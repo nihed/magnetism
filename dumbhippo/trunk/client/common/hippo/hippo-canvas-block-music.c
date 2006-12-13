@@ -3,6 +3,8 @@
 #include <hippo/hippo-person.h>
 #include "hippo-canvas-block.h"
 #include "hippo-canvas-block-music.h"
+#include "hippo-canvas-chat-preview.h"
+#include "hippo-canvas-message-preview.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-text.h>
@@ -35,6 +37,10 @@ static void hippo_canvas_block_music_title_activated (HippoCanvasBlock *canvas_b
 static void hippo_canvas_block_music_expand   (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_music_unexpand (HippoCanvasBlock *canvas_block);
 
+/* Internals */
+static void hippo_canvas_block_music_update_visibility(HippoCanvasBlockMusic *block_music);
+
+
 #if 0
 enum {
     NO_SIGNALS_YET,
@@ -54,9 +60,7 @@ G_DEFINE_TYPE_WITH_CODE(HippoCanvasBlockMusic, hippo_canvas_block_music, HIPPO_T
 static void
 hippo_canvas_block_music_init(HippoCanvasBlockMusic *block_music)
 {
-    HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(block_music);
-
-    block->expandable = FALSE; /* currently we have nothing to show on expand */
+    /* HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(block_music); */
 }
 
 static HippoCanvasItemIface *item_parent_class;
@@ -93,7 +97,7 @@ hippo_canvas_block_music_dispose(GObject *object)
 
     block_music = HIPPO_CANVAS_BLOCK_MUSIC(object);
 
-    hippo_canvas_block_music_set_track(block_music, NULL);
+    hippo_canvas_block_music_set_track_history(block_music, NULL);
 
     G_OBJECT_CLASS(hippo_canvas_block_music_parent_class)->dispose(object);
 }
@@ -159,23 +163,44 @@ hippo_canvas_block_music_constructor (GType                  type,
     hippo_canvas_block_set_heading(block, _("Music Radar"));
 
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "orientation", HIPPO_ORIENTATION_VERTICAL,
                        "spacing", 4,
                        NULL);
-
+    block_music->parent_box = box;
     hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
 
-    block_music->downloads_box = box;
+    block_music->single_message_preview = g_object_new(HIPPO_TYPE_CANVAS_MESSAGE_PREVIEW,
+                                                      "actions", hippo_canvas_block_get_actions(block),
+                                                      NULL);
+    hippo_canvas_box_append(box, block_music->single_message_preview, 0);
+    hippo_canvas_box_set_child_visible(box,
+                                       block_music->single_message_preview,
+                                       FALSE); /* no messages yet */
+    
+    block_music->downloads_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                              "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                                              "spacing", 4,
+                                              NULL);
+    hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(block_music->downloads_box), 0);
 
+    block_music->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
+                                             "actions", hippo_canvas_block_get_actions(block),
+                                             NULL);
+    hippo_canvas_box_append(box, block_music->chat_preview, 0);
+    hippo_canvas_box_set_child_visible(block_music->parent_box,
+                                       block_music->chat_preview,
+                                       FALSE); /* not expanded at first */
+    
     return object;
 }
 
-void
-hippo_canvas_block_music_set_track(HippoCanvasBlockMusic *block_music,
-                                   HippoTrack                  *track)
+static void
+set_track(HippoCanvasBlockMusic *block_music,
+          HippoTrack                  *track)
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_music);
     HippoActions *actions = hippo_canvas_block_get_actions(canvas_block);
+    const char *chat_id = NULL;
 
     if (track == block_music->track)
         return;
@@ -242,6 +267,8 @@ hippo_canvas_block_music_set_track(HippoCanvasBlockMusic *block_music,
                                         separator, 0);
             }
         }
+
+        chat_id = hippo_track_get_play_id(track);
         
         g_free(title);
         g_free(artist);
@@ -250,6 +277,57 @@ hippo_canvas_block_music_set_track(HippoCanvasBlockMusic *block_music,
         hippo_canvas_block_set_title(canvas_block, NULL, NULL, FALSE);
         hippo_canvas_box_remove_all(block_music->downloads_box);
     }
+
+    g_object_set(G_OBJECT(block_music->chat_preview),
+                 "chat-id", chat_id,
+                 NULL);
+}
+
+static void
+set_old_tracks(HippoCanvasBlockMusic *block_music,
+               GSList                *old_tracks)
+{
+    GSList *old_old_tracks = block_music->old_tracks;
+    
+    block_music->old_tracks = g_slist_copy(old_tracks);
+    g_slist_foreach(old_tracks, (GFunc)g_object_ref, NULL);
+    
+    g_slist_foreach(old_old_tracks, (GFunc)g_object_unref, NULL);
+    g_slist_free(old_old_tracks);
+}
+
+void 
+hippo_canvas_block_music_set_track_history(HippoCanvasBlockMusic *block_music,
+                                           GSList                *track_history)
+{
+    if (track_history) {
+        set_track(block_music, track_history->data);
+        set_old_tracks(block_music, track_history->next);
+    } else {
+        set_track(block_music, NULL);
+        set_old_tracks(block_music, NULL);
+    }
+}
+
+void 
+hippo_canvas_block_music_set_recent_messages(HippoCanvasBlockMusic *block_music,
+                                             GSList                *recent_messages)
+{
+    HippoChatMessage *last_message = NULL;
+
+    if (recent_messages)
+        last_message = recent_messages->data;
+
+    g_object_set(G_OBJECT(block_music->chat_preview),
+                 "recent-messages", recent_messages,
+                 NULL);
+    g_object_set(G_OBJECT(block_music->single_message_preview),
+                 "message", last_message,
+                 NULL);
+
+    block_music->have_messages = last_message != NULL;
+
+    hippo_canvas_block_music_update_visibility(block_music);
 }
 
 static void
@@ -316,15 +394,33 @@ hippo_canvas_block_music_title_activated(HippoCanvasBlock *canvas_block)
 static void
 hippo_canvas_block_music_expand(HippoCanvasBlock *canvas_block)
 {
-    /* HippoCanvasBlockMusic *block_music = HIPPO_CANVAS_BLOCK_MUSIC(canvas_block); */
+    HippoCanvasBlockMusic *block_music = HIPPO_CANVAS_BLOCK_MUSIC(canvas_block);
 
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_music_parent_class)->expand(canvas_block);
+
+    hippo_canvas_block_music_update_visibility(block_music);
 }
 
 static void
 hippo_canvas_block_music_unexpand(HippoCanvasBlock *canvas_block)
 {
-    /* HippoCanvasBlockMusic *block_music = HIPPO_CANVAS_BLOCK_MUSIC(canvas_block); */
-
+    HippoCanvasBlockMusic *block_music = HIPPO_CANVAS_BLOCK_MUSIC(canvas_block);
+    
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_music_parent_class)->unexpand(canvas_block);
+    
+    hippo_canvas_block_music_update_visibility(block_music);
 }
+
+static void
+hippo_canvas_block_music_update_visibility(HippoCanvasBlockMusic *block_music)
+{
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_music);
+    
+    hippo_canvas_box_set_child_visible(block_music->parent_box,
+                                       block_music->single_message_preview,
+                                       !canvas_block->expanded && block_music->have_messages);
+    hippo_canvas_box_set_child_visible(block_music->parent_box,
+                                       block_music->chat_preview,
+                                       canvas_block->expanded);
+}
+

@@ -20,22 +20,33 @@ typedef struct _HippoCanvasBlockMusicClass HippoCanvasBlockMusicClass;
 #define HIPPO_IS_CANVAS_BLOCK_MUSIC_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_BLOCK_MUSIC))
 #define HIPPO_CANVAS_BLOCK_MUSIC_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_BLOCK_MUSIC, HippoCanvasBlockMusicClass))
 
-GType            hippo_canvas_block_music_get_type    (void) G_GNUC_CONST;
-
-void hippo_canvas_block_music_set_track(HippoCanvasBlockMusic *block_music_person,
-                                        HippoTrack            *track);
-
 struct _HippoCanvasBlockMusic {
     HippoCanvasBlock canvas_block;
     HippoPerson *person;
+
     HippoTrack *track;
+    GSList *old_tracks;
+
+    HippoCanvasBox *parent_box;
+    HippoCanvasItem *single_message_preview;
+    HippoCanvasItem *chat_preview;
+
     HippoCanvasBox *downloads_box;
+
+    guint have_messages : 1;
 };
 
 struct _HippoCanvasBlockMusicClass {
     HippoCanvasBlockClass parent_class;
 
 };
+
+GType            hippo_canvas_block_music_get_type    (void) G_GNUC_CONST;
+
+void hippo_canvas_block_music_set_track_history(HippoCanvasBlockMusic *block_music,
+                                                GSList                *track_history);
+void hippo_canvas_block_music_set_recent_messages(HippoCanvasBlockMusic *block_music_,
+                                                  GSList                *recent_messages);
 
 G_END_DECLS
 

@@ -140,14 +140,10 @@ on_track_history_changed(HippoBlock *block,
                          HippoCanvasBlockMusicPerson *block_music_person)
 {
     GSList *track_history = NULL;
-    HippoTrack *track = NULL;
     
     g_object_get(G_OBJECT(block), "track-history", &track_history, NULL);
-
-    if (track_history)
-        track = track_history->data;
-
-    hippo_canvas_block_music_set_track(HIPPO_CANVAS_BLOCK_MUSIC(block_music_person), track);
+    
+    hippo_canvas_block_music_set_track_history(HIPPO_CANVAS_BLOCK_MUSIC(block_music_person), track_history);
 }
 
 static void

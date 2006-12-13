@@ -256,6 +256,7 @@ hippo_track_new_from_xml(HippoDataCache *cache,
     track->artist = g_strdup(artist);
     track->album = g_strdup(album);
     track->name = g_strdup(name);
+    track->play_id = g_strdup(play_id);
     track->url = g_strdup(url);
     track->last_listen_time = last_listen_time;
     track->duration = duration;
