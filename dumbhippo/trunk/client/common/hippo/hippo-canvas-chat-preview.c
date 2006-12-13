@@ -249,6 +249,7 @@ hippo_canvas_chat_preview_set_property(GObject         *object,
             clear_recent_messages(chat_preview);
             for (l = messages; l; l = l->next)
                 hippo_canvas_chat_preview_add_recent_message(chat_preview, l->data);
+            update_recent_messages(chat_preview);
         }
         break;
     case PROP_CHATTING_COUNT:
@@ -422,6 +423,7 @@ on_room_message_added(HippoChatRoom          *room,
                       HippoCanvasChatPreview *chat_preview)
 {
     hippo_canvas_chat_preview_add_recent_message(chat_preview, message);
+    update_recent_messages(chat_preview);
 }
 
 static void
@@ -475,6 +477,7 @@ hippo_canvas_chat_preview_set_room(HippoCanvasChatPreview *chat_preview,
             ++count;
             messages = messages->next;
         }
+        update_recent_messages(chat_preview);
     } else {
         clear_recent_messages(chat_preview);
         update_recent_messages(chat_preview);
@@ -611,8 +614,6 @@ hippo_canvas_chat_preview_add_recent_message (HippoCanvasChatPreview *chat_previ
         }
         chat_preview->recent_messages = g_slist_reverse(list);
     }
-
-    update_recent_messages(chat_preview);
 }
 
 void
