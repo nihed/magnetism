@@ -720,9 +720,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 	
-	private void fillAlbumInfo(Viewpoint viewpoint, YahooSongData yahooSong, YahooAlbumData yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<? extends YahooSongData>> futureAlbumTracks, AlbumView albumView) {
-			fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);
-
+	private void fillAlbumTracks(Viewpoint viewpoint, YahooSongData yahooSong, Future<List<? extends YahooSongData>> futureAlbumTracks, AlbumView albumView) {
 			TreeMap<Integer, TrackView> sortedTracks = new TreeMap<Integer, TrackView>();
 			TreeMap<Integer, List<Future<List<? extends YahooSongDownloadData>>>> trackDownloads = 
 				new TreeMap<Integer, List<Future<List<? extends YahooSongDownloadData>>>>();
@@ -902,7 +900,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongData yahooSong, YahooAlbumData yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<? extends YahooSongData>> futureAlbumTracks) {
 		AlbumView view = new AlbumView();
-		fillAlbumInfo(viewpoint, yahooSong, yahooAlbum, futureAmazonAlbum, futureAlbumTracks, view);
+		fillAlbumTracks(viewpoint, yahooSong, futureAlbumTracks, view);
+		fillAlbumInfo(yahooAlbum, futureAmazonAlbum, view);
+
 		return view;		
 	}
 	

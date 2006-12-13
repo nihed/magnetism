@@ -1,6 +1,6 @@
 package com.dumbhippo.server.views;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -33,9 +33,9 @@ public class TrackView {
 	private long lastListenTime;
 	private int trackNumber; // both -1 and 0 mean that track number is unknown/inapplicable
 	                         // valid track numbers are 1-based
-	private int totalPlays;
-	private int numberOfFriendsWhoPlayedTrack;
-	private boolean showExpanded;
+	private int totalPlays = -1;
+	private int numberOfFriendsWhoPlayedTrack = -1;
+	private boolean showExpanded = false;
 	private List<PersonMusicPlayView> personMusicPlayViews;
 	private TrackHistory trackHistory;
 	
@@ -44,23 +44,11 @@ public class TrackView {
 			name = "Unknown Title";
 	}
 	
-	public TrackView() {
-		this.album = new AlbumView();
-		this.personMusicPlayViews = new ArrayList<PersonMusicPlayView>();
-		this.totalPlays = -1;
-		this.numberOfFriendsWhoPlayedTrack = -1;
-		this.showExpanded = false;
-	}
-	
 	public TrackView(Track track, TrackHistory trackHistory) {
 		this.album = new AlbumView(track.getAlbum(), track.getArtist());
 		this.name = track.getName();
 		this.durationSeconds = track.getDuration();
 		this.trackNumber = track.getTrackNumber();
-		this.personMusicPlayViews = new ArrayList<PersonMusicPlayView>();
-		this.totalPlays = -1;
-		this.numberOfFriendsWhoPlayedTrack = -1;
-		this.showExpanded = false;
 		this.trackHistory = trackHistory;
 		
 		if (trackHistory != null)
@@ -74,10 +62,7 @@ public class TrackView {
 		this.name = name;
 		this.durationSeconds = duration;
 		this.trackNumber = trackNumber; 
-		this.personMusicPlayViews = new ArrayList<PersonMusicPlayView>();
-		this.totalPlays = -1;
-		this.numberOfFriendsWhoPlayedTrack = -1;
-		this.showExpanded = false;
+		
 		fillDefaults();
 	}
 	
@@ -116,16 +101,8 @@ public class TrackView {
 		return album.getTitle();
 	}
 
-	public void setAlbum(String album) {
-		this.album.setTitle(album);
-	}
-
 	public String getArtist() {
 		return album.getArtist();
-	}
-
-	public void setArtist(String artist) {
-		album.setArtist(artist);
 	}
 
 	public String getName() {
@@ -144,27 +121,16 @@ public class TrackView {
 		return album.getSmallImageHeight();
 	}
 
-	public void setSmallImageHeight(int smallImageHeight) {
-		album.setSmallImageHeight(smallImageHeight);
-	}
-
 	public String getSmallImageUrl() {
 		return album.getSmallImageUrl();
-	}
-
-	public void setSmallImageUrl(String smallImageUrl) {
-		album.setSmallImageUrl(smallImageUrl);
 	}
 
 	public boolean isSmallImageUrlAvailable() {
 	    return album.isSmallImageUrlAvailable();
 	}
+	
 	public int getSmallImageWidth() {
 		return album.getSmallImageWidth();
-	}
-
-	public void setSmallImageWidth(int smallImageWidth) {
-		album.setSmallImageWidth(smallImageWidth);
 	}
 
 	public int getDurationSeconds() {
@@ -227,14 +193,18 @@ public class TrackView {
 	}	
 	
 	public List<PersonMusicPlayView> getPersonMusicPlayViews() {
-		return personMusicPlayViews;
+		if (personMusicPlayViews != null)
+			return personMusicPlayViews;
+		else
+			return Collections.emptyList();
 	}
 	
 	public PersonMusicPlayView getSinglePersonMusicPlayView() {
-		if (!personMusicPlayViews.isEmpty()) {
-			return personMusicPlayViews.get(0);
+		try {
+			return getPersonMusicPlayViews().get(0);
+		} catch (IndexOutOfBoundsException e) {
+			return null;
 		}
-		return null;
 	}
 	
 	public void setPersonMusicPlayViews(List<PersonMusicPlayView> personMusicPlayViews) {
