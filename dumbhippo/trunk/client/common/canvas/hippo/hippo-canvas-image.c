@@ -141,10 +141,34 @@ hippo_canvas_image_new(void)
 }
 
 static void
+set_surface(HippoCanvasImage *image,
+            cairo_surface_t  *surface)
+{
+    if (surface != image->surface) {
+#if 0
+        /* The FC5 version of Cairo doesn't have this API */
+        if (cairo_surface_get_type(surface) != CAIRO_SURFACE_TYPE_IMAGE) {
+            g_warning("Image canvas item only supports image surfaces");
+            return;
+        }
+#endif
+        if (surface)
+            cairo_surface_reference(surface);
+        if (image->surface)
+            cairo_surface_destroy(image->surface);
+        image->surface = surface;
+        
+        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(image));
+
+        g_object_notify(G_OBJECT(image), "image");
+    }
+}
+
+static void
 set_surface_from_name(HippoCanvasImage *image)
 {
     if (image->image_name == NULL) {
-        g_object_set(image, "image", NULL, NULL);
+        set_surface(image, NULL);
     } else {
         cairo_surface_t *surface;
         HippoCanvasContext *context;
@@ -158,13 +182,12 @@ set_surface_from_name(HippoCanvasImage *image)
             /* may return NULL */
             surface = hippo_canvas_context_load_image(context,
                                                       image->image_name);
-            
-            g_object_set(image, "image", surface, NULL);
+            set_surface(image, surface);
             
             if (surface != NULL)
                 cairo_surface_destroy(surface);
         } else {
-            g_object_set(image, "image", NULL, NULL);
+            set_surface(image, NULL);
         }
     }
 }
@@ -184,28 +207,13 @@ hippo_canvas_image_set_property(GObject         *object,
         {
             cairo_surface_t *surface = g_value_get_pointer(value);
 
-            if (surface != image->surface) {
-#if 0
-                /* The FC5 version of Cairo doesn't have this API */
-                if (cairo_surface_get_type(surface) != CAIRO_SURFACE_TYPE_IMAGE) {
-                    g_warning("Image canvas item only supports image surfaces");
-                    return;
-                }
-#endif
-                if (surface)
-                    cairo_surface_reference(surface);
-                if (image->surface)
-                    cairo_surface_destroy(image->surface);
-                image->surface = surface;
-
-                if (image->image_name) {
-                    g_free(image->image_name);
-                    image->image_name = NULL;
-                    g_object_notify(G_OBJECT(image), "image-name");
-                }
-
-                hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(image));
+            if (image->image_name) {
+                g_free(image->image_name);
+                image->image_name = NULL;
+                g_object_notify(G_OBJECT(image), "image-name");
             }
+            
+            set_surface(image, surface);
         }
         break;
     case PROP_IMAGE_NAME:
