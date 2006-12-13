@@ -1,0 +1,55 @@
+#dhMainArea .dh-track {
+	position: relative;
+	margin-bottom: 7px;
+	/* this doesn't seem like the right way to do it... */
+	left: 				30px;
+}
+.dh-track {
+	height:				75px;	
+}
+.dh-track-image {
+	position:			absolute;
+	left:				0;
+	width:				75px;
+	height:				75px;
+}
+.dh-track-info {
+	position:			absolute;
+	left:				75px;
+	padding:			3px;
+}
+.dh-track-image img {
+	border:				0;
+}
+.dh-track-name {
+	font-weight:		bold;
+}
+.dh-track-links {
+	position:			relative;
+	height:				30px;
+	width:				100%;
+	width:				250px;
+	padding:			2px;
+	font-size:			7pt;
+	color:				#777777;
+	background-color:	#efefef;
+	-moz-border-radius:	5px;
+}
+div.dh-track-link {
+	float:				left;
+	margin:				3px;
+	font-size:			10pt;
+}
+
+a.dh-track-rhapsody-link:link {
+	text-decoration:	none;
+}
+
+.dh-more-songs {
+       text-align:                             center;
+}
+
+.dh-music-sharing-toggle {
+       font-family:            mono;
+       vertical-align:         middle;
+}

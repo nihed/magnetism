@@ -1,0 +1,68 @@
+@CHARSET "UTF-8";
+
+@import "sitewide.css";
+@import "home.css";
+
+.dh-people-grid {
+    position:               absolute;
+	height:					345px;
+	max-height:             345px;
+	width:				    322px;
+	left:                   50%;
+    margin-left:            -161px;
+    margin-top:             10px;
+    padding:                10px;
+    text-align:             center;
+	overflow:               hidden;
+	background-color:		#A1D759;
+}
+
+.dh-people-grid .dh-listed-person-area {
+	background-color:		white;
+	height:                 31px;
+	width:	    			296px;
+	display:                block;
+	float:                  left;	
+	overflow:               hidden;
+	margin-top:             3px;
+	margin-bottom:          7px;
+	vertical-align:         middle;
+	text-align:				center;
+	color:					#A1D759;
+}
+
+.dh-listed-person-area .dh-listed-person {
+	padding:                7px;
+}
+
+.dh-listed-person-area .dh-listed-person-with-invite-link {
+}
+
+.dh-listed-person-area .dh-invite-link {
+    font-size:              xx-small;
+    text-align:				center;	
+	margin-bottom:          0px;
+	margin-left:            0px;
+}
+
+.dh-prev-contacts {
+    position:                   absolute;
+    top:                        606px;
+    left:                       53px;    
+    color:                      #fff500;   
+}
+
+.dh-viewing-contacts {
+    position:                   absolute;
+    top:                        606px;
+    left:                       164px;    
+    color:                      #4EAA71;   
+}
+
+.dh-next-contacts {
+    position:                   absolute;
+    top:                        606px;
+    right:                      33px;   
+    color:                      #fff500;   
+}
+

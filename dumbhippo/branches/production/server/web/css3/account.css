@@ -1,0 +1,48 @@
+@CHARSET "UTF-8";
+@IMPORT url("account-positions.css");
+@IMPORT url("photo-chooser.css");
+
+#dhAccountInfoForm, #dhAccounts {
+    font-size:  13px;
+}
+
+#dhAccountInfoForm, #dhAccounts .dh-address-table {
+	font-size:	13px;
+}
+
+#dhAccountInfoForm .dh-base-row {
+    background: #EDEDED;
+}
+
+#dhAccountInfoForm .dh-alt-row {
+    background: #F3F3F3;
+}
+
+#dhAccounts .dh-base-row, #dhAccounts .dh-alt-row {
+    background: inherit;
+}
+
+#dhAccountInfoForm .dh-label-cell {
+    font-weight: bold;
+}
+
+#dhAccounts .dh-label-cell {
+    font-weight: normal;
+}
+
+#dhAccounts .dh-info-cell {
+	color:			#9648BC;
+}
+
+.dh-section-header {
+	font-weight:  		bold;
+	font-size:	  		18px;
+}
+
+.dh-section-explanation {
+	font-size:	  		14px;
+}
+
+.dh-love-hate {
+	font-size:		inherit;
+}

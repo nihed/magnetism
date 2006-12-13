@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# Folder names
+DOJO=dojo-`date +%F`
+NIGHTLY=nightly
+OUT_DIR=/srv/www/vhosts/archive
+TMP=~/.dojotmp
+
+mkdir -p $TMP/profiles
+mkdir -p $OUT_DIR/$DOJO
+cd $OUT_DIR/$DOJO
+
+# Get checkout
+echo Grabbing SVN trunk...
+svn co -q http://dojotoolkit.org/svn/dojo/trunk .
+
+# Kill the SVN bits (makes things huge otherwise)
+echo Removing SVN bits...
+for svn in `find -name .svn`
+do
+  rm -rf $svn
+done
+
+# Fixor ant
+CLASSPATH="$OUT_DIR/$DOJO/buildscripts/lib/js.jar:$OUT_DIR/$DOJO/buildscripts/lib/jython.jar"
+export CLASSPATH
+
+# Build profiles
+echo Build profiles...
+cd buildscripts
+ant # get it setup
+
+for pfile in $(cd profiles; ls *.profile.js; cd ..)
+do
+	profile=`echo $pfile | sed 's/.profile.js//g'`
+	echo Building profile: $profile
+	ant -q -Ddocless=true -Dnostrip=true -Dprofile=$profile release
+	proName=$profile-`date +%F`
+	cd ../release
+	tar -zcf $TMP/profiles/$proName.tgz .
+	zip -rq $TMP/profiles/$proName.zip .
+	cd ../buildscripts
+done
+cd ..
+
+rm -rf release
+
+# Create tar and zip
+echo Creating HEAD and src zips...
+tar -zcf $TMP/$DOJO.tgz .
+zip -rq $TMP/$DOJO.zip .
+tar -zcf $TMP/$DOJO-src.tgz src dojo.js iframe_history.html LICENSE.txt
+zip -rq $TMP/$DOJO-src.zip src dojo.js iframe_history.html LICENSE.txt
+
+# Move to permanent location
+mv $TMP/$DOJO.tgz .
+mv $TMP/$DOJO-src.tgz .
+mv $TMP/$DOJO.zip .
+mv $TMP/$DOJO-src.zip .
+mv $TMP/profiles .
+
+# Make symlinks
+echo Updating symlinks...
+ln -sf $DOJO/$DOJO.tgz $OUT_DIR/$NIGHTLY.tgz
+ln -sf $DOJO/$DOJO-src.tgz $OUT_DIR/$NIGHTLY-src.tgz
+ln -sf $DOJO/$DOJO.zip $OUT_DIR/$NIGHTLY.zip
+ln -sf $DOJO/$DOJO-src.zip $OUT_DIR/$NIGHTLY-src.zip
+rm $OUT_DIR/$NIGHTLY; ln -sf $DOJO $OUT_DIR/$NIGHTLY
+rm $OUT_DIR/$NIGHTLY-profiles; ln -sf $DOJO/profiles $OUT_DIR/$NIGHTLY-profiles
+
+# See what happened
+echo Archive is now:
+ls -l $OUT_DIR
+echo
+echo $DOJO:
+ls -l $OUT_DIR/$DOJO

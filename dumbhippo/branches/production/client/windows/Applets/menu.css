@@ -1,0 +1,104 @@
+/* Note that if you change things like the border around the menu or
+ * the margin around menu items, the sizing code in menu.js needs to 
+ * be adjusted as well 
+ */
+body
+{
+    border: solid 1px black;
+    font: menu;
+    width: 100%;
+    height: 100%;
+    padding: 2px;
+}
+
+#dhMenuTable
+{
+    width: 494px;
+    table-layout: fixed;
+    font-family: Sans-Serif;
+    font-size: 11px;
+}
+
+.dh-menu-logo
+{
+    background-image: url(linkswarm.gif);
+    width: 112px;
+    height: 17px;
+}
+
+.dh-menu-title-column
+{
+    width: 320px;
+    padding-left: 7px;
+    padding-right: 5px;
+}
+
+.dh-menu-meta-column
+{
+    width: 174px;
+}
+
+.dh-menu-post-row
+{
+    margin-top: 2px;
+    margin-bottom: 2px;
+    background-color: #F8BB77;
+    color: Black;
+    height: 25px;
+    cursor: pointer; /* For IE 5 and earlier, you'd need 'hand' instead */
+}
+
+.dh-menu-post-row-hover
+{
+    background-color: #F16D1C;
+    color: White;
+}
+
+.dh-menu-header-row
+{
+    height: 28px;
+}
+
+.dh-menu-footer-row
+{
+    height: 25px;
+}
+
+#dhMenuTable td
+{
+    border-top: 1px solid white;
+    border-bottom: 1px solid white;
+}
+
+.dh-menu-post-title
+{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 100%;
+    overflow: hidden;
+    font-weight: bold;
+}
+
+.dh-menu-post-user-count
+{
+    font-style: italic;
+}
+
+.dh-menu-link
+{
+    font-weight: bold;
+    color: #F16D1C;
+    text-decoration: none;
+}
+
+.dh-menu-link a:hover
+{
+    text-decoration: underline;
+}
+
+.dh-menu-link-disabled
+{
+    font-weight: bold;
+    text-decoration: none;
+    cursor: default;
+}

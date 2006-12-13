@@ -1,0 +1,366 @@
+@CHARSET "UTF-8";
+
+/* This file contains or imports css that applies to 
+ * general categories of page element we use on 
+ * multiple pages. Ids like "dhFooBar" and 
+ * classes like "dh-foo-bar" are specific 
+ * to our site.
+ * 
+ * Dojo widgets have classes of their own, one approach is 
+ * to set dh* classes on them in JavaScript, the other approach
+ * is to just DOM inspector the page and find the classes
+ * and css them from here.
+ */
+
+/* If you put anything in this "*" style, then it will not 
+ * have "inherit" semantics anymore. i.e. if you put 
+ * in background-color "white", then you change the color
+ * of a node, its children will not be affected since this
+ * style is explicitly forcing their color.
+ *
+ * In short, defaults in this "*" style must be overridden on a per-node
+ * basis. Defaults in the "body" style must be overridden on a per-subtree
+ * basis.
+ */
+* {
+	/* Conceptually the "inherit" here is usually what's going
+	 * on, but if you actually specify these it overrides some
+	 * elements that shouldn't default to inherit like <input>
+	 */
+	/*
+	font-family:					inherit;
+	background-color:				inherit;
+	color:							inherit;
+	opacity:						inherit;
+	*/
+}
+body {
+	/* Properties of body */
+	margin:							0;
+	padding:						0;
+
+	/* Page-wide defaults to be inherited by child nodes */
+	font-family:					Bitstream Vera Sans, Verdana, sans;
+	color:							#000000;
+	background-color:				#626262;
+}
+a {
+	color:							blue;
+	background-color:				inherit;
+}
+form {
+	margin:							0;
+}
+div {
+	margin:							0;
+	padding:						0;
+}
+img {
+	border:							0;
+}
+
+#dhMainArea {
+	min-height:						1080px;
+	max-width:						422px;
+	border:							10px solid #bababa;
+	padding:						2px;
+	background-color:				#ffffff;
+	position:						relative;
+	left:							70px;
+	top:							0px;
+}
+#dhPersonalArea {
+	min-height:						1080px;
+	max-width:						196px;
+	border:							10px solid #bababa;
+	background-color:				#bababa;
+	position:						absolute;
+	left:							531px;
+	top:							0px;
+}
+a.dh-upload-photo {
+	color:							black;
+	background-color:				inherit;
+	display:						block;
+	text-align:						right;
+	text-decoration:				none;
+	font-size:						x-small;
+	font-family:					Bitstream Vera Sans Mono, mono;
+}
+
+input.dh-upload-photo {
+	font-size:						small;
+}
+/* ------------ LEFT SIDE ------------ */
+#dhToolbar {
+	color:					#000000;
+	background-color:		#628200;
+	font-size:				x-small;
+	padding:				5px;
+}
+a.dh-toolbar-item {
+	color:					#bfff00;
+	background-color:		inherit;
+}
+a.dh-toolbar-item:link {
+	color:					#bfff00;
+	background-color:		inherit;
+}
+a.dh-toolbar-item:visited {
+	color:					#bfff00;
+	background-color:		inherit;
+}
+#dhInformationBar {
+	color:					#ffb979;
+	background-color:		#944e0f;
+	margin-top:				3px;
+	margin-bottom:			20px;
+	font-size:				x-small;
+	padding:				5px;
+	text-align:				center;
+	height:					60px;
+}
+#dhInformationBar a {
+	color:					#fff500;
+}
+
+#dhMainArea h2.dh-title {
+	color:					#3399ff;
+	margin:					0;
+	margin-top:				18px;
+	margin-bottom:			6px;
+	text-align:				left;
+}
+
+#dhMainArea .dh-title {
+	color:					#3399ff;
+	margin:					0;
+	margin-bottom:			3px;
+	text-align:				left;
+}
+
+#dhSharesArea {
+	position:				absolute;
+	width:					500px;
+	left:					-45px;
+}
+/* ------------ RIGHT SIDE ------------ */
+#dhPhotoNameArea {
+	position:				relative;
+	background-color:		white;
+	border:					2px solid white;
+	border-top:				3px solid white;;
+	border-bottom:			3px solid white;;
+	padding:				0;
+}
+#dhPhotoNameArea img.dh-headshot {
+	position:				relative;
+	width:					192px;
+	background-color:		white;
+	color:					inherit;
+	margin:					0;
+	border:					0;
+	margin-bottom:			2px;
+	border:					0;
+}
+#dhName {
+	color:					#ffffff;
+	background-color:		#944e0f;
+	font-size:				x-large;
+	font-weight:			bold;
+	padding:				5px;
+	margin:					0;
+}
+a.dh-name-edit {
+	color:					#ffb979;
+	background-color:		inherit;
+	font-size:				x-small;
+	font-weight:			normal;
+	font-family:			Bitstream Vera Sans Mono, mono;
+}
+.dh-right-box-area {
+	color:					#ffffff;
+	background-color:		inherit;
+	position:				relative;
+	height:					900px;
+	margin:					0;
+	margin-top:				3px;
+	border:					2px solid white;
+	border-top-width:		3px;
+	border-bottom-width:	3px;
+	background-color:		#626262;
+}
+.dh-right-box-area a {
+	color:							#fff500;
+	background-color:				inherit;
+}
+.dh-right-box {
+	position:				relative;
+	border-bottom:			2px solid #bababa;
+	background-color:		#626262;
+	padding:				3px;
+	padding-top:			10px;
+	overflow:				hidden;
+}
+.dh-right-box-last {
+	border-bottom:			0;
+}
+
+#dhOTP {
+	position:						fixed;
+	right:							0;
+	top:							30px;
+	background-color:				#626262;
+	color:							#919191;
+	width:							175px;
+	border:							0;
+	margin:							0;
+	padding:						0;
+	/* for firefox only, overridden to -1 in iefixes */
+	z-index:						0;
+}
+
+/* on top of OTP */
+#dhMainArea, #dhPersonalArea, #dhBottomBarContainer {
+	z-index:						1;
+}
+
+/* ------------ BOTTOM ------------ */
+
+#dhBottomBarContainer {
+	clear:		right;
+	position:	relative;
+	margin-top:	5px;
+	left:		70px;
+}
+
+a.dh-bottom-bar {
+	color:							#fff500;
+}
+/* ------------ LEGACY IMPORTING ------------ */
+
+.dhLabel {
+	/* be careful with this relative size; it is relative 
+	 * to the parent, so if you apply it to two nested 
+	 * nodes the inner node will be smaller than outer
+	 */
+	font-size:						smaller;
+	margin-bottom:					0.5em;
+}
+
+.dhStatusLabel {
+	font-size:						smaller;
+	font-style:						italic;	
+}
+
+/* Style of the text being typed by the user */
+textarea, .dhTextArea, .dojoComboBox .comboBoxInput, input[type=text], input[type=password] {
+	font-size:						small;
+	font-family:					Monospaced, mono;
+	/* IE extension that avoids text area scrollbar (dynamically expands it) */
+	overflow:                       visible;
+	width: 							25em;
+}
+
+/* Style of the border around the text being input, which 
+ * may be part of the <input> or of another tag around that
+ * e.g. in Dojo combo box it's for a table
+ */
+textarea, .dhTextArea, .dojoComboBox, .dhText {
+	border:							1px solid #afafaf;
+}
+
+/* Styles for text areas only, not one-line text input */
+textarea, .dhTextArea {
+	width:						25em;
+}
+
+a.editLabel {
+	color:						blue;	
+}
+
+/* note that input[type=text] won't always work if the "type=text" was left 
+ * implicit on the <input>
+ */
+form.inlineEditBox input[type=text] {
+	color:						blue;
+}
+
+/* Used for "this field needs fixing" messages */
+.dhValidityError {
+    color: red;
+}
+
+.dhButton, .dojoButton {
+	/* text-align:						right; */
+	background-color:				#efefef;
+}
+
+
+/* dojo-dialog is the outermost <div> of the dialog widget. Inside 
+ * it is the dialog content class=dhDialogContent, and also inside
+ * it is the background class=dialogUnderlay. Color of the underlay
+ * seems to get set in code though so be careful...
+ */
+.dojo-dialog {
+	background : #eee;
+	border : 1px solid #999;
+	-moz-border-radius : 5px;
+	padding : 4px;
+}
+
+/* FIXME this is currently centered on the entire page, not the 
+ * browser window
+ */
+.dhDialogContent {
+
+}
+
+/* Used to hide elements */
+/* The rule used to apply to children like this: 
+  .dhInvisible, .dhInvisible * { 
+   which hopefully wasn't important, because it seems to cause 
+   IE to not re-show tables in unexplained/unreproducible situations
+   when you remove dhInvisible again
+  */
+.dhInvisible {
+	display:	none;
+}
+
+/* Insert a stock amount of vertical whitespace */
+.dhVerticalPadding {
+	margin-top: 	1em;
+}
+
+.dh-center-children {
+	text-align: 	center;
+}
+
+/* Right now, white background with round corners and black outline */
+.dhItemBox {
+	background-color:			#fff;
+	border:						1px solid black;
+	-moz-border-radius:			5px;
+	padding:					0.5em;
+}
+
+/* Right now, gray background box */
+.dhBackgroundBox {
+	-moz-border-radius:				5px;
+	background-color:				#ddd;	
+	padding:						0.5em;
+}
+
+/* A message we flash before closing the page */
+.dh-closing-message {
+	top:				30%;
+	text-align:			center;
+	font-size:			larger;
+}
+
+/* Dojo debug spew goes in element with id=dojoDebug */
+#dojoDebug {
+	font-size:	small;
+	font-style: italic;
+}
+

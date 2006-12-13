@@ -1,0 +1,164 @@
+FIREFOX_SRCDIR = $(COMMONSRCDIR)/firefox
+GECKO_PRIVATE_INCLUDEDIR=$(FIREFOX_SRCDIR)/gecko-private/include
+
+extensiondir=$(pkglibdir)/firefox
+EXTENSION_SRCDIR=$(FIREFOX_SRCDIR)/extension
+extension_DATA =				\
+	$(EXTENSION_SRCDIR)/chrome.manifest	\
+	$(EXTENSION_SRCDIR)/install.rdf
+
+contentdir=$(extensiondir)/chrome/content
+CONTENT_SRCDIR=$(EXTENSION_SRCDIR)/chrome/content
+content_DATA =					\
+	$(CONTENT_SRCDIR)/overlay.js		\
+	$(CONTENT_SRCDIR)/overlay.xul
+
+skindir=$(extensiondir)/chrome/skin
+SKIN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/skin
+skin_DATA =					\
+	$(SKIN_SRCDIR)/linkswarm16x16.png	\
+	$(SKIN_SRCDIR)/linkswarm24x24.png	\
+	$(SKIN_SRCDIR)/mugshot32x32.png		\
+	$(SKIN_SRCDIR)/toolbar.css
+
+endir=$(extensiondir)/chrome/locale/en-US
+EN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/locale/en-US
+en_DATA =					\
+	$(EN_SRCDIR)/overlay.dtd
+
+prefsdir=$(extensiondir)/defaults/preferences
+PREFS_SRCDIR=$(EXTENSION_SRCDIR)/defaults/preferences
+prefs_DATA =					\
+	$(PREFS_SRCDIR)/prefs.js
+
+componentdir=$(extensiondir)/components
+component_LTLIBRARIES = libhippofirefox.la
+
+component_DATA =				\
+	hippoIExtension.xpt			\
+	hippoIControl.xpt			\
+	hippoIControlListener.xpt
+
+libhippofirefox_la_LDFLAGS = -avoid-version -module
+libhippofirefox_la_LIBADD = $(LIBHIPPOFIREFOX_LIBS) libhippoipc.la
+
+libhippofirefox_la_CPPFLAGS =			\
+	$(AM_CPPFLAGS)				\
+	$(LIBHIPPOFIREFOX_CFLAGS)		\
+	-I $(FIREFOX_SRCDIR)/include		\
+	-I config/hippo
+
+# The include of $(GECKO_INCLUDEDIR) in the FULL_GECKO case is for 
+# Ubuntu, which has a mix of the gecko-sdk directory arrangement
+# with including the full set of headers
+if HAVE_FULL_GECKO
+libhippofirefox_la_CPPFLAGS +=			\
+	-I $(GECKO_INCLUDEDIR)			\
+	-I $(GECKO_INCLUDEDIR)/caps		\
+	-I $(GECKO_INCLUDEDIR)/dom		\
+	-I $(GECKO_INCLUDEDIR)/js		\
+	-I $(GECKO_INCLUDEDIR)/necko		\
+	-I $(GECKO_INCLUDEDIR)/string		\
+	-I $(GECKO_INCLUDEDIR)/xpcom		\
+	-I $(GECKO_INCLUDEDIR)/xpconnect
+else
+libhippofirefox_la_CPPFLAGS +=			\
+	-I $(GECKO_INCLUDEDIR)			\
+	-I $(GECKO_PRIVATE_INCLUDEDIR)
+endif
+
+nodist_libhippofirefox_la_SOURCES=			\
+	$(FIREFOX_SRCDIR)/src/hippoExtension.cpp	\
+	$(FIREFOX_SRCDIR)/src/hippoExtension.h		\
+	$(FIREFOX_SRCDIR)/src/hippoModule.cpp		\
+	$(FIREFOX_SRCDIR)/src/hippoControl.cpp		\
+	$(FIREFOX_SRCDIR)/src/hippoControl.h
+
+LIBHIPPOFIREFOX_BUILT_SOURCEFILES =			\
+	$(BUILT_SRC_DIR)/hippoIExtension.h		\
+	$(BUILT_SRC_DIR)/hippoIControl.h		\
+	$(BUILT_SRC_DIR)/hippoIControlListener.h
+
+MAINTAINERCLEANFILES +=	$(LIBHIPPOFIREFOX_BUILT_SOURCEFILES)
+BUILT_SOURCES += $(LIBHIPPOFIREFOX_BUILT_SOURCEFILES)
+
+if HAVE_FULL_GECKO
+XPIDL_INCLUDES =				\
+	-I $(GECKO_IDLDIR)			\
+	-I $(FIREFOX_SRCDIR)/public
+else
+XPIDL_INCLUDES =				\
+	-I $(GECKO_IDLDIR)			\
+	-I $(FIREFOX_SRCDIR)/public
+endif
+
+IDL_FILES =							\
+	$(FIREFOX_SRCDIR)/public/hippoIExtension.idl		\
+	$(FIREFOX_SRCDIR)/public/hippoIControl.idl		\
+	$(FIREFOX_SRCDIR)/public/hippoIControlListener.idl
+
+GECKO_PRIVATE_FILES = $(FIREFOX_SRCDIR)/gecko-private/README
+GECKO_PRIVATE_IDL_FILES =							\
+	$(FIREFOX_SRCDIR)/gecko-private/idl/nsIPrincipal.idl			\
+	$(FIREFOX_SRCDIR)/gecko-private/idl/nsIScriptSecurityManager.idl	\
+	$(FIREFOX_SRCDIR)/gecko-private/idl/nsISerializable.idl			\
+	$(FIREFOX_SRCDIR)/gecko-private/idl/nsIXPCSecurityManager.idl
+GECKO_PRIVATE_INCLUDE_FILES =							\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIPrincipal.h			\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIScriptNameSpaceManager.h	\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIScriptSecurityManager.h	\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsISerializable.h		\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIXPCSecurityManager.h		\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsNetCID.h
+
+dist_pkgdata_SCRIPTS = firefox-update.sh
+
+$(BUILT_SRC_DIR)/hippoIExtension.h: $(FIREFOX_SRCDIR)/public/hippoIExtension.idl
+	$(XPIDL) $(XPIDL_INCLUDES)  -m header -e $@ $<
+
+$(BUILT_SRC_DIR)/hippoIControl.h: $(FIREFOX_SRCDIR)/public/hippoIControl.idl
+	$(XPIDL) $(XPIDL_INCLUDES)  -m header -e $@ $<
+
+$(BUILT_SRC_DIR)/hippoIControlListener.h: $(FIREFOX_SRCDIR)/public/hippoIControlListener.idl
+	$(XPIDL) $(XPIDL_INCLUDES)  -m header -e $@ $<
+
+hippoIExtension.xpt: $(FIREFOX_SRCDIR)/public/hippoIExtension.idl
+	$(XPIDL) $(XPIDL_INCLUDES)  -m typelib -e $@ $<
+
+hippoIControl.xpt: $(FIREFOX_SRCDIR)/public/hippoIControl.idl
+	$(XPIDL) $(XPIDL_INCLUDES)  -m typelib -e $@ $<
+
+hippoIControlListener.xpt: $(FIREFOX_SRCDIR)/public/hippoIControlListener.idl
+	$(XPIDL) $(XPIDL_INCLUDES)  -m typelib -e $@ $<
+
+DISTCLEANFILES +=				\
+	hippoIExtension.xpt			\
+	hippoIControl.xpt			\
+	hippoIControlListener.xpt
+
+libhippofirefox-dist-hook:
+	-mkdir $(distdir)/common-dist
+	mkdir $(distdir)/common-dist/firefox
+	mkdir $(distdir)/common-dist/firefox/extension
+	cp $(extension_DATA) $(distdir)/common-dist/firefox/extension
+	mkdir $(distdir)/common-dist/firefox/extension/chrome
+	mkdir $(distdir)/common-dist/firefox/extension/chrome/content
+	cp $(content_DATA) $(distdir)/common-dist/firefox/extension/chrome/content
+	mkdir $(distdir)/common-dist/firefox/extension/chrome/skin
+	cp $(skin_DATA) $(distdir)/common-dist/firefox/extension/chrome/skin
+	mkdir $(distdir)/common-dist/firefox/extension/chrome/locale
+	mkdir $(distdir)/common-dist/firefox/extension/chrome/locale/en-US
+	cp $(en_DATA) $(distdir)/common-dist/firefox/extension/chrome/locale/en-US
+	mkdir $(distdir)/common-dist/firefox/extension/defaults
+	mkdir $(distdir)/common-dist/firefox/extension/defaults/preferences
+	cp $(prefs_DATA) $(distdir)/common-dist/firefox/extension/defaults/preferences
+	mkdir $(distdir)/common-dist/firefox/public
+	cp $(IDL_FILES) $(distdir)/common-dist/firefox/public
+	mkdir $(distdir)/common-dist/firefox/src
+	cp $(nodist_libhippofirefox_la_SOURCES) $(distdir)/common-dist/firefox/src
+	mkdir $(distdir)/common-dist/firefox/gecko-private
+	cp $(GECKO_PRIVATE_FILES) $(distdir)/common-dist/firefox/gecko-private
+	mkdir $(distdir)/common-dist/firefox/gecko-private/idl
+	cp $(GECKO_PRIVATE_IDL_FILES) $(distdir)/common-dist/firefox/gecko-private/idl
+	mkdir $(distdir)/common-dist/firefox/gecko-private/include
+	cp $(GECKO_PRIVATE_INCLUDE_FILES) $(distdir)/common-dist/firefox/gecko-private/include

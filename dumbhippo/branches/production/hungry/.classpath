@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="src/test/java"/>
+	<classpathentry kind="var" path="JUNIT_HOME/junit.jar"/>
+	<classpathentry kind="lib" path="lib/js.jar"/>
+	<classpathentry kind="lib" path="lib/nekohtml.jar"/>
+	<classpathentry kind="lib" path="lib/servlet.jar"/>
+	<classpathentry kind="lib" path="lib/Tidy.jar"/>
+	<classpathentry kind="lib" path="lib/xercesImpl.jar"/>
+	<classpathentry kind="lib" path="lib/xmlParserAPIs.jar"/>
+	<classpathentry kind="lib" path="lib/jwebunit-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/httpunit-1.6.jar"/>
+	<classpathentry sourcepath="/smack/source" kind="lib" path="/server/lib/smack-svn-local-build-2005-09-30.jar"/>
+	<classpathentry kind="lib" path="/server/lib/mysql-connector-java-3.1.12-bin.jar"/>
+	<classpathentry kind="lib" path="/server/lib/smackx-svn-local-build-2005-09-30.jar"/>
+	<classpathentry kind="output" path="eclipse-bin"/>
+</classpath>

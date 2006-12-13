@@ -1,0 +1,53 @@
+@import "bubble.css";
+
+#dhBubbleListTop 
+{
+    margin: 2px;
+    background-color: #F8BB77;
+    padding: 8px;
+    overflow: hidden;
+}
+
+.dh-notification-top
+{
+    margin-top: 8px;
+    margin-bottom: 8px;
+    background-color: White;
+    position: relative;
+    width: 390px;
+}
+
+.dh-notification-top-tl
+{
+    background-image: url(lswhite_tl.png);
+    width: 10px;
+    height: 10px; 
+}
+
+.dh-notification-top-tr
+{
+    background-image: url(lswhite_tr.png);
+    width: 10px;
+    height: 10px; 
+}
+
+.dh-notification-top-bl
+{
+    background-image: url(lswhite_bl.png);
+    width: 10px;
+    height: 10px; 
+}
+
+.dh-notification-top-br
+{
+    background-image: url(lswhite_br.png);
+    width: 10px;
+    height: 10px; 
+}
+
+.dh-notification-color-tr
+{
+    background-image: url(lsorange_tr.png);
+    width: 8px;
+    height: 8px;
+}

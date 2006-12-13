@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<jive>
+  <dumbhippo>
+    <adminuser>admin</adminuser>
+    <adminpassword>@@jivePassword@@</adminpassword>
+    <client>
+      <windows>
+        <minimum>@@clientWindowsMinimum@@</minimum>
+        <current>@@clientWindowsCurrent@@</current>
+        <download>@@clientWindowsDownload@@</download>
+      </windows>
+      <linux>
+        <minimum>@@clientLinuxMinimum@@</minimum>
+        <current>@@clientLinuxCurrent@@</current>
+      </linux>
+      <fedora5>
+         <download>@@clientFedora5Download@@</download>
+      </fedora5>
+      <fedora6>
+         <download>@@clientFedora6Download@@</download>
+      </fedora6>
+    </client>
+  </dumbhippo>
+  <adminConsole> 
+    <!-- Disable either port by setting the value to -1 -->  
+    <port>@@jiveAdminPort@@</port>  
+    <securePort>@@jiveAdminSecurePort@@</securePort>  
+    <!-- By default, only the user with the username "admin" can login
+         to the admin console. Alternatively, you can specify a comma-delimitted
+         list usernames that should be authorized to login by setting the
+         <authorizedUsernames> field below. -->  
+    <!-- <authorizedUsernames></authorizedUsernames> --> 
+  </adminConsole>  
+  <locale>en</locale>  
+  <connectionProvider>
+    <className>org.jivesoftware.database.DefaultConnectionProvider</className>
+  </connectionProvider>
+  <provider>
+     <user>
+        <className>com.dumbhippo.jive.HippoUserProvider</className>
+     </user>
+     <auth>
+        <className>com.dumbhippo.jive.HippoAuthProvider</className>
+     </auth>
+    </provider>
+  <database>
+    <defaultProvider>
+      <driver>org.hsqldb.jdbcDriver</driver>
+      <serverURL>jdbc:hsqldb:file:@@targetdir@@/jive.db</serverURL>
+      <username>sa</username>
+      <password>@@dbpassword@@</password>
+    </defaultProvider>
+  </database>
+  <setup>true</setup>
+  <log>
+    <debug>
+      <enabled>true</enabled>
+    </debug>
+  </log>
+</jive>

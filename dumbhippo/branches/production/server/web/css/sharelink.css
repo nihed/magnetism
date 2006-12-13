@@ -1,0 +1,412 @@
+@CHARSET "UTF-8";
+
+/* ------------ STYLES SPECIFIC TO /SHARELINK ------------ */
+
+@import "sitewide.css";
+
+body {
+  margin: 0px;
+  padding: 0px;
+  height: 100%;
+  background-color: White;
+}
+
+img {
+  border: none;
+}
+
+table, tr, td {
+  padding: 0px;
+  margin: 0px;
+}
+
+.dh-share-border {
+  background-color: #F8BB77;
+}
+
+#dhShareOuterDiv {
+  width: 100%;
+  height: 100%;
+}
+
+#dhShareOuter {
+  table-layout: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+#dhShareTL {
+  vertical-align: top;
+}
+
+#dhShareTR {
+  vertical-align: top;
+}
+
+#dhShareBL {
+  vertical-align: bottom;
+}
+
+#dhShareBR {
+  vertical-align: bottom;
+}
+
+#dhShareMain {
+  height: 100%;
+  width: 100%;
+}
+
+#dhShareContainer {
+  width: 100%;
+  height: 100%;
+}
+
+#dhShareLeft {
+  vertical-align: top;
+}
+
+#dhShareLeftContainer {
+  width: 100%;
+  height: 100%;
+}
+
+#dhUrlTitleToShare {
+  width: 100%;
+  font-family: "Arial";
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
+  text-wrap: normal;
+}
+
+#dhShareSendTo {
+  font-family: "Arial";
+  font-weight: bold;
+  color: #666666;
+}
+
+#dhShareRecipientsContainer {
+  table-layout: fixed;
+  width: 100%;
+  height: 24px;
+  padding: 0px;
+  border: 0px;
+  margin: 0px;
+  vertical-align: bottom;
+  overflow: hidden;  
+}
+
+.dhShareTopCornerImg {
+  vertical-align: top;
+  width: 8px;
+  height: 8px;
+}
+
+.dhShareBottomCornerImg {
+  vertical-align: bottom;
+  width: 8px;
+  height: 8px;
+}
+
+#dhShareRecipientComboBox {
+  border: none;
+  width: 100%;
+  height: 24px;
+  background-color: #FBD6AD;
+  padding: 0px;
+  margin: 0px;
+}
+
+#dhShareDownArrow {
+  width: 24px;
+  height: 24px;
+  text-align: center;
+  background-color: #FBD6AD;
+  border: none;
+  margin: 0px;
+  padding: 0px;
+}
+
+#dhShareAddCell {
+  width: 63px;
+}
+
+#dhShareAddButton {
+  height: 24px;
+  border: none;
+  padding: 0px;
+  margin: 0px 0px;
+}
+
+#dhShareRecipientsLoading {
+  font-size: 12px;
+  font-style: italic;
+  color: #666666;
+}
+
+#dhShareRecipientsBox {
+  table-layout: fixed;
+  margin: 0px;
+  padding: 0px;
+  background-color: #F16D1C;
+}
+
+#dhShareRecipientsBoxMainRow {
+}
+
+#dhRecipientList {
+  margin: 0px;
+  padding: 0px;
+  overflow: auto;
+  overflow-x: auto;
+  overflow-y: visible;
+  _height: 132px; /* setting height helps IE, hurts firefox */
+  width: 100%;
+}
+
+#dhRecipientListTable {
+  margin: 0px;
+  padding: 0px;
+}
+
+.dhShareRecipientPerson {
+  margin: 0px 0px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 70px;
+}
+
+.dh-share-recipient-photo-border {
+  background: white;
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.dh-share-recipient-photo {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 60px;
+  height: 60px;
+}
+
+.dh-share-remove-recipient {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+}
+
+.dh-share-recipient-person-name {
+  color: White;
+  font-size: 12px;
+  width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.dh-share-recipient-note {
+  font-size: 10px;
+  font-style: italic;
+  width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#dhShareRight {
+  vertical-align: top;
+  height: 100%;
+  min-width: 190px;
+}
+
+#dhShareRightOuterContainer {
+  table-layout: fixed;
+  margin-top: 2px;
+  background-color: #F16D1C;  
+  height: 100%;
+}
+
+.dhShareRightElt {
+  background-color: #F16D1C;
+}
+
+#dhShareDescriptionLabel {
+  font-family: "Arial";
+  font-weight: bold;
+  color: White;
+  padding-top: 2px;
+  padding-bottom: 5px;
+}
+
+#dhShareDescriptionInnerBox {
+  margin: 2px 5px;
+  background-color: White;
+  height: 150px;
+}
+
+#dhShareDescriptionArea {
+  height: 100%;
+  width: 100%;
+}
+
+#dhShareDescriptionContainer {
+  height: 100%;
+  width: 100%;
+  background: White;
+}
+
+#dhShareDescriptionTextArea {
+  background: White;
+  display: block;
+  border: none;
+  height: 100%;
+  width: 100%;
+  margin: 0px;
+  padding: 0px;
+}
+
+#dhShareDescriptionBottomFill {
+    text-align: left;
+    height: 35px;
+}
+
+.dh-share-share-button {
+  position: absolute;
+  bottom: 1px;
+  right: 0px;
+  height: 27px;
+  width: 75px;  
+}
+
+/* A link that's basically a button (does something on click) */
+.dhActionLink {
+	font-size: 12px;
+	text-decoration: underline;
+	color: White;
+}
+
+/* The highlight when a recipient would be put in a group */
+.dhCouldBeInGroup {
+	background-color:			#0f0;
+}
+
+#dhCreateGroupPopup {
+	background-color:			#fff;
+	padding:					0.5em;
+	position:					absolute;
+	right:						3em;
+	bottom:						8em;
+	width:						23em; /* a bit larger than the input inside it */
+	z-index:					2;
+}
+
+#dhCreateGroupName {
+	width:						20em;
+}
+#dhCreateGroupStatus {
+	text-align:					right;	
+}
+
+td.dhHeadShot {
+	max-width:					48px;
+	height:						48px;
+	text-align:					center;
+}
+td.dhRemoveRecipient {
+	text-align:					right;
+}
+a.dhRemoveRecipient {
+	color:						red;
+	font-weight:				bold;
+	text-decoration:			none;
+}
+a.dhRemoveRecipient:link {
+	color:						red;
+	font-weight:				bold;
+	text-decoration:			none;
+}
+td.dhRecipientName {
+	font-size:					9pt;
+	white-space: 				no-wrap;
+}
+
+#dhInvitationsRemainingMessage {
+	font-size:					x-small;
+	font-style:					italic;
+}
+
+/* ------------ IMPORT FROM SITEWIDE -------------- */
+
+
+.dh-help-bubble {
+	width:				200px;
+	height:				75px;
+	position:			absolute;
+}
+.dh-help-bubble-triangle {
+	position:		relative;
+	display:		block;
+	top:			1px;
+	z-index:		2; /* on top */
+}
+.dh-help-bubble-message {
+	position:			relative;
+	padding:			7px;
+	font-size:			small;
+	background-color:	#a773fb;
+	color:				white;
+	border:				1px solid black;
+}
+.dh-help-bubble a {
+	font-size:			small;
+	color:				yellow;
+	text-decoration:	none;
+	margin:				7px;
+}
+.dh-help-bubble a:link {
+	color:				yellow;
+}
+.dh-help-bubble a:hover {
+	text-decoration:	underline;
+}
+
+/* Autosuggest stuff */
+.dh-suggestion-list {
+	z-index:			2; /* on top */
+	font-family: 		Bitstream Vera Sans, sans;
+	font-size:			10pt;
+	background: 		Window;
+	padding: 			2px;
+	border:             1px solid WindowText;
+	height:				125px;
+	overflow:			auto;
+}
+
+.dh-suggestion-list ul
+{
+	padding: 			0;
+	margin: 			0;
+	list-style-type: 		none;
+}
+.dh-suggestion-list a
+{
+	text-decoration: 		none;
+	color: 				WindowText;
+}
+.dh-suggestion-list .dh-selected
+{
+	background: 			Highlight;
+ 	color: 				HighlightText;
+}
+.dh-suggestion-list .dh-selected a
+{
+	color: 				HighlightText;
+}
+
+#dhAutoSuggest {
+	display: 			none;
+	cursor: 			pointer;	
+}

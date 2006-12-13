@@ -1,0 +1,18 @@
+@CHARSET "UTF-8";
+@IMPORT url("upgrade-positions.css");
+
+.dh-gray-hr {
+	color: #999999;
+}
+
+.dh-upgrade-message {
+	background-color:	#ffffcc;
+	border:				1px solid #cc0033;
+	-moz-border-radius:	5px;
+	font-size:			12px;
+}
+
+.dh-upgrade-message .dh-command {
+	font-family: monospace;
+	margin:	10px;
+}
