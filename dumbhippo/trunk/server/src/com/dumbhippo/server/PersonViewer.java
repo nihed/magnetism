@@ -16,6 +16,16 @@ import com.dumbhippo.server.views.Viewpoint;
 @Local
 public interface PersonViewer {
 	
+	/**
+	 * Get the number of contacts of the given person, minus the 
+	 * person's own self contact.
+	 * 
+	 * @param viewpoint viewpoint person viewing the contacts
+	 * @param user who to get contacts of
+	 * @return number of contacts
+	 */
+	public int getContactCount(Viewpoint viewpoint, User user);
+	
 	/** 
 	 * Get the contacts of the given person as a list of PersonView; the
 	 *   result will never include the person themself.

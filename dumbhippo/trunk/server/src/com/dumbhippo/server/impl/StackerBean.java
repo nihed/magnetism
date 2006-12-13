@@ -1025,15 +1025,26 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			}
 		}, pageable, expectedHitFactor);
 	}
+	
+	private static Set<BlockType> data1UserBlockTypes;
 
 	private String getData1UserBlockTypeClause() {
+		synchronized (StackerBean.class) {
+			if (data1UserBlockTypes == null) {
+				data1UserBlockTypes = new HashSet<BlockType>();
+				Iterator<BlockType> it = Arrays.asList(BlockType.values()).iterator();
+				while (it.hasNext()) {
+					BlockType blockType = it.next();
+					if (blockType.userOriginIsData1())
+						data1UserBlockTypes.add(blockType);
+				}
+			}
+		}
+		
 		StringBuilder builder = new StringBuilder(" block.blockType in (");
-		Iterator<BlockType> it = Arrays.asList(BlockType.values()).iterator();
+		Iterator<BlockType> it = data1UserBlockTypes.iterator();		
 		while (it.hasNext()) {
-			BlockType blockType = it.next();
-			if (!blockType.userOriginIsData1())
-				continue;
-			builder.append(Integer.toString(blockType.ordinal()));
+			builder.append(Integer.toString(it.next().ordinal()));
 			if (it.hasNext()) {
 				builder.append(", ");
 			}
@@ -1052,7 +1063,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
                 " WHERE ubd.deleted = 0 AND ubd.block = block " +
                 " AND " + getData1UserBlockTypeClause() + 
                 " AND block.publicBlock = true " +
-                " AND u.id = block.data1 " + 
+                " AND u.id = block.data1 " +
+                " AND u != :user " +
                 " AND ubd.user = :user " +
                 " ORDER BY ubd.stackTimestamp");
 		q.setParameter("user", user);
@@ -1073,7 +1085,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 
 	public void pageContactActivity(Viewpoint viewpoint, User viewedUser, int blocksPerUser, Pageable<PersonMugshotView> pageable) {
 		pageable.setResults(getContactActivity(viewpoint, viewedUser, pageable.getStart(), pageable.getCount(), blocksPerUser));
-		pageable.setTotalCount(pageable.getBound());			
+		pageable.setTotalCount(personViewer.getContactCount(viewpoint, viewedUser));
 	}
 
 	// When showing recently active groups, we want to exclude activity for

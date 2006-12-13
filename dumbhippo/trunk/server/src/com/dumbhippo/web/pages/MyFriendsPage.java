@@ -30,9 +30,8 @@ public class MyFriendsPage extends AbstractPersonPage {
 			activePeople.setInitialPerPage(USERS_PER_PAGE);
 			activePeople.setSubsequentPerPage(USERS_PER_PAGE);
 			activePeople.setBound(TOTAL_USERS);
-			
-			// FIXME do the query limited by people we are friends with
-			stacker.pageRecentUserActivity(getViewpoint(), activePeople, BLOCKS_PER_USER);
+
+			stacker.pageContactActivity(getViewpoint(), getViewedUser(), BLOCKS_PER_USER, activePeople);
 		}
 		return activePeople;
 	}

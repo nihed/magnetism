@@ -345,6 +345,20 @@ public class PersonViewerBean implements PersonViewer {
 		
 		return pv;
 	}
+	
+	private Query getContactQuery(Account account, boolean forCount) {
+		Query q = em.createQuery("SELECT " + (forCount ? "count(c)" : "c") + " from Contact c WHERE c.account = :account ORDER BY c.id DESC");
+		q.setParameter("account", account);
+		return q;
+	}
+	
+	public int getContactCount(Viewpoint viewpoint, User user) {
+		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user))
+			return 0;
+		
+		Query q = getContactQuery(user.getAccount(), true);
+		return ((Number) q.getSingleResult()).intValue();
+	}
 
 	public List<PersonView> getContacts(Viewpoint viewpoint, User user,
 			int start, int max, PersonViewExtra... extras) {
@@ -363,8 +377,8 @@ public class PersonViewerBean implements PersonViewer {
 		// To replace this ordering by an alphabetical ordering, we'd need to denormalize
 		// and store the display name of the contact in the Contact object; this isn't
 		// hard to do but it is a little tricky to keep updated.
-		Query q = em.createQuery("SELECT c from Contact c WHERE c.account = :account ORDER BY c.id DESC");
-		q.setParameter("account", user.getAccount());
+
+		Query q = getContactQuery(user.getAccount(), false);
 		q.setFirstResult(start);
 		if (max >= 0)
 			q.setMaxResults(max + 1); // Result might have ourself in it

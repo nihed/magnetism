@@ -4,6 +4,7 @@
 <%@ attribute name="person" required="true" type="com.dumbhippo.server.views.EntityView"%>
 <%@ attribute name="size" required="false" type="java.lang.Integer" %>
 <%@ attribute name="invited" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="disableLink" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="customLink" required="false" type="java.lang.String" %>
 
 <%-- this is required or the dh:png won't have a size set --%>
@@ -28,7 +29,7 @@
 	</c:otherwise>
 </c:choose>
 <c:choose>
-	<c:when test="${!empty linkUrl && !empty photoUrl}">
+	<c:when test="${!empty linkUrl && !empty photoUrl && !disableLink}">
 		<a href="${linkUrl}" style="text-decoration: none;" target="_top"><dh:png src="${photoUrl}" style="width: ${size}; height: ${size}; border: none;"/></a>
 	</c:when>
 	<c:when test="${!empty photoUrl}">
