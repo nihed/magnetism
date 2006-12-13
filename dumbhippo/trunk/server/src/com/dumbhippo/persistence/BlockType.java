@@ -20,7 +20,12 @@ public enum BlockType {
 	},
 	GROUP_MEMBER, // 1
 	GROUP_CHAT, // 2
-	MUSIC_PERSON, // 3
+	MUSIC_PERSON { // 3
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}
+	},
 	/** This is just placeholding a historically-used ordinal that should not be 
 	 * reused to avoid database confusion.
 	 */
@@ -34,6 +39,10 @@ public enum BlockType {
 		@Override
 		public boolean isAlwaysPublic() {
 			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
 		}		
 	},
 	FACEBOOK_PERSON { // 7
@@ -41,6 +50,10 @@ public enum BlockType {
 		public StackInclusion getDefaultStackInclusion() {
 			return null;
 		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}		
 	},
 	FACEBOOK_EVENT { // 8
 		@Override
@@ -54,6 +67,10 @@ public enum BlockType {
 		public boolean isAlwaysPublic() {
 			return true;
 		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}		
 	},
 	FLICKR_PHOTOSET { // 10
 		// Right now we only get completely public Flickr photosets
@@ -67,10 +84,18 @@ public enum BlockType {
 		public boolean isAlwaysPublic() {
 			return true;
 		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}		
 	},
 	MYSPACE_PERSON { // 12
 		@Override
 		public boolean isAlwaysPublic() {
+			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
 			return true;
 		}		
 	},
@@ -78,8 +103,18 @@ public enum BlockType {
 		@Override
 		public boolean isAlwaysPublic() {
 			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
 		}		
 	};
+	
+	// True for blocks which are originated by a user and the
+	// user guid is stored in the block data1
+	public boolean userOriginIsData1() { 
+		return false; 
+	}
 	
 	// returns true if all blocks of this type are always public,
 	// regardless of their content/specifics

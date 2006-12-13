@@ -83,6 +83,10 @@ public interface Stacker {
 	 * @param blocksPerUser number of blocks to return for each item in the result list
 	 */
 	public void pageRecentUserActivity(Viewpoint viewpoint, Pageable<PersonMugshotView> pageable, int blocksPerUser);
+	
+	public List<PersonMugshotView> getContactActivity(Viewpoint viewpoint, User user, int start, int count, int blocksPerUser);
+	
+	public void pageContactActivity(Viewpoint viewpoint, User viewedUser, int blocksPerUser, Pageable<PersonMugshotView> contactMugshots);	
 
 	public User getRandomActiveUser(Viewpoint viewpoint);
 	

@@ -1,6 +1,7 @@
 package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumMap;
@@ -917,29 +918,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return TypeUtils.castList(User.class, q.getResultList());
 	}
 	
-	public List<PersonMugshotView> getRecentUserActivity(Viewpoint viewpoint, int startUser, int userCount, int blockPerUser, boolean includeGroupUpdates) {
-		List<PersonMugshotView> mugshots = new ArrayList<PersonMugshotView>();
-		
-		// select distinct most recently active users		
-       	int expectedHitFactor = 2;
-		
-		String groupUpdatesFilter = "";
-		if (!includeGroupUpdates) {
-	        groupUpdatesFilter = " AND block.blockType != " + BlockType.GROUP_MEMBER.ordinal() + 
-	                             " AND block.blockType != " + BlockType.GROUP_CHAT.ordinal(); 
-		}
-		
-		List<User> distinctUsers = getDistinctItems(new ItemSource<User>() {
-			public List<User> get(int start, int count, String filter) {
-				return getRecentActivityUsers(start, count, filter);
-			}
-		}, startUser, userCount, groupUpdatesFilter, expectedHitFactor);
-		
-		for (User user : distinctUsers) {
+	private List<PersonMugshotView> getMugshotViews(Viewpoint viewpoint, List<User> users, int blockPerUser, String queryExtra) {
+		List<PersonMugshotView> mugshots = new ArrayList<PersonMugshotView>();		
+		for (User user : users) {
 			Query qu = em.createQuery("Select ubd FROM UserBlockData ubd, Block block " + 
                 " WHERE ubd.user = :user AND ubd.deleted = 0 AND ubd.block = block " +
                 " AND ubd.participatedTimestamp IS NOT NULL " +
-                " AND block.publicBlock = true " + groupUpdatesFilter +
+                " AND block.publicBlock = true " + queryExtra +
                 " ORDER BY ubd.participatedTimestamp DESC");
 			qu.setParameter("user", user);
 		    qu.setMaxResults(blockPerUser);
@@ -956,10 +941,29 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
          	PersonView personView = personViewer.getPersonView(viewpoint, user, 
          													   PersonViewExtra.EXTERNAL_ACCOUNTS,
          													   PersonViewExtra.CONTACT_STATUS);
-            mugshots.add(new PersonMugshotView(personView, blocks));      	
+            mugshots.add(new PersonMugshotView(personView, blocks));
+		}
+        return mugshots; 
+	}
+	
+	public List<PersonMugshotView> getRecentUserActivity(Viewpoint viewpoint, int startUser, int userCount, int blockPerUser, boolean includeGroupUpdates) {
+		
+		// select distinct most recently active users		
+       	int expectedHitFactor = 2;
+		
+		String groupUpdatesFilter = "";
+		if (!includeGroupUpdates) {
+	        groupUpdatesFilter = " AND block.blockType != " + BlockType.GROUP_MEMBER.ordinal() + 
+	                             " AND block.blockType != " + BlockType.GROUP_CHAT.ordinal(); 
 		}
 		
-		return mugshots;		
+		List<User> distinctUsers = getDistinctItems(new ItemSource<User>() {
+			public List<User> get(int start, int count, String filter) {
+				return getRecentActivityUsers(start, count, filter);
+			}
+		}, startUser, userCount, groupUpdatesFilter, expectedHitFactor);
+		
+		return getMugshotViews(viewpoint, distinctUsers, blockPerUser, groupUpdatesFilter);		
 	}
 	
 	public void pageRecentUserActivity(Viewpoint viewpoint, Pageable<PersonMugshotView> pageable, int blocksPerUser) {
@@ -1019,6 +1023,56 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				return prepareBlockView(viewpoint, block, gbd, byParticipation);
 			}
 		}, pageable, expectedHitFactor);
+	}
+
+	private String getData1UserBlockTypeClause() {
+		StringBuilder builder = new StringBuilder(" block.blockType in (");
+		Iterator<BlockType> it = Arrays.asList(BlockType.values()).iterator();
+		while (it.hasNext()) {
+			BlockType blockType = it.next();
+			if (!blockType.userOriginIsData1())
+				continue;
+			builder.append(Integer.toString(blockType.ordinal()));
+			if (it.hasNext()) {
+				builder.append(", ");
+			}
+		}
+		builder.append(")");
+		return builder.toString();
+	}
+	
+	private List<User> getRecentlyActiveContacts(User user, int start, int count) {
+		// The algorithm to find recently active contacts here is simply to select blocks from the user's
+		// stack which originated from a user, because currently the only user-originated blocks in
+		// a user's stack will be their contacts.  This is an approximation of
+		// the ideal which would be the participated blocks for all the user's contacts, but that query
+		// would be significantly slower.  This one will miss e.g. group chat.
+		Query q = em.createQuery("SELECT u FROM User u, UserBlockData ubd, Block block" +
+                " WHERE ubd.deleted = 0 AND ubd.block = block " +
+                " AND " + getData1UserBlockTypeClause() + 
+                " AND block.publicBlock = true " +
+                " AND u.id = block.data1 " + 
+                " AND ubd.user = :user " +
+                " ORDER BY ubd.stackTimestamp");
+		q.setParameter("user", user);
+		q.setFirstResult(start);
+		q.setMaxResults(count);
+		return TypeUtils.castList(User.class, q.getResultList());
+	}
+	
+	public List<PersonMugshotView> getContactActivity(Viewpoint viewpoint, final User user, int start, int count, int blocksPerUser) {
+		List<User> distinctUsers = getDistinctItems(new ItemSource<User>() {
+			public List<User> get(int start, int count, String filter) {
+				return getRecentlyActiveContacts(user, start, count);
+			}
+		}, start, count, "", 4);		
+		
+		return getMugshotViews(viewpoint, distinctUsers, blocksPerUser, "");
+	}
+
+	public void pageContactActivity(Viewpoint viewpoint, User viewedUser, int blocksPerUser, Pageable<PersonMugshotView> pageable) {
+		pageable.setResults(getContactActivity(viewpoint, viewedUser, pageable.getStart(), pageable.getCount(), blocksPerUser));
+		pageable.setTotalCount(pageable.getBound());			
 	}
 
 	// When showing recently active groups, we want to exclude activity for
