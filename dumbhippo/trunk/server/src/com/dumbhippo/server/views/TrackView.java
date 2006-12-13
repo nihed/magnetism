@@ -10,6 +10,7 @@ import com.dumbhippo.URLUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.Track;
+import com.dumbhippo.persistence.TrackHistory;
 
 /**
  * The TrackView does not necessarily represent a Track, but rather can 
@@ -36,6 +37,7 @@ public class TrackView {
 	private int numberOfFriendsWhoPlayedTrack;
 	private boolean showExpanded;
 	private List<PersonMusicPlayView> personMusicPlayViews;
+	private TrackHistory trackHistory;
 	
 	private void fillDefaults() {
 		if (name == null)
@@ -50,7 +52,7 @@ public class TrackView {
 		this.showExpanded = false;
 	}
 	
-	public TrackView(Track track) {
+	public TrackView(Track track, TrackHistory trackHistory) {
 		this.album = new AlbumView(track.getAlbum(), track.getArtist());
 		this.name = track.getName();
 		this.durationSeconds = track.getDuration();
@@ -59,6 +61,11 @@ public class TrackView {
 		this.totalPlays = -1;
 		this.numberOfFriendsWhoPlayedTrack = -1;
 		this.showExpanded = false;
+		this.trackHistory = trackHistory;
+		
+		if (trackHistory != null)
+			this.lastListenTime = trackHistory.getLastUpdated().getTime();
+		
 		fillDefaults();
 	}
 
@@ -204,6 +211,17 @@ public class TrackView {
 		return showExpanded;
 	}
 	
+	public String getDisplayTitle() {
+		if (getArtist() != null && name != null)
+			return getArtist() + " - " + name;
+		else if (name != null)
+			return getName();
+		else if (getArtist() != null)
+			return getArtist();
+		else
+			return "Music";
+	}
+	
 	public void setShowExpanded(boolean showExpanded) {
 		this.showExpanded = showExpanded;
 	}	
@@ -229,6 +247,13 @@ public class TrackView {
 				"album", getAlbum());
 	}
 	
+	public String getPlayId() {
+		if (trackHistory != null)
+			return trackHistory.getId();
+		else
+			return null;
+	}
+	
 	@Override
 	public String toString() {
 		return "{trackView artist=" + getArtist() + " album=" + getAlbum() + " name=" + getName() + "}";
@@ -245,6 +270,7 @@ public class TrackView {
 	
 	public void writeToXmlBuilder(XmlBuilder builder, String elementName) {
 		builder.openElement(elementName,
+							"playId", getPlayId(), 
 							"lastListenTime", Long.toString(getLastListenTime()),
 							"duration", Long.toString(getDurationSeconds() * 1000),
 							"nowPlaying", Boolean.toString(isNowPlaying()),

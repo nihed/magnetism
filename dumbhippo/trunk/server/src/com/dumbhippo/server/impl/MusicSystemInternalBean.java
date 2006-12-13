@@ -53,10 +53,12 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.MembershipStatus;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.TrackHistory;
+import com.dumbhippo.persistence.TrackMessage;
 import com.dumbhippo.persistence.TrackType;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.search.SearchSystem;
@@ -555,11 +557,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	static private class GetTrackViewTask implements Callable<TrackView> {
 
 		private Track track;
-		private long lastListen;
+		private TrackHistory trackHistory;
 		
-		public GetTrackViewTask(Track track, long lastListen) {
+		public GetTrackViewTask(Track track, TrackHistory trackHistory) {
 			this.track = track;
-			this.lastListen = lastListen;
+			this.trackHistory = trackHistory;
 		}
 		
 		public TrackView call() {
@@ -569,7 +571,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 			logger.debug("Obtained transaction in GetTrackViewTask thread for track {}", track);
 			
-			return musicSystem.getTrackView(track, lastListen);
+			if (trackHistory != null)
+				return musicSystem.getTrackView(trackHistory);
+			else
+				return musicSystem.getTrackView(track);				
 		}
 	}
 
@@ -600,7 +605,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// really work in that handler apparently
 		getThreadPool().execute(new Runnable() {
 			public void run() {
-				EJBUtil.defaultLookup(MusicSystemInternal.class).getTrackViewAsync(trackId, -1);
+				EJBUtil.defaultLookup(MusicSystemInternal.class).getTrackViewAsync(trackId);
 			}
 		});
 	}
@@ -804,14 +809,30 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			}
 	}
 	
-	public TrackView getTrackView(Track track) {
-		return getTrackView(track, -1);
+	public TrackHistory lookupTrackHistory(Guid trackHistoryId) throws NotFoundException {
+		TrackHistory trackHistory = em.find(TrackHistory.class, trackHistoryId.toString());
+		if (trackHistory == null)
+			throw new NotFoundException("No such TrackHistory");
+	
+		return trackHistory;
 	}
 	
-	public TrackView getTrackView(Track track, long lastListen) {
-		TrackView view = new TrackView(track);
-		if (lastListen >= 0)
-			view.setLastListenTime(lastListen);
+	public TrackView getTrackView(Track track) {
+		return getTrackView(track, null);
+	}
+	
+	public TrackView getTrackView(TrackHistory trackHistory) {
+		return getTrackView(trackHistory.getTrack(), trackHistory);
+	}
+	
+	public TrackView getTrackView(Guid trackHistoryId) throws NotFoundException {
+		TrackHistory trackHistory = lookupTrackHistory(trackHistoryId);
+		return getTrackView(trackHistory.getTrack(), trackHistory);
+	}
+	
+	private TrackView getTrackView(Track track, TrackHistory trackHistory) {
+
+		TrackView view = new TrackView(track, trackHistory);
 
 		// this method should never throw due to Yahoo or Amazon failure;
 		// we should just return a view without the extra information.
@@ -1021,27 +1042,34 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	public TrackView getCurrentTrackView(Viewpoint viewpoint, User user) throws NotFoundException {
 		TrackHistory current = getCurrentTrack(viewpoint, user);
-		return getTrackView(current.getTrack(), current.getLastUpdated().getTime());
+		return getTrackView(current.getTrack(), current);
 	}
 
-	public Future<TrackView> getTrackViewAsync(long trackId, long lastListen) {
+	public Future<TrackView> getTrackViewAsync(long trackId) {
 		// called for side effect to kick off querying the results.
 		Track track = em.find(Track.class, trackId);
 		if (track == null)
 			throw new RuntimeException("database isolation bug (?): can't reattach trackid in hintNeedsRefresh");
-		return getTrackViewAsync(track, lastListen);
+		return getTrackViewAsync(track);
 	}
 	
-	public Future<TrackView> getTrackViewAsync(Track track, long lastListen) {
+	public Future<TrackView> getTrackViewAsync(Track track) {
 		FutureTask<TrackView> futureView =
-			new FutureTask<TrackView>(new GetTrackViewTask(track, lastListen));
+			new FutureTask<TrackView>(new GetTrackViewTask(track, null));
+		getThreadPool().execute(futureView);
+		return futureView;
+	}
+	
+	public Future<TrackView> getTrackViewAsync(TrackHistory trackHistory) {
+		FutureTask<TrackView> futureView =
+			new FutureTask<TrackView>(new GetTrackViewTask(trackHistory.getTrack(), trackHistory));
 		getThreadPool().execute(futureView);
 		return futureView;
 	}
 	
 	public Future<TrackView> getCurrentTrackViewAsync(Viewpoint viewpoint, User user) throws NotFoundException {
 		TrackHistory current = getCurrentTrack(viewpoint, user);
-		return getTrackViewAsync(current.getTrack(), current.getLastUpdated().getTime());
+		return getTrackViewAsync(current);
 	}
 	
 	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumData> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum) {
@@ -1074,7 +1102,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// spawn a bunch of yahoo updater threads in parallel
 		Map<TrackHistory, Future<TrackView>> futureViews = new HashMap<TrackHistory, Future<TrackView>>(tracks.size());
 		for (TrackHistory t : tracks) {
-			futureViews.put(t, getTrackViewAsync(t.getTrack(), t.getLastUpdated().getTime()));
+			futureViews.put(t, getTrackViewAsync(t));
 		}
 	
         // now harvest all the results
@@ -1304,7 +1332,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		List<?> objects = query.getResultList();
 		List<Future<TrackView>> futureViews = new ArrayList<Future<TrackView>>(objects.size());
 		for (Object o : objects) {
-			futureViews.add(getTrackViewAsync((Track)o, -1));
+			futureViews.add(getTrackViewAsync((Track)o));
 		}
 		
 		pageable.setResults(getTrackViewResults(futureViews));
@@ -2047,5 +2075,29 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			return 0;
 		else
 			return history.get(0).getLastUpdated().getTime();
+	}
+
+	public List<TrackMessage> getNewestTrackMessages(TrackHistory trackHistory, int maxResults) {
+		Query q = em.createQuery("SELECT tm from TrackMessage tm WHERE tm.trackHistory = :trackHistory ORDER by tm.timestamp DESC");
+		q.setParameter("trackHistory", trackHistory);
+		if (maxResults >= 0)
+			q.setMaxResults(maxResults);
+		
+		return TypeUtils.castList(TrackMessage.class, q.getResultList());
+	}
+
+	public List<TrackMessage> getTrackMessages(TrackHistory trackHistory, long lastSeenSerial) {
+		Query q = em.createQuery("SELECT tm from TrackMessage tm WHERE tm.trackHistory = :trackHistory AND tm.id >= :lastSeenSerial ORDER by tm.id");
+		q.setParameter("trackHistory", trackHistory);
+		q.setParameter("lastSeenSerial", lastSeenSerial);
+		
+		return TypeUtils.castList(TrackMessage.class, q.getResultList());
+	}
+	
+	public void addTrackMessage(TrackHistory trackHistory, User fromUser, String text, Date timestamp, Sentiment sentiment) {
+		TrackMessage trackMessage = new TrackMessage(trackHistory, fromUser, text, timestamp, sentiment);
+		em.persist(trackMessage);
+		
+		notifier.onTrackMessageCreated(trackMessage);
 	}
 }

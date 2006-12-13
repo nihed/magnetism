@@ -12,6 +12,7 @@ import org.hibernate.lucene.DocumentBuilder;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Track;
+import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
 import com.dumbhippo.server.views.AlbumView;
@@ -76,11 +77,11 @@ public interface MusicSystemInternal
 		
 	public int countTrackHistory(Viewpoint viewpoint, User user);
 	
-	public TrackView getTrackView(Track track, long lastListen);
+	public TrackView getTrackView(Track track);
 
-	public Future<TrackView> getTrackViewAsync(long trackId, long lastListen);	
+	public Future<TrackView> getTrackViewAsync(long trackId);	
 	
-	public Future<TrackView> getTrackViewAsync(Track track, long lastListen);
+	public Future<TrackView> getTrackViewAsync(TrackHistory trackHistory);
 	
 	public Future<TrackView> getCurrentTrackViewAsync(Viewpoint viewpoint, User user) throws NotFoundException;
 	

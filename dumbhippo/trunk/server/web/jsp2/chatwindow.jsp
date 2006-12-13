@@ -11,10 +11,11 @@
 	some calling contexts might not know the type of chat --%>
 <jsp:setProperty name="chatwindow" property="postId" param="postId"/>
 <jsp:setProperty name="chatwindow" property="groupId" param="groupId"/>
+<jsp:setProperty name="chatwindow" property="trackId" param="trackId"/>
 <jsp:setProperty name="chatwindow" property="chatId" param="chatId"/>
 
 <c:if test="${! chatwindow.aboutSomething}">
-	<%-- no post or group, or invalid/not-allowed post or group --%>
+	<%-- no post/group/track, or invalid/not-allowed post/group/track --%>
 	<dht:errorPage>Can't find this chat</dht:errorPage>
 </c:if>
 

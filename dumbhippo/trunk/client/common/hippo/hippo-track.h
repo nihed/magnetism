@@ -28,6 +28,7 @@ HippoTrack* hippo_track_new_deprecated (const char *artist,
 const char* hippo_track_get_artist      (HippoTrack *track);
 const char* hippo_track_get_name        (HippoTrack *track);
 const char* hippo_track_get_url         (HippoTrack *track);
+const char* hippo_track_get_play_id     (HippoTrack *track);
 gboolean    hippo_track_get_now_playing (HippoTrack *track);
 
 

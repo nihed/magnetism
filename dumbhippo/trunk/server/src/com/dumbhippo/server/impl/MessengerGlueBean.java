@@ -34,6 +34,9 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Sentiment;
+import com.dumbhippo.persistence.TrackHistory;
+import com.dumbhippo.persistence.TrackMessage;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.ChatRoomInfo;
@@ -316,6 +319,10 @@ public class MessengerGlueBean implements MessengerGlue {
 		return groupSystem.lookupGroupById(SystemViewpoint.getInstance(), Guid.parseTrustedJabberId(roomName));
 	}
 	
+	private TrackHistory getTrackHistoryFromRoomName(String roomName) throws NotFoundException {
+		return musicSystem.lookupTrackHistory(Guid.parseTrustedJabberId(roomName));
+	}
+
 	private ChatRoomMessage newChatRoomMessage(EmbeddedMessage message) {
 		String username = message.getFromUser().getGuid().toJabberId(null);
 		return new ChatRoomMessage(username, message.getMessageText(),
@@ -403,6 +410,24 @@ public class MessengerGlueBean implements MessengerGlue {
 		return new ChatRoomInfo(ChatRoomKind.POST, roomName, post.getTitle(), history, worldAccessible);
 	}
 	
+	private List<ChatRoomMessage> getChatRoomMessages(TrackHistory trackHistory, long lastSeenSerial) {
+		List<TrackMessage> messages = musicSystem.getTrackMessages(trackHistory, lastSeenSerial);
+
+		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
+
+		for (TrackMessage trackMessage : messages)
+			history.add(newChatRoomMessage(trackMessage));
+		
+		return history;
+	}
+	
+	private ChatRoomInfo getChatRoomInfo(String roomName, TrackHistory trackHistory) {
+		TrackView trackView = musicSystem.getTrackView(trackHistory);
+		List<ChatRoomMessage> history = getChatRoomMessages(trackHistory, -2);
+		
+		return new ChatRoomInfo(ChatRoomKind.MUSIC, roomName, trackView.getDisplayTitle(), history, true);
+	}
+	
 	public ChatRoomUser getChatRoomUser(String roomName, ChatRoomKind kind, String username) {
 		User user;
 		// Note: we could add access controls here as well, requiring that the username
@@ -422,6 +447,8 @@ public class MessengerGlueBean implements MessengerGlue {
 				return getChatRoomRecipients(getPostFromRoomName(roomName));
 			else if (kind == ChatRoomKind.GROUP)
 				return getChatRoomRecipients(getGroupFromRoomName(roomName));
+			else if (kind == ChatRoomKind.MUSIC)
+				return Collections.emptySet();
 			else
 				throw new RuntimeException("Unknown chat room type " + kind);
 		} catch (NotFoundException e) {
@@ -432,32 +459,38 @@ public class MessengerGlueBean implements MessengerGlue {
 	public ChatRoomInfo getChatRoomInfo(String roomName) {
 		Post post = null;
 		Group group = null;
+		TrackHistory trackHistory = null;
+		int count = 0;
 		try {
 			post = getPostFromRoomName(roomName);
+			count++;
 		} catch (NotFoundException e) {
-			// FIXME in principle this should happen if the initialUser can't see the post, 
-			// but right now there's no access controls in loadRawPost so it only happens
-			// if something is broken
-			post = null;
 		}
 		try {
 			group = getGroupFromRoomName(roomName);
+			count++;
 		} catch (NotFoundException e) {
-			group = null;
+		}
+		try {
+			trackHistory = getTrackHistoryFromRoomName(roomName);
+			count++;
+		} catch (NotFoundException e) {
 		}
 		
-		if (post != null && group != null) {
+		if (count > 1) {
 			// this should theoretically be very, very unlikely so we won't bother to fix it unless 
 			// it happens on production, and even then we could just munge the database instead of 
 			// bothering...
-			logger.error("GUID collision... we'll have to put a group vs. post marker in the room ID string");
-			group = null; // just take a guess and use the post
+			logger.error("GUID collision... we'll have to put a type marker in the room ID string");
+			// we'll just guess
 		}
 		
 		if (post != null)
 			return getChatRoomInfo(roomName, post);
 		else if (group != null)
 			return getChatRoomInfo(roomName, group);
+		else if (trackHistory != null)
+			return getChatRoomInfo(roomName, trackHistory);
 		else {
 			logger.debug("Room name {} doesn't correspond to a post or group, or user not allowed to see it", roomName);
 			return null;
@@ -482,6 +515,14 @@ public class MessengerGlueBean implements MessengerGlue {
 				throw new RuntimeException("group chat not found", e);
 			}
 			return getChatRoomMessages(group, lastSeenSerial);
+		case MUSIC:
+			TrackHistory trackHistory;
+			try {
+				trackHistory = musicSystem.lookupTrackHistory(Guid.parseTrustedJabberId(roomName));
+			} catch (NotFoundException e) {
+				throw new RuntimeException("Track not found", e);
+			}
+			return getChatRoomMessages(trackHistory, lastSeenSerial);
 		}
 		throw new IllegalArgumentException("Bad chat room type");
 	}
@@ -509,6 +550,15 @@ public class MessengerGlueBean implements MessengerGlue {
 			}
 			groupSystem.addGroupMessage(group, fromUser, text, timestamp);
 			break;
+		case MUSIC:
+			TrackHistory trackHistory;
+			try {
+				trackHistory = musicSystem.lookupTrackHistory(Guid.parseTrustedJabberId(roomName));
+			} catch (NotFoundException e) {
+				throw new RuntimeException("track not found", e);
+			}
+			musicSystem.addTrackMessage(trackHistory, fromUser, text, timestamp, Sentiment.INDIFFERENT);
+			break;
 		}
 		
 		LiveState.getInstance().queueUpdate(new ChatRoomEvent(chatRoomId, ChatRoomEvent.Detail.MESSAGES_CHANGED));
@@ -517,13 +567,17 @@ public class MessengerGlueBean implements MessengerGlue {
 	public boolean canJoinChat(String roomName, ChatRoomKind kind, String username) {
 		try {
 			User user = getUserFromUsername(username);
+			UserViewpoint viewpoint = new UserViewpoint(user);
 			if (kind == ChatRoomKind.POST) {
 				Post post = getPostFromRoomName(roomName);
-				UserViewpoint viewpoint = new UserViewpoint(user);
 				return postingBoard.canViewPost(viewpoint, post);
 			} else if (kind == ChatRoomKind.GROUP) {
 				Group group = getGroupFromRoomName(roomName);
 				return groupSystem.isMember(group, user);
+			} else if (kind == ChatRoomKind.MUSIC) {
+				TrackHistory trackHistory = getTrackHistoryFromRoomName(roomName);
+				identitySpider.isViewerSystemOrFriendOf(viewpoint, trackHistory.getUser());
+				return true;
 			} else
 				throw new RuntimeException("Unknown chat room type " + kind);
 		} catch (NotFoundException e) {

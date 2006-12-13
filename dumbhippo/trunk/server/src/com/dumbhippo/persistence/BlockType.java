@@ -73,6 +73,12 @@ public enum BlockType {
 		public boolean isAlwaysPublic() {
 			return true;
 		}		
+	},
+	MUSIC_CHAT { // 13
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}		
 	};
 	
 	// returns true if all blocks of this type are always public,

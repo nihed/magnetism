@@ -26,6 +26,7 @@ struct _HippoTrack {
     char *artist;
     char *album;
     char *name;
+    char *play_id;
     char *url;
     gint64 last_listen_time;
     gint64 duration;
@@ -54,6 +55,7 @@ enum {
     PROP_ARTIST,
     PROP_ALBUM,
     PROP_NAME,
+    PROP_PLAY_ID,
     PROP_URL,
     PROP_NOW_PLAYING,
     PROP_DOWNLOADS
@@ -103,6 +105,13 @@ hippo_track_class_init(HippoTrackClass *klass)
                                                         NULL,
                                                         G_PARAM_READABLE));
     g_object_class_install_property(object_class,
+                                    PROP_PLAY_ID,
+                                    g_param_spec_string("play-id",
+                                                        _("Play Id"),
+                                                        _("An ID for this play of the track"),
+                                                        NULL,
+                                                        G_PARAM_READABLE));
+    g_object_class_install_property(object_class,
                                     PROP_NOW_PLAYING,
                                     g_param_spec_boolean("now-playing",
                                                          _("Now Playing"),
@@ -129,6 +138,7 @@ hippo_track_finalize(GObject *object)
     g_free(track->album);
     g_free(track->name);
     g_free(track->url);
+    g_free(track->play_id);
 
     g_slist_foreach(track->downloads, (GFunc)hippo_song_download_free, NULL);
     g_slist_free(track->downloads);
@@ -164,6 +174,9 @@ hippo_track_get_property(GObject         *object,
         break;
     case PROP_NAME:
         g_value_set_string(value, track->name);
+        break;
+    case PROP_PLAY_ID:
+        g_value_set_string(value, track->play_id);
         break;
     case PROP_URL:
         g_value_set_string(value, track->url);
@@ -208,12 +221,14 @@ hippo_track_new_from_xml(HippoDataCache *cache,
     gboolean now_playing;
     HippoTrack *track;
     LmMessageNode *child;
+    const char *play_id = NULL;
     const char *url = NULL;
     
     if (!hippo_xml_split(cache, node, NULL,
                          "artist", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &artist,
                          "album", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &album,
                          "name", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &name,
+                         "playId", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &play_id,
                          "url", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &url,
                          "lastListenTime", HIPPO_SPLIT_TIME_MS, &last_listen_time,
                          "duration", HIPPO_SPLIT_TIME_MS, &duration,
@@ -297,6 +312,12 @@ const char*
 hippo_track_get_name (HippoTrack *track)
 {
     return track->name;
+}
+
+const char*
+hippo_track_get_play_id (HippoTrack *track)
+{
+    return track->play_id;
 }
 
 const char*

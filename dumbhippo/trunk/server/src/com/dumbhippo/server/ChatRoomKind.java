@@ -9,5 +9,6 @@ package com.dumbhippo.server;
  */
 public enum ChatRoomKind {
 	POST,
-	GROUP;
+	GROUP,
+	MUSIC;
 }
