@@ -6,5 +6,7 @@
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.blocks.BlockView" %>
 
 <c:if test="${!block.public}">
-	<dh:png klass="dh-stacker-block-title-lock" src="/images3/${buildStamp}/lock_icon.png" style="width: 12; height: 14; border: none;" title="${block.privacyTip}"/>
+	<span class="dh-stacker-block-title-lock">
+		<dh:png src="/images3/${buildStamp}/lock_icon.png" style="width: 12px; height: 14px; border: none;" title="${block.privacyTip}"/>
+	</span>
 </c:if>	
