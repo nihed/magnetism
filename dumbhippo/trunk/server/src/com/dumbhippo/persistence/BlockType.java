@@ -117,6 +117,12 @@ public enum BlockType {
 		public boolean isAlwaysPublic() {
 			return true;
 		}		
+	},
+	DELICIOUS_PUBLIC_BOOKMARK { // 15
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}		
 	};
 	
 	// True for blocks which are originated by a user and the
