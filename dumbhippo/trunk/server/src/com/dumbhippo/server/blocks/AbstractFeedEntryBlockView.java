@@ -10,20 +10,20 @@ import com.dumbhippo.server.views.Viewpoint;
 
 /**
  * Abstract class for block views of external accounts which have 
- * a feed associated and we have one block per person (vs. one 
- * block per feed entry or something)
+ * a feed associated and we have one feed entry for each block 
+ * being viewed.
  * 
  * @author walters
  */
-public abstract class AbstractSingleBlockForFeedBlockView extends AbstractPersonBlockView implements ExternalAccountBlockView, SimpleTitleBlockView {
+public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView implements ExternalAccountBlockView, SimpleTitleBlockView {
 	
 	protected FeedEntry entry;
 	
-	public AbstractSingleBlockForFeedBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
+	public AbstractFeedEntryBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
 		super(viewpoint, block, ubd, participated);
 	}
 	
-	public AbstractSingleBlockForFeedBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) {
+	public AbstractFeedEntryBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) {
 		super(viewpoint, block, gbd, participated);
 	}
 	

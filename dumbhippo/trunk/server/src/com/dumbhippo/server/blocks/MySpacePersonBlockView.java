@@ -9,7 +9,7 @@ import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.Viewpoint;
 
-public class MySpacePersonBlockView extends AbstractSingleBlockForFeedBlockView {
+public class MySpacePersonBlockView extends AbstractFeedEntryBlockView {
 	
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(MySpacePersonBlockView.class);	

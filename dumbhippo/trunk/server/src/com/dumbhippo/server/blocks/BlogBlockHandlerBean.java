@@ -6,7 +6,7 @@ import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccountType;
 
 @Stateless
-public class BlogBlockHandlerBean extends AbstractSingleBlockForFeedBlockHandlerBean implements BlogBlockHandler {
+public class BlogBlockHandlerBean extends AbstractSingleBlockForFeedBlockHandlerBean<BlogBlockView> implements BlogBlockHandler {
 	public BlogBlockHandlerBean() {
 		super(BlogBlockView.class);
 	}
