@@ -15,7 +15,7 @@ import com.dumbhippo.server.views.Viewpoint;
  * 
  * @author walters
  */
-public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView implements ExternalAccountBlockView, SimpleTitleBlockView {
+public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView implements ExternalAccountBlockView, SimpleTitleDescriptionBlockView {
 	
 	protected FeedEntry entry;
 	
@@ -55,7 +55,11 @@ public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView
 		XmlBuilder xml = new XmlBuilder();
 		xml.appendTextAsHtml(getEntry().getDescription(), null);
 		return xml.toString();
-	}	
+	}
+	
+	public String getDescription() {
+		return getEntry().getDescription();
+	}
 	
 	public String getTitle() {
 		return getEntry().getTitle();
@@ -69,11 +73,13 @@ public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView
 		return getTitle();
 	}
 
-	public @Override String getSummaryLink() {
+	@Override 
+	public String getSummaryLink() {
 		return entry.getLink().getUrl();
 	}
 
-	public @Override String getSummaryLinkText() {
+	 @Override
+	public String getSummaryLinkText() {
 		return entry.getTitle();
 	}
 }
