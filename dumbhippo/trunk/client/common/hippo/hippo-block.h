@@ -116,7 +116,8 @@ void        hippo_block_set_icon_url       (HippoBlock *block,
 int      hippo_block_compare_newest_first  (gconstpointer block_a,
                                             gconstpointer block_b);
 
-HippoBlockType hippo_block_type_from_string(const char  *s);
+HippoBlockType hippo_block_type_from_attributes(const char  *type,
+                                                const char  *generic_types);
 
 G_END_DECLS
 

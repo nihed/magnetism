@@ -1,6 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-common-internal.h"
 #include "hippo-block.h"
+#include "hippo-block-generic.h"
 #include "hippo-block-group-chat.h"
 #include "hippo-block-group-member.h"
 #include "hippo-block-post.h"
@@ -336,6 +337,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     gboolean ignored;
     const char *icon_url = NULL;
     const char *stack_reason_str = NULL;
+    const char *generic_types = NULL;
     HippoStackReason stack_reason = HIPPO_STACK_NEW_BLOCK;
     
     g_assert(cache != NULL);
@@ -343,6 +345,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     if (!hippo_xml_split(cache, node, NULL,
                          "id", HIPPO_SPLIT_GUID, &guid,
                          "type", HIPPO_SPLIT_STRING, &type_str,
+                         "genericTypes", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &generic_types,
                          "isPublic", HIPPO_SPLIT_BOOLEAN, &is_public,
                          "timestamp", HIPPO_SPLIT_TIME_MS, &timestamp,
                          "clickedTimestamp", HIPPO_SPLIT_TIME_MS, &clicked_timestamp,
@@ -363,7 +366,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
         return FALSE;
     }
                          
-    type = hippo_block_type_from_string(type_str);
+    type = hippo_block_type_from_attributes(type_str, generic_types);
     if (type != block->type) {
         g_warning("Update to <block/> node doesn't match original type");
         return FALSE;
@@ -438,7 +441,10 @@ hippo_block_new(const char    *guid,
         break;
     case HIPPO_BLOCK_TYPE_MYSPACE_PERSON:
         object_type = HIPPO_TYPE_BLOCK_MYSPACE_PERSON;
-        break;         
+        break;
+    case HIPPO_BLOCK_TYPE_GENERIC:
+        object_type = HIPPO_TYPE_BLOCK_GENERIC;
+        break;
         /* don't add default case, it hides warnings */
     }
     
@@ -720,8 +726,11 @@ hippo_block_set_icon_url(HippoBlock *block,
 
 
 HippoBlockType
-hippo_block_type_from_string(const char *s)
+hippo_block_type_from_attributes(const char *type,
+                                 const char *generic_types)
 {
+    HippoBlockType block_type;
+    
     static const struct { const char *name; HippoBlockType type; } types[] = {
         { "POST", HIPPO_BLOCK_TYPE_POST },
         { "GROUP_MEMBER", HIPPO_BLOCK_TYPE_GROUP_MEMBER },
@@ -736,9 +745,38 @@ hippo_block_type_from_string(const char *s)
         { "MYSPACE_PERSON", HIPPO_BLOCK_TYPE_MYSPACE_PERSON }           
     };
     unsigned int i;
+
+    g_return_val_if_fail(type != NULL, HIPPO_BLOCK_TYPE_UNKNOWN);
+    /* generic_types can be NULL */
+    
+    block_type = HIPPO_BLOCK_TYPE_UNKNOWN;
+    
     for (i = 0; i < G_N_ELEMENTS(types); ++i) {
-        if (strcmp(s, types[i].name) == 0)
-            return types[i].type;
+        if (strcmp(type, types[i].name) == 0) {
+            block_type = types[i].type;
+            break;
+        }
     }
-    return HIPPO_BLOCK_TYPE_UNKNOWN;
+
+    if (block_type == HIPPO_BLOCK_TYPE_UNKNOWN &&
+        generic_types != NULL) {
+        char **generics;
+
+        generics = g_strsplit(generic_types, ",", -1);
+
+        if (generics != NULL) {
+            for (i = 0; generics[i] != NULL; ++i) {
+                /* TITLE_DESCRIPTION and ENTITY_SOURCE are also possible,
+                 * the generic block type simply uses the description and source
+                 * information if it's available, but requires the title information.
+                 */
+                if (strcmp(generics[i], "TITLE") == 0)
+                    block_type = HIPPO_BLOCK_TYPE_GENERIC;
+            }
+
+            g_strfreev(generics);
+        }
+    }
+    
+    return block_type;
 }
