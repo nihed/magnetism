@@ -12,7 +12,6 @@ import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.ObjectView;
-import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
 public abstract class BlockView implements ObjectView {
@@ -79,11 +78,6 @@ public abstract class BlockView implements ObjectView {
 	
 	public Guid getIdentifyingGuid() {
 		return block.getGuid();
-	}
-	
-	// web swarms or group chats do not have a person source, while music and external account updates do
-	public PersonView getPersonSource() {
-		return null;
 	}
 	
 	public boolean isPublic() { 

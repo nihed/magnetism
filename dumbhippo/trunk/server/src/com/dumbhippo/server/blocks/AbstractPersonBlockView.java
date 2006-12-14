@@ -13,7 +13,7 @@ import com.dumbhippo.server.views.Viewpoint;
  * Abstract base class for block views with a single user associated with them.
  *
  */
-public abstract class AbstractPersonBlockView extends BlockView {
+public abstract class AbstractPersonBlockView extends BlockView implements PersonSourceBlockView {
 	
 	private PersonView userView;
 
@@ -38,13 +38,16 @@ public abstract class AbstractPersonBlockView extends BlockView {
 	public PersonView getUserView() {
 		return userView;
 	}
-	
+		
 	// not public - use populate()
 	protected void setUserView(PersonView userView) {
 		this.userView = userView;
 	}
 
-	@Override
+	public PersonView getEntitySource() {
+		return getPersonSource();
+	}
+	
 	public PersonView getPersonSource() {
 		if (!isPopulated())
 			throw new IllegalStateException("BlockView not populated yet, can't get source");

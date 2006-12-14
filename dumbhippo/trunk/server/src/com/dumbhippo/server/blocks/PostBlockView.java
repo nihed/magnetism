@@ -9,10 +9,11 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.ChatMessageView;
+import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.Viewpoint;
 
-public class PostBlockView extends BlockView implements TitleBlockView {
+public class PostBlockView extends BlockView implements TitleBlockView, EntitySourceBlockView {
 	static final public int RECENT_MESSAGE_COUNT = 3;
 	
 	private PostView postView;
@@ -34,7 +35,13 @@ public class PostBlockView extends BlockView implements TitleBlockView {
 	}
 	
 	public PostView getPostView() {
+		if (!isPopulated())
+			throw new IllegalStateException("PostBlockView is not populated yet, but tried to get post view");
 		return this.postView;
+	}
+	
+	public EntityView getEntitySource() {
+		return getPostView().getPoster();
 	}
 	
 	public List<ChatMessageView> getRecentMessages() {
