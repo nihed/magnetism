@@ -480,7 +480,7 @@ hippo_song_download_source_get_name(HippoSongDownloadSource source)
     case HIPPO_SONG_DOWNLOAD_ITUNES:
         return "iTunes";
     case HIPPO_SONG_DOWNLOAD_YAHOO:
-        return "Yahoo!";
+        return "Yahoo! Music Engine";
     case HIPPO_SONG_DOWNLOAD_RHAPSODY:
         return "Rhapsody";
     }

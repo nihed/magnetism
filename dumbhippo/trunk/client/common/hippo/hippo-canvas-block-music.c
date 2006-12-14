@@ -371,7 +371,6 @@ set_track(HippoCanvasBlockMusic *block_music,
         while (downloads) {
             HippoCanvasItem *link;
             char *link_name;
-            HippoCanvasItem *separator;
             HippoSongDownload *d = downloads->data;
             downloads = downloads->next;
 
@@ -382,7 +381,7 @@ set_track(HippoCanvasBlockMusic *block_music,
                 HippoCanvasItem *header;
                 
                 header = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                      "text", "Play song in:",
+                                      "text", "Play song with:",
                                       "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
                                       "xalign", HIPPO_ALIGNMENT_END,
                                       NULL);
@@ -405,14 +404,6 @@ set_track(HippoCanvasBlockMusic *block_music,
 
             hippo_canvas_box_append(block_music->downloads_box,
                                     link, 0);
-
-            if (downloads) {
-                separator = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                         "text", " | ",
-                                         NULL);
-                hippo_canvas_box_append(block_music->downloads_box,
-                                        separator, 0);
-            }
         }
 
         chat_id = hippo_track_get_play_id(track);
