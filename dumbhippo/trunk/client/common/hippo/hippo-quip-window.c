@@ -114,6 +114,7 @@ static void
 on_send_activated(HippoCanvasItem       *item,
                   HippoQuipWindow       *quip_window)
 {
+#if 0
     const char *text = NULL;
     switch (quip_window->sentiment) {
     case HIPPO_SENTIMENT_INDIFFERENT:
@@ -126,10 +127,16 @@ on_send_activated(HippoCanvasItem       *item,
         text = "It sucks!";
         break;
     }
+#endif
+
+    char *text = NULL;
+    g_object_get(G_OBJECT(quip_window->entry), "text", &text, NULL);
 
     hippo_connection_send_quip(get_connection(quip_window),
                                quip_window->chat_kind, quip_window->chat_id,
                                text, quip_window->sentiment);
+    g_free(text);
+    
     hippo_quip_window_hide(quip_window);
 }
 

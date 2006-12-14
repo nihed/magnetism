@@ -16,10 +16,16 @@
     static void hippo_canvas_##lower##_class_init(HippoCanvas##Camel##Class *lower) {} \
     G_DEFINE_TYPE(HippoCanvas##Camel, hippo_canvas_##lower, HIPPO_TYPE_CANVAS_WIDGET)
 
+#define HIPPO_DEFINE_WIDGET_ITEM_CUSTOM_INIT(lower, Camel)                             \
+    struct _HippoCanvas##Camel { HippoCanvasWidget parent; };                          \
+    struct _HippoCanvas##Camel##Class { HippoCanvasWidgetClass parent; };              \
+    static void hippo_canvas_##lower##_init(HippoCanvas##Camel *lower) {}              \
+    G_DEFINE_TYPE(HippoCanvas##Camel, hippo_canvas_##lower, HIPPO_TYPE_CANVAS_WIDGET)
+
 
 HIPPO_DEFINE_WIDGET_ITEM(button, Button);
 HIPPO_DEFINE_WIDGET_ITEM(scrollbars, Scrollbars);
-HIPPO_DEFINE_WIDGET_ITEM(entry, Entry);
+HIPPO_DEFINE_WIDGET_ITEM_CUSTOM_INIT(entry, Entry);
 
 HippoCanvasItem*
 hippo_canvas_button_new(void)
@@ -139,12 +145,99 @@ hippo_canvas_scrollbars_set_policy (HippoCanvasScrollbars *scrollbars,
     g_object_unref(sw);
 }
 
+enum {
+    ENTRY_PROP_0,
+    ENTRY_PROP_TEXT
+} ;
+
+static void
+on_canvas_entry_changed(GtkEditable      *editable,
+                        HippoCanvasEntry *canvas_entry)
+{
+    g_object_notify(G_OBJECT(canvas_entry), "text");
+}
+
+static void
+hippo_canvas_entry_dispose(GObject *object)
+{
+    HippoCanvasEntry *canvas_entry = HIPPO_CANVAS_ENTRY (object);
+    GtkWidget *entry = HIPPO_CANVAS_WIDGET(object)->widget;
+
+    if (entry)
+        g_signal_handlers_disconnect_by_func(entry, (void *)on_canvas_entry_changed, canvas_entry);
+
+    G_OBJECT_CLASS(hippo_canvas_entry_parent_class)->dispose(object);
+}
+
+static void
+hippo_canvas_entry_set_property(GObject        *object,
+                                   guint            prop_id,
+                                   const GValue    *value,
+                                   GParamSpec      *pspec)
+{
+    /* HippoCanvasEntry *canvas_entry = HIPPO_CANVAS_ENTRY(object); */
+    GtkWidget *entry = HIPPO_CANVAS_WIDGET(object)->widget;
+
+    switch (prop_id) {
+    case ENTRY_PROP_TEXT:
+        gtk_entry_set_text(GTK_ENTRY(entry), g_value_get_string(value));
+        break;
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
+}
+
+static void
+hippo_canvas_entry_get_property(GObject        *object,
+                                guint            prop_id,
+                                GValue          *value,
+                                GParamSpec      *pspec)
+{
+    /* HippoCanvasEntry *canvas_entry = HIPPO_CANVAS_ENTRY (object); */
+    GtkWidget *entry = HIPPO_CANVAS_WIDGET(object)->widget;
+
+    switch (prop_id) {
+    case ENTRY_PROP_TEXT:
+        g_value_set_string(value, gtk_entry_get_text(GTK_ENTRY(entry)));
+        break;
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
+}
+
+static void
+hippo_canvas_entry_class_init(HippoCanvasEntryClass *class)
+{
+    GObjectClass *object_class = G_OBJECT_CLASS(class);
+
+    object_class->dispose = hippo_canvas_entry_dispose;
+    object_class->set_property = hippo_canvas_entry_set_property;
+    object_class->get_property = hippo_canvas_entry_get_property;
+    
+    g_object_class_install_property(object_class,
+                                    ENTRY_PROP_TEXT,
+                                    g_param_spec_string("text",
+                                                        _("Text"),
+                                                        _("Text in the entry"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+}
+
 HippoCanvasItem*
 hippo_canvas_entry_new(void)
 {
-    GtkWidget *widget;
-    widget = gtk_entry_new();
-    return g_object_new(HIPPO_TYPE_CANVAS_ENTRY,
-                        "widget", widget,
+    GtkWidget *entry;
+    HippoCanvasItem *item;
+    
+    entry = gtk_entry_new();
+    item = g_object_new(HIPPO_TYPE_CANVAS_ENTRY,
+                        "widget", entry,
                         NULL);
+
+    g_signal_connect(entry, "changed",
+                     G_CALLBACK(on_canvas_entry_changed), item);
+
+    return item;
 }
