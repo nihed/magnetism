@@ -45,7 +45,6 @@
 		            <ProgId Id="Hippo.Control"/>
 		        </Class>
 		        <Class Id="8DCDF228-AFDD-41F4-A6FB-D4B1B63CC91F" Server="hippoExplorerDll" Description="Mugshot Toolbar Action" Context="InprocServer32" ThreadingModel="apartment"/>
-		        <Class Id="2D40665F-8139-4CB5-BA39-A6E25A147F5D" Server="hippoExplorerDll" Description="Mugshot Chat Control" Context="InprocServer32" ThreadingModel="apartment"/>
 		        <Class Id="174D2323-9AF2-4257-B8BD-849865E4F1AE" Server="hippoExplorerDll" Description="&amp;Mugshot Bar" Context="InprocServer32" ThreadingModel="apartment"/>
                         <Registry Root="HKCR" Key="CLSID\{174D2323-9AF2-4257-B8BD-849865E4F1AE}\Implemented Categories\{00021494-0000-0000-C000-000000000046}"/>
                         <!-- Remove registry entries to force rescan of explorer bars; the first of these is documented in 
