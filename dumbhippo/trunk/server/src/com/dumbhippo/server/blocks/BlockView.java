@@ -119,10 +119,23 @@ public abstract class BlockView implements ObjectView {
 			clickedCountString = "-1"; // null;
 			significantClickedCountString = "-1"; // null; 
 		}
+
+		boolean isSimpleTitle = this instanceof SimpleTitleBlockView;
+		boolean isSimpleTitleDescription = this instanceof SimpleTitleDescriptionBlockView;
+		
+		// the "generic type" of a block allows the client to use a fallback 
+		// means of displaying the block
+		String genericTypes = null;
+		if (isSimpleTitleDescription) {
+			genericTypes = "SIMPLE_TITLE_DESCRIPTION,SIMPLE_TITLE";
+		} else if (isSimpleTitle) {
+			genericTypes = "SIMPLE_TITLE";
+		}
 		
 		builder.openElement("block",
 							"id", block.getId(),
 							"type", block.getBlockType().name(),
+							"genericTypes", genericTypes, // if genericTypes is null this is omitted
 							"isPublic", Boolean.toString(isPublic()),							
 							"timestamp", Long.toString(block.getTimestampAsLong()),
 							"clickedCount", clickedCountString,
@@ -133,6 +146,17 @@ public abstract class BlockView implements ObjectView {
 							"clickedTimestamp", Long.toString(userBlockData.getClickedTimestampAsLong()),
 							"stackReason", getStackReason().name(),
 							"icon", getIcon());
+		
+		// not a shining example of OO design, but simpler than the alternatives...
+		if (isSimpleTitle) {
+			String title = ((SimpleTitleBlockView) this).getTitle();
+			String link = ((SimpleTitleBlockView) this).getLink();
+			String description = (isSimpleTitleDescription) ? ((SimpleTitleDescriptionBlockView) this).getDescription() : null;
+			builder.openElement("simple", "title", title, "link", link);
+			if (description != null)
+				builder.appendTextNode("description", description);
+			builder.closeElement();
+		}
 		
 		writeDetailsToXmlBuilder(builder);
 		
