@@ -114,17 +114,28 @@ public abstract class BlockView implements ObjectView {
 			significantClickedCountString = "-1"; // null; 
 		}
 
+		// not a shining example of OO design, but simpler than the alternatives...
+		// (this is essentially a workaround for lack of "mixins" or something)
 		boolean isTitle = this instanceof TitleBlockView;
 		boolean isTitleDescription = this instanceof TitleDescriptionBlockView;
+		boolean hasSource = this instanceof EntitySourceBlockView;
 		
 		// the "generic type" of a block allows the client to use a fallback 
 		// means of displaying the block
-		String genericTypes = null;
-		if (isTitleDescription) {
-			genericTypes = "TITLE_DESCRIPTION,TITLE";
-		} else if (isTitle) {
-			genericTypes = "TITLE";
+		StringBuilder sb = new StringBuilder();
+		if (isTitleDescription)
+			sb.append("TITLE_DESCRIPTION");
+		if (isTitle) {
+			if (sb.length() > 0)
+				sb.append(",");
+			sb.append("TITLE");
 		}
+		if (hasSource) {
+			if (sb.length() > 0)
+				sb.append(",");
+			sb.append("ENTITY_SOURCE");
+		}
+		String genericTypes = sb.length() > 0 ? sb.toString() : null;
 		
 		builder.openElement("block",
 							"id", block.getId(),
@@ -139,9 +150,11 @@ public abstract class BlockView implements ObjectView {
 							"clicked", Boolean.toString(userBlockData.isClicked()),
 							"clickedTimestamp", Long.toString(userBlockData.getClickedTimestampAsLong()),
 							"stackReason", getStackReason().name(),
-							"icon", getIcon());
+							"icon", getIcon());		
+
+		if (hasSource)
+			builder.appendEmptyNode("source", "id", ((EntitySourceBlockView) this).getEntitySource().getIdentifyingGuid().toString());
 		
-		// not a shining example of OO design, but simpler than the alternatives...
 		if (isTitle) {
 			String title = ((TitleBlockView) this).getTitle();
 			String link = ((TitleBlockView) this).getLink();
