@@ -25,15 +25,18 @@ HippoTrack* hippo_track_new_deprecated (const char *artist,
                                         const char *name,
                                         gboolean    now_playing);
 
-const char* hippo_track_get_artist      (HippoTrack *track);
-const char* hippo_track_get_name        (HippoTrack *track);
-const char* hippo_track_get_url         (HippoTrack *track);
-const char* hippo_track_get_play_id     (HippoTrack *track);
-gboolean    hippo_track_get_now_playing (HippoTrack *track);
+const char* hippo_track_get_artist           (HippoTrack *track);
+const char* hippo_track_get_name             (HippoTrack *track);
+const char* hippo_track_get_url              (HippoTrack *track);
+const char* hippo_track_get_play_id          (HippoTrack *track);
+gboolean    hippo_track_get_now_playing      (HippoTrack *track);
+GTime       hippo_track_get_last_listen_time (HippoTrack *track);
 
 const char* hippo_track_get_thumbnail_url    (HippoTrack *track);
 int         hippo_track_get_thumbnail_width  (HippoTrack *track);
 int         hippo_track_get_thumbnail_height (HippoTrack *track);
+
+char      * hippo_track_get_display_title    (HippoTrack *track);
 
 typedef struct _HippoSongDownload HippoSongDownload;
 

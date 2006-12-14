@@ -226,6 +226,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-stack.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-thumbnails.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-thumbnails.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-timestamp.c		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-timestamp.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-url-image.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-url-image.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-url-link.c		\

@@ -365,6 +365,12 @@ hippo_track_get_now_playing (HippoTrack *track)
     return track->now_playing;
 }
 
+GTime
+hippo_track_get_last_listen_time (HippoTrack *track)
+{
+    return (GTime)(track->last_listen_time / 1000);
+}
+
 const char*
 hippo_track_get_thumbnail_url (HippoTrack *track)
 {
@@ -381,6 +387,19 @@ int
 hippo_track_get_thumbnail_height (HippoTrack *track)
 {
     return track->thumbnail_height;
+}
+
+char *
+hippo_track_get_display_title(HippoTrack *track)
+{
+    if (track->artist && track->name)
+        return g_strdup_printf("%s - %s", track->artist, track->name);
+    else if (track->artist)
+        return g_strdup(track->artist);
+    else if (track->name)
+        return g_strdup(track->name);
+    else
+        return g_strdup("Unknown Song");
 }
 
 /* === HippoSongDownload === */

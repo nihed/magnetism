@@ -37,8 +37,11 @@ struct _HippoCanvasBlockMusic {
     HippoCanvasBox *chat_preview_parent;
     HippoCanvasItem *chat_preview;
 
-    HippoCanvasBox *downloads_parent;
-    HippoCanvasBox *downloads;
+    HippoCanvasBox *downloads_box_parent;
+    HippoCanvasBox *downloads_box;
+    
+    HippoCanvasBox *old_tracks_box_parent;
+    HippoCanvasBox *old_tracks_box;
 
     guint have_messages : 1;
 };

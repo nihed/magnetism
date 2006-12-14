@@ -5,6 +5,7 @@
 #include "hippo-canvas-block-music.h"
 #include "hippo-canvas-chat-preview.h"
 #include "hippo-canvas-message-preview.h"
+#include "hippo-canvas-timestamp.h"
 #include "hippo-canvas-url-image.h"
 #include "hippo-canvas-url-link.h"
 #include <hippo/hippo-canvas-box.h>
@@ -59,6 +60,8 @@ enum {
     PROP_0
 };
 #endif
+
+#define MAX_OLD_TRACKS 3
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasBlockMusic, hippo_canvas_block_music, HIPPO_TYPE_CANVAS_BLOCK,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_ITEM, hippo_canvas_block_music_iface_init));
@@ -257,11 +260,11 @@ hippo_canvas_block_music_constructor (GType                  type,
     block_music->single_message_preview_parent = beside_box;
     hippo_canvas_box_append(beside_box, block_music->single_message_preview, 0);
     
-    block_music->downloads = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+    block_music->downloads_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                           "orientation", HIPPO_ORIENTATION_VERTICAL,
                                           NULL);
-    block_music->downloads_parent = block->right_column;
-    hippo_canvas_box_append(block->right_column, HIPPO_CANVAS_ITEM(block_music->downloads), 0);
+    block_music->downloads_box_parent = block->right_column;
+    hippo_canvas_box_append(block->right_column, HIPPO_CANVAS_ITEM(block_music->downloads_box), 0);
 
     block_music->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
                                              "actions", hippo_canvas_block_get_actions(block),
@@ -271,6 +274,12 @@ hippo_canvas_block_music_constructor (GType                  type,
     block_music->chat_preview_parent = content_box;
     hippo_canvas_box_append(content_box, block_music->chat_preview, 0);
 
+    block_music->old_tracks_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                               "orientation", HIPPO_ORIENTATION_VERTICAL,
+                                               NULL);
+    block_music->old_tracks_box_parent = content_box;
+    hippo_canvas_box_append(content_box, HIPPO_CANVAS_ITEM(block_music->old_tracks_box), 0);
+    
     hippo_canvas_block_music_update_visibility(block_music);
     
     return object;
@@ -357,7 +366,7 @@ set_track(HippoCanvasBlockMusic *block_music,
                          NULL);
         }
 
-        hippo_canvas_box_remove_all(block_music->downloads);
+        hippo_canvas_box_remove_all(block_music->downloads_box);
 
         while (downloads) {
             HippoCanvasItem *link;
@@ -377,7 +386,7 @@ set_track(HippoCanvasBlockMusic *block_music,
                                       "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
                                       "xalign", HIPPO_ALIGNMENT_END,
                                       NULL);
-                hippo_canvas_box_append(block_music->downloads,
+                hippo_canvas_box_append(block_music->downloads_box,
                                         header, 0);
                 have_added_header = TRUE;
             }
@@ -394,14 +403,14 @@ set_track(HippoCanvasBlockMusic *block_music,
 
             g_free(link_name);
 
-            hippo_canvas_box_append(block_music->downloads,
+            hippo_canvas_box_append(block_music->downloads_box,
                                     link, 0);
 
             if (downloads) {
                 separator = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                          "text", " | ",
                                          NULL);
-                hippo_canvas_box_append(block_music->downloads,
+                hippo_canvas_box_append(block_music->downloads_box,
                                         separator, 0);
             }
         }
@@ -413,25 +422,96 @@ set_track(HippoCanvasBlockMusic *block_music,
         g_free(url);
     } else {
         hippo_canvas_block_set_title(canvas_block, NULL, NULL, FALSE);
-        hippo_canvas_box_remove_all(block_music->downloads);
+        hippo_canvas_box_remove_all(block_music->downloads_box);
     }
 
+#if 0
+    /* Setting the chat-id gives us a "Chat" link; that can be useful for
+     * debugging, but if we want to expose that to the user, we'd probably
+     * want to move the chat link up to the Love It / Hate it quip line.
+     */
     g_object_set(G_OBJECT(block_music->chat_preview),
                  "chat-id", chat_id,
                  NULL);
+#endif
 }
 
 static void
 set_old_tracks(HippoCanvasBlockMusic *block_music,
                GSList                *old_tracks)
 {
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_music);
     GSList *old_old_tracks = block_music->old_tracks;
+    GSList *l;
+    int count = 0;
     
     block_music->old_tracks = g_slist_copy(old_tracks);
     g_slist_foreach(old_tracks, (GFunc)g_object_ref, NULL);
     
     g_slist_foreach(old_old_tracks, (GFunc)g_object_unref, NULL);
     g_slist_free(old_old_tracks);
+
+    hippo_canvas_box_remove_all(block_music->old_tracks_box);
+    for (l = block_music->old_tracks; l && count < MAX_OLD_TRACKS; l = l->next) {
+        HippoTrack *old_track = l->data;
+        const char *artist = hippo_track_get_artist(old_track);
+        const char *name = hippo_track_get_name(old_track);
+        const char *url = hippo_track_get_url(old_track);
+        GTime last_listen_time = hippo_track_get_last_listen_time(old_track);
+        HippoCanvasBox *track_box;
+        HippoCanvasItem *item;
+
+        if (artist == NULL && name == NULL)
+            name = "Unknown Song";
+
+        track_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                 "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                                 NULL);
+
+        hippo_canvas_box_append(block_music->old_tracks_box, HIPPO_CANVAS_ITEM(track_box), 0);
+
+        if (artist) {
+            item = g_object_new(HIPPO_TYPE_CANVAS_URL_LINK,
+                                "actions", hippo_canvas_block_get_actions(canvas_block),
+                                "text", artist,
+                                "tooltip", "More information about this song",
+                                "url", url,
+                                "xalign", HIPPO_ALIGNMENT_START,
+                                NULL);
+            hippo_canvas_box_append(track_box, item, 0);
+        }
+
+        if (artist && name) {
+            item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                "text", " - ",
+                                "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
+                                "xalign", HIPPO_ALIGNMENT_START,
+                                NULL);
+            hippo_canvas_box_append(track_box, item, 0);
+        }
+
+        if (name) {
+            item = g_object_new(HIPPO_TYPE_CANVAS_URL_LINK,
+                                "actions", hippo_canvas_block_get_actions(canvas_block),
+                                "text", name,
+                                "tooltip", "More information about this song",
+                                "url", url,
+                                "xalign", HIPPO_ALIGNMENT_START,
+                                NULL);
+            hippo_canvas_box_append(track_box, item, 0);
+        }
+
+        item = g_object_new(HIPPO_TYPE_CANVAS_TIMESTAMP,
+                            "actions", hippo_canvas_block_get_actions(canvas_block),
+                            "time", last_listen_time,
+                            "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
+                            "xalign", HIPPO_ALIGNMENT_START,
+                            "padding-left", 6,
+                            NULL);
+        hippo_canvas_box_append(track_box, item, 0);
+
+        count++;
+    }
 }
 
 void 
@@ -544,8 +624,11 @@ hippo_canvas_block_music_update_visibility(HippoCanvasBlockMusic *block_music)
     hippo_canvas_box_set_child_visible(block_music->chat_preview_parent,
                                        block_music->chat_preview,
                                        canvas_block->expanded);
-    hippo_canvas_box_set_child_visible(block_music->downloads_parent,
-                                       HIPPO_CANVAS_ITEM(block_music->downloads),
+    hippo_canvas_box_set_child_visible(block_music->downloads_box_parent,
+                                       HIPPO_CANVAS_ITEM(block_music->downloads_box),
+                                       canvas_block->expanded);
+    hippo_canvas_box_set_child_visible(block_music->old_tracks_box_parent,
+                                       HIPPO_CANVAS_ITEM(block_music->old_tracks_box),
                                        canvas_block->expanded);
 }
 
@@ -555,9 +638,7 @@ quip_on(HippoCanvasBlockMusic *block_music,
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_music);
     const char *play_id;
-    const char *artist;
-    const char *name;
-    char *title = NULL;
+    char *title;
     
     if (!block_music->track)
         return;
@@ -566,34 +647,7 @@ quip_on(HippoCanvasBlockMusic *block_music,
     if (!play_id)
         return;
 
-    /* Determine a title to show to the user as they are entering the quip
-     * (Do we need/want this?)
-     */
-    artist = hippo_track_get_artist(block_music->track);
-    name = hippo_track_get_artist(block_music->track);
-
-    if (artist && name)
-        title = g_strdup_printf("%s - %s", artist, name);
-    else if (artist)
-        title = g_strdup(artist);
-    else if (name)
-        title = g_strdup(name);
-    else if (canvas_block->block) {
-        HippoEntity *user = NULL;
-        const char *name = NULL;
-        
-        g_object_get(G_OBJECT(canvas_block), "user", &user, NULL);
-        if (user) {
-            name = hippo_entity_get_name(user);
-            if (name)
-                title = g_strdup_printf("%s's Music", name);
-            
-            g_object_unref(user);
-        }
-    }
-
-    if (!title)
-        title = g_strdup("Music");
+    title = hippo_track_get_display_title(block_music->track);
     
     hippo_actions_quip(hippo_canvas_block_get_actions(canvas_block),
                        HIPPO_CHAT_KIND_MUSIC, play_id,
