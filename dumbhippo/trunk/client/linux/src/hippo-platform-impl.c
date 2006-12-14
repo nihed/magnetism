@@ -2,7 +2,7 @@
 #include <config.h>
 #include "hippo-platform-impl.h"
 #include "hippo-cookies-linux.h"
-#include "hippo-window-gtk.h"
+#include "hippo-window-wrapper.h"
 #include "hippo-status-icon.h"
 #include "hippo-http.h"
 #include "main.h"
@@ -170,18 +170,7 @@ hippo_platform_impl_get_platform_info(HippoPlatform     *platform,
 static HippoWindow*
 hippo_platform_impl_create_window(HippoPlatform *platform)
 {
-    HippoWindow *window;
-
-    window = HIPPO_WINDOW(hippo_window_gtk_new());
-
-    g_object_ref(window);
-
-    /* FIXME for the platform-independent code to actually get rid of the
-     * window, it needs to destroy() not unref, but HippoWindow has
-     * no method for that
-     */
-    
-    return window;
+    return HIPPO_WINDOW(hippo_window_wrapper_new());
 }
 
 static void

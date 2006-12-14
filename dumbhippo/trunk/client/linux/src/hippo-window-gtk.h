@@ -2,7 +2,7 @@
 #ifndef __HIPPO_WINDOW_GTK_H__
 #define __HIPPO_WINDOW_GTK_H__
 
-/* Implementation of HippoWindow for GTK+ */
+/* GtkWindow (via HippoCanvasWindow) subclass used by HippoWindowWrapper */
 
 #include <hippo/hippo-window.h>
 #include <cairo.h>
@@ -21,8 +21,17 @@ typedef struct _HippoWindowGtkClass HippoWindowGtkClass;
 
 GType        	 hippo_window_gtk_get_type               (void) G_GNUC_CONST;
 
-HippoWindow* hippo_window_gtk_new    (void);
+HippoWindowGtk* hippo_window_gtk_new    (void);
 
+void            hippo_window_gtk_set_role           (HippoWindowGtk  *window_gtk,
+                                                     HippoWindowRole  role);
+HippoWindowRole hippo_window_gtk_get_role           (HippoWindowGtk  *window_gtk);
+void            hippo_window_gtk_set_resize_gravity (HippoWindowGtk  *window_gtk,
+                                                     HippoGravity     resize_gravity);
+HippoGravity    hippo_window_gtk_get_resize_gravity (HippoWindowGtk  *window_gtk);
+void            hippo_window_gtk_set_position       (HippoWindowGtk  *window_gtk,
+                                                     int              x,
+                                                     int              y);
 
 G_END_DECLS
 

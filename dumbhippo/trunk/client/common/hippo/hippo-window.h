@@ -18,6 +18,12 @@ G_BEGIN_DECLS
 #define HIPPO_IS_WINDOW_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_WINDOW))
 #define HIPPO_WINDOW_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_INTERFACE ((obj), HIPPO_TYPE_WINDOW, HippoWindowClass))
 
+typedef enum {
+    HIPPO_WINDOW_ROLE_APPLICATION,   /* A full toplevel window */
+    HIPPO_WINDOW_ROLE_NOTIFICATION, /* Notification popup, no keyboard input */
+    HIPPO_WINDOW_ROLE_INPUT_POPUP   /* Popup for text input */
+} HippoWindowRole;
+
 struct _HippoWindowClass {
     GTypeInterface base_iface;
     

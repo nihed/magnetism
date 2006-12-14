@@ -126,8 +126,11 @@ hippo_canvas_dispose(GObject *object)
 {
     HippoCanvas *canvas = HIPPO_CANVAS(object);
 
-    g_object_run_dispose(G_OBJECT(canvas->helper));
-    canvas->helper = NULL;
+    if (canvas->helper) {
+        g_object_run_dispose(G_OBJECT(canvas->helper));
+        g_object_unref(canvas->helper);
+        canvas->helper = NULL;
+    }
     
     G_OBJECT_CLASS(hippo_canvas_parent_class)->dispose(object);
 }
