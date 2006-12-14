@@ -13,7 +13,8 @@ G_BEGIN_DECLS
 typedef enum {
     HIPPO_EVENT_BUTTON_PRESS,
     HIPPO_EVENT_BUTTON_RELEASE,
-    HIPPO_EVENT_MOTION_NOTIFY
+    HIPPO_EVENT_MOTION_NOTIFY,
+    HIPPO_EVENT_KEY_PRESS,
 } HippoEventType;
 
 typedef enum {
@@ -23,6 +24,12 @@ typedef enum {
 } HippoMotionDetail;
 
 typedef struct _HippoEvent HippoEvent;
+
+typedef enum {
+    HIPPO_KEY_UNKNOWN, 
+    HIPPO_KEY_RETURN,
+    HIPPO_KEY_ESCAPE
+} HippoKey;
 
 struct _HippoEvent {
     HippoEventType type;
@@ -40,6 +47,10 @@ struct _HippoEvent {
             int x11_y_root;
             guint32 x11_time;
         } button;
+        struct {
+            HippoKey key;
+            gunichar character; /* 0 if no translation */
+        } key;
     } u;
 };
 

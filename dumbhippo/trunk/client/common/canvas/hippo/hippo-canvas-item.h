@@ -54,6 +54,8 @@ struct _HippoCanvasItemIface {
                                      HippoEvent      *event);
     gboolean (* motion_notify_event)(HippoCanvasItem *canvas_item,
                                      HippoEvent      *event);
+    gboolean (* key_press_event)    (HippoCanvasItem *canvas_item,
+                                     HippoEvent      *event);
     void     (* activated)          (HippoCanvasItem *canvas_item);
     void     (* request_changed)    (HippoCanvasItem *canvas_item);
     void     (* paint_needed)       (HippoCanvasItem *canvas_item,
@@ -117,6 +119,9 @@ gboolean hippo_canvas_item_emit_motion_notify_event (HippoCanvasItem  *canvas_it
                                                      int               x,
                                                      int               y,
                                                      HippoMotionDetail detail);
+gboolean hippo_canvas_item_emit_key_press_event     (HippoCanvasItem  *canvas_item,
+                                                     HippoKey          key,
+                                                     gunichar          character);
 void     hippo_canvas_item_emit_activated          (HippoCanvasItem *canvas_item);
 void     hippo_canvas_item_emit_paint_needed       (HippoCanvasItem *canvas_item,
                                                     int              x,

@@ -2,6 +2,7 @@
 #include <config.h>
 #include <glib/gi18n-lib.h>
 #include <string.h>
+#include <gdk/gdkkeysyms.h>
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkentry.h>
 #include <gtk/gtkscrolledwindow.h>
@@ -157,14 +158,42 @@ on_canvas_entry_changed(GtkEditable      *editable,
     g_object_notify(G_OBJECT(canvas_entry), "text");
 }
 
+static gboolean
+on_canvas_entry_key_press_event(GtkWidget        *widget,
+                                GdkEventKey      *event,
+                                HippoCanvasEntry *canvas_entry)
+{
+    HippoKey key;
+    gunichar character;
+
+    switch (event->keyval) {
+    case GDK_Return:
+    case GDK_KP_Enter:
+        key = HIPPO_KEY_RETURN;
+        break;
+    case GDK_Escape:
+        key = HIPPO_KEY_ESCAPE;
+        break;
+    default:
+        key = HIPPO_KEY_UNKNOWN;
+        break;
+    }
+
+    character = gdk_keyval_to_unicode(event->keyval);
+        
+    return hippo_canvas_item_emit_key_press_event(HIPPO_CANVAS_ITEM(canvas_entry), key, character);
+}
+
 static void
 hippo_canvas_entry_dispose(GObject *object)
 {
     HippoCanvasEntry *canvas_entry = HIPPO_CANVAS_ENTRY (object);
     GtkWidget *entry = HIPPO_CANVAS_WIDGET(object)->widget;
 
-    if (entry)
+    if (entry) {
         g_signal_handlers_disconnect_by_func(entry, (void *)on_canvas_entry_changed, canvas_entry);
+        g_signal_handlers_disconnect_by_func(entry, (void *)on_canvas_entry_key_press_event, canvas_entry);
+    }
 
     G_OBJECT_CLASS(hippo_canvas_entry_parent_class)->dispose(object);
 }
@@ -238,6 +267,8 @@ hippo_canvas_entry_new(void)
 
     g_signal_connect(entry, "changed",
                      G_CALLBACK(on_canvas_entry_changed), item);
+    g_signal_connect(entry, "key-press-event",
+                     G_CALLBACK(on_canvas_entry_key_press_event), item);
 
     return item;
 }

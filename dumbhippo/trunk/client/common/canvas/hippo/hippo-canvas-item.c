@@ -12,6 +12,7 @@ enum {
     BUTTON_PRESS_EVENT,
     BUTTON_RELEASE_EVENT,
     MOTION_NOTIFY_EVENT,
+    KEY_PRESS_EVENT,
     ACTIVATED,
     TOOLTIP_CHANGED,
     LAST_SIGNAL
@@ -88,6 +89,14 @@ hippo_canvas_item_base_init(void *klass)
                           HIPPO_TYPE_CANVAS_ITEM,
                           G_SIGNAL_RUN_LAST,
                           G_STRUCT_OFFSET(HippoCanvasItemIface, motion_notify_event),
+                          g_signal_accumulator_true_handled, NULL,
+                          hippo_canvas_marshal_BOOLEAN__BOXED,
+                          G_TYPE_BOOLEAN, 1, HIPPO_TYPE_EVENT);
+        signals[KEY_PRESS_EVENT] =
+            g_signal_new ("key-press-event",
+                          HIPPO_TYPE_CANVAS_ITEM,
+                          G_SIGNAL_RUN_LAST,
+                          G_STRUCT_OFFSET(HippoCanvasItemIface, key_press_event),
                           g_signal_accumulator_true_handled, NULL,
                           hippo_canvas_marshal_BOOLEAN__BOXED,
                           G_TYPE_BOOLEAN, 1, HIPPO_TYPE_EVENT);
@@ -295,6 +304,28 @@ hippo_canvas_item_emit_motion_notify_event (HippoCanvasItem  *canvas_item,
 }
 
 
+gboolean
+hippo_canvas_item_emit_key_press_event (HippoCanvasItem  *canvas_item,
+                                        HippoKey          key,
+                                        gunichar          character)
+{
+    HippoEvent event;
+    gboolean result;
+    
+    g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), FALSE);
+
+    event.type = HIPPO_EVENT_KEY_PRESS;
+    event.x = 0;
+    event.y = 0;    
+    event.u.key.key = key;
+    event.u.key.character = character;
+    
+    result = hippo_canvas_item_process_event(canvas_item, &event, 0, 0);
+
+    return result;
+}
+
+
 void
 hippo_canvas_item_emit_activated(HippoCanvasItem *canvas_item)
 {
@@ -382,6 +413,9 @@ hippo_canvas_item_process_event(HippoCanvasItem *canvas_item,
         break;
     case HIPPO_EVENT_MOTION_NOTIFY:
         g_signal_emit(canvas_item, signals[MOTION_NOTIFY_EVENT], 0, &translated, &handled);
+        break;
+    case HIPPO_EVENT_KEY_PRESS:
+        g_signal_emit(canvas_item, signals[KEY_PRESS_EVENT], 0, &translated, &handled);
         break;
         /* don't add a default, you'll break the compiler warnings */
     }

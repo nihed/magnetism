@@ -151,6 +151,7 @@ const GEnumValue _hippo_event_type_values[] = {
   { HIPPO_EVENT_BUTTON_PRESS, "HIPPO_EVENT_BUTTON_PRESS", "button-press" },
   { HIPPO_EVENT_BUTTON_RELEASE, "HIPPO_EVENT_BUTTON_RELEASE", "button-release" },
   { HIPPO_EVENT_MOTION_NOTIFY, "HIPPO_EVENT_MOTION_NOTIFY", "motion-notify" },
+  { HIPPO_EVENT_KEY_PRESS, "HIPPO_EVENT_KEY_PRESS", "key-press" },
   { 0, NULL, NULL }
 };
 
@@ -179,6 +180,24 @@ hippo_motion_detail_get_type (void)
 
   if (G_UNLIKELY (type == 0))
     type = g_enum_register_static ("HippoMotionDetail", _hippo_motion_detail_values);
+
+  return type;
+}
+
+const GEnumValue _hippo_key_values[] = {
+  { HIPPO_KEY_UNKNOWN, "HIPPO_KEY_UNKNOWN", "unknown" },
+  { HIPPO_KEY_RETURN, "HIPPO_KEY_RETURN", "return" },
+  { HIPPO_KEY_ESCAPE, "HIPPO_KEY_ESCAPE", "escape" },
+  { 0, NULL, NULL }
+};
+
+GType
+hippo_key_get_type (void)
+{
+  static GType type = 0;
+
+  if (G_UNLIKELY (type == 0))
+    type = g_enum_register_static ("HippoKey", _hippo_key_values);
 
   return type;
 }

@@ -119,8 +119,7 @@ on_hate_activated(HippoCanvasItem       *item,
 }
 
 static void
-on_send_activated(HippoCanvasItem       *item,
-                  HippoQuipWindow       *quip_window)
+send_quip(HippoQuipWindow *quip_window)
 {
 #if 0
     const char *text = NULL;
@@ -146,6 +145,13 @@ on_send_activated(HippoCanvasItem       *item,
     g_free(text);
     
     hippo_quip_window_hide(quip_window);
+}
+
+static void
+on_send_activated(HippoCanvasItem       *item,
+                  HippoQuipWindow       *quip_window)
+{
+    send_quip(quip_window);
 }
 
 static void
@@ -178,6 +184,22 @@ on_notify_active(GObject         *object,
         hippo_quip_window_hide(quip_window);
 }
 
+static gboolean
+on_key_press_event(HippoCanvasItem *item,
+                   HippoEvent      *event,
+                   HippoQuipWindow *quip_window)
+{
+    switch (event->u.key.key) {
+    case HIPPO_KEY_RETURN:
+        send_quip(quip_window);
+        return TRUE;
+    case HIPPO_KEY_ESCAPE:
+        hippo_quip_window_hide(quip_window);
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
 
 HippoQuipWindow*
 hippo_quip_window_new(HippoDataCache *cache)
@@ -232,14 +254,16 @@ hippo_quip_window_new(HippoDataCache *cache)
                         NULL);
     HIPPO_CANVAS_BOX(item)->clickable = TRUE; /* Hack */
     hippo_canvas_box_append(quip_window->love_box, item, 0);
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_love_activated), quip_window);
+    g_signal_connect(G_OBJECT(item), "activated",
+                     G_CALLBACK(on_love_activated), quip_window);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "padding-left", 4,
                         "text", "I love it!",
                         NULL);
     hippo_canvas_box_append(quip_window->love_box, item, 0);
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_love_activated), quip_window);
+    g_signal_connect(G_OBJECT(item), "activated",
+                     G_CALLBACK(on_love_activated), quip_window);
     
     quip_window->hate_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                          "orientation", HIPPO_ORIENTATION_HORIZONTAL,
@@ -255,21 +279,24 @@ hippo_quip_window_new(HippoDataCache *cache)
                         NULL);
     HIPPO_CANVAS_BOX(item)->clickable = TRUE; /* Hack */
     hippo_canvas_box_append(quip_window->hate_box, item, 0);
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hate_activated), quip_window);
+    g_signal_connect(G_OBJECT(item), "activated", 
+                     G_CALLBACK(on_hate_activated), quip_window);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "padding-left", 4,
                         "text", "I hate it!",
                         NULL);
     hippo_canvas_box_append(quip_window->hate_box, item, 0);
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hate_activated), quip_window);
+    g_signal_connect(G_OBJECT(item), "activated",
+                     G_CALLBACK(on_hate_activated), quip_window);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "padding-left", 8,
                         "text", "X",
                         NULL);
     hippo_canvas_box_append(top_box, item, HIPPO_PACK_END);
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_close_activated), quip_window);
+    g_signal_connect(G_OBJECT(item), "activated",
+                     G_CALLBACK(on_close_activated), quip_window);
     
     bottom_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                               "orientation", HIPPO_ORIENTATION_HORIZONTAL,
@@ -278,13 +305,16 @@ hippo_quip_window_new(HippoDataCache *cache)
 
     quip_window->entry = hippo_canvas_entry_new();
     hippo_canvas_box_append(bottom_box, quip_window->entry, HIPPO_PACK_EXPAND);
+    g_signal_connect(G_OBJECT(quip_window->entry), "key-press-event",
+                     G_CALLBACK(on_key_press_event), quip_window);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "padding-left", 8,
                         "text", "Send",
                         NULL);
     hippo_canvas_box_append(bottom_box, item, HIPPO_PACK_END);
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_send_activated), quip_window);
+    g_signal_connect(G_OBJECT(item), "activated",
+                     G_CALLBACK(on_send_activated), quip_window);
     
     return quip_window;
 }
