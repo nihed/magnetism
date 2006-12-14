@@ -63,6 +63,7 @@ import com.dumbhippo.server.blocks.BlockHandler;
 import com.dumbhippo.server.blocks.BlockNotVisibleException;
 import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.blocks.BlogBlockHandler;
+import com.dumbhippo.server.blocks.DeliciousBlockHandler;
 import com.dumbhippo.server.blocks.FacebookBlockHandler;
 import com.dumbhippo.server.blocks.FlickrPersonBlockHandler;
 import com.dumbhippo.server.blocks.FlickrPhotosetBlockHandler;
@@ -164,6 +165,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			break;
 		case MYSPACE_PERSON:
 			handlerClass = MySpacePersonBlockHandler.class;
+			break;
+		case DELICIOUS_PUBLIC_BOOKMARK:
+			handlerClass = DeliciousBlockHandler.class;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
@@ -1719,6 +1723,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case YOUTUBE_PERSON:
 		case MYSPACE_PERSON:
 		case BLOG_ENTRY:
+		case DELICIOUS_PUBLIC_BOOKMARK:
+		case MUSIC_CHAT:
 			isGroupParticipation = false;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:

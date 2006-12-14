@@ -5,6 +5,9 @@ import java.util.Set;
 
 import javax.persistence.Query;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
@@ -20,6 +23,8 @@ import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
 public abstract class AbstractBlockPerFeedEntryHandlerBean<ViewType extends AbstractFeedEntryBlockView> extends AbstractBlockHandlerBean<ViewType> implements BlockPerFeedEntryBlockHandler {
+	
+	static private final Logger logger = GlobalSetup.getLogger(AbstractBlockPerFeedEntryHandlerBean.class);
 	
 	protected AbstractBlockPerFeedEntryHandlerBean(Class<? extends ViewType> viewClass) {
 		super(viewClass);
@@ -62,8 +67,12 @@ public abstract class AbstractBlockPerFeedEntryHandlerBean<ViewType extends Abst
 	}
 
 	public void onExternalAccountFeedEntry(User user, ExternalAccount external, FeedEntry entry, int entryPosition) {
+		
 		if (!external.hasLovedAndEnabledType(getAccountType()))
 			return;
+		
+		logger.debug("stacking new block for feed entry in {}", getClass().getName());
+		
 		// entry.getDate().getTime() creates a timestamp that is too old, at least with blogspot
 		// so it is unreliable, because we update blocks based on timestamps
 		long now = System.currentTimeMillis();

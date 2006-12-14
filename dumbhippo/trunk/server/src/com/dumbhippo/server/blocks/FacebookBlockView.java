@@ -186,6 +186,11 @@ public class FacebookBlockView extends AbstractPersonBlockView
 				return getUserView().getName() + " has created a new album '" + event.getAlbum().getName() + "'";
 			case MODIFIED_ALBUM_EVENT :
 				return getUserView().getName() + " has modified an album '" + event.getAlbum().getName() + "'";
+			case LOGIN_STATUS_EVENT:
+			case UNREAD_MESSAGES_UPDATE:
+			case UNSEEN_POKES_UPDATE:
+				throw new RuntimeException("need to support event type for " + event.getEventType() + " in getTextForOthers()");
+				
 	   	    // no default, it hides bugs
 		}
 		
