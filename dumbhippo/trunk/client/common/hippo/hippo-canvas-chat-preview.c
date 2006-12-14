@@ -642,6 +642,9 @@ hippo_canvas_chat_preview_update_visibility(HippoCanvasChatPreview *chat_preview
 {
     gboolean show_chat = chat_preview->room != NULL || chat_preview->chat_id != NULL;
     gboolean show_count = chat_preview->room != NULL;
+
+    if (!chat_preview->count_parent) /* During initialization */
+        return;
     
     hippo_canvas_box_set_child_visible(chat_preview->count_parent,
                                        chat_preview->chat_link,

@@ -237,7 +237,7 @@ hippo_canvas_block_music_constructor (GType                  type,
     g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_love_activated), block_music);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                        "border-left", 8,
+                        "padding-left", 8,
                         "image-name", "quiphate_icon",
                         "xalign", HIPPO_ALIGNMENT_CENTER,
                         "yalign", HIPPO_ALIGNMENT_CENTER,

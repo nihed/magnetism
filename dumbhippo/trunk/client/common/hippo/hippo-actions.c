@@ -3,6 +3,7 @@
 #include "hippo-actions.h"
 #include "hippo-image-cache.h"
 #include "hippo-stack-manager.h"
+#include "hippo-quip-window.h"
 #include <string.h>
 
 
@@ -402,20 +403,12 @@ hippo_actions_quip(HippoActions   *actions,
                    HippoSentiment  sentiment,
                    const char     *title)
 {
-    const char *text = NULL;
+    HippoQuipWindow *quip_window = hippo_quip_window_new(actions->cache);
 
-    switch (sentiment) {
-    case HIPPO_SENTIMENT_INDIFFERENT:
-        text = "Who cares!";
-        break;
-    case HIPPO_SENTIMENT_LOVE:
-        text = "It rulez!";
-        break;
-    case HIPPO_SENTIMENT_HATE:
-        text = "It sucks!";
-        break;
-    }
-
-    hippo_connection_send_quip(get_connection(actions),
-                               kind, id, text, sentiment);
+    hippo_quip_window_set_chat(quip_window, kind, id);
+    hippo_quip_window_set_sentiment(quip_window, sentiment);
+    hippo_quip_window_set_title(quip_window, title);
+    
+    hippo_quip_window_show(quip_window);
+    g_object_unref(quip_window);
 }

@@ -157,16 +157,16 @@ hippo_canvas_timestamp_set_actions(HippoCanvasTimestamp *timestamp,
         
         g_object_unref(timestamp->actions);
         timestamp->actions = NULL;
-        
-        g_signal_connect(G_OBJECT(timestamp->actions),
-                         "minute-ticked",
-                         G_CALLBACK(on_minute_ticked),
-                         timestamp);
     }
     
     if (actions) {
         g_object_ref(actions);
         timestamp->actions = actions;
+        
+        g_signal_connect(G_OBJECT(timestamp->actions),
+                         "minute-ticked",
+                         G_CALLBACK(on_minute_ticked),
+                         timestamp);
     }
 
     g_object_notify(G_OBJECT(timestamp), "actions");
