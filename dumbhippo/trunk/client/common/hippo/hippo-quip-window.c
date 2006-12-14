@@ -32,6 +32,7 @@ struct _HippoQuipWindow {
     HippoCanvasItem *entry;
 
     guint visible : 1;
+    guint active : 1;
 };
 
 struct _HippoQuipWindowClass {
@@ -42,6 +43,9 @@ struct _HippoQuipWindowClass {
 G_DEFINE_TYPE(HippoQuipWindow, hippo_quip_window, G_TYPE_OBJECT);
 
 static void hippo_quip_window_hide(HippoQuipWindow *quip_window);
+static void on_notify_active(GObject         *object,
+                             GParamSpec      *param_spec,
+                             HippoQuipWindow *quip_window);
 
 static void
 hippo_quip_window_init(HippoQuipWindow  *quip_window)
@@ -66,6 +70,10 @@ hippo_quip_window_dispose(GObject *object)
     hippo_quip_window_hide(quip_window);
 
     if (quip_window->window) {
+        g_signal_handlers_disconnect_by_func(quip_window->window,
+                                             (void *)on_notify_active,
+                                             quip_window);
+        
         g_object_unref(quip_window->window);
         quip_window->window = NULL;
     }
@@ -147,6 +155,30 @@ on_close_activated(HippoCanvasItem       *item,
     hippo_quip_window_hide(quip_window);
 }
 
+static void 
+on_notify_active(GObject         *object,
+                 GParamSpec      *param_spec,
+                 HippoQuipWindow *quip_window)
+{
+    gboolean active;
+    gboolean hide;
+
+    g_object_get(object, "active", &active, NULL);
+
+    /* We pop down the quip window when it loses focus, to properly handle
+     * the user clicking/tabbing away elsewhere; this may be a little fragile
+     * against window managers that don't keep focus stable; we'll see how
+     * it works in practice.
+     */
+    hide = quip_window->active && !active;
+
+    quip_window->active = active;
+
+    if (hide)
+        hippo_quip_window_hide(quip_window);
+}
+
+
 HippoQuipWindow*
 hippo_quip_window_new(HippoDataCache *cache)
 {
@@ -165,6 +197,9 @@ hippo_quip_window_new(HippoDataCache *cache)
     quip_window->cache = cache;
 
     quip_window->window = hippo_platform_create_window(get_platform(quip_window));
+
+    g_signal_connect(quip_window->window, "notify::active",
+                     G_CALLBACK(on_notify_active),  quip_window);
 
     g_object_set(quip_window->window, "role", HIPPO_WINDOW_ROLE_INPUT_POPUP, NULL);    
 
