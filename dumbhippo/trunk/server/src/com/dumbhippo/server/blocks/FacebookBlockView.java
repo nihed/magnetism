@@ -80,7 +80,7 @@ public class FacebookBlockView extends AbstractPersonBlockView
 	public String getMoreThumbnailsTitle() {
 		switch (getFacebookEvent().getEventType()) {
 		case NEW_TAGGED_PHOTOS_EVENT :
-			return "All photos tagged with " + getUserView().getName();
+			return "All photos tagged with " + getPersonSource().getName();
 		case NEW_ALBUM_EVENT :
 		case MODIFIED_ALBUM_EVENT :
 			return "All photos in '" + getFacebookEvent().getAlbum().getName() + "'";
@@ -97,7 +97,7 @@ public class FacebookBlockView extends AbstractPersonBlockView
 		// above returns getLink(), we'll just use that on the client for now;
 		// the titles for the block and for the thumbnails more link are not the same 
 		builder.openElement("facebookEvent",
-				"userId", getUserView().getUser().getId(),
+				"userId", getPersonSource().getUser().getId(),
 				"title", getTitleForHome());
 		// we could omit this if the event doesn't have the thumbnails, but
 		// we rely on it for the moreThumbnailsLink for now 
@@ -124,7 +124,7 @@ public class FacebookBlockView extends AbstractPersonBlockView
 	}
 
 	public String getTitleForHome() {		
-		if (getViewpoint().isOfUser(getUserView().getUser()))
+		if (getViewpoint().isOfUser(getPersonSource().getUser()))
 			return getTextForSelf();
 		else 		
 			return getGenericText();
@@ -181,11 +181,11 @@ public class FacebookBlockView extends AbstractPersonBlockView
 			case NEW_WALL_MESSAGES_EVENT :
 				return event.getCount() + " new wall message" + pluralChar;
 			case NEW_TAGGED_PHOTOS_EVENT :
-				return getUserView().getName() + " was tagged in " + event.getPhotos().size() + " photo" + pluralChar;
+				return getPersonSource().getName() + " was tagged in " + event.getPhotos().size() + " photo" + pluralChar;
 			case NEW_ALBUM_EVENT :
-				return getUserView().getName() + " has created a new album '" + event.getAlbum().getName() + "'";
+				return getPersonSource().getName() + " has created a new album '" + event.getAlbum().getName() + "'";
 			case MODIFIED_ALBUM_EVENT :
-				return getUserView().getName() + " has modified an album '" + event.getAlbum().getName() + "'";
+				return getPersonSource().getName() + " has modified an album '" + event.getAlbum().getName() + "'";
 			case LOGIN_STATUS_EVENT:
 			case UNREAD_MESSAGES_UPDATE:
 			case UNSEEN_POKES_UPDATE:

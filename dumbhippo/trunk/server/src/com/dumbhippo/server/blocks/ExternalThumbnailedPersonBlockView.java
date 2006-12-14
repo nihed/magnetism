@@ -36,7 +36,7 @@ public abstract class ExternalThumbnailedPersonBlockView extends AbstractPersonB
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.openElement(getElementName(),
-							"userId", getUserView().getUser().getId());
+							"userId", getPersonSource().getUser().getId());
 		writeThumbnailsToXmlBuilder(builder, this);
 		builder.closeElement();		
 	}

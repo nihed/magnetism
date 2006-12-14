@@ -35,7 +35,7 @@ public class FlickrPhotosetBlockView extends AbstractPersonBlockView
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.openElement("flickrPhotoset",
-				"userId", getUserView().getUser().getId(),
+				"userId", getPersonSource().getUser().getId(),
 				"title", photosetView.getTitle());
 		writeThumbnailsToXmlBuilder(builder, this);
 		builder.closeElement();

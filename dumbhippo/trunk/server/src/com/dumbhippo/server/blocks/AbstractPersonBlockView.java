@@ -34,13 +34,9 @@ public abstract class AbstractPersonBlockView extends BlockView implements Perso
 			throw new IllegalArgumentException("populating block view with null user view");
 		this.userView = userView;
 	}
-	
-	public PersonView getUserView() {
-		return userView;
-	}
 		
 	// not public - use populate()
-	protected void setUserView(PersonView userView) {
+	protected void setPersonSource(PersonView userView) {
 		this.userView = userView;
 	}
 

@@ -46,7 +46,7 @@ public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.openElement(getElementName(),
-					"userId", getUserView().getUser().getId());
+					"userId", getPersonSource().getUser().getId());
 		writeFeedEntryToXmlBuilder(builder, entry);
 		builder.closeElement();
 	}

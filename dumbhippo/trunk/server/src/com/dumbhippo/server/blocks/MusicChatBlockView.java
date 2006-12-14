@@ -44,7 +44,7 @@ public class MusicChatBlockView extends AbstractPersonBlockView {
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.openElement("musicChat",
-				            "userId", getUserView().getUser().getId());
+				            "userId", getPersonSource().getUser().getId());
 		trackView.writeToXmlBuilder(builder, "track");
 		builder.openElement("recentMessages");
 		for (ChatMessageView message : recentMessages) {
@@ -57,7 +57,7 @@ public class MusicChatBlockView extends AbstractPersonBlockView {
 	@Override
 	public List<Object> getReferencedObjects() {
 		List<Object> result = new ArrayList<Object>();
-		result.add(getUserView());
+		result.add(getPersonSource());
 		for (ChatMessageView message : getRecentMessages()) {
 			result.add(message.getSenderView());
 		}
@@ -79,12 +79,12 @@ public class MusicChatBlockView extends AbstractPersonBlockView {
 	}
 
 	public @Override String getSummaryLink() {
-		TrackView tv = getUserView().getCurrentTrack();
+		TrackView tv = getPersonSource().getCurrentTrack();
 		return tv.getArtistPageLink();
 	}
 
 	public @Override String getSummaryLinkText() {
-		TrackView tv = getUserView().getCurrentTrack();
+		TrackView tv = getPersonSource().getCurrentTrack();
 		return tv.getTruncatedName();		
 	}
 }

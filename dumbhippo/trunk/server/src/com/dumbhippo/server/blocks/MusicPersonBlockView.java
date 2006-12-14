@@ -26,15 +26,15 @@ public class MusicPersonBlockView extends AbstractPersonBlockView {
 	}
 	
 	public List<TrackView> getTrackViews() {
-		return getUserView().getTrackHistory(); 
+		return getPersonSource().getTrackHistory(); 
 	}
 	
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.openElement("musicPerson",
-				            "userId", getUserView().getUser().getId());
+				            "userId", getPersonSource().getUser().getId());
 		builder.openElement("trackHistory");
-		for (TrackView trackView : getUserView().getTrackHistory()) {
+		for (TrackView trackView : getPersonSource().getTrackHistory()) {
 			trackView.writeToXmlBuilder(builder, "track");
 		}
 		builder.closeElement();
@@ -61,12 +61,12 @@ public class MusicPersonBlockView extends AbstractPersonBlockView {
 	}
 
 	public @Override String getSummaryLink() {
-		TrackView tv = getUserView().getCurrentTrack();
+		TrackView tv = getPersonSource().getCurrentTrack();
 		return tv.getArtistPageLink();
 	}
 
 	public @Override String getSummaryLinkText() {
-		TrackView tv = getUserView().getCurrentTrack();
+		TrackView tv = getPersonSource().getCurrentTrack();
 		return tv.getTruncatedName();		
 	}
 }
