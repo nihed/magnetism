@@ -74,6 +74,9 @@ void       hippo_app_get_screen_info   (HippoApp         *app,
                                         HippoRectangle   *monitor_rect_p,
                                         HippoRectangle   *tray_icon_rect_p,
                                         HippoOrientation *tray_icon_orientation_p);
+gboolean hippo_app_get_pointer_position (HippoApp *app,
+                                         int      *x_p,
+                                         int      *y_p);
 
 /* FIXME just change all references to have the HIPPO_ */
 #define ADD_WEAK(ptr)    HIPPO_ADD_WEAK(ptr)

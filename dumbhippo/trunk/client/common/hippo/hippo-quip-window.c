@@ -313,8 +313,17 @@ hippo_quip_window_set_title(HippoQuipWindow *quip_window,
     quip_window->title = g_strdup(title);
 }
 
+/* Offsets of pointer from upper right of window */
+#define POINTER_X_OFFSET  30
+#define POINTER_Y_OFFSET  -5
+
 void hippo_quip_window_show(HippoQuipWindow *quip_window)
 {
+    HippoRectangle monitor_rect;
+    int pointer_x, pointer_y;
+    int window_width, window_height;
+    int window_x, window_y;
+    
     g_return_if_fail(HIPPO_IS_QUIP_WINDOW(quip_window));
 
     if (quip_window->visible)
@@ -322,6 +331,33 @@ void hippo_quip_window_show(HippoQuipWindow *quip_window)
 
     quip_window->visible = TRUE;
     g_object_ref(quip_window);
+
+    hippo_platform_get_screen_info(get_platform(quip_window), &monitor_rect, NULL, NULL);
+    
+    if (!hippo_platform_get_pointer_position(get_platform(quip_window), &pointer_x, &pointer_y)) {
+        /* Pointer on a different X screen, we'll just position at lower right */
+        pointer_x = monitor_rect.x + monitor_rect.width;
+        pointer_y = monitor_rect.y + monitor_rect.height;
+    }
+
+    hippo_window_get_size(quip_window->window, &window_width, &window_height);
+
+    /* Try to position the window window so the pointer is near the upper left, but force it
+     * within the workarea */
+    window_x = pointer_x + POINTER_X_OFFSET - window_width;
+    window_y = pointer_y + POINTER_Y_OFFSET;
+
+    if (window_x + window_width > monitor_rect.x + monitor_rect.width)
+        window_x = monitor_rect.x + monitor_rect.width - window_width;
+    if (window_x < 0)
+        window_x = 0;
+
+    if (window_y + window_height > monitor_rect.y + monitor_rect.height)
+        window_y = monitor_rect.y + monitor_rect.height - window_height;
+    if (window_y < 0)
+        window_y = 0;
+
+    hippo_window_set_position(quip_window->window, window_x, window_y);
 
     hippo_window_present(quip_window->window);
 }

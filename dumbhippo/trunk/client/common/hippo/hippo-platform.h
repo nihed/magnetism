@@ -38,6 +38,9 @@ struct _HippoPlatformClass {
                                        HippoRectangle   *monitor_rect_p,
                                        HippoRectangle   *tray_icon_rect_p,
                                        HippoOrientation *tray_icon_orientation_p);
+    gboolean  (* get_pointer_position) (HippoPlatform   *platform,
+                                        int             *x_p,
+                                        int             *y_p);
     
     gboolean  (* read_login_cookie)   (HippoPlatform  *platform,
                                        HippoBrowserKind *origin_browser_p,
@@ -90,6 +93,13 @@ void             hippo_platform_get_screen_info        (HippoPlatform    *platfo
                                                         HippoRectangle   *monitor_rect_p,
                                                         HippoRectangle   *tray_icon_rect_p,
                                                         HippoOrientation *tray_icon_orientation_p);
+/* Returns false if the pointer isn't on the same screen as the the tray icon; x_p/y_p
+ * will be set to arbitrary values in that case. You probably can ignore the case, since
+ * multiple non-combined screens (an X concept) is vanishingly rare.
+ */
+gboolean         hippo_platform_get_pointer_position   (HippoPlatform    *platform,
+                                                        int              *x_p,
+                                                        int              *y_p);
 
 gboolean         hippo_platform_read_login_cookie      (HippoPlatform    *platform,
                                                         HippoBrowserKind *origin_browser_p,

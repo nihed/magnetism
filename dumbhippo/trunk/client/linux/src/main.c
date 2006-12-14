@@ -561,6 +561,34 @@ hippo_app_get_screen_info(HippoApp         *app,
     }
 }
 
+gboolean
+hippo_app_get_pointer_position (HippoApp *app,
+                                int      *x_p,
+                                int      *y_p)
+{
+    GdkScreen *screen;
+    GdkScreen *pointer_screen;
+    int x, y;
+    
+    gtk_status_icon_get_geometry(GTK_STATUS_ICON(app->icon),
+                                 &screen, NULL, NULL);
+
+    gdk_display_get_pointer(gdk_screen_get_display(screen),
+                            &pointer_screen, &x, &y, NULL);
+    
+    if (pointer_screen != screen) {
+        x = 0;
+        y = 0;
+    }
+
+    if (x_p)
+        *x_p = x;
+    if (y_p)
+        *y_p = y;
+
+    return pointer_screen == screen;
+}
+
 static void
 on_new_installed_response(GtkWidget *dialog,
                           int        response_id,

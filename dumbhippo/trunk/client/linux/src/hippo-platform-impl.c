@@ -22,6 +22,9 @@ static void         hippo_platform_impl_get_screen_info     (HippoPlatform     *
                                                              HippoRectangle    *monitor_rect_p,
                                                              HippoRectangle    *tray_icon_rect_p,
                                                              HippoOrientation  *tray_icon_orientation_p);
+static gboolean     hippo_platform_impl_get_pointer_position (HippoPlatform     *platform,
+                                                              int               *x_p,
+                                                              int               *y_p);
 static gboolean     hippo_platform_impl_read_login_cookie   (HippoPlatform     *platform,
                                                              HippoBrowserKind  *origin_browser_p,
                                                              char             **username_p,
@@ -78,6 +81,7 @@ hippo_platform_impl_iface_init(HippoPlatformClass *klass)
     klass->get_platform_info = hippo_platform_impl_get_platform_info;
     klass->create_window = hippo_platform_impl_create_window;
     klass->get_screen_info = hippo_platform_impl_get_screen_info;
+    klass->get_pointer_position = hippo_platform_impl_get_pointer_position;
     klass->read_login_cookie = hippo_platform_impl_read_login_cookie;
     klass->delete_login_cookie = hippo_platform_impl_delete_login_cookie;
     klass->get_jabber_resource = hippo_platform_impl_get_jabber_resource;
@@ -188,6 +192,14 @@ hippo_platform_impl_get_screen_info(HippoPlatform    *platform,
 {
     hippo_app_get_screen_info(hippo_get_app(), monitor_rect_p, tray_icon_rect_p,
                               tray_icon_orientation_p);
+}
+
+static gboolean
+hippo_platform_impl_get_pointer_position (HippoPlatform     *platform,
+                                          int               *x_p,
+                                          int               *y_p)
+{
+    return hippo_app_get_pointer_position(hippo_get_app(), x_p, y_p);
 }
 
 static gboolean

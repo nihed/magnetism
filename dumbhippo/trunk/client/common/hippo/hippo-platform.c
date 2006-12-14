@@ -66,6 +66,16 @@ hippo_platform_get_screen_info(HippoPlatform    *platform,
 }
 
 gboolean
+hippo_platform_get_pointer_position(HippoPlatform *platform,
+                                    int           *x_p,
+                                    int           *y_p)
+{
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), FALSE);
+    
+    return HIPPO_PLATFORM_GET_CLASS(platform)->get_pointer_position(platform, x_p, y_p);
+}
+
+gboolean
 hippo_platform_read_login_cookie(HippoPlatform    *platform,
                                  HippoBrowserKind *origin_browser_p,
                                  char            **username_p,
