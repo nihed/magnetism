@@ -14,6 +14,7 @@
 #include "hippo-canvas-block-myspace-person.h"
 #include "hippo-canvas-block-flickr-photoset.h"
 #include "hippo-canvas-block-facebook-event.h"
+#include "hippo-canvas-block-generic.h"
 #include "hippo-canvas-entity-photo.h"
 #include "hippo-canvas-entity-name.h"
 #include <hippo/hippo-canvas-box.h>
@@ -311,7 +312,10 @@ hippo_canvas_block_new(HippoBlockType type,
         break;
     case HIPPO_BLOCK_TYPE_MYSPACE_PERSON:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_MYSPACE_PERSON;        
-        break;        
+        break;
+    case HIPPO_BLOCK_TYPE_GENERIC:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_GENERIC;
+        break;
     }
 
     block = g_object_new(object_type,

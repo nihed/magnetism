@@ -158,6 +158,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-basics.h			\
 	$(COMMONSRCDIR)/hippo/hippo-block.c			\
 	$(COMMONSRCDIR)/hippo/hippo-block.h			\
+	$(COMMONSRCDIR)/hippo/hippo-block-generic.c		\
+	$(COMMONSRCDIR)/hippo/hippo-block-generic.h		\
 	$(COMMONSRCDIR)/hippo/hippo-block-group-chat.c		\
 	$(COMMONSRCDIR)/hippo/hippo-block-group-chat.h		\
 	$(COMMONSRCDIR)/hippo/hippo-block-group-member.c	\
@@ -188,6 +190,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-base.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-generic.c	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-generic.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-blog-person.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-blog-person.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-flickr-person.c	\
