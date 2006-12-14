@@ -14,7 +14,7 @@ import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
 public abstract class ExternalThumbnailedPersonBlockView extends AbstractPersonBlockView
-	implements ExternalAccountBlockView, ThumbnailsBlockView, SimpleTitleBlockView {
+	implements ExternalAccountBlockView, ThumbnailsBlockView, TitleBlockView {
 
 	protected ExternalAccountView externalAccountView;
 	

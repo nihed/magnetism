@@ -20,7 +20,7 @@ import com.dumbhippo.services.FacebookPhotoDataView;
 import com.dumbhippo.web.ListBean;
 
 public class FacebookBlockView extends AbstractPersonBlockView 
-       implements ThumbnailsBlockView, ExternalAccountBlockView, SimpleTitleBlockView {
+       implements ThumbnailsBlockView, ExternalAccountBlockView, TitleBlockView {
 	private List<FacebookEvent> facebookEvents;
 	private String link;
 	

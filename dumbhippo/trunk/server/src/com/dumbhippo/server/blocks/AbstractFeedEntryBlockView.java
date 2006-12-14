@@ -15,7 +15,7 @@ import com.dumbhippo.server.views.Viewpoint;
  * 
  * @author walters
  */
-public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView implements ExternalAccountBlockView, SimpleTitleDescriptionBlockView {
+public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView implements ExternalAccountBlockView, TitleDescriptionBlockView {
 	
 	protected FeedEntry entry;
 	

@@ -14,7 +14,7 @@ import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FlickrPhotosetView;
 
 public class FlickrPhotosetBlockView extends AbstractPersonBlockView
-	implements ExternalAccountBlockView, ThumbnailsBlockView, SimpleTitleBlockView {
+	implements ExternalAccountBlockView, ThumbnailsBlockView, TitleBlockView {
 
 	private FlickrPhotosetView photosetView;
 	private String flickrOwnerId;

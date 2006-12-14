@@ -1,7 +1,7 @@
 package com.dumbhippo.server.blocks;
 
 
-public interface SimpleTitleDescriptionBlockView extends SimpleTitleBlockView {
+public interface TitleDescriptionBlockView extends TitleBlockView {
 
 	public String getDescriptionAsHtml();
 	

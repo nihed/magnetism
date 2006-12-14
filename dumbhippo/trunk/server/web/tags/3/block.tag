@@ -42,7 +42,7 @@
    	<c:when test="${dh:enumIs(block.blockType, 'YOUTUBE_PERSON')}">
 	   	<dht3:youTubePersonBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
    	</c:when>
-   	<c:when test="${dh:myInstanceOf(block, 'com.dumbhippo.server.blocks.SimpleTitleBlockView')}">
+   	<c:when test="${dh:myInstanceOf(block, 'com.dumbhippo.server.blocks.TitleBlockView')}">
    		<%-- This covers BLOG_ENTRY, MYSPACE_PERSON, DELICIOUS_PUBLIC_BOOKMARK --%>
 	   	<dht3:simpleTitleDescriptionBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
    	</c:when>
