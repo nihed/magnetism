@@ -276,8 +276,8 @@ hippo_quip_window_set_sentiment(HippoQuipWindow *quip_window,
 
     if (sentiment == HIPPO_SENTIMENT_LOVE)
         g_object_set(quip_window->love_box,
-                     "background-color", 0xaaaaaaff,
-                     "border-color",     0xffffffff,
+                     "background-color", 0xeeeeeeff,
+                     "border-color",     0x000000ff,
                      NULL);
     else
         g_object_set(quip_window->love_box,
@@ -287,8 +287,8 @@ hippo_quip_window_set_sentiment(HippoQuipWindow *quip_window,
 
     if (sentiment == HIPPO_SENTIMENT_HATE)
         g_object_set(quip_window->hate_box,
-                     "background-color", 0xaaaaaaff,
-                     "border-color",     0xffffffff,
+                     "background-color", 0xeeeeeeff,
+                     "border-color",     0x000000ff,
                      NULL);
     else
         g_object_set(quip_window->hate_box,
@@ -343,7 +343,8 @@ void hippo_quip_window_show(HippoQuipWindow *quip_window)
     hippo_window_get_size(quip_window->window, &window_width, &window_height);
 
     /* Try to position the window window so the pointer is near the upper left, but force it
-     * within the workarea */
+     * within the workarea
+     */
     window_x = pointer_x + POINTER_X_OFFSET - window_width;
     window_y = pointer_y + POINTER_Y_OFFSET;
 

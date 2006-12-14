@@ -999,20 +999,17 @@ hippo_canvas_box_paint_background(HippoCanvasBox *box,
                         0, 0,
                         box->allocated_width,
                         box->border_top);
-        cairo_fill(cr);
         /* left */
         cairo_rectangle(cr,
                         0, box->border_top,
                         box->border_left,
                         box->allocated_height - box->border_top - box->border_bottom);
-        cairo_fill(cr);
         /* right */
         cairo_rectangle(cr,
                         box->allocated_width - box->border_right,
                         box->border_top,
                         box->border_right,
                         box->allocated_height - box->border_top - box->border_bottom);
-        cairo_fill(cr);
         /* bottom */
         cairo_rectangle(cr,
                         0, box->allocated_height - box->border_bottom,
