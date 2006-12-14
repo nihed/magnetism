@@ -109,14 +109,10 @@ public:
     int getRecentMessageCount();
 
     bool isGroupChatActive(HippoGroup *group);
+
     bool isShareActive(HippoPost *post);
 
     void getRemoteURL(BSTR appletName, BSTR *result) throw (std::bad_alloc, HResultException);
-    void getAppletPath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResultException);
-    void getAppletURL(BSTR appletName, BSTR *result) throw (std::bad_alloc, HResultException);
-
-    void showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser);
-
     void getImagePath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResultException);
 
     void registerMessageHook(HWND window, HippoMessageHook *hook);

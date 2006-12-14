@@ -602,51 +602,6 @@ HippoUI::getPreferences()
     return hippo_platform_impl_get_preferences(HIPPO_PLATFORM_IMPL(platform_));
 }
 
-void
-HippoUI::showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser)
-{
-    long width = 500;
-    long height = 600;
-    CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
-                     IID_IWebBrowser2, (void **)&webBrowser);
-
-    if (!webBrowser)
-        return;
-
-    VARIANT missing;
-    missing.vt = VT_NULL;
-
-    webBrowser->Navigate(url,
-                         &missing, &missing, &missing, &missing);
-    webBrowser->put_AddressBar(VARIANT_FALSE);
-    webBrowser->put_MenuBar(VARIANT_FALSE);
-    webBrowser->put_StatusBar(VARIANT_FALSE);
-    webBrowser->put_ToolBar(VARIANT_FALSE);
-    webBrowser->put_Width(width);
-    webBrowser->put_Height(height);
-
-    RECT workArea;
-    if (::SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0)) {
-        webBrowser->put_Left((workArea.left + workArea.right - width) / 2);
-        webBrowser->put_Top((workArea.bottom + workArea.top - height) / 2);
-    }
-
-    HippoPtr<IDispatch> dispDocument;   
-    webBrowser->get_Document(&dispDocument);
-    HippoQIPtr<IHTMLDocument2> document(dispDocument);
-
-    if (document) {
-        HippoPtr<IHTMLElement> bodyElement;
-        document->get_body(&bodyElement);
-        HippoQIPtr<IHTMLBodyElement> body(bodyElement);
-
-        if (body)
-            body->put_scroll(HippoBSTR(L"no"));
-    }
-
-    webBrowser->put_Visible(VARIANT_TRUE);
-}
-
 HRESULT
 HippoUI::ShowRecent()
 {
@@ -1601,19 +1556,6 @@ HippoUI::getBasePath() throw (std::bad_alloc, HResultException)
 }
 
 void
-HippoUI::getAppletPath(BSTR filename, BSTR *result)
-{
-    assert(*result == NULL);
-
-    HippoBSTR path(getBasePath());
-    
-    path.Append(L"applets\\");
-
-    path.Append(filename);
-    *result = ::SysAllocStringLen(path.m_str, path.Length());
-}
-
-void
 HippoUI::getImagePath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResultException)
 {
     assert(*result == NULL);
@@ -1624,30 +1566,6 @@ HippoUI::getImagePath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResul
 
     path.Append(filename);
     *result = ::SysAllocStringLen(path.m_str, path.Length());
-}
-
-// Find the pathname for a local HTML file, based on the location of the .exe
-// We could alternatively use res: URIs and embed the HTML files in the
-// executable, but this is probably more flexible
-void
-HippoUI::getAppletURL(BSTR  filename, 
-                      BSTR *url)
-{
-    HRESULT hr;
-
-    HippoBSTR path;
-
-    getAppletPath(filename, &path);
-
-    WCHAR urlBuf[INTERNET_MAX_URL_LENGTH];
-    DWORD urlLength = INTERNET_MAX_URL_LENGTH;
-    hr = UrlCreateFromPath(path, urlBuf, &urlLength, NULL);
-    if (!SUCCEEDED (hr))
-        throw HResultException(hr);
-
-    *url = SysAllocString(urlBuf);
-    if (*url == 0)
-        throw std::bad_alloc();
 }
 
 // Get the URL of a file on the web server
