@@ -1,8 +1,6 @@
-all: images
-
 ## Also edit Linux Makefile.am if changing this
 IMGDIR=..\..\common\images
-images:
+all:
 	-mkdir $(OUTDIR)\images
 	copy $(IMGDIR)\add_icon.png $(OUTDIR)\images
 	copy $(IMGDIR)\arrow.png $(OUTDIR)\images
