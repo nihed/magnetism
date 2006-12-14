@@ -28,6 +28,15 @@ hippo_canvas_button_new(void)
                                           NULL));
 }
 
+HippoCanvas *
+scrollbars_get_control(HippoCanvasScrollbars *scrollbars)
+{
+    HippoAbstractControl *control = HIPPO_CANVAS_CONTROL(scrollbars)->control;
+    g_assert(control != NULL);
+    
+    return (HippoCanvas *)control;
+}
+
 HippoCanvasItem*
 hippo_canvas_scrollbars_new(void)
 {
@@ -50,17 +59,9 @@ void
 hippo_canvas_scrollbars_set_root(HippoCanvasScrollbars *scrollbars,
                                  HippoCanvasItem       *item)
 {
-    HippoCanvas *control;
-
     g_return_if_fail(HIPPO_IS_CANVAS_SCROLLBARS(scrollbars));
     
-    control = NULL;
-    g_object_get(G_OBJECT(scrollbars), "control", &control,
-                 NULL);
-    g_assert(control != NULL);
-    control->setRoot(item);
-
-    g_object_unref(control);
+    scrollbars_get_control(scrollbars)->setRoot(item);    
 }
 
 void
@@ -72,14 +73,7 @@ hippo_canvas_scrollbars_set_policy (HippoCanvasScrollbars *scrollbars,
 
     g_return_if_fail(HIPPO_IS_CANVAS_SCROLLBARS(scrollbars));
     
-    control = NULL;
-    g_object_get(G_OBJECT(scrollbars),
-                 "control", &control,
-                 NULL);
-    g_assert(control != NULL);
-    control->setScrollbarPolicy(orientation, policy);
-
-    g_object_unref(control);
+    scrollbars_get_control(scrollbars)->setScrollbarPolicy(orientation, policy);
 }
 
 HippoCanvasItem*
