@@ -52,9 +52,14 @@ public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView
 	}
 	
 	public String getDescriptionAsHtml() {
-		XmlBuilder xml = new XmlBuilder();
-		xml.appendTextAsHtml(getEntry().getDescription(), null);
-		return xml.toString();
+		String description = getDescription();
+		if (description.trim().length() > 0) {
+			XmlBuilder xml = new XmlBuilder();
+			xml.appendTextAsHtml(getEntry().getDescription(), null);
+			return xml.toString();
+		} else {
+			return "";
+		}
 	}
 	
 	public String getDescription() {

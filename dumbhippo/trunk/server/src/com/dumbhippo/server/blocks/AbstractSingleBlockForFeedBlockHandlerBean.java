@@ -3,7 +3,6 @@ package com.dumbhippo.server.blocks;
 import java.util.Set;
 
 import javax.ejb.EJB;
-import javax.ejb.Stateless;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
@@ -21,7 +20,6 @@ import com.dumbhippo.server.FeedSystem.NoFeedEntryException;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
-@Stateless
 public abstract class AbstractSingleBlockForFeedBlockHandlerBean<ViewType extends AbstractFeedEntryBlockView> extends AbstractBlockHandlerBean<ViewType> implements SingleBlockForFeedBlockHandler {
 	
 	@EJB
