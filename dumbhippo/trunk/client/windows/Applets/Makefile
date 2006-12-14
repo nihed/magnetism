@@ -58,8 +58,11 @@ images:
 	copy $(IMGDIR)\lid.png $(OUTDIR)\images
 	copy $(IMGDIR)\lock_icon.png $(OUTDIR)\images
 	copy $(IMGDIR)\mugshotstacker.png $(OUTDIR)\images
+	copy $(IMGDIR)\noart.png $(OUTDIR)\images
 	copy $(IMGDIR)\nophoto.png $(OUTDIR)\images
 	copy $(IMGDIR)\photo_icon.png $(OUTDIR)\images
+	copy $(IMGDIR)\quiphate_icon.png $(OUTDIR)\images
+	copy $(IMGDIR)\quiplove_icon.png $(OUTDIR)\images
 	copy $(IMGDIR)\search_x.png $(OUTDIR)\images
 	copy $(IMGDIR)\unhush2.png $(OUTDIR)\images
 	copy $(IMGDIR)\unhush.png $(OUTDIR)\images

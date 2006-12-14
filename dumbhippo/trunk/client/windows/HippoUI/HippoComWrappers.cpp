@@ -441,7 +441,8 @@ HippoPostWrapper::get_Timeout(int *timeout)
 STDMETHODIMP 
 HippoPostWrapper::get_ToWorld(BOOL *toWorld)
 {
-    *toWorld = hippo_post_is_to_world(delegate_);
+    /* The method should be removed, but so should HippoComWrappers */
+    *toWorld = FALSE;
 
     return S_OK;
 }

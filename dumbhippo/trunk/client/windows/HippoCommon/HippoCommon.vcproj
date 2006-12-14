@@ -137,6 +137,9 @@
 				RelativePath="..\..\common\hippo\hippo-block-group-member.c">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-music-chat.c">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-block-music-person.c">
 			</File>
 			<File
@@ -173,7 +176,13 @@
 				RelativePath="..\..\common\hippo\hippo-canvas-block-group-member.c">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-music-chat.c">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-music-person.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-music.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-myspace-person.c">
@@ -240,6 +249,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-thumbnails.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-timestamp.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\generated\hippo-canvas-type-builtins.c">
@@ -319,6 +331,9 @@
 				RelativePath="..\..\common\hippo\hippo-post.c">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-quip-window.c">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-resource.c">
 			</File>
 			<File
@@ -375,6 +390,9 @@
 				RelativePath="..\..\common\hippo\hippo-block-group-member.h">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-music-chat.h">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-block-music-person.h">
 			</File>
 			<File
@@ -403,6 +421,12 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-photoset.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-music-chat.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-music.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-myspace-person.h">
@@ -472,6 +496,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-thumbnails.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-timestamp.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\generated\hippo-canvas-type-builtins.h">
@@ -553,6 +580,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-post.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-quip-window.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-resource.h">
