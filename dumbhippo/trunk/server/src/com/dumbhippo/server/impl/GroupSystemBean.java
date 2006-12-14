@@ -488,8 +488,6 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	
 	public Set<User> getUserMembers(Viewpoint viewpoint, Group group, MembershipStatus status) {
 		List<Resource> resourceMembers = getResourceMembers(viewpoint, group, -1, status);
-		if (resourceMembers.size() == 0)
-			return Collections.emptySet();
 		
 		Set<User> result = new HashSet<User>();
 		for (Resource r : resourceMembers) {
