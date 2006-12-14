@@ -27,7 +27,6 @@
 #include "HippoPreferences.h"
 #include "HippoPlatformImpl.h"
 #include "HippoUIUtil.h"
-#include "HippoComWrappers.h"
 #include "HippoImageFactory.h"
 #include <hippo/hippo-stack-manager.h>
 #include <hippo/hippo-canvas-box.h>
@@ -698,30 +697,6 @@ HippoUI::getChatWindowState(BSTR chatId)
         return HIPPO_WINDOW_STATE_CLOSED;
 
     return chatManager_->getChatWindowState(chatId);
-}
-
-HRESULT
-HippoUI::GetChatRoom(BSTR chatId, IHippoChatRoom **result)
-{
-    *result = NULL;
-
-    HippoUStr chatIdU(chatId);
-
-    if (!hippo_verify_guid(chatIdU.c_str())) {
-        return E_INVALIDARG;
-    }
-
-    HippoChatRoom *room = hippo_data_cache_ensure_chat_room(dataCache_, chatIdU.c_str(), HIPPO_CHAT_KIND_UNKNOWN);
-    
-    // when we go to the chat room, we are no longer ignoring it
-    hippo_chat_room_set_ignored(room, FALSE);
- 
-    if (room != NULL) {
-        *result = HippoChatRoomWrapper::getWrapper(room, dataCache_);
-        (*result)->AddRef();
-    }
-
-    return S_OK;
 }
 
 STDMETHODIMP

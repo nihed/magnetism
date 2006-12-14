@@ -66,7 +66,6 @@ public:
     STDMETHODIMP ShareLink(BSTR url, BSTR title, IHippoToolbarAction *actions);
     STDMETHODIMP ShowChatWindow(BSTR postId);
     STDMETHODIMP GetLoginId(BSTR *result);
-    STDMETHODIMP GetChatRoom(BSTR postId, IHippoChatRoom **result);
     STDMETHODIMP DoUpgrade();
     STDMETHODIMP ShareLinkComplete(BSTR postId, BSTR url);
 

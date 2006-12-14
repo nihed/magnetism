@@ -80,15 +80,6 @@ library HippoExplorer {
     [
         uuid(2D40665F-8139-4cb5-BA39-A6E25A147F5D) // CLSID_HippoChatControl
     ]
-    coclass HippoChatControl
-    {
-        [default] interface IHippoChatRoom;
-        [default, source] interface IHippoChatRoomEvents;
-        interface IHippoChatRoomEvents;
-    }
-    [
-        uuid(1C3A1AED-4166-4A4C-96CE-5C3D47D20CCA) // CLSID_HippoControl
-    ]
     coclass HippoControl
     {
         [default] interface IHippoControl;

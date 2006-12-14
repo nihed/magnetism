@@ -128,9 +128,6 @@
 				RelativePath=".\ClassFactory.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoChatControl.cpp">
-			</File>
-			<File
 				RelativePath=".\HippoControl.cpp">
 			</File>
 			<File
@@ -195,9 +192,6 @@
 			</File>
 			<File
 				RelativePath=".\Guid.h">
-			</File>
-			<File
-				RelativePath=".\HippoChatControl.h">
 			</File>
 			<File
 				RelativePath=".\HippoControl.h">

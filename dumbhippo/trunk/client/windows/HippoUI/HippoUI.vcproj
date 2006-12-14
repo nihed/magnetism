@@ -150,9 +150,6 @@
 				RelativePath=".\HippoChatWindow.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoComWrappers.cpp">
-			</File>
-			<File
 				RelativePath=".\HippoExternalBrowser.cpp">
 			</File>
 			<File
@@ -267,9 +264,6 @@
 			</File>
 			<File
 				RelativePath=".\HippoChatWindow.h">
-			</File>
-			<File
-				RelativePath=".\HippoComWrappers.h">
 			</File>
 			<File
 				RelativePath=".\HippoExternalBrowser.h">
