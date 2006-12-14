@@ -38,7 +38,6 @@
         <ComponentRef Id="hippoUI" />
         <ComponentRef Id="hippoUtil" />
         <ComponentRef Id="loudmouth" />
-        <ComponentRef Id="applets" />
         <ComponentRef Id="images" />
         <ComponentRef Id="pangoConfiguration" />
     </Feature>

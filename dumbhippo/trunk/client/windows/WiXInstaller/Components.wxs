@@ -84,59 +84,6 @@
 		        </File>
 		    </Component>
 		    
-		    <Directory Id="dhAppletsDir" Name="Applets">
-        		    <Component Id="applets" Guid="207BF071-197E-471E-8AAF-6DB6C03B78EC">
-						<File Id="addPng"            Name="add.png"      LongName="add.png"             src="applets\add.png"            DiskId="1" Vital="yes"/>
-	        	        <File Id="blueleftarrowGif"  Name="blueleft.gif" LongName="blueleftarrow.gif"   src="applets\blueleftarrow.gif"  DiskId="1" Vital="yes"/>
-	        	        <File Id="bluerightarrowGif" Name="bluerigh.gif" LongName="bluerightarrow.gif"  src="applets\bluerightarrow.gif" DiskId="1" Vital="yes"/>
-	        	        <File Id="bubbleCss"         Name="bubble.css"   LongName="bubble.css"          src="applets\bubble.css"         DiskId="1" Vital="yes"/>
-	        	        <File Id="bubbleJs"          Name="bubble.js"    LongName="bubble.js"           src="applets\bubble.js"          DiskId="1" Vital="yes"/>
-	        	        <File Id="bubbleListCss"     Name="bubbleLi.css" LongName="bubbleList.css"      src="applets\bubbleList.css"     DiskId="1" Vital="yes"/>
-	        	        <File Id="bubbleListJs"      Name="bubbleLi.js"  LongName="bubbleList.js"       src="applets\bubbleList.js"      DiskId="1" Vital="yes"/>
-	        	        <File Id="bubbleListXml"     Name="bubbleLi.xml" LongName="bubbleList.xml"      src="applets\bubbleList.xml"     DiskId="1" Vital="yes"/>
-	        	        <File Id="bubclosePng"       Name="bubclose.gif" LongName="bubclose.png"        src="applets\bubclose.png"       DiskId="1" Vital="yes"/>
-						<File Id="bubclosepPng"      Name="bubclp.gif"   LongName="bubclose_purple.png" src="applets\bubclose_purple.png" DiskId="1" Vital="yes"/>						
-	        	        <File Id="bubedgeBPng"       Name="bubedge_.png" LongName="bubedge_b.png"       src="applets\bubedge_b.png"      DiskId="1" Vital="yes"/>
-	        	        <File Id="bubedgeLPng"       Name="bubedge_.png" LongName="bubedge_l.png"       src="applets\bubedge_l.png"      DiskId="1" Vital="yes"/>
-	        	        <File Id="bubedgeRPng"       Name="bubedge_.png" LongName="bubedge_r.png"       src="applets\bubedge_r.png"      DiskId="1" Vital="yes"/>
-	        	        <File Id="bubedgeTPng"       Name="bubedge_.png" LongName="bubedge_t.png"       src="applets\bubedge_t.png"      DiskId="1" Vital="yes"/>
-						<File Id="bubgroupupdateGif" Name="bubgroup.gif" LongName="bubgroupupdate.gif"  src="applets\bubgroupupdate.gif" DiskId="1" Vital="yes"/>
-	        	        <File Id="bublinkswarmGif"   Name="bublinks.gif" LongName="bublinkswarm.gif"    src="applets\bublinkswarm.gif"   DiskId="1" Vital="yes"/>
-	        	        <File Id="chaticonGif"       Name="chaticon.gif" LongName="chaticon.gif"        src="applets\chaticon.gif"       DiskId="1" Vital="yes"/>
-	        	        <File Id="clientstyleXml"    Name="clientst.xml" LongName="clientstyle.xml"     src="applets\clientstyle.xml"    DiskId="1" Vital="yes"/>
-	        	        <File Id="dhCss"             Name="dh.css"                                      src="applets\dh.css"             DiskId="1" Vital="yes"/>
-	        	        <File Id="dhJs"              Name="dh.js"                                       src="applets\dh.js"              DiskId="1" Vital="yes"/>
-	        	        <File Id="flickrJs"          Name="flickr.js"                                   src="applets\flickr.js"          DiskId="1" Vital="yes"/>
-	        	        <File Id="grayleftarrowGif"  Name="grayleft.gif" LongName="grayleftarrow.gif"   src="applets\grayleftarrow.gif"  DiskId="1" Vital="yes"/>
-	        	        <File Id="grayrightarrowGif" Name="grayrigh.gif" LongName="grayrightarrow.gif"  src="applets\grayrightarrow.gif" DiskId="1" Vital="yes"/>
-	        	        <File Id="groupChatPng"      Name="groupCha.png" LongName="groupChat.png"       src="applets\groupChat.png"      DiskId="1" Vital="yes"/>
-	        	        <File Id="ignoreiconPng"     Name="ignoreic.png" LongName="ignoreicon.png"      src="applets\ignoreicon.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="linkswarm.gif"     Name="linkswar.gif" LongName="linkswarm.gif"       src="applets\linkswarm.gif"      DiskId="1" Vital="yes"/>
-	        	        <File Id="lsBubshadowPng"    Name="ls_bubsh.png" LongName="ls_bubshadow.png"    src="applets\ls_bubshadow.png"   DiskId="1" Vital="yes"/>
-	        	        <File Id="lsorangeBlPng"     Name="lsorange.png" LongName="lsorange_bl.png"     src="applets\lsorange_bl.png"    DiskId="1" Vital="yes"/>
-	        	        <File Id="lsorangeBrPng"     Name="lsorange.png" LongName="lsorange_br.png"     src="applets\lsorange_br.png"    DiskId="1" Vital="yes"/>
-	        	        <File Id="lsorangeTlPng"     Name="lsorange.png" LongName="lsorange_tl.png"     src="applets\lsorange_tl.png"    DiskId="1" Vital="yes"/>
-	        	        <File Id="lsorangeTrPng"     Name="lsorange.png" LongName="lsorange_tr.png"     src="applets\lsorange_tr.png"    DiskId="1" Vital="yes"/>
-						<File Id="lspurpleBlPng"     Name="lspurple.png" LongName="lspurple_bl.png"     src="applets\lspurple_bl.png"    DiskId="1" Vital="yes"/>
-						<File Id="lspurpleBrPng"     Name="lspurple.png" LongName="lspurple_br.png"     src="applets\lspurple_br.png"    DiskId="1" Vital="yes"/>
-						<File Id="lspurpleTlPng"     Name="lspurple.png" LongName="lspurple_tl.png"     src="applets\lspurple_tl.png"    DiskId="1" Vital="yes"/>
-						<File Id="lspurpleTrPng"     Name="lspurple.png" LongName="lspurple_tr.png"     src="applets\lspurple_tr.png"    DiskId="1" Vital="yes"/>						
-	        	        <File Id="lswhiteBlPng"      Name="lswhite_.png" LongName="lswhite_bl.png"      src="applets\lswhite_bl.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="lswhiteBrPng"      Name="lswhite_.png" LongName="lswhite_br.png"      src="applets\lswhite_br.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="lswhiteTlPng"      Name="lswhite_.png" LongName="lswhite_tl.png"      src="applets\lswhite_tl.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="lswhiteTrPng"      Name="lswhite_.png" LongName="lswhite_tr.png"      src="applets\lswhite_tr.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="menuCss"           Name="menu.css"     LongName="menu.css"            src="applets\menu.css"           DiskId="1" Vital="yes"/>
-	        	        <File Id="menuJs"            Name="menu.js"      LongName="menu.js"             src="applets\menu.js"            DiskId="1" Vital="yes"/>
-	        	        <File Id="menuXml"           Name="menu.xml"     LongName="menu.xml"            src="applets\menu.xml"           DiskId="1" Vital="yes"/>
-	        	        <File Id="notificationCss"   Name="notifica.css" LongName="notification.css"    src="applets\notification.css"   DiskId="1" Vital="yes"/>
-	        	        <File Id="notificationJs"    Name="notifica.js"  LongName="notification.js"     src="applets\notification.js"    DiskId="1" Vital="yes"/>
-	        	        <File Id="notificationXml"   Name="notifica.xml" LongName="notification.xml"    src="applets\notification.xml"   DiskId="1" Vital="yes"/>
-	        	        <File Id="wbubcnrBlPng"      Name="wbubcnr_.png" LongName="wbubcnr_bl.png"      src="applets\wbubcnr_bl.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="wbubcnrBrPng"      Name="wbubcnr_.png" LongName="wbubcnr_br.png"      src="applets\wbubcnr_br.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="wbubcnrTlPng"      Name="wbubcnr_.png" LongName="wbubcnr_tl.png"      src="applets\wbubcnr_tl.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="wbubcnrTrPng"      Name="wbubcnr_.png" LongName="wbubcnr_tr.png"      src="applets\wbubcnr_tr.png"     DiskId="1" Vital="yes"/>
-		            </Component>
-		    </Directory>
 		    <Directory Id="dhImagesDir" Name="Images">
         		<Component Id="images" Guid="681D6075-3B98-428C-8B73-68D9F15133AD">
 	        	    <File Id="addIconPng"        Name="add_icon.png" LongName="add_icon.png"       src="images\add_icon.png"       DiskId="1" Vital="yes"/>
@@ -167,7 +114,8 @@
 	                    <File Id="unhushPng"         Name="unhush.png"   LongName="unhush.png"         src="images\unhush.png"         DiskId="1" Vital="yes"/>
 	                    <File Id="unhush2Png"        Name="unhush2.png"  LongName="unhush2.png"        src="images\unhush2.png"        DiskId="1" Vital="yes"/>
                         </Component>
-                     </Directory>	                    
+                     </Directory>
+                     	                    
 		    <Directory Id="dhEtcDir" Name="etc">
     		        <Directory Id="dhEtcPangoDir" Name="pango">
     		            <Component Id="pangoConfiguration" Guid="7D242C09-A7C0-41cd-B5B6-6C70229F574D">
