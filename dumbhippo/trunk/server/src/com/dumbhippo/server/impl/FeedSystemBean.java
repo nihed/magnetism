@@ -173,9 +173,9 @@ public class FeedSystemBean implements FeedSystem {
 		}
 		
 		if (isDefinitelyText)
-			return prepPlainText(content.getValue());
+			return prepPlainText(content.getValue()).trim();
 		else
-			return HtmlTextExtractor.extractText(content.getValue());
+			return HtmlTextExtractor.extractText(content.getValue()).trim();
 	}
 
 	private URL entryURLFromSyndEntry(SyndEntry syndEntry) throws MalformedURLException {
