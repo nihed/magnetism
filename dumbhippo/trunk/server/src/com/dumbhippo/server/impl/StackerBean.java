@@ -24,6 +24,7 @@ import javax.persistence.Query;
 import org.jboss.annotation.ejb.Service;
 import org.slf4j.Logger;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.ThreadUtils;
@@ -414,7 +415,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		updateUserBlockDatas(block, desiredUsers, participantId, reason);
 	}
 	
-	private void refreshUserBlockDatasDeleted(Block block) {
+	private void refreshUserBlockDatasDeleted(Block block, boolean verbose) {
 		Set<User> desiredUsers = getHandler(block).getInterestedUsers(block);
 
 		List<UserBlockData> userDatas = queryUserBlockDatas(block);
@@ -428,15 +429,21 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			UserBlockData old = existing.get(u);
 			if (old != null) {
 				existing.remove(u);
-				if (old.isDeleted())
+				if (old.isDeleted()) {
+					if (verbose)
+						logger.debug("Undeleting user block data {}", old);
 					old.setDeleted(false);
+				}
 			}
 		}
 		// the rest of "existing" is users who no longer are in the desired set
 		for (User u : existing.keySet()) {
 			UserBlockData old = existing.get(u);
-			if (!old.isDeleted())
+			if (!old.isDeleted()) {
+				if (verbose)
+					logger.debug("Deleting user block data {}", old);
 				old.setDeleted(true);
+			}
 		}
 	}
 	
@@ -512,7 +519,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		updateGroupBlockDatas(block, desiredGroups, isGroupParticipation, reason);
 	}
 	
-	private void refreshGroupBlockDatasDeleted(Block block) {
+	private void refreshGroupBlockDatasDeleted(Block block, boolean verbose) {
 		Set<Group> desiredGroups = getHandler(block).getInterestedGroups(block);
 
 		List<GroupBlockData> groupDatas = queryGroupBlockDatas(block);
@@ -526,15 +533,21 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			GroupBlockData old = existing.get(g);
 			if (old != null) {
 				existing.remove(g);
-				if (old.isDeleted())
+				if (old.isDeleted()) {
+					if (verbose)
+						logger.debug("Undeleting group block data {}", old);
 					old.setDeleted(false);
+				}
 			}
 		}
 		// the rest of "existing" is groups who no longer are in the desired set
 		for (Group g : existing.keySet()) {
 			GroupBlockData old = existing.get(g);
-			if (!old.isDeleted())
+			if (!old.isDeleted()) {
+				if (verbose)
+					logger.debug("Deleting group block data {}", old);
 				old.setDeleted(true);
+			}
 		}
 	}
 	
@@ -555,14 +568,65 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				runner.runTaskInNewTransaction(new Runnable() {
 					public void run() {
 						Block attached = em.find(Block.class, block.getId());
-						refreshUserBlockDatasDeleted(attached);
-						refreshGroupBlockDatasDeleted(attached);
+						refreshUserBlockDatasDeleted(attached, false);
+						refreshGroupBlockDatasDeleted(attached, false);
 					}
 				});
 			}
 		});		
 	}
+
+	public void refreshDeletedFlagsOnAllBlocks() {
+		refreshDeletedFlagsOnAllBlocksWithType(null);
+	}
 	
+	public void refreshDeletedFlagsOnAllBlocksWithType(String typeName) {
+		final List<String> blockIds = new ArrayList<String>();
+		
+		BlockType blockType = null;
+		if (typeName != null)
+			blockType = BlockType.valueOf(typeName);
+		
+		Query q = em.createQuery("SELECT block.id FROM Block block " + 
+				(blockType != null ? " WHERE blockType = " + blockType.ordinal() : ""));
+		for (String id : TypeUtils.castList(String.class, q.getResultList()))
+			blockIds.add(id);
+		
+		Thread t = ThreadUtils.newDaemonThread("refresh deleted", new Runnable() {
+			public void run() {
+				int i = 0;
+				int failures = 0;
+				for (final String id : blockIds) {
+					if ((i % 1000) == 0) {
+						logger.debug("processing block {} of {}", i, blockIds.size());
+					}
+					try {
+						runner.runTaskInNewTransaction(new Runnable() {
+							public void run() {							
+								Block attached = em.find(Block.class, id);
+								refreshUserBlockDatasDeleted(attached, true);
+								refreshGroupBlockDatasDeleted(attached, true);							
+							}
+						});
+					} catch (RuntimeException e) {
+						logger.warn("Failed to refresh deleted flags, root exception", ExceptionUtils.getRootCause(e));
+						logger.warn("Failed to refresh deleted flags, toplevel exception", e);
+						++failures;
+						
+						if (failures > 50) {
+							logger.warn("Failed too many times, stopping");
+							break;
+						}	
+					}
+					++i;
+				}
+				
+				logger.debug("Completed refreshing deleted flags on all blocks, {} failures", failures);
+			}
+		});
+		t.start();
+	}
+		
 	public void stack(final Block block, final long activity, final User participant, final boolean isGroupParticipation, final StackReason reason) {
 
 		// never "roll back" to an earlier timestamp

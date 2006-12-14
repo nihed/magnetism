@@ -46,6 +46,13 @@ public interface Stacker {
 	public void refreshDeletedFlags(Block block);
 	public void refreshDeletedFlags(BlockKey key);
 	
+	/** 
+	 * A migration/debug method that refreshes deleted flags on *all* blocks in the database
+	 */
+	public void refreshDeletedFlagsOnAllBlocks();
+	
+	public void refreshDeletedFlagsOnAllBlocksWithType(String typeName);
+	
 	public void blockClicked(BlockKey key, User user, long clickedTime);
 	
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException;
