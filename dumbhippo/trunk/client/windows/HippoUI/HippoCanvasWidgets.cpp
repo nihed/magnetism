@@ -7,7 +7,9 @@
 #include <hippo/hippo-canvas-widgets.h>
 #include "HippoCanvasControl.h"
 #include "HippoCanvas.h"
-#include "HippoEntryControl.h"
+#include "HippoEdit.h"
+
+#define _(str) str
 
 #define HIPPO_DEFINE_CONTROL_ITEM(lower, Camel)                                         \
     struct _HippoCanvas##Camel { HippoCanvasControl parent; };                          \
@@ -19,7 +21,6 @@
 
 HIPPO_DEFINE_CONTROL_ITEM(button, Button);
 HIPPO_DEFINE_CONTROL_ITEM(scrollbars, Scrollbars);
-HIPPO_DEFINE_CONTROL_ITEM(entry, Entry);
 
 HippoCanvasItem*
 hippo_canvas_button_new(void)
@@ -70,8 +71,6 @@ hippo_canvas_scrollbars_set_policy (HippoCanvasScrollbars *scrollbars,
                                     HippoOrientation       orientation,
                                     HippoScrollbarPolicy   policy)
 {
-    HippoCanvas *control;
-
     g_return_if_fail(HIPPO_IS_CANVAS_SCROLLBARS(scrollbars));
     
     scrollbars_get_control(scrollbars)->setScrollbarPolicy(orientation, policy);
@@ -79,11 +78,15 @@ hippo_canvas_scrollbars_set_policy (HippoCanvasScrollbars *scrollbars,
 
 /*************************************************************************/
 
-class HippoCanvasEntryListener : HippoEntryControlListener {
+typedef enum {
+    ENTRY_PROP_0,
+    ENTRY_PROP_TEXT
+};
+
+class HippoCanvasEntryListener : public HippoEditListener {
 public:
-    HippoCanvasEntryListener(HippoCanvasItem *item, HippoEntryControl *control) {
-        item_ = item;
-        control_ = control;
+    HippoCanvasEntryListener(HippoCanvasItem *item, HippoEdit *control) :
+        item_(item), control_(control) {
     }
 
     virtual void onTextChanged();
@@ -91,8 +94,8 @@ public:
 
 private:
     HippoCanvasItem *item_;
-    HippoEntryControl *control_;
-}
+    HippoEdit *control_;
+};
 
 struct _HippoCanvasEntry {
     HippoCanvasControl parent;
@@ -110,23 +113,23 @@ static void
 hippo_canvas_entry_init(HippoCanvasEntry *canvas_entry) {
 }
 
-HippoEntryControl *
+HippoEdit *
 entry_get_control(HippoCanvasEntry *canvas_entry)
 {
     HippoAbstractControl *control = HIPPO_CANVAS_CONTROL(canvas_entry)->control;
     g_assert(control != NULL);
     
-    return (HippoEntryControl *)control;
+    return (HippoEdit *)control;
 }
 
 static void
 hippo_canvas_entry_dispose(GObject *object)
 {
     HippoCanvasEntry *canvas_entry = HIPPO_CANVAS_ENTRY (object);
-    HippoEntryControl *entry = entry_get_control(canvas_entry);
+    HippoEdit *edit = entry_get_control(canvas_entry);
 
-    if (entry)
-        entry->setListener(null);
+    if (edit)
+        edit->setListener(NULL);
 
     G_OBJECT_CLASS(hippo_canvas_entry_parent_class)->dispose(object);
 }
@@ -138,12 +141,11 @@ hippo_canvas_entry_set_property(GObject        *object,
                                 GParamSpec      *pspec)
 {
     HippoCanvasEntry *canvas_entry = HIPPO_CANVAS_ENTRY(object);
-    HippoEntryControl *entry = entry_get_control(canvas_entry);
+    HippoEdit *edit = entry_get_control(canvas_entry);
 
     switch (prop_id) {
     case ENTRY_PROP_TEXT:
-        HippoBSTR str = HippoBSTR.fromUTF8(g_value_get_string(value));
-        entry->setText(str);
+        edit->setText(HippoBSTR::fromUTF8(g_value_get_string(value)));
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -158,13 +160,15 @@ hippo_canvas_entry_get_property(GObject        *object,
                                 GParamSpec      *pspec)
 {
     HippoCanvasEntry *canvas_entry = HIPPO_CANVAS_ENTRY (object);
-    HippoEntryControl *entry = entry_get_control(canvas_entry);
+    HippoEdit *edit = entry_get_control(canvas_entry);
 
     switch (prop_id) {
     case ENTRY_PROP_TEXT:
-        HippoUStr ustr(entry->getText());
-        g_value_set_string(value, ustr.c_str);
-        break;
+        {
+            HippoUStr ustr(edit->getText());
+            g_value_set_string(value, ustr.c_str());
+            break;
+        }
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -172,9 +176,9 @@ hippo_canvas_entry_get_property(GObject        *object,
 }
 
 static void
-hippo_canvas_entry_class_init(HippoCanvasEntryClass *class)
+hippo_canvas_entry_class_init(HippoCanvasEntryClass *klass)
 {
-    GObjectClass *object_class = G_OBJECT_CLASS(class);
+    GObjectClass *object_class = G_OBJECT_CLASS(klass);
 
     object_class->dispose = hippo_canvas_entry_dispose;
     object_class->set_property = hippo_canvas_entry_set_property;
@@ -186,19 +190,28 @@ hippo_canvas_entry_class_init(HippoCanvasEntryClass *class)
                                                         _("Text"),
                                                         _("Text in the entry"),
                                                         NULL,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+                                                        (GParamFlags)(G_PARAM_READABLE | G_PARAM_WRITABLE)));
 }
 
 HippoCanvasItem*
 hippo_canvas_entry_new(void)
 {
-    HippoEntryControl *entry = new HippoEntryControl();
-    HippoCanvasEntry *item = g_object_new(HIPPO_TYPE_CANVAS_ENTRY,
-                                          "control", entry,
-                                          NULL);
+    HippoEdit *edit = new HippoEdit();
 
-    item->listener = new HippoCanvasEntryListener(HIPPO_CANVAS_ITEM(item), entry);
-    entry->setListener(item->listener);
+    // It turns out that Windows does a poor job of padding and drawing an border
+    // around a edit control; it's easier to make HippoEdit be a naked edit area
+    // with no border and padding and add the border and padding here
+
+    HippoCanvasEntry *item = (HippoCanvasEntry *)g_object_new(HIPPO_TYPE_CANVAS_ENTRY,
+                                                              "control", edit,
+                                                              "border", 1,
+                                                              "border-color", 0x666666ff,
+                                                              "padding-top", 2,
+                                                              "padding-bottom", 2,
+                                                              NULL);
+
+    item->listener = new HippoCanvasEntryListener(HIPPO_CANVAS_ITEM(item), edit);
+    edit->setListener(item->listener);
 
     return HIPPO_CANVAS_ITEM(item);
 }

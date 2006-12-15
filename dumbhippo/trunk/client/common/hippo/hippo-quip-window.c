@@ -230,7 +230,7 @@ hippo_quip_window_new(HippoDataCache *cache)
                              "padding", 8,
                              "border", 1,
                              "background-color", 0xffffffff,
-                             "border-color", 0x00000000,
+                             "border-color", 0x000000ff,
                              "spacing", 8,
                              NULL);
     hippo_window_set_contents(quip_window->window, HIPPO_CANVAS_ITEM(outer_box));

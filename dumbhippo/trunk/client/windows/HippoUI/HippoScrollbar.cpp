@@ -23,6 +23,9 @@ HippoScrollbar::HippoScrollbar()
 bool
 HippoScrollbar::create()
 {
+    if (isCreated())
+        return true;
+
     if (!HippoAbstractControl::create())
         return false;
 
