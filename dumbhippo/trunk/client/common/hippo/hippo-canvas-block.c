@@ -3,7 +3,6 @@
 
 #include "hippo-common-internal.h"
 #include "hippo-canvas-block.h"
-#include "hippo-canvas-block-blog-person.h"
 #include "hippo-canvas-block-post.h"
 #include "hippo-canvas-block-group-chat.h"
 #include "hippo-canvas-block-group-member.h"
@@ -11,7 +10,6 @@
 #include "hippo-canvas-block-music-person.h"
 #include "hippo-canvas-block-flickr-person.h"
 #include "hippo-canvas-block-youtube-person.h"
-#include "hippo-canvas-block-myspace-person.h"
 #include "hippo-canvas-block-flickr-photoset.h"
 #include "hippo-canvas-block-facebook-event.h"
 #include "hippo-canvas-block-generic.h"
@@ -293,9 +291,6 @@ hippo_canvas_block_new(HippoBlockType type,
     case HIPPO_BLOCK_TYPE_GROUP_MEMBER:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_GROUP_MEMBER;
         break;
-    case HIPPO_BLOCK_TYPE_BLOG_PERSON:
-        object_type = HIPPO_TYPE_CANVAS_BLOCK_BLOG_PERSON;
-        break;
     case HIPPO_BLOCK_TYPE_FLICKR_PERSON:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_FLICKR_PERSON;
         break;
@@ -307,9 +302,6 @@ hippo_canvas_block_new(HippoBlockType type,
         break;
     case HIPPO_BLOCK_TYPE_YOUTUBE_PERSON:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_YOUTUBE_PERSON;
-        break;
-    case HIPPO_BLOCK_TYPE_MYSPACE_PERSON:
-        object_type = HIPPO_TYPE_CANVAS_BLOCK_MYSPACE_PERSON;        
         break;
     case HIPPO_BLOCK_TYPE_GENERIC:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_GENERIC;

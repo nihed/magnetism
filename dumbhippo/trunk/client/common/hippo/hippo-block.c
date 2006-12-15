@@ -8,10 +8,8 @@
 #include "hippo-block-music-chat.h"
 #include "hippo-block-music-person.h"
 #include "hippo-block-facebook-person.h"
-#include "hippo-block-blog-person.h"
 #include "hippo-block-flickr-person.h"
 #include "hippo-block-youtube-person.h"
-#include "hippo-block-myspace-person.h"
 #include "hippo-block-flickr-photoset.h"
 #include "hippo-block-facebook-event.h"
 #include "hippo-xml-utils.h"
@@ -424,9 +422,6 @@ hippo_block_new(const char    *guid,
     case HIPPO_BLOCK_TYPE_MUSIC_PERSON:
         object_type = HIPPO_TYPE_BLOCK_MUSIC_PERSON;
         break;
-    case HIPPO_BLOCK_TYPE_BLOG_PERSON:
-        object_type = HIPPO_TYPE_BLOCK_BLOG_PERSON;
-        break;
     case HIPPO_BLOCK_TYPE_FLICKR_PERSON:
         object_type = HIPPO_TYPE_BLOCK_FLICKR_PERSON;
         break;
@@ -438,9 +433,6 @@ hippo_block_new(const char    *guid,
         break;
     case HIPPO_BLOCK_TYPE_YOUTUBE_PERSON:
         object_type = HIPPO_TYPE_BLOCK_YOUTUBE_PERSON;
-        break;
-    case HIPPO_BLOCK_TYPE_MYSPACE_PERSON:
-        object_type = HIPPO_TYPE_BLOCK_MYSPACE_PERSON;
         break;
     case HIPPO_BLOCK_TYPE_GENERIC:
         object_type = HIPPO_TYPE_BLOCK_GENERIC;
@@ -737,12 +729,10 @@ hippo_block_type_from_attributes(const char *type,
         { "GROUP_CHAT", HIPPO_BLOCK_TYPE_GROUP_CHAT },
         { "MUSIC_CHAT", HIPPO_BLOCK_TYPE_MUSIC_CHAT },
         { "MUSIC_PERSON", HIPPO_BLOCK_TYPE_MUSIC_PERSON },
-        { "BLOG_PERSON", HIPPO_BLOCK_TYPE_BLOG_PERSON },
         { "FLICKR_PERSON", HIPPO_BLOCK_TYPE_FLICKR_PERSON },
         { "FLICKR_PHOTOSET", HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET },
         { "FACEBOOK_EVENT", HIPPO_BLOCK_TYPE_FACEBOOK_EVENT },
-        { "YOUTUBE_PERSON", HIPPO_BLOCK_TYPE_YOUTUBE_PERSON },
-        { "MYSPACE_PERSON", HIPPO_BLOCK_TYPE_MYSPACE_PERSON }           
+        { "YOUTUBE_PERSON", HIPPO_BLOCK_TYPE_YOUTUBE_PERSON }
     };
     unsigned int i;
 
