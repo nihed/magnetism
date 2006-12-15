@@ -16,7 +16,6 @@
 		<dht3:simpleBlockTitle block="${block}" oneLine="${oneLine}" homeStack="false" spanClass="dh-stacker-block-title-generic"/>
 		<c:if test="${!oneLine && hasDescription}">
 			<dht3:blockDescription blockId="${blockId}">${block.descriptionAsHtml}</dht3:blockDescription>
-			<dht3:blockContent blockId="${blockId}">${block.descriptionAsHtml}</dht3:blockContent>
 		</c:if>
 	</dht3:blockLeft>
 	<dht3:blockRight blockId="${blockId}" from="${block.entitySource}" showFrom="${showFrom}">
