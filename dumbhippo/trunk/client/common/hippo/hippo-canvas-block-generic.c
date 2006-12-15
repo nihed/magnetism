@@ -28,6 +28,8 @@ static GObject* hippo_canvas_block_generic_constructor (GType                  t
 
 
 /* Canvas block methods */
+static void hippo_canvas_block_generic_set_block       (HippoCanvasBlock *canvas_block,
+                                                        HippoBlock       *block);
 static void hippo_canvas_block_generic_title_activated (HippoCanvasBlock *canvas_block);
 
 static void hippo_canvas_block_generic_clicked_count_changed (HippoCanvasBlock *canvas_block);
@@ -101,6 +103,7 @@ hippo_canvas_block_generic_class_init(HippoCanvasBlockGenericClass *klass)
     object_class->dispose = hippo_canvas_block_generic_dispose;
     object_class->finalize = hippo_canvas_block_generic_finalize;
 
+    canvas_block_class->set_block = hippo_canvas_block_generic_set_block;
     canvas_block_class->title_activated = hippo_canvas_block_generic_title_activated;
     canvas_block_class->clicked_count_changed = hippo_canvas_block_generic_clicked_count_changed;
     canvas_block_class->significant_clicked_count_changed = hippo_canvas_block_generic_significant_clicked_count_changed;
@@ -172,11 +175,6 @@ hippo_canvas_block_generic_constructor (GType                  type,
     HippoCanvasBlockGeneric *block_generic = HIPPO_CANVAS_BLOCK_GENERIC(object);
     HippoCanvasBox *box;
 
-    /* Skip this for now; with feed generics it's just confusing, we need to be able to give
-     * the feed name for those and say "Web Swarm" only for manual shares
-     */
-    /* hippo_canvas_block_set_heading(block, _("Web Swarm")); */
-
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        NULL);
 
@@ -224,13 +222,21 @@ static void
 hippo_canvas_block_generic_title_activated(HippoCanvasBlock *canvas_block)
 {
     HippoActions *actions;
+    char *link;
 
     if (canvas_block->block == NULL)
         return;
 
     actions = hippo_canvas_block_get_actions(canvas_block);
 
-    /* FIXME go to link */
+    link = NULL;
+    g_object_get(G_OBJECT(canvas_block->block), "link", &link, NULL);
+
+    if (link != NULL && actions != NULL) {
+        hippo_actions_open_url(actions, link);
+    }
+
+    g_free(link);
 }
 
 static void
@@ -238,8 +244,15 @@ hippo_canvas_block_generic_clicked_count_changed (HippoCanvasBlock *canvas_block
 {
     HippoCanvasBlockGeneric *canvas_block_generic = HIPPO_CANVAS_BLOCK_GENERIC(canvas_block);
     char *s;
+    int count;
 
-    s = g_strdup_printf(_("%d views"), hippo_block_get_clicked_count(canvas_block->block));
+    count = hippo_block_get_clicked_count(canvas_block->block);
+
+    if (count > 0) {
+        s = g_strdup_printf(_("%d views"), count);
+    } else {
+        s = NULL;
+    }
 
     g_object_set(G_OBJECT(canvas_block_generic->clicked_count_item),
                  "text", s,
@@ -342,4 +355,118 @@ hippo_canvas_block_generic_unexpand(HippoCanvasBlock *canvas_block)
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_generic_parent_class)->unexpand(canvas_block);
 
     hippo_canvas_block_generic_update_visibility(block_generic);
+}
+
+static void
+on_block_title_changed(HippoBlock *block,
+                       GParamSpec *arg, /* null when first calling this */
+                       void       *data)
+{
+    HippoCanvasBlock *canvas_block;
+    char *title;
+    char *link;
+
+    canvas_block = HIPPO_CANVAS_BLOCK(data);
+    
+    title = NULL;
+    link = NULL;
+    g_object_get(G_OBJECT(block),
+                 "title", &title,
+                 "link", &link,
+                 NULL);
+
+    hippo_canvas_block_set_title(canvas_block, title, link, FALSE);
+    
+    g_free(title);
+    g_free(link);
+}
+
+static void
+on_block_description_changed(HippoBlock *block,
+                             GParamSpec *arg, /* null when first calling this */
+                             void       *data)
+{
+    HippoCanvasBlock *canvas_block;
+    HippoCanvasBlockGeneric *block_generic;
+    char *description;
+
+    canvas_block = HIPPO_CANVAS_BLOCK(data);
+    block_generic = HIPPO_CANVAS_BLOCK_GENERIC(data);
+    
+    description = NULL;
+    g_object_get(G_OBJECT(block), "description", &description, NULL);
+
+    if (description == NULL) {
+        hippo_canvas_block_set_expanded(canvas_block, FALSE);
+    }
+    canvas_block->expandable = description != NULL;
+
+    g_object_set(G_OBJECT(block_generic->description_item),
+                 "text", description,
+                 NULL);
+
+    g_free(description);
+}
+
+static void
+on_block_source_changed(HippoBlock *block,
+                        GParamSpec *arg, /* null when first calling this */
+                        void       *data)
+{
+    HippoCanvasBlock *canvas_block;
+    HippoEntity *source;
+
+    canvas_block = HIPPO_CANVAS_BLOCK(data);
+    
+    source = NULL;
+    g_object_get(G_OBJECT(block), "source", &source, NULL);
+
+    hippo_canvas_block_set_sender(canvas_block,
+                                  source ? hippo_entity_get_guid(source) : NULL);
+    
+    if (source)
+        g_object_unref(source);
+}
+
+static void
+hippo_canvas_block_generic_set_block(HippoCanvasBlock *canvas_block,
+                                     HippoBlock       *block)
+{
+    
+    if (block == canvas_block->block)
+        return;
+    
+    if (canvas_block->block != NULL) {
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_block_title_changed),
+                                             canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_block_description_changed),
+                                             canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_block_source_changed),
+                                             canvas_block);
+    }
+    
+    /* Chain up to get the block really changed */
+    HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_generic_parent_class)->set_block(canvas_block, block);
+
+    if (canvas_block->block != NULL) {
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::title",
+                         G_CALLBACK(on_block_title_changed),
+                         canvas_block);
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::description",
+                         G_CALLBACK(on_block_description_changed),
+                         canvas_block);
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::source",
+                         G_CALLBACK(on_block_source_changed),
+                         canvas_block);
+
+        on_block_title_changed(canvas_block->block, NULL, canvas_block);
+        on_block_description_changed(canvas_block->block, NULL, canvas_block);
+        on_block_source_changed(canvas_block->block, NULL, canvas_block);
+    }
 }

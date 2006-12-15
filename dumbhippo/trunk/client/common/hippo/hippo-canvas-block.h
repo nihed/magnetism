@@ -98,6 +98,9 @@ void hippo_canvas_block_set_title   (HippoCanvasBlock *canvas_block,
 void hippo_canvas_block_set_content (HippoCanvasBlock *canvas_block,
                                      HippoCanvasItem  *content_item);
 
+void hippo_canvas_block_set_expanded(HippoCanvasBlock *canvas_block,
+                                     gboolean          value);
+
 /* probably has to get factored out into subclass */
 void hippo_canvas_block_set_sender  (HippoCanvasBlock *canvas_block,
                                      const char       *entity_guid);

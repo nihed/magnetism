@@ -227,7 +227,7 @@ hippo_block_generic_update_from_xml (HippoBlock           *block,
 
     if (source_node != NULL) {
         if (!hippo_xml_split(cache, source_node, NULL,
-                             "source", HIPPO_SPLIT_ENTITY, &source,
+                             "id", HIPPO_SPLIT_ENTITY, &source,
                              NULL))
             return FALSE;
 

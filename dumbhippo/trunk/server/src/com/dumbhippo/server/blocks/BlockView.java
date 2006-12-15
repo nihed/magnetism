@@ -150,7 +150,7 @@ public abstract class BlockView implements ObjectView {
 							"clicked", Boolean.toString(userBlockData.isClicked()),
 							"clickedTimestamp", Long.toString(userBlockData.getClickedTimestampAsLong()),
 							"stackReason", getStackReason().name(),
-							"icon", getIcon());		
+							"icon", getIcon());
 
 		if (hasSource)
 			builder.appendEmptyNode("source", "id", ((EntitySourceBlockView) this).getEntitySource().getIdentifyingGuid().toString());

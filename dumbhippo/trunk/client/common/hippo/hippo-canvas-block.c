@@ -62,8 +62,6 @@ static void hippo_canvas_block_unexpand_impl  (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_hush_impl      (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_unhush_impl    (HippoCanvasBlock *canvas_block);
 
-static void hippo_canvas_block_set_expanded   (HippoCanvasBlock *canvas_block,
-                                               gboolean          value);
 static void hippo_canvas_block_set_hushed     (HippoCanvasBlock *canvas_block,
                                                gboolean          value);
 
@@ -1002,7 +1000,7 @@ hippo_canvas_block_set_hushed(HippoCanvasBlock *canvas_block,
     }
 }
 
-static void
+void
 hippo_canvas_block_set_expanded(HippoCanvasBlock *canvas_block,
                                 gboolean          value)
 {
@@ -1077,7 +1075,7 @@ hippo_canvas_block_set_title(HippoCanvasBlock *canvas_block,
     if (canvas_block->skip_heading)
         return;
     
-    /* keep in mind that title may be NULL */
+    /* keep in mind that title and tooltip may be NULL */
     g_object_set(G_OBJECT(canvas_block->title_link_item),
                  "text", text,
                  "tooltip", tooltip,
