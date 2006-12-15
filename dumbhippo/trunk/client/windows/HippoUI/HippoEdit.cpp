@@ -9,7 +9,12 @@
 
 #define MIN_WIDTH 50
 
+/* If you don't change the font on the item, it defaults to a bitmapped font and looks
+ * *terrible*. We might want to pick up the font from the item instead of just hardcoding
+ * here, or alternatively use the normal system dialog font and size.
+ */
 #define FONT_SIZE 14 // In pixels
+#define FONT_NAME L"Arial"
 
 #define VERTICAL_PADDING 1 // Vertical padding around the font
 
@@ -59,6 +64,7 @@ HippoEdit::getText()
     return HippoBSTR(length, buffer);
 }
 
+
 bool
 HippoEdit::create()
 {
@@ -98,7 +104,8 @@ HippoEdit::create()
     lf.lfQuality = DEFAULT_QUALITY;
     lf.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
     
-    wcscpy(lf.lfFaceName, L"Arial");
+    wcsncpy(lf.lfFaceName, FONT_NAME, G_N_ELEMENTS(lf.lfFaceName)- 1);
+    lf.lfFaceName[G_N_ELEMENTS(lf.lfFaceName)- 1] = 0;
 
     font_ = CreateFontIndirect(&lf);
 
