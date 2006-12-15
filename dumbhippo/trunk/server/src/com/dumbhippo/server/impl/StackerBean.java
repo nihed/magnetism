@@ -65,6 +65,7 @@ import com.dumbhippo.server.blocks.BlockNotVisibleException;
 import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.blocks.BlogBlockHandler;
 import com.dumbhippo.server.blocks.DeliciousBlockHandler;
+import com.dumbhippo.server.blocks.DiggBlockHandler;
 import com.dumbhippo.server.blocks.FacebookBlockHandler;
 import com.dumbhippo.server.blocks.FlickrPersonBlockHandler;
 import com.dumbhippo.server.blocks.FlickrPhotosetBlockHandler;
@@ -74,6 +75,7 @@ import com.dumbhippo.server.blocks.MusicChatBlockHandler;
 import com.dumbhippo.server.blocks.MusicPersonBlockHandler;
 import com.dumbhippo.server.blocks.MySpacePersonBlockHandler;
 import com.dumbhippo.server.blocks.PostBlockHandler;
+import com.dumbhippo.server.blocks.RedditBlockHandler;
 import com.dumbhippo.server.blocks.TwitterPersonBlockHandler;
 import com.dumbhippo.server.blocks.YouTubeBlockHandler;
 import com.dumbhippo.server.util.EJBUtil;
@@ -173,6 +175,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			break;
 		case TWITTER_PERSON:
 			handlerClass = TwitterPersonBlockHandler.class;
+			break;
+		case DIGG_DUGG_ENTRY:
+			handlerClass = DiggBlockHandler.class;
+			break;
+		case REDDIT_ACTIVITY_ENTRY:
+			handlerClass = RedditBlockHandler.class;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
@@ -1660,6 +1668,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		migrateFlickr(user);
 		migrateYouTube(user);
 		migrateMySpace(user);
+		migrateTwitter(user);
 	}
 	
 	public void migrateBlockParticipation(String blockId) {
@@ -1753,6 +1762,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		getHandler(MySpacePersonBlockHandler.class, BlockType.MYSPACE_PERSON).migrate(user);
 	}	
 	
+	public void migrateTwitter(User user) {
+		getHandler(TwitterPersonBlockHandler.class, BlockType.TWITTER_PERSON).migrate(user);
+	}
+	
 	public void migrateGroupBlockData(String blockId) {
 		logger.debug("    migrating group block data for {}", blockId);
 		
@@ -1794,6 +1807,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case DELICIOUS_PUBLIC_BOOKMARK:
 		case MUSIC_CHAT:
 		case TWITTER_PERSON:
+		case DIGG_DUGG_ENTRY:
+		case REDDIT_ACTIVITY_ENTRY:
 			isGroupParticipation = false;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:

@@ -75,11 +75,13 @@ public final class FeedScraper {
 			IGNORED // an element we don't care about
 		}
 		
+		private URL baseUrl;
 		private URL atomUrl;
 		private URL rssUrl;
 		
-		public FeedLinkExtractor() {
+		public FeedLinkExtractor(URL baseUrl) {
 			super(Element.class, Element.IGNORED);
+			this.baseUrl = baseUrl;
 		}
 		
 		@Override
@@ -100,22 +102,22 @@ public final class FeedScraper {
 					type = type.trim();
 					try {
 						if (type.equals("application/rss+xml") && rssUrl == null) {
-							rssUrl = new URL(href);
+							rssUrl = new URL(baseUrl, href);
 							if (!rssUrl.getProtocol().equals("http"))
 								rssUrl = null;
 						} else if (type.equals("application/atom+xml") && atomUrl == null) {
-							atomUrl = new URL(href);
+							atomUrl = new URL(baseUrl, href);
 							if (!atomUrl.getProtocol().equals("http"))
 								atomUrl = null;
 						} else if (type.equals("text/xml") && rssUrl == null && title != null && title.contains("RSS")) {
 							// text/xml with title=RSS seems to be something old Wordpress does.
 							// it also has a text/xml with title=RDF
-							rssUrl = new URL(href);
+							rssUrl = new URL(baseUrl, href);
 							if (!rssUrl.getProtocol().equals("http"))
 								rssUrl = null;
 						}
 					} catch (MalformedURLException e) {
-						
+						logger.debug("Malformed url scraping for feed: " + e.getMessage());
 					}
 				}
 			}
@@ -132,7 +134,7 @@ public final class FeedScraper {
 	
 	private boolean tryAsHtml(URL url, byte[] data) {
 		XMLReader xmlReader = new Parser();
-		FeedLinkExtractor extractor = new FeedLinkExtractor();
+		FeedLinkExtractor extractor = new FeedLinkExtractor(url);
 		xmlReader.setContentHandler(extractor);
 		InputStream input = new ByteArrayInputStream(data);
 		

@@ -347,6 +347,14 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })	
 	public void doSetTwitterName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;	
+
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "urlOrName" })	
+	public void doSetDiggName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;
+
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "urlOrName" })	
+	public void doSetRedditName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })

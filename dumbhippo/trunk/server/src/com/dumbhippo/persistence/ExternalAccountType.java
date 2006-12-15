@@ -512,6 +512,94 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}		
+	},
+	DIGG("Digg") { // 13
+		@Override
+		public String getIconName() {
+			return "favicon_digg.png";
+		}
+		
+		@Override
+		public String getLink(String handle, String extra) {
+			return "http://digg.com/users/" + StringUtils.urlEncode(handle) + "/dugg";
+		}
+		
+		@Override
+		public String getSiteLink() {
+			return "http://digg.com";
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "Dugg by " + handle;
+		}
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				// 4-15 chars no spaces
+				if (handle.length() < 4)
+					throw new ValidationException("Too short to be a Digg username '" + handle + "'");
+				if (handle.length() > 15)
+					throw new ValidationException("Too long to be a Digg username '" + handle + "'");
+				if (handle.contains(" "))
+					throw new ValidationException("Digg username contains a space '" + handle + "'");
+				try {
+					new URL(getLink(handle, null));
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid Digg username '" + handle + "': " + e.getMessage());
+				}
+			}
+			return handle;
+		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}
+	},
+	REDDIT("Reddit") { // 14
+		@Override
+		public String getIconName() {
+			return "favicon_reddit.png";
+		}
+		
+		@Override
+		public String getLink(String handle, String extra) {
+			return "http://reddit.com/user/" + StringUtils.urlEncode(handle) + "/";
+		}
+		
+		@Override
+		public String getSiteLink() {
+			return "http://reddit.com";
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "Reddit Activity";
+		}
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				// FIXME Reddit doesn't say what their username limits are, and the error message
+				// is just "invalid username" if it doesn't like one, so it's tough to know
+				// what to validate
+				try {
+					new URL(getLink(handle, null));
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid Reddit username '" + handle + "': " + e.getMessage());
+				}
+			}
+			return handle;
+		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}
 	};
 	
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountType.class);	

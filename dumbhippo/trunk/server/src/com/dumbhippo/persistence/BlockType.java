@@ -141,6 +141,28 @@ public enum BlockType {
 		public boolean userOriginIsData1() {
 			return true;
 		}		
+	},
+	// an item from the Digg "stuff you Dugg" feed
+	DIGG_DUGG_ENTRY { // 17
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}		
+	},
+	// an item from the Reddit Overview feed, which is your comments and submissions both
+	REDDIT_ACTIVITY_ENTRY { // 18
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}
 	};
 	
 	// True for blocks which are originated by a user and the

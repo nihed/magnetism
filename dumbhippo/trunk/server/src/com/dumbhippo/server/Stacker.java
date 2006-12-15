@@ -149,4 +149,5 @@ public interface Stacker {
 	public void migrateGroupMembers(String groupId);
 	public void migrateGroupBlockData(String blockId);
 	public void migrateFlickr(User user);
+	public void migrateTwitter(User user);
 }

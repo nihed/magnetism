@@ -84,7 +84,11 @@
 		dh.account.initialDeliciousName = <dh:jsString value="${account.deliciousName}"/>;
 		dh.account.initialDeliciousHateQuip = <dh:jsString value="${account.deliciousHateQuip}"/>;	
 		dh.account.initialTwitterName = <dh:jsString value="${account.twitterName}"/>;
-		dh.account.initialTwitterHateQuip = <dh:jsString value="${account.twitterHateQuip}"/>;	
+		dh.account.initialTwitterHateQuip = <dh:jsString value="${account.twitterHateQuip}"/>;
+		dh.account.initialDiggName = <dh:jsString value="${account.diggName}"/>;
+		dh.account.initialDiggHateQuip = <dh:jsString value="${account.diggHateQuip}"/>;
+		dh.account.initialRedditName = <dh:jsString value="${account.redditName}"/>;
+		dh.account.initialRedditHateQuip = <dh:jsString value="${account.redditHateQuip}"/>;					
 	</script>
 </head>
 <dht3:page currentPageLink="account">

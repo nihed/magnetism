@@ -1641,15 +1641,44 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 
+	private static String findPathElementAfter(String url, String after) {
+		int i = url.indexOf(after);
+		if (i < 0) {
+			//logger.debug("'{}' not found in '{}'", after, url);
+			return null;
+		}
+		
+		i += after.length();
+		
+		int j = url.indexOf('/', i);
+		if (j < 0) {
+			//logger.debug("'/' not found after index {}", i);
+			j = url.length();
+		}
+		if (i == j) {
+			//logger.debug("{} == {}", i, j);
+			return null;
+		}
+		return url.substring(i, j);
+	}
+
+	private static String findLastPathElement(String url) {
+		if (url.endsWith("/"))
+			url = url.substring(0, url.length() - 1);
+		
+		int i = url.lastIndexOf("/");
+		if (i >= 0) {
+			return url.substring(i);
+		} else {
+			return null;
+		}
+	}
+	
 	public void doSetLastFmName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
 		String name = urlOrName.trim();
-		int user = name.indexOf("/user/");
-		if (user >= 0) {
-			user += "/user/".length();
-			name = name.substring(user);
-		}
-		if (name.endsWith("/"))
-			name = name.substring(0, name.length() - 1);
+		String found = findPathElementAfter(name, "/user/");
+		if (found != null)
+			name = found;
 		
 		if (name.startsWith("http://"))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
@@ -1668,13 +1697,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void doSetDeliciousName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
 		String name = urlOrName.trim();
 		// del.icio.us urls are just "http://del.icio.us/myusername"
-		int user = name.lastIndexOf("/");
-		if (user >= 0) {
-			name = name.substring(user);
-		}
-		if (name.endsWith("/"))
-			name = name.substring(0, name.length() - 1);
 		
+		String found = findLastPathElement(name);
+		if (found != null)
+			name = found;
+
 		if (name.startsWith("http://"))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
@@ -1702,13 +1729,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	public void doSetTwitterName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
 		String name = urlOrName.trim();
+		
 		// Twitter urls are just "http://twitter.com/myusername"
-		int user = name.lastIndexOf("/");
-		if (user >= 0) {
-			name = name.substring(user);
-		}
-		if (name.endsWith("/"))
-			name = name.substring(0, name.length() - 1);
+		
+		String found = findLastPathElement(name);
+		if (found != null)
+			name = found;
 		
 		if (name.startsWith("http://"))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
@@ -1724,6 +1750,78 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Feed feed;
 		try {
 			feed = scrapeFeedFromUrl(new URL("http://twitter.com/" + StringUtils.urlEncode(external.getHandle())));
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
+		}
+		EJBUtil.forceInitialization(feed.getAccounts());
+		
+		external.setFeed(feed);
+		feed.getAccounts().add(external);
+		
+		xml.appendTextNode("username", external.getHandle());
+	}
+
+	public void doSetDiggName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+		String name = urlOrName.trim();
+		
+		// Digg urls are "http://digg.com/users/myusername/stuff"
+
+		String found = findPathElementAfter(name, "/users/");
+		if (found != null)
+			name = found;
+
+		if (name.startsWith("http://"))
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
+		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.DIGG);
+		try {
+			external.setHandleValidating(name);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		
+		Feed feed;
+		try {
+			feed = scrapeFeedFromUrl(new URL("http://digg.com/users/" + StringUtils.urlEncode(external.getHandle()) + "/dugg"));
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
+		}
+		EJBUtil.forceInitialization(feed.getAccounts());
+		
+		external.setFeed(feed);
+		feed.getAccounts().add(external);
+		
+		xml.appendTextNode("username", external.getHandle());
+	}
+
+	public void doSetRedditName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+		String name = urlOrName.trim();
+
+		// Reddit urls are "http://reddit.com/user/myusername"
+
+		//logger.debug("name={}", name);
+		
+		String found = findPathElementAfter(name, "/user/");
+		if (found != null)
+			name = found;
+		
+		//logger.debug("found={}", found);
+		
+		if (name.startsWith("http://"))
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
+		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.REDDIT);
+		try {
+			external.setHandleValidating(name);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		
+		Feed feed;
+		try {
+			feed = scrapeFeedFromUrl(new URL("http://reddit.com/user/" + StringUtils.urlEncode(external.getHandle())));
 		} catch (MalformedURLException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
 		}

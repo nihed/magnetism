@@ -250,6 +250,29 @@ public class AccountPage {
 		return getExternalAccountHandle(ExternalAccountType.TWITTER);
 	}
 	
+	public String getDiggSentiment() {
+		return getExternalAccountSentiment(ExternalAccountType.DIGG);
+	}
+	
+	public String getDiggHateQuip() {
+		return getExternalAccountHateQuip(ExternalAccountType.DIGG);
+	}
+	
+	public String getDiggName() {
+		return getExternalAccountHandle(ExternalAccountType.DIGG);
+	}
+
+	public String getRedditSentiment() {
+		return getExternalAccountSentiment(ExternalAccountType.REDDIT);
+	}
+	
+	public String getRedditHateQuip() {
+		return getExternalAccountHateQuip(ExternalAccountType.REDDIT);
+	}
+	
+	public String getRedditName() {
+		return getExternalAccountHandle(ExternalAccountType.REDDIT);
+	}
 	
 	/**
 	 * Returns a list of supported account views; with the ExternalAccount information for the

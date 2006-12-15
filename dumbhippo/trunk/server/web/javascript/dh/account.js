@@ -127,6 +127,16 @@ dh.account.setTwitterName = function(name, loadFunc, errorFunc) {
 				     { "urlOrName" : name },
 						loadFunc, errorFunc);
 }
+dh.account.setDiggName = function(name, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("setdiggname",
+				     { "urlOrName" : name },
+						loadFunc, errorFunc);
+}
+dh.account.setRedditName = function(name, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("setredditname",
+				     { "urlOrName" : name },
+						loadFunc, errorFunc);
+}
 dh.account.setRhapsodyUrl = function(name, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("setrhapsodyhistoryfeed",
    	                      { "url" : name },
@@ -335,6 +345,59 @@ dh.account.onTwitterLoveSaved = function(value) {
 	  	    	 	entry.setMode(oldMode);
 	  	    	 }); 
 }
+
+dh.account.onDiggLoveSaved = function(value) {
+	var entry = dh.account.diggEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+  	dh.account.setDiggName(value,
+	 	    	 function(childNodes, http) {
+				    var username = null;
+					var i = 0;
+					for (i = 0; i < childNodes.length; ++i) {
+						var child = childNodes.item(i);
+						if (child.nodeType != dojo.dom.ELEMENT_NODE)
+							continue;
+			
+						if (child.nodeName == "username") {
+							username = dojo.dom.textContent(child);
+						}
+	 	    	 	}
+					entry.setLoveValueAlreadySaved(username);
+	 	    	 	entry.setMode('love');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 }); 
+}
+
+dh.account.onRedditLoveSaved = function(value) {
+	var entry = dh.account.redditEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+  	dh.account.setRedditName(value,
+	 	    	 function(childNodes, http) {
+				    var username = null;
+					var i = 0;
+					for (i = 0; i < childNodes.length; ++i) {
+						var child = childNodes.item(i);
+						if (child.nodeType != dojo.dom.ELEMENT_NODE)
+							continue;
+			
+						if (child.nodeName == "username") {
+							username = dojo.dom.textContent(child);
+						}
+	 	    	 	}
+					entry.setLoveValueAlreadySaved(username);
+	 	    	 	entry.setMode('love');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 }); 
+}
+
 dh.account.disableFacebookSession = function() {   
   	dh.server.doPOST("disablefacebooksession",
 			 	     {},
@@ -412,6 +475,22 @@ dh.account.createTwitterEntry = function() {
 	dh.account.twitterEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.twitterEntry, 'TWITTER');
 }
 
+dh.account.createDiggEntry = function() {	
+	dh.account.diggEntry = new dh.lovehate.Entry('dhDigg', 'Digg URL or username', dh.account.initialDiggName,
+					'I don\'t dig it', dh.account.initialDiggHateQuip);
+	dh.account.diggEntry.onLoveSaved = dh.account.onDiggLoveSaved;
+	dh.account.diggEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.diggEntry, 'DIGG');
+	dh.account.diggEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.diggEntry, 'DIGG');
+}
+
+dh.account.createRedditEntry = function() {	
+	dh.account.redditEntry = new dh.lovehate.Entry('dhReddit', 'Reddit URL or username', dh.account.initialRedditName,
+					'Not reading it', dh.account.initialRedditHateQuip);
+	dh.account.redditEntry.onLoveSaved = dh.account.onRedditLoveSaved;
+	dh.account.redditEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.redditEntry, 'REDDIT');
+	dh.account.redditEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.redditEntry, 'REDDIT');
+}
+
 dhAccountInit = function() {
 	dh.account.usernameEntryNode = document.getElementById('dhUsernameEntry');
 	dh.account.usernameEntry = new dh.textinput.Entry(dh.account.usernameEntryNode, "J. Doe", dh.formtable.currentValues['dhUsernameEntry']);
@@ -487,6 +566,8 @@ dhAccountInit = function() {
 	dh.account.createRhapsodyEntry();
 	dh.account.createDeliciousEntry();
 	dh.account.createTwitterEntry();
+	dh.account.createDiggEntry();
+	dh.account.createRedditEntry();
 }
 
 dojo.event.connect(dojo, "loaded", dj_global, "dhAccountInit");
