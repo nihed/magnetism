@@ -1751,7 +1751,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		try {
 			feed = scrapeFeedFromUrl(new URL("http://twitter.com/" + StringUtils.urlEncode(external.getHandle())));
 		} catch (MalformedURLException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage() + " (check that updates are public in Twitter settings)");
 		}
 		EJBUtil.forceInitialization(feed.getAccounts());
 		
