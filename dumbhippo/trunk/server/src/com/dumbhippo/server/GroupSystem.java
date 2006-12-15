@@ -79,6 +79,8 @@ public interface GroupSystem {
 	public Set<Group> findRawPrivateGroups(Viewpoint viewpoint, User member);	
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status);
+	
+	public Set<Group> findRawRecipientGroups(Viewpoint viewpoint, User member);
 
 	
 	/**

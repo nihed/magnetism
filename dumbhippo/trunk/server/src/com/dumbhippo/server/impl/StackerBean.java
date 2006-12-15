@@ -44,6 +44,7 @@ import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
+import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.StackInclusion;
@@ -946,10 +947,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	private interface ItemSource<T> {
-		List<T> get(int start, int count, String filter);
+		List<T> get(int start, int count);
 	}
 	
-	private <T> List<T> getDistinctItems(ItemSource<T> source, int start, int count, String filter, int expectedHitFactor) {
+	private <T> List<T> getDistinctItems(ItemSource<T> source, int start, int count, int expectedHitFactor) {
 		Set<T> distinctItems = new HashSet<T>();
 		List<T> returnItems = new ArrayList<T>();
 		int max = start + count;
@@ -957,7 +958,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		int chunkStart = 0;
 		while (distinctItems.size() < max) {
 			int chunkCount = (max - distinctItems.size()) * expectedHitFactor;
-			List<T> items = source.get(chunkStart, chunkCount, filter);
+			List<T> items = source.get(chunkStart, chunkCount);
 			if (items.isEmpty())
 				break;
 			
@@ -1032,17 +1033,19 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// select distinct most recently active users		
        	int expectedHitFactor = 2;
 		
-		String groupUpdatesFilter = "";
+		final String groupUpdatesFilter;
 		if (!includeGroupUpdates) {
 	        groupUpdatesFilter = " AND block.blockType != " + BlockType.GROUP_MEMBER.ordinal() + 
 	                             " AND block.blockType != " + BlockType.GROUP_CHAT.ordinal(); 
+		} else {
+			groupUpdatesFilter = "";
 		}
 		
 		List<User> distinctUsers = getDistinctItems(new ItemSource<User>() {
-			public List<User> get(int start, int count, String filter) {
-				return getRecentActivityUsers(start, count, filter);
+			public List<User> get(int start, int count) {
+				return getRecentActivityUsers(start, count, groupUpdatesFilter);
 			}
-		}, startUser, userCount, groupUpdatesFilter, expectedHitFactor);
+		}, startUser, userCount, expectedHitFactor);
 		
 		return getMugshotViews(viewpoint, distinctUsers, blockPerUser, groupUpdatesFilter);		
 	}
@@ -1133,7 +1136,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return builder.toString();
 	}
 	
-	private List<User> getRecentlyActiveContacts(User user, int start, int count) {
+	private List<User> getRecentlyActiveContacts(Viewpoint viewpoint, User user, int start, int count) {
 		// The algorithm to find recently active contacts here is simply to select blocks from the user's
 		// stack which originated from a user, because currently the only user-originated blocks in
 		// a user's stack will be their contacts.  This is an approximation of
@@ -1153,12 +1156,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return TypeUtils.castList(User.class, q.getResultList());
 	}
 	
-	public List<PersonMugshotView> getContactActivity(Viewpoint viewpoint, final User user, int start, int count, int blocksPerUser) {
+	public List<PersonMugshotView> getContactActivity(final Viewpoint viewpoint, final User user, int start, int count, int blocksPerUser) {
 		List<User> distinctUsers = getDistinctItems(new ItemSource<User>() {
-			public List<User> get(int start, int count, String filter) {
-				return getRecentlyActiveContacts(user, start, count);
+			public List<User> get(int start, int count) {
+				return getRecentlyActiveContacts(viewpoint, user, start, count);
 			}
-		}, start, count, "", 4);		
+		}, start, count, 4);		
 		
 		return getMugshotViews(viewpoint, distinctUsers, blocksPerUser, "");
 	}
@@ -1166,6 +1169,73 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	public void pageContactActivity(Viewpoint viewpoint, User viewedUser, int blocksPerUser, Pageable<PersonMugshotView> pageable) {
 		pageable.setResults(getContactActivity(viewpoint, viewedUser, pageable.getStart(), pageable.getCount(), blocksPerUser));
 		pageable.setTotalCount(personViewer.getContactCount(viewpoint, viewedUser));
+	}
+	
+	private List<GroupMugshotView> getMugshotViews(Viewpoint viewpoint,  List<Group> distinctGroups, int blockPerGroup) {
+		List<GroupMugshotView> mugshots = new ArrayList<GroupMugshotView>();		
+		for (Group group : distinctGroups) {
+			Query q = em.createQuery("Select gbd FROM GroupBlockData gbd, Block block " + 
+                " WHERE gbd.group = :group AND gbd.deleted = 0 AND gbd.block = block " +
+                INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE +
+                " ORDER BY gbd.participatedTimestamp DESC");
+			q.setParameter("group", group);
+		    q.setMaxResults(blockPerGroup);
+         	List<BlockView> blocks = new ArrayList<BlockView>();
+         	for (GroupBlockData gbd : TypeUtils.castList(GroupBlockData.class, q.getResultList())) {
+	         	try {
+	         	    BlockView blockView = getBlockView(viewpoint, gbd.getBlock(), gbd, true);
+	         	    blocks.add(blockView);
+	         	} catch (NotFoundException e) {
+	         		// this is used on the main page, let's not risk it throwing an exception here
+	         		logger.error("NotFoundException when getting what must be a public block", e);
+	         	}
+         	}
+         	GroupView groupView = groupSystem.getGroupView(viewpoint, group);
+            mugshots.add(new GroupMugshotView(groupView, blocks));      	
+		}
+		return mugshots;
+	}	
+	
+	private List<Group> getRecentlyActiveGroups(Viewpoint viewpoint, User user, int start, int count, Set<Group> visibleGroups) {
+		// This query combines searching for participated blocks with group membership. 
+		// It is not optimal right now as MySQL tells us it requires a temporary table and file sort.
+		Query q = em.createQuery("SELECT g FROM Group g, GroupBlockData gbd, Block block, GroupMember gm WHERE" +
+				" gbd.group = g AND gm.group = g AND gbd.block = block " + 
+				" AND gbd.participatedTimestamp IS NOT NULL " +
+				" AND gm.status >= " + MembershipStatus.FOLLOWER.ordinal() + 
+				" AND gm.member = :acct ORDER BY gbd.participatedTimestamp DESC");
+		q.setParameter("acct", user.getAccount());
+		q.setFirstResult(start);
+		q.setMaxResults(count);
+		List<Group> results = TypeUtils.castList(Group.class, q.getResultList());
+		// First, remove any groups that are not visible.
+		results.retainAll(visibleGroups);
+		// Now add in all visible groups at the end.  This will
+		// ensure that we can see all groups even if they had no interesting blocks.
+		// The order here will be essentially random.  Duplication filtering
+		// will happen later.
+		results.addAll(visibleGroups);
+		return results;
+	}	
+	
+	public List<GroupMugshotView> getUserGroupActivity(final Viewpoint viewpoint, final User user, int start, int count, int blocksPerGroup) {
+		// select distinct most recently active groups		
+       	int expectedHitFactor = 2;
+       	
+		final Set<Group> visibleGroups = groupSystem.findRawGroups(viewpoint, user);       	
+		
+		List<Group> distinctGroups = getDistinctItems(new ItemSource<Group>() {
+			public List<Group> get(int start, int count) {
+				return getRecentlyActiveGroups(viewpoint, user, start, count, visibleGroups);
+			}
+		}, start, count, expectedHitFactor);
+		
+		return getMugshotViews(viewpoint, distinctGroups, blocksPerGroup);			
+	}
+	
+	public void pageUserGroupActivity(Viewpoint viewpoint, User user, int blocksPerGroup, Pageable<GroupMugshotView> pageable) {
+		pageable.setResults(getUserGroupActivity(viewpoint, user, pageable.getStart(), pageable.getCount(), blocksPerGroup));
+		pageable.setTotalCount(groupSystem.findGroupsCount(viewpoint, user, null));
 	}
 
 	// When showing recently active groups, we want to exclude activity for
@@ -1193,52 +1263,23 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return TypeUtils.castList(Group.class, q.getResultList());
 	}
 	
-	public List<GroupMugshotView> getRecentGroupActivity(Viewpoint viewpoint, int startGroup, int groupCount, int blockPerGroup) {
-		List<GroupMugshotView> mugshots = new ArrayList<GroupMugshotView>();
-		
+	public List<GroupMugshotView> getRecentGroupActivity(Viewpoint viewpoint, int startGroup, int groupCount, int blockPerGroup) {		
 		// select distinct most recently active users		
        	int expectedHitFactor = 2;
 		
 		List<Group> distinctGroups = getDistinctItems(new ItemSource<Group>() {
-			public List<Group> get(int start, int count, String filter) {
+			public List<Group> get(int start, int count) {
 				return getRecentActivityGroups(start, count);
 			}
-		}, startGroup, groupCount, "", expectedHitFactor);
+		}, startGroup, groupCount, expectedHitFactor);
 		
-		for (Group group : distinctGroups) {
-			Query q = em.createQuery("Select gbd FROM GroupBlockData gbd, Block block " + 
-                " WHERE gbd.group = :group AND gbd.deleted = 0 AND gbd.block = block " +
-                INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE +
-                " ORDER BY gbd.participatedTimestamp DESC");
-			q.setParameter("group", group);
-		    q.setMaxResults(blockPerGroup);
-         	List<BlockView> blocks = new ArrayList<BlockView>();
-         	for (GroupBlockData gbd : TypeUtils.castList(GroupBlockData.class, q.getResultList())) {
-	         	try {
-	         	    BlockView blockView = getBlockView(viewpoint, gbd.getBlock(), gbd, true);
-	         	    blocks.add(blockView);
-	         	} catch (NotFoundException e) {
-	         		// this is used on the main page, let's not risk it throwing an exception here
-	         		logger.error("NotFoundException when getting what must be a public block", e);
-	         	}
-         	}
-         	GroupView groupView = groupSystem.getGroupView(viewpoint, group);
-            mugshots.add(new GroupMugshotView(groupView, blocks));      	
-		}
-		
-		return mugshots;		
+		return getMugshotViews(viewpoint, distinctGroups, blockPerGroup);	
 	}
-	
+
 	public void pageRecentGroupActivity(Viewpoint viewpoint, Pageable<GroupMugshotView> pageable, int blocksPerGroup) {
 		pageable.setResults(getRecentGroupActivity(viewpoint, pageable.getStart(), pageable.getCount(), blocksPerGroup));
 		pageable.setTotalCount(groupSystem.getPublicGroupCount());
 	}
-
-
-	public void pageRecentUsersGroupsActivity(Viewpoint viewpoint, User user, Pageable<GroupMugshotView> pageable, int blockPerGroup) {
-		// TODO Auto-generated method stub
-		
-	}	
 	
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException {
 		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.user = :user AND ubd.block = block AND block.id = :blockId");

@@ -29,8 +29,7 @@ public class MyGroupsPage extends AbstractPersonPage {
 			activeGroups.setInitialPerPage(GROUPS_PER_PAGE);
 			activeGroups.setSubsequentPerPage(GROUPS_PER_PAGE);
 			
-			// FIXME do the query limited by groups we are in
-			stacker.pageRecentGroupActivity(getViewpoint(), activeGroups, BLOCKS_PER_GROUP);
+			stacker.pageUserGroupActivity(getViewpoint(), getViewedUser(), BLOCKS_PER_GROUP, activeGroups);
 		}
 		return activeGroups;
 	}

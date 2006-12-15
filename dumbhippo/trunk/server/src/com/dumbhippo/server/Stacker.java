@@ -93,7 +93,11 @@ public interface Stacker {
 	
 	public List<PersonMugshotView> getContactActivity(Viewpoint viewpoint, User user, int start, int count, int blocksPerUser);
 	
-	public void pageContactActivity(Viewpoint viewpoint, User viewedUser, int blocksPerUser, Pageable<PersonMugshotView> contactMugshots);	
+	public void pageContactActivity(Viewpoint viewpoint, User viewedUser, int blocksPerUser, Pageable<PersonMugshotView> contactMugshots);
+
+	public List<GroupMugshotView> getUserGroupActivity(Viewpoint viewpoint, User user, int start, int count, int blocksPerUser);	
+	
+	public void pageUserGroupActivity(Viewpoint viewpoint, User user, int blocksPerGroup, Pageable<GroupMugshotView> activeGroups);	
 	
 	public User getRandomActiveUser(Viewpoint viewpoint);
 	
@@ -127,8 +131,6 @@ public interface Stacker {
 	 * @param blocksPerGroup number of blocks to return for each item in the result list
 	 */
 	public void pageRecentGroupActivity(Viewpoint viewpoint, Pageable<GroupMugshotView> pageable, int blockPerGroup);
-
-	public void pageRecentUsersGroupsActivity(Viewpoint viewpoint, User user, Pageable<GroupMugshotView> pageable, int blockPerGroup);
 	
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException;
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, BlockKey key) throws NotFoundException;
