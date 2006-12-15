@@ -74,6 +74,7 @@ import com.dumbhippo.server.blocks.MusicChatBlockHandler;
 import com.dumbhippo.server.blocks.MusicPersonBlockHandler;
 import com.dumbhippo.server.blocks.MySpacePersonBlockHandler;
 import com.dumbhippo.server.blocks.PostBlockHandler;
+import com.dumbhippo.server.blocks.TwitterPersonBlockHandler;
 import com.dumbhippo.server.blocks.YouTubeBlockHandler;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.GroupMugshotView;
@@ -169,6 +170,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			break;
 		case DELICIOUS_PUBLIC_BOOKMARK:
 			handlerClass = DeliciousBlockHandler.class;
+			break;
+		case TWITTER_PERSON:
+			handlerClass = TwitterPersonBlockHandler.class;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
@@ -1789,6 +1793,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case BLOG_ENTRY:
 		case DELICIOUS_PUBLIC_BOOKMARK:
 		case MUSIC_CHAT:
+		case TWITTER_PERSON:
 			isGroupParticipation = false;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
