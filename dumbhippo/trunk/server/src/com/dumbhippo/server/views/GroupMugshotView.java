@@ -6,8 +6,11 @@ import com.dumbhippo.server.blocks.BlockView;
 
 public class GroupMugshotView {
 
-	private GroupView groupView;
-	private List<BlockView> blocks;
+	protected GroupView groupView;
+	protected List<BlockView> blocks;
+	
+	protected GroupMugshotView() {
+	}
 	
 	public GroupMugshotView(GroupView personView, List<BlockView> blocks) {
 		this.groupView = personView;

@@ -36,13 +36,13 @@
             </div>     
             </div>        
 		</dht3:shinyBox>
-		<div class="dh-main-people">
+		<div class="dh-main-people dh-half-shinybox-left-container">
             <div class="dh-header"><a href="/active-people">Active People</a></div>
             <c:forEach items="${main.recentUserActivity.list}" var="personMugshot" varStatus="status">
                 <dht3:personStack person="${personMugshot.personView}" stackOrder="${status.count}" blocks="${personMugshot.blocks}" showFrom="false" embedVersion="true"/>
             </c:forEach>
         </div>
-        <div class="dh-main-groups">            
+        <div class="dh-main-groups dh-half-shinybox-right-container">            
             <div class="dh-header"><a href="/active-groups">Active Groups</a></div>
             <c:forEach items="${main.recentGroupActivity.list}" var="groupMugshot" varStatus="status">
 		        <dht3:groupStack who="${groupMugshot.groupView}" stackOrder="${status.count + main.recentUserActivity.size}" blocks="${groupMugshot.blocks}" showFrom="false" embedVersion="true"/>

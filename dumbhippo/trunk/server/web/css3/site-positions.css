@@ -407,6 +407,17 @@ div.dh-notification {
 	margin-left:		5px;
 }
 
+.dh-half-shinybox-left-container {
+    width:              49%;
+    float:              left;
+}
+
+.dh-half-shinybox-right-container {
+    width:              49%;
+    float:              right;
+    text-align:         left;
+}
+
 .dh-thumbnail-box-border, .dh-rss-box-border {
 	position:			relative;
 	width:				478px;

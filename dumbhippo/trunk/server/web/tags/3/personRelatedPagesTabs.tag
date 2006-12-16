@@ -2,7 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<%@ attribute name="selected" required="true" type="java.lang.String" %>
+<%@ attribute name="selected" required="false" type="java.lang.String" %>
 
 <c:if test="${empty person}">
 	<dht:errorPage>This page is broken! person required</dht:errorPage>

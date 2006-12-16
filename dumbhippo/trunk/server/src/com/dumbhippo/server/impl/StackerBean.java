@@ -1171,50 +1171,58 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageable.setTotalCount(personViewer.getContactCount(viewpoint, viewedUser));
 	}
 	
-	private List<GroupMugshotView> getMugshotViews(Viewpoint viewpoint,  List<Group> distinctGroups, int blockPerGroup) {
+	public List<GroupMugshotView> getMugshotViews(final Viewpoint viewpoint, List<Group> distinctGroups, final int blocksPerGroup) {
 		List<GroupMugshotView> mugshots = new ArrayList<GroupMugshotView>();		
-		for (Group group : distinctGroups) {
-			Query q = em.createQuery("Select gbd FROM GroupBlockData gbd, Block block " + 
-                " WHERE gbd.group = :group AND gbd.deleted = 0 AND gbd.block = block " +
-                INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE +
-                " ORDER BY gbd.participatedTimestamp DESC");
-			q.setParameter("group", group);
-		    q.setMaxResults(blockPerGroup);
-         	List<BlockView> blocks = new ArrayList<BlockView>();
-         	for (GroupBlockData gbd : TypeUtils.castList(GroupBlockData.class, q.getResultList())) {
-	         	try {
-	         	    BlockView blockView = getBlockView(viewpoint, gbd.getBlock(), gbd, true);
-	         	    blocks.add(blockView);
-	         	} catch (NotFoundException e) {
-	         		// this is used on the main page, let's not risk it throwing an exception here
-	         		logger.error("NotFoundException when getting what must be a public block", e);
-	         	}
-         	}
-         	GroupView groupView = groupSystem.getGroupView(viewpoint, group);
-            mugshots.add(new GroupMugshotView(groupView, blocks));      	
+		for (final Group group : distinctGroups) {
+			// Lazy initialization
+			mugshots.add(new GroupMugshotView() {
+				@Override
+				public List<BlockView> getBlocks() {
+					if (blocks == null) {
+						Query q = em.createQuery("Select gbd FROM GroupBlockData gbd, Block block " + 
+				                " WHERE gbd.group = :group AND gbd.deleted = 0 AND gbd.block = block " +
+				                INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE +
+				                " ORDER BY gbd.participatedTimestamp DESC");
+							q.setParameter("group", group);
+						    q.setMaxResults(blocksPerGroup);
+				         	blocks = new ArrayList<BlockView>();
+				         	for (GroupBlockData gbd : TypeUtils.castList(GroupBlockData.class, q.getResultList())) {
+					         	try {
+					         	    BlockView blockView = getBlockView(viewpoint, gbd.getBlock(), gbd, true);
+					         	    blocks.add(blockView);
+					         	} catch (NotFoundException e) {
+					         		// this is used on the main page, let's not risk it throwing an exception here
+					         		logger.error("NotFoundException when getting what must be a public block", e);
+					         	}
+				         	}	
+					}
+					return blocks;
+				}
+				@Override
+				public GroupView getGroupView() {
+					if (groupView == null)
+						groupView = groupSystem.getGroupView(viewpoint, group);
+					return groupView;
+				}				
+			});   	
 		}
 		return mugshots;
 	}	
 	
-	private List<Group> getRecentlyActiveGroups(Viewpoint viewpoint, User user, int start, int count, Set<Group> visibleGroups) {
+	private List<Group> getRecentlyActiveGroups(Viewpoint viewpoint, User user, int start, int count) {
 		// This query combines searching for participated blocks with group membership. 
 		// It is not optimal right now as MySQL tells us it requires a temporary table and file sort.
+		// Currently viewers other than the user can only see public groups
 		Query q = em.createQuery("SELECT g FROM Group g, GroupBlockData gbd, Block block, GroupMember gm WHERE" +
 				" gbd.group = g AND gm.group = g AND gbd.block = block " + 
 				" AND gbd.participatedTimestamp IS NOT NULL " +
-				" AND gm.status >= " + MembershipStatus.FOLLOWER.ordinal() + 
+				(viewpoint.isOfUser(user) ? "" : (" and g.access = " + GroupAccess.PUBLIC_INVITE.ordinal())) +
+				" AND gm.status = " + MembershipStatus.ACTIVE.ordinal() + 
 				" AND gm.member = :acct ORDER BY gbd.participatedTimestamp DESC");
 		q.setParameter("acct", user.getAccount());
 		q.setFirstResult(start);
 		q.setMaxResults(count);
 		List<Group> results = TypeUtils.castList(Group.class, q.getResultList());
-		// First, remove any groups that are not visible.
-		results.retainAll(visibleGroups);
-		// Now add in all visible groups at the end.  This will
-		// ensure that we can see all groups even if they had no interesting blocks.
-		// The order here will be essentially random.  Duplication filtering
-		// will happen later.
-		results.addAll(visibleGroups);
 		return results;
 	}	
 	
@@ -1222,11 +1230,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// select distinct most recently active groups		
        	int expectedHitFactor = 2;
        	
-		final Set<Group> visibleGroups = groupSystem.findRawGroups(viewpoint, user);       	
-		
 		List<Group> distinctGroups = getDistinctItems(new ItemSource<Group>() {
 			public List<Group> get(int start, int count) {
-				return getRecentlyActiveGroups(viewpoint, user, start, count, visibleGroups);
+				return getRecentlyActiveGroups(viewpoint, user, start, count);
 			}
 		}, start, count, expectedHitFactor);
 		
