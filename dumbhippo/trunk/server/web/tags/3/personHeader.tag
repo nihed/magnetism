@@ -6,7 +6,7 @@
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
 <%@ attribute name="shortVersion" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="embedVersion" required="false" type="java.lang.Boolean" %>
-<%@ attribute name="linkifyName" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="disableLink" required="false" type="java.lang.Boolean" %>
 
 <c:if test="${empty shortVersion}">
 	<c:set var="shortVersion" value="false"/>
@@ -14,10 +14,6 @@
 
 <c:if test="${empty embedVersion}">
 	<c:set var="embedVersion" value="false"/>
-</c:if>
-
-<c:if test="${empty linkifyName}">
-	<c:set var="linkifyName" value="true"/>
 </c:if>
 
 <div class="dh-person-header">
@@ -30,14 +26,14 @@
 			<tr valign="top">
 				<td>
 					<div class="dh-image">
-						<dht:headshot person="${who}" size="60" invited="false" disableLink="${!linkifyName}"/>
+						<dht:headshot person="${who}" size="60" invited="false" disableLink="${disableLink}"/>
 					</div>
 				</td>
 				<td>
 					<div class="dh-person-header-next-to-image">
 						<dht3:presenceIcon who="${who}"/>		
 						<c:choose>
-							<c:when test="${!linkifyName}">
+							<c:when test="${disableLink}">
 								<span class="dh-person-header-name"><c:out value="${who.name}"/>'s Mugshot</span>
 							</c:when>
 							<c:when test="${who.viewOfSelf}">

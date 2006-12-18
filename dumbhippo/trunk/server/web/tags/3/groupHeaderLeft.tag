@@ -6,6 +6,7 @@
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.GroupView" %>
 <%@ attribute name="embedVersion" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="anchor" required="false" type="java.lang.String" %>
+<%@ attribute name="disableLink" required="false" type="java.lang.Boolean" %>
 
 <c:if test="${empty embedVersion}">
 	<c:set var="embedVersion" value="false"/>
@@ -17,7 +18,7 @@
 		<tr valign="top">
 			<td>
 				<div class="dh-image">
-					<dht:groupshot group="${who}" size="60"/>
+					<dht:groupshot group="${who}" size="60" disableLink="${disableLink}"/>
 				</div>
 			</td>
 			<td>

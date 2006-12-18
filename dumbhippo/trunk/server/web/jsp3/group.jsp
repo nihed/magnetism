@@ -23,7 +23,7 @@
 	<dht3:pageSubHeader title="${group.private ? 'Private Group' : 'Public Group'}" privatePage="${group.private}">
 		<dht3:groupRelatedPagesTabs group="${group.viewedGroup}" selected="group"/>
 	</dht3:pageSubHeader>
-    <dht3:groupStack who="${group.viewedGroup}" stackOrder="1" stackType="dhMugshot" pageable="${group.pageableMugshot}" shortVersion="${group.pageableStack.position > 0}" showFrom="true" showHomeUrl="false" />
+    <dht3:groupStack who="${group.viewedGroup}" stackOrder="1" stackType="dhMugshot" pageable="${group.pageableMugshot}" shortVersion="${group.pageableStack.position > 0}" showFrom="true" showHomeUrl="false" disableLink="true"/>
 	<dht3:shinyBox color="grey">
 	    <div class="dh-person-stacker-header">
 		    <span class="dh-person-header-name"><a name="dhStacker">Group Stacker</a></span>

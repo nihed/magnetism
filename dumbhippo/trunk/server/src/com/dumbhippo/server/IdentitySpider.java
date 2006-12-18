@@ -231,6 +231,8 @@ public interface IdentitySpider {
 	 */
 	public Set<User> getRawUserContacts(Viewpoint viewpoint, User user);
 	
+	public int getRawUserContactCount(Viewpoint viewpoint, User user);
+	
 	public Set<User> getUsersWhoHaveUserAsContact(Viewpoint viewpoint, User user);
 	
 	/**

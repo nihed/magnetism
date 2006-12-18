@@ -4,6 +4,7 @@
 <%@ attribute name="group" required="true" type="com.dumbhippo.server.views.GroupView"%>
 <%@ attribute name="size" required="false" type="java.lang.String" %>
 <%@ attribute name="customLink" required="false" type="java.lang.String" %>
+<%@ attribute name="disableLink" required="false" type="java.lang.Boolean" %>
 
 <%-- this is required or the dh:png won't have a size set --%>
 <c:if test="${empty size}">
@@ -27,5 +28,11 @@
 	</c:otherwise>
 </c:choose>
 
-
-<a href="${linkUrl}" style="text-decoration: none;"><dh:png src="${photoUrl}" style="width: ${size}; height: ${size};"/></a>
+<c:choose>
+	<c:when test="${!empty linkUrl && !empty photoUrl && !disableLink}">
+		<a href="${linkUrl}" style="text-decoration: none;"><dh:png src="${photoUrl}" style="width: ${size}; height: ${size};"/></a>
+	</c:when>
+	<c:otherwise>
+		<dh:png src="${photoUrl}" style="width: ${size}; height: ${size};"/>	
+	</c:otherwise>
+</c:choose>

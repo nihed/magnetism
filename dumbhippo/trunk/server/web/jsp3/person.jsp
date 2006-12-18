@@ -32,7 +32,7 @@
             <a href="http://facebook.com">Log out from Facebook first</a> to re-login here.
        </div>                     
     </c:if> 
-	<dht3:personStack person="${person.viewedPerson}" stackOrder="1" pageable="${person.pageableMugshot}" shortVersion="${person.pageableStack.position > 0}" showFrom="true" homeStack="${person.self}"/>
+	<dht3:personStack person="${person.viewedPerson}" stackOrder="1" pageable="${person.pageableMugshot}" shortVersion="${person.pageableStack.position > 0}" showFrom="true" homeStack="${person.self}" disableLink="true"/>
 	
 	<dht3:shinyBox color="grey">
 	    <div class="dh-person-stacker-header">

@@ -8,16 +8,20 @@
 <dht3:requirePersonBean beanClass="com.dumbhippo.web.pages.MyFriendsPage"/>
 
 <c:set var="pageName" value="Friends" scope="page"/>
+<c:set var="possessive" value="${person.viewedPerson.name}'s" scope="page"/>
+<c:if test="${person.self}">
+	<c:set var="possessive" value="My" scope="page"/>
+</c:if>
 
 <head>
-	<title><c:out value="${person.viewedPerson.name}"/>'s ${pageName} - Mugshot</title>
+	<title><c:out value="${possessive}"/> ${pageName} - Mugshot</title>
 	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>
 	<dht3:stylesheet name="person"/>	
 	<dht:faviconIncludes/>
 </head>
 
 <dht3:page currentPageLink="friends">
-	<dht3:pageSubHeader title="${person.viewedPerson.name}'s ${pageName} (${person.activePeople.totalCount})">
+	<dht3:pageSubHeader title="${possessive} ${pageName} (${person.activePeople.totalCount})">
 		<dht3:randomTip tipIndex="${person.randomTipIndex}" isSelf="${person.self}"/>
 		<dht3:personRelatedPagesTabs selected="friends"/>
 	</dht3:pageSubHeader>

@@ -3,6 +3,7 @@ package com.dumbhippo.server.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -52,6 +53,7 @@ import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
@@ -106,6 +108,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	@EJB
 	private MusicSystem musicSystem;
+	
+	@EJB
+	private IdentitySpider identitySpider;
 	
 	@EJB
 	private PersonViewer personViewer;
@@ -946,8 +951,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}, pageable, expectedHitFactor);
 	}
 	
-	private interface ItemSource<T> {
-		List<T> get(int start, int count);
+	private static abstract class ItemSource<T> {
+		abstract Collection<T> get(int start, int count);
+		Collection<T> getRemainder() { return Collections.emptyList(); }
 	}
 	
 	private <T> List<T> getDistinctItems(ItemSource<T> source, int start, int count, int expectedHitFactor) {
@@ -956,11 +962,16 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		int max = start + count;
 
 		int chunkStart = 0;
+		boolean remainderUsed = false;
 		while (distinctItems.size() < max) {
 			int chunkCount = (max - distinctItems.size()) * expectedHitFactor;
-			List<T> items = source.get(chunkStart, chunkCount);
-			if (items.isEmpty())
+			Collection<T> items = source.get(chunkStart, chunkCount);
+			if (items.isEmpty() && !remainderUsed) {
+				items = source.getRemainder();
+				remainderUsed = true;
+			} else if (items.isEmpty()) {
 				break;
+			}
 			
 			int resultItemCount = 0;
 
@@ -1042,7 +1053,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 		
 		List<User> distinctUsers = getDistinctItems(new ItemSource<User>() {
-			public List<User> get(int start, int count) {
+			@Override
+			public Collection<User> get(int start, int count) {
 				return getRecentActivityUsers(start, count, groupUpdatesFilter);
 			}
 		}, startUser, userCount, expectedHitFactor);
@@ -1158,8 +1170,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	public List<PersonMugshotView> getContactActivity(final Viewpoint viewpoint, final User user, int start, int count, int blocksPerUser) {
 		List<User> distinctUsers = getDistinctItems(new ItemSource<User>() {
+			@Override
 			public List<User> get(int start, int count) {
 				return getRecentlyActiveContacts(viewpoint, user, start, count);
+			}
+
+			@Override
+			Collection<User> getRemainder() {
+				return identitySpider.getRawUserContacts(viewpoint, user);
 			}
 		}, start, count, 4);		
 		
@@ -1168,7 +1186,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 
 	public void pageContactActivity(Viewpoint viewpoint, User viewedUser, int blocksPerUser, Pageable<PersonMugshotView> pageable) {
 		pageable.setResults(getContactActivity(viewpoint, viewedUser, pageable.getStart(), pageable.getCount(), blocksPerUser));
-		pageable.setTotalCount(personViewer.getContactCount(viewpoint, viewedUser));
+		pageable.setTotalCount(identitySpider.getRawUserContactCount(viewpoint, viewedUser));
 	}
 	
 	public List<GroupMugshotView> getMugshotViews(final Viewpoint viewpoint, List<Group> distinctGroups, final int blocksPerGroup) {
@@ -1231,8 +1249,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
        	int expectedHitFactor = 2;
        	
 		List<Group> distinctGroups = getDistinctItems(new ItemSource<Group>() {
-			public List<Group> get(int start, int count) {
+			@Override
+			public Collection<Group> get(int start, int count) {
 				return getRecentlyActiveGroups(viewpoint, user, start, count);
+			}
+
+			@Override
+			Collection<Group> getRemainder() {
+				return groupSystem.findRawGroups(viewpoint, user);
 			}
 		}, start, count, expectedHitFactor);
 		
@@ -1274,7 +1298,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
        	int expectedHitFactor = 2;
 		
 		List<Group> distinctGroups = getDistinctItems(new ItemSource<Group>() {
-			public List<Group> get(int start, int count) {
+			@Override
+			public Collection<Group> get(int start, int count) {
 				return getRecentActivityGroups(start, count);
 			}
 		}, startGroup, groupCount, expectedHitFactor);
