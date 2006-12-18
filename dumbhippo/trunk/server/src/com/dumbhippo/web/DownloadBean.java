@@ -70,7 +70,7 @@ public class DownloadBean extends BrowserBean {
 	}
 	
 	public String getCurrentVersion() {
-		if (isFedora5Requested() || isFedora5Requested()) {
+		if (isFedora5Requested() || isFedora6Requested()) {
 			return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADINFO_LINUX_CURRENT);
 		} else if (isWindowsRequested()) {
 			return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADINFO_WINDOWS_CURRENT);
