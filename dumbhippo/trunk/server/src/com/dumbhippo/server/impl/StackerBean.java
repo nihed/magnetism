@@ -1177,7 +1177,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 
 			@Override
 			Collection<User> getRemainder() {
-				return identitySpider.getRawUserContacts(viewpoint, user);
+				return identitySpider.getRawUserContacts(viewpoint, user, false);
 			}
 		}, start, count, 4);		
 		
@@ -1186,7 +1186,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 
 	public void pageContactActivity(Viewpoint viewpoint, User viewedUser, int blocksPerUser, Pageable<PersonMugshotView> pageable) {
 		pageable.setResults(getContactActivity(viewpoint, viewedUser, pageable.getStart(), pageable.getCount(), blocksPerUser));
-		pageable.setTotalCount(identitySpider.getRawUserContactCount(viewpoint, viewedUser));
+		pageable.setTotalCount(identitySpider.getRawUserContactCount(viewpoint, viewedUser, false));
 	}
 	
 	public List<GroupMugshotView> getMugshotViews(final Viewpoint viewpoint, List<Group> distinctGroups, final int blocksPerGroup) {

@@ -1419,7 +1419,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// with MySQL 4, so we accept the possibility of duplicate tracks for 
 		// the moment. The way to fix this is to use native SQL ... see the handling
 		// of similar queries globally with the queries defined in TrackHistory.java
-		Set<User> contacts = identitySpider.getRawUserContacts(viewpoint, viewpoint.getViewer());
+		Set<User> contacts = identitySpider.getRawUserContacts(viewpoint, viewpoint.getViewer(), true);
 		
 		// filter out ourselves
 		Iterator<User> iterator = contacts.iterator();
@@ -1674,7 +1674,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
         if (viewpoint instanceof UserViewpoint) {
         	// we will not limit the query to h.user.id being in the contacts list, but we
         	// will give a preference to people in that list when constructing the list to return
-            contacts = identitySpider.getRawUserContacts(viewpoint, ((UserViewpoint)viewpoint).getViewer());
+            contacts = identitySpider.getRawUserContacts(viewpoint, ((UserViewpoint)viewpoint).getViewer(), true);
         }
 
         // we want to desplay the most recent plays
@@ -1806,7 +1806,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		Set<User> contacts = null;
 		if (viewpoint instanceof UserViewpoint) {
-			contacts = identitySpider.getRawUserContacts(viewpoint, ((UserViewpoint)viewpoint).getViewer());
+			contacts = identitySpider.getRawUserContacts(viewpoint, ((UserViewpoint)viewpoint).getViewer(), true);
 
 			// disabled for now since we want to return anonymous recommendations too
 			// if you renable, take care of the fact that IN () isn't allowed if contacts is empty

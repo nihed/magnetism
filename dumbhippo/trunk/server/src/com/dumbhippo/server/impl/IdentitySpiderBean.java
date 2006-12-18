@@ -607,21 +607,31 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return ((Number)q.getSingleResult()).intValue();
 	}
 
-	public Set<User> getRawUserContacts(Viewpoint viewpoint, User user) {
+	public Set<User> getRawUserContacts(Viewpoint viewpoint, User user, boolean includeSelf) {
 		if (!isViewerSystemOrFriendOf(viewpoint, user))
 			return Collections.emptySet();
 
+		Guid viewedUserId = user.getGuid();
 		Set<User> ret = new HashSet<User>();
-		for (Guid guid : LiveState.getInstance().getContacts(user.getGuid())) {
+		for (Guid guid : LiveState.getInstance().getContacts(viewedUserId)) {
+			if (!includeSelf && viewedUserId.equals(guid))
+				continue;
 			ret.add(em.find(User.class, guid.toString()));
 		}
 		return ret;
 	}
 	
-	public int getRawUserContactCount(Viewpoint viewpoint, User user) {
+	public int getRawUserContactCount(Viewpoint viewpoint, User user, boolean includeSelf) {
 		if (!isViewerSystemOrFriendOf(viewpoint, user))
 			return 0;
-		return LiveState.getInstance().getContacts(user.getGuid()).size();
+		int count = 0;
+		Guid viewedUserId = user.getGuid();		
+		for (Guid guid : LiveState.getInstance().getContacts(viewedUserId)) {
+			if (!includeSelf && viewedUserId.equals(guid))
+				continue;
+			count++;
+		}
+		return count;
 	}
 
 	static final private String GET_ACCOUNTS_WITH_ACCOUNT_AS_CONTACT_QUERY = "SELECT cc.account FROM ContactClaim cc WHERE cc.resource = :account";
@@ -893,7 +903,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	public Set<User> getMySpaceContacts(UserViewpoint viewpoint) {
 		Set<User> contacts = getRawUserContacts(viewpoint, viewpoint
-				.getViewer());
+				.getViewer(), true);
 
 		// filter out ourselves and anyone with no myspace
 		Iterator<User> iterator = contacts.iterator();

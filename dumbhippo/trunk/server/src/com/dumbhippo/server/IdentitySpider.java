@@ -226,12 +226,13 @@ public interface IdentitySpider {
 	/** 
 	 * Get the contacts of a given person who have an account; including the person themselves
 	 * @param user who to get contacts of
+	 * @param includeSelf TODO
 	 * @return their friends
 	 * 
 	 */
-	public Set<User> getRawUserContacts(Viewpoint viewpoint, User user);
+	public Set<User> getRawUserContacts(Viewpoint viewpoint, User user, boolean includeSelf);
 	
-	public int getRawUserContactCount(Viewpoint viewpoint, User user);
+	public int getRawUserContactCount(Viewpoint viewpoint, User user, boolean includeSelf);
 	
 	public Set<User> getUsersWhoHaveUserAsContact(Viewpoint viewpoint, User user);
 	
