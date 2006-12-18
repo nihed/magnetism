@@ -97,6 +97,7 @@
 	                    <File Id="closetipPng"       Name="closetip.png" LongName="closetip.png"       src="images\closetip.png"       DiskId="1" Vital="yes"/>
 	                    <File Id="expandtipPng"      Name="expandti.png" LongName="expandtip.png"      src="images\expandtip.png"      DiskId="1" Vital="yes"/>
 	                    <File Id="findPng"           Name="find.png"     LongName="find.png"           src="images\find.png"           DiskId="1" Vital="yes"/>
+	                    <File Id="flatXPng"          Name="flat_x.png"   LongName="flat_x.png"         src="images\flat_x.png"         DiskId="1" Vital="yes"/>
 	                    <File Id="homePng"           Name="home.png"     LongName="home.png"           src="images\home.png"           DiskId="1" Vital="yes"/>
 	                    <File Id="home2Png"          Name="home2.png"    LongName="home2.png"          src="images\home2.png"          DiskId="1" Vital="yes"/>
 	                    <File Id="hushPng"           Name="hush.png"     LongName="hush.png"           src="images\hush.png"           DiskId="1" Vital="yes"/>
