@@ -76,6 +76,10 @@ public interface GroupSystem {
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member);	
 	
+	public Set<Group> findRawPublicGroups(Viewpoint viewpoint, User member);
+
+	public Set<Group> findRawPublicGroups(Viewpoint viewpoint, User user, MembershipStatus active);	
+	
 	public Set<Group> findRawPrivateGroups(Viewpoint viewpoint, User member);	
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status);
@@ -118,6 +122,8 @@ public interface GroupSystem {
 	public Set<GroupView> findGroups(Viewpoint viewpoint, User member, MembershipStatus status);
 	
 	public int findGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status);
+	
+	public int findPublicGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status);	
 	
 	public void pagePublicGroups(Pageable<GroupView> pageable);
 		

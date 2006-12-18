@@ -544,13 +544,28 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	private static final String FIND_RAW_GROUPS_QUERY = 
 		"SELECT gm.group FROM GroupMember gm, AccountClaim ac, Group g " +
 		"WHERE ac.resource = gm.member AND ac.owner = :member AND g = gm.group ";
+	
+	private static enum GroupFindType {
+		ANY,
+		PRIVATE,
+		PUBLIC
+	}
+	
+	private String getGroupFindTypeQuery(GroupFindType type) {
+		if (type.equals(GroupFindType.PRIVATE))
+			return " AND g.access = " + GroupAccess.SECRET.ordinal();
+		else if (type.equals(GroupFindType.PUBLIC)) 
+			return " AND g.access = " + GroupAccess.PUBLIC_INVITE.ordinal();
+		else
+			return "";
+	}
 
-	private Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status, boolean privateOnly, boolean receivesOnly) {
+	private Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status, GroupFindType groupFindType, boolean receivesOnly) {
 		Query q;
 		
 		StringBuilder extraClause = new StringBuilder(getStatusClause(status));
-		if (privateOnly)
-			extraClause.append(" AND g.access = " + GroupAccess.SECRET.ordinal());
+		extraClause.append(getGroupFindTypeQuery(groupFindType));
+		
 		if (receivesOnly)
 			extraClause.append(getReceivesClause());
 		
@@ -571,19 +586,27 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return ret;
 	}
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
-		return findRawGroups(viewpoint, member, status, false, false);
+		return findRawGroups(viewpoint, member, status, GroupFindType.ANY, false);
 	}
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member) {
-		return findRawGroups(viewpoint, member, null, false, false);
+		return findRawGroups(viewpoint, member, null, GroupFindType.ANY, false);
 	}
+	
+	public Set<Group> findRawPublicGroups(Viewpoint viewpoint, User member) {
+		return findRawGroups(viewpoint, member, null, GroupFindType.PUBLIC, false);
+	}	
+	
+	public Set<Group> findRawPublicGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
+		return findRawGroups(viewpoint, member, status, GroupFindType.PUBLIC, false);
+	}		
 
 	public Set<Group> findRawPrivateGroups(Viewpoint viewpoint, User member) {
-		return findRawGroups(viewpoint, member, null, true, false);
+		return findRawGroups(viewpoint, member, null, GroupFindType.PRIVATE, false);
 	}
 	
 	public Set<Group> findRawRecipientGroups(Viewpoint viewpoint, User member) {
-		return findRawGroups(viewpoint, member, null, false, true);
+		return findRawGroups(viewpoint, member, null, GroupFindType.ANY, true);
 	}
  
 	public void fixupGroupMemberships(User user) {
@@ -602,7 +625,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}
 	}
 	
-	private Query buildFindGroupsQuery(Viewpoint viewpoint, User member, boolean isCount, MembershipStatus status) {
+	private Query buildFindGroupsQuery(Viewpoint viewpoint, User member, boolean isCount, MembershipStatus status, GroupFindType groupFindType) {
 		Query q;		
 		StringBuilder queryStr = new StringBuilder("SELECT ");
 		boolean ownGroups = viewpoint.isOfUser(member);		
@@ -615,6 +638,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		queryStr.append(" FROM GroupMember gm, AccountClaim ac, Group g " +
         "WHERE ac.resource = gm.member AND ac.owner = :member AND g = gm.group ");
 		queryStr.append(getStatusClause(status));
+		queryStr.append(getGroupFindTypeQuery(groupFindType));	
 		
 		if (ownGroups || viewpoint instanceof SystemViewpoint) {
 			// Special case this for effiency
@@ -635,10 +659,16 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 	
 	public int findGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status) {
-		Query q = buildFindGroupsQuery(viewpoint, member, true, status);
+		Query q = buildFindGroupsQuery(viewpoint, member, true, status, GroupFindType.ANY);
 		Object result = q.getSingleResult();
 		return ((Number) result).intValue();			
 	}
+	
+	public int findPublicGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status) {
+		Query q = buildFindGroupsQuery(viewpoint, member, true, status, GroupFindType.PUBLIC);
+		Object result = q.getSingleResult();
+		return ((Number) result).intValue();			
+	}	
 	
 	public Set<GroupView> findGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
 
@@ -646,7 +676,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		Set<GroupView> result = new HashSet<GroupView>();
 		
-		Query q = buildFindGroupsQuery(viewpoint, member, false, status);
+		Query q = buildFindGroupsQuery(viewpoint, member, false, status, GroupFindType.ANY);
 		for (Object o : q.getResultList()) {
 			GroupMember groupMember = (GroupMember)o;
 			Set<PersonView> inviters  = new HashSet<PersonView>();
