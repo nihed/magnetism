@@ -27,7 +27,8 @@ static void hippo_canvas_control_set_context (HippoCanvasItem    *item,
                                               HippoCanvasContext *context);
 static void hippo_canvas_control_allocate    (HippoCanvasItem    *item,
                                               int                 width,
-                                              int                 height);
+                                              int                 height,
+                                              gboolean            origin_changed);
 
 /* Canvas box methods */
 static void hippo_canvas_control_paint_below_children       (HippoCanvasBox  *box,
@@ -126,6 +127,11 @@ hippo_canvas_control_new(void)
     return HIPPO_CANVAS_ITEM(control);
 }
 
+void
+hippo_canvas_control_position(void)
+{
+}
+
 static void
 hippo_canvas_control_set_property(GObject         *object,
                                  guint            prop_id,
@@ -180,41 +186,14 @@ hippo_canvas_control_get_property(GObject         *object,
 }
 
 static void
-hippo_canvas_control_set_context(HippoCanvasItem    *item,
-                                 HippoCanvasContext *context)
+hippo_canvas_control_position(HippoCanvasControl *control)
 {
+    HippoCanvasItem *item = HIPPO_CANVAS_ITEM(control);
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
 
-    if (context == box->context)
-        return;
-
-    if (box->context)
-        hippo_canvas_context_unregister_widget_item(box->context, item);
-
-    /* chain up, which invalidates our old context */
-    item_parent_class->set_context(item, context);
-
-    if (box->context)
-        hippo_canvas_context_register_widget_item(box->context, item);
-}
-
-static void
-hippo_canvas_control_allocate(HippoCanvasItem *item,
-                              int              width,
-                              int              height)
-{
     int x, y, w, h;
     int control_x, control_y;
-    HippoCanvasControl *control;
-    HippoCanvasBox *box;
-
-    control = HIPPO_CANVAS_CONTROL(item);
-    box = HIPPO_CANVAS_BOX(item);
     
-    /* get the box set up */
-    item_parent_class->allocate(item, width, height);
-
-    /* Now do the allocation for the child control */
     if (control->control == NULL)
         return;
     
@@ -229,6 +208,38 @@ hippo_canvas_control_allocate(HippoCanvasItem *item,
                                                  &control_x, &control_y);
 
     control->control->sizeAllocate(control_x + x, control_y + y, w, h);
+}
+
+static void
+hippo_canvas_control_set_context(HippoCanvasItem    *item,
+                                 HippoCanvasContext *context)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+
+    if (context == box->context)
+        return;
+
+    if (box->context)
+        hippo_canvas_context_unregister_widget_item(box->context, item);
+
+    /* chain up, which invalidates our old context */
+    item_parent_class->set_context(item, context);
+
+    if (box->context) {
+        hippo_canvas_context_register_widget_item(box->context, item);
+        hippo_canvas_control_position(HIPPO_CANVAS_CONTROL(item));
+    }
+}
+
+static void
+hippo_canvas_control_allocate(HippoCanvasItem *item,
+                              int              width,
+                              int              height,
+                              gboolean         origin_changed)
+{
+    item_parent_class->allocate(item, width, height, origin_changed);
+
+    hippo_canvas_control_position(HIPPO_CANVAS_CONTROL(item));
 }
 
 static void

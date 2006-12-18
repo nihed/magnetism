@@ -42,9 +42,13 @@ struct _HippoCanvasItemIface {
     int      (* get_natural_width)  (HippoCanvasItem *canvas_item);
     int      (* get_height_request) (HippoCanvasItem *canvas_item,
                                      int              for_width);
+    /* The origin changed flag indicates that the position of the item with respect to the
+     * canvas root changed. The item must then call allocate on it's children passing
+     * TRUE for origin_changed as well. */
     void     (* allocate)           (HippoCanvasItem *canvas_item,
                                      int              width,
-                                     int              height);
+                                     int              height,
+                                     gboolean         origin_changed);
     void     (* get_allocation)     (HippoCanvasItem *canvas_item,
                                      int             *width_p,
                                      int             *height_p);
@@ -84,7 +88,8 @@ int                hippo_canvas_item_get_height_request (HippoCanvasItem    *can
                                                          int                 for_width);
 void               hippo_canvas_item_allocate           (HippoCanvasItem    *canvas_item,
                                                          int                 width,
-                                                         int                 height);
+                                                         int                 height,
+                                                         gboolean            origin_changed);
 void               hippo_canvas_item_get_allocation     (HippoCanvasItem    *canvas_item,
                                                          int                *width_p,
                                                          int                *height_p);

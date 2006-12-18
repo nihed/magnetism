@@ -18,13 +18,6 @@
 
 #define VERTICAL_PADDING 1 // Vertical padding around the font
 
-/* Change notification: If I read the MSDN docs correctly, change notification messages
- * are sent to the *parent* of the control, not the control itself. So, to get 
- * notify::text working correctly we'd need to add some facilities to HippoAbstractControl
- * to send WM_COMMAND notifications to its children. We don't need notify::text at the 
- * moment, so we ignore the issue.
- */
-
 HippoEdit::HippoEdit()
 {
     // standard Windows control
@@ -46,10 +39,25 @@ HippoEdit::setListener(HippoEditListener *listener)
     listener_ = listener;
 }
 
+bool
+HippoEdit::handleNotification(UINT notification)
+{
+    switch (notification) {
+        case EN_CHANGE:
+            listener_->onTextChanged();
+            return true;
+        default:
+            return false;
+    }
+}
+
+
 void 
 HippoEdit::setText(const HippoBSTR &text)
 {
-    SendMessage(window_, WM_SETTEXT, 0, (LPARAM)text.m_str);
+    text_ = text;
+    if (window_)
+        SendMessage(window_, WM_SETTEXT, 0, (LPARAM)text.m_str);
 }
 
 HippoBSTR 
@@ -57,11 +65,15 @@ HippoEdit::getText()
 {
 #define MAX_LENGTH 1024
 
-    WCHAR buffer[MAX_LENGTH];
+    if (window_) {
+        WCHAR buffer[MAX_LENGTH];
 
-    unsigned int length = (DWORD)SendMessage(window_, WM_GETTEXT, (WPARAM)MAX_LENGTH, (LPARAM)buffer);
+        unsigned int length = (DWORD)SendMessage(window_, WM_GETTEXT, (WPARAM)MAX_LENGTH, (LPARAM)buffer);
 
-    return HippoBSTR(length, buffer);
+        return HippoBSTR(length, buffer);
+    } else {
+        return text_;
+    }
 }
 
 
@@ -110,6 +122,8 @@ HippoEdit::create()
     font_ = CreateFontIndirect(&lf);
 
     SendMessage(window_, WM_SETFONT, (WPARAM)font_,(LPARAM)FALSE);
+    if (text_)
+        SendMessage(window_, WM_SETTEXT, 0, (LPARAM)text_.m_str);
 
     return true;
 }

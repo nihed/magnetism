@@ -182,14 +182,14 @@ HippoCanvasItem*
 hippo_canvas_test_get_root(void)
 {
     HippoCanvasItem *root;
-    HippoCanvasItem *shape1;
     HippoCanvasItem *shape2;
     HippoCanvasItem *text;
+#if 0
     HippoCanvasItem *image;
     HippoCanvasItem *row;
+    HippoCanvasItem *shape1;
     int i;
 
-#if 0
     root = g_object_new(HIPPO_TYPE_CANVAS_STACK,
                         "box-width", 400,
                         "spacing", 8,

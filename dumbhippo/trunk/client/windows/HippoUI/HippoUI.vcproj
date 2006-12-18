@@ -135,6 +135,9 @@
 				RelativePath=".\HippoAbstractWindow.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoButton.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoCanvas.cpp">
 			</File>
 			<File
@@ -255,6 +258,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoAbstractWindow.h">
+			</File>
+			<File
+				RelativePath=".\HippoButton.h">
 			</File>
 			<File
 				RelativePath=".\HippoCanvas.h">

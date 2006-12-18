@@ -14,6 +14,7 @@ all:
 	copy $(IMGDIR)\closetip.png $(OUTDIR)\images
 	copy $(IMGDIR)\expandtip.png $(OUTDIR)\images
 	copy $(IMGDIR)\find.png $(OUTDIR)\images
+	copy $(IMGDIR)\flat_x.png $(OUTDIR)\images
 	copy $(IMGDIR)\home2.png $(OUTDIR)\images
 	copy $(IMGDIR)\home.png $(OUTDIR)\images
 	copy $(IMGDIR)\hush2.png $(OUTDIR)\images

@@ -116,9 +116,6 @@
 				RelativePath="..\..\common\hippo\hippo-block-abstract-person.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-blog-person.c">
-			</File>
-			<File
 				RelativePath="..\..\common\hippo\hippo-block-facebook-event.c">
 			</File>
 			<File
@@ -129,6 +126,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-block-flickr-photoset.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-generic.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-block-group-chat.c">
@@ -143,9 +143,6 @@
 				RelativePath="..\..\common\hippo\hippo-block-music-person.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-myspace-person.c">
-			</File>
-			<File
 				RelativePath="..\..\common\hippo\hippo-block-post.c">
 			</File>
 			<File
@@ -158,9 +155,6 @@
 				RelativePath="..\..\common\hippo\hippo-canvas-base.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-blog-person.c">
-			</File>
-			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-facebook-event.c">
 			</File>
 			<File
@@ -168,6 +162,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-photoset.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-generic.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-group-chat.c">
@@ -183,9 +180,6 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-music.c">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-myspace-person.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-post.c">
@@ -369,9 +363,6 @@
 				RelativePath="..\..\common\hippo\hippo-block-abstract-person.h">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-blog-person.h">
-			</File>
-			<File
 				RelativePath="..\..\common\hippo\hippo-block-facebook-event.h">
 			</File>
 			<File
@@ -382,6 +373,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-block-flickr-photoset.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-generic.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-block-group-chat.h">
@@ -396,9 +390,6 @@
 				RelativePath="..\..\common\hippo\hippo-block-music-person.h">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-myspace-person.h">
-			</File>
-			<File
 				RelativePath="..\..\common\hippo\hippo-block-post.h">
 			</File>
 			<File
@@ -411,9 +402,6 @@
 				RelativePath="..\..\common\hippo\hippo-canvas-base.h">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-blog-person.h">
-			</File>
-			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-facebook-event.h">
 			</File>
 			<File
@@ -423,13 +411,13 @@
 				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-photoset.h">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-generic.h">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-music-chat.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-music.h">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-myspace-person.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-post.h">

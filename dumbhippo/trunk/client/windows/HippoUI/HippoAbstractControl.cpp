@@ -351,6 +351,15 @@ HippoAbstractControl::getLastRequest(int *width_p,
 }
 
 bool
+HippoAbstractControl::handleNotification(UINT notification)
+{
+    // No notifications for the base class; child classes can override
+
+    return false;
+}
+
+
+bool
 HippoAbstractControl::processMessage(UINT   message,
                                      WPARAM wParam,
                                      LPARAM lParam)

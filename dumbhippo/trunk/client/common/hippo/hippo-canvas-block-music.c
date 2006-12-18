@@ -163,6 +163,7 @@ hippo_canvas_block_music_constructor (GType                  type,
     HippoCanvasBlock *block;
     HippoCanvasBlockMusic *block_music;
     HippoCanvasBox *content_box;
+    HippoCanvasBox *box;
     HippoCanvasBox *top_box;
     HippoCanvasBox *beside_box;
     HippoCanvasBox *quip_box;
@@ -197,21 +198,32 @@ hippo_canvas_block_music_constructor (GType                  type,
                               NULL);
     hippo_canvas_box_append(top_box, HIPPO_CANVAS_ITEM(beside_box), 0);
 
+    /* An extra box to keep the artist link from expanding beyond its text */
+    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       NULL);
+    hippo_canvas_box_append(beside_box, HIPPO_CANVAS_ITEM(box), 0);
+
     block_music->artist_link = g_object_new(HIPPO_TYPE_CANVAS_URL_LINK, 
                                             "actions", hippo_canvas_block_get_actions(block),
                                             "xalign", HIPPO_ALIGNMENT_START,
                                             "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                                             NULL);
-    block_music->artist_link_parent = beside_box;
-    hippo_canvas_box_append(beside_box, block_music->artist_link, 0);
+    block_music->artist_link_parent = box;
+    hippo_canvas_box_append(box, block_music->artist_link, 0);
     
+    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       NULL);
+    hippo_canvas_box_append(beside_box, HIPPO_CANVAS_ITEM(box), 0);
+
     block_music->name_link = g_object_new(HIPPO_TYPE_CANVAS_URL_LINK,
                                           "actions", hippo_canvas_block_get_actions(block),
                                           "xalign", HIPPO_ALIGNMENT_START,
                                           "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                                           NULL);
-    block_music->name_link_parent = beside_box;
-    hippo_canvas_box_append(beside_box, block_music->name_link, 0);
+    block_music->name_link_parent = box;
+    hippo_canvas_box_append(box, block_music->name_link, 0);
 
     quip_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                             "orientation", HIPPO_ORIENTATION_HORIZONTAL,
@@ -488,6 +500,7 @@ set_old_tracks(HippoCanvasBlockMusic *block_music,
                                 "tooltip", "More information about this song",
                                 "url", url,
                                 "xalign", HIPPO_ALIGNMENT_START,
+                                "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                                 NULL);
             hippo_canvas_box_append(track_box, item, 0);
         }

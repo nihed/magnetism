@@ -150,7 +150,7 @@ send_quip(HippoQuipWindow *quip_window)
 }
 
 static void
-on_send_activated(HippoCanvasItem       *item,
+on_quip_activated(HippoCanvasItem       *item,
                   HippoQuipWindow       *quip_window)
 {
     send_quip(quip_window);
@@ -211,12 +211,13 @@ hippo_quip_window_new(HippoDataCache *cache)
     HippoCanvasBox *top_box;
     HippoCanvasBox *middle_box;
     HippoCanvasBox *bottom_box;
+    HippoCanvasBox *box;
     HippoCanvasItem *item;
 
     g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
 
     quip_window = g_object_new(HIPPO_TYPE_QUIP_WINDOW,
-                           NULL);
+                               NULL);
 
     g_object_ref(cache);
     quip_window->cache = cache;
@@ -231,24 +232,16 @@ hippo_quip_window_new(HippoDataCache *cache)
     outer_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                              "box-width", WINDOW_WIDTH,
                              "padding-left", 7,
-                             "padding-right", 7,
-                             "padding-top", 4,
+                             "padding-right", 3,
+                             "padding-top", 3,
                              "padding-bottom", 7,
                              "border", 1,
                              "background-color", 0xffffffff,
                              "border-color", 0x000000ff,
-                             "spacing", 3,
+                             "spacing", 4,
                              NULL);
     hippo_window_set_contents(quip_window->window, HIPPO_CANVAS_ITEM(outer_box));
 
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
-                        "normal-image-name", "flat_x",
-                        NULL);
-    hippo_canvas_box_append(outer_box, item, HIPPO_PACK_FIXED);
-    hippo_canvas_box_move(outer_box, item, HIPPO_GRAVITY_NORTH_EAST, WINDOW_WIDTH - 4, 4);
-    g_signal_connect(G_OBJECT(item), "activated",
-                     G_CALLBACK(on_close_activated), quip_window);
-     
     top_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                            "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                            NULL);
@@ -256,11 +249,27 @@ hippo_quip_window_new(HippoDataCache *cache)
 
     quip_window->title_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                            "xalign", HIPPO_ALIGNMENT_START,
+                                           "padding-top", 1,
                                            "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                                           "box-width", WINDOW_WIDTH - 8 - 4 - 11 - 8,
                                            NULL);
     hippo_canvas_box_append(top_box, HIPPO_CANVAS_ITEM(quip_window->title_item), HIPPO_PACK_EXPAND);
 
+    /* This box keeps the image from expanding beyond it's natural size, since we only
+     * want the image itself to show as a link; really a HIPPO_CANVAS_IMAGE_BUTTON bug
+     * but hardish to fix.
+     */
+    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       "orientation", HIPPO_ORIENTATION_VERTICAL,
+                       NULL);
+    hippo_canvas_box_append(top_box, HIPPO_CANVAS_ITEM(box), HIPPO_PACK_END);
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                        "normal-image-name", "flat_x",
+                        NULL);
+    hippo_canvas_box_append(box, item, 0);
+    g_signal_connect(G_OBJECT(item), "activated",
+                     G_CALLBACK(on_close_activated), quip_window);
+     
     middle_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                               "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                               "spacing", 4,
@@ -332,11 +341,12 @@ hippo_quip_window_new(HippoDataCache *cache)
     item = hippo_canvas_button_new();
     g_object_set(item,
                  "padding-left", 8,
+                 "padding-right", 4,
                  "text", "Quip!",
                  NULL);
     hippo_canvas_box_append(bottom_box, item, HIPPO_PACK_END);
     g_signal_connect(G_OBJECT(item), "activated",
-                     G_CALLBACK(on_send_activated), quip_window);
+                     G_CALLBACK(on_quip_activated), quip_window);
     
     return quip_window;
 }

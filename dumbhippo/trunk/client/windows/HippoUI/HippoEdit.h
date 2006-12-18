@@ -25,6 +25,8 @@ public:
 
     void setListener(HippoEditListener *listener);
 
+    bool handleNotification(UINT notification);
+
 protected:
     virtual int getWidthRequestImpl();
     virtual int getHeightRequestImpl(int forWidth);
@@ -44,6 +46,7 @@ private:
     int widthReq_;
     int heightReq_;
 
+    HippoBSTR text_;
     HFONT font_;
     WNDPROC oldWindowProc_;
 };

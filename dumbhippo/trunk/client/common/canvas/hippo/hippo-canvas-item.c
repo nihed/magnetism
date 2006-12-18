@@ -174,11 +174,12 @@ hippo_canvas_item_get_height_request(HippoCanvasItem *canvas_item,
 void
 hippo_canvas_item_allocate(HippoCanvasItem *canvas_item,
                            int              width,
-                           int              height)
+                           int              height,
+                           gboolean         origin_changed)
 {
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
 
-    HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->allocate(canvas_item, width, height);
+    HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->allocate(canvas_item, width, height, origin_changed);
 }
 
 void

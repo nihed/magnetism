@@ -5,6 +5,7 @@
  **/
 #include "stdafx-hippoui.h"
 #include <hippo/hippo-canvas-widgets.h>
+#include "HippoButton.h"
 #include "HippoCanvasControl.h"
 #include "HippoCanvas.h"
 #include "HippoEdit.h"
@@ -19,16 +20,146 @@
     G_DEFINE_TYPE(HippoCanvas##Camel, hippo_canvas_##lower, HIPPO_TYPE_CANVAS_CONTROL)
 
 
-HIPPO_DEFINE_CONTROL_ITEM(button, Button);
 HIPPO_DEFINE_CONTROL_ITEM(scrollbars, Scrollbars);
+
+/*************************************************************************/
+
+typedef enum {
+    BUTTON_PROP_0,
+    BUTTON_PROP_TEXT
+};
+
+class HippoCanvasButtonListener : public HippoButtonListener {
+public:
+    HippoCanvasButtonListener(HippoCanvasItem *item, HippoButton *control) :
+        item_(item), control_(control) {
+    }
+
+    virtual void onClicked();
+
+private:
+    HippoCanvasItem *item_;
+    HippoButton *control_;
+};
+
+struct _HippoCanvasButton {
+    HippoCanvasControl parent;
+
+    HippoCanvasButtonListener *listener;
+};
+
+struct _HippoCanvasButtonClass { 
+    HippoCanvasControlClass parent; 
+};
+
+G_DEFINE_TYPE(HippoCanvasButton, hippo_canvas_button, HIPPO_TYPE_CANVAS_CONTROL)
+
+static void 
+hippo_canvas_button_init(HippoCanvasButton *canvas_button) {
+}
+
+HippoButton *
+button_get_control(HippoCanvasButton *canvas_button)
+{
+    HippoAbstractControl *control = HIPPO_CANVAS_CONTROL(canvas_button)->control;
+    g_assert(control != NULL);
+    
+    return (HippoButton *)control;
+}
+
+static void
+hippo_canvas_button_dispose(GObject *object)
+{
+    HippoCanvasButton *canvas_button = HIPPO_CANVAS_BUTTON (object);
+    HippoButton *button = button_get_control(canvas_button);
+
+    if (button)
+        button->setListener(NULL);
+
+    G_OBJECT_CLASS(hippo_canvas_button_parent_class)->dispose(object);
+}
+
+static void
+hippo_canvas_button_set_property(GObject        *object,
+                                guint            prop_id,
+                                const GValue    *value,
+                                GParamSpec      *pspec)
+{
+    HippoCanvasButton *canvas_button = HIPPO_CANVAS_BUTTON(object);
+    HippoButton *button = button_get_control(canvas_button);
+
+    switch (prop_id) {
+    case BUTTON_PROP_TEXT:
+        button->setText(HippoBSTR::fromUTF8(g_value_get_string(value)));
+        break;
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
+}
+
+static void
+hippo_canvas_button_get_property(GObject        *object,
+                                guint            prop_id,
+                                GValue          *value,
+                                GParamSpec      *pspec)
+{
+    HippoCanvasButton *canvas_button = HIPPO_CANVAS_BUTTON (object);
+    HippoButton *button = button_get_control(canvas_button);
+
+    switch (prop_id) {
+    case BUTTON_PROP_TEXT:
+        {
+            HippoUStr ustr(button->getText());
+            g_value_set_string(value, ustr.c_str());
+            break;
+        }
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
+}
+
+static void
+hippo_canvas_button_class_init(HippoCanvasButtonClass *klass)
+{
+    GObjectClass *object_class = G_OBJECT_CLASS(klass);
+
+    object_class->dispose = hippo_canvas_button_dispose;
+    object_class->set_property = hippo_canvas_button_set_property;
+    object_class->get_property = hippo_canvas_button_get_property;
+    
+    g_object_class_install_property(object_class,
+                                    BUTTON_PROP_TEXT,
+                                    g_param_spec_string("text",
+                                                        _("Text"),
+                                                        _("Text in the button"),
+                                                        NULL,
+                                                        (GParamFlags)(G_PARAM_READABLE | G_PARAM_WRITABLE)));
+}
 
 HippoCanvasItem*
 hippo_canvas_button_new(void)
 {
-    return HIPPO_CANVAS_ITEM(g_object_new(HIPPO_TYPE_CANVAS_BUTTON,
-                                          "control", NULL, /* FIXME */
-                                          NULL));
+    HippoButton *button = new HippoButton();
+
+    HippoCanvasButton *item = (HippoCanvasButton *)g_object_new(HIPPO_TYPE_CANVAS_BUTTON,
+                                                                "control", button,
+                                                                NULL);
+
+    item->listener = new HippoCanvasButtonListener(HIPPO_CANVAS_ITEM(item), button);
+    button->setListener(item->listener);
+
+    return HIPPO_CANVAS_ITEM(item);
 }
+
+void 
+HippoCanvasButtonListener::onClicked() {
+    hippo_canvas_item_emit_activated(item_);
+}
+
+
+/*************************************************************************/
 
 HippoCanvas *
 scrollbars_get_control(HippoCanvasScrollbars *scrollbars)
@@ -205,7 +336,7 @@ hippo_canvas_entry_new(void)
     HippoCanvasEntry *item = (HippoCanvasEntry *)g_object_new(HIPPO_TYPE_CANVAS_ENTRY,
                                                               "control", edit,
                                                               "border", 1,
-                                                              "border-color", 0x666666ff,
+                                                              "border-color", 0x999999ff,
                                                               "padding-top", 2,
                                                               "padding-bottom", 2,
                                                               NULL);
