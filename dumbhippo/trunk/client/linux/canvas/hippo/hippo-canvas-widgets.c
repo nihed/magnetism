@@ -24,18 +24,106 @@
     G_DEFINE_TYPE(HippoCanvas##Camel, hippo_canvas_##lower, HIPPO_TYPE_CANVAS_WIDGET)
 
 
-HIPPO_DEFINE_WIDGET_ITEM(button, Button);
+HIPPO_DEFINE_WIDGET_ITEM_CUSTOM_INIT(button, Button);
 HIPPO_DEFINE_WIDGET_ITEM(scrollbars, Scrollbars);
 HIPPO_DEFINE_WIDGET_ITEM_CUSTOM_INIT(entry, Entry);
+
+enum {
+    BUTTON_PROP_0,
+    BUTTON_PROP_TEXT
+} ;
+
+static void
+on_canvas_button_clicked(GtkButton         *button,
+                         HippoCanvasButton *canvas_button)
+{
+    hippo_canvas_item_emit_activated(HIPPO_CANVAS_ITEM(canvas_button));
+}
+
+static void
+hippo_canvas_button_dispose(GObject *object)
+{
+    HippoCanvasButton *canvas_button = HIPPO_CANVAS_BUTTON (object);
+    GtkWidget *button = HIPPO_CANVAS_WIDGET(object)->widget;
+
+    if (button) {
+        g_signal_handlers_disconnect_by_func(button, (void *)on_canvas_button_clicked, canvas_button);
+    }
+
+    G_OBJECT_CLASS(hippo_canvas_button_parent_class)->dispose(object);
+}
+
+static void
+hippo_canvas_button_set_property(GObject        *object,
+                                   guint            prop_id,
+                                   const GValue    *value,
+                                   GParamSpec      *pspec)
+{
+    /* HippoCanvasButton *canvas_button = HIPPO_CANVAS_BUTTON(object); */
+    GtkWidget *button = HIPPO_CANVAS_WIDGET(object)->widget;
+
+    switch (prop_id) {
+    case BUTTON_PROP_TEXT:
+        gtk_button_set_label(GTK_BUTTON(button), g_value_get_string(value));
+        break;
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
+}
+
+static void
+hippo_canvas_button_get_property(GObject        *object,
+                                guint            prop_id,
+                                GValue          *value,
+                                GParamSpec      *pspec)
+{
+    /* HippoCanvasButton *canvas_button = HIPPO_CANVAS_BUTTON (object); */
+    GtkWidget *button = HIPPO_CANVAS_WIDGET(object)->widget;
+
+    switch (prop_id) {
+    case BUTTON_PROP_TEXT:
+        g_value_set_string(value, gtk_button_get_label(GTK_BUTTON(button)));
+        break;
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
+}
+
+static void
+hippo_canvas_button_class_init(HippoCanvasButtonClass *class)
+{
+    GObjectClass *object_class = G_OBJECT_CLASS(class);
+
+    object_class->dispose = hippo_canvas_button_dispose;
+    object_class->set_property = hippo_canvas_button_set_property;
+    object_class->get_property = hippo_canvas_button_get_property;
+    
+    g_object_class_install_property(object_class,
+                                    BUTTON_PROP_TEXT,
+                                    g_param_spec_string("text",
+                                                        _("Text"),
+                                                        _("Text in the button"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+}
 
 HippoCanvasItem*
 hippo_canvas_button_new(void)
 {
-    GtkWidget *widget;
-    widget = gtk_button_new();
-    return g_object_new(HIPPO_TYPE_CANVAS_BUTTON,
-                        "widget", widget,
+    GtkWidget *button;
+    HippoCanvasItem *item;
+    
+    button = gtk_button_new();
+    item = g_object_new(HIPPO_TYPE_CANVAS_BUTTON,
+                        "widget", button,
                         NULL);
+
+    g_signal_connect(button, "clicked",
+                     G_CALLBACK(on_canvas_button_clicked), item);
+
+    return item;
 }
 
 /* Hack to work-around GtkViewport bug http://bugzilla.gnome.org/show_bug.cgi?id=361781

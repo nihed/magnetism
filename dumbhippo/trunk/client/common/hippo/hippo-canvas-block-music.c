@@ -9,7 +9,7 @@
 #include "hippo-canvas-url-image.h"
 #include "hippo-canvas-url-link.h"
 #include <hippo/hippo-canvas-box.h>
-#include <hippo/hippo-canvas-image.h>
+#include <hippo/hippo-canvas-image-button.h>
 #include <hippo/hippo-canvas-link.h>
 #include <hippo/hippo-canvas-text.h>
 #include "hippo-canvas-url-link.h"
@@ -219,12 +219,12 @@ hippo_canvas_block_music_constructor (GType                  type,
                             NULL);
     hippo_canvas_box_append(beside_box, HIPPO_CANVAS_ITEM(quip_box), 0);
 
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                        "image-name", "quiplove_icon",
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                        "normal-image-name", "quiplove_icon",
+                        "tooltip", "Add a quip",
                         "xalign", HIPPO_ALIGNMENT_CENTER,
                         "yalign", HIPPO_ALIGNMENT_CENTER,
                         NULL);
-    HIPPO_CANVAS_BOX(item)->clickable = TRUE; /* Hack */
     hippo_canvas_box_append(quip_box, item, 0);
     g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_love_activated), block_music);
     
@@ -236,13 +236,13 @@ hippo_canvas_block_music_constructor (GType                  type,
     hippo_canvas_box_append(quip_box, item, 0);
     g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_love_activated), block_music);
     
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
                         "padding-left", 8,
-                        "image-name", "quiphate_icon",
+                        "tooltip", "Add a quip",
+                        "normal-image-name", "quiphate_icon",
                         "xalign", HIPPO_ALIGNMENT_CENTER,
                         "yalign", HIPPO_ALIGNMENT_CENTER,
                         NULL);
-    HIPPO_CANVAS_BOX(item)->clickable = TRUE; /* Hack */
     hippo_canvas_box_append(quip_box, item, 0);
     g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hate_activated), block_music);
 

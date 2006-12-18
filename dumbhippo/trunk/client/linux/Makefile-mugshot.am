@@ -70,6 +70,7 @@ EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/closetip.png	\
 	$(EMBEDDEDIMAGEDIR)/expandtip.png	\
 	$(EMBEDDEDIMAGEDIR)/find.png		\
+	$(EMBEDDEDIMAGEDIR)/flat_x.png		\
 	$(EMBEDDEDIMAGEDIR)/home2.png		\
 	$(EMBEDDEDIMAGEDIR)/home.png		\
 	$(EMBEDDEDIMAGEDIR)/hush2.png		\
