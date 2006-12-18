@@ -6,6 +6,7 @@ import java.util.List;
 import com.dumbhippo.DateUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.FeedPost;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.ChatMessageView;
@@ -86,7 +87,10 @@ public class PostBlockView extends BlockView implements TitleBlockView, EntitySo
 
 	@Override
 	public String getTypeTitle() {
-		return "Web Swarm";
+		if (postView.getPost() instanceof FeedPost)
+			return "Feed";
+		else
+			return "Web Swarm";
 	}
 	
 	@Override
