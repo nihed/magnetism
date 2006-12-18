@@ -26,7 +26,8 @@ static void hippo_canvas_widget_set_context (HippoCanvasItem    *item,
                                              HippoCanvasContext *context);
 static void hippo_canvas_widget_allocate    (HippoCanvasItem    *item,
                                              int                 width,
-                                             int                 height);
+                                             int                 height,
+                                             gboolean            origin_changed);
 
 /* Canvas box methods */
 static void hippo_canvas_widget_paint_below_children       (HippoCanvasBox  *box,
@@ -205,7 +206,8 @@ hippo_canvas_widget_set_context(HippoCanvasItem    *item,
 static void
 hippo_canvas_widget_allocate(HippoCanvasItem *item,
                              int              width,
-                             int              height)
+                             int              height,
+                             gboolean         origin_changed)
 {
     int x, y, w, h;
     int widget_x, widget_y;
@@ -217,7 +219,7 @@ hippo_canvas_widget_allocate(HippoCanvasItem *item,
     box = HIPPO_CANVAS_BOX(item);
     
     /* get the box set up */
-    item_parent_class->allocate(item, width, height);
+    item_parent_class->allocate(item, width, height, origin_changed);
 
     /* Now do the GTK allocation for the child widget */
     if (widget->widget == NULL || !GTK_WIDGET_VISIBLE(widget->widget))
