@@ -69,6 +69,17 @@
 		</table>
 		<table class="dh-box-grey2 dh-download-section" cellspacing="0" cellpadding="0">
 			<tr>
+			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/minimugshot_face42x79.png" style="width: 42; height: 79;"/></td>
+			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Put Mini Mugshot on your site.</div>
+			<div class="dh-download-section-description">
+				<div>Got lots of web accounts? Show where you're at and what you're up to at a glance. Add Mini Mugshot to blogs, Facebook, MySpace and more.</div>
+				<div><a class="dh-underlined-link" href="/badges">See a live example</a></div>
+			</div>
+			</td>
+			</tr>
+		</table>		
+		<table class="dh-box-grey2 dh-download-section" cellspacing="0" cellpadding="0">
+			<tr>
 			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/mugshotluv_60x53.png" style="width: 60; height: 53;"/></td>
 			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Spread the Mugshot Love.</div>
 			<div class="dh-download-section-description">
@@ -77,7 +88,7 @@
 			</div>
 			</td>
 			</tr>
-		</table>		
+		</table>
 		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
 			<tr>
 			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/underthehood54x65.png" style="width: 54; height: 65;"/></td>
