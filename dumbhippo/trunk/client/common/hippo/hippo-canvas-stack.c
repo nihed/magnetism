@@ -1,7 +1,10 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include <string.h>
 #include "hippo-common-internal.h"
 #include "hippo-canvas-stack.h"
 #include "hippo-canvas-block.h"
+#include "hippo-block-music-person.h"
+#include "hippo-block-music-chat.h"
 #include <hippo/hippo-canvas-box.h>
 #include "hippo-actions.h"
 
@@ -309,6 +312,15 @@ hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
     remove_extra_children(canvas_stack);
     
     g_object_unref(item);
+
+    /* Updating possibly visible blocks at this point doesn't take
+     * into account the possibility of a block changing in such a way
+     * to cause other blocks to be hidden without being restacked;
+     * (for example, a MUSIC_CHAT block changing play_id to match
+     * a MUSIC_PERSON block further down the stack). This is unlikely
+     * to happen currently.
+     */
+    hippo_canvas_stack_update_hidden_blocks(canvas_stack);
 }
 
 void
@@ -325,6 +337,84 @@ hippo_canvas_stack_remove_block(HippoCanvasStack *canvas_stack,
                      NULL);
         hippo_canvas_box_remove(HIPPO_CANVAS_BOX(canvas_stack), item);
     }
+}
+
+typedef struct {
+    HippoCanvasStack *canvas_stack;
+    GHashTable *chatted;
+} UpdateHiddenData;
+
+static void
+foreach_update_hidden(HippoCanvasItem *child,
+                      void            *data)
+{
+    UpdateHiddenData *uhd = data;
+    HippoBlock *child_block = NULL;
+
+    g_object_get(G_OBJECT(child), "block", &child_block, NULL);
+
+    if (HIPPO_IS_BLOCK_MUSIC_CHAT(child_block)) {
+        const char *play_id = NULL;
+        HippoTrack *track = NULL;
+        g_object_get(child_block, "track", &track, NULL);
+
+        if (track) {
+            play_id = hippo_track_get_play_id(track);
+            g_object_unref(track);
+        }
+
+        if (play_id)
+            g_hash_table_insert(uhd->chatted, (void *)play_id, GUINT_TO_POINTER(1));
+        
+    } else if (HIPPO_IS_BLOCK_MUSIC_PERSON(child_block)) {
+        const char *play_id = NULL;
+        GSList *track_history = NULL;
+        gboolean seen_track = FALSE;
+        
+        g_object_get(child_block, "track_history", &track_history, NULL);
+
+        if (track_history) {
+            HippoTrack *track = track_history->data;
+            play_id = hippo_track_get_play_id(track);
+        }
+
+        if (play_id)
+            seen_track = g_hash_table_lookup(uhd->chatted, play_id) != NULL;
+
+        hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(uhd->canvas_stack), 
+                                           child, !seen_track);
+    }
+
+    if (child_block)
+        g_object_unref(child_block);
+}
+
+void 
+hippo_canvas_stack_update_hidden_blocks(HippoCanvasStack *canvas_stack)
+{
+    UpdateHiddenData uhd;
+
+    /* The algorithm here isn't efficient; we walk through the entire
+     * stack each time a block is added or restacked and accumulate
+     * the set of music tracks that have been chatted on. Any music person
+     * block about these tracks that occurs after the music chat block
+     * is suppressed. This makes initial construction of the stack
+     * an O(N^2) operation, though the individual walks are pretty
+     * fast.
+     *
+     * A more efficient thing to do would be to keep a permanent list
+     * of chatted track ids for the stack, and update visibility only
+     * when a new track is added to that list or a music person block
+     * is restacked (and thus has a new play id).
+     */
+    uhd.canvas_stack = canvas_stack;
+    uhd.chatted = g_hash_table_new(g_str_hash, g_str_equal);
+    
+    hippo_canvas_box_foreach(HIPPO_CANVAS_BOX(canvas_stack),
+                             foreach_update_hidden,
+                             &uhd);
+    
+    g_hash_table_destroy(uhd.chatted);
 }
 
 static void
