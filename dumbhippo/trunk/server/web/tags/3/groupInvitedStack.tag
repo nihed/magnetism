@@ -4,7 +4,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.GroupView" %>
-<%@ attribute name="stackOrder" required="true" type="java.lang.Integer" %>
+<%@ attribute name="stackOrder" required="true" type="java.lang.String" %>
 <%@ attribute name="blocks" required="true" type="java.util.List" %>
 <%@ attribute name="showFrom" required="true" type="java.lang.Boolean" %>
 

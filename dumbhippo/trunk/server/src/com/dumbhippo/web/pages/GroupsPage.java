@@ -8,11 +8,11 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.server.Pageable;
-import com.dumbhippo.server.Stacker;
+import com.dumbhippo.server.Stacker.GroupQueryType;
 import com.dumbhippo.server.views.GroupMugshotView;
 import com.dumbhippo.server.views.GroupView;
-import com.dumbhippo.web.WebEJBUtil;
 
 /**
  * backing bean for /groups
@@ -26,14 +26,9 @@ public class GroupsPage extends AbstractPersonPage {
 	private static final int GROUPS_PER_PAGE = 10;
 	private static final int BLOCKS_PER_INVITED_GROUP = 2;
 	private static final int BLOCKS_PER_GROUP = 2;
-	
-	protected Stacker stacker;	
-	
-	public GroupsPage() {
-		stacker = WebEJBUtil.defaultLookup(Stacker.class);		
-	}
-	
+
 	private Pageable<GroupMugshotView> activeGroups;
+	private Pageable<GroupMugshotView> activeFollowedGroups;	
 	private List<GroupMugshotView> invitedGroupMugshots;
 	
 	public Pageable<GroupMugshotView> getActiveGroups() {
@@ -42,9 +37,25 @@ public class GroupsPage extends AbstractPersonPage {
 			activeGroups.setInitialPerPage(GROUPS_PER_PAGE);
 			activeGroups.setSubsequentPerPage(GROUPS_PER_PAGE);
 			
-			stacker.pageUserGroupActivity(getViewpoint(), getViewedUser(), BLOCKS_PER_GROUP, activeGroups);
+			stacker.pageUserGroupActivity(getViewpoint(), getViewedUser(), BLOCKS_PER_GROUP, GroupQueryType.ACTIVE, activeGroups);
 		}
 		return activeGroups;
+	}
+	
+	public Pageable<GroupMugshotView> getActiveFollowedGroups() {
+		if (activeFollowedGroups == null) {
+			activeFollowedGroups = pagePositions.createPageable("groupsFollowed");
+			activeFollowedGroups.setInitialPerPage(GROUPS_PER_PAGE);
+			activeFollowedGroups.setSubsequentPerPage(GROUPS_PER_PAGE);
+			
+			stacker.pageUserGroupActivity(getViewpoint(), getViewedUser(), BLOCKS_PER_GROUP, GroupQueryType.FOLLOWED, activeFollowedGroups);
+		}
+		return activeFollowedGroups;
+	}
+	
+	public int getActiveAndFollowedGroupsCount() {
+		return groupSystem.findGroupsCount(getViewpoint(), getViewedUser(), MembershipStatus.ACTIVE)
+			+ groupSystem.findGroupsCount(getViewpoint(), getViewedUser(), MembershipStatus.FOLLOWER);
 	}
 	
 	public List<GroupMugshotView> getInvitedGroupMugshots() {

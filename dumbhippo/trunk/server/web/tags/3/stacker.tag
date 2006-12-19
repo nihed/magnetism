@@ -4,7 +4,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%-- You can supply blocks to this tag in a form of a pageable and stackType or in a form of a blocks list --%>
-<%@ attribute name="stackOrder" required="true" type="java.lang.Integer" %>
+<%@ attribute name="stackOrder" required="true" type="java.lang.String" %>
 <%@ attribute name="stackType" required="false" type="java.lang.String" %>
 <%@ attribute name="pageable" required="false" type="com.dumbhippo.server.Pageable" %>
 <%@ attribute name="blocks" required="false" type="java.util.List" %>

@@ -51,11 +51,12 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private boolean disabled;
 	private boolean needExternalAccounts;
 	
-	private GroupSystem groupSystem;
-	private MusicSystem musicSystem;
-	private PersonView viewedPerson; 	
-	private FacebookTracker facebookTracker;
-	private Stacker stacker;
+	private PersonView viewedPerson;	
+	
+	protected GroupSystem groupSystem;
+	protected MusicSystem musicSystem;
+	protected FacebookTracker facebookTracker;
+	protected Stacker stacker;
 	
 	private ListBean<GroupView> groups;
 	private Pageable<GroupView> pageablePublicGroups;

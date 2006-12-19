@@ -123,7 +123,7 @@ public interface GroupSystem {
 	
 	public int findGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status);
 	
-	public int findPublicGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status);	
+	public int findPublicGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status);
 	
 	public void pagePublicGroups(Pageable<GroupView> pageable);
 		

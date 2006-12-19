@@ -1153,7 +1153,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// stack which originated from a user, because currently the only user-originated blocks in
 		// a user's stack will be their contacts.  This is an approximation of
 		// the ideal which would be the participated blocks for all the user's contacts, but that query
-		// would be significantly slower.  This one will miss e.g. group chat.
+		// would be significantly slower.  This one will miss e.g. group chat and posts at the moment.
+		// When we extend this to support posts we need to be sure to filter by the user's actual contacts
+		// since the first assumption will no longer be true.
 		Query q = em.createQuery("SELECT u FROM User u, UserBlockData ubd, Block block" +
                 " WHERE ubd.deleted = 0 AND ubd.block = block " +
                 " AND " + getData1UserBlockTypeClause() + 
@@ -1161,7 +1163,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
                 " AND u.id = block.data1 " +
                 " AND u != :user " +
                 " AND ubd.user = :user " +
-                " ORDER BY ubd.stackTimestamp");
+                " ORDER BY ubd.stackTimestamp DESC");
 		q.setParameter("user", user);
 		q.setFirstResult(start);
 		q.setMaxResults(count);
@@ -1225,8 +1227,18 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			});   	
 		}
 		return mugshots;
-	}	
-	private List<Group> getRecentlyActiveGroups(Viewpoint viewpoint, User user, int start, int count) {
+	}
+	
+	private MembershipStatus groupQueryTypeToMembershipStatus(GroupQueryType groupType) {
+		if (groupType.equals(GroupQueryType.ACTIVE))
+			return MembershipStatus.ACTIVE;
+		else if (groupType.equals(GroupQueryType.FOLLOWED))
+			return MembershipStatus.FOLLOWER;
+		else
+			throw new RuntimeException("Unknown group query type: " + groupType);
+	}
+	
+	private List<Group> getRecentlyActiveGroups(Viewpoint viewpoint, User user, int start, int count, GroupQueryType groupType) {
 		// This query combines searching for participated blocks with group membership. 
 		// It is not optimal right now as MySQL tells us it requires a temporary table and file sort.
 		// Currently viewers other than the user can only see public groups
@@ -1234,7 +1246,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				" gbd.group = g AND gm.group = g AND gbd.block = block " + 
 				" AND gbd.participatedTimestamp IS NOT NULL " +
 				(viewpoint.isOfUser(user) ? "" : (" and g.access = " + GroupAccess.PUBLIC_INVITE.ordinal())) +
-				" AND gm.status = " + MembershipStatus.ACTIVE.ordinal() +    
+				" AND gm.status = " + groupQueryTypeToMembershipStatus(groupType).ordinal() +    
 				" AND gm.member = :acct ORDER BY gbd.participatedTimestamp DESC");
 		q.setParameter("acct", user.getAccount());
 		q.setFirstResult(start);
@@ -1243,29 +1255,29 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return results;
 	}	
 	
-	public List<GroupMugshotView> getUserGroupActivity(final Viewpoint viewpoint, final User user, int start, int count, int blocksPerGroup) {
+	public List<GroupMugshotView> getUserGroupActivity(final Viewpoint viewpoint, final User user, int start, int count, int blocksPerGroup, final GroupQueryType groupType) {
 		// select distinct most recently active groups		
        	int expectedHitFactor = 2;
        	
 		List<Group> distinctGroups = getDistinctItems(new ItemSource<Group>() {
 			@Override
 			public Collection<Group> get(int start, int count) {
-				return getRecentlyActiveGroups(viewpoint, user, start, count);
+				return getRecentlyActiveGroups(viewpoint, user, start, count, groupType);
 			}
 
 			@Override
 			Collection<Group> getRemainder() {
 				// This matches the query above
-				return groupSystem.findRawGroups(viewpoint, user, MembershipStatus.ACTIVE);
+				return groupSystem.findRawGroups(viewpoint, user, groupQueryTypeToMembershipStatus(groupType));
 			}
 		}, start, count, expectedHitFactor);
 		
 		return getMugshotViews(viewpoint, distinctGroups, blocksPerGroup);			
 	}
 	
-	public void pageUserGroupActivity(Viewpoint viewpoint, User user, int blocksPerGroup, Pageable<GroupMugshotView> pageable) {
-		pageable.setResults(getUserGroupActivity(viewpoint, user, pageable.getStart(), pageable.getCount(), blocksPerGroup));
-		pageable.setTotalCount(groupSystem.findGroupsCount(viewpoint, user, MembershipStatus.ACTIVE));
+	public void pageUserGroupActivity(Viewpoint viewpoint, User user, int blocksPerGroup, GroupQueryType groupType, Pageable<GroupMugshotView> pageable) {
+		pageable.setResults(getUserGroupActivity(viewpoint, user, pageable.getStart(), pageable.getCount(), blocksPerGroup, groupType));
+		pageable.setTotalCount(groupSystem.findGroupsCount(viewpoint, user, groupQueryTypeToMembershipStatus(groupType)));
 	}
 
 	// When showing recently active groups, we want to exclude activity for

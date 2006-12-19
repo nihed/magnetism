@@ -11,7 +11,7 @@
 		<dh:png src="/images3/${buildStamp}/private_icon.png"/>
 	</c:if>
 	<span class="dh-page-title"><c:out value="${title}"/></span>
-	<div class="dh-page-options">	
-		<jsp:doBody/>
+	<div class="dh-page-options-container">	
+		<span class="dh-page-options"><jsp:doBody/></span>
 	</div>
 </div>

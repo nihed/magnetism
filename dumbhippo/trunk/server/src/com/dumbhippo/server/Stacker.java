@@ -97,9 +97,14 @@ public interface Stacker {
 	
 	public void pageContactActivity(Viewpoint viewpoint, User viewedUser, int blocksPerUser, Pageable<PersonMugshotView> contactMugshots);
 
-	public List<GroupMugshotView> getUserGroupActivity(Viewpoint viewpoint, User user, int start, int count, int blocksPerUser);	
+	public List<GroupMugshotView> getUserGroupActivity(Viewpoint viewpoint, User user, int start, int count, int blocksPerUser, GroupQueryType groupType);	
 	
-	public void pageUserGroupActivity(Viewpoint viewpoint, User user, int blocksPerGroup, Pageable<GroupMugshotView> activeGroups);	
+	public enum GroupQueryType {
+		FOLLOWED,
+		ACTIVE
+	};
+	
+	public void pageUserGroupActivity(Viewpoint viewpoint, User user, int blocksPerGroup, GroupQueryType groupType, Pageable<GroupMugshotView> activeGroups);	
 	
 	public User getRandomActiveUser(Viewpoint viewpoint);
 	
