@@ -27,16 +27,26 @@
 <dht3:page currentPageLink="buttons">
 	<dht3:shinyBox color="grey">
 		<div class="dh-buttons-header-box">
-			<div class="dh-buttons-header-image">
+			<div class="dh-buttons-header-image" style="width: 250px; height: 113px;">
+				<dh:png src="/images3/${buildStamp}/love_yr_mugshot_logo.png" style="width: 250px; height: 113px;"/>
 			</div>
 			<div class="dh-buttons-header-text">
-				<div>
-					Can't get enough Mugshot? Tell the world and build your network. (And ours!)
-				</div>
-				<div>
-					Add our badges to your site or blog, linking to your Mugshot page. Instructions are below.
-				</div>
+				<table cellspacing="0" cellpadding="0" height="113">
+					<tbody>
+						<tr valign="center">
+							<td>
+								<div class="dh-buttons-header-text-large">
+									Can't get enough Mugshot? Tell the world and build your network. (And ours!)
+								</div>
+								<div class="dh-buttons-header-text-small">
+									Add our badges to your site or blog, linking to your Mugshot page. Instructions are below.
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
 			</div>
+			<div class="dh-grow-div-around-floats"></div>
 		</div>
 
 		<div class="dh-buttons-main-box">

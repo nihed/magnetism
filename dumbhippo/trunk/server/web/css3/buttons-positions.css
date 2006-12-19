@@ -1,6 +1,7 @@
 @CHARSET "UTF-8";
 
 .dh-buttons-header-box {
+	/* if you add position: relative here then IE will vanish the floats contained in it */
 	margin-top:			10px;
 	margin-bottom:  	20px;
 	/* top and bottom padding relatively safe since we rarely set a height */
@@ -9,10 +10,14 @@
 }
 
 .dh-buttons-header-image {
+	float:				left;
+	display:			inline; /* Fixes IE double-margin bug */		
 	margin:				10px;
 }
 
 .dh-buttons-header-text {
+	float:				left;
+	display:			inline; /* Fixes IE double-margin bug */
 	margin:				10px;
 }
 

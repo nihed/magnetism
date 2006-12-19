@@ -87,12 +87,14 @@
 							<c:if test="${!signin.valid}">
 								<div class="dh-badges-signup-or-login">
 								    <table cellspacing="0" cellpadding="0">
-									    <tr>
-										    <td><a href="/signup"><img src="/images3/${buildStamp}/signup.gif"/></a></td>
-										    <td valign="middle" align="center" class="dh-badges-signup-or-login-text">&nbsp;or&nbsp;</td>
-										    <td><a href="/who-are-you?next=badges"><img src="/images3/${buildStamp}/login.gif"/></a></td>
-										    <td valign="middle" align="center" class="dh-badges-signup-or-login-text">&nbsp;to get your own!</td>
-									    </tr>
+								    	<tbody>
+										    <tr>
+											    <td><a href="/signup"><img src="/images3/${buildStamp}/signup.gif"/></a></td>
+											    <td valign="middle" align="center" class="dh-badges-signup-or-login-text">&nbsp;or&nbsp;</td>
+											    <td><a href="/who-are-you?next=badges"><img src="/images3/${buildStamp}/login.gif"/></a></td>
+											    <td valign="middle" align="center" class="dh-badges-signup-or-login-text">&nbsp;to get your own!</td>
+										    </tr>
+										</tbody>
 								    </table>
 								</div>
 							</c:if>
