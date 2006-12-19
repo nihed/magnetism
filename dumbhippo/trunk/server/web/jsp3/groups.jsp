@@ -55,7 +55,7 @@
 				<td width="30%"><span class="dh-page-title"><c:out value="${possessive}"/> ${pageName} (${person.activeAndFollowedGroupsCount})</span>
 					<a class="dh-groups-create-link dh-underlined-link" href="/create-group">Create a Group</a>
 				</td>
-				<td align="right" width="70%"><div class="dh-page-options-container"><span class="dh-page-options"><dht3:personRelatedPagesTabs selected="groups"/></span></div></td>
+				<td align="right" width="70%"><div class="dh-page-options-container"><span class="dh-page-options"><dht3:randomTip isSelf="${person.self}"/><dht3:personRelatedPagesTabs selected="groups"/></span></div></td>
 			</tr>
 		</table>
 	</div>

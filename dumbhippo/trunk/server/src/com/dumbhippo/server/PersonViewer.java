@@ -26,6 +26,16 @@ public interface PersonViewer {
 	 */
 	public int getContactCount(Viewpoint viewpoint, User user);
 	
+	/**
+	 * Get the number of account-owning contacts of the given person, minus the 
+	 * person's own self contact.
+	 * 
+	 * @param viewpoint viewpoint person viewing the contacts
+	 * @param user who to get contacts of
+	 * @return number of account-owning contacts
+	 */
+	public int getUserContactCount(Viewpoint viewpoint, User user);	
+	
 	/** 
 	 * Get the contacts of the given person as a list of PersonView; the
 	 *   result will never include the person themself.
@@ -55,6 +65,8 @@ public interface PersonViewer {
 	 * @return set of user contacts
 	 */
 	public List<PersonView> getUserContactsAlphaSorted(Viewpoint viewpoint, User user, int start, int max);
+	
+	public void pageUserContactsAlphaSorted(Viewpoint viewpoint, User user, Pageable<PersonView> pageable);
 	
 	/**
 	 * Get a list of users who have this user as a contact, but who are not contacts of this user.

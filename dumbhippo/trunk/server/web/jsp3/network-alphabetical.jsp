@@ -21,17 +21,17 @@
 </head>
 
 <dht3:page currentPageLink="network-alphabetical">
-	<dht3:pageSubHeader title="${possessive} ${pageName} (${person.activePeople.totalCount})">
+	<dht3:pageSubHeader title="${possessive} ${pageName} (${person.contactCount})">
 		<dht3:randomTip isSelf="${person.self}"/>
 		<dht3:personRelatedPagesTabs selected="network"/>
 	</dht3:pageSubHeader>
 	<dht3:networkTabs selected="network-alphabetical"/>
 		
     <dht3:shinyBox color="grey">
-        <div class="dh-page-shinybox-title-large">People in <c:out value="${possessive} ${pageName} (${person.activePeople.totalCount})"/></div>
+        <div class="dh-page-shinybox-title-large">People in <c:out value="${possessive} ${pageName} (${person.userContactCount})"/></div>
         <c:choose>  
-            <c:when test="${person.pageableContacts.resultCount > 0}">                         
-		        <c:forEach items="${person.pageableContacts.results}" var="person">
+            <c:when test="${person.userContactCount > 0}">
+          	    <c:forEach items="${person.pageableUserContactsBasics.results}" var="person">
 			        <dht3:personItem who="${person}"/>
 		        </c:forEach>
 		        <div class="dh-grow-div-around-floats"><div></div></div>
@@ -52,7 +52,7 @@
 		        You cannot view this person's friends.
 			</c:otherwise>
 	    </c:choose>            
-		<dht:expandablePager pageable="${person.pageableContacts}" anchor="dhFriends"/>
+		<dht:expandablePager pageable="${person.pageableUserContactsBasics}" anchor="dhFriends"/>
     </dht3:shinyBox>
     
     <c:if test="${person.self}">

@@ -35,7 +35,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	static private final Logger logger = GlobalSetup.getLogger(AbstractPersonPage.class);	
 	
 	// We override the default values for initial and subsequent results per page from Pageable
-	static private final int FRIENDS_PER_PAGE = 20;
+	static private final int FRIENDS_PER_PAGE = 50;
 	static private final int GROUPS_PER_PAGE = 20;
 	
 	// This is the number of contacts we request for the list in the sidebar;
@@ -74,11 +74,18 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	protected ListBean<PersonView> contacts;
 	private Pageable<PersonView> pageableContacts; 
+	
+	protected List<PersonView> userContacts;
+	private Pageable<PersonView> pageableUserContacts; 	
 
 	protected ListBean<PersonView> followers;
 	private Pageable<PersonView> pageableFollowers;
 	
 	private String facebookErrorMessage;
+
+	private int userContactCount = -1;
+
+	private int contactCount = -1;
 	
 	protected AbstractPersonPage() {	
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
@@ -315,6 +322,46 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		
 		return pageableContacts;
 	}
+	
+	public int getContactCount() {
+		if (contactCount == -1) {
+			contactCount = personViewer.getContactCount(getViewpoint(), getViewedUser());
+		}
+		return contactCount;
+	}
+	
+	public int getUserContactCount() {
+		if (userContactCount == -1) {
+			userContactCount = personViewer.getUserContactCount(getViewpoint(), getViewedUser());
+		}
+		return userContactCount;
+	}
+	
+	/**
+	 * Get a set of account-owning contacts of the viewed user.  The resulting
+	 * PersonView objects will be very minimal, only suitable for retrieving
+	 * the name and photo URL essentially. 
+	 * 
+	 * @return a list of PersonViews of a subset of contacts
+	 */
+	public List<PersonView> getUserContactsBasics() {
+		if (userContacts == null) {
+			userContacts = personViewer.getUserContactsAlphaSorted(getSignin().getViewpoint(), getViewedUser(), 0, FRIENDS_PER_PAGE);	
+		}
+		return userContacts;
+	}
+
+	public Pageable<PersonView> getPageableUserContactsBasics() {
+        if (pageableUserContacts == null) {			
+			pageableUserContacts = pagePositions.createPageable("network"); 				
+			pageableUserContacts.setInitialPerPage(FRIENDS_PER_PAGE);
+			pageableUserContacts.setSubsequentPerPage(FRIENDS_PER_PAGE);
+			
+			personViewer.pageUserContactsAlphaSorted(getSignin().getViewpoint(), getViewedUser(), pageableUserContacts);	
+		}
+		
+		return pageableUserContacts;
+	}	
 	
 	public ListBean<PersonView> getFollowers() {
 		if (followers == null) {

@@ -4,9 +4,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Pageable;
-import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.views.PersonMugshotView;
-import com.dumbhippo.web.WebEJBUtil;
 
 public class MyFriendsPage extends AbstractPersonPage {
 	@SuppressWarnings("unused")
@@ -16,14 +14,8 @@ public class MyFriendsPage extends AbstractPersonPage {
 	static final int BLOCKS_PER_USER = 5;
 	static final int TOTAL_USERS = 1000;
 	
-	protected Stacker stacker;
-	
 	private Pageable<PersonMugshotView> activePeople;
-	
-	public MyFriendsPage() {
-		stacker = WebEJBUtil.defaultLookup(Stacker.class);
-	}
-	
+
 	public Pageable<PersonMugshotView> getActivePeople() {
 		if (activePeople == null) {
 			activePeople = pagePositions.createBoundedPageable("people");

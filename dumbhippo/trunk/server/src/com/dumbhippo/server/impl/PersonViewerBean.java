@@ -347,18 +347,30 @@ public class PersonViewerBean implements PersonViewer {
 	}
 	
 	private Query getContactQuery(Account account, boolean forCount) {
-		Query q = em.createQuery("SELECT " + (forCount ? "count(c)" : "c") + " from Contact c WHERE c.account = :account ORDER BY c.id DESC");
-		q.setParameter("account", account);
-		return q;
+		return em.createQuery("SELECT " + (forCount ? "count(c)" : "c") + " FROM Contact c WHERE c.account = :account"
+				+ (forCount ? "" : " ORDER BY c.id DESC"))
+			.setParameter("account", account);
+	}
+	
+	private Query getUserContactQuery(Account account, boolean forCount) {
+		return em.createQuery("SELECT " + (forCount ? "count(c)" : "owner,c") + " FROM Contact c, ContactClaim cc, Account acct, User owner WHERE " +
+				" c.account = :startAccount AND cc.contact = c AND cc.resource = acct " +
+				" AND acct.owner = owner AND acct != :startAccount" + 
+				(forCount ? "" :  " ORDER BY upper(owner.nickname) ASC"))
+				.setParameter("startAccount", account);		
 	}
 	
 	public int getContactCount(Viewpoint viewpoint, User user) {
 		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user))
 			return 0;
-		
-		Query q = getContactQuery(user.getAccount(), true);
-		return ((Number) q.getSingleResult()).intValue();
+		return ((Number) getContactQuery(user.getAccount(), true).getSingleResult()).intValue();
 	}
+	
+	public int getUserContactCount(Viewpoint viewpoint, User user) {
+		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user))
+			return 0;
+		return ((Number) getUserContactQuery(user.getAccount(), true).getSingleResult()).intValue();
+	}	
 	
 	private interface ContactViewer {
 		public PersonView view(Contact c);
@@ -429,10 +441,7 @@ public class PersonViewerBean implements PersonViewer {
 		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user))
 			return Collections.emptyList();
 		
-		Query q = em.createQuery("SELECT owner,c from Contact c, ContactClaim cc, Account acct, User owner WHERE " +
-				" c.account = :startAcct AND cc.contact = c AND cc.resource = acct " +
-				" AND acct.owner = owner AND acct != :startAcct ORDER BY upper(owner.nickname) ASC");
-		q.setParameter("startAcct", user.getAccount());
+		Query q = getUserContactQuery(user.getAccount(), false);
 		q.setFirstResult(start);
 		if (max >= 0)
 			q.setMaxResults(max);
@@ -444,6 +453,11 @@ public class PersonViewerBean implements PersonViewer {
 			viewedContacts.add(constructPersonView(viewpoint, contact, owner));
 		}
 		return viewedContacts;
+	}
+	
+	public void pageUserContactsAlphaSorted(Viewpoint viewpoint, User user, Pageable<PersonView> pageable) {
+		pageable.setResults(getUserContactsAlphaSorted(viewpoint, user, pageable.getStart(), pageable.getCount()));
+		pageable.setTotalCount(getUserContactCount(viewpoint, user));
 	}
 	
 	public Set<PersonView> getFollowers(Viewpoint viewpoint, User user,
