@@ -118,7 +118,7 @@
 						<div>
 							<c:forEach var="badge" items="${person.badges.list}" varStatus="status">
 								<div id="dhBadgeOption${badge.name}">
-									<input type="radio" name="badge" value="${badge.name}" id="dhBadgeCheckbox${badge.name}" ${status.first ? 'checked' : ''} onclick="return dhOnClickBadgeCheckbox();"> <c:out value="${badge.optionName}"/>
+									<input type="radio" name="badge" value="${badge.name}" id="dhBadgeCheckbox${badge.name}" ${status.first ? 'checked' : ''} onclick="return dhOnClickBadgeCheckbox();"> <label for="dhBadgeCheckbox${badge.name}"><c:out value="${badge.optionName}"/></label>
 								</div>
 							</c:forEach>
 						</div>
