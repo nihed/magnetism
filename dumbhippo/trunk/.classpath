@@ -74,7 +74,6 @@
 	<classpathentry kind="src" path="server/tests"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/lib/hibernate-entitymanager.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/hungry/httpunit-1.6.2.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/jstl.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/bsh-2.0b4.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/rome-0.8.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/rome-fetcher-0.7.jar"/>
@@ -90,5 +89,6 @@
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/hibernate-annotations.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/jboss-cache.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/jbossweb-tomcat55.sar/tomcat-util.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/jbossweb-tomcat55.sar/jsf-libs/jstl.jar"/>
 	<classpathentry kind="output" path="eclipse-build"/>
 </classpath>

@@ -42,6 +42,7 @@
 		<pathelement location="${jboss.root}/client/log4j.jar"/>
 		<pathelement location="${jboss.root}/server/default/lib/javax.servlet.jsp.jar"/>
 		<pathelement location="${jboss.root}/server/default/deploy/jbossweb-tomcat55.sar/tomcat-util.jar"/>
+		<pathelement location="${jboss.root}/server/default/deploy/jbossweb-tomcat55.sar/jsf-libs/jstl.jar"/>
 	 	<fileset refid="dumbhippo.global.jboss.jars"/>
                 <pathelement location="${dumbhippo.global.trunkdir}/taste/taste.jar"/>
                 <pathelement location="${dumbhippo.global.trunkdir}/mediarss/target/classes/mediarss.jar"/>

@@ -157,6 +157,27 @@
         </attribute>
     </tag>
     <tag>
+    	<name>iterateStack</name>
+    	<tagclass>com.dumbhippo.web.tags.IterateStack</tagclass>
+    	<bodycontent>scriptless</bodycontent>
+    	<info>Iterate over a collection of blocks forming a stack</info>
+    	<attribute>
+    		<name>items</name>
+    		<required>true</required>
+    		<rtexprvalue>true</rtexprvalue>
+   		</attribute>
+    	<attribute>
+    		<name>var</name>
+    		<required>true</required>
+    		<rtexprvalue>false</rtexprvalue>
+   		</attribute>
+    	<attribute>
+    		<name>varStatus</name>
+    		<required>true</required>
+    		<rtexprvalue>false</rtexprvalue>
+   		</attribute>
+   	</tag>
+    <tag>
         <name>png</name>
         <tagclass>com.dumbhippo.web.tags.PngTag</tagclass>
         <bodycontent>empty</bodycontent>
