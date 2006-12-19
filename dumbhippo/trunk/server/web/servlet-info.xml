@@ -213,7 +213,7 @@
            they are listed below for completeness -->
       <init-param>
           <param-name>noSignin</param-name>
-          <param-value>badges,busy,comingsoon,error,files,flash,group-files,public-groups,signup,summit,unknownlink,upgrade,user-summary,who-are-you,robots.txt</param-value>
+          <param-value>badges,busy,buttons,comingsoon,error,files,flash,group-files,public-groups,signup,summit,unknownlink,upgrade,user-summary,who-are-you,robots.txt</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
