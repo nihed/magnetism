@@ -93,7 +93,7 @@
 </head>
 <dht3:page currentPageLink="account">
 	<dht3:pageSubHeader title="${person.viewedPerson.name}'s ${pageName}">
-		<dht3:randomTip tipIndex="${person.randomTipIndex}" isSelf="${person.self}"/>
+		<dht3:randomTip isSelf="${person.self}"/>
 	</dht3:pageSubHeader>
 			<c:choose>
 			<c:when test="${!signin.user.account.disabled}">

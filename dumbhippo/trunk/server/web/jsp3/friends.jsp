@@ -22,7 +22,7 @@
 
 <dht3:page currentPageLink="friends">
 	<dht3:pageSubHeader title="${possessive} ${pageName} (${person.activePeople.totalCount})">
-		<dht3:randomTip tipIndex="${person.randomTipIndex}" isSelf="${person.self}"/>
+		<dht3:randomTip isSelf="${person.self}"/>
 		<dht3:personRelatedPagesTabs selected="friends"/>
 	</dht3:pageSubHeader>
 

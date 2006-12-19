@@ -3,7 +3,6 @@ package com.dumbhippo.web.pages;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -79,7 +78,6 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	protected ListBean<PersonView> followers;
 	private Pageable<PersonView> pageableFollowers;
 	
-	private int randomTipIndex = -1;
 	private String facebookErrorMessage;
 	
 	protected AbstractPersonPage() {	
@@ -366,12 +364,6 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	public void setNeedExternalAccounts(boolean needExternalAccounts) {
 		this.needExternalAccounts = needExternalAccounts;
-	}
-	
-	public int getRandomTipIndex() {
-		if (randomTipIndex < 0)
-			randomTipIndex = new Random().nextInt(12);
-		return randomTipIndex;
 	}
 	
     public void setFacebookAuthToken(String facebookAuthToken) {

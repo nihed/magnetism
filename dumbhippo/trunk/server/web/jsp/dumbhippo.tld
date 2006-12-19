@@ -396,5 +396,10 @@
     	<name>myInstanceOf</name>
     	<function-class>com.dumbhippo.web.tags.FuncUtils</function-class>
     	<function-signature>boolean myInstanceOf( java.lang.Object, java.lang.String )</function-signature>
-    </function>    
+    </function>
+    <function>
+    	<name>randomInt</name>
+    	<function-class>com.dumbhippo.web.tags.FuncUtils</function-class>
+    	<function-signature>int randomInt( int )</function-signature>
+    </function>        
 </taglib>

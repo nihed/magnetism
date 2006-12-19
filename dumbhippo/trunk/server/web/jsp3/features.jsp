@@ -67,6 +67,17 @@
 			</td>
 			</tr>
 		</table>
+		<table class="dh-box-grey2 dh-download-section" cellspacing="0" cellpadding="0">
+			<tr>
+			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/mugshotluv_60x53.png" style="width: 60; height: 53;"/></td>
+			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Spread the Mugshot Love.</div>
+			<div class="dh-download-section-description">
+				<div>Can't get enough Mugshot? Tell the world and build your network. (And ours!)</div>
+				<div><a class="dh-underlined-link" href="/buttons">Add our buttons to your site or blog</a>, linking to your Mugshot page.</div>
+			</div>
+			</td>
+			</tr>
+		</table>		
 		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
 			<tr>
 			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/underthehood54x65.png" style="width: 54; height: 65;"/></td>
