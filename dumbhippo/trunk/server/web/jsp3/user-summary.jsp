@@ -22,7 +22,7 @@
 <body>
 
 	<div>
-		<dht:headshot person="${person.viewedPerson}" size="60" invited="false"/>
+		<dht:headshot person="${person.viewedPerson}" size="60"/>
 	</div>
 
 	<div>

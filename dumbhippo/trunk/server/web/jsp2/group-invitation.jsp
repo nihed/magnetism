@@ -80,7 +80,7 @@
 				<dht:zoneBoxTitle>PENDING INVITATIONS</dht:zoneBoxTitle>
 				<dht:twoColumnList>
 					<c:forEach items="${group.invitedMembers.list}" var="person">
-						<dht:personItem who="${person}" invited="true"/>
+						<dht:personItem who="${person}"/>
 					</c:forEach>
 				</dht:twoColumnList>
 			</c:if>
@@ -89,7 +89,7 @@
 				<dht:zoneBoxTitle>PENDING INVITATIONS TO FOLLOW</dht:zoneBoxTitle>
 				<dht:twoColumnList>
 					<c:forEach items="${group.invitedFollowers.list}" var="person">
-						<dht:personItem who="${person}" invited="true"/>
+						<dht:personItem who="${person}"/>
 					</c:forEach>
 				</dht:twoColumnList>
 			</c:if>			

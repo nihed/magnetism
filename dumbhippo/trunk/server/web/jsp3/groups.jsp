@@ -51,29 +51,25 @@
 
 	<div class="dh-page-title-container">
 		<table cellspacing="0" cellpadding="0">
-			<tr>
-				<td><span class="dh-page-title"><c:out value="${possessive}"/> ${pageName} (${person.activeAndFollowedGroupsCount})</span>
+			<tr width="100%">
+				<td width="30%"><span class="dh-page-title"><c:out value="${possessive}"/> ${pageName} (${person.activeAndFollowedGroupsCount})</span>
 					<a class="dh-groups-create-link dh-underlined-link" href="/create-group">Create a Group</a>
 				</td>
-				<td align="right"><div class="dh-page-options-container"><span class="dh-page-options"><dht3:personRelatedPagesTabs selected="groups"/></span></div></td>
-			</tr>
-			<tr>
-				<td>
-					<span class="dh-page-options">Show: 
-						<c:choose>
-							<c:when test="${empty followed}">
-							    Groups <c:out value="${personIn}"/> |
-								<a href="/groups?who=${person.viewedPerson.viewPersonPageId}&followed=1">Groups <c:out value="${personFollow}"/></a>
-							</c:when>
-							<c:otherwise>
-								<a href="groups?who=${person.viewedPerson.viewPersonPageId}">Groups <c:out value="${personIn}"/></a> |
-								Groups <c:out value="${personFollow}"/>
-							</c:otherwise>
-						</c:choose>
-					</span>
-				</td>
+				<td align="right" width="70%"><div class="dh-page-options-container"><span class="dh-page-options"><dht3:personRelatedPagesTabs selected="groups"/></span></div></td>
 			</tr>
 		</table>
+	</div>
+	<div class="dh-page-options-sub-options-area dh-page-options">Show: 
+	    <c:choose>
+		     <c:when test="${empty followed}">
+			     Groups <c:out value="${personIn}"/> |
+				 <a href="/groups?who=${person.viewedPerson.viewPersonPageId}&followed=1">Groups <c:out value="${personFollow}"/></a>
+			 </c:when>
+		     <c:otherwise>
+				<a href="groups?who=${person.viewedPerson.viewPersonPageId}">Groups <c:out value="${personIn}"/></a> |
+				Groups <c:out value="${personFollow}"/>
+			</c:otherwise>
+	    </c:choose>
 	</div>
 	
 	<c:forEach items="${displayedGroups.results}" var="group" varStatus="stackStatus">

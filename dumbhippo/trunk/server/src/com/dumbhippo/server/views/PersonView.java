@@ -44,7 +44,7 @@ import com.dumbhippo.web.ListBean;
 public class PersonView extends EntityView {
 	private final static Logger logger = GlobalSetup.getLogger(PersonView.class);
 	
-	public static final int MAX_SHORT_NAME_LENGTH = 15;
+	public static final int MAX_SHORT_NAME_LENGTH = 11;
 	
 	private Contact contact;
 	private User user;
@@ -239,13 +239,8 @@ public class PersonView extends EntityView {
 	}
 	
 	public String getTruncatedName() {
-		String name = getNickname();
-		
-		if (name.length() > MAX_SHORT_NAME_LENGTH) {
-			return name.substring(0, MAX_SHORT_NAME_LENGTH) + "...";
-		} else {
-			return name;
-		}
+		String name = getName();
+		return StringUtils.truncateString(name, MAX_SHORT_NAME_LENGTH);	
 	}
 	
 	public Contact getContact() {

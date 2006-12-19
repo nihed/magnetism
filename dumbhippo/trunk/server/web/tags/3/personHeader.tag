@@ -26,7 +26,7 @@
 			<tr valign="top">
 				<td>
 					<div class="dh-image">
-						<dht:headshot person="${who}" size="60" invited="false" disableLink="${disableLink}"/>
+						<dht:headshot person="${who}" size="60" disableLink="${disableLink}"/>
 					</div>
 				</td>
 				<td>

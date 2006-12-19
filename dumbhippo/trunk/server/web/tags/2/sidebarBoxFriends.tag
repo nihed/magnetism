@@ -22,7 +22,7 @@
 		<c:choose>
 			<c:when test="${person.contacts.size > 0}">
 				<c:forEach items="${person.contacts.list}" end="2" var="person">
-					<dht:personItem who="${person}" invited="true"/>
+					<dht:personItem who="${person}"/>
 				</c:forEach>
 				<c:choose>				
 				    <c:when test="${person.contacts.size > 3}">

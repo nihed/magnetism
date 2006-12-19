@@ -32,7 +32,7 @@
 <c:if test="${group.member && group.invitedMembers.size > 0}"> <%-- Allow invitees to see other invitees FIXME having the "access control" check here is wrong, should be in GroupSystem --%>
 	<dht:sidebarBox boxClass="dh-group-invited-members-box" title="${group.viewedGroup.liveGroup.invitedMemberCount} INVITED MEMBERS">
 		<c:forEach items="${group.invitedMembers.list}" end="${group.maxMembersShown - 1}" var="person">
-			<dht:personItem who="${person}" invited="true"/>
+			<dht:personItem who="${person}"/>
 		</c:forEach>
 		<c:if test="${group.viewedGroup.liveGroup.invitedMemberCount > group.maxMembersShown}">
 			<dht:moreLink moreName="ALL INVITED MEMBERS" more="/members?group=${group.viewedGroupId}"/>
@@ -43,7 +43,7 @@
 <c:if test="${group.member && group.invitedFollowers.size > 0}"> <%-- Allow invitees to see other invitees FIXME having the "access control" check here is wrong, should be in GroupSystem --%>
 	<dht:sidebarBox boxClass="dh-group-invited-members-box" title="${group.viewedGroup.liveGroup.invitedFollowerCount} INVITED FOLLOWERS">
 		<c:forEach items="${group.invitedFollowers.list}" end="${group.maxMembersShown - 1}" var="person">
-			<dht:personItem who="${person}" invited="true"/>
+			<dht:personItem who="${person}"/>
 		</c:forEach>
 		<c:if test="${group.viewedGroup.liveGroup.invitedFollowerCount > group.maxMembersShown}">
 			<dht:moreLink moreName="ALL INVITED FOLLOWERS" more="/members?group=${group.viewedGroupId}"/>

@@ -81,6 +81,13 @@ input.dh-text-input {
 	right:         0px; 
 }
 
+.dh-page-options-sub-options-area {
+	width:		   100%;
+    position:      relative;
+    top:           -4px;
+    margin-bottom: 4px;
+}
+
 #dhPageFooter {
 	clear:			both;
 	margin-top:		10px;
@@ -237,6 +244,7 @@ div.dh-notification {
 }
 
 .dh-page-shinybox-title-large  {
+    margin-top:         5px;
 	margin-bottom:		5px;
 }
 
@@ -612,4 +620,21 @@ div.dh-person-header {
 #dhTermsOfUseNote, #dhFacebookNote {
 	padding:            5px;
 	margin-bottom:      5px;
+}
+
+.dh-person-item {
+    position: relative;
+    display:  block;
+    float:    left;
+    margin:   5px;
+    width:    70px; 
+    overflow: hidden;
+}
+
+.dh-person-item .dh-image {
+	text-align:			center;	
+}
+	
+.dh-person-item-name {
+	text-align:			center;	
 }

@@ -7,7 +7,7 @@
 
 <dht3:requirePersonBean beanClass="com.dumbhippo.web.pages.MyFriendsPage"/>
 
-<c:set var="pageName" value="Friends" scope="page"/>
+<c:set var="pageName" value="Network" scope="page"/>
 <c:set var="possessive" value="${person.viewedPerson.name}'s" scope="page"/>
 <c:if test="${person.self}">
 	<c:set var="possessive" value="My" scope="page"/>
@@ -20,12 +20,13 @@
 	<dht:faviconIncludes/>
 </head>
 
-<dht3:page currentPageLink="friends">
+<dht3:page currentPageLink="network">
 	<dht3:pageSubHeader title="${possessive} ${pageName} (${person.activePeople.totalCount})">
 		<dht3:randomTip isSelf="${person.self}"/>
-		<dht3:personRelatedPagesTabs selected="friends"/>
+		<dht3:personRelatedPagesTabs selected="network"/>
 	</dht3:pageSubHeader>
-
+    <dht3:networkTabs selected="network-activity"/>
+		
 	<c:forEach items="${person.activePeople.results}" var="activePerson" varStatus="stackStatus">
 		<dht3:personStack person="${activePerson.personView}" stackOrder="${stackStatus.count + 1}" stackType="dhMugshot" blocks="${activePerson.blocks}" showFrom="true"/>
 	</c:forEach>

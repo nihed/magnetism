@@ -15,8 +15,8 @@
 
 <dht3:page currentPageLink="features">
 	<dht3:shinyBox color="grey">
+	    <div class="dh-page-shinybox-title-large">Mugshot Features</div>
 		<div class="dh-download-header-area">
-			<div class="dh-page-shinybox-title-large">Mugshot Features</div>
 			<dht3:learnMoreNextStep/>	
 		</div>
 		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
@@ -67,7 +67,7 @@
 			</td>
 			</tr>
 		</table>
-		<table class="dh-box-grey2 dh-download-section" cellspacing="0" cellpadding="0">
+		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
 			<tr>
 			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/minimugshot_face42x79.png" style="width: 42; height: 79;"/></td>
 			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Put Mini Mugshot on your site.</div>
