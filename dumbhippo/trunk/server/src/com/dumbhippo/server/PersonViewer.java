@@ -42,6 +42,21 @@ public interface PersonViewer {
 	public void pageContacts(Viewpoint viewpoint, User user, Pageable<PersonView> pageable, PersonViewExtra... extras);
 	
 	/**
+	 * Get the contacts of a user who hold accounts (are Users).  This method
+	 * returns very limited PersonView objects that are suitable essentially
+	 * only for retrieving the name and photo.
+	 * 
+	 * This method never includes the user in the set of returned contacts.
+	 * 
+	 * @param viewpoint entity viewing the contacts
+	 * @param user who to get contacts of
+	 * @param start starting index of contacts to include
+	 * @param max maximum number of contacts to return, or -1 for no limit
+	 * @return set of user contacts
+	 */
+	public List<PersonView> getUserContactsAlphaSorted(Viewpoint viewpoint, User user, int start, int max);
+	
+	/**
 	 * Get a list of users who have this user as a contact, but who are not contacts of this user.
 	 * An empty list will be returned, if the viewpoint is anything other than the viewpoint of the 
 	 * user.

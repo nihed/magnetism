@@ -132,13 +132,6 @@ public class PersonViewerBean implements PersonViewer {
     }
     
 	private void addPersonViewExtras(Viewpoint viewpoint, PersonView pv, Resource fromResource, PersonViewExtra... extras) {		
-		// given the viewpoint, set whether the view is of self
-		if (viewpoint.isOfUser(pv.getUser())) {
-			pv.setViewOfSelf(true);
-		} else {
-			pv.setViewOfSelf(false);
-		}
-		
 		// we implement this in kind of a lame way right now where we always do 
 		// all the database work, even though we only return the requested information to keep 
 		// other code honest		
@@ -288,19 +281,36 @@ public class PersonViewerBean implements PersonViewer {
 			personView.setOnline(true);
 	}
 	
+	/*
+	 * Creates a simple PersonView object.  Should not inititate any
+	 * database queries.
+	 */	
+	private PersonView constructPersonView(Viewpoint viewpoint, Contact contact, User user) {
+		PersonView pv = new PersonView(contact, user);
+		initOnline(pv);
+		// given the viewpoint, set whether the view is of self
+		if (user != null && viewpoint.isOfUser(pv.getUser())) {
+			pv.setViewOfSelf(true);
+		} else {
+			pv.setViewOfSelf(false);
+		}
+		return pv;		
+	}	
+
+	private PersonView getPersonView(Viewpoint viewpoint, Person p) {
+		Contact contact = (p instanceof Contact ? (Contact) p : null);
+		User user = (p == null ? null : identitySpider.getUser(p)); // user for contact, or p itself if it's already a user		
+		return constructPersonView(viewpoint, contact, user);
+	}
+	
 	public PersonView getPersonView(Viewpoint viewpoint, Person p, PersonViewExtra... extras) {
 		if (viewpoint == null)
 			throw new IllegalArgumentException("null viewpoint");
 		if (p == null)
 			throw new IllegalArgumentException("null person");
 		
-		Contact contact = p instanceof Contact ? (Contact) p : null;
-		User user = identitySpider.getUser(p); // user for contact, or p itself if it's already a user
-		
-		PersonView pv = new PersonView(contact, user);
-				
+		PersonView pv = getPersonView(viewpoint, p);
 		addPersonViewExtras(viewpoint, pv, null, extras);
-		initOnline(pv);
 		
 		return pv;
 	}
@@ -324,26 +334,16 @@ public class PersonViewerBean implements PersonViewer {
 			}
 		}
 		
-		PersonView pv = new PersonView(contact, user);
-		initOnline(pv);
-		
 		PersonViewExtra allExtras[] = new PersonViewExtra[extras.length + 1];
 		allExtras[0] = firstExtra;
 		for (int i = 0; i < extras.length ; ++i) {
 			allExtras[i+1] = extras[i];
-		}
-		addPersonViewExtras(viewpoint, pv, r, allExtras);
-		
-		return pv;
+		}		
+		return getPersonView(viewpoint, user != null ? user : contact, allExtras);
 	}
 
 	public PersonView getSystemView(User user, PersonViewExtra... extras) {
-		PersonView pv = new PersonView(null, user);
-		
-		addPersonViewExtras(SystemViewpoint.getInstance(), pv, null, extras);
-		initOnline(pv);
-		
-		return pv;
+		return getPersonView(SystemViewpoint.getInstance(), user, extras);
 	}
 	
 	private Query getContactQuery(Account account, boolean forCount) {
@@ -359,35 +359,19 @@ public class PersonViewerBean implements PersonViewer {
 		Query q = getContactQuery(user.getAccount(), true);
 		return ((Number) q.getSingleResult()).intValue();
 	}
-
-	public List<PersonView> getContacts(Viewpoint viewpoint, User user,
-			int start, int max, PersonViewExtra... extras) {
-		
-		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user))
-			return Collections.emptyList();
-
-		// there are various ways to get yourself in your own contact list;
-		// we strip such things out. The caller can add them back if they
-		// need them
-
+	
+	private interface ContactViewer {
+		public PersonView view(Contact c);
+	}
+	
+	private List<PersonView> viewContacts(User user, List<Contact> contacts, int max, ContactViewer viewerFunction) {
 		List<PersonView> result = new ArrayList<PersonView>();
-		Set<Guid> seen = new HashSet<Guid>();
-		
-		// ORDER BY c.id DESC is an approximation "most recently added contacts first".
-		// To replace this ordering by an alphabetical ordering, we'd need to denormalize
-		// and store the display name of the contact in the Contact object; this isn't
-		// hard to do but it is a little tricky to keep updated.
-
-		Query q = getContactQuery(user.getAccount(), false);
-		q.setFirstResult(start);
-		if (max >= 0)
-			q.setMaxResults(max + 1); // Result might have ourself in it
-
-		for (Contact c : TypeUtils.castList(Contact.class, q.getResultList())) {
+		Set<Guid> seen = new HashSet<Guid>();		
+		for (Contact c : contacts) {
 			if (max >= 0 && result.size() == max)
 				break;
 			
-			PersonView pv = getPersonView(viewpoint, c, extras);
+			PersonView pv = viewerFunction.view(c);
 			
 			// Note that this uniquification is only among a single page of the 
 			// results and we also don't make any effort to get more results to
@@ -399,20 +383,67 @@ public class PersonViewerBean implements PersonViewer {
 				continue;
 			seen.add(pv.getIdentifyingGuid());
 
+			// there are various ways to get yourself in your own contact list;
+			// we strip such things out. The caller can add them back if they
+			// need them
 			if (pv.getUser() != null && pv.getUser().equals(user))
 				continue;
 				
 			result.add(pv);
-		}
-
-		return result;
+		}		
+		return result;		
 	}
+	
+	private List<PersonView> viewContacts(final Viewpoint viewpoint, User user, List<Contact> contacts, int max, final PersonViewExtra... extras) {
+		return viewContacts(user, contacts, max, new ContactViewer() {
+			public PersonView view(Contact c) {
+				return getPersonView(viewpoint, c, extras);
+			}
+		});
+	}	
 
+	public List<PersonView> getContacts(Viewpoint viewpoint, User user,
+			int start, int max, PersonViewExtra... extras) {
+		
+		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user))
+			return Collections.emptyList();
+
+		// ORDER BY c.id DESC is an approximation "most recently added contacts first".
+		// To replace this ordering by an alphabetical ordering, we'd need to denormalize
+		// and store the display name of the contact in the Contact object; this isn't
+		// hard to do but it is a little tricky to keep updated.
+		Query q = getContactQuery(user.getAccount(), false);
+		q.setFirstResult(start);
+		if (max >= 0)
+			q.setMaxResults(max + 1); // Result might have ourself in it
+		return viewContacts(viewpoint, user, TypeUtils.castList(Contact.class, q.getResultList()), max, extras);
+	}
 
 	public void pageContacts(Viewpoint viewpoint, User user, Pageable<PersonView> pageable, PersonViewExtra... extras) {
 		pageable.setResults(getContacts(viewpoint, user, pageable.getStart(), pageable.getCount(), extras));
-		
 		pageable.setTotalCount(LiveState.getInstance().getLiveUser(user.getGuid()).getContactsCount());
+	}
+	
+	public List<PersonView> getUserContactsAlphaSorted(Viewpoint viewpoint, User user,
+			int start, int max) {		
+		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user))
+			return Collections.emptyList();
+		
+		Query q = em.createQuery("SELECT owner,c from Contact c, ContactClaim cc, Account acct, User owner WHERE " +
+				" c.account = :startAcct AND cc.contact = c AND cc.resource = acct " +
+				" AND acct.owner = owner AND acct != :startAcct ORDER BY upper(owner.nickname) ASC");
+		q.setParameter("startAcct", user.getAccount());
+		q.setFirstResult(start);
+		if (max >= 0)
+			q.setMaxResults(max);
+		List<PersonView> viewedContacts = new ArrayList<PersonView>();
+		for (Object result : q.getResultList()) {
+			Object[] row = (Object[]) result;
+			User owner = (User) (row[0]);
+			Contact contact = (Contact) (row[1]);
+			viewedContacts.add(constructPersonView(viewpoint, contact, owner));
+		}
+		return viewedContacts;
 	}
 	
 	public Set<PersonView> getFollowers(Viewpoint viewpoint, User user,
