@@ -30,6 +30,9 @@ dh.stacker.blockOpen = function(block) {
 		fullDesc.style.display = "block";
 		shortDesc.style.display = "none";
 	}
+	var message = document.getElementById("dhMusicBlockMessage-" + block.dhBlockId);
+	if (message)
+		message.style.display = "none";
 	
 	dh.stacker._forceResize(block);
 }
@@ -51,6 +54,9 @@ dh.stacker.blockClose = function(block) {
 		fullDesc.style.display = "none";
 		shortDesc.style.display = "block";
 	}
+	var message = document.getElementById("dhMusicBlockMessage-" + block.dhBlockId);
+	if (message)
+		message.style.display = "block";
 	
 	dh.stacker._forceResize(block);
 }

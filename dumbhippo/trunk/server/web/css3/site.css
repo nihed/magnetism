@@ -312,6 +312,7 @@ div.dh-async-action-link-complete {
 }
 
 .dh-stacker-block {
+	table-layout:		fixed;
 }
 
 .dh-stacker-block-expandable {
@@ -495,3 +496,39 @@ div.dh-async-action-link-complete {
     font-size:         12px;
 }
 
+.dh-music-block-left {
+	padding-top:		6px;
+	padding-left:		6px;
+	padding-bottom:		6px;
+}
+
+.dh-music-block-left table {
+	table-layout:		fixed;
+}
+
+.dh-music-block-icon img {
+	display:			block;
+}
+
+.dh-music-block-beside {
+	padding-left:		8px;
+}
+
+.dh-music-block-artist {
+	font-weight:		bold;
+	font-size:			14px;
+	margin-left:		15px;
+	text-indent:		-15px;
+}
+
+.dh-music-block-name {
+	font-weight:		bold;
+	font-size:			14px;
+	margin-left:		15px;
+	text-indent:		-15px;
+}
+
+.dh-music-block-history-item {
+	margin-left:		15px;
+	text-indent:		-15px;
+}

@@ -1,6 +1,7 @@
 package com.dumbhippo.server.blocks;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.dumbhippo.XmlBuilder;
@@ -12,7 +13,7 @@ import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.Viewpoint;
 
-public class MusicChatBlockView extends AbstractPersonBlockView {
+public class MusicChatBlockView extends AbstractPersonBlockView implements MusicBlockView {
 	public static final int RECENT_MESSAGE_COUNT = 3;
 	
 	private List<ChatMessageView> recentMessages;
@@ -31,14 +32,6 @@ public class MusicChatBlockView extends AbstractPersonBlockView {
 		this.trackView = trackView;
 		this.recentMessages = recentMessages;
 		setPopulated(true);
-	}
-	
-	public TrackView getTrackView() {
-		return trackView; 
-	}
-	
-	public List<ChatMessageView> getRecentMessages() {
-		return recentMessages;
 	}
 	
 	@Override
@@ -86,5 +79,36 @@ public class MusicChatBlockView extends AbstractPersonBlockView {
 	public @Override String getSummaryLinkText() {
 		TrackView tv = getPersonSource().getCurrentTrack();
 		return tv.getTruncatedName();		
+	}
+
+	//
+	// MusicBlockView methods
+	//
+	public TrackView getTrack() {
+		return trackView;
+	}
+	
+	public List<TrackView> getOldTracks() {
+		return Collections.emptyList();
+	}
+
+	public ChatMessageView getLastMessage() {
+		try {
+			return recentMessages.get(0);
+		} catch (IndexOutOfBoundsException e) {
+			return null;
+		} 
+	}
+	
+	public List<ChatMessageView> getRecentMessages() {
+		return recentMessages;
+	}
+
+	public List<TrackView> getTrackViews() {
+		return getPersonSource().getTrackHistory(); 
+	}
+	
+	public boolean isQuip() {
+		return true;
 	}
 }
