@@ -70,8 +70,8 @@ typedef struct {
 static const RoleProperties role_properties[] = {
     /*                   type_hint,                   skip_taskbar_pager, accept_focus, no_background */
     /* APPLICATION */  { GDK_WINDOW_TYPE_HINT_NORMAL, FALSE,              TRUE,         FALSE  },
-    /* NOTIFICATION */ { GDK_WINDOW_TYPE_HINT_NORMAL, TRUE,               FALSE,        TRUE  },
-    /* INPUT_POPUP */  { GDK_WINDOW_TYPE_HINT_NORMAL, FALSE,              TRUE,         TRUE  },
+    /* NOTIFICATION */ { GDK_WINDOW_TYPE_HINT_DOCK,   TRUE,               FALSE,        TRUE  },
+    /* INPUT_POPUP */  { GDK_WINDOW_TYPE_HINT_NORMAL,   FALSE,              TRUE,         TRUE  },
 };
 
 static void
@@ -269,10 +269,41 @@ set_static_bit_gravity(GtkWidget *widget)
 			   CWBitGravity,  &xattributes);
 }
 
+/* Windows of type INPUT_POPUP have to appear on top of all our other windows, but
+ * they also have to have a type hint of NORMAL, or Compiz (at least) won't focus
+ * them. To get a window with a NORMAL type hint to appear on top of a window
+ * with a DOCK type hint, we have to set the transient parent of the normal
+ * window. But passing in the transient parent window to here is a pain, so
+ * we just grub through the global list of windows to find something appropriate.
+ */
+static void
+hack_transient_for(HippoWindowGtk *window_gtk) 
+{
+    GList *toplevels = gtk_window_list_toplevels();
+    GList *l;
+
+    for (l = toplevels; l; l = l->next) {
+        GtkWindow *other = l->data;
+        if (other != (GtkWindow *)window_gtk &&
+            GTK_WIDGET_VISIBLE(other) &&
+            HIPPO_IS_WINDOW_GTK(other) &&
+            HIPPO_WINDOW_GTK(other)->role == HIPPO_WINDOW_ROLE_NOTIFICATION) {
+            gtk_window_set_transient_for(GTK_WINDOW(window_gtk), other);
+            break;
+        }
+    }
+
+    g_list_free(toplevels);
+    
+}
+
 static void
 hippo_window_gtk_realize(GtkWidget *widget)
 {
     HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(widget);
+
+    if (window_gtk->role == HIPPO_WINDOW_ROLE_INPUT_POPUP) 
+        hack_transient_for(window_gtk);
     
     GTK_WIDGET_CLASS(hippo_window_gtk_parent_class)->realize(widget);
 
