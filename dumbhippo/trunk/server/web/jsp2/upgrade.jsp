@@ -43,7 +43,7 @@
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.83</p>
+			<p>Version 1.1.84</p>
 			<ul>
 				<li>Enhance the display of music notifications.</li>
 				<li>Ability to add "quips" to songs.</li>
