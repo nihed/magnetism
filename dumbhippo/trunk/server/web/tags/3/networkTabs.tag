@@ -10,7 +10,6 @@
 <c:set var="whoParam" value="?who=${person.viewedPerson.viewPersonPageId}" scope="page"/>
 
 <div class="dh-page-options-sub-options-area dh-page-options">
-    Sort by:
-	<dht3:pageOptionLink name="Activity" selected="${selected == 'network-activity'}" link="/friends${whoParam}"/> |
-	<dht3:pageOptionLink name="Alphabetical" selected="${selected == 'network-alphabetical'}" link="/network-alphabetical${whoParam}" disabled="${!person.viewedPerson.viewerIsContact}"/>
+	<dht3:pageOptionLink name="Activity" selected="${selected == 'network-activity'}" link="/network${whoParam}"/> |
+	<dht3:pageOptionLink name="Overview" selected="${selected == 'network-alphabetical'}" link="/network-overview${whoParam}" disabled="${!person.viewedPerson.viewerIsContact}"/>
 </div>

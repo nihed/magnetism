@@ -221,7 +221,7 @@
       </init-param>
       <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>account,admin,chatwindow,chatwindow-disabled,create-group,download,friends,group-account,group-invitation,group-invitations,home,invitation,invitation-admin,network-alphabetical,radar-theme-creator,sharelink,sharelink-disabled,sharephotoset,sharephotoset-first,statistics,we-miss-you</param-value>
+          <param-value>account,admin,chatwindow,chatwindow-disabled,create-group,download,friends,group-account,group-invitation,group-invitations,home,invitation,invitation-admin,network,network-overview,radar-theme-creator,sharelink,sharelink-disabled,sharephotoset,sharephotoset-first,statistics,we-miss-you</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   
