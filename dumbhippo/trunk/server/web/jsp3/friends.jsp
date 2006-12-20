@@ -31,12 +31,6 @@
 		<dht3:personStack person="${activePerson.personView}" stackOrder="${stackStatus.count + 1}" stackType="dhMugshot" blocks="${activePerson.blocks}" showFrom="true"/>
 	</c:forEach>
     <dht:expandablePager pageable="${person.activePeople}"/>
- 
- 	<c:if test="${person.activePeople.position != 0}">
-	    <div class="dh-back">
-	        <a href="/person?who=${person.viewedPerson.viewPersonPageId}">Back to <c:out value="${person.viewedPerson.name}"/>'s Home</a>
-	    </div>
-	</c:if>
 </dht3:page>
 
 </html>
