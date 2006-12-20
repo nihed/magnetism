@@ -13,6 +13,7 @@ import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
 
 // Implementation of LiveUserUpdater
 @Stateless
@@ -43,11 +44,17 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 		User dbUser = identitySpider.lookupUser(user);		
 		user.setContactsCount(identitySpider.computeContactsCount(dbUser));		
 	}
+
+	private void initializeUserContactsCount(LiveUser user) {
+		User dbUser = identitySpider.lookupUser(user);		
+		user.setUserContactsCount(identitySpider.getRawUserContactCount(new UserViewpoint(dbUser), dbUser, false));		
+	}
 	
 	public void initialize(LiveUser user) {
 		initializeGroups(user);
 		initializePostCount(user);
 		initializeContactsCount(user);
+		initializeUserContactsCount(user);
 	}
 	
 	public void handleGroupMembershipChanged(Guid userGuid) {
@@ -80,6 +87,7 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 		if (liveUser != null) {
 			try {
 				initializeContactsCount(liveUser);
+				initializeUserContactsCount(liveUser);
 			} finally {
 				state.updateLiveUser(liveUser);
 			}

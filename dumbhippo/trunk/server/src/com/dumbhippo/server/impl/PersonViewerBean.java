@@ -435,6 +435,7 @@ public class PersonViewerBean implements PersonViewer {
 
 	public void pageContacts(Viewpoint viewpoint, User user, Pageable<PersonView> pageable, PersonViewExtra... extras) {
 		pageable.setResults(getContacts(viewpoint, user, pageable.getStart(), pageable.getCount(), extras));
+        // the total for getContacts is the count of all contacts, not just the user contacts
 		pageable.setTotalCount(LiveState.getInstance().getLiveUser(user.getGuid()).getContactsCount());
 	}
 	

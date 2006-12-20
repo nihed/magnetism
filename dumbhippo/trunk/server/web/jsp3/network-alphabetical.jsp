@@ -21,7 +21,7 @@
 </head>
 
 <dht3:page currentPageLink="network-alphabetical">
-	<dht3:pageSubHeader title="${possessive} ${pageName} (${person.contactCount})">
+	<dht3:pageSubHeader title="${possessive} ${pageName} (${person.userContactCount})">
 		<dht3:randomTip isSelf="${person.self}"/>
 		<dht3:personRelatedPagesTabs selected="network"/>
 	</dht3:pageSubHeader>
