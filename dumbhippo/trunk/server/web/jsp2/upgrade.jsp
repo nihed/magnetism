@@ -23,14 +23,15 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.28</p>
+			<p>Version 1.1.30</p>
 			<ul>
-				<li>Show notifications when your friends post blog entries on MySpace.</li>
-				<li>Improve the display of other blog notifications.</li>
+				<li>Enhance the display of music notifications.</li>
+				<li>Ability to add "quips" to songs.</li>
+				<li>Notifications for Digg, del.icio.us, and Twitter.</li>
 				<li>Bug fixes.</li>
 			</ul>
 			<div class="dh-upgrade-message">
-			    Note: the last version of Mugshot didn't shut down properly
+			    Note: older versions of Mugshot didn't shut down properly
 			    on some systems, so after upgrade, you may end up with two
 			    mugshot icons in your notification area. If you see this, 
 			    please open a terminal and  enter the following command:
@@ -42,11 +43,14 @@
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.81</p>
+			<p>Version 1.1.83</p>
 			<ul>
-				<li>Show notifications when your friends post blog entries on MySpace.</li>
-				<li>Improve the display of other blog notifications.</li>
-				<li>Bug fixes.</li>
+				<li>Enhance the display of music notifications.</li>
+				<li>Ability to add "quips" to songs.</li>
+				<li>Notifications for Digg, del.icio.us, and Twitter.</li>
+				<li>Improve operation with Internet Explorer 7.</li>
+				<li>Fix display of non-Latin characters.</li>
+				<li>Miscellaneous Bug fixes.</li>
 			</ul>
 		</c:otherwise>
 	</c:choose>
