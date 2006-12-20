@@ -18,6 +18,10 @@
 			color: #0000CC;
 		}
 	</style>
+	<script type="text/javascript">
+		setInterval(function() { window.open(document.location.href, "_self", null, true); },
+			1000 * 60 * 10);
+	</script>
 </head>
 
 <body>
