@@ -8,7 +8,7 @@
 	<c:when test="${!signin.valid}">
 	
 		<div>
-			Try <a href="${baseUrl}/who-are-you">logging in here</a>.
+			Try <a href="${baseUrl}/who-are-you" target="_blank">logging in here</a>.
 		</div>
 		
 		<div>
@@ -19,7 +19,7 @@
 		     cookies (maybe without adding the P3P stuff, I don't know). Safari probably
 		     isn't fixable afaik. --%>
 		     
-			<span style="font-size: 10px;"> <i>If you are already logged in to <a href="${baseUrl}">${baseUrl}</a>,
+			<span style="font-size: 10px;"> <i>If you are already logged in to <a href="${baseUrl}" target="_blank">${baseUrl}</a>,
 			your browser may be incompatible with this site as configured. If you are using Microsoft
 			Internet Explorer, you can change your security settings by choosing
 			<b>Tools &gt; Internet Options</b>. Open the <b>Privacy</b> tab, click <b>Advanced</b>,
@@ -46,6 +46,7 @@
 						</c:if>
 					</b>
 					<jsp:element name="a">
+						<jsp:attribute name="target">_blank</jsp:attribute>
 						<jsp:attribute name="href"><c:out value="${block.summaryLink}"/></jsp:attribute>
 						<jsp:body>
 							<c:out value="${block.summaryLinkText}"/>
