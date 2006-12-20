@@ -1,11 +1,16 @@
-<html>
-<%@ page pageEncoding="UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <dht3:requirePersonBean beanClass="com.dumbhippo.web.pages.MyFriendsPage"/>
+
+<c:if test="${person.userContactCount == 0}">
+	<jsp:forward page="/network-overview"/>
+</c:if>
+
+<html>
+<%@ page pageEncoding="UTF-8" %>
 
 <c:set var="pageName" value="Network" scope="page"/>
 <c:set var="possessive" value="${person.viewedPerson.name}'s" scope="page"/>
@@ -21,7 +26,7 @@
 </head>
 
 <dht3:page currentPageLink="network">
-	<dht3:pageSubHeader title="${possessive} ${pageName} (${person.activePeople.totalCount})">
+	<dht3:pageSubHeader title="${possessive} ${pageName} (${person.userContactCount})">
 		<dht3:randomTip isSelf="${person.self}"/>
 		<dht3:personRelatedPagesTabs selected="network"/>
 	</dht3:pageSubHeader>

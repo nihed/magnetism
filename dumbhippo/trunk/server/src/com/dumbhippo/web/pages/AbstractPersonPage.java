@@ -335,7 +335,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	public int getUserContactCount() {
 		if (userContactCount == -1) {
-			userContactCount = personViewer.getUserContactCount(getViewpoint(), getViewedUser());
+			userContactCount = getViewedPerson().getLiveUser().getUserContactsCount();
 		}
 		return userContactCount;
 	}
