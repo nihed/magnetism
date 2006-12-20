@@ -17,11 +17,11 @@
 	<dht3:shinyBox color="grey">
 		<div>
 			&nbsp;
-		</div>	
+		</div>
 		<div>
 			You can add the Mugshot Stacker Google Gadget to your Google personalized home  
 			page to keep an eye on what your friends are doing online. Click the 
-			<a href="http://fusion.google.com/ig/add?synd=open&moduleurl=${dh:urlEncode(baseUrl)}/google-stacker-spec"><img src="http://gmodules.com/ig/images/plus_google.gif"></a> button to 
+			<a href="http://fusion.google.com/ig/add?synd=open&moduleurl=${dh:urlEncode(baseUrl)}/google-stacker-spec"><img src="http://buttons.googlesyndication.com/fusion/add.gif" width="104" height="17" border="0" alt="Add to Google"></a> button to 
 			add this to your Google personalized home page. 
 		</div>
 		<div>

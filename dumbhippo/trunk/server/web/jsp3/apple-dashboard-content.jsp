@@ -5,11 +5,14 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <head>
-	<title>Mugshot Stacker Google Gadget</title>
+	<title>Mugshot Stacker for Apple Dashboard</title>
 	<style type="text/css">
 		body, td, a, p, div, span {
 			font-size:	13px;
 			font-family: arial, sans-serif;
+		}
+		body {
+			background-color:	#FFFFFF;
 		}
 		a:link {
 			color: #0000CC;
