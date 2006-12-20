@@ -620,19 +620,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 		return ret;
 	}
-	
-	public int getRawUserContactCount(Viewpoint viewpoint, User user, boolean includeSelf) {
-		if (!isViewerSystemOrFriendOf(viewpoint, user))
-			return 0;
-		int count = 0;
-		Guid viewedUserId = user.getGuid();		
-		for (Guid guid : LiveState.getInstance().getContacts(viewedUserId)) {
-			if (!includeSelf && viewedUserId.equals(guid))
-				continue;
-			count++;
-		}
-		return count;
-	}
 
 	static final private String GET_ACCOUNTS_WITH_ACCOUNT_AS_CONTACT_QUERY = "SELECT cc.account FROM ContactClaim cc WHERE cc.resource = :account";
 

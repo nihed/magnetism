@@ -11,9 +11,9 @@ import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.views.SystemViewpoint;
-import com.dumbhippo.server.views.UserViewpoint;
 
 // Implementation of LiveUserUpdater
 @Stateless
@@ -29,6 +29,9 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	
 	@EJB
 	private PostingBoard postingBoard;
+	
+	@EJB
+	private PersonViewer personViewer;
 	
 	private void initializeGroups(LiveUser user) {
 		User dbUser = identitySpider.lookupUser(user);		
@@ -47,7 +50,7 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 
 	private void initializeUserContactsCount(LiveUser user) {
 		User dbUser = identitySpider.lookupUser(user);		
-		user.setUserContactsCount(identitySpider.getRawUserContactCount(new UserViewpoint(dbUser), dbUser, false));		
+		user.setUserContactsCount(personViewer.getUserContactCount(SystemViewpoint.getInstance(), dbUser));	
 	}
 	
 	public void initialize(LiveUser user) {

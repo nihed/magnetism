@@ -1188,7 +1188,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 
 	public void pageContactActivity(Viewpoint viewpoint, User viewedUser, int blocksPerUser, Pageable<PersonMugshotView> pageable) {
 		pageable.setResults(getContactActivity(viewpoint, viewedUser, pageable.getStart(), pageable.getCount(), blocksPerUser));
-		pageable.setTotalCount(identitySpider.getRawUserContactCount(viewpoint, viewedUser, false));
+		pageable.setTotalCount(LiveState.getInstance().getLiveUser(viewedUser.getGuid()).getUserContactsCount());
 	}
 	
 	public List<GroupMugshotView> getMugshotViews(final Viewpoint viewpoint, List<Group> distinctGroups, final int blocksPerGroup) {
