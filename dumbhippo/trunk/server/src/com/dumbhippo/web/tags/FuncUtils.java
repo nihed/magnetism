@@ -2,6 +2,8 @@ package com.dumbhippo.web.tags;
 
 import java.util.Random;
 
+import com.dumbhippo.StringUtils;
+
 public class FuncUtils {
 	public static boolean enumIs(Enum value, String name) {
 		if (value == null)
@@ -22,5 +24,9 @@ public class FuncUtils {
 	
 	public static int randomInt(int belowThis) {
 		return new Random().nextInt(belowThis);
+	}
+	
+	public static String urlEncode(String s) {
+		return StringUtils.urlEncode(s);
 	}
 }
