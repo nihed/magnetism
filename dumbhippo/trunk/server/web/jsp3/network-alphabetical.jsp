@@ -35,6 +35,7 @@
 			        <dht3:personItem who="${person}"/>
 		        </c:forEach>
 		        <div class="dh-grow-div-around-floats"><div></div></div>
+		        <dht:expandablePager pageable="${person.pageableUserContactsBasics}" anchor="dhFriends"/>
             </c:when>
             <c:when test="${person.self}">
                 <c:choose>
@@ -52,7 +53,6 @@
 		        You cannot view this person's friends.
 			</c:otherwise>
 	    </c:choose>            
-		<dht:expandablePager pageable="${person.pageableUserContactsBasics}" anchor="dhFriends"/>
     </dht3:shinyBox>
     
     <c:if test="${person.self}">
@@ -63,6 +63,7 @@
 				<c:forEach items="${person.pageableFollowers.results}" var="person">
 					<dht3:personItem who="${person}"/>
 				</c:forEach>
+				<div class="dh-grow-div-around-floats"><div></div></div> 
 		        <dht:expandablePager pageable="${person.pageableFollowers}" anchor="dhFollowers"/>
 		    </c:when>
 		    <c:otherwise>

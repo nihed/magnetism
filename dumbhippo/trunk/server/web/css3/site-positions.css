@@ -623,16 +623,33 @@ div.dh-person-header {
 }
 
 .dh-person-item {
-    position: relative;
-    display:  block;
-    float:    left;
-    margin:   5px;
-    width:    70px; 
-    overflow: hidden;
+    position:   relative;
+    display:    block;
+    float:      left;
+    margin:     5px;
+    width:      70px; 
+    text-align:	center;
+    overflow:   hidden;
+}
+
+.dh-person-item-more-info {
+    position:			absolute;
+    display:            none;
+    width:              300px;
+    overflow:           hidden;
+    padding:            3px;         
+	z-index:			2;
 }
 
 .dh-person-item .dh-image {
-	text-align:			center;	
+	height:             60px;
+	width:	            60px;
+}
+	
+.dh-person-item-more-info .dh-image {
+	height:             60px;
+	width:	            60px;
+    padding-right:      3px;
 }
 	
 .dh-person-item-name {

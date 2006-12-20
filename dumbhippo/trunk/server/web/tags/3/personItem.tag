@@ -5,8 +5,9 @@
 
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
 
+<dh:script module="dh.infoviewer"/>
 <div class="dh-person-item">
-    <div class="dh-image">
+    <div id="dhImage${who.identifyingGuid}" class="dh-image">
 	    <dht:headshot person="${who}" size="60"/>
     </div>
     <div class="dh-person-item-name">
@@ -19,4 +20,37 @@
        </c:if>    
     </div>
 </div>    
-    
+<script type="text/javascript">
+	var imageDiv = document.getElementById("dhImage${who.identifyingGuid}");
+	imageDiv.dhImageId = "${who.identifyingGuid}";
+	imageDiv.onmouseover = dh.infoviewer.onMouseOver;
+	imageDiv.onmouseout = dh.infoviewer.onMouseOut;
+</script>
+<div id="dhEntity${who.identifyingGuid}" class="dh-person-item-more-info">
+	<table cellpadding="0" cellspacing="0">
+	<tbody>
+	<tr valign="top">
+	<td>
+        <div class="dh-image">
+	        <dht:headshot person="${who}" size="60"/>
+        </div>   
+    </td>
+    <td>
+        <c:if test="${who.liveUser != null}">  
+            <dht3:presenceIcon who="${who}"/>
+        </c:if>    
+        <span class="dh-person-item-name">
+            <c:out value="${who.name}"/>	
+         </span>    
+        <c:if test="${who.liveUser != null}">
+		     <div class="dh-person-header-stats">
+		        <span class="dh-info"><c:out value="${who.liveUser.contactsCount} in network"/></span> | 							
+			    <span class="dh-info"><dht3:plural n="${who.liveUser.groupCount}" s="group"/></span> | 
+	            <span class="dh-info"><dht3:plural n="${who.liveUser.sentPostsCount}" s="post"/></span> 
+		    </div>
+        </c:if>		
+    </td>
+    </tr>
+    </tbody>
+    </table>    
+</div>      

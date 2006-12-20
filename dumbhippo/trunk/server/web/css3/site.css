@@ -492,6 +492,16 @@ div.dh-async-action-link-complete {
 	font-weight:		bold;
 }
 
+.dh-person-item-more-info {
+	border:				1px solid black;
+	background-color:	#ffffcc;
+}
+
+.dh-person-item-more-info .dh-person-item-name {
+	font-size:          13px;
+	font-weight:		bold;   
+}
+
 .dh-person-item {
     font-size:         12px;
 }
