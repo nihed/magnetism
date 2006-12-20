@@ -38,14 +38,7 @@
 		        <dht:expandablePager pageable="${person.pageableUserContactsBasics}" anchor="dhFriends"/>
             </c:when>
             <c:when test="${person.self}">
-                <c:choose>
-				    <c:when test="${person.signin.user.account.invitations > 0}">
-					    Email <a href="/invitation">invites</a> to some friends
-				    </c:when>
-				    <c:otherwise>
-					    A loner huh?
-				    </c:otherwise>
-			    </c:choose>
+                Why not check out <a href="/active-people">Active People</a> or search for friends using their e-mail.
 			</c:when>
 			<c:otherwise>
 			    <%-- Contacts can be 0 because there are no contacts or because the viewer can not see --%>
