@@ -22,6 +22,6 @@
 <div class="dh-page-options-options-area">
     View ${whoName}: 
 	<dht3:pageOptionLink name="Home" selected="${selected == 'person'}" link="/person${whoParam}"/> |
-	<dht3:pageOptionLink name="Network" selected="${selected == 'network'}" link="/friends${whoParam}" disabled="${!person.viewedPerson.viewerIsContact}"/> |
+	<dht3:pageOptionLink name="Network" selected="${selected == 'network'}" link="/network${whoParam}" disabled="${!person.viewedPerson.viewerIsContact}"/> |
 	<dht3:pageOptionLink name="Groups" selected="${selected == 'groups'}" link="/groups${whoParam}"/>
 </div>
