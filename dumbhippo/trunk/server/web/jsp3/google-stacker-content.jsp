@@ -19,7 +19,7 @@
 		     cookies (maybe without adding the P3P stuff, I don't know). Safari probably
 		     isn't fixable afaik. --%>
 		     
-			<i>If you are already logged in to <a href="${baseUrl}">${baseUrl}</a>,
+			<span style="font-size: 10px;"> <i>If you are already logged in to <a href="${baseUrl}">${baseUrl}</a>,
 			your browser may be incompatible with this site as configured. If you are using Microsoft
 			Internet Explorer, you can change your security settings by choosing
 			<b>Tools &gt; Internet Options</b>. Open the <b>Privacy</b> tab, click <b>Advanced</b>,
@@ -27,7 +27,7 @@
 			click <b>Accept</b>. Alternatively, you can try another web browser, such as
 			<a href="http://mozilla.com">Firefox</a>. To learn more, 
 			<a href="http://en.wikipedia.org/wiki/HTTP_cookie#Privacy_and_third-party_cookies">this
-			Wikipedia article</a> may be helpful.</i>
+			Wikipedia article</a> may be helpful.</i> </span>
 		</div>
 	
 	</c:when>
