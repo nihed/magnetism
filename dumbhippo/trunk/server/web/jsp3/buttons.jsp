@@ -65,18 +65,80 @@
 			
 			<div class="dh-buttons-instructions-box">
 				<div class="dh-buttons-instructions-headline">How to add buttons in...</div>
+				<%-- No one is willing to bite the bullet on installing the AOL AIM
+				<dht3:buttonInstructions title="AIM">
+					<ol>
+						<li>Install AIM Triton</li>
+						<li>Weed through hundreds of advertisements scattered on your desktop and web browsers</li>
+						<li>Go to add / remove applications and remove AIM</li>
+						<li>Install Trillian or Gaim</li>
+					</ol>
+				</dht3:buttonInstructions>
+				--%>
 				<dht3:buttonInstructions title="Blogger">
 					<ol>
-						<li>Do it</li>
-						<li>Do it</li>
+						<li>Log into Blogger</li>
+						<li>Click "Layout"</li>
+						<li>On the sidebar of your layout, click "Add a Page Element"</li>
+						<li>Under "HTML/Javascript" click "Add to Blog"</li>
+						<li>Add a title like "Mugshot Rocks!"</li>
+						<li>Copy the code of the badge and past into the "Content" box</li>
+						<li>Click "Save Changes"</li>
+					</ol>
+				</dht3:buttonInstructions>
+				<dht3:buttonInstructions title="Blogger (beta)">
+					<ol>
+						<li>Log into Blogger with your Google Account</li>
+						<li>Click "Template"</li>
+						<li>Scroll down to the "Archive Links" section</li>
+						<li>Copy the code of the badge into the template</li>
+						<li>Click "Save Template Changes"</li>
+					</ol>
+				</dht3:buttonInstructions>
+				<dht3:buttonInstructions title="LiveJournal"><%-- Haven't verified these instructions are valid --%>
+					<ol>
+						<li>Log into LiveJournal</li>
+						<li>Hover over "Manage" and click "Info"</li>
+						<li>Copy the code of the badge and past into the "Bio" box</li>
 					</ol>
 				</dht3:buttonInstructions>
 				<dht3:buttonInstructions title="MySpace">
 					<ol>
-						<li>Do it</li>
-						<li>Do it</li>
+						<li>Log into MySpace and click "Edit Profile"</li>
+						<li>Copy the code of a badge and past into a section like "Interests" or "About Me"</li>
+						<li>Click "Preview Section" and then "Save All Changes"</li>
 					</ol>
-				</dht3:buttonInstructions>				
+				</dht3:buttonInstructions>	
+				<dht3:buttonInstructions title="TypePad"><%-- Haven't verified these instructions are valid --%>
+					<ol>
+						<li>Log into TypePad</li>
+						<li>Click on "TypeLists"</li>
+						<li>Select List type "Notes", give the List a name and click "Create new list"</li>
+						<li>Click "Add this list to your weblog(s) or About Page"</li>
+						<li>Check the box next to your weblog and click "Save Changes"</li>
+						<li>Click "Add a new item"</li>
+						<li>Copy the code of a badge and paste into the "Note" box</li>
+					</ol>
+				</dht3:buttonInstructions>
+				<dht3:buttonInstructions title="WordPress">
+					<ol>
+						<li>Log into your WordPress Dashboard</li>
+						<li>Click on "Links" or "Blogroll" and then "Add Link"</li>
+						<li>Type "Mugshot" into "Name" or "Link Name"</li>
+						<li>Copy and paste the "href" URL of the badge code into the "URI" or "Address"</li>
+						<li>Copy and past the "src" URL of the badge code into the "Image URI" down below</li>
+						<li>Click "Add Link"</li>
+					</ol>
+				</dht3:buttonInstructions>
+				<dht3:buttonInstructions title="Yahoo! Mail"><%-- Haven't verified these instructions are valid --%>
+					<ol>
+						<li>Log into Yahoo! Mail</li>
+						<li>Click "Options" and then "Mail Options"</li>
+						<li>Click the "Compose" section and select "Show a signature on all outgoing messages"</li>
+						<li>Copy the code of a badge and paste into the "Signature" box</li>
+						<li>Click "Rich Text" and then click "Save Changes"</li>
+					</ol>
+				</dht3:buttonInstructions>
 			</div>
 		
 			<div class="dh-grow-div-around-floats"></div>
