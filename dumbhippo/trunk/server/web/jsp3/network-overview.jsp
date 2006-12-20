@@ -60,7 +60,7 @@
 		        <dht:expandablePager pageable="${person.pageableFollowers}" anchor="dhFollowers"/>
 		    </c:when>
 		    <c:otherwise>
-		        You have no followers, everyone who gets updates about you is already in your network. 
+		        Everyone who gets updates about you is already in your network. 
 		    </c:otherwise> 
 		</c:choose>       
         </dht3:shinyBox>
