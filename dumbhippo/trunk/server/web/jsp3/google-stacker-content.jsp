@@ -19,7 +19,7 @@
 		     cookies (maybe without adding the P3P stuff, I don't know). Safari probably
 		     isn't fixable afaik. --%>
 		     
-			<span style="font-size: 10px;"> <i>If you are already logged in to <a href="${baseUrl}" target="_top">${baseUrl}</a>,
+			<span style="font-size: 11px;"> <i>If you are already logged in to <a href="${baseUrl}" target="_top">${baseUrl}</a>,
 			your browser may be incompatible with this site as configured. If you are using Microsoft
 			Internet Explorer, you can change your security settings by choosing
 			<b>Tools &gt; Internet Options</b>. Open the <b>Privacy</b> tab, click <b>Advanced</b>,

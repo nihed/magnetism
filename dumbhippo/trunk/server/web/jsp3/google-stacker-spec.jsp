@@ -1,8 +1,10 @@
-<%-- NOTE this is an XML page, not an HTML page --%>
+<?xml version="1.0" encoding="UTF-8" ?> 
+<%-- NOTE this is an XML page, not an HTML page. 
+     also, keep the processing instruction at the top,
+     xml technically doesn't allow whitespace before it  --%>
 <%@ page pageEncoding="UTF-8" contentType="text/xml" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-<?xml version="1.0" encoding="UTF-8" ?> 
 <Module>
   <ModulePrefs 
     title="Mugshot Stacker" height="200" scrolling="true"
