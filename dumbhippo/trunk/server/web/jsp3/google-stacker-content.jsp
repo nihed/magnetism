@@ -1,14 +1,30 @@
-<%-- NOTE this is the Google Gadget content, it is not supposed to include html, head, or body (?) --%>
+<html>
 <%@ page pageEncoding="UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
+<head>
+	<title>Mugshot Stacker Google Gadget</title>
+	<style type="text/css">
+		body, td, a, p, div, span {
+			font-size:	13px;
+			font-family: arial, sans-serif;
+		}
+		a:link {
+			color: rgb(0, 0, 204);
+		}
+	</style>
+</head>
+
+<body>
 <c:choose>
 	<c:when test="${!signin.valid}">
 	
 		<div>
-			Try <a href="${baseUrl}/who-are-you" target="_top">logging in here</a>.
+			Try <a href="${baseUrl}/who-are-you" target="_top">logging in here</a> (or 
+			<a href="${baseUrl}/" target="_top">sign up</a>, if you don't have a Mugshot
+			account already).
 		</div>
 		
 		<div>
@@ -19,7 +35,7 @@
 		     cookies (maybe without adding the P3P stuff, I don't know). Safari probably
 		     isn't fixable afaik. --%>
 		     
-			<span style="font-size: 11px;"> <i>If you are already logged in to <a href="${baseUrl}" target="_top">${baseUrl}</a>,
+			<span style="font-size: 12px;"> <i>If you are already logged in to <a href="${baseUrl}" target="_top">${baseUrl}</a>,
 			your browser may be incompatible with this site as configured. If you are using Microsoft
 			Internet Explorer, you can change your security settings by choosing
 			<b>Tools &gt; Internet Options</b>. Open the <b>Privacy</b> tab, click <b>Advanced</b>,
@@ -31,7 +47,7 @@
 		</div>
 	
 	</c:when>
-	<c:otherwise>
+	<c:otherwise>		
 		<dht3:requireStackedPersonBean/>
 		
 		<c:set var="blocks" value="${person.pageableStack.results}" scope="page"/>
@@ -52,9 +68,10 @@
 							<c:out value="${block.summaryLinkText}"/>
 						</jsp:body>
 					</jsp:element>			
-					<c:out value="${block.summaryTimeAgo}"/>
+					<span style="color: #6f6f6f;">&nbsp;<c:out value="${block.summaryTimeAgo}"/></span>
 				</div>
 			</c:forEach>
 		</div>
 	</c:otherwise>
 </c:choose>
+</body>
