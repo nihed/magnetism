@@ -304,6 +304,12 @@ public class RewriteServlet extends HttpServlet {
 			return;
 		}
 		
+		// see for example http://www.p3pwriter.com/LRN_111.asp
+		// This is a partial machine-readable encoding of 
+		// the privacy policy that allows our login cookie
+		// to work in an iframe when using IE.
+		response.setHeader("P3P", "CP=\"CAO PSA OUR\"");
+		
 		// The root URL is special-cased, we forward it depending
 		// on whether the user is signed in and depending on our
 		// configuration.
