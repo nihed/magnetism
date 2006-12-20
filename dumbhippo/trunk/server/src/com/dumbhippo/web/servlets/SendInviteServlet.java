@@ -13,6 +13,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.InvitationSystem;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.web.WebEJBUtil;
 
@@ -55,7 +56,7 @@ public class SendInviteServlet extends AbstractServlet {
 		}
 		
 		request.setAttribute("email", email);
-		request.setAttribute("remaining", invitationSystem.getInvitations(user));
+		request.setAttribute("remaining", invitationSystem.getInvitations(SystemViewpoint.getInstance(), user));
 		request.setAttribute("note", note);
 	}
 	

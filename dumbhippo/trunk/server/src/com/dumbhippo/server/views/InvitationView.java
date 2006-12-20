@@ -46,6 +46,10 @@ public class InvitationView {
 	    return suggestedGroups;	
 	}
 	
+	public String getName() {
+		return getInvite().getInvitee().getHumanReadableString();
+	}
+	
     public String getCommaSeparatedSuggestedGroupIds() {
     	StringBuilder groupIdsBuilder = new StringBuilder();
     	int i = 0;

@@ -37,10 +37,12 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	// We override the default values for initial and subsequent results per page from Pageable
 	static private final int FRIENDS_PER_PAGE = 50;
 	static private final int GROUPS_PER_PAGE = 20;
+	private static final int INVITATIONS_PER_PAGE = 25;
 	
 	// This is the number of contacts we request for the list in the sidebar;
 	// it's 1 greater than the number we actually show to allow for "More>".
 	static private final int SHORT_CONTACT_COUNT = 4;
+
 	
 	@PagePositions
 	PagePositionsBean pagePositions;
@@ -66,6 +68,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	// information about existing outstanding invitations
 	private ListBean<InvitationView> outstandingInvitations;
+	private Pageable<InvitationView> pageableOutstandingInvitations;
 	
 	private boolean lookedUpCurrentTrack;
 	private TrackView currentTrack;
@@ -403,6 +406,16 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 				    		                                    0, -1));
 		}
 		return outstandingInvitations;
+	}
+	
+	public Pageable<InvitationView> getPageableOutstandingInvitations() {
+		if (pageableOutstandingInvitations == null) {
+			pageableOutstandingInvitations = pagePositions.createPageable("invitations");
+			pageableOutstandingInvitations.setInitialPerPage(INVITATIONS_PER_PAGE);
+			pageableOutstandingInvitations.setSubsequentPerPage(INVITATIONS_PER_PAGE);
+			pageableOutstandingInvitations.generatePageResults(getOutstandingInvitations().getList());
+		}
+		return pageableOutstandingInvitations;
 	}
 	
 	protected final boolean getNeedExternalAccounts() {

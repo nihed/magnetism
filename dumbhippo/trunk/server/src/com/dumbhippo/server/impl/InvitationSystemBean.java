@@ -53,6 +53,7 @@ import com.dumbhippo.server.views.InvitationView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
 public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {
@@ -697,7 +698,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 	}
 
-	public int getInvitations(User user) {
+	public int getInvitations(Viewpoint viewpoint, User user) {
+		if (!(viewpoint instanceof SystemViewpoint || viewpoint.isOfUser(user)))
+			return 0;
 		Account account = getAccount(user);
 		return account.getInvitations();
 	}
@@ -738,7 +741,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	}
 	
 	public int getSelfInvitationCount() {
-		return getInvitations(accounts.getCharacter(Character.MUGSHOT));
+		return getInvitations(null, accounts.getCharacter(Character.MUGSHOT));
 	}
 	
 	static private class InviteMessageContent extends MessageContent {

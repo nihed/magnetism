@@ -13,6 +13,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.views.InvitationView;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @Local
 public interface InvitationSystem {
@@ -173,10 +174,11 @@ public interface InvitationSystem {
 	
 	/**
 	 * Return number of invitations the user has left to send.
+	 * @param viewpoint viewing person
 	 * @param user user
 	 * @return number of invitations
 	 */
-	public int getInvitations(User user);
+	public int getInvitations(Viewpoint viewpoint, User user);
 	
 	
 	/**

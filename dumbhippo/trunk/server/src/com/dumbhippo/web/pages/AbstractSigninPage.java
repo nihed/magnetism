@@ -67,7 +67,7 @@ public abstract class AbstractSigninPage {
 	
 	public int getInvitations() {
 		if ((invitations < 0)  && getSignin().isValid()) {
-			invitations = invitationSystem.getInvitations(getUserSignin().getUser()); 
+			invitations = invitationSystem.getInvitations(getSignin().getViewpoint(), getUserSignin().getUser()); 
 		}
 		return invitations;
 	}

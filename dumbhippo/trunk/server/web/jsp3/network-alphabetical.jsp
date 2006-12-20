@@ -28,7 +28,7 @@
 	<dht3:networkTabs selected="network-alphabetical"/>
 		
     <dht3:shinyBox color="grey">
-        <div class="dh-page-shinybox-title-large">People in <c:out value="${possessive} ${pageName} (${person.userContactCount})"/></div>
+        <div><span class="dh-page-shinybox-title-large">People in <c:out value="${possessive} ${pageName} (${person.userContactCount})"/></span></div>
         <c:choose>  
             <c:when test="${person.userContactCount > 0}">
           	    <c:forEach items="${person.pageableUserContactsBasics.results}" var="person">
@@ -71,8 +71,32 @@
 		    </c:otherwise> 
 		</c:choose>       
         </dht3:shinyBox>
-    </c:if>
-       
+        
+        <dht3:shinyBox color="grey">
+			<div>
+				<span class="dh-page-shinybox-title-large">People I've Invited to Join Mugshot <c:out value="(${person.pageableOutstandingInvitations.totalCount})"/>
+				<a class="dh-underlined-link" href="/invitation">Invite friends! (${person.invitations} invitations left)</a> 
+			</div>
+	        <c:choose>
+    	        <c:when test="${person.pageableOutstandingInvitations.totalCount > 0}">
+					<c:forEach items="${person.pageableOutstandingInvitations.results}" var="invite">
+						<div class="dh-person-item">
+						    <div class="dh-image">
+							    <dh:png src="/images2/${buildStamp}/user_pix1/invited.png?size=60" style="width: 60px; height: 60px"/>
+						    </div>
+						    <div class="dh-person-item-name">
+						    	<c:out value="${invite.name}"/>
+						    </div>
+						</div>    
+					</c:forEach>
+			        <dht:expandablePager pageable="${person.pageableOutstandingInvitations}" anchor="dhInvites"/>
+			    </c:when>
+			    <c:otherwise>
+		    	    No outstanding invitations.  <c:if test="${person.invitations > 0}"><a href="/invitation">Invite friends!</a></c:if>
+			    </c:otherwise> 
+			</c:choose>       			
+		</dht3:shinyBox>      
+	</c:if>		
 </dht3:page>
 
 </html>
