@@ -28,7 +28,7 @@
 	<dht3:networkTabs selected="network-alphabetical"/>
 		
     <dht3:shinyBox color="grey">
-        <div><span class="dh-page-shinybox-title-large">People in <c:out value="${possessive} ${pageName} (${person.userContactCount})"/></span></div>
+        <div class="dh-page-shinybox-title-large"><span>People in <c:out value="${possessive} ${pageName} (${person.userContactCount})"/></span></div>
         <c:choose>  
             <c:when test="${person.userContactCount > 0}">
           	    <c:forEach items="${person.pageableUserContactsBasics.results}" var="person">
@@ -73,8 +73,8 @@
         </dht3:shinyBox>
         
         <dht3:shinyBox color="grey">
-			<div>
-				<span class="dh-page-shinybox-title-large">People I've Invited to Join Mugshot <c:out value="(${person.pageableOutstandingInvitations.totalCount})"/>
+			<div class="dh-page-shinybox-title-large">
+				<span>People I've Invited to Join Mugshot <c:out value="(${person.pageableOutstandingInvitations.totalCount})"/></span>
 				<a class="dh-underlined-link dh-page-shinybox-subtitle" href="/invitation">Invite friends! (${person.invitations} invitations left)</a> 
 			</div>
 	        <c:choose>
