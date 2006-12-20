@@ -1,10 +1,12 @@
 package com.dumbhippo.server.views;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+import com.dumbhippo.DateUtils;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.URLUtils;
 import com.dumbhippo.XmlBuilder;
@@ -149,6 +151,10 @@ public class TrackView {
 		this.lastListenTime = lastListenTime;
 	}	
 	
+	public String getLastListenString() {
+		return DateUtils.formatTimeAgo(new Date(lastListenTime));
+	}
+
 	public int getTrackNumber() {
 		return trackNumber;
 	}

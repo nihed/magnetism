@@ -72,6 +72,7 @@
 							<span class="dh-music-block-history-artist"><a href="${track.artistPageLink}"><c:out value="${track.artist}"/></a></span>
 							<span class="dh-music-block-history-separator"> - </span>
 							<span class="dh-music-block-history-name"><a href="${track.artistPageLink}"><c:out value="${track.name}"/></a></span>
+							&nbsp;<span class="dh-stacker-block-time-ago"><c:out value="${track.lastListenString}"/></span>
 						</div>
 					</c:forEach>
 				</dht3:blockContent>			

@@ -20,6 +20,6 @@
 	<span class="dh-stacker-block-chat">
 		<span class="dh-stacker-block-chat-message"><c:out value="${msg.msg.messageText}"/></span> -
 		<span class="dh-stacker-block-chat-sender"><dht3:entityLink who="${msg.senderView}"/></span>
-		<span class="dh-stacker-block-chat-time-ago"><c:out value="${msg.timeAgo}"/></span>
+		<span class="dh-stacker-block-time-ago"><c:out value="${msg.timeAgo}"/></span>
 	</span>
 </div>
