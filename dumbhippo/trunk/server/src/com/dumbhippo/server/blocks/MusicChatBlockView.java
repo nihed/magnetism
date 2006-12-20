@@ -68,17 +68,15 @@ public class MusicChatBlockView extends AbstractPersonBlockView implements Music
 	}
 
 	public @Override String getSummaryHeading() {
-		return "Played";
+		return "Quip";
 	}
 
 	public @Override String getSummaryLink() {
-		TrackView tv = getPersonSource().getCurrentTrack();
-		return tv.getArtistPageLink();
+		return getPersonSource().getHomeUrl();
 	}
 
 	public @Override String getSummaryLinkText() {
-		TrackView tv = getPersonSource().getCurrentTrack();
-		return tv.getTruncatedName();		
+		return getTrack().getTruncatedName();		
 	}
 
 	//
