@@ -628,7 +628,6 @@ div.dh-person-header {
     float:      left;
     margin:     5px;
     width:      70px; 
-    text-align:	center;
     overflow:   hidden;
 }
 
@@ -644,6 +643,7 @@ div.dh-person-header {
 .dh-person-item .dh-image {
 	height:             60px;
 	width:	            60px;
+    margin-left:        5px;
 }
 	
 .dh-person-item-more-info .dh-image {
