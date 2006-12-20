@@ -5,7 +5,7 @@
 <?xml version="1.0" encoding="UTF-8" ?> 
 <Module>
   <ModulePrefs 
-    title="Mugshot Stacker" height="120"
+    title="Mugshot Stacker" height="200"
     description="Shows what your friends are doing online"
     author_email="feedback@mugshot.org"
     title_url="http://mugshot.org">
