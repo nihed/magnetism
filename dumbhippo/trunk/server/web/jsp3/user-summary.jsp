@@ -49,7 +49,39 @@
 	</div>
 
 	<div>
-		<dht3:miniStacker/>
+		<c:forEach items="${person.pageableMugshot.results}" var="block">
+			<div>
+				<table cellspacing="0" cellpadding="0">
+					<tbody>
+						<tr>
+							<td>
+								<dh:png src="${block.icon}" style="width: 16; height: 16; border: none; margin-right: 3px;"/>
+							</td>
+							<td>
+								<jsp:element name="a">
+									<jsp:attribute name="target">_top</jsp:attribute>
+									<jsp:attribute name="href"><c:out value="${block.summaryLink}"/></jsp:attribute>
+									<jsp:body>
+										<c:out value="${block.summaryLinkText}"/>
+									</jsp:body>
+								</jsp:element>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+								<span style="color: #6f6f6f;">
+									<c:if test="${dh:myInstanceOf(block, 'com.dumbhippo.server.blocks.EntitySourceBlockView')}">
+										from <c:out value="${block.entitySource.name}"/>
+									</c:if>
+									(<c:out value="${block.summaryTimeAgo}"/>)
+								</span>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</c:forEach>
 	</div>
 
 </div>
