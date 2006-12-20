@@ -25,8 +25,8 @@
 			<b>Tools &gt; Internet Options</b>. Open the <b>Privacy</b> tab, click <b>Advanced</b>,
 			and then check <b>Override automatic cookie handling</b>. Under <b>Third-party Cookies</b>,
 			click <b>Accept</b>. Alternatively, you can try another web browser, such as
-			<a href="http://mozilla.com">Firefox</a>. To learn more, 
-			<a href="http://en.wikipedia.org/wiki/HTTP_cookie#Privacy_and_third-party_cookies">this
+			<a href="http://mozilla.com" target="_top">Firefox</a>. To learn more, 
+			<a href="http://en.wikipedia.org/wiki/HTTP_cookie#Privacy_and_third-party_cookies" target="_top">this
 			Wikipedia article</a> may be helpful.</i> </span>
 		</div>
 	
