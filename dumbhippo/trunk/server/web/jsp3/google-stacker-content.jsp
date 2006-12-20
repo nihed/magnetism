@@ -12,7 +12,7 @@
 			font-family: arial, sans-serif;
 		}
 		a:link {
-			color: rgb(0, 0, 204);
+			color: #0000CC;
 		}
 	</style>
 </head>
@@ -55,20 +55,35 @@
 		<div>
 			<c:forEach items="${blocks}" var="block" varStatus="status">
 				<div>
-					<b>
-						<c:out value="${block.summaryHeading}"/>
-						<c:if test="${dh:myInstanceOf(block, 'com.dumbhippo.server.blocks.EntitySourceBlockView')}">
-							by <c:out value="${block.entitySource.name}"/>
-						</c:if>
-					</b>
-					<jsp:element name="a">
-						<jsp:attribute name="target">_top</jsp:attribute>
-						<jsp:attribute name="href"><c:out value="${block.summaryLink}"/></jsp:attribute>
-						<jsp:body>
-							<c:out value="${block.summaryLinkText}"/>
-						</jsp:body>
-					</jsp:element>			
-					<span style="color: #6f6f6f;">&nbsp;<c:out value="${block.summaryTimeAgo}"/></span>
+					<table cellspacing="0" cellpadding="0">
+						<tbody>
+							<tr>
+								<td>
+									<dh:png src="${block.icon}" style="width: 16; height: 16; border: none; margin-right: 3px;"/>
+								</td>
+								<td>
+									<jsp:element name="a">
+										<jsp:attribute name="target">_top</jsp:attribute>
+										<jsp:attribute name="href"><c:out value="${block.summaryLink}"/></jsp:attribute>
+										<jsp:body>
+											<c:out value="${block.summaryLinkText}"/>
+										</jsp:body>
+									</jsp:element>
+								</td>
+							</tr>
+							<tr>
+								<td></td>
+								<td>
+									<span style="color: #6f6f6f;">
+										<c:if test="${dh:myInstanceOf(block, 'com.dumbhippo.server.blocks.EntitySourceBlockView')}">
+											from <c:out value="${block.entitySource.name}"/>
+										</c:if>
+										(<c:out value="${block.summaryTimeAgo}"/>)
+									</span>
+								</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
 			</c:forEach>
 		</div>
