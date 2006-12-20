@@ -34,6 +34,10 @@ import com.dumbhippo.server.util.EJBUtil;
  *    - Seems probable that a large number of tasks will end up clumped in slower
  *      task sets.  Might want to add support for having multiple staggered instances of 
  *      the longer sets.
+ *    - Perhaps increase polling on all accounts a user has specified
+ *      based on their overall activity
+ *    - Have the client ping us when it recognizes a URL like youtube.com/upload or the
+ *      like
  *    - Add statistics to track things like how often tasks are bouncing, task deviation
  *      from expected, etc.
  */
