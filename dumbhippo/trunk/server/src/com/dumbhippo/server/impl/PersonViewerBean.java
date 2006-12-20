@@ -352,12 +352,14 @@ public class PersonViewerBean implements PersonViewer {
 			.setParameter("account", account);
 	}
 	
-	private Query getUserContactQuery(Account account, boolean forCount) {
-		return em.createQuery("SELECT " + (forCount ? "count(c)" : "owner,c") + " FROM Contact c, ContactClaim cc, Account acct, User owner WHERE " +
-				" c.account = :startAccount AND cc.contact = c AND cc.resource = acct " +
-				" AND acct.owner = owner AND acct != :startAccount" + 
-				(forCount ? "" :  " ORDER BY upper(owner.nickname) ASC"))
-				.setParameter("startAccount", account);		
+	private Query getUserContactQuery(User user, boolean forCount) {
+		return em.createQuery("SELECT " + (forCount ? "count(owner)" : "owner") + 
+				" FROM Contact c, ContactClaim cc, AccountClaim acctClaim, User owner WHERE " +
+				" c.account = :startAccount AND cc.contact = c AND cc.resource = acctClaim.resource " +
+				" AND acctClaim.owner = owner AND acctClaim.owner != :startOwner" + 
+				(forCount ? "" : " ORDER BY upper(owner.nickname) ASC"))
+			.setParameter("startOwner", user)
+			.setParameter("startAccount", user.getAccount());
 	}
 	
 	public int getContactCount(Viewpoint viewpoint, User user) {
@@ -369,7 +371,7 @@ public class PersonViewerBean implements PersonViewer {
 	public int getUserContactCount(Viewpoint viewpoint, User user) {
 		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user))
 			return 0;
-		return ((Number) getUserContactQuery(user.getAccount(), true).getSingleResult()).intValue();
+		return ((Number) getUserContactQuery(user, true).getSingleResult()).intValue();
 	}	
 	
 	private interface ContactViewer {
@@ -441,16 +443,13 @@ public class PersonViewerBean implements PersonViewer {
 		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user))
 			return Collections.emptyList();
 		
-		Query q = getUserContactQuery(user.getAccount(), false);
+		Query q = getUserContactQuery(user, false);
 		q.setFirstResult(start);
 		if (max >= 0)
 			q.setMaxResults(max);
 		List<PersonView> viewedContacts = new ArrayList<PersonView>();
-		for (Object result : q.getResultList()) {
-			Object[] row = (Object[]) result;
-			User owner = (User) (row[0]);
-			Contact contact = (Contact) (row[1]);
-			viewedContacts.add(constructPersonView(viewpoint, contact, owner));
+		for (User result : TypeUtils.castList(User.class, q.getResultList())) {
+			viewedContacts.add(constructPersonView(viewpoint, null, result));
 		}
 		return viewedContacts;
 	}
