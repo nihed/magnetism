@@ -353,7 +353,7 @@ public class PersonViewerBean implements PersonViewer {
 	}
 	
 	private Query getUserContactQuery(User user, boolean forCount) {
-		return em.createQuery("SELECT " + (forCount ? "COUNT(DISTINCT owner)" : "DISTINCT owner") + 
+		return em.createQuery("SELECT " + (forCount ? "COUNT(DISTINCT owner.id)" : "DISTINCT owner") + 
 				" FROM Contact c, ContactClaim cc, AccountClaim acctClaim, User owner WHERE " +
 				" c.account = :startAccount AND cc.contact = c AND cc.resource = acctClaim.resource " +
 				" AND acctClaim.owner = owner AND acctClaim.owner != :startOwner" + 

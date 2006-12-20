@@ -12,16 +12,14 @@ public class MyFriendsPage extends AbstractPersonPage {
 	
 	static final int USERS_PER_PAGE = 5;
 	static final int BLOCKS_PER_USER = 5;
-	static final int TOTAL_USERS = 1000;
 	
 	private Pageable<PersonMugshotView> activePeople;
 
 	public Pageable<PersonMugshotView> getActivePeople() {
 		if (activePeople == null) {
-			activePeople = pagePositions.createBoundedPageable("people");
+			activePeople = pagePositions.createPageable("people");
 			activePeople.setInitialPerPage(USERS_PER_PAGE);
 			activePeople.setSubsequentPerPage(USERS_PER_PAGE);
-			activePeople.setBound(TOTAL_USERS);
 
 			stacker.pageContactActivity(getViewpoint(), getViewedUser(), BLOCKS_PER_USER, activePeople);
 		}
