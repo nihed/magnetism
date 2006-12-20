@@ -25,5 +25,8 @@
 	</dht3:blockLeft>
 	<dht3:blockRight blockId="${blockId}" from="${block.personSource}" showFrom="${showFrom}">
 		<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>
+		<dht3:blockControls blockId="${blockId}">
+			&nbsp; <%-- http://bugzilla.mugshot.org/show_bug.cgi?id=1019 --%>
+		</dht3:blockControls>				
 	</dht3:blockRight>
 </dht3:blockContainer>
