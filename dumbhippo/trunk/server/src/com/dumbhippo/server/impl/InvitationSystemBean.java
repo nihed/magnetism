@@ -741,7 +741,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	}
 	
 	public int getSelfInvitationCount() {
-		return getInvitations(null, accounts.getCharacter(Character.MUGSHOT));
+		return getInvitations(SystemViewpoint.getInstance(), accounts.getCharacter(Character.MUGSHOT));
 	}
 	
 	static private class InviteMessageContent extends MessageContent {
