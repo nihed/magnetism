@@ -273,7 +273,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				xml.appendTextNode("group", null, "id", g.getId(), 
 						"display", g.getName(), 
 						"photoUrl", g.getPhotoUrl(),
-						"memberCount", Integer.toString(liveGroup.getMemberCount()));
+						"memberCount", Integer.toString(liveGroup.getMemberCount()),
+						"isPublic", Boolean.toString(g.isPublic()));
 			}
 		}
 	}

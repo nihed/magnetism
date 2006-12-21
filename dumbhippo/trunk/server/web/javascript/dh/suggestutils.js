@@ -70,6 +70,12 @@ dh.suggestutils.getMenuRecipients = function(allKnownIds) {
 	for (var id in allKnownIds) {
 		var obj = allKnownIds[id];
 		var node = document.createElement("li");
+		if (obj.isPublic == "false") {
+			var visibility = document.createElement("img");
+			visibility.src = dhImageRoot3 +"lock_icon.png";
+			visibility.style.marginRight = "3px";
+			node.appendChild(visibility);
+		}
 		node.appendChild(document.createTextNode(obj.displayName));
 		results.push([node, obj.id]);			
 	}

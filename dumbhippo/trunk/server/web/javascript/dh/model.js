@@ -199,12 +199,13 @@ dh.model.Feed = function(id, displayName, photoUrl, homeUrl) {
 }
 dojo.inherits(dh.model.Feed, dh.model.GuidPersistable);
 
-dh.model.Group = function(id, displayName, memberCount, photoUrl, homeUrl) {
+dh.model.Group = function(id, displayName, memberCount, photoUrl, homeUrl, isPublic) {
 	this.id = id;
 	this.displayName = displayName;
 	this.memberCount = memberCount;
 	this.photoUrl = photoUrl;
 	this.homeUrl = homeUrl;
+	this.isPublic = isPublic;
 	this.kind = "group";
 }
 dojo.inherits(dh.model.Group, dh.model.GuidPersistable);
@@ -294,7 +295,7 @@ dh.model.groupFromXmlNode = function(element) {
 	var memberCount = element.getAttribute("memberCount");
 	var photoUrl = element.getAttribute("photoUrl");
 	var homeUrl = element.getAttribute("homeUrl");
-
+	var isPublic = element.getAttribute("isPublic");
 
 	// note, empty string is "false", so group name, which is what is usually
 	// used for the display attribute, must not be blank	
@@ -303,7 +304,7 @@ dh.model.groupFromXmlNode = function(element) {
 	if (!displayName)
 		dojo.raise("no display attr on <group> node");
 	
-	return new dh.model.Group(id, displayName, memberCount, photoUrl, homeUrl);
+	return new dh.model.Group(id, displayName, memberCount, photoUrl, homeUrl, isPublic);
 }
 
 dh.model.objectFromXmlNode = function(element) {
