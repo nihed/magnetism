@@ -504,7 +504,7 @@ public class FeedSystemBean implements FeedSystem {
 		try {
 			return runner.runTaskThrowingConstraintViolation(new Callable<Feed>() {
 				
-				public Feed call() throws Exception {
+				public Feed call() throws XmlMethodException {
 					Feed newFeed = lookupExistingFeed(source);
 					if (newFeed != null) // Someone else already looked it up and stored it
 						return newFeed;
@@ -512,7 +512,12 @@ public class FeedSystemBean implements FeedSystem {
 					newFeed = new Feed(source);
 					em.persist(newFeed);
 										
-					initializeFeedFromSyndFeed(newFeed, syndFeed);
+					try {
+						initializeFeedFromSyndFeed(newFeed, syndFeed);
+					} catch (FeedLinkUnknownException e) {
+						throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR,
+								"The feed is missing a <link> field, " + e.getMessage());
+					}
 					
 					pollingPersistence.createTask(PollingTaskFamilyType.FEED, newFeed.getSource().getId());
 					
@@ -834,7 +839,7 @@ public class FeedSystemBean implements FeedSystem {
 			changed = result.isModified();
 			final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
 			runner.runTaskRetryingOnDuplicateEntry(new Callable<Object>() {
-				public Object call() throws Exception {
+				public Object call() throws DynamicPollingSystem.PollingTaskNormalExecutionException {
 					try {
 						feedSystem.storeRawUpdatedFeed(feed.getId(), result.getFeed());
 					} catch (FeedLinkUnknownException e) {
