@@ -131,6 +131,92 @@ public class PersonViewerBean implements PersonViewer {
 		return null;
     }
     
+    private void addPersonViewExtra(Viewpoint viewpoint, PersonView pv, Set<Resource> resources, PersonViewExtra e) {
+    	switch (e) {
+    	case INVITED_STATUS:
+			if (viewpoint == null) {
+				// in this case we're doing a system view, invited
+				// flag really doesn't make sense ...
+				pv.addInvitedStatus(true);
+			} else if (pv.getUser() != null) {
+				pv.addInvitedStatus(true); // they already have an account
+			} else {
+				if (viewpoint instanceof UserViewpoint) {
+					boolean invited = false;
+					for (Resource r : resources) {
+						invited = invitationSystem.hasInvited((UserViewpoint)viewpoint, r);
+						if (invited)
+							break;
+					}
+					pv.addInvitedStatus(invited);
+				}
+			}
+			break;
+    	case ALL_RESOURCES:
+			pv.addAllResources(resources);
+			break;
+    	case ALL_EMAILS:
+    		pv.addAllEmails(new TypeFilteredCollection<Resource,EmailResource>(resources, EmailResource.class));
+    		break;
+    	case ALL_AIMS:
+			pv.addAllAims(new TypeFilteredCollection<Resource,AimResource>(resources, AimResource.class));
+			break;
+    	case EXTERNAL_ACCOUNTS:
+			if (pv.getUser() != null) {
+				Set<ExternalAccountView> externals = externalAccounts.getExternalAccountViews(viewpoint, pv.getUser()); 
+				externalAccounts.loadThumbnails(viewpoint, externals);
+				pv.addExternalAccountViews(externals);
+			} else {
+				pv.addExternalAccountViews(new HashSet<ExternalAccountView>());
+			}
+			if (pv.getExternalAccountViews() == null)
+				throw new IllegalStateException("Somehow set null external accounts on PersonView");
+			break;
+    	case CONTACT_STATUS:
+			boolean isContact = false;
+			
+			if (pv.getContact() != null && 
+				viewpoint.isOfUser(pv.getContact().getAccount().getOwner())) {
+				isContact = true;
+			} else if (viewpoint instanceof UserViewpoint && pv.getUser() != null) {
+				isContact = identitySpider.isContact(viewpoint, ((UserViewpoint)viewpoint).getViewer(), pv.getUser()); 
+			}
+			
+			pv.setIsContactOfViewer(isContact);
+			break;
+    	case PRIMARY_RESOURCE:
+    	case PRIMARY_EMAIL:
+    	case PRIMARY_AIM:
+			EmailResource email = null;
+			AimResource aim = null;
+			
+			for (Resource r : resources) {
+				if (email == null && r instanceof EmailResource) {
+					email = (EmailResource) r;
+				} else if (aim == null && r instanceof AimResource) {
+					aim = (AimResource) r;
+				} else if (email != null && aim != null) {
+					break;
+				}
+			}
+			
+			if (e == PersonViewExtra.PRIMARY_RESOURCE) {
+				if (email != null) {
+					pv.addPrimaryResource(email);
+				} else if (aim != null) {
+					pv.addPrimaryResource(aim);
+				} else {
+					pv.addPrimaryResource(null);
+				}
+			} else if (e == PersonViewExtra.PRIMARY_EMAIL) {				
+				pv.addPrimaryEmail(email); // can be null
+			} else if (e == PersonViewExtra.PRIMARY_AIM) {
+				pv.addPrimaryAim(aim); // can be null
+			}
+			break;
+    	}
+    }
+    
 	private void addPersonViewExtras(Viewpoint viewpoint, PersonView pv, Resource fromResource, PersonViewExtra... extras) {		
 		// we implement this in kind of a lame way right now where we always do 
 		// all the database work, even though we only return the requested information to keep 
@@ -193,80 +279,16 @@ public class PersonViewerBean implements PersonViewer {
 		// all this anyway and most callers won't be silly (won't ask for both ALL_ and 
 		// PRIMARY_ for example)
 		for (PersonViewExtra e : extras) {
-			if (e == PersonViewExtra.INVITED_STATUS) {
-				if (viewpoint == null) {
-					// in this case we're doing a system view, invited
-					// flag really doesn't make sense ...
-					pv.addInvitedStatus(true);
-				} else if (pv.getUser() != null) {
-					pv.addInvitedStatus(true); // they already have an account
-				} else {
-					if (viewpoint instanceof UserViewpoint) {
-						boolean invited = false;
-						for (Resource r : resources) {
-							invited = invitationSystem.hasInvited((UserViewpoint)viewpoint, r);
-							if (invited)
-								break;
-						}
-						pv.addInvitedStatus(invited);
-					}
-				}
-			} else if (e == PersonViewExtra.ALL_RESOURCES) {
-				pv.addAllResources(resources);			 
-			} else if (e == PersonViewExtra.ALL_EMAILS) {
-				pv.addAllEmails(new TypeFilteredCollection<Resource,EmailResource>(resources, EmailResource.class));
-			} else if (e == PersonViewExtra.ALL_AIMS) {
-				pv.addAllAims(new TypeFilteredCollection<Resource,AimResource>(resources, AimResource.class));
-			} else if (e == PersonViewExtra.EXTERNAL_ACCOUNTS) {
-				if (pv.getUser() != null) {
-					Set<ExternalAccountView> externals = externalAccounts.getExternalAccountViews(viewpoint, pv.getUser()); 
-					externalAccounts.loadThumbnails(viewpoint, externals);
-					pv.addExternalAccountViews(externals);
-				} else {
-					pv.addExternalAccountViews(new HashSet<ExternalAccountView>());
-				}
-				if (pv.getExternalAccountViews() == null)
-					throw new IllegalStateException("Somehow set null external accounts on PersonView");
-			} else if (e == PersonViewExtra.CONTACT_STATUS) {
-				boolean isContact = false;
-				
-				if (pv.getContact() != null && 
-					viewpoint.isOfUser(pv.getContact().getAccount().getOwner())) {
-					isContact = true;
-				} else if (viewpoint instanceof UserViewpoint && pv.getUser() != null) {
-					isContact = identitySpider.isContact(viewpoint, ((UserViewpoint)viewpoint).getViewer(), pv.getUser()); 
-				}
-				
-				pv.setIsContactOfViewer(isContact);				
-			} else {
-				EmailResource email = null;
-				AimResource aim = null;
-				
-				for (Resource r : resources) {
-					if (email == null && r instanceof EmailResource) {
-						email = (EmailResource) r;
-					} else if (aim == null && r instanceof AimResource) {
-						aim = (AimResource) r;
-					} else if (email != null && aim != null) {
-						break;
-					}
-				}
-				
-				if (e == PersonViewExtra.PRIMARY_RESOURCE) {
-					if (email != null) {
-						pv.addPrimaryResource(email);
-					} else if (aim != null) {
-						pv.addPrimaryResource(aim);
-					} else {
-						pv.addPrimaryResource(null);
-					}
-				} else if (e == PersonViewExtra.PRIMARY_EMAIL) {				
-					pv.addPrimaryEmail(email); // can be null
-				} else if (e == PersonViewExtra.PRIMARY_AIM) {
-					pv.addPrimaryAim(aim); // can be null
-				}
-			}
+			addPersonViewExtra(viewpoint, pv, resources, e);
 		}
+		
+		// For a pure Contact PersonView where we can see the Contact's resources
+		// we always want to include one resource so we can build the display name
+		// for the PersonView
+		if (pv.getUser() == null &&
+			contactResources != null &&
+			!pv.hasExtra(PersonViewExtra.PRIMARY_RESOURCE))
+			addPersonViewExtra(viewpoint, pv, resources, PersonViewExtra.PRIMARY_RESOURCE);
 		
 		if (pv.hasExtra(PersonViewExtra.PRIMARY_AIM)) {
 			pv.setAimPresenceKey(getAimPresenceKey());
@@ -297,19 +319,24 @@ public class PersonViewerBean implements PersonViewer {
 		return pv;		
 	}	
 
-	private PersonView getPersonView(Viewpoint viewpoint, Person p) {
-		Contact contact = (p instanceof Contact ? (Contact) p : null);
-		User user = (p == null ? null : identitySpider.getUser(p)); // user for contact, or p itself if it's already a user		
-		return constructPersonView(viewpoint, contact, user);
-	}
-	
 	public PersonView getPersonView(Viewpoint viewpoint, Person p, PersonViewExtra... extras) {
 		if (viewpoint == null)
 			throw new IllegalArgumentException("null viewpoint");
 		if (p == null)
 			throw new IllegalArgumentException("null person");
 		
-		PersonView pv = getPersonView(viewpoint, p);
+		Contact contact;
+		User user;
+		
+		if (p instanceof User) {
+			contact = null;
+			user = (User)p;
+		} else {
+			contact = (Contact)p;
+			user = identitySpider.getUser(p);
+		}
+		
+		PersonView pv = constructPersonView(viewpoint, contact, user);
 		addPersonViewExtras(viewpoint, pv, null, extras);
 		
 		return pv;
@@ -338,8 +365,12 @@ public class PersonViewerBean implements PersonViewer {
 		allExtras[0] = firstExtra;
 		for (int i = 0; i < extras.length ; ++i) {
 			allExtras[i+1] = extras[i];
-		}		
-		return getPersonView(viewpoint, user != null ? user : contact, allExtras);
+		}
+		
+		PersonView pv = constructPersonView(viewpoint, contact, user);
+		addPersonViewExtras(viewpoint, pv, r, extras);
+		
+		return pv;
 	}
 
 	public PersonView getSystemView(User user, PersonViewExtra... extras) {
