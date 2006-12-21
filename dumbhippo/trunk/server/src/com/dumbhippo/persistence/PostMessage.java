@@ -30,6 +30,7 @@ public class PostMessage extends EmbeddedMessage {
 
 	public PostMessage(Post post, User fromUser, String messageText, Sentiment sentiment, Date timestamp) {
 		super(fromUser, messageText, timestamp, sentiment);
+		this.post = post;
 	}
 	
 	@ManyToOne
