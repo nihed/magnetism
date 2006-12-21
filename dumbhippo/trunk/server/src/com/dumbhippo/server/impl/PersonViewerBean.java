@@ -195,7 +195,9 @@ public class PersonViewerBean implements PersonViewer {
 					email = (EmailResource) r;
 				} else if (aim == null && r instanceof AimResource) {
 					aim = (AimResource) r;
-				} else if (email != null && aim != null) {
+				} 
+				
+				if (email != null && aim != null) {
 					break;
 				}
 			}
