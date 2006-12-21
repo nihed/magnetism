@@ -12,6 +12,6 @@
 	</c:if>
 	<span class="dh-page-title"><c:out value="${title}"/></span>
 	<div class="dh-page-options-container">	
-		<span class="dh-page-options"><jsp:doBody/></span>
+		<div class="dh-page-options"><jsp:doBody/></div>
 	</div>
 </div>

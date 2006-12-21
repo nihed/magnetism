@@ -50,14 +50,13 @@
 	</c:if>
 
 	<div class="dh-page-title-container">
-		<table cellspacing="0" cellpadding="0">
-			<tr width="100%">
-				<td width="30%"><span class="dh-page-title"><c:out value="${possessive}"/> ${pageName} (${person.activeAndFollowedGroupsCount})</span>
-					<a class="dh-groups-create-link dh-underlined-link" href="/create-group">Create a Group</a>
-				</td>
-				<td align="right" width="70%"><div class="dh-page-options-container"><span class="dh-page-options"><dht3:randomTip isSelf="${person.self}"/><dht3:personRelatedPagesTabs selected="groups"/></span></div></td>
-			</tr>
-		</table>
+		<span class="dh-page-title"><c:out value="${possessive}"/> ${pageName} (${person.activeAndFollowedGroupsCount})</span>
+		<a class="dh-groups-create-link dh-underlined-link" href="/create-group">Create a Group</a>
+		<div class="dh-page-options-container">
+			<div class="dh-page-options">
+				<dht3:randomTip isSelf="${person.self}"/><dht3:personRelatedPagesTabs selected="groups"/>
+			</div>
+		</div>
 	</div>
 	<div class="dh-page-options-sub-options-area dh-page-options">Show: 
 	    <c:choose>
