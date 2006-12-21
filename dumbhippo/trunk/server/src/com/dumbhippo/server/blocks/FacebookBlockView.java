@@ -123,11 +123,8 @@ public class FacebookBlockView extends AbstractPersonBlockView
 		return "Private: This Facebook update can only be seen by you.";
 	}
 
-	public String getTitleForHome() {		
-		if (getViewpoint().isOfUser(getPersonSource().getUser()))
-			return getTextForSelf();
-		else 		
-			return getGenericText();
+	public String getTitleForHome() {
+		return getTitle();
 	}
 
 	private String getTextForSelf() {
@@ -198,7 +195,10 @@ public class FacebookBlockView extends AbstractPersonBlockView
 	}
 
 	public String getTitle() {
-		return getGenericText();
+		if (getViewpoint().isOfUser(getPersonSource().getUser()))
+			return getTextForSelf();
+		else 		
+			return getGenericText();
 	}
 
 	@Override
@@ -218,6 +218,6 @@ public class FacebookBlockView extends AbstractPersonBlockView
 	
 	//	 FIXME doesn't fit into the way summary blocks look / are worded
 	public @Override String getSummaryLinkText() {
-		return getGenericText();
+		return getTitle();
 	}
 }
