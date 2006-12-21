@@ -32,3 +32,22 @@
 	font-size: 			14px;
 	font-weight:		bold;
 }
+
+.dh-badges-button-advert {
+	font-size: 			14px;
+}
+
+.dh-badges-button-img-link {
+	font-size: 			16px; 
+	font-weight: 		bold; 
+	color: 				#9648bc;
+}
+
+.dh-badges-button-link {
+	color:				#0000ff;
+	text-decoration:		underline;
+}
+
+.dh-badges-button-link:visited {
+	color:				#0000ff;
+}

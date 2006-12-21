@@ -162,6 +162,9 @@
 					<div class="dh-grow-div-around-floats"><div></div></div>
 				</c:if>
 			</div>
+		<div class="dh-badges-button-advert">
+			<a class="dh-badges-button-img-link" href="/buttons"><dh:png src="/images3/${buildStamp}/mugshotluv45x40.png" style="vertical-align:middle; width: 45px; height: 40px;" /> Love Mugshot?</a>  <a class="dh-badges-button-link" href="/buttons">Spread the word</a> with badges on your site or blog.
+		</div>
 		</div>
 	</dht3:shinyBox>
 </dht3:page>
