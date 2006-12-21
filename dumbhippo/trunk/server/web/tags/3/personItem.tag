@@ -8,7 +8,7 @@
 <dh:script module="dh.infoviewer"/>
 <div class="dh-person-item">
     <div id="dhImage${who.identifyingGuid}" class="dh-image">
-	    <dht:headshot person="${who}" size="60"/>
+	    <dht:headshot person="${who}" size="60" includePresence="true"/>
     </div>
     <div class="dh-person-item-name">
         <c:if test="${who.liveUser != null}">

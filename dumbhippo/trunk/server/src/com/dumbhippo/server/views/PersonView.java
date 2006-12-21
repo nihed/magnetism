@@ -756,6 +756,13 @@ public class PersonView extends EntityView {
 			return "/images3/offline_icon.png";
 	}
 
+	public String getOnlineIconForPhoto() {
+		if (isOnline())
+			return "/images3/online_icon_for_photo.png";
+		else
+			return "/images3/offline_icon_for_photo.png";
+	}
+	
 	public void setOnline(boolean online) {
 		this.online = online;
 	}

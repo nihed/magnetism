@@ -628,7 +628,7 @@ div.dh-person-header {
     display:    block;
     float:      left;
     margin:     5px;
-    width:      70px; 
+    width:      72px; 
     overflow:   hidden;
 }
 
@@ -644,7 +644,7 @@ div.dh-person-header {
 .dh-person-item .dh-image {
 	height:             60px;
 	width:	            60px;
-    margin-left:        5px;
+    margin-left:        6px;
 }
 	
 .dh-person-item-more-info .dh-image {
@@ -655,4 +655,14 @@ div.dh-person-header {
 	
 .dh-person-item-name {
 	text-align:			center;	
+}
+
+.dh-photo {
+    position:           relative;
+}
+
+.dh-photo .dh-presence {
+    position:           absolute;
+    top:                0px;
+    right:              -5px;
 }
