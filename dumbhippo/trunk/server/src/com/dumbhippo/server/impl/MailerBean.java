@@ -27,7 +27,6 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.UserViewpoint;
 
 
@@ -84,7 +83,7 @@ public class MailerBean implements Mailer {
     }
 	
 	private InternetAddress createAddressFromViewpoint(UserViewpoint viewpoint, SpecialSender fallbackAddress) {
-		PersonView fromViewedBySelf = personViewer.getPersonView(viewpoint, viewpoint.getViewer(), PersonViewExtra.PRIMARY_EMAIL);	
+		PersonView fromViewedBySelf = personViewer.getPersonView(viewpoint, viewpoint.getViewer());	
 	
 		InternetAddress internetAddress;
 		

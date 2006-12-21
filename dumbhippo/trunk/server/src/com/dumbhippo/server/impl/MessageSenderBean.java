@@ -39,7 +39,6 @@ import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.UserViewpoint;
 
@@ -262,9 +261,7 @@ public class MessageSenderBean implements MessageSender {
 			
 			// Since the recipient doesn't have an account, we can't get the recipient's view
 			// of the poster. Send out information from the poster's view of themself.
-			PersonView posterViewedBySelf = personViewer.getPersonView(viewpoint, 
-					                                                     poster,
-					                                                     PersonViewExtra.PRIMARY_EMAIL);
+			PersonView posterViewedBySelf = personViewer.getPersonView(viewpoint, poster);
 			
 			StringBuilder messageText = new StringBuilder();
 			XmlBuilder messageHtml = new XmlBuilder();

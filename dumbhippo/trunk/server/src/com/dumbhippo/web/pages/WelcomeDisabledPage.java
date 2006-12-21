@@ -7,7 +7,6 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.web.Signin;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.UserSigninBean;
@@ -35,7 +34,7 @@ public class WelcomeDisabledPage {
 
 	public PersonView getPerson() {
 		if (person == null)
-			person = personViewer.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.PRIMARY_EMAIL);
+			person = personViewer.getPersonView(signin.getViewpoint(), signin.getUser());
 		
 		return person;
 	}

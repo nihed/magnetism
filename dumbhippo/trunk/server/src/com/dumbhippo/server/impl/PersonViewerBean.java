@@ -16,7 +16,6 @@ import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.LiveState;
@@ -152,15 +151,6 @@ public class PersonViewerBean implements PersonViewer {
 				}
 			}
 			break;
-    	case ALL_RESOURCES:
-			pv.addAllResources(resources);
-			break;
-    	case ALL_EMAILS:
-    		pv.addAllEmails(new TypeFilteredCollection<Resource,EmailResource>(resources, EmailResource.class));
-    		break;
-    	case ALL_AIMS:
-			pv.addAllAims(new TypeFilteredCollection<Resource,AimResource>(resources, AimResource.class));
-			break;
     	case EXTERNAL_ACCOUNTS:
 			if (pv.getUser() != null) {
 				Set<ExternalAccountView> externals = externalAccounts.getExternalAccountViews(viewpoint, pv.getUser()); 
@@ -183,38 +173,6 @@ public class PersonViewerBean implements PersonViewer {
 			}
 			
 			pv.setIsContactOfViewer(isContact);
-			break;
-    	case PRIMARY_RESOURCE:
-    	case PRIMARY_EMAIL:
-    	case PRIMARY_AIM:
-			EmailResource email = null;
-			AimResource aim = null;
-			
-			for (Resource r : resources) {
-				if (email == null && r instanceof EmailResource) {
-					email = (EmailResource) r;
-				} else if (aim == null && r instanceof AimResource) {
-					aim = (AimResource) r;
-				} 
-				
-				if (email != null && aim != null) {
-					break;
-				}
-			}
-			
-			if (e == PersonViewExtra.PRIMARY_RESOURCE) {
-				if (email != null) {
-					pv.addPrimaryResource(email);
-				} else if (aim != null) {
-					pv.addPrimaryResource(aim);
-				} else {
-					pv.addPrimaryResource(null);
-				}
-			} else if (e == PersonViewExtra.PRIMARY_EMAIL) {				
-				pv.addPrimaryEmail(email); // can be null
-			} else if (e == PersonViewExtra.PRIMARY_AIM) {
-				pv.addPrimaryAim(aim); // can be null
-			}
 			break;
     	}
     }
@@ -276,23 +234,13 @@ public class PersonViewerBean implements PersonViewer {
 			resources = Collections.emptySet();
 		}
 		
-		// this does extra work right now (adding some things more than once)
-		// but just not worth the complexity to avoid since we'll probably change
-		// all this anyway and most callers won't be silly (won't ask for both ALL_ and 
-		// PRIMARY_ for example)
+		pv.addAllResources(resources);
+
 		for (PersonViewExtra e : extras) {
 			addPersonViewExtra(viewpoint, pv, resources, e);
 		}
 		
-		// For a pure Contact PersonView where we can see the Contact's resources
-		// we always want to include one resource so we can build the display name
-		// for the PersonView
-		if (pv.getUser() == null &&
-			contactResources != null &&
-			!pv.hasExtra(PersonViewExtra.PRIMARY_RESOURCE))
-			addPersonViewExtra(viewpoint, pv, resources, PersonViewExtra.PRIMARY_RESOURCE);
-		
-		if (pv.hasExtra(PersonViewExtra.PRIMARY_AIM)) {
+		if (pv.getAim() != null) {
 			pv.setAimPresenceKey(getAimPresenceKey());
 		}
 	}
@@ -344,7 +292,7 @@ public class PersonViewerBean implements PersonViewer {
 		return pv;
 	}
 
-	public PersonView getPersonView(Viewpoint viewpoint, Resource r, PersonViewExtra firstExtra, PersonViewExtra... extras) {
+	public PersonView getPersonView(Viewpoint viewpoint, Resource r, PersonViewExtra... extras) {
 		User user = null;
 		Contact contact = null;
 		
@@ -361,12 +309,6 @@ public class PersonViewerBean implements PersonViewer {
 				} catch (NotFoundException e) {
 				}
 			}
-		}
-		
-		PersonViewExtra allExtras[] = new PersonViewExtra[extras.length + 1];
-		allExtras[0] = firstExtra;
-		for (int i = 0; i < extras.length ; ++i) {
-			allExtras[i+1] = extras[i];
 		}
 		
 		PersonView pv = constructPersonView(viewpoint, contact, user);
@@ -526,7 +468,7 @@ public class PersonViewerBean implements PersonViewer {
 		List<User> users = em.createQuery("SELECT u FROM User u").getResultList();
 		Set<PersonView> result = new HashSet<PersonView>();
 		for (User user : users) {
-			result.add(getPersonView(SystemViewpoint.getInstance(), user, PersonViewExtra.ALL_RESOURCES));
+			result.add(getPersonView(SystemViewpoint.getInstance(), user));
 		}
 		
 		return result;

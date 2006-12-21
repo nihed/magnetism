@@ -95,7 +95,6 @@ import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.FeedView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -606,7 +605,7 @@ public class PostingBoardBean implements PostingBoard {
 
 	private EntityView getPosterView(Viewpoint viewpoint, Post post) {
 		if (post.getPoster() != null)
-			return personViewer.getPersonView(viewpoint, post.getPoster(), PersonViewExtra.ALL_RESOURCES);
+			return personViewer.getPersonView(viewpoint, post.getPoster());
 		else if (post instanceof FeedPost) {
 			return new FeedView(((FeedPost)post).getFeed());
 		} else {
@@ -632,7 +631,7 @@ public class PostingBoardBean implements PostingBoard {
 		}
 		
 		for (Resource recipient : recipientResources) {
-			recipients.add(personViewer.getPersonView(viewpoint, recipient, PersonViewExtra.PRIMARY_RESOURCE, PersonViewExtra.PRIMARY_AIM));
+			recipients.add(personViewer.getPersonView(viewpoint, recipient));
 		}
 	
 		if (!em.contains(post))
@@ -1204,7 +1203,7 @@ public class PostingBoardBean implements PostingBoard {
 			result.add(new GroupView(g, null, null));
 		}
 		for (Resource r : post.getPersonRecipients()) {
-			result.add(personViewer.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE));	
+			result.add(personViewer.getPersonView(viewpoint, r));	
 		}
 		result.add(getPosterView(viewpoint, post));
 		

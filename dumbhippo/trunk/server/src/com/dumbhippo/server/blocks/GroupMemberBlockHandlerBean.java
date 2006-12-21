@@ -17,7 +17,6 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -54,7 +53,7 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 			throw new BlockNotVisibleException("Group for the block is not visible", e);
 		}
 		User user = identitySpider.lookupUser(block.getData2AsGuid());
-		PersonView memberView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.PRIMARY_RESOURCE);
+		PersonView memberView = personViewer.getPersonView(viewpoint, user);
 		GroupMember member;
 		try {
 			member = groupSystem.getGroupMember(viewpoint, groupView.getGroup(), user);

@@ -59,7 +59,6 @@ import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.TrackView;
@@ -216,7 +215,7 @@ public class MessengerGlueBean implements MessengerGlue {
 		
 		Account account = accountFromUsername(username);
 		
-		PersonView view = personViewer.getSystemView(account.getOwner(), PersonViewExtra.PRIMARY_EMAIL);
+		PersonView view = personViewer.getSystemView(account.getOwner());
 		
 		String email = null;
 		if (view.getEmail() != null)

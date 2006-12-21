@@ -18,7 +18,6 @@ import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.TrackSearchResult;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -144,7 +143,7 @@ public class FindPage {
 					user = identitySpider.lookupUserByAim(viewpoint, searchText);
 				
 				if (user != null) {
-					PersonView pv = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
+					PersonView pv = personViewer.getPersonView(viewpoint, user);
 					results.add(pv);
 				}
 			}

@@ -487,7 +487,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		Set<PersonView> result = new HashSet<PersonView>();
 		logger.debug("will generate person views for {} resources", resourceMembers.size());
 		for (Resource r : resourceMembers) {
-			result.add(personViewer.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE, extras)); 
+			result.add(personViewer.getPersonView(viewpoint, r, extras)); 
 		}
 		
 		return result;

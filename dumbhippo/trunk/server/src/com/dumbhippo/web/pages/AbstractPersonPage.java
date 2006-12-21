@@ -174,12 +174,10 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			
 			if (getNeedExternalAccounts())
 				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), 
-						PersonViewExtra.ALL_RESOURCES,
 						PersonViewExtra.CONTACT_STATUS,
 						PersonViewExtra.EXTERNAL_ACCOUNTS);
 			else
 				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), 
-						PersonViewExtra.ALL_RESOURCES, 
 						PersonViewExtra.CONTACT_STATUS);
 		}
 		
@@ -301,8 +299,6 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			List<PersonView> list = personViewer.getContacts(getSignin().getViewpoint(), getViewedUser(), 
 			                   0, SHORT_CONTACT_COUNT,
 			                   PersonViewExtra.INVITED_STATUS, 
-			                   PersonViewExtra.PRIMARY_EMAIL, 
-			                   PersonViewExtra.PRIMARY_AIM,
 			                   PersonViewExtra.EXTERNAL_ACCOUNTS);	
 		    
 			contacts = new ListBean<PersonView>(list);
@@ -318,8 +314,6 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			
 			personViewer.pageContacts(getSignin().getViewpoint(), getViewedUser(), pageableContacts, 
 					   PersonViewExtra.INVITED_STATUS, 
-	                   PersonViewExtra.PRIMARY_EMAIL, 
-	                   PersonViewExtra.PRIMARY_AIM,
 	                   PersonViewExtra.EXTERNAL_ACCOUNTS);	
 		}
 		

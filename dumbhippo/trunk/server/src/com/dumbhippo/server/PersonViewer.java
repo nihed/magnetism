@@ -109,11 +109,10 @@ public interface PersonViewer {
 	 * 
 	 * @param viewpoint the viewpoint of the person who is viewing
 	 * @param resource the person being viewed
-	 * @param firstExtra at least one extra is mandatory when creating a resource
 	 * @param extras information to stuff into the PersonView, more = more database work
 	 * @return a new PersonView object
 	 */
-	public PersonView getPersonView(Viewpoint viewpoint, Resource resource, PersonViewExtra firstExtra, PersonViewExtra... extras);
+	public PersonView getPersonView(Viewpoint viewpoint, Resource resource, PersonViewExtra... extras);
 	
 	/**
 	 * 

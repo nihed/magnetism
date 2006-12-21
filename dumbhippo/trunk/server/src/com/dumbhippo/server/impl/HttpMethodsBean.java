@@ -108,13 +108,13 @@ import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FlickrUser;
 import com.dumbhippo.services.FlickrWebServices;
+import com.dumbhippo.services.LastFmWebServices;
 import com.dumbhippo.services.MySpaceScraper;
 import com.dumbhippo.services.TransientServiceException;
 import com.dumbhippo.statistics.ColumnDescription;
@@ -332,7 +332,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			HttpResponseData contentType, UserViewpoint viewpoint, String groupId)
 			throws IOException {
 		Set<PersonView> persons = groupSystem.findAddableContacts(viewpoint,
-				viewpoint.getViewer(), groupId, PersonViewExtra.ALL_RESOURCES);
+				viewpoint.getViewer(), groupId);
 
 		returnObjects(out, contentType, viewpoint, persons, null);
 	}
@@ -341,10 +341,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			HttpResponseData contentType, UserViewpoint viewpoint) throws IOException {
 
 		List<PersonView> persons = personViewer.getContacts(viewpoint, viewpoint.getViewer(),
-				0, -1, PersonViewExtra.ALL_RESOURCES);
+				0, -1);
 		// Add the user themself to the list of returned contacts (whether or not the
 		// viewer is in their own contact list getContacts() strips it out.)
-		persons.add(personViewer.getPersonView(viewpoint, viewpoint.getViewer(), PersonViewExtra.ALL_RESOURCES));
+		persons.add(personViewer.getPersonView(viewpoint, viewpoint.getViewer()));
 		Set<Group> groups = groupSystem.findRawGroups(viewpoint, viewpoint.getViewer());
 
 		returnObjects(out, contentType, viewpoint, persons, groups);
@@ -365,8 +365,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException(e);
 		}
 		Person contact = identitySpider.createContact(viewpoint.getViewer(), resource);
-		PersonView contactView = personViewer.getPersonView(viewpoint,
-				contact, PersonViewExtra.ALL_RESOURCES);
+		PersonView contactView = personViewer.getPersonView(viewpoint, contact);
 		returnPersonsXml(xml, viewpoint, Collections.singleton(contactView));
 
 		endReturnObjectsXml(out, xml);
@@ -484,8 +483,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException(e);
 		}
 		Contact contact = identitySpider.createContact(viewpoint.getViewer(), emailResource);
-		PersonView contactView = personViewer.getPersonView(viewpoint,
-				contact, PersonViewExtra.ALL_RESOURCES);
+		PersonView contactView = personViewer.getPersonView(viewpoint, contact);
 
 		returnObjects(out, contentType, viewpoint, Collections
 				.singleton(contactView), null);
@@ -1051,7 +1049,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// let's find out if we were inviting to the group or inviting to follow the group
 		boolean adderCanAdd = groupSystem.canAddMembers(viewpoint.getViewer(), group);
 		
-		PersonView contactView = personViewer.getPersonView(viewpoint, contact, PersonViewExtra.PRIMARY_RESOURCE);
+		PersonView contactView = personViewer.getPersonView(viewpoint, contact);
 
 		String note;
 		if (adderCanAdd) {
@@ -1690,6 +1688,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
+		
+		try {
+			LastFmWebServices.getTracksForUser(name);
+		} catch (TransientServiceException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Can't retrieve your songs from last.fm");
+		}
+		
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		xml.appendTextNode("username", external.getHandle());

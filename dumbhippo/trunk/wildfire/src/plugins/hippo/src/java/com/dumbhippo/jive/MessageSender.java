@@ -33,7 +33,6 @@ import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
@@ -276,8 +275,7 @@ public class MessageSender implements XmppMessageSenderProvider {
 		
 		Viewpoint viewpoint = new UserViewpoint(recipient);
 		
-		PersonView memberView = personViewer.getPersonView(viewpoint, 
-				groupMember.getMember(), PersonViewExtra.PRIMARY_RESOURCE);
+		PersonView memberView = personViewer.getPersonView(viewpoint, groupMember.getMember());
 
 		GroupView groupView = groupSystem.getGroupView(viewpoint, groupMember.getGroup());
 		

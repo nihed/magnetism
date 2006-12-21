@@ -7,7 +7,6 @@ import com.dumbhippo.persistence.Rating;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.RecommenderSystem;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.Signin;
@@ -47,7 +46,7 @@ public class SuggestPage {
 
 	public PersonView getPerson() {
 		if (person == null)
-			person = personViewer.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.ALL_RESOURCES);
+			person = personViewer.getPersonView(signin.getViewpoint(), signin.getUser());
 		
 		return person;
 	}
