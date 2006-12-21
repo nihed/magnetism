@@ -20,13 +20,7 @@
        </c:if>    
     </div>
 </div>    
-<script type="text/javascript">
-	var imageDiv = document.getElementById("dhImage${who.identifyingGuid}");
-	imageDiv.dhImageId = "${who.identifyingGuid}";
-	imageDiv.onmouseover = dh.infoviewer.onMouseOver;
-	imageDiv.onmouseout = dh.infoviewer.onMouseOut;
-</script>
-<div id="dhEntity${who.identifyingGuid}" class="dh-person-item-more-info">
+<div id="dhInfo${who.identifyingGuid}" class="dh-person-item-more-info">
 	<table cellpadding="0" cellspacing="0">
 	<tbody>
 	<tr valign="top">
@@ -54,3 +48,12 @@
     </tbody>
     </table>    
 </div>      
+<script type="text/javascript">
+	var imageDiv = document.getElementById("dhImage${who.identifyingGuid}");
+	imageDiv.dhImageId = "${who.identifyingGuid}";
+	imageDiv.onmouseover = dh.infoviewer.onImageMouseOver;
+	imageDiv.onmouseout = dh.infoviewer.onImageMouseOut;
+	var infoDiv = document.getElementById("dhInfo${who.identifyingGuid}");
+	infoDiv.dhInfoId = "${who.identifyingGuid}";
+	infoDiv.onmouseout = dh.infoviewer.onInfoMouseOut;
+</script>
