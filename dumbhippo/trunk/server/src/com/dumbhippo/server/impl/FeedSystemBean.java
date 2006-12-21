@@ -834,7 +834,7 @@ public class FeedSystemBean implements FeedSystem {
 			try {
 				result = FeedSystemBean.getRawFeed(source);
 			} catch (FeedFetcher.FetchFailedException e) {
-				throw new DynamicPollingSystem.PollingTaskNormalExecutionException(e);
+				throw new DynamicPollingSystem.PollingTaskNormalExecutionException("Feed " + feed.getSource(), e);
 			}
 			changed = result.isModified();
 			final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
@@ -843,7 +843,7 @@ public class FeedSystemBean implements FeedSystem {
 					try {
 						feedSystem.storeRawUpdatedFeed(feed.getId(), result.getFeed());
 					} catch (FeedLinkUnknownException e) {
-						throw new DynamicPollingSystem.PollingTaskNormalExecutionException(e);						
+						throw new DynamicPollingSystem.PollingTaskNormalExecutionException("Feed " + feed.getSource(), e);						
 					}
 					return null;
 				}
