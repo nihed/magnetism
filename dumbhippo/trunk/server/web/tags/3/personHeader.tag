@@ -56,7 +56,10 @@
 						<div class="dh-person-header-controls"><jsp:doBody/></div>
 						<c:if test="${!embedVersion && who.liveUser != null}">
 						    <div class="dh-person-header-stats">
-								<span class="dh-info"><c:out value="${who.liveUser.userContactsCount} in network"/></span> | 							
+								<span class="dh-info"><c:out value="${who.liveUser.userContactsCount} in network"/>
+									<c:if test="${who.viewOfSelf && who.user.account.invitations > 0}"> - <a href="/invitation">Invite friends</a>
+									</c:if>
+								</span> |
 								<span class="dh-info"><dht3:plural n="${who.liveUser.groupCount}" s="group"/></span> | 
 								<span class="dh-info"><dht3:plural n="${who.liveUser.sentPostsCount}" s="post"/></span> 
 						    </div>

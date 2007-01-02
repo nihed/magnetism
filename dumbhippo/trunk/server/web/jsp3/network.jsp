@@ -14,9 +14,19 @@
 
 <c:set var="pageName" value="Network" scope="page"/>
 <c:set var="possessive" value="${person.viewedPerson.name}'s" scope="page"/>
-<c:if test="${person.self}">
-	<c:set var="possessive" value="My" scope="page"/>
-</c:if>
+<c:choose>
+	<c:when test="${person.self}">
+		<c:set var="possessive" value="My" scope="page"/>
+		<c:set var="invitations" value="${person.viewedPerson.user.account.invitations}" scope="page"/>
+		<c:if test="${invitations > 0}">
+			<c:set var="titleLink" value="/invitation"/>
+			<c:set var="titleLinkText" value="Invite friends (${invitations} invitations left)"/>
+		</c:if>
+	</c:when>
+	<c:otherwise>
+		<c:set var="invitations" value="0" scope="page"/>
+	</c:otherwise>
+</c:choose>
 
 <head>
 	<title><c:out value="${possessive}"/> ${pageName} - Mugshot</title>
@@ -26,7 +36,8 @@
 </head>
 
 <dht3:page currentPageLink="network">
-	<dht3:pageSubHeader title="${possessive} ${pageName} (${person.userContactCount})">
+	<dht3:pageSubHeader title="${possessive} ${pageName} (${person.userContactCount})"
+				titleLink="${titleLink}" titleLinkText="${titleLinkText}">
 		<dht3:randomTip isSelf="${person.self}"/>
 		<dht3:personRelatedPagesTabs selected="network"/>
 	</dht3:pageSubHeader>

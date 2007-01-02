@@ -50,6 +50,10 @@ input.dh-text-input {
 .dh-page-title {
 }
 
+.dh-page-title-link {
+	margin-left:	5px;
+}
+
 .dh-page-title-container {
 	width:			100%;
 	position:		relative;

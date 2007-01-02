@@ -49,6 +49,19 @@ a.dh-underlined-link-visited:link, a.dh-underlined-link-visited:hover, a.dh-unde
 	font-weight:		bold;
 }
 
+.dh-page-title-link {
+	font-size:			12px;
+	font-weight:		bold;
+}
+
+.dh-page-title-link a {
+	text-decoration:	underline;
+}
+
+.dh-page-title-link a:visited {
+	color:			#0000ff;
+}
+
 .dh-page-options {
 	font-size:			12px;
 	font-weight:		bold;
