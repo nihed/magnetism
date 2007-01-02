@@ -339,6 +339,11 @@ hippo_window_wrapper_hide_to_icon(HippoWindow    *window,
 {
     HippoWindowWrapper *wrapper = HIPPO_WINDOW_WRAPPER(window);
     
+    if (!wrapper->visible)
+        return;
+
+    wrapper->visible = FALSE;
+
     /* What this is supposed to do (and does on Windows) is hides
      * the window and shows the window-minimization animation going
      * to icon_rect.
@@ -354,6 +359,8 @@ hippo_window_wrapper_hide_to_icon(HippoWindow    *window,
      * metacity could be stolen.
      */
     gtk_widget_hide(GTK_WIDGET(wrapper->window));
+    
+    g_object_unref(wrapper);
 }
 
 static void
