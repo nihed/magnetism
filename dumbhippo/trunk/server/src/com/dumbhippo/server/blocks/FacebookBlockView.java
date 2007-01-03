@@ -186,7 +186,7 @@ public class FacebookBlockView extends AbstractPersonBlockView
 			case LOGIN_STATUS_EVENT:
 			case UNREAD_MESSAGES_UPDATE:
 			case UNSEEN_POKES_UPDATE:
-				throw new RuntimeException("need to support event type for " + event.getEventType() + " in getTextForOthers()");
+				throw new RuntimeException("need to support event type for " + event.getEventType() + " in getGenericText()");
 				
 	   	    // no default, it hides bugs
 		}

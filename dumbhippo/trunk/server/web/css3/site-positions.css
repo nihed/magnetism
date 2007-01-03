@@ -659,6 +659,7 @@ div.dh-person-header {
 	
 .dh-person-item-name {
 	text-align:			center;	
+	white-space:		nowrap;
 }
 
 .dh-photo {

@@ -44,7 +44,7 @@ import com.dumbhippo.web.ListBean;
 public class PersonView extends EntityView {
 	private final static Logger logger = GlobalSetup.getLogger(PersonView.class);
 	
-	public static final int MAX_SHORT_NAME_LENGTH = 13;
+	public static final int MAX_SHORT_NAME_LENGTH = 12;
 	
 	private Contact contact;
 	private User user;

@@ -13,11 +13,11 @@
     <div class="dh-person-item-name">
         <c:if test="${who.liveUser != null}">
             <a href="${who.homeUrl}">
-       </c:if>
-       <c:out value="${who.truncatedName}"/>
-       <c:if test="${who.liveUser != null}">       
-           </a>
-       </c:if>    
+        </c:if>
+        <c:out value="${who.truncatedName}"/>
+        <c:if test="${who.liveUser != null}">       
+            </a>
+        </c:if>    
     </div>
 </div>    
 <div id="dhInfo${who.identifyingGuid}" class="dh-person-item-more-info">
