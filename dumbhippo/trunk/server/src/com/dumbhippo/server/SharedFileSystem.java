@@ -158,4 +158,20 @@ public interface SharedFileSystem {
 	 */
 	public StoredData load(Viewpoint viewpoint, Guid guid)
 		throws NotFoundException;
+	
+	/**
+	 * Performs the whole sequence createUnstoredFile, storeFileOutsideDatabase, setFileState.
+	 * Must be run outside a transaction, and returns a detached SharedFile.
+	 * 
+	 * @param userViewpoint
+	 * @param relativeName
+	 * @param mimeType
+	 * @param inputStream
+	 * @throws HumanVisibleException
+	 */
+	public SharedFile storeFile(UserViewpoint userViewpoint, String relativeName, String mimeType, InputStream inputStream, 
+			boolean worldReadable, Collection<Group> groups,
+			Collection<User> users) throws HumanVisibleException;
+	
+	public void deleteFile(UserViewpoint viewpoint, Guid fileId) throws HumanVisibleException;	
 }

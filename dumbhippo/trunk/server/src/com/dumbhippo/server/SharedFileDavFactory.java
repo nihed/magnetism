@@ -79,6 +79,23 @@ public class SharedFileDavFactory {
 		public AbstractNode getParent() {
 			return parent;
 		}
+		
+		public void replaceContent(String mimeType, InputStream contents) throws IOException {
+			throw new IOException("Not a writable file");
+		}
+		
+		public void delete() throws IOException {
+			throw new IOException("Not a writable folder");
+		}
+		
+		public void createChild(String name, String mimeType, InputStream contents) throws IOException {
+			throw new IOException("Not a writable folder");
+		}
+		
+		protected void checkIsOurOwnFile() throws IOException {
+			if (!getViewpoint().isOfUser(getViewedUser()))
+				throw new IOException("Can't write to other people's files, or not logged in");
+		}
 	}
 	
 	static private abstract class AbstractCollectionNode extends AbstractNode {
@@ -104,6 +121,10 @@ public class SharedFileDavFactory {
 		}
 
 		protected abstract Map<String,DavNode> newChildrenMap();
+		
+		protected void invalidateChildren() {
+			children = null;
+		}
 		
 		private Map<String,DavNode> getChildrenMap() {
 			if (children == null) {
@@ -333,6 +354,15 @@ public class SharedFileDavFactory {
 
 		protected abstract void pageCollectionContents(Pageable<SharedFile> pageable);
 		
+		protected DavNode createNode(SharedFile sf) {
+			DavNode node;
+			if (byId)
+				node = new SharedFileByIdNode(this, sf);
+			else
+				node = new SharedFileByNameNode(this, sf);
+			return node;
+		}
+		
 		@Override
 		protected Map<String, DavNode> newChildrenMap() {
 			Map<String, DavNode> children = new HashMap<String, DavNode>();
@@ -341,15 +371,22 @@ public class SharedFileDavFactory {
 			pageable.setSubsequentPerPage(0);
 			pageCollectionContents(pageable);
 			for (SharedFile sf : pageable.getResults()) {
-				DavNode node;
-				if (byId)
-					node = new SharedFileByIdNode(this, sf);
-				else
-					node = new SharedFileByNameNode(this, sf);
+				DavNode node = createNode(sf);
 				children.put(node.getName(), node);
 			}
 			
 			return children;
+		}
+		
+		protected void createChild(String name, String mimeType, InputStream contents, boolean worldReadable) throws IOException {
+			checkIsOurOwnFile();
+			
+			try {
+				getFileSystem().storeFile((UserViewpoint)getViewpoint(), name, mimeType, contents, worldReadable, null, null);
+				invalidateChildren();
+			} catch (HumanVisibleException e) {
+				throw new IOException(e.getMessage());
+			}			
 		}
 	}
 	
@@ -362,6 +399,11 @@ public class SharedFileDavFactory {
 		@Override
 		protected void pageCollectionContents(Pageable<SharedFile> pageable) {
 			getFileSystem().pagePublicFilesForCreator(getViewpoint(), getViewedUser(), pageable);
+		}
+		
+		@Override
+		public void createChild(String name, String mimeType, InputStream contents) throws IOException {
+			createChild(name, mimeType, contents, true);
 		}
 	}
 
@@ -379,20 +421,30 @@ public class SharedFileDavFactory {
 			else
 				pageable.setResults(TypeUtils.emptyList(SharedFile.class));
 		}
+		
+		@Override
+		public void createChild(String name, String mimeType, InputStream contents) throws IOException {
+			createChild(name, mimeType, contents, false);
+		}
 	}
 	
 	static abstract private class AbstractSharedFileNode extends AbstractNode {
-		protected SharedFile file;
+		protected SharedFile file; // assume this is detached
 		private Map<DavProperty,Object> properties;
 		private StoredData loaded;
 		
-		AbstractSharedFileNode(AbstractNode parent, SharedFile file) {
+		AbstractSharedFileNode(AbstractQueryNode parent, SharedFile file) {
 			super(parent);
 			this.file = file;
 		}
 		
 		abstract public String getName();
 
+		@Override
+		public AbstractQueryNode getParent() {
+			return (AbstractQueryNode) super.getParent();
+		}
+		
 		public Map<DavProperty, Object> getProperties() {
 			if (properties == null) {
 				properties = newProperties();
@@ -451,11 +503,27 @@ public class SharedFileDavFactory {
 		public long getLastModified() {
 			return file.getCreationDate().getTime();
 		}
+		
+		@Override
+		public void replaceContent(String mimeType, InputStream contents) throws IOException {
+			throw new IOException("Replacing files isn't supported right now - try deleting it then moving the new file over");
+		}
+		
+		@Override
+		public void delete() throws IOException {
+			checkIsOurOwnFile();
+			try {
+				getFileSystem().deleteFile((UserViewpoint) getViewpoint(), file.getGuid());
+			} catch (HumanVisibleException e) {
+				throw new IOException(e.getMessage());
+			}
+			getParent().invalidateChildren();
+		}
 	}
 	
 	static private class SharedFileByIdNode extends AbstractSharedFileNode {
 		
-		SharedFileByIdNode(AbstractNode parent, SharedFile file) {
+		SharedFileByIdNode(AbstractQueryNode parent, SharedFile file) {
 			super(parent, file);
 		}
 
@@ -467,7 +535,7 @@ public class SharedFileDavFactory {
 	
 	static private class SharedFileByNameNode extends AbstractSharedFileNode {
 		
-		SharedFileByNameNode(AbstractNode parent, SharedFile file) {
+		SharedFileByNameNode(AbstractQueryNode parent, SharedFile file) {
 			super(parent, file);
 		}
 

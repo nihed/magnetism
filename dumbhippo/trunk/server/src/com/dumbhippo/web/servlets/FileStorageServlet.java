@@ -23,11 +23,8 @@ import com.dumbhippo.StreamUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.SharedFile;
-import com.dumbhippo.persistence.StorageState;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.PermissionDeniedException;
 import com.dumbhippo.server.SharedFileSystem;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
@@ -240,38 +237,8 @@ public class FileStorageServlet extends AbstractServlet {
 		
 		UserViewpoint userViewpoint = (UserViewpoint) viewpoint;
 		
-		// Transaction 1 - store a SharedFile in state NOT_STORED with size equal to entire quota
-		// FIXME right now it's always public
-		SharedFile sf = sharedFileSystem.createUnstoredFile(userViewpoint, relativeName,
-				mimeType, true, null, null);
-		
-		// outside transaction - stuff the file contents somewhere. Max size is the 
-		// remaining quota set on the SharedFile.
-		long storedSize = -1;
-		try {
-			storedSize = sharedFileSystem.storeFileOutsideDatabase(sf, theFile.getInputStream());
-		} finally {
-			// If something goes wrong, try to remove the reserved quota so the 
-			// user isn't doomed
-			if (storedSize < 0) {
-				try {
-					sharedFileSystem.setFileState(userViewpoint, sf.getGuid(), StorageState.NOT_STORED, 0);
-				} catch (Exception e) {
-					logger.warn("Exception removing reserved quota after failed file storage", e);
-				}
-			}
-		}
-		assert storedSize >= 0;
-		
-		// Transaction 2 - set the correct state and size on the SharedFile if we didn't
-		// throw an exception storing it
-		try {
-			sharedFileSystem.setFileState(userViewpoint, sf.getGuid(), StorageState.STORED, storedSize);
-		} catch (NotFoundException e) {
-			logger.error("Should never happen, file we just created not found", e);
-		} catch (PermissionDeniedException e) {
-			logger.error("Should never happen, permission denied to change file we created", e);
-		}
+		// FIXME right now we always store new files as public
+		sharedFileSystem.storeFile(userViewpoint, relativeName, mimeType, theFile.getInputStream(), true, null, null);
 	
 		if (reloadTo != null)
 			response.sendRedirect(reloadTo);

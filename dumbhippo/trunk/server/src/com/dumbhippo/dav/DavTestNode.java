@@ -1,6 +1,7 @@
 package com.dumbhippo.dav;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
@@ -125,5 +126,17 @@ public class DavTestNode implements DavNode {
 	
 	public long getLastModified() {
 		return TIMESTAMP;
+	}
+
+	public void replaceContent(String mimeType, InputStream contents) throws IOException {
+		throw new IOException("Not a writable file");
+	}
+	
+	public void delete() throws IOException {
+		throw new IOException("Not a writable folder");
+	}
+	
+	public void createChild(String name, String mimeType, InputStream contents) throws IOException {
+		throw new IOException("Not a writable folder");
 	}
 }

@@ -14,6 +14,8 @@ public enum DavStatusCode {
 	
 	UNPROCESSABLE_ENTITY(402),
 	
+	CONFLICT(409), // required if you try to create a file in a nonexistent directory
+	
 	LOCKED(423),
 	
 	FAILED_DEPENDENCY(424),

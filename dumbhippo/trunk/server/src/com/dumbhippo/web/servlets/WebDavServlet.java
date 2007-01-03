@@ -118,7 +118,11 @@ public class WebDavServlet extends AbstractServlet {
 			}
 			logger.debug("{} complete", davMethod.name());
 		} else {
+			logRequest(request, m);
+			// super.service is just standard HttpServlet.service which should call 
+			// our doPut etc. methods
 			super.service(request, response);
+			logger.debug("{} complete", m);
 		}
 	}
 
@@ -190,13 +194,32 @@ public class WebDavServlet extends AbstractServlet {
 	@Override
 	protected void doPut(HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
-		response.sendError(DavStatusCode.FORBIDDEN.getCode());
-	}	
+		DavHandler handler = getDavHandler(request);
+		
+		String contentType = request.getContentType();
+		
+		// Windows Explorer at least generally will not set this
+		if (contentType == null)
+			contentType = "application/octet-stream"; // FIXME some kind of "magic" might be nice
+		
+		try {
+			handler.put(getNodePath(request), contentType, request.getInputStream());
+		} catch (DavHttpStatusException e) {
+			logger.debug("PUT reply code {}: {}", e.getCode(), e.getMessage());
+			response.sendError(e.getCode().getCode());
+		}
+	}
 	
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException {
-		response.sendError(DavStatusCode.FORBIDDEN.getCode());
+		DavHandler handler = getDavHandler(request);
+		try {
+			handler.delete(getNodePath(request));
+		} catch (DavHttpStatusException e) {
+			logger.debug("DELETE reply code {}: {}", e.getCode(), e.getMessage());
+			response.sendError(e.getCode().getCode());
+		}
 	}
 	
 	@Override
@@ -205,7 +228,7 @@ public class WebDavServlet extends AbstractServlet {
 		// the DAV header is "compliance classes", if we supported locking it 
 		// would be "1,2"
 		response.addHeader("DAV", "1");
-		response.addHeader("Allow", "OPTIONS, GET, HEAD, POST, DELETE, TRACE, " + 
+		response.addHeader("Allow", "OPTIONS, GET, HEAD, POST, DELETE, TRACE, PUT" + 
 				"PROPFIND" /* + 
 				"PROPPATCH, COPY, MOVE, MKCOL, LOCK, UNLOCK" */);
 		response.addHeader("MS-Author-Via", "DAV");
