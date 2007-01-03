@@ -14,9 +14,6 @@
 </c:if>
 
 <div>
-	<c:if test="${theme.draft}">
-		<b>DRAFT</b>
-	</c:if>
 	'<c:out value="${theme.name}"/>' by <c:out value="${theme.creator.nickname}"/>
 	<c:if test="${!empty theme.basedOn}">
 		based on
@@ -24,19 +21,18 @@
 		by <c:out value="${theme.basedOn.creator.nickname}"/><%--</a>--%>
 	</c:if>
 	<br/>
-	<dh:nowPlaying userId="${userId}" themeId="${theme.id}" hasLabel="false"/>
-	<br/>
-	<c:if test="${signin.valid}">
-		<span class="dh-option-list">	
-		<c:if test="${theme.creator eq signin.user}">
-			<a class="dh-option-list-option" href="/radar-theme-creator?theme=${theme.id}">Edit</a>
-			|
-		</c:if>
-		<a class="dh-option-list-option" href="javascript:dh.nowplaying.createNewTheme('${theme.id}');">Build On It</a>
-		<c:if test="${!theme.draft && !alreadyCurrent}">
-			|
-			<a class="dh-option-list-option" href="javascript:dh.nowplaying.setTheme('${theme.id}');">Set As Current Theme</a>
-		</c:if>
-		</span>
+	<table><tr><td rowSpan="5"><dh:nowPlaying userId="${userId}" themeId="${theme.id}" hasLabel="false"/></td></tr>
+	<c:if test="${theme.draft}">
+		<tr><td><b>DRAFT</b></td></tr>
 	</c:if>
+	<c:if test="${signin.valid}">
+		<c:if test="${theme.creator eq signin.user}">
+			<tr><td><a href="/radar-theme-creator?theme=${theme.id}">Edit</a></td></tr>
+		</c:if>
+		<tr><td><a href="javascript:dh.nowplaying.createNewTheme('${theme.id}');">Build On It</a></td></tr>
+		<c:if test="${!theme.draft && !alreadyCurrent}">
+			<tr><td><a href="javascript:dh.nowplaying.setTheme('${theme.id}');">Set As Current Theme</a></td></tr>
+		</c:if>
+	</c:if>
+	</table>
 </div>
