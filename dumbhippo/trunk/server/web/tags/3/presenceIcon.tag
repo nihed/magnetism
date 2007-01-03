@@ -8,11 +8,11 @@
 
 <span class="dh-presence">
     <c:choose>
-        <c:when test="${iconForPhoto}"> 
+        <c:when test="${iconForPhoto && who.online}"> 
             <dh:png src="${who.onlineIconForPhoto}" style="width: 14px; height: 14px;"/>
         </c:when>
-        <c:otherwise>    
+        <c:when test="${!iconForPhoto}">    
 	        <dh:png src="${who.onlineIcon}" style="width: 12px; height: 12px;"/>
-	    </c:otherwise>
+	    </c:when>
 	</c:choose>        
 </span>

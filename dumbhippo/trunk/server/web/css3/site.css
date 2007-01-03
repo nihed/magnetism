@@ -505,6 +505,10 @@ div.dh-async-action-link-complete {
 	font-weight:		bold;
 }
 
+.dh-person-item {
+    font-size:          12px;
+}
+
 .dh-person-item-more-info {
 	border:				1px solid black;
 	background-color:	#ffffcc;
@@ -515,8 +519,8 @@ div.dh-async-action-link-complete {
 	font-weight:		bold;   
 }
 
-.dh-person-item {
-    font-size:         12px;
+.dh-person-item-more-info .dh-person-item-controls {
+    font-size:          11px;
 }
 
 .dh-music-block-left {

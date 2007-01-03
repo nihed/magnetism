@@ -425,7 +425,7 @@ public class PersonViewerBean implements PersonViewer {
 			q.setMaxResults(max);
 		List<PersonView> viewedContacts = new ArrayList<PersonView>();
 		for (User result : TypeUtils.castList(User.class, q.getResultList())) {
-			viewedContacts.add(constructPersonView(viewpoint, null, result));
+			viewedContacts.add(getPersonView(viewpoint, result, PersonViewExtra.CONTACT_STATUS));
 		}
 		return viewedContacts;
 	}

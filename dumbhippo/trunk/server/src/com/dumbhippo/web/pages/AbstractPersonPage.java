@@ -363,7 +363,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	public ListBean<PersonView> getFollowers() {
 		if (followers == null) {
 		    Set<PersonView> mingledFollowers = 
-			    personViewer.getFollowers(getSignin().getViewpoint(), getViewedUser());		
+			    personViewer.getFollowers(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.CONTACT_STATUS);		
 		        followers = new ListBean<PersonView>(PersonView.sortedList(getSignin().getViewpoint(), getViewedUser(), mingledFollowers));
 		}
 		return followers;

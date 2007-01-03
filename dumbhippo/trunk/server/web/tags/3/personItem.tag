@@ -35,7 +35,10 @@
         </c:if>    
         <span class="dh-person-item-name">
             <c:out value="${who.name}"/>	
-         </span>    
+        </span>
+        <div class="dh-person-item-controls">
+            <dht3:personActionLinks who="${who}" showHomeUrl="true"/> 	 
+        </div>      
         <c:if test="${who.liveUser != null}">
 		     <div class="dh-person-header-stats">
 		        <span class="dh-info"><c:out value="${who.liveUser.userContactsCount} in network"/></span> | 							

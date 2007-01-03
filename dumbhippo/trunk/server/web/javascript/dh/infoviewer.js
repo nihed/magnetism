@@ -19,10 +19,10 @@ dh.infoviewer.onImageMouseOver = function(e) {
 	if (e.clientX + 350 > width) {
  	    infoDiv.style.left = (xOffset + width - 350 - pageOuterPos.x) + "px"; 
  	} else {
- 	    infoDiv.style.left = (imageDivPos.x - pageOuterPos.x + 10) + "px";
+ 	    infoDiv.style.left = (imageDivPos.x - pageOuterPos.x + 15) + "px";
  	}
  	    
-	infoDiv.style.top = (imageDivPos.y - pageOuterPos.y + 55) + "px";
+	infoDiv.style.top = (imageDivPos.y - pageOuterPos.y + 50) + "px";
 	
 	infoDiv.style.display = "block";				
 }
