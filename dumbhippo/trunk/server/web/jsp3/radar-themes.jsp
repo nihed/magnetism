@@ -39,8 +39,9 @@
 				</c:otherwise>
 			</c:choose>
 		</div>
+		<br clear="all"/>
 		<c:if test="${nowplaying.signin.valid}">
-			<c:if test="${!empty nowplaying.currentTheme}">		
+			<c:if test="${!empty nowplaying.currentTheme}">
 				<dht:radarTheme theme="${nowplaying.currentTheme}" signin="${nowplaying.signin}" userId="${nowplaying.radarCharacterId}" alreadyCurrent="true"/>		
 			</c:if>
 			<hr height="1px" color="#666666" style="margin: 10px 0px"/>
@@ -55,38 +56,39 @@
 	</dht3:shinyBox>
 
 	<c:if test="${nowplaying.signin.valid}">
-		<c:if test="${nowplaying.myThemes.count > 0}">
+		<c:if test="${nowplaying.myThemes.totalCount > 0}">
 			<dht3:shinyBox color="grey">
-		        <div class="dh-page-shinybox-title-large">Themes I've Created (<c:out value="${nowplaying.myThemes.count}"/>)</div>
+		        <div class="dh-page-shinybox-title-large">Themes I've Created (<c:out value="${nowplaying.myThemes.totalCount}"/>)</div>
 			<div>
 				<c:forEach items="${nowplaying.myThemes.results}" var="theme" varStatus="status">
 					<dht:radarTheme theme="${theme}" signin="${nowplaying.signin}" userId="${nowplaying.radarCharacterId}"/>
-					<hr height="1px" color="#666666"/>
+					<c:if test="${!status.last}"><hr height="1px" color="#666666"/></c:if>
 				</c:forEach>
 			</div>
 			<dht:expandablePager pageable="${nowplaying.myThemes}" anchor="dhMyThemes"/>			
 			</dht3:shinyBox>			
 		</c:if>
-		<c:if test="${nowplaying.friendsThemes.count > 0}">
+		<c:if test="${nowplaying.friendsThemes.totalCount > 0}">
 			<dht3:shinyBox color="grey">
-		        <div class="dh-page-shinybox-title-large">My Friends' Theme Creations (<c:out value="${nowplaying.friendsThemes.count}"/>)</div>
+		        <div class="dh-page-shinybox-title-large">My Friends' Theme Creations (<c:out value="${nowplaying.friendsThemes.totalCount}"/>)</div>
 			<div>
 		                <c:forEach items="${nowplaying.friendsThemes.results}" var="theme" varStatus="status">
 					<dht:radarTheme theme="${theme}" signin="${nowplaying.signin}" userId="${nowplaying.radarCharacterId}"/>
-					<hr height="1px" color="#666666"/>
+					<c:if test="${!status.last}"><hr height="1px" color="#666666"/></c:if>
 		                </c:forEach>
 		        </div>
+			<dht:expandablePager pageable="${nowplaying.friendsThemes}" anchor="dhFriendsThemes"/>			
 			</dht3:shinyBox>
 		</c:if>
 	</c:if>
 
-	<c:if test="${nowplaying.randomThemes.count > 0}">
+	<c:if test="${nowplaying.randomThemes.totalCount > 0}">
 		<dht3:shinyBox color="grey">
-	        <div class="dh-page-shinybox-title-large">Public Themes (<c:out value="${nowplaying.randomThemes.count}"/>)</div>
+	        <div class="dh-page-shinybox-title-large">Public Themes (<c:out value="${nowplaying.randomThemes.totalCount}"/>)</div>
 		<div>
 			<c:forEach items="${nowplaying.randomThemes.results}" var="theme" varStatus="status">
 				<dht:radarTheme theme="${theme}" signin="${nowplaying.signin}" userId="${nowplaying.radarCharacterId}"/>
-				<hr height="1px" color="#666666"/>
+					<c:if test="${!status.last}"><hr height="1px" color="#666666"/></c:if>
 			</c:forEach>		
 		</div>
 		<dht:expandablePager pageable="${nowplaying.randomThemes}" anchor="dhAllThemes"/>	

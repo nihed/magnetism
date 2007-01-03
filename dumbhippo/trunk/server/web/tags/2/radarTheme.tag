@@ -14,16 +14,17 @@
 </c:if>
 
 <div>
-	'<c:out value="${theme.name}"/>' by <c:out value="${theme.creator.nickname}"/>
+	<c:if test="${alreadyCurrent}"><em>My Current Theme</em>:</c:if>
+	<strong><c:out value="${theme.name}"/></strong> by <a href="/person?who=${theme.creator.id}"><c:out value="${theme.creator.nickname}"/></a>
 	<c:if test="${!empty theme.basedOn}">
 		based on
-		<%-- <a href="/radar-theme?theme=${theme.basedOn.id}">--%>'<c:out value="${theme.basedOn.name}"/>'
-		by <c:out value="${theme.basedOn.creator.nickname}"/><%--</a>--%>
+		<%-- <a href="/radar-theme?theme=${theme.basedOn.id}">--%><strong><c:out value="${theme.basedOn.name}"/></strong><%--</a>--%>
+		by <a href="/person?who=${theme.basedOn.creator.id}"><c:out value="${theme.basedOn.creator.nickname}"/></a>
 	</c:if>
 	<br/>
 	<table><tr><td rowSpan="5"><dh:nowPlaying userId="${userId}" themeId="${theme.id}" hasLabel="false"/></td></tr>
 	<c:if test="${theme.draft}">
-		<tr><td><b>DRAFT</b></td></tr>
+		<tr><td><b style="color:red">draft</b> <span style="font-size:10px">(you could <a href="javascript:dh.nowplaying.modify('${theme.id}', 'draft', 'false', '/radar-themes');">publish</a> it)</span></td></tr>
 	</c:if>
 	<c:if test="${signin.valid}">
 		<c:if test="${theme.creator eq signin.user}">
