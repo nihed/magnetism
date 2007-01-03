@@ -3,10 +3,12 @@ package com.dumbhippo.server;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -37,7 +39,7 @@ public class SharedFileDavFactory {
 	static private final Logger logger = GlobalSetup.getLogger(SharedFileDavFactory.class);	
 	
 	static public DavNode newRoot(Viewpoint viewpoint, SharedFileSystem sharedFileSystem) {
-		return new RootNode(viewpoint, sharedFileSystem, true);
+		return new RootNode(viewpoint, sharedFileSystem);
 	}
 	
 	static private abstract class AbstractNode implements DavNode {
@@ -151,16 +153,17 @@ public class SharedFileDavFactory {
 	}
 	
 	static private class RootNode extends AbstractCollectionNode {
-		final private boolean byId;
-		private Viewpoint viewpoint;
-		private SharedFileSystem fileSystem;
-		private Map<String,DavNode> cachedUserNodes;
+		final private Viewpoint viewpoint;
+		final private SharedFileSystem fileSystem;
+		final private AllUsersNode byIdNode;
+		final private AllUsersNode byNameNode;
 		
-		RootNode(Viewpoint viewpoint, SharedFileSystem fileSystem, boolean byId) {
+		RootNode(Viewpoint viewpoint, SharedFileSystem fileSystem) {
 			super(null, null);
-			this.byId = byId;
 			this.viewpoint = viewpoint; 
 			this.fileSystem = fileSystem;
+			this.byIdNode = new AllUsersNode(this, true);
+			this.byNameNode = new AllUsersNode(this, false);
 		}
 		
 		@Override
@@ -172,10 +175,49 @@ public class SharedFileDavFactory {
 		protected Viewpoint getViewpoint() {
 			return viewpoint;
 		}
+
+		@Override
+		protected Map<String, DavNode> newChildrenMap() {
+			Map<String,DavNode> children = new HashMap<String,DavNode>();
+			children.put(byIdNode.getName(), byIdNode);
+			children.put(byNameNode.getName(), byNameNode);
+			return children;
+		}
+		
+		/** 
+		 * Maybe we should be sending back a "Forbidden" error instead of 
+		 * an empty directory ? For testing convenience, we also 
+		 * include the logged-in user if any.
+		 */
+		@Override
+		public Collection<DavNode> getChildren() {
+			List<DavNode> list = new ArrayList<DavNode>();
+			list.add(byIdNode);
+			list.add(byNameNode);
+			return list;
+		}
+		
+		@Override
+		public String getDisplayName() {
+			return "Mugshot";
+		}
+	}
+	
+	static private class AllUsersNode extends AbstractCollectionNode {
+		static final private String USER_FILES_BY_ID_FOLDER = "users";    // by-id browsing assumes working display names, so this can be machine-readable
+		static final private String USER_FILES_BY_NAME_FOLDER = "People"; // using a nice display name as actual name
+		
+		final private boolean byId;
+		private Map<String,DavNode> cachedUserNodes;
+		
+		AllUsersNode(AbstractNode parent, boolean byId) {
+			super(parent, byId ? USER_FILES_BY_ID_FOLDER : USER_FILES_BY_NAME_FOLDER);
+			this.byId = byId;
+		}		
 		
 		@Override
 		protected Map<String, DavNode> newChildrenMap() {
-			throw new RuntimeException("listing on root node not good");
+			throw new RuntimeException("listing on all-users node not good");
 		}
 		
 		/** 
@@ -233,7 +275,13 @@ public class SharedFileDavFactory {
 		
 		@Override
 		public String getDisplayName() {
-			return "All Mugshot Users";
+			// We're expecting the user's own folder to be 
+			// their dav root really, so this should not be visible most 
+			// of the time. Having the name the same for both the byId and !byId
+			// versions is confusing, but if the names were different, what would they 
+			// be... possibly we should have multiple dav roots and not allow browsing
+			// at this level, which would let us leave this node anonymous
+			return "People";
 		}
 	}
 	
@@ -297,7 +345,7 @@ public class SharedFileDavFactory {
 				if (byId)
 					node = new SharedFileByIdNode(this, sf);
 				else
-					throw new RuntimeException("only support byId for now");
+					node = new SharedFileByNameNode(this, sf);
 				children.put(node.getName(), node);
 			}
 			
@@ -333,19 +381,17 @@ public class SharedFileDavFactory {
 		}
 	}
 	
-	static private class SharedFileByIdNode extends AbstractNode {
-		private SharedFile file;
+	static abstract private class AbstractSharedFileNode extends AbstractNode {
+		protected SharedFile file;
 		private Map<DavProperty,Object> properties;
 		private StoredData loaded;
 		
-		SharedFileByIdNode(AbstractNode parent, SharedFile file) {
+		AbstractSharedFileNode(AbstractNode parent, SharedFile file) {
 			super(parent);
 			this.file = file;
 		}
 		
-		public String getName() {
-			return file.getId();
-		}
+		abstract public String getName();
 
 		public Map<DavProperty, Object> getProperties() {
 			if (properties == null) {
@@ -404,6 +450,30 @@ public class SharedFileDavFactory {
 
 		public long getLastModified() {
 			return file.getCreationDate().getTime();
+		}
+	}
+	
+	static private class SharedFileByIdNode extends AbstractSharedFileNode {
+		
+		SharedFileByIdNode(AbstractNode parent, SharedFile file) {
+			super(parent, file);
+		}
+
+		@Override
+		public String getName() {
+			return file.getId();
+		}
+	}
+	
+	static private class SharedFileByNameNode extends AbstractSharedFileNode {
+		
+		SharedFileByNameNode(AbstractNode parent, SharedFile file) {
+			super(parent, file);
+		}
+
+		@Override
+		public String getName() {
+			return file.getName();
 		}
 	}
 }
