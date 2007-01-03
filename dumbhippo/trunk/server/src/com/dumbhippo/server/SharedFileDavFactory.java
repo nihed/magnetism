@@ -37,7 +37,7 @@ public class SharedFileDavFactory {
 	static private final Logger logger = GlobalSetup.getLogger(SharedFileDavFactory.class);	
 	
 	static public DavNode newRoot(Viewpoint viewpoint, SharedFileSystem sharedFileSystem) {
-		return new RootNode(viewpoint, sharedFileSystem);
+		return new RootNode(viewpoint, sharedFileSystem, true);
 	}
 	
 	static private abstract class AbstractNode implements DavNode {
@@ -151,12 +151,14 @@ public class SharedFileDavFactory {
 	}
 	
 	static private class RootNode extends AbstractCollectionNode {
+		final private boolean byId;
 		private Viewpoint viewpoint;
 		private SharedFileSystem fileSystem;
 		private Map<String,DavNode> cachedUserNodes;
 		
-		RootNode(Viewpoint viewpoint, SharedFileSystem fileSystem) {
+		RootNode(Viewpoint viewpoint, SharedFileSystem fileSystem, boolean byId) {
 			super(null, null);
+			this.byId = byId;
 			this.viewpoint = viewpoint; 
 			this.fileSystem = fileSystem;
 		}
@@ -202,7 +204,7 @@ public class SharedFileDavFactory {
 				cachedUserNodes = new HashMap<String,DavNode>();
 			for (User u : allUsers) {
 				if (cachedUserNodes.get(u.getId()) == null) {
-					cachedUserNodes.put(u.getId(), new UserNode(this, u));
+					cachedUserNodes.put(u.getId(), new UserNode(this, u, byId));
 				}
 			}
 			return cachedUserNodes.values();
@@ -222,7 +224,7 @@ public class SharedFileDavFactory {
 			} catch (ParseException e) {
 				throw new NotFoundException("'" + name + "' is not a user id");
 			}
-			DavNode node = new UserNode(this, user);
+			DavNode node = new UserNode(this, user, byId);
 			if (cachedUserNodes == null)
 				cachedUserNodes = new HashMap<String,DavNode>();
 			cachedUserNodes.put(name, node);
@@ -237,11 +239,13 @@ public class SharedFileDavFactory {
 	
 	static private class UserNode extends AbstractCollectionNode {
 
+		final private boolean byId;
 		private User viewedUser;
 
-		protected UserNode(AbstractNode parent, User viewedUser) {
+		protected UserNode(AbstractNode parent, User viewedUser, boolean byId) {
 			super(parent, viewedUser.getId());
 			this.viewedUser = viewedUser;
+			this.byId = byId;
 		}
 		
 		@Override
@@ -252,12 +256,12 @@ public class SharedFileDavFactory {
 		@Override
 		protected Map<String, DavNode> newChildrenMap() {
 			Map<String, DavNode> children = new HashMap<String, DavNode>();
-			DavNode node = new PublicNode(this);
+			DavNode node = new PublicNode(this, byId);
 			children.put(node.getName(), node);
 			
 			Viewpoint viewpoint = getViewpoint();
 			if (viewpoint.isOfUser(getViewedUser())) {
-				node = new PrivateNode(this);
+				node = new PrivateNode(this, byId);
 				children.put(node.getName(), node);
 			}
 			
@@ -272,8 +276,11 @@ public class SharedFileDavFactory {
 	
 	static abstract private class AbstractQueryNode extends AbstractCollectionNode {
 
-		protected AbstractQueryNode(AbstractNode parent, String name) {
+		final private boolean byId;
+		
+		protected AbstractQueryNode(AbstractNode parent, String name, boolean byId) {
 			super(parent, name);
+			this.byId = byId;
 		}
 
 		protected abstract void pageCollectionContents(Pageable<SharedFile> pageable);
@@ -286,7 +293,11 @@ public class SharedFileDavFactory {
 			pageable.setSubsequentPerPage(0);
 			pageCollectionContents(pageable);
 			for (SharedFile sf : pageable.getResults()) {
-				DavNode node = new SharedFileNode(this, sf);
+				DavNode node;
+				if (byId)
+					node = new SharedFileByIdNode(this, sf);
+				else
+					throw new RuntimeException("only support byId for now");
 				children.put(node.getName(), node);
 			}
 			
@@ -296,8 +307,8 @@ public class SharedFileDavFactory {
 	
 	static private class PublicNode extends AbstractQueryNode {
 
-		protected PublicNode(AbstractNode parent) {
-			super(parent, "Public");
+		protected PublicNode(AbstractNode parent, boolean byId) {
+			super(parent, "Public", byId);
 		}
 
 		@Override
@@ -308,8 +319,8 @@ public class SharedFileDavFactory {
 
 	static private class PrivateNode extends AbstractQueryNode {
 
-		protected PrivateNode(AbstractNode parent) {
-			super(parent, "Private");
+		protected PrivateNode(AbstractNode parent, boolean byId) {
+			super(parent, "Private", byId);
 		}
 
 		@Override
@@ -322,12 +333,12 @@ public class SharedFileDavFactory {
 		}
 	}
 	
-	static private class SharedFileNode extends AbstractNode {
+	static private class SharedFileByIdNode extends AbstractNode {
 		private SharedFile file;
 		private Map<DavProperty,Object> properties;
 		private StoredData loaded;
 		
-		SharedFileNode(AbstractNode parent, SharedFile file) {
+		SharedFileByIdNode(AbstractNode parent, SharedFile file) {
 			super(parent);
 			this.file = file;
 		}
@@ -356,7 +367,7 @@ public class SharedFileDavFactory {
 				try {
 					loaded = getFileSystem().load(getViewpoint(), file.getGuid());
 				} catch (NotFoundException e) {
-					logger.error("Failed to load an already-created SharedFileNode");
+					logger.error("Failed to load an already-created SharedFileByIdNode");
 					throw new RuntimeException(e);
 				}
 			}
