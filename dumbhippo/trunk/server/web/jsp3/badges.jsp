@@ -129,7 +129,7 @@
 								<dh:flashBadge badge="${badge}" userId="${person.viewedPerson.user.id}" hasLabel="false"/>
 								<c:if test="${dh:enumIs(badge, 'NOW_PLAYING_440_120')}">
 									<div style="margin-top: 5px;">
-										<a style="font-size: 12px;" class="dh-underlined-link" href="/radar-learnmore">Browse, edit, and create Music Radar themes</a>
+										<a style="font-size: 12px;" class="dh-underlined-link" href="/radar-themes">Browse, edit, and create Music Radar themes</a>
 									</div>
 								</c:if>
 							</div>
