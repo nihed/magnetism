@@ -2,7 +2,7 @@ dojo.provide("dh.lang");
 
 dh.inherits = function(subclass, superclass){
 	if(typeof superclass != 'function'){ 
-		dojo.raise("superclass: "+superclass+" borken");
+		dh.raise("superclass: "+superclass+" borken");
 	}
 	subclass.prototype = new superclass();
 	subclass.prototype.constructor = subclass;
