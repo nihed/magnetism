@@ -254,14 +254,16 @@ dh.actions.validateEmailInput = function(emailInputId) {
 
 // This is a wrapper around dh.control.control.showChatWindow(chatId)
 // that lazily tries loading the control
-dh.actions.joinChatUsingControl = function(chatId) {
+dh.actions.joinChat = function(chatId) {
 	dh.control.createControl();
 
 	if (dh.control.control.haveLiveChat()) {
 		dh.control.control.showChatWindow(chatId);
-	} else {
-		window.open("/download",
-		'_NEW',
-		'height=400,width=550,top='+((screen.availHeight-400)/2)+',left='+((screen.availWidth-550)/2));		
+	} else if (dojo.render.os.linux) {
+		var url = dhBaseUrl.replace(/^http:/, "mugshot:");
+		url += "/joinChat?id=" + chatId;
+    	window.open(url, "_self");
+    } else {
+		window.open("/download", '_NEW');
 	}
 }
