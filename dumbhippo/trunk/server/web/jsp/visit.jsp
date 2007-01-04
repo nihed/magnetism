@@ -16,39 +16,39 @@
 	<dht:embedObject/>
 	<script type="text/javascript">
 		function dhWriteFramesPage() {
-			document.open()
+			document.open();
 			document.write(
-"<html>" +
-"<head>" +
-"   <title><c:out value='${title}'/></title>" +
-"	<script type='text/javascript'>" +
-"		if (parent != self) {" +
-"			// only look at the base parts of the url" +
-"			var pLoc = parent.location.host + parent.location.pathname;" +
-"			var sLoc = self.location.host + self.location.pathname;" +
-"			if (pLoc == sLoc)" +
-"				parent.location.href = self.location.href;" +
-"		}" +
-"	<" + "/script>" +
-"</head>" +
-"<frameset rows='*,125'>" +
-"   <frame name='top' src='${framer.post.url}'>" +
-"    <frame name='bottom' src='framer?postId=${framer.postId}' scrolling='no' noresize bordercolor='#cccccc' marginwidth='0' marginheight='0'>" +
-"</frameset>" +
-"<noframes>" + 
-"    Your browser does not support frames.  <a href='${framer.post.url}'>Click here</a> for page." +
-"</noframes>" +
-"</html>"
-			)
-			document.close()
+"<html>\n" +
+"<head>\n" +
+"   <title><c:out value='${title}'/></title>\n" +
+"	<script type='text/javascript'>\n" +
+"		if (parent != self) {\n" +
+"			// only look at the base parts of the url\n" +
+"			var pLoc = parent.location.host + parent.location.pathname;\n" +
+"			var sLoc = self.location.host + self.location.pathname;\n" +
+"			if (pLoc == sLoc)\n" +
+"				parent.location.href = self.location.href;\n" +
+"		}\n" +
+"	<" + "/script>\n" +
+"</head>\n" +
+"<frameset rows='*,125'>\n" +
+"   <frame name='top' src='${framer.post.url}'>\n" +
+"    <frame name='bottom' src='framer?postId=${framer.postId}' scrolling='no' noresize bordercolor='#cccccc' marginwidth='0' marginheight='0'>\n" +
+"</frameset>\n" +
+"<noframes>\n" + 
+"    Your browser does not support frames.  <a href='${framer.post.url}'>Click here</a> for page.\n" +
+"</noframes>\n" +
+"</html>\n"
+			);
+			document.close();
 		}
 		function dhInit() {
-			var embedObject = document.getElementById("dhEmbedObject")
+			var embedObject = document.getElementById("dhEmbedObject");
 	        if (embedObject && embedObject.readyState && embedObject.readyState == 4) {
-				embedObject.OpenBrowserBar()
-		        window.open("${framer.post.url}", "_self", "", true)
+				embedObject.OpenBrowserBar();
+		        window.open("${framer.post.url}", "_self", "", true);
 			} else {
-				dhWriteFramesPage()
+				dhWriteFramesPage();
 			}
 		}
 	</script>
