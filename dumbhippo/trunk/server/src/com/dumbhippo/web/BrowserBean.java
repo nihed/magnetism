@@ -297,4 +297,25 @@ public class BrowserBean implements Serializable {
 	public String toString() {
 		return "{os=" + os + " browser=" + browser + " version=" + browserVersion + " osRequested=" + osRequested + " browserRequested=" + browserRequested + " distribution=" + distribution + " distributionRequested=" + distributionRequested + "}";
 	}
+	
+	private static void appendBool(StringBuilder sb, String jsVar, boolean value) {
+		sb.append(jsVar);
+		sb.append(" = ");
+		sb.append(Boolean.toString(value));
+		sb.append(";\n");
+	}
+	
+	public String getJavascriptCode() {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("dh.browser = {};\n");
+	
+		// this list isn't comprehensive, just add to it as you need to use it
+		appendBool(sb, "dh.browser.ie", isIe());
+		appendBool(sb, "dh.browser.gecko", isGecko());
+		appendBool(sb, "dh.browser.geckoAtLeast10", isGeckoAtLeast10());
+		appendBool(sb, "dh.browser.geckoAtLeast15", isGeckoAtLeast15());
+		
+		return sb.toString();
+	}
 }

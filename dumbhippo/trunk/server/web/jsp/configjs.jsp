@@ -40,3 +40,8 @@ var djConfig = {
 };
 
 function dhNoop() {}
+
+// begin code output by BrowserBean
+<dh:bean id="browser" scope="page" class="com.dumbhippo.web.BrowserBean"/>
+${browser.javascriptCode}
+// end code output by BrowserBean
