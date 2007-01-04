@@ -241,7 +241,7 @@ dh.util.join = function(array, separator, elemProp) {
 	return joined;
 }
 
-dh.util.disableOpacityEffects = dojo.render.html.mozilla && dojo.render.html.geckoVersion < 20051001;
+dh.util.disableOpacityEffects = dh.browser.gecko && !dh.browser.geckoAtLeast15;
 
 dh.util.getMainNode = function() {
 	var node = document.getElementById("dhMain");
@@ -496,7 +496,7 @@ dh.util.getMSXML = function (text) {
 dh.util.createPngElement = function(src, width, height) {
 	// don't try to use <img> or <span>, it won't work; the <div> is why you have to provide width/height
 	var img = document.createElement("div");
-	if (dojo.render.html.ie) {
+	if (dh.browser.ie) {
 		// don't try to use setAttribute(), it won't work
 		img.style.width = width;
 		img.style.height = height;

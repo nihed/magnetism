@@ -499,7 +499,7 @@ dh.control.createControl = function() {
 // user to appear in a chatroom after they are gone. So on teardown,
 // we clear the references to the control forcibly
 //
-if (dojo.render.html.ie) {
+if (dh.browser.ie) {
 	dh.control.oldOnUnload = window.onunload
 	window.onunload = function() {
 		if (dh.control.control) {
