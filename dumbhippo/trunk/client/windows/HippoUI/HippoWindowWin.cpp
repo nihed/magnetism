@@ -73,6 +73,7 @@ static void      hippo_window_win_init                (HippoWindowWin       *win
 static void      hippo_window_win_class_init          (HippoWindowWinClass  *klass);
 static void      hippo_window_win_iface_init          (HippoWindowClass     *window_class);
 static void      hippo_window_win_finalize            (GObject              *object);
+static void      hippo_window_win_dispose             (GObject              *object);
 
 static void hippo_window_win_set_property (GObject      *object,
                                            guint         prop_id,
@@ -181,12 +182,23 @@ hippo_window_win_class_init(HippoWindowWinClass *klass)
     g_object_class_override_property(object_class, PROP_ONSCREEN, "onscreen");
 
     object_class->finalize = hippo_window_win_finalize;
+    object_class->dispose = hippo_window_win_dispose;
 }
 
 static void
 hippo_window_win_init(HippoWindowWin *window_win)
 {
     window_win->impl = new HippoWindowImpl(window_win);
+}
+
+static void
+hippo_window_win_dispose(GObject *object)
+{
+    HippoWindowWin *win = HIPPO_WINDOW_WIN(object);
+
+    win->impl->setVisible(false); /* drop a ref if needed */
+
+    G_OBJECT_CLASS(hippo_window_win_parent_class)->dispose(object);
 }
 
 static void
@@ -426,10 +438,14 @@ HippoWindowImpl::idleResize()
 void
 HippoWindowImpl::setVisible(bool visible)
 {
+    if (visible == isShowing())
+        return;
     if (visible) {
         show(true);
+        g_object_ref(wrapper_);
     } else {
         hide();
+        g_object_unref(wrapper_);
     }
 }
 
@@ -441,7 +457,8 @@ HippoWindowImpl::hideToIcon(HippoRectangle *iconRect)
 
     GetWindowRect(window_, &fromRect);
 
-    hide();
+    g_object_ref(wrapper_); /* Hold a ref temporarily until code below is executed */
+    setVisible(false);
     
     toRect.left = iconRect->x;
     toRect.right = iconRect->x + iconRect->width;
@@ -449,6 +466,7 @@ HippoWindowImpl::hideToIcon(HippoRectangle *iconRect)
     toRect.bottom = iconRect->y + iconRect->height;
 
     DrawAnimatedRects(window_, IDANI_CAPTION, &fromRect, &toRect);
+    g_object_unref(wrapper_);
 }
 
 void
@@ -574,7 +592,7 @@ HippoWindowImpl::beginResize(HippoSide side)
 void
 HippoWindowImpl::present()
 {
-    show(true);
+    setVisible(true);
 
     // Apparently ShowWindow only activates a window when it is not shown. If it is
     // already showing, you need to activate it explicitly
