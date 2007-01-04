@@ -3,6 +3,7 @@ dojo.provide("dh.flickrupload");
 
 dojo.require("dh.sharelink");
 dojo.require("dh.html");
+dojo.require("dh.lang");
 dojo.require("dojo.dom");
 
 dh.flickrupload.Photo = function(filename, thumbnailPath) {
@@ -90,7 +91,7 @@ dh.flickrupload.Photo = function(filename, thumbnailPath) {
 		return this.infoXml
 	}
 }
-dojo.inherits(dh.flickrupload.Photo, Object);
+dh.inherits(dh.flickrupload.Photo, Object);
 
 dh.flickrupload.PhotoContainer = function () {
 	dh.debug("instantiating PhotoContainer")
@@ -304,7 +305,7 @@ dh.flickrupload.UploadStatus = function(photos, userId, photoTitle, descriptionH
 						});
 	}
 }
-dojo.inherits(dh.flickrupload.UploadStatus, dh.flickrupload.PhotoContainer);
+dh.inherits(dh.flickrupload.UploadStatus, dh.flickrupload.PhotoContainer);
 
 dh.flickrupload.UploadSet = function() {
 	dh.flickrupload.PhotoContainer.call(this);
@@ -420,7 +421,7 @@ dh.flickrupload.UploadSet = function() {
 		this.statusText.appendChild(document.createTextNode("" + (i+1) + " of " + this.photos.length))
 	}
 }
-dojo.inherits(dh.flickrupload.UploadSet, dh.flickrupload.PhotoContainer);
+dh.inherits(dh.flickrupload.UploadSet, dh.flickrupload.PhotoContainer);
 
 dh.debug("creating photoset instance"); 
 dh.sharephotoset.instance = new dh.flickrupload.UploadSet()
@@ -557,6 +558,6 @@ dh.flickrupload.ShareExt = function () {
 		dh.sharephotoset.instance.render();
 	}
 }
-dojo.inherits(dh.flickrupload.ShareExt, Object);
+dh.inherits(dh.flickrupload.ShareExt, Object);
 
 dh.sharelink.extensions.push(new dh.flickrupload.ShareExt());

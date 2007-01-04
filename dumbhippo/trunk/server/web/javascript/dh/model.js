@@ -174,7 +174,7 @@ dh.model.GuidPersistable = function(id, displayName) {
 		return this.kind == "world";
 	}
 }
-dojo.inherits(dh.model.GuidPersistable, Object);
+dh.inherits(dh.model.GuidPersistable, Object);
 
 dh.model.Person = function(id, userId, displayName, email, aim, emails, aims, hasAccount, photoUrl, homeUrl) {
 	this.id = id;
@@ -191,7 +191,7 @@ dh.model.Person = function(id, userId, displayName, email, aim, emails, aims, ha
 	this.homeUrl = homeUrl;
 	this.kind = "person";
 }
-dojo.inherits(dh.model.Person, dh.model.GuidPersistable);
+dh.inherits(dh.model.Person, dh.model.GuidPersistable);
 
 dh.model.Feed = function(id, displayName, photoUrl, homeUrl) {
 	this.id = id;
@@ -200,7 +200,7 @@ dh.model.Feed = function(id, displayName, photoUrl, homeUrl) {
 	this.homeUrl = homeUrl;
 	this.kind = "feed";
 }
-dojo.inherits(dh.model.Feed, dh.model.GuidPersistable);
+dh.inherits(dh.model.Feed, dh.model.GuidPersistable);
 
 dh.model.Group = function(id, displayName, memberCount, photoUrl, homeUrl, isPublic) {
 	this.id = id;
@@ -211,7 +211,7 @@ dh.model.Group = function(id, displayName, memberCount, photoUrl, homeUrl, isPub
 	this.isPublic = isPublic;
 	this.kind = "group";
 }
-dojo.inherits(dh.model.Group, dh.model.GuidPersistable);
+dh.inherits(dh.model.Group, dh.model.GuidPersistable);
 
 dh.model.TheWorld = function() {
 	this.id = "gaia"; /* Sufficiently odd that if this synthetic entity causes
@@ -219,7 +219,7 @@ dh.model.TheWorld = function() {
 	this.displayName = "The World";
 	this.kind = "world";
 }
-dojo.inherits(dh.model.TheWorld, dh.model.GuidPersistable);
+dh.inherits(dh.model.TheWorld, dh.model.GuidPersistable);
 
 dh.model.splitCommaString = function(str) {
 	return str.split(",");
