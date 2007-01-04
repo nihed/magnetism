@@ -1023,13 +1023,78 @@ HippoUI::isNoFrameURL(BSTR url)
     return false;
 }
 
-HippoExternalBrowser *
+bool 
+HippoUI::needOldIELaunch()
+{
+    // IE6 and older have an entirely broken default behavior for opening a new URL ... 
+    // a random browser is selected and repurposed for the new URL. So, we detect
+    // the condition that:
+    // 
+    //  - The installed version of IE is IE 6 or older
+    //  - The user's default browser is IE
+    // 
+    // and create an IE window directly in that case rather than going through
+    // ShellExecute.
+
+    bool haveOldIE = false;
+
+    HippoRegKey versionKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Internet Explorer", false);
+    HippoBSTR version;
+    if (versionKey.loadString(L"Version", &version)) {
+        if ((version[0] == '4' || version[0] == '5' || version[0] == '6') && version[1] == '.')
+            haveOldIE = true;
+    }
+
+    if (!haveOldIE)
+        return false;
+
+    bool launchViaIE = false;
+
+    HippoRegKey commandKey(HKEY_CLASSES_ROOT, L"HTTP\\shell\\open\\command", false);
+    HippoBSTR command;
+    if (commandKey.loadString(NULL, &command)) {
+        if (wcsstr(command.m_str, L"iexplore.exe") != 0 ||
+            wcsstr(command.m_str, L"IEXPLORE.EXE") != 0)
+        {
+            launchViaIE = true;
+        }
+    }
+
+    if (!launchViaIE)
+        return false;
+
+    return true;
+}
+
+void 
+HippoUI::launchNewBrowserOldIE(BSTR url)
+{
+    HippoPtr<IWebBrowser2> ie;
+
+    CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
+                     IID_IWebBrowser2, (void **)&ie);
+    HippoBSTR urlStr(url);
+    VARIANT missing;
+    missing.vt = VT_EMPTY;
+    ie->Navigate(urlStr, &missing, &missing, &missing, &missing);
+    ie->put_Visible(VARIANT_TRUE);
+}
+
+void 
+HippoUI::launchNewBrowserGeneric(BSTR url)
+{
+    ShellExecute(NULL, L"open", url, NULL, NULL, SW_SHOWNORMAL);
+}
+
+void
 HippoUI::launchBrowser(BSTR url)
 {
     // If the URL points directly to our site, try to find another IE window
     // visiting a part of our site and reuse that web browser; this avoids
     // getting a big pile of windows as the user keeps on using the notification
-    // icon.
+    // icon. We don't currently have this tracking facility if the windows are
+    // being opened via Firefox, so we just ignore the issue. Firefox tabs
+    // will keep things a bit neater in any case.
     if (isSiteURL(url)) {
         for (ULONG i = 0; i < browsers_.length(); i++) {
             if (isSiteURL(browsers_[i].url)) {
@@ -1055,15 +1120,14 @@ HippoUI::launchBrowser(BSTR url)
 
                     SetForegroundWindow(window);
                 }
-
-                return NULL;
             }
         }
     }
 
-    HippoExternalBrowser *browser = new HippoExternalBrowser(url, FALSE, NULL);
-    internalBrowsers_.append(HippoPtr<HippoExternalBrowser>(browser));
-    return browser;
+    if (needOldIELaunch())
+        launchNewBrowserOldIE(url);
+    else
+        launchNewBrowserGeneric(url);
 }
 
 // Show a window when the user clicks on a shared link
@@ -1080,11 +1144,7 @@ HippoUI::displaySharedLink(BSTR postId, BSTR url)
         targetURL.Append(postId);
     }
 
-    HippoExternalBrowser *browser = launchBrowser(targetURL);
-    // browser is only NULL if we reuse an existing browser, which we won't
-    // do for URLs where we want the browser bar.
-    if (browser)
-        browser->injectBrowserBar();
+    launchBrowser(targetURL);
 }
 
 void

@@ -167,9 +167,6 @@
 			<File
 				RelativePath=".\run-xpidl.bat">
 			</File>
-			<File
-				RelativePath=".\stdafx.cpp">
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -183,9 +180,6 @@
 			</File>
 			<File
 				RelativePath="..\..\common\firefox\src\hippoExtension.h">
-			</File>
-			<File
-				RelativePath=".\stdafx-hippofirefox.h">
 			</File>
 		</Filter>
 		<Filter

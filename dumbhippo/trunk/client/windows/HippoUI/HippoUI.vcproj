@@ -156,9 +156,6 @@
 				RelativePath=".\HippoEdit.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoExternalBrowser.cpp">
-			</File>
-			<File
 				RelativePath=".\HippoGSignal.cpp">
 			</File>
 			<File
@@ -276,9 +273,6 @@
 			</File>
 			<File
 				RelativePath=".\HippoEdit.h">
-			</File>
-			<File
-				RelativePath=".\HippoExternalBrowser.h">
 			</File>
 			<File
 				RelativePath=".\HippoGSignal.h">

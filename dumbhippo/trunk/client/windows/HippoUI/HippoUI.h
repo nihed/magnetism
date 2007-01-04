@@ -88,7 +88,7 @@ public:
     HippoConnection *getConnection();
 
     void showMenu(UINT buttonFlag);
-    HippoExternalBrowser *launchBrowser(BSTR url);
+    void launchBrowser(BSTR url);
     void displaySharedLink(BSTR postId, BSTR url);
 
     void ignorePost(BSTR postId);
@@ -143,11 +143,6 @@ private:
     void showSignInWindow();
     void showPreferences();
 
-    // Register an "internal" browser instance that we don't want
-    // to allow sharing of, and that we quit when the HippoUI
-    // instance exits
-    void addInternalBrowser(HippoExternalBrowser *browser, bool closeOnQuit);
-
     bool crackUrl(BSTR url, URL_COMPONENTS *components);
     // Check if an URL points to our site (and not to /visit)
     bool isSiteURL(BSTR url);
@@ -156,6 +151,10 @@ private:
     // Check if an URL points to /account, or another page that we
     // want to avoid framing
     bool isNoFrameURL(BSTR url);
+
+    bool needOldIELaunch();
+    void launchNewBrowserOldIE(BSTR url);
+    void launchNewBrowserGeneric(BSTR url);
 
     static int idleHotnessBlink(gpointer data);
 
@@ -252,7 +251,6 @@ private:
 
     HippoUIUpgradeWindowCallback *upgradeWindowCallback_;
 
-    HippoArray<HippoPtr<HippoExternalBrowser> > internalBrowsers_;
     HippoArray<HippoBrowserInfo> browsers_;
     std::vector<HippoPtr<HippoListenerProxy> > listeners_;
 
