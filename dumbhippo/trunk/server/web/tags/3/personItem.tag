@@ -33,18 +33,36 @@
         <c:if test="${who.liveUser != null}">  
             <dht3:presenceIcon who="${who}"/>
         </c:if>    
-        <span class="dh-person-item-name">
+        <div class="dh-person-item-name">
             <c:out value="${who.name}"/>	
-        </span>
+        </div>
+        <div class="dh-grow-div-around-floats"></div>	
         <div class="dh-person-item-controls">
             <dht3:personActionLinks who="${who}" showHomeUrl="true"/> 	 
         </div>      
         <c:if test="${who.liveUser != null}">
 		     <div class="dh-person-header-stats">
-		        <span class="dh-info"><c:out value="${who.liveUser.userContactsCount} in network"/></span> | 							
-			    <span class="dh-info"><dht3:plural n="${who.liveUser.groupCount}" s="group"/></span> | 
-	            <span class="dh-info"><dht3:plural n="${who.liveUser.sentPostsCount}" s="post"/></span> 
+		        <span class="dh-info">
+		            <c:if test="${who.viewerIsContact}">
+		                <a href="/network-overview?who=${who.identifyingGuid}">
+		            </c:if>    
+		            <c:out value="${who.liveUser.userContactsCount} in network"/>		
+		            <c:if test="${who.viewerIsContact}">
+		                </a>
+		            </c:if>    	
+		        </span> | 		            	            					
+			    <span class="dh-info">
+			        <c:if test="${who.liveUser.groupCount > 0}">
+		                <a href="/groups?who=${who.identifyingGuid}">
+		            </c:if>    
+			        <dht3:plural n="${who.liveUser.groupCount}" s="group"/>
+		            <c:if test="${who.viewerIsContact}">
+		                </a>
+		            </c:if>  			        
+			    </span> | 
+	            <span class="dh-info"><dht3:plural n="${who.liveUser.sentPostsCount}" s="post"/></span> 	            
 		    </div>
+		    <dht3:whereAtIcons who="${who}"/>
         </c:if>		
     </td>
     </tr>

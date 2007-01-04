@@ -16,15 +16,15 @@ dh.infoviewer.onImageMouseOver = function(e) {
 	var pageOuterPos = dh.util.getBodyPosition(pageOuterDiv);
 	var imageDivPos = dh.util.getBodyPosition(imageDiv);	
 	
-	if (e.clientX + 350 > width) {
- 	    infoDiv.style.left = (xOffset + width - 350 - pageOuterPos.x) + "px"; 
+	infoDiv.style.display = "block";
+	
+	if (imageDivPos.x + 15 + infoDiv.offsetWidth > width) {
+ 	    infoDiv.style.left = (imageDivPos.x - infoDiv.offsetWidth + 45 - pageOuterPos.x) + "px"; 
  	} else {
  	    infoDiv.style.left = (imageDivPos.x - pageOuterPos.x + 15) + "px";
  	}
  	    
-	infoDiv.style.top = (imageDivPos.y - pageOuterPos.y + 50) + "px";
-	
-	infoDiv.style.display = "block";				
+	infoDiv.style.top = (imageDivPos.y - pageOuterPos.y + 50) + "px";				
 }
 
 dh.infoviewer.onImageMouseOut = function(e) {

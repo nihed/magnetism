@@ -16,3 +16,11 @@
 .dh-learnmore-explanation {
     height:        1%;
 }
+
+.dh-person-item-more-info {
+    width:         270px;
+}
+
+.dh-person-item-more-info .dh-person-item-name {
+    margin-top:    1px;
+}

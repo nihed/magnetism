@@ -68,7 +68,10 @@
         <dht3:shinyBox color="grey">
 			<div class="dh-page-shinybox-title-large">
 				<span>People I've Invited to Join Mugshot <c:out value="(${person.pageableOutstandingInvitations.totalCount})"/></span>
-				<a class="dh-underlined-link dh-page-shinybox-subtitle" href="/invitation">Invite friends! (${person.invitations} invitations left)</a> 
+				<c:if test="${person.invitations != 1}">
+			        <c:set var="plural" value="s"/>
+			    </c:if>
+				<a class="dh-underlined-link dh-page-shinybox-subtitle" href="/invitation">Invite friends! (${person.invitations} invitation${plural} left)</a> 
 			</div>
 	        <c:choose>
     	        <c:when test="${person.pageableOutstandingInvitations.totalCount > 0}">

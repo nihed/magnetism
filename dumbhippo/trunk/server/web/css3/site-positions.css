@@ -528,7 +528,8 @@ div.dh-person-header {
 }
 
 .dh-person-header-stats {
-    padding-top:     1px;
+    padding-top:        1px;
+    padding-bottom:     2px;
 }
 
 .dh-download-header-area {
@@ -639,8 +640,7 @@ div.dh-person-header {
 .dh-person-item-more-info {
     position:			absolute;
     display:            none;
-    width:              300px;
-    overflow:           hidden;
+    min-width:          270px;
     padding:            3px;         
 	z-index:			2;
 }
@@ -660,6 +660,25 @@ div.dh-person-header {
 .dh-person-item-name {
 	text-align:			center;	
 	white-space:		nowrap;
+}
+
+.dh-person-item-more-info .dh-presence {
+    position:           relative;
+    float:              left;
+    display:            inline;
+    margin-right:       2px;
+}
+
+.dh-person-item-more-info .dh-person-item-name {
+    position:           relative;
+    float:              left;
+    clear:              right;
+    display:            inline;
+    margin-top:         -2px;
+}
+
+.dh-person-item-more-info .dh-favicons { 
+	width:              200px;
 }
 
 .dh-photo {

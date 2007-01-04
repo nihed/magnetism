@@ -20,7 +20,10 @@
 		<c:set var="invitations" value="${person.viewedPerson.user.account.invitations}" scope="page"/>
 		<c:if test="${invitations > 0}">
 			<c:set var="titleLink" value="/invitation"/>
-			<c:set var="titleLinkText" value="Invite friends (${invitations} invitations left)"/>
+			<c:if test="${invitations > 1}">
+			    <c:set var="plural" value="s"/>
+			</c:if>
+			<c:set var="titleLinkText" value="Invite friends (${invitations} invitation${plural} left)"/>
 		</c:if>
 	</c:when>
 	<c:otherwise>
