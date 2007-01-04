@@ -1,5 +1,6 @@
 dojo.provide("dh.statistics.fetcher");
 dojo.require("dh.server");
+dojo.require("dh.dom");
 
 dh.statistics.fetcher.Specification = function(server, filename, column) {
 	this.server = server;
@@ -171,8 +172,8 @@ dojo.lang.extend(dh.statistics.fetcher.Fetcher,
         for (var i = 0; i < childNodes.length; ++i) {
 	        var child = childNodes.item(i);
 	        var time = parseFloat(child.getAttribute("time"));
-	        var content = dojo.dom.textContent(child);
-	        var values = dojo.dom.textContent(child).split(",");
+	        var content = dh.dom.textContent(child);
+	        var values = dh.dom.textContent(child).split(",");
 			for (var j = 0; j < values.length; j++) {
 				datasets[j].add(time, parseInt(values[j]));
 			}

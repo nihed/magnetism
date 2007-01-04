@@ -1,7 +1,7 @@
 dojo.provide("dh.lovehate");
 dojo.require("dh.util");
 dojo.require("dh.textinput");
-dojo.require("dojo.html");
+dojo.require("dh.dom");
 
 dh.lovehate.allEntries = {}
 
@@ -55,10 +55,10 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 		
 		// Sync the "not in edit mode" values with the entries, if we're about to show them
 		if (node == me._loveNode && me._specialLoveValue == null) {
-			dojo.dom.textContent(me._loveValue, me._loveEntry.getValue());			
+			dh.dom.textContent(me._loveValue, me._loveEntry.getValue());			
 		}
 		if (node == me._hateNode) {
-			dojo.dom.textContent(me._hateValue, me._hateEntry.getValue());			
+			dh.dom.textContent(me._hateValue, me._hateEntry.getValue());			
 		}
 		
 		var i;
@@ -125,7 +125,7 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this.setSpecialLoveValue = function(value) {
 	    // this is used when we don't want a long value for the entry to be visible 
 	    // when the entry is not being edited
-	    dojo.dom.textContent(me._loveValue, value);	
+	    dh.dom.textContent(me._loveValue, value);	
 	    me._specialLoveValue = value;
 	}
 	

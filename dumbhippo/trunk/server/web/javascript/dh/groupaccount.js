@@ -5,8 +5,9 @@ dojo.require("dh.formtable")
 dojo.require("dh.textinput")
 dojo.require("dh.photochooser")
 dojo.require("dh.fileinput")
-dojo.require("dojo.dom")
 dojo.require("dh.popup")
+dojo.require("dojo.dom");
+dojo.require("dh.dom");
 dojo.require("dh.feeds");
 
 dh.groupaccount.startWait = function() {
@@ -44,7 +45,7 @@ dh.groupaccount.createGroup = function() {
 							dh.groupaccount.stopWait()
 							document.location.href = "/group-invitation?group=" + groups[0].getAttribute("id")
                 		} else {
-	                        dojo.debug("Didn't get group in response to creategroup");
+	                        dh.debug("Didn't get group in response to creategroup");
 							dh.groupaccount.stopWait("Couldn't create the group")
                 		}                    	
                     },
@@ -107,14 +108,14 @@ dh.groupaccount.onFeedPreview = function(childNodes, http) {
 		if (child.nodeType != dojo.dom.ELEMENT_NODE)
 			continue;
 		
-		//alert("child node name " + child.nodeName + " content: " + dojo.dom.textContent(child));
+		//alert("child node name " + child.nodeName + " content: " + dh.dom.textContent(child));
 		
 		if (child.nodeName == "title") {
-			title = dojo.dom.textContent(child);
+			title = dh.dom.textContent(child);
 		} else if (child.nodeName == "link") {
-			link = dojo.dom.textContent(child);
+			link = dh.dom.textContent(child);
 		} else if (child.nodeName == "source") {
-			source = dojo.dom.textContent(child);
+			source = dh.dom.textContent(child);
 		} else if (child.nodeName == "item") {
 			var item = {};
 			var j = 0;
@@ -125,16 +126,16 @@ dh.groupaccount.onFeedPreview = function(childNodes, http) {
 					continue;
 				
 				if (child2.nodeName == "title") {
-					item["title"] = dojo.dom.textContent(child2);
+					item["title"] = dh.dom.textContent(child2);
 				} else if (child2.nodeName == "link") {
-					item["link"] = dojo.dom.textContent(child2);
+					item["link"] = dh.dom.textContent(child2);
 				} else {
-					alert("unknown node " + child2.nodeName + " with content: " + dojo.dom.textContent(child2));
+					alert("unknown node " + child2.nodeName + " with content: " + dh.dom.textContent(child2));
 				}
 			}
 			items.push(item);
 		} else {
-			//alert("unknown node " + child.nodeName + " with content: " + dojo.dom.textContent(child));
+			//alert("unknown node " + child.nodeName + " with content: " + dh.dom.textContent(child));
 		}
 	}
 
@@ -153,7 +154,7 @@ dh.groupaccount.onFeedPreview = function(childNodes, http) {
 	dojo.html.addClass(feedTitleNode, 'dh-feed-title');
 	feedTitleNode.setAttribute("target", "_blank");
 	feedTitleNode.setAttribute("href", link);
-	dojo.dom.textContent(feedTitleNode, title);
+	dh.dom.textContent(feedTitleNode, title);
 	previewNode.appendChild(feedTitleNode);
 
 	var feedItemListNode = document.createElement('ol');
@@ -162,7 +163,7 @@ dh.groupaccount.onFeedPreview = function(childNodes, http) {
 	for (i = 0; i < items.length; ++i) {
 		var itemNode = document.createElement('li');
 		dojo.html.addClass(itemNode, 'dh-feed-item');
-		dojo.dom.textContent(itemNode, items[i]["title"]);
+		dh.dom.textContent(itemNode, items[i]["title"]);
 		feedItemListNode.appendChild(itemNode);
 	}
     
@@ -214,7 +215,7 @@ dh.groupaccount.tryAddFeed = function() {
 
 							dh.util.clearNode(failedMessageNode);
 							dojo.html.addClass(failedMessageNode, 'dh-feed-title');
-							dojo.dom.textContent(failedMessageNode, msg);
+							dh.dom.textContent(failedMessageNode, msg);
 							
 			  	    	 	dh.popup.show('dhFeedFailedPopup', document.getElementById('dhFeedEntry'));
 			  	    	}

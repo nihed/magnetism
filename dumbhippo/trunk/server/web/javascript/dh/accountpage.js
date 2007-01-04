@@ -8,6 +8,7 @@ dojo.require("dh.textinput")
 dojo.require("dh.photochooser")
 dojo.require("dh.fileinput")
 dojo.require("dojo.dom")
+dojo.require("dh.dom")
 dojo.require("dh.popup")
 dojo.require("dh.feeds");
 dojo.require("dh.password");

@@ -1,6 +1,7 @@
 dojo.provide("dh.sharelink");
 
 dojo.require("dojo.dom");
+dojo.require("dh.dom");
 dojo.require("dojo.event.*");
 dojo.require("dojo.widget.*");
 dojo.require("dojo.html");
@@ -58,10 +59,10 @@ dh.sharelink.toggleCreateGroup = function() {
 	dh.util.toggleShowing(popup);
 	
 	if (dh.util.isShowing(popup)) {
-		dojo.dom.textContent(dh.sharelink.createGroupLink, "Cancel");
+		dh.dom.textContent(dh.sharelink.createGroupLink, "Cancel");
 		dh.sharelink.createGroupNameEntry.focus();
 	} else {
-		dojo.dom.textContent(dh.sharelink.createGroupLink, "Create Group");
+		dh.dom.textContent(dh.sharelink.createGroupLink, "Create Group");
 		dh.sharelink.unhighlightPossibleGroup();
 	}
 }
@@ -78,7 +79,7 @@ dh.sharelink.doCreateGroup = function() {
 		
 	var statusNode = document.getElementById("dhCreateGroupStatus");
 	// this makes things jump around and look ugly, disable for now
-	//dojo.dom.textContent(statusNode, "Please wait...");
+	//dh.dom.textContent(statusNode, "Please wait...");
 	//dh.util.show(statusNode);
 	
 	var groupMembers = [];
@@ -99,14 +100,14 @@ dh.sharelink.doCreateGroup = function() {
 						"secret" : secret
 					},
 					function(type, data, http) {
-						dojo.debug("got back a new group " + data);
-						dojo.debug("text is : " + http.responseText);
+						dh.debug("got back a new group " + data);
+						dh.debug("text is : " + http.responseText);
 					
 						var newGroups = dh.share.mergeObjectsDocument(data);
 
 						for (var i = 0; i < newGroups.length; ++i) {							    	
 							// add the group as a recipient
-							dojo.debug("adding newly-created group as recipient");
+							dh.debug("adding newly-created group as recipient");
 					    	dh.share.doAddRecipient(newGroups[i].id);
 						}
 						
@@ -145,7 +146,7 @@ dh.sharelink.doAddMembers = function() {
 	dh.sharelink.inAction = true;
 		
 	var statusNode = document.getElementById("dhCreateGroupStatus");
-	dojo.dom.textContent(statusNode, "Please wait...");
+	dh.dom.textContent(statusNode, "Please wait...");
 	dh.util.show(statusNode);
 	
 	var groupId;
@@ -170,8 +171,8 @@ dh.sharelink.doAddMembers = function() {
 						"members" : commaMembers
 					},
 					function(type, data, http) {
-						dojo.debug("got back a replacement group " + data);
-						dojo.debug("text is : " + http.responseText);
+						dh.debug("got back a replacement group " + data);
+						dh.debug("text is : " + http.responseText);
 					
 						// remove the group and individual members as recipients
 						dh.share.removeRecipient(groupId);
@@ -184,7 +185,7 @@ dh.sharelink.doAddMembers = function() {
 
 						for (var i = 0; i < newGroups.length; ++i) {							    	
 							// add the group as a recipient
-							dojo.debug("adding newly-created group as recipient");
+							dh.debug("adding newly-created group as recipient");
 					    	dh.share.doAddRecipient(newGroups[i].id);
 						}
 						
@@ -240,8 +241,8 @@ dh.sharelink.updateActionLinks = function() {
 		else 
 			descriptionText = "all";
 			
-		dojo.dom.textContent(dh.sharelink.addMemberDescription, descriptionText);
-		dojo.dom.textContent(dh.sharelink.addMemberGroup, group.displayName);
+		dh.dom.textContent(dh.sharelink.addMemberDescription, descriptionText);
+		dh.dom.textContent(dh.sharelink.addMemberGroup, group.displayName);
 		dh.util.show(dh.sharelink.addMemberLink);
 	} else {
 		dh.util.hide(dh.sharelink.addMemberLink);
@@ -262,12 +263,12 @@ dh.sharelink.doSubmit = function() {
 	if (dh.sharelink.postInfo)
 		postInfoXml = dojo.dom.toText(dh.sharelink.postInfo);
 
-	dojo.debug("url = " + url);
-	dojo.debug("title = " + title);
-	dojo.debug("desc = " + descriptionHtml);
-	dojo.debug("rcpts = " + commaRecipients);
-	dojo.debug("public = " + isPublic);
-	dojo.debug("postInfo = " + postInfoXml);
+	dh.debug("url = " + url);
+	dh.debug("title = " + title);
+	dh.debug("desc = " + descriptionHtml);
+	dh.debug("rcpts = " + commaRecipients);
+	dh.debug("public = " + isPublic);
+	dh.debug("postInfo = " + postInfoXml);
 	
 	var args = 	{ 	"url" : url,
 					"title" : title, 
@@ -283,13 +284,13 @@ dh.sharelink.doSubmit = function() {
 	dh.server.getXmlPOST("sharelink",
 						args,
 						function(type, data, http) {
-							dojo.debug("sharelink got back data " + data)
+							dh.debug("sharelink got back data " + data)
 							try {
 								var post = data.documentElement
 								var id = post.getAttribute("id")
 						    	window.external.application.ShareLinkComplete(id, url)					
 							} catch (e) { 
-								dojo.debug("error signaling sharelink complete: " + e)
+								dh.debug("error signaling sharelink complete: " + e)
 							}
 							dh.util.goToNextPage("", "You've been shared!");
 						},
@@ -299,7 +300,7 @@ dh.sharelink.doSubmit = function() {
 }
 
 dh.sharelink.submitButtonClicked = function() {
-	dojo.debug("clicked share link button");
+	dh.debug("clicked share link button");
 	
 	dh.share.checkAndSubmit(dh.sharelink.doSubmit)
 }
@@ -309,13 +310,13 @@ dhShareLinkSetPostInfo = function (xmlText) {
 	try {
 		dh.sharelink.postInfo = dojo.dom.createDocumentFromText(xmlText);
 	} catch (e) {
-		dojo.debug("error in dhShareLinkSetPostInfo: " + e.message);
+		dh.debug("error in dhShareLinkSetPostInfo: " + e.message);
 	}
 }
 
 dh.sharelink.init = function() {
 	try {
-	dojo.debug("dh.sharelink.init");
+	dh.debug("dh.sharelink.init");
 			
 	var params = dh.util.getParamsFromLocation();
 	
@@ -333,7 +334,7 @@ dh.sharelink.init = function() {
 	dh.sharelink.urlTitleToShareEditBox = dojo.widget.manager.getWidgetById("dhUrlTitleToShare");
 	var params = dh.util.getParamsFromLocation();
 	if (dojo.lang.has(params, "title")) {
-		dojo.debug("title=" + params["title"])
+		dh.debug("title=" + params["title"])
 		dh.sharelink.urlTitleToShareEditBox.setText(params["title"]);
 	}
 
@@ -385,7 +386,7 @@ dh.sharelink.init = function() {
 		dh.sharelink.extensions[i].render()
 	}
 	} catch (e) {
-		dojo.debug("error in dh.sharelink.init: " + e.message)
+		dh.debug("error in dh.sharelink.init: " + e.message)
 	}	
 }
 

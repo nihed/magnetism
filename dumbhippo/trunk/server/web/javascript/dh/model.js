@@ -1,5 +1,7 @@
 // This file contains the "model" objects, like Person
 dojo.provide("dh.model");
+dojo.require("dh.util");
+dojo.require("dh.dom");
 
 dh.model.Track = function(image, title, artist, album, stillPlaying) {
 	this.image = image;
@@ -11,7 +13,7 @@ dh.model.Track = function(image, title, artist, album, stillPlaying) {
 
 dh.model.trackFromXmlNode = function(element) {
 	if (element.nodeName != "song")
-		dojo.raise("not a song element");
+		dh.raise("not a song element");
 	var image = null;
 	var title = null;
 	var artist = null;
@@ -22,15 +24,15 @@ dh.model.trackFromXmlNode = function(element) {
 	for (i = 0; i < element.childNodes.length; ++i) {
 		var n = element.childNodes.item(i);
 		if (n.nodeName == "title")
-			title = dojo.dom.textContent(n);
+			title = dh.dom.textContent(n);
 		else if (n.nodeName == "image")
-			image = dojo.dom.textContent(n);
+			image = dh.dom.textContent(n);
 		else if (n.nodeName == "artist")
-			artist = dojo.dom.textContent(n);
+			artist = dh.dom.textContent(n);
 		else if (n.nodeName == "album")
-			album = dojo.dom.textContent(n);
+			album = dh.dom.textContent(n);
 		else if (n.nodeName == "stillPlaying");
-			stillPlaying = dojo.dom.textContent(n);
+			stillPlaying = dh.dom.textContent(n);
 	}
 	
 	return new dh.model.Track(image, title, artist, album, stillPlaying == "true");
@@ -46,7 +48,7 @@ dh.model.UpdateItem = function(title, link, text, timestamp, photos) {
 
 dh.model.updateItemFromXmlNode = function(element) {		
     if (element.nodeName != "updateItem")
-        dojo.raise("updateItem node expected");		
+        dh.raise("updateItem node expected");		
 			
 	var title = null;
 	var link = null;
@@ -58,34 +60,34 @@ dh.model.updateItemFromXmlNode = function(element) {
 		
 	var updateTitleNode = itemChildNodes.item(0);
 	if (updateTitleNode.nodeName != "updateTitle")
-		dojo.raise("updateTitle node expected");
-	title = dojo.dom.textContent(updateTitleNode);
+		dh.raise("updateTitle node expected");
+	title = dh.dom.textContent(updateTitleNode);
 
 	var updateLinkNode = itemChildNodes.item(1);
 	if (updateLinkNode.nodeName != "updateLink")
-		dojo.raise("updateLink node expected");
-	link = dojo.dom.textContent(updateLinkNode);
+		dh.raise("updateLink node expected");
+	link = dh.dom.textContent(updateLinkNode);
 				
 	var updateTextNode = itemChildNodes.item(2);
 	if (updateTextNode.nodeName != "updateText")
-		dojo.raise("updateText node expected");
-	text = dojo.dom.textContent(updateTextNode);
+		dh.raise("updateText node expected");
+	text = dh.dom.textContent(updateTextNode);
 	
 	// "updateTimestamp" is optional
 	if (itemChildNodes.length > 3) {
 	    var updateTimestampNode = itemChildNodes.item(3);
 	    if (updateTimestampNode.nodeName != "updateTimestamp")
-		    dojo.raise("updateTimestamp node expected");
-	    timestampString = dojo.dom.textContent(updateTimestampNode);	    	
+		    dh.raise("updateTimestamp node expected");
+	    timestampString = dh.dom.textContent(updateTimestampNode);	    	
 	    timestamp = parseInt(timestampString);
 	    if (timestamp == NaN)
-		    dojo.raise("failed to parse '" + timestampString + "' as an integer for a timestamp");
+		    dh.raise("failed to parse '" + timestampString + "' as an integer for a timestamp");
 	}
 	
 	if (itemChildNodes.length > 4) {
 	    var updatePhotosNode = itemChildNodes.item(4);
 	    if (updatePhotosNode.nodeName != "updatePhotos")
-		    dojo.raise("updatePhotos node expected");
+		    dh.raise("updatePhotos node expected");
 	    
 	    photoNodes = updatePhotosNode.childNodes;
 		var i;
@@ -108,7 +110,7 @@ dh.model.PhotoData = function(link, source, caption) {
 
 dh.model.updatePhotoDataFromXmlNode = function(element) {		
     if (element.nodeName != "photo")
-        dojo.raise("photo node expected");		
+        dh.raise("photo node expected");		
 			
 	var link = null;
 	var source = null;
@@ -118,18 +120,18 @@ dh.model.updatePhotoDataFromXmlNode = function(element) {
 		
 	var linkNode = photoChildNodes.item(0);
 	if (linkNode.nodeName != "photoLink")
-		dojo.raise("photoLink node expected");
-	link = dojo.dom.textContent(linkNode);
+		dh.raise("photoLink node expected");
+	link = dh.dom.textContent(linkNode);
 
 	var sourceNode = photoChildNodes.item(1);
 	if (sourceNode.nodeName != "photoSource")
-		dojo.raise("photoSource node expected");
-	source = dojo.dom.textContent(sourceNode);
+		dh.raise("photoSource node expected");
+	source = dh.dom.textContent(sourceNode);
 	
     var captionNode = photoChildNodes.item(2);
 	if (captionNode.nodeName != "photoCaption")
-		dojo.raise("photoCaption node expected");
-	caption = dojo.dom.textContent(captionNode);
+		dh.raise("photoCaption node expected");
+	caption = dh.dom.textContent(captionNode);
 	
 	return new dh.model.PhotoData(link, source, caption);
 }	
@@ -144,8 +146,8 @@ dh.model.Message = function(text, fromId, fromNickname, serial, timestamp) {
 
 dh.model.messageFromXmlNode = function(element) {
 	if (element.nodeName != "message")
-		dojo.raise("not a message element");
-	var text = dojo.dom.textContent(element);
+		dh.raise("not a message element");
+	var text = dh.dom.textContent(element);
 	var from = element.getAttribute("fromId");
 	var nick = element.getAttribute("fromNickname");
 	var serial = element.getAttribute("serial");	
@@ -226,7 +228,7 @@ dh.model.personFromXmlNode = function(element) {
 	// the old HttpMethodsBean stuff returns a person that can be a contact or user,
 	// the new method on PersonView returns either a <user> or <resource> element
 	if (element.nodeName != "person" && element.nodeName != "user")
-		dojo.raise("not a person or user element");
+		dh.raise("not a person or user element");
 
 	var id = element.getAttribute("id");
 	var displayName = element.getAttribute("display");
@@ -260,9 +262,9 @@ dh.model.personFromXmlNode = function(element) {
 
 	// note, empty string is "false"	
 	if (!id)
-		dojo.raise("no id attr on <person> node");
+		dh.raise("no id attr on <person> node");
 	if (!displayName)
-		dojo.raise("no display attr on <person> node");
+		dh.raise("no display attr on <person> node");
 	
 	return new dh.model.Person(id, userId, displayName, email, aim, emails, aims, 
 		hasAccount == "true" ? true : false, photoUrl, homeUrl);
@@ -270,7 +272,7 @@ dh.model.personFromXmlNode = function(element) {
 
 dh.model.feedFromXmlNode = function(element) {
 	if (element.nodeName != "feed")
-		dojo.raise("not a feed element");
+		dh.raise("not a feed element");
 
 	var id = element.getAttribute("id");
 	var displayName = element.getAttribute("name");
@@ -279,16 +281,16 @@ dh.model.feedFromXmlNode = function(element) {
 
 	// note, empty string is "false"	
 	if (!id)
-		dojo.raise("no id attr on <feed> node");
+		dh.raise("no id attr on <feed> node");
 	if (!displayName)
-		dojo.raise("no name attr on <person> node");
+		dh.raise("no name attr on <person> node");
 	
 	return new dh.model.Feed(id, displayName, photoUrl, homeUrl);
 }
 
 dh.model.groupFromXmlNode = function(element) {
 	if (element.nodeName != "group")
-		dojo.raise("not a group element");
+		dh.raise("not a group element");
 
 	var id = element.getAttribute("id");
 	var displayName = element.getAttribute("display");
@@ -300,9 +302,9 @@ dh.model.groupFromXmlNode = function(element) {
 	// note, empty string is "false", so group name, which is what is usually
 	// used for the display attribute, must not be blank	
 	if (!id)
-		dojo.raise("no id attr on <group> node");
+		dh.raise("no id attr on <group> node");
 	if (!displayName)
-		dojo.raise("no display attr on <group> node");
+		dh.raise("no display attr on <group> node");
 	
 	return new dh.model.Group(id, displayName, memberCount, photoUrl, homeUrl, isPublic);
 }
@@ -317,7 +319,7 @@ dh.model.objectFromXmlNode = function(element) {
 	} else if (element.nodeName == "user") {
 		return dh.model.personFromXmlNode(element);
 	} else {
-		dojo.raise("unknown xml node " + element.nodeName);
+		dh.raise("unknown xml node " + element.nodeName);
 	}
 }
 

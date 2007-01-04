@@ -2,7 +2,7 @@ dojo.provide("dh.login");
 
 dojo.require("dh.server");
 dojo.require("dh.util");
-dojo.require("dojo.dom");
+dojo.require("dh.dom");
 
 dh.login.showingPassword = false;
 dh.login.form = null;
@@ -41,7 +41,7 @@ dh.login.togglePasswordBox = function() {
 		passwordEntry.style.display = 'none';
 		passwordHelp.style.display  = 'none';
 		loginButton.value = "Mail me a log in link";
-		dojo.dom.textContent(toggleLink, "Log in with password");
+		dh.dom.textContent(toggleLink, "Log in with password");
 		showingEntry.value = "false";
 		dh.login.showingPassword = false;
 	} else {
@@ -49,7 +49,7 @@ dh.login.togglePasswordBox = function() {
 		passwordEntry.style.display = 'inline';
 		passwordHelp.style.display  = 'inline';
 		loginButton.value = "Log in";
-		dojo.dom.textContent(toggleLink, "Don't know my password");
+		dh.dom.textContent(toggleLink, "Don't know my password");
 		showingEntry.value = "true";
 		dh.login.showingPassword = true;
 	}

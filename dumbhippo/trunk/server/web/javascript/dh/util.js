@@ -1,6 +1,7 @@
 dojo.provide("dh.util");
 dojo.provide("dh.logger");
 dojo.require("dojo.html");
+dojo.require("dojo.dom");
 
 dh.logger.LogEntry = function(category, text, level) {
 	this.category = category;
@@ -98,9 +99,35 @@ dh.logger.logError = function(category, text) {
 dh.log = dh.logger.log;
 dh.logError = dh.logger.logError;
 
+// deprecated, replaces dojo.debug
+dh.debug = function(text) {
+	dh.log("debug", text, "debug");
+}
+
+// dojo.raise compatibility; no real reason to use this, 
+// the idea in Dojo is that it allows hooking in a log 
+// whenever an exception is thrown
+dh.raise = function(message, excep){
+	throw Error(message);
+}
+
+// from dojo.string.trim
+dh.util.trim = function(s){
+	// some code (notably on sharelink there was something) seems to rely 
+	// on being able to trim() a null string and get null back (or maybe
+	// empty string is false in javascript? would not surprise me)
+	if (!s) {
+		return s;
+	}
+	if (!s.length) {
+		return s;
+	}
+	return s.replace(/^\s*/, "").replace(/\s*$/, "");
+}
+
 dh.util.getParamsFromLocation = function() {
 	var query = window.location.search.substring(1);
-	dojo.debug("query: " + query);
+	dh.debug("query: " + query);
 	var map = {};
 	var params = query.split("&");
    	for (var i = 0; i < params.length; i++) {
@@ -112,7 +139,7 @@ dh.util.getParamsFromLocation = function() {
    		    // into something that decodeURIComponent can understand
    		    val = val.replace(/\+/g, "%20");
    			map[key] = decodeURIComponent(val);
-   			dojo.debug("mapping query key " + key + " to " + map[key]);
+   			dh.debug("mapping query key " + key + " to " + map[key]);
    		}
     }
     return map;
@@ -135,14 +162,14 @@ dh.util.encodeQueryString = function(params) {
 dh.util.showId = function(nodeId) {
 	var node = document.getElementById(nodeId);
 	if (!node)
-		dojo.raise("can't find node " + nodeId);
+		dh.raise("can't find node " + nodeId);
 	dh.util.show(node);
 }
 
 dh.util.hideId = function(nodeId) {
 	var node = document.getElementById(nodeId);
 	if (!node)
-		dojo.raise("can't find node " + nodeId);
+		dh.raise("can't find node " + nodeId);
 	dh.util.hide(node);
 }
 
@@ -188,10 +215,10 @@ dh.util.closeWindow = function() {
 dh.util.flash = function(node) {
 	var origColor = dojo.html.getBackgroundColor(node);
 	var flashColor = [0,200,0];
-	//dojo.debug("fading from " + origColor + " to " + flashColor);
+	//dh.debug("fading from " + origColor + " to " + flashColor);
 	dojo.fx.html.colorFade(node, origColor, flashColor, 400,
 						function(node, anim) {
-							dojo.debug("fading from " + flashColor + " to " + origColor);
+							dh.debug("fading from " + flashColor + " to " + origColor);
 							dojo.fx.html.colorFade(node, flashColor, origColor, 400, function(node, anim) {
 								/* go back to our CSS color */
 								node.removeAttribute("style");
@@ -261,7 +288,7 @@ dh.util.goToNextPage = function(def, flashMessage) {
 		if (dh.util.closeWindow()) {
 			return; // never reached I think
 		} else {
-			dojo.debug("close window failed, trying default " + def);
+			dh.debug("close window failed, trying default " + def);
 			delete where;
 		}
 	}
@@ -270,16 +297,16 @@ dh.util.goToNextPage = function(def, flashMessage) {
 		where = def;
 		
 	if (!where) {
-		dojo.debug("no next page specified");	
+		dh.debug("no next page specified");	
 	} else if (where == "close") {
 		dh.util.closeWindow();
 	} else if (where == "here") {
-		dojo.debug("staying put");
+		dh.debug("staying put");
 	} else if (where == def || where.match(/^[a-zA-Z]+$/)) {
-		dojo.debug("opening " + where);
+		dh.debug("opening " + where);
     	window.open(where, "_self");
 	} else {
-		dojo.debug("invalid next page target " + where);
+		dh.debug("invalid next page target " + where);
 	}
 }
 
@@ -294,7 +321,7 @@ dh.util.getTextFromHtmlNode = function(node) {
 			if (node.nodeName.toLowerCase() == "br") {
 				result += "\n";
 			} else {
-				//dojo.debug("element = " + node.nodeName);
+				//dh.debug("element = " + node.nodeName);
 			}
 			break;
 		case 5: // ENTITY_REFERENCE_NODE
@@ -338,7 +365,7 @@ dh.util.truncateTextInHtmlNode = function(node, length) {
 		        if (length > 1)
 				    length--;				    
 			} else {
-				//dojo.debug("element = " + node.nodeName);
+				//dh.debug("element = " + node.nodeName);
 			}
 			break;
 		case 5: // ENTITY_REFERENCE_NODE

@@ -62,7 +62,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	
 	this._emitValueChanged = function() {
 		var v = this.getValue();
-		dojo.debug("v = '" + v + "'");
+		dh.debug("v = '" + v + "'");
 		if (!this.emptyIsValid && (!v || v.length == 0)) {
 			this._showDefaultText();
 		}

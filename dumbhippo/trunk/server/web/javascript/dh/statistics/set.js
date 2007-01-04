@@ -1,6 +1,6 @@
 dojo.provide("dh.statistics.set");
-dojo.require("dojo.dom");
-dojo.require("dojo.string");
+dojo.require("dh.dom");
+dojo.require("dh.util");
 
 dh.statistics.set.Set = function(server, filename, current) {
 	this.server = server;
@@ -37,7 +37,7 @@ dh.statistics.set.fromXml = function(statisticsSetElement, server, filename) {
         if (child.nodeName == "columns") {
         	columnNodes = child.childNodes;
         } else if (child.nodeName == "current") {
-			current = dojo.string.trim(dojo.dom.textContent(child)) == "true";
+			current = dh.util.trim(dh.dom.textContent(child)) == "true";
         }
  	}
  	
@@ -51,7 +51,7 @@ dh.statistics.set.fromXml = function(statisticsSetElement, server, filename) {
 	for (var j = 0; j < columnNodes.length; j++) {
         var column = columnNodes.item(j);
         set.add(column.getAttribute("id"),
-				dojo.dom.textContent(column.firstChild),
+				dh.dom.textContent(column.firstChild),
 				column.getAttribute("units"),
 			    column.getAttribute("type"));
     }

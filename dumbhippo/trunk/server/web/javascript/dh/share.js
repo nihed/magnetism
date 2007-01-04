@@ -3,7 +3,6 @@ dojo.provide("dh.share");
 dojo.require("dojo.event.*");
 dojo.require("dojo.widget.*");
 dojo.require("dojo.html");
-dojo.require("dojo.string");
 dojo.require("dojo.widget.RichText");
 dojo.require("dojo.widget.html.Button");
 dojo.require("dojo.widget.HtmlComboBox");
@@ -50,7 +49,7 @@ dh.share.mergeObjectsDocument = function(doc) {
 	var retval = [];
 	var objectsElement = doc.getElementsByTagName("objects").item(0);
 	if (!objectsElement) {
-		dojo.debug("no <objects> element");
+		dh.debug("no <objects> element");
 		return retval;
 	}
 	var nodeList = objectsElement.childNodes;
@@ -63,7 +62,7 @@ dh.share.mergeObjectsDocument = function(doc) {
 		    // merge in a new person/group we know about, overwriting any older data
 		    dh.share.allKnownIds[obj.id] = obj;
 		    retval.push(obj);
-		    dojo.debug(" saved new obj type = " + obj.kind + " id = " + obj.id + " display = " + obj.displayName);
+		    dh.debug(" saved new obj type = " + obj.kind + " id = " + obj.id + " display = " + obj.displayName);
 		}
 	}
 	
@@ -132,7 +131,7 @@ dh.share.removeRecipient = function(recipientId, node) {
 }
 
 dhRemoveRecipientClicked = function(event) {
-	dojo.debug("remove recipient");
+	dh.debug("remove recipient");
 	
 	// scan up for the dhId node which is the outermost
 	// node of the html representing this person/group, and also 
@@ -158,15 +157,15 @@ dh.share.addEmailContactAsync = function(email, onComplete) {
 	dh.server.getXmlPOST("createorgetcontact",
 			{ "email" : email },
 			function(type, data, http) {
-				dojo.debug("got back a contact " + data);
-				dojo.debug("text is : " + http.responseText);
+				dh.debug("got back a contact " + data);
+				dh.debug("text is : " + http.responseText);
 						
 				var newContacts = dh.share.mergeObjectsDocument(data);
 				
 				for (var i = 0; i < newContacts.length; ++i) {
 					// add someone; this flashes their entry and is a no-op 
 					// if they were already added
-					dojo.debug("adding newly-created contact as recipient");
+					dh.debug("adding newly-created contact as recipient");
 					dh.share.doAddRecipient(newContacts[i].id);
 				}
 				
@@ -179,10 +178,10 @@ dh.share.addEmailContactAsync = function(email, onComplete) {
 }
 
 dh.share.createNewContactFromCombo = function() {
-	var email = dojo.string.trim(dh.share.autoSuggest.inputText);
+	var email = dh.util.trim(dh.share.autoSuggest.inputText);
 	
 	if (email.length == 0) { // Silently ignore empty
-		dojo.debug("ignoring empty email")
+		dh.debug("ignoring empty email")
 		return
 	}
 	
@@ -191,14 +190,14 @@ dh.share.createNewContactFromCombo = function() {
 		return;
 	}
 	
-	dojo.debug("looking up contact " + email);
+	dh.debug("looking up contact " + email);
 	
 	dh.share.addEmailContactAsync(email)
 }
 	
 dh.share.recipientSelected = function(selectedId) {
 
-	dojo.debug("adding recipient since selected = " + selectedId);
+	dh.debug("adding recipient since selected = " + selectedId);
 	if (selectedId)
 		dh.share.doAddRecipient(selectedId, true);
 	else
@@ -208,7 +207,7 @@ dh.share.recipientSelected = function(selectedId) {
 
 dh.share.doAddRecipient = function(selectedId, noFlash) {	
 	
-	dojo.debug("adding " + selectedId + " as recipient if they aren't already");
+	dh.debug("adding " + selectedId + " as recipient if they aren't already");
 	
 	var objKey = dh.model.findGuid(dh.share.allKnownIds, selectedId);
 	if (!objKey) {
@@ -327,8 +326,8 @@ dh.share.loadContacts = function() {
 	dh.server.getXmlGET("contactsandgroups",
 			{ },
 			function(type, data, http) {
-				dojo.debug("got back contacts " + data);
-				dojo.debug("text is : " + http.responseText);
+				dh.debug("got back contacts " + data);
+				dh.debug("text is : " + http.responseText);
 							
 				dh.share.mergeObjectsDocument(data);
 				document.getElementById("dhShareRecipientsLoading").style.display = "none";
@@ -386,7 +385,7 @@ dh.share.getRecipients = function() {
 // doSubmit. doSubmit may be called asynchronously or 
 // synchronously
 dh.share.checkAndSubmit = function(doSubmit) {
-	var recipient = dojo.string.trim(dh.share.autoSuggest.inputText)
+	var recipient = dh.util.trim(dh.share.autoSuggest.inputText)
 	if (recipient.length > 0) {
 		// Check for an exact match	
 		var eligible = dh.share.getEligibleRecipients()
@@ -425,7 +424,7 @@ dh.share.checkAndSubmit = function(doSubmit) {
 }
 
 dh.share.init = function() {
-	dojo.debug("dh.share.init");
+	dh.debug("dh.share.init");
 			
 	dh.share.recipientComboBox = document.getElementById('dhShareRecipientComboBox');
 	dh.share.recipientComboBoxButton = document.getElementById('dhShareRecipientComboBoxButton');

@@ -1,9 +1,10 @@
-dojo.provide("dh.framer")
+dojo.provide("dh.framer");
 
-dojo.require("dh.chat")
-dojo.require("dh.control")
-dojo.require("dh.util")
-dojo.require("dojo.event")
+dojo.require("dh.chat");
+dojo.require("dh.control");
+dojo.require("dh.util");
+dojo.require("dojo.event");
+dojo.require("dh.dom");
 
 dh.framer._selfId = null
 
@@ -98,7 +99,7 @@ dh.framer._updateChatCount = function() {
 	else
 		countText = "(" + count + " people)"
 
-	dojo.dom.textContent(chatCountNode, countText)
+	dh.dom.textContent(chatCountNode, countText)
 }
 
 dh.framer._addUser = function(user, before, participant) {

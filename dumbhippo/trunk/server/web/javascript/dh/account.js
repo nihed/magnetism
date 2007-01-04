@@ -6,6 +6,8 @@ dojo.require("dh.photochooser");
 dojo.require("dh.lovehate");
 dojo.require("dh.password");
 dojo.require("dh.util");
+dojo.require("dh.dom");
+dojo.require("dojo.dom");
 
 dh.account.generatingRandomBio = false;
 dh.account.generateRandomBio = function() {
@@ -191,9 +193,9 @@ dh.account.onFlickrLoveSaved = function(value) {
 						continue;
 		
 					if (child.nodeName == "nsid") {
-						nsid = dojo.dom.textContent(child);
+						nsid = dh.dom.textContent(child);
 					} else if (child.nodeName == "username") {
-						username = dojo.dom.textContent(child);
+						username = dh.dom.textContent(child);
 					}
 				}
 				
@@ -268,7 +270,7 @@ dh.account.onLinkedInLoveSaved = function(value) {
 							continue;
 			
 						if (child.nodeName == "username") {
-							username = dojo.dom.textContent(child);
+							username = dh.dom.textContent(child);
 						}
 	 	    	 	}
 					entry.setLoveValueAlreadySaved(username);
@@ -308,7 +310,7 @@ dh.account.onDeliciousLoveSaved = function(value) {
 							continue;
 			
 						if (child.nodeName == "username") {
-							username = dojo.dom.textContent(child);
+							username = dh.dom.textContent(child);
 						}
 	 	    	 	}
 					entry.setLoveValueAlreadySaved(username);
@@ -334,7 +336,7 @@ dh.account.onTwitterLoveSaved = function(value) {
 							continue;
 			
 						if (child.nodeName == "username") {
-							username = dojo.dom.textContent(child);
+							username = dh.dom.textContent(child);
 						}
 	 	    	 	}
 					entry.setLoveValueAlreadySaved(username);
@@ -360,7 +362,7 @@ dh.account.onDiggLoveSaved = function(value) {
 							continue;
 			
 						if (child.nodeName == "username") {
-							username = dojo.dom.textContent(child);
+							username = dh.dom.textContent(child);
 						}
 	 	    	 	}
 					entry.setLoveValueAlreadySaved(username);
@@ -386,7 +388,7 @@ dh.account.onRedditLoveSaved = function(value) {
 							continue;
 			
 						if (child.nodeName == "username") {
-							username = dojo.dom.textContent(child);
+							username = dh.dom.textContent(child);
 						}
 	 	    	 	}
 					entry.setLoveValueAlreadySaved(username);

@@ -47,10 +47,10 @@ dh.formtable.showStatus = function(controlId, statusText, linkText, linkHref, li
 	var statusSpacer = dh.formtable.getStatusSpacer(controlId);
 	var statusTextNode = dh.formtable.getStatusText(controlId);
 	var statusLinkNode = dh.formtable.getStatusLink(controlId);
-	dojo.dom.textContent(statusTextNode, statusText);
+	dh.dom.textContent(statusTextNode, statusText);
 	
 	if (linkText) {
-		dojo.dom.textContent(statusLinkNode, linkText);
+		dh.dom.textContent(statusLinkNode, linkText);
 		statusLinkNode.href = linkHref;
 		statusLinkNode.title = linkTitle;
 		statusLinkNode.style.display = 'inline';

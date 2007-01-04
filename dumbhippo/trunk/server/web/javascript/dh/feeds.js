@@ -1,5 +1,6 @@
 dojo.provide('dh.feeds');
 dojo.require('dojo.html');
+dojo.require('dh.dom');
 
 // Callbacks that are supposed to be filled in by the specific page with what to do on button presses
 dh.feeds.loadingCancel = null;
@@ -15,7 +16,7 @@ dh.feeds.setUrl = function(url) {
 		var urlNodes = dojo.html.getElementsByClass('dh-subtitle', feedPopups[i]);
 		if (urlNodes.length != 1)
 			throw "multiple subtitle elements in feed popup";
-		dojo.dom.textContent(urlNodes[0], url);
+		dh.dom.textContent(urlNodes[0], url);
 		i = i + 1;
 	}	
 }
