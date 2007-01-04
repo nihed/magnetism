@@ -123,7 +123,7 @@ dh.sharegroup.init = function() {
 			if (dh.sharegroup.invitesRemaining() > 0)
 				return true;
 			else {
-				dh.util.flash(dh.sharegroup.inviteCountMessage);	
+				dh.share.flash(dh.sharegroup.inviteCountMessage);	
 			}
 		}
 	}

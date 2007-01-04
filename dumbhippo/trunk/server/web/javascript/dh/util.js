@@ -4,7 +4,6 @@ dojo.provide("dh.logger");
 dojo.require("dh.lang");
 dojo.require("dh.dom");
 dojo.require("dh.html");
-dojo.require("dojo.html");
 
 dh.browser = tmp_dhBrowser;
 
@@ -214,21 +213,6 @@ dh.util.closeWindow = function() {
 	
 	window.close();
 	return true;
-}
-
-// could probably choose a better color ;-)
-dh.util.flash = function(node) {
-	var origColor = dojo.html.getBackgroundColor(node);
-	var flashColor = [0,200,0];
-	//dh.debug("fading from " + origColor + " to " + flashColor);
-	dojo.fx.html.colorFade(node, origColor, flashColor, 400,
-						function(node, anim) {
-							dh.debug("fading from " + flashColor + " to " + origColor);
-							dojo.fx.html.colorFade(node, flashColor, origColor, 400, function(node, anim) {
-								/* go back to our CSS color */
-								node.removeAttribute("style");
-							});
-						});
 }
 
 dh.util.join = function(array, separator, elemProp) {

@@ -1,5 +1,6 @@
 dojo.provide("dh.share");
 
+dojo.require("dojo.style");
 dojo.require("dojo.event.*");
 dojo.require("dojo.widget.*");
 dojo.require("dojo.html");
@@ -44,6 +45,21 @@ dh.share.recipientsChangedCallback = null;
 // Called to see if we can add a particular recipient
 //  canAddRecipientCallback(personOrGroupObj)
 dh.share.canAddRecipientCallback = null;
+
+// could probably choose a better color ;-)
+dh.share.flash = function(node) {
+	var origColor = dojo.html.getBackgroundColor(node);
+	var flashColor = [0,200,0];
+	//dh.debug("fading from " + origColor + " to " + flashColor);
+	dojo.fx.html.colorFade(node, origColor, flashColor, 400,
+						function(node, anim) {
+							dh.debug("fading from " + flashColor + " to " + origColor);
+							dojo.fx.html.colorFade(node, flashColor, origColor, 400, function(node, anim) {
+								/* go back to our CSS color */
+								node.removeAttribute("style");
+							});
+						});
+}
 
 // merges an XML document into allKnownIds and returns an array
 // of the newly-added items
@@ -314,7 +330,7 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 			dh.share.recipientsChangedCallback();
 	} else {
 		if (!noFlash)
-			dh.util.flash(dh.share.findIdNode(obj.id));
+			dh.share.flash(dh.share.findIdNode(obj.id));
 	}
 	
 	// clear the combo again // Our new autosuggest.js does this for us
