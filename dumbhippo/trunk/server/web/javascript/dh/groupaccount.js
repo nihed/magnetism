@@ -24,8 +24,8 @@ dh.groupaccount.stopWait = function(message) {
 
 dh.groupaccount.createGroup = function() {
 	var secret = document.getElementById("dhGroupVisibilityPrivate").checked
-	var groupName = dojo.string.trim(dh.groupaccount.groupNameEntry.getValue())
-	var description = dojo.string.trim(dh.groupaccount.aboutGroupEntry.getValue())
+	var groupName = dh.util.trim(dh.groupaccount.groupNameEntry.getValue())
+	var description = dh.util.trim(dh.groupaccount.aboutGroupEntry.getValue())
 	
 	if (groupName == "") {
 		alert("Please enter a group name")
@@ -179,7 +179,7 @@ dh.groupaccount.onFeedPreview = function(childNodes, http) {
 dh.groupaccount.tryAddFeed = function() {
 	var url = dh.groupaccount.feedEntry.getValue();
 	if (url)
-		url = dojo.string.trim(url);
+		url = dh.util.trim(url);
 	if (url.length == 0) {
 		dh.formtable.showStatusMessage('dhFeedEntry', "Enter a web site URL");
 		return;

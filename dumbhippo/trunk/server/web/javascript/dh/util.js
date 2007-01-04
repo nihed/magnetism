@@ -479,7 +479,7 @@ dh.util.selectCheckBox = function(boxNameOrNode) {
 dh.util.updateButton = function(textboxName, buttonName) {
     var textbox = document.getElementById(textboxName);
     var button = document.getElementById(buttonName);
-    button.disabled = (dojo.string.trim(textbox.value)=='');
+    button.disabled = (dh.util.trim(textbox.value)=='');
 }
 
 // Yes, this is IE specific.  It's used on pages
@@ -821,7 +821,7 @@ dh.util.zeroPad = function(number, len) {
 }
 
 dh.util.validateEmail = function(address) {
-	address = dojo.string.trim(address)
+	address = dh.util.trim(address)
 
 	if (address == "" || address.indexOf("@") < 0) {
 		alert("Please enter a valid email address")

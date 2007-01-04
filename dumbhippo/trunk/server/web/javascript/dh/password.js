@@ -2,7 +2,6 @@ dojo.provide("dh.password");
 
 dojo.require("dojo.event.*");
 dojo.require("dojo.html");
-dojo.require("dojo.string");
 dojo.require("dh.util");
 dojo.require("dh.server");
 
@@ -50,9 +49,9 @@ dhPasswordFormUpdate = function(ev) {
 	var second = dh.password.againEntry.value;
 	
 	// keep spaces out of the entry
-	first = dojo.string.trim(first);
+	first = dh.util.trim(first);
 	dh.password.passwordEntry.value = first;
-	second = dojo.string.trim(second);
+	second = dh.util.trim(second);
 	dh.password.againEntry.value = second;
 	
 	var invalid = false;
@@ -124,7 +123,7 @@ dhPasswordFormSubmit = function() {
 		return;
 	}
 
-	var password = dojo.string.trim(dh.password.passwordEntry.value);
+	var password = dh.util.trim(dh.password.passwordEntry.value);
 	dh.password.setPassword(password);
 }
 
