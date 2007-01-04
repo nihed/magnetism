@@ -1,6 +1,7 @@
 dojo.provide("dh.util");
 dojo.provide("dh.logger");
 dojo.require("dh.dom");
+dojo.require("dh.html");
 dojo.require("dojo.html");
 
 dh.logger.LogEntry = function(category, text, level) {
@@ -174,11 +175,11 @@ dh.util.hideId = function(nodeId) {
 }
 
 dh.util.hide = function(node) {
-	dojo.html.prependClass(node, "dhInvisible");
+	dh.html.prependClass(node, "dhInvisible");
 }
 
 dh.util.show = function(node) {
-	dojo.html.removeClass(node, "dhInvisible");
+	dh.html.removeClass(node, "dhInvisible");
 }
 
 dh.util.toggleShowing = function(node) {
@@ -189,7 +190,7 @@ dh.util.toggleShowing = function(node) {
 }
 
 dh.util.isShowing = function(node) {
-	return !dojo.html.hasClass(node, "dhInvisible");
+	return !dh.html.hasClass(node, "dhInvisible");
 }
 
 dh.util.isDescendant = function (possibleParent, child) {
@@ -268,7 +269,7 @@ dh.util.goToNextPage = function(def, flashMessage) {
 		
 		// insert the message
 		var messageNode = document.createElement("div");
-		dojo.html.addClass(messageNode, "dh-closing-message");
+		dh.html.addClass(messageNode, "dh-closing-message");
 		messageNode.appendChild(document.createTextNode(flashMessage));
 		main.appendChild(messageNode);
 		dh.util.show(main);
@@ -532,15 +533,15 @@ dh.util.useFrameSet = function(window, event, obj, postID) {
 }
 
 dh.util.hasClass = function(node, className) {
-	return dojo.html.hasClass(node, className)
+	return dh.html.hasClass(node, className)
 }
 
 dh.util.prependClass = function(node, className) {
-	dojo.html.prependClass(node, className)
+	dh.html.prependClass(node, className)
 }
 
 dh.util.removeClass = function(node, className) {
-	dojo.html.removeClass(node, className)
+	dh.html.removeClass(node, className)
 }
 
 dh.util.getTextWidth = function(text, fontFamily, fontSize, fontStyle, fontVariant, fontWeight) {

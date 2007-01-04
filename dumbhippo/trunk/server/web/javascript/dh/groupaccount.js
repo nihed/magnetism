@@ -8,6 +8,7 @@ dojo.require("dh.fileinput")
 dojo.require("dh.popup")
 dojo.require("dh.dom");
 dojo.require("dh.feeds");
+dojo.require("dh.html");
 
 dh.groupaccount.startWait = function() {
 	dh.util.showMessage("Please wait...")
@@ -150,7 +151,7 @@ dh.groupaccount.onFeedPreview = function(childNodes, http) {
 	dh.util.clearNode(previewNode);
 
 	var feedTitleNode = document.createElement('a');
-	dojo.html.addClass(feedTitleNode, 'dh-feed-title');
+	dh.html.addClass(feedTitleNode, 'dh-feed-title');
 	feedTitleNode.setAttribute("target", "_blank");
 	feedTitleNode.setAttribute("href", link);
 	dh.dom.textContent(feedTitleNode, title);
@@ -161,7 +162,7 @@ dh.groupaccount.onFeedPreview = function(childNodes, http) {
 
 	for (i = 0; i < items.length; ++i) {
 		var itemNode = document.createElement('li');
-		dojo.html.addClass(itemNode, 'dh-feed-item');
+		dh.html.addClass(itemNode, 'dh-feed-item');
 		dh.dom.textContent(itemNode, items[i]["title"]);
 		feedItemListNode.appendChild(itemNode);
 	}
@@ -213,7 +214,7 @@ dh.groupaccount.tryAddFeed = function() {
 			 	    		var failedMessageNode = document.getElementById('dhFeedFailedMessage');
 
 							dh.util.clearNode(failedMessageNode);
-							dojo.html.addClass(failedMessageNode, 'dh-feed-title');
+							dh.html.addClass(failedMessageNode, 'dh-feed-title');
 							dh.dom.textContent(failedMessageNode, msg);
 							
 			  	    	 	dh.popup.show('dhFeedFailedPopup', document.getElementById('dhFeedEntry'));

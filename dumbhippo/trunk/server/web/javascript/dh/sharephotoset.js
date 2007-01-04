@@ -2,6 +2,7 @@ dojo.provide("dh.sharephotoset");
 dojo.provide("dh.flickrupload");
 
 dojo.require("dh.sharelink");
+dojo.require("dh.html");
 dojo.require("dojo.dom");
 
 dh.flickrupload.Photo = function(filename, thumbnailPath) {
@@ -16,7 +17,7 @@ dh.flickrupload.Photo = function(filename, thumbnailPath) {
 	
 	this.render = function() {
 		this.div = document.createElement("div")
-		dojo.html.addClass(this.div, "dhFlickrPhotoStatus")
+		dh.html.addClass(this.div, "dhFlickrPhotoStatus")
 		this.img = document.createElement("img")
 		this.img.setAttribute("src", thumbnailPath)
 		this.div.appendChild(this.img)
@@ -313,7 +314,7 @@ dh.flickrupload.UploadSet = function() {
 	this.div.appendChild(this.photoDiv)
 	this.metaDiv = document.createElement("div")
 	this.div.appendChild(this.metaDiv)
-	dojo.html.addClass(this.metaDiv, "dhFlickrPhotoUploadMeta")
+	dh.html.addClass(this.metaDiv, "dhFlickrPhotoUploadMeta")
 	this.statusText = document.createElement("span")
 	this.metaDiv.appendChild(this.statusText)
 	this.flickrUrl = null

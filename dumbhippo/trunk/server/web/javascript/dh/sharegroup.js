@@ -2,7 +2,6 @@ dojo.provide("dh.sharegroup");
 
 dojo.require("dojo.event.*");
 dojo.require("dojo.widget.*");
-dojo.require("dojo.html");
 dojo.require("dh.share");
 dojo.require("dh.server");
 dojo.require("dh.util");

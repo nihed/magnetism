@@ -56,6 +56,19 @@ dh.html.getClass = function (node) {
 }
 
 /**
+ * Returns whether or not the specified classname is a portion of the
+ * class list currently applied to the node. Does not cover cascaded
+ * styles, only classes directly applied to the node.
+ */
+dh.html.hasClass = function (node, classname){
+	var classes = dh.html.getClass(node).split(/\s+/g);
+	for(var x=0; x<classes.length; x++){
+		if(classname == classes[x]){ return true; }
+	}
+	return false;
+}
+
+/**
  * Adds the specified class to the beginning of the class list on the
  * passed node. This gives the specified class the highest precidence
  * when style cascading is calculated for the node. Returns true or
@@ -110,7 +123,7 @@ dh.html.setClass = function (node, classStr){
  */ 
 dh.html.removeClass = function (node, classStr){
 	if(!node){ return false; }
-	var classStr = dh.string.trim(new String(classStr));
+	var classStr = dh.util.trim(new String(classStr));
 
 	try{
 		var cs = String( node.className ).split(" ");

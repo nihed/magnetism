@@ -1,7 +1,6 @@
 dojo.provide("dh.password");
 
 dojo.require("dojo.event.*");
-dojo.require("dojo.html");
 dojo.require("dh.util");
 dojo.require("dh.server");
 

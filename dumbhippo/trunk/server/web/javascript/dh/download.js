@@ -1,6 +1,6 @@
 dojo.provide("dh.download")
 
-dojo.require("dojo.html")
+dojo.require("dh.html")
 dojo.require("dh.server")
 
 dh.download.getImage = function(node) {
@@ -39,10 +39,10 @@ dh.download.updateDownload = function() {
 	
 	if (acceptedTerms) {
 		skipNodeImg.src = dhImageRoot3 + "no_thanks_button.gif";
-		dojo.html.removeClass(skipNode, "dh-download-product-disabled");
+		dh.html.removeClass(skipNode, "dh-download-product-disabled");
 	} else {
 		skipNodeImg.src = dhImageRoot3 + "no_thanks_disabled.gif";
-		dojo.html.addClass(skipNode, "dh-download-product-disabled");	
+		dh.html.addClass(skipNode, "dh-download-product-disabled");	
 	}
 }
 

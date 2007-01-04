@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 dojo.provide("dh.textinput");
 dojo.require("dh.util");
-dojo.require("dojo.html");
+dojo.require("dh.html");
 
 dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 {
@@ -50,7 +50,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 			
 	this._showDefaultText = function() {
 		if (!this.showingDefaultText && this.defaultText) {
-			dojo.html.addClass(this.elem, "dh-text-input-showing-default");
+			dh.html.addClass(this.elem, "dh-text-input-showing-default");
 			this.elem.value = this.defaultText;
 			this.showingDefaultText = true;			
 		}
@@ -79,7 +79,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	
 	this.hideDefaultText = function() {
 		if (this.showingDefaultText) {
-			dojo.html.removeClass(this.elem, "dh-text-input-showing-default");
+			dh.html.removeClass(this.elem, "dh-text-input-showing-default");
 			this.elem.value = "";
 			this.showingDefaultText = false;
 		}

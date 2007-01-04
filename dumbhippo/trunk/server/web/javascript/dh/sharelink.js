@@ -4,7 +4,7 @@ dojo.require("dojo.dom");
 dojo.require("dh.dom");
 dojo.require("dojo.event.*");
 dojo.require("dojo.widget.*");
-dojo.require("dojo.html");
+dojo.require("dh.html");
 dojo.require("dojo.widget.HtmlInlineEditBox");
 dojo.require("dh.share");
 dojo.require("dh.server");
@@ -38,7 +38,7 @@ dh.sharelink.updateAccessTip = function() {
 
 dh.sharelink.highlightPossibleGroup = function() {
 	dh.share.forEachPossibleGroupMember(function(node) {
-		dojo.html.addClass(node, "dhCouldBeInGroup");
+		dh.html.addClass(node, "dhCouldBeInGroup");
 	});
 }
 
@@ -49,7 +49,7 @@ dh.sharelink.unhighlightPossibleGroup = function() {
 		return;
 	
 	dh.share.forEachPossibleGroupMember(function(node) {
-		dojo.html.removeClass(node, "dhCouldBeInGroup");
+		dh.html.removeClass(node, "dhCouldBeInGroup");
 	});
 }
 
@@ -202,7 +202,7 @@ dh.sharelink.doAddMembers = function() {
 
 dh.sharelink.initRecipient = function(recipient, newNode) {
 	if (dh.util.isShowing(dh.sharelink.createGroupPopup) && recipient.isPerson())
-		dojo.html.addClass(newNode, "dhCouldBeInGroup");
+		dh.html.addClass(newNode, "dhCouldBeInGroup");
 }
 
 dh.sharelink.updateActionLinks = function() {

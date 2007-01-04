@@ -3,6 +3,7 @@ dojo.provide("dh.share");
 dojo.require("dojo.event.*");
 dojo.require("dojo.widget.*");
 dojo.require("dojo.html");
+dojo.require("dh.html");
 dojo.require("dojo.widget.RichText");
 dojo.require("dojo.widget.html.Button");
 dojo.require("dojo.widget.HtmlComboBox");
@@ -233,7 +234,7 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		idNode.setAttribute("width", "100%")
 		idNode.setAttribute("cellspacing", "0")
 		idNode.setAttribute("cellpadding", "0")		
-		dojo.html.addClass(idNode, "dhShareRecipientPerson");
+		dh.html.addClass(idNode, "dhShareRecipientPerson");
 		if (dh.share.recipientCreatedCallback)
 			dh.share.recipientCreatedCallback(obj, idNode);
 		
