@@ -42,6 +42,34 @@ dh.html.hasAttribute = function (node, attr){
 }
 
 /**
+ * Returns the string value of the list of CSS classes currently assigned
+ * directly to the node in question. Returns an empty string if no class attribute
+ * is found;
+ */
+dh.html.getClass = function (node) {
+	if(node.className){
+		return node.className;
+	}else if(dh.html.hasAttribute(node, "class")){
+		return dh.html.getAttribute(node, "class");
+	}
+	return "";
+}
+
+/**
+ * Adds the specified class to the beginning of the class list on the
+ * passed node. This gives the specified class the highest precidence
+ * when style cascading is calculated for the node. Returns true or
+ * false; indicating success or failure of the operation, respectively.
+ */
+dh.html.prependClass = function (node, classStr){
+	if(!node){ return null; }
+	if(dh.html.hasAttribute(node,"class")||node.className){
+		classStr += " " + (node.className||dh.html.getAttribute(node, "class"));
+	}
+	return dh.html.setClass(node, classStr);
+}
+
+/**
  * Adds the specified class to the end of the class list on the
  *	passed &node;. Returns &true; or &false; indicating success or failure.
  */
@@ -99,3 +127,96 @@ dh.html.removeClass = function (node, classStr){
 
 	return true;
 }
+
+// Enum type for getElementsByClass classMatchType arg:
+dh.html.classMatchType = {
+	ContainsAll : 0, // all of the classes are part of the node's class (default)
+	ContainsAny : 1, // any of the classes are part of the node's class
+	IsOnly : 2 // only all of the classes are part of the node's class
+}
+
+/**
+ * Returns an array of nodes for the given classStr, children of a
+ * parent, and optionally of a certain nodeType.
+ * NOT REALLY RECOMMENDED - this function is crazy inefficient and it's just 
+ * gross. Let's try to get rid of usage of it.
+ */
+dh.html.getElementsByClass = function (classStr, parent, nodeType, classMatchType) {
+	if(!parent){ parent = document; }
+	var classes = classStr.split(/\s+/g);
+	var nodes = [];
+	if( classMatchType != 1 && classMatchType != 2 ) classMatchType = 0; // make it enum
+
+	// FIXME: doesn't have correct parent support!
+	if(false && document.evaluate) { // supports dom 3 xpath
+		var xpath = "//" + (nodeType || "*") + "[contains(";
+		if(classMatchType != dh.html.classMatchType.ContainsAny){
+			xpath += "concat(' ',@class,' '), ' " +
+				classes.join(" ') and contains(concat(' ',@class,' '), ' ") +
+				" ')]";
+		}else{
+			xpath += "concat(' ',@class,' '), ' " +
+				classes.join(" ')) or contains(concat(' ',@class,' '), ' ") +
+				" ')]";
+		}
+		//dojo.debug("xpath: " + xpath);
+
+		var xpathResult = document.evaluate(xpath, parent, null,
+			XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+
+		outer:
+		for(var node = null, i = 0; node = xpathResult.snapshotItem(i); i++){
+			if(classMatchType != dh.html.classMatchType.IsOnly){
+				nodes.push(node);
+			}else{
+				if(!dh.html.getClass(node)){ continue outer; }
+
+				var nodeClasses = dh.html.getClass(node).split(/\s+/g);
+				var reClass = new RegExp("(\\s|^)(" + classes.join(")|(") + ")(\\s|$)");
+				for(var j = 0; j < nodeClasses.length; j++) {
+					if( !nodeClasses[j].match(reClass) ) {
+						continue outer;
+					}
+				}
+				nodes.push(node);
+			}
+		}
+	}else{
+		if(!nodeType){ nodeType = "*"; }
+		var candidateNodes = parent.getElementsByTagName(nodeType);
+
+		outer:
+		for(var i = 0; i < candidateNodes.length; i++) {
+			var node = candidateNodes[i];
+			if( !dh.html.getClass(node) ) { continue outer; }
+			var nodeClasses = dh.html.getClass(node).split(/\s+/g);
+			var reClass = new RegExp("(\\s|^)((" + classes.join(")|(") + "))(\\s|$)");
+			var matches = 0;
+
+			for(var j = 0; j < nodeClasses.length; j++) {
+				if( reClass.test(nodeClasses[j]) ) {
+					if( classMatchType == dh.html.classMatchType.ContainsAny ) {
+						nodes.push(node);
+						continue outer;
+					} else {
+						matches++;
+					}
+				} else {
+					if( classMatchType == dh.html.classMatchType.IsOnly ) {
+						continue outer;
+					}
+				}
+			}
+
+			if( matches == classes.length ) {
+				if( classMatchType == dh.html.classMatchType.IsOnly && matches == nodeClasses.length ) {
+					nodes.push(node);
+				} else if( classMatchType == dh.html.classMatchType.ContainsAll ) {
+					nodes.push(node);
+				}
+			}
+		}
+	}
+	return nodes;
+}
+//this.getElementsByClassName = this.getElementsByClass;

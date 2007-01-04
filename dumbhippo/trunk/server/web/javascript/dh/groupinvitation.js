@@ -5,7 +5,6 @@ dojo.require("dh.server")
 dojo.require("dh.suggestutils")
 dojo.require("dh.textinput")
 dojo.require("dh.util");
-dojo.require("dojo.dom");
 dojo.require("dh.dom");
 
 // hash of all persons we should autocomplete on, keyed by guid
@@ -30,7 +29,7 @@ dh.groupinvitation.mergeObjectsDocument = function(doc) {
 	var nodeList = objectsElement.childNodes;
 	for (var i = 0; i < nodeList.length; ++i) {
 		var element = nodeList.item(i);
-		if (element.nodeType != dojo.dom.ELEMENT_NODE) {
+		if (element.nodeType != dh.dom.ELEMENT_NODE) {
 			continue;
 		} else {
 			var obj = dh.model.objectFromXmlNode(element);

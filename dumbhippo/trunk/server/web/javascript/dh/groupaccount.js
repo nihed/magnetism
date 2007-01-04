@@ -6,7 +6,6 @@ dojo.require("dh.textinput")
 dojo.require("dh.photochooser")
 dojo.require("dh.fileinput")
 dojo.require("dh.popup")
-dojo.require("dojo.dom");
 dojo.require("dh.dom");
 dojo.require("dh.feeds");
 
@@ -105,7 +104,7 @@ dh.groupaccount.onFeedPreview = function(childNodes, http) {
 	var i = 0;
 	for (i = 0; i < childNodes.length; ++i) {
 		var child = childNodes.item(i);
-		if (child.nodeType != dojo.dom.ELEMENT_NODE)
+		if (child.nodeType != dh.dom.ELEMENT_NODE)
 			continue;
 		
 		//alert("child node name " + child.nodeName + " content: " + dh.dom.textContent(child));
@@ -122,7 +121,7 @@ dh.groupaccount.onFeedPreview = function(childNodes, http) {
 			for (j = 0; j < child.childNodes.length; ++j) {			
 				var child2 = child.childNodes.item(j);
 				
-				if (child2.nodeType != dojo.dom.ELEMENT_NODE)
+				if (child2.nodeType != dh.dom.ELEMENT_NODE)
 					continue;
 				
 				if (child2.nodeName == "title") {

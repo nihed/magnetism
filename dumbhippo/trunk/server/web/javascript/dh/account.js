@@ -7,7 +7,6 @@ dojo.require("dh.lovehate");
 dojo.require("dh.password");
 dojo.require("dh.util");
 dojo.require("dh.dom");
-dojo.require("dojo.dom");
 
 dh.account.generatingRandomBio = false;
 dh.account.generateRandomBio = function() {
@@ -189,7 +188,7 @@ dh.account.onFlickrLoveSaved = function(value) {
 				var i = 0;
 				for (i = 0; i < childNodes.length; ++i) {
 					var child = childNodes.item(i);
-					if (child.nodeType != dojo.dom.ELEMENT_NODE)
+					if (child.nodeType != dh.dom.ELEMENT_NODE)
 						continue;
 		
 					if (child.nodeName == "nsid") {
@@ -266,7 +265,7 @@ dh.account.onLinkedInLoveSaved = function(value) {
 					var i = 0;
 					for (i = 0; i < childNodes.length; ++i) {
 						var child = childNodes.item(i);
-						if (child.nodeType != dojo.dom.ELEMENT_NODE)
+						if (child.nodeType != dh.dom.ELEMENT_NODE)
 							continue;
 			
 						if (child.nodeName == "username") {
@@ -306,7 +305,7 @@ dh.account.onDeliciousLoveSaved = function(value) {
 					var i = 0;
 					for (i = 0; i < childNodes.length; ++i) {
 						var child = childNodes.item(i);
-						if (child.nodeType != dojo.dom.ELEMENT_NODE)
+						if (child.nodeType != dh.dom.ELEMENT_NODE)
 							continue;
 			
 						if (child.nodeName == "username") {
@@ -332,7 +331,7 @@ dh.account.onTwitterLoveSaved = function(value) {
 					var i = 0;
 					for (i = 0; i < childNodes.length; ++i) {
 						var child = childNodes.item(i);
-						if (child.nodeType != dojo.dom.ELEMENT_NODE)
+						if (child.nodeType != dh.dom.ELEMENT_NODE)
 							continue;
 			
 						if (child.nodeName == "username") {
@@ -358,7 +357,7 @@ dh.account.onDiggLoveSaved = function(value) {
 					var i = 0;
 					for (i = 0; i < childNodes.length; ++i) {
 						var child = childNodes.item(i);
-						if (child.nodeType != dojo.dom.ELEMENT_NODE)
+						if (child.nodeType != dh.dom.ELEMENT_NODE)
 							continue;
 			
 						if (child.nodeName == "username") {
@@ -384,7 +383,7 @@ dh.account.onRedditLoveSaved = function(value) {
 					var i = 0;
 					for (i = 0; i < childNodes.length; ++i) {
 						var child = childNodes.item(i);
-						if (child.nodeType != dojo.dom.ELEMENT_NODE)
+						if (child.nodeType != dh.dom.ELEMENT_NODE)
 							continue;
 			
 						if (child.nodeName == "username") {

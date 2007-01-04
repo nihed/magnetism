@@ -1,7 +1,7 @@
 dojo.provide("dh.util");
 dojo.provide("dh.logger");
+dojo.require("dh.dom");
 dojo.require("dojo.html");
-dojo.require("dojo.dom");
 
 dh.logger.LogEntry = function(category, text, level) {
 	this.category = category;
@@ -317,7 +317,7 @@ dh.util.getTextFromHtmlNode = function(node) {
 	    return result;
 
 	switch (node.nodeType) {
-		case dojo.dom.ELEMENT_NODE: // ELEMENT_NODE
+		case dh.dom.ELEMENT_NODE: // ELEMENT_NODE
 			if (node.nodeName.toLowerCase() == "br") {
 				result += "\n";
 			} else {
@@ -356,7 +356,7 @@ dh.util.truncateTextInHtmlNode = function(node, length) {
 	    return length;
 	    
 	switch (node.nodeType) {
-		case dojo.dom.ELEMENT_NODE: // ELEMENT_NODE
+		case dh.dom.ELEMENT_NODE: // ELEMENT_NODE
 			if (node.nodeName.toLowerCase() == "br") {
 		        // TODO: not sure if can remove <br> on the fly here, 
 		        // but that would be a good thing to do

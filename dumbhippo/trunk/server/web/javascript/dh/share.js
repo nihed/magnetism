@@ -11,6 +11,7 @@ dojo.require("dh.util");
 dojo.require("dh.model");
 dojo.require("dh.autosuggest");
 dojo.require("dh.suggestutils");
+dojo.require("dh.dom");
 
 // whether allKnownIds has successfully been filled in
 dh.share.haveLoadedContacts = false;
@@ -55,7 +56,7 @@ dh.share.mergeObjectsDocument = function(doc) {
 	var nodeList = objectsElement.childNodes;
 	for (var i = 0; i < nodeList.length; ++i) {
 		var element = nodeList.item(i);
-		if (element.nodeType != dojo.dom.ELEMENT_NODE) {
+		if (element.nodeType != dh.dom.ELEMENT_NODE) {
 			continue;
 		} else {
 			var obj = dh.model.objectFromXmlNode(element);
@@ -76,7 +77,7 @@ dh.share.findIdNode = function(id) {
 	var list = document.getElementById("dhRecipientListTableRow");
 	for (var i = 0; i < list.childNodes.length; ++i) {
 		var child = list.childNodes.item(i);
-		if (child.nodeType != dojo.dom.ELEMENT_NODE)
+		if (child.nodeType != dh.dom.ELEMENT_NODE)
 			continue;
 		for (var j = 0; j < child.childNodes.length; j++) {			
 			var subchild = child.childNodes.item(j)			
@@ -93,7 +94,7 @@ dh.share.forEachPossibleGroupMember = function(func) {
 	var list = document.getElementById("dhRecipientListTableRow");
 	for (var i = 0; i < list.childNodes.length; ++i) {
 		var child = list.childNodes.item(i);
-		if (child.nodeType != dojo.dom.ELEMENT_NODE)
+		if (child.nodeType != dh.dom.ELEMENT_NODE)
 			continue;
 			
 		for (var j = 0; j < child.childNodes.length; j++) {			
