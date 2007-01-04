@@ -85,6 +85,9 @@ dh.framer._removeMessage = function(message) {
 
 dh.framer._updateChatCount = function() {
 	var chatCountNode = document.getElementById('dhPostChatCount')
+	if (!chatCountNode)
+		return;
+	
 	var count = this._participantList.numUsers() // only chatters, not viewers
 	var countText;
 	
