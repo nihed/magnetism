@@ -1,6 +1,6 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippoIControl.h"
-#include "hippoipc/hippo-ipc.h"
+#include "hippo-ipc.h"
 #include "nsCOMPtr.h"
 
 class hippoControl: public hippoIControl, public HippoIpcListener

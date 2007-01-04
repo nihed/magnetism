@@ -2,8 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="HippoExplorer"
-	ProjectGUID="{5EE19538-0578-4199-93DD-E77F11A060E4}"
+	Name="HippoFirefox"
+	ProjectGUID="{55F02EE8-E63D-4727-A558-C776A25DD77B}"
+	RootNamespace="HippoFirefox"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -19,15 +20,14 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../HippoUtil;../../common/hippoipc;../HippoIpc"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NOMINMAX;HIPPO_UTIL_STATIC"
+				AdditionalIncludeDirectories="&quot;c:\Program Files\gecko-sdk\include&quot;;&quot;../../common/firefox/gecko-private/include&quot;;../../common/hippoipc;../HippoUtil;../HippoIpc;Debug"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;HIPPOFIREFOX_EXPORTS;HIPPO_OS_WINDOWS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				TreatWChar_tAsBuiltInType="TRUE"
-				ForceConformanceInForLoopScope="TRUE"
-				UsePrecompiledHeader="3"
-				PrecompiledHeaderThrough="stdafx-hippoexplorer.h"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderThrough="stdafx-hippofirefox.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="4"/>
@@ -35,18 +35,17 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				RegisterOutput="TRUE"
-				AdditionalDependencies="wininet.lib advapi32.lib gdi32.lib"
-				OutputFile="$(OutDir)/HippoExplorer.dll"
+				AdditionalDependencies="&quot;c:\Program Files\gecko-sdk\lib\xpcomglue_s.lib&quot; &quot;c:\Program Files\gecko-sdk\lib\xpcom.lib&quot; &quot;c:\Program Files\gecko-sdk\lib\nspr4.lib&quot;"
+				OutputFile="$(OutDir)/HippoFirefox.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="HippoExplorer.def"
+				IgnoreDefaultLibraryNames="MSVCRT;LIBCD"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/HippoExplorer.pdb"
+				ProgramDatabaseFile="$(OutDir)/HippoFirefox.pdb"
 				SubSystem="2"
+				ImportLibrary="$(OutDir)/HippoFirefox.lib"
 				TargetMachine="1"/>
 			<Tool
-				Name="VCMIDLTool"
-				AdditionalIncludeDirectories="../HippoUtil"/>
+				Name="VCMIDLTool"/>
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
@@ -70,14 +69,15 @@
 			Name="Release|Win32"
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
-			ConfigurationType="1"
+			ConfigurationType="2"
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
-				RuntimeLibrary="4"
-				UsePrecompiledHeader="3"
-				PrecompiledHeaderThrough="stdafx-hippoexplorer.h"
+				AdditionalIncludeDirectories="../dependencies/glib/include/glib-2.0"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;HIPPOFIREFOX_EXPORTS"
+				RuntimeLibrary="0"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderThrough="stdafx-hippofirefox.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="3"/>
@@ -85,12 +85,13 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/HippoExplorer.exe"
+				OutputFile="$(OutDir)/HippoFirefox.dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				ImportLibrary="$(OutDir)/HippoFirefox.lib"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -115,9 +116,6 @@
 		</Configuration>
 	</Configurations>
 	<References>
-		<ProjectReference
-			ReferencedProjectIdentifier="{638E7547-B5E8-49AD-A70B-56E333C216FE}"
-			Name="HippoUtil"/>
 	</References>
 	<Files>
 		<Filter
@@ -125,55 +123,52 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\ClassFactory.cpp">
+				RelativePath="..\..\common\firefox\src\hippoControl.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoControl.cpp">
+				RelativePath="..\..\common\firefox\src\hippoExtension.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoEmbed.cpp">
+				RelativePath=".\hippoFirefox.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoExplorer.cpp">
-			</File>
-			<File
-				RelativePath=".\HippoExplorer.def">
-			</File>
-			<File
-				RelativePath=".\HippoExplorer.idl">
-			</File>
-			<File
-				RelativePath=".\HippoExplorerBar.cpp">
-			</File>
-			<File
-				RelativePath=".\HippoExplorerUtil.cpp">
-			</File>
-			<File
-				RelativePath=".\HippoToolbarAction.cpp">
-			</File>
-			<File
-				RelativePath=".\HippoTracker.cpp">
-			</File>
-			<File
-				RelativePath=".\HippoTrackerUpdater.cpp">
-			</File>
-			<File
-				RelativePath=".\HippoUILauncher.cpp">
-			</File>
-			<File
-				RelativePath=".\stdafx.cpp">
+				RelativePath="..\..\common\firefox\public\hippoIControl.idl">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
+						Name="VCCustomBuildTool"
+						CommandLine="run-xpidl.bat &quot;$(InputPath)&quot; &quot;$(IntDir)\$(InputName).h&quot;  &quot;$(OutDir)\$(InputName).xpt&quot; "
+						Outputs="$(IntDir)\$(InputName).h;$(OutDir)\$(InputName).xpt"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\common\firefox\public\hippoIControlListener.idl">
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Debug|Win32">
 					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
+						Name="VCCustomBuildTool"
+						CommandLine="run-xpidl.bat &quot;$(InputPath)&quot; &quot;$(IntDir)\$(InputName).h&quot;  &quot;$(OutDir)\$(InputName).xpt&quot; "
+						Outputs="$(IntDir)\$(InputName).h;$(OutDir)\$(InputName).xpt"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\common\firefox\public\hippoIExtension.idl">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="run-xpidl.bat &quot;$(InputPath)&quot; &quot;$(IntDir)\$(InputName).h&quot;  &quot;$(OutDir)\$(InputName).xpt&quot; "
+						Outputs="$(IntDir)\$(InputName).h;$(OutDir)\$(InputName).xpt"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\common\firefox\src\hippoModule.cpp">
+			</File>
+			<File
+				RelativePath=".\run-xpidl.bat">
+			</File>
+			<File
+				RelativePath=".\stdafx.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -181,74 +176,22 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath=".\ClassFactory.h">
+				RelativePath="..\..\common\firefox\src\hippo-connection.h">
 			</File>
 			<File
-				RelativePath=".\EmbedTest.htm"
-				DeploymentContent="TRUE">
+				RelativePath="..\..\common\firefox\src\hippoControl.h">
 			</File>
 			<File
-				RelativePath=".\Globals.h">
+				RelativePath="..\..\common\firefox\src\hippoExtension.h">
 			</File>
 			<File
-				RelativePath=".\Guid.h">
-			</File>
-			<File
-				RelativePath=".\HippoControl.h">
-			</File>
-			<File
-				RelativePath=".\HippoEmbed.h">
-			</File>
-			<File
-				RelativePath=".\HippoExplorerBar.h">
-			</File>
-			<File
-				RelativePath=".\HippoExplorerDispID.h">
-			</File>
-			<File
-				RelativePath=".\HippoExplorerUtil.h">
-			</File>
-			<File
-				RelativePath=".\HippoToolbarAction.h">
-			</File>
-			<File
-				RelativePath=".\HippoTracker.h">
-			</File>
-			<File
-				RelativePath=".\HippoTrackerUpdater.h">
-			</File>
-			<File
-				RelativePath=".\HippoUILauncher.h">
-			</File>
-			<File
-				RelativePath=".\Resource.h">
-			</File>
-			<File
-				RelativePath=".\stdafx-hippoexplorer.h">
+				RelativePath=".\stdafx-hippofirefox.h">
 			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
-			<File
-				RelativePath=".\DumbHippo.ico">
-			</File>
-			<File
-				RelativePath=".\DumbHippoHot.ico">
-			</File>
-			<File
-				RelativePath=".\HippoExplorer.rc">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCResourceCompilerTool"
-						AdditionalIncludeDirectories="$(IntDir)"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\linkswarmbig.ico">
-			</File>
 		</Filter>
 	</Files>
 	<Globals>
