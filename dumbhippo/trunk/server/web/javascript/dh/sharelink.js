@@ -9,6 +9,7 @@ dojo.require("dojo.widget.HtmlInlineEditBox");
 dojo.require("dh.share");
 dojo.require("dh.server");
 dojo.require("dh.util");
+dojo.require("dh.lang");
 
 dh.sharelink.extensions = [];
 dh.sharelink.urlToShareEditBox = null;
@@ -333,7 +334,7 @@ dh.sharelink.init = function() {
 	
 	dh.sharelink.urlTitleToShareEditBox = dojo.widget.manager.getWidgetById("dhUrlTitleToShare");
 	var params = dh.util.getParamsFromLocation();
-	if (dojo.lang.has(params, "title")) {
+	if (dh.lang.has(params, "title")) {
 		dh.debug("title=" + params["title"])
 		dh.sharelink.urlTitleToShareEditBox.setText(params["title"]);
 	}
@@ -366,7 +367,7 @@ dh.sharelink.init = function() {
 	dh.sharelink.addMemberDescription = document.getElementById("dhAddMemberDescription");
 	dh.sharelink.addMemberGroup = document.getElementById("dhAddMemberGroup");
 	
-	if (dojo.lang.has(params, "favicon")) {
+	if (dh.lang.has(params, "favicon")) {
 		var faviconUrl = params["favicon"];
 		dh.sharelink.postInfo = dojo.dom.createDocumentFromText("<postInfo/>");
 		var generic = dh.sharelink.postInfo.createElement("generic");

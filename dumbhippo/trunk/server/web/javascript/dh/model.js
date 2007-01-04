@@ -1,6 +1,7 @@
 // This file contains the "model" objects, like Person
 dojo.provide("dh.model");
 dojo.require("dh.util");
+dojo.require("dh.lang");
 dojo.require("dh.dom");
 
 dh.model.Track = function(image, title, artist, album, stillPlaying) {
@@ -326,7 +327,7 @@ dh.model.objectFromXmlNode = function(element) {
 dh.model.findGuid = function(set, id) {
 	// set can be an array or a hash
 	for (var prop in set) {
-		if (dojo.lang.has(set[prop], "id")) {
+		if (dh.lang.has(set[prop], "id")) {
 			if (id == set[prop]["id"]) {
 				return prop;
 			}

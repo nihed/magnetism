@@ -1,25 +1,5 @@
 dojo.provide("dh.control")
-
-///////////////////////// metalinguistic band-aids
-
-dh.lang = {}
-
-dh.lang.mixin = function(obj, props){
-	var tobj = {};
-	for(var x in props){
-		if (x == "toString" || typeof tobj[x] == "undefined"){
-			obj[x] = props[x];
-		}
-	}
-	return obj;
-}
-
-var defineClass = function(childConstructor, parentConstructor, childProps) {
-	if (!parentConstructor)
-		parentConstructor = Object;
-	dojo.inherits(childConstructor, parentConstructor);
-	dh.lang.mixin(childConstructor.prototype, childProps);
-}
+dojo.require("dh.lang");
 
 ///////////////////////// auxiliary / data-model objects
 
@@ -29,7 +9,7 @@ dh.control.Entity = function(id) {
 	this._photoUrl = null;
 }
 
-defineClass(dh.control.Entity, null, 
+dh.lang.defineClass(dh.control.Entity, null, 
 {
 	getId : function() {
 		return this._id;
@@ -59,7 +39,7 @@ dh.control.Person = function(id) {
 	this._musicPlaying = false;
 }
 
-defineClass(dh.control.Person, dh.control.Entity, 
+dh.lang.defineClass(dh.control.Person, dh.control.Entity, 
 {		
 	getCurrentSong : function() {
 		return this._currentSong;
@@ -97,7 +77,7 @@ dh.control.ChatMessage = function(entity, message, timestamp, serial) {
 	this._serial = serial;
 }
 
-defineClass(dh.control.ChatMessage, null,
+dh.lang.defineClass(dh.control.ChatMessage, null,
 {
 	getEntity : function() {
 		return this._entity;
@@ -148,7 +128,7 @@ dh.control.ChatUser = function(user, participant) {
 	this._participant = participant;
 }
 
-defineClass(dh.control.ChatUser, null,
+dh.lang.defineClass(dh.control.ChatUser, null,
 {
 	getUser : function() {
 		return this._user;
@@ -168,7 +148,7 @@ dh.control.ChatRoom = function(control, id) {
 	this._messages = {}
 }
 
-defineClass(dh.control.ChatRoom, null, 
+dh.lang.defineClass(dh.control.ChatRoom, null, 
 {
 	getId : function() {
 		return this._id;
@@ -283,7 +263,7 @@ dh.control.AbstractControl = function() {
 	this._allChatRooms = {}
 }
 
-defineClass(dh.control.AbstractControl, null, 
+dh.lang.defineClass(dh.control.AbstractControl, null, 
 {
 	// Connection point for notification of a change to a user; it would
 	// be more pleasant to be able to connect to the user itself, but 
@@ -378,7 +358,7 @@ dh.control.WebOnlyControl = function() {
 	dh.control.AbstractControl.call(this)
 }
 
-defineClass(dh.control.WebOnlyControl, dh.control.AbstractControl, {
+dh.lang.defineClass(dh.control.WebOnlyControl, dh.control.AbstractControl, {
 	sendChatMessage : function(chatId, text) {
 	},
 	
@@ -401,7 +381,7 @@ dh.control.NativeControl = function(nativeObject) {
 }
 
 
-defineClass(dh.control.NativeControl, dh.control.AbstractControl, {
+dh.lang.defineClass(dh.control.NativeControl, dh.control.AbstractControl, {
 	_joinChatRoom : function(chatId, participant) {
 		this._native.joinChatRoom(chatId, participant);
 	},
@@ -432,7 +412,7 @@ defineClass(dh.control.NativeControl, dh.control.AbstractControl, {
 dh.control.NativeControlListener = function() {
 }
 
-defineClass(dh.control.NativeControlListener, null, {
+dh.lang.defineClass(dh.control.NativeControlListener, null, {
 	onConnect: function() {
 		dh.control.control._reconnect();
     },

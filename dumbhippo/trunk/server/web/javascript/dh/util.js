@@ -1,8 +1,12 @@
 dojo.provide("dh.util");
 dojo.provide("dh.logger");
+
+dojo.require("dh.lang");
 dojo.require("dh.dom");
 dojo.require("dh.html");
 dojo.require("dojo.html");
+
+dh.browser = tmp_dhBrowser;
 
 dh.logger.LogEntry = function(category, text, level) {
 	this.category = category;
@@ -407,7 +411,7 @@ dh.util.truncateTextInHtmlNode = function(node, length) {
 
 dh.util.toggleCheckBox = function(boxNameOrNode) {
 	var node = boxNameOrNode;
-	if (dojo.lang.isString(boxNameOrNode)) {
+	if (dh.lang.isString(boxNameOrNode)) {
 		node = document.getElementById(boxNameOrNode);
 	}
 	node.checked = !node.checked;
@@ -459,7 +463,7 @@ dh.util.toggleCheckBox = function(boxNameOrNode) {
 
 dh.util.selectCheckBox = function(boxNameOrNode) {
 	var node = boxNameOrNode;
-	if (dojo.lang.isString(boxNameOrNode)) {
+	if (dh.lang.isString(boxNameOrNode)) {
 		node = document.getElementById(boxNameOrNode);
 	}
 	node.checked = true;

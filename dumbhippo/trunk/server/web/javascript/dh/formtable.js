@@ -1,5 +1,5 @@
 dojo.provide("dh.formtable")
-dojo.require("dojo.lang")
+dojo.require("dh.lang")
 
 dh.formtable.undoValues = {};
 dh.formtable.currentValues = null; // gets filled in as part of the jsp
@@ -84,7 +84,7 @@ dh.formtable._onValueChanged = function(entryObject, isXmlMethod, postMethod, ar
 
 	var args;
 	if (fixedArgs != null)
-		args = dojo.lang.shallowCopy(fixedArgs)
+		args = dh.lang.shallowCopy(fixedArgs)
 	else
 		args = {}
 	args[argName] = value;
@@ -133,7 +133,7 @@ dh.formtable.undo = function(entryObject, oldValue, postMethod, argName, fixedAr
 	dh.formtable.showStatus(controlId, "Undoing...", null, null, null);
 	var args
 	if (fixedArgs != null)
-		args = dojo.lang.shallowCopy(fixedArgs)
+		args = dh.lang.shallowCopy(fixedArgs)
 	else
 		args = {}
 	args[argName] = oldValue;

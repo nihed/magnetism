@@ -308,13 +308,15 @@ public class BrowserBean implements Serializable {
 	public String getJavascriptCode() {
 		StringBuilder sb = new StringBuilder();
 		
-		sb.append("dh.browser = {};\n");
+		// this is because the "dh" module doesn't exist in 
+		// config.js
+		sb.append("tmp_dhBrowser = {};\n");
 	
 		// this list isn't comprehensive, just add to it as you need to use it
-		appendBool(sb, "dh.browser.ie", isIe());
-		appendBool(sb, "dh.browser.gecko", isGecko());
-		appendBool(sb, "dh.browser.geckoAtLeast10", isGeckoAtLeast10());
-		appendBool(sb, "dh.browser.geckoAtLeast15", isGeckoAtLeast15());
+		appendBool(sb, "tmp_dhBrowser.ie", isIe());
+		appendBool(sb, "tmp_dhBrowser.gecko", isGecko());
+		appendBool(sb, "tmp_dhBrowser.geckoAtLeast10", isGeckoAtLeast10());
+		appendBool(sb, "tmp_dhBrowser.geckoAtLeast15", isGeckoAtLeast15());
 		
 		return sb.toString();
 	}

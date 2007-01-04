@@ -1,6 +1,7 @@
 dojo.provide("dh.statistics.set");
 dojo.require("dh.dom");
 dojo.require("dh.util");
+dojo.require("dh.lang");
 
 dh.statistics.set.Set = function(server, filename, current) {
 	this.server = server;
@@ -10,7 +11,7 @@ dh.statistics.set.Set = function(server, filename, current) {
 	this.length = 0;
 }
 
-dojo.lang.extend(dh.statistics.set.Set,
+dh.lang.extend(dh.statistics.set.Set,
 {
 	add: function(id, name, units, type) {
 		this._columns.push({

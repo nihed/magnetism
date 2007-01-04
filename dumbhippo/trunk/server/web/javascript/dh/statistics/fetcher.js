@@ -1,6 +1,7 @@
 dojo.provide("dh.statistics.fetcher");
 dojo.require("dh.server");
 dojo.require("dh.dom");
+dojo.require("dh.lang");
 
 dh.statistics.fetcher.Specification = function(server, filename, column) {
 	this.server = server;
@@ -16,7 +17,7 @@ dh.statistics.fetcher.Fetcher = function() {
 	this._selectionEnd = null;
 }
 
-dojo.lang.extend(dh.statistics.fetcher.Fetcher,
+dh.lang.extend(dh.statistics.fetcher.Fetcher,
 {
 	setSpecification: function(id, specification) {
 		this._datasets[id] = {

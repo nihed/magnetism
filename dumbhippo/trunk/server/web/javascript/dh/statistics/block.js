@@ -1,5 +1,6 @@
 dojo.provide("dh.statistics.block");
 dojo.require("dh.statistics.chart");
+dojo.require("dh.lang");
 
 dh.statistics.block.Block = function() {
 	this._set = null;
@@ -107,7 +108,7 @@ dh.statistics.block.Block = function() {
 	this._connectEvents();
 }
 
-dojo.lang.extend(dh.statistics.block.Block,
+dh.lang.extend(dh.statistics.block.Block,
 {
 	getTable: function() {
 		return this._table;
