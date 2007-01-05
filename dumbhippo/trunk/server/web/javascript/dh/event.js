@@ -107,6 +107,14 @@ dh.event.addEventListener = function(node, eventName, func) {
 	}
 }
 
+dh.event.connectAfterMethod = function(object, methodName, func) {
+	var oldHandler = object[methodName];
+	object[methodName] = function() {
+		oldHandler.apply(object, arguments);
+		return ourHandler.apply(object, arguments);
+	}
+}
+
 dh.event._onWindowLoadHandlers = [];
 
 dh.event._onWindowLoaded = function() {
