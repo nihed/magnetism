@@ -86,7 +86,7 @@
 					    <div class="dh-person-header-hated-accounts">
 						<strong>Where you won't find <c:out value="${who.name}"/></strong>
 			 		            <c:forEach var="account" items="${who.hatedAccounts.list}">
-					                    <div class="dh-person-header-hated-account"><dh:png src="/images3/${buildStamp}/quiphate_icon.png" />&nbsp;<a class="dh-person-header-hated-account-link" href="${account.externalAccount.siteLink}"><c:out value="${account.externalAccount.siteName}" /></a>&nbsp;&mdash;&nbsp;<span class="dh-person-header-hated-account-quip"><c:out value="${account.externalAccount.quip}" /></span></div>
+					                    <div class="dh-person-header-hated-account"><dh:png klass="dh-love-hate-icon" src="/images3/${buildStamp}/quiphate_icon.png" style="width: 11; height: 11; overflow: hidden;"/>&nbsp;<a class="dh-person-header-hated-account-link" href="${account.externalAccount.siteLink}"><c:out value="${account.externalAccount.siteName}" /></a>&nbsp;&mdash;&nbsp;<span class="dh-person-header-hated-account-quip"><c:out value="${account.externalAccount.quip}" /></span></div>
 					            </c:forEach>					
 					    </div>
 					</c:if>
