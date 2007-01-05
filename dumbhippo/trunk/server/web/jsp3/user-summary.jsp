@@ -37,14 +37,14 @@
        <td><img src="${baseUrl}${person.viewedPerson.onlineIcon}" border="0"/>&nbsp;<c:out value="${person.viewedPerson.name}"/>'s Mugshot</td>
 	</tr>
 	<tr>
-       <td><a href="${baseUrl}/person?who=${person.viewedUserId}">Visit My Mugshot Page</a></td>
+       <td><a target="_top" href="${baseUrl}/person?who=${person.viewedUserId}">Visit My Mugshot Page</a></td>
        </tr>
        </table>
 
 	<div>
        <c:forEach var="account" items="${person.viewedPerson.lovedAccounts.list}">
 
-       <a title="${account.externalAccount.siteName}" href="${account.link}"><img src="${baseUrl}/images3/${buildStamp}/${account.externalAccount.iconName}" border="0"/></a>&nbsp;
+       <a target="_top" title="${account.externalAccount.siteName}" href="${account.link}"><img src="${baseUrl}/images3/${buildStamp}/${account.externalAccount.iconName}" border="0"/></a>&nbsp;
 	</c:forEach>
 	</div>
 
