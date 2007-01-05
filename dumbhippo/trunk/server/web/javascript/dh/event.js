@@ -1,5 +1,6 @@
 dojo.provide("dh.event");
 dojo.require("dh.util");
+dojo.require("dh.lang");
 
 // get the node an event happened on - this is always the leaf node,
 // so if an event "bubbles" to a parent, the target is still the 
@@ -80,6 +81,16 @@ dh.event.getAltKey = function(ev)
 	throw Error("no event to get alt key state from");
 };
 
+/* 
+ * Rules for event handlers:
+ * - they should have one "ev" argument if they are a button/key event 
+ *   and intend to try to look at the event object
+ * - if they use dh.event.cancel() they should also return false
+ * - "this" in the event handler is not set to anything consistent
+ *   across different browsers (it may be the window or the dom node
+ *   currently being bubbled to, I believe)
+ */
+
 dh.event.addEventListener = function(node, eventName, func) {
 	if (node.addEventListener) {
 		// false = "bubbling phase" i.e. handle leaves first
@@ -96,13 +107,33 @@ dh.event.addEventListener = function(node, eventName, func) {
 	}
 }
 
-/* 
- * Rules for event handlers:
- * - they should have one "ev" argument if they are a button/key event 
- *   and intend to try to look at the event object
- * - if they use dh.event.cancel() they should also return false
- * - "this" in the event handler is not set to anything consistent
- *   across different browsers (it may be the window or the dom node
- *   currently being bubbled to, I believe)
- */
- 
+dh.event._onWindowLoadHandlers = [];
+
+dh.event._onWindowLoaded = function() {
+	
+	var i;
+	for (i = 0; i < dh.event._onWindowLoadHandlers.length; ++i) {
+		var f = dh.event._onWindowLoadHandlers[i];
+		f.apply(window);
+	}
+	
+	// afaik this does not matter
+	return true;
+}
+
+// If dojo has been initialized because something is using it, we 
+// need to keep the dojo onload handler.
+if (typeof window.onload == 'function') {
+	var oldHandler = window.onload;
+	var ourHandler = dh.event._onWindowLoaded;
+	dh.event._onWindowLoaded = function(){
+		oldHandler.apply(window, arguments);
+		return ourHandler.apply(window, arguments);
+	}
+}
+
+window.onload = dh.event._onWindowLoaded;
+
+dh.event.addPageLoadListener = function(func) {
+	dh.event.addEventListener(window, "load", func);	
+}
