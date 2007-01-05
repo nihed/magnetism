@@ -33,7 +33,14 @@
         <!-- Only a single feature; it's all-or-nothing -->
     <Feature Id="ProductFeature" Title="Everything" Level="1">
         <ComponentRef Id="dependencies" />
+        <ComponentRef Id="firefox" />
+        <ComponentRef Id="firefoxChromeContent" />
+        <ComponentRef Id="firefoxChromeLocaleEnUs" />
+        <ComponentRef Id="firefoxChromeSkin" />
+        <ComponentRef Id="firefoxComponents" />
+        <ComponentRef Id="firefoxDefaultsPreferences" />
         <ComponentRef Id="hippoExplorer" />
+        <ComponentRef Id="hippoFirefox" />
         <ComponentRef Id="hippoShellExt" />
         <ComponentRef Id="hippoUI" />
         <ComponentRef Id="hippoUtil" />
