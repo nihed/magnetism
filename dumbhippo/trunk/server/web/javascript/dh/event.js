@@ -95,3 +95,14 @@ dh.event.addEventListener = function(node, eventName, func) {
 		throw Error("browser does not support addEventListener or attachEvent");
 	}
 }
+
+/* 
+ * Rules for event handlers:
+ * - they should have one "ev" argument if they are a button/key event 
+ *   and intend to try to look at the event object
+ * - if they use dh.event.cancel() they should also return false
+ * - "this" in the event handler is not set to anything consistent
+ *   across different browsers (it may be the window or the dom node
+ *   currently being bubbled to, I believe)
+ */
+ 
