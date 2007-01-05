@@ -13,7 +13,6 @@
 #include "HippoListenerProxy.h"
 #include "HippoLogWindow.h"
 #include "HippoUpgrader.h"
-#include "HippoExternalBrowser.h"
 #include "HippoRemoteWindow.h"
 #include "HippoMusic.h"
 #include "HippoUIUtil.h"

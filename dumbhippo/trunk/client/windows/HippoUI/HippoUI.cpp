@@ -2028,6 +2028,48 @@ editToolbar()
     edit.ensureToolbarButton();
 }
 
+// In order for our Firefox extension to be found by Firefox, we need to install
+// a key pointing to it under HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER. Normally,
+// this key is added and removed by the installer, but in the case where the
+// user is also running debug instances of Mugshot, we want to get that key
+// pointing to the right place, so we check on startup, and if the key is missing
+// or mis-pointed we rewrite it under HKEY_CURRENT_USER.
+static void
+registerFirefoxComponent()
+{
+    HMODULE module;
+    WCHAR buf[MAX_PATH];
+    
+    module = GetModuleHandle(NULL);
+    DWORD len = GetModuleFileName(module, buf, MAX_PATH);
+    if (len == 0 || len == MAX_PATH) // Failure or truncated
+        return;
+
+    WCHAR *lastSlash = wcsrchr(buf, '\\');
+    if (lastSlash == 0)
+        return;
+
+    HippoBSTR extensionDir(lastSlash - buf, buf);
+    extensionDir.Append(L"\\firefox");
+
+    HippoBSTR userValue;
+    HippoRegKey userKey(HKEY_CURRENT_USER, L"SOFTWARE\\Mozilla\\Firefox\\Extensions", FALSE);
+    if (userKey.loadString(L"firefox@mugshot.org", &userValue)) {
+        if (userValue == extensionDir)
+            return;
+    }
+
+    HippoBSTR machineValue;
+    HippoRegKey machineKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Mozilla\\Firefox\\Extensions", FALSE);
+    if (machineKey.loadString(L"firefox@mugshot.org", &machineValue)) {
+        if (machineValue == extensionDir)
+            return;
+    }
+
+    HippoRegKey saveKey(HKEY_CURRENT_USER, L"SOFTWARE\\Mozilla\\Firefox\\Extensions", TRUE);
+    saveKey.saveString(L"firefox@mugshot.org", extensionDir.m_str);
+}
+
 static void
 migrateCookie()
 {
@@ -2163,6 +2205,7 @@ WinMain(HINSTANCE hInstance,
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     editToolbar();
+    registerFirefoxComponent();
     migrateCookie();
 
     ui = new HippoUI(options.instance_type, options.replace_existing, options.initial_debug_share);
