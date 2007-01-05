@@ -689,28 +689,15 @@ dh.util.createLinkElementWithChild = function(url, linkChild) {
     linkElement.hideFocus = "true"
     linkElement.tabIndex = -1
     linkElement.appendChild(linkChild)
-    return linkElement
+    return linkElement;
 }
 
 // right now just replaces spaces with "+" to
 // make the url look nicer in the browser window,
 // spaces show up as "%20" otherwise 
 dh.util.getPreparedUrl = function(url) {
-    var preparedUrl = url.replace(/\s/g, "+")
-    return preparedUrl
-}
-
-dh.util.stdEventHandler = function(f) {
-    return function(e) {
-        try {
-            if (!e) e = window.event;
-            e.returnValue = f(e);
-            return e.returnValue;
-        } catch (ex) {
-            alert("exception in event handler: " + ex.message);
-            return false;
-        }
-    }
+    var preparedUrl = url.replace(/\s/g, "+");
+    return preparedUrl;
 }
 
 // get the node an event happened on
