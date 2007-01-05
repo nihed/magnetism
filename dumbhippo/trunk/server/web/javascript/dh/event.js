@@ -125,6 +125,9 @@ dh.event._onWindowLoaded = function() {
 		f.apply(window);
 	}
 	
+	// drop the listeners, as gc paranoia
+	dh.event._onWindowLoadHandlers = [];
+	
 	// afaik this does not matter
 	return true;
 }
@@ -143,5 +146,10 @@ if (typeof window.onload == 'function') {
 window.onload = dh.event._onWindowLoaded;
 
 dh.event.addPageLoadListener = function(func) {
-	dh.event.addEventListener(window, "load", func);	
+	// using addEventListener appears to work in both IE and Firefox, but 
+	// they appear to run the listeners in opposite order. Also, this 
+	// way we can drop the listeners after we run them, which might help 
+	// with gc.
+	//dh.event.addEventListener(window, "load", func);
+	dh.event._onWindowLoadHandlers.push(func);
 }
