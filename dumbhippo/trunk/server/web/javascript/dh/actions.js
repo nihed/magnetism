@@ -259,7 +259,7 @@ dh.actions.joinChat = function(chatId) {
 
 	if (dh.control.control.haveLiveChat()) {
 		dh.control.control.showChatWindow(chatId);
-	} else if (dojo.render.os.linux) {
+	} else if (dh.browser.linux) {
 		var url = dhBaseUrl.replace(/^http:/, "mugshot:");
 		url += "/joinChat?id=" + chatId;
     	window.open(url, "_self");

@@ -314,9 +314,17 @@ public class BrowserBean implements Serializable {
 	
 		// this list isn't comprehensive, just add to it as you need to use it
 		appendBool(sb, "tmp_dhBrowser.ie", isIe());
+		appendBool(sb, "tmp_dhBrowser.ieAtLeast55", isIeAtLeast55());
+		appendBool(sb, "tmp_dhBrowser.ieAtLeast60", isIeAtLeast60());
 		appendBool(sb, "tmp_dhBrowser.gecko", isGecko());
 		appendBool(sb, "tmp_dhBrowser.geckoAtLeast10", isGeckoAtLeast10());
 		appendBool(sb, "tmp_dhBrowser.geckoAtLeast15", isGeckoAtLeast15());
+		appendBool(sb, "tmp_dhBrowser.safari", isSafari());
+		appendBool(sb, "tmp_dhBrowser.linux", isLinux());
+		appendBool(sb, "tmp_dhBrowser.windows", isWindows());
+		appendBool(sb, "tmp_dhBrowser.mac", isMac());
+		appendBool(sb, "tmp_dhBrowser.fedora5", isFedora5());
+		appendBool(sb, "tmp_dhBrowser.fedora6", isFedora6());
 		
 		return sb.toString();
 	}
