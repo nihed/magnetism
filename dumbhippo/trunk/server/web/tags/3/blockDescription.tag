@@ -5,6 +5,7 @@
 
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 <%@ attribute name="literalBody" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="hideOnExpand" required="false" type="java.lang.Boolean" %>
 
 <div class="dh-stacker-block-header-description" id="dhStackerBlockHeaderDescriptionContainer-${blockId}">
 	<c:choose>
@@ -18,6 +19,12 @@
 		</c:when>
 		<c:otherwise>
 			<div id="dhStackerBlockDescription-${blockId}" class="dh-stacker-block-header-description-full"><jsp:doBody/></div>
+			<c:if test="${hideOnExpand}">
+				<script type="text/javascript">
+					var div = document.getElementById("dhStackerBlockDescription-${blockId}");
+					div.dhHideOnExpand = true;
+				</script>
+			</c:if>
 		</c:otherwise>
 	</c:choose>
 </div>
