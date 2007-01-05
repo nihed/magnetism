@@ -2,6 +2,7 @@ dojo.provide("dh.lovehate");
 dojo.require("dh.util");
 dojo.require("dh.textinput");
 dojo.require("dh.dom");
+dojo.require("dh.event");
 
 dh.lovehate.allEntries = {}
 
@@ -36,14 +37,14 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this._allNodes = [me._loveNode, me._hateNode, me._loveEditNode, me._hateEditNode, me._indifferentNode, me._busyNode];
 
 	this._loveEntryNode.onkeydown = function(ev) {
-		var key = dh.util.getKeyCode(ev);
+		var key = dh.event.getKeyCode(ev);
 		if (key == ENTER) {
 			me._saveClicked("love");
 		}
 	}
 
 	this._hateEntryNode.onkeydown = function(ev) {
-		var key = dh.util.getKeyCode(ev);
+		var key = dh.event.getKeyCode(ev);
 		if (key == ENTER) {
 			me._saveClicked("hate");
 		}

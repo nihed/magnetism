@@ -3,6 +3,7 @@ dojo.provide("dh.password");
 dojo.require("dojo.event.*");
 dojo.require("dh.util");
 dojo.require("dh.server");
+dojo.require("dh.event");
 
 dh.password.passwordEntry = null;
 dh.password.againEntry = null;
@@ -75,7 +76,7 @@ dhPasswordFormUpdate = function(ev) {
 		dh.password.setButton.src = dhImageRoot3 + "setpassword.gif";
 	}
 				
-	var key = dh.util.getKeyCode(ev);
+	var key = dh.event.getKeyCode(ev);
 	if (key && key == ENTER) {
 		dhPasswordFormSubmit();
 	}

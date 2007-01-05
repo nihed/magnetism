@@ -1,6 +1,7 @@
 dojo.provide("dh.popup");
 dojo.require("dh.util");
 dojo.require("dojo.style");
+dojo.require("dh.event");
 
 // hash from popupId to bool
 dh.popup.showing = {};
@@ -47,16 +48,16 @@ dh.popup.show = function(popupId, aboveNode) {
 	popup.style.display = 'block';
 	
 	document.body.onkeydown = function(ev) {
-		if (dh.util.getKeyCode(ev) == ESC) {
+		if (dh.event.getKeyCode(ev) == ESC) {
 			dh.popup.hide(popupId);
-			dh.util.cancelEvent(ev);
+			dh.event.cancel(ev);
 			return false;
 		}
 		return true;
 	}
 	
 	document.body.onmousedown = function(ev) {
-		var target = dh.util.getEventNode(ev);
+		var target = dh.event.getNode(ev);
 		if (!target) {
 			alert("No event node?");
 			return;
@@ -69,7 +70,7 @@ dh.popup.show = function(popupId, aboveNode) {
 			// we weren't a child of the popup
 			dh.popup.hide(popupId);
 			// don't activate something else
-			dh.util.cancelEvent(ev);
+			dh.event.cancel(ev);
 			return false;
 		}
 		return true;

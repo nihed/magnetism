@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 dojo.provide("dh.textinput");
 dojo.require("dh.util");
 dojo.require("dh.html");
+dojo.require("dh.event");
 
 dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 {
@@ -137,7 +138,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	this.elem.onkeydown = function(ev) {
 		// in theory never happens since we do this on focus in
 		me.hideDefaultText();
-		var key = dh.util.getKeyCode(ev);
+		var key = dh.event.getKeyCode(ev);
 		if (key == ENTER && me.elem.nodeName.toUpperCase() != 'TEXTAREA') {
 			me.activate();
 		}

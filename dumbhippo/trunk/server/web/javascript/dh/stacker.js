@@ -1,5 +1,6 @@
 dojo.provide('dh.stacker');
 dojo.require('dh.util');
+dojo.require('dh.event');
 
 dh.stacker.removePrelight = function(node) {
 	dh.util.removeClass(node, "dh-box-prelighted")
@@ -136,7 +137,7 @@ dh.stacker.hookLinkChildren = function(block, startNode) {
 				if (!e) e = window.event;
 				dh.log("stacker-cursor", "block: " + block.dhBlockId + " link mouseover")				
 				dh.stacker.hideBlockPointer(block);
-				dh.util.cancelEvent(e);
+				dh.event.cancel(e);
 			};
 			node.onmouseout = function (e) {
 				if (!e) e = window.event;
@@ -144,7 +145,7 @@ dh.stacker.hookLinkChildren = function(block, startNode) {
 				dh.log("stacker-cursor", "block: " + block.dhBlockId + " link mouseout to " + relTarget)					
 				if (!dh.util.isDescendant(block, relTarget))
 					dh.stacker.hideBlockPointer(block);				
-				dh.util.cancelEvent(e);			
+				dh.event.cancel(e);			
 			};			
 		} else {
 			dh.stacker.hookLinkChildren(block, node);

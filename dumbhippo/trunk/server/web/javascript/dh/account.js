@@ -7,6 +7,7 @@ dojo.require("dh.lovehate");
 dojo.require("dh.password");
 dojo.require("dh.util");
 dojo.require("dh.dom");
+dojo.require("dh.event");
 
 dh.account.generatingRandomBio = false;
 dh.account.generateRandomBio = function() {
@@ -551,7 +552,7 @@ dhAccountInit = function() {
 	// make pressing enter submit the email verify
 	var emailEntryNode = document.getElementById('dhEmailEntry');
 	emailEntryNode.onkeydown = function(ev) {
-		var key = dh.util.getKeyCode(ev);
+		var key = dh.event.getKeyCode(ev);
 		if (key == ENTER) {
 			dh.account.verifyEmail();
 		}

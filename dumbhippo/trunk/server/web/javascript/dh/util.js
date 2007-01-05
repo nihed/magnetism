@@ -128,7 +128,9 @@ dh.debug = function(text) {
 
 // dojo.raise compatibility; no real reason to use this, 
 // the idea in Dojo is that it allows hooking in a log 
-// whenever an exception is thrown
+// whenever an exception is thrown. A downside of using
+// this is that javascript console will show this location
+// instead of where you threw from
 dh.raise = function(message, excep){
 	throw Error(message);
 }
@@ -700,60 +702,6 @@ dh.util.getPreparedUrl = function(url) {
     return preparedUrl;
 }
 
-// get the node an event happened on
-dh.util.getEventNode = function(ev)
-{
-	if (ev)
-		return ev.target;
-	if (window.event)
-		return window.event.srcElement;
-};
-
-// cancel an event
-dh.util.cancelEvent = function(ev)
-{
-	if (!ev)
-		ev = window.event;
-		
-	if (ev.preventDefault)
-		ev.preventDefault();
-	else
-		ev.returnValue = false;
-		
-	if (ev.stopPropagation)
-		ev.stopPropagation();
-	else
-		ev.cancelBubble = true;		
-};
-
-// Define common keycodes
-TAB = 9;
-ESC = 27;
-KEYUP = 38;
-KEYDN = 40;
-ENTER = 13;
-SHIFT = 16;
-CTRL = 17;
-ALT = 18;
-CAPS_LOCK = 20;
-
-dh.util.getKeyCode = function(ev)
-{
-	if (ev)
-		return ev.keyCode;
-	if (window.event)
-		return window.event.keyCode;
-};
-
-// is alt held down?
-dh.util.getAltKey = function(ev)
-{
-	if (ev)
-		return ev.altKey;
-	if (window.event)
-		return window.event.altKey;
-};
-
 dh.util.getBodyPosition = function(el) {
 	var point = { "x" : 0, "y" : 0 };
 	
@@ -822,16 +770,6 @@ dh.util.validateEmail = function(address) {
 		return false;
 	}
 	return true;
-}
-
-dh.util.addEventListener = function(node, eventName, func) {
-	if (node.addEventListener) {
-		node.addEventListener(eventName, func, false);
-	} else if (node.attachEvent) {
-		node.attachEvent("on" + eventName, func);
-	} else {
-		throw new Error("browser does not support addEventListener or attachEvent");
-	}
 }
 
 // Reload the content of the page, without trigger revalidation as document.location.reload()
