@@ -50,6 +50,8 @@ struct _HippoBlock {
     int significant_clicked_count;
     int clicked_count;
     char *icon_url;
+    char *title;
+    char *title_link;
     HippoStackReason stack_reason;
     guint clicked : 1;
     guint ignored : 1;
@@ -106,6 +108,14 @@ void     hippo_block_set_ignored           (HippoBlock *block,
 HippoStackReason hippo_block_get_stack_reason (HippoBlock      *block);
 void             hippo_block_set_stack_reason (HippoBlock      *block,
                                                HippoStackReason value);
+
+const char* hippo_block_get_title          (HippoBlock *block); 
+void        hippo_block_set_title          (HippoBlock *block,
+                                            const char *title);
+
+const char* hippo_block_get_title_link     (HippoBlock *block); 
+void        hippo_block_set_title_link     (HippoBlock *block,
+                                            const char *title_link);
 
 const char* hippo_block_get_icon_url       (HippoBlock *block); 
 void        hippo_block_set_icon_url       (HippoBlock *block,

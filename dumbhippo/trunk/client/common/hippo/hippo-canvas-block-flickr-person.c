@@ -261,12 +261,13 @@ hippo_canvas_block_flickr_person_set_block(HippoCanvasBlock *canvas_block,
         on_user_changed(canvas_block->block, NULL,
                         HIPPO_CANVAS_BLOCK_FLICKR_PERSON(canvas_block));
 
+        hippo_canvas_block_set_title(canvas_block,
+                                     hippo_block_get_title(canvas_block->block),
+                                     hippo_block_get_title_link(canvas_block->block),
+                                     FALSE);
+
         thumbnails = hippo_block_flickr_person_get_thumbnails(HIPPO_BLOCK_FLICKR_PERSON(canvas_block->block));
         if (thumbnails != NULL) {
-            hippo_canvas_block_set_title(canvas_block,
-                                         hippo_thumbnails_get_more_title(thumbnails),
-                                         hippo_thumbnails_get_more_link(thumbnails),
-                                         FALSE);
             g_object_set(HIPPO_CANVAS_BLOCK_FLICKR_PERSON(canvas_block)->thumbnails,
                          "thumbnails", thumbnails,
                          NULL);

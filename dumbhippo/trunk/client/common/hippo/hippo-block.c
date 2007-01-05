@@ -54,6 +54,8 @@ enum {
     PROP_CLICKED,
     PROP_ICON_URL,
     PROP_IGNORED,
+    PROP_TITLE,
+    PROP_TITLE_LINK,
     PROP_STACK_REASON
 };
 
@@ -173,7 +175,23 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                         _("URL for block 'favicon'"),
                                                         NULL,
                                                         G_PARAM_READABLE));
-    
+
+    g_object_class_install_property(object_class,
+                                    PROP_TITLE,
+                                    g_param_spec_string("title",
+                                                        _("Title"),
+                                                        _("Block title"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_TITLE_LINK,
+                                    g_param_spec_string("title-link",
+                                                        _("Title link"),
+                                                        _("Block title link"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+
     g_object_class_install_property(object_class,
                                     PROP_STACK_REASON,
                                     g_param_spec_int("stack-reason",
@@ -236,6 +254,14 @@ hippo_block_set_property(GObject         *object,
         hippo_block_set_stack_reason(block,
                                      g_value_get_int(value));
         break;
+    case PROP_TITLE:
+        hippo_block_set_title(block, 
+                              g_value_get_string(value));
+        break;
+    case PROP_TITLE_LINK:
+        hippo_block_set_title_link(block,
+                                   g_value_get_string(value));
+        break;
     case PROP_GUID:                  /* read-only */
     case PROP_BLOCK_TYPE:            /* read-only */
     case PROP_SORT_TIMESTAMP:        /* read-only */
@@ -294,6 +320,12 @@ hippo_block_get_property(GObject         *object,
     case PROP_ICON_URL:
         g_value_set_string(value, block->icon_url);
         break;
+    case PROP_TITLE:
+        g_value_set_string(value, block->title);
+        break;
+    case PROP_TITLE_LINK:
+        g_value_set_string(value, block->title_link);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -333,6 +365,9 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     int significant_clicked_count = 0;
     gboolean clicked;
     gboolean ignored;
+    LmMessageNode *title_node;
+    const char *title = NULL;
+    const char *title_link = NULL;
     const char *icon_url = NULL;
     const char *stack_reason_str = NULL;
     const char *generic_types = NULL;
@@ -379,6 +414,14 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     hippo_block_set_clicked(block, clicked);
     hippo_block_set_ignored(block, ignored);
     hippo_block_set_icon_url(block, icon_url);
+
+    title_node = lm_message_node_get_child(node, "title");
+    if (title_node) {
+        title_link = lm_message_node_get_attribute(title_node, "link");
+        title = lm_message_node_get_value(title_node);
+        hippo_block_set_title(block, title);
+        hippo_block_set_title_link(block, title_link);
+    }
 
     if (stack_reason_str)
         stack_reason = stack_reason_from_string(stack_reason_str);
@@ -716,6 +759,56 @@ hippo_block_set_icon_url(HippoBlock *block,
     g_object_notify(G_OBJECT(block), "icon-url");
 }
 
+const char*
+hippo_block_get_title(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), NULL);
+
+    return block->title;
+}
+
+void
+hippo_block_set_title(HippoBlock *block,
+                      const char *title)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (title == block->title) /* catches both null, or self-assignment */
+        return;
+
+    if (title && block->title && strcmp(title, block->title) == 0)
+        return;
+
+    g_free(block->title);
+    block->title = g_strdup(title);
+    g_object_notify(G_OBJECT(block), "title");
+}
+
+
+const char*
+hippo_block_get_title_link(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), NULL);
+
+    return block->title_link;
+}
+
+void
+hippo_block_set_title_link(HippoBlock *block,
+                           const char *link)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (link == block->title_link) /* catches both null, or self-assignment */
+        return;
+
+    if (link && block->title_link && strcmp(link, block->title_link) == 0)
+        return;
+
+    g_free(block->title_link);
+    block->title_link = g_strdup(link);
+    g_object_notify(G_OBJECT(block), "title-link");
+}
 
 HippoBlockType
 hippo_block_type_from_attributes(const char *type,
