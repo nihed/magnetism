@@ -7,6 +7,24 @@ dojo.require("dh.html");
 
 dh.browser = tmp_dhBrowser;
 
+// for dynamically loading a script
+dh.util.addScriptToHead = function(url) {
+	var script = document.createElement('script');
+	script.type = 'text/javascript';
+	script.src = url;
+	document.getElementsByTagName('head')[0].appendChild(script); 
+}
+
+// for debug-dumping an object
+dh.util.allPropsAsString = function(obj) {
+	var s = "{";
+	for (var prop in obj) {
+		s = s + prop + " : " + obj[prop] + ", ";
+	}
+	s = s + "}";
+	return s;
+}
+
 dh.logger.LogEntry = function(category, text, level) {
 	this.category = category;
 	this.text = text;

@@ -34,21 +34,3 @@ dojo.require = function(module) {
 dojo.provide = function(module) {
 	throw new Error("dojo.provide should not still exist at runtime, jscompress should have replaced it: " + module);
 }
-
-// these two functions are here instead of a module since they are 
-// debug-oriented and useful to have "fewer dependencies" for
-function dhAddScriptToHead(url) {
-	var script = document.createElement('script');
-	script.type = 'text/javascript';
-	script.src = url;
-	document.getElementsByTagName('head')[0].appendChild(script); 
-}
-
-function dhAllPropsAsString(obj) {
-	var s = "{";
-	for (var prop in obj) {
-		s = s + prop + " : " + obj[prop] + ",";
-	}
-	s = s + "}";
-	return s;
-}

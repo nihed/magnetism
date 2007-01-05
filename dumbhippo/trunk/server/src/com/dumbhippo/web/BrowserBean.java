@@ -15,6 +15,9 @@ public class BrowserBean implements Serializable {
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(BrowserBean.class);
 
+	private static final int LOWEST_GECKO_15_VERSION = 20051001;
+	private static final int LOWEST_GECKO_10_VERSION = 20041101;
+	
 	private enum OS { Mac, Windows, Linux, Unknown };
 	private enum Browser { Khtml, Gecko, Opera, IE, Unknown };
 	private enum Distribution { Fedora5, Fedora6, Unknown };
@@ -75,9 +78,9 @@ public class BrowserBean implements Serializable {
 			if (m.find()) {
 				try {
 					int geckoVersion = Integer.parseInt(m.group(1));
-					if (geckoVersion > 20051001)
+					if (geckoVersion > LOWEST_GECKO_15_VERSION)
 						browserVersion = 15;
-					else if (geckoVersion > 20041101)
+					else if (geckoVersion > LOWEST_GECKO_10_VERSION)
 						browserVersion = 10;
 				} catch (NumberFormatException e) {
 				}
@@ -298,6 +301,7 @@ public class BrowserBean implements Serializable {
 		return "{os=" + os + " browser=" + browser + " version=" + browserVersion + " osRequested=" + osRequested + " browserRequested=" + browserRequested + " distribution=" + distribution + " distributionRequested=" + distributionRequested + "}";
 	}
 	
+	@SuppressWarnings("unused")
 	private static void appendBool(StringBuilder sb, String jsVar, boolean value) {
 		sb.append(jsVar);
 		sb.append(" = ");
@@ -310,9 +314,10 @@ public class BrowserBean implements Serializable {
 		
 		// this is because the "dh" module doesn't exist in 
 		// config.js
-		sb.append("tmp_dhBrowser = {};\n");
+		sb.append("var tmp_dhBrowser = {};\n");
 	
-		// this list isn't comprehensive, just add to it as you need to use it
+		// this approach means config.js can't be cached at the Apache level
+		/*
 		appendBool(sb, "tmp_dhBrowser.ie", isIe());
 		appendBool(sb, "tmp_dhBrowser.ieAtLeast55", isIeAtLeast55());
 		appendBool(sb, "tmp_dhBrowser.ieAtLeast60", isIeAtLeast60());
@@ -325,6 +330,39 @@ public class BrowserBean implements Serializable {
 		appendBool(sb, "tmp_dhBrowser.mac", isMac());
 		appendBool(sb, "tmp_dhBrowser.fedora5", isFedora5());
 		appendBool(sb, "tmp_dhBrowser.fedora6", isFedora6());
+		*/
+		
+		// The reason for putting the js here is to help keep it in sync with 
+		// the Java version of the same thing, though whether it's worth the 
+		// pain of writing javascript in Java strings is debatable
+		sb.append("var tmp_dhInitBrowser = function(browser) {\n");
+		sb.append("    var gecko15 = ");
+		sb.append(LOWEST_GECKO_15_VERSION);
+		sb.append(";\n");
+		sb.append("    var ua = navigator.userAgent;\n");
+		sb.append("    var av = navigator.appVersion;\n");
+		sb.append("    browser.khtml = av.indexOf('Safari') >= 0 || av.indexOf('Konqueror') >= 0;\n");
+		sb.append("    var geckoPos = ua.indexOf('Gecko');\n");
+		sb.append("    if (browser.khtml) geckoPos = -1;\n");
+		sb.append("    browser.gecko = geckoPos >= 0;\n");
+		sb.append("    if (geckoPos >= 0) {\n");
+		sb.append("    	   var geckoVersion = parseInt(ua.substring(geckoPos + 6, geckoPos + 14));\n");
+		sb.append("        browser.geckoAtLeast15 = geckoVersion >= gecko15;\n");
+		sb.append("    } else {\n");
+		sb.append("        browser.geckoAtLeast15 = false;\n");
+		sb.append("    }\n");
+		sb.append("    browser.ie = av.indexOf('MSIE ') >= 0;\n");
+		sb.append("    browser.ieAtLeast55 = av.indexOf('MSIE 5.5') >= 0;\n");
+		sb.append("    browser.ieAtLeast60 = av.indexOf('MSIE 6') >= 0;\n");
+		sb.append("    browser.ieAtLeast70 = av.indexOf('MSIE 7') >= 0;\n");
+		sb.append("    if (browser.ieAtLeast70) browser.ieAtLeast60 = true;\n");
+		sb.append("    if (browser.ieAtLeast60) browser.ieAtLeast55 = true;\n");
+		sb.append("    browser.linux = av.indexOf('X11') >= 0;\n");
+		sb.append("    browser.windows = av.indexOf('Windows') >= 0;\n");
+		sb.append("    browser.mac = av.indexOf('Macintosh') >= 0;\n");
+		sb.append("}\n");
+		sb.append("tmp_dhInitBrowser(tmp_dhBrowser);");
+		sb.append("tmp_dhInitBrowser = null;");
 		
 		return sb.toString();
 	}
