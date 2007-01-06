@@ -9,14 +9,14 @@
 <c:set var="dhNameEntryCount" value="${dhNameEntryCount + 1}" scope="request"/>
 <c:set var="N" value="${dhNameEntryCount}" scope="page"/>
 
-<dh:script modules="dh.actions,dojo.event.*,dojo.widget.HtmlInlineEditBox"/>
+<dh:script modules="dh.actions,dh.event,dojo.event.*,dojo.widget.HtmlInlineEditBox"/>
 <script type="text/javascript">    
 	function dhNameEntryInit${N}() {
 		var entry = dojo.widget.manager.getWidgetById("dhNameEntry${N}");
 		entry.dhOnSaveHandler = dh.actions.renamePersonHandler;
 		dojo.event.connect(entry, "onSave", entry, "dhOnSaveHandler");
     }
-    dojo.event.connect(dojo, "loaded", dj_global, "dhNameEntryInit${N}");
+   dh.event.addPageLoadListener(dhNameEntryInit${N});
 </script>
 <span dojoType="InlineEditBox" id="dhNameEntry${N}">
 	<c:out value="${value}"/>

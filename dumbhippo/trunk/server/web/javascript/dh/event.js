@@ -15,7 +15,9 @@ dh.event.getNode = function(ev)
 	if (window.event)
 		return window.event.srcElement;
 		
-	throw Error("no event to get dom node from");
+	// FIXME we should throw here, but need to audit broken code
+	// throw Error("no event to get dom node from");
+	return null;
 };
 
 // cancel an event. This combines two things; "stop bubbling up to 
@@ -42,7 +44,10 @@ dh.event.cancel = function(ev)
 	else
 		ev.cancelBubble = true;		
 	
-	throw Error("no event to cancel");
+	// FIXME we should throw here, but need to audit broken code; the block expansion code
+	// may be an example of something that has this hosed	
+	// throw Error("no event to cancel");
+	return null;
 };
 
 // Define common keycodes - do not put "var" in front of these
@@ -77,8 +82,10 @@ dh.event.getAltKey = function(ev)
 		return ev.altKey;
 	if (window.event)
 		return window.event.altKey;
-		
-	throw Error("no event to get alt key state from");
+	
+	// FIXME we should throw here, but need to audit broken code
+	// throw Error("no event to get alt key state from");
+	return null;
 };
 
 /* 

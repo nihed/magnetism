@@ -572,4 +572,4 @@ dhAccountInit = function() {
 	dh.account.createRedditEntry();
 }
 
-dojo.event.connect(dojo, "loaded", dj_global, "dhAccountInit");
+dh.event.addPageLoadListener(dhAccountInit);

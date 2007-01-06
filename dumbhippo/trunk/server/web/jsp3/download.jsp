@@ -26,12 +26,12 @@
 	<title>Mugshot Download</title>
 	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
 	<dht3:stylesheet name="download"/>
-	<dh:script module="dh.download"/>
+	<dh:script modules="dh.download,dh.event"/>
 	<dht:faviconIncludes/>
 	<script type="text/javascript">
 		dh.download.needTermsOfUse = ${signin.needsTermsOfUse}
-		dojo.event.connect(dojo, "loaded", function () { dh.download.init() })
-	</script>	
+		dh.event.addPageLoadListener(dh.download.init);
+	</script>
 </head>
 
 <dht3:page currentPageLink="download">

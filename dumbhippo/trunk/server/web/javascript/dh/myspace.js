@@ -3,6 +3,7 @@ dojo.provide("dh.myspace");
 dojo.require("dojo.event.*");
 dojo.require("dh.util");
 dojo.require("dh.server");
+dojo.require("dh.event");
 
 dh.password.passwordEntry = null;
 dh.password.againEntry = null;
@@ -72,4 +73,4 @@ var dhMySpaceInit = function() {
 	dh.myspace.instance = new dh.myspace.NameInput();
 }
 
-dojo.event.connect(dojo, "loaded", dhMySpaceInit);
+dh.event.addPageLoadListener(dhMySpaceInit);

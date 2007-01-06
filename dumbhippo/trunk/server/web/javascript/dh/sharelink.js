@@ -10,6 +10,7 @@ dojo.require("dh.share");
 dojo.require("dh.server");
 dojo.require("dh.util");
 dojo.require("dh.lang");
+dojo.require("dh.event");
 
 dh.sharelink.extensions = [];
 dh.sharelink.urlToShareEditBox = null;
@@ -391,5 +392,4 @@ dh.sharelink.init = function() {
 	}	
 }
 
-dhShareLinkInit = dh.sharelink.init; // connect doesn't like namespaced things
-dojo.event.connect(dojo, "loaded", dj_global, "dhShareLinkInit");
+dh.event.addPageLoadListener(dh.sharelink.init);

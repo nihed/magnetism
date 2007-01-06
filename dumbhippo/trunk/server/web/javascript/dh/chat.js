@@ -1,4 +1,5 @@
-dojo.provide("dh.chat")
+dojo.provide("dh.chat");
+dojo.require("dh.event");
 
 dh.chat.MESSAGE_FONT_STYLE = "normal" 
 dh.chat.DESCRIPTION_MESSAGE_FONT_STYLE = "italic"  

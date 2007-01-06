@@ -1,11 +1,11 @@
 dojo.provide("dh.sharegroup");
 
-dojo.require("dojo.event.*");
 dojo.require("dojo.widget.*");
 dojo.require("dh.share");
 dojo.require("dh.server");
 dojo.require("dh.util");
 dojo.require("dh.dom");
+dojo.require("dh.event");
 
 dh.sharegroup.inviteCountMessage = null;
 
@@ -135,5 +135,4 @@ dh.sharegroup.init = function() {
 	dh.sharegroup.loadContacts();
 }
 
-dhShareGroupInit = dh.sharegroup.init; // connect doesn't like namespaced things
-dojo.event.connect(dojo, "loaded", dj_global, "dhShareGroupInit");
+dh.event.addPageLoadListener(dh.sharegroup.init);

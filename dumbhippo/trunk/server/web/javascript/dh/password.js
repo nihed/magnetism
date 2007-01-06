@@ -151,4 +151,5 @@ dhPasswordInit = function() {
 	dhPasswordFormUpdate();
 }
 
-dojo.event.connect(dojo, "loaded", dj_global, "dhPasswordInit");
+dh.event.addPageLoadListener(dhPasswordInit);
+

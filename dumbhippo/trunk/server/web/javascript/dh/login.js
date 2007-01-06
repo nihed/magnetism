@@ -84,4 +84,4 @@ dhLoginInit = function() {
 	document.getElementById("dhLoginAddressEntry").focus();
 }
 
-dojo.event.connect(dojo, "loaded", dj_global, "dhLoginInit");
+dh.event.addPageLoadListener(dhLoginInit);

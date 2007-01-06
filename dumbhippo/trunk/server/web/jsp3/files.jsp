@@ -20,12 +20,12 @@
 	<title><c:out value="${person.viewedPerson.name}"/>'s ${pageName} - Mugshot</title>
 	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
 	<dht:faviconIncludes/>	
-	<dh:script modules="dh.fileinput,dh.files"/>
+	<dh:script modules="dh.fileinput,dh.files,dh.event"/>
 	<script type="text/javascript">
 		var dhFilesInit = function() {
 			new dh.fileinput.Entry(document.getElementById('dhFileUploadEntry'));
 		}
-		dojo.event.connect(dojo, "loaded", dj_global, "dhFilesInit");
+		dh.event.addPageLoadListener(dhFilesInit);
 	</script>
 </head>
 <dht3:page currentPageLink="badges">

@@ -21,7 +21,7 @@
 	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/group-account.css"/>
 	<dht:faviconIncludes/>
-		<dh:script module="dh.groupaccount"/>
+	<dh:script modules="dh.groupaccount,dh.event"/>
 	<script type="text/javascript">
 		dh.formtable.currentValues = {
 			'dhGroupNameEntry' : <dh:jsString value="${group.name}"/>,
@@ -32,7 +32,7 @@
 			dh.photochooser.reloadPhoto([document.getElementById('dhHeadshotImageContainer'),
 			                             document.getElementById('dhSidebarBoxProfileGroupImage')], 60);
 		}
-		dojo.event.connect(dojo, "loaded", dj_global, "dhGroupAccountInit");
+		dh.event.addPageLoadListener(dhGroupAccountInit);
 	</script>
 </head>
 <dht:twoColumnPage>

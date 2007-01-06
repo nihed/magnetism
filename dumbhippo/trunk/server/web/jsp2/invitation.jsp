@@ -14,7 +14,7 @@
 	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/invitation.css"/>
 	<dht:faviconIncludes/>
-		<dh:script module="dh.invitation"/>
+	<dh:script modules="dh.invitation,dh.event"/>
 	<script type="text/javascript">
 		dh.invitation.initialValues = {
 			'dhAddressEntry' : '',
@@ -28,7 +28,7 @@
 			'dhSubjectEntry' : 'Invitation from ${signin.user.nickname} to join Mugshot',
 			'dhMessageEntry' : 'Just a reminder'
 		}
-		dojo.event.connect(dojo, "loaded", dj_global, "dhInvitationInit");
+		dh.event.addPageLoadListener(dhInvitationInit);
 	</script>
 </head>
 <dht:twoColumnPage>
