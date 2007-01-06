@@ -7,6 +7,7 @@
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-text.h>
+#include <hippo/hippo-canvas-link.h>
 #include "hippo-canvas-url-link.h"
 #include "hippo-canvas-thumbnails.h"
 
@@ -45,6 +46,7 @@ static void set_person (HippoCanvasBlockFlickrPerson *block_flickr_person,
 struct _HippoCanvasBlockFlickrPerson {
     HippoCanvasBlock canvas_block;
     HippoCanvasBox *thumbnails_parent;
+    HippoCanvasItem *tip;
     HippoCanvasItem *thumbnails;
     HippoPerson *person;
 };
@@ -185,6 +187,15 @@ hippo_canvas_block_flickr_person_constructor (GType                  type,
                      "actions", block->actions,
                      NULL);
 
+    block_flickr_person->tip = 
+        g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                     "text", _("View thumbnails"),
+                     "xalign", HIPPO_ALIGNMENT_START,
+                     NULL);
+    HIPPO_CANVAS_BOX(block_flickr_person->tip)->clickable = FALSE;
+
+    hippo_canvas_box_append(block_flickr_person->thumbnails_parent,
+                            block_flickr_person->tip, HIPPO_PACK_EXPAND);
     hippo_canvas_box_append(block_flickr_person->thumbnails_parent,
                             block_flickr_person->thumbnails, HIPPO_PACK_EXPAND);
 
@@ -301,6 +312,9 @@ hippo_canvas_block_flickr_person_expand(HippoCanvasBlock *canvas_block)
     hippo_canvas_box_set_child_visible(block_flickr_person->thumbnails_parent,
                                        block_flickr_person->thumbnails,
                                        TRUE);
+    hippo_canvas_box_set_child_visible(block_flickr_person->thumbnails_parent,
+                                       block_flickr_person->tip,
+                                       FALSE);
 
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_flickr_person_parent_class)->expand(canvas_block);
 }
@@ -313,6 +327,9 @@ hippo_canvas_block_flickr_person_unexpand(HippoCanvasBlock *canvas_block)
     hippo_canvas_box_set_child_visible(block_flickr_person->thumbnails_parent,
                                        block_flickr_person->thumbnails,
                                        FALSE);
+    hippo_canvas_box_set_child_visible(block_flickr_person->thumbnails_parent,
+                                       block_flickr_person->tip,
+                                       TRUE);
 
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_flickr_person_parent_class)->unexpand(canvas_block);
 }
