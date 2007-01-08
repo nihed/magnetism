@@ -81,7 +81,7 @@ public abstract class SigninBean  {
 			}
 			
 			if (account != null) {
-				if (!account.getHasAcceptedTerms() || account.isDisabled() || account.isAdminDisabled())
+				if (!account.getHasAcceptedTerms() || !account.isActive())
 					result = new DisabledSigninBean(account);
 				else
 					result = new UserSigninBean(account);
@@ -126,7 +126,7 @@ public abstract class SigninBean  {
 	public static String initializeAuthentication(HttpServletRequest request, HttpServletResponse response, Client client) {
 		Account account = client.getAccount();
 		User user = account.getOwner();
-		if (!account.isDisabled() && !account.isAdminDisabled() && account.getHasAcceptedTerms()) {
+		if (account.isActive() && account.getHasAcceptedTerms()) {
 			setCookie(response, user.getGuid(), client.getAuthKey());
 		} else {
 			SigninBean.storeGuid(request.getSession(), user.getGuid());
@@ -155,7 +155,7 @@ public abstract class SigninBean  {
 			try {
 				Client client = accountSystem.getExistingClient(userId, clientId);
 				Account account = client.getAccount();
-				if (!account.isDisabled() && !account.isAdminDisabled() && account.getHasAcceptedTerms())
+				if (account.isActive() && account.getHasAcceptedTerms())
 					setCookie(response, userId, client.getAuthKey());
 				else
 					unsetCookie(response);

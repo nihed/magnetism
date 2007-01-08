@@ -797,8 +797,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		case RAW_PREFERENCE_ONLY:
 			return musicSharingEnabled;
 		case AND_ACCOUNT_IS_ACTIVE:
-			return !(account.isDisabled() || account.isAdminDisabled())
-					&& musicSharingEnabled;
+			return account.isActive() && musicSharingEnabled;
 		}
 		throw new IllegalArgumentException(
 				"invalid value for enabled param to getMusicSharingEnabled");
