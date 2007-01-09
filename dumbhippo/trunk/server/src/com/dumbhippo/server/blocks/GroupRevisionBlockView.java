@@ -139,6 +139,6 @@ public class GroupRevisionBlockView extends BlockView implements PersonSourceBlo
 	}
 
 	public String getLink() {
-		return "/group-account?group=" + revision.getTarget().getId();
+		return "/group?who=" + revision.getTarget().getId();
 	}
 }
