@@ -243,7 +243,7 @@
                                           label="${supportedAccount.siteName}" icon="/images3/${buildStamp}/${supportedAccount.iconName}">
 		                    <dht:loveHateEntry 
 		                    	name="${supportedAccount.siteName}"
-		                    	link="${supportedAccount.externalAccount.siteLink}"
+		                    	link="${supportedAccount.externalAccountType.siteLink}"
 		                    	baseId="dh${supportedAccount.siteBaseName}" 
 		                    	mode="${supportedAccount.sentiment}">
 		                        <c:if test="${supportedAccount.siteBaseName == 'Rhapsody'}">

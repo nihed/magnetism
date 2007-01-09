@@ -248,10 +248,11 @@ dh.account.onLastFmLoveSaved = function(value) {
 	entry.setBusy();
   	dh.account.setLastFmName(value, 
 	 	    	 function(childNodes, http) {
+	 	    	 	entry.setError(null);
 	 	    	 	entry.setMode('love');
 	  	    	 },
 	  	    	 function(code, msg, http) {
-	  	    	 	alert(msg);
+	  	    	 	entry.setError(msg);
 	  	    	 	entry.setMode(oldMode);
 	  	    	 }); 
 }

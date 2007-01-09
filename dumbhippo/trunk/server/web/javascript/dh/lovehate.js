@@ -23,6 +23,9 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this._hateEditNode = document.getElementById(baseId + 'HateEditId');
 	this._indifferentNode = document.getElementById(baseId + 'IndifferentId');
 	this._busyNode = document.getElementById(baseId + 'BusyId');
+	this._normalDescriptionNode = document.getElementById(baseId + 'DescriptionNormal');
+	this._errorDescriptionNode = document.getElementById(baseId + 'DescriptionError');
+	this._errorTextNode = document.getElementById(baseId + 'DescriptionErrorText');
 	
 	this._loveEntryNode = document.getElementById(baseId + 'LoveEntryId');
 	this._hateEntryNode = document.getElementById(baseId + 'HateEntryId');
@@ -38,6 +41,8 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this._hateValue = document.getElementById(baseId + 'HateValueId');
 	
 	this._allNodes = [me._loveNode, me._hateNode, me._loveEditNode, me._hateEditNode, me._indifferentNode, me._busyNode];
+	
+	this._errorText = "";
 	
 	this._loveTip = document.getElementById(baseId + 'LoveTipId');
 	if (loveTip) {
@@ -145,6 +150,26 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 		me.setMode('busy');
 	}
 	
+	this.setError = function(msg) {
+		if (msg) {
+			me._errorTextNode.innerHTML = "";
+			me._errorTextNode.appendChild(document.createTextNode(msg));
+			me._errorDescriptionNode.style.display = "block";
+			me._normalDescriptionNode.style.display = "none";
+			dh.util.removeClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-success");		
+			dh.util.removeClass(this._containerContentNode.parentNode, "dh-love-hate-editing-box-success");			
+			dh.util.prependClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-error");		
+			dh.util.prependClass(this._containerContentNode.parentNode, "dh-love-hate-editing-box-error");				
+		} else {
+			me._normalDescriptionNode.style.display = "block";				
+			me._errorDescriptionNode.style.display = "none";
+			dh.util.removeClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-error");		
+			dh.util.removeClass(this._containerContentNode.parentNode, "dh-love-hate-editing-box-error");				
+			dh.util.prependClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-success");		
+			dh.util.prependClass(this._containerContentNode.parentNode, "dh-love-hate-editing-box-success");				
+		}
+	}
+	
 	this.setSpecialLoveValue = function(value) {
 	    // this is used when we don't want a long value for the entry to be visible 
 	    // when the entry is not being edited
@@ -189,6 +214,7 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	}
 	
 	// this updates the current values and what's showing
+	this.setError(null);
 	this.setMode(this.getMode());
 }
 

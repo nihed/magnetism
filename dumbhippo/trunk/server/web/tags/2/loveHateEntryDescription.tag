@@ -6,29 +6,34 @@
 <%@ attribute name="link" required="true" type="java.lang.String" %>
 <%@ attribute name="baseId" required="true" type="java.lang.String" %>
 
-<div class="dh-love-hate-instructions">
-	<div class="dh-love-hate-instruction-editing">
-		Editing <c:out value="${name}"/>.<br/>	
+<div id="${baseId}DescriptionContainer">
+	<div id="${baseId}DescriptionNormal">
+		<div class="dh-love-hate-instruction-editing">
+			Editing <c:out value="${name}"/>.<br/>	
+		</div>
+		<div>
+			<dh:png src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/> 
+			<a style="font-weight: bold;" href="javascript:dh.lovehate.setMode('${baseId}', 'loveEdit')" title="Click to change">Love it</a>: Enter your 
+				<jsp:element name="a">
+					<jsp:attribute name="href"><c:out value="${link}"/></jsp:attribute>
+					<jsp:attribute name="target">_blank</jsp:attribute>
+					<jsp:body><c:out value="${name}"/></jsp:body>
+				</jsp:element> user info.
+			  		<span id="${baseId}LoveTipId"></span>
+	 	</div>
+		<div>
+			<dh:png klass="dh-love-hate-icon" src="/images3/${buildStamp}/quiphate_icon.png" style="width: 11; height: 11; overflow: hidden;"/>
+			<a style="font-weight: bold;" href="javascript:dh.lovehate.setMode('${baseId}', 'hateEdit')" title="Click to change">Hate it</a>: 
+				Let people see why you don't use 
+				<jsp:element name="a">
+					<jsp:attribute name="href"><c:out value="${link}"/></jsp:attribute>
+					<jsp:attribute name="target">_blank</jsp:attribute>
+					<jsp:body><c:out value="${name}"/></jsp:body>
+				</jsp:element>.
+			</span>
+		</div>
 	</div>
-	<div>
-		<dh:png src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/> 
-		<a style="font-weight: bold;" href="javascript:dh.lovehate.setMode('${baseId}', 'loveEdit')" title="Click to change">Love it</a>: Enter your 
-			<jsp:element name="a">
-				<jsp:attribute name="href"><c:out value="${link}"/></jsp:attribute>
-				<jsp:attribute name="target">_blank</jsp:attribute>
-				<jsp:body><c:out value="${name}"/></jsp:body>
-			</jsp:element> user info.
-		  		<span id="${baseId}LoveTipId"></span>
- 	</div>
-	<div>
-		<dh:png klass="dh-love-hate-icon" src="/images3/${buildStamp}/quiphate_icon.png" style="width: 11; height: 11; overflow: hidden;"/>
-		<a style="font-weight: bold;" href="javascript:dh.lovehate.setMode('${baseId}', 'hateEdit')" title="Click to change">Hate it</a>: 
-			Let people see why you don't use 
-			<jsp:element name="a">
-				<jsp:attribute name="href"><c:out value="${link}"/></jsp:attribute>
-				<jsp:attribute name="target">_blank</jsp:attribute>
-				<jsp:body><c:out value="${name}"/></jsp:body>
-			</jsp:element>.
-		</span>
+	<div id="${baseId}DescriptionError" style="display: none">
+		<span class="dh-love-hate-error-prefix">Error:</span> <span class="dh-love-hate-error-text" id="${baseId}DescriptionErrorText"></span>
 	</div>
 </div>
