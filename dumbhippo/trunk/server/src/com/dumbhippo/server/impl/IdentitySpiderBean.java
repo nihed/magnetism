@@ -2,6 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.net.URL;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -44,6 +45,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.UserBioChangedRevision;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.server.Configuration;
@@ -55,6 +57,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
+import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.SystemViewpoint;
@@ -94,6 +97,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	@EJB
 	private Notifier notifier;
 
+	@EJB
+	private RevisionControl revisionControl;
+	
 	public User lookupUserByEmail(Viewpoint viewpoint, String email) {
 		EmailResource res = lookupEmail(email);
 		if (res == null)
@@ -862,6 +868,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			throw new RuntimeException("user not attached");
 		Account acct = user.getAccount();
 		acct.setBio(bio);
+		revisionControl.persistRevision(new UserBioChangedRevision(viewpoint.getViewer(), new Date(), bio));
 	}
 
 	public void setMusicBio(UserViewpoint viewpoint, User user, String bio) {

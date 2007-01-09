@@ -163,6 +163,11 @@ public enum BlockType {
 		public boolean userOriginIsData1() {
 			return true;
 		}
+	},
+	// a revision to a group's attributes
+	GROUP_REVISION { // 19
+		
+				
 	};
 	
 	// True for blocks which are originated by a user and the

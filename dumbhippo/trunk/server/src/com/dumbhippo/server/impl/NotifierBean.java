@@ -32,6 +32,7 @@ import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
+import com.dumbhippo.persistence.Revision;
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.TrackMessage;
 import com.dumbhippo.persistence.User;
@@ -49,6 +50,7 @@ import com.dumbhippo.server.listeners.MusicListener;
 import com.dumbhippo.server.listeners.PostChatListener;
 import com.dumbhippo.server.listeners.PostClickedListener;
 import com.dumbhippo.server.listeners.PostListener;
+import com.dumbhippo.server.listeners.RevisionListener;
 import com.dumbhippo.server.listeners.UserCreationListener;
 import com.dumbhippo.server.listeners.YouTubeListener;
 import com.dumbhippo.server.util.EJBUtil;
@@ -326,6 +328,12 @@ public class NotifierBean implements Notifier {
 	public void onYouTubeRecentVideosChanged(String flickrId, List<? extends YouTubeVideo> videos) {
 		for (YouTubeListener l : getListeners(YouTubeListener.class)) {
 			l.onYouTubeRecentVideosChanged(flickrId, videos);
+		}
+	}
+
+	public void onRevisionAdded(Revision revision) {
+		for (RevisionListener l : getListeners(RevisionListener.class)) {
+			l.onRevisionAdded(revision);
 		}
 	}
 }

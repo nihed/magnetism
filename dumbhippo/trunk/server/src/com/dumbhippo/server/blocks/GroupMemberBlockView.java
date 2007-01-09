@@ -76,7 +76,7 @@ public class GroupMemberBlockView extends BlockView {
 	
 	@Override
 	public String getPrivacyTip() {
-		return "Private: This group update can only be seen by you.";
+		return "Private: This group update can only be seen by group members.";
 	}	
 	
 	@Override

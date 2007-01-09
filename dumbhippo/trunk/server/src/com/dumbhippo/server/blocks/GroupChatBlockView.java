@@ -78,7 +78,7 @@ public class GroupChatBlockView extends BlockView implements TitleBlockView {
 	
 	@Override
 	public String getPrivacyTip() {
-		return "Private: This group chat can only be seen by you.";
+		return "Private: This group chat can only be seen by group members.";
 	}
 
 	public String getLink() {

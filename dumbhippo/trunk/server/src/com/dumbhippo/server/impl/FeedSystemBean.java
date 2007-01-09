@@ -39,6 +39,8 @@ import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupFeed;
+import com.dumbhippo.persistence.GroupFeedAddedRevision;
+import com.dumbhippo.persistence.GroupFeedRemovedRevision;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.PollingTaskEntry;
 import com.dumbhippo.persistence.PollingTaskFamilyType;
@@ -51,6 +53,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
@@ -87,6 +90,9 @@ public class FeedSystemBean implements FeedSystem {
 	
 	@EJB
 	private PollingTaskPersistence pollingPersistence;
+	
+	@EJB
+	private RevisionControl revisionControl;
 	
 	private static ExecutorService notificationService;
 	private static boolean shutdown = false;
@@ -729,10 +735,13 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 
-	public void addGroupFeed(Group group, Feed feed) {
+	public void addGroupFeed(User adder, Group group, Feed feed) {
 		for (GroupFeed old : group.getFeeds()) {
 			if (old.getFeed().equals(feed)) {
-				old.setRemoved(false);
+				if (old.isRemoved()) {
+					old.setRemoved(false);
+					revisionControl.persistRevision(new GroupFeedAddedRevision(adder, group, new Date(), feed));
+				}
 				return;
 			}
 		}
@@ -741,12 +750,17 @@ public class FeedSystemBean implements FeedSystem {
 		em.persist(groupFeed);
 		group.getFeeds().add(groupFeed);
 		feed.getGroups().add(groupFeed);
+		
+		revisionControl.persistRevision(new GroupFeedAddedRevision(adder, group, new Date(), feed));
 	}
 	
-	public void removeGroupFeed(Group group, Feed feed) {
+	public void removeGroupFeed(User remover, Group group, Feed feed) {
 		for (GroupFeed old : group.getFeeds()) {
 			if (old.getFeed().equals(feed)) {
-				old.setRemoved(true);
+				if (!old.isRemoved()) {
+					old.setRemoved(true);
+					revisionControl.persistRevision(new GroupFeedRemovedRevision(remover, group, new Date(), feed));
+				}
 				return;
 			}
 		}

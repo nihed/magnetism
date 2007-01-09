@@ -74,6 +74,7 @@ import com.dumbhippo.server.blocks.FlickrPersonBlockHandler;
 import com.dumbhippo.server.blocks.FlickrPhotosetBlockHandler;
 import com.dumbhippo.server.blocks.GroupChatBlockHandler;
 import com.dumbhippo.server.blocks.GroupMemberBlockHandler;
+import com.dumbhippo.server.blocks.GroupRevisionBlockHandler;
 import com.dumbhippo.server.blocks.MusicChatBlockHandler;
 import com.dumbhippo.server.blocks.MusicPersonBlockHandler;
 import com.dumbhippo.server.blocks.MySpacePersonBlockHandler;
@@ -187,6 +188,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			break;
 		case REDDIT_ACTIVITY_ENTRY:
 			handlerClass = RedditBlockHandler.class;
+			break;
+		case GROUP_REVISION:
+			handlerClass = GroupRevisionBlockHandler.class;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
@@ -1879,6 +1883,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case GROUP_CHAT:
 			isGroupParticipation = true;
 			reason = StackReason.CHAT_MESSAGE;
+			break;
+		case GROUP_REVISION:
+			isGroupParticipation = true;
 			break;
 		case MUSIC_PERSON:
 		case FACEBOOK_PERSON:

@@ -8,6 +8,7 @@ import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.LinkResource;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoader;
 import com.dumbhippo.server.impl.FeedSystemBean.FeedLinkUnknownException;
 import com.sun.syndication.feed.synd.SyndFeed;
@@ -88,8 +89,8 @@ public interface FeedSystem extends PollingTaskLoader {
 	
 	List<Feed> getInUseFeeds();
 	
-	void addGroupFeed(Group group, Feed feed);
-	void removeGroupFeed(Group group, Feed feed);
+	void addGroupFeed(User adder, Group group, Feed feed);
+	void removeGroupFeed(User remover, Group group, Feed feed);
 	
 	/*
 	 * Called (by FeedSystem itself) when a new FeedEntry is found

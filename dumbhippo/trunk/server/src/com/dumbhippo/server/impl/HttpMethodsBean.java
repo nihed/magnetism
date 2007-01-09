@@ -59,6 +59,8 @@ import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
+import com.dumbhippo.persistence.GroupDescriptionChangedRevision;
+import com.dumbhippo.persistence.GroupNameChangedRevision;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.NowPlayingTheme;
@@ -67,6 +69,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.UserNameChangedRevision;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.postinfo.PostInfo;
@@ -93,6 +96,7 @@ import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
+import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.SharedFileSystem;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.Stacker;
@@ -184,6 +188,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	@EJB
 	private FacebookTracker facebookTracker;
+	
+	@EJB
+	private RevisionControl revisionControl;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -427,7 +434,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doRenamePerson(UserViewpoint viewpoint, String name) {
+		name = name.trim();
 		viewpoint.getViewer().setNickname(name);
+		revisionControl.persistRevision(new UserNameChangedRevision(viewpoint.getViewer(), new Date(), name));
 	}
 
 	public void doCreateGroup(OutputStream out, HttpResponseData contentType,
@@ -513,6 +522,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				throw new RuntimeException("Only active members can edit a group");
 						
 			group.setName(name);
+			revisionControl.persistRevision(new GroupNameChangedRevision(viewpoint.getViewer(), group, new Date(), name));
 			searchSystem.indexGroup(group, true);
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
@@ -529,10 +539,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			description = description.trim();
 			
 			group.setDescription(description);
+			revisionControl.persistRevision(new GroupDescriptionChangedRevision(viewpoint.getViewer(), group, new Date(), description));
 			searchSystem.indexGroup(group, true);
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
-		}		
+		}
 	}
 	
 	public void doSetGroupStockPhoto(UserViewpoint viewpoint, String groupId, String photo) {
@@ -1465,7 +1476,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (!groupSystem.canEditGroup(viewpoint, group))
 			throw new XmlMethodException(XmlMethodErrorCode.FORBIDDEN, "Only active members can add feeds to a group");
 							
-		feedSystem.addGroupFeed(group, feed);
+		feedSystem.addGroupFeed(viewpoint.getViewer(), group, feed);
 	}
 
 	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException {
@@ -1476,7 +1487,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (!groupSystem.canEditGroup(viewpoint, group))
 			throw new XmlMethodException(XmlMethodErrorCode.FORBIDDEN, "Only active members can remove feeds from a group");
 							
-		feedSystem.removeGroupFeed(group, feed);		
+		feedSystem.removeGroupFeed(viewpoint.getViewer(), group, feed);		
 	}
 	
 	// FIXME this doesn't match the other external account manipulation methods exactly since its 
