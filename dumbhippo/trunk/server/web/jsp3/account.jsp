@@ -239,8 +239,13 @@
 				        </c:choose>    			            					   
 				    </dht:formTableRow>
 				    <c:forEach items="${account.supportedAccounts.list}" var="supportedAccount">
-                        <dht:formTableRow label="${supportedAccount.siteName}" icon="/images3/${buildStamp}/${supportedAccount.iconName}">
-		                    <dht:loveHateEntry baseId="dh${supportedAccount.siteBaseName}" mode="${supportedAccount.sentiment}">
+                        <dht:formTableRow containerId="dh${supportedAccount.siteBaseName}Container" 
+                                          label="${supportedAccount.siteName}" icon="/images3/${buildStamp}/${supportedAccount.iconName}">
+		                    <dht:loveHateEntry 
+		                    	name="${supportedAccount.siteName}"
+		                    	link="${supportedAccount.externalAccount.siteLink}"
+		                    	baseId="dh${supportedAccount.siteBaseName}" 
+		                    	mode="${supportedAccount.sentiment}">
 		                        <c:if test="${supportedAccount.siteBaseName == 'Rhapsody'}">
 		                            <a href="http://www.rhapsody.com/myrhapsody/rss.html" target="_blank" class="dh-text-input-help">help me find it</a>          
 		                        </c:if>

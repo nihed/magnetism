@@ -46,6 +46,8 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	this.defaultText = defaultText;
 	this.showingDefaultText = false;
 	
+	this._handlingFocusEvent = false;
+	
 	// if empty is invalid, we always show default text if value is empty
 	this.emptyIsValid = false;
 			
@@ -127,12 +129,28 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 		me.activate();
 	}
 
+	this.onfocus = function () {
+	}
+
 	this.elem.onfocus = function(ev) {
+		if (this._handlingFocusEvent)
+			return;
+		this._handlingFocusEvent = true;
 		me.hideDefaultText();
+		this.onfocus();
+		this._handlingFocusEvent = false;
+	}
+	
+	this.onblur = function() {
 	}
 	
 	this.elem.onblur = function(ev) {
+		if (this._handlingFocusEvent)
+			return;	
+		this._handlingFocusEvent = true;			
 		me.activate();
+		this.onblur();
+		this._handlingFocusEvent = false;		
 	}
 	
 	this.elem.onkeydown = function(ev) {

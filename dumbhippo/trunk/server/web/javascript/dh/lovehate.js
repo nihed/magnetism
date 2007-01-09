@@ -6,13 +6,16 @@ dojo.require("dh.event");
 
 dh.lovehate.allEntries = {}
 
-dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultHateText, currentHateValue)
+dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultHateText, currentHateValue, loveTip)
 {
 	dh.lovehate.allEntries[baseId] = this;
 
 	// creates a variable that can be captured in closures below, while "this" can't be
 	var me = this;
 
+	this._containerNode = document.getElementById(baseId + 'Container');
+	this._containerLabelNode = document.getElementById(baseId + 'ContainerLabel')
+	this._containerContentNode = document.getElementById(baseId + 'ContainerContent')	
 	this._rootNode = document.getElementById(baseId + 'AllId');
 	this._loveNode = document.getElementById(baseId + 'LoveId');
 	this._hateNode = document.getElementById(baseId + 'HateId');
@@ -35,6 +38,11 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this._hateValue = document.getElementById(baseId + 'HateValueId');
 	
 	this._allNodes = [me._loveNode, me._hateNode, me._loveEditNode, me._hateEditNode, me._indifferentNode, me._busyNode];
+	
+	this._loveTip = document.getElementById(baseId + 'LoveTipId');
+	if (loveTip) {
+		this._loveTip.appendChild(document.createTextNode(loveTip));
+	}
 
 	this._loveEntryNode.onkeydown = function(ev) {
 		var key = dh.event.getKeyCode(ev);
@@ -74,6 +82,20 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 		}
 		if (node.style.display == 'none')
 			throw new Error("node " + node.id + " was not found...");
+			
+		if (node == me._loveEditNode || node == me._hateEditNode) {
+			dh.util.prependClass(this._containerNode, "dh-love-hate-editing-box");
+			dh.util.prependClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-label-box")
+			dh.util.prependClass(this._containerLabelNode, "dh-love-hate-editing");
+			dh.util.prependClass(this._containerContentNode.parentNode, "dh-love-hate-editing-content-box")			
+			dh.util.prependClass(this._containerContentNode, "dh-love-hate-editing");
+		} else {
+			dh.util.removeClass(this._containerNode, "dh-love-hate-editing-box");
+			dh.util.removeClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-label-box");	
+			dh.util.removeClass(this._containerLabelNode, "dh-love-hate-editing")
+			dh.util.removeClass(this._containerContentNode.parentNode, "dh-love-hate-editing-content-box");
+			dh.util.removeClass(this._containerContentNode, "dh-love-hate-editing")			
+		}
 					
 		// focus entry boxes
 		// we don't do this because it hides the gray hint text

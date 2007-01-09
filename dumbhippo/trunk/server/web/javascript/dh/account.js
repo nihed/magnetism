@@ -414,7 +414,7 @@ dh.account.disableFacebookSession = function() {
 }
 dh.account.createMyspaceEntry = function() {
     dh.account.myspaceEntry = new dh.lovehate.Entry('dhMySpace', 'Enter your Myspace name', dh.account.initialMyspaceName,
-							'I despise Tom and his space', dh.account.initialMyspaceHateQuip);
+							'I despise Tom and his space', dh.account.initialMyspaceHateQuip, 'Your friends get updates when you post to your MySpace blog (and more to come).');
 	dh.account.myspaceEntry.onLoveSaved = dh.account.onMyspaceLoveSaved;
 	dh.account.myspaceEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.myspaceEntry, 'MYSPACE');
 	dh.account.myspaceEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.myspaceEntry, 'MYSPACE');
@@ -422,7 +422,7 @@ dh.account.createMyspaceEntry = function() {
 
 dh.account.createYouTubeEntry = function() {
     dh.account.youTubeEntry = new dh.lovehate.Entry('dhYouTube', 'YouTube username or profile URL', dh.account.initialYouTubeName,
-							'Video should kill the internet geeks', dh.account.initialYouTubeHateQuip);
+							'Video should kill the internet geeks', dh.account.initialYouTubeHateQuip, 'Your friends get updates when you upload new videos.');
 	dh.account.youTubeEntry.onLoveSaved = dh.account.onYouTubeLoveSaved;
 	dh.account.youTubeEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.youTubeEntry, 'YOUTUBE');
 	dh.account.youTubeEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.youTubeEntry, 'YOUTUBE');
@@ -430,7 +430,7 @@ dh.account.createYouTubeEntry = function() {
 
 dh.account.createLastFmEntry = function() {	
 	dh.account.lastFmEntry = new dh.lovehate.Entry('dhLastfm', 'Last.fm username', dh.account.initialLastFmName,
-					'Uhh...what\'s Last.fm?', dh.account.initialLastFmHateQuip);
+					'Uhh...what\'s Last.fm?', dh.account.initialLastFmHateQuip, 'Your friends see what music you\'re listening to.');
 	dh.account.lastFmEntry.onLoveSaved = dh.account.onLastFmLoveSaved;
 	dh.account.lastFmEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.lastFmEntry, 'LASTFM');
 	dh.account.lastFmEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.lastFmEntry, 'LASTFM');		
@@ -438,7 +438,7 @@ dh.account.createLastFmEntry = function() {
 
 dh.account.createFlickrEntry = function() {		
 	dh.account.flickrEntry = new dh.lovehate.Entry('dhFlickr', 'Email used for Flickr account', dh.account.initialFlickrEmail,
-					'Flickr doesn\'t do it for me', dh.account.initialFlickrHateQuip);
+					'Flickr doesn\'t do it for me', dh.account.initialFlickrHateQuip, 'Your friends get updates when you upload new photos and photo sets.');
 	dh.account.flickrEntry.onLoveSaved = dh.account.onFlickrLoveSaved;
 	dh.account.flickrEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.flickrEntry, 'FLICKR');
 	dh.account.flickrEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.flickrEntry, 'FLICKR');
@@ -454,7 +454,7 @@ dh.account.createLinkedInEntry = function() {
 
 dh.account.createRhapsodyEntry = function() {	
 	dh.account.rhapsodyEntry = new dh.lovehate.Entry('dhRhapsody', 'Rhapsody recent plays RSS URL', dh.account.initialRhapsodyUrl,
-					'All-you-can-eat music services hurt my diet', dh.account.initialRhapsodyHateQuip);
+					'All-you-can-eat music services hurt my diet', dh.account.initialRhapsodyHateQuip, 'Your friends will see updates from your Rhapsody playlist.');
 	dh.account.rhapsodyEntry.setSpecialLoveValue("My feed");				
 	dh.account.rhapsodyEntry.onLoveSaved = dh.account.onRhapsodyLoveSaved;
 	dh.account.rhapsodyEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.rhapsodyEntry, 'RHAPSODY');
@@ -463,7 +463,7 @@ dh.account.createRhapsodyEntry = function() {
 
 dh.account.createDeliciousEntry = function() {	
 	dh.account.deliciousEntry = new dh.lovehate.Entry('dhDelicious', 'del.icio.us URL or username', dh.account.initialDeliciousName,
-					'del.icio.us isn\'t', dh.account.initialDeliciousHateQuip);
+					'del.icio.us isn\'t', dh.account.initialDeliciousHateQuip, 'Your friends get updates when you add public bookmarks.');
 	dh.account.deliciousEntry.onLoveSaved = dh.account.onDeliciousLoveSaved;
 	dh.account.deliciousEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.deliciousEntry, 'DELICIOUS');
 	dh.account.deliciousEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.deliciousEntry, 'DELICIOUS');
@@ -471,7 +471,7 @@ dh.account.createDeliciousEntry = function() {
 
 dh.account.createTwitterEntry = function() {	
 	dh.account.twitterEntry = new dh.lovehate.Entry('dhTwitter', 'Twitter URL or username', dh.account.initialTwitterName,
-					'And *why* do I care what you\'re doing?', dh.account.initialTwitterHateQuip);
+					'And *why* do I care what you\'re doing?', dh.account.initialTwitterHateQuip, 'Your friends see your Twitter updates.');
 	dh.account.twitterEntry.onLoveSaved = dh.account.onTwitterLoveSaved;
 	dh.account.twitterEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.twitterEntry, 'TWITTER');
 	dh.account.twitterEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.twitterEntry, 'TWITTER');
@@ -479,7 +479,7 @@ dh.account.createTwitterEntry = function() {
 
 dh.account.createDiggEntry = function() {	
 	dh.account.diggEntry = new dh.lovehate.Entry('dhDigg', 'Digg URL or username', dh.account.initialDiggName,
-					'I don\'t dig it', dh.account.initialDiggHateQuip);
+					'I don\'t dig it', dh.account.initialDiggHateQuip, 'Your friends get updates when you add diggs.');
 	dh.account.diggEntry.onLoveSaved = dh.account.onDiggLoveSaved;
 	dh.account.diggEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.diggEntry, 'DIGG');
 	dh.account.diggEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.diggEntry, 'DIGG');
@@ -487,7 +487,7 @@ dh.account.createDiggEntry = function() {
 
 dh.account.createRedditEntry = function() {	
 	dh.account.redditEntry = new dh.lovehate.Entry('dhReddit', 'Reddit URL or username', dh.account.initialRedditName,
-					'Not reading it', dh.account.initialRedditHateQuip);
+					'Not reading it', dh.account.initialRedditHateQuip, 'Your friends get updates when you rate sites.');
 	dh.account.redditEntry.onLoveSaved = dh.account.onRedditLoveSaved;
 	dh.account.redditEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.redditEntry, 'REDDIT');
 	dh.account.redditEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.redditEntry, 'REDDIT');
