@@ -19,6 +19,8 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StreamUtils;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.URLUtils;
+import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.storage.StoredData;
 
 public class AmazonS3 {
 	static private final Logger logger = GlobalSetup.getLogger(AmazonS3.class);
@@ -58,7 +60,32 @@ public class AmazonS3 {
 		return connection;
 	}
 	
+	private int safeGetResponseCode(HttpURLConnection connection) {
+		int responseCode;
+		try {
+			responseCode = connection.getResponseCode();
+		} catch (Exception e) {
+			responseCode = -1;
+		}
+		return responseCode;
+	}
+	
+	private void logErrorStream(HttpURLConnection connection) {
+		try {
+			int responseCode = safeGetResponseCode(connection);
+			
+			InputStream in = connection.getErrorStream();
+			String xml = StreamUtils.readStreamUTF8(in);
+			logger.debug("Got error code {} xml '{}'", responseCode, xml);
+		} catch (Exception e) {
+			logger.debug("Failed to read error stream: {}", e.getMessage());
+		}
+	}
+	
 	private void doS3Put(String relativeName, String contentType, byte[] content) throws TransientServiceException {
+	
+		logger.debug("Sending PUT request to S3 for {}", relativeName);
+		
 		HttpURLConnection connection = openS3Connection(relativeName);
 
 		try {
@@ -96,30 +123,136 @@ public class AmazonS3 {
 			logger.debug("S3 request status {}: {}", responseCode, responseMessage);
 			
 			if (responseCode != 200) {
-				try {
-					InputStream in = connection.getErrorStream();
-					String xml = StreamUtils.readStreamUTF8(in);
-					logger.debug("Got error xml '{}'", xml);
-				} catch (Exception e) {
-					logger.debug("Failed to read error stream: {}", e.getMessage());
-				}
+				logErrorStream(connection);
+				throw new TransientServiceException("Amazon S3 error " + responseCode + ": " + responseMessage);
+			}
+		} catch (IOException e) {
+			logger.debug("IO error on connecting or on reading reply code: {}", e.getMessage());
+			
+			logErrorStream(connection);
+			
+			throw new TransientServiceException("Amazon S3: " + e.getMessage(), e);
+		}
+	}
+
+	public void createBucket(String bucketName) throws TransientServiceException  {
+		
+		doS3Put("/" + bucketName, null, null);
+	}
+
+	// important: if the object already exists, amazon will overwrite it
+	// you might think a streaming API here would be nice, but since we have to md5 the content before writing
+	// it, it's quite complicated to do this without reading into memory. I'm pretty sure we're copying the 
+	// whole file about a billion times anyway due to how various java apis we're using work.
+	public void putObject(String bucketName, String objectName, String contentType, byte[] content) throws TransientServiceException {
+		doS3Put("/" + bucketName + "/" + objectName, contentType, content);
+	}
+	
+	public StoredData getObject(String bucketName, String objectName) throws TransientServiceException, NotFoundException {
+		String relativeName = "/" + bucketName + "/" + objectName;
+		
+		logger.debug("Sending GET request to S3 for {}", relativeName);
+		
+		HttpURLConnection connection = openS3Connection(relativeName);
+		
+		try {
+			connection.setRequestMethod("GET");
+		} catch (ProtocolException e) {
+			throw new RuntimeException("failed to set method GET", e);
+		}
+		
+		connection.setDoInput(true);
+		
+		// Java will add this automatically, but too late for signS3Connection to include it in the signature.
+		// amazon does not care about it, but it is harmless. 
+		connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+		
+		connection.setRequestProperty("Content-Length", "0"); // amazon seems to want this for some reason
+		
+		AmazonS3Signature.signS3Connection(amazonAccessKeyId, amazonSecretKey, connection, relativeName);
+		
+		try {
+			connection.connect();
+			
+			StoredData sd = new StoredData(connection.getInputStream(), connection.getContentLength());
+			sd.setMimeType(connection.getContentType());
+			
+			int responseCode = connection.getResponseCode();
+			String responseMessage = connection.getResponseMessage();
+			logger.debug("S3 request status {}: {}", responseCode, responseMessage);
+			
+			if (responseCode == 404) {
+				throw new NotFoundException("Object '" + relativeName + "' not found on Amazon S3");
+			} else if (responseCode != 200) {
+				logErrorStream(connection);
+				
+				throw new TransientServiceException("Amazon S3 error " + responseCode + ": " + responseMessage);
+			}
+			
+			return sd;
+		} catch (IOException e) {
+			logger.debug("IO error on connecting or on reading reply code: {}", e.getMessage());
+			
+			// IOException can mean an actual IO error, or it can mean certain non-success response codes.
+			// The codes that trigger exceptions seem to vary with http method. Not sure how to deal with 
+			// this, so 404 is handled both here and up above.
+			if (safeGetResponseCode(connection) == 404) {
+				throw new NotFoundException("Object '" + relativeName + "' not found on Amazon S3");
+			}
+			
+			logErrorStream(connection);
+			
+			throw new TransientServiceException("Amazon S3: " + e.getMessage(), e);			
+		}
+	}
+	
+	private void doS3Delete(String relativeName) throws TransientServiceException {
+		logger.debug("Sending DELETE request to S3 for {}", relativeName);
+		
+		HttpURLConnection connection = openS3Connection(relativeName);
+		
+		try {
+			connection.setRequestMethod("DELETE");
+		} catch (ProtocolException e) {
+			throw new RuntimeException("failed to set method DELETE", e);
+		}		
+		
+		// Java will add this automatically, but too late for signS3Connection to include it in the signature.
+		// amazon does not care about it, but it is harmless. 
+		connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+		
+		AmazonS3Signature.signS3Connection(amazonAccessKeyId, amazonSecretKey, connection, relativeName);
+		
+		try {
+			connection.connect();
+			
+			int responseCode = connection.getResponseCode();
+			String responseMessage = connection.getResponseMessage();
+			logger.debug("S3 request status {}: {}", responseCode, responseMessage);
+			
+			// note 204 No Content is success for delete, not 200 OK
+			if (responseCode != 204) {
+				logErrorStream(connection);
 				
 				throw new TransientServiceException("Amazon S3 error " + responseCode + ": " + responseMessage);
 			}
 		} catch (IOException e) {
 			logger.debug("IO error on connecting or on reading reply code: {}", e.getMessage());
 			
-			throw new TransientServiceException("Amazon S3: " + e.getMessage(), e);
-		}
+			logErrorStream(connection);
+			
+			throw new TransientServiceException("Amazon S3: " + e.getMessage(), e);			
+		}		
 	}
-
-	public void createBucket(String bucketName) throws TransientServiceException  {		
-		doS3Put("/" + bucketName, null, null);
+	
+	public void deleteObject(String bucketName, String objectName) throws TransientServiceException {
+		String relativeName = "/" + bucketName + "/" + objectName;
+		doS3Delete(relativeName);
 	}
-
-	// important: if the object already exists, amazon will overwrite it
-	public void putObject(String bucketName, String objectName, String contentType, byte[] content) throws TransientServiceException {
-		doS3Put("/" + bucketName + "/" + objectName, contentType, content);
+	
+	public void deleteBucket(String bucketName) throws TransientServiceException {
+		String relativeName = "/" + bucketName;
+		doS3Delete(relativeName);
 	}
 	
 	public static void main(String[] args) {
@@ -151,8 +284,22 @@ public class AmazonS3 {
 			
 			s3.putObject("havoc-test-bucket", "havoc-test-file", "text/plain", StringUtils.getBytes("Hello World!"));
 
+			StoredData sd = s3.getObject("havoc-test-bucket", "havoc-test-file");
+			logger.debug("Retrieved object with type {} length {}", sd.getMimeType(), sd.getSizeInBytes());
+			
+			s3.deleteObject("havoc-test-bucket", "havoc-test-file");
+			
+			try {
+				sd = s3.getObject("havoc-test-bucket", "havoc-test-file");
+				logger.error("Retrieved object with type {} length {}", sd.getMimeType(), sd.getSizeInBytes());
+			} catch (NotFoundException e) {
+				logger.debug("Deleted object no longer exists, yay");
+			}
+			
+			s3.deleteBucket("havoc-test-bucket");
+			
 		} catch (Exception e) {
-			System.out.println(e.getClass().getName() + ": " + e.getMessage());
+			logger.error(e.getClass().getName() + ": " + e.getMessage());
 		}
 	}
 }
