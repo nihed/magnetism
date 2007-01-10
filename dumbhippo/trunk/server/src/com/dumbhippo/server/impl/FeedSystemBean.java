@@ -145,7 +145,7 @@ public class FeedSystemBean implements FeedSystem {
 			// potentially-user-visible XmlMethodException
 			logger.warn("Exception retrieving feed was {}: '{}' on url " + url, e.getClass().getName(), e.getMessage());
 			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR,
-					"Error fetching feed " + url);
+					"Error fetching feed " + url + ": " + e.getMessage());
 		}
 	}
 	
@@ -848,7 +848,7 @@ public class FeedSystemBean implements FeedSystem {
 			try {
 				result = FeedSystemBean.getRawFeed(source);
 			} catch (FeedFetcher.FetchFailedException e) {
-				throw new DynamicPollingSystem.PollingTaskNormalExecutionException("Feed " + feed.getSource(), e);
+				throw new DynamicPollingSystem.PollingTaskNormalExecutionException("Feed " + feed.getSource() + " fetch failed: " + e.getMessage(), e);
 			}
 			changed = result.isModified();
 			final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
@@ -857,7 +857,7 @@ public class FeedSystemBean implements FeedSystem {
 					try {
 						feedSystem.storeRawUpdatedFeed(feed.getId(), result.getFeed());
 					} catch (FeedLinkUnknownException e) {
-						throw new DynamicPollingSystem.PollingTaskNormalExecutionException("Feed " + feed.getSource(), e);						
+						throw new DynamicPollingSystem.PollingTaskNormalExecutionException("Feed " + feed.getSource() + " link unknown: " + e.getMessage(), e);						
 					}
 					return null;
 				}

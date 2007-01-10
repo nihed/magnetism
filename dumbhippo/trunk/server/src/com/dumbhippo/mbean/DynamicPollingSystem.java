@@ -196,7 +196,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 				obsolete = result.obsolete;
 				executionEnd = System.currentTimeMillis();
 			} catch (PollingTaskNormalExecutionException e) {
-				logger.info("Transient exception: " + e.getMessage());
+				logger.info("Transient exception: {}", e.getMessage());
 				return new PollingTaskExecutionResult();				
 			} catch (Exception e) {
 				logger.warn("Execution of polling task failed", e);
