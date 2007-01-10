@@ -29,6 +29,9 @@
     <dht3:groupHeader who="${who}" embedVersion="${embedVersion}" anchor="${stackType}" disableLink="${disableLink}">
         <c:choose>
             <c:when test="${signin.valid}">
+              	<c:if test="${who.status.canModify}">
+                	<dht:actionLink oneLine="true" href="/group-account?group=${who.identifyingGuid}" title="Change Group Picture, Descriptions, and Add or Remove Group Feeds">Edit Group</dht:actionLink> |
+              	</c:if>
 	            <c:choose>
 	        	    <c:when test="${who.active}">
 	        	    	<dh:script module="dh.actions"/>

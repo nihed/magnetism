@@ -9,7 +9,4 @@
 	Group:&nbsp;
 	<dht3:pageOptionLink name="Home" selected="${selected == 'group'}" link="/group?who=${group.group.id}"/> |
 	<dht3:pageOptionLink name="Members" selected="${selected == 'members'}" link="/members?group=${group.group.id}"/>
-	<c:if test="${group.status.canModify}">
-		| <dht3:pageOptionLink name="Edit Group" selected="${selected == 'group-account'}" link="/group-account?group=${group.group.id}"/>
-	</c:if>
 </div>
