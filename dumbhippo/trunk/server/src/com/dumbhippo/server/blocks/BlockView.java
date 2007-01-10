@@ -184,7 +184,7 @@ public abstract class BlockView implements ObjectView {
 			throw new RuntimeException("Attempt to write blockview to xml without populating it: " + this);
 		
 		long sortTimestamp = block.getTimestampAsLong();
-		if (userBlockData.getIgnoredTimestampAsLong() < sortTimestamp)
+		if (userBlockData.isIgnored() && userBlockData.getIgnoredTimestampAsLong() < sortTimestamp)
 			sortTimestamp = userBlockData.getIgnoredTimestampAsLong();
 		
 		builder.appendEmptyNode("block",
