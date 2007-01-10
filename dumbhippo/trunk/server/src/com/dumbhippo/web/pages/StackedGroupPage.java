@@ -81,7 +81,10 @@ public class StackedGroupPage extends AbstractSigninOptionalPage {
 			return;
 		}
 		
-		if (viewedGroup.getStatus() == MembershipStatus.INVITED || viewedGroup.getStatus() == MembershipStatus.INVITED_TO_FOLLOW ) {
+		// Once the user has accepted the terms of use, viewing a group should
+		// implicitly accepts the invitation to the group
+		if (getSignin().isActive() && 
+			(viewedGroup.getStatus() == MembershipStatus.INVITED || viewedGroup.getStatus() == MembershipStatus.INVITED_TO_FOLLOW)) {
 			// Only UserViewpoints can have INVITED or INVITED_TO_FOLLOW membership status
 			UserViewpoint userView = (UserViewpoint) viewpoint;
 			groupSystem.acceptInvitation(userView, viewedGroup.getGroup());
