@@ -270,7 +270,7 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "groupId", "url" })
-	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException;
+	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, URL url) throws XmlMethodException;
 
 	/**
 	 * Mark an external account as "hated" and give an optional quip about why.

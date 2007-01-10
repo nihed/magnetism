@@ -131,11 +131,16 @@ public class FeedFetcher {
 		// just punt this to our users.  And to add to the pain, we'll make the method return
 		// Object so they have to go digging in the source to find out what it will return!  Exccccellent."
 		Object modifiedObj = info.getLastModified();
-		if (modifiedObj instanceof Long)
-			return new Date(((Long) modifiedObj).longValue());
-		if (!(modifiedObj instanceof String))
+		Date date;
+		if (modifiedObj instanceof Long) {
+			date = new Date(((Long) modifiedObj).longValue());
+		} else if (!(modifiedObj instanceof String)) {
 			throw new RomeAPIDesignerInsanityException("last modified object isn't a Long or String; giving up");
-		return new Date(DateUtils.parseHttpDate((String) modifiedObj));		
+		} else {
+			date = new Date(DateUtils.parseHttpDate((String) modifiedObj));
+		}
+		
+		return date;
 	}
 	
 	public static FeedFetchResult getFeed(URL url) throws FetchFailedException {
@@ -156,6 +161,37 @@ public class FeedFetcher {
 			// Now check whether the feed changed
 			info = getCache().getFeedInfo(url);			
 			Date currentModified = getFeedModifiedDate(info);
+			
+			try {
+				if (lastModified != null) {
+					long now = System.currentTimeMillis();
+					
+					/* Print some debug logging if this looks fishy since we do some bizarre modified date parsing */
+					long lastBeforeNow = now - lastModified.getTime();
+					
+					if (lastBeforeNow > 1000 * 60 * 60 * 48 || lastBeforeNow < 1000 * 60 * 60 * 24) {
+						logger.debug("Possibly suspicious last modified date {} on {}", lastModified, url.toExternalForm());
+					}
+					
+					long currentBeforeNow = now - currentModified.getTime();
+					if (currentBeforeNow > 1000 * 60 * 60 * 36 || currentBeforeNow < 1000 * 60 * 60 * 24) {
+						logger.debug("Possibly suspicious current modified date {} on {}", currentModified, url.toExternalForm());
+						logger.debug("Raw current '{}'", info.getLastModified());
+					}
+					
+					long currentAfterLast = currentModified.getTime() - lastModified.getTime();
+					
+					if (currentAfterLast < 0 || currentAfterLast > 1000 * 60 * 60 * 48) {
+						logger.debug("Possibly suspicious current modified date {} vs. last modified date {} on feed: " + url.toExternalForm(),
+								currentModified, lastModified);
+						logger.debug("Raw current '{}'", info.getLastModified());
+					}
+				}
+			} catch (Exception e) {
+				// don't want the above code to break anything
+				logger.warn("Feed date sanity-checking code is broken, but continuing anyway: {}", e.getMessage());
+			}
+			
 			return new FeedFetchResultImpl(feed, lastModified == null ? true : currentModified.after(lastModified));
 		} catch (IllegalArgumentException e) {
 			throw new RuntimeException(e);

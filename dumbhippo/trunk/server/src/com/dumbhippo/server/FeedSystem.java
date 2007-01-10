@@ -15,7 +15,10 @@ import com.sun.syndication.feed.synd.SyndFeed;
 
 @Local
 public interface FeedSystem extends PollingTaskLoader {
-	Feed getFeed(LinkResource link) throws XmlMethodException;
+	
+	public Feed getExistingFeed(final LinkResource source) throws XmlMethodException;
+	
+	public Feed getOrCreateFeed(LinkResource link) throws XmlMethodException;
 	
 	/**
 	 * Does both halves of updating a feed in a single transaction, which can be 

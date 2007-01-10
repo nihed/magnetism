@@ -1423,7 +1423,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
 		LinkResource link = identitySpider.getLink(feedSource);
-		Feed feed = feedSystem.getFeed(link);
+		Feed feed = feedSystem.getOrCreateFeed(link);
 		return feed;
 	}
 	
@@ -1501,10 +1501,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feedSystem.addGroupFeed(viewpoint.getViewer(), group, feed);
 	}
 
-	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException {
+	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, URL url) throws XmlMethodException {
 		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
-		Group group = parseGroupId(viewpoint, groupId);
-		Feed feed = getFeedFromUserEnteredUrl(url);
+		Group group = parseGroupId(viewpoint, groupId);			
+		LinkResource link = identitySpider.lookupLink(url);
+		if (link == null)
+			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "Feed not found: " + url);
+		Feed feed = feedSystem.getExistingFeed(link);
 		
 		if (!groupSystem.canEditGroup(viewpoint, group))
 			throw new XmlMethodException(XmlMethodErrorCode.FORBIDDEN, "Only active members can remove feeds from a group");

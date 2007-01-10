@@ -273,7 +273,7 @@ public class FeedSystemBean implements FeedSystem {
 		if (publishedDate != null)
 			entry.setDate(publishedDate);
 		else {
-			logger.warn("Failed to retrieve date from feed {}", feed.getSource().getUrl());
+			logger.warn("Failed to retrieve date from feed entry on {}", feed.getSource().getUrl());
 			entry.setDate(new Date());
 		}
 		
@@ -510,7 +510,15 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 	
-	public Feed getFeed(final LinkResource source) throws XmlMethodException {
+	public Feed getExistingFeed(final LinkResource source) throws XmlMethodException {
+		Feed feed = lookupExistingFeed(source);
+		if (feed != null)
+			return feed;
+		else
+			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "No such feed: " + source.getUrl());
+	}
+	
+	public Feed getOrCreateFeed(final LinkResource source) throws XmlMethodException {
 		Feed feed = lookupExistingFeed(source);
 		if (feed != null)
 			return feed;
