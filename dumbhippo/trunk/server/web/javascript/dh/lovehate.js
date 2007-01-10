@@ -6,7 +6,7 @@ dojo.require("dh.event");
 
 dh.lovehate.allEntries = {}
 
-dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultHateText, currentHateValue, loveTip)
+dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultHateText, currentHateValue, loveTip, accountHelp)
 {
 	dh.lovehate.allEntries[baseId] = this;
 
@@ -17,14 +17,6 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this._containerLabelNode = document.getElementById(baseId + 'ContainerLabel')
 	this._containerContentNode = document.getElementById(baseId + 'ContainerContent')	
 	this._rootNode = document.getElementById(baseId + 'AllId');	
-	
-	var findDhIdNode = function(id) {
-		return dh.util.findChildElements(me._rootNode,
-										 function(node) {
-	                                       return (node.getAttribute("dhId") == id); 
-	                                     })[0];
-	}
-	
 	this._loveNode = document.getElementById(baseId + 'LoveId');
 	this._hateNode = document.getElementById(baseId + 'HateId');
 	this._loveEditNode = document.getElementById(baseId + 'LoveEditId');
@@ -32,9 +24,6 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this._indifferentNode = document.getElementById(baseId + 'IndifferentId');
 	this._indifferentInfoNode = document.getElementById(baseId + 'IndifferentInfoId');
 	this._busyNode = document.getElementById(baseId + 'BusyId');
-	this._normalDescriptionNode = findDhIdNode('DescriptionNormal');
-	this._errorDescriptionNode = findDhIdNode('DescriptionError');
-	this._errorTextNode = findDhIdNode('DescriptionErrorText');
 	
 	this._loveEntryNode = document.getElementById(baseId + 'LoveEntryId');
 	this._hateEntryNode = document.getElementById(baseId + 'HateEntryId');
@@ -53,14 +42,33 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	
 	this._errorText = "";
 
-	var loveNodes = dh.util.findChildElements(this._rootNode, 	                                    
-										      function(node) {
-	                                            return (node.getAttribute("dhId") == "LoveTipId"); 
-	                                          });
-	for (var i = 0; i < loveNodes.length; i++) {
-		if (loveTip)
-			loveNodes[i].appendChild(document.createTextNode(loveTip));
+    // Traverse root node of this widget, calling function on each node
+	this._foreachDhIdNode = function(id, func) {
+	  if (!content)
+	    return;
+	  dh.util.foreachChildElements(me._rootNode, 	                                    
+								   function(node) {
+	                                 if (node.getAttribute("dhId") == id) func(node);
+	                               });
 	}
+	
+	if (loveTip)
+	  this._foreachDhIdNode("LoveTipId", function (node) { node.appendChild(document.createTextNode(loveTip)); });
+	
+	if (accountHelp)
+  	  this._foreachDhIdNode("AccountHelpId", 
+	                        function(node) { 
+	                          var span = document.createElement("span");
+	                          span.appendChild(document.createTextNode(" ("));
+	                          var a = document.createElement("a");
+	                          a.setAttribute("target", "_blank");
+   	                          a.setAttribute("href", accountHelp);
+	                          dh.util.prependClass(a, "dh-text-input-help");
+	                          a.appendChild(document.createTextNode("help me find it"));
+	                          span.appendChild(a);
+	                          span.appendChild(document.createTextNode(")"));	                          
+	                          node.appendChild(span);
+	                        });       
 
 	this._loveEntryNode.onkeydown = function(ev) {
 		var key = dh.event.getKeyCode(ev);
@@ -167,17 +175,32 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	
 	this.setError = function(msg) {
 		if (msg) {
-			me._errorTextNode.innerHTML = "";
-			me._errorTextNode.appendChild(document.createTextNode(msg));
-			me._errorDescriptionNode.style.display = "block";
-			me._normalDescriptionNode.style.display = "none";
+			me._foreachDhIdNode("DescriptionError",
+			                    function(node) {
+			                      node.style.display = "block";
+			                    });
+			me._foreachDhIdNode("DescriptionErrorText",
+			                    function(node) {			                    
+			                      node.innerHTML = "";
+                                  node.appendChild(document.createTextNode(msg));
+                                });
+			me._foreachDhIdNode("DescriptionNormal",
+			                    function(node) {
+			                      node.style.display = "none";
+			                    });
 			dh.util.removeClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-success");		
 			dh.util.removeClass(this._containerContentNode.parentNode, "dh-love-hate-editing-box-success");			
 			dh.util.prependClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-error");		
 			dh.util.prependClass(this._containerContentNode.parentNode, "dh-love-hate-editing-box-error");				
 		} else {
-			me._normalDescriptionNode.style.display = "block";				
-			me._errorDescriptionNode.style.display = "none";
+			me._foreachDhIdNode("DescriptionNormal",
+			                    function(node) {
+			                      node.style.display = "block";
+			                    });
+			me._foreachDhIdNode("DescriptionError",
+			                    function(node) {
+			                      node.style.display = "none";
+			                    });			                    
 			dh.util.removeClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-error");		
 			dh.util.removeClass(this._containerContentNode.parentNode, "dh-love-hate-editing-box-error");				
 			dh.util.prependClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-success");		

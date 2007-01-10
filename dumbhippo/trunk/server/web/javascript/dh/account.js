@@ -455,7 +455,9 @@ dh.account.createLinkedInEntry = function() {
 
 dh.account.createRhapsodyEntry = function() {	
 	dh.account.rhapsodyEntry = new dh.lovehate.Entry('dhRhapsody', 'Rhapsody recent plays RSS URL', dh.account.initialRhapsodyUrl,
-					'All-you-can-eat music services hurt my diet', dh.account.initialRhapsodyHateQuip, 'Your friends will see updates from your Rhapsody playlist.');
+					'All-you-can-eat music services hurt my diet', dh.account.initialRhapsodyHateQuip, 
+					'Your friends will see updates from your Rhapsody playlist.',
+                    'http://www.rhapsody.com/myrhapsody/rss.html');
 	dh.account.rhapsodyEntry.setSpecialLoveValue("My feed");				
 	dh.account.rhapsodyEntry.onLoveSaved = dh.account.onRhapsodyLoveSaved;
 	dh.account.rhapsodyEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.rhapsodyEntry, 'RHAPSODY');

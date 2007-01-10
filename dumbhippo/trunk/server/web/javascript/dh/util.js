@@ -694,18 +694,16 @@ dh.util.createLinkElementWithChild = function(url, linkChild) {
     return linkElement;
 }
 
-dh.util.findChildElements = function(startNode, filterFunc) {
-	var results = [];
-	var findChildElementsRecurse = function(currentNode, recurse) {
+dh.util.foreachChildElements = function(startNode, func) {
+	var foreachRecurse = function(currentNode, recurse) {
 		if (currentNode.nodeType != 1)
 			return;
-		if (filterFunc(currentNode)) results.push(currentNode);
+		func(currentNode);
 		for (var i = 0; i < currentNode.childNodes.length; i++) {
 			recurse(currentNode.childNodes.item(i), recurse);
 		}
 	};
-	findChildElementsRecurse(startNode, findChildElementsRecurse);
-	return results;
+	foreachRecurse(startNode, foreachRecurse);
 }
 
 // right now just replaces spaces with "+" to

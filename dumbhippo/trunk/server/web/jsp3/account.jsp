@@ -245,11 +245,7 @@
 		                    	name="${supportedAccount.siteName}"
 		                    	link="${supportedAccount.externalAccountType.siteLink}"
 		                    	baseId="dh${supportedAccount.siteBaseName}" 
-		                    	mode="${supportedAccount.sentiment}">
-		                        <c:if test="${supportedAccount.siteBaseName == 'Rhapsody'}">
-		                            <a href="http://www.rhapsody.com/myrhapsody/rss.html" target="_blank" class="dh-text-input-help">help me find it</a>          
-		                        </c:if>
-		                    </dht:loveHateEntry>
+		                    	mode="${supportedAccount.sentiment}"/>
 				        </dht:formTableRow>	
 		            </c:forEach>
 				</dht:formTable>    	
