@@ -14,7 +14,7 @@
 <c:set var="dhSelfInviteCount" value="${dhSelfInviteCount + 1}" scope="request"/>
 <c:set var="N" value="${dhSelfInviteCount}" scope="page"/>
 
-<dht:script modules="dh.actions,dh.util,dh.event"/>
+<dh:script modules="dh.actions,dh.util,dh.event"/>
 <div>
 	<script type="text/javascript">		
 		selfInviteAddress${N} = null;
