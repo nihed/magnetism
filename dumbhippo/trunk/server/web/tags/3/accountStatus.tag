@@ -58,7 +58,7 @@
 				</div>
 				<div id="dhDownloadMessage">
 					<dh:png src="/images3/${buildStamp}/star.png" style="width: 13px; height: 13px;"/>
-					Make the most of Mugshot by downloading our desktop software. <a href="/download">Download</a>
+					Make the most of Mugshot by downloading our desktop software. <a href="/download">Download now</a>.
 				</div>
 			</c:when>
 		</c:choose>
