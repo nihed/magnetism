@@ -202,9 +202,8 @@ public class Account extends Resource {
 	 * @return true if the cookie is OK for authorization
 	 */
 	public boolean checkClientCookie(String token, String digest) {
-		Digest d = new Digest();
 		for (Client client : clients) {
-			String expectedDigest = d.computeDigest(token, client.getAuthKey());
+			String expectedDigest = Digest.computeDigest(token, client.getAuthKey());
 			if (expectedDigest.equals(digest))
 				return true;
 		}
