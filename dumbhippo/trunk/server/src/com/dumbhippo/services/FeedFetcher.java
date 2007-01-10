@@ -2,14 +2,19 @@ package com.dumbhippo.services;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.PatternLayout;
 import org.slf4j.Logger;
 
 import com.dumbhippo.DateUtils;
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.sun.syndication.feed.synd.SyndFeed;
 import com.sun.syndication.fetcher.FetcherException;
@@ -161,5 +166,41 @@ public class FeedFetcher {
 		} catch (FetcherException e) {
 			throw new FetchFailedException(e);			
 		}
+	}
+	
+	public static void main(String[] args) {
+		org.apache.log4j.Logger log4jRoot = org.apache.log4j.Logger.getRootLogger();
+		ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%d %-5p [%c] (%t): %m%n"));
+		log4jRoot.addAppender(appender);
+		log4jRoot.setLevel(Level.DEBUG);
+
+		FeedFetchResult result;
+		try {
+			result = FeedFetcher.getFeed(new URL("http://planet.classpath.org/rss20.xml"));
+		} catch (MalformedURLException e) {
+			logger.error("Malformed url {}", e.getMessage());
+			System.exit(1);
+			return;
+		} catch (FetchFailedException e) {
+			logger.error("Fetch failed {}", ExceptionUtils.getRootCause(e).getMessage());
+			System.exit(1);
+			return;
+		}
+		
+		logger.debug("Result 1: modified = {}, {}", result.isModified(), result.getFeed());
+		
+		try {
+			result = FeedFetcher.getFeed(new URL("http://planet.classpath.org/rss20.xml"));
+		} catch (MalformedURLException e) {
+			logger.error("Malformed url {}", e.getMessage());
+			System.exit(1);
+			return;
+		} catch (FetchFailedException e) {
+			logger.error("Fetch failed {}", ExceptionUtils.getRootCause(e).getMessage());
+			System.exit(1);
+			return;
+		}
+
+		logger.debug("Result 2: modified = {}, {}", result.isModified(), result.getFeed());
 	}
 }

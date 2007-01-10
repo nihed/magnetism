@@ -200,7 +200,7 @@ public class FeedSystemBean implements FeedSystem {
 	private String makeEntryGuid(SyndEntry syndEntry) throws NoEntryGuidException {
 		String guid = syndEntry.getUri();
 		// Null does occur in practice, if rarely, we just silently such entries
-		// assuming that they won't be interesting things to post in any case
+		// assuming that they won't be interesting things to post in any case. 
 		if (guid == null) 
 			throw new NoEntryGuidException();
 		
