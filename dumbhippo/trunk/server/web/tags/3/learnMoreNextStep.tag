@@ -5,6 +5,8 @@
 
 <%@ attribute name="page" required="false" type="java.lang.String" %>
 
+<c:if test="${signin.active || !signin.valid}"> <%-- Skip the whole thing when disabled --%>
+
 <c:set var="option" value="use all our features."/>
 <c:if test="${page == 'webSwarm'}">
     <c:set var="option" value="use all of Web Swarm's features."/>
@@ -83,3 +85,4 @@
 </tr>
 </table>	
 
+</c:if>
