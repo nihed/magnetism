@@ -2,8 +2,6 @@ package com.dumbhippo;
 
 import java.io.UnsupportedEncodingException;
 
-import org.jivesoftware.util.Log;
-
 /*********************************************************************
  * Base64 - a simple base64 encoder and decoder.
  *
@@ -27,7 +25,7 @@ public class Base64 {
             bytes = data.getBytes("UTF-8");
         }
         catch (UnsupportedEncodingException uee) {
-            Log.error(uee);
+            throw new RuntimeException(uee);
         }
         return encode(bytes);
     }
@@ -85,7 +83,7 @@ public class Base64 {
             bytes = data.getBytes("UTF-8");
         }
         catch (UnsupportedEncodingException uee) {
-            Log.error(uee);
+            throw new RuntimeException(uee);
         }
         return decode(bytes);
     }
