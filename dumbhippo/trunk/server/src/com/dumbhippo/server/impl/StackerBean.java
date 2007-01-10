@@ -1195,7 +1195,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageable.setTotalCount(LiveState.getInstance().getLiveUser(viewedUser.getGuid()).getUserContactsCount());
 	}
 	
-	public List<GroupMugshotView> getMugshotViews(final Viewpoint viewpoint, List<Group> distinctGroups, final int blocksPerGroup) {
+	public List<GroupMugshotView> getMugshotViews(final Viewpoint viewpoint, List<Group> distinctGroups, final int blocksPerGroup, final boolean publicOnly) {
 		List<GroupMugshotView> mugshots = new ArrayList<GroupMugshotView>();		
 		for (final Group group : distinctGroups) {
 			// Lazy initialization
@@ -1205,7 +1205,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 					if (blocks == null) {
 						Query q = em.createQuery("Select gbd FROM GroupBlockData gbd, Block block " + 
 				                " WHERE gbd.group = :group AND gbd.deleted = 0 AND gbd.block = block " +
-				                INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE +
+				                (publicOnly ? INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE : INTERESTING_PUBLIC_OR_PRIVATE_GROUP_BLOCK_CLAUSE) + 
 				                " ORDER BY gbd.participatedTimestamp DESC");
 							q.setParameter("group", group);
 						    q.setMaxResults(blocksPerGroup);
@@ -1276,7 +1276,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			}
 		}, start, count, expectedHitFactor);
 		
-		return getMugshotViews(viewpoint, distinctGroups, blocksPerGroup);			
+		return getMugshotViews(viewpoint, distinctGroups, blocksPerGroup, false);			
 	}
 	
 	public void pageUserGroupActivity(Viewpoint viewpoint, User user, int blocksPerGroup, GroupQueryType groupType, Pageable<GroupMugshotView> pageable) {
@@ -1290,6 +1290,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	static final String INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE =  
         " AND block.publicBlock = true " +
         " AND gbd.participatedTimestamp IS NOT NULL ";
+	
+	static final String INTERESTING_PUBLIC_OR_PRIVATE_GROUP_BLOCK_CLAUSE = 
+		" AND gbd.participatedTimestamp IS NOT NULL ";
 	
 	private List<Group> getRecentActivityGroups(int start, int count) {
 		// We get only public blocks, since we are displaying a system-global list
@@ -1320,7 +1323,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			}
 		}, startGroup, groupCount, expectedHitFactor);
 		
-		return getMugshotViews(viewpoint, distinctGroups, blockPerGroup);	
+		return getMugshotViews(viewpoint, distinctGroups, blockPerGroup, true);	
 	}
 
 	public void pageRecentGroupActivity(Viewpoint viewpoint, Pageable<GroupMugshotView> pageable, int blocksPerGroup) {

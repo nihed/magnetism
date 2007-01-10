@@ -1,6 +1,6 @@
 package com.dumbhippo;
 
-import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.Date;
 
 import org.apache.tomcat.util.http.FastHttpDateFormat;
@@ -10,9 +10,15 @@ public class DateUtils {
 	public static final String[] monthArray = 
         {"January", "February", "March", "April", "May", "June", 
 		 "July", "August", "September", "October", "November", "December"};
-	
-	public static long parseHttpDate(String date)  {
-		return FastHttpDateFormat.parseDate(date, new DateFormat[] {});
+
+	public static long parseHttpDate(String date) throws ParseException {
+		synchronized (DateUtils.class) {
+			long result = FastHttpDateFormat.parseDate(date, null);
+			if (result == (-1L))
+				throw new ParseException("Failed to parse date '" + date + "'", 0);
+			else
+				return result;
+		}
 	}
 	
 	public static String formatTimeAgo(Date timestamp) {

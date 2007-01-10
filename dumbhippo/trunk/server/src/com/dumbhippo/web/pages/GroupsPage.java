@@ -64,7 +64,7 @@ public class GroupsPage extends AbstractPersonPage {
 			for (GroupView group : getInvitedGroups().getList()) {
 				groups.add(group.getGroup());
 			}
-			invitedGroupMugshots = stacker.getMugshotViews(getViewpoint(), groups, BLOCKS_PER_INVITED_GROUP);
+			invitedGroupMugshots = stacker.getMugshotViews(getViewpoint(), groups, BLOCKS_PER_INVITED_GROUP, false);
 		}
 		return invitedGroupMugshots;
 	}
