@@ -21,6 +21,9 @@
 </head>
 
 <dht3:page currentPageLink="network-alphabetical">
+	<c:if test="${person.self}">
+		<dht3:accountStatus/>
+	</c:if>
 	<dht3:pageSubHeader title="${possessive} ${pageName} (${person.userContactCount})">
 		<dht3:randomTip isSelf="${person.self}"/>
 		<dht3:personRelatedPagesTabs selected="network"/>

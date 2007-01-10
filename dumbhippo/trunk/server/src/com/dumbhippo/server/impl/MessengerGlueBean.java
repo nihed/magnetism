@@ -267,6 +267,7 @@ public class MessengerGlueBean implements MessengerGlue {
 			return;
 		}
 		
+		account.setNeedsDownload(false);
 		account.setLastLoginDate(timestamp);
 	}	
 

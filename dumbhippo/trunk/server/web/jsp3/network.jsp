@@ -39,6 +39,9 @@
 </head>
 
 <dht3:page currentPageLink="network">
+	<c:if test="${person.self}">
+		<dht3:accountStatus/>
+	</c:if>
 	<dht3:pageSubHeader title="${possessive} ${pageName} (${person.userContactCount})"
 				titleLink="${titleLink}" titleLinkText="${titleLinkText}">
 		<dht3:randomTip isSelf="${person.self}"/>

@@ -11,7 +11,7 @@
 </c:if> 
 
 <c:choose>
-    <c:when test="${signin.valid}">
+    <c:when test="${signin.active}">
         <c:choose>
             <c:when test="${who.liveUser == null}">
             	<a href="javascript:window.open('/invitation?invitee=' + encodeURIComponent('${who.name}'), '_self');">

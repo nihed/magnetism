@@ -13,7 +13,7 @@
 <dht3:requirePersonBean beanClass="com.dumbhippo.web.pages.PersonPage"/>
 
 <dh:bean id="account" class="com.dumbhippo.web.pages.AccountPage" scope="page"/>
-<%-- This is a Facebook authetication token, we can create a seperate post-facebook-login landing page --%>
+<%-- This is a Facebook authetication token, we can create a separate post-facebook-login landing page --%>
 <%-- or land people on their account page, get a token, and display a message --%>
 <jsp:setProperty name="account" property="facebookAuthToken" param="auth_token"/>
 
@@ -58,6 +58,7 @@
 	<dht:faviconIncludes/>
 		<dh:script module="dh.account"/>
 	<script type="text/javascript">
+		dh.account.active = ${signin.active};
 		dh.formtable.currentValues = {
 			'dhUsernameEntry' : <dh:jsString value="${signin.user.nickname}"/>,
 			'dhBioEntry' : <dh:jsString value="${signin.user.account.bio}"/>,
@@ -92,14 +93,14 @@
 	</script>
 </head>
 <dht3:page currentPageLink="account">
+	<dht3:accountStatus/>
 	<dht3:pageSubHeader title="${person.viewedPerson.name}'s ${pageName}">
 		<dht3:randomTip isSelf="${person.self}"/>
 		<dht3:personRelatedPagesTabs/> 
 	</dht3:pageSubHeader>
-			<c:choose>
-			<c:when test="${!signin.user.account.disabled}">
+	<div id="dhAccountContents" class="${signin.active ? 'dh-account-contents' : 'dh-account-contents-disabled'}">
 			    <dht3:shinyBox color="grey">
-			    <c:if test="${param.fromDownload != 'true'}">
+			    <c:if test="${param.fromDownload != 'true' && !accountStatusShowing}">
 				    <div class="dh-page-shinybox-subtitle"><span class="dh-download-product">Get maximum Mugshot!</span> <a class="dh-underlined-link" href="/download">Download the Mugshot software</a> to use all of our features.  It's easy and free!</div>
 				</c:if>
 				<dht:formTable bodyId="dhAccountInfoForm">
@@ -312,32 +313,7 @@
 				</dht:formTableRow>
 			    </dht:formTable>
 		        </dht3:shinyBox>
-				</c:when>
-				<c:otherwise>
-				    <%-- This code is never hit, because we redirect to /we-miss-you in this case. --%>
-					<dht:formTable>				
-					<dht:formTableRow label="Enable account">
-					    <a name="accountStatus"></a>
-					    <c:if test="${termsOfUseNote=='true'}">
-                            <div id="dhTermsOfUseNote">Your account is already disabled, which means you no longer agree with <a href="javascript:window.open('/terms', 'dhTermsOfUs', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a> and <a href="javascript:window.open('/privacy', 'dhPrivacy', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Privacy Policy</a>.</div>
-                        </c:if>     
-					    <div class="dh-account-disabled-message">
-						    <c:out value="${signin.user.nickname}" />, your account is disabled.
-						</div>
-						<div>
-						<p>
-							Enable your account to interact with friends and groups, share 
-							links, and use Music Radar to display your playlists.
-						</p>
-						</div>
-						<div>
-							<dh:script module="dh.actions"/>
-							<img src="/images3/${buildStamp}/enable_acct_button.gif" onclick="javascript:dh.actions.enableAccount();"/>
-						</div>
-					</dht:formTableRow>						
-					</dht:formTable>
-				</c:otherwise>
-			</c:choose>
+    </div>
 	</dht3:page>		
 	<dht:photoChooser/>
 </html>

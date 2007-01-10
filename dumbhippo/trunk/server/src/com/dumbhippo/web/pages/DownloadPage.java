@@ -30,6 +30,10 @@ public class DownloadPage extends AbstractSigninOptionalPage {
 	public DownloadPage() {
 	}
 	
+	public boolean isDisabled() {
+		return getPerson() != null && !getPerson().getAccount().isActive();
+	}
+	
 	public boolean getHaveDownload() {
 		return getDownloadUrl() != null;
 	}

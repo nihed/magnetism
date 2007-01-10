@@ -47,6 +47,14 @@
 	font-size:		inherit;
 }
 
+.dh-account-contents-disabled * { 
+	color:				gray;
+}
+
+.dh-account-contents-disabled #dhAccounts .dh-info-cell { 
+	color:				gray;
+}
+
 #dhAccountInfoForm .dh-love-hate-editing-label-box {
 	border-left-style:	solid;
 	border-top-style:	solid;

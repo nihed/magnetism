@@ -103,11 +103,14 @@ dh.actions.signOut = function() {
 		  	    	 });
 }
 
-dh.actions.enableAccount = function() {
+dh.actions.enableAccount = function(next) {
    	dh.server.doPOST("setaccountdisabled", 
    					 { "disabled": "false" },
 		  	    	 function(type, data, http) {
-		  	    	 	 dh.util.goToNextPage("/")
+		  	    	 	 if (next)
+			  	    	 	 dh.util.goToNextPage(next)
+			  	    	 else
+				  	    	 dh.util.refresh();
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Error enabling account");
@@ -122,6 +125,44 @@ dh.actions.disableAccount = function() {
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't disable account");
+		  	    	 });
+}
+
+dh.actions.updateGetStarted = function() {
+	var link = document.getElementById("dhGetStarted");
+	var image = document.getElementById("dhGetStartedButton");
+	if (document.getElementById("dhAcceptTerms").checked) {
+		image.src = dhImageRoot3 + "get_started_button.gif";
+		link.href= "javascript:dh.actions.acceptTerms()";
+	} else {
+		image.src = dhImageRoot3 + "get_started_disabled.gif"
+		link.removeAttribute("href");
+	}
+}
+
+dh.actions.acceptTerms = function() {
+	if (!document.getElementById("dhAcceptTerms").checked) { // paranoia
+		alert("You must first accept the Mugshot Terms of Use");
+		return;
+	}
+   	dh.server.doPOST("acceptterms",
+   					 {},
+		  	    	 function(type, data, http) {
+			  	    	 dh.util.refresh();
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Couldn't accept the terms of use");
+		  	    	 });
+}
+
+dh.actions.removeDownloadMessage = function() {
+   	document.getElementById("dhAccountStatus").style.display = "none";
+   	dh.server.doPOST("setneedsdownload",
+   					 { "needsDownload" : "false" },
+		  	    	 function(type, data, http) {
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Couldn't remove the download message");
 		  	    	 });
 }
 

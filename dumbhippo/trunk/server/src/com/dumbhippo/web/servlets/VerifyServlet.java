@@ -67,7 +67,7 @@ public class VerifyServlet extends AbstractServlet {
 					UserViewpoint viewpoint = (UserViewpoint)signin.getViewpoint();
 					IdentitySpider spider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 					spider.setAccountDisabled(viewpoint.getViewer(), true);
-					// now on to /download as normal
+					// now on to /account as normal
 				} else {
 					// just send them to the /account page where they can disable, not
 					// worth some complicated solution; this will require a signin first
@@ -115,11 +115,12 @@ public class VerifyServlet extends AbstractServlet {
 			response.sendRedirect(urlParam);
 			return null;
 		} else {
-			// this forwards to we-miss-you.jsp if the account is disabled
-			String redirect = "/download?invite=" + invite.getId();
-			String invitingUserId = request.getParameter("inviter");						
-			if (invitingUserId != null)
-				redirect += "&inviter=" + invitingUserId;
+			/// No use for the invite/invitee information at the moment 
+//			String redirect = "/account?invite=" + invite.getId();
+//			String invitingUserId = request.getParameter("inviter");						
+//			if (invitingUserId != null)
+//				redirect += "&inviter=" + invitingUserId;
+			String redirect = "/account";
 			
 			return redirectToNextPage(request, response, redirect, null);
 		}

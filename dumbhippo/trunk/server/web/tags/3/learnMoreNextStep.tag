@@ -28,11 +28,10 @@
 <c:choose>
 	<c:when test="${signin.valid}">
 	    <dh:bean id="download" class="com.dumbhippo.web.DownloadBean" scope="request"/>
-	    <dh:script module="dh.download"/>
         <c:choose>
 	        <c:when test="${download.haveDownload}">
 					<div class="dh-download-buttons">
-						<a id="dhDownloadProduct" class="dh-download-product" href="javascript:dh.download.doDownload('${download.downloadUrl}')"><img src="/images3/${buildStamp}/download_now_button.gif"/></a>
+						<a id="dhDownloadProduct" class="dh-download-product" href="${download.downloadUrl}"><img src="/images3/${buildStamp}/download_now_button.gif"/></a>
 					</div>
 					</td>
 					<td class="dh-download-details" valign="top">

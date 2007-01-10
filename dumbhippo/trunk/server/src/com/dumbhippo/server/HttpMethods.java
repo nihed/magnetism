@@ -237,6 +237,10 @@ public interface HttpMethods {
 	public void doAcceptTerms(UserViewpoint viewpoint);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "needsDownload" } )
+	public void doSetNeedsDownload(UserViewpoint viewpoint, boolean needsDownload);
+	
+	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "userId", "disabled" } )
 	@HttpOptions( adminOnly = true )
 	public void doSetAdminDisabled(UserViewpoint viewpoint, String userId, boolean disabled);

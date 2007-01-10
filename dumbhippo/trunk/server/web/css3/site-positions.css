@@ -695,3 +695,18 @@ div.dh-person-header {
     top:                0px;
     right:              -5px;
 }
+
+#dhAccountStatus {
+	position:			relative;
+	padding-left: 		9px;
+	padding-right: 		9px;
+	padding-top: 		4px;
+	padding-bottom: 	4px;
+	margin-bottom:		15px;
+}
+
+#dhDownloadMessageClose {
+	position:			absolute;
+	top:				2px;
+	right:				3px;
+}

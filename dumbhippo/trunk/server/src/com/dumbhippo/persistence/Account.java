@@ -66,6 +66,7 @@ public class Account extends Resource {
 	private boolean hasDoneShareLinkTutorial;
 	
 	private boolean hasAcceptedTerms;
+	private boolean needsDownload;
 	
 	private boolean disabled;
 	private boolean adminDisabled;
@@ -120,6 +121,7 @@ public class Account extends Resource {
 		lastLogoutDate = -1;
 		wasSentShareLinkTutorial = false;
 		hasDoneShareLinkTutorial = false;
+		needsDownload = true;
 		nativeMusicSharingTimestamp = -1;
 		disabled = false;
 		musicSharingPrimed = false;
@@ -346,6 +348,15 @@ public class Account extends Resource {
 		this.hasAcceptedTerms = hasAcceptedTerms;
 	}
 	
+	@Column(nullable=false)
+	public boolean getNeedsDownload() {
+		return needsDownload;
+	}
+
+	public void setNeedsDownload(boolean needsDownload) {
+		this.needsDownload = needsDownload;
+	}
+	
 	/**
 	 * Get the salt for the user's password
 	 * @return salt bytes as String, or null if none have been set
@@ -444,7 +455,7 @@ public class Account extends Resource {
 	
 	@Transient
 	public boolean isActive() {
-		return !(isDisabled() || isAdminDisabled());
+		return !(isDisabled() || isAdminDisabled()) && hasAcceptedTerms;
 	}
 
 	@Column(nullable=true)

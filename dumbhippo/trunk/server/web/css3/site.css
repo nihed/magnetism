@@ -429,6 +429,19 @@ div.dh-async-action-link-complete {
 .dh-stacker-block-title-group-member-name {
 }
 
+.dh-empty-stacker-text {
+	font-size:			16px;
+	color:				#9648bc;
+}
+
+.dh-empty-stacker-secondary {
+	font-size:			12px;
+}
+
+.dh-empty-stacker-text a {
+	color:				#0000EE;
+};
+
 .dh-where-at-label {
 	font-weight: 		bold;
 	color:				black;
@@ -558,4 +571,28 @@ div.dh-async-action-link-complete {
 .dh-music-block-history-item {
 	margin-left:		15px;
 	text-indent:		-15px;
+}
+
+#dhAccountStatus {
+	background-color:	#fbfadc;
+	border:				1px solid #cccc99;
+	font-size:			12px;
+}
+
+.dh-account-status-secondary {
+	font-size:			12px;
+}
+
+.dh-account-status-primary {
+	font-size:			16px;
+}
+
+#dhDownloadMessage {
+	font-size:			14px;
+	font-weight:		bold;
+}
+
+#dhAccountDisabled {
+	font-size:			14px;
+	font-weight:		bold;
 }

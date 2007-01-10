@@ -21,6 +21,9 @@
 
 
 <dht3:page currentPageLink="person">
+	<c:if test="${person.self}">
+		<dht3:accountStatus/>
+	</c:if>
 	<dht3:pageSubHeader title="${person.viewedPerson.name}'s ${pageName}">
 		<dht3:randomTip isSelf="${person.self}"/>
 		<dht3:personRelatedPagesTabs selected="person"/> 
@@ -46,7 +49,16 @@
 				    </c:otherwise>
 			    </c:choose>
 		</div>    
-		<dht3:stacker stackOrder="2" stackType="dhStacker" pageable="${person.pageableStack}" showFrom="true" homeStack="${person.self}"/>
+		<c:choose>
+			<c:when test="${person.pageableStack.totalCount == 0 && person.self}">
+				<div class="dh-empty-stacker-text">
+					Here is where you see updates from friends' sites and things they share with you.
+				</div>
+	    	</c:when>
+		    <c:otherwise>
+				<dht3:stacker stackOrder="2" stackType="dhStacker" pageable="${person.pageableStack}" showFrom="true" homeStack="${person.self}"/>
+			</c:otherwise>
+		</c:choose>
 		<c:if test="${person.pageableMugshot.position != 0}">
 		    <div class="dh-back">
 		        <a href="/person?who=${person.viewedPerson.viewPersonPageId}">Back to <c:out value="${person.viewedPerson.name}"/>'s Home</a>

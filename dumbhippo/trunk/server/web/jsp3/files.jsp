@@ -29,9 +29,12 @@
 	</script>
 </head>
 <dht3:page currentPageLink="badges">
+	<c:if test="${files.self}">
+		<dht3:accountStatus/>
+	</c:if>
 	<dht3:shinyBox color="grey">
 		<c:choose>
-		 	<c:when test="${signin.valid && files.self}">
+		 	<c:when test="${signin.active && files.self}">
 				<div>UPLOAD A FILE</div>
 				<div>
 					<form enctype="multipart/form-data" action="/files/user" method="post">

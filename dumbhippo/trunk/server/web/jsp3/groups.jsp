@@ -39,6 +39,9 @@
 </head>
 
 <dht3:page currentPageLink="groups">	
+	<c:if test="${person.self}">
+		<dht3:accountStatus/>
+	</c:if>
 	<c:if test="${person.self && fn:length(person.invitedGroupMugshots) > 0}">
 		<div class="dh-groups-invited-header dh-page-title-container">
 			You've been invited to join <dht3:plural n="${fn:length(person.invitedGroupMugshots)}" s="group"/>  
@@ -51,7 +54,9 @@
 
 	<div class="dh-page-title-container">
 		<span class="dh-page-title"><c:out value="${possessive}"/> ${pageName} (${person.activeAndFollowedGroupsCount})</span>
-		<a class="dh-groups-create-link dh-underlined-link" href="/create-group">Create a Group</a>
+		<c:if test="${signin.active}">
+			<a class="dh-groups-create-link dh-underlined-link" href="/create-group">Create a Group</a>
+		</c:if>
 		<div class="dh-page-options-container">
 			<div class="dh-page-options">
 				<dht3:randomTip isSelf="${person.self}"/><dht3:personRelatedPagesTabs selected="groups"/>

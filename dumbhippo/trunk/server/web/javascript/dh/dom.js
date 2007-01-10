@@ -51,3 +51,22 @@ dh.dom.textContent = function (node, text) {
 		return _result;
 	}
 }
+
+// This function disables actions for descendents of a node; it's not completely
+// comprehensive (it only disables onclick handlers, for example), and also
+// doesn't handle visual appearance. You need to do that separately.
+dh.dom.disableChildren = function(node) {
+	var name = node.nodeName.toLowerCase();
+	if (name == "a")
+		node.removeAttribute("href");
+	else if (name == "input" || name == "textarea" || 
+		name == "button" || name == "select")
+		node.disabled = true;
+		
+	node.removeAttribute("onclick");
+	
+	for (var i = 0; i < node.childNodes.length; i++) {
+		if (node.childNodes[i].nodeType == dh.dom.ELEMENT_NODE)
+			dh.dom.disableChildren(node.childNodes[i]);
+	}
+}

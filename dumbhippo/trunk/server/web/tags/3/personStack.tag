@@ -33,7 +33,26 @@
 	<dht3:personHeader who="${person}" disableLink="${disableLink || embedVersion}" embedVersion="${embedVersion}" shortVersion="${shortVersion}">
  	    <dht3:personActionLinks who="${person}" showHomeUrl="${showHomeUrl}"/> 	    
 	</dht3:personHeader>
-	<c:if test="${!shortVersion}">
-	    <dht3:stacker stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" blocks="${blocks}" showFrom="${showFrom}" oneLine="${embedVersion}" homeStack="${homeStack}"/>
-    </c:if>
+	<c:choose>
+		<c:when test="${pageable.totalCount == 0 && person.viewOfSelf && !signin.user.account.hasAcceptedTerms}">
+			<div class="dh-empty-stacker-text">
+				Once your Mugshot account is active, updates from sites you belong to
+				will show up here. Show updates from your Myspace, Flickr, Facebook and
+				other pages all in one place. <span class="dh-empty-stacker-secondary">(This page
+				is not visible to anybody but you until you accept the Mugshot Terms of Use.)</span>
+			</div>
+	    </c:when>
+		<c:when test="${pageable.totalCount == 0 && person.viewOfSelf}">
+			<div class="dh-empty-stacker-text">
+				<a href="/account">List your accounts</a> to have updates from sites
+				you belong to show up here. Show updates from your Myspace, Flickr, Facebook and
+				other pages all in one place.
+			</div>
+	    </c:when>
+	    <c:otherwise>
+			<c:if test="${!shortVersion}">
+			    <dht3:stacker stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" blocks="${blocks}" showFrom="${showFrom}" oneLine="${embedVersion}" homeStack="${homeStack}"/>
+		    </c:if>
+	    </c:otherwise>
+    </c:choose>
 </dht3:shinyBox>

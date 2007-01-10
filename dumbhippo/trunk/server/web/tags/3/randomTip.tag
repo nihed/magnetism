@@ -10,7 +10,7 @@
 
 <div class="dh-page-options-tip-area">
 	<c:choose>
-	    <c:when test="${!isSelf}">
+	    <c:when test="${!isSelf || accountStatusShowing}">
 		    &nbsp;	    
 	    </c:when>
 		<c:when test="${tipIndex == 0}">

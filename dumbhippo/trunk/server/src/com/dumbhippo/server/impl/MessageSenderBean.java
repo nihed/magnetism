@@ -275,11 +275,13 @@ public class MessageSenderBean implements MessageSender {
 			PostView postView = new PostView(ejbContext, post, recipient);
 			
 			String url = postView.getUrl();
-			// For group shares to non-account members, we want to actually redirect them to /download
-			// so they download the client, accept terms of use etc.  Then the initial share will
-			// be for the group.
+			// For group shares to non-account members, we want to actually redirect them to their
+			// home page so they have the ability to download the client, accept terms of use etc.
+			// If we send them to the group page, then they won't get the Account status message
+			// since it isn't a personal page for them.
+			// Then the initial share will be for the group.
 			if (postType == PostType.GROUP) {
-				url = baseurl + "/download"; 
+				url = baseurl; 
 			}
 			
 			StringBuilder redirectUrl = new StringBuilder();

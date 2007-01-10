@@ -497,6 +497,11 @@ dh.account.createRedditEntry = function() {
 }
 
 dhAccountInit = function() {
+	if (!dh.account.active) {
+		dh.dom.disableChildren(document.getElementById("dhAccountContents"));
+		return;
+	}
+
 	dh.account.usernameEntryNode = document.getElementById('dhUsernameEntry');
 	dh.account.usernameEntry = new dh.textinput.Entry(dh.account.usernameEntryNode, "J. Doe", dh.formtable.currentValues['dhUsernameEntry']);
 	

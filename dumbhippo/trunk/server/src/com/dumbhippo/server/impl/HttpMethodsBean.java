@@ -1250,6 +1250,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		viewpoint.getViewer().getAccount().setHasAcceptedTerms(true);
 	}
 	
+	public void doSetNeedsDownload(UserViewpoint viewpoint, boolean needsDownload) {
+		viewpoint.getViewer().getAccount().setNeedsDownload(needsDownload);
+	}
+	
 	public void doSetAdminDisabled(UserViewpoint viewpoint, String userId, boolean disabled) {
 		if (!identitySpider.isAdministrator(viewpoint.getViewer())) {
 			throw new RuntimeException("Only administrators can administratively disable/enable accounts");

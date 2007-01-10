@@ -36,10 +36,15 @@ public class AnonymousSigninBean extends SigninBean {
 	}
 	
 	@Override
+	public boolean isActive() {
+		return false;
+	}
+	
+	@Override
 	public boolean isDisabled() {
 		return false;
 	}
-
+	
 	@Override
 	public boolean getNeedsTermsOfUse() {
 		return false;
