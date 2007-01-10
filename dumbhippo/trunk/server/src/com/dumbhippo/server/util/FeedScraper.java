@@ -109,9 +109,12 @@ public final class FeedScraper {
 							atomUrl = new URL(baseUrl, href);
 							if (!atomUrl.getProtocol().equals("http"))
 								atomUrl = null;
-						} else if (type.equals("text/xml") && rssUrl == null && title != null && title.contains("RSS")) {
+						} else if ((type.equals("text/xml") || type.equals("application/xml")) &&
+								rssUrl == null && title != null && title.contains("RSS")) {
 							// text/xml with title=RSS seems to be something old Wordpress does.
-							// it also has a text/xml with title=RDF
+							// it also has a text/xml with title=RDF.
+							// application/xml with title=RSS was seen on undeadly.org which appears to be 
+							// based on PHPSlash or something.
 							rssUrl = new URL(baseUrl, href);
 							if (!rssUrl.getProtocol().equals("http"))
 								rssUrl = null;
