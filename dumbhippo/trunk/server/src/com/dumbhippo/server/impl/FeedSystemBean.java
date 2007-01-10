@@ -184,13 +184,13 @@ public class FeedSystemBean implements FeedSystem {
 			return HtmlTextExtractor.extractText(content.getValue()).trim();
 	}
 
-	private URL entryURLFromSyndEntry(SyndEntry syndEntry) throws MalformedURLException {
+	private URL entryURLFromSyndEntry(URL baseUrl, SyndEntry syndEntry) throws MalformedURLException {
 		String entryLink = syndEntry.getLink();
 		if (entryLink == null)
 			throw new MalformedURLException("No link in synd entry");
 		entryLink = entryLink.trim();
 		
-		return new URL(entryLink);
+		return new URL(baseUrl, entryLink);
 	}
 	
 	private static class NoEntryGuidException extends Exception {
@@ -211,7 +211,7 @@ public class FeedSystemBean implements FeedSystem {
 	}
 	
 	private FeedEntry createEntryFromSyndEntry(Feed feed, SyndFeed syndFeed, SyndEntry syndEntry) throws MalformedURLException {
-		URL entryUrl = entryURLFromSyndEntry(syndEntry);
+		URL entryUrl = entryURLFromSyndEntry(new URL(feed.getLink().getUrl()), syndEntry);
 		
 		FeedEntry entry = null;
 		
@@ -623,7 +623,9 @@ public class FeedSystemBean implements FeedSystem {
 			SyndEntry syndEntry = (SyndEntry)o;
 			URL entryUrl;
 			try {
-				entryUrl = entryURLFromSyndEntry(syndEntry);
+				if (syndFeed.getLink() == null)
+					throw new MalformedURLException("missing link for synd feed");
+				entryUrl = entryURLFromSyndEntry(new URL(syndFeed.getLink()), syndEntry);
 				identitySpider.getLink(entryUrl);
 			} catch (MalformedURLException e) {
 				// just ignore, it will break later on
