@@ -694,6 +694,20 @@ dh.util.createLinkElementWithChild = function(url, linkChild) {
     return linkElement;
 }
 
+dh.util.findChildElements = function(startNode, filterFunc) {
+	var results = [];
+	var findChildElementsRecurse = function(currentNode, recurse) {
+		if (currentNode.nodeType != 1)
+			return;
+		if (filterFunc(currentNode)) results.push(currentNode);
+		for (var i = 0; i < currentNode.childNodes.length; i++) {
+			recurse(currentNode.childNodes.item(i), recurse);
+		}
+	};
+	findChildElementsRecurse(startNode, findChildElementsRecurse);
+	return results;
+}
+
 // right now just replaces spaces with "+" to
 // make the url look nicer in the browser window,
 // spaces show up as "%20" otherwise 

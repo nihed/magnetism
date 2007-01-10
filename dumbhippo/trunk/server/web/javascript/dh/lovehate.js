@@ -16,16 +16,25 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this._containerNode = document.getElementById(baseId + 'Container');
 	this._containerLabelNode = document.getElementById(baseId + 'ContainerLabel')
 	this._containerContentNode = document.getElementById(baseId + 'ContainerContent')	
-	this._rootNode = document.getElementById(baseId + 'AllId');
+	this._rootNode = document.getElementById(baseId + 'AllId');	
+	
+	var findDhIdNode = function(id) {
+		return dh.util.findChildElements(me._rootNode,
+										 function(node) {
+	                                       return (node.getAttribute("dhId") == id); 
+	                                     })[0];
+	}
+	
 	this._loveNode = document.getElementById(baseId + 'LoveId');
 	this._hateNode = document.getElementById(baseId + 'HateId');
 	this._loveEditNode = document.getElementById(baseId + 'LoveEditId');
 	this._hateEditNode = document.getElementById(baseId + 'HateEditId');
 	this._indifferentNode = document.getElementById(baseId + 'IndifferentId');
+	this._indifferentInfoNode = document.getElementById(baseId + 'IndifferentInfoId');
 	this._busyNode = document.getElementById(baseId + 'BusyId');
-	this._normalDescriptionNode = document.getElementById(baseId + 'DescriptionNormal');
-	this._errorDescriptionNode = document.getElementById(baseId + 'DescriptionError');
-	this._errorTextNode = document.getElementById(baseId + 'DescriptionErrorText');
+	this._normalDescriptionNode = findDhIdNode('DescriptionNormal');
+	this._errorDescriptionNode = findDhIdNode('DescriptionError');
+	this._errorTextNode = findDhIdNode('DescriptionErrorText');
 	
 	this._loveEntryNode = document.getElementById(baseId + 'LoveEntryId');
 	this._hateEntryNode = document.getElementById(baseId + 'HateEntryId');
@@ -40,13 +49,17 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this._specialLoveValue = null;
 	this._hateValue = document.getElementById(baseId + 'HateValueId');
 	
-	this._allNodes = [me._loveNode, me._hateNode, me._loveEditNode, me._hateEditNode, me._indifferentNode, me._busyNode];
+	this._allNodes = [me._loveNode, me._hateNode, me._loveEditNode, me._hateEditNode, me._indifferentNode, me._indifferentInfoNode, me._busyNode];
 	
 	this._errorText = "";
-	
-	this._loveTip = document.getElementById(baseId + 'LoveTipId');
-	if (loveTip) {
-		this._loveTip.appendChild(document.createTextNode(loveTip));
+
+	var loveNodes = dh.util.findChildElements(this._rootNode, 	                                    
+										      function(node) {
+	                                            return (node.getAttribute("dhId") == "LoveTipId"); 
+	                                          });
+	for (var i = 0; i < loveNodes.length; i++) {
+		if (loveTip)
+			loveNodes[i].appendChild(document.createTextNode(loveTip));
 	}
 
 	this._loveEntryNode.onkeydown = function(ev) {
@@ -88,7 +101,7 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 		if (node.style.display == 'none')
 			throw new Error("node " + node.id + " was not found...");
 			
-		if (node == me._loveEditNode || node == me._hateEditNode) {
+		if (node == me._loveEditNode || node == me._hateEditNode || node == me._indifferentInfoNode) {
 			dh.util.prependClass(this._containerNode, "dh-love-hate-editing-box");
 			dh.util.prependClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-label-box")
 			dh.util.prependClass(this._containerLabelNode, "dh-love-hate-editing");
@@ -127,6 +140,8 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 					return "hateEdit";
 				else if (each == me._indifferentNode)
 					return "indifferent";
+				else if (each == me._indifferentInfoNode)
+					return "indifferentInfo";
 				else if (each == me._busyNode)
 					return "busy";
 			}

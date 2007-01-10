@@ -46,21 +46,25 @@
 		<a href="javascript:dh.lovehate.setMode('${baseId}', 'loveEdit')" title="Express your love"><dh:png klass="dh-love-hate-icon" src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/>
 		I love it!</a>
 		<a href="javascript:dh.lovehate.setMode('${baseId}', 'hateEdit')" title="Swear undying hatred"><dh:png klass="dh-love-hate-icon" src="/images3/${buildStamp}/quiphate_icon.png" style="width: 11; height: 11; overflow: hidden;"/>
-		I hate it!</a>		
+		I hate it!</a>
+		<a href="javascript:dh.lovehate.setMode('${baseId}', 'indifferentInfo')" title="Tell me more"><dh:png klass="dh-love-hate-icon" src="/images3/${buildStamp}/info_icon.png" style="width: 11; height: 11; overflow: hidden;"/></a>
+	</div>
+	<div id="${baseId}IndifferentInfoId" style="display: none;">
+		<dht:loveHateEntryDescription isEditing="false" baseId="${baseId}" name="${name}" link="${link}"/>		
 	</div>
 	<div id="${baseId}LoveEditId" style="display: none;">
 		<dh:png klass="dh-love-hate-icon" src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/>
 		<dht:textInput id="${baseId}LoveEntryId" maxlength="255"/>
 		<img src="/images3/${buildStamp}/save_button.gif" onclick="dh.lovehate.saveClicked('${baseId}', 'love')"/>
 		<a href="javascript:dh.lovehate.cancelClicked('${baseId}')" title="I don't love it anymore - go back to being indifferent"><img src="/images3/${buildStamp}/x_button.gif"/></a>
-		<dht:loveHateEntryDescription baseId="${baseId}" name="${name}" link="${link}"/>
+		<dht:loveHateEntryDescription isEditing="true" baseId="${baseId}" name="${name}" link="${link}"/>
 	</div>	
 	<div id="${baseId}HateEditId" style="display: none;">
 		<dh:png klass="dh-love-hate-icon" src="/images3/${buildStamp}/quiphate_icon.png" style="width: 11; height: 11; overflow: hidden;"/>
 		<dht:textInput id="${baseId}HateEntryId" maxlength="255"/>
 		<img src="/images3/${buildStamp}/save_button.gif" onclick="dh.lovehate.saveClicked('${baseId}', 'hate')"/>
 		<a href="javascript:dh.lovehate.cancelClicked('${baseId}')" title="End the hate - go back to being indifferent"><img src="/images3/${buildStamp}/x_button.gif"/></a>
-		<dht:loveHateEntryDescription baseId="${baseId}" name="${name}" link="${link}"/>		
+		<dht:loveHateEntryDescription isEditing="true" baseId="${baseId}" name="${name}" link="${link}"/>		
 	</div>
 	<div id="${baseId}BusyId" style="display: none;">
 		<img src="/images2/${buildStamp}/feedspinner.gif"/> Please wait...
