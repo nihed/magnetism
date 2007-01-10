@@ -438,15 +438,26 @@ public class FeedSystemBean implements FeedSystem {
 				// not already there, we are good to go
 			}
 			
+			long now = System.currentTimeMillis();
 			try {
 				FeedEntry entry = createEntryFromSyndEntry(feed, syndFeed, syndEntry);
 				em.persist(entry);
-				// if this feed is associated with some external account(s), this function will take 
-				// care of what needs to happen
-				processFeedExternalAccounts(entry, entryPosition++);
+				
+				long age = now - entry.getDate().getTime();
+				
+				// never create/stack blocks for stuff older than 14 days, prevents 
+				// a huge deluge of old crap if people change how their blog works 
+				if (age < 1000 * 60 * 60 * 24 * 7 * 2) {
+					// if this feed is associated with some external account(s), this function will take 
+					// care of what needs to happen
+					processFeedExternalAccounts(entry, entryPosition++);
+					// these newEntryIds get posted to subscribed groups
+					newEntryIds.add(entry.getId());
+				} else {
+					logger.debug("Feed entry {} too old - not stacking", entry, entry.getDate());
+				}
 				
 				foundGuids.add(guid);
-				newEntryIds.add(entry.getId());
 				
 				logger.debug("  Found new Feed entry: {}", entry.getTitle());
 			} catch (MalformedURLException e) {
@@ -495,7 +506,7 @@ public class FeedSystemBean implements FeedSystem {
 				}
 			});
 		} else {
-			logger.debug("  No new entries for feed {}", feed.getSource());
+			logger.debug("  No new entries to process for feed {}", feed.getSource());
 		}
 	}
 	
