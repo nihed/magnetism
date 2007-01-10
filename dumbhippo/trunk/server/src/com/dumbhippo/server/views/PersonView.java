@@ -62,6 +62,7 @@ public class PersonView extends EntityView {
 	private List<TrackView> trackHistory;
 	private String aimPresenceKey;
 	private boolean viewerIsContact;
+	private InvitationView invitationView;
 	
 	private void addExtras(EnumSet<PersonViewExtra> more) {
 		if (extras == null)
@@ -898,5 +899,13 @@ public class PersonView extends EntityView {
 		if (!hasExtra(PersonViewExtra.CONTACT_STATUS))
 			logger.warn("isContactofViewer called on a PersonView without the CONTACT_STATUS extra");
 		return isContactOfViewer;
+	}
+	
+	public void setInvitationView(InvitationView invitationView) {
+		this.invitationView = invitationView;
+	}
+	
+	public InvitationView getInvitationView() {
+		return invitationView;
 	}
 }

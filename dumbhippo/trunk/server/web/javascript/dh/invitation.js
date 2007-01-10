@@ -64,6 +64,7 @@ dh.invitation.send = function() {
 }
 
 dh.invitation.fillValues = function(values) {
+	dh.invitation.addressEntry.setValue(values["dhAddressEntry"])
 	dh.invitation.subjectEntry.setValue(values["dhSubjectEntry"])
 	dh.invitation.messageEntry.setValue(values["dhMessageEntry"])
 }
@@ -227,8 +228,12 @@ dhInvitationInit = function() {
 	dh.invitation.addressEntry = new dh.textinput.Entry(document.getElementById("dhAddressEntry"), "myfriend@example.com")
 	dh.invitation.subjectEntry = new dh.textinput.Entry(document.getElementById("dhSubjectEntry"))
 	dh.invitation.messageEntry = new dh.textinput.Entry(document.getElementById("dhMessageEntry"))
-	
-	dh.invitation.fillValues(dh.invitation.initialValues)
+
+	if (dh.invitation.resendValues["dhAddressEntry"] != '') {
+	    dh.invitation.resend(dh.invitation.resendValues["dhAddressEntry"])
+	} else {    
+	    dh.invitation.fillValues(dh.invitation.initialValues)
+	}
 	
 	dh.invitation.suggestGroupsPopup = document.getElementById("dhSuggestGroupsPopup")
 	dh.invitation.suggestGroupsArea = document.getElementById("dhSuggestGroupsArea")

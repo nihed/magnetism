@@ -7,6 +7,10 @@ import org.apache.tomcat.util.http.FastHttpDateFormat;
 
 public class DateUtils {
 	
+	public static final String[] monthArray = 
+        {"January", "February", "March", "April", "May", "June", 
+		 "July", "August", "September", "October", "November", "December"};
+	
 	public static long parseHttpDate(String date)  {
 		return FastHttpDateFormat.parseDate(date, new DateFormat[] {});
 	}

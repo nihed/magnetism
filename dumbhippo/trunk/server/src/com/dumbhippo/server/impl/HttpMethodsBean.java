@@ -568,18 +568,36 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 
-	public void doRemoveContactPerson(UserViewpoint viewpoint, String contactId) {
+	public void doRemoveContactObject(UserViewpoint viewpoint, String contactObjectId) {
 		try {
-			Person contact = identitySpider.lookupGuidString(Person.class,
-					contactId);
-			identitySpider.removeContactPerson(viewpoint.getViewer(), contact);
-		} catch (ParseException e) {
-			throw new RuntimeException("Bad Guid", e);
+			GuidPersistable object = 
+				identitySpider.lookupGuidString(GuidPersistable.class, contactObjectId);
+			if (object instanceof Person) {
+			    identitySpider.removeContactPerson(viewpoint.getViewer(), (Person)object);
+			} else if (object instanceof Resource) {
+				identitySpider.removeContactResource(viewpoint.getViewer(), (Resource)object);				
+			} else {
+				throw new RuntimeException("GuidPersistable for " + contactObjectId + " is neither Person nor Resource");		
+		    }
 		} catch (NotFoundException e) {
 			throw new RuntimeException("Guid not found", e);
+		} catch (ParseException e) {
+			throw new RuntimeException("Bad Guid", e);
 		}
 	}
 
+	public void doRemoveInvitedContact(UserViewpoint viewpoint, String resourceId) {		
+		try {
+		    Resource resource = identitySpider.lookupGuidString(Resource.class, resourceId);		
+		    invitationSystem.deleteInvitations(viewpoint, resource);
+		    identitySpider.removeContactResource(viewpoint.getViewer(), resource);	
+		} catch (NotFoundException e) {
+			throw new RuntimeException("Guid not found", e);
+		} catch (ParseException e) {
+			throw new RuntimeException("Bad Guid", e);
+		}    
+	}
+	
 	public void doSendLoginLinkEmail(XmlBuilder xml, String address) throws IOException, HumanVisibleException {
 		signinSystem.sendSigninLinkEmail(address);
 	}

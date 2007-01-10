@@ -64,6 +64,16 @@
 		    </div>
 		    <dht3:whereAtIcons who="${who}"/>
         </c:if>		
+        <c:if test="${who.invitationView != null}">
+            <div class="dh-person-header-stats">
+			    <div class="dh-invitation-date">
+			        Invitation sent on <c:out value="${who.invitationView.invite.humanReadableDate}"/>.
+			    </div>    
+			    <c:if test="${who.invitationView.invite.expired}">
+			        <div>The invitation is expired.</div>
+			    </c:if>
+			</div>
+        </c:if>
     </td>
     </tr>
     </tbody>

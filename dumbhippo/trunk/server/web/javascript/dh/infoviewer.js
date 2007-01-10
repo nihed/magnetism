@@ -7,7 +7,7 @@ dh.infoviewer.onImageMouseOver = function(e) {
 	var imageDiv = document.getElementById("dhImage" + this.dhImageId);
 	var pageOuterDiv = document.getElementById("dhPageOuter");
 	
-	// we don't want the info box to move if it is already visible	
+	// we don't need to do anything for the info box if it is already visible	
 	if (infoDiv.style.display == "block")
 	    return;
         

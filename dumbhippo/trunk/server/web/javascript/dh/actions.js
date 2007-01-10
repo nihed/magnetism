@@ -22,14 +22,25 @@ dh.actions.addContact = function(contactId, cb, errcb) {
 		  	    	 });
 }
 
-dh.actions.removeContact = function(contactId) {
-	dh.server.doPOST("removecontactperson",
-				     { "contactId" : contactId },
+dh.actions.removeContact = function(contactObjectId) {
+	dh.server.doPOST("removecontactobject",
+				     { "contactObjectId" : contactObjectId },
 		  	    	 function(type, data, http) {
 		  	    	 	 dh.util.refresh();
 		  	    	 },
 		  	    	 function(type, error, http) {
-		  	    	     alert("Couldn't remove user from contact list");
+		  	    	     alert("Couldn't remove contact from contact list");
+		  	    	 });
+}
+
+dh.actions.removeInvitedContact = function(resourceId) {
+	dh.server.doPOST("removeinvitedcontact",
+				     { "resourceId" : resourceId },
+		  	    	 function(type, data, http) {
+		  	    	 	 dh.util.refresh();
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Couldn't remove invited contact");
 		  	    	 });
 }
 

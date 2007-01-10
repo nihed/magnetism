@@ -188,13 +188,29 @@ public interface IdentitySpider {
 	public void addContactPerson(User user, Person contactPerson);
 	
 	/**
-	 * Remove a contact from a person's account. 
+	 * Remove a contact person from a person's account. 
 	 * 
 	 * @param user whose contact it is
 	 * @param contactPerson the person to remove from the contact list
 	 */
 	public void removeContactPerson(User user, Person contactPerson);
 
+	/**
+	 * Remove a contact resource from a person's account. 
+	 * 
+	 * @param user whose contact it is
+	 * @param contactResource the resource to remove from the contact list
+	 */
+	public void removeContactResource(User user, Resource contactResource); 
+		
+	/**
+	 * Remove a contact from a person's account. 
+	 * 
+	 * @param user whose contact it is
+	 * @param contactPerson the person to remove from the contact list
+	 */
+	public void removeContact(User user, Contact contact); 
+	
 	/**
 	 * Compute the set of users that this user has listed as friends; this
 	 * function should not be used directly; it is an internal implementation

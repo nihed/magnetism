@@ -73,8 +73,12 @@ public interface HttpMethods {
 	public void doAddContactPerson(UserViewpoint viewpoint, String contactId);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
-	@HttpParams( { "contactId" })
-	public void doRemoveContactPerson(UserViewpoint viewpoint, String contactId);
+	@HttpParams( { "contactObjectId" })
+	public void doRemoveContactObject(UserViewpoint viewpoint, String contactObjectId);
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "resourceId" })
+	public void doRemoveInvitedContact(UserViewpoint viewpoint, String resourceId);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId" })

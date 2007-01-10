@@ -9,6 +9,18 @@
 	<dht:errorPage>Not signed in</dht:errorPage>
 </c:if>
 
+<dh:bean id="invitations" class="com.dumbhippo.web.pages.InvitePage" scope="page"/>
+<jsp:setProperty name="invitations" property="email" param="invitee"/>
+
+<c:choose>
+   <c:when test='${invitations.previousInvitation != null && invitations.previousInvitation.invite.valid}'>
+       <c:set var="resend" value='${invitations.email}'/>    
+   </c:when>
+   <c:otherwise>
+       <c:set var="send" value='${invitations.email}'/> 
+   </c:otherwise>
+</c:choose>      
+
 <head>
 	<title>Your Invitations</title>
 	<dht:siteStyle/>	
@@ -17,14 +29,14 @@
 	<dh:script modules="dh.invitation,dh.event"/>
 	<script type="text/javascript">
 		dh.invitation.initialValues = {
-			'dhAddressEntry' : '',
+			'dhAddressEntry' : '${send}',
 			'dhSubjectEntry' : 'Invitation from ${signin.user.nickname} to join Mugshot',
 			'dhMessageEntry' : 	
 	'Mugshot makes it easy to instantly share web pages and music playlists ' +
 	'with friends and family -- or the world!'
 		}
 		dh.invitation.resendValues = {
-			'dhAddressEntry' : '',
+			'dhAddressEntry' : '${resend}',
 			'dhSubjectEntry' : 'Invitation from ${signin.user.nickname} to join Mugshot',
 			'dhMessageEntry' : 'Just a reminder'
 		}

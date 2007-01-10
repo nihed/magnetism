@@ -57,25 +57,27 @@ public interface InvitationSystem {
 	
 	
 	/**
-	 * Find a selection of current invitations sent by the viewer.
+	 * Find a selection of invitations sent by the viewer.
 	 * 
 	 * @param viewpoint a person who is viewing invitations they sent
 	 * @param start invitation to start with
 	 * @param max maximum number of invitations to get
+	 * @param includeExpired whether expired invitations should be included in the results
 	 * @return a list of InvitationViews that correspond to outstanding invitations
 	 * sent by the inviter
 	 */
-	public List<InvitationView> findOutstandingInvitations(UserViewpoint viewpoint, 
-			                                               int start, 
-			                                               int max);
-	
+	public List<InvitationView> findInvitations(UserViewpoint viewpoint, 
+			                                    int start, 
+			                                    int max, 
+			                                    boolean includeExpired);
+
 	/**
-	 * Count all current invitations sent by the viewer.
+	 * Deletes all invitations created by a given viewer for a given resource.
 	 * 
-	 * @param inviter a person that has been sending invitations
-	 * @return the number of outstanding invitations sent by the inviter
+	 * @param viewpoint person who created the invitations to be deleted
+	 * @param resource the resource identifying the invitee
 	 */
-	public int countOutstandingInvitations(UserViewpoint viewpoint);
+	public void deleteInvitations(UserViewpoint viewpoint, Resource resource);
 	
 	/**
 	 * Deletes an invitation created by a given viewer with a given authentication key.
@@ -86,7 +88,7 @@ public interface InvitationSystem {
 	 * @return deleted invitation or null
 	 */
 	public InvitationView deleteInvitation(UserViewpoint viewpoint, String authKey);
-
+	
 	/**
 	 * Restores an invitation created by a given viewer with a given authentication key.
 	 * 

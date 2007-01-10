@@ -69,6 +69,9 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	// information about existing outstanding invitations
 	private ListBean<InvitationView> outstandingInvitations;
 	private Pageable<InvitationView> pageableOutstandingInvitations;
+
+	private ListBean<PersonView> invitedContacts;
+	private Pageable<PersonView> pageableInvitedContacts;
 	
 	private boolean lookedUpCurrentTrack;
 	private TrackView currentTrack;
@@ -396,8 +399,8 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		if (outstandingInvitations == null) {
 			outstandingInvitations = 
 				new ListBean<InvitationView>(
-				    invitationSystem.findOutstandingInvitations(getUserSignin().getViewpoint(), 
-				    		                                    0, -1));
+				    invitationSystem.findInvitations(getUserSignin().getViewpoint(), 
+				    		                         0, -1, false));
 		}
 		return outstandingInvitations;
 	}
@@ -410,6 +413,32 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			pageableOutstandingInvitations.generatePageResults(getOutstandingInvitations().getList());
 		}
 		return pageableOutstandingInvitations;
+	}
+	
+	public ListBean<PersonView> getInvitedContacts() {
+		if (invitedContacts == null) {
+			List<InvitationView> allInvitations = 
+				invitationSystem.findInvitations(getUserSignin().getViewpoint(), 0, -1, true);
+			List<PersonView> invitedContactsList = new ArrayList<PersonView>();
+			for (InvitationView invitation : allInvitations) {
+				PersonView invitedContact = 
+					personViewer.getPersonView(getUserSignin().getViewpoint(), invitation.getInvite().getInvitee());
+				invitedContact.setInvitationView(invitation);
+				invitedContactsList.add(invitedContact);
+			}
+			invitedContacts = new ListBean<PersonView>(invitedContactsList);
+		}
+		return invitedContacts;
+	}
+	
+	public Pageable<PersonView> getPageableInvitedContacts() {
+		if (pageableInvitedContacts == null) {
+			pageableInvitedContacts = pagePositions.createPageable("invitedContacts");
+			pageableInvitedContacts.setInitialPerPage(FRIENDS_PER_PAGE);
+			pageableInvitedContacts.setSubsequentPerPage(FRIENDS_PER_PAGE);
+			pageableInvitedContacts.generatePageResults(getInvitedContacts().getList());
+		}
+		return pageableInvitedContacts;
 	}
 	
 	protected final boolean getNeedExternalAccounts() {

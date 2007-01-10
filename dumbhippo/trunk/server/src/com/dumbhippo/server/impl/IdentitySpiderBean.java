@@ -532,10 +532,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 	
 	public void removeContactPerson(User user, Person contactPerson) {
-		logger.debug("removing contact {} from account {}", contactPerson, user
-				.getAccount());
-
-		Set<User> removedUsers = new HashSet<User>();
+		logger.debug("removing contact {} from account {}", contactPerson, user.getAccount());
 		
 		Contact contact;
 		if (contactPerson instanceof Contact) {
@@ -549,6 +546,25 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			}
 		}
 
+		removeContact(user, contact);
+	}
+
+	public void removeContactResource(User user, Resource contactResource) {
+		logger.debug("removing contact {} from account {}", contactResource, user.getAccount());
+		
+		Contact contact;
+		try {
+		    contact = findContactByResource(user, contactResource);
+		    removeContact(user, contact);
+		} catch (NotFoundException e) {
+			logger.debug("Resource {} not found as a contact", contactResource);
+			return;
+		}
+	}
+	
+	public void removeContact(User user, Contact contact) {	
+		Set<User> removedUsers = new HashSet<User>();
+		
 		for (ContactClaim cc : contact.getResources()) {
 			User resourceUser = getUser(cc.getResource());
 			if (resourceUser != null)
@@ -565,7 +581,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			
 		}
 	}
-
+	
 	public Set<Guid> computeContacts(Guid userId) {
 		User user = em.find(User.class, userId.toString());
 		

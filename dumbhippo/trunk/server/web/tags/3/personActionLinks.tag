@@ -14,7 +14,25 @@
     <c:when test="${signin.valid}">
         <c:choose>
             <c:when test="${who.liveUser == null}">
-        	    <%-- TODO: add invitation action links --%>
+            	<a href="javascript:window.open('/invitation?invitee=' + encodeURIComponent('${who.name}'), '_self');">
+        	        <c:choose>
+        	            <c:when test="${who.invitationView == null}">
+        	                Send invitation
+        	            </c:when>
+        	            <c:when test="${who.invitationView != null && who.invitationView.invite.valid}">
+        	                Re-send invitation
+        	                <c:set var="invitationText" value=" and cancel their invitation"/>
+        	            </c:when>
+        	            <c:otherwise>
+        	                Send a new invitation
+        	            </c:otherwise>
+        	        </c:choose>                
+        	    </a> 
+        	    <c:if test="${who.invitationView != null}">
+        	        | 
+        	        <dh:script module="dh.actions"/>
+  				    <dht:actionLink oneLine="true" href="javascript:dh.actions.removeInvitedContact('${who.identifyingGuid}')" title="Remove contact${invitationText}">Remove contact</dht:actionLink>   
+  				</c:if>         	    
         	</c:when>
         	<c:when test="${who.viewOfSelf}">
         	    <div>

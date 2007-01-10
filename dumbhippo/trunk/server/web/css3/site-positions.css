@@ -675,10 +675,15 @@ div.dh-person-header {
     clear:              right;
     display:            inline;
     margin-top:         -2px;
+    text-align:			left;	
 }
 
 .dh-person-item-more-info .dh-favicons { 
 	width:              200px;
+}
+
+.dh-invitation-date {
+    margin-left:        1px;
 }
 
 .dh-photo {

@@ -67,25 +67,18 @@
         
         <dht3:shinyBox color="grey">
 			<div class="dh-page-shinybox-title-large">
-				<span>People I've Invited to Join Mugshot <c:out value="(${person.pageableOutstandingInvitations.totalCount})"/></span>
+				<span>People I've Invited to Join Mugshot <c:out value="(${person.pageableInvitedContacts.totalCount})"/></span>
 				<c:if test="${person.invitations != 1}">
 			        <c:set var="plural" value="s"/>
 			    </c:if>
 				<a class="dh-underlined-link dh-page-shinybox-subtitle" href="/invitation">Invite friends! (${person.invitations} invitation${plural} left)</a> 
 			</div>
 	        <c:choose>
-    	        <c:when test="${person.pageableOutstandingInvitations.totalCount > 0}">
-					<c:forEach items="${person.pageableOutstandingInvitations.results}" var="invite">
-						<div class="dh-person-item">
-						    <div class="dh-image">
-							    <dh:png src="/images2/${buildStamp}/user_pix1/invited.png?size=60" style="width: 60px; height: 60px"/>
-						    </div>
-						    <div class="dh-person-item-name">
-						    	<c:out value="${invite.name}"/>
-						    </div>
-						</div>    
+    	        <c:when test="${person.pageableInvitedContacts.totalCount > 0}">
+					<c:forEach items="${person.pageableInvitedContacts.results}" var="invitedContact">
+						 <dht3:personItem who="${invitedContact}"/>
 					</c:forEach>
-			        <dht:expandablePager pageable="${person.pageableOutstandingInvitations}" anchor="dhInvites"/>
+			        <dht:expandablePager pageable="${person.pageableInvitedContacts}" anchor="dhInvitedContacts"/>
 			    </c:when>
 			    <c:otherwise>
 		    	    No outstanding invitations.  <c:if test="${person.invitations > 0}"><a href="/invitation">Invite friends!</a></c:if>
