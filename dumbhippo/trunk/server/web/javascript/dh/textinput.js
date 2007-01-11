@@ -133,24 +133,24 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	}
 
 	this.elem.onfocus = function(ev) {
-		if (this._handlingFocusEvent)
+		if (me._handlingFocusEvent)
 			return;
-		this._handlingFocusEvent = true;
+		me._handlingFocusEvent = true;
 		me.hideDefaultText();
-		this.onfocus();
-		this._handlingFocusEvent = false;
+		me.onfocus();
+		me._handlingFocusEvent = false;
 	}
 	
 	this.onblur = function() {
 	}
 	
 	this.elem.onblur = function(ev) {
-		if (this._handlingFocusEvent)
+		if (me._handlingFocusEvent)
 			return;	
-		this._handlingFocusEvent = true;			
+		me._handlingFocusEvent = true;			
 		me.activate();
-		this.onblur();
-		this._handlingFocusEvent = false;		
+		me.onblur();
+		me._handlingFocusEvent = false;		
 	}
 	
 	this.elem.onkeydown = function(ev) {

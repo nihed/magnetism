@@ -109,9 +109,9 @@
 				    <div class="dh-section-header">Public Info</div>
 				    <span class="dh-section-explanation">This information will be visible on your <a href="/person">Home</a> page.</span>
                 </dht3:formTableRowSeparator>
-				<dht:formTableRowStatus controlId='dhUsernameEntry'></dht:formTableRowStatus>
-				<dht:formTableRow label="My name">
+				<dht:formTableRow label="My name" controlId='dhUsernameEntry'>
 					<dht:textInput id="dhUsernameEntry" extraClass="dh-username-input"/>
+					<div id="dhUsernameEntryDescription" style="display: none"></div>
 				</dht:formTableRow>
 				<dht:formTableRowStatus controlId='dhBioEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="About me" altRow="true">
@@ -241,7 +241,7 @@
 				        </c:choose>    			            					   
 				    </dht:formTableRow>
 				    <c:forEach items="${account.supportedAccounts.list}" var="supportedAccount">
-                        <dht:formTableRow containerId="dh${supportedAccount.siteBaseName}Container" 
+                        <dht:formTableRow controlId="dh${supportedAccount.siteBaseName}" 
                                           label="${supportedAccount.siteName}" icon="/images3/${buildStamp}/${supportedAccount.iconName}">
 		                    <dht:loveHateEntry 
 		                    	name="${supportedAccount.siteName}"

@@ -12,13 +12,16 @@
 }
 
 .dh-form-table .dh-label-cell {
+	padding-right:	10px;
 	text-align:     right;
 	width:			170px;
 }
 
-#dhAccounts .dh-label-cell {
+.dh-form-table .dh-account-editing-content-only-box .dh-control-cell-div {
 	padding-left:	5px;
-	padding-right:	10px;
+}
+
+#dhAccounts .dh-label-cell {
 	text-align:     left;
 	width:          90px;
 }
@@ -200,17 +203,17 @@ tr.dh-email-address-spacer {
     bottom:        -4px;
 }
 
-#dhAccounts .dh-love-hate-instruction-editing {
+.dh-love-hate-instruction-editing {
 	padding-top:	5px;
 	padding-bottom:	5px;
 }
 
-#dhAccounts .dh-label-cell .dh-love-hate-editing {
+.dh-label-cell .dh-account-editing {
 	padding-top:	5px;
 	padding-bottom:	5px;
 }
 
-#dhAccounts .dh-control-cell .dh-love-hate-editing {
+.dh-control-cell .dh-account-editing {
 	padding-top:	5px;
 	padding-bottom:	5px;
 }

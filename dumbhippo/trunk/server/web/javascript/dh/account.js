@@ -413,6 +413,7 @@ dh.account.disableFacebookSession = function() {
 						 alert("Couldn't disabled the Facebook session.");
 					 });    
 }
+
 dh.account.createMyspaceEntry = function() {
     dh.account.myspaceEntry = new dh.lovehate.Entry('dhMySpace', 'Enter your Myspace name', dh.account.initialMyspaceName,
 							'I despise Tom and his space', dh.account.initialMyspaceHateQuip, 'Your friends get updates when you post to your MySpace blog (and more to come).');
@@ -501,17 +502,10 @@ dhAccountInit = function() {
 		dh.dom.disableChildren(document.getElementById("dhAccountContents"));
 		return;
 	}
+	var usernameEntry = new dh.formtable.ExpandableTextInput('dhUsernameEntry', "J. Doe");
+	usernameEntry.setDescription("The name you appear to others as.");
+	usernameEntry.setChangedPost('renameperson', 'name');
 
-	dh.account.usernameEntryNode = document.getElementById('dhUsernameEntry');
-	dh.account.usernameEntry = new dh.textinput.Entry(dh.account.usernameEntryNode, "J. Doe", dh.formtable.currentValues['dhUsernameEntry']);
-	
-	dh.formtable.undoValues['dhUsernameEntry'] = dh.account.usernameEntry.getValue();
-	dh.account.usernameEntry.onValueChanged = function(value) {
-		dh.formtable.onValueChanged(dh.account.usernameEntry, 'renameperson', 'name', value,
-		"Saving user name...",
-		"Your user name has been saved.");
-	}
-	
 	dh.account.bioEntryNode = document.getElementById('dhBioEntry');
 	dh.account.bioEntry = new dh.textinput.Entry(dh.account.bioEntryNode, "I grew up in Kansas.", dh.formtable.currentValues['dhBioEntry']);
 
