@@ -15,11 +15,10 @@ import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.ChannelHandler;
 import org.jivesoftware.wildfire.ClientSession;
-import org.jivesoftware.wildfire.PacketException;
 import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.SessionManager;
-import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -124,7 +123,9 @@ public class MessageSender implements XmppMessageSenderProvider {
 				packet.setTo(resource);
 				
 				try {
-					session.process(packet);
+					@SuppressWarnings("unchecked")
+					ChannelHandler<Packet> handler = session;
+					handler.process(packet);
 				} catch (UnauthorizedException e) {
 					// ignore
 				}
