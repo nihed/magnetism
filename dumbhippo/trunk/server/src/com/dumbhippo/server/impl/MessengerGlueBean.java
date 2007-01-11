@@ -33,7 +33,6 @@ import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.PostVisibility;
-import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.TrackMessage;
@@ -334,16 +333,6 @@ public class MessengerGlueBean implements MessengerGlue {
 				                user.getNickname(), user.getPhotoUrl());
 	}
 	
-	private Set<ChatRoomUser> getChatRoomRecipients(Group group) {
-		Set<ChatRoomUser> allowedUsers = new HashSet<ChatRoomUser>();		
-		Set<User> members = groupSystem.getUserMembers(SystemViewpoint.getInstance(), group, MembershipStatus.ACTIVE);
-		for (User user : members) {
-			allowedUsers.add(newChatRoomUser(user));
-		}
-		return allowedUsers;
-	}
-		
-	
 	private List<ChatRoomMessage> getChatRoomMessages(Group group, long lastSeenSerial) {
 		List<GroupMessage> messages = groupSystem.getGroupMessages(group, lastSeenSerial);
 
@@ -358,24 +347,6 @@ public class MessengerGlueBean implements MessengerGlue {
 	private ChatRoomInfo getChatRoomInfo(String roomName, Group group) {
 		List<ChatRoomMessage> history = getChatRoomMessages(group, -2);
 		return new ChatRoomInfo(ChatRoomKind.GROUP, roomName, group.getName(), history, false);
-	}
-
-	private Set<ChatRoomUser> getChatRoomRecipients(Post post) {
-		Set<ChatRoomUser> recipients = new HashSet<ChatRoomUser>();
-		User poster = post.getPoster();
-		if (poster != null)
-			recipients.add(newChatRoomUser(poster));	
-		
-		// FIXME: This doesn't handle
-		// posts where people join a group that it was sent to after the post was
-		// sent. 
-		for (Resource recipient : post.getExpandedRecipients()) {
-			User user = identitySpider.getUser(recipient);
-			if (user != null) {
-				recipients.add(newChatRoomUser(user));
-			}
-		}
-		return recipients;
 	}
 
 	private List<ChatRoomMessage> getChatRoomMessages(Post post, long lastSeenSerial) {
@@ -439,21 +410,6 @@ public class MessengerGlueBean implements MessengerGlue {
 			throw new RuntimeException(e);
 		}
 		return newChatRoomUser(user);
-	}
-	
-	public Set<ChatRoomUser> getChatRoomRecipients(String roomName, ChatRoomKind kind) {
-		try {
-			if (kind == ChatRoomKind.POST)
-				return getChatRoomRecipients(getPostFromRoomName(roomName));
-			else if (kind == ChatRoomKind.GROUP)
-				return getChatRoomRecipients(getGroupFromRoomName(roomName));
-			else if (kind == ChatRoomKind.MUSIC)
-				return Collections.emptySet();
-			else
-				throw new RuntimeException("Unknown chat room type " + kind);
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
 	}
 	
 	public ChatRoomInfo getChatRoomInfo(String roomName) {

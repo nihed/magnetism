@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.ejb.Local;
 
@@ -156,8 +155,6 @@ public interface MessengerGlue {
 	 * @return blob of information about the user
 	 */
 	public ChatRoomUser getChatRoomUser(String roomName, ChatRoomKind kind, String username);
-	
-	public Set<ChatRoomUser> getChatRoomRecipients(String roomName, ChatRoomKind kind);
 	
 	/**
 	 * Get the information needed to manage a chatroom for a post.

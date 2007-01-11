@@ -202,7 +202,6 @@ public class Room implements PresenceListener {
 	private String roomName;
 	private Guid roomGuid;
 	
-	private Set<String> recipientsCache;
 	private Map<String, UserInfo> userInfoCache;
 	private Map<JID, UserInfo> participantResources;
 	private Map<JID, UserInfo> presentResources;
@@ -275,18 +274,6 @@ public class Room implements PresenceListener {
 		return lookupUserInfo(username, false);
 	}
 	
-	private Set<String> getRecipientsCache() {
-		if (recipientsCache == null) {
-			recipientsCache = new HashSet<String>();
-			MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);		
-			for (ChatRoomUser user : glue.getChatRoomRecipients(roomName, this.kind)) {
-				Log.debug("Room recipient: " + user.getUsername());
-				recipientsCache.add(user.getUsername());
-			}					
-		}
-		return recipientsCache;
-	}
-	
 	private String getServiceDomain() {
 		return "rooms." + XMPPServer.getInstance().getServerInfo().getName();
 	}
@@ -302,10 +289,7 @@ public class Room implements PresenceListener {
 	}
 
 	/**
-	 * Send a packet to everybody who either received the post initially
-	 * or is in the chatroom. The packet is sent
-	 * only to resources that are currently logged in to the server; it
-	 * will not be queued for offline delivery.
+	 * Send a packet to everybody is in the chatroom.
 	 * 
 	 * For group chat, right now this would send to everyone in the group.
 	 * 
@@ -313,9 +297,6 @@ public class Room implements PresenceListener {
 	 */ 
 	private void sendPacketToAll(Packet packet) {
 		Set<Guid> targets = new HashSet<Guid>();
-		for (String node : getRecipientsCache()) {
-			targets.add(Guid.parseTrustedJabberId(node));
-		}
 		for (UserInfo userInfo : presentUsers.values()) {
 			targets.add(Guid.parseTrustedJabberId(userInfo.getUsername()));
 		}
@@ -751,13 +732,6 @@ public class Room implements PresenceListener {
 	    return presentUsers.containsKey(username);	
 	}
 
-	/**
-	 * Called when the set of members in a group chat room changes 
-	 */
-	public synchronized void onMembersChanged() {
-		recipientsCache = null;
-	}
-	
 	/**
 	 * Called when the messages for the chat room have changed 
 	 */
