@@ -1,7 +1,6 @@
 package com.dumbhippo.jive.rooms;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,15 +8,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -29,6 +24,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.jive.MessageSender;
 import com.dumbhippo.jive.XmlParser;
 import com.dumbhippo.live.PresenceListener;
 import com.dumbhippo.live.PresenceService;
@@ -60,17 +56,9 @@ public class Room implements PresenceListener {
 	 * The one thing we handle specially is outgoing messages; if we delivered them
 	 * directly from within our lock, we could block for arbitrary amounts of time 
 	 * with the lock held, on the other hand, delivering them unlocked would lose ordering.
-	 * So what we do is queue outgoing packets for delivery, and use a thread to handle
-	 * delivery.
-	 * 
-	 * It might be better to use a per-client thread rather than a per-chatroom since
-	 * with a per-chatroom thread, stalled delivery to one client can block delivery
-	 * to another client, but if we go that route, it should be done globally, not
-	 * within the chatroom code.
-	 * 
-	 * The actual characteristics we need are: a) we can queue outgoing packets for 
-	 * delivery without blocking and b) two packets queued from the same chatroom
-	 * to the same user are delivered in that order. 
+	 * Delivering them via MessageSender provides the necessary asynchronicity and
+	 * ordering guarantees. (The necessary ordering guarantee is that two packets queued 
+	 * from the same chatroom to the same destination are delivered in that order.) 
 	 **/ 
 	
 	private static class UserInfo {
@@ -209,43 +197,6 @@ public class Room implements PresenceListener {
 		}
 	}
 	
-	// Encapsulates a Packet with a list of resources or users to deliver it to. The
-	// advantage of using these objects in sendQueue rather than just a list of 
-	// Packets with their destination set is that we can avoid copying the Packet
-	//.once per recipient.
-	private static class DeliveryPacket {
-		private Packet packet;
-		private Set<?> to;
-		
-		private DeliveryPacket(Packet packet, Set<?> to) {
-			this.packet = packet;
-			this.to = to;
-		}
-		
-		public static DeliveryPacket createForResources(Packet packet, Set<JID> to) {
-			return new DeliveryPacket(packet, to);
-		}
-		
-		public static DeliveryPacket createForUsers(Packet packet, Set<String> to) {
-			return new DeliveryPacket(packet, to);
-		}
-
-		public void deliver() {
-			for (Object o : to) {
-				if (o instanceof JID) {
-					packet.setTo((JID)o);
-					XMPPServer.getInstance().getPacketRouter().route(packet);
-				} else if (o instanceof String) {
-					try {
-						SessionManager.getInstance().userBroadcast((String)o, packet);
-					} catch (UnauthorizedException e) {
-						// Ignore
-					}
-				}
-			}
-		}
-	}
-
 	private String title;
 	private ChatRoomKind kind;
 	private String roomName;
@@ -258,9 +209,6 @@ public class Room implements PresenceListener {
 	private Map<String, UserInfo> presentUsers;
 	private List<MessageInfo> messages;
 	private long maxMessageSerial = -1;
-	
-	private BlockingQueue<DeliveryPacket> sendQueue;
-	private Thread sendThread;
 	
 	private Room(ChatRoomInfo info) {
 		userInfoCache = new HashMap<String, UserInfo>();
@@ -275,10 +223,6 @@ public class Room implements PresenceListener {
 		title = info.getTitle();
 		
 		addMessages(info.getHistory(), false);
-		
-		sendQueue = new LinkedBlockingQueue<DeliveryPacket>();
-		sendThread = new Thread(new Sender(), "Room-Sender-" + roomName);
-		sendThread.start();
 		
 		PresenceService.getInstance().addListener(getPresenceLocation(), this);
 	}
@@ -300,17 +244,6 @@ public class Room implements PresenceListener {
 	
 	public void shutdown() {
 		PresenceService.getInstance().removeListener(getPresenceLocation(), this);
-		
-		sendThread.interrupt();
-		try {
-			// We take some precautions here because it's conceivable that the sender thread
-			// could be blocking trying to write to a client's socket 
-			sendThread.join(10 * 1000); // Wait for at most 10 seconds
-			if (sendThread.isAlive())
-				Log.warn("Timed out waiting for " + sendThread.getName() + " to exit");
-		} catch (InterruptedException e) {
-			// Shouldn't happen, just ignore
-		}
 	}
 	
 	private UserInfo lookupUserInfo(String username, boolean refresh) {
@@ -358,14 +291,6 @@ public class Room implements PresenceListener {
 		return "rooms." + XMPPServer.getInstance().getServerInfo().getName();
 	}
 
-	private void sendDeliveryPacket(DeliveryPacket packet) {
-		try {
-			sendQueue.put(packet);
-		} catch (InterruptedException e) {
-			Log.warn("Interrupted exception delivering Room packet");
-		}
-	}
-	
 	/**
 	 * Send a packet to a particular resource
 	 * 
@@ -373,7 +298,7 @@ public class Room implements PresenceListener {
 	 * @param to recipient resource
 	 */
 	private void sendPacketToResource(Packet packet, JID to) {
-		sendDeliveryPacket(new DeliveryPacket(packet, Collections.singleton(to)));
+		MessageSender.getInstance().sendPacketToResource(to, packet);
 	}
 
 	/**
@@ -387,13 +312,15 @@ public class Room implements PresenceListener {
 	 * @param packet the packet to send
 	 */ 
 	private void sendPacketToAll(Packet packet) {
-		Set<String> targets = new HashSet<String>();
-		targets.addAll(getRecipientsCache());
+		Set<Guid> targets = new HashSet<Guid>();
+		for (String node : getRecipientsCache()) {
+			targets.add(Guid.parseTrustedJabberId(node));
+		}
 		for (UserInfo userInfo : presentUsers.values()) {
-			targets.add(userInfo.getUsername());
+			targets.add(Guid.parseTrustedJabberId(userInfo.getUsername()));
 		}
 		
-		sendDeliveryPacket(new DeliveryPacket(packet, targets));
+		MessageSender.getInstance().sendPacketToUsers(targets, packet);
 	}
 	
 	/**
@@ -402,7 +329,7 @@ public class Room implements PresenceListener {
 	 * @param packet the packet to send
 	 */
 	private void sendPacketToPresent(Packet packet) {
-		sendDeliveryPacket(new DeliveryPacket(packet, new HashSet<JID>(presentResources.keySet())));
+		MessageSender.getInstance().sendPacketToResources(presentResources.keySet(), packet);
 	}
 	
 	public static Room loadFromServer(String roomName) {
@@ -900,21 +827,5 @@ public class Room implements PresenceListener {
 			presence = makePresenceAvailable(userInfo, oldStatus);
 
 		sendPacketToAll(presence);
-	}
-	
-	private class Sender implements Runnable {
-		public void run() {
-			while (true) {
-				try {
-					DeliveryPacket packet = sendQueue.take();
-					packet.deliver();
-				} catch (InterruptedException e) {
-					// Thread was shut down
-					break;
-				} catch (RuntimeException e) {
-					Log.error("Unexpected exception deliverying packet", e);
-				}
-			}
-		}
 	}
 }
