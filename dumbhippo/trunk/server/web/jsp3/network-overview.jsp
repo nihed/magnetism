@@ -87,6 +87,23 @@
 		    	    No outstanding invitations.  <c:if test="${person.invitations > 0}"><a href="/invitation">Invite friends!</a></c:if>
 			    </c:otherwise> 
 			</c:choose>       			
+		</dht3:shinyBox>    
+		
+		<dht3:shinyBox color="grey">
+			<div class="dh-page-shinybox-title-large">
+				<span>People I've Shared Links With <c:out value="(${person.pageableContactsWithoutInvites.totalCount})"/></span>
+			</div>
+	        <c:choose>
+    	        <c:when test="${person.pageableContactsWithoutInvites.totalCount > 0}">
+					<c:forEach items="${person.pageableContactsWithoutInvites.results}" var="contact">
+						 <dht3:personItem who="${contact}"/>
+					</c:forEach>
+			        <dht:expandablePager pageable="${person.pageableContactsWithoutInvites}" anchor="dhContacts"/>
+			    </c:when>
+			    <c:otherwise>
+		    	    All contacts you've shared links with received invitations! 
+			    </c:otherwise> 
+			</c:choose>       			
 		</dht3:shinyBox>      
 	</c:if>		
 </dht3:page>

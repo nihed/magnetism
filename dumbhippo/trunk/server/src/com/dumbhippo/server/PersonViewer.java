@@ -69,6 +69,16 @@ public interface PersonViewer {
 	public void pageUserContactsAlphaSorted(Viewpoint viewpoint, User user, Pageable<PersonView> pageable);
 	
 	/**
+	 * Get the contacts of the user who do not have accounts associated with them,
+	 * and have not received invitations to the system from the user.
+	 * 
+	 * @param viewpoint entity viewing the contacts
+	 * @param user who to get contacts of
+	 * @return set of user contacts without invites
+	 */
+	public List<PersonView> getContactsWithoutInvites(Viewpoint viewpoint, User user);
+	
+	/**
 	 * Get a list of users who have this user as a contact, but who are not contacts of this user.
 	 * An empty list will be returned, if the viewpoint is anything other than the viewpoint of the 
 	 * user.

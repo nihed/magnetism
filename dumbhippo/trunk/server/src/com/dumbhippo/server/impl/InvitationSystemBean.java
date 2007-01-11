@@ -242,9 +242,11 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			"    WHERE ivd.inviter = :inviter AND " +
 			"       ivd.deleted = FALSE AND " +
 			"       ivd.invitation.resultingPerson = NULL AND " +
-			"       NOT EXISTS (SELECT it.id FROM InvitationToken it " +
+			"       NOT EXISTS (SELECT it.id FROM InvitationToken it, InviterData ivd2 " +
 			"                   WHERE it.invitee = ivd.invitation.invitee AND" +
-			"                         it.creationDate > ivd.invitation.creationDate) " +		
+			"                         ivd2.inviter = :inviter AND" +
+			"                         it.creationDate > ivd.invitation.creationDate AND" +
+			"                         ivd2.invitation = it)" +		
 			"    ORDER BY ivd.invitation.creationDate DESC");
 		
 		q.setParameter("inviter", inviter);

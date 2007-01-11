@@ -72,6 +72,9 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 
 	private ListBean<PersonView> invitedContacts;
 	private Pageable<PersonView> pageableInvitedContacts;
+
+	private ListBean<PersonView> contactsWithoutInvites;
+	private Pageable<PersonView> pageableContactsWithoutInvites;
 	
 	private boolean lookedUpCurrentTrack;
 	private TrackView currentTrack;
@@ -439,6 +442,27 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			pageableInvitedContacts.generatePageResults(getInvitedContacts().getList());
 		}
 		return pageableInvitedContacts;
+	}
+	
+	
+	public ListBean<PersonView> getContactsWithoutInvites() {
+		if (contactsWithoutInvites == null) {
+			contactsWithoutInvites = 
+				new ListBean<PersonView>(personViewer.getContactsWithoutInvites(getUserSignin().getViewpoint(), 
+						                 getViewedUser()));
+		}
+	
+		return contactsWithoutInvites;
+	}
+	
+	public Pageable<PersonView> getPageableContactsWithoutInvites() {
+		if (pageableContactsWithoutInvites == null) {
+			pageableContactsWithoutInvites = pagePositions.createPageable("contacts");
+			pageableContactsWithoutInvites.setInitialPerPage(FRIENDS_PER_PAGE);
+			pageableContactsWithoutInvites.setSubsequentPerPage(FRIENDS_PER_PAGE);
+			pageableContactsWithoutInvites.generatePageResults(getContactsWithoutInvites().getList());
+		}
+		return pageableContactsWithoutInvites;		
 	}
 	
 	protected final boolean getNeedExternalAccounts() {
