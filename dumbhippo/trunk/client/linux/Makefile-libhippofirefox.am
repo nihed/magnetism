@@ -46,6 +46,7 @@ libhippofirefox_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)				\
 	$(LIBHIPPOFIREFOX_CFLAGS)		\
 	-I $(FIREFOX_SRCDIR)/include		\
+	-I $(COMMONSRCDIR)/hippoipc		\
 	-I config/hippo
 
 # The include of $(GECKO_INCLUDEDIR) in the FULL_GECKO case is for 

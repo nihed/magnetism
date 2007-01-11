@@ -2,7 +2,8 @@ noinst_LTLIBRARIES += libhippoipc.la
 
 libhippoipc_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)				\
-	$(LIBHIPPOIPC_CFLAGS)
+	$(LIBHIPPOIPC_CFLAGS)			\
+	-I $(COMMONSRCDIR)/hippoipc
 libhippoipc_la_LIBADD =
 
 nodist_libhippoipc_la_SOURCES =					\

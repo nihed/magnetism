@@ -2,7 +2,7 @@
 #ifndef __HIPPO_DBUS_IPC_LOCATOR_H__
 #define __HIPPO_DBUS_IPC_LOCATOR_H__
 
-#include "hippoipc/hippo-ipc.h"
+#include "hippo-ipc.h"
 
 class HippoDBusIpcLocator : public HippoIpcLocator
 {
