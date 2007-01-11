@@ -26,6 +26,9 @@ public class GroupsPage extends AbstractPersonPage {
 	private static final int GROUPS_PER_PAGE = 10;
 	private static final int BLOCKS_PER_INVITED_GROUP = 2;
 	private static final int BLOCKS_PER_GROUP = 2;
+	
+	private int activeGroupsCount = -1; 
+	private int followedGroupsCount = -1;
 
 	private Pageable<GroupMugshotView> activeGroups;
 	private Pageable<GroupMugshotView> activeFollowedGroups;	
@@ -52,10 +55,23 @@ public class GroupsPage extends AbstractPersonPage {
 		}
 		return activeFollowedGroups;
 	}
+
+	public int getActiveGroupsCount() {
+		if (activeGroupsCount < 0)
+			activeGroupsCount = groupSystem.findGroupsCount(getViewpoint(), getViewedUser(), MembershipStatus.ACTIVE);
+			
+		return activeGroupsCount;
+	}
+	
+	public int getFollowedGroupsCount() {
+		if (followedGroupsCount < 0)
+			followedGroupsCount = groupSystem.findGroupsCount(getViewpoint(), getViewedUser(), MembershipStatus.FOLLOWER);
+			
+		return followedGroupsCount;
+	}
 	
 	public int getActiveAndFollowedGroupsCount() {
-		return groupSystem.findGroupsCount(getViewpoint(), getViewedUser(), MembershipStatus.ACTIVE)
-			+ groupSystem.findGroupsCount(getViewpoint(), getViewedUser(), MembershipStatus.FOLLOWER);
+		return getActiveGroupsCount() + getFollowedGroupsCount();
 	}
 	
 	public List<GroupMugshotView> getInvitedGroupMugshots() {

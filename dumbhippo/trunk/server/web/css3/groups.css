@@ -14,3 +14,7 @@
 .dh-group-invitation-action-complete {
 	font-weight: bold;
 }
+
+.dh-groups-disabled-link {
+    color:              #555555;
+}
