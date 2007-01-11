@@ -5,11 +5,17 @@ dojo.require("dh.util");
 dojo.require("dh.server");
 dojo.require("dh.event");
 
+// A JSP page can override this based on signin.active after including this module
+dh.password.active = true;
+
 dh.password.passwordEntry = null;
 dh.password.againEntry = null;
 dh.password.setButton = null;
 
 dh.password.inProgress = false;
+
+// Whether the user has set a valid password
+dh.password.invalid = true;
 
 // We display the validation messages in a timeout, so they only show 
 // up if you pause for a minute (if you aren't sure what's going on)
@@ -70,6 +76,7 @@ dhPasswordFormUpdate = function(ev) {
 		dh.password.queueValidationMessage("Your password looks good! Click 'Set Password' when you're done.");
 	}
 	
+	dh.password.invalid = invalid;
 	if (invalid) {
 		dh.password.setButton.src = dhImageRoot3 + "setpassword_disabled.gif";
 	} else {
@@ -117,8 +124,9 @@ dh.password.setPassword = function(password) {
 }
 
 dhPasswordFormSubmit = function() {
-	if (dh.password.setButton.disabled) {
-		// can happen when pressing enter in text box
+	if (dh.password.invalid) {
+		// can happen when pressing enter in text box, or if the user clicks on the insensitive-looking
+		// button.
 		dh.password.showValidationMessageNow();
 		return;
 	}
@@ -137,7 +145,7 @@ dhPasswordInit = function() {
 	dh.password.setButton = document.getElementById('dhSetPasswordButton');
 	
 	// this happens when your account is disabled
-	if (!dh.password.passwordEntry)
+	if (!dh.password.passwordEntry || !dh.password.active)
 		return;
 
 	dojo.event.connect(dh.password.passwordEntry, "onchange", dj_global, "dhPasswordFormUpdate");
