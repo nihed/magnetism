@@ -23,7 +23,7 @@ dh.stacker.blockOpen = function(block) {
 		fullDesc.style.display = "block";
 		shortDesc.style.display = "none";
 	}
-	if (fullDesc.dhHideOnExpand) {
+	if (fullDesc && fullDesc.dhHideOnExpand) {
 		fullDesc.style.display = "none";
 	}
 	var message = document.getElementById("dhMusicBlockMessage-" + block.dhBlockId);
@@ -48,7 +48,7 @@ dh.stacker.blockClose = function(block) {
 		fullDesc.style.display = "none";
 		shortDesc.style.display = "block";
 	}
-	if (fullDesc.dhHideOnExpand) {
+	if (fullDesc && fullDesc.dhHideOnExpand) {
 		fullDesc.style.display = "block";
 	}	
 	var message = document.getElementById("dhMusicBlockMessage-" + block.dhBlockId);
