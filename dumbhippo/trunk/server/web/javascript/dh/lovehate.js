@@ -44,8 +44,6 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 
     // Traverse root node of this widget, calling function on each node
 	this._foreachDhIdNode = function(id, func) {
-	  if (!content)
-	    return;
 	  dh.util.foreachChildElements(me._rootNode, 	                                    
 								   function(node) {
 	                                 if (node.getAttribute("dhId") == id) func(node);
