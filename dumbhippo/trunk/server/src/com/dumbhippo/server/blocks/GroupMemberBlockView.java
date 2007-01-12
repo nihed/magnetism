@@ -6,6 +6,7 @@ import java.util.Set;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.UserBlockData;
@@ -64,6 +65,16 @@ public class GroupMemberBlockView extends BlockView {
 
 	public MembershipStatus getStatus() {
 		return status;
+	}
+	
+	public boolean isStoppedFollowing() {
+		// It's a little tricky to detect when somewhen a block indicates that
+		// the member stopped following a group; for a public group, a status of NONMEMBER 
+		// indicates. But for a secret group, NONMEMBER might mean that the person
+		// left the group and you left the group as well, in which case you are no
+		// longer able to see that their status is REMOVED. So, we also have to take
+		// into account that it is impossible to follow a SECRET group.
+		return status == MembershipStatus.NONMEMBER && group.getGroup().getAccess() != GroupAccess.SECRET;
 	}
 	
 	public Set<PersonView> getAdders() {
