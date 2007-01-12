@@ -506,25 +506,8 @@ dhAccountInit = function() {
 	usernameEntry.setDescription("The name you appear to others as.");
 	usernameEntry.setChangedPost('renameperson', 'name');
 
-	dh.account.bioEntryNode = document.getElementById('dhBioEntry');
-	dh.account.bioEntry = new dh.textinput.Entry(dh.account.bioEntryNode, "I grew up in Kansas.", dh.formtable.currentValues['dhBioEntry']);
-
-	dh.formtable.undoValues['dhBioEntry'] = dh.account.bioEntry.getValue();
-	dh.account.bioEntry.onValueChanged = function(value) {
-		dh.formtable.onValueChanged(dh.account.bioEntry, 'setbio', 'bio', value,
-		"Saving new bio...",
-		"Your bio has been saved.");
-	}
-	
-//	dh.account.musicbioEntryNode = document.getElementById('dhMusicBioEntry');
-//	dh.account.musicbioEntry = new dh.textinput.Entry(dh.account.musicbioEntryNode, "If you listen to Coldplay, I want to meet you.", dh.formtable.currentValues['dhMusicBioEntry']);
- 
-// 	dh.formtable.undoValues['dhMusicBioEntry'] = dh.account.musicbioEntry.getValue();
-//	dh.account.musicbioEntry.onValueChanged = function(value) {
-//		dh.formtable.onValueChanged(dh.account.musicbioEntry, 'setmusicbio', 'musicbio', value,
-//		"Saving new music bio...",
-//		"Your music bio has been saved.");
-//	}
+	var bioEntry = new dh.formtable.ExpandableTextInput('dhBioEntry', "I grew up in Kansas.");
+	bioEntry.setChangedPost('setbio', 'bio');
 	
 	dh.account.websiteEntryNode = document.getElementById('dhWebsiteEntry');
 	dh.account.websiteEntry = new dh.textinput.Entry(dh.account.websiteEntryNode, "Your website URL", dh.formtable.currentValues['dhWebsiteEntry']);

@@ -113,15 +113,10 @@
 					<dht:textInput id="dhUsernameEntry" extraClass="dh-username-input"/>
 					<div id="dhUsernameEntryDescription" style="display: none"></div>
 				</dht:formTableRow>
-				<dht:formTableRowStatus controlId='dhBioEntry'></dht:formTableRowStatus>
-				<dht:formTableRow label="About me" altRow="true">
-					<%--
-					<div>
-						<input type="button" value="Generate a random bio!" onclick="dh.account.generateRandomBio();"/>
-					</div>
-					--%>
+				<dht:formTableRow label="About me" altRow="true" controlId="dhBioEntry">
 					<div>
 						<dht:textInput id="dhBioEntry" multiline="true"/>
+						<div id="dhBioEntryDescription" style="display: none"></div>
 					</div>
 				</dht:formTableRow>
 				<!-- music bio currently disabled
