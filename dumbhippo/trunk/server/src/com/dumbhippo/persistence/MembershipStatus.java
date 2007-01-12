@@ -56,6 +56,13 @@ public enum MembershipStatus {
 	}
 	
 	/**
+	 * Can a member of this status chat in the group's chat room
+	 */
+	public boolean getCanChat() {
+		return ordinal() >= ACTIVE.ordinal();
+	}
+
+	/**
 	 * Can a member of this status change the group photo, etc.
 	 * @return true if the group member can change stuff
 	 */

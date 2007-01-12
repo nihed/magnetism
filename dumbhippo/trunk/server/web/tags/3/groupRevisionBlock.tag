@@ -23,8 +23,15 @@
 			
 		</dht3:blockTitle>
 		<div class="dh-stacker-block-header-description" style="margin-top: 3px;">
-			<dht:actionLinkChat oneLine="true" chatId="${block.groupView.group.id}" kind="group" linkText="Chat about this"/> or 
-			<dht:actionLink oneLine="true" href="/group-account?group=${block.groupView.group.id}" title="Edit the group">edit the group</dht:actionLink>
+		    <c:if test="${block.groupView.status.canChat}">
+				<dht:actionLinkChat oneLine="true" chatId="${block.groupView.group.id}" kind="group" linkText="Chat about this"/> 
+			</c:if>
+			<c:if test="${block.groupView.status.canChat && block.groupView.status.canModify}">
+				or 
+			</c:if>
+			<c:if test="${block.groupView.status.canModify}">
+				<dht:actionLink oneLine="true" href="/group-account?group=${block.groupView.group.id}" title="Edit the group">edit the group</dht:actionLink>
+			</c:if>
 		</div>
 	</dht3:blockLeft>
 	<dht3:blockRight blockId="${blockId}" from="${block.entitySource}" showFrom="${showFrom}">
