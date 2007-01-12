@@ -400,10 +400,14 @@ hippo_canvas_text_paint_below_children(HippoCanvasBox  *box,
         int x, y, w, h;
         int allocation_width, allocation_height;
         
+        int space_left = box->border_left + box->padding_left;
+        int space_right = box->border_right + box->padding_right;
+
+        
         hippo_canvas_item_get_allocation(HIPPO_CANVAS_ITEM(box),
                                          &allocation_width, &allocation_height);
         
-        layout = create_layout(text, allocation_width);
+        layout = create_layout(text, allocation_width - space_left - space_right);
         pango_layout_get_size(layout, &layout_width, &layout_height);
         layout_width /= PANGO_SCALE;
         layout_height /= PANGO_SCALE;
