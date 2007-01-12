@@ -81,6 +81,7 @@
 					<c:forEach items="${person.pageableInvitedContacts.results}" var="invitedContact">
 						 <dht3:personItem who="${invitedContact}"/>
 					</c:forEach>
+					<div class="dh-grow-div-around-floats"><div></div></div>
 			        <dht:expandablePager pageable="${person.pageableInvitedContacts}" anchor="dhInvitedContacts"/>
 			    </c:when>
 			    <c:otherwise>
@@ -98,6 +99,7 @@
 					<c:forEach items="${person.pageableContactsWithoutInvites.results}" var="contact">
 						 <dht3:personItem who="${contact}"/>
 					</c:forEach>
+					<div class="dh-grow-div-around-floats"><div></div></div>
 			        <dht:expandablePager pageable="${person.pageableContactsWithoutInvites}" anchor="dhContacts"/>
 			    </c:when>
 			    <c:otherwise>

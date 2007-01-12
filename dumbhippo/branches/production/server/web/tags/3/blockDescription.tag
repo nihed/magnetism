@@ -19,12 +19,10 @@
 		</c:when>
 		<c:otherwise>
 			<div id="dhStackerBlockDescription-${blockId}" class="dh-stacker-block-header-description-full"><jsp:doBody/></div>
-			<c:if test="${hideOnExpand}">
-				<script type="text/javascript">
-					var div = document.getElementById("dhStackerBlockDescription-${blockId}");
-					div.dhHideOnExpand = true;
-				</script>
-			</c:if>
+			<script type="text/javascript">
+				var div = document.getElementById("dhStackerBlockDescription-${blockId}");
+				div.dhHideOnExpand = <c:out value="${hideOnExpand ? 'true' : 'false'}"/>;
+			</script>
 		</c:otherwise>
 	</c:choose>
 </div>

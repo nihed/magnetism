@@ -59,7 +59,7 @@
 			<c:if test="${who.status.canShare}">
 				| <dht:actionLink oneLine="true" href="/group-invitation?group=${who.identifyingGuid}" title="Invite other people to this group">Invite People</dht:actionLink>
 			</c:if>	
-			<c:if test="${who.active}">
+			<c:if test="${who.status.canChat}">
 				<dht:actionLinkChat oneLine="true" chatId="${who.identifyingGuid}" kind="group" prefix="| " />
 			</c:if>
             </c:when>
