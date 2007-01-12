@@ -533,7 +533,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 	
 	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member) throws NotFoundException {
-		if (group.getAccess() == GroupAccess.SECRET &&
+		if (!viewpoint.isOfUser(member) &&
+			group.getAccess() == GroupAccess.SECRET &&
 			!getViewerStatus(viewpoint, group).getCanSeeSecretMembers())
 			throw new NotFoundException("GroupMember for user " + member + " not found");
 			
