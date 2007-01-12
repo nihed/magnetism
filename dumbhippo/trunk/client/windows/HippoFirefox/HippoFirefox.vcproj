@@ -1,76 +1,127 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8.00"
 	Name="HippoFirefox"
 	ProjectGUID="{55F02EE8-E63D-4727-A558-C776A25DD77B}"
 	RootNamespace="HippoFirefox"
-	Keyword="Win32Proj">
+	Keyword="Win32Proj"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="../Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="2"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;c:\Program Files\gecko-sdk\include&quot;;&quot;../../common/firefox/gecko-private/include&quot;;../../common/hippoipc;../HippoUtil;../HippoIpc;Debug"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;HIPPOFIREFOX_EXPORTS;HIPPO_OS_WINDOWS"
-				MinimalRebuild="TRUE"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				TreatWChar_tAsBuiltInType="TRUE"
+				TreatWChar_tAsBuiltInType="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderThrough="stdafx-hippofirefox.h"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="4"/>
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="4"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="&quot;c:\Program Files\gecko-sdk\lib\xpcomglue_s.lib&quot; &quot;c:\Program Files\gecko-sdk\lib\xpcom.lib&quot; &quot;c:\Program Files\gecko-sdk\lib\nspr4.lib&quot;"
 				OutputFile="$(OutDir)/HippoFirefox.dll"
 				LinkIncremental="2"
 				IgnoreDefaultLibraryNames="MSVCRT;LIBCD"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/HippoFirefox.pdb"
 				SubSystem="2"
 				ImportLibrary="$(OutDir)/HippoFirefox.lib"
-				TargetMachine="1"/>
+				TargetMachine="1"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
+				Name="VCWebDeploymentTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="2"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="../dependencies/glib/include/glib-2.0"
@@ -79,40 +130,53 @@
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderThrough="stdafx-hippofirefox.h"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="3"/>
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/HippoFirefox.dll"
 				LinkIncremental="1"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				ImportLibrary="$(OutDir)/HippoFirefox.lib"
-				TargetMachine="1"/>
+				TargetMachine="1"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
+				Name="VCWebDeploymentTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -121,71 +185,91 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			>
 			<File
-				RelativePath="..\..\common\firefox\src\hippoControl.cpp">
+				RelativePath="..\..\common\firefox\src\hippoControl.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\firefox\src\hippoExtension.cpp">
+				RelativePath="..\..\common\firefox\src\hippoExtension.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\hippoFirefox.cpp">
+				RelativePath=".\hippoFirefox.cpp"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\firefox\public\hippoIControl.idl">
+				RelativePath="..\..\common\firefox\public\hippoIControl.idl"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="run-xpidl.bat &quot;$(InputPath)&quot; &quot;$(IntDir)\$(InputName).h&quot;  &quot;$(OutDir)\$(InputName).xpt&quot; "
-						Outputs="$(IntDir)\$(InputName).h;$(OutDir)\$(InputName).xpt"/>
+						CommandLine="run-xpidl.bat &quot;$(InputPath)&quot; &quot;$(IntDir)\$(InputName).h&quot;  &quot;$(OutDir)\$(InputName).xpt&quot;&#x0D;&#x0A;"
+						Outputs="$(IntDir)\$(InputName).h;$(OutDir)\$(InputName).xpt"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\common\firefox\public\hippoIControlListener.idl">
+				RelativePath="..\..\common\firefox\public\hippoIControlListener.idl"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="run-xpidl.bat &quot;$(InputPath)&quot; &quot;$(IntDir)\$(InputName).h&quot;  &quot;$(OutDir)\$(InputName).xpt&quot; "
-						Outputs="$(IntDir)\$(InputName).h;$(OutDir)\$(InputName).xpt"/>
+						CommandLine="run-xpidl.bat &quot;$(InputPath)&quot; &quot;$(IntDir)\$(InputName).h&quot;  &quot;$(OutDir)\$(InputName).xpt&quot;&#x0D;&#x0A;"
+						Outputs="$(IntDir)\$(InputName).h;$(OutDir)\$(InputName).xpt"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\common\firefox\public\hippoIExtension.idl">
+				RelativePath="..\..\common\firefox\public\hippoIExtension.idl"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="run-xpidl.bat &quot;$(InputPath)&quot; &quot;$(IntDir)\$(InputName).h&quot;  &quot;$(OutDir)\$(InputName).xpt&quot; "
-						Outputs="$(IntDir)\$(InputName).h;$(OutDir)\$(InputName).xpt"/>
+						CommandLine="run-xpidl.bat &quot;$(InputPath)&quot; &quot;$(IntDir)\$(InputName).h&quot;  &quot;$(OutDir)\$(InputName).xpt&quot;&#x0D;&#x0A;"
+						Outputs="$(IntDir)\$(InputName).h;$(OutDir)\$(InputName).xpt"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\common\firefox\src\hippoModule.cpp">
+				RelativePath="..\..\common\firefox\src\hippoModule.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\run-xpidl.bat">
+				RelativePath=".\run-xpidl.bat"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			>
 			<File
-				RelativePath="..\..\common\firefox\src\hippo-connection.h">
+				RelativePath="..\..\common\firefox\src\hippo-connection.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\firefox\src\hippoControl.h">
+				RelativePath="..\..\common\firefox\src\hippoControl.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\firefox\src\hippoExtension.h">
+				RelativePath="..\..\common\firefox\src\hippoExtension.h"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
+			>
 		</Filter>
 	</Files>
 	<Globals>

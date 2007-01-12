@@ -1,121 +1,185 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8.00"
 	Name="HippoUtil"
 	ProjectGUID="{638E7547-B5E8-49AD-A70B-56E333C216FE}"
-	Keyword="Win32Proj">
+	Keyword="Win32Proj"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="../Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="2"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="."
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;BUILDING_HIPPO_UTIL;NOMINMAX"
-				MinimalRebuild="TRUE"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				TreatWChar_tAsBuiltInType="TRUE"
-				ForceConformanceInForLoopScope="TRUE"
-				UsePrecompiledHeader="3"
+				TreatWChar_tAsBuiltInType="true"
+				ForceConformanceInForLoopScope="true"
+				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="stdafx-hippoutil.h"
 				PrecompiledHeaderFile="$(IntDir)/$(TargetName).pch"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="4"/>
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="4"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				AdditionalIncludeDirectories="$(IntDir)"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
-				RegisterOutput="TRUE"
+				RegisterOutput="true"
 				AdditionalOptions="/VERBOSE:LIB"
 				AdditionalDependencies="wininet.lib advapi32.lib"
 				OutputFile="$(OutDir)/HippoUtil.dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="HippoUtil.def"
 				TypeLibraryFile=""
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/HippoUtil.pdb"
 				SubSystem="2"
-				TargetMachine="1"/>
+				TargetMachine="1"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories="$(IntDir)"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
+				Name="VCWebDeploymentTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="1"
-			CharacterSet="2">
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
-				RuntimeLibrary="4"
-				UsePrecompiledHeader="3"
+				RuntimeLibrary="0"
+				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="stdafx-hippoutil.h"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="3"/>
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/HippoUtil.exe"
 				LinkIncremental="1"
 				ModuleDefinitionFile="HippoUI.def"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				TargetMachine="1"/>
+				TargetMachine="1"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
+				Name="VCWebDeploymentTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -124,147 +188,194 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			>
 			<File
-				RelativePath=".\HippoArray.h">
+				RelativePath=".\HippoArray.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoConnectionPoint.cpp">
+				RelativePath=".\HippoConnectionPoint.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoConnectionPointContainer.cpp">
+				RelativePath=".\HippoConnectionPointContainer.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoExternal.cpp">
+				RelativePath=".\HippoExternal.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoIE.cpp">
+				RelativePath=".\HippoIE.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoInvocation.cpp">
+				RelativePath=".\HippoInvocation.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoMessageHook.cpp">
+				RelativePath=".\HippoMessageHook.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoRegistrar.cpp">
+				RelativePath=".\HippoRegistrar.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoRegKey.cpp">
+				RelativePath=".\HippoRegKey.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoRegKey.h">
+				RelativePath=".\HippoRegKey.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoThreadBridge.cpp">
+				RelativePath=".\HippoThreadBridge.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoThreadExecutor.cpp">
+				RelativePath=".\HippoThreadExecutor.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoURLParser.cpp">
+				RelativePath=".\HippoURLParser.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoUTF8.cpp">
+				RelativePath=".\HippoUTF8.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoUtil.cpp">
+				RelativePath=".\HippoUtil.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoUtil.def">
+				RelativePath=".\HippoUtil.def"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoUtil.idl">
+				RelativePath=".\HippoUtil.idl"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoUtilUtil.cpp">
+				RelativePath=".\HippoUtilUtil.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\md5.c">
+				RelativePath=".\md5.c"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"/>
+						UsePrecompiledHeader="0"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\stdafx.cpp">
+				RelativePath=".\stdafx.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
+						UsePrecompiledHeader="1"
+					/>
 				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			>
 			<File
-				RelativePath=".\cleangdiplus.h">
+				RelativePath=".\cleangdiplus.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoConnectionPoint.h">
+				RelativePath=".\HippoConnectionPoint.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoConnectionPointContainer.h">
+				RelativePath=".\HippoConnectionPointContainer.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoDispatchableObject.h">
+				RelativePath=".\HippoDispatchableObject.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoExternal.h">
+				RelativePath=".\HippoExternal.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoIE.h">
+				RelativePath=".\HippoIE.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoInvocation.h">
+				RelativePath=".\HippoInvocation.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoMessageHook.h">
+				RelativePath=".\HippoMessageHook.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoRegistrar.h">
+				RelativePath=".\HippoRegistrar.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoStdAfx.h">
+				RelativePath=".\HippoStdAfx.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoThreadBridge.h">
+				RelativePath=".\HippoThreadBridge.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoThreadExecutor.h">
+				RelativePath=".\HippoThreadExecutor.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoThreadLock.h">
+				RelativePath=".\HippoThreadLock.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoURLParser.h">
+				RelativePath=".\HippoURLParser.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoUtil.h">
+				RelativePath=".\HippoUtil.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoUtilDispId.h">
+				RelativePath=".\HippoUtilDispId.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoUtilExport.h">
+				RelativePath=".\HippoUtilExport.h"
+				>
 			</File>
 			<File
-				RelativePath=".\md5.h">
+				RelativePath=".\md5.h"
+				>
 			</File>
 			<File
-				RelativePath=".\resource.h">
+				RelativePath=".\resource.h"
+				>
 			</File>
 			<File
-				RelativePath=".\stdafx-hippoutil.h">
+				RelativePath=".\stdafx-hippoutil.h"
+				>
 			</File>
 		</Filter>
 		<File
-			RelativePath=".\HippoUtil.rc">
+			RelativePath=".\HippoUtil.rc"
+			>
 		</File>
 	</Files>
 	<Globals>
