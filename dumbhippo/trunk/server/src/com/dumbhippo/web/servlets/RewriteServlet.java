@@ -40,13 +40,17 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
+import com.dumbhippo.persistence.Account;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.ServerStatus;
 import com.dumbhippo.server.impl.ConfigurationBean;
+import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.web.JavascriptResolver;
 import com.dumbhippo.web.RewrittenRequest;
 import com.dumbhippo.web.SigninBean;
+import com.dumbhippo.web.UserSigninBean;
 import com.dumbhippo.web.WebEJBUtil;
 import com.dumbhippo.web.WebStatistics;
 
@@ -207,16 +211,23 @@ public class RewriteServlet extends HttpServlet {
 
 			SigninBean signin = SigninBean.getForRequest(request);
 
-			// When the user is logged in, we want to disable all caching of
-			// our responses; since we don't specify an Expires header, browsers
-			// would normally revalidate with an If-Modified request anyways, but 
-			// IE in some cases will used cached content without checking 
-			// (for example, when using the forward/back buttons). That breaks how 
-			// we do action links that cause the page to reload. Preventing that 
-			// caching will make back/forward a little slower, but as long as we 
-			// keep our page load times snappy it isn't a big deal.
-			if (signin.isValid())
+			if (signin.isValid()) {
+				// When the user is logged in, we want to disable all caching of
+				// our responses; since we don't specify an Expires header, browsers
+				// would normally revalidate with an If-Modified request anyways, but 
+				// IE in some cases will used cached content without checking 
+				// (for example, when using the forward/back buttons). That breaks how 
+				// we do action links that cause the page to reload. Preventing that 
+				// caching will make back/forward a little slower, but as long as we 
+				// keep our page load times snappy it isn't a big deal.				
 				response.setHeader("Cache-Control", "no-cache");
+				
+				// Also update their last web login time
+				UserSigninBean userSignin = (UserSigninBean) signin;
+				Account acct = userSignin.getUser().getAccount();
+				AccountSystem accountSystem = EJBUtil.defaultLookup(AccountSystem.class);
+				accountSystem.updateWebLoginTime(acct);
+			}
 			
 			// Deleting the user from SigninBean means that next time it
 			// is accessed, we'll get a copy attached to this hibernate Session

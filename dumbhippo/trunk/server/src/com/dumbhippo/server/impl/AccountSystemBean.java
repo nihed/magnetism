@@ -39,6 +39,8 @@ import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
 public class AccountSystemBean implements AccountSystem {
+	private static final int WEB_LOGIN_UPDATE_SEC = 60*60; // 1 hour
+
 	static private final Logger logger = GlobalSetup.getLogger(AccountSystem.class);	
 	
 	@PersistenceContext(unitName = "dumbhippo")
@@ -188,5 +190,12 @@ public class AccountSystemBean implements AccountSystem {
 		// not strictly a "pref" but this is a convenient place to send this to the client
 		prefs.put("musicSharingPrimed", Boolean.toString(account.isMusicSharingPrimed()));
 		return prefs;
+	}
+
+	public void updateWebLoginTime(Account account) {
+		Date current = new Date();
+		if (account.getLastWebLoginDate() == null || current.getTime() - account.getLastWebLoginDate().getTime() > (WEB_LOGIN_UPDATE_SEC*1000)) {
+			account.setLastWebLoginDate(current);	
+		}
 	}	
 }
