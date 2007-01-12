@@ -149,7 +149,7 @@ dh.formtable._doChange = function(controlId, isXmlMethod, methodName, argName, v
 					dh.formtable.undoValues[controlId] = value;
 	  	    	  },
 			  	  function(arg1, arg2, arg3 /*type, error, http -or- code, msg, http */) {
-			  	  	if (isXmlmethod)
+			  	  	if (isXmlMethod)
 			  	      onFailed(arg2);
 			  	    else 
 			  	      onFailed();
@@ -276,8 +276,14 @@ dh.formtable.ExpandableTextInput = function(controlId, defaultVal) {
 			dh.util.prependClass(child, "dh-saved-link")			
 		} else if (status == 'error') {
 			child = document.createElement("span");
-			span.appendChild(document.createTextNode("Error: "));
+			var span = document.createElement("span");
+			span.appendChild(document.createTextNode("Error"));
+			if (msg)
+				span.appendChild(document.createTextNode(": "));
 			dh.util.prependClass(child, "dh-account-error-prefix");
+			child.appendChild(span)
+			if (msg)
+				span.appendChild(document.createTextNode(msg));
 			dh.formtable.setExpandedError(controlId, true);
 		}
 		me._statusLink.appendChild(child);
@@ -300,6 +306,12 @@ dh.formtable.ExpandableTextInput = function(controlId, defaultVal) {
 		me._saveFunc = function (onSuccess, onFailure) {
 			dh.formtable._doChange(controlId, false, methodName, argName, me._input.getValue(), null, onSuccess, onFailure);
 		}	
+	}
+	
+	this.setChangedXmlMethod = function(methodName, argName) {
+		me._saveFunc = function(onSuccess, onFailure) {
+			dh.formtable._doChange(controlId, true, methodName, argName, me._input.getValue(), null, onSuccess, onFailure);
+		}
 	}
 	
 	this.setDescription("");

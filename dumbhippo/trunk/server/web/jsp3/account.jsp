@@ -202,13 +202,13 @@
 						    <a href="${account.addAimLink}"><dh:png klass="dh-add-icon" src="/images3/${buildStamp}/add_icon.png" style="width: 10; height: 10; overflow: hidden;"/>IM our friendly bot to add a new screen name</a>
 					    </div>
 				    </dht:formTableRow>				
-				    <dht:formTableRowStatus controlId='dhWebsiteEntry'></dht:formTableRowStatus>
-				    <dht:formTableRow label="Website" icon="/images3/${buildStamp}/homepage_icon.png">
+				    <dht:formTableRow label="Website" icon="/images3/${buildStamp}/homepage_icon.png" controlId="dhWebsiteEntry">
 					    <dht:textInput id="dhWebsiteEntry" maxlength="255"/>
+					    <div id="dhWebsiteEntryDescription" style="display: none"></div>
 				    </dht:formTableRow>
-				    <dht:formTableRowStatus controlId='dhBlogEntry'></dht:formTableRowStatus>
-				    <dht:formTableRow label="Blog" icon="/images3/${buildStamp}/blog_icon.png">
+				    <dht:formTableRow label="Blog" icon="/images3/${buildStamp}/blog_icon.png" controlId='dhBlogEntry'>
 					    <dht:textInput id="dhBlogEntry" maxlength="255"/>
+					    <div id="dhBlogEntryDescription" style="display: none"></div>
 				    </dht:formTableRow>				
 				    <tr valign="top">
 	                    <td colspan="3">

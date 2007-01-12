@@ -509,25 +509,13 @@ dhAccountInit = function() {
 	var bioEntry = new dh.formtable.ExpandableTextInput('dhBioEntry', "I grew up in Kansas.");
 	bioEntry.setChangedPost('setbio', 'bio');
 	
-	dh.account.websiteEntryNode = document.getElementById('dhWebsiteEntry');
-	dh.account.websiteEntry = new dh.textinput.Entry(dh.account.websiteEntryNode, "Your website URL", dh.formtable.currentValues['dhWebsiteEntry']);
-
-	dh.formtable.undoValues['dhWebsiteEntry'] = dh.account.websiteEntry.getValue();
-	dh.account.websiteEntry.onValueChanged = function(value) {
-		dh.formtable.onValueChangedXmlMethod(dh.account.websiteEntry, 'setwebsite', 'url', value,
-		"Saving your website address...",
-		"Your website link has been updated.");  // phrasing "updated" is because it could also be removed
-	}
-
-	dh.account.blogEntryNode = document.getElementById('dhBlogEntry');
-	dh.account.blogEntry = new dh.textinput.Entry(dh.account.blogEntryNode, "Your blog URL", dh.formtable.currentValues['dhBlogEntry']);
-
-	dh.formtable.undoValues['dhBlogEntry'] = dh.account.blogEntry.getValue();
-	dh.account.blogEntry.onValueChanged = function(value) {
-		dh.formtable.onValueChangedXmlMethod(dh.account.blogEntry, 'setblog', 'url', value,
-		"Saving your blog address...",
-		"Your blog link has been updated.");  // phrasing "updated" is because it could also be removed
-	}
+	var websiteEntry = new dh.formtable.ExpandableTextInput('dhWebsiteEntry', 'Your website URL');
+	websiteEntry.setDescription("Your website will be linked from your Mugshot page.");
+	websiteEntry.setChangedXmlMethod('setwebsite', 'url');
+	
+	var blogEntry = new dh.formtable.ExpandableTextInput('dhBlogEntry', 'Your blog URL');
+	blogEntry.setDescription("Your friends will get updates when you post to your blog.")
+	blogEntry.setChangedXmlMethod('setblog', 'url');
 	
 	// add some event handlers on the file input
 	dh.account.photoEntry = new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));
