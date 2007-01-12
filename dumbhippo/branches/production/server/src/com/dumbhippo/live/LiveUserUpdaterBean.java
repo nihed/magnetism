@@ -11,6 +11,7 @@ import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.views.SystemViewpoint;
 
@@ -29,6 +30,9 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	@EJB
 	private PostingBoard postingBoard;
 	
+	@EJB
+	private PersonViewer personViewer;
+	
 	private void initializeGroups(LiveUser user) {
 		User dbUser = identitySpider.lookupUser(user);		
 		user.setGroupCount(groupSystem.findGroupsCount(SystemViewpoint.getInstance(), dbUser, MembershipStatus.ACTIVE));
@@ -43,11 +47,17 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 		User dbUser = identitySpider.lookupUser(user);		
 		user.setContactsCount(identitySpider.computeContactsCount(dbUser));		
 	}
+
+	private void initializeUserContactsCount(LiveUser user) {
+		User dbUser = identitySpider.lookupUser(user);		
+		user.setUserContactsCount(personViewer.getUserContactCount(SystemViewpoint.getInstance(), dbUser));	
+	}
 	
 	public void initialize(LiveUser user) {
 		initializeGroups(user);
 		initializePostCount(user);
 		initializeContactsCount(user);
+		initializeUserContactsCount(user);
 	}
 	
 	public void handleGroupMembershipChanged(Guid userGuid) {
@@ -80,6 +90,7 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 		if (liveUser != null) {
 			try {
 				initializeContactsCount(liveUser);
+				initializeUserContactsCount(liveUser);
 			} finally {
 				state.updateLiveUser(liveUser);
 			}

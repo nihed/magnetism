@@ -316,4 +316,91 @@ public class SharedFileSystemBean implements SharedFileSystem {
 		data.setMimeType(file.getMimeType());
 		return data;
 	}
+
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public SharedFile storeFile(UserViewpoint userViewpoint, String relativeName, String mimeType, InputStream inputStream,
+			boolean worldReadable, Collection<Group> groups,
+			Collection<User> users) throws HumanVisibleException {
+		EJBUtil.assertNoTransaction();
+		
+		// get a proxy
+		SharedFileSystem sharedFileSystem = EJBUtil.defaultLookup(SharedFileSystem.class);
+		
+		// Transaction 1 - store a SharedFile in state NOT_STORED with size equal to entire quota
+		SharedFile sf = sharedFileSystem.createUnstoredFile(userViewpoint, relativeName,
+				mimeType, worldReadable, groups, users);
+		
+		// outside transaction - stuff the file contents somewhere. Max size is the 
+		// remaining quota set on the SharedFile.
+		long storedSize = -1;
+		try {
+			storedSize = sharedFileSystem.storeFileOutsideDatabase(sf, inputStream);
+		} finally {
+			// If something goes wrong, try to remove the reserved quota so the 
+			// user isn't doomed
+			if (storedSize < 0) {
+				try {
+					sharedFileSystem.setFileState(userViewpoint, sf.getGuid(), StorageState.NOT_STORED, 0);
+				} catch (Exception e) {
+					logger.warn("Exception removing reserved quota after failed file storage", e);
+				}
+			}
+		}
+		
+		if (storedSize < 0)
+			throw new RuntimeException("storedSize < 0 should not happen");
+		
+		// Transaction 2 - set the correct state and size on the SharedFile if we didn't
+		// throw an exception storing it
+		try {
+			sharedFileSystem.setFileState(userViewpoint, sf.getGuid(), StorageState.STORED, storedSize);
+		} catch (NotFoundException e) {
+			logger.error("Should never happen, file we just created not found", e);
+		} catch (PermissionDeniedException e) {
+			logger.error("Should never happen, permission denied to change file we created", e);
+		}
+		
+		return sf;
+	}
+	
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+ 	public void deleteFile(UserViewpoint viewpoint, Guid fileId) throws HumanVisibleException {
+		EJBUtil.assertNoTransaction();
+
+		// get a proxy
+		SharedFileSystem sharedFileSystem = EJBUtil.defaultLookup(SharedFileSystem.class);
+
+		// Transaction 1 - set state to DELETING
+ 		try {
+			sharedFileSystem.setFileState(viewpoint, fileId, StorageState.DELETING, -1);
+		} catch (NotFoundException e) {
+			throw new HumanVisibleException("No such file");
+		} catch (PermissionDeniedException e) {
+			throw new HumanVisibleException("You aren't allowed to delete this file");
+		}
+		try {
+			// Outside transaction - remove from local or remote file storage
+			sharedFileSystem.deleteFileOutsideDatabase(fileId);
+		} catch (Exception e) {
+			logger.error("Failed to delete file", e);
+			try {
+				// Transaction 2 - emergency revert of DELETING state
+				sharedFileSystem.setFileState(viewpoint, fileId, StorageState.STORED, -1);
+			} catch (Exception e2) {
+				logger.error("Failed in last-ditch effort to fix state of file {}, must be set back to STORED manually",
+						fileId);
+				logger.error("Exception was", e2);
+			}
+			throw new HumanVisibleException("Something went wrong while deleting this file");
+		}
+		// Transaction 3 - set the state to DELETED to indicate success
+		try {
+			sharedFileSystem.setFileState(viewpoint, fileId, StorageState.DELETED, -1);
+		} catch (Exception e) {
+			logger.error("Successfully deleted file {} but failed to set its state to DELETED", fileId);
+			logger.error("Exception was", e);
+			// don't return an error from the method, this will appear to have worked from user 
+			// standpoint
+		}
+ 	}
 }

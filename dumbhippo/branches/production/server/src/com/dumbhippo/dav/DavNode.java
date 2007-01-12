@@ -1,6 +1,7 @@
 package com.dumbhippo.dav;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Map;
@@ -34,4 +35,10 @@ public interface DavNode {
 	String getDisplayName();
 	
 	long getLastModified();
+	
+	void replaceContent(String mimeType, InputStream contents) throws IOException;
+	
+	void delete() throws IOException;
+	
+	void createChild(String name, String mimeType, InputStream contents) throws IOException;
 }

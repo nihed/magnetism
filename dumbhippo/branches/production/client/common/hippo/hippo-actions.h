@@ -54,6 +54,9 @@ void          hippo_actions_load_favicon_async      (HippoActions    *actions,
 void          hippo_actions_load_thumbnail_async    (HippoActions    *actions,
                                                      const char      *image_url,
                                                      HippoCanvasItem *image_item);
+void          hippo_actions_load_music_thumbnail_async(HippoActions    *actions,
+                                                       const char      *image_url,
+                                                       HippoCanvasItem *image_item);
 HippoEntity*  hippo_actions_lookup_entity           (HippoActions    *actions,
                                                      const char      *entity_guid);
 gint64        hippo_actions_get_server_time_offset  (HippoActions    *actions);
@@ -79,6 +82,11 @@ void          hippo_actions_invite_to_group         (HippoActions    *actions,
 gboolean      hippo_actions_can_play_song_download  (HippoActions      *actions,
                                                      HippoSongDownload *song_download);
 
+void          hippo_actions_quip                    (HippoActions      *actions,
+                                                     HippoChatKind      kind,
+                                                     const char        *id,
+                                                     HippoSentiment     sentiment,
+                                                     const char        *title);
 G_END_DECLS
 
 #endif /* __HIPPO_ACTIONS_H__ */

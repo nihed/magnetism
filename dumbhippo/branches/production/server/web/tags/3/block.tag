@@ -21,20 +21,20 @@
 	<c:when test="${dh:enumIs(block.blockType, 'POST')}">
 		<dht3:postBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
 	</c:when>
-   	<c:when test="${dh:enumIs(block.blockType, 'MUSIC_PERSON')}">	
-   		<dht3:musicPersonBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
+	<c:when test="${dh:enumIs(block.blockType, 'MUSIC_CHAT')}">	
+   		<dht3:musicBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
+   	</c:when>	
+	<c:when test="${dh:enumIs(block.blockType, 'MUSIC_PERSON')}">	
+   		<dht3:musicBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
    	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'GROUP_CHAT')}">
-   		<dht3:groupChatBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>
+   		<dht3:groupChatBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
    	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'GROUP_MEMBER')}">
    		<dht3:groupMemberBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>
    	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'FACEBOOK_EVENT')}">
 	   	<dht3:facebookBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}" homeStack="${homeStack}"/>
-   	</c:when>
-   	<c:when test="${dh:enumIs(block.blockType, 'BLOG_PERSON')}">
-	   	<dht3:blogBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
    	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'FLICKR_PERSON')}">
 	   	<dht3:flickrPersonBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
@@ -45,9 +45,13 @@
    	<c:when test="${dh:enumIs(block.blockType, 'YOUTUBE_PERSON')}">
 	   	<dht3:youTubePersonBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
    	</c:when>
-   	<c:when test="${dh:enumIs(block.blockType, 'MYSPACE_PERSON')}">
-	   	<dht3:mySpacePersonBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
-   	</c:when>    	
+   	<c:when test="${dh:enumIs(block.blockType, 'GROUP_REVISION')}">
+	   	<dht3:groupRevisionBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
+   	</c:when>
+   	<c:when test="${dh:myInstanceOf(block, 'com.dumbhippo.server.blocks.TitleBlockView')}">
+   		<%-- This covers BLOG_ENTRY, MYSPACE_PERSON, DELICIOUS_PUBLIC_BOOKMARK --%>
+	   	<dht3:simpleTitleDescriptionBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
+   	</c:when>
 </c:choose>
 <c:if test="${oneLine}">
     </div>

@@ -46,6 +46,7 @@ static void hippo_canvas_chat_preview_add_recent_message (HippoCanvasChatPreview
 static void update_chatting_count                        (HippoCanvasChatPreview *chat_preview);
 static void update_recent_messages                       (HippoCanvasChatPreview *chat_preview);
 
+static void hippo_canvas_chat_preview_update_visibility (HippoCanvasChatPreview *chat_preview);
 
 typedef struct {
     HippoCanvasItem *item;
@@ -249,6 +250,7 @@ hippo_canvas_chat_preview_set_property(GObject         *object,
             clear_recent_messages(chat_preview);
             for (l = messages; l; l = l->next)
                 hippo_canvas_chat_preview_add_recent_message(chat_preview, l->data);
+            update_recent_messages(chat_preview);
         }
         break;
     case PROP_CHATTING_COUNT:
@@ -347,6 +349,7 @@ hippo_canvas_chat_preview_constructor (GType                  type,
 
     update_chatting_count(chat_preview);
     update_recent_messages(chat_preview);
+    hippo_canvas_chat_preview_update_visibility(chat_preview);
 
     return object;
 }
@@ -373,13 +376,6 @@ update_chatting_count(HippoCanvasChatPreview *chat_preview)
 
         g_free(s);
     }
-
-    hippo_canvas_box_set_child_visible(chat_preview->count_parent,
-                                       chat_preview->count_item,
-                                       room != NULL);
-    hippo_canvas_box_set_child_visible(chat_preview->count_parent,
-                                       chat_preview->count_separator_item,
-                                       room != NULL);
 }
 
 static void
@@ -422,6 +418,7 @@ on_room_message_added(HippoChatRoom          *room,
                       HippoCanvasChatPreview *chat_preview)
 {
     hippo_canvas_chat_preview_add_recent_message(chat_preview, message);
+    update_recent_messages(chat_preview);
 }
 
 static void
@@ -475,6 +472,7 @@ hippo_canvas_chat_preview_set_room(HippoCanvasChatPreview *chat_preview,
             ++count;
             messages = messages->next;
         }
+        update_recent_messages(chat_preview);
     } else {
         clear_recent_messages(chat_preview);
         update_recent_messages(chat_preview);
@@ -501,6 +499,8 @@ hippo_canvas_chat_preview_set_chat_id(HippoCanvasChatPreview *chat_preview,
 
     chat_preview->chat_id = g_strdup(id);
 
+    hippo_canvas_chat_preview_update_visibility(chat_preview);
+
     g_object_notify(G_OBJECT(chat_preview), "chat-id");
 }
                                                               
@@ -520,6 +520,8 @@ hippo_canvas_chat_preview_set_actions(HippoCanvasChatPreview  *chat_preview,
         g_object_ref(actions);
         chat_preview->actions = actions;
     }
+
+    hippo_canvas_chat_preview_update_visibility(chat_preview);
 
     g_object_notify(G_OBJECT(chat_preview), "actions");
 }
@@ -611,8 +613,6 @@ hippo_canvas_chat_preview_add_recent_message (HippoCanvasChatPreview *chat_previ
         }
         chat_preview->recent_messages = g_slist_reverse(list);
     }
-
-    update_recent_messages(chat_preview);
 }
 
 void
@@ -635,4 +635,24 @@ hippo_canvas_chat_preview_set_hushed(HippoCanvasChatPreview *chat_preview,
                      "color-cascade", HIPPO_CASCADE_MODE_NONE,
                      NULL);
     }
+}
+
+static void
+hippo_canvas_chat_preview_update_visibility(HippoCanvasChatPreview *chat_preview)
+{
+    gboolean show_chat = chat_preview->room != NULL || chat_preview->chat_id != NULL;
+    gboolean show_count = chat_preview->room != NULL;
+
+    if (!chat_preview->count_parent) /* During initialization */
+        return;
+    
+    hippo_canvas_box_set_child_visible(chat_preview->count_parent,
+                                       chat_preview->chat_link,
+                                       show_chat);
+    hippo_canvas_box_set_child_visible(chat_preview->count_parent,
+                                       chat_preview->count_separator_item,
+                                       show_chat && show_count);
+    hippo_canvas_box_set_child_visible(chat_preview->count_parent,
+                                       chat_preview->count_item,
+                                       show_count);
 }

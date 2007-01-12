@@ -1,7 +1,6 @@
 package com.dumbhippo.server.impl;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -54,10 +53,12 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.MembershipStatus;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.TrackHistory;
+import com.dumbhippo.persistence.TrackMessage;
 import com.dumbhippo.persistence.TrackType;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.search.SearchSystem;
@@ -258,9 +259,18 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 
-	private void addTrackHistory(final User user, final Track track, final Date now) {
+	private void addTrackHistory(final User user, final Track track, final Date now, final boolean isNative) {
 		runner.runTaskRetryingOnConstraintViolation(new Runnable() {				
 			public void run() {
+				User u = em.find(User.class, user.getId());					
+				if (isNative) {
+					u.getAccount().setNativeMusicSharingTimestamp(new Date());
+				}
+				// This can happen when we get an empty track notification to signal
+				// playback stopped - we still want to update the native timestamp in that case
+				if (track == null)
+					return;
+				
 				Query q;
 				
 				q = em.createQuery("FROM TrackHistory h WHERE h.user = :user " +
@@ -283,25 +293,28 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		});
 		
 		// update the stack with this new listen event
-		notifier.onTrackPlayed(user, track, now);
+		if (track != null)
+			notifier.onTrackPlayed(user, track, now);
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public void setCurrentTrack(final User user, final Track track) {
-		addTrackHistory(user, track, new Date());
+	public void setCurrentTrack(final User user, final Track track, final boolean isNative) {
+		addTrackHistory(user, track, new Date(), isNative);
 	}
 	 
 	// Although this is marked as SUPPORTS - you should never invoke this
 	// method from any code holding a transaction that could have potentially
 	// modified a Track
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public void setCurrentTrack(User user, Map<String,String> properties) {
+	public void setCurrentTrack(User user, Map<String,String> properties, final boolean isNative) {
+		
 		// empty properties means "not listening to any track" - we always
 		// keep the latest track with content, we don't set CurrentTrack to null
+		final long trackId;		
 		if (properties.size() == 0)
-			return; 
-		
-		final long trackId = getTrackIdIsolated(properties);
+			trackId = -1;
+		else
+			trackId = getTrackIdIsolated(properties);
 		
 		final String userId = user.getId();
 		
@@ -309,13 +322,16 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		runner.runTaskInNewTransaction(new Runnable() {
 
 			public void run() {
-				Track t = em.find(Track.class, trackId);
-				if (t == null)
-					throw new RuntimeException("database isolation problem (?): track id not found " + trackId);
 				User u = em.find(User.class, userId);
 				if (u == null)
-					throw new RuntimeException("database isolation problem (?): user id not found " + userId);				
-				setCurrentTrack(u, t);
+					throw new RuntimeException("database isolation problem (?): user id not found " + userId);
+				Track t = null;				
+				if (trackId != -1) {
+					t = em.find(Track.class, trackId);
+					if (t == null)
+						throw new RuntimeException("database isolation problem (?): track id not found " + trackId);
+				}
+				setCurrentTrack(u, t, isNative);
 			}
 			
 		});
@@ -325,18 +341,18 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	// method from any code holding a transaction that could have potentially
 	// modified a Track	
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public void addHistoricalTrack(User user, Map<String,String> properties) {
+	public void addHistoricalTrack(User user, Map<String,String> properties, final boolean isNative) {
 		// for now there's no difference here, but eventually we might have the 
 		// client supply some properties like the date of listening instead of 
 		// pretending we "just" listened to this track.
-		setCurrentTrack(user, properties);
+		setCurrentTrack(user, properties, isNative);
 	}
 	
 	// Although this is marked as SUPPORTS - you should never invoke this
 	// method from any code holding a transaction that could have potentially
 	// modified a Track		
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public void addHistoricalTrack(final User user, final Map<String,String> properties, final long listenDate) {
+	public void addHistoricalTrack(final User user, final Map<String,String> properties, final long listenDate, final boolean isNative) {
 		final long trackId = getTrackIdIsolated(properties);
 		
 		final String userId = user.getId();
@@ -349,7 +365,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				User u = em.find(User.class, userId);
 				if (u == null)
 					throw new RuntimeException("database isolation problem (?): user id not found " + userId);
-				addTrackHistory(user, t, new Date(listenDate));
+				addTrackHistory(user, t, new Date(listenDate), isNative);
 			}
 		});
 	}
@@ -541,11 +557,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	static private class GetTrackViewTask implements Callable<TrackView> {
 
 		private Track track;
-		private long lastListen;
+		private TrackHistory trackHistory;
 		
-		public GetTrackViewTask(Track track, long lastListen) {
+		public GetTrackViewTask(Track track, TrackHistory trackHistory) {
 			this.track = track;
-			this.lastListen = lastListen;
+			this.trackHistory = trackHistory;
 		}
 		
 		public TrackView call() {
@@ -555,7 +571,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 			logger.debug("Obtained transaction in GetTrackViewTask thread for track {}", track);
 			
-			return musicSystem.getTrackView(track, lastListen);
+			if (trackHistory != null)
+				return musicSystem.getTrackView(trackHistory);
+			else
+				return musicSystem.getTrackView(track);				
 		}
 	}
 
@@ -586,7 +605,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// really work in that handler apparently
 		getThreadPool().execute(new Runnable() {
 			public void run() {
-				EJBUtil.defaultLookup(MusicSystemInternal.class).getTrackViewAsync(trackId, -1);
+				EJBUtil.defaultLookup(MusicSystemInternal.class).getTrackViewAsync(trackId);
 			}
 		});
 	}
@@ -701,9 +720,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 	
-	private void fillAlbumInfo(Viewpoint viewpoint, YahooSongData yahooSong, YahooAlbumData yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<? extends YahooSongData>> futureAlbumTracks, AlbumView albumView) {
-			fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);
-
+	private void fillAlbumTracks(Viewpoint viewpoint, YahooSongData yahooSong, Future<List<? extends YahooSongData>> futureAlbumTracks, AlbumView albumView) {
 			TreeMap<Integer, TrackView> sortedTracks = new TreeMap<Integer, TrackView>();
 			TreeMap<Integer, List<Future<List<? extends YahooSongDownloadData>>>> trackDownloads = 
 				new TreeMap<Integer, List<Future<List<? extends YahooSongDownloadData>>>>();
@@ -790,14 +807,30 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			}
 	}
 	
-	public TrackView getTrackView(Track track) {
-		return getTrackView(track, -1);
+	public TrackHistory lookupTrackHistory(Guid trackHistoryId) throws NotFoundException {
+		TrackHistory trackHistory = em.find(TrackHistory.class, trackHistoryId.toString());
+		if (trackHistory == null)
+			throw new NotFoundException("No such TrackHistory");
+	
+		return trackHistory;
 	}
 	
-	public TrackView getTrackView(Track track, long lastListen) {
-		TrackView view = new TrackView(track);
-		if (lastListen >= 0)
-			view.setLastListenTime(lastListen);
+	public TrackView getTrackView(Track track) {
+		return getTrackView(track, null);
+	}
+	
+	public TrackView getTrackView(TrackHistory trackHistory) {
+		return getTrackView(trackHistory.getTrack(), trackHistory);
+	}
+	
+	public TrackView getTrackView(Guid trackHistoryId) throws NotFoundException {
+		TrackHistory trackHistory = lookupTrackHistory(trackHistoryId);
+		return getTrackView(trackHistory.getTrack(), trackHistory);
+	}
+	
+	private TrackView getTrackView(Track track, TrackHistory trackHistory) {
+
+		TrackView view = new TrackView(track, trackHistory);
 
 		// this method should never throw due to Yahoo or Amazon failure;
 		// we should just return a view without the extra information.
@@ -867,7 +900,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongData yahooSong, YahooAlbumData yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<? extends YahooSongData>> futureAlbumTracks) {
 		AlbumView view = new AlbumView();
-		fillAlbumInfo(viewpoint, yahooSong, yahooAlbum, futureAmazonAlbum, futureAlbumTracks, view);
+		fillAlbumTracks(viewpoint, yahooSong, futureAlbumTracks, view);
+		fillAlbumInfo(yahooAlbum, futureAmazonAlbum, view);
+
 		return view;		
 	}
 	
@@ -1007,27 +1042,34 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	public TrackView getCurrentTrackView(Viewpoint viewpoint, User user) throws NotFoundException {
 		TrackHistory current = getCurrentTrack(viewpoint, user);
-		return getTrackView(current.getTrack(), current.getLastUpdated().getTime());
+		return getTrackView(current.getTrack(), current);
 	}
 
-	public Future<TrackView> getTrackViewAsync(long trackId, long lastListen) {
+	public Future<TrackView> getTrackViewAsync(long trackId) {
 		// called for side effect to kick off querying the results.
 		Track track = em.find(Track.class, trackId);
 		if (track == null)
 			throw new RuntimeException("database isolation bug (?): can't reattach trackid in hintNeedsRefresh");
-		return getTrackViewAsync(track, lastListen);
+		return getTrackViewAsync(track);
 	}
 	
-	public Future<TrackView> getTrackViewAsync(Track track, long lastListen) {
+	public Future<TrackView> getTrackViewAsync(Track track) {
 		FutureTask<TrackView> futureView =
-			new FutureTask<TrackView>(new GetTrackViewTask(track, lastListen));
+			new FutureTask<TrackView>(new GetTrackViewTask(track, null));
+		getThreadPool().execute(futureView);
+		return futureView;
+	}
+	
+	public Future<TrackView> getTrackViewAsync(TrackHistory trackHistory) {
+		FutureTask<TrackView> futureView =
+			new FutureTask<TrackView>(new GetTrackViewTask(trackHistory.getTrack(), trackHistory));
 		getThreadPool().execute(futureView);
 		return futureView;
 	}
 	
 	public Future<TrackView> getCurrentTrackViewAsync(Viewpoint viewpoint, User user) throws NotFoundException {
 		TrackHistory current = getCurrentTrack(viewpoint, user);
-		return getTrackViewAsync(current.getTrack(), current.getLastUpdated().getTime());
+		return getTrackViewAsync(current);
 	}
 	
 	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumData> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum) {
@@ -1060,7 +1102,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// spawn a bunch of yahoo updater threads in parallel
 		Map<TrackHistory, Future<TrackView>> futureViews = new HashMap<TrackHistory, Future<TrackView>>(tracks.size());
 		for (TrackHistory t : tracks) {
-			futureViews.put(t, getTrackViewAsync(t.getTrack(), t.getLastUpdated().getTime()));
+			futureViews.put(t, getTrackViewAsync(t));
 		}
 	
         // now harvest all the results
@@ -1290,7 +1332,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		List<?> objects = query.getResultList();
 		List<Future<TrackView>> futureViews = new ArrayList<Future<TrackView>>(objects.size());
 		for (Object o : objects) {
-			futureViews.add(getTrackViewAsync((Track)o, -1));
+			futureViews.add(getTrackViewAsync((Track)o));
 		}
 		
 		pageable.setResults(getTrackViewResults(futureViews));
@@ -1377,7 +1419,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// with MySQL 4, so we accept the possibility of duplicate tracks for 
 		// the moment. The way to fix this is to use native SQL ... see the handling
 		// of similar queries globally with the queries defined in TrackHistory.java
-		Set<User> contacts = identitySpider.getRawUserContacts(viewpoint, viewpoint.getViewer());
+		Set<User> contacts = identitySpider.getRawUserContacts(viewpoint, viewpoint.getViewer(), true);
 		
 		// filter out ourselves
 		Iterator<User> iterator = contacts.iterator();
@@ -1632,7 +1674,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
         if (viewpoint instanceof UserViewpoint) {
         	// we will not limit the query to h.user.id being in the contacts list, but we
         	// will give a preference to people in that list when constructing the list to return
-            contacts = identitySpider.getRawUserContacts(viewpoint, ((UserViewpoint)viewpoint).getViewer());
+            contacts = identitySpider.getRawUserContacts(viewpoint, ((UserViewpoint)viewpoint).getViewer(), true);
         }
 
         // we want to desplay the most recent plays
@@ -1764,7 +1806,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		Set<User> contacts = null;
 		if (viewpoint instanceof UserViewpoint) {
-			contacts = identitySpider.getRawUserContacts(viewpoint, ((UserViewpoint)viewpoint).getViewer());
+			contacts = identitySpider.getRawUserContacts(viewpoint, ((UserViewpoint)viewpoint).getViewer(), true);
 
 			// disabled for now since we want to return anonymous recommendations too
 			// if you renable, take care of the fact that IN () isn't allowed if contacts is empty
@@ -2022,7 +2064,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				User u = em.find(User.class, user.getId());
 				if (u == null)
 					throw new RuntimeException("failed to reattach user");
-				addTrackHistory(u, t, new Date(virtualPlayTime));
+				addTrackHistory(u, t, new Date(virtualPlayTime), false);
 			}
 		});
 	}
@@ -2033,5 +2075,29 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			return 0;
 		else
 			return history.get(0).getLastUpdated().getTime();
+	}
+
+	public List<TrackMessage> getNewestTrackMessages(TrackHistory trackHistory, int maxResults) {
+		Query q = em.createQuery("SELECT tm from TrackMessage tm WHERE tm.trackHistory = :trackHistory ORDER by tm.timestamp DESC");
+		q.setParameter("trackHistory", trackHistory);
+		if (maxResults >= 0)
+			q.setMaxResults(maxResults);
+		
+		return TypeUtils.castList(TrackMessage.class, q.getResultList());
+	}
+
+	public List<TrackMessage> getTrackMessages(TrackHistory trackHistory, long lastSeenSerial) {
+		Query q = em.createQuery("SELECT tm from TrackMessage tm WHERE tm.trackHistory = :trackHistory AND tm.id >= :lastSeenSerial ORDER by tm.id");
+		q.setParameter("trackHistory", trackHistory);
+		q.setParameter("lastSeenSerial", lastSeenSerial);
+		
+		return TypeUtils.castList(TrackMessage.class, q.getResultList());
+	}
+	
+	public void addTrackMessage(TrackHistory trackHistory, User fromUser, String text, Sentiment sentiment, Date timestamp) {
+		TrackMessage trackMessage = new TrackMessage(trackHistory, fromUser, text, timestamp, sentiment);
+		em.persist(trackMessage);
+		
+		notifier.onTrackMessageCreated(trackMessage);
 	}
 }

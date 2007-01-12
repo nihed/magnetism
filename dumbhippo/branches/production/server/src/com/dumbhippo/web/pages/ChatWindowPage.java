@@ -10,10 +10,12 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PostView;
+import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.web.Signin;
 import com.dumbhippo.web.SigninBean;
@@ -34,12 +36,15 @@ public class ChatWindowPage {
 	
     private GroupSystem groupSystem;
     private PostingBoard postBoard;
+    private MusicSystem musicSystem;
     private PostView post;
 	private GroupView group;
+	private TrackView track;
     
     public ChatWindowPage() {
     	groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
+		musicSystem =  WebEJBUtil.defaultLookup(MusicSystem.class);
     }
 	
     public SigninBean getSignin() {
@@ -60,6 +65,13 @@ public class ChatWindowPage {
     		return group.getGroup().getId();
     }
     
+    public String getTrackId() {
+    	if (track == null)
+    		return null;
+    	else
+    		return track.getPlayId();
+    }
+    
     public boolean isAboutGroup() {
     	return getGroup() != null;
     }
@@ -68,8 +80,12 @@ public class ChatWindowPage {
     	return getPost() != null;
     }
     
+    public boolean isAboutTrack() {
+    	return getTrack() != null;
+    }
+    
     public boolean isAboutSomething() {
-    	return isAboutGroup() || isAboutPost();
+    	return isAboutGroup() || isAboutPost() || isAboutTrack();
     }
     
     protected void setPost(PostView post) {
@@ -112,10 +128,28 @@ public class ChatWindowPage {
 				else
 					group = groupSystem.loadGroup(signin.getViewpoint(), new Guid(groupId));
 			} catch (NotFoundException e) {
-				logger.debug("unknown group id {}", groupId);
 				return;
 			} catch (ParseException e) {
 				group = null;
+			}
+		}
+    }
+    
+    public void setTrackId(String trackId) {
+    	logger.debug("Setting trackId {}", trackId);
+		if (trackId == null) {
+			track = null;
+		} else {
+			try {
+				String oldId = getTrackId();
+				if (oldId != null && oldId.equals(trackId))
+					; // nothing to do
+				else
+					track = musicSystem.getTrackView(new Guid(trackId));
+			} catch (NotFoundException e) {
+				return;
+			} catch (ParseException e) {
+				track = null;
 			}
 		}
     }
@@ -133,6 +167,8 @@ public class ChatWindowPage {
     		setPostId(someId);
     	if (group == null) // don't overwrite a groupId
     		setGroupId(someId);
+    	if (track == null) // don't overwrite a trackId
+    		setTrackId(someId);
     }
     
     public String getChatId() {
@@ -140,6 +176,8 @@ public class ChatWindowPage {
     		return getPostId();
     	else if (group != null)
     		return getGroupId();
+    	else if (track != null)
+    		return getTrackId();
     	else
     		return null;
     }
@@ -155,12 +193,18 @@ public class ChatWindowPage {
     		
     	return group.getGroup();
     }
+
+    public TrackView getTrack() {
+    	return track;
+    }
     
     public String getTitle() {
     	if (post != null)
     		return post.getTitle();
     	else if (group != null)
     		return group.getGroup().getName();
+    	else if (track != null)
+    		return track.getDisplayTitle();
     	else
     		return "<Unknown Chat>";
     }
@@ -168,9 +212,7 @@ public class ChatWindowPage {
     public String getTitleAsHtml() {
     	if (post != null)
     		return post.getTitleAsHtml();
-    	else if (group != null)
-    		return XmlBuilder.escape(getTitle());
     	else
-    		return "&lt;Unknown Chat&gt;";
+    		return XmlBuilder.escape(getTitle());
     }
 }

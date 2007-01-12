@@ -15,11 +15,14 @@ public class LiveUser extends LiveObject {
 	private int groupCount;
 	private int sentPostsCount;
 	private int contactsCount;
-
+	private int userContactsCount;
+	
 	LiveUser(Guid userId) {
 		super(userId);
 		this.groupCount = 0;
 		this.sentPostsCount = 0;
+		this.contactsCount = 0;
+		this.userContactsCount = 0;
 	}
 		
 	@Override
@@ -53,5 +56,13 @@ public class LiveUser extends LiveObject {
 
 	public void setContactsCount(int contactsCount) {
 		this.contactsCount = contactsCount;
+	}
+
+	public int getUserContactsCount() {
+		return userContactsCount;
+	}
+
+	public void setUserContactsCount(int userContactsCount) {
+		this.userContactsCount = userContactsCount;
 	}
 }

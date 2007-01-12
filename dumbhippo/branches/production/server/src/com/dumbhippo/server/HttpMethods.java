@@ -73,8 +73,12 @@ public interface HttpMethods {
 	public void doAddContactPerson(UserViewpoint viewpoint, String contactId);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
-	@HttpParams( { "contactId" })
-	public void doRemoveContactPerson(UserViewpoint viewpoint, String contactId);
+	@HttpParams( { "contactObjectId" })
+	public void doRemoveContactObject(UserViewpoint viewpoint, String contactObjectId);
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "resourceId" })
+	public void doRemoveInvitedContact(UserViewpoint viewpoint, String resourceId);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId" })
@@ -233,6 +237,10 @@ public interface HttpMethods {
 	public void doAcceptTerms(UserViewpoint viewpoint);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "needsDownload" } )
+	public void doSetNeedsDownload(UserViewpoint viewpoint, boolean needsDownload);
+	
+	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "userId", "disabled" } )
 	@HttpOptions( adminOnly = true )
 	public void doSetAdminDisabled(UserViewpoint viewpoint, String userId, boolean disabled);
@@ -262,7 +270,7 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "groupId", "url" })
-	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException;
+	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, URL url) throws XmlMethodException;
 
 	/**
 	 * Mark an external account as "hated" and give an optional quip about why.
@@ -347,10 +355,18 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })	
 	public void doSetTwitterName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;	
+
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "urlOrName" })	
+	public void doSetDiggName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;
+
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "urlOrName" })	
+	public void doSetRedditName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
-	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;
+	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException;
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })

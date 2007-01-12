@@ -4,11 +4,12 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.GroupView" %>
-<%@ attribute name="stackOrder" required="true" type="java.lang.Integer" %>
+<%@ attribute name="stackOrder" required="true" type="java.lang.String" %>
 <%@ attribute name="stackType" required="false" type="java.lang.String" %>
 <%@ attribute name="pageable" required="false" type="com.dumbhippo.server.Pageable" %>
 <%@ attribute name="blocks" required="false" type="java.util.List" %>
 <%@ attribute name="showFrom" required="true" type="java.lang.Boolean" %>
+<%@ attribute name="disableLink" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="embedVersion" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="width" required="false" type="java.lang.String" %>
 <%@ attribute name="floatSide" required="false" type="java.lang.String" %>
@@ -25,9 +26,12 @@
 </c:if>
 
 <dht3:shinyBox color="orange" width="${width}" floatSide="${floatSide}">
-    <dht3:groupHeader who="${who}" embedVersion="${embedVersion}" anchor="${stackType}">
+    <dht3:groupHeader who="${who}" embedVersion="${embedVersion}" anchor="${stackType}" disableLink="${disableLink}">
         <c:choose>
-            <c:when test="${signin.valid}">
+            <c:when test="${signin.active}">
+              	<c:if test="${who.status.canModify}">
+                	<dht:actionLink oneLine="true" href="/group-account?group=${who.identifyingGuid}" title="Change Group Picture, Descriptions, and Add or Remove Group Feeds">Edit Group</dht:actionLink> |
+              	</c:if>
 	            <c:choose>
 	        	    <c:when test="${who.active}">
 	        	    	<dh:script module="dh.actions"/>

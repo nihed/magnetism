@@ -1,5 +1,6 @@
 dojo.provide("dh.fileinput");
 dojo.require("dh.util");
+dojo.require("dh.event");
 
 // Firefox doesn't seem to activate the form a file input is 
 // inside on pressing Enter.
@@ -47,9 +48,9 @@ dh.fileinput.Entry = function(entryNode)
 	// with the onchange, this isn't needed
 	/*
 	this.elem.onkeydown = function(ev) {
-		var key = dh.util.getKeyCode(ev);
+		var key = dh.event.getKeyCode(ev);
 		if (key == ENTER) {
-			dh.util.cancelEvent(ev);
+			dh.event.cancel(ev);
 			me.activate();
 			return false;
 		}

@@ -13,7 +13,7 @@ public:
         wrapper_ = wrapper;
         setClassName(L"HippoWindow");
         setClassStyle(CS_HREDRAW | CS_VREDRAW);
-        setAppWindow(true);
+        setRole(HIPPO_WINDOW_ROLE_APPLICATION);
         setResizeGravity(HIPPO_GRAVITY_NORTH_WEST);
         setTitle(L"Mugshot");
         setResizable(HIPPO_ORIENTATION_VERTICAL, false);
@@ -26,8 +26,8 @@ public:
     void setContents(HippoCanvasItem *item);
     void setVisible(bool visible);
     void hideToIcon(HippoRectangle *iconRect);
-    void setAppWindow(bool appWindow);
-    bool getAppWindow() { return appWindow_; }
+    void setRole(HippoWindowRole role);
+    HippoWindowRole getRole() { return role_; }
     void getPosition(int *x_p, int *y_p);
     void getSize(int *width_p, int *height_p);
     void setResizeGravity(HippoGravity gravity);
@@ -60,7 +60,7 @@ protected:
 private:
     HippoWindowWin *wrapper_;
     GIdle resizeIdle_;
-    bool appWindow_;
+    HippoWindowRole role_;
     HippoGravity resizeGravity_;
 
     bool idleResize();
@@ -73,6 +73,7 @@ static void      hippo_window_win_init                (HippoWindowWin       *win
 static void      hippo_window_win_class_init          (HippoWindowWinClass  *klass);
 static void      hippo_window_win_iface_init          (HippoWindowClass     *window_class);
 static void      hippo_window_win_finalize            (GObject              *object);
+static void      hippo_window_win_dispose             (GObject              *object);
 
 static void hippo_window_win_set_property (GObject      *object,
                                            guint         prop_id,
@@ -134,7 +135,7 @@ enum {
 
 enum {
     PROP_0,
-    PROP_APP_WINDOW,
+    PROP_ROLE,
     PROP_RESIZE_GRAVITY,
     PROP_ACTIVE,
     PROP_ONSCREEN
@@ -167,7 +168,7 @@ hippo_window_win_class_init(HippoWindowWinClass *klass)
     object_class->set_property = hippo_window_win_set_property;
     object_class->get_property = hippo_window_win_get_property;
 
-    g_object_class_override_property(object_class, PROP_APP_WINDOW, "app-window");
+    g_object_class_override_property(object_class, PROP_ROLE, "role");
     g_object_class_override_property(object_class, PROP_RESIZE_GRAVITY, "resize-gravity");
 
     // Note that we only provide getters for these, and not notification when
@@ -181,12 +182,23 @@ hippo_window_win_class_init(HippoWindowWinClass *klass)
     g_object_class_override_property(object_class, PROP_ONSCREEN, "onscreen");
 
     object_class->finalize = hippo_window_win_finalize;
+    object_class->dispose = hippo_window_win_dispose;
 }
 
 static void
 hippo_window_win_init(HippoWindowWin *window_win)
 {
     window_win->impl = new HippoWindowImpl(window_win);
+}
+
+static void
+hippo_window_win_dispose(GObject *object)
+{
+    HippoWindowWin *win = HIPPO_WINDOW_WIN(object);
+
+    win->impl->setVisible(false); /* drop a ref if needed */
+
+    G_OBJECT_CLASS(hippo_window_win_parent_class)->dispose(object);
 }
 
 static void
@@ -222,8 +234,8 @@ hippo_window_win_set_property(GObject         *object,
     win = HIPPO_WINDOW_WIN(object);
 
     switch (prop_id) {
-    case PROP_APP_WINDOW:
-        win->impl->setAppWindow(g_value_get_boolean(value) != FALSE);
+    case PROP_ROLE:
+        win->impl->setRole((HippoWindowRole)g_value_get_int(value));
         break;
     case PROP_RESIZE_GRAVITY:
         win->impl->setResizeGravity((HippoGravity)g_value_get_int(value));
@@ -245,8 +257,8 @@ hippo_window_win_get_property(GObject         *object,
     win = HIPPO_WINDOW_WIN (object);
 
     switch (prop_id) {
-    case PROP_APP_WINDOW:
-        g_value_set_boolean(value, win->impl->getAppWindow() ? TRUE : FALSE);
+    case PROP_ROLE:
+        g_value_set_boolean(value, (int)win->impl->getRole());
         break;
     case PROP_RESIZE_GRAVITY:
         g_value_set_int(value, (int)win->impl->getResizeGravity());
@@ -426,10 +438,14 @@ HippoWindowImpl::idleResize()
 void
 HippoWindowImpl::setVisible(bool visible)
 {
+    if (visible == isShowing())
+        return;
     if (visible) {
         show(true);
+        g_object_ref(wrapper_);
     } else {
         hide();
+        g_object_unref(wrapper_);
     }
 }
 
@@ -441,7 +457,8 @@ HippoWindowImpl::hideToIcon(HippoRectangle *iconRect)
 
     GetWindowRect(window_, &fromRect);
 
-    hide();
+    g_object_ref(wrapper_); /* Hold a ref temporarily until code below is executed */
+    setVisible(false);
     
     toRect.left = iconRect->x;
     toRect.right = iconRect->x + iconRect->width;
@@ -449,15 +466,34 @@ HippoWindowImpl::hideToIcon(HippoRectangle *iconRect)
     toRect.bottom = iconRect->y + iconRect->height;
 
     DrawAnimatedRects(window_, IDANI_CAPTION, &fromRect, &toRect);
+    g_object_unref(wrapper_);
 }
 
 void
-HippoWindowImpl::setAppWindow(bool appWindow)
+HippoWindowImpl::setRole(HippoWindowRole role)
 {
-    appWindow_ = appWindow;
+    role_ = role;
 
-    setWindowStyle(appWindow ? WS_POPUP | WS_MINIMIZEBOX :  WS_POPUP);
-    setExtendedStyle(appWindow ? WS_EX_APPWINDOW : WS_EX_TOPMOST | WS_EX_NOACTIVATE);
+    DWORD windowStyle = 0;
+    DWORD extendedStyle = 0;
+
+    switch (role_) {
+        case HIPPO_WINDOW_ROLE_APPLICATION:
+            windowStyle = WS_POPUP | WS_MINIMIZEBOX;
+            extendedStyle = WS_EX_APPWINDOW;
+            break;
+        case HIPPO_WINDOW_ROLE_NOTIFICATION:
+            windowStyle = WS_POPUP;
+            extendedStyle = WS_EX_TOPMOST | WS_EX_NOACTIVATE;
+            break;
+        case HIPPO_WINDOW_ROLE_INPUT_POPUP:
+            windowStyle = WS_POPUP;
+            extendedStyle = WS_EX_TOPMOST;
+            break;
+    }
+
+    setWindowStyle(windowStyle);
+    setExtendedStyle(extendedStyle);
 }
 
 void
@@ -556,7 +592,8 @@ HippoWindowImpl::beginResize(HippoSide side)
 void
 HippoWindowImpl::present()
 {
-    ShowWindow(window_, SW_RESTORE);
+    setVisible(true);
+
     // Apparently ShowWindow only activates a window when it is not shown. If it is
     // already showing, you need to activate it explicitly
     //

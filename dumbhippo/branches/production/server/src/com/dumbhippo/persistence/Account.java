@@ -66,6 +66,7 @@ public class Account extends Resource {
 	private boolean hasDoneShareLinkTutorial;
 	
 	private boolean hasAcceptedTerms;
+	private boolean needsDownload;
 	
 	private boolean disabled;
 	private boolean adminDisabled;
@@ -77,6 +78,7 @@ public class Account extends Resource {
 	private Boolean musicSharingEnabled;
 	// whether we've "primed" music sharing with some sample music
 	private boolean musicSharingPrimed;
+	private long nativeMusicSharingTimestamp;
 	
 	private Boolean notifyPublicShares;
 	
@@ -119,6 +121,8 @@ public class Account extends Resource {
 		lastLogoutDate = -1;
 		wasSentShareLinkTutorial = false;
 		hasDoneShareLinkTutorial = false;
+		needsDownload = true;
+		nativeMusicSharingTimestamp = -1;
 		disabled = false;
 		musicSharingPrimed = false;
 		lastSeenGroupInvitations = -1;
@@ -200,9 +204,8 @@ public class Account extends Resource {
 	 * @return true if the cookie is OK for authorization
 	 */
 	public boolean checkClientCookie(String token, String digest) {
-		Digest d = new Digest();
 		for (Client client : clients) {
-			String expectedDigest = d.computeDigest(token, client.getAuthKey());
+			String expectedDigest = Digest.computeDigest(token, client.getAuthKey());
 			if (expectedDigest.equals(digest))
 				return true;
 		}
@@ -345,6 +348,15 @@ public class Account extends Resource {
 		this.hasAcceptedTerms = hasAcceptedTerms;
 	}
 	
+	@Column(nullable=false)
+	public boolean getNeedsDownload() {
+		return needsDownload;
+	}
+
+	public void setNeedsDownload(boolean needsDownload) {
+		this.needsDownload = needsDownload;
+	}
+	
 	/**
 	 * Get the salt for the user's password
 	 * @return salt bytes as String, or null if none have been set
@@ -443,7 +455,7 @@ public class Account extends Resource {
 	
 	@Transient
 	public boolean isActive() {
-		return !(isDisabled() || isAdminDisabled());
+		return !(isDisabled() || isAdminDisabled()) && hasAcceptedTerms;
 	}
 
 	@Column(nullable=true)
@@ -464,6 +476,20 @@ public class Account extends Resource {
 		this.musicSharingPrimed = musicSharingPrimed;
 	}
 	
+	@Column(nullable=true)
+	public Date getNativeMusicSharingTimestamp() {
+		if (nativeMusicSharingTimestamp == -1)
+			return null;
+		return new Date(nativeMusicSharingTimestamp);
+	}
+
+	public void setNativeMusicSharingTimestamp(Date nativeMusicSharingTimestamp) {
+		if (nativeMusicSharingTimestamp == null)
+			this.nativeMusicSharingTimestamp = -1;
+		else
+			this.nativeMusicSharingTimestamp = nativeMusicSharingTimestamp.getTime();
+	}
+
 	@Column(nullable=true)
 	public Boolean isNotifyPublicShares() {
 		return notifyPublicShares;

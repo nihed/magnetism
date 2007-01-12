@@ -1,4 +1,5 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%-- this tag is intended to be included only if invites are available --%>
@@ -13,8 +14,7 @@
 <c:set var="dhSelfInviteCount" value="${dhSelfInviteCount + 1}" scope="request"/>
 <c:set var="N" value="${dhSelfInviteCount}" scope="page"/>
 
-<dh:script module="dh.actions"/>
-<dh:script module="dh.util"/>
+<dh:script modules="dh.actions,dh.util,dh.event"/>
 <div>
 	<script type="text/javascript">		
 		selfInviteAddress${N} = null;
@@ -62,7 +62,7 @@
 	  	    	 });
 		}
 		
-		dojo.event.connect(dojo, "loaded", dj_global, "dhSelfInviteInit${N}");
+		dh.event.addPageLoadListener(dhSelfInviteInit${N});
 	</script>
 	<div id="dhSelfInviteForm${N}">
 		<c:choose>

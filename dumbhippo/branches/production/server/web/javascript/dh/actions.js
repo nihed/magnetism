@@ -22,14 +22,25 @@ dh.actions.addContact = function(contactId, cb, errcb) {
 		  	    	 });
 }
 
-dh.actions.removeContact = function(contactId) {
-	dh.server.doPOST("removecontactperson",
-				     { "contactId" : contactId },
+dh.actions.removeContact = function(contactObjectId) {
+	dh.server.doPOST("removecontactobject",
+				     { "contactObjectId" : contactObjectId },
 		  	    	 function(type, data, http) {
 		  	    	 	 dh.util.refresh();
 		  	    	 },
 		  	    	 function(type, error, http) {
-		  	    	     alert("Couldn't remove user from contact list");
+		  	    	     alert("Couldn't remove contact from contact list");
+		  	    	 });
+}
+
+dh.actions.removeInvitedContact = function(resourceId) {
+	dh.server.doPOST("removeinvitedcontact",
+				     { "resourceId" : resourceId },
+		  	    	 function(type, data, http) {
+		  	    	 	 dh.util.refresh();
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Couldn't remove invited contact");
 		  	    	 });
 }
 
@@ -92,11 +103,14 @@ dh.actions.signOut = function() {
 		  	    	 });
 }
 
-dh.actions.enableAccount = function() {
+dh.actions.enableAccount = function(next) {
    	dh.server.doPOST("setaccountdisabled", 
    					 { "disabled": "false" },
 		  	    	 function(type, data, http) {
-		  	    	 	 dh.util.goToNextPage("/")
+		  	    	 	 if (next)
+			  	    	 	 dh.util.goToNextPage(next)
+			  	    	 else
+				  	    	 dh.util.refresh();
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Error enabling account");
@@ -111,6 +125,44 @@ dh.actions.disableAccount = function() {
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't disable account");
+		  	    	 });
+}
+
+dh.actions.updateGetStarted = function() {
+	var link = document.getElementById("dhGetStarted");
+	var image = document.getElementById("dhGetStartedButton");
+	if (document.getElementById("dhAcceptTerms").checked) {
+		image.src = dhImageRoot3 + "get_started_button.gif";
+		link.href= "javascript:dh.actions.acceptTerms()";
+	} else {
+		image.src = dhImageRoot3 + "get_started_disabled.gif"
+		link.removeAttribute("href");
+	}
+}
+
+dh.actions.acceptTerms = function() {
+	if (!document.getElementById("dhAcceptTerms").checked) { // paranoia
+		alert("You must first accept the Mugshot Terms of Use");
+		return;
+	}
+   	dh.server.doPOST("acceptterms",
+   					 {},
+		  	    	 function(type, data, http) {
+			  	    	 dh.util.refresh();
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Couldn't accept the terms of use");
+		  	    	 });
+}
+
+dh.actions.removeDownloadMessage = function() {
+   	document.getElementById("dhAccountStatus").style.display = "none";
+   	dh.server.doPOST("setneedsdownload",
+   					 { "needsDownload" : "false" },
+		  	    	 function(type, data, http) {
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Couldn't remove the download message");
 		  	    	 });
 }
 
@@ -254,14 +306,16 @@ dh.actions.validateEmailInput = function(emailInputId) {
 
 // This is a wrapper around dh.control.control.showChatWindow(chatId)
 // that lazily tries loading the control
-dh.actions.joinChatUsingControl = function(chatId) {
+dh.actions.joinChat = function(chatId) {
 	dh.control.createControl();
 
 	if (dh.control.control.haveLiveChat()) {
 		dh.control.control.showChatWindow(chatId);
-	} else {
-		window.open("/download",
-		'_NEW',
-		'height=400,width=550,top='+((screen.availHeight-400)/2)+',left='+((screen.availWidth-550)/2));		
+	} else if (dh.browser.linux) {
+		var url = dhBaseUrl.replace(/^http:/, "mugshot:");
+		url += "/joinChat?id=" + chatId;
+    	window.open(url, "_self");
+    } else {
+		window.open("/download", '_NEW');
 	}
 }

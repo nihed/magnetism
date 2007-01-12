@@ -11,7 +11,6 @@
 
 static void      hippo_window_gtk_init                (HippoWindowGtk       *window_gtk);
 static void      hippo_window_gtk_class_init          (HippoWindowGtkClass  *klass);
-static void      hippo_window_gtk_iface_init          (HippoWindowClass     *window_class);
 static void      hippo_window_gtk_dispose             (GObject              *object);
 static void      hippo_window_gtk_finalize            (GObject              *object);
 
@@ -28,61 +27,19 @@ static void hippo_window_gtk_get_property (GObject      *object,
 static void     hippo_window_gtk_realize                 (GtkWidget           *widget);
 static gboolean hippo_window_gtk_expose_event            (GtkWidget           *widget,
                                                           GdkEventExpose      *event);
-static gboolean hippo_window_gtk_focus_in_event          (GtkWidget           *widget,
-                                                          GdkEventFocus       *event);
-static gboolean hippo_window_gtk_focus_out_event         (GtkWidget           *widget,
-                                                          GdkEventFocus       *event);
-static gboolean hippo_window_gtk_unmap_event             (GtkWidget           *widget,
-                                                          GdkEventAny         *event);
-static gboolean hippo_window_gtk_visibility_notify_event (GtkWidget           *widget,
-                                                          GdkEventVisibility  *event);
 
 /* Container methods */
 static void hippo_window_gtk_check_resize (GtkContainer *container);
 
-/* Window methods */
-static void hippo_window_gtk_set_contents      (HippoWindow      *window,
-                                                HippoCanvasItem  *item);
-static void hippo_window_gtk_set_visible       (HippoWindow      *window,
-                                                gboolean          visible);
-static void hippo_window_gtk_hide_to_icon      (HippoWindow      *window,
-                                                HippoRectangle   *icon_rectangle);
-static void hippo_window_gtk_set_position      (HippoWindow      *window,
-                                                int               x,
-                                                int               y);
-static void hippo_window_gtk_set_size          (HippoWindow      *window,
-                                                int               width,
-                                                int               height);
-static void hippo_window_gtk_get_position      (HippoWindow      *window,
-                                                int              *x_p,
-                                                int              *y_p);
-static void hippo_window_gtk_get_size          (HippoWindow      *window,
-                                                int              *width_p,
-                                                int              *height_p);
-static void hippo_window_gtk_set_resizable     (HippoWindow      *window,
-                                                HippoOrientation  orientation,
-                                                gboolean          value);
-static void hippo_window_gtk_begin_move_drag   (HippoWindow      *window,
-                                                HippoEvent       *event);
-static void hippo_window_gtk_begin_resize_drag (HippoWindow      *window,
-                                                HippoSide         side,
-                                                HippoEvent       *event);
-static void hippo_window_gtk_present           (HippoWindow      *window);
-
 struct _HippoWindowGtk {
     GtkWindow window;
     GtkWidget *canvas;
-    HippoCanvasItem *contents;
     HippoGravity resize_gravity;
     GtkRequisition last_position_requisition;
+    HippoWindowRole role;
     guint positioned : 1; /* Set if hippo_window_position was even called */
     guint expose_during_configure : 1; /* Set if we get an expose while waiting for
                                         * for a window manager response. */
-    guint hresizable : 1;
-    guint vresizable : 1;
-    guint app_window : 1;
-    guint active : 1;
-    guint onscreen : 1;
 };
 
 struct _HippoWindowGtkClass {
@@ -99,30 +56,23 @@ enum {
 
 enum {
     PROP_0,
-    PROP_APP_WINDOW,
-    PROP_RESIZE_GRAVITY,
-    PROP_ACTIVE,
-    PROP_ONSCREEN
 };
 
-G_DEFINE_TYPE_WITH_CODE(HippoWindowGtk, hippo_window_gtk, HIPPO_TYPE_CANVAS_WINDOW,
-                        G_IMPLEMENT_INTERFACE(HIPPO_TYPE_WINDOW, hippo_window_gtk_iface_init));
+G_DEFINE_TYPE(HippoWindowGtk, hippo_window_gtk, HIPPO_TYPE_CANVAS_WINDOW)
 
-static void
-hippo_window_gtk_iface_init(HippoWindowClass *window_class)
-{
-    window_class->set_contents = hippo_window_gtk_set_contents;
-    window_class->set_visible = hippo_window_gtk_set_visible;
-    window_class->hide_to_icon = hippo_window_gtk_hide_to_icon;
-    window_class->set_position = hippo_window_gtk_set_position;
-    window_class->set_size = hippo_window_gtk_set_size;
-    window_class->get_position = hippo_window_gtk_get_position;
-    window_class->get_size = hippo_window_gtk_get_size;
-    window_class->set_resizable = hippo_window_gtk_set_resizable;
-    window_class->begin_move_drag = hippo_window_gtk_begin_move_drag;
-    window_class->begin_resize_drag = hippo_window_gtk_begin_resize_drag;
-    window_class->present = hippo_window_gtk_present;
-}
+typedef struct {
+    GdkWindowTypeHint type_hint;
+    gboolean skip_taskbar_pager;
+    gboolean accept_focus;
+    gboolean no_background;
+} RoleProperties;
+
+static const RoleProperties role_properties[] = {
+    /*                   type_hint,                   skip_taskbar_pager, accept_focus, no_background */
+    /* APPLICATION */  { GDK_WINDOW_TYPE_HINT_NORMAL, FALSE,              TRUE,         FALSE  },
+    /* NOTIFICATION */ { GDK_WINDOW_TYPE_HINT_DOCK,   TRUE,               FALSE,        TRUE  },
+    /* INPUT_POPUP */  { GDK_WINDOW_TYPE_HINT_NORMAL,   FALSE,              TRUE,         TRUE  },
+};
 
 static void
 hippo_window_gtk_class_init(HippoWindowGtkClass *klass)
@@ -139,30 +89,19 @@ hippo_window_gtk_class_init(HippoWindowGtkClass *klass)
     
     widget_class->realize = hippo_window_gtk_realize;
     widget_class->expose_event = hippo_window_gtk_expose_event;
-    widget_class->focus_in_event = hippo_window_gtk_focus_in_event;
-    widget_class->focus_out_event = hippo_window_gtk_focus_out_event;
-    widget_class->unmap_event = hippo_window_gtk_unmap_event;
-    widget_class->visibility_notify_event = hippo_window_gtk_visibility_notify_event;
 
     container_class->check_resize = hippo_window_gtk_check_resize;
-        
-    g_object_class_override_property(object_class, PROP_APP_WINDOW, "app-window");
-    g_object_class_override_property(object_class, PROP_RESIZE_GRAVITY, "resize-gravity");
-    g_object_class_override_property(object_class, PROP_ACTIVE, "active");
-    g_object_class_override_property(object_class, PROP_ONSCREEN, "onscreen");
 }
 
 static void
 hippo_window_gtk_init(HippoWindowGtk *window_gtk)
 {
-    window_gtk->app_window = TRUE;
+    window_gtk->role = HIPPO_WINDOW_ROLE_APPLICATION;
 
     gtk_window_set_resizable(GTK_WINDOW(window_gtk), FALSE);
     gtk_window_set_decorated(GTK_WINDOW(window_gtk), FALSE);
     gtk_window_stick(GTK_WINDOW(window_gtk));
 
-    window_gtk->hresizable = FALSE;
-    window_gtk->vresizable = FALSE;
     window_gtk->resize_gravity = HIPPO_GRAVITY_NORTH_WEST;
 
     gtk_widget_add_events(GTK_WIDGET(window_gtk), GDK_VISIBILITY_NOTIFY_MASK);
@@ -189,56 +128,53 @@ hippo_window_gtk_finalize(GObject *object)
     G_OBJECT_CLASS(hippo_window_gtk_parent_class)->finalize(object);
 }
 
-HippoWindow*
+HippoWindowGtk *
 hippo_window_gtk_new(void)
 {
-    HippoWindowGtk *gtk;
-
-    gtk = g_object_new(HIPPO_TYPE_WINDOW_GTK,
-                       NULL);
-    
-    return HIPPO_WINDOW(gtk);
+    return g_object_new(HIPPO_TYPE_WINDOW_GTK, NULL);
 }
 
-static void
-set_app_window(HippoWindowGtk *window_gtk,
-               gboolean        app_window)
+void
+hippo_window_gtk_set_role(HippoWindowGtk *window_gtk,
+                          HippoWindowRole role)
 {
     GtkWindow *window = GTK_WINDOW(window_gtk);
     GtkWidget *widget = GTK_WIDGET(window_gtk);
 
-    app_window = app_window != FALSE;
-
-    if (window_gtk->app_window == app_window)
+    const RoleProperties *props;
+    
+    if (window_gtk->role == role)
         return;
     
-    window_gtk->app_window = app_window;
+    window_gtk->role = role;
 
-    gtk_window_set_skip_taskbar_hint(window, !app_window);
-    gtk_window_set_skip_pager_hint(window, !app_window);
-    if (app_window) {
-        gtk_window_set_type_hint(window, GDK_WINDOW_TYPE_HINT_NORMAL);
-        gtk_window_set_accept_focus(window, TRUE);
-    } else {
-        /* NOTIFICATION is the right type hint, but that's new in GTK+-2.10 */
-        gtk_window_set_type_hint(window, GDK_WINDOW_TYPE_HINT_DOCK);
-        gtk_window_set_accept_focus(window, FALSE);
-    }
+    props = &role_properties[role];
+
+    gtk_window_set_type_hint(window, props->type_hint);
+    gtk_window_set_skip_taskbar_hint(window, props->skip_taskbar_pager);
+    gtk_window_set_skip_pager_hint(window, props->skip_taskbar_pager);
+    gtk_window_set_accept_focus(window, props->accept_focus);
    
     /* See note about "background none" in hippo_window_gtk_realize() */
     if (GTK_WIDGET_REALIZED(widget)) {
-        if (app_window) {
+        if (props->no_background) {
+            gdk_window_set_back_pixmap(widget->window, NULL, FALSE);
+        } else {
             /* This should cause the right pixel to be set, replacing background-none */
             gtk_style_set_background (widget->style, widget->window, widget->state);
-        } else {
-            gdk_window_set_back_pixmap(widget->window, NULL, FALSE);
         }
     }
 }
 
-static void
-set_resize_gravity(HippoWindowGtk *window_gtk,
-                   HippoGravity    resize_gravity)
+HippoWindowRole
+hippo_window_gtk_get_role(HippoWindowGtk  *window_gtk)
+{
+    return window_gtk->role;
+}
+
+void
+hippo_window_gtk_set_resize_gravity(HippoWindowGtk *window_gtk,
+                                    HippoGravity    resize_gravity)
 {
     window_gtk->resize_gravity = resize_gravity;
 
@@ -269,6 +205,23 @@ set_resize_gravity(HippoWindowGtk *window_gtk,
 #endif
 }
 
+HippoGravity
+hippo_window_gtk_get_resize_gravity (HippoWindowGtk *window_gtk)
+{
+    return window_gtk->resize_gravity;
+}
+
+void
+hippo_window_gtk_set_position(HippoWindowGtk  *window_gtk,
+                              int              x,
+                              int              y)
+{
+    gtk_widget_size_request(GTK_WIDGET(window_gtk), &window_gtk->last_position_requisition);
+    window_gtk->positioned = TRUE;
+
+    gtk_window_move(GTK_WINDOW(window_gtk), x, y);
+}
+
 static void
 hippo_window_gtk_set_property(GObject         *object,
                               guint            prop_id,
@@ -280,12 +233,6 @@ hippo_window_gtk_set_property(GObject         *object,
     gtk = HIPPO_WINDOW_GTK(object);
 
     switch (prop_id) {
-    case PROP_APP_WINDOW:
-        set_app_window(gtk, g_value_get_boolean(value));
-        break;
-    case PROP_RESIZE_GRAVITY:
-        set_resize_gravity(gtk, g_value_get_int(value));
-        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -303,46 +250,9 @@ hippo_window_gtk_get_property(GObject         *object,
     gtk = HIPPO_WINDOW_GTK (object);
 
     switch (prop_id) {
-    case PROP_APP_WINDOW:
-        g_value_set_boolean(value, gtk->app_window);
-        break;
-    case PROP_RESIZE_GRAVITY:
-        g_value_set_int(value, gtk->resize_gravity);
-        break;
-    case PROP_ACTIVE:
-        g_value_set_boolean(value, gtk->active);
-        break;
-    case PROP_ONSCREEN:
-        g_value_set_boolean(value, gtk->onscreen);
-        break;
-        
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
-    }
-}
-
-static void
-set_active(HippoWindowGtk *window_gtk,
-           gboolean        active)
-{
-    active = active != FALSE;
-
-    if (active != window_gtk->active) {
-        window_gtk->active = active;
-        g_object_notify(G_OBJECT(window_gtk), "active");
-    }
-}
-
-static void
-set_onscreen(HippoWindowGtk *window_gtk,
-             gboolean        onscreen)
-{
-    onscreen = onscreen != FALSE;
-
-    if (onscreen != window_gtk->onscreen) {
-        window_gtk->onscreen = onscreen;
-        g_object_notify(G_OBJECT(window_gtk), "onscreen");
     }
 }
 
@@ -359,10 +269,41 @@ set_static_bit_gravity(GtkWidget *widget)
 			   CWBitGravity,  &xattributes);
 }
 
+/* Windows of type INPUT_POPUP have to appear on top of all our other windows, but
+ * they also have to have a type hint of NORMAL, or Compiz (at least) won't focus
+ * them. To get a window with a NORMAL type hint to appear on top of a window
+ * with a DOCK type hint, we have to set the transient parent of the normal
+ * window. But passing in the transient parent window to here is a pain, so
+ * we just grub through the global list of windows to find something appropriate.
+ */
+static void
+hack_transient_for(HippoWindowGtk *window_gtk) 
+{
+    GList *toplevels = gtk_window_list_toplevels();
+    GList *l;
+
+    for (l = toplevels; l; l = l->next) {
+        GtkWindow *other = l->data;
+        if (other != (GtkWindow *)window_gtk &&
+            GTK_WIDGET_VISIBLE(other) &&
+            HIPPO_IS_WINDOW_GTK(other) &&
+            HIPPO_WINDOW_GTK(other)->role == HIPPO_WINDOW_ROLE_NOTIFICATION) {
+            gtk_window_set_transient_for(GTK_WINDOW(window_gtk), other);
+            break;
+        }
+    }
+
+    g_list_free(toplevels);
+    
+}
+
 static void
 hippo_window_gtk_realize(GtkWidget *widget)
 {
     HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(widget);
+
+    if (window_gtk->role == HIPPO_WINDOW_ROLE_INPUT_POPUP) 
+        hack_transient_for(window_gtk);
     
     GTK_WIDGET_CLASS(hippo_window_gtk_parent_class)->realize(widget);
 
@@ -381,7 +322,7 @@ hippo_window_gtk_realize(GtkWidget *widget)
      * this considerably improves the appearance when we are
      * spontaneously resizing, since you don't get a blank area first.
      */
-    if (!window_gtk->app_window)
+    if (role_properties[window_gtk->role].no_background)
         gdk_window_set_back_pixmap(widget->window, NULL, FALSE);
 }
 
@@ -408,54 +349,6 @@ hippo_window_gtk_expose_event(GtkWidget           *widget,
     gdk_window_begin_paint_region(widget->window, event->region);
     GTK_WIDGET_CLASS(hippo_window_gtk_parent_class)->expose_event(widget, event);
     gdk_window_end_paint(widget->window);
-
-    return FALSE;
-}
-
-static gboolean
-hippo_window_gtk_focus_in_event(GtkWidget           *widget,
-                                GdkEventFocus       *event)
-{
-    HippoWindowGtk *gtk = HIPPO_WINDOW_GTK(widget);
-    
-    gboolean result = GTK_WIDGET_CLASS(hippo_window_gtk_parent_class)->focus_in_event(widget, event);
-
-    set_active(gtk, TRUE);
-
-    return result;
-}
-
-static gboolean
-hippo_window_gtk_focus_out_event(GtkWidget           *widget,
-                                 GdkEventFocus       *event)
-{
-    HippoWindowGtk *gtk = HIPPO_WINDOW_GTK(widget);
-
-    gboolean result = GTK_WIDGET_CLASS(hippo_window_gtk_parent_class)->focus_out_event(widget, event);
-
-    set_active(gtk, FALSE);
-
-    return result;
-}
-
-static gboolean
-hippo_window_gtk_unmap_event(GtkWidget   *widget,
-                             GdkEventAny *event)
-{
-    HippoWindowGtk *gtk = HIPPO_WINDOW_GTK(widget);
-
-    set_onscreen(gtk, FALSE);
-
-    return FALSE;
-}
-
-static gboolean
-hippo_window_gtk_visibility_notify_event(GtkWidget           *widget,
-                                         GdkEventVisibility  *event)
-{
-    HippoWindowGtk *gtk = HIPPO_WINDOW_GTK(widget);
-
-    set_onscreen(gtk, event->state != GDK_VISIBILITY_FULLY_OBSCURED);
 
     return FALSE;
 }
@@ -547,197 +440,3 @@ hippo_window_gtk_check_resize (GtkContainer *container)
     
     GTK_CONTAINER_CLASS(hippo_window_gtk_parent_class)->check_resize(container);
 }
-
-static void
-hippo_window_gtk_set_contents(HippoWindow     *window,
-                              HippoCanvasItem *item)
-{
-    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
-
-    if (item == window_gtk->contents)
-        return;
-
-    if (window_gtk->contents) {
-        g_object_unref(window_gtk->contents);
-        window_gtk->contents = NULL;
-    }
-
-    if (item) {
-        g_object_ref(item);
-        window_gtk->contents = item;
-    }
-
-    hippo_canvas_window_set_root(HIPPO_CANVAS_WINDOW(window_gtk), window_gtk->contents);
-}
-
-static void
-hippo_window_gtk_set_visible(HippoWindow     *window,
-                             gboolean         visible)
-{
-    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
-
-    if (visible)
-        gtk_widget_show(GTK_WIDGET(window_gtk));
-    else
-        gtk_widget_hide(GTK_WIDGET(window_gtk));
-}
-
-static void 
-hippo_window_gtk_hide_to_icon(HippoWindow    *window,
-                              HippoRectangle *icon_rect)
-{
-    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
-    
-    /* What this is supposed to do (and does on Windows) is hides
-     * the window and shows the window-minimization animation going
-     * to icon_rect.
-     * 
-     * On Linux the only way to get the real minimization animation is
-     * to really minimize. Which would have a fun interaction with the
-     * tasklist. (We could set our icon location in the window
-     * property for the place to minimize to, but the tasklist would
-     * sometimes overwrite it)
-     *
-     * So, maybe it's just best to omit ourselves from the task list
-     * and draw a minimization animation from scratch. The code from
-     * metacity could be stolen.
-     */
-    gtk_widget_hide(GTK_WIDGET(window_gtk));
-}
-
-static void
-hippo_window_gtk_set_position(HippoWindow     *window,
-                              int              x,
-                              int              y)
-{
-    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
-
-    gtk_widget_size_request(GTK_WIDGET(window_gtk), &window_gtk->last_position_requisition);
-    window_gtk->positioned = TRUE;
-
-    gtk_window_move(GTK_WINDOW(window_gtk), x, y);
-}
-
-static void
-hippo_window_gtk_set_size(HippoWindow     *window,
-                          int              width,
-                          int              height)
-{
-    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
-
-    gtk_window_resize(GTK_WINDOW(window_gtk), width, height);
-}
-
-static void
-hippo_window_gtk_get_position(HippoWindow     *window,
-                              int             *x_p,
-                              int             *y_p)
-{
-    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
-
-    gtk_window_get_position(GTK_WINDOW(window_gtk), x_p, y_p);
-}
-
-static void
-hippo_window_gtk_get_size(HippoWindow     *window,
-                          int             *width_p,
-                          int             *height_p)
-{
-    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
-
-    gtk_window_get_size(GTK_WINDOW(window_gtk), width_p, height_p);
-}
-
-static void
-hippo_window_gtk_set_resizable(HippoWindow      *window,
-                               HippoOrientation  orientation,
-                               gboolean          value)
-{
-    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
-    
-    value = value != FALSE;
-
-    if (orientation == HIPPO_ORIENTATION_VERTICAL) {
-        if (window_gtk->vresizable == value)
-            return;
-        window_gtk->vresizable = value;
-    } else {
-        if (window_gtk->hresizable == value)
-            return;
-        window_gtk->hresizable = value;
-    }
-
-
-    if (window_gtk->hresizable || window_gtk->vresizable) {
-        GdkGeometry geometry;
-
-        gtk_window_set_resizable(GTK_WINDOW(window_gtk), TRUE);
-
-        /* -1 = size request */
-        geometry.min_width = -1;
-        geometry.min_height = -1;
-        geometry.max_width = window_gtk->hresizable ? G_MAXSHORT : -1;
-        geometry.max_height = window_gtk->vresizable ? G_MAXSHORT : -1;
-        gtk_window_set_geometry_hints(GTK_WINDOW (window), NULL,
-                                      &geometry,
-                                      GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE);        
-    } else {
-        gtk_window_set_resizable(GTK_WINDOW(window_gtk), FALSE);
-        gtk_window_set_geometry_hints(GTK_WINDOW(window_gtk), NULL, NULL, 0);
-    }
-}
-
-static void
-hippo_window_gtk_begin_move_drag(HippoWindow *window,
-                                 HippoEvent  *event)
-{
-    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);    
-    
-    gtk_window_begin_move_drag(GTK_WINDOW(window_gtk),
-                               event->u.button.button,
-                               event->u.button.x11_x_root,
-                               event->u.button.x11_y_root,
-                               event->u.button.x11_time);
-}
-static void
-hippo_window_gtk_begin_resize_drag(HippoWindow *window,
-                                   HippoSide    side,
-                                   HippoEvent  *event)
-{
-    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);    
-    GdkWindowEdge edge;
-    
-    switch (side) {
-    case HIPPO_SIDE_TOP:
-        edge = GDK_WINDOW_EDGE_NORTH;
-        break;
-    case HIPPO_SIDE_BOTTOM:
-        edge = GDK_WINDOW_EDGE_SOUTH;
-        break;
-    case HIPPO_SIDE_LEFT:
-        edge = GDK_WINDOW_EDGE_WEST;
-        break;
-    case HIPPO_SIDE_RIGHT:
-        edge = GDK_WINDOW_EDGE_EAST;
-        break;
-    default:
-        g_warning("Unknown window side");
-        return;
-    }
-    
-    gtk_window_begin_resize_drag(GTK_WINDOW(window_gtk),
-                                 edge,
-                                 event->u.button.button,
-                                 event->u.button.x11_x_root,
-                                 event->u.button.x11_y_root,
-                                 event->u.button.x11_time);
-}
-
-static void
-hippo_window_gtk_present(HippoWindow *window)
-{
-    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
-
-    gtk_window_present(GTK_WINDOW(window_gtk));
-}
-

@@ -46,6 +46,13 @@ public interface Stacker {
 	public void refreshDeletedFlags(Block block);
 	public void refreshDeletedFlags(BlockKey key);
 	
+	/** 
+	 * A migration/debug method that refreshes deleted flags on *all* blocks in the database
+	 */
+	public void refreshDeletedFlagsOnAllBlocks();
+	
+	public void refreshDeletedFlagsOnAllBlocksWithType(String typeName);
+	
 	public void blockClicked(BlockKey key, User user, long clickedTime);
 	
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException;
@@ -83,7 +90,22 @@ public interface Stacker {
 	 * @param blocksPerUser number of blocks to return for each item in the result list
 	 */
 	public void pageRecentUserActivity(Viewpoint viewpoint, Pageable<PersonMugshotView> pageable, int blocksPerUser);
+	
+	public List<PersonMugshotView> getContactActivity(Viewpoint viewpoint, User user, int start, int count, int blocksPerUser);
+	
+	public List<GroupMugshotView> getMugshotViews(Viewpoint viewpoint, List<Group> groups, int blockPerGroup, boolean publicOnly);
+	
+	public void pageContactActivity(Viewpoint viewpoint, User viewedUser, int blocksPerUser, Pageable<PersonMugshotView> contactMugshots);
 
+	public List<GroupMugshotView> getUserGroupActivity(Viewpoint viewpoint, User user, int start, int count, int blocksPerUser, GroupQueryType groupType);	
+	
+	public enum GroupQueryType {
+		FOLLOWED,
+		ACTIVE
+	};
+	
+	public void pageUserGroupActivity(Viewpoint viewpoint, User user, int blocksPerGroup, GroupQueryType groupType, Pageable<GroupMugshotView> activeGroups);	
+	
 	public User getRandomActiveUser(Viewpoint viewpoint);
 	
 	public void pageStack(Viewpoint viewpoint, Group group, Pageable<BlockView> pageable, boolean byParticipation);	
@@ -116,7 +138,7 @@ public interface Stacker {
 	 * @param blocksPerGroup number of blocks to return for each item in the result list
 	 */
 	public void pageRecentGroupActivity(Viewpoint viewpoint, Pageable<GroupMugshotView> pageable, int blockPerGroup);
-
+	
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException;
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, BlockKey key) throws NotFoundException;
 	
@@ -136,4 +158,5 @@ public interface Stacker {
 	public void migrateGroupMembers(String groupId);
 	public void migrateGroupBlockData(String blockId);
 	public void migrateFlickr(User user);
+	public void migrateTwitter(User user);
 }

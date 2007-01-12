@@ -16,24 +16,7 @@
 <c:set var="url" value="${framer.post.url}" scope="page"/>
 <c:set var="description" value="${framer.post.post.text}" scope="page"/>
 
-<%-- FIXME this chat stuff is cut-and-pasted from actionLinkChat in 
-     the new tags/2 tags; need to unify ... --%>
-<c:choose>
-   <%-- The browser.ie check is necessary because the dynamic hiding of
-        the control when the chat object fails to load doesn't work
-        correctly in firefox 1.0. could also be !(browser.gecko && !browser.gecko15)
-        or something probably, but only IE is known to work anyhow --%>
-
-	<c:when test="${signin.valid && browser.ie}">
-		<c:set scope="page" var="joinChatUri" value="javascript:dh.control.control.showChatWindow('${framer.post.post.id}')"/>
-	</c:when>
-	<c:when test="${signin.valid && browser.linux && browser.gecko}">
-		<c:set scope="page" var="joinChatUri" value="mugshot://${signin.server}/joinChat?id=${framer.post.post.id}&kind=post"/>
-	</c:when>
-	<c:otherwise>
-		<%-- we don't know how to chat...  --%>
-	</c:otherwise>
-</c:choose>
+<dht:setJoinChatUri chatId="${framer.post.post.id}"/>
 
 <head>
 	<title><c:out value="${title}"/></title>
@@ -41,6 +24,7 @@
 	<!--[if IE]>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/framer-iefixes.css">
 	<![endif]-->
+		<dh:script module="dh.actions"/>
 		<dh:script module="dh.framer"/>
     <script type="text/javascript">
     	dh.framer.setSelfId("${framer.signin.userId}")
@@ -103,11 +87,11 @@
 					<div id="dhPostActionsSE"></div>
 					<div id="dhPostActionsBorderBlueout"></div>
 					<div id="dhPostActions">
-					   <c:if test="${!empty joinChatUri}">
+						<c:if test="${!empty joinChatUri}">
 							<div class="dh-post-action" id="dhPostJoinChat">
 								<a href="${joinChatUri}"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="${joinChatUri}">Join Chat</a> <span id="dhPostChatCount"></span>
 							</div>
-					   </c:if>		
+						</c:if>
 					   <c:if test="${!param.browserBar}">
 							<div class="dh-post-action">
 								<a href="${url}" target="_top"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="${url}" target="_top">Remove Frame</a>

@@ -8,13 +8,17 @@ import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.LinkResource;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoader;
 import com.dumbhippo.server.impl.FeedSystemBean.FeedLinkUnknownException;
 import com.sun.syndication.feed.synd.SyndFeed;
 
 @Local
 public interface FeedSystem extends PollingTaskLoader {
-	Feed getFeed(LinkResource link) throws XmlMethodException;
+	
+	public Feed getExistingFeed(final LinkResource source) throws XmlMethodException;
+	
+	public Feed getOrCreateFeed(LinkResource link) throws XmlMethodException;
 	
 	/**
 	 * Does both halves of updating a feed in a single transaction, which can be 
@@ -88,8 +92,8 @@ public interface FeedSystem extends PollingTaskLoader {
 	
 	List<Feed> getInUseFeeds();
 	
-	void addGroupFeed(Group group, Feed feed);
-	void removeGroupFeed(Group group, Feed feed);
+	void addGroupFeed(User adder, Group group, Feed feed);
+	void removeGroupFeed(User remover, Group group, Feed feed);
 	
 	/*
 	 * Called (by FeedSystem itself) when a new FeedEntry is found

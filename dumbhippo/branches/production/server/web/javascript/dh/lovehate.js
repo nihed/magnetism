@@ -1,23 +1,28 @@
 dojo.provide("dh.lovehate");
 dojo.require("dh.util");
 dojo.require("dh.textinput");
-dojo.require("dojo.html");
+dojo.require("dh.dom");
+dojo.require("dh.event");
 
 dh.lovehate.allEntries = {}
 
-dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultHateText, currentHateValue)
+dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultHateText, currentHateValue, loveTip, accountHelp)
 {
 	dh.lovehate.allEntries[baseId] = this;
 
 	// creates a variable that can be captured in closures below, while "this" can't be
 	var me = this;
 
-	this._rootNode = document.getElementById(baseId + 'AllId');
+	this._containerNode = document.getElementById(baseId + 'Container');
+	this._containerLabelNode = document.getElementById(baseId + 'ContainerLabel')
+	this._containerContentNode = document.getElementById(baseId + 'ContainerContent')	
+	this._rootNode = document.getElementById(baseId + 'AllId');	
 	this._loveNode = document.getElementById(baseId + 'LoveId');
 	this._hateNode = document.getElementById(baseId + 'HateId');
 	this._loveEditNode = document.getElementById(baseId + 'LoveEditId');
 	this._hateEditNode = document.getElementById(baseId + 'HateEditId');
 	this._indifferentNode = document.getElementById(baseId + 'IndifferentId');
+	this._indifferentInfoNode = document.getElementById(baseId + 'IndifferentInfoId');
 	this._busyNode = document.getElementById(baseId + 'BusyId');
 	
 	this._loveEntryNode = document.getElementById(baseId + 'LoveEntryId');
@@ -33,17 +38,45 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this._specialLoveValue = null;
 	this._hateValue = document.getElementById(baseId + 'HateValueId');
 	
-	this._allNodes = [me._loveNode, me._hateNode, me._loveEditNode, me._hateEditNode, me._indifferentNode, me._busyNode];
+	this._allNodes = [me._loveNode, me._hateNode, me._loveEditNode, me._hateEditNode, me._indifferentNode, me._indifferentInfoNode, me._busyNode];
+	
+	this._errorText = "";
+
+    // Traverse root node of this widget, calling function on each node
+	this._foreachDhIdNode = function(id, func) {
+	  dh.util.foreachChildElements(me._rootNode, 	                                    
+								   function(node) {
+	                                 if (node.getAttribute("dhId") == id) func(node);
+	                               });
+	}
+	
+	if (loveTip)
+	  this._foreachDhIdNode("LoveTipId", function (node) { node.appendChild(document.createTextNode(loveTip)); });
+	
+	if (accountHelp)
+  	  this._foreachDhIdNode("AccountHelpId", 
+	                        function(node) { 
+	                          var span = document.createElement("span");
+	                          span.appendChild(document.createTextNode(" ("));
+	                          var a = document.createElement("a");
+	                          a.setAttribute("target", "_blank");
+   	                          a.setAttribute("href", accountHelp);
+	                          dh.util.prependClass(a, "dh-text-input-help");
+	                          a.appendChild(document.createTextNode("help me find it"));
+	                          span.appendChild(a);
+	                          span.appendChild(document.createTextNode(")"));	                          
+	                          node.appendChild(span);
+	                        });       
 
 	this._loveEntryNode.onkeydown = function(ev) {
-		var key = dh.util.getKeyCode(ev);
+		var key = dh.event.getKeyCode(ev);
 		if (key == ENTER) {
 			me._saveClicked("love");
 		}
 	}
 
 	this._hateEntryNode.onkeydown = function(ev) {
-		var key = dh.util.getKeyCode(ev);
+		var key = dh.event.getKeyCode(ev);
 		if (key == ENTER) {
 			me._saveClicked("hate");
 		}
@@ -55,10 +88,10 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 		
 		// Sync the "not in edit mode" values with the entries, if we're about to show them
 		if (node == me._loveNode && me._specialLoveValue == null) {
-			dojo.dom.textContent(me._loveValue, me._loveEntry.getValue());			
+			dh.dom.textContent(me._loveValue, me._loveEntry.getValue());			
 		}
 		if (node == me._hateNode) {
-			dojo.dom.textContent(me._hateValue, me._hateEntry.getValue());			
+			dh.dom.textContent(me._hateValue, me._hateEntry.getValue());			
 		}
 		
 		var i;
@@ -73,6 +106,20 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 		}
 		if (node.style.display == 'none')
 			throw new Error("node " + node.id + " was not found...");
+			
+		if (node == me._loveEditNode || node == me._hateEditNode || node == me._indifferentInfoNode) {
+			dh.util.prependClass(this._containerNode, "dh-love-hate-editing-box");
+			dh.util.prependClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-label-box")
+			dh.util.prependClass(this._containerLabelNode, "dh-love-hate-editing");
+			dh.util.prependClass(this._containerContentNode.parentNode, "dh-love-hate-editing-content-box")			
+			dh.util.prependClass(this._containerContentNode, "dh-love-hate-editing");
+		} else {
+			dh.util.removeClass(this._containerNode, "dh-love-hate-editing-box");
+			dh.util.removeClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-label-box");	
+			dh.util.removeClass(this._containerLabelNode, "dh-love-hate-editing")
+			dh.util.removeClass(this._containerContentNode.parentNode, "dh-love-hate-editing-content-box");
+			dh.util.removeClass(this._containerContentNode, "dh-love-hate-editing")			
+		}
 					
 		// focus entry boxes
 		// we don't do this because it hides the gray hint text
@@ -99,6 +146,8 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 					return "hateEdit";
 				else if (each == me._indifferentNode)
 					return "indifferent";
+				else if (each == me._indifferentInfoNode)
+					return "indifferentInfo";
 				else if (each == me._busyNode)
 					return "busy";
 			}
@@ -122,10 +171,45 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 		me.setMode('busy');
 	}
 	
+	this.setError = function(msg) {
+		if (msg) {
+			me._foreachDhIdNode("DescriptionError",
+			                    function(node) {
+			                      node.style.display = "block";
+			                    });
+			me._foreachDhIdNode("DescriptionErrorText",
+			                    function(node) {			                    
+			                      node.innerHTML = "";
+                                  node.appendChild(document.createTextNode(msg));
+                                });
+			me._foreachDhIdNode("DescriptionNormal",
+			                    function(node) {
+			                      node.style.display = "none";
+			                    });
+			dh.util.removeClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-success");		
+			dh.util.removeClass(this._containerContentNode.parentNode, "dh-love-hate-editing-box-success");			
+			dh.util.prependClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-error");		
+			dh.util.prependClass(this._containerContentNode.parentNode, "dh-love-hate-editing-box-error");				
+		} else {
+			me._foreachDhIdNode("DescriptionNormal",
+			                    function(node) {
+			                      node.style.display = "block";
+			                    });
+			me._foreachDhIdNode("DescriptionError",
+			                    function(node) {
+			                      node.style.display = "none";
+			                    });			                    
+			dh.util.removeClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-error");		
+			dh.util.removeClass(this._containerContentNode.parentNode, "dh-love-hate-editing-box-error");				
+			dh.util.prependClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-success");		
+			dh.util.prependClass(this._containerContentNode.parentNode, "dh-love-hate-editing-box-success");				
+		}
+	}
+	
 	this.setSpecialLoveValue = function(value) {
 	    // this is used when we don't want a long value for the entry to be visible 
 	    // when the entry is not being edited
-	    dojo.dom.textContent(me._loveValue, value);	
+	    dh.dom.textContent(me._loveValue, value);	
 	    me._specialLoveValue = value;
 	}
 	
@@ -166,6 +250,7 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	}
 	
 	// this updates the current values and what's showing
+	this.setError(null);
 	this.setMode(this.getMode());
 }
 

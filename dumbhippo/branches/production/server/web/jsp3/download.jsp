@@ -6,92 +6,59 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <dh:bean id="welcome" class="com.dumbhippo.web.pages.DownloadPage" scope="page"/>
-<jsp:setProperty name="welcome" property="invitationId" param="invite"/>
-<jsp:setProperty name="welcome" property="inviterId" param="inviter"/>
-
-<c:set var="urlParams" value=''/>
-<c:set var="acceptMessage" value='false'/>
-<c:if test='${!empty param["acceptMessage"]}'>
-    <c:set var="acceptMessage" value='${param["acceptMessage"]}'/>
-    <c:set var="urlParams" value='&acceptMessage=${param["acceptMessage"]}'/>    
-</c:if>
-<c:if test='${!empty param["invite"]}'>
-    <c:set var="urlParams" value='${urlParams}&invite=${param["invite"]}'/>    
-</c:if>
-<c:if test='${!empty param["inviter"]}'>
-    <c:set var="urlParams" value='${urlParams}&inviter=${param["inviter"]}'/>    
-</c:if>
 
 <head>
 	<title>Mugshot Download</title>
 	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
 	<dht3:stylesheet name="download"/>
-	<dh:script module="dh.download"/>
+	<dh:script modules="dh.event"/>
 	<dht:faviconIncludes/>
-	<script type="text/javascript">
-		dh.download.needTermsOfUse = ${signin.needsTermsOfUse}
-		dojo.event.connect(dojo, "loaded", function () { dh.download.init() })
-	</script>	
 </head>
 
 <dht3:page currentPageLink="download">
+	<dht3:accountStatus includeDownload="false"/>
 	<dht3:shinyBox color="grey">
 		<div class="dh-download-header-area">
-			<div class="dh-download-header">Get Mugshot</div>
-			<c:if test="${welcome.haveDownload}">
-				<div class="dh-download-subtitle">Take advantage of all of our fun features with the Mugshot download.  It's easy and free!</div>
-			</c:if>
-			<div class="dh-download-terms">
-				<c:choose>
-					<c:when test="${signin.needsTermsOfUse}">
-			        	<div id="dhAcceptTermsBox">        
-					        <input type="checkbox" id="dhAcceptTerms" onclick="dh.download.updateDownload();">
-						                <label for="dhAcceptTerms">I accept the Mugshot</label> <a href="javascript:window.open('/terms', 'dhTermsOfUse', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">terms and conditions</a>. (Required to continue.)
-					        </input>
-						</div>
-		            </c:when>    
-		            <c:otherwise>
-		            </c:otherwise>
-		        </c:choose>
-			</div>
+			<div class="dh-download-header">Download Mugshot</div>
 			<c:choose>
 				<c:when test="${welcome.haveDownload}">
+					<div class="dh-download-subtitle">Share cool sites. Get updates from friends on your desktop. Show off your music playlist. Mugshot is free and easy to use!</div>
 					<div class="dh-download-buttons">
-						<%-- the class changes to dh-download-product-disabled in the javascript when one is not active --%>
-						<a id="dhDownloadProduct" class="dh-download-product" href="javascript:dh.download.doDownload('${welcome.downloadUrl}')"><img src="/images3/${buildStamp}/download_now_button.gif"/></a>
-						<a id="dhSkipDownload" class="dh-download-product" href="javascript:dh.download.doDownload()"><img src="/images3/${buildStamp}/no_thanks_button.gif"/></a>
+						<c:choose>
+							<c:when test="${welcome.disabled}">
+								<a id="dhDownloadProduct"><img src="/images3/${buildStamp}/download_now_disabled.gif"/></a>
+							</c:when>
+							<c:otherwise>
+								<a id="dhDownloadProduct" href="${welcome.downloadUrl}"><img src="/images3/${buildStamp}/download_now_button.gif"/></a>
+							</c:otherwise>
+						</c:choose>
 						<i>  (This download is for <c:out value="${welcome.downloadFor}"/>.)</i>
 					</div>
 					<div class="dh-download-yadayada">
 						Or, get Mugshot for another platform instead:
 							<c:if test="${!download.fedora5Requested}">
-								<a href="/download?distribution=fedora5${urlParams}">Fedora Core 5</a>
+								<a href="/download?distribution=fedora5">Fedora Core 5</a>
 							</c:if>
 							<c:if test="${!download.fedora6Requested}">
 								<c:if test="${!download.fedora5Requested}">| </c:if>
-								<a href="/download?distribution=fedora6${urlParams}">Fedora Core 6</a>
+								<a href="/download?distribution=fedora6">Fedora Core 6</a>
 							</c:if>
 							<c:if test="${!download.windowsRequested}">
-								| <a href="/download?platform=windows${urlParams}">Windows XP</a>
+								| <a href="/download?platform=windows">Windows XP</a>
 							</c:if>
 					</div>
 				</c:when>
 				<c:otherwise>
 					<div class="dh-download-yadayada">
 						We don't have Mugshot for your computer yet. (You can 
-						download for <a href="/download?platform=windows${urlParams}">Windows XP</a> or 
-						<a href="/download?distribution=fedora5${urlParams}">Fedora Core 5</a>.)
+						download for <a href="/download?platform=windows">Windows XP</a> or 
+						<a href="/download?distribution=fedora5">Fedora Core 5</a>.)
 						<c:if test="${download.macRequested}">We're still working on Mac OS X support.</c:if>
 						You can use Mugshot without the download, however.
-					</div>
-					<div class="dh-download-yadayada">
-						<a id="dhSkipDownload" class="dh-download-product" href="javascript:dh.download.doDownload()">Continue without downloading.</a>
 					</div>
 					<c:if test="${download.linuxRequested}">
 						<div class="dh-download-yadayada">						
 							Contributed third-party builds <a href="http://developer.mugshot.org/wiki/Downloads">can be found on the Mugshot Wiki</a>.
-							<c:if test="${signin.needsTermsOfUse}">Please also click "Continue without downloading"
-							above to accept the terms of use, or Mugshot won't work.</c:if>
 						</div>
 					</c:if>
 				</c:otherwise>

@@ -163,8 +163,7 @@ public class TestClient {
 				Authentication auth = new Authentication();
 				auth.setUsername(account.getOwner().getId());
 				
-				Digest digest = new Digest();
-				auth.setDigest(digest.computeDigest(connection.getConnectionID(), authCookie));
+				auth.setDigest(Digest.computeDigest(connection.getConnectionID(), authCookie));
 				
 				auth.setResource("Smack"); // not sure if we need to match the rest of smack on this
 				

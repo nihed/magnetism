@@ -56,6 +56,7 @@ private:
     void onRootPaintNeeded(const HippoRectangle *damage_box);
     void onRootTooltipChanged();
     void onHover(WPARAM wParam, LPARAM lParam);
+    bool onCommand(WPARAM wParam, LPARAM lParam);
     void startTrackingHover();
     void updateTooltip(bool showIfNotAlready, int x, int y);
 

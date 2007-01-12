@@ -27,7 +27,6 @@
 #include "HippoPreferences.h"
 #include "HippoPlatformImpl.h"
 #include "HippoUIUtil.h"
-#include "HippoComWrappers.h"
 #include "HippoImageFactory.h"
 #include <hippo/hippo-stack-manager.h>
 #include <hippo/hippo-canvas-box.h>
@@ -603,51 +602,6 @@ HippoUI::getPreferences()
     return hippo_platform_impl_get_preferences(HIPPO_PLATFORM_IMPL(platform_));
 }
 
-void
-HippoUI::showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser)
-{
-    long width = 500;
-    long height = 600;
-    CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
-                     IID_IWebBrowser2, (void **)&webBrowser);
-
-    if (!webBrowser)
-        return;
-
-    VARIANT missing;
-    missing.vt = VT_NULL;
-
-    webBrowser->Navigate(url,
-                         &missing, &missing, &missing, &missing);
-    webBrowser->put_AddressBar(VARIANT_FALSE);
-    webBrowser->put_MenuBar(VARIANT_FALSE);
-    webBrowser->put_StatusBar(VARIANT_FALSE);
-    webBrowser->put_ToolBar(VARIANT_FALSE);
-    webBrowser->put_Width(width);
-    webBrowser->put_Height(height);
-
-    RECT workArea;
-    if (::SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0)) {
-        webBrowser->put_Left((workArea.left + workArea.right - width) / 2);
-        webBrowser->put_Top((workArea.bottom + workArea.top - height) / 2);
-    }
-
-    HippoPtr<IDispatch> dispDocument;   
-    webBrowser->get_Document(&dispDocument);
-    HippoQIPtr<IHTMLDocument2> document(dispDocument);
-
-    if (document) {
-        HippoPtr<IHTMLElement> bodyElement;
-        document->get_body(&bodyElement);
-        HippoQIPtr<IHTMLBodyElement> body(bodyElement);
-
-        if (body)
-            body->put_scroll(HippoBSTR(L"no"));
-    }
-
-    webBrowser->put_Visible(VARIANT_TRUE);
-}
-
 HRESULT
 HippoUI::ShowRecent()
 {
@@ -698,30 +652,6 @@ HippoUI::getChatWindowState(BSTR chatId)
         return HIPPO_WINDOW_STATE_CLOSED;
 
     return chatManager_->getChatWindowState(chatId);
-}
-
-HRESULT
-HippoUI::GetChatRoom(BSTR chatId, IHippoChatRoom **result)
-{
-    *result = NULL;
-
-    HippoUStr chatIdU(chatId);
-
-    if (!hippo_verify_guid(chatIdU.c_str())) {
-        return E_INVALIDARG;
-    }
-
-    HippoChatRoom *room = hippo_data_cache_ensure_chat_room(dataCache_, chatIdU.c_str(), HIPPO_CHAT_KIND_UNKNOWN);
-    
-    // when we go to the chat room, we are no longer ignoring it
-    hippo_chat_room_set_ignored(room, FALSE);
- 
-    if (room != NULL) {
-        *result = HippoChatRoomWrapper::getWrapper(room, dataCache_);
-        (*result)->AddRef();
-    }
-
-    return S_OK;
 }
 
 STDMETHODIMP
@@ -1093,13 +1023,78 @@ HippoUI::isNoFrameURL(BSTR url)
     return false;
 }
 
-HippoExternalBrowser *
+bool 
+HippoUI::needOldIELaunch()
+{
+    // IE6 and older have an entirely broken default behavior for opening a new URL ... 
+    // a random browser is selected and repurposed for the new URL. So, we detect
+    // the condition that:
+    // 
+    //  - The installed version of IE is IE 6 or older
+    //  - The user's default browser is IE
+    // 
+    // and create an IE window directly in that case rather than going through
+    // ShellExecute.
+
+    bool haveOldIE = false;
+
+    HippoRegKey versionKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Internet Explorer", false);
+    HippoBSTR version;
+    if (versionKey.loadString(L"Version", &version)) {
+        if ((version[0] == '4' || version[0] == '5' || version[0] == '6') && version[1] == '.')
+            haveOldIE = true;
+    }
+
+    if (!haveOldIE)
+        return false;
+
+    bool launchViaIE = false;
+
+    HippoRegKey commandKey(HKEY_CLASSES_ROOT, L"HTTP\\shell\\open\\command", false);
+    HippoBSTR command;
+    if (commandKey.loadString(NULL, &command)) {
+        if (wcsstr(command.m_str, L"iexplore.exe") != 0 ||
+            wcsstr(command.m_str, L"IEXPLORE.EXE") != 0)
+        {
+            launchViaIE = true;
+        }
+    }
+
+    if (!launchViaIE)
+        return false;
+
+    return true;
+}
+
+void 
+HippoUI::launchNewBrowserOldIE(BSTR url)
+{
+    HippoPtr<IWebBrowser2> ie;
+
+    CoCreateInstance(CLSID_InternetExplorer, NULL, CLSCTX_SERVER,
+                     IID_IWebBrowser2, (void **)&ie);
+    HippoBSTR urlStr(url);
+    VARIANT missing;
+    missing.vt = VT_EMPTY;
+    ie->Navigate(urlStr, &missing, &missing, &missing, &missing);
+    ie->put_Visible(VARIANT_TRUE);
+}
+
+void 
+HippoUI::launchNewBrowserGeneric(BSTR url)
+{
+    ShellExecute(NULL, L"open", url, NULL, NULL, SW_SHOWNORMAL);
+}
+
+void
 HippoUI::launchBrowser(BSTR url)
 {
     // If the URL points directly to our site, try to find another IE window
     // visiting a part of our site and reuse that web browser; this avoids
     // getting a big pile of windows as the user keeps on using the notification
-    // icon.
+    // icon. We don't currently have this tracking facility if the windows are
+    // being opened via Firefox, so we just ignore the issue. Firefox tabs
+    // will keep things a bit neater in any case.
     if (isSiteURL(url)) {
         for (ULONG i = 0; i < browsers_.length(); i++) {
             if (isSiteURL(browsers_[i].url)) {
@@ -1125,15 +1120,14 @@ HippoUI::launchBrowser(BSTR url)
 
                     SetForegroundWindow(window);
                 }
-
-                return NULL;
             }
         }
     }
 
-    HippoExternalBrowser *browser = new HippoExternalBrowser(url, FALSE, NULL);
-    internalBrowsers_.append(HippoPtr<HippoExternalBrowser>(browser));
-    return browser;
+    if (needOldIELaunch())
+        launchNewBrowserOldIE(url);
+    else
+        launchNewBrowserGeneric(url);
 }
 
 // Show a window when the user clicks on a shared link
@@ -1150,11 +1144,7 @@ HippoUI::displaySharedLink(BSTR postId, BSTR url)
         targetURL.Append(postId);
     }
 
-    HippoExternalBrowser *browser = launchBrowser(targetURL);
-    // browser is only NULL if we reuse an existing browser, which we won't
-    // do for URLs where we want the browser bar.
-    if (browser)
-        browser->injectBrowserBar();
+    launchBrowser(targetURL);
 }
 
 void
@@ -1626,19 +1616,6 @@ HippoUI::getBasePath() throw (std::bad_alloc, HResultException)
 }
 
 void
-HippoUI::getAppletPath(BSTR filename, BSTR *result)
-{
-    assert(*result == NULL);
-
-    HippoBSTR path(getBasePath());
-    
-    path.Append(L"applets\\");
-
-    path.Append(filename);
-    *result = ::SysAllocStringLen(path.m_str, path.Length());
-}
-
-void
 HippoUI::getImagePath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResultException)
 {
     assert(*result == NULL);
@@ -1649,30 +1626,6 @@ HippoUI::getImagePath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResul
 
     path.Append(filename);
     *result = ::SysAllocStringLen(path.m_str, path.Length());
-}
-
-// Find the pathname for a local HTML file, based on the location of the .exe
-// We could alternatively use res: URIs and embed the HTML files in the
-// executable, but this is probably more flexible
-void
-HippoUI::getAppletURL(BSTR  filename, 
-                      BSTR *url)
-{
-    HRESULT hr;
-
-    HippoBSTR path;
-
-    getAppletPath(filename, &path);
-
-    WCHAR urlBuf[INTERNET_MAX_URL_LENGTH];
-    DWORD urlLength = INTERNET_MAX_URL_LENGTH;
-    hr = UrlCreateFromPath(path, urlBuf, &urlLength, NULL);
-    if (!SUCCEEDED (hr))
-        throw HResultException(hr);
-
-    *url = SysAllocString(urlBuf);
-    if (*url == 0)
-        throw std::bad_alloc();
 }
 
 // Get the URL of a file on the web server
@@ -2075,6 +2028,48 @@ editToolbar()
     edit.ensureToolbarButton();
 }
 
+// In order for our Firefox extension to be found by Firefox, we need to install
+// a key pointing to it under HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER. Normally,
+// this key is added and removed by the installer, but in the case where the
+// user is also running debug instances of Mugshot, we want to get that key
+// pointing to the right place, so we check on startup, and if the key is missing
+// or mis-pointed we rewrite it under HKEY_CURRENT_USER.
+static void
+registerFirefoxComponent()
+{
+    HMODULE module;
+    WCHAR buf[MAX_PATH];
+    
+    module = GetModuleHandle(NULL);
+    DWORD len = GetModuleFileName(module, buf, MAX_PATH);
+    if (len == 0 || len == MAX_PATH) // Failure or truncated
+        return;
+
+    WCHAR *lastSlash = wcsrchr(buf, '\\');
+    if (lastSlash == 0)
+        return;
+
+    HippoBSTR extensionDir(lastSlash - buf, buf);
+    extensionDir.Append(L"\\firefox");
+
+    HippoBSTR userValue;
+    HippoRegKey userKey(HKEY_CURRENT_USER, L"SOFTWARE\\Mozilla\\Firefox\\Extensions", FALSE);
+    if (userKey.loadString(L"firefox@mugshot.org", &userValue)) {
+        if (userValue == extensionDir)
+            return;
+    }
+
+    HippoBSTR machineValue;
+    HippoRegKey machineKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Mozilla\\Firefox\\Extensions", FALSE);
+    if (machineKey.loadString(L"firefox@mugshot.org", &machineValue)) {
+        if (machineValue == extensionDir)
+            return;
+    }
+
+    HippoRegKey saveKey(HKEY_CURRENT_USER, L"SOFTWARE\\Mozilla\\Firefox\\Extensions", TRUE);
+    saveKey.saveString(L"firefox@mugshot.org", extensionDir.m_str);
+}
+
 static void
 migrateCookie()
 {
@@ -2210,6 +2205,7 @@ WinMain(HINSTANCE hInstance,
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     editToolbar();
+    registerFirefoxComponent();
     migrateCookie();
 
     ui = new HippoUI(options.instance_type, options.replace_existing, options.initial_debug_share);

@@ -1,5 +1,6 @@
 package com.dumbhippo.persistence;
 
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -7,8 +8,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
@@ -16,6 +17,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.dumbhippo.AgeUtils;
+import com.dumbhippo.DateUtils;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.util.EJBUtil;
@@ -150,6 +152,15 @@ public class InvitationToken extends Token {
 		// age is in seconds
         long age = (System.currentTimeMillis() - getCreationDate().getTime()) / 1000;
         return "sent " + AgeUtils.formatAge(age);  
+	}
+
+	@Transient
+	public String getHumanReadableDate() {
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(getCreationDate());
+		
+		return DateUtils.monthArray[calendar.get(Calendar.MONTH)] + " " + calendar.get(Calendar.DAY_OF_MONTH) 
+		       + ", " + calendar.get(Calendar.YEAR);
 	}
 	
 	@Transient

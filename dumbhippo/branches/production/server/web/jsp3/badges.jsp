@@ -87,12 +87,14 @@
 							<c:if test="${!signin.valid}">
 								<div class="dh-badges-signup-or-login">
 								    <table cellspacing="0" cellpadding="0">
-									    <tr>
-										    <td><a href="/signup"><img src="/images3/${buildStamp}/signup.gif"/></a></td>
-										    <td valign="middle" align="center" class="dh-badges-signup-or-login-text">&nbsp;or&nbsp;</td>
-										    <td><a href="/who-are-you?next=badges"><img src="/images3/${buildStamp}/login.gif"/></a></td>
-										    <td valign="middle" align="center" class="dh-badges-signup-or-login-text">&nbsp;to get your own!</td>
-									    </tr>
+								    	<tbody>
+										    <tr>
+											    <td><a href="/signup"><img src="/images3/${buildStamp}/signup.gif"/></a></td>
+											    <td valign="middle" align="center" class="dh-badges-signup-or-login-text">&nbsp;or&nbsp;</td>
+											    <td><a href="/who-are-you?next=badges"><img src="/images3/${buildStamp}/login.gif"/></a></td>
+											    <td valign="middle" align="center" class="dh-badges-signup-or-login-text">&nbsp;to get your own!</td>
+										    </tr>
+										</tbody>
 								    </table>
 								</div>
 							</c:if>
@@ -116,7 +118,7 @@
 						<div>
 							<c:forEach var="badge" items="${person.badges.list}" varStatus="status">
 								<div id="dhBadgeOption${badge.name}">
-									<input type="radio" name="badge" value="${badge.name}" id="dhBadgeCheckbox${badge.name}" ${status.first ? 'checked' : ''} onclick="return dhOnClickBadgeCheckbox();"> <c:out value="${badge.optionName}"/>
+									<input type="radio" name="badge" value="${badge.name}" id="dhBadgeCheckbox${badge.name}" ${status.first ? 'checked' : ''} onclick="return dhOnClickBadgeCheckbox();"> <label for="dhBadgeCheckbox${badge.name}"><c:out value="${badge.optionName}"/></label>
 								</div>
 							</c:forEach>
 						</div>
@@ -127,7 +129,7 @@
 								<dh:flashBadge badge="${badge}" userId="${person.viewedPerson.user.id}" hasLabel="false"/>
 								<c:if test="${dh:enumIs(badge, 'NOW_PLAYING_440_120')}">
 									<div style="margin-top: 5px;">
-										<a style="font-size: 12px;" class="dh-underlined-link" href="/radar-learnmore">Browse, edit, and create Music Radar themes</a>
+										<a style="font-size: 12px;" class="dh-underlined-link" href="/radar-themes">Browse, edit, and create Music Radar themes</a>
 									</div>
 								</c:if>
 							</div>
@@ -160,6 +162,9 @@
 					<div class="dh-grow-div-around-floats"><div></div></div>
 				</c:if>
 			</div>
+		<div class="dh-badges-button-advert">
+			<a class="dh-badges-button-img-link" href="/buttons"><dh:png src="/images3/${buildStamp}/mugshotluv45x40.png" style="vertical-align:middle; width: 45px; height: 40px;" /> Love Mugshot?</a>  <a class="dh-badges-button-link" href="/buttons">Spread the word</a> with badges on your site or blog.
+		</div>
 		</div>
 	</dht3:shinyBox>
 </dht3:page>

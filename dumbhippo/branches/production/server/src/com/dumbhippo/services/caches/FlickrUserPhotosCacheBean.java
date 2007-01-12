@@ -151,16 +151,25 @@ public class FlickrUserPhotosCacheBean extends AbstractBasicCacheBean<String,Fli
 				// the cache, checkCache here will return NotCachedException and we'll recover. Or as soon as someone 
 				// adds or removes another photo we'll recover.)
 				FlickrPhotosView old = checkCache(key);
-				if (old.getTotal() == data.getTotal())
+				if (data != null && old.getTotal() == data.getTotal())
 					return old;
+			} catch (ExpiredCacheException e) {
+				// we need to use the new results, or save a new no-results marker
+
 			} catch (NotCachedException e) {
+				if (data == null)
+					return null;
+				
 				// we need to use the new results
 			}
 		}
 		
 		FlickrPhotosView summary = summaryStorage.saveInCacheInsideExistingTransaction(key, data, now, refetchedWithoutCheckingCache);
-		List<? extends FlickrPhotoView> photoList = photoListStorage.saveInCacheInsideExistingTransaction(key, data.getPhotos(), now, refetchedWithoutCheckingCache);
-		summary.setPhotos(photoList);
+		if (summary != null) {
+			List<? extends FlickrPhotoView> photoList = photoListStorage.saveInCacheInsideExistingTransaction(key, data != null ? data.getPhotos() : null, now, refetchedWithoutCheckingCache);
+			summary.setPhotos(photoList);
+		}
+		
 		return summary;
 	}
 

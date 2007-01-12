@@ -403,7 +403,8 @@ hippo_canvas_helper_size_allocate(HippoCanvasHelper *helper,
     if (helper->root != NULL) {
         hippo_canvas_item_allocate(helper->root,
                                    allocation->width - GTK_CONTAINER(helper->widget)->border_width * 2,
-                                   allocation->height  - GTK_CONTAINER(helper->widget)->border_width * 2);
+                                   allocation->height  - GTK_CONTAINER(helper->widget)->border_width * 2,
+                                   FALSE);
 
         /* Tooltip might be in the wrong place now */
         update_tooltip(helper, FALSE);

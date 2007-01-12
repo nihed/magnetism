@@ -1,4 +1,5 @@
 dojo.provide("dh.statistics.dataset");
+dojo.require("dh.lang");
 
 dh.statistics.dataset.Dataset = function() {
 	this.numPoints = 0;
@@ -10,7 +11,7 @@ dh.statistics.dataset.Dataset = function() {
 	this.maxY = 0;
 }
 
-dojo.lang.extend(dh.statistics.dataset.Dataset,
+dh.lang.extend(dh.statistics.dataset.Dataset,
 {
 	add: function(t, y) {	
 		this.ta[this.numPoints] = t;

@@ -95,8 +95,14 @@ hippo_canvas_window_init(HippoCanvasWindow *canvas_window)
 static void
 hippo_canvas_window_dispose(GObject *object)
 {
-    /* HippoCanvasWindow *canvas = HIPPO_CANVAS_WINDOW(object); */
+    HippoCanvasWindow *canvas_window = HIPPO_CANVAS_WINDOW(object);
 
+    if (canvas_window->helper) {
+        g_object_run_dispose(G_OBJECT(canvas_window->helper));
+        g_object_unref(canvas_window->helper);
+        canvas_window->helper = NULL;
+    }
+    
     G_OBJECT_CLASS(hippo_canvas_window_parent_class)->dispose(object);
 }
 

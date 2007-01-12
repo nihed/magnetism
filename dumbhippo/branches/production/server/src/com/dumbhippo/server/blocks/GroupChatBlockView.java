@@ -11,7 +11,7 @@ import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.Viewpoint;
 
-public class GroupChatBlockView extends BlockView implements SimpleTitleBlockView {
+public class GroupChatBlockView extends BlockView implements TitleBlockView {
 	public static final int RECENT_MESSAGE_COUNT = 3;
 	
 	private GroupView group;
@@ -74,6 +74,11 @@ public class GroupChatBlockView extends BlockView implements SimpleTitleBlockVie
 	
 	public String getTitle() {
 		return "New chat activity";
+	}
+	
+	@Override
+	public String getPrivacyTip() {
+		return "Private: This group chat can only be seen by group members.";
 	}
 
 	public String getLink() {

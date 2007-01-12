@@ -76,7 +76,7 @@ public class PersonMusicPage extends AbstractPersonPage {
 	
 	public int getSelfInvitations() {
 		if (selfInvitations < 0) {
-			selfInvitations = invitationSystem.getInvitations(getAccountSystem().getCharacter(Character.MUSIC_GEEK));
+			selfInvitations = invitationSystem.getInvitations(null, getAccountSystem().getCharacter(Character.MUSIC_GEEK));
 		}
 		return selfInvitations;
 	}

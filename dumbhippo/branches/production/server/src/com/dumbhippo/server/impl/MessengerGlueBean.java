@@ -33,7 +33,9 @@ import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.PostVisibility;
-import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Sentiment;
+import com.dumbhippo.persistence.TrackHistory;
+import com.dumbhippo.persistence.TrackMessage;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.ChatRoomInfo;
@@ -56,7 +58,6 @@ import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.TrackView;
@@ -213,7 +214,7 @@ public class MessengerGlueBean implements MessengerGlue {
 		
 		Account account = accountFromUsername(username);
 		
-		PersonView view = personViewer.getSystemView(account.getOwner(), PersonViewExtra.PRIMARY_EMAIL);
+		PersonView view = personViewer.getSystemView(account.getOwner());
 		
 		String email = null;
 		if (view.getEmail() != null)
@@ -265,6 +266,7 @@ public class MessengerGlueBean implements MessengerGlue {
 			return;
 		}
 		
+		account.setNeedsDownload(false);
 		account.setLastLoginDate(timestamp);
 	}	
 
@@ -316,6 +318,10 @@ public class MessengerGlueBean implements MessengerGlue {
 		return groupSystem.lookupGroupById(SystemViewpoint.getInstance(), Guid.parseTrustedJabberId(roomName));
 	}
 	
+	private TrackHistory getTrackHistoryFromRoomName(String roomName) throws NotFoundException {
+		return musicSystem.lookupTrackHistory(Guid.parseTrustedJabberId(roomName));
+	}
+
 	private ChatRoomMessage newChatRoomMessage(EmbeddedMessage message) {
 		String username = message.getFromUser().getGuid().toJabberId(null);
 		return new ChatRoomMessage(username, message.getMessageText(),
@@ -326,16 +332,6 @@ public class MessengerGlueBean implements MessengerGlue {
 		return new ChatRoomUser(user.getGuid().toJabberId(null),
 				                user.getNickname(), user.getPhotoUrl());
 	}
-	
-	private Set<ChatRoomUser> getChatRoomRecipients(Group group) {
-		Set<ChatRoomUser> allowedUsers = new HashSet<ChatRoomUser>();		
-		Set<User> members = groupSystem.getUserMembers(SystemViewpoint.getInstance(), group, MembershipStatus.ACTIVE);
-		for (User user : members) {
-			allowedUsers.add(newChatRoomUser(user));
-		}
-		return allowedUsers;
-	}
-		
 	
 	private List<ChatRoomMessage> getChatRoomMessages(Group group, long lastSeenSerial) {
 		List<GroupMessage> messages = groupSystem.getGroupMessages(group, lastSeenSerial);
@@ -351,24 +347,6 @@ public class MessengerGlueBean implements MessengerGlue {
 	private ChatRoomInfo getChatRoomInfo(String roomName, Group group) {
 		List<ChatRoomMessage> history = getChatRoomMessages(group, -2);
 		return new ChatRoomInfo(ChatRoomKind.GROUP, roomName, group.getName(), history, false);
-	}
-
-	private Set<ChatRoomUser> getChatRoomRecipients(Post post) {
-		Set<ChatRoomUser> recipients = new HashSet<ChatRoomUser>();
-		User poster = post.getPoster();
-		if (poster != null)
-			recipients.add(newChatRoomUser(poster));	
-		
-		// FIXME: This doesn't handle
-		// posts where people join a group that it was sent to after the post was
-		// sent. 
-		for (Resource recipient : post.getExpandedRecipients()) {
-			User user = identitySpider.getUser(recipient);
-			if (user != null) {
-				recipients.add(newChatRoomUser(user));
-			}
-		}
-		return recipients;
 	}
 
 	private List<ChatRoomMessage> getChatRoomMessages(Post post, long lastSeenSerial) {
@@ -403,6 +381,24 @@ public class MessengerGlueBean implements MessengerGlue {
 		return new ChatRoomInfo(ChatRoomKind.POST, roomName, post.getTitle(), history, worldAccessible);
 	}
 	
+	private List<ChatRoomMessage> getChatRoomMessages(TrackHistory trackHistory, long lastSeenSerial) {
+		List<TrackMessage> messages = musicSystem.getTrackMessages(trackHistory, lastSeenSerial);
+
+		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
+
+		for (TrackMessage trackMessage : messages)
+			history.add(newChatRoomMessage(trackMessage));
+		
+		return history;
+	}
+	
+	private ChatRoomInfo getChatRoomInfo(String roomName, TrackHistory trackHistory) {
+		TrackView trackView = musicSystem.getTrackView(trackHistory);
+		List<ChatRoomMessage> history = getChatRoomMessages(trackHistory, -2);
+		
+		return new ChatRoomInfo(ChatRoomKind.MUSIC, roomName, trackView.getDisplayTitle(), history, true);
+	}
+	
 	public ChatRoomUser getChatRoomUser(String roomName, ChatRoomKind kind, String username) {
 		User user;
 		// Note: we could add access controls here as well, requiring that the username
@@ -416,48 +412,41 @@ public class MessengerGlueBean implements MessengerGlue {
 		return newChatRoomUser(user);
 	}
 	
-	public Set<ChatRoomUser> getChatRoomRecipients(String roomName, ChatRoomKind kind) {
-		try {
-			if (kind == ChatRoomKind.POST)
-				return getChatRoomRecipients(getPostFromRoomName(roomName));
-			else if (kind == ChatRoomKind.GROUP)
-				return getChatRoomRecipients(getGroupFromRoomName(roomName));
-			else
-				throw new RuntimeException("Unknown chat room type " + kind);
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
 	public ChatRoomInfo getChatRoomInfo(String roomName) {
 		Post post = null;
 		Group group = null;
+		TrackHistory trackHistory = null;
+		int count = 0;
 		try {
 			post = getPostFromRoomName(roomName);
+			count++;
 		} catch (NotFoundException e) {
-			// FIXME in principle this should happen if the initialUser can't see the post, 
-			// but right now there's no access controls in loadRawPost so it only happens
-			// if something is broken
-			post = null;
 		}
 		try {
 			group = getGroupFromRoomName(roomName);
+			count++;
 		} catch (NotFoundException e) {
-			group = null;
+		}
+		try {
+			trackHistory = getTrackHistoryFromRoomName(roomName);
+			count++;
+		} catch (NotFoundException e) {
 		}
 		
-		if (post != null && group != null) {
+		if (count > 1) {
 			// this should theoretically be very, very unlikely so we won't bother to fix it unless 
 			// it happens on production, and even then we could just munge the database instead of 
 			// bothering...
-			logger.error("GUID collision... we'll have to put a group vs. post marker in the room ID string");
-			group = null; // just take a guess and use the post
+			logger.error("GUID collision... we'll have to put a type marker in the room ID string");
+			// we'll just guess
 		}
 		
 		if (post != null)
 			return getChatRoomInfo(roomName, post);
 		else if (group != null)
 			return getChatRoomInfo(roomName, group);
+		else if (trackHistory != null)
+			return getChatRoomInfo(roomName, trackHistory);
 		else {
 			logger.debug("Room name {} doesn't correspond to a post or group, or user not allowed to see it", roomName);
 			return null;
@@ -482,11 +471,19 @@ public class MessengerGlueBean implements MessengerGlue {
 				throw new RuntimeException("group chat not found", e);
 			}
 			return getChatRoomMessages(group, lastSeenSerial);
+		case MUSIC:
+			TrackHistory trackHistory;
+			try {
+				trackHistory = musicSystem.lookupTrackHistory(Guid.parseTrustedJabberId(roomName));
+			} catch (NotFoundException e) {
+				throw new RuntimeException("Track not found", e);
+			}
+			return getChatRoomMessages(trackHistory, lastSeenSerial);
 		}
 		throw new IllegalArgumentException("Bad chat room type");
 	}
 
-	public void addChatRoomMessage(String roomName, ChatRoomKind kind, String userName, String text, Date timestamp) {
+	public void addChatRoomMessage(String roomName, ChatRoomKind kind, String userName, String text, Sentiment sentiment, Date timestamp) {
 		Guid chatRoomId = Guid.parseTrustedJabberId(roomName);
 		User fromUser = getUserFromUsername(userName);
 		UserViewpoint viewpoint = new UserViewpoint(fromUser);
@@ -498,7 +495,7 @@ public class MessengerGlueBean implements MessengerGlue {
 			} catch (NotFoundException e) {
 				throw new RuntimeException("post chat not found", e);
 			}
-			postingBoard.addPostMessage(post, fromUser, text, timestamp);
+			postingBoard.addPostMessage(post, fromUser, text, sentiment, timestamp);
 			break;
 		case GROUP:
 			Group group;
@@ -507,7 +504,16 @@ public class MessengerGlueBean implements MessengerGlue {
 			} catch (NotFoundException e) {
 				throw new RuntimeException("group chat not found", e);
 			}
-			groupSystem.addGroupMessage(group, fromUser, text, timestamp);
+			groupSystem.addGroupMessage(group, fromUser, text, sentiment, timestamp);
+			break;
+		case MUSIC:
+			TrackHistory trackHistory;
+			try {
+				trackHistory = musicSystem.lookupTrackHistory(Guid.parseTrustedJabberId(roomName));
+			} catch (NotFoundException e) {
+				throw new RuntimeException("track not found", e);
+			}
+			musicSystem.addTrackMessage(trackHistory, fromUser, text, sentiment, timestamp);
 			break;
 		}
 		
@@ -517,13 +523,17 @@ public class MessengerGlueBean implements MessengerGlue {
 	public boolean canJoinChat(String roomName, ChatRoomKind kind, String username) {
 		try {
 			User user = getUserFromUsername(username);
+			UserViewpoint viewpoint = new UserViewpoint(user);
 			if (kind == ChatRoomKind.POST) {
 				Post post = getPostFromRoomName(roomName);
-				UserViewpoint viewpoint = new UserViewpoint(user);
 				return postingBoard.canViewPost(viewpoint, post);
 			} else if (kind == ChatRoomKind.GROUP) {
 				Group group = getGroupFromRoomName(roomName);
 				return groupSystem.isMember(group, user);
+			} else if (kind == ChatRoomKind.MUSIC) {
+				TrackHistory trackHistory = getTrackHistoryFromRoomName(roomName);
+				identitySpider.isViewerSystemOrFriendOf(viewpoint, trackHistory.getUser());
+				return true;
 			} else
 				throw new RuntimeException("Unknown chat room type " + kind);
 		} catch (NotFoundException e) {
@@ -645,7 +655,7 @@ public class MessengerGlueBean implements MessengerGlue {
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public void handleMusicChanged(Guid userId, Map<String, String> properties) {
 		User user = getUserFromGuid(userId);
-		musicSystemInternal.setCurrentTrack(user, properties);
+		musicSystemInternal.setCurrentTrack(user, properties, true);
 		musicSystemInternal.queueMusicChange(userId);
 	}
 
@@ -663,7 +673,7 @@ public class MessengerGlueBean implements MessengerGlue {
 		tracks = new ArrayList<Map<String,String>>(tracks);
 		Collections.reverse(tracks);
 		for (Map<String,String> properties : tracks) {
-			musicSystemInternal.addHistoricalTrack(user, properties);
+			musicSystemInternal.addHistoricalTrack(user, properties, true);
 		}
 		// don't do this again
 		identitySpider.setMusicSharingPrimed(user, true);

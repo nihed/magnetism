@@ -135,6 +135,9 @@
 				RelativePath=".\HippoAbstractWindow.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoButton.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoCanvas.cpp">
 			</File>
 			<File
@@ -150,10 +153,7 @@
 				RelativePath=".\HippoChatWindow.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoComWrappers.cpp">
-			</File>
-			<File
-				RelativePath=".\HippoExternalBrowser.cpp">
+				RelativePath=".\HippoEdit.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoGSignal.cpp">
@@ -257,6 +257,9 @@
 				RelativePath=".\HippoAbstractWindow.h">
 			</File>
 			<File
+				RelativePath=".\HippoButton.h">
+			</File>
+			<File
 				RelativePath=".\HippoCanvas.h">
 			</File>
 			<File
@@ -269,10 +272,7 @@
 				RelativePath=".\HippoChatWindow.h">
 			</File>
 			<File
-				RelativePath=".\HippoComWrappers.h">
-			</File>
-			<File
-				RelativePath=".\HippoExternalBrowser.h">
+				RelativePath=".\HippoEdit.h">
 			</File>
 			<File
 				RelativePath=".\HippoGSignal.h">

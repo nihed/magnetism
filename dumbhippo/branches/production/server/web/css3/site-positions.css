@@ -50,6 +50,10 @@ input.dh-text-input {
 .dh-page-title {
 }
 
+.dh-page-title-link {
+	margin-left:	5px;
+}
+
 .dh-page-title-container {
 	width:			100%;
 	position:		relative;
@@ -57,11 +61,12 @@ input.dh-text-input {
 	margin-top:	    8px;
 }
 
-.dh-page-options {
+.dh-page-options-container {
 	position:		absolute;
 	right:			0;
 	top:			0;
 	text-align:		right;
+	width:			50%;
 }
 
 .dh-page-options-tip-area {
@@ -79,6 +84,13 @@ input.dh-text-input {
     clear:         right;
     top:           -10px;
 	right:         0px; 
+}
+
+.dh-page-options-sub-options-area {
+	width:		   100%;
+    position:      relative;
+    top:           -4px;
+    margin-bottom: 4px;
 }
 
 #dhPageFooter {
@@ -237,6 +249,7 @@ div.dh-notification {
 }
 
 .dh-page-shinybox-title-large  {
+    margin-top:         5px;
 	margin-bottom:		5px;
 }
 
@@ -407,6 +420,17 @@ div.dh-notification {
 	margin-left:		5px;
 }
 
+.dh-half-shinybox-left-container {
+    width:              49%;
+    float:              left;
+}
+
+.dh-half-shinybox-right-container {
+    width:              49%;
+    float:              right;
+    text-align:         left;
+}
+
 .dh-thumbnail-box-border, .dh-rss-box-border {
 	position:			relative;
 	width:				478px;
@@ -504,7 +528,8 @@ div.dh-person-header {
 }
 
 .dh-person-header-stats {
-    padding-top:     1px;
+    padding-top:        1px;
+    padding-bottom:     2px;
 }
 
 .dh-download-header-area {
@@ -601,4 +626,87 @@ div.dh-person-header {
 #dhTermsOfUseNote, #dhFacebookNote {
 	padding:            5px;
 	margin-bottom:      5px;
+}
+
+.dh-person-item {
+    position:   relative;
+    display:    block;
+    float:      left;
+    margin:     5px;
+    width:      72px; 
+    overflow:   hidden;
+}
+
+.dh-person-item-more-info {
+    position:			absolute;
+    display:            none;
+    min-width:          270px;
+    padding:            3px;         
+	z-index:			2;
+}
+
+.dh-person-item .dh-image {
+	height:             60px;
+	width:	            60px;
+    margin-left:        6px;
+}
+	
+.dh-person-item-more-info .dh-image {
+	height:             60px;
+	width:	            60px;
+    padding-right:      3px;
+}
+	
+.dh-person-item-name {
+	text-align:			center;	
+	white-space:		nowrap;
+}
+
+.dh-person-item-more-info .dh-presence {
+    position:           relative;
+    float:              left;
+    display:            inline;
+    margin-right:       2px;
+}
+
+.dh-person-item-more-info .dh-person-item-name {
+    position:           relative;
+    float:              left;
+    clear:              right;
+    display:            inline;
+    margin-top:         -2px;
+    text-align:			left;	
+}
+
+.dh-person-item-more-info .dh-favicons { 
+	width:              200px;
+}
+
+.dh-invitation-date {
+    margin-left:        1px;
+}
+
+.dh-photo {
+    position:           relative;
+}
+
+.dh-photo .dh-presence {
+    position:           absolute;
+    top:                0px;
+    right:              -5px;
+}
+
+#dhAccountStatus {
+	position:			relative;
+	padding-left: 		9px;
+	padding-right: 		9px;
+	padding-top: 		4px;
+	padding-bottom: 	4px;
+	margin-bottom:		15px;
+}
+
+#dhDownloadMessageClose {
+	position:			absolute;
+	top:				2px;
+	right:				3px;
 }

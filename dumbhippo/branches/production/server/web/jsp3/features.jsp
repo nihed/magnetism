@@ -15,8 +15,8 @@
 
 <dht3:page currentPageLink="features">
 	<dht3:shinyBox color="grey">
+	    <div class="dh-page-shinybox-title-large">Mugshot Features</div>
 		<div class="dh-download-header-area">
-			<div class="dh-page-shinybox-title-large">Mugshot Features</div>
 			<dht3:learnMoreNextStep/>	
 		</div>
 		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
@@ -63,6 +63,28 @@
 			<div class="dh-download-section-description">
 				<div>It's free, fun and easy to use.  The more the merrier!</div>
 				<div><a class="dh-underlined-link" href="/invitation">Invite friends</a></div>
+			</div>
+			</td>
+			</tr>
+		</table>
+		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
+			<tr>
+			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/minimugshot_face42x79.png" style="width: 42; height: 79;"/></td>
+			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Put Mini Mugshot on your site.</div>
+			<div class="dh-download-section-description">
+				<div>Got lots of web accounts? Show where you're at and what you're up to at a glance. Add Mini Mugshot to blogs, Facebook, MySpace and more.</div>
+				<div><a class="dh-underlined-link" href="/badges">See a live example</a></div>
+			</div>
+			</td>
+			</tr>
+		</table>		
+		<table class="dh-box-grey2 dh-download-section" cellspacing="0" cellpadding="0">
+			<tr>
+			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/mugshotluv_60x53.png" style="width: 60; height: 53;"/></td>
+			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Spread the Mugshot Love.</div>
+			<div class="dh-download-section-description">
+				<div>Can't get enough Mugshot? Tell the world and build your network. (And ours!)</div>
+				<div><a class="dh-underlined-link" href="/buttons">Add our buttons to your site or blog</a>, linking to your Mugshot page.</div>
 			</div>
 			</td>
 			</tr>

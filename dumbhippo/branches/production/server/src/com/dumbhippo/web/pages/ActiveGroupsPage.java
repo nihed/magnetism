@@ -12,7 +12,7 @@ import com.dumbhippo.web.WebEJBUtil;
 
 public class ActiveGroupsPage extends AbstractSigninOptionalPage {
 	@SuppressWarnings("unused")
-	static private final Logger logger = GlobalSetup.getLogger(MusicGlobalPage.class);
+	static private final Logger logger = GlobalSetup.getLogger(ActiveGroupsPage.class);
 	
 	static final int GROUPS_PER_PAGE = 5;
 	static final int BLOCKS_PER_GROUP = 5;

@@ -1,6 +1,7 @@
 dojo.provide("dh.statistics.selector");
 
 dojo.require("dh.util");
+dojo.require("dh.lang");
 
 dh.statistics.selector.DAYNAMES = [ "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" ]
 
@@ -8,7 +9,7 @@ dh.statistics.selector.Selector = function() {
    	this.table = document.createElement("table");
 }
  
-dojo.lang.extend(dh.statistics.selector.Selector,
+dh.lang.extend(dh.statistics.selector.Selector,
 {
 	setRange: function(start, end) {
 		if (this.startDate && this.startDate.getTime() == start && 

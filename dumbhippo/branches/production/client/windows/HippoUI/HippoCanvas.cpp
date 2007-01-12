@@ -34,6 +34,9 @@ static void                   hippo_canvas_context_win_update_pango           (H
 static void                   hippo_canvas_context_win_create_controls        (HippoCanvasContextWin *context_win);
 static void                   hippo_canvas_context_win_show_controls          (HippoCanvasContextWin *context_win);
 static void                   hippo_canvas_context_win_focus_controls         (HippoCanvasContextWin *context_win);
+static bool                   hippo_canvas_context_win_handle_notification    (HippoCanvasContextWin *context_win,
+                                                                               HWND                   controlWindow,
+                                                                               UINT                   notification);
 
 HippoCanvas::HippoCanvas()
     : canvasWidthReq_(0), canvasHeightReq_(0), canvasX_(0), canvasY_(0), hscrollNeeded_(false), vscrollNeeded_(false),
@@ -447,7 +450,7 @@ HippoCanvas::tryAllocate(bool hscrollbar, bool vscrollbar)
     }
     
     if (root_ != (HippoCanvasItem*) NULL) {
-        hippo_canvas_item_allocate(root_, childWidthAlloc, childHeightAlloc);
+        hippo_canvas_item_allocate(root_, childWidthAlloc, childHeightAlloc, FALSE);
     }
 
     updateTooltip(false, lastMoveX_, lastMoveY_);
@@ -664,6 +667,15 @@ HippoCanvas::onHover(WPARAM wParam, LPARAM lParam)
         return;
 
     updateTooltip(true, x, y);
+}
+
+bool
+HippoCanvas::onCommand(WPARAM wParam, LPARAM lParam)
+{
+    UINT notification = HIWORD(wParam);
+    HWND controlWindow = (HWND)lParam;
+
+    return hippo_canvas_context_win_handle_notification(context_, controlWindow, notification);
 }
 
 void
@@ -942,6 +954,8 @@ HippoCanvas::processMessage(UINT   message,
             // forward focus on to some control inside the canvas, if any
             hippo_canvas_context_win_focus_controls(context_);
             return true;
+        case WM_COMMAND:
+            return onCommand(wParam, lParam);
     }
 
     return false;
@@ -1394,12 +1408,35 @@ hippo_canvas_context_win_focus_controls(HippoCanvasContextWin *context_win)
      * "the first one" though this isn't long-term reasonable
      */
     RegisteredControlItem *citem;
+    GSList *last_link = g_slist_last(context_win->control_items);
 
-    if (context_win->control_items == NULL)
+    if (last_link == NULL)
         return;
 
-    citem = (RegisteredControlItem*) context_win->control_items->data;
+    citem = (RegisteredControlItem*) last_link->data;
 
     if (citem->control)
         citem->control->setFocus();
+}
+
+static bool
+hippo_canvas_context_win_handle_notification(HippoCanvasContextWin *context_win,
+                                             HWND                   controlWindow,
+                                             UINT                   notification)
+{
+    RegisteredControlItem *citem;
+    GSList *link;
+    
+    citem = NULL;
+    for (link = context_win->control_items;
+         link != NULL;
+         link = link->next) {
+        citem = (RegisteredControlItem*) link->data;
+        if (citem->control) {
+            if (citem->control->getWindow() == controlWindow)
+                return citem->control->handleNotification(notification);
+        }
+    }
+
+    return false;
 }

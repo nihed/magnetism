@@ -1,7 +1,7 @@
 dojo.provide("dh.suggestutils")
 dojo.require("dh.model")
-dojo.require("dojo.dom");
-dojo.require("dojo.string");
+dojo.require("dh.dom");
+dojo.require("dh.util");
 
 // This file provides glue between the generic autosuggest box in dh.autosuggest
 // and the data model for groups/users/contacts/etc. implemented in dh.model
@@ -41,8 +41,8 @@ dh.suggestutils._findInStringArray = function(strings, func, data) {
 }
 
 dh.suggestutils._sortEligibleCompare = function(a, b) {
-	aText = dojo.dom.textContent(a[0])
-	bText = dojo.dom.textContent(b[0])	
+	aText = dh.dom.textContent(a[0])
+	bText = dh.dom.textContent(b[0])	
 	if (aText.localeCompare) // don't trust this to exist...
 		return aText.localeCompare(bText);
 	else {
@@ -70,6 +70,12 @@ dh.suggestutils.getMenuRecipients = function(allKnownIds) {
 	for (var id in allKnownIds) {
 		var obj = allKnownIds[id];
 		var node = document.createElement("li");
+		if (obj.isPublic == "false") {
+			var visibility = document.createElement("img");
+			visibility.src = dhImageRoot3 +"lock_icon.png";
+			visibility.style.marginRight = "3px";
+			node.appendChild(visibility);
+		}
 		node.appendChild(document.createTextNode(obj.displayName));
 		results.push([node, obj.id]);			
 	}
@@ -122,7 +128,7 @@ dh.suggestutils.getMatchingRecipients = function(allKnownIds, inputText, omitRec
 		return false;
 	}
 
-	var searchStr = dojo.string.trim(inputText);
+	var searchStr = dh.util.trim(inputText);
 
 	if (searchStr.length == 0)
 		return results; // no eligible when the input is empty

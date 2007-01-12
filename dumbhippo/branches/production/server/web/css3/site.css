@@ -49,6 +49,19 @@ a.dh-underlined-link-visited:link, a.dh-underlined-link-visited:hover, a.dh-unde
 	font-weight:		bold;
 }
 
+.dh-page-title-link {
+	font-size:			12px;
+	font-weight:		bold;
+}
+
+.dh-page-title-link a {
+	text-decoration:	underline;
+}
+
+.dh-page-title-link a:visited {
+	color:			#0000ff;
+}
+
 .dh-page-options {
 	font-size:			12px;
 	font-weight:		bold;
@@ -312,6 +325,7 @@ div.dh-async-action-link-complete {
 }
 
 .dh-stacker-block {
+	table-layout:		fixed;
 }
 
 .dh-stacker-block-expandable {
@@ -399,7 +413,7 @@ div.dh-async-action-link-complete {
 .dh-stacker-block-chat-message {
 }
 
-.dh-stacker-block-chat-time-ago {
+.dh-stacker-block-time-ago {
 	color:				#666666;
 }
 
@@ -414,6 +428,19 @@ div.dh-async-action-link-complete {
 
 .dh-stacker-block-title-group-member-name {
 }
+
+.dh-empty-stacker-text {
+	font-size:			16px;
+	color:				#9648bc;
+}
+
+.dh-empty-stacker-secondary {
+	font-size:			12px;
+}
+
+.dh-empty-stacker-text a {
+	color:				#0000EE;
+};
 
 .dh-where-at-label {
 	font-weight: 		bold;
@@ -488,5 +515,84 @@ div.dh-async-action-link-complete {
 	background-color:	#ffffcc;
 	color:				#cc0033;
 	font-size:          12px;
+	font-weight:		bold;
+}
+
+.dh-person-item {
+    font-size:          12px;
+}
+
+.dh-person-item-more-info {
+	border:				1px solid black;
+	background-color:	#ffffcc;
+}
+
+.dh-person-item-more-info .dh-person-item-name {
+	font-size:          13px;
+	font-weight:		bold;   
+}
+
+.dh-person-item-more-info .dh-person-item-controls {
+    font-size:          11px;
+}
+
+.dh-music-block-left {
+	padding-top:		6px;
+	padding-left:		6px;
+	padding-bottom:		6px;
+}
+
+.dh-music-block-left table {
+	table-layout:		fixed;
+}
+
+.dh-music-block-icon img {
+	display:			block;
+}
+
+.dh-music-block-beside {
+	padding-left:		8px;
+}
+
+.dh-music-block-artist {
+	font-weight:		bold;
+	font-size:			14px;
+	margin-left:		15px;
+	text-indent:		-15px;
+}
+
+.dh-music-block-name {
+	font-weight:		bold;
+	font-size:			14px;
+	margin-left:		15px;
+	text-indent:		-15px;
+}
+
+.dh-music-block-history-item {
+	margin-left:		15px;
+	text-indent:		-15px;
+}
+
+#dhAccountStatus {
+	background-color:	#fbfadc;
+	border:				1px solid #cccc99;
+	font-size:			12px;
+}
+
+.dh-account-status-secondary {
+	font-size:			12px;
+}
+
+.dh-account-status-primary {
+	font-size:			16px;
+}
+
+#dhDownloadMessage {
+	font-size:			14px;
+	font-weight:		bold;
+}
+
+#dhAccountDisabled {
+	font-size:			14px;
 	font-weight:		bold;
 }

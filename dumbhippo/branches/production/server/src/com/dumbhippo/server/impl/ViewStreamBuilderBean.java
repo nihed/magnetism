@@ -21,7 +21,6 @@ import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.views.FeedView;
 import com.dumbhippo.server.views.ObjectView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.ViewStream;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -55,9 +54,9 @@ public class ViewStreamBuilderBean implements ViewStreamBuilder {
 		else if (object instanceof Group)
 			return groupSystem.getGroupView(viewpoint, (Group)object);
 		else if (object instanceof Person)
-			return personViewer.getPersonView(viewpoint, (Person)object, PersonViewExtra.PRIMARY_RESOURCE);
+			return personViewer.getPersonView(viewpoint, (Person)object);
 		else if (object instanceof Resource)
-			return personViewer.getPersonView(viewpoint, (Resource)object, PersonViewExtra.PRIMARY_RESOURCE);
+			return personViewer.getPersonView(viewpoint, (Resource)object);
 		else if (object instanceof Post)
 			return postingBoard.getPostView(viewpoint, (Post)object);
 		else

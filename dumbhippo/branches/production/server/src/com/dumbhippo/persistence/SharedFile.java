@@ -44,8 +44,12 @@ public class SharedFile extends EmbeddedGuidPersistable {
 			Collection<User> users) {
 		this();
 		
-		if (creator == null || mimeType == null || sizeInBytes < 0)
-			throw new IllegalArgumentException("bad args to SharedFile constructor");
+		if (creator == null)
+			throw new IllegalArgumentException("SharedFile constructor requires a creator");
+		if (mimeType == null)
+			throw new IllegalArgumentException("SharedFile constructor requires a mime type");
+		if (sizeInBytes < 0)
+			throw new IllegalArgumentException("SharedFile constructor requires sizeInBytes >= 0");
 		
 		this.creator = creator;
 		this.name = name;

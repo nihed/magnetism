@@ -42,6 +42,7 @@ struct _HippoCanvasMessagePreview {
     HippoActions *actions;
     unsigned int hushed : 1;
 
+    HippoCanvasItem *icon;
     HippoCanvasItem *message_text;
     HippoCanvasItem *entity_name;
     HippoCanvasItem *time_ago;
@@ -206,14 +207,17 @@ hippo_canvas_message_preview_constructor (GType                  type,
                  "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                  NULL);
     
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                        "image-name", "chat",
-                        "xalign", HIPPO_ALIGNMENT_START,
-                        "yalign", HIPPO_ALIGNMENT_CENTER,
-                        "border-right", 4,
-                        NULL);
+    /* We set the height explicitly, because 2/3 of our icons are 11x11,
+     * and one is 11x12. Forcing the height to 12px should ensure that we
+     * don't resize based on the sentiment */
+    message_preview->icon = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                                         "xalign", HIPPO_ALIGNMENT_START,
+                                         "yalign", HIPPO_ALIGNMENT_CENTER,
+                                         "box-height", 12,
+                                         "border-right", 4,
+                                         NULL);
     
-    hippo_canvas_box_append(box, item, 0);
+    hippo_canvas_box_append(box, message_preview->icon, 0);
     
     message_preview->message_text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                                  "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
@@ -286,6 +290,7 @@ static void
 hippo_canvas_message_preview_update(HippoCanvasMessagePreview *message_preview)
 {
     HippoChatMessage *message = message_preview->message;
+    const char *icon_name = NULL;
     
     g_object_set(G_OBJECT(message_preview->message_text),
                  "text", message ? hippo_chat_message_get_text(message) : NULL,
@@ -293,6 +298,25 @@ hippo_canvas_message_preview_update(HippoCanvasMessagePreview *message_preview)
     g_object_set(G_OBJECT(message_preview->entity_name),
                  "entity", message ? hippo_chat_message_get_person(message) : NULL,
                  NULL);
+
+    if (message) {
+        switch (hippo_chat_message_get_sentiment(message)) {
+        case HIPPO_SENTIMENT_INDIFFERENT:
+            icon_name = "chat";
+            break;
+        case HIPPO_SENTIMENT_LOVE:
+            icon_name = "quiplove_icon";
+            break;
+        case HIPPO_SENTIMENT_HATE:
+            icon_name = "quiphate_icon";
+            break;
+        }
+    }
+    
+    g_object_set(message_preview->icon,
+                 "image-name", icon_name,
+                 NULL);
+    
     update_time(message_preview);
 }
 

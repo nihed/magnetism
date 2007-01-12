@@ -13,7 +13,6 @@
 #include "HippoListenerProxy.h"
 #include "HippoLogWindow.h"
 #include "HippoUpgrader.h"
-#include "HippoExternalBrowser.h"
 #include "HippoRemoteWindow.h"
 #include "HippoMusic.h"
 #include "HippoUIUtil.h"
@@ -66,7 +65,6 @@ public:
     STDMETHODIMP ShareLink(BSTR url, BSTR title, IHippoToolbarAction *actions);
     STDMETHODIMP ShowChatWindow(BSTR postId);
     STDMETHODIMP GetLoginId(BSTR *result);
-    STDMETHODIMP GetChatRoom(BSTR postId, IHippoChatRoom **result);
     STDMETHODIMP DoUpgrade();
     STDMETHODIMP ShareLinkComplete(BSTR postId, BSTR url);
 
@@ -89,7 +87,7 @@ public:
     HippoConnection *getConnection();
 
     void showMenu(UINT buttonFlag);
-    HippoExternalBrowser *launchBrowser(BSTR url);
+    void launchBrowser(BSTR url);
     void displaySharedLink(BSTR postId, BSTR url);
 
     void ignorePost(BSTR postId);
@@ -110,14 +108,10 @@ public:
     int getRecentMessageCount();
 
     bool isGroupChatActive(HippoGroup *group);
+
     bool isShareActive(HippoPost *post);
 
     void getRemoteURL(BSTR appletName, BSTR *result) throw (std::bad_alloc, HResultException);
-    void getAppletPath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResultException);
-    void getAppletURL(BSTR appletName, BSTR *result) throw (std::bad_alloc, HResultException);
-
-    void showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser);
-
     void getImagePath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResultException);
 
     void registerMessageHook(HWND window, HippoMessageHook *hook);
@@ -148,11 +142,6 @@ private:
     void showSignInWindow();
     void showPreferences();
 
-    // Register an "internal" browser instance that we don't want
-    // to allow sharing of, and that we quit when the HippoUI
-    // instance exits
-    void addInternalBrowser(HippoExternalBrowser *browser, bool closeOnQuit);
-
     bool crackUrl(BSTR url, URL_COMPONENTS *components);
     // Check if an URL points to our site (and not to /visit)
     bool isSiteURL(BSTR url);
@@ -161,6 +150,10 @@ private:
     // Check if an URL points to /account, or another page that we
     // want to avoid framing
     bool isNoFrameURL(BSTR url);
+
+    bool needOldIELaunch();
+    void launchNewBrowserOldIE(BSTR url);
+    void launchNewBrowserGeneric(BSTR url);
 
     static int idleHotnessBlink(gpointer data);
 
@@ -257,7 +250,6 @@ private:
 
     HippoUIUpgradeWindowCallback *upgradeWindowCallback_;
 
-    HippoArray<HippoPtr<HippoExternalBrowser> > internalBrowsers_;
     HippoArray<HippoBrowserInfo> browsers_;
     std::vector<HippoPtr<HippoListenerProxy> > listeners_;
 

@@ -12,12 +12,13 @@
 }
 
 .dh-form-table .dh-label-cell {
-	padding-right:	10px;
 	text-align:     right;
 	width:			170px;
 }
 
 #dhAccounts .dh-label-cell {
+	padding-left:	5px;
+	padding-right:	10px;
 	text-align:     left;
 	width:          90px;
 }
@@ -47,6 +48,10 @@
 
 .dh-form-table .dh-spacer-row {
 	height:			3px;
+}
+
+.dh-form-table .dh-box-spacer {
+	width:			10px;
 }
 
 #dhAccountInfoForm .dh-form-table .dh-spacer-row {
@@ -195,3 +200,17 @@ tr.dh-email-address-spacer {
     bottom:        -4px;
 }
 
+#dhAccounts .dh-love-hate-instruction-editing {
+	padding-top:	5px;
+	padding-bottom:	5px;
+}
+
+#dhAccounts .dh-label-cell .dh-love-hate-editing {
+	padding-top:	5px;
+	padding-bottom:	5px;
+}
+
+#dhAccounts .dh-control-cell .dh-love-hate-editing {
+	padding-top:	5px;
+	padding-bottom:	5px;
+}

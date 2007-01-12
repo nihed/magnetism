@@ -52,7 +52,6 @@ import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
-import com.dumbhippo.web.DisabledSigninBean;
 import com.dumbhippo.web.LoginCookie;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.UserSigninBean;
@@ -243,14 +242,19 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 						return null;
 					s = s.trim();
 					URL url;
-					try {
-						url = new URL(s);
-					} catch (MalformedURLException e) {
-						if (!s.startsWith("http://")) {
-							// let users type just "example.com" instead of "http://example.com"
-							return marshal(viewpoint, "http://" + s);	
-						} else {
-							throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Invalid URL: '" + s + "'");
+					
+					if (s.length() == 0) {
+						url = null;
+					} else {
+						try {
+							url = new URL(s);
+						} catch (MalformedURLException e) {
+							if (!s.startsWith("http://")) {
+								// let users type just "example.com" instead of "http://example.com"
+								return marshal(viewpoint, "http://" + s);	
+							} else {
+								throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Invalid URL: '" + s + "'");
+							}
 						}
 					}
 					return url;
@@ -805,12 +809,8 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		// if the method doesn't specifically allow disabled accounts, we treat 
 		// the request as anonymous instead of as from a user viewpoint
 		
-		if (signin instanceof UserSigninBean) {
+		if ((m.isAllowsDisabledAccount() || signin.isActive()) && signin instanceof UserSigninBean)
 			userViewpoint = ((UserSigninBean)signin).getViewpoint();
-		} else if (m.isAllowsDisabledAccount() && 
-				signin instanceof DisabledSigninBean) {
-			userViewpoint = new UserViewpoint(((DisabledSigninBean)signin).getDisabledUser());
-		}
 		
 		if (userViewpoint == null && m.isNeedsUserViewpoint()) {
 			throw new XmlMethodException(XmlMethodErrorCode.NOT_LOGGED_IN, "You need to be signed in to call this");

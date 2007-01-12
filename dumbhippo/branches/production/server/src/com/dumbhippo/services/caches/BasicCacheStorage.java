@@ -34,7 +34,7 @@ public class BasicCacheStorage<KeyType, ResultType, EntityType extends CachedIte
 			long now = System.currentTimeMillis();
 			Date lastUpdated = result.getLastUpdated();
 			if (lastUpdated == null || ((lastUpdated.getTime() + getExpirationTime()) < now)) {
-				throw new NotCachedException();
+				throw new ExpiredCacheException();
 			}
 		
 			logger.debug("Have cached result for key {}: {}", result, key);

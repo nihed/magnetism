@@ -2,7 +2,7 @@
 
 PROJECT=Mugshot
 
-DIRECTORIES="Applets dependencies HippoExplorer HippoShellExt HippoUI HippoUtil loudmouth TestLoudmouth WiXInstaller"
+DIRECTORIES="dependencies HippoExplorer HippoShellExt HippoUI HippoUtil Images loudmouth TestLoudmouth WiXInstaller"
 
 version=`grep VERSION HippoUI/Version.h  | sed 's/[^"]*"\([^"]*\).*/\1/'`
 

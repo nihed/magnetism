@@ -27,7 +27,7 @@ dh.server.get = function(name, params, loadFunc, errorFunc, how, what) {
 	else if (how == "POST" && what == null)
 		root = dhPostRoot;
 	else {
-		dojo.debug("don't know how to get that: " + what);
+		dh.debug("don't know how to get that: " + what);
 		return;
 	}
 	

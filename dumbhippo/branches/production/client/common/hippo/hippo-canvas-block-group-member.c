@@ -210,7 +210,7 @@ hippo_canvas_block_group_member_constructor (GType                  type,
     hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(canvas_group_member->invite_parent), 0);
     
     canvas_group_member->invite_image = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
-                                                     "image-name", "add_icon",
+                                                     "normal-image-name", "add_icon",
                                                      "xalign", HIPPO_ALIGNMENT_CENTER,
                                                      "yalign", HIPPO_ALIGNMENT_CENTER,
                                                      NULL);

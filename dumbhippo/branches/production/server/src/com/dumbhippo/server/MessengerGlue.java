@@ -4,12 +4,12 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.Sentiment;
 
 @Local
 public interface MessengerGlue {
@@ -156,8 +156,6 @@ public interface MessengerGlue {
 	 */
 	public ChatRoomUser getChatRoomUser(String roomName, ChatRoomKind kind, String username);
 	
-	public Set<ChatRoomUser> getChatRoomRecipients(String roomName, ChatRoomKind kind);
-	
 	/**
 	 * Get the information needed to manage a chatroom for a post.
 	 * 
@@ -191,8 +189,9 @@ public interface MessengerGlue {
 	 * @param userName the GUID of the user posting the message, in jabber node form
 	 * @param text the text of the message
 	 * @param timestamp the timestamp for the message
+	 * @param sentiment the sentiment of the message INDIFFERENT=Chat LOVE/HATE=Quip
 	 */
-	public void addChatRoomMessage(String roomName, ChatRoomKind kind, String userName, String text, Date timestamp);
+	public void addChatRoomMessage(String roomName, ChatRoomKind kind, String userName, String text, Sentiment sentiment, Date timestamp);
 	
 	/**
 	 * Get current music info for a given user.

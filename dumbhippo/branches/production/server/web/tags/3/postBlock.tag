@@ -37,7 +37,7 @@
 		</c:if>
 		<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>
 		<dht3:blockControls blockId="${blockId}">
-			<c:if test="${signin.valid}">
+			<c:if test="${signin.active}">
 				<jsp:element name="a">
 			  	  <jsp:attribute name="href">javascript:dh.util.openShareLinkWindow(<dh:jsString value="${block.postView.post.url}"/>, <dh:jsString value="${block.postView.post.title}"/>);</jsp:attribute>
 			  	  <jsp:body>Share this</jsp:body>

@@ -2,15 +2,22 @@ package com.dumbhippo.services;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.PatternLayout;
 import org.slf4j.Logger;
 
 import com.dumbhippo.DateUtils;
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.server.NotFoundException;
 import com.sun.syndication.feed.synd.SyndFeed;
 import com.sun.syndication.fetcher.FetcherException;
 import com.sun.syndication.fetcher.impl.FeedFetcherCache;
@@ -121,16 +128,30 @@ public class FeedFetcher {
 		}
 	}
 	
-	private static Date getFeedModifiedDate(SyndFeedInfo info) {
+	private static Date getFeedModifiedDate(SyndFeedInfo info) throws NotFoundException {
 		// Clearly, they thought "Well, we don't have a class handy to parse HTTP dates.  Let's
 		// just punt this to our users.  And to add to the pain, we'll make the method return
 		// Object so they have to go digging in the source to find out what it will return!  Exccccellent."
 		Object modifiedObj = info.getLastModified();
-		if (modifiedObj instanceof Long)
-			return new Date(((Long) modifiedObj).longValue());
-		if (!(modifiedObj instanceof String))
+		Date date;
+		if (modifiedObj == null) {
+			throw new NotFoundException("Modification date not present in feed");
+		} else if (modifiedObj instanceof Long) {
+			long l = ((Long) modifiedObj).longValue();
+			if (l <= 0)
+				throw new NotFoundException("Failed to parse date '" + l + "'");
+			date = new Date(l);
+		} else if (!(modifiedObj instanceof String)) {
 			throw new RomeAPIDesignerInsanityException("last modified object isn't a Long or String; giving up");
-		return new Date(DateUtils.parseHttpDate((String) modifiedObj));		
+		} else {
+			try {
+				date = new Date(DateUtils.parseHttpDate((String) modifiedObj));
+			} catch (ParseException e) {
+				throw new NotFoundException("Failed to parse date '" + modifiedObj + "'", e);
+			}
+		}
+		
+		return date;
 	}
 	
 	public static FeedFetchResult getFeed(URL url) throws FetchFailedException {
@@ -143,23 +164,104 @@ public class FeedFetcher {
 		// See if we have the feed cached
 		Date lastModified = null;
 		SyndFeedInfo info = getCache().getFeedInfo(url);
-		if (info != null)
-			lastModified = getFeedModifiedDate(info);
+		if (info != null) {
+			try {
+				lastModified = getFeedModifiedDate(info);
+			} catch (NotFoundException e1) {
+				lastModified = null;
+			}
+		}
 		
 		try {
 			SyndFeed feed = new HttpURLFeedFetcher(getCache()).retrieveFeed(url);
 			// Now check whether the feed changed
 			info = getCache().getFeedInfo(url);			
-			Date currentModified = getFeedModifiedDate(info);
+			Date currentModified;
+			try {
+				currentModified = getFeedModifiedDate(info);
+			} catch (NotFoundException e1) {
+				logger.debug("Failed to parse a current-modified date for feed {}: {}", url, e1.getMessage());
+				currentModified = new Date();
+			}
+			
+			try {
+				if (lastModified != null) {
+					long now = System.currentTimeMillis();
+					
+					/* Print some debug logging if this looks fishy since we do some bizarre modified date parsing */
+					long lastBeforeNow = now - lastModified.getTime();
+					
+					if (lastBeforeNow > 1000 * 60 * 60 * 48 || lastBeforeNow < - 1000 * 60 * 60 * 24) {
+						logger.debug("Possibly suspicious last modified date {} on {}", lastModified, url.toExternalForm());
+						logger.debug("{} hours before now", lastBeforeNow / 1000.0 / 60.0 / 60.0);
+					}
+					
+					long currentBeforeNow = now - currentModified.getTime();
+					if (currentBeforeNow > 1000 * 60 * 60 * 36 || currentBeforeNow < - 1000 * 60 * 60 * 24) {
+						logger.debug("Possibly suspicious current modified date {} on {}", currentModified, url.toExternalForm());
+						logger.debug("Raw current '{}'", info.getLastModified());
+						logger.debug("{} hours before now", currentBeforeNow / 1000.0 / 60.0 / 60.0);
+					}
+					
+					long currentAfterLast = currentModified.getTime() - lastModified.getTime();
+					
+					if (currentAfterLast < 0 || currentAfterLast > 1000 * 60 * 60 * 48) {
+						logger.debug("Possibly suspicious current modified date {} vs. last modified date {} on feed: " + url.toExternalForm(),
+								currentModified, lastModified);
+						logger.debug("Raw current '{}'", info.getLastModified());
+						logger.debug("current is {} hours after last", currentAfterLast / 1000.0 / 60.0 / 60.0);
+					}
+				}
+			} catch (Exception e) {
+				// don't want the above code to break anything
+				logger.warn("Feed date sanity-checking code is broken, but continuing anyway: {}", e.getMessage());
+			}
+			
 			return new FeedFetchResultImpl(feed, lastModified == null ? true : currentModified.after(lastModified));
 		} catch (IllegalArgumentException e) {
 			throw new RuntimeException(e);
 		} catch (IOException e) {
-			throw new FetchFailedException(e); 
+			throw new FetchFailedException(e);
 		} catch (FeedException e) {
 			throw new FetchFailedException(e);			
 		} catch (FetcherException e) {
 			throw new FetchFailedException(e);			
 		}
+	}
+	
+	public static void main(String[] args) {
+		org.apache.log4j.Logger log4jRoot = org.apache.log4j.Logger.getRootLogger();
+		ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%d %-5p [%c] (%t): %m%n"));
+		log4jRoot.addAppender(appender);
+		log4jRoot.setLevel(Level.DEBUG);
+
+		FeedFetchResult result;
+		try {
+			result = FeedFetcher.getFeed(new URL("http://planet.classpath.org/rss20.xml"));
+		} catch (MalformedURLException e) {
+			logger.error("Malformed url {}", e.getMessage());
+			System.exit(1);
+			return;
+		} catch (FetchFailedException e) {
+			logger.error("Fetch failed {}", ExceptionUtils.getRootCause(e).getMessage());
+			System.exit(1);
+			return;
+		}
+		
+		logger.debug("Result 1: modified = {}, {}", result.isModified(), result.getFeed());
+		
+		try {
+			result = FeedFetcher.getFeed(new URL("http://planet.classpath.org/rss20.xml"));
+		} catch (MalformedURLException e) {
+			logger.error("Malformed url {}", e.getMessage());
+			System.exit(1);
+			return;
+		} catch (FetchFailedException e) {
+			logger.error("Fetch failed {}", ExceptionUtils.getRootCause(e).getMessage());
+			System.exit(1);
+			return;
+		}
+
+		logger.debug("Result 2: modified = {}, {}", result.isModified(), result.getFeed());
 	}
 }

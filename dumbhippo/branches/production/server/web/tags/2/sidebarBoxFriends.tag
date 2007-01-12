@@ -22,11 +22,11 @@
 		<c:choose>
 			<c:when test="${person.contacts.size > 0}">
 				<c:forEach items="${person.contacts.list}" end="2" var="person">
-					<dht:personItem who="${person}" invited="true"/>
+					<dht:personItem who="${person}"/>
 				</c:forEach>
 				<c:choose>				
 				    <c:when test="${person.contacts.size > 3}">
-					    <dht:moreLink moreName="ALL ${title} (${person.viewedPerson.liveUser.contactsCount})" more="${url}"/>
+					    <dht:moreLink moreName="ALL ${title} (${person.viewedPerson.liveUser.userContactsCount})" more="${url}"/>
 				    </c:when>
 				    <c:when test="${(person.followers.size > 0) && selfView}">
 					    <dht:moreLink moreName="ALL YOUR FOLLOWERS (${person.followers.size})" more="${url}"/>

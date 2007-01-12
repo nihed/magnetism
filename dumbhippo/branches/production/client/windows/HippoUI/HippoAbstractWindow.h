@@ -79,7 +79,10 @@ public:
 
     int getHeight();
 
+    HWND getWindow() { return window_; }
+
     bool isCreated() { return created_; }
+    bool isDestroyed() { return destroyed_; }
 
     bool isShowing() { return showing_; }
 

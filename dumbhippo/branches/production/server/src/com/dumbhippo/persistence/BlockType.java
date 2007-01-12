@@ -20,7 +20,12 @@ public enum BlockType {
 	},
 	GROUP_MEMBER, // 1
 	GROUP_CHAT, // 2
-	MUSIC_PERSON, // 3
+	MUSIC_PERSON { // 3
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}
+	},
 	/** This is just placeholding a historically-used ordinal that should not be 
 	 * reused to avoid database confusion.
 	 */
@@ -30,9 +35,16 @@ public enum BlockType {
 	 */
 	OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF, // 5
 	
-	BLOG_PERSON { // 6
+	/** This is just placeholding a historically-used ordinal that should not be 
+	 * reused to avoid database confusion.
+	 */
+	OBSOLETE_BLOG_PERSON { // 6
 		@Override
 		public boolean isAlwaysPublic() {
+			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
 			return true;
 		}		
 	},
@@ -41,6 +53,10 @@ public enum BlockType {
 		public StackInclusion getDefaultStackInclusion() {
 			return null;
 		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}		
 	},
 	FACEBOOK_EVENT { // 8
 		@Override
@@ -54,6 +70,10 @@ public enum BlockType {
 		public boolean isAlwaysPublic() {
 			return true;
 		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}		
 	},
 	FLICKR_PHOTOSET { // 10
 		// Right now we only get completely public Flickr photosets
@@ -67,13 +87,94 @@ public enum BlockType {
 		public boolean isAlwaysPublic() {
 			return true;
 		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}		
 	},
 	MYSPACE_PERSON { // 12
 		@Override
 		public boolean isAlwaysPublic() {
 			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
 		}		
+	},
+	MUSIC_CHAT { // 13
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}		
+	},
+	BLOG_ENTRY { // 14
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}
+	},
+	DELICIOUS_PUBLIC_BOOKMARK { // 15
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}
+	},
+	TWITTER_PERSON { // 16
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}		
+	},
+	// an item from the Digg "stuff you Dugg" feed
+	DIGG_DUGG_ENTRY { // 17
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}		
+	},
+	// an item from the Reddit Overview feed, which is your comments and submissions both
+	REDDIT_ACTIVITY_ENTRY { // 18
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}
+	},
+	// a revision to a group's attributes
+	GROUP_REVISION { // 19
+		
+				
 	};
+	
+	// True for blocks which are originated by a user and the
+	// user guid is stored in the block data1
+	public boolean userOriginIsData1() { 
+		return false; 
+	}
 	
 	// returns true if all blocks of this type are always public,
 	// regardless of their content/specifics

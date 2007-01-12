@@ -44,7 +44,6 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.ServerStatus;
 import com.dumbhippo.server.impl.ConfigurationBean;
-import com.dumbhippo.web.DisabledSigninBean;
 import com.dumbhippo.web.JavascriptResolver;
 import com.dumbhippo.web.RewrittenRequest;
 import com.dumbhippo.web.SigninBean;
@@ -304,6 +303,12 @@ public class RewriteServlet extends HttpServlet {
 			return;
 		}
 		
+		// see for example http://www.p3pwriter.com/LRN_111.asp
+		// This is a partial machine-readable encoding of 
+		// the privacy policy that allows our login cookie
+		// to work in an iframe when using IE.
+		response.setHeader("P3P", "CP=\"CAO PSA OUR\"");
+		
 		// The root URL is special-cased, we forward it depending
 		// on whether the user is signed in and depending on our
 		// configuration.
@@ -379,40 +384,22 @@ public class RewriteServlet extends HttpServlet {
 		SigninBean signin = SigninBean.getForRequest(request);
 		boolean doSigninRedirect;
 		
-		// we-miss-you and download are special because they convert from
-		// DisabledSigninBean to UserSigninBean
-		if (afterSlash.equals("we-miss-you")) {
-			if ((signin instanceof DisabledSigninBean) && signin.isDisabled())
-				doSigninRedirect = false;
-			else
-				doSigninRedirect = !signin.isValid();
-		} else if (afterSlash.equals("download")) {
-			if ((signin instanceof DisabledSigninBean) && signin.getNeedsTermsOfUse())
-				doSigninRedirect = false;
-			else
-				doSigninRedirect = !signin.isValid();
-		} else if (afterSlash.equals("who-are-you") && (signin instanceof DisabledSigninBean) && signin.getNeedsTermsOfUse()) {
-			// don't allow the person to request a sign in link, redirect them to the
-			// download page right away
-            doSigninRedirect = true;
-		} else {
-			boolean isRequiresSignin = requiresSignin.contains(afterSlash); 
-			boolean isRequiresSigninStealth = requiresSigninStealth.contains(afterSlash);
-			boolean isNoSignin = noSignin.contains(afterSlash);
-	
-			// We force the page to be in one of our configuration parameters,
-			// since otherwise, its too easy to forget to update the configuration
-			// parameters, even with the warnings we output below.
-			if (!isRequiresSignin && !isRequiresSigninStealth && !isNoSignin) {
-				logger.warn("Page signin requirements not specified");
-				response.sendError(HttpServletResponse.SC_NOT_FOUND);
-				return;
-			}
-			
-			doSigninRedirect = (isRequiresSignin || (stealthMode && isRequiresSigninStealth)) && 
-							   !signin.isValid();
+		boolean isRequiresSignin = requiresSignin.contains(afterSlash); 
+		boolean isRequiresSigninStealth = requiresSigninStealth.contains(afterSlash);
+		boolean isNoSignin = noSignin.contains(afterSlash);
+
+		// We force the page to be in one of our configuration parameters,
+		// since otherwise, its too easy to forget to update the configuration
+		// parameters, even with the warnings we output below.
+		if (!isRequiresSignin && !isRequiresSigninStealth && !isNoSignin) {
+			logger.warn("Page signin requirements not specified");
+			response.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return;
 		}
 		
+		doSigninRedirect = (isRequiresSignin || (stealthMode && isRequiresSigninStealth)) && 
+						   !signin.isValid();
+
 		// If this is a request to one of the pages configured as requiresLogin,
 		// and the user isn't signed in, go to /who-are-you, storing the real
 		// destination in the query string. This only works for GET, since we'd
@@ -420,21 +407,11 @@ public class RewriteServlet extends HttpServlet {
 		
 		if (doSigninRedirect && request.getMethod().toUpperCase().equals("GET")) {
 			
-			String url;
-			if (signin instanceof DisabledSigninBean) {
-				DisabledSigninBean disabledSignin = (DisabledSigninBean)signin;
-				if (disabledSignin.getNeedsTermsOfUse())
-					url = response.encodeRedirectURL("/download?acceptMessage=true");
-				else if (disabledSignin.isDisabled())
-					url = response.encodeRedirectURL("/we-miss-you?next=" + afterSlash);
-				else
-					throw new RuntimeException("DisabledSigninBean has no reason for being disabled");
-			} else {
-				url = response.encodeRedirectURL("/who-are-you?next=" + afterSlash);
-				if (stealthMode && requiresSigninStealth.contains(afterSlash)) {
-					url = url + "&wouldBePublic=true";
-				}
+			String url = response.encodeRedirectURL("/who-are-you?next=" + afterSlash);
+			if (stealthMode && requiresSigninStealth.contains(afterSlash)) {
+				url = url + "&wouldBePublic=true";
 			}
+
 			response.sendRedirect(url);
 			return;
 		}

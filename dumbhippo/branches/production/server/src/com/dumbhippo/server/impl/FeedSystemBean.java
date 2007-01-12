@@ -39,6 +39,8 @@ import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupFeed;
+import com.dumbhippo.persistence.GroupFeedAddedRevision;
+import com.dumbhippo.persistence.GroupFeedRemovedRevision;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.PollingTaskEntry;
 import com.dumbhippo.persistence.PollingTaskFamilyType;
@@ -51,6 +53,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
@@ -87,6 +90,9 @@ public class FeedSystemBean implements FeedSystem {
 	
 	@EJB
 	private PollingTaskPersistence pollingPersistence;
+	
+	@EJB
+	private RevisionControl revisionControl;
 	
 	private static ExecutorService notificationService;
 	private static boolean shutdown = false;
@@ -139,7 +145,7 @@ public class FeedSystemBean implements FeedSystem {
 			// potentially-user-visible XmlMethodException
 			logger.warn("Exception retrieving feed was {}: '{}' on url " + url, e.getClass().getName(), e.getMessage());
 			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR,
-					"Error fetching feed " + url);
+					"Error fetching feed " + url + ": " + e.getMessage());
 		}
 	}
 	
@@ -173,18 +179,18 @@ public class FeedSystemBean implements FeedSystem {
 		}
 		
 		if (isDefinitelyText)
-			return prepPlainText(content.getValue());
+			return prepPlainText(content.getValue()).trim();
 		else
-			return HtmlTextExtractor.extractText(content.getValue());
+			return HtmlTextExtractor.extractText(content.getValue()).trim();
 	}
 
-	private URL entryURLFromSyndEntry(SyndEntry syndEntry) throws MalformedURLException {
+	private URL entryURLFromSyndEntry(URL baseUrl, SyndEntry syndEntry) throws MalformedURLException {
 		String entryLink = syndEntry.getLink();
 		if (entryLink == null)
 			throw new MalformedURLException("No link in synd entry");
 		entryLink = entryLink.trim();
 		
-		return new URL(entryLink);
+		return new URL(baseUrl, entryLink);
 	}
 	
 	private static class NoEntryGuidException extends Exception {
@@ -194,7 +200,7 @@ public class FeedSystemBean implements FeedSystem {
 	private String makeEntryGuid(SyndEntry syndEntry) throws NoEntryGuidException {
 		String guid = syndEntry.getUri();
 		// Null does occur in practice, if rarely, we just silently such entries
-		// assuming that they won't be interesting things to post in any case
+		// assuming that they won't be interesting things to post in any case. 
 		if (guid == null) 
 			throw new NoEntryGuidException();
 		
@@ -205,7 +211,7 @@ public class FeedSystemBean implements FeedSystem {
 	}
 	
 	private FeedEntry createEntryFromSyndEntry(Feed feed, SyndFeed syndFeed, SyndEntry syndEntry) throws MalformedURLException {
-		URL entryUrl = entryURLFromSyndEntry(syndEntry);
+		URL entryUrl = entryURLFromSyndEntry(new URL(feed.getLink().getUrl()), syndEntry);
 		
 		FeedEntry entry = null;
 		
@@ -267,7 +273,7 @@ public class FeedSystemBean implements FeedSystem {
 		if (publishedDate != null)
 			entry.setDate(publishedDate);
 		else {
-			logger.warn("Failed to retrieve date from feed {}", feed.getSource().getUrl());
+			logger.warn("Failed to retrieve date from feed entry on {}", feed.getSource().getUrl());
 			entry.setDate(new Date());
 		}
 		
@@ -283,7 +289,11 @@ public class FeedSystemBean implements FeedSystem {
 			logger.warn("processExternalAccountFeed called for TrackFeedEntry {}, but no accounts associated with feed", entry);
 		}		
 		
+		logger.debug("Processing external accounts for new feed entry {}", entry);
+		
 		for (ExternalAccount external : entry.getFeed().getAccounts()) {
+			
+			logger.debug("External account {}", external);
 			
 			User owner = external.getAccount().getOwner();
 			
@@ -428,15 +438,26 @@ public class FeedSystemBean implements FeedSystem {
 				// not already there, we are good to go
 			}
 			
+			long now = System.currentTimeMillis();
 			try {
 				FeedEntry entry = createEntryFromSyndEntry(feed, syndFeed, syndEntry);
 				em.persist(entry);
-				// if this feed is associated with some external account(s), this function will take 
-				// care of what needs to happen
-				processFeedExternalAccounts(entry, entryPosition++);
+				
+				long age = now - entry.getDate().getTime();
+				
+				// never create/stack blocks for stuff older than 14 days, prevents 
+				// a huge deluge of old crap if people change how their blog works 
+				if (age < 1000 * 60 * 60 * 24 * 7 * 2) {
+					// if this feed is associated with some external account(s), this function will take 
+					// care of what needs to happen
+					processFeedExternalAccounts(entry, entryPosition++);
+					// these newEntryIds get posted to subscribed groups
+					newEntryIds.add(entry.getId());
+				} else {
+					logger.debug("Feed entry {} too old - not stacking", entry, entry.getDate());
+				}
 				
 				foundGuids.add(guid);
-				newEntryIds.add(entry.getId());
 				
 				logger.debug("  Found new Feed entry: {}", entry.getTitle());
 			} catch (MalformedURLException e) {
@@ -485,11 +506,19 @@ public class FeedSystemBean implements FeedSystem {
 				}
 			});
 		} else {
-			logger.debug("  No new entries for feed {}", feed.getSource());
+			logger.debug("  No new entries to process for feed {}", feed.getSource());
 		}
 	}
 	
-	public Feed getFeed(final LinkResource source) throws XmlMethodException {
+	public Feed getExistingFeed(final LinkResource source) throws XmlMethodException {
+		Feed feed = lookupExistingFeed(source);
+		if (feed != null)
+			return feed;
+		else
+			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "No such feed: " + source.getUrl());
+	}
+	
+	public Feed getOrCreateFeed(final LinkResource source) throws XmlMethodException {
 		Feed feed = lookupExistingFeed(source);
 		if (feed != null)
 			return feed;
@@ -500,7 +529,7 @@ public class FeedSystemBean implements FeedSystem {
 		try {
 			return runner.runTaskThrowingConstraintViolation(new Callable<Feed>() {
 				
-				public Feed call() throws Exception {
+				public Feed call() throws XmlMethodException {
 					Feed newFeed = lookupExistingFeed(source);
 					if (newFeed != null) // Someone else already looked it up and stored it
 						return newFeed;
@@ -508,7 +537,12 @@ public class FeedSystemBean implements FeedSystem {
 					newFeed = new Feed(source);
 					em.persist(newFeed);
 										
-					initializeFeedFromSyndFeed(newFeed, syndFeed);
+					try {
+						initializeFeedFromSyndFeed(newFeed, syndFeed);
+					} catch (FeedLinkUnknownException e) {
+						throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR,
+								"The feed is missing a <link> field, " + e.getMessage());
+					}
 					
 					pollingPersistence.createTask(PollingTaskFamilyType.FEED, newFeed.getSource().getId());
 					
@@ -597,7 +631,9 @@ public class FeedSystemBean implements FeedSystem {
 			SyndEntry syndEntry = (SyndEntry)o;
 			URL entryUrl;
 			try {
-				entryUrl = entryURLFromSyndEntry(syndEntry);
+				if (syndFeed.getLink() == null)
+					throw new MalformedURLException("missing link for synd feed");
+				entryUrl = entryURLFromSyndEntry(new URL(syndFeed.getLink()), syndEntry);
 				identitySpider.getLink(entryUrl);
 			} catch (MalformedURLException e) {
 				// just ignore, it will break later on
@@ -720,10 +756,13 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 
-	public void addGroupFeed(Group group, Feed feed) {
+	public void addGroupFeed(User adder, Group group, Feed feed) {
 		for (GroupFeed old : group.getFeeds()) {
 			if (old.getFeed().equals(feed)) {
-				old.setRemoved(false);
+				if (old.isRemoved()) {
+					old.setRemoved(false);
+					revisionControl.persistRevision(new GroupFeedAddedRevision(adder, group, new Date(), feed));
+				}
 				return;
 			}
 		}
@@ -732,12 +771,17 @@ public class FeedSystemBean implements FeedSystem {
 		em.persist(groupFeed);
 		group.getFeeds().add(groupFeed);
 		feed.getGroups().add(groupFeed);
+		
+		revisionControl.persistRevision(new GroupFeedAddedRevision(adder, group, new Date(), feed));
 	}
 	
-	public void removeGroupFeed(Group group, Feed feed) {
+	public void removeGroupFeed(User remover, Group group, Feed feed) {
 		for (GroupFeed old : group.getFeeds()) {
 			if (old.getFeed().equals(feed)) {
-				old.setRemoved(true);
+				if (!old.isRemoved()) {
+					old.setRemoved(true);
+					revisionControl.persistRevision(new GroupFeedRemovedRevision(remover, group, new Date(), feed));
+				}
 				return;
 			}
 		}
@@ -825,16 +869,16 @@ public class FeedSystemBean implements FeedSystem {
 			try {
 				result = FeedSystemBean.getRawFeed(source);
 			} catch (FeedFetcher.FetchFailedException e) {
-				throw new DynamicPollingSystem.PollingTaskNormalExecutionException(e);
+				throw new DynamicPollingSystem.PollingTaskNormalExecutionException("Feed " + feed.getSource() + " fetch failed: " + e.getMessage(), e);
 			}
 			changed = result.isModified();
 			final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
 			runner.runTaskRetryingOnDuplicateEntry(new Callable<Object>() {
-				public Object call() throws Exception {
+				public Object call() throws DynamicPollingSystem.PollingTaskNormalExecutionException {
 					try {
 						feedSystem.storeRawUpdatedFeed(feed.getId(), result.getFeed());
 					} catch (FeedLinkUnknownException e) {
-						throw new DynamicPollingSystem.PollingTaskNormalExecutionException(e);						
+						throw new DynamicPollingSystem.PollingTaskNormalExecutionException("Feed " + feed.getSource() + " link unknown: " + e.getMessage(), e);						
 					}
 					return null;
 				}

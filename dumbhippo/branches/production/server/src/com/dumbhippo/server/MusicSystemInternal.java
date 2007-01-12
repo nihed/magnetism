@@ -12,6 +12,7 @@ import org.hibernate.lucene.DocumentBuilder;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Track;
+import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
 import com.dumbhippo.server.views.AlbumView;
@@ -36,11 +37,19 @@ import com.dumbhippo.services.YahooSongData;
 public interface MusicSystemInternal
 	extends MusicSystem, ExternalAccountFeedListener {
 
+	/**
+	 * When we get a "native" music update (i.e. one from our XMPP) discard
+	 * updates from other services if the listen time is within this timeout.
+	 * 
+	 * This should hopefully prevent duplicate updates.
+	 */
+	public static final long NATIVE_MUSIC_OVERRIDE_TIME_MS = 15 * 60 * 1000;	
+	
 	public Track getTrack(Map<String,String> properties);
 	
-	public void setCurrentTrack(User user, Track track);
+	public void setCurrentTrack(User user, Track track, boolean isNative);
 
-	public void setCurrentTrack(User user, Map<String,String> properties);
+	public void setCurrentTrack(User user, Map<String,String> properties, boolean isNative);
 	
 	/**
 	 * 
@@ -48,7 +57,7 @@ public interface MusicSystemInternal
 	 * @param user who listened
 	 * @param properties props of the track
 	 */
-	public void addHistoricalTrack(User user, Map<String,String> properties);
+	public void addHistoricalTrack(User user, Map<String,String> properties, boolean isNative);
 	
 	/**
 	 * Add this track as if it were one we have listened to, recording the date on which it was listened.
@@ -57,7 +66,7 @@ public interface MusicSystemInternal
 	 * @param properties props of the track
 	 * @param listenDate milliseconds since the epoch
 	 */	
-	public void addHistoricalTrack(User user, Map<String,String> properties, long listenDate);	
+	public void addHistoricalTrack(User user, Map<String,String> properties, long listenDate, boolean isNative);	
 	
 	/**
 	 * Should be invoked once after setCurrentTrack or addHistoricalTrack are invoked.
@@ -68,11 +77,11 @@ public interface MusicSystemInternal
 		
 	public int countTrackHistory(Viewpoint viewpoint, User user);
 	
-	public TrackView getTrackView(Track track, long lastListen);
+	public TrackView getTrackView(Track track);
 
-	public Future<TrackView> getTrackViewAsync(long trackId, long lastListen);	
+	public Future<TrackView> getTrackViewAsync(long trackId);	
 	
-	public Future<TrackView> getTrackViewAsync(Track track, long lastListen);
+	public Future<TrackView> getTrackViewAsync(TrackHistory trackHistory);
 	
 	public Future<TrackView> getCurrentTrackViewAsync(Viewpoint viewpoint, User user) throws NotFoundException;
 	

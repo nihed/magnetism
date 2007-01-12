@@ -64,6 +64,7 @@ typedef enum {
     HIPPO_CHAT_KIND_UNKNOWN,
     HIPPO_CHAT_KIND_POST,
     HIPPO_CHAT_KIND_GROUP,
+    HIPPO_CHAT_KIND_MUSIC,
     HIPPO_CHAT_KIND_BROKEN
 } HippoChatKind;
 
@@ -75,6 +76,12 @@ typedef enum {
     HIPPO_MEMBERSHIP_STATUS_INVITED,
     HIPPO_MEMBERSHIP_STATUS_ACTIVE
 } HippoMembershipStatus;
+
+typedef enum {
+    HIPPO_SENTIMENT_INDIFFERENT,
+    HIPPO_SENTIMENT_LOVE,
+    HIPPO_SENTIMENT_HATE
+} HippoSentiment;
 
 typedef enum {
     HIPPO_URI_ACTION_BROKEN,
@@ -194,6 +201,10 @@ void     hippo_uri_action_data_free_fields (HippoUriActionData *data);
 /* same strings used in URIs, the xmpp protocol */
 HippoChatKind hippo_parse_chat_kind        (const char   *str);
 const char*   hippo_chat_kind_as_string    (HippoChatKind kind);
+
+gboolean hippo_parse_sentiment(const char     *str,
+                               HippoSentiment *sentiment);
+const char *hippo_sentiment_as_string(HippoSentiment sentiment);
 
 int      hippo_compare_versions            (const char *version_a,
                                             const char *version_b);

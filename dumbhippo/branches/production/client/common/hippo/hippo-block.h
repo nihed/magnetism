@@ -12,13 +12,13 @@ typedef enum {
     HIPPO_BLOCK_TYPE_POST,
     HIPPO_BLOCK_TYPE_GROUP_MEMBER,
     HIPPO_BLOCK_TYPE_GROUP_CHAT,
+    HIPPO_BLOCK_TYPE_MUSIC_CHAT,
     HIPPO_BLOCK_TYPE_MUSIC_PERSON,
-    HIPPO_BLOCK_TYPE_BLOG_PERSON,
     HIPPO_BLOCK_TYPE_FLICKR_PERSON,
     HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET,
     HIPPO_BLOCK_TYPE_FACEBOOK_EVENT,
-    HIPPO_BLOCK_TYPE_YOUTUBE_PERSON,  
-    HIPPO_BLOCK_TYPE_MYSPACE_PERSON     
+    HIPPO_BLOCK_TYPE_YOUTUBE_PERSON,
+    HIPPO_BLOCK_TYPE_GENERIC
 } HippoBlockType;
 
 typedef enum {
@@ -50,6 +50,8 @@ struct _HippoBlock {
     int significant_clicked_count;
     int clicked_count;
     char *icon_url;
+    char *title;
+    char *title_link;
     HippoStackReason stack_reason;
     guint clicked : 1;
     guint ignored : 1;
@@ -107,6 +109,14 @@ HippoStackReason hippo_block_get_stack_reason (HippoBlock      *block);
 void             hippo_block_set_stack_reason (HippoBlock      *block,
                                                HippoStackReason value);
 
+const char* hippo_block_get_title          (HippoBlock *block); 
+void        hippo_block_set_title          (HippoBlock *block,
+                                            const char *title);
+
+const char* hippo_block_get_title_link     (HippoBlock *block); 
+void        hippo_block_set_title_link     (HippoBlock *block,
+                                            const char *title_link);
+
 const char* hippo_block_get_icon_url       (HippoBlock *block); 
 void        hippo_block_set_icon_url       (HippoBlock *block,
                                             const char *icon_url);
@@ -114,7 +124,8 @@ void        hippo_block_set_icon_url       (HippoBlock *block,
 int      hippo_block_compare_newest_first  (gconstpointer block_a,
                                             gconstpointer block_b);
 
-HippoBlockType hippo_block_type_from_string(const char  *s);
+HippoBlockType hippo_block_type_from_attributes(const char  *type,
+                                                const char  *generic_types);
 
 G_END_DECLS
 

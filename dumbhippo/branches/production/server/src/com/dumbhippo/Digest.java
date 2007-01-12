@@ -22,6 +22,14 @@ public class Digest {
 		}
 	}
 	
+	static public MessageDigest newDigestMD5() {
+		try {
+			return MessageDigest.getInstance("MD5");
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("MD5 algorithm provider missing", e);
+		}
+	}
+	
 	static public void update(MessageDigest md, String s) {
 		if (s == null)
 			md.update((byte) 0);
@@ -49,6 +57,10 @@ public class Digest {
 		return StringUtils.hexEncode(md.digest());
 	}
 	
+	static public String digestBase64(MessageDigest md) {
+		return Base64.encode(md.digest());
+	}
+	
 	/**
 	 * Computes a lowercase hex-encoded SHA-1 digest of the 
 	 * given token prepended to the given secret.
@@ -57,7 +69,7 @@ public class Digest {
 	 * @param secret the secret
 	 * @return SHA-1 digest as hex string
 	 */
-	public String computeDigest(String token, String secret) {
+	public static String computeDigest(String token, String secret) {
 		MessageDigest md = newDigest();
 		update(md, token);
 		update(md, secret);
@@ -71,9 +83,34 @@ public class Digest {
 	 * @param data what to digest
 	 * @return SHA-1 digest as hex string
 	 */
-	public String computeDigest(String data) {
+	public static String computeDigest(String data) {
 		MessageDigest md = newDigest();
 		update(md, data);
 		return digest(md);
+	}
+	
+	/**
+	 * Computes a lowercase hex-encoded MD5 digest of the 
+	 * given data.
+	 * 
+	 * @param data what to digest
+	 * @return MD5 digest as hex string
+	 */
+	public static String computeDigestMD5(String data) {
+		MessageDigest md = newDigestMD5();
+		update(md, data);
+		return digest(md);
+	}
+	
+	public static String computeDigestMD5(byte[] data) {
+		MessageDigest md = newDigestMD5();
+		md.update(data);
+		return digest(md);
+	}
+	
+	public static String computeDigestMD5Base64(byte[] data) {
+		MessageDigest md = newDigestMD5();
+		md.update(data);
+		return digestBase64(md);
 	}
 }

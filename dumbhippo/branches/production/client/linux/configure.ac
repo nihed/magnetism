@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(mugshot, 1.1.29)
+AM_INIT_AUTOMAKE(mugshot, 1.1.30)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -476,7 +476,14 @@ AC_SUBST(XPIDL)
 if $sdk_includes_nspr ; then
     NSPR_LIBS="-L $with_gecko_sdk/lib -lnspr4"
 else
-    NSPR_PACKAGES=nspr
+    for pkg in firefox-nspr nspr ; do
+        if test "x$NSPR_PACKAGES" = x ; then
+	    PKG_CHECK_EXISTS($pkg, NSPR_PACKAGES=$pkg)
+	fi
+    done
+    if test "x$NSPR_PACKAGES" = x ; then
+	AC_MSG_ERROR([Can't find nspr])
+    fi
 fi
 
 PKG_CHECK_MODULES(LIBHIPPOFIREFOX, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED $NSPR_PACKAGES)

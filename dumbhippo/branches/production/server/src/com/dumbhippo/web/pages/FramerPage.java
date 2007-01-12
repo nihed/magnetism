@@ -25,7 +25,7 @@ public class FramerPage {
     static private final Logger logger = GlobalSetup.getLogger(FramerPage.class);	
 	
     private String postId;
-    private String errorText;
+    private String errorText = "No post specified";
 
     @Signin
 	private SigninBean signin;

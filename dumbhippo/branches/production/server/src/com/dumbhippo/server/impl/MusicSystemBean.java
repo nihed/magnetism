@@ -6,7 +6,11 @@ import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.Sentiment;
+import com.dumbhippo.persistence.TrackHistory;
+import com.dumbhippo.persistence.TrackMessage;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.MusicSystemInternal;
@@ -145,5 +149,29 @@ public class MusicSystemBean implements MusicSystem {
 	
 	public long getLatestPlayTime(Viewpoint viewpoint, User user) {
 		return internal.getLatestPlayTime(viewpoint, user);
+	}
+
+	public TrackHistory lookupTrackHistory(Guid trackHistoryId) throws NotFoundException {
+		return internal.lookupTrackHistory(trackHistoryId);
+	}
+	
+	public TrackView getTrackView(TrackHistory trackHistory) {
+		return internal.getTrackView(trackHistory);
+	}
+
+	public TrackView getTrackView(Guid trackHistoryId) throws NotFoundException {
+		return internal.getTrackView(trackHistoryId);
+	}
+
+	public List<TrackMessage> getNewestTrackMessages(TrackHistory trackHistory, int maxResults) {
+		return internal.getNewestTrackMessages(trackHistory, maxResults);
+	}
+
+	public List<TrackMessage> getTrackMessages(TrackHistory trackHistory, long lastSeenSerial) {
+		return internal.getTrackMessages(trackHistory, lastSeenSerial);
+	}
+
+	public void addTrackMessage(TrackHistory trackHistory, User fromUser, String text, Sentiment sentiment, Date timestamp) {
+		internal.addTrackMessage(trackHistory, fromUser, text, sentiment, timestamp);
 	}
 }

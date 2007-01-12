@@ -177,6 +177,9 @@
 				RelativePath=".\HippoUtil.idl">
 			</File>
 			<File
+				RelativePath=".\HippoUtilUtil.cpp">
+			</File>
+			<File
 				RelativePath=".\md5.c">
 				<FileConfiguration
 					Name="Debug|Win32">

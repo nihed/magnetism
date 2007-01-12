@@ -213,15 +213,15 @@
            they are listed below for completeness -->
       <init-param>
           <param-name>noSignin</param-name>
-          <param-value>badges,busy,comingsoon,error,files,flash,group-files,public-groups,signup,summit,unknownlink,upgrade,user-summary,who-are-you,robots.txt</param-value>
+          <param-value>apple-dashboard-content,badges,busy,buttons,comingsoon,error,files,flash,google-stacker,google-stacker-spec,google-stacker-content,group-files,public-groups,sharelink,sharelink-disabled,sharelink-inactive,signup,summit,unknownlink,upgrade,user-summary,who-are-you,robots.txt</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
-          <param-value>about,active-groups,active-people,artist,bookmark,faq,features,framer,getradar,group,groups,history,landing,links,links-learnmore,main,members,music,person,privacy,radar-html,radar-learnmore,radar-themes,search,stacker-learnmore,terms,visit,web-accounts-learnmore,web-services</param-value>
+          <param-value>about,active-groups,active-people,artist,bookmark,faq,features,framer,group,groups,history,links,links-learnmore,main,members,music,person,privacy,radar-html,radar-learnmore,radar-themes,search,stacker-learnmore,terms,visit,web-accounts-learnmore,web-services</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>account,admin,chatwindow,chatwindow-disabled,create-group,download,friends,group-account,group-invitation,group-invitations,home,invitation,invitation-admin,radar-theme-creator,sharelink,sharelink-disabled,sharephotoset,sharephotoset-first,statistics,we-miss-you</param-value>
+          <param-value>account,admin,chatwindow,chatwindow-disabled,create-group,download,friends,getradar,group-account,group-invitation,group-invitations,home,invitation,invitation-admin,network,network-overview,radar-theme-creator,sharephotoset,sharephotoset-first,statistics,we-miss-you</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   

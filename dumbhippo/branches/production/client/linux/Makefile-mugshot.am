@@ -50,6 +50,8 @@ mugshot_SOURCES	=				\
 	src/hippo-status-icon.h			\
 	src/hippo-window-gtk.c			\
 	src/hippo-window-gtk.h			\
+	src/hippo-window-wrapper.c		\
+	src/hippo-window-wrapper.h		\
 	src/main.c				\
 	src/main.h
 
@@ -68,15 +70,19 @@ EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/closetip.png	\
 	$(EMBEDDEDIMAGEDIR)/expandtip.png	\
 	$(EMBEDDEDIMAGEDIR)/find.png		\
+	$(EMBEDDEDIMAGEDIR)/flat_x.png		\
 	$(EMBEDDEDIMAGEDIR)/home2.png		\
 	$(EMBEDDEDIMAGEDIR)/home.png		\
 	$(EMBEDDEDIMAGEDIR)/hush2.png		\
 	$(EMBEDDEDIMAGEDIR)/hush.png		\
 	$(EMBEDDEDIMAGEDIR)/lid.png		\
-	$(EMBEDDEDIMAGEDIR)/lock_icon.png		\
+	$(EMBEDDEDIMAGEDIR)/lock_icon.png	\
 	$(EMBEDDEDIMAGEDIR)/mugshotstacker.png	\
+	$(EMBEDDEDIMAGEDIR)/noart.png		\
 	$(EMBEDDEDIMAGEDIR)/nophoto.png		\
 	$(EMBEDDEDIMAGEDIR)/photo_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/quiphate_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/quiplove_icon.png	\
 	$(EMBEDDEDIMAGEDIR)/search_x.png	\
 	$(EMBEDDEDIMAGEDIR)/unhush2.png		\
 	$(EMBEDDEDIMAGEDIR)/unhush.png

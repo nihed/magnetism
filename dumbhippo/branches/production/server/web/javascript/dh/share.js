@@ -1,9 +1,10 @@
 dojo.provide("dh.share");
 
+dojo.require("dojo.style");
 dojo.require("dojo.event.*");
 dojo.require("dojo.widget.*");
 dojo.require("dojo.html");
-dojo.require("dojo.string");
+dojo.require("dh.html");
 dojo.require("dojo.widget.RichText");
 dojo.require("dojo.widget.html.Button");
 dojo.require("dojo.widget.HtmlComboBox");
@@ -12,6 +13,7 @@ dojo.require("dh.util");
 dojo.require("dh.model");
 dojo.require("dh.autosuggest");
 dojo.require("dh.suggestutils");
+dojo.require("dh.dom");
 
 // whether allKnownIds has successfully been filled in
 dh.share.haveLoadedContacts = false;
@@ -44,26 +46,41 @@ dh.share.recipientsChangedCallback = null;
 //  canAddRecipientCallback(personOrGroupObj)
 dh.share.canAddRecipientCallback = null;
 
+// could probably choose a better color ;-)
+dh.share.flash = function(node) {
+	var origColor = dojo.html.getBackgroundColor(node);
+	var flashColor = [0,200,0];
+	//dh.debug("fading from " + origColor + " to " + flashColor);
+	dojo.fx.html.colorFade(node, origColor, flashColor, 400,
+						function(node, anim) {
+							dh.debug("fading from " + flashColor + " to " + origColor);
+							dojo.fx.html.colorFade(node, flashColor, origColor, 400, function(node, anim) {
+								/* go back to our CSS color */
+								node.removeAttribute("style");
+							});
+						});
+}
+
 // merges an XML document into allKnownIds and returns an array
 // of the newly-added items
 dh.share.mergeObjectsDocument = function(doc) {
 	var retval = [];
 	var objectsElement = doc.getElementsByTagName("objects").item(0);
 	if (!objectsElement) {
-		dojo.debug("no <objects> element");
+		dh.debug("no <objects> element");
 		return retval;
 	}
 	var nodeList = objectsElement.childNodes;
 	for (var i = 0; i < nodeList.length; ++i) {
 		var element = nodeList.item(i);
-		if (element.nodeType != dojo.dom.ELEMENT_NODE) {
+		if (element.nodeType != dh.dom.ELEMENT_NODE) {
 			continue;
 		} else {
 			var obj = dh.model.objectFromXmlNode(element);
 		    // merge in a new person/group we know about, overwriting any older data
 		    dh.share.allKnownIds[obj.id] = obj;
 		    retval.push(obj);
-		    dojo.debug(" saved new obj type = " + obj.kind + " id = " + obj.id + " display = " + obj.displayName);
+		    dh.debug(" saved new obj type = " + obj.kind + " id = " + obj.id + " display = " + obj.displayName);
 		}
 	}
 	
@@ -77,7 +94,7 @@ dh.share.findIdNode = function(id) {
 	var list = document.getElementById("dhRecipientListTableRow");
 	for (var i = 0; i < list.childNodes.length; ++i) {
 		var child = list.childNodes.item(i);
-		if (child.nodeType != dojo.dom.ELEMENT_NODE)
+		if (child.nodeType != dh.dom.ELEMENT_NODE)
 			continue;
 		for (var j = 0; j < child.childNodes.length; j++) {			
 			var subchild = child.childNodes.item(j)			
@@ -94,7 +111,7 @@ dh.share.forEachPossibleGroupMember = function(func) {
 	var list = document.getElementById("dhRecipientListTableRow");
 	for (var i = 0; i < list.childNodes.length; ++i) {
 		var child = list.childNodes.item(i);
-		if (child.nodeType != dojo.dom.ELEMENT_NODE)
+		if (child.nodeType != dh.dom.ELEMENT_NODE)
 			continue;
 			
 		for (var j = 0; j < child.childNodes.length; j++) {			
@@ -132,7 +149,7 @@ dh.share.removeRecipient = function(recipientId, node) {
 }
 
 dhRemoveRecipientClicked = function(event) {
-	dojo.debug("remove recipient");
+	dh.debug("remove recipient");
 	
 	// scan up for the dhId node which is the outermost
 	// node of the html representing this person/group, and also 
@@ -158,15 +175,15 @@ dh.share.addEmailContactAsync = function(email, onComplete) {
 	dh.server.getXmlPOST("createorgetcontact",
 			{ "email" : email },
 			function(type, data, http) {
-				dojo.debug("got back a contact " + data);
-				dojo.debug("text is : " + http.responseText);
+				dh.debug("got back a contact " + data);
+				dh.debug("text is : " + http.responseText);
 						
 				var newContacts = dh.share.mergeObjectsDocument(data);
 				
 				for (var i = 0; i < newContacts.length; ++i) {
 					// add someone; this flashes their entry and is a no-op 
 					// if they were already added
-					dojo.debug("adding newly-created contact as recipient");
+					dh.debug("adding newly-created contact as recipient");
 					dh.share.doAddRecipient(newContacts[i].id);
 				}
 				
@@ -179,10 +196,10 @@ dh.share.addEmailContactAsync = function(email, onComplete) {
 }
 
 dh.share.createNewContactFromCombo = function() {
-	var email = dojo.string.trim(dh.share.autoSuggest.inputText);
+	var email = dh.util.trim(dh.share.autoSuggest.inputText);
 	
 	if (email.length == 0) { // Silently ignore empty
-		dojo.debug("ignoring empty email")
+		dh.debug("ignoring empty email")
 		return
 	}
 	
@@ -191,14 +208,14 @@ dh.share.createNewContactFromCombo = function() {
 		return;
 	}
 	
-	dojo.debug("looking up contact " + email);
+	dh.debug("looking up contact " + email);
 	
 	dh.share.addEmailContactAsync(email)
 }
 	
 dh.share.recipientSelected = function(selectedId) {
 
-	dojo.debug("adding recipient since selected = " + selectedId);
+	dh.debug("adding recipient since selected = " + selectedId);
 	if (selectedId)
 		dh.share.doAddRecipient(selectedId, true);
 	else
@@ -208,7 +225,7 @@ dh.share.recipientSelected = function(selectedId) {
 
 dh.share.doAddRecipient = function(selectedId, noFlash) {	
 	
-	dojo.debug("adding " + selectedId + " as recipient if they aren't already");
+	dh.debug("adding " + selectedId + " as recipient if they aren't already");
 	
 	var objKey = dh.model.findGuid(dh.share.allKnownIds, selectedId);
 	if (!objKey) {
@@ -233,7 +250,7 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		idNode.setAttribute("width", "100%")
 		idNode.setAttribute("cellspacing", "0")
 		idNode.setAttribute("cellpadding", "0")		
-		dojo.html.addClass(idNode, "dhShareRecipientPerson");
+		dh.html.addClass(idNode, "dhShareRecipientPerson");
 		if (dh.share.recipientCreatedCallback)
 			dh.share.recipientCreatedCallback(obj, idNode);
 		
@@ -313,7 +330,7 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 			dh.share.recipientsChangedCallback();
 	} else {
 		if (!noFlash)
-			dh.util.flash(dh.share.findIdNode(obj.id));
+			dh.share.flash(dh.share.findIdNode(obj.id));
 	}
 	
 	// clear the combo again // Our new autosuggest.js does this for us
@@ -327,8 +344,8 @@ dh.share.loadContacts = function() {
 	dh.server.getXmlGET("contactsandgroups",
 			{ },
 			function(type, data, http) {
-				dojo.debug("got back contacts " + data);
-				dojo.debug("text is : " + http.responseText);
+				dh.debug("got back contacts " + data);
+				dh.debug("text is : " + http.responseText);
 							
 				dh.share.mergeObjectsDocument(data);
 				document.getElementById("dhShareRecipientsLoading").style.display = "none";
@@ -386,7 +403,7 @@ dh.share.getRecipients = function() {
 // doSubmit. doSubmit may be called asynchronously or 
 // synchronously
 dh.share.checkAndSubmit = function(doSubmit) {
-	var recipient = dojo.string.trim(dh.share.autoSuggest.inputText)
+	var recipient = dh.util.trim(dh.share.autoSuggest.inputText)
 	if (recipient.length > 0) {
 		// Check for an exact match	
 		var eligible = dh.share.getEligibleRecipients()
@@ -425,7 +442,7 @@ dh.share.checkAndSubmit = function(doSubmit) {
 }
 
 dh.share.init = function() {
-	dojo.debug("dh.share.init");
+	dh.debug("dh.share.init");
 			
 	dh.share.recipientComboBox = document.getElementById('dhShareRecipientComboBox');
 	dh.share.recipientComboBoxButton = document.getElementById('dhShareRecipientComboBoxButton');

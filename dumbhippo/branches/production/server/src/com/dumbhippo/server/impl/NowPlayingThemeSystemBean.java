@@ -180,7 +180,7 @@ public class NowPlayingThemeSystemBean implements NowPlayingThemeSystem {
 	public void getFriendsThemes(Viewpoint viewpoint, User user, Pageable<NowPlayingTheme> pageable) {
 		// this will return no friends if we can't see this person's contacts
 		// from our viewpoint
-		Set<User> friends = identitySpider.getRawUserContacts(viewpoint, user);
+		Set<User> friends = identitySpider.getRawUserContacts(viewpoint, user, true);
 		
 		if (friends.isEmpty()) {
 			pageable.setResults(new ArrayList<NowPlayingTheme>());

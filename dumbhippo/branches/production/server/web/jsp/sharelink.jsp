@@ -4,6 +4,10 @@
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
+<c:if test="${!signin.active}">
+	<jsp:forward page="/sharelink-inactive"/>
+</c:if>
+
 <dh:bean id="sharelink" class="com.dumbhippo.web.pages.ShareLinkPage" scope="request"/>
 
 <head>

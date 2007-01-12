@@ -1,16 +1,21 @@
 dojo.provide("dh.password");
 
 dojo.require("dojo.event.*");
-dojo.require("dojo.html");
-dojo.require("dojo.string");
 dojo.require("dh.util");
 dojo.require("dh.server");
+dojo.require("dh.event");
+
+// A JSP page can override this based on signin.active after including this module
+dh.password.active = true;
 
 dh.password.passwordEntry = null;
 dh.password.againEntry = null;
 dh.password.setButton = null;
 
 dh.password.inProgress = false;
+
+// Whether the user has set a valid password
+dh.password.invalid = true;
 
 // We display the validation messages in a timeout, so they only show 
 // up if you pause for a minute (if you aren't sure what's going on)
@@ -50,9 +55,9 @@ dhPasswordFormUpdate = function(ev) {
 	var second = dh.password.againEntry.value;
 	
 	// keep spaces out of the entry
-	first = dojo.string.trim(first);
+	first = dh.util.trim(first);
 	dh.password.passwordEntry.value = first;
-	second = dojo.string.trim(second);
+	second = dh.util.trim(second);
 	dh.password.againEntry.value = second;
 	
 	var invalid = false;
@@ -71,13 +76,14 @@ dhPasswordFormUpdate = function(ev) {
 		dh.password.queueValidationMessage("Your password looks good! Click 'Set Password' when you're done.");
 	}
 	
+	dh.password.invalid = invalid;
 	if (invalid) {
 		dh.password.setButton.src = dhImageRoot3 + "setpassword_disabled.gif";
 	} else {
 		dh.password.setButton.src = dhImageRoot3 + "setpassword.gif";
 	}
 				
-	var key = dh.util.getKeyCode(ev);
+	var key = dh.event.getKeyCode(ev);
 	if (key && key == ENTER) {
 		dhPasswordFormSubmit();
 	}
@@ -118,13 +124,14 @@ dh.password.setPassword = function(password) {
 }
 
 dhPasswordFormSubmit = function() {
-	if (dh.password.setButton.disabled) {
-		// can happen when pressing enter in text box
+	if (dh.password.invalid) {
+		// can happen when pressing enter in text box, or if the user clicks on the insensitive-looking
+		// button.
 		dh.password.showValidationMessageNow();
 		return;
 	}
 
-	var password = dojo.string.trim(dh.password.passwordEntry.value);
+	var password = dh.util.trim(dh.password.passwordEntry.value);
 	dh.password.setPassword(password);
 }
 
@@ -138,7 +145,7 @@ dhPasswordInit = function() {
 	dh.password.setButton = document.getElementById('dhSetPasswordButton');
 	
 	// this happens when your account is disabled
-	if (!dh.password.passwordEntry)
+	if (!dh.password.passwordEntry || !dh.password.active)
 		return;
 
 	dojo.event.connect(dh.password.passwordEntry, "onchange", dj_global, "dhPasswordFormUpdate");
@@ -152,4 +159,5 @@ dhPasswordInit = function() {
 	dhPasswordFormUpdate();
 }
 
-dojo.event.connect(dojo, "loaded", dj_global, "dhPasswordInit");
+dh.event.addPageLoadListener(dhPasswordInit);
+

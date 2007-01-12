@@ -5,6 +5,8 @@
 
 <%@ attribute name="page" required="false" type="java.lang.String" %>
 
+<c:if test="${signin.active || !signin.valid}"> <%-- Skip the whole thing when disabled --%>
+
 <c:set var="option" value="use all our features."/>
 <c:if test="${page == 'webSwarm'}">
     <c:set var="option" value="use all of Web Swarm's features."/>
@@ -28,11 +30,10 @@
 <c:choose>
 	<c:when test="${signin.valid}">
 	    <dh:bean id="download" class="com.dumbhippo.web.DownloadBean" scope="request"/>
-	    <dh:script module="dh.download"/>
         <c:choose>
 	        <c:when test="${download.haveDownload}">
 					<div class="dh-download-buttons">
-						<a id="dhDownloadProduct" class="dh-download-product" href="javascript:dh.download.doDownload('${download.downloadUrl}')"><img src="/images3/${buildStamp}/download_now_button.gif"/></a>
+						<a id="dhDownloadProduct" class="dh-download-product" href="${download.downloadUrl}"><img src="/images3/${buildStamp}/download_now_button.gif"/></a>
 					</div>
 					</td>
 					<td class="dh-download-details" valign="top">
@@ -84,3 +85,4 @@
 </tr>
 </table>	
 
+</c:if>

@@ -45,7 +45,6 @@
 		            <ProgId Id="Hippo.Control"/>
 		        </Class>
 		        <Class Id="8DCDF228-AFDD-41F4-A6FB-D4B1B63CC91F" Server="hippoExplorerDll" Description="Mugshot Toolbar Action" Context="InprocServer32" ThreadingModel="apartment"/>
-		        <Class Id="2D40665F-8139-4CB5-BA39-A6E25A147F5D" Server="hippoExplorerDll" Description="Mugshot Chat Control" Context="InprocServer32" ThreadingModel="apartment"/>
 		        <Class Id="174D2323-9AF2-4257-B8BD-849865E4F1AE" Server="hippoExplorerDll" Description="&amp;Mugshot Bar" Context="InprocServer32" ThreadingModel="apartment"/>
                         <Registry Root="HKCR" Key="CLSID\{174D2323-9AF2-4257-B8BD-849865E4F1AE}\Implemented Categories\{00021494-0000-0000-C000-000000000046}"/>
                         <!-- Remove registry entries to force rescan of explorer bars; the first of these is documented in 
@@ -68,6 +67,10 @@
                         <Registry Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Browser Helper Objects\{509D3C6C-7BD2-49F7-B0F9-6C32AC4A8836}" Value="Mugshot Tracker" Type="string" />
 		    </Component>
 		    
+		    <Component Id="hippoFirefox" Guid="51C5D530-D8A5-4C08-8D6B-B24358FC9DE2">
+		        <File Id="hippoFirefoxDll" Name="HippoFir.dll" LongName="HippoFirefox.dll" src="HippoFirefox.dll"  DiskId="1" Vital="yes"/>
+		    </Component>
+		    
 		    <Component Id="hippoShellExt" Guid="4A7068C1-20B6-423A-B51A-5195E69FEED2">
 		        <File Id="hippoShellExtDll" Name="HippoShe.dll" LongName="HippoShellExt.dll" src="HippoShellExt.dll"  DiskId="1" Vital="yes"/>
 		        <Class Id="BD176713-C30F-4C24-97D8-134DEADC97E8" Server="hippoShellExtDll" Description="Mugshot Shell Extension" Context="InprocServer32" ThreadingModel="apartment"/>
@@ -84,59 +87,6 @@
 		        </File>
 		    </Component>
 		    
-		    <Directory Id="dhAppletsDir" Name="Applets">
-        		    <Component Id="applets" Guid="207BF071-197E-471E-8AAF-6DB6C03B78EC">
-						<File Id="addPng"            Name="add.png"      LongName="add.png"             src="applets\add.png"            DiskId="1" Vital="yes"/>
-	        	        <File Id="blueleftarrowGif"  Name="blueleft.gif" LongName="blueleftarrow.gif"   src="applets\blueleftarrow.gif"  DiskId="1" Vital="yes"/>
-	        	        <File Id="bluerightarrowGif" Name="bluerigh.gif" LongName="bluerightarrow.gif"  src="applets\bluerightarrow.gif" DiskId="1" Vital="yes"/>
-	        	        <File Id="bubbleCss"         Name="bubble.css"   LongName="bubble.css"          src="applets\bubble.css"         DiskId="1" Vital="yes"/>
-	        	        <File Id="bubbleJs"          Name="bubble.js"    LongName="bubble.js"           src="applets\bubble.js"          DiskId="1" Vital="yes"/>
-	        	        <File Id="bubbleListCss"     Name="bubbleLi.css" LongName="bubbleList.css"      src="applets\bubbleList.css"     DiskId="1" Vital="yes"/>
-	        	        <File Id="bubbleListJs"      Name="bubbleLi.js"  LongName="bubbleList.js"       src="applets\bubbleList.js"      DiskId="1" Vital="yes"/>
-	        	        <File Id="bubbleListXml"     Name="bubbleLi.xml" LongName="bubbleList.xml"      src="applets\bubbleList.xml"     DiskId="1" Vital="yes"/>
-	        	        <File Id="bubclosePng"       Name="bubclose.gif" LongName="bubclose.png"        src="applets\bubclose.png"       DiskId="1" Vital="yes"/>
-						<File Id="bubclosepPng"      Name="bubclp.gif"   LongName="bubclose_purple.png" src="applets\bubclose_purple.png" DiskId="1" Vital="yes"/>						
-	        	        <File Id="bubedgeBPng"       Name="bubedge_.png" LongName="bubedge_b.png"       src="applets\bubedge_b.png"      DiskId="1" Vital="yes"/>
-	        	        <File Id="bubedgeLPng"       Name="bubedge_.png" LongName="bubedge_l.png"       src="applets\bubedge_l.png"      DiskId="1" Vital="yes"/>
-	        	        <File Id="bubedgeRPng"       Name="bubedge_.png" LongName="bubedge_r.png"       src="applets\bubedge_r.png"      DiskId="1" Vital="yes"/>
-	        	        <File Id="bubedgeTPng"       Name="bubedge_.png" LongName="bubedge_t.png"       src="applets\bubedge_t.png"      DiskId="1" Vital="yes"/>
-						<File Id="bubgroupupdateGif" Name="bubgroup.gif" LongName="bubgroupupdate.gif"  src="applets\bubgroupupdate.gif" DiskId="1" Vital="yes"/>
-	        	        <File Id="bublinkswarmGif"   Name="bublinks.gif" LongName="bublinkswarm.gif"    src="applets\bublinkswarm.gif"   DiskId="1" Vital="yes"/>
-	        	        <File Id="chaticonGif"       Name="chaticon.gif" LongName="chaticon.gif"        src="applets\chaticon.gif"       DiskId="1" Vital="yes"/>
-	        	        <File Id="clientstyleXml"    Name="clientst.xml" LongName="clientstyle.xml"     src="applets\clientstyle.xml"    DiskId="1" Vital="yes"/>
-	        	        <File Id="dhCss"             Name="dh.css"                                      src="applets\dh.css"             DiskId="1" Vital="yes"/>
-	        	        <File Id="dhJs"              Name="dh.js"                                       src="applets\dh.js"              DiskId="1" Vital="yes"/>
-	        	        <File Id="flickrJs"          Name="flickr.js"                                   src="applets\flickr.js"          DiskId="1" Vital="yes"/>
-	        	        <File Id="grayleftarrowGif"  Name="grayleft.gif" LongName="grayleftarrow.gif"   src="applets\grayleftarrow.gif"  DiskId="1" Vital="yes"/>
-	        	        <File Id="grayrightarrowGif" Name="grayrigh.gif" LongName="grayrightarrow.gif"  src="applets\grayrightarrow.gif" DiskId="1" Vital="yes"/>
-	        	        <File Id="groupChatPng"      Name="groupCha.png" LongName="groupChat.png"       src="applets\groupChat.png"      DiskId="1" Vital="yes"/>
-	        	        <File Id="ignoreiconPng"     Name="ignoreic.png" LongName="ignoreicon.png"      src="applets\ignoreicon.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="linkswarm.gif"     Name="linkswar.gif" LongName="linkswarm.gif"       src="applets\linkswarm.gif"      DiskId="1" Vital="yes"/>
-	        	        <File Id="lsBubshadowPng"    Name="ls_bubsh.png" LongName="ls_bubshadow.png"    src="applets\ls_bubshadow.png"   DiskId="1" Vital="yes"/>
-	        	        <File Id="lsorangeBlPng"     Name="lsorange.png" LongName="lsorange_bl.png"     src="applets\lsorange_bl.png"    DiskId="1" Vital="yes"/>
-	        	        <File Id="lsorangeBrPng"     Name="lsorange.png" LongName="lsorange_br.png"     src="applets\lsorange_br.png"    DiskId="1" Vital="yes"/>
-	        	        <File Id="lsorangeTlPng"     Name="lsorange.png" LongName="lsorange_tl.png"     src="applets\lsorange_tl.png"    DiskId="1" Vital="yes"/>
-	        	        <File Id="lsorangeTrPng"     Name="lsorange.png" LongName="lsorange_tr.png"     src="applets\lsorange_tr.png"    DiskId="1" Vital="yes"/>
-						<File Id="lspurpleBlPng"     Name="lspurple.png" LongName="lspurple_bl.png"     src="applets\lspurple_bl.png"    DiskId="1" Vital="yes"/>
-						<File Id="lspurpleBrPng"     Name="lspurple.png" LongName="lspurple_br.png"     src="applets\lspurple_br.png"    DiskId="1" Vital="yes"/>
-						<File Id="lspurpleTlPng"     Name="lspurple.png" LongName="lspurple_tl.png"     src="applets\lspurple_tl.png"    DiskId="1" Vital="yes"/>
-						<File Id="lspurpleTrPng"     Name="lspurple.png" LongName="lspurple_tr.png"     src="applets\lspurple_tr.png"    DiskId="1" Vital="yes"/>						
-	        	        <File Id="lswhiteBlPng"      Name="lswhite_.png" LongName="lswhite_bl.png"      src="applets\lswhite_bl.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="lswhiteBrPng"      Name="lswhite_.png" LongName="lswhite_br.png"      src="applets\lswhite_br.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="lswhiteTlPng"      Name="lswhite_.png" LongName="lswhite_tl.png"      src="applets\lswhite_tl.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="lswhiteTrPng"      Name="lswhite_.png" LongName="lswhite_tr.png"      src="applets\lswhite_tr.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="menuCss"           Name="menu.css"     LongName="menu.css"            src="applets\menu.css"           DiskId="1" Vital="yes"/>
-	        	        <File Id="menuJs"            Name="menu.js"      LongName="menu.js"             src="applets\menu.js"            DiskId="1" Vital="yes"/>
-	        	        <File Id="menuXml"           Name="menu.xml"     LongName="menu.xml"            src="applets\menu.xml"           DiskId="1" Vital="yes"/>
-	        	        <File Id="notificationCss"   Name="notifica.css" LongName="notification.css"    src="applets\notification.css"   DiskId="1" Vital="yes"/>
-	        	        <File Id="notificationJs"    Name="notifica.js"  LongName="notification.js"     src="applets\notification.js"    DiskId="1" Vital="yes"/>
-	        	        <File Id="notificationXml"   Name="notifica.xml" LongName="notification.xml"    src="applets\notification.xml"   DiskId="1" Vital="yes"/>
-	        	        <File Id="wbubcnrBlPng"      Name="wbubcnr_.png" LongName="wbubcnr_bl.png"      src="applets\wbubcnr_bl.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="wbubcnrBrPng"      Name="wbubcnr_.png" LongName="wbubcnr_br.png"      src="applets\wbubcnr_br.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="wbubcnrTlPng"      Name="wbubcnr_.png" LongName="wbubcnr_tl.png"      src="applets\wbubcnr_tl.png"     DiskId="1" Vital="yes"/>
-	        	        <File Id="wbubcnrTrPng"      Name="wbubcnr_.png" LongName="wbubcnr_tr.png"      src="applets\wbubcnr_tr.png"     DiskId="1" Vital="yes"/>
-		            </Component>
-		    </Directory>
 		    <Directory Id="dhImagesDir" Name="Images">
         		<Component Id="images" Guid="681D6075-3B98-428C-8B73-68D9F15133AD">
 	        	    <File Id="addIconPng"        Name="add_icon.png" LongName="add_icon.png"       src="images\add_icon.png"       DiskId="1" Vital="yes"/>
@@ -151,6 +101,7 @@
 	                    <File Id="closetipPng"       Name="closetip.png" LongName="closetip.png"       src="images\closetip.png"       DiskId="1" Vital="yes"/>
 	                    <File Id="expandtipPng"      Name="expandti.png" LongName="expandtip.png"      src="images\expandtip.png"      DiskId="1" Vital="yes"/>
 	                    <File Id="findPng"           Name="find.png"     LongName="find.png"           src="images\find.png"           DiskId="1" Vital="yes"/>
+	                    <File Id="flatXPng"          Name="flat_x.png"   LongName="flat_x.png"         src="images\flat_x.png"         DiskId="1" Vital="yes"/>
 	                    <File Id="homePng"           Name="home.png"     LongName="home.png"           src="images\home.png"           DiskId="1" Vital="yes"/>
 	                    <File Id="home2Png"          Name="home2.png"    LongName="home2.png"          src="images\home2.png"          DiskId="1" Vital="yes"/>
 	                    <File Id="hushPng"           Name="hush.png"     LongName="hush.png"           src="images\hush.png"           DiskId="1" Vital="yes"/>
@@ -158,18 +109,71 @@
 	                    <File Id="lidPng"            Name="lid.png"      LongName="lid.png"            src="images\lid.png"            DiskId="1" Vital="yes"/>
 	                    <File Id="lockIconPng"       Name="lock_ico.png" LongName="lock_icon.png"      src="images\lock_icon.png"      DiskId="1" Vital="yes"/>
 	                    <File Id="mugshotstackerPng" Name="mugshots.png" LongName="mugshotstacker.png" src="images\mugshotstacker.png" DiskId="1" Vital="yes"/>
+	                    <File Id="noartPng"          Name="noart.png"    LongName="noart.png"          src="images\noart.png"          DiskId="1" Vital="yes"/>
 	                    <File Id="nophotoPng"        Name="nophoto.png"  LongName="nophoto.png"        src="images\nophoto.png"        DiskId="1" Vital="yes"/>
 	                    <File Id="photoIconPng"      Name="photo_ic.png" LongName="photo_icon.png"     src="images\photo_icon.png"     DiskId="1" Vital="yes"/>
+	                    <File Id="quiphateIconPng"   Name="quiphate.png" LongName="quiphate_icon.png"  src="images\quiphate_icon.png"  DiskId="1" Vital="yes"/>
+	                    <File Id="quiploveIconPng"   Name="quiplove.png" LongName="quiplove_icon.png"  src="images\quiplove_icon.png"  DiskId="1" Vital="yes"/>
 	                    <File Id="searchXPng"        Name="search_x.png" LongName="search_x.png"       src="images\search_x.png"       DiskId="1" Vital="yes"/>
 	                    <File Id="unhushPng"         Name="unhush.png"   LongName="unhush.png"         src="images\unhush.png"         DiskId="1" Vital="yes"/>
 	                    <File Id="unhush2Png"        Name="unhush2.png"  LongName="unhush2.png"        src="images\unhush2.png"        DiskId="1" Vital="yes"/>
                         </Component>
-                     </Directory>	                    
+                     </Directory>
+                     	                    
 		    <Directory Id="dhEtcDir" Name="etc">
     		        <Directory Id="dhEtcPangoDir" Name="pango">
     		            <Component Id="pangoConfiguration" Guid="7D242C09-A7C0-41cd-B5B6-6C70229F574D">
 	                        <File Id="pangoAliases"  Name="pango.ali"    LongName="pango.aliases"      src="etc\pango\pango.aliases"   DiskId="1" Vital="yes"/>
 	                    </Component>
+    		        </Directory>
+		    </Directory>
+		    
+		    <Directory Id="dhFirefoxDir" Name="firefox">
+		        <Component Id="firefox" Guid="A7AF014C-E1FC-49AA-951E-F93C2EF7B078">
+		            <File Id="chromeManifest" Name="chrome.man"  LongName="chrome.manifest" src="firefox\chrome.manifest" DiskId="1" Vital="yes"/>
+		            <File Id="installRdf"     Name="install.rdf" LongName="install.rdf"     src="firefox\install.rdf"     DiskId="1" Vital="yes"/>
+                            <Registry Root="HKMU" Key="SOFTWARE\Mozilla\Firefox\Extensions">
+                                <Registry Name="firefox@mugshot.org" Value="[$firefox]" Type="string"/>
+                            </Registry>
+		        </Component>
+		    
+    		        <Directory Id="dhFirefoxChromeDir" Name="chrome">
+        		    <Directory Id="dhFirefoxChromeContentDir" Name="content">
+    		                <Component Id="firefoxChromeContent" Guid="8CE1540B-F3B7-423E-A36E-1B0E87272A90">
+	                            <File Id="overlayJs"  Name="overlay.js"    LongName="overlay.js"      src="firefox\chrome\content\overlay.js"   DiskId="1" Vital="yes"/>
+	                            <File Id="overlayXul" Name="overlay.xul"   LongName="overlay.xul"     src="firefox\chrome\content\overlay.xul"  DiskId="1" Vital="yes"/>
+	                        </Component>
+        		    </Directory>
+        		    <Directory Id="dhFirefoxChromeLocaleDir" Name="locale">
+            		        <Directory Id="dhFirefoxChromeLocaleEnUsDir" Name="en-US">
+        		            <Component Id="firefoxChromeLocaleEnUs" Guid="807F8BF0-03B6-49FC-87A4-B81504DEFFE9">
+            	                        <File Id="overlayDtd" Name="overlay.dtd"   LongName="overlay.dtd"     src="firefox\chrome\locale\en-US\overlay.dtd"  DiskId="1" Vital="yes"/>
+	                            </Component>
+            		        </Directory>
+        		    </Directory>
+        		    <Directory Id="dhFirefoxChromeSkinDir" Name="skin">
+        		        <Component Id="firefoxChromeSkin" Guid="9A55EE27-54C8-44A1-96F3-210AE940C39E">
+            	                    <File Id="linkswarm1616Png" Name="linkswar.png"   LongName="linkswarm16x16.png"     src="firefox\chrome\skin\linkswarm16x16.png"  DiskId="1" Vital="yes"/>
+            	                    <File Id="linkswarm2424Png" Name="linkswar.png"   LongName="linkswarm24x24.png"     src="firefox\chrome\skin\linkswarm24x24.png"  DiskId="1" Vital="yes"/>
+            	                    <File Id="mugshot3232Png"   Name="mugshot3.png"   LongName="mugshot32x32.png"       src="firefox\chrome\skin\mugshot32x32.png"    DiskId="1" Vital="yes"/>
+            	                    <File Id="toolbarCss"       Name="toolbar.css"    LongName="toolbar.css"            src="firefox\chrome\skin\toolbar.css"         DiskId="1" Vital="yes"/>
+	                        </Component>
+        		    </Directory>
+    		        </Directory>
+    		        <Directory Id="dhFirefoxComponentsDir" Name="componen" LongName="components">
+        		    <Component Id="firefoxComponents" Guid="A95ABC1F-5860-4A11-A915-367F25AD1FB2">
+            	                <File Id="hippoFirefoxStubDll"       Name="HippoFir.dll"   LongName="HippoFirefoxStub.dll"      src="firefox\components\HippoFirefoxStub.dll"      DiskId="1" Vital="yes"/>
+            	                <File Id="hippoIControlXpt"          Name="hippoICo.xpt"   LongName="HippoIControl.xpt"         src="firefox\components\HippoIControl.xpt"         DiskId="1" Vital="yes"/>
+            	                <File Id="hippoIControlListenerXpt"  Name="hippoICo.xpt"   LongName="HippoIControlListener.xpt" src="firefox\components\HippoIControlListener.xpt" DiskId="1" Vital="yes"/>
+            	                <File Id="hippoIExtensionXpt"        Name="hippoIEx.xpt"   LongName="HippoIExtension.xpt"       src="firefox\components\HippoIExtension.xpt"       DiskId="1" Vital="yes"/>
+        		    </Component>
+    		        </Directory>
+    		        <Directory Id="dhFirefoxDefaultsDir" Name="defaults">
+            		    <Directory Id="dhFirefoxDefaultsPreferencesDir" Name="preferen" LongName="preferences">
+        		        <Component Id="firefoxDefaultsPreferences" Guid="6BFD88AC-CCA9-4D82-B329-EAA2DFD759A2">
+	                            <File Id="prefsJs"  Name="prefs.js"    LongName="prefs.js"      src="firefox\defaults\preferences\prefs.js"   DiskId="1" Vital="yes"/>
+                                </Component>	                            
+            		    </Directory>
     		        </Directory>
 		    </Directory>
 	        </Directory>

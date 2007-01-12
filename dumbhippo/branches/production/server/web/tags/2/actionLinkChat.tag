@@ -12,24 +12,7 @@
 <c:if test="${empty linkText}">
 	<c:set scope="page" var="linkText" value="Join Chat"/>
 </c:if>
-
-<c:choose>
-   <%-- The browser.ie check is necessary because the dynamic hiding of
-        the control when the chat object fails to load doesn't work
-        correctly in firefox 1.0. could also be !(browser.gecko && !browser.gecko15)
-        or something probably, but only IE is known to work anyhow --%>
-
-	<c:when test="${signin.valid && browser.ie}">
-		<dh:script module="dh.actions"/>
-		<c:set scope="page" var="joinChatUri" value="javascript:dh.actions.joinChatUsingControl('${chatId}')"/>
-	</c:when>
-	<c:when test="${signin.valid && browser.linux && browser.gecko}">
-		<c:set scope="page" var="joinChatUri" value="mugshot://${signin.server}/joinChat?id=${chatId}&kind=${kind}"/>
-	</c:when>
-	<c:otherwise>
-		<%-- we don't know how to chat...  --%>
-	</c:otherwise>
-</c:choose>
+<dht:setJoinChatUri chatId="${chatId}"/>
 
 <c:if test="${!empty joinChatUri}">
 	<c:choose>

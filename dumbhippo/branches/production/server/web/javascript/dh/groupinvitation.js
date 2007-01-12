@@ -4,14 +4,15 @@ dojo.require("dh.model")
 dojo.require("dh.server")
 dojo.require("dh.suggestutils")
 dojo.require("dh.textinput")
-dojo.require("dojo.string")
+dojo.require("dh.util");
+dojo.require("dh.dom");
 
 // hash of all persons we should autocomplete on, keyed by guid
 dh.groupinvitation.allKnownIds = { };
 
 dh.groupinvitation.reloadWithMessage = function(message) {
 	// We do this as a POST to avoid including the message in the URL
-	var body = dojo.string.trim(dh.groupinvitation.messageEntry.getValue())
+	var body = dh.util.trim(dh.groupinvitation.messageEntry.getValue())
 	
 	document.getElementById("dhReloadMessage").value = message
 	document.getElementById("dhReloadBody").value = body
@@ -22,13 +23,13 @@ dh.groupinvitation.reloadWithMessage = function(message) {
 dh.groupinvitation.mergeObjectsDocument = function(doc) {
 	var objectsElement = doc.getElementsByTagName("objects").item(0);
 	if (!objectsElement) {
-		dojo.debug("no <objects> element");
+		dh.debug("no <objects> element");
 		return
 	}
 	var nodeList = objectsElement.childNodes;
 	for (var i = 0; i < nodeList.length; ++i) {
 		var element = nodeList.item(i);
-		if (element.nodeType != dojo.dom.ELEMENT_NODE) {
+		if (element.nodeType != dh.dom.ELEMENT_NODE) {
 			continue;
 		} else {
 			var obj = dh.model.objectFromXmlNode(element);
@@ -70,8 +71,8 @@ dh.groupinvitation.recipientSelected = function(selectedId) {
 }
 
 dh.groupinvitation.send = function() {
-	var subject = dojo.string.trim(dh.groupinvitation.subjectEntry.getValue())
-	var message = dojo.string.trim(dh.groupinvitation.messageEntry.getValue())
+	var subject = dh.util.trim(dh.groupinvitation.subjectEntry.getValue())
+	var message = dh.util.trim(dh.groupinvitation.messageEntry.getValue())
 	
 	var params = { 
         "groupId" : dh.groupinvitation.groupId,
@@ -84,7 +85,7 @@ dh.groupinvitation.send = function() {
     if (dh.groupinvitation.selectedId != null && dh.groupinvitation.selectedText == currentText) {
     	params["inviteeId"] = dh.groupinvitation.selectedId
     } else {
-		var address = dojo.string.trim(currentText)
+		var address = dh.util.trim(currentText)
 		if (address == "" || address.indexOf("@") < 0) {
 			alert("Please enter a valid email address")
 			return
@@ -97,9 +98,9 @@ dh.groupinvitation.send = function() {
                     function(type, document, http) {
                     	var messages = document.getElementsByTagName("message")
                     	if (messages.length > 0) {
-                    		dh.groupinvitation.reloadWithMessage(dojo.dom.textContent(messages[0]))
+                    		dh.groupinvitation.reloadWithMessage(dh.dom.textContent(messages[0]))
                 		} else {
-	                        dojo.debug("Didn't get message in response to sendgroupinvitation");
+	                        dh.debug("Didn't get message in response to sendgroupinvitation");
                 		}
                     },
                     function(type, error, http) {

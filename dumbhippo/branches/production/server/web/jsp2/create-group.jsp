@@ -8,9 +8,9 @@
 	<title>Create Group</title>
 	<dht:siteStyle/>	
 	<dht:faviconIncludes/>
-		<dh:script module="dh.groupaccount"/>
+	<dh:script modules="dh.groupaccount,dh.event"/>
 	<script type="text/javascript">
-		dojo.event.connect(dojo, "loaded", dj_global, "dhCreateGroupInit");
+		dh.event.addPageLoadListener(dhCreateGroupInit);
 	</script>
 </head>
 <dht:twoColumnPage>

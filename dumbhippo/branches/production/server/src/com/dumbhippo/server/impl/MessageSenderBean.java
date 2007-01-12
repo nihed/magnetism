@@ -39,7 +39,6 @@ import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.UserViewpoint;
 
@@ -262,9 +261,7 @@ public class MessageSenderBean implements MessageSender {
 			
 			// Since the recipient doesn't have an account, we can't get the recipient's view
 			// of the poster. Send out information from the poster's view of themself.
-			PersonView posterViewedBySelf = personViewer.getPersonView(viewpoint, 
-					                                                     poster,
-					                                                     PersonViewExtra.PRIMARY_EMAIL);
+			PersonView posterViewedBySelf = personViewer.getPersonView(viewpoint, poster);
 			
 			StringBuilder messageText = new StringBuilder();
 			XmlBuilder messageHtml = new XmlBuilder();
@@ -278,11 +275,13 @@ public class MessageSenderBean implements MessageSender {
 			PostView postView = new PostView(ejbContext, post, recipient);
 			
 			String url = postView.getUrl();
-			// For group shares to non-account members, we want to actually redirect them to /download
-			// so they download the client, accept terms of use etc.  Then the initial share will
-			// be for the group.
+			// For group shares to non-account members, we want to actually redirect them to their
+			// home page so they have the ability to download the client, accept terms of use etc.
+			// If we send them to the group page, then they won't get the Account status message
+			// since it isn't a personal page for them.
+			// Then the initial share will be for the group.
 			if (postType == PostType.GROUP) {
-				url = baseurl + "/download"; 
+				url = baseurl; 
 			}
 			
 			StringBuilder redirectUrl = new StringBuilder();

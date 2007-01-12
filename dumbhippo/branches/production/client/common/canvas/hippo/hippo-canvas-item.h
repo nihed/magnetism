@@ -42,9 +42,13 @@ struct _HippoCanvasItemIface {
     int      (* get_natural_width)  (HippoCanvasItem *canvas_item);
     int      (* get_height_request) (HippoCanvasItem *canvas_item,
                                      int              for_width);
+    /* The origin changed flag indicates that the position of the item with respect to the
+     * canvas root changed. The item must then call allocate on it's children passing
+     * TRUE for origin_changed as well. */
     void     (* allocate)           (HippoCanvasItem *canvas_item,
                                      int              width,
-                                     int              height);
+                                     int              height,
+                                     gboolean         origin_changed);
     void     (* get_allocation)     (HippoCanvasItem *canvas_item,
                                      int             *width_p,
                                      int             *height_p);
@@ -53,6 +57,8 @@ struct _HippoCanvasItemIface {
     gboolean (* button_release_event) (HippoCanvasItem *canvas_item,
                                      HippoEvent      *event);
     gboolean (* motion_notify_event)(HippoCanvasItem *canvas_item,
+                                     HippoEvent      *event);
+    gboolean (* key_press_event)    (HippoCanvasItem *canvas_item,
                                      HippoEvent      *event);
     void     (* activated)          (HippoCanvasItem *canvas_item);
     void     (* request_changed)    (HippoCanvasItem *canvas_item);
@@ -82,7 +88,8 @@ int                hippo_canvas_item_get_height_request (HippoCanvasItem    *can
                                                          int                 for_width);
 void               hippo_canvas_item_allocate           (HippoCanvasItem    *canvas_item,
                                                          int                 width,
-                                                         int                 height);
+                                                         int                 height,
+                                                         gboolean            origin_changed);
 void               hippo_canvas_item_get_allocation     (HippoCanvasItem    *canvas_item,
                                                          int                *width_p,
                                                          int                *height_p);
@@ -117,6 +124,9 @@ gboolean hippo_canvas_item_emit_motion_notify_event (HippoCanvasItem  *canvas_it
                                                      int               x,
                                                      int               y,
                                                      HippoMotionDetail detail);
+gboolean hippo_canvas_item_emit_key_press_event     (HippoCanvasItem  *canvas_item,
+                                                     HippoKey          key,
+                                                     gunichar          character);
 void     hippo_canvas_item_emit_activated          (HippoCanvasItem *canvas_item);
 void     hippo_canvas_item_emit_paint_needed       (HippoCanvasItem *canvas_item,
                                                     int              x,

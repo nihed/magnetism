@@ -29,6 +29,8 @@ void hippo_canvas_stack_add_block   (HippoCanvasStack *canvas_stack,
 void hippo_canvas_stack_remove_block(HippoCanvasStack *canvas_stack,
                                      HippoBlock       *block);
 
+void hippo_canvas_stack_update_hidden_blocks(HippoCanvasStack *canvas_stack);
+
 /* Only blocks after this timestamp are included in the stack */
 void hippo_canvas_stack_set_min_timestamp(HippoCanvasStack *canvas_stack,
                                           gint64            min_timestamp);

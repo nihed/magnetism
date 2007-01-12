@@ -1,7 +1,9 @@
 package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -23,6 +25,7 @@ import javax.persistence.Query;
 import org.jboss.annotation.ejb.Service;
 import org.slf4j.Logger;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.ThreadUtils;
@@ -42,6 +45,7 @@ import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
+import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.StackInclusion;
@@ -49,6 +53,7 @@ import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
@@ -62,14 +67,20 @@ import com.dumbhippo.server.blocks.BlockHandler;
 import com.dumbhippo.server.blocks.BlockNotVisibleException;
 import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.blocks.BlogBlockHandler;
+import com.dumbhippo.server.blocks.DeliciousBlockHandler;
+import com.dumbhippo.server.blocks.DiggBlockHandler;
 import com.dumbhippo.server.blocks.FacebookBlockHandler;
 import com.dumbhippo.server.blocks.FlickrPersonBlockHandler;
 import com.dumbhippo.server.blocks.FlickrPhotosetBlockHandler;
 import com.dumbhippo.server.blocks.GroupChatBlockHandler;
 import com.dumbhippo.server.blocks.GroupMemberBlockHandler;
+import com.dumbhippo.server.blocks.GroupRevisionBlockHandler;
+import com.dumbhippo.server.blocks.MusicChatBlockHandler;
 import com.dumbhippo.server.blocks.MusicPersonBlockHandler;
 import com.dumbhippo.server.blocks.MySpacePersonBlockHandler;
 import com.dumbhippo.server.blocks.PostBlockHandler;
+import com.dumbhippo.server.blocks.RedditBlockHandler;
+import com.dumbhippo.server.blocks.TwitterPersonBlockHandler;
 import com.dumbhippo.server.blocks.YouTubeBlockHandler;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.GroupMugshotView;
@@ -98,6 +109,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	@EJB
 	private MusicSystem musicSystem;
+	
+	@EJB
+	private IdentitySpider identitySpider;
 	
 	@EJB
 	private PersonViewer personViewer;
@@ -129,7 +143,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		Class<? extends BlockHandler> handlerClass = null;
 		
 		switch (type) {
-		case BLOG_PERSON:
+		case BLOG_ENTRY:
 			handlerClass = BlogBlockHandler.class;
 			break;
 		case FACEBOOK_PERSON:
@@ -142,6 +156,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case GROUP_MEMBER:
 			handlerClass = GroupMemberBlockHandler.class;
 			break;			
+		case MUSIC_CHAT:
+			handlerClass = MusicChatBlockHandler.class;
+			break;
 		case MUSIC_PERSON:
 			handlerClass = MusicPersonBlockHandler.class;
 			break;			
@@ -160,8 +177,24 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case MYSPACE_PERSON:
 			handlerClass = MySpacePersonBlockHandler.class;
 			break;
+		case DELICIOUS_PUBLIC_BOOKMARK:
+			handlerClass = DeliciousBlockHandler.class;
+			break;
+		case TWITTER_PERSON:
+			handlerClass = TwitterPersonBlockHandler.class;
+			break;
+		case DIGG_DUGG_ENTRY:
+			handlerClass = DiggBlockHandler.class;
+			break;
+		case REDDIT_ACTIVITY_ENTRY:
+			handlerClass = RedditBlockHandler.class;
+			break;
+		case GROUP_REVISION:
+			handlerClass = GroupRevisionBlockHandler.class;
+			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
+		case OBSOLETE_BLOG_PERSON:
 			break;
 			// don't add a default, it hides compiler warnings
 		}
@@ -404,7 +437,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		updateUserBlockDatas(block, desiredUsers, participantId, reason);
 	}
 	
-	private void refreshUserBlockDatasDeleted(Block block) {
+	private void refreshUserBlockDatasDeleted(Block block, boolean verbose) {
 		Set<User> desiredUsers = getHandler(block).getInterestedUsers(block);
 
 		List<UserBlockData> userDatas = queryUserBlockDatas(block);
@@ -418,15 +451,21 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			UserBlockData old = existing.get(u);
 			if (old != null) {
 				existing.remove(u);
-				if (old.isDeleted())
+				if (old.isDeleted()) {
+					if (verbose)
+						logger.debug("Undeleting user block data {}", old);
 					old.setDeleted(false);
+				}
 			}
 		}
 		// the rest of "existing" is users who no longer are in the desired set
 		for (User u : existing.keySet()) {
 			UserBlockData old = existing.get(u);
-			if (!old.isDeleted())
+			if (!old.isDeleted()) {
+				if (verbose)
+					logger.debug("Deleting user block data {}", old);
 				old.setDeleted(true);
+			}
 		}
 	}
 	
@@ -502,7 +541,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		updateGroupBlockDatas(block, desiredGroups, isGroupParticipation, reason);
 	}
 	
-	private void refreshGroupBlockDatasDeleted(Block block) {
+	private void refreshGroupBlockDatasDeleted(Block block, boolean verbose) {
 		Set<Group> desiredGroups = getHandler(block).getInterestedGroups(block);
 
 		List<GroupBlockData> groupDatas = queryGroupBlockDatas(block);
@@ -516,15 +555,21 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			GroupBlockData old = existing.get(g);
 			if (old != null) {
 				existing.remove(g);
-				if (old.isDeleted())
+				if (old.isDeleted()) {
+					if (verbose)
+						logger.debug("Undeleting group block data {}", old);
 					old.setDeleted(false);
+				}
 			}
 		}
 		// the rest of "existing" is groups who no longer are in the desired set
 		for (Group g : existing.keySet()) {
 			GroupBlockData old = existing.get(g);
-			if (!old.isDeleted())
+			if (!old.isDeleted()) {
+				if (verbose)
+					logger.debug("Deleting group block data {}", old);
 				old.setDeleted(true);
+			}
 		}
 	}
 	
@@ -545,14 +590,65 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				runner.runTaskInNewTransaction(new Runnable() {
 					public void run() {
 						Block attached = em.find(Block.class, block.getId());
-						refreshUserBlockDatasDeleted(attached);
-						refreshGroupBlockDatasDeleted(attached);
+						refreshUserBlockDatasDeleted(attached, false);
+						refreshGroupBlockDatasDeleted(attached, false);
 					}
 				});
 			}
 		});		
 	}
+
+	public void refreshDeletedFlagsOnAllBlocks() {
+		refreshDeletedFlagsOnAllBlocksWithType(null);
+	}
 	
+	public void refreshDeletedFlagsOnAllBlocksWithType(String typeName) {
+		final List<String> blockIds = new ArrayList<String>();
+		
+		BlockType blockType = null;
+		if (typeName != null)
+			blockType = BlockType.valueOf(typeName);
+		
+		Query q = em.createQuery("SELECT block.id FROM Block block " + 
+				(blockType != null ? " WHERE blockType = " + blockType.ordinal() : ""));
+		for (String id : TypeUtils.castList(String.class, q.getResultList()))
+			blockIds.add(id);
+		
+		Thread t = ThreadUtils.newDaemonThread("refresh deleted", new Runnable() {
+			public void run() {
+				int i = 0;
+				int failures = 0;
+				for (final String id : blockIds) {
+					if ((i % 1000) == 0) {
+						logger.debug("processing block {} of {}", i, blockIds.size());
+					}
+					try {
+						runner.runTaskInNewTransaction(new Runnable() {
+							public void run() {							
+								Block attached = em.find(Block.class, id);
+								refreshUserBlockDatasDeleted(attached, true);
+								refreshGroupBlockDatasDeleted(attached, true);							
+							}
+						});
+					} catch (RuntimeException e) {
+						logger.warn("Failed to refresh deleted flags, root exception", ExceptionUtils.getRootCause(e));
+						logger.warn("Failed to refresh deleted flags, toplevel exception", e);
+						++failures;
+						
+						if (failures > 50) {
+							logger.warn("Failed too many times, stopping");
+							break;
+						}	
+					}
+					++i;
+				}
+				
+				logger.debug("Completed refreshing deleted flags on all blocks, {} failures", failures);
+			}
+		});
+		t.start();
+	}
+		
 	public void stack(final Block block, final long activity, final User participant, final boolean isGroupParticipation, final StackReason reason) {
 
 		// never "roll back" to an earlier timestamp
@@ -859,21 +955,27 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}, pageable, expectedHitFactor);
 	}
 	
-	private interface ItemSource<T> {
-		List<T> get(int start, int count, String filter);
+	private static abstract class ItemSource<T> {
+		abstract Collection<T> get(int start, int count);
+		Collection<T> getRemainder() { return Collections.emptyList(); }
 	}
 	
-	private <T> List<T> getDistinctItems(ItemSource<T> source, int start, int count, String filter, int expectedHitFactor) {
+	private <T> List<T> getDistinctItems(ItemSource<T> source, int start, int count, int expectedHitFactor) {
 		Set<T> distinctItems = new HashSet<T>();
 		List<T> returnItems = new ArrayList<T>();
 		int max = start + count;
 
 		int chunkStart = 0;
+		boolean remainderUsed = false;
 		while (distinctItems.size() < max) {
 			int chunkCount = (max - distinctItems.size()) * expectedHitFactor;
-			List<T> items = source.get(chunkStart, chunkCount, filter);
-			if (items.isEmpty())
+			Collection<T> items = source.get(chunkStart, chunkCount);
+			if (items.isEmpty() && !remainderUsed) {
+				items = source.getRemainder();
+				remainderUsed = true;
+			} else if (items.isEmpty()) {
 				break;
+			}
 			
 			int resultItemCount = 0;
 
@@ -889,7 +991,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			}		
 		    
 		    // nothing else there
-		    if (items.size() < chunkCount)
+		    if (items.size() < chunkCount && remainderUsed)
 		    	break;
 	
 		    chunkStart = chunkStart + chunkCount;
@@ -913,29 +1015,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return TypeUtils.castList(User.class, q.getResultList());
 	}
 	
-	public List<PersonMugshotView> getRecentUserActivity(Viewpoint viewpoint, int startUser, int userCount, int blockPerUser, boolean includeGroupUpdates) {
-		List<PersonMugshotView> mugshots = new ArrayList<PersonMugshotView>();
-		
-		// select distinct most recently active users		
-       	int expectedHitFactor = 2;
-		
-		String groupUpdatesFilter = "";
-		if (!includeGroupUpdates) {
-	        groupUpdatesFilter = " AND block.blockType != " + BlockType.GROUP_MEMBER.ordinal() + 
-	                             " AND block.blockType != " + BlockType.GROUP_CHAT.ordinal(); 
-		}
-		
-		List<User> distinctUsers = getDistinctItems(new ItemSource<User>() {
-			public List<User> get(int start, int count, String filter) {
-				return getRecentActivityUsers(start, count, filter);
-			}
-		}, startUser, userCount, groupUpdatesFilter, expectedHitFactor);
-		
-		for (User user : distinctUsers) {
+	private List<PersonMugshotView> getMugshotViews(Viewpoint viewpoint, List<User> users, int blockPerUser, String queryExtra) {
+		List<PersonMugshotView> mugshots = new ArrayList<PersonMugshotView>();		
+		for (User user : users) {
 			Query qu = em.createQuery("Select ubd FROM UserBlockData ubd, Block block " + 
                 " WHERE ubd.user = :user AND ubd.deleted = 0 AND ubd.block = block " +
                 " AND ubd.participatedTimestamp IS NOT NULL " +
-                " AND block.publicBlock = true " + groupUpdatesFilter +
+                " AND block.publicBlock = true " + queryExtra +
                 " ORDER BY ubd.participatedTimestamp DESC");
 			qu.setParameter("user", user);
 		    qu.setMaxResults(blockPerUser);
@@ -952,10 +1038,32 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
          	PersonView personView = personViewer.getPersonView(viewpoint, user, 
          													   PersonViewExtra.EXTERNAL_ACCOUNTS,
          													   PersonViewExtra.CONTACT_STATUS);
-            mugshots.add(new PersonMugshotView(personView, blocks));      	
+            mugshots.add(new PersonMugshotView(personView, blocks));
+		}
+        return mugshots; 
+	}
+	
+	public List<PersonMugshotView> getRecentUserActivity(Viewpoint viewpoint, int startUser, int userCount, int blockPerUser, boolean includeGroupUpdates) {
+		
+		// select distinct most recently active users		
+       	int expectedHitFactor = 2;
+		
+		final String groupUpdatesFilter;
+		if (!includeGroupUpdates) {
+	        groupUpdatesFilter = " AND block.blockType != " + BlockType.GROUP_MEMBER.ordinal() + 
+	                             " AND block.blockType != " + BlockType.GROUP_CHAT.ordinal(); 
+		} else {
+			groupUpdatesFilter = "";
 		}
 		
-		return mugshots;		
+		List<User> distinctUsers = getDistinctItems(new ItemSource<User>() {
+			@Override
+			public Collection<User> get(int start, int count) {
+				return getRecentActivityUsers(start, count, groupUpdatesFilter);
+			}
+		}, startUser, userCount, expectedHitFactor);
+		
+		return getMugshotViews(viewpoint, distinctUsers, blockPerUser, groupUpdatesFilter);		
 	}
 	
 	public void pageRecentUserActivity(Viewpoint viewpoint, Pageable<PersonMugshotView> pageable, int blocksPerUser) {
@@ -1016,6 +1124,165 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			}
 		}, pageable, expectedHitFactor);
 	}
+	
+	private static Set<BlockType> data1UserBlockTypes;
+
+	private String getData1UserBlockTypeClause() {
+		synchronized (StackerBean.class) {
+			if (data1UserBlockTypes == null) {
+				data1UserBlockTypes = new HashSet<BlockType>();
+				Iterator<BlockType> it = Arrays.asList(BlockType.values()).iterator();
+				while (it.hasNext()) {
+					BlockType blockType = it.next();
+					if (blockType.userOriginIsData1())
+						data1UserBlockTypes.add(blockType);
+				}
+			}
+		}
+		
+		StringBuilder builder = new StringBuilder(" block.blockType in (");
+		Iterator<BlockType> it = data1UserBlockTypes.iterator();		
+		while (it.hasNext()) {
+			builder.append(Integer.toString(it.next().ordinal()));
+			if (it.hasNext()) {
+				builder.append(", ");
+			}
+		}
+		builder.append(")");
+		return builder.toString();
+	}
+	
+	private List<User> getRecentlyActiveContacts(Viewpoint viewpoint, User user, int start, int count) {
+		// The algorithm to find recently active contacts here is simply to select blocks from the user's
+		// stack which originated from a user, because currently the only user-originated blocks in
+		// a user's stack will be their contacts.  This is an approximation of
+		// the ideal which would be the participated blocks for all the user's contacts, but that query
+		// would be significantly slower.  This one will miss e.g. group chat and posts at the moment.
+		// When we extend this to support posts we need to be sure to filter by the user's actual contacts
+		// since the first assumption will no longer be true.
+		Query q = em.createQuery("SELECT u FROM User u, UserBlockData ubd, Block block" +
+                " WHERE ubd.deleted = 0 AND ubd.block = block " +
+                " AND " + getData1UserBlockTypeClause() + 
+                " AND block.publicBlock = true " +
+                " AND u.id = block.data1 " +
+                " AND u != :user " +
+                " AND ubd.user = :user " +
+                " ORDER BY ubd.stackTimestamp DESC");
+		q.setParameter("user", user);
+		q.setFirstResult(start);
+		q.setMaxResults(count);
+		return TypeUtils.castList(User.class, q.getResultList());
+	}
+	
+	public List<PersonMugshotView> getContactActivity(final Viewpoint viewpoint, final User user, int start, int count, int blocksPerUser) {
+		List<User> distinctUsers = getDistinctItems(new ItemSource<User>() {
+			@Override
+			public List<User> get(int start, int count) {
+				return getRecentlyActiveContacts(viewpoint, user, start, count);
+			}
+
+			@Override
+			Collection<User> getRemainder() {
+				return identitySpider.getRawUserContacts(viewpoint, user, false);
+			}
+		}, start, count, 4);		
+		
+		return getMugshotViews(viewpoint, distinctUsers, blocksPerUser, "");
+	}
+
+	public void pageContactActivity(Viewpoint viewpoint, User viewedUser, int blocksPerUser, Pageable<PersonMugshotView> pageable) {
+		pageable.setResults(getContactActivity(viewpoint, viewedUser, pageable.getStart(), pageable.getCount(), blocksPerUser));
+		pageable.setTotalCount(LiveState.getInstance().getLiveUser(viewedUser.getGuid()).getUserContactsCount());
+	}
+	
+	public List<GroupMugshotView> getMugshotViews(final Viewpoint viewpoint, List<Group> distinctGroups, final int blocksPerGroup, final boolean publicOnly) {
+		List<GroupMugshotView> mugshots = new ArrayList<GroupMugshotView>();		
+		for (final Group group : distinctGroups) {
+			// Lazy initialization
+			mugshots.add(new GroupMugshotView() {
+				@Override
+				public List<BlockView> getBlocks() {
+					if (blocks == null) {
+						Query q = em.createQuery("Select gbd FROM GroupBlockData gbd, Block block " + 
+				                " WHERE gbd.group = :group AND gbd.deleted = 0 AND gbd.block = block " +
+				                (publicOnly ? INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE : INTERESTING_PUBLIC_OR_PRIVATE_GROUP_BLOCK_CLAUSE) + 
+				                " ORDER BY gbd.participatedTimestamp DESC");
+							q.setParameter("group", group);
+						    q.setMaxResults(blocksPerGroup);
+				         	blocks = new ArrayList<BlockView>();
+				         	for (GroupBlockData gbd : TypeUtils.castList(GroupBlockData.class, q.getResultList())) {
+					         	try {
+					         	    BlockView blockView = getBlockView(viewpoint, gbd.getBlock(), gbd, true);
+					         	    blocks.add(blockView);
+					         	} catch (NotFoundException e) {
+					         		// this is used on the main page, let's not risk it throwing an exception here
+					         		logger.error("NotFoundException when getting what must be a public block", e);
+					         	}
+				         	}	
+					}
+					return blocks;
+				}
+				@Override
+				public GroupView getGroupView() {
+					if (groupView == null)
+						groupView = groupSystem.getGroupView(viewpoint, group);
+					return groupView;
+				}				
+			});   	
+		}
+		return mugshots;
+	}
+	
+	private MembershipStatus groupQueryTypeToMembershipStatus(GroupQueryType groupType) {
+		if (groupType.equals(GroupQueryType.ACTIVE))
+			return MembershipStatus.ACTIVE;
+		else if (groupType.equals(GroupQueryType.FOLLOWED))
+			return MembershipStatus.FOLLOWER;
+		else
+			throw new RuntimeException("Unknown group query type: " + groupType);
+	}
+	
+	private List<Group> getRecentlyActiveGroups(Viewpoint viewpoint, User user, int start, int count, GroupQueryType groupType) {
+		// This query combines searching for participated blocks with group membership. 
+		// It is not optimal right now as MySQL tells us it requires a temporary table and file sort.
+		// Currently viewers other than the user can only see public groups
+		Query q = em.createQuery("SELECT g FROM Group g, GroupBlockData gbd, Block block, GroupMember gm WHERE" +
+				" gbd.group = g AND gm.group = g AND gbd.block = block " + 
+				" AND gbd.participatedTimestamp IS NOT NULL " +
+				(viewpoint.isOfUser(user) ? "" : (" and g.access = " + GroupAccess.PUBLIC_INVITE.ordinal())) +
+				" AND gm.status = " + groupQueryTypeToMembershipStatus(groupType).ordinal() +    
+				" AND gm.member = :acct ORDER BY gbd.participatedTimestamp DESC");
+		q.setParameter("acct", user.getAccount());
+		q.setFirstResult(start);
+		q.setMaxResults(count);
+		List<Group> results = TypeUtils.castList(Group.class, q.getResultList());
+		return results;
+	}	
+	
+	public List<GroupMugshotView> getUserGroupActivity(final Viewpoint viewpoint, final User user, int start, int count, int blocksPerGroup, final GroupQueryType groupType) {
+		// select distinct most recently active groups		
+       	int expectedHitFactor = 2;
+       	
+		List<Group> distinctGroups = getDistinctItems(new ItemSource<Group>() {
+			@Override
+			public Collection<Group> get(int start, int count) {
+				return getRecentlyActiveGroups(viewpoint, user, start, count, groupType);
+			}
+
+			@Override
+			Collection<Group> getRemainder() {
+				// This matches the query above
+				return groupSystem.findRawGroups(viewpoint, user, groupQueryTypeToMembershipStatus(groupType));
+			}
+		}, start, count, expectedHitFactor);
+		
+		return getMugshotViews(viewpoint, distinctGroups, blocksPerGroup, false);			
+	}
+	
+	public void pageUserGroupActivity(Viewpoint viewpoint, User user, int blocksPerGroup, GroupQueryType groupType, Pageable<GroupMugshotView> pageable) {
+		pageable.setResults(getUserGroupActivity(viewpoint, user, pageable.getStart(), pageable.getCount(), blocksPerGroup, groupType));
+		pageable.setTotalCount(groupSystem.findGroupsCount(viewpoint, user, groupQueryTypeToMembershipStatus(groupType)));
+	}
 
 	// When showing recently active groups, we want to exclude activity for
 	// users in the group, because we don't want a user playing music to
@@ -1023,6 +1290,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	static final String INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE =  
         " AND block.publicBlock = true " +
         " AND gbd.participatedTimestamp IS NOT NULL ";
+	
+	static final String INTERESTING_PUBLIC_OR_PRIVATE_GROUP_BLOCK_CLAUSE = 
+		" AND gbd.participatedTimestamp IS NOT NULL ";
 	
 	private List<Group> getRecentActivityGroups(int start, int count) {
 		// We get only public blocks, since we are displaying a system-global list
@@ -1042,47 +1312,25 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return TypeUtils.castList(Group.class, q.getResultList());
 	}
 	
-	public List<GroupMugshotView> getRecentGroupActivity(Viewpoint viewpoint, int startGroup, int groupCount, int blockPerGroup) {
-		List<GroupMugshotView> mugshots = new ArrayList<GroupMugshotView>();
-		
+	public List<GroupMugshotView> getRecentGroupActivity(Viewpoint viewpoint, int startGroup, int groupCount, int blockPerGroup) {		
 		// select distinct most recently active users		
        	int expectedHitFactor = 2;
 		
 		List<Group> distinctGroups = getDistinctItems(new ItemSource<Group>() {
-			public List<Group> get(int start, int count, String filter) {
+			@Override
+			public Collection<Group> get(int start, int count) {
 				return getRecentActivityGroups(start, count);
 			}
-		}, startGroup, groupCount, "", expectedHitFactor);
+		}, startGroup, groupCount, expectedHitFactor);
 		
-		for (Group group : distinctGroups) {
-			Query q = em.createQuery("Select gbd FROM GroupBlockData gbd, Block block " + 
-                " WHERE gbd.group = :group AND gbd.deleted = 0 AND gbd.block = block " +
-                INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE +
-                " ORDER BY gbd.participatedTimestamp DESC");
-			q.setParameter("group", group);
-		    q.setMaxResults(blockPerGroup);
-         	List<BlockView> blocks = new ArrayList<BlockView>();
-         	for (GroupBlockData gbd : TypeUtils.castList(GroupBlockData.class, q.getResultList())) {
-	         	try {
-	         	    BlockView blockView = getBlockView(viewpoint, gbd.getBlock(), gbd, true);
-	         	    blocks.add(blockView);
-	         	} catch (NotFoundException e) {
-	         		// this is used on the main page, let's not risk it throwing an exception here
-	         		logger.error("NotFoundException when getting what must be a public block", e);
-	         	}
-         	}
-         	GroupView groupView = groupSystem.getGroupView(viewpoint, group);
-            mugshots.add(new GroupMugshotView(groupView, blocks));      	
-		}
-		
-		return mugshots;		
+		return getMugshotViews(viewpoint, distinctGroups, blockPerGroup, true);	
 	}
-	
+
 	public void pageRecentGroupActivity(Viewpoint viewpoint, Pageable<GroupMugshotView> pageable, int blocksPerGroup) {
 		pageable.setResults(getRecentGroupActivity(viewpoint, pageable.getStart(), pageable.getCount(), blocksPerGroup));
 		pageable.setTotalCount(groupSystem.getPublicGroupCount());
 	}
-
+	
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException {
 		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.user = :user AND ubd.block = block AND block.id = :blockId");
 		q.setParameter("user", viewpoint.getViewer());
@@ -1397,7 +1645,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				           " WHERE block.blockType = " + BlockType.MUSIC_PERSON.ordinal() +
 				           " OR block.blockType = " + BlockType.FACEBOOK_PERSON.ordinal() +
 				           " OR block.blockType = " + BlockType.FACEBOOK_EVENT.ordinal() +
-				           " OR block.blockType = " + BlockType.BLOG_PERSON.ordinal());
+				           " OR block.blockType = " + BlockType.BLOG_ENTRY.ordinal());
 		for (String id : TypeUtils.castList(String.class, q.getResultList()))
 			tasks.add(new BlockParticipationMigrationTask(id));
 
@@ -1511,6 +1759,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		migrateFlickr(user);
 		migrateYouTube(user);
 		migrateMySpace(user);
+		migrateTwitter(user);
 	}
 	
 	public void migrateBlockParticipation(String blockId) {
@@ -1604,6 +1853,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		getHandler(MySpacePersonBlockHandler.class, BlockType.MYSPACE_PERSON).migrate(user);
 	}	
 	
+	public void migrateTwitter(User user) {
+		getHandler(TwitterPersonBlockHandler.class, BlockType.TWITTER_PERSON).migrate(user);
+	}
+	
 	public void migrateGroupBlockData(String blockId) {
 		logger.debug("    migrating group block data for {}", blockId);
 		
@@ -1634,18 +1887,27 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			isGroupParticipation = true;
 			reason = StackReason.CHAT_MESSAGE;
 			break;
+		case GROUP_REVISION:
+			isGroupParticipation = true;
+			break;
 		case MUSIC_PERSON:
 		case FACEBOOK_PERSON:
-		case FACEBOOK_EVENT:	
-		case BLOG_PERSON:
+		case FACEBOOK_EVENT:
 		case FLICKR_PERSON:
 		case FLICKR_PHOTOSET:
 		case YOUTUBE_PERSON:
-		case MYSPACE_PERSON:			
+		case MYSPACE_PERSON:
+		case BLOG_ENTRY:
+		case DELICIOUS_PUBLIC_BOOKMARK:
+		case MUSIC_CHAT:
+		case TWITTER_PERSON:
+		case DIGG_DUGG_ENTRY:
+		case REDDIT_ACTIVITY_ENTRY:
 			isGroupParticipation = false;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
+		case OBSOLETE_BLOG_PERSON:
 			throw new RuntimeException("obsolete block type used " + block);
 			// don't add a default, it hides compiler warnings
 		}

@@ -1,15 +1,15 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-common-internal.h"
 #include "hippo-block.h"
+#include "hippo-block-generic.h"
 #include "hippo-block-group-chat.h"
 #include "hippo-block-group-member.h"
 #include "hippo-block-post.h"
+#include "hippo-block-music-chat.h"
 #include "hippo-block-music-person.h"
 #include "hippo-block-facebook-person.h"
-#include "hippo-block-blog-person.h"
 #include "hippo-block-flickr-person.h"
 #include "hippo-block-youtube-person.h"
-#include "hippo-block-myspace-person.h"
 #include "hippo-block-flickr-photoset.h"
 #include "hippo-block-facebook-event.h"
 #include "hippo-xml-utils.h"
@@ -54,6 +54,8 @@ enum {
     PROP_CLICKED,
     PROP_ICON_URL,
     PROP_IGNORED,
+    PROP_TITLE,
+    PROP_TITLE_LINK,
     PROP_STACK_REASON
 };
 
@@ -173,7 +175,23 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                         _("URL for block 'favicon'"),
                                                         NULL,
                                                         G_PARAM_READABLE));
-    
+
+    g_object_class_install_property(object_class,
+                                    PROP_TITLE,
+                                    g_param_spec_string("title",
+                                                        _("Title"),
+                                                        _("Block title"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_TITLE_LINK,
+                                    g_param_spec_string("title-link",
+                                                        _("Title link"),
+                                                        _("Block title link"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+
     g_object_class_install_property(object_class,
                                     PROP_STACK_REASON,
                                     g_param_spec_int("stack-reason",
@@ -236,6 +254,14 @@ hippo_block_set_property(GObject         *object,
         hippo_block_set_stack_reason(block,
                                      g_value_get_int(value));
         break;
+    case PROP_TITLE:
+        hippo_block_set_title(block, 
+                              g_value_get_string(value));
+        break;
+    case PROP_TITLE_LINK:
+        hippo_block_set_title_link(block,
+                                   g_value_get_string(value));
+        break;
     case PROP_GUID:                  /* read-only */
     case PROP_BLOCK_TYPE:            /* read-only */
     case PROP_SORT_TIMESTAMP:        /* read-only */
@@ -294,6 +320,12 @@ hippo_block_get_property(GObject         *object,
     case PROP_ICON_URL:
         g_value_set_string(value, block->icon_url);
         break;
+    case PROP_TITLE:
+        g_value_set_string(value, block->title);
+        break;
+    case PROP_TITLE_LINK:
+        g_value_set_string(value, block->title_link);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -333,8 +365,12 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     int significant_clicked_count = 0;
     gboolean clicked;
     gboolean ignored;
+    LmMessageNode *title_node;
+    const char *title = NULL;
+    const char *title_link = NULL;
     const char *icon_url = NULL;
     const char *stack_reason_str = NULL;
+    const char *generic_types = NULL;
     HippoStackReason stack_reason = HIPPO_STACK_NEW_BLOCK;
     
     g_assert(cache != NULL);
@@ -342,6 +378,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     if (!hippo_xml_split(cache, node, NULL,
                          "id", HIPPO_SPLIT_GUID, &guid,
                          "type", HIPPO_SPLIT_STRING, &type_str,
+                         "genericTypes", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &generic_types,
                          "isPublic", HIPPO_SPLIT_BOOLEAN, &is_public,
                          "timestamp", HIPPO_SPLIT_TIME_MS, &timestamp,
                          "clickedTimestamp", HIPPO_SPLIT_TIME_MS, &clicked_timestamp,
@@ -362,7 +399,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
         return FALSE;
     }
                          
-    type = hippo_block_type_from_string(type_str);
+    type = hippo_block_type_from_attributes(type_str, generic_types);
     if (type != block->type) {
         g_warning("Update to <block/> node doesn't match original type");
         return FALSE;
@@ -377,6 +414,14 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     hippo_block_set_clicked(block, clicked);
     hippo_block_set_ignored(block, ignored);
     hippo_block_set_icon_url(block, icon_url);
+
+    title_node = lm_message_node_get_child(node, "title");
+    if (title_node) {
+        title_link = lm_message_node_get_attribute(title_node, "link");
+        title = lm_message_node_get_value(title_node);
+        hippo_block_set_title(block, title);
+        hippo_block_set_title_link(block, title_link);
+    }
 
     if (stack_reason_str)
         stack_reason = stack_reason_from_string(stack_reason_str);
@@ -414,11 +459,11 @@ hippo_block_new(const char    *guid,
     case HIPPO_BLOCK_TYPE_POST:
         object_type = HIPPO_TYPE_BLOCK_POST;
         break;
+    case HIPPO_BLOCK_TYPE_MUSIC_CHAT:
+        object_type = HIPPO_TYPE_BLOCK_MUSIC_CHAT;
+        break;
     case HIPPO_BLOCK_TYPE_MUSIC_PERSON:
         object_type = HIPPO_TYPE_BLOCK_MUSIC_PERSON;
-        break;
-    case HIPPO_BLOCK_TYPE_BLOG_PERSON:
-        object_type = HIPPO_TYPE_BLOCK_BLOG_PERSON;
         break;
     case HIPPO_BLOCK_TYPE_FLICKR_PERSON:
         object_type = HIPPO_TYPE_BLOCK_FLICKR_PERSON;
@@ -432,9 +477,9 @@ hippo_block_new(const char    *guid,
     case HIPPO_BLOCK_TYPE_YOUTUBE_PERSON:
         object_type = HIPPO_TYPE_BLOCK_YOUTUBE_PERSON;
         break;
-    case HIPPO_BLOCK_TYPE_MYSPACE_PERSON:
-        object_type = HIPPO_TYPE_BLOCK_MYSPACE_PERSON;
-        break;         
+    case HIPPO_BLOCK_TYPE_GENERIC:
+        object_type = HIPPO_TYPE_BLOCK_GENERIC;
+        break;
         /* don't add default case, it hides warnings */
     }
     
@@ -714,26 +759,107 @@ hippo_block_set_icon_url(HippoBlock *block,
     g_object_notify(G_OBJECT(block), "icon-url");
 }
 
+const char*
+hippo_block_get_title(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), NULL);
+
+    return block->title;
+}
+
+void
+hippo_block_set_title(HippoBlock *block,
+                      const char *title)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (title == block->title) /* catches both null, or self-assignment */
+        return;
+
+    if (title && block->title && strcmp(title, block->title) == 0)
+        return;
+
+    g_free(block->title);
+    block->title = g_strdup(title);
+    g_object_notify(G_OBJECT(block), "title");
+}
+
+
+const char*
+hippo_block_get_title_link(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), NULL);
+
+    return block->title_link;
+}
+
+void
+hippo_block_set_title_link(HippoBlock *block,
+                           const char *link)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (link == block->title_link) /* catches both null, or self-assignment */
+        return;
+
+    if (link && block->title_link && strcmp(link, block->title_link) == 0)
+        return;
+
+    g_free(block->title_link);
+    block->title_link = g_strdup(link);
+    g_object_notify(G_OBJECT(block), "title-link");
+}
 
 HippoBlockType
-hippo_block_type_from_string(const char *s)
+hippo_block_type_from_attributes(const char *type,
+                                 const char *generic_types)
 {
+    HippoBlockType block_type;
+    
     static const struct { const char *name; HippoBlockType type; } types[] = {
         { "POST", HIPPO_BLOCK_TYPE_POST },
         { "GROUP_MEMBER", HIPPO_BLOCK_TYPE_GROUP_MEMBER },
         { "GROUP_CHAT", HIPPO_BLOCK_TYPE_GROUP_CHAT },
+        { "MUSIC_CHAT", HIPPO_BLOCK_TYPE_MUSIC_CHAT },
         { "MUSIC_PERSON", HIPPO_BLOCK_TYPE_MUSIC_PERSON },
-        { "BLOG_PERSON", HIPPO_BLOCK_TYPE_BLOG_PERSON },
         { "FLICKR_PERSON", HIPPO_BLOCK_TYPE_FLICKR_PERSON },
         { "FLICKR_PHOTOSET", HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET },
         { "FACEBOOK_EVENT", HIPPO_BLOCK_TYPE_FACEBOOK_EVENT },
-        { "YOUTUBE_PERSON", HIPPO_BLOCK_TYPE_YOUTUBE_PERSON },
-        { "MYSPACE_PERSON", HIPPO_BLOCK_TYPE_MYSPACE_PERSON }           
+        { "YOUTUBE_PERSON", HIPPO_BLOCK_TYPE_YOUTUBE_PERSON }
     };
     unsigned int i;
+
+    g_return_val_if_fail(type != NULL, HIPPO_BLOCK_TYPE_UNKNOWN);
+    /* generic_types can be NULL */
+    
+    block_type = HIPPO_BLOCK_TYPE_UNKNOWN;
+    
     for (i = 0; i < G_N_ELEMENTS(types); ++i) {
-        if (strcmp(s, types[i].name) == 0)
-            return types[i].type;
+        if (strcmp(type, types[i].name) == 0) {
+            block_type = types[i].type;
+            break;
+        }
     }
-    return HIPPO_BLOCK_TYPE_UNKNOWN;
+
+    if (block_type == HIPPO_BLOCK_TYPE_UNKNOWN &&
+        generic_types != NULL) {
+        char **generics;
+
+        generics = g_strsplit(generic_types, ",", -1);
+
+        if (generics != NULL) {
+            for (i = 0; generics[i] != NULL; ++i) {
+                /* TITLE_DESCRIPTION and ENTITY_SOURCE are also possible,
+                 * the generic block type simply uses the description and source
+                 * information if it's available, but requires the title information.
+                 */
+                if (strcmp(generics[i], "TITLE") == 0)
+                    block_type = HIPPO_BLOCK_TYPE_GENERIC;
+            }
+
+            g_strfreev(generics);
+        }
+    }
+    
+    return block_type;
 }

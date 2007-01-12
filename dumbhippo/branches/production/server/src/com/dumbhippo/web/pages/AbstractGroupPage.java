@@ -184,7 +184,7 @@ public abstract class AbstractGroupPage {
 		if (invitations < 0) {
 			if (signin.isValid()) {
 				UserViewpoint viewpoint = (UserViewpoint)signin.getViewpoint();
-				invitations = invitationSystem.getInvitations(viewpoint.getViewer());
+				invitations = invitationSystem.getInvitations(viewpoint, viewpoint.getViewer());
 			} else {
 				invitations = 0;
 			}

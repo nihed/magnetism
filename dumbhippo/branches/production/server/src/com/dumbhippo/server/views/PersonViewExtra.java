@@ -6,12 +6,6 @@ package com.dumbhippo.server.views;
  * @author hp
  */
 public enum PersonViewExtra {
-	ALL_RESOURCES,
-	ALL_EMAILS,
-	ALL_AIMS,
-	PRIMARY_RESOURCE,
-	PRIMARY_EMAIL,
-	PRIMARY_AIM,
 	INVITED_STATUS,
 	EXTERNAL_ACCOUNTS,
 	CONTACT_STATUS;

@@ -7,7 +7,7 @@ public class StoredData {
 	private long sizeInBytes;
 	private String mimeType;
 	
-	StoredData(InputStream inputStream, long sizeInBytes) {
+	public StoredData(InputStream inputStream, long sizeInBytes) {
 		this.inputStream = inputStream;
 		this.sizeInBytes = sizeInBytes;
 	}

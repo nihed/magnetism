@@ -476,19 +476,22 @@ update_block_from_xml(HippoDataCache *cache,
                       LmMessageNode  *node)
 {
     const char *type_str;
+    const char *generic_types;
     HippoBlockType type;
     HippoBlock *block;
     gboolean existing;
     gboolean success;
 
+    generic_types = NULL;
     if (!hippo_xml_split(cache, node, NULL,
                          "type", HIPPO_SPLIT_STRING, &type_str,
+                         "genericTypes", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &generic_types,
                          NULL)) {
         g_debug("no type attribute on block node");
         return FALSE;
     }
 
-    type = hippo_block_type_from_string(type_str);
+    type = hippo_block_type_from_attributes(type_str, generic_types);
     if (type == HIPPO_BLOCK_TYPE_UNKNOWN) {
         g_debug("Ignoring block of unknown type '%s'", type_str);
         return FALSE; // Ignore silently

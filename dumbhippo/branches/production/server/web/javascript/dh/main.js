@@ -1,20 +1,20 @@
 dojo.provide('dh.main');
-dojo.require('dojo.html');
+dojo.require('dh.html');
 dojo.require("dh.util")
 
 dhMainInit = function() {
-	var blockHeaders = dojo.html.getElementsByClass('dh-stacker-block');
+	var blockHeaders = dh.html.getElementsByClass('dh-stacker-block');
 	var i = 0;
 	while (i < blockHeaders.length) {
-	   var blockIcons = dojo.html.getElementsByClass('dh-stacker-block-icon', blockHeaders[i]);	
+	   var blockIcons = dh.html.getElementsByClass('dh-stacker-block-icon', blockHeaders[i]);	
        if (blockIcons.length != 1)
 	       throw "stacker block should contain a single icon element";
 
-	   var blockTitles = dojo.html.getElementsByClass('dh-stacker-block-title', blockHeaders[i]);	
+	   var blockTitles = dh.html.getElementsByClass('dh-stacker-block-title', blockHeaders[i]);	
        if (blockTitles.length != 1)
 	       throw "stacker block should contain a single title element";
 
-	   var blockDetails = dojo.html.getElementsByClass('dh-stacker-block-right-container-inner', blockHeaders[i]);	
+	   var blockDetails = dh.html.getElementsByClass('dh-stacker-block-right-container-inner', blockHeaders[i]);	
        if (blockDetails.length != 1)
 	       throw "stacker block should contain a single details element";   			
 	       				       			

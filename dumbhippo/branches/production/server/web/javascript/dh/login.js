@@ -2,7 +2,8 @@ dojo.provide("dh.login");
 
 dojo.require("dh.server");
 dojo.require("dh.util");
-dojo.require("dojo.dom");
+dojo.require("dh.dom");
+dojo.require("dh.event");
 
 dh.login.showingPassword = false;
 dh.login.form = null;
@@ -41,7 +42,7 @@ dh.login.togglePasswordBox = function() {
 		passwordEntry.style.display = 'none';
 		passwordHelp.style.display  = 'none';
 		loginButton.value = "Mail me a log in link";
-		dojo.dom.textContent(toggleLink, "Log in with password");
+		dh.dom.textContent(toggleLink, "Log in with password");
 		showingEntry.value = "false";
 		dh.login.showingPassword = false;
 	} else {
@@ -49,7 +50,7 @@ dh.login.togglePasswordBox = function() {
 		passwordEntry.style.display = 'inline';
 		passwordHelp.style.display  = 'inline';
 		loginButton.value = "Log in";
-		dojo.dom.textContent(toggleLink, "Don't know my password");
+		dh.dom.textContent(toggleLink, "Don't know my password");
 		showingEntry.value = "true";
 		dh.login.showingPassword = true;
 	}
@@ -60,8 +61,8 @@ dhLoginInit = function() {
 	dh.login.togglePasswordBox();
 	// access key focuses the link but doesn't activate it, so we need this
 	document.onkeydown = function(ev) {
-		if ((dh.util.getKeyCode(ev) == 80 || dh.util.getKeyCode(ev) == 112) // 'P' or 'p'
-		    && dh.util.getAltKey(ev)) {
+		if ((dh.event.getKeyCode(ev) == 80 || dh.event.getKeyCode(ev) == 112) // 'P' or 'p'
+		    && dh.event.getAltKey(ev)) {
 		    dh.login.togglePasswordBox();
 		    return false; // don't do something else with this key
 		} else {
@@ -83,4 +84,4 @@ dhLoginInit = function() {
 	document.getElementById("dhLoginAddressEntry").focus();
 }
 
-dojo.event.connect(dojo, "loaded", dj_global, "dhLoginInit");
+dh.event.addPageLoadListener(dhLoginInit);

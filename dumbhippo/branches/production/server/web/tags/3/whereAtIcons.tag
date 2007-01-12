@@ -4,10 +4,10 @@
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
 
 <div class="dh-favicons">
-    <c:if test="${who.hasEmail && !empty who.email}">
+    <c:if test="${!empty who.email}">
         <dht3:whereAtIcon label="Send me email" linkText="${who.email.email}" linkTarget="${who.emailLink}" imgSrc="/images3/${buildStamp}/mail_icon.png"/>
 	</c:if>
-	<c:if test="${who.hasAim && !empty who.aim}">
+	<c:if test="${!empty who.aim}">
 		<c:set var="aimIcon" value="/images3/${buildStamp}/aim_icon.png"/>
 		<c:if test="${!empty who.aimPresenceImageLink}">
 			<c:set var="aimIcon" value="${who.aimPresenceImageLink}"/>

@@ -59,6 +59,8 @@ import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
+import com.dumbhippo.persistence.GroupDescriptionChangedRevision;
+import com.dumbhippo.persistence.GroupNameChangedRevision;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.NowPlayingTheme;
@@ -66,8 +68,8 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
-import com.dumbhippo.persistence.StorageState;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.UserNameChangedRevision;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.postinfo.PostInfo;
@@ -91,10 +93,10 @@ import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemeSystem;
 import com.dumbhippo.server.Pageable;
-import com.dumbhippo.server.PermissionDeniedException;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
+import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.SharedFileSystem;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.Stacker;
@@ -108,13 +110,13 @@ import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FlickrUser;
 import com.dumbhippo.services.FlickrWebServices;
+import com.dumbhippo.services.LastFmWebServices;
 import com.dumbhippo.services.MySpaceScraper;
 import com.dumbhippo.services.TransientServiceException;
 import com.dumbhippo.statistics.ColumnDescription;
@@ -186,6 +188,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	@EJB
 	private FacebookTracker facebookTracker;
+	
+	@EJB
+	private RevisionControl revisionControl;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -273,7 +278,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				xml.appendTextNode("group", null, "id", g.getId(), 
 						"display", g.getName(), 
 						"photoUrl", g.getPhotoUrl(),
-						"memberCount", Integer.toString(liveGroup.getMemberCount()));
+						"memberCount", Integer.toString(liveGroup.getMemberCount()),
+						"isPublic", Boolean.toString(g.isPublic()));
 			}
 		}
 	}
@@ -331,7 +337,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			HttpResponseData contentType, UserViewpoint viewpoint, String groupId)
 			throws IOException {
 		Set<PersonView> persons = groupSystem.findAddableContacts(viewpoint,
-				viewpoint.getViewer(), groupId, PersonViewExtra.ALL_RESOURCES);
+				viewpoint.getViewer(), groupId);
 
 		returnObjects(out, contentType, viewpoint, persons, null);
 	}
@@ -340,10 +346,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			HttpResponseData contentType, UserViewpoint viewpoint) throws IOException {
 
 		List<PersonView> persons = personViewer.getContacts(viewpoint, viewpoint.getViewer(),
-				0, -1, PersonViewExtra.ALL_RESOURCES);
+				0, -1);
 		// Add the user themself to the list of returned contacts (whether or not the
 		// viewer is in their own contact list getContacts() strips it out.)
-		persons.add(personViewer.getPersonView(viewpoint, viewpoint.getViewer(), PersonViewExtra.ALL_RESOURCES));
+		persons.add(personViewer.getPersonView(viewpoint, viewpoint.getViewer()));
 		Set<Group> groups = groupSystem.findRawGroups(viewpoint, viewpoint.getViewer());
 
 		returnObjects(out, contentType, viewpoint, persons, groups);
@@ -364,8 +370,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException(e);
 		}
 		Person contact = identitySpider.createContact(viewpoint.getViewer(), resource);
-		PersonView contactView = personViewer.getPersonView(viewpoint,
-				contact, PersonViewExtra.ALL_RESOURCES);
+		PersonView contactView = personViewer.getPersonView(viewpoint, contact);
 		returnPersonsXml(xml, viewpoint, Collections.singleton(contactView));
 
 		endReturnObjectsXml(out, xml);
@@ -429,7 +434,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doRenamePerson(UserViewpoint viewpoint, String name) {
+		name = name.trim();
 		viewpoint.getViewer().setNickname(name);
+		revisionControl.persistRevision(new UserNameChangedRevision(viewpoint.getViewer(), new Date(), name));
 	}
 
 	public void doCreateGroup(OutputStream out, HttpResponseData contentType,
@@ -483,8 +490,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException(e);
 		}
 		Contact contact = identitySpider.createContact(viewpoint.getViewer(), emailResource);
-		PersonView contactView = personViewer.getPersonView(viewpoint,
-				contact, PersonViewExtra.ALL_RESOURCES);
+		PersonView contactView = personViewer.getPersonView(viewpoint, contact);
 
 		returnObjects(out, contentType, viewpoint, Collections
 				.singleton(contactView), null);
@@ -516,6 +522,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				throw new RuntimeException("Only active members can edit a group");
 						
 			group.setName(name);
+			revisionControl.persistRevision(new GroupNameChangedRevision(viewpoint.getViewer(), group, new Date(), name));
 			searchSystem.indexGroup(group, true);
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
@@ -532,10 +539,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			description = description.trim();
 			
 			group.setDescription(description);
+			revisionControl.persistRevision(new GroupDescriptionChangedRevision(viewpoint.getViewer(), group, new Date(), description));
 			searchSystem.indexGroup(group, true);
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
-		}		
+		}
 	}
 	
 	public void doSetGroupStockPhoto(UserViewpoint viewpoint, String groupId, String photo) {
@@ -560,18 +568,36 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 
-	public void doRemoveContactPerson(UserViewpoint viewpoint, String contactId) {
+	public void doRemoveContactObject(UserViewpoint viewpoint, String contactObjectId) {
 		try {
-			Person contact = identitySpider.lookupGuidString(Person.class,
-					contactId);
-			identitySpider.removeContactPerson(viewpoint.getViewer(), contact);
-		} catch (ParseException e) {
-			throw new RuntimeException("Bad Guid", e);
+			GuidPersistable object = 
+				identitySpider.lookupGuidString(GuidPersistable.class, contactObjectId);
+			if (object instanceof Person) {
+			    identitySpider.removeContactPerson(viewpoint.getViewer(), (Person)object);
+			} else if (object instanceof Resource) {
+				identitySpider.removeContactResource(viewpoint.getViewer(), (Resource)object);				
+			} else {
+				throw new RuntimeException("GuidPersistable for " + contactObjectId + " is neither Person nor Resource");		
+		    }
 		} catch (NotFoundException e) {
 			throw new RuntimeException("Guid not found", e);
+		} catch (ParseException e) {
+			throw new RuntimeException("Bad Guid", e);
 		}
 	}
 
+	public void doRemoveInvitedContact(UserViewpoint viewpoint, String resourceId) {		
+		try {
+		    Resource resource = identitySpider.lookupGuidString(Resource.class, resourceId);		
+		    invitationSystem.deleteInvitations(viewpoint, resource);
+		    identitySpider.removeContactResource(viewpoint.getViewer(), resource);	
+		} catch (NotFoundException e) {
+			throw new RuntimeException("Guid not found", e);
+		} catch (ParseException e) {
+			throw new RuntimeException("Bad Guid", e);
+		}    
+	}
+	
 	public void doSendLoginLinkEmail(XmlBuilder xml, String address) throws IOException, HumanVisibleException {
 		signinSystem.sendSigninLinkEmail(address);
 	}
@@ -874,7 +900,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 					// this does NOT check whether the account has invitations left,
 					// that's why we do it above.
 					note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter), promotionCode, address,
-								"Mugshot Download", "Hey!\n\nClick here to get the Mugshot Music Radar and Web Swarm.");
+								"Mugshot Invitation", "");
 					if (note == null)
 						note = "Your invitation is on its way (check your email)";
 				}
@@ -1050,7 +1076,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// let's find out if we were inviting to the group or inviting to follow the group
 		boolean adderCanAdd = groupSystem.canAddMembers(viewpoint.getViewer(), group);
 		
-		PersonView contactView = personViewer.getPersonView(viewpoint, contact, PersonViewExtra.PRIMARY_RESOURCE);
+		PersonView contactView = personViewer.getPersonView(viewpoint, contact);
 
 		String note;
 		if (adderCanAdd) {
@@ -1224,6 +1250,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		viewpoint.getViewer().getAccount().setHasAcceptedTerms(true);
 	}
 	
+	public void doSetNeedsDownload(UserViewpoint viewpoint, boolean needsDownload) {
+		viewpoint.getViewer().getAccount().setNeedsDownload(needsDownload);
+	}
+	
 	public void doSetAdminDisabled(UserViewpoint viewpoint, String userId, boolean disabled) {
 		if (!identitySpider.isAdministrator(viewpoint.getViewer())) {
 			throw new RuntimeException("Only administrators can administratively disable/enable accounts");
@@ -1393,7 +1423,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
 		LinkResource link = identitySpider.getLink(feedSource);
-		Feed feed = feedSystem.getFeed(link);
+		Feed feed = feedSystem.getOrCreateFeed(link);
 		return feed;
 	}
 	
@@ -1468,18 +1498,21 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (!groupSystem.canEditGroup(viewpoint, group))
 			throw new XmlMethodException(XmlMethodErrorCode.FORBIDDEN, "Only active members can add feeds to a group");
 							
-		feedSystem.addGroupFeed(group, feed);
+		feedSystem.addGroupFeed(viewpoint.getViewer(), group, feed);
 	}
 
-	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException {
+	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, URL url) throws XmlMethodException {
 		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
-		Group group = parseGroupId(viewpoint, groupId);
-		Feed feed = getFeedFromUserEnteredUrl(url);
+		Group group = parseGroupId(viewpoint, groupId);			
+		LinkResource link = identitySpider.lookupLink(url);
+		if (link == null)
+			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "Feed not found: " + url);
+		Feed feed = feedSystem.getExistingFeed(link);
 		
 		if (!groupSystem.canEditGroup(viewpoint, group))
 			throw new XmlMethodException(XmlMethodErrorCode.FORBIDDEN, "Only active members can remove feeds from a group");
 							
-		feedSystem.removeGroupFeed(group, feed);		
+		feedSystem.removeGroupFeed(viewpoint.getViewer(), group, feed);		
 	}
 	
 	// FIXME this doesn't match the other external account manipulation methods exactly since its 
@@ -1641,15 +1674,44 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 
+	private static String findPathElementAfter(String url, String after) {
+		int i = url.indexOf(after);
+		if (i < 0) {
+			//logger.debug("'{}' not found in '{}'", after, url);
+			return null;
+		}
+		
+		i += after.length();
+		
+		int j = url.indexOf('/', i);
+		if (j < 0) {
+			//logger.debug("'/' not found after index {}", i);
+			j = url.length();
+		}
+		if (i == j) {
+			//logger.debug("{} == {}", i, j);
+			return null;
+		}
+		return url.substring(i, j);
+	}
+
+	private static String findLastPathElement(String url) {
+		if (url.endsWith("/"))
+			url = url.substring(0, url.length() - 1);
+		
+		int i = url.lastIndexOf("/");
+		if (i >= 0) {
+			return url.substring(i);
+		} else {
+			return null;
+		}
+	}
+	
 	public void doSetLastFmName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
 		String name = urlOrName.trim();
-		int user = name.indexOf("/user/");
-		if (user >= 0) {
-			user += "/user/".length();
-			name = name.substring(user);
-		}
-		if (name.endsWith("/"))
-			name = name.substring(0, name.length() - 1);
+		String found = findPathElementAfter(name, "/user/");
+		if (found != null)
+			name = found;
 		
 		if (name.startsWith("http://"))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
@@ -1660,6 +1722,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
+		
+		try {
+			LastFmWebServices.getTracksForUser(name);
+		} catch (TransientServiceException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Can't retrieve your songs from last.fm");
+		}
+		
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		xml.appendTextNode("username", external.getHandle());
@@ -1668,13 +1737,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void doSetDeliciousName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
 		String name = urlOrName.trim();
 		// del.icio.us urls are just "http://del.icio.us/myusername"
-		int user = name.lastIndexOf("/");
-		if (user >= 0) {
-			name = name.substring(user);
-		}
-		if (name.endsWith("/"))
-			name = name.substring(0, name.length() - 1);
 		
+		String found = findLastPathElement(name);
+		if (found != null)
+			name = found;
+
 		if (name.startsWith("http://"))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
@@ -1702,13 +1769,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	public void doSetTwitterName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
 		String name = urlOrName.trim();
+		
 		// Twitter urls are just "http://twitter.com/myusername"
-		int user = name.lastIndexOf("/");
-		if (user >= 0) {
-			name = name.substring(user);
-		}
-		if (name.endsWith("/"))
-			name = name.substring(0, name.length() - 1);
+		
+		String found = findLastPathElement(name);
+		if (found != null)
+			name = found;
 		
 		if (name.startsWith("http://"))
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
@@ -1724,6 +1790,78 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Feed feed;
 		try {
 			feed = scrapeFeedFromUrl(new URL("http://twitter.com/" + StringUtils.urlEncode(external.getHandle())));
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage() + " (check that updates are public in Twitter settings)");
+		}
+		EJBUtil.forceInitialization(feed.getAccounts());
+		
+		external.setFeed(feed);
+		feed.getAccounts().add(external);
+		
+		xml.appendTextNode("username", external.getHandle());
+	}
+
+	public void doSetDiggName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+		String name = urlOrName.trim();
+		
+		// Digg urls are "http://digg.com/users/myusername/stuff"
+
+		String found = findPathElementAfter(name, "/users/");
+		if (found != null)
+			name = found;
+
+		if (name.startsWith("http://"))
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
+		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.DIGG);
+		try {
+			external.setHandleValidating(name);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		
+		Feed feed;
+		try {
+			feed = scrapeFeedFromUrl(new URL("http://digg.com/users/" + StringUtils.urlEncode(external.getHandle()) + "/dugg"));
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
+		}
+		EJBUtil.forceInitialization(feed.getAccounts());
+		
+		external.setFeed(feed);
+		feed.getAccounts().add(external);
+		
+		xml.appendTextNode("username", external.getHandle());
+	}
+
+	public void doSetRedditName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+		String name = urlOrName.trim();
+
+		// Reddit urls are "http://reddit.com/user/myusername"
+
+		//logger.debug("name={}", name);
+		
+		String found = findPathElementAfter(name, "/user/");
+		if (found != null)
+			name = found;
+		
+		//logger.debug("found={}", found);
+		
+		if (name.startsWith("http://"))
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
+		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.REDDIT);
+		try {
+			external.setHandleValidating(name);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		
+		Feed feed;
+		try {
+			feed = scrapeFeedFromUrl(new URL("http://reddit.com/user/" + StringUtils.urlEncode(external.getHandle())));
 		} catch (MalformedURLException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
 		}
@@ -1759,11 +1897,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 
-	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {
+	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException {
 		// DO NOT cut and paste this block into similar external account methods. It's only here because
 		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
 		// for the plain entries assumes this works.
-		if (url.trim().length() == 0) {
+		if (url == null) {
 			doRemoveExternalAccount(xml, viewpoint, "WEBSITE");
 			try {
 				ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.WEBSITE);
@@ -1774,18 +1912,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			return;
 		}
 		
+		throwIfUrlNotHttp(url);
+		
 		// the rest of this is more typical of a "set external account" http method
-		
-		URL urlObject;
-		try {
-			urlObject = parseUserEnteredUrl(url, true);
-		} catch (MalformedURLException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Invalid url (" + e.getMessage() + ")");
-		}
-		
+				
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.WEBSITE);
 		try {
-			external.setHandleValidating(urlObject.toExternalForm());
+			external.setHandleValidating(url.toExternalForm());
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
@@ -1793,6 +1926,21 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doSetBlog(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException {
+		
+		// DO NOT cut and paste this block into similar external account methods. It's only here because
+		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
+		// for the plain entries assumes this works.
+		if (url == null) {
+			doRemoveExternalAccount(xml, viewpoint, "BLOG");
+			try {
+				ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.BLOG);
+				// otherwise the blog url would keep "coming back" since there's no visual indication of hate/indifferent status
+				external.setHandle(null);
+			} catch (NotFoundException e) {
+			}
+			return;
+		}
+		
 		throwIfUrlNotHttp(url);
 		
 		Feed feed = scrapeFeedFromUrl(url);
@@ -1941,37 +2089,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	@TransactionAttribute(TransactionAttributeType.NEVER)
  	public void doDeleteFile(XmlBuilder xml, UserViewpoint viewpoint, Guid fileId) throws XmlMethodException {
 		EJBUtil.assertNoTransaction();
- 		// Transaction 1 - set state to DELETING
- 		try {
-			sharedFileSystem.setFileState(viewpoint, fileId, StorageState.DELETING, -1);
-		} catch (NotFoundException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "No such file");
-		} catch (PermissionDeniedException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.FORBIDDEN, "You aren't allowed to delete this file");
-		}
 		try {
-			// Outside transaction - remove from local or remote file storage
-			sharedFileSystem.deleteFileOutsideDatabase(fileId);
-		} catch (Exception e) {
-			logger.error("Failed to delete file", e);
-			try {
-				// Transaction 2 - emergency revert of DELETING state
-				sharedFileSystem.setFileState(viewpoint, fileId, StorageState.STORED, -1);
-			} catch (Exception e2) {
-				logger.error("Failed in last-ditch effort to fix state of file {}, must be set back to STORED manually",
-						fileId);
-				logger.error("Exception was", e2);
-			}
-			throw new XmlMethodException(XmlMethodErrorCode.FAILED, "Something went wrong while deleting this file");
-		}
-		// Transaction 3 - set the state to DELETED to indicate success
-		try {
-			sharedFileSystem.setFileState(viewpoint, fileId, StorageState.DELETED, -1);
-		} catch (Exception e) {
-			logger.error("Successfully deleted file {} but failed to set its state to DELETED", fileId);
-			logger.error("Exception was", e);
-			// don't return an error from the method, this will appear to have worked from user 
-			// standpoint
+			sharedFileSystem.deleteFile(viewpoint, fileId);
+		} catch (HumanVisibleException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.FAILED, e.getMessage());
 		}
  	}
 

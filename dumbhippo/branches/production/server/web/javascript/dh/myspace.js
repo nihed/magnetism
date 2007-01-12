@@ -1,10 +1,9 @@
 dojo.provide("dh.myspace");
 
 dojo.require("dojo.event.*");
-dojo.require("dojo.html");
-dojo.require("dojo.string");
 dojo.require("dh.util");
 dojo.require("dh.server");
+dojo.require("dh.event");
 
 dh.password.passwordEntry = null;
 dh.password.againEntry = null;
@@ -37,7 +36,7 @@ dh.myspace.NameInput = function () {
 	}
 
 	this.submitHandler = function() {
-		var name = dojo.string.trim(this.inputBox.value);
+		var name = dh.util.trim(this.inputBox.value);
 		
 		if (name.length == 0) {
 			alert("Please give your MySpace name")
@@ -74,4 +73,4 @@ var dhMySpaceInit = function() {
 	dh.myspace.instance = new dh.myspace.NameInput();
 }
 
-dojo.event.connect(dojo, "loaded", dhMySpaceInit);
+dh.event.addPageLoadListener(dhMySpaceInit);

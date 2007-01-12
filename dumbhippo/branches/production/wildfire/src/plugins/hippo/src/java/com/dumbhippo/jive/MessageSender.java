@@ -15,9 +15,14 @@ import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.wildfire.ChannelHandler;
+import org.jivesoftware.wildfire.ClientSession;
+import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
 
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.XmlBuilder;
@@ -33,7 +38,6 @@ import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
@@ -58,7 +62,7 @@ import com.dumbhippo.server.views.Viewpoint;
  */
 public class MessageSender implements XmppMessageSenderProvider {
 	ExecutorService pool = ThreadUtils.newCachedThreadPool("MessageSender-pool");
-	private Map<Guid, UserMessageQueue> userQueues = new HashMap<Guid, UserMessageQueue>();
+	private Map<JID, SessionMessageQueue> sessionQueues = new HashMap<JID, SessionMessageQueue>();
 	static private MessageSender instance;
 	
 	private GroupSystem groupSystem;
@@ -86,15 +90,15 @@ public class MessageSender implements XmppMessageSenderProvider {
 		return instance;
 	}
 	
-	static class UserMessageQueue implements Runnable {
-		Queue<Message> queue = new LinkedList<Message>();
-		String node;
+	static class SessionMessageQueue implements Runnable {
+		Queue<Packet> queue = new LinkedList<Packet>();
+		JID resource;
 		
-		public UserMessageQueue(String node) {
-			this.node = node;
+		public SessionMessageQueue(JID resource) {
+			this.resource = resource;
 		}
 		
-		public synchronized void addMessage(ExecutorService pool, Message template) {
+		public synchronized void addMessage(ExecutorService pool, Packet template) {
 			boolean wasEmpty = queue.isEmpty();
 			queue.add(template);
 			
@@ -103,17 +107,25 @@ public class MessageSender implements XmppMessageSenderProvider {
 		}
 		
 		public void run() {
-			List<Message> toSend;
+			List<Packet> toSend;
 			
 			synchronized(this) {
-				toSend = new ArrayList<Message>(queue);
+				toSend = new ArrayList<Packet>(queue);
 				queue.clear(); 
 			}
 			
-			for (Message template : toSend) {
-				Message message = template.createCopy();
+			Session session = SessionManager.getInstance().getSession(resource);
+			if (session == null)
+				return; // Just dump packets to not-connected resources
+
+			for (Packet template : toSend) {
+				Packet packet = template.createCopy();
+				packet.setTo(resource);
+				
 				try {
-					SessionManager.getInstance().userBroadcast(node, message);
+					@SuppressWarnings("unchecked")
+					ChannelHandler<Packet> handler = session;
+					handler.process(packet);
 				} catch (UnauthorizedException e) {
 					// ignore
 				}
@@ -132,38 +144,63 @@ public class MessageSender implements XmppMessageSenderProvider {
 		String node = guid.toJabberId(null);
 		return (SessionManager.getInstance().getSessionCount(node) > 0);
 	}
+
+	private void queuePacket(JID address, Packet template) {
+		SessionMessageQueue sessionQueue;
+
+		synchronized (sessionQueues) {
+			sessionQueue = sessionQueues.get(address);
+			if (sessionQueue == null) {
+				sessionQueue = new SessionMessageQueue(address);
+				sessionQueues.put(address, sessionQueue);
+			}
+		}
+		
+		sessionQueue.addMessage(pool, template);
+	}
 	
 	/**
-	 * Send a message to a set of users.
+	 * Send a message to a set of users
 	 * 
 	 * @param to the users to send the message to
 	 * @param template template for the messages we want to send out. It will be
 	 *     copied and the recipient filled in.
 	 */
-	public void sendMessage(Set<Guid> to, Message template) {
+	public void sendPacketToUsers(Set<Guid> to, Packet template) {
 		for (Guid guid : to) {
 			String node = guid.toJabberId(null);
 			
-			// We want to avoid queueing messages for users not on this server,
-			// since that will frequently be the vast majority of the recipients
-			// that we are given
-			if (SessionManager.getInstance().getSessionCount(node) == 0)
-				continue;
-
-			UserMessageQueue userQueue;
-
-			synchronized (userQueues) {
-				userQueue = userQueues.get(guid);
-				if (userQueue == null) {
-					userQueue = new UserMessageQueue(node);
-					userQueues.put(guid, userQueue);
-				}
+			for (ClientSession session: SessionManager.getInstance().getSessions(node)) {
+				queuePacket(session.getAddress(), template);
 			}
 			
-			userQueue.addMessage(pool, template);
 		}
 	}
 
+	/**
+	 * Send a message to a set of resources
+	 * 
+	 * @param to the resources to send the message to
+	 * @param template template for the messages we want to send out. It will be
+	 *     copied and the recipient filled in.
+	 */
+	public void sendPacketToResources(Set<JID> to, Packet template) {
+		for (JID address : to) {
+			queuePacket(address, template);
+		}
+	}
+	
+	/**
+	 * Send a message to a single resource
+	 * 
+	 * @param to the resource to send the message to
+	 * @param template template for the messages we want to send out. It will be
+	 *     copied and the recipient filled in.
+	 */
+	public void sendPacketToResource(JID to, Packet template) {
+		queuePacket(to, template);
+	}
+	
 	/**
 	 * sendMessage variant that sends the message only to a single recipient
 	 * 
@@ -171,7 +208,7 @@ public class MessageSender implements XmppMessageSenderProvider {
 	 * @param template Message object to send
 	 */
 	public void sendMessage(Guid to, Message template) {
-		sendMessage(Collections.singleton(to), template);
+		sendPacketToUsers(Collections.singleton(to), template);
 	}
 
 	private Element elementFromXml(String xmlString) {
@@ -194,7 +231,7 @@ public class MessageSender implements XmppMessageSenderProvider {
         Message template = new Message();
         template.setType(Message.Type.headline);
         template.getElement().add(elementFromXml(payload));
-        sendMessage(to, template);
+        sendPacketToUsers(to, template);
 	}
 
 	private static final String NEW_POST_ELEMENT_NAME = "newPost";
@@ -276,8 +313,7 @@ public class MessageSender implements XmppMessageSenderProvider {
 		
 		Viewpoint viewpoint = new UserViewpoint(recipient);
 		
-		PersonView memberView = personViewer.getPersonView(viewpoint, 
-				groupMember.getMember(), PersonViewExtra.PRIMARY_RESOURCE);
+		PersonView memberView = personViewer.getPersonView(viewpoint, groupMember.getMember());
 
 		GroupView groupView = groupSystem.getGroupView(viewpoint, groupMember.getGroup());
 		

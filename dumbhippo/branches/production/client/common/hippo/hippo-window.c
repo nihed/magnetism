@@ -45,11 +45,12 @@ hippo_window_base_init(void *klass)
                           G_TYPE_NONE, 0);
 
         g_object_interface_install_property(klass,
-                                            g_param_spec_boolean("app-window",
-                                                                 _("App Window"),
-                                                                 _("Whether the window should appear in the tasklist"),
-                                                                 TRUE,
-                                                                 G_PARAM_READABLE | G_PARAM_WRITABLE));
+                                            g_param_spec_int("role", /* g_param_spec_enum( ... */
+                                                             _("Role"),
+                                                             _("Type of window"),
+                                                             HIPPO_WINDOW_ROLE_APPLICATION, HIPPO_WINDOW_ROLE_INPUT_POPUP,
+                                                             HIPPO_WINDOW_ROLE_APPLICATION,
+                                                             G_PARAM_READABLE | G_PARAM_WRITABLE));
         /* The name here is intentionally distinct from the GdkWindow "gravity" property */
         g_object_interface_install_property(klass,
                                             g_param_spec_int("resize-gravity", /* g_param_spec_enum( .. */

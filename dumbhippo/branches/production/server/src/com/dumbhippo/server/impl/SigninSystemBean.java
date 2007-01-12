@@ -28,7 +28,6 @@ import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 
@@ -156,7 +155,7 @@ public class SigninSystemBean implements SigninSystem {
 		
 
 	public void sendRepairLink(User user) throws HumanVisibleException {		
-		PersonView personView = personViewer.getPersonView(new UserViewpoint(user), user, PersonViewExtra.PRIMARY_EMAIL);
+		PersonView personView = personViewer.getPersonView(new UserViewpoint(user), user);
 		Resource resource = personView.getPrimaryResource();
 		if (resource == null || !(resource instanceof EmailResource))
 			return;

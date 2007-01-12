@@ -64,7 +64,8 @@ static int                hippo_canvas_box_get_height_request  (HippoCanvasItem 
                                                                 int                 for_width);
 static void               hippo_canvas_box_allocate            (HippoCanvasItem    *item,
                                                                 int                 width,
-                                                                int                 height);
+                                                                int                 height,
+                                                                gboolean            origin_changed);
 static void               hippo_canvas_box_get_allocation      (HippoCanvasItem    *item,
                                                                 int                *width_p,
                                                                 int                *height_p);
@@ -999,20 +1000,17 @@ hippo_canvas_box_paint_background(HippoCanvasBox *box,
                         0, 0,
                         box->allocated_width,
                         box->border_top);
-        cairo_fill(cr);
         /* left */
         cairo_rectangle(cr,
                         0, box->border_top,
                         box->border_left,
                         box->allocated_height - box->border_top - box->border_bottom);
-        cairo_fill(cr);
         /* right */
         cairo_rectangle(cr,
                         box->allocated_width - box->border_right,
                         box->border_top,
                         box->border_right,
                         box->allocated_height - box->border_top - box->border_bottom);
-        cairo_fill(cr);
         /* bottom */
         cairo_rectangle(cr,
                         0, box->allocated_height - box->border_bottom,
@@ -1863,9 +1861,29 @@ hippo_canvas_box_align(HippoCanvasBox *box,
 }
 
 static void
+allocate_child(HippoCanvasBox *box,
+               HippoBoxChild  *child,
+               int             x,
+               int             y,
+               int             width,
+               int             height,
+               int             origin_changed)
+{
+    gboolean child_moved = x != child->x || y != child->y;
+
+    child->x = x;
+    child->y = y;
+
+    hippo_canvas_item_allocate(child->item,
+                               width, height,
+                               origin_changed || child_moved);
+}
+
+static void
 hippo_canvas_box_allocate(HippoCanvasItem *item,
                           int              allocated_box_width,
-                          int              allocated_box_height)
+                          int              allocated_box_height,
+                          gboolean         origin_changed)
 {
     HippoCanvasBox *box;
     HippoCanvasBoxClass *klass;
@@ -1887,11 +1905,10 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
             box->needs_allocate);
 #endif
     
-    /* If we haven't emitted request-changed then 
-     * we are allowed to short-circuit an
-     * unchanged allocation
+    /* If we haven't emitted request-changed then we are allowed to short-circuit 
+     * an unchanged allocation
      */
-    if (!box->needs_allocate &&
+    if (!origin_changed && !box->needs_allocate &&
         (box->allocated_width == allocated_box_width && 
          box->allocated_height == allocated_box_height))
         return;
@@ -1931,11 +1948,12 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
         if (!child->visible) {
-            hippo_canvas_item_allocate(child->item, 0, 0);
+            hippo_canvas_item_allocate(child->item, 0, 0, FALSE);
         } else if (child->fixed) {
             hippo_canvas_item_allocate(child->item,
                                        child->natural_width,
-                                       child->height_request);
+                                       child->height_request,
+                                       origin_changed);
         } else {
             continue;
         }
@@ -1968,12 +1986,12 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
                 vertical_expand_space -= extra;
                 req += extra;
             }
-            
-            child->x = content_x;
-            child->y = child->end ? (bottom_y - req) : top_y;
-            hippo_canvas_item_allocate(child->item,
-                                       allocated_content_width,
-                                       req);
+
+            allocate_child(box, child,
+                           content_x, child->end ? (bottom_y - req) : top_y,
+                           allocated_content_width, req,
+                           origin_changed);
+
             if (child->end)
                 bottom_y -= (req + box->spacing);
             else
@@ -2006,11 +2024,11 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
             req = box_child_get_adjusted_width_request(child, &width_adjusts[i]);
 
             if (req > 0) {
-                child->x = child->end ? (right_x - req) : left_x;
-                child->y = content_y;
-                hippo_canvas_item_allocate(child->item,
-                                           req,
-                                           allocated_content_height);
+                allocate_child(box, child,
+                               child->end ? (right_x - req) : left_x, content_y,
+                               req, allocated_content_height,
+                               origin_changed);
+
                 if (child->end)
                     right_x -= (req + box->spacing);
                 else
@@ -2021,7 +2039,7 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
                  */
                 child->x = 0;
                 child->y = 0;
-                hippo_canvas_item_allocate(child->item, 0, 0);
+                hippo_canvas_item_allocate(child->item, 0, 0, FALSE);
             }
             
             ++i;

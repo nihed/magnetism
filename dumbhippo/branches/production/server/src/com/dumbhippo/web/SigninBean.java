@@ -80,12 +80,9 @@ public abstract class SigninBean  {
 				}
 			}
 			
-			if (account != null) {
-				if (!account.getHasAcceptedTerms() || account.isDisabled() || account.isAdminDisabled())
-					result = new DisabledSigninBean(account);
-				else
-					result = new UserSigninBean(account);
-			} else
+			if (account != null)
+				result = new UserSigninBean(account);
+			else
 				result = new AnonymousSigninBean();
 
 			logger.debug("storing SigninBean on request, valid = {}", result.isValid());
@@ -120,25 +117,20 @@ public abstract class SigninBean  {
 	 * @param response response object
 	 * @param client Client object that the user has authenticated against
 	 * @return a string that indicates a good default location for the state of the user;
-	 *    for example, if the account is disabled, we return "/we-miss-you" where the
-	 *    user is allowed to re-enable their account
+	 *    (at the moment, always "/", the account status bar will take care of any
+	 *    necessary initial actions that the user might need to reenable the account, etc.)
 	 */
 	public static String initializeAuthentication(HttpServletRequest request, HttpServletResponse response, Client client) {
 		Account account = client.getAccount();
 		User user = account.getOwner();
-		if (!account.isDisabled() && !account.isAdminDisabled() && account.getHasAcceptedTerms()) {
+		if (account.isActive()) {
 			setCookie(response, user.getGuid(), client.getAuthKey());
 		} else {
 			SigninBean.storeGuid(request.getSession(), user.getGuid());
 			request.getSession().setAttribute(CLIENT_ID_KEY, client.getId());		
 		}		
 
-		if (account.isDisabled())
-			return "/we-miss-you";
-		else if (!account.getHasAcceptedTerms())
-			return "/download?acceptMessage=true";
-		else
-			return "/";
+		return "/";
 	}
 	
 	/**
@@ -155,7 +147,7 @@ public abstract class SigninBean  {
 			try {
 				Client client = accountSystem.getExistingClient(userId, clientId);
 				Account account = client.getAccount();
-				if (!account.isDisabled() && !account.isAdminDisabled() && account.getHasAcceptedTerms())
+				if (account.isActive())
 					setCookie(response, userId, client.getAuthKey());
 				else
 					unsetCookie(response);
@@ -204,6 +196,8 @@ public abstract class SigninBean  {
 	
 	/** Are we signed in? returns false if anonymous */
 	public abstract boolean isValid();
+	/** Are we signed in for a user that isn't disabled or in need of Terms-of-Use acceptance? */
+	public abstract boolean isActive();
 	public abstract boolean isDisabled();
 	public abstract boolean getNeedsTermsOfUse();
 	

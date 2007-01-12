@@ -1,6 +1,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-<script>
+<dh:script module="dh.event"/>
+<script type="text/javascript">
 	var dhBeaconPosition = 1;
 	var dhBeaconSampleCount = 5;
 	function dhBeaconSampleIterate () {
@@ -14,7 +15,7 @@
 				}, 3000);	
 		return false;
 	}
-	dojo.event.connect(dojo, "loaded", dj_global, "dhBeaconSampleIterate");
+	dh.event.addPageLoadListener(dhBeaconSampleIterate);
 </script>
 
 <img id="dhBeaconSample" src="/images2/${buildStamp}/beacon_samples/beaconsample1.jpg"/>

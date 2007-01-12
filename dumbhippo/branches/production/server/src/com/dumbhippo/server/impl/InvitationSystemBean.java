@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.email.MessageContent;
 import com.dumbhippo.persistence.Account;
@@ -53,6 +54,7 @@ import com.dumbhippo.server.views.InvitationView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
 public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {
@@ -91,21 +93,36 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	@EJB
 	private IdentitySpider identitySpider;
-	
+
 	private InvitationToken lookupInvitationFor(Resource invitee) {
-		InvitationToken invite;
-		try {
-			// we get the newest invitation token, sort by date in descending order
-			Query q = em.createQuery(
-				"SELECT iv FROM InvitationToken iv WHERE iv.invitee = :resource ORDER BY iv.creationDate DESC");
-			q.setParameter("resource", invitee);
-			q.setMaxResults(1); // only need the first one
-			invite = (InvitationToken) q.getSingleResult();
+		List<InvitationToken> invites = lookupInvitationsFor(invitee, true);
+		if (invites.size() > 0)
+			return invites.get(0);
+		else
+	        return null;
+    }
+	
+	private List<InvitationToken> lookupInvitationsFor(Resource invitee, boolean retrieveLatestOnly) {
+		InvitationToken invite;			
+		
+		// we get the newest invitation token, sort by date in descending order
+	    Query q = em.createQuery(
+		              "SELECT iv FROM InvitationToken iv WHERE iv.invitee = :resource ORDER BY iv.creationDate DESC");
+		q.setParameter("resource", invitee);
 			
-		} catch (NoResultException e) {
-			invite = null;
+		if (retrieveLatestOnly) {
+			try {
+			    q.setMaxResults(1); // only need the first one
+			    invite = (InvitationToken) q.getSingleResult();
+			    List<InvitationToken> invites = new ArrayList<InvitationToken>();
+			    invites.add(invite);
+			    return invites;
+		    } catch (NoResultException e) {
+			    return new ArrayList<InvitationToken>();
+		    }
+		} else {    
+			return TypeUtils.castList(InvitationToken.class, q.getResultList());
 		}
-		return invite;
 	}
 
 	private InviterData lookupInviterData(User inviter, Resource invitee) {
@@ -212,19 +229,24 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	}
 	*/
 
-	public List<InvitationView> findOutstandingInvitations(UserViewpoint viewpoint, 
-			                                               int start, 
-			                                               int max) {	
+	public List<InvitationView> findInvitations(UserViewpoint viewpoint, 
+			                                    int start, int max, boolean includeExpired) {	
 		// we want to provide the invitations for which the person viewing the 
 		// invitations is the inviter
 		User inviter = viewpoint.getViewer();
 		// get only the InvitationTokens for which ResultingPerson is null,
-		// sorted by date in descending order
+		// sorted by date in descending order, filter out older invitations 
+		// to the same recipient
 		Query q = em.createQuery(
 			"SELECT ivd.invitation FROM InviterData ivd " +
 			"    WHERE ivd.inviter = :inviter AND " +
 			"       ivd.deleted = FALSE AND " +
-			"       ivd.invitation.resultingPerson = NULL " +
+			"       ivd.invitation.resultingPerson = NULL AND " +
+			"       NOT EXISTS (SELECT it.id FROM InvitationToken it, InviterData ivd2 " +
+			"                   WHERE it.invitee = ivd.invitation.invitee AND" +
+			"                         ivd2.inviter = :inviter AND" +
+			"                         it.creationDate > ivd.invitation.creationDate AND" +
+			"                         ivd2.invitation = it)" +		
 			"    ORDER BY ivd.invitation.creationDate DESC");
 		
 		q.setParameter("inviter", inviter);
@@ -235,14 +257,14 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		q.setFirstResult(start);
 		
 		@SuppressWarnings("unchecked")
-		List<InvitationToken> outstandingInvitations = q.getResultList();
+		List<InvitationToken> invitations = q.getResultList();
 		
-		List<InvitationView> outstandingInvitationViews = new ArrayList<InvitationView> ();
+		List<InvitationView> invitationViews = new ArrayList<InvitationView> ();
 		
 		// can we mix accessing data through the database with accessing it through 
 		// the persistence classes? should this also be a database query?
-		for (InvitationToken invite : outstandingInvitations) {
-			if (!invite.isValid()) {
+		for (InvitationToken invite : invitations) {
+			if (!includeExpired && invite.isExpired()) {
 				// deleted invitations should have been filtered out by the query,
 				// but we also want to filter out expired invitations
 				continue;
@@ -254,29 +276,35 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			Set<Group> suggestedGroups = 
 				groupSystem.getInvitedToGroups(inviterData.getInviter(), invite.getInvitee());
             InvitationView invitationView = new InvitationView(invite, inviterData, suggestedGroups);
-            outstandingInvitationViews.add(invitationView);
+            invitationViews.add(invitationView);
 		}
 			
-		return outstandingInvitationViews; 
+		return invitationViews; 
 	}
-	
-	public int countOutstandingInvitations(UserViewpoint viewpoint) {		
-		// it would have been nice to use a COUNT query here, but because 
-		// we want to not count expired invitations, we need to query
-		// for invitation tokens
-		// next, it seems to be better to construct an unneeded InvitationView
-		// list, than to duplicate the filtering in findOutstandingInvitations
-		return findOutstandingInvitations(viewpoint, 0, -1).size();
+
+	public void deleteInvitations(UserViewpoint viewpoint, Resource resource) {
+		User inviter = viewpoint.getViewer();
+		for (InvitationToken invite : lookupInvitationsFor(resource, false)) {
+			deleteInvitation(inviter, invite);
+		}
 	}
 	
 	public InvitationView deleteInvitation(UserViewpoint viewpoint, String authKey) {
-		User inviter = viewpoint.getViewer();
-		// Could have used lookupInvitationFor if made the deletion based on the
-		// e-mail address, and not the authentication key. Would have to make
-		// sure to go through all InvitationTokens for the invitee then. There
-		// has to be only one that is valid, but can be multiple expired ones.
+		User inviter = viewpoint.getViewer();		
 		InvitationToken invite = lookupInvitation(inviter, authKey);
+	
+		InviterData ivd = deleteInvitation(inviter, invite); 
+		if (ivd != null) {
+		    Set<Group> suggestedGroups = 
+		   	    groupSystem.getInvitedToGroups(ivd.getInviter(), invite.getInvitee());
+            InvitationView invitationView = new InvitationView(invite, ivd, suggestedGroups);
+            return invitationView;	
+		}
 		
+		return null;
+	}
+		
+	private InviterData deleteInvitation(User inviter, InvitationToken invite) {	
 		if (invite == null) {
 			return null;
 		}
@@ -300,7 +328,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		// while someone else piled on or used to have an old expired invitation, 
 		// this invitation ends up being "free" 
 		// not sure if it is worth it to do anything about it now		
-        if (ivd.isInvitationDeducted()) {
+        if (ivd.isInvitationDeducted() && !invite.isExpired()) {
         	// reimburse
     		Account account = getAccount(inviter);
     		account.addInvitations(1);
@@ -323,10 +351,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
         	invite.setDeleted(true);
         }
 		
-		Set<Group> suggestedGroups = 
-			groupSystem.getInvitedToGroups(ivd.getInviter(), invite.getInvitee());
-        InvitationView invitationView = new InvitationView(invite, ivd, suggestedGroups);
-        return invitationView;		
+        return ivd;	
 	}
 	
 	public void restoreInvitation(UserViewpoint viewpoint, String authKey) {
@@ -643,10 +668,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		// needed to fix newUser.getAccount() returning null inside identitySpider?
 		em.flush();
 		
-		// add all inviters as our contacts
+		// add all inviters as our contacts, unless they've deleted the invite
 		for (InviterData inviterData : invite.getInviters()) {
-			Account inviterAccount = inviterData.getInviter().getAccount();
-			spider.createContact(newUser, inviterAccount);
+			if (!inviterData.isDeleted()) {
+			    Account inviterAccount = inviterData.getInviter().getAccount();
+			    spider.createContact(newUser, inviterAccount);
+			}
 		}
 		
 		if (!disable)
@@ -697,7 +724,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 	}
 
-	public int getInvitations(User user) {
+	public int getInvitations(Viewpoint viewpoint, User user) {
+		if (!(viewpoint instanceof SystemViewpoint || viewpoint.isOfUser(user)))
+			return 0;
 		Account account = getAccount(user);
 		return account.getInvitations();
 	}
@@ -738,7 +767,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	}
 	
 	public int getSelfInvitationCount() {
-		return getInvitations(accounts.getCharacter(Character.MUGSHOT));
+		return getInvitations(SystemViewpoint.getInstance(), accounts.getCharacter(Character.MUGSHOT));
 	}
 	
 	static private class InviteMessageContent extends MessageContent {

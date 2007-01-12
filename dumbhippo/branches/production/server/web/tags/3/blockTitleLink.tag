@@ -3,7 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<%@ attribute name="block" required="true" type="com.dumbhippo.server.blocks.SimpleTitleBlockView" %>
+<%@ attribute name="block" required="true" type="com.dumbhippo.server.blocks.TitleBlockView" %>
 <%@ attribute name="homeStack" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="spanClass" required="false" type="java.lang.String" %>
 <%@ attribute name="linkClass" required="false" type="java.lang.String" %>

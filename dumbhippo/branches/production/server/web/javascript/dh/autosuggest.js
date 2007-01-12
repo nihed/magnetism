@@ -1,5 +1,6 @@
 dojo.provide("dh.autosuggest");
 dojo.require("dh.util");
+dojo.require("dh.event");
 
 /*******************************************************
 
@@ -522,19 +523,19 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 	Helper function to determine the keycode pressed in a 
 	browser-independent manner.
 	********************************************************/
-	this.getKeyCode = dh.util.getKeyCode;
+	this.getKeyCode = dh.event.getKeyCode;
 	
 	/********************************************************
 	Helper function to determine the event source element in a 
 	browser-independent manner.
 	********************************************************/
-	this.getEventSource = dh.util.getEventNode;
+	this.getEventSource = dh.event.getNode;
 
 	/********************************************************
 	Helper function to cancel an event in a 
 	browser-independent manner.
 	(Returning false helps too).
 	********************************************************/
-	this.cancelEvent = dh.util.cancelEvent;
+	this.cancelEvent = dh.event.cancel;
 }
 

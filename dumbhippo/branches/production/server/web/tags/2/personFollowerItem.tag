@@ -7,7 +7,7 @@
 
 <c:choose>
 	<c:when test="${(empty group) || group.canModify}">
-		<dht:personItem who="${who}" invited="true" suppressDefaultBody="true">
+		<dht:personItem who="${who}" suppressDefaultBody="true">
 			<div class="dh-follower-actions">
 		        <c:choose>
 		            <c:when test="${empty group}">

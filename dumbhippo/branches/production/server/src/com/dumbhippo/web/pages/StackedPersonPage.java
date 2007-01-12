@@ -6,9 +6,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Pageable;
-import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.blocks.BlockView;
-import com.dumbhippo.web.WebEJBUtil;
 
 public class StackedPersonPage extends AbstractPersonPage {
 	@SuppressWarnings("unused")
@@ -17,16 +15,10 @@ public class StackedPersonPage extends AbstractPersonPage {
 	// We override the default values for initial and subsequent results per page from Pageable
 	static private final int INITIAL_BLOCKS_PER_PAGE = 5;
 	static private final int BLOCKS_PER_PAGE = 20;
-	
-	protected Stacker stacker;
-	
+
 	private Pageable<BlockView> pageableMugshot;
 	private Pageable<BlockView> pageableStack;
 	
-	public StackedPersonPage() {
-		stacker = WebEJBUtil.defaultLookup(Stacker.class);
-	}
-
 	public Pageable<BlockView> getPageableMugshot() {
 		if (pageableMugshot == null) {
 			pageableMugshot = 

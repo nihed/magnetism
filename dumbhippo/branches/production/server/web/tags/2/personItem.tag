@@ -3,7 +3,6 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
-<%@ attribute name="invited" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="suppressDefaultBody" required="false" type="java.lang.Boolean" %>
 
 <div class="dh-compact-item">
@@ -12,7 +11,7 @@
 			<tr valign="top">
 				<td>
 					<div class="dh-image">
-						<dht:headshot person="${who}" invited="${invited}"/>
+						<dht:headshot person="${who}"/>
 					</div>
 				</td>
 				<td>

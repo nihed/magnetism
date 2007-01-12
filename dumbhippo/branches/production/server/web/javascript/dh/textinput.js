@@ -20,7 +20,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 dojo.provide("dh.textinput");
 dojo.require("dh.util");
-dojo.require("dojo.html");
+dojo.require("dh.html");
+dojo.require("dh.event");
 
 dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 {
@@ -45,12 +46,14 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	this.defaultText = defaultText;
 	this.showingDefaultText = false;
 	
+	this._handlingFocusEvent = false;
+	
 	// if empty is invalid, we always show default text if value is empty
 	this.emptyIsValid = false;
 			
 	this._showDefaultText = function() {
 		if (!this.showingDefaultText && this.defaultText) {
-			dojo.html.addClass(this.elem, "dh-text-input-showing-default");
+			dh.html.addClass(this.elem, "dh-text-input-showing-default");
 			this.elem.value = this.defaultText;
 			this.showingDefaultText = true;			
 		}
@@ -62,7 +65,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	
 	this._emitValueChanged = function() {
 		var v = this.getValue();
-		dojo.debug("v = '" + v + "'");
+		dh.debug("v = '" + v + "'");
 		if (!this.emptyIsValid && (!v || v.length == 0)) {
 			this._showDefaultText();
 		}
@@ -79,7 +82,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	
 	this.hideDefaultText = function() {
 		if (this.showingDefaultText) {
-			dojo.html.removeClass(this.elem, "dh-text-input-showing-default");
+			dh.html.removeClass(this.elem, "dh-text-input-showing-default");
 			this.elem.value = "";
 			this.showingDefaultText = false;
 		}
@@ -126,18 +129,34 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 		me.activate();
 	}
 
+	this.onfocus = function () {
+	}
+
 	this.elem.onfocus = function(ev) {
+		if (this._handlingFocusEvent)
+			return;
+		this._handlingFocusEvent = true;
 		me.hideDefaultText();
+		this.onfocus();
+		this._handlingFocusEvent = false;
+	}
+	
+	this.onblur = function() {
 	}
 	
 	this.elem.onblur = function(ev) {
+		if (this._handlingFocusEvent)
+			return;	
+		this._handlingFocusEvent = true;			
 		me.activate();
+		this.onblur();
+		this._handlingFocusEvent = false;		
 	}
 	
 	this.elem.onkeydown = function(ev) {
 		// in theory never happens since we do this on focus in
 		me.hideDefaultText();
-		var key = dh.util.getKeyCode(ev);
+		var key = dh.event.getKeyCode(ev);
 		if (key == ENTER && me.elem.nodeName.toUpperCase() != 'TEXTAREA') {
 			me.activate();
 		}

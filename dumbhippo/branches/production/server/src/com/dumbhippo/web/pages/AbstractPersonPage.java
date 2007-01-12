@@ -3,7 +3,6 @@ package com.dumbhippo.web.pages;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -36,12 +35,14 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	static private final Logger logger = GlobalSetup.getLogger(AbstractPersonPage.class);	
 	
 	// We override the default values for initial and subsequent results per page from Pageable
-	static private final int FRIENDS_PER_PAGE = 20;
+	static private final int FRIENDS_PER_PAGE = 50;
 	static private final int GROUPS_PER_PAGE = 20;
+	private static final int INVITATIONS_PER_PAGE = 25;
 	
 	// This is the number of contacts we request for the list in the sidebar;
 	// it's 1 greater than the number we actually show to allow for "More>".
 	static private final int SHORT_CONTACT_COUNT = 4;
+
 	
 	@PagePositions
 	PagePositionsBean pagePositions;
@@ -51,11 +52,12 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private boolean disabled;
 	private boolean needExternalAccounts;
 	
-	private GroupSystem groupSystem;
-	private MusicSystem musicSystem;
-	private PersonView viewedPerson; 	
-	private FacebookTracker facebookTracker;
-	private Stacker stacker;
+	private PersonView viewedPerson;	
+	
+	protected GroupSystem groupSystem;
+	protected MusicSystem musicSystem;
+	protected FacebookTracker facebookTracker;
+	protected Stacker stacker;
 	
 	private ListBean<GroupView> groups;
 	private Pageable<GroupView> pageablePublicGroups;
@@ -66,6 +68,13 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	// information about existing outstanding invitations
 	private ListBean<InvitationView> outstandingInvitations;
+	private Pageable<InvitationView> pageableOutstandingInvitations;
+
+	private ListBean<PersonView> invitedContacts;
+	private Pageable<PersonView> pageableInvitedContacts;
+
+	private ListBean<PersonView> contactsWithoutInvites;
+	private Pageable<PersonView> pageableContactsWithoutInvites;
 	
 	private boolean lookedUpCurrentTrack;
 	private TrackView currentTrack;
@@ -74,12 +83,18 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	protected ListBean<PersonView> contacts;
 	private Pageable<PersonView> pageableContacts; 
+	
+	protected List<PersonView> userContacts;
+	private Pageable<PersonView> pageableUserContacts; 	
 
 	protected ListBean<PersonView> followers;
 	private Pageable<PersonView> pageableFollowers;
 	
-	private int randomTipIndex = -1;
 	private String facebookErrorMessage;
+
+	private int userContactCount = -1;
+
+	private int contactCount = -1;
 	
 	protected AbstractPersonPage() {	
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
@@ -165,12 +180,10 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			
 			if (getNeedExternalAccounts())
 				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), 
-						PersonViewExtra.ALL_RESOURCES,
 						PersonViewExtra.CONTACT_STATUS,
 						PersonViewExtra.EXTERNAL_ACCOUNTS);
 			else
 				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), 
-						PersonViewExtra.ALL_RESOURCES, 
 						PersonViewExtra.CONTACT_STATUS);
 		}
 		
@@ -292,8 +305,6 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			List<PersonView> list = personViewer.getContacts(getSignin().getViewpoint(), getViewedUser(), 
 			                   0, SHORT_CONTACT_COUNT,
 			                   PersonViewExtra.INVITED_STATUS, 
-			                   PersonViewExtra.PRIMARY_EMAIL, 
-			                   PersonViewExtra.PRIMARY_AIM,
 			                   PersonViewExtra.EXTERNAL_ACCOUNTS);	
 		    
 			contacts = new ListBean<PersonView>(list);
@@ -309,18 +320,56 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			
 			personViewer.pageContacts(getSignin().getViewpoint(), getViewedUser(), pageableContacts, 
 					   PersonViewExtra.INVITED_STATUS, 
-	                   PersonViewExtra.PRIMARY_EMAIL, 
-	                   PersonViewExtra.PRIMARY_AIM,
 	                   PersonViewExtra.EXTERNAL_ACCOUNTS);	
 		}
 		
 		return pageableContacts;
 	}
 	
+	public int getContactCount() {
+		if (contactCount == -1) {
+			contactCount = personViewer.getContactCount(getViewpoint(), getViewedUser());
+		}
+		return contactCount;
+	}
+	
+	public int getUserContactCount() {
+		if (userContactCount == -1) {
+			userContactCount = getViewedPerson().getLiveUser().getUserContactsCount();
+		}
+		return userContactCount;
+	}
+	
+	/**
+	 * Get a set of account-owning contacts of the viewed user.  The resulting
+	 * PersonView objects will be very minimal, only suitable for retrieving
+	 * the name and photo URL essentially. 
+	 * 
+	 * @return a list of PersonViews of a subset of contacts
+	 */
+	public List<PersonView> getUserContactsBasics() {
+		if (userContacts == null) {
+			userContacts = personViewer.getUserContactsAlphaSorted(getSignin().getViewpoint(), getViewedUser(), 0, FRIENDS_PER_PAGE);	
+		}
+		return userContacts;
+	}
+
+	public Pageable<PersonView> getPageableUserContactsBasics() {
+        if (pageableUserContacts == null) {			
+			pageableUserContacts = pagePositions.createPageable("network"); 				
+			pageableUserContacts.setInitialPerPage(FRIENDS_PER_PAGE);
+			pageableUserContacts.setSubsequentPerPage(FRIENDS_PER_PAGE);
+			
+			personViewer.pageUserContactsAlphaSorted(getSignin().getViewpoint(), getViewedUser(), pageableUserContacts);	
+		}
+		
+		return pageableUserContacts;
+	}	
+	
 	public ListBean<PersonView> getFollowers() {
 		if (followers == null) {
 		    Set<PersonView> mingledFollowers = 
-			    personViewer.getFollowers(getSignin().getViewpoint(), getViewedUser());		
+			    personViewer.getFollowers(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.EXTERNAL_ACCOUNTS, PersonViewExtra.CONTACT_STATUS);		
 		        followers = new ListBean<PersonView>(PersonView.sortedList(getSignin().getViewpoint(), getViewedUser(), mingledFollowers));
 		}
 		return followers;
@@ -353,10 +402,67 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		if (outstandingInvitations == null) {
 			outstandingInvitations = 
 				new ListBean<InvitationView>(
-				    invitationSystem.findOutstandingInvitations(getUserSignin().getViewpoint(), 
-				    		                                    0, -1));
+				    invitationSystem.findInvitations(getUserSignin().getViewpoint(), 
+				    		                         0, -1, false));
 		}
 		return outstandingInvitations;
+	}
+	
+	public Pageable<InvitationView> getPageableOutstandingInvitations() {
+		if (pageableOutstandingInvitations == null) {
+			pageableOutstandingInvitations = pagePositions.createPageable("invitations");
+			pageableOutstandingInvitations.setInitialPerPage(INVITATIONS_PER_PAGE);
+			pageableOutstandingInvitations.setSubsequentPerPage(INVITATIONS_PER_PAGE);
+			pageableOutstandingInvitations.generatePageResults(getOutstandingInvitations().getList());
+		}
+		return pageableOutstandingInvitations;
+	}
+	
+	public ListBean<PersonView> getInvitedContacts() {
+		if (invitedContacts == null) {
+			List<InvitationView> allInvitations = 
+				invitationSystem.findInvitations(getUserSignin().getViewpoint(), 0, -1, true);
+			List<PersonView> invitedContactsList = new ArrayList<PersonView>();
+			for (InvitationView invitation : allInvitations) {
+				PersonView invitedContact = 
+					personViewer.getPersonView(getUserSignin().getViewpoint(), invitation.getInvite().getInvitee());
+				invitedContact.setInvitationView(invitation);
+				invitedContactsList.add(invitedContact);
+			}
+			invitedContacts = new ListBean<PersonView>(invitedContactsList);
+		}
+		return invitedContacts;
+	}
+	
+	public Pageable<PersonView> getPageableInvitedContacts() {
+		if (pageableInvitedContacts == null) {
+			pageableInvitedContacts = pagePositions.createPageable("invitedContacts");
+			pageableInvitedContacts.setInitialPerPage(FRIENDS_PER_PAGE);
+			pageableInvitedContacts.setSubsequentPerPage(FRIENDS_PER_PAGE);
+			pageableInvitedContacts.generatePageResults(getInvitedContacts().getList());
+		}
+		return pageableInvitedContacts;
+	}
+	
+	
+	public ListBean<PersonView> getContactsWithoutInvites() {
+		if (contactsWithoutInvites == null) {
+			contactsWithoutInvites = 
+				new ListBean<PersonView>(personViewer.getContactsWithoutInvites(getUserSignin().getViewpoint(), 
+						                 getViewedUser()));
+		}
+	
+		return contactsWithoutInvites;
+	}
+	
+	public Pageable<PersonView> getPageableContactsWithoutInvites() {
+		if (pageableContactsWithoutInvites == null) {
+			pageableContactsWithoutInvites = pagePositions.createPageable("contacts");
+			pageableContactsWithoutInvites.setInitialPerPage(FRIENDS_PER_PAGE);
+			pageableContactsWithoutInvites.setSubsequentPerPage(FRIENDS_PER_PAGE);
+			pageableContactsWithoutInvites.generatePageResults(getContactsWithoutInvites().getList());
+		}
+		return pageableContactsWithoutInvites;		
 	}
 	
 	protected final boolean getNeedExternalAccounts() {
@@ -365,12 +471,6 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	public void setNeedExternalAccounts(boolean needExternalAccounts) {
 		this.needExternalAccounts = needExternalAccounts;
-	}
-	
-	public int getRandomTipIndex() {
-		if (randomTipIndex < 0)
-			randomTipIndex = new Random().nextInt(12);
-		return randomTipIndex;
 	}
 	
     public void setFacebookAuthToken(String facebookAuthToken) {

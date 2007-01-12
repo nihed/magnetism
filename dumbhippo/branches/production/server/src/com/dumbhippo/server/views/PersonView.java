@@ -44,7 +44,7 @@ import com.dumbhippo.web.ListBean;
 public class PersonView extends EntityView {
 	private final static Logger logger = GlobalSetup.getLogger(PersonView.class);
 	
-	public static final int MAX_SHORT_NAME_LENGTH = 15;
+	public static final int MAX_SHORT_NAME_LENGTH = 12;
 	
 	private Contact contact;
 	private User user;
@@ -62,6 +62,7 @@ public class PersonView extends EntityView {
 	private List<TrackView> trackHistory;
 	private String aimPresenceKey;
 	private boolean viewerIsContact;
+	private InvitationView invitationView;
 	
 	private void addExtras(EnumSet<PersonViewExtra> more) {
 		if (extras == null)
@@ -102,54 +103,8 @@ public class PersonView extends EntityView {
 	}
 	
 	public void addAllResources(Collection<Resource> resources) {
-		addExtras(EnumSet.of(PersonViewExtra.ALL_AIMS, PersonViewExtra.ALL_EMAILS,
-				PersonViewExtra.ALL_RESOURCES, PersonViewExtra.PRIMARY_AIM, 
-				PersonViewExtra.PRIMARY_EMAIL, PersonViewExtra.PRIMARY_RESOURCE));
 		this.getResources().addAll(resources);
 	}
-	
-	public void addAllEmails(Collection<EmailResource> resources) {
-		addExtras(EnumSet.of(PersonViewExtra.ALL_EMAILS,
-				PersonViewExtra.PRIMARY_EMAIL,
-				PersonViewExtra.PRIMARY_RESOURCE));
-		this.getResources().addAll(resources);
-	}
-
-	public void addAllAims(Collection<AimResource> resources) {
-		addExtras(EnumSet.of(PersonViewExtra.ALL_AIMS,
-				PersonViewExtra.PRIMARY_AIM,
-				PersonViewExtra.PRIMARY_RESOURCE));
-		this.getResources().addAll(resources);
-	}
-
-	public void addPrimaryEmail(EmailResource resource) {
-		addExtras(EnumSet.of(PersonViewExtra.PRIMARY_EMAIL,
-				PersonViewExtra.PRIMARY_RESOURCE));
-		if (resource != null)
-			this.getResources().add(resource);
-	}
-	
-	public void addPrimaryAim(AimResource resource) {
-		addExtras(EnumSet.of(PersonViewExtra.PRIMARY_AIM,
-				PersonViewExtra.PRIMARY_RESOURCE));
-		if (resource != null)
-			this.getResources().add(resource);
-	}
-	
-	public void addPrimaryResource(Resource resource) {
-		// resource can be null
-		
-		if (resource instanceof AimResource)
-			addPrimaryAim((AimResource) resource);
-		else if (resource instanceof EmailResource)
-			addPrimaryEmail((EmailResource) resource);
-		else {
-			addExtras(EnumSet.of(PersonViewExtra.PRIMARY_RESOURCE));
-			if (resource != null)
-				this.getResources().add(resource);
-		}
-	}
-	
 	
 	public void addInvitedStatus(boolean invited) {
 		addExtras(EnumSet.of(PersonViewExtra.INVITED_STATUS));
@@ -213,7 +168,7 @@ public class PersonView extends EntityView {
 		// PrimaryResource will not be included or will be null if the viewer should
 		// not see it
 		if (name == null || name.length() == 0) {
-			if (!hasExtra(PersonViewExtra.PRIMARY_RESOURCE) || (getPrimaryResource() == null)) {
+			if (getPrimaryResource() == null) {
 				// try fallback name then
 				if (fallbackName != null) {
 					name = fallbackName;
@@ -239,13 +194,8 @@ public class PersonView extends EntityView {
 	}
 	
 	public String getTruncatedName() {
-		String name = getNickname();
-		
-		if (name.length() > MAX_SHORT_NAME_LENGTH) {
-			return name.substring(0, MAX_SHORT_NAME_LENGTH) + "...";
-		} else {
-			return name;
-		}
+		String name = getName();
+		return StringUtils.truncateString(name, MAX_SHORT_NAME_LENGTH);	
 	}
 	
 	public Contact getContact() {
@@ -263,10 +213,7 @@ public class PersonView extends EntityView {
 		return state.getLiveUser(user.getGuid());
 	}
 	
-	private <T extends Resource> T getOne(PersonViewExtra extra, Class<T> resourceClass) {
-		if (!hasExtra(extra))
-			throw new IllegalStateException("asked for " + extra + " but this PersonView wasn't created with that, only with " + extras + " for " + this.hashCode());
-
+	private <T extends Resource> T getOne(Class<T> resourceClass) {
 		for (Resource r : getResources()) {
 			if (resourceClass.isAssignableFrom(r.getClass()))
 				return resourceClass.cast(r);
@@ -275,32 +222,25 @@ public class PersonView extends EntityView {
 		return null;
 	}
 	
-	private <T extends Resource> Collection<T> getMany(PersonViewExtra extra, Class<T> resourceClass) {
-		if (!hasExtra(extra))
-			throw new IllegalStateException("asked for " + extra + " but this PersonView wasn't created with that, only with " + extras + " for " + this.hashCode());
-
+	private <T extends Resource> Collection<T> getMany(Class<T> resourceClass) {
 		return new TypeFilteredCollection<Resource,T>(getResources(), resourceClass);
 	}
 	
 	public Resource getPrimaryResource() {
-		if (hasExtra(PersonViewExtra.PRIMARY_EMAIL))
-			return getEmail();
-		else if (hasExtra(PersonViewExtra.PRIMARY_AIM))
-			return getAim();
-		else
-			return getOne(PersonViewExtra.PRIMARY_RESOURCE, Resource.class);
+		Resource resource;
+		
+		resource = getEmail();
+		if (resource != null)
+			return resource;
+		resource = getAim();
+		if (resource != null)
+			return resource;
+		
+		return getOne(Resource.class);
 	}
 	
 	public EmailResource getEmail() {
-		return getOne(PersonViewExtra.PRIMARY_EMAIL, EmailResource.class);
-	}
-	
-	public boolean getHasEmail() {
-	    return hasExtra(PersonViewExtra.PRIMARY_EMAIL);
-	}
-	
-	public boolean getHasAim() {
-		return hasExtra(PersonViewExtra.PRIMARY_AIM);
+		return getOne(EmailResource.class);
 	}
 	
 	public String getEmailLink() {
@@ -311,7 +251,7 @@ public class PersonView extends EntityView {
 	}
 	
 	public AimResource getAim() {
-		return getOne(PersonViewExtra.PRIMARY_AIM, AimResource.class);
+		return getOne(AimResource.class);
 	}
 	
 	public void setAimPresenceKey(String aimPresenceKey) {
@@ -336,15 +276,15 @@ public class PersonView extends EntityView {
 	}
 	
 	public Collection<EmailResource> getAllEmails() {
-		return getMany(PersonViewExtra.ALL_EMAILS, EmailResource.class);
+		return getMany(EmailResource.class);
 	}
 	
 	public Collection<AimResource> getAllAims() {
-		return getMany(PersonViewExtra.ALL_AIMS, AimResource.class);
+		return getMany(AimResource.class);
 	}
 	
 	public Collection<Resource> getAllResources() {
-		return getMany(PersonViewExtra.ALL_RESOURCES, Resource.class);
+		return getMany(Resource.class);
 	}
 	
 	public Set<ExternalAccountView> getExternalAccountViews() {
@@ -761,6 +701,13 @@ public class PersonView extends EntityView {
 			return "/images3/offline_icon.png";
 	}
 
+	public String getOnlineIconForPhoto() {
+		if (isOnline())
+			return "/images3/online_icon_for_photo.png";
+		else
+			return "/images3/offline_icon_for_photo.png";
+	}
+	
 	public void setOnline(boolean online) {
 		this.online = online;
 	}
@@ -832,7 +779,7 @@ public class PersonView extends EntityView {
 	public Guid getIdentifyingGuid() {
 		if (user != null) {
 			return user.getGuid();
-		} else if (hasExtra(PersonViewExtra.PRIMARY_RESOURCE) && getPrimaryResource() != null) {
+		} else if (getPrimaryResource() != null) {
 			return getPrimaryResource().getGuid();
 		} else if (fallbackIdentifyingGuid != null){
 			return fallbackIdentifyingGuid;
@@ -864,8 +811,8 @@ public class PersonView extends EntityView {
 	public String getPhotoUrl() {
 		if (user != null)
 			return user.getPhotoUrl();
-		else
-			return "/images2/user_pix1/invited.png";
+		else 
+			return "/images2/user_pix1/nonuser.png";
 	}
 	
 	/**
@@ -952,5 +899,13 @@ public class PersonView extends EntityView {
 		if (!hasExtra(PersonViewExtra.CONTACT_STATUS))
 			logger.warn("isContactofViewer called on a PersonView without the CONTACT_STATUS extra");
 		return isContactOfViewer;
+	}
+	
+	public void setInvitationView(InvitationView invitationView) {
+		this.invitationView = invitationView;
+	}
+	
+	public InvitationView getInvitationView() {
+		return invitationView;
 	}
 }

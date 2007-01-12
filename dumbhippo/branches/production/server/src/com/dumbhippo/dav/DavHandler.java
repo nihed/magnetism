@@ -33,14 +33,19 @@ public class DavHandler {
 	}
 		
 	public DavNode findNodeByPath(String path) throws NotFoundException {
-		
-		//logger.debug("looking for node by path '{}'", path);
-		
+		return findNodeByPath(path, false);
+	}
+	
+	public DavNode findParentByPath(String path) throws NotFoundException {
+		return findNodeByPath(path, true);
+	}
+	
+	private String[] splitElements(String path) throws NotFoundException {
 		if (!path.startsWith("/"))
-			throw new NotFoundException("path doesn't start with /");
+			throw new NotFoundException("path doesn't start with /");		
 		
 		if (path.equals("/"))
-			return rootNode;
+			return new String[0];
 		
 		// drop leading and trailing /
 		path = path.substring(1,
@@ -48,10 +53,45 @@ public class DavHandler {
 	
 		String[] elements = path.split("/");
 		
+		if (elements.length == 0)
+			throw new NotFoundException("empty path?");
+
+		return elements;
+	}
+	
+	private String splitBasename(String path) {
+		String[] elements;
+		try {
+			elements = splitElements(path);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("invalid path");
+		}
+		if (elements.length == 0)
+			throw new RuntimeException("root node has no basename");
+		else
+			return elements[elements.length - 1];
+	}
+	
+	private DavNode findNodeByPath(String path, boolean parent) throws NotFoundException {
+		
+		//logger.debug("looking for node by path '{}'", path);
+		
+		String[] elements = splitElements(path);
+		
+		if (parent) {
+			if (elements.length == 0)
+				throw new NotFoundException("Folder has no parent"); // root has no parent
+			else
+				elements[elements.length - 1] = null;
+		}
+		
 		//logger.debug("split into {} from {}", Arrays.toString(elements), path);
 		
-		DavNode node = rootNode;
+		DavNode node = rootNode; // empty elements will just return this root
 		for (String name : elements) {
+			if (name == null)
+				break; // happens when looking for the parent
+			
 			name = StringUtils.urlDecode(name);
 			logger.debug("looking for '{}' underneath '{}'", name, node.getName());
 			if (name.length() == 0)
@@ -303,6 +343,57 @@ public class DavHandler {
 				}
 			}
 			propFindValues(xml, node, depth, requested, unknownRequested, hadTrailingSlash);
+		}
+	}
+	
+	public void put(String requestPath, String mimeType, InputStream requestContent)
+		throws DavHttpStatusException {
+		
+		try {
+			DavNode node = findNodeByPath(requestPath);
+			try {
+				// Replace an existing file
+				node.replaceContent(mimeType, requestContent);
+			} catch (IOException e1) {
+				logger.debug("IO error replacing content of existing file {}: {}", requestPath, e1.getMessage());
+				throw new DavHttpStatusException(DavStatusCode.FORBIDDEN, e1.getMessage());
+			}
+		} catch (NotFoundException e) {
+			
+			logger.debug("node {} does not already exist: {}", requestPath, e.getMessage());
+			
+			DavNode parent;
+			try {
+				parent = findParentByPath(requestPath);
+			} catch (NotFoundException e1) {
+				// the DAV spec requires this error if the folder doesn't exist
+				logger.debug("parent folder not found for {}: {}", requestPath, e1.getMessage());
+				throw new DavHttpStatusException(DavStatusCode.CONFLICT, "Folder does not exist");
+			}
+			String childName = splitBasename(requestPath);
+			try {
+				// Create a new file
+				parent.createChild(childName, mimeType, requestContent);
+			} catch (IOException e1) {
+				logger.debug("error creating {}: {}", requestPath, e1.getMessage());
+				throw new DavHttpStatusException(DavStatusCode.FORBIDDEN, e1.getMessage());
+			}
+		}
+	}
+	
+	public void delete(String requestPath) throws DavHttpStatusException {
+		DavNode node;
+		try {
+			node = findNodeByPath(requestPath);
+		} catch (NotFoundException e) {
+			logger.debug("did not find path {} to delete: {}", requestPath, e.getMessage());
+			throw new DavHttpStatusException(DavStatusCode.NOT_FOUND, "File not found");
+		}
+		try {
+			node.delete();
+		} catch (IOException e) {
+			logger.debug("failed to delete {}: {}", requestPath, e.getMessage());
+			throw new DavHttpStatusException(DavStatusCode.FORBIDDEN, e.getMessage());
 		}
 	}
 }

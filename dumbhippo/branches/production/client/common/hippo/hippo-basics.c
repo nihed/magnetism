@@ -919,6 +919,8 @@ hippo_parse_chat_kind(const char *str)
         return HIPPO_CHAT_KIND_POST;
     else if (strcmp(str, "group") == 0)
         return HIPPO_CHAT_KIND_GROUP;
+    else if (strcmp(str, "music") == 0)
+        return HIPPO_CHAT_KIND_MUSIC;
     else if (strcmp(str, "unknown") == 0)
         return HIPPO_CHAT_KIND_UNKNOWN;
     else
@@ -933,6 +935,8 @@ hippo_chat_kind_as_string(HippoChatKind kind)
         return "post";
     case HIPPO_CHAT_KIND_GROUP:
         return "group";
+    case HIPPO_CHAT_KIND_MUSIC:
+        return "music";
     case HIPPO_CHAT_KIND_UNKNOWN:
         return "unknown";
     case HIPPO_CHAT_KIND_BROKEN:
@@ -940,6 +944,40 @@ hippo_chat_kind_as_string(HippoChatKind kind)
     }
     
     g_warning("Invalid HippoChatKind value %d", kind);
+    return NULL;
+}
+
+gboolean 
+hippo_parse_sentiment(const char     *str,
+                      HippoSentiment *sentiment)
+{
+    if (strcmp(str, "INDIFFERENT") == 0) {
+        *sentiment = HIPPO_SENTIMENT_INDIFFERENT;
+        return TRUE;
+    } else if (strcmp(str, "LOVE") == 0) {
+        *sentiment = HIPPO_SENTIMENT_LOVE;
+        return TRUE;
+    } else if (strcmp(str, "HATE") == 0) {
+        *sentiment = HIPPO_SENTIMENT_HATE;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+const char *
+hippo_sentiment_as_string(HippoSentiment sentiment)
+{
+    switch (sentiment) {
+    case HIPPO_SENTIMENT_INDIFFERENT:
+        return "INDIFFERENT";
+    case HIPPO_SENTIMENT_LOVE:
+        return "LOVE";
+    case HIPPO_SENTIMENT_HATE:
+        return "HATE";
+    }
+
+    g_warning("Invalid HippoSentiment value %d", sentiment);
     return NULL;
 }
 

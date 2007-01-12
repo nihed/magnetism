@@ -19,6 +19,9 @@ public interface ChatMessage {
 	@Column(nullable = false)
 	public Date getTimestamp();
 
+	@Column(nullable = false)
+	public Sentiment getSentiment();
+	
 	@Transient
 	public long getId();
 }

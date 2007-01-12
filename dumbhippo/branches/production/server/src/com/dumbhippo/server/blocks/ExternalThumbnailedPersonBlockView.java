@@ -14,7 +14,7 @@ import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
 public abstract class ExternalThumbnailedPersonBlockView extends AbstractPersonBlockView
-	implements ExternalAccountBlockView, ThumbnailsBlockView, SimpleTitleBlockView {
+	implements ExternalAccountBlockView, ThumbnailsBlockView, TitleBlockView {
 
 	protected ExternalAccountView externalAccountView;
 	
@@ -36,7 +36,7 @@ public abstract class ExternalThumbnailedPersonBlockView extends AbstractPersonB
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.openElement(getElementName(),
-							"userId", getUserView().getUser().getId());
+							"userId", getPersonSource().getUser().getId());
 		writeThumbnailsToXmlBuilder(builder, this);
 		builder.closeElement();		
 	}

@@ -7,8 +7,8 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 public class StringUtils {
 	public static String hexEncode(byte[] strs) {
@@ -67,18 +67,17 @@ public class StringUtils {
 		return encoded;
 	}
 	
-	public static String join(List<String> strings, String separator) {
+	public static String join(Collection<String> strings, String separator) {
 		return joinUngenericList(strings, separator);
 	}
 	
-	public static String joinUngenericList(List strings, String separator) {
+	public static String joinUngenericList(Collection strings, String separator) {
 		StringBuilder builder = new StringBuilder();
 		Iterator iterator = strings.iterator();
 		while (iterator.hasNext()) {
-			boolean hasNext = true;
 			String s = (String) iterator.next();
 			builder.append(s);
-			if (hasNext)
+			if (iterator.hasNext())
 				builder.append(separator);
 		}
 		return builder.toString();

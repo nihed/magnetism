@@ -6,7 +6,7 @@ import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.Viewpoint;
 
-public class BlogBlockView extends BlogLikeBlockView {
+public class BlogBlockView extends AbstractFeedEntryBlockView {
 	
 	public BlogBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
 		super(viewpoint, block, ubd, participated);

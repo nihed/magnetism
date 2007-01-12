@@ -14,6 +14,7 @@ import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupView;
@@ -75,9 +76,15 @@ public interface GroupSystem {
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member);	
 	
+	public Set<Group> findRawPublicGroups(Viewpoint viewpoint, User member);
+
+	public Set<Group> findRawPublicGroups(Viewpoint viewpoint, User user, MembershipStatus active);	
+	
 	public Set<Group> findRawPrivateGroups(Viewpoint viewpoint, User member);	
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status);
+	
+	public Set<Group> findRawRecipientGroups(Viewpoint viewpoint, User member);
 
 	
 	/**
@@ -115,6 +122,8 @@ public interface GroupSystem {
 	public Set<GroupView> findGroups(Viewpoint viewpoint, User member, MembershipStatus status);
 	
 	public int findGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status);
+	
+	public int findPublicGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status);
 	
 	public void pagePublicGroups(Pageable<GroupView> pageable);
 		
@@ -164,9 +173,10 @@ public interface GroupSystem {
 	 * @param group the group the message is about.
 	 * @param fromUser the user who sent the message
 	 * @param text the text of the message
+	 * @param sentiment the type of message (INDIFFERENT=normal chat message, LOVE/HATE=quip)
 	 * @param timestamp the time when the message was posted
 	 */
-	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp);
+	public void addGroupMessage(Group group, User fromUser, String text, Sentiment sentiment, Date timestamp);
 
 	/**
 	 * Return a view of chat messages based on a viewpoint.

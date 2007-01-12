@@ -14,29 +14,26 @@
 </c:if>
 
 <div>
-	<c:if test="${theme.draft}">
-		<b>DRAFT</b>
-	</c:if>
-	'<c:out value="${theme.name}"/>' by <c:out value="${theme.creator.nickname}"/>
+	<c:if test="${alreadyCurrent}"><em>My Current Theme</em>:</c:if>
+	<strong><c:out value="${theme.name}"/></strong> by <a href="/person?who=${theme.creator.id}"><c:out value="${theme.creator.nickname}"/></a>
 	<c:if test="${!empty theme.basedOn}">
 		based on
-		<%-- <a href="/radar-theme?theme=${theme.basedOn.id}">--%>'<c:out value="${theme.basedOn.name}"/>'
-		by <c:out value="${theme.basedOn.creator.nickname}"/><%--</a>--%>
+		<%-- <a href="/radar-theme?theme=${theme.basedOn.id}">--%><strong><c:out value="${theme.basedOn.name}"/></strong><%--</a>--%>
+		by <a href="/person?who=${theme.basedOn.creator.id}"><c:out value="${theme.basedOn.creator.nickname}"/></a>
 	</c:if>
 	<br/>
-	<dh:nowPlaying userId="${userId}" themeId="${theme.id}" hasLabel="false"/>
-	<br/>
+	<table><tr><td rowSpan="5"><dh:nowPlaying userId="${userId}" themeId="${theme.id}" hasLabel="false"/></td></tr>
+	<c:if test="${theme.draft}">
+		<tr><td><b style="color:red">draft</b> <span style="font-size:10px">(you could <a href="javascript:dh.nowplaying.modify('${theme.id}', 'draft', 'false', '/radar-themes');">publish</a> it)</span></td></tr>
+	</c:if>
 	<c:if test="${signin.valid}">
-		<span class="dh-option-list">	
 		<c:if test="${theme.creator eq signin.user}">
-			<a class="dh-option-list-option" href="/radar-theme-creator?theme=${theme.id}">Edit</a>
-			|
+			<tr><td><a href="/radar-theme-creator?theme=${theme.id}">Edit</a></td></tr>
 		</c:if>
-		<a class="dh-option-list-option" href="javascript:dh.nowplaying.createNewTheme('${theme.id}');">Build On It</a>
+		<tr><td><a href="javascript:dh.nowplaying.createNewTheme('${theme.id}');">Build On It</a></td></tr>
 		<c:if test="${!theme.draft && !alreadyCurrent}">
-			|
-			<a class="dh-option-list-option" href="javascript:dh.nowplaying.setTheme('${theme.id}');">Set As Current Theme</a>
+			<tr><td><a href="javascript:dh.nowplaying.setTheme('${theme.id}');">Set As Current Theme</a></td></tr>
 		</c:if>
-		</span>
 	</c:if>
+	</table>
 </div>

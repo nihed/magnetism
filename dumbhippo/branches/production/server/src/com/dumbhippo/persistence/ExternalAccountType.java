@@ -18,7 +18,7 @@ import com.dumbhippo.GlobalSetup;
  *
  */
 public enum ExternalAccountType {
-	MYSPACE("MySpace") {
+	MYSPACE("MySpace") { // 0
 		@Override
 		public String getLink(String handle, String extra) {
 			// handle is myspace name, extra is friend id number
@@ -66,7 +66,7 @@ public enum ExternalAccountType {
 			return handle != null && extra != null;
 		}
 	},
-	FLICKR("Flickr") {
+	FLICKR("Flickr") { // 1
 		@Override
 		public String getLink(String handle, String extra) {
 			// handle is "NSID" extra is flickr email address
@@ -105,7 +105,7 @@ public enum ExternalAccountType {
 			return handle != null;
 		}
 	},
-	LINKED_IN("LinkedIn")  {
+	LINKED_IN("LinkedIn")  { // 2
 		@Override
 		public String getLink(String handle, String extra) {
 			return getSiteLink() + "/in/" + StringUtils.urlEncode(handle);
@@ -139,7 +139,7 @@ public enum ExternalAccountType {
 			return handle != null;
 		}		
 	},
-	WEBSITE("Website")  {
+	WEBSITE("Website")  { // 3
 		@Override
 		public String getLink(String handle, String extra) {
 			// the "website" thing is just an url we know nothing further about
@@ -183,7 +183,7 @@ public enum ExternalAccountType {
 			return false;
 		}
 	},
-	FACEBOOK("Facebook")  {
+	FACEBOOK("Facebook")  { // 4
 		@Override
 		public String getLink(String handle, String extra) {
 			logger.warn("getLink() in ExternalAccountType does not provide a link to a Facebook profile based on a handle and an extra.");
@@ -224,7 +224,7 @@ public enum ExternalAccountType {
 			return false;
 		}
 	},
-	ORKUT("Orkut")  {
+	ORKUT("Orkut")  { // 5
 		@Override
 		public String getLink(String handle, String extra) {
 			throw new UnsupportedOperationException("add orkut support");
@@ -244,7 +244,7 @@ public enum ExternalAccountType {
 			return false;
 		}
 	},
-	YOUTUBE("YouTube")  {
+	YOUTUBE("YouTube")  { // 6
 		/* YouTube RSS feeds
 			http://www.youtube.com/rssls
 			feed://www.youtube.com/rss/user/$username/videos.rss
@@ -291,7 +291,7 @@ public enum ExternalAccountType {
 			return handle != null;
 		}
 	},
-	XANGA("Xanga")  {
+	XANGA("Xanga")  { // 7
 		@Override
 		public String getLink(String handle, String extra) {
 			throw new UnsupportedOperationException("add xanga support");
@@ -311,7 +311,7 @@ public enum ExternalAccountType {
 			return false;
 		}
 	},
-	BLOG("Blog") {
+	BLOG("Blog") { // 8
 		@Override
 		public String getLink(String handle, String extra) {
 			// handle is the blog url (human-readable, not the feed url)
@@ -355,7 +355,7 @@ public enum ExternalAccountType {
 			return false;
 		}
 	},
-	RHAPSODY("Rhapsody") {
+	RHAPSODY("Rhapsody") { // 9
 		@Override
 		public String getLink(String handle, String extra) {
 			// handle is the rhapUserId in the feed url
@@ -387,7 +387,7 @@ public enum ExternalAccountType {
 			return handle != null;
 		}
 	},
-	LASTFM("Last.fm")  {
+	LASTFM("Last.fm")  { // 10
 		@Override
 		public String getLink(String handle, String extra) {
 			return getSiteLink() + "/user/" + StringUtils.urlEncode(handle) + "/";
@@ -432,7 +432,7 @@ public enum ExternalAccountType {
 			return "favicon_lastfm.png";
 		}		
 	}, 
-	DELICIOUS("del.icio.us") {
+	DELICIOUS("del.icio.us") { // 11
 		@Override
 		public String getIconName() {
 			return "favicon_delicious.png";
@@ -474,7 +474,7 @@ public enum ExternalAccountType {
 			return handle != null;
 		}		
 	},
-	TWITTER("Twitter") {
+	TWITTER("Twitter") { // 12
 		@Override
 		public String getIconName() {
 			return "favicon_twitter.png";
@@ -512,6 +512,94 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}		
+	},
+	DIGG("Digg") { // 13
+		@Override
+		public String getIconName() {
+			return "favicon_digg.png";
+		}
+		
+		@Override
+		public String getLink(String handle, String extra) {
+			return "http://digg.com/users/" + StringUtils.urlEncode(handle) + "/dugg";
+		}
+		
+		@Override
+		public String getSiteLink() {
+			return "http://digg.com";
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "Dugg by " + handle;
+		}
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				// 4-15 chars no spaces
+				if (handle.length() < 4)
+					throw new ValidationException("Too short to be a Digg username '" + handle + "'");
+				if (handle.length() > 15)
+					throw new ValidationException("Too long to be a Digg username '" + handle + "'");
+				if (handle.contains(" "))
+					throw new ValidationException("Digg username contains a space '" + handle + "'");
+				try {
+					new URL(getLink(handle, null));
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid Digg username '" + handle + "': " + e.getMessage());
+				}
+			}
+			return handle;
+		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}
+	},
+	REDDIT("Reddit") { // 14
+		@Override
+		public String getIconName() {
+			return "favicon_reddit.png";
+		}
+		
+		@Override
+		public String getLink(String handle, String extra) {
+			return "http://reddit.com/user/" + StringUtils.urlEncode(handle) + "/";
+		}
+		
+		@Override
+		public String getSiteLink() {
+			return "http://reddit.com";
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "Reddit Activity";
+		}
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				// FIXME Reddit doesn't say what their username limits are, and the error message
+				// is just "invalid username" if it doesn't like one, so it's tough to know
+				// what to validate
+				try {
+					new URL(getLink(handle, null));
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid Reddit username '" + handle + "': " + e.getMessage());
+				}
+			}
+			return handle;
+		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}
 	};
 	
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountType.class);	

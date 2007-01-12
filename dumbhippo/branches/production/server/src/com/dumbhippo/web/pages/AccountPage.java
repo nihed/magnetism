@@ -22,7 +22,6 @@ import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.Signin;
 import com.dumbhippo.web.SigninBean;
@@ -68,7 +67,7 @@ public class AccountPage {
 
 	public PersonView getPerson() {
 		if (person == null)
-			person = personViewer.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.ALL_RESOURCES);
+			person = personViewer.getPersonView(signin.getViewpoint(), signin.getUser());
 		
 		return person;
 	}
@@ -250,6 +249,29 @@ public class AccountPage {
 		return getExternalAccountHandle(ExternalAccountType.TWITTER);
 	}
 	
+	public String getDiggSentiment() {
+		return getExternalAccountSentiment(ExternalAccountType.DIGG);
+	}
+	
+	public String getDiggHateQuip() {
+		return getExternalAccountHateQuip(ExternalAccountType.DIGG);
+	}
+	
+	public String getDiggName() {
+		return getExternalAccountHandle(ExternalAccountType.DIGG);
+	}
+
+	public String getRedditSentiment() {
+		return getExternalAccountSentiment(ExternalAccountType.REDDIT);
+	}
+	
+	public String getRedditHateQuip() {
+		return getExternalAccountHateQuip(ExternalAccountType.REDDIT);
+	}
+	
+	public String getRedditName() {
+		return getExternalAccountHandle(ExternalAccountType.REDDIT);
+	}
 	
 	/**
 	 * Returns a list of supported account views; with the ExternalAccount information for the

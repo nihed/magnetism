@@ -7,7 +7,6 @@
 #include "ClassFactory.h"
 #include "Guid.h"
 #include "HippoControl.h"
-#include "HippoChatControl.h"
 #include "HippoExplorerBar.h"
 #include "HippoToolbarAction.h"
 #include "HippoTracker.h"
@@ -70,9 +69,7 @@ ClassFactory::CreateInstance (IUnknown  *outer,
     if (outer)
         return CLASS_E_NOAGGREGATION;
 
-    if (IsEqualCLSID(classID_, CLSID_HippoChatControl)) {
-        return createInstance<HippoChatControl>(ifaceID, result);
-    } else if (IsEqualCLSID(classID_, CLSID_HippoExplorerBar)) {
+    if (IsEqualCLSID(classID_, CLSID_HippoExplorerBar)) {
         return createInstance<HippoExplorerBar>(ifaceID, result);
     } else if (IsEqualCLSID(classID_, CLSID_HippoToolbarAction)) {
         return createInstance<HippoToolbarAction>(ifaceID, result);

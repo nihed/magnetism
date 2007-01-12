@@ -597,11 +597,13 @@ manager_disconnect(StackManager *manager)
             remove_block(manager->blocks->data, manager);
         }
 
+        hippo_window_set_visible(manager->notification_window, FALSE);
         g_object_unref(manager->notification_window);
         manager->notification_window = NULL;
         manager->notification_base_item = NULL;
         manager->notification_item = NULL;
         
+        hippo_window_set_visible(manager->browser_window, FALSE);
         g_object_unref(manager->browser_window);
         manager->browser_window = NULL;
         manager->browser_base_item = NULL;
@@ -800,7 +802,7 @@ manager_attach(StackManager    *manager,
     manager->notification_window = hippo_platform_create_window(platform);
 
     /* Omit the window from the task-list and (for platforms where there is one) the pager */
-    g_object_set(manager->notification_window, "app-window", FALSE, NULL);
+    g_object_set(manager->notification_window, "role", HIPPO_WINDOW_ROLE_NOTIFICATION, NULL);
 
     manager->notification_base_item = g_object_new(HIPPO_TYPE_CANVAS_BASE,
                                                    "actions", manager->actions,

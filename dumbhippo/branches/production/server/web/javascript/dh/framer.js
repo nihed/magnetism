@@ -1,9 +1,10 @@
-dojo.provide("dh.framer")
+dojo.provide("dh.framer");
 
-dojo.require("dh.chat")
-dojo.require("dh.control")
-dojo.require("dh.util")
-dojo.require("dojo.event")
+dojo.require("dh.chat");
+dojo.require("dh.control");
+dojo.require("dh.util");
+dojo.require("dojo.event");
+dojo.require("dh.dom");
 
 dh.framer._selfId = null
 
@@ -85,6 +86,9 @@ dh.framer._removeMessage = function(message) {
 
 dh.framer._updateChatCount = function() {
 	var chatCountNode = document.getElementById('dhPostChatCount')
+	if (!chatCountNode)
+		return;
+	
 	var count = this._participantList.numUsers() // only chatters, not viewers
 	var countText;
 	
@@ -95,7 +99,7 @@ dh.framer._updateChatCount = function() {
 	else
 		countText = "(" + count + " people)"
 
-	dojo.dom.textContent(chatCountNode, countText)
+	dh.dom.textContent(chatCountNode, countText)
 }
 
 dh.framer._addUser = function(user, before, participant) {

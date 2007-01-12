@@ -1,9 +1,7 @@
 dojo.provide("dh.invitation")
 dojo.require("dh.server")
 dojo.require("dh.textinput")
-dojo.require("dojo.string")
-dojo.require("dojo.dom");
-dojo.require("dh.util")
+dojo.require("dh.util");
 
 dh.invitation.suggestGroupsPopup = null;
 dh.invitation.suggestGroupsArea = null;
@@ -34,9 +32,9 @@ dh.invitation.showInfo = function(message) {
 }
 
 dh.invitation.send = function() {
-	var address = dojo.string.trim(dh.invitation.addressEntry.getValue())
-	var subject = dojo.string.trim(dh.invitation.subjectEntry.getValue())
-	var message = dojo.string.trim(dh.invitation.messageEntry.getValue())
+	var address = dh.util.trim(dh.invitation.addressEntry.getValue())
+	var subject = dh.util.trim(dh.invitation.subjectEntry.getValue())
+	var message = dh.util.trim(dh.invitation.messageEntry.getValue())
 	
 	if (address == "" || address.indexOf("@") < 0) {
 		alert("Please enter a valid email address")
@@ -55,9 +53,9 @@ dh.invitation.send = function() {
                     function(type, document, http) {
                     	var messages = document.getElementsByTagName("message")
                     	if (messages.length > 0) {
-                    		dh.invitation.reloadWithMessage(dojo.dom.textContent(messages[0]))
+                    		dh.invitation.reloadWithMessage(dh.dom.textContent(messages[0]))
                 		} else {
-	                        dojo.debug("Didn't get message in response to sendemailinvitation");
+	                        dh.debug("Didn't get message in response to sendemailinvitation");
                 		}
                     },
                     function(type, error, http) {
@@ -66,6 +64,7 @@ dh.invitation.send = function() {
 }
 
 dh.invitation.fillValues = function(values) {
+	dh.invitation.addressEntry.setValue(values["dhAddressEntry"])
 	dh.invitation.subjectEntry.setValue(values["dhSubjectEntry"])
 	dh.invitation.messageEntry.setValue(values["dhMessageEntry"])
 }
@@ -93,7 +92,7 @@ dh.invitation.showSuggestGroupsPopup = function(linkId, address, suggestedGroupI
     if (dh.invitation.suggestGroupsLinkId) {
         var prevSuggestGroupsLink = document.getElementById(dh.invitation.suggestGroupsLinkId)
         prevSuggestGroupsLink.href = dh.invitation.suggestGroupsLinkHref
-        dojo.dom.textContent(prevSuggestGroupsLink, dh.invitation.suggestGroupsLinkValue);
+        dh.dom.textContent(prevSuggestGroupsLink, dh.invitation.suggestGroupsLinkValue);
     }
     
     var suggestGroupsLink = document.getElementById(linkId)
@@ -104,7 +103,7 @@ dh.invitation.showSuggestGroupsPopup = function(linkId, address, suggestedGroupI
     
     suggestGroupsLink.href = "javascript:dh.invitation.cancelSuggestGroups()"
     
-    dojo.dom.textContent(suggestGroupsLink, "Cancel");
+    dh.dom.textContent(suggestGroupsLink, "Cancel");
     
     dh.util.show(dh.invitation.suggestGroupsPopup)
     var inviteeAddressNode = document.createTextNode(address)
@@ -150,7 +149,7 @@ dh.invitation.doSuggestGroups = function() {
         if (n.type == "checkbox" && n.checked) {
             if (dh.invitation.suggestGroupsLinkId == "dhSuggestGroupsWithInvitation") {
                 suggestedGroups.push(n.value)                            
-                suggestedGroupsWithInvitationArray.push(" " + dojo.string.trim(n.nextSibling.nodeValue))
+                suggestedGroupsWithInvitationArray.push(" " + dh.util.trim(n.nextSibling.nodeValue))
             } else if (!dh.util.contains(dh.invitation.suggestedGroupIdsArray, n.value)) {
                 // if this is a new suggestion, add it to the list;
                 // remove the last condition if we want to "renew" all suggestions, it does not seem necessary,
@@ -166,7 +165,7 @@ dh.invitation.doSuggestGroups = function() {
     if (dh.invitation.suggestGroupsLinkId == "dhSuggestGroupsWithInvitation") {
         dh.invitation.suggestedGroupIdsWithInvitationArray = suggestedGroups
        
-        var commaSuggestedGroupsWithInvitationNode = document.createTextNode(dojo.string.trim(dh.util.join(suggestedGroupsWithInvitationArray, ",")) + " | ")
+        var commaSuggestedGroupsWithInvitationNode = document.createTextNode(dh.util.trim(dh.util.join(suggestedGroupsWithInvitationArray, ",")) + " | ")
         if (dh.invitation.suggestedGroupsWithInvitation.firstChild == null) {
             dh.invitation.suggestedGroupsWithInvitation.appendChild(commaSuggestedGroupsWithInvitationNode)
         } else {     
@@ -178,9 +177,9 @@ dh.invitation.doSuggestGroups = function() {
         var suggestGroupsLink = document.getElementById("dhSuggestGroupsWithInvitation")
         suggestGroupsLink.href = dh.invitation.suggestGroupsLinkHref
         if (suggestedGroups.length > 0) {
-            dojo.dom.textContent(suggestGroupsLink, "Edit")
+            dh.dom.textContent(suggestGroupsLink, "Edit")
         } else {
-            dojo.dom.textContent(suggestGroupsLink, "Choose Groups")        
+            dh.dom.textContent(suggestGroupsLink, "Choose Groups")        
         }
        
         // set these values back to null, so that we will not reuse them when the group suggestions
@@ -215,7 +214,7 @@ dh.invitation.cancelSuggestGroups = function() {
     
     var suggestGroupsLink = document.getElementById(dh.invitation.suggestGroupsLinkId)
     suggestGroupsLink.href = dh.invitation.suggestGroupsLinkHref
-    dojo.dom.textContent(suggestGroupsLink, dh.invitation.suggestGroupsLinkValue)
+    dh.dom.textContent(suggestGroupsLink, dh.invitation.suggestGroupsLinkValue)
     
     // set these values back to null, so that we will not reuse them when the group suggestions
     // popup is shown next time
@@ -229,8 +228,12 @@ dhInvitationInit = function() {
 	dh.invitation.addressEntry = new dh.textinput.Entry(document.getElementById("dhAddressEntry"), "myfriend@example.com")
 	dh.invitation.subjectEntry = new dh.textinput.Entry(document.getElementById("dhSubjectEntry"))
 	dh.invitation.messageEntry = new dh.textinput.Entry(document.getElementById("dhMessageEntry"))
-	
-	dh.invitation.fillValues(dh.invitation.initialValues)
+
+	if (dh.invitation.resendValues["dhAddressEntry"] != '') {
+	    dh.invitation.resend(dh.invitation.resendValues["dhAddressEntry"])
+	} else {    
+	    dh.invitation.fillValues(dh.invitation.initialValues)
+	}
 	
 	dh.invitation.suggestGroupsPopup = document.getElementById("dhSuggestGroupsPopup")
 	dh.invitation.suggestGroupsArea = document.getElementById("dhSuggestGroupsArea")

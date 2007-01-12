@@ -34,6 +34,10 @@ import com.dumbhippo.server.util.EJBUtil;
  *    - Seems probable that a large number of tasks will end up clumped in slower
  *      task sets.  Might want to add support for having multiple staggered instances of 
  *      the longer sets.
+ *    - Perhaps increase polling on all accounts a user has specified
+ *      based on their overall activity
+ *    - Have the client ping us when it recognizes a URL like youtube.com/upload or the
+ *      like
  *    - Add statistics to track things like how often tasks are bouncing, task deviation
  *      from expected, etc.
  */
@@ -192,7 +196,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 				obsolete = result.obsolete;
 				executionEnd = System.currentTimeMillis();
 			} catch (PollingTaskNormalExecutionException e) {
-				logger.info("Transient exception: " + e.getMessage());
+				logger.info("Transient exception: {}", e.getMessage());
 				return new PollingTaskExecutionResult();				
 			} catch (Exception e) {
 				logger.warn("Execution of polling task failed", e);
@@ -307,7 +311,13 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	public DynamicPollingSystem() {
 	}
 	
-	public synchronized void registerFamily(PollingTaskFamily family) {
+	public synchronized void pokeTaskSet(int index) {
+		TaskSet set = taskSetWorkers[index];
+		synchronized (set) {
+			boolean interrupt = set.poke();
+			if (interrupt)
+				taskSetThreads[index].interrupt();
+		}
 	}	
 	
 	private PollingTaskFamilyExecutionState getExecution(PollingTaskFamily family) {
@@ -368,12 +378,20 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		private boolean hasSlowerSet;
 		private Set<PollingTask> pendingTaskAdditions = new HashSet<PollingTask>();
 		private Set<PollingTask> tasks;
+		private boolean poked;
+		private boolean sleeping;
 		
 		public TaskSet(long timeoutSeconds, boolean hasFasterSet, boolean hasSlowerSet) {
 			this.timeout = timeoutSeconds * 1000;
 			this.hasFasterSet = hasFasterSet;
 			this.hasSlowerSet = hasSlowerSet;
 			tasks = new HashSet<PollingTask>(); 			
+		}
+		
+		// Must be called while synchronized
+		public boolean poke() {
+			poked = true;
+			return sleeping;
 		}
 		
 		private double exponentialAverage(double prevAvg, double current, double alpha) {
@@ -502,9 +520,22 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			
 			while (true) {
 				try {
+					synchronized (this) {
+						sleeping = true;
+					}
 					Thread.sleep(currentTimeout);
 				} catch (InterruptedException e) {
-					break;
+					synchronized (this) {
+						if (poked) {
+							poked = false;
+						} else {
+							break;
+						}
+					}
+				} finally {
+					synchronized (this) {
+						sleeping = false;
+					}
 				}
 				
 				if (!executeTasks())
@@ -617,9 +648,6 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			TestPollingTaskFamily[] families = new TestPollingTaskFamily[TestPollingTaskFamily.FamilyType.values().length];
 			for (int i = 0; i < families.length; i++) {
 				families[i] = new TestPollingTaskFamily(FamilyType.values()[i]);
-			}
-			for (TestPollingTaskFamily family : families) {
-				registerFamily(family);
 			}
 			Set<PollingTask> testTasks = new HashSet<PollingTask>();
 			Random r = new Random();

@@ -21,6 +21,7 @@ import org.apache.lucene.search.Hits;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StringUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -37,6 +38,7 @@ import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.search.SearchSystem;
@@ -418,6 +420,16 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}
 	}
 	
+	private String getReceivesClause() {
+		Set<String> receivesOrdinals = new HashSet<String>();
+		for (MembershipStatus status : MembershipStatus.values()) {
+			if (status.getReceivesPosts()) {
+				receivesOrdinals.add(Integer.toString(status.ordinal()));
+			}
+		}
+		return " AND gm.status in (" + StringUtils.join(receivesOrdinals, ", ") + ") ";
+	}
+	
 	private Query buildGetResourceMembersQuery(Viewpoint viewpoint, Group group, MembershipStatus status, boolean isCount) {
 		StringBuilder queryString = new StringBuilder("SELECT ");
 		Query q;
@@ -475,7 +487,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		Set<PersonView> result = new HashSet<PersonView>();
 		logger.debug("will generate person views for {} resources", resourceMembers.size());
 		for (Resource r : resourceMembers) {
-			result.add(personViewer.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE, extras)); 
+			result.add(personViewer.getPersonView(viewpoint, r, extras)); 
 		}
 		
 		return result;
@@ -487,8 +499,6 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	
 	public Set<User> getUserMembers(Viewpoint viewpoint, Group group, MembershipStatus status) {
 		List<Resource> resourceMembers = getResourceMembers(viewpoint, group, -1, status);
-		if (resourceMembers.size() == 0)
-			return Collections.emptySet();
 		
 		Set<User> result = new HashSet<User>();
 		for (Resource r : resourceMembers) {
@@ -534,21 +544,39 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	private static final String FIND_RAW_GROUPS_QUERY = 
 		"SELECT gm.group FROM GroupMember gm, AccountClaim ac, Group g " +
 		"WHERE ac.resource = gm.member AND ac.owner = :member AND g = gm.group ";
+	
+	private static enum GroupFindType {
+		ANY,
+		PRIVATE,
+		PUBLIC
+	}
+	
+	private String getGroupFindTypeQuery(GroupFindType type) {
+		if (type.equals(GroupFindType.PRIVATE))
+			return " AND g.access = " + GroupAccess.SECRET.ordinal();
+		else if (type.equals(GroupFindType.PUBLIC)) 
+			return " AND g.access = " + GroupAccess.PUBLIC_INVITE.ordinal();
+		else
+			return "";
+	}
 
-	private Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status, boolean privateOnly) {
+	private Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status, GroupFindType groupFindType, boolean receivesOnly) {
 		Query q;
 		
-		String statusClause = getStatusClause(status);
-		String privacyClause = privateOnly ? " AND g.access = " + GroupAccess.SECRET.ordinal() : "";
+		StringBuilder extraClause = new StringBuilder(getStatusClause(status));
+		extraClause.append(getGroupFindTypeQuery(groupFindType));
+		
+		if (receivesOnly)
+			extraClause.append(getReceivesClause());
 		
 		if (viewpoint.isOfUser(member) || viewpoint instanceof SystemViewpoint) {
 			// Special case this for effiency
-			q = em.createQuery(FIND_RAW_GROUPS_QUERY + statusClause + privacyClause); 
+			q = em.createQuery(FIND_RAW_GROUPS_QUERY + extraClause.toString()); 
 		} else if (viewpoint instanceof UserViewpoint) {
-			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE + statusClause + privacyClause);
+			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE + extraClause);
 			q.setParameter("viewer", ((UserViewpoint)viewpoint).getViewer());			
 		} else {
-			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE_ANONYMOUS + statusClause + privacyClause);
+			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE_ANONYMOUS + extraClause);
 		}
 		q.setParameter("member", member);
 		Set<Group> ret = new HashSet<Group>();
@@ -558,15 +586,27 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return ret;
 	}
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
-		return findRawGroups(viewpoint, member, status, false);
+		return findRawGroups(viewpoint, member, status, GroupFindType.ANY, false);
 	}
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member) {
-		return findRawGroups(viewpoint, member, null, false);
+		return findRawGroups(viewpoint, member, null, GroupFindType.ANY, false);
 	}
+	
+	public Set<Group> findRawPublicGroups(Viewpoint viewpoint, User member) {
+		return findRawGroups(viewpoint, member, null, GroupFindType.PUBLIC, false);
+	}	
+	
+	public Set<Group> findRawPublicGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
+		return findRawGroups(viewpoint, member, status, GroupFindType.PUBLIC, false);
+	}		
 
 	public Set<Group> findRawPrivateGroups(Viewpoint viewpoint, User member) {
-		return findRawGroups(viewpoint, member, null, true);
+		return findRawGroups(viewpoint, member, null, GroupFindType.PRIVATE, false);
+	}
+	
+	public Set<Group> findRawRecipientGroups(Viewpoint viewpoint, User member) {
+		return findRawGroups(viewpoint, member, null, GroupFindType.ANY, true);
 	}
  
 	public void fixupGroupMemberships(User user) {
@@ -585,7 +625,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}
 	}
 	
-	private Query buildFindGroupsQuery(Viewpoint viewpoint, User member, boolean isCount, MembershipStatus status) {
+	private Query buildFindGroupsQuery(Viewpoint viewpoint, User member, boolean isCount, MembershipStatus status, GroupFindType groupFindType) {
 		Query q;		
 		StringBuilder queryStr = new StringBuilder("SELECT ");
 		boolean ownGroups = viewpoint.isOfUser(member);		
@@ -598,6 +638,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		queryStr.append(" FROM GroupMember gm, AccountClaim ac, Group g " +
         "WHERE ac.resource = gm.member AND ac.owner = :member AND g = gm.group ");
 		queryStr.append(getStatusClause(status));
+		queryStr.append(getGroupFindTypeQuery(groupFindType));	
 		
 		if (ownGroups || viewpoint instanceof SystemViewpoint) {
 			// Special case this for effiency
@@ -618,10 +659,16 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 	
 	public int findGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status) {
-		Query q = buildFindGroupsQuery(viewpoint, member, true, status);
+		Query q = buildFindGroupsQuery(viewpoint, member, true, status, GroupFindType.ANY);
 		Object result = q.getSingleResult();
 		return ((Number) result).intValue();			
 	}
+	
+	public int findPublicGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status) {
+		Query q = buildFindGroupsQuery(viewpoint, member, true, status, GroupFindType.PUBLIC);
+		Object result = q.getSingleResult();
+		return ((Number) result).intValue();			
+	}	
 	
 	public Set<GroupView> findGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
 
@@ -629,7 +676,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		Set<GroupView> result = new HashSet<GroupView>();
 		
-		Query q = buildFindGroupsQuery(viewpoint, member, false, status);
+		Query q = buildFindGroupsQuery(viewpoint, member, false, status, GroupFindType.ANY);
 		for (Object o : q.getResultList()) {
 			GroupMember groupMember = (GroupMember)o;
 			Set<PersonView> inviters  = new HashSet<PersonView>();
@@ -773,8 +820,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return viewedMsgs;
 	}	
 	
-	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp) {
-		GroupMessage groupMessage = new GroupMessage(group, fromUser, text, timestamp);
+	public void addGroupMessage(Group group, User fromUser, String text, Sentiment sentiment, Date timestamp) {
+		GroupMessage groupMessage = new GroupMessage(group, fromUser, text, sentiment, timestamp);
 		em.persist(groupMessage);
 
 		notifier.onGroupMessageCreated(groupMessage);

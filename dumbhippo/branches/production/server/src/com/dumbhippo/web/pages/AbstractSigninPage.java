@@ -5,7 +5,6 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.UserSigninBean;
 import com.dumbhippo.web.WebEJBUtil;
@@ -60,14 +59,14 @@ public abstract class AbstractSigninPage {
 	 */
 	public PersonView getPerson() {
 		if (signinPerson == null && getSignin().isValid())
-			signinPerson = personViewer.getPersonView(getSignin().getViewpoint(), getUserSignin().getUser(), PersonViewExtra.ALL_RESOURCES);
+			signinPerson = personViewer.getPersonView(getSignin().getViewpoint(), getUserSignin().getUser());
 		
 		return signinPerson;
 	}
 	
 	public int getInvitations() {
 		if ((invitations < 0)  && getSignin().isValid()) {
-			invitations = invitationSystem.getInvitations(getUserSignin().getUser()); 
+			invitations = invitationSystem.getInvitations(getSignin().getViewpoint(), getUserSignin().getUser()); 
 		}
 		return invitations;
 	}

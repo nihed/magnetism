@@ -9,7 +9,7 @@ import com.dumbhippo.GlobalSetup;
  *
  * Trivial (at the moment) backing bean for sharelink.jsp.
  */
-public class ShareLinkPage extends AbstractSigninRequiredPage {
+public class ShareLinkPage extends AbstractSigninOptionalPage {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(ShareLinkPage.class);
 

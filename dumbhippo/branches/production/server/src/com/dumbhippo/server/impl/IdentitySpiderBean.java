@@ -2,6 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.net.URL;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -44,6 +45,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.UserBioChangedRevision;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.server.Configuration;
@@ -55,6 +57,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
+import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.SystemViewpoint;
@@ -94,6 +97,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	@EJB
 	private Notifier notifier;
 
+	@EJB
+	private RevisionControl revisionControl;
+	
 	public User lookupUserByEmail(Viewpoint viewpoint, String email) {
 		EmailResource res = lookupEmail(email);
 		if (res == null)
@@ -526,10 +532,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 	
 	public void removeContactPerson(User user, Person contactPerson) {
-		logger.debug("removing contact {} from account {}", contactPerson, user
-				.getAccount());
-
-		Set<User> removedUsers = new HashSet<User>();
+		logger.debug("removing contact {} from account {}", contactPerson, user.getAccount());
 		
 		Contact contact;
 		if (contactPerson instanceof Contact) {
@@ -543,6 +546,25 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			}
 		}
 
+		removeContact(user, contact);
+	}
+
+	public void removeContactResource(User user, Resource contactResource) {
+		logger.debug("removing contact {} from account {}", contactResource, user.getAccount());
+		
+		Contact contact;
+		try {
+		    contact = findContactByResource(user, contactResource);
+		    removeContact(user, contact);
+		} catch (NotFoundException e) {
+			logger.debug("Resource {} not found as a contact", contactResource);
+			return;
+		}
+	}
+	
+	public void removeContact(User user, Contact contact) {	
+		Set<User> removedUsers = new HashSet<User>();
+		
 		for (ContactClaim cc : contact.getResources()) {
 			User resourceUser = getUser(cc.getResource());
 			if (resourceUser != null)
@@ -559,7 +581,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			
 		}
 	}
-
+	
 	public Set<Guid> computeContacts(Guid userId) {
 		User user = em.find(User.class, userId.toString());
 		
@@ -607,12 +629,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return ((Number)q.getSingleResult()).intValue();
 	}
 
-	public Set<User> getRawUserContacts(Viewpoint viewpoint, User user) {
+	public Set<User> getRawUserContacts(Viewpoint viewpoint, User user, boolean includeSelf) {
 		if (!isViewerSystemOrFriendOf(viewpoint, user))
 			return Collections.emptySet();
 
+		Guid viewedUserId = user.getGuid();
 		Set<User> ret = new HashSet<User>();
-		for (Guid guid : LiveState.getInstance().getContacts(user.getGuid())) {
+		for (Guid guid : LiveState.getInstance().getContacts(viewedUserId)) {
+			if (!includeSelf && viewedUserId.equals(guid))
+				continue;
 			ret.add(em.find(User.class, guid.toString()));
 		}
 		return ret;
@@ -794,8 +819,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		case RAW_PREFERENCE_ONLY:
 			return musicSharingEnabled;
 		case AND_ACCOUNT_IS_ACTIVE:
-			return !(account.isDisabled() || account.isAdminDisabled())
-					&& musicSharingEnabled;
+			return account.isActive() && musicSharingEnabled;
 		}
 		throw new IllegalArgumentException(
 				"invalid value for enabled param to getMusicSharingEnabled");
@@ -860,6 +884,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			throw new RuntimeException("user not attached");
 		Account acct = user.getAccount();
 		acct.setBio(bio);
+		revisionControl.persistRevision(new UserBioChangedRevision(viewpoint.getViewer(), new Date(), bio));
 	}
 
 	public void setMusicBio(UserViewpoint viewpoint, User user, String bio) {
@@ -887,7 +912,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	public Set<User> getMySpaceContacts(UserViewpoint viewpoint) {
 		Set<User> contacts = getRawUserContacts(viewpoint, viewpoint
-				.getViewer());
+				.getViewer(), true);
 
 		// filter out ourselves and anyone with no myspace
 		Iterator<User> iterator = contacts.iterator();

@@ -1,4 +1,5 @@
 dojo.provide("dh.statistics.chart");
+dojo.require("dh.lang");
 
 dh.statistics.chart.Chart = function(width, height, coordinatesDivId) {
 	this.width = width;
@@ -15,14 +16,14 @@ dh.statistics.chart.Chart = function(width, height, coordinatesDivId) {
 	this.canvas.width = width;
 	this.canvas.height = height;
 	
-	// dojo.lang.hitch lets you associate a callback function with the scope of the member function
-	this.canvas.addEventListener("mousemove", dojo.lang.hitch(this, "displayCoordinates"), false);
+	// dh.lang.hitch lets you associate a callback function with the scope of the member function
+	this.canvas.addEventListener("mousemove", dh.lang.hitch(this, "displayCoordinates"), false);
 
 	var context = this.canvas.getContext("2d");
 	context.strokeStyle = "#60CC35";
 }
 
-dojo.lang.extend(dh.statistics.chart.Chart,
+dh.lang.extend(dh.statistics.chart.Chart,
 {
 	displayCoordinates: function(evt) {
 	    var x = evt.clientX;

@@ -7,6 +7,7 @@
 <%@ attribute name="offset" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="oneLine" required="true" type="java.lang.Boolean" %>
 
 <dht3:blockContainer cssClass="${offset ? 'dh-box-orange2' : 'dh-box-orange1'}" blockId="${blockId}" expandable="${!oneLine}">
 	<dht3:blockLeft block="${block}">
@@ -19,6 +20,9 @@
 	</dht3:blockLeft>
 	<dht3:blockRight blockId="${blockId}" from="${block.groupView}" showFrom="${showFrom}">
 		<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>		
+		<dht3:blockControls blockId="${blockId}">
+			&nbsp; <%-- http://bugzilla.mugshot.org/show_bug.cgi?id=1019 --%>
+		</dht3:blockControls>				
 	</dht3:blockRight>
 </dht3:blockContainer>
 

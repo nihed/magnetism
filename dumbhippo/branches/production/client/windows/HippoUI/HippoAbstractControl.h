@@ -47,6 +47,8 @@ public:
     // kind of a bad hack to get request-changed emitted on the wrapping canvas item
     void setCanvasItem(GObject *item);
 
+    virtual bool handleNotification(UINT notification);
+
 protected:
     virtual int getWidthRequestImpl() = 0;
     virtual int getHeightRequestImpl(int forWidth) = 0;

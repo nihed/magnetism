@@ -17,50 +17,74 @@
 	     Also it's good to load in one http get since we can't assume someone browsing to a random blog 
 	     has any of our css/js already cached. --%>
 	<dht:faviconIncludes/>
+	<style type="text/css"> <%-- borrowed from google-stacker-content.jsp - we might want to combine eventually --%>
+		body, td, a, p, div, span {
+			font-size:	13px;
+			font-family: arial, sans-serif;
+		}
+		a:link {
+			color: #0000CC;
+		}
+	</style>
 </head>
 
 <body>
 
-	<div>
-		<dht:headshot person="${person.viewedPerson}" size="60" invited="false"/>
-	</div>
+<div>
+       <table border="0" cellpadding="2px" cellspacing="0">
+       <tr>
+       <td rowspan="2"><dht:headshot person="${person.viewedPerson}" size="60" /></td>
+       <td><img src="${baseUrl}${person.viewedPerson.onlineIcon}" border="0"/>&nbsp;<c:out value="${person.viewedPerson.name}"/>'s Mugshot</td>
+	</tr>
+	<tr>
+       <td><a target="_top" href="${baseUrl}/person?who=${person.viewedUserId}">Visit My Mugshot Page</a></td>
+       </tr>
+       </table>
 
 	<div>
-		<c:out value="${person.viewedPerson.name}"/>
-	</div>
+       <c:forEach var="account" items="${person.viewedPerson.lovedAccounts.list}">
 
-	<div>
-		<c:out value="${person.viewedPerson.onlineIcon}"/>
-	</div>
-
-	<c:forEach items="${person.pageableMugshot.results}" var="block">
-		<div>
-			<c:out value="${block.summaryHeading}"/>
-		</div>
-		<div>
-			<jsp:element name="a">
-				<jsp:attribute name="href"><c:out value="${block.summaryLink}"/></jsp:attribute>
-				<jsp:body>
-					<c:out value="${block.summaryLinkText}"/>
-				</jsp:body>
-			</jsp:element>
-		</div>
+       <a target="_top" title="${account.externalAccount.siteName}" href="${account.link}"><img src="${baseUrl}/images3/${buildStamp}/${account.externalAccount.iconName}" border="0"/></a>&nbsp;
 	</c:forEach>
+	</div>
 
-	<c:forEach var="account" items="${person.viewedPerson.lovedAccounts.list}">
-		<div>
-			<c:out value="${account.externalAccount.siteName}"/>
-		</div>
-		<div>
-			<c:out value="${account.externalAccount.linkText}"/>
-		</div>
-		<div>
-			<c:out value="${account.link}"/>
-		</div>
-		<div>
-			<c:out value="/images3/${buildStamp}/${account.externalAccount.iconName}"/>
-		</div>
-	</c:forEach>
+	<div>
+		<c:forEach items="${person.pageableMugshot.results}" var="block">
+			<div>
+				<table cellspacing="0" cellpadding="0">
+					<tbody>
+						<tr>
+							<td>
+								<dh:png src="${block.icon}" style="width: 16; height: 16; border: none; margin-right: 3px;"/>
+							</td>
+							<td>
+								<jsp:element name="a">
+									<jsp:attribute name="target">_top</jsp:attribute>
+									<jsp:attribute name="href"><c:out value="${block.summaryLink}"/></jsp:attribute>
+									<jsp:body>
+										<c:out value="${block.summaryLinkText}"/>
+									</jsp:body>
+								</jsp:element>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+								<span style="color: #6f6f6f;">
+									<c:if test="${dh:myInstanceOf(block, 'com.dumbhippo.server.blocks.EntitySourceBlockView')}">
+										from <c:out value="${block.entitySource.name}"/>
+									</c:if>
+									(<c:out value="${block.summaryTimeAgo}"/>)
+								</span>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</c:forEach>
+	</div>
+
+</div>
 
 </body>
 

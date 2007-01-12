@@ -1,16 +1,9 @@
 dojo.provide('dh.stacker');
 dojo.require('dh.util');
+dojo.require('dh.event');
 
 dh.stacker.removePrelight = function(node) {
 	dh.util.removeClass(node, "dh-box-prelighted")
-}
-
-// Workaround for a Firefox resizing problem
-dh.stacker._forceResize = function(block) {
-	var blockTable = document.getElementById("dhStackerBlock-" + block.dhBlockId);
-	var old = blockTable.style.display
-	blockTable.style.display = "none";
-	blockTable.style.display = old;
 }
 
 dh.stacker.blockOpen = function(block) {
@@ -30,8 +23,12 @@ dh.stacker.blockOpen = function(block) {
 		fullDesc.style.display = "block";
 		shortDesc.style.display = "none";
 	}
-	
-	dh.stacker._forceResize(block);
+	if (fullDesc.dhHideOnExpand) {
+		fullDesc.style.display = "none";
+	}
+	var message = document.getElementById("dhMusicBlockMessage-" + block.dhBlockId);
+	if (message)
+		message.style.display = "none";
 }
 
 dh.stacker.blockClose = function(block) {
@@ -51,8 +48,12 @@ dh.stacker.blockClose = function(block) {
 		fullDesc.style.display = "none";
 		shortDesc.style.display = "block";
 	}
-	
-	dh.stacker._forceResize(block);
+	if (fullDesc.dhHideOnExpand) {
+		fullDesc.style.display = "block";
+	}	
+	var message = document.getElementById("dhMusicBlockMessage-" + block.dhBlockId);
+	if (message)
+		message.style.display = "block";
 }
 
 dh.stacker.onBlockMouseOver = function(e) {
@@ -142,7 +143,7 @@ dh.stacker.hookLinkChildren = function(block, startNode) {
 				if (!e) e = window.event;
 				dh.log("stacker-cursor", "block: " + block.dhBlockId + " link mouseover")				
 				dh.stacker.hideBlockPointer(block);
-				dh.util.cancelEvent(e);
+				dh.event.cancel(e);
 			};
 			node.onmouseout = function (e) {
 				if (!e) e = window.event;
@@ -150,7 +151,7 @@ dh.stacker.hookLinkChildren = function(block, startNode) {
 				dh.log("stacker-cursor", "block: " + block.dhBlockId + " link mouseout to " + relTarget)					
 				if (!dh.util.isDescendant(block, relTarget))
 					dh.stacker.hideBlockPointer(block);				
-				dh.util.cancelEvent(e);			
+				dh.event.cancel(e);			
 			};			
 		} else {
 			dh.stacker.hookLinkChildren(block, node);

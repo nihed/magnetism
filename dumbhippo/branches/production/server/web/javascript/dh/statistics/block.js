@@ -1,5 +1,7 @@
 dojo.provide("dh.statistics.block");
 dojo.require("dh.statistics.chart");
+dojo.require("dh.lang");
+dojo.require("dh.event");
 
 dh.statistics.block.Block = function() {
 	this._set = null;
@@ -107,7 +109,7 @@ dh.statistics.block.Block = function() {
 	this._connectEvents();
 }
 
-dojo.lang.extend(dh.statistics.block.Block,
+dh.lang.extend(dh.statistics.block.Block,
 {
 	getTable: function() {
 		return this._table;
@@ -215,11 +217,11 @@ dojo.lang.extend(dh.statistics.block.Block,
 	_connectEvents: function() {
 		var me = this;
 	
-		dh.util.addEventListener(this._serverSelect, "change", function() {
+		dh.event.addEventListener(this._serverSelect, "change", function() {
 			me.onSpecificationChanged();
 		});
 		
-		dh.util.addEventListener(this._columnSelect, "change", function() {
+		dh.event.addEventListener(this._columnSelect, "change", function() {
 			me.onSpecificationChanged();
 		});
 
@@ -232,13 +234,13 @@ dojo.lang.extend(dh.statistics.block.Block,
 			me._setText(me._coordinatesDiv, text);
 		};
 		
-		dh.util.addEventListener(this._remove, "mouseover", function() {
+		dh.event.addEventListener(this._remove, "mouseover", function() {
 			me._remove.className = "dh-remove dh-remove-prelight";
 		});
-		dh.util.addEventListener(this._remove, "mouseout", function() {
+		dh.event.addEventListener(this._remove, "mouseout", function() {
 			me._remove.className = "dh-remove";
 		});
-		dh.util.addEventListener(this._remove, "mousedown", function() {
+		dh.event.addEventListener(this._remove, "mousedown", function() {
 			me.onRemove();
 		});
 	}

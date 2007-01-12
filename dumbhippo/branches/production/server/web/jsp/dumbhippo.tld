@@ -157,6 +157,27 @@
         </attribute>
     </tag>
     <tag>
+    	<name>iterateStack</name>
+    	<tagclass>com.dumbhippo.web.tags.IterateStack</tagclass>
+    	<bodycontent>scriptless</bodycontent>
+    	<info>Iterate over a collection of blocks forming a stack</info>
+    	<attribute>
+    		<name>items</name>
+    		<required>true</required>
+    		<rtexprvalue>true</rtexprvalue>
+   		</attribute>
+    	<attribute>
+    		<name>var</name>
+    		<required>true</required>
+    		<rtexprvalue>false</rtexprvalue>
+   		</attribute>
+    	<attribute>
+    		<name>varStatus</name>
+    		<required>true</required>
+    		<rtexprvalue>false</rtexprvalue>
+   		</attribute>
+   	</tag>
+    <tag>
         <name>png</name>
         <tagclass>com.dumbhippo.web.tags.PngTag</tagclass>
         <bodycontent>empty</bodycontent>
@@ -396,5 +417,15 @@
     	<name>myInstanceOf</name>
     	<function-class>com.dumbhippo.web.tags.FuncUtils</function-class>
     	<function-signature>boolean myInstanceOf( java.lang.Object, java.lang.String )</function-signature>
+    </function>
+    <function>
+    	<name>randomInt</name>
+    	<function-class>com.dumbhippo.web.tags.FuncUtils</function-class>
+    	<function-signature>int randomInt( int )</function-signature>
     </function>    
+    <function>
+    	<name>urlEncode</name>
+    	<function-class>com.dumbhippo.web.tags.FuncUtils</function-class>
+    	<function-signature>java.lang.String urlEncode(java.lang.String)</function-signature>
+    </function>            
 </taglib>

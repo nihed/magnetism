@@ -88,18 +88,23 @@ public class UserSigninBean extends SigninBean {
 	}
 	
 	@Override
+	public boolean isActive() {
+		return getUser().getAccount().isActive();
+	}
+	
+	@Override
 	public void resetSessionObjects() {
 		user = null;
 	}	
 
 	@Override
 	public boolean getNeedsTermsOfUse() {
-		return false; // we never create a UserSigninBean for accounts that haven't accept the TOS
+		return !getUser().getAccount().getHasAcceptedTerms();
 	}
 	
 	@Override
 	public boolean isDisabled() {
-		return false; // we never create a UserSigninBean for a disabled account
+		return getUser().getAccount().isDisabled();
 	}
 	
 	public boolean isMusicSharingEnabled() {

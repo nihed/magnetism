@@ -16,6 +16,26 @@ import com.dumbhippo.server.views.Viewpoint;
 @Local
 public interface PersonViewer {
 	
+	/**
+	 * Get the number of contacts of the given person, minus the 
+	 * person's own self contact.
+	 * 
+	 * @param viewpoint viewpoint person viewing the contacts
+	 * @param user who to get contacts of
+	 * @return number of contacts
+	 */
+	public int getContactCount(Viewpoint viewpoint, User user);
+	
+	/**
+	 * Get the number of account-owning contacts of the given person, minus the 
+	 * person's own self contact.
+	 * 
+	 * @param viewpoint viewpoint person viewing the contacts
+	 * @param user who to get contacts of
+	 * @return number of account-owning contacts
+	 */
+	public int getUserContactCount(Viewpoint viewpoint, User user);	
+	
 	/** 
 	 * Get the contacts of the given person as a list of PersonView; the
 	 *   result will never include the person themself.
@@ -30,6 +50,33 @@ public interface PersonViewer {
 	public List<PersonView> getContacts(Viewpoint viewpoint, User user, int start, int max, PersonViewExtra... extras);
 	
 	public void pageContacts(Viewpoint viewpoint, User user, Pageable<PersonView> pageable, PersonViewExtra... extras);
+	
+	/**
+	 * Get the contacts of a user who hold accounts (are Users).  This method
+	 * returns very limited PersonView objects that are suitable essentially
+	 * only for retrieving the name and photo.
+	 * 
+	 * This method never includes the user in the set of returned contacts.
+	 * 
+	 * @param viewpoint entity viewing the contacts
+	 * @param user who to get contacts of
+	 * @param start starting index of contacts to include
+	 * @param max maximum number of contacts to return, or -1 for no limit
+	 * @return set of user contacts
+	 */
+	public List<PersonView> getUserContactsAlphaSorted(Viewpoint viewpoint, User user, int start, int max);
+	
+	public void pageUserContactsAlphaSorted(Viewpoint viewpoint, User user, Pageable<PersonView> pageable);
+	
+	/**
+	 * Get the contacts of the user who do not have accounts associated with them,
+	 * and have not received invitations to the system from the user.
+	 * 
+	 * @param viewpoint entity viewing the contacts
+	 * @param user who to get contacts of
+	 * @return set of user contacts without invites
+	 */
+	public List<PersonView> getContactsWithoutInvites(Viewpoint viewpoint, User user);
 	
 	/**
 	 * Get a list of users who have this user as a contact, but who are not contacts of this user.
@@ -72,11 +119,10 @@ public interface PersonViewer {
 	 * 
 	 * @param viewpoint the viewpoint of the person who is viewing
 	 * @param resource the person being viewed
-	 * @param firstExtra at least one extra is mandatory when creating a resource
 	 * @param extras information to stuff into the PersonView, more = more database work
 	 * @return a new PersonView object
 	 */
-	public PersonView getPersonView(Viewpoint viewpoint, Resource resource, PersonViewExtra firstExtra, PersonViewExtra... extras);
+	public PersonView getPersonView(Viewpoint viewpoint, Resource resource, PersonViewExtra... extras);
 	
 	/**
 	 * 

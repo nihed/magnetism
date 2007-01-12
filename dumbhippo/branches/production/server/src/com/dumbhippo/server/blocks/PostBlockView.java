@@ -6,13 +6,15 @@ import java.util.List;
 import com.dumbhippo.DateUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.FeedPost;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.ChatMessageView;
+import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.Viewpoint;
 
-public class PostBlockView extends BlockView implements SimpleTitleBlockView {
+public class PostBlockView extends BlockView implements TitleBlockView, EntitySourceBlockView {
 	static final public int RECENT_MESSAGE_COUNT = 3;
 	
 	private PostView postView;
@@ -34,7 +36,13 @@ public class PostBlockView extends BlockView implements SimpleTitleBlockView {
 	}
 	
 	public PostView getPostView() {
+		if (!isPopulated())
+			throw new IllegalStateException("PostBlockView is not populated yet, but tried to get post view");
 		return this.postView;
+	}
+	
+	public EntityView getEntitySource() {
+		return getPostView().getPoster();
 	}
 	
 	public List<ChatMessageView> getRecentMessages() {
@@ -79,7 +87,10 @@ public class PostBlockView extends BlockView implements SimpleTitleBlockView {
 
 	@Override
 	public String getTypeTitle() {
-		return "Web Swarm";
+		if (postView.getPost() instanceof FeedPost)
+			return "Feed";
+		else
+			return "Web Swarm";
 	}
 	
 	@Override

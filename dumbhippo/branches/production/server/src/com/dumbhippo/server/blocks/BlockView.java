@@ -12,7 +12,6 @@ import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.ObjectView;
-import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
 public abstract class BlockView implements ObjectView {
@@ -81,17 +80,12 @@ public abstract class BlockView implements ObjectView {
 		return block.getGuid();
 	}
 	
-	// web swarms or group chats do not have a person source, while music and external account updates do
-	public PersonView getPersonSource() {
-		return null;
-	}
-	
 	public boolean isPublic() { 
 		return getBlock().isPublicBlock(); 
 	}
 	
 	public String getPrivacyTip() {
-		throw new RuntimeException("No privacy tip specified for non-public block");
+		throw new RuntimeException("No privacy tip specified for non-public block: " + block);
 	}
 	
 	public StackReason getStackReason() {
@@ -119,10 +113,34 @@ public abstract class BlockView implements ObjectView {
 			clickedCountString = "-1"; // null;
 			significantClickedCountString = "-1"; // null; 
 		}
+
+		// not a shining example of OO design, but simpler than the alternatives...
+		// (this is essentially a workaround for lack of "mixins" or something)
+		boolean isTitle = this instanceof TitleBlockView;
+		boolean isTitleDescription = this instanceof TitleDescriptionBlockView;
+		boolean hasSource = this instanceof EntitySourceBlockView;
+		
+		// the "generic type" of a block allows the client to use a fallback 
+		// means of displaying the block
+		StringBuilder sb = new StringBuilder();
+		if (isTitleDescription)
+			sb.append("TITLE_DESCRIPTION");
+		if (isTitle) {
+			if (sb.length() > 0)
+				sb.append(",");
+			sb.append("TITLE");
+		}
+		if (hasSource) {
+			if (sb.length() > 0)
+				sb.append(",");
+			sb.append("ENTITY_SOURCE");
+		}
+		String genericTypes = sb.length() > 0 ? sb.toString() : null;
 		
 		builder.openElement("block",
 							"id", block.getId(),
 							"type", block.getBlockType().name(),
+							"genericTypes", genericTypes, // if genericTypes is null this is omitted
 							"isPublic", Boolean.toString(isPublic()),							
 							"timestamp", Long.toString(block.getTimestampAsLong()),
 							"clickedCount", clickedCountString,
@@ -133,6 +151,18 @@ public abstract class BlockView implements ObjectView {
 							"clickedTimestamp", Long.toString(userBlockData.getClickedTimestampAsLong()),
 							"stackReason", getStackReason().name(),
 							"icon", getIcon());
+
+		if (hasSource)
+			builder.appendEmptyNode("source", "id", ((EntitySourceBlockView) this).getEntitySource().getIdentifyingGuid().toString());
+		
+		if (isTitle) {
+			String title = ((TitleBlockView) this).getTitle();
+			String link = ((TitleBlockView) this).getLink();
+			builder.appendTextNode("title", title, "link", link);
+		}
+		
+		if (isTitleDescription)
+			builder.appendTextNode("description", ((TitleDescriptionBlockView) this).getDescription());
 		
 		writeDetailsToXmlBuilder(builder);
 		
@@ -154,7 +184,7 @@ public abstract class BlockView implements ObjectView {
 			throw new RuntimeException("Attempt to write blockview to xml without populating it: " + this);
 		
 		long sortTimestamp = block.getTimestampAsLong();
-		if (userBlockData.getIgnoredTimestampAsLong() < sortTimestamp)
+		if (userBlockData.isIgnored() && userBlockData.getIgnoredTimestampAsLong() < sortTimestamp)
 			sortTimestamp = userBlockData.getIgnoredTimestampAsLong();
 		
 		builder.appendEmptyNode("block",

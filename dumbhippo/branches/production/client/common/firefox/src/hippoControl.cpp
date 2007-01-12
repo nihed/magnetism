@@ -1,8 +1,14 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-#include <glib.h>
 
 #ifdef HIPPO_OS_LINUX
+#include <glib.h>
 #include "hippoipc/hippo-dbus-ipc-locator.h"
+#define UTF8_VALIDATE g_utf8_validate
+#elif defined(HIPPO_OS_WINDOWS)
+#include "HippoStdAfx.h"
+#include <HippoUtil.h>
+#include <hippo-com-ipc-locator.h>
+#define UTF8_VALIDATE hippo_utf8_validate
 #else
 #error "Unknown platform; don't know how to get a HippoIpcLocator"
 #endif
@@ -23,6 +29,8 @@ hippoControl::hippoControl()
 {
 #ifdef HIPPO_OS_LINUX
     locator_ = HippoDBusIpcLocator::getInstance();
+#elif HIPPO_OS_WINDOWS
+    locator_ = HippoComIpcLocator::getInstance();
 #endif
 
     listener_ = 0;
@@ -327,7 +335,7 @@ hippoControl::checkString(const nsACString &str)
     const char *start = str.BeginReading();
     const char *end = str.EndReading();
 
-    if (!g_utf8_validate(start, end - start, NULL))
+    if (!UTF8_VALIDATE(start, end - start, NULL))
         return NS_ERROR_INVALID_ARG;
 
     return NS_OK;

@@ -1,0 +1,79 @@
+@CHARSET "UTF-8";
+
+.dh-buttons-header-box {
+	/* if you add position: relative here then IE will vanish the floats contained in it */
+	margin-top:			10px;
+	margin-bottom:  	20px;
+	/* top and bottom padding relatively safe since we rarely set a height */
+	padding-top:		10px;	
+	padding-bottom:		10px;
+}
+
+.dh-buttons-header-image {
+	float:				left;
+	display:			inline; /* Fixes IE double-margin bug */		
+	margin:				10px;
+}
+
+.dh-buttons-header-text {
+	float:				left;
+	display:			inline; /* Fixes IE double-margin bug */
+	margin:				10px;
+}
+
+.dh-buttons-main-box {
+	position:		relative;
+}
+
+.dh-buttons-choices-box {
+	float:			left;
+	display:		inline; /* Fixes IE double-margin bug */	
+	width:			460px;
+	margin-right:	10px;
+}
+
+.dh-buttons-instructions-box {
+	float:		left;
+	display:		inline; /* Fixes IE double-margin bug */
+}
+
+.dh-buttons-instructions-headline {
+	margin-bottom:	10px;
+}
+
+.dh-buttons-instructions {
+	margin-bottom:	10px;
+}
+
+.dh-buttons-choice-background {
+	width:			460px;
+	margin-bottom:	10px;	
+}
+
+.dh-buttons-choice-preview {
+	float:			left;
+	display:		inline; /* Fixes IE double-margin bug */	
+	width:			120px;
+	margin-left:	10px;
+	margin-top:		10px;
+	margin-bottom:	10px;
+	text-align:		center;
+}
+
+.dh-buttons-choice-preview-title {
+	margin-top:		5px;
+}
+
+.dh-buttons-choice-code-area {
+	float:			left;
+	display:		inline; /* Fixes IE double-margin bug */
+	width:			310px;
+	margin-left:	10px;
+	margin-bottom:	10px;
+	margin-top:		10px;
+	overflow:		hidden;
+}
+
+.dh-buttons-code {
+	width:			310px;
+}

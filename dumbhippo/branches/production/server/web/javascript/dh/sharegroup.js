@@ -1,11 +1,11 @@
 dojo.provide("dh.sharegroup");
 
-dojo.require("dojo.event.*");
 dojo.require("dojo.widget.*");
-dojo.require("dojo.html");
 dojo.require("dh.share");
 dojo.require("dh.server");
 dojo.require("dh.util");
+dojo.require("dh.dom");
+dojo.require("dh.event");
 
 dh.sharegroup.inviteCountMessage = null;
 
@@ -31,7 +31,7 @@ dh.sharegroup.updateInvitations = function() {
 	else
 		message = "No more email invitations! You can only share this group with existing Mugshot users";
 
-	dojo.dom.textContent(dh.sharegroup.inviteCountMessage, message)
+	dh.dom.textContent(dh.sharegroup.inviteCountMessage, message)
 
 	if (dhShareGroupIsForum)
 		dh.sharegroup.inviteCountMessage.style.display = 'none';
@@ -40,7 +40,7 @@ dh.sharegroup.updateInvitations = function() {
 }
 
 dh.sharegroup.doSubmit = function() {
-	dojo.debug("clicked share link button");
+	dh.debug("clicked share link button");
 
 	var descriptionHtml = dh.util.getTextFromRichText(dh.share.descriptionRichText);
 	
@@ -48,9 +48,9 @@ dh.sharegroup.doSubmit = function() {
 	
 	var secret = false;
 	
-	dojo.debug("groupId = " + dhShareGroupId);
-	dojo.debug("desc = " + descriptionHtml);
-	dojo.debug("rcpts = " + commaRecipients);
+	dh.debug("groupId = " + dhShareGroupId);
+	dh.debug("desc = " + descriptionHtml);
+	dh.debug("rcpts = " + commaRecipients);
 	
 	// double-check that we're logged in
 	dh.server.doPOST("sharegroup",
@@ -74,7 +74,7 @@ dh.sharegroup.doSubmit = function() {
 }
 
 dh.sharegroup.submitButtonClicked = function() {
-	dojo.debug("clicked share link button");
+	dh.debug("clicked share link button");
 
 	dh.share.checkAndSubmit(dh.sharegroup.doSubmit)
 }
@@ -88,8 +88,8 @@ dh.sharegroup.loadContacts = function() {
 				"groupId" : dhShareGroupId
 			},
 			function(type, data, http) {
-				dojo.debug("got back contacts " + data);
-				dojo.debug("text is : " + http.responseText);
+				dh.debug("got back contacts " + data);
+				dh.debug("text is : " + http.responseText);
 							
 				dh.share.mergeObjectsDocument(data);
 				
@@ -101,7 +101,7 @@ dh.sharegroup.loadContacts = function() {
 }
 
 dh.sharegroup.init = function() {
-	dojo.debug("dh.sharegroup.init");
+	dh.debug("dh.sharegroup.init");
 
 	dh.sharegroup.inviteCountMessage = document.getElementById('dhInvitationsRemainingMessage');
 			
@@ -123,7 +123,7 @@ dh.sharegroup.init = function() {
 			if (dh.sharegroup.invitesRemaining() > 0)
 				return true;
 			else {
-				dh.util.flash(dh.sharegroup.inviteCountMessage);	
+				dh.share.flash(dh.sharegroup.inviteCountMessage);	
 			}
 		}
 	}
@@ -135,5 +135,4 @@ dh.sharegroup.init = function() {
 	dh.sharegroup.loadContacts();
 }
 
-dhShareGroupInit = dh.sharegroup.init; // connect doesn't like namespaced things
-dojo.event.connect(dojo, "loaded", dj_global, "dhShareGroupInit");
+dh.event.addPageLoadListener(dh.sharegroup.init);

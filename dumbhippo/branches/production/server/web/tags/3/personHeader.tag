@@ -6,7 +6,7 @@
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
 <%@ attribute name="shortVersion" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="embedVersion" required="false" type="java.lang.Boolean" %>
-<%@ attribute name="linkifyName" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="disableLink" required="false" type="java.lang.Boolean" %>
 
 <c:if test="${empty shortVersion}">
 	<c:set var="shortVersion" value="false"/>
@@ -14,10 +14,6 @@
 
 <c:if test="${empty embedVersion}">
 	<c:set var="embedVersion" value="false"/>
-</c:if>
-
-<c:if test="${empty linkifyName}">
-	<c:set var="linkifyName" value="true"/>
 </c:if>
 
 <div class="dh-person-header">
@@ -30,14 +26,14 @@
 			<tr valign="top">
 				<td>
 					<div class="dh-image">
-						<dht:headshot person="${who}" size="60" invited="false"/>
+						<dht:headshot person="${who}" size="60" disableLink="${disableLink}"/>
 					</div>
 				</td>
 				<td>
 					<div class="dh-person-header-next-to-image">
 						<dht3:presenceIcon who="${who}"/>		
 						<c:choose>
-							<c:when test="${!linkifyName}">
+							<c:when test="${disableLink}">
 								<span class="dh-person-header-name"><c:out value="${who.name}"/>'s Mugshot</span>
 							</c:when>
 							<c:when test="${who.viewOfSelf}">
@@ -60,7 +56,10 @@
 						<div class="dh-person-header-controls"><jsp:doBody/></div>
 						<c:if test="${!embedVersion && who.liveUser != null}">
 						    <div class="dh-person-header-stats">
-								<span class="dh-info"><dht3:plural n="${who.liveUser.contactsCount}" s="friend"/></span> | 							
+								<span class="dh-info"><c:out value="${who.liveUser.userContactsCount} in network"/>
+									<c:if test="${who.viewOfSelf && who.user.account.invitations > 0}"> - <a href="/invitation">Invite friends</a>
+									</c:if>
+								</span> |
 								<span class="dh-info"><dht3:plural n="${who.liveUser.groupCount}" s="group"/></span> | 
 								<span class="dh-info"><dht3:plural n="${who.liveUser.sentPostsCount}" s="post"/></span> 
 						    </div>
@@ -87,7 +86,7 @@
 					    <div class="dh-person-header-hated-accounts">
 						<strong>Where you won't find <c:out value="${who.name}"/></strong>
 			 		            <c:forEach var="account" items="${who.hatedAccounts.list}">
-					                    <div class="dh-person-header-hated-account"><dh:png src="/images3/${buildStamp}/quiphate_icon.png" />&nbsp;<a class="dh-person-header-hated-account-link" href="${account.externalAccount.siteLink}"><c:out value="${account.externalAccount.siteName}" /></a>&nbsp;&mdash;&nbsp;<span class="dh-person-header-hated-account-quip"><c:out value="${account.externalAccount.quip}" /></span></div>
+					                    <div class="dh-person-header-hated-account"><dh:png klass="dh-love-hate-icon" src="/images3/${buildStamp}/quiphate_icon.png" style="width: 11; height: 11; overflow: hidden;"/>&nbsp;<a class="dh-person-header-hated-account-link" href="${account.externalAccount.siteLink}"><c:out value="${account.externalAccount.siteName}" /></a>&nbsp;&mdash;&nbsp;<span class="dh-person-header-hated-account-quip"><c:out value="${account.externalAccount.quip}" /></span></div>
 					            </c:forEach>					
 					    </div>
 					</c:if>

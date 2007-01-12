@@ -7,20 +7,16 @@
 <%@ attribute name="chatId" required="true" type="java.lang.String" %>
 <%@ attribute name="chatKind" required="true" type="java.lang.String" %>
 <%@ attribute name="chattingCount" required="true" type="java.lang.Integer" %>
+<%@ attribute name="showChatLink" required="false" type="java.lang.Boolean" %>
 
-<c:choose>
-	<c:when test="${chattingCount > 0}">
-		<span class="dh-stacker-block-content-post-chatting"><c:out value="${chattingCount}"/></span> people chatting <dht:actionLinkChat prefix=" | " oneLine="true" chatId="${chatId}" kind="${chatKind}"/>
-	</c:when>
-	<c:otherwise><dht:actionLinkChat oneLine="true" chatId="${chatId}" kind="${chatKind}"/></c:otherwise>
-</c:choose>
-<c:forEach items="${block.recentMessages}" end="3" var="msg" varStatus="msgIdx">
-	<div class="dh-stacker-block-chat-container">
-	<img src="/images3/${buildStamp}/comment_iconchat_icon.png"/>
-	<span class="dh-stacker-block-chat">
-		<span class="dh-stacker-block-chat-message"><c:out value="${msg.msg.messageText}"/></span> -
-		<span class="dh-stacker-block-chat-sender"><dht3:entityLink who="${msg.senderView}"/></span>
-		<span class="dh-stacker-block-chat-time-ago"><c:out value="${msg.timeAgo}"/></span>
-	</span>
-	</div>
+<c:if test="${showChatLink}">
+	<c:choose>
+		<c:when test="${chattingCount > 0}">
+			<span class="dh-stacker-block-content-post-chatting"><c:out value="${chattingCount}"/></span> people chatting <dht:actionLinkChat prefix=" | " oneLine="true" chatId="${chatId}" kind="${chatKind}"/>
+		</c:when>
+		<c:otherwise><dht:actionLinkChat oneLine="true" chatId="${chatId}" kind="${chatKind}"/></c:otherwise>
+	</c:choose>
+</c:if>
+<c:forEach items="${block.recentMessages}" end="3" var="msg">
+	<dht3:chatMessage msg="${msg}"/>
 </c:forEach>
