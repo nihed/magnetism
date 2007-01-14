@@ -251,10 +251,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	// Kind of arbitrary but...hey.  It feels good to me.  These are prime numbers
 	// closest to durations in seconds.
 	private static final long[] pollingSetTimeSeconds = { 
-		307,                // 7 seconds
-		307,               // 23 seconds
-		307,               // ~1 minute 
-		307,              // ~5 minutes
+            307,              // ~5 minutes
 	    907,              // ~15 minutes
 	    1801,			  // ~30 minutes
 		3607              // ~1 hour
