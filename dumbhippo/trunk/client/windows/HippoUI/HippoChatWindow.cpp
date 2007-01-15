@@ -171,7 +171,7 @@ HippoChatWindowImpl::setChatId(BSTR chatId)
     if (serverPort != 80) {
         url.Append(':');
         WCHAR buffer[16];
-        StringCchPrintfW(buffer, sizeof(buffer), L"%d", serverPort);
+        StringCchPrintfW(buffer, sizeof(buffer) / sizeof(buffer[0]), L"%d", serverPort);
         url.Append(buffer);
     }
     url.Append(L"/chatwindow?chatId=");
