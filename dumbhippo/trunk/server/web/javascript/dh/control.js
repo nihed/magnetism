@@ -1,5 +1,6 @@
 dojo.provide("dh.control")
 dojo.require("dh.lang");
+dojo.require("dh.util");
 
 ///////////////////////// auxiliary / data-model objects
 
