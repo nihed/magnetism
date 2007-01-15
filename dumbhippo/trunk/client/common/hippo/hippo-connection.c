@@ -2263,16 +2263,9 @@ join_or_leave_chat_room(HippoConnection *connection,
 {
     HippoChatState old_state;
     HippoChatState new_state;
-    HippoPerson *self;
 
-    self = hippo_data_cache_get_self(connection->cache);
-    if (self == NULL) {
-        /* not connected */
-        old_state = HIPPO_CHAT_STATE_NONMEMBER;
-    } else {
-        old_state = hippo_chat_room_get_user_state(room, self);
-    }
-
+    old_state = hippo_chat_room_get_desired_state(room, self);
+    
     if (join)
         hippo_chat_room_increment_state_count(room, state);
     else
@@ -2280,8 +2273,7 @@ join_or_leave_chat_room(HippoConnection *connection,
     
     new_state = hippo_chat_room_get_desired_state(room);
 
-    if (self && old_state != new_state)
-        hippo_connection_send_chat_room_state(connection, room, old_state, new_state);
+    hippo_connection_send_chat_room_state(connection, room, old_state, new_state);
 }
 
 void
@@ -2327,8 +2319,6 @@ hippo_connection_rejoin_chat_room(HippoConnection *connection,
      */
     desired_state = hippo_chat_room_get_desired_state(room);
 
-    /* FIXME same issue as in join_or_leave_chat_room above */
-    hippo_chat_room_set_user_state(room, self, desired_state);
     hippo_connection_send_chat_room_state(connection, room, HIPPO_CHAT_STATE_NONMEMBER, desired_state);
 }
 
