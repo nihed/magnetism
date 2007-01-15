@@ -2264,7 +2264,7 @@ join_or_leave_chat_room(HippoConnection *connection,
     HippoChatState old_state;
     HippoChatState new_state;
 
-    old_state = hippo_chat_room_get_desired_state(room, self);
+    old_state = hippo_chat_room_get_desired_state(room);
     
     if (join)
         hippo_chat_room_increment_state_count(room, state);
