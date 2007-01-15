@@ -17,6 +17,7 @@
 	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
 	<dht3:stylesheet name="person"/>
 	<dht:faviconIncludes/>
+  <dht3:personFeed person="${person.viewedPerson}"/>
 </head>
 
 

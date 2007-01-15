@@ -9,6 +9,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
+import java.text.SimpleDateFormat;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,6 +18,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -104,6 +106,9 @@ import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.blocks.BlockView;
+import com.dumbhippo.server.blocks.TitleBlockView;
+import com.dumbhippo.server.blocks.TitleDescriptionBlockView;
+import com.dumbhippo.server.blocks.ExternalAccountBlockView;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.FeedScraper;
 import com.dumbhippo.server.views.AnonymousViewpoint;
@@ -2136,5 +2141,64 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		xml.closeElement();
+	}
+
+	public void getUserRSS(OutputStream out, HttpResponseData contentType, User who, boolean participantOnly) throws IOException, XmlMethodException {
+		
+		List<BlockView> stack;
+		Pageable<BlockView> pageable = new Pageable<BlockView>("stack");
+		pageable.setPosition(0);
+		pageable.setInitialPerPage(5);
+		stacker.pageStack(AnonymousViewpoint.getInstance(), who, pageable, participantOnly);
+		stack = pageable.getResults();
+		
+		PersonView userView = personViewer.getPersonView(AnonymousViewpoint.getInstance(), who);
+
+    XmlBuilder xml = new XmlBuilder();
+
+    xml.appendStandaloneFragmentHeader();
+		
+    xml.openElement("rss", "version", "2.0");
+
+    String baseurl = config.getProperty(HippoProperty.BASEURL);
+
+		xml.openElement("channel");
+    xml.appendTextNode("title", userView.getName());
+    xml.appendTextNode("link", baseurl + userView.getHomeUrl());
+    xml.appendTextNode("description", userView.getBioAsHtml());
+    xml.appendTextNode("generator", "Mugshot.org User RSS Generator");
+
+    xml.openElement("image");
+    xml.appendTextNode("url", baseurl + userView.getPhotoUrl());
+    xml.appendTextNode("title", userView.getName());
+    xml.appendTextNode("link", baseurl + userView.getHomeUrl());
+	  xml.closeElement(); // </image>
+		
+    SimpleDateFormat sdf = new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss' 'Z", Locale.US);
+
+		for (BlockView bv : stack) {
+      if ( !(bv instanceof TitleBlockView))
+        continue;
+
+      boolean ext  = (bv instanceof ExternalAccountBlockView);
+
+      xml.openElement("item");
+      xml.appendTextNode("link", (!ext? baseurl : "") + bv.getSummaryLink());
+      xml.appendTextNode("title", bv.getSummaryLinkText());
+
+      if (bv instanceof TitleDescriptionBlockView)
+        xml.appendTextNode("description", ((TitleDescriptionBlockView) bv).getDescription());
+
+      xml.appendTextNode("pubDate", sdf.format(bv.getBlock().getTimestamp()));
+
+      xml.appendTextNode("guid", (!ext? baseurl : "") + bv.getSummaryLink()); // hopefully this is actually a guid, there's no real way of checking
+  		xml.closeElement(); // </item>
+		}
+		
+		xml.closeElement(); // </channel>
+
+    xml.closeElement(); // </rss>
+
+    out.write(xml.getBytes());
 	}
 }

@@ -395,4 +395,9 @@ public interface HttpMethods {
 	@HttpParams( { "who", "includeStack", "participantOnly" })
 	@HttpOptions( optionalParams = { "includeStack", "participantOnly" } )
 	public void getUserSummary(XmlBuilder xml, User who, boolean includeStack, boolean participantOnly) throws XmlMethodException;
+
+	@HttpContentTypes(HttpResponseData.XML)
+	@HttpParams( { "who", "participantOnly" })
+	@HttpOptions( optionalParams = { "participantOnly" } )
+	public void getUserRSS(OutputStream out, HttpResponseData contentType, User who, boolean participantOnly) throws IOException, XmlMethodException;
 }
