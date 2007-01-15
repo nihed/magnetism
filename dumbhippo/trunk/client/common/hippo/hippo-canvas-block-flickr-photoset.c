@@ -24,11 +24,10 @@ static void hippo_canvas_block_flickr_photoset_get_property (GObject      *objec
                                                              guint         prop_id,
                                                              GValue       *value,
                                                              GParamSpec   *pspec);
-static GObject* hippo_canvas_block_flickr_photoset_constructor (GType                  type,
-                                                                guint                  n_construct_properties,
-                                                                GObjectConstructParam *construct_params);
 
 /* Canvas block methods */
+static void hippo_canvas_block_flickr_photoset_append_content_items (HippoCanvasBlock *block,
+                                                                     HippoCanvasBox   *parent_box);
 static void hippo_canvas_block_flickr_photoset_set_block       (HippoCanvasBlock *canvas_block,
                                                                 HippoBlock       *block);
 
@@ -94,11 +93,11 @@ hippo_canvas_block_flickr_photoset_class_init(HippoCanvasBlockFlickrPhotosetClas
 
     object_class->set_property = hippo_canvas_block_flickr_photoset_set_property;
     object_class->get_property = hippo_canvas_block_flickr_photoset_get_property;
-    object_class->constructor = hippo_canvas_block_flickr_photoset_constructor;
 
     object_class->dispose = hippo_canvas_block_flickr_photoset_dispose;
     object_class->finalize = hippo_canvas_block_flickr_photoset_finalize;
 
+    canvas_block_class->append_content_items = hippo_canvas_block_flickr_photoset_append_content_items;
     canvas_block_class->set_block = hippo_canvas_block_flickr_photoset_set_block;
     canvas_block_class->title_activated = hippo_canvas_block_flickr_photoset_title_activated;
     canvas_block_class->expand = hippo_canvas_block_flickr_photoset_expand;
@@ -159,42 +158,27 @@ hippo_canvas_block_flickr_photoset_get_property(GObject         *object,
     }
 }
 
-static GObject*
-hippo_canvas_block_flickr_photoset_constructor (GType                  type,
-                                                guint                  n_construct_properties,
-                                                GObjectConstructParam *construct_properties)
+static void
+hippo_canvas_block_flickr_photoset_append_content_items (HippoCanvasBlock *block,
+                                                         HippoCanvasBox   *parent_box)
 {
-    GObject *object;
-    HippoCanvasBlock *block;
-    HippoCanvasBlockFlickrPhotoset *block_flickr_photoset;
-
-    object = G_OBJECT_CLASS(hippo_canvas_block_flickr_photoset_parent_class)->constructor(type,
-                                                                                          n_construct_properties,
-                                                                                          construct_properties);
-    block = HIPPO_CANVAS_BLOCK(object);
-    block_flickr_photoset = HIPPO_CANVAS_BLOCK_FLICKR_PHOTOSET(object);
+    HippoCanvasBlockFlickrPhotoset *block_flickr_photoset = HIPPO_CANVAS_BLOCK_FLICKR_PHOTOSET(block);
 
     hippo_canvas_block_set_heading(block, _("Flickr photoset"));
 
-    block_flickr_photoset->thumbnails_parent =
-        g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                     NULL);
+    block_flickr_photoset->thumbnails_parent = parent_box;
 
     block_flickr_photoset->thumbnails =
         g_object_new(HIPPO_TYPE_CANVAS_THUMBNAILS,
                      "actions", block->actions,
                      NULL);
 
-    hippo_canvas_box_append(block_flickr_photoset->thumbnails_parent,
+    hippo_canvas_box_append(parent_box,
                             block_flickr_photoset->thumbnails, HIPPO_PACK_EXPAND);
 
-    hippo_canvas_box_set_child_visible(block_flickr_photoset->thumbnails_parent,
+    hippo_canvas_box_set_child_visible(parent_box,
                                        block_flickr_photoset->thumbnails,
                                        FALSE);
-
-    hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(block_flickr_photoset->thumbnails_parent));
-
-    return object;
 }
 
 static void

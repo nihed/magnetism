@@ -24,11 +24,9 @@ static void hippo_canvas_block_facebook_event_get_property (GObject      *object
                                                              guint         prop_id,
                                                              GValue       *value,
                                                              GParamSpec   *pspec);
-static GObject* hippo_canvas_block_facebook_event_constructor (GType                  type,
-                                                                guint                  n_construct_properties,
-                                                                GObjectConstructParam *construct_params);
-
 /* Canvas block methods */
+static void hippo_canvas_block_facebook_event_append_content_items (HippoCanvasBlock *block,
+                                                                    HippoCanvasBox   *parent_box);
 static void hippo_canvas_block_facebook_event_set_block       (HippoCanvasBlock *canvas_block,
                                                                 HippoBlock       *block);
 
@@ -94,11 +92,11 @@ hippo_canvas_block_facebook_event_class_init(HippoCanvasBlockFacebookEventClass 
 
     object_class->set_property = hippo_canvas_block_facebook_event_set_property;
     object_class->get_property = hippo_canvas_block_facebook_event_get_property;
-    object_class->constructor = hippo_canvas_block_facebook_event_constructor;
 
     object_class->dispose = hippo_canvas_block_facebook_event_dispose;
     object_class->finalize = hippo_canvas_block_facebook_event_finalize;
 
+    canvas_block_class->append_content_items = hippo_canvas_block_facebook_event_append_content_items;
     canvas_block_class->set_block = hippo_canvas_block_facebook_event_set_block;
     canvas_block_class->title_activated = hippo_canvas_block_facebook_event_title_activated;
     canvas_block_class->expand = hippo_canvas_block_facebook_event_expand;
@@ -159,42 +157,27 @@ hippo_canvas_block_facebook_event_get_property(GObject         *object,
     }
 }
 
-static GObject*
-hippo_canvas_block_facebook_event_constructor (GType                  type,
-                                                guint                  n_construct_properties,
-                                                GObjectConstructParam *construct_properties)
+static void
+hippo_canvas_block_facebook_event_append_content_items (HippoCanvasBlock *block,
+                                                        HippoCanvasBox   *parent_box)
 {
-    GObject *object;
-    HippoCanvasBlock *block;
-    HippoCanvasBlockFacebookEvent *block_facebook_event;
-
-    object = G_OBJECT_CLASS(hippo_canvas_block_facebook_event_parent_class)->constructor(type,
-                                                                                          n_construct_properties,
-                                                                                          construct_properties);
-    block = HIPPO_CANVAS_BLOCK(object);
-    block_facebook_event = HIPPO_CANVAS_BLOCK_FACEBOOK_EVENT(object);
+    HippoCanvasBlockFacebookEvent *block_facebook_event = HIPPO_CANVAS_BLOCK_FACEBOOK_EVENT(block);
 
     hippo_canvas_block_set_heading(block, _("Facebook event"));
 
-    block_facebook_event->thumbnails_parent =
-        g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                     NULL);
+    block_facebook_event->thumbnails_parent = parent_box;
 
     block_facebook_event->thumbnails =
         g_object_new(HIPPO_TYPE_CANVAS_THUMBNAILS,
                      "actions", block->actions,
                      NULL);
 
-    hippo_canvas_box_append(block_facebook_event->thumbnails_parent,
+    hippo_canvas_box_append(parent_box,
                             block_facebook_event->thumbnails, HIPPO_PACK_EXPAND);
 
-    hippo_canvas_box_set_child_visible(block_facebook_event->thumbnails_parent,
+    hippo_canvas_box_set_child_visible(parent_box,
                                        block_facebook_event->thumbnails,
                                        FALSE);
-
-    hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(block_facebook_event->thumbnails_parent));
-
-    return object;
 }
 
 static void

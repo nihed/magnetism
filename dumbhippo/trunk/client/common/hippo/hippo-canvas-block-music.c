@@ -28,11 +28,12 @@ static void hippo_canvas_block_music_get_property (GObject      *object,
                                                    guint         prop_id,
                                                    GValue       *value,
                                                    GParamSpec   *pspec);
-static GObject* hippo_canvas_block_music_constructor (GType                  type,
-                                                      guint                  n_construct_properties,
-                                                      GObjectConstructParam *construct_params);
 
 /* Canvas block methods */
+static void hippo_canvas_block_music_append_content_items (HippoCanvasBlock *canvas_block,
+                                                           HippoCanvasBox   *parent_box);
+static void hippo_canvas_block_music_append_right_items   (HippoCanvasBlock *canvas_block,
+                                                           HippoCanvasBox   *parent_box);
 static void hippo_canvas_block_music_set_block       (HippoCanvasBlock *canvas_block,
                                                       HippoBlock       *block);
 
@@ -90,11 +91,12 @@ hippo_canvas_block_music_class_init(HippoCanvasBlockMusicClass *klass)
 
     object_class->set_property = hippo_canvas_block_music_set_property;
     object_class->get_property = hippo_canvas_block_music_get_property;
-    object_class->constructor = hippo_canvas_block_music_constructor;
 
     object_class->dispose = hippo_canvas_block_music_dispose;
     object_class->finalize = hippo_canvas_block_music_finalize;
 
+    canvas_block_class->append_content_items = hippo_canvas_block_music_append_content_items;
+    canvas_block_class->append_right_items = hippo_canvas_block_music_append_right_items;
     canvas_block_class->set_block = hippo_canvas_block_music_set_block;
     canvas_block_class->expand = hippo_canvas_block_music_expand;
     canvas_block_class->unexpand = hippo_canvas_block_music_unexpand;
@@ -154,39 +156,25 @@ hippo_canvas_block_music_get_property(GObject         *object,
     }
 }
 
-static GObject*
-hippo_canvas_block_music_constructor (GType                  type,
-                                      guint                  n_construct_properties,
-                                      GObjectConstructParam *construct_properties)
+static void
+hippo_canvas_block_music_append_content_items (HippoCanvasBlock *block,
+                                               HippoCanvasBox   *parent_box)
 {
-    GObject *object;
-    HippoCanvasBlock *block;
-    HippoCanvasBlockMusic *block_music;
-    HippoCanvasBox *content_box;
+    HippoCanvasBlockMusic *block_music = HIPPO_CANVAS_BLOCK_MUSIC(block);
     HippoCanvasBox *box;
     HippoCanvasBox *top_box;
     HippoCanvasBox *beside_box;
     HippoCanvasBox *quip_box;
     HippoCanvasItem *item;
     
-    object = G_OBJECT_CLASS(hippo_canvas_block_music_parent_class)->constructor(type,
-                                                                                n_construct_properties,
-                                                                                construct_properties);
-    block = HIPPO_CANVAS_BLOCK(object);
-    block_music = HIPPO_CANVAS_BLOCK_MUSIC(object);
-    
     hippo_canvas_block_set_heading(block, _("Music Radar"));
-
-    content_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                               "orientation", HIPPO_ORIENTATION_VERTICAL,
-                               NULL);
-    hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(content_box));
 
     top_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                            "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                            "spacing", 4,
+                           "border-bottom", 3,
                            NULL);
-    hippo_canvas_box_append(content_box, HIPPO_CANVAS_ITEM(top_box), 0);
+    hippo_canvas_box_append(parent_box, HIPPO_CANVAS_ITEM(top_box), 0);
 
     block_music->thumbnail = g_object_new(HIPPO_TYPE_CANVAS_URL_IMAGE,
                                           "actions", hippo_canvas_block_get_actions(block),
@@ -272,29 +260,34 @@ hippo_canvas_block_music_constructor (GType                  type,
     block_music->single_message_preview_parent = beside_box;
     hippo_canvas_box_append(beside_box, block_music->single_message_preview, 0);
     
-    block_music->downloads_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                                          "orientation", HIPPO_ORIENTATION_VERTICAL,
-                                          NULL);
-    block_music->downloads_box_parent = block->right_column;
-    hippo_canvas_box_append(block->right_column, HIPPO_CANVAS_ITEM(block_music->downloads_box), 0);
-
     block_music->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
                                              "actions", hippo_canvas_block_get_actions(block),
                                              NULL);
     g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hate_activated), block_music);
 
-    block_music->chat_preview_parent = content_box;
-    hippo_canvas_box_append(content_box, block_music->chat_preview, 0);
+    block_music->chat_preview_parent = parent_box;
+    hippo_canvas_box_append(parent_box, block_music->chat_preview, 0);
 
     block_music->old_tracks_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                                "orientation", HIPPO_ORIENTATION_VERTICAL,
                                                NULL);
-    block_music->old_tracks_box_parent = content_box;
-    hippo_canvas_box_append(content_box, HIPPO_CANVAS_ITEM(block_music->old_tracks_box), 0);
+    block_music->old_tracks_box_parent = parent_box;
+    hippo_canvas_box_append(parent_box, HIPPO_CANVAS_ITEM(block_music->old_tracks_box), 0);
     
     hippo_canvas_block_music_update_visibility(block_music);
-    
-    return object;
+}
+
+static void
+hippo_canvas_block_music_append_right_items (HippoCanvasBlock *block,
+                                             HippoCanvasBox   *parent_box)
+{
+    HippoCanvasBlockMusic *block_music = HIPPO_CANVAS_BLOCK_MUSIC(block);
+
+    block_music->downloads_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                          "orientation", HIPPO_ORIENTATION_VERTICAL,
+                                          NULL);
+    block_music->downloads_box_parent = parent_box;
+    hippo_canvas_box_append(parent_box, HIPPO_CANVAS_ITEM(block_music->downloads_box), HIPPO_PACK_FLOAT_RIGHT);
 }
 
 static void

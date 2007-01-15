@@ -178,6 +178,102 @@ create_test_box_layout_root(void)
     return box;
 }
 
+static HippoCanvasItem*
+create_floated_box_layout_root(void)
+{
+    HippoCanvasBox *box;
+    HippoCanvasItem *text;
+
+    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       "orientation", HIPPO_ORIENTATION_VERTICAL,
+                       "border", 4,
+                       "border-color", 0x000000ff,
+                       "padding", 10,
+                       "background-color", 0xffffffff,
+                       "spacing", 5,
+                       NULL);
+
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "LEFT\nFLOAT",
+                        "background-color", 0xaa0000ff,
+                        "border-color", 0x000000ff,
+                        "border", 1,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, HIPPO_PACK_FLOAT_LEFT);
+
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "WIDER LEFT\nFLOAT",
+                        "background-color", 0xaa0000ff,
+                        "border-color", 0x000000ff,
+                        "border", 1,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, HIPPO_PACK_FLOAT_LEFT);
+
+    text = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                        "background-color", 0x00aa00ff,
+                        "border-color", 0x000000ff,
+                        "box-width", 5,
+                        "box-height", 5,                        
+                        "border", 1,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, HIPPO_PACK_FLOAT_RIGHT);
+    
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "RIGHT",
+                        "background-color", 0x00aa00ff,
+                        "border-color", 0x000000ff,
+                        "border", 1,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, HIPPO_PACK_FLOAT_RIGHT);
+    
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "WIDER RIGHT",
+                        "background-color", 0x00aa00ff,
+                        "border-color", 0x000000ff,
+                        "border", 1,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, HIPPO_PACK_FLOAT_RIGHT);
+    
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "This is a normally flowed item",
+                        "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD,
+                        "background-color", 0x4444ffff,
+                        "border-color", 0x000000ff,
+                        "border", 1,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, 0);
+
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "Two\nLines",
+                        "background-color", 0x4444ffff,
+                        "border-color", 0x000000ff,
+                        "border", 1,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, 0);
+
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text",
+                           "This item is set to clear both left and right floats, so it "
+                           "will appear beneath them. It also has a lot of text in it "
+                           "to force it to wrap",
+                        "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD,
+                        "background-color", 0x4444ffff,
+                        "border-color", 0x000000ff,
+                        "border", 1,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, HIPPO_PACK_CLEAR_BOTH);
+    
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "After everything so below",
+                        "background-color", 0x00aa00ff,
+                        "border-color", 0x000000ff,
+                        "border", 1,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, HIPPO_PACK_FLOAT_RIGHT);
+    
+    return HIPPO_CANVAS_ITEM(box);
+}
+
 HippoCanvasItem*
 hippo_canvas_test_get_root(void)
 {
@@ -334,7 +430,8 @@ hippo_canvas_test_get_root(void)
     g_signal_connect(G_OBJECT(text), "hovering-changed",
                      G_CALLBACK(change_text_on_hovering), NULL);
 #endif
-    
+
+#if 0    
     /* Fixed items */
     
     text = g_object_new(HIPPO_TYPE_CANVAS_LINK,
@@ -348,13 +445,23 @@ hippo_canvas_test_get_root(void)
     hippo_canvas_box_move(HIPPO_CANVAS_BOX(root), text,
                           HIPPO_GRAVITY_NORTH_WEST,
                           150, 150);
+#endif
 
+#if 0
     /* For get_natural_width testing */
 
     shape2 = create_test_box_layout_root();
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), shape2,
                             HIPPO_PACK_END | HIPPO_PACK_EXPAND);
+#endif
 
+    /* For float testing */
+
+    shape2 = create_floated_box_layout_root();
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), shape2,
+                            HIPPO_PACK_EXPAND);
+
+#if 0
     /* A box with nothing expandable in it */
 
     shape2 = g_object_new(HIPPO_TYPE_CANVAS_BOX,
@@ -367,6 +474,7 @@ hippo_canvas_test_get_root(void)
                         "background-color", 0xaaaaaaff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape2), text, 0);
+#endif
 
     return root;
 }

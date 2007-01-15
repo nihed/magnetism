@@ -11,6 +11,11 @@ const GEnumValue _hippo_pack_flags_values[] = {
   { HIPPO_PACK_END, "HIPPO_PACK_END", "end" },
   { HIPPO_PACK_FIXED, "HIPPO_PACK_FIXED", "fixed" },
   { HIPPO_PACK_IF_FITS, "HIPPO_PACK_IF_FITS", "if-fits" },
+  { HIPPO_PACK_FLOAT_LEFT, "HIPPO_PACK_FLOAT_LEFT", "float-left" },
+  { HIPPO_PACK_FLOAT_RIGHT, "HIPPO_PACK_FLOAT_RIGHT", "float-right" },
+  { HIPPO_PACK_CLEAR_LEFT, "HIPPO_PACK_CLEAR_LEFT", "clear-left" },
+  { HIPPO_PACK_CLEAR_RIGHT, "HIPPO_PACK_CLEAR_RIGHT", "clear-right" },
+  { HIPPO_PACK_CLEAR_BOTH, "HIPPO_PACK_CLEAR_BOTH", "clear-both" },
   { 0, NULL, NULL }
 };
 

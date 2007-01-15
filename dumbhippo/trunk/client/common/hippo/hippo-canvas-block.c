@@ -380,126 +380,53 @@ hippo_canvas_block_constructor (GType                  type,
     GObject *object = G_OBJECT_CLASS(hippo_canvas_block_parent_class)->constructor(type,
                                                                                    n_construct_properties,
                                                                                    construct_properties);
-
     HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
+    HippoCanvasBlockClass *klass = HIPPO_CANVAS_BLOCK_GET_CLASS(block);
     
     HippoCanvasItem *item;
     HippoCanvasBox *box;
     HippoCanvasBox *box3;
-    HippoCanvasBox *left_column;
     HippoCanvasBox *right_horizontal;
     HippoCanvasBox *right_beside;
 
-    block->background_gradient =
+    block->main_box =
         g_object_new(HIPPO_TYPE_CANVAS_GRADIENT,
-                     "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                     "orientation", HIPPO_ORIENTATION_VERTICAL,
                      "start-color", NORMAL_GRADIENT_START,
                      "end-color", NORMAL_GRADIENT_END,
                      "padding", 4,
                      "font", "11px",
                      NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block),
-                            block->background_gradient,
+                            HIPPO_CANVAS_ITEM(block->main_box),
                             HIPPO_PACK_EXPAND);
-    box = HIPPO_CANVAS_BOX(block->background_gradient);
     
     block->expand_pointer =
         g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
                      "image-name", "expandtip",
                      NULL);
-    hippo_canvas_box_append(box, block->expand_pointer, HIPPO_PACK_FIXED);
-    hippo_canvas_box_set_child_visible(box, block->expand_pointer, FALSE);
+    hippo_canvas_box_append(block->main_box, block->expand_pointer, HIPPO_PACK_FIXED);
+    hippo_canvas_box_set_child_visible(block->main_box, block->expand_pointer, FALSE);
 
     block->unexpand_pointer =
         g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
                      "image-name", "closetip",
                      NULL);
-    hippo_canvas_box_append(box, block->unexpand_pointer, HIPPO_PACK_FIXED);
-    hippo_canvas_box_set_child_visible(box, block->unexpand_pointer, FALSE);
+    hippo_canvas_box_append(block->main_box, block->unexpand_pointer, HIPPO_PACK_FIXED);
+    hippo_canvas_box_set_child_visible(block->main_box, block->unexpand_pointer, FALSE);
     
-    /* Create left column for title/description */
-    
-    left_column = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                               "orientation", HIPPO_ORIENTATION_VERTICAL,
-                               "xalign", HIPPO_ALIGNMENT_FILL,
-                               "yalign", HIPPO_ALIGNMENT_START,
-                               NULL);
-    hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(left_column), HIPPO_PACK_EXPAND);
-
-    /* create right column for from/stats */
-    
-    block->right_column = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                                       "orientation", HIPPO_ORIENTATION_VERTICAL,
-                                       "xalign", HIPPO_ALIGNMENT_FILL,                                
-                                       "yalign", HIPPO_ALIGNMENT_START,
-                                       "padding-left", 8,
-                                       NULL);
-    hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(block->right_column), HIPPO_PACK_END);
-    
-    /* Fill in left column */
-    
-    if (!block->skip_heading) {
-        box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                           "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                           "font", "Bold 12px",
-                           NULL);
-        block->heading_box = box;
-        hippo_canvas_box_append(left_column, HIPPO_CANVAS_ITEM(box), 0);
-        
-        block->heading_icon_item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                                                "xalign", HIPPO_ALIGNMENT_CENTER,
-                                                "yalign", HIPPO_ALIGNMENT_CENTER,
-                                                "scale-width", 16, /* favicon size */
-                                                "scale-height", 16,
-                                                "border-right", 6,
-                                                NULL);
-        hippo_canvas_box_append(box, block->heading_icon_item, 0);
-        
-        block->heading_lock_item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                                                "xalign", HIPPO_ALIGNMENT_START,
-                                                "yalign", HIPPO_ALIGNMENT_START,
-                                                "image-name", "lock_icon",
-                                                "border-right", 4,
-                                                NULL);
-        hippo_canvas_box_append(box, block->heading_lock_item, 0);
-        hippo_canvas_box_set_child_visible(box, block->heading_lock_item, FALSE);
-        
-#if 0
-        block->heading_text_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                                "text", NULL,
-                                                "xalign", HIPPO_ALIGNMENT_START,
-                                                "yalign", HIPPO_ALIGNMENT_START,
-                                                NULL);
-        hippo_canvas_box_append(box, block->heading_text_item, 0);
-#endif
-        
-        block->title_link_item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                                              "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                                              "xalign", HIPPO_ALIGNMENT_START,
-                                              "yalign", HIPPO_ALIGNMENT_START,
-                                              "text", NULL,
-                                              NULL);
-        hippo_canvas_box_append(box, block->title_link_item, 0);
-        
-        g_signal_connect(G_OBJECT(block->title_link_item), "activated",
-                         G_CALLBACK(on_title_activated), block);
-    }
-    
-    block->content_container_item = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                                                 NULL);
-    hippo_canvas_box_append(left_column, block->content_container_item, HIPPO_PACK_EXPAND);
-
-    
-    /* Fill in right column */
-    
+    /* Create floating items to go at the right... these need to be packed before the
+     * main content items since they floats after the content items would appear below
+     * them.
+     */
     right_horizontal = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                     "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                                     "xalign", HIPPO_ALIGNMENT_FILL,
                                     "yalign", HIPPO_ALIGNMENT_START,
                                     NULL);
 
-    hippo_canvas_box_append(block->right_column, HIPPO_CANVAS_ITEM(right_horizontal), HIPPO_PACK_EXPAND);
-    
+    hippo_canvas_box_append(block->main_box, HIPPO_CANVAS_ITEM(right_horizontal), HIPPO_PACK_FLOAT_RIGHT);
+
     /* Create photo */
     block->headshot_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_PHOTO,
                                         "actions", block->actions,
@@ -602,6 +529,61 @@ hippo_canvas_block_constructor (GType                  type,
     block->sent_to_parent = right_beside;
     hippo_canvas_box_append(block->sent_to_parent, HIPPO_CANVAS_ITEM(block->sent_to_box), 0);
 
+    if (klass->append_right_items)
+        klass->append_right_items(block, block->main_box);
+    
+    /* Fill in left column */
+    
+    if (!block->skip_heading) {
+        box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                           "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                           "font", "Bold 12px",
+                           NULL);
+        block->heading_box = box;
+        hippo_canvas_box_append(block->main_box, HIPPO_CANVAS_ITEM(box), 0);
+        
+        block->heading_icon_item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                                                "xalign", HIPPO_ALIGNMENT_CENTER,
+                                                "yalign", HIPPO_ALIGNMENT_CENTER,
+                                                "scale-width", 16, /* favicon size */
+                                                "scale-height", 16,
+                                                "border-right", 6,
+                                                NULL);
+        hippo_canvas_box_append(box, block->heading_icon_item, 0);
+        
+        block->heading_lock_item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                                                "xalign", HIPPO_ALIGNMENT_START,
+                                                "yalign", HIPPO_ALIGNMENT_START,
+                                                "image-name", "lock_icon",
+                                                "border-right", 4,
+                                                NULL);
+        hippo_canvas_box_append(box, block->heading_lock_item, 0);
+        hippo_canvas_box_set_child_visible(box, block->heading_lock_item, FALSE);
+        
+#if 0
+        block->heading_text_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                                "text", NULL,
+                                                "xalign", HIPPO_ALIGNMENT_START,
+                                                "yalign", HIPPO_ALIGNMENT_START,
+                                                NULL);
+        hippo_canvas_box_append(box, block->heading_text_item, 0);
+#endif
+        
+        block->title_link_item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                                              "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                                              "xalign", HIPPO_ALIGNMENT_START,
+                                              "yalign", HIPPO_ALIGNMENT_START,
+                                              "text", NULL,
+                                              NULL);
+        hippo_canvas_box_append(box, block->title_link_item, 0);
+        
+        g_signal_connect(G_OBJECT(block->title_link_item), "activated",
+                         G_CALLBACK(on_title_activated), block);
+    }
+
+    if (klass->append_content_items)
+        klass->append_content_items(block, block->main_box);
+
     hippo_canvas_block_update_item_expansion(block);
 
     return object;
@@ -662,39 +644,39 @@ update_expand_pointer(HippoCanvasBlock *canvas_block,
         int parent_x, parent_y;
         int x, y;
         
-        hippo_canvas_box_get_position(box, canvas_block->background_gradient,
+        hippo_canvas_box_get_position(box, HIPPO_CANVAS_ITEM(canvas_block->main_box),
                                       &parent_x, &parent_y);
         x = parent_x + event_x - 2;
         y = parent_y + event_y - 2;
         
-        hippo_canvas_box_move(HIPPO_CANVAS_BOX(canvas_block->background_gradient),
+        hippo_canvas_box_move(HIPPO_CANVAS_BOX(canvas_block->main_box),
                               canvas_block->expand_pointer,
                               HIPPO_GRAVITY_SOUTH_EAST,
                               x, y);
-        hippo_canvas_box_move(HIPPO_CANVAS_BOX(canvas_block->background_gradient),
+        hippo_canvas_box_move(HIPPO_CANVAS_BOX(canvas_block->main_box),
                               canvas_block->unexpand_pointer,
                               HIPPO_GRAVITY_SOUTH_EAST,
                               x, y);
     }
     
     if (box->hovering && !canvas_block->hushed && canvas_block->expandable) {
-        g_object_set(G_OBJECT(canvas_block->background_gradient),
+        g_object_set(G_OBJECT(canvas_block->main_box),
                      "start-color", PRELIGHT_GRADIENT_START,
                      "end-color", PRELIGHT_GRADIENT_END,
                      "tooltip",
                      expandable ? "Click to show more" : "Click to show less",
                      NULL);
     } else {
-        g_object_set(G_OBJECT(canvas_block->background_gradient),
+        g_object_set(G_OBJECT(canvas_block->main_box),
                      "start-color", NORMAL_GRADIENT_START,
                      "end-color", NORMAL_GRADIENT_END,
                      "tooltip", NULL,
                      NULL);
     }
     
-    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(canvas_block->background_gradient),
+    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(canvas_block->main_box),
                                        canvas_block->expand_pointer, expandable);
-    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(canvas_block->background_gradient),
+    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(canvas_block->main_box),
                                        canvas_block->unexpand_pointer, closeable);
 }
 
@@ -1073,22 +1055,6 @@ hippo_canvas_block_set_title(HippoCanvasBlock *canvas_block,
                  "tooltip", tooltip,
                  "visited", visited,
                  NULL);
-}
-
-void
-hippo_canvas_block_set_content(HippoCanvasBlock *canvas_block,
-                               HippoCanvasItem  *content_item)
-{
-    if (content_item)
-        g_object_ref(content_item); /* in case we remove it below */
-    
-    hippo_canvas_box_remove_all(HIPPO_CANVAS_BOX(canvas_block->content_container_item));
-
-    if (content_item) {
-        hippo_canvas_box_append(HIPPO_CANVAS_BOX(canvas_block->content_container_item),
-                                content_item, HIPPO_PACK_EXPAND);
-        g_object_unref(content_item);
-    }
 }
 
 void
