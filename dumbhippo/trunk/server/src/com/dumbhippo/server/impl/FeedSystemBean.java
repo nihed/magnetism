@@ -375,7 +375,7 @@ public class FeedSystemBean implements FeedSystem {
 		feed.setLastFetchSucceeded(true);
 	}
 	
-	private void updateFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) throws FeedLinkUnknownException {
+	private boolean updateFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) throws FeedLinkUnknownException {
 		feed.setTitle(syndFeed.getTitle());
 		setLinkFromSyndFeed(feed, syndFeed);
 		Map<String, FeedEntry> lastEntries = new HashMap<String, FeedEntry>();
@@ -507,7 +507,9 @@ public class FeedSystemBean implements FeedSystem {
 			});
 		} else {
 			logger.debug("  No new entries to process for feed {}", feed.getSource());
+			return false;
 		}
+		return true;
 	}
 	
 	public Feed getExistingFeed(final LinkResource source) throws XmlMethodException {
@@ -641,10 +643,10 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 	
-	public void storeRawUpdatedFeed(long feedId, SyndFeed syndFeed) throws FeedLinkUnknownException {
+	public boolean storeRawUpdatedFeed(long feedId, SyndFeed syndFeed) throws FeedLinkUnknownException {
 		Feed feed = em.find(Feed.class, feedId);
 		logger.debug("  Saving feed update results in db for {}", feed.getSource());
-		updateFeedFromSyndFeed(feed, syndFeed);
+		return updateFeedFromSyndFeed(feed, syndFeed);
 	}	
 	
 	public void updateFeedStoreFeed(Object contextObject) throws XmlMethodException {
@@ -871,18 +873,19 @@ public class FeedSystemBean implements FeedSystem {
 			} catch (FeedFetcher.FetchFailedException e) {
 				throw new DynamicPollingSystem.PollingTaskNormalExecutionException("Feed " + feed.getSource() + " fetch failed: " + e.getMessage(), e);
 			}
-			changed = result.isModified();
 			final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
-			runner.runTaskRetryingOnDuplicateEntry(new Callable<Object>() {
-				public Object call() throws DynamicPollingSystem.PollingTaskNormalExecutionException {
+			changed = runner.runTaskRetryingOnDuplicateEntry(new Callable<Boolean>() {
+				public Boolean call() throws DynamicPollingSystem.PollingTaskNormalExecutionException {
 					try {
-						feedSystem.storeRawUpdatedFeed(feed.getId(), result.getFeed());
+						return feedSystem.storeRawUpdatedFeed(feed.getId(), result.getFeed());
 					} catch (FeedLinkUnknownException e) {
 						throw new DynamicPollingSystem.PollingTaskNormalExecutionException("Feed " + feed.getSource() + " link unknown: " + e.getMessage(), e);						
 					}
-					return null;
 				}
 			});
+			if (changed && !result.isModified()) {
+				logger.warn("Feed fetcher returned not modified but feed system found new entries for feed: {}", feed.getSource());
+			}
 			
 			return new PollResult(changed, false);
 		}

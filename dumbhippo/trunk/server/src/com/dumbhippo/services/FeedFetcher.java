@@ -139,7 +139,7 @@ public class FeedFetcher {
 		} else if (modifiedObj instanceof Long) {
 			long l = ((Long) modifiedObj).longValue();
 			if (l <= 0)
-				throw new NotFoundException("Failed to parse date '" + l + "'");
+				throw new NotFoundException("Modification date not known");
 			date = new Date(l);
 		} else if (!(modifiedObj instanceof String)) {
 			throw new RomeAPIDesignerInsanityException("last modified object isn't a Long or String; giving up");
@@ -234,34 +234,39 @@ public class FeedFetcher {
 		ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%d %-5p [%c] (%t): %m%n"));
 		log4jRoot.addAppender(appender);
 		log4jRoot.setLevel(Level.DEBUG);
+		
+		String urlStr = "http://planet.classpath.org/rss20.xml";
+		URL url;
+		if (args.length == 1) {
+			urlStr = args[0];
+		}
+		try {
+			url = new URL(urlStr);
+		} catch (MalformedURLException e) {
+			logger.error("Malformed input url: {}", e);
+			System.exit(1);
+			return;
+		}
 
 		FeedFetchResult result;
 		try {
-			result = FeedFetcher.getFeed(new URL("http://planet.classpath.org/rss20.xml"));
-		} catch (MalformedURLException e) {
-			logger.error("Malformed url {}", e.getMessage());
-			System.exit(1);
-			return;
+			result = FeedFetcher.getFeed(url);
 		} catch (FetchFailedException e) {
 			logger.error("Fetch failed {}", ExceptionUtils.getRootCause(e).getMessage());
 			System.exit(1);
 			return;
 		}
 		
-		logger.debug("Result 1: modified = {}, {}", result.isModified(), result.getFeed());
+		logger.debug("Result 1: modified = {}", result.isModified());
 		
 		try {
-			result = FeedFetcher.getFeed(new URL("http://planet.classpath.org/rss20.xml"));
-		} catch (MalformedURLException e) {
-			logger.error("Malformed url {}", e.getMessage());
-			System.exit(1);
-			return;
+			result = FeedFetcher.getFeed(url);
 		} catch (FetchFailedException e) {
 			logger.error("Fetch failed {}", ExceptionUtils.getRootCause(e).getMessage());
 			System.exit(1);
 			return;
 		}
 
-		logger.debug("Result 2: modified = {}, {}", result.isModified(), result.getFeed());
+		logger.debug("Result 2: modified = {}", result.isModified());
 	}
 }
