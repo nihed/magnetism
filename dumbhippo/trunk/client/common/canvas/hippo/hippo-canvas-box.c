@@ -1826,6 +1826,28 @@ floats_start_packing(HippoBoxFloats  *floats,
     floats->at_y_right = 0;
 }
 
+/* Return the bottom y of the last left float processed
+ */
+static int
+floats_get_left_end_y(HippoBoxFloats *floats)
+{
+    if (floats->next_left > 0)
+        return floats->left[floats->next_left - 1].y + floats->left[floats->next_left - 1].child->height_request;
+    else
+        return 0;
+}
+
+/* Return the bottom y of the last right float processed
+ */
+static int
+floats_get_right_end_y(HippoBoxFloats *floats)
+{
+    if (floats->next_right > 0)
+        return floats->right[floats->next_right - 1].y + floats->right[floats->next_right - 1].child->height_request;
+    else
+        return 0;
+}
+
 /**
  * Do layout for a single child; if do_request is FALSE we assume that we've
  * previously done layout at the same width (from get_width_request), so we skip
@@ -1908,18 +1930,18 @@ floats_add_child(HippoBoxFloats *floats,
         /* Handle clear_left / clear_right. Ensure that normal-flow children appear below any
          * floats that they are specified to clear.
          */
-        if (child->clear_left && floats->next_left > 0) {
-            int float_end_y = left[floats->next_left - 1].y + left[floats->next_left - 1].child->height_request;
+        if (child->clear_left) {
+            int float_end_y = floats_get_left_end_y(floats);
             if (float_end_y > floats->y)
                 floats->y = float_end_y;
         }
 
-        if (child->clear_right && floats->next_right > 0) {
-            int float_end_y = right[floats->next_right - 1].y + right[floats->next_right - 1].child->height_request;
+        if (child->clear_right) {
+            int float_end_y = floats_get_right_end_y(floats);
             if (float_end_y > floats->y)
                 floats->y = float_end_y;
         }
-
+        
         if (floats->normal_count != 0)
             floats->y += floats->box->spacing;
 
@@ -1995,10 +2017,19 @@ floats_add_child(HippoBoxFloats *floats,
 static int
 floats_end_packing(HippoBoxFloats *floats)
 {
+    int height = floats->y;
+    int left_end_y = floats_get_left_end_y(floats);
+    int right_end_y = floats_get_right_end_y(floats);
+
+    if (left_end_y > height)
+        height = left_end_y;
+    if (right_end_y > height)
+        height = right_end_y;
+
     g_free(floats->left);
     g_free(floats->right);
 
-    return floats->y;
+    return height;
 }
 
 static int
