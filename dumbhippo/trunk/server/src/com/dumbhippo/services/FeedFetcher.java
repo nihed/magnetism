@@ -179,8 +179,7 @@ public class FeedFetcher {
 			Date currentModified;
 			try {
 				currentModified = getFeedModifiedDate(info);
-			} catch (NotFoundException e1) {
-				logger.debug("Failed to parse a current-modified date for feed {}: {}", url, e1.getMessage());
+			} catch (NotFoundException e) {
 				currentModified = new Date();
 			}
 			
