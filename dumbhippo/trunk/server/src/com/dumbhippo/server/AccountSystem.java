@@ -67,7 +67,7 @@ public interface AccountSystem {
 	 */
 	public Account checkClientCookie(Guid guid, String authKey) throws NotFoundException, UnauthorizedException;
 	
-	public void updateWebLoginTime(Account account);
+	public void updateWebActivity(Account account);
 	
 	/** 
 	 * Gets the number of active accounts.

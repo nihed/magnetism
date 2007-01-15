@@ -60,7 +60,7 @@ public class Account extends Resource {
 	private long creationDate;
 	private long lastLoginDate;
 	private long lastLogoutDate;
-	private long lastWebLoginDate;
+	private long lastWebActivityDate;
 	private int invitations;
 	
 	private boolean wasSentShareLinkTutorial;
@@ -120,7 +120,7 @@ public class Account extends Resource {
 		creationDate = -1;
 		lastLoginDate = -1;
 		lastLogoutDate = -1;
-		lastWebLoginDate = -1;
+		lastWebActivityDate = -1;
 		wasSentShareLinkTutorial = false;
 		hasDoneShareLinkTutorial = false;
 		needsDownload = true;
@@ -298,18 +298,18 @@ public class Account extends Resource {
 	}
 	
 	@Column(nullable=true)
-	public Date getLastWebLoginDate() {
-		if (lastWebLoginDate < 0) {
+	public Date getLastWebActivityDate() {
+		if (lastWebActivityDate < 0) {
 			return null;
 		}
-		return new Date(lastWebLoginDate);
+		return new Date(lastWebActivityDate);
 	}
 
-	public void setLastWebLoginDate(Date date) {
+	public void setLastWebActivityDate(Date date) {
 		if (date != null)
-			this.lastWebLoginDate = date.getTime();
+			this.lastWebActivityDate = date.getTime();
 		else
-			this.lastWebLoginDate = -1;
+			this.lastWebActivityDate = -1;
 	}	
 
 	@Column(nullable = false)

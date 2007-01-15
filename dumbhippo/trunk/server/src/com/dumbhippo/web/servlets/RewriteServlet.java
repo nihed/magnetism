@@ -226,7 +226,7 @@ public class RewriteServlet extends HttpServlet {
 				UserSigninBean userSignin = (UserSigninBean) signin;
 				Account acct = userSignin.getUser().getAccount();
 				AccountSystem accountSystem = EJBUtil.defaultLookup(AccountSystem.class);
-				accountSystem.updateWebLoginTime(acct);
+				accountSystem.updateWebActivity(acct);
 			}
 			
 			// Deleting the user from SigninBean means that next time it

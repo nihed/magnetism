@@ -39,7 +39,8 @@ import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
 public class AccountSystemBean implements AccountSystem {
-	private static final int WEB_LOGIN_UPDATE_SEC = 60*60; // 1 hour
+	private static final int WEB_LOGIN_UPDATE_SEC = 60*60; // Throttle updates to avoid
+	                                                       // extra database writes
 
 	static private final Logger logger = GlobalSetup.getLogger(AccountSystem.class);	
 	
@@ -192,10 +193,10 @@ public class AccountSystemBean implements AccountSystem {
 		return prefs;
 	}
 
-	public void updateWebLoginTime(Account account) {
+	public void updateWebActivity(Account account) {
 		Date current = new Date();
-		if (account.getLastWebLoginDate() == null || current.getTime() - account.getLastWebLoginDate().getTime() > (WEB_LOGIN_UPDATE_SEC*1000)) {
-			account.setLastWebLoginDate(current);	
+		if (account.getLastWebActivityDate() == null || current.getTime() - account.getLastWebActivityDate().getTime() > (WEB_LOGIN_UPDATE_SEC*1000)) {
+			account.setLastWebActivityDate(current);	
 		}
 	}	
 }
