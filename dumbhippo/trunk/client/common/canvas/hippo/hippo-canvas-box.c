@@ -1671,10 +1671,10 @@ height_request_child(HippoBoxChild *child,
  * The code below implements the third case, and is used both when computing
  * height for a width and when doing the final allocation.
  *
- * The way we handle floats is similar to the HTML box model but not absolutely
+ * The way we handle floats is similar to the CSS box model but not absolutely
  * identical. Some differences and limitations:
  *
- * - In the HTML model, an individual child in the normal flow can wrap around
+ * - In the CSS model, an individual child in the normal flow can wrap around
  *   a float; this obviously isn't possible for us where each child occupies
  *   a rectangular area.
  * - We never put two left floats or right floats on the same line; the left
