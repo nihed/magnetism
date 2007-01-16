@@ -15,6 +15,7 @@ dh.tooltip.Tooltip = function(container, source, tip) {
 		
 		// we don't need to do anything for the tooltip if it is already visible			
 		if (me._tip.style.display == "block")
+			return;
 			        
 	    var width = window.innerWidth ? window.innerWidth : document.body.offsetWidth;
     	var xOffset = window.pageXOffset ? window.pageXOffset : document.body.scrollLeft;
