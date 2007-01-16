@@ -19,8 +19,10 @@
 	<c:set var="idAttribute" value="id=\"${id}\""/>
 </c:if>
 
+<c:set var="hrefValue" value="href=\"${href}\""/>
 <c:if test="${disabled}">
 	<c:set var="disabledAttribute" value="disabled"/>
+    <c:set var="hrefValue" value=""/>
 </c:if>
 
 <c:if test="${underline}">
@@ -28,5 +30,5 @@
 </c:if>
 
 <${tagName} class="dh-action-link">
-<a ${idAttribute} ${disabledAttribute} class="${underlineClass}" href="${href}" title="${title}"><jsp:doBody/></a>
+<a ${idAttribute} ${disabledAttribute} class="${underlineClass}" ${hrefValue} title="${title}"><jsp:doBody/></a>
 </${tagName}>

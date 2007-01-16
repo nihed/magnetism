@@ -124,9 +124,7 @@
 						    <c:out value="${person.viewedPerson.name}"/> doesn't have any groups.
 						</c:when>
 						<c:when test="${signin.active}">
-						    You don't have any groups yet. You can 
-						    <a href="/active-groups">browse active groups</a> or
-						    <a href="/create-group">create your own group</a>.
+						    <dht3:noGroupsAdvice/>
 						</c:when>
 						<c:when test="${!signin.user.account.hasAcceptedTerms}">
 						     Once you agree to the Mugshot Terms of Use, you can add groups to

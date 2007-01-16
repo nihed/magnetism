@@ -27,37 +27,3 @@
 #dhContentColumn #dhSuggestedGroupsWithInvitationDiv {
 	width:			309px;
 }
-
-#dhContentColumn .dh-zone-box .dh-invitation .dh-address {
-	padding-right:	10px;
-}
-
-#dhSuggestGroupsPopup {
-	position:		absolute;
-	left:			180px; 
-	top:			18px;
-	width:			300px;
-	height:         160px;
-	padding:		5px;
-	z-index:		2;
-}
-
-#dhSuggestGroupsArea {
-	height:         84px; 
-}
-
-#dhSuggestGroupsControls {
-	position:       relative;
-	margin-top:     5px;
-	text-align:     center;
-}
-
-#dhSuggestGroupsOk, #dhSuggestGroupsCancel {
-    width:          65px;
-}
-
-#dhSuggestGroupsPopup .dh-title {
-	margin-bottom:	0px;
-	padding-bottom: 0px;
-}
-

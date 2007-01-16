@@ -596,3 +596,21 @@ div.dh-async-action-link-complete {
 	font-size:			14px;
 	font-weight:		bold;
 }
+
+.dh-section-header {
+	font-weight:  		bold;
+	font-size:	  		18px;
+}
+
+.dh-section-explanation {
+	font-size:	  		14px;
+}
+
+.dh-message {
+	background-color:	#FAFADC;
+	color:				#E2671B;
+	font-size:	  		14px;
+	font-weight:		bold;
+	border:				1px solid #E2671B;
+	-moz-border-radius:	5px;
+}

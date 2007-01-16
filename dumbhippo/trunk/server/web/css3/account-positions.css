@@ -1,20 +1,8 @@
 @CHARSET "UTF-8";
 
-.dh-form-table {
-    width:          100%;
-	margin-top:		5px;
-	margin-bottom:	5px;
-}
-
 #dhAccountInfoForm .dh-form-table {
 	margin:		    0px;
 	table-layout:   auto;
-}
-
-.dh-form-table .dh-label-cell {
-	padding-right:	10px;
-	text-align:     right;
-	width:			170px;
 }
 
 .dh-form-table .dh-account-editing-content-only-box .dh-control-cell-div {
@@ -49,19 +37,7 @@
     bottom:   2px;
 }
 
-.dh-form-table .dh-spacer-row {
-	height:			3px;
-}
-
-.dh-form-table .dh-box-spacer {
-	width:			10px;
-}
-
 #dhAccountInfoForm .dh-form-table .dh-spacer-row {
-	height:			5px;
-}
-
-.dh-form-table .dh-padding-row {
 	height:			5px;
 }
 
@@ -72,20 +48,6 @@
 div.dh-notification {
 	padding:		4px;
 	width:          100%;
-}
-
-.dh-form-table .dh-control-cell .dh-control-cell-div img {
-	vertical-align:		middle;
-}
-
-.dh-form-table .dh-image {
-	float: 			left;
-}
-
-.dh-form-table .dh-next-to-image {
-    margin-left:    10px;
-	float:			left;
-	vertical-align: top;
 }
 
 .dh-picture-instructions {
@@ -140,20 +102,6 @@ div.dh-notification {
 /* Position this so the stock photo popup is relative to it */
 #dhChooseStockLinkContainer {
 	position:		relative;
-}
-
-.dh-form-table .dh-control-cell .dh-control-cell-div input {
-	vertical-align:		middle;
-}
-
-.dh-form-table .dh-control-cell textarea.dh-text-input {
-	width:			260px;
-	overflow:       auto;
-}
-
-.dh-form-table .dh-control-cell input.dh-text-input {
-	width:			260px;
-	overflow:       hidden;
 }
 
 .dh-form-table .dh-control-cell .dh-password-input {
@@ -216,4 +164,8 @@ tr.dh-email-address-spacer {
 .dh-control-cell .dh-account-editing {
 	padding-top:	5px;
 	padding-bottom:	5px;
+}
+
+.dh-section-header {
+    margin-top:         0px;
 }

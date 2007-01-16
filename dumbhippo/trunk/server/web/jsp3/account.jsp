@@ -56,7 +56,7 @@
 	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
 	<dht3:stylesheet name="account" iefixes="true"/>	
 	<dht:faviconIncludes/>
-		<dh:script modules="dh.account,dh.password"/>
+    <dh:script modules="dh.account,dh.password"/>
 	<script type="text/javascript">
 		dh.account.active = ${signin.active};
 		dh.password.active = ${signin.active};

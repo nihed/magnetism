@@ -28,6 +28,7 @@
         	            </c:otherwise>
         	        </c:choose>                
         	    </a> 
+        	    <jsp:doBody/>
         	    |
         	    <c:choose>
         	        <c:when test="${who.invitationView != null}"> 

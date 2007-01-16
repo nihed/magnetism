@@ -1,0 +1,113 @@
+@CHARSET "UTF-8";
+
+.dh-invitations-table {
+    table-layout:   fixed;
+    overflow:       hidden;
+}
+
+.dh-person-item-more-info {
+    position:	    relative;
+    table-layout:   fixed;
+    width:          100%;
+    overflow:       hidden;
+    display:        block;
+    float:          none;
+}
+
+.dh-form-table .dh-spacer-row {
+	height:			5px;
+}
+
+.dh-form-table input {
+	vertical-align: middle;
+}
+
+.dh-form-table img {
+	vertical-align: middle;
+}
+
+#dhAddressEntry, #dhSubjectEntry, #dhMessageEntry {
+	width:			323px;
+}
+
+#dhSuggestedGroupsWithInvitationDiv {
+	width:			309px;
+}
+
+#dhSuggestGroupsPopup {
+	position:		absolute;
+	left:			240px;
+	top:			130px;
+	width:			300px;
+	height:         163px;
+	z-index:		2;
+}
+
+#dhSuggestGroupsPopup .dh-border {
+	/* hacks! see comment in photo-chooser-positions.css */
+	float:				left;
+	display:			inline;
+	/* end hacks */	
+    /* background of parent is drop shadow */
+	margin-left:		0px;
+	margin-top:			0px;
+	height:		        162px;
+	width:              299px;
+}
+
+#dhSuggestGroupsPopup .dh-content {
+	/* hacks! see comment in photo-chooser-positions.css */
+	float:				left;
+	display:			inline;
+	/* end hacks */	
+	/* background of parent is the black border */
+	margin-top:			1px;
+	margin-left:		1px;
+	height:		        160px;
+	width:              297px;
+}
+
+#dhSuggestGroupsArea {
+	margin-left:    5px;
+    margin-right:   5px;
+	height:         84px; 
+}
+
+#dhSuggestGroupsControls {
+	position:       relative;
+	margin-bottom:  5px;
+	margin-top:     5px;
+	text-align:     center;	
+}
+
+#dhSuggestGroupsOk, #dhSuggestGroupsCancel {
+    width:          65px;
+}
+
+#dhSuggestGroupsPopup .dh-title {
+	margin-left:    5px;
+    margin-top:     5px;
+}
+
+.dh-explanation-note {
+	margin-left:    5px;
+}
+
+.dh-form-table {
+	margin-bottom:	0px;
+}
+
+#dhInvitationSendButton {
+    position:       relative;
+    margin-bottom:  -10px;
+}
+
+// The following rule did not work for wrapping e-mail addresses that are
+// too long, moreover, it had a strange effect of making some e-mails
+// disappear when the page is too short.
+/*
+.dh-invitations-table .dh-person-item-more-info .dh-person-item-name {
+    text-wrap: normal;
+    word-wrap: break-word;
+}
+*/

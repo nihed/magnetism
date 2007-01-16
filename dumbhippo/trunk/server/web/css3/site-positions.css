@@ -255,7 +255,6 @@ div.dh-notification {
 
 .dh-page-shinybox-subtitle  {
     margin-top:         10px;
-	margin-bottom:		5px;
 }
 
 .dh-shiny-box {
@@ -709,4 +708,14 @@ div.dh-person-header {
 	position:			absolute;
 	top:				2px;
 	right:				3px;
+}
+
+.dh-section-header {
+    margin-top:         5px;
+}
+
+.dh-message {
+	padding:		5px;
+	margin-top:     5px;
+	margin-bottom:	5px;
 }
