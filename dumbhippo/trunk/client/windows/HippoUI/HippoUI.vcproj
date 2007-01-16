@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/cairo/include/cairo;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../../common/loudmouth;../../common;../../common/canvas"
+				AdditionalIncludeDirectories="../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/cairo/include/cairo;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../../common/loudmouth;../../common;../../common/canvas;../../common/airbag/src/client/windows"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NOMINMAX"
 				GeneratePreprocessedFile="0"
 				MinimalRebuild="true"
@@ -72,6 +72,7 @@
 				OutputFile="$(OutDir)/Mugshot.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../debug;../dependencies/glib/lib;../dependencies/cairo/lib;../dependencies/pango/lib;../dependencies/jpeg/lib"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/HippoUI.pdb"
 				SubSystem="2"
@@ -231,6 +232,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\HippoCrash.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\HippoEdit.cpp"
 				>
 			</File>
@@ -386,6 +391,10 @@
 			</File>
 			<File
 				RelativePath=".\HippoChatWindow.h"
+				>
+			</File>
+			<File
+				RelativePath=".\HippoCrash.h"
 				>
 			</File>
 			<File

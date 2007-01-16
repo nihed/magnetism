@@ -20,6 +20,7 @@
 #include <limits>
 #include "Resource.h"
 #include "HippoChatManager.h"
+#include "HippoCrash.h"
 #include "HippoHTTP.h"
 #include "HippoToolbarEdit.h"
 #include "HippoRegKey.h"
@@ -2149,6 +2150,18 @@ WinMain(HINSTANCE hInstance,
     }
 
     g_strfreev(argv);
+
+	// See if we were run because a previous instance crashed; if so, offer the user
+	// the option of uploading the crash dump to us.
+	if (options.crash_dump) {
+		HippoBSTR dump = HippoBSTR::fromUTF8(options.crash_dump);
+		bool keepRunning = hippoCrashReport(options.crash_dump);
+		if (!keepRunning)
+			return 0;
+	}
+
+	// OK, now we can install the crash handler without risk of circular spawning
+	hippoCrashInit();
 
     // If run as --install-launch, we rerun ourselves asynchronously, then immediately exit
     if (options.install_launch) {
