@@ -8,7 +8,7 @@
 <head>
 	<title>Mugshot Features</title>
 	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
-	<dht3:stylesheet name="download"/>	
+	<dht3:stylesheet name="features"/>	
 	<dht:scriptIncludes/>
 	<dht:faviconIncludes/>
 </head>
@@ -16,89 +16,82 @@
 <dht3:page currentPageLink="features">
 	<dht3:shinyBox color="grey">
 	    <div class="dh-page-shinybox-title-large">Mugshot Features</div>
-		<div class="dh-download-header-area">
-			<dht3:learnMoreNextStep/>	
+		<div class="dh-features-header">
+			Mugshot makes it easy to keep up with what your friends are doing online at different sites, all in one place.
 		</div>
-		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
-			<tr>
-			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/mugshot70x64.png" style="width: 70; height: 64;"/></td>
-			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Set up your own <span class="dh-download-product">Mugshot</span>.</div>
-			<div class="dh-download-section-description">
-				It's an easy way for you and friends to keep track of one other online.  Show a list of sites you belong to, like MySpace, <!--Digg,--> and LiveJournal.  Display
-				photo streams from your Flickr account.  Share what you're browsing and listening to, using Web Swarm and Music Radar.  Your Mugshot page also
-				includes friends' recent web activity.  Keep up with everything on one convenient page!
-			    <div>
-			    <a class="dh-download-learnmore dh-underlined-link" href="/web-accounts-learnmore">Learn more</a>
-			    &nbsp;or&nbsp;	
-				<a class="dh-underlined-link" href="/active-people">See some members' Mugshots</a></div>
-				</div>
-			</div>
-			</td>
+		<table cellspacing="0" cellpadding="0" class="dh-features-list">
+			<tr class="dh-features-list-section">
+			<td class="dh-features-list-header" colspan="4">Get updates from these sites, and more:</td>
 			</tr>
-		</table>		
-		<dht3:webSwarmLearnMore backgroundColor="grey2">
-			<a class="dh-download-learnmore dh-underlined-link" href="/links-learnmore">Learn more</a>		
-		</dht3:webSwarmLearnMore>
-		<dht3:radarLearnMore backgroundColor="grey1">
-			<a class="dh-download-learnmore dh-underlined-link" href="/radar-learnmore">Learn more</a>	
-		</dht3:radarLearnMore>
-		<dht3:stackerLearnMore backgroundColor="grey2">
-			<a class="dh-download-learnmore dh-underlined-link" href="/stacker-learnmore">Learn more</a>
-		</dht3:stackerLearnMore>
-		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
 			<tr>
-			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/groups70x59.png" style="width: 70; height: 59;"/></td>
-			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Join some <span class="dh-download-product">Groups</span>.</div>
-			<div class="dh-download-section-description">
-				<p>Join groups for what interests you to share posts and RSS feeds.  Or <a href="/create-group">start your own</a>!</p>
-				<p><span class="dh-download-section-subheader">Browse Groups by:</span> <a href="/active-groups">Activity</a></p>
-			</div>
-			</td>
+			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/musicradar_icon.png" style="width: 16; height: 16;"/></td>
+			  <td class="dh-features-list-content-column">iTunes, Last.fm, Rhapsody, and Yahoo! Music playlists</td>
+			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/blog_icon.png" style="width: 16; height: 16;"/></td>
+			  <td class="dh-features-list-content-column">Blogger, LiveJournal, MySpace, and more blogs</td>
 			</tr>
+			<tr>
+			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/favicon_flickr.png" style="width: 16; height: 16;"/></td>
+			  <td class="dh-features-list-content-column">Flickr photo sets</td>
+			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/favicon_digg.png" style="width: 16; height: 16;"/></td>
+			  <td class="dh-features-list-content-column">Stories rated on Digg and Reddit</td>			  
+			</tr>		
+			<tr>
+			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/favicon_youtube.png" style="width: 16; height: 16;"/></td>
+			  <td class="dh-features-list-content-column">YouTube videos</td>
+			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/favicon_twitter.png" style="width: 16; height: 16;"/></td>
+			  <td class="dh-features-list-content-column">Twitter status updates</td>			  
+			</tr>		
+			<tr>
+			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/favicon_delicious.png" style="width: 16; height: 16;"/></td>
+			  <td class="dh-features-list-content-column">deli.icio.us bookmarks</td>
+			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/favicon_facebook.png" style="width: 16; height: 16;"/></td>
+			  <td class="dh-features-list-content-column">Facebook messages, photos, pokes, and wall messages</td>			  
+			</tr>	
+			<tr>
+			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/feed_icon16x16.png" style="width: 16; height: 16;"/></td>
+			  <td class="dh-features-list-content-column">RSS feeds</td>
+			  <td></td>
+			  <td></td>	  
+			</tr>			
+			
+			<tr class="dh-features-list-section">
+			<td class="dh-features-list-header" colspan="4">Share links and updates with friends and groups with similar interests.</td>
+			</tr>		
+			<tr>
+			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/webswarm_icon.png" style="width: 16; height: 16;"/></td>
+			  <td class="dh-features-list-content-column">"Swarm" notifications of new and popular content</td>
+			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/quips_16x16.png" style="width: 16; height: 16;"/></td>
+			  <td class="dh-features-list-content-column">"Quips" to rate and comment on anything shared on Mugshot</td>	  
+			</tr>	
+			
+			<tr class="dh-features-list-section">
+			<td class="dh-features-list-header" colspan="4">Keep up with everything. </td>
+			</tr>		
+			<tr>
+			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/mugshot_icon.png" style="width: 16; height: 16;"/></td>
+			  <td class="dh-features-list-content-column">On the web: through your own Mugshot page</td>
+			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/mini_16x16.png" style="width: 16; height: 16;"/></td>
+			  <td class="dh-features-list-content-column">On your blog or Web page: using <a href="/badges">Mugshot Mini</a> and <a href="/radar-learnmore">Music Radar</a> widgets</td>
+			</tr>		
+			<tr>
+			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/stacker_16x16.png" style="width: 16; height: 16;"/></td>
+			  <td class="dh-features-list-content-column">On your desktop: using the <a href="/stacker-learnmore">Mugshot Stacker</a></td>
+			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/favicon_gdesktop.png" style="width: 16; height: 16;"/></td>
+			  <td class="dh-features-list-content-column">On your Google Desktop and home page: using the <a href="/google-stacker">Mugshot Google Gadget</a></td>
+			</tr>	
+			
+			<tr class="dh-features-list-section">
+			<td class="dh-features-list-header" colspan="4">It's free, fun, and easy to use.</td>
+			</tr>		
+			<tr>
+			  <td colspan="4"><a href="/signup">Sign up</a> for a free account to get started right away.  You can just use
+			  the Web version, or make the most of Mugshot with our desktop software.  It's easy to install,
+			  completely <a href="http://developer.mugshot.org">open source</a>, and there's no risk of nasty spyware.  Mugshot
+			  works with most popular Web sites, with more added every day.</td>
+			</tr>																			
 		</table>
-		<table class="dh-box-grey2 dh-download-section" cellspacing="0" cellpadding="0">
-			<tr>
-			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/invite60x51.png" style="width: 60; height: 51;"/></td>
-			<td class="dh-download-section-details-area"><div class="dh-download-section-header"><span class="dh-download-product">Invite friends</span> to Mugshot.</div>
-			<div class="dh-download-section-description">
-				<div>It's free, fun and easy to use.  The more the merrier!</div>
-				<div><a class="dh-underlined-link" href="/invitation">Invite friends</a></div>
-			</div>
-			</td>
-			</tr>
-		</table>
-		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
-			<tr>
-			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/minimugshot_face42x79.png" style="width: 42; height: 79;"/></td>
-			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Put Mini Mugshot on your site.</div>
-			<div class="dh-download-section-description">
-				<div>Got lots of web accounts? Show where you're at and what you're up to at a glance. Add Mini Mugshot to blogs, Facebook, MySpace and more.</div>
-				<div><a class="dh-underlined-link" href="/badges">See a live example</a></div>
-			</div>
-			</td>
-			</tr>
-		</table>		
-		<table class="dh-box-grey2 dh-download-section" cellspacing="0" cellpadding="0">
-			<tr>
-			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/mugshotluv_60x53.png" style="width: 60; height: 53;"/></td>
-			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Spread the Mugshot Love.</div>
-			<div class="dh-download-section-description">
-				<div>Can't get enough Mugshot? Tell the world and build your network. (And ours!)</div>
-				<div><a class="dh-underlined-link" href="/buttons">Add our buttons to your site or blog</a>, linking to your Mugshot page.</div>
-			</div>
-			</td>
-			</tr>
-		</table>
-		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
-			<tr>
-			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/underthehood54x65.png" style="width: 54; height: 65;"/></td>
-			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Get under the hood.</div>
-			<div class="dh-download-section-description">
-				<div>Mugshot is all open source, so you can chip in on the design and development if that's your style.</div>
-				<div><a class="dh-underlined-link" href="http://developer.mugshot.org">Learn more</a></div>
-			</div>
-			</td>
-			</tr>
-		</table>				
+		<div class="dh-features-header">
+			<a href="/signup">Sign up today!</a>
+		</div>		
 	</dht3:shinyBox>
 </dht3:page>

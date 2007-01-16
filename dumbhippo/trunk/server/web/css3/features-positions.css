@@ -1,0 +1,17 @@
+@CHARSET "UTF-8";
+
+.dh-features-list {
+	padding-left:	20px;
+}
+
+.dh-features-list-header {
+	padding-top:	10px;
+}
+
+.dh-features-list-icon-column {
+	width:	16px;
+}
+
+.dh-features-list-content-column {
+	padding-left:	5px;
+}

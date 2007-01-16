@@ -1,0 +1,18 @@
+@CHARSET "UTF-8";
+@IMPORT url("features-positions.css");
+
+.dh-features-header {
+	color:				black;
+	font-weight:  		bold;
+	font-size:	  		16px;
+}
+
+.dh-features-list-header {
+	color:				#9648BC;
+	font-size:	  		14px;
+	font-weight:		bold;
+}
+
+.dh-features-list-content {
+	font-size:			12px;
+}
