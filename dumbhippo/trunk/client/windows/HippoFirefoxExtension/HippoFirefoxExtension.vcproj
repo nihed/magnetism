@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="HippoFirefoxExtension"
 	ProjectGUID="{953B4EEF-CD4D-443C-97CC-7ABEE71EAB1F}"
+	RootNamespace="HippoFirefoxExtension"
 	Keyword="MakeFileProj"
 	>
 	<Platforms>
@@ -26,7 +27,7 @@
 				BuildCommandLine="nmake OUTDIR=..\Debug all"
 				ReBuildCommandLine="nmake OUTDIR=..\Debug clean all"
 				CleanCommandLine="nmake OUTDIR=..\Debug clean"
-				Output="HippoFirefoxExtension.exe"
+				Output=""
 				PreprocessorDefinitions=""
 				IncludeSearchPath=""
 				ForcedIncludes=""
