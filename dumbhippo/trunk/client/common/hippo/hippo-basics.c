@@ -425,6 +425,7 @@ hippo_parse_options(int          *argc_p,
     static gboolean initial_debug_share = FALSE;
     static gboolean verbose = FALSE;
     static gboolean verbose_xmpp = FALSE;
+    static char *crash_dump = NULL;
     char *argv0;
     GError *error;
     GOptionContext *context;
@@ -435,6 +436,7 @@ hippo_parse_options(int          *argc_p,
      * On Linux, consider mugshot-uri-handler instead, on Windows consider a COM method instead.
      */
     static const GOptionEntry entries[] = {
+        { "crash-dump", '\0', 0, G_OPTION_ARG_STRING, (gpointer)&crash_dump, "Report a crash using the specified crash dump" },
         { "debug", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&debug, "Run in debug mode" },
         { "dogfood", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&dogfood, "Run against the dogfood (testing) server" },
         { "install-launch", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&install_launch, "Run appropriately at the end of the install" },
@@ -488,6 +490,7 @@ hippo_parse_options(int          *argc_p,
     results->initial_debug_share = initial_debug_share;
     results->verbose = verbose;
     results->verbose_xmpp = verbose_xmpp;
+    results->crash_dump = g_strdup(crash_dump);
 
     hippo_print_debug_level = results->verbose;
     hippo_print_xmpp_noise = results->verbose_xmpp;
@@ -527,6 +530,7 @@ hippo_parse_options(int          *argc_p,
 void
 hippo_options_free_fields(HippoOptions *options)
 {
+    g_free(options->crash_dump);
     g_strfreev(options->restart_argv);
 }
 

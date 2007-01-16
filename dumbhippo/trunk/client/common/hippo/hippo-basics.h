@@ -149,6 +149,7 @@ typedef struct {
     guint initial_debug_share : 1;
     guint verbose : 1;
     guint verbose_xmpp : 1;
+    char *crash_dump;
     char **restart_argv;
     int    restart_argc;
 } HippoOptions;
