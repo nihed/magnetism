@@ -25,7 +25,6 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoadResult;
 import com.dumbhippo.server.util.EJBUtil;
-import com.sun.org.apache.xml.internal.utils.UnImplNode;
 
 /** 
  *  This polling system executes polling tasks, optimizing the polling
