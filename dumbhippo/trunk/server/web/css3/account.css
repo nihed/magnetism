@@ -97,7 +97,9 @@
 }
 
 .dh-placebo-link {
-	color: blue;
+	color:	blue;
+	cursor:	pointer;
+	_cursor: hand;
 }
 
 .dh-saved-link {
