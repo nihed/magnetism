@@ -27,6 +27,10 @@ static gboolean hippo_canvas_text_button_press_event (HippoCanvasItem    *item,
                                                       HippoEvent         *event);
 static void     hippo_canvas_text_set_context        (HippoCanvasItem    *item,
                                                       HippoCanvasContext *context);
+static char*    hippo_canvas_text_get_tooltip        (HippoCanvasItem    *item,
+                                                      int                 x,
+                                                      int                 y,
+                                                      HippoRectangle     *for_area);
 
 /* Box methods */
 static void hippo_canvas_text_paint_below_children       (HippoCanvasBox *box,
@@ -74,6 +78,7 @@ hippo_canvas_text_iface_init(HippoCanvasItemIface *item_class)
     item_class->button_press_event = hippo_canvas_text_button_press_event;
 
     item_class->set_context = hippo_canvas_text_set_context;
+    item_class->get_tooltip = hippo_canvas_text_get_tooltip;
 }
 
 static void
@@ -250,6 +255,23 @@ hippo_canvas_text_set_context(HippoCanvasItem    *item,
         hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(item));
 }
 
+
+static char *
+hippo_canvas_text_get_tooltip (HippoCanvasItem *item,
+                               int              x,
+                               int              y,
+                               HippoRectangle  *for_area)
+{
+    HippoCanvasText *text = HIPPO_CANVAS_TEXT(item);
+
+    g_debug("Give me the tooltip for %s %d\n", text->text, text->is_ellipsized);
+
+    if (text->is_ellipsized && text->text)
+        return g_strdup(text->text);
+    else
+        return item_parent_class->get_tooltip(item, x, y, for_area);
+}
+
 static char*
 remove_newlines(const char *text)
 {
@@ -379,6 +401,67 @@ create_layout(HippoCanvasText *text,
     return layout;
 }
 
+static gboolean
+layout_is_ellipsized(PangoLayout *layout)
+{
+    /* pango_layout_is_ellipsized() is a new function in Pango-1.16; we
+     * emulate it here by trying to look for the ellipsis run
+     */
+    PangoLogAttr *log_attrs;
+    PangoLayoutIter *iter;
+
+    /* Short circuit when we aren't ellipsizing at all */
+    if (pango_layout_get_ellipsize(layout) == PANGO_ELLIPSIZE_NONE)
+        return FALSE;
+    
+    pango_layout_get_log_attrs(layout, &log_attrs, NULL);
+    
+    iter = pango_layout_get_iter(layout);
+    do {
+        PangoGlyphItem *run;
+        int n_glyphs;
+        int start_index;
+        int n_graphemes;
+        int i;
+
+        run = pango_layout_iter_get_run(iter);
+        if (!run)
+            continue;
+
+        n_glyphs = run->glyphs->num_glyphs;
+        start_index = pango_layout_iter_get_index(iter);
+        
+        /* Check the number of clusters in the run ... if it is greater
+         * than 1, then it isn't an ellipsis
+         */
+        if (run->glyphs->log_clusters[0] != run->glyphs->log_clusters[n_glyphs - 1])
+            continue;
+
+        /* Now check the number of graphemes in the run ... if it is less
+         * than 3, it's probably an isolated 'fi' ligature or something
+         * like that rather than an ellipsis.
+         */
+        n_graphemes = 0;
+        for (i = 0; i < run->item->num_chars; i++)
+            if (log_attrs[i + start_index].is_cursor_position)
+                n_graphemes++;
+
+        if (n_graphemes < 3)
+            continue;
+
+        /* OK, at this point it is probably an ellipsis; it's possible that
+         * the text consists of just the letters 'ffi' and the font has a ligature
+         * for that or something, but it's not too likely.
+         */
+        return TRUE;
+                
+    } while (pango_layout_iter_next_run(iter));
+
+    g_free(log_attrs);
+
+    return FALSE;
+}
+
 static void
 hippo_canvas_text_paint_below_children(HippoCanvasBox  *box,
                                        cairo_t         *cr,
@@ -394,6 +477,19 @@ hippo_canvas_text_paint_below_children(HippoCanvasBox  *box,
     color_rgba = HIPPO_CANVAS_BOX_GET_CLASS(box)->default_color;
     hippo_canvas_context_affect_color(context, &color_rgba);
     
+    /* It would seem more natural to compute whether we are ellipsized or
+     * not when we are allocated to some width, but we don't have a layout
+     * at that point. We could do it in get_content_height_request(), but
+     * the parent could theoretically give us more width than it asked us
+     * about (and there are also some quirks in HippoCanvasBox where it 
+     * will call get_content_height_request() with a width if 0 at odd times),
+     * so doing it here is more reliable. We use is_ellipsized only for
+     * computing whether to show a tooltip, and we make the assumption that
+     * if the user hasn't seen the text item drawn, they won't need a 
+     * tooltip for it.
+     */
+    text->is_ellipsized = FALSE;
+
     if ((color_rgba & 0xff) != 0 && text->text != NULL) {
         PangoLayout *layout;
         int layout_width, layout_height;
@@ -411,6 +507,8 @@ hippo_canvas_text_paint_below_children(HippoCanvasBox  *box,
         pango_layout_get_size(layout, &layout_width, &layout_height);
         layout_width /= PANGO_SCALE;
         layout_height /= PANGO_SCALE;
+
+        text->is_ellipsized = layout_is_ellipsized(layout);
         
         hippo_canvas_box_align(box,
                                layout_width, layout_height,
@@ -533,6 +631,7 @@ hippo_canvas_text_get_content_height_request(HippoCanvasBox  *box,
         if (box->context != NULL) {
             layout = create_layout(text, for_width);
             pango_layout_get_size(layout, NULL, &layout_height);
+
             layout_height /= PANGO_SCALE;
             g_object_unref(layout);
         } else {
