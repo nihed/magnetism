@@ -251,7 +251,10 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	// Kind of arbitrary but...hey.  It feels good to me.  These are prime numbers
 	// closest to durations in seconds.
 	private static final long[] pollingSetTimeSeconds = { 
-            307,              // ~5 minutes
+		7,                // 7 seconds
+		23,               // 23 seconds
+		61,               // ~1 minute 
+		307,              // ~5 minutes
 	    907,              // ~15 minutes
 	    1801,			  // ~30 minutes
 		3607              // ~1 hour
@@ -370,19 +373,27 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	}
 	
 	private class TaskSet implements Runnable {
+		private static final long BUCKET_SPACING_SECONDS = 60 * 4; // 4 minutes
+		
 		private long timeout;
 		private boolean hasFasterSet;
 		private boolean hasSlowerSet;
 		private Set<PollingTask> pendingTaskAdditions = new HashSet<PollingTask>();
-		private Set<PollingTask> tasks;
+		private Map<PollingTask,Integer> tasks;
 		private boolean poked;
 		private boolean sleeping;
+		private int bucketCount;
+		private int currentBucket;
 		
 		public TaskSet(long timeoutSeconds, boolean hasFasterSet, boolean hasSlowerSet) {
 			this.timeout = timeoutSeconds * 1000;
 			this.hasFasterSet = hasFasterSet;
 			this.hasSlowerSet = hasSlowerSet;
-			tasks = new HashSet<PollingTask>(); 			
+			tasks = new HashMap<PollingTask, Integer>();
+			this.bucketCount = (int) (timeoutSeconds / BUCKET_SPACING_SECONDS);
+			if (this.bucketCount <= 0)
+				this.bucketCount = 1;
+			currentBucket = 0;
 		}
 		
 		// Must be called while synchronized
@@ -418,22 +429,34 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			}
 		}
 		
-		private synchronized boolean executeTasks() {	
-			// Suck in any tasks that were added
+		private synchronized boolean executeTasks(int bucket) {	
+			// Suck in any tasks that were added, randomly assigning
+			// them to buckets
+			Random r = new Random();
 			synchronized (pendingTaskAdditions) {
-				tasks.addAll(pendingTaskAdditions);
+				int bucketNum = r.nextInt(bucketCount);
+				for (PollingTask task : pendingTaskAdditions) {
+					tasks.put(task, bucketNum);
+				}
 				pendingTaskAdditions.clear();
 			}
 			
+			Set<PollingTask> currentTasks = new HashSet<PollingTask>();
+			for (Map.Entry<PollingTask, Integer> entry : tasks.entrySet()) {
+				if (entry.getValue() == bucket) {
+					currentTasks.add(entry.getKey());
+				}
+			}
+			
 			// Basically just avoid the log message and some overhead
-			if (tasks.isEmpty())
+			if (currentTasks.isEmpty())
 				return true;
 
 			List<Future<PollingTaskExecutionResult>> results;
 			// Execute the tasks using the common thread pool.  Do not let execution of any
 			// of them exceed our task set timeout.
 			try {
-				 results = executeTaskSet(tasks, timeout);
+				 results = executeTaskSet(currentTasks, timeout);
 			} catch (InterruptedException e) {
 				logger.debug("task set execution interrupted");					
 				return false;
@@ -453,7 +476,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			Set<PollingTask> obsolete = new HashSet<PollingTask>();
 		
 			Iterator<Future<PollingTaskExecutionResult>> resultsIterator = results.iterator();
-			Iterator<PollingTask> tasksIterator = tasks.iterator();
+			Iterator<PollingTask> tasksIterator = currentTasks.iterator();
 			
 			int failureCount = 0;
 			int changedCount = 0;
@@ -499,15 +522,26 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 					}
 				}
 			}
-			logger.debug("executed: " + tasks.size() + " changed: " + changedCount + " timeout: " + execTimeout.size() + " slower: " + slowerCandidates.size() + " faster: " + fasterCandidates.size() + " obsolete: " + obsolete.size() + " failed: " + failureCount);
-			if (hasSlowerSet)
-				tasks.removeAll(bumpTasks(this, execTimeout, true));
-			if (hasSlowerSet)
-				tasks.removeAll(bumpTasks(this, slowerCandidates, true));
-			if (hasFasterSet)
-				tasks.removeAll(bumpTasks(this, fasterCandidates, false));
+			logger.debug("bucket: " + bucket + " executed: " + tasks.size() + " changed: " + changedCount + " timeout: " + execTimeout.size() + " slower: " + slowerCandidates.size() + " faster: " + fasterCandidates.size() + " obsolete: " + obsolete.size() + " failed: " + failureCount);
+			if (hasSlowerSet) {
+				for (PollingTask task : bumpTasks(this, execTimeout, true)) {
+					tasks.remove(task);
+				}
+			}
+			if (hasSlowerSet) {
+				for (PollingTask task : bumpTasks(this, slowerCandidates, true)) {
+					tasks.remove(task);
+				}
+			}
+			if (hasFasterSet) {
+				for (PollingTask task : bumpTasks(this, fasterCandidates, false)) {
+					tasks.remove(task);
+				}
+			}
 			obsoleteTasks(obsolete);
-			tasks.removeAll(obsolete);
+			for (PollingTask task : obsolete) {
+				tasks.remove(task);
+			}
 			return true;
 		}
 		
@@ -535,10 +569,11 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 					}
 				}
 				
-				if (!executeTasks())
+				if (!executeTasks(currentBucket))
 					break;
 				
-				currentTimeout = timeout;
+				currentTimeout = Math.min(timeout, BUCKET_SPACING_SECONDS*1000);
+				currentBucket = (currentBucket + 1) % bucketCount;
 			}
 		}
 		
@@ -550,7 +585,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		
 		// Should only be called when synchronized on this object
 		public Set<PollingTask> getTasks() {
-			return tasks;
+			return tasks.keySet();
 		}
 	}
 	
