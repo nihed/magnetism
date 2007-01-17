@@ -44,7 +44,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	
 	private static DynamicPollingSystem instance;
 	
-	public DynamicPollingSystem getInstance() {
+	public static DynamicPollingSystem getInstance() {
 		return instance;
 	}
 	
