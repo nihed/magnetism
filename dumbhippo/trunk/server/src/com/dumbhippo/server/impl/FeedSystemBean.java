@@ -31,7 +31,6 @@ import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.mbean.DynamicPollingSystem;
-import com.dumbhippo.mbean.FeedUpdaterPeriodicJob;
 import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
 import com.dumbhippo.mbean.DynamicPollingSystem.PollingTaskFamily;
 import com.dumbhippo.persistence.ExternalAccount;
@@ -151,6 +150,10 @@ public class FeedSystemBean implements FeedSystem {
 	
 	private static final Pattern externalWhitespace = Pattern.compile("(^[\r\n\t ]+)|(^[\r\n\t ]+?$)");
 	private static final Pattern internalWhitespace = Pattern.compile("[\r\n\t ]+");
+
+	private static final long FEED_UPDATE_TIME = 1000 * 60 * 10; // 10 minutes
+
+	private static final long BAD_FEED_UPDATE_TIME = 1000 * 60 * 60 * 7; // 7 hours
 
 	// Some simple handling of plain text, removing irrelevant whitespace
 	private String prepPlainText(String value) {
@@ -586,7 +589,7 @@ public class FeedSystemBean implements FeedSystem {
 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public boolean updateFeedNeedsFetch(Feed feed) {
-		long updateTime = feed.getLastFetchSucceeded() ? FeedUpdaterPeriodicJob.FEED_UPDATE_TIME : FeedUpdaterPeriodicJob.BAD_FEED_UPDATE_TIME;
+		long updateTime = feed.getLastFetchSucceeded() ? FEED_UPDATE_TIME : BAD_FEED_UPDATE_TIME;
 		
 		if ((System.currentTimeMillis() - feed.getLastFetched().getTime()) < updateTime) {
 			//logger.debug("  Feed {} is already up-to-date", feed);
