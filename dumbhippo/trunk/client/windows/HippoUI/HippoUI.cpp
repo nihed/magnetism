@@ -2155,13 +2155,13 @@ WinMain(HINSTANCE hInstance,
 	// the option of uploading the crash dump to us.
 	if (options.crash_dump) {
 		HippoBSTR dump = HippoBSTR::fromUTF8(options.crash_dump);
-		bool keepRunning = hippoCrashReport(options.crash_dump);
+        bool keepRunning = hippoCrashReport(options.instance_type, options.crash_dump);
 		if (!keepRunning)
 			return 0;
 	}
 
 	// OK, now we can install the crash handler without risk of circular spawning
-	hippoCrashInit();
+    hippoCrashInit(options.instance_type);
 
     // If run as --install-launch, we rerun ourselves asynchronously, then immediately exit
     if (options.install_launch) {

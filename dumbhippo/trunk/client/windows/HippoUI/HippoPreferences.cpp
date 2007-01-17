@@ -59,6 +59,22 @@ HippoPreferences::getWebServer(BSTR *server)
 }
 
 void 
+HippoPreferences::getWebServer(HippoInstanceType instanceType, BSTR *server)
+{
+    HippoBSTR webServer;
+    HippoRegKey key(HKEY_CURRENT_USER, getInstanceSubkey(instanceType), false);
+
+    key.loadString(L"WebServer", &webServer);
+
+    if (webServer)
+        webServer.CopyTo(server);
+    else if (instanceType == HIPPO_INSTANCE_DEBUG) 
+       HippoBSTR(DEFAULT_LOCAL_WEB_SERVER).CopyTo(server);
+    else
+       HippoBSTR(DEFAULT_WEB_SERVER).CopyTo(server);
+}
+
+void 
 HippoPreferences::setWebServer(BSTR server)
 {
     webServer_ = server;
@@ -107,10 +123,11 @@ HippoPreferences::save(void)
     key.saveBool(L"SignIn", signIn_);
 }
 
+
 const WCHAR *
-HippoPreferences::getInstanceSubkey()
+HippoPreferences::getInstanceSubkey(HippoInstanceType instanceType)
 {
-    switch (instanceType_) {
+    switch (instanceType) {
         case HIPPO_INSTANCE_NORMAL:
         default:
             return HIPPO_SUBKEY;
@@ -119,6 +136,13 @@ HippoPreferences::getInstanceSubkey()
         case HIPPO_INSTANCE_DEBUG:
             return HIPPO_SUBKEY_DEBUG;
     }
+}
+
+
+const WCHAR *
+HippoPreferences::getInstanceSubkey()
+{
+    return getInstanceSubkey(instanceType_);
 }
 
 const CLSID *

@@ -9,10 +9,12 @@
 #include "HippoCrash.h"
 #include <HippoRegKey.h>
 #include "HippoUIUtil.h"
+#include "HippoPreferences.h"
 #include <glib.h>
 
 using namespace google_airbag;
 
+static HippoInstanceType hippoInstanceType;
 static ExceptionHandler *handler;
 
 // Number of crash times we keep in a registry key
@@ -94,11 +96,12 @@ checkRespawn()
 }
 
 bool
-hippoCrashReport(const char *crashName)
+hippoCrashReport(HippoInstanceType instanceType, const char *crashName)
 {
-	long crashTimes[MAX_SAVED_CRASH_TIMES] = { 0 };
-	long now;
+    HippoBSTR webServer;
 	bool respawn = checkRespawn();
+
+    HippoPreferences::getWebServer(instanceType, &webServer);
 	
 	if (respawn) {
 		HippoBSTR file = hippoUserDataDir(L"CrashDump");
@@ -106,7 +109,11 @@ hippoCrashReport(const char *crashName)
 		file.Append('\\');
 		file.appendUTF8(crashName, -1);
 
-		hippoDebugDialog(L"Mugshot crashed. Ouch! Information about the crash was written to\n    %ls\n", file.m_str);
+		hippoDebugDialog(L"Mugshot crashed. Ouch! Information about the crash was written to\n"
+                         L"%ls\n"
+                         L"Will report to %ls\n",
+                         file.m_str,
+                         webServer.m_str);
 
 		return true;
 	} else {
@@ -117,16 +124,17 @@ hippoCrashReport(const char *crashName)
 }
 
 static bool
-hippo_crash_callback(const wchar_t      *dump_path,
-                     const wchar_t      *minidump_id,
-                     void               *context,
-                     EXCEPTION_POINTERS *exinfo,
-                     bool                succeeded)
+hippoCrashCallback(const wchar_t      *dump_path,
+                   const wchar_t      *minidump_id,
+                   void               *context,
+                   EXCEPTION_POINTERS *exinfo,
+                   bool                succeeded)
 {
 #define BUF_SIZE 2048
     WCHAR exePath[BUF_SIZE];
 	WCHAR dumpArgument[BUF_SIZE];
 	const WCHAR dumpSuffix[] = L".dmp";
+    WCHAR *instanceArgument = NULL;
 	int i, j;
 
 	HINSTANCE instance = GetModuleHandle(NULL);
@@ -144,22 +152,35 @@ hippo_crash_callback(const wchar_t      *dump_path,
 		return succeeded;
 	dumpArgument[j] = '\0';
 
-    _wspawnl(_P_NOWAIT, exePath, L"HippoUI", L"--crash-dump", dumpArgument, NULL);
+    switch (hippoInstanceType) {
+    case HIPPO_INSTANCE_NORMAL:
+        break;
+    case HIPPO_INSTANCE_DEBUG:
+        instanceArgument = L"--debug";
+        break;
+    case HIPPO_INSTANCE_DOGFOOD:
+        instanceArgument = L"--dogfood";
+        break;
+    }
+
+    _wspawnl(_P_NOWAIT, exePath, L"HippoUI", L"--crash-dump", dumpArgument, instanceArgument, NULL);
 
 	return succeeded;
 }
 
 
 void
-hippoCrashInit()
+hippoCrashInit(HippoInstanceType instanceType)
 {
 	if (IsDebuggerPresent())
 		return;
 
-	HippoBSTR dumpDir = hippoUserDataDir(L"CrashDump");
+    hippoInstanceType = instanceType;
+
+    HippoBSTR dumpDir = hippoUserDataDir(L"CrashDump");
 	handler = new ExceptionHandler(std::wstring(dumpDir.m_str),
 								   NULL, 
-								   hippo_crash_callback, NULL,
+								   hippoCrashCallback, NULL,
 								   true); // install a global exception catcher
 }
 

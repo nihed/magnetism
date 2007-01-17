@@ -18,6 +18,9 @@ public:
     void getWebServer(BSTR *server) throw (std::bad_alloc);
     void setWebServer(BSTR server);
 
+    // Used from the crash-dump code
+    static void getWebServer(HippoInstanceType instanceType, BSTR *server);
+
     bool getSignIn();
     void setSignIn(bool signIn);
 
@@ -29,6 +32,8 @@ public:
 private:
     void load();
     void save();
+
+    static const WCHAR *getInstanceSubkey(HippoInstanceType instanceType);
 
     // Whether to use a separate debug registry section
     HippoInstanceType instanceType_;

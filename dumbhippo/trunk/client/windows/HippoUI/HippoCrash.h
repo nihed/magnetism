@@ -3,12 +3,14 @@
  * Copyright Red Hat, Inc. 2007
  **/
 
+#include <hippo/hippo-basics.h>
+
 // Called when the executable is invoked from a crash handler in reporting
 // mode. Returns true if we should continue on to normal executions
-bool hippoCrashReport(const char *filename);
+bool hippoCrashReport(HippoInstanceType instance, const char *crashName);
 
 // Initialize the exception handler 
-void hippoCrashInit();
+void hippoCrashInit(HippoInstanceType instance);
 
 // Force a dump
 void hippoCrashDump();
