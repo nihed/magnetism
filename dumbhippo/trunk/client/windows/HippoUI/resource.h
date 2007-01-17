@@ -48,6 +48,9 @@
 #define IDI_NOTIFICATION                170
 #define IDI_ICON4                       171
 #define IDI_NOTIFICATION_DISCONNECTED   171
+#define IDD_CRASH                       172
+#define IDD_CRASH_REPORTED              173
+#define IDD_REPEAT_CRASH                174
 #define IDI_DUMBHIPPO_BLANK             207
 #define IDC_USERNAME                    1000
 #define IDC_PASSWORD                    1001
@@ -58,6 +61,8 @@
 #define IDC_MESSAGE_SERVER              1009
 #define IDC_WEB_SERVER                  1010
 #define IDC_EDIT1                       1011
+#define IDC_CRASH_ID                    1012
+#define IDC_VERSION                     1013
 #define ID_SHARELINK_PREFERENCES        32771
 #define IDM_RECENT                      32773
 #define IDM_PREFERENCES                 32779
@@ -71,9 +76,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        172
+#define _APS_NEXT_RESOURCE_VALUE        175
 #define _APS_NEXT_COMMAND_VALUE         32790
-#define _APS_NEXT_CONTROL_VALUE         1012
+#define _APS_NEXT_CONTROL_VALUE         1014
 #define _APS_NEXT_SYMED_VALUE           124
 #endif
 #endif

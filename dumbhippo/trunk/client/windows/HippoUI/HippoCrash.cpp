@@ -10,6 +10,8 @@
 #include <HippoRegKey.h>
 #include "HippoUIUtil.h"
 #include "HippoPreferences.h"
+#include "Resource.h"
+#include "Version.h"
 #include <glib.h>
 
 using namespace google_airbag;
@@ -95,10 +97,165 @@ checkRespawn()
 	return recentCrashes <= RECENT_MAX_CRASHES;
 }
 
+static void
+setWindowIcons(HWND window)
+{
+    HINSTANCE instance = GetModuleHandle(NULL);
+    HICON smallIcon = (HICON)LoadImage(instance, MAKEINTRESOURCE(IDI_MUGSHOT),
+                                       IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
+    HICON bigIcon = (HICON)LoadImage(instance, MAKEINTRESOURCE(IDI_MUGSHOT),
+                                     IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
+    SendMessage(window, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)smallIcon);
+    SendMessage(window, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)bigIcon);
+}
+
+// There must be some easier way to get a dialog centered on the screen, but 
+// I don't know what it is, so we just do it manually in our WM_INITDIALOG
+static void
+centerWindow(HWND window)
+{
+    RECT windowRect;
+    int height, width;
+
+    GetWindowRect(window, &windowRect);
+    width = windowRect.right - windowRect.left;
+    height = windowRect.bottom - windowRect.top;
+
+    POINT cursorPos;
+    GetCursorPos(&cursorPos);
+    HMONITOR monitor = MonitorFromPoint(cursorPos, MONITOR_DEFAULTTOPRIMARY);
+
+    MONITORINFO monitorInfo;
+    monitorInfo.cbSize = sizeof(monitorInfo);
+    if (GetMonitorInfo(monitor, &monitorInfo)) {
+        int x = (monitorInfo.rcWork.left + monitorInfo.rcWork.right - width) / 2;
+        int y = (monitorInfo.rcWork.top + monitorInfo.rcWork.bottom - height) / 2;
+        MoveWindow(window, x, y, width, height, FALSE);
+    }
+}
+
+static INT_PTR CALLBACK
+crashDialogProc(HWND   dialogWindow,
+                UINT   message,
+                WPARAM wParam,
+                LPARAM lParam)
+{
+    switch (message) {
+    case WM_INITDIALOG:
+        setWindowIcons(dialogWindow);
+        centerWindow(dialogWindow);
+        return TRUE;
+    case WM_CLOSE:
+        EndDialog(dialogWindow, IDCANCEL);
+        return TRUE;
+    case WM_COMMAND:
+        int control = LOWORD(wParam);
+        int message = HIWORD(wParam);
+        switch (control) {
+        case IDOK:
+        case IDCANCEL:
+            if (HIWORD(wParam) == BN_CLICKED) {
+                EndDialog(dialogWindow, control);
+                return TRUE;
+            }
+            break;
+        }
+    }
+
+    return FALSE;
+}
+
+static INT_PTR CALLBACK
+crashReportedDialogProc(HWND   dialogWindow,
+                        UINT   message,
+                        WPARAM wParam,
+                        LPARAM lParam)
+{
+    switch (message) {
+    case WM_INITDIALOG:
+        {
+            const char *crashIdU = (const char *)lParam;
+
+            setWindowIcons(dialogWindow);
+            centerWindow(dialogWindow);
+
+            HippoBSTR crashId = HippoBSTR::fromUTF8(crashIdU);
+            SendDlgItemMessage(dialogWindow, IDC_CRASH_ID, WM_SETTEXT,
+                               0, (LPARAM)crashId.m_str);
+
+            return TRUE;
+        }
+    case WM_CLOSE:
+        EndDialog(dialogWindow, IDCANCEL);
+        return TRUE;
+    case WM_COMMAND:
+        int control = LOWORD(wParam);
+        int message = HIWORD(wParam);
+        switch (control) {
+        case IDOK:
+            if (HIWORD(wParam) == BN_CLICKED) {
+                EndDialog(dialogWindow, control);
+                return TRUE;
+            }
+            break;
+        }
+    }
+
+    return FALSE;
+}
+
+static INT_PTR CALLBACK
+repeatCrashDialogProc(HWND   dialogWindow,
+                      UINT   message,
+                      WPARAM wParam,
+                      LPARAM lParam)
+{
+    switch (message) {
+    case WM_INITDIALOG:
+        {
+            setWindowIcons(dialogWindow);
+            centerWindow(dialogWindow);
+        
+            // Substitute the current version into the dialog text in the right place
+            WCHAR buffer[1024];
+            SendDlgItemMessage(dialogWindow, IDC_VERSION, WM_GETTEXT,
+                               (WPARAM)(sizeof(buffer) / sizeof(buffer[0])),
+                               (LPARAM)buffer);
+            WCHAR *pos = wcsstr(buffer, L"@VERSION@");
+            if (pos) {
+                HippoBSTR substituted = HippoBSTR((unsigned int)(pos - buffer), buffer);
+                substituted.appendUTF8(VERSION, -1);
+                substituted.Append(pos + wcslen(L"@VERSION@"));
+                SendDlgItemMessage(dialogWindow, IDC_VERSION, WM_SETTEXT,
+                                   0, (LPARAM)substituted.m_str);
+            }
+
+            return TRUE;
+        }
+    case WM_CLOSE:
+        EndDialog(dialogWindow, IDCLOSE);
+        return TRUE;
+    case WM_COMMAND:
+        int control = LOWORD(wParam);
+        int message = HIWORD(wParam);
+        switch (control) {
+        case IDCLOSE:
+            if (HIWORD(wParam) == BN_CLICKED) {
+                EndDialog(dialogWindow, control);
+                return TRUE;
+            }
+            break;
+        }
+    }
+
+    return FALSE;
+}
+
 bool
 hippoCrashReport(HippoInstanceType instanceType, const char *crashName)
 {
     HippoBSTR webServer;
+    HINSTANCE instance = GetModuleHandle(NULL);
 	bool respawn = checkRespawn();
 
     HippoPreferences::getWebServer(instanceType, &webServer);
@@ -108,18 +265,23 @@ hippoCrashReport(HippoInstanceType instanceType, const char *crashName)
 
 		file.Append('\\');
 		file.appendUTF8(crashName, -1);
+        file.Append(L".dmp");
 
-		hippoDebugDialog(L"Mugshot crashed. Ouch! Information about the crash was written to\n"
-                         L"%ls\n"
-                         L"Will report to %ls\n",
-                         file.m_str,
-                         webServer.m_str);
+        INT_PTR result = DialogBoxParam(instance, MAKEINTRESOURCE(IDD_CRASH), NULL, 
+                                        crashDialogProc, NULL);
 
-		return true;
+        if (result != IDOK) // User cancelled
+            return true;
+
+        DialogBoxParam(instance, MAKEINTRESOURCE(IDD_CRASH_REPORTED), NULL, 
+                       crashReportedDialogProc, (LPARAM)crashName);
+
+        return true;
 	} else {
-		hippoDebugDialog(L"Mugshot seems to be repeatedly crashing, please try again later");
+        INT_PTR result = DialogBoxParam(instance, MAKEINTRESOURCE(IDD_REPEAT_CRASH), NULL, 
+                                        repeatCrashDialogProc, NULL);
 
-		return false;
+        return false;
 	}
 }
 
@@ -130,27 +292,12 @@ hippoCrashCallback(const wchar_t      *dump_path,
                    EXCEPTION_POINTERS *exinfo,
                    bool                succeeded)
 {
-#define BUF_SIZE 2048
-    WCHAR exePath[BUF_SIZE];
-	WCHAR dumpArgument[BUF_SIZE];
-	const WCHAR dumpSuffix[] = L".dmp";
     WCHAR *instanceArgument = NULL;
-	int i, j;
+    WCHAR exePath[1024];
 
 	HINSTANCE instance = GetModuleHandle(NULL);
-    if (!GetModuleFileName(instance, exePath, BUF_SIZE))
+    if (!GetModuleFileName(instance, exePath, sizeof(exePath) / sizeof(exePath[0])))
         return succeeded;
-
-	// Handcode strcat here to avoid standard library dependency
-	j = 0;
-	for (i = 0; j < BUF_SIZE && minidump_id[i]; i++)
-		dumpArgument[j++] = minidump_id[i];
-	for (i = 0; j < BUF_SIZE && dumpSuffix[i]; i++)
-		dumpArgument[j++] = dumpSuffix[i];
-
-	if (j == BUF_SIZE)
-		return succeeded;
-	dumpArgument[j] = '\0';
 
     switch (hippoInstanceType) {
     case HIPPO_INSTANCE_NORMAL:
@@ -163,7 +310,7 @@ hippoCrashCallback(const wchar_t      *dump_path,
         break;
     }
 
-    _wspawnl(_P_NOWAIT, exePath, L"HippoUI", L"--crash-dump", dumpArgument, instanceArgument, NULL);
+    _wspawnl(_P_NOWAIT, exePath, L"HippoUI", L"--crash-dump", minidump_id, instanceArgument, NULL);
 
 	return succeeded;
 }

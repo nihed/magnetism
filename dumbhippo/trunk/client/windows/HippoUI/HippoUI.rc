@@ -108,8 +108,7 @@ END
 //
 
 IDD_LOGIN DIALOGEX 0, 0, 200, 131
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Mugshot login"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
@@ -117,17 +116,14 @@ BEGIN
     EDITTEXT        IDC_USERNAME,85,46,108,12,ES_AUTOHSCROLL
     LTEXT           "Password:",IDC_STATIC,7,67,34,8
     EDITTEXT        IDC_PASSWORD,85,65,108,12,ES_PASSWORD | ES_AUTOHSCROLL
-    CONTROL         "Remember password",IDC_REMEMBERPASS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,87,186,13
+    CONTROL         "Remember password",IDC_REMEMBERPASS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,87,186,13
     DEFPUSHBUTTON   "Login",IDOK,85,110,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,143,110,50,14
-    LTEXT           "Please enter your Mugshot login information. If you don't know your username or password, please visit the mugshot.org web page.",
-                    IDC_STATIC,7,7,186,37
+    LTEXT           "Please enter your Mugshot login information. If you don't know your username or password, please visit the mugshot.org web page.",IDC_STATIC,7,7,186,37
 END
 
 IDD_PREFERENCES DIALOGEX 0, 0, 242, 102
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Mugshot Preferences"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
@@ -135,13 +131,44 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,7,138,10
     LTEXT           "Message Server:",IDC_STATIC,7,41,55,8
     EDITTEXT        IDC_MESSAGE_SERVER,72,38,163,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "Forget Sign-In Information",IDC_FORGETPASSWORD,7,81,95,
-                    14
+    PUSHBUTTON      "Forget Sign-In Information",IDC_FORGETPASSWORD,7,81,95,14
     DEFPUSHBUTTON   "OK",IDOK,129,81,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,185,81,50,14
-    ICON            IDI_SWARM1,IDC_LOGOICON,214,7,20,20
+    ICON            IDI_MUGSHOT,IDC_LOGOICON,214,7,20,20
     LTEXT           "Web Server:",IDC_STATIC,7,60,42,8
     EDITTEXT        IDC_WEB_SERVER,72,57,163,14,ES_AUTOHSCROLL
+END
+
+IDD_CRASH DIALOGEX 0, 0, 239, 91
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Mugshot crashed"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Send Crash Report",IDOK,76,70,76,14
+    PUSHBUTTON      "Cancel",IDCANCEL,156,70,76,14
+    LTEXT           "The Mugshot software has crashed. By sending information about this crash to the Mugshot developers, you can help us fix the problem.",IDC_STATIC,7,7,225,18
+    LTEXT           "The report will contain only minimal information about your usage of the Mugshot software in addition to details about where in the Mugshot code the crash occurred.",IDC_STATIC,7,27,225,28
+END
+
+IDD_CRASH_REPORTED DIALOGEX 0, 0, 237, 99
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Mugshot crashed"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,180,78,50,14
+    LTEXT           "Your crash information has succesfully been sent. Thanks!\n\nYou may wish to submit a bug report to http://bugzilla.mugshot.org to provide additional information. If you do so, please include the following crash report identifier in your bug report:",IDC_STATIC,7,7,223,51
+    EDITTEXT        IDC_CRASH_ID,7,57,223,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER
+END
+
+IDD_REPEAT_CRASH DIALOGEX 0, 0, 253, 97
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Mugshot crashed"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Close",IDCLOSE,196,75,50,14
+    LTEXT           "The Mugshot software seems to be repeatedly crashing. It will now exit. We're sorry for the inconvenience.",IDC_STATIC,7,7,239,18
+    LTEXT           "• The currently installed version of Mugshot is: @VERSION@\n   You can check for a new version at http://mugshot.org/upgrade",IDC_VERSION,7,44,239,21,0,WS_EX_TRANSPARENT
+    LTEXT           "• You can try running Mugshot again from the ""All Programs"" menu.",IDC_STATIC,7,31,239,12
 END
 
 
@@ -169,6 +196,30 @@ BEGIN
         VERTGUIDE, 72
         TOPMARGIN, 7
         BOTTOMMARGIN, 95
+    END
+
+    IDD_CRASH, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 232
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 84
+    END
+
+    IDD_CRASH_REPORTED, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 230
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 92
+    END
+
+    IDD_REPEAT_CRASH, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 246
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 89
     END
 END
 #endif    // APSTUDIO_INVOKED
