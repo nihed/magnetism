@@ -6,6 +6,7 @@
 #include "stdafx-hippoui.h"
 #include <process.h>
 #include <handler/exception_handler.h>
+#include <sender/crash_report_sender.h>
 #include "HippoCrash.h"
 #include <HippoRegKey.h>
 #include "HippoUIUtil.h"
@@ -174,14 +175,13 @@ crashReportedDialogProc(HWND   dialogWindow,
     switch (message) {
     case WM_INITDIALOG:
         {
-            const char *crashIdU = (const char *)lParam;
+            const WCHAR *crashId = (const WCHAR *)lParam;
 
             setWindowIcons(dialogWindow);
             centerWindow(dialogWindow);
 
-            HippoBSTR crashId = HippoBSTR::fromUTF8(crashIdU);
             SendDlgItemMessage(dialogWindow, IDC_CRASH_ID, WM_SETTEXT,
-                               0, (LPARAM)crashId.m_str);
+                               0, (LPARAM)crashId);
 
             return TRUE;
         }
@@ -254,35 +254,57 @@ repeatCrashDialogProc(HWND   dialogWindow,
 bool
 hippoCrashReport(HippoInstanceType instanceType, const char *crashName)
 {
-    HippoBSTR webServer;
     HINSTANCE instance = GetModuleHandle(NULL);
     bool respawn = checkRespawn();
+    bool deleteFile = true;
 
-    HippoPreferences::getWebServer(instanceType, &webServer);
-    
+    HippoBSTR file = hippoUserDataDir(L"CrashDump");
+    file.Append('\\');
+    file.appendUTF8(crashName, -1);
+    file.Append(L".dmp");
+
     if (respawn) {
-        HippoBSTR file = hippoUserDataDir(L"CrashDump");
-
-        file.Append('\\');
-        file.appendUTF8(crashName, -1);
-        file.Append(L".dmp");
-
-        INT_PTR result = DialogBoxParam(instance, MAKEINTRESOURCE(IDD_CRASH), NULL, 
+        INT_PTR button = DialogBoxParam(instance, MAKEINTRESOURCE(IDD_CRASH), NULL, 
                                         crashDialogProc, NULL);
 
-        if (result != IDOK) // User cancelled
-            return true;
+        if (button == IDOK) {
+            HippoBSTR webServer;
+            HippoPreferences::getWebServer(instanceType, &webServer);
+        
+            HippoBSTR url(L"http://");
+            url.Append(webServer);
+            url.Append(L"/crash-report");
 
-        DialogBoxParam(instance, MAKEINTRESOURCE(IDD_CRASH_REPORTED), NULL, 
-                       crashReportedDialogProc, (LPARAM)crashName);
+            HippoBSTR versionW = HippoBSTR::fromUTF8(VERSION);
 
-        return true;
+            std::map<std::wstring, std::wstring> parameters;
+            parameters[std::wstring(L"platform")] = std::wstring(L"windows");
+            parameters[std::wstring(L"version")] = std::wstring(versionW.m_str);
+
+            std::wstring reportCode;
+            ReportResult result = CrashReportSender::SendCrashReport(std::wstring(url.m_str), parameters,
+                                                                     std::wstring(file.m_str), &reportCode);
+
+            if (result == RESULT_SUCCEEDED) {
+                DialogBoxParam(instance, MAKEINTRESOURCE(IDD_CRASH_REPORTED), NULL, 
+                               crashReportedDialogProc, (LPARAM)reportCode.c_str());
+            } else {
+                MessageBox(NULL, 
+                           L"Sending the crash report failed. Maybe there was a server error or your network connection is down.", 
+                           L"Problem sending Mugshot crash report", 
+                           MB_OK | MB_ICONEXCLAMATION);
+                deleteFile = false;
+            }
+        }
     } else {
         INT_PTR result = DialogBoxParam(instance, MAKEINTRESOURCE(IDD_REPEAT_CRASH), NULL, 
                                         repeatCrashDialogProc, NULL);
-
-        return false;
     }
+
+    if (deleteFile)
+        DeleteFile(file.m_str);
+
+    return respawn;
 }
 
 static bool
