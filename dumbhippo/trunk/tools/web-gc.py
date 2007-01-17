@@ -266,17 +266,37 @@ def main():
 
     for t in all_java_tags:
         if not t.referenced():
-            print "%s does not appear to be used" % t
+            print "%s unused (java class %s)" % (t.name(), t.javaclass())
 
     for t in all_file_tags:
         if not t.referenced():
-            print "%s does not appear to be used" % t
+            print "%s unused (file %s)" % (t.name(), t.fullpath())
             unused_files.append(t.fullpath())
 
+    if len(unused_files) == 0:
+        print "no unused files"
+        return
+
+    scriptname = 'remove-unused.sh'
+    fd = os.open(scriptname, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0755)
+    if fd < 0:
+        raise "failed to open %s" % scriptname
+    f = os.fdopen(fd, 'w')
+
+    f.write("#!/bin/sh\n")
+    f.write("set -e\n")
+    f.write("function die() { echo $* 1>&2; exit 1; }\n")
     for u in unused_files:
-        print "/bin/rm %s && svn rm %s" % (u, u)
+        f.write('/bin/rm %s || die "failed to remove %s"\n' % (u, u))
 
+    f.write("\n")
+    f.write("svn rm ")
+    for u in unused_files:
+        f.write("%s " % u)
+    f.write("\n")
+    f.write("\n")
 
+    print "Wrote script %s which will remove the above" % scriptname
 
 main()
 
