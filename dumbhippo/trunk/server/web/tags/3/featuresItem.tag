@@ -13,7 +13,7 @@
 
 <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/${icon}" style="width: 16; height: 16;"/></td>
 <td class="dh-features-list-content-column">
-  <div id="dhFeatures${prefix}">
+  <div id="dhFeatures${prefix}" class="dh-features-list-text">
     <c:choose>
       <c:when test="${!empty text}"><c:out value="${text}"/></c:when>
       <c:otherwise><jsp:doBody/></c:otherwise>

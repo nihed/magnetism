@@ -17,6 +17,11 @@
 	font-size:			12px;
 }
 
+.dh-features-list-text {
+	color:				#666666;
+	text-decoration:	underline;
+}
+
 .dh-features-list-tip {
 	display: 			none;
 	border:				2px solid gray;
