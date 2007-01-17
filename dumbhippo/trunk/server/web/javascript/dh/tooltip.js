@@ -9,12 +9,17 @@ dh.tooltip.Tooltip = function(container, source, tip) {
 	this._tip = tip;
 	
 	tip.style.display = "none";
-	
+
+	this._alignBottom = false;	
 	this._yOffset = 50;
 	this._closeOnSourceOut = false;
 	
 	this.setYOffset = function (offset) {
 		this._yOffset = offset;
+	}
+	
+	this.setAlignBottom = function(alignBottom) {
+		this._alignBottom = alignBottom;
 	}
 	
 	this.setCloseOnClick = function (closeOnClick) {
@@ -52,15 +57,16 @@ dh.tooltip.Tooltip = function(container, source, tip) {
 	 	} else {
  		    me._tip.style.left = (sourcePos.x - pageOuterPos.x + 15) + "px";
 	 	}
+ 	    var offset = me._alignBottom ? me._source.offsetHeight : me._yOffset;
  	    
-		me._tip.style.top = (sourcePos.y - pageOuterPos.y + me._yOffset) + "px";	
+		me._tip.style.top = (sourcePos.y - pageOuterPos.y + offset) + "px";	
 		return;
 	}
 
 	this._source.onmouseout = function(e) {
 		if (!e) e = window.event;
     	var relTarget = e.relatedTarget || e.toElement;	
-		if (me._closeOnSourceOut)
+		if (me._closeOnSourceOut && !dh.util.isDescendant(me._source, relTarget))
 			me._hide()
 	    if (!dh.util.isDescendant(me._tip, relTarget))
 		    me._hide();

@@ -30,59 +30,130 @@
 		                         tipIcon="music_block.png"
 		                         tipIconWidth="400"
 		                         tipIconHeight="73"
-		                         tipText="Get updates when your Mugshot friends play music, and they'll see yours too."/>
-			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/blog_icon.png" style="width: 16; height: 16;"/></td>
-			  <td class="dh-features-list-content-column">Blogger, LiveJournal, MySpace, and more blogs</td>
+		                         tipText="Get updates when people in your Mugshot network play music."/>
+		      <dht3:featuresItem prefix="Blog"
+		                         icon="blog_icon.png"
+		                         text="Blogger, LiveJournal, MySpace, and more blogs"
+		                         tipIcon="blog_block.png"
+		                         tipIconWidth="450"
+		                         tipIconHeight="34"
+		                         tipText="Get updates when people in your Mugshot network post blog entries."/>
 			</tr>
 			<tr>
-			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/favicon_flickr.png" style="width: 16; height: 16;"/></td>
-			  <td class="dh-features-list-content-column">Flickr photo sets</td>
-			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/favicon_digg.png" style="width: 16; height: 16;"/></td>
-			  <td class="dh-features-list-content-column">Stories rated on Digg and Reddit</td>			  
+			  <dht3:featuresItem prefix="Flickr"
+			                     icon="favicon_flickr.png"
+			                     text="Flickr photo sets"
+			                     tipIcon="flickr_thumbs.png"
+			                     tipIconWidth="400"
+			                     tipIconHeight="118"
+			                     tipText="Get updates when people in your Mugshot network posting new photos."/>
+			  <dht3:featuresItem prefix="Digg"
+			                     icon="favicon_digg.png"
+			                     text="Stories rated on Digg and Reddit"
+			                     tipIcon="digg_block.png"
+			                     tipIconWidth="450"
+			                     tipIconHeight="34"
+			                     tipText="Get updates when people in your Mugshot network rating stories."/>	  
 			</tr>		
 			<tr>
-			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/favicon_youtube.png" style="width: 16; height: 16;"/></td>
-			  <td class="dh-features-list-content-column">YouTube videos</td>
-			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/favicon_twitter.png" style="width: 16; height: 16;"/></td>
-			  <td class="dh-features-list-content-column">Twitter status updates</td>			  
+			  <dht3:featuresItem prefix="YouTube"
+			                     icon="favicon_youtube.png"
+			                     text="YouTube videos"
+			                     tipIcon="youtube_thumbs.png"
+			                     tipIconWidth="400"
+			                     tipIconHeight="120"
+			                     tipText="Get updates when people in your Mugshot network post new YouTube videos."/>
+			  <dht3:featuresItem prefix="Twitter"
+			                     icon="favicon_twitter.png"
+			                     text="Twitter status updates"
+			                     tipIcon="twitter_block.png"
+			                     tipIconWidth="450"
+			                     tipIconHeight="34"
+			                     tipText="Get updates when people in your Mugshot network send Twitter updates."/>			  
 			</tr>		
 			<tr>
-			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/favicon_delicious.png" style="width: 16; height: 16;"/></td>
-			  <td class="dh-features-list-content-column">deli.icio.us bookmarks</td>
-			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/favicon_facebook.png" style="width: 16; height: 16;"/></td>
-			  <td class="dh-features-list-content-column">Facebook messages, photos, pokes, and wall messages</td>			  
+			  <dht3:featuresItem prefix="Delicious"
+			                     icon="favicon_delicious.png"
+			                     text="del.icio.us bookmarks"
+			                     tipIcon="delicious_block.png"
+			                     tipIconWidth="450"
+			                     tipIconHeight="34"
+			                     tipText="Get updates when people in your Mugshot network post new public del.icio.us bookmarks"/>
+			  <dht3:featuresItem prefix="Facebook"
+			                     icon="favicon_facebook.png"
+			                     text="Facebook messages, photos, pokes, and wall messages"
+			                     tipIcon="facebook_block.png"
+			                     tipIconWidth="450"
+			                     tipIconHeight="34"
+			                     tipText="Get updates when you get new Facebook updates like messages, photos, and pokes."/>			  
 			</tr>	
 			<tr>
-			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/feed_icon16x16.png" style="width: 16; height: 16;"/></td>
-			  <td class="dh-features-list-content-column">RSS feeds</td>
-			  <td></td>
-			  <td></td>	  
+			  <dht3:featuresItem prefix="RSS"
+			                     icon="feed_icon16x16.png"
+			                     text="RSS feeds"
+			                     tipIcon="feed_block.png"
+			                     tipIconWidth="450"
+			                     tipIconHeight="34"
+			                     tipText="Get updates from other RSS feeds"/>  
 			</tr>			
 			
 			<tr class="dh-features-list-section">
 			<td class="dh-features-list-header" colspan="4">Share links and updates with friends and groups with similar interests.</td>
 			</tr>		
 			<tr>
-			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/webswarm_icon.png" style="width: 16; height: 16;"/></td>
-			  <td class="dh-features-list-content-column">"Swarm" notifications of new and popular content</td>
-			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/quips_16x16.png" style="width: 16; height: 16;"/></td>
-			  <td class="dh-features-list-content-column">"Quips" to rate and comment on anything shared on Mugshot</td>	  
+			  <dht3:featuresItem prefix="Webswarm"
+			                     icon="webswarm_icon.png"
+			                     text="\"Swarm\" notifications of new and popular content"
+			                     tipIcon="webswarm_block.png"
+			                     tipIconWidth="450"
+			                     tipIconHeight="70"
+			                     tipText="Get updates when people in your Mugshot network share and swarm around links"/>
+			  <dht3:featuresItem prefix="Quips"
+			                     icon="quips_16x16.png"
+			                     text="\"Quips\" to rate and comment on anything shared on Mugshot"
+			                     tipIcon="quip.png"
+			                     tipIconWidth="243"
+			                     tipIconHeight="116"
+			                     tipText="See quips people add to Mugshot items"/>
 			</tr>	
 			
 			<tr class="dh-features-list-section">
 			<td class="dh-features-list-header" colspan="4">Keep up with everything. </td>
 			</tr>		
 			<tr>
-			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/mugshot_icon.png" style="width: 16; height: 16;"/></td>
-			  <td class="dh-features-list-content-column">On the web: through your own Mugshot page</td>
-			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/mini_16x16.png" style="width: 16; height: 16;"/></td>
-			  <td class="dh-features-list-content-column">On your blog or Web page: using <a href="/badges">Mugshot Mini</a> and <a href="/radar-learnmore">Music Radar</a> widgets</td>
+			  <dht3:featuresItem prefix="OnWeb"
+			                     icon="mugshot_icon.png"
+			                     text="On the web: through your own Mugshot page"
+			                     tipIcon="webswarm_block.png"
+			                     tipIconWidth="450"
+			                     tipIconHeight="70"
+			                     tipText="Your Mugshot page shows you a stack of updates"/>
+			  <dht3:featuresItem prefix="Mini"
+			                     icon="mini_16x16.png"
+								 tipIcon="mini.png"
+								 tipIconWidth="250"
+								 tipIconHeight="180"
+								 tipText="Put the mini on your own website">
+			    On your blog or Web page: using <a href="/badges">Mugshot Mini</a> and <a href="/radar-learnmore">Music Radar</a> widgets								 
+			  </dht3:featuresItem>
 			</tr>		
 			<tr>
-			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/stacker_16x16.png" style="width: 16; height: 16;"/></td>
-			  <td class="dh-features-list-content-column">On your desktop: using the <a href="/stacker-learnmore">Mugshot Stacker</a></td>
-			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/favicon_gdesktop.png" style="width: 16; height: 16;"/></td>
-			  <td class="dh-features-list-content-column">On your Google Desktop and home page: using the <a href="/google-stacker">Mugshot Google Gadget</a></td>
+			  <dht3:featuresItem prefix="Stacker"
+			                     icon="stacker_16x16.png"
+			                     tipIcon="stacker.png"
+			                     tipIconWidth="400"
+			                     tipIconHeight="237"
+			                     tipText="Get updates on your desktop">
+			    On your desktop: using the <a href="/stacker-learnmore">Mugshot Stacker</a>
+			  </dht3:featuresItem>
+			  <dht3:featuresItem prefix="GDesktop"
+			                     icon="favicon_gdesktop.png"
+			                     tipIcon="google_gadget.png"
+			                     tipIconWidth="400"
+			                     tipIconHeight="267"
+			                     tipText="Get updates on your Google desktop">
+			    On your Google Desktop and home page: using the <a href="/google-stacker">Mugshot Google Gadget</a>
+			  </dht3:featuresItem>
 			</tr>	
 			
 			<tr class="dh-features-list-section">
