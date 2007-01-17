@@ -9,7 +9,7 @@
 	<title>Mugshot Features</title>
 	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
 	<dht3:stylesheet name="features"/>	
-	<dht:scriptIncludes/>
+	<dh:script module="dh.tooltip"/>	
 	<dht:faviconIncludes/>
 </head>
 
@@ -24,8 +24,13 @@
 			<td class="dh-features-list-header" colspan="4">Get updates from these sites, and more:</td>
 			</tr>
 			<tr>
-			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/musicradar_icon.png" style="width: 16; height: 16;"/></td>
-			  <td class="dh-features-list-content-column">iTunes, Last.fm, Rhapsody, and Yahoo! Music playlists</td>
+		      <dht3:featuresItem prefix="Music"
+		                         icon="musicradar_icon.png"
+		                         text="iTunes, Last.fm, Rhapsody, and Yahoo! Music playlists"
+		                         tipIcon="music_block.png"
+		                         tipIconWidth="400"
+		                         tipIconHeight="73"
+		                         tipText="Get updates when your Mugshot friends play music, and they'll see yours too."/>
 			  <td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/blog_icon.png" style="width: 16; height: 16;"/></td>
 			  <td class="dh-features-list-content-column">Blogger, LiveJournal, MySpace, and more blogs</td>
 			</tr>

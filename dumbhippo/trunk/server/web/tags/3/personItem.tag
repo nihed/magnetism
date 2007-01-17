@@ -21,7 +21,7 @@
         </c:if>    
     </div>
 </div>    
-<div id="dhInfo${who.identifyingGuid}" class="dh-person-item-more-info">
+<div id="dhInfo${who.identifyingGuid}" class="dh-person-item-more-info dh-tooltip">
 	<table cellpadding="0" cellspacing="0">
 	<tbody>
 	<tr valign="top">
