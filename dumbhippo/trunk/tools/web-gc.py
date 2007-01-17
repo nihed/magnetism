@@ -13,6 +13,9 @@ all_java_files = []
 
 referenced_java_classes = {}
 
+rewrite_servlet_urls = []
+jsps_by_url = {}
+
 class Tag:
     def __init__(self, name):
         self._name = name
@@ -171,6 +174,9 @@ class JavaTag(Tag):
 class JspFile:
     def __init__(self, fullpath):
         self._filename = os.path.basename(fullpath)
+        self._fullpath = fullpath
+
+        self._url = self._filename.replace(".jsp", "")
 
         lines = open(fullpath).readlines()
 
@@ -186,6 +192,12 @@ class JspFile:
 
     def filename(self):
         return self._filename
+
+    def fullpath(self):
+        return self._fullpath
+
+    def url(self):
+        return self._url
 
     def __repr__(self):
         return "{%s}" % (self.filename())
@@ -286,10 +298,29 @@ def load_tld(fullpath):
             current_tagclass = None
             inside_tag = 0
 
+rewrite_re = re.compile('<servlet-class>.*RewriteServlet<\/servlet-class>')
+param_value_re = re.compile('<param-value>([^<]+)<\/param-value>')
+
 def load_servlet_info(fullpath):
-    pass
-    # fixme we could check that jsps are listed in RewriteServlet and
-    # gc unused servlet files
+    lines = open(fullpath).readlines()
+    inside_rewrite_servlet = 0
+    for l in lines:
+        if not inside_rewrite_servlet and rewrite_re.search(l):
+            inside_rewrite_servlet = 1
+        elif inside_rewrite_servlet:
+            m = param_value_re.search(l)
+            if m:
+                jsps = m.group(1).split(',')
+                for jsp in jsps:
+                    rewrite_servlet_urls.append(jsp)
+                
+        elif inside_rewrite_servlet and '</servlet>' in l:
+            inside_rewrite_servlet = 0
+
+    # rewrite servlet special-cases these so doesn't need them
+    # in the config
+    rewrite_servlet_urls.append("configjs")
+    rewrite_servlet_urls.append("whereimatjs")
 
 def main():
 
@@ -331,6 +362,9 @@ def main():
     for jspfilepath in jspfiles:
         j = JspFile(jspfilepath)
         all_jsp_files.append(j)
+        if jsps_by_url.has_key(j.url()):
+            raise "It looks like jsp %s has the same url as %s" % (jsps_by_url[j.url()].fullpath(), j.fullpath())
+        jsps_by_url[j.url()] = j
 
     for tldfilepath in tldfiles:
         load_tld(tldfilepath)
@@ -371,6 +405,17 @@ def main():
         if not javafiles_by_classname.has_key(classname):
             raise "java class %s is referenced but not known" % classname
         javafiles_by_classname[classname].mark_referenced()
+
+    for url in jsps_by_url.keys():
+        if url not in rewrite_servlet_urls:
+            j = jsps_by_url[url]
+            raise "url %s not listed in servlet-info.xml for file %s" % (url, j.fullpath())
+
+    for url in rewrite_servlet_urls:
+        if url.endswith(".txt"):
+            continue
+        elif not jsps_by_url.has_key(url):
+            raise "url %s listed in servlet-info.xml but has no corresponding jsp" % (url)
 
     unused_files = []
 
