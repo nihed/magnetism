@@ -24,21 +24,23 @@
 		<img src="/images2/${buildStamp}/beacon60x60.gif" align="left" />
 		Show off your iTunes, Rhapsody, or Yahoo! Music Engine playlist.  See what your friends are listening to and explore new music.  When someone clicks on your Music Radar, they'll be taken to your Mugshot page to see more about you and your tastes. <a href="/radar-learnmore">Learn More</a>
 		</div>
-		<div class="dh-radar-explanatory">
-			<strong>Music sharing:</strong>
-			<c:choose>
-				<c:when test="${nowplaying.signin.musicSharingEnabled}">
-					<dh:script module="dh.actions"/>
-					<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
-					<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>			
-				</c:when>
-				<c:otherwise>
-					<dh:script module="dh.actions"/>
-					<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
-					<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>
-				</c:otherwise>
-			</c:choose>
-		</div>
+		<c:if test="${nowplaying.signin.valid}">
+			<div class="dh-radar-explanatory">
+				<strong>Music sharing:</strong>
+				<c:choose>
+					<c:when test="${nowplaying.signin.musicSharingEnabled}">
+						<dh:script module="dh.actions"/>
+						<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
+						<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>			
+					</c:when>
+					<c:otherwise>
+						<dh:script module="dh.actions"/>
+						<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
+						<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>
+					</c:otherwise>
+				</c:choose>
+			</div>
+		</c:if>
 		<br clear="all"/>
 		<c:if test="${nowplaying.signin.valid}">
 			<c:if test="${!empty nowplaying.currentTheme}">
