@@ -98,8 +98,7 @@
 }
 
 #dhInvitationSendButton {
-    position:       relative;
-    margin-bottom:  -10px;
+    margin-top:     0px;
 }
 
 // The following rule did not work for wrapping e-mail addresses that are

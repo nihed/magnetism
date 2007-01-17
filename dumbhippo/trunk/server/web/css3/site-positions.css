@@ -722,3 +722,9 @@ div.dh-person-header {
 	margin-top:     5px;
 	margin-bottom:	5px;
 }
+
+.dh-shinybox-bottom-content {
+    position:       relative;
+    margin-top:     5px;
+    margin-bottom:  -10px;
+}

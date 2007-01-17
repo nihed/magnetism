@@ -78,9 +78,7 @@ dh.invitation.resend = function(address) {
 	// invitee e-mail 
     dh.invitation.subjectEntry.setEnabled()
     dh.invitation.messageEntry.setEnabled() 
-    document.getElementById("dhSuggestGroupsWithInvitation").disabled = false
-    document.getElementById("dhSuggestGroupsWithInvitation").href = 
-        "javascript:dh.invitation.showSuggestGroupsPopup('dhSuggestGroupsWithInvitation', 'your friend', '')";
+    dh.html.removeClass(document.getElementById("dhSuggestGroupsWithInvitation"), "dh-action-link-disabled")
     
     document.getElementById("dhInvitationSendButton").src = dhImageRoot3 + "send.png"
     document.getElementById("dhInvitationSendButton").onclick = function() {

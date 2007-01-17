@@ -88,10 +88,10 @@
     </dht:formTable>
     <c:choose>
         <c:when test="${disabled}">
-            <img id="dhInvitationSendButton" src="/images3/${buildStamp}/send_disabled.png"/>
+            <img id="dhInvitationSendButton" class="dh-shinybox-bottom-content" src="/images3/${buildStamp}/send_disabled.png"/>
         </c:when>
         <c:otherwise>
-            <img id="dhInvitationSendButton" src="/images3/${buildStamp}/send.png" onclick="javascript:dh.invitation.send();"/>        
+            <img id="dhInvitationSendButton" class="dh-shinybox-bottom-content" src="/images3/${buildStamp}/send.png" onclick="javascript:dh.invitation.send();"/>        
         </c:otherwise>
     </c:choose>        
     </dht3:shinyBox>    
@@ -150,6 +150,9 @@
                 </table>
             </c:when>
             <c:otherwise>
+                <div class="dh-shinybox-bottom-content">
+                    You have no outstanding invitations.
+                </div>
             </c:otherwise>
         </c:choose>    
     </dht3:shinyBox>    	     

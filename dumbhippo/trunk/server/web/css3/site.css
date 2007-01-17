@@ -365,6 +365,10 @@ div.dh-async-action-link-complete {
 	text-decoration:	underline;
 }
 
+.dh-action-link-disabled {
+    color:              gray;
+}
+
 .dh-stacker-block-title-title {
 }
 
@@ -441,6 +445,10 @@ div.dh-async-action-link-complete {
 .dh-empty-stacker-text a {
 	color:				#0000EE;
 };
+
+.dh-shinybox-bottom-content {
+    font-size:          14px;
+}
 
 .dh-where-at-label {
 	font-weight: 		bold;
