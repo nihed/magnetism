@@ -3,11 +3,13 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
+<%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht2" %>
+<%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <dh:bean id="admin" class="com.dumbhippo.web.pages.AdminPage" scope="request"/>
 <c:set var="mode" value='${param["mode"]}' scope="page"/>
 <c:if test="${!admin.valid}">
-	<dht:errorPage>Permission Denied</dht:errorPage>
+	<dht2:errorPage>Permission Denied</dht2:errorPage>
 </c:if>
 
 <head>
@@ -15,7 +17,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/admin.css"/>	
 	<dh:script module="dh.admin"/>
 </head>
-<dht:body>
+<body>
 
 <c:choose>
 <c:when test="${empty mode}">
@@ -85,7 +87,7 @@ New features flag is <b><c:out value="${admin.newFeatures}"/></b>
 <p>
   <c:forEach items="${admin.cachedLiveUsers}" var="user">
 	<dht:liveUserDebug user="${user}"/>
-  </c:forEach>  
+  </c:forEach>
 </p>
 </c:when>
 <c:when test="${mode == 'users'}">
@@ -147,5 +149,5 @@ New features flag is <b><c:out value="${admin.newFeatures}"/></b>
   Unrecognized mode!  Must be driver error.
 </c:otherwise>
 </c:choose>
-</dht:body>
+</body>
 </html>
