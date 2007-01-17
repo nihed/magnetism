@@ -409,8 +409,8 @@ public enum ExternalAccountType {
 				if (handle.length() > LastFmWebServices.MAX_USERNAME_LENGTH)
 					throw new ValidationException("Last.fm usernames have a maximum length of " + LastFmWebServices.MAX_USERNAME_LENGTH);
 				
-				if (!handle.matches("[-_A-Za-z0-9]+"))
-					throw new ValidationException("Last.fm usernames can only have letters, digits, dash and underscore (- _)");
+				if (!handle.matches("[-_A-Za-z0-9.]+"))
+					throw new ValidationException("Last.fm usernames can only have letters, digits, dash, dot and underscore (- . _)");
 				
 				// As extra paranoia, be sure we can use the username in an url
 				try {

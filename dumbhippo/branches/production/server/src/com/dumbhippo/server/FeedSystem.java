@@ -58,7 +58,7 @@ public interface FeedSystem extends PollingTaskLoader {
 	 * @param result the result of a feed fetch
 	 * @throws FeedLinkUnknownException 
 	 */
-	void storeRawUpdatedFeed(long feedId, SyndFeed feed) throws FeedLinkUnknownException;
+	boolean storeRawUpdatedFeed(long feedId, SyndFeed feed) throws FeedLinkUnknownException;
 	
 	/**
 	 * Mark a feed as failed after an unsuccessful update.
