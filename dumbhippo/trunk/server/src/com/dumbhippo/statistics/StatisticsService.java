@@ -79,7 +79,7 @@ public class StatisticsService extends ServiceMBeanSupport implements Statistics
     		try {
     			sets.add(getSet(filename));
     		} catch (NotFoundException e) {
-    			logger.warn("Error listing statistics set: " + e.getMessage());
+    			logger.warn("Error listing statistics set: ", e);
     		}
         }
         sets.add(statisticsWriter);

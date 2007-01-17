@@ -46,7 +46,7 @@ class ColumnSource implements ColumnDescription {
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException("Can't access column source getter");
 		} catch (InvocationTargetException e) {
-			throw new RuntimeException("Exception invoking column source getter");
+			throw new RuntimeException("Exception invoking column source getter", e);
 		}
 	}
 	
