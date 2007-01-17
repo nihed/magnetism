@@ -78,6 +78,12 @@
     </servlet>
 
     <servlet>
+      <servlet-name>CrashReportServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.CrashReportServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
       <servlet-name>SendInviteServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.servlets.SendInviteServlet</servlet-class>
     </servlet>    
@@ -191,6 +197,11 @@
    <servlet-mapping>
       <servlet-name>AbnormalErrorServlet</servlet-name>
       <url-pattern>/abnormalerror</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>CrashReportServlet</servlet-name>
+      <url-pattern>/crash-report</url-pattern>
    </servlet-mapping>
 
    <servlet-mapping>
