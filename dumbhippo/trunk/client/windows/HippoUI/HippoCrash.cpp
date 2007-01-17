@@ -1,4 +1,4 @@
-/* HippoCrash.h: Crash dump management
+/* HippoCrash.cpp: Crash dump management
  *
  * Copyright Red Hat, Inc. 2007
  **/
@@ -30,71 +30,71 @@ static ExceptionHandler *handler;
 static void
 crashTimesFromString(HippoBSTR crashTimesString, long times[])
 {
-	HippoUStr ustr(crashTimesString);
-	char **split = g_strsplit(ustr.c_str(), ";", -1);
+    HippoUStr ustr(crashTimesString);
+    char **split = g_strsplit(ustr.c_str(), ";", -1);
 
-	int i = 0;
-	while (i < MAX_SAVED_CRASH_TIMES && split[i]) {
-		times[i] = atol(split[i]);
-		i++;
-	}
-	while (i < MAX_SAVED_CRASH_TIMES) {
-		times[i] = 0;
-		i++;
-	}
+    int i = 0;
+    while (i < MAX_SAVED_CRASH_TIMES && split[i]) {
+        times[i] = atol(split[i]);
+        i++;
+    }
+    while (i < MAX_SAVED_CRASH_TIMES) {
+        times[i] = 0;
+        i++;
+    }
 
-	g_strfreev(split);
+    g_strfreev(split);
 }
 
 static HippoBSTR
 crashTimesToString(long times[])
 {
-	HippoBSTR result;
-	WCHAR buf[32];
+    HippoBSTR result;
+    WCHAR buf[32];
 
-	for (int i = 0; i < MAX_SAVED_CRASH_TIMES && times[i] != 0; i++) {
-		if (result.Length() > 0)
-			result.Append(';');
-		StringCchPrintfW(buf, sizeof(buf) / sizeof(buf[0]), L"%ld", times[i]);
-		result.Append(buf);
-	}
+    for (int i = 0; i < MAX_SAVED_CRASH_TIMES && times[i] != 0; i++) {
+        if (result.Length() > 0)
+            result.Append(';');
+        StringCchPrintfW(buf, sizeof(buf) / sizeof(buf[0]), L"%ld", times[i]);
+        result.Append(buf);
+    }
 
-	return result;
+    return result;
 }
 
 static bool
 checkRespawn()
 {
-	HippoRegKey key(HKEY_CURRENT_USER, HIPPO_REGISTRY_KEY L"\\Client", true);
+    HippoRegKey key(HKEY_CURRENT_USER, HIPPO_REGISTRY_KEY L"\\Client", true);
 
-	HippoBSTR crashTimesString;
-	if (!key.loadString(L"CrashTimes", &crashTimesString)) {
-		crashTimesString = HippoBSTR(L"");
-	}
+    HippoBSTR crashTimesString;
+    if (!key.loadString(L"CrashTimes", &crashTimesString)) {
+        crashTimesString = HippoBSTR(L"");
+    }
 
-	long now;
-	GTimeVal tmp;
-	g_get_current_time(&tmp);
-	now = tmp.tv_sec;
+    long now;
+    GTimeVal tmp;
+    g_get_current_time(&tmp);
+    now = tmp.tv_sec;
 
-	long crashTimes[MAX_SAVED_CRASH_TIMES];
-	crashTimesFromString(crashTimesString, crashTimes);
+    long crashTimes[MAX_SAVED_CRASH_TIMES];
+    crashTimesFromString(crashTimesString, crashTimes);
 
-	for (int i = MAX_SAVED_CRASH_TIMES - 1; i > 0; i--)
-		crashTimes[i] = crashTimes[i - 1];
-	crashTimes[0] = now;
+    for (int i = MAX_SAVED_CRASH_TIMES - 1; i > 0; i--)
+        crashTimes[i] = crashTimes[i - 1];
+    crashTimes[0] = now;
 
-	int recentCrashes = 0;
-	for (int i = 0; i < MAX_SAVED_CRASH_TIMES && crashTimes[i] != 0; i++) {
-		if (now - crashTimes[i] < RECENT_TIME)
-			recentCrashes++;
-	}
+    int recentCrashes = 0;
+    for (int i = 0; i < MAX_SAVED_CRASH_TIMES && crashTimes[i] != 0; i++) {
+        if (now - crashTimes[i] < RECENT_TIME)
+            recentCrashes++;
+    }
 
-	crashTimesString = crashTimesToString(crashTimes);
+    crashTimesString = crashTimesToString(crashTimes);
 
-	key.saveString(L"CrashTimes", crashTimesString.m_str);
+    key.saveString(L"CrashTimes", crashTimesString.m_str);
 
-	return recentCrashes <= RECENT_MAX_CRASHES;
+    return recentCrashes <= RECENT_MAX_CRASHES;
 }
 
 static void
@@ -256,15 +256,15 @@ hippoCrashReport(HippoInstanceType instanceType, const char *crashName)
 {
     HippoBSTR webServer;
     HINSTANCE instance = GetModuleHandle(NULL);
-	bool respawn = checkRespawn();
+    bool respawn = checkRespawn();
 
     HippoPreferences::getWebServer(instanceType, &webServer);
-	
-	if (respawn) {
-		HippoBSTR file = hippoUserDataDir(L"CrashDump");
+    
+    if (respawn) {
+        HippoBSTR file = hippoUserDataDir(L"CrashDump");
 
-		file.Append('\\');
-		file.appendUTF8(crashName, -1);
+        file.Append('\\');
+        file.appendUTF8(crashName, -1);
         file.Append(L".dmp");
 
         INT_PTR result = DialogBoxParam(instance, MAKEINTRESOURCE(IDD_CRASH), NULL, 
@@ -277,12 +277,12 @@ hippoCrashReport(HippoInstanceType instanceType, const char *crashName)
                        crashReportedDialogProc, (LPARAM)crashName);
 
         return true;
-	} else {
+    } else {
         INT_PTR result = DialogBoxParam(instance, MAKEINTRESOURCE(IDD_REPEAT_CRASH), NULL, 
                                         repeatCrashDialogProc, NULL);
 
         return false;
-	}
+    }
 }
 
 static bool
@@ -295,7 +295,7 @@ hippoCrashCallback(const wchar_t      *dump_path,
     WCHAR *instanceArgument = NULL;
     WCHAR exePath[1024];
 
-	HINSTANCE instance = GetModuleHandle(NULL);
+    HINSTANCE instance = GetModuleHandle(NULL);
     if (!GetModuleFileName(instance, exePath, sizeof(exePath) / sizeof(exePath[0])))
         return succeeded;
 
@@ -312,28 +312,28 @@ hippoCrashCallback(const wchar_t      *dump_path,
 
     _wspawnl(_P_NOWAIT, exePath, L"HippoUI", L"--crash-dump", minidump_id, instanceArgument, NULL);
 
-	return succeeded;
+    return succeeded;
 }
 
 
 void
 hippoCrashInit(HippoInstanceType instanceType)
 {
-	if (IsDebuggerPresent())
-		return;
+    if (IsDebuggerPresent())
+        return;
 
     hippoInstanceType = instanceType;
 
     HippoBSTR dumpDir = hippoUserDataDir(L"CrashDump");
-	handler = new ExceptionHandler(std::wstring(dumpDir.m_str),
-								   NULL, 
-								   hippoCrashCallback, NULL,
-								   true); // install a global exception catcher
+    handler = new ExceptionHandler(std::wstring(dumpDir.m_str),
+                                   NULL, 
+                                   hippoCrashCallback, NULL,
+                                   true); // install a global exception catcher
 }
 
 void
 hippoCrashDump()
 {
-	if (handler)
-		handler->WriteMinidump();
+    if (handler)
+        handler->WriteMinidump();
 }
