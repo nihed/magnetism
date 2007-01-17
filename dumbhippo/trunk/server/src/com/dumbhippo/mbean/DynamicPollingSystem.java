@@ -42,6 +42,12 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(DynamicPollingSystem.class);
 	
+	private static DynamicPollingSystem instance;
+	
+	public DynamicPollingSystem getInstance() {
+		return instance;
+	}
+	
 	public interface PollingTaskFamily {
 		public long getDefaultPeriodicity();
 		
@@ -367,10 +373,10 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		for (int i = 0; i < taskSetWorkers.length; i++) {
 			if (taskSetWorkers[i] == currentSet) {
 				taskSetWorkers[i + (slower ? 1 : -1)].addTasks(tasks);
+				return tasks;
 			}
 		}
-		// Currently we assume each set has no limit - later we want to allow a task to accept only a subset
-		return tasks;
+		throw new RuntimeException("Task set not in taskSetWorkers?");
 	}
 	
 	private synchronized void obsoleteTasks(Set<PollingTask> tasks) {
@@ -440,9 +446,8 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			// them to buckets
 			Random r = new Random();
 			synchronized (pendingTaskAdditions) {
-				int bucketNum = r.nextInt(bucketCount);
 				for (PollingTask task : pendingTaskAdditions) {
-					tasks.put(task, bucketNum);
+					tasks.put(task, r.nextInt(bucketCount));
 				}
 				pendingTaskAdditions.clear();
 			}
@@ -528,7 +533,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 					}
 				}
 			}
-			logger.debug("bucket: " + bucket + " executed: " + tasks.size() + " changed: " + changedCount + " timeout: " + execTimeout.size() + " slower: " + slowerCandidates.size() + " faster: " + fasterCandidates.size() + " obsolete: " + obsolete.size() + " failed: " + failureCount);
+			logger.debug("bucket: " + bucket + " executed: " + currentTasks.size() + " changed: " + changedCount + " timeout: " + execTimeout.size() + " slower: " + slowerCandidates.size() + " faster: " + fasterCandidates.size() + " obsolete: " + obsolete.size() + " failed: " + failureCount);
 			if (hasSlowerSet) {
 				for (PollingTask task : bumpTasks(this, execTimeout, true)) {
 					tasks.remove(task);
@@ -677,6 +682,8 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		taskPersistenceThread = ThreadUtils.newDaemonThread("dynamic task set persister", taskPersistenceWorker);
 		taskPersistenceThread.start();
 		
+		instance = this;		
+		
 		if (config.isFeatureEnabled("pollingTaskDebug")) {
 			logger.warn("pollingTask debug enabled; injecting test tasks");			
 			TestPollingTaskFamily[] families = new TestPollingTaskFamily[TestPollingTaskFamily.FamilyType.values().length];
@@ -719,6 +726,9 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		taskSetThreads = null;
 		taskSetWorkers = null;
 		taskFamilies.clear();
+		
+		instance = null;
+		
 		logger.debug("DynamicPollingSystem singleton stopped");
 	}
 	
