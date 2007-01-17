@@ -5,9 +5,11 @@ import os
 import re
 
 tags_by_name = {}
+javafiles_by_classname = {}
 all_file_tags = []
 all_java_tags = []
 all_jsp_files = []
+all_java_files = []
 
 referenced_java_classes = {}
 
@@ -130,7 +132,7 @@ class JavaTag(Tag):
         referenced_java_classes[self.javaclass()] = 1
 
     def fullpath(self):
-        return None
+        return javafiles_by_classname[self.javaclass()].fullpath()
 
     def __repr__(self):
         return "{%s %s}" % (self.name(), self.javaclass())
@@ -162,6 +164,52 @@ class JspFile:
 
     def __str__(self):
         return self.__repr__()
+
+class JavaFile:
+    def __init__(self, fullpath):
+        self._filename = os.path.basename(fullpath)
+        self._fullpath = fullpath
+
+        self._referenced = 0
+
+        s = fullpath.replace('/', '.')
+        i = s.find('.src.')
+        s = s[i+5:]
+        self._javaclass = s.replace(".java", "")
+
+        lines = open(fullpath).readlines()
+
+        # this is not very robust e.g. won't get references to stuff
+        # in the same package
+        self._referenced_java_classes = scan_class_references(lines)
+
+    def referenced_java_classes(self):
+        return self._referenced_java_classes        
+
+    def javaclass(self):
+        return self._javaclass
+
+    def filename(self):
+        return self._filename
+
+    def fullpath(self):
+        return self._fullpath
+
+    def referenced(self):
+        return self._referenced
+
+    def mark_referenced(self):
+        if self._referenced:
+            return
+        self._referenced = 1
+        for classname in self.referenced_java_classes():
+            referenced_java_classes[classname] = 1
+
+    def __repr__(self):
+        return "{%s}" % (self.filename())
+
+    def __str__(self):
+        return self.__repr__()    
 
 name_re = re.compile('<name>([^<]+)<\/name>')
 tagclass_re = re.compile('<tagclass>([^<]+)<\/tagclass>')
@@ -235,12 +283,21 @@ def main():
        t = TagFile(tagfilepath)
        all_file_tags.append(t)
 
-    for javafilepath in jspfiles:
-        j = JspFile(javafilepath)
+    for jspfilepath in jspfiles:
+        j = JspFile(jspfilepath)
         all_jsp_files.append(j)
 
     for tldfilepath in tldfiles:
         load_tld(tldfilepath)
+
+    for javafilepath in javafiles:
+        j = JavaFile(javafilepath)
+        all_java_files.append(j)
+
+    for j in all_java_files:
+        if javafiles_by_classname.has_key(j.javaclass()):
+            raise "somehow got two java files with class %s" % j.javaclass()
+        javafiles_by_classname[j.javaclass()] = j
 
     for t in all_java_tags:
         if tags_by_name.has_key(t.name()):
@@ -267,6 +324,7 @@ def main():
     for t in all_java_tags:
         if not t.referenced():
             print "%s unused (java class %s)" % (t.name(), t.javaclass())
+            unused_files.append(t.fullpath())
 
     for t in all_file_tags:
         if not t.referenced():
@@ -297,6 +355,7 @@ def main():
     f.write("\n")
 
     print "Wrote script %s which will remove the above" % scriptname
+    print "Remember to edit .tld also if removing java tags"
 
 main()
 

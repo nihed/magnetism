@@ -15,5 +15,4 @@
 </c:choose>
 <jsp:doBody/>
 </div><!-- dhContainer end -->
-<dh:relocateDest where="outsideFixedHackContainer"/>
 </body>

@@ -74,17 +74,6 @@
         </attribute>      
     </tag>
     <tag>
-        <name>presence</name>
-        <tagclass>com.dumbhippo.web.tags.PresenceTag</tagclass>
-        <bodycontent>empty</bodycontent>
-        <info>Taggified presence info about a person, group, or post</info>
-	    <attribute>
-           <name>value</name>
-           <required>true</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>
-    </tag>
-    <tag>
         <name>entityList</name>
         <tagclass>com.dumbhippo.web.tags.EntityListTag</tagclass>
         <bodycontent>empty</bodycontent>
@@ -144,17 +133,6 @@
            <required>false</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>                         
-    </tag>
-    <tag>
-        <name>favicon</name>
-        <tagclass>com.dumbhippo.web.tags.FaviconTag</tagclass>
-        <bodycontent>empty</bodycontent>
-        <info>Favicon image for the given link</info>
-	    <attribute>
-           <name>link</name>
-           <required>true</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>
     </tag>
     <tag>
     	<name>iterateStack</name>
@@ -222,55 +200,6 @@
         </attribute>
     </tag>
     <tag>
-        <name>relocate</name>
-        <tagclass>com.dumbhippo.web.tags.RelocateTag</tagclass>
-        <bodycontent>scriptless</bodycontent>
-        <info>Move this stuff to a later relocateDest tag</info>
-	    <attribute>
-           <name>where</name>
-           <required>true</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>
-    </tag>
-    <tag>
-        <name>relocateDest</name>
-        <tagclass>com.dumbhippo.web.tags.RelocateDestTag</tagclass>
-        <bodycontent>empty</bodycontent>
-        <info>Print out the stuff from an earlier relocate tag</info>
-	    <attribute>
-           <name>where</name>
-           <required>true</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>
-    </tag>
-    <tag>
-        <name>whenRelocateDestNeeded</name>
-        <tagclass>com.dumbhippo.web.tags.WhenRelocateDestNeededTag</tagclass>
-        <bodycontent>scriptless</bodycontent>
-        <info>Invoke body only if there's stuff to be relocated</info>
-	    <attribute>
-           <name>where</name>
-           <required>true</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>
-    </tag>
-    <tag>
-        <name>skipList</name>
-        <tagclass>com.dumbhippo.web.tags.SkipListTag</tagclass>
-        <bodycontent>scriptless</bodycontent>
-        <info>Skip the body if the given list is empty</info>
-	    <attribute>
-           <name>value</name>
-           <required>true</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>
-        <attribute>
-           <name>skipId</name>
-           <required>false</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>
-    </tag>
-    <tag>
         <name>nowPlaying</name>
         <tagclass>com.dumbhippo.web.tags.NowPlayingTag</tagclass>
         <bodycontent>empty</bodycontent>
@@ -293,38 +222,6 @@
         <attribute>
            <name>forceMode</name>
            <required>false</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>
-        <attribute>
-           <name>hasLabel</name>
-           <required>false</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>
-        <attribute>
-           <name>embedOnly</name>
-           <required>false</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>
-        
-    </tag>
-    <tag>
-        <name>userSummary</name>
-        <tagclass>com.dumbhippo.web.tags.UserSummaryTag</tagclass>
-        <bodycontent>empty</bodycontent>
-        <info>Outputs the "user summary" flash badge object</info>
-	    <attribute>
-           <name>userId</name>
-           <required>true</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>
-        <attribute>
-           <name>escapeXml</name>
-           <required>false</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>
-        <attribute>
-           <name>height</name>
-           <required>true</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>
         <attribute>
