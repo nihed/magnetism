@@ -17,6 +17,7 @@ import org.jboss.mx.util.MBeanProxyExt;
 import org.jboss.mx.util.MBeanServerLocator;
 
 import com.dumbhippo.logging.CountingAppender;
+import com.dumbhippo.mbean.DynamicPollingSystem;
 import com.dumbhippo.server.impl.MessengerGlueBean;
 
 /**
@@ -146,5 +147,53 @@ public class ServerStatistics implements StatisticsSource {
 	        type=ColumnType.CUMULATIVE)
 	public long getErrorCount() {
 		return CountingAppender.getErrorCount();
+	}
+	
+	private long getTaskCount(int i) {
+		DynamicPollingSystem pollsys = DynamicPollingSystem.getInstance();
+		if (pollsys == null)
+			return 0;
+		else
+			return pollsys.getTaskCount(i);
+	}
+	
+	@Column(id="pollingTaskCount0",
+			name="Polling Task Set 0 Size",
+			units=ColumnUnit.COUNT,
+			type=ColumnType.SNAPSHOT)
+	public long getPollingTaskCount0() {
+		return getTaskCount(0);
+	}
+	
+	@Column(id="pollingTaskCount1",
+			name="Polling Task Set 1 Size",
+			units=ColumnUnit.COUNT,
+			type=ColumnType.SNAPSHOT)
+	public long getPollingTaskCount1() {
+		return getTaskCount(1);
+	}	
+	
+	@Column(id="pollingTaskCount2",
+			name="Polling Task Set 2 Size",
+			units=ColumnUnit.COUNT,
+			type=ColumnType.SNAPSHOT)
+	public long getPollingTaskCount2() {
+		return getTaskCount(2);
+	}
+	
+	@Column(id="pollingTaskCount3",
+			name="Polling Task Set 3 Size",
+			units=ColumnUnit.COUNT,
+			type=ColumnType.SNAPSHOT)
+	public long getPollingTaskCount3() {
+		return getTaskCount(3);
+	}		
+	
+	@Column(id="pollingTaskCount4",
+			name="Polling Task Set 4 Size",
+			units=ColumnUnit.COUNT,
+			type=ColumnType.SNAPSHOT)
+	public long getPollingTaskCount4() {
+		return getTaskCount(4);
 	}
 }
