@@ -620,5 +620,15 @@ div.dh-async-action-link-complete {
 	font-size:	  		14px;
 	font-weight:		bold;
 	border:				1px solid #E2671B;
-	-moz-border-radius:	5px;
+	-moz-border-radius:	5px;	
+}
+
+.dh-message a {
+    color:              black;
+    text-decoration:    underline;
+    cursor:             pointer;
+}
+
+.dh-message .dh-confirm-link {
+    color:              blue;
 }

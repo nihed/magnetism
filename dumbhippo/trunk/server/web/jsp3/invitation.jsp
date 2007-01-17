@@ -97,6 +97,8 @@
     </dht3:shinyBox>    
     
     <dht3:shinyBox color="grey">
+        <div></div> <!-- IE bug workaround, display:none as first child causes problems -->			
+	    <dht:messageArea idSuffix="InvList"/>
         <div class="dh-section-header">Outstanding Invitations</div>
         <c:choose>
             <c:when test="${person.outstandingInvitations.size > 0}">

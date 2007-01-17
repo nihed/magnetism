@@ -723,6 +723,11 @@ div.dh-person-header {
 	margin-bottom:	5px;
 }
 
+.dh-message a {
+    margin-right:   5px;
+    margin-left:    5px;
+}
+
 .dh-shinybox-bottom-content {
     position:       relative;
     margin-top:     5px;

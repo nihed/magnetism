@@ -694,6 +694,15 @@ dh.util.createLinkElementWithChild = function(url, linkChild) {
     return linkElement;
 }
 
+dh.util.createActionLinkElement = function(text, onclick, className) {
+    var linkElement = document.createElement("a");
+    linkTextNode = document.createTextNode(text);
+    linkElement.appendChild(linkTextNode);
+    linkElement.onclick = onclick;
+    linkElement.className = className;
+    return linkElement;
+}
+
 dh.util.foreachChildElements = function(startNode, func) {
 	var foreachRecurse = function(currentNode) {
 		if (currentNode.nodeType != 1)
@@ -729,12 +738,20 @@ dh.util.getBodyPosition = function(el) {
 	return point;
 }
 
-dh.util.showMessage = function(message) {
-	var div = document.getElementById("dhMessageDiv")
+dh.util.showMessage = function(message, idSuffix, confirmAction, cancelAction) {
+    if (!idSuffix) {
+        idSuffix = ""
+    }
+        
+	var div = document.getElementById("dhMessageDiv" + idSuffix)
 
 	if (message) {	
 		dh.util.clearNode(div)
 		div.appendChild(document.createTextNode(message))
+		if (confirmAction && cancelAction) {
+		    div.appendChild(dh.util.createActionLinkElement("Confirm", confirmAction, "dh-confirm-link"))         
+		    div.appendChild(dh.util.createActionLinkElement("Cancel", cancelAction, "dh-cancel-link"))      
+		}
 		div.style.display = "block"
 	} else {
 		div.style.display = "none"

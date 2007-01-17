@@ -69,6 +69,7 @@
         </dht3:shinyBox>
         
         <dht3:shinyBox color="grey">
+            <dht:messageArea idSuffix="InvList"/>
 			<div class="dh-page-shinybox-title-large">
 				<span>People I've Invited to Join Mugshot <c:out value="(${person.pageableInvitedContacts.totalCount})"/></span>
 				<c:if test="${person.invitations != 1}">
@@ -85,12 +86,13 @@
 			        <dht:expandablePager pageable="${person.pageableInvitedContacts}" anchor="dhInvitedContacts"/>
 			    </c:when>
 			    <c:otherwise>
-		    	    No outstanding invitations.  <c:if test="${person.invitations > 0}"><a href="/invitation">Invite friends!</a></c:if>
+		    	    You have no outstanding invitations.  <c:if test="${person.invitations > 0}"><a href="/invitation">Invite friends!</a></c:if>
 			    </c:otherwise> 
 			</c:choose>       			
 		</dht3:shinyBox>    
 		
 		<dht3:shinyBox color="grey">
+		    <dht:messageArea idSuffix="ContactsList"/>
 			<div class="dh-page-shinybox-title-large">
 				<span>People I've Shared Links With <c:out value="(${person.pageableContactsWithoutInvites.totalCount})"/></span>
 			</div>
