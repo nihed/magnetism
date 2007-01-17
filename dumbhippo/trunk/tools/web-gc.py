@@ -29,7 +29,8 @@ class Tag:
 
 tagdir_re = re.compile('tagdir="\/WEB-INF\/(tags[0-9/]*)" +prefix="([0-9a-z]+)"')
 tagname_re = re.compile('<dh([a-z0-9]*):([a-z0-9A-Z_]+)')
-javaclass_re = re.compile('(com\.dumbhippo\.[a-zA-Z0-9_.]+)')
+javaclass_re = re.compile('(com\.dumbhippo\.[.a-zA-Z0-9_]+[a-zA-Z0-9_])')
+extends_page_re = re.compile('[a-zA-Z0-9_]\s+extends\s+([a-zA-Z0-9_]+[a-zA-Z0-9_])')
 
 def scan_tag_references(lines):
     prefix_fixup_map = { 'dh' : 'dh' }
@@ -63,11 +64,38 @@ def scan_tag_references(lines):
 
     return referenced_tag_names
 
+# inner classes and some other things confuse us
+ignoreClasses = [
+    "com.dumbhippo.mbean.DynamicPollingSystem",
+    "com.dumbhippo.identity20.Guid.ParseException",
+    "com.dumbhippo.server.Configuration.PropertyNotFoundException",
+    "com.dumbhippo.live.LiveState.verboseLogging",
+    "com.dumbhippo.live.LiveState.getInstance",
+    "com.dumbhippo.services.FlickrPhotosetData.PhotoData",
+    'com.dumbhippo.web.CookieAuthentication.NotLoggedInException',
+    'com.dumbhippo.web.LoginCookie.BadTastingException',
+    'com.dumbhippo.web.pages.LiveObject',
+    'com.dumbhippo.web.JavascriptResolver.Page',
+    'com.dumbhippo.server.Stacker.GroupQueryType'
+   ]
+
 def scan_class_references(lines):
     referenced_java_classes = []
     for l in lines:
+        if l.startswith("package "):
+            continue
         matches = javaclass_re.findall(l)
         for klass in matches:
+            # remove confusing things
+            if klass in ignoreClasses:
+                continue
+            
+            # filter out package names
+            i = klass.rfind(".")
+            nopackage = klass[i+1:]
+            if nopackage.islower():
+                continue
+            # assume anything else is a fully-qualified referenced java class
             referenced_java_classes.append(klass)
     return referenced_java_classes
 
@@ -165,6 +193,8 @@ class JspFile:
     def __str__(self):
         return self.__repr__()
 
+unknown_classes = []
+
 class JavaFile:
     def __init__(self, fullpath):
         self._filename = os.path.basename(fullpath)
@@ -182,6 +212,18 @@ class JavaFile:
         # this is not very robust e.g. won't get references to stuff
         # in the same package
         self._referenced_java_classes = scan_class_references(lines)
+
+        # a little hack to get the extra java refs we most need
+        # for now
+        if self._javaclass.startswith("com.dumbhippo.web.pages."):
+            for l in lines:
+                m = extends_page_re.search(l)
+                if m:
+                    pageSuperclass = m.group(1)
+                    #print "%s extends %s" % (self._javaclass, pageSuperclass)
+                    if not pageSuperclass.endswith("Page"):
+                        raise "page %s extends %s not ending in Page?" % (self._javaclass, pageSuperclass)
+                    self._referenced_java_classes.append("com.dumbhippo.web.pages." + pageSuperclass)
 
     def referenced_java_classes(self):
         return self._referenced_java_classes        
@@ -203,7 +245,10 @@ class JavaFile:
             return
         self._referenced = 1
         for classname in self.referenced_java_classes():
-            referenced_java_classes[classname] = 1
+            if not javafiles_by_classname.has_key(classname):
+                unknown_classes.append(classname)
+            else:
+                javafiles_by_classname[classname].mark_referenced()
 
     def __repr__(self):
         return "{%s}" % (self.filename())
@@ -319,6 +364,14 @@ def main():
         for classname in jsp.referenced_java_classes():
             referenced_java_classes[classname] = 1
 
+    ## before this point, to reference a java file you set referenced_java_classes[class]=1,
+    ## and then after this point you have to mark_referenced() on the JavaFile object
+
+    for classname in referenced_java_classes.keys():
+        if not javafiles_by_classname.has_key(classname):
+            raise "java class %s is referenced but not known" % classname
+        javafiles_by_classname[classname].mark_referenced()
+
     unused_files = []
 
     for t in all_java_tags:
@@ -330,6 +383,12 @@ def main():
         if not t.referenced():
             print "%s unused (file %s)" % (t.name(), t.fullpath())
             unused_files.append(t.fullpath())
+
+    for j in all_java_files:
+        if j.javaclass().startswith("com.dumbhippo.web.pages."):
+            if not j.referenced():
+                print "page bean %s looks unused" % j.javaclass()
+                unused_files.append(j.fullpath())
 
     if len(unused_files) == 0:
         print "no unused files"
@@ -356,6 +415,11 @@ def main():
 
     print "Wrote script %s which will remove the above" % scriptname
     print "Remember to edit .tld also if removing java tags"
+    print "Note that Java classes may be used from Java, which this script won't find"
+
+    if len(unknown_classes) > 0:
+        print "Some classes were not understood and the script thinks something uses them"
+        print unknown_classes
 
 main()
 
