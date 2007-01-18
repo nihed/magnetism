@@ -657,10 +657,6 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	
 	public synchronized void startSingleton() {
 		Configuration config = EJBUtil.defaultLookup(Configuration.class);
-		if (!config.isFeatureEnabled("pollingTask")) {
-			logger.info("Dynamic polling not enabled; ignoring startup");
-			return;
-		}
 		logger.info("Starting DynamicPollingSystem singleton");
 		globalTasks = new HashSet<PollingTask>();
 		taskSetThreads = new Thread[pollingSetTimeSeconds.length];
@@ -697,12 +693,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		}
 	}
 	
-	public synchronized void stopSingleton() {
-		Configuration config = EJBUtil.defaultLookup(Configuration.class);		
-		if (!config.isFeatureEnabled("pollingTask")) {
-			logger.info("Dynamic polling not enabled; ignoring shutdown");
-			return;
-		}		
+	public synchronized void stopSingleton() {		
 		logger.info("Stopping DynamicPollingSystem singleton");
 		globalTasks = null;
 		
