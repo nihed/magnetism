@@ -2,6 +2,20 @@ dojo.provide("dh.event");
 dojo.require("dh.util");
 dojo.require("dh.lang");
 
+dh.event.combineMethodsIntoOneFunction = function(object, firstMethod, secondMethod) {
+	return function() {
+		firstMethod.apply(object, arguments);
+		return secondMethod.apply(object, arguments);
+	}
+}
+
+dh.event.combineMethodsIntoOneMethod = function(firstMethod, secondMethod) {
+	return function() {
+		firstMethod.apply(this, arguments);
+		return secondMethod.apply(this, arguments);
+	}
+}
+
 // get the node an event happened on - this is always the leaf node,
 // so if an event "bubbles" to a parent, the target is still the 
 // leaf.
@@ -114,12 +128,8 @@ dh.event.addEventListener = function(node, eventName, func) {
 	}
 }
 
-dh.event.connectAfterMethod = function(object, methodName, func) {
-	var oldHandler = object[methodName];
-	object[methodName] = function() {
-		oldHandler.apply(object, arguments);
-		return ourHandler.apply(object, arguments);
-	}
+dh.event.connectAfterMethod = function(object, methodName, extraMethod) {
+	object[methodName] = dh.event.combineMethodsIntoOneMethod(object[methodName], extraMethod)
 }
 
 dh.event._onWindowLoadHandlers = [];
@@ -142,12 +152,7 @@ dh.event._onWindowLoaded = function() {
 // If dojo has been initialized because something is using it, we 
 // need to keep the dojo onload handler.
 if (typeof window.onload == 'function') {
-	var oldHandler = window.onload;
-	var ourHandler = dh.event._onWindowLoaded;
-	dh.event._onWindowLoaded = function(){
-		oldHandler.apply(window, arguments);
-		return ourHandler.apply(window, arguments);
-	}
+	dh.event._onWindowLoaded = dh.event.combineMethodsIntoOneFunction(window, window.onload, dh.event._onWindowLoaded);
 }
 
 window.onload = dh.event._onWindowLoaded;
