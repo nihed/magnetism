@@ -1,6 +1,7 @@
 package com.dumbhippo.mbean;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -9,6 +10,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -21,6 +23,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.mbean.DynamicPollingSystem.TestPollingTaskFamily.FamilyType;
+import com.dumbhippo.persistence.PollingTaskEntry;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoadResult;
@@ -129,17 +132,26 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		public static final int MAX_FAMILY_NAME_LENGTH = 20;
 		public static final int MAX_TASK_ID_LENGTH = 128;
 
+		// The following fields are only read and modified from the polling
+		// thread for the taskset that this task is currently in, so 
+		// don't need locking
+		
 		private PollingTaskFamilyExecutionState executionState;
 		
-		// Exponential weighted averages, recalculated after each execution
+		// Exponentially weighted average executation time
 		private long executionAverage = -1;
-		private long periodicityAverage = -1;
 		
 		// Used to calculate periodicity
 		private long lastChange = 0;
 		
-		// Recorded in the database
+		// The following fields are recorded in the database in a separate
+		// thread, so must be protected by synchronizing on the object 
+		
+		// Last time this task was executed
 		private long lastExecuted = -1;
+		
+		// Exponentially weighted average time between changes
+		private long periodicityAverage = -1; // 
 		
 		// Whether or not we have been executed since the last persist
 		private boolean dirty;
@@ -219,35 +231,47 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			this.executionAverage = executionAverage;
 		}
 
-		public final long getPeriodicityAverage() {
+		public final synchronized long getPeriodicityAverage() {
 			return periodicityAverage;
 		}
 		
-		public final void setPeriodicityAverage(long periodicityAverage) {
-			this.periodicityAverage = periodicityAverage;
+		public final synchronized void setPeriodicityAverage(long periodicityAverage) {
+			if (this.periodicityAverage != periodicityAverage) {
+				this.periodicityAverage = periodicityAverage;
+				this.dirty = true;
+			}
 		}
 
 		public final void touchChanged() {
 			this.lastChange = System.currentTimeMillis();
 		}
 
-		public long getLastExecuted() {
-			return lastExecuted;
-		}
-		
 		@Override
 		public final String toString() {
 			return getFamily().getName() + "-" + getIdentifier();
 		}
 		
-		// Should be invoked while synchronized		
-		public void flagClean() {
+		public synchronized void syncStateFromTaskEntry(PollingTaskEntry entry) {
+			lastExecuted = entry.getLastExecuted().getTime();
+			periodicityAverage = entry.getPeriodicityAverage();
 			dirty = false;
 		}
 
-		// Should be invoked while synchronized
-		public boolean isDirty() {
-			return dirty;
+		public synchronized void syncStateToTaskEntry(PollingTaskEntry entry) {
+			if (dirty) {
+				Date lastExecutedDate = null;
+				if (lastExecuted >= 0)
+					lastExecutedDate = new Date(lastExecuted);
+				entry.setLastExecuted(lastExecutedDate);
+		
+				// Fixup for a bug
+				if (periodicityAverage < 0)
+					periodicityAverage = getFamily().getDefaultPeriodicity();
+				
+				entry.setPeriodicityAverage(periodicityAverage);
+				
+				dirty = false;
+			}
 		}
 	}
 	
@@ -324,13 +348,8 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		throw new RuntimeException("Default polling set time " + DEFAULT_POLLING_SET_TIME + " is not in pollingSetTimeSeconds");
 	}
 	
-	public synchronized void pokeTaskSet(int index) {
-		TaskSet set = taskSetWorkers[index];
-		synchronized (set) {
-			boolean interrupt = set.poke();
-			if (interrupt)
-				taskSetThreads[index].interrupt();
-		}
+	public void pokeTaskSet(int index) {
+		taskSetWorkers[index].poke();
 	}	
 	
 	private PollingTaskFamilyExecutionState getExecution(PollingTaskFamily family) {
@@ -366,7 +385,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	}
 	
 	// Invoked from TaskSet thread
-	private synchronized List<Future<PollingTaskExecutionResult>> executeTaskSet(Set<PollingTask> tasks, long timeoutMs) throws InterruptedException {
+	private List<Future<PollingTaskExecutionResult>> executeTaskSet(Set<PollingTask> tasks, long timeoutMs) throws InterruptedException {
 		return ThreadUtils.invokeAll(threadPool, tasks, timeoutMs, TimeUnit.MILLISECONDS);
 	}
 	
@@ -388,31 +407,37 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	private class TaskSet implements Runnable {
 		private static final long BUCKET_SPACING_SECONDS = 60 * 4; // 4 minutes
 		
+		// These fields are immutable
 		private long timeout;
 		private boolean hasFasterSet;
 		private boolean hasSlowerSet;
-		private Set<PollingTask> pendingTaskAdditions = new HashSet<PollingTask>();
-		private Map<PollingTask,Integer> tasks;
-		private boolean poked;
-		private boolean sleeping;
 		private int bucketCount;
-		private int currentBucket;
+
+		// Synchronize on the object to read or modify these fields
+		private boolean sleeping;
+		private boolean poked;
 		
+		// This is only ever modified from our worker thread, so the synchronization
+		// guarantees of ConcurrentHashMap are sufficient
+		private Map<PollingTask,Integer> tasks = new ConcurrentHashMap<PollingTask, Integer>();
+
+		// This is synchronized on separately
+		private Set<PollingTask> pendingTaskAdditions = new HashSet<PollingTask>();
+
 		public TaskSet(long timeoutSeconds, boolean hasFasterSet, boolean hasSlowerSet) {
 			this.timeout = timeoutSeconds * 1000;
 			this.hasFasterSet = hasFasterSet;
 			this.hasSlowerSet = hasSlowerSet;
-			tasks = new HashMap<PollingTask, Integer>();
 			this.bucketCount = (int) (timeoutSeconds / BUCKET_SPACING_SECONDS);
 			if (this.bucketCount <= 0)
 				this.bucketCount = 1;
-			currentBucket = 0;
 		}
 		
-		// Must be called while synchronized
-		public boolean poke() {
-			poked = true;
-			return sleeping;
+		public synchronized void poke() {
+			if (sleeping && !poked) {
+				poked = true;
+				notify();
+			}
 		}
 		
 		private double exponentialAverage(double prevAvg, double current, double alpha) {
@@ -442,7 +467,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			}
 		}
 		
-		private synchronized boolean executeTasks(int bucket) {	
+		private boolean executeTasks(int bucket) {	
 			// Suck in any tasks that were added, randomly assigning
 			// them to buckets
 			int newTaskCount = 0;
@@ -562,25 +587,21 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		public void run() {
 			// Wait 1 minute after server startup before beginning dynamic polling
 			long currentTimeout = 1 * 60 * 1000;
+			int currentBucket = 0;
 			
 			while (true) {
-				try {
-					synchronized (this) {
-						sleeping = true;
+				synchronized (this) {
+					sleeping = true;
+					poked = false;
+					
+					try {
+						wait(currentTimeout);
+					} catch (InterruptedException e) {
+						logger.debug("Polling task ({}ms) exiting", timeout);
+						break;
 					}
-					Thread.sleep(currentTimeout);
-				} catch (InterruptedException e) {
-					synchronized (this) {
-						if (poked) {
-							poked = false;
-						} else {
-							break;
-						}
-					}
-				} finally {
-					synchronized (this) {
-						sleeping = false;
-					}
+					
+					sleeping = false;
 				}
 				
 				if (!executeTasks(currentBucket))
@@ -597,11 +618,10 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			}
 		}
 		
-		public synchronized int getTaskCount() {
+		public int getTaskCount() {
 			return getTasks().size();
 		}
 		
-		// Should only be called when synchronized on this object
 		public Set<PollingTask> getTasks() {
 			return tasks.keySet();
 		}
@@ -645,11 +665,10 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 					int total = 0;
 					for (int i = 0; i < taskSetWorkers.length; i++) {
 						TaskSet worker = taskSetWorkers[i];
-						synchronized (worker) {
-							Set<PollingTask> tasks = worker.getTasks();	
-							total += tasks.size();
-							persister.snapshot(tasks);
-						}
+
+						Set<PollingTask> tasks = worker.getTasks();	
+						total += tasks.size();
+						persister.snapshot(tasks);
 					}
 					Set<PollingTask> obsolete = new HashSet<PollingTask>();				
 					synchronized (pendingObsolete) {

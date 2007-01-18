@@ -155,12 +155,8 @@ public abstract class CachedExternalUpdaterBean<Status> implements CachedExterna
 	
 	protected abstract PollingTask createPollingTask(String handle);
 	
-	public Set<PollingTask> loadTasks(Set<PollingTaskEntry> entries) {
-		Set<PollingTask> tasks = new HashSet<PollingTask>();
-		for (PollingTaskEntry entry : entries) {
-			String username = entry.getTaskId();
-			tasks.add(createPollingTask(username));
-		}
-		return tasks;		
+	public PollingTask loadTask(PollingTaskEntry entry) {
+		String username = entry.getTaskId();
+		return createPollingTask(username);
 	}	
 }
