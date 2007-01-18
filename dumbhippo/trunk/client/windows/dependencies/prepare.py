@@ -24,8 +24,7 @@ all_packages = {
     'libiconv' : {
     'url' : 'ftp://ftp.gtk.org/pub/glib/2.12/win32/dependencies/libiconv-1.9.1.bin.woe32.zip',
     'md5' : 'a18e9420d6a354b585a77230996b4171',
-    'excludes' : [ 'bin/iconv.exe',
-                   'include/*' ],
+    'excludes' : [ 'bin/iconv.exe' ],
     'includes' : [ 'README.libiconv' ]
     },
     'gettext' : {
@@ -40,7 +39,7 @@ all_packages = {
     'jpeg-lib' : {
     'url' : 'http://easynews.dl.sourceforge.net/sourceforge/gnuwin32/jpeg-6b-4-lib.zip',
     'md5' : 'ff0b69c04ebc6e73e89da1f3a0c74a82',
-    'excludes' : [ "*.mft", "*.ver", "jpeg-bcc.lib" ]
+    'excludes' : [ "*.mft", "*.ver", "*/jpeg-bcc.lib" ]
     },
     'jpeg-bin' : {
     'url' : 'http://easynews.dl.sourceforge.net/sourceforge/gnuwin32/jpeg-6b-4-bin.zip',
@@ -50,7 +49,7 @@ all_packages = {
     'libpng-lib' : {
     'url' : 'http://superb-west.dl.sourceforge.net/sourceforge/gnuwin32/libpng-1.2.8-lib.zip',
     'md5' : '17a34613562c1d352e7cb27253e58498',
-    'excludes' : [ 'manifest/*', 'include/*' ]
+    'excludes' : [ 'manifest/*', "*/libpng-bcc.lib", 'include/libpng13/*' ]
     },
     'libpng-bin' : {
     'url' : 'http://superb-west.dl.sourceforge.net/sourceforge/gnuwin32/libpng-1.2.8-bin.zip',
@@ -438,7 +437,7 @@ def do_install_or_overwrite(mode, packages, dir):
 
     if mode == INSTALL:
         print "Installed %d files to %s" % (installed_count, install_dir)
-        print "You can use './dirdiff.py client/windows/dependencies %s' to see what may have changed" % install_dir
+        print "You can use './dirdiff.py <package> %s/<package>' to see what may have changed" % install_dir
         print "Then run 'prepare.py overwrite'"
     else:
         print "Overwrote %d files in %s" % (installed_count, install_dir)
