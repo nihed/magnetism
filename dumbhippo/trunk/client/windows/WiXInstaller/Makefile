@@ -19,14 +19,23 @@ INPUTS =		\
     $(OUTDIR)\*.dll	\
     $(OUTDIR)\*.exe	\
     $(OUTDIR)\applets\*   
+    
+SYMBOL_FILES =					\
+	$(OUTDIR)\loudmouth.sym		\
+	$(OUTDIR)\HippoUtil.sym		\
+	$(OUTDIR)\HippoUI.sym
+	
 
-all: dirs $(OUTDIR)\Mugshot.msi
+all: dirs $(OUTDIR)\Mugshot.msi $(OUTDIR)\Mugshot-symbols.zip
 
 {.}.wxs{$(INTDIR)}.wixobj:
     candle -out $@ $<
 
 $(OUTDIR)\Mugshot.msi: $(OBJECTS) $(INPUTS)
     light -b $(OUTDIR) -out $@ $(OBJECTS)
+    
+$(OUTDIR)\Mugshot-symbols.zip: $(SYMBOL_FILES)
+	..\util\zip -j $@ $(SYMBOL_FILES) 
 
 dirs:
     -mkdir $(INTDIR)

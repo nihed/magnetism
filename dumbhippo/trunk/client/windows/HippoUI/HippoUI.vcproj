@@ -103,6 +103,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="..\util\dump_syms $(OutDir)\HippoUI.pdb &gt; $(OutDir)\HippoUI.sym"
 			/>
 		</Configuration>
 		<Configuration
@@ -180,6 +181,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="..\util\dump_syms $(OutDir)\HippoUI.pdb &gt; $(OutDir)\HippoUI.sym"
 			/>
 		</Configuration>
 	</Configurations>

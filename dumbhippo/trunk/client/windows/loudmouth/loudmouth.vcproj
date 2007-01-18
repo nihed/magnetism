@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="loudmouth"
 	ProjectGUID="{E02F6EA7-65C3-4D2A-919F-D022D6C26DFA}"
+	RootNamespace="loudmouth"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -97,6 +98,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Creating symbol dump file"
+				CommandLine="..\util\dump_syms $(OutDir)\$(ProjectName).pdb &gt; $(OutDir)\$(ProjectName).sym"
 			/>
 		</Configuration>
 		<Configuration
@@ -175,6 +178,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Creating symbol dump file"
+				CommandLine="..\util\dump_syms $(OutDir)\$(ProjectName).pdb &gt; $(OutDir)\$(ProjectName).sym"
 			/>
 		</Configuration>
 	</Configurations>

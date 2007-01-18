@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="HippoUtil"
 	ProjectGUID="{638E7547-B5E8-49AD-A70B-56E333C216FE}"
+	RootNamespace="HippoUtil"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -101,6 +102,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Creating symbol dump file"
+				CommandLine="..\util\dump_syms $(OutDir)\$(TargetName).pdb &gt; $(OutDir)\$(TargetName).sym"
 			/>
 		</Configuration>
 		<Configuration
@@ -179,6 +182,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Creating symbol dump file"
+				CommandLine="..\util\dump_syms $(OutDir)\$(TargetName).pdb &gt; $(OutDir)\$(TargetName).sym"
 			/>
 		</Configuration>
 	</Configurations>
