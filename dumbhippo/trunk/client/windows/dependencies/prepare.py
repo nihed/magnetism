@@ -65,7 +65,7 @@ all_packages = {
     'zlib-lib' : {
     'url' : 'http://superb-west.dl.sourceforge.net/sourceforge/gnuwin32/zlib-1.2.3-lib.zip',
     'md5' : 'b0a2df1a2b0dd0bd801d71d06ce42360',
-    'excludes' : [ 'manifest/*', 'lib/zlib-bcc.lib', 'include/*' ]
+    'excludes' : [ 'manifest/*', 'lib/zlib-bcc.lib' ]
     },
     'zlib-bin' : {
     'url' : 'http://superb-west.dl.sourceforge.net/sourceforge/gnuwin32/zlib-1.2.3-bin.zip',
