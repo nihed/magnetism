@@ -254,6 +254,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	
 	// Kind of arbitrary but...hey.  It feels good to me.  These are prime numbers
 	// closest to durations in seconds.
+	// Note: when updating this, ServerStatistics should be updated to add/remove a column.
 	private static final long[] pollingSetTimeSeconds = { 
 		181,              // ~3 minutes 
 		307,              // ~5 minutes
@@ -445,10 +446,12 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		private synchronized boolean executeTasks(int bucket) {	
 			// Suck in any tasks that were added, randomly assigning
 			// them to buckets
+			int newTaskCount = 0;
 			Random r = new Random();
 			synchronized (pendingTaskAdditions) {
 				for (PollingTask task : pendingTaskAdditions) {
 					tasks.put(task, r.nextInt(bucketCount));
+					newTaskCount++;
 				}
 				pendingTaskAdditions.clear();
 			}
@@ -534,7 +537,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 					}
 				}
 			}
-			logger.debug("bucket: " + bucket + " executed: " + currentTasks.size() + " changed: " + changedCount + " timeout: " + execTimeout.size() + " slower: " + slowerCandidates.size() + " faster: " + fasterCandidates.size() + " obsolete: " + obsolete.size() + " failed: " + failureCount);
+			logger.debug("bucket: " + bucket + " new: " + newTaskCount + " executed: " + currentTasks.size() + " changed: " + changedCount + " timeout: " + execTimeout.size() + " slower: " + slowerCandidates.size() + " faster: " + fasterCandidates.size() + " obsolete: " + obsolete.size() + " failed: " + failureCount);
 			if (hasSlowerSet) {
 				for (PollingTask task : bumpTasks(this, execTimeout, true)) {
 					tasks.remove(task);
@@ -593,6 +596,10 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			synchronized (pendingTaskAdditions) {
 				pendingTaskAdditions.addAll(task);
 			}
+		}
+		
+		public synchronized int getTaskCount() {
+			return getTasks().size();
 		}
 		
 		// Should only be called when synchronized on this object
@@ -699,6 +706,10 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			pushTasks(testTasks);
 		}
 	}
+	
+	public int getTaskCount(int i) {
+		return taskSetWorkers[i].getTaskCount();
+	}	
 	
 	public synchronized void stopSingleton() {		
 		logger.info("Stopping DynamicPollingSystem singleton");
