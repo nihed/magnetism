@@ -802,12 +802,17 @@ def check_unused_modules():
     for origfile in sorted:
         print "  %s" % (origfile.get_path())
 
+    completely_unused_count = len(sorted)
+
     print "\nThe following modules appear unused in any .jsp or .tag, but other modules from the same file appear to be used:"
     sorted = unused_modules.items()
     sorted.sort(tuple_first_value_compare)
     for modname, origfile in sorted:
         print "  %s from %s" % (modname, origfile.get_path())
 
+    partly_unused_count = len(sorted)
+
+    print "\n%d completely unused js files, %d unused js modules from partly-used files" % (completely_unused_count, partly_unused_count)
 
 def usage():
     print >>sys.stderr,  "Usage: jscompress srcdir_or_file1 [srcdir_or_file2 ...] destdir"
