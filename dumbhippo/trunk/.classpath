@@ -18,10 +18,10 @@
 			<accessrule kind="nonaccessible" pattern="**/awt/List"/>
 		</accessrules>
 	</classpathentry>
-	<classpathentry kind="var" path="JUNIT_HOME/junit.jar" sourcepath="ECLIPSE_HOME/plugins/org.eclipse.jdt.source_3.0.0/src/org.junit_3.8.1/junitsrc.zip"/>
+	<classpathentry sourcepath="ECLIPSE_HOME/plugins/org.eclipse.jdt.source_3.0.0/src/org.junit_3.8.1/junitsrc.zip" kind="var" path="JUNIT_HOME/junit.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/commons-collections-2.1.1.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/dom4j-1.6.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/smack-svn-local-build-2005-09-30.jar" sourcepath="/smack/source"/>
+	<classpathentry sourcepath="/smack/source" kind="var" path="HIPPO_TRUNK_LIB/server/smack-svn-local-build-2005-09-30.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/smackx-svn-local-build-2005-09-30.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/standard.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/jboss-remoting.jar"/>
@@ -90,5 +90,7 @@
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/jboss-cache.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/jbossweb-tomcat55.sar/tomcat-util.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/jbossweb-tomcat55.sar/jsf-libs/jstl.jar"/>
+	<classpathentry kind="src" path="validator/src/java"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/validator/asm-3.0.jar"/>
 	<classpathentry kind="output" path="eclipse-build"/>
 </classpath>
