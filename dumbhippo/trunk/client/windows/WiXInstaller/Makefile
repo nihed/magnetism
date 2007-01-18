@@ -21,6 +21,7 @@ INPUTS =		\
     $(OUTDIR)\applets\*   
     
 SYMBOL_FILES =					\
+	$(OUTDIR)\libcairo-2.sym	\
 	$(OUTDIR)\loudmouth.sym		\
 	$(OUTDIR)\HippoUtil.sym		\
 	$(OUTDIR)\HippoUI.sym
@@ -35,6 +36,7 @@ $(OUTDIR)\Mugshot.msi: $(OBJECTS) $(INPUTS)
     light -b $(OUTDIR) -out $@ $(OBJECTS)
     
 $(OUTDIR)\Mugshot-symbols.zip: $(SYMBOL_FILES)
+	-del $@
 	..\util\zip -j $@ $(SYMBOL_FILES) 
 
 dirs:

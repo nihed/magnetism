@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="HippoCommon"
 	ProjectGUID="{2F331475-82BE-44AC-B6DD-D430C758BC7B}"
+	RootNamespace="HippoCommon"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -40,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/cairo/include/cairo;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../dependencies/jpeg/include;../../common;../../common/loudmouth;../../common/canvas;../../common/hippo/generated"
+				AdditionalIncludeDirectories=".;../HippoUtil;../../common/cairo/src;../dependencies/glib/include/glib-2.0;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../dependencies/jpeg/include;../../common;../../common/loudmouth;../../common/canvas;../../common/hippo/generated"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;HIPPOCOMMON_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
