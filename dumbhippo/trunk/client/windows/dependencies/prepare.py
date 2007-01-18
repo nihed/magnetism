@@ -36,6 +36,10 @@ all_packages = {
     'md5' : '48b7cb1ba976fcc4dbbeb6cd75a4a02d',
     'excludes' : [ 'bin/*', '*.tcl', '*/gettext-po.h', '*/gettextpo.lib' ]
     },
+    'dirent' : {
+    'url' : 'http://www.gimp.org/~tml/gimp/win32/dirent.zip',
+    'md5' : '93f8137ae335f1ad020b81b69e80aabe', 
+    },
     'jpeg-lib' : {
     'url' : 'http://easynews.dl.sourceforge.net/sourceforge/gnuwin32/jpeg-6b-4-lib.zip',
     'md5' : 'ff0b69c04ebc6e73e89da1f3a0c74a82',
