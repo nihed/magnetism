@@ -1,7 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,6 +17,7 @@ import com.dumbhippo.TypeUtils;
 import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
 import com.dumbhippo.persistence.PollingTaskEntry;
 import com.dumbhippo.persistence.PollingTaskFamilyType;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -59,22 +58,7 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 	
 	public void snapshot(Set<PollingTask> tasks) {
 		for (PollingTask task : tasks) {
-			synchronized (task) {
-				if (task.isDirty()) {
-					PollingTaskEntry stats = getEntry(task);
-			
-					Date lastExecuted = null;
-					if (task.getLastExecuted() >= 0)
-						lastExecuted = new Date(task.getLastExecuted());
-					stats.setLastExecuted(lastExecuted);
-			
-					// Fixup for a bug
-					if (task.getPeriodicityAverage() < 0)
-						task.setPeriodicityAverage(task.getFamily().getDefaultPeriodicity());
-					stats.setPeriodicityAverage(task.getPeriodicityAverage());
-					task.flagClean();
-				}
-			}
+			task.syncStateToTaskEntry(getEntry(task));
 		}
 	}	
 	
@@ -118,7 +102,13 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 				largestId = entry.getId();
 			PollingTaskFamilyType taskFamilyType = entry.getFamily();
 			PollingTaskLoader loader = EJBUtil.defaultLookup(taskFamilyType.getLoader());
-			newTasks.addAll(loader.loadTasks(Collections.singleton(entry)));
+			try {
+				PollingTask task = loader.loadTask(entry);
+				task.syncStateFromTaskEntry(entry);
+				newTasks.add(task);
+			} catch (NotFoundException e) {
+				logger.info("Couldn't create task for entry {}: {}", entry.getId(), e.getMessage());
+			}
 		}
 		return new PollingTaskLoadResultImpl(largestId, newTasks);
 	}

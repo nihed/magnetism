@@ -12,7 +12,7 @@ import com.dumbhippo.persistence.PollingTaskFamilyType;
 public interface PollingTaskPersistence {
 	public interface PollingTaskLoader {
 		public void migrateTasks();
-		public Set<PollingTask> loadTasks(Set<PollingTaskEntry> entries);
+		public PollingTask loadTask(PollingTaskEntry entry) throws NotFoundException;
 	}
 	
 	public void createTask(PollingTaskFamilyType family, String id);

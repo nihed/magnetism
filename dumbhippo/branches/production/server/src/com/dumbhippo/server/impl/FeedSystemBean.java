@@ -904,19 +904,15 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 
-	public Set<PollingTask> loadTasks(Set<PollingTaskEntry> entries) {
-		Set<PollingTask> tasks = new HashSet<PollingTask>();
-		for (PollingTaskEntry entry : entries) {
-			String linkId = entry.getTaskId();
-			LinkResource link = em.find(LinkResource.class, linkId);
-			try {
-				Feed feed = (Feed) em.createQuery("select feed from Feed feed where feed.source = :source").setParameter("source", link).getSingleResult();
-				tasks.add(new FeedTask(feed, link.getGuid()));
-			} catch (NoResultException e) {
-				logger.warn("feed from link " + linkId + " was deleted", e);
-			}
+	public PollingTask loadTask(PollingTaskEntry entry) throws NotFoundException {
+		String linkId = entry.getTaskId();
+		LinkResource link = em.find(LinkResource.class, linkId);
+		try {
+			Feed feed = (Feed) em.createQuery("select feed from Feed feed where feed.source = :source").setParameter("source", link).getSingleResult();
+			return new FeedTask(feed, link.getGuid());
+		} catch (NoResultException e) {
+			throw new NotFoundException("Feed from link " + linkId + " was deleted");
 		}
-		return tasks;
 	}
 
 	public void migrateTasks() {
