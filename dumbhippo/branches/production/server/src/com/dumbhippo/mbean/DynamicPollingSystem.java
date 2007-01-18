@@ -25,15 +25,13 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoadResult;
 import com.dumbhippo.server.util.EJBUtil;
+import com.sun.org.apache.xml.internal.utils.UnImplNode;
 
 /** 
  *  This polling system executes polling tasks, optimizing the polling
  *  period depending on the task's rate of change.
  *  
  *  TODO: some random improvement thoughts
- *    - Seems probable that a large number of tasks will end up clumped in slower
- *      task sets.  Might want to add support for having multiple staggered instances of 
- *      the longer sets.
  *    - Perhaps increase polling on all accounts a user has specified
  *      based on their overall activity
  *    - Have the client ping us when it recognizes a URL like youtube.com/upload or the
@@ -180,7 +178,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		}
 
 		public final PollingTaskExecutionResult call() throws Exception {
-			executionState.awaitElgibility();
+			executionState.awaitEligibility();
 			long executionStart = System.currentTimeMillis();
 			// Update stuff saved to database
 			synchronized (this) {
@@ -262,8 +260,12 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		// 86413,            // ~1 day
 		// 259201            // ~3 days
 	};
-	private static final int DEFAULT_POLLING_SET_INDEX = 2;
+	// Used for tasks with unknown periodicity
+	private static final int DEFAULT_POLLING_SET_TIME = 307;
 	private static final int MAX_WORKER_COUNT = 300;
+	
+	// Computed from DEFAULT_POLLING_SET_TIME
+	private int defaultSetIndex;
 	
 	private static class PollingTaskFamilyExecutionState {
 		private PollingTaskFamily family;
@@ -279,7 +281,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		}
 
 		// Invoked from task worker threads
-		public void awaitElgibility() throws InterruptedException {
+		public void awaitEligibility() throws InterruptedException {
 			synchronized (this) {
 				while ((family.getMaxOutstanding() > 0 &&
 					    currentTaskCount >= family.getMaxOutstanding()))
@@ -297,16 +299,23 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		}		
 	}
 	
-	private static Map<PollingTaskFamily, PollingTaskFamilyExecutionState> taskFamilies = new HashMap<PollingTaskFamily, PollingTaskFamilyExecutionState>();
-	private static ExecutorService threadPool = ThreadUtils.newFixedThreadPool("polling task worker", MAX_WORKER_COUNT);
-	private static Set<PollingTask> globalTasks;
+	private Map<PollingTaskFamily, PollingTaskFamilyExecutionState> taskFamilies = new HashMap<PollingTaskFamily, PollingTaskFamilyExecutionState>();
+	private ExecutorService threadPool = ThreadUtils.newFixedThreadPool("polling task worker", MAX_WORKER_COUNT);
+	private Set<PollingTask> globalTasks;
 	
-	private static TaskSet[] taskSetWorkers;
-	private static Thread[] taskSetThreads;
-	private static TaskPersistenceWorker taskPersistenceWorker;
-	private static Thread taskPersistenceThread;
+	private TaskSet[] taskSetWorkers;
+	private Thread[] taskSetThreads;
+	private TaskPersistenceWorker taskPersistenceWorker;
+	private Thread taskPersistenceThread;
 	
 	public DynamicPollingSystem() {
+		for (int i = 0; i < pollingSetTimeSeconds.length; i++) {
+			if (pollingSetTimeSeconds[i] == DEFAULT_POLLING_SET_TIME) {
+				defaultSetIndex = i;
+				return;
+			}
+		}		
+		throw new RuntimeException("Default polling set time " + DEFAULT_POLLING_SET_TIME + " is not in pollingSetTimeSeconds");
 	}
 	
 	public synchronized void pokeTaskSet(int index) {
@@ -336,13 +345,13 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			logger.debug("adding task {}", task.toString());
 			task.setExecutionState(getExecution(task.getFamily()));
 			if (task.getPeriodicityAverage() == -1)
-				taskSetWorkers[DEFAULT_POLLING_SET_INDEX].addTasks(Collections.singleton(task));
+				taskSetWorkers[defaultSetIndex].addTasks(Collections.singleton(task));
 			else {
 				for (int i = 0; i < pollingSetTimeSeconds.length; i++) {
 					long periodicity = pollingSetTimeSeconds[i] * 1000;
 					if (i == pollingSetTimeSeconds.length - 1
-						|| (task.getPeriodicityAverage() > (periodicity * 1.2)
-							&& task.getPeriodicityAverage() < pollingSetTimeSeconds[i+1] * 1000)) {
+						|| (task.getPeriodicityAverage() >= periodicity
+							&& task.getPeriodicityAverage() < (pollingSetTimeSeconds[i+1] * 1000))) {
 						taskSetWorkers[i].addTasks(Collections.singleton(task));					
 					}
 				}
@@ -659,7 +668,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		for (int i = 0; i < pollingSetTimeSeconds.length; i++) {
 			long time = pollingSetTimeSeconds[i];
 			
-			TaskSet taskSet = new TaskSet(time, i > 0, i < pollingSetTimeSeconds.length - 2);
+			TaskSet taskSet = new TaskSet(time, i > 0, i < pollingSetTimeSeconds.length - 1);
 			Thread t = ThreadUtils.newDaemonThread("dynamic task set (" + time + ")",  taskSet);
 
 			taskSetWorkers[i] = taskSet;			
