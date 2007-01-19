@@ -1912,7 +1912,16 @@ g_io_channel_unix_new (gint fd)
   struct stat st;
   int optval, optlen;
 
+  /* HIPPO: the fstat() trick here doesn't work with the VS8 runtime, which aborts on
+   *    an invalid FD, rather than returning the error. In Mugshot, we don't ever   
+   *    call g_io_channel_new_unix() on anything but a socket, so we can just
+   *    bypass this code.
+   */
+#if 0
   is_fd = (fstat (fd, &st) == 0);
+#else
+  is_fd = FALSE;
+#endif
 
   optlen = sizeof (optval);
   is_socket = (getsockopt (fd, SOL_SOCKET, SO_TYPE, (char *) &optval, &optlen) != SOCKET_ERROR);

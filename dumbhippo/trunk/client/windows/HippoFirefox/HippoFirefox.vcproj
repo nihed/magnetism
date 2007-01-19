@@ -124,7 +124,6 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../dependencies/glib/include/glib-2.0"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;HIPPOFIREFOX_EXPORTS"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"

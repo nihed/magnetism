@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;../HippoUtil;../../common/cairo/src;../dependencies/glib/include/glib-2.0;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../dependencies/jpeg/include;../../common;../../common/loudmouth;../../common/canvas;../../common/hippo/generated"
+				AdditionalIncludeDirectories=".;../HippoUtil;../cairo;../../common/cairo/src;../../common/glib;../../common/glib/glib;../libglib;../dependencies/gettext/include;&quot;../dependencies/pango/include/pango-1.0&quot;;../dependencies/jpeg/include;../../common;../../common/loudmouth;../../common/canvas;../../common/hippo/generated"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;HIPPOCOMMON_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"

@@ -22,6 +22,7 @@ INPUTS =		\
     
 SYMBOL_FILES =					\
 	$(OUTDIR)\libcairo-2.sym	\
+	$(OUTDIR)\libglib-2.0-0.sym \
 	$(OUTDIR)\loudmouth.sym		\
 	$(OUTDIR)\HippoUtil.sym		\
 	$(OUTDIR)\HippoUI.sym
