@@ -83,7 +83,11 @@ public class ExternalAccount extends DBUnique {
 	}
 
 	public void setHandleValidating(String handle) throws ValidationException {
-		this.handle = accountType.canonicalizeHandle(handle);
+		String validatedHandle = accountType.canonicalizeHandle(handle);
+		if (validatedHandle == null) {
+			throw new ValidationException("Empty value for an account handle is not valid");
+		}
+		this.handle = validatedHandle;
 	}	
 	
 	@Column(nullable=true)
