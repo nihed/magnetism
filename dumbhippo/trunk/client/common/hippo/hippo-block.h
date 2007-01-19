@@ -49,6 +49,7 @@ struct _HippoBlock {
     gint64 ignored_timestamp;
     int significant_clicked_count;
     int clicked_count;
+    int message_count;
     char *icon_url;
     char *title;
     char *title_link;
@@ -99,6 +100,9 @@ void     hippo_block_set_clicked_count     (HippoBlock *block,
 int      hippo_block_get_significant_clicked_count     (HippoBlock *block);
 void     hippo_block_set_significant_clicked_count     (HippoBlock *block,
                                                         int         value);
+int      hippo_block_get_message_count     (HippoBlock *block);
+void     hippo_block_set_message_count     (HippoBlock *block,
+                                            int         value);
 gboolean hippo_block_get_clicked           (HippoBlock *block);
 void     hippo_block_set_clicked           (HippoBlock *block,
                                             gboolean    value);

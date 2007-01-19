@@ -51,6 +51,7 @@ enum {
     PROP_IGNORED_TIMESTAMP,
     PROP_CLICKED_COUNT,
     PROP_SIGNIFICANT_CLICKED_COUNT,
+    PROP_MESSAGE_COUNT,
     PROP_CLICKED,
     PROP_ICON_URL,
     PROP_IGNORED,
@@ -63,6 +64,7 @@ static void
 hippo_block_init(HippoBlock *block)
 {
     block->stack_reason = HIPPO_STACK_NEW_BLOCK;
+    block->message_count = -1;
 }
 
 static void
@@ -154,6 +156,15 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
 
     g_object_class_install_property(object_class,
+                                    PROP_MESSAGE_COUNT,
+                                    g_param_spec_int("message-count",
+                                                     _("Message count"),
+                                                     _("Number of comments and quips for this block"),
+                                                     -1, G_MAXINT,
+                                                     -1,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
                                     PROP_CLICKED,
                                     g_param_spec_boolean("clicked",
                                                          _("Clicked"),
@@ -242,6 +253,10 @@ hippo_block_set_property(GObject         *object,
         hippo_block_set_significant_clicked_count(block,
                                                   g_value_get_int(value));
         break;
+    case PROP_MESSAGE_COUNT:
+        hippo_block_set_message_count(block,
+                                      g_value_get_int(value));
+        break;
     case PROP_CLICKED:
         hippo_block_set_clicked(block,
                                 g_value_get_boolean(value));
@@ -308,6 +323,9 @@ hippo_block_get_property(GObject         *object,
     case PROP_SIGNIFICANT_CLICKED_COUNT:
         g_value_set_int(value, block->significant_clicked_count);
         break;
+    case PROP_MESSAGE_COUNT:
+        g_value_set_int(value, block->message_count);
+        break;
     case PROP_CLICKED:
         g_value_set_boolean(value, block->clicked);
         break;
@@ -363,6 +381,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     gint64 ignored_timestamp;
     int clicked_count;
     int significant_clicked_count = 0;
+    int message_count = -1;
     gboolean clicked;
     gboolean ignored;
     LmMessageNode *title_node;
@@ -385,6 +404,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
                          "ignoredTimestamp", HIPPO_SPLIT_TIME_MS, &ignored_timestamp,
                          "clickedCount", HIPPO_SPLIT_INT32, &clicked_count,
                          "significantClickedCount", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_OPTIONAL, &significant_clicked_count ,
+                         "messageCount", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_OPTIONAL, &message_count,
                          "clicked", HIPPO_SPLIT_BOOLEAN, &clicked, 
                          "ignored", HIPPO_SPLIT_BOOLEAN, &ignored,
                          "icon", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &icon_url,
@@ -411,6 +431,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     hippo_block_set_ignored_timestamp(block, ignored_timestamp);
     hippo_block_set_clicked_count(block, clicked_count);
     hippo_block_set_significant_clicked_count(block, significant_clicked_count);
+    hippo_block_set_message_count(block, message_count);
     hippo_block_set_clicked(block, clicked);
     hippo_block_set_ignored(block, ignored);
     hippo_block_set_icon_url(block, icon_url);
@@ -649,6 +670,26 @@ hippo_block_set_significant_clicked_count(HippoBlock *block,
     if (value != block->significant_clicked_count) {
         block->significant_clicked_count = value;
         g_object_notify(G_OBJECT(block), "significant-clicked-count");
+    }
+}
+
+int
+hippo_block_get_message_count(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), 0);
+
+    return block->message_count;
+}
+
+void
+hippo_block_set_message_count(HippoBlock *block,
+                              int         value)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (value != block->message_count) {
+        block->message_count = value;
+        g_object_notify(G_OBJECT(block), "message-count");
     }
 }
 

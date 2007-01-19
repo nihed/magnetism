@@ -282,6 +282,7 @@ hippo_canvas_block_music_append_content_items (HippoCanvasBlock *block,
     
     block_music->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
                                              "actions", hippo_canvas_block_get_actions(block),
+                                             "message-count", 0,
                                              NULL);
     g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hate_activated), block_music);
 
@@ -441,15 +442,9 @@ set_track(HippoCanvasBlockMusic *block_music,
         hippo_canvas_box_remove_all(block_music->downloads_box);
     }
 
-#if 0
-    /* Setting the chat-id gives us a "Chat" link; that can be useful for
-     * debugging, but if we want to expose that to the user, we'd probably
-     * want to move the chat link up to the Love It / Hate it quip line.
-     */
     g_object_set(G_OBJECT(block_music->chat_preview),
                  "chat-id", chat_id,
                  NULL);
-#endif
 }
 
 static void
@@ -563,6 +558,15 @@ hippo_canvas_block_music_set_recent_messages(HippoCanvasBlockMusic *block_music,
     block_music->have_messages = last_message != NULL;
 
     hippo_canvas_block_music_update_visibility(block_music);
+}
+
+void
+hippo_canvas_block_music_set_message_count(HippoCanvasBlockMusic *block_music,
+                                           int                    message_count)
+{
+    g_object_set(G_OBJECT(block_music->chat_preview),
+                 "message-count", message_count,
+                 NULL);
 }
 
 static void
