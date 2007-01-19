@@ -43,6 +43,8 @@ static void hippo_canvas_block_music_unexpand (HippoCanvasBlock *canvas_block);
 /* Internals */
 static void hippo_canvas_block_music_update_visibility(HippoCanvasBlockMusic *block_music);
 
+static void on_quip_activated(HippoCanvasItem       *item,
+                              HippoCanvasBlockMusic *block_music);
 static void on_love_activated(HippoCanvasItem       *item,
                               HippoCanvasBlockMusic *block_music);
 static void on_hate_activated(HippoCanvasItem       *item,
@@ -220,6 +222,24 @@ hippo_canvas_block_music_append_content_items (HippoCanvasBlock *block,
     hippo_canvas_box_append(beside_box, HIPPO_CANVAS_ITEM(quip_box), 0);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                        "normal-image-name", "chat",
+                        "tooltip", "Add a quip",
+                        "xalign", HIPPO_ALIGNMENT_CENTER,
+                        "yalign", HIPPO_ALIGNMENT_CENTER,
+                        NULL);
+    hippo_canvas_box_append(quip_box, item, 0);
+    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_quip_activated), block_music);
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                        "padding-left", 4,
+                        "text", "Quip",
+                        "tooltip", "Add a quip",
+                        NULL);
+    hippo_canvas_box_append(quip_box, item, 0);
+    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_quip_activated), block_music);
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                        "padding-left", 8,
                         "normal-image-name", "quiplove_icon",
                         "tooltip", "Add a quip",
                         "xalign", HIPPO_ALIGNMENT_CENTER,
@@ -651,6 +671,13 @@ quip_on(HippoCanvasBlockMusic *block_music,
                        sentiment, title);
 
     g_free(title);
+}
+
+static void
+on_quip_activated(HippoCanvasItem       *item,
+                  HippoCanvasBlockMusic *block_music)
+{
+    quip_on(block_music, HIPPO_SENTIMENT_INDIFFERENT);
 }
 
 static void
