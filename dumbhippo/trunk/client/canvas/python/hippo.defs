@@ -83,6 +83,22 @@
     '("expand" "HIPPO_PACK_EXPAND")
     '("end" "HIPPO_PACK_END")
     '("fixed" "HIPPO_PACK_FIXED")
+    '("if-fits" "HIPPO_PACK_IF_FITS")
+    '("float-left" "HIPPO_PACK_FLOAT_LEFT")
+    '("float-right" "HIPPO_PACK_FLOAT_RIGHT")
+    '("clear-left" "HIPPO_PACK_CLEAR_LEFT")
+    '("clear-right" "HIPPO_PACK_CLEAR_RIGHT")
+    '("clear-both" "HIPPO_PACK_CLEAR_BOTH")
+  )
+)
+
+(define-enum CascadeMode
+  (in-module "Hippo")
+  (c-name "HippoCascadeMode")
+  (gtype-id "HIPPO_TYPE_CASCADE_MODE")
+  (values
+    '("none" "HIPPO_CASCADE_MODE_NONE")
+    '("inherit" "HIPPO_CASCADE_MODE_INHERIT")
   )
 )
 
@@ -104,28 +120,6 @@
     '("unset" "HIPPO_CANVAS_POINTER_UNSET")
     '("default" "HIPPO_CANVAS_POINTER_DEFAULT")
     '("hand" "HIPPO_CANVAS_POINTER_HAND")
-  )
-)
-
-(define-enum EventType
-  (in-module "Hippo")
-  (c-name "HippoEventType")
-  (gtype-id "HIPPO_TYPE_EVENT_TYPE")
-  (values
-    '("button-press" "HIPPO_EVENT_BUTTON_PRESS")
-    '("button-release" "HIPPO_EVENT_BUTTON_RELEASE")
-    '("motion-notify" "HIPPO_EVENT_MOTION_NOTIFY")
-  )
-)
-
-(define-enum MotionDetail
-  (in-module "Hippo")
-  (c-name "HippoMotionDetail")
-  (gtype-id "HIPPO_TYPE_MOTION_DETAIL")
-  (values
-    '("enter" "HIPPO_MOTION_DETAIL_ENTER")
-    '("leave" "HIPPO_MOTION_DETAIL_LEAVE")
-    '("within" "HIPPO_MOTION_DETAIL_WITHIN")
   )
 )
 
@@ -152,6 +146,51 @@
   )
 )
 
+(define-enum ScrollbarPolicy
+  (in-module "Hippo")
+  (c-name "HippoScrollbarPolicy")
+  (gtype-id "HIPPO_TYPE_SCROLLBAR_POLICY")
+  (values
+    '("never" "HIPPO_SCROLLBAR_NEVER")
+    '("automatic" "HIPPO_SCROLLBAR_AUTOMATIC")
+    '("always" "HIPPO_SCROLLBAR_ALWAYS")
+  )
+)
+
+(define-enum EventType
+  (in-module "Hippo")
+  (c-name "HippoEventType")
+  (gtype-id "HIPPO_TYPE_EVENT_TYPE")
+  (values
+    '("button-press" "HIPPO_EVENT_BUTTON_PRESS")
+    '("button-release" "HIPPO_EVENT_BUTTON_RELEASE")
+    '("motion-notify" "HIPPO_EVENT_MOTION_NOTIFY")
+    '("key-press" "HIPPO_EVENT_KEY_PRESS")
+  )
+)
+
+(define-enum MotionDetail
+  (in-module "Hippo")
+  (c-name "HippoMotionDetail")
+  (gtype-id "HIPPO_TYPE_MOTION_DETAIL")
+  (values
+    '("enter" "HIPPO_MOTION_DETAIL_ENTER")
+    '("leave" "HIPPO_MOTION_DETAIL_LEAVE")
+    '("within" "HIPPO_MOTION_DETAIL_WITHIN")
+  )
+)
+
+(define-enum Key
+  (in-module "Hippo")
+  (c-name "HippoKey")
+  (gtype-id "HIPPO_TYPE_KEY")
+  (values
+    '("unknown" "HIPPO_KEY_UNKNOWN")
+    '("return" "HIPPO_KEY_RETURN")
+    '("escape" "HIPPO_KEY_ESCAPE")
+  )
+)
+
 (define-enum Orientation
   (in-module "Hippo")
   (c-name "HippoOrientation")
@@ -171,6 +210,18 @@
     '("bottom" "HIPPO_SIDE_BOTTOM")
     '("left" "HIPPO_SIDE_LEFT")
     '("right" "HIPPO_SIDE_RIGHT")
+  )
+)
+
+(define-enum Gravity
+  (in-module "Hippo")
+  (c-name "HippoGravity")
+  (gtype-id "HIPPO_TYPE_GRAVITY")
+  (values
+    '("north-west" "HIPPO_GRAVITY_NORTH_WEST")
+    '("north-east" "HIPPO_GRAVITY_NORTH_EAST")
+    '("south-east" "HIPPO_GRAVITY_SOUTH_EAST")
+    '("south-west" "HIPPO_GRAVITY_SOUTH_WEST")
   )
 )
 
@@ -205,6 +256,11 @@
   )
 )
 
+(define-function canvas_open_test_window
+  (c-name "hippo_canvas_open_test_window")
+  (return-type "none")
+)
+
 
 
 ;; From hippo-canvas-widget.h
@@ -218,6 +274,51 @@
   (c-name "hippo_canvas_widget_new")
   (is-constructor-of "HippoCanvasWidget")
   (return-type "HippoCanvasItem*")
+)
+
+
+
+;; From hippo-canvas-window-child.h
+
+(define-function canvas_window_child_get_type
+  (c-name "hippo_canvas_window_child_get_type")
+  (return-type "GType")
+)
+
+(define-function canvas_window_child_new
+  (c-name "hippo_canvas_window_child_new")
+  (is-constructor-of "HippoCanvasWindowChild")
+  (return-type "GtkWidget*")
+)
+
+(define-method get_helper
+  (of-object "HippoCanvasWindowChild")
+  (c-name "hippo_canvas_window_child_get_helper")
+  (return-type "HippoCanvasHelper*")
+)
+
+
+
+;; From hippo-canvas-window.h
+
+(define-function canvas_window_get_type
+  (c-name "hippo_canvas_window_get_type")
+  (return-type "GType")
+)
+
+(define-function canvas_window_new
+  (c-name "hippo_canvas_window_new")
+  (is-constructor-of "HippoCanvasWindow")
+  (return-type "GtkWidget*")
+)
+
+(define-method set_root
+  (of-object "HippoCanvasWindow")
+  (c-name "hippo_canvas_window_set_root")
+  (return-type "none")
+  (parameters
+    '("HippoCanvasItem*" "item")
+  )
 )
 
 
@@ -251,8 +352,31 @@
   (return-type "none")
   (parameters
     '("HippoCanvasItem*" "child")
+    '("HippoGravity" "gravity")
     '("int" "x")
     '("int" "y")
+  )
+)
+
+(define-method set_position
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_set_position")
+  (return-type "none")
+  (parameters
+    '("HippoCanvasItem*" "child")
+    '("int" "x")
+    '("int" "y")
+  )
+)
+
+(define-method get_position
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_get_position")
+  (return-type "none")
+  (parameters
+    '("HippoCanvasItem*" "child")
+    '("int*" "x")
+    '("int*" "y")
   )
 )
 
@@ -271,6 +395,18 @@
   (return-type "none")
 )
 
+(define-method get_children
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_get_children")
+  (return-type "GList*")
+)
+
+(define-method is_empty
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_is_empty")
+  (return-type "gboolean")
+)
+
 (define-method foreach
   (of-object "HippoCanvasBox")
   (c-name "hippo_canvas_box_foreach")
@@ -285,6 +421,28 @@
   (of-object "HippoCanvasBox")
   (c-name "hippo_canvas_box_reverse")
   (return-type "none")
+)
+
+(define-method sort
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_sort")
+  (return-type "none")
+  (parameters
+    '("HippoCanvasCompareChildFunc" "compare_func")
+    '("void*" "data")
+  )
+)
+
+(define-method insert_sorted
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_insert_sorted")
+  (return-type "none")
+  (parameters
+    '("HippoCanvasItem*" "child")
+    '("HippoPackFlags" "flags")
+    '("HippoCanvasCompareChildFunc" "compare_func")
+    '("void*" "data")
+  )
 )
 
 (define-method set_child_visible
@@ -433,6 +591,35 @@
   )
 )
 
+(define-method affect_color
+  (of-object "HippoCanvasContext")
+  (c-name "hippo_canvas_context_affect_color")
+  (return-type "none")
+  (parameters
+    '("guint32*" "color_rgba_p")
+  )
+)
+
+(define-method affect_font_desc
+  (of-object "HippoCanvasContext")
+  (c-name "hippo_canvas_context_affect_font_desc")
+  (return-type "none")
+  (parameters
+    '("PangoFontDescription*" "font_desc")
+  )
+)
+
+(define-method emit_style_changed
+  (of-object "HippoCanvasContext")
+  (c-name "hippo_canvas_context_emit_style_changed")
+  (return-type "none")
+  (parameters
+    '("gboolean" "resize_needed")
+  )
+)
+
+
+
 ;; From hippo-canvas-gradient.h
 
 (define-function canvas_gradient_get_type
@@ -504,13 +691,19 @@
   )
 )
 
-(define-method get_width_request
+(define-virtual get_width_request
   (of-object "HippoCanvasItem")
   (c-name "hippo_canvas_item_get_width_request")
   (return-type "int")
 )
 
-(define-method get_height_request
+(define-method get_natural_width
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_get_natural_width")
+  (return-type "int")
+)
+
+(define-virtual get_height_request
   (of-object "HippoCanvasItem")
   (c-name "hippo_canvas_item_get_height_request")
   (return-type "int")
@@ -519,13 +712,14 @@
   )
 )
 
-(define-method allocate
+(define-virtual allocate
   (of-object "HippoCanvasItem")
   (c-name "hippo_canvas_item_allocate")
   (return-type "none")
   (parameters
     '("int" "width")
     '("int" "height")
+    '("gboolean" "origin_changed")
   )
 )
 
@@ -539,9 +733,9 @@
   )
 )
 
-(define-method get_needs_resize
+(define-method get_needs_request
   (of-object "HippoCanvasItem")
-  (c-name "hippo_canvas_item_get_needs_resize")
+  (c-name "hippo_canvas_item_get_needs_request")
   (return-type "gboolean")
 )
 
@@ -615,6 +809,16 @@
   )
 )
 
+(define-method emit_key_press_event
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_emit_key_press_event")
+  (return-type "gboolean")
+  (parameters
+    '("HippoKey" "key")
+    '("gunichar" "character")
+  )
+)
+
 (define-method emit_activated
   (of-object "HippoCanvasItem")
   (c-name "hippo_canvas_item_emit_activated")
@@ -631,6 +835,12 @@
     '("int" "width")
     '("int" "height")
   )
+)
+
+(define-method emit_tooltip_changed
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_emit_tooltip_changed")
+  (return-type "none")
 )
 
 (define-method emit_request_changed
@@ -662,6 +872,8 @@
   )
 )
 
+
+
 ;; From hippo-canvas-link.h
 
 (define-function canvas_link_get_type
@@ -675,30 +887,43 @@
   (return-type "HippoCanvasItem*")
 )
 
-(define-virtual get_width_request
-  (of-object "HippoCanvasItem")
-  (c-name "hippo_canvas_item_get_width_request")
-  (return-type "int")
+
+
+;; From hippo-canvas-style.h
+
+(define-function canvas_style_get_type
+  (c-name "hippo_canvas_style_get_type")
+  (return-type "GType")
 )
 
-(define-virtual get_height_request
-  (of-object "HippoCanvasItem")
-  (c-name "hippo_canvas_item_get_height_request")
-  (return-type "int")
-  (parameters
-    '("int" "for_width")
-  )
-)
-
-(define-virtual allocate
-  (of-object "HippoCanvasItem")
-  (c-name "hippo_canvas_item_allocate")
+(define-method affect_color
+  (of-object "HippoCanvasStyle")
+  (c-name "hippo_canvas_style_affect_color")
   (return-type "none")
   (parameters
-    '("int" "width")
-    '("int" "height")
+    '("guint32*" "color_rgba_p")
   )
 )
+
+(define-method affect_font_desc
+  (of-object "HippoCanvasStyle")
+  (c-name "hippo_canvas_style_affect_font_desc")
+  (return-type "none")
+  (parameters
+    '("PangoFontDescription*" "font_desc")
+  )
+)
+
+
+
+;; From hippo-canvas-test.h
+
+(define-function canvas_test_get_root
+  (c-name "hippo_canvas_test_get_root")
+  (return-type "HippoCanvasItem*")
+)
+
+
 
 ;; From hippo-canvas-text.h
 
@@ -717,13 +942,36 @@
 
 ;; From hippo-canvas-widgets.h
 
-(define-method set_enabled
+(define-method set_policy
   (of-object "HippoCanvasScrollbars")
-  (c-name "hippo_canvas_scrollbars_set_enabled")
+  (c-name "hippo_canvas_scrollbars_set_policy")
   (return-type "none")
   (parameters
     '("HippoOrientation" "orientation")
-    '("gboolean" "value")
+    '("HippoScrollbarPolicy" "policy")
+  )
+)
+
+
+
+;; From hippo-event.h
+
+(define-function event_get_type
+  (c-name "hippo_event_get_type")
+  (return-type "GType")
+)
+
+(define-method copy
+  (of-object "HippoEvent")
+  (c-name "hippo_event_copy")
+  (return-type "HippoEvent*")
+)
+
+(define-function event_free
+  (c-name "hippo_event_free")
+  (return-type "none")
+  (parameters
+    '("HippoRectangle*" "event")
   )
 )
 
@@ -734,18 +982,6 @@
 (define-function rectangle_get_type
   (c-name "hippo_rectangle_get_type")
   (return-type "GType")
-)
-
-(define-method copy
-  (of-object "HippoRectangle")
-  (c-name "hippo_rectangle_copy")
-  (return-type "HippoRectangle*")
-)
-
-(define-method free
-  (of-object "HippoRectangle")
-  (c-name "hippo_rectangle_free")
-  (return-type "none")
 )
 
 (define-method intersect
@@ -765,6 +1001,18 @@
   (parameters
     '("const-HippoRectangle*" "r2")
   )
+)
+
+(define-method copy
+  (of-object "HippoRectangle")
+  (c-name "hippo_rectangle_copy")
+  (return-type "HippoRectangle*")
+)
+
+(define-method free
+  (of-object "HippoRectangle")
+  (c-name "hippo_rectangle_free")
+  (return-type "none")
 )
 
 (define-function cairo_set_source_rgba32

@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(hippo-canvas, 0.1.5)
+AM_INIT_AUTOMAKE(hippo-canvas, 0.2)
 
 AM_CONFIG_HEADER(config/config.h)
 
