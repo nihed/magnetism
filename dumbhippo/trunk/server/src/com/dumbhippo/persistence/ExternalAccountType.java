@@ -359,6 +359,8 @@ public enum ExternalAccountType {
 		@Override
 		public String getLink(String handle, String extra) {
 			// handle is the rhapUserId in the feed url
+			// since there do not seem to exist public user profiles on Rhapsody,
+			// the best we can offer for the person's Rhapsody account is this feed url
 			return "http://feeds.rhapsody.com/user-track-history.rss?rhapUserId=" + handle + "&userName=I";
 		}
 		
@@ -373,11 +375,22 @@ public enum ExternalAccountType {
 		}
 		
 		@Override
+		public String getSiteUserInfoType() {
+			return "recently played tracks RSS URL";			
+		}
+		
+		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
-				if (handle.trim().length() == 0)
-					throw new ValidationException("empty rhapUserId in Rhapsody URL");
+				if (!(StringUtils.isAlphanumeric(handle) && (handle.length() == 32)))
+					throw new ValidationException("Rhapsody rhapUserId can only have letters and digits and be 32 characters long");
+				
+				try {
+					new URL(getLink(handle, null));
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid Rhapsody rhapUserId '" + handle + "': " + e.getMessage());
+				}
 			}
 			return handle;
 		}
@@ -600,6 +613,54 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}
+	}, 
+	NETFLIX("Netflix") { // 15
+		@Override
+		public String getIconName() {
+			return "favicon_netflix.png";
+		}
+		
+		@Override
+		public String getLink(String handle, String extra) {
+			return getSiteLink() + "/Invitation";
+		}
+		
+		@Override
+		public String getSiteLink() {
+			return "http://netflix.com";
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "Find this person on Netflix";
+		}
+		
+		@Override
+		public String getSiteUserInfoType() {
+			return "movies at home personalized RSS URL";			
+		}
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				// the user id for RSS feeds consists of "P" followed by 34 digits
+				if (!((handle.indexOf("P") == 0) && (handle.substring(1).matches("[0-9]+") && handle.length() == 35)))
+					throw new ValidationException("Netflix user id for RSS feeds should be 'P' followed by 34 digits");
+				
+				try {
+					new URL("http://rss.netflix.com/AtHomeRSS?id=" + handle);
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid Netflix user id handle '" + handle + "': " + e.getMessage());
+				}
+			}			
+			return handle;
+		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}		
 	};
 	
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountType.class);	
@@ -665,5 +726,11 @@ public enum ExternalAccountType {
     
     public String getName() {
     	return name();
+    }
+    
+    // the type of the user identifying info we ask the user to enter to identify their
+    // account to us
+    public String getSiteUserInfoType() {
+    	return "user info";
     }
 }

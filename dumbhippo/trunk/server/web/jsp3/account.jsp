@@ -91,6 +91,8 @@
 		dh.account.initialDiggHateQuip = <dh:jsString value="${account.diggHateQuip}"/>;
 		dh.account.initialRedditName = <dh:jsString value="${account.redditName}"/>;
 		dh.account.initialRedditHateQuip = <dh:jsString value="${account.redditHateQuip}"/>;					
+		dh.account.initialNetflixUrl = <dh:jsString value="${account.netflixFeedUrl}"/>;
+		dh.account.initialNetflixHateQuip = <dh:jsString value="${account.netflixHateQuip}"/>;	
 	</script>
 </head>
 <dht3:page currentPageLink="account">
@@ -240,6 +242,7 @@
                                           label="${supportedAccount.siteName}" icon="/images3/${buildStamp}/${supportedAccount.iconName}">
 		                    <dht:loveHateEntry 
 		                    	name="${supportedAccount.siteName}"
+		                    	userInfoType="${supportedAccount.siteUserInfoType}"
 		                    	link="${supportedAccount.externalAccountType.siteLink}"
 		                    	baseId="dh${supportedAccount.siteBaseName}" 
 		                    	mode="${supportedAccount.sentiment}"/>

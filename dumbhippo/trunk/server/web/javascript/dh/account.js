@@ -144,6 +144,11 @@ dh.account.setRhapsodyUrl = function(name, loadFunc, errorFunc) {
    	                      { "url" : name },
    	                      loadFunc, errorFunc);
 }
+dh.account.setNetflixUrl = function(name, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("setnetflixfeedurl",
+   	                      { "url" : name },
+   	                      loadFunc, errorFunc);
+}
    	
 dh.account.createExternalAccountOnHateSavedFunc = function(entry, accountType) {
 	return function(value) {
@@ -401,6 +406,20 @@ dh.account.onRedditLoveSaved = function(value) {
 	  	    	 }); 
 }
 
+dh.account.onNetflixLoveSaved = function(value) {
+	var entry = dh.account.netflixEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+  	dh.account.setNetflixUrl(value, 
+	 	    	 function(childNodes, http) {
+	 	    	 	entry.setMode('love');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 }); 
+}
+
 dh.account.disableFacebookSession = function() {   
   	dh.server.doPOST("disablefacebooksession",
 			 	     {},
@@ -455,7 +474,7 @@ dh.account.createLinkedInEntry = function() {
 }
 
 dh.account.createRhapsodyEntry = function() {	
-	dh.account.rhapsodyEntry = new dh.lovehate.Entry('dhRhapsody', 'Rhapsody recent plays RSS URL', dh.account.initialRhapsodyUrl,
+	dh.account.rhapsodyEntry = new dh.lovehate.Entry('dhRhapsody', 'Rhapsody recently played tracks RSS URL', dh.account.initialRhapsodyUrl,
 					'All-you-can-eat music services hurt my diet', dh.account.initialRhapsodyHateQuip, 
 					'Your friends will see updates from your Rhapsody playlist.',
                     'http://www.rhapsody.com/myrhapsody/rss.html');
@@ -495,6 +514,16 @@ dh.account.createRedditEntry = function() {
 	dh.account.redditEntry.onLoveSaved = dh.account.onRedditLoveSaved;
 	dh.account.redditEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.redditEntry, 'REDDIT');
 	dh.account.redditEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.redditEntry, 'REDDIT');
+}
+
+dh.account.createNetflixEntry = function() {	
+	dh.account.netflixEntry = new dh.lovehate.Entry('dhNetflix', 'Netflix movies at home RSS URL', dh.account.initialNetflixUrl,
+					'Movie rental stores are my daily respite', dh.account.initialNetflixHateQuip, 'Your friends get updates when you get new movies.',
+					'http://www.netflix.com/RSSFeeds');
+	dh.account.netflixEntry.setSpecialLoveValue("My feed");	
+	dh.account.netflixEntry.onLoveSaved = dh.account.onNetflixLoveSaved;
+	dh.account.netflixEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.netflixEntry, 'NETFLIX');
+	dh.account.netflixEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.netflixEntry, 'NETFLIX');
 }
 
 dhAccountInit = function() {
@@ -543,6 +572,7 @@ dhAccountInit = function() {
 	dh.account.createTwitterEntry();
 	dh.account.createDiggEntry();
 	dh.account.createRedditEntry();
+	dh.account.createNetflixEntry();
 }
 
 dh.event.addPageLoadListener(dhAccountInit);

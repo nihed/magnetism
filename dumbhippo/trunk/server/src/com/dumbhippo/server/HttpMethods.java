@@ -363,7 +363,11 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })	
 	public void doSetRedditName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;
-	
+
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "url" })
+	public void doSetNetflixFeedUrl(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;
+
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
 	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException;

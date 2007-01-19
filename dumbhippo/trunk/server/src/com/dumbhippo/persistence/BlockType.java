@@ -168,6 +168,17 @@ public enum BlockType {
 	GROUP_REVISION { // 19
 		
 				
+	},
+	// a Netflix movie
+	NETFLIX_MOVIE { // 20
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}
 	};
 	
 	// True for blocks which are originated by a user and the

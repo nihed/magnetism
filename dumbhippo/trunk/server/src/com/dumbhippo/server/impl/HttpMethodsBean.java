@@ -1520,48 +1520,83 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feedSystem.removeGroupFeed(viewpoint.getViewer(), group, feed);		
 	}
 	
-	// FIXME this doesn't match the other external account manipulation methods exactly since its 
-	// API predates them
-	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String urlStr) throws XmlMethodException {
-		// empty string means unset the value
-		if (urlStr.trim().length() == 0) {
-			doRemoveExternalAccount(xml, viewpoint, ExternalAccountType.RHAPSODY.name());
-			return;
-		}
+	private String findParamValueInUrl(String url, String paramName) {
+		String paramEquals = paramName + "=";
+		int i = url.indexOf(paramEquals);
+		if (i < 0)
+			return null;	
+		
+		int j = url.indexOf("&", i);
+		if (j < 0)
+			j = url.length();
+				
+		return url.substring(i + paramEquals.length(), j);			
+	}
+	
+	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException {
+		String urlOrId = urlOrIdStr.trim();
 
-		// otherwise, set a new value
-		
-		URL url;
-		try {
-			url = parseUserEnteredUrl(urlStr, true);
-		} catch (MalformedURLException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Doesn't look like a Rhapsody RSS URL : " + e.getMessage());
+		String rhapUserId = findParamValueInUrl(urlOrId, "rhapUserId");		
+		if (rhapUserId == null) {
+			if (urlOrId.startsWith("http://") || urlOrId.toLowerCase().contains(("rhapsody"))) {
+				throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Rhapsody RSS URL should contain a rhapUserId param: " + urlOrId);
+			} else {
+				// we also want to handle the user entering only an id
+				rhapUserId = urlOrId;
+			}
 		}
 		
-		String q = url.getQuery();
-		if (q == null)
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Doesn't look like a Rhapsody RSS URL: " + urlStr);
-		
-		String rhapUserIdParamName = "rhapUserId=";
-		int i = q.indexOf(rhapUserIdParamName);
-		int j = q.indexOf("&", i);
-		if (i < 0 || j < 0 || i == j) {
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Doesn't look like a Rhapsody RSS URL: " + url);
-		}
-		String rhapUserId = q.substring(i+rhapUserIdParamName.length(), j);
-		Feed feed = scrapeFeedFromUrl(url);
-		
-		logger.debug("found feed: {}", feed);
-		EJBUtil.forceInitialization(feed.getAccounts());
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.RHAPSODY);
-		
 		try {
 			external.setHandleValidating(rhapUserId);
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
-
+				
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		
+		Feed feed;		
+		try {
+		    feed = scrapeFeedFromUrl(new URL("http://feeds.rhapsody.com/user-track-history.rss?rhapUserId=" + StringUtils.urlEncode(external.getHandle()) + "&userName=I"));
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
+		}
+		EJBUtil.forceInitialization(feed.getAccounts());
+		
+		external.setFeed(feed);
+		feed.getAccounts().add(external);
+	}
+	
+	public void doSetNetflixFeedUrl(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException {
+		String urlOrId = urlOrIdStr.trim();
+
+		String netflixUserId = findParamValueInUrl(urlOrId, "id");		
+		if (netflixUserId == null) {
+			if (urlOrId.startsWith("http://") || urlOrId.toLowerCase().contains(("netflix"))) {
+			    throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Netflix RSS URL should contain an id param: " + urlOrId);
+			} else {
+				// we also want to handle a user entering only an id
+				netflixUserId = urlOrId;
+			}
+		}
+		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.NETFLIX);
+		try {
+			external.setHandleValidating(netflixUserId);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
+				
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		
+		Feed feed;		
+		try {
+		    feed = scrapeFeedFromUrl(new URL("http://rss.netflix.com/AtHomeRSS?id=" + StringUtils.urlEncode(external.getHandle())));
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
+		}
+		EJBUtil.forceInitialization(feed.getAccounts());
+		
 		external.setFeed(feed);
 		feed.getAccounts().add(external);
 	}
@@ -1701,12 +1736,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	private static String findLastPathElement(String url) {
-		if (url.endsWith("/"))
+		while (url.endsWith("/")) {
 			url = url.substring(0, url.length() - 1);
+		}
 		
 		int i = url.lastIndexOf("/");
 		if (i >= 0) {
-			return url.substring(i);
+			return url.substring(i + 1);
 		} else {
 			return null;
 		}

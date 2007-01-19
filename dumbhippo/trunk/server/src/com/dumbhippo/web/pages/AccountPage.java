@@ -272,6 +272,25 @@ public class AccountPage {
 	public String getRedditName() {
 		return getExternalAccountHandle(ExternalAccountType.REDDIT);
 	}
+
+	public String getNetflixFeedUrl() {
+		ExternalAccount external;
+		try {
+			external = externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), ExternalAccountType.NETFLIX);
+			// TODO: remove returning handle, that's temporary
+            if (external.getFeed() != null)
+			    return external.getFeed().getSource().getUrl();
+            else
+            	return external.getHandle();
+		} catch (NotFoundException e) {
+			// nothing to do
+		}
+		return ""; 
+	}
+	
+	public String getNetflixHateQuip() {
+		return getExternalAccountHateQuip(ExternalAccountType.NETFLIX);
+	}
 	
 	/**
 	 * Returns a list of supported account views; with the ExternalAccount information for the
