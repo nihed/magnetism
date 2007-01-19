@@ -372,9 +372,19 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			if (task.getPeriodicityAverage() == -1)
 				taskSetWorkers[defaultSetIndex].addTasks(Collections.singleton(task));
 			else {
+				// Add to the taskset closest to the average change periodicity of this item
 				for (int i = 0; i < pollingSetTimeSeconds.length; i++) {
-					if (i == pollingSetTimeSeconds.length - 1
-						|| (task.getPeriodicityAverage() < (pollingSetTimeSeconds[i+1] * 1000))) {
+					boolean addToSet = false;
+					
+					if (i == pollingSetTimeSeconds.length - 1)
+						addToSet = true;
+					else {
+						long threshold = 1000 * (pollingSetTimeSeconds[i] + pollingSetTimeSeconds[i + 1]) / 2;
+						if (task.getPeriodicityAverage() < threshold)
+							addToSet = true;
+					}
+					
+					if (addToSet) {
 						taskSetWorkers[i].addTasks(Collections.singleton(task));
 						break;
 					}
@@ -450,8 +460,15 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 				task.setExecutionAverage(lastExecDuration);
 			else
 				task.setExecutionAverage((long) exponentialAverage(task.getExecutionAverage(), lastExecDuration, 0.1));
-			if (changed) {
+			if (changed)
 				task.touchChanged();
+			
+			// If we simply looked at changed, then we'd never update the periodicity average of
+			// an item that never changed. That would mean that on server restart, we'd again
+			// add it to the default polling bin, which might be quite fast. So what we do
+			// is that once an item reaches the slowest polling set, we update the periodicity
+			// even if the item isn't changing.
+			if (changed || !hasSlowerSet) {
 				if (task.getPeriodicityAverage() == -1) {
 					long defaultPeriodicity = task.getFamily().getDefaultPeriodicity();
 					if (defaultPeriodicity != -1)
