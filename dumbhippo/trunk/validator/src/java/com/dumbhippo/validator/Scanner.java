@@ -355,13 +355,25 @@ class Scanner implements ClassVisitor {
 		return false;
 	}
 	
+	static private String removeReturnValueFromDescriptor(String methodDescriptor) {
+		// a descriptor is like "(argtypes)returntype"
+		int i = methodDescriptor.lastIndexOf(')');
+		if (i < 0)
+			throw new RuntimeException("method descriptor has no parens in it");
+		return methodDescriptor.substring(0, i + 1);
+	}
+	
 	boolean isMethodDeclaredInClass(String className, String methodName, String methodDescriptor) {
 		ClassInfo info = classes.get(className);
 		if (info == null)
 			return false;
 		for (MethodInfo methodInfo : info.getMethodDefinitions()) {
-			if (methodInfo.getName().equals(methodName) && methodInfo.getDescriptor().equals(methodDescriptor))
-				return true;
+			if (methodInfo.getName().equals(methodName)) {
+				String noReturnDescriptor = removeReturnValueFromDescriptor(methodDescriptor);
+				String s = removeReturnValueFromDescriptor(methodInfo.getDescriptor()); 
+				if (s.equals(noReturnDescriptor))
+					return true;
+			}
 		}
 
 		return isMethodDeclaredInSuper(info, methodName, methodDescriptor);
@@ -407,7 +419,7 @@ class Scanner implements ClassVisitor {
 					usedCount += 1;
 				} else {
 					unusedCount += 1;
-					debug("{} in class {} appears unused", methodInfo.getName(), classInfo.getName());
+					debug("{} in class {} appears unused, signature={}", methodInfo.getName(), classInfo.getName(), methodInfo.getDescriptor());
 				}
 			}
 		}
