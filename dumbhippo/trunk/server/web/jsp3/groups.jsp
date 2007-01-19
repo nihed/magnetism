@@ -117,29 +117,56 @@
 					</div>
 				</div>
 			</div>
-			<dht3:shinyBox color="grey">
-				<div class="dh-empty-stacker-text">
-					<c:choose>
-						<c:when test="${!person.self}">
-						    <c:out value="${person.viewedPerson.name}"/> doesn't have any groups.
-						</c:when>
-						<c:when test="${signin.active}">
-						    <dht3:noGroupsAdvice/>
-						</c:when>
-						<c:when test="${!signin.user.account.hasAcceptedTerms}">
-						     Once you agree to the Mugshot Terms of Use, you can add groups to
-						     your account and updates from those groups will appear in your
-						     stacker. <a href="/active-groups">Browse active groups</a>.
-						</c:when>
-						<c:when test="${signin.user.account.disabled}">
-						     Once you reenable your account, you can add groups to
-						     your account and updates from those groups will appear in your
-						     stacker. <a href="/active-groups">Browse active groups</a>.
-						</c:when>
-						<c:otherwise>
-							 You have no groups.
-						</c:otherwise>
-					</c:choose>
+			<dht3:shinyBox color="orange">
+			    <div class="dh-person-stacker-header">			
+				<table cellpadding="0" cellspacing="0">
+					<tbody>
+						<tr valign="top">
+						<td>
+						<div class="dh-image">
+							<dh:png src="/images2/${buildStamp}/user_pix1/nophoto.png?size=60" style="width: 60; height: 60"/>
+						</div>
+						</td>
+						<td>
+						<div class="dh-person-header-next-to-image">
+							<span class="dh-person-header-name">
+							<c:choose>
+								<c:when test="${!person.self}">
+						    		<c:out value="${person.viewedPerson.name}"/> doesn't have any groups
+						    	</c:when>
+						    	<c:otherwise>My Groups</c:otherwise>
+						    </c:choose>	
+						</div>
+						</td>
+						<td align="right">
+							<c:if test="${person.self}">
+								<dht3:tip>						
+								<div>
+									<c:choose>
+										<c:when test="${!signin.user.account.hasAcceptedTerms}">
+											Here is where you can join and see updates from groups when you activate
+											your Mugshot account above.
+										</c:when>
+										<c:when test="${signin.user.account.disabled || signin.user.account.adminDisabled}">
+											You must reenable your account to join and see updates from groups.
+										</c:when>
+										<c:otherwise>
+											Here is where you will see updates from groups that you join or create.
+										</c:otherwise>
+									</c:choose>
+								</div>
+								<div class="dh-tip-secondary">
+									<a href="/active-groups">Browse active groups</a>
+									<c:if test="${signin.user.account.hasAcceptedTerms && !(signin.user.account.disabled || signin.user.account.adminDisabled)}">
+										| <a href="/create-group">Create a group</a>
+									</c:if>
+								</div>
+								</dht3:tip>
+							</c:if>
+						</td>
+						</tr>
+					</tbody>
+				</table>
 				</div>
 			</dht3:shinyBox>
 	    </c:otherwise>
