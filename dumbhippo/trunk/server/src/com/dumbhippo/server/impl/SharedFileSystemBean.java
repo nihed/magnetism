@@ -207,7 +207,7 @@ public class SharedFileSystemBean implements SharedFileSystem {
 		// First we save in storage; then we persist to the database only if that succeeds.
 		long stored;
 		try {
-			stored = storage.store(file.getGuid(), contents, file.getSizeInBytes());
+			stored = storage.store(file.getGuid(), file.getMimeType(), contents, file.getSizeInBytes());
 		} catch (TooBigException e) {
 			throw new HumanVisibleException("This file is too big - " +
 					" you only have " + friendlySize(file.getSizeInBytes()) + " remaining");			
