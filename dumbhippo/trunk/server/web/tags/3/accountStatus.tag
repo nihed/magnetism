@@ -45,22 +45,31 @@
 		<div id="dhAccountStatus">
 			<c:choose>
 			<c:when test="${!signin.user.account.hasAcceptedTerms}">
-				<div>
-					<span class="dh-account-status-primary">Welcome to Mugshot! Activate your account to share updates with friends.</span>
-					<a href="/features">Learn more about Mugshot.</a>					
-				</div>
-				<script type="text/javascript">
-					dh.event.addPageLoadListener(dh.actions.updateGetStarted);
-				</script>
-				<table>
+				<table cellspacing="0" cellpadding="0">
 				<tr>
-				<td valign="center" class="dh-account-status-secondary">
-			        <input type="checkbox" id="dhAcceptTerms" onclick="dh.actions.updateGetStarted();">
-		                <label for="dhAcceptTerms">I agree to the Mugshot</label> <a href="javascript:window.open('/terms', 'dhTermsOfUse', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a>.
-			        </input>
-		        </td>
-		        <td valign="center">
-					<a id="dhGetStarted"><img id="dhGetStartedButton" src="/images3/${buildStamp}/get_started_disabled.gif"/></a>
+				<td valign="center">			
+					<div>
+						<div class="dh-account-status-primary">Welcome to Mugshot!</div>
+						Activate your account to share updates with friends.
+					</div>
+					<div>
+						<a href="/features">Learn more about Mugshot.</a>					
+					</div>
+					<script type="text/javascript">
+						dh.event.addPageLoadListener(dh.actions.updateGetStarted);
+					</script>
+				</td>
+				<td align="left" valign="center">
+					<div class="dh-account-status-secondary">
+						<div>
+			        	<input type="checkbox" id="dhAcceptTerms" onclick="dh.actions.updateGetStarted();">
+		                	<label for="dhAcceptTerms">I agree to the Mugshot</label> <a href="javascript:window.open('/terms', 'dhTermsOfUse', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a>.
+				        </input>
+				        </div>
+				        <div>
+							<a id="dhGetStarted"><img id="dhGetStartedButton" src="/images3/${buildStamp}/get_started_disabled.gif"/></a>
+						</div>
+					</div>
 				</td>
 				</tr>
 				</table>

@@ -711,6 +711,14 @@ div.dh-person-header-title {
 	margin-bottom:		15px;
 }
 
+.dh-account-status-secondary {
+	padding-left:		15px;
+}
+
+.dh-account-status-secondary input {
+	margin-left:		0px;
+}
+
 #dhDownloadMessageClose {
 	position:			absolute;
 	top:				2px;

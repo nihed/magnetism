@@ -438,7 +438,7 @@ div.dh-async-action-link-complete {
 }
 
 .dh-tip-secondary {
-	font-size:			14px;
+	font-size:			12px;
 }
 
 .dh-empty-stacker-text {
@@ -595,12 +595,9 @@ div.dh-async-action-link-complete {
 	font-size:			12px;
 }
 
-.dh-account-status-secondary {
-	font-size:			12px;
-}
-
 .dh-account-status-primary {
 	font-size:			16px;
+	font-weight:		bold;
 }
 
 #dhAccountDisabled {
