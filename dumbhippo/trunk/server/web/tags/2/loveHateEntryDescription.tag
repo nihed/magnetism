@@ -15,8 +15,8 @@
 			</div>
 		</c:if>
 		<div>
-			<dh:png src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/> 
-			<a style="font-weight: bold;" href="javascript:dh.lovehate.setMode('${baseId}', 'loveEdit')" title="Click to change">Love it</a>: Enter your 
+			<a style="font-weight: bold;" href="javascript:dh.lovehate.setMode('${baseId}', 'loveEdit')" title="Click to change">
+				<dh:png src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/> Love it</a>: Enter your 
 				<jsp:element name="a">
 					<jsp:attribute name="href"><c:out value="${link}"/></jsp:attribute>
 					<jsp:attribute name="target">_blank</jsp:attribute>
@@ -26,8 +26,8 @@
 			  		<span dhId="LoveTipId"></span>
 	 	</div>
 		<div>
-			<dh:png klass="dh-love-hate-icon" src="/images3/${buildStamp}/quiphate_icon.png" style="width: 11; height: 11; overflow: hidden;"/>
-			<a style="font-weight: bold;" href="javascript:dh.lovehate.setMode('${baseId}', 'hateEdit')" title="Click to change">Hate it</a>: 
+			<a style="font-weight: bold;" href="javascript:dh.lovehate.setMode('${baseId}', 'hateEdit')" title="Click to change">
+				<dh:png src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/> Hate it</a>: 
 				Let people see why you don't use 
 				<jsp:element name="a">
 					<jsp:attribute name="href"><c:out value="${link}"/></jsp:attribute>
