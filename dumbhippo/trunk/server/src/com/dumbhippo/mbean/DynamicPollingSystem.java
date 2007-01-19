@@ -373,11 +373,10 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 				taskSetWorkers[defaultSetIndex].addTasks(Collections.singleton(task));
 			else {
 				for (int i = 0; i < pollingSetTimeSeconds.length; i++) {
-					long periodicity = pollingSetTimeSeconds[i] * 1000;
 					if (i == pollingSetTimeSeconds.length - 1
-						|| (task.getPeriodicityAverage() >= periodicity
-							&& task.getPeriodicityAverage() < (pollingSetTimeSeconds[i+1] * 1000))) {
-						taskSetWorkers[i].addTasks(Collections.singleton(task));					
+						|| (task.getPeriodicityAverage() < (pollingSetTimeSeconds[i+1] * 1000))) {
+						taskSetWorkers[i].addTasks(Collections.singleton(task));
+						break;
 					}
 				}
 			}
