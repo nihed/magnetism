@@ -94,7 +94,7 @@
 	</script>
 </head>
 <dht3:page currentPageLink="account">
-	<dht3:accountStatus/>
+	<dht3:accountStatus enableControl="true"/>
 	<dht3:pageSubHeader title="${person.viewedPerson.name}'s ${pageName}">
 		<dht3:randomTip isSelf="${person.self}"/>
 		<dht3:personRelatedPagesTabs/> 

@@ -514,6 +514,10 @@ div.dh-person-header {
     padding-top:	8px;
 }
 
+div.dh-person-header-title {
+	white-space:	nowrap;
+}
+
 .dh-person-header-description {
 	margin-left:	5px;
 }
@@ -698,7 +702,7 @@ div.dh-person-header {
     right:              -5px;
 }
 
-#dhAccountStatus {
+#dhAccountStatus, #dhAccountDisabled {
 	position:			relative;
 	padding-left: 		9px;
 	padding-right: 		9px;
@@ -732,4 +736,13 @@ div.dh-person-header {
     position:       relative;
     margin-top:     5px;
     margin-bottom:  -10px;
+}
+
+.dh-tip {
+	margin-right:	30px;
+	margin-left:	30px;
+}
+
+.dh-tip-tip {
+	padding-left:	5px;
 }

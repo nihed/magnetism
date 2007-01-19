@@ -12,8 +12,13 @@
 
 <c:set var="pageName" value="Home" scope="page"/>
 
+<c:set var="possessive" value="${person.viewedPerson.name}'s" scope="page"/>
+<c:if test="${person.self}">
+	<c:set var="possessive" value="My" scope="page"/>
+</c:if>
+
 <head>
-	<title><c:out value="${person.viewedPerson.name}"/>'s ${pageName} - Mugshot</title>
+	<title><c:out value="${possessive}"/> ${pageName} - Mugshot</title>
 	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
 	<dht3:stylesheet name="person"/>
 	<dht:faviconIncludes/>
@@ -25,7 +30,7 @@
 	<c:if test="${person.self}">
 		<dht3:accountStatus/>
 	</c:if>
-	<dht3:pageSubHeader title="${person.viewedPerson.name}'s ${pageName}">
+	<dht3:pageSubHeader title="${possessive} ${pageName}">
 		<dht3:randomTip isSelf="${person.self}"/>
 		<dht3:personRelatedPagesTabs selected="person"/> 
 	</dht3:pageSubHeader>
@@ -40,26 +45,39 @@
 	
 	<dht3:shinyBox color="grey">
 	    <div class="dh-person-stacker-header">
-		    <span class="dh-person-header-name"><c:out value="${person.viewedPerson.name}"/>'s Stacker</span>
-			    <c:choose>
-				    <c:when test="${person.viewedPerson.viewOfSelf}">
-					    <span class="dh-person-header-description">What I'm watching on the web</span>							
-				    </c:when>
-				    <c:otherwise>
-					    <span class="dh-person-header-description">What <c:out value="${person.viewedPerson.name}"/> is watching on the web</span>							
-				    </c:otherwise>
-			    </c:choose>
+	    	<table cellspacing="0" cellpadding="0">
+	    		<tr valign="top">
+	    		<td>
+	    		<div class="dh-person-header-title">
+		    	<span class="dh-person-header-name"><c:out value="${possessive}"/> Stacker</span>
+			    	<c:choose>
+				    	<c:when test="${person.self}">
+					    	<span class="dh-person-header-description">What I'm watching on the web</span>							
+					    </c:when>
+					    <c:otherwise>
+						    <span class="dh-person-header-description">What <c:out value="${person.viewedPerson.name}"/> is watching on the web</span>							
+					    </c:otherwise>
+			    	</c:choose>
+			    </div>
+			    </td>
+			    <td align="right">
+		  			<c:choose>
+						<c:when test="${person.pageableStack.totalCount == 0 && person.self}">
+							<dht3:tip>
+								Updates from your friends and the things they share with you will go here.
+								<c:if test="${signin.user.account.hasAcceptedTerms}">
+									<div class="dh-tip-secondary">
+										<a href="/invitation">Invite some friends</a> | <a href="/active-groups">Find groups</a>
+									</div>								
+								</c:if>
+							</dht3:tip>
+					    </c:when>	    	
+					 </c:choose>
+			    </td>
+				</tr>
+			</table>
 		</div>    
-		<c:choose>
-			<c:when test="${person.pageableStack.totalCount == 0 && person.self}">
-				<div class="dh-empty-stacker-text">
-					Here is where you see updates from friends' sites and things they share with you.
-				</div>
-	    	</c:when>
-		    <c:otherwise>
-				<dht3:stacker stackOrder="2" stackType="dhStacker" pageable="${person.pageableStack}" showFrom="true" homeStack="${person.self}"/>
-			</c:otherwise>
-		</c:choose>
+		<dht3:stacker stackOrder="2" stackType="dhStacker" pageable="${person.pageableStack}" showFrom="true" homeStack="${person.self}"/>
 		<c:if test="${person.pageableMugshot.position != 0}">
 		    <div class="dh-back">
 		        <a href="/person?who=${person.viewedPerson.viewPersonPageId}">Back to <c:out value="${person.viewedPerson.name}"/>'s Home</a>

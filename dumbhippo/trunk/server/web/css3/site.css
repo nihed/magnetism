@@ -433,18 +433,26 @@ div.dh-async-action-link-complete {
 .dh-stacker-block-title-group-member-name {
 }
 
-.dh-empty-stacker-text {
+.dh-tip-tip {
 	font-size:			16px;
-	color:				#9648bc;
 }
 
+.dh-tip-secondary {
+	font-size:			14px;
+}
+
+.dh-empty-stacker-text {
+	font-size:          16px;
+    color:              #9648bc;
+}
+ 
 .dh-empty-stacker-secondary {
-	font-size:			12px;
+    font-size:          12px;
 }
 
 .dh-empty-stacker-text a {
-	color:				#0000EE;
-};
+	color:              #0000EE;
+}
 
 .dh-shinybox-bottom-content {
     font-size:          14px;
@@ -595,12 +603,18 @@ div.dh-async-action-link-complete {
 	font-size:			16px;
 }
 
-#dhDownloadMessage {
+#dhAccountDisabled {
+	background-color:	#fbfadc;
+	border:				1px solid #cc0000;
 	font-size:			14px;
 	font-weight:		bold;
 }
 
-#dhAccountDisabled {
+#dhAccountDisabled .dh-account-disabled-header {
+	color:				#E2671B;
+}
+
+#dhDownloadMessage {
 	font-size:			14px;
 	font-weight:		bold;
 }
