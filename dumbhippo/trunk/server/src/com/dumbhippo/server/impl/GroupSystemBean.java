@@ -791,9 +791,9 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	// We order and select on pm.id, though in rare cases the order by pm.id and by pm.timestamp
 	// might be different if two messages arrive almost at once. In this case, the timestamps will
 	// likely be within a second of each other and its much cheaper this way.
-	private static final String GROUP_MESSAGE_QUERY = "SELECT pm from GroupMessage pm WHERE pm.group = :group ";
-	private static final String GROUP_MESSAGE_SELECT = " AND pm.id >= :lastSeenSerial ";
-	private static final String GROUP_MESSAGE_ORDER = " ORDER BY pm.id";
+	private static final String GROUP_MESSAGE_QUERY = "SELECT gm FROM GroupMessage gm WHERE gm.group = :group ";
+	private static final String GROUP_MESSAGE_SELECT = " AND gm.id >= :lastSeenSerial ";
+	private static final String GROUP_MESSAGE_ORDER = " ORDER BY gm.id";
 	
 	public List<GroupMessage> getGroupMessages(Group group, long lastSeenSerial) {
 		List<?> messages = em.createQuery(GROUP_MESSAGE_QUERY + GROUP_MESSAGE_SELECT + GROUP_MESSAGE_ORDER)
@@ -811,6 +811,13 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		.getResultList();
 		
 		return TypeUtils.castList(GroupMessage.class, messages);		
+	}
+	
+	public int getGroupMessageCount(Group group) {
+		Query q = em.createQuery("SELECT COUNT(gm) FROM GroupMessage gm WHERE gm.group = :group")
+			.setParameter("group", group);
+		
+		return ((Number)q.getSingleResult()).intValue();
 	}
 
 	public List<ChatMessageView> viewGroupMessages(List<GroupMessage> messages, Viewpoint viewpoint) {

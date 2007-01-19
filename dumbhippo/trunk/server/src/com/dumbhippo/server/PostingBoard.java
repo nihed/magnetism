@@ -186,6 +186,15 @@ public interface PostingBoard {
 	public List<PostMessage> getPostMessages(Post post, long lastSeenSerial);
 	
 	public List<PostMessage> getNewestPostMessages(Post post, int maxResults);
+
+	/**
+	 * Get the total count of messages that were sent to the chatroom about this
+	 * post.
+	 * 
+	 * @param post the post to count the messages for
+	 * @return the total number of messages about this post
+	 */
+	public int getPostMessageCount(Post post);
 	
 	public List<ChatMessageView> viewPostMessages(List<PostMessage> messages, Viewpoint viewpoint);
 	

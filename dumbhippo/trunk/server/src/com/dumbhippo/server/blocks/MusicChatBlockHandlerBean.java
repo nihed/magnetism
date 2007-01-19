@@ -67,7 +67,13 @@ public class MusicChatBlockHandlerBean extends AbstractBlockHandlerBean<MusicCha
 			messageViews.add(new ChatMessageView(message, senderView));
 		}
 		
-		blockView.populate(userView, trackView, messageViews);
+		int messageCount;
+		if (messageViews.size() < MusicChatBlockView.RECENT_MESSAGE_COUNT) // Optimize out a query
+			messageCount = messageViews.size();
+		else
+			messageCount = musicSystem.getTrackMessageCount(trackHistory);
+		
+		blockView.populate(userView, trackView, messageViews, messageCount);
 	}
 	
 	public Set<User> getInterestedUsers(Block block) {

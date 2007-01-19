@@ -66,7 +66,14 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 	    List<ChatMessageView> recentMessages = postingBoard.viewPostMessages(
 	        postingBoard.getNewestPostMessages(postView.getPost(), PostBlockView.RECENT_MESSAGE_COUNT),
 			viewpoint);
-	    blockView.populate(postView, recentMessages);
+	    
+		int messageCount;
+		if (recentMessages.size() < PostBlockView.RECENT_MESSAGE_COUNT) // Optimize out a query
+			messageCount = recentMessages.size();
+		else
+			messageCount = postingBoard.getPostMessageCount(postView.getPost());
+			    
+	    blockView.populate(postView, recentMessages, messageCount);
 	}
 
 	private Post loadPost(Block block) {

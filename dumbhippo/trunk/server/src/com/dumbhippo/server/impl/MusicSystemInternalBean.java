@@ -2094,6 +2094,13 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return TypeUtils.castList(TrackMessage.class, q.getResultList());
 	}
 	
+	public int getTrackMessageCount(TrackHistory trackHistory) {
+		Query q = em.createQuery("SELECT count(tm) from TrackMessage tm WHERE tm.trackHistory = :trackHistory");
+		q.setParameter("trackHistory", trackHistory);
+		
+		return ((Number)q.getSingleResult()).intValue();
+	}
+	
 	public void addTrackMessage(TrackHistory trackHistory, User fromUser, String text, Sentiment sentiment, Date timestamp) {
 		TrackMessage trackMessage = new TrackMessage(trackHistory, fromUser, text, timestamp, sentiment);
 		em.persist(trackMessage);

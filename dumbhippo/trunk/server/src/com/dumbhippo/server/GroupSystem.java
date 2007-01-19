@@ -168,6 +168,14 @@ public interface GroupSystem {
 	public List<GroupMessage> getNewestGroupMessages(Group group, int maxResults);
 	
 	/**
+	 * Get the total number of messages sent to this group
+	 * 
+	 * @param group the group the look up the messages for
+	 * @return total number of messages
+	 */
+	public int getGroupMessageCount(Group group);
+	
+	/**
 	 * Add a new message that was sent to the chatroom about this group
 	 * 
 	 * @param group the group the message is about.

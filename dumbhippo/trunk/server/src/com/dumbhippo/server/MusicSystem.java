@@ -224,13 +224,18 @@ public interface MusicSystem {
 	public List<TrackMessage> getTrackMessages(TrackHistory trackHistory, long lastSeenSerial);
 
 	/**
-	 * Get up to maxResults newest messages in the group chat, sorted descending (newest first)
+	 * Get up to maxResults newest messages about this TrackHistory, sorted descending (newest first)
 	 * 
   	 * @param post the post the look up the messages for
 	 * @param maxResults
 	 * @return the list of mesages, sorted by date (newest first)
 	 */
 	public List<TrackMessage> getNewestTrackMessages(TrackHistory trackHistory, int maxResults);
+	
+	/**
+	 * Get the total number of messages about this TrackHistory
+	 */
+	public int getTrackMessageCount(TrackHistory trackHistory);
 	
 	/**
 	 * Add a new message that was sent to the chatroom about this post

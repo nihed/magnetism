@@ -114,6 +114,9 @@ public abstract class BlockView implements ObjectView {
 			significantClickedCountString = "-1"; // null; 
 		}
 
+		int messageCount = getMessageCount();
+		String messageCountString = messageCount >= 0 ? Integer.toString(messageCount) : null;
+		
 		// not a shining example of OO design, but simpler than the alternatives...
 		// (this is essentially a workaround for lack of "mixins" or something)
 		boolean isTitle = this instanceof TitleBlockView;
@@ -144,6 +147,7 @@ public abstract class BlockView implements ObjectView {
 							"isPublic", Boolean.toString(isPublic()),							
 							"timestamp", Long.toString(block.getTimestampAsLong()),
 							"clickedCount", clickedCountString,
+							"messageCount", messageCountString,
 							"significantClickedCount", significantClickedCountString,
 							"ignored", Boolean.toString(userBlockData.isIgnored()),
 							"ignoredTimestamp", Long.toString(userBlockData.getIgnoredTimestampAsLong()),
@@ -266,5 +270,17 @@ public abstract class BlockView implements ObjectView {
 		}
 		
 		return result;
+	}
+	
+	/**
+	 * Gets the total count of messages (quips and comments) for this
+	 * block. 
+	 * 
+	 * @return total number of messages, -1 means that quipping isn't
+	 *   applicable to this block type. (A transient thing until we
+	 *   implement quipping on all blocks)
+	 */
+	public int getMessageCount() {
+		return -1;
 	}
 }

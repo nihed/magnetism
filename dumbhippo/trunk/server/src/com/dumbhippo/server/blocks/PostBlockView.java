@@ -15,10 +15,11 @@ import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.Viewpoint;
 
 public class PostBlockView extends BlockView implements TitleBlockView, EntitySourceBlockView {
-	static final public int RECENT_MESSAGE_COUNT = 3;
+	static final public int RECENT_MESSAGE_COUNT = 5;
 	
 	private PostView postView;
 	private List<ChatMessageView> recentMessages;
+	private int messageCount;
 	
 	public PostBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
 		super(viewpoint, block, ubd, participated);
@@ -28,9 +29,10 @@ public class PostBlockView extends BlockView implements TitleBlockView, EntitySo
 		super(viewpoint, block, gbd, participated);
 	}
 
-	void populate(PostView post, List<ChatMessageView> recentMessages) {
+	void populate(PostView post, List<ChatMessageView> recentMessages, int messageCount) {
 		this.postView = post;
 		this.recentMessages = recentMessages;
+		this.messageCount = messageCount;
 		
 		setPopulated(true);
 	}
@@ -120,5 +122,10 @@ public class PostBlockView extends BlockView implements TitleBlockView, EntitySo
 
 	public @Override String getSummaryLinkText() {
 		return getTitle();
+	}
+	
+	@Override
+	public int getMessageCount() {
+		return messageCount;
 	}
 }
