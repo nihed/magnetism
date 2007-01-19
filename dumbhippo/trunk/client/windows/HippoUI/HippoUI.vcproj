@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../HippoUtil;../../common/glib;../../common/glib/glib;../libglib;../cairo;../../common/cairo/src;&quot;../dependencies/pango/include/pango-1.0&quot;;../../common/loudmouth;../../common;../../common/canvas;../../common/airbag/src/client/windows"
+				AdditionalIncludeDirectories="../HippoUtil;../../common/glib;../../common/glib/glib;../libglib;../cairo;../../common/cairo/src;../../common/pango;../../common/loudmouth;../../common;../../common/canvas;../../common/airbag/src/client/windows"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NOMINMAX"
 				GeneratePreprocessedFile="0"
 				MinimalRebuild="true"
@@ -68,7 +68,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/VERBOSE:LIB"
-				AdditionalDependencies="Gdiplus.lib shlwapi.lib glib-2.0.lib gthread-2.0.lib gobject-2.0.lib loudmouth.lib pango-1.0.lib pangocairo-1.0.lib pangowin32-1.0.lib cairo.lib ws2_32.lib wininet.lib urlmon.lib advapi32.lib gdi32.lib shell32.lib comctl32.lib jpeg.lib"
+				AdditionalDependencies="Gdiplus.lib shlwapi.lib pangocairo-1.0.lib pangowin32-1.0.lib ws2_32.lib wininet.lib urlmon.lib advapi32.lib gdi32.lib shell32.lib comctl32.lib jpeg.lib"
 				OutputFile="$(OutDir)/Mugshot.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../debug;../dependencies/glib/lib;../dependencies/cairo/lib;../dependencies/pango/lib;../dependencies/jpeg/lib"
@@ -131,6 +131,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="../HippoUtil;../../common/glib;../../common/glib/glib;../libglib;../cairo;../../common/cairo/src;../../common/pango;../../common/loudmouth;../../common;../../common/canvas;../../common/airbag/src/client/windows"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"

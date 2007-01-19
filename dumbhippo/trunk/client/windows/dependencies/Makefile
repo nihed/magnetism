@@ -5,9 +5,6 @@ all:
 	copy iconv.dll $(OUTDIR)
 	copy intl.dll $(OUTDIR)
 	copy jpeg62.dll $(OUTDIR)
-	copy libpango-1.0-0.dll $(OUTDIR)
-	copy libpangocairo-1.0-0.dll $(OUTDIR)
-	copy libpangowin32-1.0-0.dll $(OUTDIR)
 	copy libpng13.dll $(OUTDIR)
 	copy zlib1.dll $(OUTDIR)
 	-mkdir $(OUTDIR)\etc

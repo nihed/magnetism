@@ -20,12 +20,18 @@ INPUTS =		\
     $(OUTDIR)\*.exe	\
     $(OUTDIR)\applets\*   
     
-SYMBOL_FILES =					\
-	$(OUTDIR)\libcairo-2.sym	\
-	$(OUTDIR)\libglib-2.0-0.sym \
-	$(OUTDIR)\loudmouth.sym		\
-	$(OUTDIR)\HippoUtil.sym		\
-	$(OUTDIR)\HippoUI.sym
+SYMBOL_FILES =							\
+	$(OUTDIR)\HippoUI.sym				\
+	$(OUTDIR)\HippoUtil.sym				\
+	$(OUTDIR)\libcairo-2.sym			\
+	$(OUTDIR)\libglib-2.0-0.sym			\
+	$(OUTDIR)\libgmodule-2.0-0.sym		\
+	$(OUTDIR)\libgobject-2.0-0.sym		\
+	$(OUTDIR)\libgthread-2.0-0.sym		\
+	$(OUTDIR)\libpango-1.0-0.sym		\
+	$(OUTDIR)\libpangocairo-1.0-0.sym	\
+	$(OUTDIR)\libpangowin32-1.0-0.sym	\
+	$(OUTDIR)\loudmouth-1.sym
 	
 
 all: dirs $(OUTDIR)\Mugshot.msi $(OUTDIR)\Mugshot-symbols.zip
