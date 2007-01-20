@@ -661,6 +661,14 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		}
 		
 		public void run() {
+			
+			// Wait a minute after startup to check for tasks
+			try {
+				Thread.sleep(1 * 60 * 1000);
+			} catch (InterruptedException e) {
+				return;
+			}
+			
 			while (true) {
 				try {
 					Thread.sleep(LOAD_PERIODICITY_MS);
