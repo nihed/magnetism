@@ -40,7 +40,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
-import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -224,9 +224,9 @@ public class RewriteServlet extends HttpServlet {
 				
 				// Also update their last web login time
 				UserSigninBean userSignin = (UserSigninBean) signin;
-				Account acct = userSignin.getUser().getAccount();
+				User user = userSignin.getUser();
 				AccountSystem accountSystem = EJBUtil.defaultLookup(AccountSystem.class);
-				accountSystem.updateWebActivity(acct);
+				accountSystem.updateWebActivity(user);
 			}
 			
 			// Deleting the user from SigninBean means that next time it

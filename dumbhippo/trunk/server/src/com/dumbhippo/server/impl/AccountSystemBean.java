@@ -193,8 +193,14 @@ public class AccountSystemBean implements AccountSystem {
 		return prefs;
 	}
 
-	public void updateWebActivity(Account account) {
+	public void updateWebActivity(User user) {
 		Date current = new Date();
+		try {
+			user = spider.lookupGuid(User.class, user.getGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		Account account = user.getAccount();
 		if (account.getLastWebActivityDate() == null || current.getTime() - account.getLastWebActivityDate().getTime() > (WEB_LOGIN_UPDATE_SEC*1000)) {
 			account.setLastWebActivityDate(current);	
 		}
