@@ -62,6 +62,11 @@ public enum ExternalAccountType {
 		}
 
 		@Override
+		public boolean requiresExtraIfLoved() {
+			return true;
+		}
+		
+		@Override
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null && extra != null;
 		}
@@ -212,6 +217,16 @@ public enum ExternalAccountType {
 				}
 			}
 			return extra;
+		}
+
+		@Override
+		public boolean requiresHandleIfLoved() {
+			return false;
+		}
+
+		@Override
+		public boolean requiresExtraIfLoved() {
+			return true;
 		}
 		
 		@Override
@@ -711,6 +726,11 @@ public enum ExternalAccountType {
 		}
 		return handle;
 	}
+	
+	public boolean requiresHandleIfLoved() {
+		return true;
+	}
+	
 	public String canonicalizeExtra(String extra) throws ValidationException {
 		if (extra != null) {
 			extra = extra.trim();
@@ -718,6 +738,10 @@ public enum ExternalAccountType {
 				extra = null;
 		}		
 		return extra;
+	}
+
+	public boolean requiresExtraIfLoved() {
+		return false;
 	}
 	
     public boolean isSupported() {

@@ -117,16 +117,12 @@ public abstract class CachedExternalUpdaterBean<Status> implements CachedExterna
 		doPeriodicUpdate(handle);
 	}
 	
-	protected boolean isLovedAndEnabled(ExternalAccount external) {
-		return external.hasLovedAndEnabledType(getAccountType()) && 
-			external.getHandle() != null;
-	}	
-	
 	protected abstract Class<? extends CachedExternalUpdater<Status>> getUpdater();
 	
 	protected void onExternalAccountChange(User user, ExternalAccount external) {
-		if (!isLovedAndEnabled(external))
+		if (!external.hasLovedAndEnabledType(getAccountType()))
 			return;
+		
 		if (!configuration.isFeatureEnabled("pollingTask")) {
 			final String username = external.getHandle();
 			runner.runTaskOnTransactionCommit(new Runnable() {
