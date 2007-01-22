@@ -97,6 +97,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		// Fix up the inverse side of the mapping
 		g.getMembers().add(groupMember);
 		
+		notifier.onGroupCreated(g);
 		notifier.onGroupMemberCreated(groupMember, System.currentTimeMillis());
 		
 		searchSystem.indexGroup(g, false);
