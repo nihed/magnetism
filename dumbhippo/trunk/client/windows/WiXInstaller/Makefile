@@ -18,10 +18,10 @@ INPUTS =		\
     license.rtf		\
     $(OUTDIR)\*.dll	\
     $(OUTDIR)\*.exe	\
-    $(OUTDIR)\applets\*   
+    $(OUTDIR)\Images\*   
     
 SYMBOL_FILES =							\
-	$(OUTDIR)\HippoUI.sym				\
+	$(OUTDIR)\Mugshot.sym				\
 	$(OUTDIR)\HippoUtil.sym				\
 	$(OUTDIR)\libcairo-2.sym			\
 	$(OUTDIR)\libglib-2.0-0.sym			\

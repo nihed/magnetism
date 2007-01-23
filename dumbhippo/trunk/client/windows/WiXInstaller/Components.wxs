@@ -4,10 +4,13 @@
          too much since we have only one feature; for simplicity, we simply mirror
          the division of the client source into projects -->
     <Fragment Id="dhComponents">
-	<Directory Id="TARGETDIR" Name="SourceDir">
+        <Directory Id="TARGETDIR" Name="SourceDir">
 	    <Directory Id="ProgramFilesFolder">
 		<Directory Id="INSTALLLOCATION" Name="Mugshot">
-		    <Component Id="dependencies" Guid="EA96152A-8812-4193-90D8-2F1B3F520E36">
+            <Merge Id="visualStudioRuntime" Language="1033" src="C:\Program Files\Common Files\Merge Modules\Microsoft_VC80_CRT_x86.msm" DiskId="1" />
+            <Merge Id="visualStudioRuntimePolicy" Language="1033" src="C:\Program Files\Common Files\Merge Modules\policy_8_0_Microsoft_VC80_CRT_x86.msm" DiskId="1" />
+
+            <Component Id="dependencies" Guid="EA96152A-8812-4193-90D8-2F1B3F520E36">
 		        <File Id="copyingLibs" Name="LGPL.txt"     LongName="COPYING-LIBS.txt"     src="COPYING-LIBS.txt"      DiskId="1" Vital="yes"/>
 		        <File Id="charsetDll"  Name="charset.dll"                                  src="charset.dll"           DiskId="1" Vital="yes"/>
 		        <File Id="iconvDll"    Name="iconv.dll"                                    src="iconv.dll"             DiskId="1" Vital="yes"/>

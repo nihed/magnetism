@@ -27,7 +27,7 @@
 
         <!-- Separate "cabinets" would be used if you broke the installer across floppies ... -->
         <Media Id="1" Cabinet="Product.cab" EmbedCab="yes" />
-        
+
         <FragmentRef Id="dhComponents"/>
 
         <!-- Only a single feature; it's all-or-nothing -->
@@ -47,6 +47,8 @@
         <ComponentRef Id="loudmouth" />
         <ComponentRef Id="images" />
         <ComponentRef Id="pangoConfiguration" />
+        <MergeRef Id="visualStudioRuntime" />
+        <MergeRef Id="visualStudioRuntimePolicy" />
     </Feature>
     
     <CustomAction Id="DhQuitApp" FileKey="mugshotExe" Return="ignore" ExeCommand="--quit"/> 

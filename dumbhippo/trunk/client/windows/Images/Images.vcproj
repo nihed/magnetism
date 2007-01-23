@@ -19,20 +19,10 @@
 			OutputDirectory="Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="0"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			InheritedPropertySheets="..\HippoMake.vsprops"
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="nmake OUTDIR=..\Debug all"
-				ReBuildCommandLine="nmake OUTDIR=..\Debug clean all"
-				CleanCommandLine="nmake OUTDIR=..\Debug clean"
-				Output=""
-				PreprocessorDefinitions=""
-				IncludeSearchPath=""
-				ForcedIncludes=""
-				AssemblySearchPath=""
-				ForcedUsingAssemblies=""
-				CompileAsManaged=""
 			/>
 		</Configuration>
 		<Configuration
@@ -40,20 +30,10 @@
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="0"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			InheritedPropertySheets="..\HippoMake.vsprops"
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine=""
-				ReBuildCommandLine=""
-				CleanCommandLine=""
-				Output=""
-				PreprocessorDefinitions=""
-				IncludeSearchPath=""
-				ForcedIncludes=""
-				AssemblySearchPath=""
-				ForcedUsingAssemblies=""
-				CompileAsManaged=""
 			/>
 		</Configuration>
 	</Configurations>

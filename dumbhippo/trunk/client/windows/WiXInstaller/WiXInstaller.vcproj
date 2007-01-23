@@ -19,20 +19,10 @@
 			OutputDirectory="Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="0"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;.\WiXInstaller.vsprops"
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="nmake INTDIR=Debug OUTDIR=..\Debug all"
-				ReBuildCommandLine="nmake INTDIR=Debug OUTDIR=..\Debug clean all"
-				CleanCommandLine="nmake INTDIR=Debug OUTDIR=..\Debug clean"
-				Output="Mugshot.msi"
-				PreprocessorDefinitions=""
-				IncludeSearchPath=""
-				ForcedIncludes=""
-				AssemblySearchPath=""
-				ForcedUsingAssemblies=""
-				CompileAsManaged=""
 			/>
 		</Configuration>
 		<Configuration
@@ -40,20 +30,10 @@
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="0"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;.\WiXInstaller.vsprops"
 			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="nmake all"
-				ReBuildCommandLine="nmake clean all"
-				CleanCommandLine="nmake clean"
-				Output="Mugshot.msi"
-				PreprocessorDefinitions=""
-				IncludeSearchPath=""
-				ForcedIncludes=""
-				AssemblySearchPath=""
-				ForcedUsingAssemblies=""
-				CompileAsManaged=""
 			/>
 		</Configuration>
 	</Configurations>

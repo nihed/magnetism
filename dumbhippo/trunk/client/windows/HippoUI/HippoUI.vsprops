@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="HippoUI"
+	InheritedPropertySheets="..\HippoPch.vsprops"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="../HippoUtil;../../common/glib;../../common/glib/glib;../libglib;../cairo;../../common/cairo/src;../../common/pango;../../common/loudmouth;../../common;../../common/canvas;../../common/airbag/src/client/windows"
+		PreprocessorDefinitions="NOMINMAX"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalDependencies="Gdiplus.lib shlwapi.lib ws2_32.lib wininet.lib urlmon.lib advapi32.lib gdi32.lib shell32.lib comctl32.lib jpeg.lib"
+		OutputFile="$(OutDir)/Mugshot.exe"
+		AdditionalLibraryDirectories="../debug;../dependencies/glib/lib;../dependencies/cairo/lib;../dependencies/pango/lib;../dependencies/jpeg/lib"
+	/>
+	<Tool
+		Name="VCResourceCompilerTool"
+		AdditionalIncludeDirectories="$(IntDir)"
+	/>
+</VisualStudioPropertySheet>

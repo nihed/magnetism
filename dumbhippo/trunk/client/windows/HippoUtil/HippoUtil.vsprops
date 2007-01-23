@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="HippoUtil"
+	InheritedPropertySheets="..\HippoPch.vsprops"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="."
+		PreprocessorDefinitions="BUILDING_HIPPO_UTIL;NOMINMAX"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		RegisterOutput="true"
+		AdditionalDependencies="wininet.lib advapi32.lib"
+		ModuleDefinitionFile="HippoUtil.def"
+	/>
+	<Tool
+		Name="VCResourceCompilerTool"
+		AdditionalIncludeDirectories="$(IntDir)"
+	/>
+</VisualStudioPropertySheet>

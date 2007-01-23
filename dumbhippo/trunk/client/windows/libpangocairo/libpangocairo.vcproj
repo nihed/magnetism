@@ -20,7 +20,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="..\HippoDll.vsprops"
+			InheritedPropertySheets=".\libpangocairo.vsprops;..\HippoDebugDll.vsprops"
 			CharacterSet="0"
 			>
 			<Tool
@@ -40,17 +40,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="../libpango;../dependencies/gettext/include;../../common/glib;../../common/glib/glib;../libglib;../cairo;../../common/cairo/src;../../common/glib/gmodule;../../common/pango/pango;../../common/pango"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBPANGOCAIRO_EXPORTS;PANGO_ENABLE_BACKEND;PANGO_ENABLE_ENGINE"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="4"
-				DisableSpecificWarnings="4244"
+				AdditionalIncludeDirectories=""
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -63,12 +53,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)\libpangocairo-1.0-0.dll"
-				LinkIncremental="2"
-				ModuleDefinitionFile="../../common/pango/pango/pangocairo.def"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -100,7 +84,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="..\HippoDll.vsprops"
+			InheritedPropertySheets=".\libpangocairo.vsprops;..\HippoReleaseDll.vsprops"
 			CharacterSet="0"
 			WholeProgramOptimization="1"
 			>
@@ -121,14 +105,6 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../libpango;../dependencies/gettext/include;../../common/glib;../../common/glib/glib;../libglib;../cairo;../../common/cairo/src;../../common/glib/gmodule;../../common/pango/pango;../../common/pango"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBPANGOCAIRO_EXPORTS"
-				RuntimeLibrary="2"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
-				DisableSpecificWarnings="4244"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -141,14 +117,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)\libpangocairo-1.0-0.dll"
-				LinkIncremental="1"
-				ModuleDefinitionFile="../../common/pango/pango/pangocairo.def"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"

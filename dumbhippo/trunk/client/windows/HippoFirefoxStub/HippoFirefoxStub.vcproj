@@ -17,10 +17,10 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="../Debug"
-			IntermediateDirectory="Debug"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			InheritedPropertySheets="..\HippoDebugDll.vsprops;.\HippoFirefoxStub.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -40,18 +40,6 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="&quot;c:\Program Files\gecko-sdk\include&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;HIPPOFIREFOX_EXPORTS;HIPPO_OS_WINDOWS"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				TreatWChar_tAsBuiltInType="true"
-				UsePrecompiledHeader="0"
-				PrecompiledHeaderThrough="stdafx-hippofirefox.h"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="4"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -64,15 +52,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="&quot;c:\Program Files\gecko-sdk\lib\xpcomglue_s.lib&quot; &quot;c:\Program Files\gecko-sdk\lib\xpcom.lib&quot; &quot;c:\Program Files\gecko-sdk\lib\nspr4.lib&quot;"
-				OutputFile="$(OutDir)/HippoFirefoxStub.dll"
-				LinkIncremental="2"
-				IgnoreDefaultLibraryNames="MSVCRT;LIBCD"
-				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/HippoFirefoxStub.pdb"
-				SubSystem="2"
-				ImportLibrary="$(OutDir)/HippoFirefoxStub.lib"
-				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -101,10 +80,10 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="Release"
-			IntermediateDirectory="Release"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			InheritedPropertySheets="..\HippoReleaseDll.vsprops;.\HippoFirefoxStub.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -124,13 +103,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;HIPPOFIREFOX_EXPORTS"
-				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderThrough="stdafx-hippofirefox.h"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -143,14 +116,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/HippoFirefoxStub.dll"
-				LinkIncremental="1"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				ImportLibrary="$(OutDir)/HippoFirefoxStub.lib"
-				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"

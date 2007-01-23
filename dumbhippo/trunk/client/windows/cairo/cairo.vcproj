@@ -20,6 +20,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="..\HippoDebugDll.vsprops;.\cairo.vsprops"
 			CharacterSet="0"
 			>
 			<Tool
@@ -39,16 +40,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories=".;..\..\common\cairo\src;..\..\common\cairo\pixman\src;..\dependencies\libpng\include;..\dependencies\zlib\include"
-				PreprocessorDefinitions="HAVE_CONFIG_H;WIN32;_DEBUG;_WINDOWS;_USRDLL;CAIRO_EXPORTS;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;UNICODE;BUILDING_CAIRO"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="4"
+				AdditionalIncludeDirectories=""
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -61,12 +53,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="..\dependencies\libpng\lib\libpng.lib"
-				OutputFile="$(OutDir)\libcairo-2.dll"
-				LinkIncremental="2"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -91,8 +77,6 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Creating symbol dump file"
-				CommandLine="..\util\dump_syms &quot;$(TargetDir)$(TargetName).pdb&quot; &gt; &quot;$(OutDir)\$(TargetName).sym&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -100,6 +84,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="..\HippoReleaseDll.vsprops;.\cairo.vsprops"
 			CharacterSet="0"
 			WholeProgramOptimization="1"
 			>
@@ -120,13 +105,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories=".;..\..\common\cairo\src;..\..\common\cairo\pixman\src;..\dependencies\libpng\include;..\dependencies\zlib\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;CAIRO_EXPORTS"
-				RuntimeLibrary="2"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
+				AdditionalIncludeDirectories=""
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -139,14 +118,6 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="..\dependencies\libpng\lib\libpng.lib"
-				OutputFile="$(OutDir)\libcairo-2.dll"
-				LinkIncremental="1"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -171,8 +142,6 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Creating symbol dump file"
-				CommandLine="..\util\dump_syms &quot;$(TargetDir)$(TargetName).pdb&quot; &gt; &quot;$(OutDir)\$(TargetName).sym&quot;"
 			/>
 		</Configuration>
 	</Configurations>

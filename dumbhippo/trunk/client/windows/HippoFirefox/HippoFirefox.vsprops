@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="HippoFirefox"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="&quot;c:\Program Files\gecko-sdk\include&quot;;&quot;../../common/firefox/gecko-private/include&quot;;../../common/hippoipc;../HippoUtil;../HippoIpc;Debug"
+		PreprocessorDefinitions="HIPPO_OS_WINDOWS"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalDependencies="&quot;c:\Program Files\gecko-sdk\lib\xpcomglue_s.lib&quot; &quot;c:\Program Files\gecko-sdk\lib\xpcom.lib&quot; &quot;c:\Program Files\gecko-sdk\lib\nspr4.lib&quot;"
+		IgnoreDefaultLibraryNames="MSVCRT"
+	/>
+</VisualStudioPropertySheet>

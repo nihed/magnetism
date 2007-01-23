@@ -17,10 +17,10 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="..\Debug"
-			IntermediateDirectory="Debug"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			InheritedPropertySheets="..\HippoDebug.vsprops;.\HippoUI.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -40,50 +40,26 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="../HippoUtil;../../common/glib;../../common/glib/glib;../libglib;../cairo;../../common/cairo/src;../../common/pango;../../common/loudmouth;../../common;../../common/canvas;../../common/airbag/src/client/windows"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NOMINMAX"
-				GeneratePreprocessedFile="0"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				TreatWChar_tAsBuiltInType="true"
-				ForceConformanceInForLoopScope="true"
-				UsePrecompiledHeader="1"
-				PrecompiledHeaderThrough="stdafx-hippoui.h"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="4"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/VERBOSE:LIB"
-				AdditionalDependencies="Gdiplus.lib shlwapi.lib pangocairo-1.0.lib pangowin32-1.0.lib ws2_32.lib wininet.lib urlmon.lib advapi32.lib gdi32.lib shell32.lib comctl32.lib jpeg.lib"
-				OutputFile="$(OutDir)/Mugshot.exe"
-				LinkIncremental="2"
-				AdditionalLibraryDirectories="../debug;../dependencies/glib/lib;../dependencies/cairo/lib;../dependencies/pango/lib;../dependencies/jpeg/lib"
-				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/HippoUI.pdb"
-				SubSystem="2"
-				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
 			/>
 			<Tool
 				Name="VCManifestTool"
-				OutputManifestFile="IgnoreThis.manifest"
+				OutputManifestFile="$(TargetPath).IgnoreThis.manifest"
 				EmbedManifest="false"
 			/>
 			<Tool
@@ -103,15 +79,14 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="..\util\dump_syms $(OutDir)\HippoUI.pdb &gt; $(OutDir)\HippoUI.sym"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="Release"
-			IntermediateDirectory="Release"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			InheritedPropertySheets="..\hippoRelease.vsprops;.\HippoUI.vsprops;..\HippoSymbols.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -131,14 +106,6 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../HippoUtil;../../common/glib;../../common/glib/glib;../libglib;../cairo;../../common/cairo/src;../../common/pango;../../common/loudmouth;../../common;../../common/canvas;../../common/airbag/src/client/windows"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
-				RuntimeLibrary="0"
-				UsePrecompiledHeader="2"
-				PrecompiledHeaderThrough="stdafx-hippoui.h"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -151,13 +118,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/Mugshot.exe"
-				LinkIncremental="1"
 				GenerateDebugInformation="true"
-				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				TargetMachine="1"
+				LinkTimeCodeGeneration="0"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -182,7 +146,6 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="..\util\dump_syms $(OutDir)\HippoUI.pdb &gt; $(OutDir)\HippoUI.sym"
 			/>
 		</Configuration>
 	</Configurations>
