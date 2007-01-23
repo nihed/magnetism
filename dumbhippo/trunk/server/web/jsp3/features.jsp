@@ -46,14 +46,14 @@
 			                     tipIcon="flickr_thumbs.png"
 			                     tipIconWidth="400"
 			                     tipIconHeight="118"
-			                     tipText="Get updates when people in your Mugshot network posting new photos."/>
+			                     tipText="Get updates when people in your Mugshot network post new photos."/>
 			  <dht3:featuresItem prefix="Digg"
 			                     icon="favicon_digg.png"
 			                     text="Stories rated on Digg and Reddit"
 			                     tipIcon="digg_block.png"
 			                     tipIconWidth="450"
 			                     tipIconHeight="34"
-			                     tipText="Get updates when people in your Mugshot network rating stories."/>	  
+			                     tipText="Get updates when people in your Mugshot network rate stories."/>	  
 			</tr>		
 			<tr>
 			  <dht3:featuresItem prefix="YouTube"
