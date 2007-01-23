@@ -20,7 +20,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets=".\libpangocairo.vsprops;..\HippoDebugDll.vsprops"
+			InheritedPropertySheets=".\libpangocairo.vsprops;..\Sheets\HippoDebugDll.vsprops"
 			CharacterSet="0"
 			>
 			<Tool
@@ -84,7 +84,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets=".\libpangocairo.vsprops;..\HippoReleaseDll.vsprops"
+			InheritedPropertySheets=".\libpangocairo.vsprops;..\Sheets\HippoReleaseDll.vsprops"
 			CharacterSet="0"
 			WholeProgramOptimization="1"
 			>

@@ -19,7 +19,7 @@
 			OutputDirectory="Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="0"
-			InheritedPropertySheets="..\HippoMake.vsprops"
+			InheritedPropertySheets="..\Sheets\HippoMake.vsprops"
 			>
 			<Tool
 				Name="VCNMakeTool"
@@ -30,7 +30,7 @@
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="0"
-			InheritedPropertySheets="..\HippoMake.vsprops"
+			InheritedPropertySheets="..\Sheets\HippoMake.vsprops"
 			>
 			<Tool
 				Name="VCNMakeTool"

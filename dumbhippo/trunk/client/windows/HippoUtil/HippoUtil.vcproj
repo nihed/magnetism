@@ -20,7 +20,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="..\HippoDebugDll.vsprops;.\HippoUtil.vsprops"
+			InheritedPropertySheets="..\Sheets\HippoDebugDll.vsprops;.\HippoUtil.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -85,7 +85,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="..\HippoReleaseDll.vsprops;.\HippoUtil.vsprops"
+			InheritedPropertySheets="..\Sheets\HippoReleaseDll.vsprops;.\HippoUtil.vsprops"
 			CharacterSet="2"
 			>
 			<Tool

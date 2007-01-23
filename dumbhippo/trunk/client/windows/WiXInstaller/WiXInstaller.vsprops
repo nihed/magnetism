@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="WiXInstaller"
-	InheritedPropertySheets="..\HippoMake.vsprops"
+	InheritedPropertySheets="..\Sheets\HippoMake.vsprops"
 	>
 	<Tool
 		Name="VCNMakeTool"

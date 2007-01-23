@@ -20,7 +20,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="0"
-			InheritedPropertySheets="..\HippoMake.vsprops"
+			InheritedPropertySheets="..\Sheets\HippoMake.vsprops"
 			>
 			<Tool
 				Name="VCNMakeTool"
@@ -31,7 +31,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="0"
-			InheritedPropertySheets="..\HippoMake.vsprops"
+			InheritedPropertySheets="..\Sheets\HippoMake.vsprops"
 			>
 			<Tool
 				Name="VCNMakeTool"

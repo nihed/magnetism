@@ -20,7 +20,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets=".\libpangowin32.vsprops;..\HippoDebugDll.vsprops"
+			InheritedPropertySheets=".\libpangowin32.vsprops;..\Sheets\HippoDebugDll.vsprops"
 			CharacterSet="0"
 			>
 			<Tool
@@ -84,7 +84,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets=".\libpangowin32.vsprops;..\HippoReleaseDll.vsprops"
+			InheritedPropertySheets=".\libpangowin32.vsprops;..\Sheets\HippoReleaseDll.vsprops"
 			CharacterSet="0"
 			WholeProgramOptimization="1"
 			>

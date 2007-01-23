@@ -20,7 +20,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="..\HippoDebugDll.vsprops;.\HippoFirefoxStub.vsprops"
+			InheritedPropertySheets="..\Sheets\HippoDebugDll.vsprops;.\HippoFirefoxStub.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -83,7 +83,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="..\HippoReleaseDll.vsprops;.\HippoFirefoxStub.vsprops"
+			InheritedPropertySheets="..\Sheets\HippoReleaseDll.vsprops;.\HippoFirefoxStub.vsprops"
 			CharacterSet="2"
 			>
 			<Tool

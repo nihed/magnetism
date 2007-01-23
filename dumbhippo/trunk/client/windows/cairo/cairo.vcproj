@@ -20,7 +20,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="..\HippoDebugDll.vsprops;.\cairo.vsprops"
+			InheritedPropertySheets="..\Sheets\HippoDebugDll.vsprops;.\cairo.vsprops"
 			CharacterSet="0"
 			>
 			<Tool
@@ -84,7 +84,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="..\HippoReleaseDll.vsprops;.\cairo.vsprops"
+			InheritedPropertySheets="..\Sheets\HippoReleaseDll.vsprops;.\cairo.vsprops"
 			CharacterSet="0"
 			WholeProgramOptimization="1"
 			>

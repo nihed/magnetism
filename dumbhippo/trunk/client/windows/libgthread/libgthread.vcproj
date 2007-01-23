@@ -20,7 +20,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets=".\libgthread.vsprops;..\HippoDebugDll.vsprops"
+			InheritedPropertySheets=".\libgthread.vsprops;..\Sheets\HippoDebugDll.vsprops"
 			CharacterSet="0"
 			>
 			<Tool
@@ -83,7 +83,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets=".\libgthread.vsprops;..\HippoReleaseDll.vsprops"
+			InheritedPropertySheets=".\libgthread.vsprops;..\Sheets\HippoReleaseDll.vsprops"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>

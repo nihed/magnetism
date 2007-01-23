@@ -20,7 +20,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
-			InheritedPropertySheets="..\HippoDebug.vsprops;.\HippoIpc.vsprops"
+			InheritedPropertySheets="..\Sheets\HippoDebug.vsprops;.\HippoIpc.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
