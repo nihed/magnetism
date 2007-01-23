@@ -19,6 +19,36 @@ hippo_error_quark(void)
     return g_quark_from_static_string("hippo-error-quark");
 }
 
+/* No end of spec-compliance here, no doubt */
+gboolean
+hippo_parse_http_url (const char *url,
+                      gboolean   *is_https,
+                      char      **host,
+                      int        *port)
+{
+    const char *server;
+
+    if (is_https)
+        *is_https = FALSE;
+    if (host)
+        *host = NULL;
+    if (port)
+        *port = -1;
+    
+    if (g_str_has_prefix(url, "http://")) {
+        server = url + 7;
+    } else if (g_str_has_prefix(url, "https://")) {
+        server = url + 8;
+        if (is_https)
+            *is_https = TRUE;
+    } else {
+        return FALSE;
+    }
+
+    return hippo_parse_server(server, host, port);
+}
+
+
 /* rint doesn't exist on Windows */
 static double 
 hippo_rint(double n)

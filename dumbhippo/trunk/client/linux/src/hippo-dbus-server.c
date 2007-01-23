@@ -8,6 +8,8 @@
 #include <dbus/dbus-glib-lowlevel.h>
 #include "hippo-dbus-server.h"
 #include "hippo-dbus-client.h"
+#include "hippo-dbus-web.h"
+#include "hippo-dbus-cookies.h"
 #include <hippo/hippo-endpoint-proxy.h>
 #include "main.h"
 
@@ -1330,6 +1332,25 @@ handle_message(DBusConnection     *connection,
                 result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
             }
             
+            if (reply != NULL) {
+                dbus_connection_send(dbus->connection, reply, NULL);
+                dbus_message_unref(reply);
+            }
+        } else if (interface && path && member &&
+                   strcmp(interface, HIPPO_DBUS_WEB_INTERFACE) == 0 &&
+                   strcmp(path, HIPPO_DBUS_WEB_PATH) == 0) {
+            DBusMessage *reply;
+            
+            reply = NULL;
+            result = DBUS_HANDLER_RESULT_HANDLED;
+
+            if (strcmp(member, "GetCookiesToSend") == 0) {
+                reply = hippo_dbus_handle_get_cookies_to_send(dbus, message);
+            } else {
+                /* Set this back so the default handler can return an error */
+                result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+            }
+
             if (reply != NULL) {
                 dbus_connection_send(dbus->connection, reply, NULL);
                 dbus_message_unref(reply);
