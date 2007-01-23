@@ -12,6 +12,6 @@
 	<Tool
 		Name="VCLinkerTool"
 		AdditionalDependencies="&quot;c:\Program Files\gecko-sdk\lib\xpcomglue_s.lib&quot; &quot;c:\Program Files\gecko-sdk\lib\xpcom.lib&quot; &quot;c:\Program Files\gecko-sdk\lib\nspr4.lib&quot;"
-		IgnoreDefaultLibraryNames="MSVCRT"
+		IgnoreDefaultLibraryNames=""
 	/>
 </VisualStudioPropertySheet>
