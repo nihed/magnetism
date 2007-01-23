@@ -86,7 +86,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			InheritedPropertySheets="..\hippoRelease.vsprops;.\HippoUI.vsprops;..\Sheets\HippoSymbols.vsprops"
+			InheritedPropertySheets="..\Sheets\hippoRelease.vsprops;.\HippoUI.vsprops;..\Sheets\HippoSymbols.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
