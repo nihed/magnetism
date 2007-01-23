@@ -36,6 +36,11 @@ public enum ExternalAccountType {
 		}
 		
 		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username";
+	    }	
+		
+		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
@@ -89,6 +94,16 @@ public enum ExternalAccountType {
 		}
 
 		@Override
+	    public String getSiteUserInfoType() {
+	    	return "email used for";
+	    }
+		
+		@Override
+	    public boolean isInfoTypeProvidedBySite() {
+	    	return false;
+	    }
+	    
+		@Override
 		public String canonicalizeExtra(String extra) throws ValidationException {
 			extra = super.canonicalizeExtra(extra);
 			if (extra != null)
@@ -125,6 +140,11 @@ public enum ExternalAccountType {
 		public String getLinkText(String handle, String extra) {
 			return "My Profile";
 		}
+		
+		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username or profile URL";
+	    }		
 		
 		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
@@ -279,6 +299,12 @@ public enum ExternalAccountType {
 		public String getLinkText(String handle, String extra) {
 			return handle;
 		}
+		
+		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username or profile URL";
+	    }
+		
 		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
@@ -430,6 +456,12 @@ public enum ExternalAccountType {
 		public String getLinkText(String handle, String extra) {
 			return handle;
 		}
+		
+		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username";
+	    }
+		
 		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
@@ -482,6 +514,11 @@ public enum ExternalAccountType {
 		}
 		
 		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username or profile URL";
+	    }
+		
+		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
@@ -524,6 +561,11 @@ public enum ExternalAccountType {
 		}
 		
 		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username or profile URL";
+	    }
+		
+		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
@@ -561,6 +603,11 @@ public enum ExternalAccountType {
 		public String getLinkText(String handle, String extra) {
 			return "Dugg by " + handle;
 		}
+		
+		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username or profile URL";
+	    }
 		
 		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
@@ -607,6 +654,11 @@ public enum ExternalAccountType {
 		public String getLinkText(String handle, String extra) {
 			return "Reddit Activity";
 		}
+		
+		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username or profile URL";
+	    }
 		
 		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
@@ -756,5 +808,11 @@ public enum ExternalAccountType {
     // account to us
     public String getSiteUserInfoType() {
     	return "user info";
+    }
+    
+    // how we should talk about the identifying info, is it something the site provides you with
+    // (i.e. a username) or is it something you provide the site with (i.e. your e-mail)
+    public boolean isInfoTypeProvidedBySite() {
+    	return true;
     }
 }

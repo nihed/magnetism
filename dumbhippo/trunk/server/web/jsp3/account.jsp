@@ -243,6 +243,7 @@
 		                    <dht:loveHateEntry 
 		                    	name="${supportedAccount.siteName}"
 		                    	userInfoType="${supportedAccount.siteUserInfoType}"
+		                    	isInfoTypeProvidedBySite="${supportedAccount.infoTypeProvidedBySite}"
 		                    	link="${supportedAccount.externalAccountType.siteLink}"
 		                    	baseId="dh${supportedAccount.siteBaseName}" 
 		                    	mode="${supportedAccount.sentiment}"/>

@@ -62,6 +62,10 @@ public class ExternalAccountView {
 	public String getSiteUserInfoType() {
 		return externalAccountType.getSiteUserInfoType();
 	}
+
+	public boolean isInfoTypeProvidedBySite() {
+		return externalAccountType.isInfoTypeProvidedBySite();
+	}
 	
 	public String getIconName() {
 		return externalAccountType.getIconName();

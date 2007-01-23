@@ -86,7 +86,13 @@ public class ExternalAccount extends DBUnique {
 	public void setHandleValidating(String handle) throws ValidationException {
 		String validatedHandle = accountType.canonicalizeHandle(handle);
 		if (accountType.requiresHandleIfLoved() && validatedHandle == null) {
-			throw new ValidationException("Setting an empty value for " + this.getSiteName() + " user info is not valid");
+			String usedForSite = "";
+			if (!this.getAccountType().isInfoTypeProvidedBySite()) {
+				usedForSite = " " + this.getSiteName() + " account";
+			}
+			
+			throw new ValidationException("If you love " + this.getSiteName() + " let us know by entering your " 
+					                      + this.getAccountType().getSiteUserInfoType() + usedForSite);
 		}
 		this.handle = validatedHandle;
 	}	

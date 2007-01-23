@@ -5,6 +5,7 @@
 <%@ attribute name="isEditing" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="name" required="true" type="java.lang.String" %>
 <%@ attribute name="userInfoType" required="true" type="java.lang.String" %>
+<%@ attribute name="isInfoTypeProvidedBySite" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="link" required="true" type="java.lang.String" %>
 <%@ attribute name="baseId" required="true" type="java.lang.String" %>
 
@@ -17,14 +18,28 @@
 		</c:if>
 		<div>
 			<a style="font-weight: bold;" href="javascript:dh.lovehate.setMode('${baseId}', 'loveEdit')" title="Click to change">
-				<dh:png src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/> Love it</a>: Enter your 
-				<jsp:element name="a">
-					<jsp:attribute name="href"><c:out value="${link}"/></jsp:attribute>
-					<jsp:attribute name="target">_blank</jsp:attribute>
-					<jsp:body><c:out value="${name}"/></jsp:body>
-				</jsp:element> <c:out value="${userInfoType}"/><span dhId="AccountHelpId"></span>.
-					<%-- We use dhId because this tag is used in multiple places. --%>
-			  		<span dhId="LoveTipId"></span>
+				<dh:png src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/> Love it
+			</a>: Enter your 
+			<c:choose>
+				<c:when test="${isInfoTypeProvidedBySite}">  
+				    <jsp:element name="a">
+					    <jsp:attribute name="href"><c:out value="${link}"/></jsp:attribute>
+					    <jsp:attribute name="target">_blank</jsp:attribute>
+					    <jsp:body><c:out value="${name}"/></jsp:body>
+				    </jsp:element> <c:out value="${userInfoType}"/><span dhId="AccountHelpId"></span>.
+				</c:when>
+				<c:otherwise>
+				    <c:out value="${userInfoType}"/>
+				    <jsp:element name="a">
+					    <jsp:attribute name="href"><c:out value="${link}"/></jsp:attribute>
+					    <jsp:attribute name="target">_blank</jsp:attribute>
+					    <jsp:body><c:out value="${name}"/></jsp:body>
+				    </jsp:element> 
+				    account<span dhId="AccountHelpId"></span>.				
+				</c:otherwise>
+		    </c:choose>    
+			<%-- We use dhId because this tag is used in multiple places. --%>
+			<span dhId="LoveTipId"></span>
 	 	</div>
 		<div>
 			<a style="font-weight: bold;" href="javascript:dh.lovehate.setMode('${baseId}', 'hateEdit')" title="Click to change">

@@ -434,7 +434,7 @@ dh.account.disableFacebookSession = function() {
 }
 
 dh.account.createMyspaceEntry = function() {
-    dh.account.myspaceEntry = new dh.lovehate.Entry('dhMySpace', 'Enter your Myspace name', dh.account.initialMyspaceName,
+    dh.account.myspaceEntry = new dh.lovehate.Entry('dhMySpace', 'Myspace username', dh.account.initialMyspaceName,
 							'I despise Tom and his space', dh.account.initialMyspaceHateQuip, 'Your friends get updates when you post to your MySpace blog (and more to come).');
 	dh.account.myspaceEntry.onLoveSaved = dh.account.onMyspaceLoveSaved;
 	dh.account.myspaceEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.myspaceEntry, 'MYSPACE');
@@ -466,7 +466,7 @@ dh.account.createFlickrEntry = function() {
 }
 
 dh.account.createLinkedInEntry = function() {	
-	dh.account.linkedInEntry = new dh.lovehate.Entry('dhLinkedIn', 'LinkedIn profile URL or username', dh.account.initialLinkedInName,
+	dh.account.linkedInEntry = new dh.lovehate.Entry('dhLinkedIn', 'LinkedIn username or profile URL', dh.account.initialLinkedInName,
 					'LinkedIn is for nerds', dh.account.initialLinkedInHateQuip);
 	dh.account.linkedInEntry.onLoveSaved = dh.account.onLinkedInLoveSaved;
 	dh.account.linkedInEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.linkedInEntry, 'LINKED_IN');
@@ -485,7 +485,7 @@ dh.account.createRhapsodyEntry = function() {
 }
 
 dh.account.createDeliciousEntry = function() {	
-	dh.account.deliciousEntry = new dh.lovehate.Entry('dhDelicious', 'del.icio.us URL or username', dh.account.initialDeliciousName,
+	dh.account.deliciousEntry = new dh.lovehate.Entry('dhDelicious', 'del.icio.us username or profile URL', dh.account.initialDeliciousName,
 					'del.icio.us isn\'t', dh.account.initialDeliciousHateQuip, 'Your friends get updates when you add public bookmarks.');
 	dh.account.deliciousEntry.onLoveSaved = dh.account.onDeliciousLoveSaved;
 	dh.account.deliciousEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.deliciousEntry, 'DELICIOUS');
@@ -493,7 +493,7 @@ dh.account.createDeliciousEntry = function() {
 }
 
 dh.account.createTwitterEntry = function() {	
-	dh.account.twitterEntry = new dh.lovehate.Entry('dhTwitter', 'Twitter URL or username', dh.account.initialTwitterName,
+	dh.account.twitterEntry = new dh.lovehate.Entry('dhTwitter', 'Twitter username or profile URL', dh.account.initialTwitterName,
 					'And *why* do I care what you\'re doing?', dh.account.initialTwitterHateQuip, 'Your friends see your Twitter updates.');
 	dh.account.twitterEntry.onLoveSaved = dh.account.onTwitterLoveSaved;
 	dh.account.twitterEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.twitterEntry, 'TWITTER');
@@ -501,7 +501,7 @@ dh.account.createTwitterEntry = function() {
 }
 
 dh.account.createDiggEntry = function() {	
-	dh.account.diggEntry = new dh.lovehate.Entry('dhDigg', 'Digg URL or username', dh.account.initialDiggName,
+	dh.account.diggEntry = new dh.lovehate.Entry('dhDigg', 'Digg username or profile URL', dh.account.initialDiggName,
 					'I don\'t dig it', dh.account.initialDiggHateQuip, 'Your friends get updates when you add diggs.');
 	dh.account.diggEntry.onLoveSaved = dh.account.onDiggLoveSaved;
 	dh.account.diggEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.diggEntry, 'DIGG');
@@ -509,7 +509,7 @@ dh.account.createDiggEntry = function() {
 }
 
 dh.account.createRedditEntry = function() {	
-	dh.account.redditEntry = new dh.lovehate.Entry('dhReddit', 'Reddit URL or username', dh.account.initialRedditName,
+	dh.account.redditEntry = new dh.lovehate.Entry('dhReddit', 'Reddit username or profile URL', dh.account.initialRedditName,
 					'Not reading it', dh.account.initialRedditHateQuip, 'Your friends get updates when you rate sites.');
 	dh.account.redditEntry.onLoveSaved = dh.account.onRedditLoveSaved;
 	dh.account.redditEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.redditEntry, 'REDDIT');
