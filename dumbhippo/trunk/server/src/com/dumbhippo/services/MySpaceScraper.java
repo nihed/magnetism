@@ -70,7 +70,7 @@ public class MySpaceScraper {
 	}
 	
 	static public final void main(String[] args) throws TransientServiceException {
-		String friendID = MySpaceScraper.getFriendId("cgwalters");
+		String friendID = MySpaceScraper.getFriendId(args[0]);
 		System.out.println(friendID);
 	}
 }
