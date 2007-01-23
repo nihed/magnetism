@@ -166,7 +166,7 @@
 			  works with most popular Web sites, with more added every day.</td>
 			</tr>																			
 		</table>
-		<div class="dh-features-header">
+		<div class="dh-shinybox-bottom-content dh-features-header">
 			<a href="/signup">Sign up today!</a>
 		</div>		
 	</dht3:shinyBox>
