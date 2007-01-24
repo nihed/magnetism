@@ -1,7 +1,7 @@
 <html>
 <%@ page pageEncoding="UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ taglib uri="dumbhippo.tld" prefix="dh" %>
+<%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht2" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
