@@ -61,6 +61,7 @@ library HippoExplorer {
         HRESULT leaveChatRoom([in] BSTR chatId);
         HRESULT showChatWindow([in] BSTR chatId);
         HRESULT sendChatMessage([in] BSTR chatId, [in] BSTR text);
+        HRESULT sendChatMessageSentiment([in] BSTR chatId, [in] BSTR text, [in] int sentiment);
 
         // IE specific operations
         [helpstring("Open the post information bar (the post will be determined from the current URL)")]

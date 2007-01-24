@@ -150,9 +150,10 @@ HippoSerializedControllerLeaveChatRoom::invoke(HippoIpcController *controller)
 class HippoSerializedControllerSendChatMessage : public HippoSerializedControllerArgs
 {
 public:
-    HippoSerializedControllerSendChatMessage(const char *chatId, const char *text) {
+    HippoSerializedControllerSendChatMessage(const char *chatId, const char *text, int sentiment) {
         chatId_ = chatId;
         text_ = text;
+        sentiment_ = sentiment;
     }
 
     virtual void invoke(HippoIpcController *controller);
@@ -160,12 +161,13 @@ public:
 private:
     std::string chatId_;
     std::string text_;
+    int sentiment_;
 };
 
 void
 HippoSerializedControllerSendChatMessage::invoke(HippoIpcController *controller)
 {
-    controller->sendChatMessage(chatId_.c_str(), text_.c_str());
+    controller->sendChatMessage(chatId_.c_str(), text_.c_str(), sentiment_);
 }
 
 class HippoSerializedControllerShowChatWindow : public HippoSerializedControllerArgs
@@ -260,10 +262,10 @@ HippoSerializedController::leaveChatRoom(HippoEndpointId endpoint, const char *c
 }
 
 void
-HippoSerializedController::sendChatMessage(const char *chatId, const char *text)
+HippoSerializedController::sendChatMessage(const char *chatId, const char *text, int sentiment)
 {
     clear();
-    args_ = new HippoSerializedControllerSendChatMessage(chatId, text);
+    args_ = new HippoSerializedControllerSendChatMessage(chatId, text, sentiment);
 }
 
 void 

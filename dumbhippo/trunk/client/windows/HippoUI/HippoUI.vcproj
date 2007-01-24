@@ -59,8 +59,6 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
-				OutputManifestFile="$(TargetPath).IgnoreThis.manifest"
-				EmbedManifest="false"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"

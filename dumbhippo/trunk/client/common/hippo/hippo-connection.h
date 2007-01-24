@@ -89,7 +89,8 @@ void             hippo_connection_rejoin_chat_room          (HippoConnection *co
 
 void             hippo_connection_send_chat_room_message    (HippoConnection *connection,
                                                              HippoChatRoom   *room,
-                                                             const char      *text);
+                                                             const char      *text,
+                                                             HippoSentiment   sentiment);
 
 /* Like send_chat_room_message, but without a chat room */
 void             hippo_connection_send_quip                 (HippoConnection *connection,

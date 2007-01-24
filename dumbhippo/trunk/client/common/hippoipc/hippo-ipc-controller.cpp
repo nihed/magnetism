@@ -27,7 +27,7 @@ public:
     virtual void joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant);
     virtual void leaveChatRoom(HippoEndpointId endpoint,const char *chatId);
     virtual void showChatWindow(const char *chatId);
-    virtual void sendChatMessage(const char *chatId, const char *text);
+    virtual void sendChatMessage(const char *chatId, const char *text, int sentiment);
     
     virtual void addListener(HippoIpcListener *listener);
     virtual void removeListener(HippoIpcListener *listener);
@@ -38,7 +38,7 @@ public:
     virtual void onDisconnect();
     virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant);
     virtual void onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId);
-    virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message,double timestamp,long serial);
+    virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp,long serial);
 
     virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *arrangementName, const char *artistName, bool musicPlaying);
     
@@ -110,9 +110,9 @@ HippoIpcControllerImpl::showChatWindow(const char *chatId)
 }
 
 void 
-HippoIpcControllerImpl::sendChatMessage(const char *chatId, const char *text)
+HippoIpcControllerImpl::sendChatMessage(const char *chatId, const char *text, int sentiment)
 {
-    provider_->sendChatMessage(chatId, text);
+    provider_->sendChatMessage(chatId, text, sentiment);
 }
 
 void 
@@ -179,11 +179,11 @@ HippoIpcControllerImpl::onUserLeave(HippoEndpointId endpoint, const char *chatId
 }
 
 void
-HippoIpcControllerImpl::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial)
+HippoIpcControllerImpl::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp, long serial)
 {
     for (std::vector<HippoIpcControllerEndpoint>::iterator i = endpoints_.begin(); i != endpoints_.end(); i++) {
         if (i->getId() == endpoint) {
-            i->getListener()->onMessage(endpoint, chatId, userId, message, timestamp, serial);
+            i->getListener()->onMessage(endpoint, chatId, userId, message, sentiment, timestamp, serial);
             break;
         }
     }

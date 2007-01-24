@@ -29,7 +29,7 @@ public:
     virtual void joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant);
     virtual void leaveChatRoom(HippoEndpointId endpoint, const char *chatId);
     
-    virtual void sendChatMessage(const char *chatId, const char *text);
+    virtual void sendChatMessage(const char *chatId, const char *text, int sentiment);
     virtual void showChatWindow(const char *chatId);
     virtual void ref();
     virtual void unref();
@@ -39,7 +39,7 @@ public:
     STDMETHODIMP OnDisconnect(void);
     STDMETHODIMP OnUserJoin(UINT64 endpointId, BSTR chatId, BSTR userId, BOOL participant);
     STDMETHODIMP OnUserLeave(UINT64 endpointId, BSTR chatId, BSTR userId);
-    STDMETHODIMP OnMessage(UINT64 endpointId, BSTR chatId, BSTR userId, BSTR message, double timestamp, int serial);
+    STDMETHODIMP OnMessage(UINT64 endpointId, BSTR chatId, BSTR userId, BSTR message, int sentiment, double timestamp, int serial);
     STDMETHODIMP UserInfo(UINT64 endpointId, BSTR userId, BSTR name, BSTR smallPhotoUrl, 
                           BSTR currentSong, BSTR currentArtist, BOOL musicPlaying);
 
@@ -182,10 +182,10 @@ HippoComIpcProviderImpl::leaveChatRoom(HippoEndpointId endpoint, const char *cha
 }
 
 void 
-HippoComIpcProviderImpl::sendChatMessage(const char *chatId, const char *text)
+HippoComIpcProviderImpl::sendChatMessage(const char *chatId, const char *text, int sentiment)
 {
     if (ui_)
-        ui_->SendChatMessage(HippoBSTR::fromUTF8(chatId, -1), HippoBSTR::fromUTF8(text, -1));
+        ui_->SendChatMessage(HippoBSTR::fromUTF8(chatId, -1), HippoBSTR::fromUTF8(text, -1), sentiment);
 }
 
 void 
@@ -246,13 +246,13 @@ HippoComIpcProviderImpl::OnUserLeave(UINT64 endpointId, BSTR chatId, BSTR userId
 }
 
 STDMETHODIMP
-HippoComIpcProviderImpl::OnMessage(UINT64 endpointId, BSTR chatId, BSTR userId, BSTR message, double timestamp, int serial)
+HippoComIpcProviderImpl::OnMessage(UINT64 endpointId, BSTR chatId, BSTR userId, BSTR message, int sentiment, double timestamp, int serial)
 {
     HippoUStr chatIdU(chatId);
     HippoUStr userIdU(userId);
     HippoUStr messageU(message);
 
-    createAsyncNotification()->onMessage(endpointId, chatIdU.c_str(), userIdU.c_str(), messageU.c_str(), timestamp, serial);
+    createAsyncNotification()->onMessage(endpointId, chatIdU.c_str(), userIdU.c_str(), messageU.c_str(), sentiment, timestamp, serial);
 
     return S_OK;
 }

@@ -793,13 +793,28 @@ HippoUI::LeaveChatRoom(UINT64 endpointId, BSTR chatId)
 }
 
 STDMETHODIMP 
-HippoUI::SendChatMessage(BSTR chatId, BSTR text)
+HippoUI::SendChatMessage(BSTR chatId, BSTR text, int sentiment)
 {
     HippoUStr chatIdU(chatId);
     HippoUStr textU(text);
+    HippoSentiment hippoSentiment;
+
+    switch (sentiment) {
+        case 0:
+            hippoSentiment = HIPPO_SENTIMENT_INDIFFERENT;
+            break;
+        case 1:
+            hippoSentiment = HIPPO_SENTIMENT_LOVE;
+            break;
+        case 2:
+            hippoSentiment = HIPPO_SENTIMENT_HATE;
+            break;
+        default:
+            return E_INVALIDARG;
+    }
 
     HippoChatRoom *room = hippo_data_cache_ensure_chat_room(dataCache_, chatIdU.c_str(), HIPPO_CHAT_KIND_UNKNOWN);
-    hippo_connection_send_chat_room_message(hippo_data_cache_get_connection(dataCache_), room, textU.c_str());
+    hippo_connection_send_chat_room_message(hippo_data_cache_get_connection(dataCache_), room, textU.c_str(), hippoSentiment);
 
     return S_OK;
 }

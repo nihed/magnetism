@@ -2322,23 +2322,40 @@ hippo_connection_rejoin_chat_room(HippoConnection *connection,
     hippo_connection_send_chat_room_state(connection, room, HIPPO_CHAT_STATE_NONMEMBER, desired_state);
 }
 
-void
-hippo_connection_send_chat_room_message(HippoConnection *connection,
-                                        HippoChatRoom   *room,
-                                        const char      *text)
+static void
+send_chat_room_message(HippoConnection *connection,
+                       const char      *to,
+                       const char      *text,
+                       HippoSentiment   sentiment)
 {
-    const char *to;
     LmMessage *message;
     LmMessageNode *body;
         
-    to = hippo_chat_room_get_jabber_id(room);
     message = lm_message_new(to, LM_MESSAGE_TYPE_MESSAGE);
 
     body = lm_message_node_add_child(message->node, "body", text);
 
+    if (sentiment != HIPPO_SENTIMENT_INDIFFERENT) {
+        LmMessageNode *child = lm_message_node_add_child(message->node, "messageInfo", NULL);
+        lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/rooms");
+        lm_message_node_set_attribute(child, "sentiment", hippo_sentiment_as_string(sentiment));
+    }
+    
     hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
 
     lm_message_unref(message);
+}
+
+void
+hippo_connection_send_chat_room_message(HippoConnection *connection,
+                                        HippoChatRoom   *room,
+                                        const char      *text,
+                                        HippoSentiment   sentiment)
+{
+    const char *to;
+        
+    to = hippo_chat_room_get_jabber_id(room);
+    send_chat_room_message(connection, to, text, sentiment);
 }
 
 void
@@ -2349,26 +2366,13 @@ hippo_connection_send_quip(HippoConnection *connection,
                            HippoSentiment   sentiment)
 {
     char *node, *to;
-    LmMessage *message;
-    LmMessageNode *body;
-    LmMessageNode *child;
     
     node = hippo_id_to_jabber_id(id);
     to = g_strconcat(node, "@" HIPPO_ROOMS_JID_DOMAIN, NULL);
     g_free(node);
 
-    message = lm_message_new(to, LM_MESSAGE_TYPE_MESSAGE);
-    body = lm_message_node_add_child(message->node, "body", text);
+    send_chat_room_message(connection, to, text, sentiment);
 
-    if (sentiment != HIPPO_SENTIMENT_INDIFFERENT) {
-        child = lm_message_node_add_child(message->node, "messageInfo", NULL);
-        lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/rooms");
-        lm_message_node_set_attribute(child, "sentiment", hippo_sentiment_as_string(sentiment));
-    }
-    
-    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
-
-    lm_message_unref(message);
     g_free(to);
 }
 

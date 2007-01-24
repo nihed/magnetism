@@ -71,6 +71,7 @@ public:
    STDMETHODIMP leaveChatRoom(BSTR chatId);
    STDMETHODIMP showChatWindow(BSTR chatId);
    STDMETHODIMP sendChatMessage(BSTR chatId, BSTR text);
+   STDMETHODIMP sendChatMessageSentiment(BSTR chatId, BSTR text, int sentiment);
 
    STDMETHODIMP OpenBrowserBar();
    STDMETHODIMP CloseBrowserBar();
@@ -81,7 +82,7 @@ public:
 
    virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant);
    virtual void onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId);
-   virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial);
+   virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp, long serial);
 
    virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying);
 
