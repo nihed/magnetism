@@ -71,11 +71,16 @@ dh.lang.defineClass(dh.control.Person, dh.control.Entity,
 	}
 })
 
-dh.control.ChatMessage = function(entity, message, timestamp, serial) {
+dh.control.SENTIMENT_INDIFFERENT = 0;
+dh.control.SENTIMENT_LOVE = 1;
+dh.control.SENTIMENT_HATE = 2;
+
+dh.control.ChatMessage = function(entity, message, sentiment, timestamp, serial) {
 	this._entity = entity;
 	this._message = message;
 	this._timestamp = timestamp;
 	this._serial = serial;
+	this._sentiment = sentiment;
 }
 
 dh.lang.defineClass(dh.control.ChatMessage, null,
@@ -88,6 +93,10 @@ dh.lang.defineClass(dh.control.ChatMessage, null,
 		return this._message;
 	},
 	
+	getSentiment : function() {
+		return this._sentiment;
+	},
+	
 	getTimestamp : function() {
 		return this._timestamp;
 	},
@@ -96,23 +105,8 @@ dh.lang.defineClass(dh.control.ChatMessage, null,
 		return this._serial;
 	},
 	
-	_shortLocaleTime : function(date) {
-		return date.toLocaleTimeString().replace(/(\d:\d\d):\d\d/, "$1")
-	},
-
 	timeString : function() {
-		var now = new Date();
-		var nowTimestamp = now.getTime();
-	    var date = new Date(this._timestamp);
-    
-		if (nowTimestamp - this._timestamp < 24 * 60 * 60 * 1000 && now.getDate() == date.getDate()) {
-			return this._shortLocaleTime(date);
-		} else if (nowTimestamp - this._timestamp < 7 * 24 * 60 * 60 * 1000) {
-			var weekday = [ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ][date.getDay()];
-			return weekday + ", " + this._shortLocaleTime(date);
-		} else {
-			return date.toDateString();
-		}
+		return dh.util.formatTimeAgo(new Date(this._timestamp));
 	},	
 	
 	toString: function() {
@@ -167,8 +161,8 @@ dh.lang.defineClass(dh.control.ChatRoom, null,
 	onReconnect : function() {
 	},
 	
-	sendMessage : function(text) {
-		dh.control.control.sendChatMessage(this._id, text);
+	sendMessage : function(text, sentiment) {
+		dh.control.control.sendChatMessage(this._id, text, sentiment);
 	},
 	
 	join : function(participant) {
@@ -333,10 +327,12 @@ dh.lang.defineClass(dh.control.AbstractControl, null,
 		}
 	},
 	
-	_onMessage : function(chatId, userId, text, timestamp, serial) {
+	_onMessage : function(chatId, userId, text, timestamp, serial, sentiment) {
+		if (sentiment == null)
+			sentiment = dh.control.SENTIMENT_INDIFFERENT
 		if (this._allChatRooms[chatId]) {	
 			var message = new dh.control.ChatMessage(this._getOrCreatePerson(userId),
-											 		 text, timestamp, serial);
+											 		 text, sentiment, timestamp, serial);
 			this._allChatRooms[chatId]._addMessage(message);
 		}
 	}, 
@@ -360,7 +356,7 @@ dh.control.WebOnlyControl = function() {
 }
 
 dh.lang.defineClass(dh.control.WebOnlyControl, dh.control.AbstractControl, {
-	sendChatMessage : function(chatId, text) {
+	sendChatMessage : function(chatId, text, sentiment) {
 	},
 	
 	showChatWindow : function(chatId) {
@@ -391,8 +387,13 @@ dh.lang.defineClass(dh.control.NativeControl, dh.control.AbstractControl, {
 		this._native.leaveChatRoom(chatId);
 	},
 
-	sendChatMessage : function(chatId, text) {
-		this._native.sendChatMessage(chatId, text);
+	sendChatMessage : function(chatId, text, sentiment) {
+		try {
+			this._native.sendChatMessageSentiment(chatId, text, sentiment);
+		} catch (e) {
+			// Backwards compatibility with older native controls
+			this._native.sendChatMessage(chatId, text);
+		}
 	},
 	
 	showChatWindow : function(chatId) {
@@ -426,8 +427,8 @@ dh.lang.defineClass(dh.control.NativeControlListener, null, {
     onUserLeave: function(chatId, userId) {
     	dh.control.control._onUserLeave(chatId, userId);
     },
-    onMessage: function(chatId, userId, message, timestamp, serial) {
-    	dh.control.control._onMessage(chatId, userId, message, timestamp, serial);
+    onMessage: function(chatId, userId, message, timestamp, serial, sentiment) {
+    	dh.control.control._onMessage(chatId, userId, message, timestamp, serial, sentiment);
     },
     userInfo: function(userId, name, smallPhotoUrl, arrangementName, artistName, musicPlaying) {
     	dh.control.control._userInfo(userId, name, smallPhotoUrl, arrangementName, artistName, musicPlaying);

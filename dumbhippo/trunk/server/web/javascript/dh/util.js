@@ -508,9 +508,10 @@ dh.util.createPngElement = function(src, width, height) {
 		// don't try to use setAttribute(), it won't work
 		img.style.width = width;
 		img.style.height = height;
+		img.style.overflow = "hidden";
 		img.style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + src + "', sizingMethod='scale');"
 	} else {
-		img.setAttribute("style", "background-image: url( " + src + " ); width: " + width + "; height: " + height + ";");
+		img.setAttribute("style", "background-image: url( " + src + " ); width: " + width + "; height: " + height + "; overflow: hidden;");
 	}
 	return img;
 }
@@ -804,4 +805,68 @@ dh.util.validateEmail = function(address) {
 // Reload the content of the page, without trigger revalidation as document.location.reload()
 dh.util.refresh = function() {
 	window.open(document.location.href, "_self", null, true);
+}
+
+
+dh.util.sizePhoto = function(baseUrl, size) {
+	if (baseUrl.lastIndexOf("?") >= 0)
+		return baseUrl + "&size=" + size;
+	else
+		return baseUrl + "?size=" + size;
+}
+	
+
+dh.util.formatTimeAgo = function(date) {
+	var time = date.getTime();
+	if (time <= 0x80000000) // Unknown / bogus
+		return "";
+	
+	var now = new Date();
+
+	var deltaSeconds = (now.getTime() - time) / 1000;
+	
+	if (deltaSeconds < 30)
+		return "";
+	
+	if (deltaSeconds < 90)
+		return "a minute ago";
+		
+	if (deltaSeconds < 60*60) {
+		var deltaMinutes = deltaSeconds / 60;
+		if (deltaMinutes < 5) {
+			return Math.round(deltaMinutes) + " min. ago";
+		} else {
+			deltaMinutes = deltaMinutes - (deltaMinutes % 5);
+			return Math.round(deltaMinutes) + " min. ago";
+		}
+	}
+
+	var deltaHours = deltaSeconds / (60 * 60);
+	
+	if (deltaHours < 1.55)
+		return "1 hr. ago";
+
+	if (deltaHours < 24)
+		return Math.round(deltaHours) + " hrs. ago";
+
+	if (deltaHours < 48)
+		return "Yesterday";
+	
+	if (deltaHours < 24*15)
+		return Math.round(deltaHours / 24) + " days ago";
+	
+	var deltaWeeks = deltaHours / (24*7);
+	
+	if (deltaWeeks < 6)
+		return Math.round(deltaWeeks) + " weeks ago";
+	
+	if (deltaWeeks < 50)
+		return Math.round(deltaWeeks / 4) + " months ago";
+	
+	var deltaYears = deltaWeeks / 52;
+	
+	if (deltaYears < 1.55)
+		return "1 year ago";
+	else
+		return Math.round(deltaYears) + " years ago";
 }

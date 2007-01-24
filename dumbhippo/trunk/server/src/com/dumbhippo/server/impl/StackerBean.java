@@ -797,6 +797,24 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return getBlockView(viewpoint, ubd.getBlock(), ubd, false);
 	}	
 	
+	public BlockView loadBlock(Viewpoint viewpoint, BlockKey key) throws NotFoundException {
+		Block block = null;
+		UserBlockData ubd = null;
+		
+		if (viewpoint instanceof UserViewpoint) {
+			try {
+				ubd = lookupUserBlockData((UserViewpoint)viewpoint, key);
+				block = ubd.getBlock();
+			} catch (NotFoundException e) {
+			}
+		}
+		
+		if (block == null)
+			block = queryBlock(key);
+		
+		return getBlockView(viewpoint, block, ubd, false);
+	}	
+	
 	/**
 	 * 
 	 * @param viewpoint

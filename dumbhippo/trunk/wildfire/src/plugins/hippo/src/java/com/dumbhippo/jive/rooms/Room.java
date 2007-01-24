@@ -171,12 +171,14 @@ public class Room implements PresenceListener {
 		private UserInfo user;
 		private String text;
 		private Date timestamp;
+		private Sentiment sentiment;
 		private long serial;
 		
-		public MessageInfo(UserInfo user, String text, Date timestamp, long serial) {
+		public MessageInfo(UserInfo user, String text, Sentiment sentiment, Date timestamp, long serial) {
 			this.user = user;
 			this.text = text;
 			this.timestamp = timestamp;
+			this.sentiment = sentiment;
 			this.serial = serial;
 		}
 		
@@ -190,6 +192,10 @@ public class Room implements PresenceListener {
 		
 		public String getText() {
 			return text;
+		}
+		
+		public Sentiment getSentiment() {
+			return sentiment;
 		}
 		
 		public Date getTimestamp() {
@@ -229,7 +235,7 @@ public class Room implements PresenceListener {
 	private void addMessages(List<ChatRoomMessage> toAdd, boolean notify) {
 		for (ChatRoomMessage message : toAdd) {
 			UserInfo userInfo = lookupUserInfo(message.getFromUsername());
-			MessageInfo messageInfo = new MessageInfo(userInfo, message.getText(), message.getTimestamp(), message.getSerial());
+			MessageInfo messageInfo = new MessageInfo(userInfo, message.getText(), message.getSentiment(), message.getTimestamp(), message.getSerial());
 			messages.add(messageInfo);
 			if (messageInfo.getSerial() > maxMessageSerial)
 				maxMessageSerial = messageInfo.getSerial();
@@ -575,6 +581,8 @@ public class Room implements PresenceListener {
 		info.addAttribute("name", userInfo.getName());
 		info.addAttribute("smallPhotoUrl", userInfo.getSmallPhotoUrl());
 		info.addAttribute("timestamp", Long.toString(messageInfo.getTimestamp().getTime()));
+		if (messageInfo.getSentiment() != Sentiment.INDIFFERENT)
+			info.addAttribute("sentiment", messageInfo.getSentiment().name());
 		info.addAttribute("serial", Long.toString(messageInfo.getSerial()));
 
 		if (isDelayed) {

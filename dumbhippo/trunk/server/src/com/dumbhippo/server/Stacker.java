@@ -57,6 +57,18 @@ public interface Stacker {
 	
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException;
 	
+	/**
+	 * Get a BlockView for the given key; if the viewing user recieves notifications
+	 * about this block, then the returned BlockView is based on their UserBlockData,
+	 * otherwise it is created without any UserBlockData or GroupBlockData.
+	 * 
+	 * @param viewpoint viewpoint viewpoint the block
+	 * @param key key to use to look up the block
+	 * @return the BlockView for the block
+	 * @throws NotFoundException if the block doesn't exist or isn't visible
+	 */
+	public BlockView loadBlock(Viewpoint viewpoint, BlockKey key) throws NotFoundException;
+	
 	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, boolean participantOnly);
 
 	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, long lastTimestamp, boolean participantOnly);

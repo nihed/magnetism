@@ -324,7 +324,7 @@ public class MessengerGlueBean implements MessengerGlue {
 
 	private ChatRoomMessage newChatRoomMessage(EmbeddedMessage message) {
 		String username = message.getFromUser().getGuid().toJabberId(null);
-		return new ChatRoomMessage(username, message.getMessageText(),
+		return new ChatRoomMessage(username, message.getMessageText(), message.getSentiment(),
 				message.getTimestamp(), message.getId()); 		
 	}
 	
@@ -360,7 +360,7 @@ public class MessengerGlueBean implements MessengerGlue {
 			// FIXME: Should handle the case of a FeedPost where the effective poster is a GroupFeed
 			User poster = post.getPoster();
 			if (poster != null && post.getText().trim().length() != 0) {
-	            ChatRoomMessage message = new ChatRoomMessage(poster.getGuid().toJabberId(null), post.getText(), post.getPostDate(), -1);	 
+	            ChatRoomMessage message = new ChatRoomMessage(poster.getGuid().toJabberId(null), post.getText(), Sentiment.INDIFFERENT, post.getPostDate(), -1);	 
 	            history.add(message);
 			}
 		}

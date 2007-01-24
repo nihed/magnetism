@@ -8,11 +8,16 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.Stacker;
+import com.dumbhippo.server.blocks.BlockView;
+import com.dumbhippo.server.blocks.MusicChatBlockHandler;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.TrackView;
@@ -37,14 +42,17 @@ public class ChatWindowPage {
     private GroupSystem groupSystem;
     private PostingBoard postBoard;
     private MusicSystem musicSystem;
+    private Stacker stacker;
     private PostView post;
 	private GroupView group;
 	private TrackView track;
+	private BlockView blockView;
     
     public ChatWindowPage() {
     	groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		musicSystem =  WebEJBUtil.defaultLookup(MusicSystem.class);
+		stacker =  WebEJBUtil.defaultLookup(Stacker.class);
     }
 	
     public SigninBean getSignin() {
@@ -144,8 +152,14 @@ public class ChatWindowPage {
 				String oldId = getTrackId();
 				if (oldId != null && oldId.equals(trackId))
 					; // nothing to do
-				else
-					track = musicSystem.getTrackView(new Guid(trackId));
+				else {
+					TrackHistory trackHistory = musicSystem.lookupTrackHistory(new Guid(trackId));
+					track = musicSystem.getTrackView(trackHistory);
+					
+			    	MusicChatBlockHandler handler = WebEJBUtil.defaultLookup(MusicChatBlockHandler.class);
+			    	BlockKey key = handler.getKey(trackHistory);
+			    	blockView = stacker.loadBlock(signin.getViewpoint(), key);
+				}
 			} catch (NotFoundException e) {
 				return;
 			} catch (ParseException e) {
@@ -214,5 +228,9 @@ public class ChatWindowPage {
     		return post.getTitleAsHtml();
     	else
     		return XmlBuilder.escape(getTitle());
+    }
+    
+    public BlockView getBlock() {
+    	return blockView;
     }
 }
