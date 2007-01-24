@@ -2,6 +2,7 @@ dojo.provide("dh.chatwindow")
 
 dojo.require("dh.control")
 dojo.require("dh.chat")
+dojo.require("dh.dom")
 dojo.require("dh.event")
 dojo.require("dh.util")
 dojo.require("dojo.event")
@@ -57,16 +58,21 @@ dh.chatwindow._addMessage = function(message, before) {
 	    var linkElement = dh.util.createLinkElementWithChild(userUrl, image)       
 	    linkElement.className = "dh-chat-message-photo";
 	    messageElement.appendChild(linkElement)
+    } else {
+    	var div = document.createElement("div");
+    	div.className = "dh-chat-message-photo";
+	    messageElement.appendChild(div);
     }
     
     var rightDiv = document.createElement("div");
 	rightDiv.className = "dh-chat-message-right";
 	messageElement.appendChild(rightDiv);
 
+	var sentimentDiv = document.createElement("div");
+	sentimentDiv.className = "dh-chat-message-sentiment";
+	rightDiv.appendChild(sentimentDiv);
+
 	if (message.sentimentFirst) {
-		var sentimentDiv = document.createElement("div");
-		sentimentDiv.className = "dh-chat-message-sentiment";
-		rightDiv.appendChild(sentimentDiv);
 	
 		var sentimentUrl;
 		var sentimentWidth = 11;
@@ -252,6 +258,13 @@ dh.chatwindow._onSentimentClick = function(e) {
 	var node = dh.event.getNode(e);
 	var sentiment = dh.chatwindow._sentimentMap[node.id];
 	dh.chatwindow.setSentiment(sentiment);
+
+	// Send the focus back to the input box
+    var messageInput = document.getElementById("dhChatMessageInput");
+    messageInput.focus();
+
+	dh.event.cancel(e);
+	return false;
 }
 
 dh.chatwindow.updateTimes = function() {
@@ -266,6 +279,23 @@ dh.chatwindow.updateTimes = function() {
 	// We avoid setInterval because of a bug on firefox-x86_64, already
 	// fixed as of Firefox-2.0
 	setTimeout(dh.chatwindow.updateTimes, 60 * 1000);
+}
+
+dh.chatwindow._noopEvent = function(e) {
+	dh.event.cancel(e);
+	return false;
+}
+
+dh.chatwindow._preventSelection = function(node) {
+    dh.event.addEventListener(node, "mousedown",
+							  dh.chatwindow._noopEvent);
+    dh.event.addEventListener(node, "move",
+							  dh.chatwindow._noopEvent);
+	
+	for (var i = 0; i < node.childNodes.length; i++) {
+		if (node.childNodes[i].nodeType == dh.dom.ELEMENT_NODE)
+			dh.chatwindow._preventSelection(node.childNodes[i]);
+	}
 }
 
 dh.chatwindow.init = function() {
@@ -283,14 +313,11 @@ dh.chatwindow.init = function() {
     dh.event.addEventListener(document.body, "keypress",
 							  dh.chatwindow.onBodyKeyPress);
 							  
-    dh.event.addEventListener(messageInput, 
-    						  "click",
-							  dh.chatwindow.onMessageKeyPress);
-	
 	this.setSentiment(dh.control.SENTIMENT_INDIFFERENT);
 	
 	for (var id in this._sentimentMap) {
 		var span = document.getElementById(id);
+		dh.chatwindow._preventSelection(span);
     	dh.event.addEventListener(span, "click",
 						    	  dh.chatwindow._onSentimentClick);
 	}

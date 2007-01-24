@@ -40,15 +40,15 @@
 				Who's around: <span id="dhChatUserList"></span>
 			</div>
 			<div id="dhChatSentiments">
-				<span id="dhChatIndifferent" class="dh-chat-sentiment dh-chat-sentiment-selected">
+				<span id="dhChatIndifferent" class="dh-chat-sentiment dh-chat-sentiment-selected" onselectstart="return false;">
 				    <dh:png src="/images3/${buildStamp}/comment_iconchat_icon.png" style="width: 11; height: 11; overflow: hidden;"/>
 				    Quip
 			    </span>
-				<span id="dhChatLove" class="dh-chat-sentiment">
+				<span id="dhChatLove" class="dh-chat-sentiment" onselectstart="return false;">
 				    <dh:png src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/>
 					I love it!
 				</span>
-				<span id="dhChatHate" class="dh-chat-sentiment">
+				<span id="dhChatHate" class="dh-chat-sentiment" onselectstart="return false;">
 				    <dh:png src="/images3/${buildStamp}/quiphate_icon.png" style="width: 11; height: 11; overflow: hidden;"/>
 					I hate it!
 				</span>

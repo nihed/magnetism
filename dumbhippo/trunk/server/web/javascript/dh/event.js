@@ -21,12 +21,15 @@ dh.event.combineMethodsIntoOneMethod = function(firstMethod, secondMethod) {
 // leaf.
 dh.event.getNode = function(ev)
 {
+	if (!ev)
+		var ev = window.event;
+
  	// this is the W3C model
-	if (ev)
+	if (ev.target != null)
 		return ev.target;
 	
 	// this is IE
-	if (window.event)
+	if (ev.srcElement != null)
 		return window.event.srcElement;
 		
 	// FIXME we should throw here, but need to audit broken code
