@@ -252,7 +252,10 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		}
 		
 		public synchronized void syncStateFromTaskEntry(PollingTaskEntry entry) {
-			lastExecuted = entry.getLastExecuted().getTime();
+			if (entry.getLastExecuted() != null)
+			    lastExecuted = entry.getLastExecuted().getTime();
+			else 
+				lastExecuted = -1;
 			periodicityAverage = entry.getPeriodicityAverage();
 			dirty = false;
 		}
