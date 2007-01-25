@@ -15,6 +15,12 @@
   (gtype-id "HIPPO_TYPE_RECTANGLE")
   (copy-func "hippo_rectangle_copy")
   (release-func "hippo_rectangle_free")
+  (fields
+    '("int" "x")
+    '("int" "y")
+    '("int" "width")
+    '("int" "height")
+  )
 )
 
 (define-object Canvas
