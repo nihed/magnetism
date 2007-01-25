@@ -21,7 +21,7 @@
 
 <head>
 	<title><c:out value="${chatwindow.title}"/></title>
-	<dht3:stylesheet name="site"/>	
+	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="chatwindow" iefixes="true"/>	
 	<dh:script module="dh.chatwindow"/>	
 	<script type="text/javascript">

@@ -14,7 +14,7 @@
 
 <head>
         <title>Mugshot - Radar Theme '<c:out value="${nowplaying.theme.name}"/>'</title>
-		<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>        
+		<dht3:stylesheet name="site" iefixes="true"/>        
 		<dht:faviconIncludes/>
 		<dh:script module="dh.nowplaying"/>
 </head>

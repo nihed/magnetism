@@ -7,7 +7,7 @@
 
 <head>
 	<title>Mugshot Features</title>
-	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
+	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="features"/>	
 	<dh:script module="dh.tooltip"/>	
 	<dht:faviconIncludes/>

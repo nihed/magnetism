@@ -28,7 +28,7 @@
 
 <head>
     <title><c:out value="${person.viewedPerson.name}"/>'s ${pageName} - Mugshot</title>
-	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
+	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="person"/>	
 	<dht3:stylesheet name="invitation"/>	
 	<dht:faviconIncludes/>
