@@ -875,7 +875,7 @@ on_send_message(GtkWidget             *entry_or_button,
     if (is_all_whitespace(text))
         return;    
     
-    hippo_connection_send_chat_room_message(connection, window->room, text);
+    hippo_connection_send_chat_room_message(connection, window->room, text, HIPPO_SENTIMENT_INDIFFERENT);
     
     gtk_entry_set_text(GTK_ENTRY(window->send_entry), "");
 }

@@ -501,8 +501,21 @@ on_endpoint_message(HippoEndpointProxy *proxy,
     const char *chat_id = hippo_chat_room_get_id(chat_room);
     const char *user_id = hippo_entity_get_guid(HIPPO_ENTITY(hippo_chat_message_get_person(chat_message)));
     const char *text = hippo_chat_message_get_text(chat_message);
+    dbus_int32_t sentiment = 0;
     double timestamp = hippo_chat_message_get_timestamp(chat_message);
     dbus_int32_t serial = hippo_chat_message_get_serial(chat_message);
+
+    switch (hippo_chat_message_get_sentiment(chat_message)) {
+    case HIPPO_SENTIMENT_INDIFFERENT:
+        sentiment = 0;
+        break;
+    case HIPPO_SENTIMENT_LOVE:
+        sentiment = 1;
+        break;
+    case HIPPO_SENTIMENT_HATE:
+        sentiment = 2;
+        break;
+    }
 
     message = dbus_message_new_method_call(listener->name,
                                            HIPPO_DBUS_LISTENER_PATH,
@@ -513,6 +526,7 @@ on_endpoint_message(HippoEndpointProxy *proxy,
 			     DBUS_TYPE_STRING, &chat_id,
 			     DBUS_TYPE_STRING, &user_id,
 			     DBUS_TYPE_STRING, &text,
+			     DBUS_TYPE_INT32, &sentiment,
 			     DBUS_TYPE_DOUBLE, &timestamp,
 			     DBUS_TYPE_INT32, &serial,
 			     DBUS_TYPE_INVALID);
@@ -808,20 +822,39 @@ handle_send_chat_message(HippoDBus   *dbus,
     HippoChatRoom *room;
     const char *chat_id;
     const char *message_text;
+    dbus_int32_t sentiment;
+    HippoSentiment hippoSentiment;
     
     chat_id = NULL;
     
     if (!dbus_message_get_args(message, NULL,
 			       DBUS_TYPE_STRING, &chat_id,
 			       DBUS_TYPE_STRING, &message_text,
+                               DBUS_TYPE_INT32, &sentiment,
 			       DBUS_TYPE_INVALID)) {
         return dbus_message_new_error(message,
 				      DBUS_ERROR_INVALID_ARGS,
-				      _("Expected two string args, the chat ID and the message text"));
+				      _("Expected three args, the chat ID (string), the message text (string), and the sentiment (0,1,2)"));
+    }
+
+    switch (sentiment) {
+    case 0:
+        hippoSentiment = HIPPO_SENTIMENT_INDIFFERENT;
+        break;
+    case 1:
+        hippoSentiment = HIPPO_SENTIMENT_LOVE;
+        break;
+    case 2:
+        hippoSentiment = HIPPO_SENTIMENT_HATE;
+        break;
+    default:
+        return dbus_message_new_error(message,
+				      DBUS_ERROR_INVALID_ARGS,
+				      _("Invalid sentiment, should be 0=INDIFFERENT, 1=LOVE, or 2=HATE"));
     }
 
     room = hippo_data_cache_ensure_chat_room(cache, chat_id, HIPPO_CHAT_KIND_UNKNOWN);
-    hippo_connection_send_chat_room_message(connection, room, message_text);
+    hippo_connection_send_chat_room_message(connection, room, message_text, hippoSentiment);
     
     reply = dbus_message_new_method_return(message);
     return reply;
