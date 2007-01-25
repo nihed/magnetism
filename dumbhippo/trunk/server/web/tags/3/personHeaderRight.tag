@@ -4,6 +4,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
+<%@ attribute name="includeWhereAt" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="align" required="true" type="java.lang.String" %>
 
 <td align="right">             
@@ -13,16 +14,20 @@
 		<c:when test="${align == 'middle'}">
 			<tr valign="top">		
 			<td align="center"><jsp:doBody/></td>
-   			<td align="right">
-				<dht3:whereAtIcons who="${who}"/>
-		    </td>
+			<c:if test="${includeWhereAt}">
+   				<td align="right">
+					<dht3:whereAtIcons who="${who}"/>
+			    </td>
+			</c:if>
 			</tr>		    
 		</c:when>
 		<c:otherwise>
-			<tr valign="top">		
-   			<td align="right">
-				<dht3:whereAtIcons who="${who}"/>
-		    </td>
+			<tr valign="top">	
+			<c:if test="${includeWhereAt}">				
+	   			<td align="right">
+					<dht3:whereAtIcons who="${who}"/>
+			    </td>
+			</c:if>
 		    </tr>
 		    <tr>
     			<td align="right">
