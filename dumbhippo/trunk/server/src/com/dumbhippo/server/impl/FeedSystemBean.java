@@ -525,8 +525,14 @@ public class FeedSystemBean implements FeedSystem {
 	
 	public Feed getOrCreateFeed(final LinkResource source) throws XmlMethodException {
 		Feed feed = lookupExistingFeed(source);
-		if (feed != null)
+		if (feed != null) {
+			/* We want to ensure that we create a task for feeds which existed before
+			 * the PollingTask system was implemented as well, which were not caught
+			 * by migration because they were not in use when it was run.
+			 */
+			pollingPersistence.createTaskIdempotent(PollingTaskFamilyType.FEED, feed.getSource().getId());			
 			return feed;
+		}
 		
 		FeedFetchResult fetchResult = getRawFeedChecked(source);
 		final SyndFeed syndFeed = fetchResult.getFeed();
