@@ -48,8 +48,11 @@
    	<c:when test="${dh:enumIs(block.blockType, 'GROUP_REVISION')}">
 	   	<dht3:groupRevisionBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
    	</c:when>
+   	<c:when test="${dh:enumIs(block.blockType, 'NETFLIX_MOVIE') && !oneLine}">
+	   	<dht3:movieBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>
+   	</c:when>
    	<c:when test="${dh:myInstanceOf(block, 'com.dumbhippo.server.blocks.TitleBlockView')}">
-   		<%-- This covers BLOG_ENTRY, MYSPACE_PERSON, DELICIOUS_PUBLIC_BOOKMARK --%>
+   		<%-- This covers BLOG_ENTRY, MYSPACE_PERSON, DELICIOUS_PUBLIC_BOOKMARK, etc. and oneLine NETFLIX_MOVIE --%>
 	   	<dht3:simpleTitleDescriptionBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
    	</c:when>
 </c:choose>

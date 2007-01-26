@@ -78,6 +78,7 @@ import com.dumbhippo.server.blocks.GroupRevisionBlockHandler;
 import com.dumbhippo.server.blocks.MusicChatBlockHandler;
 import com.dumbhippo.server.blocks.MusicPersonBlockHandler;
 import com.dumbhippo.server.blocks.MySpacePersonBlockHandler;
+import com.dumbhippo.server.blocks.NetflixBlockHandler;
 import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.blocks.RedditBlockHandler;
 import com.dumbhippo.server.blocks.TwitterPersonBlockHandler;
@@ -191,6 +192,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			break;
 		case GROUP_REVISION:
 			handlerClass = GroupRevisionBlockHandler.class;
+			break;
+		case NETFLIX_MOVIE:
+			handlerClass = NetflixBlockHandler.class;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
@@ -1921,6 +1925,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case TWITTER_PERSON:
 		case DIGG_DUGG_ENTRY:
 		case REDDIT_ACTIVITY_ENTRY:
+		case NETFLIX_MOVIE:	
 			isGroupParticipation = false;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:

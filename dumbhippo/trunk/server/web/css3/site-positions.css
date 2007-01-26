@@ -335,6 +335,10 @@ div.dh-notification {
 	margin:	            5px;
 }
 
+.dh-stacker-block-beside-image .dh-stacker-block-icon {
+    margin:             0px;
+}
+
 .dh-stacker-block p	{
 	margin:				0px;
 	padding:			0px;

@@ -55,7 +55,7 @@ public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView
 		String description = getDescription();
 		if (description.trim().length() > 0) {
 			XmlBuilder xml = new XmlBuilder();
-			xml.appendTextAsHtml(getEntry().getDescription(), null);
+			xml.appendTextAsHtml(description, null);
 			return xml.toString();
 		} else {
 			return "";

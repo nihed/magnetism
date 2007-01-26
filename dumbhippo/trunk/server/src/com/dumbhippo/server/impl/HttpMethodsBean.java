@@ -1519,24 +1519,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 							
 		feedSystem.removeGroupFeed(viewpoint.getViewer(), group, feed);		
 	}
-	
-	private String findParamValueInUrl(String url, String paramName) {
-		String paramEquals = paramName + "=";
-		int i = url.indexOf(paramEquals);
-		if (i < 0)
-			return null;	
-		
-		int j = url.indexOf("&", i);
-		if (j < 0)
-			j = url.length();
-				
-		return url.substring(i + paramEquals.length(), j);			
-	}
-	
+
 	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException {
 		String urlOrId = urlOrIdStr.trim();
 
-		String rhapUserId = findParamValueInUrl(urlOrId, "rhapUserId");		
+		String rhapUserId = StringUtils.findParamValueInUrl(urlOrId, "rhapUserId");		
 		if (rhapUserId == null) {
 			if (urlOrId.startsWith("http://") || urlOrId.toLowerCase().contains(("rhapsody"))) {
 				throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Rhapsody RSS URL should contain a rhapUserId param: " + urlOrId);
@@ -1570,7 +1557,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void doSetNetflixFeedUrl(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException {
 		String urlOrId = urlOrIdStr.trim();
 
-		String netflixUserId = findParamValueInUrl(urlOrId, "id");		
+		String netflixUserId = StringUtils.findParamValueInUrl(urlOrId, "id");		
 		if (netflixUserId == null) {
 			if (urlOrId.startsWith("http://") || urlOrId.toLowerCase().contains(("netflix"))) {
 			    throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Netflix RSS URL should contain an id param: " + urlOrId);
@@ -1598,7 +1585,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		EJBUtil.forceInitialization(feed.getAccounts());
 		
 		external.setFeed(feed);
-		feed.getAccounts().add(external);
+		feed.getAccounts().add(external);			
 	}
 	
 	private ExternalAccountType parseExternalAccountType(String type) throws XmlMethodException {
@@ -1713,44 +1700,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		xml.appendTextNode("username", external.getHandle());
 	}
-
-	private static String findPathElementAfter(String url, String after) {
-		int i = url.indexOf(after);
-		if (i < 0) {
-			//logger.debug("'{}' not found in '{}'", after, url);
-			return null;
-		}
-		
-		i += after.length();
-		
-		int j = url.indexOf('/', i);
-		if (j < 0) {
-			//logger.debug("'/' not found after index {}", i);
-			j = url.length();
-		}
-		if (i == j) {
-			//logger.debug("{} == {}", i, j);
-			return null;
-		}
-		return url.substring(i, j);
-	}
-
-	private static String findLastPathElement(String url) {
-		while (url.endsWith("/")) {
-			url = url.substring(0, url.length() - 1);
-		}
-		
-		int i = url.lastIndexOf("/");
-		if (i >= 0) {
-			return url.substring(i + 1);
-		} else {
-			return null;
-		}
-	}
 	
 	public void doSetLastFmName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
 		String name = urlOrName.trim();
-		String found = findPathElementAfter(name, "/user/");
+		String found = StringUtils.findPathElementAfter(name, "/user/");
 		if (found != null)
 			name = found;
 		
@@ -1779,7 +1732,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		String name = urlOrName.trim();
 		// del.icio.us urls are just "http://del.icio.us/myusername"
 		
-		String found = findLastPathElement(name);
+		String found = StringUtils.findLastPathElement(name);
 		if (found != null)
 			name = found;
 
@@ -1813,7 +1766,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		// Twitter urls are just "http://twitter.com/myusername"
 		
-		String found = findLastPathElement(name);
+		String found = StringUtils.findLastPathElement(name);
 		if (found != null)
 			name = found;
 		
@@ -1847,7 +1800,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		// Digg urls are "http://digg.com/users/myusername/stuff"
 
-		String found = findPathElementAfter(name, "/users/");
+		String found = StringUtils.findPathElementAfter(name, "/users/");
 		if (found != null)
 			name = found;
 
@@ -1883,7 +1836,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		//logger.debug("name={}", name);
 		
-		String found = findPathElementAfter(name, "/user/");
+		String found = StringUtils.findPathElementAfter(name, "/user/");
 		if (found != null)
 			name = found;
 		

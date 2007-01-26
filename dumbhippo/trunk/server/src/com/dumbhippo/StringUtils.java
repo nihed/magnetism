@@ -193,4 +193,48 @@ public class StringUtils {
 		}
 		return true;
 	}
+	
+	public static String findParamValueInUrl(String url, String paramName) {
+		String paramEquals = paramName + "=";
+		int i = url.indexOf(paramEquals);
+		if (i < 0)
+			return null;	
+		
+		int j = url.indexOf("&", i);
+		if (j < 0)
+			j = url.length();
+				
+		return url.substring(i + paramEquals.length(), j);			
+	}
+	
+	public static String findPathElementAfter(String url, String after) {
+		int i = url.indexOf(after);
+		if (i < 0) {
+			return null;
+		}
+		
+		i += after.length();
+		
+		int j = url.indexOf('/', i);
+		if (j < 0) {
+			j = url.length();
+		}
+		if (i == j) {
+			return null;
+		}
+		return url.substring(i, j);
+	}
+
+	public static String findLastPathElement(String url) {
+		while (url.endsWith("/")) {
+			url = url.substring(0, url.length() - 1);
+		}
+		
+		int i = url.lastIndexOf("/");
+		if (i >= 0) {
+			return url.substring(i + 1);
+		} else {
+			return null;
+		}
+	}
 }

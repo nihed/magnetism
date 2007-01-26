@@ -289,7 +289,7 @@ public class FeedSystemBean implements FeedSystem {
 	private void processFeedExternalAccounts(FeedEntry entry, int entryPosition) {
 		// this is just a check for debugging purposes to make sure we handle all TrackFeedEntry objects well
 		if ((entry instanceof TrackFeedEntry) && entry.getFeed().getAccounts().isEmpty()) {
-			logger.warn("processExternalAccountFeed called for TrackFeedEntry {}, but no accounts associated with feed", entry);
+			logger.warn("processFeedExternalAccounts called for TrackFeedEntry {}, but no accounts associated with feed", entry);
 		}		
 		
 		logger.debug("Processing external accounts for new feed entry {}", entry);

@@ -42,7 +42,7 @@
 	</c:when>
 	<c:otherwise>
 		<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${showChat || !block.quip}">
-			<td class="dh-music-block-left" align="left" valign="top" width="75%">
+			<td class="dh-stacker-block-with-image-left" align="left" valign="top" width="75%">
 				<table cellspacing="0" cellpadding="0" width="100%">
 				<tr>
 				<td valign="top" class="dh-music-block-icon" width="${imageWidth}">
@@ -56,7 +56,7 @@
 					</c:choose>
 				</td>
 				<td valign="top">
-					<div class="dh-music-block-beside">	
+					<div class="dh-stacker-block-with-image-beside">	
 						<div>
 							<div class="dh-music-block-artist"><a href="${track.artistPageLink}"><c:out value="${track.artist}"/></a></div>
 							<div class="dh-music-block-name"><a href="${track.artistPageLink}"><c:out value="${track.name}"/></a></div>
