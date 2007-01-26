@@ -143,11 +143,20 @@
     		        <Directory Id="dhFirefoxChromeDir" Name="chrome">
         		    <Directory Id="dhFirefoxChromeContentDir" Name="content">
     		                <Component Id="firefoxChromeContent" Guid="8CE1540B-F3B7-423E-A36E-1B0E87272A90">
-	                            <File Id="overlayJs"  Name="overlay.js"    LongName="overlay.js"      src="firefox\chrome\content\overlay.js"   DiskId="1" Vital="yes"/>
-	                            <File Id="overlayXul" Name="overlay.xul"   LongName="overlay.xul"     src="firefox\chrome\content\overlay.xul"  DiskId="1" Vital="yes"/>
+                                <File Id="chatWindowJs"  Name="chatWind.js"   LongName="chatWindow.js"   src="firefox\chrome\content\chatWindow.js"   DiskId="1" Vital="yes"/>
+                                <File Id="chatWindowXul" Name="chatWind.xul"  LongName="chatWindow.xul"  src="firefox\chrome\content\chatWindow.xul"  DiskId="1" Vital="yes"/>
+                                <File Id="overlayJs"     Name="overlay.js"    LongName="overlay.js"      src="firefox\chrome\content\overlay.js"   DiskId="1" Vital="yes"/>
+                                <File Id="overlayXul"    Name="overlay.xul"   LongName="overlay.xul"     src="firefox\chrome\content\overlay.xul"  DiskId="1" Vital="yes"/>
 	                        </Component>
         		    </Directory>
-        		    <Directory Id="dhFirefoxChromeLocaleDir" Name="locale">
+                            <Directory Id="dhFirefoxChromeIconsDir" Name="icons">
+                                <Directory Id="dhFireFoxChromeIconsDefault" Name="default">
+                                    <Component Id="firefoxChromeIconsDefault" Guid="DB6ACAED-E2BC-4c58-92D3-6C0334D8665F">
+                                        <File Id="mugshotIco" Name="mugshot.ico" LongName="mugshot.ico" src="firefox\chrome\icons\default\Mugshot.ico" DiskId="1" Vital="yes"/>
+                                    </Component>
+                                </Directory>
+                            </Directory>
+                            <Directory Id="dhFirefoxChromeLocaleDir" Name="locale">
             		        <Directory Id="dhFirefoxChromeLocaleEnUsDir" Name="en-US">
         		            <Component Id="firefoxChromeLocaleEnUs" Guid="807F8BF0-03B6-49FC-87A4-B81504DEFFE9">
             	                        <File Id="overlayDtd" Name="overlay.dtd"   LongName="overlay.dtd"     src="firefox\chrome\locale\en-US\overlay.dtd"  DiskId="1" Vital="yes"/>
@@ -156,6 +165,7 @@
         		    </Directory>
         		    <Directory Id="dhFirefoxChromeSkinDir" Name="skin">
         		        <Component Id="firefoxChromeSkin" Guid="9A55EE27-54C8-44A1-96F3-210AE940C39E">
+                                    <File Id="chatWindowCss"    Name="chatWind.css"   LongName="chatWindow.css"         src="firefox\chrome\skin\chatWindow.css"      DiskId="1" Vital="yes"/>
             	                    <File Id="linkswarm1616Png" Name="linkswar.png"   LongName="linkswarm16x16.png"     src="firefox\chrome\skin\linkswarm16x16.png"  DiskId="1" Vital="yes"/>
             	                    <File Id="linkswarm2424Png" Name="linkswar.png"   LongName="linkswarm24x24.png"     src="firefox\chrome\skin\linkswarm24x24.png"  DiskId="1" Vital="yes"/>
             	                    <File Id="mugshot3232Png"   Name="mugshot3.png"   LongName="mugshot32x32.png"       src="firefox\chrome\skin\mugshot32x32.png"    DiskId="1" Vital="yes"/>

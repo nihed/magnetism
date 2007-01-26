@@ -477,12 +477,12 @@ HippoControl::setListener(IDispatch *listener)
 {
     listener_ = listener;
 
-    hippoDebugLogW(L"In setListener, thread is %d", GetCurrentThreadId());
+    return S_OK;
+}
 
-    if (listener_) {
-        //onMessage(1, "aaaaaaaaaaaaaa", "bbbbbbbbbbbbbb", "Hi There", 1, 1);
-    }
-
+STDMETHODIMP 
+HippoControl::setWindow(IDispatch *window)
+{
     return S_OK;
 }
 

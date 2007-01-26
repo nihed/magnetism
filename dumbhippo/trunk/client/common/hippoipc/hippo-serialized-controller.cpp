@@ -103,6 +103,27 @@ HippoSerializedControllerUnregisterEndpoint::invoke(HippoIpcController *controll
     controller->unregisterEndpoint(endpoint_);
 }
 
+class HippoSerializedControllerSetWindowId : public HippoSerializedControllerArgs
+{
+public:
+    HippoSerializedControllerSetWindowId(HippoEndpointId endpoint, HippoWindowId windowId) {
+        endpoint_ = endpoint;
+        windowId_ = windowId;
+    }
+
+    virtual void invoke(HippoIpcController *controller);
+
+private:
+    HippoEndpointId endpoint_;
+    HippoWindowId windowId_;
+};
+
+void
+HippoSerializedControllerSetWindowId::invoke(HippoIpcController *controller)
+{
+    controller->setWindowId(endpoint_, windowId_);
+}
+
 class HippoSerializedControllerJoinChatRoom : public HippoSerializedControllerArgs
 {
 public:
@@ -245,6 +266,13 @@ HippoSerializedController::unregisterEndpoint(HippoEndpointId endpoint)
 {
     clear();
     args_ = new HippoSerializedControllerUnregisterEndpoint(endpoint);
+}
+
+void 
+HippoSerializedController::setWindowId(HippoEndpointId endpoint, HippoWindowId windowId)
+{
+    clear();
+    args_ = new HippoSerializedControllerSetWindowId(endpoint, windowId);
 }
 
 void 

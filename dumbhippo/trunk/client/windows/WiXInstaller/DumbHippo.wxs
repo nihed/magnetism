@@ -35,6 +35,7 @@
         <ComponentRef Id="dependencies" />
         <ComponentRef Id="firefox" />
         <ComponentRef Id="firefoxChromeContent" />
+        <ComponentRef Id="firefoxChromeIconsDefault" />
         <ComponentRef Id="firefoxChromeLocaleEnUs" />
         <ComponentRef Id="firefoxChromeSkin" />
         <ComponentRef Id="firefoxComponents" />

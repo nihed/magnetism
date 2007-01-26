@@ -57,6 +57,8 @@ library HippoExplorer {
 
         HRESULT setListener([in] IDispatch *listener); 
 
+        HRESULT setWindow([in] IDispatch *window); // No-op for Windows
+
         HRESULT joinChatRoom([in] BSTR chatId, [in] BOOL participant);
         HRESULT leaveChatRoom([in] BSTR chatId);
         HRESULT showChatWindow([in] BSTR chatId);

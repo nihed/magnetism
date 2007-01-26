@@ -18,18 +18,22 @@
 #include "nspr.h"
 #include "nsMemory.h"
 #include "nsNetCID.h"
-#include "nsIBaseWindow.h"
-#include "nsIDocShell.h"
 #include "nsISupportsUtils.h"
-#include "nsIWidget.h"
 #include "nsIIOService.h"
 #include "nsIObserverService.h"
 #include "nsIURI.h"
-#include "nsIScriptGlobalObject.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsServiceManagerUtils.h"
 #include "nsStringAPI.h"
 #include "hippoControl.h"
+
+#ifdef HIPPO_OS_LINUX
+// These headers are used for finding the GdkWindow for a DOM window
+#include "nsIBaseWindow.h"
+#include "nsIDocShell.h"
+#include "nsIScriptGlobalObject.h"
+#include "nsIWidget.h"
+#endif
 
 hippoControl::hippoControl()
 {

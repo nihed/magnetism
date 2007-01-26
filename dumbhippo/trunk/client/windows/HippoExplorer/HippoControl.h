@@ -67,6 +67,8 @@ public:
 
    STDMETHODIMP setListener(IDispatch *listener); 
 
+   STDMETHODIMP setWindow(IDispatch *window);
+
    STDMETHODIMP joinChatRoom(BSTR chatId, BOOL participant);
    STDMETHODIMP leaveChatRoom(BSTR chatId);
    STDMETHODIMP showChatWindow(BSTR chatId);

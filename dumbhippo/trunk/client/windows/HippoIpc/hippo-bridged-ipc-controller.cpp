@@ -52,7 +52,9 @@ public:
 
     virtual HippoEndpointId registerEndpoint(HippoIpcListener *listener);
     virtual void unregisterEndpoint(HippoEndpointId endpoint);
-    
+
+    virtual void setWindowId(HippoEndpointId endpoint, HippoWindowId windowId);
+
     virtual void joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant);
     virtual void leaveChatRoom(HippoEndpointId endpoint, const char *chatId);
     
@@ -150,6 +152,15 @@ HippoBridgedIpcControllerImpl::unregisterEndpoint(HippoEndpointId endpoint)
 {
     HippoSerializedController serialized;
     serialized.unregisterEndpoint(endpoint);
+
+    hub_->doSync(&HippoComIpcControllerTask(inner_, &serialized));
+}
+
+void
+HippoBridgedIpcControllerImpl::setWindowId(HippoEndpointId endpoint, HippoWindowId windowId)
+{
+    HippoSerializedController serialized;
+    serialized.setWindowId(endpoint, windowId);
 
     hub_->doSync(&HippoComIpcControllerTask(inner_, &serialized));
 }

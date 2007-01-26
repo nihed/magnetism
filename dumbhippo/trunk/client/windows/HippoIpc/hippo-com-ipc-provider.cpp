@@ -25,7 +25,9 @@ public:
     virtual void setListener(HippoIpcListener *listener);
 
     virtual void unregisterEndpoint(HippoEndpointId endpoint);
-    
+
+    virtual void setWindowId(HippoEndpointId endpoint, HippoWindowId windowId);
+
     virtual void joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant);
     virtual void leaveChatRoom(HippoEndpointId endpoint, const char *chatId);
     
@@ -165,6 +167,12 @@ HippoComIpcProviderImpl::unregisterEndpoint(HippoEndpointId endpoint)
 {
     if (ui_)
         ui_->UnregisterEndpoint(endpoint);
+}
+
+void 
+HippoComIpcProviderImpl::setWindowId(HippoEndpointId endpoint, HippoWindowId windowId)
+{
+    // Not implemented for Windows
 }
 
 void 
