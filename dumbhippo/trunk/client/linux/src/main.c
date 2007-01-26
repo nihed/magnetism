@@ -10,7 +10,6 @@
 #include <hippo/hippo-group.h>
 #include "hippo-platform-impl.h"
 #include "hippo-status-icon.h"
-#include "hippo-chat-window.h"
 #include "hippo-dbus-server.h"
 #include "hippo-embedded-image.h"
 #include "hippo-idle.h"
