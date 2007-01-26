@@ -1,4 +1,5 @@
 /* -*- mode: IDL; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include "nsIDOMWindow.idl"
 #include "nsISupports.idl"
 #include "hippoIControlListener.idl"
 
@@ -12,6 +13,7 @@ interface hippoIControl : nsISupports {
     boolean isConnected();
     
     void setListener(in hippoIControlListener listener);
+    void setWindow(in nsIDOMWindow window);
 
     void joinChatRoom(in AUTF8String chatId, in boolean participant);
     void leaveChatRoom(in AUTF8String chatId);

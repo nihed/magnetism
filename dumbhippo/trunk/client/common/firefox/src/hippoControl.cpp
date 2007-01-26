@@ -2,6 +2,8 @@
 
 #ifdef HIPPO_OS_LINUX
 #include <glib.h>
+#include <gtk/gtk.h>
+#include <gdk/gdkx.h>
 #include "hippoipc/hippo-dbus-ipc-locator.h"
 #define UTF8_VALIDATE g_utf8_validate
 #elif defined(HIPPO_OS_WINDOWS)
@@ -16,10 +18,14 @@
 #include "nspr.h"
 #include "nsMemory.h"
 #include "nsNetCID.h"
+#include "nsIBaseWindow.h"
+#include "nsIDocShell.h"
 #include "nsISupportsUtils.h"
+#include "nsIWidget.h"
 #include "nsIIOService.h"
 #include "nsIObserverService.h"
 #include "nsIURI.h"
+#include "nsIScriptGlobalObject.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsServiceManagerUtils.h"
 #include "nsStringAPI.h"
@@ -109,6 +115,46 @@ NS_IMETHODIMP hippoControl::SetListener(hippoIControlListener *listener)
         listener_->Release();
     listener_ = listener;
     
+    return NS_OK;
+}
+
+/* void setListener (in hippoIControlListener listener); */
+NS_IMETHODIMP hippoControl::SetWindow(nsIDOMWindow *window)
+{
+#ifdef HIPPO_OS_LINUX
+    HippoWindowId windowId = 0;
+    
+    /* The window ID that we want to pass to the Mugshot client is 
+     * the window ID that corresponds to the frame that the chat is
+     * in. If the Mugshot client needs the toplevel, it can walk up
+     * the hierarchy and find it, but passing the inner window allows
+     * more intelligence in knowing if the chat is actually visible.
+     *
+     * To switch to passing the toplevel, simply insert a call to
+     * gdk_window_toplevel() ... much easier than walking up the 
+     * Mozilla hierarchy.
+     */
+    nsCOMPtr<nsIScriptGlobalObject> global = do_QueryInterface(window);
+
+    nsCOMPtr<nsIBaseWindow> baseWindow;
+    if (global)
+        baseWindow = do_QueryInterface(global->GetDocShell());
+    
+    nsCOMPtr<nsIWidget> widget;
+    if (baseWindow)
+        baseWindow->GetMainWidget(getter_AddRefs(widget));
+    
+    GdkWindow *nativeWindow = NULL;
+    if (widget)
+        nativeWindow = (GdkWindow *)widget->GetNativeData(NS_NATIVE_WINDOW);
+    
+    if (nativeWindow)
+        windowId = (HippoWindowId)GDK_DRAWABLE_XID(nativeWindow);
+    
+    if (controller_ && endpoint_ && windowId)
+        controller_->setWindowId(endpoint_, windowId);
+#endif
+
     return NS_OK;
 }
 

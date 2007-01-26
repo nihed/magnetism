@@ -59,10 +59,6 @@ void              hippo_app_join_chat     (HippoApp   *app,
 HippoWindowState hippo_app_get_chat_state (HippoApp   *app,
                                            const char *chat_id);
 
-gboolean   hippo_app_post_is_active (HippoApp   *app,
-                                     const char *post_id);                                     
-gboolean   hippo_app_chat_is_active (HippoApp   *app,
-                                     const char *post_id);
 /* use this only for user and group photos, caching is weird 
  * if the cache for lots of image types interacts
  */

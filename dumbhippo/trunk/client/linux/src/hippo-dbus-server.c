@@ -459,6 +459,7 @@ on_endpoint_user_join(HippoEndpointProxy *proxy,
                              DBUS_TYPE_BOOLEAN, &participant_bool,
 			     DBUS_TYPE_INVALID);
 
+    dbus_message_set_no_reply(message, TRUE);
     dbus_connection_send(listener->dbus->connection, message, NULL);
     dbus_message_unref(message);
 }
@@ -485,6 +486,7 @@ on_endpoint_user_leave(HippoEndpointProxy *proxy,
 			     DBUS_TYPE_STRING, &user_id,
 			     DBUS_TYPE_INVALID);
 
+    dbus_message_set_no_reply(message, TRUE);
     dbus_connection_send(listener->dbus->connection, message, NULL);
     dbus_message_unref(message);
 }
@@ -497,12 +499,14 @@ on_endpoint_message(HippoEndpointProxy *proxy,
 {
     DBusMessage *message;
     
+    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    HippoConnection *connection = hippo_data_cache_get_connection(cache);
     guint64 endpoint = hippo_endpoint_proxy_get_id(proxy);
     const char *chat_id = hippo_chat_room_get_id(chat_room);
     const char *user_id = hippo_entity_get_guid(HIPPO_ENTITY(hippo_chat_message_get_person(chat_message)));
     const char *text = hippo_chat_message_get_text(chat_message);
     dbus_int32_t sentiment = 0;
-    double timestamp = hippo_chat_message_get_timestamp(chat_message);
+    double timestamp;
     dbus_int32_t serial = hippo_chat_message_get_serial(chat_message);
 
     switch (hippo_chat_message_get_sentiment(chat_message)) {
@@ -516,6 +520,13 @@ on_endpoint_message(HippoEndpointProxy *proxy,
         sentiment = 2;
         break;
     }
+
+    /* Time in millseconds */
+    timestamp = hippo_chat_message_get_timestamp(chat_message) * 1000.;
+    /* Convert server time to client time, so the Javascript can format it correctly */
+    timestamp -= hippo_connection_get_server_time_offset(connection);
+
+    g_debug("Sending message, %s, serial=%d", text, serial);
 
     message = dbus_message_new_method_call(listener->name,
                                            HIPPO_DBUS_LISTENER_PATH,
@@ -531,6 +542,7 @@ on_endpoint_message(HippoEndpointProxy *proxy,
 			     DBUS_TYPE_INT32, &serial,
 			     DBUS_TYPE_INVALID);
 
+    dbus_message_set_no_reply(message, TRUE);
     dbus_connection_send(listener->dbus->connection, message, NULL);
     dbus_message_unref(message);
 }
@@ -575,6 +587,7 @@ on_endpoint_entity_info(HippoEndpointProxy *proxy,
                                  DBUS_TYPE_BOOLEAN, &music_playing,
                                  DBUS_TYPE_INVALID);
 
+        dbus_message_set_no_reply(message, TRUE);
         dbus_connection_send(listener->dbus->connection, message, NULL);
         dbus_message_unref(message);
     }
@@ -714,6 +727,38 @@ handle_unregister_endpoint(HippoDBus   *dbus,
     if (listener->endpoints == NULL)
 	disconnect_listener(dbus, listener);
 	
+    reply = dbus_message_new_method_return(message);
+    return reply;
+}
+
+static DBusMessage*
+handle_set_window_id(HippoDBus   *dbus,
+                     DBusMessage *message)
+{
+    DBusMessage *reply;
+    guint64 endpoint;
+    guint64 window_id;
+    HippoDBusListener *listener;
+    HippoEndpointProxy *proxy;
+    
+    if (!dbus_message_get_args(message, NULL,
+			       DBUS_TYPE_UINT64, &endpoint,
+			       DBUS_TYPE_UINT64, &window_id,
+			       DBUS_TYPE_INVALID)) {
+        return dbus_message_new_error(message,
+				      DBUS_ERROR_INVALID_ARGS,
+				      _("Expected two arguments, the endpoint ID and the window ID"));
+    }
+    
+    listener = find_listener(dbus, message, &reply);
+    if (!listener)
+        return reply;
+    proxy = find_endpoint(listener, endpoint, message, &reply);
+    if (!proxy)
+	return reply;
+
+    hippo_endpoint_proxy_set_window_id(proxy, window_id);
+
     reply = dbus_message_new_method_return(message);
     return reply;
 }
@@ -1350,6 +1395,8 @@ handle_message(DBusConnection     *connection,
                 reply = handle_register_endpoint(dbus, message);
 	    } else if (strcmp(member, "UnregisterEndpoint") == 0) {
                 reply = handle_unregister_endpoint(dbus, message);
+	    } else if (strcmp(member, "SetWindowId") == 0) {
+                reply = handle_set_window_id(dbus, message);
 	    } else if (strcmp(member, "JoinChatRoom") == 0) {
                 reply = handle_join_chat_room(dbus, message);
 	    } else if (strcmp(member, "LeaveChatRoom") == 0) {
@@ -1486,3 +1533,27 @@ hippo_dbus_notify_xmpp_connected(HippoDBus   *dbus,
             disconnect_listener(dbus, dbus->listeners->data);
     }
 }
+
+void 
+hippo_dbus_foreach_chat_window(HippoDBus             *dbus,
+                               const char            *chat_id,
+                               HippoChatWindowForeach function,
+                               void *                 data)
+{
+    GSList *l, *ll;
+
+    for (l = dbus->listeners; l; l = l->next) {
+	HippoDBusListener *listener = l->data;
+
+	for (ll = listener->endpoints; ll; ll = ll->next) {
+	    HippoEndpointProxy *proxy = ll->data;
+            guint64 window_id = hippo_endpoint_proxy_get_window_id(proxy);
+            HippoChatState state = hippo_endpoint_proxy_get_chat_state(proxy, chat_id);
+
+            if (state != HIPPO_CHAT_STATE_NONMEMBER && window_id != 0)
+                (*function) (window_id, state, data);
+	}
+    }
+}
+
+                                                

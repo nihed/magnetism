@@ -301,6 +301,8 @@ dh.lang.defineClass(dh.control.AbstractControl, null,
 	},
 	
 	_reconnect : function() {
+		this.setWindow();
+	
 		this._allEntities = {}		
 		for (var id in this._allChatRooms) {
 			this._allChatRooms[id]._reconnect();
@@ -356,6 +358,9 @@ dh.control.WebOnlyControl = function() {
 }
 
 dh.lang.defineClass(dh.control.WebOnlyControl, dh.control.AbstractControl, {
+	setWindow : function() {
+	},
+
 	sendChatMessage : function(chatId, text, sentiment) {
 	},
 	
@@ -372,9 +377,10 @@ dh.control.NativeControl = function(nativeObject) {
 	dh.control.AbstractControl.call(this);
 	this._native = nativeObject;
 	
-	this._native.setListener(new dh.control.NativeControlListener())
+	this._native.setListener(new dh.control.NativeControlListener());
         
     this._native.start(dhBaseUrl);
+	this.setWindow();
 }
 
 
@@ -387,6 +393,13 @@ dh.lang.defineClass(dh.control.NativeControl, dh.control.AbstractControl, {
 		this._native.leaveChatRoom(chatId);
 	},
 
+	setWindow : function() {
+		try { // setWindow added 2007-01-26
+			this._native.setWindow(window);
+		} catch (e) {
+		}
+	},
+	
 	sendChatMessage : function(chatId, text, sentiment) {
 		try {
 			this._native.sendChatMessageSentiment(chatId, text, sentiment);

@@ -73,7 +73,7 @@ TestListener::onMessage(HippoEndpointId endpoint, const char *chatId, const char
     g_print("    chatId: %s\n", chatId);
     g_print("    userId: %s\n", userId);
     g_print("    message: %s\n", message);
-    g_print("    sentiment: %s\n", sentiment);
+    g_print("    sentiment: %d\n", sentiment);
     g_print("    timestamp: %f\n", timestamp);
     g_print("    serial: %ld\n", serial);
 }

@@ -3,6 +3,7 @@
 #define __HIPPO_IPC_H__
 
 typedef unsigned long long HippoEndpointId;
+typedef unsigned long long HippoWindowId;
 
 class HippoIpcListener {
 public:
@@ -30,6 +31,8 @@ class HippoIpcMethods {
 public:
     virtual void unregisterEndpoint(HippoEndpointId endpoint) = 0;
     
+    virtual void setWindowId(HippoEndpointId endpoint, HippoWindowId windowId) = 0;
+
     virtual void joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant) = 0;
     virtual void leaveChatRoom(HippoEndpointId endpoint, const char *chatId) = 0;
     

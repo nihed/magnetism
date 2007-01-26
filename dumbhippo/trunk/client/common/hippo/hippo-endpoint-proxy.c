@@ -10,6 +10,7 @@ struct _HippoEndpointProxy {
     HippoDataCache *data_cache;
     guint64 id;
 
+    guint64 window_id;
     GSList *visitor_rooms;
     GSList *participant_rooms;
 
@@ -317,6 +318,23 @@ hippo_endpoint_proxy_unregister (HippoEndpointProxy *proxy)
     proxy->unregistered = TRUE;
 }
 
+void
+hippo_endpoint_proxy_set_window_id (HippoEndpointProxy *proxy,
+                                    guint64             window_id)
+{
+    g_return_if_fail (HIPPO_IS_ENDPOINT_PROXY(proxy));
+
+    proxy->window_id = window_id;
+}
+
+guint64
+hippo_endpoint_proxy_get_window_id (HippoEndpointProxy *proxy)
+{
+    g_return_val_if_fail (HIPPO_IS_ENDPOINT_PROXY(proxy), 0);
+
+    return proxy->window_id;
+}
+
 void    
 hippo_endpoint_proxy_join_chat_room (HippoEndpointProxy *proxy,
                      const char         *chat_id,
@@ -352,4 +370,24 @@ hippo_endpoint_proxy_leave_chat_room (HippoEndpointProxy *proxy,
 
     remove_from_room_list(proxy, &proxy->visitor_rooms, HIPPO_CHAT_STATE_VISITOR, room);
     remove_from_room_list(proxy, &proxy->participant_rooms, HIPPO_CHAT_STATE_PARTICIPANT, room);
+}
+
+HippoChatState
+hippo_endpoint_proxy_get_chat_state (HippoEndpointProxy *proxy,
+                                     const char         *chat_id)
+{
+    HippoChatRoom *room;
+    
+    g_return_val_if_fail (HIPPO_IS_ENDPOINT_PROXY(proxy), FALSE);
+
+    room = hippo_data_cache_lookup_chat_room(proxy->data_cache, chat_id, NULL);
+    if (room) {
+        if (g_slist_find(proxy->participant_rooms, room) != NULL)
+            return HIPPO_CHAT_STATE_PARTICIPANT;
+        
+        if (g_slist_find(proxy->visitor_rooms, room) != NULL)
+            return HIPPO_CHAT_STATE_VISITOR;
+    }
+        
+    return HIPPO_CHAT_STATE_NONMEMBER;
 }

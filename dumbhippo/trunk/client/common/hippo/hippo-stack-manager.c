@@ -1,6 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-#include "hippo-block-post.h"
 #include "hippo-block-group-chat.h"
+#include "hippo-block-music-chat.h"
+#include "hippo-block-post.h"
 #include "hippo-common-internal.h"
 #include "hippo-stack-manager.h"
 #include "hippo-canvas-base.h"
@@ -467,6 +468,16 @@ notification_is_needed_callback(HippoCanvasItem *item,
             if (chat_is_visible(info->manager, hippo_entity_get_guid(HIPPO_ENTITY(group))))
                 notify_for_block = FALSE;
             g_object_unref(group);
+        }
+    } else if (HIPPO_IS_BLOCK_MUSIC_CHAT(block)) {
+        HippoTrack *track = NULL;
+    
+        g_object_get(G_OBJECT(block), "track", &track, NULL);
+        if (track) {
+            if (chat_is_visible(info->manager, hippo_track_get_play_id(track)))
+                notify_for_block = FALSE;
+
+            g_object_unref(track);
         }
     }
 
