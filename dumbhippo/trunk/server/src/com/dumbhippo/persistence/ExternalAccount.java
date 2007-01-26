@@ -191,7 +191,8 @@ public class ExternalAccount extends DBUnique {
 	@Transient
 	public boolean hasLovedAndEnabledType(ExternalAccountType type) {
 		return accountType == type && getSentiment() == Sentiment.LOVE &&
-		getAccount().isActive();
+		getAccount().isActive() && 
+		(!accountType.isAffectedByMusicSharing() || getAccount().isMusicSharingEnabled());
 	}
 	
 	@Transient

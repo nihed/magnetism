@@ -1984,14 +1984,14 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	// setCurrentTrack and make adding tracks to the track database always async.
 	//
 	public void onExternalAccountFeedEntry(final User user, ExternalAccount external, FeedEntry feedEntry, int entryPosition) {
-		if (external.getAccountType() != ExternalAccountType.RHAPSODY)
+		if (!external.hasLovedAndEnabledType(ExternalAccountType.RHAPSODY))
 			return;
-
+		
 		if (!(feedEntry instanceof TrackFeedEntry)) {
 			logger.warn("Rhapsody account {} has non-TrackFeedEntry {}", external, feedEntry);
 			return;
 		}
-		
+
 		TrackFeedEntry entry = (TrackFeedEntry) feedEntry;
 		
 		final Map<String,String> properties = new HashMap<String,String>();

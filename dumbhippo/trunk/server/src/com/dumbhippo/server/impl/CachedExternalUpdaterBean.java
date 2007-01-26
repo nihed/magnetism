@@ -99,11 +99,17 @@ public abstract class CachedExternalUpdaterBean<Status> implements CachedExterna
 	}
 	
 	public Collection<User> getAccountLovers(String handle) {
+		String musicSharingCheck = "";
+		if (getAccountType().isAffectedByMusicSharing()) {
+			musicSharingCheck = " AND ea.account.musicSharingEnabled = true";
+		}
+		
 		Query q = em.createQuery("SELECT ea.account.owner FROM ExternalAccount ea WHERE " +
 				"  ea.accountType = " + getAccountType().ordinal() + 
 				"  AND ea.sentiment = " + Sentiment.LOVE.ordinal() + 
 				"  AND ea.handle = :handle " + 
-				"  AND ea.account.disabled = false AND ea.account.adminDisabled = false");
+				"  AND ea.account.disabled = false AND ea.account.adminDisabled = false" +
+				musicSharingCheck);
 		q.setParameter("handle", handle);
 		return TypeUtils.castList(User.class, q.getResultList());
 	}	

@@ -440,6 +440,11 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}
+		
+		@Override
+		public boolean isAffectedByMusicSharing() {
+			return true;
+		}
 	},
 	LASTFM("Last.fm")  { // 10
 		@Override
@@ -491,6 +496,11 @@ public enum ExternalAccountType {
 		public String getIconName() {
 			return "favicon_lastfm.png";
 		}		
+		
+		@Override
+		public boolean isAffectedByMusicSharing() {
+			return true;
+		}
 	}, 
 	DELICIOUS("del.icio.us") { // 11
 		@Override
@@ -814,5 +824,9 @@ public enum ExternalAccountType {
     // (i.e. a username) or is it something you provide the site with (i.e. your e-mail)
     public boolean isInfoTypeProvidedBySite() {
     	return true;
+    }
+    
+    public boolean isAffectedByMusicSharing() {
+    	return false;
     }
 }
