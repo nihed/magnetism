@@ -537,6 +537,20 @@
   (return-type "GList*")
 )
 
+(define-virtual get_content_width_request
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_get_content_width_request")
+  (return-type "int")
+)
+
+(define-virtual get_content_height_request
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_item_get_contet_height_request")
+  (return-type "int")
+  (parameters
+    '("int" "for_width")
+  )
+)
 ;; From hippo-canvas-context.h
 
 (define-function canvas_context_get_type
