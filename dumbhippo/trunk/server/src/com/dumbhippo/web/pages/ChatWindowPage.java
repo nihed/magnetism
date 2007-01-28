@@ -2,23 +2,32 @@
 package com.dumbhippo.web.pages;
 
 
+import java.util.Collections;
+import java.util.List;
+
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.TrackHistory;
+import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.blocks.MusicChatBlockHandler;
+import com.dumbhippo.server.blocks.MusicChatBlockView;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupView;
+import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -40,6 +49,7 @@ public class ChatWindowPage {
 	private SigninBean signin;
 	
     private GroupSystem groupSystem;
+    private PersonViewer personViewer;
     private PostingBoard postBoard;
     private MusicSystem musicSystem;
     private Stacker stacker;
@@ -50,6 +60,7 @@ public class ChatWindowPage {
     
     public ChatWindowPage() {
     	groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
+    	personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		musicSystem =  WebEJBUtil.defaultLookup(MusicSystem.class);
 		stacker =  WebEJBUtil.defaultLookup(Stacker.class);
@@ -142,6 +153,34 @@ public class ChatWindowPage {
 			}
 		}
     }
+
+    private BlockView getBlockView(TrackView trackView, TrackHistory trackHistory) {
+    	MusicChatBlockHandler handler = WebEJBUtil.defaultLookup(MusicChatBlockHandler.class);
+    	BlockKey key = handler.getKey(trackHistory);
+    	MusicChatBlockView result;
+    	
+		try {
+	    	result = (MusicChatBlockView)stacker.loadBlock(signin.getViewpoint(), key);
+		} catch (NotFoundException e) {
+			// If someone opens a chatwindow for a track before any quips/comments have
+			// been added to it, the MUSIC_CHAT block doesn't yet exist; we want to 
+			// avoid database changes when loading a JSP, so what we do is create a dummy 
+			// block *not* persisted to the database, and manually create the BlockView
+			// for that block. There is some danger here because the ID of the Block will
+			// be random, so if any controls are present in the block (like a hush
+			// link) they won't work. So we need to be careful that those controls don't
+			// appear in the track page.
+			
+			PersonView personView = personViewer.getPersonView(signin.getViewpoint(), trackHistory.getUser());
+			
+			Block block = new Block(key);
+			result = new MusicChatBlockView(signin.getViewpoint(), block, (UserBlockData)null, false);
+			List<ChatMessageView> messages = Collections.emptyList();
+			result.populate(personView, trackView, messages, 0);
+		}
+		
+		return result;
+    }
     
     public void setTrackId(String trackId) {
     	logger.debug("Setting trackId {}", trackId);
@@ -156,9 +195,7 @@ public class ChatWindowPage {
 					TrackHistory trackHistory = musicSystem.lookupTrackHistory(new Guid(trackId));
 					track = musicSystem.getTrackView(trackHistory);
 					
-			    	MusicChatBlockHandler handler = WebEJBUtil.defaultLookup(MusicChatBlockHandler.class);
-			    	BlockKey key = handler.getKey(trackHistory);
-			    	blockView = stacker.loadBlock(signin.getViewpoint(), key);
+					blockView = getBlockView(track, trackHistory);
 				}
 			} catch (NotFoundException e) {
 				return;
