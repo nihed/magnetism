@@ -51,3 +51,8 @@ body {
 .dh-chat-message-time {
 	color: #a7a7a7;
 }
+
+.dh-disabled-message {
+   font-size: 15px;
+   color:     #444444;
+}

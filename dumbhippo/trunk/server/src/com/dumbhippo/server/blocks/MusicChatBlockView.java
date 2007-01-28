@@ -28,7 +28,7 @@ public class MusicChatBlockView extends AbstractPersonBlockView implements Music
 		super(viewpoint, block, gbd, participated);
 	}
 	
-	void populate(PersonView userView, TrackView trackView, List<ChatMessageView> recentMessages, int messageCount) {
+	public void populate(PersonView userView, TrackView trackView, List<ChatMessageView> recentMessages, int messageCount) {
 		partiallyPopulate(userView);
 		this.trackView = trackView;
 		this.recentMessages = recentMessages;

@@ -298,11 +298,11 @@ dh.chatwindow._preventSelection = function(node) {
 	}
 }
 
-dh.chatwindow.init = function() {
+dh.chatwindow._init = function() {
 	dh.control.createControl();
 
 	this._chatRoom = dh.control.control.getOrCreateChatRoom(this.chatId)
-	dh.chatwindow._createLists()
+	this._createLists()
 
 	this._chatRoom.join(true)
 
@@ -326,7 +326,6 @@ dh.chatwindow.init = function() {
 	setTimeout(dh.chatwindow.updateTimes, 60 * 1000);
 }
 
-dh.chatwindow.initDisabled = function() {
-    dh.event.addEventListener(document.body, "keypress",
-							  dh.chatwindow.onBodyKeyPress);
+dhChatwindowInit = function() {
+	dh.chatwindow._init();
 }

@@ -445,8 +445,7 @@ public class RewriteServlet extends HttpServlet {
 				path = "/sharelink-disabled";
 				afterSlash = "sharelink-disabled";
 			} else if (path.equals("/chatwindow")) {
-				path = "/chatwindow-disabled";
-				afterSlash = "chatwindow-disabled";
+				request.setAttribute("disabled", "true");
 			}
 		}
 		

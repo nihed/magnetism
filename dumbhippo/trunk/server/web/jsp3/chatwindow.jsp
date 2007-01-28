@@ -23,14 +23,17 @@
 	<title><c:out value="${chatwindow.title}"/></title>
 	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="chatwindow" iefixes="true"/>	
-	<dh:script module="dh.chatwindow"/>	
+	<dh:script modules="dh.chatwindow,dh.event"/>
 	<script type="text/javascript">
    	    dh.chatwindow.selfId = "${chatwindow.signin.userId}";
         dh.chatwindow.chatId = "${chatwindow.chatId}";
+        <c:if test="${!disabled}">
+			dh.event.addPageLoadListener(dhChatwindowInit);
+		</c:if>
 	</script>
 </head>
 
-<body scroll="no" onload="dh.chatwindow.init()">
+<body scroll="no">
 	<div id="dhChatHeader">
 		<dht3:block block="${chatwindow.block}" offset="0" blockId="0" showFrom="true" showChat="false"/>
 	</div>
@@ -66,5 +69,15 @@
 		</div>
 	</div>
 	<div id="dhChatMessages">
+		<c:if test="${disabled}">
+			<table class="dh-disabled-table">
+			<tr>
+			<td align="center" valign="center" class="dh-disabled-message">
+			    Sorry, we're working to make things better!<br/>
+				<a href="http://blog.mugshot.org/?cat=13" target="_blank">Check the blog for updates</a>
+			</td>
+			</tr>
+			</table>
+		</c:if>
 	</div>
 </body>
