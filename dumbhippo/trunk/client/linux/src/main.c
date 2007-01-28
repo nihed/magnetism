@@ -378,7 +378,7 @@ activate_window(Display *display, Window window)
             break;
         
         if (XGetWindowProperty(display, toplevel, window_state_atom,
-                               G_MAXLONG, 0, False, AnyPropertyType,
+                               0, G_MAXLONG, False, AnyPropertyType,
                                &type, &format, &n_items, &bytes_after, &data) != Success) {
             g_debug("XGetWindowProperty failed\n");
             goto out;
