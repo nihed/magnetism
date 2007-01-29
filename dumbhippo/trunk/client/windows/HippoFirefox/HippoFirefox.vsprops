@@ -6,7 +6,7 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
-		AdditionalIncludeDirectories="&quot;c:\Program Files\gecko-sdk\include&quot;;&quot;../../common/firefox/gecko-private/include&quot;;../../common/hippoipc;../HippoUtil;../HippoIpc;Debug"
+		AdditionalIncludeDirectories="&quot;c:\Program Files\gecko-sdk\include&quot;;&quot;../../common/firefox/gecko-private/include&quot;;../../common/hippoipc;../HippoUtil;../HippoIpc;&quot;$(IntDir)&quot;"
 		PreprocessorDefinitions="HIPPO_OS_WINDOWS"
 	/>
 	<Tool

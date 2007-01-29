@@ -59,6 +59,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="HippoUI.exe.manifest"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -126,6 +127,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="HippoUI.exe.manifest"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
