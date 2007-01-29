@@ -345,7 +345,7 @@ public class MessengerGlueBean implements MessengerGlue {
 	}
 
 	private ChatRoomInfo getChatRoomInfo(String roomName, Group group) {
-		List<ChatRoomMessage> history = getChatRoomMessages(group, -2);
+		List<ChatRoomMessage> history = getChatRoomMessages(group, -1);
 		return new ChatRoomInfo(ChatRoomKind.GROUP, roomName, group.getName(), history, false);
 	}
 
@@ -354,17 +354,6 @@ public class MessengerGlueBean implements MessengerGlue {
 
 		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
 
-		if (lastSeenSerial < -1) {
-			// if post description is not empty, add it to the history of chat room messages.
-			// We mark this message that contains post description with the serial = -1
-			// FIXME: Should handle the case of a FeedPost where the effective poster is a GroupFeed
-			User poster = post.getPoster();
-			if (poster != null && post.getText().trim().length() != 0) {
-	            ChatRoomMessage message = new ChatRoomMessage(poster.getGuid().toJabberId(null), post.getText(), Sentiment.INDIFFERENT, post.getPostDate(), -1);	 
-	            history.add(message);
-			}
-		}
-		
 		for (PostMessage postMessage : messages) {
 			history.add(newChatRoomMessage(postMessage));
 		}
@@ -377,7 +366,7 @@ public class MessengerGlueBean implements MessengerGlue {
 		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY)
 			worldAccessible = false;
 		
-		List<ChatRoomMessage> history = getChatRoomMessages(post, -2);
+		List<ChatRoomMessage> history = getChatRoomMessages(post, -1);
 		return new ChatRoomInfo(ChatRoomKind.POST, roomName, post.getTitle(), history, worldAccessible);
 	}
 	
@@ -394,7 +383,7 @@ public class MessengerGlueBean implements MessengerGlue {
 	
 	private ChatRoomInfo getChatRoomInfo(String roomName, TrackHistory trackHistory) {
 		TrackView trackView = musicSystem.getTrackView(trackHistory);
-		List<ChatRoomMessage> history = getChatRoomMessages(trackHistory, -2);
+		List<ChatRoomMessage> history = getChatRoomMessages(trackHistory, -1);
 		
 		return new ChatRoomInfo(ChatRoomKind.MUSIC, roomName, trackView.getDisplayTitle(), history, true);
 	}
