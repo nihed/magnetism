@@ -8,17 +8,20 @@
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="oneLine" required="true" type="java.lang.Boolean" %>
+<%@ attribute name="chatHeader" required="true" type="java.lang.Boolean" %>
 
-<dht3:blockContainer cssClass="${offset ? 'dh-box-orange2' : 'dh-box-orange1'}" blockId="${blockId}" expandable="${!oneLine}">
+<dht3:blockContainer cssClass="${offset ? 'dh-box-orange2' : 'dh-box-orange1'}" blockId="${blockId}" expandable="${!oneLine && !chatHeader}">
 	<dht3:blockLeft block="${block}">
 	    <dht3:blockTitle>
 		    <c:out value="${block.typeTitle}"/>: <dht:actionLinkChat linkText="${block.title}" oneLine="true" chatId="${block.groupView.group.id}" kind="${chatKind}"/>
         </dht3:blockTitle>
-		<dht3:blockContent blockId="${blockId}">
-			<dht3:chatPreview block="${block}" chatId="${block.groupView.group.id}" chatKind="group" chattingCount="${block.groupView.chattingUserCount}"/>
-		</dht3:blockContent>			
+        <c:if test="${!chatHeader}">
+			<dht3:blockContent blockId="${blockId}">
+				<dht3:chatPreview block="${block}" chatId="${block.groupView.group.id}" chatKind="group" chattingCount="${block.groupView.chattingUserCount}"/>
+			</dht3:blockContent>
+		</c:if>
 	</dht3:blockLeft>
-	<dht3:blockRight blockId="${blockId}" from="${block.groupView}" showFrom="${showFrom}">
+	<dht3:blockRight blockId="${blockId}" from="${block.groupView}" showFrom="${showFrom}" chatHeader="${chatHeader}">
 		<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>		
 		<dht3:blockControls blockId="${blockId}">
 			&nbsp; <%-- http://bugzilla.mugshot.org/show_bug.cgi?id=1019 --%>

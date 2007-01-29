@@ -6,29 +6,29 @@
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.blocks.BlockView" %>
 <%@ attribute name="offset" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
-<%@ attribute name="showChat" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="chatHeader" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="oneLine" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="homeStack" required="false" type="java.lang.Boolean" %>
 
 <dh:default var="oneLine" value="false"/>
-<dh:default var="showChat" value="true"/>
+<dh:default var="chatHeader" value="false"/>
 
 <c:if test="${oneLine}">
     <div class="dh-stacker-block-one-line"/>
 </c:if>   
 <c:choose>
 	<c:when test="${dh:enumIs(block.blockType, 'POST')}">
-		<dht3:postBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
+		<dht3:postBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" chatHeader="${chatHeader}" oneLine="${oneLine}"/>
 	</c:when>
 	<c:when test="${dh:enumIs(block.blockType, 'MUSIC_CHAT')}">	
-   		<dht3:musicBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" showChat="${showChat}" oneLine="${oneLine}"/>
+   		<dht3:musicBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" chatHeader="${chatHeader}" oneLine="${oneLine}"/>
    	</c:when>	
 	<c:when test="${dh:enumIs(block.blockType, 'MUSIC_PERSON')}">	
    		<dht3:musicBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
    	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'GROUP_CHAT')}">
-   		<dht3:groupChatBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
+   		<dht3:groupChatBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" chatHeader="${chatHeader}" oneLine="${oneLine}"/>
    	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'GROUP_MEMBER')}">
    		<dht3:groupMemberBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>

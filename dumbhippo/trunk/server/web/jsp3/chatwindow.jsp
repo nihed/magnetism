@@ -35,7 +35,7 @@
 
 <body scroll="no">
 	<div id="dhChatHeader">
-		<dht3:block block="${chatwindow.block}" offset="0" blockId="0" showFrom="true" showChat="false"/>
+		<dht3:block block="${chatwindow.block}" offset="0" blockId="0" showFrom="true" chatHeader="true"/>
 	</div>
 	<div id="dhChatFooter">
 		<div id="dhChatFooterInner">

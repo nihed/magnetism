@@ -7,10 +7,10 @@
 <%@ attribute name="offset" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
-<%@ attribute name="showChat" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="chatHeader" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="oneLine" required="true" type="java.lang.Boolean" %>
 
-<dh:default var="showChat" value="true"/>
+<dh:default var="chatHeader" value="false"/>
 
 <c:set var="track" value="${block.track}"/>
 <c:set var="imageWidth" value="${track.smallImageUrlAvailable ? track.smallImageWidth : 60}"/>
@@ -41,7 +41,7 @@
 		</dht3:blockContainer>
 	</c:when>
 	<c:otherwise>
-		<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${showChat || !block.quip}">
+		<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${!chatHeader}">
 			<td class="dh-stacker-block-with-image-left" align="left" valign="top" width="75%">
 				<table cellspacing="0" cellpadding="0" width="100%">
 				<tr>
@@ -60,7 +60,7 @@
 						<div>
 							<div class="dh-music-block-artist"><a href="${track.artistPageLink}"><c:out value="${track.artist}"/></a></div>
 							<div class="dh-music-block-name"><a href="${track.artistPageLink}"><c:out value="${track.name}"/></a></div>
-							<c:if test="${showChat && !empty block.lastMessage}">
+							<c:if test="${!chatHeader && !empty block.lastMessage}">
 								<dht3:chatMessage id="dhMusicBlockMessage-${blockId}" msg="${block.lastMessage}"/>
 							</c:if>
 						</div>
@@ -69,7 +69,7 @@
 				</tr>
 				</table>
 				<dht3:blockContent blockId="${blockId}">
-					<c:if test="${showChat}">
+					<c:if test="${!chatHeader}">
 						<dht3:chatPreview block="${block}" chatId="${track.playId}" chatKind="music" chattingCount="0" showChatLink="${false}"/>
 					</c:if>
 					<c:forEach items="${block.oldTracks}" var="track">
@@ -83,7 +83,7 @@
 				</dht3:blockContent>			
 			</td>
 			<td width="0%">&nbsp;</td>
-			<dht3:blockRight blockId="${blockId}" from="${block.personSource}" showFrom="${showFrom}">
+			<dht3:blockRight blockId="${blockId}" from="${block.personSource}" showFrom="${showFrom}" chatHeader="${chatHeader}">
 				<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>
 				<dht3:blockControls blockId="${blockId}">
 					&nbsp; <%-- http://bugzilla.mugshot.org/show_bug.cgi?id=1019 --%>
