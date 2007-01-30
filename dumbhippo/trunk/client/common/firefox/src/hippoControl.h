@@ -3,6 +3,8 @@
 #include "hippo-ipc.h"
 #include "nsCOMPtr.h"
 
+#define HIPPO_FIREFOX_CONTROL_VERSION "1.1.0"
+
 class hippoControl: public hippoIControl, public HippoIpcListener
 {
 public:

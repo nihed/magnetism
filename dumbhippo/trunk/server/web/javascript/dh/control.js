@@ -260,6 +260,25 @@ dh.control.AbstractControl = function() {
 
 dh.lang.defineClass(dh.control.AbstractControl, null, 
 {
+	versionAtLeast : function(minVersion) {
+		var minComponents = minVersion.split(".");
+		var minMajor = minComponents[0] == null ? 0 : minComponents[0] - 0;
+		var minMinor = minComponents[1] == null ? 0 : minComponents[1] - 0;
+		var minMicro = minComponents[2] == null ? 0 : minComponents[2] - 0;
+
+		var curVersion = this.getVersion();
+		var curComponents = curVersion.split(".");
+		var curMajor = curComponents[0] == null ? 0 : curComponents[0] - 0;
+		var curMinor = curComponents[1] == null ? 0 : curComponents[1] - 0;
+		var curMicro = curComponents[2] == null ? 0 : curComponents[2] - 0;
+		
+		return curMajor > minMajor ||
+		       (curMajor == minMajor &&
+		        (curMinor > minMinor ||
+		         (curMinor == minMinor &&
+		          curMicro == minMicro)));
+	},
+
 	// Connection point for notification of a change to a user; it would
 	// be more pleasant to be able to connect to the user itself, but 
 	// creating lots of small closures is memory intensive and prone to
@@ -369,6 +388,10 @@ dh.lang.defineClass(dh.control.WebOnlyControl, dh.control.AbstractControl, {
 
 	haveLiveChat : function(chatId) {
 		return false
+	},
+	
+	getVersion : function() {
+		return "1.1.0";
 	}
 });
 
@@ -415,6 +438,19 @@ dh.lang.defineClass(dh.control.NativeControl, dh.control.AbstractControl, {
 	
 	haveLiveChat : function(chatId) {
 		return true;
+	},
+	
+	getVersion : function() {
+		var version;
+		try {
+			version = this._native.version;
+		} catch(e) {
+		}
+		
+		if (version == null)
+			version = "1.0.0";
+			
+		return version;
 	}
 });
 

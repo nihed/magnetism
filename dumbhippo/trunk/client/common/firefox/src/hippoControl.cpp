@@ -67,6 +67,14 @@ NS_IMETHODIMP hippoControl::GetServerUrl(nsACString &aServerUrl)
     return NS_OK;
 }
 
+/* attribute AUTF8String serverUrl; */
+NS_IMETHODIMP hippoControl::GetVersion(nsACString &aVersion)
+{
+    aVersion.Assign(HIPPO_FIREFOX_CONTROL_VERSION);
+    
+    return NS_OK;
+}
+
 /* void start(AUTF8String serverUrl); */
 NS_IMETHODIMP hippoControl::Start(const nsACString &serverUrl)
 {

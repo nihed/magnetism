@@ -79,5 +79,19 @@
 			</tr>
 			</table>
 		</c:if>
+		<div id="dhChatTooOld" style="display: none">
+			<table class="dh-disabled-table">
+			<tr>
+			<td align="center" valign="center">
+				<div class="dh-too-old-message">
+					Your version of the Mugshot browser plugin is too old; make sure you
+					have the latest Mugshot software installed, close all Mugshot and
+					browser windows, then try reopening the "Quips and Comments" window.
+					If that doesn't work, you may need to log out and log in again.
+				</div>
+			</td>
+			</tr>
+			</table>
+		</div>
 	</div>
 </body>

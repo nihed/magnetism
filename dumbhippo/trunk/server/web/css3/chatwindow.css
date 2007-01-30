@@ -56,3 +56,10 @@ body {
    font-size: 15px;
    color:     #444444;
 }
+
+.dh-too-old-message {
+   font-size:  15px;
+   color:      #444444;
+   text-align: left;
+   width:      80%;
+}

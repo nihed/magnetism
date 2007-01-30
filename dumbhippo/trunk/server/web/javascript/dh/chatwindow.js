@@ -300,12 +300,7 @@ dh.chatwindow._preventSelection = function(node) {
 
 dh.chatwindow._init = function() {
 	dh.control.createControl();
-
-	this._chatRoom = dh.control.control.getOrCreateChatRoom(this.chatId)
-	this._createLists()
-
-	this._chatRoom.join(true)
-
+	
     var messageInput = document.getElementById("dhChatMessageInput")
     
     dh.event.addEventListener(messageInput, "keypress",
@@ -313,6 +308,16 @@ dh.chatwindow._init = function() {
     dh.event.addEventListener(document.body, "keypress",
 							  dh.chatwindow.onBodyKeyPress);
 							  
+	if (!dh.control.control.versionAtLeast("1.1.0")) {
+		document.getElementById("dhChatTooOld").style.display = "block";
+		return;
+	}
+
+	this._chatRoom = dh.control.control.getOrCreateChatRoom(this.chatId)
+	this._createLists()
+
+	this._chatRoom.join(true)
+
 	this.setSentiment(dh.control.SENTIMENT_INDIFFERENT);
 	
 	for (var id in this._sentimentMap) {
