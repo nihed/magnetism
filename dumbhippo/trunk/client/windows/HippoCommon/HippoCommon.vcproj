@@ -299,6 +299,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-quipper.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-stack.c"
 				>
 			</File>
@@ -615,6 +619,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-message-preview.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-quipper.h"
 				>
 			</File>
 			<File
