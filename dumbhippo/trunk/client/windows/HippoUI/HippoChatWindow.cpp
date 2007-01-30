@@ -15,7 +15,7 @@ static const int BASE_WIDTH = 600;
 static const int BASE_HEIGHT = 600;
 
 static const WCHAR *CLASS_NAME = L"HippoChatWindowClass";
-static const WCHAR *TITLE = L"Mugshot Chat";
+static const WCHAR *TITLE = L"Mugshot Quips and Comments";
 
 class HippoChatWindowImpl : 
     public HippoChatWindow,
