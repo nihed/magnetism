@@ -571,12 +571,12 @@ vasnprintf (char *resultbuf, size_t *lengthp, const char *format, va_list args)
 		    case 's':
 # ifdef HAVE_WCHAR_T
 		      if (type == TYPE_WIDE_STRING)
-			tmp_length =
+			tmp_length = a.arg[dp->arg_index].a.a_wide_string == NULL ? 6 : /* '(null)' */
 			  local_wcslen (a.arg[dp->arg_index].a.a_wide_string)
 			  * MB_CUR_MAX;
 		      else
 # endif
-			tmp_length = strlen (a.arg[dp->arg_index].a.a_string);
+			tmp_length = a.arg[dp->arg_index].a.a_string == NULL ? 6 : strlen (a.arg[dp->arg_index].a.a_string);
 		      break;
 
 		    case 'p':
@@ -946,14 +946,14 @@ vasnprintf (char *resultbuf, size_t *lengthp, const char *format, va_list args)
 #endif
 		      case TYPE_STRING:
 			{
-			  const char *arg = a.arg[dp->arg_index].a.a_string;
+              const char *arg = a.arg[dp->arg_index].a.a_string == NULL ? "(null)" : a.arg[dp->arg_index].a.a_string;
 			  SNPRINTF_BUF (arg);
 			}
 			break;
 #ifdef HAVE_WCHAR_T
 		      case TYPE_WIDE_STRING:
 			{
-			  const wchar_t *arg = a.arg[dp->arg_index].a.a_wide_string;
+			  const wchar_t *arg = a.arg[dp->arg_index].a.a_wide_string == NULL ? L"(null)" : a.arg[dp->arg_index].a.a_wide_string;
 			  SNPRINTF_BUF (arg);
 			}
 			break;

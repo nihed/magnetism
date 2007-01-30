@@ -7,6 +7,7 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
+		AdditionalOptions="/Oy-"
 		PreprocessorDefinitions="NDEBUG"
 		RuntimeLibrary="2"
 		DebugInformationFormat="3"
