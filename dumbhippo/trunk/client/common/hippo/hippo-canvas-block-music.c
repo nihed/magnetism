@@ -5,6 +5,7 @@
 #include "hippo-canvas-block-music.h"
 #include "hippo-canvas-chat-preview.h"
 #include "hippo-canvas-message-preview.h"
+#include "hippo-canvas-quipper.h"
 #include "hippo-canvas-timestamp.h"
 #include "hippo-canvas-url-image.h"
 #include "hippo-canvas-url-link.h"
@@ -42,14 +43,6 @@ static void hippo_canvas_block_music_unexpand (HippoCanvasBlock *canvas_block);
 
 /* Internals */
 static void hippo_canvas_block_music_update_visibility(HippoCanvasBlockMusic *block_music);
-
-static void on_quip_activated(HippoCanvasItem       *item,
-                              HippoCanvasBlockMusic *block_music);
-static void on_love_activated(HippoCanvasItem       *item,
-                              HippoCanvasBlockMusic *block_music);
-static void on_hate_activated(HippoCanvasItem       *item,
-                              HippoCanvasBlockMusic *block_music);
-
 
 #if 0
 enum {
@@ -166,8 +159,6 @@ hippo_canvas_block_music_append_content_items (HippoCanvasBlock *block,
     HippoCanvasBox *box;
     HippoCanvasBox *top_box;
     HippoCanvasBox *beside_box;
-    HippoCanvasBox *quip_box;
-    HippoCanvasItem *item;
     
     hippo_canvas_block_set_heading(block, _("Music Radar"));
 
@@ -215,64 +206,12 @@ hippo_canvas_block_music_append_content_items (HippoCanvasBlock *block,
     block_music->name_link_parent = box;
     hippo_canvas_box_append(box, block_music->name_link, 0);
 
-    quip_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                            "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                            "padding-top", 2,
-                            NULL);
-    hippo_canvas_box_append(beside_box, HIPPO_CANVAS_ITEM(quip_box), 0);
+    block_music->quipper = g_object_new(HIPPO_TYPE_CANVAS_QUIPPER,
+                                        "actions", hippo_canvas_block_get_actions(block),
+                                        "padding-top", 2,
+                                        NULL);
+    hippo_canvas_box_append(beside_box, block_music->quipper, 0);
 
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
-                        "normal-image-name", "chat",
-                        "tooltip", "Add a quip",
-                        "xalign", HIPPO_ALIGNMENT_CENTER,
-                        "yalign", HIPPO_ALIGNMENT_CENTER,
-                        NULL);
-    hippo_canvas_box_append(quip_box, item, 0);
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_quip_activated), block_music);
-    
-    item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                        "padding-left", 4,
-                        "text", "Quip",
-                        "tooltip", "Add a quip",
-                        NULL);
-    hippo_canvas_box_append(quip_box, item, 0);
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_quip_activated), block_music);
-    
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
-                        "padding-left", 8,
-                        "normal-image-name", "quiplove_icon",
-                        "tooltip", "Add a quip",
-                        "xalign", HIPPO_ALIGNMENT_CENTER,
-                        "yalign", HIPPO_ALIGNMENT_CENTER,
-                        NULL);
-    hippo_canvas_box_append(quip_box, item, 0);
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_love_activated), block_music);
-    
-    item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                        "padding-left", 4,
-                        "text", "I love it!",
-                        "tooltip", "Add a quip",
-                        NULL);
-    hippo_canvas_box_append(quip_box, item, 0);
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_love_activated), block_music);
-    
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
-                        "padding-left", 8,
-                        "tooltip", "Add a quip",
-                        "normal-image-name", "quiphate_icon",
-                        "xalign", HIPPO_ALIGNMENT_CENTER,
-                        "yalign", HIPPO_ALIGNMENT_CENTER,
-                        NULL);
-    hippo_canvas_box_append(quip_box, item, 0);
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hate_activated), block_music);
-
-    item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                        "padding-left", 4,
-                        "text", "I hate it!",
-                        "tooltip", "Add a quip",
-                        NULL);
-    hippo_canvas_box_append(quip_box, item, 0);
-    
     block_music->single_message_preview = g_object_new(HIPPO_TYPE_CANVAS_MESSAGE_PREVIEW,
                                                        "actions", hippo_canvas_block_get_actions(block),
                                                        NULL);
@@ -284,7 +223,6 @@ hippo_canvas_block_music_append_content_items (HippoCanvasBlock *block,
                                              "actions", hippo_canvas_block_get_actions(block),
                                              "message-count", 0,
                                              NULL);
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hate_activated), block_music);
 
     block_music->chat_preview_parent = parent_box;
     hippo_canvas_box_append(parent_box, block_music->chat_preview, 0);
@@ -443,6 +381,9 @@ set_track(HippoCanvasBlockMusic *block_music,
     }
 
     g_object_set(G_OBJECT(block_music->chat_preview),
+                 "chat-id", chat_id,
+                 NULL);
+    g_object_set(G_OBJECT(block_music->quipper),
                  "chat-id", chat_id,
                  NULL);
 }
@@ -651,49 +592,4 @@ hippo_canvas_block_music_update_visibility(HippoCanvasBlockMusic *block_music)
     hippo_canvas_box_set_child_visible(block_music->old_tracks_box_parent,
                                        HIPPO_CANVAS_ITEM(block_music->old_tracks_box),
                                        canvas_block->expanded);
-}
-
-static void
-quip_on(HippoCanvasBlockMusic *block_music,
-        HippoSentiment         sentiment)
-{
-    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_music);
-    const char *play_id;
-    char *title;
-    
-    if (!block_music->track)
-        return;
-
-    play_id = hippo_track_get_play_id(block_music->track);
-    if (!play_id)
-        return;
-
-    title = hippo_track_get_display_title(block_music->track);
-    
-    hippo_actions_quip(hippo_canvas_block_get_actions(canvas_block),
-                       HIPPO_CHAT_KIND_MUSIC, play_id,
-                       sentiment, title);
-
-    g_free(title);
-}
-
-static void
-on_quip_activated(HippoCanvasItem       *item,
-                  HippoCanvasBlockMusic *block_music)
-{
-    quip_on(block_music, HIPPO_SENTIMENT_INDIFFERENT);
-}
-
-static void
-on_love_activated(HippoCanvasItem       *item,
-                  HippoCanvasBlockMusic *block_music)
-{
-    quip_on(block_music, HIPPO_SENTIMENT_LOVE);
-}
-
-static void
-on_hate_activated(HippoCanvasItem       *item,
-                  HippoCanvasBlockMusic *block_music)
-{
-    quip_on(block_music, HIPPO_SENTIMENT_HATE);
 }

@@ -32,6 +32,7 @@ struct _HippoCanvasBlockMusic {
     HippoCanvasItem *artist_link;
     HippoCanvasBox *name_link_parent;
     HippoCanvasItem *name_link;
+    HippoCanvasItem *quipper;
     HippoCanvasBox *single_message_preview_parent;
     HippoCanvasItem *single_message_preview;
     HippoCanvasBox *chat_preview_parent;

@@ -218,6 +218,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-grip.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-message-preview.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-message-preview.h	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-quipper.c		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-quipper.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-stack.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-stack.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-thumbnails.c		\
