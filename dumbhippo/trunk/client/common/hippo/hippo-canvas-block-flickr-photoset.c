@@ -174,7 +174,7 @@ hippo_canvas_block_flickr_photoset_append_content_items (HippoCanvasBlock *block
                      NULL);
 
     hippo_canvas_box_append(parent_box,
-                            block_flickr_photoset->thumbnails, HIPPO_PACK_EXPAND);
+                            block_flickr_photoset->thumbnails, 0);
 
     hippo_canvas_box_set_child_visible(parent_box,
                                        block_flickr_photoset->thumbnails,

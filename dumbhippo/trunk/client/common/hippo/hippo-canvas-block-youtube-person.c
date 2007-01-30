@@ -183,9 +183,9 @@ hippo_canvas_block_youtube_person_append_content_items (HippoCanvasBlock *block,
     HIPPO_CANVAS_BOX(block_youtube_person->tip)->clickable = FALSE;
 
     hippo_canvas_box_append(parent_box,
-                            block_youtube_person->tip, HIPPO_PACK_EXPAND);
+                            block_youtube_person->tip, 0);
     hippo_canvas_box_append(parent_box,
-                            block_youtube_person->thumbnails, HIPPO_PACK_EXPAND);
+                            block_youtube_person->thumbnails, 0);
 
     hippo_canvas_box_set_child_visible(parent_box,
                                        block_youtube_person->thumbnails,

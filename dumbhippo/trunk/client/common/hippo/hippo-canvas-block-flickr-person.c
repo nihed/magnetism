@@ -183,9 +183,9 @@ hippo_canvas_block_flickr_person_append_content_items (HippoCanvasBlock *block,
     HIPPO_CANVAS_BOX(block_flickr_person->tip)->clickable = FALSE;
 
     hippo_canvas_box_append(parent_box,
-                            block_flickr_person->tip, HIPPO_PACK_EXPAND);
+                            block_flickr_person->tip, 0);
     hippo_canvas_box_append(parent_box,
-                            block_flickr_person->thumbnails, HIPPO_PACK_EXPAND);
+                            block_flickr_person->thumbnails, 0);
 
     hippo_canvas_box_set_child_visible(parent_box,
                                        block_flickr_person->thumbnails,

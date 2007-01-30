@@ -173,7 +173,7 @@ hippo_canvas_block_facebook_event_append_content_items (HippoCanvasBlock *block,
                      NULL);
 
     hippo_canvas_box_append(parent_box,
-                            block_facebook_event->thumbnails, HIPPO_PACK_EXPAND);
+                            block_facebook_event->thumbnails, 0);
 
     hippo_canvas_box_set_child_visible(parent_box,
                                        block_facebook_event->thumbnails,
