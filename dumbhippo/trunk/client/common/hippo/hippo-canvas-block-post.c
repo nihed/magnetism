@@ -427,6 +427,7 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
                      NULL);
         g_object_set(G_OBJECT(canvas_block_post->quipper),
                      "chat-id", NULL,
+                     "title", NULL,
                      NULL);
     } else {
         hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_block_post),
@@ -448,6 +449,7 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
                      NULL);
         g_object_set(G_OBJECT(canvas_block_post->quipper),
                      "chat-id", hippo_post_get_guid(post),
+                     "title", hippo_post_get_title(post),
                      NULL);
     }
     

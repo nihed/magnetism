@@ -256,6 +256,7 @@ set_track(HippoCanvasBlockMusic *block_music,
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_music);
     HippoActions *actions = hippo_canvas_block_get_actions(canvas_block);
     const char *chat_id = NULL;
+    char *title = NULL;
 
     if (track == block_music->track)
         return;
@@ -371,6 +372,7 @@ set_track(HippoCanvasBlockMusic *block_music,
         }
 
         chat_id = hippo_track_get_play_id(track);
+        title = hippo_track_get_display_title(track);
         
         g_free(artist);
         g_free(name);
@@ -385,7 +387,10 @@ set_track(HippoCanvasBlockMusic *block_music,
                  NULL);
     g_object_set(G_OBJECT(block_music->quipper),
                  "chat-id", chat_id,
+                 "title", title,
                  NULL);
+
+    g_free(title);
 }
 
 static void

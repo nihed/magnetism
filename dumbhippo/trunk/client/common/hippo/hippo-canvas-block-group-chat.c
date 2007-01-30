@@ -250,6 +250,7 @@ on_group_changed(HippoBlock *block,
                      NULL);
         g_object_set(G_OBJECT(canvas_group_chat->quipper),
                      "chat-id", NULL,
+                     "title", NULL,
                      NULL);
     } else {
         g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
@@ -257,6 +258,7 @@ on_group_changed(HippoBlock *block,
                      NULL);
         g_object_set(G_OBJECT(canvas_group_chat->quipper),
                      "chat-id", hippo_entity_get_guid(HIPPO_ENTITY(group)),
+                     "title", hippo_entity_get_name(HIPPO_ENTITY(group)),
                      NULL);
                                      
         hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(canvas_group_chat),

@@ -29,6 +29,8 @@ static void hippo_canvas_quipper_set_actions (HippoCanvasQuipper *quipper,
                                               HippoActions       *actions);
 static void hippo_canvas_quipper_set_chat_id (HippoCanvasQuipper *quipper,
                                               const char         *id);
+static void hippo_canvas_quipper_set_title   (HippoCanvasQuipper *quipper,
+                                              const char         *title);
 
 static void on_quip_activated(HippoCanvasItem       *item,
                               HippoCanvasQuipper *quipper);
@@ -41,8 +43,9 @@ static void on_hate_activated(HippoCanvasItem       *item,
 struct _HippoCanvasQuipper {
     HippoCanvasBox parent;
     
-    char *chat_id;
     HippoActions *actions;
+    char *chat_id;
+    char *title;
 };
 
 struct _HippoCanvasQuipperClass {
@@ -61,7 +64,8 @@ static int signals[LAST_SIGNAL];
 enum {
     PROP_0,
     PROP_ACTIONS,
-    PROP_CHAT_ID
+    PROP_CHAT_ID,
+    PROP_TITLE
 };
 
 
@@ -99,6 +103,14 @@ hippo_canvas_quipper_class_init(HippoCanvasQuipperClass *klass)
                                                         NULL,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
     
+    g_object_class_install_property(object_class,
+                                    PROP_TITLE,
+                                    g_param_spec_string("title",
+                                                        _("Title"),
+                                                        _("Title to display in quip window"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+    
 }
 
 static void
@@ -107,6 +119,8 @@ hippo_canvas_quipper_dispose(GObject *object)
     HippoCanvasQuipper *quipper = HIPPO_CANVAS_QUIPPER(object);
 
     hippo_canvas_quipper_set_actions(quipper, NULL);
+    hippo_canvas_quipper_set_chat_id(quipper, NULL);
+    hippo_canvas_quipper_set_title(quipper, NULL);
     
     G_OBJECT_CLASS(hippo_canvas_quipper_parent_class)->dispose(object);
 }
@@ -142,6 +156,12 @@ hippo_canvas_quipper_set_property(GObject         *object,
             hippo_canvas_quipper_set_chat_id(quipper, new_id);
         }
         break;
+    case PROP_TITLE:
+        {
+            const char *new_title = g_value_get_string(value);
+            hippo_canvas_quipper_set_title(quipper, new_title);
+        }
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -164,6 +184,9 @@ hippo_canvas_quipper_get_property(GObject         *object,
         break;
     case PROP_CHAT_ID:
         g_value_set_string(value, quipper->chat_id);
+        break;
+    case PROP_TITLE:
+        g_value_set_string(value, quipper->title);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -279,6 +302,21 @@ hippo_canvas_quipper_set_chat_id(HippoCanvasQuipper *quipper,
     g_object_notify(G_OBJECT(quipper), "chat-id");
 }
                                                               
+static void
+hippo_canvas_quipper_set_title(HippoCanvasQuipper *quipper,
+                               const char         *title)
+{
+    if (title == quipper->title ||
+        (title && quipper->title && strcmp(title, quipper->title) == 0))
+        return;
+
+    if (quipper->title)
+        g_free(quipper->title);
+
+    quipper->title = g_strdup(title);
+
+    g_object_notify(G_OBJECT(quipper), "chat-id");
+}
 
 static void
 quip_on(HippoCanvasQuipper *quipper,
@@ -289,7 +327,7 @@ quip_on(HippoCanvasQuipper *quipper,
     
     hippo_actions_quip(quipper->actions,
                        HIPPO_CHAT_KIND_UNKNOWN, quipper->chat_id,
-                       sentiment, "Quip");
+                       sentiment, quipper->title);
 }
 
 static void
