@@ -116,11 +116,21 @@ GECKO_PRIVATE_IDL_FILES =							\
 	$(FIREFOX_SRCDIR)/gecko-private/idl/nsISerializable.idl			\
 	$(FIREFOX_SRCDIR)/gecko-private/idl/nsIXPCSecurityManager.idl
 GECKO_PRIVATE_INCLUDE_FILES =							\
+	$(FIREFOX_SRCDIR)/gecko-private/include/gfxCore.h			\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsColor.h			\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsCoord.h			\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsEvent.h			\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIBaseWindow.h			\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIDocShell.h			\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIMenuListener.h		\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIMouseListener.h		\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsIPrincipal.h			\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIScriptGlobalObject.h		\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsIScriptNameSpaceManager.h	\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsIScriptSecurityManager.h	\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsISerializable.h		\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsIXPCSecurityManager.h		\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIWidget.h			\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsNetCID.h
 
 dist_pkgdata_SCRIPTS = firefox-update.sh
