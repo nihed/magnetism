@@ -332,6 +332,20 @@ on_block_post_recent_messages_changed(HippoBlock *block,
 }
 
 static void
+on_message_count_changed(HippoBlock *block,
+                         GParamSpec *arg, /* null when first calling this */
+                         HippoCanvasBlockPost *canvas_block_post)
+{
+    int message_count = -1;
+
+    g_object_get(block, "message-count", &message_count, NULL);
+    
+    g_object_set(G_OBJECT(canvas_block_post->chat_preview),
+                 "message-count", message_count,
+                 NULL);
+}
+
+static void
 hippo_canvas_block_post_set_block(HippoCanvasBlock *canvas_block,
                                   HippoBlock       *block)
 {
@@ -347,6 +361,9 @@ hippo_canvas_block_post_set_block(HippoCanvasBlock *canvas_block,
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_block_post_recent_messages_changed),
                                              canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_message_count_changed),
+                                             canvas_block);
     }
     
     /* Chain up to get the block really changed */
@@ -357,14 +374,19 @@ hippo_canvas_block_post_set_block(HippoCanvasBlock *canvas_block,
                          "notify::post",
                          G_CALLBACK(on_block_post_post_changed),
                          canvas_block);
-        
         g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::recent-messages",
                          G_CALLBACK(on_block_post_recent_messages_changed),
                          canvas_block);
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::message-count",
+                         G_CALLBACK(on_message_count_changed),
+                         canvas_block);
         
         on_block_post_post_changed(canvas_block->block, NULL, canvas_block);
         on_block_post_recent_messages_changed(canvas_block->block, NULL, canvas_block);
+        on_message_count_changed(canvas_block->block, NULL,
+                                 HIPPO_CANVAS_BLOCK_POST(canvas_block));
     }
 }
 
