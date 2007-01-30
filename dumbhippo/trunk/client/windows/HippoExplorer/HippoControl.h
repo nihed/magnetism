@@ -12,6 +12,8 @@
 #include <hippo-ipc.h>
 #include "HippoExplorer_h.h"
 
+#define HIPPO_IE_CONTROL_VERSION L"1.1.0";
+
 class HippoControl :
     public IObjectWithSite,
     public IObjectSafety,
@@ -60,9 +62,11 @@ public:
 
    // IHippoControl methods
    // Standard HippoControl interface shared with firefox
+   STDMETHODIMP get_Version(BSTR *version);
+       
    STDMETHODIMP start(BSTR serverUrl);
    STDMETHODIMP stop();
-       
+
    STDMETHODIMP isConnected(BOOL *isConnected);
 
    STDMETHODIMP setListener(IDispatch *listener); 

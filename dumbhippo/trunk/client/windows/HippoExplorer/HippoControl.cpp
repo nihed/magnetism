@@ -388,6 +388,16 @@ HippoControl::GetNameSpaceParent (IUnknown **parentNamespace)
 //////////////////////// IHippoControl Methods ////////////////////////
 
 STDMETHODIMP 
+HippoControl::get_Version(BSTR *version)
+{
+    HippoBSTR ver = HIPPO_IE_CONTROL_VERSION;
+
+    ver.CopyTo(version);
+
+    return S_OK;
+}
+       
+STDMETHODIMP 
 HippoControl::start(BSTR serverUrl)
 {
     hippoDebugLogW(L"start %ls", serverUrl);
