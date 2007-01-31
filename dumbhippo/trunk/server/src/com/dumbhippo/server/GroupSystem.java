@@ -107,6 +107,8 @@ public interface GroupSystem {
 	 */
 	public void incrementGroupVersion(Group group);
 
+	public Set<GroupView> findGroups(Viewpoint viewpoint, User member);
+	
 	/**
 	 * Find the groups that member is in. The returned GroupView objects
 	 * will include information about the user inviting the user to the

@@ -672,6 +672,10 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return ((Number) result).intValue();			
 	}	
 	
+	public Set<GroupView> findGroups(Viewpoint viewpoint, User member) {
+		return findGroups(viewpoint, member, null);
+	}
+	
 	public Set<GroupView> findGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
 
 		boolean ownGroups = viewpoint.isOfUser(member);
