@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.util.EJBUtil;
 
 
@@ -482,6 +483,11 @@ public class Account extends Resource {
 
 	public void setMusicSharingEnabled(Boolean musicSharingEnabled) {
 		this.musicSharingEnabled = musicSharingEnabled;
+	}
+	
+	@Transient
+	public boolean isMusicSharingEnabledWithDefault() {
+		return musicSharingEnabled == null ? AccountSystem.DEFAULT_ENABLE_MUSIC_SHARING : musicSharingEnabled.booleanValue(); 
 	}
 
 	@Column(nullable=false)

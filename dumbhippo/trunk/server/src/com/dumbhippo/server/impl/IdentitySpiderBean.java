@@ -48,6 +48,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBioChangedRevision;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.Validators;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.ExternalAccountSystem;
@@ -74,8 +75,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			.getLogger(IdentitySpider.class);
 
 	private static final boolean DEFAULT_DEFAULT_SHARE_PUBLIC = true;
-
-	private static final boolean DEFAULT_ENABLE_MUSIC_SHARING = true;
 
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -813,7 +812,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Account account = user.getAccount();
 		Boolean musicSharingEnabled = account.isMusicSharingEnabled();
 		if (musicSharingEnabled == null)
-			musicSharingEnabled = DEFAULT_ENABLE_MUSIC_SHARING;
+			musicSharingEnabled = AccountSystem.DEFAULT_ENABLE_MUSIC_SHARING;
 
 		switch (enabled) {
 		case RAW_PREFERENCE_ONLY:

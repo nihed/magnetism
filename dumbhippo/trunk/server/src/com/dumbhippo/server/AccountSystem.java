@@ -15,6 +15,7 @@ import com.dumbhippo.persistence.ValidationException;
 
 @Local
 public interface AccountSystem {
+	public static final boolean DEFAULT_ENABLE_MUSIC_SHARING = true;	
 	
 	/**
 	 * Create a new Account owning the specified email
