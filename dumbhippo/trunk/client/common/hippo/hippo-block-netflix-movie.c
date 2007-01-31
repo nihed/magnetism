@@ -28,6 +28,7 @@ static void hippo_block_netflix_movie_get_property (GObject      *object,
 struct _HippoBlockNetflixMovie {
     HippoBlockAbstractPerson      parent;
     char *image_url;
+    char *description;
 };
 
 struct _HippoBlockNetflixMovieClass {
@@ -43,7 +44,8 @@ static int signals[LAST_SIGNAL];
 #endif
 
 enum {
-    PROP_0,
+        PROP_0,
+    PROP_DESCRIPTION
 };
 
 G_DEFINE_TYPE(HippoBlockNetflixMovie, hippo_block_netflix_movie, HIPPO_TYPE_BLOCK_ABSTRACT_PERSON);
@@ -65,7 +67,15 @@ hippo_block_netflix_movie_class_init(HippoBlockNetflixMovieClass *klass)
     object_class->dispose = hippo_block_netflix_movie_dispose;
     object_class->finalize = hippo_block_netflix_movie_finalize;
 
-    block_class->update_from_xml = hippo_block_netflix_movie_update_from_xml;    
+    block_class->update_from_xml = hippo_block_netflix_movie_update_from_xml;
+    
+    g_object_class_install_property(object_class,
+                                    PROP_DESCRIPTION,
+                                    g_param_spec_string("description",
+                                                        _("Description"),
+                                                        _("Description of the block, may be NULL"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
 }
 
 static void
@@ -82,6 +92,7 @@ hippo_block_netflix_movie_finalize(GObject *object)
     HippoBlockNetflixMovie *block_netflix = HIPPO_BLOCK_NETFLIX_MOVIE(object);
 
     g_free(block_netflix->image_url);
+    g_free(block_netflix->description);
 
     G_OBJECT_CLASS(hippo_block_netflix_movie_parent_class)->finalize(object);
 }
@@ -92,9 +103,13 @@ hippo_block_netflix_movie_set_property(GObject         *object,
                                          const GValue    *value,
                                          GParamSpec      *pspec)
 {
-    /* HippoBlockNetflixMovie *block_netflix = HIPPO_BLOCK_NETFLIX_MOVIE(object); */
+    HippoBlockNetflixMovie *block_netflix = HIPPO_BLOCK_NETFLIX_MOVIE(object);
 
     switch (prop_id) {
+    case PROP_DESCRIPTION:
+        g_free(block_netflix->description);
+        block_netflix->description = g_value_dup_string(value);
+        break;          
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -107,9 +122,12 @@ hippo_block_netflix_movie_get_property(GObject         *object,
                                          GValue          *value,
                                          GParamSpec      *pspec)
 {
-    /* HippoBlockNetflixMovie *block_netflix = HIPPO_BLOCK_NETFLIX_MOVIE(object); */
+    HippoBlockNetflixMovie *block_netflix = HIPPO_BLOCK_NETFLIX_MOVIE(object);
 
     switch (prop_id) {
+    case PROP_DESCRIPTION:
+        g_value_set_string(value, block_netflix->description);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -122,7 +140,8 @@ hippo_block_netflix_movie_update_from_xml (HippoBlock           *block,
                                            LmMessageNode        *node)
 {
     HippoBlockNetflixMovie *block_netflix = HIPPO_BLOCK_NETFLIX_MOVIE(block);
-    LmMessageNode *netflix_node, *queue_node;
+    LmMessageNode *netflix_node, *queue_node, *description_node;
+    HippoPerson *user;    
     const char *image_url;
 
     if (!HIPPO_BLOCK_CLASS(hippo_block_netflix_movie_parent_class)->update_from_xml(block, cache, node))
@@ -130,21 +149,26 @@ hippo_block_netflix_movie_update_from_xml (HippoBlock           *block,
 
     if (!hippo_xml_split(cache, node, NULL,
                          "netflixMovie", HIPPO_SPLIT_NODE, &netflix_node,
+                         "description", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &description_node,
                          NULL))
         return FALSE;
-
 
     if (!hippo_xml_split(cache, netflix_node, NULL,
                          "queue", HIPPO_SPLIT_NODE, &queue_node,
+                         "userId", HIPPO_SPLIT_PERSON, &user,
                          NULL))
         return FALSE;
 
-    if (!hippo_xml_split(cache, queue_node, NULL,
-                                                 "imageUrl", HIPPO_SPLIT_STRING, &image_url,
+    if (!hippo_xml_split(cache, queue_node, NULL, 
+                         "imageUrl", HIPPO_SPLIT_STRING, &image_url,
                          NULL))
         return FALSE;
         
-        block_netflix->image_url = g_strdup(image_url);
+    block_netflix->image_url = g_strdup(image_url);
+    hippo_block_abstract_person_set_user(HIPPO_BLOCK_ABSTRACT_PERSON(block_netflix), user);
+    if (description_node != NULL) {
+        block_netflix->description = g_strdup(lm_message_node_get_value(description_node));
+    }
     
     return TRUE;
 }
