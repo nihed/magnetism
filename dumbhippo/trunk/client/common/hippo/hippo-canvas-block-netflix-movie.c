@@ -375,7 +375,7 @@ hippo_canvas_block_netflix_movie_set_block(HippoCanvasBlock *canvas_block,
      
         thumbnail_url = hippo_block_netflix_movie_get_image_url(HIPPO_BLOCK_NETFLIX_MOVIE(canvas_block->block));
         g_object_set(block_netflix->thumbnail,
-                     "image-name", "noart",
+                     "image-name", "netflix_no_image",
                      "tooltip", "More information about this movie",
                      "url", hippo_block_get_title_link(canvas_block->block),
                      "box-width", HIPPO_CANVAS_BLOCK_NETFLIX_COVER_ART_WIDTH,
