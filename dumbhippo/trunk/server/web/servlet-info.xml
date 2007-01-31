@@ -9,6 +9,21 @@
        The DumbHippo web application  
    </description>
    
+    <!--  Get rid of ;jsessionid crap in urls -->
+	<filter>
+	  <filter-name>
+	    DisableUrlSessionFilter
+	  </filter-name>
+	  <filter-class>
+	    com.dumbhippo.web.DisableUrlSessionFilter
+	  </filter-class>
+	</filter>
+	
+	<filter-mapping>
+	  <filter-name>DisableUrlSessionFilter</filter-name>
+	  <url-pattern>/*</url-pattern>
+	</filter-mapping>
+   
    <!-- URLs hard-coded to go to our custom servlets -->
     
     <servlet>
