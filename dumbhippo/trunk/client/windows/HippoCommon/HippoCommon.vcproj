@@ -183,6 +183,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-netflix-movie.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-block-post.c"
 				>
 			</File>
@@ -232,6 +236,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-music.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-netflix-movie.c"
 				>
 			</File>
 			<File
@@ -514,6 +522,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-netflix-movie.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-block-post.h"
 				>
 			</File>
@@ -551,6 +563,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-music.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-netflix-movie.h"
 				>
 			</File>
 			<File
