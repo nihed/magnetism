@@ -71,6 +71,8 @@ static void               hippo_canvas_box_get_allocation      (HippoCanvasItem 
                                                                 int                *height_p);
 static gboolean           hippo_canvas_box_button_press_event  (HippoCanvasItem    *item,
                                                                 HippoEvent         *event);
+static gboolean           hippo_canvas_box_button_release_event(HippoCanvasItem    *item,
+                                                                HippoEvent         *event);
 static gboolean           hippo_canvas_box_motion_notify_event (HippoCanvasItem    *item,
                                                                 HippoEvent         *event);
 static void               hippo_canvas_box_request_changed     (HippoCanvasItem    *item);
@@ -118,6 +120,12 @@ typedef struct {
     guint            hovering : 1;
     guint            visible : 1;
     guint            requesting : 1; /* used to detect bugs */
+    
+    /* mouse button click tracking */
+    guint            left_release_pending : 1;
+    guint            middle_release_pending : 1;
+    guint            right_release_pending : 1;
+
 } HippoBoxChild;
 
 enum {
@@ -172,6 +180,7 @@ hippo_canvas_box_iface_init(HippoCanvasItemIface *klass)
     klass->allocate = hippo_canvas_box_allocate;
     klass->get_allocation = hippo_canvas_box_get_allocation;
     klass->button_press_event = hippo_canvas_box_button_press_event;
+    klass->button_release_event = hippo_canvas_box_button_release_event;
     klass->motion_notify_event = hippo_canvas_box_motion_notify_event;
     klass->request_changed = hippo_canvas_box_request_changed;
     klass->get_needs_request = hippo_canvas_box_get_needs_request;
@@ -927,7 +936,7 @@ hippo_canvas_box_set_context(HippoCanvasItem    *item,
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
     GSList *link;
     HippoCanvasContext *child_context;
-    
+   
     /* this shortcut most importantly catches NULL == NULL */
     if (box->context == context)
         return;
@@ -956,6 +965,11 @@ hippo_canvas_box_set_context(HippoCanvasItem    *item,
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
         hippo_canvas_item_set_context(child->item, child_context);
+
+        /* clear button_release_pending flags */
+        child->left_release_pending = FALSE;
+        child->middle_release_pending = FALSE;
+        child->middle_release_pending = FALSE; 
     }
 
     if (child_context == NULL) {
@@ -2594,6 +2608,97 @@ forward_motion_event(HippoCanvasBox *box,
     return result;
 }
 
+static void
+set_release_pending (HippoBoxChild *child,
+                     guint          button,
+                     gboolean       value)
+{
+    g_assert (child != NULL);
+
+    switch (button)
+      {
+      case 1:
+        child->left_release_pending = value;
+        break;
+      case 2:
+        child->middle_release_pending = value;
+        break;
+      case 3:
+        child->right_release_pending = value;
+        break;
+      }
+}
+
+static gboolean
+is_release_pending (HippoBoxChild *child,
+                    guint          button)
+{
+    gboolean result = FALSE;
+
+    g_assert (child != NULL);
+
+    switch (button)
+      {
+      case 1:
+        result = child->left_release_pending == TRUE;
+        break;
+      case 2:
+        result = child->middle_release_pending == TRUE;
+        break;
+      case 3:
+        result = child->right_release_pending == TRUE;
+        break;
+      }
+
+    return result;
+}
+
+static gboolean
+forward_button_release_event(HippoCanvasBox *box,
+                             HippoEvent     *event)
+{
+    GSList *link;
+    
+    for (link = box->children; link != NULL; link = link->next) {
+        HippoBoxChild *child;
+
+        child = link->data;
+        if (is_release_pending (child, event->u.button.button)) { 
+            int width;
+            int height;
+            gboolean handled = FALSE;
+
+            hippo_canvas_item_get_allocation(child->item, &width, &height);
+
+            handled = hippo_canvas_item_process_event(child->item,
+                                                      event, child->x, child->y);
+            if (!handled &&
+                event->x >= child->x && event->y >= child->y &&
+                event->x < (child->x + width) &&
+                event->y < (child->y + height)) {
+               
+                HippoCanvasBox *box;
+
+                box = HIPPO_CANVAS_BOX (child->item);
+                if (box->clickable && 
+                    event->u.button.button == 1 &&
+                    child->left_release_pending) {
+            
+                    hippo_canvas_item_emit_activated(child->item);
+
+                    handled = TRUE;
+                }
+            } 
+           
+            set_release_pending(child, event->u.button.button, FALSE); 
+            return handled;
+        }
+                 
+    }
+
+    return FALSE;
+}
+
 
 static gboolean
 forward_event(HippoCanvasBox *box,
@@ -2604,16 +2709,21 @@ forward_event(HippoCanvasBox *box,
     if (event->type == HIPPO_EVENT_MOTION_NOTIFY) {
         /* Motion events are a bit more complicated than the others */
         return forward_motion_event(box, event);
-    } else {
+    } else if (event->type == HIPPO_EVENT_BUTTON_RELEASE) {
+        return forward_button_release_event(box, event);
+    } else if (event->type == HIPPO_EVENT_BUTTON_PRESS) {
         child = find_child_at_point(box, event->x, event->y);
         
         if (child != NULL) {
+            set_release_pending (child, event->u.button.button, TRUE); 
             return hippo_canvas_item_process_event(child->item,
                                                    event, child->x, child->y);
         } else {
             return FALSE;
         }
-    }
+    } else {
+        return FALSE;
+    } 
 }
 
 static gboolean
@@ -2622,19 +2732,16 @@ hippo_canvas_box_button_press_event (HippoCanvasItem *item,
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
 
-    if (forward_event(box, event)) {
-        return TRUE;
-    } else if (box->clickable && event->u.button.button == 1) {
-        /* FIXME we should really do this on release iff the same
-         * item got the press, but this requires emulating "passive
-         * grabs" for canvas items and right now just not important
-         * enough to bother with
-         */
-        hippo_canvas_item_emit_activated(item);
-        return TRUE;
-    } else {
-        return FALSE;
-    }
+    return forward_event(box, event);
+}
+
+static gboolean
+hippo_canvas_box_button_release_event (HippoCanvasItem *item,
+                                       HippoEvent      *event)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+
+    return forward_event (box, event);
 }
 
 static gboolean
@@ -3305,3 +3412,22 @@ hippo_canvas_box_set_child_packing (HippoCanvasBox              *box,
         hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
     }
 }
+
+void
+hippo_canvas_box_set_clickable (HippoCanvasBox *box,
+                                gboolean        clickable)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
+
+    box->clickable = clickable;
+}
+
+gboolean
+hippo_canvas_box_is_clickable (HippoCanvasBox *box)
+{
+    g_return_val_if_fail(HIPPO_IS_CANVAS_BOX(box), FALSE);
+
+    return box->clickable;
+}
+
+

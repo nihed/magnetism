@@ -187,6 +187,10 @@ void                hippo_canvas_box_align               (HippoCanvasBox *box,
                                                           int            *width_p,
                                                           int            *height_p);
 
+void                hippo_canvas_box_set_clickable       (HippoCanvasBox *box,
+                                                          gboolean        clickable);
+
+gboolean            hippo_canvas_box_is_clickable        (HippoCanvasBox *box);
 
 G_END_DECLS
 

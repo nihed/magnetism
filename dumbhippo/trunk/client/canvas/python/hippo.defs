@@ -551,6 +551,22 @@
     '("int" "for_width")
   )
 )
+
+(define-method set_clickable
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_set_clickable")
+  (return-type "none")
+  (parameters
+    '("gboolean" "clickable")
+  )
+)
+
+(define-method is_clickable
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_is_clickable")
+  (return-type "gboolean")
+)
+
 ;; From hippo-canvas-context.h
 
 (define-function canvas_context_get_type
