@@ -96,10 +96,19 @@
 			<tr>
 			<td align="center" valign="center">
 				<div class="dh-too-old-message">
-					Your version of the Mugshot browser plugin is too old; make sure you
-					have the latest Mugshot software installed, close all Mugshot and
-					browser windows, then try reopening the "Quips and Comments" window.
-					If that doesn't work, you may need to log out and log in again.
+					<c:choose>
+						<c:when test="${browser.ie}">
+						    Your version of the Mugshot software is too old. Please 
+						    <a href="http://mugshot.org/download">install the latest version of Mugshot</a> 
+						    then try again.
+						</c:when>
+						<c:otherwise>
+							You need to <b>restart Firefox</b> so it uses the latest version of the
+							Mugshot browser plugin. Close all Mugshot and Firefox windows,
+						    then try reopening the "Quips and Comments" window.  If that
+						    doesn't work, you may need to log out and log in again.
+						</c:otherwise>
+					</c:choose>
 				</div>
 			</td>
 			</tr>
