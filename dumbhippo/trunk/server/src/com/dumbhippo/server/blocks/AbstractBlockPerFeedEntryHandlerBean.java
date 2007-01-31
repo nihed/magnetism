@@ -66,6 +66,10 @@ public abstract class AbstractBlockPerFeedEntryHandlerBean<ViewType extends Abst
 		//	return;
 	}
 
+	public void onNewBlockCreated(User user, ExternalAccount external) {
+	    // implemented by some subclasses	
+	}
+	
 	public void onExternalAccountFeedEntry(User user, ExternalAccount external, FeedEntry entry, int entryPosition) {
 		
 		if (!external.hasLovedAndEnabledType(getAccountType()))
@@ -77,6 +81,7 @@ public abstract class AbstractBlockPerFeedEntryHandlerBean<ViewType extends Abst
 		// so it is unreliable, because we update blocks based on timestamps
 		long now = System.currentTimeMillis();
 		Block block = stacker.createBlock(getKey(user, entry));
+		onNewBlockCreated(user, external);
 		stacker.stack(block, now, user, false, StackReason.NEW_BLOCK);
 	}
 

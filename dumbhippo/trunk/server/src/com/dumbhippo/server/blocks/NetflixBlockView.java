@@ -6,8 +6,11 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.services.NetflixMoviesView;
 
 public class NetflixBlockView extends AbstractFeedEntryBlockView {
+	
+	private NetflixMoviesView queuedMovies;
 	
 	public NetflixBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
 		super(viewpoint, block, ubd, participated);
@@ -59,5 +62,13 @@ public class NetflixBlockView extends AbstractFeedEntryBlockView {
 	public String getImageUrl() {
 		String movieId = StringUtils.findParamValueInUrl(getLink(), "movieid");		
 		return "http://cdn.nflximg.com/us/boxshots/small/" + movieId + ".jpg";
+	}
+	
+	public void setQueuedMovies(NetflixMoviesView queuedMovies) {
+		this.queuedMovies = queuedMovies;
+	}
+	
+	public NetflixMoviesView getQueuedMovies() {
+	    return queuedMovies; 	
 	}
 }

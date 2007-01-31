@@ -10,7 +10,7 @@
 
 <c:set var="hasDescription" value="${dh:myInstanceOf(block, 'com.dumbhippo.server.blocks.TitleDescriptionBlockView') && block.description != ''}"/>
 
-<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="false">
+<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${block.queuedMovies != null}">
     <td class="dh-stacker-block-with-image-left" align="left" valign="top" width="75%">
 		<table cellspacing="0" cellpadding="0" width="100%">
 			<tr>
@@ -28,6 +28,12 @@
 				</td>
 			</tr>
 		</table>	
+		<dht3:blockContent blockId="${blockId}">
+		    Movies in the Queue:
+		    <c:forEach items="${block.queuedMovies.movies}" var="movie">
+		        <br/><c:out value="${movie.priority}"/> <a href="${movie.url}"><c:out value="${movie.title}"/></a>
+			</c:forEach>
+		</dht3:blockContent>	
 	</td>
 	<td width="0%">&nbsp;</td>
 	<dht3:blockRight blockId="${blockId}" from="${block.entitySource}" showFrom="${showFrom}">
