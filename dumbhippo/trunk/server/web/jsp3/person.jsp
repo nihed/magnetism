@@ -5,6 +5,8 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
+<dht3:requireWhoParameter page="/person"/>
+
 <dht3:requireStackedPersonBean/>
 
 <%-- This is a Facebook authetication token, when people re-login we land them on their person page and get the token --%>
