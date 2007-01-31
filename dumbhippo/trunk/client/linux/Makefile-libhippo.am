@@ -264,6 +264,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-object-cache.h		\
 	$(COMMONSRCDIR)/hippo/hippo-myspace.c			\
 	$(COMMONSRCDIR)/hippo/hippo-myspace.h			\
+	$(COMMONSRCDIR)/hippo/hippo-netflix-movie.c		\
+	$(COMMONSRCDIR)/hippo/hippo-netflix-movie.h		\
 	$(COMMONSRCDIR)/hippo/hippo-person.c			\
 	$(COMMONSRCDIR)/hippo/hippo-person.h			\
 	$(COMMONSRCDIR)/hippo/hippo-platform.c			\

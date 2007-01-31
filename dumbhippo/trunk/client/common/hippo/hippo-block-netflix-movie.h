@@ -20,6 +20,7 @@ typedef struct _HippoBlockNetflixMovieClass HippoBlockNetflixMovieClass;
 GType            hippo_block_netflix_movie_get_type               (void) G_GNUC_CONST;
 
 const char *     hippo_block_netflix_movie_get_image_url          (HippoBlockNetflixMovie *netflix);
+GList *          hippo_block_netflix_movie_get_queue              (HippoBlockNetflixMovie *netflix);
 
 G_END_DECLS
 

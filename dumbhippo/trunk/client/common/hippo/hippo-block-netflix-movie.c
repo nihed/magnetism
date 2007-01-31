@@ -3,6 +3,7 @@
 #include "hippo-block-netflix-movie.h"
 #include "hippo-block-abstract-person.h"
 #include "hippo-person.h"
+#include "hippo-netflix-movie.h"
 #include "hippo-xml-utils.h"
 #include <string.h>
 
@@ -29,6 +30,7 @@ struct _HippoBlockNetflixMovie {
     HippoBlockAbstractPerson      parent;
     char *image_url;
     char *description;
+    GList *queue;
 };
 
 struct _HippoBlockNetflixMovieClass {
@@ -141,6 +143,7 @@ hippo_block_netflix_movie_update_from_xml (HippoBlock           *block,
 {
     HippoBlockNetflixMovie *block_netflix = HIPPO_BLOCK_NETFLIX_MOVIE(block);
     LmMessageNode *netflix_node, *queue_node, *description_node;
+    LmMessageNode *child_node;
     HippoPerson *user;    
     const char *image_url;
 
@@ -158,6 +161,16 @@ hippo_block_netflix_movie_update_from_xml (HippoBlock           *block,
                          "userId", HIPPO_SPLIT_PERSON, &user,
                          NULL))
         return FALSE;
+    
+    for (child_node = queue_node->children; child_node; child_node = child_node->next) {
+       HippoNetflixMovie *movie;        
+       if (strcmp(child_node->name, "movie") != 0)
+           continue;
+       movie = hippo_netflix_movie_new_from_xml(cache, child_node);
+       if (movie != NULL) {
+           block_netflix->queue = g_list_append(block_netflix->queue, movie);
+       }
+    }
 
     if (!hippo_xml_split(cache, queue_node, NULL, 
                          "imageUrl", HIPPO_SPLIT_STRING, &image_url,
@@ -176,5 +189,11 @@ hippo_block_netflix_movie_update_from_xml (HippoBlock           *block,
 const char *
 hippo_block_netflix_movie_get_image_url (HippoBlockNetflixMovie *netflix)
 {
-        return netflix->image_url;
+    return netflix->image_url;
+}
+
+GList *
+hippo_block_netflix_movie_get_queue (HippoBlockNetflixMovie *netflix)
+{
+    return netflix->queue;
 }

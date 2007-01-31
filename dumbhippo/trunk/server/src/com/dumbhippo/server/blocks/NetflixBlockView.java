@@ -7,6 +7,7 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.services.NetflixMovieView;
 import com.dumbhippo.services.NetflixMoviesView;
 
 public class NetflixBlockView extends AbstractFeedEntryBlockView {
@@ -47,6 +48,16 @@ public class NetflixBlockView extends AbstractFeedEntryBlockView {
 	@Override
 	protected void writeExtendedDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.openElement("queue", "imageUrl", getImageUrl());
+		if (getQueuedMovies() != null) {
+			for (NetflixMovieView movieView : getQueuedMovies().getMovies()) {
+				builder.openElement("movie", 
+						"title", movieView.getTitle(),
+						"description", movieView.getDescription(), 
+						"priority", Long.toString(movieView.getPriority()),
+						"url", movieView.getUrl());
+				builder.closeElement();
+			}
+		}
 		builder.closeElement();
 	}
 

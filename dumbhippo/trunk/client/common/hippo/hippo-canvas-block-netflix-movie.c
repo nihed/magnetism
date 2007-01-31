@@ -3,12 +3,16 @@
 #include <hippo/hippo-person.h>
 #include "hippo-canvas-block.h"
 #include "hippo-block-netflix-movie.h"
+#include "hippo-netflix-movie.h"
 #include "hippo-canvas-block-netflix-movie.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-text.h>
 #include "hippo-canvas-url-link.h"
 #include "hippo-canvas-url-image.h"
+
+#define HIPPO_CANVAS_BLOCK_NETFLIX_COVER_ART_WIDTH 65
+#define HIPPO_CANVAS_BLOCK_NETFLIX_COVER_ART_HEIGHT 90
 
 static void      hippo_canvas_block_netflix_movie_init                (HippoCanvasBlockNetflixMovie       *block);
 static void      hippo_canvas_block_netflix_movie_class_init          (HippoCanvasBlockNetflixMovieClass  *klass);
@@ -48,6 +52,9 @@ struct _HippoCanvasBlockNetflixMovie {
     HippoCanvasItem *title_link;
     HippoCanvasItem *description_item;
     HippoCanvasBox *description_parent;
+    HippoCanvasBox *queue_parent;
+    HippoCanvasBox *queue_box;
+    HippoCanvasBox *queue_list_box;    
     HippoPerson *person;
 };
 
@@ -165,32 +172,26 @@ hippo_canvas_block_netflix_movie_get_property(GObject         *object,
 static void
 update_visibility(HippoCanvasBlockNetflixMovie *block)
 {
-        HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block);
-        /* Stolen from hippo-canvas-block-generic.c */
-    g_object_set(G_OBJECT(block->description_item),
-                 "size-mode", canvas_block->expanded ? HIPPO_CANVAS_SIZE_WRAP_WORD : HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                 NULL);
-    hippo_canvas_box_set_child_packing(block->description_parent,
-                                       block->description_item,
-                                       canvas_block->expanded ? HIPPO_PACK_CLEAR_RIGHT : 0);                                        
-    hippo_canvas_box_set_child_visible(block->description_parent,
-                                       block->description_item,
-                                       canvas_block->expanded);
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block);
+    
+    hippo_canvas_box_set_child_visible(block->queue_parent, HIPPO_CANVAS_ITEM(block->queue_box), canvas_block->expanded);
 }
 
 static void
 hippo_canvas_block_netflix_movie_append_content_items (HippoCanvasBlock *block,
                                                        HippoCanvasBox   *parent_box)
 {
-    HippoCanvasBlockNetflixMovie *block_netflix = HIPPO_CANVAS_BLOCK_NETFLIX_MOVIE(block);      
+    HippoCanvasBlockNetflixMovie *block_netflix = HIPPO_CANVAS_BLOCK_NETFLIX_MOVIE(block);    
+    HippoCanvasBox *container_box;  
     HippoCanvasBox *box;
     HippoCanvasBox *top_box;
-    HippoCanvasBox *beside_box; 
+    HippoCanvasBox *beside_box;
+    HippoCanvasItem *item;
     
     top_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                            "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                            "spacing", 4,
-                           "border-bottom", 3,
+                           "border-bottom", 3,                          
                            NULL);
     hippo_canvas_box_append(parent_box, HIPPO_CANVAS_ITEM(top_box), 0);
 
@@ -222,10 +223,10 @@ hippo_canvas_block_netflix_movie_append_content_items (HippoCanvasBlock *block,
     hippo_canvas_box_append(box, block_netflix->favicon, 0);
 
     block_netflix->title_link = g_object_new(HIPPO_TYPE_CANVAS_URL_LINK, 
-                                          "actions", hippo_canvas_block_get_actions(block),
-                                          "xalign", HIPPO_ALIGNMENT_START,
-                                          "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                                          NULL);
+                                             "actions", hippo_canvas_block_get_actions(block),
+                                             "xalign", HIPPO_ALIGNMENT_START,
+                                             "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                                             NULL);
     hippo_canvas_box_append(box, block_netflix->title_link, 0);
     
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
@@ -235,7 +236,7 @@ hippo_canvas_block_netflix_movie_append_content_items (HippoCanvasBlock *block,
     
     block_netflix->description_parent = beside_box;
     block_netflix->description_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                                   "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                                                   "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD,
                                                    "xalign", HIPPO_ALIGNMENT_START,
                                                    "yalign", HIPPO_ALIGNMENT_START,
                                                    "text", NULL,
@@ -243,6 +244,24 @@ hippo_canvas_block_netflix_movie_append_content_items (HippoCanvasBlock *block,
                                                    "border-bottom", 4,
                                                    NULL);
     hippo_canvas_box_append(block_netflix->description_parent, block_netflix->description_item, 0);
+    
+    block_netflix->queue_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                            "orientation", HIPPO_ORIENTATION_VERTICAL,
+                                            NULL);
+    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", _("Movies in the Queue:"),
+                        "xalign", HIPPO_ALIGNMENT_START,                        
+                        NULL);                  
+    hippo_canvas_box_append(block_netflix->queue_box, item, 0);
+    block_netflix->queue_list_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                                 "orientation", HIPPO_ORIENTATION_VERTICAL,
+                                                 NULL);
+    hippo_canvas_box_append(block_netflix->queue_box, HIPPO_CANVAS_ITEM(block_netflix->queue_list_box), 0);
+    
+    block_netflix->queue_parent = parent_box;
+    hippo_canvas_box_append(block_netflix->queue_parent, HIPPO_CANVAS_ITEM(block_netflix->queue_box), 0);
+    
+    update_visibility(block_netflix);
 }
 
 static void
@@ -297,7 +316,6 @@ on_block_description_changed(HippoBlock *block,
     if (description == NULL) {
         hippo_canvas_block_set_expanded(canvas_block, FALSE);
     }
-    canvas_block->expandable = description != NULL;
 
     g_object_set(G_OBJECT(block_netflix->description_item),
                  "text", description,
@@ -329,7 +347,9 @@ hippo_canvas_block_netflix_movie_set_block(HippoCanvasBlock *canvas_block,
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_netflix_movie_parent_class)->set_block(canvas_block, block);
 
     if (canvas_block->block != NULL) {
-                const char *thumbnail_url;
+        const char *thumbnail_url;
+        GList *queue, *elt;
+        
         g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::user",
                          G_CALLBACK(on_user_changed),
@@ -344,7 +364,7 @@ hippo_canvas_block_netflix_movie_set_block(HippoCanvasBlock *canvas_block,
                         
         hippo_actions_load_favicon_async(canvas_block->actions,
                                          hippo_block_get_icon_url(canvas_block->block),
-                                         block_netflix->favicon);        
+                                         block_netflix->favicon);            
                         
         g_object_set(block_netflix->title_link,
                      "text", hippo_block_get_title(canvas_block->block),
@@ -358,14 +378,45 @@ hippo_canvas_block_netflix_movie_set_block(HippoCanvasBlock *canvas_block,
                      "image-name", "noart",
                      "tooltip", "More information about this movie",
                      "url", hippo_block_get_title_link(canvas_block->block),
-                     "box-width", 65,
-                     "box-height", 90,
+                     "box-width", HIPPO_CANVAS_BLOCK_NETFLIX_COVER_ART_WIDTH,
+                     "box-height", HIPPO_CANVAS_BLOCK_NETFLIX_COVER_ART_HEIGHT,
                      NULL);
         hippo_actions_load_thumbnail_async(hippo_canvas_block_get_actions(canvas_block),
                                            thumbnail_url,
                                            block_netflix->thumbnail);     
                                            
         on_block_description_changed(canvas_block->block, NULL, canvas_block);
+        
+        queue = hippo_block_netflix_movie_get_queue(HIPPO_BLOCK_NETFLIX_MOVIE(canvas_block->block));
+     
+        canvas_block->expandable = (queue != NULL);
+                
+        for (elt = queue; elt; elt = elt->next) {
+            HippoNetflixMovie *movie;
+            HippoCanvasBox *box;
+            HippoCanvasItem *number, *title;
+            char *priority_str;
+            
+            movie = elt->data;
+            
+            box = g_object_new(HIPPO_TYPE_CANVAS_BOX, "orientation", HIPPO_ORIENTATION_HORIZONTAL, NULL);
+            
+            priority_str = g_strdup_printf("%d", hippo_netflix_movie_get_priority(movie));
+            number = g_object_new(HIPPO_TYPE_CANVAS_TEXT, "text", priority_str, NULL);
+            g_free(priority_str);
+            hippo_canvas_box_append(box, number, 0);
+            
+            title = g_object_new(HIPPO_TYPE_CANVAS_URL_LINK, 
+                                 "actions", hippo_canvas_block_get_actions(canvas_block),
+                                 "xalign", HIPPO_ALIGNMENT_START,
+                                 "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                                 "text", hippo_netflix_movie_get_title(movie),
+                                 "padding-left", 4,
+                                 NULL);
+            hippo_canvas_box_append(box, title, 0);
+            
+            hippo_canvas_box_append(block_netflix->queue_list_box, HIPPO_CANVAS_ITEM(box), 0);            
+        }
     }
 }
 
