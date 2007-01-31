@@ -171,6 +171,8 @@ hippo_canvas_block_music_append_content_items (HippoCanvasBlock *block,
 
     block_music->thumbnail = g_object_new(HIPPO_TYPE_CANVAS_URL_IMAGE,
                                           "actions", hippo_canvas_block_get_actions(block),
+                                          "xalign", HIPPO_ALIGNMENT_CENTER,
+                                          "yalign", HIPPO_ALIGNMENT_CENTER,
                                           NULL);
     hippo_canvas_box_append(top_box, block_music->thumbnail, 0);
 
