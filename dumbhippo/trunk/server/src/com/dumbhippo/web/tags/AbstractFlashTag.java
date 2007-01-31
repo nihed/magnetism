@@ -79,7 +79,7 @@ public abstract class AbstractFlashTag extends SimpleTagSupport {
 		+ "<div align=\"center\">\n"
 		+ "  <embed quality=\"high\" wmode=\"transparent\" bgcolor=\"%s\"\n"
 		+ "         width=\"%d\" height=\"%d\" align=\"middle\"\n"
-		+ "         allowScriptAccess=\"sameDomain\" type=\"application/x-shockwave-flash\"\n"
+		+ "         allowScriptAccess=\"always\" type=\"application/x-shockwave-flash\"\n"
 		+ "         pluginspage=\"http://www.macromedia.com/go/getflashplayer\"\n"
 		+ "         src=\"%s\" />\n"
 		+ "</div>\n";
