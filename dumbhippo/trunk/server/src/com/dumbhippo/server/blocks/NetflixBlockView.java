@@ -1,6 +1,7 @@
 package com.dumbhippo.server.blocks;
 
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.GroupBlockData;
@@ -41,8 +42,14 @@ public class NetflixBlockView extends AbstractFeedEntryBlockView {
 
 	public ExternalAccountType getAccountType() {
 		return ExternalAccountType.NETFLIX;
-	}
+	}	
 	
+	@Override
+	protected void writeExtendedDetailsToXmlBuilder(XmlBuilder builder) {
+		builder.openElement("queue", "imageUrl", getImageUrl());
+		builder.closeElement();
+	}
+
 	@Override
 	public String getDescription() {
 		String description = getEntry().getDescription();

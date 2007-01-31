@@ -10,6 +10,7 @@
 #include "hippo-canvas-block-music-person.h"
 #include "hippo-canvas-block-flickr-person.h"
 #include "hippo-canvas-block-youtube-person.h"
+#include "hippo-canvas-block-netflix-movie.h"
 #include "hippo-canvas-block-flickr-photoset.h"
 #include "hippo-canvas-block-facebook-event.h"
 #include "hippo-canvas-block-generic.h"
@@ -303,6 +304,9 @@ hippo_canvas_block_new(HippoBlockType type,
     case HIPPO_BLOCK_TYPE_YOUTUBE_PERSON:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_YOUTUBE_PERSON;
         break;
+    case HIPPO_BLOCK_TYPE_NETFLIX_MOVIE:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_NETFLIX_MOVIE;
+        break;        
     case HIPPO_BLOCK_TYPE_GENERIC:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_GENERIC;
         break;

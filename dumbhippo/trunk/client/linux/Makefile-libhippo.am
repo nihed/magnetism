@@ -178,6 +178,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-block-music-chat.h		\
 	$(COMMONSRCDIR)/hippo/hippo-block-music-person.c	\
 	$(COMMONSRCDIR)/hippo/hippo-block-music-person.h	\
+	$(COMMONSRCDIR)/hippo/hippo-block-netflix-movie.c	\
+	$(COMMONSRCDIR)/hippo/hippo-block-netflix-movie.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-post.c		\
 	$(COMMONSRCDIR)/hippo/hippo-block-post.h		\
 	$(COMMONSRCDIR)/hippo/hippo-block-youtube-person.c	\
@@ -204,6 +206,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-music-chat.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-music-person.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-music-person.h	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-netflix-movie.c	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-netflix-movie.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-post.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-post.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-youtube-person.c	\
