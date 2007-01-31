@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
@@ -47,6 +48,8 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.ServerStatus;
 import com.dumbhippo.server.impl.ConfigurationBean;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.web.JavascriptResolver;
 import com.dumbhippo.web.RewrittenRequest;
 import com.dumbhippo.web.SigninBean;
@@ -95,8 +98,14 @@ public class RewriteServlet extends HttpServlet {
 	
 	private FaviconHandler faviconHandler;
 	
-	private boolean hasSignin(HttpServletRequest request) {
-		return SigninBean.getForRequest(request).isValid();
+	private Guid getSigninGuid(HttpServletRequest request) {
+		SigninBean signin = SigninBean.getForRequest(request);
+		if (signin.isValid()) {
+			Viewpoint viewpoint = signin.getViewpoint();
+			if (viewpoint instanceof UserViewpoint)
+				return ((UserViewpoint) viewpoint).getViewer().getGuid();
+		}
+		return null;
 	}
 	
     private String checkBuildStamp(String relativePath) {
@@ -305,15 +314,7 @@ public class RewriteServlet extends HttpServlet {
 		
 		// this line of debug is cut-and-pasted over to AbstractServlet also
 		logger.debug("--------------- HTTP {} for '{}' content-type=" + request.getContentType(), httpMethod, path);
-		
-		// Support for legacy /home, main, and /comingsoon URLs;
-		// forward them all to the root URL; see next stanza for
-		// the special case treatment they will then get
-		if (path.equals("/home") || path.equals("/main") || path.equals("/comingsoon")) {
-			response.sendRedirect("");
-			return;
-		}
-		
+				
 		// see for example http://www.p3pwriter.com/LRN_111.asp
 		// This is a partial machine-readable encoding of 
 		// the privacy policy that allows our login cookie
@@ -325,12 +326,13 @@ public class RewriteServlet extends HttpServlet {
 		// configuration.
 		
 		if (path.equals("/")) {
-			if (hasSignin(request))
-				handleVersionedJsp(request, response, "home");
+			Guid signinUserGuid = getSigninGuid(request);
+			if (signinUserGuid != null)
+				response.sendRedirect("/person?who=" + signinUserGuid.toString());
 			else if (stealthMode)
-				handleVersionedJsp(request, response, "comingsoon");
+				response.sendRedirect("/comingsoon");
 			else
-				handleVersionedJsp(request, response, "main");
+				response.sendRedirect("/main");
 			return;
 		}
 		
