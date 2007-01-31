@@ -1,6 +1,7 @@
 package com.dumbhippo.server.blocks;
 
 import com.dumbhippo.DateUtils;
+import com.dumbhippo.StringUtils;
 import com.dumbhippo.Thumbnail;
 import com.dumbhippo.Thumbnails;
 import com.dumbhippo.XmlBuilder;
@@ -212,7 +213,7 @@ public abstract class BlockView implements ObjectView {
 	
 	// utility function for use in implementations of writeDetailsToXmlBuilder
 	protected void writeFeedEntryToXmlBuilder(XmlBuilder builder, FeedEntry entry) {
-		builder.appendTextNode("feedEntry", entry.getDescription(),
+		builder.appendTextNode("feedEntry", StringUtils.ellipsizeText(entry.getDescription()),
 				"title", entry.getTitle(),
 				"href", entry.getLink().getUrl());
 	}

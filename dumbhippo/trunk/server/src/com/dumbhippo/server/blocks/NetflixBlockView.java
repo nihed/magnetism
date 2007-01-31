@@ -52,7 +52,7 @@ public class NetflixBlockView extends AbstractFeedEntryBlockView {
 
 	@Override
 	public String getDescription() {
-		String description = getEntry().getDescription();
+		String description = StringUtils.ellipsizeText(getEntry().getDescription());
 		// We want to parse out "Shipped on mm/dd/yy."
 		String shippedStr = "Shipped on ";
 		int i = description.indexOf(shippedStr); 

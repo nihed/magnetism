@@ -1,5 +1,6 @@
 package com.dumbhippo.server.blocks;
 
+import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.FeedEntry;
@@ -67,7 +68,7 @@ public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView
 	}
 	
 	public String getDescription() {
-		return getEntry().getDescription();
+		return StringUtils.ellipsizeText(getEntry().getDescription());
 	}
 	
 	public String getTitle() {

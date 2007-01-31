@@ -127,6 +127,27 @@ public class StringUtils {
 		return truncatedString;
 	}
 	
+	public static int COLUMN_CHAR_LIMIT = 255;
+	
+	/**
+	 * Ellipsizes the text that came from a database column. 
+	 * If the text is COLUMN_CHAR_LIMIT characters long, it's
+	 * likely that it was truncated and we need to ellipsize
+	 * it in a pretty way.
+	 * 
+	 * @param s text to ellipsize
+	 * @return ellipsized text or the original string
+	 */
+	public static String ellipsizeText(String s) {
+		int indexOfLastSpace = s.lastIndexOf(" ");
+		// we should not ellipsize the text if it is likely that
+		// we have the whole text
+	    if (s.length() == COLUMN_CHAR_LIMIT && indexOfLastSpace > 0) {
+	    	return s.substring(0, indexOfLastSpace).trim() + "...";
+	    }
+		return s;
+	}
+	
 	/**
 	 * Picks a random String from an array of Strings.
 	 * 
