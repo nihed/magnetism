@@ -84,7 +84,9 @@
 			</td>
 			<td width="0%">&nbsp;</td>
 			<dht3:blockRight blockId="${blockId}" from="${block.personSource}" showFrom="${showFrom}" chatHeader="${chatHeader}">
-				<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>
+				<c:if test="${!chatHeader}">
+					<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>
+				</c:if>
 				<dht3:blockControls blockId="${blockId}">
 					&nbsp; <%-- http://bugzilla.mugshot.org/show_bug.cgi?id=1019 --%>
 				</dht3:blockControls>				

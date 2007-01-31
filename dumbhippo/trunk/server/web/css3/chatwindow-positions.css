@@ -10,8 +10,6 @@ body {
 
 #dhChatHeader {
 	position: absolute;
-	top: 0px;
-	height: 90px;
 	left: 0px;
 	bottom: 0px;
 	width: 100%;
@@ -19,9 +17,6 @@ body {
 
 #dhChatMessages {
 	position: absolute;
-	top: 90px;
-	bottom: 110px;
-	height: expression((document.body.clientHeight - 200) + "px");
 	overflow: auto;
 	left: 0px;
 	right: 0px;

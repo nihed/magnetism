@@ -20,7 +20,7 @@
 </c:choose>
 
 <dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${!oneLine && !chatHeader}">
-	<dht3:blockLeft block="${block}">
+	<dht3:blockLeft block="${block}" chatHeader="${chatHeader}">
 		<dht3:simpleBlockTitle block="${block}" oneLine="${oneLine}" homeStack="false"/>
 		<dht3:stackReason block="${block}" blockId="${blockId}"/>
 	    <dht3:blockDescription blockId="${blockId}" literalBody="${chatHeader}">${block.postView.textAsHtml}</dht3:blockDescription>   
@@ -31,14 +31,16 @@
 		</c:if>
 	</dht3:blockLeft>
 	<dht3:blockRight blockId="${blockId}" from="${block.postView.poster}" showFrom="${showFrom}" chatHeader="${chatHeader}">
-	    <c:if test="${!oneLine}"> 
-		    <c:choose>
-			    <c:when test="${block.postView.totalViewers == 1}">1 view</c:when>
-			    <c:otherwise>${block.postView.totalViewers} views</c:otherwise>
-		    </c:choose>
-		    | 
+		<c:if test="${!chatHeader}">
+		    <c:if test="${!oneLine}"> 
+			    <c:choose>
+				    <c:when test="${block.postView.totalViewers == 1}">1 view</c:when>
+				    <c:otherwise>${block.postView.totalViewers} views</c:otherwise>
+			    </c:choose>
+			    | 
+			</c:if>
+			<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>
 		</c:if>
-		<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>
 		<dht3:blockControls blockId="${blockId}" chatHeader="${chatHeader}">
 			<c:if test="${signin.active}">
 				<jsp:element name="a">
@@ -46,7 +48,7 @@
 			  	  <jsp:body>Share this</jsp:body>
 			  	</jsp:element>
 			</c:if>
-			<dht3:blockSentTimeAgo>${block.postTimeAgo}</dht3:blockSentTimeAgo>
+			<dht3:blockSentTimeAgo chatHeader="${chatHeader}">${block.postTimeAgo}</dht3:blockSentTimeAgo>
 			<dht3:blockSentTo blockId="${blockId}" who="${block.postView.recipients}"/>				
 		</dht3:blockControls>				
 	</dht3:blockRight>

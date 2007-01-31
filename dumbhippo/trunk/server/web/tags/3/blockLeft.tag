@@ -4,8 +4,9 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.blocks.BlockView" %>
- 
-<td align="left" valign="top" width="75%">
+<%@ attribute name="chatHeader" required="false" type="java.lang.Boolean" %>
+
+<td align="left" valign="top" width="${chatHeader ? 70 : 75}%">
 <table cellspacing="0" cellpadding="0" width="100%">
 <tr>
 <td valign="top" class="dh-stacker-block-icon-column"><dh:png klass="dh-stacker-block-icon" src="${block.icon}" style="width: 16; height: 16; border: none;"/></td>

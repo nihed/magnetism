@@ -227,4 +227,14 @@ public class ChatWindowPage {
     public BlockView getBlock() {
     	return blockView;
     }
+    
+    public int getHeaderHeight() {
+    	if (blockView.getBlockType() == BlockType.MUSIC_CHAT) {
+    		TrackView track = ((MusicChatBlockView)blockView).getTrack();
+    		int musicHeight = track.isSmallImageUrlAvailable() ? track.getSmallImageHeight() : 60;
+    		return musicHeight + 12; // 6px border on top and bottom
+    	} else {
+    		return 90;
+    	}
+    }
 }

@@ -24,6 +24,18 @@
 	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="chatwindow" iefixes="true"/>	
 	<dh:script modules="dh.chatwindow,dh.event"/>
+	<style type="text/css"> <%-- Vertical sizes are set here so we can do computed heights--%>
+		#dhChatHeader {
+			top: 0px;
+			height: ${chatwindow.headerHeight}px;
+		}
+
+		#dhChatMessages {
+			top: ${chatwindow.headerHeight}px;
+			bottom: 110px;
+			height: expression((document.body.clientHeight - ${chatwindow.headerHeight + 110}) + "px");
+		}
+	</style>
 	<script type="text/javascript">
    	    dh.chatwindow.selfId = "${chatwindow.signin.userId}";
         dh.chatwindow.chatId = "${chatwindow.chatId}";

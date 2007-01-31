@@ -153,6 +153,7 @@ dh.chat.UserList = function(chatRoom, insertCallback, removeCallback, updateCall
 	this._onReconnect = function() {
 		while (this._users.length > 0) {
 			var old = this._users.pop()
+			delete this._userMap[old.getId()];
 			this._removeCallback(old)
 		}
 	}

@@ -12,13 +12,13 @@
 
 <c:set var="imageSize" value="${chatHeader ? 60 : 30}"/>
 
-<td align="right" valign="top" id="dhStackerBlockRightContainer-${blockId}" class="dh-stacker-block-right-container" width="25%">
+<td align="right" valign="top" id="dhStackerBlockRightContainer-${blockId}" class="dh-stacker-block-right-container" width="${chatHeader ? 30 : 25}%">
 <div class="dh-stacker-block-right-container-inner">
 	<table cellspacing="0" cellpadding="0" class="dh-stacker-block-right-container-inner-table">
 	<tr>
 	<td valign="top"><div class="dh-stacker-block-right">
 		<c:if test="${showFrom}">
-			<div class="dh-stacker-block-right-from-name">from <dht3:entityLink who="${from}" onlineIcon="true"/></div>
+			<div class="dh-stacker-block-right-from-name">from <dht3:entityLink who="${from}" onlineIcon="${!chatHeader}"/></div>
 		</c:if>
 		<jsp:doBody/>
 	</div></td>
