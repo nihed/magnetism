@@ -27,6 +27,7 @@
  */
 
 HippoButton::HippoButton()
+    : widthReq_(-1), heightReq_(-1), font_(0), text_(0), listener_(0)
 {
     // standard Windows control
     setClassName(L"BUTTON");
@@ -79,7 +80,7 @@ HippoButton::getText()
 void
 HippoButton::ensureFont()
 {
-    if (isDestroyed())
+    if (font_ || isDestroyed())
         return;
 
     LOGFONT lf;
