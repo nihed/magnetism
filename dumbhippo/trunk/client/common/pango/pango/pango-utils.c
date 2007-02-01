@@ -1329,7 +1329,14 @@ read_alias_file (const char *filename)
   int n_new;
   int i;
 
+#if 0
   file = g_fopen (filename, "r");
+#else
+  WCHAR *filenameW = g_utf8_to_utf16(filename, -1, NULL, NULL, NULL);
+  if (!filenameW)
+    return;
+  file = _wfopen(filenameW, L"r");
+#endif
   if (!file)
     return;
 

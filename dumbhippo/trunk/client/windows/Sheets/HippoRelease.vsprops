@@ -9,7 +9,7 @@
 		Name="VCCLCompilerTool"
 		AdditionalOptions="/Oy-"
 		PreprocessorDefinitions="NDEBUG"
-		RuntimeLibrary="2"
+		RuntimeLibrary="0"
 		DebugInformationFormat="3"
 	/>
 </VisualStudioPropertySheet>

@@ -7,8 +7,10 @@
         <Directory Id="TARGETDIR" Name="SourceDir">
 	    <Directory Id="ProgramFilesFolder">
 		<Directory Id="INSTALLLOCATION" Name="Mugshot">
+                    <!--
             <Merge Id="visualStudioRuntime" Language="1033" src="C:\Program Files\Common Files\Merge Modules\Microsoft_VC80_CRT_x86.msm" DiskId="1" />
             <Merge Id="visualStudioRuntimePolicy" Language="1033" src="C:\Program Files\Common Files\Merge Modules\policy_8_0_Microsoft_VC80_CRT_x86.msm" DiskId="1" />
+                    -->
 
             <Component Id="dependencies" Guid="EA96152A-8812-4193-90D8-2F1B3F520E36">
 		        <File Id="copyingLibs" Name="LGPL.txt"     LongName="COPYING-LIBS.txt"     src="COPYING-LIBS.txt"      DiskId="1" Vital="yes"/>

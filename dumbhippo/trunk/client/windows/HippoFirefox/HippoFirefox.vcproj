@@ -115,6 +115,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				IgnoreDefaultLibraryNames="MSVCRT"
 			/>
 			<Tool
 				Name="VCALinkTool"
