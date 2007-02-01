@@ -35,9 +35,11 @@
 		</div>
 	</dht3:blockLeft>
 	<dht3:blockRight blockId="${blockId}" from="${block.entitySource}" showFrom="${showFrom}">
-		<div class="dh-stacker-block-sent-to">
-			change to <dht3:entityLink who="${block.groupView}"/>
-		</div>
+        <c:if test="${!oneLine}">  	
+		    <div class="dh-stacker-block-sent-to">
+			    change to <dht3:entityLink who="${block.groupView}"/>
+		    </div>
+		</c:if>    
 		<div class="dh-stacker-block-time">
 			<c:out value="${block.timeAgo}"/>
 		</div>
