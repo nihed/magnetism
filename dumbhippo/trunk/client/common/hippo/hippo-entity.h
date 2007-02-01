@@ -37,6 +37,7 @@ HippoEntityType  hippo_entity_get_entity_type     (HippoEntity    *entity);
 const char*      hippo_entity_get_name            (HippoEntity    *entity);
 const char*      hippo_entity_get_home_url        (HippoEntity    *entity);
 const char*      hippo_entity_get_photo_url       (HippoEntity    *entity);
+gboolean         hippo_entity_get_in_network      (HippoEntity    *entity);
 
 void             hippo_entity_set_name            (HippoEntity    *entity,
                                                    const char     *name);
@@ -44,6 +45,9 @@ void             hippo_entity_set_home_url        (HippoEntity    *entity,
                                                    const char     *link);
 void             hippo_entity_set_photo_url       (HippoEntity    *entity,
                                                    const char     *url);
+void             hippo_entity_set_in_network      (HippoEntity    *entity,
+                                                   gboolean        in_network);
+
 G_END_DECLS
 
 #endif /* __HIPPO_ENTITY_H__ */

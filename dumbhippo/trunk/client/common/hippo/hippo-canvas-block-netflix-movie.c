@@ -182,7 +182,6 @@ hippo_canvas_block_netflix_movie_append_content_items (HippoCanvasBlock *block,
                                                        HippoCanvasBox   *parent_box)
 {
     HippoCanvasBlockNetflixMovie *block_netflix = HIPPO_CANVAS_BLOCK_NETFLIX_MOVIE(block);    
-    HippoCanvasBox *container_box;  
     HippoCanvasBox *box;
     HippoCanvasBox *top_box;
     HippoCanvasBox *beside_box;
