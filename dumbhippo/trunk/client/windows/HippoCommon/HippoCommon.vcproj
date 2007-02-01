@@ -420,6 +420,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-netflix-movie.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-object-cache.c"
 				>
 			</File>
@@ -755,6 +759,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-myspace.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-netflix-movie.h"
 				>
 			</File>
 			<File

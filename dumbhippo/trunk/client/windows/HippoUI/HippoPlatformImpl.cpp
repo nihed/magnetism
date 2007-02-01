@@ -275,20 +275,20 @@ out:
 
 static void
 store_ie_login_cookie(const char  *web_host,
-                      const char  *web_port,
+                      int          web_port,
                       const char  *username,
-                      const char **password)
+                      const char  *password)
 {
     HippoBSTR authUrl;
     
-    makeAuthUrl(web_host, authUrl);
+    makeAuthUrl(web_host, &authUrl);
 
-    char *value = g_strdup_printf("auth=host=%s&name=%s&password=%s; Path=/",
+    char *value = g_strdup_printf("host=%s&name=%s&password=%s; expires=Thu, 31-Dec-2020 23:59:59 GMT; path=/",
                                   web_host, username, password);
-    HippoBSTR valueU = HippoBSTR.fromUTF8(value);
+    HippoBSTR valueW = HippoBSTR::fromUTF8(value);
     g_free(value);
 
-    InternetSetCookie(authUrl.m_str, NULL, valueU.m_str);
+    InternetSetCookie(authUrl.m_str, L"auth", valueW.m_str);
 }
 
 static char *
@@ -298,7 +298,7 @@ get_firefox_dir(void)
     SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path);
 
     HippoBSTR result(path);
-    result.Append(L"\\Firefox");
+    result.Append(L"\\Mozilla\\Firefox");
     
     HippoUStr resultU(result);
     
@@ -322,6 +322,7 @@ read_firefox_login_cookie(const char       *web_host,
 
     cookies = hippo_cookie_locator_load_cookies(locator, web_host, -1, "auth");
     if (cookies) {
+        HippoCookie *cookie = (HippoCookie *)cookies->data;
         const char *value = hippo_cookie_get_value(cookie);
         result = hippo_parse_login_cookie(value, web_host, username_p, password_p);
     }
@@ -352,7 +353,7 @@ hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
 
     if (result) {
         *origin_browser_p = HIPPO_BROWSER_IE;
-    } else (!result) {
+    } else if (!result) {
         result = read_firefox_login_cookie(web_host, username_p, password_p);
         if (result) {
             *origin_browser_p = HIPPO_BROWSER_FIREFOX;
@@ -361,7 +362,7 @@ hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
              * cookie store used by IE so that our embedded use of IE
              * (and direct calls to WinInet) pick it up.
              */
-            store_ie_login_cookie(web_host, web_port, *username, *password);
+            store_ie_login_cookie(web_host, web_port, *username_p, *password_p);
         }
     }
     
@@ -386,14 +387,14 @@ hippo_platform_impl_windows_migrate_cookie(const char *from_web_host,
     char *password;
 
     // See if we already have a cookie from the new host
-    if (do_read_login_cookie(to_web_host, &username, &password)) {
+    if (read_ie_login_cookie(to_web_host, &username, &password)) {
         g_free(username);
         g_free(password);
 
         return;
     }
 
-    if (!do_read_login_cookie(from_web_host, &username, &password))
+    if (!read_ie_login_cookie(from_web_host, &username, &password))
         return;
 
     GDate *date = g_date_new();
