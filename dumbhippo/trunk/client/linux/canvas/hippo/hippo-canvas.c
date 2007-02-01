@@ -85,8 +85,7 @@ hippo_canvas_init(HippoCanvas *canvas)
 
     canvas->helper = hippo_canvas_helper_new(GTK_CONTAINER(canvas));
 
-    gtk_widget_add_events(widget, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK |
-                          GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS | GDK_BUTTON_RELEASE);
+    gtk_widget_add_events(widget, HIPPO_CANVAS_EVENT_MASK);
 }
 
 static void

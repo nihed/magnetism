@@ -274,6 +274,50 @@ create_floated_box_layout_root(void)
     return HIPPO_CANVAS_ITEM(box);
 }
 
+static void
+on_item_activated(HippoCanvasItem *item)
+{
+    g_object_set(G_OBJECT(item), "text", "Foo", NULL);
+}
+
+static HippoCanvasItem*
+create_test_click_release_root(void)
+{
+    HippoCanvasItem *box;
+    HippoCanvasItem *text;
+    
+    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "border", 4,
+                       "border-color", 0x000000ff,
+                       "padding", 10,
+                       "background-color", 0xffffffff,
+                       "spacing", 10,
+                       NULL);
+
+    text = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                        "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                        "text", "Click Me!",
+                        "background-color", 0xffaaaaff,                        
+                        NULL);
+
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, 0);
+
+    g_signal_connect(G_OBJECT(text), "activated", G_CALLBACK(on_item_activated), NULL);
+    
+    text = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                        "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                        "text", "Click Me!",
+                        "background-color", 0x00aaffff,
+                        NULL);
+    
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, 0);
+
+    g_signal_connect(G_OBJECT(text), "activated", G_CALLBACK(on_item_activated), NULL);
+
+    return box;
+}
+
 HippoCanvasItem*
 hippo_canvas_test_get_root(void)
 {
@@ -455,12 +499,18 @@ hippo_canvas_test_get_root(void)
                             HIPPO_PACK_END | HIPPO_PACK_EXPAND);
 #endif
 
+#if 0
     /* For float testing */
 
     shape2 = create_floated_box_layout_root();
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), shape2,
                             HIPPO_PACK_EXPAND);
+#endif
 
+    shape2 = create_test_click_release_root();
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), shape2,
+                            HIPPO_PACK_EXPAND);    
+    
 #if 0
     /* A box with nothing expandable in it */
 

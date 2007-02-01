@@ -2663,37 +2663,15 @@ forward_button_release_event(HippoCanvasBox *box,
         HippoBoxChild *child;
 
         child = link->data;
-        if (is_release_pending (child, event->u.button.button)) { 
-            int width;
-            int height;
+        if (is_release_pending (child, event->u.button.button)) {
             gboolean handled = FALSE;
-
-            hippo_canvas_item_get_allocation(child->item, &width, &height);
-
+            
             handled = hippo_canvas_item_process_event(child->item,
                                                       event, child->x, child->y);
-            if (!handled &&
-                event->x >= child->x && event->y >= child->y &&
-                event->x < (child->x + width) &&
-                event->y < (child->y + height)) {
-               
-                HippoCanvasBox *box;
-
-                box = HIPPO_CANVAS_BOX (child->item);
-                if (box->clickable && 
-                    event->u.button.button == 1 &&
-                    child->left_release_pending) {
             
-                    hippo_canvas_item_emit_activated(child->item);
-
-                    handled = TRUE;
-                }
-            } 
-           
             set_release_pending(child, event->u.button.button, FALSE); 
             return handled;
         }
-                 
     }
 
     return FALSE;
@@ -2740,8 +2718,16 @@ hippo_canvas_box_button_release_event (HippoCanvasItem *item,
                                        HippoEvent      *event)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+    gboolean handled;
+    
+    handled = forward_event (box, event);
 
-    return forward_event (box, event);
+    if (!handled && box->clickable && event->u.button.button == 1) {
+        hippo_canvas_item_emit_activated(item);
+        return TRUE;
+    } else {
+        return handled;
+    }
 }
 
 static gboolean

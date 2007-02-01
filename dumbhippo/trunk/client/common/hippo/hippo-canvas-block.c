@@ -48,7 +48,7 @@ static HippoCanvasPointer hippo_canvas_block_get_pointer         (HippoCanvasIte
                                                                   int                 y);
 static gboolean           hippo_canvas_block_motion_notify_event (HippoCanvasItem    *item,
                                                                   HippoEvent         *event);
-static gboolean           hippo_canvas_block_button_press_event  (HippoCanvasItem    *item,
+static gboolean           hippo_canvas_block_button_release_event(HippoCanvasItem    *item,
                                                                   HippoEvent         *event);
 
 /* our own methods */
@@ -120,7 +120,7 @@ hippo_canvas_block_iface_init(HippoCanvasItemIface *item_class)
 
     item_class->get_pointer = hippo_canvas_block_get_pointer;
     item_class->motion_notify_event = hippo_canvas_block_motion_notify_event;
-    item_class->button_press_event = hippo_canvas_block_button_press_event;
+    item_class->button_release_event = hippo_canvas_block_button_release_event;
 }
 
 static void
@@ -702,8 +702,8 @@ hippo_canvas_block_motion_notify_event (HippoCanvasItem    *item,
 }
 
 static gboolean
-hippo_canvas_block_button_press_event(HippoCanvasItem    *item,
-                                      HippoEvent         *event)
+hippo_canvas_block_button_release_event(HippoCanvasItem    *item,
+                                        HippoEvent         *event)
 {
     gboolean result;
     HippoCanvasBlock *canvas_block;
@@ -711,7 +711,7 @@ hippo_canvas_block_button_press_event(HippoCanvasItem    *item,
     canvas_block = HIPPO_CANVAS_BLOCK(item);
 
     /* See if a child wants it */
-    result = (*item_parent_class->button_press_event) (item, event);
+    result = (*item_parent_class->button_release_event) (item, event);
     if (result)
         return TRUE;
 

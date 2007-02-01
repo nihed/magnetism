@@ -81,8 +81,7 @@ hippo_canvas_window_init(HippoCanvasWindow *canvas_window)
     GtkWidget *widget = GTK_WIDGET(canvas_window);
     GtkWidget *window_child;
 
-    gtk_widget_add_events(widget, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK |
-                          GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK);
+    gtk_widget_add_events(widget, HIPPO_CANVAS_EVENT_MASK);
 
     window_child = hippo_canvas_window_child_new();
 

@@ -107,6 +107,9 @@ void     hippo_connection_request_hotness           (HippoConnection *connection
 void     hippo_connection_request_blocks            (HippoConnection *connection,
                                                      gint64           last_timestamp);
 
+void     hippo_connection_request_contacts          (HippoConnection *connection);
+
+
 void     hippo_connection_set_block_hushed          (HippoConnection *connection,
                                                      const char      *block_id,
                                                      gboolean         hushed);
