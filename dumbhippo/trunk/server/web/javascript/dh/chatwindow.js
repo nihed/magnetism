@@ -14,6 +14,10 @@ dh.chatwindow.MAX_HISTORY_COUNT = 110
 dh.chatwindow.chatId = null
 dh.chatwindow.selfId = null
 
+// True if we're currently maintaining the scrollbar at the bottom
+// of the window; we update this only when the user explicitly scrolls
+dh.chatwindow._atBottom = true;
+
 dh.chatwindow._createHeadShot = function(photoUrl) {
     return dh.util.createPngElement(photoUrl, dh.chatwindow.PHOTO_SIZE, dh.chatwindow.PHOTO_SIZE);
 }
@@ -118,12 +122,15 @@ dh.chatwindow._addMessage = function(message, before) {
 	timeSpan.appendChild(document.createTextNode(message.timeString()));
 	contentsDiv.appendChild(timeSpan);
 
+	var wasAtBottom = this._atBottom;
+
     var messagesDiv = document.getElementById("dhChatMessages");
-	var wasAtBottom = this._isAtBottom(messagesDiv);
     messagesDiv.insertBefore(messageElement, before ? this._messageElement(before) : null);
 		
-    if (!before && wasAtBottom)
+    if (wasAtBottom) {
 		this._scrollToBottom(messagesDiv);
+		this._atBottom = true;
+	}
 				
 	try {
 		window.external.application.DemandAttention()
@@ -187,6 +194,11 @@ dh.chatwindow.sendClicked = function() {
 
 	dh.control.control.sendChatMessage(this.chatId, text, this._sentiment);
     messageInput.value = "";
+    
+    // Scroll to the bottom so that the user can see their own new message
+    var messagesDiv = document.getElementById("dhChatMessages");
+	this._scrollToBottom(messagesDiv);
+    this._atBottom = true;
 }
 
 // Note that this handler is used directly and not invoked
@@ -215,6 +227,14 @@ dh.chatwindow.onBodyKeyPress = function (e) {
 		window.close();
     	return false;
 	}
+	
+	return true;
+}
+
+// Called as an event handler, and not as a method with 'this'
+dh.chatwindow._onMessagesScroll = function (e) {
+    var messagesDiv = document.getElementById("dhChatMessages");
+	dh.chatwindow._atBottom = dh.chatwindow._isAtBottom(messagesDiv);
 	
 	return true;
 }
@@ -313,6 +333,10 @@ dh.chatwindow._init = function() {
 		return;
 	}
 
+    var messagesDiv = document.getElementById("dhChatMessages");
+	dh.event.addEventListener(messagesDiv, "scroll",
+							  dh.chatwindow._onMessagesScroll);
+
 	this._chatRoom = dh.control.control.getOrCreateChatRoom(this.chatId)
 	this._createLists()
 
@@ -326,7 +350,7 @@ dh.chatwindow._init = function() {
     	dh.event.addEventListener(span, "click",
 						    	  dh.chatwindow._onSentimentClick);
 	}
-
+	
 	messageInput.focus()
 	setTimeout(dh.chatwindow.updateTimes, 60 * 1000);
 }
