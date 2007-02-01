@@ -237,8 +237,12 @@ dh.lang.defineClass(dh.control.ChatRoom, null,
 	},
 		
 	_onUserLeave : function(person) {
-		delete this._users[person.getId()];
-		this.onUserLeave(person);
+		var id = person.getId();
+		var chatUser = this._users[id].getParticipant();
+		if (chatUser) {
+			delete this._users[id];
+			this.onUserLeave(person);
+		}
 	}
 })
 
