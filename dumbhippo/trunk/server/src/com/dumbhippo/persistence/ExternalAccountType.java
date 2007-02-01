@@ -417,7 +417,7 @@ public enum ExternalAccountType {
 		
 		@Override
 		public String getSiteUserInfoType() {
-			return "\"Recently Played Tracks\" RSS feed URL";			
+			return "\u201CRecently Played Tracks\u201D RSS feed URL";			
 		}
 		
 		@Override
@@ -714,7 +714,7 @@ public enum ExternalAccountType {
 		
 		@Override
 		public String getSiteUserInfoType() {
-			return "\"Movies At Home\" RSS feed URL";			
+			return "\u201CMovies At Home\u201D RSS feed URL";			
 		}
 		
 		@Override

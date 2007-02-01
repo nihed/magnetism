@@ -474,7 +474,7 @@ dh.account.createLinkedInEntry = function() {
 }
 
 dh.account.createRhapsodyEntry = function() {	
-	dh.account.rhapsodyEntry = new dh.lovehate.Entry('dhRhapsody', 'Rhapsody "Recently Played Tracks" RSS feed URL', dh.account.initialRhapsodyUrl,
+	dh.account.rhapsodyEntry = new dh.lovehate.Entry('dhRhapsody', 'Rhapsody \u201CRecently Played Tracks\u201D RSS feed URL', dh.account.initialRhapsodyUrl,
 					'All-you-can-eat music services hurt my diet', dh.account.initialRhapsodyHateQuip, 
 					'Your friends will see updates from your Rhapsody playlist.',
                     'http://www.rhapsody.com/myrhapsody/rss.html');
@@ -517,7 +517,7 @@ dh.account.createRedditEntry = function() {
 }
 
 dh.account.createNetflixEntry = function() {	
-	dh.account.netflixEntry = new dh.lovehate.Entry('dhNetflix', 'Netflix "Movies At Home" RSS feed URL', dh.account.initialNetflixUrl,
+	dh.account.netflixEntry = new dh.lovehate.Entry('dhNetflix', 'Netflix \u201CMovies At Home\u201D RSS feed URL', dh.account.initialNetflixUrl,
 					'Movie rental stores are my daily respite', dh.account.initialNetflixHateQuip, 'Your friends get updates when you get new movies.',
 					'http://www.netflix.com/RSSFeeds');
 	dh.account.netflixEntry.setSpecialLoveValue("My feed");	
