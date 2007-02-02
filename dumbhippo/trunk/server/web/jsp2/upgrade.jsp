@@ -23,34 +23,34 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.30</p>
+			<p>Version 1.1.32</p>
 			<ul>
-				<li>Enhance the display of music notifications.</li>
-				<li>Ability to add "quips" to songs.</li>
-				<li>Notifications for Digg, del.icio.us, and Twitter.</li>
+				<li>New "Quips and Comments" window replacing the old chat window.</li>
+				<li>Ability to quip directly from the notification block for web swarms.<li>
+				<li>Notifications for Netflix.</li>
+				<li>Tooltips for truncated text.</li>
+				<li>Better layout of notification blocks.</li>
 				<li>Bug fixes.</li>
 			</ul>
 			<div class="dh-upgrade-message">
-			    Note: older versions of Mugshot didn't shut down properly
-			    on some systems, so after upgrade, you may end up with two
-			    mugshot icons in your notification area. If you see this, 
-			    please open a terminal and  enter the following command:
-			    <div class="dh-command">
-				   killall mugshot ; sleep 1 ; mugshot &
-				</div>
-				Or, simply log out and log back in.
+			    Note: you'll need to restart Firefox by closing all windows after
+			    installing this upgrade.
 			</div>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.84</p>
+			<p>Version 1.1.88</p>
 			<ul>
-				<li>Enhance the display of music notifications.</li>
-				<li>Ability to add "quips" to songs.</li>
-				<li>Notifications for Digg, del.icio.us, and Twitter.</li>
-				<li>Improve operation with Internet Explorer 7.</li>
-				<li>Fix display of non-Latin characters.</li>
-				<li>Miscellaneous Bug fixes.</li>
+				<li>Includes a Firefox extension with a toolbar icon and live chat preview.<li>
+				<li>Links opened in the user's default browser.</li>
+
+				<li>New "Quips and Comments" window replacing the old chat window.</li>
+				<li>Ability to quip directly from the notification block for web swarms.<li>
+				<li>Notifications for Netflix.</li>
+				<li>Tooltips for truncated text.</li>
+				<li>Better layout of notification blocks.</li>
+				<li>Optionally report crashes to the Mugshot developers.</li>
+				<li>Bug fixes.</li>
 			</ul>
 		</c:otherwise>
 	</c:choose>
