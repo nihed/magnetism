@@ -26,7 +26,7 @@
 			<p>Version 1.1.32</p>
 			<ul>
 				<li>New "Quips and Comments" window replacing the old chat window.</li>
-				<li>Ability to quip directly from the notification block for web swarms.<li>
+				<li>Ability to quip directly from the notification block for web swarms.</li>
 				<li>Notifications for Netflix.</li>
 				<li>Tooltips for truncated text.</li>
 				<li>Better layout of notification blocks.</li>
@@ -41,15 +41,12 @@
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
 			<p>Version 1.1.88</p>
 			<ul>
-				<li>Includes a Firefox extension with a toolbar icon and live chat preview.<li>
+				<li>Includes a Firefox extension with a toolbar icon and live chat preview.</li>
 				<li>Links opened in the user's default browser.</li>
 
 				<li>New "Quips and Comments" window replacing the old chat window.</li>
-				<li>Ability to quip directly from the notification block for web swarms.<li>
 				<li>Notifications for Netflix.</li>
-				<li>Tooltips for truncated text.</li>
-				<li>Better layout of notification blocks.</li>
-				<li>Optionally report crashes to the Mugshot developers.</li>
+				<li>Optional crash reporting.</li>
 				<li>Bug fixes.</li>
 			</ul>
 		</c:otherwise>
