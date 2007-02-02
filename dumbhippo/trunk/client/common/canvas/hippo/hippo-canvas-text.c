@@ -408,13 +408,14 @@ layout_is_ellipsized(PangoLayout *layout)
      * emulate it here by trying to look for the ellipsis run
      */
     PangoLogAttr *log_attrs;
+    int n_attrs;
     PangoLayoutIter *iter;
 
     /* Short circuit when we aren't ellipsizing at all */
     if (pango_layout_get_ellipsize(layout) == PANGO_ELLIPSIZE_NONE)
         return FALSE;
     
-    pango_layout_get_log_attrs(layout, &log_attrs, NULL);
+    pango_layout_get_log_attrs(layout, &log_attrs, &n_attrs);
     
     iter = pango_layout_get_iter(layout);
     do {
@@ -442,7 +443,7 @@ layout_is_ellipsized(PangoLayout *layout)
          * like that rather than an ellipsis.
          */
         n_graphemes = 0;
-        for (i = 0; i < run->item->num_chars; i++)
+        for (i = 0; i < run->item->num_chars && i + start_index < n_attrs; i++)
             if (log_attrs[i + start_index].is_cursor_position)
                 n_graphemes++;
 
