@@ -3,6 +3,7 @@
 #include "hippo-idle.h"
 
 #include <X11/Xlib.h>
+#include <X11/Xatom.h>
 #include <X11/extensions/scrnsaver.h>
 #include <gdk/gdkx.h>
 
@@ -16,6 +17,89 @@ struct HippoIdleMonitor {
     HippoIdleChangedFunc func;
     void *data;
 };
+
+#if 0
+/* Code to find the active window in order to collect stats for social
+ * application browsing. NOT CURRENTLY USED
+ */
+static char *
+get_active_application_name(HippoIdleMonitor *monitor)
+{
+    Display *xdisplay = GDK_DISPLAY_XDISPLAY(monitor->display);
+    int n_screens = gdk_display_get_n_screens(monitor->display);
+    Atom net_active_window_x = gdk_x11_get_xatom_by_name_for_display(monitor->display,
+                                                                     "_NET_ACTIVE_WINDOW");
+    GdkAtom net_active_window_gdk = gdk_atom_intern("_NET_ACTIVE_WINDOW", FALSE);
+    Window active_window = None;
+    char *appname = NULL;
+    int i;
+
+    /* Find the currently focused window by looking at the _NET_ACTIVE_WINDOW property
+     * on all the screens of the display.
+     */
+    for (i = 0; i < n_screens; i++) {
+        GdkScreen *screen = gdk_display_get_screen(monitor->display, i);
+        GdkWindow *root = gdk_screen_get_root_window(screen);
+        Atom type;
+        int format;
+        unsigned long n_items;
+        unsigned long bytes_after;
+        guchar *data;
+
+        if (!gdk_x11_screen_supports_net_wm_hint (screen, net_active_window_gdk))
+            continue;
+
+        XGetWindowProperty (xdisplay, GDK_DRAWABLE_XID(root),
+                            net_active_window_x,
+                            0, 1, False, XA_WINDOW,
+                            &type, &format, &n_items, &bytes_after, &data);
+        if (type == XA_WINDOW) {
+            active_window = *(Window *)data;
+            XFree(data);
+            break;
+        }
+    }
+
+    if (active_window) {
+        Atom type;
+        int format;
+        unsigned long n_items;
+        unsigned long bytes_after;
+        guchar *data;
+        
+        /* Now that we have the active window, figure out the application name
+         */
+        gdk_error_trap_push();
+        
+        if (XGetWindowProperty (xdisplay, active_window,
+                                XA_WM_CLASS,
+                                0, G_MAXLONG, False, XA_STRING,
+                                &type, &format, &n_items, &bytes_after, &data) == Success &&
+            type == XA_STRING)
+        {
+            if (format == 8) {
+                char **list;
+                int count;
+                
+                count = gdk_text_property_to_utf8_list_for_display(monitor->display, GDK_TARGET_STRING,
+                                                                   8, data, n_items, &list);
+
+                if (count > 1)
+                    appname = g_strdup(list[1]);
+
+                if (list)
+                    g_strfreev(list);
+            }
+            
+            XFree(data);
+        }
+        
+        gdk_error_trap_pop();
+    }
+
+    return appname;
+}
+#endif
 
 static GTime
 get_time (void)
