@@ -502,7 +502,7 @@ hippo_cookie_locator_add_file(HippoCookieLocator *locator,
                               const char         *file,
                               HippoBrowserKind    browser)
 {
-    HippoCookieSource *source = hippo_cookie_source_new(HIPPO_COOKIE_DIRECTORY,
+    HippoCookieSource *source = hippo_cookie_source_new(HIPPO_COOKIE_FILE,
                                                         file,
                                                         browser);
 
