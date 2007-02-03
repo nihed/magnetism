@@ -496,6 +496,12 @@ hippo_window_wrapper_present(HippoWindow *window)
     if (!wrapper->visible) {
         g_object_ref(window);
         wrapper->visible = TRUE;
+
+        /* Turns out that windows of type TOOLBAR don't get activated when shown,
+         * so we need to show the widget first, so that the explicit focus code
+         * in gtk_window_present_gets_called().
+         */
+        gtk_widget_show(GTK_WIDGET(wrapper->window));        
     }
 
     gtk_window_present(GTK_WINDOW(wrapper->window));
