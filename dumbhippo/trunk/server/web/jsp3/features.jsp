@@ -90,7 +90,7 @@
 			<tr>
 			  <dht3:featuresItem prefix="Netflix"
 			                     icon="favicon_netflix.png"
-			                     text="Netflix video queue"
+			                     text="Netflix movie queue"
 			                     tipIcon="netflix_block.png"
 			                     tipIconWidth="450"
 			                     tipIconHeight="79"
