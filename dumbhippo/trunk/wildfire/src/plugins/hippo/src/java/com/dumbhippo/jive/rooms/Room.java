@@ -507,14 +507,14 @@ public class Room implements PresenceListener {
 			    }
             }
 			userInfo.setParticipantCount(userInfo.getParticipantCount() + 1);
+			participantResources.put(jid, userInfo);
 			if (userInfo.getParticipantCount() == 1) {
-				participantResources.put(jid, userInfo);
 				statusChanged = true;
 			}			
 		} else if (!participant && resourceWasParticipant) {
 			userInfo.setParticipantCount(userInfo.getParticipantCount() - 1);
+			participantResources.remove(jid);
 			if (userInfo.getParticipantCount() == 0) {
-				participantResources.remove(jid);
 				statusChanged = true;
 			}
 		}
@@ -797,7 +797,7 @@ public class Room implements PresenceListener {
 		
 		if (newStatus == RoomUserStatus.NONMEMBER)
 			presentUsers.remove(userInfo.getUsername());
-		else if (newStatus == RoomUserStatus.PARTICIPANT)
+		else if (oldStatus == RoomUserStatus.NONMEMBER)
 			presentUsers.put(userInfo.getUsername(), userInfo);
 
 		userInfo.setGlobalStatus(newStatus);
