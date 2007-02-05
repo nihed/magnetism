@@ -88,6 +88,13 @@
 			                     tipText="Get updates when you get new Facebook updates like messages, photos, and pokes."/>			  
 			</tr>	
 			<tr>
+			  <dht3:featuresItem prefix="Netflix"
+			                     icon="favicon_netflix.png"
+			                     text="Netflix video queue"
+			                     tipIcon="netflix_block.png"
+			                     tipIconWidth="450"
+			                     tipIconHeight="79"
+			                     tipText="Get updates when people in your Mugshot network queue Netflix movies."/> 			
 			  <dht3:featuresItem prefix="RSS"
 			                     icon="feed_icon16x16.png"
 			                     text="RSS feeds"
