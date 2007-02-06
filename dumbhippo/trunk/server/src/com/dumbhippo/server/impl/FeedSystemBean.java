@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -58,6 +59,7 @@ import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.syndication.RhapModule;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.util.FeedScraper;
 import com.dumbhippo.server.util.HtmlTextExtractor;
 import com.dumbhippo.services.FeedFetcher;
 import com.dumbhippo.services.FeedFetcher.FeedFetchResult;
@@ -513,6 +515,27 @@ public class FeedSystemBean implements FeedSystem {
 			return false;
 		}
 		return true;
+	}
+
+	public Feed scrapeFeedFromUrl(URL url) throws XmlMethodException {
+		FeedScraper scraper = new FeedScraper();
+		try {
+			// This downloads the url contents, and if it's already an RSS feed then FeedSystem will do it again 
+			// if it's not cached... but since 1) usually we'll be downloading html and not rss here and 2) many feeds
+			// will be cached, it's really not worth making a mess to move the downloaded bytes from FeedScraper to FeedSystem
+			scraper.analyzeURL(url);
+		} catch (IOException e) {
+			logger.debug("IO error analyzing url {}: {}", url, e.getMessage());
+			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Unable to contact the site (" + e.getMessage() + ")");
+		}
+		URL feedSource = scraper.getFeedSource();
+		if (feedSource == null) {
+			logger.debug("No feed found at url {}", url);
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Couldn't find a feed at " + url);
+		}		
+		LinkResource link = identitySpider.getLink(feedSource);
+		Feed feed = getOrCreateFeed(link);
+		return feed;
 	}
 	
 	public Feed getExistingFeed(final LinkResource source) throws XmlMethodException {
