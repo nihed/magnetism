@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import java.net.URL;
 import java.util.List;
 
 import javax.ejb.Local;
@@ -15,6 +16,8 @@ import com.sun.syndication.feed.synd.SyndFeed;
 
 @Local
 public interface FeedSystem extends PollingTaskLoader {
+	
+	public Feed scrapeFeedFromUrl(URL url) throws XmlMethodException;
 	
 	public Feed getExistingFeed(final LinkResource source) throws XmlMethodException;
 	

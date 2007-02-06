@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Pair;
 import com.dumbhippo.StreamUtils;
 import com.dumbhippo.URLUtils;
 
@@ -39,7 +40,21 @@ public class MySpaceScraper {
 		return m.group(1);
 	}	
 	
-	public static String getFriendId(String mySpaceName) throws TransientServiceException {
+	private static boolean isPrivateProfile(String html) {
+		Pattern p = Pattern.compile("This profile is set to private.");
+		Matcher m = p.matcher(html);
+		return m.find();
+	}
+	
+	public static Pair<String, Boolean> getFriendId(String mySpaceName) throws TransientServiceException {
+        String html = getMySpacePageHtml(mySpaceName);
+		String id = scrapeFriendID(html);
+		if (id != null)
+			return new Pair<String, Boolean>(id, isPrivateProfile(html));
+		throw new TransientServiceException("Couldn't scrape MySpace friendId");
+	}
+	
+	private static String getMySpacePageHtml(String mySpaceName) throws TransientServiceException {
 		URL u;
 		try {
 			u = new URL("http://myspace.com/" + mySpaceName);
@@ -63,14 +78,12 @@ public class MySpaceScraper {
 		} catch (IOException e) {
 			throw new TransientServiceException(e);
 		}
-		String id = scrapeFriendID(html);
-		if (id != null)
-			return id;
-		throw new TransientServiceException("Couldn't scrape MySpace friendId");
+		
+		return html;
 	}
-	
+			
 	static public final void main(String[] args) throws TransientServiceException {
-		String friendID = MySpaceScraper.getFriendId(args[0]);
+		String friendID = MySpaceScraper.getFriendId(args[0]).getFirst();
 		System.out.println(friendID);
 	}
 }

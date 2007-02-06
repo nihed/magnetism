@@ -214,7 +214,7 @@ dh.account.onFlickrLoveSaved = function(value) {
 					});
 			},
 	  	    function(code, msg, http) {
-	  	     	alert(msg);
+	  	        alert(msg);
 	  	     	entry.setMode(oldMode);
 	  	    });
 }
@@ -225,11 +225,23 @@ dh.account.onMyspaceLoveSaved = function(value) {
 	entry.setBusy();
   	dh.account.setMyspaceName(value, 
 	 	    	 function(childNodes, http) {
-	 	    	 	entry.setMode('love');
+	 	    	     var i = 0;
+					 for (i = 0; i < childNodes.length; ++i) {
+						 var child = childNodes.item(i);
+						 if (child.nodeType != dh.dom.ELEMENT_NODE)
+							 continue;
+			
+						 if (child.nodeName == "message") {
+							 msg = dh.dom.textContent(child);
+							 alert(msg);
+							 break;
+						 }
+	 	    	 	 }
+	 	    	 	 entry.setMode('love');
 	  	    	 },
 	  	    	 function(code, msg, http) {
-	  	    	 	alert(msg);
-	  	    	 	entry.setMode(oldMode);
+	  	    	 	 alert(msg);
+	  	    	 	 entry.setMode(oldMode);
 	  	    	 }); 
 }
 

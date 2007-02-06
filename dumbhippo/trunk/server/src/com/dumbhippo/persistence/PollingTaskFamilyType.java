@@ -3,6 +3,7 @@ package com.dumbhippo.persistence;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.FlickrUpdater;
 import com.dumbhippo.server.LastFmUpdater;
+import com.dumbhippo.server.MySpaceUpdater;
 import com.dumbhippo.server.YouTubeUpdater;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoader;
 
@@ -36,6 +37,12 @@ public enum PollingTaskFamilyType {
 		public Class<? extends PollingTaskLoader> getLoader() {
 			return YouTubeUpdater.class;
 		}
+	},
+	MYSPACE() {
+		@Override
+		public Class<? extends PollingTaskLoader> getLoader() {
+			return MySpaceUpdater.class;
+		}		
 	};
 	
 	public abstract Class<? extends PollingTaskLoader> getLoader();
