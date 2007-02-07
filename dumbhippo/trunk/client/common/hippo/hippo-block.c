@@ -58,7 +58,8 @@ enum {
     PROP_IGNORED,
     PROP_TITLE,
     PROP_TITLE_LINK,
-    PROP_STACK_REASON
+    PROP_STACK_REASON,
+    PROP_FILTER_FLAGS
 };
 
 static void
@@ -211,6 +212,14 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                      _("Reason code for why the block was restacked"),
                                                      0, G_MAXINT, HIPPO_STACK_NEW_BLOCK,
                                                      G_PARAM_READABLE));
+                                                     
+   g_object_class_install_property(object_class,
+                                    PROP_FILTER_FLAGS,
+                                    g_param_spec_uint("filter-flags",
+                                                      _("Filter flags"),
+                                                      _("Flags applicable to this block, used for filtering"),
+                                                      0, G_MAXUINT, 0,
+                                                      G_PARAM_READABLE));                                                     
 }
 
 static void
@@ -392,6 +401,8 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     const char *stack_reason_str = NULL;
     const char *generic_types = NULL;
     HippoStackReason stack_reason = HIPPO_STACK_NEW_BLOCK;
+    guint filter_flags_value = 0;
+    const char *filter_flags = NULL;
     
     g_assert(cache != NULL);
 
@@ -410,6 +421,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
                          "ignored", HIPPO_SPLIT_BOOLEAN, &ignored,
                          "icon", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &icon_url,
                          "stackReason", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &stack_reason_str,
+                         "filterFlags", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &filter_flags,
                          NULL)) {
         g_debug("missing attributes on <block> %s update", block->guid);
         return FALSE;
@@ -436,6 +448,18 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     hippo_block_set_clicked(block, clicked);
     hippo_block_set_ignored(block, ignored);
     hippo_block_set_icon_url(block, icon_url);
+    
+    if (filter_flags != NULL) {
+        char **flags = g_strsplit(filter_flags, ",", 0);
+        char **flag;
+        for (flag = flags; *flag; flag++) {
+            if (strcmp(*flag, "FEED") == 0) {
+                filter_flags_value ^= HIPPO_BLOCK_FILTER_FLAG_FEED;
+            }       
+        }
+    }
+    
+    hippo_block_set_filter_flags(block, filter_flags_value);
 
     title_node = lm_message_node_get_child(node, "title");
     if (title_node) {
@@ -776,6 +800,26 @@ hippo_block_set_stack_reason(HippoBlock      *block,
     if (value != block->stack_reason) {
         block->stack_reason = value;
         g_object_notify(G_OBJECT(block), "stack-reason");
+    }
+}
+
+guint
+hippo_block_get_filter_flags(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), FALSE);
+
+    return block->filter_flags;
+}
+
+void
+hippo_block_set_filter_flags(HippoBlock *block,
+                             guint       flags)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (flags != block->filter_flags) {
+        block->filter_flags = flags;
+        g_object_notify(G_OBJECT(block), "filter-flags");
     }
 }
 

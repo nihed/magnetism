@@ -20,6 +20,7 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.StackFilterFlags;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
@@ -102,11 +103,14 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 	}
 	
 	public void onPostCreated(Post post) {
+		boolean isFeed = (post instanceof FeedPost);
 		Block block = stacker.createBlock(getKey(post));
 		block.setPublicBlock(post.isPublic() && !post.isDisabled());
+		if (isFeed)
+			block.setFilterFlags(StackFilterFlags.FEED.getValue());
 		User poster = post.getPoster();
 		stacker.stack(block, post.getPostDate().getTime(),
-					poster, !(post instanceof FeedPost), StackReason.NEW_BLOCK);
+					poster, !isFeed, StackReason.NEW_BLOCK);
 	}
 
 	public void onPostDisabledToggled(Post post) {

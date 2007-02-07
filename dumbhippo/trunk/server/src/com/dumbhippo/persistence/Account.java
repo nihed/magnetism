@@ -97,6 +97,8 @@ public class Account extends Resource {
 	// used to notify when we have new ones
 	private long groupInvitationReceived;
 	
+	private String stackFilter;
+	
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
 	 * very far since they have auth keys. Instead add methods that do whatever
@@ -692,5 +694,14 @@ public class Account extends Resource {
 			}
 		}
 		return null;
+	}
+
+	@Column(nullable=true)
+	public String getStackFilter() {
+		return stackFilter;
+	}
+
+	public void setStackFilter(String blockTypeFilter) {
+		this.stackFilter = blockTypeFilter;
 	}
 }

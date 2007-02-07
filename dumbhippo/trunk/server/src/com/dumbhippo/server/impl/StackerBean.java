@@ -48,6 +48,7 @@ import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
+import com.dumbhippo.persistence.StackFilterFlags;
 import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
@@ -819,6 +820,31 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return getBlockView(viewpoint, block, ubd, false);
 	}	
 	
+	private static class StackFilterExpression {
+		private boolean noFeed = false;
+		private boolean noSelfSource = false;
+		
+		public StackFilterExpression(String expr) {
+			if (expr != null) {
+				String[] components = expr.split(",");
+				for (int i = 0; i < components.length; i++) {
+					if (components[i].equals("nofeed"))
+						noFeed = true;
+					else if (components[i].equals("noselfsource"))
+						noSelfSource = true;
+				}
+			}
+		}
+		
+		public boolean isNoFeed() {
+			return noFeed;
+		}
+		
+		public boolean isNoSelfSource() {
+			return noSelfSource;
+		}
+	}
+	
 	/**
 	 * 
 	 * @param viewpoint
@@ -827,9 +853,15 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	 * @param start
 	 * @param count
 	 * @param participantOnly if true, only include blocks where someone participated, and sort by participation time 
-	 * @return
+	 * @param participantOnly2 
+	 * @param filter 
+	 * @param noSelfSource 
+	 * @return 
 	 */
-	private List<UserBlockData> getBlocks(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, boolean participantOnly) {
+	private List<UserBlockData> getBlocks(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, 
+			                              String filter, boolean participantOnly) {
+		
+		StackFilterExpression parsedExpression = new StackFilterExpression(filter);
 		
 		StringBuilder sb = new StringBuilder();
 		
@@ -844,6 +876,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// if lastTimestamp == 0 then all blocks are included so just skip the test in the sql
 		if (lastTimestamp > 0)
 			sb.append(" AND ubd.stackTimestamp >= :timestamp ");
+		
+		if (parsedExpression.isNoFeed())
+			sb.append(" AND block.filterFlags != " + StackFilterFlags.FEED.getValue());
 		
 		/* Inclusion clause */
 		sb.append(" AND (block.inclusion = ");
@@ -956,6 +991,11 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void pageStack(final Viewpoint viewpoint, final User user, Pageable<BlockView> pageable, final long lastTimestamp, final boolean participantOnly) {
+		pageStack(viewpoint, user, pageable, lastTimestamp, null, participantOnly);
+	}
+	
+	public void pageStack(final Viewpoint viewpoint, final User user, Pageable<BlockView> pageable, final long lastTimestamp, 
+			              final String filter, final boolean participantOnly) {
 		
 		logger.debug("getting stack for user {}", user);
 
@@ -966,7 +1006,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageStack(viewpoint, new BlockSource<UserBlockData>() {
 			public List<Pair<Block, UserBlockData>> get(int start, int count) {
 				List<Pair<Block, UserBlockData>> results = new ArrayList<Pair<Block, UserBlockData>>();
-				for (UserBlockData ubd : getBlocks(viewpoint, user, lastTimestamp, start, count, participantOnly)) {
+				for (UserBlockData ubd : getBlocks(viewpoint, user, lastTimestamp, start, count, filter, participantOnly)) {
 					results.add(new Pair<Block, UserBlockData>(ubd.getBlock(), ubd));
 				}
 				return results;
@@ -975,7 +1015,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				return prepareBlockView(viewpoint, block, ubd, participantOnly);
 			}
 		}, pageable, expectedHitFactor);
-	}
+	}	
 	
 	private static abstract class ItemSource<T> {
 		abstract Collection<T> get(int start, int count);
@@ -1936,5 +1976,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 
 		updateGroupBlockDatas(block, isGroupParticipation, reason);
+	}
+
+	public String getUserStackFilterPrefs(User user) {
+		return user.getAccount().getStackFilter();
 	}
 }

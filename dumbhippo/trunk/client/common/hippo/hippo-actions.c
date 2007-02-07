@@ -339,6 +339,18 @@ hippo_actions_expand_notification(HippoActions *actions)
 }
 
 void
+hippo_actions_toggle_filter(HippoActions *actions)
+{
+    hippo_stack_manager_toggle_filter(actions->cache);
+}
+
+void
+hippo_actions_toggle_nofeed(HippoActions *actions)
+{
+    hippo_stack_manager_toggle_nofeed(actions->cache);
+}
+
+void
 hippo_actions_open_home_page(HippoActions    *actions)
 {
     hippo_connection_open_maybe_relative_url(get_connection(actions), "/");

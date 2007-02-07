@@ -105,7 +105,8 @@ void             hippo_connection_request_chat_room_details (HippoConnection *co
 void     hippo_connection_request_prefs             (HippoConnection *connection);
 void     hippo_connection_request_hotness           (HippoConnection *connection);
 void     hippo_connection_request_blocks            (HippoConnection *connection,
-                                                     gint64           last_timestamp);
+                                                     gint64           last_timestamp,
+                                                     const char      *filter);
 
 void     hippo_connection_request_contacts          (HippoConnection *connection);
 

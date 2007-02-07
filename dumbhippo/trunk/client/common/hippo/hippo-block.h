@@ -29,6 +29,12 @@ typedef enum {
     HIPPO_STACK_CHAT_MESSAGE
 } HippoStackReason;
 
+typedef enum {
+    HIPPO_BLOCK_FILTER_FLAG_FEED = 1 << 0
+    // OTHER_FLAG = 1 << 1,
+    // ANOTHER_FLAG = 1 << 2
+} HippoBlockFilterFlag;
+
 typedef struct _HippoBlock      HippoBlock;
 typedef struct _HippoBlockClass HippoBlockClass;
 
@@ -55,6 +61,7 @@ struct _HippoBlock {
     char *title;
     char *title_link;
     HippoStackReason stack_reason;
+    guint filter_flags;
     guint clicked : 1;
     guint ignored : 1;
 };
@@ -113,6 +120,9 @@ void     hippo_block_set_ignored           (HippoBlock *block,
 HippoStackReason hippo_block_get_stack_reason (HippoBlock      *block);
 void             hippo_block_set_stack_reason (HippoBlock      *block,
                                                HippoStackReason value);
+                                               
+guint    hippo_block_get_filter_flags      (HippoBlock *block);
+void     hippo_block_set_filter_flags      (HippoBlock *block, guint flags);
 
 const char* hippo_block_get_title          (HippoBlock *block); 
 void        hippo_block_set_title          (HippoBlock *block,

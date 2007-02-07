@@ -1031,7 +1031,7 @@ hippo_data_cache_on_connect(HippoConnection      *connection,
         hippo_data_cache_foreach_chat_room(cache, FALSE, update_chat_room_func, cache);
 
         hippo_connection_request_prefs(connection);
-        hippo_connection_request_blocks(connection, 0);
+        hippo_connection_request_blocks(connection, 0, NULL);
     } else {
         /* Clear stuff, so we get "changed" signals both on disconnect 
          * and again on reconnect, and so we don't have stale data on
