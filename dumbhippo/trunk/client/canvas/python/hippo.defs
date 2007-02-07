@@ -727,6 +727,21 @@
   )
 )
 
+(define-method get_width_request
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_get_width_request")
+  (return-type "int")
+)
+
+(define-method get_height_request
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_get_height_request")
+  (return-type "int")
+  (parameters
+    '("int" "for_width")
+  )
+)
+
 (define-virtual get_width_request
   (of-object "HippoCanvasItem")
   (c-name "hippo_canvas_item_get_width_request")
