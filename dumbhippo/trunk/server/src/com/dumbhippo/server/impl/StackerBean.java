@@ -709,7 +709,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 		
 		// if we weren't previously clicked on, then increment the count.
-		// (FIXME is this a race or does it work due to transaction semantics? not sure)
+		// (FIXME this is not a reliable way of incrementing a count, since two transactions
+		// can read the same value and write the same value + 1)
 		if (!ubd.isClicked())
 			ubd.getBlock().setClickedCount(ubd.getBlock().getClickedCount() + 1);
 		
