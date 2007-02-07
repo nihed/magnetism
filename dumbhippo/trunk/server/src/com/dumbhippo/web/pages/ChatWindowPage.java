@@ -70,7 +70,7 @@ public class ChatWindowPage {
     
     private PostBlockView loadPostBlockView(Guid postId) throws NotFoundException {
     	PostBlockHandler handler = WebEJBUtil.defaultLookup(PostBlockHandler.class);
-    	BlockKey key = handler.getKey(postId);
+    	BlockKey key = handler.getLookupOnlyKey(postId);
     	
     	PostBlockView result = (PostBlockView)stacker.loadBlock(signin.getViewpoint(), key);
     		

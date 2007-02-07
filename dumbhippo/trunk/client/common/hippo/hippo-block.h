@@ -4,6 +4,7 @@
 
 #include <loudmouth/loudmouth.h>
 #include <hippo/hippo-basics.h>
+#include <hippo/hippo-entity.h>
 
 G_BEGIN_DECLS
 
@@ -49,6 +50,7 @@ struct _HippoBlock {
     GObject parent;
     char   *guid;
     HippoBlockType type;
+    HippoEntity *source;
     gboolean is_public;
     GTime  update_time;
     gint64 timestamp;
@@ -85,6 +87,9 @@ gboolean         hippo_block_update_from_xml           (HippoBlock     *block,
 
 const char*      hippo_block_get_guid                  (HippoBlock *block);
 HippoBlockType   hippo_block_get_block_type            (HippoBlock *block);
+
+HippoEntity *    hippo_block_get_source                (HippoBlock *block);
+void             hippo_block_set_source                (HippoBlock *block, HippoEntity *entity);
 
 gboolean hippo_block_is_public             (HippoBlock *block);
 void     hippo_block_set_public            (HippoBlock *block,

@@ -351,6 +351,12 @@ hippo_actions_toggle_nofeed(HippoActions *actions)
 }
 
 void
+hippo_actions_toggle_noselfsource(HippoActions *actions)
+{
+    hippo_stack_manager_toggle_noselfsource(actions->cache);
+}
+
+void
 hippo_actions_open_home_page(HippoActions    *actions)
 {
     hippo_connection_open_maybe_relative_url(get_connection(actions), "/");

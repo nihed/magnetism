@@ -45,13 +45,17 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 		super(PostBlockView.class);
 	}
 
-	public BlockKey getKey(Post post) {
-		return getKey(post.getGuid());
+	public BlockKey getLookupOnlyKey(Post post) {
+		return getLookupOnlyKey(post.getGuid());
 	}
-
-	public BlockKey getKey(Guid postId) {
-		return new BlockKey(BlockType.POST, postId);
-	}	
+	
+	public BlockKey getLookupOnlyKey(Guid postId) {
+		return new BlockKey(BlockType.POST, postId, true);
+	}		
+	
+	public BlockKey getKey(Post post) {
+		return new BlockKey(BlockType.POST, post.getGuid(), post.getPoster().getGuid());
+	}
 	
 	@Override
 	protected void populateBlockViewImpl(PostBlockView blockView) throws BlockNotVisibleException {
@@ -116,7 +120,7 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 	public void onPostDisabledToggled(Post post) {
 		Block block;
 		try {
-			block = stacker.queryBlock(getKey(post));
+			block = stacker.queryBlock(getLookupOnlyKey(post));
 		} catch (NotFoundException e) {
 			logger.warn("No block found for post {} - migration needed?", post);
 			return;
@@ -125,24 +129,24 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 	}
 
 	public void onPostMessageCreated(PostMessage message) {
-		stacker.stack(getKey(message.getPost()), message.getTimestamp().getTime(),
+		stacker.stack(getLookupOnlyKey(message.getPost()), message.getTimestamp().getTime(),
 				message.getFromUser(), true, StackReason.CHAT_MESSAGE);
 	}
 
 	public void onPostClicked(Post post, User user, long clickedTime) {
-		stacker.blockClicked(getKey(post), user, clickedTime);
+		stacker.blockClicked(getLookupOnlyKey(post), user, clickedTime);
 	}
 
 	public Block lookupBlock(Post post) {
 		try {
-			return stacker.queryBlock(getKey(post));
+			return stacker.queryBlock(getLookupOnlyKey(post));
 		} catch (NotFoundException e) {
 			throw new RuntimeException("No Block found for Post {}, migration needed?", e);
 		}
 	}
 	
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Post post) throws NotFoundException {
-		return stacker.lookupUserBlockData(viewpoint, getKey(post));
+		return stacker.lookupUserBlockData(viewpoint, getLookupOnlyKey(post));
 	}
 	
 	

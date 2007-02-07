@@ -221,6 +221,7 @@ enum {
     POST_ACTIVITY,
     MYSPACE_CHANGED,
     GROUP_MEMBERSHIP_CHANGED,
+    BLOCK_FILTER_CHANGED,
     LAST_SIGNAL
 };
 
@@ -329,6 +330,15 @@ hippo_connection_class_init(HippoConnectionClass *klass)
                       NULL, NULL,
                       hippo_common_marshal_VOID__OBJECT_OBJECT_STRING,
                       G_TYPE_NONE, 3, G_TYPE_OBJECT, G_TYPE_OBJECT, G_TYPE_STRING); 
+                      
+    signals[BLOCK_FILTER_CHANGED] =
+        g_signal_new ("block-filter-changed",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__STRING,
+                      G_TYPE_NONE, 1, G_TYPE_STRING);               
 
     object_class->finalize = hippo_connection_finalize;
 }
@@ -1640,16 +1650,27 @@ hippo_connection_update_server_time_offset(HippoConnection *connection,
     connection->server_time_offset = server_time - hippo_current_time_ms();
 }
  
+static void
+hippo_connection_update_filter(HippoConnection *connection,
+                               const char      *filter)
+{
+    g_free(connection->active_block_filter);
+    connection->active_block_filter = g_strdup(filter);
+    g_signal_emit(connection, signals[BLOCK_FILTER_CHANGED], 0, connection->active_block_filter);
+}
+ 
 static gboolean
 hippo_connection_parse_blocks(HippoConnection *connection,
                               LmMessageNode   *node)
 {
     LmMessageNode *subchild;
+    const char *filter = NULL;
     gint64 server_timestamp;
 
     /* g_debug("Parsing blocks list <%s>", node->name); */
     
     if (!hippo_xml_split(connection->cache, node, NULL,
+                         "filter", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &filter,
                          "serverTime", HIPPO_SPLIT_TIME_MS, &server_timestamp,
                          NULL)) {
         g_debug("missing serverTime on blocks");
@@ -1657,6 +1678,8 @@ hippo_connection_parse_blocks(HippoConnection *connection,
     }
 
     hippo_connection_update_server_time_offset(connection, server_timestamp);
+    if (filter)
+        hippo_connection_update_filter(connection, filter);
     
     for (subchild = node->children; subchild; subchild = subchild->next) {
         if (!hippo_data_cache_update_from_xml(connection->cache, subchild)) {
