@@ -347,7 +347,7 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
     return TRUE;
 }
 
-#define MAX_INFO 16
+#define MAX_INFO 20
 
 gboolean
 hippo_xml_split(HippoDataCache *cache,

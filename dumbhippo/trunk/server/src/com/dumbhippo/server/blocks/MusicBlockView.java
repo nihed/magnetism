@@ -5,7 +5,7 @@ import java.util.List;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.TrackView;
 
-public interface MusicBlockView {
+public interface MusicBlockView extends EntitySourceBlockView {
 	TrackView getTrack();
 	List<TrackView> getOldTracks();
 	ChatMessageView getLastMessage();

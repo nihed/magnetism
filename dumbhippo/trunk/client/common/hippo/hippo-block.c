@@ -46,6 +46,7 @@ enum {
     PROP_GUID,
     PROP_BLOCK_TYPE,
     PROP_IS_PUBLIC,
+    PROP_SOURCE,    
     PROP_SORT_TIMESTAMP,
     PROP_TIMESTAMP,
     PROP_CLICKED_TIMESTAMP,
@@ -97,6 +98,14 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                      0, G_MAXINT,
                                                      HIPPO_BLOCK_TYPE_UNKNOWN,
                                                      G_PARAM_READABLE));
+                                                     
+    g_object_class_install_property(object_class,
+                                    PROP_SOURCE,
+                                    g_param_spec_object("source",
+                                                        _("Source"),
+                                                        _("The entity which originated this block"),
+                                                         HIPPO_TYPE_ENTITY,
+                                                         G_PARAM_READABLE));                                                     
     
     g_object_class_install_property(object_class,
                                     PROP_IS_PUBLIC,
@@ -314,6 +323,9 @@ hippo_block_get_property(GObject         *object,
     case PROP_BLOCK_TYPE:
         g_value_set_int(value, block->type);
         break;
+    case PROP_SOURCE:
+        g_value_set_object(value, block->source);
+        break;
     case PROP_SORT_TIMESTAMP:
         g_value_set_int64(value,
                           hippo_block_get_sort_timestamp(block));
@@ -403,6 +415,8 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     HippoStackReason stack_reason = HIPPO_STACK_NEW_BLOCK;
     guint filter_flags_value = 0;
     const char *filter_flags = NULL;
+    LmMessageNode *source_node = NULL;
+    HippoEntity *source;
     
     g_assert(cache != NULL);
 
@@ -422,6 +436,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
                          "icon", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &icon_url,
                          "stackReason", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &stack_reason_str,
                          "filterFlags", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &filter_flags,
+                         "source", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &source_node,                         
                          NULL)) {
         g_debug("missing attributes on <block> %s update", block->guid);
         return FALSE;
@@ -457,9 +472,18 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
                 filter_flags_value ^= HIPPO_BLOCK_FILTER_FLAG_FEED;
             }       
         }
+        g_strfreev(flags);
     }
     
     hippo_block_set_filter_flags(block, filter_flags_value);
+
+    if (source_node != NULL) {
+        if (!hippo_xml_split(cache, source_node, NULL,
+                             "id", HIPPO_SPLIT_ENTITY, &source,
+                             NULL))
+            return FALSE;
+        hippo_block_set_source(block, source);
+    }
 
     title_node = lm_message_node_get_child(node, "title");
     if (title_node) {
@@ -897,6 +921,32 @@ hippo_block_set_title_link(HippoBlock *block,
     g_free(block->title_link);
     block->title_link = g_strdup(link);
     g_object_notify(G_OBJECT(block), "title-link");
+}
+
+HippoEntity *
+hippo_block_get_source(HippoBlock *block)
+{
+    return block->source;
+}
+
+void
+hippo_block_set_source(HippoBlock        *block,
+                       HippoEntity       *source)
+{
+    if (source == block->source)
+        return;
+
+    if (block->source) {
+        g_object_unref(block->source);
+        block->source = NULL;
+    }
+
+    if (source) {
+        g_object_ref(source);
+        block->source = source;
+    }
+
+    g_object_notify(G_OBJECT(block), "source");
 }
 
 HippoBlockType

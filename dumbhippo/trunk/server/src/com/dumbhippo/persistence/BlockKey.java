@@ -14,8 +14,9 @@ public class BlockKey {
 	private Guid data2;
 	private long data3;
 	private StackInclusion inclusion;
+	private boolean data2Optional;
 	
-	public BlockKey(BlockType type, Guid data1, Guid data2, long data3, StackInclusion inclusion) {
+	public BlockKey(BlockType type, Guid data1, Guid data2, long data3, StackInclusion inclusion, boolean data2Optional) {
 		if (type == null)
 			throw new IllegalArgumentException("null block type");
 		
@@ -23,6 +24,7 @@ public class BlockKey {
 		this.data1 = data1;
 		this.data2 = data2;
 		this.data3 = data3;
+		this.data2Optional = data2Optional;
 		
 		if (inclusion != null)
 			this.inclusion = inclusion;
@@ -31,6 +33,10 @@ public class BlockKey {
 			if (this.inclusion == null)
 				throw new IllegalArgumentException("inclusion must be specified creating block keys of type " + type);
 		}
+	}
+	
+	public BlockKey(BlockType type, Guid data1, Guid data2, long data3, StackInclusion inclusion) {
+		this(type, data1, data2, data3, inclusion, false);
 	}
 	
 	public BlockKey(BlockType type, Guid data1, Guid data2, long data3) {
@@ -48,6 +54,10 @@ public class BlockKey {
 	public BlockKey(BlockType type, Guid data1) {
 		this(type, data1, null, -1, null);
 	}	
+	
+	public BlockKey(BlockType type, Guid data1, boolean data2Optional) {
+		this(type, data1, null, -1, null, data2Optional);
+	}		
 	
 	public BlockKey(BlockType type, Guid data1, StackInclusion inclusion) {
 		this(type, data1, null, -1, inclusion);
@@ -71,6 +81,10 @@ public class BlockKey {
 
 	public StackInclusion getInclusion() {
 		return inclusion;
+	}
+	
+	public boolean isData2Optional() {
+		return data2Optional;
 	}
 
 	@Override

@@ -26,6 +26,7 @@ import com.dumbhippo.server.views.Viewpoint;
 public interface Stacker {
 	
 	public String getUserStackFilterPrefs(User user);
+	public void setUserStackFilterPrefs(User viewer, String filter);	
 	
 	public Block getOrCreateBlock(BlockKey key);
 	public Block createBlock(BlockKey key);

@@ -35,12 +35,17 @@ static void     hippo_canvas_filter_area_paint              (HippoCanvasItem *it
 static void
 on_nofeed_activated(HippoCanvasItem        *button,
                     HippoCanvasFilterArea  *area);
+static void
+on_noselfsource_activated(HippoCanvasItem        *button,
+                          HippoCanvasFilterArea  *area);
 
 struct _HippoCanvasFilterArea {
     HippoCanvasBox box;
     HippoActions *actions;
     HippoCanvasItem *nofeed_item;
+    HippoCanvasItem *noselfsource_item;    
     gboolean nofeed_checked;
+    gboolean noselfsource_checked;
 };
 
 struct _HippoCanvasFilterAreaClass {
@@ -51,7 +56,7 @@ enum {
     LAST_SIGNAL
 };
 
-static int signals[LAST_SIGNAL];
+// static int signals[LAST_SIGNAL];
 
 enum {
     PROP_0,
@@ -211,6 +216,23 @@ hippo_canvas_filter_area_constructor (GType                  type,
     hippo_canvas_box_append(box, item, 0);
     g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_nofeed_activated), area);
     area->nofeed_item = item;
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "Hide my items: ",
+                        "padding-left", 40,
+                        "xalign", HIPPO_ALIGNMENT_START,
+                        NULL);
+    hippo_canvas_box_append(box, item, 0);    
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                        "normal-image-name", "checkbox",
+                        "xalign", HIPPO_ALIGNMENT_START,
+                        "yalign", HIPPO_ALIGNMENT_CENTER,
+                        "tooltip", "Whether or not to show items from me",
+                        NULL);
+    hippo_canvas_box_append(box, item, 0);
+    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_noselfsource_activated), area);
+    area->noselfsource_item = item;    
    
     return object;
 }
@@ -226,13 +248,38 @@ hippo_canvas_filter_area_paint(HippoCanvasItem *item,
     item_parent_class->paint(item, cr, damaged_box);
 }
 
+void
+hippo_canvas_filter_area_set_nofeed_active(HippoCanvasFilterArea *area,
+                                           gboolean               active)
+{
+    area->nofeed_checked = active;
+    g_object_set(G_OBJECT(area->nofeed_item), "normal-image-name", 
+                 area->nofeed_checked ? "checked_checkbox" : "checkbox", NULL);    
+}
+
+void
+hippo_canvas_filter_area_set_noselfsource_active(HippoCanvasFilterArea *area,
+                                                 gboolean               active)
+{
+   area->noselfsource_checked = active;
+   g_object_set(G_OBJECT(area->noselfsource_item), "normal-image-name", 
+                area->noselfsource_checked ? "checked_checkbox" : "checkbox", NULL);   
+}
+
 static void
 on_nofeed_activated(HippoCanvasItem        *button,
                     HippoCanvasFilterArea  *area)
 {
-    area->nofeed_checked = !area->nofeed_checked;
-    g_object_set(G_OBJECT(area->nofeed_item), "normal-image-name", 
-                 area->nofeed_checked ? "checked_checkbox" : "checkbox", NULL);
+    hippo_canvas_filter_area_set_nofeed_active(area, !area->nofeed_checked);
     if (area->actions)
         hippo_actions_toggle_nofeed(area->actions);
+}
+
+static void
+on_noselfsource_activated(HippoCanvasItem        *button,
+                          HippoCanvasFilterArea  *area)
+{
+    hippo_canvas_filter_area_set_noselfsource_active(area, !area->noselfsource_checked);
+    if (area->actions)
+        hippo_actions_toggle_noselfsource(area->actions);
 }

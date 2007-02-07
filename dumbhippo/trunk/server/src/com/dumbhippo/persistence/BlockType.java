@@ -17,6 +17,11 @@ public enum BlockType {
 		public boolean getClickedCountUseful() { 
 			return true;
 		}
+		
+		@Override
+		public boolean userOriginIsData2() {
+			return true;
+		}
 	},
 	GROUP_MEMBER, // 1
 	GROUP_CHAT, // 2
@@ -185,6 +190,10 @@ public enum BlockType {
 	// user guid is stored in the block data1
 	public boolean userOriginIsData1() { 
 		return false; 
+	}
+	
+	public boolean userOriginIsData2() {
+		return false;
 	}
 	
 	// returns true if all blocks of this type are always public,

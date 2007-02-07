@@ -34,7 +34,8 @@ void hippo_stack_manager_toggle_browser     (HippoDataCache   *cache);
 void hippo_stack_manager_toggle_filter      (HippoDataCache   *cache);
 /* Enable/Disable feed filter */
 void hippo_stack_manager_toggle_nofeed      (HippoDataCache   *cache);
-
+/* Enable/Disable self source filter */
+void hippo_stack_manager_toggle_noselfsource(HippoDataCache   *cache);
 
 G_END_DECLS
 

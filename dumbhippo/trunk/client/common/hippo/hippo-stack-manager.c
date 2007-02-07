@@ -1,4 +1,5 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include <string.h>
 #include "hippo-block-group-chat.h"
 #include "hippo-block-music-chat.h"
 #include "hippo-block-post.h"
@@ -30,7 +31,8 @@ typedef struct {
     HippoDataCache  *cache;
     HippoActions    *actions;
     HippoConnection *connection;
-    guint            nofeed_active;
+    gboolean         nofeed_active;
+    gboolean         noselfsource_active;
     GSList          *blocks;
 
     HippoWindow     *browser_window;
@@ -420,7 +422,7 @@ manager_toggle_browser(StackManager *manager)
 static void
 manager_toggle_filter(StackManager *manager)
 {
-        manager->filter_area_visible = !manager->filter_area_visible;
+    manager->filter_area_visible = !manager->filter_area_visible;
     g_debug("Setting filter area visible: %d", manager->filter_area_visible);
     hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(manager->browser_box),
                                        manager->browser_filter_area_item,
@@ -433,6 +435,9 @@ apply_current_filter(StackManager *manager,
 {
     if (manager->nofeed_active &&
         hippo_block_get_filter_flags(block) & HIPPO_BLOCK_FILTER_FLAG_FEED)
+        return FALSE;
+    else if (manager->noselfsource_active &&
+             hippo_block_get_source(block) == ((HippoEntity*) hippo_data_cache_get_self(manager->cache)))
         return FALSE;
            
     return TRUE;
@@ -453,6 +458,7 @@ filter_canvas_item(HippoCanvasItem *item,
 static void
 apply_filter_all(StackManager *manager)
 {
+    GList *conditions = NULL, *elt;
     GString *filter_string;
     g_debug("Refiltering all blocks");    
     hippo_canvas_box_foreach(HIPPO_CANVAS_BOX(manager->browser_item),
@@ -460,7 +466,14 @@ apply_filter_all(StackManager *manager)
                              manager);
     filter_string = g_string_new("");
     if (manager->nofeed_active)
-        g_string_append(filter_string, "nofeed");       
+        conditions = g_list_prepend(conditions, "nofeed");       
+    if (manager->noselfsource_active)
+        conditions = g_list_prepend(conditions, "noselfsource");
+    for (elt = conditions; elt; elt = elt->next) {
+        g_string_append(filter_string, (const char*) elt->data);
+        if (elt->next != NULL)
+            g_string_append(filter_string, ",");
+    }
     hippo_connection_request_blocks(manager->connection, 0, 
                                     filter_string->str);
     g_string_free(filter_string, TRUE); 
@@ -469,9 +482,49 @@ apply_filter_all(StackManager *manager)
 static void
 manager_toggle_nofeed(StackManager *manager)
 {
-        manager->nofeed_active = !manager->nofeed_active;
+    manager->nofeed_active = !manager->nofeed_active;
     
     apply_filter_all(manager);                             
+}
+
+static void
+manager_toggle_noselfsource(StackManager *manager)
+{
+    manager->noselfsource_active = !manager->noselfsource_active;
+    
+    apply_filter_all(manager);                             
+}
+
+static void
+handle_filter_change(HippoConnection *connection, const char *filter, StackManager *manager) 
+{
+    char **elts = g_strsplit(filter, ",", 0);
+    char **elt;
+    gboolean nofeed = FALSE;
+    gboolean noselfsource = FALSE;
+    
+    for (elt = elts; *elt; elt++) {
+        if (strcmp(*elt, "nofeed") == 0) {
+            nofeed = TRUE;    
+        } else if (strcmp(*elt, "noselfsource") == 0) {
+            noselfsource = TRUE;    
+        } else {
+            g_warning("Unknown block filter qualifier: '%s'", *elt);
+        }
+    }
+    g_strfreev(elts);
+    
+    manager->nofeed_active = nofeed;
+    hippo_canvas_filter_area_set_nofeed_active(HIPPO_CANVAS_FILTER_AREA(manager->browser_filter_area_item), manager->nofeed_active);
+    manager->noselfsource_active = noselfsource;  
+    hippo_canvas_filter_area_set_noselfsource_active(HIPPO_CANVAS_FILTER_AREA(manager->browser_filter_area_item), manager->noselfsource_active);
+        
+    apply_filter_all(manager);
+    
+    if ((manager->nofeed_active || manager->noselfsource_active)
+        && !manager->filter_area_visible) {
+        manager_toggle_filter(manager);
+    }
 }
 
 static gboolean
@@ -804,6 +857,9 @@ manager_attach(StackManager    *manager,
     g_object_ref(manager->cache);
     manager->connection = hippo_data_cache_get_connection(manager->cache);
 
+    g_signal_connect(manager->connection, "block-filter-changed",
+                     G_CALLBACK(handle_filter_change), manager);
+
     /* FIXME really the "actions" should probably be more global, e.g.
      * shared with the tray icon, but the way I wanted to do that
      * is to stuff it on the data cache, but that requires moving
@@ -1054,4 +1110,18 @@ hippo_stack_manager_toggle_nofeed(HippoDataCache  *cache)
     }
 
     manager_toggle_nofeed(manager);
+}
+
+void
+hippo_stack_manager_toggle_noselfsource(HippoDataCache  *cache)
+{
+    StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
+    HippoConnection *connection = hippo_data_cache_get_connection(manager->cache);
+
+    if (!hippo_connection_get_connected(connection)) {
+        g_debug("ignoring noselfsource toggle due to current disconnection state");        
+        return;
+    }
+
+    manager_toggle_noselfsource(manager);
 }
