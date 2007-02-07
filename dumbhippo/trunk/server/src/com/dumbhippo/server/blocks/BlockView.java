@@ -191,11 +191,19 @@ public abstract class BlockView implements ObjectView {
 	
 	protected abstract void writeDetailsToXmlBuilder(XmlBuilder builder);	
 	
-	/** This is used by the flash embed, which is more "thin client" than the 
+	/** This is used by the flash badge, which is more "thin client" than the 
 	 * web and windows/linux clients and thus needs a lot less info. In general the 
-	 * flash embed does not know about specific block types, and we'd like to keep it 
+	 * flash badge does not know about specific block types, and we'd like to keep it 
 	 * that way, so if you find yourself doing the equivalent of writeDetailsToXmlBuilder()
 	 * in this method you are probably wrong.
+	 * 
+	 * A flash badge item looks for example like:
+	 * 
+	 * Dugg (1 hour ago)
+	 * &lt;a href="http://storylink"&gt;Story Title&lt;/a&gt;
+	 * 
+	 * where "Dugg" = summaryHeading, "http://storylink" = summaryLink, 
+	 * "Story Title" = summaryLinkText, "1 hour ago" = summaryTimeAgo 
 	 * 
 	 * @param builder builder to write to
 	 */
@@ -216,14 +224,27 @@ public abstract class BlockView implements ObjectView {
 				"linkText", getSummaryLinkText());
 	}
 	
+	/** See writeSummaryToXmlBuilder(), this provides the time ago shown in the
+	 * flash badge which has short summary versions of blocks 
+	 */
 	public final String getSummaryTimeAgo() {
 		return DateUtils.formatTimeAgo(block.getTimestamp());
 	}
 	
+	/** See writeSummaryToXmlBuilder(), this provides a short heading shown in the
+	 * flash badge which has short summary versions of blocks. The style is like 
+	 * "Dugg", "Posted", etc. see other existing examples.
+	 */
 	public abstract String getSummaryHeading();
 	
+	/** See writeSummaryToXmlBuilder(), this provides the href for the link shown in the
+	 * flash badge which has short summary versions of blocks.
+	 */
 	public abstract String getSummaryLink();
 	
+	/** See writeSummaryToXmlBuilder(), this provides the text for the link shown in the flash 
+	 * badge which has short summary versions of blocks.
+	 */
 	public abstract String getSummaryLinkText();
 	
 	// utility function for use in implementations of writeDetailsToXmlBuilder
