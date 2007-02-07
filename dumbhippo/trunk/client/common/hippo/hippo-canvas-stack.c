@@ -285,7 +285,8 @@ canvas_block_compare(HippoCanvasItem *a,
 
 void
 hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
-                             HippoBlock       *block)
+                             HippoBlock       *block,
+                             gboolean          visible)
 {
     HippoCanvasItem *item;
     gint64 sort_timestamp;

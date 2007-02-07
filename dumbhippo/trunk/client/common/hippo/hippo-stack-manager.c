@@ -5,6 +5,7 @@
 #include "hippo-common-internal.h"
 #include "hippo-stack-manager.h"
 #include "hippo-canvas-base.h"
+#include "hippo-canvas-filter-area.h"
 #include "hippo-canvas-stack.h"
 #include "hippo-canvas-block.h"
 #include "hippo-canvas-grip.h"
@@ -29,11 +30,13 @@ typedef struct {
     HippoDataCache  *cache;
     HippoActions    *actions;
     HippoConnection *connection;
+    guint            nofeed_active;
     GSList          *blocks;
 
     HippoWindow     *browser_window;
     HippoCanvasItem *browser_box;
     HippoCanvasItem *browser_base_item;
+    HippoCanvasItem *browser_filter_area_item;    
     HippoCanvasItem *browser_scroll_item;
     HippoCanvasItem *browser_item;
     HippoCanvasItem *browser_resize_grip;
@@ -57,6 +60,7 @@ typedef struct {
     guint            notification_hovering : 1;
     
     guint            base_on_bottom : 1;
+    guint            filter_area_visible : 1;    
     guint            user_resized_browser : 1;
     guint            user_moved_browser : 1;
     
@@ -298,7 +302,7 @@ static gint64
 manager_get_newest_timestamp(StackManager *manager)
 {
     if (manager->blocks) {
-        HippoBlock *block = manager->blocks->data;
+        HippoBlock *block = (manager->blocks)->data;
         return hippo_block_get_sort_timestamp(block);
     } else {
         return 0;
@@ -413,6 +417,63 @@ manager_toggle_browser(StackManager *manager)
     }
 }
 
+static void
+manager_toggle_filter(StackManager *manager)
+{
+        manager->filter_area_visible = !manager->filter_area_visible;
+    g_debug("Setting filter area visible: %d", manager->filter_area_visible);
+    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(manager->browser_box),
+                                       manager->browser_filter_area_item,
+                                       manager->filter_area_visible);                
+}
+
+static gboolean
+apply_current_filter(StackManager *manager,
+                     HippoBlock   *block)
+{
+    if (manager->nofeed_active &&
+        hippo_block_get_filter_flags(block) & HIPPO_BLOCK_FILTER_FLAG_FEED)
+        return FALSE;
+           
+    return TRUE;
+}
+
+static void 
+filter_canvas_item(HippoCanvasItem *item,
+                   gpointer         data)
+{
+    StackManager *manager = (StackManager*) data;
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(item);
+    
+    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(manager->browser_item),
+                                       HIPPO_CANVAS_ITEM(canvas_block),
+                                       apply_current_filter(manager, canvas_block->block));
+}
+
+static void
+apply_filter_all(StackManager *manager)
+{
+    GString *filter_string;
+    g_debug("Refiltering all blocks");    
+    hippo_canvas_box_foreach(HIPPO_CANVAS_BOX(manager->browser_item),
+                             filter_canvas_item,
+                             manager);
+    filter_string = g_string_new("");
+    if (manager->nofeed_active)
+        g_string_append(filter_string, "nofeed");       
+    hippo_connection_request_blocks(manager->connection, 0, 
+                                    filter_string->str);
+    g_string_free(filter_string, TRUE); 
+}
+
+static void
+manager_toggle_nofeed(StackManager *manager)
+{
+        manager->nofeed_active = !manager->nofeed_active;
+    
+    apply_filter_all(manager);                             
+}
+
 static gboolean
 chat_is_visible(StackManager *manager,
                 const char   *chat_id)
@@ -509,23 +570,31 @@ resort_block(StackManager *manager,
              HippoBlock   *block)
 {
     GSList *link;
-
+    gboolean visible;
+    
     link = g_slist_find(manager->blocks, block);
     
     if (link != NULL) {
         manager->blocks = g_slist_remove(manager->blocks, block);
-    }
+    }   
     
     manager->blocks = g_slist_insert_sorted(manager->blocks,
                                             block,
                                             hippo_block_compare_newest_first);
 
-    hippo_canvas_stack_add_block(HIPPO_CANVAS_STACK(manager->browser_item),
-                                 block);
-    hippo_canvas_stack_add_block(HIPPO_CANVAS_STACK(manager->notification_item),
-                                 block);
+   
+    visible = apply_current_filter(manager, block);
+    
+        hippo_canvas_stack_add_block(HIPPO_CANVAS_STACK(manager->browser_item),
+                                 block, 
+                                 visible);                
 
-    if (!browser_is_onscreen(manager) && notification_is_needed(manager))
+    if (visible)
+            hippo_canvas_stack_add_block(HIPPO_CANVAS_STACK(manager->notification_item),
+                                     block,
+                                     TRUE);
+
+    if (visible && !browser_is_onscreen(manager) && notification_is_needed(manager))
         manager_set_notification_visible(manager, TRUE);
 }
 
@@ -545,20 +614,21 @@ on_block_added(HippoDataCache *cache,
                void           *data)
 {
     StackManager *manager = data;
-
+    
     /* We won't know how to display this anyway */
     if (hippo_block_get_block_type(block) == HIPPO_BLOCK_TYPE_UNKNOWN)
         return;
     
-    if (g_slist_find(manager->blocks, block) != NULL)
+    if (g_slist_find(manager->blocks, block) != NULL) {
         return;
+    }
 
     g_object_ref(block);
 
     g_signal_connect(G_OBJECT(block), "notify::sort-timestamp",
                      G_CALLBACK(on_block_sort_changed),
-                     manager);
-
+                     data);
+                     
     resort_block(manager, block);
 }
 
@@ -567,17 +637,19 @@ remove_block(HippoBlock   *block,
              StackManager *manager)
 {
     GSList *link;
-
+    
     link = g_slist_find(manager->blocks, block);
+    
     if (link != NULL) {
         manager->blocks = g_slist_remove(manager->blocks, block);
-        g_signal_handlers_disconnect_by_func(G_OBJECT(block),
-                                             G_CALLBACK(on_block_sort_changed),
-                                             manager);
-        g_object_unref(block);
     }
+    
+    g_signal_handlers_disconnect_by_func(G_OBJECT(block),
+                                         G_CALLBACK(on_block_sort_changed),
+                                             manager);                                       
+    g_object_unref(block);    
 
-    hippo_canvas_stack_remove_block(HIPPO_CANVAS_STACK(manager->browser_item), block);
+    hippo_canvas_stack_remove_block(HIPPO_CANVAS_STACK(manager->browser_item), block); 
     hippo_canvas_stack_remove_block(HIPPO_CANVAS_STACK(manager->notification_item), block);
 }
 
@@ -605,7 +677,7 @@ manager_disconnect(StackManager *manager)
                                              manager);
 
         while (manager->blocks != NULL) {
-            remove_block(manager->blocks->data, manager);
+                remove_block(manager->blocks->data, manager);
         }
 
         hippo_window_set_visible(manager->notification_window, FALSE);
@@ -770,17 +842,21 @@ manager_attach(StackManager    *manager,
                      G_CALLBACK(on_browser_title_bar_button_press),
                      manager);
                      
+    manager->browser_filter_area_item = g_object_new(HIPPO_TYPE_CANVAS_FILTER_AREA,
+                                                     "actions", manager->actions,
+                                                     NULL);
+                     
     manager->browser_item = g_object_new(HIPPO_TYPE_CANVAS_STACK,
                                          "box-width", UI_WIDTH,
                                          "actions", manager->actions,
                                          NULL);
-    manager->browser_scroll_item = hippo_canvas_scrollbars_new();
+    manager->browser_scroll_item = hippo_canvas_scrollbars_new();                                         
     hippo_canvas_scrollbars_set_policy(HIPPO_CANVAS_SCROLLBARS(manager->browser_scroll_item),
                                        HIPPO_ORIENTATION_HORIZONTAL,
                                        HIPPO_SCROLLBAR_NEVER);
     hippo_canvas_scrollbars_set_policy(HIPPO_CANVAS_SCROLLBARS(manager->browser_scroll_item),
                                        HIPPO_ORIENTATION_VERTICAL,
-                                       HIPPO_SCROLLBAR_ALWAYS);
+                                       HIPPO_SCROLLBAR_ALWAYS);                                     
     
     manager->browser_resize_grip = g_object_new(HIPPO_TYPE_CANVAS_GRIP,
                                               NULL);
@@ -799,11 +875,18 @@ manager_attach(StackManager    *manager,
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->browser_box),
                             manager->browser_base_item,
                             0);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->browser_box),
+                            manager->browser_filter_area_item,
+                            0);                            
+    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(manager->browser_box),
+                                       manager->browser_filter_area_item,
+                                       FALSE);
     hippo_canvas_scrollbars_set_root(HIPPO_CANVAS_SCROLLBARS(manager->browser_scroll_item),
                                      manager->browser_item);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->browser_box),
                             manager->browser_scroll_item,
                             HIPPO_PACK_EXPAND);
+                            
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->browser_box),
                             manager->browser_resize_grip,
                             0);
@@ -943,4 +1026,32 @@ hippo_stack_manager_toggle_browser(HippoDataCache  *cache)
         return;
 
     manager_toggle_browser(manager);
+}
+
+void
+hippo_stack_manager_toggle_filter(HippoDataCache  *cache)
+{
+    StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
+    HippoConnection *connection = hippo_data_cache_get_connection(manager->cache);
+
+    if (!hippo_connection_get_connected(connection)) {
+        g_debug("ignoring filter toggle due to current disconnection state");
+        return;
+    }
+
+    manager_toggle_filter(manager);
+}
+
+void
+hippo_stack_manager_toggle_nofeed(HippoDataCache  *cache)
+{
+    StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
+    HippoConnection *connection = hippo_data_cache_get_connection(manager->cache);
+
+    if (!hippo_connection_get_connected(connection)) {
+        g_debug("ignoring nofeed toggle due to current disconnection state");        
+        return;
+    }
+
+    manager_toggle_nofeed(manager);
 }

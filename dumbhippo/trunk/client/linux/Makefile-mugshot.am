@@ -68,8 +68,12 @@ EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/bar_x.png		\
 	$(EMBEDDEDIMAGEDIR)/blue_x.png		\
 	$(EMBEDDEDIMAGEDIR)/chat.png		\
+	$(EMBEDDEDIMAGEDIR)/checkbox.png	\
+	$(EMBEDDEDIMAGEDIR)/checked_checkbox.png \
 	$(EMBEDDEDIMAGEDIR)/closetip.png	\
 	$(EMBEDDEDIMAGEDIR)/expandtip.png	\
+	$(EMBEDDEDIMAGEDIR)/filter2.png		\
+	$(EMBEDDEDIMAGEDIR)/filter.png		\
 	$(EMBEDDEDIMAGEDIR)/find.png		\
 	$(EMBEDDEDIMAGEDIR)/flat_x.png		\
 	$(EMBEDDEDIMAGEDIR)/home2.png		\

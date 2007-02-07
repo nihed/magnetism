@@ -44,6 +44,8 @@ static void on_expand_activated  (HippoCanvasItem  *button,
                                   HippoCanvasBase *base);
 static void on_hush_activated  (HippoCanvasItem  *button,
                                 HippoCanvasBase *base);
+static void on_filter_activated(HippoCanvasItem  *button,
+                                HippoCanvasBase *base);                                
 static void on_home_activated  (HippoCanvasItem  *button,
                                 HippoCanvasBase *base);
 
@@ -301,6 +303,18 @@ hippo_canvas_base_constructor (GType                  type,
     }
     
     if (!base->notification_mode) {
+         item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                             "normal-image-name", "filter",
+                             "prelight-image-name", "filter2",
+                             "xalign", HIPPO_ALIGNMENT_END,
+                             "tooltip", "Show filters",
+                             NULL);
+        hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+        g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_filter_activated), base);
+        g_signal_connect(G_OBJECT(item), "button-press-event", G_CALLBACK(on_button_button_press_event), base);        
+        
+        add_pipe_bar(box, HIPPO_PACK_END);
+        
         item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
                             "normal-image-name", "home",
                             "prelight-image-name", "home2",
@@ -405,6 +419,14 @@ on_hush_activated(HippoCanvasItem  *button,
 {
     if (base->actions)
         hippo_actions_hush_notification(base->actions);
+}
+
+static void
+on_filter_activated(HippoCanvasItem  *button,
+                    HippoCanvasBase  *base)
+{
+    if (base->actions)
+        hippo_actions_toggle_filter(base->actions);
 }
 
 static void

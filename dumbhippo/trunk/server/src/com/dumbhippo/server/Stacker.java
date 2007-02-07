@@ -24,7 +24,9 @@ import com.dumbhippo.server.views.Viewpoint;
  */
 @Local
 public interface Stacker {
-
+	
+	public String getUserStackFilterPrefs(User user);
+	
 	public Block getOrCreateBlock(BlockKey key);
 	public Block createBlock(BlockKey key);
 	public Block queryBlock(BlockKey key) throws NotFoundException;
@@ -72,6 +74,9 @@ public interface Stacker {
 	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, boolean participantOnly);
 
 	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, long lastTimestamp, boolean participantOnly);
+	
+	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, long lastTimestamp, 
+			              String filter, boolean participantOnly);	
 	
 	/**
 	 * Fetch recently active users on the system, along with a snapshot of their activity.

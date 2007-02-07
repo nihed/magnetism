@@ -43,12 +43,14 @@ public class Block extends EmbeddedGuidPersistable {
 	private int clickedCount;
 	private boolean publicBlock;
 	private StackInclusion inclusion;
+	private int filterFlags;
 	
 	// for hibernate
 	public Block() {
 		this.timestamp = 0;
 		this.data3 = -1;
 		this.inclusion = StackInclusion.IN_ALL_STACKS;
+		this.filterFlags = 0;
 	}
 
 	public Block(BlockKey key) {
@@ -179,6 +181,15 @@ public class Block extends EmbeddedGuidPersistable {
 	public void setInclusion(StackInclusion stackInclusion) {
 		this.inclusion = stackInclusion;
 	}
+	
+	@Column(nullable=false)
+	public int getFilterFlags() {
+		return filterFlags;
+	}
+	
+	public void setFilterFlags(int flags) {
+		this.filterFlags = flags;
+	}	
 	
 	@Override
 	public String toString() {

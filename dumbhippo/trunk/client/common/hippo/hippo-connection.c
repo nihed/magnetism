@@ -184,6 +184,7 @@ struct _HippoConnection {
     char *password;
     char *download_url;
     char *tooltip;
+    char *active_block_filter;
     int request_blocks_id;
     gint64 last_blocks_timestamp;
     gint64 server_time_offset;
@@ -1107,7 +1108,8 @@ request_blocks_idle(void *data)
      * this will return an empty list of blocks
      */
     hippo_connection_request_blocks(rbd->connection,
-                                    rbd->connection->last_blocks_timestamp);
+                                    rbd->connection->last_blocks_timestamp,
+                                    rbd->connection->active_block_filter);
 
     return FALSE;
 }
@@ -1694,7 +1696,8 @@ on_request_blocks_reply(LmMessageHandler *handler,
 
 void
 hippo_connection_request_blocks(HippoConnection *connection,
-                                gint64           last_timestamp)
+                                gint64           last_timestamp,
+                                const char      *filter)
 {
     LmMessage *message;
     LmMessageNode *node;
@@ -1710,6 +1713,11 @@ hippo_connection_request_blocks(HippoConnection *connection,
     s = g_strdup_printf("%" G_GINT64_FORMAT, last_timestamp);
     lm_message_node_set_attribute(child, "lastTimestamp", s);
     g_free(s);
+    if (filter) {
+        lm_message_node_set_attribute(child, "filter", filter);
+    }
+    g_free(connection->active_block_filter);
+    connection->active_block_filter = g_strdup(filter);
     
     hippo_connection_send_message_with_reply(connection, message,
                                              on_request_blocks_reply, SEND_MODE_AFTER_AUTH);

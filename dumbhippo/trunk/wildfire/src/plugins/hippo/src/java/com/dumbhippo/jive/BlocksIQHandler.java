@@ -74,17 +74,22 @@ public class BlocksIQHandler extends AnnotatedIQHandler {
         if (lastTimestampStr == null)
         	throw IQException.createBadRequest("get/blocks IQ missing lastTimestamp attribute");
         
+        String filter = child.attributeValue("filter");
+        if (filter == null) {
+        	filter = stacker.getUserStackFilterPrefs(viewpoint.getViewer());
+        }
+        
         long lastTimestamp;
         try {
         	lastTimestamp = Long.parseLong(lastTimestampStr);
         } catch (NumberFormatException e) {
         	throw IQException.createBadRequest("get/blocks IQ lastTimestamp attribute not valid");
-        }
+        }      
         
 		Pageable<BlockView> pageable = new Pageable<BlockView>("stack");
 		pageable.setPosition(0);
 		pageable.setInitialPerPage(25);
-		stacker.pageStack(viewpoint, viewpoint.getViewer(), pageable, lastTimestamp, false);
+		stacker.pageStack(viewpoint, viewpoint.getViewer(), pageable, lastTimestamp, filter, false);
 		List<BlockView> views = pageable.getResults();
 		String xml = getBlocksXml(viewpoint, "blocks", views);
         
