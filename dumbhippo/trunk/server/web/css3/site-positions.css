@@ -635,8 +635,8 @@ div.dh-person-header-title {
 }
 
 .dh-tooltip {
-    position:			absolute;
-    display:            none;
+    posivisibility:         hidden;
+    display:            blocksplay:            none;
 	z-index:			2;    
 }
 
@@ -755,5 +755,3 @@ div.dh-person-header-title {
 }
 
 .dh-tip-tip {
-	padding-left:	5px;
-}
