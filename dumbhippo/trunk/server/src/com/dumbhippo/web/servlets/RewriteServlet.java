@@ -287,6 +287,21 @@ public class RewriteServlet extends HttpServlet {
 			}
 		}		
 	}
+	
+	static private String constructQueryString(String[] queryStrings) {
+	    StringBuffer resultingQueryBuffer = new StringBuffer("");
+		for (String queryString : queryStrings) {
+			if (queryString != null && queryString.length() > 0) {
+				if (resultingQueryBuffer.length() == 0) {
+					resultingQueryBuffer.append("?");
+				} else {
+					resultingQueryBuffer.append("&");
+				}
+				resultingQueryBuffer.append(queryString);					
+			}
+		}
+		return resultingQueryBuffer.toString();
+	}
 
 	@Override
 	public void service(HttpServletRequest request,	HttpServletResponse response) throws IOException, ServletException {
@@ -324,15 +339,18 @@ public class RewriteServlet extends HttpServlet {
 		// The root URL is special-cased, we forward it depending
 		// on whether the user is signed in and depending on our
 		// configuration.
-		
+				
 		if (path.equals("/")) {
+			String requestQueryString = request.getQueryString();
 			Guid signinUserGuid = getSigninGuid(request);
-			if (signinUserGuid != null)
-				response.sendRedirect("/person?who=" + signinUserGuid.toString());
-			else if (stealthMode)
-				response.sendRedirect("/comingsoon");
-			else
-				response.sendRedirect("/main");
+			if (signinUserGuid != null) {
+				String additionalQueryString = "who=" + signinUserGuid.toString();
+				response.sendRedirect("/person" + constructQueryString(new String[]{additionalQueryString, requestQueryString}));
+			} else if (stealthMode) {
+				response.sendRedirect("/comingsoon" + constructQueryString(new String[]{requestQueryString}));
+			} else {
+				response.sendRedirect("/main" + constructQueryString(new String[]{requestQueryString}));
+			}	
 			return;
 		}
 		
