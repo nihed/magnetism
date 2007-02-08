@@ -1630,9 +1630,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		email = parseEmail(email);
 		
-		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		// validation is not necessary because we've already found a flickr user using flickr web services when this
+		// method is called
 		external.setHandle(nsid);
 		external.setExtra(email);
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 	}
 	
 	public void doSetMySpaceName(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException {
