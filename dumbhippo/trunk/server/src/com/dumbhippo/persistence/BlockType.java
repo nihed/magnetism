@@ -184,6 +184,18 @@ public enum BlockType {
 		public boolean userOriginIsData1() {
 			return true;
 		}
+	},
+	// a question to the user about account options
+	ACCOUNT_QUESTION { // 21
+		@Override
+		public boolean userOriginIsData1() {
+			return true; 
+		}
+		
+		@Override
+		public StackInclusion getDefaultStackInclusion() {
+			return StackInclusion.ONLY_WHEN_VIEWING_SELF;
+		}
 	};
 	
 	// True for blocks which are originated by a user and the

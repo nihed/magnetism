@@ -845,6 +845,19 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(user.getGuid(), "musicSharingPrimed", Boolean.toString(primed)));			
 		}
 	}
+	
+	public boolean getApplicationUsageEnabled(User user) {
+		Boolean enabled = user.getAccount().isApplicationUsageEnabled();
+		return enabled != null ? enabled : AccountSystem.DEFAULT_APPLICATION_USAGE_ENABLED;
+	}
+	
+	public void setApplicationUsageEnabled(User user, boolean enabled) {
+		Account account = user.getAccount();
+		boolean wasEnabled = getApplicationUsageEnabled(user);
+		account.setApplicationUsageEnabled(enabled);
+		if (enabled != wasEnabled)
+			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(user.getGuid(), "applicationUsageEnabled", Boolean.toString(enabled)));
+	}
 
 	public boolean getNotifyPublicShares(User user) {
 		Account account = user.getAccount();

@@ -190,6 +190,9 @@ public class AccountSystemBean implements AccountSystem {
 
 		// not strictly a "pref" but this is a convenient place to send this to the client
 		prefs.put("musicSharingPrimed", Boolean.toString(account.isMusicSharingPrimed()));
+		
+		prefs.put("applicationUsageEnabled", Boolean.toString(spider.getApplicationUsageEnabled(account.getOwner())));
+		
 		return prefs;
 	}
 
