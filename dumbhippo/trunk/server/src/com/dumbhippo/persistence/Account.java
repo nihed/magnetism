@@ -107,7 +107,9 @@ public class Account extends Resource {
 	/* FIXME we can probably simplify this down to just one cookie right in the Account ? */
 	private Set<Client> clients;
 
-	private Set<ExternalAccount> externalAccounts; 
+	private Set<ExternalAccount> externalAccounts;
+
+	private Boolean applicationUsageEnabled; 
 	
 	/**
 	 * Used only for Hibernate 
@@ -703,5 +705,14 @@ public class Account extends Resource {
 
 	public void setStackFilter(String blockTypeFilter) {
 		this.stackFilter = blockTypeFilter;
+	}
+	
+	@Column(nullable=true)
+	public Boolean isApplicationUsageEnabled() {
+		return applicationUsageEnabled;
+	}
+
+	public void setApplicationUsageEnabled(Boolean enabled) {
+		this.applicationUsageEnabled = enabled;
 	}
 }

@@ -64,6 +64,7 @@ import com.dumbhippo.server.SimpleServiceMBean;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmppMessageSender;
+import com.dumbhippo.server.blocks.AccountQuestionBlockHandler;
 import com.dumbhippo.server.blocks.BlockHandler;
 import com.dumbhippo.server.blocks.BlockNotVisibleException;
 import com.dumbhippo.server.blocks.BlockView;
@@ -196,6 +197,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			break;
 		case NETFLIX_MOVIE:
 			handlerClass = NetflixBlockHandler.class;
+			break;
+		case ACCOUNT_QUESTION:
+			handlerClass = AccountQuestionBlockHandler.class;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
@@ -708,6 +712,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			return;
 		}
 		
+		blockClicked(ubd, clickedTime);
+	}
+		
+	public void blockClicked(UserBlockData ubd, long clickedTime) {
 		// if we weren't previously clicked on, then increment the count.
 		// (FIXME this is not a reliable way of incrementing a count, since two transactions
 		// can read the same value and write the same value + 1)

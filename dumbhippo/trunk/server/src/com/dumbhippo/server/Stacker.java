@@ -57,6 +57,7 @@ public interface Stacker {
 	public void refreshDeletedFlagsOnAllBlocksWithType(String typeName);
 	
 	public void blockClicked(BlockKey key, User user, long clickedTime);
+	public void blockClicked(UserBlockData ubd, long clickedTime);
 	
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException;
 	
