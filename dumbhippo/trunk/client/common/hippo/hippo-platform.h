@@ -66,6 +66,9 @@ struct _HippoPlatformClass {
     
     gboolean  (* can_play_song_download) (HippoPlatform     *platform,
                                           HippoSongDownload *song_download);
+
+    void      (* show_disconnected_window) (HippoPlatform   *platform,
+                                            HippoConnection *connection);
     
     /* Preferences */
     char*     (* get_message_server)  (HippoPlatform *platform);
@@ -124,6 +127,10 @@ void             hippo_platform_http_request           (HippoPlatform   *platfor
 
 gboolean         hippo_platform_can_play_song_download (HippoPlatform     *platform,
                                                         HippoSongDownload *song_download);
+
+void             hippo_platform_show_disconnected_window (HippoPlatform   *platform,
+                                                          HippoConnection *connection);
+    
 
 /* Preferences */
 HippoInstanceType hippo_platform_get_instance_type (HippoPlatform *platform);
