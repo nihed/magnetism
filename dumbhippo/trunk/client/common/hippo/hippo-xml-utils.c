@@ -440,7 +440,10 @@ hippo_xml_split(HippoDataCache *cache,
                             goto out;
                         }
                                         
-                        if (!hippo_xml_split_process_value(cache, node->name, info, child->value, &internal_error))
+                        if (!hippo_xml_split_process_value(cache, node->name, info,
+                                                           /* loudmouth has value==NULL when the node has empty content ("<foo/>") */
+                                                           child->value ? child->value : "",
+                                                           &internal_error))
                             goto out;
                     }
                 }
