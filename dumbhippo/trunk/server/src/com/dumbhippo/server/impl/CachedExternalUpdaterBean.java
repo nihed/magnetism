@@ -101,7 +101,10 @@ public abstract class CachedExternalUpdaterBean<Status> implements CachedExterna
 	public Collection<User> getAccountLovers(String handle) {
 		String musicSharingCheck = "";
 		if (getAccountType().isAffectedByMusicSharing()) {
-			musicSharingCheck = " AND ea.account.musicSharingEnabled = true";
+			musicSharingCheck = " AND (ea.account.musicSharingEnabled = true ";
+			if (AccountSystemBean.DEFAULT_ENABLE_MUSIC_SHARING)
+				musicSharingCheck += " OR ea.account.musicSharingEnabled IS NULL";
+			musicSharingCheck += ") ";
 		}
 		
 		Query q = em.createQuery("SELECT ea.account.owner FROM ExternalAccount ea WHERE " +
