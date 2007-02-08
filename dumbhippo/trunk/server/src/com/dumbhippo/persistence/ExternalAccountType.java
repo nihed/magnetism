@@ -5,6 +5,8 @@ import java.net.URL;
 
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.services.FlickrUser;
+import com.dumbhippo.services.MySpaceScraper;
+import com.dumbhippo.services.TransientServiceException;
 import com.dumbhippo.services.YouTubeWebServices;
 import com.dumbhippo.services.LastFmWebServices;
 
@@ -44,13 +46,15 @@ public enum ExternalAccountType {
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
-				if (handle.length() > 40)
-					throw new ValidationException("MySpace name too long: " + handle);
-				if (!handle.matches("^[\\p{Alnum}]+$"))
-					throw new ValidationException("Invalid MySpace name: " + handle);
+				try {
+					MySpaceScraper.getFriendId(handle);
+				} catch (TransientServiceException e) {
+					throw new ValidationException("Invalid MySpace name '" + handle + "'");
+				}
 			}
 			return handle;
 		}
+		
 		// friend ID
 		@Override
 		public String canonicalizeExtra(String extra) throws ValidationException {

@@ -1636,23 +1636,22 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	public void doSetMySpaceName(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException {
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.MYSPACE);
-		try {
-			external.setHandleValidating(name);
-		} catch (ValidationException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
-		}
-		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.MYSPACE);		
 		String friendId;		
 		boolean isPrivate;
 		try {
 			Pair<String, Boolean> mySpaceInfoPair = MySpaceScraper.getFriendId(name);
 			friendId = mySpaceInfoPair.getFirst();
 			isPrivate = mySpaceInfoPair.getSecond();
-			external.setExtra(friendId);
+			external.setExtraValidating(friendId);
+			// if we were able to get the friend id, the name must be valid, we don't 
+			// want to do the same validation the second time by calling setHandleValidating
+			external.setHandle(name);
 		} catch (TransientServiceException e) {
 			logger.warn("Failed to get MySpace friend ID", e);
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Couldn't verify MySpace name; try again later");
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Couldn't verify MySpace name '" + name + "'");
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
 		
 		// our check for whether the MySpace profile is set to private is not that definitive, so we might as well attempt
