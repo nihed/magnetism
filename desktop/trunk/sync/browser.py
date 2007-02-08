@@ -7,11 +7,15 @@ import sys
 class BrowserDialog (gtk.Dialog):
     
     def __init__(self):
-        gtk.Dialog.__init__(self)
+        gtk.Dialog.__init__(self, title="Browser")
+        self.connect("delete_event", self.delete_event)
+        self.connect("destroy", self.destroy)
 
-        self.set_title("Browser")
+        self.set_border_width(5)
+        self.set_resizable(False)
+        self.set_has_separator(False)
 
-        self.vbox.set_spacing(6)
+        self.vbox.set_spacing(2)
 
         label = gtk.Label()
         label.set_markup("<b>What's Your Browser?</b>")
@@ -34,9 +38,15 @@ class BrowserDialog (gtk.Dialog):
 
         self.vbox.show_all()
 
-        self.add_button('Cancel', gtk.RESPONSE_CANCEL)
+        self.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
         self.add_button('Launch Browser', gtk.RESPONSE_OK)
 
+    def delete_event(self, widget, event, data=None):
+        return False
+        
+    def destroy(self, widget, data=None):
+        gtk.main_quit()
+            
 def main():
 
     dialog = BrowserDialog()
