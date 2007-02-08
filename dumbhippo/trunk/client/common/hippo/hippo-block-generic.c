@@ -24,9 +24,6 @@ static void hippo_block_generic_get_property (GObject      *object,
                                               GValue       *value,
                                               GParamSpec   *pspec);
 
-static void set_source                       (HippoBlockGeneric     *block_generic,
-                                              HippoEntity           *entity);
-
 struct _HippoBlockGeneric {
     HippoBlock       parent;
     char            *title;

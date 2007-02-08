@@ -276,12 +276,14 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-person.h			\
 	$(COMMONSRCDIR)/hippo/hippo-platform.c			\
 	$(COMMONSRCDIR)/hippo/hippo-platform.h			\
-	$(COMMONSRCDIR)/hippo/hippo-quip-window.c		\
-	$(COMMONSRCDIR)/hippo/hippo-quip-window.h		\
 	$(COMMONSRCDIR)/hippo/hippo-post.c			\
 	$(COMMONSRCDIR)/hippo/hippo-post.h			\
+	$(COMMONSRCDIR)/hippo/hippo-quip-window.c		\
+	$(COMMONSRCDIR)/hippo/hippo-quip-window.h		\
 	$(COMMONSRCDIR)/hippo/hippo-resource.c			\
 	$(COMMONSRCDIR)/hippo/hippo-resource.h			\
+	$(COMMONSRCDIR)/hippo/hippo-settings.c			\
+	$(COMMONSRCDIR)/hippo/hippo-settings.h			\
 	$(COMMONSRCDIR)/hippo/hippo-stack-manager.c		\
 	$(COMMONSRCDIR)/hippo/hippo-stack-manager.h		\
 	$(COMMONSRCDIR)/hippo/hippo-surface.c			\

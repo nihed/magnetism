@@ -59,6 +59,9 @@ gboolean         hippo_connection_get_connected             (HippoConnection  *c
 /* signin returns TRUE if we're waiting on the user to set the login cookie, FALSE if we already have it */
 gboolean         hippo_connection_signin                    (HippoConnection  *connection);
 void             hippo_connection_signout                   (HippoConnection  *connection);
+/* TRUE if user needs to log in (we think we have no login cookie) */
+gboolean         hippo_connection_get_need_login            (HippoConnection  *connection);
+
 void             hippo_connection_set_post_ignored          (HippoConnection  *connection,
                                                              const char       *post_id);
 void             hippo_connection_do_invite_to_group        (HippoConnection  *connection,
@@ -153,6 +156,13 @@ void  hippo_connection_visit_post_id           (HippoConnection *connection,
 void  hippo_connection_visit_entity            (HippoConnection *connection,
                                                 HippoEntity     *entity);
 
+/* Functions for setting/storing desktop state on Mugshot; distinct from "prefs" which are
+ * prefs for Mugshot itself
+ */
+void hippo_connection_request_desktop_settings (HippoConnection *connection);
+void hippo_connection_send_desktop_setting     (HippoConnection *connection,
+                                                const char      *key,
+                                                const char      *value);
 
 G_END_DECLS
 
