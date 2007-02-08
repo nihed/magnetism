@@ -39,7 +39,8 @@ struct _HippoDataCache {
     GSList          *myspace_comments;
     HippoHotness     hotness;
     unsigned int     music_sharing_enabled : 1;
-    unsigned int     music_sharing_primed : 1;    
+    unsigned int     music_sharing_primed : 1;
+    unsigned int     application_usage_enabled : 1;
     HippoClientInfo  client_info;
 };
 
@@ -49,6 +50,7 @@ struct _HippoDataCacheClass {
 };
 
 enum {
+    APPLICATION_USAGE_CHANGED,
     POST_ADDED,
     POST_REMOVED,
     ENTITY_ADDED,
@@ -97,6 +99,15 @@ hippo_data_cache_class_init(HippoDataCacheClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);  
           
+    signals[APPLICATION_USAGE_CHANGED] =
+        g_signal_new ("application-usage-changed",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
+
     signals[POST_ADDED] =
         g_signal_new ("post-added",
                       G_TYPE_FROM_CLASS (object_class),
@@ -309,6 +320,13 @@ hippo_data_cache_get_need_priming_music(HippoDataCache *cache)
     return cache->music_sharing_enabled && !cache->music_sharing_primed;
 }
 
+gboolean
+hippo_data_cache_get_application_usage_enabled(HippoDataCache *cache)
+{
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), FALSE);
+    return cache->application_usage_enabled;
+}
+
 const char*
 hippo_data_cache_get_myspace_name(HippoDataCache *cache)
 {
@@ -373,6 +391,20 @@ hippo_data_cache_set_music_sharing_primed(HippoDataCache  *cache,
     
     set_music_sharing(cache, cache->music_sharing_enabled, primed);
 }                                          
+
+void
+hippo_data_cache_set_application_usage_enabled (HippoDataCache *cache,
+                                                gboolean        enabled)
+{
+    g_return_if_fail(HIPPO_IS_DATA_CACHE(cache));
+
+    enabled = enabled != FALSE;
+
+    if (enabled != cache->application_usage_enabled) {
+        cache->application_usage_enabled = enabled;
+        g_signal_emit(cache, signals[APPLICATION_USAGE_CHANGED], 0);
+    }
+}
 
 void
 hippo_data_cache_set_myspace_name(HippoDataCache  *cache,

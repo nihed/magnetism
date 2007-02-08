@@ -1354,6 +1354,8 @@ hippo_connection_parse_prefs_node(HippoConnection *connection,
     gboolean saw_music_sharing_enabled = FALSE;
     gboolean music_sharing_primed = TRUE;
     gboolean saw_music_sharing_primed = FALSE;
+    gboolean application_usage_enabled = FALSE;
+    gboolean saw_application_usage_enabled = FALSE;
     LmMessageNode *child;
     
     g_debug("Parsing prefs message");
@@ -1374,6 +1376,9 @@ hippo_connection_parse_prefs_node(HippoConnection *connection,
         } else if (strcmp(key, "musicSharingPrimed") == 0) {
             music_sharing_primed = value != NULL && parse_bool(value);
             saw_music_sharing_primed = TRUE;
+        } else if (strcmp(key, "applicationUsageEnabled") == 0) {
+            application_usage_enabled = value != NULL && parse_bool(value);
+            saw_application_usage_enabled = TRUE;
         } else {
             g_debug("Unknown pref '%s'", key);
         }
@@ -1387,6 +1392,9 @@ hippo_connection_parse_prefs_node(HippoConnection *connection,
     
     if (saw_music_sharing_enabled)
         hippo_data_cache_set_music_sharing_enabled(connection->cache, music_sharing_enabled);
+
+    if (saw_application_usage_enabled)
+        hippo_data_cache_set_application_usage_enabled(connection->cache, application_usage_enabled);
 }
 
 static LmHandlerResult
@@ -1797,6 +1805,29 @@ hippo_connection_set_block_hushed(HippoConnection *connection,
     lm_message_unref(message);
 
     g_debug("Sent blockHushed=%d", hushed);
+}
+
+void
+hippo_connection_send_account_question_response(HippoConnection *connection,
+                                                const char      *block_id,
+                                                const char      *response)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_SET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "response", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/accountQuestion");
+    lm_message_node_set_attribute(child, "blockId", block_id);
+    lm_message_node_set_attribute(child, "response", response);
+
+    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
+
+    lm_message_unref(message);
 }
 
 void

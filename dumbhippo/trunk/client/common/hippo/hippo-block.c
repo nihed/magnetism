@@ -1,6 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-common-internal.h"
 #include "hippo-block.h"
+#include "hippo-block-account-question.h"
 #include "hippo-block-generic.h"
 #include "hippo-block-group-chat.h"
 #include "hippo-block-group-member.h"
@@ -57,6 +58,7 @@ enum {
     PROP_CLICKED,
     PROP_ICON_URL,
     PROP_IGNORED,
+    PROP_PINNED,
     PROP_TITLE,
     PROP_TITLE_LINK,
     PROP_STACK_REASON,
@@ -191,6 +193,14 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                          G_PARAM_READABLE | G_PARAM_WRITABLE));
 
     g_object_class_install_property(object_class,
+                                    PROP_PINNED,
+                                    g_param_spec_boolean("pinned",
+                                                         _("Pinned"),
+                                                         _("Whether the block is a pinned message"),
+                                                         FALSE,
+                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
                                     PROP_ICON_URL,
                                     g_param_spec_string("icon-url",
                                                         _("Icon URL"),
@@ -284,6 +294,10 @@ hippo_block_set_property(GObject         *object,
         hippo_block_set_ignored(block,
                                 g_value_get_boolean(value));        
         break;
+    case PROP_PINNED:
+        hippo_block_set_pinned(block,
+                                g_value_get_boolean(value));        
+        break;
     case PROP_STACK_REASON:
         hippo_block_set_stack_reason(block,
                                      g_value_get_int(value));
@@ -353,6 +367,9 @@ hippo_block_get_property(GObject         *object,
         break;
     case PROP_IGNORED:
         g_value_set_boolean(value, block->ignored);
+        break;
+    case PROP_PINNED:
+        g_value_set_boolean(value, block->pinned);
         break;
     case PROP_STACK_REASON:
         g_value_set_int(value, block->stack_reason);
@@ -519,6 +536,9 @@ hippo_block_new(const char    *guid,
     switch (type) {
     case HIPPO_BLOCK_TYPE_UNKNOWN:
         object_type = HIPPO_TYPE_BLOCK;
+        break;
+    case HIPPO_BLOCK_TYPE_ACCOUNT_QUESTION:
+        object_type = HIPPO_TYPE_BLOCK_ACCOUNT_QUESTION;
         break;
     case HIPPO_BLOCK_TYPE_GROUP_CHAT:
         object_type = HIPPO_TYPE_BLOCK_GROUP_CHAT;
@@ -807,6 +827,26 @@ hippo_block_set_ignored(HippoBlock *block,
     }
 }
 
+gboolean 
+hippo_block_get_pinned(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), FALSE);
+
+    return block->pinned;
+}
+
+void
+hippo_block_set_pinned(HippoBlock *block,
+                       gboolean    pinned)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (pinned != block->pinned) {
+        block->pinned = pinned;
+        g_object_notify(G_OBJECT(block), "pinned");
+    }
+}
+ 
 HippoStackReason
 hippo_block_get_stack_reason(HippoBlock *block)
 {
@@ -957,6 +997,7 @@ hippo_block_type_from_attributes(const char *type,
     
     static const struct { const char *name; HippoBlockType type; } types[] = {
         { "POST", HIPPO_BLOCK_TYPE_POST },
+        { "ACCOUNT_QUESTION", HIPPO_BLOCK_TYPE_ACCOUNT_QUESTION },
         { "GROUP_MEMBER", HIPPO_BLOCK_TYPE_GROUP_MEMBER },
         { "GROUP_CHAT", HIPPO_BLOCK_TYPE_GROUP_CHAT },
         { "MUSIC_CHAT", HIPPO_BLOCK_TYPE_MUSIC_CHAT },

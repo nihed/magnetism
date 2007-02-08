@@ -115,6 +115,10 @@ void     hippo_connection_set_block_hushed          (HippoConnection *connection
                                                      const char      *block_id,
                                                      gboolean         hushed);
 
+void hippo_connection_send_account_question_response(HippoConnection *connection,
+                                                     const char      *block_id,
+                                                     const char      *response);
+
 /* Gets the number of milliseconds to add to the local time to get the server time */
 gint64   hippo_connection_get_server_time_offset    (HippoConnection *connection);
 
