@@ -205,6 +205,9 @@ public abstract class BlockView implements ObjectView {
 	 * where "Dugg" = summaryHeading, "http://storylink" = summaryLink, 
 	 * "Story Title" = summaryLinkText, "1 hour ago" = summaryTimeAgo 
 	 * 
+	 * The "summary" properties are also used by the Google Gadget, though 
+	 * not via this XML.
+	 * 
 	 * @param builder builder to write to
 	 */
 	public void writeSummaryToXmlBuilder(XmlBuilder builder) {
