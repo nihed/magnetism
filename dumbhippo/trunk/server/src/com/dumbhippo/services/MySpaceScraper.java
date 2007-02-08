@@ -51,7 +51,7 @@ public class MySpaceScraper {
 		String id = scrapeFriendID(html);
 		if (id != null)
 			return new Pair<String, Boolean>(id, isPrivateProfile(html));
-		throw new TransientServiceException("Couldn't scrape MySpace friendId");
+		throw new TransientServiceException("Couldn't scrape MySpace friendId for " + mySpaceName);
 	}
 	
 	private static String getMySpacePageHtml(String mySpaceName) throws TransientServiceException {
