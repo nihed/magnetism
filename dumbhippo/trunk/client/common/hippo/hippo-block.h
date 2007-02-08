@@ -10,6 +10,7 @@ G_BEGIN_DECLS
 
 typedef enum {
     HIPPO_BLOCK_TYPE_UNKNOWN,
+    HIPPO_BLOCK_TYPE_ACCOUNT_QUESTION,
     HIPPO_BLOCK_TYPE_POST,
     HIPPO_BLOCK_TYPE_GROUP_MEMBER,
     HIPPO_BLOCK_TYPE_GROUP_CHAT,
@@ -66,6 +67,7 @@ struct _HippoBlock {
     guint filter_flags;
     guint clicked : 1;
     guint ignored : 1;
+    guint pinned : 1;
 };
 
 struct _HippoBlockClass {
@@ -122,6 +124,10 @@ void     hippo_block_set_clicked           (HippoBlock *block,
 gboolean hippo_block_get_ignored           (HippoBlock *block);
 void     hippo_block_set_ignored           (HippoBlock *block,
                                             gboolean    value);
+gboolean hippo_block_get_pinned            (HippoBlock *block);
+void     hippo_block_set_pinned            (HippoBlock *block,
+                                            gboolean    pinned);
+    
 HippoStackReason hippo_block_get_stack_reason (HippoBlock      *block);
 void             hippo_block_set_stack_reason (HippoBlock      *block,
                                                HippoStackReason value);

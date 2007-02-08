@@ -90,6 +90,11 @@ void          hippo_actions_quip                    (HippoActions      *actions,
                                                      const char        *id,
                                                      HippoSentiment     sentiment,
                                                      const char        *title);
+
+void hippo_actions_send_account_question_response(HippoActions *actions,
+                                                  const char   *block_id,
+                                                  const char   *response);
+
 G_END_DECLS
 
 #endif /* __HIPPO_ACTIONS_H__ */

@@ -54,6 +54,8 @@ struct _HippoCanvasBlock {
     /* probably a class props not instance props, but free bits anyway */
     unsigned int expandable : 1;
     unsigned int skip_heading : 1;
+    unsigned int skip_standard_right : 1;
+    unsigned int message_block : 1;
     
     unsigned int expanded : 1;
     unsigned int hushed : 1;

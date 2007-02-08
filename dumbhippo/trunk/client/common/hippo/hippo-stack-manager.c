@@ -905,6 +905,7 @@ manager_attach(StackManager    *manager,
     manager->browser_item = g_object_new(HIPPO_TYPE_CANVAS_STACK,
                                          "box-width", UI_WIDTH,
                                          "actions", manager->actions,
+                                         "pin-messages", TRUE,
                                          NULL);
     manager->browser_scroll_item = hippo_canvas_scrollbars_new();                                         
     hippo_canvas_scrollbars_set_policy(HIPPO_CANVAS_SCROLLBARS(manager->browser_scroll_item),

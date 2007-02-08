@@ -430,3 +430,12 @@ hippo_actions_quip(HippoActions   *actions,
     hippo_quip_window_show(quip_window);
     g_object_unref(quip_window);
 }
+
+void 
+hippo_actions_send_account_question_response(HippoActions *actions,
+                                             const char   *block_id,
+                                             const char   *response)
+{
+    hippo_connection_send_account_question_response(get_connection(actions),
+                                                    block_id, response);
+}
