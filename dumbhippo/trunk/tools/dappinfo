@@ -136,9 +136,9 @@ class DappinfoEditor:
         keys.sort()
         for key in keys:
             value = self._properties[key]
-            value = re.sub("\\", r"\\\\", value)
-            value = re.sub("\r", r"\\r", value)
-            value = re.sub("\n", r"\\n", value)
+            value = re.sub(r"\\", r"\\\\", value)
+            value = re.sub(r"\r", r"\\r", value)
+            value = re.sub(r"\n", r"\\n", value)
             f.write("%s=%s\n" % (key, value))
         f.close()
         
@@ -274,6 +274,22 @@ class DappinfoEditor:
         self._properties_read = False
         self._properties = None
 
+    def rename(self, newfile):
+        basename = os.path.basename(newfile)
+        if not newfile.endswith(".dappinfo"):
+            raise HumanVisibleException("New file name '%s' doesn't end in .dappinfo" % basename)
+        
+        m = re.match(r"^([A-Za-z0-9._-]+).dappinfo$", basename)
+        if not m:
+            raise HumanVisibleException("Can't extract a valid application id from new filename '%s'" % basename)
+        newid = m.group(1)
+        
+        self._open()
+        self._set_property("id", newid)
+        self.finish()
+
+        system("mv '%s' '%s'" % (self._filename, newfile))
+
     def setdesktop(self, desktopfile, destpath):
         if not file_exists(desktopfile):
             raise HumanVisibleException("Input file '%s' doesn't exist", desktopfile)
@@ -345,7 +361,7 @@ def cmd_addicon(args):
         editor.cleanup()
 
 def cmd_cat(args):
-    parser = OptionParser(usage="%prog edit [options] dappinfofile")
+    parser = OptionParser(usage="%prog cat [options] dappinfofile")
     (options, args) = parser.parse_args(args=args)
 
     if len(args) != 1:
@@ -387,6 +403,21 @@ def cmd_edit(args):
     editor = DappinfoEditor(args[0])
     try:
         editor.edit(editor_cmd=options.editor_cmd)
+        editor.finish()
+    finally:
+        editor.cleanup()
+
+def cmd_rename(args):
+    parser = OptionParser(usage="%prog rename [options] dappinfofile newfile")
+    (options, args) = parser.parse_args(args=args)
+
+    if len(args) != 2:
+        parser.print_usage()
+        sys.exit(1)
+
+    editor = DappinfoEditor(args[0])
+    try:
+        editor.rename(args[1])
         editor.finish()
     finally:
         editor.cleanup()
@@ -439,6 +470,8 @@ try:
         cmd_delicon(args)
     elif sys.argv[1] == "edit":
         cmd_edit(args)
+    elif sys.argv[1] == "rename":
+        cmd_rename(args)
     elif sys.argv[1] == "setdesktop":
         cmd_setdesktop(args)
     elif sys.argv[1] == "upload":
