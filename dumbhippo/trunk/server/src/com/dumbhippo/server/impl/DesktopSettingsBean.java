@@ -43,7 +43,7 @@ public class DesktopSettingsBean implements DesktopSettings {
 		Map<String,String> map = new HashMap<String,String>();
 		
 		for (DesktopSetting ds : TypeUtils.castList(DesktopSetting.class, settings)) {
-			map.put(ds.getKey(), ds.getValue());
+			map.put(ds.getKeyName(), ds.getValue());
 		}
 		
 		return map;
@@ -54,7 +54,7 @@ public class DesktopSettingsBean implements DesktopSettings {
 		runner.runTaskRetryingOnConstraintViolation(new Runnable() {
 
 			public void run() {
-				Query q = em.createQuery("SELECT ds FROM DesktopSetting ds WHERE ds.user = :user AND ds.key = :key");
+				Query q = em.createQuery("SELECT ds FROM DesktopSetting ds WHERE ds.user = :user AND ds.keyName = :key");
 				q.setParameter("user", user);
 				q.setParameter("key", key);
 				DesktopSetting ds;

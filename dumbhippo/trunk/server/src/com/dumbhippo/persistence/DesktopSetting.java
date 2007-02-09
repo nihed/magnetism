@@ -15,7 +15,7 @@ import javax.persistence.UniqueConstraint;
 @Entity
 @Table(name="DesktopSetting", 
 		   uniqueConstraints = 
-		      {@UniqueConstraint(columnNames={"user_id","key"})}
+		      {@UniqueConstraint(columnNames={"user_id","keyName"})}
 	      )
 public class DesktopSetting extends DBUnique {
 
@@ -47,11 +47,11 @@ public class DesktopSetting extends DBUnique {
 	}
 
 	@Column(nullable=false)
-	public String getKey() {
+	public String getKeyName() {
 		return key;
 	}
 
-	public void setKey(String key) {
+	public void setKeyName(String key) {
 		this.key = key;
 	}
 
