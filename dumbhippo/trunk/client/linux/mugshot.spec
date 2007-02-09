@@ -1,5 +1,5 @@
 Name:           mugshot
-Version:        1.1.32
+Version:        1.1.33
 Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
@@ -181,6 +181,9 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
+* Fri Feb  9 2007 Owen Taylor <otaylor@redhat.com> - 1.1.33-1
+- 1.1.33
+
 * Thu Feb  1 2007 Owen Taylor <otaylor@redhat.com> - 1.1.32-1
 - Version 1.1.32
 
