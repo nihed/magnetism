@@ -49,6 +49,7 @@ public class DesktopSettingsBean implements DesktopSettings {
 		return map;
 	}
 
+	// null value means unset
 	public void setSetting(final User user, final String key, final String value) {
 		runner.runTaskRetryingOnConstraintViolation(new Runnable() {
 
@@ -59,10 +60,15 @@ public class DesktopSettingsBean implements DesktopSettings {
 				DesktopSetting ds;
 				try {
 					ds = (DesktopSetting) q.getSingleResult();
-					ds.setValue(value);
+					if (value != null)
+						ds.setValue(value);
+					else
+						em.remove(ds);
 				} catch (NoResultException e) {
-					ds = new DesktopSetting(user, key, value);
-					em.persist(ds);
+					if (value != null) {
+						ds = new DesktopSetting(user, key, value);
+						em.persist(ds);
+					}
 				}
 				LiveState.getInstance().queueUpdate(new DesktopSettingChangedEvent(user.getGuid(), key, value));
 			}

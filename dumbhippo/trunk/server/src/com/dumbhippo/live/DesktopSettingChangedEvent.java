@@ -36,6 +36,10 @@ public class DesktopSettingChangedEvent implements LiveEvent {
 		return key;
 	}
 
+	/** 
+	 * value will be null if the setting was unset.
+	 * @return
+	 */
 	public String getValue() {
 		return value;
 	}
