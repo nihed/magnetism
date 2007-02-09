@@ -258,7 +258,13 @@ hippo_settings_new(HippoConnection *connection)
     g_signal_connect(G_OBJECT(connection), "setting-changed", G_CALLBACK(on_setting_changed), settings);
 
     /* FIXME this ends up happening at the wrong time (the first time someone
-     * needs to use HippoSettings) instead of at application startup
+     * needs to use HippoSettings) instead of at application startup.
+     *
+     * Also, this implicitly caches that anything it doesn't return is known unset,
+     * which we could use to avoid asking for anything not yet cached.
+     */
+    /* FIXME we might drop all cache state on reconnecting to the server since
+     * we may have missed change notifications
      */
     hippo_connection_request_desktop_settings(settings->connection);
     
