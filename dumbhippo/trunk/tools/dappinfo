@@ -230,6 +230,14 @@ class DappinfoEditor:
         self._set_property(propname, destpath)
         self._copy_in(iconfile, destpath)
 
+    def cat(self):
+        self._open()
+
+        # Flush any local property modifications
+        self._flush_properties()
+
+        system("cat %s" % self._propfile())
+
     def delicon(self, destpath):
         if not valid_subpath(destpath):
             raise HumanVisibleException("Destination path '%s' must be relative" % destpath)
@@ -313,7 +321,7 @@ def die(msg):
     sys.exit(1)
 
 def usage():
-    print >>sys.stderr, "usage: dappinfo [addicon|delicon|edit|setdesktop|upload] [options] [arguments]"
+    print >>sys.stderr, "usage: dappinfo [addicon|cat|delicon|edit|setdesktop|upload] [options] [arguments]"
     print >>sys.stderr, "       dappinfo [subcommand] -h for more information on a subcommand."
     sys.exit(1)
 
@@ -332,6 +340,21 @@ def cmd_addicon(args):
     editor = DappinfoEditor(args[0])
     try:
         editor.addicon(args[1], args[2], theme=options.theme, size=options.size)
+        editor.finish()
+    finally:
+        editor.cleanup()
+
+def cmd_cat(args):
+    parser = OptionParser(usage="%prog edit [options] dappinfofile")
+    (options, args) = parser.parse_args(args=args)
+
+    if len(args) != 1:
+        parser.print_usage()
+        sys.exit(1)
+
+    editor = DappinfoEditor(args[0])
+    try:
+        editor.cat()
         editor.finish()
     finally:
         editor.cleanup()
@@ -410,6 +433,8 @@ try:
     
     if sys.argv[1] == "addicon":
         cmd_addicon(args)
+    elif sys.argv[1] == "cat":
+        cmd_cat(args)
     elif sys.argv[1] == "delicon":
         cmd_delicon(args)
     elif sys.argv[1] == "edit":

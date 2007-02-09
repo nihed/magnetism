@@ -302,10 +302,11 @@ parser.add_option("--redhat-menus",
                   help="redhat-menus RPM file (merged into source tree to resolve symlinks)")
 (options, args) = parser.parse_args()
 
-if (options.destdir == None):
-    die("--destdir option must be supplied")
+if (options.destdir != None):
+    config.destdir = options.destdir
+else:
+    config.destdir = "."
 
-config.destdir = options.destdir
 ensure_dir(config.destdir)
 
 if options.redhat_menus != None:
