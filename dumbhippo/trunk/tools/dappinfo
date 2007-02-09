@@ -342,7 +342,9 @@ def usage():
     sys.exit(1)
 
 def cmd_addicon(args):
-    parser = OptionParser(usage="%prog addicon [options] dappinfofile iconfile destpath")
+    parser = OptionParser(usage=
+                          "%prog addicon [options] dappinfofile iconfile destpath\n"
+                          "    Copy an icon into the dappinfo file.")
     parser.add_option("--theme",
                       help="Name of theme the icon belongs to")
     parser.add_option("--size",
@@ -361,7 +363,9 @@ def cmd_addicon(args):
         editor.cleanup()
 
 def cmd_cat(args):
-    parser = OptionParser(usage="%prog cat [options] dappinfofile")
+    parser = OptionParser(usage=
+                          "%prog cat [options] dappinfofile\n"
+                          "    Cat the contents of application.properties to standard out.")
     (options, args) = parser.parse_args(args=args)
 
     if len(args) != 1:
@@ -376,7 +380,9 @@ def cmd_cat(args):
         editor.cleanup()
 
 def cmd_delicon(args):
-    parser = OptionParser(usage="%prog delicon [options] dappinfofile destpath")
+    parser = OptionParser(usage=
+                          "%prog delicon [options] dappinfofile destpath\n"
+                          "    Delete an icon from the dappinfo file.")
     (options, args) = parser.parse_args(args=args)
 
     if len(args) != 2:
@@ -391,7 +397,9 @@ def cmd_delicon(args):
         editor.cleanup()
 
 def cmd_edit(args):
-    parser = OptionParser(usage="%prog edit [options] dappinfofile")
+    parser = OptionParser(usage=
+                          "%prog edit [options] dappinfofile\n"
+                          "     Edit application.properties in an editor.")
     parser.add_option("--editor-cmd",
                       help="Editor to run on the properties file")
     (options, args) = parser.parse_args(args=args)
@@ -408,7 +416,9 @@ def cmd_edit(args):
         editor.cleanup()
 
 def cmd_rename(args):
-    parser = OptionParser(usage="%prog rename [options] dappinfofile newfile")
+    parser = OptionParser(usage=
+                          "%prog rename [options] dappinfofile newfile\n"
+                          "    Rename the dappinfofile to a new name, and change the embedded id to match.")
     (options, args) = parser.parse_args(args=args)
 
     if len(args) != 2:
@@ -423,7 +433,9 @@ def cmd_rename(args):
         editor.cleanup()
 
 def cmd_setdesktop(args):
-    parser = OptionParser(usage="%prog setdesktop [options] dappinfofile desktopfile destpath")
+    parser = OptionParser(usage=
+                          "%prog setdesktop [options] dappinfofile desktopfile destpath\n"
+                          "    Embed a desktop file into the dappinfo file.")
     (options, args) = parser.parse_args(args=args)
 
     if len(args) != 3:
@@ -438,7 +450,8 @@ def cmd_setdesktop(args):
         editor.cleanup()
 
 def cmd_upload(args):
-    parser = OptionParser(usage="%prog upload [options] dappinfofile")
+    parser = OptionParser(usage="%prog upload [options] dappinfofile\n"
+                          "     Upload the dappinfo to the server.")
     parser.add_option("--server",
                       help="Server to upload the file to")
     parser.add_option("--cookiesfile",
