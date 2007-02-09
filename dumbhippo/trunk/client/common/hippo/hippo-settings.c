@@ -52,14 +52,11 @@ hippo_settings_class_init(HippoSettingsClass  *klass)
 }
 
 static void
-on_setting_changed(HippoConnection *connection,
-                   const char      *key,
-                   const char      *value,
-                   void            *data)
+update_cache(HippoSettings *settings,
+             const char    *key,
+             const char    *value)
 {
-    HippoSettings *settings = HIPPO_SETTINGS(data);
-
-    g_debug("setting: %s=%s", key, value ? value : "(null)");
+    g_debug("caching: %s=%s", key, value ? value : "(null)");
     
     if (value == NULL) {
         g_hash_table_remove(settings->entries, key);
@@ -71,12 +68,23 @@ on_setting_changed(HippoConnection *connection,
 }
 
 static void
+on_setting_changed(HippoConnection *connection,
+                   const char      *key,
+                   const char      *value,
+                   void            *data)
+{
+    HippoSettings *settings = HIPPO_SETTINGS(data);
+
+    update_cache(settings, key, value);
+}
+
+static void
 hippo_settings_dispose(GObject *object)
 {
     /* HippoSettings *settings = HIPPO_SETTINGS(object); */
 
     g_signal_handlers_disconnect_by_func(object, G_CALLBACK(on_setting_changed), object);
-
+    
     G_OBJECT_CLASS(hippo_settings_parent_class)->dispose(object);
 }
 
@@ -98,14 +106,65 @@ hippo_settings_new(HippoConnection *connection)
     settings = g_object_new(HIPPO_TYPE_SETTINGS,
                             NULL);
 
-    g_object_ref(connection);
+    /* Note that the connection refs the settings in the normal
+     * hippo_settings_get_and_ref case, so we can't ref the
+     * connection
+     */
     settings->connection = connection;
 
     settings->entries = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 
-    g_signal_connect(G_OBJECT(settings), "setting-changed", G_CALLBACK(on_setting_changed), settings);
+    g_signal_connect(G_OBJECT(connection), "setting-changed", G_CALLBACK(on_setting_changed), settings);
     
     hippo_connection_request_desktop_settings(settings->connection);
     
     return settings;
 }
+
+HippoSettings*
+hippo_settings_get_and_ref(HippoConnection  *connection)
+{
+    HippoSettings *settings;
+
+    settings = g_object_get_data(G_OBJECT(connection), "hippo-settings");
+
+    if (settings == NULL) {
+        settings = hippo_settings_new(connection);
+        
+        g_object_set_data_full(G_OBJECT(connection), "hippo-settings", settings,
+                               (GDestroyNotify) g_object_unref);
+    }
+
+    g_object_ref(settings);
+    
+    return settings;
+}
+
+void
+hippo_settings_set(HippoSettings    *settings,
+                   const char       *key,
+                   const char       *value)
+{
+    g_debug("setting: %s=%s", key, value ? value : "(null)");
+    
+    hippo_connection_send_desktop_setting(settings->connection, key, value);
+
+    /* FIXME this is BROKEN but is needed for testing until the server has
+     * change notification on settings
+     */
+    update_cache(settings, key, value);
+}
+
+const char*
+hippo_settings_get(HippoSettings    *settings,
+                   const char       *key)
+{
+    const char *value;
+
+    value = g_hash_table_lookup(settings->entries, key);
+
+    g_debug("getting: %s=%s", key, value ? value : "(null)");
+
+    return value;
+}
+

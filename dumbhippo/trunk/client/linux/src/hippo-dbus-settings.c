@@ -15,6 +15,18 @@
 /* This is its own file since it could end up being a fair bit of code eventually
  */
 
+static HippoSettings*
+get_and_ref_settings(void)
+{
+    HippoDataCache *cache;
+    HippoConnection *connection;
+    
+    cache = hippo_app_get_data_cache(hippo_get_app());
+    connection = hippo_data_cache_get_connection(cache);
+
+    return hippo_settings_get_and_ref(connection);
+}
+
 void
 hippo_dbus_try_acquire_online_prefs_manager(DBusConnection *connection,
                                             gboolean        replace)
@@ -41,8 +53,9 @@ hippo_dbus_handle_get_preference(HippoDBus   *dbus,
     const char *signature;
     DBusMessageIter iter;
     DBusMessageIter variant_iter;
-    dbus_int32_t v_INT32;
-
+    const char *value;
+    HippoSettings *settings;
+    
     key = NULL;
     signature = NULL;
     if (!dbus_message_get_args(message, NULL,
@@ -51,21 +64,61 @@ hippo_dbus_handle_get_preference(HippoDBus   *dbus,
                                DBUS_TYPE_INVALID)) {
         return dbus_message_new_error(message,
                                       DBUS_ERROR_INVALID_ARGS,
-                                      _("Expected two arguments, the key and the expected typecode"));
+                                      _("Expected two arguments, the key and the expected type signature"));
     }
 
+    if (!dbus_signature_validate_single(signature, NULL)) {
+        return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+                                      _("Type signature must be a single complete type, not a list of types"));
+    }
+
+    if (!(*signature == DBUS_TYPE_INT32 || *signature == DBUS_TYPE_STRING)) {
+        return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
+                                      _("Only STRING and INT32 values supported for now"));
+    }
+    
+    settings = get_and_ref_settings();
+
+    value = hippo_settings_get(settings, key);
+
+    if (value == NULL) {
+        g_object_unref(settings);
+        return dbus_message_new_error_printf(message, HIPPO_DBUS_PREFS_ERROR_NOT_FOUND,                                      
+                                             _("No value known for key '%s'"), key);
+    }
+    
     reply = dbus_message_new_method_return(message);
 
     dbus_message_iter_init_append(reply, &iter);
-
-    dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT, DBUS_TYPE_INT32_AS_STRING,
+    
+    dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT, signature,
                                      &variant_iter);
 
-    v_INT32 = 42;
-    dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_INT32, &v_INT32);
+
+    switch (*signature) {
+    case DBUS_TYPE_STRING:
+        dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_STRING, &value);
+        break;
+    case DBUS_TYPE_INT32:
+        {
+            dbus_int32_t v_INT32;
+
+            if (!hippo_parse_int32(value, &v_INT32)) {
+                g_object_unref(settings);
+                dbus_message_unref(reply);
+                return dbus_message_new_error_printf(message, HIPPO_DBUS_PREFS_ERROR_WRONG_TYPE,  
+                                                     _("Value was '%s' not parseable as an INT32"), value);
+            }
+            
+            dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_INT32, &v_INT32);
+        }
+        break;
+    }
 
     dbus_message_iter_close_container(&iter, &variant_iter);
 
+    g_object_unref(settings);
+    
     return reply;
 }
 
@@ -74,7 +127,61 @@ hippo_dbus_handle_set_preference(HippoDBus   *dbus,
                                  DBusMessage *message)
 {
     DBusMessage *reply;
+    HippoSettings *settings;
+    DBusMessageIter iter;
+    DBusMessageIter variant_iter;
+    const char *key;
+    int value_type;
+    char *value;
     
+    if (!dbus_message_has_signature(message, "sv")) {
+        return dbus_message_new_error(message,
+                                      DBUS_ERROR_INVALID_ARGS,
+                                      _("Expected two arguments, the string key and the variant value"));
+    }
+    
+    dbus_message_iter_init(message, &iter);
+
+    key = NULL;
+    dbus_message_iter_get_basic(&iter, &key);
+
+    dbus_message_iter_next(&iter);
+
+    dbus_message_iter_recurse(&iter, &variant_iter);
+
+    value_type = dbus_message_iter_get_arg_type(&variant_iter);
+
+    value = NULL;
+    switch (value_type) {
+    case DBUS_TYPE_STRING:
+        {
+            const char *v_STRING;
+            dbus_message_iter_get_basic(&variant_iter, &v_STRING);
+            value = g_strdup(v_STRING);
+        }
+        break;
+    case DBUS_TYPE_INT32:
+        {
+            dbus_int32_t v_INT32;
+            dbus_message_iter_get_basic(&variant_iter, &v_INT32);
+            value = g_strdup_printf("%d", v_INT32);
+        }
+        break;
+    default:
+        return dbus_message_new_error_printf(message,
+                                             DBUS_ERROR_INVALID_ARGS,
+                                             _("Unable to handle values of type '%c' right now"), value_type);
+        break;
+    }
+
+    settings = get_and_ref_settings();
+    
+    hippo_settings_set(settings, key, value);
+
+    g_free(value);
+    g_object_unref(settings);
+    
+    /* Just an empty "ack" reply */
     reply = dbus_message_new_method_return(message);
 
     return reply;
