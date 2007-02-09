@@ -23,19 +23,12 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.32</p>
+			<p>Version 1.1.33</p>
 			<ul>
-				<li>New "Quips and Comments" window replacing the old chat window.</li>
-				<li>Ability to quip directly from the notification block for web swarms.</li>
-				<li>Notifications for Netflix.</li>
-				<li>Tooltips for truncated text.</li>
-				<li>Better layout of notification blocks.</li>
-				<li>Bug fixes.</li>
+				<li>Make sure that the quip window is initially focused.</li>
+				<li>Fix crash when closing quip window.</li>
+				<li>Fix problem reading login cookies from Epiphany.</li>
 			</ul>
-			<div class="dh-upgrade-message">
-			    Note: you'll need to restart Firefox by closing all windows after
-			    installing this upgrade.
-			</div>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
