@@ -8,11 +8,17 @@ import javax.ejb.EJB;
 import org.dom4j.Element;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.Message;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.jive.annotations.IQHandler;
 import com.dumbhippo.jive.annotations.IQMethod;
+import com.dumbhippo.live.DesktopSettingChangedEvent;
+import com.dumbhippo.live.LiveEventListener;
+import com.dumbhippo.live.LiveState;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.DesktopSettings;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.views.UserViewpoint;
 
 /** 
@@ -22,16 +28,50 @@ import com.dumbhippo.server.views.UserViewpoint;
  *
  */
 @IQHandler(namespace=SettingsIQHandler.SETTINGS_NAMESPACE)
-public class SettingsIQHandler extends AnnotatedIQHandler {
+public class SettingsIQHandler extends AnnotatedIQHandler implements LiveEventListener<DesktopSettingChangedEvent> {
 	static final String SETTINGS_NAMESPACE = "http://dumbhippo.com/protocol/settings";
 	
 	@EJB
 	private DesktopSettings settings;
 	
+	@EJB
+	private IdentitySpider spider;
+	
 	public SettingsIQHandler() {
 		super("Hippo settings IQ Handler");
 		Log.debug("creating SettingsIQHandler");
 	}
+	
+	public void onEvent(DesktopSettingChangedEvent event) {
+		User user = spider.lookupUser(event.getUserId()); 
+
+		XmlBuilder xml = new XmlBuilder();
+		xml.openElement("settings",
+			    "xmlns", SETTINGS_NAMESPACE);
+		
+		xml.appendTextNode("setting", event.getValue(), "key", event.getKey());
+		
+		xml.closeElement();
+		
+		Message message = new Message();
+		message.setType(Message.Type.headline);
+		message.getElement().add(XmlParser.elementFromXml(xml.toString()));
+		MessageSender.getInstance().sendMessage(user.getGuid(), message);
+	}
+
+	@Override
+	public void start() throws IllegalStateException {
+		super.start();
+		Log.debug("setting up DesktopSettingChangedEvent listener");
+		LiveState.addEventListener(DesktopSettingChangedEvent.class, this);		
+	}
+
+	@Override
+	public void stop() {
+		super.stop();
+		Log.debug("stopping DesktopSettingChangedEvent listener");		
+		LiveState.removeEventListener(DesktopSettingChangedEvent.class, this);			
+	}	
 	
 	@IQMethod(name="settings", type=IQ.Type.get)
 	public void getContacts(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
