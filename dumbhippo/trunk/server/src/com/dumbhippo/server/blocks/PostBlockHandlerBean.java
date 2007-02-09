@@ -54,7 +54,8 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 	}		
 	
 	public BlockKey getKey(Post post) {
-		return new BlockKey(BlockType.POST, post.getGuid(), post.getPoster().getGuid());
+		User poster = post.getPoster();
+		return new BlockKey(BlockType.POST, post.getGuid(), poster == null ? null : poster.getGuid());
 	}
 	
 	@Override
