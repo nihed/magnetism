@@ -2,10 +2,12 @@ package com.dumbhippo.server.blocks;
 
 public enum AccountQuestion {
 	APPLICATION_USAGE {
+		@Override
 		public String getTitle() {
 			return "Share your application usage";
 		}
 		
+		@Override
 		public String getDescription(String answer) {
 			if ("yes".equals(answer))
 				return 
@@ -24,6 +26,7 @@ public enum AccountQuestion {
 					"usage statistics.";
 		}
 		
+		@Override
 		public AccountQuestionButton[] getButtons() {
 			return new AccountQuestionButton[] {
 				new AccountQuestionButton("Share my application usage", "yes"),
@@ -31,6 +34,7 @@ public enum AccountQuestion {
 			};
 		}
 		
+		@Override
 		public String getMoreLink() {
 			return "/application-usage";
 		}
