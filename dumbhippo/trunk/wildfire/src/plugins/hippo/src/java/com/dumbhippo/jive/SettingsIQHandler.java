@@ -75,7 +75,7 @@ public class SettingsIQHandler extends AnnotatedIQHandler implements LiveEventLi
 	}	
 	
 	@IQMethod(name="settings", type=IQ.Type.get)
-	public void getContacts(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
+	public void getSettings(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
 		Map<String,String> map = settings.getSettings(viewpoint.getViewer());
 		
 		XmlBuilder xml = new XmlBuilder();
