@@ -1,0 +1,205 @@
+Event Markup Syntax Requirements
+================================
+
+:Author: Dylan Schiemann
+:Version: 0.2
+:Copyright: Dojo Foundation, 2005
+:Date: $Date:$
+
+.. contents::
+
+Purpose
+-------
+
+This document outlines the rationale and development concepts for Dojo xml 
+event syntax.
+
+Requirements
+------------
+
+.. FIXME
+.. I guess the main thing that is bothering me still is how to pass parameters
+.. and how to differentiate between instance and class for events defined in 
+.. proposets... also, when using propsets, do events override, or are they 
+.. additive... I'm assuming that they are additive, but what if you wanted to 
+.. override... also, how is order treated, which could be needed for things 
+.. like cancellation?
+
+.. RAR (response):
+.. NOTE: the <action> tag is a wrapper around dojo.event.connect(), nothing
+.. more!
+.. 	params: parameters are passed just as they are passed to the attached-to
+..		function or method! This is a necessity of the fact that we are
+..		implementing this entire system as advice. If, OTOH, the user wants
+..		something different, than I say we should expose around* advice with
+..		either a way to specify the around method by object/name look or inline
+..		as a CDATA section which gets constructed into a:
+..			new Function("methodInvocationObj","functext...");
+..		syntax. I think this is neither overly onerous nor slow for toolkit
+..		authors and end users.
+..	class vs. instance:
+..		What does "this" point to? That should give you your answer when an
+..		object name is not provided. In other situations, I think we should
+..		take a literal approach to object name lookup. The only exception is
+..		for typed propsets which apply to every widget (instance) of a given
+..		type. Do you still feel this is ambiguious?
+..	overrides:
+..		events defined as propsets do NOT over-ride, in the same way that
+..		DOM 0-style event handlers are always additive in our system. If the
+..		user wishes to clobber the event, they can simply implement around
+..		advice that squelches by not calling the proceed() method of the
+..		methodInvocationObj. Perhaps it wouldn't hurt to provide syntactic
+..		sugar for this construct?
+..		All of that said, perhaps we should also provide a way to disconnect?
+..	order:
+..		as with other dojo.event.connect() calls, order is handled both
+..		explicitly and implicitly. MDA's advice implementation allows for the
+..		expression of preferences within a handler collection, which might be
+..		an improvement we should adopt. For any particular collection of
+..		handlers, we currently force a new handler onto the back of the handler
+..		stack. OTOH, the user can add the advice to either the before, around,
+..		or after advice stacks, therefore influencing the order in which it'll
+..		be executed (rather ham-fisted-ly, though). IIRC, I held of on
+..		implementing attachment order preference because I didn't see a real
+..		need for it, but that was mainly ignorance and not informed decision
+..		making. Let me know if you think it needs to be corrected.
+
+DOM Style Events
+****************
+
+Dojo makes an attempt to support multiple methods of providing linkage between
+event handler code and the events being fired on widgets. Despite the varying
+syntaxes, all are implemented in terms of the underlying Dojo event system
+which is provided in the "dojo.event" namespace. "DOM 0 style" referrs to the
+direct addition of executable script code as an attribute. Dojo supports this
+style of event attachment for ANY method defined on an widget. For instance, if
+a widget sports a method named "foo", one can execute code that will run any
+time "foo()" is called like this:
+
+	<g dojo:tagName="button" label="huzzah" foo="dojo.hostenv.println('foo!');" />
+
+Note that this does NOT replace whatever else would have happened when this
+buttons's foo() method was called. Instead, our event handler code is called
+afterward. Widget authors can attach these methods to any native DOM or
+rendering context event handlers they wish, so be warned that you are somewhat
+at the mercy of the widget template author as to when things may or may not
+happen.
+
+
+Instance vs. Class
+******************
+
+.. FIXME
+
+Advice
+******
+
+.. FIXME
+
+
+Usage Scenarios
+---------------
+
+.. FIXME
+
+
+Development Decisions
+---------------------
+
+.. FIXME
+
+Examples
+--------
+
+Dojo will supports simple inline, DOM 0 style attribute markup for events, as 
+well as through property sets.  Markup for various events is defined as follows:
+
+DOM 0 style inline event markup
+*******************************
+
+from within a dojoml document:::
+
+	<dojo:button label="huzzah" onclick="foo();" />
+
+from within an x/html document:::
+	
+	<div dojoTagName="button" label="huzzah" onclick="foo();">
+	</div>
+
+from within an svg document:::
+	
+	<g dojo:tagName="button" label="huzzah" onclick="foo();" />
+
+In the above cases, scope is by default the widget instance.
+
+.. FIXME: defining different scope, passing custom parameters
+
+external property set
+*********************
+
+.. FIXME: review more recent notes on this to see if this makes sense still...
+.. what's the difference between target and action... need to look at this again
+
+external::
+
+	<dojo:propertySet match="dojo.button">
+		<dojo:event type="onclick" target="" action="foo"/>
+		<dojo:connect>
+			<dojo:source object="" function="" name="" />
+			<dojo:target object="" function="" name="" />
+		</dojo:connect>
+	</dojo:propertySet>
+
+child propsets in a widget/component declaration
+************************************************
+
+from within a dojoml document::
+
+	<dojo:button label="huzzah" onclick="foo">
+		<dojo:propertySet>
+			<dojo:event type="onclick" target="" action="foo"/>
+			<dojo:connect>
+				<dojo:source object="" function="" name="" />
+				<dojo:target object="" function="" name="" />
+			</dojo:connect>
+		</dojo:propertySet>
+	</dojo:button>
+
+from within an html document:::
+	
+	<div dojoTagName="button" label="huzzah">
+		<div dojoTagName="propertySet">
+			<div dojoTagName="event" dojoType="onclick" dojoTarget="" dojoAction="foo"/>
+			<div dojoTagName="connect">
+				<div dojoTagName="source" dojoObject="" dojoFunction="" dojoName="" />
+				<div dojoTagName="target" dojoObject="" dojoFunction="" dojoName="" />
+			</div>
+		</div>
+	</div>
+
+from within an xhtml document or document with support for namespaces:::
+	
+	<div dojo:tagName="button label="huzzah">
+		<div dojo:tagName="propertySet">
+			<div dojo:tagName="event" dojo:type="onclick" dojo:target="" dojo:action="foo"/>
+			<div dojo:tagName="connect">
+				<div dojo:tagName="source" dojo:object="" dojo:function="" dojo:name="" />
+				<div dojo:tagName="target" dojo:object="" dojo:function="" dojo:name="" />
+			</div>
+		</div>
+	</div>
+
+from within an svg document:::
+	
+	<g dojo:tagName="grid" dojo:propertyProviderList="#propsetFoo #propsetBar
+		file#propsetBaz">
+		<g dojo:tagName="propertySet">
+			<g dojo:tagName="event" dojo:type="onclick" dojo:target="" dojo:action="foo"/>
+			<g dojo:tagName="connect">
+				<g dojo:tagName="source" dojo:object="" dojo:function="" dojo:name="" />
+				<g dojo:tagName="target" dojo:object="" dojo:function="" dojo:name="" />
+			</g>
+		</g>
+	</g>
+
+.. FIXME: this needs a vim tag!!

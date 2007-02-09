@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+    <!-- Main plugin class -->
+    <class>com.dumbhippo.jive.HippoPlugin</class>
+
+    <!-- Plugin meta-data -->
+    <name>Hippo Plugin</name>
+    <description>Plugin for doing our crazy Hippo stuff</description>
+    <author>Dumb Hippo Software</author>
+    <version>0.2</version>
+    <date>09/29/2005</date>
+    <url></url>
+    <minServerVersion>2.2.0</minServerVersion>
+</plugin>

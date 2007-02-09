@@ -1,0 +1,33 @@
+@CHARSET "UTF-8";
+@IMPORT url("styled-form.css");
+@IMPORT url("invitation-positions.css");
+
+.dh-person-item-more-info {
+	border:				none;
+	background-color:	transparent;
+}
+
+#dhSuggestGroupsPopup {
+    /* drop shadow color */
+	background-color:	#b3b3b3;
+}
+
+#dhSuggestGroupsPopup .dh-border {
+	background-color:	black;
+}
+
+#dhSuggestGroupsPopup .dh-content {
+	background-color:	white;
+	overflow:           auto; 
+}
+
+#dhSuggestGroupsArea {
+	border:				1px solid black;
+	overflow:           auto; 
+}
+
+.dh-explanation-note {
+	font-style:			italic;
+	font-size:			10px;
+}
+

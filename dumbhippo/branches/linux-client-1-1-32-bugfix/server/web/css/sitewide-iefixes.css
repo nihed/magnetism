@@ -1,0 +1,54 @@
+@CHARSET "UTF-8";
+
+/* CSS file included if IE < 8 */
+
+body.dh-body-with-fixed-hack {
+	height:					100%;
+	overflow:				hidden;
+}
+/* Most other fonts look nasty on IE, but look good in everything else */
+body {	
+	font-family:			Verdana, sans;
+}
+.dh-non-ie-png {
+	display: 				none;
+}
+
+#dhContainer {
+	position:				relative;
+}
+.dh-container-with-fixed-hack {
+	height:					100%;
+	overflow:				auto;
+}
+#dhMainArea {
+	height:					1080px;
+	width:					446px;
+}
+#dhToolbar {
+	font-size:				xx-small;
+}
+a.dh-toolbar-item {
+	font-size:				xx-small;
+}
+a.dh-toolbar-item:link {
+	font-size:				xx-small;
+}
+#dhPersonalArea {
+	height:					1080px;
+	width:					216px;
+}
+.dh-title {
+	font-size:				normal;
+}
+
+#dhName {
+	font-size:				large;
+}
+.dh-group, .dh-person {
+	font-size:				x-small;
+}
+#dhOTP {
+	position:				absolute;
+	z-index:				-1;
+}

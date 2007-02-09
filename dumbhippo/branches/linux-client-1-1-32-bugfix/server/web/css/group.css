@@ -1,0 +1,16 @@
+@CHARSET "UTF-8";
+
+/* ------------ STYLES SPECIFIC TO /GROUP ------------ */
+
+@import "sitewide.css";
+@import "home.css";
+@import "bubbles.css";
+@import "musicelements.css";
+
+.dh-group-access {
+    text-align:         right;	
+	font-size:			small;
+	color:              #4EAA71;
+}
+
+

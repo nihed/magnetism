@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." default="all" name="hungry">
+        <import file="${basedir}/../common.xml"/>
+        <property name="hippo.server.path" value="${dumbhippo.global.trunkdir}/server"/>
+	<property name="jboss.path" value="${dumbhippo.global.jboss.root}"/>
+
+	<property name="target" value="target" />
+	<property name="build" value="${target}/classes" />
+	<property name="build.tests" value="${target}/test-classes" />
+	<property name="reports.tests" value="${target}/reports" />
+	<property name="target.lib" value="${target}/lib" />
+	<property name="src.java" value="src/java" />
+	<property name="src.tests.java" value="src/test/java" />
+	<fileset dir="${jboss.path}/client" id="dependency.jars.jboss">
+		<!-- without this ant uses the whole dir apparently -->
+		<include name="nonexistent.jar"/>
+		<!--
+		<include name="jbossall-client.jar"/>
+		<include name="jbossmq-client.jar"/>
+		<include name="jboss-j2ee.jar"/>
+		<include name="log4j.jar"/> -->
+	</fileset>
+	<fileset dir="${dumbhippo.global.trunkdir}" id="dependency.jars.server">
+		<include name="lib/server/smack-svn-local-build-2005-09-30.jar"/>
+		<include name="lib/server/mysql-connector-java-3.1.12-bin.jar"/>
+		<include name="server/target/classes/dumbhippo-client.jar"/>
+	</fileset>
+    <path id="project.classpath">
+        <pathelement location="${build}"/>
+	<fileset dir="${dumbhippo.global.lib}/hungry" includes="*.jar" />
+    	<fileset refid="dependency.jars.jboss" />
+    	<fileset refid="dependency.jars.server" />
+    </path>
+    <target name="init">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+    	<echo message="creating directories..." />
+        <mkdir dir="${build}"/>    	
+        <mkdir dir="${build.tests}"/>    	
+        <mkdir dir="${reports.tests}"/> 
+    	<mkdir dir="${target.lib}"/>
+    </target>
+    <target name="clean">
+        <delete dir="target"/>
+    </target>
+
+	<target name="all" depends="test-readonly"/>
+	
+	<!-- test stuff -->
+	<path id="tests.classpath">
+		<pathelement location="${build.tests}"/>
+		<path refid="project.classpath" />
+	</path>
+
+	<target name="build" depends="init">
+		<javac srcdir="${src.tests.java}" destdir="${build.tests}" source="1.5">
+			<classpath refid="tests.classpath" />
+		</javac>
+		<copy todir="${build.tests}">
+			<fileset dir="${src.tests.java}">
+				<patternset>
+					<include name="**/*.properties" />
+				</patternset>
+			</fileset>
+		</copy>
+	</target>
+	
+	<target name="test-readonly" depends="build">
+		<echo message="Running READ-ONLY tests on site" />
+		<!-- fork=yes required for assertions to be enabled -->
+		<junit printsummary="yes" haltonfailure="yes" showoutput="true">
+			<assertions enableSystemAssertions="true">
+				<enable />
+			</assertions>
+			<formatter type="plain" usefile="false" />
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${reports.tests}">
+				<fileset dir="${src.tests.java}">
+					<include name="com/dumbhippo/hungry/readonly/ReadonlyTests.java" />
+				</fileset>
+			</batchtest>
+			<classpath refid="tests.classpath"/>
+		</junit>
+	</target>
+
+	<target name="test-destructive" depends="build">
+		<echo message="Running DESTRUCTIVE tests on site" />
+		<!-- fork=yes required for assertions to be enabled -->
+		<junit printsummary="yes" haltonfailure="yes" showoutput="true">
+			<assertions enableSystemAssertions="true">
+				<enable />
+			</assertions>
+			<formatter type="plain" usefile="false" />
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${reports.tests}">
+				<fileset dir="${src.tests.java}">
+					<include name="com/dumbhippo/hungry/destructive/DestructiveTests.java" />
+				</fileset>
+			</batchtest>
+			<classpath refid="tests.classpath"/>
+		</junit>
+	</target>
+
+	<target name="test-example" depends="build">
+		<echo message="Running example tests on random web sites" />
+		<!-- fork=yes required for assertions to be enabled -->
+		<junit printsummary="yes" haltonfailure="yes">
+			<assertions enableSystemAssertions="true">
+				<enable />
+			</assertions>
+			<formatter type="plain" usefile="false" />
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${reports.tests}">
+				<fileset dir="${src.tests.java}">
+					<include name="com/dumbhippo/hungry/example/ExampleTests.java" />
+				</fileset>
+			</batchtest>
+			<classpath refid="tests.classpath"/>
+		</junit>
+	</target>
+
+	<target name="test-performance" depends="build">
+		<echo message="Run benchmarks against test performance data" />
+		<!-- fork=yes required for assertions to be enabled -->
+		<junit printsummary="yes" haltonfailure="yes">
+			<assertions enableSystemAssertions="true">
+				<enable />
+			</assertions>
+			<formatter type="plain" usefile="false" />
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${reports.tests}">
+				<fileset dir="${src.tests.java}">
+					<include name="com/dumbhippo/hungry/performance/PerformanceTests.java" />
+				</fileset>
+			</batchtest>
+			<classpath refid="tests.classpath"/>
+		</junit>
+	</target>
+
+	<target name="performance-data" depends="build">
+		<echo message="Creating data for performance tests" />
+            <java fork="yes" classname="com.dumbhippo.hungry.performance.TestData">
+            	<classpath>
+					<fileset dir="/usr/share/java" includes="junit.jar"/>
+				</classpath>
+    			<classpath refid="tests.classpath"/>
+			</java>
+	</target>
+	
+</project>

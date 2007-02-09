@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="HippoExplorer"
+	InheritedPropertySheets="..\Sheets\HippoPch.vsprops"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="../HippoUtil;../../common/hippoipc;../HippoIpc"
+		PreprocessorDefinitions="NOMINMAX"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		RegisterOutput="true"
+		AdditionalDependencies="wininet.lib advapi32.lib gdi32.lib"
+		ModuleDefinitionFile="HippoExplorer.def"
+	/>
+	<Tool
+		Name="VCMIDLTool"
+		AdditionalIncludeDirectories="../HippoUtil"
+	/>
+	<Tool
+		Name="VCResourceCompilerTool"
+		AdditionalIncludeDirectories="$(IntDir)"
+	/>
+</VisualStudioPropertySheet>

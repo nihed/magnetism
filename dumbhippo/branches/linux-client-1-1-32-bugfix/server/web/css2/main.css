@@ -1,0 +1,49 @@
+@CHARSET "UTF-8";
+@IMPORT url("main-positions.css");
+
+#dhZoneBoxWeb {
+	border-left: 1px solid #F16D1C;
+	border-right: 1px solid #F16D1C;
+}
+
+#dhZoneBoxMusic {
+	border-left: 1px solid #36AAE8;
+	border-right: 1px solid #36AAE8;
+}
+
+#dhZoneBoxTv {
+	border-left: 1px solid #60B635;
+	border-right: 1px solid #60B635;
+}
+
+.dh-logo-link, #dhMainLogoLinks {
+	color:			#ffffff;
+	background-color:	transparent;
+	font-weight:		bold;
+	font-size:		16px;
+}
+
+.dh-logo-link {
+	text-decoration:	underline;
+}
+.dh-logo-link:visited {
+	color:			#ffffff;
+}
+
+.dh-zone-box .dh-title {
+	font-size:		14px;
+	font-weight:	bold;
+}
+
+.dh-zone-box .dh-blurb {
+	font-size:		11px;
+}
+
+.dh-zone-box .dh-attribution, .dh-zone-box .dh-counts, .dh-zone-box .dh-extra-info, .dh-zone-box .dh-play-at {
+	font-size:		11px;
+	color:			#666666;
+}
+
+.dh-zone-box .dh-attribution .dh-name-link {
+	font-weight:	bold;
+}

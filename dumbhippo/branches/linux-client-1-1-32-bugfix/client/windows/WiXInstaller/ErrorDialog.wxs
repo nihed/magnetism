@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
+    <Fragment>
+        <UI>	
+            <!-- There are many things about defining an ErrorDialog that are somewhat "mystic"
+                 Note only do the (Documented) Id's for ErrorText and ErrorIcon need to have
+                 those exact values, the single letter ID's for the buttons are also mandatory;
+                 which isn't documented.
+                 
+                 The TabSkip=yes on the buttons is to keep them from being linked by WiX into
+                 the focus chain; which will result in a broken focus chain, since it deletes
+                 the buttons it doesn't need. The horizontal positioning of the buttons doesn't 
+                 matter; they'll be repositioned centered by the installer.
+                 
+                 Actually, if we omit the specification of an error dialog entirely, we'll just
+                 get the default one, which is about the same. But after spending all the time
+                 to get this working, I'm hesitant to delete it.
+            -->
+            <Property Id="ErrorDialog" Value="ErrorPage"/>    
+	    <Dialog Id="ErrorPage" Width="250" Height="100" Title="[ProductName] Installer Error" ErrorDialog="yes" >
+	        <Control Id="ErrorText" Type="Text" X="36" Y="10" Width="204" Height="58" TabSkip="no"/>
+	        <Control Id="ErrorIcon" Type="Icon" X="10" Y="10" Width="18" Height="18" FixedSize="yes"/>
+
+	        <Control Id="A" Type="PushButton" X="184" Y="73" Width="56" Height="17" TabSkip="yes">
+	            <Text>Cancel</Text>
+	            <Publish Event="EndDialog" Value="ErrorAbort"/>
+	        </Control>
+	        <Control Id="C" Type="PushButton" X="184" Y="73" Width="56" Height="17" TabSkip="yes">
+	            <Text>Cancel</Text>
+	            <Publish Event="EndDialog" Value="ErrorCancel"/>
+	        </Control>
+	        <Control Id="I" Type="PushButton" X="184" Y="73" Width="56" Height="17" TabSkip="yes">
+	            <Text>Ignore</Text>
+	            <Publish Event="EndDialog" Value="ErrorIgnore"/>
+	        </Control>
+	        <Control Id="N" Type="PushButton" X="184" Y="73" Width="56" Height="17" TabSkip="yes">
+	            <Text>No</Text>
+	            <Publish Event="EndDialog" Value="ErrorNo"/>
+	        </Control>
+	        <Control Id="O" Type="PushButton" X="184" Y="73" Width="56" Height="17" TabSkip="yes">
+	            <Text>OK</Text>
+	            <Publish Event="EndDialog" Value="ErrorOk"/>
+	        </Control>
+	        <Control Id="R" Type="PushButton" X="184" Y="73" Width="56" Height="17" TabSkip="yes">
+	            <Text>Retry</Text>
+	            <Publish Event="EndDialog" Value="ErrorRetry"/>
+	        </Control>
+	        <Control Id="Y" Type="PushButton" X="184" Y="73" Width="56" Height="17" TabSkip="yes">
+	            <Text>Yes</Text>
+	            <Publish Event="EndDialog" Value="ErrorYes"/>
+	        </Control>
+	    </Dialog>
+	</UI>
+    </Fragment>
+</Wix>

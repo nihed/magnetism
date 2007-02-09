@@ -1,0 +1,31 @@
+.dhVerticalPadding {
+	margin:						0;
+	padding:					0;
+	font-size:					2pt;
+	height:						0;
+	width:						0;
+	display:					none;
+}
+#dhCreateGroupPopup input[type="button"] {
+	width:						auto;
+}
+#dhCreateGroupPopup input {
+	width:						auto;
+}
+.dhRecipient {
+	float:						left;
+	margin:						0.5em;
+	width:						150px;
+}
+.dhButton.share {
+	margin:						0.75em;	
+}
+
+.dh-share-share-button {
+  margin-right: -1px;
+}
+
+#dhUrlTitleToShare {
+  width: expression(Math.max(parseInt(this.offsetWidth), Math.floor(0.5*document.body.clientWidth)) + "px");
+  height: expression(Math.max(parseInt(this.offsetHeight), 75) + "px")
+}

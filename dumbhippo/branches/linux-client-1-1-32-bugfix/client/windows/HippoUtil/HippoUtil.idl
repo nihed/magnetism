@@ -1,0 +1,142 @@
+cpp_quote("#pragma once")
+
+import "oaidl.idl";
+import "ocidl.idl";
+import "exdisp.idl";
+
+#include "HippoUtilDispID.h"
+
+[
+    uuid(BC81C530-2099-4121-9B66-969D89B22E3C), // LIBID_HippoUtil
+    helpstring("DumbHippo Utilities"),
+    lcid(0x0000),
+    version(0.1)
+]
+library HippoUtil {
+    interface IHippoUIListener;
+    interface IHippoToolbarAction;
+
+    [
+        uuid(F596AE04-94E7-4cdd-8CD8-5D4361F962E5), // IID_IHippoUI
+        helpstring("DumbHippo User Interface"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoUI : IDispatch
+    {
+        [id(100), helpstring("Register a browser")]
+        HRESULT RegisterBrowser([in] IWebBrowser2 *browser, [out, retval] DWORD* cookie);
+        [id(101), helpstring("Unregister a previously registered browser")]
+        HRESULT UnregisterBrowser([in] DWORD cookie);
+        [id(102), helpstring("Update information about a browser")]
+        HRESULT UpdateBrowser([in] DWORD cookie, [in] BSTR url, [in] BSTR title);
+        [id(103), helpstring("Unregister and exit, returns process ID so caller can wait for exit")]
+        HRESULT Quit([out, retval] DWORD *processId);
+        [id(104), helpstring("Show recently shared links")]
+        HRESULT ShowRecent();
+        [id(105), helpstring("Upload a photo file to flickr and share link to it")]
+        HRESULT BeginFlickrShare([in] BSTR path);
+        [id(106), helpstring("Share a specific URL")]
+        HRESULT ShareLink([in] BSTR url, [in] BSTR title, [in] IHippoToolbarAction *actions);
+        [id(107), helpstring("Open a chat window about a post")]
+        HRESULT ShowChatWindow([in] BSTR postId);
+        [id(108), helpstring("Get the user ID of the logged-in user")]
+        HRESULT GetLoginId([out, retval] BSTR *loginId);
+        [id(110), helpstring("Start upgrade process")]
+        HRESULT DoUpgrade();
+        [id(111), helpstring("Signal a share as complete")]
+        HRESULT ShareLinkComplete([in] BSTR postId, [in] BSTR url);
+
+        [id(112), helpstring("Register a listener for callbacks")]
+        HRESULT RegisterListener([in] IHippoUIListener *listener, [out] UINT64 *listenerId);
+        [id(113), helpstring("Unregister a listener added with RegisterListener")]
+        HRESULT UnregisterListener([in] UINT64 listenerId);
+        [id(114), helpstring("Register a single recipient of callbacks within a listener")]
+        HRESULT RegisterEndpoint([in] UINT64 listenerId, [out] UINT64 *endpointId);
+        [id(116), helpstring("Unregister an endpoint registered with RegisterEndpoint")]
+        HRESULT UnregisterEndpoint([in] UINT64 endpointId);
+        [id(117), helpstring("Join a chat room, sending events to the given endpoint")]
+        HRESULT JoinChatRoom([in] UINT64 endpointId, [in] BSTR chatId, [in] BOOL participant);
+        [id(118), helpstring("Leave a chatroom joined with JoinChatRoom")]
+        HRESULT LeaveChatRoom([in] UINT64 endpointId, [in] BSTR chatId);
+        [id(119), helpstring("Send a chat message to a particular room")]
+        HRESULT SendChatMessage([in] BSTR chatId, [in] BSTR text, [in] int sentiment);
+
+        [id(120), helpstring("Get the name of the server we connect to in host:port format")]
+        HRESULT GetServerName([out, retval] BSTR *serverName);
+        [id(121), helpstring("Launch a web browser for the given URL, reusing existing windows if appropriate")]
+        HRESULT LaunchBrowser([in] BSTR url);
+
+        // up to 129
+    }
+    [
+        uuid(BB761F87-493F-43F5-A1F2-2DDD1045B62F),
+        helpstring("DumbHippo User Interface Listener"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoToolbarAction : IUnknown
+    {
+        HRESULT Navigate([in] BSTR url);
+    }
+    [   
+        uuid(D7CECFA9-49F8-4a12-AB5E-1991332B081A), // IID_IHippoToolbarAction
+        helpstring("DumbHippo Web Toolbar Action"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoUIListener : IDispatch
+    {
+        HRESULT OnConnect();
+        HRESULT OnDisconnect();
+        HRESULT OnUserJoin([in] UINT64 endpointId, [in] BSTR chatId, [in] BSTR userId, [in] BOOL participant);
+        HRESULT OnUserLeave([in] UINT64 endpointId, [in] BSTR chatId, [in] BSTR userId);
+        HRESULT OnMessage([in] UINT64 endpointId, [in] BSTR chatId, [in] BSTR userId, [in] BSTR message, [in] int sentiment, [in] double timestamp, [in] int serial);
+        HRESULT UserInfo([in]  UINT64 endpointId, [in] BSTR userId, [in] BSTR name, [in] BSTR smallPhotoUrl, [in] BSTR currentSong, [in] BSTR currentArtist, [in] BOOL musicPlaying);
+    }
+    [
+        uuid(49214430-579E-4c01-92DC-4BFDA2377EB7), // IID_IHippoExternal
+        helpstring("DumbHippo Javascript external object"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoExternal : IUnknown
+    {
+        [id(130), propget, helpstring("Get the application object")]
+        HRESULT Application([out, retval] IDispatch **application);
+        [id(135), helpstring("Log to the debug log")]
+        HRESULT DebugLog([in] BSTR msg);
+        [id(136), helpstring("Create an xmlhttp object")]
+        HRESULT GetXmlHttp([out, retval] IXmlHttpRequest **request);
+    }
+    [
+        uuid(C79153EE-79EB-4269-8EA3-5E57722776F3),
+        helpstring("DumbHippo Inter-thread Call Interface"),
+        dual
+    ]
+    interface IHippoCallable : IUnknown
+    {
+        HRESULT call([in] UINT64 param, [out, retval] UINT64 *reval);
+    }
+    [
+        uuid(FD2D3BEE-477E-4625-B35F-BF497FF601D9)
+    ]
+    coclass HippoUI 
+    {
+        [default] interface IHippoUI;
+    }
+    [
+        uuid(EE8E46EB-CDC7-4f89-A8AE-AF09946C9685)
+    ]
+    coclass HippoUI_Debug
+    {
+        [default] interface IHippoUI;
+    }
+    [
+        uuid(B3124A18-A7AB-41a8-AB11-A0D6452209C6)
+    ]
+    coclass HippoUI_Dogfood 
+    {
+        [default] interface IHippoUI;
+    }
+}

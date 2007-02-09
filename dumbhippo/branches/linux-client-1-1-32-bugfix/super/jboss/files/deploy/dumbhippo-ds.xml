@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<datasources>
+  <local-tx-datasource>
+    <jndi-name>DumbHippoDS</jndi-name>
+    <max-pool-size>@@maxConnectionPoolSize@@</max-pool-size>
+    <blocking-timeout-millis>30000</blocking-timeout-millis>
+@@if mysqlEnabled
+	<!-- I don't think the useUnicode is needed with current MySQL, but it shouldn't hurt -->
+    <connection-url>jdbc:mysql://@@mysqlHost@@:@@mysqlPort@@/dumbhippo?useUnicode=true&amp;characterEncoding=UTF-8</connection-url>
+    <driver-class>com.mysql.jdbc.Driver</driver-class>
+    <user-name>root</user-name>
+    <password>@@dbPassword@@</password>
+    <exception-sorter-class-name>org.jboss.resource.adapter.jdbc.vendor.MySQLExceptionSorter</exception-sorter-class-name>
+    <metadata>
+       <type-mapping>mySQL</type-mapping>
+    </metadata>
+@@elif pgsqlEnabled
+    <connection-url>jdbc:postgresql://localhost:@@pgsqlPort@@/dumbhippo</connection-url>
+    <driver-class>org.postgresql.Driver</driver-class>
+    <user-name>dumbhippo</user-name>
+    <password>@@dbPassword@@</password>
+    <metadata>
+       <type-mapping>PostgreSQL 8.0</type-mapping>
+    </metadata>
+@@else
+@@  error "No Database"
+@@endif   
+  </local-tx-datasource>
+</datasources>
+

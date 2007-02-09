@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<server>
+   <!-- ==================================================================== -->
+   <!-- JMS Queues and Topics                                                -->
+   <!-- ==================================================================== -->
+
+	<!-- Incoming queue for adding an AIM address to an account for example -->
+	<mbean code="org.jboss.mq.server.jmx.Queue"
+		name="jboss.mq.destination:service=Queue,name=IncomingAimQueue">
+		<depends optional-attribute-name="DestinationManager">
+			jboss.mq:service=DestinationManager
+		</depends>
+	</mbean>
+
+	<!-- Outgoing queue for IM'ing someone something -->
+	<mbean code="org.jboss.mq.server.jmx.Queue"
+		name="jboss.mq.destination:service=Queue,name=OutgoingAimQueue">
+		<depends optional-attribute-name="DestinationManager">
+			jboss.mq:service=DestinationManager
+		</depends>
+	</mbean>
+
+        <!-- Queue for scheduling reindexing for search of objects -->
+	<mbean code="org.jboss.mq.server.jmx.Queue"
+		name="jboss.mq.destination:service=Queue,name=IndexQueue">
+		<depends optional-attribute-name="DestinationManager">
+			jboss.mq:service=DestinationManager
+		</depends>
+	</mbean>
+
+  <!-- Topic for asynchronous updates to cached state -->
+	<mbean code="org.jboss.mq.server.jmx.Topic"
+		name="jboss.mq.destination:service=Topic,name=LiveUpdateTopic">
+		<depends optional-attribute-name="DestinationManager">
+			jboss.mq:service=DestinationManager
+		</depends>
+	</mbean>
+</server>

@@ -1,0 +1,27 @@
+@CHARSET "UTF-8";
+
+#dhAdminSamples {
+	float: right; 
+	font-size: smaller;
+	border: 1px solid grey;
+}
+
+.dh-admin-sample-code {
+	font-family: monospace;
+}
+
+#dhAdminShellResultArea {
+	width: 600px;
+}
+
+.dh-admin-shell-result {
+	font-family: monospace; 
+	border: 1px solid black; 
+	margin: 10px 0px;
+}
+
+#dhAdminShellResultReflection {
+	overflow: scroll; 
+	height: 200px; 
+	font-family: monospace; 
+}

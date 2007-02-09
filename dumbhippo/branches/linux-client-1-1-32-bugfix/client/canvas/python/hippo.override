@@ -1,0 +1,252 @@
+/* -*- Mode: C; c-basic-offset: 4 -*- */
+%%
+headers
+#include <Python.h>
+
+#include "pygobject.h"
+#include "hippo/hippo-canvas-item.h"
+#include "hippo/hippo-canvas-box.h"
+#include "hippo/hippo-canvas-image.h"
+#include "hippo/hippo-canvas-text.h"
+#include "hippo/hippo-canvas-link.h"
+#include "hippo/hippo-canvas.h"
+#include "hippo/hippo-canvas-widget.h"
+
+#include "hippo-canvas/hippo-canvas-type-builtins.h"
+
+#include "pycairo.h"
+#include <pygtk/pygtk.h>
+
+extern Pycairo_CAPI_t *Pycairo_CAPI;
+
+%%
+modulename hippocanvas
+%%
+import gobject.GObject as PyGObject_Type
+import gtk.Container as PyGtkContainer_Type
+import gtk.gdk.Pixbuf as PyGdkPixbuf_Type
+%%
+ignore
+hippo_cairo_set_source_rgba32
+hippo_canvas_box_new
+hippo_canvas_text_new
+hippo_canvas_link_new
+%%
+ignore-glob
+  *_get_type
+  _*
+%%
+override hippo_canvas_context_translate_to_widget kwargs
+static PyObject *
+_wrap_hippo_canvas_context_translate_to_widget(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "item", NULL };
+    PyGObject *item;
+    int x_p = 0, y_p = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:HippoCanvasContext.translate_to_widget", kwlist, &PyHippoCanvasItem_Type, &item))
+        return NULL;
+
+    hippo_canvas_context_translate_to_widget(HIPPO_CANVAS_CONTEXT(self->obj), HIPPO_CANVAS_ITEM(item->obj), &x_p, &y_p);
+
+    return Py_BuildValue("(ii)", x_p, y_p);
+}
+%%
+override hippo_canvas_item_get_allocation noargs
+static PyObject *
+_wrap_hippo_canvas_item_get_allocation(PyGObject *self)
+{
+    int x_p = 0;
+    int y_p = 0;
+
+    hippo_canvas_item_get_allocation(HIPPO_CANVAS_ITEM(self->obj), &x_p, &y_p);
+
+    return Py_BuildValue("(ii)", x_p, y_p);
+}
+%%
+override hippo_canvas_item_get_request noargs
+static PyObject *
+_wrap_hippo_canvas_item_get_request(PyGObject *self)
+{
+    int x_p = 0;
+    int y_p = 0;
+
+    hippo_canvas_item_get_request(HIPPO_CANVAS_ITEM(self->obj), &x_p, &y_p);
+
+    return Py_BuildValue("(ii)", x_p, y_p);
+}
+%%
+override hippo_canvas_box_get_position kwargs
+static PyObject *
+_wrap_hippo_canvas_box_get_position(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "child", NULL };
+    PyGObject *child;
+    int x_p = 0, y_p = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:HippoCanvasBox.get_position", kwlist, &PyHippoCanvasItem_Type, &child))
+        return NULL;
+
+    hippo_canvas_context_translate_to_widget(HIPPO_CANVAS_CONTEXT(self->obj), HIPPO_CANVAS_ITEM(child->obj), &x_p, &y_p);
+
+    return Py_BuildValue("(ii)", x_p, y_p);
+}
+%%
+override hippo_canvas_box_get_children noargs
+static PyObject *
+_wrap_hippo_canvas_box_get_children(PyGObject *self)
+{   
+    GList *list, *tmp;
+    PyObject *py_list;
+
+    list = hippo_canvas_box_get_children(HIPPO_CANVAS_BOX(self->obj));
+
+    if ((py_list = PyList_New(0)) == NULL) {
+        g_list_free(list);
+        return NULL;
+    }
+    for (tmp = list; tmp != NULL; tmp = tmp->next) {
+        PyObject *child_obj = pygobject_new(G_OBJECT(tmp->data));
+
+        if (child_obj == NULL) {
+            g_list_free(list);
+            Py_DECREF(py_list);
+            return NULL;
+        }
+        PyList_Append(py_list, child_obj);
+        Py_DECREF(child_obj);
+    }
+    g_list_free(list);
+    return py_list;
+}
+%%
+override-slot HippoEvent.tp_getattr
+static PyObject *
+_wrap_hippo_event_tp_getattr(PyObject *self, char *attr)
+{
+    HippoEvent *event = pyg_boxed_get(self, HippoEvent);
+
+    switch(event->type) {
+    case HIPPO_EVENT_MOTION_NOTIFY:
+        if (!strcmp(attr, "__members__"))
+            return Py_BuildValue("[sss]", "x", "y", "detail");
+        if (!strcmp(attr, "x"))
+            return PyInt_FromLong(event->x);
+        if (!strcmp(attr, "y"))
+            return PyInt_FromLong(event->y);
+        if (!strcmp(attr, "detail"))
+            return pyg_enum_from_gtype(HIPPO_TYPE_MOTION_DETAIL, event->u.motion.detail);
+        break;
+
+    default:
+        break;
+    }
+
+    return NULL;
+}
+%%
+override hippo_cairo_surface_from_gdk_pixbuf kwargs
+static cairo_surface_t*
+_cairo_surface_from_pixbuf (GdkPixbuf *pixbuf)
+{
+/* Ripped from GooCanvas */
+  gint width = gdk_pixbuf_get_width (pixbuf);
+  gint height = gdk_pixbuf_get_height (pixbuf);
+  guchar *gdk_pixels = gdk_pixbuf_get_pixels (pixbuf);
+  int gdk_rowstride = gdk_pixbuf_get_rowstride (pixbuf);
+  int n_channels = gdk_pixbuf_get_n_channels (pixbuf);
+  guchar *cairo_pixels;
+  cairo_format_t format;
+  cairo_surface_t *surface;
+  static const cairo_user_data_key_t key;
+  int j;
+
+  if (n_channels == 3)
+    format = CAIRO_FORMAT_RGB24;
+  else
+    format = CAIRO_FORMAT_ARGB32;
+
+  cairo_pixels = g_malloc (4 * width * height);
+  surface = cairo_image_surface_create_for_data ((unsigned char *)cairo_pixels,
+						 format,
+						 width, height, 4 * width);
+  cairo_surface_set_user_data (surface, &key,
+			       cairo_pixels, (cairo_destroy_func_t)g_free);
+
+  for (j = height; j; j--)
+    {
+      guchar *p = gdk_pixels;
+      guchar *q = cairo_pixels;
+
+      if (n_channels == 3)
+	{
+	  guchar *end = p + 3 * width;
+	  
+	  while (p < end)
+	    {
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+	      q[0] = p[2];
+	      q[1] = p[1];
+	      q[2] = p[0];
+#else	  
+	      q[1] = p[0];
+	      q[2] = p[1];
+	      q[3] = p[2];
+#endif
+	      p += 3;
+	      q += 4;
+	    }
+	}
+      else
+	{
+	  guchar *end = p + 4 * width;
+	  guint t1,t2,t3;
+	    
+#define MULT(d,c,a,t) G_STMT_START { t = c * a; d = ((t >> 8) + t) >> 8; } G_STMT_END
+
+	  while (p < end)
+	    {
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+	      MULT(q[0], p[2], p[3], t1);
+	      MULT(q[1], p[1], p[3], t2);
+	      MULT(q[2], p[0], p[3], t3);
+	      q[3] = p[3];
+#else	  
+	      q[0] = p[3];
+	      MULT(q[1], p[0], p[3], t1);
+	      MULT(q[2], p[1], p[3], t2);
+	      MULT(q[3], p[2], p[3], t3);
+#endif
+	      
+	      p += 4;
+	      q += 4;
+	    }
+	  
+#undef MULT
+	}
+
+      gdk_pixels += gdk_rowstride;
+      cairo_pixels += 4 * width;
+    }
+
+  return surface;
+}
+static PyObject *
+_wrap_hippo_cairo_surface_from_gdk_pixbuf(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "pixbuf", NULL };
+    PyGObject *child;
+    cairo_surface_t *surface;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:hippo.cairo_surface_from_gdk_pixbuf", kwlist, &PyGdkPixbuf_Type, &child))
+        return NULL;
+
+    surface = _cairo_surface_from_pixbuf(GDK_PIXBUF (child->obj));
+	if (surface == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "pixbuf could not be converted");
+        return NULL;
+    }
+
+    return PycairoSurface_FromSurface(surface, NULL);
+}
+%%

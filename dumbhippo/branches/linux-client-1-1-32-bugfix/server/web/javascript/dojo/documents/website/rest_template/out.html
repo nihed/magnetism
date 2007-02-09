@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.3.9: http://docutils.sourceforge.net/" />
+<title></title>
+<link rel="stylesheet" href="default.css" type="text/css" />
+</head>
+<body>
+<div class="document">
+	<div id="rest" class="docs">
+		
+		<link rel="stylesheet" type="text/css" href="css/rest_common.css" media="screen" />
+		<link rel="stylesheet" type="text/css" href="css/print.css" media="print" />
+		<div id="header">
+			<div id="dojo-top">
+				<h1><a href="http://dojotoolkit.org" title="Dojo">Dojo Toolkit</a></h1>
+				<div id="dojo-top-nav">
+					<a id="dojo-downloads" href="http://dojotoolkit.org/download/" title="Get the source">Download</a>
+					<span>|</span>
+					<a id="dojo-news" href="http://dojotoolkit.org/blog/" title="planet::dojo">News</a>
+					<span>|</span>
+					<a id="dojo-docs" href="http://dojotoolkit.org/docs/" title="Help, How-tos, and more">Documentation</a>
+					<span>|</span>
+					<a id="dojo-community" href="http://dojotoolkit.org/community/" title="Join the fray">Community</a>
+					<span>|</span>
+					<a id="dojo-examples" href="http://dojotoolkit.org/examples/" title="Dojo in action">Examples</a>
+				</div>
+			</div>
+		</div>
+		<div id="content-body">
+			<div id="content">
+<div class="section" id="overview">
+<h1><a class="toc-backref" href="#id1" name="overview">Overview</a></h1>
+<p>The last optional step in Dojo's build process is compression. Like many
+non-trivial JavaScript tools, Dojo uses a tool to reduce the size, and
+therefore latency, of JavaScript by browsers. This article covers <em>only</em> the
+compression system. While the rest of the Dojo package and build system are
+interesting in their own rights, there is a lot of pent-up demand for a stable,
+reliable, and non-destructive JavaScript compressor.</p>
+<p>While many compression tools exist, several factors together make the Dojo
+compressor unique. We'll get to those, but first, how to make it work for you.</p>
+</div>
+<div class="section" id="example">
+<h1><a class="toc-backref" href="#id2" name="example">Example</a></h1>
+<p>To run this example, you'll need a working install of Java (at least 1.4 is
+recommended). The latest version of the tool itself can be downloaded from Dojo
+Subversion at:</p>
+<p><a class="reference" href="http://dojotoolkit.org/svn/dojo/buildscripts/lib/custom_rhino.jar">http://dojotoolkit.org/svn/dojo/buildscripts/lib/custom_rhino.jar</a></p>
+<p>To demo our compression system, let's build an example that we want to
+compress. Here's the listing for <tt class="docutils literal"><span class="pre">infile.js</span></tt>:</p>
+<pre class="literal-block">
+function MyClass(){
+    this.foo = function(argument1, argument2){
+        var addedArgs = parseInt(argument1)+parseInt(argument2);
+        return addedArgs;
+    }
+
+    var anonymousInnerFunction = function(){
+        // do stuff here!
+    }
+}
+
+function MyFunc(){
+    // this is a top-level function
+}
+
+
+
+
+
+// we've got multiple lines of whitespace here
+</pre>
+<p>We run it through the compressor with this command to generate <tt class="docutils literal"><span class="pre">outfile.js</span></tt>:</p>
+<pre class="literal-block">
+java -jar custom_rhino.jar -c infile.js &gt; outfile.js 2&gt;&amp;1
+</pre>
+<p>And the contents of <tt class="docutils literal"><span class="pre">outfile.js</span></tt> should now look something like:</p>
+<pre class="literal-block">
+function MyClass(){
+this.foo=function(_1,_2){
+var _3=parseInt(_1)+parseInt(_2);
+return _3;
+};
+var _4=function(){
+};
+}
+function MyFunc(){
+}
+</pre>
+<p>So that <em>looks</em> smaller, but by how much?:</p>
+<pre class="literal-block">
+obelisk:/tmp/compress alex$ ls -lah
+...
+-rw-r--r--    1 alex  users  321B Aug 12 09:21 infile.js
+-rw-r--r--    1 alex  users  140B Aug 12 09:21 outfile.js
+</pre>
+<p>321 bytes to 140 bytes, a 56% reduction. Not bad!</p>
+</div>
+<div class="section" id="riding-a-rhino">
+<h1><a class="toc-backref" href="#id3" name="riding-a-rhino">Riding a Rhino</a></h1>
+<p>So how does this all work? And why should anyone choose this tool over the
+other ones that are available. The answer to both of those questions is in the
+design of the the Dojo compressor. Instead of brittle regular expressions, the
+Dojo compressor is based on Rhino, a JavaScript engine from the Mozilla
+project.</p>
+<p>Being based on a real parse stream, the Dojo compressor can get a better idea
+for the context of a token (variable name, etc.) than the regular-expression
+based tools. This allows us to achieve the over-riding goal of a compressor
+that would be acceptable to the Dojo project: it must never mangle a public
+API.</p>
+</div>
+<div class="section" id="api-safety">
+<h1><a class="toc-backref" href="#id4" name="api-safety">API Safety</a></h1>
+<p>There are many &quot;obfuscators&quot; available in addition to size reduction tools.
+Over the years, many people have attempted to &quot;encrypt&quot; or otherwise obfuscate
+JavaScript sent over the wire to browsers, and it never pans out. Why not? For
+starters, JavaScript (as implemented in browsers) is completely interpreted.
+This means that any further compilation beyond source transformations will not
+work everywhere, and the tool provides a &quot;decryption&quot; tool along with the
+&quot;encrypted&quot; or obfuscated source, the unencrypted version will be available at
+runtime for anyone with a debugger to see. For those tools that just transform
+source code by mangling variable names, it's even easier to revert their
+changes. Therefore, obfuscation and encryption aren't useful goals. Size
+reduction, on the other hand, <em>is</em> a useful goal.</p>
+<p>But not if your size-reduction tool breaks things. There are, of course, many
+increments available for the &quot;compression&quot; process. Potential choices available
+to a tool author include:</p>
+<ul class="simple">
+<li>removing comments</li>
+<li>collapsing line-beginning whitespace</li>
+<li>removing line-ending whitespace</li>
+<li>collapsing multiple blank lines</li>
+<li>removing all new-line characters</li>
+<li>removing whitespace around operators</li>
+<li>removing whitespace near/around curly braces</li>
+<li>replacing symbols with shorter names (this is how most &quot;obfuscation&quot; is done)</li>
+</ul>
+<p>And the list goes on and gets ever-more esoteric as one tries to squeeze every
+last K out of a JavaScript file. But at some point, you can go too far. The Dojo
+compressor attempts to strike a balance between debuggability (not replacing
+all symbols and not removing all newlines) and size reduction.</p>
+</div>
+<div class="section" id="getting-the-source">
+<h1><a class="toc-backref" href="#id5" name="getting-the-source">Getting The Source</a></h1>
+<p>The source code for Rhino is available from Mozilla anonymous CVS. Instructions
+for Mozilla CVS are at:</p>
+<p><a class="reference" href="http://www.mozilla.org/cvs.html">http://www.mozilla.org/cvs.html</a></p>
+<p>And the Rhino code lives in their repository at:</p>
+<p>/cvsroot/mozilla/js/rhino</p>
+<p>Our patches should apply cleanly against Rhino HEAD and are available in
+unified diff format from:</p>
+<p><a class="reference" href="http://dojotoolkit.org/svn/dojo/buildscripts/lib/custom_rhino.diff">http://dojotoolkit.org/svn/dojo/buildscripts/lib/custom_rhino.diff</a></p>
+<p>Unlike the rest of Dojo, the Dojo Foundation does not control the copyright of
+the original work, and we therefore cannot license this code under there AFL.
+It is made available under the tri-licensing terms of the Mozilla project.</p>
+</div>
+<div class="section" id="the-future">
+<h1><a class="toc-backref" href="#id6" name="the-future">The Future</a></h1>
+<p>The Dojo compression tool is by no means the last word in file-size or
+on-the-wire reduction. Gzipping content on the wire is the next obvious
+improvement for those deploying applications.</p>
+<p>The Dojo package system and JSAN allow developers to include just those
+packages from a library that they require, and future work on real JS linkers
+will further strip down capable libraries like Dojo to only absolutely what is
+needed by application authors.</p>
+<p>The Dojo project intends to continue to produce the best Open Source tools for
+JS and webapp developers, and we will make these transparently available in the
+Dojo build system, as we do today with the compression and package systems.</p>
+<div class="section" id="about-the-author">
+<h2><a class="toc-backref" href="#id7" name="about-the-author">About The Author</a></h2>
+<p>Alex Russell is the project lead for Dojo and  can be reached at
+&lt;<a class="reference" href="mailto:alex&#64;dojotoolkit.org">alex&#64;dojotoolkit.org</a>&gt;. His blog is at: <a class="reference" href="http://alex.dojotoolkit.org">http://alex.dojotoolkit.org</a></p>
+			</div>
+			<div id="sidebar">
+				<h1>Documentation</h1>
+				<div id="section-sidebar">
+
+<div class="section" id="dojo-s-compressor">
+<h3><a class="toc-backref" href="#id8" name="dojo-s-compressor">Dojo's Compressor</a></h3>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Author:</th><td class="field-body">Alex Russell</td>
+</tr>
+<tr class="field"><th class="field-name">Version:</th><td class="field-body">0.1</td>
+</tr>
+<tr class="field"><th class="field-name">Copyright:</th><td class="field-body">Dojo Foundation, 2005</td>
+</tr>
+<tr class="field"><th class="field-name">Date:</th><td class="field-body">2005/08/12</td>
+</tr>
+</tbody>
+</table>
+<div class="contents topic" id="contents">
+<p class="topic-title first"><a name="contents">Contents</a></p>
+<ul class="simple">
+<li><a class="reference" href="#overview" id="id1" name="id1">Overview</a></li>
+<li><a class="reference" href="#example" id="id2" name="id2">Example</a></li>
+<li><a class="reference" href="#riding-a-rhino" id="id3" name="id3">Riding a Rhino</a></li>
+<li><a class="reference" href="#api-safety" id="id4" name="id4">API Safety</a></li>
+<li><a class="reference" href="#getting-the-source" id="id5" name="id5">Getting The Source</a></li>
+<li><a class="reference" href="#the-future" id="id6" name="id6">The Future</a><ul>
+<li><a class="reference" href="#about-the-author" id="id7" name="id7">About The Author</a><ul>
+<li><a class="reference" href="#dojo-s-compressor" id="id8" name="id8">Dojo's Compressor</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+				</div>
+				<!--
+				<div id="site-sidebar">
+					site sidebar
+				</div>
+				-->
+				<div class="clear"></div>
+				<div id="footer">
+					<div style="float:left;">&copy; Dojo Foundation, All Rights Reserved.</div>
+			</div>
+		</div>
+	</div>
+<!-- vim:ts=4:et:tw=0:shiftwidth=4: -->
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

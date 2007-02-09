@@ -1,0 +1,64 @@
+@IMPORT url("statistics-positions.css");
+
+body { font-family: sans-serif; }
+
+#dhHeaderTable {
+	table-layout: fixed;
+	width: 100%;
+}
+
+#dhHourSelector {
+	 text-align: right;
+	 font-size: 12px;
+}
+
+#dhHourSelector table {
+	 border-collapse: collapse;
+}
+
+#dhHourSelector .dh-hour {
+	border: 1px solid #666666; 
+	padding: 2px; 
+	cursor: default;
+}
+	
+#dhHourSelector .dh-normal-hour { 
+	background: #eeeecc; 
+}
+
+#dhHourSelector .dh-selected-hour { 
+	background: #ccccee; 
+}
+
+#dhHourSelector .dh-hour-head { 
+	background: #ffffff; 
+}
+
+#dhHourSelector .dh-disabled-hour { 
+	background: #ffffff; 
+	color: #aaaaaa; 
+}
+
+.dh-graph canvas {
+	background: #eeeecc; 
+}
+
+.dh-remove {
+	border: 1px solid black;
+	cursor: default;
+}
+
+.dh-remove-disabled {
+	border: 1px solid #666666;
+	color: #aaaaaa; 
+}
+
+.dh-remove-prelight {
+	background-color: #eeeecc; 
+}
+
+.dh-coordinates div {
+	background: #d5c5d5;
+	text-align: center;
+}
+

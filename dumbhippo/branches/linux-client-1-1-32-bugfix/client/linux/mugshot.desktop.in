@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+# don't mark Mugshot for translation, it's a trademark/proper name
+Name=Mugshot
+GenericName=Mugshot
+_Comment=Companion software for mugshot.org
+Exec=mugshot
+Terminal=false
+Type=Application
+Icon=mugshot
+StartupNotify=false
+Categories=

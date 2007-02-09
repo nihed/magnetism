@@ -1,0 +1,109 @@
+Fast Widget Authoring With Dojo
+===============================
+
+:Author: Alex Russell
+:Version: 0.1
+:Copyright: Dojo Foundation, 2005
+:Date: 2005/05/02
+
+.. contents::
+
+.. storage spot for things that didn't make it into fast_widget_authoring.rest
+	
+Intro
+----------------------------------
+
+The Dojo project is working to build a modern, capable, "webish", and easy to
+use DHTML toolkit. But what does "easy to use" mean? And easy to use for who?
+That's a big question, and one which the project is attempting to answer by
+introducing multiple points of entry into the code. What that means is that it
+shouldn't matter whether you just want to use a widget or an API, build widgets
+and APIs with Dojo, or hack on the core of Dojo itself: you should be able to
+do all of those if you want to. This article is complementary to our article on the `Dojo widget system`_.  So while the other article describes how to use the 
+widget system, this article provides an analysis of the problem space for people 
+who want to build and use widgets or "AJAX components" in their applications.
+
+In order to make it simpler to build better UIs, Dojo seeks to make it easier 
+for the people that build the tools they use to construct better components 
+faster. Given the time constraints and volatility of specs in the average web 
+app project, simplifying the creation and maintenance of these components is of 
+paramount importance. Until now, developers building DHTML UI components have 
+either had to rely on hard-to-maintain innerHTML techniques or verbosely 
+construct UI components one node at a time with document.createElement() calls. 
+Given these unappealing options, most developers punt and scramble back to the 
+relative sanity of the server-side.
+
+The Workflow Problem
+----------------------------------
+
+Cross-browser issues aside, there are practical considerations to think about
+when building reusable UI components. Those who go the innerHTML route soon
+find themselves building huge string variables and dealing with myriad string
+encoding issues. Worse, it's pretty sub-optimal to attach programmatic logic to
+elements created this way. What good is getting a reference to a DOM node that
+could be blown away the next time your need to repaint the UI in response to
+user input?
+
+The other side of the fence is the "clean" method constructing UIs with pure
+DOM manipulation from JavaScript. This is the approach that toolkits like
+DomAPI and nWidgets take (for the most part). While functional and cleaner than
+the alternative, developers suffer reduced productivity. Building widgets this
+way is verbose and time consuming and once a widget or component works, the
+last thing you ever want to do is change its DOM structure. Not what you might
+call maintainable.
+
+The DOM-only approach also doesn't fit well into the basic workflow of UI
+development for web applications. Creative professionals often design systems
+and if the developer is lucky, will hand over HTML with the final design (and
+when was the last time that a "final" design was actually final, anyway?). The
+job of turning that design into a functioning system falls to a web development
+professional. Regardless of whether or not they've been handed slide-ware, the
+first step for this person is almost always to prototype the UI is good markup
+and CSS.
+
+This is a tremendously important point. Markup, it turns out, is perhaps the
+fastest way to build the initial representation of a UI for programmers and
+dramatically improves the productivity of programmers.  Classic desktop GUI
+toolkits are starting to adapt (GTK+ and QT) or die (MFC will some day be
+replaced by XAML, Mozilla uses XUL now, etc.).  Said another way, markup has,
+for better and for worse, democratized the GUI construction process. Building
+client-side UIs with either innerHTML or direct DOM manipulation endangers this
+cornerstone adavntage of web applications. Successful DHTML/Ajax tools need to
+preserve the advantage of markup, both in constructing and using custom
+widgets.
+
+The method we outline in the `Dojo widget system`_ allows component authors to 
+continue to realize the advantages of HTML and CSS markup for creating the 
+initial state of widgets while maintaining the advantages of direct DOM 
+manipulation for post-initialization changes a component's look and feel.
+
+Remainders
+---------------
+
+`Dojo Status`_
+`Dojo widget system`_
+
+
+Getting Involved with Dojo
+##########################
+
+If you'd like to contribute to the future of Dojo and responsive web
+applications, we'd love to hear from you and work with you. Our project website
+has links to the various tools (mailing lists, wiki, bug tracking) that you can
+use to participate in the project. http://dojotoolkit.org
+
+People wanting to contribute to the the core of Dojo should have a look our
+license. It has been chosen to be non-political (Academic Free License 2.1) and
+we support your use of Dojo in software that's licensed in other ways, but will
+not accept differently-licensed patches.
+
+About The Author
+#########################
+
+Alex Russell, a core contributor to Dojo, can be reached at
+<alex@dojotoolkit.org>. His blog is at: http://alex.nWidgets.com
+
+.. _`Dojo Status`: http://www.dojotoolkit.org/projectStatus.html
+.. _`Dojo widget system`: http://www.dojotoolkit.org/fast_widget_authoring.html
+
+.. vim:ts=4:et:tw=0:shiftwidth=4:

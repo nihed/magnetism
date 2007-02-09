@@ -1,0 +1,542 @@
+[10:00AM] dylan_: ​hey
+​[10:00AM] slightlyoff: ​howdy!
+​[10:00AM] ttrenka joined the chat room. (10:00AM) 
+[10:00AM] ttrenka: ​i'm here
+​[10:00AM] slightlyoff: ​neat
+​[10:01AM] ttrenka: ​probably can't talk too long though
+​[10:01AM] slightlyoff: ​OK
+​[10:01AM] ttrenka: ​but while we wait...http:/​​/​​www.simonkelk.co.uk/​​mainframe-misc-heaven-sk.html
+[10:01AM] ttrenka: some mild entertainment for you.
+​[10:02AM] dylan_: ​lol
+​[10:02AM] ttrenka: ​apparently I'm going to burn in HELL
+​[10:02AM] slightlyoff: ​nice
+​[10:02AM] ttrenka: ​:)
+​[10:02AM] dylan_: ​i've been enjoying paul graham's latest: http:/​​/​​paulgraham.com/​​hs.html
+​[10:02AM] ttrenka: ​yeah
+[10:02AM] ttrenka: was reading that before, didn't realize that was a new one
+[10:03AM] ttrenka: how long do we want to wait?
+​[10:03AM] dylan_: ​5 min?
+​[10:03AM] ttrenka: ​ok
+​[10:04AM] dylan_: ​schontz might join, what about mda?
+​[10:04AM] slightlyoff: ​MDA isn't respoding to IM, so he seems doubtful
+​[10:04AM] ttrenka: ​david isn't signed in at all either
+​[10:04AM] slightlyoff: ​call him?
+[10:04AM] slightlyoff: (schontz)
+[10:04AM] slightlyoff: ;-)
+​[10:04AM] ttrenka: ​if you want
+​[10:04AM] slightlyoff: ​nah, no big deal
+​[10:04AM] dylan_: ​i have no cell service at my desk
+​[10:05AM] ttrenka: ​k
+[10:05AM] ttrenka: someone want to explain this action tag, then?
+[10:05AM] ttrenka: ;)
+​[10:05AM] dylan_: ​well, the idea was to treat events/actions like any other property set
+​[10:06AM] ttrenka: ​ok
+​[10:06AM] dylan_: ​and to support both normal dom style events, and AOP style advice
+​[10:06AM] slightlyoff: ​mda just joined the land o the living
+​[10:06AM] ttrenka: ​heh
+​[10:06AM] dylan_: ​if you haven't already, take a look at the files in /templates
+​[10:06AM] ttrenka: ​ok, let me do an update
+[10:07AM] ttrenka: if I can
+​[10:07AM] slightlyoff: ​which ones? and which lines?
+​[10:07AM] ttrenka: ​bollocks
+​[10:07AM] dylan_: ​dojoml.xml, and exampleApp.xml, grep for event and connect
+​[10:08AM] slightlyoff: ​bollocks?
+​[10:08AM] dylan_: ​that's the latest work i've done on it, which was sometime last year
+​[10:08AM] ttrenka: ​yeah
+[10:08AM] ttrenka: sorry, just figured out why I was having issues with SVN
+[10:08AM] ttrenka: ok
+​[10:08AM] mda joined the chat room. (10:08AM) 
+[10:08AM] ttrenka: ​I'm seeing this:
+[10:09AM] ttrenka: <dojo:connect> 
+[10:09AM] ttrenka: <dojo:source object="" function="" name="" /> 
+[10:09AM] ttrenka: <dojo:target object="" function="" name="" /> 
+[10:09AM] ttrenka: </dojo:connect> 
+[10:09AM] ttrenka: <dojo:event type="" target="" action="" /> 
+[10:09AM] ttrenka: in dojoml.xml, right?
+​[10:09AM] dylan_: ​yup
+​[10:09AM] slightlyoff: ​hrm, does that mean that we never got around to the <action> tag?
+[10:09AM] slightlyoff: or is connect just a synonym?
+​[10:09AM] dylan_: ​same thing, just a different name
+​[10:10AM] ttrenka: ​ok
+[10:10AM] ttrenka: still seems like DOM 0
+[10:10AM] ttrenka: is that right?
+​[10:10AM] slightlyoff: ​not really
+​[10:10AM] ttrenka: ​in terms of a single function being assign
+[10:10AM] ttrenka: assigned
+​[10:10AM] slightlyoff: ​I can have multiple sets of these
+[10:10AM] slightlyoff: all pointing at the same function
+​[10:10AM] ttrenka: ​...i actually see it as more of a cross between DOM 0 and XBL
+[10:10AM] ttrenka: I think
+​[10:11AM] slightlyoff: ​and they can be set to be either before-advice, after-advice, or around-advice
+​[10:11AM] ttrenka: ​ok
+[10:12AM] ttrenka: this is going to sound stupid.
+​[10:12AM] slightlyoff: ​so in the same waht that you could do __sig__.connect() or dojo.event.connect(), you use <dojo:connect> to accomplish method interception
+​[10:12AM] dylan_: ​so we had some issues when thinking about this before, but i want to get your opinion and ideas before getting into that :)
+​[10:12AM] ttrenka: ​but what's the issue?
+[10:13AM] ttrenka: are you guys waiting for an opinion from me?
+​[10:13AM] dylan_: ​so i guess the first questions i have then are, does this make sense, is it flexible, does it do what it should, is it easy to use?
+​[10:14AM] ttrenka: ​oh ok
+​[10:14AM] mda: ​one thing that comes to mind is that with mandatory instance-to-instance wiring, you can't just say anymore "this is a click handler"
+​[10:14AM] ttrenka: ​concur
+​[10:14AM] mda: ​like if a container widget has 50 buttons in it.
+​[10:14AM] slightlyoff: ​yes
+​[10:14AM] dylan_: ​we would still allow that in inline markup
+​[10:14AM] slightlyoff: ​how?
+[10:14AM] slightlyoff: I've actuallly hacked this in to the current system
+[10:15AM] slightlyoff: where if you give the name of a function on the widget class to the ctor, it'll create a new anonymous function out of it
+[10:15AM] slightlyoff: and then connect it
+[10:15AM] slightlyoff: the problem with this is that it's limited to events that are explicitly supported
+​[10:15AM] dylan_: ​right
+​[10:15AM] mda: ​why is it so limited?
+​[10:16AM] slightlyoff: ​so there's a breif syntax on the template to allow attachment
+​[10:16AM] ttrenka: ​k
+​[10:16AM] slightlyoff: ​well, that was my concern, and why we're all in IRC today = )
+​[10:16AM] mda: ​if i've got a component that has an onX() function, it can be called for any X() event.
+[10:17AM] mda: that isn't new, that is how VB, and lots of other method/property/events RAD systems do things.
+​[10:17AM] ttrenka: ​yep
+​[10:17AM] slightlyoff: ​right
+​[10:17AM] ttrenka: ​i have a q
+​[10:17AM] slightlyoff: ​but the DOM provide more events that we're currently supporting on these things
+​[10:17AM] ttrenka: ​how do the connect and event tags establish context?
+​[10:17AM] dylan_: ​that's one of the issues :)
+​[10:18AM] ttrenka: ​gotcha.
+​[10:18AM] mda: ​and does the handler get the identical args of the originating function?
+​[10:18AM] slightlyoff: ​yes
+[10:18AM] slightlyoff: it's after-advice in the current system
+​[10:18AM] ttrenka: ​ok
+[10:19AM] ttrenka: where does one define the handlers themselves?
+​[10:19AM] mda: ​so where is the side-effect context? like the glorious window.event?
+​[10:19AM] slightlyoff: ​my other concern is replacement
+​[10:19AM] ttrenka: ​(grill grill grill :))
+​[10:19AM] slightlyoff: ​heh
+​[10:19AM] dylan_: ​the handlers themselves are script
+​[10:19AM] slightlyoff: ​well, right now I think the side effect context is the place where we say new Function("this is some script");
+​[10:20AM] david_ascher joined the chat room. (10:20AM) 
+[10:20AM] slightlyoff: ​hi david!
+​[10:20AM] ttrenka: ​thta's not how it actually works, is it?
+​[10:20AM] david_ascher: ​hi all
+​[10:20AM] dylan_: ​hey david
+​[10:20AM] ttrenka: ​hi
+​[10:20AM] slightlyoff: ​actually, yes
+[10:20AM] slightlyoff: (and I don't like it either)
+[10:20AM] slightlyoff: let me get you code...one sec...
+​[10:20AM] ttrenka: ​using the new Function constructor?
+​[10:20AM] mda: ​but callee has to be able to find out stuff about the originating object right?
+​[10:20AM] slightlyoff: ​open problem
+​[10:20AM] ttrenka: ​executing it in the global context?
+​[10:21AM] mda: ​or is this another thing as a consequence of one-to-one wiring, there has to be a new function written for every handler to hardwire knowledge of the originator?
+[10:21AM] mda: that doesn't sound right :)
+​[10:21AM] ttrenka: ​ugg
+​[10:21AM] slightlyoff: ​http:/​​/​​dojotoolkit.org/​​viewcvs/​​viewcvs.py/​​*checkout*/​​src/​​webui/​​widgets/​​Parse.js?content-type=text​​%2Fplain​&rev=245
+[10:21AM] slightlyoff: well, it's not one-to-one wiring
+[10:22AM] slightlyoff: or rather, it's many to one, but you're only allowed to attach to the events we make explicit
+​[10:22AM] ttrenka: ​line #?
+​[10:22AM] slightlyoff: ​and that's my main concern with the system
+[10:22AM] slightlyoff: grr, wrong file
+[10:22AM] slightlyoff: one sec = )
+​[10:22AM] ttrenka: ​heh
+​[10:22AM] slightlyoff: ​http:/​​/​​dojotoolkit.org/​​viewcvs/​​viewcvs.py/​​src/​​webui/​​Widget.js?rev=246​&view=auto
+[10:22AM] slightlyoff: look at "mixInProperties"
+[10:23AM] slightlyoff: or just search for dojo.event.connect()
+​[10:23AM] ttrenka: ​ok
+​[10:24AM] slightlyoff: ​the other half of this is in the template creation code
+​[10:24AM] ttrenka: ​no idea what rev I'm looking at, but it's line 149
+​[10:24AM] slightlyoff: ​let me find that
+[10:24AM] slightlyoff: heh
+​[10:24AM] ttrenka: ​ok, here's a q.
+[10:24AM] ttrenka: event.connect, when you pass it the "this" reference
+​[10:24AM] slightlyoff: ​that's the widget object
+​[10:25AM] ttrenka: ​is that where you are establishing execution context for the new Function?
+[10:25AM] ttrenka: i.e. when that function is fired, is it firing in the context of "this"?
+​[10:25AM] slightlyoff: ​yes, implicitly, and badly
+​[10:25AM] ttrenka: ​ok
+​[10:25AM] dylan_: ​why badly?
+​[10:25AM] slightlyoff: ​'cause it's not explicitly handled
+​[10:26AM] ttrenka: ​one of the big things I did when I did the event system for f( m ) was to get around this issue by making sure the first arg passed to any handler function was the context of execution
+​[10:26AM] slightlyoff: ​it's just a side effect right now
+​[10:26AM] dylan_: ​ok
+​[10:26AM] slightlyoff: ​...and not the event object like a normal event handler would want?
+​[10:26AM] ttrenka: ​oh, that's the second arg
+[10:26AM] ttrenka: :)
+​[10:26AM] slightlyoff: ​heh
+​[10:26AM] ttrenka: ​that's why every handler in f( m ) expects only 2 args
+[10:26AM] ttrenka: source and event objects,
+​[10:27AM] slightlyoff: ​right
+​[10:27AM] ttrenka: ​it makes it a bit easier to write handlers against it.
+​[10:27AM] slightlyoff: ​well, we have something similar for around advice
+​[10:27AM] ttrenka: ​right
+[10:27AM] ttrenka: but.
+​[10:27AM] slightlyoff: ​where if you want to really, really intercept the function, you get a context as an argument
+​[10:27AM] ttrenka: ​why is that not the default behavior?
+[10:28AM] ttrenka: or are you executing the new Function object in context?
+​[10:28AM] slightlyoff: ​well, because it would make everyone write every function our way
+​[10:28AM] ttrenka: ​i.e. "this".call(funcObject)
+​[10:28AM] slightlyoff: ​instead of being able to retrofit old code with the event system
+​[10:28AM] ttrenka: ​...and what's wrong with that idea?
+[10:28AM] ttrenka: k
+[10:28AM] ttrenka: wait
+[10:29AM] ttrenka: above should be funcObject.call("this"_
+[10:29AM] ttrenka: sorry
+[10:29AM] ttrenka: whoops
+[10:29AM] ttrenka: is being able to retrofit an existing app one of the primary goals of this system?
+​[10:29AM] david_ascher left the chat room. (10:29AM) Reason: " The IRC Client of the Gods! -> http:/​​/​​www.hydrairc.com <- HydraIRC"
+[10:29AM] slightlyoff: ​yes
+​[10:29AM] ttrenka: ​why?
+​[10:30AM] slightlyoff: ​lower the barrier to entry, the better
+​[10:30AM] ttrenka: ​(I don't remember talking about this, that's all)
+[10:30AM] ttrenka: ok
+​[10:30AM] slightlyoff: ​people shouldn't have to swallow a lot ot use Dojo
+[10:30AM] slightlyoff: only what they want/need
+​[10:30AM] dylan_: ​the first hit is free
+​[10:30AM] ttrenka: ​in that case.
+​[10:30AM] slightlyoff: ​but we're digressing somewhat
+​[10:30AM] ttrenka: ​I would suggest that attaching an event should start off really simply
+​[10:30AM] slightlyoff: ​how the general event system works is orthoginal to how DOM-ish events
+[10:30AM] slightlyoff: are handled
+​[10:31AM] ttrenka: ​I would think that Dylan's <dojo:event /> tag would be the initially used tag
+[10:31AM] ttrenka: and attach it DOM0 style.
+[10:31AM] ttrenka: make sure it executes in the context of the widget object.
+[10:32AM] ttrenka: i.e. if I have a grid
+[10:32AM] ttrenka: and I define the dojo:event tag in the propertyBag of the grid
+​[10:32AM] slightlyoff: ​right
+​[10:32AM] ttrenka: ​then i would expect my handler to either execute in the context of the grid object
+​[10:32AM] slightlyoff: ​but Mark's whole point was that it's heavyweight
+​[10:32AM] ttrenka: ​that syntax isn't heavyweight.
+[10:32AM] ttrenka: limiting, yes
+​[10:32AM] slightlyoff: ​and that you should be able to say something like <button onClick="" />
+​[10:33AM] ttrenka: ​or grid onclick
+[10:33AM] ttrenka: etc.
+[10:33AM] ttrenka: is that right, mda?
+[10:34AM] ttrenka: ...anyways..
+[10:34AM] ttrenka: if the goal is to lower the barrier of entry, then the simpler the markup is, the better it is
+​[10:34AM] dylan_: ​i'm ok with an inline single attribute event handler definition in theory... just not sure how to specify what it applies to in the case of property sets that apply to a class or group of widgets
+​[10:34AM] slightlyoff: ​agreed
+​[10:34AM] ttrenka: ​so I would completely agree with mda on that one
+​[10:34AM] slightlyoff: ​but we don't want to cut out power too those who want it (namely, oursevles)
+​[10:34AM] ttrenka: ​and I'd probably even eliminate the propertyBag itself
+[10:34AM] ttrenka: of course
+​[10:34AM] slightlyoff: ​so I think that keeping the <connect/action> tag is good
+[10:35AM] slightlyoff: but we need somethign simple for direct attachment
+​[10:35AM] mda: ​(sorry in a con call, but i see that someone is agreeing with me....)
+​[10:35AM] ttrenka: ​what's wrong with doing that in code?
+[10:35AM] ttrenka: np :)
+​[10:35AM] slightlyoff: ​heh
+​[10:36AM] ttrenka: ​how about something like this.
+[10:36AM] ttrenka: 1. simple attachment:
+[10:36AM] ttrenka: <widget onEvent="" />
+[10:36AM] ttrenka: 2. complex attachment:
+​[10:37AM] dylan_: ​yes, but what goes inside the onevent?
+​[10:37AM] slightlyoff: ​code
+[10:37AM] slightlyoff: event handler clode
+​[10:37AM] ttrenka: ​<widget>
+[10:37AM] ttrenka: <onEvent>
+[10:37AM] ttrenka: <connect source="" target="" handler=""/>
+[10:37AM] ttrenka: <connect source="" target="" handler=
+[10:37AM] ttrenka: shit
+​[10:37AM] slightlyoff: ​heh
+​[10:37AM] ttrenka: ​sorry, hit the enter key too soon
+[10:37AM] ttrenka: you get the idea
+[10:37AM] ttrenka: I think events themselves need to be explicit for the widget
+​[10:38AM] dylan_: ​your syntax assumes a predefined list of events
+​[10:38AM] ttrenka: ​if there's an attribute for the event, then it's essentially like DOM 0 assignment
+[10:38AM] ttrenka: yep
+​[10:38AM] slightlyoff: ​yes
+​[10:38AM] ttrenka: ​it most certainly does
+​[10:38AM] slightlyoff: ​OK, I'm OK with all of that
+​[10:38AM] dylan_: ​so for case #2 that seems limiting
+​[10:38AM] slightlyoff: ​(since it's what I've implemented so far)
+​[10:38AM] ttrenka: ​I think that should be the case for any widget anyways
+[10:39AM] ttrenka: and if someone needs some other event, they can either extend the widget in question
+​[10:39AM] slightlyoff: ​well, the <connect source="" target="" handler="" /> is sugar, more or less
+​[10:39AM] ttrenka: ​or we can provide a mechanism for attaching arbitrary events to any widget.
+[10:39AM] ttrenka: sure
+​[10:39AM] slightlyoff: ​so that brings up the question I'm trying to get answered: what events do we support?
+​[10:39AM] ttrenka: ​I think that's dependant on the widget
+​[10:39AM] dylan_: ​i thought the whole point of advice was not having to provide such a mechanism... isn't advice just that mechanism?
+​[10:39AM] ttrenka: ​don't you think?
+[10:40AM] ttrenka: is it?
+​[10:40AM] slightlyoff: ​advice will let you attach to whatever's already being fired
+​[10:40AM] dylan_: ​well, i guess something needs to trigger the advice
+​[10:40AM] ttrenka: ​ok
+[10:40AM] ttrenka: I was completely off on that one :)
+​[10:40AM] slightlyoff: ​the question here is whether or not we should fire every possible event type or some subset
+[10:40AM] slightlyoff: one sec
+​[10:41AM] ttrenka: ​k
+[10:41AM] ttrenka: I would argue subset
+[10:41AM] ttrenka: ...and give the ability to quickly extend if need be
+​[10:41AM] slightlyoff: ​http:/​​/​​dojotoolkit.org/​​viewcvs/​​viewcvs.py/​​*checkout*/​​src/​​webui/​​widgets/​​HTMLButton.js?content-type=text​​%2Fplain​&rev=242
+[10:41AM] slightlyoff: have a look at the last line
+​[10:41AM] dylan_: ​however, if it is something as strange as ... send a signal between these two widgets if the first widget has more than 8 rows, how is that really an event?
+​[10:42AM] slightlyoff: ​the event/message duality thing has nasty consequences
+​[10:42AM] ttrenka: ​what, dojoAttachEvent="onClick"?
+​[10:42AM] slightlyoff: ​(at times)
+[10:42AM] slightlyoff: but that's not our problem
+[10:42AM] slightlyoff: ahhh! good question!
+[10:42AM] slightlyoff: when the template is parsed, we look for attributes called "dojoAttachEvent"
+​[10:42AM] ttrenka: ​ok
+​[10:42AM] slightlyoff: ​and then if there's a method on the widget class wit hthat name, we connect that event to that widget's named event
+​[10:43AM] ttrenka: ​i think you guys are making this too complex
+[10:43AM] ttrenka: at some point, there will be a standard set of events that most widgets will support
+[10:43AM] ttrenka: i don't see any reason to define this kind of flexibility into the system
+​[10:43AM] slightlyoff: ​there's also support for doing dojoAttachEvent="widgetMethod:onClick" to fire something other than a default-name method
+[10:43AM] slightlyoff: dude, what I'm saying is that this wasn't "designed"
+[10:43AM] slightlyoff: this particular thing is the hack I did to make this work
+​[10:43AM] ttrenka: ​it seems designed to me
+[10:44AM] ttrenka: ok
+​[10:44AM] slightlyoff: ​but it seems to cover a lot of what you're discussing
+​[10:44AM] ttrenka: ​it does
+​[10:44AM] slightlyoff: ​so either we can talk about making it better or throwing it out
+​[10:44AM] ttrenka: ​heh
+​[10:45AM] schontz joined the chat room. (10:45AM) 
+[10:45AM] dylan_: ​about time, slacker :)
+​[10:45AM] schontz: ​heh
+[10:45AM] schontz: I just figured out how to get this setup w/trillian
+​[10:45AM] dylan_: ​welcome
+​[10:45AM] ttrenka: ​heh
+​[10:45AM] schontz: ​I'm gonna be down for a few minutes while I travel to class
+​[10:45AM] ttrenka: ​ok
+[10:46AM] ttrenka: well
+[10:46AM] ttrenka: from what I'm seeing, and hearing...
+​[10:46AM] slightlyoff: ​so, the system as it stands now requires the widget author to be explicit about what events to attach from where
+​[10:46AM] ttrenka: ​I would argue that a widget would definitely have a predefined set of events.
+​[10:46AM] slightlyoff: ​OK
+​[10:46AM] ttrenka: ​right
+​[10:47AM] slightlyoff: ​and we don't support the full gamut of DOM events?
+[10:47AM] slightlyoff: (unless the widget supports them all)
+​[10:47AM] ttrenka: ​and the reason why I'd argue that is because I think if we told joe average coder that they had to be explicit about attaching events, that would be a deal killer
+[10:47AM] ttrenka: no, I don't think we should
+[10:47AM] ttrenka: (the full gamut)
+[10:47AM] ttrenka: but
+​[10:47AM] slightlyoff: ​they differ from browser to browser
+​[10:48AM] ttrenka: ​...I think it wouldn't be a bad idea to offer a mechanism, through code, to be able to get at the internal event properties
+[10:48AM] ttrenka: for the advanced coder, if you will
+​[10:48AM] dylan_: ​basically my viewpoint in general is this: the dom event mechanism pretty much sucks, and I want something better... but we need to support dom events because most people are used to that... now how do we effectively support dom events in a way that is as flexible as our other mechanisms for describing components
+​[10:48AM] slightlyoff: ​yeah, that makes sense
+[10:48AM] slightlyoff: well, we can create the event handlers in a closure
+[10:48AM] slightlyoff: and give them an implicit context object in their namesapce
+​[10:48AM] ttrenka: ​I think the basic idea here is to insulate someone from the browser differences
+​[10:49AM] slightlyoff: ​(instead of abusing arguments)
+​[10:49AM] dylan_: ​and namespace differences...
+​[10:49AM] slightlyoff: ​yeah, I agree
+​[10:49AM] ttrenka: ​if I have a button in HTML, and an button in SVG, I would want my event handlers to be the same
+​[10:49AM] slightlyoff: ​also agreed
+​[10:49AM] ttrenka: ​yeah
+[10:49AM] ttrenka: so I would expect to be writing an onClick handler
+[10:49AM] ttrenka: or an onButtonDown
+[10:49AM] ttrenka: onButtonUp
+​[10:49AM] slightlyoff: ​yep
+​[10:49AM] dylan_: ​or something higher level like an onActivate
+​[10:49AM] slightlyoff: ​yes
+​[10:49AM] ttrenka: ​...and I would expect that my handlers would be written similarly to DOM handlers
+​[10:49AM] slightlyoff: ​it's funny
+​[10:50AM] ttrenka: ​but they don't have to *be* DOM handlers.
+[10:50AM] ttrenka: what?
+​[10:50AM] slightlyoff: ​as a side-effect, the current system supports almos all of that
+​[10:50AM] ttrenka: ​that's a plus, then.
+​[10:50AM] slightlyoff: ​we just don't have the context thing worked out
+​[10:50AM] ttrenka: ​less reworking
+[10:50AM] ttrenka: ok
+[10:50AM] ttrenka: connect needs to support that
+​[10:50AM] dylan_: ​yes, context has been our #1 issue
+​[10:50AM] ttrenka: ​?
+[10:50AM] ttrenka: ok
+​[10:50AM] slightlyoff: ​so it sounds like we need a couple of things now
+[10:50AM] slightlyoff: 1.) to figure out what context we want to provide in the handler namespace, and at what name
+[10:50AM] slightlyoff: 2.) a base list of dom-iish events to support
+​[10:51AM] ttrenka: ​honestly?
+​[10:51AM] slightlyoff: ​3.) whether or not the current syntax for template authors to hook those things up is sane
+​[10:51AM] ttrenka: ​for context, I'd recommend just doing something like handler.apply(context, args)
+[10:51AM] ttrenka: when the connect mechanism actually fires
+​[10:51AM] slightlyoff: ​OK
+[10:52AM] slightlyoff: that's fine
+​[10:52AM] dylan_: ​ugh, an 11am meeting just showed up on my calendar
+​[10:52AM] slightlyoff: ​run away! run away!
+​[10:52AM] ttrenka: ​and pass the context when you do the connection.
+[10:52AM] ttrenka: heh
+​[10:52AM] slightlyoff: ​so what should the context be? the widget?
+​[10:52AM] ttrenka: ​depends on how you connect it
+[10:52AM] ttrenka: but yes, I would do it in the context of the widget.
+​[10:52AM] slightlyoff: ​so if I say "this" should it point to the widget?
+​[10:52AM] ttrenka: ​yes
+​[10:52AM] dylan_: ​well, defining handler that way assumes you know what the handler is going to be...
+​[10:53AM] slightlyoff: ​ok, that's sweet, it's like a 2-line fix = )
+​[10:53AM] ttrenka: ​you're writing the function already
+[10:53AM] ttrenka: (not you, the general you)
+​[10:53AM] slightlyoff: ​yeah
+​[10:53AM] ttrenka: ​you might not know what the actual context will be, but you should have a good idea that it will be a button executing it
+​[10:53AM] slightlyoff: ​sounds sane
+[10:53AM] slightlyoff: can someone come up with a list of events?
+​[10:53AM] schontz: ​how do events get attached/detached in widget land?
+​[10:54AM] dylan_: ​it feels limiting, but i'm not sure why
+​[10:54AM] slightlyoff: ​well, we still support <connect />
+[10:54AM] slightlyoff: the power is there if you need it = )
+​[10:54AM] schontz: ​my thought is to mimic widget library events as opposed to DOM events
+​[10:54AM] dylan_: ​right, but we have the same context issue there as well, right
+​[10:54AM] slightlyoff: ​we're discussing about how to do both
+​[10:54AM] ttrenka: ​there is a code equivilent, right?
+​[10:54AM] slightlyoff: ​yes, of course
+​[10:54AM] ttrenka: ​then that's solved.
+[10:54AM] ttrenka: :)
+​[10:55AM] slightlyoff: ​dojo.event.connect(widget, handler, myobj, mylistener);
+​[10:55AM] ttrenka: ​let's face it: a markup document describes the initial state of some application.
+​[10:55AM] slightlyoff: ​yep
+​[10:55AM] ttrenka: ​after the app is initialized, you're in code land and not markup land.
+​[10:55AM] slightlyoff: ​also agreed
+​[10:55AM] dylan_: ​ok
+​[10:55AM] slightlyoff: ​but the initial state goes a long, long way = )
+​[10:56AM] ttrenka: ​if handlers need to be added or removed on the fly, it will be done with code, or by interpreting new doc fragments that are also frozen in time.
+[10:56AM] ttrenka: yeah
+[10:56AM] ttrenka: of course
+[10:56AM] ttrenka: we all on the same page?
+​[10:56AM] dylan_: ​yes, and the or by inter... is a big point btw
+​[10:56AM] schontz: ​does anyone but me think the widgets should have a shorthand widget.connectEvent(hadler, myobj, mylistener)?
+​[10:56AM] ttrenka: ​it's you
+​[10:56AM] slightlyoff: ​heh
+​[10:56AM] ttrenka: ​:P
+[10:57AM] ttrenka: I think we've been implying that
+[10:57AM] ttrenka: haven't we?
+​[10:57AM] slightlyoff: ​well, I haven't = )
+​[10:57AM] schontz: ​o
+​[10:57AM] slightlyoff: ​since this is mostly being done in the parser phase, I hadn't considered it
+​[10:57AM] ttrenka: ​the q has been whether or not we have events that are specific to widgets.
+[10:57AM] ttrenka: right?
+​[10:57AM] slightlyoff: ​but it seems a good idea, doesn't it = )
+​[10:57AM] schontz: ​I just know I have a much easier time dealing with method name + fewer args
+​[10:57AM] ttrenka: ​it can be, sure
+[10:57AM] ttrenka: stick it on the Widget class
+​[10:57AM] slightlyoff: ​yep
+​[10:58AM] dylan_: ​ok
+​[10:58AM] slightlyoff: ​and then implement our changes in the light of that
+​[10:58AM] schontz: ​well, if we have a decent event structure, then making an event specific to a/some widget(s) should be easy, no?
+​[10:58AM] ttrenka: ​yeah
+[10:58AM] ttrenka: that's the idea
+​[10:58AM] dylan_: ​alex, are you going to put this log up somewhere?
+​[10:58AM] slightlyoff: ​yes, that's easy
+[10:58AM] slightlyoff: um, where do you want it?
+​[10:58AM] schontz: ​and now, class. catch you guys in a few if you're there
+[10:58AM] schontz: here, rather
+​[10:58AM] slightlyoff: ​(also, I'm going to be out of town starting in 2 hours or so)
+​[10:58AM] dylan_: ​somewhere in svn, perhaps
+​[10:58AM] slightlyoff: ​not the wiki?
+​[10:58AM] dylan_: ​in documents
+[10:58AM] dylan_: or the wiki...
+​[10:58AM] ttrenka: ​heh
+​[10:59AM] dylan_: ​whatever... somewhere that we can all come back to it
+​[10:59AM] slightlyoff: ​OK
+[10:59AM] slightlyoff: well, I'll throw it in SVN for now
+​[10:59AM] dylan_: ​ok, gotta go... have fun in tahoe... and everyone else, have a good weekend
+​[10:59AM] slightlyoff: ​later!
+[10:59AM] slightlyoff: thanks for all your help
+​[10:59AM] ttrenka: ​np
+[10:59AM] ttrenka: :)
+​[10:59AM] slightlyoff: ​oh! who's working up a list of events?
+​[11:00AM] ttrenka: ​I think that's dependant on the widget
+[11:00AM] ttrenka: don't you think?
+​[11:00AM] slightlyoff: ​so there won't be a base list?
+​[11:00AM] ttrenka: ​no
+​[11:00AM] slightlyoff: ​hrm
+​[11:00AM] ttrenka: ​if there is, it will be really minimal
+[11:00AM] ttrenka: like onInit?
+​[11:00AM] dylan_: ​i'll put some head time into some of this next week
+​[11:00AM] ttrenka: ​onShow, onHide?
+[11:00AM] ttrenka: that kind of thing?
+[11:00AM] ttrenka: onRender?
+​[11:00AM] slightlyoff: ​well, you can currently connect to any method on the widget with attribute syntax
+​[11:00AM] ttrenka: ​k
+​[11:01AM] slightlyoff: ​so you could easily listen to the show() and hide() methods by saying <widget show="do something" />
+​[11:01AM] ttrenka: ​sure
+[11:01AM] ttrenka: that's fine
+[11:01AM] ttrenka: but you were asking about a base set of events
+​[11:01AM] slightlyoff: ​a consequence of me being lazy = )
+​[11:01AM] ttrenka: ​?
+[11:01AM] ttrenka: that all widgets would have
+[11:01AM] ttrenka: right?
+​[11:01AM] slightlyoff: ​well, they'll get defined as stub functions on the base widget
+​[11:01AM] ttrenka: ​of course
+[11:01AM] ttrenka: so I'd say onInit
+[11:02AM] ttrenka: definitely without a doubt.
+​[11:02AM] slightlyoff: ​and you can remove them on your own widget by saying something like this.onWhatever = null;
+​[11:02AM] ttrenka: ​and possibly onRender
+[11:02AM] ttrenka: sure
+[11:02AM] ttrenka: maybe onDestroy
+[11:02AM] ttrenka: and that would be it, no?
+​[11:02AM] slightlyoff: ​but things like onMouseMove and onClick and onKeyPress don't interest you?
+​[11:02AM] ttrenka: ​not if there's no point in the widget having it
+​[11:03AM] slightlyoff: ​hmm
+[11:03AM] slightlyoff: OK, I'll have to thikn it over = )
+​[11:03AM] ttrenka: ​would I want to support MouseMove on a text input?
+​[11:03AM] slightlyoff: ​that's a good question = )
+​[11:03AM] ttrenka: ​events specific to the widget
+[11:03AM] ttrenka: we just need to make sure we're consistent in naming conventions, that's all
+[11:04AM] ttrenka: oh
+​[11:04AM] slightlyoff: ​right
+[11:04AM] slightlyoff: and for template authors...
+​[11:04AM] ttrenka: ​and we need to make sure there's a canceling mechanism
+​[11:04AM] slightlyoff: ​ahh, that's a good catch
+​[11:04AM] ttrenka: ​(running across that problem now with f( m ))
+​[11:04AM] slightlyoff: ​any ideas on syntax? or would you do it in the handler?
+​[11:04AM] ttrenka: ​no idea
+[11:04AM] ttrenka: that's the problem
+[11:05AM] ttrenka: I don't really like the way it's implemented in the DOM, but there may not be a better way
+​[11:05AM] slightlyoff: ​mda, do you have any thoughts on canceling and bubbling?
+[11:06AM] slightlyoff: so "no" then ;-)
+[11:08AM] slightlyoff: so should we flag that for discussion later?
+[11:08AM] slightlyoff: I don't think it'll keep us from getting the current todo list done
+​[11:08AM] ttrenka: ​sure
+​[11:09AM] slightlyoff: ​my last question is about the template syntax
+​[11:09AM] ttrenka: ​ok
+​[11:09AM] slightlyoff: ​good? bad? ugly?
+​[11:09AM] ttrenka: ​based on what? the template string you have in the Button widget?
+​[11:10AM] slightlyoff: ​yeah
+[11:10AM] slightlyoff: = )
+​[11:10AM] ttrenka: ​um
+​[11:10AM] slightlyoff: ​sorry, it's my only data point
+​[11:10AM] ttrenka: ​it's not what I was expecting or envisioning.
+[11:10AM] ttrenka: heh
+[11:10AM] ttrenka: but close, I suppose
+[11:10AM] ttrenka: :)
+​[11:10AM] slightlyoff: ​but it's how a template author can attach a DOM event to a widget event right now
+[11:11AM] slightlyoff: is there anything you'd want to see fixed with it? what were you expecting?
+​[11:11AM] ttrenka: ​well
+[11:11AM] ttrenka: to be honest, I hadn't gotten that far.
+[11:11AM] ttrenka: :)
+​[11:12AM] slightlyoff: ​heh
+​[11:12AM] ttrenka: ​I was expecting that the template itself would be all HTML, no custom attributes.
+[11:12AM] ttrenka: no assigned IDs.
+[11:12AM] ttrenka: CSS info, though
+​[11:12AM] slightlyoff: ​well, we don't assign IDs
+​[11:12AM] ttrenka: ​well, we probably need to when the widget is inserted into the document
+​[11:12AM] slightlyoff: ​and the cutom attributes are for attach points into the widget object
+​[11:12AM] ttrenka: ​right
+[11:12AM] ttrenka: except
+[11:12AM] ttrenka: well
+[11:13AM] ttrenka: let me ask this: where is the code that grabs that template string and inserts it into the document?
+​[11:13AM] slightlyoff: ​the other way to do this is to force someone to write a method that descends the DOM and handles the connection themselves
+​[11:13AM] ttrenka: ​...and to be honest, that's exactly what I was expecting to happen
+​[11:13AM] slightlyoff: ​so the template string gets turned into a node, cloned, attached, and THEN inserted into the document once it's connected to the widget object
+​[11:13AM] ttrenka: ​with internal, private event handlers that tap into the DOM events, that fire off the widget ones
+[11:14AM] ttrenka: so where does the "turning into a node" happen?
+[11:16AM] ttrenka: ....well...
+[11:16AM] ttrenka: I'll tell you what
+​[11:16AM] slightlyoff: ​one sec, let me find it...
+​[11:16AM] ttrenka: ​no, that's ok
+[11:16AM] ttrenka: is anyone else still here?
+[11:16AM] ttrenka: or is it just you and me?
+​[11:17AM] slightlyoff: ​I think it's you and me = )
+​[11:17AM] ttrenka: ​heh
+[11:17AM] ttrenka: ok
+[11:17AM] ttrenka: send me an email before you take off for Tahoe
+[11:17AM] ttrenka: I'm heading home, gonna finish working from there
+[11:17AM] ttrenka: have fun on de slopes :)
+​[11:17AM] dylan_ left the chat room. (11:17AM) Reason: Read error: 110 (Connection timed out)
+[11:18AM] ttrenka left the chat room. (11:18AM) Reason: "Trillian (http:/​​/​​www.ceruleanstudios.com)​"
+[11:19AM] schontz_ joined the chat room. (11:19AM) 
+[11:19AM] schontz_: ​ hola
+​[11:20AM] slightlyoff: ​it's all done but the shouting = )
+[11:20AM] slightlyoff: I'll be posting the transcript, though
+​[11:20AM] schontz_: ​I see
+[11:20AM] schontz_: alright
+[11:21AM] schontz_: Glad I could be so helpful :P
+​[11:21AM] slightlyoff: ​= )
+​[11:22AM] schontz_ left the chat room. (11:22AM) Reason: Client Quit
+[11:27AM] schontz left the chat room. (11:27AM) Reason: Read error: 110 (Connection timed out)

@@ -1,0 +1,86 @@
+List of possible future enhancements / likely directions, we are doing these "as needed"
+
+- HippoCanvasContainer
+ 
+  add HippoCanvasContainer interface, add set_parent/get_parent on canvas item that 
+  gets/sets a container, move get_position and set_child_visible from box to container
+
+- Avoid having to always align images
+
+  image item should maybe default to center alignment instead of fill like most items do
+
+- Allow composite items to be activated/prelighted
+
+  e.g. in one place in mugshot we have a CLOSE link and then an X icon next to it; should be able 
+  to make the box containing those two a composite button, where the whole thing prelights 
+  as a whole, and you can connect to "activated" on the whole thing.
+
+  One way to do this would be to make HippoCanvasBox::clickable into a settable 
+  property; and if a box is clickable, do not forward click events to
+  its children, instead just activate the parent. This doesn't address 
+  prelighting the composite as a whole though.
+
+- Naming of get_width_request / get_height_request
+
+  With get_natural_width there, naming these get_min_width/get_min_height makes some 
+  amount of sense. request is sort of gtk jargon.
+
+  Or really, merging into something like:
+    get_width_request(item, &minimum, &natural);
+    get_height_request(item, for_width, &minimum, &natural);
+  The merging makes it easier to implement in items, since the min/natural code is often
+  related or the same. Note also the addition of natural height, something 
+  we don't have right now.  
+
+- Clean up cascading styles
+
+  Right now affect_font_desc / affect_color / get_color are on HippoCanvasContext,
+  they should probably all be on a separate interface (HippoStylist?) or something
+  like that. Then HippoStyle would also implement this interface perhaps.
+
+- Set class-default font and colors
+
+  if you allow setting a box to "gray 11px" for example, then the CanvasLink items in there 
+  will override the gray with blue, since links default to blue. So each item should 
+  first use its own props, then its context's props, then its class props, then its
+  parent class props.
+
+  There's a little hack around this right now with HippoCanvasBoxClass::default_color
+
+- The return value of button press event needs to be known by the
+  parent in advance.
+
+  If the parent is going to handle the click if the child doesn't, then it needs 
+  to be able to display prelights and change the mouse cursor and so forth.
+  
+  One approach might be to generalize get_pointer to return some kind of 
+  "what-this-item-handles-info" (and enforce it by not delivering events
+  the item doesn't say it will handle)
+
+  Or get_pointer and get_tooltip could be merged into a sort of "hover state"
+  indicating info about the hover point.
+
+  The "handles click" flag is probably per-mouse-button.
+
+- To handle tooltips correctly, a widget or CanvasBox displaying a canvas item
+  really needs a unique ID for a each different logical zone that's returned.
+  Both the tooltip text and the for_area can change while the pointer is
+  still inside the same logical element of the display.
+
+  This could be done by having in a "hover state" the desired mouse pointer,
+  tooltip text, tooltip area, and an "owner" made up of a pointer (usually 
+  a canvas item pointer) and an integer id.
+
+- Summarizing the last two ideas, an ugly version might be:
+
+  struct {
+    HippoCanvasPointer pointer;
+    char *tooltip;
+    HippoRectangle area;
+    void *owner_id_pointer_part;
+    int owner_id_int_part;
+  } ButtonOneHandlerInfo;
+
+  /* returns true if it handles */
+  gboolean (* get_button_one_handling) (HippoCanvasItem *item,
+                                        ButtonOneHandlingInfo *info_p);

@@ -1,0 +1,53 @@
+@CHARSET "UTF-8";
+
+.dh-form-table {
+    width:          100%;
+	margin-top:		5px;
+	margin-bottom:	5px;
+}
+
+.dh-form-table .dh-label-cell {
+	padding-right:	10px;
+	text-align:     right;
+	width:			170px;
+}
+
+.dh-form-table .dh-spacer-row {
+	height:			3px;
+}
+
+.dh-form-table .dh-box-spacer {
+	width:			10px;
+}
+
+.dh-form-table .dh-padding-row {
+	height:			5px;
+}
+
+.dh-form-table .dh-control-cell .dh-control-cell-div img {
+	vertical-align:		middle;
+}
+
+.dh-form-table .dh-image {
+	float: 			left;
+}
+
+.dh-form-table .dh-next-to-image {
+    margin-left:    10px;
+	float:			left;
+	vertical-align: top;
+}
+
+.dh-form-table .dh-control-cell .dh-control-cell-div input {
+	vertical-align:		middle;
+}
+
+.dh-form-table .dh-control-cell textarea.dh-text-input {
+	width:			260px;
+	overflow:       auto;
+}
+
+.dh-form-table .dh-control-cell input.dh-text-input {
+	width:			260px;
+	overflow:       hidden;
+}

@@ -1,0 +1,16 @@
+# Where to look for chrome://mugshot
+content mugshot chrome/content/
+
+# Where to look for chrome://mugshot/en-US/ (currently unused)
+locale mugshot en-US chrome/locale/en-US/
+
+# Register a theme for chrome://mugshot/skin/ ... there could be multiple of these
+skin mugshot classic/1.0 chrome/skin/
+
+# Register our main overlay
+overlay chrome://browser/content/browser.xul chrome://mugshot/content/overlay.xul
+
+# Apply our icon style to the toolbar customization window; the reference
+# in the overlay file handles pulling it in for the browser window
+style chrome://global/content/customizeToolbar.xul chrome://mugshot/skin/toolbar.css
+

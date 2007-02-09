@@ -1,0 +1,7 @@
+<jboss-app>
+	<!-- if you change this you must also change it in jboss-web.xml -->
+    <loader-repository>dumbhippo.com:loader=dumbhippo.ear</loader-repository>
+    <module>
+        <service>dumbhippo-service.xml</service>
+     </module>
+</jboss-app>

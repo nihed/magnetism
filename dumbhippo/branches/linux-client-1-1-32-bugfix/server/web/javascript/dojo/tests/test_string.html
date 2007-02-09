@@ -1,0 +1,55 @@
+<html>
+	<head>
+		<title>Text Test</title>
+		<style type="text/css">
+			#Mover {
+				position : absolute;
+				background : #ccc;
+				left : 200px;
+				top : 200px;
+			}
+		</style>
+		<script language="JavaScript" type="text/javascript">
+			// Dojo configuration
+			djConfig = { 
+				isDebug: true
+			};
+		</script>
+		<script language="JavaScript" type="text/javascript" 
+			src="../dojo.js"></script>
+		<script language="JavaScript" type="text/javascript" 
+			src="jsunit_browser.js"></script>
+		<script language="JavaScript" type="text/javascript">
+			dojo.require("dojo.string");
+
+			function init(){
+				var ws = " This has some white space at the ends! Oh no!    ";
+				dj_debug("ws: '" + ws + "'");
+				jum.assertEquals("trim", "This has some white space at the ends! Oh no!", dojo.string.trim(ws));
+				dj_debug("trim('" + ws + "') => '" + dojo.string.trim(ws) + "'");
+				var p = "This %{string} has %{parameters} %{toReplace}";
+				dj_debug("paramString('" + p + "') => '" + dojo.string.paramString(p,
+							{ string: "area", parameters: "foo"}) + "'");
+				dj_debug("paramString('" + p + "', true) => '" + dojo.string.paramString(p,
+							{ string: "area", parameters: "foo"}, true) + "'");
+				dj_debug("isBlank('   ') => " + dojo.string.isBlank('   '));
+				dj_debug("isBlank('            x') => " + dojo.string.isBlank('            x'));
+				dj_debug("isBlank('x             ') => " + dojo.string.isBlank('x             '));
+				dj_debug("isBlank('') => " + dojo.string.isBlank(''));
+				dj_debug("isBlank(null) => " + dojo.string.isBlank(null));
+				dj_debug("isBlank(new Array()) => " + dojo.string.isBlank(new Array()));
+				dj_debug("capitalize('this is a bunch of words') => '" + dojo.string.capitalize('this is a bunch of words') + "'");
+				dj_debug("capitalize('word') => '" + dojo.string.capitalize('word') + "'");
+				dj_debug("capitalize('   ') => '" + dojo.string.capitalize('   ') + "'");
+				dj_debug("capitalize('') => '" + dojo.string.capitalize('') + "'");
+				dj_debug("capitalize(null) => '" + dojo.string.capitalize(null) + "'");
+				dj_debug("capitalize(new Array()) => '" + dojo.string.capitalize(new Array()) + "'");
+			}
+
+			dojo.hostenv.modulesLoadedListeners.push(init);
+		</script>
+	</head>
+	<body>
+	</body>
+</html>
+

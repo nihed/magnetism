@@ -1,0 +1,125 @@
+@CHARSET "UTF-8";
+
+/* ------------ SHARE BUBBLES ------------ */
+
+.dh-share-shadow {
+	position:				relative;
+	background: 			url('/images/shadow.png') no-repeat bottom center;
+	left:					-5px;
+	top:					15px;
+}
+.dh-share {	/* this is to counter the shadow code */
+	left:					5px;
+	top:					-15px;
+}
+.dh-share {
+	width:					458px;
+	position:				relative;
+	color:					white;
+	background-color:		#3399ff;
+	min-height:				150px;
+	border:					3px solid white;
+	-moz-border-radius:		10px;
+	margin-bottom:			10px;
+}
+.dh-share-from {
+	position:				absolute;
+	left:					0;
+	width:					85px;
+	min-height:				140px;
+	padding-top:			24px;
+	text-align:				center;
+}
+.dh-share-from img.dh-person {
+	width:					48px;
+	height:					48px;
+	border:					0;
+}
+.dh-share a.dh-person {
+	display:				block;
+	color:					#e5e920;
+	background-color:		inherit;
+	font-size:				small;
+	float:					none;
+	margin-left:			auto;
+	margin-right:			auto;
+}
+a.dh-headshot:link {
+	color:					#e5e920;
+	background-color:		inherit;
+}
+.dh-share-text {
+	width:					375px;
+	position:				absolute;
+	right:					0;
+	padding-top:			12px;
+}
+a.dh-share-link {
+	font-weight:			bold;
+	color:					white;
+	background-color:		inherit;
+	position:				relative;
+	display:				block;
+	width:					365px;
+	overflow:				hidden;
+	white-space:			nowrap;
+	text-overflow:			ellipsis;
+}
+a.dh-share-link:link {
+	color:					white;
+	background-color:		inherit;
+}
+.dh-favicon {
+	float:					left;
+	margin-right:			10px;
+}
+.dh-share-description {
+	font-size:				smaller;
+	height:					65px;
+	margin-top:				12px;
+}
+.dh-share-description p {
+	margin:					0;
+}
+.dh-share-to {
+	position:				absolute;
+	bottom:					4px;
+	right:					12px;
+	color:					#e5e920;
+	background-color:		inherit;
+	font-size:				small;
+}
+.dh-share-to a {
+	color:					#e5e920;
+	background-color:		inherit;
+	font-size:				small;
+}
+
+div.dh-share-search {
+	position:				relative;
+	text-align:				right;
+	right:					30px;
+}
+
+form.dh-share-search {
+	display:				inline;
+}
+
+input.dh-share-search {
+	width:					5em;
+	border:					1px solid black;
+	text-align:				center;
+	padding:				0;
+	margin:					0;
+}
+
+a.dh-share-search {
+	color:					blue;
+	background-color:		inherit;
+}
+
+#dhSharesArea h2.dh-title {
+    position:               relative; 
+	left:					50px;
+    margin-right:           80px;  
+}

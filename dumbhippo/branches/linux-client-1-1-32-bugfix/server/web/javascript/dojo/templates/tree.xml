@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dojo:application xmlns:dojo="http://www.dojotoolkit.org/2004/dojoml" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<dojo:tree id="dojoTreeExample" dataProvider="treeExampleDataModel" propertyProviderList="treeDefinitions" />
+	<dojo:propertySet id="treeDefinitions" componentClass="default">
+		<dojo:propertySet xlink:href="tree.css/.dojoTree" sourceType="css" targetType="all" />
+		<dojo:resizable>yes</dojo:resizable>
+		<dojo:indentation>0.5em</dojo:indentation>
+		<dojo:state type="default" mode="expandedToDepth">
+			<dojo:expandDepth>3</dojo:expandDepth>
+		</dojo:state>
+		<dojo:treeItems>
+			<dojo:repetition frequency="1,3,1" propertyProviderList="tree.css/.className1, tree.css/.className2, tree.css/.className3" />
+			<dojo:rowHeight>1.2em</dojo:rowHeight>
+		</dojo:treeItems>
+		<dojo:treeIconItems>
+			<dojo:icon type="folderClosed" propertyProviderList="tree.css/.folderClosed" xlink:href="folderClosedIcon.png" sourceType="image" targetType="html" /><!-- could also use a reference to an svgDefsElement in xlink:href -->
+			<dojo:icon type="folderOpen" propertyProviderList="tree.css/.folderOpen" xlink:href="folderOpenIcon.png" sourceType="image" targetType="all" />
+			<dojo:icon type="leaf" propertyProviderList="tree.css/.leaf" xlink:href="tree.svg#leaf" sourceType="svg" targetType="svg" />
+		</dojo:treeIconItems>
+	</dojo:propertySet>
+	<dojo:dataModel id="treeExampleDataModel" src="#staticExampleModel" type="xml">
+		<dojo:label elementName="name" />
+		<dojo:treeItem elementName="structure">
+			<dojo:label elementName="name" />
+			<dojo:objectRelation elementName="uniqueId" />
+		</dojo:treeItem>
+	</dojo:dataModel>
+
+	<arbitraryDataStructure id="staticExampleModel">
+		<name>testTree</name>
+		<structure>
+			<name>item1</name>
+			<uniqueId>record1</uniqueId>
+		</structure>
+		<structure>
+			<name>item2</name>
+			<uniqueId>record2</uniqueId>
+		</structure>
+		<structure>
+			<name>item3</name>
+			<uniqueId>record3</uniqueId>
+		</structure>
+		<structure>
+			<name>item4</name>
+			<uniqueId>record4</uniqueId>
+		</structure>
+	</arbitraryDataStructure>
+</dojo:application>

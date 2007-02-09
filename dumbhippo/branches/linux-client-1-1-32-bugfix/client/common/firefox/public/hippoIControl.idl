@@ -1,0 +1,34 @@
+/* -*- mode: IDL; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include "nsIDOMWindow.idl"
+#include "nsISupports.idl"
+#include "hippoIControlListener.idl"
+
+[scriptable,uuid(8bf6de0a-ed8f-47af-8757-41551542d196)]
+interface hippoIControl : nsISupports {
+    readonly attribute AUTF8String serverUrl;
+    readonly attribute AUTF8String version;
+
+    void start(in AUTF8String serverUrl);
+    void stop();
+
+    boolean isConnected();
+    
+    void setListener(in hippoIControlListener listener);
+    void setWindow(in nsIDOMWindow window);
+
+    void joinChatRoom(in AUTF8String chatId, in boolean participant);
+    void leaveChatRoom(in AUTF8String chatId);
+    void showChatWindow(in AUTF8String chatId);
+    void sendChatMessage(in AUTF8String chatId, in AUTF8String text);
+    void sendChatMessageSentiment(in AUTF8String chatId, in AUTF8String text, in PRUint32 sentiment);
+
+    void notifyPageShared(in AUTF8String postId, in AUTF8String url);
+};
+
+
+%{ C++
+#define HIPPO_CONTROL_CID \
+  { 0xfb192a55, 0xb1de, 0x4b23, \
+      { 0xa5, 0xb2, 0xa5, 0xad, 0xf8, 0xa4, 0xe4, 0x46 } }
+#define HIPPO_CONTROL_CONTRACTID "@mugshot.org/hippoService"
+%}

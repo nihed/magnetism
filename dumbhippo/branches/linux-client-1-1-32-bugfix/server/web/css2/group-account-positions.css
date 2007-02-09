@@ -1,0 +1,27 @@
+@CHARSET "UTF-8";
+
+#dhContentColumn .dh-form-table {
+	width:			478px;
+	margin-top:		10px;
+	margin-bottom:	10px;
+}
+
+#dhContentColumn .dh-text-input {
+	width:			183px;
+}
+
+#dhContentColumn #dhAboutGroupEntry {
+	width:			252px;
+}
+
+tr.dh-feed-spacer {
+	height:			5px;
+}
+
+.dh-feed-status-icon {
+	margin-right:	10px;
+}
+
+#dhFeedEntry {
+	margin-right:	10px;
+}

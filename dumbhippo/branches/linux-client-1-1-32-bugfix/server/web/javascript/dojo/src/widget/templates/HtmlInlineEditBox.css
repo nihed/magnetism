@@ -1,0 +1,51 @@
+.editLabel {
+	font-family:		Bitstream Vera Sans Mono, mono;
+	font-size : 		xx-small;
+	padding : 			0 5px;
+	display:			inline;
+	color:				#ffb979 !important;
+	background-color:	inherit;
+	text-decoration:	none;
+}
+a.editLabel:link {
+	color:				#ffb979 !important;
+	background-color : 	inherit;
+}
+
+.editableRegion {
+	background-color : #947a64 !important;
+	cursor : pointer;
+	_cursor : hand;
+}
+
+.editableRegion .editLabel {
+	display : 			inline;
+	color: 				white !important;
+	background-color : 	#947a64 !important;
+}
+
+.editableTextareaRegion .editLabel {
+	display : 			block;
+}
+
+.inlineEditBox {
+	/*background-color : #ffc;*/
+	display : 			inline;
+}
+
+.dh-html-inline-edit-options {
+	font-size:			small;
+	font-weight:		normal;
+}
+
+.dh-html-inline-edit-save {
+	color:					white;
+	background-color:		#628200;
+	border:					2px outset #628200;		
+}
+
+.dh-html-inline-edit-cancel {
+	color:					white;
+	background-color:		#626262;
+	border:					2px outset #626262;
+}

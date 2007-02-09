@@ -1,0 +1,29 @@
+@CHARSET "UTF-8";
+
+#dhContentColumn .dh-form-table .dh-spacer-row {
+	height:			5px;
+}
+
+#dhContentColumn .dh-form-table input {
+	vertical-align: middle;
+}
+
+#dhContentColumn .dh-form-table img {
+	vertical-align: middle;
+}
+
+#dhContentColumn #dhAddressEntry {
+	width:			183px;
+}
+
+#dhContentColumn #dhSubjectEntry {
+	width:			309px;
+}
+
+#dhContentColumn #dhMessageEntry {
+	width:			309px;
+}
+
+#dhContentColumn #dhSuggestedGroupsWithInvitationDiv {
+	width:			309px;
+}

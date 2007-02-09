@@ -1,0 +1,103 @@
+.. title:: Dojo Project Status
+
+.. raw:: html
+   :file: website/rest_template/header.html
+
+Current Efforts
+-------------------
+
+0.2
+*********************
+- Improves upon the features shipped in 0.1.x
+- Refactoring of the widget and namespace systems
+- Refactored widget system inheritance model
+- Automated documentation generation
+- Improved build system to allow for more familiar usage
+- Support <connect /> and <propset /> elements
+- Improve widgets shipped in 0.1
+
+0.1
+*********************
+- 0.1.0 released on 2005/08/29
+- The 0.1.x releases are bug-fixes for the 0.1 branch
+- Highlights for the 0.1.x line:
+    * transparent package system
+    * `dojo.io`_ package
+    * `dojo.event`_ package
+    * animation system with pre-built effects
+    * drag-and-drop system
+    * widget system
+    * portable WYSIWYG rich text editing widget
+    * combo-box ("live search") widget
+    * date-picker widget
+
+Status
+------------------------
+
+Dojo is under heavy development. We have finished a significant portion of the
+core "plumbing" for the project. Widgets are under development by multiple open
+source and commercial efforts, and many of these are being contributed back to
+the community. Dojo has been successfully deployed in mutliple commercial
+products including Jot and Renkoo.
+
+More details are available in the `Dojo Roadmap`_
+
+Releases
+------------------------
+
+Dojo 0.1.0 was released on 2005/08/29. Multiple profile builds were made
+available at that time. New builds of these profiles are made available nighty
+at http://archive.dojotoolkit.org/
+
+No release date has been set for new releases on the 0.1.x line or for 0.2.0,
+but this document will be updated when new release dates are planned.
+
+Code Checkins
+----------------
+
+A complete list of checkins may be found through our `checkins mailing list`_
+
+Getting Involved
+------------------------
+
+If you would like to contribute to the Dojo project, please contact us through
+the `dojo interest mailing list`_.
+
+License
+-------
+
+Dojo is licensed under the very friendly `Academic Free License v 2.1`_. Some
+`thoughts on the AFL license`_.
+
+Dojo Foundation
+---------------
+
+Dojo is a California nonprofit corporation.  We're currently working on 
+mundane details like bylaws and tax exemption status.
+
+
+.. FIXME: insert correct urls, and additional urls to make this more useful
+
+.. _`checkins mailing list`: http://www.dojotoolkit.org/pipermail/dojo-checkins/
+.. _`dojo interest mailing list`: http://www.dojotoolkit.org/pipermail/dojo-interest/
+.. _`Dojo Roadmap`: http://www.dojotoolkit.org/docs/projectRoadmap.html
+.. _`dojo.io` : http://dojotoolkit.org/docs/intro_to_dojo_io.html
+.. _`dojo.event` : http://dojotoolkit.org/docs/dojo_event_system.html
+.. _`Anonymous SVN access` : http://dojotoolkit.org/svn/dojo/
+.. _`Academic Free License v 2.1` : http://opensource.org/licenses/afl-2.1.php
+.. _`thoughts on the AFL license` : http://netwindows.org/pipermail/ng-dhtml_netwindows.org/2005-January/000643.html
+
+.. raw:: html
+   :file: website/rest_template/sidebar.html
+
+:Author: Alex Russell,Dylan Schiemann
+:Version: 0.4
+:Copyright: Dojo Foundation, 2005
+:Date: 2005/03/21
+
+.. contents::
+
+.. raw:: html
+   :file: website/rest_template/footer.html
+
+.. vim:ts=4:et:tw=0:shiftwidth=4:

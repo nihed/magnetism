@@ -1,0 +1,233 @@
+<html>
+<head>
+<title>Download Dojo 0.1 - DojoToolkit.org</title>
+<script type="text/javascript" src="/dojo/dojo.js"></script>
+<link rel="stylesheet" type="text/css" href="http://dojotoolkit.org/css/screen.css" media="screen" />
+<link rel="stylesheet" type="text/css" href="http://dojotoolkit.org/css/print.css" media="print" />
+<style type="text/css">
+#picker-table {
+	width : 100%;
+	margin : 1em 0;
+}
+
+#picker-table td {
+	vertical-align : top;
+}
+
+#picker-options {
+	padding : 10px 0 15px;
+	font-family : Lucida Grande, Tahoma, sans-serif;
+}
+
+#picker-options a {
+	display : block;
+	width : 100%;
+	padding : 4px 10px 4px 7px;
+	color : #339;
+	text-decoration : none;
+}
+
+#picker-options a.selected {
+	background : #dedede url(/img/picker-tl.gif) no-repeat top left;
+}
+
+#picker-content {
+	background : #dedede url(/img/picker-br.gif) no-repeat bottom right;
+	font : 0.9em Lucida Grande, Tahoma, sans-serif;
+}
+
+#picker-content div.content {
+	padding : 10px;
+	display : none;
+	background : #dedede url(/img/picker-tl.gif) no-repeat top left;
+}
+
+#picker-content div.content code {
+	background : none;
+}
+
+#picker-content div.content.selected {
+	display : block;
+}
+
+#picker-content div.download {
+	margin : 6px 0 10px;
+	font-size : 1.4em;
+	font-weight : bold;
+	text-align : right;
+}
+
+#picker-content div.download a {
+	padding : 4px 8px;
+	border : 1px solid #ccc;
+	background : #ccc;
+	color : blue;
+	text-decoration : none;
+	white-space : nowrap;
+	-moz-border-radius-bottomright : 8px;
+	-moz-border-radius-topleft : 8px;
+}
+
+#picker-content div.download a:hover {
+	text-decoration : underline;
+}
+</style>
+<script type="text/javascript" src="dojo/dojo.js"></script>
+<script type="text/javascript">
+dojo.require("dojo.xml.*");
+dojo.require("dojo.event.BrowserEvent");
+
+var Picker = {
+	init: function() {
+		var table = document.getElementById("picker-table");
+		var td = table.getElementsByTagName("td");
+
+		var a = td[0].getElementsByTagName("a");
+		for(var i = 0; i < a.length; i++) {
+			dojo.event.connect(a[i], "onclick", Picker, "click");
+		}
+
+		Picker.select(dojo.xml.domUtil.getFirstChildTag(td[0]));
+	},
+
+	click: function(e) {
+		e.preventDefault();
+		Picker.select(e.currentTarget);
+	},
+
+	select: function(node) {
+		dojo.xml.htmlUtil.addClass(node, "selected");
+		try { node.blur(); } catch(e) {}
+
+		var lnk = dojo.xml.domUtil.getFirstChildTag(node.parentNode);
+		while(lnk) {
+			if(lnk != node) {
+				dojo.xml.htmlUtil.removeClass(lnk, "selected");
+			}
+			lnk = dojo.xml.domUtil.getNextSiblingTag(lnk);
+		}
+
+		var id = node.href.split("#")[1];
+		var div = dojo.xml.domUtil.getFirstChildTag(document.getElementById("picker-content"));
+		while(div) {
+			div.style.display = (div.id == id ? "block" : "none");
+			div = dojo.xml.domUtil.getNextSiblingTag(div);
+		}
+	}
+};
+dojo.addOnLoad(Picker, "init");
+</script>
+</head>
+
+<body class="downloads">
+	<div id="header">
+		<div id="dojo-top">
+			<h1><a href="http://dojotoolkit.org" title="Dojo">Dojo Toolkit</a></h1>
+			<div id="dojo-top-nav">
+				<a id="dojo-downloads" href="http://dojotoolkit.org/download/" title="Get the source">Download</a>
+				<span>|</span>
+				<a id="dojo-news" href="http://dojotoolkit.org/blog/" title="planet::dojo">News</a>
+				<span>|</span>
+				<a id="dojo-docs" href="http://dojotoolkit.org/docs/" title="Help, How-tos, and more">Documentation</a>
+				<span>|</span>
+				<a id="dojo-trac" href="http://dojotoolkit.org/trac/" title="Source Browser, Bug Tracker">Bug Tracker</a>
+				<span>|</span>
+				<a id="dojo-community" href="http://dojotoolkit.org/community/" title="Join the fray">Community</a>
+				<span>|</span>
+				<a id="dojo-examples" href="http://dojotoolkit.org/examples/" title="Dojo in action">Examples</a>
+			</div>
+		</div>
+	</div>
+	<div id="content-body">
+		<div id="content" class="content"><div id="content2">
+			<h1>Pick an Edition</h1>
+
+			<p>Dojo offers a number of custom builds, referred to as <em>Editions</em>, that combine different pieces
+			of Dojo into a single, compressed file. Don't worry, you can still use all the power of Dojo no matter
+			what edition you snag.</p>
+
+			<!-- Gah, this was going to be a beautiful DL if it wasn't for IE -->
+			<table id="picker-table" border="0" cellpadding="0" cellspacing="0">
+			<tbody><tr>
+			<td id="picker-options" nowrap="nowrap">
+				<a href="#dl-ajax" class="selected">AJAX </a>
+				<a href="#dl-io">I/O (XmlHttp) </a>
+				<a href="#dl-evio">Event + I/O </a>
+				<a href="#dl-widgets">Widgets </a>
+				<a href="#dl-sink">The "Kitchen Sink" </a>
+			</td>
+			<td id="picker-content">
+				<div class="content selected" id="dl-ajax">
+					<div class="download"><a href="http://download.dojotoolkit.org/release-0.1.0/dojo-0.1.0-ajax.zip">Download 0.1 (zip)</a></div>
+					<p>The AJAX edition makes creating applications with <strong>async I/O</strong> (XmlHttp), perform top-notch <strong>visual effects</strong> and tie it all together with an aspect-oriented <strong>event system</strong> to create your next web application.</p>
+				</div>
+				<div class="content" id="dl-io">
+					<div class="download"><a href="http://download.dojotoolkit.org/release-0.1.0/dojo-0.1.0-browserio.zip">Download 0.1 (zip)</a></div>
+					<p>Just need a kick-ass XmlHttp layer? The I/O edition is built with <CODE>dojo.io.bind</CODE> for all your async needs.</p>
+				</div>
+				<div class="content" id="dl-evio">
+					<div class="download"><a href="http://download.dojotoolkit.org/release-0.1.0/dojo-0.1.0-event_and_io.zip">Download 0.1 (zip)</a></div>
+					<p>Go for the one-two punch with our aspect-oriented event system and robust XmlHttp layer.</p>
+				</div>
+				<div class="content" id="dl-widgets">
+					<div class="download"><a href="http://download.dojotoolkit.org/release-0.1.0/dojo-0.1.0-widgets.zip">Download 0.1 (zip)</a></div>
+					<p>Make web widgets fun again. No other widget system provides HTML &amp; CSS templating capabilities with loose coupling to the widget implementation. Take "separating style, content, and logic" to a whole new level.</p>
+				</div>
+				<div class="content" id="dl-sink">
+					<div class="download"><a href="http://download.dojotoolkit.org/release-0.1.0/dojo-0.1.0-kitchen_sink.zip">Download 0.1 (zip)</a></div>
+					<p>This build includes all of the Dojo libraries rolled into a single file so you don't have to think about what to include. A great way to get up-and-running fast.</p>
+				</div>
+			</td>
+			</tr></tbody>
+			</table>
+
+			<h1>Getting Started</h1>
+			<p>So you've downloaded and extracted a Dojo edition to your development
+			environment, now what? Dojo offers a number of resources to help you get
+			off the ground and using your new JavaScript buddy. Some of the articles
+			you might want to check out:</p>
+			<ul>
+				<li><a href="http://dojotoolkit.org/docs/getting_started_with_packaged_dojo.html">Getting Started with a Dojo Download</a></li>
+				<li><a href="http://dojotoolkit.org/docs/intro_to_dojo_io.html"><code>dojo.io.bind()</code>: Baking Usability into XMLHTTP</a></li>
+				<li><a href="http://dojo.jot.com/Animation">Animations</a> &amp;
+				<a href="http://dojo.jot.com/HTMLEffects">Effects</a> in Dojo</li>
+				<li><a href="http://dojotoolkit.org/docs/dojo_event_system.html">The Dojo Event System</a></li>
+			</ul>
+			<p>If you happen to be doing widget development with Dojo (you did grab the
+			widget edition then, right?), you'll also want to read
+			<a href="http://dojotoolkit.org/docs/fast_widget_authoring.html">Fast Widget Authoring with Dojo</a>.</p>
+		</div></div>
+		<div id="sidebar">
+			<h1>Downloads</h1>
+
+			<h2>Get the Source</h2>
+			<p>Are you developing a project that requires more advanced packaging functionality
+			than the pre-built editions provide? If so, you can <a href="http://dojo.jot.com/WikiHome/Getting+Started+With+Subversion">grab an SVN checkout</a>
+			which includes build tools allowing you to create your own packages and even roll in your own
+			custom code.</p>
+
+			<p>You can also <a href="http://archive.dojotoolkit.org">download nightly versions</a>
+			of the whole repository or just the source if you like to live dangerously.</p>
+
+			<h2>Getting Help</h2>
+			<p>While we'd love if Dojo were perfect, we know that that's not the case and we're
+			here to help! Right now, the following resources are available:</p>
+			<ul>
+				<li>IRC: <code>#dojo</code> on <code>irc.freenode.net</code></li>
+				<li><a href="http://dojo.jot.com">The Dojo Wiki</a> (work in progress).</li>
+				<li><a href="http://dojotoolkit.org/mailman/listinfo/dojo-interest">The Dojo Interest mailing list</a></li>
+			</ul>
+
+			<div class="clear"></div>
+			<div id="footer">
+				<div style="float:left;">&copy; Dojo Foundation, All Rights Reserved.</div>
+				<div>
+					<a href="http://dojotoolkit.org/blog/feed/" title="RSS 2.0 Feed">RSS</a>
+					<span>|</span>
+					<a href="http://dojotoolkit.org/blog/feed/atom/" title="Atom 0.3">Atom</a>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
+

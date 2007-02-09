@@ -1,0 +1,599 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!-- Copyright (c) 2004-2005 The Dojo Foundation, Licensed under the Academic Free License version 2.1 or above --> 
+<!--
+	TODO: 
+		- single-file builds
+		- task for firing off jslink.pl against a set of "app files". TBD:
+		  should we support these as HTML? Or just JS files?
+		  NOTE: the following command issued from the top-level seems to work correctly:
+		  	perl buildscripts/jslink.pl -pre cat -i release/testUsage.js -l src/bootstrap1.js -l src/hostenv_browser.js -l src/bootstrap2.js -l src/io/IO.js -l src/io/BrowserIO.js -o - > release/minimal.js
+		  This correctly "links" the files together, but mangles some
+		  identifiers and places anonymous inner functions at the wrong places
+		  OTOH, running the linker over the pre-compressed version of the file doesn't seem to work at all
+		- a task for running the compressor across the user's files as well as our own
+		- doc generation (pending new mods to Rhino)
+-->
+<project name="dojo" default="help" basedir=".">
+	<description>build the Dojo toolkit</description>
+
+	<!-- project properties -->
+	<property name="project" value="dojo"/>
+	<property name="build_dir" value="../build"/>
+	<property name="root" value=".."/>
+	<property name="src" value="src"/>
+	<property name="version" value="development"/>
+	<property name="lang" value="en"/>
+	<property name="release_dir" value="${root}/release/${project}"/>
+	<property name="docs_dir" value="${root}/documents"/>
+	<property name="release_docs_dir" value="${release_dir}/documents"/>
+	<property name="rest_style_sheet" value="${docs_dir}/styles/dojo.css"/>
+	<property name="rest_files" value=""/>
+	<property name="website_dir" value="${docs_dir}/website"/>
+	<property name="release_website_dir" value="/srv/www/htdocs"/>
+	<property name="profile" value=""/>
+	<property name="copyright" 
+		value="/* Copyright (c) 2004-2005 The Dojo Foundation, Licensed under the Academic Free License version 2.1 or above */"/>
+	<property name="build_notice" 
+		value="/* This is a compiled version of Dojo, designed for deployment and not for development. If would like to modify or work with Dojo, please visit http://dojotoolkit.org for more information and to get the 'source' version of this file. */"/>
+
+	<!-- help task -->
+	<target name="help" depends="-fix-config">
+		<echo>
+build targets:
+	clean - deletes all files in the ${release_dir} directory
+	website - copies website files into the correct location and sets
+		permissions correctly
+	compress - copies the files in ${root}/${src} to the
+		${release_dir}/${project}/${src} directory where it
+		compresses all the .js files with a set of regular
+		expressions and removes all non .js files
+	src - Take ./${src} and build the ${release_dir}/${project}/${src}_src
+		directory. More or less a copy of the source files, documentation and
+		all.
+	docs - builds documentation in all formats from ./${src} and place it in ${release_docs_dir}
+	test - builds and runs command line unit tests
+	testScripting - tests the JS and Jython integration in the build process
+
+	**** all following build types can take an optional parameter in the form of: -Dversion='currentVer'
+		where 'currentVer' is the version of ${project} being built, default is 'development'
+
+	zip - zips the ${release_dir}/${project} directory for distribution
+	tar - tars and gzips the ${release_dir}/${project} directory for distribution
+	release - creates a full release of ${project}
+
+	full build example:
+		ant -Dversion=0.3.0 clean release
+
+	build example with tarball:
+		ant -Dversion=0.3.0 clean compress tar
+
+	just generate documentation:
+		ant -Dversion=0.3.0 clean docs
+
+	full build, but without docs:
+		ant -Dversion=0.3.0 -Ddocless=true clean release
+
+		</echo>
+	</target>
+	<!-- end help task -->
+
+	<!-- test task -->
+	<target name="test"
+		depends="-fix-config"
+		description="builds and runs unit tests for Dojo under Rhino and JUM">
+		<!-- clobber the tests directory and rebuild it -->
+		<!-- copy over the contents of the old test directory -->
+		<!--
+		<delete dir="${release_dir}/tests"/>
+		<mkdir dir="${release_dir}/tests" />
+		-->
+
+		<script language="jython"><![CDATA[
+# make the python standard library available
+import sys
+sys.path.append("lib/pyLib.zip")
+sys.path.append(".")
+import buildUtil
+
+buildUtil.buildTestFiles()
+
+# print "#################### testRunner.js ####################",
+# for line in file("../testRunner.js"):
+# 	print line,
+# print "################## end testRunner.js ##################\n"
+]]></script>
+		<!-- <java jar="${user.home}/.ant/lib/js.jar" fork="true"> -->
+		<java jar="./lib/custom_rhino.jar" fork="true">
+			<!-- FIXME: should this be in the release/ dir somewhere? -->
+			<arg value="../testRunner.js" />
+		</java>
+		<!--
+		<delete file="../testRunner.js" />
+		-->
+	</target>
+	<!-- end test task -->
+
+	<!-- test-scripting task -->
+	<target name="testScripting"
+		depends="-fix-config"
+		description="runs minimal test on our BSF+JS+Jython integration">
+		<script language="javascript"><![CDATA[
+			function print(){
+				var args = [];
+				for(var x=0; x<arguments.length; x++){
+					args.push(arguments[x]);
+				}
+				java.lang.System.out.println.apply(java.lang.System.out, args);
+				
+			}
+
+			function echo(msg, parentTask){
+				var echo = dojo.createTask("echo");
+				parentTask.addTask(echo);
+				echo.setMessage(msg);
+			}
+
+			/*
+			function load(){
+				for(var x=0; x<arguments.length; x++){
+					var scriptTask = dojo.createTask("script");
+					scriptTask.setAttribute(); // FIXME: will this work?
+				}
+			}
+			*/
+			
+			print("foo");
+			echo("JavaScript (Rhino) integration is working!", testScripting);
+		]]></script>
+		<script language="jython"><![CDATA[
+import sys
+# make the python standard library avialable
+sys.path.append("lib/pyLib.zip")
+
+# import re
+
+echo = dojo.createTask("echo")
+testScripting.addTask(echo)
+echo.setMessage("Jython integration is working!");
+
+print "look ma! Jython!"
+]]></script>
+	</target>
+	<!-- end testScripting task -->
+
+	<!-- -check-config task -->
+	<target name="-check-config"
+		description="checks to make sure than we're sane before doing anything else">
+		<available property="bsf_ok" file="${user.home}/.ant/lib/bsf.jar" />
+		<available property="ant_bsf_ok" file="${user.home}/.ant/lib/ant-apache-bsf.jar" />
+		<available property="jython_ok" file="${user.home}/.ant/lib/jython.jar" />
+		<available property="jython_libs_ok" file="${user.home}/.ant/lib/pyLib.zip" />
+		<available property="rhino_ok" file="${user.home}/.ant/lib/js.jar" />
+
+		<condition property="config_ok">
+			<and>
+				<isset property="bsf_ok" />
+				<isset property="ant_bsf_ok" />
+				<isset property="jython_ok" />
+				<isset property="jython_libs_ok" />
+				<isset property="rhino_ok" />
+			</and>
+		</condition>
+
+	</target>
+	<!-- end -check-config task -->
+
+	<!-- -fix-config task -->
+	<target name="-fix-config"
+		depends="-check-config"
+		unless="config_ok"
+		description="fixes our ant classpath (if possible)">
+		<copy todir="${user.home}/.ant/lib"
+			preservelastmodified="true">
+			<fileset dir="lib/">
+				<include name="bsf.jar"/>
+				<include name="jython.jar"/>
+				<include name="pyLib.zip"/>
+				<include name="js.jar"/>
+				<include name="ant-apache-bsf.jar"/>
+			</fileset>
+		</copy>
+
+		<echo message=""/>
+		<echo message="+--------------------------------------------------------+" />
+		<echo message="| Due to some horrendous design decisions by the authors |" />
+		<echo message="| of Ant, it has been necessaray to install some jar     |" />
+		<echo message="| files to your ~/.ant/ directory. Given the nature of   |" />
+		<echo message="| the problem, it will be necessaray for you to re-run   |" />
+		<echo message="| your build command.                                    |" />
+		<echo message="|                                                        |" />
+		<echo message="| The Dojo team apologies for this inconvenience.        |" />
+		<echo message="|                                                        |" />
+		<echo message="| The system will now exit.                              |" />
+		<echo message="+--------------------------------------------------------+" />
+		<echo message=""/>
+
+		<fail message="Sorry, please re-run your build command, it should work now"/>
+	</target>
+	<!-- end -fix-config task -->
+
+	<!-- website task -->
+	<!-- 
+		FIXME: 	need to build docs here and copy the HTML files generated from
+				reST to website/docs/
+	-->
+	<target name="website"
+		depends="-fix-config"
+		description="'builds' the website and moves files into the correct directory, taking care to ensure that file permissions are correct">
+
+		<copy todir="${release_website_dir}" overwrite="true">
+			<fileset dir="${website_dir}">
+				<exclude name="**/.svn*" />
+				<include name="**/*" />
+			</fileset>
+		</copy>
+		<antcall target="docs" />
+		<copy todir="${release_website_dir}/docs/" overwrite="true">
+			<fileset dir="${release_docs_dir}">
+				<exclude name="**/.svn*" />
+				<include name="*.html" />
+			</fileset>
+		</copy>
+		<chgrp group="www" type="both">
+			<fileset dir="${release_website_dir}" followsymlinks="false" includes="**/**" />
+		</chgrp>
+		<chmod perm="g+rwx" type="dir">
+			<fileset dir="${release_website_dir}" followsymlinks="false" includes="**/**" />
+		</chmod>
+		<chmod perm="g+rw" type="file">
+			<fileset dir="${release_website_dir}" followsymlinks="false" includes="**/**" />
+		</chmod>
+	</target>
+	<!-- end website task -->
+
+	<!-- FIXME: need to fix this task!! -->
+	<!-- docs task -->
+	<target name="docs"
+		unless="docless"
+		depends="-fix-config"
+		description="'builds' the docs">
+		<!-- first, clobber the docs directory and rebuild it -->
+		<!-- 
+			FIXME: how best can we check for staleness here? Shouldn't Ant be
+			doing this for us? Clobbering entire dirs seems a little
+			heavyweight.
+		-->
+		<delete dir="${release_docs_dir}"/>
+		<mkdir dir="${release_docs_dir}" />
+		<mkdir dir="${release_docs_dir}/requirements" />
+		<script language="jython"><![CDATA[
+import sys
+# make the python standard library avialable
+sys.path.append("lib/pyLib.zip")
+sys.path.append(".")
+
+# import re
+import os
+from buildUtil import *
+
+buildRestFiles( dojo.getProperty("docs_dir"), 
+				dojo.getProperty("release_docs_dir"),
+				dojo.getProperty("rest_style_sheet"),
+				dojo.getProperty("rest_files"))
+]]></script>
+
+		<!-- fix body tags -->
+		<replaceregexp match="^&lt;body&gt;$" byline="true" 
+			replace="&lt;body class=&quot;docs&quot;&gt;" flags="g">
+			<fileset dir="${release_docs_dir}">
+				<exclude name="**/.svn*" />
+				<include name="**/*.html" />
+			</fileset>
+		</replaceregexp>
+
+	</target>
+	<!-- end docs task -->
+
+	<!-- clean task -->
+	<target name="clean"
+		description="removes release files">
+		<delete dir="${release_dir}"/>
+	</target>
+	<!-- end clean task -->
+
+	<!-- gen-strip-docs task -->
+	<target name="gen-strip-docs">
+		<!-- make sure we're dealing with unix newlines -->
+		<replaceregexp match="(\r)" replace="" byline="false" flags="g">
+			<fileset dir="${destdir}" includes="**/*.js"/>
+		</replaceregexp>
+
+		<replaceregexp match="(\n)" replace="NWNEWLINEHERE" byline="false" flags="g">
+			<fileset dir="${destdir}" includes="**/*.js"/>
+		</replaceregexp>
+
+		<!-- strip /* */ (multiline) comments -->
+		<replaceregexp match="\/\*(.*?)\*\/" replace="" byline="false" flags="g">
+			<fileset dir="${destdir}" includes="**/*.js"/>
+		</replaceregexp>
+
+		<!-- clobber leading and trailing DocBook comment -->
+		<replaceregexp match="^&lt;\!--" replace="" byline="false" flags="g">
+			<fileset dir="${destdir}" includes="**/*.js"/>
+		</replaceregexp>
+		<replaceregexp match="--&gt;$" replace="" byline="false" flags="g">
+			<fileset dir="${destdir}" includes="**/*.js"/>
+		</replaceregexp>
+
+		<!-- add copyright notice -->
+		<replaceregexp match="^" byline="false" replace="${copyright}">
+			<fileset dir="${destdir}" includes="**/*.js"/>
+		</replaceregexp>
+
+		<replace dir="${release_dir}/${project}/${nodocs}">
+			<include name="**/*.js"/>
+			<replacetoken>NWNEWLINEHERE</replacetoken>
+			<replacevalue><![CDATA[
+]]></replacevalue>
+		</replace>
+
+		<!-- add copyright notice -->
+		<replaceregexp match="^" byline="false" replace="${copyright}">
+			<fileset dir="${destdir}" includes="**/*.js"/>
+		</replaceregexp>
+	</target>
+	<!-- end gen-strip-docs task -->
+
+	<!-- src task -->
+	<target name="src"
+		depends="-fix-config"
+		unless="nosrc"
+		description="creates a copy of the source files for distribution">
+
+		<property name="ddir" value="${release_dir}/${project}/${src}_src"/>
+		<!-- make sure our dir structure is right -->
+		<delete dir="${ddir}" />
+		<mkdir dir="${ddir}" />
+
+		<copy todir="${ddir}" preservelastmodified="true">
+			<fileset dir="./${src}" includes="**" />
+		</copy>
+
+		<!-- make sure we're dealing with unix newlines -->
+		<fixcrlf srcdir="${ddir}"
+			eol="lf" eof="remove"
+			includes="**/*.js" />
+
+		<!-- ensure everyone can read -->
+		<chmod perm="ugo+rx" type="dir" dir="${release_dir}" includes="**" />
+		<chmod perm="ugo+r" type="file" dir="${release_dir}" includes="**/*.*" />
+	</target>
+	<!-- end src task -->
+
+	<!-- strip-docs task -->
+	<target name="strip-docs"
+		depends="-fix-config"
+		description="this task generates files somewhere between the full 'source' version and the fully comment and white-space stripped versions produced by the 'compress' task">
+		<delete dir="${release_dir}/${project}/${nodocs}"/>
+
+		<mkdir dir="${release_dir}/${project}/${nodocs}"/>
+		<mkdir dir="${release_dir}/${project}/${nodocs}/widgets"/>
+		<copy todir="${release_dir}/${project}/${nodocs}">
+			<fileset dir="./${src}" includes="${core.files},console.js" />
+		</copy>
+		<copy todir="${release_dir}/${project}/${nodocs}/widgets">
+			<fileset dir="./${src}/widgets" includes="${widgets}" />
+		</copy>
+
+		<antcall target="gen-strip-docs">
+			<param name="destdir" value="${release_dir}/${project}/${nodocs}" />
+		</antcall>
+		<fixcrlf srcdir="${release_dir}/${project}/${nodocs}"
+			eol="lf" eof="remove"
+			includes="**/*.js" />
+		<chmod perm="ugo+rx" type="dir" dir="${release_dir}" includes="**"/>
+		<chmod perm="ugo+r" type="file" dir="${release_dir}" includes="**/*.*"/>
+	</target>
+	<!-- strip-docs task -->
+
+	<!-- -set-profile-deps task -->
+	<target name="-set-profile-deps" depends="-fix-config"
+		description="populates the contents of the dependecy list for a given profile">
+		<!-- 
+			FIXME: this is just a stub! need to fill it in! 
+		-->
+		<script language="javascript"><![CDATA[
+			var pf = dojo.getProperty("profileFile");
+			if((!pf)||(pf=="null")||(pf=="")){
+				// echo("profile: "+dojo.getProperty("profile"), compress);
+				var prof = dojo.getProperty("profile");
+				if((prof)&&(prof!="null")&&(prof!="")){
+					dojo.setNewProperty("profileFile", "profiles/"+prof+".profile.js");
+				}else{
+					dojo.setNewProperty("profileFile", "getDependencyList.js");
+				}
+			}
+		]]></script>
+
+		<!-- FIXME: need to actually get a list of js files to be processed  -->
+		<java jar="${user.home}/.ant/lib/js.jar" fork="true" outputproperty="concatFilesProp">
+			<arg value="${profileFile}" />
+		</java>
+		<script language="javascript"><![CDATA[
+			function echo(msg){
+				var echo = dojo.createTask("echo");
+				echo.setMessage(msg);
+				echo.execute();
+			}
+
+			var currentTask = dojo.getTargets().get("-set-profile-deps");
+			var files = dojo.getProperty("concatFilesProp");
+			dojo.setNewProperty("profileDeps", files);
+		]]></script>
+
+	</target>
+	<!-- end -set-profile-deps task -->
+
+	<!-- list-profile-deps task -->
+	<target name="list-profile-deps" depends="-fix-config, -set-profile-deps"
+		description="lists out the contents of the file dependencies">
+		<echo>${profileDeps}</echo>
+	</target>
+	<!-- end list-profile-deps task -->
+
+	<!-- compress task -->
+	<target name="compress" depends="-fix-config, list-profile-deps"
+		description="runs compression code over release JS files">
+		<echo>profileFile: ${profileFile}</echo>
+		<!-- write the list of files included to the release directory -->
+		<echo file="${release_dir}/build.txt">
+Files baked into this package:
+
+${profileDeps}
+
+		</echo>
+
+		<!-- now write 'em all to a single file -->
+		<concat fixlastline="yes" eol="crlf" destfile="${release_dir}/source.__package__.js">
+		<!--
+		<concat fixlastline="yes" eol="crlf" destfile="${release_dir}/dojo.js">
+		-->
+			<filelist 
+				dir="."
+				files="${profileDeps}" />
+		</concat>
+
+		<antcall target="-rhino-compress">
+			<param name="srcFile" value="${release_dir}/source.__package__.js" />
+			<param name="dstFile" value="${release_dir}/dojo.js" />
+		</antcall>
+
+		<antcall target="-no-rhino-compress">
+			<param name="srcFile" value="${release_dir}/source.__package__.js" />
+			<param name="dstFile" value="${release_dir}/dojo.js" />
+		</antcall>
+
+		<!--
+		<java jar="./lib/custom_rhino.jar" fork="true" output="${release_dir}/__package__.js">
+			<arg value="-c" />
+			<arg value="${release_dir}/source.__package__.js" />
+		</java>
+		-->
+
+		<!-- add build notice -->
+		<replaceregexp match="^" byline="false" replace="${build_notice}">
+			<fileset dir="${release_dir}" includes="dojo.js"/>
+		</replaceregexp>
+
+		<!-- add copyright notice -->
+		<replaceregexp match="^" byline="false" replace="${copyright}">
+			<fileset dir="${release_dir}" includes="**/*.js"/>
+		</replaceregexp>
+
+		<delete file="${release_dir}/source.__package__.js"/>
+
+		<!-- we copy over iframe_history.html here just in case this is a truly
+		stand-alone build that isn't being kicked off via release -->
+		<copy file="../iframe_history.html" todir="${release_dir}/" />
+	</target>
+	<!-- end compress task -->
+
+	<target name="-rhino-compress"
+		unless="nostrip">
+		<java jar="./lib/custom_rhino.jar" fork="true" output="${dstFile}">
+			<arg value="-c" />
+			<arg value="${srcFile}" />
+		</java>
+	</target>
+
+	<target name="-no-rhino-compress"
+		if="nostrip">
+		<copy overwrite="true" file="${srcFile}" tofile="${dstFile}" />
+	</target>
+
+	<!-- intern-strings task -->
+	<target name="intern-strings" depends="-fix-config"
+		description="pulls template paths specified in prototypes into templateStrings which can be used to speed up widget construction">
+		<script language="jython"><![CDATA[
+import sys
+# make the python standard library avialable
+sys.path.append("lib/pyLib.zip")
+sys.path.append(".")
+
+# import re
+import os
+from buildUtil import *
+
+internTemplateStrings()
+]]></script>
+	</target>
+	<!-- end intern-strings task -->
+
+	<!-- release task -->
+	<target name="release" depends="-fix-config"
+		description="builds a release">
+		<antcall target="clean" />
+		<!--
+		<antcall target="src" />
+		-->
+		<copy todir="${release_dir}/${src}" includeEmptyDirs="false" preservelastmodified="true">
+			<fileset dir="${root}/${src}">
+				<include name="**" />
+				<exclude name="**/*.swp" />
+				<exclude name="**/.svn*" />
+			</fileset>
+		</copy>
+
+		<antcall target="-docs-and-tests" />
+		<antcall target="compress" />
+		<!-- <antcall target="intern-strings" /> -->
+
+		<copy overwrite="true" file="../iframe_history.html" todir="${release_dir}/"  preservelastmodified="true" />
+
+		<copy file="${root}/LICENSE" todir="${release_dir}/"  preservelastmodified="true" />
+		<copy file="${root}/CHANGELOG" todir="${release_dir}/"  preservelastmodified="true" />
+		<!--
+		<copy file="README" todir="${release_dir}/" />
+		-->
+	</target>
+	<!-- end release task -->
+
+	<target name="-docs-and-tests"
+		unless="docless"
+		description="builds docs, copies in tests, and constructs API outlines">
+		<copy todir="${release_dir}/apis" includeEmptyDirs="false" preservelastmodified="true">
+			<fileset dir="${root}/documents/apis">
+				<include name="**" />
+				<exclude name="**/*.swp" />
+				<exclude name="**/.svn*" />
+			</fileset>
+		</copy>
+
+		<copy todir="${release_dir}/tests" includeEmptyDirs="false" preservelastmodified="true">
+			<fileset dir="${root}/tests">
+				<include name="**" />
+				<exclude name="**/*.swp" />
+				<exclude name="**/.svn*" />
+			</fileset>
+		</copy>
+
+		<antcall target="docs" />
+	</target>
+
+	<!-- zip task -->
+	<target name="zip"
+		description="builds zip file of release files">
+		<zip destfile="${release_dir}/${project}_${version}.zip" basedir="${release_dir}/${project}"/>
+	</target>
+	<!-- end zip task -->
+
+	<!-- tar task -->
+	<target name="tar"
+		description="builds tarball of release files">
+		<tar tarfile="${release_dir}/${project}_${version}.tar" basedir="${release_dir}" includes="${project}/**"/>
+		<gzip zipfile="${release_dir}/${project}_${version}.tar.gz" src="${release_dir}/${project}_${version}.tar"/>
+		<delete file="${release_dir}/${project}_${version}.tar"/>
+	</target>
+	<!-- end tar task -->
+</project>

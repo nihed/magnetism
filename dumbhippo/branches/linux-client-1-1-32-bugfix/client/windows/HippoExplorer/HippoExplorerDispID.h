@@ -1,0 +1,2 @@
+// HippoEmbedEvents
+#define HIPPO_DISPID_LOCATIONCHANGED 0x00730001

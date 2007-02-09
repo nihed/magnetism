@@ -1,0 +1,137 @@
+bin_PROGRAMS += mugshot mugshot-uri-handler
+
+mugshot_CPPFLAGS = 			\
+	$(AM_CPPFLAGS)			\
+	-I $(top_srcdir)		\
+	$(MUGSHOT_CFLAGS)		\
+	-I$(top_srcdir)/canvas
+
+mugshot_LDFLAGS=$(MUGSHOT_LIBS)
+mugshot_LDADD= libhippoipc.la libhippo.la
+
+if !HAVE_GTK210
+mugshot_CPPFLAGS += -I$(top_srcdir)/gtkcopy
+mugshot_LDFLAGS += libgtkcopy.la
+endif
+
+mugshot_SOURCES	=				\
+	canvas/hippo/hippo-canvas.c		\
+	canvas/hippo/hippo-canvas.h		\
+	canvas/hippo/hippo-canvas-helper.c	\
+	canvas/hippo/hippo-canvas-helper.h	\
+	canvas/hippo/hippo-canvas-widget.c	\
+	canvas/hippo/hippo-canvas-widget.h	\
+	canvas/hippo/hippo-canvas-widgets.c	\
+	canvas/hippo/hippo-canvas-window.c	\
+	canvas/hippo/hippo-canvas-window.h	\
+	canvas/hippo/hippo-canvas-window-child.c\
+	canvas/hippo/hippo-canvas-window-child.h\
+	src/hippo-cookies-linux.c		\
+	src/hippo-cookies-linux.h		\
+	src/hippo-dbus-client.c			\
+	src/hippo-dbus-client.h			\
+	src/hippo-dbus-cookies.c		\
+	src/hippo-dbus-cookies.h		\
+	src/hippo-dbus-server.c			\
+	src/hippo-dbus-server.h			\
+	src/hippo-dbus-web.h			\
+	src/hippo-embedded-image.c		\
+	src/hippo-embedded-image.h		\
+	src/hippo-http.c			\
+	src/hippo-http.h			\
+	src/hippo-idle.c                	\
+	src/hippo-idle.h                	\
+	src/hippo-pixbuf-cache.c		\
+	src/hippo-pixbuf-cache.h		\
+	src/hippo-person-renderer.c		\
+	src/hippo-person-renderer.h		\
+	src/hippo-platform-impl.c		\
+	src/hippo-platform-impl.h		\
+	src/hippo-status-icon.c			\
+	src/hippo-status-icon.h			\
+	src/hippo-window-gtk.c			\
+	src/hippo-window-gtk.h			\
+	src/hippo-window-wrapper.c		\
+	src/hippo-window-wrapper.h		\
+	src/main.c				\
+	src/main.h
+
+## Also edit Windows Applets/Makefile if changing this
+EMBEDDEDIMAGEDIR=$(COMMONSRCDIR)/images
+EMBEDDED_IMAGES=				\
+	$(EMBEDDEDIMAGEDIR)/add_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/arrow.png		\
+	$(EMBEDDEDIMAGEDIR)/arrow2.png		\
+	$(EMBEDDEDIMAGEDIR)/bar_middle.png	\
+	$(EMBEDDEDIMAGEDIR)/bar_pipe.png	\
+	$(EMBEDDEDIMAGEDIR)/bar_x2.png		\
+	$(EMBEDDEDIMAGEDIR)/bar_x.png		\
+	$(EMBEDDEDIMAGEDIR)/blue_x.png		\
+	$(EMBEDDEDIMAGEDIR)/chat.png		\
+	$(EMBEDDEDIMAGEDIR)/closetip.png	\
+	$(EMBEDDEDIMAGEDIR)/expandtip.png	\
+	$(EMBEDDEDIMAGEDIR)/find.png		\
+	$(EMBEDDEDIMAGEDIR)/flat_x.png		\
+	$(EMBEDDEDIMAGEDIR)/home2.png		\
+	$(EMBEDDEDIMAGEDIR)/home.png		\
+	$(EMBEDDEDIMAGEDIR)/hush2.png		\
+	$(EMBEDDEDIMAGEDIR)/hush.png		\
+	$(EMBEDDEDIMAGEDIR)/lid.png		\
+	$(EMBEDDEDIMAGEDIR)/lock_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/mugshotstacker.png	\
+	$(EMBEDDEDIMAGEDIR)/netflix_no_image.png \
+	$(EMBEDDEDIMAGEDIR)/noart.png		\
+	$(EMBEDDEDIMAGEDIR)/nophoto.png		\
+	$(EMBEDDEDIMAGEDIR)/photo_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/quiphate_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/quiplove_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/search_x.png	\
+	$(EMBEDDEDIMAGEDIR)/unhush2.png		\
+	$(EMBEDDEDIMAGEDIR)/unhush.png
+
+EMBEDDED_IMAGE_HEADER=$(BUILT_SRC_DIR)/hippo-embedded-image-data.h
+$(EMBEDDED_IMAGE_HEADER):	$(EMBEDDED_IMAGES)
+	mkdir $(MARSHAL_DIR) || true
+	cat </dev/null > $(EMBEDDED_IMAGE_HEADER) || exit 1 ;				\
+	ALL_NAMES="" ;									\
+	for I in $(EMBEDDED_IMAGES); do							\
+	    IMG=$$I ;									\
+	    NAME=`echo "$$I" | sed -e 's/.png//g' | sed -e 's/.gif//g'` ;		\
+	    NAME=`basename "$$NAME"` ;							\
+	    echo "Writing embedded image $$IMG with name $$NAME" ;			\
+	    gdk-pixbuf-csource --struct --raw --static "$$IMG"				\
+                                --name="$$NAME"						\
+				>> $(EMBEDDED_IMAGE_HEADER) || exit 1;			\
+	    ALL_NAMES="$$ALL_NAMES $$NAME" ;						\
+        done ;										\
+        echo 'struct { const char *name; '  >> $(EMBEDDED_IMAGE_HEADER) ;		\
+        echo 'GdkPixbuf *pixbuf; '  >> $(EMBEDDED_IMAGE_HEADER) ;			\
+	echo 'const GdkPixdata *pixdata; } catalog[] = {' >> $(EMBEDDED_IMAGE_HEADER) ;	\
+	for I in $$ALL_NAMES ; do							\
+            echo "{ \"$$I\", NULL, &$$I }," >> $(EMBEDDED_IMAGE_HEADER) ;		\
+	done ;										\
+	echo '{ NULL, NULL, NULL } };' >> $(EMBEDDED_IMAGE_HEADER) || exit 1
+
+BUILT_SOURCES += $(EMBEDDED_IMAGE_HEADER)
+MAINTAINERCLEANFILES +=	$(EMBEDDED_IMAGE_HEADER)
+
+## we need to nodist these because otherwise automake would copy 
+## ../common to distdir/../common which puts common outside of distdir.
+## so we handle the disting manually so the destination is always distdir/common-dist
+nodist_mugshot_SOURCES=$(EMBEDDED_IMAGES)
+mugshot-dist-hook:
+	-mkdir $(distdir)/common-dist
+	mkdir $(distdir)/common-dist/images
+	cp $(EMBEDDED_IMAGES) $(distdir)/common-dist/images
+
+desktopfilesdir=$(datadir)/gnome/autostart
+desktopfiles_in_files=mugshot.desktop.in
+desktopfiles_files=$(desktopfiles_in_files:.desktop.in=.desktop)
+desktopfiles_DATA = $(desktopfiles_files)
+# intltool not here until po exists and all that
+#@INTLTOOL_DESKTOP_RULE@
+mugshot.desktop: mugshot.desktop.in
+	cat $(srcdir)/mugshot.desktop.in | sed -e 's/^_//g' > mugshot.desktop
+
+EXTRA_DIST += $(desktopfiles_in_files)
+MAINTAINERCLEANFILES +=	$(desktopfiles_files)

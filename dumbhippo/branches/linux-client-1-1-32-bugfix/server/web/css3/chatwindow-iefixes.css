@@ -1,0 +1,14 @@
+@CHARSET "UTF-8";
+
+#dhChatMessages {
+	width: 100%;
+	padding-top: 6px;
+}
+
+.dh-chat-message-userfirst {
+	padding-top: 2px;
+}
+
+.dh-chat-message-contents {
+	margin-left: 17px;
+}
