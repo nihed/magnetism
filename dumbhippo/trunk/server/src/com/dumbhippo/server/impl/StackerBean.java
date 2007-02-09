@@ -2000,7 +2000,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case TWITTER_PERSON:
 		case DIGG_DUGG_ENTRY:
 		case REDDIT_ACTIVITY_ENTRY:
-		case NETFLIX_MOVIE:	
+		case NETFLIX_MOVIE:
+		case ACCOUNT_QUESTION:
 			isGroupParticipation = false;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
