@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
+import com.dumbhippo.live.DesktopSettingChangedEvent;
+import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.DesktopSetting;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.DesktopSettings;
@@ -62,6 +64,7 @@ public class DesktopSettingsBean implements DesktopSettings {
 					ds = new DesktopSetting(user, key, value);
 					em.persist(ds);
 				}
+				LiveState.getInstance().queueUpdate(new DesktopSettingChangedEvent(user.getGuid(), key, value));
 			}
 			
 		});
