@@ -160,6 +160,8 @@ void  hippo_connection_visit_entity            (HippoConnection *connection,
  * prefs for Mugshot itself
  */
 void hippo_connection_request_desktop_settings (HippoConnection *connection);
+void hippo_connection_request_desktop_setting  (HippoConnection *connection,
+                                                const char      *key);
 void hippo_connection_send_desktop_setting     (HippoConnection *connection,
                                                 const char      *key,
                                                 const char      *value);

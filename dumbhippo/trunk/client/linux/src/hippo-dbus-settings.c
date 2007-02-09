@@ -42,19 +42,84 @@ hippo_dbus_try_acquire_online_prefs_manager(DBusConnection *connection,
     dbus_bus_request_name(connection, HIPPO_DBUS_ONLINE_PREFS_BUS_NAME,
                           flags,
                           NULL);
+
+    /* note that calling get_and_ref_settings() in here is bad, because HippoApp has
+     * not been created
+     */
+}
+
+typedef struct SettingArrivedData SettingArrivedData;
+struct SettingArrivedData {
+    DBusMessage *method_call;
+    const char *signature; /* points inside method_call */
+    HippoSettings *settings;
+    DBusConnection *connection;
+};
+
+static void
+setting_arrived(const char *key,
+                const char *value,
+                void       *data)
+{
+    SettingArrivedData *sad = data;
+    DBusMessage *reply;
+    DBusMessageIter iter;
+    DBusMessageIter variant_iter;
+    
+    if (value == NULL) {
+        reply = dbus_message_new_error_printf(sad->method_call, HIPPO_DBUS_PREFS_ERROR_NOT_FOUND,                                      
+                                              _("No value known for key '%s'"), key);
+        goto out;
+    }
+    
+    reply = dbus_message_new_method_return(sad->method_call);
+
+    dbus_message_iter_init_append(reply, &iter);
+    
+    dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT, sad->signature,
+                                     &variant_iter);
+
+
+    switch (*(sad->signature)) {
+    case DBUS_TYPE_STRING:
+        dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_STRING, &value);
+        break;
+    case DBUS_TYPE_INT32:
+        {
+            dbus_int32_t v_INT32;
+
+            if (!hippo_parse_int32(value, &v_INT32)) {
+                dbus_message_unref(reply);
+                reply = dbus_message_new_error_printf(sad->method_call, HIPPO_DBUS_PREFS_ERROR_WRONG_TYPE,  
+                                                      _("Value was '%s' not parseable as an INT32"), value);
+                goto out;
+            }
+            
+            dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_INT32, &v_INT32);
+        }
+        break;
+    }
+
+    dbus_message_iter_close_container(&iter, &variant_iter);
+
+ out:
+    dbus_connection_send(sad->connection, reply, NULL);
+    dbus_message_unref(reply);
+    
+    dbus_message_unref(sad->method_call);
+    g_object_unref(sad->settings);
+    dbus_connection_unref(sad->connection);
+    g_free(sad);
 }
 
 DBusMessage*
 hippo_dbus_handle_get_preference(HippoDBus   *dbus,
                                  DBusMessage *message)
 {
-    DBusMessage *reply;
     const char *key;
     const char *signature;
-    DBusMessageIter iter;
-    DBusMessageIter variant_iter;
-    const char *value;
     HippoSettings *settings;
+    SettingArrivedData *sad;
     
     key = NULL;
     signature = NULL;
@@ -78,48 +143,19 @@ hippo_dbus_handle_get_preference(HippoDBus   *dbus,
     }
     
     settings = get_and_ref_settings();
+    sad = g_new0(SettingArrivedData, 1);
+    sad->settings = settings;
+    sad->method_call = message;
+    dbus_message_ref(sad->method_call);
+    sad->signature = signature; /* points inside sad->method_call */
 
-    value = hippo_settings_get(settings, key);
-
-    if (value == NULL) {
-        g_object_unref(settings);
-        return dbus_message_new_error_printf(message, HIPPO_DBUS_PREFS_ERROR_NOT_FOUND,                                      
-                                             _("No value known for key '%s'"), key);
-    }
+    sad->connection = hippo_dbus_get_connection(dbus);
+    dbus_connection_ref(sad->connection);
     
-    reply = dbus_message_new_method_return(message);
-
-    dbus_message_iter_init_append(reply, &iter);
+    /* this may call setting_arrived synchronously if we already have it */
+    hippo_settings_get(settings, key, setting_arrived, sad);    
     
-    dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT, signature,
-                                     &variant_iter);
-
-
-    switch (*signature) {
-    case DBUS_TYPE_STRING:
-        dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_STRING, &value);
-        break;
-    case DBUS_TYPE_INT32:
-        {
-            dbus_int32_t v_INT32;
-
-            if (!hippo_parse_int32(value, &v_INT32)) {
-                g_object_unref(settings);
-                dbus_message_unref(reply);
-                return dbus_message_new_error_printf(message, HIPPO_DBUS_PREFS_ERROR_WRONG_TYPE,  
-                                                     _("Value was '%s' not parseable as an INT32"), value);
-            }
-            
-            dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_INT32, &v_INT32);
-        }
-        break;
-    }
-
-    dbus_message_iter_close_container(&iter, &variant_iter);
-
-    g_object_unref(settings);
-    
-    return reply;
+    return NULL; /* no synchronous reply, we'll send it async or we just sent it above */
 }
 
 DBusMessage*
