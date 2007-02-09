@@ -20,6 +20,14 @@ GType            hippo_settings_get_type               (void) G_GNUC_CONST;
 
 HippoSettings*   hippo_settings_new                    (HippoConnection  *connection);
 
+HippoSettings*   hippo_settings_get_and_ref            (HippoConnection  *connection);
+
+void             hippo_settings_set                    (HippoSettings    *settings,
+                                                        const char       *key,
+                                                        const char       *value);
+const char*      hippo_settings_get                    (HippoSettings    *settings,
+                                                        const char       *key);
+
 G_END_DECLS
 
 #endif /* __HIPPO_SETTINGS_H__ */

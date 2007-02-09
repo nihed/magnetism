@@ -6,6 +6,7 @@
 #include <HippoStdAfx.h>
 #endif
 
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -17,6 +18,95 @@ GQuark
 hippo_error_quark(void)
 {
     return g_quark_from_static_string("hippo-error-quark");
+}
+
+
+gboolean
+hippo_parse_int32(const char *s,
+                  int        *result)
+{
+    /*
+     * We accept values of the form '\s*\d+\s+'
+     */
+    
+    char *end;
+    long v;
+
+    while (g_ascii_isspace(*s))
+        ++s;
+    
+    if (*s == '\0')
+        return FALSE;
+    
+    end = NULL;
+    errno = 0;
+    v = strtol(s, &end, 10);
+
+    if (errno == ERANGE)
+        return FALSE;
+
+    while (g_ascii_isspace(*end))
+        end++;
+
+    if (*end != '\0')
+        return FALSE;
+
+    *result = v;
+
+    return TRUE;
+}
+
+gboolean
+hippo_parse_int64(const char *s,
+                  gint64     *result)
+{
+    char *end;
+    guint64 v;
+    gboolean had_minus = FALSE;
+
+    /*
+     * We accept values of the form '\s*\d+\s+'.  
+     *
+     * FC5's glib does not have g_ascii_strtoll, only strtoull, so
+     * we have an extra hoop or two to jump through.
+     */
+    while (g_ascii_isspace(*s))
+        ++s;
+    
+    if (*s == '\0')
+        return FALSE;
+    
+    if (*s == '-') {
+        ++s;
+        had_minus = TRUE;
+    }
+
+    end = NULL;
+    errno = 0;
+    v = g_ascii_strtoull(s, &end, 10);
+
+    if (errno == ERANGE)
+        return FALSE;
+
+    while (g_ascii_isspace(*end))
+        end++;
+
+    if (*end != '\0')
+        return FALSE;
+
+    if (had_minus) {
+        if (v > - (guint64) G_MININT64)
+            return FALSE;
+        
+        *result = - (gint64) v;
+    } else {
+        if (v > G_MAXINT64)
+            return FALSE;
+        
+        *result = (gint64) v;
+    }
+        
+    return TRUE;
 }
 
 /* No end of spec-compliance here, no doubt */

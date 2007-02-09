@@ -163,6 +163,11 @@ typedef void (* HippoHttpFunc) (const char *content_type,
                                 GString    *content_or_error,
                                 void       *data);
 
+gboolean hippo_parse_int32 (const char *s,
+                            int        *result);
+gboolean hippo_parse_int64 (const char *s,
+                            gint64     *result);
+
 gboolean hippo_parse_http_url  (const char *url,
                                 gboolean   *is_https,
                                 char      **host,

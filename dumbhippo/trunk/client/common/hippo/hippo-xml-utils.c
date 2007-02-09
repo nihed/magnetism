@@ -1,8 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
-#include <errno.h>
 #include <stdarg.h>
-#include <stdlib.h>
 #include <string.h>
 #include "hippo-basics.h"
 #include "hippo-data-cache.h"
@@ -17,94 +15,6 @@ hippo_xml_error_quark (void)
         q = g_quark_from_static_string ("hippo-xml-error-quark");
 
     return q;
-}
-
-static gboolean
-parse_int32(const char *s,
-            int        *result)
-{
-    /*
-     * We accept values of the form '\s*\d+\s+'
-     */
-    
-    char *end;
-    long v;
-
-    while (g_ascii_isspace(*s))
-        ++s;
-    
-    if (*s == '\0')
-        return FALSE;
-    
-    end = NULL;
-    errno = 0;
-    v = strtol(s, &end, 10);
-
-    if (errno == ERANGE)
-        return FALSE;
-
-    while (g_ascii_isspace(*end))
-        end++;
-
-    if (*end != '\0')
-        return FALSE;
-
-    *result = v;
-
-    return TRUE;
-}
-
-static gboolean
-parse_int64(const char *s,
-            gint64     *result)
-{
-    char *end;
-    guint64 v;
-    gboolean had_minus = FALSE;
-
-    /*
-     * We accept values of the form '\s*\d+\s+'.  
-     *
-     * FC5's glib does not have g_ascii_strtoll, only strtoull, so
-     * we have an extra hoop or two to jump through.
-     */
-    while (g_ascii_isspace(*s))
-        ++s;
-    
-    if (*s == '\0')
-        return FALSE;
-    
-    if (*s == '-') {
-        ++s;
-        had_minus = TRUE;
-    }
-
-    end = NULL;
-    errno = 0;
-    v = g_ascii_strtoull(s, &end, 10);
-
-    if (errno == ERANGE)
-        return FALSE;
-
-    while (g_ascii_isspace(*end))
-        end++;
-
-    if (*end != '\0')
-        return FALSE;
-
-    if (had_minus) {
-        if (v > - (guint64) G_MININT64)
-            return FALSE;
-        
-        *result = - (gint64) v;
-    } else {
-        if (v > G_MAXINT64)
-            return FALSE;
-        
-        *result = (gint64) v;
-    }
-        
-    return TRUE;
 }
 
 static gboolean
@@ -195,7 +105,7 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
         *(const char **)info->location = value;
         break;
     case HIPPO_SPLIT_INT32:
-        if (!parse_int32(value, (int *)info->location)) {
+        if (!hippo_parse_int32(value, (int *)info->location)) {
             g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
                         "Value '%s' for attribute '%s' of node <%s/> is not a valid 32-bit value",
                         value, info->attribute_name, node_name);
@@ -203,7 +113,7 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
         }
         break;
     case HIPPO_SPLIT_INT64:
-        if (!parse_int64(value, (gint64 *)info->location)) {
+        if (!hippo_parse_int64(value, (gint64 *)info->location)) {
             g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
                         "Value '%s' for attribute '%s' of node <%s/> is not a valid 64-bit value",
                         value, info->attribute_name, node_name);
@@ -220,7 +130,7 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
         }
         break;
     case HIPPO_SPLIT_TIME_MS:
-        if (!parse_int64(value, (gint64 *)info->location)) {
+        if (!hippo_parse_int64(value, (gint64 *)info->location)) {
             g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
                         "Value '%s' for attribute '%s' of node <%s/> is not a valid millisecond timestamp",
                         value, info->attribute_name, node_name);

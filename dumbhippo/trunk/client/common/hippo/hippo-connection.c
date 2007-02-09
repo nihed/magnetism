@@ -2753,10 +2753,10 @@ on_desktop_setting_reply(LmMessageHandler *handler,
 
     child = message->node->children;
 
-    g_debug("got reply for <setting/>");
+    g_debug("got reply for <setting/> a new value");
 
     if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/settings", "setting")) {
-        g_warning("Got unexpected reply for <setting/>");
+        g_warning("Got wrong type of reply for <setting/> a new value");
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 

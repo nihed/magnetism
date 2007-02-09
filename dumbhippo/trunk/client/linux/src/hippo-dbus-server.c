@@ -870,13 +870,16 @@ handle_send_chat_message(HippoDBus   *dbus,
 			 DBusMessage *message)
 {
     DBusMessage *reply;
-    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
-    HippoConnection *connection = hippo_data_cache_get_connection(cache);
+    HippoDataCache *cache;
+    HippoConnection *connection;
     HippoChatRoom *room;
     const char *chat_id;
     const char *message_text;
     dbus_int32_t sentiment;
     HippoSentiment hippoSentiment;
+
+    cache = hippo_app_get_data_cache(hippo_get_app());
+    connection = hippo_data_cache_get_connection(cache);
     
     chat_id = NULL;
     
