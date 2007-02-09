@@ -46,10 +46,10 @@ def ensure_dir(dir):
 
 #######################################################################
 
-COMMENT_REGEX = re.compile("^\s*#.*$")
-CONTINUED_REGEX = re.compile("(^|[^\\\\])(\\\\\\\\)*\\\\$")
-KEY_VALUE_REGEX = re.compile("^\s*([^\s:=]+)\s*[:=]?\s*(.*?)$", re.DOTALL)
-EMPTY_LINE_REGEX = re.compile("^\s*$")
+COMMENT_REGEX = re.compile(r"^\s*#.*$")
+CONTINUED_REGEX = re.compile(r"(^|[^\\])(\\\\)*\\$")
+KEY_VALUE_REGEX = re.compile(r"^\s*([^\s:=]+)\s*[:=]?\s*(.*?)$", re.DOTALL)
+EMPTY_LINE_REGEX = re.compile(r"^\s*$")
 
 class DappinfoEditor:
     def __init__(self, filename):
@@ -110,7 +110,7 @@ class DappinfoEditor:
                 else:
                     return c
 
-            l = re.sub("\\\\(.)", replace_escape, l)
+            l = re.sub(r"\\(.)", replace_escape, l)
 
             if EMPTY_LINE_REGEX.match(l):
                 continue
@@ -136,9 +136,9 @@ class DappinfoEditor:
         keys.sort()
         for key in keys:
             value = self._properties[key]
-            value = re.sub("\\\\", "\\\\\\\\", value)
-            value = re.sub("\r", "\\\\r", value)
-            value = re.sub("\n", "\\\\n", value)
+            value = re.sub("\\", r"\\\\", value)
+            value = re.sub("\r", r"\\r", value)
+            value = re.sub("\n", r"\\n", value)
             f.write("%s=%s\n" % (key, value))
         f.close()
         
