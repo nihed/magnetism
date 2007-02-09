@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -105,6 +106,7 @@ import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.SharedFileSystem;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.Stacker;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
@@ -204,6 +206,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB 
 	private FeedSystem feedSystem;
+	
+	@EJB
+	private TransactionRunner runner;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -1379,7 +1384,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		return bsh;
 	}
 
-	public void doAdminShellExec(XmlBuilder xml, UserViewpoint viewpoint, boolean parseOnly, String command) throws IOException, HumanVisibleException {
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public void doAdminShellExec(XmlBuilder xml, UserViewpoint viewpoint, boolean parseOnly, boolean transaction, final String command) throws IOException, HumanVisibleException {
 		StringWriter clientOut = new StringWriter();
 		if (parseOnly) {
 			Parser parser = new Parser(new StringReader(command));
@@ -1396,15 +1402,28 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		PrintWriter pw = new PrintWriter(clientOut);
-		Interpreter bsh = makeInterpreter(pw);
+		final Interpreter bsh = makeInterpreter(pw);
 		pw.flush();
+		
+		Callable<Object> execution = new Callable<Object>() {
+			public Object call() throws Exception {
+				return bsh.eval(command);
+			}
+		};
 
 		try {
-			Object result = bsh.eval(command);
+			Object result;
+			if (transaction) {
+				result = runner.runTaskInNewTransaction(execution);
+			} else {
+				result = execution.call();
+			}
 			bsh.set("result", result);
 			writeSuccess(xml, clientOut, result);
 		} catch (EvalError e) {
 			writeException(xml, clientOut, e);
+		} catch (Exception e) {
+			throw new RuntimeException(e);  // Shouldn't happen
 		}
 	}
 	

@@ -49,7 +49,10 @@ Sample commands:<br/>
 <div id="dhAdminShellMessage"></div>
 <div>
 <div><textarea rows="8" cols="70" accesskey="i" id="dhAdminShellInput" onkeypress="dh.admin.shell.queueParseCheck();"></textarea></div>
-<div><input id="dhAdminShellEvalButton" accesskey="e" type="button" value="Eval" onclick="dh.admin.shell.doEval();"/></div>
+<div><input id="dhAdminShellEvalButton" accesskey="e" type="button" value="Eval" onclick="dh.admin.shell.doEval();"/>
+     <input id="dhAdminShellTransactionCheck" name="dhAdminShellTransactionCheck 
+            accesskey="t" type="checkbox" checked="true"/> <label for="dhAdminShellTransactionCheck">Use transaction</label>
+</div>
 </div>
 <div id="dhAdminShellResultArea">
 <div id="dhAdminShellResult" class="dh-admin-shell-result"><p style="color: grey;">Result</p></div>

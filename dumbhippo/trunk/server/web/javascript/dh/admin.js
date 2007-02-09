@@ -137,11 +137,12 @@ dh.admin.shell.queueParseCheck = function () {
 	}, 2000)
 }
 
-dh.admin.shell.exec = function (parseOnly, cb) {
+dh.admin.shell.exec = function (parseOnly, transaction, cb) {
 	var text = document.getElementById("dhAdminShellInput").value
 
 	dh.server.doXmlMethod("adminshellexec",
 						  { "parseOnly": "" + parseOnly,
+						    "transaction" : "" + transaction,
 						  	"command" : text },
 			  	    	  function(childNodes, http) {
 							var result = dh.admin.shell.parseResult(childNodes)
@@ -156,7 +157,7 @@ dh.admin.shell.exec = function (parseOnly, cb) {
 }
 
 dh.admin.shell.doParseCheck = function () {
-	dh.admin.shell.exec(true, function (result) {	
+	dh.admin.shell.exec(true, false, function (result) {	
 							if (dh.admin.shell.executing)
 								return
 							if (result.type == "success")
@@ -177,7 +178,10 @@ dh.admin.shell.doEval = function () {
 	dh.admin.shell.setNotification("Evaluating...")
 	var evalButton = document.getElementById("dhAdminShellEvalButton")
 	evalButton.style.disabled = true
-	dh.admin.shell.exec(false, function (result) {
+	var transactionCheck = document.getElementById("dhAdminShellTransactionCheck");
+	dh.admin.shell.exec(false, 
+	                    transactionCheck.checked ? "true" : "false",
+	                    function (result) {
 							dh.admin.shell.executing = false
 							evalButton.style.disabled = false
 							var outputDiv = document.getElementById("dhAdminShellOutput")
