@@ -115,6 +115,12 @@ hippo_dbus_class_init(HippoDBusClass  *klass)
                       G_TYPE_NONE, 1, G_TYPE_POINTER);
 }
 
+DBusConnection*
+hippo_dbus_get_connection(HippoDBus *dbus)
+{
+    return dbus->connection;
+}
+
 static gboolean
 propagate_dbus_error(GError **error, DBusError *derror)
 {
@@ -1452,6 +1458,11 @@ handle_message(DBusConnection     *connection,
             result = DBUS_HANDLER_RESULT_HANDLED;
             
             if (strcmp(member, "GetPreference") == 0) {
+                /* GetPreference is often async (no immediate reply)
+                 * since it may need to block on the XMPP connection.
+                 * If it decides to be synchronous it will return
+                 * a reply, otherwise NULL
+                 */
                 reply = hippo_dbus_handle_get_preference(dbus, message);
             } else if (strcmp(member, "SetPreference") == 0) {
                 reply = hippo_dbus_handle_set_preference(dbus, message);

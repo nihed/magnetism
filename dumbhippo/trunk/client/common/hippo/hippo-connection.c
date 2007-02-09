@@ -2737,7 +2737,14 @@ on_desktop_settings_reply(LmMessageHandler *handler,
 }
 
 void
-hippo_connection_request_desktop_settings (HippoConnection *connection)
+hippo_connection_request_desktop_settings(HippoConnection *connection)
+{
+    hippo_connection_request_desktop_setting(connection, NULL);
+}
+
+void
+hippo_connection_request_desktop_setting(HippoConnection *connection,
+                                          const char      *key)
 {
     LmMessage *message;
     LmMessageNode *node;
@@ -2750,11 +2757,15 @@ hippo_connection_request_desktop_settings (HippoConnection *connection)
     child = lm_message_node_add_child (node, "settings", NULL);
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/settings");
 
+    /* key means just get the one value, no key means get all settings (expensive) */
+    if (key != NULL)
+        lm_message_node_set_attribute(child, "key", key);
+    
     hippo_connection_send_message_with_reply(connection, message, on_desktop_settings_reply, SEND_MODE_AFTER_AUTH);
 
     lm_message_unref(message);
 
-    g_debug("Sent request for desktop settings");
+    g_debug("Sent request for desktop setting (key = %s)", key ? key : "(null)");
 }
 
 static LmHandlerResult

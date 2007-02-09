@@ -6,6 +6,10 @@
 
 G_BEGIN_DECLS
 
+typedef void (* HippoSettingArrivedFunc) (const char    *key,
+                                          const char    *value,
+                                          void          *data);
+
 typedef struct _HippoSettings      HippoSettings;
 typedef struct _HippoSettingsClass HippoSettingsClass;
 
@@ -18,15 +22,16 @@ typedef struct _HippoSettingsClass HippoSettingsClass;
 
 GType            hippo_settings_get_type               (void) G_GNUC_CONST;
 
-HippoSettings*   hippo_settings_new                    (HippoConnection  *connection);
+HippoSettings* hippo_settings_new         (HippoConnection         *connection);
+HippoSettings* hippo_settings_get_and_ref (HippoConnection         *connection);
+void           hippo_settings_set         (HippoSettings           *settings,
+                                           const char              *key,
+                                           const char              *value);
+void           hippo_settings_get         (HippoSettings           *settings,
+                                           const char              *key,
+                                           HippoSettingArrivedFunc  func,
+                                           void                    *data);
 
-HippoSettings*   hippo_settings_get_and_ref            (HippoConnection  *connection);
-
-void             hippo_settings_set                    (HippoSettings    *settings,
-                                                        const char       *key,
-                                                        const char       *value);
-const char*      hippo_settings_get                    (HippoSettings    *settings,
-                                                        const char       *key);
 
 G_END_DECLS
 
