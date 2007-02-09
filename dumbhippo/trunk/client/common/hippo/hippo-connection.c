@@ -2687,6 +2687,33 @@ hippo_connection_request_chat_room_details(HippoConnection *connection,
             hippo_chat_room_get_id(room), hippo_chat_room_get_jabber_id(room));
 }
 
+static void
+hippo_connection_parse_settings_node(HippoConnection *connection,
+                                     LmMessageNode   *settings_node)
+{
+    LmMessageNode *child;
+    
+    for (child = settings_node->children; child != NULL; child = child->next) {
+        const char *key = lm_message_node_get_attribute(child, "key");
+        const char *unset = lm_message_node_get_attribute(child, "unset");
+        const char *value = lm_message_node_get_value(child);
+        
+        if (key == NULL) {
+            g_debug("ignoring node '%s' with no 'key' attribute in settings reply",
+                    child->name);
+            continue;
+        }
+
+        if (unset && strcmp(unset, "true") == 0) {
+            value = NULL;
+        } else if (value == NULL) {
+            /* loudmouth tends to convert empty string to NULL for contentless nodes */
+            value = "";
+        }
+
+        g_signal_emit(G_OBJECT(connection), signals[SETTING_CHANGED], 0, key, value);
+    }
+}
 
 static LmHandlerResult
 on_desktop_settings_reply(LmMessageHandler *handler,
@@ -2696,7 +2723,6 @@ on_desktop_settings_reply(LmMessageHandler *handler,
 { 
     HippoConnection *connection = HIPPO_CONNECTION(data);
     LmMessageNode *settings_node = message->node->children;
-    LmMessageNode *child;
     
     if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/settings", "settings")) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
@@ -2705,19 +2731,8 @@ on_desktop_settings_reply(LmMessageHandler *handler,
     if (settings_node == NULL || strcmp(settings_node->name, "settings") != 0)
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 
-    for (child = settings_node->children; child != NULL; child = child->next) {
-        const char *key = lm_message_node_get_attribute(child, "key");
-        const char *value = lm_message_node_get_value(child);
-
-        if (key == NULL) {
-            g_debug("ignoring node '%s' with no 'key' attribute in settings reply",
-                    child->name);
-            continue;
-        }
-
-        g_signal_emit(G_OBJECT(connection), signals[SETTING_CHANGED], 0, key, value);
-    }
-
+    hippo_connection_parse_settings_node(connection, settings_node);
+    
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
 
@@ -2755,10 +2770,13 @@ on_desktop_setting_reply(LmMessageHandler *handler,
 
     g_debug("got reply for <setting/> a new value");
 
+#if 0
+    /* the reply has nothing in it right now (no <setting> element) */
     if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/settings", "setting")) {
         g_warning("Got wrong type of reply for <setting/> a new value");
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
+#endif
 
     /* Nothing we really need to do with the reply, it's just an ACK */
     
@@ -2781,7 +2799,11 @@ hippo_connection_send_desktop_setting (HippoConnection *connection,
     child = lm_message_node_add_child (node, "setting", NULL);
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/settings");
     lm_message_node_set_attribute(child, "key", key);
-    lm_message_node_set_value(child, value);
+
+    if (value != NULL)
+        lm_message_node_set_value(child, value);
+    else
+        lm_message_node_set_attribute(child, "unset", "true");
 
     hippo_connection_send_message_with_reply(connection, message, on_desktop_setting_reply, SEND_MODE_AFTER_AUTH);
 
@@ -3159,6 +3181,25 @@ hippo_connection_process_pending_room_messages(HippoConnection *connection)
 /* === HippoConnection Loudmouth handlers === */
 
 static gboolean
+handle_setting_changed(HippoConnection *connection,
+                       LmMessage       *message)
+{
+    LmMessageNode *child;
+    
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
+        return FALSE;
+
+    child = find_child_node(message->node, "http://dumbhippo.com/protocol/settings", "settings");
+    if (child == NULL)
+        return FALSE;
+    g_debug("handling settings changed message");
+
+    hippo_connection_parse_settings_node(connection, child);
+
+    return TRUE;
+}
+
+static gboolean
 handle_blocks_changed(HippoConnection *connection,
                       LmMessage       *message)
 {
@@ -3456,6 +3497,10 @@ handle_message (LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
+    if (handle_setting_changed(connection, message)) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+    
     if (handle_myspace_name_changed(connection, message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }

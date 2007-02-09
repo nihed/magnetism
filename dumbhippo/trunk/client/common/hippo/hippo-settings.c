@@ -4,6 +4,12 @@
 #include "hippo-connection.h"
 #include <string.h>
 
+typedef struct CacheEntry CacheEntry;
+
+struct CacheEntry {
+    char *key;
+    char *value;
+};
 
 static void      hippo_settings_init                (HippoSettings       *settings);
 static void      hippo_settings_class_init          (HippoSettingsClass  *klass);
@@ -52,18 +58,38 @@ hippo_settings_class_init(HippoSettingsClass  *klass)
 }
 
 static void
+cache_entry_free(CacheEntry *entry)
+{
+    g_free(entry->key);
+    g_free(entry->value);
+    g_free(entry);
+}
+
+static void
+invalidate_cache(HippoSettings *settings,
+                 const char    *key)
+{
+    g_hash_table_remove(settings->entries, key);
+}
+
+static void
 update_cache(HippoSettings *settings,
              const char    *key,
              const char    *value)
 {
-    g_debug("caching: %s=%s", key, value ? value : "(null)");
+    CacheEntry *entry;
     
-    if (value == NULL) {
-        g_hash_table_remove(settings->entries, key);
+    g_debug("caching: %s=%s", key, value ? value : "(null)");
+
+    entry = g_hash_table_lookup(settings->entries, key);
+    if (entry == NULL) {
+        entry = g_new0(CacheEntry, 1);
+        entry->key = g_strdup(key);
+        entry->value = g_strdup(value);
+        g_hash_table_replace(settings->entries, entry->key, entry);        
     } else {
-        g_hash_table_replace(settings->entries,
-                             g_strdup(key),
-                             g_strdup(value));
+        g_free(entry->value);
+        entry->value = g_strdup(value);
     }
 }
 
@@ -112,7 +138,7 @@ hippo_settings_new(HippoConnection *connection)
      */
     settings->connection = connection;
 
-    settings->entries = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+    settings->entries = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, (GFreeFunc) cache_entry_free);
 
     g_signal_connect(G_OBJECT(connection), "setting-changed", G_CALLBACK(on_setting_changed), settings);
     
@@ -148,23 +174,27 @@ hippo_settings_set(HippoSettings    *settings,
     g_debug("setting: %s=%s", key, value ? value : "(null)");
     
     hippo_connection_send_desktop_setting(settings->connection, key, value);
-
-    /* FIXME this is BROKEN but is needed for testing until the server has
-     * change notification on settings
-     */
-    update_cache(settings, key, value);
+    /* don't return a stale value */
+    invalidate_cache(settings, key);
 }
 
 const char*
 hippo_settings_get(HippoSettings    *settings,
                    const char       *key)
 {
-    const char *value;
+    CacheEntry *entry;
 
-    value = g_hash_table_lookup(settings->entries, key);
+    entry = g_hash_table_lookup(settings->entries, key);
 
-    g_debug("getting: %s=%s", key, value ? value : "(null)");
+    if (entry != NULL) {
+        g_debug("getting: %s=%s", entry->key, entry->value ? entry->value : "(null)");
+        return entry->value; /* may be NULL */
+    } else {
+        /* FIXME We need to synchronously get the value from the server
+         */
 
-    return value;
+        
+        return NULL;
+    }
 }
 
