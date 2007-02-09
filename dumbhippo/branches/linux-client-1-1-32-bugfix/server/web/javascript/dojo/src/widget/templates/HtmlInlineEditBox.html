@@ -1,0 +1,8 @@
+<div>
+	<form class="inlineEditBox" dojoAttachPoint="form" dojoAttachEvent="onSubmit:saveEdit; onReset:cancelEdit">
+		<input type="text" dojoAttachPoint="text" style="display: none;" />
+		<textarea dojoAttachPoint="textarea" style="display: none;"></textarea>
+		<div class="dh-html-inline-edit-options"><input type="submit" value="Save" class="dh-html-inline-edit-save" /> or <input type="reset" value="Cancel" class="dh-html-inline-edit-cancel" /></div>
+	</form>
+	<a href="javascript:;" dojoAttachPoint="edit" dojoAttachEvent="onClick:beginEdit" class="editLabel">Edit</a>
+</div>

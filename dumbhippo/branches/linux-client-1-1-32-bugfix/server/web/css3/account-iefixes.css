@@ -1,0 +1,30 @@
+.dh-accounts-checklist label {
+    height:       1%;   
+}
+
+.dh-love-hate-icon {
+    bottom:    3px;
+}
+
+.dh-add-icon {
+    bottom:    4px;
+}
+
+#dhMusicRadarPreferences label {
+    bottom:   0px;
+    width:    20px;
+}
+
+#dhMusicRadarPreferences #dhMusicOn, #dhMusicRadarPreferences #dhMusicOff {
+    bottom:   0px;
+}
+
+.dh-hidden-file-upload {
+    width:    0px;
+    left:     0px;
+}    
+
+.dh-styled-file-upload, .dh-styled-file-upload-think {
+	top:      3px;	
+	left:     5px;
+}

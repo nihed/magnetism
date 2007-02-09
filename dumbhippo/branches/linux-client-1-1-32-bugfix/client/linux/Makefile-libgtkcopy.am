@@ -1,0 +1,46 @@
+# EXTRA_DIST needs to be set outside the HAVE_GTK210 conditional; though
+# automake does handle distributing the sourcefiles fine when they
+# are inside the conditional
+GTK_MARSHAL_LIST=$(top_srcdir)/gtkcopy/gtk/hippo-gtk-marshal.list
+GTK_MARSHAL_HEADER=$(MARSHAL_DIR)/hippo-gtk-marshal.h
+GTK_MARSHAL_BODY=$(MARSHAL_DIR)/hippo-gtk-marshal.c
+
+EXTRA_DIST += $(GTK_MARSHAL_LIST)
+
+if !HAVE_GTK210
+MARSHAL_LIST=
+noinst_LTLIBRARIES += libgtkcopy.la
+
+libgtkcopy_la_CPPFLAGS =		\
+	$(AM_CPPFLAGS)			\
+	-I$(top_srcdir)/gtkcopy		\
+	$(LIBGTKCOPY_CFLAGS)
+
+libgtkcopy_la_LIBADD = 			\
+	$(LIBGTKCOPY_LIBS)
+
+LIBGTKCOPY_BUILT_SOURCEFILES=			\
+	$(GTK_MARSHAL_HEADER)			\
+	$(GTK_MARSHAL_BODY)
+
+libgtkcopy_la_SOURCES=				\
+	gtkcopy/gtk/hippo-gtk-renamings.h	\
+	gtkcopy/gtk/gtksimulated.h		\
+	gtkcopy/gtk/gtkstatusicon.c		\
+	gtkcopy/gtk/gtkstatusicon.h		\
+	gtkcopy/gtk/gtktrayicon.h		\
+	gtkcopy/gtk/gtktrayicon-x11.c
+
+nodist_libgtkcopy_la_SOURCES = $(LIBGTKCOPY_BUILT_SOURCEFILES)
+
+MAINTAINERCLEANFILES +=	$(LIBGTKCOPY_BUILT_SOURCEFILES)
+BUILT_SOURCES += $(LIBGTKCOPY_BUILT_SOURCEFILES)
+
+$(GTK_MARSHAL_HEADER): $(GTK_MARSHAL_LIST)
+	mkdir $(MARSHAL_DIR) || true
+	$(GLIB_GENMARSHAL) --prefix=hippo_gtk_marshal $(GTK_MARSHAL_LIST) --header > $(GTK_MARSHAL_HEADER)
+
+$(GTK_MARSHAL_BODY): $(GTK_MARSHAL_LIST)
+	mkdir $(MARSHAL_DIR) || true
+	(echo "#include \"hippo-gtk-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_gtk_marshal $(GTK_MARSHAL_LIST) --body) > $(GTK_MARSHAL_BODY)
+endif

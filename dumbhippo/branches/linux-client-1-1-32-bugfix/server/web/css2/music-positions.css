@@ -1,0 +1,10 @@
+@CHARSET "UTF-8";
+
+.dh-music-separator {
+	width: 1px;
+}
+
+.dh-music-option {
+	padding-left: 10px;
+	padding-right: 10px;
+}

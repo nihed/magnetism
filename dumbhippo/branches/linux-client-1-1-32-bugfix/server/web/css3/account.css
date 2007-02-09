@@ -1,0 +1,83 @@
+@CHARSET "UTF-8";
+@IMPORT url("styled-form.css");
+@IMPORT url("account-positions.css");
+@IMPORT url("photo-chooser.css");
+
+#dhAccounts, #dhAccounts .dh-address-table {
+	font-size:	13px;
+}
+
+#dhAccounts .dh-base-row, #dhAccounts .dh-alt-row {
+    background: inherit;
+}
+
+#dhAccounts .dh-label-cell {
+    font-weight: normal;
+}
+
+#dhAccounts .dh-info-cell {
+	color:			#9648BC;
+}
+
+#dhAccountInfoForm .dh-love-hate {
+	font-size:		inherit;
+}
+
+.dh-account-contents-disabled * { 
+	color:				gray;
+}
+
+.dh-account-contents-disabled #dhAccounts .dh-info-cell { 
+	color:				gray;
+}
+
+.dh-account-editing-label-box {
+	border-left-style:	solid;
+	border-top-style:	solid;
+	border-bottom-style: solid;
+	border-right-style: none;
+	border-width:		1px;	
+	background-color:	#FAFADC;
+}
+
+.dh-account-editing-content-box {
+	border-right-style:	solid;
+	border-top-style:	solid;
+	border-bottom-style: solid;
+	border-left-style:	none;
+	border-width:		1px;	
+	background-color:	#FAFADC;
+}
+
+.dh-account-editing-content-only-box {
+	border-style:		solid;
+	border-width:		1px;
+	background-color:	#FAFADC;	
+}
+
+.dh-account-editing-box-success {
+	border-color:		#CCCC99;
+}
+
+.dh-account-editing-box-error {
+	border-color:		#CC0000;
+}
+
+.dh-account-error-prefix {
+	color:				red;
+	font-weight:		bold;
+}
+
+.dh-account-error-text {
+	font-weight:		bold;
+}
+
+.dh-placebo-link {
+	color:	blue;
+	cursor:	pointer;
+	_cursor: hand;
+}
+
+.dh-saved-link {
+	color: black;
+}

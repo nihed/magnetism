@@ -1,0 +1,171 @@
+@CHARSET "UTF-8";
+
+#dhAccountInfoForm .dh-form-table {
+	margin:		    0px;
+	table-layout:   auto;
+}
+
+.dh-form-table .dh-account-editing-content-only-box .dh-control-cell-div {
+	padding-left:	5px;
+}
+
+#dhAccounts .dh-label-cell {
+	text-align:     left;
+	width:          90px;
+}
+
+#dhAccounts .dh-control-cell-next-to-info {
+    width:          320px;
+}
+
+#dhAccounts .dh-info-cell {
+	padding-left:	5px;
+	text-align:     left;
+}
+
+#dhAccounts .dh-label-cell .dh-form-table-row-icon {
+    margin-right:    5px;
+}
+
+#dhMusicRadarPreferences label {
+    position: relative;
+    bottom:   -1px;
+}
+
+#dhMusicRadarPreferences #dhMusicOn, #dhMusicRadarPreferences #dhMusicOff {
+    position: relative;
+    bottom:   2px;
+}
+
+#dhAccountInfoForm .dh-form-table .dh-spacer-row {
+	height:			5px;
+}
+
+#dhAccountInfoForm .dh-form-table .dh-padding-row {
+    height:         0px;
+}
+
+div.dh-notification {
+	padding:		4px;
+	width:          100%;
+}
+
+.dh-picture-instructions {
+    position:   relative;
+    float:      left;
+    margin-top: 4px;
+    height:     20px;
+}
+
+.dh-picture-more-instructions {
+    position:     relative;
+    float:        left;
+    margin-top:   4px;
+    clear:        left;
+}
+
+#dhPictureForm {
+    position:  relative;
+    float:     left;
+}
+
+#dhPictureEntry, .dh-file-upload-think {
+	margin-top:     2px;
+}
+
+.dh-file-upload, .dh-file-upload-think {
+	position:       relative;
+	left:           3px;	
+}
+
+/* setting width to 0 works for IE, but not for Firefox,
+   best we can do in Firefox for shrinking the input field
+   is setting size=1; then we need to move the hidden browse 
+   input box over to the left to have the actual browse 
+   button show up right next to dh-picture-instructions */ 
+.dh-hidden-file-upload {
+	position:       relative;
+    left:           -28px;
+	-moz-opacity:   0;
+	filter:alpha(opacity: 0);
+	opacity:        0;
+	z-index:        2;	
+}
+
+.dh-styled-file-upload, .dh-styled-file-upload-think {
+	position:       absolute;
+	top:            2px;
+	left:           3px;
+	z-index:        1;
+}
+
+/* Position this so the stock photo popup is relative to it */
+#dhChooseStockLinkContainer {
+	position:		relative;
+}
+
+.dh-form-table .dh-control-cell .dh-password-input {
+	width:			260px;
+}
+
+.dh-form-table .dh-control-cell .dh-username-input {
+	width:			260px;
+}
+
+.dh-aim-address {
+	padding-bottom:	5px;
+}
+
+.dh-aim-address a {
+	margin-left:	10px;	
+}
+
+tr.dh-email-address-spacer {
+	height:			5px;
+}
+
+#dhEmailEntry {
+	margin-right:	10px;
+}
+
+.dh-love-hate-icon, .dh-add-icon {
+    position:  relative;
+    bottom:    1px;
+}
+
+.dh-add-icon {
+    margin-right: 3px;
+}
+
+.dh-explanation {
+    margin-bottom: 5px;
+}
+
+#dhSetPasswordButton {
+    margin-top:    5px;
+    margin-right:  5px;
+}
+
+#dhRemovePasswordLink {
+    position:      relative;
+    bottom:        -4px;
+}
+
+.dh-love-hate-instruction-editing {
+	padding-top:	5px;
+	padding-bottom:	5px;
+}
+
+.dh-label-cell .dh-account-editing {
+	padding-top:	5px;
+	padding-bottom:	5px;
+}
+
+.dh-control-cell .dh-account-editing {
+	padding-top:	5px;
+	padding-bottom:	5px;
+}
+
+.dh-section-header {
+    margin-top:         0px;
+}

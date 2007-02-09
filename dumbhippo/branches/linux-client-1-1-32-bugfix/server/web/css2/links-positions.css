@@ -1,0 +1,9 @@
+@CHARSET "UTF-8";
+
+.dh-public-shares-toggle {
+	margin-top:			10px;
+	margin-bottom:			10px;
+}
+#notifyPublicShares {
+	margin:				0;
+}

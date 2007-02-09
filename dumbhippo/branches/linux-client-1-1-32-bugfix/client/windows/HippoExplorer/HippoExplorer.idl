@@ -1,0 +1,93 @@
+cpp_quote("#pragma once")
+
+import "oaidl.idl";
+import "ocidl.idl";
+import "HippoUtil.idl";
+
+#include "HippoExplorerDispID.h"
+
+[
+    uuid(39794B35-15C8-43b8-A1D7-AEB345E8355C), // LIBID_HippoExplorer
+    helpstring("DumbHippo Explorer Interface"),
+    lcid(0x0000),
+    version(0.1)
+]
+library HippoExplorer {
+    [
+        uuid(82344E95-33D8-44e3-A2BF-2E4A0CCC6C95), // IID_IHippoEmbed
+        helpstring("DumbHippo Embedded Object"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoEmbed : IDispatch
+    {
+        [helpstring("Close the browser window; usually used for server side dialogs")]
+        HRESULT CloseWindow(void);
+        [helpstring("Show a chat window for the given post")]
+        HRESULT ShowChatWindow(BSTR userId, BSTR postId);
+        [helpstring("Open the post information bar (the post will be determined from the current URL)")]
+        HRESULT OpenBrowserBar();
+        [helpstring("Close the post information bar")]
+        HRESULT CloseBrowserBar();
+    }
+    [
+        uuid(48584F5A-B7EB-4eda-B058-42DEDB94A89E), // IID_IHippoEmbedEvents
+        helpstring("DumbHippo Embedded Object Events"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoEmbedEvents : IDispatch
+    {
+        [helpstring("Toplevel location changed")]
+        [id(HIPPO_DISPID_LOCATIONCHANGED)] HRESULT LocationChanged(BSTR locationURL);
+    }
+    [
+        uuid(B9E30962-D43E-4038-9028-7FF8D830C994),
+        helpstring("DumbHippo Control Object"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoControl : IDispatch
+    {
+        // Standard HippoControl interface shared with firefox
+        HRESULT start([in] BSTR serverUrl);
+        HRESULT stop();
+
+        // New in control version 1.1.0
+        [propget]
+        HRESULT Version([out, retval] BSTR *version);
+        
+        HRESULT isConnected([out, retval] BOOL *isConnected);
+
+        HRESULT setListener([in] IDispatch *listener); 
+
+        HRESULT setWindow([in] IDispatch *window); // No-op for Windows
+
+        HRESULT joinChatRoom([in] BSTR chatId, [in] BOOL participant);
+        HRESULT leaveChatRoom([in] BSTR chatId);
+        HRESULT showChatWindow([in] BSTR chatId);
+        HRESULT sendChatMessage([in] BSTR chatId, [in] BSTR text);
+        HRESULT sendChatMessageSentiment([in] BSTR chatId, [in] BSTR text, [in] int sentiment);
+
+        // IE specific operations
+        [helpstring("Open the post information bar (the post will be determined from the current URL)")]
+        HRESULT OpenBrowserBar();
+        [helpstring("Close the post information bar")]
+        HRESULT CloseBrowserBar();
+    }
+    [
+        uuid(5A96BF90-0D8A-4200-A23B-1C8DABC0CC04) // CLSID_HippoEmbed
+    ]
+    coclass HippoEmbed
+    {
+        [default] interface IHippoEmbed;
+        [default, source] interface IHippoEmbedEvents;
+    }
+    [
+        uuid(1C3A1AED-4166-4A4C-96CE-5C3D47D20CCA) // CLSID_HippoControl
+    ]
+    coclass HippoControl
+    {
+        [default] interface IHippoControl;
+    }
+}

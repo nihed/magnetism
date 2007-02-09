@@ -1,0 +1,5 @@
+﻿<flash_project name="userSummary" version="1">
+    <project_file path="./userSummary.fla" filetype="fla" profile="" def_file="true" />
+    <project_file path="./userSummary.as" filetype="as" />
+    <project_file path="./hippo.as" filetype="as" />
+</flash_project>

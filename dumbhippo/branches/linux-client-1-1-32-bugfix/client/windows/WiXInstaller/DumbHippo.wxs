@@ -1,0 +1,108 @@
+<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
+    <Product Id="819D8B9C-8ADD-4520-BA0E-3A7E002635AC"
+            UpgradeCode="9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F"
+            Name="Mugshot" 
+            Language="1033"
+            Version="1.1.88"
+            Manufacturer="Red Hat">
+        <Package Id="????????-????-????-????-????????????"
+                Description="Mugshot client software" 
+                InstallerVersion="200" 
+                Compressed="yes" />             
+
+        <!-- Only allow installation as an administrative user, install as all users;
+             a value of 2 would mean "install for all users if possible, otherwise only 
+             for the current user", but that would require some fixes; in particular
+             the installer still tries to install in C:/Program Files in that case -->
+        <Property Id="ALLUSERS" Value="1"/>
+        
+        <!-- The icon used Add/Remove programs --> 
+        <Property Id="ARPPRODUCTICON" Value="hippoIcon"/>
+        
+        <Upgrade Id="9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F">
+            <UpgradeVersion Minimum="0" Maximum="1.1.88" Property="DHPREVIOUSVERSIONS"/>
+            <UpgradeVersion Minimum="1.1.0" Maximum="1.1.88" Property="DHSAMELICENSE"/>
+            <UpgradeVersion Minimum="1.1.88" IncludeMinimum="yes" Property="DHNEWERVERSIONS"/>
+        </Upgrade>
+
+        <!-- Separate "cabinets" would be used if you broke the installer across floppies ... -->
+        <Media Id="1" Cabinet="Product.cab" EmbedCab="yes" />
+
+        <FragmentRef Id="dhComponents"/>
+
+        <!-- Only a single feature; it's all-or-nothing -->
+    <Feature Id="ProductFeature" Title="Everything" Level="1">
+        <ComponentRef Id="dependencies" />
+        <ComponentRef Id="firefox" />
+        <ComponentRef Id="firefoxChromeContent" />
+        <ComponentRef Id="firefoxChromeIconsDefault" />
+        <ComponentRef Id="firefoxChromeLocaleEnUs" />
+        <ComponentRef Id="firefoxChromeSkin" />
+        <ComponentRef Id="firefoxComponents" />
+        <ComponentRef Id="firefoxDefaultsPreferences" />
+        <ComponentRef Id="hippoExplorer" />
+        <ComponentRef Id="hippoFirefox" />
+        <ComponentRef Id="hippoShellExt" />
+        <ComponentRef Id="hippoUI" />
+        <ComponentRef Id="hippoUtil" />
+        <ComponentRef Id="loudmouth" />
+        <ComponentRef Id="images" />
+        <ComponentRef Id="pangoConfiguration" />
+        <!-- We're static linking for now -->
+        <!-- <MergeRef Id="visualStudioRuntime" /> -->
+        <!-- <MergeRef Id="visualStudioRuntimePolicy" /> -->
+    </Feature>
+    
+    <CustomAction Id="DhQuitApp" FileKey="mugshotExe" Return="ignore" ExeCommand="--quit"/> 
+    <!-- Specifying Return="ignore" prevents the installation from being rolled back if 
+         launching DumbHippo fails; while the launch failure almost certainly indicates
+         a broken install, it will be easier to debug what is going on if the user can
+         try running the client. The downside is that they may not realize that something
+         went wrong at all. -->
+        <CustomAction Id="DhLaunchApp" FileKey="mugshotExe" Execute="commit" Return="ignore" ExeCommand="--install-launch"/>
+    
+    <InstallExecuteSequence>
+        <Custom Action="DhQuitApp" After="InstallValidate">REMOVE="ALL"</Custom>
+        <!-- Because of Execute="commit" in the definition of the custom action, the action
+             is not actually executed at this point, but rather copied into the Commit script.
+             The conditional catches the case where we are uninstalling, not installing -->
+        <Custom Action="DhLaunchApp" Before="InstallFinalize">NOT Installed</Custom>
+        <!-- This can be put in various places in the sequence; we do it early on
+             so that the uninstall of the old version can quit the app before we
+             start the upgrade -->
+        <RemoveExistingProducts After="InstallInitialize"/>
+    </InstallExecuteSequence>
+     
+    <InstallUISequence>
+        <Show Dialog="NotAdminPage" After="CostFinalize">NOT Privileged</Show>
+        <Show Dialog="WelcomePage" After="NotAdminPage">NOT DHSAMELICENSE</Show>
+        <Show Dialog="ProgressPage" After="WelcomePage">NOT DHPREVIOUSVERSIONS</Show>
+        <Show Dialog="UpgradeProgressPage" After="ProgressPage">DHPREVIOUSVERSIONS</Show>
+        <Show Dialog="FatalErrorPage" OnExit="error"/>
+        <!-- We'd also like to show a page for OnExit="cancel", when the user cancels
+             *after* the initial page; but without custom actions implemented with DLLs,
+             it seems basically impossible to achieve this without also displaying
+             the dialog when the user cancels from the initial page; no properties
+             have different values in the two cases, so we can't conditionalize.
+             (All the property changes that go on during the install are in the
+             "server" part of the install, and thus not visible to the UI.) -->
+    </InstallUISequence>
+    
+    <UI>
+        <TextStyle Id="dialogTitleStyle" FaceName="Arial" Size="18"/>
+        
+        <TextStyle Id="defaultUIStyle" FaceName="Tahoma" Size="8"/>
+        <Property Id="DefaultUIFont" Value="defaultUIStyle"/>
+       
+       <!-- Other dialogs/pages are referenced from the InstallUISequence; these aren't -->
+        <DialogRef Id="ErrorPage"/>
+        <DialogRef Id="FilesInUse"/>
+    </UI>
+    
+    <!-- Used for the page header -->
+    <Binary Id="bannerBmp" src="../WixInstaller/mugshotBanner.bmp"/>
+    
+    <Icon Id="hippoIcon" src="../HippoUI/Mugshot.ico"/>
+    </Product>
+</Wix>
