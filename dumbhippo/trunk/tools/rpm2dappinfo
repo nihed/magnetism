@@ -244,6 +244,8 @@ class DappinfoWriter:
         self.tmpdir = tempfile.mkdtemp("", "rpm2dappinfo-dest-")
         self.properties = {}
         try:
+            self.properties["id"] = self.desktopname
+            
             self._compute_package_name()
             self._scan_desktopfile()
             self._add_desktop()
