@@ -42,21 +42,25 @@ public class SettingsIQHandler extends AnnotatedIQHandler implements LiveEventLi
 		Log.debug("creating SettingsIQHandler");
 	}
 	
-	public void onEvent(DesktopSettingChangedEvent event) {
-		User user = spider.lookupUser(event.getUserId()); 
-
+	private String getOneSettingXml(String key, String value) {
 		XmlBuilder xml = new XmlBuilder();
 		xml.openElement("settings",
 			    "xmlns", SETTINGS_NAMESPACE);
 		
-		xml.appendTextNode("setting", event.getValue(), "key", event.getKey(),
-				"unset", event.getValue() != null ? null : "true");
+		xml.appendTextNode("setting", value, "key", key,
+				"unset", value != null ? null : "true");
 		
 		xml.closeElement();
 		
+		return xml.toString();
+	}
+	
+	public void onEvent(DesktopSettingChangedEvent event) {
+		User user = spider.lookupUser(event.getUserId()); 
+
 		Message message = new Message();
 		message.setType(Message.Type.headline);
-		message.getElement().add(XmlParser.elementFromXml(xml.toString()));
+		message.getElement().add(XmlParser.elementFromXml(getOneSettingXml(event.getKey(), event.getValue())));
 		MessageSender.getInstance().sendMessage(user.getGuid(), message);
 	}
 
@@ -76,20 +80,35 @@ public class SettingsIQHandler extends AnnotatedIQHandler implements LiveEventLi
 	
 	@IQMethod(name="settings", type=IQ.Type.get)
 	public void getSettings(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
-		Map<String,String> map = settings.getSettings(viewpoint.getViewer());
 		
-		XmlBuilder xml = new XmlBuilder();
+		Element child = request.getChildElement();
 		
-		xml.openElement("settings",
-			    "xmlns", SETTINGS_NAMESPACE);
+		// key attribute to get setting for one key, omitted to get all settings for the user
+		String key = child.attributeValue("key");
 		
-		for (Entry<String,String> entry : map.entrySet()) {
-			xml.appendTextNode("setting", entry.getValue(), "key", entry.getKey());
+		String childXml;
+		
+		if (key == null) {
+			Map<String,String> map = settings.getSettings(viewpoint.getViewer());
+			
+			XmlBuilder xml = new XmlBuilder();
+			
+			xml.openElement("settings",
+				    "xmlns", SETTINGS_NAMESPACE);
+			
+			for (Entry<String,String> entry : map.entrySet()) {
+				xml.appendTextNode("setting", entry.getValue(), "key", entry.getKey());
+			}
+			
+			xml.closeElement();
+			childXml = xml.toString();
+		} else {
+			String value = settings.getSetting(viewpoint.getViewer(), key);
+			// remember value may be null for unset
+			childXml = getOneSettingXml(key, value);
 		}
 		
-		xml.closeElement();
-		
-		reply.setChildElement(XmlParser.elementFromXml(xml.toString()));
+		reply.setChildElement(XmlParser.elementFromXml(childXml));
 	}
 	
 	@IQMethod(name="setting", type=IQ.Type.set)

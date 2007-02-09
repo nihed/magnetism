@@ -24,6 +24,14 @@ public interface DesktopSettings {
 	 */
 	public Map<String,String> getSettings(User user);
 	
+	/**
+	 * Gets one setting
+	 * @param user
+	 * @param key
+	 * @return the value, or null if unset
+	 */
+	public String getSetting(User user, String key);
+	
 	/** 
 	 * Sets a new value for a setting, or unsets if value is null
 	 * @param user whose setting is it
