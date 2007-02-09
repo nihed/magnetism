@@ -49,7 +49,8 @@ public class SettingsIQHandler extends AnnotatedIQHandler implements LiveEventLi
 		xml.openElement("settings",
 			    "xmlns", SETTINGS_NAMESPACE);
 		
-		xml.appendTextNode("setting", event.getValue(), "key", event.getKey());
+		xml.appendTextNode("setting", event.getValue(), "key", event.getKey(),
+				"unset", event.getValue() != null ? null : "true");
 		
 		xml.closeElement();
 		
@@ -96,8 +97,14 @@ public class SettingsIQHandler extends AnnotatedIQHandler implements LiveEventLi
 		Element child = request.getChildElement();
 		
 		String key = child.attributeValue("key");
-		String value = child.getText();
-		
+		String unset = child.attributeValue("unset");
+		String value;
+		if (unset != null && unset.equals("true")) {
+			value = null;
+		} else {
+			value = child.getText();
+		}
+				
 		settings.setSetting(viewpoint.getViewer(), key, value);
 	}
 }

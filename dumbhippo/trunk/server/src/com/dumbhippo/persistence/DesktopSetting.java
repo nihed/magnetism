@@ -55,6 +55,10 @@ public class DesktopSetting extends DBUnique {
 		this.key = key;
 	}
 
+	/** 
+	 * value can't be null, to remove a setting you delete the row.
+	 * @return
+	 */
 	@Column(nullable=false)
 	public String getValue() {
 		return value;
