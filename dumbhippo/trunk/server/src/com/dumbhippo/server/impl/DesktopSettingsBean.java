@@ -75,4 +75,17 @@ public class DesktopSettingsBean implements DesktopSettings {
 			
 		});
 	}
+
+	public String getSetting(User user, String key) {
+		Query q = em.createQuery("SELECT ds FROM DesktopSetting ds WHERE ds.user = :user AND ds.keyName = :key");
+		q.setParameter("user", user);
+		q.setParameter("key", key);
+		DesktopSetting ds;
+		try {
+			ds = (DesktopSetting) q.getSingleResult();
+			return ds.getValue();
+		} catch (NoResultException e) {
+			return null;
+		}
+	}
 }
