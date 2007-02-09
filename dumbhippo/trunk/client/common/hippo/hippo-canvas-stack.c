@@ -343,6 +343,7 @@ hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
                                    canvas_block_compare, canvas_stack);
 
     remove_extra_children(canvas_stack);
+    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(canvas_stack), item, visible);
     
     g_object_unref(item);
 
