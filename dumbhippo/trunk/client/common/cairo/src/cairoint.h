@@ -2313,6 +2313,10 @@ _cairo_error (cairo_status_t status);
 cairo_private int
 _cairo_dtostr (char *buffer, size_t size, double d);
 
+/* Open a file with a UTF-8 filename */
+cairo_private FILE *
+_cairo_fopen (char *filename, char *mode);
+
 /* Avoid unnecessary PLT entries.  */
 slim_hidden_proto (cairo_clip_preserve);
 slim_hidden_proto (cairo_close_path);

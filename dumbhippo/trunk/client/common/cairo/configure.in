@@ -220,6 +220,26 @@ CAIRO_LIBS=$CAIRO_NONPKGCONFIG_LIBS
 
 dnl ===========================================================================
 
+dnl
+dnl On Windows, filenames passed to fopen are in the current codepage
+dnl This means some files can't be opened with fopen(). So, we instead
+dnl use UTF-8 filenames and pass them to _wfopen()
+dnl
+    
+have_wfopen=false
+AC_CHECK_FUNCS(_wfopen wfopen, [have_wfopen=true])
+
+use_wfopen=false
+if $have_wfopen; then
+    case "$host" in
+        *-*-mingw*|*-*-cygwin*)
+            AC_DEFINE(USE_UTF16_WFOPEN, 1, [define if we cairo convert filenames to UTF-16 and use wfopen()])
+        ;;
+    esac
+fi
+
+dnl ===========================================================================
+
 CAIRO_BACKEND_ENABLE(xlib, Xlib, xlib, XLIB_SURFACE, auto, [
   xlib_REQUIRES="x11"
   PKG_CHECK_MODULES(xlib, $xlib_REQUIRES, ,
