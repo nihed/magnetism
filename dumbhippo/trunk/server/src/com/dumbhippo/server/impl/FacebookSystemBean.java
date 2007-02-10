@@ -7,6 +7,8 @@ import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -30,10 +32,14 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.services.FacebookWebServices;
 
 @Stateless
 public class FacebookSystemBean implements FacebookSystem {
 	static private final Logger logger = GlobalSetup.getLogger(FacebookSystemBean.class);
+	
+	// how long to wait on the Facebook API call
+	static protected final int REQUEST_TIMEOUT = 1000 * 12;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em; 
@@ -163,4 +169,29 @@ public class FacebookSystemBean implements FacebookSystem {
 		return apiKey;
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public void decodeUserIds() {
+		FacebookSystem facebookSystem = EJBUtil.defaultLookup(FacebookSystem.class);
+		List<FacebookAccount> facebookAccounts = facebookSystem.getAllAccounts();
+		
+        FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
+		
+		ws.decodeUserIds(facebookAccounts);
+		
+		// those are detached copies of Facebook accounts, we need to set facebookUserId on attached copy
+		facebookSystem.updateUserIds(facebookAccounts);
+	}
+	
+	public void updateUserIds(List<FacebookAccount> detachedFacebookAccounts) {
+		for (FacebookAccount detachedFacebookAccount : detachedFacebookAccounts) {
+		    FacebookAccount facebookAccount = em.find(FacebookAccount.class, detachedFacebookAccount.getId());
+		    // just a sanity check
+		    if (detachedFacebookAccount.getFacebookUserId() != null) {
+		        facebookAccount.setFacebookUserId(detachedFacebookAccount.getFacebookUserId());
+		    } else {
+		    	logger.warn("Web services produced a null Facebook user id for Facebook account {}",  
+		    			detachedFacebookAccount.getId());
+		    }
+		} 
+	}
 }
