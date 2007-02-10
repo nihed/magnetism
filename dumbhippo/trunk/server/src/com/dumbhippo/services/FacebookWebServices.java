@@ -5,13 +5,16 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookAlbumData;
 import com.dumbhippo.persistence.FacebookEvent;
@@ -57,7 +60,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
         params.add("method=" + methodName);
 		params.add("auth_token=" + facebookAuthToken);
 		
-		String wsUrl = generateFacebookRequest(params);
+		String wsUrl = generateFacebookRequest(params, false);
 			
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
 		
@@ -90,7 +93,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
         params.add("method=" + methodName);
 		params.add("session_key=" + facebookAccount.getSessionKey());
 
-		String wsUrl = generateFacebookRequest(params);
+		String wsUrl = generateFacebookRequest(params, false);
 
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
 		
@@ -139,7 +142,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		params.add("users=" + facebookAccount.getFacebookUserId());
 		params.add("fields=wall_count");
 		
-		String wsUrl = generateFacebookRequest(params);
+		String wsUrl = generateFacebookRequest(params, false);
 
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
 
@@ -172,7 +175,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
         params.add("method=" + methodName);
 		params.add("session_key=" + facebookAccount.getSessionKey());
 
-		String wsUrl = generateFacebookRequest(params);
+		String wsUrl = generateFacebookRequest(params, false);
 
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
 
@@ -213,7 +216,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		params.add("session_key=" + facebookAccount.getSessionKey());
 		params.add("id=" + facebookAccount.getFacebookUserId());
 		
-		String wsUrl = generateFacebookRequest(params);		
+		String wsUrl = generateFacebookRequest(params, false);		
 		
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(facebookAccount), wsUrl);
 		
@@ -250,7 +253,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		params.add("session_key=" + facebookAccount.getSessionKey());
 		params.add("id=" + facebookAccount.getFacebookUserId());
 		
-		String wsUrl = generateFacebookRequest(params);		
+		String wsUrl = generateFacebookRequest(params, false);		
 		
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(facebookAccount), wsUrl);
 		
@@ -270,7 +273,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		params.add("session_key=" + facebookAccount.getSessionKey());
 		params.add("id=" + facebookAccount.getFacebookUserId());
 		
-		String wsUrl = generateFacebookRequest(params);		
+		String wsUrl = generateFacebookRequest(params, false);		
 		
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(facebookAccount), wsUrl);
 		
@@ -324,13 +327,20 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
         return modifiedAlbums;
 	}
 	
-	private String generateFacebookRequest(List<String> params) {
+	private String generateFacebookRequest(List<String> params, boolean newApi) {
+		params.add("api_key=" + apiKey);
+		params.add("call_id=" + System.currentTimeMillis());
+		if (newApi) {
+			params.add("v=1.0");
+		}
+	    return generateFacebookRequest(params, secret);	
+	}
+	
+	static public String generateFacebookRequest(List<String> params, String facebookSecret) {
 	    StringBuffer signatureBuffer = new StringBuffer();
 	    StringBuffer requestBuffer = new StringBuffer();
 	    
 		requestBuffer.append("http://api.facebook.com/restserver.php?");
-		params.add("api_key=" + apiKey);
-		params.add("call_id=" + System.currentTimeMillis());
 		
 	    // sort the list of parameters alphabetically
 	    Collections.sort(params);
@@ -349,7 +359,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	    }
 	    
 	    // concatinate the secret in the end of the signatureBuffer
-	    signatureBuffer.append(this.secret);
+	    signatureBuffer.append(facebookSecret);
 	    
 	    StringBuffer signature = new StringBuffer();
 	    try {
@@ -390,4 +400,49 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		
 		return false;
 	}
+	
+	public void decodeUserIds(List<FacebookAccount> facebookAccounts) {
+		logger.debug("will decode user ids for {} Facebook accounts", facebookAccounts.size());
+		StringBuffer ids = new StringBuffer();
+		// several FacebookAccount objects can have the same facebook user
+		Map<String, Set<FacebookAccount>> facebookAccountsMap = new HashMap<String, Set<FacebookAccount>>();
+		for (FacebookAccount facebookAccount : facebookAccounts) {
+			if (facebookAccountsMap.containsKey(facebookAccount.getFacebookUserId())) {
+				facebookAccountsMap.get(facebookAccount.getFacebookUserId()).add(facebookAccount);
+			} else {
+		        ids.append(facebookAccount.getFacebookUserId() + ",");		
+		        Set<FacebookAccount> sameIdAccounts = new HashSet<FacebookAccount>();
+		        sameIdAccounts.add(facebookAccount);
+		        facebookAccountsMap.put(facebookAccount.getFacebookUserId(), sameIdAccounts);
+			}
+		}
+		// remove the last ","
+		if (ids.length() > 0) {
+		    ids.deleteCharAt(ids.length()-1);
+		}
+		
+		List<String> params = new ArrayList<String>();
+		String methodName = "facebook.update.decodeIDs";
+        params.add("method=" + methodName);
+		params.add("ids=" + ids.toString());
+		
+		String wsUrl = generateFacebookRequest(params, true);	
+		
+		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(null), wsUrl);
+		
+		int count = 0;
+		for (Pair<String, String> idPair : handler.getIdPairs()) {
+			Set<FacebookAccount> sameIdAccounts = facebookAccountsMap.get(idPair.getFirst());
+			for (FacebookAccount facebookAccount : sameIdAccounts) {
+				facebookAccount.setFacebookUserId(idPair.getSecond());
+				count++;
+			}
+		    facebookAccountsMap.remove(idPair.getFirst());
+		}
+		
+		// it's ok for this number not to match the total number of Facebook account
+		// if some ids were already decoded
+		logger.debug("decoded user ids for {} Facebook accounts", count);
+	}
+	
  }

@@ -10,6 +10,7 @@ import org.xml.sax.SAXException;
 
 import com.dumbhippo.EnumSaxHandler;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookAlbumData;
 
@@ -50,6 +51,11 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		modified,
 		description,
 		location,
+		
+		// facebook.update.decodeIDs
+		id_map,
+		old_id,
+		new_id,
 		
 		// error message
 		fb_error,
@@ -95,6 +101,7 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 	private boolean gettingTaggedPhotos;
 	private List<FacebookAlbumData> albums;
 	private boolean gettingAlbums;
+	private List<Pair<String, String>> idPairs;
 
 	FacebookSaxHandler() {
 		this(null);	
@@ -114,6 +121,7 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		gettingTaggedPhotos = false;
 		albums = new ArrayList<FacebookAlbumData>();
 		gettingAlbums = false;
+		idPairs = new ArrayList<Pair<String, String>>();
 	}
 	
 	private FacebookPhotoData currentFacebookPhotoData() {
@@ -130,6 +138,13 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 			return null;
 	}
 	
+	private Pair<String, String> getCurrentIdPair() {
+		if (idPairs.size() > 0)
+			return idPairs.get(idPairs.size() - 1);
+		else
+			return null;	
+    }
+
 	@Override
 	protected void openElement(Element c) throws SAXException {
 		if (c == Element.result) {
@@ -147,6 +162,9 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 			album.setFacebookAccount(facebookAccount);
 			album.getCoverPhoto().setFacebookAccount(facebookAccount);
 			albums.add(album);
+		} else if (c == Element.id_map) {
+			Pair<String, String> idPair = new Pair<String, String>(null, null);
+			idPairs.add(idPair);
 		}
 	}
 	
@@ -274,7 +292,11 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 			} else if (attrs.getValue("method").equals("facebook.pokes.getCount")) {
 				totalPokeCount = totalCount;
 			}  
-		} else if (c == Element.code) {
+		} else if (c == Element.old_id) {
+			getCurrentIdPair().setFirst(currentContent); 
+	    } else if (c == Element.new_id) {
+		    getCurrentIdPair().setSecond(currentContent);
+	    } else if (c == Element.code) {
 			errorCode = parseFacebookCount(c, currentContent);
 			logger.debug("Parsed out error code {}", errorCode);
 		} else if (c == Element.msg) {
@@ -333,5 +355,9 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 	
 	public List<FacebookAlbumData> getAlbums() {
 		return albums;
+	}
+	
+	public List<Pair<String, String>> getIdPairs() {
+		return idPairs;
 	}
 }
