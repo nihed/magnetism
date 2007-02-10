@@ -71,6 +71,15 @@ cairo_win32_scaled_font_done_font (cairo_scaled_font_t *scaled_font);
 cairo_public double
 cairo_win32_scaled_font_get_metrics_factor (cairo_scaled_font_t *scaled_font);
 
+cairo_public char *
+cairo_win32_filename_from_unicode (WCHAR *wide_filename);
+
+cairo_public char *
+cairo_win32_filename_from_ansi (char *ansi_filename);
+
+cairo_public void
+cairo_win32_free_filename (char *filename);
+
 CAIRO_END_DECLS
 
 #else  /* CAIRO_HAS_WIN32_SURFACE */

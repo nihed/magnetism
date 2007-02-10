@@ -1214,4 +1214,109 @@ DllMain (HINSTANCE hinstDLL,
   return TRUE;
 }
 #endif
+
+/**
+ * cairo_win32_filename_from_unicode:
+ * @wide_filename: filename as a Unicode string
+ *
+ * Convenience function that converts a wide Unicode filename into
+ * Cairo form. Cairo functions that take filenames expect the filename
+ * to be encoded in UTF-8, instead of in the current system code
+ * page. this function converts a wide filename (In UTF-16, as taken
+ * by Unicode Windows API functions) to the UTF-8 form.
+ * 
+ * Return value: the filename as UTF-8, or %NULL if conversion
+ *  to UTF-8 failed because of out-of-memory or other errors.
+ *  The value should be freed with cairo_win32_free_filename()
+ **/
+cairo_public char *
+cairo_win32_filename_from_unicode (WCHAR *wide_filename)
+{
+    int len;
+    char *result;
+
+    /* Preflight to find the necessary length */
+    len = WideCharToMultiByte (CP_UTF8, 0,
+			       wide_filename, -1,
+			       NULL, 0,
+			       NULL, NULL);
+    if (len == 0)
+	return NULL;
+
+    result = malloc (len);
+    if (!result)
+	return NULL;
+
+    /* Now convert */
+    len = WideCharToMultiByte (CP_UTF8, 0,
+			       wide_filename, -1,
+			       result, len,
+			       NULL, NULL);
+
+    if (len == 0) { /* Huh? */
+	free(result);
+	return NULL;
+    }
+}
+
+/**
+ * cairo_win32_filename_from_ansi:
+ * @wide_filename: filename in the current ANSI code page
+ *
+ * Like cairo_win32_filename_from_unicode(), but converts
+ * from the current windows ANSI codepage (the code page used
+ * for filenames in the non-Unicode versions of Windows API functions)
+ * 
+ * Return value: the filename as UTF-8, or %NULL if conversion
+ *  to UTF-8 failed because of out-of-memory or other errors.
+ *  The value should be freed with cairo_win32_free_filename()
+ **/
+cairo_public char *
+cairo_win32_filename_from_ansi (char *ansi_filename)
+{
+    int len;
+    WCHAR *wide_filename;
+    char *result;
+
+    /* Preflight to find the necessary length */
+    len = MultiByteToWideChar (CP_ACP, 0,
+			       ansi_filename, -1,
+			       NULL, 0);
+    if (len == 0)
+	return NULL;
+
+    wide_filename = malloc (len * sizeof(WCHAR));
+    if (!wide_filename)
+	return NULL;
+
+    /* Now convert */
+    len = MultiByteToWideChar (CP_ACP, 0,
+			       ansi_filename, -1,
+			       wide_filename, len);
+
+    if (len == 0) { /* Huh? */
+	free (wide_filename);
+	return NULL;
+    }
+
+    result = cairo_win32_filename_from_unicode (wide_filename);
+    free (wide_filename);
+      
+    return result;
+}
+
+/**
+ * cairo_win32_free_filename:
+ * @filename: filename to fre
+ * 
+ * Frees a filename returned from cairo_win32_filename_from_unicode()
+ * or cairo_win32_filename_from_ansi().
+ **/
+cairo_public void
+cairo_win32_free_filename (char *filename)
+{
+    if (filename)
+	free(filename);
+}
+
 #endif

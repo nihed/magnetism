@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <locale.h>
 #include <ctype.h>
+#include <errno.h>
 #include "cairoint.h"
 #include "cairo-output-stream-private.h"
 
@@ -460,7 +461,7 @@ _cairo_output_stream_create_for_filename (const char *filename)
     stdio_stream_t *stream;
     FILE *file;
 
-    file = fopen (filename, "wb");
+    file = _cairo_fopen (filename, "wb");
     if (file == NULL)
 	return (cairo_output_stream_t *) &cairo_output_stream_nil_write_error;
 
@@ -534,3 +535,63 @@ _cairo_memory_stream_length (cairo_output_stream_t *base)
 
     return _cairo_array_num_elements (&stream->array);
 }
+
+/**
+ * _cairo_fopen:
+ * @filename: filename to open
+ * @mode: mode string with which to open the file
+ * 
+ * Exactly like the C library function, but possibly doing encoding
+ * conversion on the filename. On Unix platforms, the filename is
+ * passed directly to the system, but on Windows, the filename is
+ * interpreted as UTF-8, rather than in a codepage that would depend
+ * on system settings.
+ * 
+ * Return value: The newly opened file, or NULL if an error occured.
+ **/
+FILE *
+_cairo_fopen (char *filename, char *mode)
+{
+#ifdef USE_UTF16_WFOPEN
+    uint16_t *filename_w;
+    uint16_t *mode_w;
+    FILE *result;
+
+    /* This check is a convenience if someone omits a check on the
+     * the return value cairo_win32_filename_from_unicode(), since that can
+     * return NULL on OOM.
+     */
+    if (filename == NULL || mode == NULL) {
+	errno = EINVAL;
+	return NULL;
+    }
+    
+    if (_cairo_utf8_to_utf16 (filename, -1, &filename_w, NULL) != CAIRO_STATUS_SUCCESS) {
+	errno = EINVAL;
+	return NULL;
+    }
+
+    if (_cairo_utf8_to_utf16 (mode, -1, &mode_w, NULL) != CAIRO_STATUS_SUCCESS) {
+	free (filename_w);
+	errno = EINVAL;
+	return NULL;
+    }
+
+#ifdef HAVE__WFOPEN
+    result = _wfopen(filename_w, mode_w);
+#elif HAVE_WFOPEN
+    result = wfopen(filename_w, mode_w);
+#else
+#error "USE_UTF16_WFOPEN is defined but neither HAVE__WFOPEN or HAVE_WFOPEN was defined"
+#endif /* USE_UTF16_WFOPEN */
+
+    free (filename_w);
+    free (mode_w);
+
+    return result;
+    
+#else /* Use fopen directly */
+    return fopen (filename, mode);
+#endif  
+}
+
