@@ -1257,6 +1257,8 @@ cairo_win32_filename_from_unicode (WCHAR *wide_filename)
 	free(result);
 	return NULL;
     }
+
+    return result;
 }
 
 /**
