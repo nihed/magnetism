@@ -86,6 +86,10 @@
 /* Define to 1 if you have the `vasnprintf' function. */
 #undef HAVE_VASNPRINTF
 
+/* Define to 1 if you have the `_wfopen' function. */
+#define HAVE__WFOPEN 1
+
+/* Define to 1 if you have the `_wfopen' function. */
 /* Define to 1 if you have the `XrmFinalize' function. */
 #undef HAVE_XRMFINALIZE
 
@@ -120,5 +124,9 @@
    first (like Motorola and SPARC, unlike Intel and VAX). */
 #undef WORDS_BIGENDIAN
 
+/* define if we should convert filenames to UTF-16 and use _wfopen() */
+#define USE_UTF16_WFOPEN 1
+
 /* Define to 1 if the X Window System is missing or not being used. */
 #undef X_DISPLAY_MISSING
+

@@ -147,6 +147,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-account-question.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-block-facebook-event.c"
 				>
 			</File>
@@ -200,6 +204,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-base.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-account-question.c"
 				>
 			</File>
 			<File
@@ -272,6 +280,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-entity-photo.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-filter-area.c"
 				>
 			</File>
 			<File
@@ -363,6 +375,15 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						CommandLine="genmarshal.bat&#x0D;&#x0A;"
+						Outputs="hippo-common-marshal.c;hippo-common-marshal.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="genmarshal.bat"
 						Outputs="hippo-common-marshal.c;hippo-common-marshal.h"
 					/>
 				</FileConfiguration>
@@ -490,6 +511,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-account-question.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-block-facebook-event.h"
 				>
 			</File>
@@ -543,6 +568,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-base.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-account-question.h"
 				>
 			</File>
 			<File
@@ -603,6 +632,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-entity-photo.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-filter-area.h"
 				>
 			</File>
 			<File
