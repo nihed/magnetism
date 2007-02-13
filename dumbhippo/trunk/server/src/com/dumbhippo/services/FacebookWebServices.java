@@ -60,7 +60,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
         params.add("method=" + methodName);
 		params.add("auth_token=" + facebookAuthToken);
 		
-		String wsUrl = generateFacebookRequest(params, false);
+		String wsUrl = generateFacebookRequest(params);
 			
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
 		
@@ -80,58 +80,85 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	}
 	
 	/**
-	 * Return update time if the number of unread messages changed or the number of total messages 
-	 * increased and some of them are unread messages.
+	 * Return a pair of update times for messages and pokes notifications. 
+	 * First element is an update time if the number of unread messages changed or the most 
+	 * recent message id changed.
+	 * Second element is an update time if the number of unseen pokes changed or the most 
+	 * recent poke id changed.
 	 * 
 	 * @param facebookAccount
-	 * @return update time if the set of unread messages changed
+	 * @return update times if the set of unread messages or pokes changed
 	 */
-	public long updateMessageCount(FacebookAccount facebookAccount) {
+	public Pair<Long, Long> updateNotifications(FacebookAccount facebookAccount) {
 	    // generate messages request using session from facebookAccount
 		List<String> params = new ArrayList<String>();
-		String methodName = "facebook.messages.getCount";
+		String methodName = "facebook.notifications.get";
         params.add("method=" + methodName);
 		params.add("session_key=" + facebookAccount.getSessionKey());
 
-		String wsUrl = generateFacebookRequest(params, false);
+		String wsUrl = generateFacebookRequest(params);
 
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
 		
+		long messagesTime = -1;
+		long pokesTime = -1;
+		
 		if (handleErrorCode(facebookAccount, handler, methodName)) {
-			return -1;
+			return new Pair<Long, Long>(messagesTime, pokesTime);
 		}
 		
+		long currentTime = (new Date()).getTime();
+		
 		int newUnread = handler.getUnreadMessageCount(); 
-		int newTotal = handler.getTotalMessageCount();
+		int newMostRecentMessageId = handler.getMostRecentMessageId();
 		int oldUnread = facebookAccount.getUnreadMessageCount();
-		int oldTotal = facebookAccount.getTotalMessageCount();
-		if ((newUnread != -1) && (newTotal != -1)) {
-			// with the current api, we can only know for sure that the set of new messages
-			// changed if newUnread != oldUnread; however there is another situation when 
-			// the user could have new messages: if newTotal > oldTotal, the user must have received 
-			// new messages, though we do not know if they read the new ones and left the 
-			// old unread messages unread or actually read the old unread messages, and then 
-			// received the new ones			
-            // also, deleted messages are not included in the number of total messages we get 
-			// from facebook, which prevents us from always notifying the user if they possibly
-			// have new messages
-			// so we would not detect that the person has new messages if, for example, between 
-			// our requests they read 2 of their new messages, deleted them, and received 2 other 
-			// new messages 
-			facebookAccount.setTotalMessageCount(newTotal);		
-			if ((newUnread != oldUnread) || ((newTotal > oldTotal) && (newUnread > 0)))  {
-				long time = (new Date()).getTime();
-				// we want the timestamp to correspond to the times when we signify change
-				// in unread messages
-				facebookAccount.setMessageCountTimestampAsLong(time);
+		int oldMostRecentMessageId = facebookAccount.getMostRecentMessageId();
+		if ((newUnread != -1) && (newMostRecentMessageId != -1)) {	
+			if ((newUnread != oldUnread) || ((newUnread > 0) && (newMostRecentMessageId > oldMostRecentMessageId)))  {
 				facebookAccount.setUnreadMessageCount(newUnread);
-				return time; 
+				// if the new unread message count is 0, most recent message id will also
+				// be returned as 0, in which case we don't want to set it
+				if (newMostRecentMessageId > 0)
+				    facebookAccount.setMostRecentMessageId(newMostRecentMessageId);	
+				// we don't want to notify if the message count is the same as before and we are initializing  
+				// the mostRecentMessageId
+				// we don't want to notify if the message count is 0 and we are initializing it
+				if (((newUnread != oldUnread) || (oldMostRecentMessageId != -1)) 
+					&& ((newUnread > 0) || (oldUnread != -1))) {
+					messagesTime = currentTime;
+					facebookAccount.setMessageCountTimestampAsLong(messagesTime);
+				}
 			}
 		} else {
-			logger.error("Did not receive a valid response for facebook.messages.getCount request, did not receive an error either."
+			logger.error("Did not receive a valid response for messages from facebook.notifications.get request, did not receive an error either."
 					     + " Error message {}, error code {}", handler.getErrorMessage(), handler.getErrorCode());
 		}
-        return -1;
+		
+		int newUnseen = handler.getUnseenPokeCount(); 
+		int newMostRecentPokeId = handler.getMostRecentPokeId();
+		int oldUnseen = facebookAccount.getUnseenPokeCount();
+		int oldMostRecentPokeId = facebookAccount.getMostRecentPokeId();
+		if ((newUnseen != -1) && (newMostRecentPokeId != -1)) {	
+			if ((newUnseen != oldUnseen) || ((newUnseen > 0) && (newMostRecentPokeId > oldMostRecentPokeId)))  {
+				facebookAccount.setUnseenPokeCount(newUnseen);
+				// if the new unseen poke count is 0, most recent poke id will also
+				// be returned as 0, in which case we don't want to set it
+				if (newMostRecentPokeId > 0)
+				    facebookAccount.setMostRecentPokeId(newMostRecentPokeId);
+				// we don't want to notify if the poke count is the same as before and we are initializing  
+				// the mostRecentPokeId
+				// we don't want to notify if the poke count is 0 and we are initializing it
+				if (((newUnseen != oldUnseen) || (oldMostRecentPokeId != -1)) 
+					&& ((newUnseen > 0) || (oldUnseen != -1))) {
+				    pokesTime = currentTime;
+				    facebookAccount.setPokeCountTimestampAsLong(pokesTime);
+				}
+			}
+		} else {
+			logger.error("Did not receive a valid response for pokes from facebook.notifications.get request, did not receive an error either."
+					     + " Error message {}, error code {}", handler.getErrorMessage(), handler.getErrorCode());
+		}		
+        return new Pair<Long, Long>(messagesTime, pokesTime);
 	}
 	
 	public FacebookEvent updateWallMessageCount(FacebookAccount facebookAccount) {
@@ -139,10 +166,10 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		String methodName = "facebook.users.getInfo";
         params.add("method=" + methodName);
 		params.add("session_key=" + facebookAccount.getSessionKey());
-		params.add("users=" + facebookAccount.getFacebookUserId());
+		params.add("uids=" + facebookAccount.getFacebookUserId());
 		params.add("fields=wall_count");
 		
-		String wsUrl = generateFacebookRequest(params, false);
+		String wsUrl = generateFacebookRequest(params);
 
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
 
@@ -168,55 +195,16 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		return null;
 	}
 	
-	public long updatePokeCount(FacebookAccount facebookAccount) {
-	    // generate messages request using session from facebookAccount
-		List<String> params = new ArrayList<String>();
-		String methodName = "facebook.pokes.getCount";
-        params.add("method=" + methodName);
-		params.add("session_key=" + facebookAccount.getSessionKey());
-
-		String wsUrl = generateFacebookRequest(params, false);
-
-		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
-
-		if (handleErrorCode(facebookAccount, handler, methodName)) {
-			return -1;
-		}
-		
-		int newUnseen = handler.getUnseenPokeCount(); 
-		int newTotal = handler.getTotalPokeCount();
-		int oldUnseen = facebookAccount.getUnseenPokeCount();
-		int oldTotal = facebookAccount.getTotalPokeCount();
-		if ((newUnseen != -1) && (newTotal != -1)) {
-			facebookAccount.setTotalPokeCount(newTotal);		
-			if ((newUnseen != oldUnseen) || ((newTotal > oldTotal) && (newUnseen > 0)))  {
-				facebookAccount.setUnseenPokeCount(newUnseen);
-				if ((newUnseen > 0) || (oldUnseen != -1)) {
-				    long time = (new Date()).getTime();
-				    // we want the timestamp to correspond to the times when we signify change
-				    // in unseen pokes
-				    facebookAccount.setPokeCountTimestampAsLong(time);
-				    return time; 
-				}				
-			}
-		} else {
-			logger.error("Did not receive a valid response for facebook.pokes.getCount request, did not receive an error either."
-					     + " Error message {}, error code {}", handler.getErrorMessage(), handler.getErrorCode());
-		}
-		
-        return -1;
-	}
-	
 	// if we already have results, returning null might mean that there was no change in the photo
 	// count, so we decided not to bother about checking for changes on the individual photos
 	public List<FacebookPhotoData> updateTaggedPhotos(FacebookAccount facebookAccount) {
 		List<String> params = new ArrayList<String>();
-		String methodName = "facebook.photos.getOfUser";
+		String methodName = "facebook.photos.get";
         params.add("method=" + methodName);
 		params.add("session_key=" + facebookAccount.getSessionKey());
-		params.add("id=" + facebookAccount.getFacebookUserId());
+		params.add("subj_id=" + facebookAccount.getFacebookUserId());
 		
-		String wsUrl = generateFacebookRequest(params, false);		
+		String wsUrl = generateFacebookRequest(params);		
 		
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(facebookAccount), wsUrl);
 		
@@ -248,12 +236,12 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	public int getTaggedPhotosCount(FacebookAccount facebookAccount) {
 		logger.debug("will get facebook tagged photos count for {}", facebookAccount.getFacebookUserId());
 		List<String> params = new ArrayList<String>();
-		String methodName = "facebook.photos.getOfUser";
+		String methodName = "facebook.photos.get";
         params.add("method=" + methodName);
 		params.add("session_key=" + facebookAccount.getSessionKey());
-		params.add("id=" + facebookAccount.getFacebookUserId());
+		params.add("subj_id=" + facebookAccount.getFacebookUserId());
 		
-		String wsUrl = generateFacebookRequest(params, false);		
+		String wsUrl = generateFacebookRequest(params);		
 		
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(facebookAccount), wsUrl);
 		
@@ -268,12 +256,12 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	public List<FacebookPhotoData> getTaggedPhotos(FacebookAccount facebookAccount) {
 		logger.debug("will get facebook tagged photos for {}", facebookAccount.getFacebookUserId());
 		List<String> params = new ArrayList<String>();
-		String methodName = "facebook.photos.getOfUser";
+		String methodName = "facebook.photos.get";
         params.add("method=" + methodName);
 		params.add("session_key=" + facebookAccount.getSessionKey());
-		params.add("id=" + facebookAccount.getFacebookUserId());
+		params.add("subj_id=" + facebookAccount.getFacebookUserId());
 		
-		String wsUrl = generateFacebookRequest(params, false);		
+		String wsUrl = generateFacebookRequest(params);		
 		
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(facebookAccount), wsUrl);
 		
@@ -327,12 +315,11 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
         return modifiedAlbums;
 	}
 	
-	private String generateFacebookRequest(List<String> params, boolean newApi) {
+	private String generateFacebookRequest(List<String> params) {
 		params.add("api_key=" + apiKey);
 		params.add("call_id=" + System.currentTimeMillis());
-		if (newApi) {
-			params.add("v=1.0");
-		}
+		params.add("v=1.0");
+		
 	    return generateFacebookRequest(params, secret);	
 	}
 	
@@ -426,7 +413,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
         params.add("method=" + methodName);
 		params.add("ids=" + ids.toString());
 		
-		String wsUrl = generateFacebookRequest(params, true);	
+		String wsUrl = generateFacebookRequest(params);	
 		
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(null), wsUrl);
 		

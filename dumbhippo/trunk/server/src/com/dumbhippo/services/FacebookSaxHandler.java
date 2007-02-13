@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
-import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.EnumSaxHandler;
@@ -17,36 +16,35 @@ import com.dumbhippo.persistence.FacebookAlbumData;
 public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Element>{
 	static private final Logger logger = GlobalSetup.getLogger(FacebookSaxHandler.class);
 
-	enum Element {	
-		// General
-		result,
-		result_elt,
-		total,
-		
+	enum Element {			
 		// facebook.auth.getSession
 		session_key,
 		uid,
 		
-		// facebook.messages.getCount
+		// facebook.notifications.get
+		messages, 
+		pokes,
 		unread,
-		
-		// facebook.pokes.getCount
-		unseen,
+		most_recent,
 		
 		// facebook.users.getInfo, we only get a wall_count field from it
 		wall_count,
 		
-		// general for facebook.photos.getOfUser and facebook.photos.getAlbums
+		// general for facebook.photos.get and facebook.photos.getAlbums
 		created,
 		aid,
 		
-		// facebook.photos.getOfUser and facebook.photos.getAlbums for the album cover photo
+		// facebook.photos.get
+		photos_get_response,
+		photo,
 		link,
-		src, 
+		src_small, 
 		caption,
 		
 		// facebook.photos.getAlbums
-		cover_photo,
+		photos_getAlbums_response,
+		album,
+		cover_pid,
 		name, 
 		modified,
 		description,
@@ -58,9 +56,8 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		new_id,
 		
 		// error message
-		fb_error,
-		code,
-        msg,
+		error_code,
+        error_msg,
             
 		IGNORED // an element we don't care about
 	}
@@ -70,6 +67,7 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		API_EC_SERVICE(2),
 		API_EC_TOO_MANY_CALLS(4),
 		API_EC_BAD_IP(5),
+		API_EC_PARAM_INVALID(100),
 		API_EC_PARAM_API_KEY(101),
 		API_EC_PARAM_SESSION_KEY(102),
 		API_EC_PARAM_CALL_ID(103),
@@ -90,11 +88,10 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 	private String sessionKey;
 	private String facebookUserId;
 	private int unreadMessageCount;
-	private int totalCount;
-	private int totalMessageCount;
+	private int mostRecentMessageId;
 	private int wallMessageCount;
 	private int unseenPokeCount;
-	private int totalPokeCount;
+	private int mostRecentPokeId;
 	private int errorCode;
 	private String errorMessage;
 	private List<FacebookPhotoData> taggedPhotos;
@@ -111,11 +108,10 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		super(Element.class, Element.IGNORED);
 		this.facebookAccount = facebookAccount;
 		unreadMessageCount = -1;
-		totalCount = -1;
-		totalMessageCount = -1;
+		mostRecentMessageId = -1;
 		wallMessageCount = -1;
 		unseenPokeCount = -1;
-		totalPokeCount = -1;
+        mostRecentPokeId = -1;
 		errorCode = -1;
 		taggedPhotos = new ArrayList<FacebookPhotoData>();
 		gettingTaggedPhotos = false;
@@ -147,17 +143,14 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 
 	@Override
 	protected void openElement(Element c) throws SAXException {
-		if (c == Element.result) {
-			Attributes attrs = currentAttributes();
-			if (attrs.getValue("method").equals("facebook.photos.getOfUser")) {
-				gettingTaggedPhotos = true; 
-			} else if (attrs.getValue("method").equals("facebook.photos.getAlbums")) {
-				gettingAlbums = true;
-			}
-		} else if ((c == Element.result_elt) && gettingTaggedPhotos) {
+		if (c == Element.photos_get_response) {
+			gettingTaggedPhotos = true; 
+		} else if (c == Element.photos_getAlbums_response) {
+			gettingAlbums = true;
+	    } else if ((c == Element.photo) && gettingTaggedPhotos) {
 			FacebookPhotoData photo = new FacebookPhotoData();
 			taggedPhotos.add(photo);
-		} else if ((c == Element.result_elt) && gettingAlbums) {
+		} else if ((c == Element.album) && gettingAlbums) {
 			FacebookAlbumData album = new FacebookAlbumData();
 			album.setFacebookAccount(facebookAccount);
 			album.getCoverPhoto().setFacebookAccount(facebookAccount);
@@ -207,14 +200,21 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 			facebookUserId = currentContent;
 			logger.debug("Parsed out uid {}", facebookUserId);
 		} else if (c == Element.unread) {
-            unreadMessageCount = parseFacebookCount(c, currentContent); 
-			logger.debug("Parsed out unread message count {}", unreadMessageCount);	
-		} else if (c == Element.unseen) {
-			unseenPokeCount = parseFacebookCount(c, currentContent); 
-			logger.debug("Parsed out unseen poke count {}", unseenPokeCount);		
-		} else if (c == Element.total) {
-			totalCount = parseFacebookCount(c, currentContent); 
-			logger.debug("Parsed out total count {}", totalCount);
+			if (parent() == Element.messages) {
+                unreadMessageCount = parseFacebookCount(c, currentContent); 
+			    logger.debug("Parsed out unread message count {}", unreadMessageCount);	
+			} else if (parent() == Element.pokes) {
+				unseenPokeCount = parseFacebookCount(c, currentContent); 
+				logger.debug("Parsed out unseen poke count {}", unseenPokeCount);					
+			}
+		} else if (c == Element.most_recent) {
+			if (parent() == Element.messages) {
+                mostRecentMessageId = parseFacebookCount(c, currentContent); 
+			    logger.debug("Parsed out most recent message id {}", mostRecentMessageId);	
+			} else if (parent() == Element.pokes) {
+				mostRecentPokeId = parseFacebookCount(c, currentContent); 
+				logger.debug("Parsed out most recent poke id {}", mostRecentPokeId);					
+			}
 		} else if (c == Element.wall_count) {
 			wallMessageCount = parseFacebookCount(c, currentContent); 
 			logger.debug("Parsed out wall message count {}", wallMessageCount);
@@ -225,7 +225,7 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 				// currentFacebookAlbumData().getCoverPhoto().setLink(currentContent);
 			}
 			logger.debug("Parsed out photo link {}", currentContent);
-		} else if (c == Element.src) {
+		} else if (c == Element.src_small) {
 			if (gettingTaggedPhotos) {
 			    currentFacebookPhotoData().setSource(currentContent);
 			} else if (gettingAlbums) {
@@ -245,13 +245,8 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 			    currentFacebookPhotoData().setCreatedTimestamp(new Date(createdTimestamp));
 			    logger.debug("Parsed out tagged photo date {}", createdTimestamp);
 			} else if (gettingAlbums) {
-				if (parent() == Element.cover_photo) {
-					// currentFacebookAlbumData().getCoverPhoto().setCreatedTimestampAsLong(createdTimestamp);
-					logger.debug("Parsed out cover photo date {}", createdTimestamp);
-				} else {
-					// currentFacebookAlbumData().setCreatedTimestampAsLong(createdTimestamp);
-					logger.debug("Parsed out album creation date {}", createdTimestamp);
-				}					
+			    // currentFacebookAlbumData().setCreatedTimestampAsLong(createdTimestamp);
+				logger.debug("Parsed out album creation date {}", createdTimestamp);				
 			}
 		} else if (c == Element.modified) { 
 			long modifiedTimestamp = parseFacebookDate(c, currentContent);
@@ -262,14 +257,14 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 			    currentFacebookPhotoData().setAlbumId(currentContent);
 				logger.debug("Parsed out tagged photo album id {}", currentContent);
 			} else if (gettingAlbums) {
-				if (parent() == Element.cover_photo) {
-					// currentFacebookAlbumData().getCoverPhoto().setAlbumId(currentContent);
-					logger.debug("Parsed out cover photo album id {}", currentContent);
-				} else {
-					currentFacebookAlbumData().setAlbumId(currentContent);
-					logger.debug("Parsed out album id {}", currentContent);
-				}
+				currentFacebookAlbumData().setAlbumId(currentContent);
+				logger.debug("Parsed out album id {}", currentContent);
 			}
+		} else if (c == Element.cover_pid) {
+			// FIXME: this call encrypts the id and we'll never see it again, 
+			// while what we'll really want if we'll be doing anything with user's 
+			// albums is to get the photo for the cover using this id
+			currentFacebookAlbumData().getCoverPhoto().setPhotoId(currentContent);
 		} else if (c == Element.name) {
 			currentFacebookAlbumData().setName(currentContent);
 			logger.debug("Parsed out album name {}", currentContent);	
@@ -279,27 +274,14 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		} else if (c == Element.location) {
 			currentFacebookAlbumData().setLocation(currentContent);
 			logger.debug("Parsed out album location {}", currentContent);	
-		} else if (c == Element.result) {
-			// we will parse our an error message before we will be closing
-			// the result element; we should not try to parse out regular contents
-			// if we got back an error message
-			if (errorMessage != null) {
-				return;
-			}
-			Attributes attrs = currentAttributes();
-			if (attrs.getValue("method").equals("facebook.messages.getCount")) {
-				totalMessageCount = totalCount;
-			} else if (attrs.getValue("method").equals("facebook.pokes.getCount")) {
-				totalPokeCount = totalCount;
-			}  
 		} else if (c == Element.old_id) {
 			getCurrentIdPair().setFirst(currentContent); 
 	    } else if (c == Element.new_id) {
 		    getCurrentIdPair().setSecond(currentContent);
-	    } else if (c == Element.code) {
+	    } else if (c == Element.error_code) {
 			errorCode = parseFacebookCount(c, currentContent);
 			logger.debug("Parsed out error code {}", errorCode);
-		} else if (c == Element.msg) {
+		} else if (c == Element.error_msg) {
 			errorMessage = currentContent; 
 			logger.debug("Parsed out error message {}", errorMessage);
 		}	
@@ -325,24 +307,24 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		return logger;
 	}
 
-	public int getTotalMessageCount() {
-		return totalMessageCount;
-	}
-
 	public int getUnreadMessageCount() {
 		return unreadMessageCount;
 	}
 
+	public int getMostRecentMessageId() {
+		return mostRecentMessageId;
+	}
+	
 	public int getWallMessageCount() {
 		return wallMessageCount;
 	}
 
-	public int getTotalPokeCount() {
-		return totalPokeCount;
-	}
-
 	public int getUnseenPokeCount() {
 		return unseenPokeCount;
+	}
+
+	public int getMostRecentPokeId() {
+		return mostRecentPokeId;
 	}
 	
 	public int getTaggedPhotoCount() {

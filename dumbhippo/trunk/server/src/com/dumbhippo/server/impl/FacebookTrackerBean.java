@@ -96,14 +96,6 @@ public class FacebookTrackerBean implements FacebookTracker {
 		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
 		ws.updateSession(facebookAccount, facebookAuthToken);
 		
-		long updateTime = (new Date()).getTime();
-		long time = ws.updateMessageCount(facebookAccount);
-		if (time != -1) {
-		    updateTime = time;
-		} else {
-			// we also want to make sure the message count timestamp is refreshed
-			facebookAccount.setMessageCountTimestampAsLong(updateTime);
-		}
 		FacebookEvent loginStatusEvent = getLoginStatusEvent(facebookAccount, true);
 		if (loginStatusEvent != null)  
 		    notifier.onFacebookEvent(facebookAccount.getExternalAccount().getAccount().getOwner(), loginStatusEvent);
@@ -121,8 +113,10 @@ public class FacebookTrackerBean implements FacebookTracker {
 		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
 
 		// we could do these requests in parallel, but be careful about updating the same facebookAccount
-		long time = ws.updateMessageCount(facebookAccount);
-		if (time != -1) {
+		Pair<Long, Long> times = ws.updateNotifications(facebookAccount);
+		long messagesTime = times.getFirst();
+		long pokesTime = times.getSecond();
+		if (messagesTime != -1) {
 			// we recycle the event about unread messages for a given facebook account
 			FacebookEvent unreadMessagesEvent = facebookAccount.getRecyclableEvent(FacebookEventType.UNREAD_MESSAGES_UPDATE);
 			if (unreadMessagesEvent == null) {
@@ -136,30 +130,26 @@ public class FacebookTrackerBean implements FacebookTracker {
 			}
 			notifier.onFacebookEvent(user, unreadMessagesEvent);
 		}
+		if (pokesTime != -1) {
+			// we recycle the event about unseen pokes for a given facebook account
+			FacebookEvent unseenPokesEvent = facebookAccount.getRecyclableEvent(FacebookEventType.UNSEEN_POKES_UPDATE);
+			if (unseenPokesEvent == null) {
+				unseenPokesEvent = 
+					new FacebookEvent(facebookAccount, FacebookEventType.UNSEEN_POKES_UPDATE, 
+	                                  facebookAccount.getUnseenPokeCount(), facebookAccount.getPokeCountTimestampAsLong());
+				persistFacebookEvent(unseenPokesEvent);
+			} else {
+				unseenPokesEvent.setCount(facebookAccount.getUnseenPokeCount());
+				unseenPokesEvent.setEventTimestampAsLong(facebookAccount.getPokeCountTimestampAsLong());
+			}
+			notifier.onFacebookEvent(user, unseenPokesEvent);
+    	}		
 		if (facebookAccount.isSessionKeyValid()) {
 		    FacebookEvent newWallMessagesEvent = ws.updateWallMessageCount(facebookAccount);
 		    if (newWallMessagesEvent != null) {
 		    	// we create an individual event for each wall messages update
 				persistFacebookEvent(newWallMessagesEvent);
 		    	notifier.onFacebookEvent(user, newWallMessagesEvent);		    	
-		    }
-		    
-		    if (facebookAccount.isSessionKeyValid()) {
-		    	long pokeTime = ws.updatePokeCount(facebookAccount);
-		    	if (pokeTime != -1) {
-					// we recycle the event about unseen pokes for a given facebook account
-					FacebookEvent unseenPokesEvent = facebookAccount.getRecyclableEvent(FacebookEventType.UNSEEN_POKES_UPDATE);
-					if (unseenPokesEvent == null) {
-						unseenPokesEvent = 
-							new FacebookEvent(facebookAccount, FacebookEventType.UNSEEN_POKES_UPDATE, 
-			                                  facebookAccount.getUnseenPokeCount(), facebookAccount.getPokeCountTimestampAsLong());
-						persistFacebookEvent(unseenPokesEvent);
-					} else {
-						unseenPokesEvent.setCount(facebookAccount.getUnseenPokeCount());
-						unseenPokesEvent.setEventTimestampAsLong(facebookAccount.getPokeCountTimestampAsLong());
-					}
-					notifier.onFacebookEvent(user, unseenPokesEvent);
-		    	}
 		    }
 		} else {
 			notifier.onFacebookEvent(user, getLoginStatusEvent(facebookAccount, false));

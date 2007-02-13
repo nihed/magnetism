@@ -85,10 +85,7 @@ public class CachedFacebookPhotoData extends DBUnique implements CachedListItem 
 	
 	@Column(nullable=false, length=FacebookWebServices.MAX_FACEBOOK_PHOTO_LINK_LENGTH)
 	public String getLink() {
-		// there is a bug in what Facebook returns, api.facebook.com
-		// does not have photo.php, while www.facebook.com takes us
-		// to the right photo
-		return link.replace("api.facebook.com", "www.facebook.com");
+		return link;
 	}
 	
 	public void setLink(String link) {
