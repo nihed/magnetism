@@ -157,7 +157,8 @@ class DappinfoWriter:
                     elif key == "Comment":
                         self.properties["description"] = value
                     elif key == "Categories":
-                        self.properties["categories"] = value
+                        # Strip trailing ";"
+                        self.properties["categories"] = re.sub(";\s*$", "", value)
                     elif key == "Exec":
                         args = value.split()
                         if (len(args) > 0):
