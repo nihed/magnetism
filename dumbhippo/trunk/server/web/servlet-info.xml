@@ -33,6 +33,12 @@
     </servlet>
 
     <servlet>
+      <servlet-name>AppinfoUploadServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.AppinfoUploadServlet</servlet-class>
+	  <load-on-startup>1</load-on-startup>
+	</servlet>
+
+    <servlet>
       <servlet-name>FileStorageServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.servlets.FileStorageServlet</servlet-class>
 	  <load-on-startup>1</load-on-startup>
@@ -149,6 +155,11 @@
       <url-pattern>/sendinvite</url-pattern>
    </servlet-mapping>
 
+   <servlet-mapping>
+      <servlet-name>AppinfoUploadServlet</servlet-name>
+      <url-pattern>/upload/appinfo</url-pattern>    
+   </servlet-mapping>
+   
    <servlet-mapping>
       <servlet-name>PersonPhotoServlet</servlet-name>
       <url-pattern>/upload/headshots</url-pattern>    

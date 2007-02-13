@@ -23,6 +23,7 @@ public enum HippoProperty {
 	XMPP_ADMINUSER("dumbhippo.server.xmpp.adminuser", null),
 	XMPP_PASSWORD("dumbhippo.server.xmpp.password", null),
 	HTTP_PORT("dumbhippo.server.http.port", "8080"),
+	APPINFO_DIR("dumbhippo.server.appinfo.dir", null),
 	CRASHDUMP_DIR("dumbhippo.server.crashdump.dir", null),
 	FILES_SAVEURL("dumbhippo.server.files.saveurl", null),
 	LUCENE_INDEXDIR("dumbhippo.server.lucene.indexdir", null),

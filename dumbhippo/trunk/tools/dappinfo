@@ -1,5 +1,18 @@
 #!/usr/bin/python
 
+DEFAULT_UPLOAD_CATEGORIES = [
+    'AudioVideo',
+    'Development',
+    'Education',
+    'Game',
+    'Graphics',
+    'Network',
+    'Office',
+    'System',
+    'TextEditor',
+    'Utility'
+]
+
 from optparse import OptionParser
 import os
 import re
@@ -304,8 +317,30 @@ class DappinfoEditor:
         self._copy_in(desktopfile, self._tmppath(destpath))
         self._set_property("desktop", destpath)
 
-    def upload(self, server=None, cookiesFile=None):
-        self._open()
+    def upload(self, server=None, cookies_file=None, upload_categories=None):
+        if not server:
+            raise HumanVisibleException("Server to upload must be specified");
+        if not cookies_file:
+            raise HumanVisibleException("Cookies file must be specified");
+        if cookies_file.find("=") >= 0:
+            raise HumanVisibleException("Cookies file name can't contain '=' - that confuses curl");
+
+        categories_string = self._get_property("categories")
+        if not categories_string:
+            print >>sys.stderr, "Not uploading %s because it has no categories" % self._filename
+            return
+
+        found = False
+        categories = categories_string.split(";")
+        for c in categories:
+            if upload_categories.count(c) > 0:
+                found = True
+
+        if not found:
+            print >>sys.stderr, "Not uploading %s because its categories (%s) don't match whitelist" % (self._filename, categories_string)
+            return
+        
+        system("curl -b '%s' -F 'appinfo_file=@%s;type=application/octet-stream' http://%s/upload/appinfo" % (cookies_file, self._filename,server))
 
     def finish(self):
         if not self._is_open:
@@ -450,24 +485,32 @@ def cmd_setdesktop(args):
         editor.cleanup()
 
 def cmd_upload(args):
-    parser = OptionParser(usage="%prog upload [options] dappinfofile\n"
+    parser = OptionParser(usage="%prog upload [options] dappinfofile...\n"
                           "     Upload the dappinfo to the server.")
     parser.add_option("--server",
                       help="Server to upload the file to")
     parser.add_option("--cookiesfile",
                       help="Your browser cookies file (for authentication)")
+    parser.add_option("--upload-categories",
+                      help="Override default set of categories to upload (comma separated)")
     (options, args) = parser.parse_args(args=args)
 
-    if len(args) != 1:
+    if len(args) < 1:
         parser.print_usage()
         sys.exit(1)
 
-    editor = DappinfoEditor(args[0])
-    try:
-        editor.upload(args[0], server=options.server, cookiesfile=options.cookiesfile)
-        editor.finish()
-    finally:
-        editor.cleanup()
+    if options.upload_categories:
+        upload_categories = options.upload_categories.split(",")
+    else:
+        upload_categories = DEFAULT_UPLOAD_CATEGORIES
+
+    for file in args:
+        editor = DappinfoEditor(file)
+        try:
+            editor.upload(server=options.server, cookies_file=options.cookiesfile, upload_categories=upload_categories)
+            editor.finish()
+        finally:
+            editor.cleanup()
 
 try:
     if len(sys.argv) < 2:
