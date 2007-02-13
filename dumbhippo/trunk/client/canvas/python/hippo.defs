@@ -520,6 +520,16 @@
   )
 )
 
+(define-virtual paint_background
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_paint_background")
+  (return-type "none")
+  (parameters
+    '("cairo_t*" "cr")
+    '("HippoRectangle*" "damaged_box")
+  )
+)
+
 (define-method get_position
   (of-object "HippoCanvasBox")
   (c-name "hippo_canvas_box_get_position")
