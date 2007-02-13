@@ -27,7 +27,6 @@ import gtk.Container as PyGtkContainer_Type
 import gtk.gdk.Pixbuf as PyGdkPixbuf_Type
 %%
 ignore
-hippo_cairo_set_source_rgba32
 hippo_canvas_box_new
 hippo_canvas_text_new
 hippo_canvas_link_new
