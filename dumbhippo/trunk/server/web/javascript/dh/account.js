@@ -490,7 +490,7 @@ dh.account.createRhapsodyEntry = function() {
 					'All-you-can-eat music services hurt my diet', dh.account.initialRhapsodyHateQuip, 
 					'Your friends will see updates from your Rhapsody playlist.',
                     'http://www.rhapsody.com/myrhapsody/rss.html');
-	dh.account.rhapsodyEntry.setSpecialLoveValue("My feed");				
+	dh.account.rhapsodyEntry.setSpecialLoveValue("My Recently Played Tracks");				
 	dh.account.rhapsodyEntry.onLoveSaved = dh.account.onRhapsodyLoveSaved;
 	dh.account.rhapsodyEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.rhapsodyEntry, 'RHAPSODY');
 	dh.account.rhapsodyEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.rhapsodyEntry, 'RHAPSODY');	
@@ -532,7 +532,7 @@ dh.account.createNetflixEntry = function() {
 	dh.account.netflixEntry = new dh.lovehate.Entry('dhNetflix', 'Netflix \u201CMovies At Home\u201D RSS feed URL', dh.account.initialNetflixUrl,
 					'Movie rental stores are my daily respite', dh.account.initialNetflixHateQuip, 'Your friends get updates when you get new movies.',
 					'http://www.netflix.com/RSSFeeds');
-	dh.account.netflixEntry.setSpecialLoveValue("My feed");	
+	dh.account.netflixEntry.setSpecialLoveValue("My Movies At Home");	
 	dh.account.netflixEntry.onLoveSaved = dh.account.onNetflixLoveSaved;
 	dh.account.netflixEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.netflixEntry, 'NETFLIX');
 	dh.account.netflixEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.netflixEntry, 'NETFLIX');
