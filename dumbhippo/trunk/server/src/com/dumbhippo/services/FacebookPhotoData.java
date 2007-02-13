@@ -61,7 +61,7 @@ public class FacebookPhotoData implements FacebookPhotoDataView {
 	}	
 	
 	public String getThumbnailSrc() {
-		return getSource() + "&size=thumb";
+		return getSource();
 	}
 	
 	public String getThumbnailHref() {

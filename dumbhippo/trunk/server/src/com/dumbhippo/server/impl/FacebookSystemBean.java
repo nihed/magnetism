@@ -149,7 +149,7 @@ public class FacebookSystemBean implements FacebookSystem {
 	        return "http://api.facebook.com/login.php?api_key=" + getApiKey() + "&next=/";
 	    } else {
 		    return "http://www.facebook.com/" + facebookEvent.getEventType().getPageName() +  ".php?uid=" 
-	               + facebookEvent.getFacebookAccount().getFacebookUserId() + "&api_key=" + getApiKey();
+	               + facebookEvent.getFacebookAccount().getFacebookUserId();
 	    }
 	}
 	
