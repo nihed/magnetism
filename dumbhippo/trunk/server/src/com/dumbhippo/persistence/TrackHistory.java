@@ -40,7 +40,8 @@ import javax.persistence.UniqueConstraint;
 		    
 			@EntityResult(entityClass=Track.class)
 		}
-//      Doesn't work with our current Hibernate		
+//      This didn't work with the Hibernate when the code was written
+//      but works fine now. Not currently used, however.
 //		columns={
 //			@ColumnResult(name="lastUpdated")
 //		}
