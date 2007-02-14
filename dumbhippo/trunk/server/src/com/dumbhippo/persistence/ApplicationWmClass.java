@@ -33,7 +33,7 @@ public class ApplicationWmClass extends DBUnique {
 		return wmClass;
 	}
 	
-	public void setWmClass(String category) {
-		this.wmClass = category;
+	public void setWmClass(String wmClass) {
+		this.wmClass = wmClass;
 	}
 }

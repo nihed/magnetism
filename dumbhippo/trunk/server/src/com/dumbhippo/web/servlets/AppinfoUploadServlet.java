@@ -30,7 +30,7 @@ public class AppinfoUploadServlet extends AbstractServlet {
 
 	private static final long serialVersionUID = 1L;
 
-	private static final Logger logger = GlobalSetup.getLogger(CrashReportServlet.class);
+	private static final Logger logger = GlobalSetup.getLogger(AppinfoUploadServlet.class);
 	
 	// Our typical dump size seems to be about 20k
 	private static final int MAX_IN_MEMORY_SIZE = 32 * 1024;

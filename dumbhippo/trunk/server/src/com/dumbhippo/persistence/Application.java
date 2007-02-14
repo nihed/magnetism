@@ -1,8 +1,17 @@
 package com.dumbhippo.persistence;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.dumbhippo.server.util.EJBUtil;
 
 @Entity
 public class Application {
@@ -12,6 +21,7 @@ public class Application {
 	ApplicationCategory category;
 	String rawCategories;
 	String titlePatterns;
+	Set<ApplicationIcon> icons;
 	
 	// for hibernate
 	public Application() {
@@ -70,5 +80,27 @@ public class Application {
 
 	public void setTitlePatterns(String titlePatterns) {
 		this.titlePatterns = titlePatterns;
+	}
+	
+	@OneToMany(mappedBy="application")
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
+	public Set<ApplicationIcon> getIcons() {
+		if (icons == null)
+			icons = new HashSet<ApplicationIcon>();
+		
+		return icons;
+	}
+	
+	protected void setIcons(Set<ApplicationIcon> icons) {
+		if (icons == null)
+			throw new NullPointerException();
+		this.icons = icons;
+	}
+	
+	/**
+	 * Bug work around, see docs for EJBUtil.forceInitialization()
+	 */
+	public void prepareToModifyIcons() {
+		EJBUtil.forceInitialization(icons);
 	}
 }

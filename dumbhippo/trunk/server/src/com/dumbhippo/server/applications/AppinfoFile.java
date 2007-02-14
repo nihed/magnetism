@@ -15,23 +15,23 @@ import java.util.zip.ZipEntry;
 import com.dumbhippo.persistence.ValidationException;
 
 public class AppinfoFile extends JarFile {
-	Properties properties;
-	String appId;
-	String name;
-	String description;
-	Set<String> categories;
-	Set<String> wmClasses;
-	Set<String> titlePatterns;
-	Set<IconInfo> icons;
+	private Properties properties;
+	private String appId;
+	private String name;
+	private String description;
+	private Set<String> categories;
+	private Set<String> wmClasses;
+	private Set<String> titlePatterns;
+	private Set<AppinfoIcon> icons;
 	
-	static final Pattern ID_REGEX = Pattern.compile("[A-Za-z0-9-]+");
-	static final Pattern NAME_REGEX = Pattern.compile(".+");
-	static final Pattern DESCRIPTION_REGEX = null;
-	static final Pattern CATEGORY_REGEX = Pattern.compile("[A-Za-z0-9-]+");
-	static final Pattern WM_CLASS_REGEX = Pattern.compile(".+");
-	static final Pattern TITLE_PATTERN_REGEX = Pattern.compile(".+");
+	static final private Pattern ID_REGEX = Pattern.compile("[A-Za-z0-9-]+");
+	static final private Pattern NAME_REGEX = Pattern.compile(".+");
+	static final private Pattern DESCRIPTION_REGEX = null;
+	static final private Pattern CATEGORY_REGEX = Pattern.compile("[A-Za-z0-9-]+");
+	static final private Pattern WM_CLASS_REGEX = Pattern.compile(".+");
+	static final private Pattern TITLE_PATTERN_REGEX = Pattern.compile(".+");
 	
-	static final Pattern ICON_KEY_REGEX = Pattern.compile("icon.([A-Za-z0-9-_]+)(\\.\\d+x\\d+|scalable)?");
+	static final private Pattern ICON_KEY_REGEX = Pattern.compile("icon.([A-Za-z0-9-_]+)(?:\\.(\\d+x\\d+|scalable))?");
 
 	public AppinfoFile(File file) throws IOException, ValidationException {
 		super(file);
@@ -67,7 +67,7 @@ public class AppinfoFile extends JarFile {
 		wmClasses = getSetProperty("wmclass", WM_CLASS_REGEX);
 		titlePatterns = getSetProperty("titlepattern", TITLE_PATTERN_REGEX);
 		
-		icons = new HashSet<IconInfo>();
+		icons = new HashSet<AppinfoIcon>();
 		for (Object o : properties.keySet()) {
 			String key = (String)o;
 			
@@ -84,7 +84,7 @@ public class AppinfoFile extends JarFile {
 				if (getEntry(path) == null)
 					throw new ValidationException("icon property '" + key + "' doesn't point to an icon in the appinfo file");
 				
-				icons.add(new IconInfo(theme,size, path));
+				icons.add(new AppinfoIcon(theme,size, path));
 			}
 		}
 	}
@@ -148,11 +148,11 @@ public class AppinfoFile extends JarFile {
 		return titlePatterns;
 	}
 	
-	public Set<IconInfo> getIcons() {
+	public Set<AppinfoIcon> getIcons() {
 		return icons;
 	}
 	
-	public InputStream getIconStream(IconInfo info) throws IOException {
+	public InputStream getIconStream(AppinfoIcon info) throws IOException {
 		ZipEntry entry = getEntry(info.getPath());
 		if (entry == null)
 			throw new IOException("Entry not found for '" + info.getPath() + "'");

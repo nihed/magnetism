@@ -1,32 +1,70 @@
 package com.dumbhippo.server.applications;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.imageio.ImageIO;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.Digest;
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AppinfoUpload;
 import com.dumbhippo.persistence.Application;
 import com.dumbhippo.persistence.ApplicationCategory;
+import com.dumbhippo.persistence.ApplicationIcon;
 import com.dumbhippo.persistence.ApplicationWmClass;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.NotFoundException;
 
 @Stateless
 public class ApplicationSystemBean implements ApplicationSystem {
+	
+	@SuppressWarnings("unused")
+	static private final Logger logger = GlobalSetup.getLogger(ApplicationSystemBean.class);
+
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em; 
+	
+	@EJB
+	private Configuration config;
 		
 	public void addUpload(Guid uploaderId, Guid uploadId, AppinfoFile appinfoFile) {
-		User uploader = em.find(User.class, uploaderId.toString()); 
+		User uploader = em.find(User.class, uploaderId.toString());
+		boolean isNew = false;
 		
-		Application application = findOrCreateApplication(appinfoFile.getAppId());
-
+		Application application = em.find(Application.class, appinfoFile.getAppId());
+		if (application == null) {
+			application = new Application(appinfoFile.getAppId());
+			isNew = true;
+		}
+		
 		updateApplication(application, appinfoFile);
+		if (isNew)
+			em.persist(application);
+		
+		updateApplicationCollections(application, appinfoFile);
 		
 		AppinfoUpload upload = new AppinfoUpload(uploader);
 		upload.setId(uploadId.toString());
@@ -39,28 +77,14 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		application.setName(appinfoFile.getName());
 		application.setDescription(appinfoFile.getDescription());
 		
-		StringBuilder builder = new StringBuilder();
-		List<String> sortedTitlePatterns = new ArrayList<String>(appinfoFile.getTitlePatterns());
-		Collections.sort(sortedTitlePatterns);
-		
-		for (String t : sortedTitlePatterns) {
-			if (builder.length() > 0)
-				builder.append(";");
-			builder.append(t);
-		}
-		
 		application.setRawCategories(setToString(appinfoFile.getCategories()));
 		application.setCategory(computeCategoryFromRaw(appinfoFile.getCategories()));
 		application.setTitlePatterns(setToString(appinfoFile.getTitlePatterns()));
-		
-		em.createQuery("DELETE FROM ApplicationWmClass WHERE application= :application")
-			.setParameter("application", application)
-			.executeUpdate();
-		
-		for (String wmClass : appinfoFile.getWmClasses()) {
-			ApplicationWmClass applicationWmClass = new ApplicationWmClass(application, wmClass);
-			em.persist(applicationWmClass);
-		}
+	}
+	
+	private void updateApplicationCollections(Application application, AppinfoFile appinfoFile) {
+		updateWmClasses(application, appinfoFile);
+		updateIcons(application, appinfoFile);
 	}
 	
 	private ApplicationCategory computeCategoryFromRaw(Set<String> rawCategories) {
@@ -96,13 +120,227 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		return builder.toString();
 	}
 
-	private Application findOrCreateApplication(String appId) {
-		Application application = em.find(Application.class, appId);
-		if (application == null) {
-			application = new Application(appId);
-			em.persist(application);
+	private void updateWmClasses(Application application, AppinfoFile appinfoFile) {
+		em.createQuery("DELETE FROM ApplicationWmClass awc WHERE awc.application= :application")
+			.setParameter("application", application)
+			.executeUpdate();
+		
+		for (String wmClass : appinfoFile.getWmClasses()) {
+			ApplicationWmClass applicationWmClass = new ApplicationWmClass(application, wmClass);
+			em.persist(applicationWmClass);
+		}
+	}
+	
+	private void updateIcons(Application application, AppinfoFile appinfoFile) {
+		em.createQuery("DELETE FROM ApplicationIcon ai WHERE ai.application= :application")
+			.setParameter("application", application)
+			.executeUpdate();
+	
+		persistIcons(application, appinfoFile, getInterestingIcons(appinfoFile));
+	}
+	
+	private Collection<AppinfoIcon> getInterestingIcons(AppinfoFile appinfoFile) {
+		Map<Integer, AppinfoIcon> bySize = new HashMap<Integer, AppinfoIcon>();
+		
+		for (AppinfoIcon icon : appinfoFile.getIcons()) {
+			// Only consider PNG icons
+			if (!icon.getPath().endsWith(".png"))
+				continue;
+			
+			Integer size = icon.getNominalSize();
+			
+			if (!bySize.containsKey(size) || betterIcon(icon, bySize.get(size))) {
+				bySize.put(size, icon);
+			}
 		}
 		
-		return application;
+		return bySize.values();
+	}
+	
+	private boolean betterIcon(AppinfoIcon icon, AppinfoIcon otherIcon) {
+		String theme = icon.getTheme();
+		String otherTheme = otherIcon.getTheme();
+		
+		// We consider locolor to be the worst theme, then an unspecified
+		// theme. All other themes are sorted alphabetically. The reason
+		// for the alphabetical sort is so that we don't mix themes 
+		// unnecessarily if a appinfo file contains multiple themes.
+		
+		if ("locolor".equals(otherTheme)) {
+			if (!"locolor".equals(theme))
+				return true;
+		} else if (otherTheme == null) {
+			if (theme != null)
+				return true;
+		} else {
+			if (theme == null)
+				return false;
+			
+			if (theme.compareTo(otherTheme) < 0)
+				return true;
+		}
+		
+		return false;
+	}
+
+	private void persistIcons(Application application, AppinfoFile appinfoFile, Collection<AppinfoIcon> toPersist) {
+		// This isn't actually needed because of the call to clear(), but documents the 
+		// need to be careful about the situation here; we have to make sure that 
+		// application.icons() is initialized before we create any ApplicationIcon
+		// objects.
+		application.prepareToModifyIcons();
+		application.getIcons().clear();
+	
+		for (AppinfoIcon icon : toPersist) {
+			try {
+				int actualWidth, actualHeight;
+				
+				// Parse the icon to get it's actual dimensions, so we can generate
+				// HTML that lays out without waiting for the images. Also has a side-effect
+				// of validating the 
+				
+				InputStream istream = appinfoFile.getIconStream(icon);
+				BufferedImage image = ImageIO.read(istream);
+				istream.close();
+
+				if (image == null) {
+					// Theoretically, we could see if we have a usable icon in a different
+					// theme, but ignore that corner case; people shouldn't upload 
+					// appinfo files with bad PNGs in them anyways 
+					logger.warn("Cannot read application icon {} for {}, skipping", 
+								icon.getPath(), application.getId());
+					continue;
+				}
+
+				actualWidth = image.getWidth();
+				actualHeight = image.getHeight();
+				
+				String key = saveIcon(appinfoFile, icon);
+				ApplicationIcon dbIcon = new ApplicationIcon(application, icon.getNominalSize(), key, actualWidth, actualHeight);
+				em.persist(dbIcon);
+				application.getIcons().add(dbIcon);
+			} catch (IOException e) {
+				logger.warn("Cannot save application icon {} for {}, skipping: {}", 
+							new Object[] { icon.getPath(), application.getId(), e.getMessage() });
+			}
+		}
+	}
+	
+	private String saveIcon(AppinfoFile appinfoFile, AppinfoIcon icon) throws IOException {
+		InputStream istream; 
+		byte[] buffer = new byte[16384];
+		
+		MessageDigest md = Digest.newDigest();
+		
+		// First compute the hash of the icons contents that we use to identify it
+		istream = appinfoFile.getIconStream(icon);
+		
+		while (true) {
+			int count = istream.read(buffer);
+			if (count == -1)
+				break;
+			
+			md.update(buffer, 0, count);
+		}
+		
+		istream.close();
+		
+		String key = Digest.digest(md);
+		
+		// Now save the icon, if it isn't already there
+		
+		File saveFile = getIconFile(key);
+		if (!saveFile.exists()) {
+			istream = appinfoFile.getIconStream(icon);
+			
+			OutputStream ostream = new FileOutputStream(saveFile);
+			
+			try {
+				while (true) {
+					int count = istream.read(buffer);
+					if (count == -1)
+						break;
+					
+					ostream.write(buffer, 0, count);
+				}
+				
+				ostream.close();
+			} catch (IOException e) {
+				ostream.close();
+				saveFile.delete();
+			} finally {
+				istream.close();
+			}
+		}
+		
+		return key;
+	}
+	
+	private File getIconFile(String key) {
+		return new File(getIconsDir(), key + ".png");
+	}
+	
+	private File getIconsDir() {
+		String filesUrl = config.getPropertyFatalIfUnset(HippoProperty.FILES_SAVEURL);
+		String saveUrl = filesUrl + Configuration.APPICONS_RELATIVE_PATH;
+		
+		URI saveUri;
+		try {
+			saveUri = new URI(saveUrl);
+		} catch (URISyntaxException e) {
+			throw new RuntimeException("save url busted", e);
+		}
+		
+		return new File(saveUri);
+	}
+
+	public ApplicationIconView getIcon(String appId, int desiredSize) throws NotFoundException {
+		ApplicationIcon unsizedIcon = null;
+		ApplicationIcon sizedIcon = null;
+		
+		Application application = em.find(Application.class, appId);
+		if (application == null)
+			throw new NotFoundException("No such application");
+		
+		// We try to fine the icon with the nominal size closest
+		// to the desired size, except that we always prefer a
+		// too big icon to a too small icon.
+		for (ApplicationIcon icon : application.getIcons()) {
+			int iconSize = icon.getSize();
+			if (iconSize == -1) {
+				unsizedIcon = icon;
+			} else if (sizedIcon == null) {
+				sizedIcon = icon;
+			} else {
+				int oldSize = sizedIcon.getSize();
+				if (oldSize < desiredSize && iconSize >= desiredSize)
+					sizedIcon = icon;
+				else if (Math.abs(oldSize - desiredSize) > Math.abs(iconSize - desiredSize))
+					sizedIcon = icon;
+			}
+		}
+		
+		ApplicationIcon icon;
+		
+		if (sizedIcon == null) {
+			if (unsizedIcon == null)
+				throw new NotFoundException("No icons for application");
+
+			icon = unsizedIcon;
+		} else {
+			// We really don't want to scale up, so if we're going to
+			// use a smaller size, we double check to see if we have a
+			// icon without a specified nominal size that is actually
+			// larger than the desired size.
+			if (sizedIcon.getSize() < desiredSize &&
+				unsizedIcon != null &&
+				unsizedIcon.getActualHeight() >= desiredSize &&
+				unsizedIcon.getActualWidth() >= desiredSize)
+				icon = unsizedIcon;
+			else
+				icon = sizedIcon;
+		}
+			
+		return new ApplicationIconView(icon, desiredSize);
 	}
 }
