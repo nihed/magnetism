@@ -39,6 +39,12 @@
 	</servlet>
 
     <servlet>
+      <servlet-name>ApplicationIconServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.ApplicationIconServlet</servlet-class>
+	  <load-on-startup>1</load-on-startup>
+	</servlet>
+
+    <servlet>
       <servlet-name>FileStorageServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.servlets.FileStorageServlet</servlet-class>
 	  <load-on-startup>1</load-on-startup>
@@ -165,6 +171,11 @@
       <url-pattern>/upload/headshots</url-pattern>    
    </servlet-mapping>
    
+   <servlet-mapping>
+      <servlet-name>ApplicationIconServlet</servlet-name>
+	  <url-pattern>/files/appicons/*</url-pattern>      
+   </servlet-mapping>   
+
    <servlet-mapping>
       <servlet-name>PersonPhotoServlet</servlet-name>
 	  <url-pattern>/files/headshots/*</url-pattern>      

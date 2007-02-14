@@ -17,6 +17,7 @@ public interface Configuration {
 
 	static final public String HEADSHOTS_RELATIVE_PATH = "/headshots";
 	static final public String GROUPSHOTS_RELATIVE_PATH = "/groupshots";
+	static final public String APPICONS_RELATIVE_PATH = "/appicons";
 	static final public int SHOT_TINY_SIZE = 30;
 	static final public int SHOT_SMALL_SIZE = 48;
 	static final public int SHOT_MEDIUM_SIZE = 60;
