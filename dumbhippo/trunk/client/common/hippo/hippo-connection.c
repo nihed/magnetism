@@ -1655,6 +1655,44 @@ hippo_connection_notify_myspace_contact_post(HippoConnection *connection,
     g_debug("Sent MySpace contact post xmpp message");
 }
 
+void
+hippo_connection_send_active_applications  (HippoConnection *connection,
+                                            int              collection_period,
+                                            GSList          *app_ids,
+                                            GSList          *wm_classes)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *subnode;
+    LmMessageNode *appnode;
+    char *period_str;
+    GSList *l;
+
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_SET);
+    node = lm_message_get_node(message);
+
+    subnode = lm_message_node_add_child (node, "activeApplications", NULL);
+    lm_message_node_set_attribute(subnode, "xmlns", "http://dumbhippo.com/protocol/applications");
+
+    period_str = g_strdup_printf("%d", collection_period);
+    lm_message_node_set_attribute(subnode, "period", period_str);
+    g_free(period_str);
+
+    for (l = app_ids; l; l = l->next) {
+        appnode = lm_message_node_add_child (subnode, "application", NULL);
+        lm_message_node_set_attribute(appnode, "appId", (char *)l->data);
+    }
+    
+    for (l = wm_classes; l; l = l->next) {
+        appnode = lm_message_node_add_child (subnode, "application", NULL);
+        lm_message_node_set_attribute(appnode, "wmClass", (char *)l->data);
+    }
+    
+    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
+    lm_message_unref(message);
+}
+
 gint64
 hippo_connection_get_server_time_offset(HippoConnection *connection)
 {

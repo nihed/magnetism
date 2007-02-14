@@ -118,6 +118,16 @@ void     hippo_connection_set_block_hushed          (HippoConnection *connection
                                                      const char      *block_id,
                                                      gboolean         hushed);
 
+/* Sends a list of applications active over the last collection_period seconds
+ * to the server for use in social application browsing; the applications can
+ * be identified either by application ID (we'd get this from a title match)
+ * or by the raw WM_CLASS field which the server will match on the server side.
+ */
+void     hippo_connection_send_active_applications  (HippoConnection *connection,
+                                                     int              collection_period,
+                                                     GSList          *appids,
+                                                     GSList          *wm_classes);
+
 void hippo_connection_send_account_question_response(HippoConnection *connection,
                                                      const char      *block_id,
                                                      const char      *response);

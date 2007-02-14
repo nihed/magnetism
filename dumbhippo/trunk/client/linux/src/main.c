@@ -19,6 +19,13 @@
 
 static const char *hippo_version_file = NULL;
 
+/* How often we upload application data to the server */
+//#define UPLOAD_APPLICATIONS_TIMEOUT_SEC 3600 /* One hour */
+#define UPLOAD_APPLICATIONS_TIMEOUT_SEC 60
+
+/* The period of time our collected information about application extends over */
+#define UPLOAD_APPLICATIONS_PERIOD_SEC 24 * 3600  /* One day */
+
 struct HippoApp {
     GMainLoop *loop;
     HippoPlatform *platform;
@@ -40,6 +47,7 @@ struct HippoApp {
     guint check_installed_timeout;
     int check_installed_fast_count;
     guint check_installed_timeout_fast : 1;
+    guint upload_applications_timeout;
     HippoIdleMonitor *idle_monitor;
 };
 
@@ -1078,6 +1086,40 @@ on_client_info_available(HippoConnection *connection,
 }
 
 static void
+on_application_usage_changed(HippoConnection *connection,
+                             void            *data)
+{
+    HippoApp *app = data;
+
+    hippo_idle_set_collect_application_usage(app->idle_monitor,
+                                             hippo_data_cache_get_application_usage_enabled(app->cache));
+}
+
+static gboolean
+on_upload_applications_timeout(gpointer data)
+{
+    HippoApp *app = (HippoApp *)data;
+    gboolean enabled = hippo_data_cache_get_application_usage_enabled(app->cache);
+
+    if (enabled) {
+        GSList *applications = hippo_idle_get_active_applications(app->idle_monitor,
+                                                                  UPLOAD_APPLICATIONS_PERIOD_SEC);
+
+        if (applications) {
+            hippo_connection_send_active_applications(app->connection,
+                                                      UPLOAD_APPLICATIONS_PERIOD_SEC,
+                                                      NULL,
+                                                      applications);
+            
+            g_slist_foreach(applications, (GFunc)g_free, NULL);
+            g_slist_free(applications);
+        }
+    }
+    
+    return TRUE;
+}
+
+static void
 on_dbus_song_changed(HippoDBus *dbus,
                      HippoSong *song,
                      HippoApp  *app)
@@ -1191,7 +1233,16 @@ hippo_app_new(HippoInstanceType  instance_type,
     /* start slow timeout to look for new installed versions */
     hippo_app_start_check_installed_timeout(app, FALSE);
  
-    app->idle_monitor = hippo_idle_add(gdk_display_get_default(), on_idle_changed, app); 
+    app->idle_monitor = hippo_idle_add(gdk_display_get_default(), on_idle_changed, app);
+
+    g_signal_connect(G_OBJECT(app->cache), "application-usage-changed",
+                     G_CALLBACK(on_application_usage_changed), app);
+    hippo_idle_set_collect_application_usage(app->idle_monitor,
+                                             hippo_data_cache_get_application_usage_enabled(app->cache));
+
+    app->upload_applications_timeout = g_timeout_add(UPLOAD_APPLICATIONS_TIMEOUT_SEC * 1000,
+                                                     on_upload_applications_timeout,
+                                                     app);
     
     return app;
 }
@@ -1199,6 +1250,10 @@ hippo_app_new(HippoInstanceType  instance_type,
 static void
 hippo_app_free(HippoApp *app)
 {
+    g_source_remove(app->upload_applications_timeout);
+    
+    g_signal_handlers_disconnect_by_func(G_OBJECT(app->cache),
+                                         G_CALLBACK(on_application_usage_changed), app);
     hippo_idle_free(app->idle_monitor);
 
     if (app->check_installed_timeout != 0)
