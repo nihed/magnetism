@@ -7,6 +7,12 @@
 #include <X11/extensions/scrnsaver.h>
 #include <gdk/gdkx.h>
 
+typedef struct HippoApplicationInfo HippoApplicationInfo;
+
+struct HippoApplicationInfo {
+    GTime active_time;
+};
+
 struct HippoIdleMonitor {
     XScreenSaverInfo *info;
     GdkDisplay *display;
@@ -16,11 +22,12 @@ struct HippoIdleMonitor {
     gboolean currently_idle;
     HippoIdleChangedFunc func;
     void *data;
+    gboolean collect_application_usage;
+    GHashTable *application_info;
 };
 
-#if 0
 /* Code to find the active window in order to collect stats for social
- * application browsing. NOT CURRENTLY USED
+ * application browsing.
  */
 static char *
 get_active_application_name(HippoIdleMonitor *monitor)
@@ -99,8 +106,29 @@ get_active_application_name(HippoIdleMonitor *monitor)
 
     return appname;
 }
-#endif
 
+static void
+update_application_info(HippoIdleMonitor *monitor)
+{
+    char *application_name = get_active_application_name(monitor);
+    HippoApplicationInfo *info;
+    GTimeVal now;
+
+    if (!application_name)
+        return;
+
+    info = g_hash_table_lookup(monitor->application_info, application_name);
+    if (!info) {
+        info = g_new(HippoApplicationInfo, 1);
+        g_hash_table_insert(monitor->application_info, g_strdup(application_name), info);
+    }
+
+    g_get_current_time(&now);
+    info->active_time = now.tv_sec;
+
+    g_free(application_name);
+}
+    
 static GTime
 get_time (void)
 {
@@ -167,6 +195,10 @@ poll_for_idleness (void *data)
         (* monitor->func) (monitor->currently_idle, monitor->data);
     }
 
+    if (monitor->collect_application_usage && !monitor->currently_idle) {
+        update_application_info(monitor);
+    }
+    
     return TRUE;
 }
 
@@ -196,6 +228,9 @@ hippo_idle_add (GdkDisplay          *display,
     monitor->func = func;
     monitor->data = data;
     monitor->poll_id = g_timeout_add(5000, poll_for_idleness, monitor);
+    monitor->collect_application_usage = FALSE;
+    monitor->application_info = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                                      (GDestroyNotify)g_free, (GDestroyNotify)g_free);
 
     return monitor;
 }
@@ -210,5 +245,48 @@ hippo_idle_free (HippoIdleMonitor *monitor)
 
     g_source_remove(monitor->poll_id);
     g_object_unref(monitor->display);
+    g_hash_table_destroy(monitor->application_info);
     g_free(monitor);
+}
+
+void
+hippo_idle_set_collect_application_usage(HippoIdleMonitor *monitor,
+                                         gboolean          collect_application_usage)
+{
+    monitor->collect_application_usage = collect_application_usage != FALSE;
+}
+
+typedef struct {
+    GSList *result;
+    GTime start_time;
+} ActiveApplicationsData;
+
+static void
+active_applications_foreach(gpointer key,
+                            gpointer value,
+                            gpointer data)
+{
+    char *name = key;
+    HippoApplicationInfo *info = value;
+    ActiveApplicationsData *app_data = data;
+
+    if (info->active_time > app_data->start_time)
+        app_data->result = g_slist_prepend(app_data->result, g_strdup(name));
+}
+
+GSList *
+hippo_idle_get_active_applications(HippoIdleMonitor *monitor,
+                                   int               in_last_seconds)
+{
+    GTimeVal now;
+    ActiveApplicationsData app_data;
+
+    g_get_current_time(&now);
+
+    app_data.result = NULL;
+    app_data.start_time = now.tv_sec - in_last_seconds;
+    
+    g_hash_table_foreach(monitor->application_info, active_applications_foreach, &app_data);
+
+    return app_data.result;
 }
