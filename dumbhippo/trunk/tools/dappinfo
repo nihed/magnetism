@@ -319,11 +319,13 @@ class DappinfoEditor:
 
     def upload(self, server=None, cookies_file=None, upload_categories=None):
         if not server:
-            raise HumanVisibleException("Server to upload must be specified");
+            raise HumanVisibleException("Server to upload must be specified")
         if not cookies_file:
-            raise HumanVisibleException("Cookies file must be specified");
+            raise HumanVisibleException("Cookies file must be specified")
         if cookies_file.find("=") >= 0:
-            raise HumanVisibleException("Cookies file name can't contain '=' - that confuses curl");
+            raise HumanVisibleException("Cookies file name can't contain '=' - that confuses curl")
+        if not file_exists(cookies_file):
+            raise HumanVisibleException("Cookies file '%s' doesn't exist" % cookies_file)
 
         categories_string = self._get_property("categories")
         if not categories_string:
