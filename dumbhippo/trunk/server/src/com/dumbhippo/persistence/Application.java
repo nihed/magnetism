@@ -50,6 +50,7 @@ public class Application {
 		this.name = name;
 	}
 
+	@Column(nullable = true)
 	public String getDescription() {
 		return description;
 	}
@@ -58,6 +59,7 @@ public class Application {
 		this.description = description;
 	}
 
+	@Column(nullable = false)
 	public ApplicationCategory getCategory() {
 		return category;
 	}
@@ -66,6 +68,7 @@ public class Application {
 		this.category = category;
 	}
 
+	@Column(nullable = true)
 	public String getRawCategories() {
 		return rawCategories;
 	}
@@ -74,6 +77,7 @@ public class Application {
 		this.rawCategories = rawCategories;
 	}
 
+	@Column(nullable = true)
 	public String getTitlePatterns() {
 		return titlePatterns;
 	}
