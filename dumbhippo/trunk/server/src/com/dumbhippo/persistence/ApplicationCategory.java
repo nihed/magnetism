@@ -12,16 +12,21 @@ public enum ApplicationCategory {
 	SOUND_AND_VIDEO("Sound & Video", "AudioVideo", "!Settings"),
 	SYSTEM_TOOLS("System", "!Screensaver");
 	
-	String name;
+	String displayName;
 	String[] rawCategories;
 	
 	ApplicationCategory(String name, String... rawCategories) {
-		this.name = name;
+		this.displayName = name;
 		this.rawCategories = rawCategories;
 	}
 	
+	public String getDisplayName() {
+		return displayName;
+	}
+	
+	// JSP convenience
 	public String getName() {
-		return name;
+		return name().toLowerCase();
 	}
 	
 	public String[] getRawCategories() {

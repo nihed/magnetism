@@ -1,1 +1,69 @@
 @CHARSET "UTF-8";
+
+#dhApplicationsCategories {
+	float: left;
+	padding-right: 56px;
+}
+
+#dhApplicationsApplications {
+	float: left;
+}
+
+.dh-applications-heading {
+	margin-bottom: 7px;
+}
+
+#dhApplicationsStatsHeader {
+	float: left;
+	width: 104px;
+}
+
+#dhApplicationsApplicationsHeader {
+	position: relative;
+	left: 7px;
+}
+
+.dh-applications-application {
+	margin-top: 6px;
+	margin-bottom: 6px;
+}
+
+.dh-applications-application-stats-outer {
+	float: left;
+	width: 104px;
+}
+
+.dh-applications-application-stats {
+	position: relative;
+	left: 12px;
+	width: 80px;
+}
+
+.dh-applications-application-icon {
+	width: 62px;
+	float: left;
+	text-align: center;
+}
+
+.dh-applications-application-details {
+	position: relative;
+	left: 6px;
+	top: 6px;
+}
+
+.dh-applications-application-separator {
+	clear: both;
+}
+
+.dh-applications-category-name {
+	padding-right: 9px;
+}
+
+.dh-applications-category-bar-outer {
+	width: 80px;
+	height: 10px;
+}
+
+.dh-applications-category-bar {
+	height: 10px;
+}

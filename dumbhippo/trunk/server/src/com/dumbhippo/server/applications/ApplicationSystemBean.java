@@ -12,7 +12,6 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -422,46 +421,35 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		}
 	}
 	
-	public List<CategoryView> getPopularApplications(Date since, int iconSize) {
-		Map<ApplicationCategory, List<ApplicationView>> byCategory = new HashMap<ApplicationCategory, List<ApplicationView>>();
-		
+	public List<ApplicationView> getPopularApplications(Date since, int iconSize, ApplicationCategory category) {
 		Query q = em.createNamedQuery("applicationsPopularSince")
 			.setParameter("since", since);
 		List<?> results = q.getResultList();
+
+		List<ApplicationView> applicationViews = new ArrayList<ApplicationView>();
+		
+		int rank = 1;
 		for (Object o : results) {
 			Object[] columns = (Object[])o;
 			Application application = (Application)columns[0];
 			Number count = (Number)columns[1];
-			
-			List<ApplicationView> categoryApps = byCategory.get(application.getCategory());
-			if (categoryApps == null) {
-				categoryApps = new ArrayList<ApplicationView>();
-				byCategory.put(application.getCategory(), categoryApps);
-			}
+
+			if (category != null && application.getCategory() != category)
+				continue;
 			
 			ApplicationView applicationView = new ApplicationView(application);
 			applicationView.setUsageCount(count.intValue());
+			applicationView.setRank(rank);
 			try {
 				applicationView.setIcon(getIcon(application, iconSize));
 			} catch (NotFoundException e) {
 				// FIXME: Default icon (maybe in getIcon())
 			}
 			
-			categoryApps.add(applicationView);
+			applicationViews.add(applicationView);
+			rank++;
 		}
 		
-		List<CategoryView> categoryViews = new ArrayList<CategoryView>();
-		
-		for (ApplicationCategory category : byCategory.keySet())
-			categoryViews.add(new CategoryView(category, byCategory.get(category)));
-		
-		Collections.sort(categoryViews, new Comparator<CategoryView>() {
-
-			public int compare(CategoryView a, CategoryView b) {
-				return a.getCategory().getName().compareTo(b.getCategory().getName());
-			}
-		});
-		
-		return categoryViews;
+		return applicationViews;
 	}
 }
