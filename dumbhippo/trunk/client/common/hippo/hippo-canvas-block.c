@@ -104,6 +104,7 @@ static void
 hippo_canvas_block_init(HippoCanvasBlock *block)
 {
     block->expandable = TRUE;
+    block->linkify_title = TRUE;
     
     HIPPO_CANVAS_BOX(block)->border_left = 1;
     HIPPO_CANVAS_BOX(block)->border_right = 1;
@@ -576,16 +577,18 @@ hippo_canvas_block_constructor (GType                  type,
                                                 "border-right", 6,
                                                 NULL);
         hippo_canvas_box_append(box, block->heading_icon_item, 0);
-        
-        block->heading_lock_item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                                                "xalign", HIPPO_ALIGNMENT_START,
-                                                "yalign", HIPPO_ALIGNMENT_START,
-                                                "image-name", "lock_icon",
-                                                "border-right", 4,
-                                                NULL);
-        hippo_canvas_box_append(box, block->heading_lock_item, 0);
-        hippo_canvas_box_set_child_visible(box, block->heading_lock_item, FALSE);
-        
+
+        if (!block->skip_lock) {
+            block->heading_lock_item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                                                    "xalign", HIPPO_ALIGNMENT_START,
+                                                    "yalign", HIPPO_ALIGNMENT_START,
+                                                    "image-name", "lock_icon",
+                                                    "border-right", 4,
+                                                    NULL);
+            hippo_canvas_box_append(box, block->heading_lock_item, 0);
+            hippo_canvas_box_set_child_visible(box, block->heading_lock_item, FALSE);
+        }
+            
 #if 0
         block->heading_text_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                                 "text", NULL,
@@ -594,17 +597,27 @@ hippo_canvas_block_constructor (GType                  type,
                                                 NULL);
         hippo_canvas_box_append(box, block->heading_text_item, 0);
 #endif
+
+        if (block->linkify_title) {
+            block->title_link_item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                                                  "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                                                  "xalign", HIPPO_ALIGNMENT_START,
+                                                  "yalign", HIPPO_ALIGNMENT_START,
+                                                  "text", NULL,
+                                                  NULL);
+            g_signal_connect(G_OBJECT(block->title_link_item), "activated",
+                             G_CALLBACK(on_title_activated), block);
+        } else {
+            block->title_link_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                                  "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                                                  "xalign", HIPPO_ALIGNMENT_START,
+                                                  "yalign", HIPPO_ALIGNMENT_START,
+                                                  "text", NULL,
+                                                  NULL);
+        }
         
-        block->title_link_item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                                              "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                                              "xalign", HIPPO_ALIGNMENT_START,
-                                              "yalign", HIPPO_ALIGNMENT_START,
-                                              "text", NULL,
-                                              NULL);
         hippo_canvas_box_append(box, block->title_link_item, 0);
         
-        g_signal_connect(G_OBJECT(block->title_link_item), "activated",
-                         G_CALLBACK(on_title_activated), block);
     }
 
     if (klass->append_content_items)
@@ -924,7 +937,7 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
             on_block_stack_reason_changed(new_block, NULL, canvas_block);
             on_block_icon_url_changed(new_block, NULL, canvas_block);
 
-            if (!canvas_block->skip_heading)
+            if (canvas_block->heading_lock_item)
                 hippo_canvas_box_set_child_visible(canvas_block->heading_box,
                                                    canvas_block->heading_lock_item,
                                                    !hippo_block_is_public(canvas_block->block));
@@ -1084,7 +1097,7 @@ hippo_canvas_block_set_title(HippoCanvasBlock *canvas_block,
     g_object_set(G_OBJECT(canvas_block->title_link_item),
                  "text", text,
                  "tooltip", tooltip,
-                 "visited", visited,
+                 canvas_block->linkify_title ? "visited" : NULL, visited,
                  NULL);
 }
 
