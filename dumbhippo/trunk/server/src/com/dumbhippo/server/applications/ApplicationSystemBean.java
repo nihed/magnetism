@@ -367,9 +367,6 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	}
 
 	private void recordApplicationUsage(UserViewpoint viewpoint, ApplicationUsageProperties props, Date date) {
-		logger.debug("Recording application usage: appId={}, wmClass={}",
-					 props.getAppId(), props.getWmClass());
-		
 		if (props.getAppId() != null) {
 			Application application = em.find(Application.class, props.getAppId());
 			if (application == null) {
