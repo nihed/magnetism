@@ -252,7 +252,7 @@
 				</dht:formTable>    	
 				</dht:formTableRow>	
 				<dht:formTableRow label="Music Radar preferences">
-				    <div id="dhMusicRadarPreferences">
+				    <div id="dhMusicRadarPreferences" class="dh-account-preferences-row">
 				    Music sharing: 
 				    <c:choose>
 					<c:when test="${signin.musicSharingEnabled}">
@@ -269,6 +269,26 @@
 					<div>
 					<a href="/radar-themes">Edit my Music Radar theme</a> | <a href="/getradar">Get Music Radar HTML</a>
 					</div>	
+					</div>    
+				</dht:formTableRow>
+				<dht:formTableRow label="Application statistics">
+				    <div class="dh-explanation">
+					Share information about which applications you use with Mugshot and Fedora. <a href="/applications">Read more</a>
+					</div>
+				    <div id="dhApplicationUsagePreferences" class="dh-account-preferences-row">
+				    Application usage statistics: 
+				    <c:choose>
+					<c:when test="${signin.user.account.applicationUsageEnabledWithDefault}">
+						<dh:script module="dh.actions"/>
+						<input type="radio" name="dhApplicationUsageEnabled" id="dhApplicationUsageOn" checked="true" onclick="dh.actions.setApplicationUsageEnabled(true);"> <label for="dhApplicationUsageOn">On</label>
+						<input type="radio" name="dhApplicationUsageEnabled" id="dhApplicationUsageOff" onclick="dh.actions.setApplicationUsageEnabled(false);">	<label for="dhApplicationUsageOff">Off</label>			
+					</c:when>
+					<c:otherwise>
+						<dh:script module="dh.actions"/>
+						<input type="radio" name="dhApplicationUsageEnabled" id="dhApplicationUsageOn" onclick="dh.actions.setApplicationUsageEnabled(true);"> <label for="dhApplicationUsageOn">On</label>
+						<input type="radio" name="dhApplicationUsageEnabled" id="dhApplicationUsageOff" checked="true" onclick="dh.actions.setApplicationUsageEnabled(false);">	<label for="dhApplicationUsageOff">Off</label>
+					</c:otherwise>
+					</c:choose>
 					</div>    
 				</dht:formTableRow>
 				<dht3:formTableRowSeparator>
