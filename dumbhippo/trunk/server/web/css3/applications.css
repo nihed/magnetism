@@ -1,0 +1,11 @@
+@CHARSET "UTF-8";
+@IMPORT url("applications-positions.css");
+
+.dh-applications-category-name {
+	font-size: 20px;
+}
+
+.dh-applications-usage-count {
+	font-size: 14px;
+	color: #666666;
+}
