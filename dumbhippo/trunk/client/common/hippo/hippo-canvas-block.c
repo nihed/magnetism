@@ -403,7 +403,6 @@ hippo_canvas_block_constructor (GType                  type,
         block->main_box =
             g_object_new(HIPPO_TYPE_CANVAS_BOX,
                          "background-color", MESSAGE_BLOCK_COLOR,
-                         "end-color", NORMAL_GRADIENT_END,
                          NULL);
     } else {
         block->main_box =
