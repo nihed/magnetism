@@ -60,9 +60,9 @@ public class AppinfoFile extends JarFile {
 		properties.load(propertiesStream);
 		propertiesStream.close();
 		
-		appId = getStringProperty("id", ID_REGEX);
-		name = getStringProperty("name", NAME_REGEX);
-		description = getStringProperty("description", DESCRIPTION_REGEX);
+		appId = getStringProperty("id", ID_REGEX, false);
+		name = getStringProperty("name", NAME_REGEX, false);
+		description = getStringProperty("description", DESCRIPTION_REGEX, true);
 		categories = getSetProperty("categories", CATEGORY_REGEX);
 		wmClasses = getSetProperty("wmclass", WM_CLASS_REGEX);
 		titlePatterns = getSetProperty("titlepattern", TITLE_PATTERN_REGEX);
@@ -89,11 +89,15 @@ public class AppinfoFile extends JarFile {
 		}
 	}
 	
-	private String getStringProperty(String propertyName, Pattern mustMatch) throws ValidationException {
+	private String getStringProperty(String propertyName, Pattern mustMatch, boolean nullOk) throws ValidationException {
 		String str = properties.getProperty(propertyName);
 		
-		if (str == null)
+		if (str == null) {
+			if (nullOk)
+				return null;
+			
 			throw new ValidationException("Property '" + propertyName + "' is required");
+		}
 		
 		str = str.trim();
 		
