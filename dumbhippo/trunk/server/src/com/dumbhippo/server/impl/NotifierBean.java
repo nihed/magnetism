@@ -217,6 +217,12 @@ public class NotifierBean implements Notifier {
 		}
 	}
 
+	public void onApplicationUsageToggled(Account account) {
+		for (AccountStatusListener l : getListeners(AccountStatusListener.class)) {
+			l.onApplicationUsageToggled(account);
+		}
+	}
+
 	public void onGroupCreated(Group group) {
 		for (GroupCreationListener l : getListeners(GroupCreationListener.class)) {
 			l.onGroupCreated(group);

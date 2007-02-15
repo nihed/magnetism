@@ -2213,4 +2213,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
     out.write(xml.getBytes());
 	}
+
+	public void doSetApplicationUsageEnabled(UserViewpoint viewpoint, boolean enabled) throws IOException, HumanVisibleException {
+		identitySpider.setApplicationUsageEnabled(viewpoint.getViewer(), enabled);
+	}
 }

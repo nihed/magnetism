@@ -36,7 +36,7 @@ public enum AccountQuestion {
 		
 		@Override
 		public String getMoreLink() {
-			return "/application-usage";
+			return "/applications";
 		}
 	};
 	
