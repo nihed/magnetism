@@ -9,6 +9,7 @@ import javax.ejb.Local;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.ApplicationCategory;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.views.UserViewpoint;
 
 @Local
@@ -19,7 +20,7 @@ public interface ApplicationSystem {
 	
 	void recordApplicationUsage(UserViewpoint viewpoint, Collection<ApplicationUsageProperties> usages);
 	
-	public List<ApplicationView> getPopularApplications(Date since, int iconSize, ApplicationCategory category);
+	public void pagePopularApplications(Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable);
 	
 	public List<CategoryView> getPopularCategories(Date since);
 }
