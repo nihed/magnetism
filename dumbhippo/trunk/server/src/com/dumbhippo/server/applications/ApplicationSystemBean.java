@@ -12,6 +12,8 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +23,9 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.imageio.ImageIO;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
@@ -32,11 +36,14 @@ import com.dumbhippo.persistence.AppinfoUpload;
 import com.dumbhippo.persistence.Application;
 import com.dumbhippo.persistence.ApplicationCategory;
 import com.dumbhippo.persistence.ApplicationIcon;
+import com.dumbhippo.persistence.ApplicationUsage;
 import com.dumbhippo.persistence.ApplicationWmClass;
+import com.dumbhippo.persistence.UnmatchedApplicationUsage;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.views.UserViewpoint;
 
 @Stateless
 public class ApplicationSystemBean implements ApplicationSystem {
@@ -294,13 +301,9 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		return new File(saveUri);
 	}
 
-	public ApplicationIconView getIcon(String appId, int desiredSize) throws NotFoundException {
+	private ApplicationIconView getIcon(Application application, int desiredSize) throws NotFoundException {
 		ApplicationIcon unsizedIcon = null;
 		ApplicationIcon sizedIcon = null;
-		
-		Application application = em.find(Application.class, appId);
-		if (application == null)
-			throw new NotFoundException("No such application");
 		
 		// We try to fine the icon with the nominal size closest
 		// to the desired size, except that we always prefer a
@@ -342,5 +345,126 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		}
 			
 		return new ApplicationIconView(icon, desiredSize);
+	}
+
+	public ApplicationIconView getIcon(String appId, int desiredSize) throws NotFoundException {
+		Application application = em.find(Application.class, appId);
+		if (application == null)
+			throw new NotFoundException("No such application");
+		
+		return getIcon(application, desiredSize);
+	}
+
+	public void recordApplicationUsage(UserViewpoint viewpoint, Collection<ApplicationUsageProperties> usages) {
+		// We currently record usage by looping over each reported application usage one-by-one,
+		// but it would probably be more efficient to retrieve all applications that the user
+		// used within the last day, compare them with the new usage set, and persist anything
+		// new.
+		Date now = new Date();
+		for (ApplicationUsageProperties props : usages) {
+			recordApplicationUsage(viewpoint, props, now);
+		}
+	}
+
+	private void recordApplicationUsage(UserViewpoint viewpoint, ApplicationUsageProperties props, Date date) {
+		logger.debug("Recording application usage: appId={}, wmClass={}",
+					 props.getAppId(), props.getWmClass());
+		
+		if (props.getAppId() != null) {
+			Application application = em.find(Application.class, props.getAppId());
+			if (application == null) {
+				logger.warn("Got application usage report for an unknown application ID '{}', ignoring", props.getAppId());
+			}
+			recordApplicationUsage(viewpoint, application, date);
+		} else if (props.getWmClass() != null) {
+			Query q = em.createQuery("SELECT awc.application FROM ApplicationWmClass awc WHERE awc.wmClass = :wmClass")
+				.setParameter("wmClass", props.getWmClass());
+			
+			try {
+				Application application = (Application)q.getSingleResult();
+				recordApplicationUsage(viewpoint, application, date);
+			} catch (NoResultException e) {
+				recordUnmatchedApplicationUsage(viewpoint, props, date);
+			}
+		} else {
+			logger.warn("Application usage report doesn't include either an application ID or a window class, ignoring");
+		}
+	}
+
+	private void recordApplicationUsage(UserViewpoint viewpoint, Application application, Date date) {
+		Date oneDayAgo = new Date(date.getTime() - 24 * 60 * 60 * 1000L);
+		
+		Query q = em.createQuery("SELECT usage FROM ApplicationUsage usage " +
+								 "   WHERE usage.user = :user " +
+								 "     AND usage.application = :application " +
+								 "     AND usage.date > :oneDayAgo")
+			.setParameter("user", viewpoint.getViewer())
+			.setParameter("application", application)
+			.setParameter("oneDayAgo", oneDayAgo);
+		
+		if (q.getResultList().isEmpty()) {
+			ApplicationUsage usage = new ApplicationUsage(viewpoint.getViewer(), application, date);
+			em.persist(usage);
+		}
+	}
+	
+	private void recordUnmatchedApplicationUsage(UserViewpoint viewpoint, ApplicationUsageProperties props, Date date) {
+		Date oneDayAgo = new Date(date.getTime() - 24 * 60 * 60 * 1000L);
+		
+		Query q = em.createQuery("SELECT usage FROM UnmatchedApplicationUsage usage " +
+								 "   WHERE usage.user = :user " +
+								 "     AND usage.wmClass = :wmClass " +
+								 "     AND usage.date > :oneDayAgo")
+			.setParameter("user", viewpoint.getViewer())
+			.setParameter("wmClass", props.getWmClass())
+			.setParameter("oneDayAgo", oneDayAgo);
+		
+		if (q.getResultList().isEmpty()) {
+			UnmatchedApplicationUsage usage = new UnmatchedApplicationUsage(viewpoint.getViewer(), props.getWmClass(), date);
+			em.persist(usage);
+		}
+	}
+	
+	public List<CategoryView> getPopularApplications(Date since, int iconSize) {
+		Map<ApplicationCategory, List<ApplicationView>> byCategory = new HashMap<ApplicationCategory, List<ApplicationView>>();
+		
+		Query q = em.createNamedQuery("applicationsPopularSince")
+			.setParameter("since", since);
+		List<?> results = q.getResultList();
+		for (Object o : results) {
+			Object[] columns = (Object[])o;
+			Application application = (Application)columns[0];
+			Number count = (Number)columns[1];
+			
+			List<ApplicationView> categoryApps = byCategory.get(application.getCategory());
+			if (categoryApps == null) {
+				categoryApps = new ArrayList<ApplicationView>();
+				byCategory.put(application.getCategory(), categoryApps);
+			}
+			
+			ApplicationView applicationView = new ApplicationView(application);
+			applicationView.setUsageCount(count.intValue());
+			try {
+				applicationView.setIcon(getIcon(application, iconSize));
+			} catch (NotFoundException e) {
+				// FIXME: Default icon (maybe in getIcon())
+			}
+			
+			categoryApps.add(applicationView);
+		}
+		
+		List<CategoryView> categoryViews = new ArrayList<CategoryView>();
+		
+		for (ApplicationCategory category : byCategory.keySet())
+			categoryViews.add(new CategoryView(category, byCategory.get(category)));
+		
+		Collections.sort(categoryViews, new Comparator<CategoryView>() {
+
+			public int compare(CategoryView a, CategoryView b) {
+				return a.getCategory().getName().compareTo(b.getCategory().getName());
+			}
+		});
+		
+		return categoryViews;
 	}
 }

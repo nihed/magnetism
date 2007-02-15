@@ -4,8 +4,14 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 @Entity
+@Table(name="ApplicationWmClass", 
+        uniqueConstraints = 
+           {@UniqueConstraint(columnNames={"application_id", "wmClass"})}
+   )
 public class ApplicationWmClass extends DBUnique {
 	private Application application;
 	private String wmClass;
