@@ -27,12 +27,12 @@
     margin-right:    5px;
 }
 
-#dhMusicRadarPreferences label {
+.dh-account-preferences-row label {
     position: relative;
     bottom:   -1px;
 }
 
-#dhMusicRadarPreferences #dhMusicOn, #dhMusicRadarPreferences #dhMusicOff {
+.dh-account-preferences-row input {
     position: relative;
     bottom:   2px;
 }
