@@ -12,12 +12,12 @@ public class ApplicationIconView {
 		this.icon = icon;
 		this.desiredSize = desiredSize;
 
-		int effectiveSize = desiredSize;
+		int effectiveSize = icon.getSize();
 		if (effectiveSize == -1) {
 			effectiveSize = Math.max(icon.getActualWidth(), icon.getActualHeight());
 		}
 		
-		double scale = desiredSize / effectiveSize;
+		double scale = (double)desiredSize / effectiveSize;
 		if (scale > 0.9 && scale < 1.1)
 			scale = 1.0;
 		
@@ -54,6 +54,6 @@ public class ApplicationIconView {
 	public String getUrl() {
 		// The database ID should work fine here as a version to allow web-server
 		// caching; it will change iff. the image changes.
-		return "/files/appicons/" + icon.getApplication().getId() + "&size=" + desiredSize + "&v=" + icon.getId();
+		return "/files/appicons/" + icon.getApplication().getId() + "?size=" + desiredSize + "&v=" + icon.getId();
 	}
 }

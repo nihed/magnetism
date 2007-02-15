@@ -261,7 +261,7 @@
            they are listed below for completeness -->
       <init-param>
           <param-name>noSignin</param-name>
-          <param-value>apple-dashboard-content,badges,busy,buttons,comingsoon,error,files,flash,google-stacker,google-stacker-spec,google-stacker-content,group-files,public-groups,radar-theme,sharelink,sharelink-inactive,signup,summit,unknownlink,upgrade,user-summary,who-are-you,robots.txt</param-value>
+          <param-value>apple-dashboard-content,applications,badges,busy,buttons,comingsoon,error,files,flash,google-stacker,google-stacker-spec,google-stacker-content,group-files,public-groups,radar-theme,sharelink,sharelink-inactive,signup,summit,unknownlink,upgrade,user-summary,who-are-you,robots.txt</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
