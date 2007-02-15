@@ -20,13 +20,17 @@
 	    <div class="dh-page-shinybox-title-large">Open Source Application Statistics</div>
 	    <div>
 	    	Mugshot and Fedora developers are working on ways to browse and find popular
-	    	applications. Hear are the current statistics for users sharing anonymous
+	    	applications. Here are the current statistics for users sharing
 	    	application usage with us. 
+	    	<a href="/applications-learnmore">Read the full details</a>
+	    	<c:if test="${signin.valid}">
+	    		| <a href="#">Share your own application usage with us</a>
+	    	</c:if>
 	    </div>
 	    <hr>
 	    <div id="dhApplicationsCategories">
 	    	<div class="dh-applications-heading">View Category:</div>
-    		<table cellspacing="0" cellpadding="0">
+    		<table class="dh-applications-categories" cellspacing="0" cellpadding="0">
 	    		<tr class="dh-applications-category">
 	    			<td>
 	    				<c:choose>
@@ -44,18 +48,18 @@
 		    		<tr class="dh-applications-category">
 		    			<td class="dh-applications-category-name">
 		    				<c:choose>
-		    					<c:when test="${applications.category == category}">
-				    				<c:out value="${category.displayName}"/>
+		    					<c:when test="${applications.category == category.category}">
+				    				<c:out value="${category.category.displayName}"/>
 				    			</c:when>
 				    			<c:otherwise>
-					    			<a href="/applications?category=${category.name}">
-					    				<c:out value="${category.displayName}"/>
+					    			<a href="/applications?category=${category.category.name}">
+					    				<c:out value="${category.category.displayName}"/>
 					    			</a>
 				    			</c:otherwise>
 			   				</c:choose>
 		    			</td>
 						<td class="dh-applications-category-bar-outer">	    			
-		    				<div class="dh-applications-category-bar" style="background-color: #a45ac6; width: 60px;"/>
+		    				<div class="dh-applications-category-bar" style="background-color: ${category.color}; width: ${category.length}px;"/>
 		    			</td>
 	    			</tr>
 		    	</c:forEach>
@@ -72,36 +76,45 @@
 	    			</c:otherwise>
 	    		</c:choose>
 	    	Applications</div>
-	    	<div id="dhApplicationsHeader">
-	    		<div id="dhApplicationsStatsHeader">Rank & Usage</div>
-	    		<div id="dhApplicationsApplicationsHeader">Applications</div>
-	    	</div>
-		    <c:forEach items="${applications.popularApplications}" var="application">
-	    		<div class="dh-applications-application-separator"></div>
-		    	<div class="dh-applications-application">
-		    		<div class="dh-applications-application-stats-outer">
-			    		<div class="dh-applications-application-stats">
-			    			<div class="dh-applications-rank"><c:out value="${application.rank}"/></div>
-			    			<div class="dh-applications-usage"><c:out value="${application.usageCount}"/></div>
-			    		</div>
-		    		</div>
-		    		<div class="dh-applications-application-icon">
-						<dh:png src="${application.icon.url}" 
-							style="width: ${application.icon.displayWidth}; height: ${application.icon.displayHeight}; overflow: hidden;"/>
-		    		</div>
-		    		<div class="dh-applications-application-details">
-		    			<div class="dh-applications-application-name">
-		    				<c:out value="${application.application.name}"/>
-			    		</div>
-		    			<div class="dh-applications-application-category">
-			    			<a href="/applications?category=${application.application.category.name}">
-	    						<c:out value="${application.application.category.displayName}"/>
-	    					</a>
-			    		</div>
-		    		</div>
-		    		<div class="dh-applications-application-separator"></div>
-    			</div>
-		    </c:forEach>
+	    	<c:choose>
+	    		<c:when test="${empty applications.popularApplications}">
+	    			<div class="dh-applications-no-applications">
+	    				There are no popular applications in this category.
+	    			</div>
+	    		</c:when>
+	    		<c:otherwise>
+			    	<div id="dhApplicationsHeader">
+			    		<div id="dhApplicationsStatsHeader">Rank & Usage</div>
+			    		<div id="dhApplicationsApplicationsHeader">Applications</div>
+			    	</div>	    		
+				    <c:forEach items="${applications.popularApplications}" var="application">
+			    		<div class="dh-applications-application-separator"></div>
+				    	<div class="dh-applications-application">
+				    		<div class="dh-applications-application-stats-outer">
+					    		<div class="dh-applications-application-stats">
+					    			<div class="dh-applications-rank"><c:out value="${application.rank}"/></div>
+					    			<div class="dh-applications-usage"><c:out value="${application.usageCount}"/></div>
+					    		</div>
+				    		</div>
+				    		<div class="dh-applications-application-icon">
+								<dh:png src="${application.icon.url}" 
+									style="width: ${application.icon.displayWidth}; height: ${application.icon.displayHeight}; overflow: hidden;"/>
+				    		</div>
+				    		<div class="dh-applications-application-details">
+				    			<div class="dh-applications-application-name">
+				    				<c:out value="${application.application.name}"/>
+					    		</div>
+				    			<div class="dh-applications-application-category">
+					    			<a href="/applications?category=${application.application.category.name}">
+			    						<c:out value="${application.application.category.displayName}"/>
+			    					</a>
+					    		</div>
+				    		</div>
+				    		<div class="dh-applications-application-separator"></div>
+		    			</div>
+				    </c:forEach>
+		    </c:otherwise>
+		    </c:choose>
 	    </div>
 	</dht3:shinyBox>
 </dht3:page>

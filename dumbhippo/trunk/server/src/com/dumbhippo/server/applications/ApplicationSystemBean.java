@@ -430,6 +430,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		
 		int rank = 1;
 		for (Object o : results) {
+			int thisRank = rank++;
 			Object[] columns = (Object[])o;
 			Application application = (Application)columns[0];
 			Number count = (Number)columns[1];
@@ -439,7 +440,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 			
 			ApplicationView applicationView = new ApplicationView(application);
 			applicationView.setUsageCount(count.intValue());
-			applicationView.setRank(rank);
+			applicationView.setRank(thisRank);
 			try {
 				applicationView.setIcon(getIcon(application, iconSize));
 			} catch (NotFoundException e) {
@@ -447,9 +448,41 @@ public class ApplicationSystemBean implements ApplicationSystem {
 			}
 			
 			applicationViews.add(applicationView);
-			rank++;
 		}
 		
 		return applicationViews;
+	}
+	
+	public List<CategoryView> getPopularCategories(Date since) {
+		Map<ApplicationCategory, Integer> usageCounts = new HashMap<ApplicationCategory, Integer>();
+		
+		Query q = em.createQuery(" SELECT a.category, COUNT(*) " +
+								 "   FROM ApplicationUsage au, Application a " +
+								 "   WHERE au.application = a AND au.date > :since " +
+								 "GROUP BY a.category")
+			.setParameter("since", since);
+		
+		for (Object o : q.getResultList()) {
+			Object[] columns = (Object[])o;
+			ApplicationCategory category = (ApplicationCategory)columns[0];
+			Number count = (Number)columns[1];
+			
+			usageCounts.put(category, count.intValue());
+		}
+		
+		List<CategoryView> categoryViews = new ArrayList<CategoryView>();
+		for (ApplicationCategory category : ApplicationCategory.values()) {
+			int usageCount;
+			if (usageCounts.containsKey(category))
+				usageCount = usageCounts.get(category);
+			else
+				usageCount = 0;
+			
+			CategoryView categoryView = new CategoryView(category);
+			categoryView.setUsageCount(usageCount);
+			categoryViews.add(categoryView);
+		}
+		
+		return categoryViews;
 	}
 }
