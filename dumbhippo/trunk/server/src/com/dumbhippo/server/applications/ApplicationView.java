@@ -5,6 +5,7 @@ import com.dumbhippo.persistence.Application;
 public class ApplicationView {
 	private Application application;
 	private int usageCount;
+	private int rank;
 	private ApplicationIconView icon;
 	
 	public ApplicationView(Application application) {
@@ -29,5 +30,13 @@ public class ApplicationView {
 
 	public void setUsageCount(int usageCount) {
 		this.usageCount = usageCount;
+	}
+
+	public void setRank(int rank) {
+		this.rank = rank;
+	}
+	
+	public int getRank() {
+		return rank;
 	}
 }

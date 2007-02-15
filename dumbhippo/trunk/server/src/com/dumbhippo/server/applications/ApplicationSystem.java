@@ -7,6 +7,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.ApplicationCategory;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.UserViewpoint;
 
@@ -18,5 +19,5 @@ public interface ApplicationSystem {
 	
 	void recordApplicationUsage(UserViewpoint viewpoint, Collection<ApplicationUsageProperties> usages);
 	
-	public List<CategoryView> getPopularApplications(Date since, int iconSize);
+	public List<ApplicationView> getPopularApplications(Date since, int iconSize, ApplicationCategory category);
 }

@@ -1,11 +1,42 @@
 @CHARSET "UTF-8";
 @IMPORT url("applications-positions.css");
 
-.dh-applications-category-name {
-	font-size: 20px;
+.dh-applications-heading {
+	font-size: 16px;
+	font-weight: bold;
 }
 
-.dh-applications-usage-count {
-	font-size: 14px;
-	color: #666666;
+#dhApplicationsHeader {
+	font-size: 12px;
 }
+
+#dhApplicationsStatsHeader {
+	text-align: center; 
+}
+
+.dh-applications-application-stats {
+	text-align: center; 
+	background: url("/images3/purple_gradient.png") top left repeat-x;
+}
+
+.dh-applications-rank {
+	font-size: 24px;
+}
+
+.dh-applications-usage {
+	font-size: 14px;
+	color: #777777;
+}
+
+.dh-applications-application-name {
+	font-size: 14px;
+}
+
+.dh-applications-application-category {
+	font-size: 12px;
+}
+
+.dh-applications-category {
+	font-size: 14px;
+}
+
