@@ -317,11 +317,30 @@ class DappinfoEditor:
         self._copy_in(desktopfile, self._tmppath(destpath))
         self._set_property("desktop", destpath)
 
+    def _find_cookies_file(self):
+        home = os.environ['HOME']
+        cookies_file = None
+        try:
+            for subdir in os.listdir(os.path.join(home, ".mozilla", "firefox")):
+                if (subdir.endswith(".default")):
+                    possible = os.path.join(home, ".mozilla", "firefox", subdir, "cookies.txt")
+                    if (file_exists(possible)):
+                        cookies_file = possible
+                        break
+        except OSError:
+            pass
+
+        if not cookies_file:
+            raise HumanVisibleException("Can't aind your browser cookies file, you need to pass --cookies-file")
+
+        print >>sys.stderr, "Reading cookies from %s" % cookies_file
+        return cookies_file
+
     def upload(self, server=None, cookies_file=None, upload_categories=None):
         if not server:
             raise HumanVisibleException("Server to upload must be specified")
         if not cookies_file:
-            raise HumanVisibleException("Cookies file must be specified")
+            cookies_file = self._find_cookies_file()
         if cookies_file.find("=") >= 0:
             raise HumanVisibleException("Cookies file name can't contain '=' - that confuses curl")
         if not file_exists(cookies_file):
@@ -491,7 +510,7 @@ def cmd_upload(args):
                           "     Upload the dappinfo to the server.")
     parser.add_option("--server",
                       help="Server to upload the file to")
-    parser.add_option("--cookiesfile",
+    parser.add_option("--cookies-file",
                       help="Your browser cookies file (for authentication)")
     parser.add_option("--upload-categories",
                       help="Override default set of categories to upload (comma separated)")
@@ -509,7 +528,7 @@ def cmd_upload(args):
     for file in args:
         editor = DappinfoEditor(file)
         try:
-            editor.upload(server=options.server, cookies_file=options.cookiesfile, upload_categories=upload_categories)
+            editor.upload(server=options.server, cookies_file=options.cookies_file, upload_categories=upload_categories)
             editor.finish()
         finally:
             editor.cleanup()
