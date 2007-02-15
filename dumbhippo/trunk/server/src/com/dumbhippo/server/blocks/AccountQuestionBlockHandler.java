@@ -6,10 +6,11 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.listeners.AccountStatusListener;
 import com.dumbhippo.server.views.UserViewpoint;
 
 @Local
-public interface AccountQuestionBlockHandler extends BlockHandler {
+public interface AccountQuestionBlockHandler extends BlockHandler, AccountStatusListener {
 	public BlockKey getKey(User user, AccountQuestion question);
 	
 	public void createApplicationUsageBlocks();

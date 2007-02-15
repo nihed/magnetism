@@ -404,4 +404,9 @@ public interface HttpMethods {
 	@HttpParams( { "who", "participantOnly" })
 	@HttpOptions( optionalParams = { "participantOnly" } )
 	public void getUserRSS(OutputStream out, HttpResponseData contentType, User who, boolean participantOnly) throws IOException, XmlMethodException;
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "enabled" })
+	public void doSetApplicationUsageEnabled(UserViewpoint viewpoint, boolean enabled) throws IOException, HumanVisibleException;
+
 }

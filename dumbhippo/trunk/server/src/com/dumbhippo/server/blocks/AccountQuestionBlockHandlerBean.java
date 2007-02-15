@@ -6,6 +6,9 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Block;
@@ -24,6 +27,9 @@ import com.dumbhippo.server.views.Viewpoint;
 public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<AccountQuestionBlockView>
 		implements AccountQuestionBlockHandler {
 	
+	@SuppressWarnings("unused")
+	static private final Logger logger = GlobalSetup.getLogger(AccountQuestionBlockHandlerBean.class);
+
 	@EJB
 	protected AccountSystem accountSystem;
 	
@@ -86,6 +92,29 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 		}
 	}
 	
+
+	public void onAccountAdminDisabledToggled(Account account) {
+		// Don't care
+	}
+
+	public void onAccountDisabledToggled(Account account) {
+		// Don't care
+		
+	}
+
+	public void onApplicationUsageToggled(Account account) {
+		try {
+			Block block = stacker.queryBlock(getKey(account.getOwner(), AccountQuestion.APPLICATION_USAGE));
+			questionAnswered(new UserViewpoint(account.getOwner()), block);
+		} catch (NotFoundException e) {
+			// No block, nothing to do
+		}
+	}
+
+	public void onMusicSharingToggled(Account account) {
+		// Don't care
+	}
+
 	private void handleApplicationUsageResponse(UserViewpoint viewpoint, String response) throws BadResponseCodeException {
 		if (response.equals("yes"))
 			identitySpider.setApplicationUsageEnabled(viewpoint.getViewer(), true);
@@ -109,22 +138,38 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 			throw new NotFoundException("Attempt to answer someone else's AcountQuestion");
 		}
 		
+		// We don't restack the block ourselves here; instead the question-type-specific
+		// handler should make changes to the user's account resulting in a notification
+		// to us. And then in response to the notification we restack the block. Doing
+		// it this way makes sure that the question is still marked as answered even if
+		// the user makes the change through the account page or other parts of the
+		// user interface.
+		
 		switch (blockView.getQuestion()) {
 		case APPLICATION_USAGE:
 			handleApplicationUsageResponse(viewpoint, response);
 			break;
 		}
-		
+	}
+	
+	private void questionAnswered(UserViewpoint viewpoint, Block block) {
 		long when = System.currentTimeMillis();
 		
-		// We recycle "clicked" to mean "answered the question"; this is a little dubious
-		// but will allow us to quickly query for unanswered question sent to a user
-		// without having to extend Block.
-		stacker.blockClicked(ubd, when);
+		try {
+			UserBlockData ubd = stacker.lookupUserBlockData(viewpoint, block.getGuid());
+			
+			// We recycle "clicked" to mean "answered the question"; this is a little dubious
+			// but will allow us to quickly query for unanswered question sent to a user
+			// without having to extend Block.
+			stacker.blockClicked(ubd, when);
+		} catch (NotFoundException e) {
+			logger.warn("UserBlockData didn't exist for the account's owner when answering an account question", e);
+		}
+
 		
 		// The call to blockClicked wont restack block since the clicked count 
 		// can only ever be 1, so we need restack the block ourselves to change
 		// it to a confirmation block
-		stacker.stack(ubd.getBlock(), when, StackReason.BLOCK_UPDATE);
+		stacker.stack(block, when, StackReason.BLOCK_UPDATE);
 	}
 }
