@@ -39,7 +39,7 @@ public class AccountQuestionBlockView extends BlockView {
 	
 	@Override
 	public String getIcon() {
-		return "/images3/mugshot_icon.png";
+		return "/images3/star.png";
 	}
 
 	@Override

@@ -339,3 +339,13 @@ dh.actions.joinChat = function(chatId) {
 		window.open("/download", '_NEW');
 	}
 }
+
+dh.actions.setApplicationUsageEnabled = function(enabled) {
+   	dh.server.doPOST("setapplicationusageenabled",
+				     { "enabled" : enabled },
+		  	    	 function(type, data, http) {
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Couldn't change application usage sharing preference.");
+		  	    	 });
+}

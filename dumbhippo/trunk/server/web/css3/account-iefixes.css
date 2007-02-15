@@ -10,12 +10,12 @@
     bottom:    4px;
 }
 
-#dhMusicRadarPreferences label {
+.dh-acount-preferences-row label {
     bottom:   0px;
     width:    20px;
 }
 
-#dhMusicRadarPreferences #dhMusicOn, #dhMusicRadarPreferences #dhMusicOff {
+.dh-acount-preferences-row input {
     bottom:   0px;
 }
 
