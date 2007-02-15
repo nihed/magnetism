@@ -53,7 +53,9 @@ struct _HippoCanvasBlock {
     GTime original_age;
     /* probably a class props not instance props, but free bits anyway */
     unsigned int expandable : 1;
+    unsigned int linkify_title : 1;
     unsigned int skip_heading : 1;
+    unsigned int skip_lock : 1;
     unsigned int skip_standard_right : 1;
     unsigned int message_block : 1;
     

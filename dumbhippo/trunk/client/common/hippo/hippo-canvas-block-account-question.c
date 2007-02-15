@@ -50,7 +50,6 @@ enum {
 struct _HippoCanvasBlockAccountQuestion {
     HippoCanvasBlock parent;
 
-    HippoCanvasItem *title_item;
     HippoCanvasItem *description_item;
     HippoCanvasItem *read_more_item;
     HippoCanvasBox *buttons_box;
@@ -72,7 +71,8 @@ hippo_canvas_block_account_question_init(HippoCanvasBlockAccountQuestion *block_
     block->required_type = HIPPO_BLOCK_TYPE_ACCOUNT_QUESTION;
     block->expandable = FALSE;
     block->message_block = TRUE;
-    block->skip_heading = TRUE;
+    block->linkify_title = FALSE;
+    block->skip_lock = TRUE;
     block->skip_standard_right = TRUE;
 }
 
@@ -161,15 +161,10 @@ hippo_canvas_block_account_question_append_content_items (HippoCanvasBlock *bloc
     HippoCanvasBlockAccountQuestion *block_account_question = HIPPO_CANVAS_BLOCK_ACCOUNT_QUESTION(block);
     HippoCanvasBox *box;
 
-    block_account_question->title_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                                      "font", "Bold 12px",
-                                                      "xalign", HIPPO_ALIGNMENT_START,
-                                                      NULL);
-    hippo_canvas_box_append(parent_box, block_account_question->title_item, 0);
-
     block_account_question->description_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                                             "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD,
                                                             "xalign", HIPPO_ALIGNMENT_START,
+                                                            "padding-top", 2,
                                                             NULL);
     hippo_canvas_box_append(parent_box, block_account_question->description_item, 0);
 
@@ -237,9 +232,7 @@ on_title_changed(HippoBlock                      *block,
                  "title", &title,
                  NULL);
 
-    g_object_set(block_account_question->title_item,
-                 "text", title,
-                 NULL);
+    hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(block_account_question), title, NULL, FALSE);
 
     g_free(title);
 }
