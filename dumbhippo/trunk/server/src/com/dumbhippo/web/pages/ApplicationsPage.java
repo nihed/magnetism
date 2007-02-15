@@ -7,16 +7,25 @@ import java.util.Date;
 import java.util.List;
 
 import com.dumbhippo.persistence.ApplicationCategory;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.applications.ApplicationSystem;
 import com.dumbhippo.server.applications.ApplicationView;
 import com.dumbhippo.server.applications.CategoryView;
+import com.dumbhippo.web.PagePositions;
+import com.dumbhippo.web.PagePositionsBean;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class ApplicationsPage {
 	private ApplicationSystem applicationSystem;
+	
+	@PagePositions
+	PagePositionsBean pagePositions;
+	
 	public List<CategoryInfo> categories;
-	public List<ApplicationView> popularApplications;
+	public Pageable<ApplicationView> applications;
 	private ApplicationCategory category;
+	
+	static final int APPLICATIONS_PER_PAGE = 10;
 	
 	static final int ICON_SIZE = 48;
 	static final int BAR_LENGTH = 80;
@@ -133,11 +142,13 @@ public class ApplicationsPage {
 		return categories;
 	}
 	
-	public List<ApplicationView> getPopularApplications() {
-		if (popularApplications == null) {
-			popularApplications = applicationSystem.getPopularApplications(getSince(), ICON_SIZE, category);
+	public Pageable<ApplicationView> getApplications() {
+		if (applications == null) {
+			applications = pagePositions.createPageable("applications", APPLICATIONS_PER_PAGE);
+			applications.setSubsequentPerPage(APPLICATIONS_PER_PAGE);
+			applicationSystem.pagePopularApplications(getSince(), ICON_SIZE, category, applications);
 		}
 		
-		return popularApplications;
+		return applications;
 	}
 }

@@ -42,6 +42,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.views.UserViewpoint;
 
 @Stateless
@@ -421,7 +422,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		}
 	}
 	
-	public List<ApplicationView> getPopularApplications(Date since, int iconSize, ApplicationCategory category) {
+	public void pagePopularApplications(Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
 		Query q = em.createNamedQuery("applicationsPopularSince")
 			.setParameter("since", since);
 		List<?> results = q.getResultList();
@@ -429,6 +430,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		List<ApplicationView> applicationViews = new ArrayList<ApplicationView>();
 		
 		int rank = 1;
+		int pos = 0;
 		for (Object o : results) {
 			int thisRank = rank++;
 			Object[] columns = (Object[])o;
@@ -438,19 +440,24 @@ public class ApplicationSystemBean implements ApplicationSystem {
 			if (category != null && application.getCategory() != category)
 				continue;
 			
-			ApplicationView applicationView = new ApplicationView(application);
-			applicationView.setUsageCount(count.intValue());
-			applicationView.setRank(thisRank);
-			try {
-				applicationView.setIcon(getIcon(application, iconSize));
-			} catch (NotFoundException e) {
-				// FIXME: Default icon (maybe in getIcon())
+			if (pos >= pageable.getStart() && pos < pageable.getStart() + pageable.getCount()) {
+				ApplicationView applicationView = new ApplicationView(application);
+				applicationView.setUsageCount(count.intValue());
+				applicationView.setRank(thisRank);
+				try {
+					applicationView.setIcon(getIcon(application, iconSize));
+				} catch (NotFoundException e) {
+					// FIXME: Default icon (maybe in getIcon())
+				}
+			
+				applicationViews.add(applicationView);
 			}
 			
-			applicationViews.add(applicationView);
+			pos++;
 		}
-		
-		return applicationViews;
+
+		pageable.setResults(applicationViews);
+		pageable.setTotalCount(pos);
 	}
 	
 	public List<CategoryView> getPopularCategories(Date since) {

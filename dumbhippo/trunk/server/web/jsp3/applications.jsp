@@ -77,7 +77,7 @@
 	    		</c:choose>
 	    	Applications</div>
 	    	<c:choose>
-	    		<c:when test="${empty applications.popularApplications}">
+	    		<c:when test="${applications.applications.resultCount == 0}">
 	    			<div class="dh-applications-no-applications">
 	    				There are no popular applications in this category.
 	    			</div>
@@ -87,7 +87,7 @@
 			    		<div id="dhApplicationsStatsHeader">Rank & Usage</div>
 			    		<div id="dhApplicationsApplicationsHeader">Applications</div>
 			    	</div>	    		
-				    <c:forEach items="${applications.popularApplications}" var="application">
+				    <c:forEach items="${applications.applications.results}" var="application">
 			    		<div class="dh-applications-application-separator"></div>
 				    	<div class="dh-applications-application">
 				    		<div class="dh-applications-application-stats-outer">
@@ -113,6 +113,9 @@
 				    		<div class="dh-applications-application-separator"></div>
 		    			</div>
 				    </c:forEach>
+				    <div class="dh-applications-more">
+					    <dht:expandablePager pageable="${applications.applications}"/>
+				    </div>
 		    </c:otherwise>
 		    </c:choose>
 	    </div>
