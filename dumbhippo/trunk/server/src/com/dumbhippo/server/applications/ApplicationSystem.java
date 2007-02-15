@@ -20,4 +20,6 @@ public interface ApplicationSystem {
 	void recordApplicationUsage(UserViewpoint viewpoint, Collection<ApplicationUsageProperties> usages);
 	
 	public List<ApplicationView> getPopularApplications(Date since, int iconSize, ApplicationCategory category);
+	
+	public List<CategoryView> getPopularCategories(Date since);
 }
