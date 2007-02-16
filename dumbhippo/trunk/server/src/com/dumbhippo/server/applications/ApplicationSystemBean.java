@@ -442,6 +442,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 			
 			if (pos >= pageable.getStart() && pos < pageable.getStart() + pageable.getCount()) {
 				ApplicationView applicationView = new ApplicationView(application);
+				//applicationView.setUsageCount(count.intValue());
 				applicationView.setUsageCount(count.intValue());
 				applicationView.setRank(thisRank);
 				try {

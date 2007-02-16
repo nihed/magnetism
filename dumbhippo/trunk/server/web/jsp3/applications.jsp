@@ -117,7 +117,7 @@
 				    		<div class="dh-applications-application-stats-outer">
 					    		<div class="dh-applications-application-stats">
 					    			<div class="dh-applications-rank"><c:out value="${application.rank}"/></div>
-					    			<div class="dh-applications-usage"><c:out value="${application.usageCount}"/></div>
+					    			<div class="dh-applications-usage"><c:out value="${dh:format1('%,d', application.usageCount)}"/></div>
 					    		</div>
 				    		</div>
 				    		<div class="dh-applications-application-icon">
