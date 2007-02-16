@@ -34,7 +34,7 @@ public class ApplicationWmClass extends DBUnique {
 		this.application = application;
 	}
 	
-	@Column(nullable = false)
+	@Column(nullable = false, length=127)
 	public String getWmClass() {
 		return wmClass;
 	}

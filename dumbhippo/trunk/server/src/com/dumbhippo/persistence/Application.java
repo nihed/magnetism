@@ -32,7 +32,7 @@ public class Application {
 	}
 	
 	@Id
-	@Column(nullable = false)
+	@Column(nullable = false, length=64)
 	public String getId() {
 		return id;
 	}
