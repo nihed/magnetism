@@ -125,6 +125,9 @@ ICON_REGEX = re.compile("^(\S*?)(.xpm|.png|.svg)?$")
 class DappinfoWriter:
     def __init__(self, sourcedir, desktopfile, rpmfile):
         self.sourcedir = sourcedir
+        self.all_dirs = [self.sourcedir]
+        self.all_dirs.extend(config.merge_dirs)
+        
         self.desktopfile = desktopfile
         self.rpmfile = rpmfile
         self.iconname = None
@@ -174,12 +177,17 @@ class DappinfoWriter:
         self.properties["package"] = m.group(1)
 
     def _add_file(self, infile, outfile):
-        inpath = os.path.join(self.sourcedir, infile)
-        outpath = os.path.join(self.tmpdir, outfile)
+        for d in self.all_dirs:
+            inpath = os.path.join(d, infile)
+            if file_exists(inpath):
+                outpath = os.path.join(self.tmpdir, outfile)
         
-        ensure_dir(os.path.dirname(outpath))
+                ensure_dir(os.path.dirname(outpath))
+        
+                system("cp '%s' '%s'" % (inpath, outpath))
 
-        system("cp '%s' '%s'" % (inpath, outpath))
+                return
+        raise Exception("Cannot find file %s in any directory" % infile)
 
     def _add_desktop(self):
         basename = os.path.basename(self.desktopfile)
@@ -187,15 +195,17 @@ class DappinfoWriter:
         self.properties["desktop"] = basename
 
     def _find_icons(self):
+        result = []
         if self.iconname:
             def pred(f):
                 return f == self.iconname + ".png" or \
                        f == self.iconname + ".svg" or \
                        f == self.iconname + ".png"
 
-            return find_files(self.sourcedir, ["usr/share/pixmaps", "usr/share/icons"], pred)
-        else:
-            return []
+            for d in self.all_dirs:
+                result.extend(find_files(d, ["usr/share/pixmaps", "usr/share/icons"], pred))
+            
+        return result
 
     def _add_icon(self, iconfile):
         propname = None
@@ -279,11 +289,7 @@ def extract_from_rpm(rpmfile):
     verbose("Processing " + os.path.basename(rpmfile))
     tmpdir = extract_rpm(rpmfile)
     try:
-        if config.redhat_menus_dir != None:
-            alt_dirs = [config.redhat_menus_dir]
-        else:
-            alt_dirs = []
-        fixup_symlinks(tmpdir, alt_dirs)
+        fixup_symlinks(tmpdir, config.merge_dirs)
         for d in find_desktops(tmpdir):
             writer = DappinfoWriter(tmpdir, d, os.path.basename(rpmfile))
             writer.process()
@@ -301,8 +307,8 @@ usage = "%prog [options] RPMFILE [RPMFILE...]"
 parser = OptionParser(usage=usage)
 parser.add_option("-d", "--destdir",
                   help="Directory to write resulting application info files")
-parser.add_option("--redhat-menus",
-                  help="redhat-menus RPM file (merged into source tree to resolve symlinks)")
+parser.add_option("--merge", action="append",
+                  help="Merge this RPM into each RPMs file system space (can be repeated)")
 (options, args) = parser.parse_args()
 
 if (options.destdir != None):
@@ -312,14 +318,14 @@ else:
 
 ensure_dir(config.destdir)
 
-if options.redhat_menus != None:
-    config.redhat_menus_dir = extract_rpm(options.redhat_menus)
-else:
-    config.redhat_menus_dir = None
-
+config.merge_dirs = []
 try:
+    if options.merge:
+        for m in options.merge:
+            config.merge_dirs.append(extract_rpm(m))
+
     for rpmfile in args:
         extract_from_rpm(rpmfile)
 finally:
-    pass
-system("rm -rf '%s'" % config.redhat_menus_dir)
+    for d in config.merge_dirs:
+        system("rm -rf '%s'" % d)
