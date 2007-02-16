@@ -88,8 +88,8 @@ public abstract class AbstractBlockPerFeedEntryHandlerBean<ViewType extends Abst
 	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
 		if (external.getAccountType() != getAccountType())
 			return;
-		Feed feed = external.getFeed();
-		if (feed != null) {
+		
+		for (Feed feed : external.getFeeds()) {
 			Query q = em.createQuery("SELECT fe FROM FeedEntry fe WHERE fe.feed = :feed AND EXISTS (SELECT b FROM Block b WHERE b.blockType = " + 
 					getBlockType().ordinal() + " AND b.data1 = :userId AND b.data3 = fe.id)");
 			q.setParameter("feed", feed);
