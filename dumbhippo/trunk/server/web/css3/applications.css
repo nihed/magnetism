@@ -44,3 +44,21 @@
    font-size: 15px;
    color:     #444444;
 }
+
+.dh-applications-learnmore h2 {
+	margin-top: 8px;
+	margin-bottom: 4px;
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.dh-applications-learnmore p {
+	margin-top: 4px;
+	margin-top: 4px;
+}
+
+.dh-applications-settings {
+	padding: 			8px;
+	background-color:	#fbfadc;
+	border:				1px solid #cccc99;
+}
