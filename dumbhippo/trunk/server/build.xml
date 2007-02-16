@@ -342,6 +342,7 @@
 				<include name="**/persistence/**/*.class" />
 				<!-- server+util but not server/impl -->
 				<include name="**/server/*.class" />
+				<include name="**/server/listeners/*.class" />
 				<include name="**/server/applications/*.class" />
 				<include name="**/server/blocks/*.class" />
 				<include name="**/server/util/*.class" />
