@@ -1,2 +1,0 @@
-#!/bin/sh
-PYTHONPATH=../canvas/build/.libs/:../canvas/.libs python

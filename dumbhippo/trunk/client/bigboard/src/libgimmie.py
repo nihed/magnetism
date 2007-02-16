@@ -135,39 +135,3 @@ class DockWindow(gtk.Window):
         gobject.idle_add(self.do_set_wm_strut)
         
         return ret
-
-class EdgeWindow(DockWindow):
-    __gsignals__ = {
-        'size-request' : 'override',
-        'size-allocate' : 'override'
-        }
-
-    def __init__(self, edge_gravity):
-        DockWindow.__init__(self, edge_gravity)
-        self.set_keep_above(True)
-        self.set_wm_strut(True)
-
-    def do_size_request(self, req):
-        ret = DockWindow.do_size_request(self, req)
-
-        # Give some whitespace
-        geom = self.get_screen().get_monitor_geometry(0)
-
-        # If centered to a side, take at least 50% of available size
-        if self.get_edge_gravity() in [gtk.gdk.GRAVITY_SOUTH, gtk.gdk.GRAVITY_NORTH]:
-            req.width = max(geom.width / 2, req.width)
-        elif self.get_edge_gravity() in [gtk.gdk.GRAVITY_EAST, gtk.gdk.GRAVITY_WEST]:
-            req.height = max(geom.height / 2, req.height)
-
-        # Never take more than available size
-        req.width = min(geom.width, req.width)
-        req.height = min(geom.height, req.height)
-
-        ### Uncomment for a more stable bar size
-        # If centered to a side, take 85% of available size
-        #if self.get_edge_gravity() in (gtk.gdk.GRAVITY_SOUTH, gtk.gdk.GRAVITY_NORTH):
-        #    req.width = geom.width * 0.85
-        #elif self.get_edge_gravity() in (gtk.gdk.GRAVITY_EAST, gtk.gdk.GRAVITY_WEST):
-        #    req.height = geom.height * 0.85
-
-        return ret
