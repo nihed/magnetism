@@ -1,8 +1,13 @@
 package com.dumbhippo.persistence;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -33,11 +38,12 @@ public class ExternalAccount extends DBUnique {
 	private String extra;
 	// quip (right now only applies if sentiment == HATE)
 	private String quip;
-	// if the account has an associated feed, that goes here
-	private Feed feed;
+	// if the account has associated feeds, they go here
+	private Set<Feed> feeds;
 	
 	public ExternalAccount() {
 		sentiment = Sentiment.INDIFFERENT;
+		feeds = new HashSet<Feed>();
 	}
 	
 	public ExternalAccount(ExternalAccountType where) {
@@ -144,14 +150,48 @@ public class ExternalAccount extends DBUnique {
 		this.sentiment = sentiment;
 	}
 
-	@ManyToOne
-	@JoinColumn(nullable=true)	
+    // This is a @ManyToMany relationship because:
+    // -- an external account can have multiple feeds that we might want to poll
+	// -- the same feed can be set on different external accounts (i.e. if two people
+	//    have a shared photos account)
+	@ManyToMany
+	@JoinTable(name="ExternalAccount_Feed",
+		       joinColumns=@JoinColumn(name="externalAccount_id", referencedColumnName="id"),                 
+		       inverseJoinColumns=@JoinColumn(name="feed_id", referencedColumnName="id"),
+		       uniqueConstraints=@UniqueConstraint(columnNames={"externalAccount_id", "feed_id"}))	
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
+	public Set<Feed> getFeeds() {
+		return feeds;
+	}
+
+	public void setFeeds(Set<Feed> feeds) {
+		if (feeds == null)
+			throw new IllegalArgumentException("Setting feeds to null is illegal.");
+		this.feeds = feeds;
+	}
+	
+	public void addFeed(Feed feed) {
+		feeds.add(feed);
+	}
+	
+	public void removeFeed(Feed feed) {
+		feeds.remove(feed);
+	}
+	
+	@Transient	
 	public Feed getFeed() {
-		return feed;
+		if (feeds.size() == 1)
+			return ((Feed[])feeds.toArray(new Feed[1]))[0];
+		else if (feeds.isEmpty())
+			return null;
+		else
+			throw new RuntimeException("The external account has multiple feeds, not sure which feed you want me to return.");
 	}
 
 	public void setFeed(Feed feed) {
-		this.feed = feed;
+		Set<Feed> feedsSet = new HashSet<Feed>();
+		feedsSet.add(feed);	
+		setFeeds(feedsSet);
 	}
 	
 	@Override

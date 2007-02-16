@@ -1876,18 +1876,46 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
-		Feed feed;
+		external.setFeeds(new HashSet<Feed>());
+		
+		Feed feed, likedFeed, dislikedFeed;
+		boolean likedFeedFound, dislikedFeedFound;
 		try {
 			feed = feedSystem.scrapeFeedFromUrl(new URL("http://reddit.com/user/" + StringUtils.urlEncode(external.getHandle())));
+            // we create feeds for likes and dislikes regardless of whether they are actually found
+			Pair<Feed, Boolean> likedFeedPair = feedSystem.createFeedFromUrl(new URL("http://reddit.com/user/" + StringUtils.urlEncode(external.getHandle()) + "/liked.rss"));
+			likedFeed = likedFeedPair.getFirst();
+			likedFeedFound = likedFeedPair.getSecond();
+			Pair<Feed, Boolean> dislikedFeedPair = feedSystem.createFeedFromUrl(new URL("http://reddit.com/user/" + StringUtils.urlEncode(external.getHandle()) + "/disliked.rss"));
+			dislikedFeed = dislikedFeedPair.getFirst();
+			dislikedFeedFound = dislikedFeedPair.getSecond(); 			
 		} catch (MalformedURLException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
 		}
-		EJBUtil.forceInitialization(feed.getAccounts());
-		
-		external.setFeed(feed);
-		feed.getAccounts().add(external);
+		EJBUtil.forceInitialization(feed.getAccounts());		
+		external.addFeed(feed);
+		feed.getAccounts().add(external);		
+
+		EJBUtil.forceInitialization(likedFeed.getAccounts());
+		external.addFeed(likedFeed);
+		likedFeed.getAccounts().add(external);				
+               
+		EJBUtil.forceInitialization(dislikedFeed.getAccounts());
+		external.addFeed(dislikedFeed);
+		dislikedFeed.getAccounts().add(external);				
 		
 		xml.appendTextNode("username", external.getHandle());
+		
+		// we should really always either find or not find both feeds
+		if (likedFeedFound != dislikedFeedFound) {
+		    logger.warn("likedFeedFound was {}, while displikedFeedFound was {}", likedFeedFound, dislikedFeedFound);				
+		}
+		
+	    if (!likedFeedFound || !dislikedFeedFound) {	
+		    xml.appendTextNode("message", "It looks like your Reddit votes are not public, if you want them to be available " +
+		    		                       "on Mugshot in addition to links you submit and comment on on Reddit, you can make " +
+		    		                       "them public at http://reddit.com/prefs/options");
+	    }
 	}
 	
 	public void doSetLinkedInProfile(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {

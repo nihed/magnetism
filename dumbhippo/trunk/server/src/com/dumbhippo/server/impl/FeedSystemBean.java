@@ -27,6 +27,7 @@ import javax.persistence.Query;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Pair;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
@@ -376,11 +377,17 @@ public class FeedSystemBean implements FeedSystem {
 			}
 		}
 
-		feed.setLastFetched(new Date());
-		feed.setLastFetchSucceeded(true);
+		Date now = new Date();
+		feed.setLastFetched(now);
+		feed.setLastFetchedSuccessfully(now);
 	}
 	
 	private boolean updateFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) throws FeedLinkUnknownException {
+		if (feed.getLastFetchedSuccessfully().getTime() < 0) {
+			initializeFeedFromSyndFeed(feed, syndFeed);
+			return false;
+		}
+		
 		feed.setTitle(syndFeed.getTitle());
 		setLinkFromSyndFeed(feed, syndFeed);
 		Map<String, FeedEntry> lastEntries = new HashMap<String, FeedEntry>();
@@ -477,8 +484,9 @@ public class FeedSystemBean implements FeedSystem {
 				entry.setCurrent(false);
 		}
 
-		feed.setLastFetched(new Date());
-		feed.setLastFetchSucceeded(true);
+		Date now = new Date();
+		feed.setLastFetched(now);
+		feed.setLastFetchedSuccessfully(now);
 
 		// The feed entries aren't visible to the notification service 
 		// thread until after we commit this transaction, so don't submit them
@@ -538,6 +546,28 @@ public class FeedSystemBean implements FeedSystem {
 		return feed;
 	}
 	
+	public Pair<Feed, Boolean> createFeedFromUrl(URL url) throws XmlMethodException {
+		FeedScraper scraper = new FeedScraper();
+		URL feedSource = null;
+		boolean feedFound = true;
+		try {
+			scraper.analyzeURL(url);
+			feedSource = scraper.getFeedSource();
+		} catch (IOException e) {
+		    // nothing to do
+		}
+	
+		if (feedSource == null) {
+			// means no feed was found, but here we still go ahead and create a Feed 
+			feedSource = url;
+			feedFound = false;
+		}	
+		
+		LinkResource link = identitySpider.getLink(feedSource);
+		Feed feed = getOrCreateFeed(link);
+		return new Pair<Feed, Boolean>(feed, feedFound);
+	}
+	
 	public Feed getExistingFeed(final LinkResource source) throws XmlMethodException {
 		Feed feed = lookupExistingFeed(source);
 		if (feed != null)
@@ -546,7 +576,7 @@ public class FeedSystemBean implements FeedSystem {
 			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "No such feed: " + source.getUrl());
 	}
 	
-	public Feed getOrCreateFeed(final LinkResource source) throws XmlMethodException {
+	private Feed getOrCreateFeed(final LinkResource source) throws XmlMethodException {
 		Feed feed = lookupExistingFeed(source);
 		if (feed != null) {
 			/* We want to ensure that we create a task for feeds which existed before
@@ -557,8 +587,14 @@ public class FeedSystemBean implements FeedSystem {
 			return feed;
 		}
 		
-		FeedFetchResult fetchResult = getRawFeedChecked(source);
-		final SyndFeed syndFeed = fetchResult.getFeed();
+		SyndFeed syndFeedTemp = null; 
+		try {
+		    FeedFetchResult fetchResult = getRawFeed(source);
+		    syndFeedTemp = fetchResult.getFeed();   
+		} catch (FetchFailedException e) {
+			// nothing to do, sometimes we'll be creating Feed objects for Feeds that are not available
+		}
+		final SyndFeed syndFeed = syndFeedTemp;
 		
 		try {
 			return runner.runTaskThrowingConstraintViolation(new Callable<Feed>() {
@@ -570,12 +606,14 @@ public class FeedSystemBean implements FeedSystem {
 					
 					newFeed = new Feed(source);
 					em.persist(newFeed);
-										
-					try {
-						initializeFeedFromSyndFeed(newFeed, syndFeed);
-					} catch (FeedLinkUnknownException e) {
-						throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR,
-								"The feed is missing a <link> field, " + e.getMessage());
+						
+					if (syndFeed != null) {
+					    try {
+						    initializeFeedFromSyndFeed(newFeed, syndFeed);
+					    } catch (FeedLinkUnknownException e) {
+						    throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR,
+							   	    "The feed is missing a <link> field, " + e.getMessage());
+					    }
 					}
 					
 					pollingPersistence.createTask(PollingTaskFamilyType.FEED, newFeed.getSource().getId());
@@ -698,8 +736,7 @@ public class FeedSystemBean implements FeedSystem {
 			feed = em.find(Feed.class, feed.getId());
 		}
 		
-		feed.setLastFetched(new Date());
-		feed.setLastFetchSucceeded(false);		
+		feed.setLastFetched(new Date());	
 	}
 	
 	public void updateFeed(Feed feed) {
@@ -903,6 +940,7 @@ public class FeedSystemBean implements FeedSystem {
 			try {
 				result = FeedSystemBean.getRawFeed(source);
 			} catch (FeedFetcher.FetchFailedException e) {
+				feedSystem.markFeedFailedLastUpdate(feed);
 				throw new DynamicPollingSystem.PollingTaskNormalExecutionException("Feed " + feed.getSource() + " fetch failed: " + e.getMessage(), e);
 			}
 			final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
@@ -911,6 +949,7 @@ public class FeedSystemBean implements FeedSystem {
 					try {
 						return feedSystem.storeRawUpdatedFeed(feed.getId(), result.getFeed());
 					} catch (FeedLinkUnknownException e) {
+						feedSystem.markFeedFailedLastUpdate(feed);
 						throw new DynamicPollingSystem.PollingTaskNormalExecutionException("Feed " + feed.getSource() + " link unknown: " + e.getMessage(), e);						
 					}
 				}

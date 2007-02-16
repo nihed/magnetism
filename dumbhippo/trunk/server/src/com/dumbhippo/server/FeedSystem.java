@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
@@ -17,11 +18,29 @@ import com.sun.syndication.feed.synd.SyndFeed;
 @Local
 public interface FeedSystem extends PollingTaskLoader {
 	
+	/**
+	 * Scrapes a feed from the url and creates or returns an existing Feed object, throwing 
+	 * an exception is there is no feed at the specified url or the url is not valid.
+	 * 
+	 * @param url
+	 * @return feed
+	 * @throws XmlMethodException
+	 */
 	public Feed scrapeFeedFromUrl(URL url) throws XmlMethodException;
 	
-	public Feed getExistingFeed(final LinkResource source) throws XmlMethodException;
+	/**
+	 * Creates or returns an existing Feed object regardless of whether a feed was found
+	 * at the specified url or the url is valid. This is useful in cases when a certain
+	 * feed might not be available due to privacy settings, but can become available later
+	 * if those privacy settings change.
+	 * 
+	 * @param url
+	 * @return feed and a flag indicating whether the feed was actually found at the url
+	 * @throws XmlMethodException
+	 */
+	public Pair<Feed, Boolean> createFeedFromUrl(URL url) throws XmlMethodException;
 	
-	public Feed getOrCreateFeed(LinkResource link) throws XmlMethodException;
+	public Feed getExistingFeed(final LinkResource source) throws XmlMethodException;
 	
 	/**
 	 * Does both halves of updating a feed in a single transaction, which can be 
