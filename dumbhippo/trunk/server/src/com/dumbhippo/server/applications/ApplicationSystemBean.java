@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +31,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AppinfoUpload;
 import com.dumbhippo.persistence.Application;
@@ -39,10 +41,13 @@ import com.dumbhippo.persistence.ApplicationUsage;
 import com.dumbhippo.persistence.ApplicationWmClass;
 import com.dumbhippo.persistence.UnmatchedApplicationUsage;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
+import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.views.UserViewpoint;
 
 @Stateless
@@ -56,6 +61,9 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	
 	@EJB
 	private Configuration config;
+	
+	@EJB
+	private TransactionRunner runner;
 		
 	public void addUpload(Guid uploaderId, Guid uploadId, AppinfoFile appinfoFile) {
 		User uploader = em.find(User.class, uploaderId.toString());
@@ -78,6 +86,69 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		upload.setApplication(application);
 		
 		em.persist(upload);
+	}
+	
+	public void reinstallAllApplications() {
+		// We don't actually need to run on commit, just async, but on-commit
+		// is an easy way to get async
+		runner.runTaskOnTransactionCommit(new Runnable() {
+			public void run() {
+				final List<AppinfoUpload> uploads = new ArrayList<AppinfoUpload>();
+				final Set<String> seenApplications = new HashSet<String>();
+				
+				final File appinfoDir;
+				
+				try {
+					appinfoDir = new File(config.getPropertyNoDefault(HippoProperty.APPINFO_DIR));
+				} catch (PropertyNotFoundException e) {
+					throw new RuntimeException("appinfoDir property was not set in super configuration");
+				}
+
+				logger.info("Getting list of applications to install");
+				
+				runner.runTaskInNewTransaction(new Runnable() {
+					public void run() {
+						Query q = em.createQuery("SELECT au from AppinfoUpload au ORDER BY uploadDate DESC");
+						uploads.addAll(TypeUtils.castList(AppinfoUpload.class, q.getResultList()));
+					}
+				});
+				
+				for (final AppinfoUpload au : uploads) {
+					if (seenApplications.contains(au.getApplication().getId()))
+						continue;
+					
+					runner.runTaskInNewTransaction(new Runnable() {
+						public void run() {
+							// Reattach application
+							Application application = em.find(Application.class, au.getApplication().getId());
+							if (application == null) {
+								logger.warn("Application {} disappeared from database", application.getId());
+								return;
+							}
+
+							logger.info("Reinstalling {}.appinfo for {}", au.getId(), application.getId());
+							
+							File location = new File(appinfoDir, au.getId() + ".dappinfo");
+							try {
+								AppinfoFile appinfoFile = new AppinfoFile(location);
+								
+								updateApplication(application, appinfoFile);
+								updateApplicationCollections(application, appinfoFile);
+				
+								seenApplications.add(application.getId());
+								
+							} catch (IOException e) {
+								logger.warn("Couldn't read saved {}.dappinfo file: {}", e.getMessage());
+							} catch (ValidationException e) {
+								logger.warn("Couldn't validate saved {}.dappinfo file: {}", e.getMessage());
+							}
+						}
+					});
+				}
+				
+				logger.info("Finished reinstalling all applications");
+			}
+		});
 	}
 	
 	private void updateApplication(Application application, AppinfoFile appinfoFile) {
@@ -126,7 +197,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		
 		return builder.toString();
 	}
-
+	
 	private void updateWmClasses(Application application, AppinfoFile appinfoFile) {
 		em.createQuery("DELETE FROM ApplicationWmClass awc WHERE awc.application= :application")
 			.setParameter("application", application)
@@ -139,10 +210,20 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	}
 	
 	private void updateIcons(Application application, AppinfoFile appinfoFile) {
-		em.createQuery("DELETE FROM ApplicationIcon ai WHERE ai.application= :application")
-			.setParameter("application", application)
-			.executeUpdate();
-	
+//      Mixing bulk updates and the TreeCache doesn't seem to work properly (you get
+//      warnings because TreeCache work is done after the transaction is committed).
+//      So we need to do this manually rather than with a bulk update
+//
+//		em.createQuery("DELETE FROM ApplicationIcon ai WHERE ai.application= :application")
+//		.setParameter("application", application)
+//		.executeUpdate();
+//	
+		List<ApplicationIcon> icons = new ArrayList<ApplicationIcon>(application.getIcons());
+		for (ApplicationIcon icon : icons) {
+			application.getIcons().remove(icon);
+			em.remove(icon);
+		}
+		
 		persistIcons(application, appinfoFile, getInterestingIcons(appinfoFile));
 	}
 	
