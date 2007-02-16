@@ -6,6 +6,7 @@
 #include "hippo-canvas-url-link.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-text.h>
+#include <hippo/hippo-canvas-timestamp.h>
 #include <hippo/hippo-canvas-widgets.h>
 
 static void      hippo_canvas_block_account_question_init                (HippoCanvasBlockAccountQuestion       *block);
@@ -25,6 +26,8 @@ static void hippo_canvas_block_account_question_get_property (GObject      *obje
 
 /* Canvas block methods */
 static void hippo_canvas_block_account_question_append_content_items (HippoCanvasBlock *canvas_block,
+                                                                      HippoCanvasBox   *parent_box);
+static void hippo_canvas_block_account_question_append_right_items   (HippoCanvasBlock *canvas_block,
                                                                       HippoCanvasBox   *parent_box);
 static void hippo_canvas_block_account_question_set_block       (HippoCanvasBlock *canvas_block,
                                                                  HippoBlock       *block);
@@ -52,6 +55,9 @@ struct _HippoCanvasBlockAccountQuestion {
 
     HippoCanvasItem *description_item;
     HippoCanvasItem *read_more_item;
+    HippoCanvasBox *timestamp_parent;
+    HippoCanvasItem *timestamp_item;
+    
     HippoCanvasBox *buttons_box;
 };
 
@@ -97,6 +103,7 @@ hippo_canvas_block_account_question_class_init(HippoCanvasBlockAccountQuestionCl
     object_class->finalize = hippo_canvas_block_account_question_finalize;
 
     canvas_block_class->append_content_items = hippo_canvas_block_account_question_append_content_items;
+    canvas_block_class->append_right_items = hippo_canvas_block_account_question_append_right_items;
     canvas_block_class->set_block = hippo_canvas_block_account_question_set_block;
     canvas_block_class->expand = hippo_canvas_block_account_question_expand;
     canvas_block_class->unexpand = hippo_canvas_block_account_question_unexpand;
@@ -190,6 +197,21 @@ hippo_canvas_block_account_question_append_content_items (HippoCanvasBlock *bloc
     hippo_canvas_box_append(parent_box, HIPPO_CANVAS_ITEM(block_account_question->buttons_box), 0);
 
     hippo_canvas_block_account_question_update_visibility(block_account_question);
+}
+
+static void
+hippo_canvas_block_account_question_append_right_items (HippoCanvasBlock *block,
+                                                        HippoCanvasBox   *parent_box)
+{
+    HippoCanvasBlockAccountQuestion *block_account_question = HIPPO_CANVAS_BLOCK_ACCOUNT_QUESTION(block);
+
+    block_account_question->timestamp_parent = parent_box;
+    block_account_question->timestamp_item = g_object_new(HIPPO_TYPE_CANVAS_TIMESTAMP,
+                                                          "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
+                                                          "actions", block->actions,
+                                                          NULL);
+    hippo_canvas_box_append(parent_box, block_account_question->timestamp_item, HIPPO_PACK_FLOAT_RIGHT);
+    hippo_canvas_box_set_child_visible(parent_box, block_account_question->timestamp_item, FALSE);
 }
 
 static void
@@ -307,6 +329,39 @@ on_more_link_changed(HippoBlock                      *block,
 }
 
 static void
+on_answer_changed(HippoBlock                      *block,
+                  GParamSpec                      *arg, /* null when first calling this */
+                  HippoCanvasBlockAccountQuestion *block_account_question)
+{
+    char *answer = NULL;
+    
+    g_object_get(block,
+                 "answer", &answer,
+                 NULL);
+
+    /* We only show a timestamp if the user has answered the question */
+    hippo_canvas_box_set_child_visible(block_account_question->timestamp_parent, block_account_question->timestamp_item, answer != NULL);
+
+    g_free(answer);
+}
+
+static void
+on_timestamp_changed(HippoBlock                      *block,
+                     GParamSpec                      *arg, /* null when first calling this */
+                     HippoCanvasBlockAccountQuestion *block_account_question)
+{
+    gint64 timestamp = 0;
+    
+    g_object_get(block,
+                 "timestamp", &timestamp,
+                 NULL);
+
+    g_object_set(block_account_question->timestamp_item,
+                 "time", (int)(timestamp / 1000),
+                 NULL);
+}
+
+static void
 hippo_canvas_block_account_question_set_block(HippoCanvasBlock *canvas_block,
                                               HippoBlock       *block)
 {
@@ -330,6 +385,12 @@ hippo_canvas_block_account_question_set_block(HippoCanvasBlock *canvas_block,
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_more_link_changed),
                                              canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_answer_changed),
+                                             canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_timestamp_changed),
+                                             canvas_block);
     }
 
 
@@ -345,11 +406,17 @@ hippo_canvas_block_account_question_set_block(HippoCanvasBlock *canvas_block,
                          G_CALLBACK(on_buttons_changed), block_account_question);
         g_signal_connect(canvas_block->block, "notify::more_link",
                          G_CALLBACK(on_more_link_changed), block_account_question);
+        g_signal_connect(canvas_block->block, "notify::answer",
+                         G_CALLBACK(on_answer_changed), block_account_question);
+        g_signal_connect(canvas_block->block, "notify::timestamp",
+                         G_CALLBACK(on_timestamp_changed), block_account_question);
 
         on_title_changed(block, NULL, block_account_question);
         on_description_changed(block, NULL, block_account_question);
         on_buttons_changed(block, NULL, block_account_question);
         on_more_link_changed(block, NULL, block_account_question);
+        on_answer_changed(block, NULL, block_account_question);
+        on_timestamp_changed(block, NULL, block_account_question);
     }
 }
 
