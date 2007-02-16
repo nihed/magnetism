@@ -79,6 +79,13 @@
   (gtype-id "HIPPO_TYPE_CANVAS_WIDGET")
 )
 
+(define-object CanvasWindow
+  (in-module "Hippo")
+  (parent "GtkWindow")
+  (c-name "HippoCanvasWindow")
+  (gtype-id "HIPPO_TYPE_CANVAS_WINDOW")
+)
+
 ;; Enumerations and flags ...
 
 (define-enum PackFlags
