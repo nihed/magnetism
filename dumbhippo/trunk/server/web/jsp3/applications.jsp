@@ -9,7 +9,7 @@
 <jsp:setProperty name="applications" property="categoryName" param="category"/>
 
 <head>
-	<title>Applications</title>
+	<title>Application Statistics</title>
 	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="applications"/>	
 	<dh:script module="dh.server"/>
