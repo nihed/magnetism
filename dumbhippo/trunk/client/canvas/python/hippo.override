@@ -252,3 +252,49 @@ _wrap_hippo_cairo_surface_from_gdk_pixbuf(PyGObject *self, PyObject *args, PyObj
     return PycairoSurface_FromSurface(surface, NULL);
 }
 %%
+override hippo_canvas_set_load_image_hook kwargs
+static PyObject *_canvas_load_image_hook_cb = NULL;
+
+static cairo_surface_t*
+_canvas_load_image_hook(HippoCanvasContext *context,
+                       const char         *image_name)
+{
+    PyObject *arglist;
+    PyObject *result;
+    PycairoSurface *surface_result;
+    cairo_surface_t *surface;
+    
+    printf("calling load image hook\n");
+    
+    arglist = Py_BuildValue("(s)", image_name);
+    result = PyEval_CallObject(_canvas_load_image_hook_cb, arglist);
+    Py_DECREF(arglist);
+    if (result == NULL)
+        return NULL;
+    surface_result = (PycairoSurface*)result;
+    surface = surface_result->surface;
+    cairo_surface_reference(surface);
+    Py_XDECREF(result);
+    return surface;
+}
+
+static PyObject *
+_wrap_hippo_canvas_set_load_image_hook(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    PyObject *result = NULL;
+    PyObject *temp;
+
+    if (PyArg_ParseTuple(args, "O:canvas_set_load_image_hook", &temp)) {
+        if (!PyCallable_Check(temp)) {
+            PyErr_SetString(PyExc_TypeError, "parameter must be callable");
+            return NULL;
+        }
+        Py_XINCREF(temp);
+        Py_XDECREF(_canvas_load_image_hook_cb);
+		_canvas_load_image_hook_cb = temp;
+		hippo_canvas_set_load_image_hook(_canvas_load_image_hook);
+        Py_INCREF(Py_None);
+        result = Py_None;
+    }
+  	return result;
+}
