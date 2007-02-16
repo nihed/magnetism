@@ -537,8 +537,15 @@ static void
 state_changed_cb(HippoConnection *connection,
                  Dialogs         *dialogs)
 {
+    /* FIXME: I think this replaced login handling, and it needs to 
+     * be restored to that, but showing a dialog when the status
+     * changes (say, because the server restarts or your network
+     * connection drops) is GRADE A EVIL.
+     */
+#if 0
     /* update dialog text and/or which dialog is showing */
     dialogs_show_disconnected_window(dialogs);
+#endif
 }
 
 static Dialogs*
