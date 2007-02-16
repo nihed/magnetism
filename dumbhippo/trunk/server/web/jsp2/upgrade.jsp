@@ -23,11 +23,10 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.33</p>
+			<p>Version 1.1.34</p>
 			<ul>
-				<li>Make sure that the quip window is initially focused.</li>
-				<li>Fix crash when closing quip window.</li>
-				<li>Fix problem reading login cookies from Epiphany.</li>
+				<li>Ability to filter which blocks are displayed.</li>
+				<li>Optional application usage statistics tracking.</li>
 			</ul>
 		</c:when>
 		<c:otherwise>
