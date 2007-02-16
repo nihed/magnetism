@@ -264,8 +264,6 @@ _canvas_load_image_hook(HippoCanvasContext *context,
     PycairoSurface *surface_result;
     cairo_surface_t *surface;
     
-    printf("calling load image hook\n");
-    
     arglist = Py_BuildValue("(s)", image_name);
     result = PyEval_CallObject(_canvas_load_image_hook_cb, arglist);
     Py_DECREF(arglist);
