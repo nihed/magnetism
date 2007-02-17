@@ -71,6 +71,7 @@ public class HippoPlugin implements Plugin {
 			addIQHandler(new BlocksIQHandler());
 			addIQHandler(new AccountQuestionIQHandler());
 			addIQHandler(new SettingsIQHandler());
+			addIQHandler(new WhereImIQHandler());
 			
 			Log.debug("... done initializing Hippo plugin");
 		} catch (Exception e) {
