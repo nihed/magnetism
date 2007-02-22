@@ -10,6 +10,7 @@
 #include "hippo-dbus-client.h"
 #include "hippo-dbus-web.h"
 #include "hippo-dbus-cookies.h"
+#include "hippo-dbus-mugshot.h"
 #include "hippo-dbus-settings.h"
 #include <hippo/hippo-endpoint-proxy.h>
 #include "main.h"
@@ -194,6 +195,9 @@ hippo_dbus_try_to_acquire(const char  *server,
         /* FIXME leak bus connection since unref isn't allowed */
         return NULL;
     }
+    
+    /* Grab ownership of the Mugshot interface */
+    hippo_dbus_try_acquire_mugshot(connection, FALSE);
 
     /* Acquire online prefs manager; we continue even if this
      * fails. If another Mugshot had it, we should have replaced that
@@ -1381,6 +1385,8 @@ handle_message(DBusConnection     *connection,
     HippoDBus *dbus;
     int type;
     DBusHandlerResult result;
+    HippoDataCache *cache;
+    HippoConnection *xmpp_connection;
     
     dbus = HIPPO_DBUS(user_data);
     
@@ -1388,6 +1394,9 @@ handle_message(DBusConnection     *connection,
 
     result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     dbus->in_dispatch = TRUE;
+
+    cache = hippo_app_get_data_cache(hippo_get_app());
+    xmpp_connection = hippo_data_cache_get_connection(cache);
         
     if (type == DBUS_MESSAGE_TYPE_METHOD_CALL) {
         const char *sender = dbus_message_get_sender(message);
@@ -1477,6 +1486,26 @@ handle_message(DBusConnection     *connection,
                 dbus_connection_send(dbus->connection, reply, NULL);
                 dbus_message_unref(reply);
             }
+         } else if (path && member &&
+                    strcmp(path, HIPPO_DBUS_MUGSHOT_PATH) == 0) {
+            DBusMessage *reply;
+            
+            reply = NULL;
+            result = DBUS_HANDLER_RESULT_HANDLED;
+
+            if (strcmp(member, "GetWhereim") == 0) {
+                reply = hippo_dbus_handle_mugshot_get_whereim(dbus, xmpp_connection, message);
+            } else if (strcmp(member, "Introspect") == 0) {
+                reply = hippo_dbus_handle_mugshot_introspect(dbus, message);                
+            } else {
+                /* Set this back so the default handler can return an error */
+                result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+            }
+
+            if (reply != NULL) {
+                dbus_connection_send(dbus->connection, reply, NULL);
+                dbus_message_unref(reply);
+            }        
         }
     } else if (type == DBUS_MESSAGE_TYPE_SIGNAL) {
         const char *sender = dbus_message_get_sender(message);
@@ -1598,4 +1627,13 @@ hippo_dbus_foreach_chat_window(HippoDBus             *dbus,
     }
 }
 
-                                                
+void       
+hippo_dbus_notify_whereim_changed(HippoDBus               *dbus,
+                                  HippoConnection         *xmpp_connection,
+                                  HippoExternalAccount    *acct)
+{
+	DBusMessage *signal;
+	signal = hippo_dbus_mugshot_signal_whereim_changed(dbus, xmpp_connection, acct);
+	dbus_connection_send(dbus->connection, signal, NULL);
+	dbus_message_unref(signal);
+}

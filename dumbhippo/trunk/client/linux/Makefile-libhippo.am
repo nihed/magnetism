@@ -253,6 +253,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-data-cache-internal.h	\
 	$(COMMONSRCDIR)/hippo/hippo-entity.c			\
 	$(COMMONSRCDIR)/hippo/hippo-entity.h			\
+	$(COMMONSRCDIR)/hippo/hippo-external-account.c		\
+	$(COMMONSRCDIR)/hippo/hippo-external-account.h		\
 	$(COMMONSRCDIR)/hippo/hippo-entity-protected.h		\
 	$(COMMONSRCDIR)/hippo/hippo-endpoint-proxy.c		\
 	$(COMMONSRCDIR)/hippo/hippo-endpoint-proxy.h		\
