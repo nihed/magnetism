@@ -62,12 +62,14 @@ static void         hippo_platform_impl_set_signin          (HippoPlatform     *
 
 typedef struct Dialogs Dialogs;
 
-static Dialogs* dialogs_get                      (HippoConnection *connection);
-static void     dialogs_destroy                  (Dialogs         *dialogs);
-static void     dialogs_show_disconnected_window (Dialogs         *dialogs);
-static void     dialogs_show_login               (Dialogs         *dialogs);
-static void     dialogs_show_status              (Dialogs         *dialogs);
-
+static Dialogs* dialogs_get                        (HippoConnection *connection);
+static void     dialogs_destroy                    (Dialogs         *dialogs);
+static void     dialogs_update_disconnected_window (Dialogs         *dialogs,
+                                                    gboolean         show_if_not_showing);
+static void     dialogs_update_login               (Dialogs         *dialogs,
+                                                    gboolean         show_if_not_showing);
+static void     dialogs_update_status              (Dialogs         *dialogs,
+                                                    gboolean         show_if_not_showing);
 
 
 struct _HippoPlatformImpl {
@@ -418,7 +420,7 @@ hippo_platform_impl_show_disconnected_window(HippoPlatform   *platform,
 
     dialogs = dialogs_get(connection);
     
-    dialogs_show_disconnected_window(dialogs);
+    dialogs_update_disconnected_window(dialogs, TRUE);
 }
 
 static HippoInstanceType
@@ -537,15 +539,8 @@ static void
 state_changed_cb(HippoConnection *connection,
                  Dialogs         *dialogs)
 {
-    /* FIXME: I think this replaced login handling, and it needs to 
-     * be restored to that, but showing a dialog when the status
-     * changes (say, because the server restarts or your network
-     * connection drops) is GRADE A EVIL.
-     */
-#if 0
     /* update dialog text and/or which dialog is showing */
-    dialogs_show_disconnected_window(dialogs);
-#endif
+    dialogs_update_disconnected_window(dialogs, FALSE);
 }
 
 static Dialogs*
@@ -569,14 +564,15 @@ dialogs_get(HippoConnection *connection)
 }
 
 static void
-dialogs_show_disconnected_window (Dialogs *dialogs)
+dialogs_update_disconnected_window (Dialogs *dialogs,
+                                    gboolean show_if_not_showing)
 {
     HippoConnection *connection = dialogs->connection;
     
     if (hippo_connection_get_need_login(connection)) {
-        dialogs_show_login(dialogs);
+        dialogs_update_login(dialogs, show_if_not_showing);
     } else if (!hippo_connection_get_connected(connection)) {
-        dialogs_show_status(dialogs);
+        dialogs_update_status(dialogs, show_if_not_showing);
     } else {
         dialogs_destroy(dialogs);
     }
@@ -612,9 +608,10 @@ login_response_cb(GtkDialog *dialog,
 
 
 static void
-dialogs_show_login(Dialogs *dialogs)
-{
-    if (dialogs->login_dialog == NULL) {
+dialogs_update_login(Dialogs *dialogs,
+                     gboolean show_if_not_showing)
+{    
+    if (dialogs->login_dialog == NULL && show_if_not_showing) {
         dialogs_destroy(dialogs); /* Kill any other dialogs */
         
         dialogs->login_dialog = gtk_message_dialog_new(NULL, 0,
@@ -636,8 +633,9 @@ dialogs_show_login(Dialogs *dialogs)
         g_signal_connect(G_OBJECT(dialogs->login_dialog), "destroy",
                          G_CALLBACK(gtk_widget_destroyed), &dialogs->login_dialog);
     }
-    
-    gtk_window_present(GTK_WINDOW(dialogs->login_dialog));
+
+    if (dialogs->login_dialog)
+        gtk_window_present(GTK_WINDOW(dialogs->login_dialog));
 }
 
 
@@ -697,9 +695,10 @@ status_response_cb(GtkDialog *dialog,
 }
 
 static void
-dialogs_show_status(Dialogs *dialogs)
+dialogs_update_status(Dialogs *dialogs,
+                      gboolean show_if_not_showing)
 {
-    if (dialogs->connection_status_dialog == NULL) {
+    if (dialogs->connection_status_dialog == NULL && show_if_not_showing) {
         dialogs_destroy(dialogs); /* Kill any other dialogs */
         
         dialogs->connection_status_dialog = gtk_message_dialog_new(NULL, 0,
@@ -717,6 +716,7 @@ dialogs_show_status(Dialogs *dialogs)
     } else {
         set_state_text(dialogs);
     }
-    
-    gtk_window_present(GTK_WINDOW(dialogs->connection_status_dialog));
+
+    if (dialogs->connection_status_dialog)
+        gtk_window_present(GTK_WINDOW(dialogs->connection_status_dialog));
 }
