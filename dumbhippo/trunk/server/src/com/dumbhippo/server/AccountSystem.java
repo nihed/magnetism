@@ -12,6 +12,7 @@ import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
+import com.dumbhippo.server.views.UserViewpoint;
 
 @Local
 public interface AccountSystem {
@@ -128,5 +129,16 @@ public interface AccountSystem {
 	 * @param account user's account
 	 * @return preferences mapping
 	 */
-	public Map<String, String> getPrefs(Account account);	
+	public Map<String, String> getPrefs(Account account);
+	
+	/**
+	 * Updates information about client platforms that a user has logged in from. (More specifically, 
+	 * queried us for the latest client information about.) We record that the user last logged
+	 * in from the combination of platform and distribution at the current time.
+	 * 
+	 * @param viewpoint viewpoint of user 
+	 * @param platform platform string
+	 * @param distribution distribution string
+	 */
+	public void updateClientInfo(UserViewpoint viewpoint, String platform, String distribution);
 }
