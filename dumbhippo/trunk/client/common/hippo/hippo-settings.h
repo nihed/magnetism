@@ -31,7 +31,7 @@ void           hippo_settings_get         (HippoSettings           *settings,
                                            const char              *key,
                                            HippoSettingArrivedFunc  func,
                                            void                    *data);
-
+gboolean       hippo_settings_get_ready   (HippoSettings           *settings);
 
 G_END_DECLS
 

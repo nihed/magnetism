@@ -19,23 +19,27 @@ G_BEGIN_DECLS
 #define HIPPO_DBUS_ONLINE_PREFS_BUS_NAME "org.freedesktop.OnlinePreferencesManager"
 #define HIPPO_DBUS_ONLINE_PREFS_PATH "/org/freedesktop/online_preferences"
 
+#define HIPPO_DBUS_PREFS_ERROR_NOT_READY "org.freedesktop.Preferences.Error.NotReady"
 #define HIPPO_DBUS_PREFS_ERROR_NOT_FOUND "org.freedesktop.Preferences.Error.NotFound"
 #define HIPPO_DBUS_PREFS_ERROR_WRONG_TYPE "org.freedesktop.Preferences.Error.WrongType" 
 
 /*
  * Lame summary of the org.freedesktop.Preferences interface
  * 
- * VARIANT GetPreference(STRING key, SIGNATURE expectedType) throws NotFound, WrongType
- * void SetPreference(STRING key, VARIANT v)
+ * VARIANT GetPreference(STRING key, SIGNATURE expectedType) throws NotFound, WrongType, NotReady
+ * void SetPreference(STRING key, VARIANT v) # just queues up if offline
+ * BOOLEAN IsReady()
+ * signal ReadyChanged(BOOLEAN status)
  *
  */
-
-
 
 DBusMessage* hippo_dbus_handle_get_preference(HippoDBus   *dbus,
                                               DBusMessage *message);
 
 DBusMessage* hippo_dbus_handle_set_preference(HippoDBus   *dbus,
+                                              DBusMessage *message);
+
+DBusMessage* hippo_dbus_handle_is_ready      (HippoDBus   *dbus,
                                               DBusMessage *message);
 
 DBusMessage* hippo_dbus_handle_introspect_prefs(HippoDBus   *dbus,
