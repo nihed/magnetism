@@ -53,6 +53,10 @@ static void             hippo_canvas_helper_translate_to_widget    (HippoCanvasC
                                                                     HippoCanvasItem    *item,
                                                                     int                *x_p,
                                                                     int                *y_p);
+static void             hippo_canvas_helper_translate_to_screen    (HippoCanvasContext *context,
+                                                                    HippoCanvasItem    *item,
+                                                                    int                *x_p,
+                                                                    int                *y_p);
 
 static void             hippo_canvas_helper_fixup_resize_state     (HippoCanvasHelper  *canvas);
 
@@ -135,6 +139,7 @@ hippo_canvas_helper_iface_init (HippoCanvasContextIface *klass)
     klass->register_widget_item = hippo_canvas_helper_register_widget_item;
     klass->unregister_widget_item = hippo_canvas_helper_unregister_widget_item;
     klass->translate_to_widget = hippo_canvas_helper_translate_to_widget;
+    klass->translate_to_screen = hippo_canvas_helper_translate_to_screen;
 }
 
 static void
@@ -896,6 +901,38 @@ hippo_canvas_helper_translate_to_widget(HippoCanvasContext *context,
         *x_p += GTK_CONTAINER(widget)->border_width;
     if (y_p)
         *y_p += GTK_CONTAINER(widget)->border_width;
+}
+
+static void
+hippo_canvas_helper_translate_to_screen(HippoCanvasContext *context,
+                                        HippoCanvasItem    *item,
+                                        int                *x_p,
+                                        int                *y_p)
+{
+    HippoCanvasHelper *helper = HIPPO_CANVAS_HELPER(context);
+    GtkWidget *widget = helper->widget;
+    GdkWindow *window = widget->window;
+    gint window_x, window_y;
+
+    g_assert(window != NULL);
+
+    /* convert coords of root canvas item to coords of
+     * widget->window
+     */
+
+    if (GTK_WIDGET_NO_WINDOW(widget)) {
+        if (x_p)
+            *x_p += widget->allocation.x;
+        if (y_p)
+            *y_p += widget->allocation.y;
+    }
+
+    gdk_window_get_origin(window, &window_x, &window_y);
+
+    if (x_p)
+        *x_p += window_x;
+    if (y_p)
+        *y_p += window_y;
 }
 
 static void

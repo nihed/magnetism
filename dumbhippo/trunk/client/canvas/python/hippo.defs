@@ -323,6 +323,9 @@
   (c-name "hippo_canvas_window_new")
   (is-constructor-of "HippoCanvasWindow")
   (return-type "GtkWidget*")
+  (properties
+    '("type" (optional))
+  )
 )
 
 (define-method set_root
@@ -636,6 +639,17 @@
 (define-method translate_to_widget
   (of-object "HippoCanvasContext")
   (c-name "hippo_canvas_context_translate_to_widget")
+  (return-type "none")
+  (parameters
+    '("HippoCanvasItem*" "item")
+    '("int*" "x_p")
+    '("int*" "y_p")
+  )
+)
+
+(define-method translate_to_screen
+  (of-object "HippoCanvasContext")
+  (c-name "hippo_canvas_context_translate_to_screen")
   (return-type "none")
   (parameters
     '("HippoCanvasItem*" "item")
