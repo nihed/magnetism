@@ -42,6 +42,10 @@ static void             hippo_canvas_box_translate_to_widget    (HippoCanvasCont
                                                                  HippoCanvasItem      *item,
                                                                  int                  *x_p,
                                                                  int                  *y_p);
+static void             hippo_canvas_box_translate_to_screen    (HippoCanvasContext   *context,
+                                                                 HippoCanvasItem      *item,
+                                                                 int                  *x_p,
+                                                                 int                  *y_p);
 static void             hippo_canvas_box_affect_color           (HippoCanvasContext   *context,
                                                                  guint32              *color_rgba_p);
 static void             hippo_canvas_box_affect_font_desc       (HippoCanvasContext   *context,
@@ -197,6 +201,7 @@ hippo_canvas_box_iface_init_context (HippoCanvasContextIface *klass)
     klass->register_widget_item = hippo_canvas_box_register_widget_item;
     klass->unregister_widget_item = hippo_canvas_box_unregister_widget_item;
     klass->translate_to_widget = hippo_canvas_box_translate_to_widget;
+    klass->translate_to_screen = hippo_canvas_box_translate_to_screen;
     klass->affect_color = hippo_canvas_box_affect_color;
     klass->affect_font_desc = hippo_canvas_box_affect_font_desc;
     klass->style_changed = hippo_canvas_box_style_changed;
@@ -865,6 +870,29 @@ hippo_canvas_box_translate_to_widget(HippoCanvasContext *context,
         *y_p += child->y;
     
     hippo_canvas_context_translate_to_widget(box->context,
+                                             HIPPO_CANVAS_ITEM(box), x_p, y_p);
+}
+    
+static void
+hippo_canvas_box_translate_to_screen(HippoCanvasContext *context,
+                                     HippoCanvasItem    *item,
+                                     int                *x_p,
+                                     int                *y_p)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
+    HippoBoxChild *child;
+    
+    g_assert(box->context != NULL);
+
+    child = find_child(box, item);
+    g_assert(child != NULL);
+
+    if (x_p)
+        *x_p += child->x;
+    if (y_p)
+        *y_p += child->y;
+    
+    hippo_canvas_context_translate_to_screen(box->context,
                                              HIPPO_CANVAS_ITEM(box), x_p, y_p);
 }
 

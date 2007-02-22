@@ -108,6 +108,18 @@ hippo_canvas_context_translate_to_widget(HippoCanvasContext *context,
     
     HIPPO_CANVAS_CONTEXT_GET_IFACE(context)->translate_to_widget(context, item, x_p, y_p);
 }
+    
+void
+hippo_canvas_context_translate_to_screen(HippoCanvasContext *context,
+                                         HippoCanvasItem    *item,
+                                         int                *x_p,
+                                         int                *y_p)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_CONTEXT(context));
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(item));
+    
+    HIPPO_CANVAS_CONTEXT_GET_IFACE(context)->translate_to_screen(context, item, x_p, y_p);
+}
 
 void
 hippo_canvas_context_affect_color(HippoCanvasContext     *context,

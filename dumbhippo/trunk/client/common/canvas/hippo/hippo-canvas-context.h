@@ -55,6 +55,10 @@ struct _HippoCanvasContextIface {
                                                  HippoCanvasItem    *item,
                                                  int                *x_p,
                                                  int                *y_p);
+    void             (* translate_to_screen)    (HippoCanvasContext *context,
+                                                 HippoCanvasItem    *item,
+                                                 int                *x_p,
+                                                 int                *y_p);
 
     /* Style methods (should probably be on a separate interface eventually) */
     void             (* affect_color)           (HippoCanvasContext   *context,
@@ -85,6 +89,10 @@ void hippo_canvas_context_register_widget_item   (HippoCanvasContext *context,
 void hippo_canvas_context_unregister_widget_item (HippoCanvasContext *context,
                                                   HippoCanvasItem    *item);
 void hippo_canvas_context_translate_to_widget    (HippoCanvasContext *context,
+                                                  HippoCanvasItem    *item,
+                                                  int                *x_p,
+                                                  int                *y_p);
+void hippo_canvas_context_translate_to_screen    (HippoCanvasContext *context,
                                                   HippoCanvasItem    *item,
                                                   int                *x_p,
                                                   int                *y_p);
