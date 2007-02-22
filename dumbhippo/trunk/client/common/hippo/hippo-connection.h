@@ -175,6 +175,8 @@ void hippo_connection_request_desktop_setting  (HippoConnection *connection,
 void hippo_connection_send_desktop_setting     (HippoConnection *connection,
                                                 const char      *key,
                                                 const char      *value);
+                                                
+void hippo_connection_request_mugshot_whereim  (HippoConnection *connection);                                                
 
 G_END_DECLS
 

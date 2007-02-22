@@ -3,6 +3,7 @@
 #include "hippo-connection.h"
 #include "hippo-data-cache-internal.h"
 #include "hippo-common-marshal.h"
+#include "hippo-external-account.h"
 #include "hippo-xml-utils.h"
 #include <loudmouth/loudmouth.h>
 #include <string.h>
@@ -223,6 +224,7 @@ enum {
     GROUP_MEMBERSHIP_CHANGED,
     BLOCK_FILTER_CHANGED,
     SETTING_CHANGED,
+    WHEREIM_CHANGED,
     LAST_SIGNAL
 };
 
@@ -349,6 +351,15 @@ hippo_connection_class_init(HippoConnectionClass *klass)
                       NULL, NULL,
                       hippo_common_marshal_VOID__STRING_STRING,
                       G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
+                      
+    signals[WHEREIM_CHANGED] =
+        g_signal_new ("whereim-changed",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__OBJECT,
+                      G_TYPE_NONE, 1, G_TYPE_OBJECT);                      
     
     object_class->finalize = hippo_connection_finalize;
 }
@@ -2861,6 +2872,68 @@ hippo_connection_send_desktop_setting (HippoConnection *connection,
     g_debug("Sent setting %s=%s", key, value);
 }
 
+
+static void
+hippo_connection_parse_whereim_node(HippoConnection *connection,
+                                    LmMessageNode   *node)
+{
+    LmMessageNode *child;
+    
+    for (child = node->children; child != NULL; child = child->next) {
+        HippoExternalAccount *acct;
+        
+        acct = hippo_external_account_new_from_xml(connection->cache, child);
+
+                if (acct) {
+                g_signal_emit(G_OBJECT(connection), signals[WHEREIM_CHANGED], 0, acct);
+        
+                g_object_unref(acct);
+                }
+    }
+}
+
+static LmHandlerResult
+on_whereim_reply(LmMessageHandler *handler,
+                 LmConnection     *lconnection,
+                 LmMessage        *message,
+                 gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *node = message->node->children;
+    
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/whereim", "whereim")) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    if (node == NULL || strcmp(node->name, "whereim") != 0)
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+
+    hippo_connection_parse_whereim_node(connection, node);
+    
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+void
+hippo_connection_request_mugshot_whereim(HippoConnection *connection)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "whereim", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/whereim");
+    
+    hippo_connection_send_message_with_reply(connection, message, on_whereim_reply, SEND_MODE_AFTER_AUTH);
+
+    lm_message_unref(message);
+
+    g_debug("Sent request for whereim");        
+}
+
 static gboolean
 parse_chat_user_info(HippoConnection *connection,
                      LmMessageNode   *parent,
@@ -3572,6 +3645,12 @@ handle_message (LmMessageHandler *handler,
             g_debug("newPost received");
             hippo_connection_parse_post_data(connection, child, TRUE, "newPost");
             return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+        }
+        child = find_child_node(message->node, "http://dumbhippo.com/protocol/whereim", "whereim");
+        if (child) {
+                g_debug("whereim received");
+                hippo_connection_parse_whereim_node(connection, child);
+                return LM_HANDLER_RESULT_REMOVE_MESSAGE;
         }
     }
     

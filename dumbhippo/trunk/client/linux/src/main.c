@@ -1157,6 +1157,15 @@ on_connected_changed(HippoConnection *connection,
     hippo_dbus_notify_xmpp_connected(app->dbus, connected);
 }
 
+static void
+on_whereim_changed(HippoConnection            *connection,
+                   HippoExternalAccount       *acct,
+                   void                       *data)
+{
+    HippoApp *app = data;
+    hippo_dbus_notify_whereim_changed(app->dbus, app->connection, acct);
+}
+
 /* Since we're doing this anyway, hippo_platform_get_screen_info becomes mostly
  * pointless... really should either remove screen info from HippoPlatform,
  * or put a "screen-info-changed" signal on HippoPlatform.
@@ -1220,6 +1229,10 @@ hippo_app_new(HippoInstanceType  instance_type,
                      G_CALLBACK(on_client_info_available), app);
     g_signal_connect(G_OBJECT(app->connection), "connected-changed",
                      G_CALLBACK(on_connected_changed), app);
+                     
+    /* Hook up D-BUS reflectors */
+    g_signal_connect(G_OBJECT(app->connection), "whereim-changed",
+                     G_CALLBACK(on_whereim_changed), app);                     
     
     app->photo_cache = hippo_pixbuf_cache_new(app->platform);
     

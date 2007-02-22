@@ -6,6 +6,7 @@
 
 #include <glib-object.h>
 #include <hippo/hippo-basics.h>
+#include <hippo/hippo-external-account.h>
 
 G_BEGIN_DECLS
 
@@ -27,6 +28,10 @@ HippoDBus* hippo_dbus_try_to_acquire           (const char  *server,
 
 void       hippo_dbus_notify_xmpp_connected    (HippoDBus   *dbus,
                                                 gboolean     connected);
+                                                
+void       hippo_dbus_notify_whereim_changed   (HippoDBus               *dbus,
+                                                HippoConnection         *xmpp_connection,
+                                                HippoExternalAccount    *acct);                                                
 
 typedef void (*HippoChatWindowForeach)(guint64 window_id, HippoChatState state, void *data);
 
@@ -40,7 +45,7 @@ void hippo_dbus_foreach_chat_window(HippoDBus             *dbus,
  */
 #ifdef DBUS_MAJOR_PROTOCOL_VERSION
 DBusConnection* hippo_dbus_get_connection(HippoDBus *dbus);
-
+                                                
 #endif /* "only if dbus.h already included" */
 
 
