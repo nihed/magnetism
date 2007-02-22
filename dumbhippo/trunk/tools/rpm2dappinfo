@@ -133,7 +133,10 @@ class DappinfoWriter:
         self.iconname = None
         
         basename = os.path.basename(self.desktopfile)
-        self.desktopname = re.match("^(.*).desktop$", basename).group(1)
+        self.app_id = re.match("^(.*).desktop$", basename).group(1)
+        for prefix in config.strip_prefixes:
+            if self.app_id.startswith(prefix):
+                self.app_id = self.app_id[len(prefix):]
 
     def _scan_desktopfile(self):
         f = open(os.path.join(self.sourcedir, self.desktopfile))
@@ -246,16 +249,16 @@ class DappinfoWriter:
         system("native2ascii -encoding UTF-8 '%s' '%s'; rm '%s'" % (tmpfile, outfile, tmpfile))
                     
     def _write_dappinfo(self):
-        dappinfofile = os.path.join(config.destdir, self.desktopname + ".dappinfo")
+        dappinfofile = os.path.join(config.destdir, self.app_id + ".dappinfo")
         system("(cd '%s' && jar c .) > '%s'" % (self.tmpdir, dappinfofile))
         
     def process(self):
-        verbose("  Generating " + self.desktopname + ".dappinfo")
+        verbose("  Generating " + self.app_id + ".dappinfo")
 
         self.tmpdir = tempfile.mkdtemp("", "rpm2dappinfo-dest-")
         self.properties = {}
         try:
-            self.properties["id"] = self.desktopname
+            self.properties["id"] = self.app_id
             
             self._compute_package_name()
             self._scan_desktopfile()
@@ -309,12 +312,19 @@ parser.add_option("-d", "--destdir",
                   help="Directory to write resulting application info files")
 parser.add_option("--merge", action="append",
                   help="Merge this RPM into each RPMs file system space (can be repeated)")
+parser.add_option("--strip-prefix", action="append",
+                  help="Strip this prefix from desktop file names (can be repeated)")
 (options, args) = parser.parse_args()
 
 if (options.destdir != None):
     config.destdir = options.destdir
 else:
     config.destdir = "."
+
+if options.strip_prefix:
+    config.strip_prefixes = options.strip_prefix
+else:
+    config.strip_prefixes = []
 
 ensure_dir(config.destdir)
 
