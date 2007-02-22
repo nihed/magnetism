@@ -15,16 +15,42 @@
 /* This is its own file since it could end up being a fair bit of code eventually
  */
 
+static void
+on_ready_changed(HippoSettings *settings,
+                 gboolean       ready,
+                 void          *data)
+{
+    DBusConnection *dbus_connection = data;
+    DBusMessage *message;
+    
+    message = dbus_message_new_signal(HIPPO_DBUS_ONLINE_PREFS_PATH,
+                                      HIPPO_DBUS_PREFS_INTERFACE,
+                                      HIPPO_DBUS_ONLINE_PREFS_BUS_NAME);
+    dbus_message_append_args(message, DBUS_TYPE_BOOLEAN, &ready, DBUS_TYPE_INVALID);
+    dbus_connection_send(dbus_connection, message, NULL);
+    dbus_message_unref(message);
+}
+
 static HippoSettings*
-get_and_ref_settings(void)
+get_and_ref_settings(DBusConnection *dbus_connection)
 {
     HippoDataCache *cache;
     HippoConnection *connection;
+    HippoSettings *settings;
     
     cache = hippo_app_get_data_cache(hippo_get_app());
     connection = hippo_data_cache_get_connection(cache);
 
-    return hippo_settings_get_and_ref(connection);
+    settings = hippo_settings_get_and_ref(connection);
+
+    if (!g_object_get_data(G_OBJECT(settings), "ready-connected")) {
+        g_object_set_data(G_OBJECT(settings), "ready-connected", GINT_TO_POINTER(TRUE));
+        dbus_connection_ref(dbus_connection);
+        g_signal_connect_data(G_OBJECT(settings), "ready-changed", G_CALLBACK(on_ready_changed),
+                              dbus_connection, (GClosureNotify) dbus_connection_unref, 0);
+    }
+    
+    return settings;
 }
 
 void
@@ -120,6 +146,7 @@ hippo_dbus_handle_get_preference(HippoDBus   *dbus,
     const char *signature;
     HippoSettings *settings;
     SettingArrivedData *sad;
+    DBusConnection *dbus_connection;
     
     key = NULL;
     signature = NULL;
@@ -141,16 +168,27 @@ hippo_dbus_handle_get_preference(HippoDBus   *dbus,
         return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
                                       _("Only STRING and INT32 values supported for now"));
     }
+
+    dbus_connection = hippo_dbus_get_connection(dbus);    
     
-    settings = get_and_ref_settings();
+    settings = get_and_ref_settings(dbus_connection);
+
+    if (!hippo_settings_get_ready(settings)) {
+        g_object_unref(G_OBJECT(settings));
+        return dbus_message_new_error(message, HIPPO_DBUS_PREFS_ERROR_NOT_READY,
+                                      _("Have not yet connected to server, can't get preferences"));
+    }
+
     sad = g_new0(SettingArrivedData, 1);
+    sad->connection = dbus_connection;
+    dbus_connection_ref(sad->connection);
+    
     sad->settings = settings;
+
     sad->method_call = message;
     dbus_message_ref(sad->method_call);
     sad->signature = signature; /* points inside sad->method_call */
 
-    sad->connection = hippo_dbus_get_connection(dbus);
-    dbus_connection_ref(sad->connection);
     
     /* this may call setting_arrived synchronously if we already have it */
     hippo_settings_get(settings, key, setting_arrived, sad);    
@@ -210,7 +248,7 @@ hippo_dbus_handle_set_preference(HippoDBus   *dbus,
         break;
     }
 
-    settings = get_and_ref_settings();
+    settings = get_and_ref_settings(hippo_dbus_get_connection(dbus));
     
     hippo_settings_set(settings, key, value);
 
@@ -222,6 +260,31 @@ hippo_dbus_handle_set_preference(HippoDBus   *dbus,
 
     return reply;
 }
+
+DBusMessage*
+hippo_dbus_handle_is_ready(HippoDBus   *dbus,
+                           DBusMessage *message)
+{
+    HippoSettings *settings;
+    dbus_bool_t v_BOOLEAN;
+    DBusMessage *reply;
+
+    if (!dbus_message_has_signature(message, "")) {
+        return dbus_message_new_error(message,
+                                      DBUS_ERROR_INVALID_ARGS,
+                                      _("Expected zero arguments"));
+    }
+
+    settings = get_and_ref_settings(hippo_dbus_get_connection(dbus));
+    v_BOOLEAN = hippo_settings_get_ready(settings);
+    g_object_unref(settings);
+
+    reply = dbus_message_new_method_return(message);
+    dbus_message_append_args(reply, DBUS_TYPE_BOOLEAN, &v_BOOLEAN, DBUS_TYPE_INVALID);
+
+    return reply;
+}
+
 
 DBusMessage*
 hippo_dbus_handle_introspect_prefs(HippoDBus   *dbus,
@@ -261,6 +324,16 @@ hippo_dbus_handle_introspect_prefs(HippoDBus   *dbus,
                     "      <arg direction=\"in\" type=\"s\"/>\n"
                     "      <arg direction=\"in\" type=\"v\"/>\n"
                     "    </method>\n");
+
+    g_string_append(xml,
+                    "    <method name=\"IsReady\">\n"
+                    "      <arg direction=\"out\" type=\"b\"/>\n"
+                    "    </method>\n");
+
+    g_string_append(xml,
+                    "    <signal name=\"ReadyChanged\">\n"
+                    "      <arg direction=\"out\" type=\"b\"/>\n"
+                    "    </signal>\n");
     
     g_string_append(xml, "  </interface>\n");        
   

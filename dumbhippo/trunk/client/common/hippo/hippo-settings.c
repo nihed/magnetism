@@ -37,6 +37,7 @@ struct _HippoSettings {
 
     GHashTable *entries;
     GHashTable *requests;
+    guint ready : 1;
 };
 
 struct _HippoSettingsClass {
@@ -46,13 +47,12 @@ struct _HippoSettingsClass {
 
 G_DEFINE_TYPE(HippoSettings, hippo_settings, G_TYPE_OBJECT);
 
-/*
 enum {
+    READY_CHANGED,
     LAST_SIGNAL
 };
 
 static int signals[LAST_SIGNAL];
-*/
 
 
 static void
@@ -69,7 +69,14 @@ hippo_settings_class_init(HippoSettingsClass  *klass)
     object_class->dispose = hippo_settings_dispose;
     object_class->finalize = hippo_settings_finalize;
 
-
+    signals[READY_CHANGED] =
+        g_signal_new ("ready-changed",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__BOOLEAN,
+                      G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 }
 
 static void
@@ -214,6 +221,15 @@ on_setting_changed(HippoConnection *connection,
 {
     HippoSettings *settings = HIPPO_SETTINGS(data);
 
+    /* We report ourselves as "ready" if we've ever successfully
+     * gotten a setting.  We remain "ready" even if the connection to
+     * the server is disconnected right now.
+     */
+    if (!settings->ready) {
+        settings->ready = TRUE;
+        g_signal_emit(settings, signals[READY_CHANGED], 0, TRUE);
+    }
+    
     update_cache(settings, key, value);
 }
 
@@ -329,3 +345,8 @@ hippo_settings_get(HippoSettings           *settings,
     }
 }
 
+gboolean
+hippo_settings_get_ready(HippoSettings *settings)
+{
+    return settings->ready;
+}
