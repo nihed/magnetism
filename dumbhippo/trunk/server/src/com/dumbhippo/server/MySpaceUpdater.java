@@ -2,6 +2,7 @@ package com.dumbhippo.server;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoader;
 
 /** 
@@ -13,4 +14,12 @@ import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoader;
 @Local
 public interface MySpaceUpdater extends PollingTaskLoader {
 
+	/**
+	 * Creates and adds a feed for the MySpace blog for an external account.
+	 * 
+	 * @param external 
+	 * @throws XmlMethodException if the feed for the MySpace blog could not be found,
+	 *                            for example, if the MySpace account is private 
+	 */
+	public void createFeedForMySpaceBlog(ExternalAccount external) throws XmlMethodException;
 }
