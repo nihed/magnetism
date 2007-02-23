@@ -52,7 +52,7 @@ public class ApplicationIconServlet extends AbstractServlet {
 	
 	// getPathInfo() seems to include the query string against the J2EE docs;
 	// this may be Tomcat being bug-compatible with the Sun J2EE implementation
-	static final Pattern PATH_INFO_REGEX = Pattern.compile("(?:([0-9]+)/)?([A-Za-z0-9-]+)(?:.png|.PNG)?");
+	static final Pattern PATH_INFO_REGEX = Pattern.compile("(?:([0-9]+)/)?([A-Za-z0-9-.]+)(?:.png|.PNG)?");
 	
 	@Override
 	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
