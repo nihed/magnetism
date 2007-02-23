@@ -343,7 +343,26 @@ hippo_settings_set(HippoSettings    *settings,
                    const char       *key,
                    const char       *value)
 {
+    CacheEntry *entry;
+    gboolean unchanged;
+    
     g_debug("setting: %s=%s", key, value ? value : "(null)");
+
+    /* this short-circuit is intended to help avoid infinite loops and excess
+     * server traffic when things go awry
+     */
+    entry = g_hash_table_lookup(settings->entries, key);
+    if (entry != NULL) {
+        unchanged = ((entry->value != NULL) == (value != NULL)) &&
+            (value == NULL || strcmp(value, entry->value) == 0);
+    } else {
+        unchanged = (value == NULL);
+    }
+    
+    if (unchanged) {
+        g_debug("no change to setting, not sending to server");
+        return;
+    }
     
     hippo_connection_send_desktop_setting(settings->connection, key, value);
 
