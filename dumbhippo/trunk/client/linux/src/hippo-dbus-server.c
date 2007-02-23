@@ -1477,6 +1477,8 @@ handle_message(DBusConnection     *connection,
                 reply = hippo_dbus_handle_set_preference(dbus, message);
             } else if (strcmp(member, "Introspect") == 0) {
                 reply = hippo_dbus_handle_introspect_prefs(dbus, message);
+            } else if (strcmp(member, "IsReady") == 0) {
+                reply = hippo_dbus_handle_is_ready(dbus, message);
             } else {
                 /* Set this back so the default handler can return an error */
                 result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;

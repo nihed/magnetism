@@ -226,6 +226,7 @@ enum {
     GROUP_MEMBERSHIP_CHANGED,
     BLOCK_FILTER_CHANGED,
     SETTING_CHANGED,
+    SETTINGS_LOADED,
     WHEREIM_CHANGED,
     LAST_SIGNAL
 };
@@ -353,7 +354,16 @@ hippo_connection_class_init(HippoConnectionClass *klass)
                       NULL, NULL,
                       hippo_common_marshal_VOID__STRING_STRING,
                       G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
-                      
+
+    signals[SETTINGS_LOADED] =
+        g_signal_new ("settings-loaded",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
+    
     signals[WHEREIM_CHANGED] =
         g_signal_new ("whereim-changed",
                       G_TYPE_FROM_CLASS (object_class),
@@ -2852,6 +2862,11 @@ on_desktop_settings_reply(LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 
     hippo_connection_parse_settings_node(connection, settings_node);
+
+    /* FIXME this should really only be emitted if we asked for all settings, not every time
+     * we ask for a single setting, but too annoying to do that for now
+     */
+    g_signal_emit(G_OBJECT(connection), signals[SETTINGS_LOADED], 0);
     
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -2885,7 +2900,7 @@ hippo_connection_request_desktop_setting(HippoConnection *connection,
 
     lm_message_unref(message);
 
-    g_debug("Sent request for desktop setting (key = %s)", key ? key : "(null)");
+    g_debug("Sent request for desktop setting (key is %s)", key ? key : "(null, getting all of them)");
 }
 
 static LmHandlerResult

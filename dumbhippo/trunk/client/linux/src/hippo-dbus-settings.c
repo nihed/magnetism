@@ -22,10 +22,12 @@ on_ready_changed(HippoSettings *settings,
 {
     DBusConnection *dbus_connection = data;
     DBusMessage *message;
+
+    g_debug("emitting ReadyChanged ready=%d", ready);
     
     message = dbus_message_new_signal(HIPPO_DBUS_ONLINE_PREFS_PATH,
                                       HIPPO_DBUS_PREFS_INTERFACE,
-                                      HIPPO_DBUS_ONLINE_PREFS_BUS_NAME);
+                                      "ReadyChanged");
     dbus_message_append_args(message, DBUS_TYPE_BOOLEAN, &ready, DBUS_TYPE_INVALID);
     dbus_connection_send(dbus_connection, message, NULL);
     dbus_message_unref(message);
@@ -44,6 +46,7 @@ get_and_ref_settings(DBusConnection *dbus_connection)
     settings = hippo_settings_get_and_ref(connection);
 
     if (!g_object_get_data(G_OBJECT(settings), "ready-connected")) {
+        g_debug("connecting to ready-changed on HippoSettings");
         g_object_set_data(G_OBJECT(settings), "ready-connected", GINT_TO_POINTER(TRUE));
         dbus_connection_ref(dbus_connection);
         g_signal_connect_data(G_OBJECT(settings), "ready-changed", G_CALLBACK(on_ready_changed),
@@ -124,6 +127,24 @@ setting_arrived(const char *key,
             dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_INT32, &v_INT32);
         }
         break;
+    case DBUS_TYPE_BOOLEAN:
+        {
+            dbus_bool_t v_BOOLEAN;
+
+            if (strcmp(value, "true") == 0)
+                v_BOOLEAN = TRUE;
+            else if (strcmp(value, "false") == 0)
+                v_BOOLEAN = FALSE;
+            else {
+                dbus_message_unref(reply);
+                reply = dbus_message_new_error_printf(sad->method_call, HIPPO_DBUS_PREFS_ERROR_WRONG_TYPE,  
+                                                      _("Value was '%s' not parseable as a BOOLEAN"), value);
+                goto out;
+            }
+            
+            dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_BOOLEAN, &v_BOOLEAN);
+        }
+        break;
     }
 
     dbus_message_iter_close_container(&iter, &variant_iter);
@@ -164,9 +185,11 @@ hippo_dbus_handle_get_preference(HippoDBus   *dbus,
                                       _("Type signature must be a single complete type, not a list of types"));
     }
 
-    if (!(*signature == DBUS_TYPE_INT32 || *signature == DBUS_TYPE_STRING)) {
+    if ( ! (*signature == DBUS_TYPE_INT32 ||
+            *signature == DBUS_TYPE_STRING ||
+            *signature == DBUS_TYPE_BOOLEAN) ) {
         return dbus_message_new_error(message, DBUS_ERROR_INVALID_ARGS,
-                                      _("Only STRING and INT32 values supported for now"));
+                                      _("Only STRING, INT32, BOOLEAN values supported for now"));
     }
 
     dbus_connection = hippo_dbus_get_connection(dbus);    
@@ -241,6 +264,13 @@ hippo_dbus_handle_set_preference(HippoDBus   *dbus,
             value = g_strdup_printf("%d", v_INT32);
         }
         break;
+    case DBUS_TYPE_BOOLEAN:
+        {
+            dbus_bool_t v_BOOLEAN;
+            dbus_message_iter_get_basic(&variant_iter, &v_BOOLEAN);
+            value = g_strdup_printf("%s", v_BOOLEAN ? "true" : "false");
+        }
+        break;
     default:
         return dbus_message_new_error_printf(message,
                                              DBUS_ERROR_INVALID_ARGS,
@@ -269,6 +299,8 @@ hippo_dbus_handle_is_ready(HippoDBus   *dbus,
     dbus_bool_t v_BOOLEAN;
     DBusMessage *reply;
 
+    g_debug("handling IsReady()");
+    
     if (!dbus_message_has_signature(message, "")) {
         return dbus_message_new_error(message,
                                       DBUS_ERROR_INVALID_ARGS,
