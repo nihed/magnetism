@@ -150,7 +150,13 @@ def initialize_gconf_from_server_state():
         else:
             sync_gconf_key_from_server(pattern)
 
+def on_pref_changed(key):
+    if key.startswith("/gconf/"):
+        key = key.replace("/gconf", "")
+    sync_gconf_key_from_server(key)
+
 def on_prefs_ready(is_ready=False):
+    online_prefs.connect_to_signal('PreferenceChanged', on_pref_changed)
     if copy_local_state:
         initialize_server_from_gconf_state()
     else:
