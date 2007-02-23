@@ -435,6 +435,21 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		
 		return getIcon(application, desiredSize);
 	}
+	
+	public ApplicationView getApplicationView(String appId, int iconSize) throws NotFoundException {
+		Application application = em.find(Application.class, appId);
+		if (application == null)
+			throw new NotFoundException("No such application");
+		
+		ApplicationView applicationView = new ApplicationView(application);
+		try {
+			applicationView.setIcon(getIcon(application, iconSize));
+		} catch (NotFoundException e) {
+			// FIXME: Default icon (maybe in getIcon())
+		}
+		
+		return applicationView;
+	}
 
 	public void recordApplicationUsage(UserViewpoint viewpoint, Collection<ApplicationUsageProperties> usages) {
 		// We currently record usage by looping over each reported application usage one-by-one,
@@ -503,12 +518,8 @@ public class ApplicationSystemBean implements ApplicationSystem {
 			em.persist(usage);
 		}
 	}
-	
-	public void pagePopularApplications(Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
-		Query q = em.createNamedQuery("applicationsPopularSince")
-			.setParameter("since", since);
-		List<?> results = q.getResultList();
 
+	private void pageApplicationList(List<?> results, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
 		List<ApplicationView> applicationViews = new ArrayList<ApplicationView>();
 		
 		int rank = 1;
@@ -543,6 +554,23 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		pageable.setTotalCount(pos);
 	}
 	
+	public void pagePopularApplications(Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
+		Query q = em.createNamedQuery("applicationsPopularSince")
+			.setParameter("since", since);
+		List<?> results = q.getResultList();
+
+		pageApplicationList(results, iconSize, category, pageable);
+	}
+	
+	public void pageRelatedApplications(Application relatedTo, Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
+		Query q = em.createNamedQuery("relatedApplicationsSince")
+			.setParameter("relatedId", relatedTo.getId())
+			.setParameter("since", since);
+		List<?> results = q.getResultList();
+
+		pageApplicationList(results, iconSize, category, pageable);
+	}
+
 	public List<CategoryView> getPopularCategories(Date since) {
 		Map<ApplicationCategory, Integer> usageCounts = new HashMap<ApplicationCategory, Integer>();
 		

@@ -19,10 +19,12 @@ public interface ApplicationSystem {
 	void reinstallAllApplications();
 	
 	ApplicationIconView getIcon(String appId, int size) throws NotFoundException;
+	ApplicationView getApplicationView(String appId, int iconSze) throws NotFoundException;
 	
 	void recordApplicationUsage(UserViewpoint viewpoint, Collection<ApplicationUsageProperties> usages);
 	
 	public void pagePopularApplications(Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable);
+	public void pageRelatedApplications(Application relatedTo, Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable);
 	
 	public List<CategoryView> getPopularCategories(Date since);
 	

@@ -54,7 +54,26 @@ import org.hibernate.annotations.Index;
 				"GROUP by app.id " +
 				"ORDER by count DESC",
 			resultSetMapping="applicationUsageAggregateMapping"
-		)
+		),
+	@NamedNativeQuery(name="relatedApplicationsSince",
+			query=
+				"SELECT  " +
+				"  app.id as id, " +
+				"  app.name as name, " +
+				"  app.description as description, " +
+				"  app.category as category, " +
+				"  app.rawCategories as rawCategories, " +
+				"  app.titlePatterns as titlePatterns, " +
+				"  COUNT(app.id) as count " + 
+				"FROM ApplicationUsage au LEFT JOIN Application app on au.application_id = app.id " +
+				"WHERE au.date > :since " +
+				"  AND EXISTS(SELECT * FROM ApplicationUsage au2 " +
+				"              WHERE au2.user_id = au.user_id " +
+				"                AND au2.application_id = :relatedId) " +
+				"GROUP by app.id " +
+				"ORDER by count DESC",
+			resultSetMapping="applicationUsageAggregateMapping"
+	)
 })
 public class ApplicationUsage extends DBUnique {
 	private Application application;
