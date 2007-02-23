@@ -574,4 +574,9 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		
 		return categoryViews;
 	}
+
+	public List<Application> getApplicationsWithTitlePatterns() {
+		Query q = em.createQuery("SELECT a from Application a WHERE a.titlePatterns IS NOT NULL and a.titlePatterns <> ''");
+		return TypeUtils.castList(Application.class, q.getResultList());
+	}
 }

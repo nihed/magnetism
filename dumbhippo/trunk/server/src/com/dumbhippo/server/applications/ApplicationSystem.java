@@ -7,6 +7,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.Application;
 import com.dumbhippo.persistence.ApplicationCategory;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
@@ -24,4 +25,6 @@ public interface ApplicationSystem {
 	public void pagePopularApplications(Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable);
 	
 	public List<CategoryView> getPopularCategories(Date since);
+	
+	public List<Application> getApplicationsWithTitlePatterns();
 }

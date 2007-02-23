@@ -6,11 +6,14 @@ import java.util.List;
 
 import javax.ejb.EJB;
 
+import org.dom4j.Document;
+import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.xmpp.packet.IQ;
 
 import com.dumbhippo.jive.annotations.IQHandler;
 import com.dumbhippo.jive.annotations.IQMethod;
+import com.dumbhippo.persistence.Application;
 import com.dumbhippo.server.applications.ApplicationSystem;
 import com.dumbhippo.server.applications.ApplicationUsageProperties;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -49,5 +52,20 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler {
 		}
 		
 		applicationSystem.recordApplicationUsage(viewpoint, usages);
+	}
+
+	@IQMethod(name="titlePatterns", type=IQ.Type.get)
+	public void getTitlePatterns(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
+		Document document = DocumentFactory.getInstance().createDocument();
+		Element childElement = document.addElement("titlePatterns", APPLICATIONS_NAMESPACE);
+
+		List<Application> applications = applicationSystem.getApplicationsWithTitlePatterns();
+		for (Application application : applications) {
+			Element applicationNode = childElement.addElement("application");
+			applicationNode.addAttribute("appId", application.getId());
+			applicationNode.setText(application.getTitlePatterns());
+		}
+		
+		reply.setChildElement(childElement);
 	}
 }
