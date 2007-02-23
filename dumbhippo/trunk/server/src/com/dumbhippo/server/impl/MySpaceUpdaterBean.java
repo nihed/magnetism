@@ -1,6 +1,7 @@
 package com.dumbhippo.server.impl;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -24,6 +25,7 @@ import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.MySpaceUpdater;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PollingTaskPersistence;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.MySpaceScraper;
@@ -40,10 +42,13 @@ public class MySpaceUpdaterBean implements MySpaceUpdater {
 	@EJB
 	private PollingTaskPersistence pollingPersistence;
 	
+	@EJB
+	private FeedSystem feedSystem;
+	
 	private static class MySpaceTaskFamily implements PollingTaskFamily {
 
 		public long getDefaultPeriodicity() {
-			return 60 * 60 * 1000; // 1 hour
+			return  60 * 60 * 1000; // 1 hour
 		}
 
 		public long getMaxOutstanding() {
@@ -71,13 +76,14 @@ public class MySpaceUpdaterBean implements MySpaceUpdater {
 		@Override
 		protected PollResult execute() throws Exception {			
 			try {
-				logger.debug("Checking MySpace feed for external account id {}", external.getId());
-				final FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);
-				// externalAccount.getExtra() for MySpace is friendId
-			    Feed feed = feedSystem.scrapeFeedFromUrl(MySpaceScraper.getBlogURLFromFriendId(external.getExtra()));
-				EJBUtil.forceInitialization(feed.getAccounts());		
-				external.setFeed(feed);
-				feed.getAccounts().add(external);	
+			    final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
+			    runner.runTaskInNewTransaction(new Callable<Object>() {
+					public Object call() throws XmlMethodException {
+						final MySpaceUpdater mySpaceUpdater = EJBUtil.defaultLookup(MySpaceUpdater.class);
+						mySpaceUpdater.createFeedForMySpaceBlog(external);
+						return null;
+					}
+				});
 				return new PollResult(true, true);
 			} catch (XmlMethodException e) {
 				// nothing to do, MySpace account is probably still private
@@ -102,6 +108,16 @@ public class MySpaceUpdaterBean implements MySpaceUpdater {
 		return new MySpaceTask(external);
 	}
 
+	public void createFeedForMySpaceBlog(ExternalAccount external) throws XmlMethodException {
+	    // the external account passed in here is detached
+		// external.getExtra() for MySpace is friendId
+		Feed feed = feedSystem.scrapeFeedFromUrl(MySpaceScraper.getBlogURLFromFriendId(external.getExtra()));
+		EJBUtil.forceInitialization(feed.getAccounts());
+		ExternalAccount attachedExternal = em.find(ExternalAccount.class, external.getId());
+		attachedExternal.setFeed(feed);
+		feed.getAccounts().add(attachedExternal);
+	}
+	
 	public void migrateTasks() {
 		// get all loved MySpace accounts with a NULL feed
 		Query q = em.createQuery("FROM ExternalAccount ea WHERE " +

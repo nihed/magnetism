@@ -214,7 +214,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 				logger.info("Transient exception: {}", e.getMessage());
 				return new PollingTaskExecutionResult();				
 			} catch (Exception e) {
-				logger.warn("Execution of polling task failed", e);
+				logger.warn("Execution of polling task failed for task: " + toString(), e);
 				return new PollingTaskExecutionResult();				
 			} finally {
 				executionState.notifyComplete();
