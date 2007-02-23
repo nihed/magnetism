@@ -214,21 +214,28 @@ update_cache(HippoSettings *settings,
 }
 
 static void
-on_setting_changed(HippoConnection *connection,
-                   const char      *key,
-                   const char      *value,
+on_settings_loaded(HippoConnection *connection,
                    void            *data)
 {
     HippoSettings *settings = HIPPO_SETTINGS(data);
 
     /* We report ourselves as "ready" if we've ever successfully
-     * gotten a setting.  We remain "ready" even if the connection to
+     * loaded settings.  We remain "ready" even if the connection to
      * the server is disconnected right now.
      */
     if (!settings->ready) {
         settings->ready = TRUE;
         g_signal_emit(settings, signals[READY_CHANGED], 0, TRUE);
     }
+}
+
+static void
+on_setting_changed(HippoConnection *connection,
+                   const char      *key,
+                   const char      *value,
+                   void            *data)
+{
+    HippoSettings *settings = HIPPO_SETTINGS(data);
     
     update_cache(settings, key, value);
 }
@@ -272,6 +279,7 @@ hippo_settings_new(HippoConnection *connection)
     settings->requests = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, (GFreeFunc) request_entry_free);
 
     g_signal_connect(G_OBJECT(connection), "setting-changed", G_CALLBACK(on_setting_changed), settings);
+    g_signal_connect(G_OBJECT(connection), "settings-loaded", G_CALLBACK(on_settings_loaded), settings);
 
     /* FIXME this ends up happening at the wrong time (the first time someone
      * needs to use HippoSettings) instead of at application startup.
