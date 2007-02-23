@@ -33,6 +33,24 @@ on_ready_changed(HippoSettings *settings,
     dbus_message_unref(message);
 }
 
+static void
+on_setting_changed(HippoSettings *settings,
+                   const char    *key,
+                   void          *data)
+{
+    DBusConnection *dbus_connection = data;
+    DBusMessage *message;
+
+    g_debug("emitting PreferenceChanged key=%s", key);
+    
+    message = dbus_message_new_signal(HIPPO_DBUS_ONLINE_PREFS_PATH,
+                                      HIPPO_DBUS_PREFS_INTERFACE,
+                                      "PreferenceChanged");
+    dbus_message_append_args(message, DBUS_TYPE_STRING, &key, DBUS_TYPE_INVALID);
+    dbus_connection_send(dbus_connection, message, NULL);
+    dbus_message_unref(message);
+}
+
 static HippoSettings*
 get_and_ref_settings(DBusConnection *dbus_connection)
 {
@@ -45,12 +63,19 @@ get_and_ref_settings(DBusConnection *dbus_connection)
 
     settings = hippo_settings_get_and_ref(connection);
 
-    if (!g_object_get_data(G_OBJECT(settings), "ready-connected")) {
+    if (!g_object_get_data(G_OBJECT(settings), "dbus-connected")) {
         g_debug("connecting to ready-changed on HippoSettings");
-        g_object_set_data(G_OBJECT(settings), "ready-connected", GINT_TO_POINTER(TRUE));
+        g_object_set_data(G_OBJECT(settings), "dbus-connected", GINT_TO_POINTER(TRUE));
+
+        /* these refs are never dropped at the moment but in practice the dbus connection
+         * should never be disconnected so it's fine */
+        
         dbus_connection_ref(dbus_connection);
         g_signal_connect_data(G_OBJECT(settings), "ready-changed", G_CALLBACK(on_ready_changed),
                               dbus_connection, (GClosureNotify) dbus_connection_unref, 0);
+        dbus_connection_ref(dbus_connection);
+        g_signal_connect_data(G_OBJECT(settings), "setting-changed", G_CALLBACK(on_setting_changed),
+                              dbus_connection, (GClosureNotify) dbus_connection_unref, 0);        
     }
     
     return settings;
@@ -364,7 +389,12 @@ hippo_dbus_handle_introspect_prefs(HippoDBus   *dbus,
 
     g_string_append(xml,
                     "    <signal name=\"ReadyChanged\">\n"
-                    "      <arg direction=\"out\" type=\"b\"/>\n"
+                    "      <arg direction=\"in\" type=\"b\"/>\n"
+                    "    </signal>\n");
+
+    g_string_append(xml,
+                    "    <signal name=\"PreferenceChanged\">\n"
+                    "      <arg direction=\"in\" type=\"s\"/>\n"
                     "    </signal>\n");
     
     g_string_append(xml, "  </interface>\n");        

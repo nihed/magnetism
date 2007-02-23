@@ -49,6 +49,7 @@ G_DEFINE_TYPE(HippoSettings, hippo_settings, G_TYPE_OBJECT);
 
 enum {
     READY_CHANGED,
+    SETTING_CHANGED,
     LAST_SIGNAL
 };
 
@@ -77,6 +78,14 @@ hippo_settings_class_init(HippoSettingsClass  *klass)
                       NULL, NULL,
                       g_cclosure_marshal_VOID__BOOLEAN,
                       G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+    signals[SETTING_CHANGED] =
+        g_signal_new ("setting-changed",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__STRING,
+                      G_TYPE_NONE, 1, G_TYPE_STRING);    
 }
 
 static void
@@ -195,9 +204,12 @@ update_cache(HippoSettings *settings,
              const char    *value)
 {
     CacheEntry *entry;
+    gboolean unchanged;
     
     g_debug("caching: %s=%s", key, value ? value : "(null)");
 
+    unchanged = FALSE;
+    
     entry = g_hash_table_lookup(settings->entries, key);
     if (entry == NULL) {
         entry = g_new0(CacheEntry, 1);
@@ -205,12 +217,24 @@ update_cache(HippoSettings *settings,
         entry->value = g_strdup(value);
         g_hash_table_replace(settings->entries, entry->key, entry);
     } else {
-        g_free(entry->value);
-        entry->value = g_strdup(value);
+
+        unchanged = ((entry->value != NULL) == (value != NULL)) &&
+            (value == NULL || strcmp(value, entry->value) == 0);
+
+        if (!unchanged) {
+            g_free(entry->value);
+            entry->value = g_strdup(value);
+        }
     }
 
     /* notify anyone that was waiting for this new value */
     mark_request_filled(settings, key, value);
+
+    /* send out a signal if it changed - the short-circuit is good
+     * since we convert this signal to a dbus signal also
+     */
+    if (!unchanged)
+        g_signal_emit(settings, signals[SETTING_CHANGED], 0, key);
 }
 
 static void

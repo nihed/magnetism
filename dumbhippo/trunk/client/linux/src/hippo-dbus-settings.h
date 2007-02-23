@@ -30,6 +30,7 @@ G_BEGIN_DECLS
  * void SetPreference(STRING key, VARIANT v) # just queues up if offline
  * BOOLEAN IsReady()
  * signal ReadyChanged(BOOLEAN status)
+ * signal PreferenceChanged(STRING key)
  *
  */
 
