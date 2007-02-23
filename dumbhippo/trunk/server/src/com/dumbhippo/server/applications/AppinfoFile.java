@@ -24,7 +24,7 @@ public class AppinfoFile extends JarFile {
 	private Set<String> titlePatterns;
 	private Set<AppinfoIcon> icons;
 	
-	static final private Pattern ID_REGEX = Pattern.compile("[A-Za-z0-9-]+");
+	static final private Pattern ID_REGEX = Pattern.compile("[A-Za-z0-9-.]+");
 	static final private Pattern NAME_REGEX = Pattern.compile(".+");
 	static final private Pattern DESCRIPTION_REGEX = null;
 	static final private Pattern CATEGORY_REGEX = Pattern.compile("[A-Za-z0-9-]+");
