@@ -16,24 +16,21 @@ typedef struct HippoIdleMonitor HippoIdleMonitor;
 typedef void (* HippoIdleChangedFunc) (gboolean idle, void *data);
 
 HippoIdleMonitor* hippo_idle_add  (GdkDisplay          *display,
+                                   HippoDataCache      *cache,
                                    HippoIdleChangedFunc func,
                                    void                *data);
 void              hippo_idle_free (HippoIdleMonitor    *monitor);
 
 /*
- * Set whether we collect statistics on the users application usage
+ * Returns lists of application names we've seen the user interacting with
+ * within the last 'in_last_seconds' seconds. Free the names in the GSLists
+ * with g_free(), the lists themselves with g_slist_free().
  */
-void hippo_idle_set_collect_application_usage(HippoIdleMonitor *monitor,
-                                              gboolean          collect_application_usage);
-
-/*
- * Returns a list of application names we've seen the user interacting with
- * within the last 'in_last_seconds' seconds. Free the names in the GSList
- * with g_free(), the list itself with g_slist_free().
- */
-GSList *hippo_idle_get_active_applications(HippoIdleMonitor *monitor,
-                                           int               in_last_seconds);
-
+void hippo_idle_get_active_applications(HippoIdleMonitor *monitor,
+                                        int               in_last_seconds,
+                                        GSList          **app_ids,
+                                        GSList          **wm_classes);
+    
 G_END_DECLS
 
 #endif /* __HIPPO_IDLE_H__ */

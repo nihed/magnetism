@@ -244,6 +244,8 @@ DBUS_REQUIRED=0.60
 DBUS_GLIB_REQUIRED=0.60
 # earlier might work, but this is what's been tested
 CURL_REQUIRED=7.13.1
+# earlier might work, but this is what's been tested
+PCRE_REQUIRED=6.3
 
 ## We don't just use PKG_CHECK_MODULES because libcurl.pc has all kinds of crap in it like openssl and kerberos
 ## on the link line... we don't want to link to all that stuff. So just do -lcurl
@@ -314,7 +316,21 @@ else
     XSCREENSAVER_CFLAGS="$X_CFLAGS"
 fi
 
-PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED cairo pango)
+# PCRE checks
+AC_MSG_CHECKING([for PCRE])
+PKG_CHECK_EXISTS(libpcre >= $PCRE_REQUIRED, found_pcre=yes, found_pcre=no)
+AC_MSG_RESULT([$found_pcre])
+if test $found_pcre = yes ; then
+   PCRE_MODULES=libpcre
+   AC_DEFINE(HAVE_PCRE, 1, [Define if you have the PCRE regular expression library])
+else 
+   # We currently only use autoconf on platforms where we need PCRE (PCRE is used
+   # in the application-tracking support to convert titles to application IDs). If
+   # that changed, then this error could be removed.
+   AC_MSG_ERROR([PCRE is required])
+fi
+
+PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED cairo pango $PCRE_MODULES)
 PKG_CHECK_MODULES(LIBHIPPOIPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)
 PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED $XSCREENSAVER_PACKAGES)

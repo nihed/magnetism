@@ -111,6 +111,7 @@ void     hippo_connection_request_blocks            (HippoConnection *connection
                                                      gint64           last_timestamp,
                                                      const char      *filter);
 
+void     hippo_connection_request_title_patterns    (HippoConnection *connection);
 void     hippo_connection_request_contacts          (HippoConnection *connection);
 
 
