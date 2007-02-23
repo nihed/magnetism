@@ -452,6 +452,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 			Application application = em.find(Application.class, props.getAppId());
 			if (application == null) {
 				logger.warn("Got application usage report for an unknown application ID '{}', ignoring", props.getAppId());
+				return;
 			}
 			recordApplicationUsage(viewpoint, application, date);
 		} else if (props.getWmClass() != null) {
