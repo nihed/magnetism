@@ -1668,6 +1668,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			// if we were able to get the friend id, the name must be valid, we don't 
 			// want to do the same validation the second time by calling setHandleValidating
 			external.setHandle(name);
+			external.setFeeds(new HashSet<Feed>());
 		} catch (TransientServiceException e) {
 			logger.warn("Failed to get MySpace friend ID", e);
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Couldn't verify MySpace name '" + name + "'");
