@@ -87,6 +87,9 @@ const HippoClientInfo* hippo_data_cache_get_client_info     (HippoDataCache   *c
 
 void             hippo_data_cache_add_debug_data            (HippoDataCache   *cache);
 
+const char *     hippo_data_cache_match_application_title   (HippoDataCache   *cache,
+                                                             const char       *title);
+
 G_END_DECLS
 
 #endif /* __HIPPO_DATA_CACHE_H__ */

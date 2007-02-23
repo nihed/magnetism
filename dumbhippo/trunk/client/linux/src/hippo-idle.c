@@ -1,4 +1,4 @@
-/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/* -*- mode; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include <config.h>
 #include "hippo-idle.h"
 
@@ -16,21 +16,24 @@ struct HippoApplicationInfo {
 struct HippoIdleMonitor {
     XScreenSaverInfo *info;
     GdkDisplay *display;
+    HippoDataCache *cache;
     GTime activity_time;
     unsigned long last_idle;
     guint poll_id;
     gboolean currently_idle;
     HippoIdleChangedFunc func;
     void *data;
-    gboolean collect_application_usage;
-    GHashTable *application_info;
+    GHashTable *applications_by_app_id;
+    GHashTable *applications_by_wm_class;
 };
 
 /* Code to find the active window in order to collect stats for social
  * application browsing.
  */
-static char *
-get_active_application_name(HippoIdleMonitor *monitor)
+static void
+get_active_application_properties(HippoIdleMonitor *monitor,
+                                  char            **wm_class,
+                                  char            **title)
 {
     Display *xdisplay = GDK_DISPLAY_XDISPLAY(monitor->display);
     int n_screens = gdk_display_get_n_screens(monitor->display);
@@ -38,8 +41,18 @@ get_active_application_name(HippoIdleMonitor *monitor)
                                                                      "_NET_ACTIVE_WINDOW");
     GdkAtom net_active_window_gdk = gdk_atom_intern("_NET_ACTIVE_WINDOW", FALSE);
     Window active_window = None;
-    char *appname = NULL;
     int i;
+
+    Atom type;
+    int format;
+    unsigned long n_items;
+    unsigned long bytes_after;
+    guchar *data;
+        
+    if (wm_class)
+        *wm_class = NULL;
+    if (title)
+        *title = NULL;
 
     /* Find the currently focused window by looking at the _NET_ACTIVE_WINDOW property
      * on all the screens of the display.
@@ -47,11 +60,6 @@ get_active_application_name(HippoIdleMonitor *monitor)
     for (i = 0; i < n_screens; i++) {
         GdkScreen *screen = gdk_display_get_screen(monitor->display, i);
         GdkWindow *root = gdk_screen_get_root_window(screen);
-        Atom type;
-        int format;
-        unsigned long n_items;
-        unsigned long bytes_after;
-        guchar *data;
 
         if (!gdk_x11_screen_supports_net_wm_hint (screen, net_active_window_gdk))
             continue;
@@ -67,17 +75,11 @@ get_active_application_name(HippoIdleMonitor *monitor)
         }
     }
 
-    if (active_window) {
-        Atom type;
-        int format;
-        unsigned long n_items;
-        unsigned long bytes_after;
-        guchar *data;
+    /* Now that we have the active window, figure out the application name and WM class
+     */
+    gdk_error_trap_push();
         
-        /* Now that we have the active window, figure out the application name
-         */
-        gdk_error_trap_push();
-        
+    if (active_window && wm_class) {
         if (XGetWindowProperty (xdisplay, active_window,
                                 XA_WM_CLASS,
                                 0, G_MAXLONG, False, XA_STRING,
@@ -92,7 +94,7 @@ get_active_application_name(HippoIdleMonitor *monitor)
                                                                    8, data, n_items, &list);
 
                 if (count > 1)
-                    appname = g_strdup(list[1]);
+                    *wm_class = g_strdup(list[1]);
 
                 if (list)
                     g_strfreev(list);
@@ -100,33 +102,90 @@ get_active_application_name(HippoIdleMonitor *monitor)
             
             XFree(data);
         }
-        
-        gdk_error_trap_pop();
     }
 
-    return appname;
+    if (active_window && title) {
+        Atom utf8_string = gdk_x11_get_xatom_by_name_for_display(monitor->display, "UTF8_STRING");
+        
+        if (XGetWindowProperty (xdisplay, active_window,
+                                gdk_x11_get_xatom_by_name_for_display(monitor->display, "_NET_WM_NAME"),
+                                0, G_MAXLONG, False, utf8_string,
+                                &type, &format, &n_items, &bytes_after, &data) == Success &&
+            type == utf8_string)
+        {
+            if (format == 8 && g_utf8_validate((char *)data, -1, NULL)) {
+                *title = g_strdup((char *)data);
+            }
+            
+            XFree(data);
+        }
+    }
+
+    if (active_window && title && *title == NULL) {
+        if (XGetWindowProperty (xdisplay, active_window,
+                                XA_WM_NAME,
+                                0, G_MAXLONG, False, AnyPropertyType,
+                                &type, &format, &n_items, &bytes_after, &data) == Success &&
+            type != None)
+        {
+            if (format == 8) {
+                char **list;
+                int count;
+                
+                count = gdk_text_property_to_utf8_list_for_display(monitor->display,
+                                                                   gdk_x11_xatom_to_atom_for_display(monitor->display, type),
+                                                                   8, data, n_items, &list);
+
+                if (count > 0)
+                    *title = g_strdup(list[0]);
+                
+                if (list)
+                    g_strfreev(list);
+            }
+            
+            XFree(data);
+        }
+    }
+        
+    gdk_error_trap_pop();
 }
 
 static void
 update_application_info(HippoIdleMonitor *monitor)
 {
-    char *application_name = get_active_application_name(monitor);
-    HippoApplicationInfo *info;
+    char *wm_class;
+    char *title;
+    HippoApplicationInfo *info = NULL;
     GTimeVal now;
 
-    if (!application_name)
-        return;
+    get_active_application_properties(monitor, &wm_class, &title);
 
-    info = g_hash_table_lookup(monitor->application_info, application_name);
-    if (!info) {
-        info = g_new(HippoApplicationInfo, 1);
-        g_hash_table_insert(monitor->application_info, g_strdup(application_name), info);
+    if (title) {
+        const char *app_id = hippo_data_cache_match_application_title(monitor->cache, title);
+        if (app_id) {
+            info = g_hash_table_lookup(monitor->applications_by_app_id, app_id);
+            if (!info) {
+                info = g_new(HippoApplicationInfo, 1);
+                g_hash_table_insert(monitor->applications_by_app_id, g_strdup(app_id), info);
+            }
+        }
     }
 
-    g_get_current_time(&now);
-    info->active_time = now.tv_sec;
+    if (!info && wm_class) {
+        info = g_hash_table_lookup(monitor->applications_by_wm_class, wm_class);
+        if (!info) {
+            info = g_new(HippoApplicationInfo, 1);
+            g_hash_table_insert(monitor->applications_by_wm_class, g_strdup(wm_class), info);
+        }
+    }
 
-    g_free(application_name);
+    if (info) {
+        g_get_current_time(&now);
+        info->active_time = now.tv_sec;
+    }
+        
+    g_free(wm_class);
+    g_free(title);
 }
     
 static GTime
@@ -195,7 +254,7 @@ poll_for_idleness (void *data)
         (* monitor->func) (monitor->currently_idle, monitor->data);
     }
 
-    if (monitor->collect_application_usage && !monitor->currently_idle) {
+    if (hippo_data_cache_get_application_usage_enabled(monitor->cache) && !monitor->currently_idle) {
         update_application_info(monitor);
     }
     
@@ -204,6 +263,7 @@ poll_for_idleness (void *data)
 
 HippoIdleMonitor*
 hippo_idle_add (GdkDisplay          *display,
+                HippoDataCache      *cache,
                 HippoIdleChangedFunc func,
                 void                *data)
 {
@@ -219,8 +279,8 @@ hippo_idle_add (GdkDisplay          *display,
     }
     
     monitor = g_new0(HippoIdleMonitor, 1);
-    monitor->display = display;
-    g_object_ref(monitor->display);
+    monitor->display = g_object_ref(display);
+    monitor->cache = g_object_ref(cache);
     monitor->info = XScreenSaverAllocInfo();
     monitor->activity_time = get_time();
     monitor->last_idle = 0;    
@@ -228,9 +288,10 @@ hippo_idle_add (GdkDisplay          *display,
     monitor->func = func;
     monitor->data = data;
     monitor->poll_id = g_timeout_add(5000, poll_for_idleness, monitor);
-    monitor->collect_application_usage = FALSE;
-    monitor->application_info = g_hash_table_new_full(g_str_hash, g_str_equal,
-                                                      (GDestroyNotify)g_free, (GDestroyNotify)g_free);
+    monitor->applications_by_app_id = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                                            (GDestroyNotify)g_free, (GDestroyNotify)g_free);
+    monitor->applications_by_wm_class = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                                              (GDestroyNotify)g_free, (GDestroyNotify)g_free);
 
     return monitor;
 }
@@ -245,15 +306,10 @@ hippo_idle_free (HippoIdleMonitor *monitor)
 
     g_source_remove(monitor->poll_id);
     g_object_unref(monitor->display);
-    g_hash_table_destroy(monitor->application_info);
+    g_object_unref(monitor->cache);
+    g_hash_table_destroy(monitor->applications_by_app_id);
+    g_hash_table_destroy(monitor->applications_by_wm_class);
     g_free(monitor);
-}
-
-void
-hippo_idle_set_collect_application_usage(HippoIdleMonitor *monitor,
-                                         gboolean          collect_application_usage)
-{
-    monitor->collect_application_usage = collect_application_usage != FALSE;
 }
 
 typedef struct {
@@ -274,19 +330,28 @@ active_applications_foreach(gpointer key,
         app_data->result = g_slist_prepend(app_data->result, g_strdup(name));
 }
 
-GSList *
+void
 hippo_idle_get_active_applications(HippoIdleMonitor *monitor,
-                                   int               in_last_seconds)
+                                   int               in_last_seconds,
+                                   GSList          **app_ids,
+                                   GSList          **wm_classes)
 {
     GTimeVal now;
     ActiveApplicationsData app_data;
 
     g_get_current_time(&now);
 
-    app_data.result = NULL;
     app_data.start_time = now.tv_sec - in_last_seconds;
-    
-    g_hash_table_foreach(monitor->application_info, active_applications_foreach, &app_data);
 
-    return app_data.result;
+    if (app_ids) {
+        app_data.result = NULL;
+        g_hash_table_foreach(monitor->applications_by_app_id, active_applications_foreach, &app_data);
+        *app_ids = app_data.result;
+    }
+
+    if (wm_classes) {
+        app_data.result = NULL;
+        g_hash_table_foreach(monitor->applications_by_wm_class, active_applications_foreach, &app_data);
+        *wm_classes = app_data.result;
+    }
 }

@@ -1085,16 +1085,6 @@ on_client_info_available(HippoConnection *connection,
     gtk_window_present(GTK_WINDOW(app->upgrade_dialog));
 }
 
-static void
-on_application_usage_changed(HippoConnection *connection,
-                             void            *data)
-{
-    HippoApp *app = data;
-
-    hippo_idle_set_collect_application_usage(app->idle_monitor,
-                                             hippo_data_cache_get_application_usage_enabled(app->cache));
-}
-
 static gboolean
 on_upload_applications_timeout(gpointer data)
 {
@@ -1102,19 +1092,30 @@ on_upload_applications_timeout(gpointer data)
     gboolean enabled = hippo_data_cache_get_application_usage_enabled(app->cache);
 
     if (enabled) {
-        GSList *applications = hippo_idle_get_active_applications(app->idle_monitor,
-                                                                  UPLOAD_APPLICATIONS_PERIOD_SEC);
+        GSList *app_ids;
+        GSList *wm_classes;
 
-        if (applications) {
+        hippo_idle_get_active_applications(app->idle_monitor,
+                                           UPLOAD_APPLICATIONS_PERIOD_SEC,
+                                           &app_ids, &wm_classes);
+
+        if (app_ids || wm_classes) {
             hippo_connection_send_active_applications(app->connection,
                                                       UPLOAD_APPLICATIONS_PERIOD_SEC,
-                                                      NULL,
-                                                      applications);
+                                                      app_ids,
+                                                      wm_classes);
             
-            g_slist_foreach(applications, (GFunc)g_free, NULL);
-            g_slist_free(applications);
+            g_slist_foreach(app_ids, (GFunc)g_free, NULL);
+            g_slist_free(app_ids);
+            g_slist_foreach(wm_classes, (GFunc)g_free, NULL);
+            g_slist_free(wm_classes);
         }
     }
+
+    /* There is no change notification when the set of title patterns change,
+     * so we periodically re-request them to stay up-to-date
+     */
+    hippo_connection_request_title_patterns(app->connection);
     
     return TRUE;
 }
@@ -1246,12 +1247,7 @@ hippo_app_new(HippoInstanceType  instance_type,
     /* start slow timeout to look for new installed versions */
     hippo_app_start_check_installed_timeout(app, FALSE);
  
-    app->idle_monitor = hippo_idle_add(gdk_display_get_default(), on_idle_changed, app);
-
-    g_signal_connect(G_OBJECT(app->cache), "application-usage-changed",
-                     G_CALLBACK(on_application_usage_changed), app);
-    hippo_idle_set_collect_application_usage(app->idle_monitor,
-                                             hippo_data_cache_get_application_usage_enabled(app->cache));
+    app->idle_monitor = hippo_idle_add(gdk_display_get_default(), app->cache, on_idle_changed, app);
 
     app->upload_applications_timeout = g_timeout_add(UPLOAD_APPLICATIONS_TIMEOUT_SEC * 1000,
                                                      on_upload_applications_timeout,
@@ -1265,8 +1261,6 @@ hippo_app_free(HippoApp *app)
 {
     g_source_remove(app->upload_applications_timeout);
     
-    g_signal_handlers_disconnect_by_func(G_OBJECT(app->cache),
-                                         G_CALLBACK(on_application_usage_changed), app);
     hippo_idle_free(app->idle_monitor);
 
     if (app->check_installed_timeout != 0)

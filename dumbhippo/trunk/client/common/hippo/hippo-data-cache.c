@@ -3,6 +3,7 @@
 #include "hippo-connection.h"
 #include "hippo-group.h"
 #include "hippo-block-post.h"
+#include "hippo-title-pattern.h"
 #include "hippo-xml-utils.h"
 #include <string.h>
 
@@ -42,6 +43,7 @@ struct _HippoDataCache {
     unsigned int     music_sharing_primed : 1;
     unsigned int     application_usage_enabled : 1;
     HippoClientInfo  client_info;
+    GSList          *title_patterns;
 };
 
 struct _HippoDataCacheClass {
@@ -246,6 +248,8 @@ hippo_data_cache_finalize(GObject *object)
     hippo_data_cache_set_myspace_name(cache, NULL);
     hippo_data_cache_set_myspace_blog_comments(cache, NULL);
     hippo_data_cache_set_myspace_contacts(cache, NULL);
+
+    hippo_data_cache_set_title_patterns(cache, NULL);
 
     hippo_data_cache_clear_active_posts(cache);
 
@@ -1064,6 +1068,7 @@ hippo_data_cache_on_connect(HippoConnection      *connection,
 
         hippo_connection_request_prefs(connection);
         hippo_connection_request_blocks(connection, 0, NULL);
+        hippo_connection_request_title_patterns(connection);
     } else {
         /* Clear stuff, so we get "changed" signals both on disconnect 
          * and again on reconnect, and so we don't have stale data on
@@ -1109,7 +1114,7 @@ hippo_data_cache_set_myspace_blog_comments(HippoDataCache  *cache,
     
     g_slist_foreach(cache->myspace_comments, (GFunc) hippo_myspace_blog_comment_free, NULL);
     g_slist_free(cache->myspace_comments);
-    cache->myspace_comments = g_slist_copy(comments);
+    cache->myspace_comments = comments;
     
     g_signal_emit(cache, signals[MYSPACE_COMMENTS_CHANGED], 0);
 }
@@ -1159,6 +1164,35 @@ hippo_data_cache_set_client_info(HippoDataCache        *cache,
     }
 }
 
+
+void
+hippo_data_cache_set_title_patterns(HippoDataCache *cache,
+                                    GSList         *title_patterns)
+{
+    g_return_if_fail(HIPPO_IS_DATA_CACHE(cache));
+        
+    g_slist_foreach(cache->title_patterns, (GFunc)hippo_title_pattern_free, NULL);
+    g_slist_free(cache->title_patterns);
+    
+    cache->title_patterns = title_patterns;
+}
+
+const char *
+hippo_data_cache_match_application_title(HippoDataCache *cache,
+                                         const char     *title)
+{
+    GSList *l;
+
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+
+    for (l = cache->title_patterns; l; l = l->next) {
+        if (hippo_title_pattern_matches(l->data, title))
+            return hippo_title_pattern_get_app_id(l->data);
+    }
+
+    return NULL;
+}
+    
 static HippoEntity *
 add_debug_person(HippoDataCache *cache, const char *guid, const char *name)
 {

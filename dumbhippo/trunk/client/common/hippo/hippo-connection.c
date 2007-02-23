@@ -4,6 +4,7 @@
 #include "hippo-data-cache-internal.h"
 #include "hippo-common-marshal.h"
 #include "hippo-external-account.h"
+#include "hippo-title-pattern.h"
 #include "hippo-xml-utils.h"
 #include <loudmouth/loudmouth.h>
 #include <string.h>
@@ -123,6 +124,7 @@ static void     hippo_connection_send_message_with_reply(HippoConnection *connec
                                                          LmHandleMessageFunction handler,
                                                          SendMode           mode);
 static void     hippo_connection_request_client_info  (HippoConnection *connection);
+
 static void     hippo_connection_parse_prefs_node     (HippoConnection *connection,
                                                        LmMessageNode   *prefs_node);
 static void     hippo_connection_process_pending_room_messages(HippoConnection *connection);
@@ -1291,7 +1293,7 @@ on_client_info_reply(LmMessageHandler *handler,
         hippo_connection_signout(connection);
     } else {
         /* Now fully authenticated */
-        hippo_connection_state_change(connection, HIPPO_STATE_AUTHENTICATED);     
+        hippo_connection_state_change(connection, HIPPO_STATE_AUTHENTICATED);
     }
     
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
@@ -1321,6 +1323,79 @@ hippo_connection_request_client_info(HippoConnection *connection)
         lm_message_node_set_attribute(child, "distribution", info.distribution);
     
     hippo_connection_send_message_with_reply(connection, message, on_client_info_reply, SEND_MODE_IMMEDIATELY);
+
+    lm_message_unref(message);
+}
+
+static LmHandlerResult
+on_title_patterns_reply(LmMessageHandler *handler,
+                        LmConnection     *lconnection,
+                        LmMessage        *message,
+                        gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *child;
+    LmMessageNode *subchild;
+    GSList *title_patterns = NULL;
+
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/applications", "titlePatterns")) {
+        g_warning("Title patterns reply was wrong thing");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    child = message->node->children;
+
+    for (subchild = child->children; subchild; subchild = subchild->next) {
+        const char *app_id;
+        const char *value;
+        char **patterns, **p;
+    
+        if (strcmp (subchild->name, "application") != 0)
+            continue;
+
+        app_id = lm_message_node_get_attribute(subchild, "appId");
+        if (!app_id) {
+            g_warning("titlePatterns application node doesn't have an appId attribute");
+            continue;
+        }
+        
+        value = lm_message_node_get_value(subchild);
+        if (!value)
+            continue;
+
+        patterns = g_strsplit(value, ";", -1);
+        for (p = patterns; *p; p++) {
+            g_strstrip(*p);
+            title_patterns = g_slist_prepend(title_patterns, hippo_title_pattern_new(app_id, *p));
+        }
+
+        g_strfreev(patterns);
+    }
+
+    /* takes ownership */
+    hippo_data_cache_set_title_patterns(connection->cache, title_patterns);
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+void
+hippo_connection_request_title_patterns(HippoConnection *connection)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    
+    g_return_if_fail(HIPPO_IS_CONNECTION(connection));
+
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "titlePatterns", NULL);
+
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/applications");
+
+    hippo_connection_send_message_with_reply(connection, message, on_title_patterns_reply, SEND_MODE_IMMEDIATELY);
 
     lm_message_unref(message);
 }
@@ -1508,10 +1583,8 @@ on_get_myspace_blog_comments_reply(LmMessageHandler *handler,
                                    hippo_myspace_blog_comment_new(comment_id, poster_id));
     }
 
-    /* This takes ownership of the comments in the list but not the list itself */
+    /* takes ownership */
     hippo_data_cache_set_myspace_blog_comments(connection->cache, comments);
-    
-    g_slist_free(comments);
     
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -1578,11 +1651,9 @@ on_get_myspace_contacts_reply(LmMessageHandler *handler,
         g_debug("got myspace contact '%s'", name);
     }
 
-    /* takes ownership of contacts but not the list */
+    /* takes ownership */
     hippo_data_cache_set_myspace_contacts(connection->cache, contacts);
     
-    g_slist_free(contacts);
-
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
 

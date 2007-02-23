@@ -292,6 +292,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-surface.h			\
 	$(COMMONSRCDIR)/hippo/hippo-thumbnails.c		\
 	$(COMMONSRCDIR)/hippo/hippo-thumbnails.h		\
+	$(COMMONSRCDIR)/hippo/hippo-title-pattern.c		\
+	$(COMMONSRCDIR)/hippo/hippo-title-pattern.h		\
 	$(COMMONSRCDIR)/hippo/hippo-track.c			\
 	$(COMMONSRCDIR)/hippo/hippo-track.h			\
 	$(COMMONSRCDIR)/hippo/hippo-window.c			\
