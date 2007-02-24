@@ -5,7 +5,8 @@
 
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
 
-<dh:script module="dh.infoviewer"/>
+<dh:script module="dh.tooltip"/>
+
 <div class="dh-person-item">
     <div id="dhImage${who.identifyingGuid}" class="dh-image">
 	    <dht:headshot person="${who}" size="60" includePresence="true"/>
@@ -20,7 +21,7 @@
         </c:if>    
     </div>
 </div>    
-<div id="dhInfo${who.identifyingGuid}" class="dh-person-item-more-info">
+<div id="dhInfo${who.identifyingGuid}" class="dh-person-item-more-info dh-tooltip">
 	<table cellpadding="0" cellspacing="0">
 	<tbody>
 	<tr valign="top">
@@ -80,11 +81,7 @@
     </table>    
 </div>      
 <script type="text/javascript">
-	var imageDiv = document.getElementById("dhImage${who.identifyingGuid}");
-	imageDiv.dhImageId = "${who.identifyingGuid}";
-	imageDiv.onmouseover = dh.infoviewer.onImageMouseOver;
-	imageDiv.onmouseout = dh.infoviewer.onImageMouseOut;
-	var infoDiv = document.getElementById("dhInfo${who.identifyingGuid}");
-	infoDiv.dhInfoId = "${who.identifyingGuid}";
-	infoDiv.onmouseout = dh.infoviewer.onInfoMouseOut;
+	var tooltip = new dh.tooltip.Tooltip(document.getElementById("dhPageOuter"), 
+	                                     document.getElementById("dhImage${who.identifyingGuid}"),
+	                                     document.getElementById("dhInfo${who.identifyingGuid}"));
 </script>

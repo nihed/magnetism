@@ -7,7 +7,7 @@
 
 <head>
 	<title>Mugshot</title>
-	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
+	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="main"/>
 	<dht:faviconIncludes/>
     <dh:script modules="dh.main,dh.event"/>

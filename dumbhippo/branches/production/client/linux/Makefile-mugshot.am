@@ -26,14 +26,17 @@ mugshot_SOURCES	=				\
 	canvas/hippo/hippo-canvas-window.h	\
 	canvas/hippo/hippo-canvas-window-child.c\
 	canvas/hippo/hippo-canvas-window-child.h\
-	src/hippo-chat-window.c		    	\
-	src/hippo-chat-window.h		    	\
 	src/hippo-cookies-linux.c		\
 	src/hippo-cookies-linux.h		\
 	src/hippo-dbus-client.c			\
 	src/hippo-dbus-client.h			\
+	src/hippo-dbus-cookies.c		\
+	src/hippo-dbus-cookies.h		\
 	src/hippo-dbus-server.c			\
 	src/hippo-dbus-server.h			\
+	src/hippo-dbus-settings.c		\
+	src/hippo-dbus-settings.h		\
+	src/hippo-dbus-web.h			\
 	src/hippo-embedded-image.c		\
 	src/hippo-embedded-image.h		\
 	src/hippo-http.c			\
@@ -67,8 +70,12 @@ EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/bar_x.png		\
 	$(EMBEDDEDIMAGEDIR)/blue_x.png		\
 	$(EMBEDDEDIMAGEDIR)/chat.png		\
+	$(EMBEDDEDIMAGEDIR)/checkbox.png	\
+	$(EMBEDDEDIMAGEDIR)/checked_checkbox.png \
 	$(EMBEDDEDIMAGEDIR)/closetip.png	\
 	$(EMBEDDEDIMAGEDIR)/expandtip.png	\
+	$(EMBEDDEDIMAGEDIR)/filter2.png		\
+	$(EMBEDDEDIMAGEDIR)/filter.png		\
 	$(EMBEDDEDIMAGEDIR)/find.png		\
 	$(EMBEDDEDIMAGEDIR)/flat_x.png		\
 	$(EMBEDDEDIMAGEDIR)/home2.png		\
@@ -78,6 +85,7 @@ EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/lid.png		\
 	$(EMBEDDEDIMAGEDIR)/lock_icon.png	\
 	$(EMBEDDEDIMAGEDIR)/mugshotstacker.png	\
+	$(EMBEDDEDIMAGEDIR)/netflix_no_image.png \
 	$(EMBEDDEDIMAGEDIR)/noart.png		\
 	$(EMBEDDEDIMAGEDIR)/nophoto.png		\
 	$(EMBEDDEDIMAGEDIR)/photo_icon.png	\

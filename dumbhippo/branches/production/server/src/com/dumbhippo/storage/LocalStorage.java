@@ -1,5 +1,6 @@
 package com.dumbhippo.storage;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -76,7 +77,7 @@ class LocalStorage implements Storage {
 		return new File(saveDir, relative);
 	}
 	
-	public long store(Guid guid, InputStream stream, long maxSize) throws StorageException {
+	public long store(Guid guid, String contentType, InputStream stream, long maxSize) throws StorageException {
 		File f = fileFromGuid(guid);
 		
 		StorageLocks.getInstance().lock(guid);
@@ -144,6 +145,13 @@ class LocalStorage implements Storage {
 		}
 	}
 
+
+	public void store(Guid guid, String contentType, byte[] content) throws StorageException {
+		long stored = store(guid, contentType, new ByteArrayInputStream(content), content.length);
+		if (stored != content.length)
+			throw new RuntimeException("stored " + stored + " bytes but should have stored " + content.length);
+	}
+	
 	public StoredData load(Guid guid) throws StorageException {
 		File f = fileFromGuid(guid);
 		

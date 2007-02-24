@@ -71,11 +71,16 @@ dh.lang.defineClass(dh.control.Person, dh.control.Entity,
 	}
 })
 
-dh.control.ChatMessage = function(entity, message, timestamp, serial) {
+dh.control.SENTIMENT_INDIFFERENT = 0;
+dh.control.SENTIMENT_LOVE = 1;
+dh.control.SENTIMENT_HATE = 2;
+
+dh.control.ChatMessage = function(entity, message, sentiment, timestamp, serial) {
 	this._entity = entity;
 	this._message = message;
 	this._timestamp = timestamp;
 	this._serial = serial;
+	this._sentiment = sentiment;
 }
 
 dh.lang.defineClass(dh.control.ChatMessage, null,
@@ -88,6 +93,10 @@ dh.lang.defineClass(dh.control.ChatMessage, null,
 		return this._message;
 	},
 	
+	getSentiment : function() {
+		return this._sentiment;
+	},
+	
 	getTimestamp : function() {
 		return this._timestamp;
 	},
@@ -96,23 +105,8 @@ dh.lang.defineClass(dh.control.ChatMessage, null,
 		return this._serial;
 	},
 	
-	_shortLocaleTime : function(date) {
-		return date.toLocaleTimeString().replace(/(\d:\d\d):\d\d/, "$1")
-	},
-
 	timeString : function() {
-		var now = new Date();
-		var nowTimestamp = now.getTime();
-	    var date = new Date(this._timestamp);
-    
-		if (nowTimestamp - this._timestamp < 24 * 60 * 60 * 1000 && now.getDate() == date.getDate()) {
-			return this._shortLocaleTime(date);
-		} else if (nowTimestamp - this._timestamp < 7 * 24 * 60 * 60 * 1000) {
-			var weekday = [ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ][date.getDay()];
-			return weekday + ", " + this._shortLocaleTime(date);
-		} else {
-			return date.toDateString();
-		}
+		return dh.util.formatTimeAgo(new Date(this._timestamp));
 	},	
 	
 	toString: function() {
@@ -167,8 +161,8 @@ dh.lang.defineClass(dh.control.ChatRoom, null,
 	onReconnect : function() {
 	},
 	
-	sendMessage : function(text) {
-		dh.control.control.sendChatMessage(this._id, text);
+	sendMessage : function(text, sentiment) {
+		dh.control.control.sendChatMessage(this._id, text, sentiment);
 	},
 	
 	join : function(participant) {
@@ -243,8 +237,12 @@ dh.lang.defineClass(dh.control.ChatRoom, null,
 	},
 		
 	_onUserLeave : function(person) {
-		delete this._users[person.getId()];
-		this.onUserLeave(person);
+		var id = person.getId();
+		var chatUser = this._users[id].getParticipant();
+		if (chatUser) {
+			delete this._users[id];
+			this.onUserLeave(person);
+		}
 	}
 })
 
@@ -266,6 +264,25 @@ dh.control.AbstractControl = function() {
 
 dh.lang.defineClass(dh.control.AbstractControl, null, 
 {
+	versionAtLeast : function(minVersion) {
+		var minComponents = minVersion.split(".");
+		var minMajor = minComponents[0] == null ? 0 : minComponents[0] - 0;
+		var minMinor = minComponents[1] == null ? 0 : minComponents[1] - 0;
+		var minMicro = minComponents[2] == null ? 0 : minComponents[2] - 0;
+
+		var curVersion = this.getVersion();
+		var curComponents = curVersion.split(".");
+		var curMajor = curComponents[0] == null ? 0 : curComponents[0] - 0;
+		var curMinor = curComponents[1] == null ? 0 : curComponents[1] - 0;
+		var curMicro = curComponents[2] == null ? 0 : curComponents[2] - 0;
+		
+		return curMajor > minMajor ||
+		       (curMajor == minMajor &&
+		        (curMinor > minMinor ||
+		         (curMinor == minMinor &&
+		          curMicro == minMicro)));
+	},
+
 	// Connection point for notification of a change to a user; it would
 	// be more pleasant to be able to connect to the user itself, but 
 	// creating lots of small closures is memory intensive and prone to
@@ -307,6 +324,8 @@ dh.lang.defineClass(dh.control.AbstractControl, null,
 	},
 	
 	_reconnect : function() {
+		this.setWindow();
+	
 		this._allEntities = {}		
 		for (var id in this._allChatRooms) {
 			this._allChatRooms[id]._reconnect();
@@ -333,10 +352,12 @@ dh.lang.defineClass(dh.control.AbstractControl, null,
 		}
 	},
 	
-	_onMessage : function(chatId, userId, text, timestamp, serial) {
+	_onMessage : function(chatId, userId, text, timestamp, serial, sentiment) {
+		if (sentiment == null)
+			sentiment = dh.control.SENTIMENT_INDIFFERENT
 		if (this._allChatRooms[chatId]) {	
 			var message = new dh.control.ChatMessage(this._getOrCreatePerson(userId),
-											 		 text, timestamp, serial);
+											 		 text, sentiment, timestamp, serial);
 			this._allChatRooms[chatId]._addMessage(message);
 		}
 	}, 
@@ -360,7 +381,10 @@ dh.control.WebOnlyControl = function() {
 }
 
 dh.lang.defineClass(dh.control.WebOnlyControl, dh.control.AbstractControl, {
-	sendChatMessage : function(chatId, text) {
+	setWindow : function() {
+	},
+
+	sendChatMessage : function(chatId, text, sentiment) {
 	},
 	
 	showChatWindow : function(chatId) {
@@ -368,6 +392,10 @@ dh.lang.defineClass(dh.control.WebOnlyControl, dh.control.AbstractControl, {
 
 	haveLiveChat : function(chatId) {
 		return false
+	},
+	
+	getVersion : function() {
+		return "1.1.0";
 	}
 });
 
@@ -376,9 +404,10 @@ dh.control.NativeControl = function(nativeObject) {
 	dh.control.AbstractControl.call(this);
 	this._native = nativeObject;
 	
-	this._native.setListener(new dh.control.NativeControlListener())
+	this._native.setListener(new dh.control.NativeControlListener());
         
     this._native.start(dhBaseUrl);
+	this.setWindow();
 }
 
 
@@ -391,8 +420,20 @@ dh.lang.defineClass(dh.control.NativeControl, dh.control.AbstractControl, {
 		this._native.leaveChatRoom(chatId);
 	},
 
-	sendChatMessage : function(chatId, text) {
-		this._native.sendChatMessage(chatId, text);
+	setWindow : function() {
+		try { // setWindow added 2007-01-26
+			this._native.setWindow(window);
+		} catch (e) {
+		}
+	},
+	
+	sendChatMessage : function(chatId, text, sentiment) {
+		try {
+			this._native.sendChatMessageSentiment(chatId, text, sentiment);
+		} catch (e) {
+			// Backwards compatibility with older native controls
+			this._native.sendChatMessage(chatId, text);
+		}
 	},
 	
 	showChatWindow : function(chatId) {
@@ -401,6 +442,19 @@ dh.lang.defineClass(dh.control.NativeControl, dh.control.AbstractControl, {
 	
 	haveLiveChat : function(chatId) {
 		return true;
+	},
+	
+	getVersion : function() {
+		var version;
+		try {
+			version = this._native.version;
+		} catch(e) {
+		}
+		
+		if (version == null)
+			version = "1.0.0";
+			
+		return version;
 	}
 });
 
@@ -426,8 +480,8 @@ dh.lang.defineClass(dh.control.NativeControlListener, null, {
     onUserLeave: function(chatId, userId) {
     	dh.control.control._onUserLeave(chatId, userId);
     },
-    onMessage: function(chatId, userId, message, timestamp, serial) {
-    	dh.control.control._onMessage(chatId, userId, message, timestamp, serial);
+    onMessage: function(chatId, userId, message, timestamp, serial, sentiment) {
+    	dh.control.control._onMessage(chatId, userId, message, timestamp, serial, sentiment);
     },
     userInfo: function(userId, name, smallPhotoUrl, arrangementName, artistName, musicPlaying) {
     	dh.control.control._userInfo(userId, name, smallPhotoUrl, arrangementName, artistName, musicPlaying);

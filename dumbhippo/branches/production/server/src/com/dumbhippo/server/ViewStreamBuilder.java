@@ -1,6 +1,6 @@
 package com.dumbhippo.server;
 
-import java.util.List;
+import java.util.Collection;
 
 import javax.ejb.Local;
 
@@ -30,5 +30,5 @@ public interface ViewStreamBuilder {
 	 * @param objectView object to include in the stream
 	 * @return a new ViewStream
 	 */
-	public ViewStream buildStream(Viewpoint viewpoint, List<ObjectView> objectViews); 
+	public ViewStream buildStream(Viewpoint viewpoint, Collection<ObjectView> objectViews); 
 }

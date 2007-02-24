@@ -1,5 +1,6 @@
 package com.dumbhippo.server.blocks;
 
+import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.FeedEntry;
@@ -47,15 +48,19 @@ public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.openElement(getElementName(),
 					"userId", getPersonSource().getUser().getId());
+		writeExtendedDetailsToXmlBuilder(builder);		
 		writeFeedEntryToXmlBuilder(builder, entry);
 		builder.closeElement();
+	}
+	
+	protected void writeExtendedDetailsToXmlBuilder(XmlBuilder builder) {
 	}
 	
 	public String getDescriptionAsHtml() {
 		String description = getDescription();
 		if (description.trim().length() > 0) {
 			XmlBuilder xml = new XmlBuilder();
-			xml.appendTextAsHtml(getEntry().getDescription(), null);
+			xml.appendTextAsHtml(description, null);
 			return xml.toString();
 		} else {
 			return "";
@@ -63,7 +68,7 @@ public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView
 	}
 	
 	public String getDescription() {
-		return getEntry().getDescription();
+		return StringUtils.ellipsizeText(getEntry().getDescription());
 	}
 	
 	public String getTitle() {

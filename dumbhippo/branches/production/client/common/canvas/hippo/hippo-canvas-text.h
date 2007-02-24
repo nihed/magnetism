@@ -32,6 +32,7 @@ struct _HippoCanvasText {
     PangoAttrList *attributes;
     double font_scale;
     guint size_mode : 3;
+    guint is_ellipsized : 1;
 };
 
 struct _HippoCanvasTextClass {

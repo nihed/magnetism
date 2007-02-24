@@ -24,7 +24,8 @@ GType            hippo_canvas_stack_get_type               (void) G_GNUC_CONST;
 HippoCanvasItem* hippo_canvas_stack_new    (void);
 
 void hippo_canvas_stack_add_block   (HippoCanvasStack *canvas_stack,
-                                     HippoBlock       *block);
+                                     HippoBlock       *block,
+                                     gboolean          visible);
 
 void hippo_canvas_stack_remove_block(HippoCanvasStack *canvas_stack,
                                      HippoBlock       *block);

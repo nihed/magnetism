@@ -2,21 +2,36 @@
 package com.dumbhippo.web.pages;
 
 
+import java.util.Collections;
+import java.util.List;
+
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.Group;
-import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.BlockKey;
+import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.TrackHistory;
+import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.PersonViewer;
+import com.dumbhippo.server.Stacker;
+import com.dumbhippo.server.blocks.BlockView;
+import com.dumbhippo.server.blocks.GroupChatBlockHandler;
+import com.dumbhippo.server.blocks.GroupChatBlockView;
+import com.dumbhippo.server.blocks.MusicChatBlockHandler;
+import com.dumbhippo.server.blocks.MusicChatBlockView;
+import com.dumbhippo.server.blocks.PostBlockHandler;
+import com.dumbhippo.server.blocks.PostBlockView;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupView;
+import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.TrackView;
-import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.web.Signin;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.WebEJBUtil;
@@ -34,123 +49,102 @@ public class ChatWindowPage {
     @Signin
 	private SigninBean signin;
 	
-    private GroupSystem groupSystem;
-    private PostingBoard postBoard;
+    private PersonViewer personViewer;
     private MusicSystem musicSystem;
-    private PostView post;
-	private GroupView group;
-	private TrackView track;
+    private Stacker stacker;
+	private BlockView blockView;
     
     public ChatWindowPage() {
-    	groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
-		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
+    	personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
 		musicSystem =  WebEJBUtil.defaultLookup(MusicSystem.class);
+		stacker =  WebEJBUtil.defaultLookup(Stacker.class);
     }
 	
     public SigninBean getSignin() {
 		return signin;
     }
 
-    public String getPostId() {
-    	if (post == null)
-    		return null;
-    	else
-    		return post.getPost().getId();
-    }
-
-    public String getGroupId() {
-    	if (group == null)
-    		return null;
-    	else
-    		return group.getGroup().getId();
-    }
-    
-    public String getTrackId() {
-    	if (track == null)
-    		return null;
-    	else
-    		return track.getPlayId();
-    }
-    
-    public boolean isAboutGroup() {
-    	return getGroup() != null;
-    }
-    
-    public boolean isAboutPost() {
-    	return getPost() != null;
-    }
-    
-    public boolean isAboutTrack() {
-    	return getTrack() != null;
-    }
-    
     public boolean isAboutSomething() {
-    	return isAboutGroup() || isAboutPost() || isAboutTrack();
+    	return blockView != null;
     }
     
-    protected void setPost(PostView post) {
-		this.post = post;
-		logger.debug("chatting about post: {}", getPostId());
-		if (signin.isValid()) {
-			UserViewpoint viewpoint = (UserViewpoint)signin.getViewpoint();
-			postBoard.postViewedBy(post.getPost(), viewpoint.getViewer());
-		}
+    private PostBlockView loadPostBlockView(Guid postId) throws NotFoundException {
+    	PostBlockHandler handler = WebEJBUtil.defaultLookup(PostBlockHandler.class);
+    	BlockKey key = handler.getLookupOnlyKey(postId);
+    	
+    	PostBlockView result = (PostBlockView)stacker.loadBlock(signin.getViewpoint(), key);
+    		
+    	return result;
     }
-
+    
     public void setPostId(String postId) {
     	logger.debug("Setting postId {}", postId);
-		if (postId == null) {
-			post = null;
-		} else {
-			try {
-				String oldId = getPostId();
-				if (oldId != null && oldId.equals(postId))
-					; // nothing to do
-				else
-					post = postBoard.loadPost(signin.getViewpoint(), new Guid(postId));
-			} catch (NotFoundException e) {
-				post = null;
-			} catch (ParseException e) {
-				post = null;
-			}
+		try {
+			blockView = loadPostBlockView(new Guid(postId));
+		} catch (NotFoundException e) {
+			// Not a post ID
+		} catch (ParseException e) {
 		}
     }
 
+    private GroupChatBlockView loadGroupChatBlockView(Guid postId) throws NotFoundException {
+    	GroupChatBlockHandler handler = WebEJBUtil.defaultLookup(GroupChatBlockHandler.class);
+    	BlockKey key = handler.getKey(postId);
+    	
+    	GroupChatBlockView result = (GroupChatBlockView)stacker.loadBlock(signin.getViewpoint(), key);
+    		
+    	return result;
+    }
+    
     public void setGroupId(String groupId) {
     	logger.debug("Setting groupId {}", groupId);
-		if (groupId == null) {
-			group = null;
-		} else {
-			try {
-				String oldId = getGroupId();
-				if (oldId != null && oldId.equals(groupId))
-					; // nothing to do
-				else
-					group = groupSystem.loadGroup(signin.getViewpoint(), new Guid(groupId));
-			} catch (NotFoundException e) {
-				return;
-			} catch (ParseException e) {
-				group = null;
-			}
+		try {
+			blockView = loadGroupChatBlockView(new Guid(groupId));
+		} catch (NotFoundException e) {
+			// Not a group ID
+		} catch (ParseException e) {
 		}
+    }
+
+    private MusicChatBlockView loadMusicChatBlockView(Guid trackId) throws NotFoundException {
+		MusicChatBlockHandler handler = WebEJBUtil.defaultLookup(MusicChatBlockHandler.class);
+    	
+		TrackHistory trackHistory = musicSystem.lookupTrackHistory(trackId);
+
+    	BlockKey key = handler.getKey(trackHistory);
+    	MusicChatBlockView result;
+    	
+		try {
+	    	result = (MusicChatBlockView)stacker.loadBlock(signin.getViewpoint(), key);
+		} catch (NotFoundException e) {
+			// If someone opens a chatwindow for a track before any quips/comments have
+			// been added to it, the MUSIC_CHAT block doesn't yet exist; we want to 
+			// avoid database changes when loading a JSP, so what we do is create a dummy 
+			// block *not* persisted to the database, and manually create the BlockView
+			// for that block. There is some danger here because the ID of the Block will
+			// be random, so if any controls are present in the block (like a hush
+			// link) they won't work. So we need to be careful that those controls don't
+			// appear in the track page.
+			
+			TrackView trackView = musicSystem.getTrackView(trackHistory);
+			PersonView personView = personViewer.getPersonView(signin.getViewpoint(), trackHistory.getUser());
+			
+			Block block = new Block(key);
+			result = new MusicChatBlockView(signin.getViewpoint(), block, (UserBlockData)null, false);
+			List<ChatMessageView> messages = Collections.emptyList();
+			result.populate(personView, trackView, messages, 0);
+		}
+		
+		return result;
     }
     
     public void setTrackId(String trackId) {
     	logger.debug("Setting trackId {}", trackId);
-		if (trackId == null) {
-			track = null;
-		} else {
-			try {
-				String oldId = getTrackId();
-				if (oldId != null && oldId.equals(trackId))
-					; // nothing to do
-				else
-					track = musicSystem.getTrackView(new Guid(trackId));
-			} catch (NotFoundException e) {
-				return;
-			} catch (ParseException e) {
-				track = null;
-			}
+		try {
+			blockView = loadMusicChatBlockView(new Guid(trackId));
+		} catch (NotFoundException e) {
+			// Not a track ID
+		} catch (ParseException e) {
 		}
     }
     
@@ -162,57 +156,85 @@ public class ChatWindowPage {
      */
     public void setChatId(String someId) {
     	logger.debug("Setting chatId {}", someId);
-    	// call both of these, so we detect a guid collision if any 
-    	if (post == null) // don't overwrite a postId
+    	if (blockView == null) // don't overwrite a postId
     		setPostId(someId);
-    	if (group == null) // don't overwrite a groupId
+    	if (blockView == null) // don't overwrite a groupId
     		setGroupId(someId);
-    	if (track == null) // don't overwrite a trackId
+    	if (blockView == null) // don't overwrite a trackId
     		setTrackId(someId);
     }
     
-    public String getChatId() {
-    	if (post != null)
-    		return getPostId();
-    	else if (group != null)
-    		return getGroupId();
-    	else if (track != null)
-    		return getTrackId();
-    	else
-    		return null;
-    }
-    
-    public PostView getPost() {
-		return post;
-    }
-    
-    public Group getGroup() {
-    	// TODO: make web page take GroupView, not group
-    	if (group == null)
-    		return null;
+    private PostView getPost() {
+    	if (blockView.getBlockType() != BlockType.POST)
+    		throw new RuntimeException("Not a post");
     		
-    	return group.getGroup();
+		return ((PostBlockView)blockView).getPostView();
+    }
+    
+    private GroupView getGroup() {
+    	if (blockView.getBlockType() != BlockType.GROUP_CHAT)
+    		throw new RuntimeException("Not a group");
+    	
+		return ((GroupChatBlockView)blockView).getGroupView();
     }
 
-    public TrackView getTrack() {
-    	return track;
+    private TrackView getTrack() {
+    	if (blockView.getBlockType() != BlockType.MUSIC_CHAT)
+    		throw new RuntimeException("Not a music chat");
+		
+		return ((MusicChatBlockView)blockView).getTrack();
     }
     
+    public String getChatId() {
+    	if (blockView != null) {
+    		switch (blockView.getBlockType()) {
+    		case GROUP_CHAT:
+    			return getGroup().getGroup().getId();
+    		case MUSIC_CHAT:
+    			return getTrack().getPlayId();
+    		case POST:
+    			return getPost().getPost().getId();
+			default:
+    		}
+    	}
+    	
+    	return null;
+    }
+
     public String getTitle() {
-    	if (post != null)
-    		return post.getTitle();
-    	else if (group != null)
-    		return group.getGroup().getName();
-    	else if (track != null)
-    		return track.getDisplayTitle();
-    	else
-    		return "<Unknown Chat>";
+    	if (blockView != null) {
+    		switch (blockView.getBlockType()) {
+    		case GROUP_CHAT:
+    			return getGroup().getName();
+    		case MUSIC_CHAT:
+    			return getTrack().getDisplayTitle();
+    		case POST:
+    			return getPost().getTitle();
+			default:
+    		}
+    	}
+    	
+    	return "<Unknown chat>";
     }
     
     public String getTitleAsHtml() {
-    	if (post != null)
-    		return post.getTitleAsHtml();
+    	if (getPost() != null)
+    		return getPost().getTitleAsHtml();
     	else
     		return XmlBuilder.escape(getTitle());
+    }
+    
+    public BlockView getBlock() {
+    	return blockView;
+    }
+    
+    public int getHeaderHeight() {
+    	if (blockView.getBlockType() == BlockType.MUSIC_CHAT) {
+    		TrackView track = ((MusicChatBlockView)blockView).getTrack();
+    		int musicHeight = track.isSmallImageUrlAvailable() ? track.getSmallImageHeight() : 60;
+    		return musicHeight + 12; // 6px border on top and bottom
+    	} else {
+    		return 90;
+    	}
     }
 }

@@ -28,7 +28,6 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoadResult;
 import com.dumbhippo.server.util.EJBUtil;
-import com.sun.org.apache.xml.internal.utils.UnImplNode;
 
 /** 
  *  This polling system executes polling tasks, optimizing the polling
@@ -215,7 +214,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 				logger.info("Transient exception: {}", e.getMessage());
 				return new PollingTaskExecutionResult();				
 			} catch (Exception e) {
-				logger.warn("Execution of polling task failed", e);
+				logger.warn("Execution of polling task failed for task: " + toString(), e);
 				return new PollingTaskExecutionResult();				
 			} finally {
 				executionState.notifyComplete();
@@ -253,7 +252,10 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		}
 		
 		public synchronized void syncStateFromTaskEntry(PollingTaskEntry entry) {
-			lastExecuted = entry.getLastExecuted().getTime();
+			if (entry.getLastExecuted() != null)
+			    lastExecuted = entry.getLastExecuted().getTime();
+			else 
+				lastExecuted = -1;
 			periodicityAverage = entry.getPeriodicityAverage();
 			dirty = false;
 		}
@@ -662,6 +664,14 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		}
 		
 		public void run() {
+			
+			// Wait a minute after startup to check for tasks
+			try {
+				Thread.sleep(1 * 60 * 1000);
+			} catch (InterruptedException e) {
+				return;
+			}
+			
 			while (true) {
 				try {
 					Thread.sleep(LOAD_PERIODICITY_MS);

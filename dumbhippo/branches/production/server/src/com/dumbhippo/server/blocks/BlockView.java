@@ -1,6 +1,10 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.dumbhippo.DateUtils;
+import com.dumbhippo.StringUtils;
 import com.dumbhippo.Thumbnail;
 import com.dumbhippo.Thumbnails;
 import com.dumbhippo.XmlBuilder;
@@ -9,6 +13,7 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.GroupBlockData;
+import com.dumbhippo.persistence.StackFilterFlags;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.ObjectView;
@@ -97,6 +102,16 @@ public abstract class BlockView implements ObjectView {
 			return StackReason.NEW_BLOCK;
 	}
 	
+	private static String getBlockFilterFlagsList(Block block) {
+		List<String> flagStrings = new ArrayList<String>();
+		for (StackFilterFlags flag : StackFilterFlags.values()) {
+			if ((block.getFilterFlags() & flag.getValue()) != 0) {
+				flagStrings.add(flag.name());
+			}
+		}
+		return StringUtils.join(flagStrings, ",");
+	}
+	
 	public void writeToXmlBuilder(XmlBuilder builder) {
 		if (!isPopulated())
 			throw new RuntimeException("Attempt to write blockview to xml without populating it: " + this);
@@ -114,6 +129,9 @@ public abstract class BlockView implements ObjectView {
 			significantClickedCountString = "-1"; // null; 
 		}
 
+		int messageCount = getMessageCount();
+		String messageCountString = messageCount >= 0 ? Integer.toString(messageCount) : null;
+		
 		// not a shining example of OO design, but simpler than the alternatives...
 		// (this is essentially a workaround for lack of "mixins" or something)
 		boolean isTitle = this instanceof TitleBlockView;
@@ -144,12 +162,14 @@ public abstract class BlockView implements ObjectView {
 							"isPublic", Boolean.toString(isPublic()),							
 							"timestamp", Long.toString(block.getTimestampAsLong()),
 							"clickedCount", clickedCountString,
+							"messageCount", messageCountString,
 							"significantClickedCount", significantClickedCountString,
 							"ignored", Boolean.toString(userBlockData.isIgnored()),
 							"ignoredTimestamp", Long.toString(userBlockData.getIgnoredTimestampAsLong()),
 							"clicked", Boolean.toString(userBlockData.isClicked()),
 							"clickedTimestamp", Long.toString(userBlockData.getClickedTimestampAsLong()),
 							"stackReason", getStackReason().name(),
+							"filterFlags", getBlockFilterFlagsList(block),
 							"icon", getIcon());
 
 		if (hasSource)
@@ -171,11 +191,22 @@ public abstract class BlockView implements ObjectView {
 	
 	protected abstract void writeDetailsToXmlBuilder(XmlBuilder builder);	
 	
-	/** This is used by the flash embed, which is more "thin client" than the 
+	/** This is used by the flash badge, which is more "thin client" than the 
 	 * web and windows/linux clients and thus needs a lot less info. In general the 
-	 * flash embed does not know about specific block types, and we'd like to keep it 
+	 * flash badge does not know about specific block types, and we'd like to keep it 
 	 * that way, so if you find yourself doing the equivalent of writeDetailsToXmlBuilder()
 	 * in this method you are probably wrong.
+	 * 
+	 * A flash badge item looks for example like:
+	 * 
+	 * Dugg (1 hour ago)
+	 * &lt;a href="http://storylink"&gt;Story Title&lt;/a&gt;
+	 * 
+	 * where "Dugg" = summaryHeading, "http://storylink" = summaryLink, 
+	 * "Story Title" = summaryLinkText, "1 hour ago" = summaryTimeAgo 
+	 * 
+	 * The "summary" properties are also used by the Google Gadget, though 
+	 * not via this XML.
 	 * 
 	 * @param builder builder to write to
 	 */
@@ -196,19 +227,32 @@ public abstract class BlockView implements ObjectView {
 				"linkText", getSummaryLinkText());
 	}
 	
+	/** See writeSummaryToXmlBuilder(), this provides the time ago shown in the
+	 * flash badge which has short summary versions of blocks 
+	 */
 	public final String getSummaryTimeAgo() {
 		return DateUtils.formatTimeAgo(block.getTimestamp());
 	}
 	
+	/** See writeSummaryToXmlBuilder(), this provides a short heading shown in the
+	 * flash badge which has short summary versions of blocks. The style is like 
+	 * "Dugg", "Posted", etc. see other existing examples.
+	 */
 	public abstract String getSummaryHeading();
 	
+	/** See writeSummaryToXmlBuilder(), this provides the href for the link shown in the
+	 * flash badge which has short summary versions of blocks.
+	 */
 	public abstract String getSummaryLink();
 	
+	/** See writeSummaryToXmlBuilder(), this provides the text for the link shown in the flash 
+	 * badge which has short summary versions of blocks.
+	 */
 	public abstract String getSummaryLinkText();
 	
 	// utility function for use in implementations of writeDetailsToXmlBuilder
 	protected void writeFeedEntryToXmlBuilder(XmlBuilder builder, FeedEntry entry) {
-		builder.appendTextNode("feedEntry", entry.getDescription(),
+		builder.appendTextNode("feedEntry", StringUtils.ellipsizeText(entry.getDescription()),
 				"title", entry.getTitle(),
 				"href", entry.getLink().getUrl());
 	}
@@ -266,5 +310,17 @@ public abstract class BlockView implements ObjectView {
 		}
 		
 		return result;
+	}
+	
+	/**
+	 * Gets the total count of messages (quips and comments) for this
+	 * block. 
+	 * 
+	 * @return total number of messages, -1 means that quipping isn't
+	 *   applicable to this block type. (A transient thing until we
+	 *   implement quipping on all blocks)
+	 */
+	public int getMessageCount() {
+		return -1;
 	}
 }

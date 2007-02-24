@@ -74,7 +74,7 @@ public:
     STDMETHODIMP UnregisterEndpoint(UINT64 endpointId);
     STDMETHODIMP JoinChatRoom(UINT64 endpointId, BSTR chatId, BOOL participant);
     STDMETHODIMP LeaveChatRoom(UINT64 endpointId, BSTR chatId);
-    STDMETHODIMP SendChatMessage(BSTR chatId, BSTR text);
+    STDMETHODIMP SendChatMessage(BSTR chatId, BSTR text, int sentiment);
     STDMETHODIMP GetServerName(BSTR *serverName);
     STDMETHODIMP LaunchBrowser(BSTR url);
 

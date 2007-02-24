@@ -15,7 +15,8 @@ struct _HippoEntity {
     char *photo_url;
     int version;
     int notify_freeze_count;
-    gboolean need_notify;
+    guint need_notify : 1;
+    guint in_network : 1;
 };
 
 struct _HippoEntityClass {

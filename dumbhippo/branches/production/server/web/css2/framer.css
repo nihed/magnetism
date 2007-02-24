@@ -357,6 +357,10 @@ a.dh-framer-title {
 	color: #fff500;
 }
 
+.dh-chat-message-time {
+	color: #ffccaa;
+}
+
 #dhPostViewingList {
 	position:	absolute;
 	top:		6px;

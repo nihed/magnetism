@@ -18,7 +18,7 @@
 
 <head>
 	<title><c:out value="${person.viewedPerson.name}"/>'s ${pageName} - Mugshot</title>
-	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
+	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht:faviconIncludes/>	
 	<dh:script modules="dh.fileinput,dh.files,dh.event"/>
 	<script type="text/javascript">

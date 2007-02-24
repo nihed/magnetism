@@ -235,27 +235,14 @@ bool
 HippoUpgrader::openDownloadFile(BSTR  basename,
                                 BSTR *filename)
 {
-    WCHAR path[MAX_PATH];
-    SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path);
-    if (StringCchCat(path, MAX_PATH, L"\\Mugshot") != S_OK ||
-        (!CreateDirectory(path, NULL) &&
-         GetLastError() != ERROR_ALREADY_EXISTS))
-    {
-        hippoDebugDialog(L"Error creating local data directory: %ls", path);
-        return false;
-    }
-    if (StringCchCat(path, MAX_PATH, L"\\Upgrade") != S_OK ||
-        (!CreateDirectory(path, NULL) &&
-         GetLastError() != ERROR_ALREADY_EXISTS))
-    {
-        hippoDebugDialog(L"Error creating download directory: %ls", path);
-        return false;
-    }
-    if (StringCchCat(path, MAX_PATH, L"\\") != S_OK ||
-        StringCchCat(path, MAX_PATH, basename) != S_OK)
-        return false;
+	HippoBSTR path = hippoUserDataDir(L"Upgrade");
+	if (!path)
+		return false;
 
-    HANDLE file = CreateFile(path, FILE_WRITE_DATA, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	path.Append('\\');
+	path.Append(basename);
+
+    HANDLE file = CreateFile(path.m_str, FILE_WRITE_DATA, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (!file)
         return false;
 

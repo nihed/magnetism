@@ -148,8 +148,7 @@ HippoAbstractControl::sizeAllocate(const HippoRectangle *rect)
     }
 
     if (parent_ && parent_->requestChangedSinceAllocate_) {
-        g_warning("%s being allocated by parent but parent is not allocated",
-                HippoUStr(getClassName()).c_str());
+        // Parent is going to get re-requested/allocated anyways, so wait for that
         return;
     }
 

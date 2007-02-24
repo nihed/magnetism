@@ -6,6 +6,8 @@ package com.dumbhippo.server;
 import java.io.Serializable;
 import java.util.Date;
 
+import com.dumbhippo.persistence.Sentiment;
+
 /**
  * Object representing a chat room message 
  * for transfer to the web tier or to Jive
@@ -20,11 +22,13 @@ public class ChatRoomMessage implements Serializable {
 	private long serial;
 	private Date timestamp;
 	private String text;
+	private Sentiment sentiment;
 	
-	public ChatRoomMessage(String fromUsername, String text, Date timestamp, long serial) {
+	public ChatRoomMessage(String fromUsername, String text, Sentiment sentiment, Date timestamp, long serial) {
 		this.fromUsername = fromUsername;
 		this.timestamp = timestamp;
 		this.text = text;
+		this.sentiment = sentiment;
 		this.serial = serial;
 	}
 	
@@ -40,6 +44,11 @@ public class ChatRoomMessage implements Serializable {
 		return text;
 	}
 
+
+	public Sentiment getSentiment() {
+		return sentiment;
+	}
+	
 	public Date getTimestamp() {
 		return timestamp;
 	}

@@ -10,11 +10,6 @@ G_BEGIN_DECLS
 typedef struct HippoCookie HippoCookie;
 
 
-typedef struct {
-    char *filename;
-    HippoBrowserKind browser;
-} HippoCookiesFile;
-
 HippoCookie* hippo_cookie_new    (HippoBrowserKind origin_browser,
                                   const char      *domain,
                                   int              port,
@@ -48,22 +43,31 @@ GTime       hippo_cookie_get_timestamp                  (HippoCookie *cookie);
 const char *hippo_cookie_get_name                       (HippoCookie *cookie);
 const char *hippo_cookie_get_value                      (HippoCookie *cookie);
 
-/* load a cookies.txt file; 
- * NULL domain, NULL name, -1 port act as "wildcard" for this function, or 
- * specify them to filter. Returns a list of HippoCookie.
+
+typedef struct HippoCookieLocator HippoCookieLocator;
+
+HippoCookieLocator *hippo_cookie_locator_new(void);
+
+void hippo_cookie_locator_destroy(HippoCookieLocator *locator);
+
+/* Add a directory to scan for cookies.txt files */
+void hippo_cookie_locator_add_directory(HippoCookieLocator *locator,
+                                        const char         *directory,
+                                        HippoBrowserKind    browser);
+
+/* Add cookies.txt file */
+void hippo_cookie_locator_add_file(HippoCookieLocator *locator,
+                                   const char         *file,
+                                   HippoBrowserKind    browser);
+
+/* You have to hippo_cookie_unref() the returned cookies and g_slist_free()
+ * the list. NULL domain, NULL name, -1 port act as "wildcard" for this function, or 
+ * specify them to filter.
  */
-GSList*     hippo_load_cookies_file                     (HippoBrowserKind browser,
-                                                         const char *filename,
-                                                         const char *domain,
-                                                         int         port,
-                                                         const char *name,
-                                                         GError    **error);
-/* Merge multiple cookies.txt files; ignores failures to load any specific one */                                                         
-GSList*     hippo_load_cookies_files                    (const HippoCookiesFile *files,
-                                                         int         n_files,
-                                                         const char *domain,
-                                                         int         port,
-                                                         const char *name);
+GSList *hippo_cookie_locator_load_cookies(HippoCookieLocator *locator,
+                                          const char         *domain,
+                                          int                 port,
+                                          const char         *name);
 
 G_END_DECLS
 

@@ -3,6 +3,7 @@
 #include <hippo/hippo-post.h>
 #include "hippo-canvas-block.h"
 #include "hippo-canvas-block-post.h"
+#include "hippo-canvas-quipper.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-text.h>
@@ -25,9 +26,6 @@ static void hippo_canvas_block_post_get_property (GObject      *object,
                                                   guint         prop_id,
                                                   GValue       *value,
                                                   GParamSpec   *pspec);
-static GObject* hippo_canvas_block_post_constructor (GType                  type,
-                                                     guint                  n_construct_properties,
-                                                     GObjectConstructParam *construct_params);
 
 /* Canvas item methods */
 static void     hippo_canvas_block_post_paint              (HippoCanvasItem *item,
@@ -35,6 +33,8 @@ static void     hippo_canvas_block_post_paint              (HippoCanvasItem *ite
                                                             HippoRectangle  *damaged_box);
 
 /* Canvas block methods */
+static void hippo_canvas_block_post_append_content_items (HippoCanvasBlock *canvas_block,
+                                                          HippoCanvasBox   *parent_box);
 static void hippo_canvas_block_post_set_block       (HippoCanvasBlock *canvas_block,
                                                      HippoBlock       *block);
 
@@ -56,8 +56,10 @@ static void hippo_canvas_block_post_set_post (HippoCanvasBlockPost *canvas_block
 static void hippo_canvas_block_post_update_visibility(HippoCanvasBlockPost *block_post);
 
 /* Callbacks */
+#if 0
 static void on_faves_activated                 (HippoCanvasItem      *button_or_link,
                                                 HippoCanvasBlockPost *canvas_block_post);
+#endif
 
 
 struct _HippoCanvasBlockPost {
@@ -65,9 +67,9 @@ struct _HippoCanvasBlockPost {
     HippoPost *post;
     HippoCanvasItem *description_item;
     HippoCanvasItem *reason_item;
+    HippoCanvasItem *quipper;
     HippoCanvasItem *single_message_preview;
     HippoCanvasItem *clicked_count_item;
-    HippoCanvasBox *parent_box;
     HippoCanvasItem *details_box;
     HippoCanvasItem *chat_preview;
     HippoCanvasItem *faves_link;
@@ -122,11 +124,11 @@ hippo_canvas_block_post_class_init(HippoCanvasBlockPostClass *klass)
     
     object_class->set_property = hippo_canvas_block_post_set_property;
     object_class->get_property = hippo_canvas_block_post_get_property;
-    object_class->constructor = hippo_canvas_block_post_constructor;
     
     object_class->dispose = hippo_canvas_block_post_dispose;
     object_class->finalize = hippo_canvas_block_post_finalize;
 
+    canvas_block_class->append_content_items = hippo_canvas_block_post_append_content_items;
     canvas_block_class->set_block = hippo_canvas_block_post_set_block;
     canvas_block_class->title_activated = hippo_canvas_block_post_title_activated;
     canvas_block_class->clicked_count_changed = hippo_canvas_block_post_clicked_count_changed;
@@ -190,34 +192,24 @@ hippo_canvas_block_post_get_property(GObject         *object,
     }
 }
 
-static GObject*
-hippo_canvas_block_post_constructor (GType                  type,
-                                     guint                  n_construct_properties,
-                                     GObjectConstructParam *construct_properties)
+static void
+hippo_canvas_block_post_append_content_items (HippoCanvasBlock *block,
+                                              HippoCanvasBox   *parent_box)
 {
-    GObject *object = G_OBJECT_CLASS(hippo_canvas_block_post_parent_class)->constructor(type,
-                                                                                        n_construct_properties,
-                                                                                        construct_properties);
-    
-    HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
-    HippoCanvasBlockPost *block_post = HIPPO_CANVAS_BLOCK_POST(object);
-    HippoCanvasBox *box;
+    HippoCanvasBlockPost *block_post = HIPPO_CANVAS_BLOCK_POST(block);
 
     /* Skip this for now; with feed posts it's just confusing, we need to be able to give
      * the feed name for those and say "Web Swarm" only for manual shares
      */
     /* hippo_canvas_block_set_heading(block, _("Web Swarm")); */
     
-    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                       NULL);
-    
     block_post->reason_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                            "xalign", HIPPO_ALIGNMENT_START,
                                            "text", NULL,
                                            "font", "Italic 11px",
                                            NULL);
-    hippo_canvas_box_append(box, block_post->reason_item, 0);
-    hippo_canvas_box_set_child_visible(box,
+    hippo_canvas_box_append(parent_box, block_post->reason_item, 0);
+    hippo_canvas_box_set_child_visible(parent_box,
                                        block_post->reason_item,
                                        FALSE);
 
@@ -226,16 +218,22 @@ hippo_canvas_block_post_constructor (GType                  type,
                                                 "xalign", HIPPO_ALIGNMENT_START,
                                                 "yalign", HIPPO_ALIGNMENT_START,
                                                 "text", NULL,
-                                                "border-top", 4,
-                                                "border-bottom", 4,
                                                 NULL);
-    hippo_canvas_box_append(box, block_post->description_item, 0);
+    hippo_canvas_box_append(parent_box, block_post->description_item, 0);
+
+    block_post->quipper = g_object_new(HIPPO_TYPE_CANVAS_QUIPPER,
+                                       "actions", hippo_canvas_block_get_actions(block),
+                                       NULL);
+    hippo_canvas_box_append(parent_box, block_post->quipper, 0);
+    hippo_canvas_box_set_child_visible(parent_box,
+                                       block_post->quipper,
+                                       FALSE); /* no messages yet */
 
     block_post->single_message_preview = g_object_new(HIPPO_TYPE_CANVAS_MESSAGE_PREVIEW,
                                                       "actions", hippo_canvas_block_get_actions(block),
                                                       NULL);
-    hippo_canvas_box_append(box, block_post->single_message_preview, 0);
-    hippo_canvas_box_set_child_visible(box,
+    hippo_canvas_box_append(parent_box, block_post->single_message_preview, 0);
+    hippo_canvas_box_set_child_visible(parent_box,
                                        block_post->single_message_preview,
                                        FALSE); /* no messages yet */
 
@@ -243,16 +241,17 @@ hippo_canvas_block_post_constructor (GType                  type,
                                            "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                                            "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
                                            NULL);
-    hippo_canvas_box_append(box, block_post->details_box, 0);
-    block_post->parent_box = box;
-    hippo_canvas_box_set_child_visible(block_post->parent_box,
+    hippo_canvas_box_append(parent_box, block_post->details_box, 0);
+    hippo_canvas_box_set_child_visible(parent_box,
                                        block_post->details_box,
                                        FALSE); /* not expanded at first */
     
     block_post->clicked_count_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                                   "text", NULL,
                                                   NULL);
+#if 0
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_post->details_box), block_post->clicked_count_item, 0);
+#endif
 
 #if 0
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
@@ -273,16 +272,13 @@ hippo_canvas_block_post_constructor (GType                  type,
 
     block_post->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
                                             "actions", hippo_canvas_block_get_actions(block),
+                                            "padding-top", 8,
                                             NULL);
-    hippo_canvas_box_append(block_post->parent_box,
+    hippo_canvas_box_append(parent_box,
                             block_post->chat_preview, 0);
-    hippo_canvas_box_set_child_visible(block_post->parent_box,
+    hippo_canvas_box_set_child_visible(parent_box,
                                        block_post->chat_preview,
                                        FALSE); /* not expanded at first */
-    
-    hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
-        
-    return object;
 }
 
 static void
@@ -349,6 +345,20 @@ on_block_post_recent_messages_changed(HippoBlock *block,
 }
 
 static void
+on_message_count_changed(HippoBlock *block,
+                         GParamSpec *arg, /* null when first calling this */
+                         HippoCanvasBlockPost *canvas_block_post)
+{
+    int message_count = -1;
+
+    g_object_get(block, "message-count", &message_count, NULL);
+    
+    g_object_set(G_OBJECT(canvas_block_post->chat_preview),
+                 "message-count", message_count,
+                 NULL);
+}
+
+static void
 hippo_canvas_block_post_set_block(HippoCanvasBlock *canvas_block,
                                   HippoBlock       *block)
 {
@@ -364,6 +374,9 @@ hippo_canvas_block_post_set_block(HippoCanvasBlock *canvas_block,
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_block_post_recent_messages_changed),
                                              canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_message_count_changed),
+                                             canvas_block);
     }
     
     /* Chain up to get the block really changed */
@@ -374,14 +387,19 @@ hippo_canvas_block_post_set_block(HippoCanvasBlock *canvas_block,
                          "notify::post",
                          G_CALLBACK(on_block_post_post_changed),
                          canvas_block);
-        
         g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::recent-messages",
                          G_CALLBACK(on_block_post_recent_messages_changed),
                          canvas_block);
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::message-count",
+                         G_CALLBACK(on_message_count_changed),
+                         canvas_block);
         
         on_block_post_post_changed(canvas_block->block, NULL, canvas_block);
         on_block_post_recent_messages_changed(canvas_block->block, NULL, canvas_block);
+        on_message_count_changed(canvas_block->block, NULL,
+                                 HIPPO_CANVAS_BLOCK_POST(canvas_block));
     }
 }
 
@@ -407,6 +425,10 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
         g_object_set(G_OBJECT(canvas_block_post->chat_preview),
                      "chat-id", NULL,
                      NULL);
+        g_object_set(G_OBJECT(canvas_block_post->quipper),
+                     "chat-id", NULL,
+                     "title", NULL,
+                     NULL);
     } else {
         hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_block_post),
                                      hippo_post_get_title(post),
@@ -424,6 +446,10 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
 
         g_object_set(G_OBJECT(canvas_block_post->chat_preview),
                      "chat-id", hippo_post_get_guid(post),
+                     NULL);
+        g_object_set(G_OBJECT(canvas_block_post->quipper),
+                     "chat-id", hippo_post_get_guid(post),
+                     "title", hippo_post_get_title(post),
                      NULL);
     }
     
@@ -567,14 +593,18 @@ hippo_canvas_block_post_update_visibility(HippoCanvasBlockPost *block_post)
     else
         stack_reason = HIPPO_STACK_BLOCK_UPDATE;
 
-    /* the details box and chat preview both show iff. we are expanded
+    /* the details box / chat preview /quipper  show iff. we are expanded
      */
-    hippo_canvas_box_set_child_visible(block_post->parent_box,
+    hippo_canvas_box_set_child_visible(canvas_block->main_box,
                                        block_post->details_box,
                                        canvas_block->expanded);
 
-    hippo_canvas_box_set_child_visible(block_post->parent_box,
+    hippo_canvas_box_set_child_visible(canvas_block->main_box,
                                        block_post->chat_preview,
+                                       canvas_block->expanded);
+
+    hippo_canvas_box_set_child_visible(canvas_block->main_box,
+                                       block_post->quipper,
                                        canvas_block->expanded);
 
     /* The description is always visible when expanded, otherwise we sometimes
@@ -588,13 +618,13 @@ hippo_canvas_block_post_update_visibility(HippoCanvasBlockPost *block_post)
     show_reason = stack_reason == HIPPO_STACK_VIEWER_COUNT;
     show_description = canvas_block->expanded || (!show_single_message && !show_reason);
 
-    hippo_canvas_box_set_child_visible(block_post->parent_box,
+    hippo_canvas_box_set_child_visible(canvas_block->main_box,
                                        block_post->description_item,
                                        show_description);
-    hippo_canvas_box_set_child_visible(block_post->parent_box,
+    hippo_canvas_box_set_child_visible(canvas_block->main_box,
                                        block_post->reason_item,
                                        show_reason);
-    hippo_canvas_box_set_child_visible(block_post->parent_box,
+    hippo_canvas_box_set_child_visible(canvas_block->main_box,
                                        block_post->single_message_preview,
                                        show_single_message);
 }
@@ -654,6 +684,7 @@ hippo_canvas_block_post_unhush(HippoCanvasBlock *canvas_block)
                                          FALSE);
 }
 
+#if 0
 static void
 on_faves_activated(HippoCanvasItem      *button_or_link,
                    HippoCanvasBlockPost *canvas_block_post)
@@ -665,3 +696,4 @@ on_faves_activated(HippoCanvasItem      *button_or_link,
     if (canvas_block->actions && canvas_block->block)
         hippo_actions_add_to_faves(canvas_block->actions, canvas_block->block);
 }
+#endif

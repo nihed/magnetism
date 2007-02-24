@@ -72,6 +72,7 @@ HippoChatRoom*   hippo_data_cache_ensure_chat_room       (HippoDataCache  *cache
 
 HippoHotness     hippo_data_cache_get_hotness               (HippoDataCache   *cache);
 gboolean         hippo_data_cache_get_music_sharing_enabled (HippoDataCache   *cache);
+gboolean         hippo_data_cache_get_application_usage_enabled (HippoDataCache *cache);
 gboolean         hippo_data_cache_get_need_priming_music    (HippoDataCache   *cache);
 const char*      hippo_data_cache_get_myspace_name          (HippoDataCache   *cache);
 

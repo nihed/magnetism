@@ -1,0 +1,494 @@
+#!/usr/bin/python
+
+from optparse import OptionParser
+import os
+import re
+import stat
+import sys
+import tempfile
+
+class HumanVisibleException(Exception):
+    def __init__(self, message):
+        Exception.__init__(self, message)
+
+def warn(msg):
+    print >>sys.stderr, "Warning: " + msg
+
+def system(cmd):
+    result = os.system(cmd)
+    if (result != 0):
+        raise Exception("Execution of '%s' failed" % cmd)
+
+def file_exists(f):
+    try:
+        os.stat(f)
+        return True;
+    except OSError:
+        return False
+
+# Check for a path that can safely be joined to another and will be
+# within that other path
+def valid_subpath(p):
+    if os.path.isabs(p):
+        return False
+    for c in os.path.split(p):
+        if c == "..":
+            return False
+    return True
+
+def ensure_dir(dir):
+    try:
+        m = os.stat(dir)[stat.ST_MODE]
+        if not stat.S_ISDIR(m):
+            raise HumanVisibleException("'%s' is not a directory" % dir)
+    except OSError:
+        os.makedirs(dir)
+
+#######################################################################
+
+COMMENT_REGEX = re.compile(r"^\s*#.*$")
+CONTINUED_REGEX = re.compile(r"(^|[^\\])(\\\\)*\\$")
+KEY_VALUE_REGEX = re.compile(r"^\s*([^\s:=]+)\s*[:=]?\s*(.*?)$", re.DOTALL)
+EMPTY_LINE_REGEX = re.compile(r"^\s*$")
+
+class DappinfoEditor:
+    def __init__(self, filename):
+        self._filename = filename
+        self._is_open = False
+        self._properties_read = False
+        self._properties_dirty = False
+
+    def _propfile(self):
+        return os.path.join(self._tmpdir, "application.properties")
+
+    def _open(self):
+        if self._is_open:
+            return
+        
+        self._is_open = True
+        self._tmpdir = tempfile.mkdtemp("", "dappinfo-")
+
+        system("(cd '%s' && jar x) < '%s'" % (self._tmpdir, self._filename))
+
+        propfile = self._propfile()
+        tmpfile = propfile + ".tmp"
+        system("native2ascii -reverse -encoding UTF-8 '%s' '%s' && mv '%s' '%s'" % (propfile, tmpfile, tmpfile, propfile))
+
+    def _read_properties(self):
+        if self._properties_read:
+            return
+
+        self._open()
+
+        self._properties = {}
+        f = open(self._propfile(), "r")
+        while True:
+            l = f.readline()
+            if not l:
+                break
+            
+            if COMMENT_REGEX.match(l):
+                continue
+            while CONTINUED_REGEX.search(l):
+                next = f.readline()
+                if not next:
+                    break
+                l = l[:-1] + next.lstrip()
+
+            def replace_escape(m):
+                c = m.group(1)
+                if c == "t":
+                    return "\t"
+                elif c == "r":
+                    return "\r"
+                elif c == "n":
+                    return "\n"
+                elif c == "f":
+                    return "\f"
+                elif c == "\\":
+                    return "\\"
+                else:
+                    return c
+
+            l = re.sub(r"\\(.)", replace_escape, l)
+
+            if EMPTY_LINE_REGEX.match(l):
+                continue
+
+            m = KEY_VALUE_REGEX.match(l)
+            if not m:
+                warn("Line '%s' didn't match the key/value regex" % l)
+                continue
+                
+            self._properties[m.group(1)] = m.group(2)
+        f.close()
+
+        self._properties_read = True
+        
+    def _flush_properties(self):
+        if not self._properties_dirty:
+            return
+
+        self._open()
+
+        f = open(self._propfile(), "w")
+        keys = self._properties.keys()
+        keys.sort()
+        for key in keys:
+            value = self._properties[key]
+            value = re.sub(r"\\", r"\\\\", value)
+            value = re.sub(r"\r", r"\\r", value)
+            value = re.sub(r"\n", r"\\n", value)
+            f.write("%s=%s\n" % (key, value))
+        f.close()
+        
+        self._properties_dirty = False
+
+    def _get_property(self, key):
+        try:
+            self._read_properties()
+            return self._properties[key]
+        except KeyError:
+            return None
+
+    def _set_property(self, key, value):
+        self._read_properties()
+        self._properties_dirty = True
+
+        if value == None:
+            del self._properties[key]
+        else:
+            self._properties[key] = value
+
+    def _delete_property(self, key):
+        self._set_property(key, None)
+
+    def _tmppath(self, path):
+        # Caller should check, but double-check here for safety
+        if not valid_subpath(path):
+            raise Exception("_tmppath() called with an invalid subpath")
+            
+        return os.path.join(self._tmpdir, path)
+
+    def _copy_in(self, src, dest):
+        self._open()
+        
+        destpath = self._tmppath(dest)
+        destdir = os.path.dirname(destpath)
+        ensure_dir(destdir)
+
+        system("cp '%s' '%s'" % (src, destpath))
+
+    def _delete_file(self, dest):
+        self._open()
+
+        destpath = self._tmppath(dest)
+        if file_exists(destpath):
+            os.unlink(destpath)
+
+
+    def _clean_empty_dirs_recurse(self, dir, delete_this_dir):
+        still_there = 0
+        for f in os.listdir(dir):
+            childpath = os.path.join(dir, f)
+            m = os.lstat(childpath)[stat.ST_MODE]
+            if stat.S_ISDIR(m):
+                if not self._clean_empty_dirs_recurse(childpath, True):
+                    still_there += 1
+            else:
+                still_there += 1
+                
+        if delete_this_dir and still_there == 0:
+            os.rmdir(dir)
+            return True
+        else:
+            return False
+
+    def _clean_empty_dirs(self):
+        self._clean_empty_dirs_recurse(self._tmpdir, False)
+        
+    def addicon(self, iconfile, destpath, theme=None, size=None):
+        if not valid_subpath(destpath):
+            raise HumanVisibleException("Destination path '%s' must be relative" % destpath)
+
+        self._open()
+
+        propname = "icon"
+
+        if theme != None:
+            propname += "." + theme
+        else:
+            propname += ".generic"
+        
+        if size != None:
+            propname += "." + size
+
+        old_icon = self._get_property(propname)
+        if old_icon and valid_subpath(old_icon):
+            self._delete_file(old_icon)
+
+        self._set_property(propname, destpath)
+        self._copy_in(iconfile, destpath)
+
+    def cat(self):
+        self._open()
+
+        # Flush any local property modifications
+        self._flush_properties()
+
+        system("cat %s" % self._propfile())
+
+    def delicon(self, destpath):
+        if not valid_subpath(destpath):
+            raise HumanVisibleException("Destination path '%s' must be relative" % destpath)
+    
+        self._open()
+        self._read_properties()
+        
+        to_delete = []
+        for key in self._properties:
+            if key.startswith("icon.") and self._properties[key] == destpath:
+                to_delete.append(key)
+
+        for key in to_delete:
+            self._delete_property(key)
+
+        self._delete_file(destpath)
+
+    def edit(self, editor_cmd=None):
+        self._open()
+
+        # Flush any local property modifications
+        self._flush_properties()
+
+        if editor_cmd == None:
+            editor_cmd = os.getenv("VISUAL")
+        if editor_cmd == None:
+            editor_cmd = os.getenv("EDITOR")
+        if editor_cmd == None:
+            raise HumanVisibleException("Editor must be specified via VISUAL, EDITOR, or--editor-cmd")
+
+        system("%s %s" % (editor_cmd, self._propfile()))
+
+        # Discard any previous read local properties
+        self._properties_read = False
+        self._properties = None
+
+    def rename(self, newfile):
+        basename = os.path.basename(newfile)
+        if not newfile.endswith(".dappinfo"):
+            raise HumanVisibleException("New file name '%s' doesn't end in .dappinfo" % basename)
+        
+        m = re.match(r"^([A-Za-z0-9._-]+).dappinfo$", basename)
+        if not m:
+            raise HumanVisibleException("Can't extract a valid application id from new filename '%s'" % basename)
+        newid = m.group(1)
+        
+        self._open()
+        self._set_property("id", newid)
+        self.finish()
+
+        system("mv '%s' '%s'" % (self._filename, newfile))
+
+    def setdesktop(self, desktopfile, destpath):
+        if not file_exists(desktopfile):
+            raise HumanVisibleException("Input file '%s' doesn't exist", desktopfile)
+        if not valid_subpath(destpath):
+            raise HumanVisibleException("Destination path '%s' must be relative" % destpath)
+        self._open()
+        
+        old_desktop = self._get_property("desktop")
+        if old_desktop and valid_subpath(old_desktop):
+            self._delete_file(old_desktop)
+
+        self._copy_in(desktopfile, self._tmppath(destpath))
+        self._set_property("desktop", destpath)
+
+    def upload(self, server=None, cookiesFile=None):
+        self._open()
+
+    def finish(self):
+        if not self._is_open:
+            return
+
+        self._flush_properties()
+
+        propfile = self._propfile()
+        tmpfile = propfile + ".tmp"
+        system("native2ascii -encoding UTF-8 '%s' '%s' && mv '%s' '%s'" % (propfile, tmpfile, tmpfile, propfile))
+
+        self._clean_empty_dirs()
+
+        system("(cd '%s' && jar c .) > '%s'" % (self._tmpdir, self._filename))
+
+        self.cleanup()
+        
+    def cleanup(self):
+        if not self._is_open:
+            return
+
+        system("rm -rf '%s'" % self._tmpdir)
+        self._is_open = False;
+        
+#######################################################################
+
+def die(msg):
+    print >>sys.stderr, "dappinfo: " +  msg
+    sys.exit(1)
+
+def usage():
+    print >>sys.stderr, "usage: dappinfo [addicon|cat|delicon|edit|setdesktop|upload] [options] [arguments]"
+    print >>sys.stderr, "       dappinfo [subcommand] -h for more information on a subcommand."
+    sys.exit(1)
+
+def cmd_addicon(args):
+    parser = OptionParser(usage=
+                          "%prog addicon [options] dappinfofile iconfile destpath\n"
+                          "    Copy an icon into the dappinfo file.")
+    parser.add_option("--theme",
+                      help="Name of theme the icon belongs to")
+    parser.add_option("--size",
+                      help="Nominal size of the icon (48x48, say)")
+    (options, args) = parser.parse_args(args=args)
+
+    if len(args) != 3:
+        parser.print_usage()
+        sys.exit(1)
+
+    editor = DappinfoEditor(args[0])
+    try:
+        editor.addicon(args[1], args[2], theme=options.theme, size=options.size)
+        editor.finish()
+    finally:
+        editor.cleanup()
+
+def cmd_cat(args):
+    parser = OptionParser(usage=
+                          "%prog cat [options] dappinfofile\n"
+                          "    Cat the contents of application.properties to standard out.")
+    (options, args) = parser.parse_args(args=args)
+
+    if len(args) != 1:
+        parser.print_usage()
+        sys.exit(1)
+
+    editor = DappinfoEditor(args[0])
+    try:
+        editor.cat()
+        editor.finish()
+    finally:
+        editor.cleanup()
+
+def cmd_delicon(args):
+    parser = OptionParser(usage=
+                          "%prog delicon [options] dappinfofile destpath\n"
+                          "    Delete an icon from the dappinfo file.")
+    (options, args) = parser.parse_args(args=args)
+
+    if len(args) != 2:
+        parser.print_usage()
+        sys.exit(1)
+
+    editor = DappinfoEditor(args[0])
+    try:
+        editor.delicon(args[1])
+        editor.finish()
+    finally:
+        editor.cleanup()
+
+def cmd_edit(args):
+    parser = OptionParser(usage=
+                          "%prog edit [options] dappinfofile\n"
+                          "     Edit application.properties in an editor.")
+    parser.add_option("--editor-cmd",
+                      help="Editor to run on the properties file")
+    (options, args) = parser.parse_args(args=args)
+
+    if len(args) != 1:
+        parser.print_usage()
+        sys.exit(1)
+
+    editor = DappinfoEditor(args[0])
+    try:
+        editor.edit(editor_cmd=options.editor_cmd)
+        editor.finish()
+    finally:
+        editor.cleanup()
+
+def cmd_rename(args):
+    parser = OptionParser(usage=
+                          "%prog rename [options] dappinfofile newfile\n"
+                          "    Rename the dappinfofile to a new name, and change the embedded id to match.")
+    (options, args) = parser.parse_args(args=args)
+
+    if len(args) != 2:
+        parser.print_usage()
+        sys.exit(1)
+
+    editor = DappinfoEditor(args[0])
+    try:
+        editor.rename(args[1])
+        editor.finish()
+    finally:
+        editor.cleanup()
+
+def cmd_setdesktop(args):
+    parser = OptionParser(usage=
+                          "%prog setdesktop [options] dappinfofile desktopfile destpath\n"
+                          "    Embed a desktop file into the dappinfo file.")
+    (options, args) = parser.parse_args(args=args)
+
+    if len(args) != 3:
+        parser.print_usage()
+        sys.exit(1)
+
+    editor = DappinfoEditor(args[0])
+    try:
+        editor.setdesktop(args[1], args[2])
+        editor.finish()
+    finally:
+        editor.cleanup()
+
+def cmd_upload(args):
+    parser = OptionParser(usage="%prog upload [options] dappinfofile\n"
+                          "     Upload the dappinfo to the server.")
+    parser.add_option("--server",
+                      help="Server to upload the file to")
+    parser.add_option("--cookiesfile",
+                      help="Your browser cookies file (for authentication)")
+    (options, args) = parser.parse_args(args=args)
+
+    if len(args) != 1:
+        parser.print_usage()
+        sys.exit(1)
+
+    editor = DappinfoEditor(args[0])
+    try:
+        editor.upload(args[0], server=options.server, cookiesfile=options.cookiesfile)
+        editor.finish()
+    finally:
+        editor.cleanup()
+
+try:
+    if len(sys.argv) < 2:
+        usage();
+
+    args = sys.argv[2:]
+    
+    if sys.argv[1] == "addicon":
+        cmd_addicon(args)
+    elif sys.argv[1] == "cat":
+        cmd_cat(args)
+    elif sys.argv[1] == "delicon":
+        cmd_delicon(args)
+    elif sys.argv[1] == "edit":
+        cmd_edit(args)
+    elif sys.argv[1] == "rename":
+        cmd_rename(args)
+    elif sys.argv[1] == "setdesktop":
+        cmd_setdesktop(args)
+    elif sys.argv[1] == "upload":
+        cmd_upload(args)
+except HumanVisibleException, e:
+    print >>sys.stderr, "dappinfo: " + e.__str__()
+    sys.exit(1)

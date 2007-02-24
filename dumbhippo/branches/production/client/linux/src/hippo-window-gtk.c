@@ -69,9 +69,9 @@ typedef struct {
 
 static const RoleProperties role_properties[] = {
     /*                   type_hint,                   skip_taskbar_pager, accept_focus, no_background */
-    /* APPLICATION */  { GDK_WINDOW_TYPE_HINT_NORMAL, FALSE,              TRUE,         FALSE  },
-    /* NOTIFICATION */ { GDK_WINDOW_TYPE_HINT_DOCK,   TRUE,               FALSE,        TRUE  },
-    /* INPUT_POPUP */  { GDK_WINDOW_TYPE_HINT_NORMAL,   FALSE,              TRUE,         TRUE  },
+    /* APPLICATION */  { GDK_WINDOW_TYPE_HINT_NORMAL,  FALSE,              TRUE,         FALSE  },
+    /* NOTIFICATION */ { GDK_WINDOW_TYPE_HINT_DOCK,    TRUE,               FALSE,        TRUE  },
+    /* INPUT_POPUP */  { GDK_WINDOW_TYPE_HINT_TOOLBAR, FALSE,              TRUE,         TRUE  },
 };
 
 static void
@@ -275,6 +275,18 @@ set_static_bit_gravity(GtkWidget *widget)
  * with a DOCK type hint, we have to set the transient parent of the normal
  * window. But passing in the transient parent window to here is a pain, so
  * we just grub through the global list of windows to find something appropriate.
+ * 
+ * Update: now we set TOOLBAR instead of NORMAL because metacity won't allow
+ * NORMAL transients to be promoted into the dock layer. This may mean we
+ * don't need the transient hint anymore, but it can't hurt, and is
+ * appropriate for a TOOLBAR, so let's go with it.
+ *
+ * Compiz should be focusing DOCK windows (think of a panel applet containing
+ * an entry box), so the Compiz focus issue might get fixed eventually as well.
+ *
+ * Of the EWMH type hints, I think DIALOG with decorations disabled
+ * is probably most appropriate; the transiency hint plus a possible STATE_ABOVE hint
+ * should keep the dialog sufficiently on top. But, not bothering to test this for now.
  */
 static void
 hack_transient_for(HippoWindowGtk *window_gtk) 

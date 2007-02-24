@@ -59,6 +59,9 @@ gboolean         hippo_connection_get_connected             (HippoConnection  *c
 /* signin returns TRUE if we're waiting on the user to set the login cookie, FALSE if we already have it */
 gboolean         hippo_connection_signin                    (HippoConnection  *connection);
 void             hippo_connection_signout                   (HippoConnection  *connection);
+/* TRUE if user needs to log in (we think we have no login cookie) */
+gboolean         hippo_connection_get_need_login            (HippoConnection  *connection);
+
 void             hippo_connection_set_post_ignored          (HippoConnection  *connection,
                                                              const char       *post_id);
 void             hippo_connection_do_invite_to_group        (HippoConnection  *connection,
@@ -89,7 +92,8 @@ void             hippo_connection_rejoin_chat_room          (HippoConnection *co
 
 void             hippo_connection_send_chat_room_message    (HippoConnection *connection,
                                                              HippoChatRoom   *room,
-                                                             const char      *text);
+                                                             const char      *text,
+                                                             HippoSentiment   sentiment);
 
 /* Like send_chat_room_message, but without a chat room */
 void             hippo_connection_send_quip                 (HippoConnection *connection,
@@ -104,11 +108,19 @@ void             hippo_connection_request_chat_room_details (HippoConnection *co
 void     hippo_connection_request_prefs             (HippoConnection *connection);
 void     hippo_connection_request_hotness           (HippoConnection *connection);
 void     hippo_connection_request_blocks            (HippoConnection *connection,
-                                                     gint64           last_timestamp);
+                                                     gint64           last_timestamp,
+                                                     const char      *filter);
+
+void     hippo_connection_request_contacts          (HippoConnection *connection);
+
 
 void     hippo_connection_set_block_hushed          (HippoConnection *connection,
                                                      const char      *block_id,
                                                      gboolean         hushed);
+
+void hippo_connection_send_account_question_response(HippoConnection *connection,
+                                                     const char      *block_id,
+                                                     const char      *response);
 
 /* Gets the number of milliseconds to add to the local time to get the server time */
 gint64   hippo_connection_get_server_time_offset    (HippoConnection *connection);
@@ -144,6 +156,15 @@ void  hippo_connection_visit_post_id           (HippoConnection *connection,
 void  hippo_connection_visit_entity            (HippoConnection *connection,
                                                 HippoEntity     *entity);
 
+/* Functions for setting/storing desktop state on Mugshot; distinct from "prefs" which are
+ * prefs for Mugshot itself
+ */
+void hippo_connection_request_desktop_settings (HippoConnection *connection);
+void hippo_connection_request_desktop_setting  (HippoConnection *connection,
+                                                const char      *key);
+void hippo_connection_send_desktop_setting     (HippoConnection *connection,
+                                                const char      *key,
+                                                const char      *value);
 
 G_END_DECLS
 

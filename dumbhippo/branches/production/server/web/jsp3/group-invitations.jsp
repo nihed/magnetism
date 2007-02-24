@@ -12,7 +12,7 @@
 
 <head>
 	<title>My ${pageName} - Mugshot</title>
-	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>
+	<dht3:stylesheet name="site" iefixes="true"/>
 	<dht3:stylesheet name="person"/>
 	<dht3:stylesheet name="groups"/>
 	<dh:script module="dh.groups"/>

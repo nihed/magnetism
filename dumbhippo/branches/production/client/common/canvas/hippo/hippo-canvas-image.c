@@ -159,6 +159,7 @@ set_surface(HippoCanvasImage *image,
         image->surface = surface;
         
         hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(image));
+        hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(image), 0, 0, -1, -1);
 
         g_object_notify(G_OBJECT(image), "image");
     }

@@ -6,6 +6,7 @@
 #include <HippoStdAfx.h>
 #endif
 
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -18,6 +19,125 @@ hippo_error_quark(void)
 {
     return g_quark_from_static_string("hippo-error-quark");
 }
+
+
+gboolean
+hippo_parse_int32(const char *s,
+                  int        *result)
+{
+    /*
+     * We accept values of the form '\s*\d+\s+'
+     */
+    
+    char *end;
+    long v;
+
+    while (g_ascii_isspace(*s))
+        ++s;
+    
+    if (*s == '\0')
+        return FALSE;
+    
+    end = NULL;
+    errno = 0;
+    v = strtol(s, &end, 10);
+
+    if (errno == ERANGE)
+        return FALSE;
+
+    while (g_ascii_isspace(*end))
+        end++;
+
+    if (*end != '\0')
+        return FALSE;
+
+    *result = v;
+
+    return TRUE;
+}
+
+gboolean
+hippo_parse_int64(const char *s,
+                  gint64     *result)
+{
+    char *end;
+    guint64 v;
+    gboolean had_minus = FALSE;
+
+    /*
+     * We accept values of the form '\s*\d+\s+'.  
+     *
+     * FC5's glib does not have g_ascii_strtoll, only strtoull, so
+     * we have an extra hoop or two to jump through.
+     */
+    while (g_ascii_isspace(*s))
+        ++s;
+    
+    if (*s == '\0')
+        return FALSE;
+    
+    if (*s == '-') {
+        ++s;
+        had_minus = TRUE;
+    }
+
+    end = NULL;
+    errno = 0;
+    v = g_ascii_strtoull(s, &end, 10);
+
+    if (errno == ERANGE)
+        return FALSE;
+
+    while (g_ascii_isspace(*end))
+        end++;
+
+    if (*end != '\0')
+        return FALSE;
+
+    if (had_minus) {
+        if (v > - (guint64) G_MININT64)
+            return FALSE;
+        
+        *result = - (gint64) v;
+    } else {
+        if (v > G_MAXINT64)
+            return FALSE;
+        
+        *result = (gint64) v;
+    }
+        
+    return TRUE;
+}
+
+/* No end of spec-compliance here, no doubt */
+gboolean
+hippo_parse_http_url (const char *url,
+                      gboolean   *is_https,
+                      char      **host,
+                      int        *port)
+{
+    const char *server;
+
+    if (is_https)
+        *is_https = FALSE;
+    if (host)
+        *host = NULL;
+    if (port)
+        *port = -1;
+    
+    if (g_str_has_prefix(url, "http://")) {
+        server = url + 7;
+    } else if (g_str_has_prefix(url, "https://")) {
+        server = url + 8;
+        if (is_https)
+            *is_https = TRUE;
+    } else {
+        return FALSE;
+    }
+
+    return hippo_parse_server(server, host, port);
+}
+
 
 /* rint doesn't exist on Windows */
 static double 
@@ -425,6 +545,7 @@ hippo_parse_options(int          *argc_p,
     static gboolean initial_debug_share = FALSE;
     static gboolean verbose = FALSE;
     static gboolean verbose_xmpp = FALSE;
+    static char *crash_dump = NULL;
     char *argv0;
     GError *error;
     GOptionContext *context;
@@ -435,6 +556,7 @@ hippo_parse_options(int          *argc_p,
      * On Linux, consider mugshot-uri-handler instead, on Windows consider a COM method instead.
      */
     static const GOptionEntry entries[] = {
+        { "crash-dump", '\0', 0, G_OPTION_ARG_STRING, (gpointer)&crash_dump, "Report a crash using the specified crash dump" },
         { "debug", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&debug, "Run in debug mode" },
         { "dogfood", 'd', 0, G_OPTION_ARG_NONE, (gpointer)&dogfood, "Run against the dogfood (testing) server" },
         { "install-launch", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&install_launch, "Run appropriately at the end of the install" },
@@ -488,6 +610,7 @@ hippo_parse_options(int          *argc_p,
     results->initial_debug_share = initial_debug_share;
     results->verbose = verbose;
     results->verbose_xmpp = verbose_xmpp;
+    results->crash_dump = g_strdup(crash_dump);
 
     hippo_print_debug_level = results->verbose;
     hippo_print_xmpp_noise = results->verbose_xmpp;
@@ -527,6 +650,7 @@ hippo_parse_options(int          *argc_p,
 void
 hippo_options_free_fields(HippoOptions *options)
 {
+    g_free(options->crash_dump);
     g_strfreev(options->restart_argv);
 }
 

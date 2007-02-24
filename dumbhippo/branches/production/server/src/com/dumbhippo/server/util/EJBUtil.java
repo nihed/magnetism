@@ -79,6 +79,16 @@ public class EJBUtil {
 		}
 	}	
 	
+	public static EntityManager entityManagerLookup(String unitName) {
+		try {
+            Context namingContext = new InitialContext();
+            // perform JNDI lookup to obtain container-managed entity manager
+            return (EntityManager)namingContext.lookup("java:comp/env/persistence/" + unitName);
+		} catch (NamingException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
 	/**
 	 * Very simple wrapper around InitialContext.lookup that looks up an
 	 * a desired local session bean in JNDI by the interface name of its primary 

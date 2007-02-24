@@ -9,7 +9,7 @@
 
 <head>
 	<title>${pageName} - Mugshot</title>
-	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
+	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht:faviconIncludes/>
 </head>
 

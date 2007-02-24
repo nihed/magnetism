@@ -7,6 +7,7 @@
 <%@ attribute name="signin" required="true" type="com.dumbhippo.web.SigninBean"%>
 <%@ attribute name="alreadyCurrent" required="false" type="java.lang.Boolean"%>
 <%@ attribute name="userId" required="false" type="java.lang.String" %>
+<%@ attribute name="forceMode" required="false" type="java.lang.String" %>
 
 <%-- default to our own userId if none given --%>
 <c:if test="${empty userId}">
@@ -18,11 +19,11 @@
 	<strong><c:out value="${theme.name}"/></strong> by <a href="/person?who=${theme.creator.id}"><c:out value="${theme.creator.nickname}"/></a>
 	<c:if test="${!empty theme.basedOn}">
 		based on
-		<%-- <a href="/radar-theme?theme=${theme.basedOn.id}">--%><strong><c:out value="${theme.basedOn.name}"/></strong><%--</a>--%>
+		<a href="/radar-theme?theme=${theme.basedOn.id}"><strong><c:out value="${theme.basedOn.name}"/></strong></a>
 		by <a href="/person?who=${theme.basedOn.creator.id}"><c:out value="${theme.basedOn.creator.nickname}"/></a>
 	</c:if>
 	<br/>
-	<table><tr><td rowSpan="5"><dh:nowPlaying userId="${userId}" themeId="${theme.id}" hasLabel="false"/></td></tr>
+	<table><tr><td rowSpan="5"><dh:nowPlaying userId="${userId}" themeId="${theme.id}" hasLabel="false" forceMode="${forceMode}"/></td></tr>
 	<c:if test="${theme.draft}">
 		<tr><td><b style="color:red">draft</b> <span style="font-size:10px">(you could <a href="javascript:dh.nowplaying.modify('${theme.id}', 'draft', 'false', '/radar-themes');">publish</a> it)</span></td></tr>
 	</c:if>

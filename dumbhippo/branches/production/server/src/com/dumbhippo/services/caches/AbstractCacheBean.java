@@ -52,7 +52,8 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 		FLICKR_PHOTOSET_PHOTOS,
 		FLICKR_USER_PHOTOSETS,
 		FACEBOOK_PHOTO_DATA,
-		YOUTUBE_VIDEOS
+		YOUTUBE_VIDEOS,
+		NETFLIX_QUEUE_MOVIES
 	}
 	
 	private static EnumMap<Request,UniqueTaskExecutor> executors;

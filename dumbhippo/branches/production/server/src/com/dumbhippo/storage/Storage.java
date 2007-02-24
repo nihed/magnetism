@@ -10,13 +10,29 @@ public interface Storage {
 	 * given guid. Fails if something is already stored under this guid. 
 	 * Closes the input stream when finished.
 	 * 
+	 * The contentType is canonically stored in our database, not in the storage backend, 
+	 * but Amazon S3 can store the contentType also so we do that.
+	 * 
+	 * Throws TooBigException if maxSize is exceeded.
+	 * 
 	 * @param guid
+	 * @param contentType
 	 * @param stream
 	 * @param maxSize
 	 * @return size of the stored stream in bytes
 	 * @throws StorageException
 	 */
-	public long store(Guid guid, InputStream stream, long maxSize) throws StorageException;
+	public long store(Guid guid, String contentType, InputStream stream, long maxSize) throws StorageException;
+	
+	/**
+	 * Stores the given byte array, same semantics as the version that takes an input stream.
+	 * 
+	 * @param guid
+	 * @param contentType
+	 * @param content
+	 * @throws StorageException
+	 */
+	public void store(Guid guid, String contentType, byte[] content) throws StorageException;
 	
 	/**
 	 * Looks up stored data under the given guid, and returns an open stream

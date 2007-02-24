@@ -127,11 +127,6 @@ hippo_canvas_control_new(void)
     return HIPPO_CANVAS_ITEM(control);
 }
 
-void
-hippo_canvas_control_position(void)
-{
-}
-
 static void
 hippo_canvas_control_set_property(GObject         *object,
                                  guint            prop_id,

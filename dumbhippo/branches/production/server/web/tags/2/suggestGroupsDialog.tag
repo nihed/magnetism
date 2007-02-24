@@ -1,6 +1,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
+<%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <div id="dhSuggestGroupsPopup" class="dhInvisible">
 	<div id="dhSuggestGroupsTopDiv" class="dh-border">
@@ -13,7 +14,7 @@
 	    <c:set var="count" value="1"/>  
 	    <c:choose>
 	        <c:when test="${person.groups.size < 1}">
-	            <c:out value="You have no groups of your own."/>
+	            <dht3:noGroupsAdvice/>
 	        </c:when>
 	        <c:otherwise>        
 	            <c:forEach items="${person.groups.list}" var="group">

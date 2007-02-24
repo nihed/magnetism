@@ -30,11 +30,13 @@ public:
 
     virtual HippoEndpointId registerEndpoint(HippoIpcListener *listener);
     virtual void unregisterEndpoint(HippoEndpointId endpoint);
+
+    virtual void setWindowId(HippoEndpointId endpoint, HippoWindowId windowId);
     
     virtual void joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant);
     virtual void leaveChatRoom(HippoEndpointId endpoint, const char *chatId);
     
-    virtual void sendChatMessage(const char *chatId, const char *text);
+    virtual void sendChatMessage(const char *chatId, const char *text, int sentiment);
     virtual void showChatWindow(const char *chatId);
 
 private:

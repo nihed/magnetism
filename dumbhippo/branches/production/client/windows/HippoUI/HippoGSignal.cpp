@@ -1,6 +1,7 @@
 #include "stdafx-hippoui.h"
 
 #include "HippoGSignal.h"
+#include <assert.h>
 
 Slot::~Slot ()
 {

@@ -96,13 +96,13 @@ public class Post extends GuidPersistable {
 		this.poster = poster;
 		this.visibility = visibility;
 		this.toWorld = toWorld;
-		this.explicitTitle = explicitTitle;
 		this.text = text;
 		this.personRecipients = personRecipients;
 		this.groupRecipients = groupRecipients;
 		this.expandedRecipients = expandedRecipients;
 		this.resources = resources;
 		this.postDate = System.currentTimeMillis();
+		setExplicitTitle(explicitTitle);
 		initMissing();
 	}
 	
@@ -208,7 +208,7 @@ public class Post extends GuidPersistable {
 		return explicitTitle;
 	}
 	public void setExplicitTitle(String title) {
-		this.explicitTitle = title;
+		this.explicitTitle = title != null ? title.trim() : null;
 	}
 
 	@ManyToMany

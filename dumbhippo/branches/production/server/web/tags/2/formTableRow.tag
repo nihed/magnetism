@@ -6,7 +6,7 @@
 <%@ attribute name="icon" required="false" type="java.lang.String" %>
 <%@ attribute name="info" required="false" type="java.lang.String" %>
 <%@ attribute name="altRow" required="false" type="java.lang.Boolean" %>
-<%@ attribute name="containerId" required="false" type="java.lang.String" %>
+<%@ attribute name="controlId" required="false" type="java.lang.String" %>
 
 <c:set var="rowClass" value="dh-base-row"/>
 
@@ -16,9 +16,9 @@
 
 <tr><td colspan="4" class="dh-padding-row ${rowClass}"></td></tr>
 
-<tr valign="top" class="${rowClass}" id="${containerId}">
+<tr valign="top" class="${rowClass}" id="${controlId}FormContainer">
 	<td class="dh-label-cell">
-		<div class="dh-label-cell-div" id="${containerId}Label">
+		<div class="dh-label-cell-div" id="${controlId}FormLabel">
 			<c:if test="${!empty icon}"><dh:png klass="dh-form-table-row-icon" src="${icon}" style="width: 16; height: 16; border: none;"/></c:if>
 		    <c:if test="${!empty label}"><c:out value="${label}"/>:</c:if>
 	    </div>
@@ -30,7 +30,7 @@
 	    </c:when>
 	    <c:otherwise>
 	        <td colspan="2" class="dh-control-cell">
-				<div class="dh-control-cell-div" id="${containerId}Content"><jsp:doBody/></div>
+				<div class="dh-control-cell-div" id="${controlId}FormContent"><jsp:doBody/></div>
 		    </td>
 	    </c:otherwise>
 	</c:choose>

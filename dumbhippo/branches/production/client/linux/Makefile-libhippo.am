@@ -164,6 +164,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-block-group-chat.h		\
 	$(COMMONSRCDIR)/hippo/hippo-block-group-member.c	\
 	$(COMMONSRCDIR)/hippo/hippo-block-group-member.h	\
+	$(COMMONSRCDIR)/hippo/hippo-block-account-question.c	\
+	$(COMMONSRCDIR)/hippo/hippo-block-account-question.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-abstract-person.c	\
 	$(COMMONSRCDIR)/hippo/hippo-block-abstract-person.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-facebook-person.c	\
@@ -178,6 +180,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-block-music-chat.h		\
 	$(COMMONSRCDIR)/hippo/hippo-block-music-person.c	\
 	$(COMMONSRCDIR)/hippo/hippo-block-music-person.h	\
+	$(COMMONSRCDIR)/hippo/hippo-block-netflix-movie.c	\
+	$(COMMONSRCDIR)/hippo/hippo-block-netflix-movie.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-post.c		\
 	$(COMMONSRCDIR)/hippo/hippo-block-post.h		\
 	$(COMMONSRCDIR)/hippo/hippo-block-youtube-person.c	\
@@ -186,6 +190,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-base.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-account-question.c	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-account-question.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-generic.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-generic.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-flickr-person.c	\
@@ -204,6 +210,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-music-chat.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-music-person.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-music-person.h	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-netflix-movie.c	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-netflix-movie.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-post.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-post.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-youtube-person.c	\
@@ -214,10 +222,14 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-entity-name.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-entity-photo.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-entity-photo.h	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-filter-area.c	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-filter-area.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-grip.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-grip.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-message-preview.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-message-preview.h	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-quipper.c		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-quipper.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-stack.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-stack.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-thumbnails.c		\
@@ -258,16 +270,20 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-object-cache.h		\
 	$(COMMONSRCDIR)/hippo/hippo-myspace.c			\
 	$(COMMONSRCDIR)/hippo/hippo-myspace.h			\
+	$(COMMONSRCDIR)/hippo/hippo-netflix-movie.c		\
+	$(COMMONSRCDIR)/hippo/hippo-netflix-movie.h		\
 	$(COMMONSRCDIR)/hippo/hippo-person.c			\
 	$(COMMONSRCDIR)/hippo/hippo-person.h			\
 	$(COMMONSRCDIR)/hippo/hippo-platform.c			\
 	$(COMMONSRCDIR)/hippo/hippo-platform.h			\
-	$(COMMONSRCDIR)/hippo/hippo-quip-window.c		\
-	$(COMMONSRCDIR)/hippo/hippo-quip-window.h		\
 	$(COMMONSRCDIR)/hippo/hippo-post.c			\
 	$(COMMONSRCDIR)/hippo/hippo-post.h			\
+	$(COMMONSRCDIR)/hippo/hippo-quip-window.c		\
+	$(COMMONSRCDIR)/hippo/hippo-quip-window.h		\
 	$(COMMONSRCDIR)/hippo/hippo-resource.c			\
 	$(COMMONSRCDIR)/hippo/hippo-resource.h			\
+	$(COMMONSRCDIR)/hippo/hippo-settings.c			\
+	$(COMMONSRCDIR)/hippo/hippo-settings.h			\
 	$(COMMONSRCDIR)/hippo/hippo-stack-manager.c		\
 	$(COMMONSRCDIR)/hippo/hippo-stack-manager.h		\
 	$(COMMONSRCDIR)/hippo/hippo-surface.c			\

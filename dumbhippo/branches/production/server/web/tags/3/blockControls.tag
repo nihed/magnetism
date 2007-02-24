@@ -4,7 +4,8 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
+<%@ attribute name="chatHeader" required="false" type="java.lang.Boolean" %>
 
-<div class="dh-stacker-block-controls" id="dhStackerBlockControls-${blockId}">
+<div class="dh-stacker-block-controls" id="dhStackerBlockControls-${blockId}${chatHeader ? '-expanded' : ''}" style="${chatHeader ? '' : 'display: none;'}">
 	<jsp:doBody/>
 </div>

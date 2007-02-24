@@ -102,4 +102,9 @@ public class MusicPersonBlockView extends AbstractPersonBlockView implements Mus
 	public boolean isQuip() {
 		return false;
 	}
+	
+	@Override
+	public int getMessageCount() {
+		return 0; // If there were messages, it would be a MUSIC_CHAT block instead
+	}
 }

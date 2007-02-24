@@ -12,7 +12,7 @@ import com.dumbhippo.web.WebEJBUtil;
 
 public class MainPage extends AbstractSigninOptionalPage {
 		@SuppressWarnings("unused")
-		static private final Logger logger = GlobalSetup.getLogger(MusicGlobalPage.class);
+		static private final Logger logger = GlobalSetup.getLogger(MainPage.class);
 		
 		private static final String[] MUGSHOTS = {
 			"arthur",

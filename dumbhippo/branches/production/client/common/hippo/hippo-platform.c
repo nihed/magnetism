@@ -192,7 +192,7 @@ hippo_platform_set_message_server(HippoPlatform  *platform,
                                   const char     *value)
 {
     g_return_if_fail(HIPPO_IS_PLATFORM(platform));                                  
-    HIPPO_PLATFORM_GET_CLASS(platform)->set_message_server(platform, value);                              
+    HIPPO_PLATFORM_GET_CLASS(platform)->set_message_server(platform, value);
 }
 
 void
@@ -230,3 +230,19 @@ hippo_platform_get_web_host_port(HippoPlatform  *platform,
     hippo_parse_web_server(server, host_p, port_p);
     g_free(server);
 }
+
+void
+hippo_platform_show_disconnected_window (HippoPlatform   *platform,
+                                         HippoConnection *connection)
+{
+    HippoPlatformClass *klass;
+    
+    g_return_if_fail(HIPPO_IS_PLATFORM(platform));
+
+    klass = HIPPO_PLATFORM_GET_CLASS(platform);
+    
+    if (klass->show_disconnected_window != NULL) {
+        (* klass->show_disconnected_window) (platform, connection);
+    }
+}
+    

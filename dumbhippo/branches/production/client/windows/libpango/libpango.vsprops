@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="libpango"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories=".;../dependencies/gettext/include;../../common/glib;../../common/glib/glib;../libglib;../../common/glib/gmodule;../../common/pango/pango;../../common/pango"
+		PreprocessorDefinitions="PANGO_ENABLE_BACKEND;PANGO_ENABLE_ENGINE"
+		DisableSpecificWarnings="4312;4244;4267"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		OutputFile="$(OutDir)\libpango-1.0-0.dll"
+		ModuleDefinitionFile="..\..\common\pango\pango\pango.def"
+	/>
+</VisualStudioPropertySheet>

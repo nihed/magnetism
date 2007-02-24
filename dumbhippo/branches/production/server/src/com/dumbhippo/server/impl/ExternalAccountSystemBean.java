@@ -226,6 +226,10 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	}
 
 	public void setSentiment(ExternalAccount externalAccount, Sentiment sentiment) {
+		if ((sentiment == Sentiment.LOVE) && !externalAccount.hasAccountInfo()) {
+			throw new RuntimeException("Trying to set a love sentiment on account with no valid account info");
+		}
+		
 		externalAccount.setSentiment(sentiment);
 		notifier.onExternalAccountLovedAndEnabledMaybeChanged(externalAccount.getAccount().getOwner(), externalAccount);
 	}

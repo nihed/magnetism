@@ -7,6 +7,7 @@
 #include "HippoUI.h"
 #include "HippoWindowWin.h"
 #include <HippoUtil.h>
+#include <ShlObj.h>
 #include <Windows.h>
 #include <mshtml.h>
 #include <hippo/hippo-basics.h>
@@ -201,7 +202,7 @@ getAuthUrl(HippoPlatform *platform,
 }
 
 static gboolean
-do_read_login_cookie(const char       *web_host,
+read_ie_login_cookie(const char       *web_host,
                      char            **username_p,
                      char            **password_p)
 {
@@ -272,6 +273,69 @@ out:
     return (*username_p && *password_p);
 }
 
+static void
+store_ie_login_cookie(const char  *web_host,
+                      int          web_port,
+                      const char  *username,
+                      const char  *password)
+{
+    HippoBSTR authUrl;
+    
+    makeAuthUrl(web_host, &authUrl);
+
+    char *value = g_strdup_printf("host=%s&name=%s&password=%s; expires=Thu, 31-Dec-2020 23:59:59 GMT; path=/",
+                                  web_host, username, password);
+    HippoBSTR valueW = HippoBSTR::fromUTF8(value);
+    g_free(value);
+
+    InternetSetCookie(authUrl.m_str, L"auth", valueW.m_str);
+}
+
+static char *
+get_firefox_dir(void)
+{
+    WCHAR path[MAX_PATH];
+    SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path);
+
+    HippoBSTR result(path);
+    result.Append(L"\\Mozilla\\Firefox");
+    
+    HippoUStr resultU(result);
+    
+    return g_strdup(resultU.c_str());
+}
+
+static gboolean
+read_firefox_login_cookie(const char       *web_host,
+                          char            **username_p,
+                          char            **password_p)
+{
+    HippoCookieLocator *locator = hippo_cookie_locator_new();
+    const char *homedir = g_get_home_dir();
+    char *path;
+    GSList *cookies;
+    gboolean result = FALSE;
+
+    path = get_firefox_dir();
+    hippo_cookie_locator_add_directory(locator, path, HIPPO_BROWSER_FIREFOX);
+    g_free(path);
+
+    cookies = hippo_cookie_locator_load_cookies(locator, web_host, -1, "auth");
+    if (cookies) {
+        HippoCookie *cookie = (HippoCookie *)cookies->data;
+        const char *value = hippo_cookie_get_value(cookie);
+        result = hippo_parse_login_cookie(value, web_host, username_p, password_p);
+    }
+
+    /* Free cookies! */
+    g_slist_foreach(cookies, (GFunc) hippo_cookie_unref, NULL);
+    g_slist_free(cookies);
+
+    hippo_cookie_locator_destroy(locator);
+
+    return result;
+}
+
 static gboolean
 hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
                                       HippoBrowserKind *origin_browser_p,
@@ -281,14 +345,27 @@ hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
     char *web_host;
     int web_port;
 
-    *origin_browser_p = HIPPO_BROWSER_IE;
-
     hippo_platform_get_web_host_port(platform, &web_host, &web_port);
     
     g_debug("Looking for login to %s:%d", web_host, web_port);
 
-    gboolean result = do_read_login_cookie(web_host, username_p, password_p);
+    gboolean result = read_ie_login_cookie(web_host, username_p, password_p);
 
+    if (result) {
+        *origin_browser_p = HIPPO_BROWSER_IE;
+    } else if (!result) {
+        result = read_firefox_login_cookie(web_host, username_p, password_p);
+        if (result) {
+            *origin_browser_p = HIPPO_BROWSER_FIREFOX;
+
+            /* Store the cookie we found from firefox into the system-wide
+             * cookie store used by IE so that our embedded use of IE
+             * (and direct calls to WinInet) pick it up.
+             */
+            store_ie_login_cookie(web_host, web_port, *username_p, *password_p);
+        }
+    }
+    
     g_free(web_host);
 
     return result;
@@ -310,14 +387,14 @@ hippo_platform_impl_windows_migrate_cookie(const char *from_web_host,
     char *password;
 
     // See if we already have a cookie from the new host
-    if (do_read_login_cookie(to_web_host, &username, &password)) {
+    if (read_ie_login_cookie(to_web_host, &username, &password)) {
         g_free(username);
         g_free(password);
 
         return;
     }
 
-    if (!do_read_login_cookie(from_web_host, &username, &password))
+    if (!read_ie_login_cookie(from_web_host, &username, &password))
         return;
 
     GDate *date = g_date_new();

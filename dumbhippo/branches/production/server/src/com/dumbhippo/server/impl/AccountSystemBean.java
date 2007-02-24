@@ -26,6 +26,7 @@ import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.UserClientInfo;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
@@ -36,9 +37,13 @@ import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UnauthorizedException;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.UserViewpoint;
 
 @Stateless
 public class AccountSystemBean implements AccountSystem {
+	private static final int WEB_LOGIN_UPDATE_SEC = 60*60; // Throttle updates to avoid
+	                                                       // extra database writes
+
 	static private final Logger logger = GlobalSetup.getLogger(AccountSystem.class);	
 	
 	@PersistenceContext(unitName = "dumbhippo")
@@ -187,6 +192,47 @@ public class AccountSystemBean implements AccountSystem {
 
 		// not strictly a "pref" but this is a convenient place to send this to the client
 		prefs.put("musicSharingPrimed", Boolean.toString(account.isMusicSharingPrimed()));
+		
+		prefs.put("applicationUsageEnabled", Boolean.toString(spider.getApplicationUsageEnabled(account.getOwner())));
+		
 		return prefs;
-	}	
+	}
+
+	public void updateWebActivity(User user) {
+		Date current = new Date();
+		try {
+			user = spider.lookupGuid(User.class, user.getGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		Account account = user.getAccount();
+		if (account.getLastWebActivityDate() == null || current.getTime() - account.getLastWebActivityDate().getTime() > (WEB_LOGIN_UPDATE_SEC*1000)) {
+			account.setLastWebActivityDate(current);	
+		}
+	}
+
+	public void updateClientInfo(UserViewpoint viewpoint, String platform, String distribution) {
+		// NULL doesn't work well as a unique key, so use "" when no distribution is
+		// specified
+		if (distribution == null)
+			distribution = "";
+		
+		Query q = em.createQuery("SELECT uci FROM UserClientInfo uci " +
+				                 " WHERE uci.user = :user " +
+				                 "   AND uci.platform = :platform " +
+				                 "   AND uci.distribution = :distribution")
+            .setParameter("user", viewpoint.getViewer())
+			.setParameter("platform", platform)
+			.setParameter("distribution", distribution);
+		
+		UserClientInfo uci;
+		try {
+			uci = (UserClientInfo)q.getSingleResult();
+			uci.setLastChecked(new Date());
+		} catch (NoResultException e) {
+			uci = new UserClientInfo(viewpoint.getViewer(), platform, distribution);
+			uci.setLastChecked(new Date());
+			em.persist(uci);
+		}
+	}
 }

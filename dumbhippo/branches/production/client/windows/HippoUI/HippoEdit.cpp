@@ -19,6 +19,7 @@
 #define VERTICAL_PADDING 1 // Vertical padding around the font
 
 HippoEdit::HippoEdit()
+    : font_(0), listener_(0), text_(0)
 {
     // standard Windows control
     setClassName(L"EDIT");

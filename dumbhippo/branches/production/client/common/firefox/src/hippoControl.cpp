@@ -2,6 +2,8 @@
 
 #ifdef HIPPO_OS_LINUX
 #include <glib.h>
+#include <gtk/gtk.h>
+#include <gdk/gdkx.h>
 #include "hippoipc/hippo-dbus-ipc-locator.h"
 #define UTF8_VALIDATE g_utf8_validate
 #elif defined(HIPPO_OS_WINDOWS)
@@ -24,6 +26,14 @@
 #include "nsServiceManagerUtils.h"
 #include "nsStringAPI.h"
 #include "hippoControl.h"
+
+#ifdef HIPPO_OS_LINUX
+// These headers are used for finding the GdkWindow for a DOM window
+#include "nsIBaseWindow.h"
+#include "nsIDocShell.h"
+#include "nsIScriptGlobalObject.h"
+#include "nsIWidget.h"
+#endif
 
 hippoControl::hippoControl()
 {
@@ -53,6 +63,14 @@ NS_IMPL_ISUPPORTS1_CI(hippoControl, hippoIControl);
 NS_IMETHODIMP hippoControl::GetServerUrl(nsACString &aServerUrl)
 {
     aServerUrl.Assign(serverUrl_);
+    
+    return NS_OK;
+}
+
+/* attribute AUTF8String serverUrl; */
+NS_IMETHODIMP hippoControl::GetVersion(nsACString &aVersion)
+{
+    aVersion.Assign(HIPPO_FIREFOX_CONTROL_VERSION);
     
     return NS_OK;
 }
@@ -112,6 +130,46 @@ NS_IMETHODIMP hippoControl::SetListener(hippoIControlListener *listener)
     return NS_OK;
 }
 
+/* void setListener (in hippoIControlListener listener); */
+NS_IMETHODIMP hippoControl::SetWindow(nsIDOMWindow *window)
+{
+#ifdef HIPPO_OS_LINUX
+    HippoWindowId windowId = 0;
+    
+    /* The window ID that we want to pass to the Mugshot client is 
+     * the window ID that corresponds to the frame that the chat is
+     * in. If the Mugshot client needs the toplevel, it can walk up
+     * the hierarchy and find it, but passing the inner window allows
+     * more intelligence in knowing if the chat is actually visible.
+     *
+     * To switch to passing the toplevel, simply insert a call to
+     * gdk_window_toplevel() ... much easier than walking up the 
+     * Mozilla hierarchy.
+     */
+    nsCOMPtr<nsIScriptGlobalObject> global = do_QueryInterface(window);
+
+    nsCOMPtr<nsIBaseWindow> baseWindow;
+    if (global)
+        baseWindow = do_QueryInterface(global->GetDocShell());
+    
+    nsCOMPtr<nsIWidget> widget;
+    if (baseWindow)
+        baseWindow->GetMainWidget(getter_AddRefs(widget));
+    
+    GdkWindow *nativeWindow = NULL;
+    if (widget)
+        nativeWindow = (GdkWindow *)widget->GetNativeData(NS_NATIVE_WINDOW);
+    
+    if (nativeWindow)
+        windowId = (HippoWindowId)GDK_DRAWABLE_XID(nativeWindow);
+    
+    if (controller_ && endpoint_ && windowId)
+        controller_->setWindowId(endpoint_, windowId);
+#endif
+
+    return NS_OK;
+}
+
 /* void joinChatRoom (in AUTF8String chatId, in boolean participant); */
 NS_IMETHODIMP hippoControl::JoinChatRoom(const nsACString &chatId, PRBool participant)
 {
@@ -122,7 +180,7 @@ NS_IMETHODIMP hippoControl::JoinChatRoom(const nsACString &chatId, PRBool partic
         return rv;
 
     if (controller_ && endpoint_)
-        controller_->joinChatRoom(endpoint_, chatId.BeginReading(), participant);
+        controller_->joinChatRoom(endpoint_, chatId.BeginReading(), participant ? true : false);
     
     return NS_OK;
 }
@@ -160,6 +218,12 @@ NS_IMETHODIMP hippoControl::ShowChatWindow(const nsACString &chatId)
 /* void sendChatMessage (in AUTF8String chatId, in AUTF8String text); */
 NS_IMETHODIMP hippoControl::SendChatMessage(const nsACString &chatId, const nsACString &text)
 {
+    return SendChatMessageSentiment(chatId, text, 0); // 0 == INDIFFERENT
+}
+
+/* void sendChatMessageSentiment (in AUTF8String chatId, in AUTF8String text, int PRUint32 sentiment); */
+NS_IMETHODIMP hippoControl::SendChatMessageSentiment(const nsACString &chatId, const nsACString &text, PRUint32 sentiment)
+{
     nsresult rv;
 
     rv = checkGuid(chatId);
@@ -170,8 +234,11 @@ NS_IMETHODIMP hippoControl::SendChatMessage(const nsACString &chatId, const nsAC
     if (NS_FAILED(rv))
         return rv;
 
+    if (sentiment < 0 || sentiment > 2)
+        return NS_ERROR_INVALID_ARG;
+
     if (controller_)
-        controller_->sendChatMessage(chatId.BeginReading(), text.BeginReading());
+        controller_->sendChatMessage(chatId.BeginReading(), text.BeginReading(), sentiment);
     
     return NS_OK;
 }
@@ -238,10 +305,10 @@ hippoControl::onUserLeave(HippoEndpointId endpoint, const char *chatId, const ch
 }
 
 void 
-hippoControl::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial)
+hippoControl::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp, long serial)
 {
     if (listener_)
-        listener_->OnMessage(nsCString(chatId), nsCString(userId), nsCString(message), timestamp, serial);
+        listener_->OnMessage(nsCString(chatId), nsCString(userId), nsCString(message), timestamp, serial, sentiment);
 }
 
 void 

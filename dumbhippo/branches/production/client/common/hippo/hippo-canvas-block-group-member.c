@@ -23,11 +23,10 @@ static void hippo_canvas_block_group_member_get_property (GObject      *object,
                                                           guint         prop_id,
                                                           GValue       *value,
                                                           GParamSpec   *pspec);
-static GObject* hippo_canvas_block_group_member_constructor (GType                  type,
-                                                             guint                  n_construct_properties,
-                                                             GObjectConstructParam *construct_properties);
 
 /* Canvas block methods */
+static void hippo_canvas_block_group_member_append_content_items (HippoCanvasBlock *canvas_block,
+                                                                  HippoCanvasBox   *box);
 static void hippo_canvas_block_group_member_set_block       (HippoCanvasBlock *canvas_block,
                                                              HippoBlock       *block);
 
@@ -93,11 +92,11 @@ hippo_canvas_block_group_member_class_init(HippoCanvasBlockGroupMemberClass *kla
 
     object_class->set_property = hippo_canvas_block_group_member_set_property;
     object_class->get_property = hippo_canvas_block_group_member_get_property;
-    object_class->constructor = hippo_canvas_block_group_member_constructor;
 
     object_class->dispose = hippo_canvas_block_group_member_dispose;
     object_class->finalize = hippo_canvas_block_group_member_finalize;
 
+    canvas_block_class->append_content_items = hippo_canvas_block_group_member_append_content_items;
     canvas_block_class->set_block = hippo_canvas_block_group_member_set_block;
     canvas_block_class->title_activated = hippo_canvas_block_group_member_title_activated;
     canvas_block_class->expand = hippo_canvas_block_group_member_expand;
@@ -179,35 +178,19 @@ on_invite_activated(HippoCanvasItem  *button_or_link,
         g_object_unref(group);
 }
 
-static GObject*
-hippo_canvas_block_group_member_constructor (GType                  type,
-                                             guint                  n_construct_properties,
-                                             GObjectConstructParam *construct_properties)
+static void
+hippo_canvas_block_group_member_append_content_items (HippoCanvasBlock *block,
+                                                      HippoCanvasBox   *parent_box)
 {
-    GObject *object;
-    HippoCanvasBlock *block;
-    HippoCanvasBlockGroupMember *canvas_group_member;
-    HippoCanvasBox *box;
-
-    object = G_OBJECT_CLASS(hippo_canvas_block_group_member_parent_class)->constructor(type,
-                                                                                       n_construct_properties,
-                                                                                       construct_properties);
-    
-    block = HIPPO_CANVAS_BLOCK(object);
-    canvas_group_member = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(object);
+    HippoCanvasBlockGroupMember *canvas_group_member = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(block);
     
     hippo_canvas_block_set_heading(block, _("Group Update"));
-
-    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                       NULL);
-
-    hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
 
     canvas_group_member->invite_parent = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                                                       "spacing", 4,
                                                       NULL);
-    hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(canvas_group_member->invite_parent), 0);
+    hippo_canvas_box_append(parent_box, HIPPO_CANVAS_ITEM(canvas_group_member->invite_parent), 0);
     
     canvas_group_member->invite_image = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
                                                      "normal-image-name", "add_icon",
@@ -227,8 +210,6 @@ hippo_canvas_block_group_member_constructor (GType                  type,
 
     g_signal_connect(G_OBJECT(canvas_group_member->invite_link),
                      "activated", G_CALLBACK(on_invite_activated), block);
-    
-    return object;
 }
 
 static void

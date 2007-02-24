@@ -4,11 +4,13 @@
 
 #include <loudmouth/loudmouth.h>
 #include <hippo/hippo-basics.h>
+#include <hippo/hippo-entity.h>
 
 G_BEGIN_DECLS
 
 typedef enum {
     HIPPO_BLOCK_TYPE_UNKNOWN,
+    HIPPO_BLOCK_TYPE_ACCOUNT_QUESTION,
     HIPPO_BLOCK_TYPE_POST,
     HIPPO_BLOCK_TYPE_GROUP_MEMBER,
     HIPPO_BLOCK_TYPE_GROUP_CHAT,
@@ -18,6 +20,7 @@ typedef enum {
     HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET,
     HIPPO_BLOCK_TYPE_FACEBOOK_EVENT,
     HIPPO_BLOCK_TYPE_YOUTUBE_PERSON,
+    HIPPO_BLOCK_TYPE_NETFLIX_MOVIE,    
     HIPPO_BLOCK_TYPE_GENERIC
 } HippoBlockType;
 
@@ -27,6 +30,12 @@ typedef enum {
     HIPPO_STACK_VIEWER_COUNT,
     HIPPO_STACK_CHAT_MESSAGE
 } HippoStackReason;
+
+typedef enum {
+    HIPPO_BLOCK_FILTER_FLAG_FEED = 1 << 0
+    // OTHER_FLAG = 1 << 1,
+    // ANOTHER_FLAG = 1 << 2
+} HippoBlockFilterFlag;
 
 typedef struct _HippoBlock      HippoBlock;
 typedef struct _HippoBlockClass HippoBlockClass;
@@ -42,6 +51,7 @@ struct _HippoBlock {
     GObject parent;
     char   *guid;
     HippoBlockType type;
+    HippoEntity *source;
     gboolean is_public;
     GTime  update_time;
     gint64 timestamp;
@@ -49,12 +59,15 @@ struct _HippoBlock {
     gint64 ignored_timestamp;
     int significant_clicked_count;
     int clicked_count;
+    int message_count;
     char *icon_url;
     char *title;
     char *title_link;
     HippoStackReason stack_reason;
+    guint filter_flags;
     guint clicked : 1;
     guint ignored : 1;
+    guint pinned : 1;
 };
 
 struct _HippoBlockClass {
@@ -76,6 +89,9 @@ gboolean         hippo_block_update_from_xml           (HippoBlock     *block,
 
 const char*      hippo_block_get_guid                  (HippoBlock *block);
 HippoBlockType   hippo_block_get_block_type            (HippoBlock *block);
+
+HippoEntity *    hippo_block_get_source                (HippoBlock *block);
+void             hippo_block_set_source                (HippoBlock *block, HippoEntity *entity);
 
 gboolean hippo_block_is_public             (HippoBlock *block);
 void     hippo_block_set_public            (HippoBlock *block,
@@ -99,15 +115,25 @@ void     hippo_block_set_clicked_count     (HippoBlock *block,
 int      hippo_block_get_significant_clicked_count     (HippoBlock *block);
 void     hippo_block_set_significant_clicked_count     (HippoBlock *block,
                                                         int         value);
+int      hippo_block_get_message_count     (HippoBlock *block);
+void     hippo_block_set_message_count     (HippoBlock *block,
+                                            int         value);
 gboolean hippo_block_get_clicked           (HippoBlock *block);
 void     hippo_block_set_clicked           (HippoBlock *block,
                                             gboolean    value);
 gboolean hippo_block_get_ignored           (HippoBlock *block);
 void     hippo_block_set_ignored           (HippoBlock *block,
                                             gboolean    value);
+gboolean hippo_block_get_pinned            (HippoBlock *block);
+void     hippo_block_set_pinned            (HippoBlock *block,
+                                            gboolean    pinned);
+    
 HippoStackReason hippo_block_get_stack_reason (HippoBlock      *block);
 void             hippo_block_set_stack_reason (HippoBlock      *block,
                                                HippoStackReason value);
+                                               
+guint    hippo_block_get_filter_flags      (HippoBlock *block);
+void     hippo_block_set_filter_flags      (HippoBlock *block, guint flags);
 
 const char* hippo_block_get_title          (HippoBlock *block); 
 void        hippo_block_set_title          (HippoBlock *block,

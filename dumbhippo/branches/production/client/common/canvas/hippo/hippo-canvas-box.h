@@ -17,11 +17,19 @@ typedef enum
                              */
     HIPPO_PACK_END = 2,
     HIPPO_PACK_FIXED = 4,   /* Like position: absolute or GtkFixed */
-    HIPPO_PACK_IF_FITS = 8  /* Can hide this child to make space if allocation is too small
+    HIPPO_PACK_IF_FITS = 8, /* Can hide this child to make space if allocation is too small
                              * for the child's width request. 
                              * Include child width in box's natural width but not box's request.
                              * (doesn't work in vertical boxes for now)
                              */
+    /* Floated children: only works with vertical box, and cannot be used in combination
+     * with HIPPO_PACK_EXPAND or HIPPO_PACK_END
+     */
+    HIPPO_PACK_FLOAT_LEFT = 16,   /* Float to the left */
+    HIPPO_PACK_FLOAT_RIGHT = 32,  /* Float to the right */
+    HIPPO_PACK_CLEAR_LEFT = 64,   /* Pack below left-floated children */
+    HIPPO_PACK_CLEAR_RIGHT = 128, /* Pack below right-floated children */
+    HIPPO_PACK_CLEAR_BOTH = 192   /* Pack below left-and right floated children */
 } HippoPackFlags;
 
 typedef enum {
@@ -179,6 +187,10 @@ void                hippo_canvas_box_align               (HippoCanvasBox *box,
                                                           int            *width_p,
                                                           int            *height_p);
 
+void                hippo_canvas_box_set_clickable       (HippoCanvasBox *box,
+                                                          gboolean        clickable);
+
+gboolean            hippo_canvas_box_is_clickable        (HippoCanvasBox *box);
 
 G_END_DECLS
 

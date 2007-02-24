@@ -20,7 +20,7 @@ public:
     virtual void onDisconnect();
     virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant);
     virtual void onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId);
-    virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial);
+    virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment,double timestamp, long serial);
     virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying);
 };
 
@@ -67,12 +67,13 @@ TestListener::onUserLeave(HippoEndpointId endpoint, const char *chatId, const ch
 }
 
 void
-TestListener::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial)
+TestListener::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp, long serial)
 {
     g_print("message\n");
     g_print("    chatId: %s\n", chatId);
     g_print("    userId: %s\n", userId);
     g_print("    message: %s\n", message);
+    g_print("    sentiment: %d\n", sentiment);
     g_print("    timestamp: %f\n", timestamp);
     g_print("    serial: %ld\n", serial);
 }

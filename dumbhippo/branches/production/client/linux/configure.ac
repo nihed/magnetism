@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(mugshot, 1.1.30)
+AM_INIT_AUTOMAKE(mugshot, 1.1.33)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -486,7 +486,7 @@ else
     fi
 fi
 
-PKG_CHECK_MODULES(LIBHIPPOFIREFOX, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED $NSPR_PACKAGES)
+PKG_CHECK_MODULES(LIBHIPPOFIREFOX, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED $NSPR_PACKAGES gtk+-2.0)
 
 # Should have -lxpcom here, but that upsets libtool for unknown reasons. Or
 # should we use -lxpcomglue instead? We don't actually link to anything private, though

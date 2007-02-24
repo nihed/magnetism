@@ -22,6 +22,26 @@ dh.actions.addContact = function(contactId, cb, errcb) {
 		  	    	 });
 }
 
+dh.actions.removeContactConfirmation = function(name, resourceId, invited) {
+    if (invited) {
+        var idSuffix = 'InvList';
+        var removeFunction = function() {
+	        dh.actions.removeInvitedContact(resourceId);
+	    };
+	} else {
+        var idSuffix = 'ContactsList';
+        var removeFunction = function() {
+	        dh.actions.removeContact(resourceId)
+	    };	
+	}                   
+	                        
+	dh.util.showMessage('Remove ' + name + ' from your contacts?', idSuffix,
+	                    removeFunction,
+	                    function() {
+	                        dh.util.showMessage(null, idSuffix);
+	                    });
+}
+
 dh.actions.removeContact = function(contactObjectId) {
 	dh.server.doPOST("removecontactobject",
 				     { "contactObjectId" : contactObjectId },

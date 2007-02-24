@@ -19,7 +19,7 @@ public:
 
     virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant);
     virtual void onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId);
-    virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial);
+    virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp, long serial);
 
     virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying);
 
@@ -80,10 +80,10 @@ HippoBridgedIpcListenerImpl::onUserLeave(HippoEndpointId endpoint, const char *c
 }
 
 void 
-HippoBridgedIpcListenerImpl::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial)
+HippoBridgedIpcListenerImpl::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp, long serial)
 {
     HippoSerializedListener *serialized = new HippoSerializedListener();
-    serialized->onMessage(endpoint, chatId, userId, message, timestamp, serial);
+    serialized->onMessage(endpoint, chatId, userId, message, sentiment, timestamp, serial);
 
     invokeAsync((void *)serialized);
 }

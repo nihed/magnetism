@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="cairo"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories=".;..\..\common\cairo\src;..\..\common\cairo\pixman\src;..\dependencies\libpng\include;..\dependencies\zlib\include"
+		PreprocessorDefinitions="HAVE_CONFIG_H;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;BUILDING_CAIRO"
+		DisableSpecificWarnings="4146;4244;4267;4311"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalDependencies="libpng.lib"
+		OutputFile="$(OutDir)\libcairo-2.dll"
+		AdditionalLibraryDirectories="..\dependencies\libpng\lib\"
+	/>
+</VisualStudioPropertySheet>

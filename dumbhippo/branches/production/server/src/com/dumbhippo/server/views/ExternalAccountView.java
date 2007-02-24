@@ -59,6 +59,14 @@ public class ExternalAccountView {
 		       name.substring(1, name.length()).replaceAll("\\.", "");
 	}
 	
+	public String getSiteUserInfoType() {
+		return externalAccountType.getSiteUserInfoType();
+	}
+
+	public boolean isInfoTypeProvidedBySite() {
+		return externalAccountType.isInfoTypeProvidedBySite();
+	}
+	
 	public String getIconName() {
 		return externalAccountType.getIconName();
 	}

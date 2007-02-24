@@ -71,6 +71,8 @@ static void               hippo_canvas_box_get_allocation      (HippoCanvasItem 
                                                                 int                *height_p);
 static gboolean           hippo_canvas_box_button_press_event  (HippoCanvasItem    *item,
                                                                 HippoEvent         *event);
+static gboolean           hippo_canvas_box_button_release_event(HippoCanvasItem    *item,
+                                                                HippoEvent         *event);
 static gboolean           hippo_canvas_box_motion_notify_event (HippoCanvasItem    *item,
                                                                 HippoEvent         *event);
 static void               hippo_canvas_box_request_changed     (HippoCanvasItem    *item);
@@ -111,9 +113,19 @@ typedef struct {
     guint            end : 1;
     guint            fixed : 1;
     guint            if_fits : 1;
+    guint            float_left : 1;
+    guint            float_right : 1;
+    guint            clear_left : 1;
+    guint            clear_right : 1;
     guint            hovering : 1;
     guint            visible : 1;
     guint            requesting : 1; /* used to detect bugs */
+    
+    /* mouse button click tracking */
+    guint            left_release_pending : 1;
+    guint            middle_release_pending : 1;
+    guint            right_release_pending : 1;
+
 } HippoBoxChild;
 
 enum {
@@ -168,6 +180,7 @@ hippo_canvas_box_iface_init(HippoCanvasItemIface *klass)
     klass->allocate = hippo_canvas_box_allocate;
     klass->get_allocation = hippo_canvas_box_get_allocation;
     klass->button_press_event = hippo_canvas_box_button_press_event;
+    klass->button_release_event = hippo_canvas_box_button_release_event;
     klass->motion_notify_event = hippo_canvas_box_motion_notify_event;
     klass->request_changed = hippo_canvas_box_request_changed;
     klass->get_needs_request = hippo_canvas_box_get_needs_request;
@@ -923,7 +936,7 @@ hippo_canvas_box_set_context(HippoCanvasItem    *item,
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
     GSList *link;
     HippoCanvasContext *child_context;
-    
+   
     /* this shortcut most importantly catches NULL == NULL */
     if (box->context == context)
         return;
@@ -952,6 +965,11 @@ hippo_canvas_box_set_context(HippoCanvasItem    *item,
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
         hippo_canvas_item_set_context(child->item, child_context);
+
+        /* clear button_release_pending flags */
+        child->left_release_pending = FALSE;
+        child->middle_release_pending = FALSE;
+        child->middle_release_pending = FALSE; 
     }
 
     if (child_context == NULL) {
@@ -1657,16 +1675,389 @@ height_request_child(HippoBoxChild *child,
     }
 }
 
+/*
+ * In essence there are three separate layout managers for HippoCanvasBox:
+ *
+ *  - Horizontal
+ *  - Vertical
+ *  - Vertical with floats
+ *
+ * The code below implements the third case, and is used both when computing
+ * height for a width and when doing the final allocation.
+ *
+ * The way we handle floats is similar to the CSS box model but not absolutely
+ * identical. Some differences and limitations:
+ *
+ * - In the CSS model, an individual child in the normal flow can wrap around
+ *   a float; this obviously isn't possible for us where each child occupies
+ *   a rectangular area.
+ * - We never put two left floats or right floats on the same line; the left
+ *   all are positioned on the extreme left of the box, the right floats all
+ *   are positioned on the extreme right of the box.
+ * - We assume that floats all fit horizontally and that left floats and right
+ *   floats don't interact with each other; a float will never be forced
+ *   downwards because it doesn't fit.
+ */
+
+/* Checks that the box packing flags are consistent and returns true if the box has any
+ * floating children
+ */
+static gboolean
+box_validate_packing(HippoCanvasBox *box)
+{
+    gboolean has_floats = FALSE;
+    gboolean has_expand = FALSE;
+    gboolean has_if_fits = FALSE;
+    
+    GSList *l;
+
+    for (l = box->children; l != NULL; l = l->next) {
+        HippoBoxChild *child = l->data;
+
+        if (child->float_right || child->float_left || child->clear_left || child->clear_right)
+            has_floats = TRUE;
+        if (child->expand)
+            has_expand = TRUE;
+        if (child->if_fits)
+            has_if_fits = TRUE;
+    }
+
+    if (has_floats && box->orientation == HIPPO_ORIENTATION_HORIZONTAL)
+        g_warning("Floating children can only be used in a vertical box");
+    if (has_floats && has_expand)
+        g_warning("Floating children cannot be used in the same box as HIPPO_PACK_EXPAND");
+    if (has_if_fits && box->orientation == HIPPO_ORIENTATION_VERTICAL)
+        g_warning("HIPPO_PACK_IF_FITS can only be used in a horizontal box");
+
+    return has_floats;
+}
+
+/* Per-floated-child information that we need during the layout process
+ */
+typedef struct {
+    HippoBoxChild *child;
+    int y;
+} HippoBoxFloat;
+
+/* Global information during the layout process
+ */
+typedef struct {
+    HippoCanvasBox *box;
+    int for_width;
+    
+    int y;             /* End y-coordinate of the last normal-flow child */
+    int normal_count;  /* Number of normal-flow child we've seen */
+
+    HippoBoxFloat *left;
+    int n_left;         /* number of left-floated children */
+    int next_left;      /* the index of the next left-floated child in the packing order */
+    int at_y_left;      /* the index of the first left-floated child that could overlap
+                         * subsequent normal-flow children */
+    
+    HippoBoxFloat *right;
+    int n_right;        /* number of right-floated children */
+    int next_right;     /* the index of the next right-floated child in the packing order */
+    int at_y_right;     /* the index of the first right-floated child that could overlap
+                         * subsequent normal-flow children */
+    
+} HippoBoxFloats;
+
+/* Initialize the layout process when doing layout with floats.
+ */
+static void 
+floats_start_packing(HippoBoxFloats  *floats,
+                     HippoCanvasBox  *box,
+                     int              for_width)
+{
+    GSList *l;
+    int n_left = 0;
+    int n_right = 0;
+    int i_left, i_right;
+
+    floats->box = box;
+    floats->for_width = for_width;
+
+    /* Count the number of floated children and allocate space for
+     * per-child information
+     */
+    for (l = box->children; l != NULL; l = l->next) {
+        HippoBoxChild *child = l->data;
+
+        if (child->fixed || !child->visible)
+            continue;
+
+        if (child->float_left)
+            n_left++;
+        else if (child->float_right)
+            n_right++;
+    }
+
+    floats->n_left = n_left;
+    floats->left = g_new(HippoBoxFloat, n_left);
+    floats->n_right = n_right;
+    floats->right = g_new(HippoBoxFloat, n_right);
+
+    /* Compute initial sizes and (vertical) positions for the floated children based on
+     * the requested width and height of each child; left and right floats are positioned
+     * in a solid column down each side. The only adjustment we make later is to move floats
+     * down so that a float doesn't appear above a normally-flowed child that precedes it
+     * in the packing order.
+     */
+    i_left = 0;
+    i_right = 0;
+    for (l = box->children; l != NULL; l = l->next) {
+        HippoBoxChild *child = l->data;
+
+        if (child->fixed || !child->visible)
+            continue;
+
+        if (child->float_left) {
+            floats->left[i_left].child = child;
+            if (i_left == 0)
+                floats->left[i_left].y = 0;
+            else
+                floats->left[i_left].y = floats->left[i_left - 1].y + floats->left[i_left - 1].child->height_request + box->spacing;
+                
+            i_left++;
+        } else if (child->float_right) {
+            floats->right[i_right].child = child;
+            if (i_right == 0)
+                floats->right[i_right].y = 0;
+            else
+                floats->right[i_right].y = floats->right[i_right - 1].y + floats->right[i_right - 1].child->height_request + box->spacing;
+                
+            i_right++;
+        }
+    }
+    
+    floats->y = 0;
+    floats->normal_count = 0 ;
+
+    floats->next_left = 0;
+    floats->at_y_left = 0;
+    
+    floats->next_right = 0;
+    floats->at_y_right = 0;
+}
+
+/* Return the bottom y of the last left float processed
+ */
+static int
+floats_get_left_end_y(HippoBoxFloats *floats)
+{
+    if (floats->next_left > 0)
+        return floats->left[floats->next_left - 1].y + floats->left[floats->next_left - 1].child->height_request;
+    else
+        return 0;
+}
+
+/* Return the bottom y of the last right float processed
+ */
+static int
+floats_get_right_end_y(HippoBoxFloats *floats)
+{
+    if (floats->next_right > 0)
+        return floats->right[floats->next_right - 1].y + floats->right[floats->next_right - 1].child->height_request;
+    else
+        return 0;
+}
+
+/**
+ * Do layout for a single child; if do_request is FALSE we assume that we've
+ * previously done layout at the same width (from get_width_request), so we skip
+ * doing size negotation with the child, and use the cached value. The content-area
+ * relative allocation of the child is stored in child_allocation, if non-NULL.
+ */
+static void
+floats_add_child(HippoBoxFloats *floats,
+                 HippoBoxChild  *child,
+                 gboolean        do_request,
+                 HippoRectangle *child_allocation)
+{
+    HippoBoxFloat *left = floats->left;
+    HippoBoxFloat *right = floats->right;
+    int i;
+    
+    if (child->fixed || !child->visible)
+        return;
+
+    if (child->float_left) {
+        /* If the float doesn't appear below normal normal children that precede
+         * it in the packing order, then we need to move it (and all following
+         * left floats) down
+         */
+        HippoBoxFloat *left_float = &left[floats->next_left];
+
+        int next_normal_y = floats->y;
+        if (floats->normal_count > 0)
+            next_normal_y += floats->box->spacing;
+
+        if (left_float->y < next_normal_y) {
+            int move_down = next_normal_y - left_float->y;
+            for (i = floats->next_left; i < floats->n_left; i++)
+                left[i].y += move_down;
+        }
+
+        if (child_allocation) {
+            child_allocation->x = 0;
+            child_allocation->y = left_float->y;
+            child_allocation->width = child->natural_width;
+            child_allocation->height = child->height_request;
+        }
+        
+        floats->next_left++;
+        
+    } else if (child->float_right) {
+        /* If the float doesn't appear below normal normal children that precede
+         * it in the packing order, then we need to move it (and all following
+         * left floats) down
+         */
+        HippoBoxFloat *right_float = &right[floats->next_right];
+
+        int next_normal_y = floats->y;
+        if (floats->normal_count > 0)
+            next_normal_y += floats->box->spacing;
+
+        if (right_float->y < next_normal_y) {
+            int move_down = next_normal_y - right_float->y;
+            for (i = floats->next_right; i < floats->n_right; i++)
+                right[i].y += move_down;
+        }
+        
+        if (child_allocation) {
+            child_allocation->x = floats->for_width - child->natural_width;
+            child_allocation->y = right_float->y;
+            child_allocation->width = child->natural_width;
+            child_allocation->height = child->height_request;
+        }
+        
+        floats->next_right++;
+        
+    } else {
+        int i_left = floats->at_y_left;
+        int i_right = floats->at_y_right;
+        int left_float_width = 0;
+        int right_float_width = 0;
+        int tentative_height = do_request ? 1 : child->height_request;
+        gboolean one_more_pass = TRUE;
+
+        /* Handle clear_left / clear_right. Ensure that normal-flow children appear below any
+         * floats that they are specified to clear.
+         */
+        if (child->clear_left) {
+            int float_end_y = floats_get_left_end_y(floats);
+            if (float_end_y > floats->y)
+                floats->y = float_end_y;
+        }
+
+        if (child->clear_right) {
+            int float_end_y = floats_get_right_end_y(floats);
+            if (float_end_y > floats->y)
+                floats->y = float_end_y;
+        }
+        
+        if (floats->normal_count != 0)
+            floats->y += floats->box->spacing;
+
+        /* Skip over any floats that are completely above this child; they don't affect the
+         * width; we only look up to floats->next_left/right since floats after this
+         * normal-flow child will appear below it.
+         */
+        while (i_left < floats->next_left &&
+               left[i_left].y + left[i_left].child->height_request <= floats->y)
+            i_left++;
+
+        while (i_right < floats->next_right &&
+               right[i_right].y + right[i_right].child->height_request <= floats->y)
+            i_right++;
+        
+        /* We need to iterate to determine the set of floats that actually do affect
+         * the width; we start off subtracting the width of only floats that overlap
+         * the top line of the child (tentative_height == 1), and find the height
+         * of the child at that width. If that height causes us to overlap any more
+         * floats and narrow the available width, then we need to repeat, and so
+         * forth.
+         *
+         * If we see a float that overlaps this child, then we know that floats 
+         * before that float can't overlap normal children after this child,
+         * so we can advance floats->at_y_left/at_y_right.
+         */
+        while (TRUE) {
+            while (i_left < floats->next_left &&
+                   left[i_left].y < floats->y + tentative_height) {
+                if (left[i_left].child->natural_width > left_float_width) {
+                    left_float_width = left[i_left].child->natural_width;
+                    one_more_pass = TRUE;
+                }
+                floats->at_y_left = i_left;
+                i_left++;
+            }
+
+            while (i_right < floats->next_right &&
+                   right[i_right].y < floats->y + tentative_height) {
+                if (right[i_right].child->natural_width > right_float_width) {
+                    right_float_width = right[i_right].child->natural_width;
+                    one_more_pass = TRUE;
+                }
+                floats->at_y_right = i_right;
+                i_right++;
+            }
+
+            if (!one_more_pass)
+                break;
+
+            if (do_request) {
+                height_request_child(child, floats->for_width - left_float_width - right_float_width);
+                tentative_height = child->height_request;
+            }
+
+            one_more_pass = FALSE;
+        }
+
+        if (child_allocation) {
+            child_allocation->x = left_float_width;
+            child_allocation->y = floats->y;
+            child_allocation->width = floats->for_width - left_float_width - right_float_width;
+            child_allocation->height = tentative_height;
+        }
+                                            
+        floats->y += tentative_height;
+        floats->normal_count++;
+    }
+}
+
+/* Finish the floating layout process. Returns the minimal total height for the box
+ */
+static int
+floats_end_packing(HippoBoxFloats *floats)
+{
+    int height = floats->y;
+    int left_end_y = floats_get_left_end_y(floats);
+    int right_end_y = floats_get_right_end_y(floats);
+
+    if (left_end_y > height)
+        height = left_end_y;
+    if (right_end_y > height)
+        height = right_end_y;
+
+    g_free(floats->left);
+    g_free(floats->right);
+
+    return height;
+}
+
 static int
 hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
                                             int             for_width)
 {
     int total;
     GSList *link;
+    gboolean has_floats;
 
     /* Do fixed children, just to have their request recorded;
      * the box for_width is ignored here, fixed children just
-     * always get their width request.
+     * always get their width request. Similarly, floated children
+     * just get their width request, so we request them first.
      *
      * For !visible children we want to request them but will
      * always allocate 0x0
@@ -1674,7 +2065,7 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
 
-        if (!(child->fixed || !child->visible))
+        if (!(child->fixed || child->float_left || child->float_right || !child->visible))
             continue;
 
         if (child->width_request < 0)
@@ -1687,7 +2078,21 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
 
     total = 0;
 
-    if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
+    has_floats = box_validate_packing(box);
+    
+    if (box->orientation == HIPPO_ORIENTATION_VERTICAL && has_floats) {
+
+        HippoBoxFloats floats;
+
+        floats_start_packing(&floats, box, for_width);
+        
+        for (link = box->children; link != NULL; link = link->next) {
+            floats_add_child(&floats, link->data, TRUE, NULL);
+        }
+
+        total = floats_end_packing(&floats);
+
+    } else if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
         int n_children;
 
         n_children = 0;
@@ -1894,6 +2299,7 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     int vertical_expand_count;
     GSList *link;
     int content_x, content_y;
+    gboolean has_floats;
 
     box = HIPPO_CANVAS_BOX(item);
     klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
@@ -1960,8 +2366,34 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     }
 
     /* Now layout the box */
+
+    has_floats = box_validate_packing(box);
     
-    if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
+    if (box->orientation == HIPPO_ORIENTATION_VERTICAL && has_floats) {
+
+        HippoBoxFloats floats;
+
+        floats_start_packing(&floats, box, allocated_content_width);
+        
+        for (link = box->children; link != NULL; link = link->next) {
+            HippoBoxChild *child = link->data;
+            HippoRectangle child_allocation;
+
+            if (child->fixed || !child->visible)
+                continue;
+            
+            floats_add_child(&floats, child, FALSE, &child_allocation);
+
+            allocate_child(box, child,
+                           content_x + child_allocation.x,
+                           content_y + child_allocation.y,
+                           child_allocation.width, child_allocation.height,
+                           origin_changed);
+        }
+
+        floats_end_packing(&floats);
+
+    } else if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
         int top_y;
         int bottom_y;
         int vertical_expand_space;
@@ -2176,6 +2608,75 @@ forward_motion_event(HippoCanvasBox *box,
     return result;
 }
 
+static void
+set_release_pending (HippoBoxChild *child,
+                     guint          button,
+                     gboolean       value)
+{
+    g_assert (child != NULL);
+
+    switch (button)
+      {
+      case 1:
+        child->left_release_pending = value;
+        break;
+      case 2:
+        child->middle_release_pending = value;
+        break;
+      case 3:
+        child->right_release_pending = value;
+        break;
+      }
+}
+
+static gboolean
+is_release_pending (HippoBoxChild *child,
+                    guint          button)
+{
+    gboolean result = FALSE;
+
+    g_assert (child != NULL);
+
+    switch (button)
+      {
+      case 1:
+        result = child->left_release_pending == TRUE;
+        break;
+      case 2:
+        result = child->middle_release_pending == TRUE;
+        break;
+      case 3:
+        result = child->right_release_pending == TRUE;
+        break;
+      }
+
+    return result;
+}
+
+static gboolean
+forward_button_release_event(HippoCanvasBox *box,
+                             HippoEvent     *event)
+{
+    GSList *link;
+    
+    for (link = box->children; link != NULL; link = link->next) {
+        HippoBoxChild *child;
+
+        child = link->data;
+        if (is_release_pending (child, event->u.button.button)) {
+            gboolean handled = FALSE;
+            
+            handled = hippo_canvas_item_process_event(child->item,
+                                                      event, child->x, child->y);
+            
+            set_release_pending(child, event->u.button.button, FALSE); 
+            return handled;
+        }
+    }
+
+    return FALSE;
+}
+
 
 static gboolean
 forward_event(HippoCanvasBox *box,
@@ -2186,16 +2687,21 @@ forward_event(HippoCanvasBox *box,
     if (event->type == HIPPO_EVENT_MOTION_NOTIFY) {
         /* Motion events are a bit more complicated than the others */
         return forward_motion_event(box, event);
-    } else {
+    } else if (event->type == HIPPO_EVENT_BUTTON_RELEASE) {
+        return forward_button_release_event(box, event);
+    } else if (event->type == HIPPO_EVENT_BUTTON_PRESS) {
         child = find_child_at_point(box, event->x, event->y);
         
         if (child != NULL) {
+            set_release_pending (child, event->u.button.button, TRUE); 
             return hippo_canvas_item_process_event(child->item,
                                                    event, child->x, child->y);
         } else {
             return FALSE;
         }
-    }
+    } else {
+        return FALSE;
+    } 
 }
 
 static gboolean
@@ -2204,18 +2710,23 @@ hippo_canvas_box_button_press_event (HippoCanvasItem *item,
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
 
-    if (forward_event(box, event)) {
-        return TRUE;
-    } else if (box->clickable && event->u.button.button == 1) {
-        /* FIXME we should really do this on release iff the same
-         * item got the press, but this requires emulating "passive
-         * grabs" for canvas items and right now just not important
-         * enough to bother with
-         */
+    return forward_event(box, event);
+}
+
+static gboolean
+hippo_canvas_box_button_release_event (HippoCanvasItem *item,
+                                       HippoEvent      *event)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+    gboolean handled;
+    
+    handled = forward_event (box, event);
+
+    if (!handled && box->clickable && event->u.button.button == 1) {
         hippo_canvas_item_emit_activated(item);
         return TRUE;
     } else {
-        return FALSE;
+        return handled;
     }
 }
 
@@ -2443,7 +2954,15 @@ set_flags(HippoBoxChild *c,
         old |= HIPPO_PACK_FIXED;
     if (c->if_fits)
         old |= HIPPO_PACK_IF_FITS;
-    
+    if (c->float_left)
+        old |= HIPPO_PACK_FLOAT_LEFT;
+    if (c->float_right)
+        old |= HIPPO_PACK_FLOAT_RIGHT;
+    if (c->clear_left)
+        old |= HIPPO_PACK_CLEAR_LEFT;
+    if (c->clear_right)
+        old |= HIPPO_PACK_CLEAR_RIGHT;
+
     if (old == flags)
         return FALSE; /* no change */
 
@@ -2451,6 +2970,15 @@ set_flags(HippoBoxChild *c,
     c->end = (flags & HIPPO_PACK_END) != 0;
     c->fixed = (flags & HIPPO_PACK_FIXED) != 0;
     c->if_fits = (flags & HIPPO_PACK_IF_FITS) != 0;
+    c->float_left = (flags & HIPPO_PACK_FLOAT_LEFT) != 0;
+    c->float_right = (flags & HIPPO_PACK_FLOAT_RIGHT) != 0;
+    c->clear_left = (flags & HIPPO_PACK_CLEAR_LEFT) != 0;
+    c->clear_right = (flags & HIPPO_PACK_CLEAR_RIGHT) != 0;
+    
+    if ((c->float_left && c->float_right) ||
+        (c->float_left && c->fixed) ||
+        (c->float_right && c->fixed))
+        g_warning("Only one of FLOAT_LEFT, FLOAT_RIGHT, FLOAT_EXPAND can be used at once");
     
     return TRUE;
 }
@@ -2870,3 +3398,22 @@ hippo_canvas_box_set_child_packing (HippoCanvasBox              *box,
         hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
     }
 }
+
+void
+hippo_canvas_box_set_clickable (HippoCanvasBox *box,
+                                gboolean        clickable)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
+
+    box->clickable = clickable;
+}
+
+gboolean
+hippo_canvas_box_is_clickable (HippoCanvasBox *box)
+{
+    g_return_val_if_fail(HIPPO_IS_CANVAS_BOX(box), FALSE);
+
+    return box->clickable;
+}
+
+

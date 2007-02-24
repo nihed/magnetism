@@ -63,7 +63,7 @@
 				<div id="dhChatAreaBorderWhiteout"></div>
 				
 				<div id="dhPostSwarmInfo">
-					<span id="dhPostViewingListLabel">Who's swarming this page: </span>
+					<span id="dhPostViewingListLabel">Who's around: </span>
 					<span id="dhPostViewingListPeople"></span>
 				</div>
 				
@@ -89,7 +89,7 @@
 					<div id="dhPostActions">
 						<c:if test="${!empty joinChatUri}">
 							<div class="dh-post-action" id="dhPostJoinChat">
-								<a href="${joinChatUri}"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="${joinChatUri}">Join Chat</a> <span id="dhPostChatCount"></span>
+								<a href="${joinChatUri}"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="${joinChatUri}">Quips and Comments</a>
 							</div>
 						</c:if>
 					   <c:if test="${!param.browserBar}">

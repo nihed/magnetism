@@ -90,11 +90,12 @@ HippoSerializedListenerOnUserLeave::invoke(HippoIpcListener *listener)
 class HippoSerializedListenerOnMessage : public HippoSerializedListenerArgs
 {
 public:
-    HippoSerializedListenerOnMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial) {
+    HippoSerializedListenerOnMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp, long serial) {
         endpoint_ = endpoint;
         chatId_ = chatId;
         userId_ = userId;
         message_ = message;
+        sentiment_ = sentiment;
         timestamp_ = timestamp;
         serial_ = serial;
     }
@@ -106,6 +107,7 @@ private:
     std::string chatId_;
     std::string userId_;
     std::string message_;
+    int sentiment_;
     double timestamp_;
     long serial_;
 };
@@ -113,7 +115,7 @@ private:
 void
 HippoSerializedListenerOnMessage::invoke(HippoIpcListener *listener)
 {
-    listener->onMessage(endpoint_, chatId_.c_str(), userId_.c_str(), message_.c_str(), timestamp_, serial_);
+    listener->onMessage(endpoint_, chatId_.c_str(), userId_.c_str(), message_.c_str(), sentiment_, timestamp_, serial_);
 }
 
 class HippoSerializedListenerUserInfo : public HippoSerializedListenerArgs
@@ -194,10 +196,10 @@ HippoSerializedListener::onUserLeave(HippoEndpointId endpoint, const char *chatI
 }
 
 void 
-HippoSerializedListener::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial)
+HippoSerializedListener::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp, long serial)
 {
     clear();
-    args_ = new HippoSerializedListenerOnMessage(endpoint, chatId, userId, message, timestamp, serial);
+    args_ = new HippoSerializedListenerOnMessage(endpoint, chatId, userId, message, sentiment, timestamp, serial);
 }
 
 void 

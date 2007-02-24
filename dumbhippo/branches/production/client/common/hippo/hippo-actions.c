@@ -339,6 +339,24 @@ hippo_actions_expand_notification(HippoActions *actions)
 }
 
 void
+hippo_actions_toggle_filter(HippoActions *actions)
+{
+    hippo_stack_manager_toggle_filter(actions->cache);
+}
+
+void
+hippo_actions_toggle_nofeed(HippoActions *actions)
+{
+    hippo_stack_manager_toggle_nofeed(actions->cache);
+}
+
+void
+hippo_actions_toggle_noselfsource(HippoActions *actions)
+{
+    hippo_stack_manager_toggle_noselfsource(actions->cache);
+}
+
+void
 hippo_actions_open_home_page(HippoActions    *actions)
 {
     hippo_connection_open_maybe_relative_url(get_connection(actions), "/");
@@ -411,4 +429,13 @@ hippo_actions_quip(HippoActions   *actions,
     
     hippo_quip_window_show(quip_window);
     g_object_unref(quip_window);
+}
+
+void 
+hippo_actions_send_account_question_response(HippoActions *actions,
+                                             const char   *block_id,
+                                             const char   *response)
+{
+    hippo_connection_send_account_question_response(get_connection(actions),
+                                                    block_id, response);
 }

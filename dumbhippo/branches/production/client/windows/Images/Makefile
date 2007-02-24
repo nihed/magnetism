@@ -22,6 +22,7 @@ all:
 	copy $(IMGDIR)\lid.png $(OUTDIR)\images
 	copy $(IMGDIR)\lock_icon.png $(OUTDIR)\images
 	copy $(IMGDIR)\mugshotstacker.png $(OUTDIR)\images
+	copy $(IMGDIR)\netflix_no_image.png $(OUTDIR)\images
 	copy $(IMGDIR)\noart.png $(OUTDIR)\images
 	copy $(IMGDIR)\nophoto.png $(OUTDIR)\images
 	copy $(IMGDIR)\photo_icon.png $(OUTDIR)\images

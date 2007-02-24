@@ -164,6 +164,18 @@ on_recent_messages_changed(HippoBlock *block,
 }
 
 static void
+on_message_count_changed(HippoBlock *block,
+                         GParamSpec *arg, /* null when first calling this */
+                         HippoCanvasBlockMusicChat *block_music_chat)
+{
+    int message_count = -1;
+
+    g_object_get(block, "message-count", &message_count, NULL);
+    
+    hippo_canvas_block_music_set_message_count(HIPPO_CANVAS_BLOCK_MUSIC(block_music_chat), message_count);
+}
+
+static void
 hippo_canvas_block_music_chat_set_block(HippoCanvasBlock *canvas_block,
                                           HippoBlock       *block)
 {
@@ -179,6 +191,9 @@ hippo_canvas_block_music_chat_set_block(HippoCanvasBlock *canvas_block,
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_recent_messages_changed),
                                              canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_message_count_changed),
+                                             canvas_block);
     }
 
     /* Chain up to get the block really changed */
@@ -193,9 +208,15 @@ hippo_canvas_block_music_chat_set_block(HippoCanvasBlock *canvas_block,
                          "notify::recent-messages",
                          G_CALLBACK(on_recent_messages_changed),
                          canvas_block);
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::message-count",
+                         G_CALLBACK(on_message_count_changed),
+                         canvas_block);
         on_track_changed(canvas_block->block, NULL,
                          HIPPO_CANVAS_BLOCK_MUSIC_CHAT(canvas_block));
         on_recent_messages_changed(canvas_block->block, NULL,
                                    HIPPO_CANVAS_BLOCK_MUSIC_CHAT(canvas_block));
+        on_message_count_changed(canvas_block->block, NULL,
+                                 HIPPO_CANVAS_BLOCK_MUSIC_CHAT(canvas_block));
     }
 }

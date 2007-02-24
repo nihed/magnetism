@@ -17,6 +17,11 @@ public enum BlockType {
 		public boolean getClickedCountUseful() { 
 			return true;
 		}
+		
+		@Override
+		public boolean userOriginIsData2() {
+			return true;
+		}
 	},
 	GROUP_MEMBER, // 1
 	GROUP_CHAT, // 2
@@ -168,12 +173,39 @@ public enum BlockType {
 	GROUP_REVISION { // 19
 		
 				
+	},
+	// a Netflix movie
+	NETFLIX_MOVIE { // 20
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}
+	},
+	// a question to the user about account options
+	ACCOUNT_QUESTION { // 21
+		@Override
+		public boolean userOriginIsData1() {
+			return true; 
+		}
+		
+		@Override
+		public StackInclusion getDefaultStackInclusion() {
+			return StackInclusion.ONLY_WHEN_VIEWING_SELF;
+		}
 	};
 	
 	// True for blocks which are originated by a user and the
 	// user guid is stored in the block data1
 	public boolean userOriginIsData1() { 
 		return false; 
+	}
+	
+	public boolean userOriginIsData2() {
+		return false;
 	}
 	
 	// returns true if all blocks of this type are always public,

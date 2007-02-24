@@ -14,10 +14,11 @@ import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.Viewpoint;
 
 public class MusicChatBlockView extends AbstractPersonBlockView implements MusicBlockView {
-	public static final int RECENT_MESSAGE_COUNT = 3;
+	public static final int RECENT_MESSAGE_COUNT = 5;
 	
 	private List<ChatMessageView> recentMessages;
 	private TrackView trackView;
+	int messageCount = -1;
 	
 	public MusicChatBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
 		super(viewpoint, block, ubd, participated);
@@ -27,10 +28,11 @@ public class MusicChatBlockView extends AbstractPersonBlockView implements Music
 		super(viewpoint, block, gbd, participated);
 	}
 	
-	void populate(PersonView userView, TrackView trackView, List<ChatMessageView> recentMessages) {
+	public void populate(PersonView userView, TrackView trackView, List<ChatMessageView> recentMessages, int messageCount) {
 		partiallyPopulate(userView);
 		this.trackView = trackView;
 		this.recentMessages = recentMessages;
+		this.messageCount = messageCount;
 		setPopulated(true);
 	}
 	
@@ -108,5 +110,10 @@ public class MusicChatBlockView extends AbstractPersonBlockView implements Music
 	
 	public boolean isQuip() {
 		return true;
+	}
+	
+	@Override
+	public int getMessageCount() {
+		return messageCount;
 	}
 }

@@ -13,6 +13,9 @@
 #include "Resource.h"
 #include <ExDispid.h>
 #include <strsafe.h>
+                   
+// I don't understand why this is necessary with VS2005, but it (hopefully) should be harmless
+struct DECLSPEC_UUID("f1db8392-7331-11d0-8c99-00a0c92dbfe8") IInputObjectSite;
 
 static const int MIN_HEIGHT = 125;
 static const int MAX_HEIGHT = 125; // -1 is no max

@@ -24,11 +24,16 @@ HippoEndpointProxy *hippo_endpoint_proxy_new (HippoDataCache *data_cache);
 
 guint64 hippo_endpoint_proxy_get_id          (HippoEndpointProxy *proxy);
 void    hippo_endpoint_proxy_unregister      (HippoEndpointProxy *proxy);
+void    hippo_endpoint_proxy_set_window_id   (HippoEndpointProxy *proxy,
+                                              guint64             window_id);
+guint64 hippo_endpoint_proxy_get_window_id   (HippoEndpointProxy *proxy);
 void    hippo_endpoint_proxy_join_chat_room  (HippoEndpointProxy *proxy,
-                          const char         *chat_id,
-                          HippoChatState      state);
+                                              const char         *chat_id,
+                                              HippoChatState      state);
 void    hippo_endpoint_proxy_leave_chat_room (HippoEndpointProxy *proxy,
-                          const char         *chat_id);
+                                              const char         *chat_id);
+HippoChatState hippo_endpoint_proxy_get_chat_state (HippoEndpointProxy *proxy,
+                                                    const char         *chat_id);
 
 G_END_DECLS
 

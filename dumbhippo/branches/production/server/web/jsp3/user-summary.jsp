@@ -6,10 +6,10 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<c:if test="${empty person}">
-	<dht3:requirePersonBean beanClass="com.dumbhippo.web.pages.UserSummaryPage"/>
-	<jsp:setProperty name="person" property="needExternalAccounts" value="true"/>
-</c:if>
+<dht3:requireWhoParameter page="/user-summary"/>
+
+<dht3:requirePersonBean beanClass="com.dumbhippo.web.pages.UserSummaryPage"/>
+<jsp:setProperty name="person" property="needExternalAccounts" value="true"/>
 
 <head>
 	<title><c:out value="${person.viewedPerson.name}"/>'s Summary - Mugshot</title>
@@ -42,10 +42,9 @@
        </table>
 
 	<div>
-       <c:forEach var="account" items="${person.viewedPerson.lovedAccounts.list}">
-
-       <a target="_top" title="${account.externalAccount.siteName}" href="${account.link}"><img src="${baseUrl}/images3/${buildStamp}/${account.externalAccount.iconName}" border="0"/></a>&nbsp;
-	</c:forEach>
+    	<c:forEach var="account" items="${person.viewedPerson.lovedAccounts.list}">
+        	<a target="_top" title="${account.externalAccount.siteName}" href="${account.link}"><img src="${baseUrl}/images3/${buildStamp}/${account.externalAccount.iconName}" border="0"/></a>&nbsp;
+		</c:forEach>
 	</div>
 
 	<div>

@@ -40,13 +40,20 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
+import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.ServerStatus;
 import com.dumbhippo.server.impl.ConfigurationBean;
+import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.web.JavascriptResolver;
 import com.dumbhippo.web.RewrittenRequest;
 import com.dumbhippo.web.SigninBean;
+import com.dumbhippo.web.UserSigninBean;
 import com.dumbhippo.web.WebEJBUtil;
 import com.dumbhippo.web.WebStatistics;
 
@@ -91,8 +98,14 @@ public class RewriteServlet extends HttpServlet {
 	
 	private FaviconHandler faviconHandler;
 	
-	private boolean hasSignin(HttpServletRequest request) {
-		return SigninBean.getForRequest(request).isValid();
+	private Guid getSigninGuid(HttpServletRequest request) {
+		SigninBean signin = SigninBean.getForRequest(request);
+		if (signin.isValid()) {
+			Viewpoint viewpoint = signin.getViewpoint();
+			if (viewpoint instanceof UserViewpoint)
+				return ((UserViewpoint) viewpoint).getViewer().getGuid();
+		}
+		return null;
 	}
 	
     private String checkBuildStamp(String relativePath) {
@@ -207,16 +220,23 @@ public class RewriteServlet extends HttpServlet {
 
 			SigninBean signin = SigninBean.getForRequest(request);
 
-			// When the user is logged in, we want to disable all caching of
-			// our responses; since we don't specify an Expires header, browsers
-			// would normally revalidate with an If-Modified request anyways, but 
-			// IE in some cases will used cached content without checking 
-			// (for example, when using the forward/back buttons). That breaks how 
-			// we do action links that cause the page to reload. Preventing that 
-			// caching will make back/forward a little slower, but as long as we 
-			// keep our page load times snappy it isn't a big deal.
-			if (signin.isValid())
+			if (signin.isValid()) {
+				// When the user is logged in, we want to disable all caching of
+				// our responses; since we don't specify an Expires header, browsers
+				// would normally revalidate with an If-Modified request anyways, but 
+				// IE in some cases will used cached content without checking 
+				// (for example, when using the forward/back buttons). That breaks how 
+				// we do action links that cause the page to reload. Preventing that 
+				// caching will make back/forward a little slower, but as long as we 
+				// keep our page load times snappy it isn't a big deal.				
 				response.setHeader("Cache-Control", "no-cache");
+				
+				// Also update their last web login time
+				UserSigninBean userSignin = (UserSigninBean) signin;
+				User user = userSignin.getUser();
+				AccountSystem accountSystem = EJBUtil.defaultLookup(AccountSystem.class);
+				accountSystem.updateWebActivity(user);
+			}
 			
 			// Deleting the user from SigninBean means that next time it
 			// is accessed, we'll get a copy attached to this hibernate Session
@@ -267,6 +287,21 @@ public class RewriteServlet extends HttpServlet {
 			}
 		}		
 	}
+	
+	static private String constructQueryString(String[] queryStrings) {
+	    StringBuffer resultingQueryBuffer = new StringBuffer("");
+		for (String queryString : queryStrings) {
+			if (queryString != null && queryString.length() > 0) {
+				if (resultingQueryBuffer.length() == 0) {
+					resultingQueryBuffer.append("?");
+				} else {
+					resultingQueryBuffer.append("&");
+				}
+				resultingQueryBuffer.append(queryString);					
+			}
+		}
+		return resultingQueryBuffer.toString();
+	}
 
 	@Override
 	public void service(HttpServletRequest request,	HttpServletResponse response) throws IOException, ServletException {
@@ -294,15 +329,7 @@ public class RewriteServlet extends HttpServlet {
 		
 		// this line of debug is cut-and-pasted over to AbstractServlet also
 		logger.debug("--------------- HTTP {} for '{}' content-type=" + request.getContentType(), httpMethod, path);
-		
-		// Support for legacy /home, main, and /comingsoon URLs;
-		// forward them all to the root URL; see next stanza for
-		// the special case treatment they will then get
-		if (path.equals("/home") || path.equals("/main") || path.equals("/comingsoon")) {
-			response.sendRedirect("");
-			return;
-		}
-		
+				
 		// see for example http://www.p3pwriter.com/LRN_111.asp
 		// This is a partial machine-readable encoding of 
 		// the privacy policy that allows our login cookie
@@ -312,14 +339,18 @@ public class RewriteServlet extends HttpServlet {
 		// The root URL is special-cased, we forward it depending
 		// on whether the user is signed in and depending on our
 		// configuration.
-		
+				
 		if (path.equals("/")) {
-			if (hasSignin(request))
-				handleVersionedJsp(request, response, "home");
-			else if (stealthMode)
-				handleVersionedJsp(request, response, "comingsoon");
-			else
-				handleVersionedJsp(request, response, "main");
+			String requestQueryString = request.getQueryString();
+			Guid signinUserGuid = getSigninGuid(request);
+			if (signinUserGuid != null) {
+				String additionalQueryString = "who=" + signinUserGuid.toString();
+				response.sendRedirect("/person" + constructQueryString(new String[]{additionalQueryString, requestQueryString}));
+			} else if (stealthMode) {
+				response.sendRedirect("/comingsoon" + constructQueryString(new String[]{requestQueryString}));
+			} else {
+				response.sendRedirect("/main" + constructQueryString(new String[]{requestQueryString}));
+			}	
 			return;
 		}
 		
@@ -434,8 +465,7 @@ public class RewriteServlet extends HttpServlet {
 				path = "/sharelink-disabled";
 				afterSlash = "sharelink-disabled";
 			} else if (path.equals("/chatwindow")) {
-				path = "/chatwindow-disabled";
-				afterSlash = "chatwindow-disabled";
+				request.setAttribute("disabled", "true");
 			}
 		}
 		

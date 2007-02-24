@@ -28,6 +28,22 @@ HippoDBus* hippo_dbus_try_to_acquire           (const char  *server,
 void       hippo_dbus_notify_xmpp_connected    (HippoDBus   *dbus,
                                                 gboolean     connected);
 
+typedef void (*HippoChatWindowForeach)(guint64 window_id, HippoChatState state, void *data);
+
+void hippo_dbus_foreach_chat_window(HippoDBus             *dbus,
+                                    const char            *chat_id,
+                                    HippoChatWindowForeach function,
+                                    void                  *data);
+
+/* This is just an arbitrary macro defined in dbus.h, the idea is to avoid requiring dbus.h for
+ * this header
+ */
+#ifdef DBUS_MAJOR_PROTOCOL_VERSION
+DBusConnection* hippo_dbus_get_connection(HippoDBus *dbus);
+
+#endif /* "only if dbus.h already included" */
+
+
 G_END_DECLS
 
 #endif /* __HIPPO_DBUS_SERVER_H__ */

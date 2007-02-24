@@ -207,12 +207,32 @@ HippoListenerProxyImpl::onMessage(HippoChatRoom *room, HippoChatMessage *message
     HippoBSTR entityId = HippoBSTR::fromUTF8(hippo_entity_get_guid(HIPPO_ENTITY(sender)), -1);
     HippoBSTR text = HippoBSTR::fromUTF8(hippo_chat_message_get_text(message), -1);
 
+    int sentiment;
+    switch (hippo_chat_message_get_sentiment(message)) {
+        case HIPPO_SENTIMENT_INDIFFERENT:
+            sentiment = 0;
+            break;
+        case HIPPO_SENTIMENT_LOVE:
+            sentiment = 1;
+            break;
+        case HIPPO_SENTIMENT_HATE:
+            sentiment = 2;
+            break;
+    }
+
+    // The Javascript code needs to get local times, not server times, in order to
+    // be able to do "time ago" properly
+    HippoConnection *connection = hippo_data_cache_get_connection(dataCache_);
+    gint64 serverTimeOffset = hippo_connection_get_server_time_offset(connection);
+    double timestamp = hippo_chat_message_get_timestamp(message) * 1000. - serverTimeOffset;
+
     if (listener_)
         listener_->OnMessage(hippo_endpoint_proxy_get_id(endpointProxy),
                              chatId,
                              entityId,
                              text,
-                             hippo_chat_message_get_timestamp(message),
+                             sentiment,
+                             timestamp,
                              hippo_chat_message_get_serial(message));
 }
 

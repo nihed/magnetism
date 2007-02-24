@@ -107,6 +107,8 @@ public interface GroupSystem {
 	 */
 	public void incrementGroupVersion(Group group);
 
+	public Set<GroupView> findGroups(Viewpoint viewpoint, User member);
+	
 	/**
 	 * Find the groups that member is in. The returned GroupView objects
 	 * will include information about the user inviting the user to the
@@ -166,6 +168,14 @@ public interface GroupSystem {
 	 * @return
 	 */
 	public List<GroupMessage> getNewestGroupMessages(Group group, int maxResults);
+	
+	/**
+	 * Get the total number of messages sent to this group
+	 * 
+	 * @param group the group the look up the messages for
+	 * @return total number of messages
+	 */
+	public int getGroupMessageCount(Group group);
 	
 	/**
 	 * Add a new message that was sent to the chatroom about this group

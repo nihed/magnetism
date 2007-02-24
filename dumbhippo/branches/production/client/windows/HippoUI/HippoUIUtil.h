@@ -118,6 +118,8 @@ private:
 bool hippoWindowIsOnscreen(HWND window);
 bool hippoWindowIsActive(HWND window);
 
+HippoBSTR hippoUserDataDir(HippoBSTR subdir = 0);
+
 void hippo_rectangle_from_rect(HippoRectangle *hippo_rect, const RECT *windows_rect);
 void hippo_rectangle_to_rect  (const HippoRectangle *hippo_rect, RECT *windows_rect);
 

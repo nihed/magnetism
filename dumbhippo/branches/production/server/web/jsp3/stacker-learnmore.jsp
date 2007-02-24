@@ -7,7 +7,7 @@
 
 <head>
 	<title>Mugshot Stacker - Learn More</title>
-	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
+	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="download"/>
 	<dht:scriptIncludes/>
 	<dht:faviconIncludes/>

@@ -3,6 +3,7 @@
  * Copyright Red Hat, Inc. 2005
  */
 #include "stdafx-hippoui.h"
+#include <ShlObj.h>
 #include "HippoUIUtil.h"
 
 // The following is adapted from glib/glib/gutils.c:g_escape_uri_string()
@@ -152,6 +153,33 @@ HippoGObjectRefcounter::unref(GObject *object)
         G_BREAKPOINT();
     g_object_unref(object);
 }
+
+HippoBSTR 
+hippoUserDataDir(HippoBSTR subdir)
+{
+    WCHAR path[MAX_PATH];
+    SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, path);
+
+	HippoBSTR result(path);
+
+	result.Append(L"\\Mugshot");
+	if (!CreateDirectory(result.m_str, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
+        hippoDebugDialog(L"Error creating local data directory: %ls", path);
+		return HippoBSTR(NULL);
+    }
+
+	if (subdir) {
+		result.Append('\\');
+		result.Append(subdir);
+		if (!CreateDirectory(result.m_str, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
+	        hippoDebugDialog(L"Error creating local data subdirectory: %ls", path);
+			return HippoBSTR(NULL);
+		}
+	}
+
+	return result;
+}
+
 
 void
 hippo_rectangle_from_rect(HippoRectangle *hippo_rect, const RECT *windows_rect)

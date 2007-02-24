@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="HippoMake"
+	>
+	<Tool
+		Name="VCNMakeTool"
+		BuildCommandLine="nmake OUTDIR=..\$(ConfigurationName) INTDIR=$(ConfigurationName) all"
+		ReBuildCommandLine="nmake OUTDIR=..\$(ConfigurationName) INTDIR=$(ConfigurationName) clean all"
+		CleanCommandLine="nmake OUTDIR=..\$(ConfigurationName) INTDIR=$(ConfigurationName) clean"
+		Output=""
+		PreprocessorDefinitions=""
+		IncludeSearchPath=""
+		ForcedIncludes=""
+		AssemblySearchPath=""
+		ForcedUsingAssemblies=""
+		CompileAsManaged=""
+	/>
+</VisualStudioPropertySheet>

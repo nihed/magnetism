@@ -3,6 +3,7 @@ package com.dumbhippo.web.tags;
 import java.util.Random;
 
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.XmlBuilder;
 
 public class FuncUtils {
 	public static boolean enumIs(Enum value, String name) {
@@ -28,5 +29,9 @@ public class FuncUtils {
 	
 	public static String urlEncode(String s) {
 		return StringUtils.urlEncode(s);
+	}
+	
+	public static String xmlEscape(String s) {
+		return XmlBuilder.escape(s);
 	}
 }

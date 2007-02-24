@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.Base64;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StringUtils;
 
 
 /** This code is from the S3 docs, 
@@ -98,7 +99,7 @@ public class AmazonS3Signature {
 		
 		//Acquire an HMAC/SHA1 from the raw key bytes.
 		SecretKeySpec signingKey =
-		    new SecretKeySpec(secretAccessKey.getBytes(), "HmacSHA1");
+		    new SecretKeySpec(StringUtils.getBytes(secretAccessKey), "HmacSHA1");
 
 		// Acquire the MAC instance and initialize with the signing key.
 		Mac mac = null;
@@ -119,7 +120,7 @@ public class AmazonS3Signature {
 		String canonicalString = canonicalBuffer.toString();
 		String headerSignature = Base64.encode(mac.doFinal(canonicalString.getBytes()));
 
-		//logger.debug("will sign '{}'", canonicalString);
+		//logger.debug("will sign '{}' as bytes '{}'", canonicalString, StringUtils.hexEncode(StringUtils.getBytes(canonicalString)));
 		//logger.debug("signature '{}'", headerSignature);
 		
 		// set the Authorization header with the value we've just calculated.

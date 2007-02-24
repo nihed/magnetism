@@ -24,10 +24,12 @@ public:
     virtual HippoEndpointId registerEndpoint();
     virtual void unregisterEndpoint(HippoEndpointId endpoint);
 
+    virtual void setWindowId(HippoEndpointId endpoint, HippoWindowId windowId);
+
     virtual void joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant);
     virtual void leaveChatRoom(HippoEndpointId endpoint, const char *chatId);
     
-    virtual void sendChatMessage(const char *chatId, const char *text);
+    virtual void sendChatMessage(const char *chatId, const char *text, int sentiment);
     virtual void showChatWindow(const char *chatId);
     
 private:
@@ -446,6 +448,23 @@ HippoDBusIpcProviderImpl::unregisterEndpoint(HippoEndpointId endpoint)
     dbus_message_unref(message);
 }
 
+void 
+HippoDBusIpcProviderImpl::setWindowId(HippoEndpointId endpoint, HippoWindowId windowId)
+{
+    if (!isIpcConnected())
+        return;
+    
+    DBusMessage *message = createMethodMessage("SetWindowId");
+
+    dbus_message_append_args(message,
+			     DBUS_TYPE_UINT64, &endpoint,
+			     DBUS_TYPE_UINT64, &windowId,
+			     DBUS_TYPE_INVALID);
+    
+    dbus_connection_send(connection_, message, NULL);
+    dbus_message_unref(message);
+}
+
 void
 HippoDBusIpcProviderImpl::joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant)
 {
@@ -483,16 +502,17 @@ HippoDBusIpcProviderImpl::leaveChatRoom(HippoEndpointId endpoint, const char *ch
 }
     
 void
-HippoDBusIpcProviderImpl::sendChatMessage(const char *chatId, const char *text)
+HippoDBusIpcProviderImpl::sendChatMessage(const char *chatId, const char *text, int sentiment)
 {
     if (!isIpcConnected())
         return;
     
-    DBusMessage *message = createMethodMessage("LeaveChatRoom");
+    DBusMessage *message = createMethodMessage("SendChatMessage");
 
     dbus_message_append_args(message,
 			     DBUS_TYPE_STRING, &chatId,
 			     DBUS_TYPE_STRING, &text,
+                             DBUS_TYPE_INT32, &sentiment,
 			     DBUS_TYPE_INVALID);
     
     dbus_connection_send(connection_, message, NULL);
@@ -568,8 +588,8 @@ HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
 				  DBUS_TYPE_STRING, &chatId,
 				  DBUS_TYPE_STRING, &userId,
 				  DBUS_TYPE_INVALID)) {
-	if (listener_)
-	    listener_->onUserLeave(endpoint, chatId, userId);
+            if (listener_)
+                listener_->onUserLeave(endpoint, chatId, userId);
 	} else {
 	    reply = dbus_message_new_error(message,
 					   DBUS_ERROR_INVALID_ARGS,
@@ -581,6 +601,7 @@ HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
 	const char *chatId;
 	const char *userId;
 	const char *text;
+        dbus_int32_t sentiment;
 	double timestamp;
 	int serial;
 
@@ -589,15 +610,16 @@ HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
 				  DBUS_TYPE_STRING, &chatId,
 				  DBUS_TYPE_STRING, &userId,
 				  DBUS_TYPE_STRING, &text,
+				  DBUS_TYPE_INT32,  &sentiment,
 				  DBUS_TYPE_DOUBLE, &timestamp,
 				  DBUS_TYPE_INT32, &serial,
 				  DBUS_TYPE_INVALID)) {
 	    if (listener_)
-		listener_->onMessage(endpoint, chatId, userId, text, timestamp, serial);
+		listener_->onMessage(endpoint, chatId, userId, text, sentiment, timestamp, serial);
 	} else {
 	    reply = dbus_message_new_error(message,
 					  DBUS_ERROR_INVALID_ARGS,
-					  _("Expected Messsage(uint64 endpoint, string chatId, string userId, string text, double timestamp, int32 serial)"));
+					  _("Expected Messsage(uint64 endpoint, string chatId, string userId, string text, int32 sentiment, double timestamp, int32 serial)"));
 	}
 
     } else if (strcmp(member, "UserInfo") == 0) {
@@ -633,11 +655,10 @@ HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
 				       _("Unknown callback method"));
     }
 
-    if (!reply)
-	reply = dbus_message_new_method_return(message); // empty reply
-
-    dbus_connection_send(connection_, reply, NULL);
-    dbus_message_unref(reply);
+    if (reply) {
+        dbus_connection_send(connection_, reply, NULL);
+        dbus_message_unref(reply);
+    }
 
     return DBUS_HANDLER_RESULT_HANDLED;
 }

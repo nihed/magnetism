@@ -24,6 +24,7 @@ import com.dumbhippo.persistence.PollingTaskEntry;
 import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
@@ -99,11 +100,20 @@ public abstract class CachedExternalUpdaterBean<Status> implements CachedExterna
 	}
 	
 	public Collection<User> getAccountLovers(String handle) {
+		String musicSharingCheck = "";
+		if (getAccountType().isAffectedByMusicSharing()) {
+			musicSharingCheck = " AND (ea.account.musicSharingEnabled = true ";
+			if (AccountSystem.DEFAULT_ENABLE_MUSIC_SHARING)
+				musicSharingCheck += " OR ea.account.musicSharingEnabled IS NULL";
+			musicSharingCheck += ") ";
+		}
+		
 		Query q = em.createQuery("SELECT ea.account.owner FROM ExternalAccount ea WHERE " +
 				"  ea.accountType = " + getAccountType().ordinal() + 
 				"  AND ea.sentiment = " + Sentiment.LOVE.ordinal() + 
 				"  AND ea.handle = :handle " + 
-				"  AND ea.account.disabled = false AND ea.account.adminDisabled = false");
+				"  AND ea.account.disabled = false AND ea.account.adminDisabled = false" +
+				musicSharingCheck);
 		q.setParameter("handle", handle);
 		return TypeUtils.castList(User.class, q.getResultList());
 	}	
@@ -117,16 +127,12 @@ public abstract class CachedExternalUpdaterBean<Status> implements CachedExterna
 		doPeriodicUpdate(handle);
 	}
 	
-	protected boolean isLovedAndEnabled(ExternalAccount external) {
-		return external.hasLovedAndEnabledType(getAccountType()) && 
-			external.getHandle() != null;
-	}	
-	
 	protected abstract Class<? extends CachedExternalUpdater<Status>> getUpdater();
 	
 	protected void onExternalAccountChange(User user, ExternalAccount external) {
-		if (!isLovedAndEnabled(external))
+		if (!external.hasLovedAndEnabledType(getAccountType()))
 			return;
+		
 		if (!configuration.isFeatureEnabled("pollingTask")) {
 			final String username = external.getHandle();
 			runner.runTaskOnTransactionCommit(new Runnable() {

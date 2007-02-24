@@ -1,0 +1,66 @@
+@CHARSET "UTF-8";
+@IMPORT url("chatwindow-positions.css");
+
+body {
+	text-align: left;
+}
+
+#dhChatHeader {
+	background-color: #ededed;
+	overflow: hidden;
+}
+
+#dhChatFooter {
+	font-size: 12px;
+}
+
+#dhChatFooterInner {
+	border-top: 2px solid #c9c9c9;
+}
+
+.dh-chat-sentiment {
+	cursor: pointer;
+}
+
+.dh-chat-sentiment-selected {
+	color: #ffffff;
+	background-color: #ac6ac6;
+}
+
+#dhChatMessageInputCell {
+	border: 1px solid #999999;
+	font-family: sans-serif;
+	font-size: 12px;
+}
+
+#dhChatMessageInput {
+	font-family: sans-serif;
+	font-size: 12px;
+}
+
+#dhChatMessages {
+	font-size: 12px;
+}
+
+.dh-chat-message-text {
+}
+
+.dh-chat-message-who {
+	color: #0000cc;
+}
+
+.dh-chat-message-time {
+	color: #a7a7a7;
+}
+
+.dh-disabled-message {
+   font-size: 15px;
+   color:     #444444;
+}
+
+.dh-too-old-message {
+   font-size:  15px;
+   color:      #444444;
+   text-align: left;
+   width:      80%;
+}

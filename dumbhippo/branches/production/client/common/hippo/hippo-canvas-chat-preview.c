@@ -12,7 +12,7 @@
 #include <hippo/hippo-canvas-entity-name.h>
 
 /* max number of chat messages in the preview */
-#define MAX_PREVIEWED 3
+#define MAX_PREVIEWED 5
 
 static void      hippo_canvas_chat_preview_init                (HippoCanvasChatPreview       *box);
 static void      hippo_canvas_chat_preview_class_init          (HippoCanvasChatPreviewClass  *klass);
@@ -41,9 +41,12 @@ static void hippo_canvas_chat_preview_set_actions        (HippoCanvasChatPreview
                                                           HippoActions           *actions);
 static void hippo_canvas_chat_preview_set_chatting_count (HippoCanvasChatPreview *chat_preview,
                                                           int                     count);
+static void hippo_canvas_chat_preview_set_message_count  (HippoCanvasChatPreview *chat_preview,
+                                                          int                     count);
 static void hippo_canvas_chat_preview_add_recent_message (HippoCanvasChatPreview *chat_preview,
                                                           HippoChatMessage       *message);
 static void update_chatting_count                        (HippoCanvasChatPreview *chat_preview);
+static void update_message_count                         (HippoCanvasChatPreview *chat_preview);
 static void update_recent_messages                       (HippoCanvasChatPreview *chat_preview);
 
 static void hippo_canvas_chat_preview_update_visibility (HippoCanvasChatPreview *chat_preview);
@@ -60,6 +63,7 @@ struct _HippoCanvasChatPreview {
     HippoChatRoom  *room;
     char *chat_id;
     int chatting_count;
+    int message_count;
     GSList *recent_messages;
 
     HippoCanvasItem *chat_link;
@@ -90,7 +94,8 @@ enum {
     PROP_CHAT_ID,
     PROP_ACTIONS,
     PROP_RECENT_MESSAGES,
-    PROP_CHATTING_COUNT
+    PROP_CHATTING_COUNT,
+    PROP_MESSAGE_COUNT
 };
 
 
@@ -109,6 +114,7 @@ on_chat_activated(HippoCanvasItem        *chat_link,
 static void
 hippo_canvas_chat_preview_init(HippoCanvasChatPreview *chat_preview)
 {
+    chat_preview->message_count = -1;
 }
 
 static HippoCanvasItemIface *item_parent_class;
@@ -165,6 +171,15 @@ hippo_canvas_chat_preview_class_init(HippoCanvasChatPreviewClass *klass)
                                                      _("Number of users currently chatting"),
                                                      0, G_MAXINT,
                                                      0,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+    
+    g_object_class_install_property(object_class,
+                                    PROP_MESSAGE_COUNT,
+                                    g_param_spec_int("message-count",
+                                                     _("Message count"),
+                                                     _("Total number of comments and quips"),
+                                                     -1, G_MAXINT,
+                                                     -1,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
     
     g_object_class_install_property(object_class,
@@ -257,6 +272,10 @@ hippo_canvas_chat_preview_set_property(GObject         *object,
         hippo_canvas_chat_preview_set_chatting_count(chat_preview,
                                                      g_value_get_int(value));
         break;
+    case PROP_MESSAGE_COUNT:
+        hippo_canvas_chat_preview_set_message_count(chat_preview,
+                                                    g_value_get_int(value));
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -286,6 +305,9 @@ hippo_canvas_chat_preview_get_property(GObject         *object,
     case PROP_CHATTING_COUNT:
         g_value_set_int(value, chat_preview->chatting_count);
         break;
+    case PROP_MESSAGE_COUNT:
+        g_value_set_int(value, chat_preview->message_count);
+        break;
     case PROP_RECENT_MESSAGES:
         g_value_set_pointer(value, chat_preview->recent_messages);
         break;
@@ -309,6 +331,16 @@ hippo_canvas_chat_preview_constructor (GType                  type,
     HippoCanvasItem *item;
     int i;
     
+    for (i = 0; i < MAX_PREVIEWED; ++i) {
+        chat_preview->message_previews[i] = g_object_new(HIPPO_TYPE_CANVAS_MESSAGE_PREVIEW,
+                                                         "actions", chat_preview->actions,
+                                                         NULL);
+        
+        hippo_canvas_box_append(HIPPO_CANVAS_BOX(chat_preview),
+                                chat_preview->message_previews[i],
+                                0);
+    }
+
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                        "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
@@ -327,9 +359,8 @@ hippo_canvas_chat_preview_constructor (GType                  type,
     hippo_canvas_box_append(box, chat_preview->count_separator_item, 0);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                        "text", "Chat",
                         "color-cascade", HIPPO_CASCADE_MODE_NONE,
-                        "tooltip", "Join chat room for this",
+                        "tooltip", "View all quips and comments",
                         NULL);
     chat_preview->chat_link = item;
     hippo_canvas_box_append(box, item, 0);
@@ -337,17 +368,8 @@ hippo_canvas_chat_preview_constructor (GType                  type,
     g_signal_connect(G_OBJECT(item), "activated",
                      G_CALLBACK(on_chat_activated), chat_preview);
 
-    for (i = 0; i < MAX_PREVIEWED; ++i) {
-        chat_preview->message_previews[i] = g_object_new(HIPPO_TYPE_CANVAS_MESSAGE_PREVIEW,
-                                                         "actions", chat_preview->actions,
-                                                         NULL);
-        
-        hippo_canvas_box_append(HIPPO_CANVAS_BOX(chat_preview),
-                                chat_preview->message_previews[i],
-                                0);
-    }
-
     update_chatting_count(chat_preview);
+    update_message_count(chat_preview);
     update_recent_messages(chat_preview);
     hippo_canvas_chat_preview_update_visibility(chat_preview);
 
@@ -376,6 +398,23 @@ update_chatting_count(HippoCanvasChatPreview *chat_preview)
 
         g_free(s);
     }
+}
+
+static void
+update_message_count(HippoCanvasChatPreview *chat_preview)
+{
+    char *s;
+
+    if (chat_preview->message_count >= 0)
+        s = g_strdup_printf("Quips and Comments (%d)\302\273", chat_preview->message_count);
+    else
+        s = g_strdup("Quips and Comments\302\273");
+
+    g_object_set(G_OBJECT(chat_preview->chat_link),
+                 "text", s,
+                 NULL);
+    
+    g_free(s);
 }
 
 static void
@@ -538,6 +577,20 @@ hippo_canvas_chat_preview_set_chatting_count (HippoCanvasChatPreview *chat_previ
     update_chatting_count(chat_preview);
     
     g_object_notify(G_OBJECT(chat_preview), "chatting-count");
+}
+
+static void
+hippo_canvas_chat_preview_set_message_count (HippoCanvasChatPreview *chat_preview,
+                                             int                     count)
+{
+    if (count == chat_preview->message_count)
+        return;
+
+    chat_preview->message_count = count;
+
+    update_message_count(chat_preview);
+    
+    g_object_notify(G_OBJECT(chat_preview), "message-count");
 }
 
 /* Insert this message if it would be one of the MAX_PREVIEWED most

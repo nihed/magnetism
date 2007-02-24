@@ -68,4 +68,8 @@ public class InvitationView {
     public int getSuggestedGroupsCount() {
     	return suggestedGroups.size();
     }
+    
+	public String getImageUrl() {
+			return "/images2/user_pix1/nonuser.png";
+	}
 }

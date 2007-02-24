@@ -9,6 +9,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
+import java.text.SimpleDateFormat;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,6 +18,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -43,6 +45,7 @@ import bsh.TokenMgrError;
 
 import com.dumbhippo.BeanUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Pair;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
@@ -65,6 +68,7 @@ import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
@@ -94,6 +98,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemeSystem;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
+import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.RevisionControl;
@@ -104,8 +109,10 @@ import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.blocks.BlockView;
+import com.dumbhippo.server.blocks.TitleBlockView;
+import com.dumbhippo.server.blocks.TitleDescriptionBlockView;
+import com.dumbhippo.server.blocks.ExternalAccountBlockView;
 import com.dumbhippo.server.util.EJBUtil;
-import com.dumbhippo.server.util.FeedScraper;
 import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.ExternalAccountView;
@@ -191,6 +198,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private RevisionControl revisionControl;
+	
+	@EJB
+	private PollingTaskPersistence pollingPersistence;
+	
+	@EJB 
+	private FeedSystem feedSystem;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -1402,36 +1415,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (MalformedURLException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Invalid URL: " + e.getMessage());
 		}
-		return scrapeFeedFromUrl(urlObject);
-	}
-	
-	private Feed scrapeFeedFromUrl(URL url) throws XmlMethodException {
-		FeedScraper scraper = new FeedScraper();
-		try {
-			// This downloads the url contents, and if it's already an RSS feed then FeedSystem will do it again 
-			// if it's not cached... but since 1) usually we'll be downloading html and not rss here and 2) many feeds
-			// will be cached, it's really not worth making a mess to move the downloaded bytes from FeedScraper to FeedSystem
-			scraper.analyzeURL(url);
-		} catch (IOException e) {
-			logger.debug("IO error analyzing url {}: {}", url, e.getMessage());
-			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Unable to contact the site (" + e.getMessage() + ")");
-		}
-		URL feedSource = scraper.getFeedSource();
-		if (feedSource == null) {
-			logger.debug("No feed found at url {}", url);
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Couldn't find a feed at " + url);
-		}
-		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
-		LinkResource link = identitySpider.getLink(feedSource);
-		Feed feed = feedSystem.getOrCreateFeed(link);
-		return feed;
+		return feedSystem.scrapeFeedFromUrl(urlObject);
 	}
 	
 	public void getFeedDump(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String url) throws HumanVisibleException, IOException {
 		try {
-			PrintStream printer = new PrintStream(out);
-			FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);				
-			
+			PrintStream printer = new PrintStream(out);						
 			Feed feed = getFeedFromUserEnteredUrl(url);
 			feedSystem.updateFeed(feed);
 			
@@ -1461,8 +1450,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 
-	public void doFeedPreview(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {
-		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
+	public void doFeedPreview(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {		
 		Feed feed = getFeedFromUserEnteredUrl(url);
 		feedSystem.updateFeed(feed);
 
@@ -1490,8 +1478,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.closeElement();
 	}
 	
-	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException {
-		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
+	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException {		
 		Group group = parseGroupId(viewpoint, groupId);
 		Feed feed = getFeedFromUserEnteredUrl(url);
 
@@ -1501,8 +1488,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feedSystem.addGroupFeed(viewpoint.getViewer(), group, feed);
 	}
 
-	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, URL url) throws XmlMethodException {
-		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
+	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, URL url) throws XmlMethodException {		
 		Group group = parseGroupId(viewpoint, groupId);			
 		LinkResource link = identitySpider.lookupLink(url);
 		if (link == null)
@@ -1514,51 +1500,73 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 							
 		feedSystem.removeGroupFeed(viewpoint.getViewer(), group, feed);		
 	}
-	
-	// FIXME this doesn't match the other external account manipulation methods exactly since its 
-	// API predates them
-	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String urlStr) throws XmlMethodException {
-		// empty string means unset the value
-		if (urlStr.trim().length() == 0) {
-			doRemoveExternalAccount(xml, viewpoint, ExternalAccountType.RHAPSODY.name());
-			return;
-		}
 
-		// otherwise, set a new value
-		
-		URL url;
-		try {
-			url = parseUserEnteredUrl(urlStr, true);
-		} catch (MalformedURLException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Doesn't look like a Rhapsody RSS URL : " + e.getMessage());
+	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException {
+		String urlOrId = urlOrIdStr.trim();
+
+		String rhapUserId = StringUtils.findParamValueInUrl(urlOrId, "rhapUserId");		
+		if (rhapUserId == null) {
+			if (urlOrId.startsWith("http://") || urlOrId.toLowerCase().contains(("rhapsody"))) {
+				throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Rhapsody RSS URL should contain a rhapUserId param: " + urlOrId);
+			} else {
+				// we also want to handle the user entering only an id
+				rhapUserId = urlOrId;
+			}
 		}
 		
-		String q = url.getQuery();
-		if (q == null)
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Doesn't look like a Rhapsody RSS URL: " + urlStr);
-		
-		String rhapUserIdParamName = "rhapUserId=";
-		int i = q.indexOf(rhapUserIdParamName);
-		int j = q.indexOf("&", i);
-		if (i < 0 || j < 0 || i == j) {
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Doesn't look like a Rhapsody RSS URL: " + url);
-		}
-		String rhapUserId = q.substring(i+rhapUserIdParamName.length(), j);
-		Feed feed = scrapeFeedFromUrl(url);
-		
-		logger.debug("found feed: {}", feed);
-		EJBUtil.forceInitialization(feed.getAccounts());
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.RHAPSODY);
-		
 		try {
 			external.setHandleValidating(rhapUserId);
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
-
+				
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		
+		Feed feed;		
+		try {
+		    feed = feedSystem.scrapeFeedFromUrl(new URL("http://feeds.rhapsody.com/user-track-history.rss?rhapUserId=" + StringUtils.urlEncode(external.getHandle()) + "&userName=I"));
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
+		}
+		EJBUtil.forceInitialization(feed.getAccounts());
+		
 		external.setFeed(feed);
 		feed.getAccounts().add(external);
+	}
+	
+	public void doSetNetflixFeedUrl(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException {
+		String urlOrId = urlOrIdStr.trim();
+
+		String netflixUserId = StringUtils.findParamValueInUrl(urlOrId, "id");		
+		if (netflixUserId == null) {
+			if (urlOrId.startsWith("http://") || urlOrId.toLowerCase().contains(("netflix"))) {
+			    throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Netflix RSS URL should contain an id param: " + urlOrId);
+			} else {
+				// we also want to handle a user entering only an id
+				netflixUserId = urlOrId;
+			}
+		}
+		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.NETFLIX);
+		try {
+			external.setHandleValidating(netflixUserId);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
+				
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		
+		Feed feed;		
+		try {
+		    feed = feedSystem.scrapeFeedFromUrl(new URL("http://rss.netflix.com/AtHomeRSS?id=" + StringUtils.urlEncode(external.getHandle())));
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
+		}
+		EJBUtil.forceInitialization(feed.getAccounts());
+		
+		external.setFeed(feed);
+		feed.getAccounts().add(external);			
 	}
 	
 	private ExternalAccountType parseExternalAccountType(String type) throws XmlMethodException {
@@ -1580,7 +1588,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	public void doHateExternalAccount(XmlBuilder xml, UserViewpoint viewpoint, String type, String quip) throws XmlMethodException {
 		
-		// FIXME if we do this to a MySpace account we're supposed to send notifications to the myspace tracker
+		// FIXME for any external account that has a feed associated with it, we could try to remove the feed and
+		// the polling task for it; also for MySpace we could check if there is a polling task for checking on
+		// a feed for a private profile and remove that task
 		
 		ExternalAccountType typeEnum = parseExternalAccountType(type);
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, typeEnum);
@@ -1595,7 +1605,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	public void doRemoveExternalAccount(XmlBuilder xml, UserViewpoint viewpoint, String type) throws XmlMethodException {
 		
-		// FIXME if we do this to a MySpace account we're supposed to send notifications to the myspace tracker
+		// FIXME for any external account that has a feed associated with it, we could try to remove the feed and
+		// the polling task for it; also for MySpace we could check if there is a polling task for checking on
+		// a feed for a private profile and remove that task
 		
 		ExternalAccountType typeEnum = parseExternalAccountType(type);
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, typeEnum);
@@ -1618,33 +1630,52 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		email = parseEmail(email);
 		
-		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		// validation is not necessary because we've already found a flickr user using flickr web services when this
+		// method is called
 		external.setHandle(nsid);
 		external.setExtra(email);
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 	}
 	
 	public void doSetMySpaceName(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException {
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.MYSPACE);
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.MYSPACE);		
+		String friendId;		
+		boolean isPrivate;
 		try {
-			external.setHandleValidating(name);
+			Pair<String, Boolean> mySpaceInfoPair = MySpaceScraper.getFriendId(name);
+			friendId = mySpaceInfoPair.getFirst();
+			isPrivate = mySpaceInfoPair.getSecond();
+			external.setExtraValidating(friendId);
+			// if we were able to get the friend id, the name must be valid, we don't 
+			// want to do the same validation the second time by calling setHandleValidating
+			external.setHandle(name);
+		} catch (TransientServiceException e) {
+			logger.warn("Failed to get MySpace friend ID", e);
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Couldn't verify MySpace name '" + name + "'");
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
 		
-		String friendId;		
+		// our check for whether the MySpace profile is set to private is not that definitive, so we might as well attempt
+		// to get the feed in any case
 		try {
-			friendId = MySpaceScraper.getFriendId(name);
-			external.setExtra(friendId);
-		} catch (TransientServiceException e) {
-			logger.warn("Failed to get MySpace friend ID", e);
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Couldn't verify MySpace name; try again later");
-		}
-		
-		Feed feed = scrapeFeedFromUrl(MySpaceScraper.getBlogURLFromFriendId(friendId));
-		EJBUtil.forceInitialization(feed.getAccounts());		
-		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
-		external.setFeed(feed);
-		feed.getAccounts().add(external);		
+		    Feed feed = feedSystem.scrapeFeedFromUrl(MySpaceScraper.getBlogURLFromFriendId(friendId));
+			EJBUtil.forceInitialization(feed.getAccounts());		
+			externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+			external.setFeed(feed);
+			feed.getAccounts().add(external);	
+		} catch (XmlMethodException e) {
+			if (e.getCode() == XmlMethodErrorCode.INVALID_URL && isPrivate) {
+				// the account must be set private	
+				externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+				logger.debug("Creating a task for external account id {}", external.getId());
+				pollingPersistence.createTaskIdempotent(PollingTaskFamilyType.MYSPACE, String.valueOf(external.getId()));
+				xml.appendTextNode("message", "It looks like your MySpace account is set to private, so updates about your MySpace blog entries will not be available on Mugshot.");
+			} else {
+		        // rethrow
+			    throw e;
+			}
+		}	
 	}
 
 	public void doSetYouTubeName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
@@ -1673,43 +1704,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		xml.appendTextNode("username", external.getHandle());
 	}
-
-	private static String findPathElementAfter(String url, String after) {
-		int i = url.indexOf(after);
-		if (i < 0) {
-			//logger.debug("'{}' not found in '{}'", after, url);
-			return null;
-		}
-		
-		i += after.length();
-		
-		int j = url.indexOf('/', i);
-		if (j < 0) {
-			//logger.debug("'/' not found after index {}", i);
-			j = url.length();
-		}
-		if (i == j) {
-			//logger.debug("{} == {}", i, j);
-			return null;
-		}
-		return url.substring(i, j);
-	}
-
-	private static String findLastPathElement(String url) {
-		if (url.endsWith("/"))
-			url = url.substring(0, url.length() - 1);
-		
-		int i = url.lastIndexOf("/");
-		if (i >= 0) {
-			return url.substring(i);
-		} else {
-			return null;
-		}
-	}
 	
 	public void doSetLastFmName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
 		String name = urlOrName.trim();
-		String found = findPathElementAfter(name, "/user/");
+		String found = StringUtils.findPathElementAfter(name, "/user/");
 		if (found != null)
 			name = found;
 		
@@ -1738,7 +1736,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		String name = urlOrName.trim();
 		// del.icio.us urls are just "http://del.icio.us/myusername"
 		
-		String found = findLastPathElement(name);
+		String found = StringUtils.findLastPathElement(name);
 		if (found != null)
 			name = found;
 
@@ -1755,7 +1753,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		Feed feed;
 		try {
-			feed = scrapeFeedFromUrl(new URL("http://del.icio.us/rss/" + StringUtils.urlEncode(external.getHandle())));
+			feed = feedSystem.scrapeFeedFromUrl(new URL("http://del.icio.us/rss/" + StringUtils.urlEncode(external.getHandle())));
 		} catch (MalformedURLException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
 		}
@@ -1772,7 +1770,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		// Twitter urls are just "http://twitter.com/myusername"
 		
-		String found = findLastPathElement(name);
+		String found = StringUtils.findLastPathElement(name);
 		if (found != null)
 			name = found;
 		
@@ -1789,7 +1787,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		Feed feed;
 		try {
-			feed = scrapeFeedFromUrl(new URL("http://twitter.com/" + StringUtils.urlEncode(external.getHandle())));
+			feed = feedSystem.scrapeFeedFromUrl(new URL("http://twitter.com/" + StringUtils.urlEncode(external.getHandle())));
 		} catch (MalformedURLException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage() + " (check that updates are public in Twitter settings)");
 		}
@@ -1806,7 +1804,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		// Digg urls are "http://digg.com/users/myusername/stuff"
 
-		String found = findPathElementAfter(name, "/users/");
+		String found = StringUtils.findPathElementAfter(name, "/users/");
 		if (found != null)
 			name = found;
 
@@ -1823,7 +1821,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		Feed feed;
 		try {
-			feed = scrapeFeedFromUrl(new URL("http://digg.com/users/" + StringUtils.urlEncode(external.getHandle()) + "/dugg"));
+			feed = feedSystem.scrapeFeedFromUrl(new URL("http://digg.com/users/" + StringUtils.urlEncode(external.getHandle()) + "/dugg"));
 		} catch (MalformedURLException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
 		}
@@ -1842,7 +1840,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		//logger.debug("name={}", name);
 		
-		String found = findPathElementAfter(name, "/user/");
+		String found = StringUtils.findPathElementAfter(name, "/user/");
 		if (found != null)
 			name = found;
 		
@@ -1861,7 +1859,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		Feed feed;
 		try {
-			feed = scrapeFeedFromUrl(new URL("http://reddit.com/user/" + StringUtils.urlEncode(external.getHandle())));
+			feed = feedSystem.scrapeFeedFromUrl(new URL("http://reddit.com/user/" + StringUtils.urlEncode(external.getHandle())));
 		} catch (MalformedURLException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
 		}
@@ -1943,7 +1941,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		throwIfUrlNotHttp(url);
 		
-		Feed feed = scrapeFeedFromUrl(url);
+		Feed feed = feedSystem.scrapeFeedFromUrl(url);
 		EJBUtil.forceInitialization(feed.getAccounts());
 		
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.BLOG);
@@ -2136,5 +2134,64 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		xml.closeElement();
+	}
+
+	public void getUserRSS(OutputStream out, HttpResponseData contentType, User who, boolean participantOnly) throws IOException, XmlMethodException {
+		
+		List<BlockView> stack;
+		Pageable<BlockView> pageable = new Pageable<BlockView>("stack");
+		pageable.setPosition(0);
+		pageable.setInitialPerPage(5);
+		stacker.pageStack(AnonymousViewpoint.getInstance(), who, pageable, participantOnly);
+		stack = pageable.getResults();
+		
+		PersonView userView = personViewer.getPersonView(AnonymousViewpoint.getInstance(), who);
+
+    XmlBuilder xml = new XmlBuilder();
+
+    xml.appendStandaloneFragmentHeader();
+		
+    xml.openElement("rss", "version", "2.0");
+
+    String baseurl = config.getProperty(HippoProperty.BASEURL);
+
+		xml.openElement("channel");
+    xml.appendTextNode("title", userView.getName());
+    xml.appendTextNode("link", baseurl + userView.getHomeUrl());
+    xml.appendTextNode("description", userView.getBioAsHtml());
+    xml.appendTextNode("generator", "Mugshot.org User RSS Generator");
+
+    xml.openElement("image");
+    xml.appendTextNode("url", baseurl + userView.getPhotoUrl());
+    xml.appendTextNode("title", userView.getName());
+    xml.appendTextNode("link", baseurl + userView.getHomeUrl());
+	  xml.closeElement(); // </image>
+		
+    SimpleDateFormat sdf = new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss' 'Z", Locale.US);
+
+		for (BlockView bv : stack) {
+      if ( !(bv instanceof TitleBlockView))
+        continue;
+
+      boolean ext  = (bv instanceof ExternalAccountBlockView);
+
+      xml.openElement("item");
+      xml.appendTextNode("link", (!ext? baseurl : "") + bv.getSummaryLink());
+      xml.appendTextNode("title", bv.getSummaryLinkText());
+
+      if (bv instanceof TitleDescriptionBlockView)
+        xml.appendTextNode("description", ((TitleDescriptionBlockView) bv).getDescription());
+
+      xml.appendTextNode("pubDate", sdf.format(bv.getBlock().getTimestamp()));
+
+      xml.appendTextNode("guid", (!ext? baseurl : "") + bv.getSummaryLink()); // hopefully this is actually a guid, there's no real way of checking
+  		xml.closeElement(); // </item>
+		}
+		
+		xml.closeElement(); // </channel>
+
+    xml.closeElement(); // </rss>
+
+    out.write(xml.getBytes());
 	}
 }

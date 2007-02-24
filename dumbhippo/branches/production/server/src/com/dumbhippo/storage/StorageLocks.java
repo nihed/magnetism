@@ -13,6 +13,10 @@ import com.dumbhippo.identity20.Guid;
  * globally (across all backends) as well as between instances of the 
  * same backend.
  * 
+ * FIXME this has to be clusterwide probably; though on the other hand, 
+ * the only three options (get, put, delete) are more or less atomic for both 
+ * the local file and the S3 backend, so locking may be pointless-ish.
+ * 
  * @author Havoc Pennington
  *
  */

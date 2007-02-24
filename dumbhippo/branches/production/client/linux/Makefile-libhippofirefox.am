@@ -10,12 +10,20 @@ extension_DATA =				\
 contentdir=$(extensiondir)/chrome/content
 CONTENT_SRCDIR=$(EXTENSION_SRCDIR)/chrome/content
 content_DATA =					\
+	$(CONTENT_SRCDIR)/chatWindow.js		\
+	$(CONTENT_SRCDIR)/chatWindow.xul	\
 	$(CONTENT_SRCDIR)/overlay.js		\
 	$(CONTENT_SRCDIR)/overlay.xul
+
+defaulticonsdir=$(extensiondir)/chrome/icons/default
+DEFAULTICONS_SRCDIR=$(EXTENSION_SRCDIR)/chrome/icons/default
+defaulticons_DATA =				\
+	$(DEFAULTICONS_SRCDIR)/mugshot.xpm
 
 skindir=$(extensiondir)/chrome/skin
 SKIN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/skin
 skin_DATA =					\
+	$(SKIN_SRCDIR)/chatWindow.css		\
 	$(SKIN_SRCDIR)/linkswarm16x16.png	\
 	$(SKIN_SRCDIR)/linkswarm24x24.png	\
 	$(SKIN_SRCDIR)/mugshot32x32.png		\
@@ -56,10 +64,13 @@ if HAVE_FULL_GECKO
 libhippofirefox_la_CPPFLAGS +=			\
 	-I $(GECKO_INCLUDEDIR)			\
 	-I $(GECKO_INCLUDEDIR)/caps		\
+	-I $(GECKO_INCLUDEDIR)/docshell		\
 	-I $(GECKO_INCLUDEDIR)/dom		\
+	-I $(GECKO_INCLUDEDIR)/gfx		\
 	-I $(GECKO_INCLUDEDIR)/js		\
 	-I $(GECKO_INCLUDEDIR)/necko		\
 	-I $(GECKO_INCLUDEDIR)/string		\
+	-I $(GECKO_INCLUDEDIR)/widget		\
 	-I $(GECKO_INCLUDEDIR)/xpcom		\
 	-I $(GECKO_INCLUDEDIR)/xpconnect
 else
@@ -105,11 +116,21 @@ GECKO_PRIVATE_IDL_FILES =							\
 	$(FIREFOX_SRCDIR)/gecko-private/idl/nsISerializable.idl			\
 	$(FIREFOX_SRCDIR)/gecko-private/idl/nsIXPCSecurityManager.idl
 GECKO_PRIVATE_INCLUDE_FILES =							\
+	$(FIREFOX_SRCDIR)/gecko-private/include/gfxCore.h			\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsColor.h			\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsCoord.h			\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsEvent.h			\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIBaseWindow.h			\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIDocShell.h			\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIMenuListener.h		\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIMouseListener.h		\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsIPrincipal.h			\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIScriptGlobalObject.h		\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsIScriptNameSpaceManager.h	\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsIScriptSecurityManager.h	\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsISerializable.h		\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsIXPCSecurityManager.h		\
+	$(FIREFOX_SRCDIR)/gecko-private/include/nsIWidget.h			\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsNetCID.h
 
 dist_pkgdata_SCRIPTS = firefox-update.sh
@@ -145,6 +166,9 @@ libhippofirefox-dist-hook:
 	mkdir $(distdir)/common-dist/firefox/extension/chrome
 	mkdir $(distdir)/common-dist/firefox/extension/chrome/content
 	cp $(content_DATA) $(distdir)/common-dist/firefox/extension/chrome/content
+	mkdir $(distdir)/common-dist/firefox/extension/chrome/icons
+	mkdir $(distdir)/common-dist/firefox/extension/chrome/icons/default
+	cp $(defaulticons_DATA) $(distdir)/common-dist/firefox/extension/chrome/icons/default
 	mkdir $(distdir)/common-dist/firefox/extension/chrome/skin
 	cp $(skin_DATA) $(distdir)/common-dist/firefox/extension/chrome/skin
 	mkdir $(distdir)/common-dist/firefox/extension/chrome/locale

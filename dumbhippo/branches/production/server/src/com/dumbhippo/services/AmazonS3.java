@@ -36,6 +36,9 @@ public class AmazonS3 {
 		this.timeoutMilliseconds = 1000 * 60 * 60; // we are uploading files etc. after all 
 		this.amazonAccessKeyId = amazonAccessKeyId;
 		this.amazonSecretKey = amazonSecretKey;
+		logger.debug("created S3 service object with keyId={} and secret key length {} (should be 40?)", this.amazonAccessKeyId, this.amazonSecretKey.length());
+		if (amazonSecretKey.trim() != amazonSecretKey)
+			logger.warn("Amazon secret key appears to have leading/trailing whitespace");
 	}
 
 	private HttpURLConnection openS3Connection(String relativeName) throws TransientServiceException {

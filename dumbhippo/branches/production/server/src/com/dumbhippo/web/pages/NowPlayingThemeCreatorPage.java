@@ -6,7 +6,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemeSystem;
 import com.dumbhippo.web.WebEJBUtil;
 
-public class NowPlayingThemeCreatorPage extends AbstractSigninRequiredPage {
+public class NowPlayingThemeCreatorPage extends AbstractSigninOptionalPage {
 
 	private NowPlayingThemeSystem nowPlayingSystem;
 	private NowPlayingTheme theme;
