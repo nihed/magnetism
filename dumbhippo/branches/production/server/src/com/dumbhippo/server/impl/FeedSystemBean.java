@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -58,6 +59,7 @@ import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.syndication.RhapModule;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.util.FeedScraper;
 import com.dumbhippo.server.util.HtmlTextExtractor;
 import com.dumbhippo.services.FeedFetcher;
 import com.dumbhippo.services.FeedFetcher.FeedFetchResult;
@@ -289,7 +291,7 @@ public class FeedSystemBean implements FeedSystem {
 	private void processFeedExternalAccounts(FeedEntry entry, int entryPosition) {
 		// this is just a check for debugging purposes to make sure we handle all TrackFeedEntry objects well
 		if ((entry instanceof TrackFeedEntry) && entry.getFeed().getAccounts().isEmpty()) {
-			logger.warn("processExternalAccountFeed called for TrackFeedEntry {}, but no accounts associated with feed", entry);
+			logger.warn("processFeedExternalAccounts called for TrackFeedEntry {}, but no accounts associated with feed", entry);
 		}		
 		
 		logger.debug("Processing external accounts for new feed entry {}", entry);
@@ -514,6 +516,27 @@ public class FeedSystemBean implements FeedSystem {
 		}
 		return true;
 	}
+
+	public Feed scrapeFeedFromUrl(URL url) throws XmlMethodException {
+		FeedScraper scraper = new FeedScraper();
+		try {
+			// This downloads the url contents, and if it's already an RSS feed then FeedSystem will do it again 
+			// if it's not cached... but since 1) usually we'll be downloading html and not rss here and 2) many feeds
+			// will be cached, it's really not worth making a mess to move the downloaded bytes from FeedScraper to FeedSystem
+			scraper.analyzeURL(url);
+		} catch (IOException e) {
+			logger.debug("IO error analyzing url {}: {}", url, e.getMessage());
+			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Unable to contact the site (" + e.getMessage() + ")");
+		}
+		URL feedSource = scraper.getFeedSource();
+		if (feedSource == null) {
+			logger.debug("No feed found at url {}", url);
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Couldn't find a feed at " + url);
+		}		
+		LinkResource link = identitySpider.getLink(feedSource);
+		Feed feed = getOrCreateFeed(link);
+		return feed;
+	}
 	
 	public Feed getExistingFeed(final LinkResource source) throws XmlMethodException {
 		Feed feed = lookupExistingFeed(source);
@@ -525,8 +548,14 @@ public class FeedSystemBean implements FeedSystem {
 	
 	public Feed getOrCreateFeed(final LinkResource source) throws XmlMethodException {
 		Feed feed = lookupExistingFeed(source);
-		if (feed != null)
+		if (feed != null) {
+			/* We want to ensure that we create a task for feeds which existed before
+			 * the PollingTask system was implemented as well, which were not caught
+			 * by migration because they were not in use when it was run.
+			 */
+			pollingPersistence.createTaskIdempotent(PollingTaskFamilyType.FEED, feed.getSource().getId());			
 			return feed;
+		}
 		
 		FeedFetchResult fetchResult = getRawFeedChecked(source);
 		final SyndFeed syndFeed = fetchResult.getFeed();

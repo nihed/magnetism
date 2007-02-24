@@ -20,6 +20,7 @@
 #include <limits>
 #include "Resource.h"
 #include "HippoChatManager.h"
+#include "HippoCrash.h"
 #include "HippoHTTP.h"
 #include "HippoToolbarEdit.h"
 #include "HippoRegKey.h"
@@ -792,13 +793,28 @@ HippoUI::LeaveChatRoom(UINT64 endpointId, BSTR chatId)
 }
 
 STDMETHODIMP 
-HippoUI::SendChatMessage(BSTR chatId, BSTR text)
+HippoUI::SendChatMessage(BSTR chatId, BSTR text, int sentiment)
 {
     HippoUStr chatIdU(chatId);
     HippoUStr textU(text);
+    HippoSentiment hippoSentiment;
+
+    switch (sentiment) {
+        case 0:
+            hippoSentiment = HIPPO_SENTIMENT_INDIFFERENT;
+            break;
+        case 1:
+            hippoSentiment = HIPPO_SENTIMENT_LOVE;
+            break;
+        case 2:
+            hippoSentiment = HIPPO_SENTIMENT_HATE;
+            break;
+        default:
+            return E_INVALIDARG;
+    }
 
     HippoChatRoom *room = hippo_data_cache_ensure_chat_room(dataCache_, chatIdU.c_str(), HIPPO_CHAT_KIND_UNKNOWN);
-    hippo_connection_send_chat_room_message(hippo_data_cache_get_connection(dataCache_), room, textU.c_str());
+    hippo_connection_send_chat_room_message(hippo_data_cache_get_connection(dataCache_), room, textU.c_str(), hippoSentiment);
 
     return S_OK;
 }
@@ -818,7 +834,7 @@ HippoUI::GetServerName(BSTR *serverName)
     result.Append(L":");
 
     WCHAR buffer[16];
-    StringCchPrintfW(buffer, sizeof(buffer), L"%d", port);
+    StringCchPrintfW(buffer, sizeof(buffer) / sizeof(buffer[0]), L"%d", port);
     result.Append(buffer);
 
     g_free(hostU);
@@ -2149,6 +2165,18 @@ WinMain(HINSTANCE hInstance,
     }
 
     g_strfreev(argv);
+
+	// See if we were run because a previous instance crashed; if so, offer the user
+	// the option of uploading the crash dump to us.
+	if (options.crash_dump) {
+		HippoBSTR dump = HippoBSTR::fromUTF8(options.crash_dump);
+        bool keepRunning = hippoCrashReport(options.instance_type, options.crash_dump);
+		if (!keepRunning)
+			return 0;
+	}
+
+	// OK, now we can install the crash handler without risk of circular spawning
+    hippoCrashInit(options.instance_type);
 
     // If run as --install-launch, we rerun ourselves asynchronously, then immediately exit
     if (options.install_launch) {

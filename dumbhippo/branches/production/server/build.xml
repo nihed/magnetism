@@ -71,7 +71,7 @@
 		
 	<target name="compile" depends="init">
 		<!-- Compile the java code -->
-		<javac debug="on" srcdir="${src}" destdir="${build}" source="1.5">
+		<javac debug="on" srcdir="${src}" destdir="${build}" source="1.5" encoding="UTF-8">
 			<classpath refid="project.class.path" />
 		</javac>
 		
@@ -84,7 +84,7 @@
 	</target>
 
 	<target name="test" depends="compile">
-		<javac srcdir="${src.tests}" destdir="${build.tests}" source="1.5">
+		<javac srcdir="${src.tests}" destdir="${build.tests}" source="1.5" encoding="UTF-8">
 			<classpath refid="tests.class.path" />
 		</javac>
 		<!-- fork=yes required for assertions to be enabled -->

@@ -48,19 +48,30 @@ dh.framer._userSpan = function(user) {
 	return document.getElementById(this._userSpanId(user))
 }
 
+dh.framer._messageTimeElementId = function(message) {
+	return "dhChatMessageTime-" + message.getSerial();
+}
+
+dh.framer._messageTimeElement = function(message) {
+	return document.getElementById(this._messageTimeElementId(message));
+}
+
 dh.framer._addMessage = function(message, before) {
 	var nameDiv = document.createElement("div")
     nameDiv.id = this._messageNameDivId(message)
     nameDiv.className = "dh-chat-name"
   	nameDiv.appendChild(document.createTextNode(message.getEntity().getName()))
   	 
-    var messageFontStyle = dh.chat.getMessageFontStyle(message)
-    
     var messageDiv = document.createElement("div")
 	messageDiv.id = this._messageDivId(message)
     messageDiv.className = "dh-chat-message"	
     dh.util.insertTextWithLinks(messageDiv, message.getMessage()) 
- 	messageDiv.style.fontStyle = messageFontStyle
+	
+	var timeSpan = document.createElement("span");
+	timeSpan.className = "dh-chat-message-time";
+	timeSpan.id = this._messageTimeElementId(message);
+	timeSpan.appendChild(document.createTextNode(" - " + message.timeString()));
+	messageDiv.appendChild(timeSpan);
 	
 	var beforeMessageDiv = before ? this._messageDiv(before) : null;
 	var beforeNameDiv = before ? this._messageNameDiv(before) : null;
@@ -84,24 +95,6 @@ dh.framer._removeMessage = function(message) {
 	}
 }
 
-dh.framer._updateChatCount = function() {
-	var chatCountNode = document.getElementById('dhPostChatCount')
-	if (!chatCountNode)
-		return;
-	
-	var count = this._participantList.numUsers() // only chatters, not viewers
-	var countText;
-	
-	if (count == 0)
-		countText = "(empty)"
-	else if (count == 1)
-		countText = "(1 person)"
-	else
-		countText = "(" + count + " people)"
-
-	dh.dom.textContent(chatCountNode, countText)
-}
-
 dh.framer._addUser = function(user, before, participant) {
 	var userList = document.getElementById("dhPostViewingListPeople")
     
@@ -114,8 +107,6 @@ dh.framer._addUser = function(user, before, participant) {
 		userList.insertBefore(document.createTextNode(", "), span.nextSibling);
 	else if (span.previousSibling)
 		userList.insertBefore(document.createTextNode(", "), span);
-
-	this._updateChatCount()
 }
 
 dh.framer._removeUser = function(user) {
@@ -127,13 +118,25 @@ dh.framer._removeUser = function(user) {
     else if (span.previousSibling)
 	    userList.removeChild(span.previousSibling)
     userList.removeChild(span)
-    
-    this._updateChatCount()
 }
 
 dh.framer._updateUser = function(user) {
 	var span = this._userSpan(user)
 	span.replaceChild(document.createTextNode(user.getName()), span.firstChild)
+}
+
+dh.framer.updateTimes = function() {
+	dh.framer._messageList.foreachMessage(function(message) {
+		var span = dh.framer._messageTimeElement(message);
+		var currentText = dh.dom.textContent(span);
+		var newText = " - " + message.timeString();
+		if (newText != currentText); // Avoid spurious redraws
+			dh.dom.textContent(span, newText);
+	});
+	
+	// We avoid setInterval because of a bug on firefox-x86_64, already
+	// fixed as of Firefox-2.0
+	setTimeout(dh.framer.updateTimes, 60 * 1000);
 }
 
 dh.framer.init = function() {
@@ -147,20 +150,13 @@ dh.framer.init = function() {
 		function(message) { dh.framer._removeMessage(message) },
 		3);
 		
-	this._participantList = new dh.chat.UserList(
+	this._userList = new dh.chat.UserList(
 		this._chatRoom,
 		function(user, before, participant) { dh.framer._addUser(user, before, true) },
 		function(user) { dh.framer._removeUser(user) },
 		function(user) { dh.framer._updateUser(user) },
-		function(user, participant) { return participant });
+		function(user, participant) { return true });
 
-	dh.framer._visitorList = new dh.chat.UserList(
-		this._chatRoom,
-		function(user, before, participant) { dh.framer._addUser(user, before, false) },
-		function(user) { dh.framer._removeUser(user) },
-		function(user) { dh.framer._updateUser(user) },
-		function(user, participant) { return !participant });
-		
 	this._chatRoom.join(false)
 
 	if (!dh.control.control.haveLiveChat()) {
@@ -173,5 +169,7 @@ dh.framer.init = function() {
     	// var joinChat = document.getElementById("dhPostJoinChat")
     	// if (joinChat)
 	    //	joinChat.style.display = "none"
-    }
+    } else {
+	   	setTimeout(dh.framer.updateTimes, 60 * 1000);
+   	}
 }

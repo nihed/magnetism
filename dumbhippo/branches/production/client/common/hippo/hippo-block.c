@@ -1,6 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-common-internal.h"
 #include "hippo-block.h"
+#include "hippo-block-account-question.h"
 #include "hippo-block-generic.h"
 #include "hippo-block-group-chat.h"
 #include "hippo-block-group-member.h"
@@ -12,6 +13,7 @@
 #include "hippo-block-youtube-person.h"
 #include "hippo-block-flickr-photoset.h"
 #include "hippo-block-facebook-event.h"
+#include "hippo-block-netflix-movie.h"
 #include "hippo-xml-utils.h"
 #include <string.h>
 
@@ -45,24 +47,29 @@ enum {
     PROP_GUID,
     PROP_BLOCK_TYPE,
     PROP_IS_PUBLIC,
+    PROP_SOURCE,    
     PROP_SORT_TIMESTAMP,
     PROP_TIMESTAMP,
     PROP_CLICKED_TIMESTAMP,
     PROP_IGNORED_TIMESTAMP,
     PROP_CLICKED_COUNT,
     PROP_SIGNIFICANT_CLICKED_COUNT,
+    PROP_MESSAGE_COUNT,
     PROP_CLICKED,
     PROP_ICON_URL,
     PROP_IGNORED,
+    PROP_PINNED,
     PROP_TITLE,
     PROP_TITLE_LINK,
-    PROP_STACK_REASON
+    PROP_STACK_REASON,
+    PROP_FILTER_FLAGS
 };
 
 static void
 hippo_block_init(HippoBlock *block)
 {
     block->stack_reason = HIPPO_STACK_NEW_BLOCK;
+    block->message_count = -1;
 }
 
 static void
@@ -93,6 +100,14 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                      0, G_MAXINT,
                                                      HIPPO_BLOCK_TYPE_UNKNOWN,
                                                      G_PARAM_READABLE));
+                                                     
+    g_object_class_install_property(object_class,
+                                    PROP_SOURCE,
+                                    g_param_spec_object("source",
+                                                        _("Source"),
+                                                        _("The entity which originated this block"),
+                                                         HIPPO_TYPE_ENTITY,
+                                                         G_PARAM_READABLE));                                                     
     
     g_object_class_install_property(object_class,
                                     PROP_IS_PUBLIC,
@@ -154,6 +169,15 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
 
     g_object_class_install_property(object_class,
+                                    PROP_MESSAGE_COUNT,
+                                    g_param_spec_int("message-count",
+                                                     _("Message count"),
+                                                     _("Number of comments and quips for this block"),
+                                                     -1, G_MAXINT,
+                                                     -1,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
                                     PROP_CLICKED,
                                     g_param_spec_boolean("clicked",
                                                          _("Clicked"),
@@ -165,6 +189,14 @@ hippo_block_class_init(HippoBlockClass *klass)
                                     g_param_spec_boolean("ignored",
                                                          _("Ignored"),
                                                          _("Whether we ignored the block"),
+                                                         FALSE,
+                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_PINNED,
+                                    g_param_spec_boolean("pinned",
+                                                         _("Pinned"),
+                                                         _("Whether the block is a pinned message"),
                                                          FALSE,
                                                          G_PARAM_READABLE | G_PARAM_WRITABLE));
 
@@ -199,6 +231,14 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                      _("Reason code for why the block was restacked"),
                                                      0, G_MAXINT, HIPPO_STACK_NEW_BLOCK,
                                                      G_PARAM_READABLE));
+                                                     
+   g_object_class_install_property(object_class,
+                                    PROP_FILTER_FLAGS,
+                                    g_param_spec_uint("filter-flags",
+                                                      _("Filter flags"),
+                                                      _("Flags applicable to this block, used for filtering"),
+                                                      0, G_MAXUINT, 0,
+                                                      G_PARAM_READABLE));                                                     
 }
 
 static void
@@ -242,12 +282,20 @@ hippo_block_set_property(GObject         *object,
         hippo_block_set_significant_clicked_count(block,
                                                   g_value_get_int(value));
         break;
+    case PROP_MESSAGE_COUNT:
+        hippo_block_set_message_count(block,
+                                      g_value_get_int(value));
+        break;
     case PROP_CLICKED:
         hippo_block_set_clicked(block,
                                 g_value_get_boolean(value));
         break;
     case PROP_IGNORED:
         hippo_block_set_ignored(block,
+                                g_value_get_boolean(value));        
+        break;
+    case PROP_PINNED:
+        hippo_block_set_pinned(block,
                                 g_value_get_boolean(value));        
         break;
     case PROP_STACK_REASON:
@@ -289,6 +337,9 @@ hippo_block_get_property(GObject         *object,
     case PROP_BLOCK_TYPE:
         g_value_set_int(value, block->type);
         break;
+    case PROP_SOURCE:
+        g_value_set_object(value, block->source);
+        break;
     case PROP_SORT_TIMESTAMP:
         g_value_set_int64(value,
                           hippo_block_get_sort_timestamp(block));
@@ -308,11 +359,17 @@ hippo_block_get_property(GObject         *object,
     case PROP_SIGNIFICANT_CLICKED_COUNT:
         g_value_set_int(value, block->significant_clicked_count);
         break;
+    case PROP_MESSAGE_COUNT:
+        g_value_set_int(value, block->message_count);
+        break;
     case PROP_CLICKED:
         g_value_set_boolean(value, block->clicked);
         break;
     case PROP_IGNORED:
         g_value_set_boolean(value, block->ignored);
+        break;
+    case PROP_PINNED:
+        g_value_set_boolean(value, block->pinned);
         break;
     case PROP_STACK_REASON:
         g_value_set_int(value, block->stack_reason);
@@ -363,6 +420,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     gint64 ignored_timestamp;
     int clicked_count;
     int significant_clicked_count = 0;
+    int message_count = -1;
     gboolean clicked;
     gboolean ignored;
     LmMessageNode *title_node;
@@ -372,6 +430,10 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     const char *stack_reason_str = NULL;
     const char *generic_types = NULL;
     HippoStackReason stack_reason = HIPPO_STACK_NEW_BLOCK;
+    guint filter_flags_value = 0;
+    const char *filter_flags = NULL;
+    LmMessageNode *source_node = NULL;
+    HippoEntity *source;
     
     g_assert(cache != NULL);
 
@@ -385,10 +447,13 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
                          "ignoredTimestamp", HIPPO_SPLIT_TIME_MS, &ignored_timestamp,
                          "clickedCount", HIPPO_SPLIT_INT32, &clicked_count,
                          "significantClickedCount", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_OPTIONAL, &significant_clicked_count ,
+                         "messageCount", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_OPTIONAL, &message_count,
                          "clicked", HIPPO_SPLIT_BOOLEAN, &clicked, 
                          "ignored", HIPPO_SPLIT_BOOLEAN, &ignored,
                          "icon", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &icon_url,
                          "stackReason", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &stack_reason_str,
+                         "filterFlags", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &filter_flags,
+                         "source", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &source_node,                         
                          NULL)) {
         g_debug("missing attributes on <block> %s update", block->guid);
         return FALSE;
@@ -411,9 +476,31 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     hippo_block_set_ignored_timestamp(block, ignored_timestamp);
     hippo_block_set_clicked_count(block, clicked_count);
     hippo_block_set_significant_clicked_count(block, significant_clicked_count);
+    hippo_block_set_message_count(block, message_count);
     hippo_block_set_clicked(block, clicked);
     hippo_block_set_ignored(block, ignored);
     hippo_block_set_icon_url(block, icon_url);
+    
+    if (filter_flags != NULL) {
+        char **flags = g_strsplit(filter_flags, ",", 0);
+        char **flag;
+        for (flag = flags; *flag; flag++) {
+            if (strcmp(*flag, "FEED") == 0) {
+                filter_flags_value ^= HIPPO_BLOCK_FILTER_FLAG_FEED;
+            }       
+        }
+        g_strfreev(flags);
+    }
+    
+    hippo_block_set_filter_flags(block, filter_flags_value);
+
+    if (source_node != NULL) {
+        if (!hippo_xml_split(cache, source_node, NULL,
+                             "id", HIPPO_SPLIT_ENTITY, &source,
+                             NULL))
+            return FALSE;
+        hippo_block_set_source(block, source);
+    }
 
     title_node = lm_message_node_get_child(node, "title");
     if (title_node) {
@@ -450,6 +537,9 @@ hippo_block_new(const char    *guid,
     case HIPPO_BLOCK_TYPE_UNKNOWN:
         object_type = HIPPO_TYPE_BLOCK;
         break;
+    case HIPPO_BLOCK_TYPE_ACCOUNT_QUESTION:
+        object_type = HIPPO_TYPE_BLOCK_ACCOUNT_QUESTION;
+        break;
     case HIPPO_BLOCK_TYPE_GROUP_CHAT:
         object_type = HIPPO_TYPE_BLOCK_GROUP_CHAT;
         break;
@@ -477,6 +567,9 @@ hippo_block_new(const char    *guid,
     case HIPPO_BLOCK_TYPE_YOUTUBE_PERSON:
         object_type = HIPPO_TYPE_BLOCK_YOUTUBE_PERSON;
         break;
+    case HIPPO_BLOCK_TYPE_NETFLIX_MOVIE:
+        object_type = HIPPO_TYPE_BLOCK_NETFLIX_MOVIE;
+        break;        
     case HIPPO_BLOCK_TYPE_GENERIC:
         object_type = HIPPO_TYPE_BLOCK_GENERIC;
         break;
@@ -652,6 +745,26 @@ hippo_block_set_significant_clicked_count(HippoBlock *block,
     }
 }
 
+int
+hippo_block_get_message_count(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), 0);
+
+    return block->message_count;
+}
+
+void
+hippo_block_set_message_count(HippoBlock *block,
+                              int         value)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (value != block->message_count) {
+        block->message_count = value;
+        g_object_notify(G_OBJECT(block), "message-count");
+    }
+}
+
 gboolean
 hippo_block_get_clicked(HippoBlock *block)
 {
@@ -714,6 +827,26 @@ hippo_block_set_ignored(HippoBlock *block,
     }
 }
 
+gboolean 
+hippo_block_get_pinned(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), FALSE);
+
+    return block->pinned;
+}
+
+void
+hippo_block_set_pinned(HippoBlock *block,
+                       gboolean    pinned)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (pinned != block->pinned) {
+        block->pinned = pinned;
+        g_object_notify(G_OBJECT(block), "pinned");
+    }
+}
+ 
 HippoStackReason
 hippo_block_get_stack_reason(HippoBlock *block)
 {
@@ -731,6 +864,26 @@ hippo_block_set_stack_reason(HippoBlock      *block,
     if (value != block->stack_reason) {
         block->stack_reason = value;
         g_object_notify(G_OBJECT(block), "stack-reason");
+    }
+}
+
+guint
+hippo_block_get_filter_flags(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), FALSE);
+
+    return block->filter_flags;
+}
+
+void
+hippo_block_set_filter_flags(HippoBlock *block,
+                             guint       flags)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (flags != block->filter_flags) {
+        block->filter_flags = flags;
+        g_object_notify(G_OBJECT(block), "filter-flags");
     }
 }
 
@@ -810,6 +963,32 @@ hippo_block_set_title_link(HippoBlock *block,
     g_object_notify(G_OBJECT(block), "title-link");
 }
 
+HippoEntity *
+hippo_block_get_source(HippoBlock *block)
+{
+    return block->source;
+}
+
+void
+hippo_block_set_source(HippoBlock        *block,
+                       HippoEntity       *source)
+{
+    if (source == block->source)
+        return;
+
+    if (block->source) {
+        g_object_unref(block->source);
+        block->source = NULL;
+    }
+
+    if (source) {
+        g_object_ref(source);
+        block->source = source;
+    }
+
+    g_object_notify(G_OBJECT(block), "source");
+}
+
 HippoBlockType
 hippo_block_type_from_attributes(const char *type,
                                  const char *generic_types)
@@ -818,6 +997,7 @@ hippo_block_type_from_attributes(const char *type,
     
     static const struct { const char *name; HippoBlockType type; } types[] = {
         { "POST", HIPPO_BLOCK_TYPE_POST },
+        { "ACCOUNT_QUESTION", HIPPO_BLOCK_TYPE_ACCOUNT_QUESTION },
         { "GROUP_MEMBER", HIPPO_BLOCK_TYPE_GROUP_MEMBER },
         { "GROUP_CHAT", HIPPO_BLOCK_TYPE_GROUP_CHAT },
         { "MUSIC_CHAT", HIPPO_BLOCK_TYPE_MUSIC_CHAT },
@@ -825,7 +1005,8 @@ hippo_block_type_from_attributes(const char *type,
         { "FLICKR_PERSON", HIPPO_BLOCK_TYPE_FLICKR_PERSON },
         { "FLICKR_PHOTOSET", HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET },
         { "FACEBOOK_EVENT", HIPPO_BLOCK_TYPE_FACEBOOK_EVENT },
-        { "YOUTUBE_PERSON", HIPPO_BLOCK_TYPE_YOUTUBE_PERSON }
+        { "YOUTUBE_PERSON", HIPPO_BLOCK_TYPE_YOUTUBE_PERSON },
+        { "NETFLIX_MOVIE", HIPPO_BLOCK_TYPE_NETFLIX_MOVIE }
     };
     unsigned int i;
 

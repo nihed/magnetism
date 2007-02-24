@@ -37,11 +37,15 @@ dh.chat.MessageList = function(chatRoom, insertCallback, removeCallback, limit) 
 			insertPos--
 		}
 		
-		if (insertPos > 0 && this._messages[insertPos - 1].getEntity() == message.getEntity())
-			message.userFirst = false
-		else
-			message.userFirst = true
-		
+		if (insertPos > 0) {
+		    var previous = this._messages[insertPos - 1];
+		    message.userFirst = message.getEntity() != previous.getEntity();
+			message.sentimentFirst = message.userFirst || (message.getSentiment() != previous.getSentiment());
+		} else {
+			message.userFirst = true;
+			message.sentimentFirst = true;
+		}
+			
 		// Insert the new message in the correct place
 		this._messages.splice(insertPos, 0, message)
 		var before = null
@@ -50,12 +54,14 @@ dh.chat.MessageList = function(chatRoom, insertCallback, removeCallback, limit) 
 		this._insertCallback(message, before)		
 		
 		if (before) {
-			// If the 'userFirst' user for the next message, we need
-			// to remove and reinsert it so that the GUI can be updated
-			var oldNextIsFirst = before.userFirst
-			before.userFirst = before.getEntity() != message.getEntity()
+			// We might have to reinsert the next entry if 
+			// "userFirst" or "sentimentFirst" for it changed
+			var oldNextIsUserFirst = before.userFirst;
+			var oldNextIsSentimentFirst = before.sentimentFirst;
+			before.userFirst = before.getEntity() != message.getEntity();
+			before.sentimentFirst = before.userFirst || before.getSentiment() != message.getSentiment();
 			
-			if (before.userFirst != oldNextIsFirst) {
+			if (before.userFirst != oldNextIsUserFirst || before.sentimentFirst != oldNextIsSentimentFirst) {
 				var nextBefore
 				if (insertPos < this._messages.length - 2)
 					nextBefore = this._messages[insertPos + 2]
@@ -147,6 +153,7 @@ dh.chat.UserList = function(chatRoom, insertCallback, removeCallback, updateCall
 	this._onReconnect = function() {
 		while (this._users.length > 0) {
 			var old = this._users.pop()
+			delete this._userMap[old.getId()];
 			this._removeCallback(old)
 		}
 	}

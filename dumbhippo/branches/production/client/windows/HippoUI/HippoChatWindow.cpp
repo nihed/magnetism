@@ -15,7 +15,7 @@ static const int BASE_WIDTH = 600;
 static const int BASE_HEIGHT = 600;
 
 static const WCHAR *CLASS_NAME = L"HippoChatWindowClass";
-static const WCHAR *TITLE = L"Mugshot Chat";
+static const WCHAR *TITLE = L"Mugshot Quips and Comments";
 
 class HippoChatWindowImpl : 
     public HippoChatWindow,
@@ -171,7 +171,7 @@ HippoChatWindowImpl::setChatId(BSTR chatId)
     if (serverPort != 80) {
         url.Append(':');
         WCHAR buffer[16];
-        StringCchPrintfW(buffer, sizeof(buffer), L"%d", serverPort);
+        StringCchPrintfW(buffer, sizeof(buffer) / sizeof(buffer[0]), L"%d", serverPort);
         url.Append(buffer);
     }
     url.Append(L"/chatwindow?chatId=");

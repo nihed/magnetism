@@ -67,8 +67,8 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private ListBean<GroupView> combinedGroups;
 	
 	// information about existing outstanding invitations
-	private ListBean<InvitationView> outstandingInvitations;
-	private Pageable<InvitationView> pageableOutstandingInvitations;
+	private ListBean<PersonView> outstandingInvitations;
+	private Pageable<PersonView> pageableOutstandingInvitations;
 
 	private ListBean<PersonView> invitedContacts;
 	private Pageable<PersonView> pageableInvitedContacts;
@@ -398,17 +398,27 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		return currentTrack;
 	}
 	
-	public ListBean<InvitationView> getOutstandingInvitations() {
+	private ListBean<PersonView> convertToPersonViews(List<InvitationView> invitationViews) {
+		List<PersonView> personViewsList = new ArrayList<PersonView>();
+		for (InvitationView invitation : invitationViews) {
+			PersonView personView = 
+				personViewer.getPersonView(getUserSignin().getViewpoint(), invitation.getInvite().getInvitee());
+			personView.setInvitationView(invitation);
+			personViewsList.add(personView);
+		}
+		return new ListBean<PersonView>(personViewsList);
+	}
+	
+	public ListBean<PersonView> getOutstandingInvitations() {
 		if (outstandingInvitations == null) {
 			outstandingInvitations = 
-				new ListBean<InvitationView>(
-				    invitationSystem.findInvitations(getUserSignin().getViewpoint(), 
-				    		                         0, -1, false));
+				convertToPersonViews(invitationSystem.findInvitations(getUserSignin().getViewpoint(), 
+                                                                      0, -1, false));
 		}
 		return outstandingInvitations;
 	}
 	
-	public Pageable<InvitationView> getPageableOutstandingInvitations() {
+	public Pageable<PersonView> getPageableOutstandingInvitations() {
 		if (pageableOutstandingInvitations == null) {
 			pageableOutstandingInvitations = pagePositions.createPageable("invitations");
 			pageableOutstandingInvitations.setInitialPerPage(INVITATIONS_PER_PAGE);
@@ -418,18 +428,12 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		return pageableOutstandingInvitations;
 	}
 	
+	
 	public ListBean<PersonView> getInvitedContacts() {
 		if (invitedContacts == null) {
-			List<InvitationView> allInvitations = 
-				invitationSystem.findInvitations(getUserSignin().getViewpoint(), 0, -1, true);
-			List<PersonView> invitedContactsList = new ArrayList<PersonView>();
-			for (InvitationView invitation : allInvitations) {
-				PersonView invitedContact = 
-					personViewer.getPersonView(getUserSignin().getViewpoint(), invitation.getInvite().getInvitee());
-				invitedContact.setInvitationView(invitation);
-				invitedContactsList.add(invitedContact);
-			}
-			invitedContacts = new ListBean<PersonView>(invitedContactsList);
+			invitedContacts = 
+				convertToPersonViews(invitationSystem.findInvitations(getUserSignin().getViewpoint(), 
+						                                              0, -1, true));
 		}
 		return invitedContacts;
 	}

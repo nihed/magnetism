@@ -5,6 +5,8 @@ import java.net.URL;
 
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.services.FlickrUser;
+import com.dumbhippo.services.MySpaceScraper;
+import com.dumbhippo.services.TransientServiceException;
 import com.dumbhippo.services.YouTubeWebServices;
 import com.dumbhippo.services.LastFmWebServices;
 
@@ -36,16 +38,23 @@ public enum ExternalAccountType {
 		}
 		
 		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username";
+	    }	
+		
+		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
-				if (handle.length() > 40)
-					throw new ValidationException("MySpace name too long: " + handle);
-				if (!handle.matches("^[\\p{Alnum}]+$"))
-					throw new ValidationException("Invalid MySpace name: " + handle);
+				try {
+					MySpaceScraper.getFriendId(handle);
+				} catch (TransientServiceException e) {
+					throw new ValidationException("Invalid MySpace name '" + handle + "'");
+				}
 			}
 			return handle;
 		}
+		
 		// friend ID
 		@Override
 		public String canonicalizeExtra(String extra) throws ValidationException {
@@ -61,6 +70,11 @@ public enum ExternalAccountType {
 			return extra;
 		}
 
+		@Override
+		public boolean requiresExtraIfLoved() {
+			return true;
+		}
+		
 		@Override
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null && extra != null;
@@ -83,6 +97,16 @@ public enum ExternalAccountType {
 			return "My Photos";
 		}
 
+		@Override
+	    public String getSiteUserInfoType() {
+	    	return "email used for";
+	    }
+		
+		@Override
+	    public boolean isInfoTypeProvidedBySite() {
+	    	return false;
+	    }
+	    
 		@Override
 		public String canonicalizeExtra(String extra) throws ValidationException {
 			extra = super.canonicalizeExtra(extra);
@@ -120,6 +144,11 @@ public enum ExternalAccountType {
 		public String getLinkText(String handle, String extra) {
 			return "My Profile";
 		}
+		
+		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username or profile URL";
+	    }		
 		
 		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
@@ -213,6 +242,16 @@ public enum ExternalAccountType {
 			}
 			return extra;
 		}
+
+		@Override
+		public boolean requiresHandleIfLoved() {
+			return false;
+		}
+
+		@Override
+		public boolean requiresExtraIfLoved() {
+			return true;
+		}
 		
 		@Override
 		public boolean getHasAccountInfo(String handle, String extra) {
@@ -264,6 +303,12 @@ public enum ExternalAccountType {
 		public String getLinkText(String handle, String extra) {
 			return handle;
 		}
+		
+		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username or profile URL";
+	    }
+		
 		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
@@ -359,6 +404,8 @@ public enum ExternalAccountType {
 		@Override
 		public String getLink(String handle, String extra) {
 			// handle is the rhapUserId in the feed url
+			// since there do not seem to exist public user profiles on Rhapsody,
+			// the best we can offer for the person's Rhapsody account is this feed url
 			return "http://feeds.rhapsody.com/user-track-history.rss?rhapUserId=" + handle + "&userName=I";
 		}
 		
@@ -373,11 +420,22 @@ public enum ExternalAccountType {
 		}
 		
 		@Override
+		public String getSiteUserInfoType() {
+			return "\u201CRecently Played Tracks\u201D RSS feed URL";			
+		}
+		
+		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
-				if (handle.trim().length() == 0)
-					throw new ValidationException("empty rhapUserId in Rhapsody URL");
+				if (!(StringUtils.isAlphanumeric(handle) && (handle.length() == 32)))
+					throw new ValidationException("Rhapsody rhapUserId can only have letters and digits and be 32 characters long");
+				
+				try {
+					new URL(getLink(handle, null));
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid Rhapsody rhapUserId '" + handle + "': " + e.getMessage());
+				}
 			}
 			return handle;
 		}
@@ -385,6 +443,11 @@ public enum ExternalAccountType {
 		@Override
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
+		}
+		
+		@Override
+		public boolean isAffectedByMusicSharing() {
+			return true;
 		}
 	},
 	LASTFM("Last.fm")  { // 10
@@ -402,6 +465,12 @@ public enum ExternalAccountType {
 		public String getLinkText(String handle, String extra) {
 			return handle;
 		}
+		
+		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username";
+	    }
+		
 		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
@@ -431,6 +500,11 @@ public enum ExternalAccountType {
 		public String getIconName() {
 			return "favicon_lastfm.png";
 		}		
+		
+		@Override
+		public boolean isAffectedByMusicSharing() {
+			return true;
+		}
 	}, 
 	DELICIOUS("del.icio.us") { // 11
 		@Override
@@ -452,6 +526,11 @@ public enum ExternalAccountType {
 		public String getLinkText(String handle, String extra) {
 			return "My Favorites";
 		}
+		
+		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username or profile URL";
+	    }
 		
 		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
@@ -496,6 +575,11 @@ public enum ExternalAccountType {
 		}
 		
 		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username or profile URL";
+	    }
+		
+		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
@@ -533,6 +617,11 @@ public enum ExternalAccountType {
 		public String getLinkText(String handle, String extra) {
 			return "Dugg by " + handle;
 		}
+		
+		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username or profile URL";
+	    }
 		
 		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
@@ -581,6 +670,11 @@ public enum ExternalAccountType {
 		}
 		
 		@Override
+	    public String getSiteUserInfoType() {
+	    	return "username or profile URL";
+	    }
+		
+		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
@@ -600,6 +694,54 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}
+	}, 
+	NETFLIX("Netflix") { // 15
+		@Override
+		public String getIconName() {
+			return "favicon_netflix.png";
+		}
+		
+		@Override
+		public String getLink(String handle, String extra) {
+			return getSiteLink() + "/Invitation";
+		}
+		
+		@Override
+		public String getSiteLink() {
+			return "http://netflix.com";
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "Find this person on Netflix";
+		}
+		
+		@Override
+		public String getSiteUserInfoType() {
+			return "\u201CMovies At Home\u201D RSS feed URL";			
+		}
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				// the user id for RSS feeds consists of "P" followed by 34 digits
+				if (!((handle.indexOf("P") == 0) && (handle.substring(1).matches("[0-9]+") && handle.length() == 35)))
+					throw new ValidationException("Netflix user id for RSS feeds should be 'P' followed by 34 digits");
+				
+				try {
+					new URL("http://rss.netflix.com/AtHomeRSS?id=" + handle);
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid Netflix user id handle '" + handle + "': " + e.getMessage());
+				}
+			}			
+			return handle;
+		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}		
 	};
 	
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountType.class);	
@@ -650,6 +792,11 @@ public enum ExternalAccountType {
 		}
 		return handle;
 	}
+	
+	public boolean requiresHandleIfLoved() {
+		return true;
+	}
+	
 	public String canonicalizeExtra(String extra) throws ValidationException {
 		if (extra != null) {
 			extra = extra.trim();
@@ -658,6 +805,10 @@ public enum ExternalAccountType {
 		}		
 		return extra;
 	}
+
+	public boolean requiresExtraIfLoved() {
+		return false;
+	}
 	
     public boolean isSupported() {
     	return true;
@@ -665,5 +816,21 @@ public enum ExternalAccountType {
     
     public String getName() {
     	return name();
+    }
+    
+    // the type of the user identifying info we ask the user to enter to identify their
+    // account to us
+    public String getSiteUserInfoType() {
+    	return "user info";
+    }
+    
+    // how we should talk about the identifying info, is it something the site provides you with
+    // (i.e. a username) or is it something you provide the site with (i.e. your e-mail)
+    public boolean isInfoTypeProvidedBySite() {
+    	return true;
+    }
+    
+    public boolean isAffectedByMusicSharing() {
+    	return false;
     }
 }

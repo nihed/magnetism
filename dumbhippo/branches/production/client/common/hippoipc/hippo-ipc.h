@@ -3,6 +3,7 @@
 #define __HIPPO_IPC_H__
 
 typedef unsigned long long HippoEndpointId;
+typedef unsigned long long HippoWindowId;
 
 class HippoIpcListener {
 public:
@@ -18,7 +19,7 @@ public:
 
     virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant) = 0;
     virtual void onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId) = 0;
-    virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial) = 0;
+    virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp, long serial) = 0;
 
     virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying) = 0;
     
@@ -30,10 +31,12 @@ class HippoIpcMethods {
 public:
     virtual void unregisterEndpoint(HippoEndpointId endpoint) = 0;
     
+    virtual void setWindowId(HippoEndpointId endpoint, HippoWindowId windowId) = 0;
+
     virtual void joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant) = 0;
     virtual void leaveChatRoom(HippoEndpointId endpoint, const char *chatId) = 0;
     
-    virtual void sendChatMessage(const char *chatId, const char *text) = 0;
+    virtual void sendChatMessage(const char *chatId, const char *text, int sentiment) = 0;
     virtual void showChatWindow(const char *chatId) = 0;
     
 protected:

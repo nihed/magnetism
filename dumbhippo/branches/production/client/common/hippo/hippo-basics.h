@@ -149,6 +149,7 @@ typedef struct {
     guint initial_debug_share : 1;
     guint verbose : 1;
     guint verbose_xmpp : 1;
+    char *crash_dump;
     char **restart_argv;
     int    restart_argc;
 } HippoOptions;
@@ -161,6 +162,16 @@ typedef void (* HippoPrintDebugFunc) (const char *message);
 typedef void (* HippoHttpFunc) (const char *content_type,
                                 GString    *content_or_error,
                                 void       *data);
+
+gboolean hippo_parse_int32 (const char *s,
+                            int        *result);
+gboolean hippo_parse_int64 (const char *s,
+                            gint64     *result);
+
+gboolean hippo_parse_http_url  (const char *url,
+                                gboolean   *is_https,
+                                char      **host,
+                                int        *port);
 
 gboolean hippo_parse_server          (const char *server,
                                       char      **host,

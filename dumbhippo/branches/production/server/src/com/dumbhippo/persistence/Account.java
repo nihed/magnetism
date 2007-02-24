@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.util.EJBUtil;
 
 
@@ -60,6 +61,7 @@ public class Account extends Resource {
 	private long creationDate;
 	private long lastLoginDate;
 	private long lastLogoutDate;
+	private long lastWebActivityDate;
 	private int invitations;
 	
 	private boolean wasSentShareLinkTutorial;
@@ -95,6 +97,8 @@ public class Account extends Resource {
 	// used to notify when we have new ones
 	private long groupInvitationReceived;
 	
+	private String stackFilter;
+	
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
 	 * very far since they have auth keys. Instead add methods that do whatever
@@ -103,7 +107,9 @@ public class Account extends Resource {
 	/* FIXME we can probably simplify this down to just one cookie right in the Account ? */
 	private Set<Client> clients;
 
-	private Set<ExternalAccount> externalAccounts; 
+	private Set<ExternalAccount> externalAccounts;
+
+	private Boolean applicationUsageEnabled; 
 	
 	/**
 	 * Used only for Hibernate 
@@ -119,6 +125,7 @@ public class Account extends Resource {
 		creationDate = -1;
 		lastLoginDate = -1;
 		lastLogoutDate = -1;
+		lastWebActivityDate = -1;
 		wasSentShareLinkTutorial = false;
 		hasDoneShareLinkTutorial = false;
 		needsDownload = true;
@@ -293,6 +300,21 @@ public class Account extends Resource {
 			this.lastLogoutDate = date.getTime();
 		else
 			this.lastLogoutDate = -1;
+	}
+	
+	@Column(nullable=true)
+	public Date getLastWebActivityDate() {
+		if (lastWebActivityDate < 0) {
+			return null;
+		}
+		return new Date(lastWebActivityDate);
+	}
+
+	public void setLastWebActivityDate(Date date) {
+		if (date != null)
+			this.lastWebActivityDate = date.getTime();
+		else
+			this.lastWebActivityDate = -1;
 	}	
 
 	@Column(nullable = false)
@@ -465,6 +487,11 @@ public class Account extends Resource {
 
 	public void setMusicSharingEnabled(Boolean musicSharingEnabled) {
 		this.musicSharingEnabled = musicSharingEnabled;
+	}
+	
+	@Transient
+	public boolean isMusicSharingEnabledWithDefault() {
+		return musicSharingEnabled == null ? AccountSystem.DEFAULT_ENABLE_MUSIC_SHARING : musicSharingEnabled.booleanValue(); 
 	}
 
 	@Column(nullable=false)
@@ -669,5 +696,23 @@ public class Account extends Resource {
 			}
 		}
 		return null;
+	}
+
+	@Column(nullable=true)
+	public String getStackFilter() {
+		return stackFilter;
+	}
+
+	public void setStackFilter(String blockTypeFilter) {
+		this.stackFilter = blockTypeFilter;
+	}
+	
+	@Column(nullable=true)
+	public Boolean isApplicationUsageEnabled() {
+		return applicationUsageEnabled;
+	}
+
+	public void setApplicationUsageEnabled(Boolean enabled) {
+		this.applicationUsageEnabled = enabled;
 	}
 }

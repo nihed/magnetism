@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
-    <Product Id="AEB57CA0-70B0-44C1-8CC5-DD9EA3E86E50"
+    <Product Id="819D8B9C-8ADD-4520-BA0E-3A7E002635AC"
             UpgradeCode="9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F"
             Name="Mugshot" 
             Language="1033"
-            Version="1.1.84"
+            Version="1.1.88"
             Manufacturer="Red Hat">
         <Package Id="????????-????-????-????-????????????"
                 Description="Mugshot client software" 
@@ -21,13 +21,14 @@
         <Property Id="ARPPRODUCTICON" Value="hippoIcon"/>
         
         <Upgrade Id="9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F">
-            <UpgradeVersion Minimum="0" Maximum="1.1.84" Property="DHPREVIOUSVERSIONS"/>
-            <UpgradeVersion Minimum="1.1.84" IncludeMinimum="yes" Property="DHNEWERVERSIONS"/>
+            <UpgradeVersion Minimum="0" Maximum="1.1.88" Property="DHPREVIOUSVERSIONS"/>
+            <UpgradeVersion Minimum="1.1.0" Maximum="1.1.88" Property="DHSAMELICENSE"/>
+            <UpgradeVersion Minimum="1.1.88" IncludeMinimum="yes" Property="DHNEWERVERSIONS"/>
         </Upgrade>
 
         <!-- Separate "cabinets" would be used if you broke the installer across floppies ... -->
         <Media Id="1" Cabinet="Product.cab" EmbedCab="yes" />
-        
+
         <FragmentRef Id="dhComponents"/>
 
         <!-- Only a single feature; it's all-or-nothing -->
@@ -35,6 +36,7 @@
         <ComponentRef Id="dependencies" />
         <ComponentRef Id="firefox" />
         <ComponentRef Id="firefoxChromeContent" />
+        <ComponentRef Id="firefoxChromeIconsDefault" />
         <ComponentRef Id="firefoxChromeLocaleEnUs" />
         <ComponentRef Id="firefoxChromeSkin" />
         <ComponentRef Id="firefoxComponents" />
@@ -47,6 +49,9 @@
         <ComponentRef Id="loudmouth" />
         <ComponentRef Id="images" />
         <ComponentRef Id="pangoConfiguration" />
+        <!-- We're static linking for now -->
+        <!-- <MergeRef Id="visualStudioRuntime" /> -->
+        <!-- <MergeRef Id="visualStudioRuntimePolicy" /> -->
     </Feature>
     
     <CustomAction Id="DhQuitApp" FileKey="mugshotExe" Return="ignore" ExeCommand="--quit"/> 
@@ -71,7 +76,7 @@
      
     <InstallUISequence>
         <Show Dialog="NotAdminPage" After="CostFinalize">NOT Privileged</Show>
-        <Show Dialog="WelcomePage" After="NotAdminPage">NOT DHPREVIOUSVERSIONS</Show>
+        <Show Dialog="WelcomePage" After="NotAdminPage">NOT DHSAMELICENSE</Show>
         <Show Dialog="ProgressPage" After="WelcomePage">NOT DHPREVIOUSVERSIONS</Show>
         <Show Dialog="UpgradeProgressPage" After="ProgressPage">DHPREVIOUSVERSIONS</Show>
         <Show Dialog="FatalErrorPage" OnExit="error"/>

@@ -36,12 +36,16 @@ static void     hippo_canvas_base_paint              (HippoCanvasItem *item,
 static gboolean on_title_bar_button_press_event(HippoCanvasItem *title_bar,
                                                 HippoEvent      *event,
                                                 HippoCanvasBase *base);
+static gboolean on_button_button_press_event(HippoCanvasItem *button,
+                                             HippoEvent      *event);
 static void on_close_activated (HippoCanvasItem *button,
                                 HippoCanvasBase *base);
 static void on_expand_activated  (HippoCanvasItem  *button,
                                   HippoCanvasBase *base);
 static void on_hush_activated  (HippoCanvasItem  *button,
                                 HippoCanvasBase *base);
+static void on_filter_activated(HippoCanvasItem  *button,
+                                HippoCanvasBase *base);                                
 static void on_home_activated  (HippoCanvasItem  *button,
                                 HippoCanvasBase *base);
 
@@ -259,6 +263,7 @@ hippo_canvas_base_constructor (GType                  type,
         hippo_canvas_box_append(box, item, 0);
     
         g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_expand_activated), base);
+        g_signal_connect(G_OBJECT(item), "button-press-event", G_CALLBACK(on_button_button_press_event), base);
 
         add_pipe_bar(box, 0);
     }
@@ -278,6 +283,7 @@ hippo_canvas_base_constructor (GType                  type,
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
 
     g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_close_activated), base);
+    g_signal_connect(G_OBJECT(item), "button-press-event", G_CALLBACK(on_button_button_press_event), base);
 
     add_pipe_bar(box, HIPPO_PACK_END);
 
@@ -291,6 +297,7 @@ hippo_canvas_base_constructor (GType                  type,
         hippo_canvas_box_append(box, item, HIPPO_PACK_END);
     
         g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hush_activated), base);
+        g_signal_connect(G_OBJECT(item), "button-press-event", G_CALLBACK(on_button_button_press_event), base);
 
         add_pipe_bar(box, HIPPO_PACK_END);
     }
@@ -305,8 +312,21 @@ hippo_canvas_base_constructor (GType                  type,
         hippo_canvas_box_append(box, item, HIPPO_PACK_END);
         
         g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_home_activated), base);
+        g_signal_connect(G_OBJECT(item), "button-press-event", G_CALLBACK(on_button_button_press_event), base);
         
         add_pipe_bar(box, HIPPO_PACK_END);
+        
+        item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                            "normal-image-name", "filter",
+                            "prelight-image-name", "filter2",
+                            "xalign", HIPPO_ALIGNMENT_END,
+                            "tooltip", "Show filters",
+                            NULL);
+        hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+        g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_filter_activated), base);
+        g_signal_connect(G_OBJECT(item), "button-press-event", G_CALLBACK(on_button_button_press_event), base);        
+        
+        add_pipe_bar(box, HIPPO_PACK_END);        
     }
         
 #if 0    
@@ -361,6 +381,18 @@ on_title_bar_button_press_event(HippoCanvasItem *title_bar,
     return handled;
 }
 
+/* This is a hack for the title bar buttons to prevent button presses from leaking
+ * through them to the title bar and triggering a move. The correct fix is probably
+ * for HippoCanvasImageButton, Link, etc, to *always* block button press event
+ * propagation. Or maybe HippoCanvasBox can do it when set to be clickable.
+ */
+static gboolean 
+on_button_button_press_event(HippoCanvasItem *button,
+                             HippoEvent      *event)
+{
+    return TRUE;
+}
+
 static void
 on_close_activated (HippoCanvasItem *button,
                     HippoCanvasBase *base)
@@ -387,6 +419,14 @@ on_hush_activated(HippoCanvasItem  *button,
 {
     if (base->actions)
         hippo_actions_hush_notification(base->actions);
+}
+
+static void
+on_filter_activated(HippoCanvasItem  *button,
+                    HippoCanvasBase  *base)
+{
+    if (base->actions)
+        hippo_actions_toggle_filter(base->actions);
 }
 
 static void

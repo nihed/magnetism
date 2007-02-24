@@ -42,6 +42,8 @@ void             hippo_data_cache_set_music_sharing_enabled (HippoDataCache  *ca
                                                              gboolean         enabled);
 void             hippo_data_cache_set_music_sharing_primed  (HippoDataCache  *cache,
                                                              gboolean         primed);
+void             hippo_data_cache_set_application_usage_enabled (HippoDataCache *cache,
+                                                                 gboolean        enabled);
 
 void             hippo_data_cache_clear_active_posts        (HippoDataCache  *cache);
 void             hippo_data_cache_add_active_posts          (HippoDataCache  *cache,

@@ -82,8 +82,19 @@ public class ExternalAccount extends DBUnique {
 		}
 	}
 
+	// used when setting a handle for loved accounts
 	public void setHandleValidating(String handle) throws ValidationException {
-		this.handle = accountType.canonicalizeHandle(handle);
+		String validatedHandle = accountType.canonicalizeHandle(handle);
+		if (accountType.requiresHandleIfLoved() && validatedHandle == null) {
+			String usedForSite = "";
+			if (!this.getAccountType().isInfoTypeProvidedBySite()) {
+				usedForSite = " " + this.getSiteName() + " account";
+			}
+			
+			throw new ValidationException("If you love " + this.getSiteName() + " let us know by entering your " 
+					                      + this.getAccountType().getSiteUserInfoType() + usedForSite);
+		}
+		this.handle = validatedHandle;
 	}	
 	
 	@Column(nullable=true)
@@ -105,9 +116,15 @@ public class ExternalAccount extends DBUnique {
 			throw new IllegalArgumentException("Setting invalid extra on ExternalAccount type " + accountType + " value '" + extra + "'", e);
 		}
 	}
-	
+
+	// used when setting an extra for loved accounts
 	public void setExtraValidating(String extra) throws ValidationException {
-		this.extra = accountType.canonicalizeExtra(extra);
+		String validatedExtra = accountType.canonicalizeExtra(extra);
+		if (accountType.requiresExtraIfLoved() && validatedExtra == null) {
+			// this message should not normally be displayed to the user
+			throw new ValidationException("Setting an empty value for " + this.getSiteName() + " user info extra is not valid");
+		}
+		this.extra = validatedExtra;
 	}
 	
 	@Column(nullable=true)
@@ -174,12 +191,17 @@ public class ExternalAccount extends DBUnique {
 	@Transient
 	public boolean hasLovedAndEnabledType(ExternalAccountType type) {
 		return accountType == type && getSentiment() == Sentiment.LOVE &&
-		accountType.getHasAccountInfo(handle, extra) &&
-		getAccount().isActive();
+		getAccount().isActive() && 
+		(!accountType.isAffectedByMusicSharing() || getAccount().isMusicSharingEnabledWithDefault());
 	}
 	
 	@Transient
 	public boolean isLovedAndEnabled() {
 		return hasLovedAndEnabledType(accountType);
+	}
+	
+	@Transient
+	public boolean hasAccountInfo() {
+		return accountType.getHasAccountInfo(handle, extra);
 	}
 }

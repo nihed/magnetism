@@ -53,10 +53,10 @@
     
 <head>
     <title><c:out value="${person.viewedPerson.name}"/>'s ${pageName} - Mugshot</title>
-	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
+	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="account" iefixes="true"/>	
 	<dht:faviconIncludes/>
-		<dh:script modules="dh.account,dh.password"/>
+    <dh:script modules="dh.account,dh.password"/>
 	<script type="text/javascript">
 		dh.account.active = ${signin.active};
 		dh.password.active = ${signin.active};
@@ -91,10 +91,12 @@
 		dh.account.initialDiggHateQuip = <dh:jsString value="${account.diggHateQuip}"/>;
 		dh.account.initialRedditName = <dh:jsString value="${account.redditName}"/>;
 		dh.account.initialRedditHateQuip = <dh:jsString value="${account.redditHateQuip}"/>;					
+		dh.account.initialNetflixUrl = <dh:jsString value="${account.netflixFeedUrl}"/>;
+		dh.account.initialNetflixHateQuip = <dh:jsString value="${account.netflixHateQuip}"/>;	
 	</script>
 </head>
 <dht3:page currentPageLink="account">
-	<dht3:accountStatus/>
+	<dht3:accountStatus enableControl="true"/>
 	<dht3:pageSubHeader title="${person.viewedPerson.name}'s ${pageName}">
 		<dht3:randomTip isSelf="${person.self}"/>
 		<dht3:personRelatedPagesTabs/> 
@@ -109,19 +111,14 @@
 				    <div class="dh-section-header">Public Info</div>
 				    <span class="dh-section-explanation">This information will be visible on your <a href="/person">Home</a> page.</span>
                 </dht3:formTableRowSeparator>
-				<dht:formTableRowStatus controlId='dhUsernameEntry'></dht:formTableRowStatus>
-				<dht:formTableRow label="My name">
+				<dht:formTableRow label="My name" controlId='dhUsernameEntry'>
 					<dht:textInput id="dhUsernameEntry" extraClass="dh-username-input"/>
+					<div id="dhUsernameEntryDescription" style="display: none"></div>
 				</dht:formTableRow>
-				<dht:formTableRowStatus controlId='dhBioEntry'></dht:formTableRowStatus>
-				<dht:formTableRow label="About me" altRow="true">
-					<%--
-					<div>
-						<input type="button" value="Generate a random bio!" onclick="dh.account.generateRandomBio();"/>
-					</div>
-					--%>
+				<dht:formTableRow label="About me" altRow="true" controlId="dhBioEntry">
 					<div>
 						<dht:textInput id="dhBioEntry" multiline="true"/>
+						<div id="dhBioEntryDescription" style="display: none"></div>
 					</div>
 				</dht:formTableRow>
 				<!-- music bio currently disabled
@@ -207,13 +204,13 @@
 						    <a href="${account.addAimLink}"><dh:png klass="dh-add-icon" src="/images3/${buildStamp}/add_icon.png" style="width: 10; height: 10; overflow: hidden;"/>IM our friendly bot to add a new screen name</a>
 					    </div>
 				    </dht:formTableRow>				
-				    <dht:formTableRowStatus controlId='dhWebsiteEntry'></dht:formTableRowStatus>
-				    <dht:formTableRow label="Website" icon="/images3/${buildStamp}/homepage_icon.png">
+				    <dht:formTableRow label="Website" icon="/images3/${buildStamp}/homepage_icon.png" controlId="dhWebsiteEntry">
 					    <dht:textInput id="dhWebsiteEntry" maxlength="255"/>
+					    <div id="dhWebsiteEntryDescription" style="display: none"></div>
 				    </dht:formTableRow>
-				    <dht:formTableRowStatus controlId='dhBlogEntry'></dht:formTableRowStatus>
-				    <dht:formTableRow label="Blog" icon="/images3/${buildStamp}/blog_icon.png">
+				    <dht:formTableRow label="Blog" icon="/images3/${buildStamp}/blog_icon.png" controlId='dhBlogEntry'>
 					    <dht:textInput id="dhBlogEntry" maxlength="255"/>
+					    <div id="dhBlogEntryDescription" style="display: none"></div>
 				    </dht:formTableRow>				
 				    <tr valign="top">
 	                    <td colspan="3">
@@ -241,10 +238,12 @@
 				        </c:choose>    			            					   
 				    </dht:formTableRow>
 				    <c:forEach items="${account.supportedAccounts.list}" var="supportedAccount">
-                        <dht:formTableRow containerId="dh${supportedAccount.siteBaseName}Container" 
+                        <dht:formTableRow controlId="dh${supportedAccount.siteBaseName}" 
                                           label="${supportedAccount.siteName}" icon="/images3/${buildStamp}/${supportedAccount.iconName}">
 		                    <dht:loveHateEntry 
 		                    	name="${supportedAccount.siteName}"
+		                    	userInfoType="${supportedAccount.siteUserInfoType}"
+		                    	isInfoTypeProvidedBySite="${supportedAccount.infoTypeProvidedBySite}"
 		                    	link="${supportedAccount.externalAccountType.siteLink}"
 		                    	baseId="dh${supportedAccount.siteBaseName}" 
 		                    	mode="${supportedAccount.sentiment}"/>

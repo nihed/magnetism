@@ -40,7 +40,7 @@ body {
 	padding:						0;
 
 	/* Page-wide defaults to be inherited by child nodes */
-	font-family:					Bitstream Vera Sans, Verdana, sans;
+	font-family:					Luxi Sans, Arial, sans-serif;
 	color:							#000000;
 	background-color:				#626262;
 }
@@ -85,7 +85,7 @@ a.dh-upload-photo {
 	text-align:						right;
 	text-decoration:				none;
 	font-size:						x-small;
-	font-family:					Bitstream Vera Sans Mono, mono;
+	font-family:					Bitstream Vera Sans Mono, monospace;
 }
 
 input.dh-upload-photo {
@@ -176,7 +176,7 @@ a.dh-name-edit {
 	background-color:		inherit;
 	font-size:				x-small;
 	font-weight:			normal;
-	font-family:			Bitstream Vera Sans Mono, mono;
+	font-family:			Bitstream Vera Sans Mono, monospace;
 }
 .dh-right-box-area {
 	color:					#ffffff;
@@ -256,7 +256,7 @@ a.dh-bottom-bar {
 /* Style of the text being typed by the user */
 textarea, .dhTextArea, .dojoComboBox .comboBoxInput, input[type=text], input[type=password] {
 	font-size:						small;
-	font-family:					Monospaced, mono;
+	font-family:					monospace;
 	/* IE extension that avoids text area scrollbar (dynamically expands it) */
 	overflow:                       visible;
 	width: 							25em;

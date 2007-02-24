@@ -60,7 +60,7 @@ library HippoUtil {
         [id(118), helpstring("Leave a chatroom joined with JoinChatRoom")]
         HRESULT LeaveChatRoom([in] UINT64 endpointId, [in] BSTR chatId);
         [id(119), helpstring("Send a chat message to a particular room")]
-        HRESULT SendChatMessage([in] BSTR chatId, [in] BSTR text);
+        HRESULT SendChatMessage([in] BSTR chatId, [in] BSTR text, [in] int sentiment);
 
         [id(120), helpstring("Get the name of the server we connect to in host:port format")]
         HRESULT GetServerName([out, retval] BSTR *serverName);
@@ -91,7 +91,7 @@ library HippoUtil {
         HRESULT OnDisconnect();
         HRESULT OnUserJoin([in] UINT64 endpointId, [in] BSTR chatId, [in] BSTR userId, [in] BOOL participant);
         HRESULT OnUserLeave([in] UINT64 endpointId, [in] BSTR chatId, [in] BSTR userId);
-        HRESULT OnMessage([in] UINT64 endpointId, [in] BSTR chatId, [in] BSTR userId, [in] BSTR message, [in] double timestamp, [in] int serial);
+        HRESULT OnMessage([in] UINT64 endpointId, [in] BSTR chatId, [in] BSTR userId, [in] BSTR message, [in] int sentiment, [in] double timestamp, [in] int serial);
         HRESULT UserInfo([in]  UINT64 endpointId, [in] BSTR userId, [in] BSTR name, [in] BSTR smallPhotoUrl, [in] BSTR currentSong, [in] BSTR currentArtist, [in] BOOL musicPlaying);
     }
     [

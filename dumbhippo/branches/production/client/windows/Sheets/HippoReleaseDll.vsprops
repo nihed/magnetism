@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="HippoReleaseDll"
+	InheritedPropertySheets=".\hippoRelease.vsprops;.\HippoDll.vsprops;.\HippoSymbols.vsprops"
+	>
+	<Tool
+		Name="VCLinkerTool"
+		LinkIncremental="1"
+		GenerateDebugInformation="true"
+		OptimizeReferences="2"
+		EnableCOMDATFolding="2"
+	/>
+</VisualStudioPropertySheet>

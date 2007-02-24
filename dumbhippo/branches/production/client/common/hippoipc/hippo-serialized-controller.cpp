@@ -103,6 +103,27 @@ HippoSerializedControllerUnregisterEndpoint::invoke(HippoIpcController *controll
     controller->unregisterEndpoint(endpoint_);
 }
 
+class HippoSerializedControllerSetWindowId : public HippoSerializedControllerArgs
+{
+public:
+    HippoSerializedControllerSetWindowId(HippoEndpointId endpoint, HippoWindowId windowId) {
+        endpoint_ = endpoint;
+        windowId_ = windowId;
+    }
+
+    virtual void invoke(HippoIpcController *controller);
+
+private:
+    HippoEndpointId endpoint_;
+    HippoWindowId windowId_;
+};
+
+void
+HippoSerializedControllerSetWindowId::invoke(HippoIpcController *controller)
+{
+    controller->setWindowId(endpoint_, windowId_);
+}
+
 class HippoSerializedControllerJoinChatRoom : public HippoSerializedControllerArgs
 {
 public:
@@ -150,9 +171,10 @@ HippoSerializedControllerLeaveChatRoom::invoke(HippoIpcController *controller)
 class HippoSerializedControllerSendChatMessage : public HippoSerializedControllerArgs
 {
 public:
-    HippoSerializedControllerSendChatMessage(const char *chatId, const char *text) {
+    HippoSerializedControllerSendChatMessage(const char *chatId, const char *text, int sentiment) {
         chatId_ = chatId;
         text_ = text;
+        sentiment_ = sentiment;
     }
 
     virtual void invoke(HippoIpcController *controller);
@@ -160,12 +182,13 @@ public:
 private:
     std::string chatId_;
     std::string text_;
+    int sentiment_;
 };
 
 void
 HippoSerializedControllerSendChatMessage::invoke(HippoIpcController *controller)
 {
-    controller->sendChatMessage(chatId_.c_str(), text_.c_str());
+    controller->sendChatMessage(chatId_.c_str(), text_.c_str(), sentiment_);
 }
 
 class HippoSerializedControllerShowChatWindow : public HippoSerializedControllerArgs
@@ -246,6 +269,13 @@ HippoSerializedController::unregisterEndpoint(HippoEndpointId endpoint)
 }
 
 void 
+HippoSerializedController::setWindowId(HippoEndpointId endpoint, HippoWindowId windowId)
+{
+    clear();
+    args_ = new HippoSerializedControllerSetWindowId(endpoint, windowId);
+}
+
+void 
 HippoSerializedController::joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant)
 {
     clear();
@@ -260,10 +290,10 @@ HippoSerializedController::leaveChatRoom(HippoEndpointId endpoint, const char *c
 }
 
 void
-HippoSerializedController::sendChatMessage(const char *chatId, const char *text)
+HippoSerializedController::sendChatMessage(const char *chatId, const char *text, int sentiment)
 {
     clear();
-    args_ = new HippoSerializedControllerSendChatMessage(chatId, text);
+    args_ = new HippoSerializedControllerSendChatMessage(chatId, text, sentiment);
 }
 
 void 

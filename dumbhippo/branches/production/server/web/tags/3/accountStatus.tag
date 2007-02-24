@@ -4,53 +4,75 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="includeDownload" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="enableControl" required="false" type="java.lang.Boolean" %>
 
 <c:if test="${empty includeDownload}">
 	<c:set var="includeDownload" value="true"/>
 </c:if> 
+<c:if test="${empty enableControl}">
+	<c:set var="enableControl" value="false"/>
+</c:if> 
 
 <dh:script modules="dh.actions,dh.event"/>
-<c:if test="${!signin.active || (includeDownload && signin.user.account.needsDownload)}">
+<c:choose>
+	<c:when test="${signin.user.account.adminDisabled}">
+		<div id="dhAccountDisabled">
+			<span class="dh-account-disabled-header">Your account is currently disabled.</span>
+			Your account has been disabled by the Mugshot site adminstrators. If you believe it
+			was disabled in error, please contact <a href="mailto:feedback@mugshot.org">feedback@mugshot.org</a> 
+			so we can straighten the situation out.
+		</div>
+	</c:when>
+	<c:when test="${signin.user.account.disabled}">
+		<div id="dhAccountDisabled">
+			<span class="dh-account-disabled-header">Your account is currently disabled.</span>  
+			<c:choose>
+				<c:when test="${!enableControl}">
+					Go to <a href="/account">My Account</a> to reenable it.
+				</c:when>
+				<c:otherwise>
+					The information on your Mugshot pages is not visible to anybody else. 
+					Reenable your account to use all of Mugshot's features. 
+                    <p>
+                    	<a href="javascript:dh.actions.enableAccount()">Reenable my account</a>
+                    </p>
+                </c:otherwise>
+			</c:choose>
+		</div>
+	</c:when>	
+	<c:when test="${!signin.active || (includeDownload && signin.user.account.needsDownload)}">
 	<c:set scope="request" var="accountStatusShowing" value="true"/>
-	<div id="dhAccountStatus">
-		<c:choose>
-			<c:when test="${signin.user.account.adminDisabled}">
-				<div id="dhAccountDisabled">
-					Your account has been disabled by the Mugshot site adminstrators. If you believe it
-					was disabled in error, please contact <a href="mailto:feedback@mugshot.org">feedback@mugshot.org</a> 
-					so we can straighten the situation out.
-				</div>
-			</c:when>
+		<div id="dhAccountStatus">
+			<c:choose>
 			<c:when test="${!signin.user.account.hasAcceptedTerms}">
-				<div>
-					<span class="dh-account-status-primary">Welcome to Mugshot! Activate your account to share updates with friends.</span>
-					<a href="/features">Learn more about Mugshot.</a>					
-				</div>
-				<script type="text/javascript">
-					dh.event.addPageLoadListener(dh.actions.updateGetStarted);
-				</script>
-				<table>
+				<table cellspacing="0" cellpadding="0">
 				<tr>
-				<td valign="center" class="dh-account-status-secondary">
-			        <input type="checkbox" id="dhAcceptTerms" onclick="dh.actions.updateGetStarted();">
-		                <label for="dhAcceptTerms">I agree to the Mugshot</label> <a href="javascript:window.open('/terms', 'dhTermsOfUse', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a>.
-			        </input>
-		        </td>
-		        <td valign="center">
-					<a id="dhGetStarted"><img id="dhGetStartedButton" src="/images3/${buildStamp}/get_started_disabled.gif"/></a>
+				<td valign="center">			
+					<div>
+						<div class="dh-account-status-primary">Welcome to Mugshot!</div>
+						Activate your account to share updates with friends.
+					</div>
+					<div>
+						<a href="/features">Learn more about Mugshot.</a>					
+					</div>
+					<script type="text/javascript">
+						dh.event.addPageLoadListener(dh.actions.updateGetStarted);
+					</script>
+				</td>
+				<td align="left" valign="center">
+					<div class="dh-account-status-secondary">
+						<div>
+			        	<input type="checkbox" id="dhAcceptTerms" onclick="dh.actions.updateGetStarted();">
+		                	<label for="dhAcceptTerms">I agree to the Mugshot</label> <a href="javascript:window.open('/terms', 'dhTermsOfUse', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a>.
+				        </input>
+				        </div>
+				        <div>
+							<a id="dhGetStarted"><img id="dhGetStartedButton" src="/images3/${buildStamp}/get_started_disabled.gif"/></a>
+						</div>
+					</div>
 				</td>
 				</tr>
 				</table>
-			</c:when>
-			<c:when test="${signin.user.account.disabled}">
-				<div id="dhAccountDisabled">
-					You have disabled your account. The information on these page is not
-					visible to anybody else. Reenable your account to use all of Mugshot's 
-					features. 
-					<p>
-						<a href="javascript:dh.actions.enableAccount()">Reenable my account</a>
-					</p>
-				</div>
 			</c:when>
 			<c:when test="${includeDownload && signin.user.account.needsDownload}">
 				<div id="dhDownloadMessageClose">
@@ -63,4 +85,5 @@
 			</c:when>
 		</c:choose>
 	</div> 
-</c:if>
+	</c:when>
+</c:choose>

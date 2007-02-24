@@ -1,415 +1,569 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8.00"
 	Name="HippoUI"
 	ProjectGUID="{012658BC-1460-41DC-9E2E-CDD45B75AEF5}"
-	Keyword="Win32Proj">
+	RootNamespace="HippoUI"
+	Keyword="Win32Proj"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="..\Debug"
-			IntermediateDirectory="Debug"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="2">
+			InheritedPropertySheets="..\Sheets\HippoDebug.vsprops;.\HippoUI.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/cairo/include/cairo;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../../common/loudmouth;../../common;../../common/canvas"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NOMINMAX"
-				GeneratePreprocessedFile="0"
-				MinimalRebuild="TRUE"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				TreatWChar_tAsBuiltInType="TRUE"
-				ForceConformanceInForLoopScope="TRUE"
-				UsePrecompiledHeader="1"
-				PrecompiledHeaderThrough="stdafx-hippoui.h"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="4"/>
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/VERBOSE:LIB"
-				AdditionalDependencies=" thrownew.obj Gdiplus.lib shlwapi.lib glib-2.0.lib gthread-2.0.lib gobject-2.0.lib loudmouth.lib pango-1.0.lib pangocairo-1.0.lib pangowin32-1.0.lib cairo.lib ws2_32.lib wininet.lib urlmon.lib advapi32.lib gdi32.lib shell32.lib comctl32.lib jpeg.lib"
-				OutputFile="$(OutDir)/Mugshot.exe"
-				LinkIncremental="2"
-				AdditionalLibraryDirectories="../debug;../dependencies/glib/lib;../dependencies/cairo/lib;../dependencies/pango/lib;../dependencies/jpeg/lib"
-				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/HippoUI.pdb"
-				SubSystem="2"
-				TargetMachine="1"/>
-			<Tool
-				Name="VCMIDLTool"/>
-			<Tool
-				Name="VCPostBuildEventTool"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories="$(IntDir)"/>
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
+				Name="VCLinkerTool"
+				GenerateDebugInformation="true"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
+				Name="VCManifestTool"
+				AdditionalManifestFiles="HippoUI.exe.manifest"
+			/>
 			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="Release"
-			IntermediateDirectory="Release"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="2">
+			InheritedPropertySheets="..\Sheets\hippoRelease.vsprops;.\HippoUI.vsprops;..\Sheets\HippoSymbols.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
-				RuntimeLibrary="4"
-				UsePrecompiledHeader="3"
-				PrecompiledHeaderThrough="stdafx-hippoui.h"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="3"/>
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/Mugshot.exe"
-				LinkIncremental="1"
-				GenerateDebugInformation="TRUE"
-				SubSystem="2"
+				GenerateDebugInformation="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				TargetMachine="1"/>
+				LinkTimeCodeGeneration="0"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+				AdditionalManifestFiles="HippoUI.exe.manifest"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
+				Name="VCWebDeploymentTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
 		<ProjectReference
 			ReferencedProjectIdentifier="{638E7547-B5E8-49AD-A70B-56E333C216FE}"
-			Name="HippoUtil"/>
+			RelativePathToProject=".\HippoUtil\HippoUtil.vcproj"
+		/>
 	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			>
 			<File
-				RelativePath=".\HippoAbstractControl.cpp">
+				RelativePath=".\HippoAbstractControl.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoAbstractIEWindow.cpp">
+				RelativePath=".\HippoAbstractIEWindow.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoAbstractWindow.cpp">
+				RelativePath=".\HippoAbstractWindow.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoButton.cpp">
+				RelativePath=".\HippoButton.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoCanvas.cpp">
+				RelativePath=".\HippoCanvas.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoCanvasControl.cpp">
+				RelativePath=".\HippoCanvasControl.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoCanvasWidgets.cpp">
+				RelativePath=".\HippoCanvasWidgets.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoChatManager.cpp">
+				RelativePath=".\HippoChatManager.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoChatWindow.cpp">
+				RelativePath=".\HippoChatWindow.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoEdit.cpp">
+				RelativePath=".\HippoCrash.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoGSignal.cpp">
+				RelativePath=".\HippoEdit.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoHTTP.cpp">
+				RelativePath=".\HippoGSignal.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoIcon.cpp">
+				RelativePath=".\HippoHTTP.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoIEWindow.cpp">
+				RelativePath=".\HippoIcon.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoImageFactory.cpp">
+				RelativePath=".\HippoIEWindow.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoITunesMonitor.cpp">
+				RelativePath=".\HippoImageFactory.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoJScriptEngine.cpp">
+				RelativePath=".\HippoITunesMonitor.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoListenerProxy.cpp">
+				RelativePath=".\HippoJScriptEngine.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoLogWindow.cpp">
+				RelativePath=".\HippoListenerProxy.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoMusic.cpp">
+				RelativePath=".\HippoLogWindow.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoMusicMonitor.cpp">
+				RelativePath=".\HippoMusic.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoPlatformImpl.cpp">
+				RelativePath=".\HippoMusicMonitor.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoPreferences.cpp">
+				RelativePath=".\HippoPlatformImpl.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoRemoteWindow.cpp">
+				RelativePath=".\HippoPreferences.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoScrollbar.cpp">
+				RelativePath=".\HippoRemoteWindow.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoToolbarEdit.cpp">
+				RelativePath=".\HippoScrollbar.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoToolTip.cpp">
+				RelativePath=".\HippoToolbarEdit.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoUI.cpp">
+				RelativePath=".\HippoToolTip.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoUI.idl">
+				RelativePath=".\HippoUI.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoUIUtil.cpp">
+				RelativePath=".\HippoUI.idl"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoUpgrader.cpp">
+				RelativePath=".\HippoUIUtil.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoWindowWin.cpp">
+				RelativePath=".\HippoUpgrader.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoYahooMonitor.cpp">
+				RelativePath=".\HippoWindowWin.cpp"
+				>
 			</File>
 			<File
-				RelativePath=".\stdafx.cpp">
+				RelativePath=".\HippoYahooMonitor.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\stdafx.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
+						UsePrecompiledHeader="1"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
+						UsePrecompiledHeader="1"
+					/>
 				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			>
 			<File
-				RelativePath=".\Guid.h">
+				RelativePath=".\Guid.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoAbstractControl.h">
+				RelativePath=".\HippoAbstractControl.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoAbstractIEWindow.h">
+				RelativePath=".\HippoAbstractIEWindow.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoAbstractWindow.h">
+				RelativePath=".\HippoAbstractWindow.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoButton.h">
+				RelativePath=".\HippoButton.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoCanvas.h">
+				RelativePath=".\HippoCanvas.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoCanvasControl.h">
+				RelativePath=".\HippoCanvasControl.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoChatManager.h">
+				RelativePath=".\HippoChatManager.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoChatWindow.h">
+				RelativePath=".\HippoChatWindow.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoEdit.h">
+				RelativePath=".\HippoCrash.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoGSignal.h">
+				RelativePath=".\HippoEdit.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoHTTP.h">
+				RelativePath=".\HippoGSignal.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoIcon.h">
+				RelativePath=".\HippoHTTP.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoIEWindow.h">
+				RelativePath=".\HippoIcon.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoImageFactory.h">
+				RelativePath=".\HippoIEWindow.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoITunesMonitor.h">
+				RelativePath=".\HippoImageFactory.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoJScriptEngine.h">
+				RelativePath=".\HippoITunesMonitor.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoListenerProxy.h">
+				RelativePath=".\HippoJScriptEngine.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoLogWindow.h">
+				RelativePath=".\HippoListenerProxy.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoMusic.h">
+				RelativePath=".\HippoLogWindow.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoMusicMonitor.h">
+				RelativePath=".\HippoMusic.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoPlatformImpl.h">
+				RelativePath=".\HippoMusicMonitor.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoPreferences.h">
+				RelativePath=".\HippoPlatformImpl.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoRemoteWindow.h">
+				RelativePath=".\HippoPreferences.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoScrollbar.h">
+				RelativePath=".\HippoRemoteWindow.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoToolbarEdit.h">
+				RelativePath=".\HippoScrollbar.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoToolTip.h">
+				RelativePath=".\HippoToolbarEdit.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoUI.h">
+				RelativePath=".\HippoToolTip.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoUIUtil.h">
+				RelativePath=".\HippoUI.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoUpgrader.h">
+				RelativePath=".\HippoUIUtil.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoWindowWin.h">
+				RelativePath=".\HippoUpgrader.h"
+				>
 			</File>
 			<File
-				RelativePath=".\HippoYahooMonitor.h">
+				RelativePath=".\HippoWindowWin.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Resource.h">
+				RelativePath=".\HippoYahooMonitor.h"
+				>
 			</File>
 			<File
-				RelativePath=".\stdafx-hippoui.h">
+				RelativePath=".\Resource.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Version.h">
+				RelativePath=".\stdafx-hippoui.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Version.h"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
+			>
 			<File
-				RelativePath=".\HippoUI.exe.manifest">
+				RelativePath=".\HippoUI.exe.manifest"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\HippoUI.rc">
+				RelativePath=".\HippoUI.rc"
+				>
 			</File>
 			<File
-				RelativePath=".\linkswarm.ico">
+				RelativePath=".\linkswarm.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\Logo0.ico">
+				RelativePath=".\Logo0.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\Logo1.ico">
+				RelativePath=".\Logo1.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\Logo2.ico">
+				RelativePath=".\Logo2.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\Logo3.ico">
+				RelativePath=".\Logo3.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\Logo4.ico">
+				RelativePath=".\Logo4.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\Logo5.ico">
+				RelativePath=".\Logo5.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\Logo6.ico">
+				RelativePath=".\Logo6.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\Mugshot.ico">
+				RelativePath=".\Mugshot.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\notification.ico">
+				RelativePath=".\notification.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\notification_disconnected.ico">
+				RelativePath=".\notification_disconnected.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\swarm1.ico">
+				RelativePath=".\swarm1.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\swarm2.ico">
+				RelativePath=".\swarm2.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\swarm3.ico">
+				RelativePath=".\swarm3.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\swarm4.ico">
+				RelativePath=".\swarm4.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\swarm5.ico">
+				RelativePath=".\swarm5.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\swarm5b.ico">
+				RelativePath=".\swarm5b.ico"
+				>
 			</File>
 		</Filter>
 	</Files>

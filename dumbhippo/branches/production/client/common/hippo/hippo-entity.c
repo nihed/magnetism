@@ -223,6 +223,13 @@ hippo_entity_get_photo_url(HippoEntity    *entity)
     return entity->photo_url;
 }
 
+gboolean
+hippo_entity_get_in_network(HippoEntity    *entity)
+{
+    g_return_val_if_fail(HIPPO_IS_ENTITY(entity), FALSE);
+    return entity->in_network;
+}
+
 void
 hippo_entity_set_name(HippoEntity    *entity,
                       const char     *name)
@@ -242,9 +249,19 @@ hippo_entity_set_home_url(HippoEntity    *entity,
 
 void
 hippo_entity_set_photo_url(HippoEntity    *entity,
-                                 const char     *url)
+                           const char     *url)
 {
     g_return_if_fail(HIPPO_IS_ENTITY(entity));
     /* g_debug("Setting photo for '%s' to '%s'", entity->guid, url ? url : "null"); */
     hippo_entity_set_string(entity, &entity->photo_url, url);
+}
+
+void
+hippo_entity_set_in_network(HippoEntity    *entity,
+                            gboolean        in_network)
+{
+    g_return_if_fail(HIPPO_IS_ENTITY(entity));
+
+    entity->in_network = in_network != FALSE;
+    hippo_entity_notify(entity);
 }

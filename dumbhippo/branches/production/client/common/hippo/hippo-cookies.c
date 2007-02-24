@@ -364,7 +364,7 @@ parse_line(GSList    **cookies_p,
 }
 
 /* NULL domain, NULL name, -1 port act as "wildcard" for this function */
-GSList*
+static GSList*
 hippo_load_cookies_file(HippoBrowserKind browser,
                         const char *filename,
                         const char *domain,
@@ -400,6 +400,202 @@ hippo_load_cookies_file(HippoBrowserKind browser,
     return g_slist_reverse(cookies);
 }
 
+typedef enum {
+    HIPPO_COOKIE_FILE,
+    HIPPO_COOKIE_DIRECTORY
+} HippoCookieSourceType;
+
+typedef struct HippoCookieSource HippoCookieSource;
+typedef struct HippoCookieFile   HippoCookieFile;
+
+struct HippoCookieSource {
+    HippoCookieSourceType type;
+    char *path;
+    HippoBrowserKind browser;
+};
+
+struct HippoCookieLocator {
+    char *domain;
+    int port;
+    char *name;
+    
+    GSList *sources;
+};
+
+struct HippoCookieFile {
+    char *filename;
+    HippoBrowserKind browser;
+};
+
+static HippoCookieSource *
+hippo_cookie_source_new(HippoCookieSourceType type,
+                        const char           *path,
+                        HippoBrowserKind      browser)
+{
+    HippoCookieSource *source = g_new0(HippoCookieSource, 1);
+
+    source->type = type;
+    source->path = g_strdup(path);
+    source->browser = browser;
+
+    return source;
+}
+
+static void
+hippo_cookie_source_destroy(HippoCookieSource *source)
+{
+    g_free(source->path);
+    g_free(source);
+}
+
+static HippoCookieFile *
+hippo_cookie_file_new(const char      *filename,
+                      HippoBrowserKind browser)
+{
+    HippoCookieFile *file = g_new0(HippoCookieFile, 1);
+    
+    file->filename = g_strdup(filename);
+    file->browser = browser;
+
+    return file;
+}
+
+static void
+hippo_cookie_file_destroy(HippoCookieFile *file)
+{
+    g_free(file->filename);
+    g_free(file);
+}
+
+
+HippoCookieLocator *
+hippo_cookie_locator_new(void)
+{
+    HippoCookieLocator *locator = g_new0(HippoCookieLocator, 1);
+
+    return locator;
+}
+
+void 
+hippo_cookie_locator_destroy(HippoCookieLocator *locator)
+{
+    g_slist_foreach(locator->sources, (GFunc)hippo_cookie_source_destroy, NULL);
+    g_slist_free(locator->sources);
+
+    g_free(locator);
+}
+
+void 
+hippo_cookie_locator_add_directory(HippoCookieLocator *locator,
+                                   const char         *directory,
+                                   HippoBrowserKind    browser)
+{
+    HippoCookieSource *source = hippo_cookie_source_new(HIPPO_COOKIE_DIRECTORY,
+                                                        directory,
+                                                        browser);
+
+    locator->sources = g_slist_append(locator->sources, source);
+}
+
+void 
+hippo_cookie_locator_add_file(HippoCookieLocator *locator,
+                              const char         *file,
+                              HippoBrowserKind    browser)
+{
+    HippoCookieSource *source = hippo_cookie_source_new(HIPPO_COOKIE_FILE,
+                                                        file,
+                                                        browser);
+
+    locator->sources = g_slist_append(locator->sources, source);
+}
+
+static void
+find_files_for_file_source(HippoCookieSource *source,
+                           GSList           **result)
+{
+    if (g_file_test(source->path, G_FILE_TEST_EXISTS)) {
+        HippoCookieFile *file = hippo_cookie_file_new(source->path, source->browser);
+        
+        *result = g_slist_append(*result, file);
+    }
+}
+
+static void
+find_files_for_directory(const char       *path,
+                         HippoBrowserKind  browser,
+                         GSList          **result)
+{
+    GDir *dir;
+    const char *subdir;
+
+    dir = g_dir_open(path, 0, NULL);
+    if (dir == NULL)
+        return; /* ignore errors */
+    
+    while ((subdir = g_dir_read_name(dir)) != NULL) {
+        char *subdirfull;
+        char *cookie_file;
+        
+        /* g_debug("Reading firefox subdir/file '%s'", subdir); */
+        
+        if (strcmp(subdir, "Cache") == 0) {
+            /* this saves a lot of IO */
+            /* g_debug("Skipping firefox cache dir"); */
+            continue;
+        }
+        
+        cookie_file = g_build_filename(path, subdir, "cookies.txt", NULL);
+        /* g_debug("Checking for cookies file '%s'\n", cookie_file); */
+        
+        if (g_file_test(cookie_file, G_FILE_TEST_EXISTS)) {
+            *result = g_slist_prepend(*result, hippo_cookie_file_new(cookie_file, browser));
+        }
+        
+        g_free(cookie_file);
+        
+        /* Also check for salted directories in the mozilla profile
+           directories and discover the joy of recursion. */
+        subdirfull = g_build_filename(path, subdir, NULL);
+        /* g_debug("checking if '%s' is a directory...", subdirfull); */
+        if (g_file_test(subdirfull, G_FILE_TEST_IS_DIR)) {
+            char *subsubdir = g_build_filename(path, subdir, NULL);
+            /* g_debug("'%s' is a directory...", subsubdir); */
+            find_files_for_directory(subsubdir, browser, result);
+            g_free(subsubdir);
+        }
+        g_free(subdirfull);
+    }
+    
+    g_dir_close(dir);
+}
+
+static void
+find_files_for_directory_source(HippoCookieSource *source,
+                                GSList           **result)
+{
+    find_files_for_directory(source->path, source->browser, result);
+
+}
+
+static GSList *
+locator_find_files(HippoCookieLocator *locator)
+{
+    GSList *result = NULL;
+    GSList *l;
+
+    for (l = locator->sources; l; l = l->next) {
+        HippoCookieSource *source = l->data;
+        
+        if (source->type == HIPPO_COOKIE_FILE) {
+            find_files_for_file_source(source, &result);
+        } else {
+            find_files_for_directory_source(source, &result);
+        }
+    }
+    
+    return result;
+}
+
 static void
 listify_foreach(void *key, void *value, void *data)
 {
@@ -408,22 +604,26 @@ listify_foreach(void *key, void *value, void *data)
     hippo_cookie_ref(value);
 }
 
-GSList*
-hippo_load_cookies_files(const HippoCookiesFile *files,
-                         int         n_files,
-                         const char *domain,
-                         int         port,
-                         const char *name)
+GSList *
+hippo_cookie_locator_load_cookies(HippoCookieLocator *locator,
+                                  const char         *domain,
+                                  int                 port,
+                                  const char         *name)
 {
+    GSList *files;
     GHashTable *merge;
     GSList *merged_list;
-    int i;
-    
-    merge = g_hash_table_new((GHashFunc)hippo_cookie_hash, (GEqualFunc) hippo_cookie_equals);
+    GSList *l;
 
-    for (i = 0; i < n_files; ++i) {
-        char *filename = files[i].filename;
-        HippoBrowserKind browser = files[i].browser;
+    files = locator_find_files(locator);
+    
+    merge = g_hash_table_new_full((GHashFunc)hippo_cookie_hash, (GEqualFunc) hippo_cookie_equals,
+                                  NULL, (GDestroyNotify)hippo_cookie_unref);
+
+    for (l = files; l; l = l->next) {
+        HippoCookieFile *file = l->data;
+        char *filename = file->filename;
+        HippoBrowserKind browser = file->browser;
         GSList *cookies;
         GError *error;
         
@@ -455,9 +655,13 @@ hippo_load_cookies_files(const HippoCookiesFile *files,
         }
     }
 
+    g_slist_foreach(files, (GFunc)hippo_cookie_file_destroy, NULL);
+    g_slist_free(files);
+
     /* Now listify the hash table */
     merged_list = NULL;
     g_hash_table_foreach(merge, listify_foreach, &merged_list);
     g_hash_table_destroy(merge);
+
     return merged_list;
-}                         
+}

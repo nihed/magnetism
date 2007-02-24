@@ -28,15 +28,16 @@
         	            </c:otherwise>
         	        </c:choose>                
         	    </a> 
+        	    <jsp:doBody/>
         	    |
         	    <c:choose>
         	        <c:when test="${who.invitationView != null}"> 
         	            <dh:script module="dh.actions"/>
-  				        <dht:actionLink oneLine="true" href="javascript:dh.actions.removeInvitedContact('${who.identifyingGuid}')" title="Remove contact${invitationText}">Remove contact</dht:actionLink>
+  				        <dht:actionLink oneLine="true" href="javascript:dh.actions.removeContactConfirmation('${who.name}', '${who.identifyingGuid}', true)" title="Remove contact${invitationText}">Remove contact</dht:actionLink>
   				    </c:when>
   				    <c:otherwise>
                         <dh:script module="dh.actions"/>
-  				        <dht:actionLink oneLine="true" href="javascript:dh.actions.removeContact('${who.identifyingGuid}')" title="Remove contact${invitationText}">Remove contact</dht:actionLink>  				    
+  				        <dht:actionLink oneLine="true" href="javascript:dh.actions.removeContactConfirmation('${who.name}', '${who.identifyingGuid}', false)" title="Remove contact${invitationText}">Remove contact</dht:actionLink>  				    
   				    </c:otherwise>       
   				</c:choose>         	    
         	</c:when>

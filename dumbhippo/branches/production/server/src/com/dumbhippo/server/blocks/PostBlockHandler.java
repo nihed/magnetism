@@ -17,8 +17,9 @@ import com.dumbhippo.server.views.UserViewpoint;
 public interface PostBlockHandler
 	extends BlockHandler, PostListener, PostChatListener, PostClickedListener {
 
+	public BlockKey getLookupOnlyKey(Post post);
+	public BlockKey getLookupOnlyKey(Guid postId);
 	public BlockKey getKey(Post post);
-	public BlockKey getKey(Guid postId);
 	
 	public Block lookupBlock(Post post);
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Post post) throws NotFoundException;

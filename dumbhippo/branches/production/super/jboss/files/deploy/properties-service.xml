@@ -28,6 +28,7 @@
                 dumbhippo.server.http.port=@@tomcatHttpPort@@
 		dumbhippo.server.baseurl=@@baseurl@@
 		dumbhippo.server.web.version=@@webVersion@@
+		dumbhippo.server.crashdump.dir=@@crashdumpDir@@
 		dumbhippo.server.files.saveurl=file://@@filesavedir@@
 		dumbhippo.server.lucene.indexdir=@@luceneIndexDir@@
 		dumbhippo.server.aimbot.name=@@imbotScreenName@@
@@ -44,7 +45,9 @@
 		dumbhippo.server.downloadinfo.linux.current=@@clientLinuxCurrent@@
 		dumbhippo.server.downloadinfo.linux.date=@@clientLinuxDate@@
 		dumbhippo.server.amazon.accesskeyid=@@amazonAccessKeyId@@
+		dumbhippo.server.amazon.secretkey=@@amazonSecretKey@@		
 		dumbhippo.server.amazon.associatetag=@@amazonAssociateTag@@
+		dumbhippo.server.amazon.s3bucket=@@amazonS3Bucket@@
 		dumbhippo.server.yahoo.appid=@@yahooAppId@@
 		dumbhippo.server.ebay.devid=@@ebayDevId@@
 		dumbhippo.server.ebay.appid=@@ebayAppId@@

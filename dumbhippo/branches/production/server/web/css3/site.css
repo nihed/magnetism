@@ -3,7 +3,7 @@
 @IMPORT url("header.css");
 
 body {
-	font-family: 		Arial, sans-serif;
+	font-family: 		Luxi Sans, Arial, sans-serif;
 }
 
 body.dh-gray-background-page {
@@ -365,6 +365,10 @@ div.dh-async-action-link-complete {
 	text-decoration:	underline;
 }
 
+.dh-action-link-disabled {
+    color:              gray;
+}
+
 .dh-stacker-block-title-title {
 }
 
@@ -429,18 +433,30 @@ div.dh-async-action-link-complete {
 .dh-stacker-block-title-group-member-name {
 }
 
-.dh-empty-stacker-text {
+.dh-tip-tip {
 	font-size:			16px;
-	color:				#9648bc;
 }
 
-.dh-empty-stacker-secondary {
+.dh-tip-secondary {
 	font-size:			12px;
 }
 
+.dh-empty-stacker-text {
+	font-size:          16px;
+    color:              #9648bc;
+}
+ 
+.dh-empty-stacker-secondary {
+    font-size:          12px;
+}
+
 .dh-empty-stacker-text a {
-	color:				#0000EE;
-};
+	color:              #0000EE;
+}
+
+.dh-shinybox-bottom-content {
+    font-size:          14px;
+}
 
 .dh-where-at-label {
 	font-weight: 		bold;
@@ -536,13 +552,13 @@ div.dh-async-action-link-complete {
     font-size:          11px;
 }
 
-.dh-music-block-left {
+.dh-stacker-block-with-image-left {
 	padding-top:		6px;
 	padding-left:		6px;
 	padding-bottom:		6px;
 }
 
-.dh-music-block-left table {
+.dh-stacker-block-with-image-left table {
 	table-layout:		fixed;
 }
 
@@ -550,8 +566,12 @@ div.dh-async-action-link-complete {
 	display:			block;
 }
 
-.dh-music-block-beside {
+.dh-stacker-block-with-image-beside {
 	padding-left:		8px;
+}
+
+.dh-stacker-block-with-image-beside .dh-stacker-block-icon {
+    margin:             0px;
 }
 
 .dh-music-block-artist {
@@ -579,12 +599,20 @@ div.dh-async-action-link-complete {
 	font-size:			12px;
 }
 
-.dh-account-status-secondary {
-	font-size:			12px;
-}
-
 .dh-account-status-primary {
 	font-size:			16px;
+	font-weight:		bold;
+}
+
+#dhAccountDisabled {
+	background-color:	#fbfadc;
+	border:				1px solid #cc0000;
+	font-size:			14px;
+	font-weight:		bold;
+}
+
+#dhAccountDisabled .dh-account-disabled-header {
+	color:				#E2671B;
 }
 
 #dhDownloadMessage {
@@ -592,7 +620,30 @@ div.dh-async-action-link-complete {
 	font-weight:		bold;
 }
 
-#dhAccountDisabled {
-	font-size:			14px;
+.dh-section-header {
+	font-weight:  		bold;
+	font-size:	  		18px;
+}
+
+.dh-section-explanation {
+	font-size:	  		14px;
+}
+
+.dh-message {
+	background-color:	#FAFADC;
+	color:				#E2671B;
+	font-size:	  		14px;
 	font-weight:		bold;
+	border:				1px solid #E2671B;
+	-moz-border-radius:	5px;	
+}
+
+.dh-message a {
+    color:              black;
+    text-decoration:    underline;
+    cursor:             pointer;
+}
+
+.dh-message .dh-confirm-link {
+    color:              blue;
 }

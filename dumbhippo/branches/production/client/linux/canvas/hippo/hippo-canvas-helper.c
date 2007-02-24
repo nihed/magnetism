@@ -398,8 +398,6 @@ hippo_canvas_helper_size_allocate(HippoCanvasHelper *helper,
 {
     /* g_debug("gtk allocate on canvas root %p canvas %p", helper->root, canvas); */
 
-    hippo_canvas_helper_fixup_resize_state(helper);
-    
     if (helper->root != NULL) {
         hippo_canvas_item_allocate(helper->root,
                                    allocation->width - GTK_CONTAINER(helper->widget)->border_width * 2,

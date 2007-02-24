@@ -9,10 +9,10 @@
 
 <head>
         <title>Music Radar Themes</title>
-	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
+	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="radar"/>
 	<dht:scriptIncludes/>
-       	<dh:script module="dh.nowplaying"/>
+    <dh:script module="dh.nowplaying"/>
 	<dht:faviconIncludes/>
 </head>
 

@@ -29,6 +29,7 @@ struct _HippoQuipWindow {
     
     HippoWindow *window;
     HippoCanvasBox *title_item;
+    HippoCanvasBox *indifferent_box;
     HippoCanvasBox *love_box;
     HippoCanvasBox *hate_box;
     HippoCanvasItem *entry;
@@ -44,6 +45,7 @@ struct _HippoQuipWindowClass {
 
 G_DEFINE_TYPE(HippoQuipWindow, hippo_quip_window, G_TYPE_OBJECT);
 
+static void hippo_quip_window_update_sentiment(HippoQuipWindow *quip_window);
 static void hippo_quip_window_hide(HippoQuipWindow *quip_window);
 static void on_notify_active(GObject         *object,
                              GParamSpec      *param_spec,
@@ -104,6 +106,13 @@ static HippoPlatform*
 get_platform(HippoQuipWindow *quip_window)
 {
     return hippo_connection_get_platform(get_connection(quip_window));
+}
+
+static void
+on_indifferent_activated(HippoCanvasItem       *item,
+                         HippoQuipWindow       *quip_window)
+{
+    hippo_quip_window_set_sentiment(quip_window, HIPPO_SENTIMENT_INDIFFERENT);
 }
 
 static void
@@ -203,6 +212,43 @@ on_key_press_event(HippoCanvasItem *item,
     }
 }
 
+static HippoCanvasBox *
+create_sentiment_box(HippoQuipWindow *quip_window,
+                     const char      *text,
+                     const char      *icon,
+                     GCallback        on_activated)
+{
+    HippoCanvasBox *box;
+    HippoCanvasItem *item;
+    
+    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "padding-top", 1,
+                       "padding-bottom", 1,
+                       "padding-left", 4,
+                       "padding-right", 4,
+                       NULL);
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                        "normal-image-name", icon,
+                        "xalign", HIPPO_ALIGNMENT_CENTER,
+                        "yalign", HIPPO_ALIGNMENT_CENTER,
+                        NULL);
+    hippo_canvas_box_append(box, item, 0);
+    g_signal_connect(G_OBJECT(item), "activated",
+                     G_CALLBACK(on_love_activated), quip_window);
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                        "padding-left", 4,
+                        "text", text,
+                        NULL);
+    hippo_canvas_box_append(box, item, 0);
+    g_signal_connect(G_OBJECT(item), "activated",
+                     on_activated, quip_window);
+
+    return box;
+}
+ 
 HippoQuipWindow*
 hippo_quip_window_new(HippoDataCache *cache)
 {
@@ -276,58 +322,24 @@ hippo_quip_window_new(HippoDataCache *cache)
                               NULL);
     hippo_canvas_box_append(outer_box, HIPPO_CANVAS_ITEM(middle_box), 0);
 
-    quip_window->love_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                                         "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                                         "padding-top", 1,
-                                         "padding-bottom", 1,
-                                         "padding-left", 4,
-                                         "padding-right", 4,
-                                         NULL);
+    quip_window->indifferent_box = create_sentiment_box(quip_window,
+                                                        "Quip",
+                                                        "chat",
+                                                        G_CALLBACK(on_indifferent_activated));
+    hippo_canvas_box_append(middle_box, HIPPO_CANVAS_ITEM(quip_window->indifferent_box), 0);
+
+    quip_window->love_box = create_sentiment_box(quip_window,
+                                                 "I love it!",
+                                                 "quiplove_icon",
+                                                 G_CALLBACK(on_love_activated));
     hippo_canvas_box_append(middle_box, HIPPO_CANVAS_ITEM(quip_window->love_box), 0);
-    
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
-                        "normal-image-name", "quiplove_icon",
-                        "xalign", HIPPO_ALIGNMENT_CENTER,
-                        "yalign", HIPPO_ALIGNMENT_CENTER,
-                        NULL);
-    hippo_canvas_box_append(quip_window->love_box, item, 0);
-    g_signal_connect(G_OBJECT(item), "activated",
-                     G_CALLBACK(on_love_activated), quip_window);
-    
-    item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                        "padding-left", 4,
-                        "text", "I love it!",
-                        NULL);
-    hippo_canvas_box_append(quip_window->love_box, item, 0);
-    g_signal_connect(G_OBJECT(item), "activated",
-                     G_CALLBACK(on_love_activated), quip_window);
-    
-    quip_window->hate_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                                         "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                                         "padding-top", 1,
-                                         "padding-bottom", 1,
-                                         "padding-left", 4,
-                                         "padding-right", 4,
-                                         NULL);
+
+    quip_window->hate_box = create_sentiment_box(quip_window,
+                                                 "I hate it!",
+                                                 "quiphate_icon",
+                                                 G_CALLBACK(on_hate_activated));
     hippo_canvas_box_append(middle_box, HIPPO_CANVAS_ITEM(quip_window->hate_box), 0);
     
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
-                        "normal-image-name", "quiphate_icon",
-                        "xalign", HIPPO_ALIGNMENT_CENTER,
-                        "yalign", HIPPO_ALIGNMENT_CENTER,
-                        NULL);
-    hippo_canvas_box_append(quip_window->hate_box, item, 0);
-    g_signal_connect(G_OBJECT(item), "activated", 
-                     G_CALLBACK(on_hate_activated), quip_window);
-
-    item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                        "padding-left", 4,
-                        "text", "I hate it!",
-                        NULL);
-    hippo_canvas_box_append(quip_window->hate_box, item, 0);
-    g_signal_connect(G_OBJECT(item), "activated",
-                     G_CALLBACK(on_hate_activated), quip_window);
-
     bottom_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                               "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                               NULL);
@@ -347,6 +359,8 @@ hippo_quip_window_new(HippoDataCache *cache)
     hippo_canvas_box_append(bottom_box, item, HIPPO_PACK_END);
     g_signal_connect(G_OBJECT(item), "activated",
                      G_CALLBACK(on_quip_activated), quip_window);
+
+    hippo_quip_window_update_sentiment(quip_window);
     
     return quip_window;
 }
@@ -366,6 +380,43 @@ hippo_quip_window_set_chat(HippoQuipWindow *quip_window,
     }
 }
 
+static void
+hippo_quip_window_update_sentiment(HippoQuipWindow *quip_window)
+{
+    if (quip_window->sentiment == HIPPO_SENTIMENT_INDIFFERENT)
+        g_object_set(quip_window->indifferent_box,
+                     "color",            0xffffffff,
+                     "background-color", 0xac6ac6ff,
+                     NULL);
+    else
+        g_object_set(quip_window->indifferent_box,
+                     "color",            0x000000ff,
+                     "background-color", 0x00000000,
+                     NULL);
+
+    if (quip_window->sentiment == HIPPO_SENTIMENT_LOVE)
+        g_object_set(quip_window->love_box,
+                     "color",            0xffffffff,
+                     "background-color", 0xac6ac6ff,
+                     NULL);
+    else
+        g_object_set(quip_window->love_box,
+                     "color",            0x000000ff,
+                     "background-color", 0x00000000,
+                     NULL);
+
+    if (quip_window->sentiment == HIPPO_SENTIMENT_HATE)
+        g_object_set(quip_window->hate_box,
+                     "color",            0xffffffff,
+                     "background-color", 0xac6ac6ff,
+                     NULL);
+    else
+        g_object_set(quip_window->hate_box,
+                     "color",            0x000000ff,
+                     "background-color", 0x00000000,
+                     NULL);
+}
+
 void
 hippo_quip_window_set_sentiment(HippoQuipWindow *quip_window,
                                 HippoSentiment   sentiment)
@@ -376,29 +427,8 @@ hippo_quip_window_set_sentiment(HippoQuipWindow *quip_window,
         return;
     
     quip_window->sentiment = sentiment;
-
-    if (sentiment == HIPPO_SENTIMENT_LOVE)
-        g_object_set(quip_window->love_box,
-                     "color",            0xffffffff,
-                     "background-color", 0xac6ac6ff,
-                     NULL);
-    else
-        g_object_set(quip_window->love_box,
-                     "color",            0x000000ff,
-                     "background-color", 0x00000000,
-                     NULL);
-
-    if (sentiment == HIPPO_SENTIMENT_HATE)
-        g_object_set(quip_window->hate_box,
-                     "color",            0xffffffff,
-                     "background-color", 0xac6ac6ff,
-                     NULL);
-    else
-        g_object_set(quip_window->hate_box,
-                     "color",            0x000000ff,
-                     "background-color", 0x00000000,
-                     NULL);
-
+    
+    hippo_quip_window_update_sentiment(quip_window);
 }
 
 void

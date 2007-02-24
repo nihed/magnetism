@@ -29,6 +29,7 @@ struct _HippoCanvasStack {
     HippoActions *actions;
     gint64 min_timestamp;
     int max_blocks;
+    gboolean pin_messages;
 };
 
 struct _HippoCanvasStackClass {
@@ -46,7 +47,8 @@ enum {
 enum {
     PROP_0,
     PROP_ACTIONS,
-    PROP_MAX_BLOCKS
+    PROP_MAX_BLOCKS,
+    PROP_PIN_MESSAGES
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasStack, hippo_canvas_stack, HIPPO_TYPE_CANVAS_BOX,
@@ -96,6 +98,14 @@ hippo_canvas_stack_class_init(HippoCanvasStackClass *klass)
                                                      0, G_MAXINT,
                                                      G_MAXINT,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_PIN_MESSAGES,
+                                    g_param_spec_boolean("pin-messages",
+                                                         _("Pin Messages"),
+                                                         _("Whether to pin system messages to the top of the stack"),
+                                                         FALSE,
+                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
 
 }
 
@@ -192,6 +202,17 @@ hippo_canvas_stack_set_property(GObject         *object,
             }
         }
         break;
+    case PROP_PIN_MESSAGES:
+        {
+            gboolean new_pin_messages = g_value_get_boolean(value);
+            if (new_pin_messages != stack->pin_messages) {
+                stack->pin_messages = new_pin_messages;
+                /* Theoretically, we need to resort here; practically
+                 * speaking, we don't change this property on the fly
+                 */
+            }
+        }
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -214,6 +235,9 @@ hippo_canvas_stack_get_property(GObject         *object,
         break;
     case PROP_MAX_BLOCKS:
         g_value_set_int(value, stack->max_blocks);
+        break;
+    case PROP_PIN_MESSAGES:
+        g_value_set_boolean(value, stack->pin_messages);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -266,6 +290,7 @@ canvas_block_compare(HippoCanvasItem *a,
                      HippoCanvasItem *b,
                      void            *data)
 {
+    HippoCanvasStack *stack = data;
     HippoBlock *block_a;
     HippoBlock *block_b;
     int result;
@@ -273,7 +298,14 @@ canvas_block_compare(HippoCanvasItem *a,
     g_object_get(G_OBJECT(a), "block", &block_a, NULL);
     g_object_get(G_OBJECT(b), "block", &block_b, NULL);
 
-    result = hippo_block_compare_newest_first(block_a, block_b);
+    if (stack->pin_messages && block_a->pinned != block_b->pinned) {
+        if (block_a->pinned)
+            result = -1;
+        else
+            result = 1;
+    } else {
+        result = hippo_block_compare_newest_first(block_a, block_b);
+    }
 
     if (block_a)
         g_object_unref(block_a);
@@ -285,7 +317,8 @@ canvas_block_compare(HippoCanvasItem *a,
 
 void
 hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
-                             HippoBlock       *block)
+                             HippoBlock       *block,
+                             gboolean          visible)
 {
     HippoCanvasItem *item;
     gint64 sort_timestamp;
@@ -307,9 +340,10 @@ hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
 
     g_object_set(G_OBJECT(item), "block", block, NULL);
     hippo_canvas_box_insert_sorted(HIPPO_CANVAS_BOX(canvas_stack), item, 0,
-                                   canvas_block_compare, NULL);
+                                   canvas_block_compare, canvas_stack);
 
     remove_extra_children(canvas_stack);
+    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(canvas_stack), item, visible);
     
     g_object_unref(item);
 

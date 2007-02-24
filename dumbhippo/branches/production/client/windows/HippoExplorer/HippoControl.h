@@ -12,6 +12,8 @@
 #include <hippo-ipc.h>
 #include "HippoExplorer_h.h"
 
+#define HIPPO_IE_CONTROL_VERSION L"1.1.0";
+
 class HippoControl :
     public IObjectWithSite,
     public IObjectSafety,
@@ -60,17 +62,22 @@ public:
 
    // IHippoControl methods
    // Standard HippoControl interface shared with firefox
+   STDMETHODIMP get_Version(BSTR *version);
+       
    STDMETHODIMP start(BSTR serverUrl);
    STDMETHODIMP stop();
-       
+
    STDMETHODIMP isConnected(BOOL *isConnected);
 
    STDMETHODIMP setListener(IDispatch *listener); 
+
+   STDMETHODIMP setWindow(IDispatch *window);
 
    STDMETHODIMP joinChatRoom(BSTR chatId, BOOL participant);
    STDMETHODIMP leaveChatRoom(BSTR chatId);
    STDMETHODIMP showChatWindow(BSTR chatId);
    STDMETHODIMP sendChatMessage(BSTR chatId, BSTR text);
+   STDMETHODIMP sendChatMessageSentiment(BSTR chatId, BSTR text, int sentiment);
 
    STDMETHODIMP OpenBrowserBar();
    STDMETHODIMP CloseBrowserBar();
@@ -81,7 +88,7 @@ public:
 
    virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant);
    virtual void onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId);
-   virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial);
+   virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp, long serial);
 
    virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying);
 

@@ -78,7 +78,13 @@ dh.invitation.resend = function(address) {
 	// invitee e-mail 
     dh.invitation.subjectEntry.setEnabled()
     dh.invitation.messageEntry.setEnabled() 
-    document.getElementById("dhInvitationSendButton").disabled = false
+    dh.html.removeClass(document.getElementById("dhSuggestGroupsWithInvitation"), "dh-action-link-disabled")
+    
+    document.getElementById("dhInvitationSendButton").src = dhImageRoot3 + "send.png"
+    document.getElementById("dhInvitationSendButton").onclick = function() {
+        dh.invitation.send()
+    }
+         
 	dh.util.showMessage('Press "Send" to resend the invitation')
 	
 	// Scroll to the top of the page
@@ -103,7 +109,9 @@ dh.invitation.showSuggestGroupsPopup = function(linkId, address, suggestedGroupI
     
     suggestGroupsLink.href = "javascript:dh.invitation.cancelSuggestGroups()"
     
-    dh.dom.textContent(suggestGroupsLink, "Cancel");
+    if (linkId == "dhSuggestGroupsWithInvitation") {
+        dh.dom.textContent(suggestGroupsLink, "Cancel");
+    }
     
     dh.util.show(dh.invitation.suggestGroupsPopup)
     var inviteeAddressNode = document.createTextNode(address)
@@ -165,7 +173,11 @@ dh.invitation.doSuggestGroups = function() {
     if (dh.invitation.suggestGroupsLinkId == "dhSuggestGroupsWithInvitation") {
         dh.invitation.suggestedGroupIdsWithInvitationArray = suggestedGroups
        
-        var commaSuggestedGroupsWithInvitationNode = document.createTextNode(dh.util.trim(dh.util.join(suggestedGroupsWithInvitationArray, ",")) + " | ")
+        var commaSuggestedGroupsWithInvitationNode = document.createTextNode("")        
+        if (suggestedGroups.length > 0) {
+            commaSuggestedGroupsWithInvitationNode = document.createTextNode(dh.util.trim(dh.util.join(suggestedGroupsWithInvitationArray, ",")) + " | ")
+        }
+            
         if (dh.invitation.suggestedGroupsWithInvitation.firstChild == null) {
             dh.invitation.suggestedGroupsWithInvitation.appendChild(commaSuggestedGroupsWithInvitationNode)
         } else {     

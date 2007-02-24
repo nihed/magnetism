@@ -1,7 +1,7 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -16,9 +16,9 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.ViewStreamBuilder;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.ViewStreamBuilder;
 import com.dumbhippo.server.views.FeedView;
 import com.dumbhippo.server.views.ObjectView;
 import com.dumbhippo.server.views.ViewStream;
@@ -94,7 +94,7 @@ public class ViewStreamBuilderBean implements ViewStreamBuilder {
 		return stream;
 	}
 
-	public ViewStream buildStream(Viewpoint viewpoint, List<ObjectView> objectViews) {
+	public ViewStream buildStream(Viewpoint viewpoint, Collection<ObjectView> objectViews) {
 		ViewStream stream = new ViewStream();
 		Set<Guid> visited = new HashSet<Guid>();
 		

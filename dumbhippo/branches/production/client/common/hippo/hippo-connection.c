@@ -184,6 +184,7 @@ struct _HippoConnection {
     char *password;
     char *download_url;
     char *tooltip;
+    char *active_block_filter;
     int request_blocks_id;
     gint64 last_blocks_timestamp;
     gint64 server_time_offset;
@@ -220,6 +221,8 @@ enum {
     POST_ACTIVITY,
     MYSPACE_CHANGED,
     GROUP_MEMBERSHIP_CHANGED,
+    BLOCK_FILTER_CHANGED,
+    SETTING_CHANGED,
     LAST_SIGNAL
 };
 
@@ -328,7 +331,25 @@ hippo_connection_class_init(HippoConnectionClass *klass)
                       NULL, NULL,
                       hippo_common_marshal_VOID__OBJECT_OBJECT_STRING,
                       G_TYPE_NONE, 3, G_TYPE_OBJECT, G_TYPE_OBJECT, G_TYPE_STRING); 
+                      
+    signals[BLOCK_FILTER_CHANGED] =
+        g_signal_new ("block-filter-changed",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__STRING,
+                      G_TYPE_NONE, 1, G_TYPE_STRING);               
 
+    signals[SETTING_CHANGED] =
+        g_signal_new ("setting-changed",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      hippo_common_marshal_VOID__STRING_STRING,
+                      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
+    
     object_class->finalize = hippo_connection_finalize;
 }
 
@@ -503,7 +524,7 @@ gboolean
 hippo_connection_signin(HippoConnection *connection)
 {
     g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), FALSE);
-
+    
     hippo_connection_stop_signin_timeout(connection);
         
     if (hippo_connection_load_auth(connection)) {
@@ -1107,7 +1128,8 @@ request_blocks_idle(void *data)
      * this will return an empty list of blocks
      */
     hippo_connection_request_blocks(rbd->connection,
-                                    rbd->connection->last_blocks_timestamp);
+                                    rbd->connection->last_blocks_timestamp,
+                                    rbd->connection->active_block_filter);
 
     return FALSE;
 }
@@ -1342,6 +1364,8 @@ hippo_connection_parse_prefs_node(HippoConnection *connection,
     gboolean saw_music_sharing_enabled = FALSE;
     gboolean music_sharing_primed = TRUE;
     gboolean saw_music_sharing_primed = FALSE;
+    gboolean application_usage_enabled = FALSE;
+    gboolean saw_application_usage_enabled = FALSE;
     LmMessageNode *child;
     
     g_debug("Parsing prefs message");
@@ -1362,6 +1386,9 @@ hippo_connection_parse_prefs_node(HippoConnection *connection,
         } else if (strcmp(key, "musicSharingPrimed") == 0) {
             music_sharing_primed = value != NULL && parse_bool(value);
             saw_music_sharing_primed = TRUE;
+        } else if (strcmp(key, "applicationUsageEnabled") == 0) {
+            application_usage_enabled = value != NULL && parse_bool(value);
+            saw_application_usage_enabled = TRUE;
         } else {
             g_debug("Unknown pref '%s'", key);
         }
@@ -1375,6 +1402,9 @@ hippo_connection_parse_prefs_node(HippoConnection *connection,
     
     if (saw_music_sharing_enabled)
         hippo_data_cache_set_music_sharing_enabled(connection->cache, music_sharing_enabled);
+
+    if (saw_application_usage_enabled)
+        hippo_data_cache_set_application_usage_enabled(connection->cache, application_usage_enabled);
 }
 
 static LmHandlerResult
@@ -1638,16 +1668,27 @@ hippo_connection_update_server_time_offset(HippoConnection *connection,
     connection->server_time_offset = server_time - hippo_current_time_ms();
 }
  
+static void
+hippo_connection_update_filter(HippoConnection *connection,
+                               const char      *filter)
+{
+    g_free(connection->active_block_filter);
+    connection->active_block_filter = g_strdup(filter);
+    g_signal_emit(connection, signals[BLOCK_FILTER_CHANGED], 0, connection->active_block_filter);
+}
+ 
 static gboolean
 hippo_connection_parse_blocks(HippoConnection *connection,
                               LmMessageNode   *node)
 {
     LmMessageNode *subchild;
+    const char *filter = NULL;
     gint64 server_timestamp;
 
     /* g_debug("Parsing blocks list <%s>", node->name); */
     
     if (!hippo_xml_split(connection->cache, node, NULL,
+                         "filter", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &filter,
                          "serverTime", HIPPO_SPLIT_TIME_MS, &server_timestamp,
                          NULL)) {
         g_debug("missing serverTime on blocks");
@@ -1655,6 +1696,8 @@ hippo_connection_parse_blocks(HippoConnection *connection,
     }
 
     hippo_connection_update_server_time_offset(connection, server_timestamp);
+    if (filter)
+        hippo_connection_update_filter(connection, filter);
     
     for (subchild = node->children; subchild; subchild = subchild->next) {
         if (!hippo_data_cache_update_from_xml(connection->cache, subchild)) {
@@ -1694,7 +1737,8 @@ on_request_blocks_reply(LmMessageHandler *handler,
 
 void
 hippo_connection_request_blocks(HippoConnection *connection,
-                                gint64           last_timestamp)
+                                gint64           last_timestamp,
+                                const char      *filter)
 {
     LmMessage *message;
     LmMessageNode *node;
@@ -1710,6 +1754,11 @@ hippo_connection_request_blocks(HippoConnection *connection,
     s = g_strdup_printf("%" G_GINT64_FORMAT, last_timestamp);
     lm_message_node_set_attribute(child, "lastTimestamp", s);
     g_free(s);
+    if (filter) {
+        lm_message_node_set_attribute(child, "filter", filter);
+    }
+    g_free(connection->active_block_filter);
+    connection->active_block_filter = g_strdup(filter);
     
     hippo_connection_send_message_with_reply(connection, message,
                                              on_request_blocks_reply, SEND_MODE_AFTER_AUTH);
@@ -1766,6 +1815,29 @@ hippo_connection_set_block_hushed(HippoConnection *connection,
     lm_message_unref(message);
 
     g_debug("Sent blockHushed=%d", hushed);
+}
+
+void
+hippo_connection_send_account_question_response(HippoConnection *connection,
+                                                const char      *block_id,
+                                                const char      *response)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_SET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "response", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/accountQuestion");
+    lm_message_node_set_attribute(child, "blockId", block_id);
+    lm_message_node_set_attribute(child, "response", response);
+
+    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
+
+    lm_message_unref(message);
 }
 
 void
@@ -2263,16 +2335,9 @@ join_or_leave_chat_room(HippoConnection *connection,
 {
     HippoChatState old_state;
     HippoChatState new_state;
-    HippoPerson *self;
 
-    self = hippo_data_cache_get_self(connection->cache);
-    if (self == NULL) {
-        /* not connected */
-        old_state = HIPPO_CHAT_STATE_NONMEMBER;
-    } else {
-        old_state = hippo_chat_room_get_user_state(room, self);
-    }
-
+    old_state = hippo_chat_room_get_desired_state(room);
+    
     if (join)
         hippo_chat_room_increment_state_count(room, state);
     else
@@ -2280,8 +2345,7 @@ join_or_leave_chat_room(HippoConnection *connection,
     
     new_state = hippo_chat_room_get_desired_state(room);
 
-    if (self && old_state != new_state)
-        hippo_connection_send_chat_room_state(connection, room, old_state, new_state);
+    hippo_connection_send_chat_room_state(connection, room, old_state, new_state);
 }
 
 void
@@ -2327,28 +2391,43 @@ hippo_connection_rejoin_chat_room(HippoConnection *connection,
      */
     desired_state = hippo_chat_room_get_desired_state(room);
 
-    /* FIXME same issue as in join_or_leave_chat_room above */
-    hippo_chat_room_set_user_state(room, self, desired_state);
     hippo_connection_send_chat_room_state(connection, room, HIPPO_CHAT_STATE_NONMEMBER, desired_state);
+}
+
+static void
+send_chat_room_message(HippoConnection *connection,
+                       const char      *to,
+                       const char      *text,
+                       HippoSentiment   sentiment)
+{
+    LmMessage *message;
+    LmMessageNode *body;
+        
+    message = lm_message_new(to, LM_MESSAGE_TYPE_MESSAGE);
+
+    body = lm_message_node_add_child(message->node, "body", text);
+
+    if (sentiment != HIPPO_SENTIMENT_INDIFFERENT) {
+        LmMessageNode *child = lm_message_node_add_child(message->node, "messageInfo", NULL);
+        lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/rooms");
+        lm_message_node_set_attribute(child, "sentiment", hippo_sentiment_as_string(sentiment));
+    }
+    
+    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
+
+    lm_message_unref(message);
 }
 
 void
 hippo_connection_send_chat_room_message(HippoConnection *connection,
                                         HippoChatRoom   *room,
-                                        const char      *text)
+                                        const char      *text,
+                                        HippoSentiment   sentiment)
 {
     const char *to;
-    LmMessage *message;
-    LmMessageNode *body;
         
     to = hippo_chat_room_get_jabber_id(room);
-    message = lm_message_new(to, LM_MESSAGE_TYPE_MESSAGE);
-
-    body = lm_message_node_add_child(message->node, "body", text);
-
-    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
-
-    lm_message_unref(message);
+    send_chat_room_message(connection, to, text, sentiment);
 }
 
 void
@@ -2359,26 +2438,13 @@ hippo_connection_send_quip(HippoConnection *connection,
                            HippoSentiment   sentiment)
 {
     char *node, *to;
-    LmMessage *message;
-    LmMessageNode *body;
-    LmMessageNode *child;
     
     node = hippo_id_to_jabber_id(id);
     to = g_strconcat(node, "@" HIPPO_ROOMS_JID_DOMAIN, NULL);
     g_free(node);
 
-    message = lm_message_new(to, LM_MESSAGE_TYPE_MESSAGE);
-    body = lm_message_node_add_child(message->node, "body", text);
+    send_chat_room_message(connection, to, text, sentiment);
 
-    if (sentiment != HIPPO_SENTIMENT_INDIFFERENT) {
-        child = lm_message_node_add_child(message->node, "messageInfo", NULL);
-        lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/rooms");
-        lm_message_node_set_attribute(child, "sentiment", hippo_sentiment_as_string(sentiment));
-    }
-    
-    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
-
-    lm_message_unref(message);
     g_free(to);
 }
 
@@ -2619,6 +2685,142 @@ hippo_connection_request_chat_room_details(HippoConnection *connection,
 
     g_debug("Sent request for chat room details on '%s' '%s'",
             hippo_chat_room_get_id(room), hippo_chat_room_get_jabber_id(room));
+}
+
+static void
+hippo_connection_parse_settings_node(HippoConnection *connection,
+                                     LmMessageNode   *settings_node)
+{
+    LmMessageNode *child;
+    
+    for (child = settings_node->children; child != NULL; child = child->next) {
+        const char *key = lm_message_node_get_attribute(child, "key");
+        const char *unset = lm_message_node_get_attribute(child, "unset");
+        const char *value = lm_message_node_get_value(child);
+        
+        if (key == NULL) {
+            g_debug("ignoring node '%s' with no 'key' attribute in settings reply",
+                    child->name);
+            continue;
+        }
+
+        if (unset && strcmp(unset, "true") == 0) {
+            value = NULL;
+        } else if (value == NULL) {
+            /* loudmouth tends to convert empty string to NULL for contentless nodes */
+            value = "";
+        }
+
+        g_signal_emit(G_OBJECT(connection), signals[SETTING_CHANGED], 0, key, value);
+    }
+}
+
+static LmHandlerResult
+on_desktop_settings_reply(LmMessageHandler *handler,
+                          LmConnection     *lconnection,
+                          LmMessage        *message,
+                          gpointer          data)
+{ 
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *settings_node = message->node->children;
+    
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/settings", "settings")) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    if (settings_node == NULL || strcmp(settings_node->name, "settings") != 0)
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+
+    hippo_connection_parse_settings_node(connection, settings_node);
+    
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+void
+hippo_connection_request_desktop_settings(HippoConnection *connection)
+{
+    hippo_connection_request_desktop_setting(connection, NULL);
+}
+
+void
+hippo_connection_request_desktop_setting(HippoConnection *connection,
+                                          const char      *key)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "settings", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/settings");
+
+    /* key means just get the one value, no key means get all settings (expensive) */
+    if (key != NULL)
+        lm_message_node_set_attribute(child, "key", key);
+    
+    hippo_connection_send_message_with_reply(connection, message, on_desktop_settings_reply, SEND_MODE_AFTER_AUTH);
+
+    lm_message_unref(message);
+
+    g_debug("Sent request for desktop setting (key = %s)", key ? key : "(null)");
+}
+
+static LmHandlerResult
+on_desktop_setting_reply(LmMessageHandler *handler,
+                         LmConnection     *lconnection,
+                         LmMessage        *message,
+                         gpointer          data)
+{
+    /* HippoConnection *connection = HIPPO_CONNECTION(data); */
+    LmMessageNode *child;
+
+    child = message->node->children;
+
+    g_debug("got reply for <setting/> a new value");
+
+#if 0
+    /* the reply has nothing in it right now (no <setting> element) */
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/settings", "setting")) {
+        g_warning("Got wrong type of reply for <setting/> a new value");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+#endif
+
+    /* Nothing we really need to do with the reply, it's just an ACK */
+    
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+void
+hippo_connection_send_desktop_setting (HippoConnection *connection,
+                                       const char      *key,
+                                       const char      *value)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_SET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "setting", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/settings");
+    lm_message_node_set_attribute(child, "key", key);
+
+    if (value != NULL)
+        lm_message_node_set_value(child, value);
+    else
+        lm_message_node_set_attribute(child, "unset", "true");
+
+    hippo_connection_send_message_with_reply(connection, message, on_desktop_setting_reply, SEND_MODE_AFTER_AUTH);
+
+    lm_message_unref(message);
+
+    g_debug("Sent setting %s=%s", key, value);
 }
 
 static gboolean
@@ -2990,6 +3192,25 @@ hippo_connection_process_pending_room_messages(HippoConnection *connection)
 /* === HippoConnection Loudmouth handlers === */
 
 static gboolean
+handle_setting_changed(HippoConnection *connection,
+                       LmMessage       *message)
+{
+    LmMessageNode *child;
+    
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
+        return FALSE;
+
+    child = find_child_node(message->node, "http://dumbhippo.com/protocol/settings", "settings");
+    if (child == NULL)
+        return FALSE;
+    g_debug("handling settings changed message");
+
+    hippo_connection_parse_settings_node(connection, child);
+
+    return TRUE;
+}
+
+static gboolean
 handle_blocks_changed(HippoConnection *connection,
                       LmMessage       *message)
 {
@@ -3287,6 +3508,10 @@ handle_message (LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
+    if (handle_setting_changed(connection, message)) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+    
     if (handle_myspace_name_changed(connection, message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
@@ -3491,6 +3716,25 @@ hippo_connection_get_tooltip(HippoConnection *connection)
     connection->tooltip = g_strdup_printf(tip, name);
 
     return connection->tooltip;
+}
+
+/* return TRUE if showing login dialog would be appropriate */
+gboolean
+hippo_connection_get_need_login(HippoConnection  *connection)
+{
+    switch (hippo_connection_get_state(connection)) {
+    case HIPPO_STATE_SIGNED_OUT:
+    case HIPPO_STATE_RETRYING:
+    case HIPPO_STATE_SIGN_IN_WAIT:
+    case HIPPO_STATE_AUTH_WAIT:
+        if (connection->last_auth_failed || connection->username == NULL)
+            return TRUE;
+        else
+            return FALSE;
+        break;
+    default:
+        return FALSE;
+    }
 }
 
 const char*

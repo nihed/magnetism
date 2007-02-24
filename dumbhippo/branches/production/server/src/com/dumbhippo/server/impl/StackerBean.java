@@ -48,6 +48,7 @@ import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
+import com.dumbhippo.persistence.StackFilterFlags;
 import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
@@ -63,6 +64,7 @@ import com.dumbhippo.server.SimpleServiceMBean;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmppMessageSender;
+import com.dumbhippo.server.blocks.AccountQuestionBlockHandler;
 import com.dumbhippo.server.blocks.BlockHandler;
 import com.dumbhippo.server.blocks.BlockNotVisibleException;
 import com.dumbhippo.server.blocks.BlockView;
@@ -78,6 +80,7 @@ import com.dumbhippo.server.blocks.GroupRevisionBlockHandler;
 import com.dumbhippo.server.blocks.MusicChatBlockHandler;
 import com.dumbhippo.server.blocks.MusicPersonBlockHandler;
 import com.dumbhippo.server.blocks.MySpacePersonBlockHandler;
+import com.dumbhippo.server.blocks.NetflixBlockHandler;
 import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.blocks.RedditBlockHandler;
 import com.dumbhippo.server.blocks.TwitterPersonBlockHandler;
@@ -192,6 +195,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case GROUP_REVISION:
 			handlerClass = GroupRevisionBlockHandler.class;
 			break;
+		case NETFLIX_MOVIE:
+			handlerClass = NetflixBlockHandler.class;
+			break;
+		case ACCOUNT_QUESTION:
+			handlerClass = AccountQuestionBlockHandler.class;
+			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
 		case OBSOLETE_BLOG_PERSON:
@@ -236,7 +245,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				   "AND block.inclusion = :inclusion";
 		} else if (data1 != null) {
 			return "block.blockType=:type " +
-				   "AND block.data1=:data1 AND block.data2='' AND block.data3=:data3 " + 
+				   "AND block.data1=:data1 " + (key.isData2Optional() ? "" : " AND block.data2='' ") + " AND block.data3=:data3 " + 
 				   "AND block.inclusion = :inclusion";
 		} else if (data2 != null) {
 			return "block.blockType=:type " +
@@ -703,8 +712,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			return;
 		}
 		
+		blockClicked(ubd, clickedTime);
+	}
+		
+	public void blockClicked(UserBlockData ubd, long clickedTime) {
 		// if we weren't previously clicked on, then increment the count.
-		// (FIXME is this a race or does it work due to transaction semantics? not sure)
+		// (FIXME this is not a reliable way of incrementing a count, since two transactions
+		// can read the same value and write the same value + 1)
 		if (!ubd.isClicked())
 			ubd.getBlock().setClickedCount(ubd.getBlock().getClickedCount() + 1);
 		
@@ -740,8 +754,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	// FIXME this function should die since block-type-specific code should not 
 	// be in this file
-	private BlockKey getPostKey(Guid postId) {
-		return getHandler(PostBlockHandler.class, BlockType.POST).getKey(postId);
+	private BlockKey getPostKey(Post post) {
+		return getHandler(PostBlockHandler.class, BlockType.POST).getKey(post);
 	}
 	
 	// FIXME this function should die since block-type-specific code should not 
@@ -797,6 +811,49 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return getBlockView(viewpoint, ubd.getBlock(), ubd, false);
 	}	
 	
+	public BlockView loadBlock(Viewpoint viewpoint, BlockKey key) throws NotFoundException {
+		Block block = null;
+		UserBlockData ubd = null;
+		
+		if (viewpoint instanceof UserViewpoint) {
+			try {
+				ubd = lookupUserBlockData((UserViewpoint)viewpoint, key);
+				block = ubd.getBlock();
+			} catch (NotFoundException e) {
+			}
+		}
+		
+		if (block == null)
+			block = queryBlock(key);
+		
+		return getBlockView(viewpoint, block, ubd, false);
+	}	
+	
+	private static class StackFilterExpression {
+		private boolean noFeed = false;
+		private boolean noSelfSource = false;
+		
+		public StackFilterExpression(String expr) {
+			if (expr != null) {
+				String[] components = expr.split(",");
+				for (int i = 0; i < components.length; i++) {
+					if (components[i].equals("nofeed"))
+						noFeed = true;
+					else if (components[i].equals("noselfsource"))
+						noSelfSource = true;
+				}
+			}
+		}
+		
+		public boolean isNoFeed() {
+			return noFeed;
+		}
+		
+		public boolean isNoSelfSource() {
+			return noSelfSource;
+		}
+	}
+	
 	/**
 	 * 
 	 * @param viewpoint
@@ -805,9 +862,15 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	 * @param start
 	 * @param count
 	 * @param participantOnly if true, only include blocks where someone participated, and sort by participation time 
-	 * @return
+	 * @param participantOnly2 
+	 * @param filter 
+	 * @param noSelfSource 
+	 * @return 
 	 */
-	private List<UserBlockData> getBlocks(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, boolean participantOnly) {
+	private List<UserBlockData> getBlocks(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, 
+			                              String filter, boolean participantOnly) {
+		
+		StackFilterExpression parsedExpression = new StackFilterExpression(filter);
 		
 		StringBuilder sb = new StringBuilder();
 		
@@ -822,6 +885,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// if lastTimestamp == 0 then all blocks are included so just skip the test in the sql
 		if (lastTimestamp > 0)
 			sb.append(" AND ubd.stackTimestamp >= :timestamp ");
+		
+		if (parsedExpression.isNoFeed())
+			sb.append(" AND block.filterFlags != " + StackFilterFlags.FEED.getValue());
+		
+		if (parsedExpression.isNoSelfSource() && viewpoint instanceof UserViewpoint) {
+			sb.append(" AND (NOT ((block.data1 = :viewpointGuid AND " + getData1UserBlockTypeClause() + ")" +
+					  "           OR (block.data2 = :viewpointGuid AND " + getData2UserBlockTypeClause() + ")))");
+		}
 		
 		/* Inclusion clause */
 		sb.append(" AND (block.inclusion = ");
@@ -934,6 +1005,11 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void pageStack(final Viewpoint viewpoint, final User user, Pageable<BlockView> pageable, final long lastTimestamp, final boolean participantOnly) {
+		pageStack(viewpoint, user, pageable, lastTimestamp, null, participantOnly);
+	}
+	
+	public void pageStack(final Viewpoint viewpoint, final User user, Pageable<BlockView> pageable, final long lastTimestamp, 
+			              final String filter, final boolean participantOnly) {
 		
 		logger.debug("getting stack for user {}", user);
 
@@ -944,7 +1020,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageStack(viewpoint, new BlockSource<UserBlockData>() {
 			public List<Pair<Block, UserBlockData>> get(int start, int count) {
 				List<Pair<Block, UserBlockData>> results = new ArrayList<Pair<Block, UserBlockData>>();
-				for (UserBlockData ubd : getBlocks(viewpoint, user, lastTimestamp, start, count, participantOnly)) {
+				for (UserBlockData ubd : getBlocks(viewpoint, user, lastTimestamp, start, count, filter, participantOnly)) {
 					results.add(new Pair<Block, UserBlockData>(ubd.getBlock(), ubd));
 				}
 				return results;
@@ -953,7 +1029,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				return prepareBlockView(viewpoint, block, ubd, participantOnly);
 			}
 		}, pageable, expectedHitFactor);
-	}
+	}	
 	
 	private static abstract class ItemSource<T> {
 		abstract Collection<T> get(int start, int count);
@@ -1126,31 +1202,52 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	private static Set<BlockType> data1UserBlockTypes;
+	private static Set<BlockType> data2UserBlockTypes;
 
-	private String getData1UserBlockTypeClause() {
-		synchronized (StackerBean.class) {
-			if (data1UserBlockTypes == null) {
-				data1UserBlockTypes = new HashSet<BlockType>();
-				Iterator<BlockType> it = Arrays.asList(BlockType.values()).iterator();
-				while (it.hasNext()) {
-					BlockType blockType = it.next();
-					if (blockType.userOriginIsData1())
-						data1UserBlockTypes.add(blockType);
-				}
-			}
-		}
-		
-		StringBuilder builder = new StringBuilder(" block.blockType in (");
+	private static String joinBlockTypeOridnals(Set<BlockType> types) {
+		StringBuilder builder = new StringBuilder();
 		Iterator<BlockType> it = data1UserBlockTypes.iterator();		
 		while (it.hasNext()) {
 			builder.append(Integer.toString(it.next().ordinal()));
 			if (it.hasNext()) {
 				builder.append(", ");
 			}
-		}
-		builder.append(")");
+		}		
 		return builder.toString();
 	}
+	
+	private static void initBlockTypeCache() {
+		synchronized (StackerBean.class) {
+			if (data1UserBlockTypes == null) {
+				data1UserBlockTypes = new HashSet<BlockType>();
+				data2UserBlockTypes = new HashSet<BlockType>();
+				Iterator<BlockType> it = Arrays.asList(BlockType.values()).iterator();
+				while (it.hasNext()) {
+					BlockType blockType = it.next();
+					if (blockType.userOriginIsData1())
+						data1UserBlockTypes.add(blockType);
+					else if (blockType.userOriginIsData2())
+						data2UserBlockTypes.add(blockType);
+				}
+			}
+		}	
+	}
+	
+	private String getData1UserBlockTypeClause() {
+		initBlockTypeCache();
+		StringBuilder builder = new StringBuilder(" block.blockType IN (");
+		builder.append(joinBlockTypeOridnals(data1UserBlockTypes));
+		builder.append(") ");
+		return builder.toString();
+	}
+	
+	private String getData2UserBlockTypeClause() {
+		initBlockTypeCache();
+		StringBuilder builder = new StringBuilder(" block.blockType IN (");
+		builder.append(joinBlockTypeOridnals(data2UserBlockTypes));
+		builder.append(") ");
+		return builder.toString();
+	}	
 	
 	private List<User> getRecentlyActiveContacts(Viewpoint viewpoint, User user, int start, int count) {
 		// The algorithm to find recently active contacts here is simply to select blocks from the user's
@@ -1682,7 +1779,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	public void migratePost(String postId) {
 		logger.debug("    migrating post {}", postId);
 		Post post = em.find(Post.class, postId);
-		Block block = getOrCreateBlock(getPostKey(post.getGuid()), post.isPublic());
+		Block block = getOrCreateBlock(getPostKey(post), post.isPublic());
 		long activity = post.getPostDate().getTime();
 		StackReason reason = StackReason.NEW_BLOCK;
 		
@@ -1712,7 +1809,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		Post post = em.find(Post.class, postId);
 		Block block;
 		try {
-		    block = queryBlock(getPostKey(post.getGuid()));		
+		    block = queryBlock(getPostKey(post));		
 		} catch (NotFoundException e) {
 			logger.warn("Block corresponding to post {} was not found, won't migrate post participation", post);
 			return;
@@ -1903,6 +2000,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case TWITTER_PERSON:
 		case DIGG_DUGG_ENTRY:
 		case REDDIT_ACTIVITY_ENTRY:
+		case NETFLIX_MOVIE:
+		case ACCOUNT_QUESTION:
 			isGroupParticipation = false;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
@@ -1914,4 +2013,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 
 		updateGroupBlockDatas(block, isGroupParticipation, reason);
 	}
+
+	public String getUserStackFilterPrefs(User user) {
+		return user.getAccount().getStackFilter();
+	}
+	
+	public void setUserStackFilterPrefs(User user, String filter) {
+		user.getAccount().setStackFilter(filter);
+	}	
 }

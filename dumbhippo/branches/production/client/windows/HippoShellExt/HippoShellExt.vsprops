@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="HippoShellExt"
+	InheritedPropertySheets="..\Sheets\HippoPch.vsprops"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="../HippoUtil"
+		PreprocessorDefinitions="NOMINMAX"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		RegisterOutput="true"
+		AdditionalDependencies="advapi32.lib shell32.lib"
+		ModuleDefinitionFile="HippoShellExt.def"
+	/>
+</VisualStudioPropertySheet>

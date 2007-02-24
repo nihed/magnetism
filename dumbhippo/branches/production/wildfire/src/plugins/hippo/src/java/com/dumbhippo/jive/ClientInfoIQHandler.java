@@ -1,40 +1,49 @@
 package com.dumbhippo.jive;
 
+import javax.ejb.EJB;
+
 import org.dom4j.Document;
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.IQHandlerInfo;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
 
-public class ClientInfoIQHandler extends AbstractIQHandler {
-	private IQHandlerInfo info;
+import com.dumbhippo.jive.annotations.IQHandler;
+import com.dumbhippo.jive.annotations.IQMethod;
+import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.views.UserViewpoint;
+
+@IQHandler(namespace=ClientInfoIQHandler.CLIENT_INFO_NAMESPACE)
+public class ClientInfoIQHandler extends AnnotatedIQHandler {
+	static final String CLIENT_INFO_NAMESPACE = "http://dumbhippo.com/protocol/clientinfo";
 	
+	@EJB
+	AccountSystem accountSystem;
+	
+	@EJB
+	TransactionRunner runner;
+
 	public ClientInfoIQHandler() {
 		super("Dumbhippo clientInfo IQ Handler");
 		Log.debug("creating ClientInfoIQHandler");
-		info = new IQHandlerInfo("clientInfo", "http://dumbhippo.com/protocol/clientinfo");
 	}
 
-	@Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException {
-		Log.debug("handling IQ packet " + packet);
-		IQ reply = IQ.createResultIQ(packet);
-		Element iq = packet.getChildElement();
+	@IQMethod(name="clientInfo", type=IQ.Type.get)
+	public void getClientInfo(final UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
+		Element child = request.getChildElement();
 		
-        String platform = iq.attributeValue("platform");
+		final String platform = child.attributeValue("platform");
         if (platform == null) {
-        	makeError(reply, "clientInfo IQ missing platform attribute");
-        	return reply;
+        	throw IQException.createBadRequest("clientInfo IQ missing platform attribute");
         }
 
         // optional distribution info
-        String distribution = iq.attributeValue("distribution");
+        final String distribution = child.attributeValue("distribution");
         
 		Document document = DocumentFactory.getInstance().createDocument();
-		Element childElement = document.addElement("clientInfo", "http://dumbhippo.com/protocol/clientinfo");
+		Element childElement = document.addElement("clientInfo", CLIENT_INFO_NAMESPACE);
 		if (platform.equals("windows")) {
 			childElement.addAttribute("minimum", JiveGlobals.getXMLProperty("dumbhippo.client.windows.minimum"));
 			childElement.addAttribute("current", JiveGlobals.getXMLProperty("dumbhippo.client.windows.current"));
@@ -55,21 +64,15 @@ public class ClientInfoIQHandler extends AbstractIQHandler {
 				childElement.addAttribute("download", "http://example.com/notused");
 			}
 		} else {
-			Log.debug("Unknown platform '" + platform + "' in clientInfo IQ");
-			makeError(reply, "clientInfo IQ: unrecognized platform: '" + platform + "'");
-			return reply;			
+			throw IQException.createBadRequest("clientInfo IQ: unrecognized platform: '" + platform + "'");
 		}
+		
 		reply.setChildElement(childElement);
-
-     	return reply;
-	}
-
-	@Override
-	public IQHandlerInfo getInfo() {
-		return info;
-	}
-
-	@Override
-	public void start() {
+		
+		runner.runTaskOnTransactionCommit(new Runnable() {
+			public void run() {
+				accountSystem.updateClientInfo(viewpoint, platform, distribution);
+			}
+		});
 	}
 }

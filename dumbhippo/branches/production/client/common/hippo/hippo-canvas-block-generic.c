@@ -22,12 +22,11 @@ static void hippo_canvas_block_generic_get_property (GObject      *object,
                                                      guint         prop_id,
                                                      GValue       *value,
                                                      GParamSpec   *pspec);
-static GObject* hippo_canvas_block_generic_constructor (GType                  type,
-                                                        guint                  n_construct_properties,
-                                                        GObjectConstructParam *construct_params);
-
 
 /* Canvas block methods */
+static void hippo_canvas_block_generic_append_content_items(HippoCanvasBlock *block,
+                                                            HippoCanvasBox   *parent_box);
+
 static void hippo_canvas_block_generic_set_block       (HippoCanvasBlock *canvas_block,
                                                         HippoBlock       *block);
 static void hippo_canvas_block_generic_title_activated (HippoCanvasBlock *canvas_block);
@@ -46,6 +45,7 @@ static void hippo_canvas_block_generic_update_visibility    (HippoCanvasBlockGen
 
 struct _HippoCanvasBlockGeneric {
     HippoCanvasBlock canvas_block;
+    HippoCanvasBox *description_parent;
     HippoCanvasItem *description_item;
     HippoCanvasItem *reason_item;
     HippoCanvasItem *clicked_count_item;
@@ -98,11 +98,11 @@ hippo_canvas_block_generic_class_init(HippoCanvasBlockGenericClass *klass)
 
     object_class->set_property = hippo_canvas_block_generic_set_property;
     object_class->get_property = hippo_canvas_block_generic_get_property;
-    object_class->constructor = hippo_canvas_block_generic_constructor;
 
     object_class->dispose = hippo_canvas_block_generic_dispose;
     object_class->finalize = hippo_canvas_block_generic_finalize;
 
+    canvas_block_class->append_content_items = hippo_canvas_block_generic_append_content_items;
     canvas_block_class->set_block = hippo_canvas_block_generic_set_block;
     canvas_block_class->title_activated = hippo_canvas_block_generic_title_activated;
     canvas_block_class->clicked_count_changed = hippo_canvas_block_generic_clicked_count_changed;
@@ -162,32 +162,23 @@ hippo_canvas_block_generic_get_property(GObject         *object,
     }
 }
 
-static GObject*
-hippo_canvas_block_generic_constructor (GType                  type,
-                                        guint                  n_construct_properties,
-                                        GObjectConstructParam *construct_properties)
+static void
+hippo_canvas_block_generic_append_content_items(HippoCanvasBlock *block,
+                                                HippoCanvasBox   *parent_box)
 {
-    GObject *object = G_OBJECT_CLASS(hippo_canvas_block_generic_parent_class)->constructor(type,
-                                                                                           n_construct_properties,
-                                                                                           construct_properties);
-
-    HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
-    HippoCanvasBlockGeneric *block_generic = HIPPO_CANVAS_BLOCK_GENERIC(object);
-    HippoCanvasBox *box;
-
-    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                       NULL);
+    HippoCanvasBlockGeneric *block_generic = HIPPO_CANVAS_BLOCK_GENERIC(block);
 
     block_generic->reason_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                               "xalign", HIPPO_ALIGNMENT_START,
                                               "text", NULL,
                                               "font", "Italic 11px",
                                               NULL);
-    hippo_canvas_box_append(box, block_generic->reason_item, 0);
-    hippo_canvas_box_set_child_visible(box,
+    hippo_canvas_box_append(parent_box, block_generic->reason_item, 0);
+    hippo_canvas_box_set_child_visible(parent_box,
                                        block_generic->reason_item,
                                        FALSE);
 
+    block_generic->description_parent = parent_box;
     block_generic->description_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                                    "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                                                    "xalign", HIPPO_ALIGNMENT_START,
@@ -196,14 +187,14 @@ hippo_canvas_block_generic_constructor (GType                  type,
                                                    "border-top", 4,
                                                    "border-bottom", 4,
                                                    NULL);
-    hippo_canvas_box_append(box, block_generic->description_item, 0);
+    hippo_canvas_box_append(parent_box, block_generic->description_item, 0);
 
     block_generic->details_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                               "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                                               "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
                                               NULL);
-    hippo_canvas_box_append(box, block_generic->details_box, 0);
-    block_generic->parent_box = box;
+    hippo_canvas_box_append(parent_box, block_generic->details_box, HIPPO_PACK_CLEAR_RIGHT);
+    block_generic->parent_box = parent_box;
     hippo_canvas_box_set_child_visible(block_generic->parent_box,
                                        block_generic->details_box,
                                        FALSE); /* not expanded at first */
@@ -212,10 +203,6 @@ hippo_canvas_block_generic_constructor (GType                  type,
                                                      "text", NULL,
                                                      NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_generic->details_box), block_generic->clicked_count_item, 0);
-
-    hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
-
-    return object;
 }
 
 static void
@@ -325,6 +312,13 @@ hippo_canvas_block_generic_update_visibility(HippoCanvasBlockGeneric *block_gene
     g_object_set(G_OBJECT(block_generic->description_item),
                  "size-mode", canvas_block->expanded ? HIPPO_CANVAS_SIZE_WRAP_WORD : HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                  NULL);
+
+    /* When the block is expanded, we want to give the description the full width,
+     * bumping it down below the sender information on the right if necessary
+     */
+    hippo_canvas_box_set_child_packing (block_generic->description_parent,
+                                        block_generic->description_item,
+                                        canvas_block->expanded ? HIPPO_PACK_CLEAR_RIGHT : 0);
 
     show_reason = stack_reason == HIPPO_STACK_VIEWER_COUNT;
     show_description = canvas_block->expanded || !show_reason;

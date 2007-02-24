@@ -32,6 +32,7 @@ struct _HippoCanvasBlockMusic {
     HippoCanvasItem *artist_link;
     HippoCanvasBox *name_link_parent;
     HippoCanvasItem *name_link;
+    HippoCanvasItem *quipper;
     HippoCanvasBox *single_message_preview_parent;
     HippoCanvasItem *single_message_preview;
     HippoCanvasBox *chat_preview_parent;
@@ -55,8 +56,10 @@ GType            hippo_canvas_block_music_get_type    (void) G_GNUC_CONST;
 
 void hippo_canvas_block_music_set_track_history(HippoCanvasBlockMusic *block_music,
                                                 GSList                *track_history);
-void hippo_canvas_block_music_set_recent_messages(HippoCanvasBlockMusic *block_music_,
+void hippo_canvas_block_music_set_recent_messages(HippoCanvasBlockMusic *block_music,
                                                   GSList                *recent_messages);
+void hippo_canvas_block_music_set_message_count(HippoCanvasBlockMusic *block_music,
+                                                int                    message_count);
 
 G_END_DECLS
 

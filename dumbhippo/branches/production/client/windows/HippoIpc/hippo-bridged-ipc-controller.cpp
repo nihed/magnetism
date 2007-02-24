@@ -52,11 +52,13 @@ public:
 
     virtual HippoEndpointId registerEndpoint(HippoIpcListener *listener);
     virtual void unregisterEndpoint(HippoEndpointId endpoint);
-    
+
+    virtual void setWindowId(HippoEndpointId endpoint, HippoWindowId windowId);
+
     virtual void joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant);
     virtual void leaveChatRoom(HippoEndpointId endpoint, const char *chatId);
     
-    virtual void sendChatMessage(const char *chatId, const char *text);
+    virtual void sendChatMessage(const char *chatId, const char *text, int sentiment);
     virtual void showChatWindow(const char *chatId);
 
 private:
@@ -155,6 +157,15 @@ HippoBridgedIpcControllerImpl::unregisterEndpoint(HippoEndpointId endpoint)
 }
 
 void
+HippoBridgedIpcControllerImpl::setWindowId(HippoEndpointId endpoint, HippoWindowId windowId)
+{
+    HippoSerializedController serialized;
+    serialized.setWindowId(endpoint, windowId);
+
+    hub_->doSync(&HippoComIpcControllerTask(inner_, &serialized));
+}
+
+void
 HippoBridgedIpcControllerImpl::joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant)
 {
     HippoSerializedController serialized;
@@ -173,10 +184,10 @@ HippoBridgedIpcControllerImpl::leaveChatRoom(HippoEndpointId endpoint, const cha
 }
 
 void
-HippoBridgedIpcControllerImpl::sendChatMessage(const char *chatId, const char *text)
+HippoBridgedIpcControllerImpl::sendChatMessage(const char *chatId, const char *text, int sentiment)
 {
     HippoSerializedController serialized;
-    serialized.sendChatMessage(chatId, text);
+    serialized.sendChatMessage(chatId, text, sentiment);
 
     hub_->doSync(&HippoComIpcControllerTask(inner_, &serialized));
 }

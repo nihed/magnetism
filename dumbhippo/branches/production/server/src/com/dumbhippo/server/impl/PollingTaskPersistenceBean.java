@@ -58,14 +58,23 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 	
 	public void snapshot(Set<PollingTask> tasks) {
 		for (PollingTask task : tasks) {
-			task.syncStateToTaskEntry(getEntry(task));
+			try {
+			    task.syncStateToTaskEntry(getEntry(task));
+			} catch (NoResultException e) {
+				logger.warn("Task {} disappeared, will not sync its state to the database.", task);
+			}
 		}
 	}	
 	
 	public void clean(Set<PollingTask> tasks) {
 		for (PollingTask task : tasks) {
-			PollingTaskEntry stats = getEntry(task);
-			em.remove(stats);
+			try {
+			    PollingTaskEntry stats = getEntry(task);
+			    em.remove(stats);
+			    logger.debug("Removed task {}", task);
+			} catch (NoResultException e) {
+				logger.warn("Tried to remove task {} that must have been already removed.", task);
+			} 
 		}
 	}
 	
@@ -96,7 +105,7 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 			query.setParameter("dbId", dbId);
 		Set<PollingTask> newTasks = new HashSet<PollingTask>();
 		List<PollingTaskEntry> entries = TypeUtils.castList(PollingTaskEntry.class, query.getResultList());
-		long largestId = -1;
+		long largestId = dbId;
 		for (PollingTaskEntry entry : entries) {
 			if (entry.getId() > largestId)
 				largestId = entry.getId();

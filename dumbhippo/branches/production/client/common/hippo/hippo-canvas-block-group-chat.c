@@ -5,6 +5,7 @@
 #include "hippo-canvas-block-group-chat.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
+#include <hippo/hippo-canvas-quipper.h>
 #include <hippo/hippo-canvas-text.h>
 #include <hippo/hippo-canvas-gradient.h>
 #include <hippo/hippo-canvas-link.h>
@@ -25,12 +26,10 @@ static void hippo_canvas_block_group_chat_get_property (GObject      *object,
                                                         guint         prop_id,
                                                         GValue       *value,
                                                         GParamSpec   *pspec);
-static GObject* hippo_canvas_block_group_chat_constructor (GType                  type,
-                                                           guint                  n_construct_properties,
-                                                           GObjectConstructParam *construct_params);
-
 
 /* Canvas block methods */
+static void hippo_canvas_block_group_chat_append_content_items (HippoCanvasBlock *canvas_block,
+                                                                HippoCanvasBox   *parent_box);
 static void hippo_canvas_block_group_chat_set_block       (HippoCanvasBlock *canvas_block,
                                                            HippoBlock       *block);
 
@@ -44,7 +43,7 @@ static void hippo_canvas_block_group_update_visibility(HippoCanvasBlockGroupChat
 
 struct _HippoCanvasBlockGroupChat {
     HippoCanvasBlock canvas_block;
-    HippoCanvasBox *parent_box;
+    HippoCanvasItem *quipper;
     HippoCanvasItem *single_message_preview;
     HippoCanvasItem *chat_preview;
 
@@ -96,11 +95,11 @@ hippo_canvas_block_group_chat_class_init(HippoCanvasBlockGroupChatClass *klass)
 
     object_class->set_property = hippo_canvas_block_group_chat_set_property;
     object_class->get_property = hippo_canvas_block_group_chat_get_property;
-    object_class->constructor = hippo_canvas_block_group_chat_constructor;
 
     object_class->dispose = hippo_canvas_block_group_chat_dispose;
     object_class->finalize = hippo_canvas_block_group_chat_finalize;
 
+    canvas_block_class->append_content_items = hippo_canvas_block_group_chat_append_content_items;
     canvas_block_class->set_block = hippo_canvas_block_group_chat_set_block;
     canvas_block_class->title_activated = hippo_canvas_block_group_chat_title_activated;
     canvas_block_class->expand = hippo_canvas_block_group_chat_expand;
@@ -156,48 +155,44 @@ hippo_canvas_block_group_chat_get_property(GObject         *object,
     }
 }
 
-static GObject*
-hippo_canvas_block_group_chat_constructor (GType                  type,
-                                           guint                  n_construct_properties,
-                                           GObjectConstructParam *construct_properties)
+static void
+hippo_canvas_block_group_chat_append_content_items (HippoCanvasBlock *block,
+                                                    HippoCanvasBox   *parent_box)
 {
-    GObject *object = G_OBJECT_CLASS(hippo_canvas_block_group_chat_parent_class)->constructor(type,
-                                                                                              n_construct_properties,
-                                                                                              construct_properties);
-    
-    HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
-    HippoCanvasBlockGroupChat *block_group_chat = HIPPO_CANVAS_BLOCK_GROUP_CHAT(object);
-    HippoCanvasBox *box;
+    HippoCanvasBlockGroupChat *block_group_chat = HIPPO_CANVAS_BLOCK_GROUP_CHAT(block);
         
     hippo_canvas_block_set_heading(block, _("Group Chat"));
 
-    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                       NULL);
+    block_group_chat->quipper = g_object_new(HIPPO_TYPE_CANVAS_QUIPPER,
+                                             "actions", hippo_canvas_block_get_actions(block),
+                                             NULL);
+    hippo_canvas_box_append(parent_box,
+                            block_group_chat->quipper, 0);
+    hippo_canvas_box_set_child_visible(parent_box,
+                                       block_group_chat->quipper,
+                                       FALSE); /* not expanded at first */
 
-    block_group_chat->parent_box = box;
-    
     block_group_chat->single_message_preview = g_object_new(HIPPO_TYPE_CANVAS_MESSAGE_PREVIEW,
                                                            "actions", hippo_canvas_block_get_actions(block),
                                                            NULL);
-    hippo_canvas_box_append(block_group_chat->parent_box,
+    hippo_canvas_box_append(parent_box,
                             block_group_chat->single_message_preview, 0);
-    hippo_canvas_box_set_child_visible(block_group_chat->parent_box,
+    hippo_canvas_box_set_child_visible(parent_box,
                                        block_group_chat->single_message_preview,
                                        TRUE); /* not expanded at first */
 
     
     block_group_chat->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
                                                   "actions", hippo_canvas_block_get_actions(block),
+                                                  "padding-top", 8,
                                                   NULL);
-    hippo_canvas_box_append(block_group_chat->parent_box,
-                            block_group_chat->chat_preview, 0);
-    hippo_canvas_box_set_child_visible(block_group_chat->parent_box,
+    hippo_canvas_box_append(parent_box,
+                            block_group_chat->chat_preview,
+                            HIPPO_PACK_CLEAR_RIGHT);
+    hippo_canvas_box_set_child_visible(parent_box,
                                        block_group_chat->chat_preview,
                                        FALSE); /* not expanded at first */
 
-    hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
-    
-    return object;
 }
 
 static void
@@ -253,9 +248,17 @@ on_group_changed(HippoBlock *block,
         g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
                      "chat-id", NULL,
                      NULL);
+        g_object_set(G_OBJECT(canvas_group_chat->quipper),
+                     "chat-id", NULL,
+                     "title", NULL,
+                     NULL);
     } else {
         g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
                      "chat-id", hippo_entity_get_guid(HIPPO_ENTITY(group)),
+                     NULL);
+        g_object_set(G_OBJECT(canvas_group_chat->quipper),
+                     "chat-id", hippo_entity_get_guid(HIPPO_ENTITY(group)),
+                     "title", hippo_entity_get_name(HIPPO_ENTITY(group)),
                      NULL);
                                      
         hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(canvas_group_chat),
@@ -274,6 +277,20 @@ on_recent_messages_changed(HippoBlock *block,
 }
 
 static void
+on_message_count_changed(HippoBlock *block,
+                         GParamSpec *arg, /* null when first calling this */
+                         HippoCanvasBlockGroupChat *canvas_group_chat)
+{
+    int message_count = -1;
+
+    g_object_get(block, "message-count", &message_count, NULL);
+    
+    g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
+                 "message-count", message_count,
+                 NULL);
+}
+
+static void
 hippo_canvas_block_group_chat_set_block(HippoCanvasBlock *canvas_block,
                                         HippoBlock       *block)
 {
@@ -285,6 +302,9 @@ hippo_canvas_block_group_chat_set_block(HippoCanvasBlock *canvas_block,
     if (canvas_block->block != NULL) {
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_recent_messages_changed),
+                                             canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_message_count_changed),
                                              canvas_block);
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_group_changed),
@@ -300,12 +320,18 @@ hippo_canvas_block_group_chat_set_block(HippoCanvasBlock *canvas_block,
                          G_CALLBACK(on_recent_messages_changed),
                          canvas_block);
         g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::message-count",
+                         G_CALLBACK(on_message_count_changed),
+                         canvas_block);
+        g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::group",
                          G_CALLBACK(on_group_changed),
                          canvas_block);
 
         on_group_changed(canvas_block->block, NULL, canvas_block);
         on_recent_messages_changed(canvas_block->block, NULL, canvas_block);
+        on_message_count_changed(canvas_block->block, NULL,
+                                 HIPPO_CANVAS_BLOCK_GROUP_CHAT(canvas_block));
     }
 }
 
@@ -338,11 +364,14 @@ hippo_canvas_block_group_update_visibility(HippoCanvasBlockGroupChat *block_grou
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_group_chat);
     
-    hippo_canvas_box_set_child_visible(block_group_chat->parent_box,
+    hippo_canvas_box_set_child_visible(canvas_block->main_box,
                                        block_group_chat->single_message_preview,
                                        !canvas_block->expanded && block_group_chat->have_messages);
-    hippo_canvas_box_set_child_visible(block_group_chat->parent_box,
+    hippo_canvas_box_set_child_visible(canvas_block->main_box,
                                        block_group_chat->chat_preview,
+                                       canvas_block->expanded);
+    hippo_canvas_box_set_child_visible(canvas_block->main_box,
+                                       block_group_chat->quipper,
                                        canvas_block->expanded);
 }
 

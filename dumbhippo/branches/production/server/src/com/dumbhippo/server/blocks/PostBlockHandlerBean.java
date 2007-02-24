@@ -20,6 +20,7 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.StackFilterFlags;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
@@ -44,13 +45,18 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 		super(PostBlockView.class);
 	}
 
-	public BlockKey getKey(Post post) {
-		return getKey(post.getGuid());
+	public BlockKey getLookupOnlyKey(Post post) {
+		return getLookupOnlyKey(post.getGuid());
 	}
-
-	public BlockKey getKey(Guid postId) {
-		return new BlockKey(BlockType.POST, postId);
-	}	
+	
+	public BlockKey getLookupOnlyKey(Guid postId) {
+		return new BlockKey(BlockType.POST, postId, true);
+	}		
+	
+	public BlockKey getKey(Post post) {
+		User poster = post.getPoster();
+		return new BlockKey(BlockType.POST, post.getGuid(), poster == null ? null : poster.getGuid());
+	}
 	
 	@Override
 	protected void populateBlockViewImpl(PostBlockView blockView) throws BlockNotVisibleException {
@@ -66,7 +72,14 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 	    List<ChatMessageView> recentMessages = postingBoard.viewPostMessages(
 	        postingBoard.getNewestPostMessages(postView.getPost(), PostBlockView.RECENT_MESSAGE_COUNT),
 			viewpoint);
-	    blockView.populate(postView, recentMessages);
+	    
+		int messageCount;
+		if (recentMessages.size() < PostBlockView.RECENT_MESSAGE_COUNT) // Optimize out a query
+			messageCount = recentMessages.size();
+		else
+			messageCount = postingBoard.getPostMessageCount(postView.getPost());
+			    
+	    blockView.populate(postView, recentMessages, messageCount);
 	}
 
 	private Post loadPost(Block block) {
@@ -95,17 +108,20 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 	}
 	
 	public void onPostCreated(Post post) {
+		boolean isFeed = (post instanceof FeedPost);
 		Block block = stacker.createBlock(getKey(post));
 		block.setPublicBlock(post.isPublic() && !post.isDisabled());
+		if (isFeed)
+			block.setFilterFlags(StackFilterFlags.FEED.getValue());
 		User poster = post.getPoster();
 		stacker.stack(block, post.getPostDate().getTime(),
-					poster, !(post instanceof FeedPost), StackReason.NEW_BLOCK);
+					poster, !isFeed, StackReason.NEW_BLOCK);
 	}
 
 	public void onPostDisabledToggled(Post post) {
 		Block block;
 		try {
-			block = stacker.queryBlock(getKey(post));
+			block = stacker.queryBlock(getLookupOnlyKey(post));
 		} catch (NotFoundException e) {
 			logger.warn("No block found for post {} - migration needed?", post);
 			return;
@@ -114,24 +130,24 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 	}
 
 	public void onPostMessageCreated(PostMessage message) {
-		stacker.stack(getKey(message.getPost()), message.getTimestamp().getTime(),
+		stacker.stack(getLookupOnlyKey(message.getPost()), message.getTimestamp().getTime(),
 				message.getFromUser(), true, StackReason.CHAT_MESSAGE);
 	}
 
 	public void onPostClicked(Post post, User user, long clickedTime) {
-		stacker.blockClicked(getKey(post), user, clickedTime);
+		stacker.blockClicked(getLookupOnlyKey(post), user, clickedTime);
 	}
 
 	public Block lookupBlock(Post post) {
 		try {
-			return stacker.queryBlock(getKey(post));
+			return stacker.queryBlock(getLookupOnlyKey(post));
 		} catch (NotFoundException e) {
 			throw new RuntimeException("No Block found for Post {}, migration needed?", e);
 		}
 	}
 	
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Post post) throws NotFoundException {
-		return stacker.lookupUserBlockData(viewpoint, getKey(post));
+		return stacker.lookupUserBlockData(viewpoint, getLookupOnlyKey(post));
 	}
 	
 	

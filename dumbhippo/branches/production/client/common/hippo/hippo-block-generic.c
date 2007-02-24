@@ -24,9 +24,6 @@ static void hippo_block_generic_get_property (GObject      *object,
                                               GValue       *value,
                                               GParamSpec   *pspec);
 
-static void set_source                       (HippoBlockGeneric     *block_generic,
-                                              HippoEntity           *entity);
-
 struct _HippoBlockGeneric {
     HippoBlock       parent;
     char            *title;
@@ -51,8 +48,7 @@ enum {
     PROP_0,
     PROP_TITLE,
     PROP_LINK,
-    PROP_DESCRIPTION,
-    PROP_SOURCE
+    PROP_DESCRIPTION
 };
 
 G_DEFINE_TYPE(HippoBlockGeneric, hippo_block_generic, HIPPO_TYPE_BLOCK);
@@ -99,25 +95,11 @@ hippo_block_generic_class_init(HippoBlockGenericClass *klass)
                                                         _("Description of the block, may be NULL"),
                                                         NULL,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
-
-
-    g_object_class_install_property(object_class,
-                                    PROP_SOURCE,
-                                    g_param_spec_object("source",
-                                                        _("Source"),
-                                                        _("Source displayed in the block"),
-                                                        HIPPO_TYPE_ENTITY,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
-
 }
 
 static void
 hippo_block_generic_dispose(GObject *object)
 {
-    HippoBlockGeneric *block_generic = HIPPO_BLOCK_GENERIC(object);
-
-    set_source(block_generic, NULL);
-
     G_OBJECT_CLASS(hippo_block_generic_parent_class)->dispose(object);
 }
 
@@ -142,9 +124,6 @@ hippo_block_generic_set_property(GObject         *object,
     HippoBlockGeneric *block_generic = HIPPO_BLOCK_GENERIC(object);
 
     switch (prop_id) {
-    case PROP_SOURCE:
-        set_source(block_generic, (HippoEntity*) g_value_get_object(value));
-        break;
     case PROP_TITLE:
         g_free(block_generic->title);
         block_generic->title = g_value_dup_string(value);
@@ -172,9 +151,6 @@ hippo_block_generic_get_property(GObject         *object,
     HippoBlockGeneric *block_generic = HIPPO_BLOCK_GENERIC(object);
 
     switch (prop_id) {
-    case PROP_SOURCE:
-        g_value_set_object(value, (GObject*) block_generic->source);
-        break;
     case PROP_TITLE:
         g_value_set_string(value, block_generic->title);
         break;
@@ -198,8 +174,6 @@ hippo_block_generic_update_from_xml (HippoBlock           *block,
     /* HippoBlockGeneric *block_generic = HIPPO_BLOCK_GENERIC(block); */
     LmMessageNode *title_node;
     LmMessageNode *description_node;
-    LmMessageNode *source_node;
-    HippoEntity *source;
     const char *description;
     const char *title;
     const char *link;
@@ -209,10 +183,8 @@ hippo_block_generic_update_from_xml (HippoBlock           *block,
 
     title_node = NULL;
     description_node = NULL;
-    source_node = NULL;
     if (!hippo_xml_split(cache, node, NULL,
                          "title", HIPPO_SPLIT_NODE, &title_node,
-                         "source", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &source_node,
                          "description", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &description_node,
                          NULL))
         return FALSE;
@@ -222,16 +194,7 @@ hippo_block_generic_update_from_xml (HippoBlock           *block,
     if (title == NULL || link == NULL)
         return FALSE;
 
-    source = NULL;
     description = NULL;
-
-    if (source_node != NULL) {
-        if (!hippo_xml_split(cache, source_node, NULL,
-                             "id", HIPPO_SPLIT_ENTITY, &source,
-                             NULL))
-            return FALSE;
-
-    }
 
     if (description_node != NULL) {
         description = lm_message_node_get_value(description_node);
@@ -240,29 +203,8 @@ hippo_block_generic_update_from_xml (HippoBlock           *block,
     g_object_set(G_OBJECT(block),
                  "title", title,
                  "link", link,
-                 "source", source,
                  "description", description,
                  NULL);
 
     return TRUE;
-}
-
-static void
-set_source(HippoBlockGeneric        *block_generic,
-           HippoEntity              *source)
-{
-    if (source == block_generic->source)
-        return;
-
-    if (block_generic->source) {
-        g_object_unref(block_generic->source);
-        block_generic->source = NULL;
-    }
-
-    if (source) {
-        g_object_ref(source);
-        block_generic->source = source;
-    }
-
-    g_object_notify(G_OBJECT(block_generic), "source");
 }

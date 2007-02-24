@@ -320,7 +320,7 @@ public class PostView implements ObjectView {
 							"favorite", Boolean.toString(favorite));
 							
 		builder.appendTextNode("title", post.getTitle());
-		builder.appendTextNode("description", post.getText());
+		builder.appendTextNode("description", StringUtils.ellipsizeText(post.getText()));
 		
 		builder.openElement("recipients");
 		for (EntityView entityView : recipients) {

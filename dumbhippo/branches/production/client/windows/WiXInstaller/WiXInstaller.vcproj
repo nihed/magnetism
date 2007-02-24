@@ -1,38 +1,40 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8.00"
 	Name="WiXInstaller"
 	ProjectGUID="{D45AA47E-F39D-45C9-93A5-5D17CF093164}"
-	Keyword="MakeFileProj">
+	Keyword="MakeFileProj"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="Debug"
 			IntermediateDirectory="Debug"
-			ConfigurationType="0">
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;.\WiXInstaller.vsprops"
+			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="nmake INTDIR=Debug OUTDIR=..\Debug all"
-				ReBuildCommandLine="nmake INTDIR=Debug OUTDIR=..\Debug clean all"
-				CleanCommandLine="nmake INTDIR=Debug OUTDIR=..\Debug clean"
-				Output="Mugshot.msi"/>
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
-			ConfigurationType="0">
+			ConfigurationType="0"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops;.\WiXInstaller.vsprops"
+			>
 			<Tool
 				Name="VCNMakeTool"
-				BuildCommandLine="nmake all"
-				ReBuildCommandLine="nmake clean all"
-				CleanCommandLine="nmake clean"
-				Output="Mugshot.msi"/>
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -41,53 +43,68 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			>
 			<File
-				RelativePath=".\Components.wxs">
+				RelativePath=".\Components.wxs"
+				>
 			</File>
 			<File
-				RelativePath=".\DumbHippo.wxs">
+				RelativePath=".\DumbHippo.wxs"
+				>
 			</File>
 			<File
-				RelativePath=".\ErrorDialog.wxs">
+				RelativePath=".\ErrorDialog.wxs"
+				>
 			</File>
 			<File
-				RelativePath=".\FatalErrorPage.wxs">
+				RelativePath=".\FatalErrorPage.wxs"
+				>
 			</File>
 			<File
-				RelativePath=".\FilesInUseDialog.wxs">
+				RelativePath=".\FilesInUseDialog.wxs"
+				>
 			</File>
 			<File
-				RelativePath=".\NotAdminPage.wxs">
+				RelativePath=".\NotAdminPage.wxs"
+				>
 			</File>
 			<File
-				RelativePath=".\ProgressPage.wxs">
+				RelativePath=".\ProgressPage.wxs"
+				>
 			</File>
 			<File
-				RelativePath=".\UpgradeProgressPage.wxs">
+				RelativePath=".\UpgradeProgressPage.wxs"
+				>
 			</File>
 			<File
-				RelativePath=".\WelcomePage.wxs">
+				RelativePath=".\WelcomePage.wxs"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
+			>
 			<File
-				RelativePath=".\fog.jpg">
+				RelativePath=".\fog.jpg"
+				>
 			</File>
 			<File
-				RelativePath=".\license.rtf">
+				RelativePath=".\license.rtf"
+				>
 			</File>
 		</Filter>
 		<File
-			RelativePath=".\Makefile">
+			RelativePath=".\Makefile"
+			>
 		</File>
 	</Files>
 	<Globals>

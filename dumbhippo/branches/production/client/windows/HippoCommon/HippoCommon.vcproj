@@ -1,102 +1,129 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8.00"
 	Name="HippoCommon"
 	ProjectGUID="{2F331475-82BE-44AC-B6DD-D430C758BC7B}"
-	Keyword="Win32Proj">
+	RootNamespace="HippoCommon"
+	Keyword="Win32Proj"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="..\Debug"
-			IntermediateDirectory="Debug"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
-			CharacterSet="2">
+			InheritedPropertySheets="..\Sheets\HippoDebug.vsprops;.\HippoCommon.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories=".;../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/cairo/include/cairo;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../dependencies/jpeg/include;../../common;../../common/loudmouth;../../common/canvas;../../common/hippo/generated"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;HIPPOCOMMON_EXPORTS"
-				MinimalRebuild="TRUE"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="4"/>
+				AdditionalIncludeDirectories=""
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
 			<Tool
-				Name="VCLibrarianTool"/>
+				Name="VCResourceCompilerTool"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCLibrarianTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="Release"
-			IntermediateDirectory="Release"
-			ConfigurationType="2"
-			CharacterSet="2">
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="4"
+			InheritedPropertySheets="..\Sheets\hippoRelease.vsprops;.\HippoCommon.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;HIPPOCOMMON_EXPORTS"
-				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="TRUE"
-				DebugInformationFormat="3"/>
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
 			<Tool
-				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/HippoCommon.dll"
-				LinkIncremental="1"
-				GenerateDebugInformation="TRUE"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				ImportLibrary="$(OutDir)/HippoCommon.lib"
-				TargetMachine="1"/>
+				Name="VCResourceCompilerTool"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCLibrarianTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -105,496 +132,689 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			>
 			<File
-				RelativePath="..\..\common\hippo\hippo-actions.c">
+				RelativePath="..\..\common\hippo\hippo-actions.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-basics.c">
+				RelativePath="..\..\common\hippo\hippo-basics.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-abstract-person.c">
+				RelativePath="..\..\common\hippo\hippo-block-abstract-person.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-facebook-event.c">
+				RelativePath="..\..\common\hippo\hippo-block-facebook-event.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-facebook-person.c">
+				RelativePath="..\..\common\hippo\hippo-block-facebook-person.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-flickr-person.c">
+				RelativePath="..\..\common\hippo\hippo-block-flickr-person.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-flickr-photoset.c">
+				RelativePath="..\..\common\hippo\hippo-block-flickr-photoset.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-generic.c">
+				RelativePath="..\..\common\hippo\hippo-block-generic.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-group-chat.c">
+				RelativePath="..\..\common\hippo\hippo-block-group-chat.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-group-member.c">
+				RelativePath="..\..\common\hippo\hippo-block-group-member.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-music-chat.c">
+				RelativePath="..\..\common\hippo\hippo-block-music-chat.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-music-person.c">
+				RelativePath="..\..\common\hippo\hippo-block-music-person.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-post.c">
+				RelativePath="..\..\common\hippo\hippo-block-netflix-movie.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-youtube-person.c">
+				RelativePath="..\..\common\hippo\hippo-block-post.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block.c">
+				RelativePath="..\..\common\hippo\hippo-block-youtube-person.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-base.c">
+				RelativePath="..\..\common\hippo\hippo-block.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-facebook-event.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-base.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-person.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-facebook-event.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-photoset.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-person.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-generic.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-photoset.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-group-chat.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-generic.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-group-member.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-group-chat.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-music-chat.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-group-member.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-music-person.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-music-chat.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-music.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-music-person.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-post.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-music.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-youtube-person.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-netflix-movie.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-post.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-box.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-youtube-person.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-chat-preview.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-block.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-context.c">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-box.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-entity-name.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-chat-preview.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-entity-photo.c">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-context.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-gradient.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-entity-name.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-grip.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-entity-photo.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-image-button.c">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-gradient.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-image.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-grip.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-item.c">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-image-button.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-link.c">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-image.c"
+				>
 			</File>
 			<File
-				RelativePath=".\hippo-canvas-marshal.c">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-item.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-message-preview.c">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-link.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-stack.c">
+				RelativePath=".\hippo-canvas-marshal.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-style.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-message-preview.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-test.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-quipper.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-text.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-stack.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-thumbnails.c">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-style.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-timestamp.c">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-test.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\generated\hippo-canvas-type-builtins.c">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-text.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-url-image.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-thumbnails.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-url-link.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-timestamp.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-chat-room.c">
+				RelativePath="..\..\common\hippo\generated\hippo-canvas-type-builtins.c"
+				>
 			</File>
 			<File
-				RelativePath=".\hippo-common-marshal.c">
+				RelativePath="..\..\common\hippo\hippo-canvas-url-image.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-common-marshal.list">
+				RelativePath="..\..\common\hippo\hippo-canvas-url-link.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-chat-room.c"
+				>
+			</File>
+			<File
+				RelativePath=".\hippo-common-marshal.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-common-marshal.list"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="genmarshal.bat
-"
-						Outputs="hippo-common-marshal.c;hippo-common-marshal.h"/>
+						CommandLine="genmarshal.bat&#x0D;&#x0A;"
+						Outputs="hippo-common-marshal.c;hippo-common-marshal.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-connection.c">
+				RelativePath="..\..\common\hippo\hippo-connection.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-cookies.c">
+				RelativePath="..\..\common\hippo\hippo-cookies.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-data-cache.c">
+				RelativePath="..\..\common\hippo\hippo-data-cache.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-endpoint-proxy.c">
+				RelativePath="..\..\common\hippo\hippo-endpoint-proxy.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-entity.c">
+				RelativePath="..\..\common\hippo\hippo-entity.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-event.c">
+				RelativePath="..\..\common\canvas\hippo\hippo-event.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-feed-entry.c">
+				RelativePath="..\..\common\hippo\hippo-feed-entry.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-feed.c">
+				RelativePath="..\..\common\hippo\hippo-feed.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-graphics.c">
+				RelativePath="..\..\common\canvas\hippo\hippo-graphics.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-group.c">
+				RelativePath="..\..\common\hippo\hippo-group.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-image-cache.c">
+				RelativePath="..\..\common\hippo\hippo-image-cache.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-jpeg-loader.c">
+				RelativePath="..\..\common\hippo\hippo-jpeg-loader.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-myspace.c">
+				RelativePath="..\..\common\hippo\hippo-myspace.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-object-cache.c">
+				RelativePath="..\..\common\hippo\hippo-netflix-movie.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-person.c">
+				RelativePath="..\..\common\hippo\hippo-object-cache.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-platform.c">
+				RelativePath="..\..\common\hippo\hippo-person.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-post.c">
+				RelativePath="..\..\common\hippo\hippo-platform.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-quip-window.c">
+				RelativePath="..\..\common\hippo\hippo-post.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-resource.c">
+				RelativePath="..\..\common\hippo\hippo-quip-window.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-stack-manager.c">
+				RelativePath="..\..\common\hippo\hippo-resource.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-surface.c">
+				RelativePath="..\..\common\hippo\hippo-stack-manager.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-thumbnails.c">
+				RelativePath="..\..\common\hippo\hippo-surface.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-track.c">
+				RelativePath="..\..\common\hippo\hippo-thumbnails.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-window.c">
+				RelativePath="..\..\common\hippo\hippo-track.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-xml-utils.c">
+				RelativePath="..\..\common\hippo\hippo-window.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-xml-utils.c"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			>
 			<File
-				RelativePath="..\..\common\hippo\hippo-actions.h">
+				RelativePath="..\..\common\hippo\hippo-actions.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-basics.h">
+				RelativePath="..\..\common\hippo\hippo-basics.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-abstract-person.h">
+				RelativePath="..\..\common\hippo\hippo-block-abstract-person.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-facebook-event.h">
+				RelativePath="..\..\common\hippo\hippo-block-facebook-event.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-facebook-person.h">
+				RelativePath="..\..\common\hippo\hippo-block-facebook-person.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-flickr-person.h">
+				RelativePath="..\..\common\hippo\hippo-block-flickr-person.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-flickr-photoset.h">
+				RelativePath="..\..\common\hippo\hippo-block-flickr-photoset.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-generic.h">
+				RelativePath="..\..\common\hippo\hippo-block-generic.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-group-chat.h">
+				RelativePath="..\..\common\hippo\hippo-block-group-chat.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-group-member.h">
+				RelativePath="..\..\common\hippo\hippo-block-group-member.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-music-chat.h">
+				RelativePath="..\..\common\hippo\hippo-block-music-chat.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-music-person.h">
+				RelativePath="..\..\common\hippo\hippo-block-music-person.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-post.h">
+				RelativePath="..\..\common\hippo\hippo-block-netflix-movie.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block-youtube-person.h">
+				RelativePath="..\..\common\hippo\hippo-block-post.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-block.h">
+				RelativePath="..\..\common\hippo\hippo-block-youtube-person.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-base.h">
+				RelativePath="..\..\common\hippo\hippo-block.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-facebook-event.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-base.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-person.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-facebook-event.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-photoset.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-person.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-generic.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-photoset.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-music-chat.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-generic.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-music.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-music-chat.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-post.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-music.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-youtube-person.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-netflix-movie.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-post.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-box.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-block-youtube-person.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-chat-preview.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-block.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-context.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-box.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-entity-name.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-chat-preview.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-entity-photo.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-context.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-gradient.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-entity-name.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-grip.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-entity-photo.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-image-button.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-gradient.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-image.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-grip.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-internal.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-image-button.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-item.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-image.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-link.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-internal.h"
+				>
 			</File>
 			<File
-				RelativePath=".\hippo-canvas-marshal.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-item.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-message-preview.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-link.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-stack.h">
+				RelativePath=".\hippo-canvas-marshal.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-style.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-message-preview.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-test.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-quipper.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-text.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-stack.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-thumbnails.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-style.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-timestamp.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-test.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\generated\hippo-canvas-type-builtins.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-text.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-url-image.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-thumbnails.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-url-link.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-timestamp.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-widgets.h">
+				RelativePath="..\..\common\hippo\generated\hippo-canvas-type-builtins.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-chat-room.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-url-image.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-common-internal.h">
+				RelativePath="..\..\common\hippo\hippo-canvas-url-link.h"
+				>
 			</File>
 			<File
-				RelativePath=".\hippo-common-marshal.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-widgets.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-common.h">
+				RelativePath="..\..\common\hippo\hippo-chat-room.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-connection.h">
+				RelativePath="..\..\common\hippo\hippo-common-internal.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-cookies.h">
+				RelativePath=".\hippo-common-marshal.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-data-cache-internal.h">
+				RelativePath="..\..\common\hippo\hippo-common.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-data-cache.h">
+				RelativePath="..\..\common\hippo\hippo-connection.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-endpoint-proxy.h">
+				RelativePath="..\..\common\hippo\hippo-cookies.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-entity-protected.h">
+				RelativePath="..\..\common\hippo\hippo-data-cache-internal.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-entity.h">
+				RelativePath="..\..\common\hippo\hippo-data-cache.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-event.h">
+				RelativePath="..\..\common\hippo\hippo-endpoint-proxy.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-feed-entry.h">
+				RelativePath="..\..\common\hippo\hippo-entity-protected.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-feed.h">
+				RelativePath="..\..\common\hippo\hippo-entity.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-graphics.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-event.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-group.h">
+				RelativePath="..\..\common\hippo\hippo-feed-entry.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-image-cache.h">
+				RelativePath="..\..\common\hippo\hippo-feed.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-jpeg-loader.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-graphics.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-myspace.h">
+				RelativePath="..\..\common\hippo\hippo-group.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-object-cache.h">
+				RelativePath="..\..\common\hippo\hippo-image-cache.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-person.h">
+				RelativePath="..\..\common\hippo\hippo-jpeg-loader.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-platform.h">
+				RelativePath="..\..\common\hippo\hippo-myspace.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-post.h">
+				RelativePath="..\..\common\hippo\hippo-netflix-movie.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-quip-window.h">
+				RelativePath="..\..\common\hippo\hippo-object-cache.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-resource.h">
+				RelativePath="..\..\common\hippo\hippo-person.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-stack-manager.h">
+				RelativePath="..\..\common\hippo\hippo-platform.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-surface.h">
+				RelativePath="..\..\common\hippo\hippo-post.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-thumbnails.h">
+				RelativePath="..\..\common\hippo\hippo-quip-window.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-window.h">
+				RelativePath="..\..\common\hippo\hippo-resource.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-xml-utils.h">
+				RelativePath="..\..\common\hippo\hippo-stack-manager.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-surface.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-thumbnails.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-window.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-xml-utils.h"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
+			>
 		</Filter>
 	</Files>
 	<Globals>

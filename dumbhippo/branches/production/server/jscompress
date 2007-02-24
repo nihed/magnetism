@@ -134,6 +134,9 @@ all_whitespace_re = re.compile('^\s+$')
 ## the below just does not remove comments that have quotes in them
 slashslash_comment_re = re.compile('//[^"\']*$')
 
+def tuple_first_value_compare(a, b):
+    return cmp(a[0], b[0])
+
 def tuple_second_value_compare(a, b):
     return cmp(a[1], b[1])
 
@@ -736,6 +739,81 @@ class DestFile:
         already = {}
         self._add_orig_to_provider_map(provider_map, self._orig, already)
 
+
+def recursively_add_file_in_use(origfile, modnames, origfiles):
+    origfiles[origfile] = 1
+    for modname in origfile.get_all_requires():
+        modnames[modname] = 1
+        reqfile = providers[modname]
+        recursively_add_file_in_use(reqfile, modnames, origfiles)
+
+def origfile_path_compare(a, b):
+    return cmp(a.get_path(), b.get_path())
+
+dh_script_modules_re = re.compile('dh:script\s+modules?=["\']([a-z,.A-Z_0-9 ]+)["\']')
+
+def check_unused_modules():
+    all_tag_or_jsp_files = []
+    used_modules = {}
+
+    ## hacktastic
+    if os.path.exists('server/web'):
+        webdir = 'server/web'
+    elif os.path.exists('web'):
+        webdir = 'web'
+    else:
+        print "Could not locate server/web to check for unused modules"
+        return
+    
+    for root, dirs, files in os.walk(webdir, topdown=False):
+        for name in files:
+            fullpath = os.path.join(root, name)
+            if fullpath.endswith(".tag") or fullpath.endswith(".jsp"):
+                all_tag_or_jsp_files.append(fullpath)
+    
+    for fullpath in all_tag_or_jsp_files:
+        lines = open(fullpath, 'r').readlines()
+        for l in lines:
+            matches = dh_script_modules_re.findall(l)
+            for m in matches:
+                modules = m.split(",")
+                for mod in modules:
+                    used_modules[mod.strip()] = 1
+
+    # print used_modules.keys()
+
+    used_files = {}
+    for modname, origfile in providers.items():
+        if used_modules.has_key(modname):
+            recursively_add_file_in_use(origfile, used_modules, used_files)
+
+    completely_unused_files = {}
+    unused_modules = {}
+    for modname, origfile in providers.items():
+        if not used_modules.has_key(modname):
+            if not used_files.has_key(origfile):
+                completely_unused_files[origfile] = 1
+            else:
+                unused_modules[modname] = origfile
+
+    print "\nThe following files appear to be unused in any .jsp or .tag:"
+    sorted = completely_unused_files.keys()
+    sorted.sort(origfile_path_compare)
+    for origfile in sorted:
+        print "  %s" % (origfile.get_path())
+
+    completely_unused_count = len(sorted)
+
+    print "\nThe following modules appear unused in any .jsp or .tag, but other modules from the same file appear to be used:"
+    sorted = unused_modules.items()
+    sorted.sort(tuple_first_value_compare)
+    for modname, origfile in sorted:
+        print "  %s from %s" % (modname, origfile.get_path())
+
+    partly_unused_count = len(sorted)
+
+    print "\n%d completely unused js files, %d unused js modules from partly-used files" % (completely_unused_count, partly_unused_count)
+
 def usage():
     print >>sys.stderr,  "Usage: jscompress srcdir_or_file1 [srcdir_or_file2 ...] destdir"
 
@@ -888,5 +966,9 @@ def main():
         provides_out.write("%s : %s\n" % (module, dest.get_relative_path()))
 
     provides_out.close()
+
+    print "\nScanning .jsp/.tag files for unused js modules..."
+
+    check_unused_modules()
 
 main()

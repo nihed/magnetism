@@ -1,5 +1,6 @@
 dojo.provide("dh.lovehate");
 dojo.require("dh.util");
+dojo.require("dh.formtable");
 dojo.require("dh.textinput");
 dojo.require("dh.dom");
 dojo.require("dh.event");
@@ -13,9 +14,7 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	// creates a variable that can be captured in closures below, while "this" can't be
 	var me = this;
 
-	this._containerNode = document.getElementById(baseId + 'Container');
-	this._containerLabelNode = document.getElementById(baseId + 'ContainerLabel')
-	this._containerContentNode = document.getElementById(baseId + 'ContainerContent')	
+	me._baseId = baseId;
 	this._rootNode = document.getElementById(baseId + 'AllId');	
 	this._loveNode = document.getElementById(baseId + 'LoveId');
 	this._hateNode = document.getElementById(baseId + 'HateId');
@@ -41,6 +40,8 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this._allNodes = [me._loveNode, me._hateNode, me._loveEditNode, me._hateEditNode, me._indifferentNode, me._indifferentInfoNode, me._busyNode];
 	
 	this._errorText = "";
+	
+	dh.formtable.initExpanded(me._baseId, true);
 
     // Traverse root node of this widget, calling function on each node
 	this._foreachDhIdNode = function(id, func) {
@@ -107,19 +108,7 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 		if (node.style.display == 'none')
 			throw new Error("node " + node.id + " was not found...");
 			
-		if (node == me._loveEditNode || node == me._hateEditNode || node == me._indifferentInfoNode) {
-			dh.util.prependClass(this._containerNode, "dh-love-hate-editing-box");
-			dh.util.prependClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-label-box")
-			dh.util.prependClass(this._containerLabelNode, "dh-love-hate-editing");
-			dh.util.prependClass(this._containerContentNode.parentNode, "dh-love-hate-editing-content-box")			
-			dh.util.prependClass(this._containerContentNode, "dh-love-hate-editing");
-		} else {
-			dh.util.removeClass(this._containerNode, "dh-love-hate-editing-box");
-			dh.util.removeClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-label-box");	
-			dh.util.removeClass(this._containerLabelNode, "dh-love-hate-editing")
-			dh.util.removeClass(this._containerContentNode.parentNode, "dh-love-hate-editing-content-box");
-			dh.util.removeClass(this._containerContentNode, "dh-love-hate-editing")			
-		}
+		dh.formtable.setExpandedEditing(me._baseId, node == me._loveEditNode || node == me._hateEditNode || node == me._indifferentInfoNode);
 					
 		// focus entry boxes
 		// we don't do this because it hides the gray hint text
@@ -186,10 +175,7 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 			                    function(node) {
 			                      node.style.display = "none";
 			                    });
-			dh.util.removeClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-success");		
-			dh.util.removeClass(this._containerContentNode.parentNode, "dh-love-hate-editing-box-success");			
-			dh.util.prependClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-error");		
-			dh.util.prependClass(this._containerContentNode.parentNode, "dh-love-hate-editing-box-error");				
+			
 		} else {
 			me._foreachDhIdNode("DescriptionNormal",
 			                    function(node) {
@@ -198,12 +184,9 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 			me._foreachDhIdNode("DescriptionError",
 			                    function(node) {
 			                      node.style.display = "none";
-			                    });			                    
-			dh.util.removeClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-error");		
-			dh.util.removeClass(this._containerContentNode.parentNode, "dh-love-hate-editing-box-error");				
-			dh.util.prependClass(this._containerLabelNode.parentNode, "dh-love-hate-editing-box-success");		
-			dh.util.prependClass(this._containerContentNode.parentNode, "dh-love-hate-editing-box-success");				
+			                    });			                    			
 		}
+		dh.formtable.setExpandedError(me._baseId, msg);
 	}
 	
 	this.setSpecialLoveValue = function(value) {
@@ -252,6 +235,8 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	// this updates the current values and what's showing
 	this.setError(null);
 	this.setMode(this.getMode());
+	
+	return this;
 }
 
 dh.lovehate.setMode = function(baseId, mode) {

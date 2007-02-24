@@ -9,6 +9,21 @@
        The DumbHippo web application  
    </description>
    
+    <!--  Get rid of ;jsessionid crap in urls -->
+	<filter>
+	  <filter-name>
+	    DisableUrlSessionFilter
+	  </filter-name>
+	  <filter-class>
+	    com.dumbhippo.web.DisableUrlSessionFilter
+	  </filter-class>
+	</filter>
+	
+	<filter-mapping>
+	  <filter-name>DisableUrlSessionFilter</filter-name>
+	  <url-pattern>/*</url-pattern>
+	</filter-mapping>
+   
    <!-- URLs hard-coded to go to our custom servlets -->
     
     <servlet>
@@ -74,6 +89,12 @@
     <servlet>
       <servlet-name>AbnormalErrorServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.servlets.AbnormalErrorServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+      <servlet-name>CrashReportServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.CrashReportServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
     </servlet>
 
@@ -194,6 +215,11 @@
    </servlet-mapping>
 
    <servlet-mapping>
+      <servlet-name>CrashReportServlet</servlet-name>
+      <url-pattern>/crash-report</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
       <servlet-name>WantsInServlet</servlet-name>
       <url-pattern>/wantsin</url-pattern>
    </servlet-mapping>
@@ -213,15 +239,15 @@
            they are listed below for completeness -->
       <init-param>
           <param-name>noSignin</param-name>
-          <param-value>apple-dashboard-content,badges,busy,buttons,comingsoon,error,files,flash,google-stacker,google-stacker-spec,google-stacker-content,group-files,public-groups,sharelink,sharelink-disabled,sharelink-inactive,signup,summit,unknownlink,upgrade,user-summary,who-are-you,robots.txt</param-value>
+          <param-value>apple-dashboard-content,badges,busy,buttons,comingsoon,error,files,flash,google-stacker,google-stacker-spec,google-stacker-content,group-files,public-groups,radar-theme,sharelink,sharelink-inactive,signup,summit,unknownlink,upgrade,user-summary,who-are-you,robots.txt</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
-          <param-value>about,active-groups,active-people,artist,bookmark,faq,features,framer,group,groups,history,links,links-learnmore,main,members,music,person,privacy,radar-html,radar-learnmore,radar-themes,search,stacker-learnmore,terms,visit,web-accounts-learnmore,web-services</param-value>
+          <param-value>about,active-groups,active-people,artist,bookmark,faq,features,framer,group,groups,links,links-learnmore,main,members,music,person,privacy,radar-html,radar-learnmore,radar-themes,search,stacker-learnmore,terms,visit,web-accounts-learnmore,web-services</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSignin</param-name>
-          <param-value>account,admin,chatwindow,chatwindow-disabled,create-group,download,friends,getradar,group-account,group-invitation,group-invitations,home,invitation,invitation-admin,network,network-overview,radar-theme-creator,sharephotoset,sharephotoset-first,statistics,we-miss-you</param-value>
+          <param-value>account,admin,chatwindow,chatwindow-disabled,create-group,download,friends,getradar,group-account,group-invitation,group-invitations,home,invitation,invitation-admin,network,network-overview,radar-theme-creator,statistics</param-value>
       </init-param>
       <load-on-startup>1</load-on-startup>
    </servlet>   

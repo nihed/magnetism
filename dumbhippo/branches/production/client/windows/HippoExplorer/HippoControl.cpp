@@ -388,6 +388,16 @@ HippoControl::GetNameSpaceParent (IUnknown **parentNamespace)
 //////////////////////// IHippoControl Methods ////////////////////////
 
 STDMETHODIMP 
+HippoControl::get_Version(BSTR *version)
+{
+    HippoBSTR ver = HIPPO_IE_CONTROL_VERSION;
+
+    ver.CopyTo(version);
+
+    return S_OK;
+}
+       
+STDMETHODIMP 
 HippoControl::start(BSTR serverUrl)
 {
     hippoDebugLogW(L"start %ls", serverUrl);
@@ -477,12 +487,12 @@ HippoControl::setListener(IDispatch *listener)
 {
     listener_ = listener;
 
-    hippoDebugLogW(L"In setListener, thread is %d", GetCurrentThreadId());
+    return S_OK;
+}
 
-    if (listener_) {
-        //onMessage(1, "aaaaaaaaaaaaaa", "bbbbbbbbbbbbbb", "Hi There", 1, 1);
-    }
-
+STDMETHODIMP 
+HippoControl::setWindow(IDispatch *window)
+{
     return S_OK;
 }
 
@@ -533,16 +543,24 @@ HippoControl::showChatWindow(BSTR chatId)
 STDMETHODIMP 
 HippoControl::sendChatMessage(BSTR chatId, BSTR text)
 {
+    return sendChatMessageSentiment(chatId, text, 0); // 0 == INDIFFERENT
+}
+
+STDMETHODIMP 
+HippoControl::sendChatMessageSentiment(BSTR chatId, BSTR text, int sentiment)
+{
     if (!chatId || !hippoVerifyGuid(chatId))
         return E_INVALIDARG;
     if (!text)
+        return E_INVALIDARG;
+    if (sentiment < 0 || sentiment > 2)
         return E_INVALIDARG;
 
     HippoUStr chatIdU(chatId);
     HippoUStr textU(text);
 
     if (controller_ && endpoint_)
-        controller_->sendChatMessage(chatIdU.c_str(), textU.c_str());
+        controller_->sendChatMessage(chatIdU.c_str(), textU.c_str(), sentiment);
 
     return S_OK;
 }
@@ -636,11 +654,9 @@ HippoControl::onUserLeave(HippoEndpointId endpoint, const char *chatId, const ch
 }
 
 void 
-HippoControl::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial)
+HippoControl::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp, long serial)
 {
-    hippoDebugLogU("HippoControl::onMessage(%s,%s,%s,%f,%ld)", chatId, userId, message, timestamp, serial);
-    hippoDebugLogW(L"In onMessage, thread is %d", GetCurrentThreadId());
-
+    hippoDebugLogU("HippoControl::onMessage(%s,%s,%s,%d,%f,%ld)", chatId, userId, message, sentiment, timestamp, serial);
 
     if (!listener_)
         return;
@@ -652,6 +668,7 @@ HippoControl::onMessage(HippoEndpointId endpoint, const char *chatId, const char
     invocation.add(HippoBSTR::fromUTF8(message, -1));
     invocation.addDouble(timestamp);
     invocation.addLong(serial);
+    invocation.addLong(sentiment);
 
     HRESULT hr = invocation.run();
     if (FAILED(hr))

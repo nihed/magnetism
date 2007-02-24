@@ -127,6 +127,27 @@ public class StringUtils {
 		return truncatedString;
 	}
 	
+	public static int COLUMN_CHAR_LIMIT = 255;
+	
+	/**
+	 * Ellipsizes the text that came from a database column. 
+	 * If the text is COLUMN_CHAR_LIMIT characters long, it's
+	 * likely that it was truncated and we need to ellipsize
+	 * it in a pretty way.
+	 * 
+	 * @param s text to ellipsize
+	 * @return ellipsized text or the original string
+	 */
+	public static String ellipsizeText(String s) {
+		int indexOfLastSpace = s.lastIndexOf(" ");
+		// we should not ellipsize the text if it is likely that
+		// we have the whole text
+	    if (s.length() == COLUMN_CHAR_LIMIT && indexOfLastSpace > 0) {
+	    	return s.substring(0, indexOfLastSpace).trim() + "...";
+	    }
+		return s;
+	}
+	
 	/**
 	 * Picks a random String from an array of Strings.
 	 * 
@@ -192,5 +213,49 @@ public class StringUtils {
 			}
 		}
 		return true;
+	}
+	
+	public static String findParamValueInUrl(String url, String paramName) {
+		String paramEquals = paramName + "=";
+		int i = url.indexOf(paramEquals);
+		if (i < 0)
+			return null;	
+		
+		int j = url.indexOf("&", i);
+		if (j < 0)
+			j = url.length();
+				
+		return url.substring(i + paramEquals.length(), j);			
+	}
+	
+	public static String findPathElementAfter(String url, String after) {
+		int i = url.indexOf(after);
+		if (i < 0) {
+			return null;
+		}
+		
+		i += after.length();
+		
+		int j = url.indexOf('/', i);
+		if (j < 0) {
+			j = url.length();
+		}
+		if (i == j) {
+			return null;
+		}
+		return url.substring(i, j);
+	}
+
+	public static String findLastPathElement(String url) {
+		while (url.endsWith("/")) {
+			url = url.substring(0, url.length() - 1);
+		}
+		
+		int i = url.lastIndexOf("/");
+		if (i >= 0) {
+			return url.substring(i + 1);
+		} else {
+			return null;
+		}
 	}
 }

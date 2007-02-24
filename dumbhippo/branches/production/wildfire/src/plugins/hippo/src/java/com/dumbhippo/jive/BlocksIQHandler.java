@@ -40,13 +40,14 @@ public class BlocksIQHandler extends AnnotatedIQHandler {
 		Log.debug("creating BlocksIQHandler");
 	}
 	
-	private String getBlocksXml(UserViewpoint viewpoint, String elementName, List<BlockView> views) {
+	private String getBlocksXml(UserViewpoint viewpoint, String filter, String elementName, List<BlockView> views) {
 		List<ObjectView> objectList = TypeUtils.castList(ObjectView.class, views);
 		
 		XmlBuilder xml = new XmlBuilder();
 		
 		xml.openElement(elementName,
 					    "xmlns", BLOCKS_NAMESPACE,
+					    "filter", filter,
 				        "serverTime", Long.toString(System.currentTimeMillis()));
 		
 		ViewStream stream = viewStreamBuilder.buildStream(viewpoint, objectList);
@@ -74,19 +75,27 @@ public class BlocksIQHandler extends AnnotatedIQHandler {
         if (lastTimestampStr == null)
         	throw IQException.createBadRequest("get/blocks IQ missing lastTimestamp attribute");
         
+        String filter = child.attributeValue("filter");
+        boolean filterProvided = (filter != null);
+        if (!filterProvided) {
+        	filter = stacker.getUserStackFilterPrefs(viewpoint.getViewer());
+        } else {
+        	stacker.setUserStackFilterPrefs(viewpoint.getViewer(), filter);
+        }
+        
         long lastTimestamp;
         try {
         	lastTimestamp = Long.parseLong(lastTimestampStr);
         } catch (NumberFormatException e) {
         	throw IQException.createBadRequest("get/blocks IQ lastTimestamp attribute not valid");
-        }
+        }      
         
 		Pageable<BlockView> pageable = new Pageable<BlockView>("stack");
 		pageable.setPosition(0);
 		pageable.setInitialPerPage(25);
-		stacker.pageStack(viewpoint, viewpoint.getViewer(), pageable, lastTimestamp, false);
+		stacker.pageStack(viewpoint, viewpoint.getViewer(), pageable, lastTimestamp, filter, false);
 		List<BlockView> views = pageable.getResults();
-		String xml = getBlocksXml(viewpoint, "blocks", views);
+		String xml = getBlocksXml(viewpoint, filterProvided ? null : filter, "blocks", views);
         
 		reply.setChildElement(XmlParser.elementFromXml(xml));
 	}
@@ -127,7 +136,7 @@ public class BlocksIQHandler extends AnnotatedIQHandler {
 			throw new RuntimeException("Can't load block view for the user's own block", e);
 		}
         
-		String xml = getBlocksXml(viewpoint, "blockHushed", Collections.singletonList(blockView));
+		String xml = getBlocksXml(viewpoint, null, "blockHushed", Collections.singletonList(blockView));
 		reply.setChildElement(XmlParser.elementFromXml(xml));
 	}
 }

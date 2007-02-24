@@ -24,7 +24,10 @@ import com.dumbhippo.server.views.Viewpoint;
  */
 @Local
 public interface Stacker {
-
+	
+	public String getUserStackFilterPrefs(User user);
+	public void setUserStackFilterPrefs(User viewer, String filter);	
+	
 	public Block getOrCreateBlock(BlockKey key);
 	public Block createBlock(BlockKey key);
 	public Block queryBlock(BlockKey key) throws NotFoundException;
@@ -54,12 +57,28 @@ public interface Stacker {
 	public void refreshDeletedFlagsOnAllBlocksWithType(String typeName);
 	
 	public void blockClicked(BlockKey key, User user, long clickedTime);
+	public void blockClicked(UserBlockData ubd, long clickedTime);
 	
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException;
+	
+	/**
+	 * Get a BlockView for the given key; if the viewing user recieves notifications
+	 * about this block, then the returned BlockView is based on their UserBlockData,
+	 * otherwise it is created without any UserBlockData or GroupBlockData.
+	 * 
+	 * @param viewpoint viewpoint viewpoint the block
+	 * @param key key to use to look up the block
+	 * @return the BlockView for the block
+	 * @throws NotFoundException if the block doesn't exist or isn't visible
+	 */
+	public BlockView loadBlock(Viewpoint viewpoint, BlockKey key) throws NotFoundException;
 	
 	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, boolean participantOnly);
 
 	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, long lastTimestamp, boolean participantOnly);
+	
+	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, long lastTimestamp, 
+			              String filter, boolean participantOnly);	
 	
 	/**
 	 * Fetch recently active users on the system, along with a snapshot of their activity.

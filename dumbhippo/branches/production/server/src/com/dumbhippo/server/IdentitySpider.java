@@ -333,6 +333,10 @@ public interface IdentitySpider {
 	
 	public void setMusicSharingPrimed(User user, boolean primed);
 	
+	public boolean getApplicationUsageEnabled(User user);
+	
+	public void setApplicationUsageEnabled(User user, boolean enabled);
+	
 	public boolean getNotifyPublicShares(User user);
 	
 	public void setNotifyPublicShares(User user, boolean notify);	

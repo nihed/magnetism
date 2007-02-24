@@ -1,0 +1,324 @@
+#!/usr/bin/python
+
+from optparse import OptionParser
+import os
+import re
+import stat
+import sys
+import tempfile
+
+class Config:
+    pass
+config = Config()
+
+##########################################################################
+
+def verbose(msg):
+    print >>sys.stderr, msg
+
+def warn(msg):
+    print >>sys.stderr, "Warning: " + msg
+
+def system(cmd):
+    result = os.system(cmd)
+    if (result != 0):
+        raise Exception("Execution of '%s' failed" % cmd)
+
+def file_exists(f):
+    try:
+        os.stat(f)
+        return True;
+    except OSError:
+        return False
+
+def find_files_recurse(dir, subdir, pred):
+    if (subdir):
+        path = os.path.join(dir, subdir)
+    else:
+        path = dir
+
+    result = []
+
+    for f in os.listdir(path):
+        childpath = os.path.join(path, f)
+        if (subdir):
+            childsub = os.path.join(subdir, f)
+        else:
+            childsub = f
+        
+        m = os.lstat(childpath)[stat.ST_MODE]
+        if stat.S_ISDIR(m):
+            result.extend(find_files_recurse(dir, childsub, pred))
+        elif pred(f):
+            try:
+                m = os.stat(childpath)[stat.ST_MODE]
+                if stat.S_ISREG(m):
+                    result.append(childsub)
+            except OSError:
+                warn("Broken symlink from %s" % childpath)
+
+    return result
+
+def find_files(dir, subdirs, pred):
+    if subdirs:
+        result = []
+        for sd in subdirs:
+            if file_exists(os.path.join(dir, sd)):
+                result.extend(find_files_recurse(dir, sd, pred))
+        return result
+    else:
+        return find_files_recurse(dir, None, pred)
+
+# Fixes up symlinks within dir, treating "dir" as the root of the
+# filesystem. If a symlink doesn't have a target in the directory,
+# check in alternate directories
+def fixup_symlinks(dir, alt_dirs, subdir = None):
+    if (subdir):
+        path = os.path.join(dir, subdir)
+    else:
+        path = dir
+
+    dirs = [dir]
+    dirs.extend(alt_dirs)
+            
+    for f in os.listdir(path):
+        childpath = os.path.join(path, f)
+        if (subdir):
+            childsub = os.path.join(subdir, f)
+        else:
+            childsub = f
+        
+        m = os.lstat(childpath)[stat.ST_MODE]
+        if stat.S_ISDIR(m):
+            fixup_symlinks(dir, alt_dirs, childsub)
+        elif stat.S_ISLNK(m):
+            l = os.readlink(childpath)
+            if (l.startswith("/")):
+                for d in dirs:
+                    p = os.path.normpath(d + "/" + l)
+                    if file_exists(p):
+                        system("ln -sf '%s' '%s'" % (p, childpath))
+                        break
+            else:
+                abs = os.path.join(subdir, l)
+                if not file_exists(os.path.join(dir, abs)):
+                    for d in alt_dirs:
+                        p = os.path.normpath(os.path.join(d, abs))
+                        if file_exists(p):
+                            system("ln -sf '%s' '%s'" % (p, childpath))
+                            break
+
+def ensure_dir(dir):
+    try:
+        m = os.stat(dir)[stat.ST_MODE]
+        if not stat.S_ISDIR(m):
+            raise Exception("'%s' is not a directory" % dir)
+    except OSError:
+        os.makedirs(dir)
+
+###############################################################################3
+
+GROUP_REGEX = re.compile("^\[([^]]+)\]$")
+KEY_VALUE_REGEX = re.compile("^([A-Za-z]+)\s*=\s*(.*)$")
+ICON_REGEX = re.compile("^(\S*?)(.xpm|.png|.svg)?$")
+
+class DappinfoWriter:
+    def __init__(self, sourcedir, desktopfile, rpmfile):
+        self.sourcedir = sourcedir
+        self.desktopfile = desktopfile
+        self.rpmfile = rpmfile
+        self.iconname = None
+        
+        basename = os.path.basename(self.desktopfile)
+        self.desktopname = re.match("^(.*).desktop$", basename).group(1)
+
+    def _scan_desktopfile(self):
+        f = open(os.path.join(self.sourcedir, self.desktopfile))
+        in_desktop_group = False
+        for l in f:
+            l = l.rstrip()
+            m = GROUP_REGEX.match(l)
+            if m:
+                if in_desktop_group and m.group(1) != "Desktop Entry":
+                    in_desktop_group = False
+                elif not in_desktop_group and m.group(1) == "Desktop Entry":
+                    in_desktop_group = True
+            if in_desktop_group:
+                m = KEY_VALUE_REGEX.match(l)
+                if (m):
+                    key = m.group(1)
+                    value = m.group(2)
+                    if key == "Icon":
+                        m = ICON_REGEX.match(value)
+                        if m:
+                            self.iconname = m.group(1)
+                    elif key == "Name":
+                        self.properties["name"] = value
+                    elif key == "Comment":
+                        self.properties["description"] = value
+                    elif key == "Categories":
+                        self.properties["categories"] = value
+                    elif key == "Exec":
+                        args = value.split()
+                        if (len(args) > 0):
+                            cmd = os.path.basename(args[0])
+                            self.properties["wmclass"] = cmd[0].upper() + cmd[1:]
+        f.close()
+
+    def _compute_package_name(self):
+        m = re.match("^(.*?)-[a-zA-Z0-9_.]+-[a-zA-Z0-9_.]+\.[a-zA-Z0-9]+\.rpm$", self.rpmfile)
+        if not m:
+            warn("Cannot parse package name out of rpm name '" + self.rpmfile + "'")
+            return
+        self.properties["package"] = m.group(1)
+
+    def _add_file(self, infile, outfile):
+        inpath = os.path.join(self.sourcedir, infile)
+        outpath = os.path.join(self.tmpdir, outfile)
+        
+        ensure_dir(os.path.dirname(outpath))
+
+        system("cp '%s' '%s'" % (inpath, outpath))
+
+    def _add_desktop(self):
+        basename = os.path.basename(self.desktopfile)
+        self._add_file(self.desktopfile, basename)
+        self.properties["desktop"] = basename
+
+    def _find_icons(self):
+        if self.iconname:
+            def pred(f):
+                return f == self.iconname + ".png" or \
+                       f == self.iconname + ".svg" or \
+                       f == self.iconname + ".png"
+
+            return find_files(self.sourcedir, ["usr/share/pixmaps", "usr/share/icons"], pred)
+        else:
+            return []
+
+    def _add_icon(self, iconfile):
+        propname = None
+        
+        if propname == None:
+            m = re.match("^usr/share/icons/([A-Za-z0-9-_]+)/(\d+x\d+|scalable)/.*$", iconfile)
+            if m:
+                propname = "icon." + m.group(1) + "." + m.group(2)
+
+        if propname == None:
+            m = re.match("^usr/share/pixmaps.*$", iconfile)
+            if m:
+                propname = "icon.generic"
+
+        if propname == None:
+            warn("'%s' isn't in an icon dir, skipping" % iconfile)
+            return
+
+        stripped = iconfile[len("usr/share/"):]
+        self._add_file(iconfile, stripped)
+        self.properties[propname] = stripped
+
+    def _add_icons(self):
+        for iconfile in self._find_icons():
+            self._add_icon(iconfile)
+
+    def _write_properties(self):
+        outfile = os.path.join(self.tmpdir, "application.properties")
+        tmpfile = outfile + ".tmp"
+        f = open(tmpfile, "w")
+        keys = self.properties.keys()
+        keys.sort()
+        for key in keys:
+            value = self.properties[key]
+            verbose("    %s=%s" % (key, value))
+            f.write("%s=%s\n" % (key, value))
+        f.close()
+        system("native2ascii -encoding UTF-8 '%s' '%s'; rm '%s'" % (tmpfile, outfile, tmpfile))
+                    
+    def _write_dappinfo(self):
+        dappinfofile = os.path.join(config.destdir, self.desktopname + ".dappinfo")
+        system("(cd '%s' && jar c .) > '%s'" % (self.tmpdir, dappinfofile))
+        
+    def process(self):
+        verbose("  Generating " + self.desktopname + ".dappinfo")
+
+        self.tmpdir = tempfile.mkdtemp("", "rpm2dappinfo-dest-")
+        self.properties = {}
+        try:
+            self.properties["id"] = self.desktopname
+            
+            self._compute_package_name()
+            self._scan_desktopfile()
+            self._add_desktop()
+            self._add_icons()
+            self._write_properties()
+            self._write_dappinfo()
+        finally:
+            system("rm -rf '%s'" % self.tmpdir)
+            self.tmpdir = None
+            self.properties = {}
+
+#######################################################################
+
+def find_desktops(dir):
+    def pred(f):
+        return f.endswith(".desktop")
+
+    return find_files(dir, ["usr/share/applications"], pred)
+
+def extract_rpm(rpmfile):
+    tmpdir = tempfile.mkdtemp("", "rpm2dappinfo-")
+    try:
+        system("rpm2cpio '%s' | ( cd '%s' && cpio -id '*.desktop' '*.png' '*.svg' '*.xpm' 2>/dev/null )" % (rpmfile,tmpdir))
+    except:
+        system("rm -rf '%s'" % tmpdir)
+        raise
+    return tmpdir
+
+def extract_from_rpm(rpmfile):
+    verbose("Processing " + os.path.basename(rpmfile))
+    tmpdir = extract_rpm(rpmfile)
+    try:
+        if config.redhat_menus_dir != None:
+            alt_dirs = [config.redhat_menus_dir]
+        else:
+            alt_dirs = []
+        fixup_symlinks(tmpdir, alt_dirs)
+        for d in find_desktops(tmpdir):
+            writer = DappinfoWriter(tmpdir, d, os.path.basename(rpmfile))
+            writer.process()
+    finally:
+        system("rm -rf '%s'" % tmpdir)
+
+#######################################################################
+
+def die(msg):
+    print >>sys.stderr, "rpm2dappinfo: " +  msg
+    sys.exit(1)
+
+usage = "%prog [options] RPMFILE [RPMFILE...]"
+
+parser = OptionParser(usage=usage)
+parser.add_option("-d", "--destdir",
+                  help="Directory to write resulting application info files")
+parser.add_option("--redhat-menus",
+                  help="redhat-menus RPM file (merged into source tree to resolve symlinks)")
+(options, args) = parser.parse_args()
+
+if (options.destdir != None):
+    config.destdir = options.destdir
+else:
+    config.destdir = "."
+
+ensure_dir(config.destdir)
+
+if options.redhat_menus != None:
+    config.redhat_menus_dir = extract_rpm(options.redhat_menus)
+else:
+    config.redhat_menus_dir = None
+
+try:
+    for rpmfile in args:
+        extract_from_rpm(rpmfile)
+finally:
+    pass
+system("rm -rf '%s'" % config.redhat_menus_dir)

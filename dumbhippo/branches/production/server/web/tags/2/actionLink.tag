@@ -20,13 +20,14 @@
 </c:if>
 
 <c:if test="${disabled}">
-	<c:set var="disabledAttribute" value="disabled"/>
+	<c:set var="disabledClass" value="dh-action-link-disabled"/>
 </c:if>
 
 <c:if test="${underline}">
     <c:set var="underlineClass" value="dh-underlined-link"/>
 </c:if>
 
+<dh:script module="dh.html"/>
 <${tagName} class="dh-action-link">
-<a ${idAttribute} ${disabledAttribute} class="${underlineClass}" href="${href}" title="${title}"><jsp:doBody/></a>
+    <a ${idAttribute} class="${disabledClass} ${underlineClass}" href="${href}" onclick="return !dh.html.hasClass(this, 'dh-action-link-disabled');" title="${title}"><jsp:doBody/></a>
 </${tagName}>

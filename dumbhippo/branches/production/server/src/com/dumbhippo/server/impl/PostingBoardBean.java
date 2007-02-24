@@ -1177,6 +1177,13 @@ public class PostingBoardBean implements PostingBoard {
 		return TypeUtils.castList(PostMessage.class, messages);		
 	}
 	
+	public int getPostMessageCount(Post post) {
+		Query q = em.createQuery("SELECT COUNT(pm) FROM PostMessage pm WHERE pm.post = :post")
+			.setParameter("post", post);
+		
+		return ((Number)q.getSingleResult()).intValue();
+	}
+	
 	public List<ChatMessageView> viewPostMessages(List<PostMessage> messages, Viewpoint viewpoint) {
 		List<ChatMessageView> viewedMsgs = new ArrayList<ChatMessageView>();
 		for (PostMessage m : messages) {

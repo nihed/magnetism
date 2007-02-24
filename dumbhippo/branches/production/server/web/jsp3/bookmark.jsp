@@ -4,4 +4,4 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<jsp:forward page="/links-learnmore"/>
+<c:redirect url="/links-learnmore"/>

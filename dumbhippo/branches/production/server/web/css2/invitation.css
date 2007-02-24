@@ -1,15 +1,7 @@
 @CHARSET "UTF-8";
 @IMPORT url("invitation-positions.css");
 
-/* Shared between invitation.jsp and group-invitation.jsp */
-
-#dhContentColumn .dh-zone-box .dh-invitation {
-	font-size: 			12px;
-}
-
-#dhContentColumn .dh-zone-box .dh-invitation .dh-sent {
-	color: 				#606060;
-}
+/* Used only in group-invitation.jsp */
 
 #dhContentColumn .dh-zone-box .dh-warning-note {
 	font-style:			italic;
@@ -19,24 +11,6 @@
 #dhAutoSuggest {
     display:            none;
     cursor:             pointer;
-}
-
-/* White background with round corners and black outline */
-#dhSuggestGroupsPopup {
-	background-color:			#fff;
-	border:						1px solid black;
-	-moz-border-radius:			5px;
-	overflow:                   auto; 
-}
-
-#dhSuggestGroupsArea {
-	border:						1px solid black;
-	overflow:                   auto; 
-}
-
-.dh-explanation-note {
-	font-style:			italic;
-	font-size:			10px;
 }
 
 /* Suggestion list styling; similar rules are in sharelink.css */

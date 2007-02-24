@@ -12,6 +12,10 @@
 
 G_BEGIN_DECLS
 
+#define HIPPO_CANVAS_EVENT_MASK (GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | \
+                                 GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK |          \
+                                 GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK)
+
 typedef struct _HippoCanvasHelper      HippoCanvasHelper;
 typedef struct _HippoCanvasHelperClass HippoCanvasHelperClass;
 

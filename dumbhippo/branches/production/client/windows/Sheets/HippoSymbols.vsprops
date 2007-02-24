@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="HippoSymbols"
+	>
+	<Tool
+		Name="VCPostBuildEventTool"
+		Description="Creating symbol dump file"
+		CommandLine="..\util\dump_syms &quot;$(TargetDir)$(TargetName).pdb&quot; &gt; &quot;$(OutDir)\$(TargetName).sym&quot;"
+	/>
+</VisualStudioPropertySheet>

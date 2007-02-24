@@ -28,10 +28,9 @@ struct _HippoCanvasBlock {
     HippoBlockType required_type;
     HippoBlock *block;
     HippoActions *actions;
-    HippoCanvasItem *background_gradient;
+    HippoCanvasBox *main_box;
     HippoCanvasItem *expand_pointer;
     HippoCanvasItem *unexpand_pointer;
-    HippoCanvasBox  *right_column;
     HippoCanvasBox  *age_parent;
     HippoCanvasItem *age_separator_item;
     HippoCanvasItem *age_prefix_item;
@@ -48,7 +47,6 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *heading_icon_item;
     HippoCanvasItem *heading_lock_item;
     HippoCanvasItem *title_link_item;
-    HippoCanvasItem *content_container_item;
     HippoCanvasItem *headshot_item;
     HippoCanvasItem *name_item;
     HippoCanvasItem *toggle_hush_link;
@@ -56,6 +54,8 @@ struct _HippoCanvasBlock {
     /* probably a class props not instance props, but free bits anyway */
     unsigned int expandable : 1;
     unsigned int skip_heading : 1;
+    unsigned int skip_standard_right : 1;
+    unsigned int message_block : 1;
     
     unsigned int expanded : 1;
     unsigned int hushed : 1;
@@ -66,7 +66,11 @@ struct _HippoCanvasBlock {
 
 struct _HippoCanvasBlockClass {
     HippoCanvasBoxClass parent_class;
-    
+
+    void (* append_content_items)  (HippoCanvasBlock *canvas_block,
+                                    HippoCanvasBox   *parent_box);
+    void (* append_right_items)    (HippoCanvasBlock *canvas_block,
+                                    HippoCanvasBox   *parent_box);
     void (* set_block)             (HippoCanvasBlock *canvas_block,
                                     HippoBlock       *block);
     void (* title_activated)       (HippoCanvasBlock *canvas_block);
@@ -95,8 +99,6 @@ void hippo_canvas_block_set_title   (HippoCanvasBlock *canvas_block,
                                      const char       *text,
                                      const char       *tooltip,
                                      gboolean          visited);
-void hippo_canvas_block_set_content (HippoCanvasBlock *canvas_block,
-                                     HippoCanvasItem  *content_item);
 
 void hippo_canvas_block_set_expanded(HippoCanvasBlock *canvas_block,
                                      gboolean          value);
