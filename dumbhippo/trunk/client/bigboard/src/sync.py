@@ -13,8 +13,11 @@ def warn(str):
 # complex globs don't really work, only trailing "*", because
 # in some spots we manually parse the trailing "*"
 simple_sync_whitelist = [
+    '/apps/metacity/*',
+    '/desktop/gnome/applications/*',
     '/desktop/gnome/background/*',
-    '/apps/metacity/*'
+    '/desktop/gnome/interface/*',
+    '/desktop/gnome/url-handlers/*'
     ]
 
 gconf_client = None
