@@ -49,6 +49,8 @@ static gboolean     hippo_platform_impl_can_play_song_download (HippoPlatform   
                                                                 HippoSongDownload *song_download);
 static void         hippo_platform_impl_show_disconnected_window (HippoPlatform *platform,
                                                                   HippoConnection *connection);
+static HippoNetworkStatus hippo_platform_impl_get_network_status (HippoPlatform *platform);
+
 static HippoInstanceType hippo_platform_impl_get_instance_type (HippoPlatform  *platform);
 static char*        hippo_platform_impl_get_message_server  (HippoPlatform     *platform);
 static char*        hippo_platform_impl_get_web_server      (HippoPlatform     *platform);
@@ -103,6 +105,7 @@ hippo_platform_impl_iface_init(HippoPlatformClass *klass)
     klass->get_chat_window_state = hippo_platform_impl_get_chat_window_state;
     klass->can_play_song_download = hippo_platform_impl_can_play_song_download;
     klass->show_disconnected_window = hippo_platform_impl_show_disconnected_window;
+    klass->get_network_status = hippo_platform_impl_get_network_status;
     
     klass->get_instance_type = hippo_platform_impl_get_instance_type;
     klass->get_message_server = hippo_platform_impl_get_message_server;
@@ -421,6 +424,14 @@ hippo_platform_impl_show_disconnected_window(HippoPlatform   *platform,
     dialogs = dialogs_get(connection);
     
     dialogs_update_disconnected_window(dialogs, TRUE);
+}
+
+static HippoNetworkStatus
+hippo_platform_impl_get_network_status (HippoPlatform *platform)
+{
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+    
+    return HIPPO_NETWORK_STATUS_UNKNOWN;
 }
 
 static HippoInstanceType
