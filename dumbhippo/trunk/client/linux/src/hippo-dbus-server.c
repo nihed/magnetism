@@ -474,7 +474,7 @@ on_endpoint_user_join(HippoEndpointProxy *proxy,
 			     DBUS_TYPE_UINT64, &endpoint,
 			     DBUS_TYPE_STRING, &chat_id,
 			     DBUS_TYPE_STRING, &user_id,
-                             DBUS_TYPE_BOOLEAN, &participant_bool,
+                 DBUS_TYPE_BOOLEAN, &participant_bool,
 			     DBUS_TYPE_INVALID);
 
     dbus_message_set_no_reply(message, TRUE);
@@ -1497,6 +1497,10 @@ handle_message(DBusConnection     *connection,
 
             if (strcmp(member, "GetWhereim") == 0) {
                 reply = hippo_dbus_handle_mugshot_get_whereim(dbus, xmpp_connection, message);
+            } else if (strcmp(member, "GetNetwork") == 0) {
+                reply = hippo_dbus_handle_mugshot_get_network(dbus, message);
+            } else if (strcmp(member, "GetSelf") == 0) {
+            	reply = hippo_dbus_handle_mugshot_get_self(dbus, message);                
             } else if (strcmp(member, "Introspect") == 0) {
                 reply = hippo_dbus_handle_mugshot_introspect(dbus, message);                
             } else {
