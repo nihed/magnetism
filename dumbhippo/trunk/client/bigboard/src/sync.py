@@ -156,7 +156,7 @@ def sync_gconf_key_from_server(key):
     else:
         warn("ignoring unknown gconf type " + str(gconf_type))
 
-    print "setting %s to %s" % (key, str(gconf_value))
+    print "setting %s to %s" % (key, str(value))
 
     gconf_client.set(key, gconf_value)
 

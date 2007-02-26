@@ -38,6 +38,7 @@ struct _HippoSettings {
     GHashTable *entries;
     GHashTable *requests;
     guint ready : 1;
+    guint everything_loaded_since_connect : 1;
 };
 
 struct _HippoSettingsClass {
@@ -243,6 +244,8 @@ on_settings_loaded(HippoConnection *connection,
 {
     HippoSettings *settings = HIPPO_SETTINGS(data);
 
+    settings->everything_loaded_since_connect = TRUE;
+    
     /* We report ourselves as "ready" if we've ever successfully
      * loaded settings.  We remain "ready" even if the connection to
      * the server is disconnected right now.
@@ -251,6 +254,8 @@ on_settings_loaded(HippoConnection *connection,
         settings->ready = TRUE;
         g_signal_emit(settings, signals[READY_CHANGED], 0, TRUE);
     }
+
+    /* FIXME any pending requests at this point can be completed */
 }
 
 static void
@@ -262,6 +267,18 @@ on_setting_changed(HippoConnection *connection,
     HippoSettings *settings = HIPPO_SETTINGS(data);
     
     update_cache(settings, key, value);
+}
+
+static void
+on_connected_changed(HippoConnection *connection,
+                     gboolean         connected,
+                     void            *data)
+{
+    HippoSettings *settings = HIPPO_SETTINGS(data);
+
+    if (!connected) {
+        settings->everything_loaded_since_connect = FALSE;
+    }
 }
 
 static void
@@ -304,12 +321,10 @@ hippo_settings_new(HippoConnection *connection)
 
     g_signal_connect(G_OBJECT(connection), "setting-changed", G_CALLBACK(on_setting_changed), settings);
     g_signal_connect(G_OBJECT(connection), "settings-loaded", G_CALLBACK(on_settings_loaded), settings);
+    g_signal_connect(G_OBJECT(connection), "connected-changed", G_CALLBACK(on_connected_changed), settings);
 
     /* FIXME this ends up happening at the wrong time (the first time someone
      * needs to use HippoSettings) instead of at application startup.
-     *
-     * Also, this implicitly caches that anything it doesn't return is known unset,
-     * which we could use to avoid asking for anything not yet cached.
      */
     /* FIXME we might drop all cache state on reconnecting to the server since
      * we may have missed change notifications
@@ -391,8 +406,18 @@ hippo_settings_get(HippoSettings           *settings,
         g_debug("sync getting: %s=%s", entry->key, entry->value ? entry->value : "(null)");
         (* func) (entry->key, entry->value, data);
     } else {
-        hippo_connection_request_desktop_setting(settings->connection, key);
-        mark_request_pending(settings, key, func, data);
+        if (settings->everything_loaded_since_connect) {
+            g_debug("we should have any existing settings in cache, not asking for %s", key);
+            (* func) (key, NULL, data);
+        } else {
+            /* FIXME This is just dangerous, really - if it ever happens on a large scale then
+             * the server will be doomed. Probably we should only allow getting *all* settings
+             * in bulk since that's the only sane thing.
+             */
+            
+            hippo_connection_request_desktop_setting(settings->connection, key);
+            mark_request_pending(settings, key, func, data);
+        }
     }
 }
 
