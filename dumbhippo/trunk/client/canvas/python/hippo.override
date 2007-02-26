@@ -268,6 +268,31 @@ _wrap_hippo_cairo_surface_from_gdk_pixbuf(PyGObject *self, PyObject *args, PyObj
     return PycairoSurface_FromSurface(surface, NULL);
 }
 %%
+override-attr HippoCanvasImage.image
+static PyObject *
+_wrap_hippo_canvas_image__get_image(PyGObject * self, void *closure)
+{
+	GValue prop = { 0, };
+	g_object_get_property(G_OBJECT(self->obj), "image", &prop); 
+	return PycairoSurface_FromSurface(g_value_get_pointer(&prop), NULL);
+}
+
+static int
+_wrap_hippo_canvas_image__set_image(PyGObject *self, PyObject *value, void *closure)
+{
+    GValue prop = {0, };
+	PycairoSurface *surface_obj;
+	cairo_surface_t *surface;
+	if (!PyObject_TypeCheck(value, &PycairoSurface_Type))
+		return -1;
+    surface_obj = (PycairoSurface*)value;
+    surface = surface_obj->surface;
+    g_value_init(&prop, G_TYPE_POINTER);
+    g_value_set_pointer(&prop, surface);
+    g_object_set_property(G_OBJECT(self->obj), "image", &prop);
+    return 0;
+}
+%%
 override hippo_canvas_set_load_image_hook kwargs
 static PyObject *_canvas_load_image_hook_cb = NULL;
 
