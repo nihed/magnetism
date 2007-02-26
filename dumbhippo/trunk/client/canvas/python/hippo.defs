@@ -50,6 +50,9 @@
   (parent "HippoCanvasBox")
   (c-name "HippoCanvasImage")
   (gtype-id "HIPPO_TYPE_CANVAS_IMAGE")
+  (fields 
+    '("object" "image")
+  )
 )
 
 (define-interface CanvasItem
