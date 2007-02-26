@@ -145,8 +145,20 @@ handle_message(DBusConnection     *connection,
 
         g_debug("system bus signal from %s %s.%s", sender ? sender : "NULL", interface, member);
    
-        if (dbus_message_is_signal(message, "org.freedesktop.NetworkManager", "StateChanged")) {
-          
+        if (dbus_message_is_signal(message, "org.freedesktop.NetworkManager", "StateChange")) {
+            dbus_uint32_t v_UINT32;
+            
+            if (dbus_message_get_args(message, NULL, DBUS_TYPE_UINT32, &v_UINT32, DBUS_TYPE_INVALID)) {
+                HippoNetworkStatus status = HIPPO_NETWORK_STATUS_UNKNOWN;
+                if (v_UINT32 == 3)
+                    status = HIPPO_NETWORK_STATUS_UP;
+                else if (v_UINT32 == 1)
+                    status = HIPPO_NETWORK_STATUS_DOWN;
+
+                g_debug("new network status from network manager %u", v_UINT32);
+                
+                g_signal_emit(G_OBJECT(dbus), signals[NETWORK_STATUS_CHANGED], 0, status);
+            }
         } else if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL, "Disconnected")) {
             hippo_system_dbus_disconnected(dbus);
             dbus = NULL;
@@ -168,6 +180,8 @@ hippo_system_dbus_open(GError     **error)
     DBusGConnection *gconnection;
     DBusConnection *connection;
     DBusError derror;
+
+    g_debug("attempting connect to system dbus");
     
     /* dbus_bus_get is a little hosed in old versions since you can't
      * unref unless you know it's disconnected. I guess it turns out
@@ -197,7 +211,7 @@ hippo_system_dbus_open(GError     **error)
                        "',interface='"
                        "org.freedesktop.NetworkManager"
                        "',member='"
-                       "StateChanged"
+                       "StateChange"
                        "'",
                        &derror);
 

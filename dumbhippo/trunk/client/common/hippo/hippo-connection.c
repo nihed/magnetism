@@ -813,18 +813,36 @@ hippo_connection_stop_signin_timeout(HippoConnection *connection)
     }
 }
 
+static void
+hippo_connection_retry(HippoConnection *connection)
+{
+    g_debug("retrying connect to server");
+    
+    hippo_connection_stop_retry_timeout(connection);
+    hippo_connection_connect(connection, NULL);
+}
 
 static gboolean 
 retry_timeout(gpointer data)
 {
     HippoConnection *connection = HIPPO_CONNECTION(data);
 
-    g_debug("Retry timeout");
-
-    hippo_connection_stop_retry_timeout(connection);
-    hippo_connection_connect(connection, NULL);
+    hippo_connection_retry(connection);
 
     return FALSE;
+}
+
+static void
+on_network_status_changed(HippoPlatform     *platform,
+                          HippoNetworkStatus status,
+                          gpointer           data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+
+    g_debug("new network status from platform %d", status);
+    
+    if (status != HIPPO_NETWORK_STATUS_DOWN)
+        hippo_connection_retry(connection);
 }
 
 static void
@@ -835,6 +853,9 @@ hippo_connection_start_retry_timeout(HippoConnection *connection)
         g_debug("Installing retry timeout for %g seconds", timeout / 1000.0);
         connection->retry_timeout_id = g_timeout_add(timeout, 
                                                      retry_timeout, connection);
+
+        g_signal_connect(G_OBJECT(connection->platform), "network-status-changed",
+                         G_CALLBACK(on_network_status_changed), connection);
     }
 }
 
@@ -845,6 +866,10 @@ hippo_connection_stop_retry_timeout(HippoConnection *connection)
         g_debug("Removing retry timeout");
         g_source_remove (connection->retry_timeout_id);
         connection->retry_timeout_id = 0;
+        
+        g_signal_handlers_disconnect_by_func(G_OBJECT(connection->platform),
+                                             G_CALLBACK(on_network_status_changed),
+                                             connection);
     }
 }
 
