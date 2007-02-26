@@ -1887,8 +1887,10 @@ hippo_connection_request_blocks(HippoConnection *connection,
     if (filter) {
         lm_message_node_set_attribute(child, "filter", filter);
     }
-    g_free(connection->active_block_filter);
-    connection->active_block_filter = g_strdup(filter);
+    if (filter != connection->active_block_filter) {
+        g_free(connection->active_block_filter);
+        connection->active_block_filter = g_strdup(filter);
+    }
     
     hippo_connection_send_message_with_reply(connection, message,
                                              on_request_blocks_reply, SEND_MODE_AFTER_AUTH);
