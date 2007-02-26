@@ -5,6 +5,7 @@
 #include "hippo-window-wrapper.h"
 #include "hippo-status-icon.h"
 #include "hippo-http.h"
+#include "hippo-dbus-system.h"
 #include "main.h"
 #include <string.h>
 
@@ -78,6 +79,8 @@ struct _HippoPlatformImpl {
     GObject parent;
     HippoInstanceType instance;
     char *jabber_resource;
+    HippoSystemDBus *system_dbus;
+    HippoNetworkStatus network_status;
 };
 
 struct _HippoPlatformImplClass {
@@ -131,20 +134,54 @@ hippo_platform_impl_class_init(HippoPlatformImplClass  *klass)
     object_class->dispose = hippo_platform_impl_dispose;
 }
 
+static void
+on_network_status_changed(HippoSystemDBus   *system_dbus,
+                          HippoNetworkStatus status,
+                          HippoPlatformImpl *impl)
+{
+    if (status != impl->network_status) {
+        impl->network_status = status;
+        hippo_platform_emit_network_status_changed(HIPPO_PLATFORM(impl),
+                                                   impl->network_status);
+    }
+}
+
 HippoPlatform*
 hippo_platform_impl_new(HippoInstanceType instance)
 {
-    HippoPlatformImpl *impl = g_object_new(HIPPO_TYPE_PLATFORM_IMPL, NULL);
+    HippoPlatformImpl *impl;
+    GError *error;
+    
+    impl = g_object_new(HIPPO_TYPE_PLATFORM_IMPL, NULL);
     impl->instance = instance;
+
+    error = NULL;
+    impl->system_dbus = hippo_system_dbus_open(&error);
+    if (impl->system_dbus) {
+        g_signal_connect(G_OBJECT(impl->system_dbus), "network-status-changed",
+                         G_CALLBACK(on_network_status_changed), impl);
+    } else {
+        g_debug("Failed to open system dbus: %s", error->message);
+        g_error_free(error);
+    }
+    impl->network_status = HIPPO_NETWORK_STATUS_UNKNOWN;
+    
     return HIPPO_PLATFORM(impl);
 }
 
 static void
 hippo_platform_impl_dispose(GObject *object)
 {
-    /* HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(object); */
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(object);
 
     g_debug("Disposing platform impl");
+
+    if (impl->system_dbus) {
+        g_signal_handlers_disconnect_by_func(G_OBJECT(impl->system_dbus),
+                                             G_CALLBACK(on_network_status_changed), impl);
+        g_object_unref(impl->system_dbus);
+        impl->system_dbus = NULL;
+    }
     
     G_OBJECT_CLASS(hippo_platform_impl_parent_class)->finalize(object);
 }
@@ -431,7 +468,7 @@ hippo_platform_impl_get_network_status (HippoPlatform *platform)
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
     
-    return HIPPO_NETWORK_STATUS_UNKNOWN;
+    return impl->network_status;
 }
 
 static HippoInstanceType
