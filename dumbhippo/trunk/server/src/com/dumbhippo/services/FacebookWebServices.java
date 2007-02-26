@@ -109,24 +109,28 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		
 		long currentTime = (new Date()).getTime();
 		
+		// Unread messages count we store is not the actual unread messages count, but 
+		// rather the number of unread messages we last displayed to the user.
+		// Because we use the unread message count to build blocks we display to the user,
+		// we don't update the unread message count unless it is something we want to pop
+		// up to the user in the updated message count notification, i.e. if we get message 
+		// count 2, we don't update it to 0 when the user reads the messages, but keep
+		// it as 2 until the next time the user gets unread messages. 
+		// Same goes for pokes.
+		
 		int newUnread = handler.getUnreadMessageCount(); 
 		int newMostRecentMessageId = handler.getMostRecentMessageId();
 		int oldUnread = facebookAccount.getUnreadMessageCount();
 		int oldMostRecentMessageId = facebookAccount.getMostRecentMessageId();
 		if ((newUnread != -1) && (newMostRecentMessageId != -1)) {	
-			if ((newUnread != oldUnread) || ((newUnread > 0) && (newMostRecentMessageId > oldMostRecentMessageId)))  {
+			if ((newUnread > 0) && (newMostRecentMessageId > oldMostRecentMessageId))  {
 				facebookAccount.setUnreadMessageCount(newUnread);
-				// if the new unread message count is 0, most recent message id will also
-				// be returned as 0, in which case we don't want to set it
-				if (newMostRecentMessageId > 0)
-				    facebookAccount.setMostRecentMessageId(newMostRecentMessageId);	
-				// we don't want to notify if the message count is the same as before and we are initializing  
-				// the mostRecentMessageId
-				// we don't want to notify if the message count is 0 and we are initializing it
-				if (((newUnread != oldUnread) || (oldMostRecentMessageId != -1)) 
-					&& ((newUnread > 0) || (oldUnread != -1))) {
+				facebookAccount.setMostRecentMessageId(newMostRecentMessageId);	
+				// if oldMostRecentMessageId is -1 (we are initializing that field), 
+				// we only want to notify if newUnread > oldUnread
+				if ((oldMostRecentMessageId > -1) || (newUnread > oldUnread)) {
 					messagesTime = currentTime;
-					facebookAccount.setMessageCountTimestampAsLong(messagesTime);
+					facebookAccount.setMessageCountTimestampAsLong(messagesTime);					
 				}
 			}
 		} else {
@@ -139,19 +143,14 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		int oldUnseen = facebookAccount.getUnseenPokeCount();
 		int oldMostRecentPokeId = facebookAccount.getMostRecentPokeId();
 		if ((newUnseen != -1) && (newMostRecentPokeId != -1)) {	
-			if ((newUnseen != oldUnseen) || ((newUnseen > 0) && (newMostRecentPokeId > oldMostRecentPokeId)))  {
+			if ((newUnseen > 0) && (newMostRecentPokeId > oldMostRecentPokeId))  {
 				facebookAccount.setUnseenPokeCount(newUnseen);
-				// if the new unseen poke count is 0, most recent poke id will also
-				// be returned as 0, in which case we don't want to set it
-				if (newMostRecentPokeId > 0)
-				    facebookAccount.setMostRecentPokeId(newMostRecentPokeId);
-				// we don't want to notify if the poke count is the same as before and we are initializing  
-				// the mostRecentPokeId
-				// we don't want to notify if the poke count is 0 and we are initializing it
-				if (((newUnseen != oldUnseen) || (oldMostRecentPokeId != -1)) 
-					&& ((newUnseen > 0) || (oldUnseen != -1))) {
+                facebookAccount.setMostRecentPokeId(newMostRecentPokeId);
+				// if oldMostRecentPokeId is -1 (we are initializing that field), 
+				// we only want to notify if newUseen > oldUnseen
+				if ((oldMostRecentPokeId > -1) || (newUnseen > oldUnseen)) {
 				    pokesTime = currentTime;
-				    facebookAccount.setPokeCountTimestampAsLong(pokesTime);
+				    facebookAccount.setPokeCountTimestampAsLong(pokesTime);				
 				}
 			}
 		} else {
