@@ -203,6 +203,8 @@ hippo_system_dbus_open(GError     **error)
             _("No active connection to the system's message bus"));
         return NULL;
     }
+
+    dbus_error_init(&derror);
     
     /* Add NetworkManager signal match */
     dbus_bus_add_match(connection,
