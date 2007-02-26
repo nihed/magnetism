@@ -10,9 +10,11 @@ import getopt
 def warn(str):
     print str # fixme
 
-# complex globs don't really work, only trailing "*"
+# complex globs don't really work, only trailing "*", because
+# in some spots we manually parse the trailing "*"
 simple_sync_whitelist = [
-    '/desktop/gnome/background/*'
+    '/desktop/gnome/background/*',
+    '/apps/metacity/*'
     ]
 
 gconf_client = None
@@ -215,3 +217,4 @@ def main():
     loop.run()
 
 main()
+ 
