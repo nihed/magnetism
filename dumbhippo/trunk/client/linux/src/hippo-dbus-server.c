@@ -270,7 +270,7 @@ hippo_dbus_try_to_acquire(const char  *server,
         /* FIXME leak bus connection since unref isn't allowed */
         return NULL;
     }
-
+    
     /* the connection is already set up with the main loop. 
      * We just need to create our object, filters, etc. 
      */
