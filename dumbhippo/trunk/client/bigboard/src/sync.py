@@ -78,14 +78,21 @@ def sync_gconf_key_to_server(key):
     if value:
         send_gconf_to_server(key, value)
 
+def sync_gconf_dir_to_server(key):
+    entries = gconf_client.all_entries(key)
+    for e in entries:
+        sync_gconf_key_to_server(e.key)
+    dirs = gconf_client.all_dirs(key)
+    for d in dirs:
+        sync_gconf_dir_to_server(d)
+
 def initialize_server_from_gconf_state():
     for pattern in simple_sync_whitelist:
         if pattern.endswith("/*"):
-            entries = gconf_client.all_entries(pattern.replace("/*", ""))
-            for e in entries:
-                sync_gconf_key_to_server(e.key)
+            sync_gconf_dir_to_server(pattern.replace("/*", ""))
         else:
             sync_gconf_key_to_server(pattern)
+    print "Done uploading local state to server"
 
 def dbus_signature_from_gconf_type(type, list_type):
     if type == gconf.VALUE_INT:
@@ -107,6 +114,7 @@ def dbus_signature_from_gconf_type(type, list_type):
         return None
 
 def sync_gconf_key_from_server(key):
+    
     schema_key = "/schemas" + key # this is wrong, but schema.get_type() isn't in older gnome-python, only in svn head
     schema = gconf_client.get_schema(schema_key)
     if not schema:
@@ -115,6 +123,10 @@ def sync_gconf_key_from_server(key):
 
     # for some reason schema.get_type() appears to not exist
     dvalue = schema.get_default_value()
+    if not dvalue:
+        warn("no default value for " + key + " and right now we need one to get the key type")
+        return
+    
     gconf_type = dvalue.type
     gconf_list_type = None
     if gconf_type == gconf.VALUE_LIST:
@@ -144,14 +156,22 @@ def sync_gconf_key_from_server(key):
     else:
         warn("ignoring unknown gconf type " + str(gconf_type))
 
+    print "setting %s to %s" % (key, str(gconf_value))
+
     gconf_client.set(key, gconf_value)
+
+def sync_gconf_dir_from_server(key):
+    entries = gconf_client.all_entries(key)
+    for e in entries:
+        sync_gconf_key_from_server(e.key)    
+    dirs = gconf_client.all_dirs(key)
+    for d in dirs:
+        sync_gconf_dir_from_server(d)
 
 def initialize_gconf_from_server_state():
     for pattern in simple_sync_whitelist:
         if pattern.endswith("/*"):
-            entries = gconf_client.all_entries(pattern.replace("/*", ""))
-            for e in entries:
-                sync_gconf_key_from_server(e.key)
+            sync_gconf_dir_from_server(pattern.replace("/*", ""))
         else:
             sync_gconf_key_from_server(pattern)
 
