@@ -46,8 +46,14 @@ class Sidebar(DockWindow):
         ret = DockWindow.do_size_request(self, req)
         # Give some whitespace
         geom = self.get_screen().get_monitor_geometry(0)
-        # Always occupy the full height
-        req.height = geom.height 
+        
+        screen = gtk.gdk.screen_get_default()
+        rootw = screen.get_root_window()
+        prop = rootw.property_get("_NET_WORKAREA")
+        logging.debug("got _NET_WORKAREA: %s" % (prop,))
+        (_, _, workarea) = prop
+        work_height = workarea[3]
+        req.height = work_height 
         # Never take more than available size
         req.width = min(geom.width, req.width)
         return ret
