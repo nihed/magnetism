@@ -8,13 +8,13 @@ import hippo
 from big_widgets import Sidebar, CommandShell
 import bigboard,libbig
 
-import stocks, stocks.self_stock
+import stocks, stocks.self_stock, stocks.people_stock
 
 class BigBoardPanel:
     def __init__(self):
         self.dw = Sidebar(True)
 
-        self._stocks = [stocks.self_stock.SelfStock()]
+        self._stocks = [stocks.self_stock.SelfStock(), stocks.people_stock.PeopleStock()]
 
         self.canvas = hippo.Canvas()
         self.dw.get_content().add(self.canvas)
