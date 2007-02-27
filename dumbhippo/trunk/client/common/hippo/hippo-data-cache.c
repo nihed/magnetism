@@ -681,6 +681,32 @@ hippo_data_cache_lookup_block(HippoDataCache  *cache,
     return g_hash_table_lookup(cache->blocks, guid);
 }
 
+struct DataCacheForeachValueData{
+        GFunc cb;
+        gpointer data;
+};
+
+static void
+data_cache_foreach_value(gpointer key, gpointer value, gpointer data)
+{
+        struct DataCacheForeachValueData *foreach_data = (struct DataCacheForeachValueData *) data;
+        foreach_data->cb(value, foreach_data->data);    
+}
+
+void
+hippo_data_cache_foreach_entity(HippoDataCache  *cache,
+                                GFunc            func,
+                                gpointer         data)
+{
+        struct DataCacheForeachValueData foreach_data;
+        
+    g_return_if_fail(HIPPO_IS_DATA_CACHE(cache));
+    
+    foreach_data.cb = func;
+    foreach_data.data = data;
+    g_hash_table_foreach(cache->entities, data_cache_foreach_value, &foreach_data);
+}
+
 HippoPerson*
 hippo_data_cache_get_self(HippoDataCache   *cache)
 {
