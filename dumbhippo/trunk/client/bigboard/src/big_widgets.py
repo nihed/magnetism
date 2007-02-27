@@ -6,8 +6,7 @@ import hippo
 
 from libgimmie import DockWindow
 from libbig import URLImageCache
-import libbig
-from singleton import Singleton       
+import libbig      
 
 class CanvasURLImage(hippo.CanvasImage):
     def __init__(self, url=None):
