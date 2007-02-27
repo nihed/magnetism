@@ -29,8 +29,7 @@ class CanvasURLImage(hippo.CanvasImage):
 
 class Sidebar(DockWindow):
     __gsignals__ = {
-        'size-request' : 'override',
-        'size-allocate' : 'override'
+        'size-request' : 'override'
         }
 
     def __init__(self, is_left):
@@ -38,8 +37,6 @@ class Sidebar(DockWindow):
         if not is_left:
             gravity = gtk.gdk.GRAVITY_EAST
         DockWindow.__init__(self, gravity)
-        self.set_keep_above(True)
-        self.set_wm_strut(True)
         self.is_left = is_left
 
     def do_size_request(self, req):

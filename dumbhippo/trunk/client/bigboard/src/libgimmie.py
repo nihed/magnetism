@@ -9,8 +9,7 @@ import gtk
 # gimmie_gui.py
 class DockWindow(gtk.Window):
     __gsignals__ = {
-        'realize' : 'override',
-        'size-allocate' : 'override'
+        'realize' : 'override'
         }
 
     def __init__(self, edge_gravity):
@@ -18,13 +17,15 @@ class DockWindow(gtk.Window):
 
         self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
         self.set_resizable(False)
+        self.set_keep_above(1)
+        self.set_focus_on_map(0)
+        # self.set_property("accept-focus", 0) # this is probably wrong, we need complex handling (take focus only when certain things are clicked)
 
         ### Uncomment to have icons grow upwards.
         ### FIXME: This trips metacity bugs and makes the window actually move position
         #self.set_gravity(gtk.gdk.GRAVITY_SOUTH_EAST)
 
         self.edge_gravity = edge_gravity
-        self.set_strut = False
         
         if edge_gravity in (gtk.gdk.GRAVITY_EAST, gtk.gdk.GRAVITY_WEST):
             self.content = gtk.VBox (False, 0)
@@ -70,63 +71,37 @@ class DockWindow(gtk.Window):
         return [geom.x + x, geom.y + y] # Compensate for multiple monitors
 
     def move_to_position(self):
-        if self.window:
-            ### FIXME: Apparantly other people who are not me don't need this
-            self.window.set_override_redirect(True)
-            apply(self.move, self.get_win_placement())
-            self.window.set_override_redirect(False)
+        apply(self.move, self.get_win_placement())
 
     def do_realize(self):
         ret = gtk.Window.do_realize(self)
         self.move_to_position()
+        self.do_set_wm_strut()
         return ret
 
-    def set_wm_strut(self, val):
-        self.set_strut = val
-        self.queue_resize_no_redraw()
-
+    # thanks to Gimmie (Alex Graveley) for this method
     def do_set_wm_strut(self):
         '''
         Set the _NET_WM_STRUT window manager hint, so that maximized windows
-        and/or desktop icons will not overlap this window\'s allocatied area.
+        and/or desktop icons will not overlap this window\'s allocated area.
         See http://standards.freedesktop.org/wm-spec/latest for details.
         '''
-        if self.window:
-            if self.set_strut:
-                # values are left, right, top, bottom
-                propvals = [0, 0, 0, 0]
-
-                geom = self.get_screen().get_monitor_geometry(0)
-                eg = self.get_edge_gravity()
-                x, y = self.window.get_origin()
-                alloc = self.allocation
-
-                if eg == gtk.gdk.GRAVITY_WEST:
-                    propvals[0] = alloc.width + x
-                elif eg == gtk.gdk.GRAVITY_EAST and x != 0:
-                    propvals[1] = geom.width - x
-                elif eg == gtk.gdk.GRAVITY_NORTH:
-                    propvals[2] = alloc.height + y
-                elif eg == gtk.gdk.GRAVITY_SOUTH and y != 0:
-                    propvals[3] = geom.height - y
-
-                # tell window manager to not overlap buttons with maximized window
-                self.window.property_change("_NET_WM_STRUT",
-                                            "CARDINAL",
-                                            32,
-                                            gtk.gdk.PROP_MODE_REPLACE,
-                                            propvals)
-            else:
-                self.window.property_delete("_NET_WM_STRUT")
-
-        return False
-
-    def do_size_allocate(self, alloc):
-        ret = gtk.Window.do_size_allocate(self, alloc)
-        self.move_to_position()
-
-        # Setting _NET_WM_STRUT too early can confuse the WM if the window is
-        # still located at 0,0, so do it in an idle.
-        gobject.idle_add(self.do_set_wm_strut)
+        if self.edge_gravity != gtk.gdk.GRAVITY_WEST:
+            raise "haven't implemented gravities other than WEST"
         
-        return ret
+        if self.window:
+            # values are left, right, top, bottom
+            propvals = [0, 0, 0, 0]
+            
+            geom = self.get_screen().get_monitor_geometry(0)
+            alloc = self.allocation
+
+            propvals[0] = alloc.width
+
+            # tell window manager to not overlap buttons with maximized window
+            self.window.property_change("_NET_WM_STRUT",
+                                        "CARDINAL",
+                                        32,
+                                        gtk.gdk.PROP_MODE_REPLACE,
+                                        propvals)
+
