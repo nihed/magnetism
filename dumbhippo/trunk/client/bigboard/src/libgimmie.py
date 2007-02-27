@@ -16,13 +16,8 @@ class DockWindow(gtk.Window):
     def __init__(self, edge_gravity):
         gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
 
-        self.set_wmclass("gnome-panel", "Gnome-panel")
         self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
-        self.set_skip_pager_hint(True)
-        self.set_skip_taskbar_hint(True)
-        self.set_decorated(False)
         self.set_resizable(False)
-        self.stick()
 
         ### Uncomment to have icons grow upwards.
         ### FIXME: This trips metacity bugs and makes the window actually move position

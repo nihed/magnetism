@@ -18,6 +18,7 @@ class BigBoardPanel:
 
         self.canvas = hippo.Canvas()
         self.dw.get_content().add(self.canvas)
+        self.canvas.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))
         
         self.main_box = hippo.CanvasBox()
         self.canvas.set_root(self.main_box)
