@@ -57,8 +57,8 @@ class Mugshot(gobject.GObject):
         if self._mugshot is None:
             bus = dbus.SessionBus()
             self._mugshot = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
-            self._mugshot.connect_to_signal('whereimChanged', self._whereimChanged)
-            self._mugshot.connect_to_signal('entityChanged', self._entityChanged)
+            self._mugshot.connect_to_signal('WhereimChanged', self._whereimChanged)
+            self._mugshot.connect_to_signal('EntityChanged', self._entityChanged)
         return self._mugshot
     
     def get_entity(self, guid):
@@ -82,14 +82,14 @@ class Mugshot(gobject.GObject):
     def get_whereim(self):
         if (self._whereim is None):
             proxy = self._get_mugshot()
-            proxy.GetWhereim()
+            proxy.NotifyAllWhereim()
             return None
         return self._whereim.values()
     
     def get_network(self):
         if self._network is None:
             proxy = self._get_mugshot()
-            proxy.GetNetwork()
+            proxy.NotifyAllNetwork()
             return None
         return self._network.values()
     

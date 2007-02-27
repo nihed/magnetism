@@ -34,11 +34,13 @@ append_strings_as_dict(DBusMessageIter *iter,
     while ((name = va_arg(args, const char*)) != NULL) {
         DBusMessageIter subsubiter;        
         const char *value = va_arg(args, const char*);
-        dbus_message_iter_open_container(&subiter, DBUS_TYPE_DICT_ENTRY, NULL, &subsubiter);
-        dbus_message_iter_append_basic(&subsubiter, DBUS_TYPE_STRING, &name);
-        dbus_message_iter_append_basic(&subsubiter, DBUS_TYPE_STRING, &value);
-        dbus_message_iter_close_container(&subiter, &subsubiter);
-    }                                      
+        if (value) {
+            dbus_message_iter_open_container(&subiter, DBUS_TYPE_DICT_ENTRY, NULL, &subsubiter);
+            dbus_message_iter_append_basic(&subsubiter, DBUS_TYPE_STRING, &name);
+            dbus_message_iter_append_basic(&subsubiter, DBUS_TYPE_STRING, &value);
+            dbus_message_iter_close_container(&subiter, &subsubiter);
+        }
+    }
     dbus_message_iter_close_container(iter, &subiter);    
 }
 
@@ -167,11 +169,20 @@ hippo_dbus_handle_mugshot_introspect(HippoDBus   *dbus,
                            HIPPO_DBUS_MUGSHOT_INTERFACE);
 
     g_string_append(xml,
-                    "    <method name=\"GetWhereim\"/>\n");
+                    "    <method name=\"NotifyAllWhereim\"/>\n");
     g_string_append(xml,
-                    "    <method name=\"GetNetwork\"/>\n");
-
+                    "    <method name=\"NotifyAllNetwork\"/>\n");
     
+    g_string_append(xml,
+                    "    <signal name=\"WhereimChanged\">\n"
+                    "      <arg direction=\"in\" type=\"s\"/>\n"
+                    "      <arg direction=\"in\" type=\"s\"/>\n"
+                    "    </signal>\n");
+
+    g_string_append(xml,
+                    "    <signal name=\"EntityChanged\">\n"
+                    "      <arg direction=\"in\" type=\"{ss}\"/>\n"
+                    "    </signal>\n");
     
     g_string_append(xml, "  </interface>\n");        
   
@@ -199,7 +210,7 @@ hippo_dbus_mugshot_signal_whereim_changed(HippoDBus            *dbus,
     
     signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
                                      HIPPO_DBUS_MUGSHOT_INTERFACE,
-                                     "whereimChanged");
+                                     "WhereimChanged");
     abs_icon_url = hippo_connection_make_absolute_url(connection, icon_url);
     dbus_message_append_args(signal, DBUS_TYPE_STRING, &name,
                              DBUS_TYPE_STRING, &abs_icon_url,
@@ -217,7 +228,7 @@ hippo_dbus_mugshot_signal_entity_changed(HippoDBus            *dbus,
     DBusMessage *signal;
     signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
                                      HIPPO_DBUS_MUGSHOT_INTERFACE,
-                                     "entityChanged");
+                                     "EntityChanged");
     append_entity(dbus, signal, entity);
     return signal;                               
 }
