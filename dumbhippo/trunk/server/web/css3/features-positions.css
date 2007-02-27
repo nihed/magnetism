@@ -1,19 +1,38 @@
 @CHARSET "UTF-8";
 
+.dh-features-header {
+    margin-bottom:  10px;
+}
+
+.dh-features-footer {
+    text-align:     center;
+}
+
 .dh-features-list {
-	padding-left:	20px;
+	margin-left:	15px;
 }
 
-.dh-features-list-header {
-	padding-top:	10px;
+.dh-features-list td {
+    padding-bottom: 7px;
 }
 
-.dh-features-list-icon-column {
-	width:	16px;
+.dh-features-list .dh-spacer-row {
+	height:			3px;
 }
 
-.dh-features-list-content-column {
-	padding-left:	5px;
+.dh-features-list td.dh-features-list-header {
+	background: url("/images3/title_gradient.png") top left repeat-x;
+	padding-left:   5px;
+}
+
+.dh-features-list td.dh-features-list-icon-column {
+	width:	        16px;
+	padding-left:   5px;
+	padding-right:  5px;
+}
+
+.dh-features-list-summary {
+	padding-left:   5px;
 }
 
 .dh-features-list-tip-content {
