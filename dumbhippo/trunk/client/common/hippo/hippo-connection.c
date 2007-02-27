@@ -1259,10 +1259,9 @@ message_is_iq_with_namespace(LmMessage  *message,
     if (lm_message_get_type(message) != LM_MESSAGE_TYPE_IQ ||
         lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_RESULT ||
         !child || child->next ||
-        !node_matches(child, document_element_name, expected_namespace))
-        {
-            return FALSE;
-        } else {
+        !node_matches(child, document_element_name, expected_namespace)) {
+        return FALSE;
+    } else {
         return TRUE;
     }
 }
@@ -1447,19 +1446,21 @@ on_contacts_reply(LmMessageHandler *handler,
     LmMessageNode *child;
     LmMessageNode *subchild;
 
+    child = message->node->children;
+    
     if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/contacts", "contacts")) {
         g_warning("Contacts reply was wrong thing");
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
-    child = message->node->children;
-
     for (subchild = child->children; subchild; subchild = subchild->next) {
         if (!hippo_connection_parse_entity(connection, subchild)) {
             g_warning("failed to parse entity in on_contacts_reply");
-            return FALSE;
+            return LM_HANDLER_RESULT_REMOVE_MESSAGE;
         }
     }
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
 
 void
@@ -2258,9 +2259,11 @@ hippo_connection_parse_entity(HippoConnection *connection,
     home_url = lm_message_node_get_attribute(node, "homeUrl");
 
     if (type != HIPPO_ENTITY_RESOURCE) {
-        photo_url = lm_message_node_get_attribute(node, "smallPhotoUrl");
+        photo_url = lm_message_node_get_attribute(node, "photoUrl");
+        if (!photo_url)
+            photo_url = lm_message_node_get_attribute(node, "smallPhotoUrl"); /* legacy attribute name */
         if (!photo_url) {
-            g_warning("entity node lacks photo url");
+            g_warning("entity node guid='%s' name='%s' lacks photo url", guid, name);
             return FALSE;
         }
     } else {
