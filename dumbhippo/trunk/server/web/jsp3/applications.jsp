@@ -5,7 +5,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<dh:bean id="applications" class="com.dumbhippo.web.pages.ApplicationsPage" scope="page"/>
+<dh:bean id="applications" class="com.dumbhippo.web.pages.ApplicationsPage" scope="request"/>
 <jsp:setProperty name="applications" property="categoryName" param="category"/>
 
 <head>
@@ -52,44 +52,8 @@
 	    	</c:if>
 	    </div>
 	    <hr>
-	    <div id="dhApplicationsCategories">
-	    	<div class="dh-applications-heading">View Category:</div>
-    		<table class="dh-applications-categories" cellspacing="0" cellpadding="0">
-	    		<tr class="dh-applications-category">
-	    			<td>
-	    				<c:choose>
-	    					<c:when test="${empty applications.category}">
-			    				All
-			    			</c:when>
-			    			<c:otherwise>
-				    			<a href="/applications">All</a>
-			    			</c:otherwise>
-		   				</c:choose>
-
-	    			</td>
-    			</tr>
-		    	<c:forEach items="${applications.categories}" var="category">
-		    		<tr class="dh-applications-category">
-		    			<td class="dh-applications-category-name">
-		    				<c:choose>
-		    					<c:when test="${applications.category == category.category}">
-				    				<c:out value="${category.category.displayName}"/>
-				    			</c:when>
-				    			<c:otherwise>
-					    			<a href="/applications?category=${category.category.name}">
-					    				<c:out value="${category.category.displayName}"/>
-					    			</a>
-				    			</c:otherwise>
-			   				</c:choose>
-		    			</td>
-						<td class="dh-applications-category-bar-outer">	    			
-		    				<div class="dh-applications-category-bar" style="background-color: ${category.color}; width: ${category.length}px;"/>
-		    			</td>
-	    			</tr>
-		    	</c:forEach>
-	    	</table>
-	    </div>
-	    <div id="dhApplicationsApplications">
+	    <dht3:applicationCategories currentCategory="${applications.category}"/>
+	    <div id="dhApplicationsRight">
 	    	<div class="dh-applications-heading">Popularity of 
 	    		<c:choose>
 	    			<c:when test="${!empty applications.category}">
@@ -107,40 +71,44 @@
 	    			</div>
 	    		</c:when>
 	    		<c:otherwise>
-			    	<div id="dhApplicationsHeader">
-			    		<div id="dhApplicationsStatsHeader">Rank & Usage</div>
-			    		<div id="dhApplicationsApplicationsHeader">Applications</div>
-			    	</div>	    		
-				    <c:forEach items="${applications.applications.results}" var="application">
-			    		<div class="dh-applications-application-separator"></div>
-				    	<div class="dh-applications-application">
-				    		<div class="dh-applications-application-stats-outer">
-					    		<div class="dh-applications-application-stats">
-					    			<div class="dh-applications-rank"><c:out value="${application.rank}"/></div>
-					    			<div class="dh-applications-usage"><c:out value="${dh:format1('%,d', application.usageCount)}"/></div>
-					    		</div>
-				    		</div>
-				    		<div class="dh-applications-application-icon">
-								<dh:png src="${application.icon.url}" 
-									style="width: ${application.icon.displayWidth}; height: ${application.icon.displayHeight}; overflow: hidden;"/>
-				    		</div>
-				    		<div class="dh-applications-application-details">
-				    			<div class="dh-applications-application-name">
-				    				<c:out value="${application.application.name}"/>
-					    		</div>
-				    			<div class="dh-applications-application-category">
-					    			<a href="/applications?category=${application.application.category.name}">
-			    						<c:out value="${application.application.category.displayName}"/>
-			    					</a>
-					    		</div>
-				    		</div>
+			    	<div id="dhApplicationsApplications">
+				    	<div id="dhApplicationsHeader">
+				    		<div id="dhApplicationsStatsHeader">Rank & Usage</div>
+				    		<div id="dhApplicationsApplicationsHeader">Applications</div>
+				    	</div>	    		
+					    <c:forEach items="${applications.applications.results}" var="application">
 				    		<div class="dh-applications-application-separator"></div>
-		    			</div>
-				    </c:forEach>
-				    <div class="dh-applications-more">
-					    <dht:expandablePager pageable="${applications.applications}"/>
+					    	<div class="dh-applications-application">
+					    		<div class="dh-applications-application-stats-outer">
+						    		<div class="dh-applications-application-stats">
+						    			<div class="dh-applications-rank"><c:out value="${application.rank}"/></div>
+						    			<div class="dh-applications-usage"><c:out value="${dh:format1('%,d', application.usageCount)}"/></div>
+						    		</div>
+					    		</div>
+					    		<div class="dh-applications-application-icon">
+									<dh:png src="${application.icon.url}" 
+										style="width: ${application.icon.displayWidth}; height: ${application.icon.displayHeight}; overflow: hidden;"/>
+					    		</div>
+					    		<div class="dh-applications-application-details">
+					    			<div class="dh-applications-application-name">
+						    			<a href="/application?id=${application.application.id}">
+						    				<c:out value="${application.application.name}"/>
+			    						</a>
+						    		</div>
+					    			<div class="dh-applications-application-category">
+						    			<a href="/applications?category=${application.application.category.name}">
+				    						<c:out value="${application.application.category.displayName}"/>
+				    					</a>
+						    		</div>
+					    		</div>
+					    		<div class="dh-applications-application-separator"></div>
+			    			</div>
+					    </c:forEach>
+					    <div class="dh-applications-more">
+						    <dht:expandablePager pageable="${applications.applications}"/>
+					    </div>
 				    </div>
-		    </c:otherwise>
+			    </c:otherwise>
 		    </c:choose>
 	    </div>
 	</dht3:shinyBox>
