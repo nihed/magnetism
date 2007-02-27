@@ -6,6 +6,11 @@
 	font-weight: bold;
 }
 
+.dh-applications-subheading {
+	font-size: 14px;
+	font-weight: bold;
+}
+
 #dhApplicationsHeader {
 	font-size: 12px;
 }
@@ -16,11 +21,18 @@
 
 .dh-applications-application-stats {
 	text-align: center; 
+}
+
+#dhApplicationApplications .dh-applications-application-stats {
 	background: url("/images3/purple_gradient.png") top left repeat-x;
 }
 
-.dh-applications-rank {
+#dhApplicationApplications .dh-applications-rank {
 	font-size: 24px;
+}
+
+#dhApplicationRelatd .dh-applications-rank {
+	font-size: 16px;
 }
 
 .dh-applications-usage {
@@ -36,8 +48,16 @@
 	font-size: 12px;
 }
 
+.dh-applications-application-description {
+	font-size: 12px;
+}
+
 .dh-applications-category {
 	font-size: 14px;
+}
+
+.dh-applications-current-category {
+	font-weight: bold;
 }
 
 .dh-applications-no-applications {
