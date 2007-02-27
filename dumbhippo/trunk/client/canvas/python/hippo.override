@@ -30,9 +30,11 @@ import gtk.gdk.Pixbuf as PyGdkPixbuf_Type
 %%
 ignore
 hippo_canvas_box_new
+hippo_canvas_image_new
 hippo_canvas_text_new
 hippo_canvas_link_new
 hippo_canvas_window_new
+hippo_canvas_widget_new
 %%
 ignore-glob
   *_get_type
