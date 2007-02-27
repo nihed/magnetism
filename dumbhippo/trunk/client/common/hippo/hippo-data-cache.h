@@ -39,6 +39,11 @@ HippoEntity*     hippo_data_cache_lookup_entity          (HippoDataCache  *cache
                                                           const char      *guid);
 HippoBlock*      hippo_data_cache_lookup_block           (HippoDataCache  *cache,
                                                           const char      *guid);
+                                                          
+void             hippo_data_cache_foreach_entity         (HippoDataCache  *cache,
+                                                          GFunc            func,
+                                                          gpointer         data);
+                                                                                                                    
 /* A convenience method like ensure_post() doesn't work well because we want to be 
  * able to init the properties of a post before adding it and thus emitting the 
  * post-added signal
