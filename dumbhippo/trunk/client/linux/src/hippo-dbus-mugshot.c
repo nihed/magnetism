@@ -11,28 +11,28 @@
 #include "hippo-dbus-mugshot.h"
 #include "main.h"
 
-static void 
+static void
 append_strings_as_dict(DBusMessageIter *iter,
                        ...)
 {
     const char *name;
-    va_list args;    
+    va_list args;
     DBusMessageIter subiter;
 
     va_start(args, iter);
-    
-    dbus_message_iter_open_container(iter, 
-                                     DBUS_TYPE_ARRAY, 
-                                     DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING 
-                                       DBUS_TYPE_STRING_AS_STRING 
-                                       DBUS_TYPE_STRING_AS_STRING 
-                                     DBUS_DICT_ENTRY_END_CHAR_AS_STRING,
-                                     &subiter);     
-    
 
-    
+    dbus_message_iter_open_container(iter,
+                                     DBUS_TYPE_ARRAY,
+                                     DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING
+                                     DBUS_TYPE_STRING_AS_STRING
+                                     DBUS_TYPE_STRING_AS_STRING
+                                     DBUS_DICT_ENTRY_END_CHAR_AS_STRING,
+                                     &subiter);
+
+
+
     while ((name = va_arg(args, const char*)) != NULL) {
-        DBusMessageIter subsubiter;        
+        DBusMessageIter subsubiter;
         const char *value = va_arg(args, const char*);
         if (value) {
             dbus_message_iter_open_container(&subiter, DBUS_TYPE_DICT_ENTRY, NULL, &subsubiter);
@@ -41,7 +41,7 @@ append_strings_as_dict(DBusMessageIter *iter,
             dbus_message_iter_close_container(&subiter, &subsubiter);
         }
     }
-    dbus_message_iter_close_container(iter, &subiter);    
+    dbus_message_iter_close_container(iter, &subiter);
 }
 
 static void
@@ -55,19 +55,19 @@ append_entity(HippoDBus         *dbus,
     const char *name;
     const char *home_url;
     const char *photo_url;
-    char *abs_home_url; 
+    char *abs_home_url;
     char *abs_photo_url;
-    
+
     connection = hippo_data_cache_get_connection(hippo_app_get_data_cache(hippo_get_app()));
-    
+
     guid = hippo_entity_get_guid(entity);
     name = hippo_entity_get_name(entity);
     home_url = hippo_entity_get_home_url(entity);
     photo_url = hippo_entity_get_photo_url(entity);
-    
+
     abs_home_url = hippo_connection_make_absolute_url(connection, home_url);
     abs_photo_url = hippo_connection_make_absolute_url(connection, photo_url);
-    
+
     dbus_message_iter_init_append(message, &iter);
     append_strings_as_dict(&iter, "guid", guid, "name", name, "home-url", abs_home_url, "photo-url", abs_photo_url, NULL);
 
@@ -92,21 +92,21 @@ hippo_dbus_try_acquire_mugshot(DBusConnection *connection,
                           NULL);
 }
 
-DBusMessage* 
+DBusMessage*
 hippo_dbus_handle_mugshot_get_self(HippoDBus   *dbus,
-   				                   DBusMessage  *message)
+                                   DBusMessage  *message)
 {
     HippoPerson *self;
     DBusMessage *reply;
     HippoDataCache *cache;
-    
+
     cache = hippo_app_get_data_cache(hippo_get_app());
-    
+
     self = hippo_data_cache_get_self(cache);
     if (self == NULL) {
     	return dbus_message_new_error(message, "org.mugshot.Mugshot.Disconnected", "Not connected");
     }
-    
+
     reply = dbus_message_new_method_return(message);
     append_entity(dbus, reply, HIPPO_ENTITY(self));
     return reply;
@@ -114,11 +114,11 @@ hippo_dbus_handle_mugshot_get_self(HippoDBus   *dbus,
 
 DBusMessage*
 hippo_dbus_handle_mugshot_get_whereim(HippoDBus   *dbus,
-									  HippoConnection *connection,
+                                      HippoConnection *connection,
                                       DBusMessage *message)
 {
     hippo_connection_request_mugshot_whereim(connection);
-    
+
     return dbus_message_new_method_return(message);  /* Send out the results as signals.  */
 }
 
@@ -127,8 +127,8 @@ signal_entity_changed(gpointer entity_ptr, gpointer data)
 {
     HippoDBus *dbus = HIPPO_DBUS(data);
     HippoEntity *entity = (HippoEntity*) entity_ptr;
-    
-    hippo_dbus_mugshot_signal_entity_changed(dbus, entity);		
+
+    hippo_dbus_mugshot_signal_entity_changed(dbus, entity);
 }
 
 DBusMessage*
@@ -136,7 +136,7 @@ hippo_dbus_handle_mugshot_get_network(HippoDBus   *dbus,
                                       DBusMessage  *message)
 {
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
-    
+
     hippo_data_cache_foreach_entity(cache, signal_entity_changed, dbus);
 
     return dbus_message_new_method_return(message);  /* Send out the results as signals.  */
@@ -150,19 +150,19 @@ hippo_dbus_handle_mugshot_introspect(HippoDBus   *dbus,
     DBusMessage *reply;
 
     xml = g_string_new(NULL);
-    
+
     g_string_append(xml, DBUS_INTROSPECT_1_0_XML_DOCTYPE_DECL_NODE);
-        
+
     g_string_append(xml, "<node>\n");
-        
+
     g_string_append_printf(xml, "  <interface name=\"%s\">\n", DBUS_INTERFACE_INTROSPECTABLE);
-        
+
     g_string_append(xml, "    <method name=\"Introspect\">\n");
-        
+
     g_string_append_printf(xml, "      <arg name=\"data\" direction=\"out\" type=\"%s\"/>\n", DBUS_TYPE_STRING_AS_STRING);
-        
+
     g_string_append(xml, "    </method>\n");
-        
+
     g_string_append(xml, "  </interface>\n");
 
     g_string_append_printf(xml, "  <interface name=\"%s\">\n",
@@ -172,7 +172,7 @@ hippo_dbus_handle_mugshot_introspect(HippoDBus   *dbus,
                     "    <method name=\"NotifyAllWhereim\"/>\n");
     g_string_append(xml,
                     "    <method name=\"NotifyAllNetwork\"/>\n");
-    
+
     g_string_append(xml,
                     "    <signal name=\"WhereimChanged\">\n"
                     "      <arg direction=\"in\" type=\"s\"/>\n"
@@ -183,9 +183,9 @@ hippo_dbus_handle_mugshot_introspect(HippoDBus   *dbus,
                     "    <signal name=\"EntityChanged\">\n"
                     "      <arg direction=\"in\" type=\"{ss}\"/>\n"
                     "    </signal>\n");
-    
-    g_string_append(xml, "  </interface>\n");        
-  
+
+    g_string_append(xml, "  </interface>\n");
+
     g_string_append(xml, "</node>\n");
 
 
@@ -194,7 +194,7 @@ hippo_dbus_handle_mugshot_introspect(HippoDBus   *dbus,
     dbus_message_append_args(reply, DBUS_TYPE_STRING, &xml->str, DBUS_TYPE_INVALID);
 
     g_string_free(xml, TRUE);
-    
+
     return reply;
 }
 
@@ -205,9 +205,9 @@ hippo_dbus_mugshot_signal_whereim_changed(HippoDBus            *dbus,
 {
     DBusMessage *signal;
     char *name, *icon_url, *abs_icon_url;
-    
+
     g_object_get(acct, "name", &name, "icon-url", &icon_url, NULL);
-    
+
     signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
                                      HIPPO_DBUS_MUGSHOT_INTERFACE,
                                      "WhereimChanged");
@@ -218,7 +218,7 @@ hippo_dbus_mugshot_signal_whereim_changed(HippoDBus            *dbus,
     g_free(name);
     g_free(icon_url);
     g_free(abs_icon_url);
-    return signal;	                                 
+    return signal;
 }
 
 DBusMessage*
@@ -230,5 +230,5 @@ hippo_dbus_mugshot_signal_entity_changed(HippoDBus            *dbus,
                                      HIPPO_DBUS_MUGSHOT_INTERFACE,
                                      "EntityChanged");
     append_entity(dbus, signal, entity);
-    return signal;                               
+    return signal;
 }
