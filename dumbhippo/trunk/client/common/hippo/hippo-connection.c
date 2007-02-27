@@ -127,6 +127,8 @@ static void     hippo_connection_request_client_info  (HippoConnection *connecti
 
 static void     hippo_connection_parse_prefs_node     (HippoConnection *connection,
                                                        LmMessageNode   *prefs_node);
+static gboolean hippo_connection_parse_entity         (HippoConnection *connection,
+                                                       LmMessageNode   *node);
 static void     hippo_connection_process_pending_room_messages(HippoConnection *connection);
 
 /* enter/leave unconditionally send the presence message; send_state will 
@@ -1436,6 +1438,53 @@ hippo_connection_request_title_patterns(HippoConnection *connection)
 }
 
 static LmHandlerResult
+on_contacts_reply(LmMessageHandler *handler,
+                  LmConnection     *lconnection,
+                  LmMessage        *message,
+                  gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *child;
+    LmMessageNode *subchild;
+
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/contacts", "contacts")) {
+        g_warning("Contacts reply was wrong thing");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    child = message->node->children;
+
+    for (subchild = child->children; subchild; subchild = subchild->next) {
+        if (!hippo_connection_parse_entity(connection, subchild)) {
+            g_warning("failed to parse entity in on_contacts_reply");
+            return FALSE;
+        }
+    }
+}
+
+void
+hippo_connection_request_contacts(HippoConnection *connection)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    
+    g_return_if_fail(HIPPO_IS_CONNECTION(connection));
+
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "contacts", NULL);
+
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/contacts");
+
+    hippo_connection_send_message_with_reply(connection, message, on_contacts_reply, SEND_MODE_IMMEDIATELY);
+
+    lm_message_unref(message);
+}
+
+static LmHandlerResult
 on_prefs_reply(LmMessageHandler *handler,
                LmConnection     *lconnection,
                LmMessage        *message,
@@ -2173,7 +2222,8 @@ hippo_connection_parse_entity(HippoConnection *connection,
     const char *name;
     const char *home_url;
     const char *photo_url;
- 
+    const char *is_contact;
+    
     HippoEntityType type;
     if (strcmp(node->name, "resource") == 0)
         type = HIPPO_ENTITY_RESOURCE;
@@ -2217,6 +2267,8 @@ hippo_connection_parse_entity(HippoConnection *connection,
         photo_url = NULL;
     }
 
+    is_contact = lm_message_node_get_attribute(node, "isContact");
+    
     entity = hippo_data_cache_lookup_entity(connection->cache, guid);
     if (entity == NULL) {
         created_entity = TRUE;
@@ -2234,7 +2286,11 @@ hippo_connection_parse_entity(HippoConnection *connection,
         set_fallback_home_url(connection, entity);
     }
     hippo_entity_set_photo_url(entity, photo_url);
- 
+
+    /* old servers don't supply is_contact */
+    if (is_contact && strcmp(is_contact, "true") == 0)
+        hippo_entity_set_in_network(entity, TRUE);
+        
     if (created_entity) {
         hippo_data_cache_add_entity(connection->cache, entity);
     }

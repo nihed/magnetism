@@ -1495,9 +1495,9 @@ handle_message(DBusConnection     *connection,
             reply = NULL;
             result = DBUS_HANDLER_RESULT_HANDLED;
 
-            if (strcmp(member, "GetWhereim") == 0) {
+            if (strcmp(member, "NotifyAllWhereim") == 0) {
                 reply = hippo_dbus_handle_mugshot_get_whereim(dbus, xmpp_connection, message);
-            } else if (strcmp(member, "GetNetwork") == 0) {
+            } else if (strcmp(member, "NotifyAllNetwork") == 0) {
                 reply = hippo_dbus_handle_mugshot_get_network(dbus, message);
             } else if (strcmp(member, "GetSelf") == 0) {
             	reply = hippo_dbus_handle_mugshot_get_self(dbus, message);                
