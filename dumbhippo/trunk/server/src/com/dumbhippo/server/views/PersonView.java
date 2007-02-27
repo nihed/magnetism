@@ -739,11 +739,13 @@ public class PersonView extends EntityView {
 								"id", user.getId(), 
 				               	"name", getName(),
 				               	"homeUrl", getHomeUrl(), 
-				               	"photoUrl", getPhotoUrl());
+				               	"photoUrl", getPhotoUrl(),
+				               	"isContact", Boolean.toString(isContactOfViewer()));
 		} else {
 			builder.openElement("resource", 
 					            "id", getIdentifyingGuid().toString(), 
-					            "name", getName());
+					            "name", getName(),
+					            "isContact", Boolean.toString(isContactOfViewer()));
 		}
 		
 		if (getCurrentTrack() != null)
