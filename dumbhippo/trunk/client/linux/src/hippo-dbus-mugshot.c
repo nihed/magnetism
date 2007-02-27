@@ -94,8 +94,8 @@ DBusMessage*
 hippo_dbus_handle_mugshot_get_self(HippoDBus   *dbus,
    				                   DBusMessage  *message)
 {
-	HippoPerson *self;
-	DBusMessage *reply;
+    HippoPerson *self;
+    DBusMessage *reply;
     HippoDataCache *cache;
     
     cache = hippo_app_get_data_cache(hippo_get_app());
@@ -123,10 +123,10 @@ hippo_dbus_handle_mugshot_get_whereim(HippoDBus   *dbus,
 static void
 signal_entity_changed(gpointer entity_ptr, gpointer data)
 {
-	HippoDBus *dbus = HIPPO_DBUS(data);
-	HippoEntity *entity = (HippoEntity*) entity_ptr;
-	
-	hippo_dbus_mugshot_signal_entity_changed(dbus, entity);		
+    HippoDBus *dbus = HIPPO_DBUS(data);
+    HippoEntity *entity = (HippoEntity*) entity_ptr;
+    
+    hippo_dbus_mugshot_signal_entity_changed(dbus, entity);		
 }
 
 DBusMessage*
@@ -136,7 +136,8 @@ hippo_dbus_handle_mugshot_get_network(HippoDBus   *dbus,
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
     
     hippo_data_cache_foreach_entity(cache, signal_entity_changed, dbus);
-   	return dbus_message_new_method_return(message);  /* Send out the results as signals.  */
+
+    return dbus_message_new_method_return(message);  /* Send out the results as signals.  */
 }
 
 DBusMessage*
@@ -169,7 +170,9 @@ hippo_dbus_handle_mugshot_introspect(HippoDBus   *dbus,
                     "    <method name=\"GetWhereim\"/>\n");
     g_string_append(xml,
                     "    <method name=\"GetNetwork\"/>\n");
-                    
+
+    
+    
     g_string_append(xml, "  </interface>\n");        
   
     g_string_append(xml, "</node>\n");
@@ -189,18 +192,18 @@ hippo_dbus_mugshot_signal_whereim_changed(HippoDBus            *dbus,
                                           HippoConnection      *connection,
                                           HippoExternalAccount *acct)
 {
-	DBusMessage *signal;
-	char *name, *icon_url, *abs_icon_url;
-	
-	g_object_get(acct, "name", &name, "icon-url", &icon_url, NULL);
-	
-	signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
-	                                 HIPPO_DBUS_MUGSHOT_INTERFACE,
-	                                 "whereimChanged");
-	abs_icon_url = hippo_connection_make_absolute_url(connection, icon_url);
-	dbus_message_append_args(signal, DBUS_TYPE_STRING, &name,
-	                                 DBUS_TYPE_STRING, &abs_icon_url,
-	                                 DBUS_TYPE_INVALID);
+    DBusMessage *signal;
+    char *name, *icon_url, *abs_icon_url;
+    
+    g_object_get(acct, "name", &name, "icon-url", &icon_url, NULL);
+    
+    signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
+                                     HIPPO_DBUS_MUGSHOT_INTERFACE,
+                                     "whereimChanged");
+    abs_icon_url = hippo_connection_make_absolute_url(connection, icon_url);
+    dbus_message_append_args(signal, DBUS_TYPE_STRING, &name,
+                             DBUS_TYPE_STRING, &abs_icon_url,
+                             DBUS_TYPE_INVALID);
     g_free(name);
     g_free(icon_url);
     g_free(abs_icon_url);
