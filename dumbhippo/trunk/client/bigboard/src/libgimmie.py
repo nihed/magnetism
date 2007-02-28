@@ -1,6 +1,6 @@
 # Stuff imported from gimmie
 
-import os
+import os, logging
 from gettext import gettext as _
 
 import gobject
@@ -77,7 +77,7 @@ class DockWindow(gtk.Window):
         ret = gtk.Window.do_realize(self)
         self.move_to_position()
         self.do_set_wm_strut()
-        return ret
+        return ret      
 
     # thanks to Gimmie (Alex Graveley) for this method
     def do_set_wm_strut(self):
@@ -95,6 +95,8 @@ class DockWindow(gtk.Window):
             
             geom = self.get_screen().get_monitor_geometry(0)
             alloc = self.allocation
+
+            logging.debug("setting west strut to %d width" % (alloc.width,))
 
             propvals[0] = alloc.width
 

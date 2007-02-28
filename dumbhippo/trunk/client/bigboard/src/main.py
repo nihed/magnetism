@@ -6,36 +6,79 @@ import gobject, gtk, dbus, dbus.glib
 
 import hippo
 from big_widgets import Sidebar, CommandShell
-import bigboard,libbig
+from bigboard import Stock
+import libbig
 
 import stocks, stocks.self_stock, stocks.people_stock
 
-class BigBoardPanel:
+class BigBoardPanel(object):
     def __init__(self):
-        self.dw = Sidebar(True)
+        self._dw = Sidebar(True)
+        
+        self._size = Stock.SIZE_BULL
 
         self._stocks = [stocks.self_stock.SelfStock(), stocks.people_stock.PeopleStock()]
 
-        self.canvas = hippo.Canvas()
-        self.dw.get_content().add(self.canvas)
-        self.canvas.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))
+        self._canvas = hippo.Canvas()
+        self._dw.get_content().add(self._canvas)
+        self._canvas.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))
         
-        self.main_box = hippo.CanvasBox()
-        self.canvas.set_root(self.main_box)
-        self.canvas.set_size_request(100, 600)
+        self._main_box = hippo.CanvasBox()
+        self._canvas.set_root(self._main_box)
      
-        self.title = hippo.CanvasText()
-        self.title.set_property("text", "My Fedora")
+        self._header_box = hippo.CanvasBox()
+        self._header_box.set_property("orientation", hippo.ORIENTATION_HORIZONTAL)
      
-        self.main_box.append(self.title)
+        self._title = hippo.CanvasText()
+        self._title.set_property("text", "My Fedora")
      
-        for stock in self._stocks:
-            self.main_box.append(stock.get_content())
+        self._header_box.append(self._title)
+        
+        self._size_button = hippo.CanvasLink()
+        self._size_button.set_property("xalign", hippo.ALIGNMENT_END)
+        self._size_button.connect("button-press-event", lambda text, event: self._toggle_size())
+        
+        self._header_box.append(self._size_button, hippo.PACK_END)
+        
+        self._main_box.append(self._header_box)
+        
+        self._stocks_box = hippo.CanvasBox()
+        
+        self._main_box.append(self._stocks_box)
   
-        self.canvas.show()
+        self._sync_size()
+  
+        self._canvas.show()
+        
+    def _toggle_size(self):
+        if self._size == Stock.SIZE_BULL:
+            self._size = Stock.SIZE_BEAR
+        else:
+            self._size = Stock.SIZE_BULL
+        self._sync_size()
+            
+    def _sync_size(self):       
+        self._header_box.set_child_visible(self._title, self._size == Stock.SIZE_BULL)
+        if self._size == Stock.SIZE_BEAR:
+            self._size_button.set_property("text", ">> large")
+            self._canvas.set_size_request(55, 42)             
+        else:
+            self._size_button.set_property("text", "<< small")
+            self._canvas.set_size_request(210, 42)             
+            
+        self._stocks_box.remove_all()
+        for stock in self._stocks:
+            stock.set_size(self._size)            
+            self._stocks_box.append(stock.get_content(self._size))    
+        
+        self._dw.queue_resize()  
+        # TODO - this is kind of gross; we need the strut change to happen after
+        # the resize, but that appears to be an ultra-low priority internally
+        # so we can't easily queue something directly after.
+        gobject.timeout_add(42, lambda : self._dw.do_set_wm_strut() and False)
         
     def show(self):
-        self.dw.show_all()
+        self._dw.show_all()
 
 def load_image_hook(img_name):
     print "loading: %s" % (img_name,)
