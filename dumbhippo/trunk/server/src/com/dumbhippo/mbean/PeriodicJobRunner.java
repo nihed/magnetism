@@ -5,13 +5,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.Callable;
 
 import org.jboss.system.ServiceMBeanSupport;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
+import com.dumbhippo.ThreadUtils.DaemonRunnable;
 
 /** The "cron job" mbean - runs on one node of the cluster.
  *  To add a "cron job" create a subclass of PeriodicJob and put the 
@@ -86,7 +86,7 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 		jobs.get(klass).poke();
 	}
 
-	private static class PeriodicJobRunnable implements Callable<Object> {
+	private static class PeriodicJobRunnable implements DaemonRunnable {
 		private int generation;
 		private boolean poked;
 		private PeriodicJob job;
@@ -153,21 +153,14 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 			return false; // shut down
 		}
 		
-		public Object call() {
+		public void run() throws InterruptedException {
 			logger.info("Starting periodic update thread for '{}' with interval {} minutes",
 					job.getName(), job.getFrequencyInMilliseconds() / 1000.0 / 60.0);
 			while (runOneGeneration()) {
 				// sleep protects us from 100% CPU in catastrophic failure case
 				logger.warn("Periodic job thread sleeping and then restarting itself");
-				try {
-					Thread.sleep(10000);
-				} catch (InterruptedException e) {
-					// this probably means interrupt() was called from shutdown()
-					logger.debug("Job thread sleeping was woken up, exiting thread");
-					break;
-				}
+				Thread.sleep(10000);
 			}
-			return null;
 		}	
 	}
 }
