@@ -21,7 +21,7 @@ class ExternalAccountIcon(CanvasURLImage):
 
 class SelfStock(Stock):
     def __init__(self):
-        super(SelfStock,self).__init__("Self")
+        super(SelfStock,self).__init__("Self", None)
         
         spider = identity_spider.IdentitySpider()
         self._mugshot = mugshot.get_mugshot()
@@ -37,7 +37,7 @@ class SelfStock(Stock):
         self._namephoto_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
         
         self._photo = CanvasURLImage()
-        self._photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
+        #self._photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
             
         self._namephoto_box.append(self._photo)
         
@@ -47,6 +47,7 @@ class SelfStock(Stock):
         self._box.append(self._namephoto_box)
         
         self._whereim_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL, spacing=2)
+        self._whereim_box.set_property("padding-top", 4)
         
         self._box.append(self._whereim_box)
         

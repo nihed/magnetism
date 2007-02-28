@@ -2,7 +2,7 @@
 
 import os, sys, threading, getopt, logging
 
-import gobject, gtk, dbus, dbus.glib
+import gobject, gtk, pango, dbus, dbus.glib
 
 import hippo
 from big_widgets import Sidebar, CommandShell
@@ -11,6 +11,35 @@ import libbig
 
 import stocks, stocks.self_stock, stocks.people_stock
 
+class Exchange(hippo.CanvasBox):
+    """A container for stocks."""
+    
+    def __init__(self, stock):
+        hippo.CanvasBox.__init__(self,  
+                                 spacing=4, 
+                                 padding_left=4,
+                                 padding_top=6,
+                                 orientation=hippo.ORIENTATION_VERTICAL)
+        self._stock = stock
+        if not stock.get_ticker() is None:
+            text = stock.get_ticker() + "                  "
+            self._ticker_text = hippo.CanvasText(text=text, font="14px", xalign=hippo.ALIGNMENT_START)
+            attrs = pango.AttrList()
+            attrs.insert(pango.AttrUnderline(pango.UNDERLINE_SINGLE, 0, 32767))
+            self._ticker_text.set_property("attributes", attrs)
+            self.append(self._ticker_text)
+        self._stockbox = hippo.CanvasBox()
+        self.append(self._stockbox)
+        # wait to append until set_size is called
+    
+    def get_stock(self):
+        return self._stock
+    
+    def set_size(self, size):
+        self._stockbox.remove_all()
+        self._stock.set_size(size)
+        self._stockbox.append(self._stock.get_content(size))
+
 class BigBoardPanel(object):
     def __init__(self):
         self._dw = Sidebar(True)
@@ -18,6 +47,7 @@ class BigBoardPanel(object):
         self._size = Stock.SIZE_BULL
 
         self._stocks = [stocks.self_stock.SelfStock(), stocks.people_stock.PeopleStock()]
+        self._exchanges = []
 
         self._canvas = hippo.Canvas()
         self._dw.get_content().add(self._canvas)
@@ -28,8 +58,7 @@ class BigBoardPanel(object):
      
         self._header_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
      
-        self._title = hippo.CanvasText()
-        self._title.set_property("text", "My Fedora")
+        self._title = hippo.CanvasText(text="My Fedora", font="Bold 12px")
      
         self._header_box.append(self._title)
         
@@ -43,10 +72,19 @@ class BigBoardPanel(object):
         self._stocks_box = hippo.CanvasBox()
         
         self._main_box.append(self._stocks_box)
+        
+        for stock in self._stocks:
+            self.list(stock)        
   
         self._sync_size()
   
         self._canvas.show()
+        
+    def list(self, stock):
+        container = Exchange(stock)
+        self._stocks_box.append(container)
+        container.set_size(self._size)
+        self._exchanges.append(container)
         
     def _toggle_size(self):
         if self._size == Stock.SIZE_BULL:
@@ -64,10 +102,8 @@ class BigBoardPanel(object):
             self._size_button.set_property("text", u"\u00ab small")
             self._canvas.set_size_request(210, 42)             
             
-        self._stocks_box.remove_all()
-        for stock in self._stocks:
-            stock.set_size(self._size)            
-            self._stocks_box.append(stock.get_content(self._size))    
+        for exchange in self._exchanges:
+            exchange.set_size(self._size)
         
         self._dw.queue_resize()  
         # TODO - this is kind of gross; we need the strut change to happen after
