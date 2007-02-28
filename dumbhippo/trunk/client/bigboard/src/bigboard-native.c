@@ -8,7 +8,7 @@
 
 #include <glib.h>
 
-static PyObject *logging_cb;
+static PyObject *logging_cb = NULL;
 
 static gboolean initialized_loghandler = FALSE;
 static void 
@@ -17,9 +17,13 @@ log_handler(const char    *log_domain,
             const char    *message,
             void          *user_data)
 {
-    PyObject *arglist;
+    PyObject *arglist = NULL;
     PyObject *result;
-    arglist = Py_BuildValue("(sus)", log_domain, log_level, message);
+    
+    if (!initialized_loghandler)
+        return;
+    
+    arglist = Py_BuildValue("(sis)", log_domain, log_level, message);
     result = PyEval_CallObject(logging_cb, arglist);
     Py_DECREF(arglist);
     if (result == NULL)
