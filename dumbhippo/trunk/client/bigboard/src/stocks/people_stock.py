@@ -31,5 +31,5 @@ class PeopleStock(bigboard.Stock):
         logging.debug("self (%s) changed" % (myself.get_guid(),))
         self._name.set_property("text", myself.get_name())
     
-    def _handle_entity_added(self, entity):
+    def _handle_entity_added(self, mugshot, entity):
         logging.debug("entity added to people stock %s" % (entity.get_name()))
