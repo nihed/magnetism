@@ -184,7 +184,7 @@ public class PersonViewerBean implements PersonViewer {
 						((UserViewpoint) viewpoint).getViewer(), pv.getUser());
 			}
 
-			pv.setIsContactOfViewer(isContact);
+			pv.setContactOfViewer(isContact);
 			break;
 		}
 	}
