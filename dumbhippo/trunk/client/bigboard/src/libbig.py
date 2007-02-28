@@ -18,6 +18,12 @@ def get_bigboard_config_file(name):
     except OSError, e:
         pass
     return os.path.join(basepath, name)
+
+def get_attr_or_none(dict, attr):
+    if dict.has_key(attr):
+        return dict[attr]
+    else:
+        return None
     
 class AutoStruct:
     def __init__(self, **kwargs):    
@@ -27,7 +33,7 @@ class AutoStruct:
     def __getattr__(self, name):
         if name[0:4] == 'get_':
             attr = name[4:] # skip over get_
-            return lambda: self._struct_values[attr]
+            return lambda: get_attr_or_none(self._struct_values, attr)
         return None
     
     def _get_keys(self):
