@@ -17,14 +17,17 @@ class CanvasURLImage(hippo.CanvasImage):
             self.set_url(url)
         
     def set_url(self, url):
-        image_cache = URLImageCache.getInstance()
-        image_cache.get(url, self._handle_image_load, self._handle_image_error)
+        if url:
+            image_cache = URLImageCache.getInstance()
+            image_cache.get(url, self._handle_image_load, self._handle_image_error)
+        else:
+            self.set_property("image", None)
         
     def _handle_image_load(self, url, image):
         self.set_property("image", image)
         
     def _handle_image_error(self, url, exc):
-        logging.exception("failed to load image for '%s'", exc)  #FIXME queue retry
+        logging.exception("failed to load image " + str(url) + ": '%s'", exc)  #FIXME queue retry
 
 class Sidebar(DockWindow):
     __gsignals__ = {

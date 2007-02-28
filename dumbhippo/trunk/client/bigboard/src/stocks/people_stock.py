@@ -25,8 +25,9 @@ class EntityItem(hippo.CanvasBox):
     def _update(self):
         if not self._entity:
             return
-        self._photo.set_url(self._entity.get_photo_url())
         self._name.set_property("text", self._entity.get_name())
+        if self._entity.get_photo_url():
+            self._photo.set_url(self._entity.get_photo_url())
 
 class PeopleStock(bigboard.Stock):
     def __init__(self):
