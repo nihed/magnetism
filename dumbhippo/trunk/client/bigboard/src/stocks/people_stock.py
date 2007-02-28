@@ -11,18 +11,14 @@ class EntityItem(hippo.CanvasBox):
         
         self._entity = None
 
-        self._photo = CanvasURLImage()
-        self._photo.set_property('scale-width', 30)
-        self._photo.set_property('scale-height', 30)
-        self._photo.set_property('xalign', hippo.ALIGNMENT_START)
-        self._photo.set_property('yalign', hippo.ALIGNMENT_START)
-        self._photo.set_property('border', 1)
-        self._photo.set_property('border-color', 0x000000ff)
+        self._photo = CanvasURLImage(scale_width=30,
+                                     scale_height=30,
+                                     border=1,
+                                     border_color=0x000000ff)
         self.append(self._photo)
 
-        self._name = hippo.CanvasText()
-        self._name.set_property('xalign', hippo.ALIGNMENT_START)
-        self._name.set_property('yalign', hippo.ALIGNMENT_START)
+        self._name = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START,
+                                      size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         self.append(self._name)
         
     def set_entity(self, entity):
@@ -50,9 +46,7 @@ class PeopleStock(bigboard.Stock):
         self._mugshot.get_self()
         self._mugshot.get_network()
         
-        self._box = hippo.CanvasBox()
-        self._box.set_property("orientation", hippo.ORIENTATION_VERTICAL)
-        self._box.set_property('spacing', 3)
+        self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
         
     def get_content(self, size):
         return self._box
