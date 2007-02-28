@@ -1,3 +1,4 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -17,6 +18,9 @@ void pyhippo_add_constants(PyObject *module, const gchar *strip_prefix);
 
 extern PyMethodDef pyhippo_functions[];
 
+/* this is analogous to what pygtk does for GtkObject, GtkWindow, etc.
+ * but it just has to be a bug in pygtk that it works this way.
+ */
 static void
 sink_hippocanvasbox(GObject *object)
 {
@@ -35,8 +39,8 @@ _cairo_surface_from_gvalue(const GValue *value)
 static int
 _cairo_surface_to_gvalue(GValue *value, PyObject *obj)
 {
-    //if (!(PyObject_IsInstance(obj, (PyObject *) &PycairoSurface_Type)))
-    //    return -1;
+    if (!(PyObject_TypeCheck(obj, &PycairoSurface_Type)))
+        return -1;
 
     g_value_set_boxed(value, ((PycairoSurface*)(obj))->surface);
     return 0;
