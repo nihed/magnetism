@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -623,8 +624,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		for (String id : TypeUtils.castList(String.class, q.getResultList()))
 			blockIds.add(id);
 		
-		Thread t = ThreadUtils.newDaemonThread("refresh deleted", new Runnable() {
-			public void run() {
+		Thread t = ThreadUtils.newDaemonThread("refresh deleted", new Callable<Object>() {
+			public Object call() {
 				int i = 0;
 				int failures = 0;
 				for (final String id : blockIds) {
@@ -653,6 +654,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				}
 				
 				logger.debug("Completed refreshing deleted flags on all blocks, {} failures", failures);
+				return null;
 			}
 		});
 		t.start();

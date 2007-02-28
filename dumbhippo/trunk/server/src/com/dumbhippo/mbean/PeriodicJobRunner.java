@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.Callable;
 
 import org.jboss.system.ServiceMBeanSupport;
 import org.slf4j.Logger;
@@ -85,7 +86,7 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 		jobs.get(klass).poke();
 	}
 
-	private static class PeriodicJobRunnable implements Runnable {
+	private static class PeriodicJobRunnable implements Callable<Object> {
 		private int generation;
 		private boolean poked;
 		private PeriodicJob job;
@@ -152,7 +153,7 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 			return false; // shut down
 		}
 		
-		public void run() {
+		public Object call() {
 			logger.info("Starting periodic update thread for '{}' with interval {} minutes",
 					job.getName(), job.getFrequencyInMilliseconds() / 1000.0 / 60.0);
 			while (runOneGeneration()) {
@@ -166,6 +167,7 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 					break;
 				}
 			}
+			return null;
 		}	
 	}
 }
