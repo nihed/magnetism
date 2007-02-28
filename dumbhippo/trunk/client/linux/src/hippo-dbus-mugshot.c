@@ -34,7 +34,7 @@ append_strings_as_dict(DBusMessageIter *iter,
     while ((name = va_arg(args, const char*)) != NULL) {
         DBusMessageIter subsubiter;
         const char *value = va_arg(args, const char*);
-        if (value) {
+        if (value) { /* skip pairs with a null value */
             dbus_message_iter_open_container(&subiter, DBUS_TYPE_DICT_ENTRY, NULL, &subsubiter);
             dbus_message_iter_append_basic(&subsubiter, DBUS_TYPE_STRING, &name);
             dbus_message_iter_append_basic(&subsubiter, DBUS_TYPE_STRING, &value);
@@ -65,9 +65,10 @@ append_entity(HippoDBus         *dbus,
     home_url = hippo_entity_get_home_url(entity);
     photo_url = hippo_entity_get_photo_url(entity);
 
-    abs_home_url = hippo_connection_make_absolute_url(connection, home_url);
-    abs_photo_url = hippo_connection_make_absolute_url(connection, photo_url);
+    abs_home_url = home_url ? hippo_connection_make_absolute_url(connection, home_url) : NULL;
+    abs_photo_url = abs_photo_url ? hippo_connection_make_absolute_url(connection, photo_url) : NULL;
 
+    /* append_strings_as_dict will skip pairs with null value */
     dbus_message_iter_init_append(message, &iter);
     append_strings_as_dict(&iter, "guid", guid, "name", name, "home-url", abs_home_url, "photo-url", abs_photo_url, NULL);
 
