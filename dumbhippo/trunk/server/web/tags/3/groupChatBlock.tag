@@ -10,7 +10,7 @@
 <%@ attribute name="oneLine" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="chatHeader" required="true" type="java.lang.Boolean" %>
 
-<c:set var="cssClass" value="dh-box-${chatHeader ? grey : orange}-${offset ? 2 : 1}"/>
+<c:set var="cssClass" value="dh-box-${chatHeader ? 'grey' : 'orange'}${offset ? 2 : 1}"/>
 
 <dht3:blockContainer cssClass="${cssClass}" blockId="${blockId}" expandable="${!oneLine && !chatHeader}">
 	<dht3:blockLeft block="${block}" chatHeader="${chatHeader}">
