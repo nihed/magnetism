@@ -1,5 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-canvas-internal.h"
+#include "hippo-canvas-util.h"
 #include <string.h>
 #include <cairo.h>
 #include "hippo-canvas-image.h"
@@ -84,9 +85,10 @@ hippo_canvas_image_class_init(HippoCanvasImageClass *klass)
     
     g_object_class_install_property(object_class,
                                     PROP_IMAGE,
-                                    g_param_spec_pointer("image",
+                                    g_param_spec_boxed("image",
                                                          _("Image"),
                                                          _("Image as cairo_surface_t"),
+                                                         HIPPO_TYPE_CAIRO_SURFACE,
                                                          G_PARAM_READABLE | G_PARAM_WRITABLE));
 
     g_object_class_install_property(object_class,
@@ -206,7 +208,7 @@ hippo_canvas_image_set_property(GObject         *object,
     switch (prop_id) {
     case PROP_IMAGE:
         {
-            cairo_surface_t *surface = g_value_get_pointer(value);
+            cairo_surface_t *surface = g_value_get_boxed(value);
 
             if (image->image_name) {
                 g_free(image->image_name);
@@ -270,7 +272,7 @@ hippo_canvas_image_get_property(GObject         *object,
 
     switch (prop_id) {
     case PROP_IMAGE:
-        g_value_set_pointer(value, image->surface);
+        g_value_set_boxed(value, image->surface);
         break;
     case PROP_IMAGE_NAME:
         g_value_set_string(value, image->image_name);

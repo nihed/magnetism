@@ -142,6 +142,8 @@ CANVAS_SRCDIR_FILES = 					\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-style.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-test.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-text.c		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-util.c		\
+        $(CANVASSRCDIR)/hippo/hippo-canvas-util.h		\
 	$(CANVASSRCDIR)/hippo/hippo-event.c			\
 	$(CANVASSRCDIR)/hippo/hippo-graphics.c
 
