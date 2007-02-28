@@ -11,6 +11,9 @@ import libbig
 
 import stocks, stocks.self_stock, stocks.people_stock
 
+SIZE_BULL_PX = 210
+SIZE_BEAR_PX = 65
+
 class Exchange(hippo.CanvasBox):
     """A container for stocks."""
     
@@ -62,7 +65,7 @@ class BigBoardPanel(object):
      
         self._header_box.append(self._title)
         
-        self._size_button = hippo.CanvasLink(xalign=hippo.ALIGNMENT_END)
+        self._size_button = hippo.CanvasLink(xalign=hippo.ALIGNMENT_CENTER)
         self._size_button.connect("button-press-event", lambda text, event: self._toggle_size())
         
         self._header_box.append(self._size_button, hippo.PACK_END)
@@ -96,11 +99,15 @@ class BigBoardPanel(object):
     def _sync_size(self):       
         self._header_box.set_child_visible(self._title, self._size == Stock.SIZE_BULL)
         if self._size == Stock.SIZE_BEAR:
+            self._header_box.remove(self._size_button)
+            self._header_box.append(self._size_button, hippo.PACK_EXPAND)
             self._size_button.set_property("text", u"\u00bb large")
-            self._canvas.set_size_request(55, 42)             
+            self._canvas.set_size_request(SIZE_BEAR_PX, 42)             
         else:
-            self._size_button.set_property("text", u"\u00ab small")
-            self._canvas.set_size_request(210, 42)             
+            self._header_box.remove(self._size_button)
+            self._header_box.append(self._size_button, hippo.PACK_END)            
+            self._size_button.set_property("text", u"\u00ab small")        
+            self._canvas.set_size_request(SIZE_BULL_PX, 42)             
             
         for exchange in self._exchanges:
             exchange.set_size(self._size)
