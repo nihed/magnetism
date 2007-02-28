@@ -26,16 +26,14 @@ class BigBoardPanel(object):
         self._main_box = hippo.CanvasBox()
         self._canvas.set_root(self._main_box)
      
-        self._header_box = hippo.CanvasBox()
-        self._header_box.set_property("orientation", hippo.ORIENTATION_HORIZONTAL)
+        self._header_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
      
         self._title = hippo.CanvasText()
         self._title.set_property("text", "My Fedora")
      
         self._header_box.append(self._title)
         
-        self._size_button = hippo.CanvasLink()
-        self._size_button.set_property("xalign", hippo.ALIGNMENT_END)
+        self._size_button = hippo.CanvasLink(xalign=hippo.ALIGNMENT_END)
         self._size_button.connect("button-press-event", lambda text, event: self._toggle_size())
         
         self._header_box.append(self._size_button, hippo.PACK_END)
@@ -60,10 +58,10 @@ class BigBoardPanel(object):
     def _sync_size(self):       
         self._header_box.set_child_visible(self._title, self._size == Stock.SIZE_BULL)
         if self._size == Stock.SIZE_BEAR:
-            self._size_button.set_property("text", ">> large")
+            self._size_button.set_property("text", u"\u00bb large")
             self._canvas.set_size_request(55, 42)             
         else:
-            self._size_button.set_property("text", "<< small")
+            self._size_button.set_property("text", u"\u00ab small")
             self._canvas.set_size_request(210, 42)             
             
         self._stocks_box.remove_all()

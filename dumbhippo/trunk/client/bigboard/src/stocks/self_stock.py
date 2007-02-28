@@ -13,6 +13,10 @@ class ExternalAccountIcon(CanvasURLImage):
         
     def set_acct(self, acct):
         self._acct = acct
+        self._acct.connect("changed", self._sync)
+        self._sync()
+        
+    def _sync(self):
         self.set_url(self._acct.get_icon_url())
 
 class SelfStock(Stock):
@@ -26,27 +30,23 @@ class SelfStock(Stock):
         
         self._mugshot.get_self()
         
-        self._mugshot.connect('whereim-changed', self._handle_whereim_changed)
+        self._mugshot.connect('whereim-added', self._handle_whereim_added)
         
-        self._box = hippo.CanvasBox()
-        self._box.set_property("orientation", hippo.ORIENTATION_VERTICAL)        
+        self._box = hippo.CanvasBox()    
         
-        self._namephoto_box = hippo.CanvasBox()
-        self._namephoto_box.set_property("orientation", hippo.ORIENTATION_HORIZONTAL)
+        self._namephoto_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
         
-        self._photo = CanvasURLImage()          
+        self._photo = CanvasURLImage()
         self._photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
             
         self._namephoto_box.append(self._photo)
         
-        self._name = hippo.CanvasText()
-        self._name.set_property("text", spider.get_self_name())
+        self._name = hippo.CanvasText(text=spider.get_self_name())
         self.append_bull(self._namephoto_box, self._name)        
         
         self._box.append(self._namephoto_box)
         
-        self._whereim_box = hippo.CanvasBox()
-        self._whereim_box.set_property("orientation", hippo.ORIENTATION_HORIZONTAL)
+        self._whereim_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL, spacing=2)
         
         self._box.append(self._whereim_box)
         
@@ -65,12 +65,9 @@ class SelfStock(Stock):
         self._photo.set_url(myself.get_photo_url())
         self._name.set_property("text", myself.get_name())
     
-    def _handle_whereim_changed(self, mugshot, acct):
+    def _handle_whereim_added(self, mugshot, acct):
         name = acct.get_name()
-        if not self._whereim.has_key(name):
-            self._whereim[name] = ExternalAccountIcon(acct)
-            logging.debug("appending external account %s" % (name,))
-            self._whereim_box.append(self._whereim[name])
-        else:
-            self._whereim[name].set_acct(acct)
+        self._whereim[name] = ExternalAccountIcon(acct)
+        logging.debug("appending external account %s" % (name,))
+        self._whereim_box.append(self._whereim[name])
 

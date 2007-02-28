@@ -10,24 +10,20 @@ import libbig
 
 class CanvasURLImage(hippo.CanvasImage):
     def __init__(self, url=None):
-        hippo.CanvasImage.__init__(self)
-        self.set_property("xalign", hippo.ALIGNMENT_START)
-        self.set_property("yalign", hippo.ALIGNMENT_START)        
-        if not url is None:
-            self.set_url(url)
+        hippo.CanvasImage.__init__(self, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START) 
+        self.set_url(url)
         
     def set_url(self, url):
         if url:
             image_cache = URLImageCache.getInstance()
             image_cache.get(url, self._handle_image_load, self._handle_image_error)
-        else:
-            self.set_property("image", None)
-        
+
     def _handle_image_load(self, url, image):
         self.set_property("image", image)
         
     def _handle_image_error(self, url, exc):
-        logging.exception("failed to load image " + str(url) + ": '%s'", exc)  #FIXME queue retry
+        # note exception is automatically added to log
+        logging.exception("failed to load image for '%s'", url)  #FIXME queue retry
 
 class Sidebar(DockWindow):
     __gsignals__ = {
