@@ -139,7 +139,7 @@ def main(args):
     def logger(domain, priority, msg):
         print msg
 
-    libbig.set_log_handler(logger)    
+    #libbig.set_log_handler(logger)    
     
     gtk.gdk.threads_init()
     dbus.glib.threads_init()    
