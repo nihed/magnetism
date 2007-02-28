@@ -55,6 +55,7 @@ append_entity(HippoDBus         *dbus,
     const char *name;
     const char *home_url;
     const char *photo_url;
+    const char *type;
     char *abs_home_url;
     char *abs_photo_url;
 
@@ -65,12 +66,28 @@ append_entity(HippoDBus         *dbus,
     home_url = hippo_entity_get_home_url(entity);
     photo_url = hippo_entity_get_photo_url(entity);
 
+    type = NULL;
+    switch (hippo_entity_get_entity_type(entity)) {
+    case HIPPO_ENTITY_PERSON:
+        type = "person";
+        break;
+    case HIPPO_ENTITY_GROUP:
+        type = "group";
+        break;
+    case HIPPO_ENTITY_RESOURCE:
+        type = "resource";
+        break;
+    case HIPPO_ENTITY_FEED:
+        type = "feed";
+        break;
+    }
+    
     abs_home_url = home_url ? hippo_connection_make_absolute_url(connection, home_url) : NULL;
     abs_photo_url = photo_url ? hippo_connection_make_absolute_url(connection, photo_url) : NULL;
 
     /* append_strings_as_dict will skip pairs with null value */
     dbus_message_iter_init_append(message, &iter);
-    append_strings_as_dict(&iter, "guid", guid, "name", name, "home-url", abs_home_url, "photo-url", abs_photo_url, NULL);
+    append_strings_as_dict(&iter, "guid", guid, "type", type, "name", name, "home-url", abs_home_url, "photo-url", abs_photo_url, NULL);
 
     g_free(abs_home_url);
     g_free(abs_photo_url);
@@ -129,7 +146,8 @@ signal_entity_changed(gpointer entity_ptr, gpointer data)
     HippoDBus *dbus = HIPPO_DBUS(data);
     HippoEntity *entity = (HippoEntity*) entity_ptr;
 
-    hippo_dbus_notify_entity_changed(dbus, entity);
+    if (hippo_entity_get_in_network(entity))
+        hippo_dbus_notify_entity_changed(dbus, entity);
 }
 
 DBusMessage*

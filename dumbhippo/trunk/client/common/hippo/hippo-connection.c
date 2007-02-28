@@ -1465,6 +1465,8 @@ on_contacts_reply(LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
+    g_debug("got contacts reply");
+    
     for (subchild = child->children; subchild; subchild = subchild->next) {
         if (!hippo_connection_parse_entity(connection, subchild)) {
             g_warning("failed to parse entity in on_contacts_reply");
@@ -1484,6 +1486,8 @@ hippo_connection_request_contacts(HippoConnection *connection)
     
     g_return_if_fail(HIPPO_IS_CONNECTION(connection));
 
+    g_debug("requesting contacts");
+    
     message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
     node = lm_message_get_node(message);
@@ -2302,9 +2306,9 @@ hippo_connection_parse_entity(HippoConnection *connection,
     }
     hippo_entity_set_photo_url(entity, photo_url);
 
-    /* old servers don't supply is_contact */
-    if (is_contact && strcmp(is_contact, "true") == 0)
-        hippo_entity_set_in_network(entity, TRUE);
+    /* old servers don't supply is_contact; even newer servers don't always supply it (only if they asked for the 'PersonViewExtra') */
+    if (is_contact)
+        hippo_entity_set_in_network(entity, strcmp(is_contact, "true") == 0);
         
     if (created_entity) {
         hippo_data_cache_add_entity(connection->cache, entity);
