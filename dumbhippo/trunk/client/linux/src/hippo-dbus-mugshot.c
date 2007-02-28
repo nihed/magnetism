@@ -66,7 +66,7 @@ append_entity(HippoDBus         *dbus,
     photo_url = hippo_entity_get_photo_url(entity);
 
     abs_home_url = home_url ? hippo_connection_make_absolute_url(connection, home_url) : NULL;
-    abs_photo_url = abs_photo_url ? hippo_connection_make_absolute_url(connection, photo_url) : NULL;
+    abs_photo_url = photo_url ? hippo_connection_make_absolute_url(connection, photo_url) : NULL;
 
     /* append_strings_as_dict will skip pairs with null value */
     dbus_message_iter_init_append(message, &iter);
