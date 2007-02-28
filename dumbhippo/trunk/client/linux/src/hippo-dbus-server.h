@@ -33,6 +33,9 @@ void       hippo_dbus_notify_whereim_changed   (HippoDBus               *dbus,
                                                 HippoConnection         *xmpp_connection,
                                                 HippoExternalAccount    *acct);                                                
 
+void       hippo_dbus_notify_entity_changed    (HippoDBus               *dbus,
+                                                HippoEntity             *entity);
+
 typedef void (*HippoChatWindowForeach)(guint64 window_id, HippoChatState state, void *data);
 
 void hippo_dbus_foreach_chat_window(HippoDBus             *dbus,

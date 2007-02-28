@@ -1638,8 +1638,18 @@ hippo_dbus_notify_whereim_changed(HippoDBus               *dbus,
                                   HippoConnection         *xmpp_connection,
                                   HippoExternalAccount    *acct)
 {
-	DBusMessage *signal;
-	signal = hippo_dbus_mugshot_signal_whereim_changed(dbus, xmpp_connection, acct);
-	dbus_connection_send(dbus->connection, signal, NULL);
-	dbus_message_unref(signal);
+    DBusMessage *signal;
+    signal = hippo_dbus_mugshot_signal_whereim_changed(dbus, xmpp_connection, acct);
+    dbus_connection_send(dbus->connection, signal, NULL);
+    dbus_message_unref(signal);
+}
+
+void       
+hippo_dbus_notify_entity_changed(HippoDBus               *dbus,
+                                 HippoEntity             *entity)
+{
+    DBusMessage *signal;
+    signal = hippo_dbus_mugshot_signal_entity_changed(dbus, entity);
+    dbus_connection_send(dbus->connection, signal, NULL);
+    dbus_message_unref(signal);
 }
