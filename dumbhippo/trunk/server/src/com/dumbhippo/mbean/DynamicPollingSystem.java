@@ -416,7 +416,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		taskPersistenceWorker.addObsoleteTasks(tasks);
 	}
 	
-	private class TaskSet implements Runnable {
+	private class TaskSet implements Callable<Object> {
 		private static final long BUCKET_SPACING_SECONDS = 60 * 4; // 4 minutes
 		
 		// These fields are immutable
@@ -603,7 +603,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			return true;
 		}
 		
-		public void run() {
+		public Object call() {
 			// Wait 1 minute after server startup before beginning dynamic polling
 			long currentTimeout = 1 * 60 * 1000;
 			int currentBucket = 0;
@@ -629,6 +629,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 				currentTimeout = Math.min(timeout, BUCKET_SPACING_SECONDS*1000);
 				currentBucket = (currentBucket + 1) % bucketCount;
 			}
+			return null;
 		}
 		
 		public void addTasks(Set<PollingTask> task) {
@@ -646,7 +647,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		}
 	}
 	
-	private class TaskPersistenceWorker implements Runnable {
+	private class TaskPersistenceWorker implements Callable<Object> {
 		
 		// Load every 5 seconds, save every minute
 		private static final long LOAD_PERIODICITY_MS = 5 * 1000;
@@ -663,13 +664,13 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			}
 		}
 		
-		public void run() {
+		public Object call() {
 			
 			// Wait a minute after startup to check for tasks
 			try {
 				Thread.sleep(1 * 60 * 1000);
 			} catch (InterruptedException e) {
-				return;
+				return null;
 			}
 			
 			while (true) {
@@ -709,6 +710,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 						logger.debug("new: " + totalLoaded);
 				}
 			}
+			return null;
 		}		
 	}
 	
