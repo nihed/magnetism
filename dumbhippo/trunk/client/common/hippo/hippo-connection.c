@@ -230,6 +230,9 @@ enum {
     SETTING_CHANGED,
     SETTINGS_LOADED,
     WHEREIM_CHANGED,
+    /* Emitted to signal that we should temporarily rapidly upload application
+     * activity instead of just once an hour */
+    INITIAL_APPLICATION_BURST,
     LAST_SIGNAL
 };
 
@@ -374,6 +377,15 @@ hippo_connection_class_init(HippoConnectionClass *klass)
                       NULL, NULL,
                       g_cclosure_marshal_VOID__OBJECT,
                       G_TYPE_NONE, 1, G_TYPE_OBJECT);                      
+    
+    signals[INITIAL_APPLICATION_BURST] =
+        g_signal_new ("initial-application-burst",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);                      
     
     object_class->finalize = hippo_connection_finalize;
 }
@@ -3056,11 +3068,11 @@ hippo_connection_parse_whereim_node(HippoConnection *connection,
         
         acct = hippo_external_account_new_from_xml(connection->cache, child);
 
-                if (acct) {
-                g_signal_emit(G_OBJECT(connection), signals[WHEREIM_CHANGED], 0, acct);
-        
-                g_object_unref(acct);
-                }
+        if (acct) {
+            g_signal_emit(G_OBJECT(connection), signals[WHEREIM_CHANGED], 0, acct);
+                
+            g_object_unref(acct);
+        }
     }
 }
 
@@ -3728,6 +3740,25 @@ handle_group_membership_change(HippoConnection *connection,
     return TRUE;
 }
 
+static gboolean
+handle_initial_application_burst(HippoConnection *connection,
+                                 LmMessage       *message)
+{
+    LmMessageNode *child;
+    
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
+        return FALSE;
+
+    child = find_child_node(message->node, "http://dumbhippo.com/protocol/applications", "initialApplicationBurst");
+    if (child == NULL)
+        return FALSE;
+    g_debug("received a message to turn on initial application burst upload");
+
+    g_signal_emit(connection, signals[INITIAL_APPLICATION_BURST], 0);
+
+    return TRUE;
+}
+
 static LmHandlerResult 
 handle_stream_error (LmMessageHandler *handler,
                      LmConnection     *lconnection,
@@ -3807,6 +3838,10 @@ handle_message (LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
     
+    if (handle_initial_application_burst(connection, message)) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
     /* Messages used to be HEADLINE, we accept both for compatibility */
     if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NORMAL
         /* Shouldn't need this, default should be normal */
