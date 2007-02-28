@@ -18,6 +18,7 @@ import com.dumbhippo.server.ViewStreamBuilder;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.ObjectView;
 import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.ViewStream;
 
@@ -51,7 +52,7 @@ public class ContactsIQHandler extends AnnotatedIQHandler {
 				0, -1);
 		// Add the user themself to the list of returned contacts (whether or not the
 		// viewer is in their own contact list getContacts() strips it out.)
-		persons.add(personViewer.getPersonView(viewpoint, viewpoint.getViewer()));
+		persons.add(personViewer.getPersonView(viewpoint, viewpoint.getViewer(), PersonViewExtra.CONTACT_STATUS));
 		
 		ViewStream stream = viewStreamBuilder.buildStream(viewpoint, TypeUtils.castList(ObjectView.class, persons));
 		
