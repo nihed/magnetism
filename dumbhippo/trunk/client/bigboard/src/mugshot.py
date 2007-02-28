@@ -4,16 +4,8 @@ import gobject, dbus
 
 import libbig
 
-class ExternalAccount:
-    def __init__(self, name, icon_url):        
-        self._name = name
-        self._icon_url = icon_url
-        
-    def get_name(self):
-        return self._name
-    
-    def get_icon_url(self):
-        return self._icon_url
+class ExternalAccount(libbig.AutoSignallingStruct):
+    pass
     
 class Entity(libbig.AutoSignallingStruct):
     pass
@@ -21,7 +13,7 @@ class Entity(libbig.AutoSignallingStruct):
 class Mugshot(gobject.GObject):
     __gsignals__ = {
         "self-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "whereim-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "whereim-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "entity-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
         }    
     
@@ -36,16 +28,19 @@ class Mugshot(gobject.GObject):
         self._mugshot = None
     
     def _whereimChanged(self, name, icon_url):
-        logging.debug("whereimChanged: %s" % (inspect.getargvalues(inspect.currentframe())[3],))
-        acct = ExternalAccount(name, icon_url)
+        logging.debug("whereimChanged: %s %s" % (name, icon_url))
         if self._whereim is None:
             self._whereim = {}
             self._network = {}
-        self._whereim[name] = acct
-        self.emit('whereim-changed', acct)
+        attrs = {'name': name, 'icon_url': icon_url}
+        if not self._whereim.has_key(name):
+            self._whereim[name] = ExternalAccount(**attrs)
+            self.emit('whereim-added', self._whereim[name])     
+        else:
+            self._whereim[name].update(**attrs)
         
     def _entityChanged(self, attrs):
-        logging.debug("entityChanged: %s" % (inspect.getargvalues(inspect.currentframe())[3],))
+        logging.debug("entityChanged: %s" % (attrs,))
         if self._network is None:
             self._network = {}
 
