@@ -87,9 +87,13 @@ class URLImageCache(Singleton):
     def get(self, url, cb, errcb):
         if self._cache.has_key(url): # TODO expire
             return self._cache[url]
-        self._loads[url] = (cb, errcb)
-        logging.debug("adding url='%s' to pending loads (%d outstanding)" % (url, len(self._loads.keys())))        
-        self._fetcher.fetch(url, self._do_load, self._do_load_error)
+        cbdata = (cb, errcb)
+        if self._loads.has_key(url):
+            self._loads[url].append(cbdata)
+        else:
+            self._loads[url] = [cbdata]
+            logging.debug("adding url='%s' to pending loads (%d outstanding)" % (url, len(self._loads.keys())))        
+            self._fetcher.fetch(url, self._do_load, self._do_load_error)
         
     def _do_load(self, url, data):
         try:
@@ -103,12 +107,15 @@ class URLImageCache(Singleton):
             surface = hippo.cairo_surface_from_gdk_pixbuf(pixbuf)
             logging.debug("invoking callback for %s url='%s'" % (self, url))
             self._cache[url] = surface
-            self._loads[url][0](url, surface)
+            for cb, errcb in self._loads[url]:
+                cb(url, surface)
         except:
-            self._loads[url][1](url, sys.exc_info())
+            for cb, errcb in self._loads[url]:
+                errcb(url, sys.exc_info())
         del self._loads[url]            
         
     def _do_load_error(self, url, exc_info):
-        self._loads[url][1](url, exc_info)
+        for cb,errcb in self._loads[url]:
+            errcb(url, exc_info)
         del self._loads[url]        
  
