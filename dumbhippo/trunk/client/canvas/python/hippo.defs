@@ -50,9 +50,13 @@
   (parent "HippoCanvasBox")
   (c-name "HippoCanvasImage")
   (gtype-id "HIPPO_TYPE_CANVAS_IMAGE")
-  (fields 
-    '("object" "image")
-  )
+)
+
+(define-object CanvasImageButton
+  (in-module "Hippo")
+  (parent "HippoCanvasImage")
+  (c-name "HippoCanvasImageButton")
+  (gtype-id "HIPPO_TYPE_CANVAS_IMAGE_BUTTON")
 )
 
 (define-interface CanvasItem

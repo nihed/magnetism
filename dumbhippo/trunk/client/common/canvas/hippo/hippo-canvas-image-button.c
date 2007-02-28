@@ -2,6 +2,7 @@
 #include "hippo-canvas-internal.h"
 #include <string.h>
 #include "hippo-canvas-image-button.h"
+#include "hippo-canvas-util.h"
 
 static void      hippo_canvas_image_button_init                (HippoCanvasImageButton       *image);
 static void      hippo_canvas_image_button_class_init          (HippoCanvasImageButtonClass  *klass);
@@ -80,9 +81,10 @@ hippo_canvas_image_button_class_init(HippoCanvasImageButtonClass *klass)
     
     g_object_class_install_property(object_class,
                                     PROP_NORMAL_IMAGE,
-                                    g_param_spec_pointer("normal-image",
+                                    g_param_spec_boxed("normal-image",
                                                          _("Normal Image"),
                                                          _("normal image as cairo_surface_t"),
+                                                         HIPPO_TYPE_CAIRO_SURFACE,
                                                          G_PARAM_READABLE | G_PARAM_WRITABLE));
 
     g_object_class_install_property(object_class,
@@ -94,9 +96,10 @@ hippo_canvas_image_button_class_init(HippoCanvasImageButtonClass *klass)
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
     g_object_class_install_property(object_class,
                                     PROP_PRELIGHT_IMAGE,
-                                    g_param_spec_pointer("prelight-image",
+                                    g_param_spec_boxed("prelight-image",
                                                          _("Prelight Image"),
                                                          _("prelight image as cairo_surface_t"),
+                                                         HIPPO_TYPE_CAIRO_SURFACE,
                                                          G_PARAM_READABLE | G_PARAM_WRITABLE));
 
     g_object_class_install_property(object_class,
@@ -186,7 +189,7 @@ hippo_canvas_image_button_set_property(GObject         *object,
     switch (prop_id) {
     case PROP_NORMAL_IMAGE:
         {
-            cairo_surface_t *surface = g_value_get_pointer(value);
+            cairo_surface_t *surface = g_value_get_boxed(value);
             if (surface != button->normal_image) {
                 if (surface)
                     cairo_surface_reference(surface);
@@ -210,7 +213,7 @@ hippo_canvas_image_button_set_property(GObject         *object,
         break;
     case PROP_PRELIGHT_IMAGE:
         {
-            cairo_surface_t *surface = g_value_get_pointer(value);
+            cairo_surface_t *surface = g_value_get_boxed(value);
             if (surface != button->prelight_image) {
                 if (surface)
                     cairo_surface_reference(surface);
@@ -253,13 +256,13 @@ hippo_canvas_image_button_get_property(GObject         *object,
 
     switch (prop_id) {
     case PROP_NORMAL_IMAGE:
-        g_value_set_pointer(value, button->normal_image);
+        g_value_set_boxed(value, button->normal_image);
         break;
     case PROP_NORMAL_IMAGE_NAME:
         g_value_set_string(value, button->normal_image_name);
         break;
     case PROP_PRELIGHT_IMAGE:
-        g_value_set_pointer(value, button->prelight_image);
+        g_value_set_boxed(value, button->prelight_image);
         break;
     case PROP_PRELIGHT_IMAGE_NAME:
         g_value_set_string(value, button->prelight_image_name);
