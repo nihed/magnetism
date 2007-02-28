@@ -1,5 +1,5 @@
 Name:           mugshot
-Version:        1.1.34
+Version:        1.1.35
 Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
@@ -19,6 +19,7 @@ BuildRequires:  curl-devel >= 7.15
 BuildRequires:  GConf2-devel >= 2.8
 BuildRequires:  libXScrnSaver-devel
 BuildRequires:  libjpeg-devel >= 6b
+BuildRequires:  pcre-devel >= 6.3
 
 # Needed for fc6 and greater
 # BuildRequires: firefox-devel >= 1.5.04
@@ -181,6 +182,9 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
+* Wed Feb 28 2007 Owen Taylor <otaylor@redhat.com> - 1.1.35-1
+- 1.1.35
+
 * Fri Feb 16 2007 Owen Taylor <otaylor@redhat.com> - 1.1.34-1
 - 1.1.34
 
