@@ -8,12 +8,22 @@ from big_widgets import CanvasURLImage
 class EntityItem(hippo.CanvasBox):
     def __init__(self):
         hippo.CanvasBox.__init__(self)
+        self.set_property('orientation', hippo.ORIENTATION_HORIZONTAL)
+        
         self._entity = None
 
         self._photo = CanvasURLImage()
+        self._photo.set_property('scale-width', 30)
+        self._photo.set_property('scale-height', 30)
+        self._photo.set_property('xalign', hippo.ALIGNMENT_START)
+        self._photo.set_property('yalign', hippo.ALIGNMENT_START)
+        self._photo.set_property('border', 1)
+        self._photo.set_property('border-color', 0x000000ff)
         self.append(self._photo)
 
         self._name = hippo.CanvasText()
+        self._name.set_property('xalign', hippo.ALIGNMENT_START)
+        self._name.set_property('yalign', hippo.ALIGNMENT_START)
         self.append(self._name)
         
     def set_entity(self, entity):
@@ -42,7 +52,8 @@ class PeopleStock(bigboard.Stock):
         self._mugshot.get_network()
         
         self._box = hippo.CanvasBox()
-        self._box.set_property("orientation", hippo.ORIENTATION_VERTICAL)        
+        self._box.set_property("orientation", hippo.ORIENTATION_VERTICAL)
+        self._box.set_property('spacing', 3)
         
     def get_content(self, size):
         return self._box
