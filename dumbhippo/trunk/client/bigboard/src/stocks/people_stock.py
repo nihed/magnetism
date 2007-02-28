@@ -7,8 +7,7 @@ from big_widgets import CanvasURLImage
 
 class EntityItem(hippo.CanvasBox):
     def __init__(self):
-        hippo.CanvasBox.__init__(self)
-        self.set_property('orientation', hippo.ORIENTATION_HORIZONTAL)
+        hippo.CanvasBox.__init__(self, orientation=hippo.ORIENTATION_HORIZONTAL)
         
         self._entity = None
 
@@ -41,7 +40,7 @@ class EntityItem(hippo.CanvasBox):
 
 class PeopleStock(bigboard.Stock):
     def __init__(self):
-        super(PeopleStock, self).__init__("People")
+        super(PeopleStock, self).__init__("People", "People")
         
         self._mugshot = mugshot.get_mugshot()
 

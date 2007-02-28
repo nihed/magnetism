@@ -2,9 +2,16 @@ class Stock(object):
     SIZE_BEAR = 1
     SIZE_BULL = 2
     
-    def __init__(self, name):
-        self._stock_name = name
+    def __init__(self, id, ticker):
+        self._id = id
+        self._ticker = ticker
         self._bull_widgets = {}
+        
+    def get_id(self):
+        return self._id
+    
+    def get_ticker(self):
+        return self._ticker
 
     def append_bull(self, box, item):
         """Adds item to box, recording that this widget should
