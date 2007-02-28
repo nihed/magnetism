@@ -30,7 +30,7 @@ class EntityItem(hippo.CanvasBox):
 
 class PeopleStock(bigboard.Stock):
     def __init__(self):
-        bigboard.Stock.__init__(self, "People")
+        super(PeopleStock, self).__init__("People")
         
         self._mugshot = mugshot.get_mugshot()
 
@@ -43,7 +43,7 @@ class PeopleStock(bigboard.Stock):
         self._box = hippo.CanvasBox()
         self._box.set_property("orientation", hippo.ORIENTATION_VERTICAL)        
         
-    def get_content(self):
+    def get_content(self, size):
         return self._box
     
     def _handle_self_changed(self, mugshot, myself):

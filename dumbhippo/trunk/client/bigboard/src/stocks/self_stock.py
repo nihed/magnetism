@@ -2,7 +2,8 @@ import logging
 
 import hippo
 
-import bigboard, identity_spider, mugshot
+import identity_spider, mugshot
+from bigboard import Stock
 from big_widgets import CanvasURLImage
 
 class ExternalAccountIcon(CanvasURLImage):
@@ -14,9 +15,9 @@ class ExternalAccountIcon(CanvasURLImage):
         self._acct = acct
         self.set_url(self._acct.get_icon_url())
 
-class SelfStock(bigboard.Stock):
+class SelfStock(Stock):
     def __init__(self):
-        bigboard.Stock.__init__(self, "Self")
+        super(SelfStock,self).__init__("Self")
         
         spider = identity_spider.IdentitySpider()
         self._mugshot = mugshot.get_mugshot()
@@ -35,14 +36,12 @@ class SelfStock(bigboard.Stock):
         
         self._photo = CanvasURLImage()          
         self._photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
-        self._photo.set_property("xalign", hippo.ALIGNMENT_START)
-        self._photo.set_property("yalign", hippo.ALIGNMENT_START)
             
         self._namephoto_box.append(self._photo)
         
         self._name = hippo.CanvasText()
         self._name.set_property("text", spider.get_self_name())
-        self._namephoto_box.append(self._name)        
+        self.append_bull(self._namephoto_box, self._name)        
         
         self._box.append(self._namephoto_box)
         
@@ -55,8 +54,11 @@ class SelfStock(bigboard.Stock):
         
         self._mugshot.get_whereim()
         
-    def get_content(self):
+    def get_content(self, size):
         return self._box
+    
+    def set_size(self, size):
+        super(SelfStock, self).set_size(size)
     
     def _handle_self_changed(self, mugshot, myself):
         logging.debug("self (%s) changed" % (myself.get_guid(),))
@@ -71,4 +73,4 @@ class SelfStock(bigboard.Stock):
             self._whereim_box.append(self._whereim[name])
         else:
             self._whereim[name].set_acct(acct)
-        
+
