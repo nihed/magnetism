@@ -624,8 +624,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		for (String id : TypeUtils.castList(String.class, q.getResultList()))
 			blockIds.add(id);
 		
-		Thread t = ThreadUtils.newDaemonThread("refresh deleted", new Callable<Object>() {
-			public Object call() {
+		Thread t = ThreadUtils.newDaemonThread("refresh deleted", new ThreadUtils.DaemonRunnable() {
+			public void run() {
 				int i = 0;
 				int failures = 0;
 				for (final String id : blockIds) {
@@ -654,7 +654,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				}
 				
 				logger.debug("Completed refreshing deleted flags on all blocks, {} failures", failures);
-				return null;
 			}
 		});
 		t.start();
