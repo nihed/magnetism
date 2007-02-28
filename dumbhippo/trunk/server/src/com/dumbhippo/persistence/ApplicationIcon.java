@@ -5,7 +5,11 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 @Entity
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ApplicationIcon extends DBUnique {
 	private Application application;
 	private int size;

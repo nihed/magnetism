@@ -11,11 +11,12 @@ import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.applications.ApplicationSystem;
 import com.dumbhippo.server.applications.ApplicationView;
 import com.dumbhippo.server.applications.CategoryView;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.web.PagePositions;
 import com.dumbhippo.web.PagePositionsBean;
 import com.dumbhippo.web.WebEJBUtil;
 
-public class ApplicationsPage {
+public class ApplicationsPage extends AbstractSigninOptionalPage {
 	private ApplicationSystem applicationSystem;
 	
 	@PagePositions
@@ -23,16 +24,19 @@ public class ApplicationsPage {
 	
 	public List<CategoryInfo> categories;
 	public Pageable<ApplicationView> applications;
+	public Pageable<ApplicationView> myApplications;
 	private ApplicationCategory category;
 	
-	static final int APPLICATIONS_PER_PAGE = 10;
+	private static final int MY_APPLICATIONS_PER_PAGE = 5; 
+	private static final int APPLICATIONS_PER_PAGE = 10;
+
+	private static final int MINI_ICON_SIZE = 24;
+	private static final int ICON_SIZE = 48;
+	private static final int BAR_LENGTH = 80;
 	
-	static final int ICON_SIZE = 48;
-	static final int BAR_LENGTH = 80;
-	
-	static final RgbColor MIN_COLOR = new RgbColor(0xeb, 0xdc, 0xf3); 
-	static final RgbColor MAX_COLOR = new RgbColor(0xa4, 0x5a, 0xc6); 
-	
+	private static final RgbColor MIN_COLOR = new RgbColor(0xeb, 0xdc, 0xf3); 
+	private static final RgbColor MAX_COLOR = new RgbColor(0xa4, 0x5a, 0xc6);
+
 	public static class CategoryInfo {
 		private ApplicationCategory category;
 		private String color;
@@ -150,5 +154,18 @@ public class ApplicationsPage {
 		}
 		
 		return applications;
+	}
+	
+	public Pageable<ApplicationView> getMyApplications() {
+		if (!getSignin().isValid())
+			throw new RuntimeException(".myApplications accessed when not signed in");
+		
+		if (myApplications == null) {
+			myApplications = pagePositions.createPageable("myApplications", MY_APPLICATIONS_PER_PAGE);
+			myApplications.setSubsequentPerPage(MY_APPLICATIONS_PER_PAGE);
+			applicationSystem.pageMyApplications((UserViewpoint)getViewpoint(), getSince(), MINI_ICON_SIZE, null, myApplications);
+		}
+
+		return myApplications;
 	}
 }

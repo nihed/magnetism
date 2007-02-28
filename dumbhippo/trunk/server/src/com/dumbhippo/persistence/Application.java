@@ -14,6 +14,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.dumbhippo.server.util.EJBUtil;
 
 @Entity
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public class Application {
 	String id;
 	String name;

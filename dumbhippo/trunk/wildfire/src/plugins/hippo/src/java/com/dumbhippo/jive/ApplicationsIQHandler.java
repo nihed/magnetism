@@ -9,22 +9,32 @@ import javax.ejb.EJB;
 import org.dom4j.Document;
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.Message;
 
 import com.dumbhippo.jive.annotations.IQHandler;
 import com.dumbhippo.jive.annotations.IQMethod;
+import com.dumbhippo.live.LiveEventListener;
+import com.dumbhippo.live.LiveState;
+import com.dumbhippo.live.UserPrefChangedEvent;
 import com.dumbhippo.persistence.Application;
+import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.applications.ApplicationSystem;
 import com.dumbhippo.server.applications.ApplicationUsageProperties;
 import com.dumbhippo.server.views.UserViewpoint;
 
 @IQHandler(namespace=ApplicationsIQHandler.APPLICATIONS_NAMESPACE)
-public class ApplicationsIQHandler extends AnnotatedIQHandler {
+public class ApplicationsIQHandler extends AnnotatedIQHandler  implements LiveEventListener<UserPrefChangedEvent> {
 	static final String APPLICATIONS_NAMESPACE = "http://dumbhippo.com/protocol/applications"; 
 	
 	@EJB
 	private ApplicationSystem applicationSystem;
 
+	@EJB
+	private IdentitySpider identitySpider;
+	
 	public ApplicationsIQHandler() {
 		super("Hippo application usage IQ Handler");
 	}
@@ -67,5 +77,38 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler {
 		}
 		
 		reply.setChildElement(childElement);
+	}
+	
+
+	@Override
+	public void start() throws IllegalStateException {
+		super.start();
+		LiveState.addEventListener(UserPrefChangedEvent.class, this);		
+	}
+
+	@Override
+	public void stop() {
+		super.stop();
+		LiveState.removeEventListener(UserPrefChangedEvent.class, this);			
+	}	
+
+	public void onEvent(UserPrefChangedEvent event) {
+		if (event.getKey().equals("applicationUsageEnabled") && event.getValue().equals("true")) {
+			// When the user initially enables application tracking, we signal that user's
+			// clients that they should temporarily upload application information with
+			// high frequency, so the user gets immediate feedback about the way that
+			// application usage tracking works.
+			
+			User user = identitySpider.lookupUser(event.getUserId()); 
+
+			Message message = new Message();
+			message.setType(Message.Type.headline);
+			
+			Document document = DocumentFactory.getInstance().createDocument();
+			Element childElement = document.addElement("initialApplicationBurst", APPLICATIONS_NAMESPACE);
+
+			message.getElement().add(childElement);
+			MessageSender.getInstance().sendMessage(user.getGuid(), message);
+		}
 	}
 }

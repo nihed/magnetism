@@ -25,6 +25,7 @@ public interface ApplicationSystem {
 	
 	public void pagePopularApplications(Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable);
 	public void pageRelatedApplications(Application relatedTo, Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable);
+	public void pageMyApplications(UserViewpoint viewpoint, Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable);
 	
 	public List<CategoryView> getPopularCategories(Date since);
 	
