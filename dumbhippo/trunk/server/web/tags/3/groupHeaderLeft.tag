@@ -25,13 +25,17 @@
 				<div class="dh-person-header-next-to-image">
 					<span class="dh-person-header-name">
 						<c:choose>
-							<c:when test="${!empty anchor}">
-								<a href="${who.homeUrl}" name="${anchor}"><c:out value="${who.name}"/></a>
+							<c:when test="${!empty anchor && !disableLink}">
+								<a href="${who.homeUrl}" name="${anchor}">
 							</c:when>
-							<c:otherwise>
-								<a href="${who.homeUrl}"><c:out value="${who.name}"/></a>
-							</c:otherwise>
+							<c:when test="${!disableLink}">
+								<a href="${who.homeUrl}">
+							</c:when>
 						</c:choose>
+						<c:out value="${who.name}"/>
+						<c:if test="${!disableLink}">						
+						    </a>
+						</c:if>
 					</span>
 					<c:if test="${!embedVersion}">
 						<span class="dh-person-header-description">Group activity</span>
