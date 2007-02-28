@@ -101,17 +101,13 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 			this.poked = true;
 		}
 
-		private boolean runOneGeneration() {
+		private boolean runOneGeneration() throws InterruptedException {
 			int iteration = 0;
 			generation += 1;
 			boolean first = true;
 			try {
 				// We start off by sleeping for 1-3 minutes to reduce initial server load
-				try {
-					Thread.sleep(new Random().nextInt(2 * 60 * 1000) + 60 * 1000);
-				} catch (InterruptedException e) {				
-					return false;
-				}
+				Thread.sleep(new Random().nextInt(2 * 60 * 1000) + 60 * 1000);
 				
 				long lastUpdate = System.currentTimeMillis();
 				
@@ -137,11 +133,7 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 						}
 					}
 
-					try {
-						job.doIt(sleepTime, generation, iteration);
-					} catch (InterruptedException e) {
-						break;
-					}
+					job.doIt(sleepTime, generation, iteration);
 					
 					lastUpdate = System.currentTimeMillis();					
 				}
