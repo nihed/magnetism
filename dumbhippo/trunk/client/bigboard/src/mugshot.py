@@ -50,11 +50,13 @@ class Mugshot(gobject.GObject):
             self._network = {}
 
         ## python keywords have to be byte arrays (binary strings) not unicode strings
+        ## also over dbus we name the keys in the dict with hyphen, and the keywords
+        ## are with underscore
         kwattrs = {}
         for k in attrs.keys():
-            kwattrs[str(k)] = attrs[k]
+            kwattrs[str(k).replace('-','_')] = attrs[k]
         
-        guid = attrs['guid']
+        guid = kwattrs['guid']
         if not self._entities.has_key(guid):
             self._entities[guid] = Entity(**kwattrs)
             self.emit("entity-added", self._entities[guid])
