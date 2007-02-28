@@ -23,9 +23,9 @@
 
 <dht3:page currentPageLink="applications">
    	<dht3:shinyBox color="grey">
-	    <div class="dh-page-shinybox-title-large">Open Source Application Statistics</div>
+	    <dht3:applicationsTop/>
 	    <hr>
-	    <dht3:applicationCategories currentCategory="${appView.application.category}" linkifyCurrent="true"/>
+	    <dht3:applicationsLeft/>
 	    <div id="dhApplicationsRight">
     		<div class="dh-applications-application-icon">
 				<dh:png src="${appView.icon.url}" 
@@ -47,38 +47,7 @@
 	    		</div>
     		</div>
 			<div class="dh-applications-subheading">Popular applications among <c:out value="${appView.application.name}"/> users:</div>
-			<div id="dhApplicationsRelated">
-			    <c:forEach items="${application.relatedApplications.results}" var="app">
-		    		<div class="dh-applications-application-separator"></div>
-			    	<div class="dh-applications-application">
-			    		<div class="dh-applications-application-stats-outer">
-				    		<div class="dh-applications-application-stats">
-				    			<div class="dh-applications-rank"><c:out value="${app.rank}"/></div>
-				    		</div>
-			    		</div>
-			    		<div class="dh-applications-application-icon">
-							<dh:png src="${app.icon.url}" 
-								style="width: ${app.icon.displayWidth}; height: ${app.icon.displayHeight}; overflow: hidden;"/>
-			    		</div>
-			    		<div class="dh-applications-application-details">
-			    			<div class="dh-applications-application-name">
-				    			<a href="/application?id=${app.application.id}">
-				    				<c:out value="${app.application.name}"/>
-			    				</a>
-				    		</div>
-			    			<div class="dh-applications-application-category">
-				    			<a href="/applications?category=${app.application.category.name}">
-		    						<c:out value="${app.application.category.displayName}"/>
-		    					</a>
-				    		</div>
-			    		</div>
-			    		<div class="dh-applications-application-separator"></div>
-	    			</div>
-			    </c:forEach>
-			    <div class="dh-applications-more">
-				    <dht:expandablePager pageable="${application.relatedApplications}"/>
-			    </div>
-		    </div>
+			<dht3:miniApplicationList apps="${application.relatedApplications}"/>
 	    </div>
 	</dht3:shinyBox>
 </dht3:page>

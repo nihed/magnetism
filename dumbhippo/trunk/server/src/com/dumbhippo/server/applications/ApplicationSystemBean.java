@@ -12,6 +12,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -553,24 +554,78 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		pageable.setResults(applicationViews);
 		pageable.setTotalCount(pos);
 	}
+
+	// To make caching effective, we need to keep using the same "since" times for
+	// a while. This quantizes to 1-hour intervals (not to "the hour", exactly, 
+	// since we don't take into account leap seconds and whatnot, but rather to
+	// an arbitrary point within the hour). Since the "since" times we use now
+	// are "in the last month", a one-hour quantization has little effect.
+	static Date quantizeSince(Date since) {
+		long t = since.getTime();
+		return new Date(t - t % 3600000L);
+	}
+	
+	// "ORDER by COUNT(*) DESC is valid HQL but not supported by MySQL 4. MySQL 5 
+	// handles it fine; since we are still using MySQL 4 on the production servers,
+	// we do the sorting of grouped results ourself.
+	static List<Object[]> getSortedResults(Query q) {
+		List<Object[]> results = TypeUtils.castList(Object[].class,q.getResultList());
+		
+		Collections.sort(results, new Comparator<Object[]>() {
+			public int compare(Object[] a, Object[] b){
+				int countA = ((Number)a[1]).intValue();
+				int countB = ((Number)b[1]).intValue();
+				if (countA > countB)
+					return -1;
+				else if (countA < countB)
+					return 1;
+				else
+					return 0;
+			}
+		});
+		
+		return results;
+	}
 	
 	public void pagePopularApplications(Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
-		Query q = em.createNamedQuery("applicationsPopularSince")
-			.setParameter("since", since);
-		List<?> results = q.getResultList();
-
-		pageApplicationList(results, iconSize, category, pageable);
+		Query q = em.createQuery("SELECT au.application, COUNT(*) " +
+								 "  FROM ApplicationUsage au  " +
+								 "  WHERE au.date > :since " +
+								 "  GROUP by au.application.id")
+		    .setParameter("since", quantizeSince(since))
+			.setHint("org.hibernate.cacheable", true);
+		
+		pageApplicationList(getSortedResults(q), iconSize, category, pageable);
 	}
 	
 	public void pageRelatedApplications(Application relatedTo, Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
-		Query q = em.createNamedQuery("relatedApplicationsSince")
+		Query q = em.createQuery("SELECT au.application, COUNT(*) " +
+				 				 "  FROM ApplicationUsage au  " +
+				 				 "  WHERE au.date > :since " +
+				 				 "    AND EXISTS (SELECT au2 FROM ApplicationUsage au2 " +
+				 				 "                 WHERE au2.application.id = :relatedId " +
+				 				 "                   AND au2.user = au.user " +
+				 				 "                   AND au2.date > :since) " +
+				 				 "  GROUP by au.application.id")
 			.setParameter("relatedId", relatedTo.getId())
-			.setParameter("since", since);
-		List<?> results = q.getResultList();
+			.setParameter("since", quantizeSince(since))
+			.setHint("org.hibernate.cacheable", true);
 
-		pageApplicationList(results, iconSize, category, pageable);
+		pageApplicationList(getSortedResults(q), iconSize, category, pageable);
 	}
 
+	public void pageMyApplications(UserViewpoint viewpoint, Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
+		Query q = em.createQuery("SELECT au.application, COUNT(*) " +
+								 "  FROM ApplicationUsage au  " +
+								 "  WHERE au.date > :since " +
+								 "    AND au.user = :user " +
+								 "  GROUP by au.application.id")
+		    .setParameter("since", since)
+		    .setParameter("user", viewpoint.getViewer());
+		
+		pageApplicationList(getSortedResults(q), iconSize, category, pageable);
+	}
+	
 	public List<CategoryView> getPopularCategories(Date since) {
 		Map<ApplicationCategory, Integer> usageCounts = new HashMap<ApplicationCategory, Integer>();
 		
@@ -578,7 +633,8 @@ public class ApplicationSystemBean implements ApplicationSystem {
 								 "   FROM ApplicationUsage au, Application a " +
 								 "   WHERE au.application = a AND au.date > :since " +
 								 "GROUP BY a.category")
-			.setParameter("since", since);
+			.setParameter("since", quantizeSince(since))
+			.setHint("org.hibernate.cacheable", true);
 		
 		for (Object o : q.getResultList()) {
 			Object[] columns = (Object[])o;

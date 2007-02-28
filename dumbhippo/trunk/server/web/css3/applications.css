@@ -23,15 +23,15 @@
 	text-align: center; 
 }
 
-#dhApplicationApplications .dh-applications-application-stats {
+#dhApplicationsApplications .dh-applications-application-stats {
 	background: url("/images3/purple_gradient.png") top left repeat-x;
 }
 
-#dhApplicationApplications .dh-applications-rank {
+#dhApplicationsApplications .dh-applications-rank {
 	font-size: 24px;
 }
 
-#dhApplicationRelatd .dh-applications-rank {
+.dh-mini-applications .dh-applications-rank {
 	font-size: 16px;
 }
 
