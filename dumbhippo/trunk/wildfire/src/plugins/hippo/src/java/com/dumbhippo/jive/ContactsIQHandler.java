@@ -49,7 +49,7 @@ public class ContactsIQHandler extends AnnotatedIQHandler {
 	@IQMethod(name="contacts", type=IQ.Type.get)
 	public void getContacts(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
 		List<PersonView> persons = personViewer.getContacts(viewpoint, viewpoint.getViewer(),
-				0, -1);
+				0, -1, PersonViewExtra.CONTACT_STATUS);
 		// Add the user themself to the list of returned contacts (whether or not the
 		// viewer is in their own contact list getContacts() strips it out.)
 		persons.add(personViewer.getPersonView(viewpoint, viewpoint.getViewer(), PersonViewExtra.CONTACT_STATUS));
