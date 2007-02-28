@@ -31,6 +31,8 @@ class Mugshot(gobject.GObject):
             raise Exception("use mugshot.get_mugshot()")       
         self._whereim = None
         self._self = None
+        self._network = None
+        self._entities = {}
         self._mugshot = None
     
     def _whereimChanged(self, name, icon_url):
@@ -42,16 +44,22 @@ class Mugshot(gobject.GObject):
         self._whereim[name] = acct
         self.emit('whereim-changed', acct)
         
-    def _entityChanged(self, guid, name, home_url, photo_url, in_network):
+    def _entityChanged(self, attrs):
         logging.debug("entityChanged: %s" % (inspect.getargvalues(inspect.currentframe())[3],))
         if self._network is None:
             self._network = {}
-        attrs = {'guid': guid, 'name': name, 'home_url': home_url, 'photo_url': photo_url, 'in_network': in_network}
+
+        ## python keywords have to be byte arrays (binary strings) not unicode strings
+        kwattrs = {}
+        for k in attrs.keys():
+            kwattrs[str(k)] = attrs[k]
+        
+        guid = attrs['guid']
         if not self._entities.has_key(guid):
-            self._entities[guid] = Entity(**attrs)
+            self._entities[guid] = Entity(**kwattrs)
             self.emit("entity-added", self._entities[guid])
         else:
-            self._entities.update(**attrs)
+            self._entities.update(**kwattrs)
     
     def _get_mugshot(self):
         if self._mugshot is None:

@@ -128,7 +128,7 @@ signal_entity_changed(gpointer entity_ptr, gpointer data)
     HippoDBus *dbus = HIPPO_DBUS(data);
     HippoEntity *entity = (HippoEntity*) entity_ptr;
 
-    hippo_dbus_mugshot_signal_entity_changed(dbus, entity);
+    hippo_dbus_notify_entity_changed(dbus, entity);
 }
 
 DBusMessage*
@@ -181,7 +181,7 @@ hippo_dbus_handle_mugshot_introspect(HippoDBus   *dbus,
 
     g_string_append(xml,
                     "    <signal name=\"EntityChanged\">\n"
-                    "      <arg direction=\"in\" type=\"{ss}\"/>\n"
+                    "      <arg direction=\"in\" type=\"a{ss}\"/>\n"
                     "    </signal>\n");
 
     g_string_append(xml, "  </interface>\n");
