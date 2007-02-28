@@ -132,6 +132,7 @@ public class AppinfoFile extends JarFile {
 		return appId;
 	}
 	
+	@Override
 	public String getName() {
 		return name;
 	}
