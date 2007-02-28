@@ -6,7 +6,6 @@ import java.util.Set;
 import javax.ejb.EJB;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 
@@ -16,7 +15,6 @@ import com.dumbhippo.jive.annotations.IQMethod;
 import com.dumbhippo.live.ExternalAccountChangedEvent;
 import com.dumbhippo.live.LiveEventListener;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.live.UserPrefChangedEvent;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ExternalAccountSystem;

@@ -181,7 +181,7 @@ public class ExternalAccount extends DBUnique {
 	@Transient	
 	public Feed getFeed() {
 		if (feeds.size() == 1)
-			return ((Feed[])feeds.toArray(new Feed[1]))[0];
+			return feeds.toArray(new Feed[1])[0];
 		else if (feeds.isEmpty())
 			return null;
 		else
