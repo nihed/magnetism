@@ -1,7 +1,7 @@
 @CHARSET "UTF-8";
 
 #dhAccountInfoForm .dh-form-table {
-	margin:		    0px;
+    margin:         0px;
 	table-layout:   auto;
 }
 
@@ -12,6 +12,12 @@
 #dhAccounts .dh-label-cell {
 	text-align:     left;
 	width:          90px;
+}
+
+#dhAccounts .dh-label-cell .dh-label-cell-div-with-prefix {
+    position:       relative;
+    margin-left:    -40px;
+    width:          130px;
 }
 
 #dhAccounts .dh-control-cell-next-to-info {
@@ -25,6 +31,7 @@
 
 #dhAccounts .dh-label-cell .dh-form-table-row-icon {
     margin-right:    5px;
+    vertical-align:  middle;
 }
 
 .dh-account-preferences-row label {

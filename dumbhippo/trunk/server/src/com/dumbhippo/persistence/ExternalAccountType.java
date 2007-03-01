@@ -2,16 +2,18 @@ package com.dumbhippo.persistence;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.SortUtils;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.services.FlickrUser;
+import com.dumbhippo.services.LastFmWebServices;
 import com.dumbhippo.services.MySpaceScraper;
 import com.dumbhippo.services.TransientServiceException;
 import com.dumbhippo.services.YouTubeWebServices;
-import com.dumbhippo.services.LastFmWebServices;
-
-import org.slf4j.Logger;
-import com.dumbhippo.GlobalSetup;
 
 /**
  * This enum goes in the database, so don't change values without migrating the db
@@ -256,11 +258,6 @@ public enum ExternalAccountType {
 		@Override
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return extra != null;
-		}
-		
-		@Override
-		public boolean isSupported() {
-			return false;
 		}
 	},
 	ORKUT("Orkut")  { // 5
@@ -741,6 +738,11 @@ public enum ExternalAccountType {
 		@Override
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
+		}
+		
+		@Override 
+		public boolean isNew() {
+			return true;
 		}		
 	};
 	
@@ -832,5 +834,13 @@ public enum ExternalAccountType {
     
     public boolean isAffectedByMusicSharing() {
     	return false;
+    }
+    
+    public boolean isNew() {
+    	return false;
+    }
+    
+    public static List <ExternalAccountType> alphabetizedValues() {
+    	return SortUtils.sortCollection(ExternalAccountType.values(), "getSiteName");
     }
 }
