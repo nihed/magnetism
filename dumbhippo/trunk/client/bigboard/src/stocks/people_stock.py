@@ -5,6 +5,7 @@ import hippo
 import bigboard, mugshot
 from big_widgets import CanvasURLImage
 import slideout
+import profile
 
 class EntityItem(hippo.CanvasBox):
     def __init__(self, **kwargs):
@@ -69,6 +70,9 @@ class EntityItem(hippo.CanvasBox):
         self._entity = entity
         self._update()
 
+    def get_guid(self):
+        return self._entity.get_guid()
+
     def set_size(self, size):
         if size == bigboard.Stock.SIZE_BULL:
             self.set_child_visible(self._name, True)
@@ -107,6 +111,8 @@ class PeopleStock(bigboard.Stock):
 
         self._slideout = None
         self._slideout_item = None
+
+        self._profiles = profile.ProfileFactory()
         
     def get_content(self, size):
         return self._box
@@ -148,3 +154,5 @@ class PeopleStock(bigboard.Stock):
         self._slideout_item = item
         coords = item.get_screen_coords()
         self._slideout.slideout_from(coords[0] + item.get_allocation()[0], coords[1])
+
+        self._profiles.get_profile(item.get_guid())
