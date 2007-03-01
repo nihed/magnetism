@@ -23,7 +23,7 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.35</p>
+			<p>Version 1.1.36</p>
 			<ul>
 				<li>Ability to filter which blocks are displayed.</li>
 				<li>Optional application usage statistics tracking.</li>
