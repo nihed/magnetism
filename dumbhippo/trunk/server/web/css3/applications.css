@@ -82,3 +82,8 @@
 	background-color:	#fbfadc;
 	border:				1px solid #cccc99;
 }
+
+.dh-applications-no-data {
+    font-size:  18px;
+    color:      #444444;
+}
