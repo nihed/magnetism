@@ -1499,6 +1499,10 @@ handle_message(DBusConnection     *connection,
                 reply = hippo_dbus_handle_mugshot_get_whereim(dbus, xmpp_connection, message);
             } else if (strcmp(member, "NotifyAllNetwork") == 0) {
                 reply = hippo_dbus_handle_mugshot_get_network(dbus, message);
+            } else if (strcmp(member, "GetMyTopApplications") == 0) {
+                reply = hippo_dbus_handle_mugshot_get_my_top_applications(dbus, message);                       
+            } else if (strcmp(member, "GetBaseProperties") == 0) {
+                reply = hippo_dbus_handle_mugshot_get_baseprops(dbus, message);                   
             } else if (strcmp(member, "GetSelf") == 0) {
             	reply = hippo_dbus_handle_mugshot_get_self(dbus, message);                
             } else if (strcmp(member, "Introspect") == 0) {
