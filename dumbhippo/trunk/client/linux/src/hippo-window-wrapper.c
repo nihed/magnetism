@@ -36,6 +36,9 @@ static gboolean hippo_window_wrapper_unmap_event             (GtkWidget         
 static gboolean hippo_window_wrapper_visibility_notify_event (GtkWidget           *widget,
                                                               GdkEventVisibility  *event,
                                                               HippoWindowWrapper  *wrapper);
+static gboolean hippo_window_wrapper_delete_event            (GtkWidget           *widget,
+                                                              GdkEventAny         *event,
+                                                              HippoWindowWrapper  *wrapper);
 
 /* Window methods */
 static void hippo_window_wrapper_set_contents      (HippoWindow      *window,
@@ -151,6 +154,8 @@ hippo_window_wrapper_init(HippoWindowWrapper *wrapper)
                            G_CALLBACK(hippo_window_wrapper_unmap_event), wrapper);
     g_signal_connect_after(wrapper->window, "visibility-notify-event",
                            G_CALLBACK(hippo_window_wrapper_visibility_notify_event), wrapper);
+    g_signal_connect_after(wrapper->window, "delete-event",
+                           G_CALLBACK(hippo_window_wrapper_delete_event), wrapper);
 }
 
 static void
@@ -300,6 +305,16 @@ hippo_window_wrapper_visibility_notify_event(GtkWidget           *widget,
     set_onscreen(wrapper, event->state != GDK_VISIBILITY_FULLY_OBSCURED);
 
     return FALSE;
+}
+
+static gboolean
+hippo_window_wrapper_delete_event(GtkWidget           *widget,
+                                  GdkEventAny         *event,
+                                  HippoWindowWrapper  *wrapper)
+{
+    g_signal_emit_by_name(wrapper, "minimize");
+
+    return TRUE;
 }
 
 static void

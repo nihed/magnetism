@@ -136,7 +136,7 @@ hippo_canvas_stack_dispose(GObject *object)
 
     set_actions(stack, NULL);
 
-    G_OBJECT_CLASS(hippo_canvas_stack_parent_class)->finalize(object);
+    G_OBJECT_CLASS(hippo_canvas_stack_parent_class)->dispose(object);
 }
 
 static void
