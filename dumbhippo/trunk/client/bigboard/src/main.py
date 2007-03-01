@@ -21,6 +21,7 @@ class Exchange(hippo.CanvasBox):
         hippo.CanvasBox.__init__(self,  
                                  orientation=hippo.ORIENTATION_VERTICAL)
         self._stock = stock
+        self._ticker_text = None
         if not stock.get_ticker() is None:
             text = stock.get_ticker() + "                  "
             self._ticker_text = hippo.CanvasText(text=text, font="14px", xalign=hippo.ALIGNMENT_START)
@@ -39,6 +40,8 @@ class Exchange(hippo.CanvasBox):
         self._stockbox.remove_all()
         self._stock.set_size(size)
         self._stockbox.append(self._stock.get_content(size))
+        if self._ticker_text:
+            self.set_child_visible(self._ticker_text, size == Stock.SIZE_BULL)
 
 class BigBoardPanel(object):
     def __init__(self):
