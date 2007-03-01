@@ -1387,7 +1387,7 @@ on_title_patterns_reply(LmMessageHandler *handler,
     GSList *title_patterns = NULL;
 
     if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/applications", "titlePatterns")) {
-        g_warning("Title patterns reply was wrong thing");
+        g_debug("Title patterns reply was wrong thing");
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
@@ -1461,7 +1461,7 @@ on_contacts_reply(LmMessageHandler *handler,
     child = message->node->children;
     
     if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/contacts", "contacts")) {
-        g_warning("Contacts reply was wrong thing");
+        g_debug("Contacts reply was wrong thing");
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
