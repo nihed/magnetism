@@ -106,16 +106,18 @@ class URLImageCache(Singleton):
             self._loads[url] = [cbdata]
             logging.debug("adding url='%s' to pending loads (%d outstanding)" % (url, len(self._loads.keys())))        
             self._fetcher.fetch(url, self._do_load, self._do_load_error)
+
+    def _pixbuf_from_data(self, data):
+
+        return loader.get_pixbuf()
         
     def _do_load(self, url, data):
         try:
-            # Why doesn't gdk-pixbuf have a sensible _new_from_memory_stream ?
-            (tmpfd, tmpf_name) = tempfile.mkstemp()
-            tmpf = os.fdopen(tmpfd, 'w')
-            tmpf.write(data)
-            tmpf.close()
-            pixbuf = gtk.gdk.pixbuf_new_from_file(tmpf_name)
-            os.unlink(tmpf_name)
+            loader = gtk.gdk.PixbufLoader()
+            # the write and close can both throw
+            loader.write(data)
+            loader.close()            
+            pixbuf = loader.get_pixbuf()
             surface = hippo.cairo_surface_from_gdk_pixbuf(pixbuf)
             logging.debug("invoking callback for %s url='%s'" % (self, url))
             self._cache[url] = surface
