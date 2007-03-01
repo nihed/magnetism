@@ -27,6 +27,9 @@ class EntityItem(hippo.CanvasBox):
         self._entity = entity
         self._update()
 
+    def set_size(self, size):
+        self.set_child_visible(self._name, size == bigboard.Stock.SIZE_BULL)
+
     def _update(self):
         if not self._entity:
             return
@@ -47,9 +50,16 @@ class PeopleStock(bigboard.Stock):
         self._mugshot.get_network()
         
         self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
+
+        self._items = {}
         
     def get_content(self, size):
         return self._box
+
+    def set_size(self, size):
+        super(PeopleStock, self).set_size(size)
+        for i in self._items.values():
+            i.set_size(size)
     
     def _handle_self_changed(self, mugshot, myself):
         logging.debug("self (%s) changed" % (myself.get_guid(),))
@@ -58,4 +68,6 @@ class PeopleStock(bigboard.Stock):
         logging.debug("entity added to people stock %s" % (entity.get_name()))
         item = EntityItem()
         item.set_entity(entity)
+        item.set_size(self.get_size())
         self._box.append(item)
+        self._items[entity.get_guid()] = item
