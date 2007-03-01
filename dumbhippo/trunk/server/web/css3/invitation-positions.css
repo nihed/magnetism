@@ -101,9 +101,10 @@
     margin-top:     0px;
 }
 
-// The following rule did not work for wrapping e-mail addresses that are
-// too long, moreover, it had a strange effect of making some e-mails
-// disappear when the page is too short.
+/* The following rule did not work for wrapping e-mail addresses that are
+ * too long, moreover, it had a strange effect of making some e-mails
+ * disappear when the page is too short.
+ */
 /*
 .dh-invitations-table .dh-person-item-more-info .dh-person-item-name {
     text-wrap: normal;
