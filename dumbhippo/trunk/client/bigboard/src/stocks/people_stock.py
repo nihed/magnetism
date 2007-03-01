@@ -6,8 +6,9 @@ import bigboard, mugshot
 from big_widgets import CanvasURLImage
 
 class EntityItem(hippo.CanvasBox):
-    def __init__(self):
-        hippo.CanvasBox.__init__(self, orientation=hippo.ORIENTATION_HORIZONTAL)
+    def __init__(self, **kwargs):
+        kwargs['orientation'] = hippo.ORIENTATION_HORIZONTAL
+        hippo.CanvasBox.__init__(self, **kwargs)
         
         self._entity = None
 
@@ -17,9 +18,11 @@ class EntityItem(hippo.CanvasBox):
                                      border_color=0x000000ff)
         self.append(self._photo)
 
-        self._name = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START,
+        self._name = hippo.CanvasText(xalign=hippo.ALIGNMENT_FILL, yalign=hippo.ALIGNMENT_START,
                                       size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         self.append(self._name)
+
+        self.set_size(bigboard.Stock.SIZE_BULL)
         
     def set_entity(self, entity):
         if self._entity == entity:
@@ -28,7 +31,14 @@ class EntityItem(hippo.CanvasBox):
         self._update()
 
     def set_size(self, size):
-        self.set_child_visible(self._name, size == bigboard.Stock.SIZE_BULL)
+        if size == bigboard.Stock.SIZE_BULL:
+            self.set_child_visible(self._name, True)
+            self._photo.set_property('xalign', hippo.ALIGNMENT_START)
+            self._photo.set_property('yalign', hippo.ALIGNMENT_START)
+        else:
+            self.set_child_visible(self._name, False)
+            self._photo.set_property('xalign', hippo.ALIGNMENT_CENTER)
+            self._photo.set_property('yalign', hippo.ALIGNMENT_CENTER)
 
     def _update(self):
         if not self._entity:
@@ -56,11 +66,19 @@ class PeopleStock(bigboard.Stock):
     def get_content(self, size):
         return self._box
 
+    def _set_item_size(self, item, size):
+        if size == bigboard.Stock.SIZE_BULL:
+            item.set_property('xalign', hippo.ALIGNMENT_FILL)
+        else:
+            item.set_property('xalign', hippo.ALIGNMENT_CENTER)
+        
+        item.set_size(size)
+
     def set_size(self, size):
         super(PeopleStock, self).set_size(size)
         for i in self._items.values():
-            i.set_size(size)
-    
+            self._set_item_size(i, size)
+            
     def _handle_self_changed(self, mugshot, myself):
         logging.debug("self (%s) changed" % (myself.get_guid(),))
     
@@ -68,6 +86,6 @@ class PeopleStock(bigboard.Stock):
         logging.debug("entity added to people stock %s" % (entity.get_name()))
         item = EntityItem()
         item.set_entity(entity)
-        item.set_size(self.get_size())
         self._box.append(item)
         self._items[entity.get_guid()] = item
+        self._set_item_size(item, self.get_size())
