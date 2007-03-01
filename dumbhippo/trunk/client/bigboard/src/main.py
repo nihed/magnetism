@@ -11,17 +11,14 @@ import libbig
 
 import stocks, stocks.self_stock, stocks.people_stock
 
-SIZE_BULL_PX = 210
-SIZE_BEAR_PX = 65
+SIZE_BULL_PADDING_PX = 4
+SIZE_BEAR_PADDING_PX = 2
 
 class Exchange(hippo.CanvasBox):
     """A container for stocks."""
     
     def __init__(self, stock):
         hippo.CanvasBox.__init__(self,  
-                                 spacing=4, 
-                                 padding_left=4,
-                                 padding_top=6,
                                  orientation=hippo.ORIENTATION_VERTICAL)
         self._stock = stock
         if not stock.get_ticker() is None:
@@ -72,7 +69,7 @@ class BigBoardPanel(object):
         
         self._main_box.append(self._header_box)
         
-        self._stocks_box = hippo.CanvasBox()
+        self._stocks_box = hippo.CanvasBox(spacing=4)
         
         self._main_box.append(self._stocks_box)
         
@@ -102,12 +99,14 @@ class BigBoardPanel(object):
             self._header_box.remove(self._size_button)
             self._header_box.append(self._size_button, hippo.PACK_EXPAND)
             self._size_button.set_property("text", u"\u00bb large")
-            self._canvas.set_size_request(SIZE_BEAR_PX, 42)             
+            self._canvas.set_size_request(Stock.SIZE_BEAR_CONTENT_PX + SIZE_BEAR_PADDING_PX*2, 42)
+            self._stocks_box.set_property('padding', SIZE_BEAR_PADDING_PX)
         else:
             self._header_box.remove(self._size_button)
             self._header_box.append(self._size_button, hippo.PACK_END)            
             self._size_button.set_property("text", u"\u00ab small")        
-            self._canvas.set_size_request(SIZE_BULL_PX, 42)             
+            self._canvas.set_size_request(Stock.SIZE_BULL_CONTENT_PX + SIZE_BULL_PADDING_PX*2, 42)
+            self._stocks_box.set_property('padding', SIZE_BULL_PADDING_PX)
             
         for exchange in self._exchanges:
             exchange.set_size(self._size)
