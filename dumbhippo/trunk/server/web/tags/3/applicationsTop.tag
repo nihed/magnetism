@@ -15,6 +15,9 @@
 							 busy.style.display = "none";
 							 document.getElementById("dhApplicationsEnable").style.display = "none";
 							 document.getElementById("dhApplicationsEnableConfirm").style.display = "inline";
+							 var d = document.getElementById("dhMyApplications");
+							 if (d)
+								 d.style.display = "block";
 			  	    	 },
 			  	    	 function(type, error, http) {
 							 busy.style.display = "none";
