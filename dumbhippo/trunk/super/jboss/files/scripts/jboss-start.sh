@@ -57,8 +57,17 @@ else
   jdwpopt="-Xrunjdwp:server=y,transport=dt_socket,address=$jdwpPort,suspend=n"
 fi
 
+# Setup the JVM
+if [ "x$JAVA" = "x" ]; then
+    if [ "x$JAVA_HOME" != "x" ]; then
+        JAVA="$JAVA_HOME/bin/java"
+    else
+        JAVA="java"
+    fi
+fi
+
 JAVA_OPTS="-XX:MaxPermSize=128M -Xmx${javaMaxHeap}m -Xms${javaMaxHeap}m -Xdebug $jdwpopt" \
-$JAVA_HOME/bin/java -classpath $JAVA_HOME/lib/tools.jar:${jbossdir}/bin/run.jar $JAVA_OPTS -Djava.endorsed.dirs=${jbossdir}/lib/endorsed  -Djboss.partition.udpGroup=@@multicastAddress@@ -Djboss.server.home.dir=$targetdir -Djboss.server.home.url=file://$targetdir org.jboss.Main --partition=@@jbossPartition@@ $bindopt > /dev/null 2>&1 &
+$JAVA -classpath $JAVA_HOME/lib/tools.jar:${jbossdir}/bin/run.jar $JAVA_OPTS -Djava.endorsed.dirs=${jbossdir}/lib/endorsed  -Djboss.partition.udpGroup=@@multicastAddress@@ -Djboss.server.home.dir=$targetdir -Djboss.server.home.url=file://$targetdir org.jboss.Main --partition=@@jbossPartition@@ $bindopt > /dev/null 2>&1 &
 pid=$!
 started=false
 for i in `seq 1 30` ; do
