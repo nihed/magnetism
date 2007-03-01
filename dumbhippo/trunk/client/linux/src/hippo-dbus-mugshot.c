@@ -110,6 +110,29 @@ hippo_dbus_try_acquire_mugshot(DBusConnection *connection,
                           NULL);
 }
 
+DBusMessage* 
+hippo_dbus_handle_mugshot_get_baseprops(HippoDBus       *dbus,
+                                        DBusMessage     *message)
+{
+    DBusMessageIter iter;
+    DBusMessage *reply;
+    HippoDataCache *cache;
+    HippoConnection *connection;
+    char *baseurl;
+
+    cache = hippo_app_get_data_cache(hippo_get_app());
+    connection = hippo_data_cache_get_connection(cache);
+    
+    baseurl = hippo_connection_make_absolute_url(connection, "/");    
+    
+    reply = dbus_message_new_method_return(message);   
+    dbus_message_iter_init_append(reply, &iter);
+     
+    append_strings_as_dict(&iter, "baseurl", baseurl, NULL);
+    
+    return reply;    
+}
+
 DBusMessage*
 hippo_dbus_handle_mugshot_get_self(HippoDBus   *dbus,
                                    DBusMessage  *message)
@@ -186,7 +209,11 @@ hippo_dbus_handle_mugshot_introspect(HippoDBus   *dbus,
 
     g_string_append_printf(xml, "  <interface name=\"%s\">\n",
                            HIPPO_DBUS_MUGSHOT_INTERFACE);
-
+    g_string_append(xml,
+                    "    <method name=\"GetBaseProperties\">\n"
+                    "      <arg direction=\"out\" type=\"a{ss}\"/>\n"
+                    "    </method>"
+                    );
     g_string_append(xml,
                     "    <method name=\"NotifyAllWhereim\"/>\n");
     g_string_append(xml,

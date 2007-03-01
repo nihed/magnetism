@@ -21,6 +21,9 @@ G_BEGIN_DECLS
 #define HIPPO_DBUS_MUGSHOT_BUS_NAME "org.mugshot.Mugshot"
 #define HIPPO_DBUS_MUGSHOT_PATH "/org/mugshot/Mugshot"
 
+DBusMessage* hippo_dbus_handle_mugshot_get_baseprops(HippoDBus       *dbus,
+                                                     DBusMessage     *message);
+
 DBusMessage* hippo_dbus_handle_mugshot_get_whereim  (HippoDBus       *dbus,
                                                      HippoConnection *xmpp_connection,
                                                      DBusMessage     *message);
