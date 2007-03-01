@@ -212,41 +212,56 @@
 					    <dht:textInput id="dhBlogEntry" maxlength="255"/>
 					    <div id="dhBlogEntryDescription" style="display: none"></div>
 				    </dht:formTableRow>				
-				    <tr valign="top">
-	                    <td colspan="3">
-	                        <c:choose>
-	                            <c:when test="${account.facebookErrorMessage != null}">
-                                    <div id="dhFacebookNote">
-                                        <c:out value="${account.facebookErrorMessage}"/>
-                                        <a href="http://facebook.com">Log out from Facebook first</a> to re-login here.
-                                    </div>                     
-                                </c:when>   	     
-	                            <c:when test="${account.facebookAuthToken != null}">
-                                    <div id="dhFacebookNote">Thank you for logging in to Facebook! You will now be getting Facebook updates.</div>                     
-                                </c:when>
-                            </c:choose>       	                
-                        </td>
-                    </tr>     
-				    <dht:formTableRow label="Facebook" icon="/images3/${buildStamp}/favicon_facebook.png">
-				        <c:choose>
-				            <c:when test="${account.loggedInToFacebook}">
-				                You are logged in <a href="javascript:dh.account.disableFacebookSession();">Log out</a>
-				            </c:when>
-				            <c:otherwise>
-				                <a href="http://api.facebook.com/login.php?api_key=${account.facebookApiKey}&next=/account">Log in to receive updates</a>
-				            </c:otherwise>
-				        </c:choose>    			            					   
-				    </dht:formTableRow>
 				    <c:forEach items="${account.supportedAccounts.list}" var="supportedAccount">
+				        <c:if test="${supportedAccount.siteName == 'Facebook'}">
+				            <tr valign="top">
+	                            <td colspan="3">
+	                                <c:choose>
+	                                    <c:when test="${account.facebookErrorMessage != null}">
+                                            <div id="dhFacebookNote">
+                                                <c:out value="${account.facebookErrorMessage}"/>
+                                                <a href="http://facebook.com">Log out from Facebook first</a> to re-login here.
+                                            </div>                     
+                                        </c:when>   	     
+	                                    <c:when test="${account.facebookAuthToken != null}">
+                                            <div id="dhFacebookNote">Thank you for logging in to Facebook! You will now be getting Facebook updates.</div>                     
+                                        </c:when>
+                                    </c:choose>       	                
+                                </td>
+                             </tr>     
+                        </c:if>
+				        <c:set var="prefixIcon" value=""/>
+				        <c:set var="prefixIconWidth" value=""/>
+				        <c:set var="prefixIconHeight" value=""/>
+				        <c:if test="${supportedAccount.externalAccountType.new}">
+				            <c:set var="prefixIcon" value="/images3/${buildStamp}/new_icon.png"/>
+				            <c:set var="prefixIconWidth" value="31"/>
+				            <c:set var="prefixIconHeight" value="10"/>
+				        </c:if>
                         <dht:formTableRow controlId="dh${supportedAccount.siteBaseName}" 
-                                          label="${supportedAccount.siteName}" icon="/images3/${buildStamp}/${supportedAccount.iconName}">
-		                    <dht:loveHateEntry 
-		                    	name="${supportedAccount.siteName}"
-		                    	userInfoType="${supportedAccount.siteUserInfoType}"
-		                    	isInfoTypeProvidedBySite="${supportedAccount.infoTypeProvidedBySite}"
-		                    	link="${supportedAccount.externalAccountType.siteLink}"
-		                    	baseId="dh${supportedAccount.siteBaseName}" 
-		                    	mode="${supportedAccount.sentiment}"/>
+                                          label="${supportedAccount.siteName}" icon="/images3/${buildStamp}/${supportedAccount.iconName}"
+                                          prefixIcon="${prefixIcon}" prefixIconWidth="${prefixIconWidth}" prefixIconHeight="${prefixIconHeight}">
+                            <c:choose>
+                                <c:when test="${supportedAccount.siteName == 'Facebook'}">
+                                    <c:choose>
+				                        <c:when test="${account.loggedInToFacebook}">
+				                            You are logged in <a href="javascript:dh.account.disableFacebookSession();">Log out</a>
+				                        </c:when>
+				                        <c:otherwise>
+				                            <a href="http://api.facebook.com/login.php?api_key=${account.facebookApiKey}&next=/account">Log in to receive updates</a>
+				                        </c:otherwise>
+				                    </c:choose>    	
+                                </c:when>
+                                <c:otherwise>              
+		                            <dht:loveHateEntry 
+		                    	        name="${supportedAccount.siteName}"
+		                    	        userInfoType="${supportedAccount.siteUserInfoType}"
+		                    	        isInfoTypeProvidedBySite="${supportedAccount.infoTypeProvidedBySite}"
+		                    	        link="${supportedAccount.externalAccountType.siteLink}"
+		                    	        baseId="dh${supportedAccount.siteBaseName}" 
+		                    	        mode="${supportedAccount.sentiment}"/>
+		                        </c:otherwise>
+		                    </c:choose>    	
 				        </dht:formTableRow>	
 		            </c:forEach>
 				</dht:formTable>    	
@@ -271,7 +286,7 @@
 					</div>	
 					</div>    
 				</dht:formTableRow>
-				<dht:formTableRow label="Application statistics">
+				<dht:formTableRow label="Application statistics" altRow="true">
 				    <div class="dh-explanation">
 					Share information about which applications you use with Mugshot and Fedora. <a href="/applications">Read more</a>
 					</div>
@@ -296,7 +311,7 @@
 				    <span class="dh-section-explanation">Nobody sees this stuff but you.</span>
                 </dht3:formTableRowSeparator>
 				<dht:formTableRowStatus controlId='dhPasswordEntry'></dht:formTableRowStatus>
-				<dht:formTableRow label="Set a password" altRow="true">
+				<dht:formTableRow label="Set a password">
 				    <div class="dh-explanation">
 					A password is optional. You can also log into Mugshot by having a log in link sent to any of your
 					email addresses or screen names from the <i>Log In</i> screen.
@@ -314,7 +329,7 @@
 					</c:if>
 					<img id="dhSetPasswordButton" src="/images3/${buildStamp}/setpassword_disabled.gif"/><a id="dhRemovePasswordLink" style="${removePasswordLinkStyle}" href="javascript:dh.password.unsetPassword();" title="Delete my password">Delete my current password.</a>
 				</dht:formTableRow>
-				<dht:formTableRow label="Disable account">
+				<dht:formTableRow label="Disable account" altRow="true">
 				    <div class="dh-explanation">
 					Disabling your account means we won't show any information on your
 					public Home page, and we will never send you email for any reason.
