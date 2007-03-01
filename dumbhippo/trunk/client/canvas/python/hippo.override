@@ -147,20 +147,42 @@ _wrap_hippo_event_tp_getattr(PyObject *self, char *attr)
 {
     HippoEvent *event = pyg_boxed_get(self, HippoEvent);
 
+    if (!strcmp(attr, "type"))
+        return pyg_enum_from_gtype(HIPPO_TYPE_EVENT_TYPE, event->type);
+    else if (!strcmp(attr, "x"))
+        return PyInt_FromLong(event->x);
+    else if (!strcmp(attr, "y"))
+        return PyInt_FromLong(event->y);
+    
     switch(event->type) {
     case HIPPO_EVENT_MOTION_NOTIFY:
         if (!strcmp(attr, "__members__"))
-            return Py_BuildValue("[sss]", "x", "y", "detail");
-        if (!strcmp(attr, "x"))
-            return PyInt_FromLong(event->x);
-        if (!strcmp(attr, "y"))
-            return PyInt_FromLong(event->y);
-        if (!strcmp(attr, "detail"))
+            return Py_BuildValue("[ssss]", "type", "x", "y", "detail");
+        else if (!strcmp(attr, "detail"))
             return pyg_enum_from_gtype(HIPPO_TYPE_MOTION_DETAIL, event->u.motion.detail);
         break;
-
-    default:
+    case HIPPO_EVENT_BUTTON_PRESS:
+    case HIPPO_EVENT_BUTTON_RELEASE:
+        if (!strcmp(attr, "__members__"))
+            return Py_BuildValue("[sssssss]", "type", "x", "y", "button", "x11_x_root", "x11_y_root", "x11_time");
+        else if (!strcmp(attr, "button"))
+            return PyInt_FromLong(event->u.button.button);
+        else if (!strcmp(attr, "x11_x_root"))
+            return PyInt_FromLong(event->u.button.x11_x_root);
+        else if (!strcmp(attr, "x11_y_root"))
+            return PyInt_FromLong(event->u.button.x11_y_root);
+        else if (!strcmp(attr, "x11_time"))
+            return PyInt_FromLong(event->u.button.x11_time);
         break;
+    case HIPPO_EVENT_KEY_PRESS:
+        if (!strcmp(attr, "__members__"))
+            return Py_BuildValue("[sssss]", "type", "x", "y", "key", "character");
+        else if (!strcmp(attr, "key"))
+            return pyg_enum_from_gtype(HIPPO_TYPE_KEY, event->u.key.key);
+        else if (!strcmp(attr, "character"))
+            return PyInt_FromLong(event->u.key.character); /* FIXME this should probably return a string? */
+        break;        
+        /* No default, hides compiler warnings */
     }
 
     return NULL;
