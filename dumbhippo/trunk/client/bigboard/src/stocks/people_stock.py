@@ -4,6 +4,7 @@ import hippo
 
 import bigboard, mugshot
 from big_widgets import CanvasURLImage
+import slideout
 
 class EntityItem(hippo.CanvasBox):
     def __init__(self, **kwargs):
@@ -85,6 +86,9 @@ class EntityItem(hippo.CanvasBox):
         if self._entity.get_photo_url():
             self._photo.set_url(self._entity.get_photo_url())
 
+    def get_screen_coords(self):
+        return self.get_context().translate_to_screen(self)
+
 class PeopleStock(bigboard.Stock):
     def __init__(self):
         super(PeopleStock, self).__init__("People", "People")
@@ -100,6 +104,9 @@ class PeopleStock(bigboard.Stock):
         self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
 
         self._items = {}
+
+        self._slideout = None
+        self._slideout_item = None
         
     def get_content(self, size):
         return self._box
@@ -127,3 +134,17 @@ class PeopleStock(bigboard.Stock):
         self._box.append(item)
         self._items[entity.get_guid()] = item
         self._set_item_size(item, self.get_size())
+        item.connect('button-press-event', self._handle_item_pressed)
+
+    def _handle_item_pressed(self, item, event):
+        if self._slideout:
+            self._slideout.destroy()
+            self._slideout = None
+            if self._slideout_item == item:
+                self._slideout_item = None
+                return
+
+        self._slideout = slideout.Slideout()
+        self._slideout_item = item
+        coords = item.get_screen_coords()
+        self._slideout.slideout_from(coords[0] + item.get_allocation()[0], coords[1])
