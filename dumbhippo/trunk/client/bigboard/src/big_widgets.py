@@ -9,6 +9,8 @@ from libbig import URLImageCache
 import libbig      
 
 class CanvasURLImage(hippo.CanvasImage):
+    """A wrapper for CanvasImage which has a set_url method to retrieve
+       images from a URL."""
     def __init__(self, url=None, **kwargs):
         hippo.CanvasImage.__init__(self, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START, **kwargs) 
         self.set_url(url)

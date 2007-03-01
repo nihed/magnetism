@@ -8,6 +8,12 @@ from libgimmie import DockWindow
 from singletonmixin import Singleton
 import bignative
 
+def run_program(name, args):
+    pid = os.fork()
+    if pid == 0:
+        os.execvp(name, [name] + args)
+        os._exit(0)
+
 def set_log_handler(handler):
     bignative.set_log_handler(handler)
     
