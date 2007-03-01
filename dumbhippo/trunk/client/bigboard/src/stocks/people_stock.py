@@ -93,9 +93,9 @@ class EntityItem(hippo.CanvasBox):
     def get_screen_coords(self):
         return self.get_context().translate_to_screen(self)
 
-class PeopleStock(bigboard.Stock):
+class PeopleStock(bigboard.AbstractMugshotStock):
     def __init__(self):
-        super(PeopleStock, self).__init__("People", "People")
+        super(PeopleStock, self).__init__("People")
         
         self._mugshot = mugshot.get_mugshot()
 

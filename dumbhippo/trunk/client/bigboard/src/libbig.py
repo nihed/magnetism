@@ -1,6 +1,7 @@
 import os, code, sys, traceback, urllib, logging, StringIO, tempfile
 
 import cairo, gtk, gobject, threading
+import gnome
 
 import hippo
 
@@ -13,6 +14,9 @@ def run_program(name, args):
     if pid == 0:
         os.execvp(name, [name] + args)
         os._exit(0)
+        
+def show_url(url):
+    gnome.url_show(url)
 
 def set_log_handler(handler):
     bignative.set_log_handler(handler)
@@ -32,6 +36,9 @@ def get_attr_or_none(dict, attr):
         return None
     
 class AutoStruct:
+    """Kind of like a dictionary, except the values are accessed using
+    normal method calls, i.e. get_VALUE(), and the keys are determined
+    by arguments passed to the constructor (and are immutable thereafter)."""
     def __init__(self, **kwargs):    
         self._struct_values = {}
         self._struct_values.update(kwargs)
@@ -55,6 +62,8 @@ class AutoStruct:
         return "autostruct values=%s" % (self._struct_values,)
     
 class AutoSignallingStruct(gobject.GObject, AutoStruct):
+    """An AutoStruct that also emits a "changed" signal when
+    its values change."""
     __gsignals__ = {
         "changed": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())        
         }
