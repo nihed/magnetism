@@ -56,6 +56,7 @@ class Sidebar(DockWindow):
         return ret
 
 class CommandShell(gtk.Window):
+    """Every application needs a development shell."""
     def __init__(self, locals={}):
         gtk.Window.__init__(self, type=gtk.WINDOW_TOPLEVEL)
         

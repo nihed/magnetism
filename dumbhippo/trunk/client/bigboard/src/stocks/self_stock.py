@@ -4,7 +4,7 @@ import hippo
 
 import identity_spider, mugshot
 import libbig
-from bigboard import Stock
+from bigboard import AbstractMugshotStock
 from big_widgets import CanvasURLImage
 
 class ExternalAccountIcon(CanvasURLImage):
@@ -20,9 +20,10 @@ class ExternalAccountIcon(CanvasURLImage):
     def _sync(self):
         self.set_url(self._acct.get_icon_url())
 
-class SelfStock(Stock):
+class SelfStock(AbstractMugshotStock):
+    """Shows a user's Mugshot personal information."""
     def __init__(self):
-        super(SelfStock,self).__init__("Self", None)
+        super(SelfStock,self).__init__("Self", ticker="")
         
         spider = identity_spider.IdentitySpider()
         self._mugshot = mugshot.get_mugshot()
@@ -38,13 +39,13 @@ class SelfStock(Stock):
         self._namephoto_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
         
         self._photo = CanvasURLImage()
-        self._photo.connect("button-press-event", lambda button, event: self._on_edit_self())
+        self.connect_mugshot_handler(self._photo, "button-press-event", lambda button, event: self._on_edit_self())           
         #self._photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
             
         self._namephoto_box.append(self._photo)
         
         self._name = hippo.CanvasText(text=spider.get_self_name())
-        self._photo.connect("button-press-event", lambda button, event: self._on_edit_self())        
+        self.connect_mugshot_handler(self._name, "button-press-event", lambda button, event: self._on_edit_self())        
         self.append_bull(self._namephoto_box, self._name)        
         
         self._box.append(self._namephoto_box)
@@ -59,7 +60,8 @@ class SelfStock(Stock):
         self._mugshot.get_whereim()
         
     def _on_edit_self(self):
-        libbig.run_program('gnome-about-me', [])
+        baseurl = self._mugshot.get_baseurl()
+        libbig.show_url(baseurl + "/account")
         
     def get_content(self, size):
         return self._box

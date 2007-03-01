@@ -22,7 +22,7 @@ class Exchange(hippo.CanvasBox):
                                  orientation=hippo.ORIENTATION_VERTICAL)
         self._stock = stock
         self._ticker_text = None
-        if not stock.get_ticker() is None:
+        if not stock.get_ticker() == "":
             text = stock.get_ticker() + "                  "
             self._ticker_text = hippo.CanvasText(text=text, font="14px", xalign=hippo.ALIGNMENT_START)
             attrs = pango.AttrList()
@@ -118,7 +118,7 @@ class BigBoardPanel(object):
         # TODO - this is kind of gross; we need the strut change to happen after
         # the resize, but that appears to be an ultra-low priority internally
         # so we can't easily queue something directly after.
-        gobject.timeout_add(42, lambda : self._dw.do_set_wm_strut() and False)
+        gobject.timeout_add(250, lambda : self._dw.do_set_wm_strut() and False)
         
     def show(self):
         self._dw.show_all()

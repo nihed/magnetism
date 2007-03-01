@@ -8,10 +8,14 @@ class ExternalAccount(libbig.AutoSignallingStruct):
     pass
     
 class Entity(libbig.AutoSignallingStruct):
+    """A Mugshot entity such as person, group, or feed."""
     pass
 
 class Mugshot(gobject.GObject):
+    """A combination of a wrapper and cache for the Mugshot D-BUS API.  Access
+    using the get_mugshot() module method."""
     __gsignals__ = {
+        "initialized" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "self-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "whereim-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "entity-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
@@ -20,12 +24,16 @@ class Mugshot(gobject.GObject):
     def __init__(self, issingleton):
         gobject.GObject.__init__(self)
         if not issingleton == 42:
-            raise Exception("use mugshot.get_mugshot()")       
+            raise Exception("use mugshot.get_mugshot()")
+        
+        # Generic properties
+        self._baseprops = None
+        
         self._whereim = None
         self._self = None
         self._network = None
         self._entities = {}
-        self._mugshot = None
+        self._proxy = None
     
     def _whereimChanged(self, name, icon_url):
         logging.debug("whereimChanged: %s %s" % (name, icon_url))
@@ -58,18 +66,20 @@ class Mugshot(gobject.GObject):
         else:
             self._entities.update(**kwattrs)
     
-    def _get_mugshot(self):
-        if self._mugshot is None:
+    def _get_proxy(self):
+        if self._proxy is None:
             bus = dbus.SessionBus()
-            self._mugshot = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
-            self._mugshot.connect_to_signal('WhereimChanged', self._whereimChanged)
-            self._mugshot.connect_to_signal('EntityChanged', self._entityChanged)
-        return self._mugshot
+            self._proxy = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
+            self._proxy.connect_to_signal('WhereimChanged', self._whereimChanged)
+            self._proxy.connect_to_signal('EntityChanged', self._entityChanged)
+        return self._proxy
     
     def get_entity(self, guid):
         return self._entites[guid]
     
     def _on_dbus_error(self, err):
+        # TODO - could schedule a "reboot" of this class here to reload
+        # information
         logging.error("D-BUS error: %s" % (err,))
     
     def _on_get_self(self, myself):
@@ -77,23 +87,39 @@ class Mugshot(gobject.GObject):
         self._self = Entity(guid=myself['guid'], name=myself['name'], home_url=myself['home-url'], photo_url=myself['photo-url'])
         self.emit("self-changed", self._self)
     
+    def _on_get_baseprops(self, props):
+        self._baseprops = {}
+        for k,v in props.items():
+            self._baseprops[str(k)] = v
+        self.emit("initialized")
+    
+    def _get_baseprop(self, name):
+        if self._baseprops is None:
+            proxy = self._get_proxy()
+            proxy.GetBaseProperties(reply_handler=self._on_get_baseprops, error_handler=self._on_dbus_error)
+            return None
+        return self._baseprops['baseurl']
+    
+    def get_baseurl(self):
+        return self._get_baseprop('baseurl')
+    
     def get_self(self):
         if self._self is None:
-            mugshot = self._get_mugshot()
-            mugshot.GetSelf(reply_handler=self._on_get_self, error_handler=self._on_dbus_error)
+            proxy = self._get_proxy()
+            proxy.GetSelf(reply_handler=self._on_get_self, error_handler=self._on_dbus_error)
             return None
         return self._self
     
     def get_whereim(self):
         if (self._whereim is None):
-            proxy = self._get_mugshot()
+            proxy = self._get_proxy()
             proxy.NotifyAllWhereim()
             return None
         return self._whereim.values()
     
     def get_network(self):
         if self._network is None:
-            proxy = self._get_mugshot()
+            proxy = self._get_proxy()
             proxy.NotifyAllNetwork()
             return None
         return self._network.values()
