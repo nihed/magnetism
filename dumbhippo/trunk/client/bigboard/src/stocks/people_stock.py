@@ -23,7 +23,45 @@ class EntityItem(hippo.CanvasBox):
         self.append(self._name)
 
         self.set_size(bigboard.Stock.SIZE_BULL)
+
+        self.connect('button-press-event', self._handle_button_press)
+        self.connect('button-release-event', self._handle_button_release)
+        self.connect('motion-notify-event', self._handle_motion)
+        self._pressed = False
+        self._hovered = False
+
+    def _update_color(self):
+        if self._pressed:
+            self.set_property('background-color', 0x00000088)
+        elif self._hovered:
+            self.set_property('background-color', 0x00000033)
+        else:
+            self.set_property('background-color', 0x00000000)        
+
+    def _handle_button_press(self, self2, event):
+        if event.button != 1:
+            return False
         
+        self._pressed = True
+
+        self._update_color()
+
+    def _handle_button_release(self, self2, event):
+        if event.button != 1:
+            return False
+
+        self._pressed = False
+
+        self._update_color()
+
+    def _handle_motion(self, self2, event):
+        if event.detail == hippo.MOTION_DETAIL_ENTER:
+            self._hovered = True
+        elif event.detail == hippo.MOTION_DETAIL_LEAVE:
+            self._hovered = False
+
+        self._update_color()
+            
     def set_entity(self, entity):
         if self._entity == entity:
             return
