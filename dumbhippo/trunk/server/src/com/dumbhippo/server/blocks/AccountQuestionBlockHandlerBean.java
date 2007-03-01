@@ -5,10 +5,12 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Block;
@@ -84,11 +86,15 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 	public void createApplicationUsageBlocks() {
 		long when = System.currentTimeMillis();
 		
-		for (Account account : accountSystem.getActiveAccounts()) {
-			if (account.isApplicationUsageEnabled() == null) {
-				Block block = stacker.getOrCreateBlock(getKey(account.getOwner(), AccountQuestion.APPLICATION_USAGE));
-				stacker.stack(block, when, null, false, StackReason.BLOCK_UPDATE);
-			}
+		Query q = em.createQuery("SELECT a FROM Account a " +
+								 " WHERE a.applicationUsageEnabled IS NULL " +
+								 "   AND EXISTS (SELECT uci FROM UserClientInfo uci " +
+								 "                WHERE uci.user = a.owner " +
+								 "                  AND uci.platform = 'linux')");
+		
+		for (Account account : TypeUtils.castList(Account.class, q.getResultList())) {
+			Block block = stacker.getOrCreateBlock(getKey(account.getOwner(), AccountQuestion.APPLICATION_USAGE));
+			stacker.stack(block, when, null, false, StackReason.BLOCK_UPDATE);
 		}
 	}
 	
