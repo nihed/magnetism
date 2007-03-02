@@ -162,6 +162,7 @@ def main(args):
     hippo.canvas_set_load_image_hook(load_image_hook)    
     
     panel = BigBoardPanel()
+    
     panel.show()
     
     if debug:

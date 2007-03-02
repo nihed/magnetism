@@ -32,16 +32,13 @@ class AppDisplay(hippo.CanvasBox):
 class AppsStock(bigboard.AbstractMugshotStock):
     def __init__(self):
         super(AppsStock, self).__init__("Applications")
-        
-        self._mugshot = mugshot.get_mugshot()
-
-        self._mugshot.connect("my-top-apps-changed", self._handle_my_top_apps_changed)
-        
-        self._mugshot.get_my_top_apps()
-        
         self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
-
         self._apps = {}
+
+    def _on_mugshot_initialized(self):
+        super(AppsStock, self)._on_mugshot_initialized()
+        self._mugshot.connect("my-top-apps-changed", self._handle_my_top_apps_changed)
+        self._mugshot.get_my_top_apps()
 
     def get_content(self, size):
         return self._box
