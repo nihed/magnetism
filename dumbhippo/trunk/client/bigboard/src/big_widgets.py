@@ -36,6 +36,7 @@ class CanvasMugshotURLImage(CanvasURLImage):
         CanvasURLImage.__init__(self, **kwargs)
         self._mugshot = mugshot.get_mugshot()
         self._mugshot.connect("initialized", lambda mugshot: self._mugshot_url_image_sync())
+        self._rel_url = None
         if url:
             self.set_url(url)
         
@@ -46,7 +47,7 @@ class CanvasMugshotURLImage(CanvasURLImage):
         
     def _mugshot_url_image_sync(self):
         baseurl = self._mugshot.get_baseurl()
-        if not (baseurl is None):
+        if not (baseurl is None or self._rel_url is None):
             CanvasURLImage.set_url(self, baseurl + self._rel_url)
 
 class Sidebar(DockWindow):
