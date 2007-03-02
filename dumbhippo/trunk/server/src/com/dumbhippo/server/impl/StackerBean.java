@@ -31,6 +31,7 @@ import com.dumbhippo.Pair;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.ThreadUtils.DaemonRunnable;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.BlockEvent;
 import com.dumbhippo.live.LiveEventListener;
@@ -623,7 +624,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		for (String id : TypeUtils.castList(String.class, q.getResultList()))
 			blockIds.add(id);
 		
-		Thread t = ThreadUtils.newDaemonThread("refresh deleted", new ThreadUtils.DaemonRunnable() {
+		Thread t = ThreadUtils.newDaemonThread("refresh deleted", new DaemonRunnable() {
 			public void run() {
 				int i = 0;
 				int failures = 0;
