@@ -1,14 +1,18 @@
-import logging, inspect
+import logging, inspect, xml.dom, xml.dom.minidom
 
 import gobject, dbus
 
 import libbig
+from libbig import _log_cb
 
 class ExternalAccount(libbig.AutoSignallingStruct):
     pass
     
 class Entity(libbig.AutoSignallingStruct):
     """A Mugshot entity such as person, group, or feed."""
+    pass
+
+class Application(libbig.AutoSignallingStruct):
     pass
 
 class Mugshot(gobject.GObject):
@@ -18,7 +22,8 @@ class Mugshot(gobject.GObject):
         "initialized" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "self-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "whereim-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "entity-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
+        "entity-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
         }    
     
     def __init__(self, issingleton):
@@ -33,6 +38,8 @@ class Mugshot(gobject.GObject):
         self._self = None
         self._network = None
         self._entities = {}
+        self._applications = {}
+        self._top_apps = []
         self._proxy = None
         
         self._external_iqs = {} # int -> cb
@@ -44,29 +51,22 @@ class Mugshot(gobject.GObject):
             self._network = {}
         attrs = {'name': name, 'icon_url': icon_url}
         if not self._whereim.has_key(name):
-            self._whereim[name] = ExternalAccount(**attrs)
+            self._whereim[name] = ExternalAccount(attrs)
             self.emit('whereim-added', self._whereim[name])     
         else:
-            self._whereim[name].update(**attrs)
+            self._whereim[name].update(attrs)
         
     def _entityChanged(self, attrs):
         logging.debug("entityChanged: %s" % (attrs,))
         if self._network is None:
             self._network = {}
-
-        ## python keywords have to be byte arrays (binary strings) not unicode strings
-        ## also over dbus we name the keys in the dict with hyphen, and the keywords
-        ## are with underscore
-        kwattrs = {}
-        for k in attrs.keys():
-            kwattrs[str(k).replace('-','_')] = attrs[k]
         
-        guid = kwattrs['guid']
+        guid = attrs[u'guid']
         if not self._entities.has_key(guid):
-            self._entities[guid] = Entity(**kwattrs)
+            self._entities[guid] = Entity(attrs)
             self.emit("entity-added", self._entities[guid])
         else:
-            self._entities.update(**kwattrs)
+            self._entities.update(attrs)
             
     def _externalIQReturn(self, id, content):
         logging.debug("got external IQ reply for %d", id)
@@ -77,9 +77,9 @@ class Mugshot(gobject.GObject):
         if self._proxy is None:
             bus = dbus.SessionBus()
             self._proxy = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
-            self._proxy.connect_to_signal('WhereimChanged', self._whereimChanged)
-            self._proxy.connect_to_signal('EntityChanged', self._entityChanged)
-            self._proxy.connect_to_signal('ExternalIQReturn', self._externalIQReturn)
+            self._proxy.connect_to_signal('WhereimChanged', _log_cb(self._whereimChanged))
+            self._proxy.connect_to_signal('EntityChanged', _log_cb(self._entityChanged))
+            self._proxy.connect_to_signal('ExternalIQReturn', _log_cb(self._externalIQReturn))
         return self._proxy
     
     def get_entity(self, guid):
@@ -92,7 +92,7 @@ class Mugshot(gobject.GObject):
     
     def _on_get_self(self, myself):
         logging.debug("self changed: %s" % (myself,))
-        self._self = Entity(guid=myself['guid'], name=myself['name'], home_url=myself['home-url'], photo_url=myself['photo-url'])
+        self._self = Entity(myself)
         self.emit("self-changed", self._self)
     
     def _on_get_baseprops(self, props):
@@ -104,9 +104,9 @@ class Mugshot(gobject.GObject):
     def _get_baseprop(self, name):
         if self._baseprops is None:
             proxy = self._get_proxy()
-            proxy.GetBaseProperties(reply_handler=self._on_get_baseprops, error_handler=self._on_dbus_error)
+            proxy.GetBaseProperties(reply_handler=_log_cb(self._on_get_baseprops), error_handler=self._on_dbus_error)
             return None
-        return self._baseprops['baseurl']
+        return self._baseprops[name]
     
     def get_baseurl(self):
         return self._get_baseprop('baseurl')
@@ -114,7 +114,7 @@ class Mugshot(gobject.GObject):
     def get_self(self):
         if self._self is None:
             proxy = self._get_proxy()
-            proxy.GetSelf(reply_handler=self._on_get_self, error_handler=self._on_dbus_error)
+            proxy.GetSelf(reply_handler=_log_cb(self._on_get_self), error_handler=self._on_dbus_error)
             return None
         return self._self
     
@@ -137,9 +137,34 @@ class Mugshot(gobject.GObject):
         id = proxy.SendExternalIQ(False, name, xmlns, content)
         self._external_iqs[id] = cb
     
+    def _on_top_applications(self, xml_str):     
+        doc = xml.dom.minidom.parseString(xml_str)
+        root = doc.documentElement
+        if not root.nodeName == 'myTopApplications':
+            logging.warn("invalid root node, expected myTopApplications")
+            return
+        top_apps = []
+        for node in root.childNodes:
+            if not (node.nodeType == xml.dom.Node.ELEMENT_NODE):
+                continue
+            id = node.getAttribute("id")
+            logging.debug("parsing application id=%s", id)
+            attrs = libbig.snarf_attributes_from_xml_node(node, ['id', 'rank', 'usage-count', 'icon-url', 'description', 'name'])
+            app = None
+            if not self._applications.has_key(attrs['id']):
+                app = Application(attrs)
+                self._applications[attrs['id']] = app
+            else:
+                app = self._applications[attrs['id']]
+                app.update(attrs)
+            top_apps.append(app)
+        self._top_apps = top_apps
+        logging.debug("emitting top-apps-changed")
+        self.emit("top-apps-changed", self._top_apps)
+    
     def get_applications(self):
         self._do_external_iq("myTopApplications", "http://dumbhippo.com/protocol/applications", "",
-                             lambda content: logging.debug("got apps: %s", content))
+                             self._on_top_applications)
         return None
     
 mugshot_inst = None

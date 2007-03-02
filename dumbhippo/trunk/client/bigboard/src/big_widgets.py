@@ -6,14 +6,15 @@ import hippo
 
 from libgimmie import DockWindow
 from libbig import URLImageCache
-import libbig      
+import libbig, mugshot
 
 class CanvasURLImage(hippo.CanvasImage):
     """A wrapper for CanvasImage which has a set_url method to retrieve
        images from a URL."""
     def __init__(self, url=None, **kwargs):
         hippo.CanvasImage.__init__(self, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START, **kwargs) 
-        self.set_url(url)
+        if url:
+            self.set_url(url)
         
     def set_url(self, url):
         if url:
@@ -26,6 +27,27 @@ class CanvasURLImage(hippo.CanvasImage):
     def _handle_image_error(self, url, exc):
         # note exception is automatically added to log
         logging.exception("failed to load image for '%s'", url)  #FIXME queue retry
+        
+class CanvasMugshotURLImage(CanvasURLImage):
+    """A canvas image that takes a Mugshot-relative image URL.
+    Automatically adjusts if Mugshot base url changes or is
+    not known at construction time."""
+    def __init__(self, url=None, **kwargs):
+        CanvasURLImage.__init__(self, **kwargs)
+        self._mugshot = mugshot.get_mugshot()
+        self._mugshot.connect("initialized", lambda mugshot: self._mugshot_url_image_sync())
+        if url:
+            self.set_url(url)
+        
+    def set_url(self, url):
+        if url:
+            self._rel_url = url
+            self._mugshot_url_image_sync()
+        
+    def _mugshot_url_image_sync(self):
+        baseurl = self._mugshot.get_baseurl()
+        if not (baseurl is None):
+            CanvasURLImage.set_url(self, baseurl + self._rel_url)
 
 class Sidebar(DockWindow):
     __gsignals__ = {

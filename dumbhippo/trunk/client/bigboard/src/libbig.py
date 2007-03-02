@@ -29,19 +29,43 @@ def get_bigboard_config_file(name):
         pass
     return os.path.join(basepath, name)
 
+def snarf_attributes_from_xml_node(node, attrlist):
+    attrs = {}
+    for attr in attrlist:
+        attrs[attr] = node.getAttribute(attr)
+    return attrs
+
 def get_attr_or_none(dict, attr):
     if dict.has_key(attr):
         return dict[attr]
     else:
         return None
     
+def _log_cb(func, errtext=None):
+    """Wraps callbacks in a function that catches exceptions and logs them
+    to the logging system."""
+    def exec_cb(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except:
+            if errtext:
+                text = errtext
+            else:
+                text = "Caught exception in callback"
+            logging.exception(text)
+    return exec_cb
+    
 class AutoStruct:
     """Kind of like a dictionary, except the values are accessed using
     normal method calls, i.e. get_VALUE(), and the keys are determined
-    by arguments passed to the constructor (and are immutable thereafter)."""
-    def __init__(self, **kwargs):    
+    by arguments passed to the constructor (and are immutable thereafter).
+    
+    Dictionary keys should be alphanumeric, with the addition that 
+    hyphens (-) are transformed to underscore (_).
+    """
+    def __init__(self, values):    
         self._struct_values = {}
-        self._struct_values.update(kwargs)
+        self._struct_values.update(self._transform_values(values))
         
     def __getattr__(self, name):
         if name[0:4] == 'get_':
@@ -55,8 +79,19 @@ class AutoStruct:
     def _get_value(self, name):
         return self._struct_values[name]
     
-    def _update(self, args):
-        self._struct_values.update(args)
+    def _transform_values(self, values):
+        temp_args = {}
+        for k,v in values.items():
+            if type(k) == unicode:
+                k = str(k)
+            temp_args[k.replace('-','_')] = v    
+        return temp_args
+    
+    def update(self, values):
+        for k in values.keys():
+            if not self._struct_values.has_key(k):
+                raise Exception("Unknown key '%s' added to %s" % (k, self))
+        self._struct_values.update(self._transform_values(values))
         
     def __str__(self):
         return "autostruct values=%s" % (self._struct_values,)
@@ -68,16 +103,16 @@ class AutoSignallingStruct(gobject.GObject, AutoStruct):
         "changed": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())        
         }
     
-    def __init__(self, **kwargs):
+    def __init__(self, values):
         gobject.GObject.__init__(self)
-        AutoStruct.__init__(self, **kwargs)
+        AutoStruct.__init__(self, values)
             
-    def update(self, **kwargs):
+    def update(self, values):
         changed = False
-        for k,v in kwargs.items():
+        for k,v in values.items():
             if self._get_value(k) != v:
                 changed = True
-        self._update(kwargs)
+        self.update(values)
         if changed:
             self.emit("changed")    
     
