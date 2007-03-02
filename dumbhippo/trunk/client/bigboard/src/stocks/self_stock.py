@@ -5,11 +5,11 @@ import hippo
 import identity_spider, mugshot
 import libbig
 from bigboard import AbstractMugshotStock
-from big_widgets import CanvasURLImage
+from big_widgets import CanvasMugshotURLImage
 
-class ExternalAccountIcon(CanvasURLImage):
+class ExternalAccountIcon(CanvasMugshotURLImage):
     def __init__(self, acct):
-        CanvasURLImage.__init__(self)
+        CanvasMugshotURLImage.__init__(self)
         self.set_acct(acct)
         
     def set_acct(self, acct):
@@ -38,7 +38,7 @@ class SelfStock(AbstractMugshotStock):
         
         self._namephoto_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
         
-        self._photo = CanvasURLImage()
+        self._photo = CanvasMugshotURLImage()
         self.connect_mugshot_handler(self._photo, "button-press-event", lambda button, event: self._on_edit_self())           
         #self._photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
             
