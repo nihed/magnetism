@@ -1,5 +1,6 @@
 package com.dumbhippo.server.applications;
 
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Application;
 
 public class ApplicationView {
@@ -38,5 +39,15 @@ public class ApplicationView {
 	
 	public int getRank() {
 		return rank;
+	}
+	
+	public void writeToXmlBuilder(XmlBuilder builder) {
+		builder.appendEmptyNode("application",
+				                "name", application.getName(),
+				                "description", application.getDescription(),
+				                "icon-url", getIcon().getUrl(),
+				                "usage-count", "" + getUsageCount(),
+				                "rank", "" + getRank());
+				       
 	}
 }
