@@ -24,16 +24,7 @@ class SelfStock(AbstractMugshotStock):
     """Shows a user's Mugshot personal information."""
     def __init__(self):
         super(SelfStock,self).__init__("Self", ticker="")
-        
-        spider = identity_spider.IdentitySpider()
-        self._mugshot = mugshot.get_mugshot()
-        
-        self._mugshot.connect("self-changed", self._handle_self_changed)
-        
-        self._mugshot.get_self()
-        
-        self._mugshot.connect('whereim-added', self._handle_whereim_added)
-        
+
         self._box = hippo.CanvasBox()    
         
         self._namephoto_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
@@ -44,7 +35,7 @@ class SelfStock(AbstractMugshotStock):
             
         self._namephoto_box.append(self._photo)
         
-        self._name = hippo.CanvasText(text=spider.get_self_name())
+        self._name = hippo.CanvasText()
         self.connect_mugshot_handler(self._name, "button-press-event", lambda button, event: self._on_edit_self())        
         self.append_bull(self._namephoto_box, self._name)        
         
@@ -57,7 +48,12 @@ class SelfStock(AbstractMugshotStock):
         
         self._whereim = {}
         
-        self._mugshot.get_whereim()
+    def _on_mugshot_initialized(self):
+        super(SelfStock, self)._on_mugshot_initialized()
+        self._mugshot.connect("self-changed", self._handle_self_changed)
+        self._mugshot.connect('whereim-added', self._handle_whereim_added)        
+        self._mugshot.get_self()
+        self._mugshot.get_whereim()        
         
     def _on_edit_self(self):
         baseurl = self._mugshot.get_baseurl()

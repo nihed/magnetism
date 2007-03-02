@@ -97,14 +97,6 @@ class PeopleStock(bigboard.AbstractMugshotStock):
     def __init__(self):
         super(PeopleStock, self).__init__("People")
         
-        self._mugshot = mugshot.get_mugshot()
-
-        self._mugshot.connect("entity-added", self._handle_entity_added)
-        self._mugshot.connect("self-changed", self._handle_self_changed)
-        
-        self._mugshot.get_self()
-        self._mugshot.get_network()
-        
         self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
 
         self._items = {}
@@ -113,6 +105,13 @@ class PeopleStock(bigboard.AbstractMugshotStock):
         self._slideout_item = None
 
         self._profiles = profile.ProfileFactory()
+        
+    def _on_mugshot_initialized(self):
+        super(PeopleStock, self)._on_mugshot_initialized()
+        self._mugshot.connect("entity-added", self._handle_entity_added)
+        self._mugshot.connect("self-changed", self._handle_self_changed)        
+        self._mugshot.get_self()
+        self._mugshot.get_network()        
         
     def get_content(self, size):
         return self._box

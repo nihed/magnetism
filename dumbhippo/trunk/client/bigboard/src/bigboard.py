@@ -69,15 +69,14 @@ class AbstractMugshotStock(Stock):
         self._mugshot_initialized = False
         self._dependent_handlers = []
         
-        proxy = mugshot.get_mugshot()
-        proxy.connect("initialized", self._on_mugshot_initialized)
-        proxy.get_baseurl()
+        self._mugshot = mugshot.get_mugshot()
+        self._mugshot.connect("initialized", lambda mugshot: self._on_mugshot_initialized())
         
     # protected
     def get_mugshot_initialized(self):
         return self._mugshot_initialized
         
-    def _on_mugshot_initialized(self, proxy):
+    def _on_mugshot_initialized(self):
         logging.debug("mugshot intialized, hooking up %d handlers", len(self._dependent_handlers))
         self._mugshot_initialized = True
         for object, signal, handler in self._dependent_handlers:

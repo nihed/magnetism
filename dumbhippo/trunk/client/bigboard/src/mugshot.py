@@ -34,27 +34,31 @@ class Mugshot(gobject.GObject):
         self._global_apps_poll_id = 0
         
         self._app_poll_frequency_ms = 30 * 60 * 1000
-                
-        self._reset()
+        
+        session_bus = dbus.SessionBus()
+        bus_proxy = session_bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
+        self._bus_proxy = bus_proxy.connect_to_signal("NameOwnerChanged",
+                                                      _log_cb(self._on_dbus_name_owner_changed))
+        self._create_proxy()
+        
+        self._reset()        
         
     def _reset(self):
         # Generic properties
         self._baseprops = None
         
-        self._whereim = None
+        self._whereim = None # <str>,<ExternalAccount>
         self._self = None
         self._network = None
-        self._entities = {}
-        self._applications = {}
-        self._my_top_apps = None
-        self._global_top_apps = None
-        self._proxy = None
+        self._entities = {} # <str>,<Entity>
+        self._applications = {} # <str>,<Application>
+        self._my_top_apps = None # <Application>
+        self._global_top_apps = None # <Application>
         
-        self._external_iqs = {} # int -> callback
+        self._external_iqs = {} # <int>,<function>
         
         self._reset_my_apps_poll()
         self._reset_global_apps_poll()
-
 
     def _reset_my_apps_poll(self):
         if self._my_apps_poll_id > 0:
@@ -67,6 +71,24 @@ class Mugshot(gobject.GObject):
             gobject.source_remove(self._global_apps_poll_id)
             self._global_apps_poll_id = 0
         self._global_apps_poll_id = gobject.timeout_add(self._app_poll_frequency_ms, self._idle_poll_global_apps)        
+        
+    def _create_proxy(self):
+        try:
+            bus = dbus.SessionBus()
+            self._proxy = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
+            self._proxy.connect_to_signal('WhereimChanged', _log_cb(self._whereimChanged))
+            self._proxy.connect_to_signal('EntityChanged', _log_cb(self._entityChanged))
+            self._proxy.connect_to_signal('ExternalIQReturn', _log_cb(self._externalIQReturn))
+            self._proxy.GetBaseProperties(reply_handler=_log_cb(self._on_get_baseprops), error_handler=self._on_dbus_error)        
+        except dbus.DBusException:
+            self._proxy = None
+        
+    def _on_dbus_name_owner_changed(self, name, prev_owner, new_owner):
+        if name == 'org.mugshot.Mugshot':
+            if new_owner != '':
+                self._create_proxy()
+            else:
+                self._proxy = None
     
     def _whereimChanged(self, name, icon_url):
         logging.debug("whereimChanged: %s %s" % (name, icon_url))
@@ -93,18 +115,14 @@ class Mugshot(gobject.GObject):
             self._entities.update(attrs)
             
     def _externalIQReturn(self, id, content):
-        logging.debug("got external IQ reply for %d", id)
+        logging.debug("got external IQ reply for %d (%d outstanding)", id, len(self._external_iqs.keys()))
         if self._external_iqs.has_key(id):
             self._external_iqs[id](content)
             del self._external_iqs[id]
     
-    def _get_proxy(self):
+    def _do_proxy_call(self, ):
         if self._proxy is None:
             bus = dbus.SessionBus()
-            self._proxy = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
-            self._proxy.connect_to_signal('WhereimChanged', _log_cb(self._whereimChanged))
-            self._proxy.connect_to_signal('EntityChanged', _log_cb(self._entityChanged))
-            self._proxy.connect_to_signal('ExternalIQReturn', _log_cb(self._externalIQReturn))
         return self._proxy
     
     def get_entity(self, guid):
@@ -127,10 +145,6 @@ class Mugshot(gobject.GObject):
         self.emit("initialized")
     
     def _get_baseprop(self, name):
-        if self._baseprops is None:
-            proxy = self._get_proxy()
-            proxy.GetBaseProperties(reply_handler=_log_cb(self._on_get_baseprops), error_handler=self._on_dbus_error)
-            return None
         return self._baseprops[name]
     
     def get_baseurl(self):
@@ -138,31 +152,30 @@ class Mugshot(gobject.GObject):
     
     def get_self(self):
         if self._self is None:
-            proxy = self._get_proxy()
-            proxy.GetSelf(reply_handler=_log_cb(self._on_get_self), error_handler=self._on_dbus_error)
+            self._proxy.GetSelf(reply_handler=_log_cb(self._on_get_self), error_handler=self._on_dbus_error)
             return None
         return self._self
     
     def get_whereim(self):
         if (self._whereim is None):
-            proxy = self._get_proxy()
-            proxy.NotifyAllWhereim()
+            self._proxy.NotifyAllWhereim()
             return None
         return self._whereim.values()
     
     def get_network(self):
         if self._network is None:
-            proxy = self._get_proxy()
-            proxy.NotifyAllNetwork()
+            self._proxy.NotifyAllNetwork()
             return None
         return self._network.values()
 
     def _do_external_iq(self, name, xmlns, content, cb):
         """Sends a raw IQ request to Mugshot server, indirecting
-        via D-BUS to client."""
-        proxy = self._get_proxy()        
+        via D-BUS to client."""     
+        if self._proxy is None:
+            logging.warn("No Mugshot active, not sending IQ")
+            return
         logging.debug("sending external IQ request: %s %s (%d bytes)", name, xmlns, len(content))
-        id = proxy.SendExternalIQ(False, name, xmlns, content)
+        id = self._proxy.SendExternalIQ(False, name, xmlns, content)
         self._external_iqs[id] = cb
     
     def _load_app_from_xml(self, node):
