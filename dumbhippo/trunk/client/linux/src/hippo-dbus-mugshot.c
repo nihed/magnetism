@@ -163,6 +163,40 @@ hippo_dbus_handle_mugshot_get_whereim(HippoDBus   *dbus,
     return dbus_message_new_method_return(message);  /* Send out the results as signals.  */
 }
 
+DBusMessage*
+hippo_dbus_handle_mugshot_send_external_iq(HippoDBus   *dbus,
+                                           DBusMessage *message)
+{
+    DBusMessage *reply;
+    gboolean is_set;
+    const char *element;
+    const char *xmlns;
+    const char *content;
+    DBusError error;
+    HippoConnection *connection;
+    guint request_id;
+    
+    dbus_error_init(&error);
+    
+    if (!dbus_message_get_args(message,
+                               &error, 
+                               DBUS_TYPE_BOOLEAN, &is_set,
+                               DBUS_TYPE_STRING, &element,
+                               DBUS_TYPE_STRING, &xmlns,
+                               DBUS_TYPE_STRING, &content,
+                               DBUS_TYPE_INVALID)) {
+        return dbus_message_new_error(message, "org.mugshot.Mugshot.InvalidArgs", "Invalid arguments");                            
+    }
+    
+    connection = hippo_data_cache_get_connection(hippo_app_get_data_cache(hippo_get_app()));
+    
+    request_id = hippo_connection_send_external_iq(connection, is_set, element, xmlns, content);    
+    
+    reply = dbus_message_new_method_return(message);
+    dbus_message_append_args(reply, DBUS_TYPE_UINT32, &request_id, NULL);
+    return reply;
+}
+
 static void
 signal_entity_changed(gpointer entity_ptr, gpointer data)
 {
@@ -214,6 +248,15 @@ hippo_dbus_handle_mugshot_introspect(HippoDBus   *dbus,
                     "      <arg direction=\"out\" type=\"a{ss}\"/>\n"
                     "    </method>"
                     );
+    g_string_append(xml,
+                    "    <method name=\"SendExternalIQ\">\n"
+                    "      <arg direction=\"in\" type=\"b\"/>\n"
+                    "      <arg direction=\"in\" type=\"s\"/>\n"
+                    "      <arg direction=\"in\" type=\"s\"/>\n"
+                    "      <arg direction=\"in\" type=\"s\"/>\n"
+                    "      <arg direction=\"out\" type=\"u\"/>\n"                    
+                    "    </method>"
+                    );                    
     g_string_append(xml,
                     "    <method name=\"NotifyAllWhereim\"/>\n");
     g_string_append(xml,
@@ -278,3 +321,16 @@ hippo_dbus_mugshot_signal_entity_changed(HippoDBus            *dbus,
     append_entity(dbus, signal, entity);
     return signal;
 }
+
+DBusMessage* 
+hippo_dbus_mugshot_signal_external_iq_return(HippoDBus            *dbus,
+                                             guint                 id,
+                                             const char           *content)
+{
+    DBusMessage *signal;
+    signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
+                                     HIPPO_DBUS_MUGSHOT_INTERFACE,
+                                     "ExternalIQReturn");
+    dbus_message_append_args(signal, DBUS_TYPE_UINT32, &id, DBUS_TYPE_STRING, &content, DBUS_TYPE_INVALID);
+    return signal;
+}                                                   

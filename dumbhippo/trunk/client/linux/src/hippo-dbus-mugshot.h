@@ -28,6 +28,9 @@ DBusMessage* hippo_dbus_handle_mugshot_get_whereim  (HippoDBus       *dbus,
                                                      HippoConnection *xmpp_connection,
                                                      DBusMessage     *message);
 
+DBusMessage* hippo_dbus_handle_mugshot_send_external_iq  (HippoDBus       *dbus,
+                                                          DBusMessage     *message);
+
 DBusMessage* hippo_dbus_handle_mugshot_get_self 	(HippoDBus   *dbus,
              				                         DBusMessage  *message);   
                                                      
@@ -46,7 +49,10 @@ DBusMessage* hippo_dbus_mugshot_signal_whereim_changed      (HippoDBus          
                                                              
 DBusMessage* hippo_dbus_mugshot_signal_entity_changed       (HippoDBus            *dbus,
                                                              HippoEntity          *entity);
-
+                                                             
+DBusMessage* hippo_dbus_mugshot_signal_external_iq_return (HippoDBus            *dbus,
+                                                           guint                 id,
+                                                           const char           *content);
 G_END_DECLS
 
 #endif /* __HIPPO_DBUS_SETTINGS_H__ */
