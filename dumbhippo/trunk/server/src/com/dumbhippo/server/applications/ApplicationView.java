@@ -43,6 +43,7 @@ public class ApplicationView {
 	
 	public void writeToXmlBuilder(XmlBuilder builder) {
 		builder.appendEmptyNode("application",
+								"id", application.getId(),
 				                "name", application.getName(),
 				                "description", application.getDescription(),
 				                "icon-url", getIcon().getUrl(),
