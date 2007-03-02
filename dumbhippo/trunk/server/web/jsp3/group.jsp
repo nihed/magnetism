@@ -20,7 +20,7 @@
 </head>
 
 <dht3:page currentPageLink="group">
-	<dht3:pageSubHeader title="${group.private ? 'Private Group' : 'Public Group'}" privatePage="${group.private}">
+	<dht3:pageSubHeader title="${group.viewedGroup.name} - ${group.private ? 'Private Group' : 'Public Group'}" privatePage="${group.private}">
 		<dht3:groupRelatedPagesTabs group="${group.viewedGroup}" selected="group"/>
 	</dht3:pageSubHeader>
     <dht3:groupStack who="${group.viewedGroup}" stackOrder="1" stackType="dhMugshot" pageable="${group.pageableMugshot}" shortVersion="${group.pageableStack.position > 0}" showFrom="true" showHomeUrl="false" disableLink="true"/>
