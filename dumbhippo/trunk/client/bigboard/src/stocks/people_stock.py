@@ -3,7 +3,7 @@ import logging
 import hippo
 
 import bigboard, mugshot
-from big_widgets import CanvasURLImage
+from big_widgets import CanvasMugshotURLImage
 import slideout
 import profile
 
@@ -14,10 +14,10 @@ class EntityItem(hippo.CanvasBox):
         
         self._entity = None
 
-        self._photo = CanvasURLImage(scale_width=30,
-                                     scale_height=30,
-                                     border=1,
-                                     border_color=0x000000ff)
+        self._photo = CanvasMugshotURLImage(scale_width=30,
+                                            scale_height=30,
+                                            border=1,
+                                            border_color=0x000000ff)
         self.append(self._photo)
 
         self._name = hippo.CanvasText(xalign=hippo.ALIGNMENT_FILL, yalign=hippo.ALIGNMENT_START,
