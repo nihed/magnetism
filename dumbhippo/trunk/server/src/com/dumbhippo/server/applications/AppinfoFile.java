@@ -3,8 +3,10 @@ package com.dumbhippo.server.applications;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -22,6 +24,7 @@ public class AppinfoFile extends JarFile {
 	private Set<String> categories;
 	private Set<String> wmClasses;
 	private Set<String> titlePatterns;
+	private List<String> desktopNames;
 	private Set<AppinfoIcon> icons;
 	
 	static final private Pattern ID_REGEX = Pattern.compile("[A-Za-z0-9-.]+");
@@ -32,6 +35,8 @@ public class AppinfoFile extends JarFile {
 	static final private Pattern TITLE_PATTERN_REGEX = Pattern.compile(".+");
 	
 	static final private Pattern ICON_KEY_REGEX = Pattern.compile("icon.([A-Za-z0-9-_]+)(?:\\.(\\d+x\\d+|scalable))?");
+	
+	static final private Pattern DESKTOP_REGEX = Pattern.compile("(?:.*/)?([A-Za-z0-9-.]+)\\.desktop");
 
 	public AppinfoFile(File file) throws IOException, ValidationException {
 		super(file);
@@ -66,6 +71,23 @@ public class AppinfoFile extends JarFile {
 		categories = getSetProperty("categories", CATEGORY_REGEX);
 		wmClasses = getSetProperty("wmclass", WM_CLASS_REGEX);
 		titlePatterns = getSetProperty("titlepattern", TITLE_PATTERN_REGEX);
+		
+		desktopNames = getListProperty("desktopnames", TITLE_PATTERN_REGEX);
+		
+		// We form a fallback value of desktopNames from the application ID
+		// and from the name of the desktop file in the appinfo file, if any.
+		if (desktopNames.isEmpty()) {
+			desktopNames = new ArrayList<String>();
+			String desktop = getStringProperty("desktop", null, false);
+			String desktopName = null;
+			Matcher m = DESKTOP_REGEX.matcher(desktop);
+			if (m.matches()) {
+				desktopName = m.group(1);
+				desktopNames.add(desktopName);
+			}
+			if (desktopName == null || !desktopName.equals(appId))
+				desktopNames.add(appId);
+		}
 		
 		icons = new HashSet<AppinfoIcon>();
 		for (Object o : properties.keySet()) {
@@ -128,6 +150,27 @@ public class AppinfoFile extends JarFile {
 		}
 	}
 	
+	private List<String> getListProperty(String propertyName, Pattern mustMatch) throws ValidationException {
+		String str = properties.getProperty(propertyName);
+		
+		if (str != null) {
+			str = str.trim();
+			
+			String[] values = str.split("\\s*;\\s*");
+			List<String> result = new ArrayList<String>();
+			for (String v : values) {
+				if (mustMatch != null && !mustMatch.matcher(v).matches())
+					throw new ValidationException("'" + str + "' is not a valid value for property '" + propertyName + "'");
+
+				result.add(v);
+			}
+			
+			return result;
+		} else{
+			return Collections.emptyList();
+		}
+	}
+	
 	public String getAppId() {
 		return appId;
 	}
@@ -152,7 +195,11 @@ public class AppinfoFile extends JarFile {
 	public Set<String> getTitlePatterns() {
 		return titlePatterns;
 	}
-	
+
+	public List<String> getDesktopNames() {
+		return desktopNames;
+	}
+
 	public Set<AppinfoIcon> getIcons() {
 		return icons;
 	}

@@ -163,6 +163,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		application.setRawCategories(setToString(appinfoFile.getCategories()));
 		application.setCategory(computeCategoryFromRaw(appinfoFile.getCategories()));
 		application.setTitlePatterns(setToString(appinfoFile.getTitlePatterns()));
+		application.setDesktopNames(listToString(appinfoFile.getDesktopNames()));
 	}
 	
 	private void updateApplicationCollections(Application application, AppinfoFile appinfoFile) {
@@ -189,18 +190,23 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		return ApplicationCategory.OTHER;
 	}
 	
-	private String setToString(Set<String> set) {
+	private String listToString(List<String> list) {
 		StringBuilder builder = new StringBuilder();
-		List<String> sortedElements = new ArrayList<String>(set);
-		Collections.sort(sortedElements);
 		
-		for (String t : sortedElements) {
+		for (String t : list) {
 			if (builder.length() > 0)
 				builder.append(";");
 			builder.append(t);
 		}
 		
 		return builder.toString();
+	}
+	
+	private String setToString(Set<String> set) {
+		List<String> sortedElements = new ArrayList<String>(set);
+		Collections.sort(sortedElements);
+		
+		return listToString(sortedElements);
 	}
 	
 	private void updateWmClasses(Application application, AppinfoFile appinfoFile) {
