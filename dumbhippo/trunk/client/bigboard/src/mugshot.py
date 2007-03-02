@@ -34,6 +34,8 @@ class Mugshot(gobject.GObject):
         self._network = None
         self._entities = {}
         self._proxy = None
+        
+        self._external_iqs = {} # int -> cb
     
     def _whereimChanged(self, name, icon_url):
         logging.debug("whereimChanged: %s %s" % (name, icon_url))
@@ -65,6 +67,11 @@ class Mugshot(gobject.GObject):
             self.emit("entity-added", self._entities[guid])
         else:
             self._entities.update(**kwattrs)
+            
+    def _externalIQReturn(self, id, content):
+        logging.debug("got external IQ reply for %d", id)
+        if self._external_iqs.has_key(id):
+            self._external_iqs[id](content)
     
     def _get_proxy(self):
         if self._proxy is None:
@@ -72,6 +79,7 @@ class Mugshot(gobject.GObject):
             self._proxy = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
             self._proxy.connect_to_signal('WhereimChanged', self._whereimChanged)
             self._proxy.connect_to_signal('EntityChanged', self._entityChanged)
+            self._proxy.connect_to_signal('ExternalIQReturn', self._externalIQReturn)
         return self._proxy
     
     def get_entity(self, guid):
@@ -123,6 +131,16 @@ class Mugshot(gobject.GObject):
             proxy.NotifyAllNetwork()
             return None
         return self._network.values()
+
+    def _do_external_iq(self, name, xmlns, content, cb):
+        proxy = self._get_proxy()        
+        id = proxy.SendExternalIQ(False, name, xmlns, content)
+        self._external_iqs[id] = cb
+    
+    def get_applications(self):
+        self._do_external_iq("myTopApplications", "http://dumbhippo.com/protocol/applications", "",
+                             lambda content: logging.debug("got apps: %s", content))
+        return None
     
 mugshot_inst = None
 def get_mugshot():
