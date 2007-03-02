@@ -1199,6 +1199,17 @@ on_whereim_changed(HippoConnection            *connection,
     hippo_dbus_notify_whereim_changed(app->dbus, app->connection, acct);
 }
 
+static void
+on_external_iq_return(HippoConnection      *connection,
+                      guint                 id,
+                      const char           *content,
+                      void                 *data)
+{
+    HippoApp *app = data;
+    
+    hippo_dbus_notify_external_iq_return(app->dbus, id, content);
+}
+
 /* Since we're doing this anyway, hippo_platform_get_screen_info becomes mostly
  * pointless... really should either remove screen info from HippoPlatform,
  * or put a "screen-info-changed" signal on HippoPlatform.
@@ -1267,7 +1278,9 @@ hippo_app_new(HippoInstanceType  instance_type,
                      
     /* Hook up D-BUS reflectors */
     g_signal_connect(G_OBJECT(app->connection), "whereim-changed",
-                     G_CALLBACK(on_whereim_changed), app);                     
+                     G_CALLBACK(on_whereim_changed), app);      
+    g_signal_connect(G_OBJECT(app->connection), "external-iq-return",
+                     G_CALLBACK(on_external_iq_return), app);  
     
     app->photo_cache = hippo_pixbuf_cache_new(app->platform);
     

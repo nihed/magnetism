@@ -1499,8 +1499,8 @@ handle_message(DBusConnection     *connection,
                 reply = hippo_dbus_handle_mugshot_get_whereim(dbus, xmpp_connection, message);
             } else if (strcmp(member, "NotifyAllNetwork") == 0) {
                 reply = hippo_dbus_handle_mugshot_get_network(dbus, message);
-            } else if (strcmp(member, "GetMyTopApplications") == 0) {
-                reply = hippo_dbus_handle_mugshot_get_my_top_applications(dbus, message);                       
+            } else if (strcmp(member, "SendExternalIQ") == 0) {
+                reply = hippo_dbus_handle_mugshot_send_external_iq(dbus, message);                       
             } else if (strcmp(member, "GetBaseProperties") == 0) {
                 reply = hippo_dbus_handle_mugshot_get_baseprops(dbus, message);                   
             } else if (strcmp(member, "GetSelf") == 0) {
@@ -1656,4 +1656,15 @@ hippo_dbus_notify_entity_changed(HippoDBus               *dbus,
     signal = hippo_dbus_mugshot_signal_entity_changed(dbus, entity);
     dbus_connection_send(dbus->connection, signal, NULL);
     dbus_message_unref(signal);
+}
+
+void       
+hippo_dbus_notify_external_iq_return (HippoDBus            *dbus,
+                                      guint                 id,
+                                      const char           *content)
+{
+    DBusMessage *signal;
+    signal = hippo_dbus_mugshot_signal_external_iq_return(dbus, id, content);
+    dbus_connection_send(dbus->connection, signal, NULL);
+    dbus_message_unref(signal);    
 }
