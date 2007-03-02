@@ -12,6 +12,7 @@ import org.dom4j.Element;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.jive.annotations.IQHandler;
 import com.dumbhippo.jive.annotations.IQMethod;
 import com.dumbhippo.live.LiveEventListener;
@@ -20,8 +21,10 @@ import com.dumbhippo.live.UserPrefChangedEvent;
 import com.dumbhippo.persistence.Application;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.applications.ApplicationSystem;
 import com.dumbhippo.server.applications.ApplicationUsageProperties;
+import com.dumbhippo.server.applications.ApplicationView;
 import com.dumbhippo.server.views.UserViewpoint;
 
 @IQHandler(namespace=ApplicationsIQHandler.APPLICATIONS_NAMESPACE)
@@ -36,6 +39,24 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler  implements LiveEv
 	
 	public ApplicationsIQHandler() {
 		super("Hippo application usage IQ Handler");
+	}
+
+	@IQMethod(name="myTopApplications", type=IQ.Type.get)
+	public void getMyTopApplications(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
+		Document document = DocumentFactory.getInstance().createDocument();
+		Element childElement = document.addElement("myTopApplications", APPLICATIONS_NAMESPACE);
+
+		Pageable<ApplicationView> pageable = new Pageable<ApplicationView>("applications");
+		pageable.setPosition(0);
+		pageable.setInitialPerPage(30);		
+		applicationSystem.pageMyApplications(viewpoint, null, 24, null, pageable);
+		for (ApplicationView application : pageable.getResults()) {
+			XmlBuilder builder = new XmlBuilder();
+			application.writeToXmlBuilder(builder);
+			childElement.add(XmlParser.elementFromXml(builder.toString()));			
+		}
+		
+		reply.setChildElement(childElement);		
 	}
 	
 	@IQMethod(name="activeApplications", type=IQ.Type.set)
