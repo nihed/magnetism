@@ -16,13 +16,14 @@ import com.dumbhippo.server.util.EJBUtil;
 @Entity
 @Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public class Application {
-	String id;
-	String name;
-	String description;
-	ApplicationCategory category;
-	String rawCategories;
-	String titlePatterns;
-	Set<ApplicationIcon> icons;
+	private String id;
+	private String name;
+	private String description;
+	private ApplicationCategory category;
+	private String rawCategories;
+	private String titlePatterns;
+	private String desktopNames;
+	private Set<ApplicationIcon> icons;
 	
 	// for hibernate
 	public Application() {
@@ -85,6 +86,15 @@ public class Application {
 
 	public void setTitlePatterns(String titlePatterns) {
 		this.titlePatterns = titlePatterns;
+	}
+	
+	@Column(nullable = true)
+	public String getDesktopNames() {
+		return desktopNames;
+	}
+
+	public void setDesktopNames(String desktopNames) {
+		this.desktopNames = desktopNames;
 	}
 	
 	@OneToMany(mappedBy="application")
