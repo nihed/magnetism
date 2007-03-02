@@ -4234,6 +4234,71 @@ hippo_connection_visit_entity(HippoConnection *connection,
     }
 }
 
+#ifdef HIPPO_LOUDMOUTH_IS_10
+typedef struct {
+        gchar *key;
+        gchar *value;
+} KeyValuePair;
+static char *
+copied_lm_message_node_to_string(LmMessageNode *node)
+{
+    GString       *ret;
+    GSList        *l;
+    LmMessageNode *child;
+
+    g_return_val_if_fail (node != NULL, NULL);
+    
+    if (node->name == NULL) {
+        return g_strdup ("");
+    }
+    
+    ret = g_string_new ("<");
+    g_string_append (ret, node->name);
+    
+    for (l = node->attributes; l; l = l->next) {
+        KeyValuePair *kvp = (KeyValuePair *) l->data;
+
+        if (node->raw_mode == FALSE) {
+            gchar *escaped;
+
+            escaped = g_markup_escape_text (kvp->value, -1);
+            g_string_append_printf (ret, " %s=\"%s\"", 
+                        kvp->key, escaped);
+            g_free (escaped);
+        } else {
+            g_string_append_printf (ret, " %s=\"%s\"", 
+                        kvp->key, kvp->value);
+        }
+        
+    }
+    
+    g_string_append_c (ret, '>');
+    
+    if (node->value) {
+        gchar *tmp;
+
+        if (node->raw_mode == FALSE) {
+            tmp = g_markup_escape_text (node->value, -1);
+            g_string_append (ret,  tmp);
+            g_free (tmp);
+        } else {
+            g_string_append (ret, node->value);
+        }
+    } 
+
+    for (child = node->children; child; child = child->next) {
+        gchar *child_str = copied_lm_message_node_to_string (child);
+        g_string_append_c (ret, ' ');
+        g_string_append (ret, child_str);
+        g_free (child_str);
+    }
+
+    g_string_append_printf (ret, "</%s>\n", node->name);
+    
+    return g_string_free (ret, FALSE);
+}
+#endif
+
 static LmHandlerResult
 on_external_iq_reply(LmMessageHandler *handler,
                      LmConnection     *lconnection,
@@ -4247,11 +4312,17 @@ on_external_iq_reply(LmMessageHandler *handler,
     char *content = NULL;
     
     g_debug("got external IQ reply (id=%u)", external_id);
-    
-    if (node)
+
+    if (node) {
+        lm_message_node_set_raw_mode(node, FALSE);        
+#ifdef HIPPO_LOUDMOUTH_IS_10    
+        content = copied_lm_message_node_to_string(node);
+#else
         content = lm_message_node_to_string(node);
-    else
+#endif
+    } else {
         content = g_strdup("");
+    }
     
     g_signal_emit(G_OBJECT(connection), signals[EXTERNAL_IQ_RETURN], 0, external_id, content);
                   

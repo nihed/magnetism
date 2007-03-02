@@ -56,8 +56,6 @@ append_entity(HippoDBus         *dbus,
     const char *home_url;
     const char *photo_url;
     const char *type;
-    char *abs_home_url;
-    char *abs_photo_url;
 
     connection = hippo_data_cache_get_connection(hippo_app_get_data_cache(hippo_get_app()));
 
@@ -81,16 +79,10 @@ append_entity(HippoDBus         *dbus,
         type = "feed";
         break;
     }
-    
-    abs_home_url = home_url ? hippo_connection_make_absolute_url(connection, home_url) : NULL;
-    abs_photo_url = photo_url ? hippo_connection_make_absolute_url(connection, photo_url) : NULL;
 
     /* append_strings_as_dict will skip pairs with null value */
     dbus_message_iter_init_append(message, &iter);
-    append_strings_as_dict(&iter, "guid", guid, "type", type, "name", name, "home-url", abs_home_url, "photo-url", abs_photo_url, NULL);
-
-    g_free(abs_home_url);
-    g_free(abs_photo_url);
+    append_strings_as_dict(&iter, "guid", guid, "type", type, "name", name, "home-url", home_url, "photo-url", photo_url, NULL);
 }
 
 void
@@ -293,20 +285,19 @@ hippo_dbus_mugshot_signal_whereim_changed(HippoDBus            *dbus,
                                           HippoExternalAccount *acct)
 {
     DBusMessage *signal;
-    char *name, *icon_url, *abs_icon_url;
+    char *name, *icon_url;
 
     g_object_get(acct, "name", &name, "icon-url", &icon_url, NULL);
 
     signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
                                      HIPPO_DBUS_MUGSHOT_INTERFACE,
                                      "WhereimChanged");
-    abs_icon_url = hippo_connection_make_absolute_url(connection, icon_url);
-    dbus_message_append_args(signal, DBUS_TYPE_STRING, &name,
-                             DBUS_TYPE_STRING, &abs_icon_url,
+    dbus_message_append_args(signal, 
+                             DBUS_TYPE_STRING, &name,
+                             DBUS_TYPE_STRING, &icon_url,
                              DBUS_TYPE_INVALID);
     g_free(name);
     g_free(icon_url);
-    g_free(abs_icon_url);
     return signal;
 }
 
