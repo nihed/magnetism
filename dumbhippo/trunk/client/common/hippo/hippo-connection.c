@@ -25,6 +25,41 @@ static const int RETRY_TIMEOUT_FUZZ = 60*1000*5;        /* add up to this much t
                                                          * at the same time.
                                                          */
 
+typedef struct MessageContext MessageContext;
+
+/* This structure is generated internally if 
+ * extended data is passed to hippo_connection_send_message_with_reply_full.
+ * It is then passed to the callback function instead of the bare HippoConnection.
+ */
+struct MessageContext {
+    guint refcount;
+    HippoConnection *connection;
+    gpointer data;
+    GFreeFunc free_data_func;
+};
+
+static void 
+message_context_ref(MessageContext *context)
+{
+    if (context == NULL)
+        return;
+    context->refcount++;  
+}
+
+static void
+message_context_unref (gpointer ptr) 
+{
+    MessageContext *context = (MessageContext *) ptr;
+    if (context == NULL)
+        return;
+    if (--context->refcount == 0) {
+        if (context->free_data_func) {
+            context->free_data_func(context->data);
+        }
+        g_free(context);
+    }
+}
+
 /* === OutgoingMessage internal class === */
 
 typedef struct OutgoingMessage OutgoingMessage;
@@ -34,18 +69,22 @@ struct OutgoingMessage {
     LmMessage        *message;
     LmHandleMessageFunction handler;
     int generation;
+    MessageContext *context;
 };
 
 static OutgoingMessage*
 outgoing_message_new(LmMessage               *message,
                      LmHandleMessageFunction  handler,
-                     int                      generation)
+                     int                      generation,
+                     MessageContext          *context)
 {
     OutgoingMessage *outgoing = g_new0(OutgoingMessage, 1);
     outgoing->refcount = 1;
     outgoing->message = message;
     outgoing->handler = handler;
     outgoing->generation = generation;
+    outgoing->context = context;
+    message_context_ref(outgoing->context);
     if (message)
         lm_message_ref(message);
     return outgoing;
@@ -71,6 +110,7 @@ outgoing_message_unref(OutgoingMessage *outgoing)
     if (outgoing->refcount == 0) {
         if (outgoing->message)
             lm_message_unref(outgoing->message);
+        message_context_unref(outgoing->context);
         g_free(outgoing);
     }
 }
@@ -196,6 +236,8 @@ struct _HippoConnection {
     unsigned int too_old : 1;
     unsigned int upgrade_available : 1;
     unsigned int last_auth_failed : 1;
+    
+    guint external_iq_serial;
 };
 
 struct _HippoConnectionClass {
@@ -233,6 +275,7 @@ enum {
     /* Emitted to signal that we should temporarily rapidly upload application
      * activity instead of just once an hour */
     INITIAL_APPLICATION_BURST,
+    EXTERNAL_IQ_RETURN,
     LAST_SIGNAL
 };
 
@@ -385,7 +428,16 @@ hippo_connection_class_init(HippoConnectionClass *klass)
                       0,
                       NULL, NULL,
                       g_cclosure_marshal_VOID__VOID,
-                      G_TYPE_NONE, 0);                      
+                      G_TYPE_NONE, 0);        
+                      
+    signals[EXTERNAL_IQ_RETURN] =
+        g_signal_new ("external-iq-return",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__UINT_POINTER,
+                      G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_POINTER);    
     
     object_class->finalize = hippo_connection_finalize;
 }
@@ -1099,7 +1151,8 @@ hippo_connection_send_message(HippoConnection *connection,
 static void
 send_immediately(HippoConnection         *connection,
                  LmMessage               *message,
-                 LmHandleMessageFunction  handler)
+                 LmHandleMessageFunction  handler,
+                 MessageContext          *context)
 {
     GError *error;
     
@@ -1110,7 +1163,9 @@ send_immediately(HippoConnection         *connection,
     
     error = NULL;
     if (handler != NULL) {
-        LmMessageHandler *handler_obj = lm_message_handler_new(handler, connection, NULL);
+        LmMessageHandler *handler_obj = lm_message_handler_new(handler, 
+                                                               context ? (void*) context : (void*) connection,  /* Defaults to connection */
+                                                               context ? message_context_unref : (GDestroyNotify) NULL);
         lm_connection_send_with_reply(connection->lm_connection, message, handler_obj, &error);
         lm_message_handler_unref(handler_obj);
     } else {
@@ -1123,11 +1178,15 @@ send_immediately(HippoConnection         *connection,
 }
 
 static void
-hippo_connection_send_message_with_reply(HippoConnection  *connection,
-                                         LmMessage        *message,
-                                         LmHandleMessageFunction handler,
-                                         SendMode          mode)
+hippo_connection_send_message_with_reply_full(HippoConnection  *connection,
+                                              LmMessage        *message,
+                                              LmHandleMessageFunction handler,
+                                              SendMode          mode,
+                                              gpointer          data,
+                                              GFreeFunc         free_func)
 {
+    MessageContext *context = NULL;
+    
     if (mode == SEND_MODE_IGNORE_IF_DISCONNECTED) {
         if (!hippo_connection_get_connected(connection))
             return;    
@@ -1135,14 +1194,31 @@ hippo_connection_send_message_with_reply(HippoConnection  *connection,
             mode = SEND_MODE_AFTER_AUTH;
     }
     
+    if (data != NULL) {
+        context = g_new0(MessageContext, 1);
+        context->refcount = 1;
+        context->connection = connection;
+        context->data = data;
+        context->free_data_func = free_func;   
+    }
+    
     if (mode == SEND_MODE_IMMEDIATELY) {
-        send_immediately(connection, message, handler);
+        send_immediately(connection, message, handler, context);
     } else {
         g_queue_push_tail(connection->pending_outgoing_messages,
-                          outgoing_message_new(message, handler, connection->generation));
+                          outgoing_message_new(message, handler, connection->generation, context));
 
         hippo_connection_flush_outgoing(connection);    
     }
+}
+
+static void
+hippo_connection_send_message_with_reply(HippoConnection  *connection,
+                                         LmMessage        *message,
+                                         LmHandleMessageFunction handler,
+                                         SendMode          mode)
+{
+    return hippo_connection_send_message_with_reply_full(connection, message, handler, mode, NULL, NULL);
 }
 
 static void
@@ -1162,7 +1238,7 @@ hippo_connection_flush_outgoing(HippoConnection *connection)
          * sent while disconnected, not stuff sent before disconnection.
          */
         if (om->generation == connection->generation)
-            send_immediately(connection, om->message, om->handler);
+            send_immediately(connection, om->message, om->handler, om->context);
         outgoing_message_unref(om);
     }
 
@@ -4157,3 +4233,60 @@ hippo_connection_visit_entity(HippoConnection *connection,
                   hippo_entity_get_guid(entity));
     }
 }
+
+static LmHandlerResult
+on_external_iq_reply(LmMessageHandler *handler,
+                     LmConnection     *lconnection,
+                     LmMessage        *message,
+                     gpointer          data)
+{
+    MessageContext *context = (MessageContext*) data;
+    HippoConnection *connection = context->connection;
+    LmMessageNode *node = message->node->children;
+    guint external_id = GPOINTER_TO_UINT(context->data);
+    char *content = NULL;
+    
+    g_debug("got external IQ reply (id=%u)", external_id);
+    
+    if (node)
+        content = lm_message_node_to_string(node);
+    else
+        content = g_strdup("");
+    
+    g_signal_emit(G_OBJECT(connection), signals[EXTERNAL_IQ_RETURN], 0, external_id, content);
+                  
+    g_free(content);
+    
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}   
+
+guint 
+hippo_connection_send_external_iq(HippoConnection *connection,
+                                  gboolean         is_set,
+                                  const char      *element,
+                                  const char      *xmlns,
+                                  const char      *content)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           is_set ? LM_MESSAGE_SUB_TYPE_SET : LM_MESSAGE_SUB_TYPE_GET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, element, NULL);
+    lm_message_node_set_attribute(child, "xmlns", xmlns);
+    lm_message_node_set_raw_mode(child, TRUE);    
+    lm_message_node_set_value(child, content);
+    
+    connection->external_iq_serial++;
+    
+    hippo_connection_send_message_with_reply_full(connection, message, on_external_iq_reply, SEND_MODE_AFTER_AUTH,
+                                                  GUINT_TO_POINTER(connection->external_iq_serial), NULL);
+
+    lm_message_unref(message);
+
+    g_debug("Sent external IQ: %s %s (%d content characters)", element, xmlns, strlen(content));         
+    return connection->external_iq_serial;
+}  

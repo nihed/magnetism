@@ -177,7 +177,13 @@ void hippo_connection_send_desktop_setting     (HippoConnection *connection,
                                                 const char      *key,
                                                 const char      *value);
                                                 
-void hippo_connection_request_mugshot_whereim  (HippoConnection *connection);                                                
+void hippo_connection_request_mugshot_whereim  (HippoConnection *connection); 
+
+guint hippo_connection_send_external_iq        (HippoConnection *connection,
+                                                gboolean         is_set,
+                                                const char      *element,
+                                                const char      *xmlns,
+                                                const char      *content);                                               
 
 G_END_DECLS
 
