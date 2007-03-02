@@ -184,8 +184,8 @@ _wrap_hippo_event_tp_getattr(PyObject *self, char *attr)
         break;        
         /* No default, hides compiler warnings */
     }
-
-    return NULL;
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 %%
 override hippo_cairo_surface_from_gdk_pixbuf kwargs
