@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 import org.slf4j.Logger;
 
@@ -16,10 +15,7 @@ import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupFeed;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
-import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
@@ -27,6 +23,7 @@ import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -41,13 +38,11 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	
 	// We override the default values for initial and subsequent results per page from Pageable
 	// This number will apply to each section of members (active/followers/invited/invited followers)
-	static private final int MEMBERS_PER_PAGE = 14;
-	static private final int MAX_POSTS_SHOWN = 10;
+	static private final int MEMBERS_PER_PAGE = 50;
 	static private final int MAX_MEMBERS_SHOWN = 5;
 	
 	private PostingBoard postBoard;
 	private MusicSystem musicSystem;
-	private Configuration configuration;
 	private GroupSystem groupSystem;
 	
 	@PagePositions
@@ -56,9 +51,6 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private GroupView viewedGroup;
 	private String viewedGroupId;
 	private boolean fromInvite;
-	private boolean justAdded;
-	private Set<User> adders;
-	private PersonView inviter;
 	private GroupMember groupMember;
 	private Pageable<TrackView> latestTracks;
 	private ListBean<PersonView> activeMembers;
@@ -76,7 +68,6 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	
 	public GroupPage() {		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
-		configuration = WebEJBUtil.defaultLookup(Configuration.class);
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
@@ -123,7 +114,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		// implicitly accepts the invitation to the group
 		if (getSignin().isActive() && 
 			(viewedGroup.getStatus() == MembershipStatus.INVITED || viewedGroup.getStatus() == MembershipStatus.INVITED_TO_FOLLOW)) {
-			// If the user is active, we have a user
+			// Only UserViewpoints can have INVITED or INVITED_TO_FOLLOW membership status
 			UserViewpoint userView = (UserViewpoint) viewpoint;
 			groupSystem.acceptInvitation(userView, viewedGroup.getGroup());
 			// Reload the view so we get the new status
@@ -133,11 +124,8 @@ public class GroupPage extends AbstractSigninOptionalPage {
 				logger.debug("invalid or inaccessible group id {}", groupId);
 				return;
 			}
-			justAdded = true;
 		}
 		groupMember = viewedGroup.getGroupMember();
-		
-		adders = groupMember.getAdders();
 	}
 	
 	public void setAllMembers(boolean allMembers) {
@@ -146,7 +134,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 
 	private List<PersonView> getMembers(MembershipStatus status) {
 		int maxResults = allMembers ? -1 : MAX_MEMBERS_SHOWN;
-		List<PersonView> result = PersonView.sortedList(groupSystem.getMembers(getSignin().getViewpoint(), viewedGroup.getGroup(), status, maxResults));
+		List<PersonView> result = PersonView.sortedList(groupSystem.getMembers(getSignin().getViewpoint(), viewedGroup.getGroup(), status, maxResults, PersonViewExtra.EXTERNAL_ACCOUNTS));
 		return result;
 	}
  
@@ -344,20 +332,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	public boolean isInvitedNotAccepted() {
 		return getGroupMember().getStatus() == MembershipStatus.INVITED;
 	}
-
-	public boolean isJustAdded() {
-		return justAdded;
-	}
-
-	public PersonView getInviter() {
-		// TODO: display all the adders
-		if (inviter == null && adders.iterator().hasNext()) {
-			inviter = personViewer.getPersonView(getSignin().getViewpoint(), adders.iterator().next());	
-		}
-		
-		return inviter;
-	}
-
+	
 	public boolean isFromInvite() {
 		return fromInvite;
 	}
@@ -369,25 +344,6 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		}
 		
 		this.fromInvite = fromInvite;
-	}
-	
-	public Pageable<PostView> getPosts() {
-		assert getViewedGroup() != null;
-		
-		if (posts == null) {
-			posts = pagePositions.createPageable("groupPosts");
-			postBoard.getGroupPosts(getSignin().getViewpoint(), getViewedGroup().getGroup(), posts);
-		}
-		return posts;
-	}
-
-	public Pageable<TrackView> getLatestTracks() {
-		if (latestTracks == null) {
-			latestTracks = pagePositions.createPageable("latestTracks"); 
-			musicSystem.pageLatestTrackViews(getSignin().getViewpoint(), getViewedGroup().getGroup(), latestTracks);
-		}
-
-		return latestTracks;
 	}
 	
 	public ListBean<GroupFeed> getFeeds() {
@@ -411,15 +367,28 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		return feeds;
 	}
 	
-	public int getMaxPostsShown() {
-		return MAX_POSTS_SHOWN;
-	}
-	
 	public int getMaxMembersShown() {
 		return MAX_MEMBERS_SHOWN;
 	}
 	
-	public String getDownloadUrlWindows() {
-		return configuration.getProperty(HippoProperty.DOWNLOADURL_WINDOWS);
+	// No longer used
+	public Pageable<PostView> getPosts() {
+		assert getViewedGroup() != null;
+		
+		if (posts == null) {
+			posts = pagePositions.createPageable("groupPosts");
+			postBoard.getGroupPosts(getSignin().getViewpoint(), getViewedGroup().getGroup(), posts);
+		}
+		return posts;
+	}
+
+    // No longer used
+	public Pageable<TrackView> getLatestTracks() {
+		if (latestTracks == null) {
+			latestTracks = pagePositions.createPageable("latestTracks"); 
+			musicSystem.pageLatestTrackViews(getSignin().getViewpoint(), getViewedGroup().getGroup(), latestTracks);
+		}
+
+		return latestTracks;
 	}
 }

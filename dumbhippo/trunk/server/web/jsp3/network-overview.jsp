@@ -20,7 +20,7 @@
 	<dht:faviconIncludes/>
 </head>
 
-<dht3:page currentPageLink="network-alphabetical">
+<dht3:page currentPageLink="network-overview">
 	<c:if test="${person.self}">
 		<dht3:accountStatus/>
 	</c:if>
@@ -28,7 +28,7 @@
 		<dht3:randomTip isSelf="${person.self}"/>
 		<dht3:personRelatedPagesTabs selected="network"/>
 	</dht3:pageSubHeader>
-	<dht3:networkTabs selected="network-alphabetical"/>
+	<dht3:networkTabs selected="network-overview"/>
 		
     <dht3:shinyBox color="grey">
         <div class="dh-page-shinybox-title-large"><span>People in <c:out value="${possessive} ${pageName} (${person.userContactCount})"/></span></div>

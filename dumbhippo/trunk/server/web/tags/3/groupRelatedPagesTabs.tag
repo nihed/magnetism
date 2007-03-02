@@ -6,7 +6,7 @@
 <%@ attribute name="selected" required="true" type="java.lang.String" %>
 
 <div>
-	Group:&nbsp;
+	View group:&nbsp;
 	<dht3:pageOptionLink name="Home" selected="${selected == 'group'}" link="/group?who=${group.group.id}"/> |
 	<dht3:pageOptionLink name="Members" selected="${selected == 'members'}" link="/members?group=${group.group.id}"/>
 </div>
