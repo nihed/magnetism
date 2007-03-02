@@ -23,14 +23,21 @@ class Mugshot(gobject.GObject):
         "self-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "whereim-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "entity-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
+        "my-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
         }    
     
     def __init__(self, issingleton):
         gobject.GObject.__init__(self)
         if not issingleton == 42:
             raise Exception("use mugshot.get_mugshot()")
+        self._my_apps_poll_id = 0
+        self._global_apps_poll_id = 0
         
+        self._app_poll_frequency_ms = 30 * 60 * 1000
+                
+        self._reset()
+        
+    def _reset(self):
         # Generic properties
         self._baseprops = None
         
@@ -39,10 +46,27 @@ class Mugshot(gobject.GObject):
         self._network = None
         self._entities = {}
         self._applications = {}
-        self._top_apps = []
+        self._my_top_apps = None
+        self._global_top_apps = None
         self._proxy = None
         
-        self._external_iqs = {} # int -> cb
+        self._external_iqs = {} # int -> callback
+        
+        self._reset_my_apps_poll()
+        self._reset_global_apps_poll()
+
+
+    def _reset_my_apps_poll(self):
+        if self._my_apps_poll_id > 0:
+            gobject.source_remove(self._my_apps_poll_id)
+            self._my_apps_poll_id = 0
+        self._my_apps_poll_id = gobject.timeout_add(self._app_poll_frequency_ms, self._idle_poll_my_apps)
+        
+    def _reset_global_apps_poll(self):
+        if self._global_apps_poll_id > 0:
+            gobject.source_remove(self._global_apps_poll_id)
+            self._global_apps_poll_id = 0
+        self._global_apps_poll_id = gobject.timeout_add(self._app_poll_frequency_ms, self._idle_poll_global_apps)        
     
     def _whereimChanged(self, name, icon_url):
         logging.debug("whereimChanged: %s %s" % (name, icon_url))
@@ -72,6 +96,7 @@ class Mugshot(gobject.GObject):
         logging.debug("got external IQ reply for %d", id)
         if self._external_iqs.has_key(id):
             self._external_iqs[id](content)
+            del self._external_iqs[id]
     
     def _get_proxy(self):
         if self._proxy is None:
@@ -133,39 +158,79 @@ class Mugshot(gobject.GObject):
         return self._network.values()
 
     def _do_external_iq(self, name, xmlns, content, cb):
+        """Sends a raw IQ request to Mugshot server, indirecting
+        via D-BUS to client."""
         proxy = self._get_proxy()        
+        logging.debug("sending external IQ request: %s %s (%d bytes)", name, xmlns, len(content))
         id = proxy.SendExternalIQ(False, name, xmlns, content)
         self._external_iqs[id] = cb
     
-    def _on_top_applications(self, xml_str):     
+    def _load_app_from_xml(self, node):
+        id = node.getAttribute("id")
+        logging.debug("parsing application id=%s", id)
+        attrs = libbig.snarf_attributes_from_xml_node(node, ['id', 'rank', 'usage-count', 'icon-url', 'description', 'name'])
+        app = None
+        if not self._applications.has_key(attrs['id']):
+            app = Application(attrs)
+            self._applications[attrs['id']] = app
+        else:
+            app = self._applications[attrs['id']]    
+        app.update(attrs)            
+        return app
+    
+    def _parse_app_set(self, expected_name, xml_str):
         doc = xml.dom.minidom.parseString(xml_str)
         root = doc.documentElement
-        if not root.nodeName == 'myTopApplications':
-            logging.warn("invalid root node, expected myTopApplications")
+        if not root.nodeName == expected_name:
+            logging.warn("invalid root node, expected %s", expected_name)
             return
-        top_apps = []
+        apps = []
         for node in root.childNodes:
             if not (node.nodeType == xml.dom.Node.ELEMENT_NODE):
                 continue
-            id = node.getAttribute("id")
-            logging.debug("parsing application id=%s", id)
-            attrs = libbig.snarf_attributes_from_xml_node(node, ['id', 'rank', 'usage-count', 'icon-url', 'description', 'name'])
-            app = None
-            if not self._applications.has_key(attrs['id']):
-                app = Application(attrs)
-                self._applications[attrs['id']] = app
-            else:
-                app = self._applications[attrs['id']]
-                app.update(attrs)
-            top_apps.append(app)
-        self._top_apps = top_apps
-        logging.debug("emitting top-apps-changed")
-        self.emit("top-apps-changed", self._top_apps)
+            app = self._load_app_from_xml(node)
+            apps.append(app)
+        return apps
+            
+    def _on_my_top_applications(self, xml_str):     
+        self._my_top_apps = self._parse_app_set('myTopApplications', xml_str)
+        logging.debug("emitting my-top-apps-changed")
+        self.emit("my-top-apps-changed", self._my_top_apps)
+        
+    def _on_top_applications(self, xml_str):     
+        self._global_top_apps = self._parse_app_set('topApplications', xml_str)
+        logging.debug("emitting global-top-apps-changed")
+        self.emit("global-top-apps-changed", self._global_top_apps)        
     
-    def get_applications(self):
+    def _request_my_top_apps(self):
         self._do_external_iq("myTopApplications", "http://dumbhippo.com/protocol/applications", "",
-                             self._on_top_applications)
-        return None
+                             self._on_my_top_applications)
+    
+    def _request_global_top_apps(self):
+        self._do_external_iq("topApplications", "http://dumbhippo.com/protocol/applications", "",
+                             self._on_top_applications)        
+            
+    def _idle_poll_my_apps(self):
+        self._request_my_top_apps()
+        return True
+    
+    def _idle_poll_global_apps(self):
+        self._request_global_top_apps()
+        return True    
+    
+    def get_my_top_apps(self):
+        if self._my_top_apps is None:
+            self._request_my_top_apps()
+            self._reset_my_apps_poll()
+            return None
+        return self._my_top_apps
+    
+    def get_global_top_apps(self):
+        if self._global_top_apps is None:
+            self._request_global_top_apps()
+            self._reset_global_apps_poll()
+            return None    
+        return self._global_top_apps
     
 mugshot_inst = None
 def get_mugshot():
