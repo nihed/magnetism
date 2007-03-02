@@ -109,10 +109,11 @@ class AutoSignallingStruct(gobject.GObject, AutoStruct):
             
     def update(self, values):
         changed = False
+        values = self._transform_values(values)
         for k,v in values.items():
             if self._get_value(k) != v:
                 changed = True
-        self.update(values)
+        AutoStruct.update(self, values)
         if changed:
             self.emit("changed")    
     
