@@ -196,6 +196,12 @@ class DappinfoWriter:
         basename = os.path.basename(self.desktopfile)
         self._add_file(self.desktopfile, basename)
         self.properties["desktop"] = basename
+        
+        desktopname = re.match("^(.*).desktop$", basename).group(1)
+        if self.app_id != desktopname:
+            self.properties["desktopname"] = desktopname + ";" + self.app_id
+        else:
+            self.properties["desktopname"] = desktopname
 
     def _find_icons(self):
         result = []
