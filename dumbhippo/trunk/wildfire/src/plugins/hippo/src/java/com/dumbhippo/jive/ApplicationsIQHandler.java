@@ -1,6 +1,7 @@
 package com.dumbhippo.jive;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -40,6 +41,14 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler  implements LiveEv
 	public ApplicationsIQHandler() {
 		super("Hippo application usage IQ Handler");
 	}
+	
+	private void appendApplicationViews(Element elt, Collection<ApplicationView> views) {
+		for (ApplicationView application : views) {
+			XmlBuilder builder = new XmlBuilder();
+			application.writeToXmlBuilder(builder);
+			elt.add(XmlParser.elementFromXml(builder.toString()));			
+		}		
+	}
 
 	@IQMethod(name="myTopApplications", type=IQ.Type.get)
 	public void getMyTopApplications(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
@@ -50,14 +59,31 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler  implements LiveEv
 		pageable.setPosition(0);
 		pageable.setInitialPerPage(30);		
 		applicationSystem.pageMyApplications(viewpoint, null, 24, null, pageable);
-		for (ApplicationView application : pageable.getResults()) {
-			XmlBuilder builder = new XmlBuilder();
-			application.writeToXmlBuilder(builder);
-			childElement.add(XmlParser.elementFromXml(builder.toString()));			
-		}
+		appendApplicationViews(childElement, pageable.getResults());
 		
 		reply.setChildElement(childElement);		
 	}
+
+	@IQMethod(name="topApplications", type=IQ.Type.get)
+	public void getTopApplications(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
+		Document document = DocumentFactory.getInstance().createDocument();
+		Element childElement = document.addElement("topApplications", APPLICATIONS_NAMESPACE);
+		
+		int position = 0;
+		String positionStr = childElement.attributeValue("start");
+		if (positionStr != null)
+			position = Integer.valueOf(positionStr);
+		if (position < 0 || position > 4096) // Arbitrary but reasonable limit
+			position = 0;
+		
+		Pageable<ApplicationView> pageable = new Pageable<ApplicationView>("applications");
+		pageable.setPosition(position);
+		pageable.setInitialPerPage(30);		
+		applicationSystem.pagePopularApplications(null, 24, null, pageable);
+		appendApplicationViews(childElement, pageable.getResults());
+		
+		reply.setChildElement(childElement);		
+	}	
 	
 	@IQMethod(name="activeApplications", type=IQ.Type.set)
 	public void setActiveApplications(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
