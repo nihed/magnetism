@@ -3,7 +3,6 @@ package com.dumbhippo.web.pages;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 import com.dumbhippo.persistence.ApplicationCategory;
@@ -103,13 +102,9 @@ public class ApplicationsPage extends AbstractSigninOptionalPage {
 		return category;
 	}
 	
-	private Date getSince() {
-		return new Date(System.currentTimeMillis() - 31 * 24 * 60 * 60 * 1000L);
-	}
-	
 	public List<CategoryInfo> getCategories() {
 		if (categories == null) {
-			List<CategoryView> views = applicationSystem.getPopularCategories(getSince());
+			List<CategoryView> views = applicationSystem.getPopularCategories(null);
 			
 			int maxUsage = 0;
 			
@@ -150,7 +145,7 @@ public class ApplicationsPage extends AbstractSigninOptionalPage {
 		if (applications == null) {
 			applications = pagePositions.createPageable("applications", APPLICATIONS_PER_PAGE);
 			applications.setSubsequentPerPage(APPLICATIONS_PER_PAGE);
-			applicationSystem.pagePopularApplications(getSince(), ICON_SIZE, category, applications);
+			applicationSystem.pagePopularApplications(null, ICON_SIZE, category, applications);
 		}
 		
 		return applications;
@@ -163,7 +158,7 @@ public class ApplicationsPage extends AbstractSigninOptionalPage {
 		if (myApplications == null) {
 			myApplications = pagePositions.createPageable("myApplications", MY_APPLICATIONS_PER_PAGE);
 			myApplications.setSubsequentPerPage(MY_APPLICATIONS_PER_PAGE);
-			applicationSystem.pageMyApplications((UserViewpoint)getViewpoint(), getSince(), MINI_ICON_SIZE, null, myApplications);
+			applicationSystem.pageMyApplications((UserViewpoint)getViewpoint(), null, MINI_ICON_SIZE, null, myApplications);
 		}
 
 		return myApplications;

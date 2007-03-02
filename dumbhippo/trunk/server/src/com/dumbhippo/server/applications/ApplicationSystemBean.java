@@ -65,6 +65,10 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	
 	@EJB
 	private TransactionRunner runner;
+	
+	private Date getDefaultSince() {
+		return new Date(System.currentTimeMillis() - 31 * 24 * 60 * 60 * 1000L);
+	}
 		
 	public void addUpload(Guid uploaderId, Guid uploadId, AppinfoFile appinfoFile) {
 		User uploader = em.find(User.class, uploaderId.toString());
@@ -588,6 +592,8 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	}
 	
 	public void pagePopularApplications(Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
+		if (since == null)
+			since = getDefaultSince();		
 		Query q = em.createQuery("SELECT au.application, COUNT(*) " +
 								 "  FROM ApplicationUsage au  " +
 								 "  WHERE au.date > :since " +
@@ -599,6 +605,8 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	}
 	
 	public void pageRelatedApplications(Application relatedTo, Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
+		if (since == null)
+			since = getDefaultSince();
 		Query q = em.createQuery("SELECT au.application, COUNT(*) " +
 				 				 "  FROM ApplicationUsage au  " +
 				 				 "  WHERE au.date > :since " +
@@ -615,6 +623,8 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	}
 
 	public void pageMyApplications(UserViewpoint viewpoint, Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
+		if (since == null)
+			since = getDefaultSince();		
 		Query q = em.createQuery("SELECT au.application, COUNT(*) " +
 								 "  FROM ApplicationUsage au  " +
 								 "  WHERE au.date > :since " +
@@ -627,6 +637,8 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	}
 	
 	public List<CategoryView> getPopularCategories(Date since) {
+		if (since == null)
+			since = getDefaultSince();		
 		Map<ApplicationCategory, Integer> usageCounts = new HashMap<ApplicationCategory, Integer>();
 		
 		Query q = em.createQuery(" SELECT a.category, COUNT(*) " +
