@@ -87,3 +87,20 @@
     font-size:  18px;
     color:      #444444;
 }
+
+.dh-application-edit-label {
+	font-weight: bold;
+	text-align: right;
+}
+
+.dh-application-edit-control textarea {
+	font-family: Luxi Sans, Arial, sans-serif;
+}
+
+.dh-application-edit-help {
+	font-style: italic;
+}
+
+.dh-application-edit-save {
+	text-align: right;
+}
