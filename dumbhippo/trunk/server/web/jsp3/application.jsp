@@ -21,7 +21,7 @@
 	<dht3:stylesheet name="applications"/>	
 </head>
 
-<dht3:page currentPageLink="applications">
+<dht3:page currentPageLink="application">
    	<dht3:shinyBox color="grey">
 	    <dht3:applicationsTop/>
 	    <hr>
