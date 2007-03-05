@@ -106,12 +106,15 @@ class ProfileItem(hippo.CanvasBox):
 
         self._photo = CanvasMugshotURLImage(scale_width=30,
                                             scale_height=30,
-                                            border=1,
-                                            border_color=0x000000ff)
+                                            border=2)
         self.append(self._photo)
 
         self._online = hippo.CanvasText(text='Offline')
         self.append(self._online)
+
+        self._ribbon_bar = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL,
+                                           spacing=2, border=2)
+        self.append(self._ribbon_bar)
 
     def set_entity(self, entity):
         if self._entity == entity:
@@ -137,6 +140,13 @@ class ProfileItem(hippo.CanvasBox):
         else:
             self._online.set_property('text', 'Offline')
 
+        self._ribbon_bar.remove_all()
+        for a in profile.get_accounts():
+            badge = CanvasMugshotURLImage(scale_width=16, scale_height=16)
+            badge.set_url(a['icon'])
+            badge.set_property('tooltip', a['linkText']) # doesn't work...
+            self._ribbon_bar.append(badge)
+
 class PeopleStock(bigboard.AbstractMugshotStock):
     def __init__(self):
         super(PeopleStock, self).__init__("People")
@@ -155,7 +165,7 @@ class PeopleStock(bigboard.AbstractMugshotStock):
         self._mugshot.connect("entity-added", self._handle_entity_added)
         self._mugshot.connect("self-changed", self._handle_self_changed)        
         self._mugshot.get_self()
-        self._mugshot.get_network()        
+        self._mugshot.get_network()
         
     def get_content(self, size):
         return self._box
