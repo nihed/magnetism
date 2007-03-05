@@ -177,7 +177,9 @@ hippo_dbus_handle_mugshot_send_external_iq(HippoDBus   *dbus,
                                DBUS_TYPE_STRING, &xmlns,
                                DBUS_TYPE_STRING, &content,
                                DBUS_TYPE_INVALID)) {
-        return dbus_message_new_error(message, "org.mugshot.Mugshot.InvalidArgs", "Invalid arguments");                            
+        reply = dbus_message_new_error(message, error.name, error.message);
+        dbus_error_free(&error);
+        return reply;
     }
     
     connection = hippo_data_cache_get_connection(hippo_app_get_data_cache(hippo_get_app()));
