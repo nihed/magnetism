@@ -10,7 +10,7 @@ public enum ApplicationCategory {
 	OTHER("Other"),
 	PROGRAMMING("Programming", "Development"),
 	SOUND_AND_VIDEO("Sound & Video", "AudioVideo", "!Settings"),
-	SYSTEM_TOOLS("System", "!Screensaver");
+	SYSTEM_TOOLS("System", "System", "!Screensaver");
 	
 	String displayName;
 	String[] rawCategories;
