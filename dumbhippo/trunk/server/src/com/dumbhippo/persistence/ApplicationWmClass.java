@@ -10,7 +10,7 @@ import javax.persistence.UniqueConstraint;
 @Entity
 @Table(name="ApplicationWmClass", 
         uniqueConstraints = 
-           {@UniqueConstraint(columnNames={"application_id", "wmClass"})}
+           {@UniqueConstraint(columnNames={"wmClass"})}
    )
 public class ApplicationWmClass extends DBUnique {
 	private Application application;
