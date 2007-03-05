@@ -1,4 +1,4 @@
-import os, code, sys, traceback, urllib, logging, StringIO
+import os, code, sys, traceback, urllib2, logging, StringIO
 import re, tempfile
 
 import cairo, gtk, gobject, threading
@@ -151,7 +151,7 @@ class AsyncHTTPFetcher:
     def _do_fetch(self, url, cb, errcb):
         logging.debug("in thread fetch of %s" % (url,))
         try:
-            data = urllib.urlopen(url).read()
+            data = urllib2.urlopen(url).read()
             gobject.idle_add(lambda: cb(url, data) and False)
         except:
             logging.debug("caught error for fetch of %s: %s" % (url, sys.exc_info()))
