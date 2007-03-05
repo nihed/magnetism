@@ -158,6 +158,16 @@ public interface Stacker {
 	 */
 	public void pageRecentGroupActivity(Viewpoint viewpoint, Pageable<GroupMugshotView> pageable, int blockPerGroup);
 	
+	/**
+	 * Get views for any account questions that are still unanswered by this user and that
+	 * were stacked before the given timestamp.
+	 * 
+	 * @param viewpoint the user
+	 * @param before only return blocks stacked before this timestamp
+	 * @return list of blockviews, sorted in reverse-chronological order
+	 */
+	public List<BlockView> getUnansweredQuestions(UserViewpoint viewpoint, long stackedBefore);
+
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException;
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, BlockKey key) throws NotFoundException;
 	
