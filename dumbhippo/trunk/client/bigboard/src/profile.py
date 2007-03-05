@@ -9,7 +9,7 @@ class Profile(libbig.AutoStruct, xml.sax.ContentHandler):
     def __init__(self, guid):
         libbig.AutoStruct.__init__(self,
                                    { 'name' : None, 'photo' : None, 'who' : str(guid), 'online' : None,
-                                     'homeUrl' : None, 'onlineIcon' : None, 'accounts' : [], 'stack' : [],
+                                     'home_url' : None, 'onlineIcon' : None, 'accounts' : [], 'stack' : [],
                                      'email' : None, 'aim' : None})
 
     def startElement(self, name, attrs):
@@ -26,7 +26,7 @@ class Profile(libbig.AutoStruct, xml.sax.ContentHandler):
             self.update({ 'name' : attrs.getValue('name'),
                           'photo' : attrs.getValue('photo'),
                           'online' : online,
-                          'homeUrl' : attrs.getValue('homeUrl') })
+                          'home_url' : attrs.getValue('homeUrl') })
 
         elif name == 'externalAccount':
             accounts = self.get_accounts()
