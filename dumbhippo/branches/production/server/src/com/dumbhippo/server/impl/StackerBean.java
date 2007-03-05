@@ -623,7 +623,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		for (String id : TypeUtils.castList(String.class, q.getResultList()))
 			blockIds.add(id);
 		
-		Thread t = ThreadUtils.newDaemonThread("refresh deleted", new Runnable() {
+		Thread t = ThreadUtils.newDaemonThread("refresh deleted", new ThreadUtils.DaemonRunnable() {
 			public void run() {
 				int i = 0;
 				int failures = 0;

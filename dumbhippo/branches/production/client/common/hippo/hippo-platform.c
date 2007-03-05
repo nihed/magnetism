@@ -22,6 +22,12 @@ hippo_platform_get_type(void)
     return type;
 }
 
+enum {
+    NETWORK_STATUS_CHANGED,
+    LAST_SIGNAL
+};
+static int signals[LAST_SIGNAL];
+
 static void
 hippo_platform_base_init(void *klass)
 {
@@ -29,7 +35,16 @@ hippo_platform_base_init(void *klass)
     
     if (!initialized) {
         /* create signals in here */      
-    
+
+        signals[NETWORK_STATUS_CHANGED] =
+            g_signal_new ("network-status-changed",
+                          HIPPO_TYPE_PLATFORM,
+                          G_SIGNAL_RUN_LAST,
+                          0,
+                          NULL, NULL,
+                          g_cclosure_marshal_VOID__INT,
+                          G_TYPE_NONE, 1, G_TYPE_INT);        
+        
         initialized = TRUE;   
     }
 }
@@ -245,4 +260,26 @@ hippo_platform_show_disconnected_window (HippoPlatform   *platform,
         (* klass->show_disconnected_window) (platform, connection);
     }
 }
+
+HippoNetworkStatus
+hippo_platform_get_network_status(HippoPlatform *platform)
+{
+    HippoPlatformClass *klass;
     
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), HIPPO_NETWORK_STATUS_UNKNOWN);
+
+    klass = HIPPO_PLATFORM_GET_CLASS(platform);
+    
+    if (klass->get_network_status != NULL) {
+        return (* klass->get_network_status) (platform);
+    } else {
+        return HIPPO_NETWORK_STATUS_UNKNOWN;
+    }
+}
+
+void
+hippo_platform_emit_network_status_changed (HippoPlatform *platform,
+                                            HippoNetworkStatus status)
+{
+    g_signal_emit(G_OBJECT(platform), signals[NETWORK_STATUS_CHANGED], 0, status);
+}

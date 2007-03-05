@@ -437,9 +437,11 @@ strong_ref_on_load(GObject   *cached_obj,
          */
         old_strong = priv->strong_cache[i];
 
+#if 0
         g_debug("Replacing old strong-ref '%s' with new strong-ref '%s' entry %d",
                 old_strong ? old_strong->url : "none", entry->url, i);
-
+#endif
+        
         g_assert(entry->cached_obj != NULL);
         g_object_ref(entry->cached_obj);
         entry->in_strong_cache = TRUE;
@@ -494,21 +496,23 @@ hippo_object_cache_load(HippoObjectCache           *cache,
 static void
 dump_foreach(void *key, void *value, void *data)
 {
+#if 0
     CacheEntry *entry = value;
-
+    
     g_debug("%s '%s' obj=%p %s",
             entry->in_strong_cache ? "STRONG" : "WEAK  ",
             entry->url,
             entry->cached_obj,
             entry->cached_obj ?
             g_type_name_from_instance((GTypeInstance*) entry->cached_obj) : "");
+#endif
 }
 
 void
 hippo_object_cache_debug_dump (HippoObjectCache *cache)
 {
     HippoObjectCachePrivate *priv = HIPPO_OBJECT_CACHE_GET_PRIVATE(cache);
-    
+
     g_hash_table_foreach(priv->weak_cache,
                          dump_foreach,
                          NULL);

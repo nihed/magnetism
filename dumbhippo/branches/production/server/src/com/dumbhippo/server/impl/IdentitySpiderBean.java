@@ -853,10 +853,14 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	public void setApplicationUsageEnabled(User user, boolean enabled) {
 		Account account = user.getAccount();
+		boolean wasSet = account.isApplicationUsageEnabled() != null;
 		boolean wasEnabled = getApplicationUsageEnabled(user);
 		account.setApplicationUsageEnabled(enabled);
 		if (enabled != wasEnabled)
 			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(user.getGuid(), "applicationUsageEnabled", Boolean.toString(enabled)));
+
+		if (enabled != wasEnabled || !wasSet)
+			notifier.onApplicationUsageToggled(account);
 	}
 
 	public boolean getNotifyPublicShares(User user) {

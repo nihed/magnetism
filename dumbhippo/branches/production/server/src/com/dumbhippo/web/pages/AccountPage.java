@@ -295,12 +295,10 @@ public class AccountPage {
 	/**
 	 * Returns a list of supported account views; with the ExternalAccount information for the
 	 * user filled in for the account types for which the user has accounts.
-	 * 
-	 * TODO: the list should be in the alphabetical order by the account type name
 	 */
 	public ListBean<ExternalAccountView> getSupportedAccounts() {
 		List<ExternalAccountView> supportedAccounts = new ArrayList<ExternalAccountView>(); 
-		for (ExternalAccountType type : ExternalAccountType.values()) {
+		for (ExternalAccountType type : ExternalAccountType.alphabetizedValues()) {
 			if (type.isSupported()) {
 				try {
 				    ExternalAccount externalAccount = 

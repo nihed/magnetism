@@ -11,8 +11,10 @@
 <%@ attribute name="tipIconWidth" required="true" type="java.lang.String" %>
 <%@ attribute name="tipIconHeight" required="true" type="java.lang.String" %>
 
-<td class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/${icon}" style="width: 16; height: 16;"/></td>
-<td class="dh-features-list-content-column">
+<%-- no matter how I style dh-features-list-icon-column or the image inside, the icons have about 10 pixels of
+     margin on the right in IE7, it would be nice to fix this --%>
+<td valign="top" class="dh-features-list-icon-column"><dh:png src="/images3/${buildStamp}/${icon}" style="width: 16; height: 16;"/></td>
+<td valign="top" class="dh-features-list-content-column">
   <div id="dhFeatures${prefix}" class="dh-features-list-text">
     <c:choose>
       <c:when test="${!empty text}"><c:out value="${text}"/></c:when>

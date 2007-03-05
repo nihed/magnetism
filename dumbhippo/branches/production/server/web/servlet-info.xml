@@ -33,6 +33,18 @@
     </servlet>
 
     <servlet>
+      <servlet-name>AppinfoUploadServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.AppinfoUploadServlet</servlet-class>
+	  <load-on-startup>1</load-on-startup>
+	</servlet>
+
+    <servlet>
+      <servlet-name>ApplicationIconServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.ApplicationIconServlet</servlet-class>
+	  <load-on-startup>1</load-on-startup>
+	</servlet>
+
+    <servlet>
       <servlet-name>FileStorageServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.servlets.FileStorageServlet</servlet-class>
 	  <load-on-startup>1</load-on-startup>
@@ -150,10 +162,20 @@
    </servlet-mapping>
 
    <servlet-mapping>
+      <servlet-name>AppinfoUploadServlet</servlet-name>
+      <url-pattern>/upload/appinfo</url-pattern>    
+   </servlet-mapping>
+   
+   <servlet-mapping>
       <servlet-name>PersonPhotoServlet</servlet-name>
       <url-pattern>/upload/headshots</url-pattern>    
    </servlet-mapping>
    
+   <servlet-mapping>
+      <servlet-name>ApplicationIconServlet</servlet-name>
+	  <url-pattern>/files/appicons/*</url-pattern>      
+   </servlet-mapping>   
+
    <servlet-mapping>
       <servlet-name>PersonPhotoServlet</servlet-name>
 	  <url-pattern>/files/headshots/*</url-pattern>      
@@ -239,7 +261,7 @@
            they are listed below for completeness -->
       <init-param>
           <param-name>noSignin</param-name>
-          <param-value>apple-dashboard-content,badges,busy,buttons,comingsoon,error,files,flash,google-stacker,google-stacker-spec,google-stacker-content,group-files,public-groups,radar-theme,sharelink,sharelink-inactive,signup,summit,unknownlink,upgrade,user-summary,who-are-you,robots.txt</param-value>
+          <param-value>apple-dashboard-content,application,applications,applications-learnmore,badges,busy,buttons,comingsoon,error,files,flash,google-stacker,google-stacker-spec,google-stacker-content,group-files,public-groups,radar-theme,sharelink,sharelink-inactive,signup,summit,tour,unknownlink,upgrade,user-summary,who-are-you,robots.txt</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>

@@ -103,7 +103,7 @@
 			                     tipIconHeight="34"
 			                     tipText="Get updates from other RSS feeds"/>  
 			</tr>			
-			
+			<tr><td colspan="4" class="dh-spacer-row"></td></tr>
 			<tr class="dh-features-list-section">
 			<td class="dh-features-list-header" colspan="4">Share links and updates with friends and groups with similar interests.</td>
 			</tr>		
@@ -123,8 +123,8 @@
 			                     tipIconHeight="116"
 			                     tipText="See quips people add to Mugshot items"/>
 			</tr>	
-			
-			<tr class="dh-features-list-section">
+			<tr><td colspan="4" class="dh-spacer-row"></td></tr>
+			<tr class="dh-features-list-section">			
 			<td class="dh-features-list-header" colspan="4">Keep up with everything. </td>
 			</tr>		
 			<tr>
@@ -162,19 +162,19 @@
 			    On your Google Desktop and home page: using the <a href="/google-stacker">Mugshot Google Gadget</a>
 			  </dht3:featuresItem>
 			</tr>	
-			
+			<tr><td colspan="4" class="dh-spacer-row"></td></tr>
 			<tr class="dh-features-list-section">
 			<td class="dh-features-list-header" colspan="4">It's free, fun, and easy to use.</td>
 			</tr>		
 			<tr>
-			  <td colspan="4"><a href="/signup">Sign up</a> for a free account to get started right away.  You can just use
+			  <td colspan="4" class="dh-features-list-summary"><a href="/signup">Sign up</a> for a free account to get started right away.  You can just use
 			  the Web version, or make the most of Mugshot with our desktop software.  It's easy to install,
 			  completely <a href="http://developer.mugshot.org">open source</a>, and there's no risk of nasty spyware.  Mugshot
 			  works with most popular Web sites, with more added every day.</td>
 			</tr>																			
 		</table>
-		<div class="dh-shinybox-bottom-content dh-features-header">
-			<a href="/signup">Sign up today!</a>
+		<div class="dh-shinybox-bottom-content dh-features-footer">
+			<a href="/tour">Take the tour</a> or <a href="/signup">Sign up today!</a>
 		</div>		
 	</dht3:shinyBox>
 </dht3:page>

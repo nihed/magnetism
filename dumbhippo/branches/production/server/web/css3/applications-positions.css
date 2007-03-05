@@ -1,0 +1,115 @@
+@CHARSET "UTF-8";
+
+#dhApplicationsLeft {
+	float: left;
+	padding-right: 56px;
+}
+
+#dhApplicationsRight {
+	float: left;
+}
+
+.dh-applications-heading {
+	margin-bottom: 7px;
+}
+
+.dh-applications-subheading {
+	margin-top: 10px;
+	margin-bottom: 7px;
+}
+
+#dhApplicationsStatsHeader {
+	float: left;
+	width: 104px;
+}
+
+#dhApplicationsApplicationsHeader {
+	position: relative;
+	left: 7px;
+}
+
+.dh-applications-application {
+	margin-top: 6px;
+	margin-bottom: 6px;
+}
+
+.dh-applications-application-stats-outer {
+	float: left;
+}
+
+#dhApplicationsApplications .dh-applications-application-stats-outer {
+	width: 104px;
+}
+
+.dh-mini-applications .dh-applications-application-stats-outer {
+	width: 35px;
+}
+
+#dhApplicationsApplications .dh-applications-application-stats {
+	position: relative;
+	left: 12px;
+	width: 80px;
+}
+
+.dh-mini-applications .dh-applications-application-stats {
+	position: relative;
+	left: 5px;
+	width: 25px;
+}
+
+.dh-applications-application-icon {
+	float: left;
+	text-align: center;
+}
+
+#dhApplicationsApplications .dh-applications-application-icon {
+	width: 62px;
+}
+
+.dh-mini-applications .dh-applications-application-icon {
+	width: 31px;
+}
+
+#dhApplicationsApplications .dh-applications-application-details {
+	position: relative;
+	left: 6px;
+	top: 6px;
+}
+
+.dh-applications-application-separator {
+	clear: both;
+}
+
+.dh-applications-more {
+	margin-left: 12px;
+}
+
+.dh-applications-categories {
+	padding-left: 12px;
+	padding-bottom: 12px;
+}
+
+.dh-applications-category-name {
+	padding-right: 9px;
+}
+
+.dh-applications-category-bar-outer {
+	width: 80px;
+	height: 10px;
+}
+
+.dh-applications-category-bar {
+	height: 10px;
+}
+
+#dhApplicationsBusy {
+	display: block;
+	position: absolute;
+	bottom: 10px;
+	right: 10px;
+}
+
+.dh-applications-no-data {
+	padding-top: 8px;
+	padding-left: 12px;
+}

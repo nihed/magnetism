@@ -21,10 +21,12 @@ public class FacebookAccount extends DBUnique {
 	private boolean sessionKeyValid;
 	private ExternalAccount externalAccount;
 	private int unreadMessageCount;
+	private int mostRecentMessageId;
 	private int totalMessageCount;
-	private long messageCountTimestamp;
+	private long messageCountTimestamp;	
 	private int wallMessageCount;
 	private int unseenPokeCount;
+	private int mostRecentPokeId;
 	private int totalPokeCount;
 	private long pokeCountTimestamp;
 	private Set<FacebookEvent> facebookEvents; 
@@ -42,10 +44,12 @@ public class FacebookAccount extends DBUnique {
 		this.externalAccount = externalAccount;
 		this.sessionKeyValid = false;
 		this.unreadMessageCount = -1;
+		this.mostRecentMessageId = -1;
 		this.totalMessageCount = -1;
 		this.messageCountTimestamp = -1;
 		this.wallMessageCount = -1;
 		this.unseenPokeCount = -1;
+		this.mostRecentPokeId = -1;
 		this.totalPokeCount = -1;
 		this.pokeCountTimestamp = -1;
 		this.facebookEvents = new HashSet<FacebookEvent>();
@@ -100,6 +104,15 @@ public class FacebookAccount extends DBUnique {
     	this.unreadMessageCount = unreadMessageCount;
     }
 
+	@Column(nullable=false)
+	public int getMostRecentMessageId() {
+		return mostRecentMessageId;
+	}
+	
+    public void setMostRecentMessageId(int mostRecentMessageId) {
+    	this.mostRecentMessageId = mostRecentMessageId;
+    }
+    
 	@Column(nullable=false)
 	public int getTotalMessageCount() {
 		return totalMessageCount;
@@ -158,6 +171,15 @@ public class FacebookAccount extends DBUnique {
     	this.unseenPokeCount = unseenPokeCount;
     }
 
+	@Column(nullable=false)
+	public int getMostRecentPokeId() {
+		return mostRecentPokeId;
+	}
+	
+    public void setMostRecentPokeId(int mostRecentPokeId) {
+    	this.mostRecentPokeId = mostRecentPokeId;
+    }
+    
 	@Column(nullable=false)
 	public int getTotalPokeCount() {
 		return totalPokeCount;

@@ -4,6 +4,9 @@
 
 <%@ attribute name="label" required="true" type="java.lang.String" %>
 <%@ attribute name="icon" required="false" type="java.lang.String" %>
+<%@ attribute name="prefixIcon" required="false" type="java.lang.String" %>
+<%@ attribute name="prefixIconWidth" required="false" type="java.lang.Integer" %>
+<%@ attribute name="prefixIconHeight" required="false" type="java.lang.Integer" %>
 <%@ attribute name="info" required="false" type="java.lang.String" %>
 <%@ attribute name="altRow" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="controlId" required="false" type="java.lang.String" %>
@@ -14,12 +17,17 @@
     <c:set var="rowClass" value="dh-alt-row"/>
 </c:if>
 
+<c:if test="${! empty prefixIcon}">
+    <c:set var="withPrefixClass" value="dh-label-cell-div-with-prefix"/>
+</c:if>
+
 <tr><td colspan="4" class="dh-padding-row ${rowClass}"></td></tr>
 
-<tr valign="top" class="${rowClass}" id="${controlId}FormContainer">
+<tr valign="top" class="${rowClass}" id="${controlId}FormContainer"> 
 	<td class="dh-label-cell">
-		<div class="dh-label-cell-div" id="${controlId}FormLabel">
-			<c:if test="${!empty icon}"><dh:png klass="dh-form-table-row-icon" src="${icon}" style="width: 16; height: 16; border: none;"/></c:if>
+		<div class="dh-label-cell-div ${withPrefixClass}" id="${controlId}FormLabel">
+            <c:if test="${!empty prefixIcon}"><dh:png klass="dh-form-table-row-icon" src="${prefixIcon}" style="width: ${prefixIconWidth}; height: ${prefixIconHeight}; border: none; overflow: hidden;"/></c:if>
+			<c:if test="${!empty icon}"><dh:png klass="dh-form-table-row-icon" src="${icon}" style="width: 16; height: 16; border: none; overflow: hidden;"/></c:if>
 		    <c:if test="${!empty label}"><c:out value="${label}"/>:</c:if>
 	    </div>
 	</td>

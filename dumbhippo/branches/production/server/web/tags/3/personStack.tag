@@ -31,7 +31,7 @@
 
 <dht3:shinyBox color="grey" width="${width}" floatSide="${floatSide}">				
 	<dht3:personHeader>
-		<dht3:personHeaderLeft who="${person}" disableLink="${disableLink || embedVersion}" embedVersion="${embedVersion}" shortVersion="${shortVersion}">
+		<dht3:personHeaderLeft who="${person}" disableLink="${disableLink}" embedVersion="${embedVersion}" shortVersion="${shortVersion}">
 	 	    <dht3:personActionLinks who="${person}" showHomeUrl="${showHomeUrl}"/> 	    
 	 	</dht3:personHeaderLeft>
 	 	<dht3:personHeaderRight who="${person}" align="${pageable.totalCount == 0 && person.viewOfSelf ? 'middle' : 'belowAccounts'}" includeWhereAt="${!embedVersion}">

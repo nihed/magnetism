@@ -727,7 +727,8 @@ public class PersonView extends EntityView {
 			builder.appendTextNode("user", "", "id", user.getId(), 
 				               	   "name", getName(),
 				               	   "homeUrl", getHomeUrl(), 
-				               	   "smallPhotoUrl", getPhotoUrl());
+				               	   "smallPhotoUrl", getPhotoUrl(),
+				               	   "isContact", hasExtra(PersonViewExtra.CONTACT_STATUS) ? Boolean.toString(isContactOfViewer()) : null);
 		} else {
 			builder.appendTextNode("resource", "", "id", getIdentifyingGuid().toString(), "name", getName());
 		}		
@@ -739,11 +740,13 @@ public class PersonView extends EntityView {
 								"id", user.getId(), 
 				               	"name", getName(),
 				               	"homeUrl", getHomeUrl(), 
-				               	"photoUrl", getPhotoUrl());
+				               	"photoUrl", getPhotoUrl(),
+				               	"isContact", hasExtra(PersonViewExtra.CONTACT_STATUS) ? Boolean.toString(isContactOfViewer()) : null);
 		} else {
 			builder.openElement("resource", 
 					            "id", getIdentifyingGuid().toString(), 
-					            "name", getName());
+					            "name", getName(),
+					            "isContact", hasExtra(PersonViewExtra.CONTACT_STATUS) ? Boolean.toString(isContactOfViewer()) : null);
 		}
 		
 		if (getCurrentTrack() != null)
@@ -890,7 +893,7 @@ public class PersonView extends EntityView {
 		return viewerIsContact;
 	}
 
-	public void setIsContactOfViewer(boolean isContact) {
+	public void setContactOfViewer(boolean isContact) {
 		this.isContactOfViewer = isContact;
 		addExtras(EnumSet.of(PersonViewExtra.CONTACT_STATUS));
 	}

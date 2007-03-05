@@ -115,8 +115,32 @@ public class ThreadUtils {
 		});
 	}
 	
-	public static Thread newDaemonThread(String name, Runnable r) {
-		Thread t = new Thread(r);
+	public interface DaemonRunnable {
+		public void run() throws InterruptedException;
+	}
+	
+	public static Thread newDaemonThread(String name, final DaemonRunnable r) {
+		Runnable restartingRunnable = new Runnable() {
+			private static final long RESTART_DELAY_MS = 60 * 1000;
+			public void run() {
+				try {
+					while (true) {
+						try {
+							r.run();
+							break;
+						} catch (InterruptedException e) {
+							throw e;
+						} catch (RuntimeException e) {
+							logger.error("Caught unexpected exception in daemon thread, will restart in "
+										 + RESTART_DELAY_MS, e);
+							Thread.sleep(RESTART_DELAY_MS);
+						}
+					}
+				} catch (InterruptedException e) {
+				}
+			}
+		};
+		Thread t = new Thread(restartingRunnable);
 		t.setDaemon(true);
 		synchronized (ThreadUtils.class) {
 			t.setName(name + " " + nextGlobalThreadId);

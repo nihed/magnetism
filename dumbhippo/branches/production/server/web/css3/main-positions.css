@@ -1,21 +1,28 @@
 @CHARSET "UTF-8";
 
-.dh-shiny-box {
-	margin-bottom:		5px;
+#dhMugshotWelcome {
+    position:        relative; 
+    bottom:          -10px;
 }
 
-#dhMugshotIntro {
-}    
-    
 #dhMugshotIntro {
     position:        relative;  
     width:           290px; 
     display:         block;
     float:           left;
     margin-top:      10px;  
-    margin-bottom:   10px;
     margin-left:     15px;
     margin-right:    10px;
+}
+
+#dhMugshotIntro * {
+    margin-top:     20px;
+}
+
+#dhMugshotTourBadge {
+    position:        relative;
+    text-align:      center;
+    margin-top:      5px;
 }
 
 #dhMugshotExample {
@@ -23,12 +30,7 @@
     width:           406px;    
     display:         block;
     float:           left;
-    margin-bottom:   10px; 
-    bottom:          -19px; 
-}
-
-#dhMugshotIntro * {
-    margin-top:     20px;
+    bottom:          -9px;
 }
 
 #dhMugshotIntro .dh-intro-options {

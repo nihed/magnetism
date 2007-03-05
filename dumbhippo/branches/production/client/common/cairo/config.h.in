@@ -86,8 +86,14 @@
 /* Define to 1 if you have the `vasnprintf' function. */
 #undef HAVE_VASNPRINTF
 
+/* Define to 1 if you have the `wfopen' function. */
+#undef HAVE_WFOPEN
+
 /* Define to 1 if you have the `XrmFinalize' function. */
 #undef HAVE_XRMFINALIZE
+
+/* Define to 1 if you have the `_wfopen' function. */
+#undef HAVE__WFOPEN
 
 /* Name of package */
 #undef PACKAGE
@@ -112,6 +118,9 @@
 
 /* use MMX compiler intrinsics */
 #undef USE_MMX
+
+/* define if we cairo convert filenames to UTF-16 and use wfopen() */
+#undef USE_UTF16_WFOPEN
 
 /* Version number of package */
 #undef VERSION

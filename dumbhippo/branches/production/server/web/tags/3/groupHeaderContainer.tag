@@ -4,7 +4,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <div class="dh-person-header">
-    <table class="dh-person-info">
+    <table class="dh-person-info" cellspacing="0" cellpadding="0">
     <tbody>
     <tr valign="top">
 	<jsp:doBody/>

@@ -261,6 +261,10 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		// We aren't interested in this, just part of a listener iface we're using
 	}
 	
+	public void onApplicationUsageToggled(Account account) {
+		// We aren't interested in this, just part of a listener iface we're using
+	}
+	
 	public void validateAll() {
 		logger.info("Administrator kicked off validation of all ExternalAccount rows in the database");
 		Query q = em.createQuery("SELECT ea.id, ea.accountType, ea.handle, ea.extra FROM ExternalAccount ea");

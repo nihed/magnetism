@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
+import com.dumbhippo.ThreadUtils.DaemonRunnable;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.mbean.DynamicPollingSystem.TestPollingTaskFamily.FamilyType;
 import com.dumbhippo.persistence.PollingTaskEntry;
@@ -416,7 +417,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		taskPersistenceWorker.addObsoleteTasks(tasks);
 	}
 	
-	private class TaskSet implements Runnable {
+	private class TaskSet implements DaemonRunnable {
 		private static final long BUCKET_SPACING_SECONDS = 60 * 4; // 4 minutes
 		
 		// These fields are immutable
@@ -603,7 +604,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			return true;
 		}
 		
-		public void run() {
+		public void run() throws InterruptedException {
 			// Wait 1 minute after server startup before beginning dynamic polling
 			long currentTimeout = 1 * 60 * 1000;
 			int currentBucket = 0;
@@ -613,12 +614,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 					sleeping = true;
 					poked = false;
 					
-					try {
-						wait(currentTimeout);
-					} catch (InterruptedException e) {
-						logger.debug("Polling task ({}ms) exiting", timeout);
-						break;
-					}
+					wait(currentTimeout);
 					
 					sleeping = false;
 				}
@@ -646,7 +642,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		}
 	}
 	
-	private class TaskPersistenceWorker implements Runnable {
+	private class TaskPersistenceWorker implements DaemonRunnable {
 		
 		// Load every 5 seconds, save every minute
 		private static final long LOAD_PERIODICITY_MS = 5 * 1000;
@@ -663,21 +659,13 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			}
 		}
 		
-		public void run() {
+		public void run() throws InterruptedException {
 			
 			// Wait a minute after startup to check for tasks
-			try {
-				Thread.sleep(1 * 60 * 1000);
-			} catch (InterruptedException e) {
-				return;
-			}
+			Thread.sleep(1 * 60 * 1000);
 			
 			while (true) {
-				try {
-					Thread.sleep(LOAD_PERIODICITY_MS);
-				} catch (InterruptedException e) {
-					break;
-				}			
+				Thread.sleep(LOAD_PERIODICITY_MS);		
 				
 				PollingTaskPersistence persister = EJBUtil.defaultLookup(PollingTaskPersistence.class);
 

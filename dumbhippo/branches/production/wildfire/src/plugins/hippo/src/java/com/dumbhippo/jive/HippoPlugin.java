@@ -59,6 +59,7 @@ public class HippoPlugin implements Plugin {
 			
 			compatibilityNotifier.start();
 			
+			addIQHandler(new ApplicationsIQHandler());
 			addIQHandler(new ClientInfoIQHandler());
 			addIQHandler(new MySpaceIQHandler());					
 			addIQHandler(new MusicIQHandler(roomHandler));
@@ -70,6 +71,8 @@ public class HippoPlugin implements Plugin {
 			addIQHandler(new BlocksIQHandler());
 			addIQHandler(new AccountQuestionIQHandler());
 			addIQHandler(new SettingsIQHandler());
+			addIQHandler(new WhereImIQHandler());
+			addIQHandler(new ContactsIQHandler());
 			
 			Log.debug("... done initializing Hippo plugin");
 		} catch (Exception e) {

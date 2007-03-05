@@ -28,6 +28,7 @@
                 dumbhippo.server.http.port=@@tomcatHttpPort@@
 		dumbhippo.server.baseurl=@@baseurl@@
 		dumbhippo.server.web.version=@@webVersion@@
+		dumbhippo.server.appinfo.dir=@@appinfoDir@@
 		dumbhippo.server.crashdump.dir=@@crashdumpDir@@
 		dumbhippo.server.files.saveurl=file://@@filesavedir@@
 		dumbhippo.server.lucene.indexdir=@@luceneIndexDir@@

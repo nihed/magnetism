@@ -712,6 +712,11 @@ public class Account extends Resource {
 		return applicationUsageEnabled;
 	}
 
+	@Transient
+	public boolean isApplicationUsageEnabledWithDefault() {
+		return applicationUsageEnabled == null ? AccountSystem.DEFAULT_APPLICATION_USAGE_ENABLED : applicationUsageEnabled; 
+	}
+
 	public void setApplicationUsageEnabled(Boolean enabled) {
 		this.applicationUsageEnabled = enabled;
 	}

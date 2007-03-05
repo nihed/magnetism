@@ -19,6 +19,18 @@
 
 static const char *hippo_version_file = NULL;
 
+/* How often we upload application data to the server */
+#define UPLOAD_APPLICATIONS_TIMEOUT_SEC 3600 /* One hour */
+
+/* How often we upload application data to the server in burst mode */
+#define UPLOAD_APPLICATIONS_BURST_TIMEOUT_SEC 30
+
+/* Length of the initial application burst */
+#define UPLOAD_APPLICATIONS_BURST_LENGTH_SEC 3600 /* One hour */
+
+/* The period of time our collected information about application extends over */
+#define UPLOAD_APPLICATIONS_PERIOD_SEC 24 * 3600  /* One day */
+
 struct HippoApp {
     GMainLoop *loop;
     HippoPlatform *platform;
@@ -40,6 +52,8 @@ struct HippoApp {
     guint check_installed_timeout;
     int check_installed_fast_count;
     guint check_installed_timeout_fast : 1;
+    guint upload_applications_timeout;
+    int upload_applications_burst_count;
     HippoIdleMonitor *idle_monitor;
 };
 
@@ -1077,6 +1091,53 @@ on_client_info_available(HippoConnection *connection,
     gtk_window_present(GTK_WINDOW(app->upgrade_dialog));
 }
 
+static gboolean
+on_upload_applications_timeout(gpointer data)
+{
+    HippoApp *app = (HippoApp *)data;
+
+    if (app->upload_applications_burst_count > 0) {
+        app->upload_applications_burst_count--;
+        
+        if (app->upload_applications_burst_count == 0) {
+            g_source_remove(app->upload_applications_timeout);
+            g_timeout_add(UPLOAD_APPLICATIONS_TIMEOUT_SEC * 1000,
+                          on_upload_applications_timeout,
+                          app);
+        }
+    }
+
+    if (hippo_data_cache_get_application_usage_enabled(app->cache)) {
+        GSList *app_ids;
+        GSList *wm_classes;
+
+        hippo_idle_get_active_applications(app->idle_monitor,
+                                           UPLOAD_APPLICATIONS_PERIOD_SEC,
+                                           &app_ids, &wm_classes);
+
+        if (app_ids || wm_classes) {
+            hippo_connection_send_active_applications(app->connection,
+                                                      UPLOAD_APPLICATIONS_PERIOD_SEC,
+                                                      app_ids,
+                                                      wm_classes);
+            
+            g_slist_foreach(app_ids, (GFunc)g_free, NULL);
+            g_slist_free(app_ids);
+            g_slist_foreach(wm_classes, (GFunc)g_free, NULL);
+            g_slist_free(wm_classes);
+        }
+    }
+
+    /* There is no change notification when the set of title patterns change,
+     * so we periodically re-request them to stay up-to-date (but don't do
+     * this when burst uploading)
+     */
+    if (app->upload_applications_burst_count == 0)
+        hippo_connection_request_title_patterns(app->connection);
+    
+    return TRUE;
+}
+
 static void
 on_dbus_song_changed(HippoDBus *dbus,
                      HippoSong *song,
@@ -1106,6 +1167,20 @@ on_idle_changed(gboolean  idle,
 }                
 
 static void
+on_initial_application_burst(HippoConnection *connection,
+                             void            *data)
+{
+    HippoApp *app = data;
+
+    app->upload_applications_burst_count = UPLOAD_APPLICATIONS_BURST_LENGTH_SEC / UPLOAD_APPLICATIONS_BURST_TIMEOUT_SEC;
+        
+    g_source_remove(app->upload_applications_timeout);
+    g_timeout_add(UPLOAD_APPLICATIONS_BURST_TIMEOUT_SEC * 1000,
+                  on_upload_applications_timeout,
+                  app);
+}
+
+static void
 on_connected_changed(HippoConnection *connection,
                      gboolean         connected,
                      void            *data)
@@ -1113,6 +1188,15 @@ on_connected_changed(HippoConnection *connection,
     HippoApp *app = data;
 
     hippo_dbus_notify_xmpp_connected(app->dbus, connected);
+}
+
+static void
+on_whereim_changed(HippoConnection            *connection,
+                   HippoExternalAccount       *acct,
+                   void                       *data)
+{
+    HippoApp *app = data;
+    hippo_dbus_notify_whereim_changed(app->dbus, app->connection, acct);
 }
 
 /* Since we're doing this anyway, hippo_platform_get_screen_info becomes mostly
@@ -1178,6 +1262,12 @@ hippo_app_new(HippoInstanceType  instance_type,
                      G_CALLBACK(on_client_info_available), app);
     g_signal_connect(G_OBJECT(app->connection), "connected-changed",
                      G_CALLBACK(on_connected_changed), app);
+    g_signal_connect(G_OBJECT(app->connection), "initial-application-burst",
+                     G_CALLBACK(on_initial_application_burst), app);
+                     
+    /* Hook up D-BUS reflectors */
+    g_signal_connect(G_OBJECT(app->connection), "whereim-changed",
+                     G_CALLBACK(on_whereim_changed), app);                     
     
     app->photo_cache = hippo_pixbuf_cache_new(app->platform);
     
@@ -1191,7 +1281,11 @@ hippo_app_new(HippoInstanceType  instance_type,
     /* start slow timeout to look for new installed versions */
     hippo_app_start_check_installed_timeout(app, FALSE);
  
-    app->idle_monitor = hippo_idle_add(gdk_display_get_default(), on_idle_changed, app); 
+    app->idle_monitor = hippo_idle_add(gdk_display_get_default(), app->cache, on_idle_changed, app);
+
+    app->upload_applications_timeout = g_timeout_add(UPLOAD_APPLICATIONS_TIMEOUT_SEC * 1000,
+                                                     on_upload_applications_timeout,
+                                                     app);
     
     return app;
 }
@@ -1199,6 +1293,8 @@ hippo_app_new(HippoInstanceType  instance_type,
 static void
 hippo_app_free(HippoApp *app)
 {
+    g_source_remove(app->upload_applications_timeout);
+    
     hippo_idle_free(app->idle_monitor);
 
     if (app->check_installed_timeout != 0)
@@ -1214,6 +1310,8 @@ hippo_app_free(HippoApp *app)
 
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
                                          G_CALLBACK(on_connected_changed), app);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
+                                         G_CALLBACK(on_initial_application_burst), app);
     
     hippo_stack_manager_unmanage(app->cache);
     

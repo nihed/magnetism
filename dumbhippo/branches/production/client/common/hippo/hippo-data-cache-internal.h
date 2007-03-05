@@ -54,7 +54,7 @@ void             hippo_data_cache_set_active_posts          (HippoDataCache  *ca
 void             hippo_data_cache_set_myspace_name          (HippoDataCache  *cache,
                                                              const char      *name);
 
-/* these take ownership of the list members but not the list */
+/* these take ownership of the list members and the list itself */
 void             hippo_data_cache_set_myspace_blog_comments (HippoDataCache  *cache,
                                                              GSList          *comments);
 void             hippo_data_cache_set_myspace_contacts      (HippoDataCache  *cache,
@@ -62,6 +62,10 @@ void             hippo_data_cache_set_myspace_contacts      (HippoDataCache  *ca
 
 void             hippo_data_cache_set_client_info           (HippoDataCache        *cache,
                                                              const HippoClientInfo *info);
+
+/* this takes ownership of the list members and the list itself */
+void             hippo_data_cache_set_title_patterns        (HippoDataCache *cache,
+                                                             GSList         *title_patterns);
 
 G_END_DECLS
 

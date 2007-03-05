@@ -3,6 +3,8 @@
 #include "hippo-connection.h"
 #include "hippo-data-cache-internal.h"
 #include "hippo-common-marshal.h"
+#include "hippo-external-account.h"
+#include "hippo-title-pattern.h"
 #include "hippo-xml-utils.h"
 #include <loudmouth/loudmouth.h>
 #include <string.h>
@@ -122,8 +124,11 @@ static void     hippo_connection_send_message_with_reply(HippoConnection *connec
                                                          LmHandleMessageFunction handler,
                                                          SendMode           mode);
 static void     hippo_connection_request_client_info  (HippoConnection *connection);
+
 static void     hippo_connection_parse_prefs_node     (HippoConnection *connection,
                                                        LmMessageNode   *prefs_node);
+static gboolean hippo_connection_parse_entity         (HippoConnection *connection,
+                                                       LmMessageNode   *node);
 static void     hippo_connection_process_pending_room_messages(HippoConnection *connection);
 
 /* enter/leave unconditionally send the presence message; send_state will 
@@ -223,6 +228,11 @@ enum {
     GROUP_MEMBERSHIP_CHANGED,
     BLOCK_FILTER_CHANGED,
     SETTING_CHANGED,
+    SETTINGS_LOADED,
+    WHEREIM_CHANGED,
+    /* Emitted to signal that we should temporarily rapidly upload application
+     * activity instead of just once an hour */
+    INITIAL_APPLICATION_BURST,
     LAST_SIGNAL
 };
 
@@ -349,6 +359,33 @@ hippo_connection_class_init(HippoConnectionClass *klass)
                       NULL, NULL,
                       hippo_common_marshal_VOID__STRING_STRING,
                       G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_STRING);
+
+    signals[SETTINGS_LOADED] =
+        g_signal_new ("settings-loaded",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
+    
+    signals[WHEREIM_CHANGED] =
+        g_signal_new ("whereim-changed",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__OBJECT,
+                      G_TYPE_NONE, 1, G_TYPE_OBJECT);                      
+    
+    signals[INITIAL_APPLICATION_BURST] =
+        g_signal_new ("initial-application-burst",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);                      
     
     object_class->finalize = hippo_connection_finalize;
 }
@@ -790,18 +827,36 @@ hippo_connection_stop_signin_timeout(HippoConnection *connection)
     }
 }
 
+static void
+hippo_connection_retry(HippoConnection *connection)
+{
+    g_debug("retrying connect to server");
+    
+    hippo_connection_stop_retry_timeout(connection);
+    hippo_connection_connect(connection, NULL);
+}
 
 static gboolean 
 retry_timeout(gpointer data)
 {
     HippoConnection *connection = HIPPO_CONNECTION(data);
 
-    g_debug("Retry timeout");
-
-    hippo_connection_stop_retry_timeout(connection);
-    hippo_connection_connect(connection, NULL);
+    hippo_connection_retry(connection);
 
     return FALSE;
+}
+
+static void
+on_network_status_changed(HippoPlatform     *platform,
+                          HippoNetworkStatus status,
+                          gpointer           data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+
+    g_debug("new network status from platform %d", status);
+    
+    if (status != HIPPO_NETWORK_STATUS_DOWN)
+        hippo_connection_retry(connection);
 }
 
 static void
@@ -812,6 +867,9 @@ hippo_connection_start_retry_timeout(HippoConnection *connection)
         g_debug("Installing retry timeout for %g seconds", timeout / 1000.0);
         connection->retry_timeout_id = g_timeout_add(timeout, 
                                                      retry_timeout, connection);
+
+        g_signal_connect(G_OBJECT(connection->platform), "network-status-changed",
+                         G_CALLBACK(on_network_status_changed), connection);
     }
 }
 
@@ -822,6 +880,10 @@ hippo_connection_stop_retry_timeout(HippoConnection *connection)
         g_debug("Removing retry timeout");
         g_source_remove (connection->retry_timeout_id);
         connection->retry_timeout_id = 0;
+        
+        g_signal_handlers_disconnect_by_func(G_OBJECT(connection->platform),
+                                             G_CALLBACK(on_network_status_changed),
+                                             connection);
     }
 }
 
@@ -1209,10 +1271,9 @@ message_is_iq_with_namespace(LmMessage  *message,
     if (lm_message_get_type(message) != LM_MESSAGE_TYPE_IQ ||
         lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_RESULT ||
         !child || child->next ||
-        !node_matches(child, document_element_name, expected_namespace))
-        {
-            return FALSE;
-        } else {
+        !node_matches(child, document_element_name, expected_namespace)) {
+        return FALSE;
+    } else {
         return TRUE;
     }
 }
@@ -1280,7 +1341,7 @@ on_client_info_reply(LmMessageHandler *handler,
         hippo_connection_signout(connection);
     } else {
         /* Now fully authenticated */
-        hippo_connection_state_change(connection, HIPPO_STATE_AUTHENTICATED);     
+        hippo_connection_state_change(connection, HIPPO_STATE_AUTHENTICATED);
     }
     
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
@@ -1310,6 +1371,132 @@ hippo_connection_request_client_info(HippoConnection *connection)
         lm_message_node_set_attribute(child, "distribution", info.distribution);
     
     hippo_connection_send_message_with_reply(connection, message, on_client_info_reply, SEND_MODE_IMMEDIATELY);
+
+    lm_message_unref(message);
+}
+
+static LmHandlerResult
+on_title_patterns_reply(LmMessageHandler *handler,
+                        LmConnection     *lconnection,
+                        LmMessage        *message,
+                        gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *child;
+    LmMessageNode *subchild;
+    GSList *title_patterns = NULL;
+
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/applications", "titlePatterns")) {
+        g_debug("Title patterns reply was wrong thing");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    child = message->node->children;
+
+    for (subchild = child->children; subchild; subchild = subchild->next) {
+        const char *app_id;
+        const char *value;
+        char **patterns, **p;
+    
+        if (strcmp (subchild->name, "application") != 0)
+            continue;
+
+        app_id = lm_message_node_get_attribute(subchild, "appId");
+        if (!app_id) {
+            g_warning("titlePatterns application node doesn't have an appId attribute");
+            continue;
+        }
+        
+        value = lm_message_node_get_value(subchild);
+        if (!value)
+            continue;
+
+        patterns = g_strsplit(value, ";", -1);
+        for (p = patterns; *p; p++) {
+            g_strstrip(*p);
+            title_patterns = g_slist_prepend(title_patterns, hippo_title_pattern_new(app_id, *p));
+        }
+
+        g_strfreev(patterns);
+    }
+
+    /* takes ownership */
+    hippo_data_cache_set_title_patterns(connection->cache, title_patterns);
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+void
+hippo_connection_request_title_patterns(HippoConnection *connection)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    
+    g_return_if_fail(HIPPO_IS_CONNECTION(connection));
+
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "titlePatterns", NULL);
+
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/applications");
+
+    hippo_connection_send_message_with_reply(connection, message, on_title_patterns_reply, SEND_MODE_IMMEDIATELY);
+
+    lm_message_unref(message);
+}
+
+static LmHandlerResult
+on_contacts_reply(LmMessageHandler *handler,
+                  LmConnection     *lconnection,
+                  LmMessage        *message,
+                  gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *child;
+    LmMessageNode *subchild;
+
+    child = message->node->children;
+    
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/contacts", "contacts")) {
+        g_debug("Contacts reply was wrong thing");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    g_debug("got contacts reply");
+    
+    for (subchild = child->children; subchild; subchild = subchild->next) {
+        if (!hippo_connection_parse_entity(connection, subchild)) {
+            g_warning("failed to parse entity in on_contacts_reply");
+            return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+        }
+    }
+
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+void
+hippo_connection_request_contacts(HippoConnection *connection)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    
+    g_return_if_fail(HIPPO_IS_CONNECTION(connection));
+
+    g_debug("requesting contacts");
+    
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "contacts", NULL);
+
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/contacts");
+
+    hippo_connection_send_message_with_reply(connection, message, on_contacts_reply, SEND_MODE_IMMEDIATELY);
 
     lm_message_unref(message);
 }
@@ -1497,10 +1684,8 @@ on_get_myspace_blog_comments_reply(LmMessageHandler *handler,
                                    hippo_myspace_blog_comment_new(comment_id, poster_id));
     }
 
-    /* This takes ownership of the comments in the list but not the list itself */
+    /* takes ownership */
     hippo_data_cache_set_myspace_blog_comments(connection->cache, comments);
-    
-    g_slist_free(comments);
     
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -1567,11 +1752,9 @@ on_get_myspace_contacts_reply(LmMessageHandler *handler,
         g_debug("got myspace contact '%s'", name);
     }
 
-    /* takes ownership of contacts but not the list */
+    /* takes ownership */
     hippo_data_cache_set_myspace_contacts(connection->cache, contacts);
     
-    g_slist_free(contacts);
-
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
 
@@ -1653,6 +1836,44 @@ hippo_connection_notify_myspace_contact_post(HippoConnection *connection,
     hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
     lm_message_unref(message);
     g_debug("Sent MySpace contact post xmpp message");
+}
+
+void
+hippo_connection_send_active_applications  (HippoConnection *connection,
+                                            int              collection_period,
+                                            GSList          *app_ids,
+                                            GSList          *wm_classes)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *subnode;
+    LmMessageNode *appnode;
+    char *period_str;
+    GSList *l;
+
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_SET);
+    node = lm_message_get_node(message);
+
+    subnode = lm_message_node_add_child (node, "activeApplications", NULL);
+    lm_message_node_set_attribute(subnode, "xmlns", "http://dumbhippo.com/protocol/applications");
+
+    period_str = g_strdup_printf("%d", collection_period);
+    lm_message_node_set_attribute(subnode, "period", period_str);
+    g_free(period_str);
+
+    for (l = app_ids; l; l = l->next) {
+        appnode = lm_message_node_add_child (subnode, "application", NULL);
+        lm_message_node_set_attribute(appnode, "appId", (char *)l->data);
+    }
+    
+    for (l = wm_classes; l; l = l->next) {
+        appnode = lm_message_node_add_child (subnode, "application", NULL);
+        lm_message_node_set_attribute(appnode, "wmClass", (char *)l->data);
+    }
+    
+    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
+    lm_message_unref(message);
 }
 
 gint64
@@ -1757,8 +1978,10 @@ hippo_connection_request_blocks(HippoConnection *connection,
     if (filter) {
         lm_message_node_set_attribute(child, "filter", filter);
     }
-    g_free(connection->active_block_filter);
-    connection->active_block_filter = g_strdup(filter);
+    if (filter != connection->active_block_filter) {
+        g_free(connection->active_block_filter);
+        connection->active_block_filter = g_strdup(filter);
+    }
     
     hippo_connection_send_message_with_reply(connection, message,
                                              on_request_blocks_reply, SEND_MODE_AFTER_AUTH);
@@ -2016,7 +2239,8 @@ hippo_connection_parse_entity(HippoConnection *connection,
     const char *name;
     const char *home_url;
     const char *photo_url;
- 
+    const char *is_contact;
+    
     HippoEntityType type;
     if (strcmp(node->name, "resource") == 0)
         type = HIPPO_ENTITY_RESOURCE;
@@ -2051,15 +2275,19 @@ hippo_connection_parse_entity(HippoConnection *connection,
     home_url = lm_message_node_get_attribute(node, "homeUrl");
 
     if (type != HIPPO_ENTITY_RESOURCE) {
-        photo_url = lm_message_node_get_attribute(node, "smallPhotoUrl");
+        photo_url = lm_message_node_get_attribute(node, "photoUrl");
+        if (!photo_url)
+            photo_url = lm_message_node_get_attribute(node, "smallPhotoUrl"); /* legacy attribute name */
         if (!photo_url) {
-            g_warning("entity node lacks photo url");
+            g_warning("entity node guid='%s' name='%s' lacks photo url", guid, name);
             return FALSE;
         }
     } else {
         photo_url = NULL;
     }
 
+    is_contact = lm_message_node_get_attribute(node, "isContact");
+    
     entity = hippo_data_cache_lookup_entity(connection->cache, guid);
     if (entity == NULL) {
         created_entity = TRUE;
@@ -2077,7 +2305,11 @@ hippo_connection_parse_entity(HippoConnection *connection,
         set_fallback_home_url(connection, entity);
     }
     hippo_entity_set_photo_url(entity, photo_url);
- 
+
+    /* old servers don't supply is_contact; even newer servers don't always supply it (only if they asked for the 'PersonViewExtra') */
+    if (is_contact)
+        hippo_entity_set_in_network(entity, strcmp(is_contact, "true") == 0);
+        
     if (created_entity) {
         hippo_data_cache_add_entity(connection->cache, entity);
     }
@@ -2732,6 +2964,11 @@ on_desktop_settings_reply(LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 
     hippo_connection_parse_settings_node(connection, settings_node);
+
+    /* FIXME this should really only be emitted if we asked for all settings, not every time
+     * we ask for a single setting, but too annoying to do that for now
+     */
+    g_signal_emit(G_OBJECT(connection), signals[SETTINGS_LOADED], 0);
     
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -2765,7 +3002,7 @@ hippo_connection_request_desktop_setting(HippoConnection *connection,
 
     lm_message_unref(message);
 
-    g_debug("Sent request for desktop setting (key = %s)", key ? key : "(null)");
+    g_debug("Sent request for desktop setting (key is %s)", key ? key : "(null, getting all of them)");
 }
 
 static LmHandlerResult
@@ -2821,6 +3058,68 @@ hippo_connection_send_desktop_setting (HippoConnection *connection,
     lm_message_unref(message);
 
     g_debug("Sent setting %s=%s", key, value);
+}
+
+
+static void
+hippo_connection_parse_whereim_node(HippoConnection *connection,
+                                    LmMessageNode   *node)
+{
+    LmMessageNode *child;
+    
+    for (child = node->children; child != NULL; child = child->next) {
+        HippoExternalAccount *acct;
+        
+        acct = hippo_external_account_new_from_xml(connection->cache, child);
+
+        if (acct) {
+            g_signal_emit(G_OBJECT(connection), signals[WHEREIM_CHANGED], 0, acct);
+                
+            g_object_unref(acct);
+        }
+    }
+}
+
+static LmHandlerResult
+on_whereim_reply(LmMessageHandler *handler,
+                 LmConnection     *lconnection,
+                 LmMessage        *message,
+                 gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *node = message->node->children;
+    
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/whereim", "whereim")) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    if (node == NULL || strcmp(node->name, "whereim") != 0)
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+
+    hippo_connection_parse_whereim_node(connection, node);
+    
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+void
+hippo_connection_request_mugshot_whereim(HippoConnection *connection)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "whereim", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/whereim");
+    
+    hippo_connection_send_message_with_reply(connection, message, on_whereim_reply, SEND_MODE_AFTER_AUTH);
+
+    lm_message_unref(message);
+
+    g_debug("Sent request for whereim");        
 }
 
 static gboolean
@@ -3445,6 +3744,25 @@ handle_group_membership_change(HippoConnection *connection,
     return TRUE;
 }
 
+static gboolean
+handle_initial_application_burst(HippoConnection *connection,
+                                 LmMessage       *message)
+{
+    LmMessageNode *child;
+    
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
+        return FALSE;
+
+    child = find_child_node(message->node, "http://dumbhippo.com/protocol/applications", "initialApplicationBurst");
+    if (child == NULL)
+        return FALSE;
+    g_debug("received a message to turn on initial application burst upload");
+
+    g_signal_emit(connection, signals[INITIAL_APPLICATION_BURST], 0);
+
+    return TRUE;
+}
+
 static LmHandlerResult 
 handle_stream_error (LmMessageHandler *handler,
                      LmConnection     *lconnection,
@@ -3524,6 +3842,10 @@ handle_message (LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
     
+    if (handle_initial_application_burst(connection, message)) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
     /* Messages used to be HEADLINE, we accept both for compatibility */
     if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NORMAL
         /* Shouldn't need this, default should be normal */
@@ -3534,6 +3856,12 @@ handle_message (LmMessageHandler *handler,
             g_debug("newPost received");
             hippo_connection_parse_post_data(connection, child, TRUE, "newPost");
             return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+        }
+        child = find_child_node(message->node, "http://dumbhippo.com/protocol/whereim", "whereim");
+        if (child) {
+                g_debug("whereim received");
+                hippo_connection_parse_whereim_node(connection, child);
+                return LM_HANDLER_RESULT_REMOVE_MESSAGE;
         }
     }
     

@@ -1,0 +1,11 @@
+[Desktop Entry]
+# this is for autostart, not the menus
+Encoding=UTF-8
+_Name=BigBoard Sync
+_GenericName=Online Sync
+_Comment=Stores your preferences and data online
+Exec=bigboard-sync
+Terminal=false
+Type=Application
+StartupNotify=false
+Categories=

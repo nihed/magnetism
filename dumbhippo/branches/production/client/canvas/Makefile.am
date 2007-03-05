@@ -124,6 +124,7 @@ COMMON_CANVAS_HEADERFILES = 					\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-style.h	\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-text.h		\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-widgets.h	\
+	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-util.h		\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-event.h		\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-graphics.h
 
@@ -146,6 +147,7 @@ COMMON_CANVAS_SOURCEFILES = 					\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-text.c		\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-test.c		\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-test.h		\
+	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-util.c		\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-event.c		\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-graphics.c
 

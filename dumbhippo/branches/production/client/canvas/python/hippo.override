@@ -7,10 +7,12 @@ headers
 #include "hippo/hippo-canvas-item.h"
 #include "hippo/hippo-canvas-box.h"
 #include "hippo/hippo-canvas-image.h"
+#include "hippo/hippo-canvas-image-button.h"
 #include "hippo/hippo-canvas-text.h"
 #include "hippo/hippo-canvas-link.h"
 #include "hippo/hippo-canvas.h"
 #include "hippo/hippo-canvas-widget.h"
+#include "hippo/hippo-canvas-window.h"
 
 #include "hippo-canvas/hippo-canvas-type-builtins.h"
 
@@ -24,13 +26,16 @@ modulename hippocanvas
 %%
 import gobject.GObject as PyGObject_Type
 import gtk.Container as PyGtkContainer_Type
+import gtk.Window as PyGtkWindow_Type
 import gtk.gdk.Pixbuf as PyGdkPixbuf_Type
 %%
 ignore
-hippo_cairo_set_source_rgba32
 hippo_canvas_box_new
+hippo_canvas_image_new
 hippo_canvas_text_new
 hippo_canvas_link_new
+hippo_canvas_window_new
+hippo_canvas_widget_new
 %%
 ignore-glob
   *_get_type
@@ -48,6 +53,22 @@ _wrap_hippo_canvas_context_translate_to_widget(PyGObject *self, PyObject *args, 
         return NULL;
 
     hippo_canvas_context_translate_to_widget(HIPPO_CANVAS_CONTEXT(self->obj), HIPPO_CANVAS_ITEM(item->obj), &x_p, &y_p);
+
+    return Py_BuildValue("(ii)", x_p, y_p);
+}
+%%
+override hippo_canvas_context_translate_to_screen kwargs
+static PyObject *
+_wrap_hippo_canvas_context_translate_to_screen(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "item", NULL };
+    PyGObject *item;
+    int x_p = 0, y_p = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:HippoCanvasContext.translate_to_screen", kwlist, &PyHippoCanvasItem_Type, &item))
+        return NULL;
+
+    hippo_canvas_context_translate_to_screen(HIPPO_CANVAS_CONTEXT(self->obj), HIPPO_CANVAS_ITEM(item->obj), &x_p, &y_p);
 
     return Py_BuildValue("(ii)", x_p, y_p);
 }
@@ -126,20 +147,42 @@ _wrap_hippo_event_tp_getattr(PyObject *self, char *attr)
 {
     HippoEvent *event = pyg_boxed_get(self, HippoEvent);
 
+    if (!strcmp(attr, "type"))
+        return pyg_enum_from_gtype(HIPPO_TYPE_EVENT_TYPE, event->type);
+    else if (!strcmp(attr, "x"))
+        return PyInt_FromLong(event->x);
+    else if (!strcmp(attr, "y"))
+        return PyInt_FromLong(event->y);
+    
     switch(event->type) {
     case HIPPO_EVENT_MOTION_NOTIFY:
         if (!strcmp(attr, "__members__"))
-            return Py_BuildValue("[sss]", "x", "y", "detail");
-        if (!strcmp(attr, "x"))
-            return PyInt_FromLong(event->x);
-        if (!strcmp(attr, "y"))
-            return PyInt_FromLong(event->y);
-        if (!strcmp(attr, "detail"))
+            return Py_BuildValue("[ssss]", "type", "x", "y", "detail");
+        else if (!strcmp(attr, "detail"))
             return pyg_enum_from_gtype(HIPPO_TYPE_MOTION_DETAIL, event->u.motion.detail);
         break;
-
-    default:
+    case HIPPO_EVENT_BUTTON_PRESS:
+    case HIPPO_EVENT_BUTTON_RELEASE:
+        if (!strcmp(attr, "__members__"))
+            return Py_BuildValue("[sssssss]", "type", "x", "y", "button", "x11_x_root", "x11_y_root", "x11_time");
+        else if (!strcmp(attr, "button"))
+            return PyInt_FromLong(event->u.button.button);
+        else if (!strcmp(attr, "x11_x_root"))
+            return PyInt_FromLong(event->u.button.x11_x_root);
+        else if (!strcmp(attr, "x11_y_root"))
+            return PyInt_FromLong(event->u.button.x11_y_root);
+        else if (!strcmp(attr, "x11_time"))
+            return PyInt_FromLong(event->u.button.x11_time);
         break;
+    case HIPPO_EVENT_KEY_PRESS:
+        if (!strcmp(attr, "__members__"))
+            return Py_BuildValue("[sssss]", "type", "x", "y", "key", "character");
+        else if (!strcmp(attr, "key"))
+            return pyg_enum_from_gtype(HIPPO_TYPE_KEY, event->u.key.key);
+        else if (!strcmp(attr, "character"))
+            return PyInt_FromLong(event->u.key.character); /* FIXME this should probably return a string? */
+        break;        
+        /* No default, hides compiler warnings */
     }
 
     return NULL;
@@ -250,3 +293,47 @@ _wrap_hippo_cairo_surface_from_gdk_pixbuf(PyGObject *self, PyObject *args, PyObj
     return PycairoSurface_FromSurface(surface, NULL);
 }
 %%
+override hippo_canvas_set_load_image_hook kwargs
+static PyObject *_canvas_load_image_hook_cb = NULL;
+
+static cairo_surface_t*
+_canvas_load_image_hook(HippoCanvasContext *context,
+                       const char         *image_name)
+{
+    PyObject *arglist;
+    PyObject *result;
+    PycairoSurface *surface_result;
+    cairo_surface_t *surface;
+    
+    arglist = Py_BuildValue("(s)", image_name);
+    result = PyEval_CallObject(_canvas_load_image_hook_cb, arglist);
+    Py_DECREF(arglist);
+    if (result == NULL)
+        return NULL;
+    surface_result = (PycairoSurface*)result;
+    surface = surface_result->surface;
+    cairo_surface_reference(surface);
+    Py_XDECREF(result);
+    return surface;
+}
+
+static PyObject *
+_wrap_hippo_canvas_set_load_image_hook(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    PyObject *result = NULL;
+    PyObject *temp;
+
+    if (PyArg_ParseTuple(args, "O:canvas_set_load_image_hook", &temp)) {
+        if (!PyCallable_Check(temp)) {
+            PyErr_SetString(PyExc_TypeError, "parameter must be callable");
+            return NULL;
+        }
+        Py_XINCREF(temp);
+        Py_XDECREF(_canvas_load_image_hook_cb);
+		_canvas_load_image_hook_cb = temp;
+		hippo_canvas_set_load_image_hook(_canvas_load_image_hook);
+        Py_INCREF(Py_None);
+        result = Py_None;
+    }
+  	return result;
+}

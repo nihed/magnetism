@@ -38,4 +38,9 @@ public interface FacebookSystem {
 
 	public String getApiKey();	
 	
+	// this is a migration function needed for moving from using Facebook beta to using Facebook 1.0 API
+	public void decodeUserIds();
+	
+	public void updateUserIds(List<FacebookAccount> detachedFacebookAccounts);
+	
 }
