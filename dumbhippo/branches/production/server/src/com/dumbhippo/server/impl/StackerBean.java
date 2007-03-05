@@ -1428,6 +1428,31 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageable.setTotalCount(groupSystem.getPublicGroupCount());
 	}
 	
+
+	public List<BlockView> getUnansweredQuestions(UserViewpoint viewpoint, long stackedBefore) {
+		Query q = em.createQuery("   SELECT ubd FROM UserBlockData ubd " +
+				                 "    WHERE ubd.user = :user " +
+				                 "      AND ubd.block.blockType = " + BlockType.ACCOUNT_QUESTION.ordinal() + " " +
+				                 "      AND ubd.clickedTimestamp IS NULL " +
+				                 "      AND ubd.stackTimestamp < :stackedBefore " +
+				                 " ORDER BY ubd.stackTimestamp DESC")
+		    .setParameter("user", viewpoint.getViewer())
+		    .setParameter("stackedBefore", new Date(stackedBefore));
+		
+		List<BlockView> results = new ArrayList<BlockView>();
+		
+		for (UserBlockData ubd : TypeUtils.castList(UserBlockData.class, q.getResultList())) {
+			try {
+				results.add(loadBlock(viewpoint, ubd));
+			} catch (NotFoundException e) {
+				logger.warn("Couldn't find/view question block {} for viewer {}",
+						    ubd.getBlock().getId(), viewpoint.getViewer());
+			}
+		}
+		
+		return results;
+	}	
+	
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException {
 		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.user = :user AND ubd.block = block AND block.id = :blockId");
 		q.setParameter("user", viewpoint.getViewer());
@@ -2020,5 +2045,5 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	public void setUserStackFilterPrefs(User user, String filter) {
 		user.getAccount().setStackFilter(filter);
-	}	
+	}
 }

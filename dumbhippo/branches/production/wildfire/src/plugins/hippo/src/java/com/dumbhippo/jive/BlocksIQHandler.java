@@ -95,6 +95,10 @@ public class BlocksIQHandler extends AnnotatedIQHandler {
 		pageable.setInitialPerPage(25);
 		stacker.pageStack(viewpoint, viewpoint.getViewer(), pageable, lastTimestamp, filter, false);
 		List<BlockView> views = pageable.getResults();
+		
+		if (lastTimestamp <= 0)
+			views.addAll(stacker.getUnansweredQuestions(viewpoint, views.get(views.size() - 1).getUserBlockData().getStackTimestampAsLong()));
+		
 		String xml = getBlocksXml(viewpoint, filterProvided ? null : filter, "blocks", views);
         
 		reply.setChildElement(XmlParser.elementFromXml(xml));
