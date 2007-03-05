@@ -99,14 +99,16 @@ class EntityItem(hippo.CanvasBox):
 class ProfileItem(hippo.CanvasBox):
     def __init__(self, profiles, **kwargs):
         kwargs['orientation'] = hippo.ORIENTATION_VERTICAL
+        kwargs['border'] = 1
+        kwargs['border-color'] = 0x0000000ff
         hippo.CanvasBox.__init__(self, **kwargs)
 
         self._profiles = profiles
         self._entity = None
 
-        self._photo = CanvasMugshotURLImage(scale_width=30,
-                                            scale_height=30,
-                                            border=2)
+        self._photo = CanvasMugshotURLImage(scale_width=60,
+                                            scale_height=60,
+                                            border=5)
         self.append(self._photo)
 
         self._online = hippo.CanvasText(text='Offline')
@@ -133,7 +135,7 @@ class ProfileItem(hippo.CanvasBox):
             print "failed to fetch profile"
             return
         
-        print str(profile)
+        #print str(profile)
 
         if profile.get_online():
             self._online.set_property('text', 'Online')
@@ -206,7 +208,7 @@ class PeopleStock(bigboard.AbstractMugshotStock):
         self._slideout = slideout.Slideout()
         self._slideout_item = item
         coords = item.get_screen_coords()
-        self._slideout.slideout_from(coords[0] + item.get_allocation()[0], coords[1])
+        self._slideout.slideout_from(coords[0] + item.get_allocation()[0] + 4, coords[1])
 
         p = ProfileItem(self._profiles)
         p.set_entity(item.get_entity())
