@@ -14,6 +14,7 @@ public class AppinfoUpload extends EmbeddedGuidPersistable {
 	private Application application;
 	private User uploader;
 	private long uploadDate;
+	private boolean deleteApplication;
 
 	// For hibernate
 	public AppinfoUpload() {
@@ -22,6 +23,7 @@ public class AppinfoUpload extends EmbeddedGuidPersistable {
 	public AppinfoUpload(User uploader) {
 		uploadDate = System.currentTimeMillis();
 		this.uploader = uploader;
+		this.deleteApplication = false;
 	}
 	
 	@JoinColumn(nullable = false)
@@ -51,5 +53,14 @@ public class AppinfoUpload extends EmbeddedGuidPersistable {
 	
 	public void setUploader(User uploader) {
 		this.uploader = uploader;
+	}
+
+	@Column(nullable = false)
+	public boolean isDeleteApplication() {
+		return deleteApplication;
+	}
+
+	public void setDeleteApplication(boolean delete) {
+		this.deleteApplication = delete;
 	}
 }

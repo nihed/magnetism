@@ -16,6 +16,7 @@ import com.dumbhippo.server.views.UserViewpoint;
 @Local
 public interface ApplicationSystem {
 	void addUpload(Guid uploaderId, Guid uploadId, AppinfoFile appinfoFile);
+	void deleteApplication(UserViewpoint viewpoint, String applicationId);
 	void reinstallAllApplications();
 	
 	ApplicationIconView getIcon(String appId, int size) throws NotFoundException;
