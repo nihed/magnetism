@@ -9,8 +9,8 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
-import java.text.SimpleDateFormat;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -111,9 +111,9 @@ import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.blocks.BlockView;
+import com.dumbhippo.server.blocks.ExternalAccountBlockView;
 import com.dumbhippo.server.blocks.TitleBlockView;
 import com.dumbhippo.server.blocks.TitleDescriptionBlockView;
-import com.dumbhippo.server.blocks.ExternalAccountBlockView;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.EntityView;
@@ -2165,6 +2165,19 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				"photo", userView.getPhotoUrl(),
 				"name", userView.getName(),
 				"homeUrl", userView.getHomeUrl());
+		
+		xml.openElement("addresses");
+
+		AimResource aim = userView.getAim();
+		EmailResource email = userView.getEmail();
+		
+		if (aim != null)
+			xml.appendEmptyNode("address", "type", "aim", "value", aim.getScreenName());
+		
+		if (email != null)
+			xml.appendEmptyNode("address", "type", "email", "value", email.getEmail());
+		
+		xml.closeElement();
 		
 		xml.openElement("accounts");
 		
