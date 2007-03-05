@@ -9,7 +9,8 @@ class Profile(libbig.AutoStruct, xml.sax.ContentHandler):
     def __init__(self, guid):
         libbig.AutoStruct.__init__(self,
                                    { 'name' : None, 'photo' : None, 'who' : str(guid), 'online' : None,
-                                     'homeUrl' : None, 'onlineIcon' : None, 'accounts' : [], 'stack' : [] })
+                                     'homeUrl' : None, 'onlineIcon' : None, 'accounts' : [], 'stack' : [],
+                                     'email' : None, 'aim' : None})
 
     def startElement(self, name, attrs):
         #print name
@@ -33,6 +34,12 @@ class Profile(libbig.AutoStruct, xml.sax.ContentHandler):
                               'type' : attrs.getValue('type'),
                               'linkText' : attrs.getValue('linkText'),
                               'icon' : attrs.getValue('icon') })
+        elif name == 'address':
+            type = attrs.getValue('type')
+            if type == 'email':
+                self.update({ 'email' : attrs.getValue('value') })
+            elif type == 'aim':
+                self.update({ 'aim' : attrs.getValue('value') })
 
     def characters(self, content):
         #print content
