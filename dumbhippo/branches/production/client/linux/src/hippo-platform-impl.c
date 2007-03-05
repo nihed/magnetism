@@ -5,6 +5,7 @@
 #include "hippo-window-wrapper.h"
 #include "hippo-status-icon.h"
 #include "hippo-http.h"
+#include "hippo-dbus-system.h"
 #include "main.h"
 #include <string.h>
 
@@ -49,6 +50,8 @@ static gboolean     hippo_platform_impl_can_play_song_download (HippoPlatform   
                                                                 HippoSongDownload *song_download);
 static void         hippo_platform_impl_show_disconnected_window (HippoPlatform *platform,
                                                                   HippoConnection *connection);
+static HippoNetworkStatus hippo_platform_impl_get_network_status (HippoPlatform *platform);
+
 static HippoInstanceType hippo_platform_impl_get_instance_type (HippoPlatform  *platform);
 static char*        hippo_platform_impl_get_message_server  (HippoPlatform     *platform);
 static char*        hippo_platform_impl_get_web_server      (HippoPlatform     *platform);
@@ -62,18 +65,22 @@ static void         hippo_platform_impl_set_signin          (HippoPlatform     *
 
 typedef struct Dialogs Dialogs;
 
-static Dialogs* dialogs_get                      (HippoConnection *connection);
-static void     dialogs_destroy                  (Dialogs         *dialogs);
-static void     dialogs_show_disconnected_window (Dialogs         *dialogs);
-static void     dialogs_show_login               (Dialogs         *dialogs);
-static void     dialogs_show_status              (Dialogs         *dialogs);
-
+static Dialogs* dialogs_get                        (HippoConnection *connection);
+static void     dialogs_destroy                    (Dialogs         *dialogs);
+static void     dialogs_update_disconnected_window (Dialogs         *dialogs,
+                                                    gboolean         show_if_not_showing);
+static void     dialogs_update_login               (Dialogs         *dialogs,
+                                                    gboolean         show_if_not_showing);
+static void     dialogs_update_status              (Dialogs         *dialogs,
+                                                    gboolean         show_if_not_showing);
 
 
 struct _HippoPlatformImpl {
     GObject parent;
     HippoInstanceType instance;
     char *jabber_resource;
+    HippoSystemDBus *system_dbus;
+    HippoNetworkStatus network_status;
 };
 
 struct _HippoPlatformImplClass {
@@ -101,6 +108,7 @@ hippo_platform_impl_iface_init(HippoPlatformClass *klass)
     klass->get_chat_window_state = hippo_platform_impl_get_chat_window_state;
     klass->can_play_song_download = hippo_platform_impl_can_play_song_download;
     klass->show_disconnected_window = hippo_platform_impl_show_disconnected_window;
+    klass->get_network_status = hippo_platform_impl_get_network_status;
     
     klass->get_instance_type = hippo_platform_impl_get_instance_type;
     klass->get_message_server = hippo_platform_impl_get_message_server;
@@ -126,20 +134,54 @@ hippo_platform_impl_class_init(HippoPlatformImplClass  *klass)
     object_class->dispose = hippo_platform_impl_dispose;
 }
 
+static void
+on_network_status_changed(HippoSystemDBus   *system_dbus,
+                          HippoNetworkStatus status,
+                          HippoPlatformImpl *impl)
+{
+    if (status != impl->network_status) {
+        impl->network_status = status;
+        hippo_platform_emit_network_status_changed(HIPPO_PLATFORM(impl),
+                                                   impl->network_status);
+    }
+}
+
 HippoPlatform*
 hippo_platform_impl_new(HippoInstanceType instance)
 {
-    HippoPlatformImpl *impl = g_object_new(HIPPO_TYPE_PLATFORM_IMPL, NULL);
+    HippoPlatformImpl *impl;
+    GError *error;
+    
+    impl = g_object_new(HIPPO_TYPE_PLATFORM_IMPL, NULL);
     impl->instance = instance;
+
+    error = NULL;
+    impl->system_dbus = hippo_system_dbus_open(&error);
+    if (impl->system_dbus) {
+        g_signal_connect(G_OBJECT(impl->system_dbus), "network-status-changed",
+                         G_CALLBACK(on_network_status_changed), impl);
+    } else {
+        g_debug("Failed to open system dbus: %s", error->message);
+        g_error_free(error);
+    }
+    impl->network_status = HIPPO_NETWORK_STATUS_UNKNOWN;
+    
     return HIPPO_PLATFORM(impl);
 }
 
 static void
 hippo_platform_impl_dispose(GObject *object)
 {
-    /* HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(object); */
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(object);
 
     g_debug("Disposing platform impl");
+
+    if (impl->system_dbus) {
+        g_signal_handlers_disconnect_by_func(G_OBJECT(impl->system_dbus),
+                                             G_CALLBACK(on_network_status_changed), impl);
+        g_object_unref(impl->system_dbus);
+        impl->system_dbus = NULL;
+    }
     
     G_OBJECT_CLASS(hippo_platform_impl_parent_class)->finalize(object);
 }
@@ -418,7 +460,15 @@ hippo_platform_impl_show_disconnected_window(HippoPlatform   *platform,
 
     dialogs = dialogs_get(connection);
     
-    dialogs_show_disconnected_window(dialogs);
+    dialogs_update_disconnected_window(dialogs, TRUE);
+}
+
+static HippoNetworkStatus
+hippo_platform_impl_get_network_status (HippoPlatform *platform)
+{
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+    
+    return impl->network_status;
 }
 
 static HippoInstanceType
@@ -538,7 +588,7 @@ state_changed_cb(HippoConnection *connection,
                  Dialogs         *dialogs)
 {
     /* update dialog text and/or which dialog is showing */
-    dialogs_show_disconnected_window(dialogs);
+    dialogs_update_disconnected_window(dialogs, FALSE);
 }
 
 static Dialogs*
@@ -562,14 +612,15 @@ dialogs_get(HippoConnection *connection)
 }
 
 static void
-dialogs_show_disconnected_window (Dialogs *dialogs)
+dialogs_update_disconnected_window (Dialogs *dialogs,
+                                    gboolean show_if_not_showing)
 {
     HippoConnection *connection = dialogs->connection;
     
     if (hippo_connection_get_need_login(connection)) {
-        dialogs_show_login(dialogs);
+        dialogs_update_login(dialogs, show_if_not_showing);
     } else if (!hippo_connection_get_connected(connection)) {
-        dialogs_show_status(dialogs);
+        dialogs_update_status(dialogs, show_if_not_showing);
     } else {
         dialogs_destroy(dialogs);
     }
@@ -605,9 +656,10 @@ login_response_cb(GtkDialog *dialog,
 
 
 static void
-dialogs_show_login(Dialogs *dialogs)
-{
-    if (dialogs->login_dialog == NULL) {
+dialogs_update_login(Dialogs *dialogs,
+                     gboolean show_if_not_showing)
+{    
+    if (dialogs->login_dialog == NULL && show_if_not_showing) {
         dialogs_destroy(dialogs); /* Kill any other dialogs */
         
         dialogs->login_dialog = gtk_message_dialog_new(NULL, 0,
@@ -629,8 +681,9 @@ dialogs_show_login(Dialogs *dialogs)
         g_signal_connect(G_OBJECT(dialogs->login_dialog), "destroy",
                          G_CALLBACK(gtk_widget_destroyed), &dialogs->login_dialog);
     }
-    
-    gtk_window_present(GTK_WINDOW(dialogs->login_dialog));
+
+    if (dialogs->login_dialog)
+        gtk_window_present(GTK_WINDOW(dialogs->login_dialog));
 }
 
 
@@ -690,9 +743,10 @@ status_response_cb(GtkDialog *dialog,
 }
 
 static void
-dialogs_show_status(Dialogs *dialogs)
+dialogs_update_status(Dialogs *dialogs,
+                      gboolean show_if_not_showing)
 {
-    if (dialogs->connection_status_dialog == NULL) {
+    if (dialogs->connection_status_dialog == NULL && show_if_not_showing) {
         dialogs_destroy(dialogs); /* Kill any other dialogs */
         
         dialogs->connection_status_dialog = gtk_message_dialog_new(NULL, 0,
@@ -710,6 +764,7 @@ dialogs_show_status(Dialogs *dialogs)
     } else {
         set_state_text(dialogs);
     }
-    
-    gtk_window_present(GTK_WINDOW(dialogs->connection_status_dialog));
+
+    if (dialogs->connection_status_dialog)
+        gtk_window_present(GTK_WINDOW(dialogs->connection_status_dialog));
 }

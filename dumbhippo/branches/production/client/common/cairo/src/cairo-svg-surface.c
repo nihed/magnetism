@@ -196,7 +196,8 @@ cairo_svg_surface_create_for_stream (cairo_write_func_t		 write_func,
 
 /**
  * cairo_svg_surface_create:
- * @filename: a filename for the SVG output (must be writable)
+ * @filename: a filename for the SVG output (must be writable).
+ *   On Windows this filename is encoded in UTF-8. See cairo_win32_filename_from_unicode().
  * @width_in_points: width of the surface, in points (1 point == 1/72.0 inch)
  * @height_in_points: height of the surface, in points (1 point == 1/72.0 inch)
  *

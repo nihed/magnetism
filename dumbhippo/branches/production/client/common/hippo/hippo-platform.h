@@ -16,6 +16,12 @@ typedef struct {
                                */
 } HippoPlatformInfo;
 
+typedef enum {
+    HIPPO_NETWORK_STATUS_UNKNOWN,
+    HIPPO_NETWORK_STATUS_DOWN,
+    HIPPO_NETWORK_STATUS_UP
+} HippoNetworkStatus;
+
 typedef struct _HippoPlatform      HippoPlatform;
 typedef struct _HippoPlatformClass HippoPlatformClass;
 
@@ -69,6 +75,8 @@ struct _HippoPlatformClass {
 
     void      (* show_disconnected_window) (HippoPlatform   *platform,
                                             HippoConnection *connection);
+
+    HippoNetworkStatus (* get_network_status) (HippoPlatform *platform);
     
     /* Preferences */
     char*     (* get_message_server)  (HippoPlatform *platform);
@@ -131,6 +139,11 @@ gboolean         hippo_platform_can_play_song_download (HippoPlatform     *platf
 void             hippo_platform_show_disconnected_window (HippoPlatform   *platform,
                                                           HippoConnection *connection);
     
+
+HippoNetworkStatus hippo_platform_get_network_status (HippoPlatform *platform);
+
+void               hippo_platform_emit_network_status_changed (HippoPlatform *platform,
+                                                               HippoNetworkStatus status);
 
 /* Preferences */
 HippoInstanceType hippo_platform_get_instance_type (HippoPlatform *platform);

@@ -252,9 +252,9 @@ public interface HttpMethods {
 	public void doSetNewFeatures(UserViewpoint viewpoint, boolean newFeaturesFlag);
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
-	@HttpParams( { "parseOnly", "command" } )
-	@HttpOptions( adminOnly = true )
-	public void doAdminShellExec(XmlBuilder xml, UserViewpoint viewpoint, boolean parseOnly, String command) throws IOException, HumanVisibleException;
+	@HttpParams( { "parseOnly", "transaction", "command" } )
+	@HttpOptions( adminOnly = true, transaction = false)	
+	public void doAdminShellExec(XmlBuilder xml, UserViewpoint viewpoint, boolean parseOnly, boolean transaction, String command) throws IOException, HumanVisibleException;
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
@@ -404,4 +404,9 @@ public interface HttpMethods {
 	@HttpParams( { "who", "participantOnly" })
 	@HttpOptions( optionalParams = { "participantOnly" } )
 	public void getUserRSS(OutputStream out, HttpResponseData contentType, User who, boolean participantOnly) throws IOException, XmlMethodException;
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "enabled" })
+	public void doSetApplicationUsageEnabled(UserViewpoint viewpoint, boolean enabled) throws IOException, HumanVisibleException;
+
 }

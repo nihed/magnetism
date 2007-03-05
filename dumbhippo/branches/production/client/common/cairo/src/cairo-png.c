@@ -213,7 +213,8 @@ stdio_write_func (png_structp png, png_bytep data, png_size_t size)
 /**
  * cairo_surface_write_to_png:
  * @surface: a #cairo_surface_t with pixel contents
- * @filename: the name of a file to write to
+ * @filename: the name of a file to write to; on Windows this filename
+ *   is encoded in UTF-8. See cairo_win32_filename_from_unicode().
  *
  * Writes the contents of @surface to a new file @filename as a PNG
  * image.
@@ -232,7 +233,7 @@ cairo_surface_write_to_png (cairo_surface_t	*surface,
     FILE *fp;
     cairo_status_t status;
 
-    fp = fopen (filename, "wb");
+    fp = _cairo_fopen (filename, "wb");
     if (fp == NULL)
 	return CAIRO_STATUS_WRITE_ERROR;
 
@@ -448,7 +449,8 @@ stdio_read_func (png_structp png, png_bytep data, png_size_t size)
 
 /**
  * cairo_image_surface_create_from_png:
- * @filename: name of PNG file to load
+ * @filename: name of PNG file to load. On Windows this filename
+ *   is encoded in UTF-8. See cairo_win32_filename_from_unicode().
  *
  * Creates a new image surface and initializes the contents to the
  * given PNG file.
@@ -468,7 +470,7 @@ cairo_image_surface_create_from_png (const char *filename)
     FILE *fp;
     cairo_surface_t *surface;
 
-    fp = fopen (filename, "rb");
+    fp = _cairo_fopen (filename, "rb");
     if (fp == NULL) {
 	switch (errno) {
 	case ENOMEM:

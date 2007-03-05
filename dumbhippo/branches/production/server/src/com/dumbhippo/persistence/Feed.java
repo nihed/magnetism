@@ -7,6 +7,7 @@ import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -24,13 +25,15 @@ public class Feed extends DBUnique {
 	private LinkResource source;
 	private String title;
 	private long lastFetched;
-	private boolean lastFetchSucceeded;
+	private long lastFetchedSuccessfully;
 	private Set<GroupFeed> groups;
 	private Set<ExternalAccount> accounts;
 	
 	protected Feed() {
 		this.groups = new HashSet<GroupFeed>();
 		this.accounts = new HashSet<ExternalAccount>();
+		lastFetched = -1;
+		lastFetchedSuccessfully = -1;
 	}
 	
 	public Feed(LinkResource source) {
@@ -56,13 +59,19 @@ public class Feed extends DBUnique {
 	public void setLastFetched(Date lastFetched) {
 		this.lastFetched = lastFetched.getTime();
 	}
-	
-	public boolean getLastFetchSucceeded() {
-		return lastFetchSucceeded;
+
+	@Column(nullable = false)
+	public Date getLastFetchedSuccessfully() {
+		return new Date(lastFetchedSuccessfully);
 	}
 	
-	public void setLastFetchSucceeded(boolean lastFetchSucceeded) {
-		this.lastFetchSucceeded = lastFetchSucceeded;
+	public void setLastFetchedSuccessfully(Date lastFetchedSuccessfully) {
+		this.lastFetchedSuccessfully = lastFetchedSuccessfully.getTime();
+	}
+	
+	@Transient
+	public boolean getLastFetchSucceeded() {
+		return (lastFetched == lastFetchedSuccessfully);
 	}
 	
 	public String getTitle() {
@@ -87,7 +96,7 @@ public class Feed extends DBUnique {
 		this.groups = groups;
 	}
 	
-	@OneToMany(mappedBy="feed")
+	@ManyToMany(mappedBy="feeds")
 	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<ExternalAccount> getAccounts() {
 		return accounts;

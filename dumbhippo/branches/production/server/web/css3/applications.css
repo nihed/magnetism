@@ -1,0 +1,89 @@
+@CHARSET "UTF-8";
+@IMPORT url("applications-positions.css");
+
+.dh-applications-heading {
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.dh-applications-subheading {
+	font-size: 14px;
+	font-weight: bold;
+}
+
+#dhApplicationsHeader {
+	font-size: 12px;
+}
+
+#dhApplicationsStatsHeader {
+	text-align: center; 
+}
+
+.dh-applications-application-stats {
+	text-align: center; 
+}
+
+#dhApplicationsApplications .dh-applications-application-stats {
+	background: url("/images3/purple_gradient.png") top left repeat-x;
+}
+
+#dhApplicationsApplications .dh-applications-rank {
+	font-size: 24px;
+}
+
+.dh-mini-applications .dh-applications-rank {
+	font-size: 16px;
+}
+
+.dh-applications-usage {
+	font-size: 14px;
+	color: #777777;
+}
+
+.dh-applications-application-name {
+	font-size: 14px;
+}
+
+.dh-applications-application-category {
+	font-size: 12px;
+}
+
+.dh-applications-application-description {
+	font-size: 12px;
+}
+
+.dh-applications-category {
+	font-size: 14px;
+}
+
+.dh-applications-current-category {
+	font-weight: bold;
+}
+
+.dh-applications-no-applications {
+   font-size: 15px;
+   color:     #444444;
+}
+
+.dh-applications-learnmore h2 {
+	margin-top: 8px;
+	margin-bottom: 4px;
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.dh-applications-learnmore p {
+	margin-top: 4px;
+	margin-top: 4px;
+}
+
+.dh-applications-settings {
+	padding: 			8px;
+	background-color:	#fbfadc;
+	border:				1px solid #cccc99;
+}
+
+.dh-applications-no-data {
+    font-size:  18px;
+    color:      #444444;
+}

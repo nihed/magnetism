@@ -23,6 +23,10 @@ public class FuncUtils {
 		return supposedClass.isAssignableFrom(obj.getClass());
 	}
 	
+	public static String format1(String format, Object o) {
+		return String.format(format, o);
+	}
+	
 	public static int randomInt(int belowThis) {
 		return new Random().nextInt(belowThis);
 	}

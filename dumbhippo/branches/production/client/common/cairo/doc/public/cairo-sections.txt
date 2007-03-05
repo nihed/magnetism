@@ -67,6 +67,9 @@ cairo_ps_surface_dsc_comment
 cairo_win32_surface_create
 cairo_win32_surface_create_with_dib
 cairo_win32_surface_get_dc
+cairo_win32_filename_from_unicode
+cairo_win32_filename_from_ansi
+cairo_win32_free_filename
 </SECTION>
 
 <SECTION>

@@ -136,7 +136,7 @@ hippo_canvas_stack_dispose(GObject *object)
 
     set_actions(stack, NULL);
 
-    G_OBJECT_CLASS(hippo_canvas_stack_parent_class)->finalize(object);
+    G_OBJECT_CLASS(hippo_canvas_stack_parent_class)->dispose(object);
 }
 
 static void
@@ -342,8 +342,8 @@ hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
     hippo_canvas_box_insert_sorted(HIPPO_CANVAS_BOX(canvas_stack), item, 0,
                                    canvas_block_compare, canvas_stack);
 
-    remove_extra_children(canvas_stack);
     hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(canvas_stack), item, visible);
+    remove_extra_children(canvas_stack);
     
     g_object_unref(item);
 

@@ -52,6 +52,13 @@
   (gtype-id "HIPPO_TYPE_CANVAS_IMAGE")
 )
 
+(define-object CanvasImageButton
+  (in-module "Hippo")
+  (parent "HippoCanvasImage")
+  (c-name "HippoCanvasImageButton")
+  (gtype-id "HIPPO_TYPE_CANVAS_IMAGE_BUTTON")
+)
+
 (define-interface CanvasItem
   (in-module "Hippo")
   (c-name "HippoCanvasItem")
@@ -77,6 +84,13 @@
   (parent "HippoCanvasBox")
   (c-name "HippoCanvasWidget")
   (gtype-id "HIPPO_TYPE_CANVAS_WIDGET")
+)
+
+(define-object CanvasWindow
+  (in-module "Hippo")
+  (parent "GtkWindow")
+  (c-name "HippoCanvasWindow")
+  (gtype-id "HIPPO_TYPE_CANVAS_WINDOW")
 )
 
 ;; Enumerations and flags ...
@@ -316,6 +330,9 @@
   (c-name "hippo_canvas_window_new")
   (is-constructor-of "HippoCanvasWindow")
   (return-type "GtkWidget*")
+  (properties
+    '("type" (optional))
+  )
 )
 
 (define-method set_root
@@ -520,6 +537,16 @@
   )
 )
 
+(define-virtual paint_background
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_paint_background")
+  (return-type "none")
+  (parameters
+    '("cairo_t*" "cr")
+    '("HippoRectangle*" "damaged_box")
+  )
+)
+
 (define-method get_position
   (of-object "HippoCanvasBox")
   (c-name "hippo_canvas_box_get_position")
@@ -619,6 +646,17 @@
 (define-method translate_to_widget
   (of-object "HippoCanvasContext")
   (c-name "hippo_canvas_context_translate_to_widget")
+  (return-type "none")
+  (parameters
+    '("HippoCanvasItem*" "item")
+    '("int*" "x_p")
+    '("int*" "y_p")
+  )
+)
+
+(define-method translate_to_screen
+  (of-object "HippoCanvasContext")
+  (c-name "hippo_canvas_context_translate_to_screen")
   (return-type "none")
   (parameters
     '("HippoCanvasItem*" "item")

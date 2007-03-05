@@ -18,11 +18,28 @@ pid=`cat $pidfile`
 
 $jbossdir/bin/shutdown.sh -s jnp://$bindHost:$jnpPort > /dev/null &
 
-timeout=30
+timeout=15
 interval=1
 while [ $timeout -gt 0 ] ; do
     if ps -p $pid > /dev/null ; then : ; else
 	echo "... stopped"
+	rm -f "${pidfile}"
+	exit 0
+    fi
+
+    sleep $interval
+    let timeout="$timeout - $interval"
+done
+
+echo "...timed out, initiating forced termination of pid $pid"
+kill -9 $pid
+
+timeout=5
+interval=1
+while [ $timeout -gt 0 ] ; do
+    if ps -p $pid > /dev/null ; then : ; else
+	echo "... stopped"
+	rm -f "${pidfile}"
 	exit 0
     fi
 

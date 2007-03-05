@@ -4,7 +4,7 @@ public enum AccountQuestion {
 	APPLICATION_USAGE {
 		@Override
 		public String getTitle() {
-			return "Share your application usage";
+			return "Application Statistics";
 		}
 		
 		@Override
@@ -36,7 +36,7 @@ public enum AccountQuestion {
 		
 		@Override
 		public String getMoreLink() {
-			return "/application-usage";
+			return "/applications";
 		}
 	};
 	

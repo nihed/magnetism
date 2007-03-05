@@ -3,7 +3,6 @@
 #define __HIPPO_CANVAS_IMAGE_H__
 
 /* A canvas item that renders a Cairo image surface */
-
 #include "hippo-canvas-item.h"
 #include "hippo-canvas-box.h"
 #include <cairo.h>
@@ -35,6 +34,7 @@ struct _HippoCanvasImageClass {
 GType            hippo_canvas_image_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_image_new    (void);
+
 
 
 G_END_DECLS

@@ -30,6 +30,7 @@ static void                        hippo_account_question_button_free (HippoAcco
 struct _HippoBlockAccountQuestion {
     HippoBlock            parent;
 
+    char *answer;
     char *title;
     char *description;
     char *more_link;
@@ -55,6 +56,7 @@ static int signals[LAST_SIGNAL];
 
 enum {
     PROP_0,
+    PROP_ANSWER,
     PROP_TITLE,
     PROP_DESCRIPTION,
     PROP_BUTTONS,
@@ -82,6 +84,14 @@ hippo_block_account_question_class_init(HippoBlockAccountQuestionClass *klass)
 
     block_class->update_from_xml = hippo_block_account_question_update_from_xml;
     
+    g_object_class_install_property(object_class,
+                                    PROP_ANSWER,
+                                    g_param_spec_string("answer",
+                                                        _("Answer"),
+                                                        _("User's answer to the question (may be null)"),
+                                                        NULL,
+                                                        G_PARAM_READABLE));
+
     g_object_class_install_property(object_class,
                                     PROP_TITLE,
                                     g_param_spec_string("title",
@@ -113,6 +123,20 @@ hippo_block_account_question_class_init(HippoBlockAccountQuestionClass *klass)
                                                         NULL,
                                                         G_PARAM_READABLE));
 
+}
+
+static void
+set_answer(HippoBlockAccountQuestion *block_account_question,
+           const char                *answer)
+{
+    if (answer == block_account_question->answer ||
+        (answer && block_account_question->answer && strcmp(answer, block_account_question->answer) == 0))
+        return;
+
+    g_free(block_account_question->answer);
+    block_account_question->answer = g_strdup(answer);
+
+    g_object_notify(G_OBJECT(block_account_question), "answer");
 }
 
 static void
@@ -177,6 +201,7 @@ hippo_block_account_question_dispose(GObject *object)
 {
     HippoBlockAccountQuestion *block_account_question = HIPPO_BLOCK_ACCOUNT_QUESTION(object);
 
+    set_answer(block_account_question, NULL);
     set_title(block_account_question, NULL);
     set_description(block_account_question, NULL);
     set_buttons(block_account_question, NULL);
@@ -209,6 +234,9 @@ hippo_block_account_question_get_property(GObject         *object,
     HippoBlockAccountQuestion *block_account_question = HIPPO_BLOCK_ACCOUNT_QUESTION(object);
 
     switch (prop_id) {
+    case PROP_ANSWER:
+        g_value_set_string(value, block_account_question->answer);
+        break;
     case PROP_TITLE:
         g_value_set_string(value, block_account_question->title);
         break;
@@ -282,6 +310,7 @@ hippo_block_account_question_update_from_xml (HippoBlock           *block,
 
     buttons = g_slist_reverse(buttons);
             
+    set_answer(block_account_question, answer);
     set_title(block_account_question, title);
     set_description(block_account_question, description);
     set_more_link(block_account_question, more_link);

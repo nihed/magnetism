@@ -24,12 +24,15 @@
 		    <div id="dhMugshotIntro"> 
 		        <div class="dh-intro-message">Put your Mugshot on the Web.</div>
 		        <div class="dh-intro-explanation">Show updates from all your sites on one page. Get live updates from friends.  Mugshot makes it fun, free and easy!</div>
-			<div class="dh-intro-text">Share content from <em>MySpace</em>, <em>YouTube</em>, <em>Facebook</em>, <em>Flickr</em>, blogs and more. Why go to a ton of different sites every day when you can check out just one?</div>
+			    <div class="dh-intro-text">Share content from <em>MySpace</em>, <em>YouTube</em>, <em>Facebook</em>, <em>Flickr</em>, blogs and more. Why go to a ton of different sites every day when you can check out just one?</div>
 		        <div class="dh-intro-options">
-			<span class="dh-button"><a href="/who-are-you"><img src="/images3/${buildStamp}/login.gif"/></a></span>
-			&nbsp; or &nbsp;
-			<span class="dh-button"><a href="/features"><img src="/images3/${buildStamp}/learnmore.gif"/></a></span>                
+			        <span class="dh-button"><a href="/signup"><img src="/images3/${buildStamp}/signup.gif"/></a></span>
+			        &nbsp; or &nbsp;
+			        <span class="dh-button"><a href="/features"><img src="/images3/${buildStamp}/learnmore.gif"/></a></span>                
                 </div>
+                <div id="dhMugshotTourBadge">
+                    <a href="/tour"><img src="/images3/${buildStamp}/tour_badge.png"/></a>            
+                </div> 
             </div>
             <div id="dhMugshotExample">
                 <img src="/images3/${buildStamp}/sampleMugshot.gif" style="width: 620px; height: 346px; border: none;"/>
