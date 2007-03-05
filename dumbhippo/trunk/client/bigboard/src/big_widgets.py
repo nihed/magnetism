@@ -31,13 +31,9 @@ class CanvasURLImage(hippo.CanvasImage):
         logging.exception("failed to load image for '%s'", url)  #FIXME queue retry
         
 class CanvasMugshotURLImage(CanvasURLImage):
-    """A canvas image that takes a Mugshot-relative image URL.
-    Automatically adjusts if Mugshot base url changes or is
-    not known at construction time."""
+    """A canvas image that takes a Mugshot-relative image URL."""
     def __init__(self, url=None, **kwargs):
         CanvasURLImage.__init__(self, **kwargs)
-        self._mugshot = mugshot.get_mugshot()
-        self._mugshot.connect("initialized", lambda mugshot: self._mugshot_url_image_sync())
         self._rel_url = None
         if url:
             self.set_url(url)
@@ -48,7 +44,7 @@ class CanvasMugshotURLImage(CanvasURLImage):
             self._mugshot_url_image_sync()
         
     def _mugshot_url_image_sync(self):
-        baseurl = self._mugshot.get_baseurl()
+        baseurl = mugshot.get_mugshot().get_baseurl()
         if not (baseurl is None or self._rel_url is None):
             CanvasURLImage.set_url(self, baseurl + self._rel_url)
 
