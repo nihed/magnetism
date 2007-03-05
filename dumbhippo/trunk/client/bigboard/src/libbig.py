@@ -144,7 +144,10 @@ class URLImageCache(Singleton):
     
     def get(self, url, cb, errcb):
         if self._cache.has_key(url): # TODO expire
-            return self._cache[url]
+            surface = self._cache[url]
+            cb(url, surface)
+            return
+
         cbdata = (cb, errcb)
         if self._loads.has_key(url):
             self._loads[url].append(cbdata)
