@@ -75,7 +75,9 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		boolean isNew = false;
 		
 		Application application = em.find(Application.class, appinfoFile.getAppId());
-		if (application == null) {
+		if (application != null) {
+			application.setDeleted(false);
+		} else {
 			application = new Application(appinfoFile.getAppId());
 			isNew = true;
 		}
@@ -89,6 +91,24 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		AppinfoUpload upload = new AppinfoUpload(uploader);
 		upload.setId(uploadId.toString());
 		upload.setApplication(application);
+		
+		em.persist(upload);
+	}
+	
+	public void deleteApplication(UserViewpoint viewpoint, String applicationId) {
+		Application application = em.find(Application.class, applicationId);
+		application.setDeleted(true);
+		
+		// We need to mark the application as deleted instead of actually removing
+		// it to retain referential integrity for AppinfoUpload, but we can delete
+		// the wmClasses and icons for the application. (We *must* delete the
+		// wmClasses to avoid problems with the unique constraints on that table.)
+		deleteWmClasses(application);
+		deleteIcons(application);
+		
+		AppinfoUpload upload = new AppinfoUpload(viewpoint.getViewer());
+		upload.setApplication(application);
+		upload.setDeleteApplication(true);
 		
 		em.persist(upload);
 	}
@@ -121,6 +141,11 @@ public class ApplicationSystemBean implements ApplicationSystem {
 				for (final AppinfoUpload au : uploads) {
 					if (seenApplications.contains(au.getApplication().getId()))
 						continue;
+					
+					if (au.isDeleteApplication()) {
+						seenApplications.add(au.getApplication().getId());
+						continue;
+					}
 					
 					runner.runTaskInNewTransaction(new Runnable() {
 						public void run() {
@@ -209,10 +234,14 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		return listToString(sortedElements);
 	}
 	
-	private void updateWmClasses(Application application, AppinfoFile appinfoFile) {
+	private void deleteWmClasses(Application application) {
 		em.createQuery("DELETE FROM ApplicationWmClass awc WHERE awc.application= :application")
-			.setParameter("application", application)
-			.executeUpdate();
+		.setParameter("application", application)
+		.executeUpdate();
+	}
+	
+	private void updateWmClasses(Application application, AppinfoFile appinfoFile) {
+		deleteWmClasses(application);
 		
 		for (String wmClass : appinfoFile.getWmClasses()) {
 			ApplicationWmClass applicationWmClass = new ApplicationWmClass(application, wmClass);
@@ -220,7 +249,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		}
 	}
 	
-	private void updateIcons(Application application, AppinfoFile appinfoFile) {
+	private void deleteIcons(Application application) {
 //      Mixing bulk updates and the TreeCache doesn't seem to work properly (you get
 //      warnings because TreeCache work is done after the transaction is committed).
 //      So we need to do this manually rather than with a bulk update
@@ -234,6 +263,10 @@ public class ApplicationSystemBean implements ApplicationSystem {
 			application.getIcons().remove(icon);
 			em.remove(icon);
 		}
+	}
+	
+	private void updateIcons(Application application, AppinfoFile appinfoFile) {
+		deleteIcons(application);
 		
 		persistIcons(application, appinfoFile, getInterestingIcons(appinfoFile));
 	}

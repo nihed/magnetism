@@ -17,6 +17,7 @@ import com.dumbhippo.server.util.EJBUtil;
 @Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public class Application {
 	private String id;
+	private boolean deleted;
 	private String name;
 	private String description;
 	private ApplicationCategory category;
@@ -38,9 +39,18 @@ public class Application {
 	public String getId() {
 		return id;
 	}
-	
+
 	protected void setId(String id) {
 		this.id = id;
+	}
+
+	@Column(nullable = false)
+	public boolean isDeleted() {
+		return deleted;
+	}
+
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
 	}
 
 	@Column(nullable = false)
