@@ -71,7 +71,8 @@ class AutoStruct:
         if name[0:4] == 'get_':
             attr = name[4:] # skip over get_
             return lambda: get_attr_or_none(self._struct_values, attr)
-        return None
+        else:
+            raise AttributeError, name # if we return None, it *overrides* other __getattr__ so e.g. __nonzero__ doesn't work
     
     def _get_keys(self):
         return self._struct_values.keys()
@@ -151,10 +152,6 @@ class URLImageCache(Singleton):
             self._loads[url] = [cbdata]
             logging.debug("adding url='%s' to pending loads (%d outstanding)" % (url, len(self._loads.keys())))        
             self._fetcher.fetch(url, self._do_load, self._do_load_error)
-
-    def _pixbuf_from_data(self, data):
-
-        return loader.get_pixbuf()
         
     def _do_load(self, url, data):
         try:

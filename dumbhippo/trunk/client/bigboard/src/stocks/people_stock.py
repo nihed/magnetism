@@ -141,6 +141,12 @@ class PeopleStock(bigboard.AbstractMugshotStock):
         self._set_item_size(item, self.get_size())
         item.connect('button-press-event', self._handle_item_pressed)
 
+    def _on_profile_fetched(self, profile):
+        if not profile:
+            print "failed to fetch profile"
+        else:
+            print str(profile)
+
     def _handle_item_pressed(self, item, event):
         if self._slideout:
             self._slideout.destroy()
@@ -154,4 +160,4 @@ class PeopleStock(bigboard.AbstractMugshotStock):
         coords = item.get_screen_coords()
         self._slideout.slideout_from(coords[0] + item.get_allocation()[0], coords[1])
 
-        self._profiles.get_profile(item.get_guid())
+        self._profiles.fetch_profile(item.get_guid(), self._on_profile_fetched)
