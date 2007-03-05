@@ -106,10 +106,16 @@ class ProfileItem(hippo.CanvasBox):
         self._profiles = profiles
         self._entity = None
 
+        self._top_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
+        self.append(self._top_box)
+
         self._photo = CanvasMugshotURLImage(scale_width=60,
                                             scale_height=60,
                                             border=5)
-        self.append(self._photo)
+        self._top_box.append(self._photo)
+
+        self._address_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
+        self._top_box.append(self._address_box)
 
         self._online = hippo.CanvasText(text='Offline')
         self.append(self._online)
@@ -148,6 +154,15 @@ class ProfileItem(hippo.CanvasBox):
             badge.set_url(a['icon'])
             badge.set_property('tooltip', a['linkText']) # doesn't work...
             self._ribbon_bar.append(badge)
+
+        self._address_box.remove_all()
+        if profile.get_email():
+            email = hippo.CanvasLink(text=profile.get_email())
+            self._address_box.append(email)
+
+        if profile.get_aim():
+            email = hippo.CanvasLink(text=profile.get_aim())
+            self._address_box.append(aim)
 
 class PeopleStock(bigboard.AbstractMugshotStock):
     def __init__(self):
