@@ -23,6 +23,7 @@ class Mugshot(gobject.GObject):
         "self-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "whereim-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "entity-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "global-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "my-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
         }    
     
@@ -115,8 +116,8 @@ class Mugshot(gobject.GObject):
             self._entities.update(attrs)
             
     def _externalIQReturn(self, id, content):
-        logging.debug("got external IQ reply for %d (%d outstanding)", id, len(self._external_iqs.keys()))
         if self._external_iqs.has_key(id):
+            logging.debug("got external IQ reply for %d (%d outstanding)", id, len(self._external_iqs.keys())-1)            
             self._external_iqs[id](content)
             del self._external_iqs[id]
     
@@ -181,7 +182,7 @@ class Mugshot(gobject.GObject):
     def _load_app_from_xml(self, node):
         id = node.getAttribute("id")
         logging.debug("parsing application id=%s", id)
-        attrs = libbig.snarf_attributes_from_xml_node(node, ['id', 'rank', 'usage-count', 'icon-url', 'description', 'name'])
+        attrs = libbig.snarf_attributes_from_xml_node(node, ['id', 'rank', 'usageCount', 'iconUrl', 'description', 'name'])
         app = None
         if not self._applications.has_key(attrs['id']):
             app = Application(attrs)

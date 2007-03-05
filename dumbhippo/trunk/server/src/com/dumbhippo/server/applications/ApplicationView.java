@@ -46,8 +46,9 @@ public class ApplicationView {
 								"id", application.getId(),
 				                "name", application.getName(),
 				                "description", application.getDescription(),
-				                "icon-url", getIcon().getUrl(),
-				                "usage-count", "" + getUsageCount(),
+				                "desktopNames", application.getDesktopNames(),
+				                "iconUrl", getIcon().getUrl(),
+				                "usageCount", "" + getUsageCount(),
 				                "rank", "" + getRank());
 				       
 	}

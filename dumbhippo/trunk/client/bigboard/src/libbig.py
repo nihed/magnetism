@@ -1,4 +1,5 @@
-import os, code, sys, traceback, urllib, logging, StringIO, tempfile
+import os, code, sys, traceback, urllib, logging, StringIO
+import re, tempfile
 
 import cairo, gtk, gobject, threading
 import gnome
@@ -41,6 +42,21 @@ def get_attr_or_none(dict, attr):
     else:
         return None
     
+_stud_re = re.compile(r'[A-Z]\w')
+def studly_to_underscore(str):
+    match = _stud_re.search(str)
+    result = ''
+    while match:
+        prev = str[:match.start()]
+        result += prev
+        if prev != '':
+            result += '_'
+        result += match.group().lower()
+        str = str[match.end():]
+        match = _stud_re.search(str)
+    result += str
+    return result
+    
 def _log_cb(func, errtext=None):
     """Wraps callbacks in a function that catches exceptions and logs them
     to the logging system."""
@@ -60,8 +76,11 @@ class AutoStruct:
     normal method calls, i.e. get_VALUE(), and the keys are determined
     by arguments passed to the constructor (and are immutable thereafter).
     
-    Dictionary keys should be alphanumeric, with the addition that 
-    hyphens (-) are transformed to underscore (_).
+    Dictionary keys should be alphanumeric.  Transformation rules are
+    applied to make the key more friendly to the get_VALUE syntax.  
+    First, hyphens (-) are transformed to underscore (_).  Second,
+    studlyCaps style names are replaced by their underscored versions;
+    e.g. fooBarBaz is transformed to foo_bar_baz.
     """
     def __init__(self, values):    
         self._struct_values = {}
@@ -85,7 +104,9 @@ class AutoStruct:
         for k,v in values.items():
             if type(k) == unicode:
                 k = str(k)
-            temp_args[k.replace('-','_')] = v    
+            k = k.replace('-','_')
+            k = studly_to_underscore(k)
+            temp_args[k] = v    
         return temp_args
     
     def update(self, values):
