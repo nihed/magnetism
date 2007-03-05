@@ -18,10 +18,12 @@ class CanvasURLImage(hippo.CanvasImage):
         
     def set_url(self, url):
         if url:
+            #print "fetching %s" % url
             image_cache = URLImageCache.getInstance()
             image_cache.get(url, self._handle_image_load, self._handle_image_error)
 
     def _handle_image_load(self, url, image):
+        #print "got %s: %s" % (url, str(image))
         self.set_property("image", image)
         
     def _handle_image_error(self, url, exc):

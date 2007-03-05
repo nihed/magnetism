@@ -16,7 +16,10 @@ class Slideout(hippo.CanvasWindow):
 
         self.set_root(self._root)
 
-        self._root.append(hippo.CanvasText(text="Foo Bar Baz\nflsdjfl;k dsfksdjf;ksdj "))
+        #self._root.append(hippo.CanvasText(text="Foo Bar Baz\nflsdjfl;k dsfksdjf;ksdj "))
+
+    def get_root(self):
+        return self._root
     
     def slideout_from(self, x, y):
         self.move(x, y)

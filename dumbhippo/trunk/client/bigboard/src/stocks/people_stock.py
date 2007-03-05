@@ -73,6 +73,9 @@ class EntityItem(hippo.CanvasBox):
     def get_guid(self):
         return self._entity.get_guid()
 
+    def get_entity(self):
+        return self._entity
+
     def set_size(self, size):
         if size == bigboard.Stock.SIZE_BULL:
             self.set_child_visible(self._name, True)
@@ -92,6 +95,47 @@ class EntityItem(hippo.CanvasBox):
 
     def get_screen_coords(self):
         return self.get_context().translate_to_screen(self)
+
+class ProfileItem(hippo.CanvasBox):
+    def __init__(self, profiles, **kwargs):
+        kwargs['orientation'] = hippo.ORIENTATION_VERTICAL
+        hippo.CanvasBox.__init__(self, **kwargs)
+
+        self._profiles = profiles
+        self._entity = None
+
+        self._photo = CanvasMugshotURLImage(scale_width=30,
+                                            scale_height=30,
+                                            border=1,
+                                            border_color=0x000000ff)
+        self.append(self._photo)
+
+        self._online = hippo.CanvasText(text='Offline')
+        self.append(self._online)
+
+    def set_entity(self, entity):
+        if self._entity == entity:
+            return
+        self._entity = entity    
+
+        if self._entity:
+
+            if self._entity.get_photo_url():
+                self._photo.set_url(self._entity.get_photo_url())
+
+            self._profiles.fetch_profile(self._entity.get_guid(), self._on_profile_fetched)
+
+    def _on_profile_fetched(self, profile):
+        if not profile:
+            print "failed to fetch profile"
+            return
+        
+        print str(profile)
+
+        if profile.get_online():
+            self._online.set_property('text', 'Online')
+        else:
+            self._online.set_property('text', 'Offline')
 
 class PeopleStock(bigboard.AbstractMugshotStock):
     def __init__(self):
@@ -141,12 +185,6 @@ class PeopleStock(bigboard.AbstractMugshotStock):
         self._set_item_size(item, self.get_size())
         item.connect('button-press-event', self._handle_item_pressed)
 
-    def _on_profile_fetched(self, profile):
-        if not profile:
-            print "failed to fetch profile"
-        else:
-            print str(profile)
-
     def _handle_item_pressed(self, item, event):
         if self._slideout:
             self._slideout.destroy()
@@ -160,4 +198,6 @@ class PeopleStock(bigboard.AbstractMugshotStock):
         coords = item.get_screen_coords()
         self._slideout.slideout_from(coords[0] + item.get_allocation()[0], coords[1])
 
-        self._profiles.fetch_profile(item.get_guid(), self._on_profile_fetched)
+        p = ProfileItem(self._profiles)
+        p.set_entity(item.get_entity())
+        self._slideout.get_root().append(p)
