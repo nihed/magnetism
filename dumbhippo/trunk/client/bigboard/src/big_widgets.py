@@ -48,6 +48,31 @@ class CanvasMugshotURLImage(CanvasURLImage):
         if not (baseurl is None or self._rel_url is None):
             CanvasURLImage.set_url(self, baseurl + self._rel_url)
 
+class PrelightingCanvasBox(hippo.CanvasBox):
+    def __init__(self, **kwargs):
+        hippo.CanvasBox.__init__(self, **kwargs)
+        self._hovered = False
+        self.connect('motion-notify-event', lambda self, event: self._handle_motion(event))
+        
+    def _handle_motion(self, event):
+        if event.detail == hippo.MOTION_DETAIL_ENTER:
+            self._hovered = True
+        elif event.detail == hippo.MOTION_DETAIL_LEAVE:
+            self._hovered = False
+
+        self.sync_prelight_color()
+        
+    # protected
+    def sync_prelight_color(self): 
+        if self._hovered and self.do_prelight():
+            self.set_property('background-color', 0x00000033)
+        else:
+            self.set_property('background-color', 0x00000000)           
+            
+    # protected
+    def do_prelight(self):
+        return True
+
 class Sidebar(DockWindow):
     __gsignals__ = {
         'size-request' : 'override'
