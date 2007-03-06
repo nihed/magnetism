@@ -93,6 +93,8 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		upload.setApplication(application);
 		
 		em.persist(upload);
+		
+		migrateUnmatchedUsage(application);
 	}
 	
 	public void deleteApplication(UserViewpoint viewpoint, String applicationId) {
@@ -164,7 +166,9 @@ public class ApplicationSystemBean implements ApplicationSystem {
 								
 								updateApplication(application, appinfoFile);
 								updateApplicationCollections(application, appinfoFile);
-				
+												
+								migrateUnmatchedUsage(application);
+								
 								seenApplications.add(application.getId());
 								
 							} catch (IOException e) {
@@ -355,6 +359,19 @@ public class ApplicationSystemBean implements ApplicationSystem {
 				logger.warn("Cannot save application icon {} for {}, skipping: {}", 
 							new Object[] { icon.getPath(), application.getId(), e.getMessage() });
 			}
+		}
+	}
+	
+	private void migrateUnmatchedUsage(Application application) {
+		Query q = em.createQuery("SELECT uau FROM ApplicationWmClass awc, UnmatchedApplicationUsage uau " +
+				                 " WHERE awc.application = :application " +
+				                 "   AND uau.wmClass = awc.wmClass")
+			.setParameter("application", application);
+		
+		for (UnmatchedApplicationUsage uau : TypeUtils.castList(UnmatchedApplicationUsage.class, q.getResultList())) {
+			ApplicationUsage au = new ApplicationUsage(uau.getUser(), application, uau.getDate());
+			em.persist(au);
+			em.remove(uau);
 		}
 	}
 	
