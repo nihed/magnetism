@@ -193,6 +193,8 @@ class PeopleStock(bigboard.AbstractMugshotStock):
     
     def _handle_entity_added(self, mugshot, entity):
         logging.debug("entity added to people stock %s" % (entity.get_name()))
+        if entity.get_type() != 'person':
+            return
         item = EntityItem()
         item.set_entity(entity)
         self._box.append(item)
