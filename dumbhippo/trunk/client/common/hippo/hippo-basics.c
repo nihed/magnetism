@@ -117,7 +117,9 @@ hippo_parse_http_url (const char *url,
                       int        *port)
 {
     const char *server;
-
+    char *no_slash;
+    gboolean result;
+    
     if (is_https)
         *is_https = FALSE;
     if (host)
@@ -135,7 +137,16 @@ hippo_parse_http_url (const char *url,
         return FALSE;
     }
 
-    return hippo_parse_server(server, host, port);
+    no_slash = NULL;
+    if (g_str_has_suffix(server, "/")) {
+        no_slash = g_strndup(server, strlen(server) - 1);
+    }
+    
+    result = hippo_parse_server(no_slash ? no_slash : server, host, port);
+
+    g_free(no_slash);
+
+    return result;
 }
 
 

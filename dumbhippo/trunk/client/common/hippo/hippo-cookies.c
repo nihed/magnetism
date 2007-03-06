@@ -236,8 +236,7 @@ parse_domain(const char *server,
      * right now anyway
      */            
     if (hippo_parse_server(server, host, port)) {
-        if (*port < 0)
-            *port = 80;
+        /* port may be -1 here */
         return TRUE;
     } else {
         return FALSE;
@@ -340,13 +339,21 @@ parse_line(GSList    **cookies_p,
 
         if (!parse_domain(fields[DOMAIN].text, &domain, &port))
             goto out;
+
+        /* FIXME in RFC 2965 (the new cookie spec, not the old netscape one) a cookie can be sent
+         * back to any port unless there's a Port attribute. Not sure about the old netscape
+         * one. This code needs some fixing after trying to decipher what browsers do and what
+         * goes in the cookies.txt file if a host restricts a cookie to a port.
+         */
         
         if ((domain_filter == NULL || strcmp(domain_filter, domain) == 0) &&
-            (port_filter < 0 || port_filter == port) &&
+            (port_filter < 0 || port_filter == port || port < 0) &&
             (name_filter == NULL || strcmp(name_filter, fields[ATTR_NAME].text) == 0)) {
             HippoCookie *cookie;
             cookie = hippo_cookie_new(browser,
-                                      domain, port, all_hosts_match,
+                                      domain,
+                                      port < 0 ? 80 : port, /* this may be wrong; need to audit callers */
+                                      all_hosts_match,
                                       fields[PATH].text,
                                       secure_connection_required, timestamp,
                                       fields[ATTR_NAME].text,

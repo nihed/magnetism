@@ -1,4 +1,4 @@
-import os, code, sys, traceback, urllib2, logging, StringIO
+import os, code, sys, traceback, urllib2, logging, StringIO, cookielib
 import re, tempfile
 
 import cairo, gtk, gobject, threading
@@ -142,19 +142,30 @@ class AutoSignallingStruct(gobject.GObject, AutoStruct):
 class AsyncHTTPFetcher:
     """Asynchronously fetch objects over HTTP, invoking
        callbacks using the GLib main loop."""
-    def fetch(self, url, cb, errcb):
+    def fetch(self, url, cb, errcb, cookies=None):
         logging.debug('creating async HTTP request thread for %s' % (url,))
-        thread = threading.Thread(target=self._do_fetch, name="AsyncHTTPFetch", args=(url, cb, errcb))
+        thread = threading.Thread(target=self._do_fetch, name="AsyncHTTPFetch", args=(url, cb, errcb, cookies))
         thread.setDaemon(True)
         thread.start()
         
-    def _do_fetch(self, url, cb, errcb):
+    def _do_fetch(self, url, cb, errcb, cookies):
         logging.debug("in thread fetch of %s" % (url,))
         try:
-            data = urllib2.urlopen(url).read()
+            request = urllib2.Request(url)
+            # set our cookies
+            if cookies:
+                for c in cookies:
+                    header = c[0] + "=" + c[1] # oddly, apparently there's no escaping here
+                    request.add_header("Cookie", header)
+            # this cookie stuff is an attempt to be sure we use Set-Cookie cookies during this request,
+            # e.g. JSESSIONID, but not sure it's needed/correct
+            cj = cookielib.CookieJar()
+            opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookiejar=cj))
+            data = opener.open(request).read()
             gobject.idle_add(lambda: cb(url, data) and False)
-        except:
-            logging.debug("caught error for fetch of %s: %s" % (url, sys.exc_info()))
+        except Exception, e:
+            logging.error("caught error for fetch of %s: %s" % (url, e))
+            # in my experience sys.exc_info() is some kind of junk here, while "e" is useful
             gobject.idle_add(lambda: errcb(url, sys.exc_info()) and False)
     
 class URLImageCache(Singleton):

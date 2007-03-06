@@ -1450,6 +1450,8 @@ handle_message(DBusConnection     *connection,
 
             if (strcmp(member, "GetCookiesToSend") == 0) {
                 reply = hippo_dbus_handle_get_cookies_to_send(dbus, message);
+            } else if (strcmp(member, "Introspect") == 0) {
+                reply = hippo_dbus_handle_introspect_web(dbus, message);                
             } else {
                 /* Set this back so the default handler can return an error */
                 result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;

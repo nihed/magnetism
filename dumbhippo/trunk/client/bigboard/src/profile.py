@@ -59,10 +59,15 @@ class ProfileFactory:
         self._baseurl = self._mugshot.get_baseurl()
 
     def _download_summary(self, guid):
-        ## FIXME include our login cookie
+        pairs = None
+        try:
+            pairs = self._mugshot.get_cookies(self._baseurl)
+        except e:
+            logging.exception('failed to get cookies')
         self._fetcher.fetch(self._baseurl + 'xml/userSummary?includeStack=true&who=' + guid,
                             lambda url, data: self._do_load(url, data, guid),
-                            lambda url, exc_info: self._do_load_error(url, exc_info, guid))
+                            lambda url, exc_info: self._do_load_error(url, exc_info, guid),
+                            cookies=pairs)
 
     def _notify(self, guid):
         p = None
