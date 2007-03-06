@@ -12,74 +12,74 @@ class EntityItem(PrelightingCanvasBox):
         kwargs['orientation'] = hippo.ORIENTATION_HORIZONTAL
         PrelightingCanvasBox.__init__(self, **kwargs)
         
-        self._entity = None
+        self.__entity = None
 
-        self._photo = CanvasMugshotURLImage(scale_width=30,
+        self.__photo = CanvasMugshotURLImage(scale_width=30,
                                             scale_height=30,
                                             border=1,
                                             border_color=0x000000ff)
-        self.append(self._photo)
+        self.append(self.__photo)
 
-        self._name = hippo.CanvasText(xalign=hippo.ALIGNMENT_FILL, yalign=hippo.ALIGNMENT_START,
+        self.__name = hippo.CanvasText(xalign=hippo.ALIGNMENT_FILL, yalign=hippo.ALIGNMENT_START,
                                       size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
-        self.append(self._name)
+        self.append(self.__name)
 
         self.set_size(bigboard.Stock.SIZE_BULL)
 
-        self.connect('button-press-event', self._handle_button_press)
-        self.connect('button-release-event', self._handle_button_release)
-        self._pressed = False
+        self.connect('button-press-event', self.__handle_button_press)
+        self.connect('button-release-event', self.__handle_button_release)
+        self.__pressed = False
 
-    def _update_color(self):
-        if self._pressed:
+    def __update_color(self):
+        if self.__pressed:
             self.set_property('background-color', 0x00000088)
         else:
             self.sync_prelight_color()
 
-    def _handle_button_press(self, self2, event):
+    def __handle_button_press(self, self2, event):
         if event.button != 1:
             return False
         
-        self._pressed = True
+        self.__pressed = True
 
-        self._update_color()
+        self.__update_color()
 
-    def _handle_button_release(self, self2, event):
+    def __handle_button_release(self, self2, event):
         if event.button != 1:
             return False
 
-        self._pressed = False
+        self.__pressed = False
 
-        self._update_color()
+        self.__update_color()
             
     def set_entity(self, entity):
-        if self._entity == entity:
+        if self.__entity == entity:
             return
-        self._entity = entity
-        self._update()
+        self.__entity = entity
+        self.__update()
 
     def get_guid(self):
-        return self._entity.get_guid()
+        return self.__entity.get_guid()
 
     def get_entity(self):
-        return self._entity
+        return self.__entity
 
     def set_size(self, size):
         if size == bigboard.Stock.SIZE_BULL:
-            self.set_child_visible(self._name, True)
-            self._photo.set_property('xalign', hippo.ALIGNMENT_START)
-            self._photo.set_property('yalign', hippo.ALIGNMENT_START)
+            self.set_child_visible(self.__name, True)
+            self.__photo.set_property('xalign', hippo.ALIGNMENT_START)
+            self.__photo.set_property('yalign', hippo.ALIGNMENT_START)
         else:
-            self.set_child_visible(self._name, False)
-            self._photo.set_property('xalign', hippo.ALIGNMENT_CENTER)
-            self._photo.set_property('yalign', hippo.ALIGNMENT_CENTER)
+            self.set_child_visible(self.__name, False)
+            self.__photo.set_property('xalign', hippo.ALIGNMENT_CENTER)
+            self.__photo.set_property('yalign', hippo.ALIGNMENT_CENTER)
 
-    def _update(self):
-        if not self._entity:
+    def __update(self):
+        if not self.__entity:
             return
-        self._name.set_property("text", self._entity.get_name())
-        if self._entity.get_photo_url():
-            self._photo.set_url(self._entity.get_photo_url())
+        self.__name.set_property("text", self.__entity.get_name())
+        if self.__entity.get_photo_url():
+            self.__photo.set_url(self.__entity.get_photo_url())
 
     def get_screen_coords(self):
         return self.get_context().translate_to_screen(self)
@@ -91,46 +91,46 @@ class ProfileItem(hippo.CanvasBox):
         kwargs['border-color'] = 0x0000000ff
         hippo.CanvasBox.__init__(self, **kwargs)
 
-        self._profiles = profiles
-        self._entity = None
+        self.__profiles = profiles
+        self.__entity = None
 
-        self._top_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
-        self.append(self._top_box)
+        self.__top_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
+        self.append(self.__top_box)
 
-        self._photo = CanvasMugshotURLImage(scale_width=60,
+        self.__photo = CanvasMugshotURLImage(scale_width=60,
                                             scale_height=60,
                                             border=5)
-        self._top_box.append(self._photo)
+        self.__top_box.append(self.__photo)
 
-        self._address_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
-        self._top_box.append(self._address_box)
+        self.__address_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
+        self.__top_box.append(self.__address_box)
 
-        self._online = hippo.CanvasText(text='Offline')
-        self.append(self._online)
+        self.__online = hippo.CanvasText(text='Offline')
+        self.append(self.__online)
 
-        self._ribbon_bar = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL,
+        self.__ribbon_bar = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL,
                                            spacing=2, border=2)
-        self.append(self._ribbon_bar)
+        self.append(self.__ribbon_bar)
 
     def set_entity(self, entity):
-        if self._entity == entity:
+        if self.__entity == entity:
             return
-        self._entity = entity    
+        self.__entity = entity    
 
-        if self._entity:
+        if self.__entity:
 
-            if self._entity.get_photo_url():
-                self._photo.set_url(self._entity.get_photo_url())
+            if self.__entity.get_photo_url():
+                self.__photo.set_url(self.__entity.get_photo_url())
 
-            self._profiles.fetch_profile(self._entity.get_guid(), self._on_profile_fetched)
+            self.__profiles.fetch_profile(self.__entity.get_guid(), self.__on_profile_fetched)
 
-    def _on_activate_email(self, canvas_item, profile):
+    def __on_activate_email(self, canvas_item, profile):
         print profile.get_email()
 
-    def _on_activate_aim(self, canvas_item, profile):
+    def __on_activate_aim(self, canvas_item, profile):
         print profile.get_aim()
 
-    def _on_profile_fetched(self, profile):
+    def __on_profile_fetched(self, profile):
         if not profile:
             print "failed to fetch profile"
             return
@@ -138,52 +138,52 @@ class ProfileItem(hippo.CanvasBox):
         #print str(profile)
 
         if profile.get_online():
-            self._online.set_property('text', 'Online')
+            self.__online.set_property('text', 'Online')
         else:
-            self._online.set_property('text', 'Offline')
+            self.__online.set_property('text', 'Offline')
 
-        self._ribbon_bar.remove_all()
+        self.__ribbon_bar.remove_all()
         for a in profile.get_accounts():
             badge = CanvasMugshotURLImage(scale_width=16, scale_height=16)
             badge.set_url(a['icon'])
             badge.set_property('tooltip', a['linkText']) # doesn't work...
-            self._ribbon_bar.append(badge)
+            self.__ribbon_bar.append(badge)
 
-        self._address_box.remove_all()
+        self.__address_box.remove_all()
         if profile.get_email():
             email = hippo.CanvasLink(text=profile.get_email(), xalign=hippo.ALIGNMENT_START)
-            email.connect('activated', self._on_activate_email, profile)
-            self._address_box.append(email)
+            email.connect('activated', self.__on_activate_email, profile)
+            self.__address_box.append(email)
 
         if profile.get_aim():
             aim = hippo.CanvasLink(text=profile.get_aim(), xalign=hippo.ALIGNMENT_START)
-            aim.connect('activated', self._on_activate_aim, profile)
-            self._address_box.append(aim)
+            aim.connect('activated', self.__on_activate_aim, profile)
+            self.__address_box.append(aim)
 
 class PeopleStock(bigboard.AbstractMugshotStock):
     def __init__(self):
         super(PeopleStock, self).__init__("People")
         
-        self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
+        self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
 
-        self._items = {}
+        self.__items = {}
 
-        self._slideout = None
-        self._slideout_item = None
+        self.__slideout = None
+        self.__slideout_item = None
 
-        self._profiles = profile.ProfileFactory()
+        self.__profiles = profile.ProfileFactory()
         
     def _on_mugshot_initialized(self):
         super(PeopleStock, self)._on_mugshot_initialized()
-        self._mugshot.connect("entity-added", self._handle_entity_added)
-        self._mugshot.connect("self-changed", self._handle_self_changed)        
+        self._mugshot.connect("entity-added", self.__handle_entity_added)
+        self._mugshot.connect("self-changed", self.__handle_self_changed)        
         self._mugshot.get_self()
         self._mugshot.get_network()
         
     def get_content(self, size):
-        return self._box
+        return self.__box
 
-    def _set_item_size(self, item, size):
+    def __set_item_size(self, item, size):
         if size == bigboard.Stock.SIZE_BULL:
             item.set_property('xalign', hippo.ALIGNMENT_FILL)
         else:
@@ -193,36 +193,36 @@ class PeopleStock(bigboard.AbstractMugshotStock):
 
     def set_size(self, size):
         super(PeopleStock, self).set_size(size)
-        for i in self._items.values():
-            self._set_item_size(i, size)
+        for i in self.__items.values():
+            self.__set_item_size(i, size)
             
-    def _handle_self_changed(self, mugshot, myself):
+    def __handle_self_changed(self, mugshot, myself):
         logging.debug("self (%s) changed" % (myself.get_guid(),))
     
-    def _handle_entity_added(self, mugshot, entity):
+    def __handle_entity_added(self, mugshot, entity):
         logging.debug("entity added to people stock %s" % (entity.get_name()))
         if entity.get_type() != 'person':
             return
         item = EntityItem()
         item.set_entity(entity)
-        self._box.append(item)
-        self._items[entity.get_guid()] = item
-        self._set_item_size(item, self.get_size())
-        item.connect('button-press-event', self._handle_item_pressed)
+        self.__box.append(item)
+        self.__items[entity.get_guid()] = item
+        self.__set_item_size(item, self.get_size())
+        item.connect('button-press-event', self.__handle_item_pressed)
 
-    def _handle_item_pressed(self, item, event):
-        if self._slideout:
-            self._slideout.destroy()
-            self._slideout = None
-            if self._slideout_item == item:
-                self._slideout_item = None
+    def __handle_item_pressed(self, item, event):
+        if self.__slideout:
+            self.__slideout.destroy()
+            self.__slideout = None
+            if self.__slideout_item == item:
+                self.__slideout_item = None
                 return
 
-        self._slideout = slideout.Slideout()
-        self._slideout_item = item
+        self.__slideout = slideout.Slideout()
+        self.__slideout_item = item
         coords = item.get_screen_coords()
-        self._slideout.slideout_from(coords[0] + item.get_allocation()[0] + 4, coords[1])
+        self.__slideout.slideout_from(coords[0] + item.get_allocation()[0] + 4, coords[1])
 
-        p = ProfileItem(self._profiles)
+        p = ProfileItem(self.__profiles)
         p.set_entity(item.get_entity())
-        self._slideout.get_root().append(p)
+        self.__slideout.get_root().append(p)
