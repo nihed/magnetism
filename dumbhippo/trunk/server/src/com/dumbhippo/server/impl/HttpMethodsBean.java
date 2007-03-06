@@ -2142,7 +2142,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
  	}
 
-	public void getUserSummary(Viewpoint viewpoint, XmlBuilder xml, User who, boolean includeStack, boolean participantOnly) throws XmlMethodException {
+	public void getUserSummary(XmlBuilder xml, Viewpoint viewpoint, User who, boolean includeStack, boolean participantOnly) throws XmlMethodException {
 		Set<ExternalAccountView> externalAccountViews = externalAccountSystem.getExternalAccountViews(viewpoint, who);
 		
 		List<BlockView> stack;

@@ -6,20 +6,16 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.blocks.BlockView;
-import com.dumbhippo.web.PagePositions;
-import com.dumbhippo.web.PagePositionsBean;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class StackedGroupPage extends GroupPage {
-	protected static final Logger logger = GlobalSetup.getLogger(StackedGroupPage.class);
+	@SuppressWarnings("unused")
+	private static final Logger logger = GlobalSetup.getLogger(StackedGroupPage.class);
 	
 	static private final int INITIAL_BLOCKS_PER_PAGE = 5;
 	static private final int SUBSEQUENT_BLOCKS_PER_PAGE = 20;
 
 	private Stacker stacker;
-	
-	@PagePositions
-	PagePositionsBean pagePositions;
 	
 	private Pageable<BlockView> pageableMugshot;
 	private Pageable<BlockView> pageableStack;
