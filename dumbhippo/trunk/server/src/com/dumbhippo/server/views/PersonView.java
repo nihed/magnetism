@@ -401,8 +401,8 @@ public class PersonView extends EntityView {
 		
 		if (sort) {
 		    final Collator collator = Collator.getInstance();
-		    Comparator<T> comparator = 
-			    new Comparator<T>() {
+		    Comparator<PersonView> comparator = 
+			    new Comparator<PersonView>() {
 			        public int compare (PersonView v1, PersonView v2) {
 				        return collator.compare(v1.getName(), v2.getName());
 			        }

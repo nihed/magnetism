@@ -35,7 +35,7 @@ import com.dumbhippo.web.PagePositionsBean;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class GroupPage extends AbstractSigninOptionalPage {
-	protected static final Logger logger = GlobalSetup.getLogger(GroupPage.class);
+	private static final Logger logger = GlobalSetup.getLogger(GroupPage.class);
 	
 	// We override the default values for initial and subsequent results per page from Pageable
 	// This number will apply to each section of members (active/followers/invited/invited followers)
@@ -47,7 +47,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private GroupSystem groupSystem;
 	
 	@PagePositions
-	PagePositionsBean pagePositions;
+	protected PagePositionsBean pagePositions;
 	
 	private GroupView viewedGroup;
 	private String viewedGroupId;

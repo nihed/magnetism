@@ -71,11 +71,11 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 
 	private static HttpMethodRepository repository;
 	
-	private static synchronized HttpMethodRepository getRepository() {
-		if (repository == null) {
-			repository = new HttpMethodRepository();
-			repository.scanInterface(HttpMethods.class);
-			repository.lock();
+	private static HttpMethodRepository getRepository() {
+		synchronized (HttpMethodsServlet2.class) {
+			if (repository == null) {
+				repository = new HttpMethodRepository(HttpMethods.class);
+			}
 		}
 		return repository;
 	}
@@ -89,7 +89,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		
 		private List<HttpMethod> sortedMethods;
 		
-		HttpMethodRepository() {
+		HttpMethodRepository(Class<?>... interfaces) {
 			methods = new HashMap<String,HttpMethod>();
 			
 			marshallers = new HashMap<Class<?>,Marshaller<?>>();
@@ -301,13 +301,21 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 					return Guid.class;
 				}
 			});
+			
+			for (Class<?> iface : interfaces) {
+				scanInterface(iface);
+			}
+			
+			lock();
+			
+			logger.debug("HttpMethodRepository ready with {} methods on {} interfaces", methods.size(), interfaces.length);
 		}
 		
 		Marshaller lookupMarshaller(Class<?> klass) {
 			return marshallers.get(klass);
 		}
 		
-		void scanInterface(Class<?> iface) {
+		private void scanInterface(Class<?> iface) {
 			if (!iface.isInterface())
 				throw new IllegalArgumentException("not an interface: " + iface.getName());
 			int count = 0;
@@ -320,7 +328,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 					continue;
 				}
 
-				HttpMethod hMethod = new HttpMethod(m, contentAnnotation);
+				HttpMethod hMethod = new HttpMethod(this, m, contentAnnotation);
 				
 				methods.put(hMethod.getName(), hMethod);
 				count += 1;
@@ -328,12 +336,14 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 			logger.debug("Found {} methods on {}", count, iface.getName());
 		}
 		
-		void scanClass(Class<?> klass) {
+		/*
+		private void scanClass(Class<?> klass) {
 			Class<?>[] interfaces = klass.getInterfaces();
 			for (Class<?> iface : interfaces) {
 				scanInterface(iface);
 			}
 		}
+		*/
 		
 		Collection<HttpMethod> getMethods() {
 			return sortedMethods;
@@ -351,7 +361,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 			return m;
 		}
 		
-		void lock() {
+		private void lock() {
 			if (sortedMethods != null)
 				throw new IllegalStateException("can only lock() once");
 			
@@ -439,7 +449,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		private boolean requiresTransaction;
 		private Method method;
 		
-		HttpMethod(Method m,
+		HttpMethod(HttpMethodRepository repository, Method m,
 				   HttpContentTypes contentAnnotation) {
 			
 			this.method = m;
@@ -542,7 +552,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 			
 			for (String pname : paramsAnnotation.value()) {
 				
-				Marshaller marshaller = getRepository().lookupMarshaller(args[i]);
+				Marshaller marshaller = repository.lookupMarshaller(args[i]);
 				if (marshaller == null)
 					throw new RuntimeException("don't know how to marshal argument to " + m.getName() + " of type " + args[i].getName());
 				
