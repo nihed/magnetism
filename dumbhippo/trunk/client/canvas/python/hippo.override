@@ -31,6 +31,7 @@ import gtk.gdk.Pixbuf as PyGdkPixbuf_Type
 %%
 ignore
 hippo_canvas_box_new
+hippo_canvas_image_button_new
 hippo_canvas_image_new
 hippo_canvas_text_new
 hippo_canvas_link_new
