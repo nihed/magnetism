@@ -71,7 +71,7 @@ class AppDisplay(PhotoContentItem):
         self.__app.connect("changed", lambda app: self.__app_display_sync())
         self.__app_display_sync()
     
-    def _get_name(self):
+    def __get_name(self):
         if self.__app is None:
             return "unknown"
         return self.__app.get_name()
