@@ -17,6 +17,7 @@ import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.ChatMessageView;
+import com.dumbhippo.server.views.GroupMemberView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
@@ -52,15 +53,17 @@ public interface GroupSystem {
 	
 	public void addMember(User adder, Group group, Person person);
 	
+	public boolean canRemoveInvitation(User remover, GroupMember groupMember);
+	
 	public void removeMember(User remover, Group group, Person person);
 	
 	public int getMembersCount(Viewpoint viewpoint, Group group, MembershipStatus status);
 	
 	public boolean isMember(Group group, User user);
 	
-	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras);
+	public Set<GroupMemberView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras);
 	
-	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, int maxResults, PersonViewExtra... extras);
+	public Set<GroupMemberView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, int maxResults, PersonViewExtra... extras);
 
 	public Set<User> getUserMembers(Viewpoint viewpoint, Group group);
 	

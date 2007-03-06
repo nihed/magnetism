@@ -111,6 +111,19 @@ dh.actions.addMember = function(groupId, id, onSuccess) {
 		});
 }
 
+dh.actions.removeGroupInvitee = function(groupId, email) {
+    dh.server.doPOST("suggestgroups",
+		   		     { "address" : email, 
+					   "suggestedGroupIds" : "",
+					   "desuggestedGroupIds" : groupId },
+		  	    	 function(type, data, http) {
+		  	    	       dh.util.refresh();
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Couldn't remove a group invitee.");
+		  	    	 });
+}
+		  	    	     
 dh.actions.signOut = function() {
    	dh.server.doPOST("signout", { },
 		  	    	 function(type, data, http) {

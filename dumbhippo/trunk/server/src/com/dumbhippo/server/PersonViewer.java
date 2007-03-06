@@ -91,6 +91,20 @@ public interface PersonViewer {
 	public Set<PersonView> getFollowers(Viewpoint viewpoint, User user, PersonViewExtra... extras);
 	
 	/**
+	 * Returns an object of a specified class that extends a PersonView that
+	 * describes a person from the viewpoint of another person.
+	 * 
+	 * @param <T>
+	 * @param viewpoint the viewpoint of the person who is viewing
+	 * @param p the person being viewed
+	 * @param clazz the class which instance we should return
+	 * @param extras information to stuff into the PersonView, more = more database work
+	 * @return a new objects of the specified class that extends PersonView
+	 */
+	public <T extends PersonView> T getPersonView(Viewpoint viewpoint, Person p,
+			Class<T> clazz, PersonViewExtra... extras);
+	
+	/**
 	 * Returns an object describing a person from the viewpoint of another person.
 	 * 
 	 * @param viewpoint the viewpoint of the person who is viewing
@@ -99,6 +113,21 @@ public interface PersonViewer {
 	 * @return a new PersonView object
 	 */
 	public PersonView getPersonView(Viewpoint viewpoint, Person p, PersonViewExtra... extras);
+
+	/**
+	 * Returns an object of a specified class that extends a PersonView that
+	 * describes a person from the viewpoint of another person, given a resource owned by 
+	 * the person.
+	 * 
+	 * @param <T>
+	 * @param viewpoint the viewpoint of the person who is viewing
+	 * @param resource the person being viewed
+	 * @param clazz the class which instance we should return
+	 * @param extras information to stuff into the PersonView, more = more database work
+	 * @return a new objects of the specified class that extends PersonView
+	 */
+	public <T extends PersonView> T getPersonView(Viewpoint viewpoint, Resource r,
+			Class<T> clazz, PersonViewExtra... extras);
 	
 	/**
 	 * Returns an object describing a person from the viewpoint of another person,
