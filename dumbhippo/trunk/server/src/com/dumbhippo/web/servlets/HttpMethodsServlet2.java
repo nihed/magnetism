@@ -340,6 +340,11 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		}
 		
 		HttpMethod lookupMethod(String name) {
+			if (sortedMethods == null || lowercaseMethods == null)
+				throw new IllegalStateException("need to lock() prior to lookupMethod()");
+			if (name == null)
+				throw new IllegalArgumentException("null name passed to lookupMethod()");
+			
 			HttpMethod m = methods.get(name);
 			if (m == null)
 				m = lowercaseMethods.get(name);
