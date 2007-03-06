@@ -2,10 +2,12 @@ import logging
 
 import hippo
 
+import os
 import bigboard, mugshot
 from big_widgets import CanvasMugshotURLImage, PrelightingCanvasBox
 import slideout
 import profile
+import cgi
 
 class EntityItem(PrelightingCanvasBox):
     def __init__(self, **kwargs):
@@ -125,10 +127,11 @@ class ProfileItem(hippo.CanvasBox):
             self.__profiles.fetch_profile(self.__entity.get_guid(), self.__on_profile_fetched)
 
     def __on_activate_email(self, canvas_item, profile):
-        print profile.get_email()
+        # email should probably cgi.escape except it breaks if you escape the @
+        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'mailto:' + profile.get_email())
 
     def __on_activate_aim(self, canvas_item, profile):
-        print profile.get_aim()
+        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'aim:GoIM?screenname=' + cgi.escape(profile.get_aim()))
 
     def __on_profile_fetched(self, profile):
         if not profile:
