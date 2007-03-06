@@ -124,6 +124,12 @@ class ProfileItem(hippo.CanvasBox):
 
             self._profiles.fetch_profile(self._entity.get_guid(), self._on_profile_fetched)
 
+    def _on_activate_email(self, canvas_item, profile):
+        print profile.get_email()
+
+    def _on_activate_aim(self, canvas_item, profile):
+        print profile.get_aim()
+
     def _on_profile_fetched(self, profile):
         if not profile:
             print "failed to fetch profile"
@@ -145,11 +151,13 @@ class ProfileItem(hippo.CanvasBox):
 
         self._address_box.remove_all()
         if profile.get_email():
-            email = hippo.CanvasLink(text=profile.get_email())
+            email = hippo.CanvasLink(text=profile.get_email(), xalign=hippo.ALIGNMENT_START)
+            email.connect('activated', self._on_activate_email, profile)
             self._address_box.append(email)
 
         if profile.get_aim():
-            aim = hippo.CanvasLink(text=profile.get_aim())
+            aim = hippo.CanvasLink(text=profile.get_aim(), xalign=hippo.ALIGNMENT_START)
+            aim.connect('activated', self._on_activate_aim, profile)
             self._address_box.append(aim)
 
 class PeopleStock(bigboard.AbstractMugshotStock):
