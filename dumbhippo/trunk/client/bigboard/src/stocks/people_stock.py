@@ -149,7 +149,7 @@ class ProfileItem(hippo.CanvasBox):
             self._address_box.append(email)
 
         if profile.get_aim():
-            email = hippo.CanvasLink(text=profile.get_aim())
+            aim = hippo.CanvasLink(text=profile.get_aim())
             self._address_box.append(aim)
 
 class PeopleStock(bigboard.AbstractMugshotStock):
