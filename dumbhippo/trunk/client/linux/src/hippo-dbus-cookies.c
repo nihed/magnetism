@@ -43,9 +43,10 @@ hippo_dbus_handle_get_cookies_to_send(HippoDBus   *dbus,
     host = NULL;
     port = -1;
     if (!hippo_parse_http_url(url, &is_https, &host, &port)) {
-        return dbus_message_new_error(message,
-                                      DBUS_ERROR_INVALID_ARGS,
-                                      _("Invalid URL, only http/https URLs understood"));
+        return dbus_message_new_error_printf(message,
+                                             DBUS_ERROR_INVALID_ARGS,
+                                             _("Invalid URL, only http/https URLs understood: '%s'"),
+                                             url);
     }
     
     if (port < 0) {
@@ -56,6 +57,9 @@ hippo_dbus_handle_get_cookies_to_send(HippoDBus   *dbus,
     }
 
     cookies = hippo_load_cookies(host, port, NULL);
+
+    g_debug("Loaded %d cookies for host '%s' port %d", g_slist_length(cookies), host, port);
+    
     reply = dbus_message_new_method_return(message);
 
     dbus_message_iter_init_append(reply, &iter);

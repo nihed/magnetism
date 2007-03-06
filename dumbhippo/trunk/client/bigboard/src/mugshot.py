@@ -41,6 +41,7 @@ class Mugshot(gobject.GObject):
         self._bus_proxy = bus_proxy.connect_to_signal("NameOwnerChanged",
                                                       _log_cb(self._on_dbus_name_owner_changed))
         self._create_proxy()
+        self._create_ws_proxy()
         
         self._reset()        
         
@@ -83,13 +84,23 @@ class Mugshot(gobject.GObject):
             self._proxy.GetBaseProperties(reply_handler=_log_cb(self._on_get_baseprops), error_handler=self._on_dbus_error)        
         except dbus.DBusException:
             self._proxy = None
+
+
+    def _create_ws_proxy(self):
+        try:
+            bus = dbus.SessionBus()
+            self._ws_proxy = bus.get_object('org.mugshot.Mugshot', '/org/gnome/web_services')
+        except dbus.DBusException:
+            self._ws_proxy = None
         
     def _on_dbus_name_owner_changed(self, name, prev_owner, new_owner):
         if name == 'org.mugshot.Mugshot':
             if new_owner != '':
                 self._create_proxy()
+                self._create_ws_proxy()
             else:
                 self._proxy = None
+                self._ws_proxy = None
     
     def _whereimChanged(self, name, icon_url):
         logging.debug("whereimChanged: %s %s" % (name, icon_url))
@@ -168,6 +179,12 @@ class Mugshot(gobject.GObject):
             self._proxy.NotifyAllNetwork()
             return None
         return self._network.values()
+
+    def get_cookies(self, url):
+        cookies = self._ws_proxy.GetCookiesToSend(url)
+            
+        #print cookies
+        return cookies
 
     def _do_external_iq(self, name, xmlns, content, cb):
         """Sends a raw IQ request to Mugshot server, indirecting

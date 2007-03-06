@@ -12,6 +12,12 @@ G_BEGIN_DECLS
 #define HIPPO_DBUS_WEB_INTERFACE       "org.gnome.WebServices"
 #define HIPPO_DBUS_WEB_PATH            "/org/gnome/web_services"
 
+
+
+DBusMessage* hippo_dbus_handle_introspect_web(HippoDBus   *dbus,
+                                              DBusMessage *message);
+
+
 G_END_DECLS
 
 #endif /* __HIPPO_DBUS_WEB_H__ */
