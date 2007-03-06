@@ -23,8 +23,8 @@ if [ "$1" = "install" ] ; then
 elif [ "$1" = "remove" ] ; then
     for libdir in /usr/lib /usr/lib64 ; do
 	# Remove any symlinks we've created into any firefox directory
-	for d in $libdir/firefox* ; do
-	    if [ d = "$libdir/firefox*" ] ; then
+	for d in $libdir/firefox* $libdir/iceweasel*; do
+	    if [ "$d" = "$libdir/firefox*" -o "$d" = "$libdir/iceweasel*" ] ; then
 		continue
 	    fi
 	    link=$d/extensions/firefox@mugshot.org
