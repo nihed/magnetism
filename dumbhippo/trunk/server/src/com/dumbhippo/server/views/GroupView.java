@@ -62,10 +62,14 @@ import com.dumbhippo.persistence.VersionedEntity;
 	 }
 	 
 	 public boolean getCanJoin() {
-			return !getGroupMember().isParticipant() && 
+		return !getGroupMember().isParticipant() && 
 		       (group.getAccess() == GroupAccess.PUBLIC_INVITE ||
 		        getGroupMember().getStatus() == MembershipStatus.REMOVED);
-	}
+	 }
+	 
+	 public boolean getCanSeeContent() {
+         return (group.getAccess() != GroupAccess.SECRET || getGroupMember().getStatus().getCanSeeSecretContent());
+	 }
 	 
 	 // TODO: avoid using this, and try using getInviters
 	 public PersonView getInviter() {

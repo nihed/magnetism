@@ -230,11 +230,21 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	        		invitedToGroups.add(group);
 	        	}
 	        } catch (NotFoundException e) {
-	        	// invitee is not a member of this group, nothing to do
+	        	// adder is not a member of this group, nothing to do
 	        }
 	    }
 	    
 	    return invitedToGroups;
+	}
+	
+	public boolean canSeeContent(Viewpoint viewpoint, Group group) {
+		if (group.getAccess() != GroupAccess.SECRET || viewpoint instanceof SystemViewpoint) {
+			return true;
+		} else if (viewpoint instanceof UserViewpoint) {
+			return getViewerStatus(viewpoint, group).getCanSeeSecretContent();
+		} else {
+			return false;
+		}
 	}
 	
 	public boolean canAddMembers(User adder, Group group) {
@@ -400,24 +410,18 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}
 	}
 	
-	// We might want to allow REMOVED members full visibility, to give a 
-	// "nomail" feel, but changing the visibility allows people to see
-	// what the world sees and makes the operation more concrete
-	// 
-	// So, we have two query strings "Can see that the group exists" - 
-	// this is needed to avoid the group page vanishing when you remove
-	// yourself - and also "Can see private posts and members". There is 
-	// no difference between the two for the anonymous viewer.
+	// this checks if the viewer can see the group activity or its members
 	private static final String CAN_SEE = 
 		" (g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " OR " + 
 		  "EXISTS (SELECT vgm FROM GroupMember vgm, AccountClaim ac " +
 	              "WHERE vgm.group = g AND ac.resource = vgm.member AND ac.owner = :viewer AND " +
 	              "vgm.status >= " + MembershipStatus.INVITED.ordinal() + ")) ";
-	private static final String CAN_SEE_GROUP =
-		" (g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " OR " + 
-		  "EXISTS (SELECT vgm FROM GroupMember vgm, AccountClaim ac " +
+	// this checks if the user can invite other people to a group
+	private static final String CAN_SHARE_GROUP =
+		" (EXISTS (SELECT vgm FROM GroupMember vgm, AccountClaim ac " +
                   "WHERE vgm.group = g AND ac.resource = vgm.member AND ac.owner = :viewer AND " +
-                  "vgm.status >= " + MembershipStatus.REMOVED.ordinal() + ")) ";
+                  "(vgm.status = " + MembershipStatus.ACTIVE.ordinal() + 
+                  " OR vgm.status = " + MembershipStatus.FOLLOWER.ordinal() + "))) ";	
 	private static final String CAN_SEE_ANONYMOUS = " g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " ";
 	
 	private String getStatusClause(MembershipStatus status) {
@@ -551,7 +555,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member) throws NotFoundException {
 		if (!viewpoint.isOfUser(member) &&
 			group.getAccess() == GroupAccess.SECRET &&
-			!getViewerStatus(viewpoint, group).getCanSeeSecretMembers())
+			!getViewerStatus(viewpoint, group).getCanSeeSecretContent())
 			throw new NotFoundException("GroupMember for user " + member + " not found");
 			
 		return getGroupMember(group, member);
@@ -785,7 +789,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	private static final String FIND_ADDABLE_CONTACTS_QUERY = 
 		"SELECT contact from Account a, Contact contact, Group g " +
 		"WHERE a.owner = :viewer AND contact.account = a AND " + 
-			  "g.id = :groupid AND " + CAN_SEE_GROUP + " AND " + 
+			  "g.id = :groupid AND " + CAN_SHARE_GROUP + " AND " + 
 			  "NOT EXISTS(SELECT gm FROM GroupMember gm " +
 				         "WHERE gm.group = :groupid AND " + CONTACT_IS_MEMBER + " AND " +
 				               "gm.status >= " + MembershipStatus.INVITED.ordinal() + ")";

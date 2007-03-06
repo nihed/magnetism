@@ -28,26 +28,36 @@
 		<dht3:groupRelatedPagesTabs group="${group.viewedGroup}" selected="members"/>
 	</dht3:pageSubHeader>
 	
-	<dht3:shinyBox color="grey">
-        <div class="dh-page-shinybox-title-large"><span>Group Members (<c:out value="${group.activeMembers.size}"/>)</span></div>
-        <c:choose>  
-            <c:when test="${group.activeMembers.size > 0}">
-          	    <c:forEach items="${group.pageableActiveMembers.results}" var="person">
-			        <dht3:personItem who="${person}" useSpecialControls="true">
-			            <c:if test="${person.viewOfSelf}">
-			        	    <dh:script module="dh.actions"/>
-						    <dht:actionLink oneLine="true" href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')" title="Stop receiving stack activity from this group">Leave Group</dht:actionLink>
-			            </c:if>
-			        </dht3:personItem>
-		        </c:forEach>
-		        <div class="dh-grow-div-around-floats"><div></div></div>
-		        <dht:expandablePager pageable="${group.pageableActiveMembers}" anchor="dhActiveMembers"/>
-            </c:when>
-			<c:otherwise>
-			    Nobody in this group.
-			</c:otherwise>
-	    </c:choose>            
-    </dht3:shinyBox>
+	<c:if test="${!group.viewedGroup.canSeeContent && dh:enumIs(group.viewedGroup.status, 'REMOVED')}">
+	    <dht3:shinyBox color="grey">
+	        <div class="dh-page-shinybox-title-large"><span>Group Members</span></div>
+	        <dh:script module="dh.actions"/>
+			You need to <dht:actionLink oneLine="true" href="javascript:dh.actions.joinGroup('${group.viewedGroupId}')" title="Rejoin this group">rejoin this group</dht:actionLink> to see the group members.
+	    </dht3:shinyBox>
+	</c:if>
+		  
+	<c:if test="${group.viewedGroup.canSeeContent}">        
+	    <dht3:shinyBox color="grey">
+            <div class="dh-page-shinybox-title-large"><span>Group Members (<c:out value="${group.activeMembers.size}"/>)</span></div>
+            <c:choose>  
+                <c:when test="${group.activeMembers.size > 0}">
+          	        <c:forEach items="${group.pageableActiveMembers.results}" var="person">
+			            <dht3:personItem who="${person}" useSpecialControls="true">
+			                <c:if test="${person.viewOfSelf}">
+			        	        <dh:script module="dh.actions"/>
+						        <dht:actionLink oneLine="true" href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')" title="Stop receiving stack activity from this group">Leave Group</dht:actionLink>
+			                </c:if>
+			            </dht3:personItem>
+		            </c:forEach>
+		            <div class="dh-grow-div-around-floats"><div></div></div>
+		            <dht:expandablePager pageable="${group.pageableActiveMembers}" anchor="dhActiveMembers"/>
+                </c:when>
+			    <c:otherwise>
+			        Nobody in this group.
+			    </c:otherwise>
+	        </c:choose>            
+        </dht3:shinyBox>
+    </c:if>
     
     <%-- Only public groups can have followers --%>
     <c:if test="${group.public}">

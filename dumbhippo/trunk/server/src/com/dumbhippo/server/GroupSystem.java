@@ -49,6 +49,15 @@ public interface GroupSystem {
 	 */
 	public Set<Group> getInvitedToGroups(User adder, Resource invitee);
 	
+	/**
+	 * Returns true if the viewer can see the content of the group's mugshot and stacker.
+	 * 
+	 * @param viewpoint
+	 * @param group
+	 * @return true if the viewer can see the content of the group's mugshot and stacker.
+	 */
+	public boolean canSeeContent(Viewpoint viewpoint, Group group);
+	
 	public boolean canAddMembers(User adder, Group group);
 	
 	public void addMember(User adder, Group group, Person person);

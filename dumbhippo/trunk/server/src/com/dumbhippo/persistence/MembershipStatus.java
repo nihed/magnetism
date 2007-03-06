@@ -21,12 +21,12 @@ public enum MembershipStatus {
 	
 	private boolean receivesPosts;
 	private boolean canSeeSecretGroup;
-	private boolean canSeeSecretMembers;
+	private boolean canSeeSecretContent;
 	
-	private MembershipStatus(boolean receivesPosts, boolean canSeeSecretGroup, boolean canSeeSecretMembers) {
+	private MembershipStatus(boolean receivesPosts, boolean canSeeSecretGroup, boolean canSeeSecretContent) {
 		this.receivesPosts = receivesPosts;  
 		this.canSeeSecretGroup = canSeeSecretGroup;
-		this.canSeeSecretMembers = canSeeSecretMembers;
+		this.canSeeSecretContent = canSeeSecretContent;
 	}
 	
 	/**
@@ -51,8 +51,8 @@ public enum MembershipStatus {
 	 * you can always join-look-leave), but if we made the group vanish when you left it,
 	 * it would make it hard to undo the operation and join it again.
 	 */
-	public boolean getCanSeeSecretMembers() {
-		return canSeeSecretMembers;
+	public boolean getCanSeeSecretContent() {
+		return canSeeSecretContent;
 	}
 	
 	/**
