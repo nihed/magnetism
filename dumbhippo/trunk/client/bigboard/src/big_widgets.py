@@ -8,11 +8,10 @@ from libgimmie import DockWindow
 from libbig import URLImageCache
 import libbig, mugshot, bigboard
 
-class CanvasURLImage(hippo.CanvasImage):
+class CanvasURLImageMixin:
     """A wrapper for CanvasImage which has a set_url method to retrieve
        images from a URL."""
-    def __init__(self, url=None, **kwargs):
-        hippo.CanvasImage.__init__(self, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START, **kwargs) 
+    def __init__(self, url=None):
         if url:
             self.set_url(url)
         
@@ -30,10 +29,9 @@ class CanvasURLImage(hippo.CanvasImage):
         # note exception is automatically added to log
         logging.exception("failed to load image for '%s'", url)  #FIXME queue retry
         
-class CanvasMugshotURLImage(CanvasURLImage):
+class CanvasMugshotURLImageMixin:
     """A canvas image that takes a Mugshot-relative image URL."""
-    def __init__(self, url=None, **kwargs):
-        CanvasURLImage.__init__(self, **kwargs)
+    def __init__(self, url=None):
         self.__rel_url = None
         if url:
             self.set_url(url)
@@ -47,6 +45,33 @@ class CanvasMugshotURLImage(CanvasURLImage):
         baseurl = mugshot.get_mugshot().get_baseurl()
         if not (baseurl is None or self.__rel_url is None):
             CanvasURLImage.set_url(self, baseurl + self.__rel_url)
+
+class CanvasURLImage(hippo.CanvasImage, CanvasURLImageMixin):
+    """A wrapper for CanvasImage which has a set_url method to retrieve
+       images from a URL."""
+    def __init__(self, url=None, **kwargs):
+        hippo.CanvasImage.__init__(self, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START, **kwargs)
+        CanvasURLImageMixin.__init__(self, url)
+        
+class CanvasMugshotURLImage(CanvasMugshotURLImageMixin, CanvasURLImage):
+    """A canvas image that takes a Mugshot-relative image URL."""
+    def __init__(self, url=None, **kwargs):
+        CanvasURLImage.__init__(self, **kwargs)
+        CanvasMugshotURLImageMixin.__init__(self, url)
+
+class CanvasURLImageButton(hippo.CanvasImageButton, CanvasURLImageMixin):
+    """A wrapper for CanvasImageButton which has a set_url method to retrieve
+       images from a URL."""
+    def __init__(self, url=None, **kwargs):
+        hippo.CanvasImageButton.__init__(self, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START, **kwargs)
+        CanvasURLImageMixin.__init__(self, url)
+        
+class CanvasMugshotURLImageButton(CanvasMugshotURLImageMixin, CanvasURLImageButton):
+    """A canvas image button that takes a Mugshot-relative image URL."""
+    def __init__(self, url=None, **kwargs):
+        CanvasURLImageButton.__init__(self, **kwargs)
+        CanvasMugshotURLImageMixin.__init__(self, url)
+
 
 class PrelightingCanvasBox(hippo.CanvasBox):
     """A box with a background that changes color on mouse hover."""

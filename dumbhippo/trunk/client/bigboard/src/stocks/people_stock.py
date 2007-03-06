@@ -4,7 +4,7 @@ import hippo
 
 import os
 import bigboard, mugshot
-from big_widgets import CanvasMugshotURLImage, PrelightingCanvasBox
+from big_widgets import CanvasMugshotURLImage, CanvasMugshotURLImageButton, PrelightingCanvasBox
 import slideout
 import profile
 import cgi
@@ -20,6 +20,7 @@ class EntityItem(PrelightingCanvasBox):
                                             scale_height=30,
                                             border=1,
                                             border_color=0x000000ff)
+
         self.append(self.__photo)
 
         self.__name = hippo.CanvasText(xalign=hippo.ALIGNMENT_FILL, yalign=hippo.ALIGNMENT_START,
@@ -147,7 +148,7 @@ class ProfileItem(hippo.CanvasBox):
 
         self.__ribbon_bar.remove_all()
         for a in profile.get_accounts():
-            badge = CanvasMugshotURLImage(scale_width=16, scale_height=16)
+            badge = CanvasMugshotURLImageButton(scale_width=16, scale_height=16)
             badge.set_url(a['icon'])
             badge.set_property('tooltip', a['linkText']) # doesn't work...
             self.__ribbon_bar.append(badge)
