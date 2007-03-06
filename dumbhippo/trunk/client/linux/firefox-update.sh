@@ -9,8 +9,8 @@ if [ "$1" = "install" ] ; then
     for libdir in /usr/lib /usr/lib64 ; do
 	# Add symlinks to any firefox directory that looks like it is part of a
 	# currently installed package
-	for d in $libdir/firefox* ; do
-	    if [ d = "$libdir/firefox*" ] ; then
+	for d in $libdir/firefox* $libdir/iceweasel*; do
+	    if [ "$d" = "$libdir/firefox*" -o "$d" = "$libdir/iceweasel*" ] ; then
 		continue
 	    fi
 	    link=$d/extensions/firefox@mugshot.org
