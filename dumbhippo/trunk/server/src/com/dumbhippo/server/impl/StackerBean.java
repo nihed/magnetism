@@ -870,7 +870,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	 */
 	private List<UserBlockData> getBlocks(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, 
 			                              String filter, boolean participantOnly) {
-		
 		StackFilterExpression parsedExpression = new StackFilterExpression(filter);
 		
 		StringBuilder sb = new StringBuilder();
@@ -1164,6 +1163,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	private List<GroupBlockData> getBlocks(Viewpoint viewpoint, Group group, int start, int count, boolean byParticipation) {
+		if (!groupSystem.canSeeContent(viewpoint, group))
+			return Collections.emptyList();
+		
 		String orderBy;
 		if (byParticipation)
 			orderBy = " AND gbd.participatedTimestamp IS NOT NULL ORDER BY gbd.participatedTimestamp DESC";

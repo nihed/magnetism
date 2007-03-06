@@ -24,21 +24,23 @@
 		<dht3:groupRelatedPagesTabs group="${group.viewedGroup}" selected="group"/>
 	</dht3:pageSubHeader>
     <dht3:groupStack who="${group.viewedGroup}" stackOrder="1" stackType="dhMugshot" pageable="${group.pageableMugshot}" shortVersion="${group.pageableStack.position > 0}" showFrom="true" showHomeUrl="false" disableLink="true"/>
-	<dht3:shinyBox color="grey">
-	    <div class="dh-person-stacker-header">
-		    <span class="dh-person-header-name"><a name="dhStacker">Group Stacker</a></span>
-		    <span class="dh-person-header-description">Updates from group members and feeds</span>
-		</div>    
-		<c:choose>
-			<c:when test="${group.pageableMugshot.position == 0}">
-				<dht3:stacker stackOrder="2" stackType="dhStacker" pageable="${group.pageableStack}" showFrom="true"/>
-			</c:when>
-			<c:otherwise>
-			    <div class="dh-back">
-		    	    <a href="/group?who=${group.viewedGroupId}">Back to <c:out value="${group.viewedGroup.name}"/>'s Home</a>
-			    </div>
-		    </c:otherwise>
-		</c:choose>
-	</dht3:shinyBox>	
+    <c:if test="${group.viewedGroup.canSeeContent}">
+	    <dht3:shinyBox color="grey">
+	        <div class="dh-person-stacker-header">
+		        <span class="dh-person-header-name"><a name="dhStacker">Group Stacker</a></span>
+		        <span class="dh-person-header-description">Updates from group members and feeds</span>
+		    </div>    
+		    <c:choose>
+			    <c:when test="${group.pageableMugshot.position == 0}">
+				    <dht3:stacker stackOrder="2" stackType="dhStacker" pageable="${group.pageableStack}" showFrom="true"/>
+			    </c:when>
+			    <c:otherwise>
+			        <div class="dh-back">
+		    	        <a href="/group?who=${group.viewedGroupId}">Back to <c:out value="${group.viewedGroup.name}"/>'s Home</a>
+			        </div>
+		        </c:otherwise>
+		    </c:choose>
+	    </dht3:shinyBox>	
+	</c:if>
 </dht3:page>
 </html>

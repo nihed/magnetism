@@ -43,7 +43,7 @@
 					</c:when>
 					<c:when test="${dh:enumIs(who.status, 'REMOVED')}">
 						<dh:script module="dh.actions"/>
-						 <dht:actionLink oneLine="true" href="javascript:dh.actions.joinGroup('${who.identifyingGuid}')" title="Rejoin this group">Join group</dht:actionLink>
+						<dht:actionLink oneLine="true" href="javascript:dh.actions.joinGroup('${who.identifyingGuid}')" title="Rejoin this group">Join group</dht:actionLink>
 					</c:when>
 					<c:when test="${dh:enumIs(who.status, 'NONMEMBER') && who.canJoin}">
 						<dh:script module="dh.actions"/>
@@ -71,6 +71,10 @@
 		</c:choose>        
 	</dht3:groupHeader>
 	<c:choose>
+	    <c:when test="${!who.canSeeContent && dh:enumIs(who.status, 'REMOVED')}">
+	        <dh:script module="dh.actions"/>
+			You need to <dht:actionLink oneLine="true" href="javascript:dh.actions.joinGroup('${who.identifyingGuid}')" title="Rejoin this group">rejoin this group</dht:actionLink> to see the group activity.
+	    </c:when>
 		<c:when test="${!shortVersion}">
 		    <dht3:stacker stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" blocks="${blocks}" showFrom="${showFrom}" oneLine="${embedVersion}"/>
     	</c:when> 
