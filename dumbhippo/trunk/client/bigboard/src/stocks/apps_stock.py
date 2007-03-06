@@ -45,49 +45,58 @@ def get_app_directory():
 
 class AppDisplay(PhotoContentItem):
     def __init__(self, app):
-        PhotoContentItem.__init__(self, 
-                                  orientation=hippo.ORIENTATION_HORIZONTAL,
-                                  spacing=4)
-        self._app = None
+        PhotoContentItem.__init__(self, border_right=6)
+        self.__app = None
                 
-        self.set_photo(CanvasMugshotURLImage(scale_width=30,
-                                             scale_height=30))
-        self._title = hippo.CanvasText()
-        self.set_child(self._title)
+        self.__photo = CanvasMugshotURLImage(scale_width=30,
+                                             scale_height=30)
+        self.set_photo(self.__photo)
+        self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=2, 
+                                     border_right=4)
+        self.__title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        self.__description = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        attrs = pango.AttrList()
+        attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
+        self.__description.set_property("attributes", attrs)        
+        self.__box.append(self.__title)
+        self.__box.append(self.__description)        
+        self.set_child(self.__box)
     
-        self.connect("button-press-event", lambda self, event: self._on_button_press(event))
+        self.connect("button-press-event", lambda self, event: self.__on_button_press(event))
         
         self.set_app(app)
         
     def set_app(self, app):
-        self._app = app
-        self._app.connect("changed", lambda app: self._app_display_sync())
-        self._app_display_sync()
+        self.__app = app
+        self.__app.connect("changed", lambda app: self.__app_display_sync())
+        self.__app_display_sync()
     
     def _get_name(self):
-        if self._app is None:
+        if self.__app is None:
             return "unknown"
-        return self._app.get_name()
+        return self.__app.get_name()
     
     def __str__(self):
-        return '<AppDisplay name="%s">' % (self._get_name())
+        return '<AppDisplay name="%s">' % (self.__get_name())
     
-    def _set_app_installed(self, installed):
+    def __set_app_installed(self, installed):
         attrs = pango.AttrList()
-        if not installed:
-            attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
+        if installed:
+            attrs.insert(pango.AttrForeground(0x0, 0x0, 0xFFFF, 0, 0xFFFF))
+        else:
             logging.debug("app %s is not installed", self)
-        self._title.set_property("attributes", attrs)
+        self.__title.set_property("attributes", attrs)
         
     # override
     def do_prelight(self):
-        return not self._desktop_entry is None
+        return not self.__desktop_entry is None
     
-    def _app_display_sync(self):
-        self._title.set_property("text", self._app.get_name())
-        self._photo.set_url(self._app.get_icon_url())
-        self._desktop_entry = None
-        names = self._app.get_desktop_names()
+    def __app_display_sync(self):
+        self.__title.set_property("text", self.__app.get_name())
+        self.__description.set_property("text", self.__app.get_description())
+        self.__photo.set_url(self.__app.get_icon_url())
+        self.__desktop_entry = None
+        names = self.__app.get_desktop_names()
         for name in names.split(';'):
             ad = get_app_directory()            
             menuitem = None
@@ -98,16 +107,16 @@ class AppDisplay(PhotoContentItem):
             entry_path = menuitem.get_desktop_file_path()
             logging.debug("loading desktop file %s", entry_path) 
             desktop = gnomedesktop.item_new_from_file(entry_path, 0)
-            self._desktop_entry = desktop
+            self.__desktop_entry = desktop
             break
-        self._set_app_installed(not self._desktop_entry is None)
+        self.__set_app_installed(not self.__desktop_entry is None)
         
-    def _on_button_press(self, event):
+    def __on_button_press(self, event):
         logging.debug("activated app %s", self)
-        if self._desktop_entry is None:
+        if self.__desktop_entry is None:
             logging.error("couldn't find installed app %s, ignoring activate")
             return
-        self._desktop_entry.launch(())
+        self.__desktop_entry.launch(())
 
 class AppsStock(bigboard.AbstractMugshotStock):
     def __init__(self):
