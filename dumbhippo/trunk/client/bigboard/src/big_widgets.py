@@ -6,7 +6,7 @@ import hippo
 
 from libgimmie import DockWindow
 from libbig import URLImageCache
-import libbig, mugshot
+import libbig, mugshot, bigboard
 
 class CanvasURLImage(hippo.CanvasImage):
     """A wrapper for CanvasImage which has a set_url method to retrieve
@@ -49,6 +49,7 @@ class CanvasMugshotURLImage(CanvasURLImage):
             CanvasURLImage.set_url(self, baseurl + self._rel_url)
 
 class PrelightingCanvasBox(hippo.CanvasBox):
+    """A box with a background that changes color on mouse hover."""
     def __init__(self, **kwargs):
         hippo.CanvasBox.__init__(self, **kwargs)
         self._hovered = False
@@ -72,6 +73,37 @@ class PrelightingCanvasBox(hippo.CanvasBox):
     # protected
     def do_prelight(self):
         return True
+    
+class PhotoContentItem(PrelightingCanvasBox):
+    """A specialized container that has a photo and some
+    corresponding content.  Handles size changes via 
+    set_size."""
+    def __init__(self, **kwargs):
+        PrelightingCanvasBox.__init__(self, **kwargs)
+        self._photo = None
+        self._child = None
+        
+    def set_photo(self, photo):
+        assert(self._photo is None)
+        self._photo = photo
+        self.append(self._photo)       
+        
+    def set_child(self, child):
+        assert(not self._photo is None)
+        assert(self._child is None)
+        self._child = child
+        self.append(self._title)         
+        
+    def set_size(self, size):
+        assert(not (self._photo is None or self._child is None))
+        if size == bigboard.Stock.SIZE_BULL:
+            self.set_child_visible(self._child, True)
+            self._photo.set_property('xalign', hippo.ALIGNMENT_START)
+            self._photo.set_property('yalign', hippo.ALIGNMENT_START)
+        else:
+            self.set_child_visible(self._child, False)
+            self._photo.set_property('xalign', hippo.ALIGNMENT_CENTER)
+            self._photo.set_property('yalign', hippo.ALIGNMENT_CENTER)        
 
 class Sidebar(DockWindow):
     __gsignals__ = {

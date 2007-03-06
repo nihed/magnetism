@@ -4,7 +4,7 @@ import gmenu, gobject, pango, gnomedesktop
 import hippo
 
 import bigboard, mugshot
-from big_widgets import CanvasMugshotURLImage, PrelightingCanvasBox
+from big_widgets import CanvasMugshotURLImage, PhotoContentItem
 
 class AppDirectory(gobject.GObject):
     def __init__(self):
@@ -43,19 +43,17 @@ def get_app_directory():
         _app_directory = AppDirectory()
     return _app_directory
 
-class AppDisplay(PrelightingCanvasBox):
+class AppDisplay(PhotoContentItem):
     def __init__(self, app):
-        PrelightingCanvasBox.__init__(self, 
-                                      orientation=hippo.ORIENTATION_HORIZONTAL,
-                                      spacing=4)
+        PhotoContentItem.__init__(self, 
+                                  orientation=hippo.ORIENTATION_HORIZONTAL,
+                                  spacing=4)
         self._app = None
                 
-        self._photo = CanvasMugshotURLImage(scale_width=30,
-                                            scale_height=30)
+        self.set_photo(CanvasMugshotURLImage(scale_width=30,
+                                             scale_height=30))
         self._title = hippo.CanvasText()
-        
-        self.append(self._photo)
-        self.append(self._title)
+        self.set_child(self._title)
     
         self.connect("button-press-event", lambda self, event: self._on_button_press(event))
         
@@ -124,6 +122,18 @@ class AppsStock(bigboard.AbstractMugshotStock):
 
     def get_content(self, size):
         return self._box
+            
+    def _set_item_size(self, item, size):
+        if size == bigboard.Stock.SIZE_BULL:
+            item.set_property('xalign', hippo.ALIGNMENT_FILL)
+        else:
+            item.set_property('xalign', hippo.ALIGNMENT_CENTER)
+        item.set_size(size)            
+            
+    def set_size(self, size):
+        super(AppsStock, self).set_size(size)
+        for child in self._box.get_children():
+            self._set_item_size(child, size)        
             
     def _handle_my_top_apps_changed(self, mugshot, apps):
         logging.debug("my apps changed")
