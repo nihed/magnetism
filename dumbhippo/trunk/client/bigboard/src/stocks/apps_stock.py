@@ -4,7 +4,7 @@ import gmenu, gobject, pango, gnomedesktop
 import hippo
 
 import bigboard, mugshot
-from big_widgets import CanvasMugshotURLImage
+from big_widgets import CanvasMugshotURLImage, PrelightingCanvasBox
 
 class AppDirectory(gobject.GObject):
     def __init__(self):
@@ -43,11 +43,11 @@ def get_app_directory():
         _app_directory = AppDirectory()
     return _app_directory
 
-class AppDisplay(hippo.CanvasBox):
+class AppDisplay(PrelightingCanvasBox):
     def __init__(self, app):
-        hippo.CanvasBox.__init__(self, 
-                                 orientation=hippo.ORIENTATION_HORIZONTAL,
-                                 spacing=4)
+        PrelightingCanvasBox.__init__(self, 
+                                      orientation=hippo.ORIENTATION_HORIZONTAL,
+                                      spacing=4)
         self._app = None
                 
         self._photo = CanvasMugshotURLImage(scale_width=30,
@@ -80,6 +80,10 @@ class AppDisplay(hippo.CanvasBox):
             attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
             logging.debug("app %s is not installed", self)
         self._title.set_property("attributes", attrs)
+        
+    # override
+    def do_prelight(self):
+        return not self._desktop_entry is None
     
     def _app_display_sync(self):
         self._title.set_property("text", self._app.get_name())

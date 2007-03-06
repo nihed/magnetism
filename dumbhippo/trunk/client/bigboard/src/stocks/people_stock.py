@@ -3,14 +3,14 @@ import logging
 import hippo
 
 import bigboard, mugshot
-from big_widgets import CanvasMugshotURLImage
+from big_widgets import CanvasMugshotURLImage, PrelightingCanvasBox
 import slideout
 import profile
 
-class EntityItem(hippo.CanvasBox):
+class EntityItem(PrelightingCanvasBox):
     def __init__(self, **kwargs):
         kwargs['orientation'] = hippo.ORIENTATION_HORIZONTAL
-        hippo.CanvasBox.__init__(self, **kwargs)
+        PrelightingCanvasBox.__init__(self, **kwargs)
         
         self._entity = None
 
@@ -28,17 +28,13 @@ class EntityItem(hippo.CanvasBox):
 
         self.connect('button-press-event', self._handle_button_press)
         self.connect('button-release-event', self._handle_button_release)
-        self.connect('motion-notify-event', self._handle_motion)
         self._pressed = False
-        self._hovered = False
 
     def _update_color(self):
         if self._pressed:
             self.set_property('background-color', 0x00000088)
-        elif self._hovered:
-            self.set_property('background-color', 0x00000033)
         else:
-            self.set_property('background-color', 0x00000000)        
+            self.sync_prelight_color()
 
     def _handle_button_press(self, self2, event):
         if event.button != 1:
@@ -53,14 +49,6 @@ class EntityItem(hippo.CanvasBox):
             return False
 
         self._pressed = False
-
-        self._update_color()
-
-    def _handle_motion(self, self2, event):
-        if event.detail == hippo.MOTION_DETAIL_ENTER:
-            self._hovered = True
-        elif event.detail == hippo.MOTION_DETAIL_LEAVE:
-            self._hovered = False
 
         self._update_color()
             
