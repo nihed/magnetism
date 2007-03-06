@@ -14,6 +14,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 /**
  * - Methods must be named getFoo or doFoo
@@ -398,7 +399,7 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "who", "includeStack", "participantOnly" })
 	@HttpOptions( optionalParams = { "includeStack", "participantOnly" } )
-	public void getUserSummary(XmlBuilder xml, User who, boolean includeStack, boolean participantOnly) throws XmlMethodException;
+	public void getUserSummary(Viewpoint viewpoint, XmlBuilder xml, User who, boolean includeStack, boolean participantOnly) throws XmlMethodException;
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "who", "participantOnly" })

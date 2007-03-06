@@ -2142,21 +2142,21 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
  	}
 
-	public void getUserSummary(XmlBuilder xml, User who, boolean includeStack, boolean participantOnly) throws XmlMethodException {
-		Set<ExternalAccountView> externalAccountViews = externalAccountSystem.getExternalAccountViews(AnonymousViewpoint.getInstance(), who);
+	public void getUserSummary(Viewpoint viewpoint, XmlBuilder xml, User who, boolean includeStack, boolean participantOnly) throws XmlMethodException {
+		Set<ExternalAccountView> externalAccountViews = externalAccountSystem.getExternalAccountViews(viewpoint, who);
 		
 		List<BlockView> stack;
 		if (includeStack) {
 			Pageable<BlockView> pageable = new Pageable<BlockView>("stack");
 			pageable.setPosition(0);
 			pageable.setInitialPerPage(5);
-			stacker.pageStack(AnonymousViewpoint.getInstance(), who, pageable, participantOnly);
+			stacker.pageStack(viewpoint, who, pageable, participantOnly);
 			stack = pageable.getResults();
 		} else {
 			stack = Collections.emptyList();
 		}
 		
-		PersonView userView = personViewer.getPersonView(AnonymousViewpoint.getInstance(), who);
+		PersonView userView = personViewer.getPersonView(viewpoint, who);
 		
 		xml.openElement("userSummary",
 				"who", who.getId(),
