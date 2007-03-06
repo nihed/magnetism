@@ -4,6 +4,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
+<%@ attribute name="useSpecialControls" required="false" type="java.lang.Boolean" %>
 
 <dh:script module="dh.tooltip"/>
 
@@ -39,7 +40,14 @@
         </div>
         <div class="dh-grow-div-around-floats"></div>	
         <div class="dh-person-item-controls">
-            <dht3:personActionLinks who="${who}" showHomeUrl="true"/> 	 
+            <c:choose>
+                <c:when test="${!useSpecialControls}">
+                    <dht3:personActionLinks who="${who}" showHomeUrl="true"/> 
+                </c:when>
+                <c:otherwise>
+                    <jsp:doBody/>
+                </c:otherwise>
+            </c:choose>            	 
         </div>      
         <c:if test="${who.liveUser != null}">
 		     <div class="dh-person-header-stats">

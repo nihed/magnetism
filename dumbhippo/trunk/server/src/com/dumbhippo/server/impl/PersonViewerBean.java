@@ -287,21 +287,29 @@ public class PersonViewerBean implements PersonViewer {
 	 * Creates a simple PersonView object. Should not inititate any database
 	 * queries.
 	 */
-	private PersonView constructPersonView(Viewpoint viewpoint,
-			Contact contact, User user) {
-		PersonView pv = new PersonView(contact, user);
-		initOnline(pv);
-		// given the viewpoint, set whether the view is of self
-		if (user != null && viewpoint.isOfUser(pv.getUser())) {
-			pv.setViewOfSelf(true);
-		} else {
-			pv.setViewOfSelf(false);
+	private <T extends PersonView> T constructPersonView(Viewpoint viewpoint,
+			Contact contact, User user, Class<T> clazz) {
+		try {
+		    T pv = clazz.newInstance();
+			pv.setContact(contact);
+			pv.setUser(user);
+			initOnline(pv);
+			// given the viewpoint, set whether the view is of self
+			if (user != null && viewpoint.isOfUser(pv.getUser())) {
+				pv.setViewOfSelf(true);
+			} else {
+				pv.setViewOfSelf(false);
+			}
+			return pv;
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException("Can't instantiate " + clazz.getName(), e);
+		} catch (InstantiationException e) {
+			throw new RuntimeException("Can't instantiate " + clazz.getName(), e);
 		}
-		return pv;
 	}
-
-	public PersonView getPersonView(Viewpoint viewpoint, Person p,
-			PersonViewExtra... extras) {
+	
+	public <T extends PersonView> T getPersonView(Viewpoint viewpoint, Person p,
+			Class<T> clazz, PersonViewExtra... extras) {
 		if (viewpoint == null)
 			throw new IllegalArgumentException("null viewpoint");
 		if (p == null)
@@ -318,14 +326,19 @@ public class PersonViewerBean implements PersonViewer {
 			user = identitySpider.getUser(p);
 		}
 
-		PersonView pv = constructPersonView(viewpoint, contact, user);
+		T pv = constructPersonView(viewpoint, contact, user, clazz);
 		addPersonViewExtras(viewpoint, pv, null, extras);
 
-		return pv;
+		return pv;	
+	}
+	
+	public PersonView getPersonView(Viewpoint viewpoint, Person p,
+			PersonViewExtra... extras) {
+        return getPersonView(viewpoint, p, PersonView.class, extras);
 	}
 
-	public PersonView getPersonView(Viewpoint viewpoint, Resource r,
-			PersonViewExtra... extras) {
+	public <T extends PersonView> T getPersonView(Viewpoint viewpoint, Resource r,
+			Class<T> clazz, PersonViewExtra... extras) {
 		User user = null;
 		Contact contact = null;
 
@@ -345,10 +358,15 @@ public class PersonViewerBean implements PersonViewer {
 			}
 		}
 
-		PersonView pv = constructPersonView(viewpoint, contact, user);
+		T pv = constructPersonView(viewpoint, contact, user, clazz);
 		addPersonViewExtras(viewpoint, pv, r, extras);
 
 		return pv;
+	}
+	
+	public PersonView getPersonView(Viewpoint viewpoint, Resource r,
+			PersonViewExtra... extras) {
+	    return getPersonView(viewpoint, r, PersonView.class, extras);	
 	}
 
 	public PersonView getSystemView(User user, PersonViewExtra... extras) {

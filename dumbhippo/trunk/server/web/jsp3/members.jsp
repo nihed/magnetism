@@ -33,7 +33,12 @@
         <c:choose>  
             <c:when test="${group.activeMembers.size > 0}">
           	    <c:forEach items="${group.pageableActiveMembers.results}" var="person">
-			        <dht3:personItem who="${person}"/>
+			        <dht3:personItem who="${person}" useSpecialControls="true">
+			            <c:if test="${person.viewOfSelf}">
+			        	    <dh:script module="dh.actions"/>
+						    <dht:actionLink oneLine="true" href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')" title="Stop receiving stack activity from this group">Leave Group</dht:actionLink>
+			            </c:if>
+			        </dht3:personItem>
 		        </c:forEach>
 		        <div class="dh-grow-div-around-floats"><div></div></div>
 		        <dht:expandablePager pageable="${group.pageableActiveMembers}" anchor="dhActiveMembers"/>
@@ -51,7 +56,16 @@
             <c:choose>  
                 <c:when test="${group.followers.size > 0}">
           	        <c:forEach items="${group.pageableFollowers.results}" var="person">
-			            <dht3:personItem who="${person}"/>
+			            <dht3:personItem who="${person}" useSpecialControls="true">
+                            <c:if test="${person.viewOfSelf}">
+                                <dh:script module="dh.actions"/>
+						        <dht:actionLink oneLine="true" href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')" title="Stop following this group">Stop following</dht:actionLink>
+				            </c:if>
+				            <c:if test="${group.member}">
+				                <dh:script module="dh.actions"/>
+				                <dht:actionLink oneLine="true" href="javascript:dh.actions.addMember('${group.viewedGroupId}', '${person.identifyingGuid}', function () { dh.util.refresh() })" title="Invite this person to be a member in this group">Invite to group</dht:actionLink>		  	    	
+				            </c:if>
+			            </dht3:personItem>			                 
 		            </c:forEach>
 		            <div class="dh-grow-div-around-floats"><div></div></div>
 		            <dht:expandablePager pageable="${group.pageableFollowers}" anchor="dhFollowers"/>
@@ -72,7 +86,16 @@
             <c:choose>  
                 <c:when test="${group.invitedMembers.size > 0}">
           	        <c:forEach items="${group.pageableInvitedMembers.results}" var="person">
-			            <dht3:personItem who="${person}"/>
+			            <dht3:personItem who="${person}" useSpecialControls="true">
+			                <a href="javascript:window.open('/group-invitation?group=${group.viewedGroupId}&invitee=${person.identifyingGuid}', '_self');">
+			                    Re-send invitation
+			                </a>
+			                <c:if test="${person.viewerCanRemoveInvitation}">
+			                    |
+                                <dh:script module="dh.actions"/>
+				                <dht:actionLink oneLine="true" href="javascript:dh.actions.removeGroupInvitee('${group.viewedGroupId}', ${person.email});" title="Cancel group invitation for this person">Remove invitation</dht:actionLink>		  	    				                    
+			                </c:if>
+			            </dht3:personItem>
 		            </c:forEach>
 		            <div class="dh-grow-div-around-floats"><div></div></div>
 		            <dht:expandablePager pageable="${group.pageableInvitedMembers}" anchor="dhInvitedMembers"/>
@@ -96,7 +119,24 @@
             <c:choose>  
                 <c:when test="${group.invitedFollowers.size > 0}">
           	        <c:forEach items="${group.pageableInvitedFollowers.results}" var="person">
-			            <dht3:personItem who="${person}"/>
+			            <dht3:personItem who="${person}" useSpecialControls="true">
+			                <c:choose>
+			                    <c:when test="${group.member}">
+			                        <dh:script module="dh.actions"/>
+				                    <dht:actionLink oneLine="true" href="javascript:dh.actions.addMember('${group.viewedGroupId}', '${person.identifyingGuid}', function () { dh.util.refresh() })" title="Invite this person to be a member in this group">Invite to group</dht:actionLink>		  	    			                   
+			                    </c:when>			               
+			                    <c:otherwise>
+			                        <a href="javascript:window.open('/group-invitation?group=${group.viewedGroupId}&invitee=${person.identifyingGuid}', '_self');">
+			                            Re-send invitation
+			                        </a>
+			                    </c:otherwise>
+			                </c:choose> 
+			                <c:if test="${person.viewerCanRemoveInvitation}">
+			                    |
+                                <dh:script module="dh.actions"/>
+				                <dht:actionLink oneLine="true" href="javascript:dh.actions.removeGroupInvitee('${group.viewedGroupId}', ${person.email});" title="Remove invitation to follow this group for this person">Remove invitation</dht:actionLink>		  	    				                    
+			                </c:if>			                
+			            </dht3:personItem>
 		            </c:forEach>
 		            <div class="dh-grow-div-around-floats"><div></div></div>
 		            <dht:expandablePager pageable="${group.pageableInvitedFollowers}" anchor="dhInvitedFollowers"/>

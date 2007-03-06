@@ -53,6 +53,7 @@ import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.ChatMessageView;
+import com.dumbhippo.server.views.GroupMemberView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
@@ -349,6 +350,13 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
         		GroupEvent.Detail.MEMBERS_CHANGED));
 	}
 	
+	public boolean canRemoveInvitation(User remover, GroupMember groupMember) {
+		if (groupMember.getAdders().contains(remover) && !(groupMember.getMember() instanceof Account)) {
+			return true;
+		}
+		return false;
+	}
+	
 	public void removeMember(User remover, Group group, Person person) {		
 		try {
 			// note that getGroupMember() here does a fixup so we only have one GroupMember which 
@@ -356,8 +364,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			GroupMember groupMember = getGroupMember(group, person);
 
             // we let adders remove group members they added that do not have an account
-			if (!remover.equals(person) && groupMember.getAdders().contains(remover) 
-			    && !(groupMember.getMember() instanceof Account)) {
+			if (!remover.equals(person) && canRemoveInvitation(remover, groupMember)) {
 				groupMember.removeAdder(remover);
 				// entirely remove the group member if the last adder removed them
 				if (groupMember.getAdders().isEmpty()) {
@@ -472,11 +479,11 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return ((Number) result).intValue();		
 	}
 	
-	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras) {
+	public Set<GroupMemberView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras) {
 		return getMembers(viewpoint, group, null, -1, extras);
 	}
 	
-	public Set<PersonView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, int maxResults, PersonViewExtra... extras) {
+	public Set<GroupMemberView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, int maxResults, PersonViewExtra... extras) {
 		
 		// The subversion history has some code to try doing this with fewer queries; 
 		// but for now keeping it simple
@@ -485,10 +492,18 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		if (resourceMembers.size() == 0)
 			return Collections.emptySet();
 		
-		Set<PersonView> result = new HashSet<PersonView>();
+		Set<GroupMemberView> result = new HashSet<GroupMemberView>();
 		logger.debug("will generate person views for {} resources", resourceMembers.size());
 		for (Resource r : resourceMembers) {
-			result.add(personViewer.getPersonView(viewpoint, r, extras)); 
+			GroupMemberView groupMemberView = personViewer.getPersonView(viewpoint, r, GroupMemberView.class, extras); 
+			if (viewpoint instanceof UserViewpoint) {
+				try {
+			        groupMemberView.setViewerCanRemoveInvitation(canRemoveInvitation(((UserViewpoint)viewpoint).getViewer(), getGroupMember(group, r)));
+				} catch (NotFoundException e) {
+					throw new RuntimeException("Couldn't find a group member that was returned by getResourceMembers", e);
+				}
+			}
+			result.add(groupMemberView); 
 		}
 		
 		return result;

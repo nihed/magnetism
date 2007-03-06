@@ -79,20 +79,14 @@ public class PersonView extends EntityView {
 	
 	/**
 	 * Construct a new PersonView object representing a view of a particular
-	 * person by another object. Use IdentitySpider.getPersonView() rather than
-	 * this function. Note that BOTH contact and user can be null...
+	 * person by another object. Use PersonViewer.getPersonView() rather than
+	 * this function. Normally, user and contact will be set once the PersonView
+	 * is created, but BOTH contact and user can be null...
 	 * 
 	 * FIXME we have this "primary resource" thing but we don't really keep 
 	 * track of any such concept in the db, we just pick one at random...
-	 * 
-	 * 
-	 * @param contact the contact the person is being viewed as, or null if none
-	 * @param person the user corresponding to the contact, or null if none
-	 * @param extras info you want the PersonView to contain about the person 
 	 */
-	public PersonView(Contact contact, User user) {
-		this.contact = contact;
-		this.user = user;
+	public PersonView() {
 	}
 	
 	private Set<Resource> getResources() {
@@ -198,8 +192,22 @@ public class PersonView extends EntityView {
 		return StringUtils.truncateString(name, MAX_SHORT_NAME_LENGTH);	
 	}
 	
+	/**
+	 * @param contact the contact the person is being viewed as
+	 */
+	public void setContact(Contact contact) {
+		this.contact = contact;
+	}
+	
 	public Contact getContact() {
 		return contact;
+	}
+	
+	/**
+	 * @param user the user corresponding to the contact
+	 */
+	public void setUser(User user) {
+	    this.user = user;		
 	}
 	
 	public User getUser() {
@@ -373,13 +381,13 @@ public class PersonView extends EntityView {
 	 * @param sort a flag indicating whether to sort the formed lists alphabetically
 	 * @return a List of created Lists
 	 */
-	static private List<List<PersonView>> generatePeopleLists(Set<PersonView> views, boolean sort) {	
-		ArrayList<PersonView> listOfUsers = new ArrayList<PersonView>();
-		ArrayList<PersonView> listOfPeopleWithInvites = new ArrayList<PersonView>();
-		ArrayList<PersonView> listOfPeopleWithNoInvites = new ArrayList<PersonView>();
-		ArrayList<PersonView> listOfPeopleWithNoInvitedStatus = new ArrayList<PersonView>();
+	static private <T extends PersonView> List<List<T>> generatePeopleLists(Set<T> views, boolean sort) {	
+		ArrayList<T> listOfUsers = new ArrayList<T>();
+		ArrayList<T> listOfPeopleWithInvites = new ArrayList<T>();
+		ArrayList<T> listOfPeopleWithNoInvites = new ArrayList<T>();
+		ArrayList<T> listOfPeopleWithNoInvitedStatus = new ArrayList<T>();
 		
-		for (PersonView pv : views) {
+		for (T pv : views) {
 			if (pv.getUser() != null) {
   		        listOfUsers.add(pv);
 			} else if (!pv.hasExtra(PersonViewExtra.INVITED_STATUS)) {
@@ -393,8 +401,8 @@ public class PersonView extends EntityView {
 		
 		if (sort) {
 		    final Collator collator = Collator.getInstance();
-		    Comparator<PersonView> comparator = 
-			    new Comparator<PersonView>() {
+		    Comparator<T> comparator = 
+			    new Comparator<T>() {
 			        public int compare (PersonView v1, PersonView v2) {
 				        return collator.compare(v1.getName(), v2.getName());
 			        }
@@ -406,7 +414,7 @@ public class PersonView extends EntityView {
 		    Collections.sort(listOfPeopleWithNoInvitedStatus, comparator);
 		}
 	  
-		ArrayList<List<PersonView>> listOfLists = new ArrayList<List<PersonView>>();
+		ArrayList<List<T>> listOfLists = new ArrayList<List<T>>();
 		listOfLists.add(listOfUsers);
 		listOfLists.add(listOfPeopleWithInvites);
 		listOfLists.add(listOfPeopleWithNoInvites);
@@ -428,12 +436,12 @@ public class PersonView extends EntityView {
 	 * @param views a set of PersonView objects
 	 * @return a newly created List containing the sorted people
 	 */
-	static public List<PersonView> sortedList(Set<PersonView> views) {
+	static public <T extends PersonView> List<T> sortedList(Set<T> views) {
 		
-		List<List<PersonView>> listOfLists = generatePeopleLists(views, true);
+		List<List<T>> listOfLists = generatePeopleLists(views, true);
 		
 		// combine the above lists in the list to return
-		ArrayList<PersonView> list = new ArrayList<PersonView>();
+		ArrayList<T> list = new ArrayList<T>();
 		list.addAll(listOfLists.get(0));
 		list.addAll(listOfLists.get(1));
 		list.addAll(listOfLists.get(2));
@@ -465,12 +473,12 @@ public class PersonView extends EntityView {
 	 * @param views a set of PersonView objects
 	 * @return a newly created List containing the sorted people
 	 */
-	static public List<PersonView> sortedList(Viewpoint viewpoint, User viewedUser, Set<PersonView> views) {
+	static public <T extends PersonView> List<T> sortedList(Viewpoint viewpoint, User viewedUser, Set<T> views) {
 		
-		List<List<PersonView>> listOfLists = generatePeopleLists(views, true);
+		List<List<T>> listOfLists = generatePeopleLists(views, true);
 		
 		// combine the above lists in the list to return
-		ArrayList<PersonView> list = new ArrayList<PersonView>();
+		ArrayList<T> list = new ArrayList<T>();
 		list.addAll(listOfLists.get(0));
 		if (viewpoint.isOfUser(viewedUser)) {
 		    list.addAll(listOfLists.get(1));
@@ -501,19 +509,19 @@ public class PersonView extends EntityView {
 	 * @return a newly created List containing the specified sorted subset 
 	 *         of people
 	 */
-	static public List<PersonView> sortedList(Set<PersonView> views, int start, 
+	static public <T extends PersonView> List<T> sortedList(Set<T> views, int start, 
 			                                  int rows, int usersPerRow, 
 			                                  int nonUsersPerRow) {
 		
-		List<List<PersonView>> listOfLists = generatePeopleLists(views, true);
+		List<List<T>> listOfLists = generatePeopleLists(views, true);
 
-		ArrayList<PersonView> listOfUsers = (ArrayList<PersonView>)listOfLists.get(0);
-		ArrayList<PersonView> listOfPeopleWithInvites = (ArrayList<PersonView>)listOfLists.get(1);
-		ArrayList<PersonView> listOfPeopleWithNoInvites = (ArrayList<PersonView>)listOfLists.get(2);
-		ArrayList<PersonView> listOfPeopleWithNoInvitedStatus = (ArrayList<PersonView>)listOfLists.get(3);
+		ArrayList<T> listOfUsers = (ArrayList<T>)listOfLists.get(0);
+		ArrayList<T> listOfPeopleWithInvites = (ArrayList<T>)listOfLists.get(1);
+		ArrayList<T> listOfPeopleWithNoInvites = (ArrayList<T>)listOfLists.get(2);
+		ArrayList<T> listOfPeopleWithNoInvitedStatus = (ArrayList<T>)listOfLists.get(3);
 		
 		// combine appropriate members of the above lists in the list to return
-		ArrayList<PersonView> list = new ArrayList<PersonView>();
+		ArrayList<T> list = new ArrayList<T>();
 		
 		int count = 0;
 		int index = start-1;
