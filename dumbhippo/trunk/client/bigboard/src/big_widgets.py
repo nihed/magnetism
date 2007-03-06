@@ -20,13 +20,13 @@ class CanvasURLImage(hippo.CanvasImage):
         if url:
             #print "fetching %s" % url
             image_cache = URLImageCache.getInstance()
-            image_cache.get(url, self._handle_image_load, self._handle_image_error)
+            image_cache.get(url, self.__handle_image_load, self.__handle_image_error)
 
-    def _handle_image_load(self, url, image):
+    def __handle_image_load(self, url, image):
         #print "got %s: %s" % (url, str(image))
         self.set_property("image", image)
         
-    def _handle_image_error(self, url, exc):
+    def __handle_image_error(self, url, exc):
         # note exception is automatically added to log
         logging.exception("failed to load image for '%s'", url)  #FIXME queue retry
         
@@ -34,38 +34,38 @@ class CanvasMugshotURLImage(CanvasURLImage):
     """A canvas image that takes a Mugshot-relative image URL."""
     def __init__(self, url=None, **kwargs):
         CanvasURLImage.__init__(self, **kwargs)
-        self._rel_url = None
+        self.__rel_url = None
         if url:
             self.set_url(url)
         
     def set_url(self, url):
         if url:
-            self._rel_url = url
-            self._mugshot_url_image_sync()
+            self.__rel_url = url
+            self.__sync()
         
-    def _mugshot_url_image_sync(self):
+    def __sync(self):
         baseurl = mugshot.get_mugshot().get_baseurl()
-        if not (baseurl is None or self._rel_url is None):
-            CanvasURLImage.set_url(self, baseurl + self._rel_url)
+        if not (baseurl is None or self.__rel_url is None):
+            CanvasURLImage.set_url(self, baseurl + self.__rel_url)
 
 class PrelightingCanvasBox(hippo.CanvasBox):
     """A box with a background that changes color on mouse hover."""
     def __init__(self, **kwargs):
         hippo.CanvasBox.__init__(self, **kwargs)
-        self._hovered = False
-        self.connect('motion-notify-event', lambda self, event: self._handle_motion(event))
+        self.__hovered = False
+        self.connect('motion-notify-event', lambda self, event: self.__handle_motion(event))
         
-    def _handle_motion(self, event):
+    def __handle_motion(self, event):
         if event.detail == hippo.MOTION_DETAIL_ENTER:
-            self._hovered = True
+            self.__hovered = True
         elif event.detail == hippo.MOTION_DETAIL_LEAVE:
-            self._hovered = False
+            self.__hovered = False
 
         self.sync_prelight_color()
         
     # protected
     def sync_prelight_color(self): 
-        if self._hovered and self.do_prelight():
+        if self.__hovered and self.do_prelight():
             self.set_property('background-color', 0x00000033)
         else:
             self.set_property('background-color', 0x00000000)           
@@ -79,31 +79,33 @@ class PhotoContentItem(PrelightingCanvasBox):
     corresponding content.  Handles size changes via 
     set_size."""
     def __init__(self, **kwargs):
-        PrelightingCanvasBox.__init__(self, **kwargs)
-        self._photo = None
-        self._child = None
+        PrelightingCanvasBox.__init__(self,
+                                      orientation=hippo.ORIENTATION_HORIZONTAL,
+                                      spacing=4, **kwargs)
+        self.__photo = None
+        self.__child = None
         
     def set_photo(self, photo):
-        assert(self._photo is None)
-        self._photo = photo
-        self.append(self._photo)       
+        assert(self.__photo is None)
+        self.__photo = photo
+        self.append(self.__photo)       
         
     def set_child(self, child):
-        assert(not self._photo is None)
-        assert(self._child is None)
-        self._child = child
-        self.append(self._title)         
+        assert(not self.__photo is None)
+        assert(self.__child is None)
+        self.__child = child
+        self.append(self.__child)         
         
     def set_size(self, size):
-        assert(not (self._photo is None or self._child is None))
+        assert(not (self.__photo is None or self.__child is None))
         if size == bigboard.Stock.SIZE_BULL:
-            self.set_child_visible(self._child, True)
-            self._photo.set_property('xalign', hippo.ALIGNMENT_START)
-            self._photo.set_property('yalign', hippo.ALIGNMENT_START)
+            self.set_child_visible(self.__child, True)
+            self.__photo.set_property('xalign', hippo.ALIGNMENT_START)
+            self.__photo.set_property('yalign', hippo.ALIGNMENT_START)
         else:
-            self.set_child_visible(self._child, False)
-            self._photo.set_property('xalign', hippo.ALIGNMENT_CENTER)
-            self._photo.set_property('yalign', hippo.ALIGNMENT_CENTER)        
+            self.set_child_visible(self.__child, False)
+            self.__photo.set_property('xalign', hippo.ALIGNMENT_CENTER)
+            self.__photo.set_property('yalign', hippo.ALIGNMENT_CENTER)        
 
 class Sidebar(DockWindow):
     __gsignals__ = {
