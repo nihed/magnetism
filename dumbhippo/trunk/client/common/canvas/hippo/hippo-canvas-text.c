@@ -264,8 +264,6 @@ hippo_canvas_text_get_tooltip (HippoCanvasItem *item,
 {
     HippoCanvasText *text = HIPPO_CANVAS_TEXT(item);
 
-    g_debug("Give me the tooltip for %s %d\n", text->text, text->is_ellipsized);
-
     if (text->is_ellipsized && text->text)
         return g_strdup(text->text);
     else
