@@ -8,6 +8,50 @@ from libgimmie import DockWindow
 from libbig import URLImageCache
 import libbig, mugshot, bigboard
 
+class CanvasEntry(hippo.CanvasWidget):
+    __gproperties__ = {
+        'text': (gobject.TYPE_STRING, 'Text', 'Text', '', gobject.PARAM_READWRITE)
+    }
+    
+    def __init__(self, **kwargs):
+        self.__entry = gtk.Entry()
+        hippo.CanvasWidget.__init__(self, widget=self.__entry, **kwargs)
+        self.__entry.connect("changed", lambda *args: self.notify("text"))
+        self.__entry.connect("key-press-event", lambda entry, event: self.__handle_keypress(event))
+        self.__entry.connect("button-press-event", lambda entry, event: self.__focus_entry())
+        self.set_property("widget", self.__entry)
+        
+    def __focus_entry(self):
+        logging.debug("focusing entry")
+        window = self.__entry.get_toplevel()
+        if window:
+            window.present()
+        self.__entry.grab_focus()
+        
+    def __handle_keypress(self, event):
+        if event.keyval in (gtk.gdk.keyval_from_name('Enter'), gtk.gdk.keyval_from_name('Return')):
+            key = hippo.KEY_RETURN
+        elif event.keyval == gtk.gdk.keyval_from_name('Escape'):
+            key = hippo.KEY_ESCAPE
+        else:
+            key = hippo.KEY_UNKNOWN
+
+        character = unichr(gtk.gdk.keyval_to_unicode(event.keyval))
+        
+        self.emit_key_press_event(key, character)     
+        
+    def do_set_property(self, pspec, value):
+        if pspec.name == 'text':
+            self.__entry.set_property("text", value)
+        else:
+            raise AttributeError, 'unknown property %s' % pspec.name
+        
+    def do_get_property(self, pspec):
+        if pspec.name == 'text':
+            return self.__entry.get_property("text")
+        else:
+            raise AttributeError, 'unknown property %s' % pspec.name        
+
 class CanvasURLImageMixin:
     """A wrapper for CanvasImage which has a set_url method to retrieve
        images from a URL."""
@@ -117,11 +161,15 @@ class PhotoContentItem(PrelightingCanvasBox):
                                       orientation=hippo.ORIENTATION_HORIZONTAL,
                                       spacing=4, **kwargs)
         self.__photo = None
+        self.__photo_native_width = None
+        self.__photo_native_height = None
         self.__child = None
         
     def set_photo(self, photo):
         assert(self.__photo is None)
         self.__photo = photo
+        self.__photo_native_width = photo.get_property("scale-width")
+        self.__photo_native_height = photo.get_property("scale-height")
         self.append(self.__photo)       
         
     def set_child(self, child):
@@ -131,15 +179,19 @@ class PhotoContentItem(PrelightingCanvasBox):
         self.append(self.__child)         
         
     def set_size(self, size):
-        assert(not (self.__photo is None or self.__child is None))
+        assert(not None in (self.__photo, self.__child, self.__photo_native_width, self.__photo_native_height))
         if size == bigboard.Stock.SIZE_BULL:
             self.set_child_visible(self.__child, True)
             self.__photo.set_property('xalign', hippo.ALIGNMENT_START)
             self.__photo.set_property('yalign', hippo.ALIGNMENT_START)
+            self.__photo.set_property("scale-width", self.__photo_native_width)
+            self.__photo.set_property("scale-height", self.__photo_native_height)   
         else:
             self.set_child_visible(self.__child, False)
             self.__photo.set_property('xalign', hippo.ALIGNMENT_CENTER)
             self.__photo.set_property('yalign', hippo.ALIGNMENT_CENTER)        
+            self.__photo.set_property("scale-width", 30)
+            self.__photo.set_property("scale-height", 30)            
 
 class Sidebar(DockWindow):
     __gsignals__ = {
