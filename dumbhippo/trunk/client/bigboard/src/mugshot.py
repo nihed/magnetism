@@ -214,7 +214,7 @@ class Mugshot(gobject.GObject):
         root = doc.documentElement
         if not root.nodeName == expected_name:
             logging.warn("invalid root node, expected %s", expected_name)
-            return
+            return None
         apps = []
         for node in root.childNodes:
             if not (node.nodeType == xml.dom.Node.ELEMENT_NODE):
