@@ -10,8 +10,9 @@ class AppDirectory(gobject.GObject):
     def __init__(self):
         gobject.GObject.__init__(self)
         self._tree = gmenu.lookup_tree('applications.menu')
-        self._apps = {} 
-        self._tree.add_monitor(lambda tree: self._on_apps_changed)        
+        self._apps = {}
+        # with gnome-menus-2.16.0-2.fc6 omitting the user_data arg crashes the gmenu module
+        self._tree.add_monitor(lambda tree: self._on_apps_changed, None)
         self._on_apps_changed()
         
     def _append_directory(self, directory):
