@@ -1,0 +1,79 @@
+import gnomekeyring, libbig
+
+class Keyring:
+    def __init__(self, is_singleton):
+        if not is_singleton == 42:
+            raise Exception("use keyring.get_keyring()")
+        self.__ids = {}
+
+        self.__hack = {}
+
+        
+
+    def is_available(self):
+        return gnomekeyring.is_available()
+
+    def get_login(self, whatfor):
+
+        if self.__hack.has_key(whatfor):
+            return self.__hack[whatfor]
+        else:
+            return (None, None)
+
+        ## some nonworking attempt to use gnomekeyring follows...
+        
+        id = None
+        if self.__ids.has_key(whatfor):
+            id = self.__ids[whatfor]
+        else:
+            ids = gnomekeyring.find_items_sync(gnomekeyring.ITEM_GENERIC_SECRET,
+                                               dict(whatfor=whatfor))
+            print ids
+            #FIXME
+
+        try:
+            secret = gnomekeyring.item_get_info_sync('session', id).get_secret()
+            username, password = secret.split('\n')
+        except gnomekeyring.DeniedError:
+            username = None
+            password = None
+
+        return (username, password)
+        
+    def store_username(self, whatfor, username, password):
+
+        self.__hack[whatfor] = (username, password)
+
+        ## some nonworking attempt to use gnomekeyring follows...
+        
+        self.__ids[whatfor] = gnomekeyring.item_create_sync('session',
+                                                            gnomekeyring.ITEM_GENERIC_SECRET,
+                                                            "BigBoard",
+                                                            dict(appname="BigBoard", whatfor=whatfor),
+                                                            "\n".join((username, password)), True)
+
+
+keyring_inst = None
+def get_keyring():
+    global keyring_inst
+    if keyring_inst is None:
+        keyring_inst = Keyring(42)
+    return keyring_inst
+
+
+if __name__ == '__main__':
+
+    libbig.set_application_name("BigBoard")
+    
+    ring = get_keyring()
+
+    print ring.is_available()
+
+    print "storing"
+    ring.store_username('foob', 'abc', 'def')
+
+    print "getting"
+    print ring.get_login('foob')
+
+    print "done"
+    
