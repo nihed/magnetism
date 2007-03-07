@@ -125,14 +125,14 @@ class SearchStock(AbstractMugshotStock):
         super(SearchStock,self).__init__("Search", ticker="")
 
         self.__logger = logging.getLogger('bigboard.stocks.SearchStock')
-
+        
+        self.__box = hippo.CanvasBox()
+        
         if not deskbar_available:
-            self.append(hippo.CanvasText(text="Deskbar not installed"))
+            self.__box.append(hippo.CanvasText(text="Deskbar not installed"))
             return
         
         self.__deskbar = DeskbarAPI()
-        
-        self.__box = hippo.CanvasBox()
         
         self.__input = CanvasEntry()
         self.__input.connect("notify::text", lambda *args: self.__queue_search())
