@@ -9,7 +9,7 @@ from big_widgets import CanvasMugshotURLImage, PhotoContentItem
 class AppDirectory(gobject.GObject):
     def __init__(self):
         gobject.GObject.__init__(self)
-        self._tree = gmenu.lookup_tree('applications.menu')
+        self._tree = gmenu.lookup_tree('applications.menu', gmenu.FLAGS_INCLUDE_EXCLUDED)
         self._apps = {}
         # with gnome-menus-2.16.0-2.fc6 omitting the user_data arg crashes the gmenu module
         self._tree.add_monitor(lambda tree: self._on_apps_changed, None)
@@ -49,8 +49,7 @@ class AppDisplay(PhotoContentItem):
         PhotoContentItem.__init__(self, border_right=6)
         self.__app = None
                 
-        self.__photo = CanvasMugshotURLImage(scale_width=30,
-                                             scale_height=30)
+        self.__photo = CanvasMugshotURLImage(scale_width=30, scale_height=30)
         self.set_photo(self.__photo)
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=2, 
                                      border_right=4)
@@ -115,7 +114,7 @@ class AppDisplay(PhotoContentItem):
     def __on_button_press(self, event):
         logging.debug("activated app %s", self)
         if self.__desktop_entry is None:
-            logging.error("couldn't find installed app %s, ignoring activate")
+            logging.error("couldn't find installed app %s, ignoring activate", self)
             return
         self.__desktop_entry.launch(())
 

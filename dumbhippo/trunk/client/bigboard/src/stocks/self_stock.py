@@ -4,8 +4,8 @@ import hippo
 
 import identity_spider, mugshot
 import libbig
-from bigboard import AbstractMugshotStock
-from big_widgets import CanvasMugshotURLImage
+from bigboard import Stock, AbstractMugshotStock
+from big_widgets import CanvasMugshotURLImage, PhotoContentItem
 
 class ExternalAccountIcon(CanvasMugshotURLImage):
     def __init__(self, acct):
@@ -25,19 +25,19 @@ class SelfStock(AbstractMugshotStock):
     def __init__(self):
         super(SelfStock,self).__init__("Self", ticker="")
 
-        self._box = hippo.CanvasBox()    
+        self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4)
+
+        self._namephoto_box = PhotoContentItem()
         
-        self._namephoto_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
-        
-        self._photo = CanvasMugshotURLImage()
+        self._photo = CanvasMugshotURLImage(scale_width=48, scale_height=48)
         self.connect_mugshot_handler(self._photo, "button-press-event", lambda button, event: self._on_edit_self())           
         #self._photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
             
-        self._namephoto_box.append(self._photo)
+        self._namephoto_box.set_photo(self._photo)
         
         self._name = hippo.CanvasText()
         self.connect_mugshot_handler(self._name, "button-press-event", lambda button, event: self._on_edit_self())        
-        self.append_bull(self._namephoto_box, self._name)        
+        self._namephoto_box.set_child(self._name)        
         
         self._box.append(self._namephoto_box)
         
@@ -64,6 +64,7 @@ class SelfStock(AbstractMugshotStock):
     
     def set_size(self, size):
         super(SelfStock, self).set_size(size)
+        self._namephoto_box.set_size(size)
     
     def _handle_self_changed(self, mugshot, myself):
         logging.debug("self (%s) changed" % (myself.get_guid(),))

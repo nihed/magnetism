@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, sys, threading, getopt, logging
+import os, sys, threading, getopt, logging, logging.config, StringIO
 
 import gobject, gtk, pango, dbus, dbus.glib
 
@@ -9,7 +9,7 @@ from big_widgets import Sidebar, CommandShell
 from bigboard import Stock
 import libbig
 
-import stocks, stocks.self_stock, stocks.people_stock, stocks.apps_stock
+import stocks, stocks.self_stock, stocks.people_stock, stocks.apps_stock, stocks.search_stock
 
 SIZE_BULL_PADDING_PX = 4
 SIZE_BEAR_PADDING_PX = 2
@@ -47,9 +47,14 @@ class BigBoardPanel(object):
     def __init__(self):
         self._dw = Sidebar(True)
         
+        self.__logger = logging.getLogger("bigboard.Panel")
+        
         self._size = Stock.SIZE_BULL
 
-        self._stocks = [stocks.self_stock.SelfStock(), stocks.people_stock.PeopleStock(), stocks.apps_stock.AppsStock()]
+        self._stocks = [stocks.self_stock.SelfStock(), 
+                        stocks.search_stock.SearchStock(),
+                        stocks.people_stock.PeopleStock(), 
+                        stocks.apps_stock.AppsStock()]
         self._exchanges = []
 
         self._canvas = hippo.Canvas()
@@ -84,12 +89,15 @@ class BigBoardPanel(object):
         self._canvas.show()
         
     def list(self, stock):
+        """Add a stock to an Exchange."""
+        self.__logger.debug("listing stock %s", stock)
         container = Exchange(stock)
         self._stocks_box.append(container)
         container.set_size(self._size)
         self._exchanges.append(container)
         
     def _toggle_size(self):
+        self.__logger.debug("toggling size")
         if self._size == Stock.SIZE_BULL:
             self._size = Stock.SIZE_BEAR
         else:
@@ -112,6 +120,7 @@ class BigBoardPanel(object):
             self._stocks_box.set_property('padding', SIZE_BULL_PADDING_PX)
             
         for exchange in self._exchanges:
+            self.__logger.debug("resizing exchange %s to %s", exchange, self._size)
             exchange.set_size(self._size)
         
         self._dw.queue_resize()  
@@ -133,15 +142,21 @@ def usage():
 
 def main(args):
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hd", ["help", "debug"])
+        opts, args = getopt.getopt(sys.argv[1:], "hd", ["help", "debug", "debug-modules="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
     debug = False
-    for o, a in opts:
+    shell = False
+    debug_modules = ""
+    for o, v in opts:
         if o in ('-d', '--debug'):
             debug = True
-        if o in ("-h", "--help"):
+        elif o in ('-s', '--shell'):
+            shell = True
+        elif o in ('--debug-modules'):
+            debug_modules = v.split(',')
+        elif o in ("-h", "--help"):
             usage()
             sys.exit()
     
@@ -153,10 +168,49 @@ def main(args):
     gtk.gdk.threads_init()
     dbus.glib.threads_init()    
     
-    default_log_level = logging.WARNING
+    default_log_level = 'INFO'
     if debug:
-        default_log_level = logging.DEBUG
-    logging.basicConfig(level=default_log_level)
+        default_log_level = 'DEBUG'
+    
+    logging_config = StringIO.StringIO()
+    logging_config.write("""
+[loggers]
+keys=%s
+
+""" % (','.join(['root'] + debug_modules)))
+    logging_config.write("""    
+[formatters]
+keys=base
+
+[handlers]
+keys=stderr
+    
+[formatter_base]
+class=logging.Formatter
+
+[handler_stderr]
+class=StreamHandler
+level=NOTSET
+formatter=base
+args=(sys.stderr,)
+
+[logger_root]
+level=%s
+handlers=stderr
+
+        """ % (default_log_level,))
+    for module in debug_modules:
+        logging_config.write("""
+[logger_%s]
+level=DEBUG
+handlers=stderr
+propagate=0
+qualname=bigboard.%s
+
+        """ % (module,module)
+        )
+    logging.config.fileConfig(StringIO.StringIO(logging_config.getvalue()))
+    
     logging.debug("Initialized logging")
     
     hippo.canvas_set_load_image_hook(load_image_hook)    
@@ -165,7 +219,7 @@ def main(args):
     
     panel.show()
     
-    if debug:
+    if shell:
         cmdshell = CommandShell({'panel': panel})
         cmdshell.show_all()
         

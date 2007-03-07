@@ -143,13 +143,14 @@ class AsyncHTTPFetcher:
     """Asynchronously fetch objects over HTTP, invoking
        callbacks using the GLib main loop."""
     def fetch(self, url, cb, errcb, cookies=None):
-        logging.debug('creating async HTTP request thread for %s' % (url,))
+        self.__logger = logging.getLogger("bigboard.AsyncHTTPFetcher")
+        self.__logger.debug('creating async HTTP request thread for %s' % (url,))
         thread = threading.Thread(target=self._do_fetch, name="AsyncHTTPFetch", args=(url, cb, errcb, cookies))
         thread.setDaemon(True)
         thread.start()
         
     def _do_fetch(self, url, cb, errcb, cookies):
-        logging.debug("in thread fetch of %s" % (url,))
+        self.__logger.debug("in thread fetch of %s" % (url,))
         try:
             request = urllib2.Request(url)
             # set our cookies
@@ -164,7 +165,7 @@ class AsyncHTTPFetcher:
             data = opener.open(request).read()
             gobject.idle_add(lambda: cb(url, data) and False)
         except Exception, e:
-            logging.error("caught error for fetch of %s: %s" % (url, e))
+            self.__logger.error("caught error for fetch of %s: %s" % (url, e))
             # in my experience sys.exc_info() is some kind of junk here, while "e" is useful
             gobject.idle_add(lambda: errcb(url, sys.exc_info()) and False)
     
@@ -172,6 +173,7 @@ class URLImageCache(Singleton):
     def __init__(self):
         self._cache = {}
         self._loads = {}
+        self.__logger = logging.getLogger('bigboard.URLImageCache')
         self._fetcher = AsyncHTTPFetcher()
     
     def get(self, url, cb, errcb):
@@ -185,7 +187,7 @@ class URLImageCache(Singleton):
             self._loads[url].append(cbdata)
         else:
             self._loads[url] = [cbdata]
-            logging.debug("adding url='%s' to pending loads (%d outstanding)" % (url, len(self._loads.keys())))        
+            self.__logger.debug("adding url='%s' to pending loads (%d outstanding)" % (url, len(self._loads.keys())))        
             self._fetcher.fetch(url, self._do_load, self._do_load_error)
         
     def _do_load(self, url, data):
@@ -196,7 +198,7 @@ class URLImageCache(Singleton):
             loader.close()            
             pixbuf = loader.get_pixbuf()
             surface = hippo.cairo_surface_from_gdk_pixbuf(pixbuf)
-            logging.debug("invoking callback for %s url='%s'" % (self, url))
+            self.__logger.debug("invoking callback for %s url='%s'" % (self, url))
             self._cache[url] = surface
             for cb, errcb in self._loads[url]:
                 cb(url, surface)
