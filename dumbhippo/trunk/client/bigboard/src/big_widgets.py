@@ -14,6 +14,7 @@ class CanvasURLImageMixin:
     def __init__(self, url=None):
         if url:
             self.set_url(url)
+        self.__is_button = False
         
     def set_url(self, url):
         if url:
@@ -23,12 +24,19 @@ class CanvasURLImageMixin:
 
     def __handle_image_load(self, url, image):
         #print "got %s: %s" % (url, str(image))
-        self.set_property("image", image)
+        if self.__is_button:
+            self.set_property("normal-image", image)
+            self.set_property("prelight-image", image)
+        else:
+            self.set_property("image", image)
         
     def __handle_image_error(self, url, exc):
         # note exception is automatically added to log
         logging.exception("failed to load image for '%s'", url)  #FIXME queue retry
-        
+
+    def _set_is_button(self, is_button):
+        self.__is_button = is_button
+    
 class CanvasMugshotURLImageMixin:
     """A canvas image that takes a Mugshot-relative image URL."""
     def __init__(self, url=None):
@@ -44,7 +52,7 @@ class CanvasMugshotURLImageMixin:
     def __sync(self):
         baseurl = mugshot.get_mugshot().get_baseurl()
         if not (baseurl is None or self.__rel_url is None):
-            CanvasURLImage.set_url(self, baseurl + self.__rel_url)
+            CanvasURLImageMixin.set_url(self, baseurl + self.__rel_url)
 
 class CanvasURLImage(hippo.CanvasImage, CanvasURLImageMixin):
     """A wrapper for CanvasImage which has a set_url method to retrieve
@@ -65,6 +73,7 @@ class CanvasURLImageButton(hippo.CanvasImageButton, CanvasURLImageMixin):
     def __init__(self, url=None, **kwargs):
         hippo.CanvasImageButton.__init__(self, xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START, **kwargs)
         CanvasURLImageMixin.__init__(self, url)
+        self._set_is_button(True)
         
 class CanvasMugshotURLImageButton(CanvasMugshotURLImageMixin, CanvasURLImageButton):
     """A canvas image button that takes a Mugshot-relative image URL."""
