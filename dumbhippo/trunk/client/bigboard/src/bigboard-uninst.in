@@ -1,4 +1,5 @@
 #!/bin/sh
 srcdir=@SRCDIR@
 builddir=$(dirname $0)
-PYTHONPATH=${srcdir}/../canvas/build/.libs/:${srcdir}/../canvas/.libs:${builddir}/.libs:${srcdir}/src exec @PYTHON@ ${srcdir}/src/main.py "$@"
+DEBUG=
+PYTHONPATH=${srcdir}/../canvas/build/.libs/:${srcdir}/../canvas/.libs:${builddir}/.libs:${srcdir}/src exec $DEBUG @PYTHON@ ${srcdir}/src/main.py "$@"
