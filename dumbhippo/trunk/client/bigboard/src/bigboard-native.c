@@ -54,5 +54,22 @@ bigboard_set_log_handler(PyObject *self, PyObject *args)
         Py_INCREF(Py_None);
         result = Py_None;
     }
-  	return result;
+    return result;
 }
+
+PyObject*
+bigboard_set_application_name(PyObject *self, PyObject *args)
+{
+    PyObject *result = NULL;
+    char *s;
+
+    if (PyArg_ParseTuple(args, "s:bigboard_set_application_name", &s)) {
+        /* my impression from the python docs is that "s" is not owned by us so not freed */
+        g_set_application_name(s);
+        
+        Py_INCREF(Py_None);
+        result = Py_None;
+    }
+    return result;
+}
+

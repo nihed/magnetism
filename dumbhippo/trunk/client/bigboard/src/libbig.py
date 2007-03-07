@@ -21,6 +21,9 @@ def show_url(url):
 
 def set_log_handler(handler):
     bignative.set_log_handler(handler)
+
+def set_application_name(name):
+    bignative.set_application_name(name)
     
 def get_bigboard_config_file(name):
     basepath = os.path.expanduser("~/.bigboard")
