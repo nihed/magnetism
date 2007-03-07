@@ -33,8 +33,8 @@
     </servlet>
 
     <servlet>
-      <servlet-name>AppinfoUploadServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.servlets.AppinfoUploadServlet</servlet-class>
+      <servlet-name>AppinfoServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.AppinfoServlet</servlet-class>
 	  <load-on-startup>1</load-on-startup>
 	</servlet>
 
@@ -162,8 +162,13 @@
    </servlet-mapping>
 
    <servlet-mapping>
-      <servlet-name>AppinfoUploadServlet</servlet-name>
+      <servlet-name>AppinfoServlet</servlet-name>
       <url-pattern>/upload/appinfo</url-pattern>    
+   </servlet-mapping>
+   
+   <servlet-mapping>
+      <servlet-name>AppinfoServlet</servlet-name>
+      <url-pattern>/upload/appinfo-edit</url-pattern>    
    </servlet-mapping>
    
    <servlet-mapping>
@@ -174,6 +179,11 @@
    <servlet-mapping>
       <servlet-name>ApplicationIconServlet</servlet-name>
 	  <url-pattern>/files/appicons/*</url-pattern>      
+   </servlet-mapping>   
+
+   <servlet-mapping>
+      <servlet-name>AppinfoServlet</servlet-name>
+	  <url-pattern>/files/appinfo-icon/*</url-pattern>      
    </servlet-mapping>   
 
    <servlet-mapping>
