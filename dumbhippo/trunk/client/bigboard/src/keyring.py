@@ -40,7 +40,7 @@ class Keyring:
 
         return (username, password)
         
-    def store_username(self, whatfor, username, password):
+    def store_login(self, whatfor, username, password):
 
         self.__hack[whatfor] = (username, password)
 
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     print ring.is_available()
 
     print "storing"
-    ring.store_username('foob', 'abc', 'def')
+    ring.store_login('foob', 'abc', 'def')
 
     print "getting"
     print ring.get_login('foob')
