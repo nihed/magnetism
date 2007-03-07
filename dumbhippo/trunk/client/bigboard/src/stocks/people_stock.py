@@ -4,15 +4,14 @@ import hippo
 
 import os
 import bigboard, mugshot
-from big_widgets import CanvasMugshotURLImage, CanvasMugshotURLImageButton, PrelightingCanvasBox
+from big_widgets import CanvasMugshotURLImage, CanvasMugshotURLImageButton, PhotoContentItem
 import slideout
 import profile
 import cgi
 
-class EntityItem(PrelightingCanvasBox):
+class EntityItem(PhotoContentItem):
     def __init__(self, **kwargs):
-        kwargs['orientation'] = hippo.ORIENTATION_HORIZONTAL
-        PrelightingCanvasBox.__init__(self, **kwargs)
+        PhotoContentItem.__init__(self, **kwargs)
         
         self.__entity = None
 
@@ -21,13 +20,11 @@ class EntityItem(PrelightingCanvasBox):
                                             border=1,
                                             border_color=0x000000ff)
 
-        self.append(self.__photo)
+        self.set_photo(self.__photo)
 
         self.__name = hippo.CanvasText(xalign=hippo.ALIGNMENT_FILL, yalign=hippo.ALIGNMENT_START,
                                       size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
-        self.append(self.__name)
-
-        self.set_size(bigboard.Stock.SIZE_BULL)
+        self.set_child(self.__name)
 
         self.connect('button-press-event', self.__handle_button_press)
         self.connect('button-release-event', self.__handle_button_release)
