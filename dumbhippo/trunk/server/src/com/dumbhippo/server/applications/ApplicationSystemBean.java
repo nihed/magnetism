@@ -115,6 +115,47 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		em.persist(upload);
 	}
 	
+	private AppinfoFile getAppinfoFile(AppinfoUpload upload) throws IOException, ValidationException {
+		final File appinfoDir;
+		
+		try {
+			appinfoDir = new File(config.getPropertyNoDefault(HippoProperty.APPINFO_DIR));
+		} catch (PropertyNotFoundException e) {
+			throw new RuntimeException("appinfoDir property was not set in super configuration");
+		}
+
+		File location = new File(appinfoDir, upload.getId() + ".dappinfo");
+		return new AppinfoFile(location);
+	}
+	
+	public AppinfoFile getAppinfoFile(String applicationId) throws NotFoundException {
+		Query q = em.createQuery("SELECT au from AppinfoUpload au " +
+				                 " WHERE au.application.id = :applicationId " +
+				                 " ORDER BY uploadDate DESC")
+			.setParameter("applicationId", applicationId)
+			.setMaxResults(1);
+		
+		AppinfoUpload upload;
+		
+		try {
+			 upload = (AppinfoUpload)q.getSingleResult();
+		} catch (NoResultException e) {
+			throw new NotFoundException("Application not found");
+		}
+		
+		if (upload.isDeleteApplication()) {
+			throw new NotFoundException("Application was deleted");
+		}
+		
+		try {
+			return getAppinfoFile(upload);
+		} catch (IOException e) {
+			throw new RuntimeException("IO Error reading previously uploaded appinfo file", e);
+		} catch (ValidationException e) {
+			throw new RuntimeException("Validation error reading previously uploaded appinfo file", e);
+		}
+	}
+
 	public void reinstallAllApplications() {
 		// We don't actually need to run on commit, just async, but on-commit
 		// is an easy way to get async
@@ -123,14 +164,6 @@ public class ApplicationSystemBean implements ApplicationSystem {
 				final List<AppinfoUpload> uploads = new ArrayList<AppinfoUpload>();
 				final Set<String> seenApplications = new HashSet<String>();
 				
-				final File appinfoDir;
-				
-				try {
-					appinfoDir = new File(config.getPropertyNoDefault(HippoProperty.APPINFO_DIR));
-				} catch (PropertyNotFoundException e) {
-					throw new RuntimeException("appinfoDir property was not set in super configuration");
-				}
-
 				logger.info("Getting list of applications to install");
 				
 				runner.runTaskInNewTransaction(new Runnable() {
@@ -160,9 +193,8 @@ public class ApplicationSystemBean implements ApplicationSystem {
 
 							logger.info("Reinstalling {}.appinfo for {}", au.getId(), application.getId());
 							
-							File location = new File(appinfoDir, au.getId() + ".dappinfo");
 							try {
-								AppinfoFile appinfoFile = new AppinfoFile(location);
+								AppinfoFile appinfoFile = getAppinfoFile(au);
 								
 								updateApplication(application, appinfoFile);
 								updateApplicationCollections(application, appinfoFile);
@@ -189,10 +221,10 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		application.setName(appinfoFile.getName());
 		application.setDescription(appinfoFile.getDescription());
 		
-		application.setRawCategories(setToString(appinfoFile.getCategories()));
+		application.setRawCategories(appinfoFile.getCategoriesString());
 		application.setCategory(computeCategoryFromRaw(appinfoFile.getCategories()));
-		application.setTitlePatterns(setToString(appinfoFile.getTitlePatterns()));
-		application.setDesktopNames(listToString(appinfoFile.getDesktopNames()));
+		application.setTitlePatterns(appinfoFile.getTitlePatternsString());
+		application.setDesktopNames(appinfoFile.getDesktopNamesString());
 	}
 	
 	private void updateApplicationCollections(Application application, AppinfoFile appinfoFile) {
@@ -217,25 +249,6 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		}
 		
 		return ApplicationCategory.OTHER;
-	}
-	
-	private String listToString(List<String> list) {
-		StringBuilder builder = new StringBuilder();
-		
-		for (String t : list) {
-			if (builder.length() > 0)
-				builder.append(";");
-			builder.append(t);
-		}
-		
-		return builder.toString();
-	}
-	
-	private String setToString(Set<String> set) {
-		List<String> sortedElements = new ArrayList<String>(set);
-		Collections.sort(sortedElements);
-		
-		return listToString(sortedElements);
 	}
 	
 	private void deleteWmClasses(Application application) {
@@ -511,7 +524,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		
 		return applicationView;
 	}
-
+	
 	public void recordApplicationUsage(UserViewpoint viewpoint, Collection<ApplicationUsageProperties> usages) {
 		// We currently record usage by looping over each reported application usage one-by-one,
 		// but it would probably be more efficient to retrieve all applications that the user

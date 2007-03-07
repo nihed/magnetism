@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StringUtils;
 
 public class AppinfoIcon {
 	@SuppressWarnings("unused")
@@ -14,6 +15,8 @@ public class AppinfoIcon {
 	private String theme;
 	private String size;
 	private String path;
+
+	private byte[] contents;
 	
 	public AppinfoIcon(String theme, String size, String path) {
 		this.theme = theme;
@@ -33,6 +36,14 @@ public class AppinfoIcon {
 		return path;
 	}
 	
+	public byte[] getContents() {
+		return contents;
+	}
+	
+	public void setContents(byte[] contents) {
+		this.contents = contents;
+	}
+	
 	Pattern SIZE_PATTERN = Pattern.compile("(\\d+)x\\1");
 	
 	public int getNominalSize() {
@@ -45,5 +56,32 @@ public class AppinfoIcon {
 		} else {
 			return -1;
 		}
+	}
+	
+	public String getQueryString() {
+		StringBuilder result = new StringBuilder();
+		if (theme != null) {
+			result.append("?theme=");
+			result.append(StringUtils.urlEncode(theme));
+		}
+		if (size != null) {
+			if (result.length() == 0)
+				result.append("?size=");
+			else
+				result.append("&size=");
+			result.append(StringUtils.urlEncode(size));
+		}
+		
+		return result.toString();
+	}
+	
+	public boolean matches(String theme, String size) {
+		if (!(theme == this.theme || theme != null && theme.equals(this.theme)))
+			return false;
+
+		if (!(size == this.size || size != null && size.equals(this.size)))
+			return false;
+		
+		return true;
 	}
 }
