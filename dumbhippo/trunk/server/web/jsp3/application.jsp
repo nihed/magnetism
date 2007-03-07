@@ -11,7 +11,7 @@
 
 <c:set var="appView" value="${application.application}"/>
 
-<c:if test="${empty appView}">
+<c:if test="${empty appView || appView.application.deleted}">
 	<dht:errorPage>Application not found</dht:errorPage>
 </c:if>
 

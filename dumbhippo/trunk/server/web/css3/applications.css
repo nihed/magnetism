@@ -91,6 +91,7 @@
 .dh-application-edit-label {
 	font-weight: bold;
 	text-align: right;
+	vertical-align: baseline;
 }
 
 .dh-application-edit-control textarea {

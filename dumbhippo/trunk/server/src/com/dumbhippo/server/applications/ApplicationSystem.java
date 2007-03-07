@@ -21,6 +21,7 @@ public interface ApplicationSystem {
 	
 	ApplicationIconView getIcon(String appId, int size) throws NotFoundException;
 	ApplicationView getApplicationView(String appId, int iconSze) throws NotFoundException;
+	AppinfoFile getAppinfoFile(String appId) throws NotFoundException;
 	
 	void recordApplicationUsage(UserViewpoint viewpoint, Collection<ApplicationUsageProperties> usages);
 	
