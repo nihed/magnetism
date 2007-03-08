@@ -23,7 +23,6 @@ public class Application {
 	private String tooltip;
 	private String description;
 	private ApplicationCategory category;
-	private String rawCategories;
 	private String titlePatterns;
 	private String desktopNames;
 	private Set<ApplicationIcon> icons;
@@ -98,15 +97,6 @@ public class Application {
 
 	public void setCategory(ApplicationCategory category) {
 		this.category = category;
-	}
-
-	@Column(nullable = true)
-	public String getRawCategories() {
-		return rawCategories;
-	}
-
-	public void setRawCategories(String rawCategories) {
-		this.rawCategories = rawCategories;
 	}
 
 	@Column(nullable = true)

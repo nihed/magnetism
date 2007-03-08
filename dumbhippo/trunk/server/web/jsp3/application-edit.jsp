@@ -88,6 +88,25 @@
 		    				Detailed description of the application in a paragraph.
 		    			</jsp:attribute>
 		    		</dht3:applicationEditRow>
+		    		<dht3:applicationEditRow id="dhApplicationCategory" name="category" label="Category">
+		    			<jsp:attribute name="help">
+		    				Category that this application belongs to.
+		    			</jsp:attribute>
+		    			<jsp:attribute name="contents">
+		    				<select name="category" id="dhApplicationCategory">
+		    					<c:forEach items="${application.categories}" var="category">
+		    						<c:choose>
+		    							<c:when test="${category == appinfo.category}">
+					    					<option value="${category.name}" selected="1"><c:out value="${category.displayName}"/></option>
+					    				</c:when>
+					    				<c:otherwise>
+					    					<option value="${category.name}"><c:out value="${category.displayName}"/></option>
+					    				</c:otherwise>
+					    			</c:choose>
+		    					</c:forEach>
+		    				</select>
+		    			</jsp:attribute>
+		    		</dht3:applicationEditRow>
 		    		<dht3:applicationEditRow id="dhApplicationWmClasses" name="wmClasses" label="WM Classes" value="${appinfo.wmClassesString}">
 		    			<jsp:attribute name="help">
 							List of WM class names that might be found on a window for this application (; separated)
@@ -101,11 +120,6 @@
 		    		<dht3:applicationEditRow id="dhApplicationDesktopNames" name="desktopNames" label="Desktop Names" value="${appinfo.desktopNamesString}">
 		    			<jsp:attribute name="help">
 		    				Names used when finding a desktop file to launch this application. (; separated)
-		    			</jsp:attribute>
-		    		</dht3:applicationEditRow>
-		    		<dht3:applicationEditRow id="dhApplicationCategories" name="categories" label="Categories" value="${appinfo.categoriesString}">
-		    			<jsp:attribute name="help">
-		    				Categories that this application belongs to. (; separated)
 		    			</jsp:attribute>
 		    		</dht3:applicationEditRow>
 		    		<tr>

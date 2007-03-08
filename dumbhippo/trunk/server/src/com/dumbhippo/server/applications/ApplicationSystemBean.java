@@ -334,8 +334,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		application.setName(appinfoFile.getName());
 		application.setDescription(appinfoFile.getDescription());
 		
-		application.setRawCategories(appinfoFile.getCategoriesString());
-		application.setCategory(computeCategoryFromRaw(appinfoFile.getCategories()));
+		application.setCategory(appinfoFile.getCategory());
 		application.setTitlePatterns(appinfoFile.getTitlePatternsString());
 		application.setDesktopNames(appinfoFile.getDesktopNamesString());
 	}
@@ -343,25 +342,6 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	private void updateApplicationCollections(Application application, AppinfoFile appinfoFile) {
 		updateWmClasses(application, appinfoFile);
 		updateIcons(application, appinfoFile);
-	}
-	
-	private ApplicationCategory computeCategoryFromRaw(Set<String> rawCategories) {
-		for (ApplicationCategory category : ApplicationCategory.values()) {
-			boolean found = false;
-			boolean foundNot = false;
-			
-			for (String rc : category.getRawCategories()) {
-				if (rc.charAt(0) == '!' && rawCategories.contains(rc.substring(1)))
-					foundNot = true;
-				else if (rawCategories.contains(rc))
-					found = true;
-			}
-			
-			if (found && !foundNot)
-				return category;
-		}
-		
-		return ApplicationCategory.OTHER;
 	}
 	
 	private void deleteWmClasses(Application application) {

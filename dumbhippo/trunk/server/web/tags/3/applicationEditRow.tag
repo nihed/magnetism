@@ -8,6 +8,7 @@
 <%@ attribute name="name" required="true" type="java.lang.String" rtexprvalue="false"%>
 <%@ attribute name="value" required="false" type="java.lang.String"%>
 <%@ attribute name="help" required="false" fragment="true"%>
+<%@ attribute name="contents" required="false" fragment="true"%>
 <%@ attribute name="multiline" required="false" type="java.lang.Boolean"%>
 
 <tr>
@@ -16,6 +17,9 @@
 	</td>
 	<td class="dh-application-edit-control">
 		<c:choose>
+			<c:when test="${!empty contents}">
+				<jsp:invoke fragment="contents"/>
+			</c:when>
 			<c:when test="${multiline}">
 			    <textarea id="${id}" name="${name}"><c:out value="${value}"/></textarea>
 			</c:when>
