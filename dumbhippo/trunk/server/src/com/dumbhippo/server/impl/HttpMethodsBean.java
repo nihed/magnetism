@@ -2293,6 +2293,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			description.append(" by ");
 			description.appendEscaped(upload.getUploader().getName());
 			description.closeElement();
+			String comment = upload.getUpload().getComment();
+			if (comment != null && !"".equals("comment")) {
+				description.openElement("p");
+				description.appendEscaped(comment);
+				description.closeElement();				
+			}
 			
 			String guid = baseUrlString + "/rss/application-edit/" + upload.getUpload().getId();
 
