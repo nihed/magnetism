@@ -1,9 +1,11 @@
 package com.dumbhippo.server.applications;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +27,8 @@ public class AppinfoFile extends JarFile {
 	private Properties properties;
 	private String appId;
 	private String name;
+	private String genericName;
+	private String tooltip;
 	private String description;
 	private String desktopPath;
 	private Set<String> categories;
@@ -35,6 +39,8 @@ public class AppinfoFile extends JarFile {
 	
 	static final private Pattern ID_REGEX = Pattern.compile("[A-Za-z0-9-.]+");
 	static final private Pattern NAME_REGEX = Pattern.compile(".+");
+	static final private Pattern GENERIC_NAME_REGEX = null;
+	static final private Pattern TOOLTIP_REGEX = null;
 	static final private Pattern DESCRIPTION_REGEX = null;
 	static final private Pattern CATEGORY_REGEX = Pattern.compile("[A-Za-z0-9-]+");
 	static final private Pattern WM_CLASS_REGEX = Pattern.compile(".+");
@@ -74,6 +80,8 @@ public class AppinfoFile extends JarFile {
 		
 		appId = getStringProperty("id", ID_REGEX, false);
 		name = getStringProperty("name", NAME_REGEX, false);
+		genericName = getStringProperty("genericname", GENERIC_NAME_REGEX, true);
+		tooltip = getStringProperty("tooltip", TOOLTIP_REGEX, true);
 		description = getStringProperty("description", DESCRIPTION_REGEX, true);
 		categories = getSetProperty("categories", CATEGORY_REGEX);
 		wmClasses = getSetProperty("wmclass", WM_CLASS_REGEX);
@@ -81,8 +89,15 @@ public class AppinfoFile extends JarFile {
 		desktopNames = getListProperty("desktopnames", DESKTOP_NAME_REGEX);
 		desktopPath = getStringProperty("desktop", DESKTOP_REGEX, false);
 
-		if (getEntry(desktopPath) == null)
-			throw new ValidationException("desktop property doesn't point to a file in the appinfo file");
+		if (desktopPath != null) {
+			ZipEntry desktopEntry = getEntry(desktopPath); 
+			if (desktopEntry == null)
+				throw new ValidationException("desktop property doesn't point to a file in the appinfo file");
+			
+			// To deal with old uploads that don't have some keys, scan for those keys
+			// in the desktopfile provided with the upload
+			scanDesktopFile(desktopEntry);
+		}
 
 		// We form a fallback value of desktopNames from the application ID
 		// and from the name of the desktop file in the appinfo file, if any.
@@ -102,6 +117,29 @@ public class AppinfoFile extends JarFile {
 				desktopNames.add(appId);
 		}
 
+		// Make sure we have some value for all of genericName/tooltip/description
+		
+		if (genericName == null) {
+			if (tooltip != null)
+				genericName = tooltip;
+			else if (description != null)
+				genericName = description;
+		}
+		
+		if (tooltip == null) {
+			if (genericName != null)
+				tooltip = genericName;
+			else if (description != null)
+				tooltip = description;
+		}
+		
+		if (description == null) {
+			if (tooltip != null)
+				description = tooltip;
+			else if (genericName != null)
+				description = genericName;
+		}
+		
 		icons = new ArrayList<AppinfoIcon>();
 		for (Object o : properties.keySet()) {
 			String key = (String)o;
@@ -157,6 +195,57 @@ public class AppinfoFile extends JarFile {
 			}
 		});
 	}
+	
+	static final Pattern GROUP_REGEX = Pattern.compile("^\\[([^]]+)\\]\\s*$");
+	static final Pattern KEY_VALUE_REGEX = Pattern.compile("^([A-Za-z]+)\\s*=\\s*(.*?)\\s*$");
+
+	private void scanDesktopFile(ZipEntry entry) throws IOException {
+		InputStream in = getInputStream(entry);
+		BufferedReader reader = null;
+		
+		try {
+			reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+			
+			boolean inDesktopGroup = false;
+			while (true) {
+				Matcher m; 
+				
+				String line = reader.readLine();
+				if (line == null)
+					break;
+				
+				line = line.trim();
+				
+				m = GROUP_REGEX.matcher(line);
+				if (m.matches()) {
+	                if (inDesktopGroup && !"Desktop Entry".equals(m.group(1)))
+	                    inDesktopGroup = false;
+	                else if (!inDesktopGroup && "Desktop Entry".equals(m.group(1)))
+	                    inDesktopGroup= true;
+	                continue;
+				}
+				
+				if (!inDesktopGroup)
+					continue;
+			
+				m = KEY_VALUE_REGEX.matcher(line);
+				if (m.matches()) {
+					String key = m.group(1);
+					String value = m.group(2);
+					
+					if (description == null && key.equals("Comment"))
+						tooltip = value;
+					else if (genericName == null && key.equals("GenericName"))
+						genericName = value;
+				}
+			}
+		} finally {
+			if (reader != null)
+				reader.close();
+			
+			in.close();
+		}
+	}
 
 	private String getStringProperty(String propertyName, Pattern mustMatch, boolean nullOk) throws ValidationException {
 		String str = properties.getProperty(propertyName);
@@ -193,6 +282,25 @@ public class AppinfoFile extends JarFile {
 	public void setName(String name) throws ValidationException {
 		this.name = validateString(name, "name", NAME_REGEX, false);
 		setProperty("name", getName());
+	}
+	
+
+	public String getGenericName() {
+		return genericName;
+	}
+
+	public void setGenericName(String genericName) throws ValidationException {
+		this.genericName = validateString(genericName, "genericName", GENERIC_NAME_REGEX, false);
+		setProperty("genericname", getGenericName());
+	}
+
+	public String getTooltip() {
+		return tooltip;
+	}
+
+	public void setTooltip(String tooltip) throws ValidationException {
+		this.tooltip = validateString(tooltip, "tooltip", TOOLTIP_REGEX, false);
+		setProperty("tooltip", getTooltip());
 	}
 
 	public String getDescription() {

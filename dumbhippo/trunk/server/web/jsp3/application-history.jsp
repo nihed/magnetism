@@ -79,6 +79,8 @@
 	    		<dht3:applicationHistoryRow id="dhApplicationComment" label="Comment" value="${application.upload.upload.comment}"/>
 	    		<tr class="dh-application-edit-spacer-row"></tr>
 	    		<dht3:applicationHistoryRow id="dhApplicationName" label="Name" value="${appinfo.name}"/>
+	    		<dht3:applicationHistoryRow id="dhApplicationGenericName" label="Generic Name" value="${appinfo.genericName}"/>
+	    		<dht3:applicationHistoryRow id="dhApplicationTooltip" label="Tooltip" value="${appinfo.tooltip}"/>
 	    		<dht3:applicationHistoryRow id="dhApplicationDescription" label="Description" value="${appinfo.description}"/>
 	    		<dht3:applicationHistoryRow id="dhApplicationWmClasses" label="WM Classes" value="${appinfo.wmClassesString}"/>
 	    		<dht3:applicationHistoryRow id="dhApplicationTitlePatterns" label="Title Patterns" value="${appinfo.titlePatternsString}"/>
