@@ -20,8 +20,8 @@ import com.dumbhippo.server.views.Viewpoint;
 public interface ApplicationSystem {
 	boolean canEditApplications(Viewpoint viewpoint);
 		
-	void addUpload(Guid uploaderId, Guid uploadId, AppinfoFile appinfoFile);
-	void deleteApplication(UserViewpoint viewpoint, String applicationId);
+	void addUpload(Guid uploaderId, Guid uploadId, AppinfoFile appinfoFile, String comment);
+	void deleteApplication(UserViewpoint viewpoint, String applicationId, String comment);
 	void reinstallAllApplications();
 	
 	void revertApplication(UserViewpoint viewpoint, String applicationId, Guid uploadId, String comment) throws XmlMethodException;

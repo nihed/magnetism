@@ -105,3 +105,20 @@
 .dh-application-edit-save {
 	text-align: right;
 }
+
+.dh-application-upload-history th { 
+	text-align: left;
+}
+
+.dh-application-upload .dh-application-upload-comment {
+	font-style: italic;
+}
+
+.dh-application-upload-current {
+	font-weight: bold;
+}
+
+.dh-application-upload-odd {
+	background: #f4f4cc;
+}
+

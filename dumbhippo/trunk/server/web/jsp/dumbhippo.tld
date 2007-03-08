@@ -356,4 +356,9 @@
     	<function-class>com.dumbhippo.web.tags.FuncUtils</function-class>
     	<function-signature>java.lang.String xmlEscape(java.lang.String)</function-signature>
     </function>
+    <function>
+    	<name>size</name>
+    	<function-class>com.dumbhippo.web.tags.FuncUtils</function-class>
+    	<function-signature>int size(java.util.Collection)</function-signature>
+    </function>
 </taglib>

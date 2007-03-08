@@ -88,7 +88,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		return new Date(System.currentTimeMillis() - 31 * 24 * 60 * 60 * 1000L);
 	}
 		
-	public void addUpload(Guid uploaderId, Guid uploadId, AppinfoFile appinfoFile) {
+	public void addUpload(Guid uploaderId, Guid uploadId, AppinfoFile appinfoFile, String comment) {
 		User uploader = em.find(User.class, uploaderId.toString());
 		boolean isNew = false;
 		
@@ -106,16 +106,17 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		
 		updateApplicationCollections(application, appinfoFile);
 		
-		AppinfoUpload upload = new AppinfoUpload(uploader);
+		AppinfoUpload upload = new AppinfoUpload(uploader, comment);
 		upload.setId(uploadId.toString());
 		upload.setApplication(application);
+		upload.setInitialUpload(isNew);
 		
 		em.persist(upload);
 		
 		migrateUnmatchedUsage(application);
 	}
 	
-	public void deleteApplication(UserViewpoint viewpoint, String applicationId) {
+	public void deleteApplication(UserViewpoint viewpoint, String applicationId, String comment) {
 		Application application = em.find(Application.class, applicationId);
 		application.setDeleted(true);
 		
@@ -126,7 +127,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		deleteWmClasses(application);
 		deleteIcons(application);
 		
-		AppinfoUpload upload = new AppinfoUpload(viewpoint.getViewer());
+		AppinfoUpload upload = new AppinfoUpload(viewpoint.getViewer(), comment);
 		upload.setApplication(application);
 		upload.setDeleteApplication(true);
 		
@@ -261,7 +262,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		}
 
 		try {
-			addUpload(viewpoint.getViewer().getGuid(), newUploadId, oldFile);
+			addUpload(viewpoint.getViewer().getGuid(), newUploadId, oldFile, comment);
 		} catch (RuntimeException e) {
 			saveLocation.delete();
 			throw(e);
