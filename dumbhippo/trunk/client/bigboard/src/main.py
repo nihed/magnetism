@@ -212,6 +212,9 @@ qualname=bigboard.%s
     logging.config.fileConfig(StringIO.StringIO(logging_config.getvalue()))
     
     logging.debug("Initialized logging")
+
+    libbig.set_application_name("BigBoard")
+    libbig.set_program_name("bigboard")
     
     hippo.canvas_set_load_image_hook(load_image_hook)    
     

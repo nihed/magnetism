@@ -73,3 +73,18 @@ bigboard_set_application_name(PyObject *self, PyObject *args)
     return result;
 }
 
+PyObject*
+bigboard_set_program_name(PyObject *self, PyObject *args)
+{
+    PyObject *result = NULL;
+    char *s;
+
+    if (PyArg_ParseTuple(args, "s:bigboard_set_program_name", &s)) {
+        /* my impression from the python docs is that "s" is not owned by us so not freed */
+        g_set_prgname(s);
+        
+        Py_INCREF(Py_None);
+        result = Py_None;
+    }
+    return result;
+}

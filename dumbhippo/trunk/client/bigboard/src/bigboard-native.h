@@ -9,6 +9,7 @@ G_BEGIN_DECLS
 
 PyObject * bigboard_set_log_handler			(PyObject *self, PyObject *func);
 PyObject*  bigboard_set_application_name                (PyObject *self, PyObject *args);
+PyObject*  bigboard_set_program_name                    (PyObject *self, PyObject *args);
 
 G_END_DECLS
 
