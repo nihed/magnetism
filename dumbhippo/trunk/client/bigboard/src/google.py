@@ -3,7 +3,7 @@ import httplib2, keyring, libbig, sys, xml, xml.sax
 class AbstractDocument(libbig.AutoStruct):
     def __init__(self):
         libbig.AutoStruct.__init__(self,
-                                   { 'title' : '', 'link' : None })
+                                   { 'title' : 'Untitled', 'link' : None })
 
 class SpreadsheetDocument(AbstractDocument):
     def __init__(self):
@@ -16,10 +16,11 @@ class WordProcessorDocument(AbstractDocument):
 class DocumentsParser(xml.sax.ContentHandler):
     def __init__(self):
         self.__docs = []
+        self.__inside_title = False
 
     def startElement(self, name, attrs):
-        print "<" + name + ">"
-        print attrs.getNames() # .getValue('foo')
+        #print "<" + name + ">"
+        #print attrs.getNames() # .getValue('foo')
 
         if name == 'entry':
             d = SpreadsheetDocument()
@@ -27,13 +28,20 @@ class DocumentsParser(xml.sax.ContentHandler):
         elif len(self.__docs) > 0:
             d = self.__docs[-1]
             if name == 'title':
-                d.update({'title' : ''}) # FIXME
+                self.__inside_title = True
 
     def endElement(self, name):
-        print "</" + name + ">"
+        #print "</" + name + ">"
+        
+        if name == 'title':
+            self.__inside_title = False
 
     def characters(self, content):
-        print content
+        #print content
+        if len(self.__docs) > 0:
+            d = self.__docs[-1]
+            if self.__inside_title:
+                d.update({'title' : content})
 
     def get_documents(self):
         return self.__docs
