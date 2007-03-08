@@ -144,3 +144,18 @@
 .dh-application-edit-spacer-row {
 	height:   12px;
 }
+
+.dh-application-upload-history {
+	margin-left:	1em;
+}
+
+.dh-application-upload-history td {
+	padding-top:       2px;
+	padding-bottom:    2px;
+}
+
+.dh-application-upload-comment {
+	padding-left:  12px;
+	padding-right: 12px;
+	width: 		   30em;
+}

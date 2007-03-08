@@ -19,7 +19,7 @@
 <c:set var="appinfo" value="${application.appinfoFile}"/>
 
 <head>
-	<title>Application History - <c:out value="${appinfo.name}"/></title>
+	<title>Application History - <c:out value="${appView.application.name}"/></title>
 	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="applications"/>	
     <dh:script modules="dh.util,dh.server"/>
@@ -49,9 +49,9 @@
 
 <dht3:page currentPageLink="applications">
    	<dht3:shinyBox color="grey">
-		<div class="dh-page-shinybox-title-large">Application History - <c:out value="${appinfo.name}"/></div>
+		<div class="dh-page-shinybox-title-large">Application History - <c:out value="${appView.application.name}"/></div>
 		<div>
-   			This page shows past versions of application information for <c:out value="${appinfo.name}"/>.
+   			This page shows past versions of application information for <c:out value="${appView.application.name}"/>.
 			<a href="/application-edit?id=${appinfo.appId}">Edit current</a> |
 			<a href="/application?id=${appinfo.appId}">Go back to browsing</a>
 		</div>
@@ -61,16 +61,22 @@
 	    		<dht3:applicationHistoryRow id="dhApplicationUploadDate" label="Date">
 	    			<jsp:attribute name="value">
 						<fmt:formatDate value="${application.upload.upload.uploadDate}" pattern="yyyy-MM-dd HH:mm:ss ZZZ"/>
-						<c:if test="${application.upload.current}">
-							(current)
-						</c:if>
+						<c:choose>
+							<c:when test="${application.upload.upload.initialUpload}">
+								(initial upload)
+							</c:when>
+							<c:when test="${application.upload.current}">
+								(current)
+							</c:when>
+						</c:choose>
 	    			</jsp:attribute>
 	    		</dht3:applicationHistoryRow>
-	    		<dht3:applicationHistoryRow id="dhApplicationUploader" label="Uploader">
+	    		<dht3:applicationHistoryRow id="dhApplicationUploader" label="${application.upload.upload.initialUpload ? 'Uploaded By' : 'Modified By'}">
 	    			<jsp:attribute name="contents">
 						<a href="${application.upload.uploader.homeUrl}"><c:out value="${application.upload.uploader.name}"/></a>
 	    			</jsp:attribute>
 	    		</dht3:applicationHistoryRow>
+	    		<dht3:applicationHistoryRow id="dhApplicationComment" label="Comment" value="${application.upload.upload.comment}"/>
 	    		<tr class="dh-application-edit-spacer-row"></tr>
 	    		<dht3:applicationHistoryRow id="dhApplicationName" label="Name" value="${appinfo.name}"/>
 	    		<dht3:applicationHistoryRow id="dhApplicationDescription" label="Description" value="${appinfo.description}"/>
@@ -83,64 +89,64 @@
     			Icons:
     			</td>
     			<td>
-			    	<table>
-			    		<tr>
-    					<th>
-			    		</th>
-			    		<th>
-			    			Theme
-			    		</th>
-			    		<th>
-			    			Size
-			    		</th>
-			    		</tr>
-				    	<c:forEach items="${appinfo.icons}" var="icon">
+    				<c:if test="${dh:size(appinfo.icons) > 0}">
+				    	<table>
 				    		<tr>
-				    		<td>
-				    			<dht3:appinfoIcon upload="${application.upload}" icon="${icon}"/>
-					    	</td>
-				    		<td>
-			    				<c:out value="${icon.theme}"/>
-			    			</td>
-			    			<td>
-			    				<c:out value="${icon.size}"/>
-		    				</td>
-					    		</tr>
-		    			</c:forEach>
-    				</table>
-    				<table>
-			    	<tbody id="dhAddIconBody">
-			    	<tr id="dhAddIconHeader" style="display: none;">
-		    		<th>
-   						File
-			   		</th>
-			   		<th>
-   						Theme
-			   		</th>
-			   		<th>
-   						Size
-			   		</th>
-    				</tr>
-				    </tbody>
-	    			</table>
+    						<th>
+				    		</th>
+			    			<th>
+			    				Theme
+			    			</th>
+				    		<th>
+				    			Size
+				    		</th>
+				    		</tr>
+					    	<c:forEach items="${appinfo.icons}" var="icon">
+					    		<td>
+					    			<dht3:appinfoIcon upload="${application.upload}" icon="${icon}"/>
+						    	</td>
+				    			<td>
+			    					<c:out value="${icon.theme}"/>
+				    			</td>
+				    			<td>
+				    				<c:out value="${icon.size}"/>
+			    				</td>
+						    		</tr>
+			    			</c:forEach>
+			    		</table>
+    				</c:if>
 				</td>
 				</tr>
 	    	</table>
 	    </div>
 	    <div class="dh-grow-div-around-floats"></div>
 	    <hr/>
-		<div class="dh-page-shinybox-subtitle">History</div>
-		<table>
-			<c:forEach items="${application.uploadHistory}" var="upload">
-				<tr>
-				<td>
-					<fmt:formatDate value="${upload.upload.uploadDate}" pattern="yyyy-MM-dd HH:mm:ss ZZZ"/>
+		<table class="dh-application-upload-history" cellspacing="0">
+			<tr class="dh-application-upload-date-header">
+			<th class="dh-application-upload-date">Date</th>
+			<th class="dh-application-upload-comment">Comment</th>
+			<th class="dh-application-upload-uploader">Modified By</th>
+			</tr>
+			<c:forEach items="${application.uploadHistory}" var="upload" varStatus="status">
+				<c:set var="current" value="${upload.upload.id == application.upload.upload.id}"/>
+				<tr class="dh-application-upload ${current ? 'dh-application-upload-current' : ''} ${(status.index % 2  == 0) ? 'dh-application-upload-odd' : 'dh-application-upload-even'}">
+				<td class="dh-application-upload-date">
+					<c:choose>
+						<c:when test="${current}">
+							<fmt:formatDate value="${upload.upload.uploadDate}" pattern="yyyy-MM-dd HH:mm:ss ZZZ"/>
+						</c:when>
+						<c:otherwise>
+							<a href="/application-history?id=${appView.application.id}&version=${upload.upload.id}">
+								<fmt:formatDate value="${upload.upload.uploadDate}" pattern="yyyy-MM-dd HH:mm:ss ZZZ"/>
+							</a>
+						</c:otherwise>
+					</c:choose>
 				</td>
-				<td>
-					<a href="${upload.uploader.homeUrl}"><c:out value="${upload.uploader.name}"/></a>
+				<td class="dh-application-upload-comment">
+					<c:out value="${upload.upload.comment}"/>
 				</td>
-				<td>
-					<a href="/application-history?id=${appView.application.id}&version=${upload.upload.id}">Go</a>
+				<td class="dh-application-upload-uploader">
+					<c:out value="${upload.uploader.name}"/>
 				</td>
 				</tr>
 			</c:forEach>

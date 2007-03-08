@@ -103,37 +103,39 @@
 	    			Icons:
 	    			</td>
 	    			<td>
-				    	<table>
-				    		<tr>
-	    					<th>
-				    		</th>
-				    		<th>
-				    			Theme
-				    		</th>
-				    		<th>
-				    			Size
-				    		</th>
-				    		<th>
-				    			Delete
-				    		</th>
-				    		</tr>
-					    	<c:forEach items="${appinfo.icons}" var="icon">
+	    				<c:if test="${dh:size(appinfo.icons) > 0}">
+					    	<table>
 					    		<tr>
-					    		<td>
-					    			<dht3:appinfoIcon upload="${application.upload}" icon="${icon}"/>
-						    	</td>
-					    		<td>
-				    				<c:out value="${icon.theme}"/>
-				    			</td>
-				    			<td>
-				    				<c:out value="${icon.size}"/>
-			    				</td>
-			    				<td>
-			    					<input type="checkbox" name="delete-icon${empty icon.theme ? '' : '.'}${icon.theme}${empty icon.size ? '' : '.'}${icon.size}"/>
-			    				</td>
+	    						<th>
+					    		</th>
+				    			<th>
+					    			Theme
+					    		</th>
+					    		<th>
+					    			Size
+					    		</th>
+					    		<th>
+				    				Delete
+				    			</th>
 					    		</tr>
-			    			</c:forEach>
-	    				</table>
+						    	<c:forEach items="${appinfo.icons}" var="icon">
+						    		<tr>
+						    		<td>
+						    			<dht3:appinfoIcon upload="${application.upload}" icon="${icon}"/>
+							    	</td>
+					    			<td>
+				    					<c:out value="${icon.theme}"/>
+					    			</td>
+					    			<td>
+					    				<c:out value="${icon.size}"/>
+					    				</td>
+			    					<td>
+			    						<input type="checkbox" name="delete-icon${empty icon.theme ? '' : '.'}${icon.theme}${empty icon.size ? '' : '.'}${icon.size}"/>
+			    					</td>
+						    		</tr>
+				    			</c:forEach>
+	    					</table>
+	    				</c:if>
 	    				<table>
 				    	<tbody id="dhAddIconBody">
 				    	<tr id="dhAddIconHeader" style="display: none;">
@@ -152,6 +154,12 @@
 					    <a href="javascript:dhAddIcon()">Add an icon</a>
 					</td>
 					</tr>
+		    		<tr class="dh-application-edit-spacer-row"></tr>
+		    		<dht3:applicationEditRow id="dhApplicationDescription" name="comment" label="Comment" value="" multiline="true">
+		    			<jsp:attribute name="help">
+		    				Comment describing of the change you are making
+		    			</jsp:attribute>
+		    		</dht3:applicationEditRow>
 		    		<tr>
 		    			<td></td>
 		    			<td class="dh-application-edit-save"><input type="submit" value="Save"></input></td>

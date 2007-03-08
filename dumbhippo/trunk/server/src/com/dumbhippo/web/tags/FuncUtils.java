@@ -1,5 +1,6 @@
 package com.dumbhippo.web.tags;
 
+import java.util.Collection;
 import java.util.Random;
 
 import com.dumbhippo.StringUtils;
@@ -37,5 +38,9 @@ public class FuncUtils {
 	
 	public static String xmlEscape(String s) {
 		return XmlBuilder.escape(s);
+	}
+	
+	public static int size(Collection collection) {
+		return collection.size();
 	}
 }

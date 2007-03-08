@@ -200,7 +200,7 @@ public class AppinfoFile extends JarFile {
 	}
 
 	public void setDescription(String description) throws ValidationException {
-		this.description = validateString(name, "description", DESCRIPTION_REGEX, true);
+		this.description = validateString(description, "description", DESCRIPTION_REGEX, true);
 		setProperty("description", getDescription());
 	}
 

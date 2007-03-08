@@ -105,6 +105,8 @@ public class AppinfoServlet extends AbstractServlet {
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "file upload malformed somehow; we aren't sure what went wrong");
 		}
 		
+		String comment = null;
+		
 		for (Object o : items) {
 			FileItem item = (FileItem) o;
 			String name = item.getFieldName();
@@ -118,6 +120,8 @@ public class AppinfoServlet extends AbstractServlet {
 				}
 				
 				break;
+			} else if (name.equals("comment")) {
+				comment = item.getString().trim();
 			}
 		}
 		
@@ -133,7 +137,7 @@ public class AppinfoServlet extends AbstractServlet {
 		}
 
 		try {
-			applicationSystem.addUpload(getUser(request).getGuid(), uploadId, file);
+			applicationSystem.addUpload(getUser(request).getGuid(), uploadId, file, comment);
 		} catch (RuntimeException e) {
 			file.close();
 			saveLocation.delete();
@@ -212,15 +216,16 @@ public class AppinfoServlet extends AbstractServlet {
 	}
 	
 	private static class EditSpec {
-		String appId = null;
-		String name = null;
-		String description = null;
-		String wmClasses = null;
-		String titlePatterns = null;
-		String desktopNames = null;
-		String categories = null;
-		List<DeleteIconSpec> toDelete = new ArrayList<DeleteIconSpec>();
-		Map<Integer, AddIconSpec> toAdd = new HashMap<Integer,AddIconSpec>();
+		private String appId = null;
+		private String name = null;
+		private String description = null;
+		private String wmClasses = null;
+		private String titlePatterns = null;
+		private String desktopNames = null;
+		private String categories = null;
+		private List<DeleteIconSpec> toDelete = new ArrayList<DeleteIconSpec>();
+		private Map<Integer, AddIconSpec> toAdd = new HashMap<Integer,AddIconSpec>();
+		private String comment;
 		
 		public String getAppId() {
 			return appId;
@@ -245,6 +250,10 @@ public class AppinfoServlet extends AbstractServlet {
 					desktopNames =item.getString();
 				} else if (fieldName.equals("categories")) {
 					categories = item.getString();
+				} else if (fieldName.equals("comment")) {
+					comment = item.getString().trim();
+					if ("".equals(comment))
+						comment = null;
 				} else {
 					Matcher m = ADD_ICON_NAME_REGEX.matcher(fieldName);
 					if (m.matches()) {
@@ -306,6 +315,10 @@ public class AppinfoServlet extends AbstractServlet {
 				}
 			}
 		}
+
+		public String getComment() {
+			return comment;
+		}
 	}
 
 	private String doEdit(HttpServletRequest request, HttpServletResponse response)  throws HttpException, IOException {
@@ -360,7 +373,7 @@ public class AppinfoServlet extends AbstractServlet {
 			out = null;
 			
 
-			applicationSystem.addUpload(getUser(request).getGuid(), uploadId, file);
+			applicationSystem.addUpload(getUser(request).getGuid(), uploadId, file, spec.getComment());
 
 			logger.debug("Edited appinfo file succesfully written to {}", saveLocation.getPath());
 			success = true;
