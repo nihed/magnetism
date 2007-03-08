@@ -70,6 +70,3 @@ if __name__ == '__main__':
     events = g.get_calendar()
 
     print events
-
-    
-    
