@@ -60,7 +60,8 @@
 		<div class="dh-page-shinybox-title-large">Edit Application - <c:out value="${appinfo.name}"/></div>
 		<div>
    			This page allow allows you to edit the application database information for <c:out value="${appinfo.name}"/>.
-			<a href="/application?id=${appinfo.appId}">Go back to viewing</a>.
+			<a href="/application-history?id=${appinfo.appId}">View history</a> |
+			<a href="/application?id=${appinfo.appId}">Go back to browsing</a>
 		</div>
 	    <hr>
 	    <div id="dhApplicationsRight">
@@ -119,17 +120,7 @@
 					    	<c:forEach items="${appinfo.icons}" var="icon">
 					    		<tr>
 					    		<td>
-					    			<c:choose>
-					    				<c:when test="${icon.size == 'scalable'}">
-								    		<iframe src="/files/appinfo-icon/${appinfo.appId}${icon.queryString}" width="64" height="64" frameborder="0"></iframe>
-					    				</c:when>
-					    				<c:when test="${icon.nominalSize != -1}">
-								    		<img src="/files/appinfo-icon/${appinfo.appId}${icon.queryString}" width="${icon.nominalSize}" height="${icon.nominalSize}"/>
-					    				</c:when>
-					    				<c:otherwise>
-								    		<img src="/files/appinfo-icon/${appinfo.appId}${icon.queryString}"/>
-					    				</c:otherwise>
-					    			</c:choose>
+					    			<dht3:appinfoIcon upload="${application.upload}" icon="${icon}"/>
 						    	</td>
 					    		<td>
 				    				<c:out value="${icon.theme}"/>

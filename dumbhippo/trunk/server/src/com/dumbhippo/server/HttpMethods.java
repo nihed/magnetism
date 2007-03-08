@@ -410,4 +410,12 @@ public interface HttpMethods {
 	@HttpParams( { "enabled" })
 	public void doSetApplicationUsageEnabled(UserViewpoint viewpoint, boolean enabled) throws IOException, HumanVisibleException;
 
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "applicationId", "version", "comment" } )
+	public void doRevertApplication(XmlBuilder xml, UserViewpoint viewpoint, String applicationId, Guid version, String comment) throws XmlMethodException;
+
+	@HttpContentTypes(HttpResponseData.XML)
+	@HttpParams( { } )
+	public void getApplicationEditRSS(OutputStream out, HttpResponseData contentType, Viewpoint viewpoint) throws IOException, XmlMethodException;
+
 }

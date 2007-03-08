@@ -10,7 +10,6 @@ import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,7 +17,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -47,6 +45,7 @@ import bsh.TokenMgrError;
 import com.dumbhippo.BeanUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
+import com.dumbhippo.RssBuilder;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
@@ -54,6 +53,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.LiveGroup;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.AimResource;
+import com.dumbhippo.persistence.Application;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
@@ -110,8 +110,9 @@ import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
+import com.dumbhippo.server.applications.AppinfoUploadView;
+import com.dumbhippo.server.applications.ApplicationSystem;
 import com.dumbhippo.server.blocks.BlockView;
-import com.dumbhippo.server.blocks.ExternalAccountBlockView;
 import com.dumbhippo.server.blocks.TitleBlockView;
 import com.dumbhippo.server.blocks.TitleDescriptionBlockView;
 import com.dumbhippo.server.util.EJBUtil;
@@ -156,6 +157,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	@EJB
 	private AccountSystem accountSystem;
 
+	@EJB
+	private ApplicationSystem applicationSystem;
+	
 	@EJB
 	private GroupSystem groupSystem;
 
@@ -2207,56 +2211,94 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		stack = pageable.getResults();
 		
 		PersonView userView = personViewer.getPersonView(AnonymousViewpoint.getInstance(), who);
-
-    XmlBuilder xml = new XmlBuilder();
-
-    xml.appendStandaloneFragmentHeader();
 		
-    xml.openElement("rss", "version", "2.0");
+	    String baseUrlString = config.getProperty(HippoProperty.BASEURL);
+	    
+	    URL baseUrl = new URL(baseUrlString);
+	    URL userPhotoUrl = new URL(baseUrl, userView.getPhotoUrl());
+	    URL userHomeUrl = new URL(baseUrl, userView.getHomeUrl());
+	    
+	    String channelDescription = userView.getBioAsHtml();
+	    if (channelDescription == null)
+	    	channelDescription = "What " + userView.getName() + " is doing online";
 
-    String baseurl = config.getProperty(HippoProperty.BASEURL);
-
-		xml.openElement("channel");
-    xml.appendTextNode("title", userView.getName());
-    xml.appendTextNode("link", baseurl + userView.getHomeUrl());
-    xml.appendTextNode("description", userView.getBioAsHtml());
-    xml.appendTextNode("generator", "Mugshot.org User RSS Generator");
-
-    xml.openElement("image");
-    xml.appendTextNode("url", baseurl + userView.getPhotoUrl());
-    xml.appendTextNode("title", userView.getName());
-    xml.appendTextNode("link", baseurl + userView.getHomeUrl());
-	  xml.closeElement(); // </image>
-		
-    SimpleDateFormat sdf = new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss' 'Z", Locale.US);
+	    RssBuilder rss = new RssBuilder(userView.getName(),
+										userHomeUrl,
+										channelDescription);
+				
+		rss.setChannelImage(userPhotoUrl,
+				            userView.getName(),
+				            userHomeUrl);
 
 		for (BlockView bv : stack) {
-      if ( !(bv instanceof TitleBlockView))
-        continue;
+			if (!(bv instanceof TitleBlockView))
+				continue;
 
-      boolean ext  = (bv instanceof ExternalAccountBlockView);
-
-      xml.openElement("item");
-      xml.appendTextNode("link", (!ext? baseurl : "") + bv.getSummaryLink());
-      xml.appendTextNode("title", bv.getSummaryLinkText());
-
-      if (bv instanceof TitleDescriptionBlockView)
-        xml.appendTextNode("description", ((TitleDescriptionBlockView) bv).getDescription());
-
-      xml.appendTextNode("pubDate", sdf.format(bv.getBlock().getTimestamp()));
-
-      xml.appendTextNode("guid", (!ext? baseurl : "") + bv.getSummaryLink()); // hopefully this is actually a guid, there's no real way of checking
-  		xml.closeElement(); // </item>
+			String description = null;
+			if (bv instanceof TitleDescriptionBlockView)
+				description = ((TitleDescriptionBlockView) bv).getDescription();
+			
+			URL url;
+			try {
+				url = new URL(baseUrl, bv.getSummaryLink());
+			} catch (MalformedURLException e) {
+				logger.warn("Invalid summary link URL: {}", bv.getSummaryLink());
+				continue;
+			}
+			
+			String guid = baseUrlString + "/rss/user/" + userView.getUser().getId() + "/" + bv.getBlock().getId();
+			
+			rss.addItem(url,
+						bv.getSummaryLinkText(),
+						description,
+						bv.getBlock().getTimestamp(),
+						guid);
 		}
 		
-		xml.closeElement(); // </channel>
-
-    xml.closeElement(); // </rss>
-
-    out.write(xml.getBytes());
+		out.write(rss.getBytes());
 	}
 
 	public void doSetApplicationUsageEnabled(UserViewpoint viewpoint, boolean enabled) throws IOException, HumanVisibleException {
 		identitySpider.setApplicationUsageEnabled(viewpoint.getViewer(), enabled);
+	}
+	
+	public void doRevertApplication(XmlBuilder builder, UserViewpoint viewpoint, String applicationId, Guid version, String comment) throws XmlMethodException {
+		applicationSystem.revertApplication(viewpoint, applicationId, version, comment);
+	}
+
+	public static final int NUM_APPLICATION_EDIT_ITEMS = 30;
+	
+	public void getApplicationEditRSS(OutputStream out, HttpResponseData contentType, Viewpoint viewpoint) throws IOException, XmlMethodException {
+		List<AppinfoUploadView> uploads = applicationSystem.getUploadHistory(viewpoint, NUM_APPLICATION_EDIT_ITEMS);
+		
+	    String baseUrlString = config.getProperty(HippoProperty.BASEURL);
+	    URL baseUrl = new URL(baseUrlString);
+	    URL homeUrl = new URL(baseUrl, "/applications");
+
+	    RssBuilder rss = new RssBuilder("Mugshot Application Edits",
+										homeUrl,
+										"Recent changes to the Mugshot application database");
+				
+		for (AppinfoUploadView upload : uploads) {
+			Application application = upload.getUpload().getApplication(); 
+			URL url = new URL(baseUrl, "/application-history?id=" + application.getId() + "&version=" + upload.getUpload().getId());
+
+			String title = "Application Edit: " + application.getName();
+			
+			XmlBuilder description = new XmlBuilder();
+			description.openElement("p");
+			description.append("Edit to ");
+			description.appendEscaped(application.getName());
+			description.append(" by ");
+			description.appendEscaped(upload.getUploader().getName());
+			description.closeElement();
+			
+			String guid = baseUrlString + "/rss/application-edit/" + upload.getUpload().getId();
+
+			rss.addItem(url, title, description.toString(),
+						upload.getUpload().getUploadDate(), guid);
+		}
+		
+		out.write(rss.getBytes());
 	}
 }

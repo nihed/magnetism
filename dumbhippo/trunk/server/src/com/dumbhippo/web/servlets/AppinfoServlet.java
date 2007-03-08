@@ -26,11 +26,11 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StreamUtils;
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.persistence.User;
+import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.AppinfoUpload;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.applications.AppinfoFile;
@@ -63,7 +63,6 @@ public class AppinfoServlet extends AbstractServlet {
 	
 	private Configuration config;
 	private ApplicationSystem applicationSystem;
-	private IdentitySpider identitySpider;
 	private File appinfoDir;
 
 	@Override
@@ -71,7 +70,6 @@ public class AppinfoServlet extends AbstractServlet {
 		super.init();
 		applicationSystem = WebEJBUtil.defaultLookup(ApplicationSystem.class);
 		config = WebEJBUtil.defaultLookup(Configuration.class);
-		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 		try {
 			appinfoDir = new File(config.getPropertyNoDefault(HippoProperty.APPINFO_DIR));
 		} catch (PropertyNotFoundException e) {
@@ -92,11 +90,9 @@ public class AppinfoServlet extends AbstractServlet {
 		ServletFileUpload upload = new ServletFileUpload(new DiskFileItemFactory());
 		upload.setSizeMax(MAX_APPINFO_FILE_SIZE);
 		
-		User user = getUser(request);
-		// isAdminstrator re-attaches
-		if (user == null || !identitySpider.isAdministrator(user))
+		if (!applicationSystem.canEditApplications(getViewpoint(request)))
 			throw new HttpException(HttpResponseCode.FORBIDDEN, "you don't have permission to upload application info files");
-		
+
 		Guid uploadId = Guid.createNew();
 		
 		File saveLocation = new File(appinfoDir, uploadId.toString() + ".dappinfo");
@@ -137,7 +133,7 @@ public class AppinfoServlet extends AbstractServlet {
 		}
 
 		try {
-			applicationSystem.addUpload(user.getGuid(), uploadId, file);
+			applicationSystem.addUpload(getUser(request).getGuid(), uploadId, file);
 		} catch (RuntimeException e) {
 			file.close();
 			saveLocation.delete();
@@ -320,11 +316,9 @@ public class AppinfoServlet extends AbstractServlet {
 		ServletFileUpload upload = new ServletFileUpload(new DiskFileItemFactory());
 		upload.setSizeMax(MAX_ICON_FILE_SIZE);
 		
-		User user = getUser(request);
-		// isAdminstrator re-attaches
-		if (user == null || !identitySpider.isAdministrator(user))
+		if (!applicationSystem.canEditApplications(getViewpoint(request)))
 			throw new HttpException(HttpResponseCode.FORBIDDEN, "you don't have permission to upload application info files");
-		
+
 		Guid uploadId = Guid.createNew();
 		
 		File saveLocation = new File(appinfoDir, uploadId.toString() + ".dappinfo");
@@ -348,7 +342,8 @@ public class AppinfoServlet extends AbstractServlet {
 		
 		try {
 			try {
-				file = applicationSystem.getAppinfoFile(spec.getAppId());
+				AppinfoUpload currentUpload = applicationSystem.getCurrentUpload(spec.getAppId());
+				file = applicationSystem.getAppinfoFile(currentUpload.getGuid());
 			} catch (NotFoundException e) {
 				throw new HttpException(HttpResponseCode.BAD_REQUEST, "appId doesn't reference a known application");
 			}
@@ -365,7 +360,7 @@ public class AppinfoServlet extends AbstractServlet {
 			out = null;
 			
 
-			applicationSystem.addUpload(user.getGuid(), uploadId, file);
+			applicationSystem.addUpload(getUser(request).getGuid(), uploadId, file);
 
 			logger.debug("Edited appinfo file succesfully written to {}", saveLocation.getPath());
 			success = true;
@@ -390,12 +385,12 @@ public class AppinfoServlet extends AbstractServlet {
 
 	////////////////////////////////////////////////////////////
 	//
-	// GET /files/appinfo-icon/<appId>
+	// GET /files/appinfo-icon/<uploadId>
 	//
 	// Retrieve an icon from a previously uploaded appinfo file
 
 	private String doGetIcon(HttpServletRequest request, HttpServletResponse response)  throws HttpException, IOException {
-		String applicationId = request.getPathInfo().substring(1);
+		String uploadId = request.getPathInfo().substring(1);
 		String theme = request.getParameter("theme");
 		if ("generic".equals(theme))
 			theme = null;
@@ -405,9 +400,11 @@ public class AppinfoServlet extends AbstractServlet {
 		AppinfoFile appinfoFile;
 		
 		try {
-			 appinfoFile = applicationSystem.getAppinfoFile(applicationId);
+			appinfoFile = applicationSystem.getAppinfoFile(new Guid(uploadId));
 		} catch (NotFoundException e) {
-			throw new HttpException(HttpResponseCode.NOT_FOUND, "Application not found");
+			throw new HttpException(HttpResponseCode.NOT_FOUND, "Upload not found");
+		} catch (ParseException e) {
+			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Bad upload id");
 		}
 		
 		try {

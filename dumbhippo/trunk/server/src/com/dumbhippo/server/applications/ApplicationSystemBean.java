@@ -45,11 +45,16 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.XmlMethodErrorCode;
+import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
 public class ApplicationSystemBean implements ApplicationSystem {
@@ -64,7 +69,20 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	private Configuration config;
 	
 	@EJB
+	private IdentitySpider identitySpider;
+
+	@EJB
+	private PersonViewer personViewer;
+	
+	@EJB
 	private TransactionRunner runner;
+	
+	public boolean canEditApplications(Viewpoint viewpoint) {
+		if (viewpoint instanceof UserViewpoint)
+			return identitySpider.isAdministrator(((UserViewpoint)viewpoint).getViewer());
+		else
+			return false;
+	}
 	
 	private Date getDefaultSince() {
 		return new Date(System.currentTimeMillis() - 31 * 24 * 60 * 60 * 1000L);
@@ -114,8 +132,8 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		
 		em.persist(upload);
 	}
-	
-	private AppinfoFile getAppinfoFile(AppinfoUpload upload) throws IOException, ValidationException {
+
+	private File getAppinfoLocation(Guid uploadId) {
 		final File appinfoDir;
 		
 		try {
@@ -124,35 +142,129 @@ public class ApplicationSystemBean implements ApplicationSystem {
 			throw new RuntimeException("appinfoDir property was not set in super configuration");
 		}
 
-		File location = new File(appinfoDir, upload.getId() + ".dappinfo");
-		return new AppinfoFile(location);
+		return new File(appinfoDir, uploadId + ".dappinfo");
 	}
 	
-	public AppinfoFile getAppinfoFile(String applicationId) throws NotFoundException {
+	private AppinfoFile getAppinfoFileInternal(AppinfoUpload upload) throws IOException, ValidationException {
+		return new AppinfoFile(getAppinfoLocation(upload.getGuid()));
+	}
+	
+	public AppinfoUpload getCurrentUpload(String applicationId) throws NotFoundException {
 		Query q = em.createQuery("SELECT au from AppinfoUpload au " +
-				                 " WHERE au.application.id = :applicationId " +
-				                 " ORDER BY uploadDate DESC")
-			.setParameter("applicationId", applicationId)
-			.setMaxResults(1);
-		
-		AppinfoUpload upload;
-		
+                " WHERE au.application.id = :applicationId " +
+                " ORDER BY uploadDate DESC")
+        .setParameter("applicationId", applicationId)
+		.setMaxResults(1);
+
 		try {
-			 upload = (AppinfoUpload)q.getSingleResult();
+			return (AppinfoUpload)q.getSingleResult();
 		} catch (NoResultException e) {
 			throw new NotFoundException("Application not found");
 		}
+	}
+
+	public AppinfoUploadView getCurrentUploadView(Viewpoint viewpoint, String applicationId) throws NotFoundException {
+		AppinfoUpload upload = getCurrentUpload(applicationId);
+		return new AppinfoUploadView(upload, personViewer.getPersonView(viewpoint, upload.getUploader()), true);
+	}
+
+	public AppinfoFile getAppinfoFile(Guid uploadId) throws NotFoundException {
+		AppinfoUpload upload = em.find(AppinfoUpload.class, uploadId.toString());
 		
 		if (upload.isDeleteApplication()) {
 			throw new NotFoundException("Application was deleted");
 		}
 		
 		try {
-			return getAppinfoFile(upload);
+			return getAppinfoFileInternal(upload);
 		} catch (IOException e) {
 			throw new RuntimeException("IO Error reading previously uploaded appinfo file", e);
 		} catch (ValidationException e) {
 			throw new RuntimeException("Validation error reading previously uploaded appinfo file", e);
+		}
+	}
+	
+	public AppinfoUploadView getAppinfoUploadView(Viewpoint viewpoint, Guid uploadId) throws NotFoundException {
+		AppinfoUpload upload = em.find(AppinfoUpload.class, uploadId.toString());
+		if (upload == null)
+			throw new NotFoundException("Upload not found");
+		
+		AppinfoUpload currentUpload = getCurrentUpload(upload.getApplication().getId());
+		
+		return new AppinfoUploadView(upload, personViewer.getPersonView(viewpoint, upload.getUploader()),
+									 upload == currentUpload);
+	}
+	
+	public AppinfoFile getAppinfoFile(AppinfoUpload upload) throws NotFoundException {
+		if (upload.isDeleteApplication()) {
+			throw new NotFoundException("Application was deleted");
+		}
+		
+		try {
+			return getAppinfoFileInternal(upload);
+		} catch (IOException e) {
+			throw new RuntimeException("IO Error reading previously uploaded appinfo file", e);
+		} catch (ValidationException e) {
+			throw new RuntimeException("Validation error reading previously uploaded appinfo file", e);
+		}
+	}
+
+	public void revertApplication(UserViewpoint viewpoint, String applicationId, Guid uploadId, String comment) throws XmlMethodException {
+		if (!canEditApplications(viewpoint))
+			throw new XmlMethodException(XmlMethodErrorCode.FORBIDDEN, "you don't have permission to edit applications");
+		
+		AppinfoUpload oldUpload = em.find(AppinfoUpload.class, uploadId.toString());
+		if (oldUpload == null)
+			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "uploadId not found");
+			
+		if (!oldUpload.getApplication().getId().equals(applicationId))
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "uploadId doesn't refer to the right application");
+		
+		comment = comment.trim();
+		if (comment.equals(""))
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "must provide a non-empty comment");
+		
+		Guid newUploadId = Guid.createNew();
+		
+		// In principal, we could just reuse the old saved copy we have of the application information.
+		// But since the application save location is tied to the ID of the AppinfoUpload object
+		// and we want a new AppinfoUpload object (for a new uploader/date/comment), we load
+		// in the application data and save it out again.
+		
+		File saveLocation = getAppinfoLocation(newUploadId);
+		AppinfoFile oldFile;
+		try {
+			oldFile = getAppinfoFileInternal(oldUpload);
+		} catch (IOException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.FAILED, "IO error reading in old application data");
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.FAILED, "Old application data failed validation: " + e.getMessage());
+		}
+		
+		OutputStream out = null;
+		
+		try {
+			out = new FileOutputStream(saveLocation);
+			oldFile.write(out);
+			out.close();
+			out = null;
+		} catch (IOException e) {
+			saveLocation.delete();
+			throw new XmlMethodException(XmlMethodErrorCode.FAILED, "couldn't resave application data");
+		} finally {
+			if (out != null) {
+				try {
+					out.close();
+				} catch (IOException e) {
+				}
+			}
+		}
+
+		try {
+			addUpload(viewpoint.getViewer().getGuid(), newUploadId, oldFile);
+		} catch (RuntimeException e) {
+			saveLocation.delete();
+			throw(e);
 		}
 	}
 
@@ -194,7 +306,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 							logger.info("Reinstalling {}.appinfo for {}", au.getId(), application.getId());
 							
 							try {
-								AppinfoFile appinfoFile = getAppinfoFile(au);
+								AppinfoFile appinfoFile = getAppinfoFileInternal(au);
 								
 								updateApplication(application, appinfoFile);
 								updateApplicationCollections(application, appinfoFile);
@@ -593,6 +705,39 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		}
 	}
 
+	public List<AppinfoUploadView> getUploadHistory(Viewpoint viewpoint, Application application) {
+		Query q = em.createQuery("SELECT au from AppinfoUpload au " +
+                " WHERE au.application = :application " +
+                " ORDER BY uploadDate DESC")
+                .setParameter("application", application);
+
+		List<AppinfoUploadView> results = new ArrayList<AppinfoUploadView>();
+		boolean current = true;
+		for (AppinfoUpload upload : TypeUtils.castList(AppinfoUpload.class, q.getResultList())) {
+			results.add(new AppinfoUploadView(upload, personViewer.getPersonView(viewpoint, upload.getUploader()), current));
+			current = false;
+		}
+		
+		return results;
+	}
+	
+	public List<AppinfoUploadView> getUploadHistory(Viewpoint viewpoint, int maxItems) {
+		Query q = em.createQuery("SELECT au from AppinfoUpload au " +
+								 " ORDER BY uploadDate DESC");
+		
+		if (maxItems >= 0)
+			q.setMaxResults(maxItems);
+
+		List<AppinfoUploadView> results = new ArrayList<AppinfoUploadView>();
+		boolean current = true;
+		for (AppinfoUpload upload : TypeUtils.castList(AppinfoUpload.class, q.getResultList())) {
+			results.add(new AppinfoUploadView(upload, personViewer.getPersonView(viewpoint, upload.getUploader()), current));
+			current = false;
+		}
+		
+		return results;
+	}
+	
 	private void pageApplicationList(List<?> results, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
 		List<ApplicationView> applicationViews = new ArrayList<ApplicationView>();
 		
