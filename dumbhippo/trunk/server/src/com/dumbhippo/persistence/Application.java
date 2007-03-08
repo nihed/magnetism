@@ -19,6 +19,8 @@ public class Application {
 	private String id;
 	private boolean deleted;
 	private String name;
+	private String genericName;
+	private String tooltip;
 	private String description;
 	private ApplicationCategory category;
 	private String rawCategories;
@@ -60,6 +62,24 @@ public class Application {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	@Column(nullable = true)
+	public String getGenericName() {
+		return genericName;
+	}
+
+	public void setGenericName(String genericName) {
+		this.genericName = genericName;
+	}
+
+	@Column(nullable = true)
+	public String getTooltip() {
+		return tooltip;
+	}
+
+	public void setTooltip(String tooltip) {
+		this.tooltip = tooltip;
 	}
 
 	@Column(nullable = true)

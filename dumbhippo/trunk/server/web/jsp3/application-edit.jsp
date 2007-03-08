@@ -73,9 +73,19 @@
 		    				Name displayed in the user interface.
 		    			</jsp:attribute>
 		    		</dht3:applicationEditRow>
+		    		<dht3:applicationEditRow id="dhApplicationGenericName" name="genericName" label="Generic Name" value="${appinfo.genericName}">
+		    			<jsp:attribute name="help">
+		    				Generic type of this application (Web Browser).
+		    			</jsp:attribute>
+		    		</dht3:applicationEditRow>
+		    		<dht3:applicationEditRow id="dhApplicationTooltip" name="tooltip" label="Tooltip" value="${appinfo.tooltip}">
+		    			<jsp:attribute name="help">
+							Short description of this application (Browse the Web).
+		    			</jsp:attribute>
+		    		</dht3:applicationEditRow>
 		    		<dht3:applicationEditRow id="dhApplicationDescription" name="description" label="Description" value="${appinfo.description}" multiline="true">
 		    			<jsp:attribute name="help">
-		    				Detailed description of the application (one or two sentences).
+		    				Detailed description of the application in a paragraph.
 		    			</jsp:attribute>
 		    		</dht3:applicationEditRow>
 		    		<dht3:applicationEditRow id="dhApplicationWmClasses" name="wmClasses" label="WM Classes" value="${appinfo.wmClassesString}">

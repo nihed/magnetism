@@ -216,6 +216,8 @@ public class AppinfoServlet extends AbstractServlet {
 	private static class EditSpec {
 		private String appId = null;
 		private String name = null;
+		private String genericName = null;
+		private String tooltip = null;
 		private String description = null;
 		private String wmClasses = null;
 		private String titlePatterns = null;
@@ -238,6 +240,10 @@ public class AppinfoServlet extends AbstractServlet {
 					appId = item.getString();
 				} else if (fieldName.equals("name")) {
 					name = item.getString();
+				} else if (fieldName.equals("genericName")) {
+					genericName = item.getString();
+				} else if (fieldName.equals("tooltip")) {
+					tooltip = item.getString();
 				} else if (fieldName.equals("description")) {
 					description = item.getString();
 				} else if (fieldName.equals("wmClasses")) {
@@ -297,6 +303,8 @@ public class AppinfoServlet extends AbstractServlet {
 
 		public void edit(AppinfoFile appinfoFile) throws ValidationException {
 			appinfoFile.setName(name);
+			appinfoFile.setGenericName(genericName);
+			appinfoFile.setTooltip(tooltip);
 			appinfoFile.setDescription(description);
 			appinfoFile.setCategoriesString(categories);
 			appinfoFile.setWmClassesString(wmClasses);
