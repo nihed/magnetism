@@ -1,5 +1,44 @@
 import httplib2, keyring, libbig, sys, xml, xml.sax
 
+class AbstractDocument(libbig.AutoStruct):
+    def __init__(self):
+        libbig.AutoStruct.__init__(self,
+                                   { 'title' : '', 'link' : None })
+
+class SpreadsheetDocument(AbstractDocument):
+    def __init__(self):
+        AbstractDocument.__init__(self)
+
+class WordProcessorDocument(AbstractDocument):
+    def __init__(self):
+        AbstractDocument.__init__(self)
+
+class DocumentsParser(xml.sax.ContentHandler):
+    def __init__(self):
+        self.__docs = []
+
+    def startElement(self, name, attrs):
+        print "<" + name + ">"
+        print attrs.getNames() # .getValue('foo')
+
+        if name == 'entry':
+            d = SpreadsheetDocument()
+            self.__docs.append(d)
+        elif len(self.__docs) > 0:
+            d = self.__docs[-1]
+            if name == 'title':
+                d.update({'title' : ''}) # FIXME
+
+    def endElement(self, name):
+        print "</" + name + ">"
+
+    def characters(self, content):
+        print content
+
+    def get_documents(self):
+        return self.__docs
+
+
 class Event(libbig.AutoStruct):
     def __init__(self):
         libbig.AutoStruct.__init__(self,
@@ -56,8 +95,25 @@ class Google:
             xml.sax.parseString(data, p)
             return p.get_events()
         except xml.sax.SAXException, e:
-            return None
+            return []
+
+    def get_documents(self):
+        h = httplib2.Http()
+        h.add_credentials(self.__username, self.__password)
+        h.follow_all_redirects = True
+
+        uri = 'http://spreadsheets.google.com/feeds/spreadsheets/private/full'
         
+        headers, data = h.request(uri, "GET", headers = {})
+
+        print data
+
+        try:
+            p = DocumentsParser()
+            xml.sax.parseString(data, p)
+            return p.get_documents()
+        except xml.sax.SAXException, e:
+            return []
         
 if __name__ == '__main__':
 
@@ -67,6 +123,14 @@ if __name__ == '__main__':
 
     g = Google()
 
+    print "getting documents..."
+    docs = g.get_documents()
+
+    print docs
+
+    #sys.exit(0)
+
+    print "getting calendar..."
     events = g.get_calendar()
 
     print events

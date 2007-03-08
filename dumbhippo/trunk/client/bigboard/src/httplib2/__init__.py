@@ -228,11 +228,11 @@ UNQUOTE_PAIRS = re.compile(r'\\(.)')
 def _parse_www_authenticate(headers, headername='www-authenticate'):
     """Returns a dictionary of dictionaries, one dict
     per auth_scheme."""
-    retval = {}
+    retval = { 'googlelogin' : {} } # HACK - default-include googlelogin so it works with google urls that don't return 401
     if headers.has_key(headername):
         authenticate = headers[headername].strip()
         www_auth = USE_WWW_AUTH_STRICT_PARSING and WWW_AUTH_STRICT or WWW_AUTH_RELAXED
-        while authenticate:
+        while authenticate and " " in authenticate:
             # Break off the scheme at the beginning of the line
             if headername == 'authentication-info':
                 (auth_scheme, the_rest) = ('digest', authenticate)                
@@ -577,9 +577,9 @@ class GoogleLoginAuthentication(Authentication):
         # For the rest we guess based on the URI
         if service == 'xapi' and  request_uri.find("calendar") > 0:
             service = "cl"
-        # No point in guessing Base or Spreadsheet
-        #elif request_uri.find("spreadsheets") > 0:
-        #    service = "wise"
+        # Upstream httplib2 comments this out since google doesn't do 401 on those
+        elif request_uri.find("spreadsheets") > 0:
+            service = "wise"
 
         auth = dict(Email=credentials[0], Passwd=credentials[1], service=service, source=headers['user-agent'])
         resp, content = self.http.request("https://www.google.com/accounts/ClientLogin", method="POST", body=urlencode(auth), headers={'Content-Type': 'application/x-www-form-urlencoded'})
@@ -756,7 +756,8 @@ class Http:
                 (response, content) = self._conn_request(conn, request_uri, method, body, headers )
                 response._stale_digest = 1
 
-        if response.status == 401:
+        # google hack is for google api urls that don't do 401 right, i.e. everything but calendar it looks like
+        if response.status == 401 or ('google.com' in absolute_uri and response.status == 404):
             for authorization in self._auth_from_challenge(host, request_uri, headers, response, content):
                 authorization.request(method, request_uri, headers, body) 
                 (response, content) = self._conn_request(conn, request_uri, method, body, headers, )
