@@ -160,8 +160,10 @@ class DappinfoWriter:
                             self.iconname = m.group(1)
                     elif key == "Name":
                         self.properties["name"] = value
+                    elif key == "GenericName":
+                        self.properties["genericname"] = value
                     elif key == "Comment":
-                        self.properties["description"] = value
+                        self.properties["tooltip"] = value
                     elif key == "Categories":
                         # Strip trailing ";"
                         self.properties["categories"] = re.sub(";\s*$", "", value)
