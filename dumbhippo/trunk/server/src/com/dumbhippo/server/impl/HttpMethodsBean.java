@@ -2280,14 +2280,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 										"Recent changes to the Mugshot application database");
 				
 		for (AppinfoUploadView upload : uploads) {
-			Application application = upload.getUpload().getApplication(); 
+			Application application = upload.getUpload().getApplication();
+			boolean initialUpload = upload.getUpload().isInitialUpload();
 			URL url = new URL(baseUrl, "/application-history?id=" + application.getId() + "&version=" + upload.getUpload().getId());
 
-			String title = "Application Edit: " + application.getName();
+			String title = (initialUpload ? "Application Upload: " : "Application Edit: ") + application.getName();
 			
 			XmlBuilder description = new XmlBuilder();
 			description.openElement("p");
-			description.append("Edit to ");
+			description.append(initialUpload ? "Initial upload of " : "Edit to ");
 			description.appendEscaped(application.getName());
 			description.append(" by ");
 			description.appendEscaped(upload.getUploader().getName());
