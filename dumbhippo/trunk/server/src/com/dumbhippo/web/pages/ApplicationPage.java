@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.ApplicationCategory;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.applications.AppinfoFile;
@@ -89,6 +90,10 @@ public class ApplicationPage extends AbstractSigninOptionalPage {
 		return appinfoFile;
 	}
 
+	public ApplicationCategory[] getCategories() {
+		return ApplicationCategory.values();
+	}
+	
 	private Date getSince() {
 		return new Date(System.currentTimeMillis() - 31 * 24 * 60 * 60 * 1000L);
 	}

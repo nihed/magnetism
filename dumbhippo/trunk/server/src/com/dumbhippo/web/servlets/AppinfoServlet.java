@@ -222,7 +222,7 @@ public class AppinfoServlet extends AbstractServlet {
 		private String wmClasses = null;
 		private String titlePatterns = null;
 		private String desktopNames = null;
-		private String categories = null;
+		private String category = null;
 		private List<DeleteIconSpec> toDelete = new ArrayList<DeleteIconSpec>();
 		private Map<Integer, AddIconSpec> toAdd = new HashMap<Integer,AddIconSpec>();
 		private String comment;
@@ -252,8 +252,8 @@ public class AppinfoServlet extends AbstractServlet {
 					titlePatterns = item.getString();
 				} else if (fieldName.equals("desktopNames")) {
 					desktopNames =item.getString();
-				} else if (fieldName.equals("categories")) {
-					categories = item.getString();
+				} else if (fieldName.equals("category")) {
+					category = item.getString();
 				} else if (fieldName.equals("comment")) {
 					comment = item.getString().trim();
 					if ("".equals(comment))
@@ -306,7 +306,7 @@ public class AppinfoServlet extends AbstractServlet {
 			appinfoFile.setGenericName(genericName);
 			appinfoFile.setTooltip(tooltip);
 			appinfoFile.setDescription(description);
-			appinfoFile.setCategoriesString(categories);
+			appinfoFile.setCategoryString(category);
 			appinfoFile.setWmClassesString(wmClasses);
 			appinfoFile.setTitlePatternsString(titlePatterns);
 			appinfoFile.setDesktopNamesString(desktopNames);

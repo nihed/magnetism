@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 
 import com.dumbhippo.StreamUtils;
+import com.dumbhippo.persistence.ApplicationCategory;
 import com.dumbhippo.persistence.ValidationException;
 
 public class AppinfoFile extends JarFile {
@@ -31,7 +32,7 @@ public class AppinfoFile extends JarFile {
 	private String tooltip;
 	private String description;
 	private String desktopPath;
-	private Set<String> categories;
+	private ApplicationCategory category;
 	private Set<String> wmClasses;
 	private Set<String> titlePatterns;
 	private List<String> desktopNames;
@@ -83,11 +84,13 @@ public class AppinfoFile extends JarFile {
 		genericName = getStringProperty("genericname", GENERIC_NAME_REGEX, true);
 		tooltip = getStringProperty("tooltip", TOOLTIP_REGEX, true);
 		description = getStringProperty("description", DESCRIPTION_REGEX, true);
-		categories = getSetProperty("categories", CATEGORY_REGEX);
 		wmClasses = getSetProperty("wmclass", WM_CLASS_REGEX);
 		titlePatterns = getSetProperty("titlepattern", TITLE_PATTERN_REGEX);
 		desktopNames = getListProperty("desktopnames", DESKTOP_NAME_REGEX);
 		desktopPath = getStringProperty("desktop", DESKTOP_REGEX, false);
+
+		Set<String> rawCategories = getSetProperty("categories", CATEGORY_REGEX);
+		category = ApplicationCategory.fromRaw(rawCategories);
 
 		if (desktopPath != null) {
 			ZipEntry desktopEntry = getEntry(desktopPath); 
@@ -312,19 +315,28 @@ public class AppinfoFile extends JarFile {
 		setProperty("description", getDescription());
 	}
 
-	public Set<String> getCategories() {
-		return categories;
+	public ApplicationCategory getCategory() {
+		return category;
 	}
 	
-	public String getCategoriesString() {
-		return setToString(getCategories());
+	public void setCategory(ApplicationCategory category) {
+		this.category = category;
+		
+		String rawCategory = category.getSingleRawCategory();
+		setProperty("categories", rawCategory != null ? rawCategory : "");
 	}
-
-	public void setCategoriesString(String categories) throws ValidationException {
-		this.categories = setFromString(categories, "categories", CATEGORY_REGEX);
-		setProperty("categories", getCategoriesString());
+	
+	public void setCategoryString(String categoryString) throws ValidationException {
+		for (ApplicationCategory category : ApplicationCategory.values()) {
+			if (category.getName().equals(categoryString)) {
+				setCategory(category);
+				return;
+			}
+		}
+		
+		throw new ValidationException("'" + categoryString + "' is not a valid category value");
 	}
-
+	
 	public Set<String> getWmClasses() {
 		return wmClasses;
 	}

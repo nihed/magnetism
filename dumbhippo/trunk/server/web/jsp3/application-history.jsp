@@ -82,10 +82,10 @@
 	    		<dht3:applicationHistoryRow id="dhApplicationGenericName" label="Generic Name" value="${appinfo.genericName}"/>
 	    		<dht3:applicationHistoryRow id="dhApplicationTooltip" label="Tooltip" value="${appinfo.tooltip}"/>
 	    		<dht3:applicationHistoryRow id="dhApplicationDescription" label="Description" value="${appinfo.description}"/>
+	    		<dht3:applicationHistoryRow id="dhApplicationCategory" label="Category" value="${appinfo.category.displayName}"/>
 	    		<dht3:applicationHistoryRow id="dhApplicationWmClasses" label="WM Classes" value="${appinfo.wmClassesString}"/>
 	    		<dht3:applicationHistoryRow id="dhApplicationTitlePatterns" label="Title Patterns" value="${appinfo.titlePatternsString}"/>
 	    		<dht3:applicationHistoryRow id="dhApplicationDesktopNames" label="Desktop Names" value="${appinfo.desktopNamesString}"/>
-	    		<dht3:applicationHistoryRow id="dhApplicationCategories" label="Categories" value="${appinfo.categoriesString}"/>
 	    		<tr>
     			<td class="dh-application-edit-label">
     			Icons:
