@@ -148,7 +148,7 @@ def main(args):
         sys.exit(2)
     debug = False
     shell = False
-    debug_modules = ""
+    debug_modules = []
     for o, v in opts:
         if o in ('-d', '--debug'):
             debug = True
