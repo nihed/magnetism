@@ -119,7 +119,7 @@ if __name__ == '__main__':
 
     libbig.set_application_name("BigBoard")
 
-    keyring.get_keyring().store_login('google', 'havoc.pennington', '')
+    #keyring.get_keyring().store_login('google', 'havoc.pennington', '')
 
     g = Google()
 
@@ -128,7 +128,7 @@ if __name__ == '__main__':
 
     print docs
 
-    #sys.exit(0)
+    sys.exit(0)
 
     print "getting calendar..."
     events = g.get_calendar()

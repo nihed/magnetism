@@ -27,6 +27,9 @@ def set_application_name(name):
 
 def set_program_name(name):
     bignative.set_program_name(name)
+
+def gnome_keyring_find_items_sync(type, attributes):
+    return bignative.keyring_find_items_sync(type, attributes)
     
 def get_bigboard_config_file(name):
     basepath = os.path.expanduser("~/.bigboard")
