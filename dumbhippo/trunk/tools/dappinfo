@@ -336,7 +336,7 @@ class DappinfoEditor:
         print >>sys.stderr, "Reading cookies from %s" % cookies_file
         return cookies_file
 
-    def upload(self, server=None, cookies_file=None, upload_categories=None):
+    def upload(self, server=None, cookies_file=None, upload_categories=None, comment=None):
         if not server:
             raise HumanVisibleException("Server to upload must be specified")
         if not cookies_file:
@@ -360,8 +360,13 @@ class DappinfoEditor:
         if not found:
             print >>sys.stderr, "Not uploading %s because its categories (%s) don't match whitelist" % (self._filename, categories_string)
             return
-        
-        system("curl -b '%s' -F 'appinfo_file=@%s;type=application/octet-stream' http://%s/upload/appinfo" % (cookies_file, self._filename,server))
+
+        if comment != None:
+            comment_arg = "-F 'comment=%s'" % comment.replace("'", r"''\'")
+        else:
+            comment_arg = ""
+
+        system("curl -b '%s' -F 'appinfo_file=@%s;type=application/octet-stream' %s http://%s/upload/appinfo" % (cookies_file, self._filename, comment_arg, server))
 
     def finish(self):
         if not self._is_open:
@@ -510,6 +515,8 @@ def cmd_upload(args):
                           "     Upload the dappinfo to the server.")
     parser.add_option("--server",
                       help="Server to upload the file to")
+    parser.add_option("--comment",
+                      help="Comment about this upload")
     parser.add_option("--cookies-file",
                       help="Your browser cookies file (for authentication)")
     parser.add_option("--upload-categories",
@@ -528,7 +535,7 @@ def cmd_upload(args):
     for file in args:
         editor = DappinfoEditor(file)
         try:
-            editor.upload(server=options.server, cookies_file=options.cookies_file, upload_categories=upload_categories)
+            editor.upload(server=options.server, cookies_file=options.cookies_file, upload_categories=upload_categories, comment=options.comment)
             editor.finish()
         finally:
             editor.cleanup()

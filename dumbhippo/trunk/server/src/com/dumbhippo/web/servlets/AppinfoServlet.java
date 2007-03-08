@@ -118,8 +118,6 @@ public class AppinfoServlet extends AbstractServlet {
 					logger.warn("Couldn't write appinfo dump to disk", e);
 					throw new HttpException(HttpResponseCode.INTERNAL_SERVER_ERROR, "Couldn't save appinfo file");
 				}
-				
-				break;
 			} else if (name.equals("comment")) {
 				comment = item.getString().trim();
 			}
