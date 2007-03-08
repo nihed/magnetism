@@ -7,7 +7,7 @@ import java.util.Locale;
 
 public class RssBuilder {
 	XmlBuilder xml = new XmlBuilder();
-    static final SimpleDateFormat sdf = new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss' 'Z", Locale.US);
+    static final SimpleDateFormat dateFormat = new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss' 'Z", Locale.US);
 
 	public boolean init = false;
 	String title;
@@ -81,8 +81,11 @@ public class RssBuilder {
 			xml.appendTextNode("title", title);
 		if (description != null)
 			xml.appendTextNode("description", description);
-		if (pubDate != null)
-			xml.appendTextNode("pubDate", sdf.format(pubDate));
+		if (pubDate != null) {
+			synchronized(dateFormat) {
+				xml.appendTextNode("pubDate", dateFormat.format(pubDate));
+			}
+		}
 		if (guid != null)
 			xml.appendTextNode("guid", guid);
 		xml.closeElement();

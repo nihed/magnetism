@@ -282,7 +282,10 @@ public abstract class AbstractServlet extends HttpServlet {
 	 */
 	public static void setInfiniteExpires(HttpServletResponse response) {
 		// According to to HTTP spec we shouldn't set a date more than 1 year in advance
-		String expires = format.format(new Date(System.currentTimeMillis() + (364 * 24 * 60 * 60 * 1000l)));
+		String expires;
+		synchronized(format) {
+			expires = format.format(new Date(System.currentTimeMillis() + (364 * 24 * 60 * 60 * 1000l)));
+		}
 		response.setHeader("Expires", expires);	
 	}
 	
