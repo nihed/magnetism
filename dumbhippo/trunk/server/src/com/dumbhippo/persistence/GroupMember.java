@@ -104,17 +104,7 @@ public class GroupMember extends DBUnique {
 	public void removeAdder(User adder) {
 		adders.remove(adder);
 	}
-	
-	/**
-	 * Is the person "in the group" (which means they can see other members,
-	 * posts, etc. if it's a private group)
-	 * @return true if the user is invited or active
-	 */
-	@Transient
-	public boolean isParticipant() {
-		return getStatus().ordinal() >= MembershipStatus.INVITED.ordinal();
-	}
-	
+
 	/**
 	 * Can the user change the group photo, etc.
 	 * @return true if the group member can change stuff
@@ -122,15 +112,6 @@ public class GroupMember extends DBUnique {
 	@Transient
 	public boolean canModify() {
 		return getStatus().getCanModify();
-	}
-	
-	/**
-	 * Can the user add members to the group.
-	 * @return
-	 */
-	@Transient
-	public boolean canAddMembers() {
-		return getStatus().ordinal() >= MembershipStatus.REMOVED.ordinal();
 	}
 	
 	@Override

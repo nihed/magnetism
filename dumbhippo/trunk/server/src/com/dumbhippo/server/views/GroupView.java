@@ -62,7 +62,7 @@ import com.dumbhippo.persistence.VersionedEntity;
 	 }
 	 
 	 public boolean getCanJoin() {
-		return !getGroupMember().isParticipant() && 
+		return !getGroupMember().getStatus().isParticipant() && 
 		       (group.getAccess() == GroupAccess.PUBLIC_INVITE ||
 		        getGroupMember().getStatus() == MembershipStatus.REMOVED);
 	 }

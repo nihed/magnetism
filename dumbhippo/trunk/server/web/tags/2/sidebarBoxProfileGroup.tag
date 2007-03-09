@@ -46,7 +46,7 @@
 							<c:if test="${group.canShare}">
 								 <dht:actionLink href="/group-invitation?group=${group.viewedGroupId}" title="Invite other people to this group">Invite People</dht:actionLink>
 							</c:if>
-							<c:if test="${group.member}">
+							<c:if test="${group.viewedGroup.status.participant}">
 								<dht:actionLinkChat chatId="${group.viewedGroupId}" kind="group"/>
 							</c:if>								
 						</div>
@@ -59,7 +59,7 @@
 				<c:when test="${!empty group.viewedGroup.group.description}">
 					<c:out value="${group.viewedGroup.group.description}"/>
 				</c:when>
-				<c:when test="${group.member}">
+				<c:when test="${group.viewedGroup.status.participant}">
 					<div class="dh-action-link"><a href="/group-account?group=${group.viewedGroupId}" title="Edit the group information">Enter a description</a></div>
 				</c:when>
 			</c:choose>

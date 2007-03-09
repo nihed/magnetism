@@ -289,11 +289,15 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	} 
 	
 	public boolean isMember() {
-		return getGroupMember().isParticipant();
+		return getGroupMember().getStatus().isParticipant();
 	}
 	
 	public boolean getCanAddMembers() {
-		return (getGroupMember().canAddMembers() || isForum());
+		return (getGroupMember().getStatus().getCanAddMembers() || isForum());
+	}
+
+	public boolean getCanAddFollowers() {
+		return getGroupMember().getStatus().getCanAddFollowers();
 	}
 	
 	public boolean isFollower() {

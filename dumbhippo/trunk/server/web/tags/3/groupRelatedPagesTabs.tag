@@ -3,7 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="group" required="true" type="com.dumbhippo.server.views.GroupView" %>
-<%@ attribute name="selected" required="true" type="java.lang.String" %>
+<%@ attribute name="selected" required="false" type="java.lang.String" %>
 
 <div>
 	View group:&nbsp;
