@@ -55,8 +55,7 @@ class DocsStock(bigboard.AbstractMugshotStock):
         self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
         self._docs = {}
 
-        # Disabled by default right now since it isn't async
-        #self.__update_docs()
+        self.__update_docs()
 
     def _on_mugshot_initialized(self):
         super(DocsStock, self)._on_mugshot_initialized()
@@ -75,11 +74,16 @@ class DocsStock(bigboard.AbstractMugshotStock):
         super(DocsStock, self).set_size(size)
         for child in self._box.get_children():
             self._set_item_size(child, size)        
-            
-    def __update_docs(self):
-        logging.debug("retrieving documents")
-        docs = google.Google().get_documents()
+
+    def __on_load_docs(self, docs):
         self._box.remove_all()
         for doc in docs:
             display = DocDisplay(doc)
             self._box.append(display)
+
+    def __on_failed_load(self, exc_info):
+        pass
+            
+    def __update_docs(self):
+        logging.debug("retrieving documents")
+        google.Google().fetch_documents(self.__on_load_docs, self.__on_failed_load)

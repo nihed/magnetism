@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, sys, threading, getopt, logging, logging.config, StringIO
+import os, sys, threading, getopt, logging, StringIO
 
 import gobject, gtk, pango, dbus, dbus.glib
 
@@ -172,47 +172,8 @@ def main(args):
     default_log_level = 'INFO'
     if debug:
         default_log_level = 'DEBUG'
-    
-    logging_config = StringIO.StringIO()
-    logging_config.write("""
-[loggers]
-keys=%s
 
-""" % (','.join(['root'] + debug_modules)))
-    logging_config.write("""    
-[formatters]
-keys=base
-
-[handlers]
-keys=stderr
-    
-[formatter_base]
-class=logging.Formatter
-
-[handler_stderr]
-class=StreamHandler
-level=NOTSET
-formatter=base
-args=(sys.stderr,)
-
-[logger_root]
-level=%s
-handlers=stderr
-
-        """ % (default_log_level,))
-    for module in debug_modules:
-        logging_config.write("""
-[logger_%s]
-level=DEBUG
-handlers=stderr
-propagate=0
-qualname=bigboard.%s
-
-        """ % (module,module)
-        )
-    logging.config.fileConfig(StringIO.StringIO(logging_config.getvalue()))
-    
-    logging.debug("Initialized logging")
+    libbig.init_logging(default_log_level, debug_modules)
 
     libbig.set_application_name("BigBoard")
     libbig.set_program_name("bigboard")
