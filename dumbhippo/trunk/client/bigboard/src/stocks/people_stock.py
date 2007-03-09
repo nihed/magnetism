@@ -198,10 +198,10 @@ class PeopleStock(bigboard.AbstractMugshotStock):
             self.__set_item_size(i, size)
             
     def __handle_self_changed(self, mugshot, myself):
-        logging.debug("self (%s) changed" % (myself.get_guid(),))
+        self._logger.debug("self (%s) changed" % (myself.get_guid(),))
     
     def __handle_entity_added(self, mugshot, entity):
-        logging.debug("entity added to people stock %s" % (entity.get_name()))
+        self._logger.debug("entity added to people stock %s" % (entity.get_name()))
         if entity.get_type() != 'person':
             return
         item = EntityItem()

@@ -24,244 +24,295 @@ class Mugshot(gobject.GObject):
         "whereim-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "entity-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "global-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "my-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
+        "my-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "pinned-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))        
         }    
     
     def __init__(self, issingleton):
         gobject.GObject.__init__(self)
+        
+        self._logger = logging.getLogger('bigboard.Mugshot')
+        
         if not issingleton == 42:
             raise Exception("use mugshot.get_mugshot()")
-        self._my_apps_poll_id = 0
-        self._global_apps_poll_id = 0
+        self.__my_apps_poll_id = 0
+        self.__global_apps_poll_id = 0
         
-        self._app_poll_frequency_ms = 30 * 60 * 1000
+        self.__app_poll_frequency_ms = 30 * 60 * 1000
         
         session_bus = dbus.SessionBus()
         bus_proxy = session_bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
-        self._bus_proxy = bus_proxy.connect_to_signal("NameOwnerChanged",
-                                                      _log_cb(self._on_dbus_name_owner_changed))
-        self._create_proxy()
-        self._create_ws_proxy()
+        self.__bus_proxy = bus_proxy.connect_to_signal("NameOwnerChanged",
+                                                       _log_cb(self.__on_dbus_name_owner_changed))
+        self.__create_proxy()
+        self.__create_ws_proxy()
+        self.__create_listener_proxy()
         
-        self._reset()        
+        self.__reset()        
         
-    def _reset(self):
+    def __reset(self):
         # Generic properties
-        self._baseprops = None
+        self.__baseprops = None
         
-        self._whereim = None # <str>,<ExternalAccount>
-        self._self = None
-        self._network = None
-        self._entities = {} # <str>,<Entity>
-        self._applications = {} # <str>,<Application>
-        self._my_top_apps = None # <Application>
-        self._global_top_apps = None # <Application>
+        self.__whereim = None # <str>,<ExternalAccount>
+        self.__self = None
+        self.__network = None
+        self.__entities = {} # <str>,<Entity>
+        self.__applications = {} # <str>,<Application>
+        self.__my_top_apps = None # <Application>
+        self.__my_app_usage_start = None
+        self.__pinned_apps = None
+        self.__global_top_apps = None # <Application>
         
-        self._external_iqs = {} # <int>,<function>
+        self.__external_iqs = {} # <int>,<function>
         
-        self._reset_my_apps_poll()
-        self._reset_global_apps_poll()
+        self.__reset_my_apps_poll()
+        self.__reset_global_apps_poll()
 
-    def _reset_my_apps_poll(self):
-        if self._my_apps_poll_id > 0:
-            gobject.source_remove(self._my_apps_poll_id)
-            self._my_apps_poll_id = 0
-        self._my_apps_poll_id = gobject.timeout_add(self._app_poll_frequency_ms, self._idle_poll_my_apps)
+    def __reset_my_apps_poll(self):
+        if self.__my_apps_poll_id > 0:
+            gobject.source_remove(self.__my_apps_poll_id)
+            self.__my_apps_poll_id = 0
+        self.__my_apps_poll_id = gobject.timeout_add(self.__app_poll_frequency_ms, self.__idle_poll_my_apps)
         
-    def _reset_global_apps_poll(self):
-        if self._global_apps_poll_id > 0:
-            gobject.source_remove(self._global_apps_poll_id)
-            self._global_apps_poll_id = 0
-        self._global_apps_poll_id = gobject.timeout_add(self._app_poll_frequency_ms, self._idle_poll_global_apps)        
+    def __reset_global_apps_poll(self):
+        if self.__global_apps_poll_id > 0:
+            gobject.source_remove(self.__global_apps_poll_id)
+            self.__global_apps_poll_id = 0
+        self.__global_apps_poll_id = gobject.timeout_add(self.__app_poll_frequency_ms, self.__idle_poll_global_apps)        
         
-    def _create_proxy(self):
+    def __create_proxy(self):
         try:
             bus = dbus.SessionBus()
-            self._proxy = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
-            self._proxy.connect_to_signal('WhereimChanged', _log_cb(self._whereimChanged))
-            self._proxy.connect_to_signal('EntityChanged', _log_cb(self._entityChanged))
-            self._proxy.connect_to_signal('ExternalIQReturn', _log_cb(self._externalIQReturn))
-            self._proxy.GetBaseProperties(reply_handler=_log_cb(self._on_get_baseprops), error_handler=self._on_dbus_error)        
+            self.__proxy = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
+            self.__proxy.connect_to_signal('WhereimChanged', _log_cb(self.__whereimChanged))
+            self.__proxy.connect_to_signal('EntityChanged', _log_cb(self.__entityChanged))
+            self.__proxy.connect_to_signal('ExternalIQReturn', _log_cb(self.__externalIQReturn))
+            self.__proxy.GetBaseProperties(reply_handler=_log_cb(self.__on_get_baseprops), error_handler=self.__on_dbus_error)        
         except dbus.DBusException:
-            self._proxy = None
+            self.__proxy = None
 
-
-    def _create_ws_proxy(self):
+    def __create_ws_proxy(self):
         try:
             bus = dbus.SessionBus()
-            self._ws_proxy = bus.get_object('org.mugshot.Mugshot', '/org/gnome/web_services')
+            self.__ws_proxy = bus.get_object('org.mugshot.Mugshot', '/org/gnome/web_services')
         except dbus.DBusException:
-            self._ws_proxy = None
+            self.__ws_proxy = None
+            
+    def __create_listener_proxy(self):
+        try:
+            bus = dbus.SessionBus()
+            #self.__listener_proxy = bus.get_object('com.dumbhippo.Listener', '/com/dumbhippo/listener')
+            #self.__listener_proxy.connect_to_signal('Connected', _log_cb(self.__on_xmpp_connected))
+            #self.__listener_proxy.connect_to_signal('Disconnected', _log_cb(self.__on_xmpp_disconnected))  
+        except dbus.DBusException:
+            self.__listener_proxy = None            
         
-    def _on_dbus_name_owner_changed(self, name, prev_owner, new_owner):
+    def __on_dbus_name_owner_changed(self, name, prev_owner, new_owner):
         if name == 'org.mugshot.Mugshot':
             if new_owner != '':
-                self._create_proxy()
-                self._create_ws_proxy()
+                self._logger.debug("owner for org.mugshot.Mugshot changed, recreating proxies")
+                self.__create_proxy()
+                self.__create_ws_proxy()
+                self.__create_listener_proxy()
             else:
-                self._proxy = None
-                self._ws_proxy = None
-    
-    def _whereimChanged(self, name, icon_url):
-        logging.debug("whereimChanged: %s %s" % (name, icon_url))
-        if self._whereim is None:
-            self._whereim = {}
-            self._network = {}
-        attrs = {'name': name, 'icon_url': icon_url}
-        if not self._whereim.has_key(name):
-            self._whereim[name] = ExternalAccount(attrs)
-            self.emit('whereim-added', self._whereim[name])     
-        else:
-            self._whereim[name].update(attrs)
+                self.__proxy = None
+                self.__ws_proxy = None
+
+    def __on_xmpp_connected(self):
+        self._logger.debug("got xmpp connected")
         
-    def _entityChanged(self, attrs):
-        logging.debug("entityChanged: %s" % (attrs,))
-        if self._network is None:
-            self._network = {}
+    def __on_xmpp_disconnected(self):
+        self._logger.debug("got xmpp disconnected")
+    
+    def __whereimChanged(self, name, icon_url):
+        self._logger.debug("whereimChanged: %s %s" % (name, icon_url))
+        if self.__whereim is None:
+            self.__whereim = {}
+            self.__network = {}
+        attrs = {'name': name, 'icon_url': icon_url}
+        if not self.__whereim.has_key(name):
+            self.__whereim[name] = ExternalAccount(attrs)
+            self.emit('whereim-added', self.__whereim[name])     
+        else:
+            self.__whereim[name].update(attrs)
+        
+    def __entityChanged(self, attrs):
+        self._logger.debug("entityChanged: %s" % (attrs,))
+        if self.__network is None:
+            self.__network = {}
         
         guid = attrs[u'guid']
-        if not self._entities.has_key(guid):
-            self._entities[guid] = Entity(attrs)
-            self.emit("entity-added", self._entities[guid])
+        if not self.__entities.has_key(guid):
+            self.__entities[guid] = Entity(attrs)
+            self.emit("entity-added", self.__entities[guid])
         else:
-            self._entities.update(attrs)
+            self.__entities.update(attrs)
             
-    def _externalIQReturn(self, id, content):
-        if self._external_iqs.has_key(id):
-            logging.debug("got external IQ reply for %d (%d outstanding)", id, len(self._external_iqs.keys())-1)            
-            self._external_iqs[id](content)
-            del self._external_iqs[id]
+    def __externalIQReturn(self, id, content):
+        if self.__external_iqs.has_key(id):
+            self._logger.debug("got external IQ reply for %d (%d outstanding)", id, len(self.__external_iqs.keys())-1)            
+            self.__external_iqs[id](content)
+            del self.__external_iqs[id]
     
-    def _do_proxy_call(self, ):
-        if self._proxy is None:
+    def __do_proxy_call(self, ):
+        if self.__proxy is None:
             bus = dbus.SessionBus()
-        return self._proxy
+        return self.__proxy
     
     def get_entity(self, guid):
-        return self._entites[guid]
+        return self.__entites[guid]
     
-    def _on_dbus_error(self, err):
+    def __on_dbus_error(self, err):
         # TODO - could schedule a "reboot" of this class here to reload
         # information
-        logging.error("D-BUS error: %s" % (err,))
+        self._logger.exception("D-BUS error: %s" % (err,))
     
-    def _on_get_self(self, myself):
-        logging.debug("self changed: %s" % (myself,))
-        self._self = Entity(myself)
-        self.emit("self-changed", self._self)
+    def __on_get_self(self, myself):
+        self._logger.debug("self changed: %s" % (myself,))
+        self.__self = Entity(myself)
+        self.emit("self-changed", self.__self)
     
-    def _on_get_baseprops(self, props):
-        self._baseprops = {}
+    def __on_get_baseprops(self, props):
+        self.__baseprops = {}
         for k,v in props.items():
-            self._baseprops[str(k)] = v
+            self.__baseprops[str(k)] = v
         self.emit("initialized")
     
-    def _get_baseprop(self, name):
-        return self._baseprops[name]
+    def __get_baseprop(self, name):
+        return self.__baseprops[name]
     
     def get_baseurl(self):
-        return self._get_baseprop('baseurl')
+        return self.__get_baseprop('baseurl')
+    
+    def get_self_id(self):
+        return self.__get_baseprop('self-id')
     
     def get_self(self):
-        if self._self is None:
-            self._proxy.GetSelf(reply_handler=_log_cb(self._on_get_self), error_handler=self._on_dbus_error)
+        if self.__self is None:
+            self.__proxy.GetSelf(reply_handler=_log_cb(self.__on_get_self), error_handler=self.__on_dbus_error)
             return None
-        return self._self
+        return self.__self
     
     def get_whereim(self):
-        if (self._whereim is None):
-            self._proxy.NotifyAllWhereim()
+        if (self.__whereim is None):
+            self.__proxy.NotifyAllWhereim()
             return None
-        return self._whereim.values()
+        return self.__whereim.values()
     
     def get_network(self):
-        if self._network is None:
-            self._proxy.NotifyAllNetwork()
+        if self.__network is None:
+            self.__proxy.NotifyAllNetwork()
             return None
-        return self._network.values()
+        return self.__network.values()
 
     def get_cookies(self, url):
-        cookies = self._ws_proxy.GetCookiesToSend(url)
+        cookies = self.__ws_proxy.GetCookiesToSend(url)
             
         #print cookies
         return cookies
 
-    def _do_external_iq(self, name, xmlns, content, cb):
+    def __do_external_iq(self, name, xmlns, content, cb, is_set=False):
         """Sends a raw IQ request to Mugshot server, indirecting
         via D-BUS to client."""     
-        if self._proxy is None:
-            logging.warn("No Mugshot active, not sending IQ")
+        if self.__proxy is None:
+            self._logger.warn("No Mugshot active, not sending IQ")
             return
-        logging.debug("sending external IQ request: %s %s (%d bytes)", name, xmlns, len(content))
-        id = self._proxy.SendExternalIQ(False, name, xmlns, content)
-        self._external_iqs[id] = cb
+        self._logger.debug("sending external IQ request: set=%s %s %s (%d bytes)", is_set, name, xmlns, len(content))
+        id = self.__proxy.SendExternalIQ(is_set, name, xmlns, content)
+        self.__external_iqs[id] = cb
     
-    def _load_app_from_xml(self, node):
+    def __load_app_from_xml(self, node):
         id = node.getAttribute("id")
-        logging.debug("parsing application id=%s", id)
+        self._logger.debug("parsing application id=%s", id)
         attrs = libbig.snarf_attributes_from_xml_node(node, ['id', 'rank', 'usageCount', 'iconUrl', 'description', 'name', 'desktopNames'])
         app = None
-        if not self._applications.has_key(attrs['id']):
+        if not self.__applications.has_key(attrs['id']):
             app = Application(attrs)
-            self._applications[attrs['id']] = app
+            self.__applications[attrs['id']] = app
         else:
-            app = self._applications[attrs['id']]    
+            app = self.__applications[attrs['id']]    
         app.update(attrs)            
         return app
     
-    def _parse_app_set(self, expected_name, xml_str):
-        doc = xml.dom.minidom.parseString(xml_str)
+    def __parse_app_set(self, expected_name, doc):
         root = doc.documentElement
         if not root.nodeName == expected_name:
-            logging.warn("invalid root node, expected %s", expected_name)
+            self._logger.warn("invalid root node, expected %s", expected_name)
             return None
         apps = []
         for node in root.childNodes:
             if not (node.nodeType == xml.dom.Node.ELEMENT_NODE):
                 continue
-            app = self._load_app_from_xml(node)
+            app = self.__load_app_from_xml(node)
             apps.append(app)
         return apps
             
-    def _on_my_top_applications(self, xml_str):     
-        self._my_top_apps = self._parse_app_set('myTopApplications', xml_str)
-        logging.debug("emitting my-top-apps-changed")
-        self.emit("my-top-apps-changed", self._my_top_apps)
+    def __on_my_top_applications(self, xml_str):     
+        doc = xml.dom.minidom.parseString(xml_str)        
+        self.__my_top_apps = self.__parse_app_set('myTopApplications', doc)
+        self.__my_app_usage_start = doc.documentElement.getAttribute("since")
+        self._logger.debug("emitting my-top-apps-changed")
+        self.emit("my-top-apps-changed", self.__my_top_apps)
         
-    def _on_top_applications(self, xml_str):     
-        self._global_top_apps = self._parse_app_set('topApplications', xml_str)
-        logging.debug("emitting global-top-apps-changed")
-        self.emit("global-top-apps-changed", self._global_top_apps)        
+    def __on_top_applications(self, xml_str):     
+        doc = xml.dom.minidom.parseString(xml_str)        
+        self.__global_top_apps = self.__parse_app_set('topApplications', doc)
+        self._logger.debug("emitting global-top-apps-changed")
+        self.emit("global-top-apps-changed", self.__global_top_apps)        
     
-    def _request_my_top_apps(self):
-        self._do_external_iq("myTopApplications", "http://dumbhippo.com/protocol/applications", "",
-                             self._on_my_top_applications)
+    def __request_my_top_apps(self):
+        self.__do_external_iq("myTopApplications", "http://dumbhippo.com/protocol/applications", "",
+                             self.__on_my_top_applications)
     
-    def _request_global_top_apps(self):
-        self._do_external_iq("topApplications", "http://dumbhippo.com/protocol/applications", "",
-                             self._on_top_applications)        
+    def __request_global_top_apps(self):
+        self.__do_external_iq("topApplications", "http://dumbhippo.com/protocol/applications", "",
+                             self.__on_top_applications)        
             
-    def _idle_poll_my_apps(self):
-        self._request_my_top_apps()
+    def __idle_poll_my_apps(self):
+        self.__request_my_top_apps()
         return True
     
-    def _idle_poll_global_apps(self):
-        self._request_global_top_apps()
+    def __idle_poll_global_apps(self):
+        self.__request_global_top_apps()
         return True    
     
     def get_my_top_apps(self):
-        if self._my_top_apps is None:
-            self._request_my_top_apps()
-            self._reset_my_apps_poll()
+        if self.__my_top_apps is None:
+            self.__request_my_top_apps()
+            self.__reset_my_apps_poll()
             return None
-        return self._my_top_apps
+        return self.__my_top_apps
+    
+    def get_my_app_usage_start(self):
+        return self.__my_app_usage_start
     
     def get_global_top_apps(self):
-        if self._global_top_apps is None:
-            self._request_global_top_apps()
-            self._reset_global_apps_poll()
+        if self.__global_top_apps is None:
+            self.__request_global_top_apps()
+            self.__reset_global_apps_poll()
             return None    
-        return self._global_top_apps
+        return self.__global_top_apps
+    
+    def __on_pinned_apps(self, xml_str):
+        doc = xml.dom.minidom.parseString(xml_str)        
+        self.__pinned_apps = self.__parse_app_set('pinned', doc)
+        self._logger.debug("emitting pinned-apps-changed")
+        self.emit("pinned-apps-changed", self.__pinned_apps)        
+    
+    def get_pinned_apps(self):
+        self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications", "",
+                              self.__on_pinned_apps)
+        
+    def set_pinned_apps(self, ids):
+        iq = StringIO.StringIO()
+        for id in ids:
+            iq.write('<appId>')
+            iq.write(id)
+            iq.write('</appId')
+        self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications", 
+                              iq.get_value(),
+                              self.__on_pinned_apps, is_set=True)     
     
 mugshot_inst = None
 def get_mugshot():

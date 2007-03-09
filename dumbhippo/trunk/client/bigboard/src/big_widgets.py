@@ -8,6 +8,16 @@ from libgimmie import DockWindow
 from libbig import URLImageCache
 import libbig, mugshot, bigboard
 
+class CanvasVBox(hippo.CanvasBox):
+    def __init__(self, **kwargs):
+        kwargs['orientation'] = hippo.ORIENTATION_VERTICAL
+        hippo.CanvasBox.__init__(self)
+
+class CanvasHBox(hippo.CanvasBox):
+    def __init__(self, **kwargs):
+        kwargs['orientation'] = hippo.ORIENTATION_HORIZONTAL
+        hippo.CanvasBox.__init__(self)
+
 class CanvasEntry(hippo.CanvasWidget):
     __gproperties__ = {
         'text': (gobject.TYPE_STRING, 'Text', 'Text', '', gobject.PARAM_READWRITE)

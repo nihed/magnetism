@@ -19,8 +19,6 @@ class SearchStock(AbstractMugshotStock):
     """Search.  It's what's for dinner."""
     def __init__(self):
         super(SearchStock,self).__init__("Search", ticker="")
-
-        self.__logger = logging.getLogger('bigboard.stocks.SearchStock')
         
         self.__box = hippo.CanvasBox()
         
@@ -49,10 +47,10 @@ class SearchStock(AbstractMugshotStock):
         
     def __queue_search(self):
         text = self.__input.get_property("text")
-        self.__logger.debug("initiating query for %s" % (text,))
+        self._logger.debug("initiating query for %s" % (text,))
         self.__deskbar.query(text,
                              self.__handle_result)
         
     def __handle_result(self, qstring, matches):
-        self.__logger.debug("got matches for %s: %s", qstring, matches)
+        self._logger.debug("got matches for %s: %s", qstring, matches)
 
