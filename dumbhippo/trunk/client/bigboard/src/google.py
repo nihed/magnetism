@@ -29,6 +29,13 @@ class DocumentsParser(xml.sax.ContentHandler):
             d = self.__docs[-1]
             if name == 'title':
                 self.__inside_title = True
+            elif name == 'link':
+                rel = attrs.getValue('rel')
+                href = attrs.getValue('href')
+                type = attrs.getValue('type')
+                #print str((rel, href, type))
+                if rel == 'alternate' and type == 'text/html':
+                    d.update({'link' : href})
 
     def endElement(self, name):
         #print "</" + name + ">"
@@ -50,11 +57,12 @@ class DocumentsParser(xml.sax.ContentHandler):
 class Event(libbig.AutoStruct):
     def __init__(self):
         libbig.AutoStruct.__init__(self,
-                                   { 'title' : '', 'start_time' : '', 'end_time' : '' })
+                                   { 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '' })
 
 class EventsParser(xml.sax.ContentHandler):
     def __init__(self):
         self.__events = []
+        self.__inside_title = False
 
     def startElement(self, name, attrs):
         #print "<" + name + ">"
@@ -66,18 +74,31 @@ class EventsParser(xml.sax.ContentHandler):
         elif len(self.__events) > 0:
             e = self.__events[-1]
             if name == 'title':
-                e.update({'title' : ''}) # FIXME
+                self.__inside_title = True
             elif name == 'gd:when':
                 e.update({ 'start_time' : attrs.getValue('startTime'),
                            'end_time' : attrs.getValue('endTime') })
-
+            elif name == 'link':
+                rel = attrs.getValue('rel')
+                href = attrs.getValue('href')
+                type = attrs.getValue('type')
+                #print str((rel, href, type))
+                if rel == 'alternate' and type == 'text/html':
+                    e.update({'link' : href})
+                
     def endElement(self, name):
         #print "</" + name + ">"
-        pass
+
+        if name == 'title':
+            self.__inside_title = False
 
     def characters(self, content):
         #print content
-        pass
+        if len(self.__events) > 0:
+            e = self.__events[-1]
+            if self.__inside_title:
+                e.update({'title' : content})
+        
 
     def get_events(self):
         return self.__events
