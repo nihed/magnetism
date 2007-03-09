@@ -139,11 +139,11 @@ def load_image_hook(img_name):
     return hippo.cairo_surface_from_gdk_pixbuf(pixbuf)
 
 def usage():
-    print "%s [--debug] [--help]" % (sys.argv[0])
+    print "%s [--debug] [--debug-modules=mod1,mod2...] [--shell] [--help]" % (sys.argv[0])
 
 def main(args):
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hd", ["help", "debug", "debug-modules="])
+        opts, args = getopt.getopt(sys.argv[1:], "hds", ["help", "debug", "shell", "debug-modules="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
