@@ -67,13 +67,13 @@ class SelfStock(AbstractMugshotStock):
         self._namephoto_box.set_size(size)
     
     def _handle_self_changed(self, mugshot, myself):
-        logging.debug("self (%s) changed" % (myself.get_guid(),))
+        self._logger.debug("self (%s) changed" % (myself.get_guid(),))
         self._photo.set_url(myself.get_photo_url())
         self._name.set_property("text", myself.get_name())
     
     def _handle_whereim_added(self, mugshot, acct):
         name = acct.get_name()
         self._whereim[name] = ExternalAccountIcon(acct)
-        logging.debug("appending external account %s" % (name,))
+        self._logger.debug("appending external account %s" % (name,))
         self._whereim_box.append(self._whereim[name])
 

@@ -62,7 +62,7 @@ class ProfileFactory:
         pairs = None
         try:
             pairs = self._mugshot.get_cookies(self._baseurl)
-        except e:
+        except:
             logging.exception('failed to get cookies')
         self._fetcher.fetch(self._baseurl + 'xml/userSummary?includeStack=true&who=' + guid,
                             lambda url, data: self._do_load(url, data, guid),

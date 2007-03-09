@@ -32,6 +32,9 @@ class Stock(object):
         self._bull_widgets = {}
         self._size = Stock.SIZE_BULL
         
+        # For use in subclasses as well
+        self._logger = logging.getLogger('bigboard.stocks.' + id)  
+        
     def get_id(self):
         return self._id
     
