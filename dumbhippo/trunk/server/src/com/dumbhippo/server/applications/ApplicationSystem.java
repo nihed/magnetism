@@ -10,6 +10,8 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AppinfoUpload;
 import com.dumbhippo.persistence.Application;
 import com.dumbhippo.persistence.ApplicationCategory;
+import com.dumbhippo.persistence.ApplicationUserState;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.XmlMethodException;
@@ -42,8 +44,16 @@ public interface ApplicationSystem {
 	public void pagePopularApplications(Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable);
 	public void pageRelatedApplications(Application relatedTo, Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable);
 	public void pageMyApplications(UserViewpoint viewpoint, Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable);
+	public Date getMyApplicationUsageStart(UserViewpoint viewpoint);
 	
 	public List<CategoryView> getPopularCategories(Date since);
 	
 	public List<Application> getApplicationsWithTitlePatterns();
+	
+	void pinApplicationIds(User user, List<String> applicationIds, boolean pin);
+	
+	public List<ApplicationView> viewApplications(UserViewpoint viewpoint, List<Application> apps, int iconSize);
+	
+	public List<Application> getPinnedApplications(User user); 
+	public ApplicationUserState getUserState(User user, Application app);
 }
