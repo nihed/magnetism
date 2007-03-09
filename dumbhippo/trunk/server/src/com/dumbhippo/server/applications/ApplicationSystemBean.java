@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -39,6 +40,7 @@ import com.dumbhippo.persistence.Application;
 import com.dumbhippo.persistence.ApplicationCategory;
 import com.dumbhippo.persistence.ApplicationIcon;
 import com.dumbhippo.persistence.ApplicationUsage;
+import com.dumbhippo.persistence.ApplicationUserState;
 import com.dumbhippo.persistence.ApplicationWmClass;
 import com.dumbhippo.persistence.UnmatchedApplicationUsage;
 import com.dumbhippo.persistence.User;
@@ -738,11 +740,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 				//applicationView.setUsageCount(count.intValue());
 				applicationView.setUsageCount(count.intValue());
 				applicationView.setRank(thisRank);
-				try {
-					applicationView.setIcon(getIcon(application, iconSize));
-				} catch (NotFoundException e) {
-					// FIXME: Default icon (maybe in getIcon())
-				}
+				setViewIcon(applicationView, iconSize);
 			
 				applicationViews.add(applicationView);
 			}
@@ -831,6 +829,12 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		pageApplicationList(getSortedResults(q), iconSize, category, pageable);
 	}
 	
+	public Date getMyApplicationUsageStart(UserViewpoint viewpoint) {
+		Query q = em.createQuery("SELECT MIN(au.date) from ApplicationUsage au where au.user = :user")
+			.setParameter("user", viewpoint.getViewer());
+		return (Date) q.getSingleResult();
+	}
+	
 	public List<CategoryView> getPopularCategories(Date since) {
 		if (since == null)
 			since = getDefaultSince();		
@@ -869,6 +873,66 @@ public class ApplicationSystemBean implements ApplicationSystem {
 
 	public List<Application> getApplicationsWithTitlePatterns() {
 		Query q = em.createQuery("SELECT a from Application a WHERE a.titlePatterns IS NOT NULL and a.titlePatterns <> ''");
+		return TypeUtils.castList(Application.class, q.getResultList());
+	}
+
+	public ApplicationUserState getUserState(final User user, final Application app) {
+		try {
+			return runner.runTaskThrowingConstraintViolation(new Callable<ApplicationUserState>() {
+				public ApplicationUserState call() {
+					Query q = em.createQuery("FROM ApplicationUserState aus WHERE aus.user = :user "
+							+ " AND aus.application = :app");
+					q.setParameter("user", user);
+					q.setParameter("app", app);
+	
+					ApplicationUserState res;
+					try {
+						res = (ApplicationUserState) q.getSingleResult();
+					} catch (NoResultException e) {
+						res = new ApplicationUserState(user, app);
+						em.persist(res);
+					}
+	
+					return res;	
+				}
+			});
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}	
+
+	public void pinApplicationIds(User user, List<String> applicationIds, boolean pin) {
+		for (String appId : applicationIds) {
+			Application application = em.find(Application.class, appId);
+			if (application == null) {
+				logger.warn("Unknown application id '{}'", appId);
+				continue;
+			}
+			ApplicationUserState state = getUserState(user, application);
+			state.setPinned(pin);
+		}
+	}
+	
+	private void setViewIcon(ApplicationView view, int size) {
+		try {
+			view.setIcon(getIcon(view.getApplication(), size));
+		} catch (NotFoundException e) {
+			// FIXME: Default icon (maybe in getIcon())
+		}				
+	}
+	
+	public List<ApplicationView> viewApplications(UserViewpoint viewpoint, List<Application> apps, int iconSize) {
+		List<ApplicationView> result = new ArrayList<ApplicationView>();
+		for (Application app : apps) {
+			ApplicationView viewedApp = new ApplicationView(app);
+			setViewIcon(viewedApp, iconSize);
+		}
+		return result;
+	}
+
+	public List<Application> getPinnedApplications(User user) {
+		Query q = em.createQuery("SELECT aus.application FROM ApplicationUserState aus WHERE aus.user = :user AND aus.pinned = TRUE")
+			.setParameter("user", user);
 		return TypeUtils.castList(Application.class, q.getResultList());
 	}
 }
