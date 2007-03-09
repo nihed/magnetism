@@ -1,4 +1,4 @@
-import os, code, sys, traceback, urllib2, logging, StringIO, cookielib
+import os, code, sys, traceback, urllib2, logging, logging.config, StringIO, cookielib
 import re, tempfile
 
 import cairo, gtk, gobject, threading
@@ -221,3 +221,47 @@ class URLImageCache(Singleton):
             errcb(url, exc_info)
         del self._loads[url]        
  
+
+def init_logging(default_level, debug_modules):
+    
+    logging_config = StringIO.StringIO()
+    logging_config.write("""
+[loggers]
+keys=%s
+
+""" % (','.join(['root'] + debug_modules)))
+    logging_config.write("""    
+[formatters]
+keys=base
+
+[handlers]
+keys=stderr
+    
+[formatter_base]
+class=logging.Formatter
+
+[handler_stderr]
+class=StreamHandler
+level=NOTSET
+formatter=base
+args=(sys.stderr,)
+
+[logger_root]
+level=%s
+handlers=stderr
+
+        """ % (default_level,))
+    for module in debug_modules:
+        logging_config.write("""
+[logger_%s]
+level=DEBUG
+handlers=stderr
+propagate=0
+qualname=bigboard.%s
+
+        """ % (module,module)
+        )
+    logging.config.fileConfig(StringIO.StringIO(logging_config.getvalue()))
+    
+    logging.debug("Initialized logging")
+    

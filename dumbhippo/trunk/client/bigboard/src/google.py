@@ -1,4 +1,4 @@
-import httplib2, keyring, libbig, sys, xml, xml.sax
+import httplib2, keyring, libbig, sys, xml, xml.sax, logging, threading, gobject
 
 class AbstractDocument(libbig.AutoStruct):
     def __init__(self):
@@ -80,6 +80,37 @@ class EventsParser(xml.sax.ContentHandler):
     def get_events(self):
         return self.__events
 
+class AsyncHTTPLib2Fetcher:
+    """Asynchronously fetch objects over HTTP, invoking
+       callbacks using the GLib main loop."""
+    def fetch(self, url, username, password, cb, errcb):
+        self.__logger = logging.getLogger("bigboard.AsyncHTTPLib2Fetcher")
+        self.__logger.debug('creating async HTTP request thread for %s' % (url,))
+
+        thread = threading.Thread(target=self._do_fetch, name="AsyncHTTPLib2Fetch", args=(url, username, password, cb, errcb))
+        thread.setDaemon(True)
+        thread.start()
+        
+    def _do_fetch(self, url, username, password, cb, errcb):
+        self.__logger.debug("in thread fetch of %s" % (url,))
+        try:
+            h = httplib2.Http()
+            h.add_credentials(username, password)
+            h.follow_all_redirects = True
+
+            self.__logger.debug("sending http request")
+
+            headers, data = h.request(url, "GET", headers = {})
+
+            self.__logger.debug("adding idle after http request")
+
+            gobject.idle_add(lambda: cb(url, data) and False)
+        except Exception, e:
+            self.__logger.error("caught error for fetch of %s: %s" % (url, e))
+            # in my experience sys.exc_info() is some kind of junk here, while "e" is useful
+            gobject.idle_add(lambda: errcb(url, sys.exc_info()) and False)
+
+
 class Google:
 
     def __init__(self):
@@ -89,41 +120,54 @@ class Google:
 
         self.__username = username
         self.__password = password
+        self.__fetcher = AsyncHTTPLib2Fetcher()
 
-    def get_calendar(self):
-        h = httplib2.Http()
-        h.add_credentials(self.__username, self.__password)
-        h.follow_all_redirects = True
-        uri = 'http://www.google.com/calendar/feeds/' + self.__username + '@gmail.com/private/full'
-        
-        headers, data = h.request(uri, "GET", headers = {})
-
+    def __on_calendar_load(self, url, data, cb, errcb):
         try:
             p = EventsParser()
             xml.sax.parseString(data, p)
-            return p.get_events()
+            cb(p.get_events())
         except xml.sax.SAXException, e:
-            return []
+            errcb(sys.exc_info())
 
-    def get_documents(self):
-        h = httplib2.Http()
-        h.add_credentials(self.__username, self.__password)
-        h.follow_all_redirects = True
 
-        uri = 'http://spreadsheets.google.com/feeds/spreadsheets/private/full'
-        
-        headers, data = h.request(uri, "GET", headers = {})
+    def __on_calendar_error(self, url, exc_info, errcb):
+        errcb(exc_info)
 
-        print data
+    def fetch_calendar(self, cb, errcb):
 
+        uri = 'http://www.google.com/calendar/feeds/' + self.__username + '@gmail.com/private/full'
+
+        self.__fetcher.fetch(uri, self.__username, self.__password,
+                             lambda url, data: self.__on_calendar_load(url, data, cb, errcb),
+                             lambda url, exc_info: self.__on_calendar_error(url, exc_info, errcb))
+
+    def __on_documents_load(self, url, data, cb, errcb):
         try:
             p = DocumentsParser()
             xml.sax.parseString(data, p)
-            return p.get_documents()
+            cb(p.get_documents())
         except xml.sax.SAXException, e:
-            return []
-        
+            errcb(sys.exc_info())
+
+    def __on_documents_error(self, url, exc_info, errcb):
+        errcb(exc_info)
+
+    def fetch_documents(self, cb, errcb):
+
+        uri = 'http://spreadsheets.google.com/feeds/spreadsheets/private/full'
+
+        self.__fetcher.fetch(uri, self.__username, self.__password,
+                             lambda url, data: self.__on_documents_load(url, data, cb, errcb),
+                             lambda url, exc_info: self.__on_documents_error(url, exc_info, errcb))
+
 if __name__ == '__main__':
+
+    import gtk, gtk.gdk
+
+    gtk.gdk.threads_init()
+
+    libbig.init_logging('DEBUG', ['bigboard.AsyncHTTP2LibFetcher'])
 
     libbig.set_application_name("BigBoard")
 
@@ -131,14 +175,15 @@ if __name__ == '__main__':
 
     g = Google()
 
-    print "getting documents..."
-    docs = g.get_documents()
+    def display(x):
+        print x
+    
+    g.fetch_documents(display, display)
+    g.fetch_calendar(display, display)
 
-    print docs
+    loop = gobject.MainLoop()
+
+    print "running mainloop"
+    loop.run()
 
     sys.exit(0)
-
-    print "getting calendar..."
-    events = g.get_calendar()
-
-    print events
