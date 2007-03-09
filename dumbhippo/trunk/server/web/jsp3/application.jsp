@@ -25,8 +25,10 @@
    	<dht3:shinyBox color="grey">
 	    <dht3:applicationsTop/>
 	    <hr>
+	    <table id="dhApplicationsColumns">
+	    <tr>
 	    <dht3:applicationsLeft/>
-	    <div id="dhApplicationsRight">
+	    <td id="dhApplicationsRight">
     		<div class="dh-applications-application-icon">
 				<dh:png src="${appView.icon.url}" 
 					style="width: ${appView.icon.displayWidth}; height: ${appView.icon.displayHeight}; overflow: hidden;"/>
@@ -48,6 +50,8 @@
     		</div>
 			<div class="dh-applications-subheading">Popular applications among <c:out value="${appView.application.name}"/> users:</div>
 			<dht3:miniApplicationList apps="${application.relatedApplications}"/>
-	    </div>
+	    </td>
+	    </tr>
+	    </table>
 	</dht3:shinyBox>
 </dht3:page>
