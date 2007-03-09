@@ -31,7 +31,7 @@ while [ $timeout -gt 0 ] ; do
     let timeout="$timeout - $interval"
 done
 
-echo "...timed out, initiating forced termination of pid $pid"
+echo "...timed out, initiating forced termination of pid $pid (\"Hasta la vista, baby.\")"
 kill -9 $pid
 
 timeout=5
