@@ -5,7 +5,7 @@
     overflow:       hidden;
 }
 
-.dh-person-item-more-info {
+.dh-invitations-table .dh-person-item-more-info {
     position:	    relative;
     table-layout:   fixed;
     width:          100%;
@@ -111,3 +111,19 @@
     word-wrap: break-word;
 }
 */
+
+/* Suggestion list styling; similar rules are in sharelink.css */
+
+.dh-suggestion-list {
+	z-index:            2; /* on top */
+    padding:            2px;
+    max-height:         176px;
+    height:expression(this.scrollHeight > 176 ? "176px" : "auto");
+    overflow:           auto;
+    text-align:			left;
+}
+
+.dh-suggestion-list ul {
+	padding:			0;
+    margin:             0;
+}

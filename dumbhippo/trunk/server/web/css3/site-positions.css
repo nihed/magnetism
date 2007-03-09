@@ -248,7 +248,7 @@ div.dh-notification {
 	position:			relative;
 }
 
-.dh-page-shinybox-title-large  {
+.dh-page-shinybox-title-large, .dh-section-header {
     margin-top:         5px;
 	margin-bottom:		5px;
 }
@@ -728,12 +728,7 @@ div.dh-person-header-title {
 
 #dhDownloadMessageClose {
 	position:			absolute;
-	top:				2px;
-	right:				3px;
-}
-
-.dh-section-header {
-    margin-top:         5px;
+	top:				n-top:         5px;
 }
 
 .dh-message {

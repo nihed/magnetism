@@ -282,7 +282,7 @@ public class SharedFileSystemBean implements SharedFileSystem {
 					member = groupSystem.getGroupMember(viewpoint, g.getGroup(), viewer);
 				} catch (NotFoundException e) {
 				}
-				if (member != null && member.isParticipant())
+				if (member != null && member.getStatus().isParticipant())
 					return file;
 			}
 		}

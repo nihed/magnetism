@@ -71,7 +71,7 @@
                                 <dh:script module="dh.actions"/>
 						        <dht:actionLink oneLine="true" href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')" title="Stop following this group">Stop following</dht:actionLink>
 				            </c:if>
-				            <c:if test="${group.member}">
+				            <c:if test="${group.canAddMembers}">
 				                <dh:script module="dh.actions"/>
 				                <dht:actionLink oneLine="true" href="javascript:dh.actions.addMember('${group.viewedGroupId}', '${person.identifyingGuid}', function () { dh.util.refresh() })" title="Invite this person to be a member in this group">Invite to group</dht:actionLink>		  	    	
 				            </c:if>
@@ -87,75 +87,13 @@
         </dht3:shinyBox>
     </c:if>
    
-    <c:if test="${group.member}">
-        <dht3:shinyBox color="grey">
-            <div class="dh-page-shinybox-title-large">
-                <span>People Invited to the Group (<c:out value="${group.invitedMembers.size}"/>)</span>
-                <a class="dh-underlined-link dh-page-shinybox-subtitle" href="/group-invitation?group=${group.viewedGroupId}">Invite people!</a>
-            </div>
-            <c:choose>  
-                <c:when test="${group.invitedMembers.size > 0}">
-          	        <c:forEach items="${group.pageableInvitedMembers.results}" var="person">
-			            <dht3:personItem who="${person}" useSpecialControls="true">
-			                <a href="javascript:window.open('/group-invitation?group=${group.viewedGroupId}&invitee=${person.identifyingGuid}', '_self');">
-			                    Re-send invitation
-			                </a>
-			                <c:if test="${person.viewerCanRemoveInvitation}">
-			                    |
-                                <dh:script module="dh.actions"/>
-				                <dht:actionLink oneLine="true" href="javascript:dh.actions.removeGroupInvitee('${group.viewedGroupId}', ${person.email});" title="Cancel group invitation for this person">Remove invitation</dht:actionLink>		  	    				                    
-			                </c:if>
-			            </dht3:personItem>
-		            </c:forEach>
-		            <div class="dh-grow-div-around-floats"><div></div></div>
-		            <dht:expandablePager pageable="${group.pageableInvitedMembers}" anchor="dhInvitedMembers"/>
-                </c:when>
-			    <c:otherwise>
-			        This group has no outstanding invitations. <a href="/group-invitation?group=${group.viewedGroupId}">Invite people!</a>
-			    </c:otherwise>
-	        </c:choose>            
-        </dht3:shinyBox>
+    <c:if test="${group.viewedGroup.status.participant}">
+        <dht3:invitedMembers/>
     </c:if>
 
     <%-- Only public groups can have followers; both members and followers can see people who are invited to follow --%>
-    <c:if test="${group.public && (group.member || group.follower)}">
-        <dht3:shinyBox color="grey">
-            <div class="dh-page-shinybox-title-large">
-                <span>People Invited to Follow the Group (<c:out value="${group.invitedFollowers.size}"/>)</span>
-                <c:if test="${group.follower}">
-                    <a class="dh-underlined-link dh-page-shinybox-subtitle" href="/group-invitation?group=${group.viewedGroupId}">Invite people to follow!</a>
-                </c:if>    
-            </div>
-            <c:choose>  
-                <c:when test="${group.invitedFollowers.size > 0}">
-          	        <c:forEach items="${group.pageableInvitedFollowers.results}" var="person">
-			            <dht3:personItem who="${person}" useSpecialControls="true">
-			                <c:choose>
-			                    <c:when test="${group.member}">
-			                        <dh:script module="dh.actions"/>
-				                    <dht:actionLink oneLine="true" href="javascript:dh.actions.addMember('${group.viewedGroupId}', '${person.identifyingGuid}', function () { dh.util.refresh() })" title="Invite this person to be a member in this group">Invite to group</dht:actionLink>		  	    			                   
-			                    </c:when>			               
-			                    <c:otherwise>
-			                        <a href="javascript:window.open('/group-invitation?group=${group.viewedGroupId}&invitee=${person.identifyingGuid}', '_self');">
-			                            Re-send invitation
-			                        </a>
-			                    </c:otherwise>
-			                </c:choose> 
-			                <c:if test="${person.viewerCanRemoveInvitation}">
-			                    |
-                                <dh:script module="dh.actions"/>
-				                <dht:actionLink oneLine="true" href="javascript:dh.actions.removeGroupInvitee('${group.viewedGroupId}', ${person.email});" title="Remove invitation to follow this group for this person">Remove invitation</dht:actionLink>		  	    				                    
-			                </c:if>			                
-			            </dht3:personItem>
-		            </c:forEach>
-		            <div class="dh-grow-div-around-floats"><div></div></div>
-		            <dht:expandablePager pageable="${group.pageableInvitedFollowers}" anchor="dhInvitedFollowers"/>
-                </c:when>
-			    <c:otherwise>
-			        This group has no outstanding invitations to follow. <c:if test="${group.follower}"><a href="/group-invitation?group=${group.viewedGroupId}">Invite people to follow!</a></c:if>
-			    </c:otherwise>
-	        </c:choose>            
-        </dht3:shinyBox>
+    <c:if test="${group.public && (group.viewedGroup.status.participant || group.viewedGroup.status.followingParticipant)}">
+        <dht3:invitedFollowers/>
     </c:if>
        
 </dht3:page>

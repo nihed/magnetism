@@ -174,12 +174,11 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			group.getMembers().add(accountMember);
 			notifier.onGroupMemberCreated(accountMember, System.currentTimeMillis());
 		}
-		
+
 		return accountMember;
 	}
 
-	private GroupMember getGroupMemberForContact(Group group, Contact contact) throws NotFoundException {
-		
+	private GroupMember getGroupMemberForContact(Group group, Contact contact) throws NotFoundException {		
 		// FIXME this isn't really going to work well if there are multiple GroupMember, but the 
 		// UI doesn't really offer a way to do that right now anyway I don't think
 		
@@ -189,6 +188,16 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			for (ContactClaim cc : contact.getResources()) {
 				if (cc.getResource().equals(member.getMember()))
 					return member;
+				// Because we don't fixup ContactClaim to point to the Account instead of the
+				// EmailResource when someone you invited joins, we need an additional
+				// check here to see if the EmailResource is claimed by a user who is
+				// a group member.
+				if (!(cc.getResource() instanceof Account)) {				
+				    AccountClaim ac = cc.getResource().getAccountClaim();
+				    if (ac != null && ac.getOwner().getAccount().equals(member.getMember())) {
+					    return member;
+				    }
+				}
 			}
 		}
 		throw new NotFoundException("GroupMember for contact " + contact + " not found");
@@ -255,7 +264,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			adderMember = null;
 		}		
 		
-		if ((adderMember != null && adderMember.canAddMembers()) ||
+		if ((adderMember != null && adderMember.getStatus().getCanAddMembers()) ||
             group.getAccess() == GroupAccess.PUBLIC)
 				return true;
 			else
@@ -338,7 +347,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			
 		} else {
 			Resource resource = identitySpider.getBestResource(person);
-			
+		    
 			groupMember = new GroupMember(group, resource, newStatus);
 			if (!selfAdd) { 
 				groupMember.addAdder(adder);
@@ -784,7 +793,10 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 	
 	private static final String CONTACT_IS_MEMBER =
-		" EXISTS(SELECT cc FROM ContactClaim cc WHERE cc.contact = contact AND cc.resource = gm.member) ";
+		" (EXISTS(SELECT cc FROM ContactClaim cc WHERE cc.contact = contact AND cc.resource = gm.member) OR" +
+		" EXISTS(SELECT a2 FROM Account a2 WHERE a2.owner IN " +
+		" (SELECT ac.owner FROM ContactClaim cc, AccountClaim ac WHERE cc.contact = contact AND ac.resource = cc.resource) " +
+		" AND a2 = gm.member)) ";
 	
 	private static final String FIND_ADDABLE_CONTACTS_QUERY = 
 		"SELECT contact from Account a, Contact contact, Group g " +

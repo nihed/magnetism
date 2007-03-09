@@ -1,5 +1,7 @@
 package com.dumbhippo.persistence;
 
+import javax.persistence.Transient;
+
 /**
  * This enum is used in database persistence, so changing it affects the schema.
  * We rely on the ordinal values in a couple of cases:
@@ -75,7 +77,35 @@ public enum MembershipStatus {
 	 * @ return true if group member can share group with others
 	 */
 	public boolean getCanShare() {
-		return (ordinal() == ACTIVE.ordinal() || ordinal() == FOLLOWER.ordinal());
+		return (getCanAddMembers() || getCanAddFollowers());
+	}
+	
+	public boolean getCanAddMembers() {
+		return (ordinal() == ACTIVE.ordinal());
+	}
+	
+	public boolean getCanAddFollowers() {
+		return (ordinal() == FOLLOWER.ordinal());
+	}
+	
+	/**
+	 * Is the person "in the group" (which means they can see other members,
+	 * posts, etc. if it's a private group)
+	 * @return true if the user is invited or active
+	 */
+	public boolean isParticipant() {
+		return (ordinal() >= MembershipStatus.INVITED.ordinal());
+	}
+	
+	/**
+	 * Is the person a follower or invited to follow, which means they can
+	 * see other people invited to follow a public group.
+	 * 
+	 * @return true if the user is a follower or invited to follow
+	 */
+	public boolean isFollowingParticipant() {
+		return (ordinal() == MembershipStatus.FOLLOWER.ordinal() || 
+				ordinal() == MembershipStatus.INVITED_TO_FOLLOW.ordinal());
 	}
 	
 	// REMOVED is unordered for the purposes of better/worse

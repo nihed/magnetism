@@ -214,10 +214,13 @@ div.dh-async-action-link-complete {
 	font-size:			12px;
 }
 
+.dh-page-shinybox-title-large, .dh-section-header {
+	font-weight:  		bold;
+	font-size:	  		18px;
+}
+
 .dh-page-shinybox-title-large {
-	font-size:			18px;
-	font-weight:		bold;
-	color:				#9648BC;
+    color:				#9648BC;
 }
 
 .dh-page-shinybox-subtitle {
@@ -618,11 +621,6 @@ div.dh-async-action-link-complete {
 #dhDownloadMessage {
 	font-size:			14px;
 	font-weight:		bold;
-}
-
-.dh-section-header {
-	font-weight:  		bold;
-	font-size:	  		18px;
 }
 
 .dh-section-explanation {
