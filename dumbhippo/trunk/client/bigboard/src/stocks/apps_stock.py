@@ -68,6 +68,11 @@ class HideableBox(hippo.CanvasBox):
         self.__content = content
         self.append(self.__content)
         
+    def set_shown(self, shown):
+        shown = not not shown
+        if shown != self.__shown:
+            self.__toggle_show()
+        
     def __toggle_show(self):
         assert(not self.__content is None)        
         self.__shown = not self.__shown
@@ -81,8 +86,8 @@ class HideableBox(hippo.CanvasBox):
 class AppDisplay(PhotoContentItem):
     def __init__(self, app):
         PhotoContentItem.__init__(self, border_right=6)
-        self.__app = None
-                
+        self.__app = None 
+            
         self._logger = logging.getLogger('bigboard.AppDisplay')                
                 
         self.__photo = CanvasMugshotURLImage(scale_width=30, scale_height=30)
@@ -158,6 +163,8 @@ class AppsStock(bigboard.AbstractMugshotStock):
     STATIFICATION_TIME_SEC = 60 * 60 * 24 * 3; # 3 days
     def __init__(self):
         super(AppsStock, self).__init__("Applications") 
+                
+        self.__initialized = False           
         
         self.__box = CanvasVBox(spacing=3)
         self.__message = hippo.CanvasText()
@@ -171,7 +178,7 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self.__box.append(self.__static_set)
         self.__box.append(self.__dynamic_set_container)
         
-        self.__apps = {}
+        self.__static_set_ids = {}
         self.__set_message('Loading...')
         
     def __set_message(self, text):
@@ -203,9 +210,16 @@ class AppsStock(bigboard.AbstractMugshotStock):
     def __handle_pinned_apps_changed(self, mugshot, apps):
         self._logger.debug("pinned apps changed")
         self.__static_set.remove_all()
+        self.__static_set_ids = {}
         for app in apps:
             display = AppDisplay(app)
             self.__static_set.append(display)           
+            self.__static_set_ids[app.get_id()] = True
+            
+        if not self.__initialized:
+            self.__initialized = True
+            if len(self.__static_set.get_children()) > 0:
+                self.__dynamic_set_container.set_shown(False)
             
     def __handle_global_top_apps_changed(self, mugshot, apps):
         self._logger.debug("global apps changed")
@@ -214,7 +228,7 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self._logger.debug("my apps changed")
         
         if self._mugshot.get_my_app_usage_start():
-            app_stalking_duration = (time.time()) - (int(self._mugshot.get_my_app_usage_start())/1000) 
+            app_stalking_duration = (time.mktime(time.gmtime())) - (int(self._mugshot.get_my_app_usage_start())/1000) 
             self._logger.debug("app stalking duration: %s", app_stalking_duration)
             if app_stalking_duration <= self.STATIFICATION_TIME_SEC:
                 self.__set_message("Building application list...")
@@ -233,5 +247,7 @@ class AppsStock(bigboard.AbstractMugshotStock):
         
         self.__dynamic_set.remove_all()
         for app in apps:
+            if self.__static_set_ids.has_key(app.get_id()):
+                continue
             display = AppDisplay(app)
             self.__dynamic_set.append(display)
