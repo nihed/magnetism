@@ -114,13 +114,24 @@ class AsyncHTTPLib2Fetcher:
 class Google:
 
     def __init__(self):
+        self.__username = None
+        self.__password = None
+        self.__fetcher = AsyncHTTPLib2Fetcher()
+
+    def __with_login_info(self, func):
+        """Call func after we get username and password"""
+        
         k = keyring.get_keyring()
 
         username, password = k.get_login("google")
 
+        if not username or not password:
+            return
+
         self.__username = username
         self.__password = password
-        self.__fetcher = AsyncHTTPLib2Fetcher()
+
+        func()
 
     def __on_calendar_load(self, url, data, cb, errcb):
         try:
@@ -130,17 +141,19 @@ class Google:
         except xml.sax.SAXException, e:
             errcb(sys.exc_info())
 
-
     def __on_calendar_error(self, url, exc_info, errcb):
         errcb(exc_info)
 
-    def fetch_calendar(self, cb, errcb):
+    def __have_login_fetch_calendar(self, cb, errcb):
 
         uri = 'http://www.google.com/calendar/feeds/' + self.__username + '@gmail.com/private/full'
 
         self.__fetcher.fetch(uri, self.__username, self.__password,
                              lambda url, data: self.__on_calendar_load(url, data, cb, errcb),
                              lambda url, exc_info: self.__on_calendar_error(url, exc_info, errcb))
+
+    def fetch_calendar(self, cb, errcb):
+        self.__with_login_info(lambda: self.__have_login_fetch_calendar(cb, errcb))
 
     def __on_documents_load(self, url, data, cb, errcb):
         try:
@@ -153,7 +166,7 @@ class Google:
     def __on_documents_error(self, url, exc_info, errcb):
         errcb(exc_info)
 
-    def fetch_documents(self, cb, errcb):
+    def __have_login_fetch_documents(self, cb, errcb):
 
         uri = 'http://spreadsheets.google.com/feeds/spreadsheets/private/full'
 
@@ -161,6 +174,9 @@ class Google:
                              lambda url, data: self.__on_documents_load(url, data, cb, errcb),
                              lambda url, exc_info: self.__on_documents_error(url, exc_info, errcb))
 
+    def fetch_documents(self, cb, errcb):
+        self.__with_login_info(lambda: self.__have_login_fetch_documents(cb, errcb))
+        
 if __name__ == '__main__':
 
     import gtk, gtk.gdk
