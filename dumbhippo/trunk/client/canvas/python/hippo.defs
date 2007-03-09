@@ -961,7 +961,21 @@
   )
 )
 
+(define-virtual button_press_event
+  (of-object "HippoCanvasItem")
+  (return-type "gboolean")
+  (parameters
+    '("HippoEvent*" "event")
+  )
+)
 
+(define-virtual button_release_event
+  (of-object "HippoCanvasItem")
+  (return-type "gboolean")
+  (parameters
+    '("HippoEvent*" "event")
+  )
+)
 
 ;; From hippo-canvas-link.h
 
