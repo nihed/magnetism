@@ -3,7 +3,7 @@ import logging
 import gobject
 import hippo
 
-import bigboard, mugshot, google, pango
+import bigboard, mugshot, google, pango, os
 from big_widgets import CanvasMugshotURLImage, PhotoContentItem
 
 class DocDisplay(PhotoContentItem):
@@ -46,8 +46,12 @@ class DocDisplay(PhotoContentItem):
         #self.__photo.set_url(self.__doc.get_icon_url())
         
     def __on_button_press(self, event):
+        if event.button != 1:
+            return False
+        
         logging.debug("activated doc %s", self)
-        # FIXME
+
+        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', self.__doc.get_link())
 
 class DocsStock(bigboard.AbstractMugshotStock):
     def __init__(self):

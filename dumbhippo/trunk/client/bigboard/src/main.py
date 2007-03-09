@@ -9,7 +9,7 @@ from big_widgets import Sidebar, CommandShell
 from bigboard import Stock
 import libbig
 
-import stocks, stocks.self_stock, stocks.people_stock, stocks.apps_stock, stocks.search_stock, stocks.docs_stock
+import stocks, stocks.self_stock, stocks.people_stock, stocks.apps_stock, stocks.search_stock, stocks.docs_stock, stocks.calendar_stock
 
 SIZE_BULL_PADDING_PX = 4
 SIZE_BEAR_PADDING_PX = 2
@@ -55,7 +55,9 @@ class BigBoardPanel(object):
                         stocks.search_stock.SearchStock(),
                         stocks.people_stock.PeopleStock(), 
                         stocks.apps_stock.AppsStock(),
-                        stocks.docs_stock.DocsStock()]
+                        stocks.calendar_stock.CalendarStock(),
+                        stocks.docs_stock.DocsStock()
+                        ]
         self._exchanges = []
 
         self._canvas = hippo.Canvas()
