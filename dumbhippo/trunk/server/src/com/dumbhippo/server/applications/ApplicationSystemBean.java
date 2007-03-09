@@ -926,6 +926,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		for (Application app : apps) {
 			ApplicationView viewedApp = new ApplicationView(app);
 			setViewIcon(viewedApp, iconSize);
+			result.add(viewedApp);
 		}
 		return result;
 	}
