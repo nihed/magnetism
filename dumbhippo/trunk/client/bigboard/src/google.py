@@ -219,10 +219,13 @@ class Google:
 
         k = keyring.get_keyring()
 
-        username, password = k.get_login("google")
-
-        self.__username = username
-        self.__password = password
+        try:
+            username, password = k.get_login("google")
+            self.__username = username
+            self.__password = password            
+        except TypeError:
+            self.__username = None
+            self.__password = None
 
     def __on_auth_dialog_ok(self):
         self.__username = self.__auth_dialog.get_username()
