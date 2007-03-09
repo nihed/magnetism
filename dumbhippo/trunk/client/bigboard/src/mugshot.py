@@ -1,4 +1,4 @@
-import logging, inspect, xml.dom, xml.dom.minidom
+import logging, inspect, xml.dom, xml.dom.minidom, StringIO
 
 import gobject, dbus
 
@@ -40,6 +40,7 @@ class Mugshot(gobject.GObject):
         
         self.__app_poll_frequency_ms = 30 * 60 * 1000
         
+        self._logger.debug("connecting to session bus")            
         session_bus = dbus.SessionBus()
         bus_proxy = session_bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
         self.__bus_proxy = bus_proxy.connect_to_signal("NameOwnerChanged",
@@ -51,6 +52,7 @@ class Mugshot(gobject.GObject):
         self.__reset()        
         
     def __reset(self):
+        self._logger.debug("reset")  
         # Generic properties
         self.__baseprops = None
         
@@ -82,8 +84,9 @@ class Mugshot(gobject.GObject):
         self.__global_apps_poll_id = gobject.timeout_add(self.__app_poll_frequency_ms, self.__idle_poll_global_apps)        
         
     def __create_proxy(self):
-        try:
+        try:        
             bus = dbus.SessionBus()
+            self._logger.debug("creating proxy for org.mugshot.Mugshot")
             self.__proxy = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
             self.__proxy.connect_to_signal('WhereimChanged', _log_cb(self.__whereimChanged))
             self.__proxy.connect_to_signal('EntityChanged', _log_cb(self.__entityChanged))
@@ -295,6 +298,7 @@ class Mugshot(gobject.GObject):
         return self.__global_top_apps
     
     def __on_pinned_apps(self, xml_str):
+        self._logger.debug("parsing pinned apps reply: %s", xml_str)
         doc = xml.dom.minidom.parseString(xml_str)        
         self.__pinned_apps = self.__parse_app_set('pinned', doc)
         self._logger.debug("emitting pinned-apps-changed")
@@ -309,10 +313,10 @@ class Mugshot(gobject.GObject):
         for id in ids:
             iq.write('<appId>')
             iq.write(id)
-            iq.write('</appId')
+            iq.write('</appId>')
         self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications", 
-                              iq.get_value(),
-                              self.__on_pinned_apps, is_set=True)     
+                              iq.getvalue(),
+                              lambda *args: self._logger.debug("app pin set succeeded"), is_set=True)     
     
 mugshot_inst = None
 def get_mugshot():
