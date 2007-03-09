@@ -2,6 +2,7 @@ package com.dumbhippo.jive;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -30,7 +31,9 @@ import com.dumbhippo.server.views.UserViewpoint;
 
 @IQHandler(namespace=ApplicationsIQHandler.APPLICATIONS_NAMESPACE)
 public class ApplicationsIQHandler extends AnnotatedIQHandler  implements LiveEventListener<UserPrefChangedEvent> {
-	static final String APPLICATIONS_NAMESPACE = "http://dumbhippo.com/protocol/applications"; 
+	static final String APPLICATIONS_NAMESPACE = "http://dumbhippo.com/protocol/applications";
+	
+	private static final int DEFAULT_ICON_SIZE = 32;
 	
 	@EJB
 	private ApplicationSystem applicationSystem;
@@ -54,14 +57,53 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler  implements LiveEv
 	public void getMyTopApplications(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
 		Document document = DocumentFactory.getInstance().createDocument();
 		Element childElement = document.addElement("myTopApplications", APPLICATIONS_NAMESPACE);
+		
+		Date since = applicationSystem.getMyApplicationUsageStart(viewpoint);
+		childElement.addAttribute("since", "" + since.getTime());	
 
 		Pageable<ApplicationView> pageable = new Pageable<ApplicationView>("applications");
 		pageable.setPosition(0);
 		pageable.setInitialPerPage(30);		
-		applicationSystem.pageMyApplications(viewpoint, null, 24, null, pageable);
+		applicationSystem.pageMyApplications(viewpoint, null, DEFAULT_ICON_SIZE, null, pageable);
 		appendApplicationViews(childElement, pageable.getResults());
 		
 		reply.setChildElement(childElement);		
+	}
+	
+	@IQMethod(name="pinned", type=IQ.Type.get)
+	public void getPinned(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
+		Document document = DocumentFactory.getInstance().createDocument();
+		Element childElement = document.addElement("pinned", APPLICATIONS_NAMESPACE);		
+		List<Application> pinned = applicationSystem.getPinnedApplications(viewpoint.getViewer());
+		List<ApplicationView> pinnedViewed = applicationSystem.viewApplications(viewpoint, pinned, DEFAULT_ICON_SIZE);
+		appendApplicationViews(childElement, pinnedViewed);
+		
+		reply.setChildElement(childElement);			
+	}
+
+	@IQMethod(name="pinned", type=IQ.Type.set)
+	public void setPinned(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
+		Element child = request.getChildElement();
+		List<String> applicationIds = new ArrayList<String>();
+		
+		String isPinnedFlag = child.attributeValue("isPinned");
+		boolean isPinned = true;
+		if (isPinnedFlag != null && isPinnedFlag.equals("false"))
+			isPinned = false;
+		
+		final int limit = 100;  /* Arbitrary, mostly to mitigate broken clients */
+		int count = 0;
+		for (Iterator i = child.elementIterator(); i.hasNext(); ) {
+			count++;			
+			if (count > limit)
+				break;
+			Element subchild = (Element)i.next();
+			if (subchild.getName().equals("appId")) {
+				applicationIds.add(subchild.getText());
+			}
+		}
+		
+		applicationSystem.pinApplicationIds(viewpoint.getViewer(), applicationIds, isPinned);
 	}
 
 	@IQMethod(name="topApplications", type=IQ.Type.get)
