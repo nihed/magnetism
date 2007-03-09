@@ -64,7 +64,7 @@
 			<a href="/application?id=${appinfo.appId}">Go back to browsing</a>
 		</div>
 	    <hr>
-	    <div id="dhApplicationsRight">
+	    <div>
 	    	<form action="/upload/appinfo-edit" method="POST" enctype="multipart/form-data">
 	    		<input type="hidden" name="appId" value="${appinfo.appId}"/>
 		    	<table id="dhApplicationEdit">

@@ -18,8 +18,10 @@
    	<dht3:shinyBox color="grey">
 	    <dht3:applicationsTop/>
 	    <hr>
+	    <table id="dhApplicationsColumns">
+	    <tr>
 	    <dht3:applicationsLeft/>
-	    <div id="dhApplicationsRight">
+	    <td id="dhApplicationsRight">
 	    	<div class="dh-applications-heading">Popularity of 
 	    		<c:choose>
 	    			<c:when test="${!empty applications.category}">
@@ -76,6 +78,8 @@
 				    </div>
 			    </c:otherwise>
 		    </c:choose>
-	    </div>
+	    </td>
+	    </tr>
+	    </table>
 	</dht3:shinyBox>
 </dht3:page>

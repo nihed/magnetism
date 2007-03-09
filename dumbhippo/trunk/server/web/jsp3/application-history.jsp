@@ -56,7 +56,7 @@
 			<a href="/application?id=${appinfo.appId}">Go back to browsing</a>
 		</div>
 	    <hr>
-	    <div id="dhApplicationsRight">
+	    <div>
 	    	<table id="dhApplicationEdit">
 	    		<dht3:applicationHistoryRow id="dhApplicationUploadDate" label="Date">
 	    			<jsp:attribute name="value">

@@ -4,7 +4,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <c:set var="applicationsEnabled" value="${signin.valid && signin.user.account.applicationUsageEnabledWithDefault}"/>
-<div id="dhApplicationsLeft">
+<td id="dhApplicationsLeft">
 	<dht3:applicationCategories currentCategory="${appView.application.category}" linkifyCurrent="true"/>
 	<div id="dhMyApplications" style="${applicationsEnabled ? '' : 'display: none;'}">
 		<div class="dh-applications-subheading">Your Application Usage</div>
@@ -20,4 +20,4 @@
 			</c:otherwise>
 		</c:choose>
 	</div>
-</div>
+</td>
