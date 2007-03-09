@@ -111,16 +111,25 @@ hippo_dbus_handle_mugshot_get_baseprops(HippoDBus       *dbus,
     HippoDataCache *cache;
     HippoConnection *connection;
     char *baseurl;
+    const char *self_id;
+    char *connected;
 
     cache = hippo_app_get_data_cache(hippo_get_app());
     connection = hippo_data_cache_get_connection(cache);
     
-    baseurl = hippo_connection_make_absolute_url(connection, "/");    
+    baseurl = hippo_connection_make_absolute_url(connection, "/");
+    self_id = hippo_connection_get_self_guid(connection);
+    connected = hippo_connection_get_connected(connection) ? "true" : "false";    
     
     reply = dbus_message_new_method_return(message);   
     dbus_message_iter_init_append(reply, &iter);
      
-    append_strings_as_dict(&iter, "baseurl", baseurl, NULL);
+    append_strings_as_dict(&iter, 
+                           "baseurl", baseurl,
+                           "self-id", self_id,
+                           "connected", connected,  
+                           NULL);
+    g_free(baseurl);
     
     return reply;    
 }
