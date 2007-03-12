@@ -4,7 +4,7 @@ import gmenu, gobject, pango, gnomedesktop
 import hippo
 
 import bigboard, mugshot
-from big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox, CanvasVBox
+from big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox, CanvasVBox, ActionLink
 
 class AppDirectory(gobject.GObject):
     def __init__(self):
@@ -63,6 +63,14 @@ class HideableBox(hippo.CanvasBox):
         
         self.__sync_show()
         
+    def set_hidetext(self, text):
+        self.__hidetext = text
+        self.__sync_show()
+        
+    def set_showtext(self, text):
+        self.__showtext = text
+        self.__sync_show()
+                
     def set_content(self, content):
         assert(self.__content is None)
         self.__content = content
@@ -93,7 +101,7 @@ class AppDisplay(PhotoContentItem):
         self.__photo = CanvasMugshotURLImage(scale_width=30, scale_height=30)
         self.set_photo(self.__photo)
         self.__box = CanvasVBox(spacing=2, border_right=4)
-        self.__title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        self.__title = ActionLink(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         self.__description = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         attrs = pango.AttrList()
         attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
@@ -120,12 +128,13 @@ class AppDisplay(PhotoContentItem):
         return '<AppDisplay name="%s">' % (self.__get_name())
     
     def __set_app_installed(self, installed):
-        attrs = pango.AttrList()
-        if installed:
-            attrs.insert(pango.AttrForeground(0x0, 0x0, 0xFFFF, 0, 0xFFFF))
-        else:
-            self._logger.debug("app %s is not installed", self)
-        self.__title.set_property("attributes", attrs)
+        pass
+#        attrs = pango.AttrList()
+#        if installed:
+#            attrs.insert(pango.AttrForeground(0x0, 0x0, 0xFFFF, 0, 0xFFFF))
+#        else:
+#            self._logger.debug("app %s is not installed", self)
+#        self.__title.set_property("attributes", attrs)
         
     # override
     def do_prelight(self):
@@ -182,7 +191,9 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self.__set_message('Loading...')
         
     def __set_message(self, text):
-        self.__message.set_property("text", text)
+        self.__box.set_child_visible(self.__message, not text is None)
+        if text:
+            self.__message.set_property("text", text)
 
     def _on_mugshot_initialized(self):
         super(AppsStock, self)._on_mugshot_initialized()
@@ -233,7 +244,7 @@ class AppsStock(bigboard.AbstractMugshotStock):
             if app_stalking_duration <= self.STATIFICATION_TIME_SEC:
                 self.__set_message("Building application list...")
             else:
-                self.__set_message("")                
+                self.__set_message(None) 
             if len(self.__static_set.get_children()) == 0 and \
                app_stalking_duration > self.STATIFICATION_TIME_SEC:
                 # We don't have a static set yet, time to make it
@@ -242,6 +253,8 @@ class AppsStock(bigboard.AbstractMugshotStock):
                     if len(pinned_ids) >= self.STATIC_SET_SIZE:
                         break
                     pinned_ids.append(app.get_id())
+                # FIXME - we need to retry if this fails for some reason                    
+                # this is generally true of any state setting
                 self._logger.debug("creating initial pin set: %s", pinned_ids)
                 self._mugshot.set_pinned_apps(pinned_ids)
         
@@ -251,3 +264,5 @@ class AppsStock(bigboard.AbstractMugshotStock):
                 continue
             display = AppDisplay(app)
             self.__dynamic_set.append(display)
+        self.__dynamic_set_container.set_showtext("Show Recent (%d)" % (len(self.__dynamic_set.get_children()),))
+            

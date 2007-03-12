@@ -5,43 +5,61 @@ import os, sys, threading, getopt, logging, StringIO
 import gobject, gtk, pango, dbus, dbus.glib
 
 import hippo
-from big_widgets import Sidebar, CommandShell
+from big_widgets import Sidebar, CommandShell, CanvasHBox
 from bigboard import Stock
 import libbig
 
 import stocks, stocks.self_stock, stocks.people_stock, stocks.apps_stock, stocks.search_stock, stocks.docs_stock, stocks.calendar_stock
 
-SIZE_BULL_PADDING_PX = 4
-SIZE_BEAR_PADDING_PX = 2
+class GradientHeader(hippo.CanvasGradient):
+    def __init__(self, **kwargs):
+        hippo.CanvasGradient.__init__(self, 
+                                      start_color=0xF4F4F4FF, 
+                                      end_color=0xC7C7C7FF,
+                                      padding_left=4,
+                                      color=0x333333FF, **kwargs)
 
 class Exchange(hippo.CanvasBox):
     """A container for stocks."""
     
     def __init__(self, stock):
         hippo.CanvasBox.__init__(self,  
-                                 orientation=hippo.ORIENTATION_VERTICAL)
-        self._stock = stock
-        self._ticker_text = None
+                                 orientation=hippo.ORIENTATION_VERTICAL,
+                                 spacing=4)
+        self.__stock = stock
+        self.__ticker_text = None
+        self.__expanded = True
         if not stock.get_ticker() == "":
-            text = stock.get_ticker() + "                  "
-            self._ticker_text = hippo.CanvasText(text=text, font="14px", xalign=hippo.ALIGNMENT_START)
-            attrs = pango.AttrList()
-            attrs.insert(pango.AttrUnderline(pango.UNDERLINE_SINGLE, 0, 32767))
-            self._ticker_text.set_property("attributes", attrs)
-            self.append(self._ticker_text)
-        self._stockbox = hippo.CanvasBox()
-        self.append(self._stockbox)
-        # wait to append until set_size is called
+            text = stock.get_ticker()
+            self.__ticker_container = GradientHeader()
+            self.__ticker_text = hippo.CanvasText(text=text, font="14px", xalign=hippo.ALIGNMENT_START)
+            #attrs = pango.AttrList()
+            #attrs.insert(pango.AttrUnderline(pango.UNDERLINE_SINGLE, 0, 0xFFFF))
+            #self.__ticker_text.set_property("attributes", attrs)
+            self.__ticker_text.connect("button-press-event", lambda text, event: self.__toggle_expanded())  
+            self.__ticker_container.append(self.__ticker_text)
+            self.append(self.__ticker_container)
+        self.__stockbox = hippo.CanvasBox()
+        self.append(self.__stockbox)
+        self.__sync_expanded()
+        # wait to append stock until set_size is called
+    
+    def __toggle_expanded(self):
+        self.__expanded = not self.__expanded
+        self.__sync_expanded()
+        
+    def __sync_expanded(self):
+        self.set_child_visible(self.__stockbox, self.__expanded)
     
     def get_stock(self):
-        return self._stock
+        return self.__stock
     
     def set_size(self, size):
-        self._stockbox.remove_all()
-        self._stock.set_size(size)
-        self._stockbox.append(self._stock.get_content(size))
-        if self._ticker_text:
-            self.set_child_visible(self._ticker_text, size == Stock.SIZE_BULL)
+        self.__stockbox.remove_all()
+        self.__stock.set_size(size)
+        self.__stockbox.append(self.__stock.get_content(size))
+        if self.__ticker_text:
+            self.set_child_visible(self.__ticker_container, size == Stock.SIZE_BULL)
 
 class BigBoardPanel(object):
     def __init__(self):
@@ -63,13 +81,15 @@ class BigBoardPanel(object):
         self._canvas = hippo.Canvas()
         self._dw.get_content().add(self._canvas)
         self._canvas.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))
-        
-        self._main_box = hippo.CanvasBox()
+                
+        self._main_box = hippo.CanvasBox(border_right=1, border_color=0x999999FF)
         self._canvas.set_root(self._main_box)
      
+        self._header_container = GradientHeader()
         self._header_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
+        self._header_container.append(self._header_box)
      
-        self._title = hippo.CanvasText(text="My Fedora", font="Bold 12px")
+        self._title = hippo.CanvasText(text="My Fedora", font="Bold 14px")
      
         self._header_box.append(self._title)
         
@@ -78,7 +98,7 @@ class BigBoardPanel(object):
         
         self._header_box.append(self._size_button, hippo.PACK_END)
         
-        self._main_box.append(self._header_box)
+        self._main_box.append(self._header_container)
         
         self._stocks_box = hippo.CanvasBox(spacing=4)
         
@@ -113,14 +133,12 @@ class BigBoardPanel(object):
             self._header_box.remove(self._size_button)
             self._header_box.append(self._size_button, hippo.PACK_EXPAND)
             self._size_button.set_property("text", u"\u00bb large")
-            self._canvas.set_size_request(Stock.SIZE_BEAR_CONTENT_PX + SIZE_BEAR_PADDING_PX*2, 42)
-            self._stocks_box.set_property('padding', SIZE_BEAR_PADDING_PX)
+            self._canvas.set_size_request(Stock.SIZE_BEAR_CONTENT_PX, 42)
         else:
             self._header_box.remove(self._size_button)
             self._header_box.append(self._size_button, hippo.PACK_END)            
             self._size_button.set_property("text", u"\u00ab small")        
-            self._canvas.set_size_request(Stock.SIZE_BULL_CONTENT_PX + SIZE_BULL_PADDING_PX*2, 42)
-            self._stocks_box.set_property('padding', SIZE_BULL_PADDING_PX)
+            self._canvas.set_size_request(Stock.SIZE_BULL_CONTENT_PX, 42)
             
         for exchange in self._exchanges:
             self.__logger.debug("resizing exchange %s to %s", exchange, self._size)
