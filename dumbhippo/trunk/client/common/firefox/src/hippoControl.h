@@ -3,7 +3,7 @@
 #include "hippo-ipc.h"
 #include "nsCOMPtr.h"
 
-#define HIPPO_FIREFOX_CONTROL_VERSION "1.1.0"
+#define HIPPO_FIREFOX_CONTROL_VERSION "1.2.0"
 
 class hippoControl: public hippoIControl, public HippoIpcListener
 {
@@ -23,6 +23,7 @@ public:
     virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp, long serial);
 
     virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying);
+    virtual void applicationInfo(HippoEndpointId endpoint, const char *applicationId, bool canInstall, bool canRun, const char *version);
     
 private:
     nsresult checkServerUrl(const nsACString &serverUrl, nsACString &hostPort);

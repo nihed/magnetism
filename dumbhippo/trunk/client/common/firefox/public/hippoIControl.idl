@@ -22,6 +22,10 @@ interface hippoIControl : nsISupports {
     void sendChatMessage(in AUTF8String chatId, in AUTF8String text);
     void sendChatMessageSentiment(in AUTF8String chatId, in AUTF8String text, in PRUint32 sentiment);
 
+    void getApplicationInfo(in AUTF8String applicationId, in AUTF8String packageNames, in AUTF8String desktopNames);
+    void installApplication(in AUTF8String applicationId, in AUTF8String packageNames, in AUTF8String desktopNames);
+    void runApplication (in AUTF8String desktopNames);
+
     void notifyPageShared(in AUTF8String postId, in AUTF8String url);
 };
 

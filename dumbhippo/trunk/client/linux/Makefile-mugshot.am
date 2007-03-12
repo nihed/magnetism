@@ -28,6 +28,8 @@ mugshot_SOURCES	=				\
 	canvas/hippo/hippo-canvas-window-child.h\
 	src/hippo-cookies-linux.c		\
 	src/hippo-cookies-linux.h		\
+	src/hippo-distribution.c		\
+	src/hippo-distribution.h		\
 	src/hippo-dbus-client.c			\
 	src/hippo-dbus-client.h			\
 	src/hippo-dbus-cookies.c		\

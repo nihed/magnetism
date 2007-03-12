@@ -39,6 +39,10 @@ public:
     virtual void sendChatMessage(const char *chatId, const char *text, int sentiment);
     virtual void showChatWindow(const char *chatId);
 
+    virtual void getApplicationInfo(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames);
+    virtual void installApplication(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames);
+    virtual void runApplication(const char *desktopNames, unsigned int timestamp);
+    
 private:
     void clear();
     HippoSerializedControllerArgs *args_;

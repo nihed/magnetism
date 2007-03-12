@@ -69,6 +69,11 @@ library HippoExplorer {
         HRESULT sendChatMessage([in] BSTR chatId, [in] BSTR text);
         HRESULT sendChatMessageSentiment([in] BSTR chatId, [in] BSTR text, [in] int sentiment);
 
+	// No-op for windows
+	HRESULT getApplicationInfo([in] applicationId, [in] packageNames, [in] desktopNames);
+	HRESULT installApplication([in] applicationId, [in] packageNames, [in] desktopNames);
+	HRESULT runApplication([in] desktopNames);
+
         // IE specific operations
         [helpstring("Open the post information bar (the post will be determined from the current URL)")]
         HRESULT OpenBrowserBar();

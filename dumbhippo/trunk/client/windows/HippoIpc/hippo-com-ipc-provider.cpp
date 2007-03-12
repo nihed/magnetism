@@ -33,6 +33,11 @@ public:
     
     virtual void sendChatMessage(const char *chatId, const char *text, int sentiment);
     virtual void showChatWindow(const char *chatId);
+
+    virtual void getApplicationInfo(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames) ;
+    virtual void installApplication(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames) ;
+    virtual void runApplication(const char *desktopNames, unsigned int timestamp);
+    
     virtual void ref();
     virtual void unref();
 
@@ -203,6 +208,26 @@ HippoComIpcProviderImpl::showChatWindow(const char *chatId)
         ui_->ShowChatWindow(HippoBSTR::fromUTF8(chatId, -1));
 }
 
+void
+HippoComIpcProviderImpl::getApplicationInfo(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames)
+{
+    // Not implemented for Windows; Respond with "no, no, no"
+    createAsyncNotification()->applicationInfo(endpoint, applicationId, false, false, "");
+}
+
+void
+HippoComIpcProviderImpl::installApplication(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames)
+{
+    // Not implemented for Windows; Respond to implicit getApplicationInfo() with "no, no, no"
+    createAsyncNotification()->applicationInfo(endpoint, applicationId, false, false, "");
+}
+
+void
+HippoComIpcProviderImpl:runApplication(const char *desktopNames, unsigned int timestamp)
+{
+    // Not implemented for Windows
+}
+ 
 void 
 HippoComIpcProviderImpl::ref()
 {

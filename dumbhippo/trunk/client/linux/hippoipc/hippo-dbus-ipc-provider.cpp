@@ -31,6 +31,10 @@ public:
     
     virtual void sendChatMessage(const char *chatId, const char *text, int sentiment);
     virtual void showChatWindow(const char *chatId);
+
+    virtual void getApplicationInfo(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames);
+    virtual void installApplication(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames);
+    virtual void runApplication(const char *desktopNames, unsigned int timestamp);
     
 private:
     DBusMessage *createMethodMessage(const char *name);
@@ -535,6 +539,62 @@ HippoDBusIpcProviderImpl::showChatWindow(const char *chatId)
     dbus_message_unref(message);
 }
 
+void
+HippoDBusIpcProviderImpl::getApplicationInfo(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames)
+{
+    if (!isIpcConnected())
+        return;
+    
+    DBusMessage *message = createMethodMessage("GetApplicationInfo");
+
+    dbus_message_append_args(message,
+			     DBUS_TYPE_STRING, &endpoint,
+			     DBUS_TYPE_STRING, &applicationId,
+			     DBUS_TYPE_STRING, &packageNames,
+			     DBUS_TYPE_STRING, &desktopNames,
+			     DBUS_TYPE_INVALID);
+    
+    dbus_connection_send(connection_, message, NULL);
+    dbus_message_unref(message);
+}
+
+void
+HippoDBusIpcProviderImpl::installApplication(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames)
+{
+    if (!isIpcConnected())
+        return;
+    
+    DBusMessage *message = createMethodMessage("InstallApplication");
+
+    dbus_message_append_args(message,
+			     DBUS_TYPE_STRING, &endpoint,
+			     DBUS_TYPE_STRING, &applicationId,
+			     DBUS_TYPE_STRING, &packageNames,
+			     DBUS_TYPE_STRING, &desktopNames,
+			     DBUS_TYPE_INVALID);
+    
+    dbus_connection_send(connection_, message, NULL);
+    dbus_message_unref(message);
+}
+
+void
+HippoDBusIpcProviderImpl::runApplication(const char *desktopNames, unsigned int timestamp)
+{
+    if (!isIpcConnected())
+        return;
+    
+    DBusMessage *message = createMethodMessage("RunApplication");
+    dbus_uint32_t timestamp32 = timestamp;
+
+    dbus_message_append_args(message,
+			     DBUS_TYPE_STRING, &desktopNames,
+			     DBUS_TYPE_UINT32, &timestamp32,
+			     DBUS_TYPE_INVALID);
+    
+    dbus_connection_send(connection_, message, NULL);
+    dbus_message_unref(message);
+}
+    
 DBusHandlerResult
 HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
 {    
@@ -647,6 +707,28 @@ HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
 	    reply = dbus_message_new_error(message,
 					   DBUS_ERROR_INVALID_ARGS,
 					   _("Expected UserInfo(uint64 endpoint, string userId, string name, string smallPhotoUrl, string currentSong, boolean musicPlaying)"));
+	}
+
+    } else if (strcmp(member, "ApplicationInfo") == 0) {
+	dbus_uint64_t endpoint;
+	const char *applicationId;
+	dbus_bool_t canInstall;
+	dbus_bool_t canRun;
+	const char *version;
+	
+	if (dbus_message_get_args(message, NULL,
+				  DBUS_TYPE_UINT64, &endpoint,
+				  DBUS_TYPE_STRING, &applicationId,
+				  DBUS_TYPE_BOOLEAN, &canInstall,
+				  DBUS_TYPE_BOOLEAN, &canRun,
+				  DBUS_TYPE_STRING, &version,
+				  DBUS_TYPE_INVALID)) {
+	    if (listener_)
+		listener_->applicationInfo(endpoint, applicationId, canInstall, canRun, version);
+	} else {
+	    reply = dbus_message_new_error(message,
+					   DBUS_ERROR_INVALID_ARGS,
+					   _("Expected ApplicationInfo(uint64 endpoint, string applicationId, boolean canInstall, boolean canRun, string version)"));
 	}
 
     } else {

@@ -12,7 +12,7 @@
 #include <hippo-ipc.h>
 #include "HippoExplorer_h.h"
 
-#define HIPPO_IE_CONTROL_VERSION L"1.1.0";
+#define HIPPO_IE_CONTROL_VERSION L"1.2.0";
 
 class HippoControl :
     public IObjectWithSite,
@@ -79,6 +79,10 @@ public:
    STDMETHODIMP sendChatMessage(BSTR chatId, BSTR text);
    STDMETHODIMP sendChatMessageSentiment(BSTR chatId, BSTR text, int sentiment);
 
+   STDMETHODIMP getApplicationInfo(BSTR applicationId, BSTR packageNames, BSTR desktopNames);
+   STDMETHODIMP installApplication(BSTR applicationId, BSTR packageNames, BSTR desktopNames);
+   STDMETHODIMP runApplication(BSTR desktopNames);
+
    STDMETHODIMP OpenBrowserBar();
    STDMETHODIMP CloseBrowserBar();
 
@@ -91,6 +95,7 @@ public:
    virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp, long serial);
 
    virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying);
+   virtual void applicationInfo(HippoEndpointId endpoint, const char *applicationId, bool canInstall, bool canRun, const char *version);
 
    static HRESULT showHideBrowserBarInternal(HippoPtr<IWebBrowser2> &browser, bool doShow);
 

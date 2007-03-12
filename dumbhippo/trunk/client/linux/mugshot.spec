@@ -20,6 +20,8 @@ BuildRequires:  GConf2-devel >= 2.8
 BuildRequires:  libXScrnSaver-devel
 BuildRequires:  libjpeg-devel >= 6b
 BuildRequires:  pcre-devel >= 6.3
+BuildRequires:  gnome-desktop-devel >= 2.10.0
+BuildRequires:  gnome-vfs2-devel
 
 # Needed for fc6 and greater
 # BuildRequires: firefox-devel >= 1.5.04
