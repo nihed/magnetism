@@ -19,6 +19,10 @@ class GradientHeader(hippo.CanvasGradient):
                                       padding_left=4,
                                       color=0x333333FF, **kwargs)
 
+class Separator(hippo.CanvasBox):
+    def __init__(self):
+        hippo.CanvasBox.__init__(self, border_top=1, border_color=0x999999FF)
+
 class Exchange(hippo.CanvasBox):
     """A container for stocks."""
     
@@ -58,6 +62,11 @@ class Exchange(hippo.CanvasBox):
         self.__stockbox.remove_all()
         self.__stock.set_size(size)
         self.__stockbox.append(self.__stock.get_content(size))
+        padding = 4
+        if size == Stock.SIZE_BEAR:
+            padding = 2  
+        self.__stockbox.set_property("padding_left", padding)
+        self.__stockbox.set_property("padding_right", padding)
         if self.__ticker_text:
             self.set_child_visible(self.__ticker_container, size == Stock.SIZE_BULL)
 
@@ -112,8 +121,11 @@ class BigBoardPanel(object):
         self._canvas.show()
         
     def list(self, stock):
-        """Add a stock to an Exchange."""
+        """Add a stock to an Exchange and append it to the bigboard."""
         self.__logger.debug("listing stock %s", stock)
+        if stock.get_ticker() == "" and len(self._stocks_box.get_children()) > 0:
+            sep = Separator()
+            self._stocks_box.append(sep)
         container = Exchange(stock)
         self._stocks_box.append(container)
         container.set_size(self._size)
