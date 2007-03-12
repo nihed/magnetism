@@ -243,6 +243,74 @@ NS_IMETHODIMP hippoControl::SendChatMessageSentiment(const nsACString &chatId, c
     return NS_OK;
 }
 
+/* void getApplicationInfo (in AUTF8String applicationId, in AUTF8String packageNames, in AUTF8String desktopNames); */
+NS_IMETHODIMP hippoControl::GetApplicationInfo(const nsACString &applicationId, const nsACString &packageNames, const nsACString &desktopNames)
+{
+    nsresult rv;
+
+    rv = checkString(applicationId);
+    if (NS_FAILED(rv))
+        return rv;
+
+    rv = checkString(packageNames);
+    if (NS_FAILED(rv))
+        return rv;
+
+    rv = checkString(desktopNames);
+    if (NS_FAILED(rv))
+        return rv;
+
+    if (controller_ && endpoint_)
+        controller_->getApplicationInfo(endpoint_, applicationId.BeginReading(), packageNames.BeginReading(), desktopNames.BeginReading());
+
+    return NS_OK;
+}
+
+/* void installApplication (in AUTF8String applicationId, in AUTF8String packageNames, in AUTF8String desktopNames); */
+NS_IMETHODIMP hippoControl::InstallApplication(const nsACString &applicationId, const nsACString &packageNames, const nsACString &desktopNames)
+{
+    nsresult rv;
+
+    rv = checkString(applicationId);
+    if (NS_FAILED(rv))
+        return rv;
+
+    rv = checkString(packageNames);
+    if (NS_FAILED(rv))
+        return rv;
+
+    rv = checkString(desktopNames);
+    if (NS_FAILED(rv))
+        return rv;
+
+    if (controller_ && endpoint_)
+        controller_->installApplication(endpoint_, applicationId.BeginReading(), packageNames.BeginReading(), desktopNames.BeginReading());
+
+    return NS_OK;
+}
+
+/* void runApplication (in AUTF8String desktopNames); */
+NS_IMETHODIMP hippoControl::RunApplication (const nsACString &desktopNames)
+{
+    nsresult rv;
+
+    rv = checkString(desktopNames);
+    if (NS_FAILED(rv))
+        return rv;
+
+    unsigned int timestamp;
+#ifdef HIPPO_OS_LINUX
+    timestamp = gtk_get_current_event_time();
+#else
+    timestamp = 0;
+#endif    
+    
+    if (controller_)
+        controller_->runApplication(desktopNames.BeginReading(), timestamp);
+
+    return NS_OK;
+}
+
 /* void notifyPageShared (in AUTF8String postId, in AUTF8String url); */
 NS_IMETHODIMP hippoControl::NotifyPageShared(const nsACString & postId, const nsACString & url)
 {
@@ -318,7 +386,14 @@ hippoControl::userInfo(HippoEndpointId endpoint, const char *userId, const char 
         listener_->UserInfo(nsCString(userId), nsCString(name), nsCString(smallPhotoUrl),
                             nsCString(currentSong), nsCString(currentArtist), musicPlaying);
 }
- 
+
+void
+hippoControl::applicationInfo(HippoEndpointId endpoint, const char *applicationId, bool canInstall, bool canRun, const char *version)
+{
+    if (listener_)
+        listener_->ApplicationInfo(nsCString(applicationId), canInstall, canRun, nsCString(version));
+}
+
 nsresult 
 hippoControl::checkServerUrl(const nsACString &serverUrl, nsACString &hostPort)
 {

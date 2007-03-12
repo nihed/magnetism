@@ -61,6 +61,10 @@ public:
     virtual void sendChatMessage(const char *chatId, const char *text, int sentiment);
     virtual void showChatWindow(const char *chatId);
 
+    virtual void getApplicationInfo(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames);
+    virtual void installApplication(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames);
+    virtual void runApplication(const char *desktopNames, unsigned int timestamp);
+    
 private:
     HippoThreadLock lock_;
     HippoComIpcHub *hub_;
@@ -197,6 +201,33 @@ HippoBridgedIpcControllerImpl::showChatWindow(const char *chatId)
 {
     HippoSerializedController serialized;
     serialized.showChatWindow(chatId);
+
+    hub_->doSync(&HippoComIpcControllerTask(inner_, &serialized));
+}
+
+void
+HippoBridgedIpcControllerImpl::getApplicationInfo(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames)
+{
+    HippoSerializedController serialized;
+    serialized.getApplicationInfo(endpoint, applicationId, packageNames, desktopNames);
+
+    hub_->doSync(&HippoComIpcControllerTask(inner_, &serialized));
+}
+
+void
+HippoBridgedIpcControllerImpl::installApplication(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames)
+{
+    HippoSerializedController serialized;
+    serialized.installApplication(endpoint, applicationId, packageNames, desktopNames);
+
+    hub_->doSync(&HippoComIpcControllerTask(inner_, &serialized));
+}
+
+void
+HippoBridgedIpcControllerImpl::runApplication(const char *desktopNames, unsigned int timestamp)
+{
+    HippoSerializedController serialized;
+    serialized.runApplication(desktopNames, timestamp);
 
     hub_->doSync(&HippoComIpcControllerTask(inner_, &serialized));
 }

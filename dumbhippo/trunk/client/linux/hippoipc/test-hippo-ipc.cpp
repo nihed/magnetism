@@ -22,6 +22,7 @@ public:
     virtual void onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId);
     virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment,double timestamp, long serial);
     virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying);
+    virtual void applicationInfo(HippoEndpointId endpoint, const char *applicationId, bool canInstall, bool canRun, const char *version);
 };
 
 void
@@ -88,6 +89,16 @@ TestListener::userInfo(HippoEndpointId endpoint, const char *userId, const char 
     g_print("    currentSong: %s\n", currentSong);
     g_print("    currentArtist: %s\n", currentArtist);
     g_print("    musicPlaying: %d\n", musicPlaying);
+}
+
+void
+TestListener::applicationInfo(HippoEndpointId endpoint, const char *applicationId, bool canInstall, bool canRun, const char *version)
+{
+    g_print("applicationInfo\n");
+    g_print("    userId: %s\n", applicationId);
+    g_print("    canInstall: %d\n", canInstall);
+    g_print("    canRun: %d\n", canRun);
+    g_print("    version: %s\n", version);
 }
 
 static const void

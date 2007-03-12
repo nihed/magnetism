@@ -12,6 +12,7 @@
 #include "hippo-dbus-cookies.h"
 #include "hippo-dbus-mugshot.h"
 #include "hippo-dbus-settings.h"
+#include "hippo-distribution.h"
 #include <hippo/hippo-endpoint-proxy.h>
 #include "main.h"
 
@@ -38,6 +39,8 @@
 #define QL_SONG_STARTED        "SongStarted"
 
 typedef struct _HippoDBusListener HippoDBusListener;
+typedef struct _HippoApplicationRequest HippoApplicationRequest;
+
 
 static void      hippo_dbus_init                (HippoDBus       *dbus);
 static void      hippo_dbus_class_init          (HippoDBusClass  *klass);
@@ -65,6 +68,7 @@ struct _HippoDBusListener {
     HippoDBus *dbus;
     char *name;
     GSList *endpoints;
+    GSList *application_requests;
 };
 
 struct _HippoDBus {
@@ -80,6 +84,22 @@ struct _HippoDBus {
 struct _HippoDBusClass {
     GObjectClass parent_class;
 
+};
+
+struct _HippoApplicationRequest {
+    HippoDBusListener *listener;
+    
+    guint64 endpoint;
+    char *application_id;
+    char *package_names;
+    char *desktop_names;
+    
+    gboolean can_install;
+    gboolean can_run;
+    char *version;
+
+    gboolean package_response;
+    gboolean application_response;
 };
 
 G_DEFINE_TYPE(HippoDBus, hippo_dbus, G_TYPE_OBJECT);
@@ -708,6 +728,13 @@ disconnect_listener(HippoDBus         *dbus,
     
     while (listener->endpoints != NULL)
 	unregister_endpoint(listener, listener->endpoints->data);
+
+    while (listener->application_requests != NULL) {
+        HippoApplicationRequest *request = listener->application_requests->data;
+        request->listener = NULL;
+
+        listener->application_requests = g_slist_delete_link(listener->application_requests, listener->application_requests);
+    }
     
     dbus->listeners = g_slist_remove(dbus->listeners, listener);
 
@@ -922,6 +949,267 @@ handle_send_chat_message(HippoDBus   *dbus,
     room = hippo_data_cache_ensure_chat_room(cache, chat_id, HIPPO_CHAT_KIND_UNKNOWN);
     hippo_connection_send_chat_room_message(connection, room, message_text, hippoSentiment);
     
+    reply = dbus_message_new_method_return(message);
+    return reply;
+}
+
+static HippoApplicationRequest *
+hippo_application_request_new(HippoDBusListener  *listener,
+                              guint64             endpoint,
+                              const char         *application_id,
+                              const char         *package_names,
+                              const char         *desktop_names)
+{
+    HippoApplicationRequest *request = g_new0(HippoApplicationRequest, 1);
+
+    request->listener = listener;
+    request->endpoint = endpoint;
+    request->application_id = g_strdup(application_id);
+    request->package_names = g_strdup(package_names);
+    request->desktop_names = g_strdup(desktop_names);
+
+    request->package_response = FALSE;
+    request->application_response = FALSE;
+
+    listener->application_requests = g_slist_prepend(listener->application_requests, listener);
+
+    return request;
+}
+
+static void
+hippo_application_request_finish(HippoApplicationRequest *request)
+{
+    if (request->listener) {
+        HippoDBusListener *listener = request->listener;
+        DBusMessage *message;
+
+        const char *version = request->version ? request->version : "";
+        dbus_bool_t can_install = request->can_run;
+        dbus_bool_t can_run = request->can_run;
+            
+        listener->application_requests = g_slist_remove(listener->application_requests, request);
+
+        message = dbus_message_new_method_call(listener->name,
+                                               HIPPO_DBUS_LISTENER_PATH,
+                                               HIPPO_DBUS_LISTENER_INTERFACE,
+                                               "ApplicationInfo");
+
+        dbus_message_append_args(message,
+                                 DBUS_TYPE_UINT64, &request->endpoint,
+                                 DBUS_TYPE_STRING, &request->application_id,
+                                 DBUS_TYPE_BOOLEAN, &can_install,
+                                 DBUS_TYPE_BOOLEAN, &can_run,
+                                 DBUS_TYPE_STRING, &version,
+                                 DBUS_TYPE_INVALID);
+
+        dbus_message_set_no_reply(message, TRUE);
+        dbus_connection_send(listener->dbus->connection, message, NULL);
+        dbus_message_unref(message);
+    }
+    
+    g_free(request->application_id);
+    g_free(request->package_names);
+    g_free(request->desktop_names);
+    g_free(request->version);
+    g_free(request);
+}
+
+static void
+get_application_info_check_package_callback(gboolean    is_installed,
+                                            gboolean    is_installable,
+                                            const char *installed_version,
+                                            void       *data)
+{
+    HippoApplicationRequest *request = data;
+
+    request->can_install = is_installable;
+    request->version = g_strdup(installed_version);
+    request->package_response = TRUE;
+
+    if (request->package_response && request->application_response)
+        hippo_application_request_finish(request);
+}
+
+static void
+get_application_info_check_application_callback(gboolean  is_runnable,
+                                                void     *data)
+{
+    HippoApplicationRequest *request = data;
+
+    request->can_run = is_runnable;
+    request->application_response = TRUE;
+    
+    if (request->package_response && request->application_response)
+        hippo_application_request_finish(request);
+}
+
+static void
+do_get_application_info(HippoApplicationRequest *request)
+{
+    HippoDistribution *distro = hippo_distribution_get();
+
+    /* Call check_package() before check_application() because check_package()
+     * is currently out-of-process and async while check_application() isn't
+     */
+    hippo_distribution_check_package(distro,
+                                     request->package_names,
+                                     get_application_info_check_package_callback,
+                                     request);
+    hippo_distribution_check_application(distro,
+                                         request->desktop_names,
+                                         get_application_info_check_application_callback,
+                                         request);
+}
+
+static DBusMessage*
+handle_get_application_info(HippoDBus   *dbus,
+                            DBusMessage *message)
+{
+    DBusMessage *reply;
+    guint64 endpoint;
+    const char *application_id;
+    const char *package_names;
+    const char *desktop_names;
+    HippoDBusListener *listener;
+    HippoEndpointProxy *proxy;
+    HippoApplicationRequest *request;
+    
+    application_id = NULL;
+    package_names = NULL;
+    desktop_names = NULL;
+    
+    if (!dbus_message_get_args(message, NULL,
+			       DBUS_TYPE_UINT64, &endpoint,
+			       DBUS_TYPE_STRING, &application_id,
+			       DBUS_TYPE_STRING, &package_names,
+			       DBUS_TYPE_STRING, &desktop_names,
+			       DBUS_TYPE_INVALID)) {
+        return dbus_message_new_error(message,
+				      DBUS_ERROR_INVALID_ARGS,
+				      _("Expected four arguments, the endpoint ID, the application Id, possible package names, possible desktop names"));
+    }
+    
+    listener = find_listener(dbus, message, &reply);
+    if (!listener)
+        return reply;
+    proxy = find_endpoint(listener, endpoint, message, &reply);
+    if (!proxy)
+	return reply;
+
+    g_debug("GetApplicationInfo(%lld, %s, %s, %s)\n", endpoint, application_id, package_names, desktop_names);
+
+    request = hippo_application_request_new(listener, endpoint, application_id, package_names, desktop_names);
+    do_get_application_info(request);
+
+    reply = dbus_message_new_method_return(message);
+    return reply;
+}
+
+static void
+install_application_install_package_callback(GError   *error,
+                                             void     *data)
+{
+    HippoApplicationRequest *request = data;
+
+    do_get_application_info(request);
+}
+
+
+static void
+do_install_application(HippoApplicationRequest *request)
+{
+    HippoDistribution *distro = hippo_distribution_get();
+
+    hippo_distribution_install_package(distro,
+                                       request->package_names,
+                                       install_application_install_package_callback,
+                                       request);
+}
+
+static DBusMessage*
+handle_install_application(HippoDBus   *dbus,
+                           DBusMessage *message)
+{
+    DBusMessage *reply;
+    guint64 endpoint;
+    const char *application_id;
+    const char *package_names;
+    const char *desktop_names;
+    HippoDBusListener *listener;
+    HippoEndpointProxy *proxy;
+    HippoApplicationRequest *request;
+    
+    application_id = NULL;
+    package_names = NULL;
+    desktop_names = NULL;
+    
+    if (!dbus_message_get_args(message, NULL,
+			       DBUS_TYPE_UINT64, &endpoint,
+			       DBUS_TYPE_STRING, &application_id,
+			       DBUS_TYPE_STRING, &package_names,
+			       DBUS_TYPE_STRING, &desktop_names,
+			       DBUS_TYPE_INVALID)) {
+        return dbus_message_new_error(message,
+				      DBUS_ERROR_INVALID_ARGS,
+				      _("Expected four arguments, the endpoint ID, the application Id, possible package names, possible desktop names"));
+    }
+    
+    listener = find_listener(dbus, message, &reply);
+    if (!listener)
+        return reply;
+    proxy = find_endpoint(listener, endpoint, message, &reply);
+    if (!proxy)
+	return reply;
+
+    g_debug("InstallApplication(%lld, %s, %s, %s)\n", endpoint, application_id, package_names, desktop_names);
+
+    request = hippo_application_request_new(listener, endpoint, application_id, package_names, desktop_names);
+    do_install_application(request);
+
+    reply = dbus_message_new_method_return(message);
+    return reply;
+}
+
+static void
+run_application_callback(GError   *error,
+                         void     *data)
+{
+}
+
+static void
+do_run_application(const char *desktop_names,
+                   guint32     timestamp)
+{
+
+    HippoDistribution *distro = hippo_distribution_get();
+
+    hippo_distribution_run_application(distro, desktop_names, timestamp,
+                                       run_application_callback, NULL);
+}
+
+static DBusMessage*
+handle_run_application(HippoDBus   *dbus,
+                       DBusMessage *message)
+{
+    DBusMessage *reply;
+    const char *desktop_names;
+    dbus_uint32_t timestamp;
+    
+    desktop_names = NULL;
+    
+    if (!dbus_message_get_args(message, NULL,
+			       DBUS_TYPE_STRING, &desktop_names,
+			       DBUS_TYPE_UINT32, &timestamp,
+			       DBUS_TYPE_INVALID)) {
+        return dbus_message_new_error(message,
+				      DBUS_ERROR_INVALID_ARGS,
+				      _("Expected two arguments, possible desktop names and timestamp"));
+    }
+    
+    g_debug("RunApplication(%s, %d)\n", desktop_names, timestamp);
+
+    do_run_application(desktop_names, timestamp);
+
     reply = dbus_message_new_method_return(message);
     return reply;
 }
@@ -1432,6 +1720,12 @@ handle_message(DBusConnection     *connection,
                        /* JoinChat is the legacy name until we have an rpm built with new url handler */
                        strcmp(member, "JoinChat") == 0) {
                 reply = handle_show_chat_window(dbus, message);
+	    } else if (strcmp(member, "GetApplicationInfo") == 0) {
+                reply = handle_get_application_info(dbus, message);
+	    } else if (strcmp(member, "InstallApplication") == 0) {
+                reply = handle_install_application(dbus, message);
+	    } else if (strcmp(member, "RunApplication") == 0) {
+                reply = handle_run_application(dbus, message);
             } else {
                 /* Set this back so the default handler can return an error */
                 result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;

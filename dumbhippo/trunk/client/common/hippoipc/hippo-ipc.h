@@ -22,6 +22,8 @@ public:
     virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp, long serial) = 0;
 
     virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying) = 0;
+
+    virtual void applicationInfo(HippoEndpointId endpoint, const char *applicationId, bool canInstall, bool canRun, const char *version) = 0;
     
 protected:
     virtual ~HippoIpcListener() {}
@@ -38,6 +40,10 @@ public:
     
     virtual void sendChatMessage(const char *chatId, const char *text, int sentiment) = 0;
     virtual void showChatWindow(const char *chatId) = 0;
+
+    virtual void getApplicationInfo(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames) = 0;
+    virtual void installApplication(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames) = 0;
+    virtual void runApplication(const char *desktopNames, unsigned int timestamp) = 0;
     
 protected:
     virtual ~HippoIpcMethods() {};

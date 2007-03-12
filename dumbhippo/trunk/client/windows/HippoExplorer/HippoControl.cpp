@@ -565,6 +565,37 @@ HippoControl::sendChatMessageSentiment(BSTR chatId, BSTR text, int sentiment)
     return S_OK;
 }
 
+STDMETHODIMP
+HippoControl::getApplicationInfo(BSTR applicationId, BSTR packageNames, BSTR desktopNames)
+{
+    HippoUStr applicationIdU(applicationId);
+    HippoUStr packageNamesU(packageNames);
+    HippoUStr desktopNamesU(desktopNames);
+
+    if (controller_ && endpoint_)
+	controller_->getApplicationInfo(endpoint_, applicationIdU.c_str(), packageNamesU.c_str(), desktopNamesU.c_str());
+
+    return S_OK;
+}
+
+STDMETHODIMP
+installApplication(BSTR applicationId, BSTR packageNames, BSTR desktopNames)
+{
+    HippoUStr packageNamesU(packageNames);
+
+    if (controller_ && endpoint_)
+	controller_->installApplication(endpoint_, applicationIdU.c_str(), packageNamesU.c_str(), desktopNamesU.c_str());
+}
+
+STDMETHODIMP
+runApplication(BSTR desktopNames)
+{
+    HippoUStr desktopNamesU(desktopNames);
+
+    if (controller_)
+	controller_->runApplication(desktopNames, 0);
+}
+
 STDMETHODIMP 
 HippoControl::OpenBrowserBar()
 {
@@ -694,6 +725,24 @@ HippoControl::userInfo(HippoEndpointId endpoint, const char *userId, const char 
 
     invocation.run();
 }
+
+void
+HippoControll::applicationInfo(HippoEndpointId endpoint, const char *applicationId, bool canInstall, bool canRun, const char *version)
+{
+    hippoDebugLogU("HippoControl::applicationInfo(%s,%d,%d,%s)", applicationId, canInstall, canRun, version);
+
+    if (!listener_)
+        return;
+
+    HippoInvocation invocation(listener_, L"applicationInfo");
+
+    invocation.add(HippoBSTR::fromUTF8(applicationId, -1));
+    invocation.addBool(canInstall);
+    invocation.addBool(canRun);
+    invocation.add(HippoBSTR::fromUTF8(version, -1));
+ 
+    invocation.run();
+}}
 
 /////////////////////////////////////////////////////////////////////
 

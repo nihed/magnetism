@@ -11,4 +11,5 @@ interface hippoIControlListener : nsISupports {
     void onReconnect(in AUTF8String chatId);
 
     void userInfo(in AUTF8String userId, in AUTF8String name, in AUTF8String smallPhotoUrl, in AUTF8String arrangementName, in AUTF8String artistName, in boolean musicPlaying);
+    void applicationInfo(in AUTF8String applicationId, in boolean canInstall, in boolean canRun, in AUTF8String version);
 };

@@ -30,6 +30,10 @@ public:
     virtual void showChatWindow(const char *chatId);
     virtual void sendChatMessage(const char *chatId, const char *text, int sentiment);
     
+    virtual void getApplicationInfo(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames);
+    virtual void installApplication(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames);
+    virtual void runApplication(const char *desktopNames, unsigned int timestamp);
+    
     virtual void addListener(HippoIpcListener *listener);
     virtual void removeListener(HippoIpcListener *listener);
     virtual HippoEndpointId registerEndpoint(HippoIpcListener *listener);
@@ -42,6 +46,8 @@ public:
     virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, int sentiment, double timestamp,long serial);
 
     virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *arrangementName, const char *artistName, bool musicPlaying);
+    
+    virtual void applicationInfo(HippoEndpointId endpoint, const char *applicationId, bool canInstall, bool canRun, const char *version);
     
 private:
     HippoIpcProvider *provider_;
@@ -122,6 +128,24 @@ HippoIpcControllerImpl::sendChatMessage(const char *chatId, const char *text, in
     provider_->sendChatMessage(chatId, text, sentiment);
 }
 
+void
+HippoIpcControllerImpl::getApplicationInfo(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames)
+{
+    provider_->getApplicationInfo(endpoint, applicationId, packageNames, desktopNames);
+}
+
+void
+HippoIpcControllerImpl::installApplication(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames)
+{
+    provider_->installApplication(endpoint, applicationId, packageNames, desktopNames);
+}
+
+void
+HippoIpcControllerImpl::runApplication(const char *desktopNames, unsigned int timestamp)
+{
+    provider_->runApplication(desktopNames, timestamp);
+}
+ 
 void 
 HippoIpcControllerImpl::addListener(HippoIpcListener *listener)
 {
@@ -206,3 +230,16 @@ HippoIpcControllerImpl::userInfo(HippoEndpointId endpoint, const char *userId, c
         }
     }
 }
+
+void
+HippoIpcControllerImpl::applicationInfo(HippoEndpointId endpoint, const char *applicationId, bool canInstall, bool canRun, const char *version)
+{
+    for (std::vector<HippoIpcControllerEndpoint>::iterator i = endpoints_.begin(); i != endpoints_.end(); i++) {
+        if (i->getId() == endpoint) {
+            i->getListener()->applicationInfo(endpoint, applicationId, canInstall, canRun, version);
+            break;
+        }
+    }
+}
+    
+

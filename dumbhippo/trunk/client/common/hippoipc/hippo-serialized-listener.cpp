@@ -150,6 +150,33 @@ HippoSerializedListenerUserInfo::invoke(HippoIpcListener *listener)
                        currentSong_.c_str(), currentArtist_.c_str(), musicPlaying_);
 }
 
+class HippoSerializedListenerApplicationInfo : public HippoSerializedListenerArgs
+{
+public:
+    HippoSerializedListenerApplicationInfo(HippoEndpointId endpoint, const char *applicationId, bool canInstall, bool canRun, const char *version) {
+        endpoint_ = endpoint;
+        applicationId_ = applicationId;
+        canInstall_ = canInstall;
+        canRun_ = canRun;
+        version_ = version;
+    }
+
+    void invoke(HippoIpcListener *listener);
+
+private:
+    HippoEndpointId endpoint_;
+    std::string applicationId_;
+    bool canInstall_;
+    bool canRun_;
+    std::string version_;
+};
+
+void
+HippoSerializedListenerApplicationInfo::invoke(HippoIpcListener *listener)
+{
+    listener->applicationInfo(endpoint_, applicationId_.c_str(), canInstall_, canRun_, version_.c_str());
+}
+
 HippoSerializedListener::HippoSerializedListener()
 {
     args_ = 0;
@@ -207,6 +234,13 @@ HippoSerializedListener::userInfo(HippoEndpointId endpoint, const char *userId, 
 {
     clear();
     args_ = new HippoSerializedListenerUserInfo(endpoint, userId, name, smallPhotoUrl, currentSong, currentArtist, musicPlaying);
+}
+
+void 
+HippoSerializedListener::applicationInfo(HippoEndpointId endpoint, const char *applicationId, bool canInstall, bool canRun, const char *version)
+{
+    clear();
+    args_ = new HippoSerializedListenerApplicationInfo(endpoint, applicationId, canInstall, canRun, version);
 }
 
 void

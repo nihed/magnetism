@@ -246,6 +246,8 @@ DBUS_GLIB_REQUIRED=0.60
 CURL_REQUIRED=7.13.1
 # earlier might work, but this is what's been tested
 PCRE_REQUIRED=6.3
+# 2.10 for gnome_desktop_item_set_launch_time()
+GNOME_DESKTOP_REQUIRED=2.10.0
 
 ## We don't just use PKG_CHECK_MODULES because libcurl.pc has all kinds of crap in it like openssl and kerberos
 ## on the link line... we don't want to link to all that stuff. So just do -lcurl
@@ -334,7 +336,7 @@ PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth
 AC_DEFINE(HIPPO_LOUDMOUTH_IS_10, 1, [Define if Loudmouth is version 1.0 or below])
 PKG_CHECK_MODULES(LIBHIPPOIPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)
-PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED $XSCREENSAVER_PACKAGES)
+PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED gnome-desktop-2.0 >= $GNOME_DESKTOP_REQUIRED gnome-vfs-2.0 $XSCREENSAVER_PACKAGES)
 MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $CURL_LIBS $XSCREENSAVER_LIBS $JPEG_LIBS"
 MUGSHOT_CFLAGS="$MUGSHOT_BASE_CFLAGS $CURL_CFLAGS $XSCREENSAVER_CFLAGS"
 AC_SUBST(MUGSHOT_LIBS)
