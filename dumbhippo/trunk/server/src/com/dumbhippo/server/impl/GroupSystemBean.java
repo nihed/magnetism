@@ -335,7 +335,9 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 					}
 				} else {
 					// already invited, add the new adder 
-					groupMember.addAdder(adder);					
+					groupMember.addAdder(adder);	
+					// TODO: don't return here to have a block re-stack on resending
+					// an invitation
 					return;
 				}
 				break;
@@ -376,46 +378,52 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return false;
 	}
 	
-	public void removeMember(User remover, Group group, Person person) {		
+	public void removeMember(User remover, Group group, Person person) {	
 		try {
 			// note that getGroupMember() here does a fixup so we only have one GroupMember which 
 			// canonically points to our account.
 			GroupMember groupMember = getGroupMember(group, person);
-
-            // we let adders remove group members they added that do not have an account
-			if (!remover.equals(person) && canRemoveInvitation(remover, groupMember)) {
-				groupMember.removeAdder(remover);
-				// entirely remove the group member if the last adder removed them
-				if (groupMember.getAdders().isEmpty()) {
-					group.getMembers().remove(groupMember);
-					em.remove(groupMember);					
-				}
-			} else if (!remover.equals(person)) {				
-				throw new IllegalArgumentException("a group member can only be removed by themself " +
-						                           "or by one of its adders if the group member doesn't have an account");
-			}
-			
-			// REMOVED has more rights than FOLLOWER so be sure we don't let followers "remove" themselves. 
-			if (groupMember.getStatus().ordinal() > MembershipStatus.REMOVED.ordinal()) {
-				groupMember.setStatus(MembershipStatus.REMOVED);
-				
-				notifier.onGroupMemberStatusChanged(groupMember, System.currentTimeMillis());
-		        LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
-		        		groupMember.getMember().getGuid(), GroupEvent.Detail.MEMBERS_CHANGED));
-			} else if (groupMember.getStatus().ordinal() < MembershipStatus.REMOVED.ordinal()) {
-				// To go from FOLLOWER or INVITED_TO_FOLLOW to removed, we delete the GroupMember
-				group.getMembers().remove(groupMember);
-				em.remove(groupMember);
-				
-				// we don't stackGroupMember here, we only care about transitions to REMOVED for timestamp 
-				// updating (right now anyway)
-				LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
-						groupMember.getMember().getGuid(), GroupEvent.Detail.MEMBERS_CHANGED));
-			} else {
-				// status == REMOVED, nothing to do
-			}
+			removeMember(remover, groupMember);
 		} catch (NotFoundException e) {
 			// nothing to do
+		}
+	}
+	
+	public void removeMember(User remover, GroupMember groupMember) {		
+	   User userMember = identitySpider.getUser(groupMember.getMember());
+	   Group group = groupMember.getGroup();
+	   
+        // we let adders remove group members they added that do not have an account
+		if (!remover.equals(userMember) && canRemoveInvitation(remover, groupMember)) {
+			groupMember.removeAdder(remover);
+			// entirely remove the group member if the last adder removed them
+			if (groupMember.getAdders().isEmpty()) {
+				group.getMembers().remove(groupMember);
+				em.remove(groupMember);					
+			}
+		} else if (!remover.equals(userMember)) {				
+			throw new IllegalArgumentException("a group member can only be removed by themself " +
+					                           "or by one of its adders if the group member doesn't have an account");
+		}
+		
+		// REMOVED has more rights than FOLLOWER so be sure we don't let followers "remove" themselves. 
+		if (groupMember.getStatus().ordinal() > MembershipStatus.REMOVED.ordinal()) {
+			groupMember.setStatus(MembershipStatus.REMOVED);
+			
+			notifier.onGroupMemberStatusChanged(groupMember, System.currentTimeMillis());
+	        LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
+	        		groupMember.getMember().getGuid(), GroupEvent.Detail.MEMBERS_CHANGED));
+		} else if (groupMember.getStatus().ordinal() < MembershipStatus.REMOVED.ordinal()) {
+			// To go from FOLLOWER or INVITED_TO_FOLLOW to removed, we delete the GroupMember
+			group.getMembers().remove(groupMember);
+			em.remove(groupMember);
+			
+			// we don't stackGroupMember here, we only care about transitions to REMOVED for timestamp 
+			// updating (right now anyway)
+			LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
+					groupMember.getMember().getGuid(), GroupEvent.Detail.MEMBERS_CHANGED));
+		} else {
+			// status == REMOVED, nothing to do
 		}
 	}
 	
@@ -434,8 +442,16 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	private static final String CAN_SEE_ANONYMOUS = " g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " ";
 	
 	private String getStatusClause(MembershipStatus status) {
+		return getStatusClause(status, false);
+	}
+
+	private String getStatusClause(MembershipStatus status, boolean allGroups) {
 		if (status != null) {
 			return " AND gm.status = " + status.ordinal();
+		} else if (allGroups) {
+			return " AND ( gm.status >= " + MembershipStatus.INVITED.ordinal() +
+			       " OR gm.status = " + MembershipStatus.INVITED_TO_FOLLOW.ordinal() +
+			       " OR gm.status = " + MembershipStatus.FOLLOWER.ordinal() + " )";
 		} else {
 			return " AND gm.status >= " + MembershipStatus.INVITED.ordinal();
 		}
@@ -655,7 +671,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}
 	}
 	
-	private Query buildFindGroupsQuery(Viewpoint viewpoint, User member, boolean isCount, MembershipStatus status, GroupFindType groupFindType) {
+	private Query buildFindGroupsQuery(Viewpoint viewpoint, User member, boolean isCount, MembershipStatus status, boolean allGroups, GroupFindType groupFindType) {
 		Query q;		
 		StringBuilder queryStr = new StringBuilder("SELECT ");
 		boolean ownGroups = viewpoint.isOfUser(member);		
@@ -667,7 +683,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		queryStr.append(" FROM GroupMember gm, AccountClaim ac, Group g " +
         "WHERE ac.resource = gm.member AND ac.owner = :member AND g = gm.group ");
-		queryStr.append(getStatusClause(status));
+		queryStr.append(getStatusClause(status, allGroups));
 		queryStr.append(getGroupFindTypeQuery(groupFindType));	
 		
 		if (ownGroups || viewpoint instanceof SystemViewpoint) {
@@ -687,15 +703,39 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		q.setParameter("member", member);
 		return q;
 	}
+
+	private Query buildFindGroupsQuery(Viewpoint viewpoint, Resource resource) {
+		Query q;		
+
+		StringBuilder queryStr = new StringBuilder(" SELECT gm FROM GroupMember gm, Group g " +
+        "WHERE gm.member = :member AND g = gm.group ");
+		
+		if (viewpoint instanceof SystemViewpoint) {
+			// Special case this for effiency
+			q = em.createQuery(queryStr.toString());				
+		} else if (viewpoint instanceof UserViewpoint) {
+			queryStr.append(" AND ");
+			queryStr.append(CAN_SEE);
+			q = em.createQuery(queryStr.toString());				
+			q.setParameter("viewer", ((UserViewpoint)viewpoint).getViewer());			
+		} else {
+			queryStr.append(" AND ");
+			queryStr.append(CAN_SEE_ANONYMOUS);
+			q = em.createQuery(queryStr.toString());
+		}
+	
+		q.setParameter("member", resource);
+		return q;
+	}
 	
 	public int findGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status) {
-		Query q = buildFindGroupsQuery(viewpoint, member, true, status, GroupFindType.ANY);
+		Query q = buildFindGroupsQuery(viewpoint, member, true, status, false, GroupFindType.ANY);
 		Object result = q.getSingleResult();
 		return ((Number) result).intValue();			
 	}
 	
 	public int findPublicGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status) {
-		Query q = buildFindGroupsQuery(viewpoint, member, true, status, GroupFindType.PUBLIC);
+		Query q = buildFindGroupsQuery(viewpoint, member, true, status, false, GroupFindType.PUBLIC);
 		Object result = q.getSingleResult();
 		return ((Number) result).intValue();			
 	}	
@@ -710,7 +750,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		Set<GroupView> result = new HashSet<GroupView>();
 		
-		Query q = buildFindGroupsQuery(viewpoint, member, false, status, GroupFindType.ANY);
+		Query q = buildFindGroupsQuery(viewpoint, member, false, status, false, GroupFindType.ANY);
 		for (Object o : q.getResultList()) {
 			GroupMember groupMember = (GroupMember)o;
 			Set<PersonView> inviters  = new HashSet<PersonView>();
@@ -728,6 +768,20 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			result.add(new GroupView(groupMember.getGroup(), groupMember, inviters));
 		}
 		return result;	
+	}
+	
+	public List<GroupMember> findGroups(Viewpoint viewpoint, Resource resource) {
+		Query q;		
+		AccountClaim ac = resource.getAccountClaim();
+		if (ac != null) {
+			// all the group memberships must have been fixed up once 
+			// a user took over a resource
+			q = buildFindGroupsQuery(viewpoint, ac.getOwner(), false, null, true, GroupFindType.ANY);						
+		} else {
+		    q = buildFindGroupsQuery(viewpoint, resource);
+		}
+		
+		return TypeUtils.castList(GroupMember.class, q.getResultList());	
 	}
 	
 	private static final String FIND_PUBLIC_GROUPS_QUERY = 

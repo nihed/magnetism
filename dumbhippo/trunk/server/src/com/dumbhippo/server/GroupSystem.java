@@ -66,6 +66,8 @@ public interface GroupSystem {
 	
 	public void removeMember(User remover, Group group, Person person);
 	
+	public void removeMember(User remover, GroupMember groupMember);
+	
 	public int getMembersCount(Viewpoint viewpoint, Group group, MembershipStatus status);
 	
 	public boolean isMember(Group group, User user);
@@ -138,6 +140,15 @@ public interface GroupSystem {
 	public int findGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status);
 	
 	public int findPublicGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status);
+	
+	/**
+	 * Find the groups for a resource. 
+	 * 
+	 * @param viewpoint
+	 * @param resource
+	 * @return a list GroupMember objects describing group memberships of a resource
+	 */
+	public List<GroupMember> findGroups(Viewpoint viewpoint, Resource resource);
 	
 	public void pagePublicGroups(Pageable<GroupView> pageable);
 		

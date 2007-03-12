@@ -64,6 +64,7 @@ import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupDescriptionChangedRevision;
+import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupNameChangedRevision;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
@@ -610,7 +611,14 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	public void doRemoveInvitedContact(UserViewpoint viewpoint, String resourceId) {		
 		try {
-		    Resource resource = identitySpider.lookupGuidString(Resource.class, resourceId);		
+		    Resource resource = identitySpider.lookupGuidString(Resource.class, resourceId);	
+		    // remove groups we've invited this person to
+		    // we are using SystemViewpoint, because we would not be able to SEE_GROUP 
+		    // if have removed yourself from it, though still want to remove an invitation
+		    for (GroupMember groupMember : groupSystem.findGroups(SystemViewpoint.getInstance(), resource)) {
+		    	if (groupSystem.canRemoveInvitation(viewpoint.getViewer(), groupMember))
+		    	    groupSystem.removeMember(viewpoint.getViewer(), groupMember);
+		    }
 		    invitationSystem.deleteInvitations(viewpoint, resource);
 		    identitySpider.removeContactResource(viewpoint.getViewer(), resource);	
 		} catch (NotFoundException e) {
