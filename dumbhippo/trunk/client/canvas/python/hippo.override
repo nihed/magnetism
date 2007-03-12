@@ -10,6 +10,7 @@ headers
 #include "hippo/hippo-canvas-image-button.h"
 #include "hippo/hippo-canvas-text.h"
 #include "hippo/hippo-canvas-link.h"
+#include "hippo/hippo-canvas-gradient.h"
 #include "hippo/hippo-canvas.h"
 #include "hippo/hippo-canvas-widget.h"
 #include "hippo/hippo-canvas-window.h"
@@ -31,6 +32,7 @@ import gtk.gdk.Pixbuf as PyGdkPixbuf_Type
 %%
 ignore
 hippo_canvas_box_new
+hippo_canvas_gradient_new
 hippo_canvas_image_button_new
 hippo_canvas_image_new
 hippo_canvas_text_new

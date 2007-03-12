@@ -93,6 +93,13 @@
   (gtype-id "HIPPO_TYPE_CANVAS_WINDOW")
 )
 
+(define-object CanvasGradient
+  (in-module "Hippo")
+  (parent "HippoCanvasBox")
+  (c-name "HippoCanvasGradient")
+  (gtype-id "HIPPO_TYPE_CANVAS_GRADIENT")
+)
+
 ;; Enumerations and flags ...
 
 (define-enum PackFlags
