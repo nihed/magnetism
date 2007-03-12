@@ -17,6 +17,11 @@ class CanvasHBox(hippo.CanvasBox):
     def __init__(self, **kwargs):
         kwargs['orientation'] = hippo.ORIENTATION_HORIZONTAL
         hippo.CanvasBox.__init__(self)
+        
+class ActionLink(hippo.CanvasLink):
+    def __init__(self, **kwargs):
+        hippo.CanvasLink.__init__(self, **kwargs)
+        self.set_property("color", 0x0066DDFF)
 
 class CanvasEntry(hippo.CanvasWidget):
     __gproperties__ = {
@@ -154,7 +159,7 @@ class PrelightingCanvasBox(hippo.CanvasBox):
     # protected
     def sync_prelight_color(self): 
         if self.__hovered and self.do_prelight():
-            self.set_property('background-color', 0x00000033)
+            self.set_property('background-color', 0xE2E2E2FF)
         else:
             self.set_property('background-color', 0x00000000)           
             
