@@ -39,24 +39,38 @@ dh.groupinvitation.mergeObjectsDocument = function(doc) {
 	
 	// update the autocompletions
 	dh.groupinvitation.autoSuggest.checkUpdate(true);
+	
+	if (dh.groupinvitation.inviteeId != null) {		
+	    dh.groupinvitation.inviteeInitialLoad = true;
+	    dh.groupinvitation.recipientSelected(dh.groupinvitation.inviteeId);
+	}
 }
 
 dh.groupinvitation.loadContacts = function() {
 	dh.server.getXmlGET("addablecontacts",
 			{ 
-				"groupId" : dh.groupinvitation.groupId
+				"groupId" : dh.groupinvitation.groupId,
+				"inviteeId" : dh.groupinvitation.inviteeId
 			},
 			function(type, data, http) {
-				dh.groupinvitation.mergeObjectsDocument(data);
+			    var messages = data.getElementsByTagName("message")
+                if (messages.length > 0) {
+                    dh.groupinvitation.reloadWithMessage(dh.dom.textContent(messages[0]))
+                } else {
+  			        dh.groupinvitation.mergeObjectsDocument(data);
+  			    }
 			});
 }
 
 dh.groupinvitation.getEligibleRecipients = function() {
     if (dh.groupinvitation.autoSuggest.menuMode) {
   		return dh.suggestutils.getMenuRecipients(dh.groupinvitation.allKnownIds)
-	} else {
+	} else if (!dh.groupinvitation.inviteeInitialLoad) {
    		return dh.suggestutils.getMatchingRecipients(dh.groupinvitation.allKnownIds, 
    													 dh.groupinvitation.autoSuggest.inputText)
+	} else {
+	    dh.groupinvitation.inviteeInitialLoad = false;
+	    return new Array();
 	}
 }
 

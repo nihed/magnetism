@@ -13,7 +13,7 @@
 <dht3:shinyBox color="grey">
     <div class="${titleClass}">
                 <span>People Invited to Follow the Group (<c:out value="${group.invitedFollowers.size}"/>)</span>
-                <c:if test="${!forInvitationPage && group.follower}">
+                <c:if test="${group.canAddFollowers && !forInvitationPage}">
                     <a class="dh-underlined-link dh-page-shinybox-subtitle" href="/group-invitation?group=${group.viewedGroupId}">Invite people to follow!</a>
                 </c:if>    
             </div>
@@ -27,9 +27,11 @@
 				                    <dht:actionLink oneLine="true" href="javascript:dh.actions.addMember('${group.viewedGroupId}', '${person.identifyingGuid}', function () { dh.util.refresh() })" title="Invite this person to be a member in this group">Invite to group</dht:actionLink>		  	    			                   
 			                    </c:when>			               
 			                    <c:when test="${group.canAddFollowers}">
-			                        <a href="javascript:window.open('/group-invitation?group=${group.viewedGroupId}&invitee=${person.identifyingGuid}', '_self');">
-			                            Re-send invitation
-			                        </a>
+			                        <c:if test="${person.personIdentifyingGuid != null}">
+			                            <a href="javascript:window.open('/group-invitation?group=${group.viewedGroupId}&invitee=${person.personIdentifyingGuid}', '_self');">
+			                                Re-send invitation
+			                            </a>
+			                        </c:if>        
 			                    </c:when>
 			                </c:choose> 
 			                <c:if test="${person.viewerCanRemoveInvitation}">
@@ -45,7 +47,10 @@
 		            <dht:expandablePager pageable="${group.pageableInvitedFollowers}" anchor="dhInvitedFollowers"/>
                 </c:when>
 			    <c:otherwise>
-			        This group has no outstanding invitations to follow. <c:if test="${group.follower}"><a href="/group-invitation?group=${group.viewedGroupId}">Invite people to follow!</a></c:if>
+			        This group has no outstanding invitations to follow. 
+			        <c:if test="${group.canAddFollowers && !forInvitationPage}">
+                        <a href="/group-invitation?group=${group.viewedGroupId}">Invite people to follow!</a>
+                    </c:if>
 			    </c:otherwise>
 	        </c:choose>            
 </dht3:shinyBox>

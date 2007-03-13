@@ -275,10 +275,12 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		GroupMember groupMember;
 		
 		boolean selfAdd = adder.equals(person);
+		boolean canAddSelf = false;
 		
 		try {
 			// if person is a User then this will do fixups
 			groupMember = getGroupMember(group, person);
+			canAddSelf = (groupMember.getStatus().ordinal() > MembershipStatus.REMOVED.ordinal());
 		} catch (NotFoundException e) {
 			groupMember = null;
 		}
@@ -296,7 +298,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		// Compute the best status that the adder can make the user
 		MembershipStatus newStatus;
 		if (selfAdd)
-			newStatus = adderCanAdd ? MembershipStatus.ACTIVE : MembershipStatus.FOLLOWER;
+			newStatus = canAddSelf ? MembershipStatus.ACTIVE : MembershipStatus.FOLLOWER;
 		else
 			newStatus = adderCanAdd ? MembershipStatus.INVITED : MembershipStatus.INVITED_TO_FOLLOW;
 		
@@ -327,18 +329,9 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				}
 				break;
 			case INVITED:
-				if (selfAdd) {
-					// accepting an invitation, add our inviters as contacts
-					Set<User> previousAdders = groupMember.getAdders();
-					for (User previousAdder : previousAdders) {
-						identitySpider.addContactPerson(adder, previousAdder);
-					}
-				} else {
-					// already invited, add the new adder 
+				if (!selfAdd) {
+					// already invited, add the new adder, let the block be restacked  
 					groupMember.addAdder(adder);	
-					// TODO: don't return here to have a block re-stack on resending
-					// an invitation
-					return;
 				}
 				break;
 			case ACTIVE:
@@ -433,12 +426,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		  "EXISTS (SELECT vgm FROM GroupMember vgm, AccountClaim ac " +
 	              "WHERE vgm.group = g AND ac.resource = vgm.member AND ac.owner = :viewer AND " +
 	              "vgm.status >= " + MembershipStatus.INVITED.ordinal() + ")) ";
-	// this checks if the user can invite other people to a group
-	private static final String CAN_SHARE_GROUP =
-		" (EXISTS (SELECT vgm FROM GroupMember vgm, AccountClaim ac " +
-                  "WHERE vgm.group = g AND ac.resource = vgm.member AND ac.owner = :viewer AND " +
-                  "(vgm.status = " + MembershipStatus.ACTIVE.ordinal() + 
-                  " OR vgm.status = " + MembershipStatus.FOLLOWER.ordinal() + "))) ";	
+
 	private static final String CAN_SEE_ANONYMOUS = " g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " ";
 	
 	private String getStatusClause(MembershipStatus status) {
@@ -852,13 +840,24 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		" (SELECT ac.owner FROM ContactClaim cc, AccountClaim ac WHERE cc.contact = contact AND ac.resource = cc.resource) " +
 		" AND a2 = gm.member)) ";
 	
+	// this checks if the user can invite other people to a group
+	private static final String CAN_SHARE_GROUP =
+		" (vgm.status = " + MembershipStatus.ACTIVE.ordinal() + 
+        " OR vgm.status = " + MembershipStatus.FOLLOWER.ordinal() + ") ";	
+	
+	// this filters out people who are group members or are already invited, as well
+	// as filters out followers and people invited to follow if the viewer is a follower
 	private static final String FIND_ADDABLE_CONTACTS_QUERY = 
-		"SELECT contact from Account a, Contact contact, Group g " +
+		"SELECT contact from Account a, Contact contact, Group g, GroupMember vgm, AccountClaim ac " +
 		"WHERE a.owner = :viewer AND contact.account = a AND " + 
-			  "g.id = :groupid AND " + CAN_SHARE_GROUP + " AND " + 
-			  "NOT EXISTS(SELECT gm FROM GroupMember gm " +
+			  "g.id = :groupid AND vgm.group = g AND ac.resource = vgm.member AND ac.owner = :viewer AND " + CAN_SHARE_GROUP +
+			  "AND NOT EXISTS(SELECT gm FROM GroupMember gm " +
 				         "WHERE gm.group = :groupid AND " + CONTACT_IS_MEMBER + " AND " +
-				               "gm.status >= " + MembershipStatus.INVITED.ordinal() + ")";
+				               "(gm.status >= " + MembershipStatus.INVITED.ordinal() +
+				               " OR (vgm.status = " + MembershipStatus.FOLLOWER.ordinal() + 
+				               " AND (gm.status = " + MembershipStatus.FOLLOWER.ordinal() +
+				                      " OR gm.status = " + MembershipStatus.INVITED_TO_FOLLOW.ordinal() +
+				                      "))))";
 
 	public Set<PersonView> findAddableContacts(UserViewpoint viewpoint, User owner, String groupId, PersonViewExtra... extras) {
 		Person viewer = viewpoint.getViewer();
