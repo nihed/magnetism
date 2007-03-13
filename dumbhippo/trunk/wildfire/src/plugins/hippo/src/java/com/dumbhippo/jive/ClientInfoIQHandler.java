@@ -39,8 +39,24 @@ public class ClientInfoIQHandler extends AnnotatedIQHandler {
         	throw IQException.createBadRequest("clientInfo IQ missing platform attribute");
         }
 
-        // optional distribution info
-        final String distribution = child.attributeValue("distribution");
+        // optional distribution/version info
+        String rawDistribution = child.attributeValue("distribution");
+        String rawVersion = child.attributeValue("version");
+
+        final String distribution;
+        final String version;
+        
+        // backwards compatibility
+        if ("fedora5".equals(rawDistribution)) {
+        	distribution = "Fedora";
+        	version = "5";
+        } else if ("fedora6".equals(rawDistribution)) {
+        	distribution = "Fedora";
+        	version = "6";
+        } else {
+        	distribution = rawDistribution;
+        	version = rawVersion;
+        }
         
 		Document document = DocumentFactory.getInstance().createDocument();
 		Element childElement = document.addElement("clientInfo", CLIENT_INFO_NAMESPACE);
@@ -55,9 +71,9 @@ public class ClientInfoIQHandler extends AnnotatedIQHandler {
 			// Linux does not use a download url here, because it doesn't auto-download the new package
 			// (perhaps it should, but for now it doesn't). We set the url anyway because 1) we might 
 			// want to use it later and 2) older clients will break if the attribute is missing.
-			if (distribution != null && distribution.equals("fedora5")) {
+			if ("Fedora".equals(distribution) && "5".equals(version)) {
 				childElement.addAttribute("download", JiveGlobals.getXMLProperty("dumbhippo.client.fedora5.download"));
-			} else if (distribution != null && distribution.equals("fedora6")) {
+			} else if ("Fedora".equals(distribution) && "6".equals(version)) {
 				childElement.addAttribute("download", JiveGlobals.getXMLProperty("dumbhippo.client.fedora6.download"));
 			} else {
 				// We set the attribute anyway so older client versions don't throw an error.
@@ -71,7 +87,7 @@ public class ClientInfoIQHandler extends AnnotatedIQHandler {
 		
 		runner.runTaskOnTransactionCommit(new Runnable() {
 			public void run() {
-				accountSystem.updateClientInfo(viewpoint, platform, distribution);
+				accountSystem.updateClientInfo(viewpoint, platform, distribution, version);
 			}
 		});
 	}
