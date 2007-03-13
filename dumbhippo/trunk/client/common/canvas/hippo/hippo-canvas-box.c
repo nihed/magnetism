@@ -3044,6 +3044,95 @@ hippo_canvas_box_sort(HippoCanvasBox              *box,
     hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }
 
+static HippoBoxChild *
+child_create_from_item(HippoCanvasBox              *box,
+                       HippoCanvasItem             *child,
+                       HippoPackFlags               flags)
+{
+    HippoBoxChild *c;
+
+    g_object_ref(child);
+    hippo_canvas_item_sink(child);
+    connect_child(box, child);
+    c = g_new0(HippoBoxChild, 1);
+    c->item = child;
+    set_flags(c, flags);
+    c->visible = TRUE;
+    c->min_width = -1;
+    c->min_height = -1;
+    c->height_request_for_width = -1;
+
+    return c;    
+}
+
+static void
+child_setup(HippoCanvasBox              *box,
+            HippoCanvasItem             *child)
+{
+    if (box->context != NULL)
+        hippo_canvas_item_set_context(child, HIPPO_CANVAS_CONTEXT(box));
+    else
+        hippo_canvas_item_set_context(child, NULL);
+
+    /* fixed items don't change the box's request, but they do
+     * need to be request/allocated themselves, so we need to
+     * do this even for fixed items
+     */
+    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
+}
+
+void
+hippo_canvas_box_insert_before(HippoCanvasBox              *box,
+                               HippoCanvasItem             *child,
+                               HippoCanvasItem             *ref_child,
+                               HippoPackFlags               flags)
+{
+    HippoBoxChild *c;
+    HippoBoxChild *ref_c;
+    int position;
+
+    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
+    g_return_if_fail(find_child(box, child) == NULL);
+    
+    ref_c = find_child(box, ref_child);
+    
+    g_return_if_fail(ref_c != NULL);
+
+    c = child_create_from_item(box, child, flags);
+
+    position = g_slist_index(box->children, ref_c);
+    box->children = g_slist_insert(box->children, c, position);
+
+    child_setup(box, child);
+}
+
+void
+hippo_canvas_box_insert_after(HippoCanvasBox              *box,
+                              HippoCanvasItem             *child,
+                              HippoCanvasItem             *ref_child,
+                              HippoPackFlags               flags)
+{
+    HippoBoxChild *c;
+    HippoBoxChild *ref_c;
+    int position;
+
+    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
+    g_return_if_fail(find_child(box, child) == NULL);
+    
+    ref_c = find_child(box, ref_child);
+    
+    g_return_if_fail(ref_c != NULL);
+
+    c = child_create_from_item(box, child, flags);
+
+    position = g_slist_index(box->children, ref_c);
+    box->children = g_slist_insert(box->children, c, ++position);
+
+    child_setup(box, child);
+}
+
 void
 hippo_canvas_box_insert_sorted(HippoCanvasBox              *box,
                                HippoCanvasItem             *child,
@@ -3056,17 +3145,8 @@ hippo_canvas_box_insert_sorted(HippoCanvasBox              *box,
     g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
     g_return_if_fail(find_child(box, child) == NULL);
-    
-    g_object_ref(child);
-    hippo_canvas_item_sink(child);
-    connect_child(box, child);
-    c = g_new0(HippoBoxChild, 1);
-    c->item = child;
-    set_flags(c, flags);
-    c->visible = TRUE;
-    c->min_width = -1;
-    c->min_height = -1;
-    c->height_request_for_width = -1;
+
+    c = child_create_from_item(box, child, flags);
 
     if (compare_func == NULL) {
         box->children = g_slist_append(box->children, c);
@@ -3083,16 +3163,27 @@ hippo_canvas_box_insert_sorted(HippoCanvasBox              *box,
         box->children = g_slist_insert_before(box->children, l, c);
     }
 
-    if (box->context != NULL)
-        hippo_canvas_item_set_context(child, HIPPO_CANVAS_CONTEXT(box));
-    else
-        hippo_canvas_item_set_context(child, NULL);
+    child_setup(box, child);
+}
 
-    /* fixed items don't change the box's request, but they do
-     * need to be request/allocated themselves, so we need to
-     * do this even for fixed items
-     */
-    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
+void
+hippo_canvas_box_prepend(HippoCanvasBox  *box,
+                         HippoCanvasItem *child,
+                         HippoPackFlags   flags)
+{
+    HippoBoxChild *c;
+    HippoBoxChild *ref_c;
+    int position;
+
+    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
+    g_return_if_fail(find_child(box, child) == NULL);
+
+    c = child_create_from_item(box, child, flags);
+
+    box->children = g_slist_prepend(box->children, c);
+
+    child_setup(box, child);
 }
 
 void

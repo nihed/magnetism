@@ -366,6 +366,16 @@
   (return-type "HippoCanvasItem*")
 )
 
+(define-method prepend
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_prepend")
+  (return-type "none")
+  (parameters
+    '("HippoCanvasItem*" "child")
+    '("HippoPackFlags" "flags" (default "0"))
+  )
+)
+
 (define-method append
   (of-object "HippoCanvasBox")
   (c-name "hippo_canvas_box_append")
@@ -599,6 +609,28 @@
   (of-object "HippoCanvasBox")
   (c-name "hippo_canvas_box_is_clickable")
   (return-type "gboolean")
+)
+
+(define-method insert_before
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_insert_before")
+  (return-type "none")
+  (parameters
+    '("HippoCanvasItem*" "child")
+    '("HippoCanvasItem*" "ref_child")
+    '("HippoPackFlags" "flags" (default "0"))
+  )
+)
+
+(define-method insert_after
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_insert_after")
+  (return-type "none")
+  (parameters
+    '("HippoCanvasItem*" "child")
+    '("HippoCanvasItem*" "ref_child")
+    '("HippoPackFlags" "flags" (default "0"))
+  )
 )
 
 ;; From hippo-canvas-context.h
