@@ -721,9 +721,29 @@ hippo_distribution_get_version(HippoDistribution *distro)
 }
 
 static gboolean
+validate_name(const char *name)
+{
+    const char *p;
+    
+    for (p = name; *p; p++) {
+        char c = *p;
+        
+        if (!((c >= 'A' && c <= 'Z') ||
+              (c >= 'a' && c <= 'z') ||
+              (c >= '0' && c <= '9') ||
+              (c == '.') ||
+              (c == '_') ||
+              (c == '-')))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+static gboolean
 find_package_name(HippoDistribution *distro,
                   const char        *package_names,
-                  char             **package_name,
+                  char             **package,
                   char             **source)
 {
     char **pairs = g_strsplit(package_names, ";", -1);
@@ -738,7 +758,7 @@ find_package_name(HippoDistribution *distro,
         char **s;
         
         if (equal == NULL) {
-            g_warning("Bad package name component: %s\n", pair);
+            g_warning("Bad package name component: '%s'", pair);
             continue;
         }
 
@@ -749,16 +769,31 @@ find_package_name(HippoDistribution *distro,
             GSList *l;
             
             g_strstrip(source_name);
-            
+
+            if (!validate_name(source_name)) {
+                g_warning("Bad source name: '%s'", source_name);
+                goto next_source;
+            }
+
             for (l = distro->sources; l; l = l->next) {
                 if (strcmp(l->data, source_name) == 0) {
-                    *package_name = g_strdup(equal + 1);
+                    char *package_name = g_strstrip(g_strdup(equal + 1));
+                    if (!validate_name(package_name)) {
+                        g_warning("Bad package name: '%s'", package_name);
+                        g_free(package_name);
+                        
+                        goto next_source;
+                    }
+                    
+                    *package = package_name;
                     *source = g_strdup(source_name);
                     found = TRUE;
+                    
                     break;
                 }
             }
 
+        next_source:
             g_free(source_name);
         }
 
@@ -932,6 +967,11 @@ find_desktop_file(HippoDistribution *distro,
         char *path;
         
         g_strstrip(names[i]);
+
+        if (!validate_name(names[i])) {
+            g_warning("Bad desktop name: '%s'", names[i]);
+            continue;
+        }
         
         filename = g_strconcat(names[i], ".desktop", NULL);
         path = g_build_filename(APPLICATION_DIR, filename, NULL);
