@@ -1333,21 +1333,23 @@ hippo_canvas_box_get_content_width_request(HippoCanvasBox *box,
         
         n_children_in_natural += 1;
 
-        /* children with if fits flag won't appear at our min size.
-         * children with 0 min size won't themselves appear but they
-         * will get spacing around them, so they count in n_children_in_min
+        /* children with if fits flag won't appear at our min width if
+         * we are horizontal. If we're vertical, always request enough
+         * width for all if_fits children. Children with 0 min size won't
+         * themselves appear but they will get spacing around them, so
+         * they count in n_children_in_min.
          */
-        if (!child->if_fits)
-            n_children_in_min += 1;
         
         if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
-            if (!child->if_fits)
-                total_min = MAX(total_min, child->min_width);
+            total_min = MAX(total_min, child->min_width);
+            n_children_in_min += 1;
 
             total_natural = MAX(total_natural, child->natural_width);
         } else {
-            if (!child->if_fits)
+            if (!child->if_fits) {
                 total_min += child->min_width;
+                n_children_in_min += 1;
+            }
             
             total_natural += child->natural_width;
         }
@@ -1738,6 +1740,8 @@ box_validate_packing(HippoCanvasBox *box)
         g_warning("Floating children can only be used in a vertical box");
     if (has_floats && has_expand)
         g_warning("Floating children cannot be used in the same box as HIPPO_PACK_EXPAND");
+    if (has_floats && has_if_fits)
+        g_warning("Floating children can't be used in the same box as HIPPO_PACK_IF_FITS");
 
     return has_floats;
 }
@@ -2062,7 +2066,8 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
                                             int            *min_height_p,
                                             int            *natural_height_p)
 {
-    int total;
+    int total_min;
+    int total_natural;
     GSList *link;
     gboolean has_floats;
 
@@ -2088,7 +2093,8 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
 
     /* Now do the box-layout children */
 
-    total = 0;
+    total_min = 0;
+    total_natural = 0;
 
     has_floats = box_validate_packing(box);
     
@@ -2102,27 +2108,37 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
             floats_add_child(&floats, link->data, TRUE, NULL);
         }
 
-        total = floats_end_packing(&floats);
+        total_min = total_natural = floats_end_packing(&floats);
 
     } else if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
-        int n_children;
+        /* this block should look a lot like get_content_width_request() */
+        int n_children_in_min;
+        int n_children_in_natural;
 
-        n_children = 0;
+        n_children_in_min = 0;
+        n_children_in_natural = 0;
         for (link = box->children; link != NULL; link = link->next) {
             HippoBoxChild *child = link->data;
 
-            if (child->fixed || !child->visible)
-                continue;
-
-            n_children += 1;
-            
+            /* Note that we still request and allocate !visible children */
             height_request_child(child, for_width);
             
-            total += child->min_height;
+            if (child->fixed || !child->visible)
+                continue;
+            
+            n_children_in_natural += 1;
+            total_natural += child->natural_height;
+            
+            if (!child->if_fits) {
+                n_children_in_min += 1;
+                total_min += child->min_height;
+            }
         }
 
-        if (n_children > 1)
-            total += box->spacing * (n_children - 1);
+        if (n_children_in_min > 1)
+            total_min += box->spacing * (n_children_in_min - 1);
+        if (n_children_in_natural > 1)
+            total_natural += box->spacing * (n_children_in_natural - 1);
     } else {
         HippoCanvasBoxClass *klass;
         int requested_content_width;
@@ -2161,8 +2177,9 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
             req = box_child_get_adjusted_min_width(child, &width_adjusts[i]);
 
             height_request_child(child, req);
-
-            total = MAX(total, child->min_height);
+            
+            total_min = MAX(total_min, child->min_height);
+            total_natural = MAX(total_natural, child->natural_height);
 
             ++i;
         }
@@ -2171,9 +2188,9 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
     }
 
     if (min_height_p)
-        *min_height_p = total;
+        *min_height_p = total_min;
     if (natural_height_p)
-        *natural_height_p = total; /* FIXME (have not implemented natural height yet) */
+        *natural_height_p = total_natural;
 }
 
 static void
@@ -2410,46 +2427,58 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     } else if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
         int top_y;
         int bottom_y;
-        int vertical_expand_space;
-        int vertical_expand_count;
+        AdjustInfo *height_adjusts;
+        int i;
 
-        vertical_expand_count = count_expandable_children(box->children, NULL);
-        
-        vertical_expand_space = allocated_content_height - requested_content_height;
-        if (vertical_expand_space < 0)
-            vertical_expand_space = 0;
-        
+        compute_adjusts(box->children,
+                        g_slist_length(box->children),
+                        box->orientation,
+                        box->spacing,
+                        allocated_content_height - requested_content_height,
+                        &height_adjusts);
+
+        i = 0;
         top_y = content_y;
         bottom_y = content_y + allocated_content_height;
         for (link = box->children; link != NULL; link = link->next) {
             HippoBoxChild *child = link->data;
             int req;
 
-            if (child->fixed || !child->visible)
+            if (child->fixed || !child->visible) {
+                ++i;
                 continue;
+            }
             
-            req = child->min_height;
-            if (child->expand && !child->if_fits) { /* FIXME the if_fits check is temporary
-                                                       since we allow but don't handle it,
-                                                       and count_expandable_children skips if_fits */
-                int extra;
-                g_assert (vertical_expand_count > 0);
-                extra = (vertical_expand_space / vertical_expand_count);
-                vertical_expand_count -= 1;
-                vertical_expand_space -= extra;
-                req += extra;
+            req = box_child_get_adjusted_min_height(child, &height_adjusts[i]);
+
+            if (req > 0) {
+                allocate_child(box, child,
+                               content_x, child->end ? (bottom_y - req) : top_y,
+                               allocated_content_width, req,
+                               origin_changed);
+                
+            } else {
+                /* Child was adjusted out of existence, act like it's
+                 * !visible
+                 */
+                child->x = 0;
+                child->y = 0;
+                hippo_canvas_item_allocate(child->item, 0, 0, FALSE);
             }
 
-            allocate_child(box, child,
-                           content_x, child->end ? (bottom_y - req) : top_y,
-                           allocated_content_width, req,
-                           origin_changed);
+            /* Children with req == 0 still get spacing unless they are IF_FITS.
+             */
 
-            if (child->end)
-                bottom_y -= (req + box->spacing);
-            else
-                top_y += (req + box->spacing);
+            if (!height_adjusts[i].does_not_fit) {
+                if (child->end)
+                    bottom_y -= (req + box->spacing);
+                else
+                    top_y += (req + box->spacing);
+            }
+            
+            ++i;
         }
+        g_free(height_adjusts);
     } else {
         int left_x;
         int right_x;
