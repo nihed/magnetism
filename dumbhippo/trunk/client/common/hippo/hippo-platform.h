@@ -10,10 +10,8 @@ G_BEGIN_DECLS
 
 typedef struct {
     const char *name;         /* "windows" or "linux" */
-    const char *distribution; /* "fedora5", "fedora6", or NULL for unknown
-                               * could also be "xp" or something maybe on Windows
-                               * but is NULL right now
-                               */
+    const char *distribution; /* Not used on Window. "Fedora", "Ubuntu", etc, on Linux */
+    const char *version;      /* May be NULL if we don't know anything better */
 } HippoPlatformInfo;
 
 typedef enum {
