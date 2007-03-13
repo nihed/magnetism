@@ -984,7 +984,7 @@ hippo_application_request_finish(HippoApplicationRequest *request)
         DBusMessage *message;
 
         const char *version = request->version ? request->version : "";
-        dbus_bool_t can_install = request->can_run;
+        dbus_bool_t can_install = request->can_install;
         dbus_bool_t can_run = request->can_run;
             
         listener->application_requests = g_slist_remove(listener->application_requests, request);
