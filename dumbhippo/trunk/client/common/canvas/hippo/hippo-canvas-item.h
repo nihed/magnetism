@@ -38,10 +38,14 @@ struct _HippoCanvasItemIface {
     void     (* paint)              (HippoCanvasItem  *canvas_item,
                                      cairo_t          *cr,
                                      HippoRectangle   *damaged_box);
-    int      (* get_width_request)  (HippoCanvasItem *canvas_item);
-    int      (* get_natural_width)  (HippoCanvasItem *canvas_item);
-    int      (* get_height_request) (HippoCanvasItem *canvas_item,
-                                     int              for_width);
+    void     (* get_width_request)  (HippoCanvasItem *canvas_item,
+                                     int             *min_width_p,
+                                     int             *natural_width_p);
+    void     (* get_height_request) (HippoCanvasItem *canvas_item,
+                                     int              for_width,
+                                     int             *min_height_p,
+                                     int             *natural_height_p);
+    
     /* The origin changed flag indicates that the position of the item with respect to the
      * canvas root changed. The item must then call allocate on it's children passing
      * TRUE for origin_changed as well. */
@@ -82,10 +86,13 @@ void               hippo_canvas_item_sink               (HippoCanvasItem    *can
 
 void               hippo_canvas_item_set_context        (HippoCanvasItem    *canvas_item,
                                                          HippoCanvasContext *context);
-int                hippo_canvas_item_get_width_request  (HippoCanvasItem    *canvas_item);
-int                hippo_canvas_item_get_natural_width  (HippoCanvasItem    *canvas_item);
-int                hippo_canvas_item_get_height_request (HippoCanvasItem    *canvas_item,
-                                                         int                 for_width);
+void               hippo_canvas_item_get_width_request  (HippoCanvasItem    *canvas_item,
+                                                         int                *min_width_p,
+                                                         int                *natural_width_p);
+void               hippo_canvas_item_get_height_request (HippoCanvasItem    *canvas_item,
+                                                         int                 for_width,
+                                                         int                *min_height_p,
+                                                         int                *natural_height_p);
 void               hippo_canvas_item_allocate           (HippoCanvasItem    *canvas_item,
                                                          int                 width,
                                                          int                 height,
@@ -102,10 +109,6 @@ HippoCanvasPointer hippo_canvas_item_get_pointer        (HippoCanvasItem    *can
                                                          int                 x,
                                                          int                 y);
 
-
-void     hippo_canvas_item_get_request             (HippoCanvasItem *canvas_item,
-                                                    int             *width_p,
-                                                    int             *height_p);
 gboolean hippo_canvas_item_emit_button_press_event (HippoCanvasItem *canvas_item,
                                                     int              x,
                                                     int              y,

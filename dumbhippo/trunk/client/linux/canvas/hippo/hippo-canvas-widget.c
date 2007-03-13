@@ -30,12 +30,16 @@ static void hippo_canvas_widget_allocate    (HippoCanvasItem    *item,
                                              gboolean            origin_changed);
 
 /* Canvas box methods */
-static void hippo_canvas_widget_paint_below_children       (HippoCanvasBox  *box,
-                                                            cairo_t         *cr,
-                                                            HippoRectangle  *damage_box);
-static int  hippo_canvas_widget_get_content_width_request  (HippoCanvasBox  *box);
-static int  hippo_canvas_widget_get_content_height_request (HippoCanvasBox  *box,
-                                                            int              for_width);
+static void hippo_canvas_widget_paint_below_children        (HippoCanvasBox  *box,
+                                                             cairo_t         *cr,
+                                                             HippoRectangle  *damage_box);
+static void  hippo_canvas_widget_get_content_width_request  (HippoCanvasBox  *box,
+                                                             int             *min_width_p,
+                                                             int             *natural_width_p);
+static void  hippo_canvas_widget_get_content_height_request (HippoCanvasBox  *box,
+                                                             int              for_width,
+                                                             int             *min_height_p,
+                                                             int             *natural_height_p);
 
 enum {
     NO_SIGNALS_YET,
@@ -264,15 +268,19 @@ hippo_canvas_widget_paint_below_children(HippoCanvasBox  *box,
      */
 }
 
-static int
-hippo_canvas_widget_get_content_width_request(HippoCanvasBox *box)
+static void
+hippo_canvas_widget_get_content_width_request(HippoCanvasBox *box,
+                                              int            *min_width_p,
+                                              int            *natural_width_p)
 {
     HippoCanvasWidget *widget = HIPPO_CANVAS_WIDGET(box);
-    int children_width;
+    int children_min_width, children_natural_width;
     int widget_width;
     GtkRequisition req;
     
-    children_width = HIPPO_CANVAS_BOX_CLASS(hippo_canvas_widget_parent_class)->get_content_width_request(box);
+    HIPPO_CANVAS_BOX_CLASS(hippo_canvas_widget_parent_class)->get_content_width_request(box,
+                                                                                        &children_min_width,
+                                                                                        &children_natural_width);
 
     if (widget->widget && GTK_WIDGET_VISIBLE(widget->widget)) {
         gtk_widget_size_request(widget->widget, &req);
@@ -281,21 +289,28 @@ hippo_canvas_widget_get_content_width_request(HippoCanvasBox *box)
         widget_width = 0;
     }
 
-    return MAX(widget_width, children_width);
+    if (min_width_p)
+        *min_width_p = MAX(widget_width, children_min_width);
+    if (natural_width_p)
+        *natural_width_p = MAX(widget_width, children_natural_width);
 }
 
-static int
+static void
 hippo_canvas_widget_get_content_height_request(HippoCanvasBox  *box,
-                                               int              for_width)
+                                               int              for_width,
+                                               int             *min_height_p,
+                                               int             *natural_height_p)
 {
     HippoCanvasWidget *widget = HIPPO_CANVAS_WIDGET(box);
-    int children_height;
+    int children_min_height, children_natural_height;
     int widget_height;
     GtkRequisition req;
     
     /* get height of children and the box padding */
-    children_height = HIPPO_CANVAS_BOX_CLASS(hippo_canvas_widget_parent_class)->get_content_height_request(box,
-                                                                                                           for_width);
+    HIPPO_CANVAS_BOX_CLASS(hippo_canvas_widget_parent_class)->get_content_height_request(box,
+                                                                                         for_width,
+                                                                                         &children_min_height,
+                                                                                         &children_natural_height);
     
     if (widget->widget && GTK_WIDGET_VISIBLE(widget->widget)) {
         /* We know a get_height_request was done first, so we can
@@ -308,5 +323,8 @@ hippo_canvas_widget_get_content_height_request(HippoCanvasBox  *box,
         widget_height = 0;
     }
     
-    return MAX(widget_height, children_height);
+    if (min_height_p)
+        *min_height_p = MAX(widget_height, children_min_height);
+    if (natural_height_p)
+        *natural_height_p = MAX(widget_height, children_natural_height);
 }
