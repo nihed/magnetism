@@ -211,19 +211,23 @@ public class AccountSystemBean implements AccountSystem {
 		}
 	}
 
-	public void updateClientInfo(UserViewpoint viewpoint, String platform, String distribution) {
-		// NULL doesn't work well as a unique key, so use "" when no distribution is
+	public void updateClientInfo(UserViewpoint viewpoint, String platform, String distribution, String version) {
+		// NULL doesn't work well as a unique key, so use "" when no distribution/version is
 		// specified
 		if (distribution == null)
 			distribution = "";
+		if (version == null)
+			version = "";
 		
 		Query q = em.createQuery("SELECT uci FROM UserClientInfo uci " +
 				                 " WHERE uci.user = :user " +
 				                 "   AND uci.platform = :platform " +
-				                 "   AND uci.distribution = :distribution")
+				                 "   AND uci.distribution = :distribution" +
+				                 "   AND uci.version = :version")
             .setParameter("user", viewpoint.getViewer())
 			.setParameter("platform", platform)
-			.setParameter("distribution", distribution);
+			.setParameter("distribution", distribution)
+			.setParameter("version", version);
 		
 		UserClientInfo uci;
 		try {

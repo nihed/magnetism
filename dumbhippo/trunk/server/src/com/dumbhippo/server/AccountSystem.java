@@ -140,5 +140,5 @@ public interface AccountSystem {
 	 * @param platform platform string
 	 * @param distribution distribution string
 	 */
-	public void updateClientInfo(UserViewpoint viewpoint, String platform, String distribution);
+	public void updateClientInfo(UserViewpoint viewpoint, String platform, String distribution, String version);
 }
