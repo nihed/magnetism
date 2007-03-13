@@ -231,7 +231,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	private void endReturnObjectsXml(OutputStream out, XmlBuilder xml)
 			throws IOException {
 		xml.append("</objects>");
-
 		out.write(xml.getBytes());
 	}
 
@@ -277,10 +276,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 					display = display + " (myself)";
 				}
 
+				// Note: we do not want to use p.getIdentifyingGuid() for "id"
+				// by default here, because there are places in javascript that 
+				// depend on the contact id to be returned for the id field, 
+				// and not the resource id that is returned by p.getIdentifyingGuid()
+				// (at least groupinvitation.js for inviteeId is one such place)
 				xml.appendTextNode("person", null, "id",
-						p.getContact() != null ? p.getContact().getId() : p
-								.getUser().getId(), "contactId",
-						p.getContact() != null ? p.getContact().getId() : "",
+                        p.getPersonIdentifyingGuid() != null ? 
+                        p.getPersonIdentifyingGuid().toString() : p.getIdentifyingGuid().toString(), 
+						"contactId", p.getContact() != null ? p.getContact().getId() : "",
 						"userId", p.getUser() != null ? p.getUser().getId()
 								: "", "display", display, "hasAccount",
 						hasAccount, "email",
@@ -318,7 +322,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			returnPersonsXml(xml, viewpoint, persons);
 		if (groups != null)
 			returnGroupsXml(xml, viewpoint, groups);
-
+ 
 		endReturnObjectsXml(out, xml);
 	}
 
@@ -357,11 +361,26 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	public void getAddableContacts(OutputStream out,
-			HttpResponseData contentType, UserViewpoint viewpoint, String groupId)
+			HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String inviteeId)
 			throws IOException {
 		Set<PersonView> persons = groupSystem.findAddableContacts(viewpoint,
 				viewpoint.getViewer(), groupId);
 
+		if (inviteeId != null && inviteeId.trim().length() > 0) {
+			try {
+				Person person = identitySpider.lookupGuidString(Person.class, inviteeId);
+				PersonView personView = personViewer.getPersonView(viewpoint, person);
+				persons.add(personView);
+			} catch (ParseException e) {
+				writeMessageReply(out, "getAddableContactsReply", "Supplied invitee was not found.");
+				logger.warn("bad invitee guid", e);
+				return;
+			} catch (NotFoundException e) {
+				writeMessageReply(out, "getAddableContactsReply", "Supplied invitee was not found.");
+				logger.warn("no such invitee guid", e);
+				return;
+			}
+		}
 		returnObjects(out, contentType, viewpoint, persons, null);
 	}
 
@@ -1050,10 +1069,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	{
 		if (contentType != HttpResponseData.XML)
 			throw new IllegalArgumentException("only support XML replies");
+		Person person;
+		PostingBoard.InviteRecipients inviteRecipients;
 		
-		Contact contact;
-		
-		Group group;
+		Group group;		
 		try {
 			group = groupSystem.lookupGroupById(viewpoint, groupId);
 		} catch (NotFoundException e) {
@@ -1062,14 +1081,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		if (inviteeId != null) {
 			try {
-				contact = identitySpider.lookupGuidString(Contact.class, inviteeId);
+				person = identitySpider.lookupGuidString(Person.class, inviteeId);
+				inviteRecipients = PostingBoard.InviteRecipients.DONT_INVITE;
 			} catch (ParseException e) {
 				throw new RuntimeException("bad invitee guid", e);
 			} catch (NotFoundException e) {
 				throw new RuntimeException("no such invitee guid", e);
 			}
 			
-		} else if (inviteeAddress != null) { 
+		} else if (inviteeAddress != null) {
 			EmailResource resource;
 			try {
 				resource = identitySpider.getEmail(inviteeAddress);
@@ -1090,15 +1110,16 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				return;
 			}
 
-			contact = identitySpider.createContact(viewpoint.getViewer(), resource);
+			person = identitySpider.createContact(viewpoint.getViewer(), resource);
+			inviteRecipients = PostingBoard.InviteRecipients.MUST_INVITE;
 		} else {
 			throw new RuntimeException("inviteeId and inviteeAddress can't both be null");
 		}
-		
-		GuidPersistable recipient = contact;
+			
+		GuidPersistable recipient = person;
 		Set<GuidPersistable> recipients = Collections.singleton(recipient);
 		try {
-			postingBoard.doShareGroupPost(viewpoint.getViewer(), group, subject, message, recipients, PostingBoard.InviteRecipients.MUST_INVITE);
+			postingBoard.doShareGroupPost(viewpoint.getViewer(), group, subject, message, recipients, inviteRecipients);
 		} catch (NotFoundException e) {
 			throw new RuntimeException("doShareGroup unxpectedly couldn't find contact recipient");
 		}
@@ -1106,13 +1127,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// let's find out if we were inviting to the group or inviting to follow the group
 		boolean adderCanAdd = groupSystem.canAddMembers(viewpoint.getViewer(), group);
 		
-		PersonView contactView = personViewer.getPersonView(viewpoint, contact);
+		PersonView personView = personViewer.getPersonView(viewpoint, person);
 
 		String note;
 		if (adderCanAdd) {
-		    note = contactView.getName() + " has been invited to the group " + group.getName();
+		    note = personView.getName() + " has been invited to the group " + group.getName();
 		} else {
-			note = contactView.getName() + " has been invited to follow the group " + group.getName();
+			note = personView.getName() + " has been invited to follow the group " + group.getName();
 		}
 		
 		writeMessageReply(out, "sendGroupInvitationReply", note);

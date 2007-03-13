@@ -810,6 +810,21 @@ public class PersonView extends EntityView {
 		}
 	}
 
+	/**
+	 * This method returns a contact or user id, in that order of preference,
+	 * or null.
+	 *
+	 * @return a contact or user id
+	 */
+	public Guid getPersonIdentifyingGuid() {
+		if (contact != null)
+			return contact.getGuid();
+		else if (user != null)
+			return user.getGuid();
+		else
+			return null;		
+	}
+	
 	@Override
 	public String getHomeUrl() {
 		if (user != null)

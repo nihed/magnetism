@@ -13,7 +13,7 @@
 <dht3:shinyBox color="grey">
             <div class="${titleClass}">
                 <span>People Invited to the Group (<c:out value="${group.invitedMembers.size}"/>)</span>
-                <c:if test="${!forInvitationPage}">
+                <c:if test="${group.canAddMembers && !forInvitationPage}">
                     <a class="dh-underlined-link dh-page-shinybox-subtitle" href="/group-invitation?group=${group.viewedGroupId}">Invite people!</a>
                 </c:if>
             </div>
@@ -22,9 +22,11 @@
           	        <c:forEach items="${group.pageableInvitedMembers.results}" var="person">
 			            <dht3:personItem who="${person}" useSpecialControls="true">
 			                <c:if test="${group.canAddMembers}">
-			                    <a href="javascript:window.open('/group-invitation?group=${group.viewedGroupId}&invitee=${person.identifyingGuid}', '_self');">
-			                        Re-send invitation
-			                    </a>
+			                    <c:if test="${person.personIdentifyingGuid != null}">
+			                        <a href="javascript:window.open('/group-invitation?group=${group.viewedGroupId}&invitee=${person.personIdentifyingGuid}', '_self');">
+			                            Re-send invitation
+			                        </a>
+			                    </c:if>   			                        
 			                </c:if>    
 			                <c:if test="${person.viewerCanRemoveInvitation}">
 			                    <c:if test="${group.canAddMembers}">
@@ -39,7 +41,10 @@
 		            <dht:expandablePager pageable="${group.pageableInvitedMembers}" anchor="dhInvitedMembers"/>
                 </c:when>
 			    <c:otherwise>
-			        This group has no outstanding invitations. <a href="/group-invitation?group=${group.viewedGroupId}">Invite people!</a>
+			        This group has no outstanding invitations. 
+			        <c:if test="${group.canAddMembers && !forInvitationPage}">
+			            <a href="/group-invitation?group=${group.viewedGroupId}">Invite people!</a>
+			        </c:if>
 			    </c:otherwise>
 	        </c:choose>            
         </dht3:shinyBox>

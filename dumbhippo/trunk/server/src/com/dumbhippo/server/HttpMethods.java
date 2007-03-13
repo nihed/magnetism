@@ -29,8 +29,8 @@ import com.dumbhippo.server.views.Viewpoint;
 public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XML)
-	@HttpParams( { "groupId" })
-	public void getAddableContacts(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId)
+	@HttpParams( { "groupId", "inviteeId" })
+	public void getAddableContacts(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String inviteeId)
 			throws IOException;
 
 	@HttpContentTypes(HttpResponseData.XML)

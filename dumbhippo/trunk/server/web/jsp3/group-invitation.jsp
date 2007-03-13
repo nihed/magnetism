@@ -25,6 +25,7 @@
 
 <c:set var="pageName" value="Invitations to ${group.viewedGroup.name}" scope="page"/>
 
+
 <head>
 	<title><c:out value="${pageName}"/> - Mugshot</title>
 	<dht3:stylesheet name="site" iefixes="true"/>	
@@ -34,6 +35,7 @@
 	<dh:script modules="dh.groupinvitation,dh.event"/>
 	<script type="text/javascript">
 		dh.groupinvitation.groupId = <dh:jsString value="${group.viewedGroupId}"/>
+		dh.groupinvitation.inviteeId = <dh:jsString value="${param['invitee']}"/>
 		dh.groupinvitation.initialValues = {
 			'dhAddressEntry' : '',
 			'dhSubjectEntry' : <dh:jsString value="${group.shareSubject}"/>,
@@ -83,8 +85,10 @@
 		<img id="dhInvitationSendButton" class="dh-shinybox-bottom-content" src="/images3/${buildStamp}/send.png" onclick="javascript:dh.groupinvitation.send();"/> 	
     </dht3:shinyBox>   
     
-    <dht3:invitedMembers forInvitationPage="true"/>
-
+    <c:if test="${group.viewedGroup.status.participant}">
+        <dht3:invitedMembers forInvitationPage="true"/>
+    </c:if>
+    
     <%-- Only public groups can have followers --%>
     <c:if test="${group.public}">
         <dht3:invitedFollowers forInvitationPage="true"/>
