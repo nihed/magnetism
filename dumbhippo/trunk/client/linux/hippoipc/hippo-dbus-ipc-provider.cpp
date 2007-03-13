@@ -548,7 +548,7 @@ HippoDBusIpcProviderImpl::getApplicationInfo(HippoEndpointId endpoint, const cha
     DBusMessage *message = createMethodMessage("GetApplicationInfo");
 
     dbus_message_append_args(message,
-			     DBUS_TYPE_STRING, &endpoint,
+			     DBUS_TYPE_UINT64, &endpoint,
 			     DBUS_TYPE_STRING, &applicationId,
 			     DBUS_TYPE_STRING, &packageNames,
 			     DBUS_TYPE_STRING, &desktopNames,
@@ -567,7 +567,7 @@ HippoDBusIpcProviderImpl::installApplication(HippoEndpointId endpoint, const cha
     DBusMessage *message = createMethodMessage("InstallApplication");
 
     dbus_message_append_args(message,
-			     DBUS_TYPE_STRING, &endpoint,
+			     DBUS_TYPE_UINT64, &endpoint,
 			     DBUS_TYPE_STRING, &applicationId,
 			     DBUS_TYPE_STRING, &packageNames,
 			     DBUS_TYPE_STRING, &desktopNames,

@@ -53,7 +53,9 @@
 typedef gboolean (*CheckDistributionFunction) (const char                 *filename,
                                                char                      **raw_name,
                                                char                      **raw_version);
-typedef void     (*CheckPackageFunction)      (const char                *package_name,
+typedef void     (*CheckPackageFunction)      (HippoDistribution         *distirbution,
+                                               const char                *package_name,
+                                               const char                *source,
                                                HippoCheckPackageCallback  callback,
                                                void                      *callback_data);
 typedef void     (*InstallPackageFunction)    (const char                *package_name,
@@ -66,7 +68,9 @@ static gboolean check_distribution_lsb_release    (const char                 *f
 static gboolean check_distribution_redhat_release (const char                 *filename,
                                                    char                      **raw_name,
                                                    char                      **raw_version);
-static void     check_package_rpm                 (const char                 *package_name,
+static void     check_package_rpm                 (HippoDistribution          *distribution,
+                                                   const char                 *package_name,
+                                                   const char                 *source,
                                                    HippoCheckPackageCallback   callback,
                                                    void                       *callback_data);
 static void     install_package_pirut             (const char                 *package_name,
@@ -78,6 +82,9 @@ static void     install_package_yum               (const char                 *p
                                                    HippoAsyncCallback          callback,
                                                    void                       *callback_data);
 #endif    
+
+static InstallPackageFunction hippo_distribution_find_install_package_function(HippoDistribution *distribution,
+                                                                               const char        *source);
 
 static const struct {
     const char *source;
@@ -472,6 +479,8 @@ check_distribution_redhat_release(const char   *filename,
 /************************************************************/
 
 typedef struct {
+    HippoDistribution *distribution;
+    char *source;
     HippoCheckPackageCallback callback;
     void *callback_data;
 } CheckPackageRpmClosure;
@@ -502,26 +511,34 @@ check_package_rpm_callback(GError      *error,
         }
     }
 
-    closure->callback(version != NULL, TRUE, version, closure->callback_data);
+    closure->callback(version != NULL,
+                      hippo_distribution_find_install_package_function(closure->distribution, closure->source) != NULL,
+                      version,
+                      closure->callback_data);
     g_free(version);
+    g_free(closure->source);
     g_free(closure);
 }
 
 static void
-check_package_rpm(const char                *package_name,
+check_package_rpm(HippoDistribution         *distribution,
+                  const char                *package_name,
+                  const char                *source,
                   HippoCheckPackageCallback  callback,
                   void                      *callback_data)
 {
     const char *args[] = {
         "/bin/rpm",
         "-q",
-        "--queryformat='%{version}-%{release}\\n'",
+        "--queryformat=%{version}-%{release}\\n",
         NULL,
         NULL,
     };
     CheckPackageRpmClosure *closure;
 
     closure = g_new(CheckPackageRpmClosure, 1);
+    closure->distribution = distribution;
+    closure->source = g_strdup(source);
     closure->callback = callback;
     closure->callback_data = callback_data;
     
@@ -811,6 +828,25 @@ compare_versions(const char *version_a, const char *version_b)
     }
 }
 
+static InstallPackageFunction
+hippo_distribution_find_install_package_function(HippoDistribution *distro,
+                                                 const char        *source)
+{
+    guint i;
+    
+    for (i = 0; i < G_N_ELEMENTS(install_package_functions); i++) {
+        if (strcmp(install_package_functions[i].source, source) == 0) {
+            if (install_package_functions[i].minimum_version
+                && compare_versions(distro->version, install_package_functions[i].minimum_version) < 0)
+                continue;
+            
+            return install_package_functions[i].func;
+        }
+    }
+
+    return NULL;
+}
+
 void
 hippo_distribution_check_package(HippoDistribution         *distro,
                                  const char                *package_names,
@@ -834,7 +870,7 @@ hippo_distribution_check_package(HippoDistribution         *distro,
                 && compare_versions(distro->version, check_package_functions[i].minimum_version) < 0)
                 continue;
             
-            check_package_functions[i].func(package_name, callback, callback_data);
+            check_package_functions[i].func(distro, package_name, source, callback, callback_data);
             goto found;
         }
     }
@@ -854,8 +890,8 @@ hippo_distribution_install_package(HippoDistribution   *distro,
 {
     char *package_name = NULL;
     char *source = NULL;
-    guint i;
     GError *error = NULL;
+    InstallPackageFunction func;
 
     g_return_if_fail(distro != NULL);
 
@@ -864,18 +900,13 @@ hippo_distribution_install_package(HippoDistribution   *distro,
         goto out;
     }
 
-    for (i = 0; i < G_N_ELEMENTS(install_package_functions); i++) {
-        if (strcmp(install_package_functions[i].source, source) == 0) {
-            if (install_package_functions[i].minimum_version
-                && compare_versions(distro->version, install_package_functions[i].minimum_version) < 0)
-                continue;
-            
-            install_package_functions[i].func(package_name, callback, callback_data);
-            goto out;
-        }
+    func = hippo_distribution_find_install_package_function(distro, source);
+    if (!func) {
+        error = g_error_new(HIPPO_DISTRIBUTION_ERROR, HIPPO_DISTRIBUTION_ERROR_CANNOT_INSTALL, "Don't know how to install packages for source '%s'", source);
+        goto out;
     }
 
-    error = g_error_new(HIPPO_DISTRIBUTION_ERROR, HIPPO_DISTRIBUTION_ERROR_CANNOT_INSTALL, "Don't know how to install packages for source '%s'", source);
+    (*func) (package_name, callback, callback_data);
 
  out:
     if (error) {
