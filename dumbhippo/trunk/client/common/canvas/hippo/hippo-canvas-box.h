@@ -137,6 +137,9 @@ GType            hippo_canvas_box_get_type          (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_box_new               (void);
 
+void             hippo_canvas_box_prepend           (HippoCanvasBox              *box,
+                                                     HippoCanvasItem             *child,
+                                                     HippoPackFlags               flags);
 void             hippo_canvas_box_append            (HippoCanvasBox              *box,
                                                      HippoCanvasItem             *child,
                                                      HippoPackFlags               flags);
@@ -165,6 +168,14 @@ void             hippo_canvas_box_reverse           (HippoCanvasBox             
 void             hippo_canvas_box_sort              (HippoCanvasBox              *box,
                                                      HippoCanvasCompareChildFunc  compare_func,
                                                      void                        *data); 
+void             hippo_canvas_box_insert_after     (HippoCanvasBox              *box,
+                                                    HippoCanvasItem             *child,
+                                                    HippoCanvasItem             *ref_child,
+                                                    HippoPackFlags               flags);
+void             hippo_canvas_box_insert_before     (HippoCanvasBox              *box,
+                                                     HippoCanvasItem             *child,
+                                                     HippoCanvasItem             *ref_child,
+                                                     HippoPackFlags               flags);
 void             hippo_canvas_box_insert_sorted     (HippoCanvasBox              *box,
                                                      HippoCanvasItem             *child,
                                                      HippoPackFlags               flags,
