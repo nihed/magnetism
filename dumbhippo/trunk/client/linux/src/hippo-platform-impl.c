@@ -2,6 +2,7 @@
 #include <config.h>
 #include "hippo-platform-impl.h"
 #include "hippo-cookies-linux.h"
+#include "hippo-distribution.h"
 #include "hippo-window-wrapper.h"
 #include "hippo-status-icon.h"
 #include "hippo-http.h"
@@ -198,37 +199,27 @@ hippo_platform_impl_finalize(GObject *object)
     G_OBJECT_CLASS(hippo_platform_impl_parent_class)->finalize(object);
 }
 
-static const char*
-get_distribution(void)
-{
-    static const char* distribution = NULL;
-
-    if (distribution == NULL) {
-        char *contents = NULL;
-        gsize len = 0;
-        GError *error = NULL;
-        if (!g_file_get_contents("/etc/fedora-release", &contents, &len, &error)) {
-            g_debug("Failed to get /etc/fedora-release contents: %s", error->message);
-            g_error_free(error);
-        } else {
-            if (strstr(contents, " 5 ") != NULL)
-                distribution = "fedora5";
-            else if (strstr(contents, " 6 ") != NULL)
-                distribution = "fedora6";
-
-            g_free(contents);
-        }
-    }
-
-    return distribution;
-}
-
 static void
 hippo_platform_impl_get_platform_info(HippoPlatform     *platform,
                                       HippoPlatformInfo *info)
 {
+    HippoDistribution *distro = hippo_distribution_get();
+    
     info->name = "linux";
-    info->distribution = get_distribution();
+    info->distribution = hippo_distribution_get_name(distro);
+    info->version = hippo_distribution_get_version(distro);
+
+    /* Backwards compatibility hack: versions of the server prior to 2007-03-13
+     * expected distribution/version to be combined into one string and
+     * handled "fedora5" and "fedora6" specially. Newer server versions
+     * expand "fedora5/fedora6" back into the correct two fields.
+     */
+    if (info->distribution && strcmp(info->distribution, "Fedora") == 0) {
+        if (info->version && strcmp(info->version, "5") == 0)
+            info->distribution = "fedora5";
+        else if (info->version && strcmp(info->version, "6") == 0)
+            info->distribution = "fedora6";
+    }
 }
 
 static HippoWindow*

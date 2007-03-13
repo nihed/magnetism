@@ -441,8 +441,8 @@ hippo_platform_impl_get_platform_info(HippoPlatform           *platform,
                                       HippoPlatformInfo       *info)
 {
     info->name = "windows";
-    // we could stick the windows flavor ("xp", "nt") in here eventually if we needed it
-    info->distribution = NULL;
+    info->distribution = NULL; // Unused for windows
+    info->version = NULL; // FIXME: should be "nt2000", "xp", "vista" 
 }
 
 static const char*
