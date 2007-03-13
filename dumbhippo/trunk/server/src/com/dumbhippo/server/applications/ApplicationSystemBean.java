@@ -339,6 +339,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		application.setCategory(appinfoFile.getCategory());
 		application.setTitlePatterns(appinfoFile.getTitlePatternsString());
 		application.setDesktopNames(appinfoFile.getDesktopNamesString());
+		application.setPackageNames(appinfoFile.getPackageNames());
 	}
 	
 	private void updateApplicationCollections(Application application, AppinfoFile appinfoFile) {
