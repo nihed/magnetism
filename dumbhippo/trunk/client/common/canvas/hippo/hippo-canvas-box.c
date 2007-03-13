@@ -1819,7 +1819,7 @@ floats_start_packing(HippoBoxFloats  *floats,
             if (i_left == 0)
                 floats->left[i_left].y = 0;
             else
-                floats->left[i_left].y = floats->left[i_left - 1].y + floats->left[i_left - 1].child->min_height + box->spacing;
+                floats->left[i_left].y = floats->left[i_left - 1].y + floats->left[i_left - 1].child->natural_height + box->spacing;
                 
             i_left++;
         } else if (child->float_right) {
@@ -1827,7 +1827,7 @@ floats_start_packing(HippoBoxFloats  *floats,
             if (i_right == 0)
                 floats->right[i_right].y = 0;
             else
-                floats->right[i_right].y = floats->right[i_right - 1].y + floats->right[i_right - 1].child->min_height + box->spacing;
+                floats->right[i_right].y = floats->right[i_right - 1].y + floats->right[i_right - 1].child->natural_height + box->spacing;
                 
             i_right++;
         }
@@ -1849,7 +1849,7 @@ static int
 floats_get_left_end_y(HippoBoxFloats *floats)
 {
     if (floats->next_left > 0)
-        return floats->left[floats->next_left - 1].y + floats->left[floats->next_left - 1].child->min_height;
+        return floats->left[floats->next_left - 1].y + floats->left[floats->next_left - 1].child->natural_height;
     else
         return 0;
 }
@@ -1860,7 +1860,7 @@ static int
 floats_get_right_end_y(HippoBoxFloats *floats)
 {
     if (floats->next_right > 0)
-        return floats->right[floats->next_right - 1].y + floats->right[floats->next_right - 1].child->min_height;
+        return floats->right[floats->next_right - 1].y + floats->right[floats->next_right - 1].child->natural_height;
     else
         return 0;
 }
@@ -1905,7 +1905,7 @@ floats_add_child(HippoBoxFloats *floats,
             child_allocation->x = 0;
             child_allocation->y = left_float->y;
             child_allocation->width = child->natural_width;
-            child_allocation->height = child->min_height;
+            child_allocation->height = child->natural_height;
         }
         
         floats->next_left++;
@@ -1931,7 +1931,7 @@ floats_add_child(HippoBoxFloats *floats,
             child_allocation->x = floats->for_width - child->natural_width;
             child_allocation->y = right_float->y;
             child_allocation->width = child->natural_width;
-            child_allocation->height = child->min_height;
+            child_allocation->height = child->natural_height;
         }
         
         floats->next_right++;
@@ -1941,7 +1941,7 @@ floats_add_child(HippoBoxFloats *floats,
         int i_right = floats->at_y_right;
         int left_float_width = 0;
         int right_float_width = 0;
-        int tentative_height = do_request ? 1 : child->min_height;
+        int tentative_height = do_request ? 1 : child->natural_height;
         gboolean one_more_pass = TRUE;
 
         /* Handle clear_left / clear_right. Ensure that normal-flow children appear below any
@@ -1967,11 +1967,11 @@ floats_add_child(HippoBoxFloats *floats,
          * normal-flow child will appear below it.
          */
         while (i_left < floats->next_left &&
-               left[i_left].y + left[i_left].child->min_height <= floats->y)
+               left[i_left].y + left[i_left].child->natural_height <= floats->y)
             i_left++;
 
         while (i_right < floats->next_right &&
-               right[i_right].y + right[i_right].child->min_height <= floats->y)
+               right[i_right].y + right[i_right].child->natural_height <= floats->y)
             i_right++;
         
         /* We need to iterate to determine the set of floats that actually do affect
@@ -2011,7 +2011,7 @@ floats_add_child(HippoBoxFloats *floats,
 
             if (do_request) {
                 height_request_child(child, floats->for_width - left_float_width - right_float_width);
-                tentative_height = child->min_height;
+                tentative_height = child->natural_height;
             }
 
             one_more_pass = FALSE;
