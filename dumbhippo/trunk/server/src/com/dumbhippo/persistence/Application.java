@@ -7,6 +7,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -26,6 +27,7 @@ public class Application {
 	private String titlePatterns;
 	private String desktopNames;
 	private Set<ApplicationIcon> icons;
+	private String packageNames;
 	
 	// for hibernate
 	public Application() {
@@ -115,6 +117,15 @@ public class Application {
 
 	public void setDesktopNames(String desktopNames) {
 		this.desktopNames = desktopNames;
+	}
+	
+	@Column(nullable = true)
+	public String getPackageNames() {
+		return packageNames;
+	}
+	
+	public void setPackageNames(String packageNames) {
+		this.packageNames = packageNames;
 	}
 	
 	@OneToMany(mappedBy="application")

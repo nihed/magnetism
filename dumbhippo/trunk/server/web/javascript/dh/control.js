@@ -246,6 +246,60 @@ dh.lang.defineClass(dh.control.ChatRoom, null,
 	}
 })
 
+dh.control.Application = function(control, id, packageNames, desktopNames) {
+	this._control = control;
+	this._id = id;
+	this._packageNames = packageNames ? packageNames : "";
+	this._desktopNames = desktopNames ? desktopNames : "";
+	
+	this._canInstall = false;
+	this._canRun = false;
+	this._version = null;
+}
+
+dh.lang.defineClass(dh.control.Application, null,
+{
+	getCanInstall : function() {
+		return this._canInstall;
+	},
+
+	getCanRun : function() {
+		return this._canRun;
+	},
+	
+	getVersion : function() {
+		return this._version;
+	},
+	
+	install : function() {
+		if (this._control.haveApplications())
+			this._control.installApplication(this._id, this._packageNames, this._desktopNames);
+	},
+	
+	run : function() {
+		if (this._control.haveApplications())
+			this._control.runApplication(this._desktopNames);
+	},
+	
+	onChange : function() {
+	},
+	
+	_getInfo : function() {
+		if (this._control.haveApplications())
+			this._control.getApplicationInfo(this._id, this._packageNames, this._desktopNames);
+	},
+	
+	_update : function(canInstall, canRun, version) {
+		if (canInstall != this._canInstall || canRun != this._canRun || version != this._version) {
+			this._canInstall = canInstall;
+			this._canRun = canRun;
+			this._version = version;
+			
+			this.onChange();
+		}
+	}
+})
+
 ///////////////////////// Control object
 
 //// AbstractControl shared among all control implementations
@@ -256,10 +310,11 @@ dh.control.AbstractControl = function() {
 		onDisconnected : function() {}
 	}
 	
-	this._connected = false
+	this._connected = false;
 	
-	this._allEntities = {}
-	this._allChatRooms = {}
+	this._allEntities = {};
+	this._allChatRooms = {};
+	this._applications = {};
 }
 
 dh.lang.defineClass(dh.control.AbstractControl, null, 
@@ -308,6 +363,17 @@ dh.lang.defineClass(dh.control.AbstractControl, null,
 		return room;
 	},
 
+	getOrCreateApplication : function(id, packageNames, desktopNames) {
+		var application = this._applications[id]
+		if (!application) {
+			application = new dh.control.Application(this, id, packageNames, desktopNames);
+			this._applications[id] = application;
+			application._getInfo();
+		}
+		
+		return application;
+	},
+
 	_getOrCreatePerson : function(id) {
 		var entity = this._allEntities[id]
 		if (!entity) {
@@ -329,6 +395,9 @@ dh.lang.defineClass(dh.control.AbstractControl, null,
 		this._allEntities = {}		
 		for (var id in this._allChatRooms) {
 			this._allChatRooms[id]._reconnect();
+		}
+		for (var id in this._applications) {
+			this._applications[id]._getInfo();
 		}
 	},
 	
@@ -370,6 +439,18 @@ dh.lang.defineClass(dh.control.AbstractControl, null,
 		u.setCurrentArtist(currentArtist);
 		u.setMusicPlaying(musicPlaying);
 		this.onUserChange(u)
+	},
+	
+	_applicationInfo : function(applicationId, canInstall, canRun, version) {
+		if (version != null) {
+			version = dh.util.trim(version);
+			if (version == "")
+				version = null;
+		};
+		
+		var application = this._applications[applicationId];
+		if (application != null)
+			application._update(canInstall, canRun, version);
 	}
 });
 
@@ -389,13 +470,17 @@ dh.lang.defineClass(dh.control.WebOnlyControl, dh.control.AbstractControl, {
 	
 	showChatWindow : function(chatId) {
 	},
-
-	haveLiveChat : function(chatId) {
+	
+	haveLiveChat : function() {
+		return false
+	},
+	
+	haveApplications : function() {
 		return false
 	},
 	
 	getVersion : function() {
-		return "1.1.0";
+		return "1.2.0";
 	}
 });
 
@@ -440,8 +525,24 @@ dh.lang.defineClass(dh.control.NativeControl, dh.control.AbstractControl, {
 		this._native.showChatWindow(chatId);
 	},
 	
-	haveLiveChat : function(chatId) {
+	getApplicationInfo : function(applicationId, packageNames, desktopNames) {
+		this._native.getApplicationInfo(applicationId, packageNames, desktopNames);
+	},
+	
+	installApplication : function(applicationId, packageNames, desktopNames) {
+		this._native.installApplication(applicationId, packageNames, desktopNames);
+	},
+	
+	runApplication : function(desktopNames) {
+		this._native.runApplication(desktopNames);
+	},
+	
+	haveLiveChat : function() {
 		return true;
+	},
+	
+	haveApplications : function() {
+		return this.versionAtLeast("1.2.0");
 	},
 	
 	getVersion : function() {
@@ -485,6 +586,9 @@ dh.lang.defineClass(dh.control.NativeControlListener, null, {
     },
     userInfo: function(userId, name, smallPhotoUrl, arrangementName, artistName, musicPlaying) {
     	dh.control.control._userInfo(userId, name, smallPhotoUrl, arrangementName, artistName, musicPlaying);
+    },
+    applicationInfo: function(applicationId, canInstall, canRun, version) {
+    	dh.control.control._applicationInfo(applicationId, canInstall, canRun, version);
     },
     // The QueryInterface function is used only for Firefox, where the callback
     // is used as a XPCOM object for IE, we just need a javascript object

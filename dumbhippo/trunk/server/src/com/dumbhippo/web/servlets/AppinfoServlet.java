@@ -222,6 +222,7 @@ public class AppinfoServlet extends AbstractServlet {
 		private String wmClasses = null;
 		private String titlePatterns = null;
 		private String desktopNames = null;
+		private String packageNames = null;
 		private String category = null;
 		private List<DeleteIconSpec> toDelete = new ArrayList<DeleteIconSpec>();
 		private Map<Integer, AddIconSpec> toAdd = new HashMap<Integer,AddIconSpec>();
@@ -251,7 +252,9 @@ public class AppinfoServlet extends AbstractServlet {
 				} else if (fieldName.equals("titlePatterns")) {
 					titlePatterns = item.getString();
 				} else if (fieldName.equals("desktopNames")) {
-					desktopNames =item.getString();
+					desktopNames = item.getString();
+				} else if (fieldName.equals("packageNames")) {
+					packageNames = item.getString();
 				} else if (fieldName.equals("category")) {
 					category = item.getString();
 				} else if (fieldName.equals("comment")) {
@@ -310,6 +313,7 @@ public class AppinfoServlet extends AbstractServlet {
 			appinfoFile.setWmClassesString(wmClasses);
 			appinfoFile.setTitlePatternsString(titlePatterns);
 			appinfoFile.setDesktopNamesString(desktopNames);
+			appinfoFile.setPackageNames(packageNames);
 			
 			for (DeleteIconSpec spec : toDelete)
 				appinfoFile.deleteIcon(spec.getTheme(), spec.getSize());

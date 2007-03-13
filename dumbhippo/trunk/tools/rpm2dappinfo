@@ -179,7 +179,8 @@ class DappinfoWriter:
         if not m:
             warn("Cannot parse package name out of rpm name '" + self.rpmfile + "'")
             return
-        self.properties["package"] = m.group(1)
+        if config.source:
+            self.properties["packagenames"] = config.source + "=" + m.group(1)
 
     def _add_file(self, infile, outfile):
         for d in self.all_dirs:
@@ -201,9 +202,9 @@ class DappinfoWriter:
         
         desktopname = re.match("^(.*).desktop$", basename).group(1)
         if self.app_id != desktopname:
-            self.properties["desktopname"] = desktopname + ";" + self.app_id
+            self.properties["desktopnames"] = desktopname + ";" + self.app_id
         else:
-            self.properties["desktopname"] = desktopname
+            self.properties["desktopnames"] = desktopname
 
     def _find_icons(self):
         result = []
@@ -322,7 +323,15 @@ parser.add_option("--merge", action="append",
                   help="Merge this RPM into each RPMs file system space (can be repeated)")
 parser.add_option("--strip-prefix", action="append",
                   help="Strip this prefix from desktop file names (can be repeated)")
+parser.add_option("--source",
+                  help="Name of package source this package comes from")
 (options, args) = parser.parse_args()
+
+
+if options.source == None:
+    die("Package source name must be specified with the --source parameter");
+
+config.source = options.source
 
 if (options.destdir != None):
     config.destdir = options.destdir
