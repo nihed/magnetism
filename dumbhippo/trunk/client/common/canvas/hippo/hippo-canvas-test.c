@@ -122,7 +122,7 @@ create_test_box_layout_root(void)
     HippoCanvasItem *text;
     
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "orientation", HIPPO_ORIENTATION_VERTICAL,
                        "border", 4,
                        "border-color", 0x000000ff,
                        "padding", 10,
@@ -491,15 +491,15 @@ hippo_canvas_test_get_root(void)
                           150, 150);
 #endif
 
-#if 0
-    /* For get_natural_width testing */
+#if 1
+    /* For box layout testing */
 
     shape2 = create_test_box_layout_root();
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), shape2,
                             HIPPO_PACK_END | HIPPO_PACK_EXPAND);
 #endif
 
-#if 1
+#if 0
     /* For float testing */
 
     shape2 = create_floated_box_layout_root();
