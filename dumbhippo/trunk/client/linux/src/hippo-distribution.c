@@ -102,7 +102,7 @@ static const struct {
 #ifdef ENABLE_INSTALL_PACKAGE_YUM
     { "fedora", install_package_yum, NULL },
 #endif
-    { "fedora", install_package_pirut, "6.0.91" }
+    { "fedora", install_package_pirut, "6.91" }
 };
     
 static const struct {
