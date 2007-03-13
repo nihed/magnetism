@@ -1345,8 +1345,11 @@ hippo_canvas_box_get_content_width_request(HippoCanvasBox *box,
         
         n_children_in_natural += 1;
 
-        /* children with 0 min size or if fits flag won't appear at our min size */
-        if (child->min_width > 0 && !child->if_fits)
+        /* children with if fits flag won't appear at our min size.
+         * children with 0 min size won't themselves appear but they
+         * will get spacing around them, so they count in n_children_in_min
+         */
+        if (!child->if_fits)
             n_children_in_min += 1;
         
         if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
@@ -2466,11 +2469,7 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
                                child->end ? (right_x - req) : left_x, content_y,
                                req, allocated_content_height,
                                origin_changed);
-
-                if (child->end)
-                    right_x -= (req + box->spacing);
-                else
-                    left_x += (req + box->spacing);
+                
             } else {
                 /* Child was adjusted out of existence, act like it's
                  * !visible
@@ -2478,6 +2477,18 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
                 child->x = 0;
                 child->y = 0;
                 hippo_canvas_item_allocate(child->item, 0, 0, FALSE);
+            }
+
+            /* Children with req == 0 still get spacing unless they are IF_FITS.
+             * The handling of spacing could use improvement (spaces should probably
+             * act like items with min width 0 and natural width of spacing) but
+             * it's pretty hard to get right without rearranging the code a lot.
+             */
+            if (!width_adjusts[i].does_not_fit) {
+                if (child->end)
+                    right_x -= (req + box->spacing);
+                else
+                    left_x += (req + box->spacing);
             }
             
             ++i;
