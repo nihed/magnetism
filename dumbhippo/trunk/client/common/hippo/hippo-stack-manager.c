@@ -214,22 +214,31 @@ resize_browser_to_natural_size(StackManager *manager)
     HippoRectangle monitor;
     int natural_width;
     int natural_height;
+    int h;
+
+    /* FIXME this could probably be redone so it used the canvas item concept of
+     * natural size, which would be less confusing perhaps, though no real practical
+     * advantage
+     */
     
     platform = hippo_connection_get_platform(manager->connection);
     hippo_platform_get_screen_info(platform, &monitor, NULL, NULL);
     
-    natural_width = hippo_canvas_item_get_width_request(manager->browser_box);
+    hippo_canvas_item_get_width_request(manager->browser_box, &natural_width, NULL);
 
     natural_height = 2 * WINDOW_BORDER;
-    
-    natural_height += hippo_canvas_item_get_height_request(manager->browser_base_item, natural_width);
+
+    hippo_canvas_item_get_height_request(manager->browser_base_item, natural_width, &h, NULL);
+    natural_height += h;
 
     /* The width we'll give to browser_item is actually less than this by the width of the scrollbar,
      * but our stack items have a height independent of width when collapsed in any case
      */
-    natural_height += hippo_canvas_item_get_height_request(manager->browser_item, natural_width);
+    hippo_canvas_item_get_height_request(manager->browser_item, natural_width, &h, NULL);
+    natural_height += h;
 
-    natural_height += hippo_canvas_item_get_height_request(manager->browser_resize_grip, natural_width);
+    hippo_canvas_item_get_height_request(manager->browser_resize_grip, natural_width, &h, NULL);
+    natural_height += h;
 
     if (natural_height > monitor.height * 0.75)
         natural_height = (int)monitor.height * 0.75;

@@ -139,36 +139,33 @@ hippo_canvas_item_set_context(HippoCanvasItem    *canvas_item,
     HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->set_context(canvas_item, context);
 }
 
-int
-hippo_canvas_item_get_width_request(HippoCanvasItem *canvas_item)
-{
-    g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), 0);
-
-    return HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_width_request(canvas_item);
-}
-
-/* returns -1 to just use the width request. The natural width should
- * be thought of as the width at which alignment
- * (HIPPO_ALIGNMENT_START etc.)  makes no difference but at which
- * nothing will be chopped off or wrapped.  There is no real guarantee
- * a container won't give an item more than the natural, this is just
- * a hint for containers that can do something useful with it, or
- * something.
+/* The natural width should be thought of as the width at which
+ * alignment (HIPPO_ALIGNMENT_START etc.) makes no difference but at
+ * which nothing will be chopped off or wrapped.  There is no real
+ * guarantee a container won't give an item more than the natural,
+ * this is just a hint for containers that can do something useful
+ * with it, like giving extra space to some other child that can use it.
  */
-int
-hippo_canvas_item_get_natural_width(HippoCanvasItem *canvas_item)
+void
+hippo_canvas_item_get_width_request(HippoCanvasItem  *canvas_item,
+                                    int              *min_width_p,
+                                    int              *natural_width_p)
 {
-    g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), -1);
-    return HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_natural_width(canvas_item);
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
+
+    HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_width_request(canvas_item, min_width_p, natural_width_p);
 }
 
-int
-hippo_canvas_item_get_height_request(HippoCanvasItem *canvas_item,
-                                     int              for_width)
+void
+hippo_canvas_item_get_height_request(HippoCanvasItem  *canvas_item,
+                                     int               for_width,
+                                     int              *min_height_p,
+                                     int              *natural_height_p)
 {
-    g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), 0);
-    
-    return HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_height_request(canvas_item, for_width);
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
+
+    HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_height_request(canvas_item, for_width,
+                                                                 min_height_p, natural_height_p);
 }
 
 void
@@ -189,21 +186,6 @@ hippo_canvas_item_get_allocation(HippoCanvasItem *canvas_item,
 {
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
     HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_allocation(canvas_item, width_p, height_p);
-}
-
-void
-hippo_canvas_item_get_request (HippoCanvasItem *canvas_item,
-                               int             *width_p,
-                               int             *height_p)
-{
-    int width, height;
-
-    width = hippo_canvas_item_get_width_request(canvas_item);
-    height = hippo_canvas_item_get_height_request(canvas_item, width);
-    if (width_p)
-        *width_p = width;
-    if (height_p)
-        *height_p = height;
 }
 
 gboolean

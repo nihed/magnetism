@@ -388,9 +388,11 @@ hippo_canvas_helper_size_request(HippoCanvasHelper *helper,
     requisition->height = 0;
 
     if (helper->root != NULL) {
-        hippo_canvas_item_get_request(helper->root,
-                                      &requisition->width,
-                                      &requisition->height);
+        int min_width, min_height;
+        hippo_canvas_item_get_width_request(helper->root, &min_width, NULL);
+        hippo_canvas_item_get_height_request(helper->root, min_width, &min_height, NULL);
+        requisition->width = min_width;
+        requisition->height = min_height;
     }
 
     requisition->width += GTK_CONTAINER(helper->widget)->border_width * 2;

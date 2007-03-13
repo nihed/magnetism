@@ -120,10 +120,13 @@ struct _HippoCanvasBoxClass {
                                                cairo_t          *cr,
                                                HippoRectangle   *damaged_box);
     
-    int      (* get_content_width_request)    (HippoCanvasBox   *box);
-    int      (* get_content_natural_width)    (HippoCanvasBox   *box);
-    int      (* get_content_height_request)   (HippoCanvasBox   *box,
-                                               int               for_width);
+    void     (* get_content_width_request)    (HippoCanvasBox   *box,
+                                               int              *min_width_p,
+                                               int              *natural_width_p);
+    void     (* get_content_height_request)   (HippoCanvasBox   *box,
+                                               int               for_width,
+                                               int              *min_height_p,
+                                               int              *natural_height_p);
 
     void     (* hovering_changed)             (HippoCanvasBox   *box,
                                                gboolean          hovering);

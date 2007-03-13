@@ -28,9 +28,13 @@ static gboolean hippo_canvas_grip_motion_notify_event (HippoCanvasItem *item,
 static void hippo_canvas_grip_paint_below_children       (HippoCanvasBox *box,
                                                           cairo_t        *cr,
                                                           HippoRectangle *damaged_box);
-static int  hippo_canvas_grip_get_content_width_request  (HippoCanvasBox *box);
-static int  hippo_canvas_grip_get_content_height_request (HippoCanvasBox *box,
-                                                          int             for_width);
+static void  hippo_canvas_grip_get_content_width_request  (HippoCanvasBox *box,
+                                                           int            *min_width_p,
+                                                           int            *natural_width_p);
+static void  hippo_canvas_grip_get_content_height_request (HippoCanvasBox *box,
+                                                           int             for_width,
+                                                           int            *min_height_p,
+                                                           int            *natural_height_p);
 
 
 struct _HippoCanvasGrip {
@@ -230,31 +234,46 @@ hippo_canvas_grip_paint_below_children(HippoCanvasBox  *box,
 #endif
 }
 
-static int
-hippo_canvas_grip_get_content_width_request(HippoCanvasBox *box)
+static void
+hippo_canvas_grip_get_content_width_request(HippoCanvasBox *box,
+                                            int            *min_width_p,
+                                            int            *natural_width_p)
 {
     HippoCanvasGrip *grip = HIPPO_CANVAS_GRIP(box);
-    int children_width;
+    int children_min_width, children_natural_width;
     int grip_width;
     
-    children_width = HIPPO_CANVAS_BOX_CLASS(hippo_canvas_grip_parent_class)->get_content_width_request(box);
-
+    HIPPO_CANVAS_BOX_CLASS(hippo_canvas_grip_parent_class)->get_content_width_request(box,
+                                                                                      &children_min_width, &children_natural_width);
+    
     get_grip_request(grip, &grip_width, NULL);
-    return MAX(grip_width, children_width);
+    
+    if (min_width_p)
+        *min_width_p = MAX(grip_width, children_min_width);
+    if (natural_width_p)
+        *natural_width_p = MAX(grip_width, children_natural_width);
 }
 
-static int
+static void
 hippo_canvas_grip_get_content_height_request(HippoCanvasBox *box,
-                                             int             for_width)
+                                             int             for_width,
+                                             int            *min_height_p,
+                                             int            *natural_height_p)
 {
     HippoCanvasGrip *grip = HIPPO_CANVAS_GRIP(box);
-    int children_height;
+    int children_min_height, children_natural_height;
     int grip_height;
     
-    children_height = HIPPO_CANVAS_BOX_CLASS(hippo_canvas_grip_parent_class)->get_content_height_request(box, for_width);
+    HIPPO_CANVAS_BOX_CLASS(hippo_canvas_grip_parent_class)->get_content_height_request(box, for_width,
+                                                                                       &children_min_height,
+                                                                                       &children_natural_height);
 
     get_grip_request(grip, NULL, &grip_height);
-    return MAX(grip_height, children_height);
+
+    if (min_height_p)
+        *min_height_p = MAX(grip_height, children_min_height);
+    if (natural_height_p)
+        *natural_height_p = MAX(grip_height, children_natural_height);
 }
 
 static gboolean

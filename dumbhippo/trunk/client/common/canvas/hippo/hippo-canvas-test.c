@@ -491,7 +491,7 @@ hippo_canvas_test_get_root(void)
                           150, 150);
 #endif
 
-#if 0
+#if 1
     /* For get_natural_width testing */
 
     shape2 = create_test_box_layout_root();
@@ -507,9 +507,12 @@ hippo_canvas_test_get_root(void)
                             HIPPO_PACK_EXPAND);
 #endif
 
+#if 0
+    /* for click-release testing */
     shape2 = create_test_click_release_root();
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), shape2,
-                            HIPPO_PACK_EXPAND);    
+                            HIPPO_PACK_EXPAND);
+#endif
     
 #if 0
     /* A box with nothing expandable in it */

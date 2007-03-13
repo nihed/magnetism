@@ -36,10 +36,13 @@ static char*    hippo_canvas_text_get_tooltip        (HippoCanvasItem    *item,
 static void hippo_canvas_text_paint_below_children       (HippoCanvasBox *box,
                                                           cairo_t        *cr,
                                                           HippoRectangle *damaged_box);
-static int  hippo_canvas_text_get_content_width_request  (HippoCanvasBox *box);
-static int  hippo_canvas_text_get_content_natural_width  (HippoCanvasBox *box);
-static int  hippo_canvas_text_get_content_height_request (HippoCanvasBox *box,
-                                                          int             for_width);
+static void hippo_canvas_text_get_content_width_request  (HippoCanvasBox *box,
+                                                          int            *min_width_p,
+                                                          int            *natural_width_p);
+static void hippo_canvas_text_get_content_height_request (HippoCanvasBox *box,
+                                                          int             for_width,
+                                                          int            *min_height_p,
+                                                          int            *natural_height_p);
 
 enum {
     NO_SIGNALS_YET,
@@ -94,7 +97,6 @@ hippo_canvas_text_class_init(HippoCanvasTextClass *klass)
 
     box_class->paint_below_children = hippo_canvas_text_paint_below_children;
     box_class->get_content_width_request = hippo_canvas_text_get_content_width_request;
-    box_class->get_content_natural_width = hippo_canvas_text_get_content_natural_width;
     box_class->get_content_height_request = hippo_canvas_text_get_content_height_request;
     
     g_object_class_install_property(object_class,
@@ -540,97 +542,60 @@ hippo_canvas_text_paint_below_children(HippoCanvasBox  *box,
     }
 }
 
-static int
-hippo_canvas_text_get_content_width_request(HippoCanvasBox *box)
+static void
+hippo_canvas_text_get_content_width_request(HippoCanvasBox *box,
+                                            int            *min_width_p,
+                                            int            *natural_width_p)
 {
     HippoCanvasText *text = HIPPO_CANVAS_TEXT(box);
-    int children_width;
+    int children_min_width, children_natural_width;
     int layout_width;
     
-    children_width = HIPPO_CANVAS_BOX_CLASS(hippo_canvas_text_parent_class)->get_content_width_request(box);
-
-    if (text->size_mode != HIPPO_CANVAS_SIZE_FULL_WIDTH) {
+    HIPPO_CANVAS_BOX_CLASS(hippo_canvas_text_parent_class)->get_content_width_request(box,
+                                                                                      &children_min_width,
+                                                                                      &children_natural_width);
+    if (box->context != NULL) {
+        PangoLayout *layout = create_layout(text, -1);
+        pango_layout_get_size(layout, &layout_width, NULL);
+        layout_width /= PANGO_SCALE;
+        g_object_unref(layout);
+    } else {
         layout_width = 0;
-    } else {
-        if (box->context != NULL) {
-            PangoLayout *layout = create_layout(text, -1);
-            pango_layout_get_size(layout, &layout_width, NULL);
-            layout_width /= PANGO_SCALE;
-            g_object_unref(layout);
-        } else {
-            layout_width = 0;
-        }
     }
 
-    return MAX(children_width, layout_width);
-}
-
-static int
-hippo_canvas_text_get_content_natural_width (HippoCanvasBox *box)
-{
-    HippoCanvasText *text;
-    HippoCanvasBoxClass *box_class;
-    int children_width;
-    int layout_width;
-
-    text = HIPPO_CANVAS_TEXT(box);
-    box_class = HIPPO_CANVAS_BOX_CLASS(hippo_canvas_text_parent_class);
-    
-    children_width = box_class->get_content_natural_width(box);
-
-    if (text->size_mode == HIPPO_CANVAS_SIZE_FULL_WIDTH && children_width < 0) {
-        /* natural width is same as request */
-        layout_width = -1;
-    } else {
-        /* request will have been 0, compute the real natural width here. */
-        /* FIXME if the children_width isn't -1 we recompute here what we've
-         * already computed in get_width_request
-         */
-        if (box->context != NULL) {
-            PangoLayout *layout = create_layout(text, -1);
-            pango_layout_get_size(layout, &layout_width, NULL);
-            layout_width /= PANGO_SCALE;
-            g_object_unref(layout);
-        } else {
-            layout_width = 0;
-        }
+    if (min_width_p) {
+        if (text->size_mode == HIPPO_CANVAS_SIZE_FULL_WIDTH)
+            *min_width_p = MAX(children_min_width, layout_width);
+        else
+            *min_width_p = children_min_width;
     }
 
-    if (children_width < 0 && layout_width < 0) {
-        return -1;
-    } else {
-        g_assert(layout_width >= 0);
-        if (children_width < 0) {
-            /* FIXME We have to re-request the children which is
-             * potentially expensive, maybe should rethink
-             * something. Text items rarely have children anyway
-             * though so it doesn't make any difference right now.
-             */
-            children_width = box_class->get_content_width_request(box);
-        }
-        
-        g_assert(children_width >= 0 && layout_width >= 0);
-        return MAX(children_width, layout_width);
+    if (natural_width_p) {
+        *natural_width_p = MAX(children_natural_width, layout_width);
     }
 }
 
-static int
+static void
 hippo_canvas_text_get_content_height_request(HippoCanvasBox  *box,
-                                             int              for_width)
+                                             int              for_width,
+                                             int             *min_height_p,
+                                             int             *natural_height_p)
 {
     HippoCanvasText *text = HIPPO_CANVAS_TEXT(box);
-    int children_height;
+    int children_min_height, children_natural_height;
     PangoLayout *layout;
     int layout_height;
 
-    children_height = HIPPO_CANVAS_BOX_CLASS(hippo_canvas_text_parent_class)->get_content_height_request(box,
-                                                                                                         for_width);
+    HIPPO_CANVAS_BOX_CLASS(hippo_canvas_text_parent_class)->get_content_height_request(box,
+                                                                                       for_width,
+                                                                                       &children_min_height,
+                                                                                       &children_natural_height);
 
     if (for_width > 0) {
         if (box->context != NULL) {
             layout = create_layout(text, for_width);
             pango_layout_get_size(layout, NULL, &layout_height);
-
+            
             layout_height /= PANGO_SCALE;
             g_object_unref(layout);
         } else {
@@ -640,7 +605,10 @@ hippo_canvas_text_get_content_height_request(HippoCanvasBox  *box,
         layout_height = 0;
     }
     
-    return MAX(layout_height, children_height);
+    if (min_height_p)
+        *min_height_p = MAX(layout_height, children_min_height);
+    if (natural_height_p)
+        *natural_height_p = MAX(layout_height, children_natural_height);
 }
 
 static gboolean
