@@ -581,21 +581,6 @@
   (return-type "GList*")
 )
 
-(define-virtual get_content_width_request
-  (of-object "HippoCanvasBox")
-  (c-name "hippo_canvas_box_get_content_width_request")
-  (return-type "int")
-)
-
-(define-virtual get_content_height_request
-  (of-object "HippoCanvasBox")
-  (c-name "hippo_canvas_item_get_contet_height_request")
-  (return-type "int")
-  (parameters
-    '("int" "for_width")
-  )
-)
-
 (define-method set_clickable
   (of-object "HippoCanvasBox")
   (c-name "hippo_canvas_box_set_clickable")
@@ -630,6 +615,27 @@
     '("HippoCanvasItem*" "child")
     '("HippoCanvasItem*" "ref_child")
     '("HippoPackFlags" "flags" (default "0"))
+  )
+)
+
+(define-virtual get_content_width_request
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_item_get_content_width_request")
+  (return-type "none")
+  (parameters
+    '("int*" "min_width" (direction "out"))
+    '("int*" "natural_width" (direction "out"))
+  )
+)
+
+(define-virtual get_content_height_request
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_item_get_content_height_request")
+  (return-type "none")
+  (parameters
+    '("int" "for_width")
+    '("int*" "min_height" (direction "out"))
+    '("int*" "natural_height" (direction "out"))
   )
 )
 
@@ -807,36 +813,42 @@
 (define-method get_width_request
   (of-object "HippoCanvasItem")
   (c-name "hippo_canvas_item_get_width_request")
-  (return-type "int")
+  (return-type "none")
+  (parameters
+    '("int*" "min_width" (direction "out"))
+    '("int*" "natural_width" (direction "out"))
+  )
 )
 
 (define-method get_height_request
   (of-object "HippoCanvasItem")
   (c-name "hippo_canvas_item_get_height_request")
-  (return-type "int")
+  (return-type "none")
   (parameters
     '("int" "for_width")
+    '("int*" "min_height" (direction "out"))
+    '("int*" "natural_height" (direction "out"))
   )
 )
 
 (define-virtual get_width_request
   (of-object "HippoCanvasItem")
   (c-name "hippo_canvas_item_get_width_request")
-  (return-type "int")
-)
-
-(define-method get_natural_width
-  (of-object "HippoCanvasItem")
-  (c-name "hippo_canvas_item_get_natural_width")
-  (return-type "int")
+  (return-type "none")
+  (parameters
+    '("int*" "min_width" (direction "out"))
+    '("int*" "natural_width" (direction "out"))
+  )
 )
 
 (define-virtual get_height_request
   (of-object "HippoCanvasItem")
   (c-name "hippo_canvas_item_get_height_request")
-  (return-type "int")
+  (return-type "none")
   (parameters
     '("int" "for_width")
+    '("int*" "min_height" (direction "out"))
+    '("int*" "natural_height" (direction "out"))
   )
 )
 
@@ -885,16 +897,6 @@
   (parameters
     '("int" "x")
     '("int" "y")
-  )
-)
-
-(define-method get_request
-  (of-object "HippoCanvasItem")
-  (c-name "hippo_canvas_item_get_request")
-  (return-type "none")
-  (parameters
-    '("int*" "width_p")
-    '("int*" "height_p")
   )
 )
 
