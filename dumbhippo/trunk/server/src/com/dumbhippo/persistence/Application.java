@@ -7,7 +7,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
-import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -28,6 +27,8 @@ public class Application {
 	private String desktopNames;
 	private Set<ApplicationIcon> icons;
 	private String packageNames;
+	private int rank;
+	private int usageCount;
 	
 	// for hibernate
 	public Application() {
@@ -143,6 +144,24 @@ public class Application {
 		this.icons = icons;
 	}
 	
+	@Column(nullable = false)
+	public int getRank() {
+		return rank;
+	}
+
+	public void setRank(int rank) {
+		this.rank = rank;
+	}
+
+	@Column(nullable = false)
+	public int getUsageCount() {
+		return usageCount;
+	}
+
+	public void setUsageCount(int usage) {
+		this.usageCount = usage;
+	}
+
 	/**
 	 * Bug work around, see docs for EJBUtil.forceInitialization()
 	 */

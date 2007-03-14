@@ -56,4 +56,6 @@ public interface ApplicationSystem {
 	
 	public List<Application> getPinnedApplications(User user); 
 	public ApplicationUserState getUserState(User user, Application app);
+
+	void updateUsages();
 }

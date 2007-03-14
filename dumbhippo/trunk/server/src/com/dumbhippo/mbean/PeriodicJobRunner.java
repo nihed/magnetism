@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.ThreadUtils.DaemonRunnable;
+import com.dumbhippo.server.applications.ApplicationUpdatePeriodicJob;
 
 /** The "cron job" mbean - runs on one node of the cluster.
  *  To add a "cron job" create a subclass of PeriodicJob and put the 
@@ -23,7 +24,8 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 	private static final Logger logger = GlobalSetup.getLogger(PeriodicJobRunner.class);
 	
 	private static final Class[] jobClasses = {
-		FacebookTrackerPeriodicJob.class
+		FacebookTrackerPeriodicJob.class,
+		ApplicationUpdatePeriodicJob.class
 	};
 	
 	private List<Thread> threads;

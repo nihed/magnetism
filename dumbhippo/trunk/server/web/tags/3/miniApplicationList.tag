@@ -6,12 +6,12 @@
 <%@ attribute name="apps" required="true" type="com.dumbhippo.server.Pageable" %>
 
 <div class="dh-mini-applications">
-    <c:forEach items="${apps.results}" var="app">
+    <c:forEach items="${apps.results}" var="app" varStatus="status">
    		<div class="dh-applications-application-separator"></div>
     	<div class="dh-applications-application">
     		<div class="dh-applications-application-stats-outer">
 	    		<div class="dh-applications-application-stats">
-	    			<div class="dh-applications-rank"><c:out value="${app.rank}"/></div>
+	    			<div class="dh-applications-rank"><c:out value="${1 + apps.start + status.index}"/></div>
 	    		</div>
     		</div>
     		<div class="dh-applications-application-icon">

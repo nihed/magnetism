@@ -5,8 +5,6 @@ import com.dumbhippo.persistence.Application;
 
 public class ApplicationView {
 	private Application application;
-	private int usageCount;
-	private int rank;
 	private ApplicationIconView icon;
 	
 	public ApplicationView(Application application) {
@@ -25,22 +23,6 @@ public class ApplicationView {
 		this.icon = icon;
 	}
 
-	public int getUsageCount() {
-		return usageCount;
-	}
-
-	public void setUsageCount(int usageCount) {
-		this.usageCount = usageCount;
-	}
-
-	public void setRank(int rank) {
-		this.rank = rank;
-	}
-	
-	public int getRank() {
-		return rank;
-	}
-	
 	public void writeToXmlBuilder(XmlBuilder builder) {
 		builder.appendEmptyNode("application",
 								"id", application.getId(),
@@ -48,8 +30,8 @@ public class ApplicationView {
 				                "description", application.getDescription(),
 				                "desktopNames", application.getDesktopNames(),
 				                "iconUrl", getIcon().getUrl(),
-				                "usageCount", "" + getUsageCount(),
-				                "rank", "" + getRank());
+				                "usageCount", "" + application.getUsageCount(),
+				                "rank", "" + application.getRank());
 				       
 	}
 }
