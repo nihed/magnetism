@@ -88,32 +88,383 @@ _wrap_hippo_canvas_item_get_allocation(PyGObject *self)
     return Py_BuildValue("(ii)", x_p, y_p);
 }
 %%
-override hippo_canvas_item_get_request noargs
+override hippo_canvas_item_get_height_request kwargs
 static PyObject *
-_wrap_hippo_canvas_item_get_request(PyGObject *self)
+_wrap_hippo_canvas_item_get_height_request(PyGObject *self, PyObject *args, PyObject *kwargs)
 {
-    int x_p = 0;
-    int y_p = 0;
+    static char *kwlist[] = { "for_width", NULL };
+    int min_height = 0;
+    int natural_height = 0;
+    int for_width;
 
-    hippo_canvas_item_get_request(HIPPO_CANVAS_ITEM(self->obj), &x_p, &y_p);
-
-    return Py_BuildValue("(ii)", x_p, y_p);
-}
-%%
-override hippo_canvas_box_get_position kwargs
-static PyObject *
-_wrap_hippo_canvas_box_get_position(PyGObject *self, PyObject *args, PyObject *kwargs)
-{
-    static char *kwlist[] = { "child", NULL };
-    PyGObject *child;
-    int x_p = 0, y_p = 0;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:HippoCanvasBox.get_position", kwlist, &PyHippoCanvasItem_Type, &child))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"i:HippoCanvasItem.get_height_request", kwlist, &for_width))
         return NULL;
 
-    hippo_canvas_context_translate_to_widget(HIPPO_CANVAS_CONTEXT(self->obj), HIPPO_CANVAS_ITEM(child->obj), &x_p, &y_p);
+    hippo_canvas_item_get_height_request(HIPPO_CANVAS_ITEM(self->obj), for_width, &min_height, &natural_height);
 
-    return Py_BuildValue("(ii)", x_p, y_p);
+    return Py_BuildValue("(ii)", min_height, natural_height);
+}
+%%
+override hippo_canvas_item_get_width_request noargs
+static PyObject *
+_wrap_hippo_canvas_item_get_width_request(PyGObject *self)
+{
+    int min_width = 0;
+    int natural_width = 0;
+
+    hippo_canvas_item_get_width_request(HIPPO_CANVAS_ITEM(self->obj), &min_width, &natural_width);
+
+    return Py_BuildValue("(ii)", min_width, natural_width);
+}
+%%
+override HippoCanvasItem__do_get_width_request kwargs
+static PyObject *
+_wrap_HippoCanvasItem__do_get_width_request(PyObject *cls, PyObject *args, PyObject *kwargs)
+{
+    HippoCanvasItemIface *iface;
+    static char *kwlist[] = { "self", NULL };
+    PyGObject *self;
+    int min_width = 0;
+    int natural_width = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:HippoCanvasItem.get_width_request", kwlist, &PyHippoCanvasItem_Type, &self))
+        return NULL;
+    iface = g_type_interface_peek(g_type_class_peek(pyg_type_from_object(cls)), HIPPO_TYPE_CANVAS_ITEM);
+    if (iface->get_width_request)
+        iface->get_width_request(HIPPO_CANVAS_ITEM(self->obj), &min_width, &natural_width);
+    else {
+        PyErr_SetString(PyExc_NotImplementedError, "interface method HippoCanvasItem.get_width_request not implemented");
+        return NULL;
+    }
+    return Py_BuildValue("(ii)", min_width, natural_width);
+}
+%%
+override HippoCanvasItem__do_get_height_request kwargs
+static PyObject *
+_wrap_HippoCanvasItem__do_get_height_request(PyObject *cls, PyObject *args, PyObject *kwargs)
+{
+    HippoCanvasItemIface *iface;
+    static char *kwlist[] = { "self", "for_width", NULL };
+    PyGObject *self;
+    int for_width;
+    int min_height = 0;
+    int natural_height = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!i:HippoCanvasItem.get_height_request", kwlist, &PyHippoCanvasItem_Type, &self, &for_width))
+        return NULL;
+    iface = g_type_interface_peek(g_type_class_peek(pyg_type_from_object(cls)), HIPPO_TYPE_CANVAS_ITEM);
+    if (iface->get_height_request)
+        iface->get_height_request(HIPPO_CANVAS_ITEM(self->obj), for_width, &min_height, &natural_height);
+    else {
+        PyErr_SetString(PyExc_NotImplementedError, "interface method HippoCanvasItem.get_height_request not implemented");
+        return NULL;
+    }
+    return Py_BuildValue("(ii)", min_height, natural_height);
+}
+%%
+override HippoCanvasBox__do_get_content_width_request kwargs
+static PyObject *
+_wrap_HippoCanvasBox__do_get_content_width_request(PyObject *cls, PyObject *args, PyObject *kwargs)
+{
+    gpointer klass;
+    static char *kwlist[] = { "self", NULL };
+    PyGObject *self;
+    int min_width = 0;
+    int natural_width = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:HippoCanvasBox.get_content_width_request", kwlist, &PyHippoCanvasBox_Type, &self))
+        return NULL;
+    klass = g_type_class_ref(pyg_type_from_object(cls));
+    if (HIPPO_CANVAS_BOX_CLASS(klass)->get_content_width_request)
+        HIPPO_CANVAS_BOX_CLASS(klass)->get_content_width_request(HIPPO_CANVAS_BOX(self->obj), &min_width, &natural_width);
+    else {
+        PyErr_SetString(PyExc_NotImplementedError, "virtual method HippoCanvasBox.get_content_width_request not implemented");
+        g_type_class_unref(klass);
+        return NULL;
+    }
+    g_type_class_unref(klass);
+    return Py_BuildValue("(ii)", min_width, natural_width);
+}
+%%
+override HippoCanvasBox__do_get_content_height_request kwargs
+static PyObject *
+_wrap_HippoCanvasBox__do_get_content_height_request(PyObject *cls, PyObject *args, PyObject *kwargs)
+{
+    gpointer klass;
+    static char *kwlist[] = { "self", "for_width", NULL };
+    PyGObject *self;
+    int for_width;
+    int min_height = 0;
+    int natural_height = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!i:HippoCanvasBox.get_content_height_request", kwlist, &PyHippoCanvasBox_Type, &self, &for_width))
+        return NULL;
+    klass = g_type_class_ref(pyg_type_from_object(cls));
+    if (HIPPO_CANVAS_BOX_CLASS(klass)->get_content_height_request)
+        HIPPO_CANVAS_BOX_CLASS(klass)->get_content_height_request(HIPPO_CANVAS_BOX(self->obj), for_width, &min_height, &natural_height);
+    else {
+        PyErr_SetString(PyExc_NotImplementedError, "virtual method HippoCanvasBox.get_content_height_request not implemented");
+        g_type_class_unref(klass);
+        return NULL;
+    }
+    g_type_class_unref(klass);
+    return Py_BuildValue("(ii)", min_height, natural_height);    
+}
+%%
+override HippoCanvasItem__proxy_do_get_width_request
+static void
+_wrap_HippoCanvasItem__proxy_do_get_width_request(HippoCanvasItem *self, int*min_width, int*natural_width)
+{
+    PyGILState_STATE __py_state;
+    PyObject *py_self;
+    PyObject *py_retval;
+    PyObject *py_method;
+
+    int my_min_width = 0;
+    int my_natural_width = 0;
+   
+    __py_state = pyg_gil_state_ensure();
+    py_self = pygobject_new((GObject *) self);
+    if (!py_self) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        pyg_gil_state_release(__py_state);
+        return;
+    } 
+    py_method = PyObject_GetAttrString(py_self, "do_get_width_request");
+    if (!py_method) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    py_retval = PyObject_CallObject(py_method, NULL);
+    if (!py_retval) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_method);
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    if (!PyArg_ParseTuple(py_retval, "ii", &my_min_width, &my_natural_width)) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_retval);
+        Py_DECREF(py_method);
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    
+    if (min_width)
+        *min_width = my_min_width;
+    if (natural_width)
+        *natural_width = my_natural_width;
+   
+    Py_DECREF(py_retval);
+    Py_DECREF(py_method);
+    Py_DECREF(py_self);
+    pyg_gil_state_release(__py_state);
+}
+%%
+override HippoCanvasItem__proxy_do_get_height_request
+static void
+_wrap_HippoCanvasItem__proxy_do_get_height_request(HippoCanvasItem *self, int for_width, int*min_height, int*natural_height)
+{
+    PyGILState_STATE __py_state;
+    PyObject *py_self;
+    PyObject *py_for_width;
+    PyObject *py_retval;
+    PyObject *py_args;
+    PyObject *py_method;
+
+    int my_min_height = 0;
+    int my_natural_height = 0;
+   
+    __py_state = pyg_gil_state_ensure();
+    py_self = pygobject_new((GObject *) self);
+    if (!py_self) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    py_for_width = PyInt_FromLong(for_width);
+    
+    py_args = PyTuple_New(1);
+    PyTuple_SET_ITEM(py_args, 0, py_for_width);
+    
+    py_method = PyObject_GetAttrString(py_self, "do_get_height_request");
+    if (!py_method) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_args);
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    py_retval = PyObject_CallObject(py_method, py_args);
+    if (!py_retval) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_method);
+        Py_DECREF(py_args);
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    if (!PyArg_ParseTuple(py_retval, "ii", &my_min_height, &my_natural_height)) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_retval);
+        Py_DECREF(py_method);
+        Py_DECREF(py_args);
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    
+    if (min_height)
+        *min_height = my_min_height;
+    if (natural_height)
+        *natural_height = my_natural_height;
+   
+    Py_DECREF(py_retval);
+    Py_DECREF(py_method);
+    Py_DECREF(py_args);
+    Py_DECREF(py_self);
+    pyg_gil_state_release(__py_state);
+}
+%%
+override HippoCanvasBox__proxy_do_get_content_width_request
+static void
+_wrap_HippoCanvasBox__proxy_do_get_content_width_request(HippoCanvasBox *self, int*min_width, int*natural_width)
+{
+    PyGILState_STATE __py_state;
+    PyObject *py_self;
+    PyObject *py_retval;
+    PyObject *py_method;
+
+    int my_min_width = 0;
+    int my_natural_width = 0;
+   
+    __py_state = pyg_gil_state_ensure();
+    py_self = pygobject_new((GObject *) self);
+    if (!py_self) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    
+    
+    py_method = PyObject_GetAttrString(py_self, "do_get_content_width_request");
+    if (!py_method) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    py_retval = PyObject_CallObject(py_method, NULL);
+    if (!py_retval) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_method);
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    if (!PyArg_ParseTuple(py_retval, "ii", &my_min_width, &my_natural_width)) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_retval);
+        Py_DECREF(py_method);
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    
+    if (min_width)
+        *min_width = my_min_width;
+    if (natural_width)
+        *natural_width = my_natural_width;
+   
+    Py_DECREF(py_retval);
+    Py_DECREF(py_method);
+    Py_DECREF(py_self);
+    pyg_gil_state_release(__py_state);
+}
+%%
+override HippoCanvasBox__proxy_do_get_content_height_request
+static void
+_wrap_HippoCanvasBox__proxy_do_get_content_height_request(HippoCanvasBox *self, int for_width, int*min_height, int*natural_height)
+{
+    PyGILState_STATE __py_state;
+    PyObject *py_self;
+    PyObject *py_for_width;
+    PyObject *py_retval;
+    PyObject *py_args;
+    PyObject *py_method;
+
+    int my_min_height = 0;
+    int my_natural_height = 0;
+
+    __py_state = pyg_gil_state_ensure();
+    py_self = pygobject_new((GObject *) self);
+    if (!py_self) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    py_for_width = PyInt_FromLong(for_width);
+    
+    py_args = PyTuple_New(1);
+    PyTuple_SET_ITEM(py_args, 0, py_for_width);
+    
+    py_method = PyObject_GetAttrString(py_self, "do_get_content_height_request");
+    if (!py_method) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_args);
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    py_retval = PyObject_CallObject(py_method, py_args);
+    if (!py_retval) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_method);
+        Py_DECREF(py_args);
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    if (!PyArg_ParseTuple(py_retval, "ii", &my_min_height, &my_natural_height)) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_retval);
+        Py_DECREF(py_method);
+        Py_DECREF(py_args);
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    
+    if (min_height)
+        *min_height = my_min_height;
+    if (natural_height)
+        *natural_height = my_natural_height;
+
+    Py_DECREF(py_retval);
+    Py_DECREF(py_method);
+    Py_DECREF(py_args);
+    Py_DECREF(py_self);
+    pyg_gil_state_release(__py_state);
 }
 %%
 override hippo_canvas_box_get_children noargs
