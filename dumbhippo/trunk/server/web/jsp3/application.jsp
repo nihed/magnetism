@@ -66,36 +66,44 @@
 	    <tr>
 	    <dht3:applicationsLeft/>
 	    <td id="dhApplicationsRight">
-    		<div class="dh-applications-application-icon">
-				<dh:png src="${appView.icon.url}" 
-					style="width: ${appView.icon.displayWidth}; height: ${appView.icon.displayHeight}; overflow: hidden;"/>
-    		</div>
-			<div class="dhApplicationsApplications">
-	    		<div class="dh-applications-application-details">
-	    			<div class="dh-applications-application-name">
-	    				<c:out value="${appView.application.name}"/>
+			<div id="dhApplicationsApplications">
+		    	<div class="dh-applications-application">
+		    		<div class="dh-applications-application-stats-outer">
+	    				<div class="dh-applications-application-stats">
+		    				<div class="dh-applications-rank"><c:out value="${appView.application.rank}"/></div>
+			    			<div class="dh-applications-usage"><c:out value="${dh:format1('%,d', appView.application.usageCount)}"/></div>
+			    		</div>
+	    			</div>
+		    		<div class="dh-applications-application-icon">
+						<dh:png src="${appView.icon.url}" 
+							style="width: ${appView.icon.displayWidth}; height: ${appView.icon.displayHeight}; overflow: hidden;"/>
 		    		</div>
-	    			<div class="dh-applications-application-category">
-		    			<a href="/applications?category=${appView.application.category.name}">
-							<c:out value="${appView.application.category.displayName}"/>
-						</a>
+	    			<div class="dh-applications-application-details">
+	    				<div class="dh-applications-application-name">
+	    					<c:out value="${appView.application.name}"/>
+			    		</div>
+		    			<div class="dh-applications-application-category">
+			    			<a href="/applications?category=${appView.application.category.name}">
+								<c:out value="${appView.application.category.displayName}"/>
+							</a>
+			    		</div>
+	    				<div class="dh-applications-application-description">
+	    					<c:out value="${appView.application.description}"/>
+		    			</div>
+		    			<div class="dh-applications-application-local">
+			    			<span id="dhApplicationVersionOuter" style="display: none;">
+			    				Currently installed: <span id="dhApplicationVersion"></span>
+		   					</span>
+				    		<span id="dhApplicationSeparator" style="display: none;">&nbsp;|&nbsp;</span>
+		    				<span id="dhApplicationInstall" style="display: none;">
+	   							<a href="javascript:dhApplicationApplication.install()">Install</a>
+			    			</span>
+			    			<span id="dhApplicationRun" style="display: none;">
+			    				<a href="javascript:dhApplicationApplication.run()">Run</a>
+		   					</span>
+	  					</div>
 		    		</div>
-	    			<div class="dh-applications-application-description">
-	    				<c:out value="${appView.application.description}"/>
-		    		</div>
-		    		<div class="dh-applications-application-local">
-			    		<span id="dhApplicationVersionOuter" style="display: none;">
-			    			Currently installed: <span id="dhApplicationVersion"></span>
-    					</span>
-			    		<span id="dhApplicationSeparator" style="display: none;">&nbsp;|&nbsp;</span>
-		    			<span id="dhApplicationInstall" style="display: none;">
-    						<a href="javascript:dhApplicationApplication.install()">Install</a>
-			    		</span>
-			    		<span id="dhApplicationRun" style="display: none;">
-			    			<a href="javascript:dhApplicationApplication.run()">Run</a>
-    					</span>
-   					</div>
-	    		</div>
+		   		</div>
     		</div>
 			<div class="dh-applications-subheading">Popular applications among <c:out value="${appView.application.name}"/> users:</div>
 			<dht3:miniApplicationList apps="${application.relatedApplications}"/>

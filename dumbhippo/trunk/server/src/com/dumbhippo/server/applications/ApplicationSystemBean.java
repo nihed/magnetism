@@ -725,13 +725,10 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	private void pageApplicationList(List<?> results, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
 		List<ApplicationView> applicationViews = new ArrayList<ApplicationView>();
 		
-		int rank = 1;
 		int pos = 0;
 		for (Object o : results) {
-			int thisRank = rank++;
 			Object[] columns = (Object[])o;
 			Application application = (Application)columns[0];
-			Number count = (Number)columns[1];
 
 			if (category != null && application.getCategory() != category)
 				continue;
@@ -739,8 +736,6 @@ public class ApplicationSystemBean implements ApplicationSystem {
 			if (pos >= pageable.getStart() && pos < pageable.getStart() + pageable.getCount()) {
 				ApplicationView applicationView = new ApplicationView(application);
 				//applicationView.setUsageCount(count.intValue());
-				applicationView.setUsageCount(count.intValue());
-				applicationView.setRank(thisRank);
 				setViewIcon(applicationView, iconSize);
 			
 				applicationViews.add(applicationView);
@@ -786,16 +781,39 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	}
 	
 	public void pagePopularApplications(Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
-		if (since == null)
-			since = getDefaultSince();		
-		Query q = em.createQuery("SELECT au.application, COUNT(*) " +
-								 "  FROM ApplicationUsage au  " +
-								 "  WHERE au.date > :since " +
-								 "  GROUP by au.application.id")
-		    .setParameter("since", quantizeSince(since))
-			.setHint("org.hibernate.cacheable", true);
+		String category_clause;
 		
-		pageApplicationList(getSortedResults(q), iconSize, category, pageable);
+		if (category != null)
+			category_clause = "AND a.category = " + category.ordinal();
+		else
+			category_clause = "";
+		
+		Query q = em.createQuery("  SELECT a " +
+								 "    FROM Application a " +
+								 "   WHERE usageCount <> 0 " +
+								 category_clause + 
+								 "ORDER BY usageCount desc")
+			.setFirstResult(pageable.getStart())
+			.setMaxResults(pageable.getCount());
+		
+		List<ApplicationView> applicationViews = new ArrayList<ApplicationView>();
+		
+		for (Application application : TypeUtils.castList(Application.class, q.getResultList())) {
+			ApplicationView applicationView = new ApplicationView(application);
+			setViewIcon(applicationView, iconSize);
+		
+			applicationViews.add(applicationView);
+		}
+		
+		pageable.setResults(applicationViews);
+
+		Query countQuery = em.createQuery("   SELECT count(a)" +
+				                          "    FROM Application a " +
+										  "   WHERE usageCount <> 0 " +
+										  category_clause)
+			.setHint("org.hibernate.cacheable", true);
+
+		pageable.setTotalCount(((Number)countQuery.getSingleResult()).intValue());
 	}
 	
 	public void pageRelatedApplications(Application relatedTo, Date since, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
@@ -936,5 +954,45 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		Query q = em.createQuery("SELECT aus.application FROM ApplicationUserState aus WHERE aus.user = :user AND aus.pinned = TRUE")
 			.setParameter("user", user);
 		return TypeUtils.castList(Application.class, q.getResultList());
+	}
+
+	public void updateUsages() {
+		Set<String> usedApps = new HashSet<String>();
+		
+		Query q = em.createQuery("SELECT au.application, COUNT(*) " +
+				 "  FROM ApplicationUsage au  " +
+				 "  WHERE au.date > :since " +
+				 "  GROUP by au.application.id")
+			.setParameter("since", quantizeSince(getDefaultSince()));
+
+		int lastCount = -1;
+		int currentRank = 1;  // paying attention to ties
+		int totalRank = 1;    // ignoring ties
+		for (Object o : getSortedResults(q)) {
+			Object[] columns = (Object[])o;
+			Application application = (Application)columns[0];
+			int count = ((Number)columns[1]).intValue();
+			
+			if (count != lastCount)
+				currentRank = totalRank;
+
+			application.setRank(currentRank);
+			application.setUsageCount(count);
+			
+			lastCount = count;
+
+			usedApps.add(application.getId());
+			
+			totalRank++;
+		}
+		
+		// Set the rank for all unused applications
+		q = em.createQuery("SELECT a from Application a");
+		for (Application application : TypeUtils.castList(Application.class, q.getResultList())) {
+			if (!usedApps.contains(application.getId())) {
+				application.setRank(totalRank);
+				application.setUsageCount(0);
+			}
+		}
 	}
 }
