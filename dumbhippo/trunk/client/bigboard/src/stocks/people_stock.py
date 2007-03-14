@@ -206,7 +206,7 @@ class PeopleStock(bigboard.AbstractMugshotStock):
             return
         item = EntityItem()
         item.set_entity(entity)
-        self.__box.append(item)
+        self.__box.append(item, hippo.PACK_IF_FITS)
         self.__items[entity.get_guid()] = item
         self.__set_item_size(item, self.get_size())
         item.connect('button-press-event', self.__handle_item_pressed)

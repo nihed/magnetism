@@ -81,9 +81,9 @@ class BigBoardPanel(object):
         self._stocks = [stocks.self_stock.SelfStock(), 
                         stocks.search_stock.SearchStock(),
                         stocks.people_stock.PeopleStock(), 
-                        stocks.apps_stock.AppsStock(),
-                        stocks.calendar_stock.CalendarStock(),
-                        stocks.docs_stock.DocsStock()
+                        stocks.apps_stock.AppsStock()
+#                        stocks.calendar_stock.CalendarStock(),
+#                        stocks.docs_stock.DocsStock()
                         ]
         self._exchanges = []
 
