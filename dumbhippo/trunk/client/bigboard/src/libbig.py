@@ -79,6 +79,32 @@ def _log_cb(func, errtext=None):
                 text = "Caught exception in callback"
             logging.exception(text)
     return exec_cb
+
+# Taken from http://www.python.org/dev/peps/pep-0318/
+def singleton(cls):
+    instances = {}
+    def getinstance():
+        if cls not in instances:
+            instances[cls] = cls()
+        return instances[cls]
+    return getinstance
+
+class BiMap(object):
+    def __init__(self, a_name, b_name, initval):
+        self.__a_to_b = initval
+        self.__b_to_a = {}
+        self.__a_name = a_name
+        self.__b_name = b_name
+        for k, v in initval.iteritems():
+            self.__b_to_a[v] = k
+    
+    def __getitem__(self, key):
+        if key == self.__a_name:
+            return self.__a_to_b
+        elif key == self.__b_name:
+            return self.__b_to_a
+        else:
+            raise ValueError("Unknown bimap set name %s" % (key,))    
     
 class AutoStruct:
     """Kind of like a dictionary, except the values are accessed using
@@ -239,6 +265,8 @@ keys=stderr
     
 [formatter_base]
 class=logging.Formatter
+format="%%(asctime)s [%%(thread)d] %%(name)s %%(levelname)s %%(message)s"
+datefmt=%%H:%%M:%%S
 
 [handler_stderr]
 class=StreamHandler

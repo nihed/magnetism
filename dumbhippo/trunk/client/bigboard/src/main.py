@@ -6,7 +6,7 @@ import gobject, gtk, pango, dbus, dbus.glib
 
 import hippo
 from big_widgets import Sidebar, CommandShell, CanvasHBox
-from bigboard import Stock
+from bigboard import Stock, PrefixedState
 import libbig
 
 import stocks, stocks.self_stock, stocks.people_stock, stocks.apps_stock, stocks.search_stock, stocks.docs_stock, stocks.calendar_stock
@@ -29,17 +29,15 @@ class Exchange(hippo.CanvasBox):
     def __init__(self, stock):
         hippo.CanvasBox.__init__(self,  
                                  orientation=hippo.ORIENTATION_VERTICAL,
-                                 spacing=4)
+                                 spacing=4)      
         self.__stock = stock
         self.__ticker_text = None
-        self.__expanded = True
+        self.__state = PrefixedState('/panel/stock/' + stock.get_id() + "/") 
+        self.__state.set_default('expanded', True)
         if not stock.get_ticker() == "":
             text = stock.get_ticker()
             self.__ticker_container = GradientHeader()
             self.__ticker_text = hippo.CanvasText(text=text, font="14px", xalign=hippo.ALIGNMENT_START)
-            #attrs = pango.AttrList()
-            #attrs.insert(pango.AttrUnderline(pango.UNDERLINE_SINGLE, 0, 0xFFFF))
-            #self.__ticker_text.set_property("attributes", attrs)
             self.__ticker_text.connect("button-press-event", lambda text, event: self.__toggle_expanded())  
             self.__ticker_container.append(self.__ticker_text)
             self.append(self.__ticker_container)
@@ -49,11 +47,11 @@ class Exchange(hippo.CanvasBox):
         # wait to append stock until set_size is called
     
     def __toggle_expanded(self):
-        self.__expanded = not self.__expanded
+        self.__state['expanded'] = not self.__state['expanded']
         self.__sync_expanded()
         
     def __sync_expanded(self):
-        self.set_child_visible(self.__stockbox, self.__expanded)
+        self.set_child_visible(self.__stockbox, self.__state['expanded'])
     
     def get_stock(self):
         return self.__stock
@@ -76,7 +74,12 @@ class BigBoardPanel(object):
         
         self.__logger = logging.getLogger("bigboard.Panel")
         
-        self._size = Stock.SIZE_BULL
+        self.__logger.info("constructing")
+        
+        self.__state = PrefixedState('/panel/')  
+                       
+        self.__size_str = libbig.BiMap("size", "str", {Stock.SIZE_BULL: u'bull', Stock.SIZE_BEAR: u'bear'})
+        self.__state.set_default('size', self.__size_str['size'][Stock.SIZE_BULL])
 
         self._stocks = [stocks.self_stock.SelfStock(), 
                         stocks.search_stock.SearchStock(),
@@ -120,6 +123,9 @@ class BigBoardPanel(object):
   
         self._canvas.show()
         
+    def __get_size(self):
+            return self.__size_str['str'][self.__state['size']]
+        
     def list(self, stock):
         """Add a stock to an Exchange and append it to the bigboard."""
         self.__logger.debug("listing stock %s", stock)
@@ -128,20 +134,20 @@ class BigBoardPanel(object):
             self._stocks_box.append(sep)
         container = Exchange(stock)
         self._stocks_box.append(container)
-        container.set_size(self._size)
+        container.set_size(self.__get_size())
         self._exchanges.append(container)
         
     def _toggle_size(self):
         self.__logger.debug("toggling size")
-        if self._size == Stock.SIZE_BULL:
-            self._size = Stock.SIZE_BEAR
+        if self.__get_size() == Stock.SIZE_BULL:
+            self.__state['size'] = self.__size_str['size'][Stock.SIZE_BEAR]
         else:
-            self._size = Stock.SIZE_BULL
+            self.__state['size']= self.__size_str['size'][Stock.SIZE_BULL]
         self._sync_size()
             
     def _sync_size(self):       
-        self._header_box.set_child_visible(self._title, self._size == Stock.SIZE_BULL)
-        if self._size == Stock.SIZE_BEAR:
+        self._header_box.set_child_visible(self._title, self.__get_size() == Stock.SIZE_BULL)
+        if self.__get_size() == Stock.SIZE_BEAR:
             self._header_box.remove(self._size_button)
             self._header_box.append(self._size_button, hippo.PACK_EXPAND)
             self._size_button.set_property("text", u"\u00bb large")
@@ -153,8 +159,8 @@ class BigBoardPanel(object):
             self._canvas.set_size_request(Stock.SIZE_BULL_CONTENT_PX, 42)
             
         for exchange in self._exchanges:
-            self.__logger.debug("resizing exchange %s to %s", exchange, self._size)
-            exchange.set_size(self._size)
+            self.__logger.debug("resizing exchange %s to %s", exchange, self.__get_size())
+            exchange.set_size(self.__get_size())
         
         self._dw.queue_resize()  
         # TODO - this is kind of gross; we need the strut change to happen after
@@ -175,16 +181,19 @@ def usage():
 
 def main(args):
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hds", ["help", "debug", "shell", "debug-modules="])
+        opts, args = getopt.getopt(sys.argv[1:], "hds", ["help", "debug", "info", "shell", "debug-modules="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
+    info = False
     debug = False
     shell = False
     debug_modules = []
     for o, v in opts:
         if o in ('-d', '--debug'):
             debug = True
+        elif o in ('--info',):
+            info = True
         elif o in ('-s', '--shell'):
             shell = True
         elif o in ('--debug-modules'):
@@ -201,7 +210,9 @@ def main(args):
     gtk.gdk.threads_init()
     dbus.glib.threads_init()    
     
-    default_log_level = 'INFO'
+    default_log_level = 'ERROR'
+    if info:
+        default_log_level = 'INFO'
     if debug:
         default_log_level = 'DEBUG'
 
