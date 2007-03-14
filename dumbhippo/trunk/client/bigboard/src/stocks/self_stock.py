@@ -2,7 +2,7 @@ import logging, os
 
 import hippo
 
-import identity_spider, mugshot
+import mugshot
 import libbig
 from bigboard import Stock, AbstractMugshotStock
 from big_widgets import CanvasMugshotURLImage, PhotoContentItem

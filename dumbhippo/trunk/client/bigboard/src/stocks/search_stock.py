@@ -10,7 +10,7 @@ except:
 
 import hippo
 
-import identity_spider, mugshot
+import mugshot
 import libbig
 from bigboard import AbstractMugshotStock
 from big_widgets import CanvasMugshotURLImage, CanvasEntry
