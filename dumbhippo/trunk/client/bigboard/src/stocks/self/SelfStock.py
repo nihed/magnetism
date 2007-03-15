@@ -22,8 +22,8 @@ class ExternalAccountIcon(CanvasMugshotURLImage):
 
 class SelfStock(AbstractMugshotStock):
     """Shows a user's Mugshot personal information."""
-    def __init__(self):
-        super(SelfStock,self).__init__("Self", ticker="")
+    def __init__(self, *args, **kwargs):
+        super(SelfStock,self).__init__(*args, **kwargs)
 
         self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4)
 

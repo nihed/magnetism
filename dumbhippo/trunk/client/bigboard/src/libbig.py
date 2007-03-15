@@ -1,5 +1,5 @@
 import os, code, sys, traceback, urllib2, logging, logging.config, StringIO, cookielib
-import re, tempfile
+import re, tempfile, xml.dom.minidom
 
 import cairo, gtk, gobject, threading
 import gnome
@@ -105,6 +105,27 @@ class BiMap(object):
             return self.__b_to_a
         else:
             raise ValueError("Unknown bimap set name %s" % (key,))    
+        
+def _traverse_nodes(node, matches, index): 
+    if index == len(matches):
+        return node
+    if node.nodeType == xml.dom.Node.ELEMENT_NODE:
+        for subnode in node.childNodes:
+            if subnode.nodeType == xml.dom.Node.ELEMENT_NODE and subnode.tagName == matches[index]:
+                return _traverse_nodes(subnode, matches, index+1)
+    raise KeyError("Couldn't find path %s from node %s" % ('/'.join(matches), node))
+        
+def get_xml_element(node, path):
+    """Traverse a path like foo/bar/baz from a DOM node, using the first matching
+    element."""
+    return _traverse_nodes(node, path.split('/'), 0)
+
+def get_xml_element_value(start_node, path):
+    node = get_xml_element(start_node, path)
+    if node.firstChild:
+        return node.firstChild.nodeValue
+    else:
+        return ""
     
 class AutoStruct:
     """Kind of like a dictionary, except the values are accessed using
