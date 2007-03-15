@@ -6,6 +6,8 @@ import hippo
 import bigboard, mugshot
 from big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox, CanvasVBox, ActionLink
 
+import appbrowser
+
 class AppDirectory(gobject.GObject):
     def __init__(self):
         gobject.GObject.__init__(self)
@@ -187,13 +189,15 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self.__box.append(self.__static_set)
         self.__box.append(self.__dynamic_set_container)
         
+        self.__app_browser = appbrowser.AppBrowser()
         self._add_more_link(self.__on_more_link)
         
         self.__static_set_ids = {}
         self.__set_message('Loading...')
         
     def __on_more_link(self):
-        self._logger.debug("more!")        
+        self._logger.debug("more!")
+        self.__app_browser.present()
         
     def __set_message(self, text):
         self.__box.set_child_visible(self.__message, not text is None)
@@ -202,8 +206,7 @@ class AppsStock(bigboard.AbstractMugshotStock):
 
     def _on_mugshot_initialized(self):
         super(AppsStock, self)._on_mugshot_initialized()
-        self._mugshot.connect("my-top-apps-changed", self.__handle_my_top_apps_changed)
-        self._mugshot.connect("global-top-apps-changed", self.__handle_global_top_apps_changed)        
+        self._mugshot.connect("my-top-apps-changed", self.__handle_my_top_apps_changed)      
         self._mugshot.connect("pinned-apps-changed", self.__handle_pinned_apps_changed)
         self._mugshot.get_pinned_apps()        
         self._mugshot.get_my_top_apps()
@@ -236,9 +239,6 @@ class AppsStock(bigboard.AbstractMugshotStock):
             self.__initialized = True
             if len(self.__static_set.get_children()) > 0:
                 self.__dynamic_set_container.set_shown(False)
-            
-    def __handle_global_top_apps_changed(self, mugshot, apps):
-        self._logger.debug("global apps changed")
             
     def __handle_my_top_apps_changed(self, mugshot, apps):
         self._logger.debug("my apps changed")
