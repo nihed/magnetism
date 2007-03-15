@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-import os, sys, threading, getopt, logging, StringIO
+import os, sys, threading, getopt, logging, StringIO, stat
+import xml.dom.minidom
 
 import gobject, gtk, pango, dbus, dbus.glib
 
@@ -8,8 +9,6 @@ import hippo
 from big_widgets import Sidebar, CommandShell, CanvasHBox
 from bigboard import Stock, PrefixedState
 import libbig
-
-import stocks, stocks.self_stock, stocks.people_stock, stocks.apps_stock, stocks.search_stock, stocks.docs_stock, stocks.calendar_stock
 
 class GradientHeader(hippo.CanvasGradient):
     def __init__(self, **kwargs):
@@ -22,7 +21,55 @@ class GradientHeader(hippo.CanvasGradient):
 class Separator(hippo.CanvasBox):
     def __init__(self):
         hippo.CanvasBox.__init__(self, border_top=1, border_color=0x999999FF)
-
+        
+class StockReader(gobject.GObject):
+    __gsignals__ = {
+        "stock-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
+    }
+            
+    def __init__(self, dirs):
+        gobject.GObject.__init__(self)
+        self.__logger = logging.getLogger('bigboard.StockReader')
+        self.__dirs = dirs
+        
+    def load(self):
+        self.__logger.debug("starting stock reading, cwd=%s", os.getcwd())
+        for dir in self.__dirs:
+            self.__logger.info("reading directory %s", dir)
+            for direntry in os.listdir(dir):
+                stockdir = os.path.join(dir, direntry)
+                if not stat.S_ISDIR(os.stat(stockdir).st_mode):
+                    continue
+                
+                listing = os.path.join(stockdir, 'listing.xml')
+                if not os.access(listing, os.R_OK):
+                    self.__logger.debug("ignoring missing %s", listing)
+                    continue
+                self.__logger.debug("parsing %s", listing)
+                doc = xml.dom.minidom.parse(listing)
+                
+                stock = doc.documentElement
+                fmt_version = int(stock.getAttribute("version") or "0")
+                id = libbig.get_xml_element_value(stock, 'id')
+                class_name = id.split('.')[-1]
+                try:
+                    ticker = libbig.get_xml_element_value(stock, 'ticker')
+                except KeyError:
+                    ticker = ""
+                    
+                sys.path.append(stockdir)
+                try:
+                    self.__logger.info("importing module %s (%s) %s", class_name, id, stockdir)
+                    module = __import__(class_name)
+                    class_constructor = getattr(module, class_name)
+                    self.__logger.debug("got constructor %s", class_constructor)
+                    
+                    stock = class_constructor({'id': id, 'ticker': ticker})
+                    self.emit("stock-added", stock)                    
+                except:
+                    self.__logger.exception("failed to add stock %s", id)
+                
+                
 class Exchange(hippo.CanvasBox):
     """A container for stocks."""
     
@@ -34,7 +81,10 @@ class Exchange(hippo.CanvasBox):
         self.__ticker_text = None
         self.__state = PrefixedState('/panel/stock/' + stock.get_id() + "/") 
         self.__state.set_default('expanded', True)
-        if not stock.get_ticker() == "":
+        if stock.get_ticker() == "-":
+            sep = Separator()
+            self.append(sep)            
+        elif not stock.get_ticker() == "":
             text = stock.get_ticker()
             self.__ticker_container = GradientHeader()
             self.__ticker_text = hippo.CanvasText(text=text, font="14px", xalign=hippo.ALIGNMENT_START)
@@ -69,7 +119,7 @@ class Exchange(hippo.CanvasBox):
             self.set_child_visible(self.__ticker_container, size == Stock.SIZE_BULL)
 
 class BigBoardPanel(object):
-    def __init__(self):
+    def __init__(self, dirs):
         self._dw = Sidebar(True)
         
         self.__logger = logging.getLogger("bigboard.Panel")
@@ -77,17 +127,15 @@ class BigBoardPanel(object):
         self.__logger.info("constructing")
         
         self.__state = PrefixedState('/panel/')  
+        
+        self.__state.set_default('listed', 'org.mugshot.bigboard.SelfStock;org.mugshot.bigboard.SearchStock;org.mugshot.bigboard.AppsStock')
                        
         self.__size_str = libbig.BiMap("size", "str", {Stock.SIZE_BULL: u'bull', Stock.SIZE_BEAR: u'bear'})
         self.__state.set_default('size', self.__size_str['size'][Stock.SIZE_BULL])
 
-        self._stocks = [stocks.self_stock.SelfStock(), 
-                        stocks.search_stock.SearchStock(),
-                        stocks.people_stock.PeopleStock(), 
-                        stocks.apps_stock.AppsStock()
-#                        stocks.calendar_stock.CalendarStock(),
-#                        stocks.docs_stock.DocsStock()
-                        ]
+        self.__stockreader = StockReader(dirs)
+        self.__stockreader.connect("stock-added", lambda reader, stock: self.__on_stock_added(stock))
+
         self._exchanges = []
 
         self._canvas = hippo.Canvas()
@@ -115,13 +163,15 @@ class BigBoardPanel(object):
         self._stocks_box = hippo.CanvasBox(spacing=4)
         
         self._main_box.append(self._stocks_box)
-        
-        for stock in self._stocks:
-            self.list(stock)        
   
         self._sync_size()
+        
+        self.__stockreader.load()        
   
         self._canvas.show()
+        
+    def __on_stock_added(self, stock):
+        self.list(stock)
         
     def __get_size(self):
             return self.__size_str['str'][self.__state['size']]
@@ -129,13 +179,22 @@ class BigBoardPanel(object):
     def list(self, stock):
         """Add a stock to an Exchange and append it to the bigboard."""
         self.__logger.debug("listing stock %s", stock)
-        if stock.get_ticker() == "" and len(self._stocks_box.get_children()) > 0:
-            sep = Separator()
-            self._stocks_box.append(sep)
         container = Exchange(stock)
-        self._stocks_box.append(container)
         container.set_size(self.__get_size())
         self._exchanges.append(container)
+                
+        last_matched = None
+        for listed in self.__state['listed'].split(';'):
+            if listed == stock.get_id():
+                self.__logger.debug("found stock %s in saved listing, inserting after %s", stock, last_matched)
+                if last_matched is None:
+                    self._stocks_box.prepend(container)
+                else:
+                    self._stocks_box.insert_after(container, last_matched)
+                break
+            for exchange in self._stocks_box.get_children():
+                if listed == exchange.get_stock().get_id(): 
+                    last_matched = exchange
         
     def _toggle_size(self):
         self.__logger.debug("toggling size")
@@ -177,17 +236,18 @@ def load_image_hook(img_name):
     return hippo.cairo_surface_from_gdk_pixbuf(pixbuf)
 
 def usage():
-    print "%s [--debug] [--debug-modules=mod1,mod2...] [--shell] [--help]" % (sys.argv[0])
+    print "%s [--debug] [--debug-modules=mod1,mod2...] [--shell] [--stockdirs=dir1:dir2:...] [--help]" % (sys.argv[0])
 
-def main(args):
+def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hds", ["help", "debug", "info", "shell", "debug-modules="])
+        opts, args = getopt.getopt(sys.argv[1:], "hds", ["help", "debug", "info", "shell", "stockdirs=", "debug-modules="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
     info = False
     debug = False
     shell = False
+    stockdirs = []
     debug_modules = []
     for o, v in opts:
         if o in ('-d', '--debug'):
@@ -196,6 +256,8 @@ def main(args):
             info = True
         elif o in ('-s', '--shell'):
             shell = True
+        elif o in ('--stockdirs',):
+            stockdirs = map(os.path.abspath, v.split(':'))
         elif o in ('--debug-modules'):
             debug_modules = v.split(',')
         elif o in ("-h", "--help"):
@@ -223,7 +285,7 @@ def main(args):
     
     hippo.canvas_set_load_image_hook(load_image_hook)    
     
-    panel = BigBoardPanel()
+    panel = BigBoardPanel(stockdirs)
     
     panel.show()
     
@@ -234,4 +296,4 @@ def main(args):
     gtk.main()
 
 if __name__ == "__main__":
-    main(None)
+    main()

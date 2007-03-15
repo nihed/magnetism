@@ -149,19 +149,16 @@ class Stock(object):
     SIZE_BULL_CONTENT_PX = 200
     SIZE_BEAR_CONTENT_PX = 36
     
-    def __init__(self, id, ticker=None):
-        self._id = id
-        if ticker == None:
-            self._ticker = id
-        else:
-            self._ticker = ticker
+    def __init__(self, metainfo):
+        self._id = metainfo['id']
+        self._ticker = metainfo['ticker']
         self._bull_widgets = {}
         self._size = Stock.SIZE_BULL
         
         # For use in subclasses as well
-        self._logger = logging.getLogger('bigboard.stocks.' + id)  
+        self._logger = logging.getLogger('bigboard.stocks.' + self._id)  
         
-        self._state = PrefixedState('/stock/' + id)
+        self._state = PrefixedState('/stock/' + self._id)
         
     def get_id(self):
         return self._id
@@ -195,8 +192,8 @@ class Stock(object):
 class AbstractMugshotStock(Stock):
     """An abstract class for stocks which use Mugshot.  The most useful
     method on this class is connect_mugshot_handler."""
-    def __init__(self, id, ticker=None):
-        super(AbstractMugshotStock, self).__init__(id, ticker)
+    def __init__(self, *args, **kwargs):
+        super(AbstractMugshotStock, self).__init__(*args, **kwargs)
         self._mugshot_initialized = False
         self._dependent_handlers = []
         

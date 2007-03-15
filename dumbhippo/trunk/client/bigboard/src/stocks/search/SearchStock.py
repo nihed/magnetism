@@ -17,8 +17,8 @@ from big_widgets import CanvasMugshotURLImage, CanvasEntry
         
 class SearchStock(AbstractMugshotStock):
     """Search.  It's what's for dinner."""
-    def __init__(self):
-        super(SearchStock,self).__init__("Search", ticker="")
+    def __init__(self, *args, **kwargs):
+        super(SearchStock,self).__init__(*args, **kwargs)
         
         self.__box = hippo.CanvasBox()
         

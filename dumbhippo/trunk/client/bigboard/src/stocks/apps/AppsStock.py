@@ -170,8 +170,8 @@ class AppDisplay(PhotoContentItem):
 class AppsStock(bigboard.AbstractMugshotStock):
     STATIC_SET_SIZE = 5    
     STATIFICATION_TIME_SEC = 60 * 60 * 24 * 3; # 3 days
-    def __init__(self):
-        super(AppsStock, self).__init__("Applications") 
+    def __init__(self, *args, **kwargs):
+        super(AppsStock, self).__init__(*args, **kwargs) 
                 
         self.__initialized = False           
         
