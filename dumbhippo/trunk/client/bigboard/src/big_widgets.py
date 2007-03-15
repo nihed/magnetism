@@ -11,12 +11,12 @@ import libbig, mugshot, bigboard
 class CanvasVBox(hippo.CanvasBox):
     def __init__(self, **kwargs):
         kwargs['orientation'] = hippo.ORIENTATION_VERTICAL
-        hippo.CanvasBox.__init__(self)
+        hippo.CanvasBox.__init__(self, **kwargs)
 
 class CanvasHBox(hippo.CanvasBox):
     def __init__(self, **kwargs):
         kwargs['orientation'] = hippo.ORIENTATION_HORIZONTAL
-        hippo.CanvasBox.__init__(self)
+        hippo.CanvasBox.__init__(self, **kwargs)
         
 class ActionLink(hippo.CanvasLink):
     def __init__(self, **kwargs):
