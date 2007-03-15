@@ -72,7 +72,7 @@ Mugshot™ is a trademark of Red Hat, Inc. and may only be used with Red Hat Inc
 </p>
 <ol>
 <li>
-They may use the Mugshot™ mark in association with the original Mugshot™ code found on the Mugshot Project website (see http://mugshot.org) without modification; or
+They may use the Mugshot™ mark in association with the original Mugshot™ code found on the Mugshot Project website (see <a href="http://mugshot.org">http://mugshot.org</a>) without modification; or
 </li>
 <li>
 They may use the Mugshot™ mark in association with a modified version of the original Mugshot™ client code provided they abide by the conditions set forth below; and 
@@ -86,7 +86,7 @@ Except as expressly stated herein, no other rights are granted to use any other 
 </p>
 <h4>Distribution by FTP or Electronic Download</h4>
 <p>
-If you distribute the Mugshot™ client code by FTP or other electronic download, you have permission to identify the download using the Mugshot™ mark so long as you are otherwise in compliance with these guidelines.  If you are using Mugshot™ to identify the download, it must be in compliance with these Mugshot Trademark Guidelines, and you must also display the following statement: “This distribution of Mugshot™ is subject to the Red Hat license for Mugshot™ which may be found at http://mugshot.redhat.com/licenses/.”  Of course, you are always permitted to redistribute the code without utilizing the Mugshot™ mark so long as you otherwise comply with the GNU General Public License.  Please bear in mind that you are solely responsible for ensuring that the download you provide complies with these Mugshot Trademark Guidelines.
+If you distribute the Mugshot™ client code by FTP or other electronic download, you have permission to identify the download using the Mugshot™ mark so long as you are otherwise in compliance with these guidelines.  If you are using Mugshot™ to identify the download, it must be in compliance with these Mugshot Trademark Guidelines, and you must also display the following statement: “This distribution of Mugshot™ is subject to the Red Hat license for Mugshot™ which may be found at <a href="http://mugshot.org/licenses">http://mugshot.org/licenses</a>.”  Of course, you are always permitted to redistribute the code without utilizing the Mugshot™ mark so long as you otherwise comply with the GNU General Public License.  Please bear in mind that you are solely responsible for ensuring that the download you provide complies with these Mugshot Trademark Guidelines.
 </p>
 <h4>Modified Mugshot Client Code – Limited Trademark Permission</h4>
 <p>
