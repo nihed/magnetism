@@ -1,0 +1,11 @@
+@CHARSET "UTF-8";
+
+#dhLegalContents {
+	margin-left: auto;
+	margin-right: auto;
+	
+	/* Ignored by IE */
+	max-width: 	830px;
+	/* And for IE, ignored by firefox */
+	width:expression(document.body.clientWidth > 770 ? 580 : document.body.clientWidth - 190);
+}

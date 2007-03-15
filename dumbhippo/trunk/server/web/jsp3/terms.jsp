@@ -3,17 +3,16 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
+<%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <head>
 	<title>Terms of Use</title>
-	<dht:siteStyle/>	
+	<dht3:stylesheet name="site" iefixes="true"/>	
+	<dht3:stylesheet name="legal" iefixes="true"/>	
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
 </head>
-<dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_termsofuse500.gif" fullHeader="true">
-
-<h3>Mugshot<br>
-Terms of Use Agreement<br>
+<dht3:legalPage title="Terms of Use">
+<h3>Mugshot Terms of Use Agreement<br>
 May 25, 2006</h3>
 
 <p>
@@ -176,5 +175,5 @@ The following is a partial list of the kind of activity that is illegal or prohi
 <p>
 Please contact us at: <a href="mailto:feedback@mugshot.org">feedback@mugshot.org</a> with any questions regarding this Agreement.
 </p>
-</dht:systemPage>
+</dht3:legalPage>
 </html>
