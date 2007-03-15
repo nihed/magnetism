@@ -155,9 +155,10 @@ class Stock(object):
         self._bull_widgets = {}
         self._size = Stock.SIZE_BULL
         
+        self.__more_link_cb = None
+        
         # For use in subclasses as well
         self._logger = logging.getLogger('bigboard.stocks.' + self._id)  
-        
         self._state = PrefixedState('/stock/' + self._id)
         
     def get_id(self):
@@ -165,6 +166,16 @@ class Stock(object):
     
     def get_ticker(self):
         return self._ticker
+
+    def _add_more_link(self, cb):
+        self.__more_link_cb = cb
+        
+    def has_more_link(self):
+        return bool(self.__more_link_cb)
+    
+    def on_more_clicked(self):
+        assert(self.__more_link_cb)
+        self.__more_link_cb()
 
     def append_bull(self, box, item):
         """Adds item to box, recording that this widget should
