@@ -1252,6 +1252,13 @@ get_content_area(HippoCanvasBox *box,
                               y_p, height_p);
 }
 
+static gboolean
+child_is_expandable(HippoBoxChild *child, AdjustInfo *adjust)
+{
+	return child->visible && child->expand &&
+		(!child->if_fits || (adjust && !(adjust->does_not_fit)));	
+}
+
 static int
 count_expandable_children(GSList     *children,
                           AdjustInfo *adjusts)
@@ -1267,8 +1274,7 @@ count_expandable_children(GSList     *children,
         /* We assume here that we've prevented via g_warning
          * any floats/fixed from having expand=TRUE
          */
-        if (child->visible && child->expand &&
-            (!child->if_fits || (adjusts && !adjusts[i].does_not_fit)))
+		if (child_is_expandable(child, adjusts ? &(adjusts[i]) : NULL))
             ++count;
         
         ++i;
@@ -1528,12 +1534,12 @@ adjust_for_expandable(GSList        *children,
     for (link = children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
 
-        if (child->expand && !adjusts[i].does_not_fit) {
+        if (child_is_expandable(child, &(adjusts[i])) && !adjusts[i].does_not_fit) {
             int extra;
-            extra = (expand_space / expand_count);
-            expand_count -= 1;
-            expand_space -= extra;
-            adjusts[i].adjustment += extra;
+        	extra = (expand_space / expand_count);
+        	expand_count -= 1;
+        	expand_space -= extra;
+        	adjusts[i].adjustment += extra;
         }
         ++i;
     }
