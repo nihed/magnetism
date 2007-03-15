@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(mugshot, 1.1.37)
+AM_INIT_AUTOMAKE(mugshot, 1.1.38)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -515,6 +515,12 @@ LIBHIPPOFIREFOX_LIBS="$LIBHIPPOFIREFOX_LIBS $NSPR_LIBS"
 #### define absolute path to srcdir for debugging-only code
 ABSOLUTE_TOP_SRCDIR=`cd ${srcdir} && pwd`
 AC_DEFINE_UNQUOTED(ABSOLUTE_TOP_SRCDIR, "$ABSOLUTE_TOP_SRCDIR", [full path to srcdir])
+
+AC_ARG_WITH(about_message, 
+ 	    AC_HELP_STRING([--with-about-message=MESSAGE],
+			   [Additional message for the about dialog]))
+
+AC_DEFINE_UNQUOTED(HIPPO_ABOUT_MESSAGE, "$with_about_message", [additional message for the about dialog])
 
 AC_OUTPUT([
 Makefile
