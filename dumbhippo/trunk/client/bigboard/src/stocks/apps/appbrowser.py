@@ -6,40 +6,15 @@ import hippo
 import bigboard, mugshot
 from big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, ActionLink, CanvasEntry, PrelightingCanvasBox
 
+import apps_widgets
+
 _logger = logging.getLogger("bigboard.AppBrowser")
-
-class AppHeader(CanvasHBox):
-    def __init__(self, app=None):
-        super(AppHeader, self).__init__()
-
-        self.__icon = CanvasMugshotURLImage(scale_width=30, scale_height=30)
-        self.append(self.__icon)
-        
-        self.__header_text_items_box = CanvasVBox()
-        self.__name = hippo.CanvasText(text="App", font="Bold 12px")
-        self.__header_text_items_box.append(self.__name)
-        self.__category = ActionLink(text="Cat")
-        self.__header_text_items_box.append(self.__category)        
-        self.__subcategory = hippo.CanvasText(text="Kitty") 
-        self.__header_text_items_box.append(self.__subcategory)
-        self.append(self.__header_text_items_box)
-        
-        if app:
-            self.set_app(app)
-        
-    def set_app(self, app):
-        self.__app = app
-        self.__icon.set_url(app.get_icon_url())
-        self.__name.set_property("text", app.get_name())
-        
-    def get_app(self):
-        return self.__app
 
 class AppOverview(PrelightingCanvasBox):
     def __init__(self, app=None):
-        super(AppOverview, self).__init__()
+        super(AppOverview, self).__init__(box_width=200)
         
-        self.__header = AppHeader()
+        self.__header = apps_widgets.AppDisplay()
         self.append(self.__header)
         
         self.__description = hippo.CanvasText(size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END,
@@ -97,7 +72,7 @@ class AppList(CanvasHBox):
         idx = 0
         box = None
         for app in apps:
-             overview = AppHeader(app)
+             overview = apps_widgets.AppDisplay(app)
              overview.connect("button-press-event", self.__on_overview_click)
              if idx == 0:
                  box = self.__column_one
@@ -115,7 +90,6 @@ class AppBrowser(hippo.CanvasWindow):
     def __init__(self):
         super(AppBrowser, self).__init__(gtk.WINDOW_TOPLEVEL)
         
-        self.set_resizable(False)
         self.set_keep_above(1)
         self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))        
     
@@ -139,6 +113,7 @@ class AppBrowser(hippo.CanvasWindow):
         self.__right_box.append(self.__app_list)
         self.__app_list.connect("selected", lambda list, app: self.__on_app_selected(app))
         
+        self.set_default_size(600, 400)
         self.connect("delete-event", gtk.Widget.hide_on_delete)
         
         self.set_root(self.__box)
