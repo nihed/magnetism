@@ -54,19 +54,6 @@ dh.groupaccount.createGroup = function() {
   	                })
 }
 
-dh.groupaccount.updateName = function(name) {
-	document.title = "Settings for " + name
-	var nameDiv = document.getElementById("dhSidebarBoxProfileGroupName")
-	dh.util.clearNode(nameDiv)
-	nameDiv.appendChild(document.createTextNode(name))
-}
-
-dh.groupaccount.updateDescription = function(description) {
-	var nameDiv = document.getElementById("dhSidebarBoxProfileGroupDescription")
-	dh.util.clearNode(nameDiv)
-	nameDiv.appendChild(document.createTextNode(description))
-}
-
 dh.groupaccount.hideAllFeedPopups = function() {
 	dh.popup.hide('dhFeedPreviewPopup');
 	dh.popup.hide('dhFeedFailedPopup');
@@ -240,30 +227,18 @@ dhCreateGroupInit = function() {
 }
 
 dhGroupAccountInit = function() {
-	dh.groupaccount.groupNameEntry = new dh.textinput.Entry(document.getElementById("dhGroupNameEntry"), "Mugshot Fans", dh.formtable.currentValues['dhGroupNameEntry'])
+	dh.groupaccount.groupNameEntry = new dh.formtable.ExpandableTextInput('dhGroupNameEntry', "Mugshot Fans");
+    dh.groupaccount.groupNameEntry.setDescription("The name for the group.");
+    dh.groupaccount.groupNameEntry.setChangedPost('renamegroup', 'name', { "groupId" : dh.groupaccount.groupId });
 
-	dh.formtable.undoValues['dhGroupNameEntry'] = dh.groupaccount.groupNameEntry.getValue();
-	dh.groupaccount.groupNameEntry.onValueChanged = function(value) {
-		dh.formtable.onValueChanged(dh.groupaccount.groupNameEntry, 'renamegroup', 'name', value,
-			"Saving group name...",
-			"The group name has been saved.",
-			{ "groupId" : dh.groupaccount.groupId },
-			dh.groupaccount.updateName);
-	}
-	
-	dh.groupaccount.aboutGroupEntry = new dh.textinput.Entry(document.getElementById("dhAboutGroupEntry"), "", dh.formtable.currentValues['dhAboutGroupEntry'])
+	dh.groupaccount.aboutGroupEntry = new dh.formtable.ExpandableTextInput('dhAboutGroupEntry', "");
+    dh.groupaccount.aboutGroupEntry.setDescription("The description for the group.");
+    dh.groupaccount.aboutGroupEntry.setChangedPost('setgroupdescription', 'description', { "groupId" : dh.groupaccount.groupId });
 
-	dh.formtable.undoValues['dhAboutGroupEntry'] = dh.groupaccount.aboutGroupEntry.getValue();
-	dh.groupaccount.aboutGroupEntry.onValueChanged = function(value) {
-		dh.formtable.onValueChanged(dh.groupaccount.aboutGroupEntry, 'setgroupdescription', 'description', value,
-			"Saving group description...",
-			"The group description has been saved.",
-			{ "groupId" : dh.groupaccount.groupId },
-			dh.groupaccount.updateDescription);
-	}
-
-	// add some event handlers on the file input (onchange)
-	new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));
+	// add some event handlers on the file input
+	dh.groupaccount.photoEntry = new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));
+	// the div below could be null
+	dh.groupaccount.photoEntry.setBrowseButtonDiv(document.getElementById('dhStyledPictureEntry'));
 	
 	dh.photochooser.init("group", dh.groupaccount.groupId);
 	
