@@ -187,8 +187,13 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self.__box.append(self.__static_set)
         self.__box.append(self.__dynamic_set_container)
         
+        self._add_more_link(self.__on_more_link)
+        
         self.__static_set_ids = {}
         self.__set_message('Loading...')
+        
+    def __on_more_link(self):
+        self._logger.debug("more!")        
         
     def __set_message(self, text):
         self.__box.set_child_visible(self.__message, not text is None)

@@ -6,13 +6,14 @@ import xml.dom.minidom
 import gobject, gtk, pango, dbus, dbus.glib
 
 import hippo
-from big_widgets import Sidebar, CommandShell, CanvasHBox
+from big_widgets import Sidebar, CommandShell, CanvasHBox, ActionLink
 from bigboard import Stock, PrefixedState
 import libbig
 
 class GradientHeader(hippo.CanvasGradient):
     def __init__(self, **kwargs):
         hippo.CanvasGradient.__init__(self, 
+                                      orientation=hippo.ORIENTATION_HORIZONTAL,
                                       start_color=0xF4F4F4FF, 
                                       end_color=0xC7C7C7FF,
                                       padding_left=4,
@@ -89,7 +90,14 @@ class Exchange(hippo.CanvasBox):
             self.__ticker_container = GradientHeader()
             self.__ticker_text = hippo.CanvasText(text=text, font="14px", xalign=hippo.ALIGNMENT_START)
             self.__ticker_text.connect("button-press-event", lambda text, event: self.__toggle_expanded())  
-            self.__ticker_container.append(self.__ticker_text)
+            self.__ticker_container.append(self.__ticker_text, hippo.PACK_EXPAND)
+            
+            if stock.has_more_link():
+                more_link = ActionLink(xalign=hippo.ALIGNMENT_END, 
+                                       text=u"More \u00BB")
+                more_link.connect("button-press-event", lambda link, event: stock.on_more_clicked())
+                self.__ticker_container.append(more_link)
+            
             self.append(self.__ticker_container)
         self.__stockbox = hippo.CanvasBox()
         self.append(self.__stockbox)
@@ -145,20 +153,18 @@ class BigBoardPanel(object):
         self._main_box = hippo.CanvasBox(border_right=1, border_color=0x999999FF)
         self._canvas.set_root(self._main_box)
      
-        self._header_container = GradientHeader()
-        self._header_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
-        self._header_container.append(self._header_box)
+        self._header_box = GradientHeader()
      
-        self._title = hippo.CanvasText(text="My Fedora", font="Bold 14px")
+        self._title = hippo.CanvasText(text="My Fedora", font="Bold 14px", xalign=hippo.ALIGNMENT_START)
      
-        self._header_box.append(self._title)
+        self._header_box.append(self._title, hippo.PACK_EXPAND)
         
         self._size_button = hippo.CanvasLink(xalign=hippo.ALIGNMENT_CENTER)
         self._size_button.connect("button-press-event", lambda text, event: self._toggle_size())
         
         self._header_box.append(self._size_button, hippo.PACK_END)
         
-        self._main_box.append(self._header_container)
+        self._main_box.append(self._header_box)
         
         self._stocks_box = hippo.CanvasBox(spacing=4)
         
