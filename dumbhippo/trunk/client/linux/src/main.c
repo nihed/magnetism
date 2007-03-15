@@ -210,14 +210,24 @@ hippo_app_restart(HippoApp *app)
     }
 }
 
+#define STANDARD_COPYRIGHT "Copyright 2006 Red Hat, Inc. and others"
+
 void
 hippo_app_show_about(HippoApp *app)
 {
     if (app->about_dialog == NULL) {
+        const char *copyright;
+        
+        if (HIPPO_ABOUT_MESSAGE[0]) {
+            copyright = STANDARD_COPYRIGHT "\n\n" HIPPO_ABOUT_MESSAGE;
+        } else {
+            copyright = STANDARD_COPYRIGHT;
+        }
+        
         app->about_dialog = g_object_new(GTK_TYPE_ABOUT_DIALOG,
             "name", "Mugshot",
             "version", VERSION,
-            "copyright", "Copyright 2006 Red Hat, Inc. and others",
+            "copyright", copyright,
             "website", "http://mugshot.org",
             "logo-icon-name", "mugshot",
             NULL);

@@ -1,5 +1,5 @@
 Name:           mugshot
-Version:        1.1.37
+Version:        1.1.38
 Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
@@ -8,6 +8,20 @@ License:        GPL
 URL:            http://mugshot.org/
 Source0:        http://developer.mugshot.org/download/sources/linux/mugshot-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+
+# Patching:
+#
+# If you add any patches to this RPM, change the define below to something like:
+#
+# %%define about_message "Adapted for ExampleLinux".
+#
+# If, however, the patches alter the user experience in significant ways or change
+# the default server that the client connects to, you must remove the Mugshot
+# trademarks from the source code.
+#
+# See http://mugshot.org/trademark for full details.
+#
+%define about_message ""
 
 BuildRequires:  glib2-devel >= 2.6
 BuildRequires:  gtk2-devel >= 2.6
@@ -52,7 +66,7 @@ your friends use. It's fun and easy.
 
 
 %build
-%configure
+%configure --with-about-message=%{about_message}
 make %{?_smp_mflags}
 
 
