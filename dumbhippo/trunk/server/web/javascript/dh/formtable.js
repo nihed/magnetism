@@ -227,7 +227,7 @@ dh.formtable.ExpandableTextInput = function(controlId, defaultVal) {
 
 	this._input = new dh.textinput.Entry(document.getElementById(controlId), defaultVal, dh.formtable.currentValues[controlId]);
 	
-	dh.formtable.undoValues['dhUsernameEntry'] = this._input.getValue();		
+	dh.formtable.undoValues[controlId] = this._input.getValue();		
 	
 	this._saveFunc = null;
 	
@@ -302,15 +302,15 @@ dh.formtable.ExpandableTextInput = function(controlId, defaultVal) {
 		this._descriptionNode.appendChild(me._statusLink);
 	}
 	
-	this.setChangedPost = function(methodName, argName) {
+	this.setChangedPost = function(methodName, argName, fixedArgs) {
 		me._saveFunc = function (onSuccess, onFailure) {
-			dh.formtable._doChange(controlId, false, methodName, argName, me._input.getValue(), null, onSuccess, onFailure);
+			dh.formtable._doChange(controlId, false, methodName, argName, me._input.getValue(), fixedArgs, onSuccess, onFailure);
 		}	
 	}
 	
-	this.setChangedXmlMethod = function(methodName, argName) {
+	this.setChangedXmlMethod = function(methodName, argName, fixedArgs) {
 		me._saveFunc = function(onSuccess, onFailure) {
-			dh.formtable._doChange(controlId, true, methodName, argName, me._input.getValue(), null, onSuccess, onFailure);
+			dh.formtable._doChange(controlId, true, methodName, argName, me._input.getValue(), fixedArgs, onSuccess, onFailure);
 		}
 	}
 	

@@ -1,0 +1,22 @@
+@CHARSET "UTF-8";
+
+.dh-section-header {
+    margin-top:         5px;
+	margin-bottom:		5px;
+}
+
+tr.dh-feed-spacer {
+	height:			5px;
+}
+
+.dh-feed-status-icon {
+	margin-right:	10px;
+}
+
+#dhFeedEntry {
+	margin-right:	5px;
+}
+
+#dhFeedLoadingPopup, #dhFeedPreviewPopup, #dhFeedFailedPopup {
+    margin-left:    10px;
+}

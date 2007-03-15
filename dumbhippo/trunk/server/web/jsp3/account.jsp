@@ -112,7 +112,7 @@
 				    <span class="dh-section-explanation">This information will be visible on your <a href="/person">Home</a> page.</span>
                 </dht3:formTableRowSeparator>
 				<dht:formTableRow label="My name" controlId='dhUsernameEntry'>
-					<dht:textInput id="dhUsernameEntry" extraClass="dh-username-input"/>
+					<dht:textInput id="dhUsernameEntry" extraClass="dh-name-input"/>
 					<div id="dhUsernameEntryDescription" style="display: none"></div>
 				</dht:formTableRow>
 				<dht:formTableRow label="About me" altRow="true" controlId="dhBioEntry">
@@ -129,7 +129,6 @@
 					</div>
 				</dht:formTableRow>
 				-->
-				<dht:formTableRowStatus controlId='dhPictureEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="My picture">
 					<div id="dhHeadshotImageContainer" class="dh-image">
 						<dht:headshot person="${account.person}" size="60" customLink="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" />
@@ -149,7 +148,7 @@
 							<input type="hidden" name="reloadTo" value="/account"/>
 						</form>
 						<div class="dh-picture-more-instructions">
-						or <a href="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" title="Choose from a library of pictures">choose a stock picture</a>						
+						    or <a href="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" title="Choose from a library of pictures">choose a stock picture</a>						
 						</div>
 						<div id="dhChooseStockLinkContainer">
 						</div>
