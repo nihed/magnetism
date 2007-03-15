@@ -63,7 +63,7 @@
 					<div class="dh-account-status-secondary">
 						<div>
 			        	<input type="checkbox" id="dhAcceptTerms" onclick="dh.actions.updateGetStarted();">
-		                	<label for="dhAcceptTerms">I agree to the Mugshot</label> <a href="javascript:window.open('/terms', 'dhTermsOfUse', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a>.
+		                	<label for="dhAcceptTerms">I agree to the Mugshot</label> <a href="javascript:window.open('/terms', 'dhTermsOfUse', 'menubar=no,scrollbars=yes,width=700,height=700');void(0);">Terms of Use</a>.
 				        </input>
 				        </div>
 				        <div>
