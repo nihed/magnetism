@@ -77,9 +77,39 @@ class Expander:
         the regular expression only once per file and still
         encapsulate the substitution"""
         
-        subst = re.compile("@@((?:[a-zA-Z_][a-zA-Z_0-9]*\\.)?[a-zA-Z_][a-zA-Z0-9_]*)@@")
+        subst = re.compile("@@((?:[a-zA-Z_][a-zA-Z_0-9]*\\.)?[a-zA-Z_][a-zA-Z0-9_]*)(?::(properties|xml))?@@")
+
+        xmlMatch = re.compile("[<&'\"]")
+        def xmlEscape(m):
+            c = m.group(0)
+            if (c == '<'):
+                return '&lt;'
+            elif (c == '&'):
+                return '&amp;'
+            elif (c == "'"):
+                return '&apos;'
+            elif (c == '"'):
+                return '&quot;'
+
+        propertiesMatch = re.compile(r"[^ -~]")
+        def propertiesEscape(m):
+            c = m.group(0)
+            if (c == '\r'):
+                return r"\r"
+            elif (c == '\n'):
+                return r"\n"
+            elif (c == '\t'):
+                return r"\t"
+            else:
+                return r"\u%04x" % ord(c)
+        
         def repl(m):
-            return scope.expand_parameter(m.group(1))
+            result = scope.expand_parameter(m.group(1))
+            if m.group(2) == "properties":
+                result = propertiesMatch.sub(propertiesEscape, result)
+            elif m.group(2) == "xml":
+                result = xmlMatch.sub(xmlEscape, result)
+            return result
         
         def expand_line(line):
             return subst.sub(repl, line)
