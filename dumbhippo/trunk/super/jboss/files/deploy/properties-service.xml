@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?><!-- -*- tab-width: 4; indent-tabs-mode: t -*- -->
 <!DOCTYPE server>
 <!-- $Id: properties-service.xml,v 1.5 2003/08/27 04:34:12 patriot1burke Exp $ -->
 <!-- Modified for use with dumbhippo, since I can't figure out a simpler way
@@ -17,15 +17,15 @@
     <!-- do not put trailing whitespace here, or we put you in the iron maiden -->
     <attribute name="Properties">
 	    java.awt.headless=true
-            dumbhippo.server.hajndiPort=@@hajndiPort@@
+		dumbhippo.server.hajndiPort=@@hajndiPort@@
 	    dumbhippo.server.features=@@serverFeatures@@
 	    dumbhippo.server.disable.authentication=@@disableAuthentication@@
-	    dumbhippo.server.email.disable=@@disableEmail@@
-            dumbhippo.server.bind.host=@@bindHost@@
+	    Dumbhippo.server.email.disable=@@disableEmail@@
+        dumbhippo.server.bind.host=@@bindHost@@
 		dumbhippo.server.xmpp.port=@@jivePlainPort@@
 		dumbhippo.server.xmpp.adminuser=admin
 		dumbhippo.server.xmpp.password=@@jivePassword@@
-                dumbhippo.server.http.port=@@tomcatHttpPort@@
+        dumbhippo.server.http.port=@@tomcatHttpPort@@
 		dumbhippo.server.baseurl=@@baseurl@@
 		dumbhippo.server.web.version=@@webVersion@@
 		dumbhippo.server.appinfo.dir=@@appinfoDir@@
