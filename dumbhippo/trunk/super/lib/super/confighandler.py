@@ -4,6 +4,7 @@ import string
 import sys
 import xml.sax
 import xml.sax.handler
+import xml.sax.saxutils
 
 from super.service import Service
 from super.merge import Merge
@@ -34,10 +35,28 @@ class ConfigHandler (xml.sax.ContentHandler):
         self.state = OUTSIDE
         self.locator = None
         self.param_name = None
+        self.nested_xml_level = 0
 
     def setDocumentLocator(self, locator):
         self.locator = locator
 
+    def open_nested_element(self, name, attrs):
+        if self.param_format != 'xml':
+            self._report("Unescaped XML nested inside a <parameter/> element without format='xml'")
+        
+        self.nested_xml_level += 1
+        self.param_value += "<" + name
+        for key in attrs.keys():
+            self.param_value += " " + key + "='" + xml.sax.saxutils.escape(attrs[key], { "'" : "&apos" }) + "'"
+        self.param_value += ">"
+
+    def close_nested_element(self, name):
+        self.nested_xml_level -= 1
+        if self.param_value.endswith(">") and not self.param_value.endswith("/>"):
+            self.param_value = self.param_value[:-1] + "/>"
+        else:
+            self.param_value += "</" + name + "/>"
+        
     def startElement(self, name, attrs):
         if (self.state == OUTSIDE):
             if (name == 'superconf'):
@@ -52,7 +71,13 @@ class ConfigHandler (xml.sax.ContentHandler):
                 self.state = INCLUDE
                 return
             elif (name == 'parameter'):
-                (self.param_name,) = self._parse_attributes(name, attrs, 'name', True)
+                (self.param_name,self.param_format) = self._parse_attributes(name, attrs, 'name', True,
+                                                                                          'format', False)
+                if self.param_format == None:
+                    self.param_format = 'text'
+                if self.param_format != 'text' and self.param_format != 'xml':
+                    self._report("Parameter format must be 'xml' or 'text'")
+                    
                 self.param_value = ""
                 self.state = PARAMETER
                 return
@@ -77,7 +102,13 @@ class ConfigHandler (xml.sax.ContentHandler):
                 return
         elif (self.state == SERVICE):
             if (name == 'parameter'):
-                (self.param_name,) = self._parse_attributes(name, attrs, 'name', True)
+                (self.param_name,self.param_format) = self._parse_attributes(name, attrs, 'name', True,
+                                                                                          'format', False)
+                if self.param_format == None:
+                    self.param_format = 'text'
+                if self.param_format != 'text' and self.param_format != 'xml':
+                    self._report("Parameter format must be 'xml' or 'text'")
+                
                 self.param_value = ""
                 self.state = SERVICE_PARAMETER
                 return
@@ -126,6 +157,9 @@ class ConfigHandler (xml.sax.ContentHandler):
             elif (name == 'directory'):
                 self.state = SERVICE_DIRECTORY
                 return
+        elif (self.state == PARAMETER or self.state == SERVICE_PARAMETER):
+            self.open_nested_element(name, attrs)
+            return
 
         self._report("Invalid element <%s/>" % name)
 
@@ -137,14 +171,20 @@ class ConfigHandler (xml.sax.ContentHandler):
         elif (self.state == INCLUDE):
             self.state = SUPERCONF
         elif (self.state == PARAMETER):
-            self.config.set_parameter(self.param_name, self.param_value.strip())
-            self.state = SUPERCONF
+            if (self.nested_xml_level > 0):
+                self.close_nested_element(name)
+            else:
+                self.config.set_parameter(self.param_name, self.param_value.strip())
+                self.state = SUPERCONF
         elif (self.state == SERVICE):
             self.service = None
             self.state = SUPERCONF
         elif (self.state == SERVICE_PARAMETER):
-            self.service.set_parameter(self.param_name, self.param_value.strip())
-            self.state = SERVICE
+            if (self.nested_xml_level > 0):
+                self.close_nested_element(name)
+            else:
+                self.service.set_parameter(self.param_name, self.param_value.strip())
+                self.state = SERVICE
         elif (self.state == SERVICE_MERGE):
             self.state = SERVICE
         elif (self.state == SERVICE_REQUIREDSERVICE):
@@ -157,6 +197,8 @@ class ConfigHandler (xml.sax.ContentHandler):
     def characters(self, content):
         if (self.state == PARAMETER or
             self.state == SERVICE_PARAMETER):
+            if (self.param_format == 'xml'):
+                contents = xml.sax.saxutils.escape(content)
             self.param_value = self.param_value + content
             return
 
