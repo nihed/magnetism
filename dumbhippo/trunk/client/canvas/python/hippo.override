@@ -162,6 +162,66 @@ _wrap_HippoCanvasItem__do_get_height_request(PyObject *cls, PyObject *args, PyOb
     return Py_BuildValue("(ii)", min_height, natural_height);
 }
 %%
+override hippo_canvas_box_insert_sorted kwargs
+static int
+marshal_canvas_box_insert_sorted(HippoCanvasItem *a, HippoCanvasItem *b, void *data)
+{
+    PyObject *py_a, *py_b;
+	PyObject *compare = (PyObject*) data;
+	PyObject *retobj;
+	PyGILState_STATE state;	
+	int retval = 0;
+	
+    state = pyg_gil_state_ensure();
+	py_a = pygobject_new(G_OBJECT(a));    
+	py_b = pygobject_new(G_OBJECT(b));
+    
+    retobj = PyEval_CallFunction(compare, "(OO)", py_a, py_b);
+
+	Py_DECREF(py_a);
+	Py_DECREF(py_b);
+
+    if (retobj == NULL) {
+        PyErr_Print();
+    } else {
+    	retval = PyInt_AsLong(retobj);
+        if (retval == -1 && PyErr_Occurred())
+            PyErr_Print();    
+    }
+	
+    Py_XDECREF(retobj);
+
+    pyg_gil_state_release(state);
+    
+    return retval;
+}
+static PyObject *
+_wrap_hippo_canvas_box_insert_sorted(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "child", "flags", "compare_func", NULL };
+	PyGObject *item;
+	int flags = 0;
+	PyObject *compare;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!iO:HippoCanvasBox.insert_sorted", kwlist,
+    								 &PyHippoCanvasItem_Type, &item,
+    								 &flags,
+    								 &compare))
+        return NULL;
+    if (!PyCallable_Check(compare)) {
+        PyErr_SetString(PyExc_TypeError, "parameter must be callable");
+        return NULL;
+    }	
+
+	hippo_canvas_box_insert_sorted(HIPPO_CANVAS_BOX(self->obj), 
+								   HIPPO_CANVAS_ITEM(item->obj),
+								   flags,
+								   marshal_canvas_box_insert_sorted,
+								   compare);
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+%%
 override HippoCanvasBox__do_get_content_width_request kwargs
 static PyObject *
 _wrap_HippoCanvasBox__do_get_content_width_request(PyObject *cls, PyObject *args, PyObject *kwargs)
