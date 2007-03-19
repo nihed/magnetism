@@ -36,12 +36,16 @@ class AppOverview(PrelightingCanvasBox):
         self.__header.set_app(app)
         self.__description.set_property("text", app.get_description())
         
+    def launch(self):
+        return self.__header.launch()
+        
     def get_app(self):
         return self.__app
         
 class AppList(CanvasHBox):
     __gsignals__ = {
-        "selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
+        "selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "launch" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())      
     }
     
     def __init__(self):
@@ -82,9 +86,12 @@ class AppList(CanvasHBox):
              box.append(overview)
              
     def __on_overview_click(self, overview, event):
-         _logger.debug("pressed %s", overview)
+         _logger.debug("pressed %s %d", overview, event.count)
          
-         self.emit("selected", overview.get_app())
+         if event.count == 1:
+             self.emit("selected", overview.get_app())
+         else:
+             self.emit("launch")
              
 class AppBrowser(hippo.CanvasWindow):
     def __init__(self):
@@ -112,6 +119,7 @@ class AppBrowser(hippo.CanvasWindow):
         self.__app_list = AppList()
         self.__right_box.append(self.__app_list)
         self.__app_list.connect("selected", lambda list, app: self.__on_app_selected(app))
+        self.__app_list.connect("launch", lambda list: self.__on_app_launch()) 
         
         self.set_default_size(600, 400)
         self.connect("delete-event", gtk.Widget.hide_on_delete)
@@ -120,3 +128,7 @@ class AppBrowser(hippo.CanvasWindow):
         
     def __on_app_selected(self, app):
         self.__overview.set_app(app)
+        
+    def __on_app_launch(self):
+        self.__overview.launch()
+        self.hide()
