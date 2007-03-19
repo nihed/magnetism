@@ -46,6 +46,10 @@ AC_SUBST(LT_AGE)
 
 
 AC_PROG_CC
+# This disables building a static library for the firefox plugin, while having
+# no effect on our convenience libraries. (I don't know why libtool builds
+# static libraries when -module is supplied on a platform supporting dlopen...)
+AM_DISABLE_STATIC
 AC_PROG_CXX
 AC_PROG_LIBTOOL
 AC_ISC_POSIX
