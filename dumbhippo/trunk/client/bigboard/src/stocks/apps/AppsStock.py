@@ -122,6 +122,7 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self.__static_set_ids = {}
         for app in apps:
             display = apps_widgets.AppDisplay(app)
+            display.connect("button-press-event", lambda display, event: display.launch()) 
             self.__static_set.append(display)           
             self.__static_set_ids[app.get_id()] = True
             
@@ -158,6 +159,7 @@ class AppsStock(bigboard.AbstractMugshotStock):
             if self.__static_set_ids.has_key(app.get_id()):
                 continue
             display = apps_widgets.AppDisplay(app)
+            display.connect("button-press-event", lambda display, event: display.launch())             
             self.__dynamic_set.append(display)
         self.__dynamic_set_container.set_showtext("Show Recent (%d)" % (len(self.__dynamic_set.get_children()),))
             
