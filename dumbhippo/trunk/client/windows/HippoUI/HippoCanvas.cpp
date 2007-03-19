@@ -616,20 +616,33 @@ HippoCanvas::onMouseDown(int button, WPARAM wParam, LPARAM lParam)
         if (getMouseCoords(lParam, &x, &y)) {
             hippo_canvas_item_emit_button_press_event(root_,
                 x, y, button,
-                0, 0, 0);
+                0, 0, 0, 1);
         }
     }
 }
 
 void
-HippoCanvas::onMouseUp(int button, WPARAM wParam, LPARAM lParam)
+HippoCanvas::onMouseClick(int count, WPARAM wParam, LPARAM lParam)
 {
     if (root_ != (HippoCanvasItem*) NULL) {
         int x, y;
         getMouseCoords(lParam, &x, &y); // don't check return value - emit even if outside the area
-        hippo_canvas_item_emit_button_release_event(root_,
+        hippo_canvas_item_emit_button_press_event(root_,
                 x, y, button,
-                0, 0, 0);
+                0, 0, count);
+    }
+}
+
+void
+HippoCanvas::onMouseDown(int button, WPARAM wParam, LPARAM lParam)
+{
+    if (root_ != (HippoCanvasItem*) NULL) {
+        int x, y;
+        if (getMouseCoords(lParam, &x, &y)) {
+            hippo_canvas_item_emit_button_press_event(root_,
+                x, y, button,
+                0, 0, 0, 1);
+        }
     }
 }
 
@@ -929,6 +942,9 @@ HippoCanvas::processMessage(UINT   message,
         case WM_LBUTTONUP:
             onMouseUp(1, wParam, lParam);
             return true;
+        case WM_LBUTTONDBLCLK:
+        	onMouseClick(2, wParam, lParam);
+        	return true;
         case WM_MBUTTONDOWN:
             onMouseDown(2, wParam, lParam);
             return true;

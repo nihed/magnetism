@@ -50,6 +50,7 @@ private:
     void onPaint(WPARAM wParam, LPARAM lParam);
     void onMouseDown(int button, WPARAM wParam, LPARAM lParam);
     void onMouseUp(int button, WPARAM wParam, LPARAM lParam);
+    void onMouseClick(int count, WPARAM wParam, LPARAM lParam);    
     void onMouseMove(WPARAM wParam, LPARAM lParam);
     void onMouseLeave(WPARAM wParam, LPARAM lParam);
     void onRootRequestChanged();
