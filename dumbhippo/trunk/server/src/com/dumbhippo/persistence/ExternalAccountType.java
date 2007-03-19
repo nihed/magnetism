@@ -449,6 +449,11 @@ public enum ExternalAccountType {
 	},
 	LASTFM("Last.fm")  { // 10
 		@Override
+		public String getDomNodeIdName() {
+			return "Lastfm";
+		}
+		
+		@Override
 		public String getLink(String handle, String extra) {
 			return getSiteLink() + "/user/" + StringUtils.urlEncode(handle) + "/";
 		}
@@ -504,6 +509,12 @@ public enum ExternalAccountType {
 		}
 	}, 
 	DELICIOUS("del.icio.us") { // 11
+		
+		@Override
+		public String getDomNodeIdName() {
+			return "Delicious";
+		}
+		
 		@Override
 		public String getIconName() {
 			return "favicon_delicious.png";
@@ -744,6 +755,67 @@ public enum ExternalAccountType {
 		public boolean isNew() {
 			return true;
 		}		
+	},
+	GOOGLE_READER("Google Reader") { // 16
+		@Override
+		public String getDomNodeIdName() {
+			return "GoogleReader";
+		}
+		
+		@Override
+		public String getIconName() {
+			return "favicon_google_reader.png";
+		}
+		
+		@Override
+		public String getLink(String handle, String extra) {
+			return "http://www.google.com/reader/shared/" + StringUtils.urlEncode(handle);
+		}
+		
+		@Override
+		public String getSiteLink() {
+			return "http://www.google.com/reader/view/";
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "Shared by " + handle;
+		}
+		
+		@Override
+	    public String getSiteUserInfoType() {
+	    	return "Shared items page link or feed URL";
+	    }
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				// 20 numbers, for now we just require nonzero length and all numbers, in case it isn't fixed at 20
+				if (handle.length() < 1)
+					throw new ValidationException("Empty Google Reader ID number");
+				if (handle.length() > 25)
+					throw new ValidationException("Too long to Google Reader ID number '" + handle + "'");
+				if (!StringUtils.isAllNumbers(handle))
+					throw new ValidationException("Google Reader ID contains non-numbers '" + handle + "'");
+				try {
+					new URL(getLink(handle, null));
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid Google Reader ID '" + handle + "': " + e.getMessage());
+				}
+			}
+			return handle;
+		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}
+		
+		@Override 
+		public boolean isNew() {
+			return true;
+		}
 	};
 	
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountType.class);	
@@ -843,4 +915,14 @@ public enum ExternalAccountType {
     public static List <ExternalAccountType> alphabetizedValues() {
     	return SortUtils.sortCollection(ExternalAccountType.values(), "getSiteName");
     }
+
+    /** 
+     * return a name usable in a DOM id name, usually looks like "FooBar" if the 
+     * * site is "Foo Bar" for example
+     * @return
+     */
+	public String getDomNodeIdName() {
+		// this usually works as a default, though it's a bit of a hack
+		return getSiteName();
+	}
 }

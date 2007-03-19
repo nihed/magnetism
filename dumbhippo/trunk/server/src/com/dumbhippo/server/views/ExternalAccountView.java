@@ -37,6 +37,11 @@ public class ExternalAccountView {
     	this.link = link;
     }
 
+    /** FIXME I think this would be better eliminated, anywhere that this "not associated with 
+     * any specific external account" ExternalAccountView is allowed, we should be using 
+     * ExternalAccountType, not ExternalAccountView.
+     * @param externalAccountType
+     */
     public ExternalAccountView(ExternalAccountType externalAccountType) {
     	this.externalAccountType = externalAccountType;
     }
@@ -53,10 +58,8 @@ public class ExternalAccountView {
 		return externalAccountType.getSiteName();
 	}
 	
-	public String getSiteBaseName() {		
-		String name = externalAccountType.getSiteName();
-		return name.substring(0, 1).toUpperCase() +
-		       name.substring(1, name.length()).replaceAll("\\.", "");
+	public String getDomNodeIdName() {	
+		return externalAccountType.getDomNodeIdName();
 	}
 	
 	public String getSiteUserInfoType() {

@@ -197,6 +197,14 @@ public class StringUtils {
 		return true;
 	}
 	
+	public static boolean isAllNumbers(String s) {
+		for (char c : s.toCharArray()) {
+			if (!Character.isDigit(c))
+				return false;
+		}
+		return true;
+	}
+	
 	public static boolean isAlphanumericOrInSet(String s, String otherCharsAllowed) {
 		for (char c : s.toCharArray()) {
 			if (!Character.isLetterOrDigit(c)) {

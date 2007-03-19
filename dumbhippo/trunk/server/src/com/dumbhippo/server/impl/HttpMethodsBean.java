@@ -2038,6 +2038,52 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feed.getAccounts().add(external);
 	}
 	
+	public void doSetGoogleReaderUrl(XmlBuilder xml, UserViewpoint viewpoint, String feedOrPageUrl) throws XmlMethodException {
+		feedOrPageUrl = feedOrPageUrl.trim();
+		
+		// the page url would be "http://www.google.com/reader/shared/10558901572126132384"
+		// the feed would be "http://www.google.com/reader/public/atom/user/10558901572126132384/state/com.google/broadcast"
+		
+		String userId = null;
+		if (feedOrPageUrl.startsWith("http://www.google.com/reader/shared/")) {
+			userId = StringUtils.findLastPathElement(feedOrPageUrl);
+		} else if (feedOrPageUrl.startsWith("http://www.google.com/reader/public/atom/user/")) {
+			String s = feedOrPageUrl.substring("http://www.google.com/reader/public/atom/user/".length());
+			int i = s.indexOf('/');
+			if (i >= 0)
+				userId = s.substring(0, i);
+			if (userId.length() == 0 || !StringUtils.isAllNumbers(userId))
+				userId = null;
+		} 
+		
+		if (userId == null) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Give the URL of your Google Reader shared items page or feed");
+		} else {
+			logger.debug("Parsed google reader id '{}' from '{}'", userId, feedOrPageUrl);
+		}
+		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.GOOGLE_READER);
+		try {
+			external.setHandleValidating(userId);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
+		
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		
+		Feed feed;
+		try {
+		    feed = feedSystem.scrapeFeedFromUrl(new URL("http://www.google.com/reader/public/atom/user/" +
+		    		StringUtils.urlEncode(external.getHandle() + "/state/com.google/broadcast")));
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
+		}
+		EJBUtil.forceInitialization(feed.getAccounts());
+		
+		external.setFeed(feed);
+		feed.getAccounts().add(external);
+	}
+	
 	private StatisticsService getStatisticsService() throws XmlMethodException {
 		// This probably should be using JNDI, or MX, or EJB injection, but the static
 		// member variable in StatisticsService is sufficient for now and simple

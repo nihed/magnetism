@@ -291,6 +291,25 @@ public class AccountPage {
 	public String getNetflixHateQuip() {
 		return getExternalAccountHateQuip(ExternalAccountType.NETFLIX);
 	}
+
+	public String getGoogleReaderUrl() {
+		ExternalAccount external;
+		try {
+			external = externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), ExternalAccountType.GOOGLE_READER);
+			return external.getLink();
+		} catch (NotFoundException e) {
+			// nothing to do
+		}
+		return ""; 
+	}
+	
+	public String getGoogleReaderHateQuip() {
+		return getExternalAccountHateQuip(ExternalAccountType.GOOGLE_READER);
+	}	
+
+	public String getGoogleReaderSentiment() {
+		return getExternalAccountSentiment(ExternalAccountType.GOOGLE_READER);
+	}	
 	
 	/**
 	 * Returns a list of supported account views; with the ExternalAccount information for the

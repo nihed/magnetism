@@ -149,6 +149,12 @@ dh.account.setNetflixUrl = function(name, loadFunc, errorFunc) {
    	                      { "url" : name },
    	                      loadFunc, errorFunc);
 }
+ 
+dh.account.setGoogleReaderUrl = function(name, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("setGoogleReaderUrl",
+   	                      { "url" : name },
+   	                      loadFunc, errorFunc);
+}
    	
 dh.account.createExternalAccountOnHateSavedFunc = function(entry, accountType) {
 	return function(value) {
@@ -437,6 +443,20 @@ dh.account.onNetflixLoveSaved = function(value) {
 	  	    	 }); 
 }
 
+dh.account.onGoogleReaderLoveSaved = function(value) {
+	var entry = dh.account.googleReaderEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+  	dh.account.setGoogleReaderUrl(value, 
+	 	    	 function(childNodes, http) {
+	 	    	 	entry.setMode('love');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 }); 
+}
+
 dh.account.disableFacebookSession = function() {   
   	dh.server.doPOST("disablefacebooksession",
 			 	     {},
@@ -543,6 +563,16 @@ dh.account.createNetflixEntry = function() {
 	dh.account.netflixEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.netflixEntry, 'NETFLIX');
 }
 
+dh.account.createGoogleReaderEntry = function() {	
+	dh.account.googleReaderEntry = new dh.lovehate.Entry('dhGoogleReader', 'Google Reader public shared items page', dh.account.initialGoogleReaderUrl,
+					"I don't like to read", dh.account.initialGoogleReaderHateQuip, 'Your friends see your Google Reader public shared items.',
+					'http://www.google.com/reader/view');
+	dh.account.googleReaderEntry.setSpecialLoveValue("My Shared Items");
+	dh.account.googleReaderEntry.onLoveSaved = dh.account.onGoogleReaderLoveSaved;
+	dh.account.googleReaderEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.googleReaderEntry, 'GOOGLE_READER');
+	dh.account.googleReaderEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.googleReaderEntry, 'GOOGLE_READER');
+}
+
 dhAccountInit = function() {
 	if (!dh.account.active) {
 		dh.dom.disableChildren(document.getElementById("dhAccountContents"));
@@ -590,6 +620,7 @@ dhAccountInit = function() {
 	dh.account.createDiggEntry();
 	dh.account.createRedditEntry();
 	dh.account.createNetflixEntry();
+	dh.account.createGoogleReaderEntry();
 }
 
 dh.event.addPageLoadListener(dhAccountInit);
