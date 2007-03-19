@@ -371,6 +371,10 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
+	public void doSetGoogleReaderUrl(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;	
+	
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "url" })
 	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException;
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)

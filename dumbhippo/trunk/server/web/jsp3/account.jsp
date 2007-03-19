@@ -93,6 +93,8 @@
 		dh.account.initialRedditHateQuip = <dh:jsString value="${account.redditHateQuip}"/>;					
 		dh.account.initialNetflixUrl = <dh:jsString value="${account.netflixFeedUrl}"/>;
 		dh.account.initialNetflixHateQuip = <dh:jsString value="${account.netflixHateQuip}"/>;	
+		dh.account.initialGoogleReaderUrl = <dh:jsString value="${account.googleReaderUrl}"/>;
+		dh.account.initialGoogleReaderHateQuip = <dh:jsString value="${account.googleReaderHateQuip}"/>;
 	</script>
 </head>
 <dht3:page currentPageLink="account">
@@ -237,7 +239,7 @@
 				            <c:set var="prefixIconWidth" value="31"/>
 				            <c:set var="prefixIconHeight" value="10"/>
 				        </c:if>
-                        <dht:formTableRow controlId="dh${supportedAccount.siteBaseName}" 
+                        <dht:formTableRow controlId="dh${supportedAccount.domNodeIdName}" 
                                           label="${supportedAccount.siteName}" icon="/images3/${buildStamp}/${supportedAccount.iconName}"
                                           prefixIcon="${prefixIcon}" prefixIconWidth="${prefixIconWidth}" prefixIconHeight="${prefixIconHeight}">
                             <c:choose>
@@ -257,7 +259,7 @@
 		                    	        userInfoType="${supportedAccount.siteUserInfoType}"
 		                    	        isInfoTypeProvidedBySite="${supportedAccount.infoTypeProvidedBySite}"
 		                    	        link="${supportedAccount.externalAccountType.siteLink}"
-		                    	        baseId="dh${supportedAccount.siteBaseName}" 
+		                    	        baseId="dh${supportedAccount.domNodeIdName}" 
 		                    	        mode="${supportedAccount.sentiment}"/>
 		                        </c:otherwise>
 		                    </c:choose>    	

@@ -11,13 +11,13 @@
 
 #dhAccounts .dh-label-cell {
 	text-align:     left;
-	width:          90px;
+	width:          120px; /* if you change this, you also have to change the -with-prefix one below */
 }
 
 #dhAccounts .dh-label-cell .dh-label-cell-div-with-prefix {
     position:       relative;
     margin-left:    -40px;
-    width:          130px;
+    width:          160px; /* if you change this, you also have to change the one above */
 }
 
 #dhAccounts .dh-control-cell-next-to-info {
