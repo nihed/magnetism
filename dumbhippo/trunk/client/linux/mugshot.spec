@@ -36,6 +36,7 @@ BuildRequires:  libjpeg-devel >= 6b
 BuildRequires:  pcre-devel >= 6.3
 BuildRequires:  gnome-desktop-devel >= 2.10.0
 BuildRequires:  gnome-vfs2-devel
+BuildRequires:  desktop-file-utils
 
 # Needed for fc6 and greater
 # BuildRequires: firefox-devel >= 1.5.04
@@ -75,6 +76,16 @@ rm -rf $RPM_BUILD_ROOT
 export GCONF_DISABLE_MAKEFILE_SCHEMA_INSTALL=1
 make install DESTDIR=$RPM_BUILD_ROOT
 unset GCONF_DISABLE_MAKEFILE_SCHEMA_INSTALL
+
+# Don't package a .la file for the component .so
+rm -f $RPM_BUILD_ROOT%{_libdir}/mugshot/firefox/components/*.la
+
+# Run desktop-file-install to so we get validation (and to make
+# things fedora-packaging-guidelines compliant)
+desktop-file-install 					\
+  --dir=$RPM_BUILD_ROOT%{_datadir}/gnome/autostart 	\
+  --vendor=mugshot   					\
+  mugshot.desktop
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -198,6 +209,11 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
+* Mon Mar 19 2007 Owen Taylor <otaylor@redhat.com> - 1.1.38-1
+- Don't package the .la file for libhippofirefox
+- Use desktop-file-install to validate mugshot.spec and make
+  the fedora-packaging-guidelines happy
+
 * Thu Mar  1 2007 Owen Taylor <otaylor@redhat.com> - 1.1.37-1
 - 1.1.37
 
