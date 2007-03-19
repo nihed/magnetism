@@ -6,21 +6,20 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Properties;
 
-import javax.annotation.PostConstruct;
-import javax.ejb.Stateless;
-
+import org.jboss.annotation.ejb.Service;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.SimpleServiceMBean;
 
 /*
  * Implementation of Configuration
  * @author walters
  */
-@Stateless
-public class ConfigurationBean implements Configuration {
+@Service
+public class ConfigurationBean implements Configuration, SimpleServiceMBean {
 	
 	static private final Logger logger = GlobalSetup.getLogger(ConfigurationBean.class);		
 
@@ -30,10 +29,7 @@ public class ConfigurationBean implements Configuration {
 	
 	private URL baseurl;
 	
-	@PostConstruct
-	public void init() {
-		logger.debug("Loading dumbhippo configuration properties (happens once per ConfigurationBean instance)");
-		
+	public void start() {
 		Properties systemProperties = System.getProperties();
 		
 		// We don't want to use System.getProperties() as the default here, since 
@@ -78,10 +74,24 @@ public class ConfigurationBean implements Configuration {
 			else
 				props.remove(prop.getKey());
 		}
+		
+		String s = getPropertyFatalIfUnset(HippoProperty.BASEURL);
+		try {
+			baseurl = new URL(s);
+		} catch (MalformedURLException e) {
+			throw new RuntimeException("Server misconfiguration - base URL is invalid! '" + s + "'", e);
+		}
+	}
+	
+	public void stop() {
 	}
 
 	public String getProperty(String name) throws PropertyNotFoundException {
-		String ret = overriddenProperties.getProperty(name);
+		String ret;
+	
+		synchronized(ConfigurationBean.class) {
+			ret = overriddenProperties.getProperty(name);
+		}
 		if (ret == null)
 		    ret = props.getProperty(name);
 		if (ret == null)
@@ -115,19 +125,13 @@ public class ConfigurationBean implements Configuration {
 	}
 
 	public URL getBaseUrl() {
-		if (baseurl == null) {		
-			String s = getPropertyFatalIfUnset(HippoProperty.BASEURL);
-			try {
-				baseurl = new URL(s);
-			} catch (MalformedURLException e) {
-				throw new RuntimeException("Server misconfiguration - base URL is invalid! '" + s + "'", e);
-			}
-		}
 		return baseurl;
 	}
 	
 	public void setProperty(String name, String value) {
-		overriddenProperties.put(name, value);
+		synchronized(ConfigurationBean.class) {
+			overriddenProperties.put(name, value);
+		}
 	}
 
 	public boolean isFeatureEnabled(String name) {
@@ -137,7 +141,9 @@ public class ConfigurationBean implements Configuration {
 	static private File webRealPath;
 	
 	public File getWebRealPath() {
-		return webRealPath;
+		synchronized(ConfigurationBean.class) {
+			return webRealPath;
+		}
 	}
 	
 	public static synchronized void setWebRealPath(File file) {
