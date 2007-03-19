@@ -65,8 +65,7 @@ class MultiVTable(CanvasHBox):
         
     def append_section_head(self, text):
         self.__setup()
-        # Fill out empty spaces by using the allocation from earlier appended items,
-        # similar to a HTML table
+        # Fill out empty spaces as necessary
         if self.__append_index != 0:
             (x,y) = self.get_children()[self.__append_index-1].get_allocation()            
             for i,v in enumerate(self.get_children()[self.__append_index:]):
@@ -112,7 +111,8 @@ class AppList(MultiVTable):
         self.__mugshot.connect("global-top-apps-changed", 
                                lambda mugshot, apps: self.__on_top_apps_changed(apps))          
         
-        self.__categories = {} # <string,set<Application>>
+        self.__search = None
+        self.__all_apps = set()
         
     def __on_mugshot_initialized(self, mugshot):
         self.__on_top_apps_changed(self.__mugshot.get_global_top_apps())
@@ -123,23 +123,44 @@ class AppList(MultiVTable):
         
         _logger.debug("handling top apps changed")
         
-        self.__categories.clear()
-        self.remove_all()
+        self.__all_apps = set(apps)
+        self.__sync_display()
         
-        for app in apps:
-             cat = app.get_category()
-             if not self.__categories.has_key(cat):
-                 self.__categories[cat] = set()
-             self.__categories[cat].add(app)
+    def __sync_display(self):
+        
+        self.remove_all()
+                
+        categories = {} 
+        
+        # sort into categories
+        for app in filter(self.__filter_app, self.__all_apps):
+            cat = app.get_category()
+            if not categories.has_key(cat):
+                categories[cat] = set()
+            categories[cat].add(app)
              
-        cat_keys = self.__categories.keys()
+        cat_keys = categories.keys()
         cat_keys.sort()
         for catname in cat_keys:
             self.append_section_head(catname)
-            for app in self.__categories[catname]:
+            for app in categories[catname]:
                 overview = apps_widgets.AppDisplay(app)
                 overview.connect("button-press-event", self.__on_overview_click)             
                 self.append_column_item(overview)
+                
+    def __filter_app(self, app):
+        if not self.__search:
+            return True
+        search = self.__search.lower()
+        keys = (app.get_name(), app.get_description())
+        for key in keys:
+            if key.lower().find(search) >= 0:
+                return True
+        return False
+                
+    def set_search(self, search):
+        self.__search = (search == "" and None) or search
+        self.__sync_display()
              
     def __on_overview_click(self, overview, event):
          _logger.debug("pressed %s %d", overview, event.count)
@@ -164,6 +185,8 @@ class AppBrowser(hippo.CanvasWindow):
         self.__search_text = hippo.CanvasText(text="Search", font="Bold 12px")
         self.__left_box.append(self.__search_text)
         self.__search_input = CanvasEntry()
+        self.__search_input.connect("notify::text", self.__on_search_changed)
+        self.__idle_search_id = 0
         self.__left_box.append(self.__search_input)        
     
         self.__overview = AppOverview()
@@ -193,3 +216,12 @@ class AppBrowser(hippo.CanvasWindow):
     def __on_keypress(self, event):
         if event.keyval == 65307:
             self.hide()
+            
+    def __on_search_changed(self, input, text):
+        if self.__idle_search_id > 0:
+            return
+        self.__idle_search_id = gobject.timeout_add(500, self.__idle_do_search)
+        
+    def __idle_do_search(self):
+        self.__app_list.set_search(self.__search_input.get_property("text"))
+        self.__idle_search_id = 0
