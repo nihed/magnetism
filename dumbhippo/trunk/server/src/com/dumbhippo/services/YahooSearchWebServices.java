@@ -307,7 +307,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 	
 	static public final void main(String[] args) {
 		ConfigurationBean config = new ConfigurationBean();
-		config.init();
+		config.start();
 		
 		YahooSearchWebServices ws = new YahooSearchWebServices(6000, config);
 		List<YahooSongData> list = ws.lookupSong("Bob Dylan", "Time Out of Mind", "Tryin' To Get To Heaven");
