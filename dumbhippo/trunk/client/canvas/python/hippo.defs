@@ -911,6 +911,7 @@
     '("int" "x11_x_root")
     '("int" "x11_y_root")
     '("guint32" "x11_time")
+    '("int" "count")
   )
 )
 

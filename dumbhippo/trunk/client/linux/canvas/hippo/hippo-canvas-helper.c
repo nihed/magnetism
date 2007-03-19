@@ -421,6 +421,7 @@ hippo_canvas_helper_button_press(HippoCanvasHelper *helper,
                                  GdkEventButton    *event)
 {
     int window_x, window_y;
+    int count;
     
     if (helper->root == NULL)
         return FALSE;
@@ -431,12 +432,18 @@ hippo_canvas_helper_button_press(HippoCanvasHelper *helper,
     g_debug("canvas button press at %d,%d allocation %d,%d", (int) event->x, (int) event->y,
             widget->allocation.x, widget->allocation.y);
     */
-
+    count = 1;
+    if (event->type == GDK_2BUTTON_PRESS)
+    	count = 2;
+    else if (event->type == GDK_3BUTTON_PRESS)
+    	count = 3;
+    
     hippo_canvas_item_emit_button_press_event(helper->root,
                                               event->x - window_x, event->y - window_y,
                                               event->button,
                                               event->x_root, event->y_root,
-                                              event->time);
+                                              event->time,
+                                              count);
 
     return TRUE;
 }

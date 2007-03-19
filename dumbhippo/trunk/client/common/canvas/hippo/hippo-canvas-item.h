@@ -115,7 +115,8 @@ gboolean hippo_canvas_item_emit_button_press_event (HippoCanvasItem *canvas_item
                                                     int              button,
                                                     int              x11_x_root,
                                                     int              x11_y_root,
-                                                    guint32          x11_time);
+                                                    guint32          x11_time,
+                                                    int              count);
 gboolean hippo_canvas_item_emit_button_release_event (HippoCanvasItem *canvas_item,
                                                       int              x,
                                                       int              y,

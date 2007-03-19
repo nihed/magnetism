@@ -41,6 +41,7 @@ struct _HippoEvent {
         } motion;
         struct {
             int button;
+            int count;
 
             /* we pass these through for gtk_window_begin_resize_drag() */
             int x11_x_root;
