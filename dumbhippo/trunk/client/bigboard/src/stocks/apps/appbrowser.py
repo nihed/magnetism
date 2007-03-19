@@ -12,14 +12,14 @@ _logger = logging.getLogger("bigboard.AppBrowser")
 
 class AppOverview(PrelightingCanvasBox):
     def __init__(self, app=None):
-        super(AppOverview, self).__init__(box_width=200)
+        super(AppOverview, self).__init__(box_width=200, border=1, border_color=0x666666FF)
         
         self.__header = apps_widgets.AppDisplay()
         self.append(self.__header)
         
         self.__description = hippo.CanvasText(size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END,
                                               text="""Lorem ipsum dolor sit amet, consectetuer adipiscing elit.""")
-        self.append(self.__description)
+        self.append(self.__description)     
         
         self.__updated = hippo.CanvasText(text="Last updated")
         self.append(self.__updated)
@@ -177,7 +177,7 @@ class AppBrowser(hippo.CanvasWindow):
         self.set_keep_above(1)
         self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))        
     
-        self.__box = CanvasHBox()
+        self.__box = CanvasHBox(spacing=10)
     
         self.__left_box = CanvasVBox()
         self.__box.append(self.__left_box)
@@ -191,6 +191,7 @@ class AppBrowser(hippo.CanvasWindow):
     
         self.__overview = AppOverview()
         self.__left_box.append(self.__overview)
+        self.__left_box.set_child_visible(self.__overview, False)        
         
         self.__right_box = CanvasVBox()
         self.__box.append(self.__right_box)
@@ -200,13 +201,14 @@ class AppBrowser(hippo.CanvasWindow):
         self.__app_list.connect("selected", lambda list, app: self.__on_app_selected(app))
         self.__app_list.connect("launch", lambda list: self.__on_app_launch()) 
         
-        self.set_default_size(600, 400)
+        self.set_default_size(750, 600)
         self.connect("delete-event", gtk.Widget.hide_on_delete)
         self.connect("key-press-event", lambda win, event: self.__on_keypress(event))
         
         self.set_root(self.__box)
         
     def __on_app_selected(self, app):
+        self.__left_box.set_child_visible(self.__overview, True)
         self.__overview.set_app(app)
         
     def __on_app_launch(self):
