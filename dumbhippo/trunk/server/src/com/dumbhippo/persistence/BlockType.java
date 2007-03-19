@@ -196,6 +196,15 @@ public enum BlockType {
 		public StackInclusion getDefaultStackInclusion() {
 			return StackInclusion.ONLY_WHEN_VIEWING_SELF;
 		}
+	}, GOOGLE_READER_SHARED_ITEM {
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
+		@Override
+		public boolean userOriginIsData1() {
+			return true;
+		}
 	};
 	
 	// True for blocks which are originated by a user and the
