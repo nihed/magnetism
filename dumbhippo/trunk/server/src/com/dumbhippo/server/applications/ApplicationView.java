@@ -27,6 +27,8 @@ public class ApplicationView {
 		builder.appendEmptyNode("application",
 								"id", application.getId(),
 				                "name", application.getName(),
+				                "tooltip", application.getTooltip(),
+				                "category", application.getCategory().getDisplayName(),
 				                "description", application.getDescription(),
 				                "desktopNames", application.getDesktopNames(),
 				                "iconUrl", getIcon().getUrl(),
