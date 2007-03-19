@@ -1,6 +1,5 @@
 package com.dumbhippo.persistence;
 
-import javax.persistence.Transient;
 
 /**
  * This enum is used in database persistence, so changing it affects the schema.

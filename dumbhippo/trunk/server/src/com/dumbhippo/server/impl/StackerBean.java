@@ -75,6 +75,7 @@ import com.dumbhippo.server.blocks.DiggBlockHandler;
 import com.dumbhippo.server.blocks.FacebookBlockHandler;
 import com.dumbhippo.server.blocks.FlickrPersonBlockHandler;
 import com.dumbhippo.server.blocks.FlickrPhotosetBlockHandler;
+import com.dumbhippo.server.blocks.GoogleReaderBlockHandler;
 import com.dumbhippo.server.blocks.GroupChatBlockHandler;
 import com.dumbhippo.server.blocks.GroupMemberBlockHandler;
 import com.dumbhippo.server.blocks.GroupRevisionBlockHandler;
@@ -201,6 +202,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			break;
 		case ACCOUNT_QUESTION:
 			handlerClass = AccountQuestionBlockHandler.class;
+			break;
+		case GOOGLE_READER_SHARED_ITEM:
+			handlerClass = GoogleReaderBlockHandler.class;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
@@ -2030,6 +2034,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case REDDIT_ACTIVITY_ENTRY:
 		case NETFLIX_MOVIE:
 		case ACCOUNT_QUESTION:
+		case GOOGLE_READER_SHARED_ITEM:
 			isGroupParticipation = false;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
