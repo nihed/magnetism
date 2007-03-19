@@ -24,7 +24,7 @@ public class ConfigurationBean implements Configuration {
 	
 	static private final Logger logger = GlobalSetup.getLogger(ConfigurationBean.class);		
 
-	static private Properties overridenProperties = new Properties();
+	static private Properties overriddenProperties = new Properties();
 	
 	private Properties props;
 	
@@ -81,7 +81,7 @@ public class ConfigurationBean implements Configuration {
 	}
 
 	public String getProperty(String name) throws PropertyNotFoundException {
-		String ret = overridenProperties.getProperty(name);
+		String ret = overriddenProperties.getProperty(name);
 		if (ret == null)
 		    ret = props.getProperty(name);
 		if (ret == null)
@@ -127,7 +127,7 @@ public class ConfigurationBean implements Configuration {
 	}
 	
 	public void setProperty(String name, String value) {
-		overridenProperties.put(name, value);
+		overriddenProperties.put(name, value);
 	}
 
 	public boolean isFeatureEnabled(String name) {
