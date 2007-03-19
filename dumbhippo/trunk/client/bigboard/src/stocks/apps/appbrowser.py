@@ -42,24 +42,77 @@ class AppOverview(PrelightingCanvasBox):
     def get_app(self):
         return self.__app
         
-class AppList(CanvasHBox):
+class MultiVTable(CanvasHBox):
+    """Implements an multi-column aligned table.  May have inner section headings."""
+    def __init__(self, columns=2, horiz_spacing=30, vert_spacing=5, item_height=None):
+        super(MultiVTable, self).__init__()    
+        
+        if item_height is None:
+            raise NotImplementedError("Must specify an item_height right now")
+        
+        self.__horiz_spacing = horiz_spacing
+        self.__vert_spacing = vert_spacing
+        self.__column_count = columns
+        self.__item_height = item_height
+
+    def __setup(self):
+        if self.__column_count == len(self.get_children()):
+            return
+        for i in range(self.__column_count):
+            self.append(CanvasVBox(spacing=self.__vert_spacing))
+        
+        self.__append_index = 0
+        
+    def append_section_head(self, text):
+        self.__setup()
+        # Fill out empty spaces by using the allocation from earlier appended items,
+        # similar to a HTML table
+        if self.__append_index != 0:
+            (x,y) = self.get_children()[self.__append_index-1].get_allocation()            
+            for i,v in enumerate(self.get_children()[self.__append_index:]):
+                empty = CanvasVBox(box_height=(y>0 and y or self.__item_height))
+                v.append(empty)
+                
+        self.__append_index = 0
+        
+        for i,v in enumerate(self.get_children()):
+            subbox = CanvasVBox(color=0x666666FF, border_bottom=1, border_color=0x666666FF)
+            text_item = hippo.CanvasText(font="Bold 14px", xalign=hippo.ALIGNMENT_START)
+            if i == 0:
+                text_item.set_property("text", text)
+            else:
+                text_item.set_property("text", " ")
+            subbox.append(text_item)
+            v.append(subbox)
+    
+    def append_column_item(self, child):
+        self.__setup()
+        for i,v in enumerate(self.get_children()):
+            if i == self.__append_index:
+                kwargs = {'box_height': self.__item_height}
+                if i != self.__column_count-1:
+                    kwargs['padding_right'] = self.__horiz_spacing
+                wrapper = CanvasVBox(**kwargs)
+                wrapper.append(child)
+                v.append(wrapper)
+                break
+        self.__append_index = (self.__append_index + 1) % self.__column_count
+        
+class AppList(MultiVTable):
     __gsignals__ = {
         "selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "launch" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())      
     }
     
     def __init__(self):
-        super(AppList, self).__init__()
+        super(AppList, self).__init__(columns=3,item_height=40)
         
         self.__mugshot = mugshot.get_mugshot()
         self.__mugshot.connect("initialized", self.__on_mugshot_initialized)
         self.__mugshot.connect("global-top-apps-changed", 
                                lambda mugshot, apps: self.__on_top_apps_changed(apps))          
         
-        self.__column_one = CanvasVBox(padding_right=30)
-        self.append(self.__column_one)
-        self.__column_two = CanvasVBox()
-        self.append(self.__column_two)
+        self.__categories = {} # <string,set<Application>>
         
     def __on_mugshot_initialized(self, mugshot):
         self.__on_top_apps_changed(self.__mugshot.get_global_top_apps())
@@ -70,20 +123,23 @@ class AppList(CanvasHBox):
         
         _logger.debug("handling top apps changed")
         
-        self.__column_one.remove_all()
-        self.__column_two.remove_all()
+        self.__categories.clear()
+        self.remove_all()
         
-        idx = 0
-        box = None
         for app in apps:
-             overview = apps_widgets.AppDisplay(app)
-             overview.connect("button-press-event", self.__on_overview_click)
-             if idx == 0:
-                 box = self.__column_one
-             elif idx == 1:
-                 box = self.__column_two
-             idx = (idx+1) % 2
-             box.append(overview)
+             cat = app.get_category()
+             if not self.__categories.has_key(cat):
+                 self.__categories[cat] = set()
+             self.__categories[cat].add(app)
+             
+        cat_keys = self.__categories.keys()
+        cat_keys.sort()
+        for catname in cat_keys:
+            self.append_section_head(catname)
+            for app in self.__categories[catname]:
+                overview = apps_widgets.AppDisplay(app)
+                overview.connect("button-press-event", self.__on_overview_click)             
+                self.append_column_item(overview)
              
     def __on_overview_click(self, overview, event):
          _logger.debug("pressed %s %d", overview, event.count)
@@ -123,6 +179,7 @@ class AppBrowser(hippo.CanvasWindow):
         
         self.set_default_size(600, 400)
         self.connect("delete-event", gtk.Widget.hide_on_delete)
+        self.connect("key-press-event", lambda win, event: self.__on_keypress(event))
         
         self.set_root(self.__box)
         
@@ -132,3 +189,7 @@ class AppBrowser(hippo.CanvasWindow):
     def __on_app_launch(self):
         self.__overview.launch()
         self.hide()
+        
+    def __on_keypress(self, event):
+        if event.keyval == 65307:
+            self.hide()
