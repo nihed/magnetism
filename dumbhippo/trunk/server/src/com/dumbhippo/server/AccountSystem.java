@@ -139,6 +139,7 @@ public interface AccountSystem {
 	 * @param viewpoint viewpoint of user 
 	 * @param platform platform string
 	 * @param distribution distribution string
+	 * @param architecture client operating system architecture
 	 */
-	public void updateClientInfo(UserViewpoint viewpoint, String platform, String distribution, String version);
+	public void updateClientInfo(UserViewpoint viewpoint, String platform, String distribution, String version, String architecture);
 }

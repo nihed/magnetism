@@ -58,7 +58,9 @@ public class ClientInfoIQHandler extends AnnotatedIQHandler {
         	version = rawVersion;
         }
         
-		Document document = DocumentFactory.getInstance().createDocument();
+        final String architecture = child.attributeValue("architecture");
+
+        Document document = DocumentFactory.getInstance().createDocument();
 		Element childElement = document.addElement("clientInfo", CLIENT_INFO_NAMESPACE);
 		if (platform.equals("windows")) {
 			childElement.addAttribute("minimum", JiveGlobals.getXMLProperty("dumbhippo.client.windows.minimum"));
@@ -87,7 +89,7 @@ public class ClientInfoIQHandler extends AnnotatedIQHandler {
 		
 		runner.runTaskOnTransactionCommit(new Runnable() {
 			public void run() {
-				accountSystem.updateClientInfo(viewpoint, platform, distribution, version);
+				accountSystem.updateClientInfo(viewpoint, platform, distribution, version, architecture);
 			}
 		});
 	}

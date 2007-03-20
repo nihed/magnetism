@@ -12,22 +12,25 @@ import javax.persistence.UniqueConstraint;
 @Entity
 @Table(name="UserClientInfo", 
         uniqueConstraints = 
-           {@UniqueConstraint(columnNames={"user_id", "platform", "distribution", "version"})}
+           {@UniqueConstraint(columnNames={"user_id", "platform", "distribution", "version", "architecture"})}
    )
 public class UserClientInfo extends DBUnique {
 	User user;
 	String platform;
 	String distribution;
 	String version;
+	String architecture;
 	long lastChecked;
 	
 	public UserClientInfo() {
 	}
 	
-	public UserClientInfo(User user, String platform, String distribution) {
+	public UserClientInfo(User user, String platform, String distribution, String version, String architecture) {
 		this.user = user;
 		this.platform = platform;
 		this.distribution = distribution;
+		this.version = version;
+		this.architecture = architecture;
 	}
 
 	@Column(nullable = false, length = 32)
@@ -64,6 +67,15 @@ public class UserClientInfo extends DBUnique {
 	
 	protected void setVersion(String version) {
 		this.version = version;
+	}
+	
+	@Column(nullable = false, length = 32)
+	public String getArchitecture() {
+		return architecture;
+	}
+	
+	protected void setArchitecture(String architecture) {
+		this.architecture = architecture;
 	}
 	
 	@JoinColumn(nullable = false)
