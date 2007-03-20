@@ -313,6 +313,19 @@ public class AccountPage {
 		return getExternalAccountSentiment(ExternalAccountType.GOOGLE_READER);
 	}	
 	
+	public String getPicasaSentiment() {
+		return getExternalAccountSentiment(ExternalAccountType.PICASA);
+	}
+	
+	public String getPicasaHateQuip() {
+		return getExternalAccountHateQuip(ExternalAccountType.PICASA);
+	}
+	
+	public String getPicasaName() {
+		return getExternalAccountHandle(ExternalAccountType.PICASA);
+	}
+	
+	
 	/**
 	 * Returns a list of supported account views; with the ExternalAccount information for the
 	 * user filled in for the account types for which the user has accounts.

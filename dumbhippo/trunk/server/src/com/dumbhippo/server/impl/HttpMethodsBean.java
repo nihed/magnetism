@@ -1976,6 +1976,44 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 
+	public void doSetPicasaName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+		String name = urlOrName.trim();
+		
+		// Picasa public urls are http://picasaweb.google.com/username
+		
+		String found = StringUtils.findLastPathElement(name);
+		if (found != null)
+			name = found;
+		
+		if (name.startsWith("http://"))
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public gallery URL or just your username");
+		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.PICASA);
+		try {
+			external.setHandleValidating(name);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		
+		try {
+			@SuppressWarnings("unused") Feed feed = feedSystem.scrapeFeedFromUrl(new URL("http://picasaweb.google.com/" + StringUtils.urlEncode(external.getHandle())));
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage() + " (check that you have a public Picasa web gallery set up)");
+		}
+		/* We validate that the feed can be fetched, but the actual feed checking is done as a "web service" not as a feed (i.e. we don't update the Feed object
+		 * and get FeedEntry for it)
+		 */
+		/* 
+		EJBUtil.forceInitialization(feed.getAccounts());
+		
+		external.setFeed(feed);
+		feed.getAccounts().add(external);
+		*/
+		
+		xml.appendTextNode("username", external.getHandle());
+	}
+	
 	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException {
 		// DO NOT cut and paste this block into similar external account methods. It's only here because
 		// we don't use the "love hate" widget on /account for the website, and the javascript glue 

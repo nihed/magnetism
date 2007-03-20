@@ -779,7 +779,7 @@ public enum ExternalAccountType {
 		
 		@Override
 		public String getLinkText(String handle, String extra) {
-			return "Shared by " + handle;
+			return "Shared Items";
 		}
 		
 		@Override
@@ -802,6 +802,65 @@ public enum ExternalAccountType {
 					new URL(getLink(handle, null));
 				} catch (MalformedURLException e) {
 					throw new ValidationException("Invalid Google Reader ID '" + handle + "': " + e.getMessage());
+				}
+			}
+			return handle;
+		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}
+		
+		@Override 
+		public boolean isNew() {
+			return true;
+		}
+	},
+	PICASA("Picasa") { // 17
+		@Override
+		public String getDomNodeIdName() {
+			return "Picasa";
+		}
+		
+		@Override
+		public String getIconName() {
+			return "favicon_picasa.png";
+		}
+		
+		@Override
+		public String getLink(String handle, String extra) {
+			return "http://picasaweb.google.com/" + StringUtils.urlEncode(handle);
+		}
+		
+		@Override
+		public String getSiteLink() {
+			return "http://picasaweb.google.com/";
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "Albums by " + handle;
+		}
+		
+		@Override
+	    public String getSiteUserInfoType() {
+	    	return "user name";
+	    }
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				// google username, not sure what the requirements really are
+				if (handle.length() < 1)
+					throw new ValidationException("Empty Picasa username");
+				if (handle.length() > 40)
+					throw new ValidationException("Too long Picasa username '" + handle + "'");
+				try {
+					new URL(getLink(handle, null));
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid Picasa username '" + handle + "': " + e.getMessage());
 				}
 			}
 			return handle;
