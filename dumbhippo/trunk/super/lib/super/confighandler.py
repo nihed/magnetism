@@ -55,7 +55,7 @@ class ConfigHandler (xml.sax.ContentHandler):
         if self.param_value.endswith(">") and not self.param_value.endswith("/>"):
             self.param_value = self.param_value[:-1] + "/>"
         else:
-            self.param_value += "</" + name + "/>"
+            self.param_value += "</" + name + ">"
         
     def startElement(self, name, attrs):
         if (self.state == OUTSIDE):

@@ -6,6 +6,7 @@ public enum HippoProperty {
 	DISABLE_AUTHENTICATION("dumbhippo.server.disable.authentication", "false"),
 	DISABLE_EMAIL("dumbhippo.server.email.disable", "false"),
 	FEEDBACK_EMAIL("dumbhippo.server.email.feedback", "feedback@mugshot.org"),
+	DOWNLOADS("dumbhippo.server.downloads", null),
 	DOWNLOADURL_WINDOWS("dumbhippo.server.downloadurl.windows", "http://devel.mugshot.org/download/Mugshot-current.msi"),
 	DOWNLOADURL_WINDOWS_SOURCE("dumbhippo.server.downloadurl.windows.source", null),
 	DOWNLOADURL_FEDORA5("dumbhippo.server.downloadurl.fedora5", null),

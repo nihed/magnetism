@@ -1,6 +1,7 @@
 package com.dumbhippo.server.impl;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -8,11 +9,14 @@ import java.util.Properties;
 
 import org.jboss.annotation.ejb.Service;
 import org.slf4j.Logger;
+import org.xml.sax.SAXException;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.SimpleServiceMBean;
+import com.dumbhippo.server.downloads.DownloadConfiguration;
+import com.dumbhippo.server.downloads.DownloadSaxHandler;
 
 /*
  * Implementation of Configuration
@@ -26,6 +30,7 @@ public class ConfigurationBean implements Configuration, SimpleServiceMBean {
 	static private Properties overriddenProperties = new Properties();
 	
 	private Properties props;
+	private DownloadConfiguration downloads;
 	
 	private URL baseurl;
 	
@@ -80,6 +85,18 @@ public class ConfigurationBean implements Configuration, SimpleServiceMBean {
 			baseurl = new URL(s);
 		} catch (MalformedURLException e) {
 			throw new RuntimeException("Server misconfiguration - base URL is invalid! '" + s + "'", e);
+		}
+		
+		String downloadXml = getPropertyFatalIfUnset(HippoProperty.DOWNLOADS);
+		downloads = new DownloadConfiguration();
+		
+		try {
+			DownloadSaxHandler handler = new DownloadSaxHandler(downloads);
+			handler.parse(downloadXml);
+		} catch (SAXException e) {
+			throw new RuntimeException("Failed to parse downloads property", e);
+		} catch (IOException e) {
+			throw new RuntimeException("Failed to parse downloads property", e);
 		}
 	}
 	
