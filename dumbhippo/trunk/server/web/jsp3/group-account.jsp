@@ -76,19 +76,19 @@
 		<dht3:groupRelatedPagesTabs group="${group.viewedGroup}"/>
 	</dht3:pageSubHeader>
     
-    <dht3:shinyBox color="grey">
+    <dht3:shinyBox color="orange">
         <c:choose>
 		    <c:when test="${group.public}">
 		        <div class="dh-section-header">Public Info</div>
-		        <span class="dh-section-explanation">This information will be visible on the <a href="/group?who=${group.viewedGroupId}">group page</a>.</span>
+		        <div class="dh-section-explanation">This information will be visible on the <a href="/group?who=${group.viewedGroupId}">group page</a>.</div>
 			</c:when>
 			<c:otherwise>
                 <div class="dh-section-header">Private Info</div>
-		        <span class="dh-section-explanation">Because this group is private, this information will only be visible to group members.</span>			
+		        <div class="dh-section-explanation">Because this group is private, this information will only be visible to group members.</div>			
 			</c:otherwise>
 		</c:choose>
 	
-		<dht:formTable bodyId="dhAccountInfoForm">
+		<dht:formTable bodyId="dhAccountInfoForm" tableClass="dh-form-table-orange">
 		    <dht:formTableRowStatus controlId='dhGroupNameEntry'></dht:formTableRowStatus>
 			<dht:formTableRow label="Group name" controlId='dhGroupNameEntry'>
 				<dht:textInput id="dhGroupNameEntry" extraClass="dh-name-input"/>

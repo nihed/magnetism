@@ -2,7 +2,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<%@ attribute name="label" required="true" type="java.lang.String" %>
+<%@ attribute name="label" required="false" type="java.lang.String" %>
 <%@ attribute name="icon" required="false" type="java.lang.String" %>
 <%@ attribute name="prefixIcon" required="false" type="java.lang.String" %>
 <%@ attribute name="prefixIconWidth" required="false" type="java.lang.Integer" %>
@@ -24,13 +24,15 @@
 <tr><td colspan="4" class="dh-padding-row ${rowClass}"></td></tr>
 
 <tr valign="top" class="${rowClass}" id="${controlId}FormContainer"> 
-	<td class="dh-label-cell">
-		<div class="dh-label-cell-div ${withPrefixClass}" id="${controlId}FormLabel">
-            <c:if test="${!empty prefixIcon}"><dh:png klass="dh-form-table-row-icon" src="${prefixIcon}" style="width: ${prefixIconWidth}; height: ${prefixIconHeight}; border: none; overflow: hidden;"/></c:if>
-			<c:if test="${!empty icon}"><dh:png klass="dh-form-table-row-icon" src="${icon}" style="width: 16; height: 16; border: none; overflow: hidden;"/></c:if>
-		    <c:if test="${!empty label}"><c:out value="${label}"/>:</c:if>
-	    </div>
-	</td>
+    <c:if test="${!empty label}">
+	    <td class="dh-label-cell">
+		    <div class="dh-label-cell-div ${withPrefixClass}" id="${controlId}FormLabel">
+                <c:if test="${!empty prefixIcon}"><dh:png klass="dh-form-table-row-icon" src="${prefixIcon}" style="width: ${prefixIconWidth}; height: ${prefixIconHeight}; border: none; overflow: hidden;"/></c:if>
+			    <c:if test="${!empty icon}"><dh:png klass="dh-form-table-row-icon" src="${icon}" style="width: 16; height: 16; border: none; overflow: hidden;"/></c:if>
+		        <c:out value="${label}"/>:
+	        </div>
+	    </td>
+	</c:if>
 	<c:choose>
 	    <c:when test="${!empty info}">
 	        <td class="dh-control-cell dh-control-cell-next-to-info"><div class="dh-control-cell-div"><jsp:doBody/></div></td>

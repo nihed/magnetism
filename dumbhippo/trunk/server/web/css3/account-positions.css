@@ -24,11 +24,6 @@
     width:          320px;
 }
 
-#dhAccounts .dh-info-cell {
-	padding-left:	5px;
-	text-align:     left;
-}
-
 #dhAccounts .dh-label-cell .dh-form-table-row-icon {
     margin-right:    5px;
     vertical-align:  middle;

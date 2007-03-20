@@ -12,8 +12,6 @@
 
 <dh:bean id="group" class="com.dumbhippo.web.pages.GroupPage" scope="request"/>
 <jsp:setProperty name="group" property="viewedGroupId" param="group"/>
-<%-- TODO: should be able to remove this once the sidebar with only some members shown is not used anywhere --%>
-<jsp:setProperty name="group" property="allMembers" value="true"/>
 
 <c:if test="${empty group.viewedGroup}">
 	<dht:errorPage>Group not found</dht:errorPage>
@@ -50,7 +48,7 @@
 		<dht3:groupRelatedPagesTabs group="${group.viewedGroup}"/>
 	</dht3:pageSubHeader>
     
-    <dht3:shinyBox color="grey">
+    <dht3:shinyBox color="orange">
         <div></div> <!-- IE bug workaround, display:none as first child causes problems -->			
 	    <dht:messageArea/>
 		<div class="dh-section-header">
@@ -70,7 +68,7 @@
 				account.
 			</div>
 		</c:if>
-		<dht:formTable>
+		<dht:formTable tableClass="dh-form-table-orange">
             <dht:formTableRow label="User or Email Address">
                 <dht:textInput id="dhAddressEntry"/>
                 <img id="dhAddressButton" src="/images2/${buildStamp}/dropdownarrow.gif"/>

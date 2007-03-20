@@ -7,8 +7,6 @@
 
 <dh:bean id="group" class="com.dumbhippo.web.pages.GroupPage" scope="request"/>
 <jsp:setProperty name="group" property="viewedGroupId" param="group"/>
-<%-- TODO: should be able to remove this once the sidebar with only some members shown is not used anywhere --%>
-<jsp:setProperty name="group" property="allMembers" value="true"/>
 
 <c:if test="${empty group.viewedGroup}">
 	<dht:errorPage>Group not found</dht:errorPage>
@@ -29,7 +27,7 @@
 	</dht3:pageSubHeader>
 	
 	<c:if test="${!group.viewedGroup.canSeeContent && dh:enumIs(group.viewedGroup.status, 'REMOVED')}">
-	    <dht3:shinyBox color="grey">
+	    <dht3:shinyBox color="orange">
 	        <div class="dh-page-shinybox-title-large"><span>Group Members</span></div>
 	        <dh:script module="dh.actions"/>
 			You need to <dht:actionLink oneLine="true" href="javascript:dh.actions.joinGroup('${group.viewedGroupId}')" title="Rejoin this group">rejoin this group</dht:actionLink> to see the group members.
@@ -37,7 +35,7 @@
 	</c:if>
 		  
 	<c:if test="${group.viewedGroup.canSeeContent}">        
-	    <dht3:shinyBox color="grey">
+	    <dht3:shinyBox color="orange">
             <div class="dh-page-shinybox-title-large"><span>Group Members (<c:out value="${group.activeMembers.size}"/>)</span></div>
             <c:choose>  
                 <c:when test="${group.activeMembers.size > 0}">
@@ -61,7 +59,7 @@
     
     <%-- Only public groups can have followers --%>
     <c:if test="${group.public}">
-        <dht3:shinyBox color="grey">
+        <dht3:shinyBox color="orange">
             <div class="dh-page-shinybox-title-large"><span>Group Followers (<c:out value="${group.followers.size}"/>)</span></div>
             <c:choose>  
                 <c:when test="${group.followers.size > 0}">

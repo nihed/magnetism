@@ -25,7 +25,7 @@
 	</dht3:pageSubHeader>
     <dht3:groupStack who="${group.viewedGroup}" stackOrder="1" stackType="dhMugshot" pageable="${group.pageableMugshot}" shortVersion="${group.pageableStack.position > 0}" showFrom="true" showHomeUrl="false" disableLink="true"/>
     <c:if test="${group.viewedGroup.canSeeContent}">
-	    <dht3:shinyBox color="grey">
+	    <dht3:shinyBox color="orange">
 	        <div class="dh-person-stacker-header">
 		        <span class="dh-person-header-name"><a name="dhStacker">Group Stacker</a></span>
 		        <span class="dh-person-header-description">Updates from group members and feeds</span>

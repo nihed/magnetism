@@ -6,6 +6,11 @@
 	margin-bottom:	5px;
 }
 
+.dh-no-extra-space-table {
+	margin-top:		-3px;
+	margin-bottom:	0px;
+}
+
 .dh-form-table .dh-label-cell {
 	padding-right:	10px;
 	text-align:     right;
@@ -16,6 +21,10 @@
 	height:			3px;
 }
 
+.dh-no-extra-space-table .dh-spacer-row {
+	height:			0px;
+}
+
 .dh-form-table .dh-box-spacer {
 	width:			10px;
 }
@@ -24,8 +33,16 @@
 	height:			5px;
 }
 
+.dh-no-extra-space-table .dh-padding-row {
+	height:			0px;
+}
+
 .dh-form-table .dh-control-cell .dh-control-cell-div img {
 	vertical-align:		middle;
+}
+
+.dh-no-extra-space-table .dh-control-cell {
+    width:              70px;
 }
 
 .dh-form-table .dh-image {
@@ -39,7 +56,12 @@
 }
 
 .dh-form-table .dh-control-cell .dh-control-cell-div input {
-	vertical-align:		middle;
+	vertical-align:	    middle;
+}
+
+.dh-form-table .dh-control-cell .dh-control-cell-div input.dh-radio-input {
+    vertical-align:	    baseline;
+    margin-left:        0px;
 }
 
 .dh-form-table .dh-control-cell textarea.dh-text-input {
@@ -50,4 +72,13 @@
 .dh-form-table .dh-control-cell input.dh-text-input {
 	width:			260px;
 	overflow:       hidden;
+}
+
+.dh-form-table .dh-info-cell {
+	padding-left:	5px;
+	text-align:     left;
+}
+
+.dh-no-extra-space-table .dh-info-cell {
+	vertical-align:	middle;
 }

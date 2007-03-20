@@ -11,15 +11,18 @@ dojo.require("dh.feeds");
 dojo.require("dh.html");
 
 dh.groupaccount.startWait = function() {
-	dh.util.showMessage("Please wait...")
-	document.getElementById("dhCreateGroupSave").disabled = true
-	document.getElementById("dhCreateGroupCancel").disabled = true
+	var image = document.getElementById("dhCreateGroupSave");
+	image.src = dhImageRoot3 + "save_25px_disabled.gif";
+	image.onclick = function() {}
 }
 
 dh.groupaccount.stopWait = function(message) {
 	dh.util.showMessage(message)
-	document.getElementById("dhCreateGroupSave").disabled = false
-	document.getElementById("dhCreateGroupCancel").disabled = false
+	var image = document.getElementById("dhCreateGroupSave");
+	image.src = dhImageRoot3 + "save_25px.gif";
+    image.onclick = function() {
+        dh.groupaccount.createGroup();
+    }
 }
 
 dh.groupaccount.createGroup = function() {

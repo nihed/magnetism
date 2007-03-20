@@ -627,6 +627,10 @@ div.dh-async-action-link-complete {
 	font-size:	  		14px;
 }
 
+div.dh-section-explanation {
+    margin-bottom:      8px;
+}
+
 .dh-message {
 	background-color:	#FAFADC;
 	color:				#E2671B;

@@ -10,7 +10,7 @@
     <c:set var="titleClass" value="dh-section-header"/>    
 </c:if>
     
-<dht3:shinyBox color="grey">
+<dht3:shinyBox color="orange">
     <div class="${titleClass}">
                 <span>People Invited to Follow the Group (<c:out value="${group.invitedFollowers.size}"/>)</span>
                 <c:if test="${group.canAddFollowers && !forInvitationPage}">

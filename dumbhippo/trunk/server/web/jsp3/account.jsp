@@ -111,7 +111,7 @@
 				<dht:formTable bodyId="dhAccountInfoForm">
 				<dht3:formTableRowSeparator>
 				    <div class="dh-section-header">Public Info</div>
-				    <span class="dh-section-explanation">This information will be visible on your <a href="/person">Home</a> page.</span>
+				    <div class="dh-section-explanation">This information will be visible on your <a href="/person">Home</a> page.</div>
                 </dht3:formTableRowSeparator>
 				<dht:formTableRow label="My name" controlId='dhUsernameEntry'>
 					<dht:textInput id="dhUsernameEntry" extraClass="dh-name-input"/>
@@ -309,7 +309,7 @@
 				</dht:formTableRow>
 				<dht3:formTableRowSeparator>
 				    <div class="dh-section-header">Private Info</div>
-				    <span class="dh-section-explanation">Nobody sees this stuff but you.</span>
+				    <div class="dh-section-explanation">Nobody sees this stuff but you.</div>
                 </dht3:formTableRowSeparator>
 				<dht:formTableRowStatus controlId='dhPasswordEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="Set a password">
