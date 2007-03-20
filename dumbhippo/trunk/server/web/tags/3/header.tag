@@ -65,7 +65,7 @@
 					<jsp:attribute name="name">q</jsp:attribute>
 					<jsp:attribute name="value">${searchText}</jsp:attribute>
 				</jsp:element>
-				</td><td valign="top"><img id="dhSearchBoxFind" src="/images3/${buildStamp}/find.gif" onclick="dhSearchSubmit()"/></td>
+				</td><td valign="top"><img id="dhSearchBoxFind" src="/images3/${buildStamp}/find.gif" width="39" height="16" onclick="dhSearchSubmit()"/></td>
 				</tr>
 				</table>
 			</form>
