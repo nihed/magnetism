@@ -95,6 +95,8 @@
 		dh.account.initialNetflixHateQuip = <dh:jsString value="${account.netflixHateQuip}"/>;	
 		dh.account.initialGoogleReaderUrl = <dh:jsString value="${account.googleReaderUrl}"/>;
 		dh.account.initialGoogleReaderHateQuip = <dh:jsString value="${account.googleReaderHateQuip}"/>;
+		dh.account.initialPicasaName = <dh:jsString value="${account.picasaName}"/>;
+		dh.account.initialPicasaHateQuip = <dh:jsString value="${account.picasaHateQuip}"/>;
 	</script>
 </head>
 <dht3:page currentPageLink="account">

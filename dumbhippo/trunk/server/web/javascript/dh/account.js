@@ -155,7 +155,12 @@ dh.account.setGoogleReaderUrl = function(name, loadFunc, errorFunc) {
    	                      { "url" : name },
    	                      loadFunc, errorFunc);
 }
-   	
+dh.account.setPicasaName = function(name, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("setPicasaName",
+				     { "urlOrName" : name },
+						loadFunc, errorFunc);
+}
+
 dh.account.createExternalAccountOnHateSavedFunc = function(entry, accountType) {
 	return function(value) {
 		var oldMode = entry.getMode();
@@ -457,6 +462,32 @@ dh.account.onGoogleReaderLoveSaved = function(value) {
 	  	    	 }); 
 }
 
+dh.account.onPicasaLoveSaved = function(value) {
+	var entry = dh.account.picasaEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+  	dh.account.setPicasaName(value,
+	 	    	 function(childNodes, http) {
+				    var username = null;
+					var i = 0;
+					for (i = 0; i < childNodes.length; ++i) {
+						var child = childNodes.item(i);
+						if (child.nodeType != dh.dom.ELEMENT_NODE)
+							continue;
+			
+						if (child.nodeName == "username") {
+							username = dh.dom.textContent(child);
+						}
+	 	    	 	}
+					entry.setLoveValueAlreadySaved(username);
+	 	    	 	entry.setMode('love');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 }); 
+}
+
 dh.account.disableFacebookSession = function() {   
   	dh.server.doPOST("disablefacebooksession",
 			 	     {},
@@ -573,6 +604,14 @@ dh.account.createGoogleReaderEntry = function() {
 	dh.account.googleReaderEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.googleReaderEntry, 'GOOGLE_READER');
 }
 
+dh.account.createPicasaEntry = function() {	
+	dh.account.picasaEntry = new dh.lovehate.Entry('dhPicasa', 'Picasa username or public gallery URL', dh.account.initialPicasaName,
+					'Pictures of cats', dh.account.initialPicasaHateQuip, 'Your friends see your public Picasa albums.');
+	dh.account.picasaEntry.onLoveSaved = dh.account.onPicasaLoveSaved;
+	dh.account.picasaEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.picasaEntry, 'PICASA');
+	dh.account.picasaEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.picasaEntry, 'PICASA');
+}
+
 dhAccountInit = function() {
 	if (!dh.account.active) {
 		dh.dom.disableChildren(document.getElementById("dhAccountContents"));
@@ -621,6 +660,7 @@ dhAccountInit = function() {
 	dh.account.createRedditEntry();
 	dh.account.createNetflixEntry();
 	dh.account.createGoogleReaderEntry();
+	dh.account.createPicasaEntry();	
 }
 
 dh.event.addPageLoadListener(dhAccountInit);
