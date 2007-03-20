@@ -208,6 +208,7 @@ hippo_platform_impl_get_platform_info(HippoPlatform     *platform,
     info->name = "linux";
     info->distribution = hippo_distribution_get_name(distro);
     info->version = hippo_distribution_get_version(distro);
+    info->architecture = hippo_distribution_get_architecture(distro);
 
     /* Backwards compatibility hack: versions of the server prior to 2007-03-13
      * expected distribution/version to be combined into one string and
