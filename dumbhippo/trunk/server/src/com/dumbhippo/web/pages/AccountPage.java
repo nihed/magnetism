@@ -296,7 +296,9 @@ public class AccountPage {
 		ExternalAccount external;
 		try {
 			external = externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), ExternalAccountType.GOOGLE_READER);
-			return external.getLink();
+			if (external.hasAccountInfo()) {
+			    return external.getLink();
+			}
 		} catch (NotFoundException e) {
 			// nothing to do
 		}

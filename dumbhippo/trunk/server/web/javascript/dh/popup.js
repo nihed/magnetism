@@ -39,12 +39,6 @@ dh.popup.show = function(popupId, aboveNode) {
 		e.appendChild(popup);
 	}
 	
-	/* This isn't precision, just "kind of next to"
-	 * IE considers a scrollbar click as mouse input ergo it doesn't allow people to scroll horizontally 
-	 * and see the rest of the popup under 800x600
-	 */
-	popup.style.left = "0px";
-	popup.style.bottom = "15px";
 	popup.style.display = 'block';
 	
 	document.body.onkeydown = function(ev) {
