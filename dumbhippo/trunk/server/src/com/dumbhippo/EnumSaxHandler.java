@@ -13,7 +13,9 @@ import javax.xml.parsers.SAXParserFactory;
 import org.slf4j.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
+import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -21,8 +23,9 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(EnumSaxHandler.class);
 
-	private static SAXParserFactory saxFactory;	
-	
+	private static SAXParserFactory saxFactory;
+
+	private Locator locator;
 	private Class<E> enumClass;
 	private E ignoredValue;
 	
@@ -74,6 +77,10 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 		parse(input, this);
 	}
 	
+	protected EnumSaxHandler(Class<E> enumClass) {
+		this(enumClass, null);
+	}
+
 	protected EnumSaxHandler(Class<E> enumClass, E ignoredValue) {
 		this.enumClass = enumClass;
 		this.ignoredValue = ignoredValue;
@@ -82,18 +89,21 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 		content = new StringBuilder();
 	}
 	
-	private E parseElementName(String name) {
+	private E parseElementName(String name) throws SAXException {
 		 E value;
 		 try {
 			 value = Enum.valueOf(enumClass, name);
 		 } catch (IllegalArgumentException e) {
-			 value = ignoredValue;
+			 if (ignoredValue != null)
+				 value = ignoredValue;
+			 else
+				 throw new SAXParseException("element '" + name + "' is not recognized", locator);
 		 }
 		 assert value != null;
 		 return value;
 	}
 	
-	private void push(String name, Attributes attributes) {
+	private void push(String name, Attributes attributes) throws SAXException {
 		 E value = parseElementName(name);
 
 		 // The SAX parser seems to reuse or modify Attributes
@@ -142,6 +152,15 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 		} else {
 			throw new SAXException("element has no name, uri=" + uri + " localName=" + localName + " qName=" + qName);
 		}
+	}
+	
+	@Override
+	public void setDocumentLocator(Locator locator) {
+		this.locator = locator;
+	}
+	
+	public Locator getDocumentLocator() {
+		return locator;
 	}
 	
 	@Override

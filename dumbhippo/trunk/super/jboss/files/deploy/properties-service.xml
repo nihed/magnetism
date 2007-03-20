@@ -15,7 +15,7 @@
          name="jboss:type=Service,name=SystemProperties">
 
     <!-- do not put trailing whitespace here, or we put you in the iron maiden -->
-    <attribute name="Properties">
+    <attribute name="Properties"><![CDATA[
 	    java.awt.headless=true
 		dumbhippo.server.hajndiPort=@@hajndiPort:properties@@
 	    dumbhippo.server.features=@@serverFeatures:properties@@
@@ -34,6 +34,7 @@
 		dumbhippo.server.lucene.indexdir=@@luceneIndexDir:properties@@
 		dumbhippo.server.aimbot.name=@@imbotScreenName:properties@@
 		dumbhippo.server.aim.presence.key=@@aimPresenceKey:properties@@
+		dumbhippo.server.downloads=@@clientDownloads:properties@@
 		dumbhippo.server.downloadurl.windows=@@clientWindowsDownload:properties@@
 		dumbhippo.server.downloadurl.windows.source=@@clientWindowsDownloadSource:properties@@
 		dumbhippo.server.downloadurl.fedora5=@@clientFedora5Download:properties@@
@@ -65,7 +66,7 @@
 		dumbhippo.server.summitgroupguid=@@summitGroupGuid:properties@@
 		dumbhippo.server.newuserinvitationcount=@@newUserInvitationCount:properties@@
 		dumbhippo.server.specialnewuserinvitationcount=@@specialNewUserInvitationCount:properties@@
-    </attribute>
+    ]]></attribute>
   </mbean>
   
 </server>
