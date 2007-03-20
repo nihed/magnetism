@@ -34,8 +34,9 @@ GQuark hippo_distribution_error_quark(void);
 
 HippoDistribution *hippo_distribution_get (void);
 
-const char *hippo_distribution_get_name   (HippoDistribution *distro);
-const char *hippo_distribution_get_version(HippoDistribution *distro);
+const char *hippo_distribution_get_name        (HippoDistribution *distro);
+const char *hippo_distribution_get_version     (HippoDistribution *distro);
+const char *hippo_distribution_get_architecture(HippoDistribution *distro);
 
 void hippo_distribution_check_package     (HippoDistribution             *distro,
                                            const char                    *package_names,

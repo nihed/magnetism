@@ -117,6 +117,7 @@ static const struct {
 struct HippoDistribution {
     char *name;
     char *version;
+    char *architecture;
     GSList *sources;
 };
 
@@ -649,6 +650,29 @@ get_canonical_name(const char *raw_name)
 }
 
 static void
+find_architecture(HippoDistribution *distro)
+{
+    GError *error = NULL;
+    int status;
+    const char *args[] = {
+        "/bin/uname",
+        "-i",
+        NULL
+    };
+
+    if (hippo_execute_command_sync((char **)args, &error, &status, &distro->architecture)) {
+        g_strstrip(distro->architecture);
+    } else {
+        if (error) {
+            g_warning("Couldn't run uname -i to get architecture: %s\n", error->message);
+            g_error_free(error);
+        } else {
+            g_warning("uname -i failed");
+        }
+    }
+}
+
+static void
 find_distribution_information(HippoDistribution *distro)
 {
     guint i;
@@ -676,8 +700,11 @@ find_distribution_information(HippoDistribution *distro)
         }
     }
 
+    find_architecture(distro);
+
     g_debug("Distribution Name: %s", distro->name ? distro->name : "<unknown>");
     g_debug("Distribution Version: %s", distro->version ? distro->version : "<unknown>");
+    g_debug("Distribution Architecture: %s", distro->architecture ? distro->architecture : "<unknown>");
 }
 
 static void
@@ -718,6 +745,14 @@ hippo_distribution_get_version(HippoDistribution *distro)
     g_return_val_if_fail(distro != NULL, NULL);
 
     return distro->version;
+}
+
+const char *
+hippo_distribution_get_architecture(HippoDistribution *distro)
+{
+    g_return_val_if_fail(distro != NULL, NULL);
+
+    return distro->architecture;
 }
 
 static gboolean

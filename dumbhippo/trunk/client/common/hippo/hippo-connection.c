@@ -1447,6 +1447,8 @@ hippo_connection_request_client_info(HippoConnection *connection)
         lm_message_node_set_attribute(child, "distribution", info.distribution);
     if (info.version)
         lm_message_node_set_attribute(child, "version", info.version);
+    if (info.architecture)
+        lm_message_node_set_attribute(child, "architecture", info.architecture);
     
     hippo_connection_send_message_with_reply(connection, message, on_client_info_reply, SEND_MODE_IMMEDIATELY);
 

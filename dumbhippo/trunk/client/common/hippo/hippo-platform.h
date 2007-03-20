@@ -12,6 +12,7 @@ typedef struct {
     const char *name;         /* "windows" or "linux" */
     const char *distribution; /* Not used on Window. "Fedora", "Ubuntu", etc, on Linux */
     const char *version;      /* May be NULL if we don't know anything better */
+    const char *architecture; /* May be NULL for "unknown" */
 } HippoPlatformInfo;
 
 typedef enum {

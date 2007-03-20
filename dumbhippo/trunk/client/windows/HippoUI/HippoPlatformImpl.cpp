@@ -442,7 +442,8 @@ hippo_platform_impl_get_platform_info(HippoPlatform           *platform,
 {
     info->name = "windows";
     info->distribution = NULL; // Unused for windows
-    info->version = NULL; // FIXME: should be "nt2000", "xp", "vista" 
+    info->version = NULL;      // FIXME: should be "nt2000", "xp", "vista"
+    info->architecture = NULL; // FIXME: should be "i386" for win32 or "x86_64" for win64
 }
 
 static const char*
