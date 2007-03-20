@@ -116,9 +116,11 @@ hippo_block_facebook_person_update_from_xml (HippoBlock           *block,
                                              HippoDataCache       *cache,
                                              LmMessageNode        *node)
 {
+#if 0    
     HippoBlockFacebookPerson *block_facebook_person = HIPPO_BLOCK_FACEBOOK_PERSON(block);
     LmMessageNode *facebook_node;
     HippoPerson *user;
+#endif    
 
     if (!HIPPO_BLOCK_CLASS(hippo_block_facebook_person_parent_class)->update_from_xml(block, cache, node))
         return FALSE;
