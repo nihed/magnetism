@@ -211,30 +211,34 @@ public class AccountSystemBean implements AccountSystem {
 		}
 	}
 
-	public void updateClientInfo(UserViewpoint viewpoint, String platform, String distribution, String version) {
-		// NULL doesn't work well as a unique key, so use "" when no distribution/version is
-		// specified
+	public void updateClientInfo(UserViewpoint viewpoint, String platform, String distribution, String version, String architecture) {
+		// NULL doesn't work well as a unique key, so use "" when no 
+		// distribution/version/architecture is specified
 		if (distribution == null)
 			distribution = "";
 		if (version == null)
 			version = "";
+		if (architecture == null)
+			architecture = "";
 		
 		Query q = em.createQuery("SELECT uci FROM UserClientInfo uci " +
 				                 " WHERE uci.user = :user " +
 				                 "   AND uci.platform = :platform " +
 				                 "   AND uci.distribution = :distribution" +
-				                 "   AND uci.version = :version")
+				                 "   AND uci.version = :version" +
+				                 "   AND uci.architecture = :architecture")
             .setParameter("user", viewpoint.getViewer())
 			.setParameter("platform", platform)
 			.setParameter("distribution", distribution)
-			.setParameter("version", version);
+			.setParameter("version", version)
+			.setParameter("architecture", architecture);
 		
 		UserClientInfo uci;
 		try {
 			uci = (UserClientInfo)q.getSingleResult();
 			uci.setLastChecked(new Date());
 		} catch (NoResultException e) {
-			uci = new UserClientInfo(viewpoint.getViewer(), platform, distribution);
+			uci = new UserClientInfo(viewpoint.getViewer(), platform, distribution, version, architecture);
 			uci.setLastChecked(new Date());
 			em.persist(uci);
 		}
