@@ -4,13 +4,18 @@
 
 <%@ attribute name="hasSaveCancelButtons" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="bodyId" required="false" type="java.lang.String" %>
+<%@ attribute name="tableClass" required="false" type="java.lang.String" %>
 
 <c:if test="${empty bodyId}">
     <c:set var="bodyId" value=""/>
 </c:if>
 
+<c:if test="${empty tableClass}">
+    <c:set var="tableClass" value=""/>
+</c:if>
+
 <div>
-	<table class="dh-form-table" cellspacing="0" cellpadding="0">
+	<table class="dh-form-table ${tableClass}" cellspacing="0" cellpadding="0">
 		<thead>
 			<tr>
 				<th></th><th></th>

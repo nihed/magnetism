@@ -40,7 +40,6 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	// We override the default values for initial and subsequent results per page from Pageable
 	// This number will apply to each section of members (active/followers/invited/invited followers)
 	static private final int MEMBERS_PER_PAGE = 50;
-	static private final int MAX_MEMBERS_SHOWN = 5;
 	
 	private PostingBoard postBoard;
 	private MusicSystem musicSystem;
@@ -65,15 +64,12 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private ListBean<GroupFeed> feeds;
 	
 	private Pageable<PostView> posts;
-	private boolean allMembers;
 	
 	public GroupPage() {		
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
-		
-		allMembers = false;	
 	}
 	
 	public GroupView getViewedGroup() {
@@ -128,13 +124,9 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		}
 		groupMember = viewedGroup.getGroupMember();
 	}
-	
-	public void setAllMembers(boolean allMembers) {
-		this.allMembers = allMembers;
-	}
 
 	private List<GroupMemberView> getMembers(MembershipStatus status) {
-		int maxResults = allMembers ? -1 : MAX_MEMBERS_SHOWN;
+		int maxResults = -1;
 		List<GroupMemberView> result = PersonView.sortedList(groupSystem.getMembers(getSignin().getViewpoint(), viewedGroup.getGroup(), status, maxResults, PersonViewExtra.EXTERNAL_ACCOUNTS));
 		return result;
 	}
@@ -370,10 +362,6 @@ public class GroupPage extends AbstractSigninOptionalPage {
 			feeds = new ListBean<GroupFeed>(list);
 		}
 		return feeds;
-	}
-	
-	public int getMaxMembersShown() {
-		return MAX_MEMBERS_SHOWN;
 	}
 	
 	// No longer used
