@@ -41,6 +41,16 @@ class AppOverview(PrelightingCanvasBox):
         
     def get_app(self):
         return self.__app
+
+def categorize(apps):    
+    """Given a set of applications, returns a map <string,set<Application>> based on category name."""
+    categories = {}
+    for app in apps:
+        cat = app.get_category()
+        if not categories.has_key(cat):
+            categories[cat] = set()
+        categories[cat].add(app)   
+    return categories
         
 class MultiVTable(CanvasHBox):
     """Implements an multi-column aligned table.  May have inner section headings."""
@@ -97,6 +107,44 @@ class MultiVTable(CanvasHBox):
                 break
         self.__append_index = (self.__append_index + 1) % self.__column_count
         
+class AppCategoryUsage(MultiVTable):
+    def __init__(self):
+        super(AppCategoryUsage, self).__init__(horiz_spacing=10, item_height=20)
+        
+        self.__bar_height = 10
+        self.__bar_width = 80
+        
+        self.__apps = set()
+        
+    def set_apps(self, apps):
+        self.remove_all()
+        
+        self.append_column_item(hippo.CanvasText(text="Category"))
+        self.append_column_item(hippo.CanvasText(text="Your Usage"))        
+        
+        categories = categorize(apps)
+        cat_usage = {}
+        
+        max_usage_count = ('', 0)
+        for category,apps in categories.iteritems():
+            cat_usage_count = 0
+            for app in apps:
+                cat_usage_count += int(app.get_usage_count())
+            if cat_usage_count > max_usage_count[1]:
+                max_usage_count = (category, cat_usage_count)
+            cat_usage[category] = cat_usage_count
+        
+        for category, usage in cat_usage.iteritems():
+            self.append_column_item(hippo.CanvasText(text=category))
+            factor = (usage * 1.0) / max_usage_count[1]
+            print "using factor %s" % (factor,)
+            box = CanvasHBox()
+            box.append(CanvasVBox(box_height=self.__bar_height,
+                                  box_width=(int(self.__bar_width * factor)),
+                                  background_color=0xEBDCF3FF))
+            box.append(hippo.CanvasText(text=" "))
+            self.append_column_item(box)
+        
 class AppList(MultiVTable):
     __gsignals__ = {
         "selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
@@ -106,38 +154,18 @@ class AppList(MultiVTable):
     def __init__(self):
         super(AppList, self).__init__(columns=3,item_height=40)
         
-        self.__mugshot = mugshot.get_mugshot()
-        self.__mugshot.connect("initialized", self.__on_mugshot_initialized)
-        self.__mugshot.connect("global-top-apps-changed", 
-                               lambda mugshot, apps: self.__on_top_apps_changed(apps))          
-        
         self.__search = None
         self.__all_apps = set()
         
-    def __on_mugshot_initialized(self, mugshot):
-        self.__on_top_apps_changed(self.__mugshot.get_global_top_apps())
-        
-    def __on_top_apps_changed(self, apps):
-        if not apps:
-            return
-        
-        _logger.debug("handling top apps changed")
-        
+    def set_apps(self, apps):
         self.__all_apps = set(apps)
         self.__sync_display()
         
     def __sync_display(self):
         
         self.remove_all()
-                
-        categories = {} 
-        
-        # sort into categories
-        for app in filter(self.__filter_app, self.__all_apps):
-            cat = app.get_category()
-            if not categories.has_key(cat):
-                categories[cat] = set()
-            categories[cat].add(app)
+
+        categories = categorize(filter(self.__filter_app, self.__all_apps))
              
         cat_keys = categories.keys()
         cat_keys.sort()
@@ -191,7 +219,10 @@ class AppBrowser(hippo.CanvasWindow):
     
         self.__overview = AppOverview()
         self.__left_box.append(self.__overview)
-        self.__left_box.set_child_visible(self.__overview, False)        
+        self.__left_box.set_child_visible(self.__overview, False)     
+        
+        self.__cat_usage = AppCategoryUsage()
+        self.__left_box.append(self.__cat_usage)   
         
         self.__right_box = CanvasVBox()
         self.__box.append(self.__right_box)
@@ -206,6 +237,12 @@ class AppBrowser(hippo.CanvasWindow):
         self.connect("key-press-event", lambda win, event: self.__on_keypress(event))
         
         self.set_root(self.__box)
+        
+        self.__mugshot = mugshot.get_mugshot()
+        self.__mugshot.connect("initialized", self.__on_mugshot_initialized)
+        self.__mugshot.connect("global-top-apps-changed", 
+                               lambda mugshot, apps: self.__on_top_apps_changed(apps))          
+                
         
     def __on_app_selected(self, app):
         self.__left_box.set_child_visible(self.__overview, True)
@@ -227,3 +264,14 @@ class AppBrowser(hippo.CanvasWindow):
     def __idle_do_search(self):
         self.__app_list.set_search(self.__search_input.get_property("text"))
         self.__idle_search_id = 0
+        
+    def __on_mugshot_initialized(self, mugshot):
+        self.__on_top_apps_changed(self.__mugshot.get_global_top_apps())
+                
+    def __on_top_apps_changed(self, apps):
+        if not apps:
+            return
+        _logger.debug("handling top apps changed")        
+        
+        self.__app_list.set_apps(apps)
+        self.__cat_usage.set_apps(apps)
