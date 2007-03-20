@@ -10,7 +10,7 @@
 
 <div class="dh-page-title-container">
 	<c:if test="${!empty privatePage && privatePage}">
-		<dh:png src="/images3/${buildStamp}/private_icon.png"/>
+		<dh:png src="/images3/${buildStamp}/private_icon.png" style="width: 12; height: 14; overflow: hidden;"/>
 	</c:if>
 	<span class="dh-page-title"><c:out value="${title}"/></span>
 	<c:if test="${!empty titleLink}">
