@@ -106,6 +106,10 @@ div.dh-notification {
 	position:		relative;
 }
 
+#dhPhotoChooser {
+	bottom:         -12px;	
+}
+
 .dh-form-table .dh-control-cell .dh-password-input {
 	width:			260px;
 }

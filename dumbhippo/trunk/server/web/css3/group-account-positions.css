@@ -20,3 +20,7 @@ tr.dh-feed-spacer {
 #dhFeedLoadingPopup, #dhFeedPreviewPopup, #dhFeedFailedPopup {
     margin-left:    10px;
 }
+
+#dhPhotoChooser {
+	bottom:         -5px;	
+}
