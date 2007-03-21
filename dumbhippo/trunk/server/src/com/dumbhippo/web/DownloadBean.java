@@ -112,17 +112,4 @@ public class DownloadBean extends BrowserBean {
 	public String getDownloadUrlLinuxTar() {
 		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_LINUX_TAR);
 	}
-	
-	// deprecated
-	public String getDownloadUrlLinux() {
-		logger.warn("Some page is still referring to downloadUrlLinux instead of distribution-specific urls");
-		return getDownloadUrlFedora5();
-	}
-	
-	// deprecated
-	public String getDownloadUrlLinuxSrpm() {
-		logger.warn("Some page is still referring to downloadUrlLinuxSrpm instead of distribution-specific urls");
-		return getDownloadUrlFedora5Srpm();
-	}
-
 }
