@@ -10,6 +10,7 @@ from big_widgets import CanvasMugshotURLImage, PhotoContentItem
 class ExternalAccountIcon(CanvasMugshotURLImage):
     def __init__(self, acct):
         CanvasMugshotURLImage.__init__(self)
+        self.connect("button-press-event", lambda img,event: self.__launch_browser())
         self.set_acct(acct)
         
     def set_acct(self, acct):
@@ -19,6 +20,9 @@ class ExternalAccountIcon(CanvasMugshotURLImage):
         
     def _sync(self):
         self.set_url(self._acct.get_icon_url())
+        
+    def __launch_browser(self):
+        libbig.show_url(self._acct.get_link())
 
 class SelfStock(AbstractMugshotStock):
     """Shows a user's Mugshot personal information."""
