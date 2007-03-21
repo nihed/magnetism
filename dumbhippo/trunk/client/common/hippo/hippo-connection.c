@@ -227,6 +227,7 @@ struct _HippoConnection {
     int message_port;
     char *username;
     char *password;
+    gboolean contacts_loaded;
     char *download_url;
     char *tooltip;
     char *active_block_filter;
@@ -276,6 +277,7 @@ enum {
      * activity instead of just once an hour */
     INITIAL_APPLICATION_BURST,
     EXTERNAL_IQ_RETURN,
+   	CONTACTS_LOADED,    
     LAST_SIGNAL
 };
 
@@ -429,6 +431,15 @@ hippo_connection_class_init(HippoConnectionClass *klass)
                       NULL, NULL,
                       g_cclosure_marshal_VOID__VOID,
                       G_TYPE_NONE, 0);        
+                      
+    signals[CONTACTS_LOADED] =
+        g_signal_new ("contacts-loaded",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);                          
                       
     signals[EXTERNAL_IQ_RETURN] =
         g_signal_new ("external-iq-return",
@@ -1051,7 +1062,7 @@ hippo_connection_state_change(HippoConnection *connection,
 
     hippo_connection_flush_outgoing(connection);
 
-    g_debug("Connection state = %s connected = %d", hippo_state_debug_string(connection->state), connected);
+    g_debug("Connection state = %s connected = %d", hippo_state_to_string(connection->state), connected);
     
     /* It's important to bump generation on _disconnect_,
      * so stuff queued while disconnected is in the right 
@@ -1528,6 +1539,12 @@ hippo_connection_request_title_patterns(HippoConnection *connection)
     lm_message_unref(message);
 }
 
+gboolean         
+hippo_connection_get_contacts_loaded(HippoConnection  *connection)
+{
+	return connection->contacts_loaded;
+}
+
 static LmHandlerResult
 on_contacts_reply(LmMessageHandler *handler,
                   LmConnection     *lconnection,
@@ -1553,6 +1570,9 @@ on_contacts_reply(LmMessageHandler *handler,
             return LM_HANDLER_RESULT_REMOVE_MESSAGE;
         }
     }
+    
+    connection->contacts_loaded = TRUE;
+    g_signal_emit(G_OBJECT(connection), signals[CONTACTS_LOADED], 0);
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -3736,6 +3756,29 @@ handle_prefs_changed(HippoConnection *connection,
 }
 
 static gboolean
+handle_entities_changed(HippoConnection *connection,
+                        LmMessage       *message)
+{
+    LmMessageNode *child, *subchild;
+    
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
+        return FALSE;
+
+    child = find_child_node(message->node, "http://dumbhippo.com/protocol/entity", "entitiesChanged");
+    if (child == NULL)
+        return FALSE;
+    g_debug("handling entities changed message");
+
+	for (subchild = child->children; subchild; subchild = subchild->next) {
+        if (!hippo_data_cache_update_from_xml(connection->cache, subchild)) {
+            g_debug("Did not successfully update <%s> from xml", subchild->name);
+        }
+    }
+
+    return TRUE;
+}
+
+static gboolean
 handle_myspace_name_changed(HippoConnection *connection,
                             LmMessage       *message)
 {
@@ -3909,6 +3952,10 @@ handle_message (LmMessageHandler *handler,
     if (handle_setting_changed(connection, message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
+    
+    if (handle_entities_changed(connection, message)) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }    
     
     if (handle_myspace_name_changed(connection, message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
@@ -4146,7 +4193,7 @@ hippo_connection_get_need_login(HippoConnection  *connection)
 }
 
 const char*
-hippo_state_debug_string(HippoState state)
+hippo_state_to_string(HippoState state)
 {
     switch (state) {
     case HIPPO_STATE_SIGNED_OUT:

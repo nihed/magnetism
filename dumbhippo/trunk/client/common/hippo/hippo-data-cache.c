@@ -698,7 +698,7 @@ hippo_data_cache_foreach_entity(HippoDataCache  *cache,
                                 GFunc            func,
                                 gpointer         data)
 {
-        struct DataCacheForeachValueData foreach_data;
+    struct DataCacheForeachValueData foreach_data;
         
     g_return_if_fail(HIPPO_IS_DATA_CACHE(cache));
     
