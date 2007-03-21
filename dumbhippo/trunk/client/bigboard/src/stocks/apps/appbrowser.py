@@ -113,14 +113,16 @@ class AppCategoryUsage(MultiVTable):
         
         self.__bar_height = 10
         self.__bar_width = 80
+        self.__bar_min_color = (0xeb, 0xdc, 0xf3); 
+        self.__bar_max_color = (0xa4, 0x5a, 0xc6);        
         
         self.__apps = set()
         
     def set_apps(self, apps):
         self.remove_all()
         
-        self.append_column_item(hippo.CanvasText(text="Category"))
-        self.append_column_item(hippo.CanvasText(text="Your Usage"))        
+        self.append_column_item(hippo.CanvasText(text="Category", font="Bold 14px"))
+        self.append_column_item(hippo.CanvasText(text="Your Usage", font="Bold 14px"))
         
         categories = categorize(apps)
         cat_usage = {}
@@ -137,11 +139,11 @@ class AppCategoryUsage(MultiVTable):
         for category, usage in cat_usage.iteritems():
             self.append_column_item(hippo.CanvasText(text=category))
             factor = (usage * 1.0) / max_usage_count[1]
-            print "using factor %s" % (factor,)
             box = CanvasHBox()
+            (r, g, b)= map(lambda (min,max): int(min * (1.0-factor)) + int(max*factor), zip(self.__bar_min_color, self.__bar_max_color))
             box.append(CanvasVBox(box_height=self.__bar_height,
                                   box_width=(int(self.__bar_width * factor)),
-                                  background_color=0xEBDCF3FF))
+                                  background_color=(r << 24) + (g << 16) + (b << 8) + (0xFF << 0)))
             box.append(hippo.CanvasText(text=" "))
             self.append_column_item(box)
         
