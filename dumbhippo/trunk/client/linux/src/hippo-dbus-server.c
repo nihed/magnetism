@@ -1812,7 +1812,18 @@ handle_message(DBusConnection     *connection,
                 dbus_connection_send(dbus->connection, reply, NULL);
                 dbus_message_unref(reply);
             }        
-        }
+        } else if (path && member &&
+                   g_str_has_prefix(path, HIPPO_DBUS_MUGSHOT_DATACACHE_PATH_PREFIX)) {
+            DBusMessage *reply;
+                               	
+            reply = hippo_dbus_handle_mugshot_entity_message(dbus, message);
+            
+            if (reply != NULL) {
+            	result = DBUS_HANDLER_RESULT_HANDLED;
+        	    dbus_connection_send(dbus->connection, reply, NULL);
+                dbus_message_unref(reply);
+            }
+        }        
     } else if (type == DBUS_MESSAGE_TYPE_SIGNAL) {
         const char *sender = dbus_message_get_sender(message);
         const char *interface = dbus_message_get_interface(message);

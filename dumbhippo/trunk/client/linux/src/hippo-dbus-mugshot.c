@@ -85,6 +85,36 @@ append_entity(HippoDBus         *dbus,
     append_strings_as_dict(&iter, "guid", guid, "type", type, "name", name, "home-url", home_url, "photo-url", photo_url, NULL);
 }
 
+static HippoEntity *
+entity_from_ref(HippoDBus *dbus,
+                const char *ref)
+{
+    HippoDataCache *cache;
+     
+    cache = hippo_app_get_data_cache(hippo_get_app());
+    
+    if (!g_str_has_prefix(ref, HIPPO_DBUS_MUGSHOT_DATACACHE_PATH_PREFIX))
+        return NULL;
+    
+    return hippo_data_cache_lookup_entity(cache, ref + strlen(HIPPO_DBUS_MUGSHOT_DATACACHE_PATH_PREFIX));
+}
+                
+static char *
+get_entity_path(HippoEntity *entity)
+{
+	return g_strdup_printf(HIPPO_DBUS_MUGSHOT_DATACACHE_PATH_PREFIX "%s", hippo_entity_get_guid(entity));  
+}
+
+static void
+append_entity_ref(HippoDBus *dbus,
+                  DBusMessage *message,
+                  HippoEntity *entity)
+{
+	char *opath;
+	opath = get_entity_path(entity);
+    dbus_message_append_args(message, DBUS_TYPE_OBJECT_PATH, &opath, DBUS_TYPE_INVALID);
+}
+
 void
 hippo_dbus_try_acquire_mugshot(DBusConnection *connection,
                                gboolean        replace)
@@ -150,7 +180,31 @@ hippo_dbus_handle_mugshot_get_self(HippoDBus   *dbus,
     }
 
     reply = dbus_message_new_method_return(message);
-    append_entity(dbus, reply, HIPPO_ENTITY(self));
+    append_entity_ref(dbus, reply, HIPPO_ENTITY(self));					
+    return reply;
+}
+
+DBusMessage*
+hippo_dbus_handle_mugshot_entity_message(HippoDBus   *dbus,
+                                         DBusMessage  *message)
+{
+	DBusError error;
+    HippoEntity *entity;
+    DBusMessage *reply = NULL;
+
+    dbus_error_init(&error);
+    
+    entity = entity_from_ref(dbus, dbus_message_get_path(message));
+    
+    if (!entity) {
+    	return dbus_message_new_error(message, "org.mugshot.Mugshot.UnknownEntity", "Unknown entity");    	
+    }
+    
+    if (!strcmp(dbus_message_get_member(message), "GetProperties")) {
+	    reply = dbus_message_new_method_return(message);
+        append_entity(dbus, reply, HIPPO_ENTITY(entity));	
+    }
+    	
     return reply;
 }
 
@@ -204,7 +258,7 @@ static void
 signal_entity_changed(gpointer entity_ptr, gpointer data)
 {
     HippoDBus *dbus = HIPPO_DBUS(data);
-    HippoEntity *entity = (HippoEntity*) entity_ptr;
+    HippoEntity *entity = (HippoEntity*) entity_ptr;  
 
     if (hippo_entity_get_in_network(entity))
         hippo_dbus_notify_entity_changed(dbus, entity);
@@ -267,8 +321,7 @@ hippo_dbus_handle_mugshot_introspect(HippoDBus   *dbus,
 
     g_string_append(xml,
                     "    <signal name=\"WhereimChanged\">\n"
-                    "      <arg direction=\"in\" type=\"s\"/>\n"
-                    "      <arg direction=\"in\" type=\"s\"/>\n"
+                    "      <arg direction=\"in\" type=\"a{ss}\"/>\n"
                     "    </signal>\n");
 
     g_string_append(xml,
@@ -296,19 +349,24 @@ hippo_dbus_mugshot_signal_whereim_changed(HippoDBus            *dbus,
                                           HippoExternalAccount *acct)
 {
     DBusMessage *signal;
-    char *name, *icon_url;
+    DBusMessageIter iter;
+    char *name, *icon_url, *link;
 
-    g_object_get(acct, "name", &name, "icon-url", &icon_url, NULL);
+    g_object_get(acct, "name", &name, "icon-url", &icon_url, "link", &link, NULL);
 
     signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
                                      HIPPO_DBUS_MUGSHOT_INTERFACE,
                                      "WhereimChanged");
-    dbus_message_append_args(signal, 
-                             DBUS_TYPE_STRING, &name,
-                             DBUS_TYPE_STRING, &icon_url,
-                             DBUS_TYPE_INVALID);
+    dbus_message_iter_init_append(signal, &iter);
+                                         
+	append_strings_as_dict(&iter, 
+						   "name", name,
+						   "icon-url", icon_url,
+						   "link", link,
+						   NULL);
     g_free(name);
     g_free(icon_url);
+    g_free(link);
     return signal;
 }
 
@@ -317,10 +375,12 @@ hippo_dbus_mugshot_signal_entity_changed(HippoDBus            *dbus,
                                          HippoEntity          *entity)
 {
     DBusMessage *signal;
-    signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
-                                     HIPPO_DBUS_MUGSHOT_INTERFACE,
-                                     "EntityChanged");
-    append_entity(dbus, signal, entity);
+    char *path;
+    path = get_entity_path(entity);
+    signal = dbus_message_new_signal(path,
+                                     HIPPO_DBUS_MUGSHOT_ENTITY_INTERFACE,
+                                     "Changed");
+    g_free(path);
     return signal;
 }
 
