@@ -5,7 +5,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<dh:bean id="welcome" class="com.dumbhippo.web.pages.DownloadPage" scope="page"/>
+<dh:bean id="download" class="com.dumbhippo.web.DownloadBean" scope="page"/>
 
 <head>
 	<title>Mugshot Download</title>
@@ -21,18 +21,18 @@
 		<div class="dh-download-header-area">
 			<div class="dh-download-header">Download Mugshot</div>
 			<c:choose>
-				<c:when test="${welcome.haveDownload}">
+				<c:when test="${download.haveDownload}">
 					<div class="dh-download-subtitle">Share cool sites. Get updates from friends on your desktop. Show off your music playlist. Mugshot is free and easy to use!</div>
 					<div class="dh-download-buttons">
 						<c:choose>
-							<c:when test="${welcome.disabled}">
+							<c:when test="${signin.disabled}">
 								<a id="dhDownloadProduct"><img src="/images3/${buildStamp}/download_now_disabled.gif"/></a>
 							</c:when>
 							<c:otherwise>
-								<a id="dhDownloadProduct" href="${welcome.downloadUrl}"><img src="/images3/${buildStamp}/download_now_button.gif"/></a>
+								<a id="dhDownloadProduct" href="${download.downloadUrl}"><img src="/images3/${buildStamp}/download_now_button.gif"/></a>
 							</c:otherwise>
 						</c:choose>
-						<i>  (This download is for <c:out value="${welcome.downloadFor}"/>.)</i>
+						<i>  (This download is for <c:out value="${download.downloadFor}"/>.)</i>
 					</div>
 					<div class="dh-download-yadayada">
 						Or, get Mugshot for another platform instead:
@@ -66,8 +66,8 @@
 			<c:choose>
 				<c:when test="${download.linuxRequested}">
 					<div class="dh-download-yadayada">
-						<i>Source code is available in <a href="${welcome.downloadUrlLinuxTar}">tar.gz</a> and
-						<a href="${welcome.downloadUrlSrpm}">SRPM</a> formats.</i>
+						<i>Source code is available in <a href="${download.downloadUrlLinuxTar}">tar.gz</a> and
+						<a href="${download.downloadUrlSrpm}">SRPM</a> formats.</i>
 					</div>
 				</c:when>
 			</c:choose>			

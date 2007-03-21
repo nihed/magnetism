@@ -4,9 +4,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<%-- This is only used in the Linux case, but currently dh:bean as a side effect sets the 
-     "browser" variable in request scope, so don't try moving this into the linux-only cases below --%>
-<dh:bean id="download" class="com.dumbhippo.web.pages.DownloadPage" scope="page"/>
+<dh:bean id="download" class="com.dumbhippo.web.DownloadBean" scope="page"/>
 
 <head>
 	<title>Upgrade</title>
@@ -21,7 +19,7 @@
 	<td><dh:png id="dhUpgradeLogo" src="/images2/${buildStamp}/mugicon90x80.png" style="width: 90; height: 80;"/></td>
 	<td>
 	<c:choose>
-		<c:when test="${browser.linuxRequested}">
+		<c:when test="${download.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
 			<p>Version 1.1.37</p>
 			<ul>
@@ -50,7 +48,7 @@
 	<div>
 		<center>
 			<c:choose>
-				<c:when test="${browser.linuxRequested}">
+				<c:when test="${download.linuxRequested}">
 					<c:if test="${download.haveDownload}">
 						<a href="${download.downloadUrl}"><c:out value="${download.downloadFor}"/> RPM</a>
 						<br/>
