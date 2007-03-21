@@ -68,6 +68,11 @@ public class FlickrPersonBlockHandlerBean extends
 	public void onMostRecentFlickrPhotosChanged(String flickrId, FlickrPhotosView photosView) {
 		logger.debug("most recent flickr photos changed for " + flickrId);
 
+		if (photosView.getPhotos().size() == 0) {
+			logger.debug("not restacking flickr person block since photo count is 0");
+			return;
+		}	
+		
 		long now = System.currentTimeMillis();
 		Collection<User> users = flickrUpdater.getAccountLovers(flickrId);
 		for (User user : users) {
