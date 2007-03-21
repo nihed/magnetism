@@ -695,12 +695,13 @@ dh.util.createLinkElementWithChild = function(url, linkChild) {
     return linkElement;
 }
 
-dh.util.createActionLinkElement = function(text, onclick, className) {
+dh.util.createActionLinkElement = function(text, onclick, className, id) {
     var linkElement = document.createElement("a");
     linkTextNode = document.createTextNode(text);
     linkElement.appendChild(linkTextNode);
     linkElement.onclick = onclick;
     linkElement.className = className;
+    linkElement.id = id;
     return linkElement;
 }
 
@@ -750,8 +751,8 @@ dh.util.showMessage = function(message, idSuffix, confirmAction, cancelAction) {
 		dh.util.clearNode(div)
 		div.appendChild(document.createTextNode(message))
 		if (confirmAction && cancelAction) {
-		    div.appendChild(dh.util.createActionLinkElement("Confirm", confirmAction, "dh-confirm-link"))         
-		    div.appendChild(dh.util.createActionLinkElement("Cancel", cancelAction, "dh-cancel-link"))      
+		    div.appendChild(dh.util.createActionLinkElement("Confirm", confirmAction, "dh-confirm-link", ""))         
+		    div.appendChild(dh.util.createActionLinkElement("Cancel", cancelAction, "dh-cancel-link", ""))      
 		}
 		div.style.display = "block"
 	} else {

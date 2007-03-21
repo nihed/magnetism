@@ -3,6 +3,7 @@ dojo.require("dh.lang")
 
 dh.formtable.undoValues = {};
 dh.formtable.currentValues = null; // gets filled in as part of the jsp
+dh.formtable.expandableTextInputs = {};
 
 dh.formtable.linkClosures = {};
 dh.formtable.invokeLinkClosure = function(which) {
@@ -145,8 +146,12 @@ dh.formtable._doChange = function(controlId, isXmlMethod, methodName, argName, v
 			      args,
 		  	      function(/*type, data, http -or- childNodes, http*/) {
 					onSuccess();
- 	    	 		// this saves what we'll undo to after the NEXT change
-					dh.formtable.undoValues[controlId] = value;
+					// for the expandable text inputs, we keep the old 
+					// value until the input is being edited again
+					if (dh.formtable.expandableTextInputs[controlId] == null) {
+ 	    	 		    // this saves what we'll undo to after the NEXT change
+					    dh.formtable.undoValues[controlId] = value;
+					}
 	  	    	  },
 			  	  function(arg1, arg2, arg3 /*type, error, http -or- code, msg, http */) {
 			  	  	if (isXmlMethod)
@@ -226,29 +231,49 @@ dh.formtable.ExpandableTextInput = function(controlId, defaultVal) {
 	dh.formtable.initExpanded(controlId, false);
 
 	this._input = new dh.textinput.Entry(document.getElementById(controlId), defaultVal, dh.formtable.currentValues[controlId]);
+	this._input.timeoutBeforeChange = 200;
 	
 	dh.formtable.undoValues[controlId] = this._input.getValue();		
+	dh.formtable.expandableTextInputs[controlId] = this;
 	
-	this._saveFunc = null;
+	this._saveLink = null;	
+	this._saveFunc = null;	
 	
 	this._handlingFocus = false;
 	
 	this._input.onfocus = function () {
 		me._handlingFocus = true;
+	    dh.formtable.undoValues[controlId] = me._input.getValue();
 		me._setStatus('edited');
 		dh.formtable.setExpandedEditing(controlId, true);
 		me._descriptionNode.style.display = "block";
 		me._handlingFocus = false;
 	}
-	
-	this._input.onblur = function () {
-		if (me._handlingFocus) // Avoid spurious focus outs
-			return;
+
+    this._input.onkeyup = function () {
+        me._updateSaveLink();
+    }
+    
+    // this checks if the input value has changed and the save link 
+    // needs to look active
+    this._updateSaveLink = function () {
+        if (me._input.getValue() != me._input.lastValue) {
+            if (!dh.util.hasClass(me._saveLink, "dh-placebo-active-link")) {               
+			    dh.util.prependClass(me._saveLink, "dh-placebo-active-link");		   
+			}             
+        } else {
+            if (dh.util.hasClass(me._saveLink, "dh-placebo-active-link")) {
+			    dh.util.removeClass(me._saveLink, "dh-placebo-active-link");		   
+			}              
+        }
+    }       
+    
+    this._input.onValueChanged = function () {
 		me._setStatus('saving');
 		me._saveFunc(function () { me._setStatus('saved'); },
-		               function (msg) { me._setStatus('error', msg); });
-	}
-	
+		             function (msg) { me._setStatus('error', msg); });    
+    }
+    	
 	this._descriptionNode = document.getElementById(controlId + "Description");
 	
 	this._statusLink = document.createElement("span");
@@ -257,11 +282,22 @@ dh.formtable.ExpandableTextInput = function(controlId, defaultVal) {
 	this._setStatus = function(status, msg) {
 		dh.util.clearNode(me._statusLink);
 		var child;
+		var child2;
 		dh.formtable.setExpandedError(controlId, false);
 		if (status == 'edited') {
+		    me._input.cancelEdit = false;
 			child = document.createElement("span");
 			child.appendChild(document.createTextNode("Save"));
-			dh.util.prependClass(child, "dh-placebo-link");			
+			dh.util.prependClass(child, "dh-placebo-link");		
+			me._saveLink = child;
+			var cancelAction = function() {		
+			    expandableTextInput = dh.formtable.expandableTextInputs[controlId];	 
+			    expandableTextInput._input.cancelEdit = true;
+			    expandableTextInput._descriptionNode.style.display = "none";
+			    dh.formtable.setExpandedEditing(controlId, false);
+			    expandableTextInput._input.setValue(dh.formtable.undoValues[controlId], true);
+		    }		    
+			child2 = dh.util.createActionLinkElement("Cancel", cancelAction, "dh-active-link", "");     	
 		} else if (status == 'saving') {
 			child = document.createElement("span");
 			child.appendChild(document.createTextNode("Saving..."));
@@ -270,10 +306,26 @@ dh.formtable.ExpandableTextInput = function(controlId, defaultVal) {
 			child = document.createElement("span");
 			var img = document.createElement("img");
 			img.setAttribute("src", dhImageRoot3 + "check.png");
-			img.style.marginRight = "5px";
+			img.style.marginLeft = "3px";			
+			img.style.marginRight = "3px";
+			img.style.verticalAlign = "baseline";
 			child.appendChild(img);		
 			child.appendChild(document.createTextNode("Saved"));
-			dh.util.prependClass(child, "dh-saved-link")			
+			dh.util.prependClass(child, "dh-saved-link")
+			var undoAction = function() {			 
+			    undoValue = dh.formtable.undoValues[controlId];
+			    // elem.focus() seemed to work asynchronously, which would cause 
+			    // things below to be done out of order, so we do all the preparation
+			    // work in our own handleFocus(), and then call elem.focus() 
+			    // to get the cursor into the box 
+			    dh.formtable.expandableTextInputs[controlId]._input.handleFocus();			    	    
+			    dh.formtable.expandableTextInputs[controlId]._input.setValue(undoValue, true);
+			    // dh.formtable.undoValues[controlId] is now the value that was saved and that we are undoing
+			    dh.formtable.expandableTextInputs[controlId]._input.lastValue = dh.formtable.undoValues[controlId];
+			    dh.formtable.expandableTextInputs[controlId]._updateSaveLink();
+			    dh.formtable.expandableTextInputs[controlId]._input.elem.focus();			    
+		    }		    
+			child2 = dh.util.createActionLinkElement("Undo", undoAction, "dh-active-link", "");    			
 		} else if (status == 'error') {
 			child = document.createElement("span");
 			var span = document.createElement("span");
@@ -287,6 +339,8 @@ dh.formtable.ExpandableTextInput = function(controlId, defaultVal) {
 			dh.formtable.setExpandedError(controlId, true);
 		}
 		me._statusLink.appendChild(child);
+		if (child2)
+		    me._statusLink.appendChild(child2);
 	}
 	
 	this._setStatus('edited');
@@ -303,8 +357,8 @@ dh.formtable.ExpandableTextInput = function(controlId, defaultVal) {
 	}
 	
 	this.setChangedPost = function(methodName, argName, fixedArgs) {
-		me._saveFunc = function (onSuccess, onFailure) {
-			dh.formtable._doChange(controlId, false, methodName, argName, me._input.getValue(), fixedArgs, onSuccess, onFailure);
+		me._saveFunc = function (onSuccess, onFailure) {	
+            dh.formtable._doChange(controlId, false, methodName, argName, me._input.getValue(), fixedArgs, onSuccess, onFailure);
 		}	
 	}
 	

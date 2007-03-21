@@ -15,7 +15,7 @@
 		<dht3:blockTitle>
 			<span class="dh-stacker-block-title-generic"><dht3:entityLink who="${block.revisorView}"/></span>
 			<c:choose>
-				<c:when test="${dh:enumIs(block.revision.type, 'GROUP_NAME_CHANGED')}"> changed the group's name to '<c:out value="${block.groupView.name}"/>'</c:when>
+				<c:when test="${dh:enumIs(block.revision.type, 'GROUP_NAME_CHANGED')}"> changed the group's name to '<c:out value="${block.revision.newName}"/>'</c:when>
 				<c:when test="${dh:enumIs(block.revision.type, 'GROUP_DESCRIPTION_CHANGED')}"> changed the description of <dht3:entityLink who="${block.groupView}"/></c:when>
 				<c:when test="${dh:enumIs(block.revision.type, 'GROUP_FEED_ADDED')}"> added the feed '<c:out value="${block.revision.feed.title}"/>' to <dht3:entityLink who="${block.groupView}"/> </c:when>
 				<c:when test="${dh:enumIs(block.revision.type, 'GROUP_FEED_REMOVED')}"> removed the feed '<c:out value="${block.revision.feed.title}"/>' from <dht3:entityLink who="${block.groupView}"/></c:when>
