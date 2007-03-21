@@ -21,6 +21,7 @@ struct _HippoExternalAccount {
     
     char *name;
     char *icon_url;
+    char *link;
 };
 
 struct _HippoExternalAccountClass {
@@ -40,7 +41,8 @@ static int signals[LAST_SIGNAL];
 enum {
     PROP_0,
     PROP_NAME,
-    PROP_ICON_URL
+    PROP_ICON_URL,
+    PROP_LINK
 };
 
 static void
@@ -72,6 +74,14 @@ hippo_external_account_class_init(HippoExternalAccountClass *klass)
                                                         _("Possibly-remote URL of favicon"),
                                                         NULL,
                                                         G_PARAM_READABLE));
+                                                        
+    g_object_class_install_property(object_class,
+                                    PROP_LINK,
+                                    g_param_spec_string("link",
+                                                        _("Link"),
+                                                        _("Link to external account site"),
+                                                        NULL,
+                                                        G_PARAM_READABLE));                                                        
 }
 
 static void
@@ -111,6 +121,9 @@ hippo_external_account_get_property(GObject         *object,
     case PROP_ICON_URL:
         g_value_set_string(value, track->icon_url);
         break;
+    case PROP_LINK:
+        g_value_set_string(value, track->link);
+        break;        
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -126,16 +139,19 @@ hippo_external_account_new_from_xml(HippoDataCache *cache,
     HippoExternalAccount *acct;
     const char *name;
     const char *icon_url;
+    const char *link;
 
     acct = g_object_new(HIPPO_TYPE_EXTERNAL_ACCOUNT, NULL);
 
     if (!hippo_xml_split(cache, node, NULL,
                          "type", HIPPO_SPLIT_STRING, &name,
                          "icon", HIPPO_SPLIT_STRING, &icon_url,
+                         "link", HIPPO_SPLIT_STRING, &link,
                          NULL))
         return NULL;
     acct->name = g_strdup(name);
     acct->icon_url = g_strdup(icon_url);
+    acct->link = g_strdup(link);
 
     return acct;
 }
