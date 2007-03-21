@@ -26,6 +26,10 @@ HippoDBus* hippo_dbus_try_to_acquire           (const char  *server,
                                                 gboolean     replace_existing,
                                                 GError     **error);
 
+void       hippo_dbus_notify_auth_changed      (HippoDBus   *dbus);
+
+void       hippo_dbus_notify_contacts_loaded   (HippoDBus   *dbus);
+
 void       hippo_dbus_notify_xmpp_connected    (HippoDBus   *dbus,
                                                 gboolean     connected);
                                                 

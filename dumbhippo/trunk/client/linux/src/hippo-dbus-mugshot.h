@@ -24,6 +24,9 @@ G_BEGIN_DECLS
 #define HIPPO_DBUS_MUGSHOT_ENTITY_INTERFACE "org.mugshot.Mugshot.Entity"
 #define HIPPO_DBUS_MUGSHOT_DATACACHE_PATH_PREFIX "/org/mugshot/Mugshot/datacache/"
 
+DBusMessage* hippo_dbus_handle_mugshot_get_connection_status(HippoDBus   *dbus,
+                                                             DBusMessage  *message);
+
 DBusMessage* hippo_dbus_handle_mugshot_entity_message(HippoDBus   *dbus,
                                                       DBusMessage  *message);
 
@@ -48,6 +51,8 @@ DBusMessage* hippo_dbus_handle_mugshot_introspect   (HippoDBus       *dbus,
 
 void hippo_dbus_try_acquire_mugshot                 (DBusConnection *connection,
                                                      gboolean        replace);
+
+DBusMessage* hippo_dbus_mugshot_signal_connection_changed       (HippoDBus            *dbus);
 
 DBusMessage* hippo_dbus_mugshot_signal_whereim_changed      (HippoDBus            *dbus,
                                                              HippoConnection      *xmpp_connection,

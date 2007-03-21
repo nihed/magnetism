@@ -141,23 +141,17 @@ hippo_dbus_handle_mugshot_get_baseprops(HippoDBus       *dbus,
     HippoDataCache *cache;
     HippoConnection *connection;
     char *baseurl;
-    const char *self_id;
-    char *connected;
 
     cache = hippo_app_get_data_cache(hippo_get_app());
     connection = hippo_data_cache_get_connection(cache);
     
     baseurl = hippo_connection_make_absolute_url(connection, "/");
-    self_id = hippo_connection_get_self_guid(connection);
-    connected = hippo_connection_get_connected(connection) ? "true" : "false";    
     
     reply = dbus_message_new_method_return(message);   
     dbus_message_iter_init_append(reply, &iter);
      
     append_strings_as_dict(&iter, 
                            "baseurl", baseurl,
-                           "self-id", self_id,
-                           "connected", connected,  
                            NULL);
     g_free(baseurl);
     
@@ -181,6 +175,33 @@ hippo_dbus_handle_mugshot_get_self(HippoDBus   *dbus,
 
     reply = dbus_message_new_method_return(message);
     append_entity_ref(dbus, reply, HIPPO_ENTITY(self));					
+    return reply;
+}
+
+DBusMessage*
+hippo_dbus_handle_mugshot_get_connection_status(HippoDBus   *dbus,
+                                                DBusMessage  *message)
+{
+    DBusMessage *reply;	
+	gboolean have_auth;
+	gboolean connected;
+	gboolean contacts_loaded;
+    HippoDataCache *cache;
+	HippoConnection *connection;
+	
+    cache = hippo_app_get_data_cache(hippo_get_app());
+    connection = hippo_data_cache_get_connection(cache);
+    
+    have_auth = hippo_connection_get_has_auth(connection);
+	connected = hippo_connection_get_connected(connection);
+	contacts_loaded = hippo_connection_get_contacts_loaded(connection);
+    
+    reply = dbus_message_new_method_return(message);    
+    dbus_message_append_args(reply, DBUS_TYPE_BOOLEAN, &have_auth, 
+                                    DBUS_TYPE_BOOLEAN, &connected,
+                                    DBUS_TYPE_BOOLEAN, &contacts_loaded, 
+                                    DBUS_TYPE_INVALID);
+    
     return reply;
 }
 
@@ -368,6 +389,16 @@ hippo_dbus_mugshot_signal_whereim_changed(HippoDBus            *dbus,
     g_free(icon_url);
     g_free(link);
     return signal;
+}
+
+DBusMessage*
+hippo_dbus_mugshot_signal_connection_changed(HippoDBus            *dbus)
+{
+    DBusMessage *signal;
+    signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
+                                     HIPPO_DBUS_MUGSHOT_INTERFACE,
+                                     "ConnectionStatusChanged");
+    return signal;	
 }
 
 DBusMessage*

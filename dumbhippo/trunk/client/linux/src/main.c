@@ -1201,6 +1201,24 @@ on_connected_changed(HippoConnection *connection,
 }
 
 static void
+on_has_auth_changed(HippoConnection *connection,
+                    void            *data)
+{
+    HippoApp *app = data;
+
+    hippo_dbus_notify_auth_changed(app->dbus);
+}
+
+static void
+on_contacts_loaded(HippoConnection *connection,
+                   void            *data)
+{
+    HippoApp *app = data;
+
+    hippo_dbus_notify_contacts_loaded(app->dbus);
+}
+
+static void
 on_whereim_changed(HippoConnection            *connection,
                    HippoExternalAccount       *acct,
                    void                       *data)
@@ -1297,10 +1315,14 @@ hippo_app_new(HippoInstanceType  instance_type,
     
     g_signal_connect(G_OBJECT(app->connection), "client-info-available", 
                      G_CALLBACK(on_client_info_available), app);
+    g_signal_connect(G_OBJECT(app->connection), "has-auth-changed",
+                     G_CALLBACK(on_has_auth_changed), app);                     
     g_signal_connect(G_OBJECT(app->connection), "connected-changed",
                      G_CALLBACK(on_connected_changed), app);
     g_signal_connect(G_OBJECT(app->connection), "initial-application-burst",
                      G_CALLBACK(on_initial_application_burst), app);
+    g_signal_connect(G_OBJECT(app->connection), "contacts-loaded", 
+                     G_CALLBACK(on_contacts_loaded), app);                     
                      
     /* Hook up D-BUS reflectors */
     g_signal_connect(G_OBJECT(app->connection), "whereim-changed",
