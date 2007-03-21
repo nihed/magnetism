@@ -21,6 +21,12 @@ G_BEGIN_DECLS
 #define HIPPO_DBUS_MUGSHOT_BUS_NAME "org.mugshot.Mugshot"
 #define HIPPO_DBUS_MUGSHOT_PATH "/org/mugshot/Mugshot"
 
+#define HIPPO_DBUS_MUGSHOT_ENTITY_INTERFACE "org.mugshot.Mugshot.Entity"
+#define HIPPO_DBUS_MUGSHOT_DATACACHE_PATH_PREFIX "/org/mugshot/Mugshot/datacache/"
+
+DBusMessage* hippo_dbus_handle_mugshot_entity_message(HippoDBus   *dbus,
+                                                      DBusMessage  *message);
+
 DBusMessage* hippo_dbus_handle_mugshot_get_baseprops(HippoDBus       *dbus,
                                                      DBusMessage     *message);
 

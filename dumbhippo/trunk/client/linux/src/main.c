@@ -1249,6 +1249,19 @@ on_icon_size_changed(GtkStatusIcon *tray_icon,
     return FALSE;
 }
 
+static void
+on_entity_changed(HippoEntity *entity, HippoApp *app)
+{
+	hippo_dbus_notify_entity_changed(app->dbus, entity);	
+}
+
+static void
+on_entity_added(HippoDataCache *cache, HippoEntity *entity, HippoApp *app)
+{
+    g_signal_connect(G_OBJECT(entity), "changed",
+                     G_CALLBACK(on_entity_changed), app);	
+}
+
 static HippoApp*
 hippo_app_new(HippoInstanceType  instance_type,
               HippoPlatform     *platform,
@@ -1278,6 +1291,9 @@ hippo_app_new(HippoInstanceType  instance_type,
     app->cache = hippo_data_cache_new(app->connection);
     g_object_unref(app->connection); /* let the data cache keep it alive */
     app->icon = hippo_status_icon_new(app->cache);
+    
+    g_signal_connect(G_OBJECT(app->cache), "entity-added",
+                     G_CALLBACK(on_entity_added), app);
     
     g_signal_connect(G_OBJECT(app->connection), "client-info-available", 
                      G_CALLBACK(on_client_info_available), app);
