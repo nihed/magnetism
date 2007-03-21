@@ -12,10 +12,10 @@ import hippo
 
 import mugshot
 import libbig
-from bigboard import AbstractMugshotStock
+from bigboard import Stock
 from big_widgets import CanvasMugshotURLImage, CanvasEntry
         
-class SearchStock(AbstractMugshotStock):
+class SearchStock(Stock):
     """Search.  It's what's for dinner."""
     def __init__(self, *args, **kwargs):
         super(SearchStock,self).__init__(*args, **kwargs)
@@ -35,9 +35,6 @@ class SearchStock(AbstractMugshotStock):
         self.__applet.reparent(self.__vbox)
         
         self.__box.append(self.__widget)
-        
-    def _on_mugshot_initialized(self):
-        super(SearchStock, self)._on_mugshot_initialized()
         
     def get_content(self, size):
         return self.__box

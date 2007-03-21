@@ -20,6 +20,7 @@ class Mugshot(gobject.GObject):
     using the get_mugshot() module method."""
     __gsignals__ = {
         "initialized" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        "connection-status": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
         "self-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "whereim-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "entity-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
@@ -47,7 +48,6 @@ class Mugshot(gobject.GObject):
                                                        _log_cb(self.__on_dbus_name_owner_changed))
         self.__create_proxy()
         self.__create_ws_proxy()
-        self.__create_listener_proxy()
         
         self.__reset()        
         
@@ -90,10 +90,12 @@ class Mugshot(gobject.GObject):
             bus = dbus.SessionBus()
             self._logger.debug("creating proxy for org.mugshot.Mugshot")
             self.__proxy = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
+            self.__proxy.connect_to_signal('ConnectionStatusChanged', _log_cb(self.__on_connection_status_changed))          
             self.__proxy.connect_to_signal('WhereimChanged', _log_cb(self.__whereimChanged))
             self.__proxy.connect_to_signal('EntityChanged', _log_cb(self.__entityChanged))
             self.__proxy.connect_to_signal('ExternalIQReturn', _log_cb(self.__externalIQReturn))
-            self.__proxy.GetBaseProperties(reply_handler=_log_cb(self.__on_get_baseprops), error_handler=self.__on_dbus_error)        
+            self.__get_connection_status()    
+            self.__proxy.GetBaseProperties(reply_handler=_log_cb(self.__on_get_baseprops), error_handler=self.__on_dbus_error)            
         except dbus.DBusException:
             self.__proxy = None
 
@@ -102,16 +104,7 @@ class Mugshot(gobject.GObject):
             bus = dbus.SessionBus()
             self.__ws_proxy = bus.get_object('org.mugshot.Mugshot', '/org/gnome/web_services')
         except dbus.DBusException:
-            self.__ws_proxy = None
-            
-    def __create_listener_proxy(self):
-        try:
-            bus = dbus.SessionBus()
-            #self.__listener_proxy = bus.get_object('com.dumbhippo.Listener', '/com/dumbhippo/listener')
-            #self.__listener_proxy.connect_to_signal('Connected', _log_cb(self.__on_xmpp_connected))
-            #self.__listener_proxy.connect_to_signal('Disconnected', _log_cb(self.__on_xmpp_disconnected))  
-        except dbus.DBusException:
-            self.__listener_proxy = None            
+            self.__ws_proxy = None        
         
     def __on_dbus_name_owner_changed(self, name, prev_owner, new_owner):
         if name == 'org.mugshot.Mugshot':
@@ -124,11 +117,17 @@ class Mugshot(gobject.GObject):
                 self.__proxy = None
                 self.__ws_proxy = None
 
-    def __on_xmpp_connected(self):
-        self._logger.debug("got xmpp connected")
-        
-    def __on_xmpp_disconnected(self):
-        self._logger.debug("got xmpp disconnected")
+    def __on_connection_status(self, has_auth, connected, contacts):
+        self._logger.debug("connection status auth=%s connected=%s contacts=%s" % (has_auth, connected, contacts))
+        self.emit("connection-status", has_auth, connected, contacts)         
+
+    def __get_connection_status(self):
+        self.__proxy.GetConnectionStatus(reply_handler=_log_cb(self.__on_connection_status),
+                                         error_handler=_log_cb(self.__on_dbus_error))
+
+    def __on_connection_status_changed(self):
+        self._logger.debug("connection status changed")        
+        self.__get_connection_status()
     
     def __whereimChanged(self, props):
         self._logger.debug("whereimChanged: %s" % (props,))
@@ -204,9 +203,6 @@ class Mugshot(gobject.GObject):
     
     def get_baseurl(self):
         return self.__get_baseprop('baseurl')
-    
-    def get_self_id(self):
-        return self.__get_baseprop('self-id')
     
     def get_self(self):
         if self.__self is None:

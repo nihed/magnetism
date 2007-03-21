@@ -2,8 +2,10 @@ import os, logging, xml.dom.minidom
 
 import gobject
 
+import hippo
+
 from singletonmixin import Singleton
-import mugshot, libbig
+import big_widgets, mugshot, libbig
 
 class State(Singleton):
     """Extremely simple state saving mechanism.  Intended to be
@@ -205,12 +207,34 @@ class AbstractMugshotStock(Stock):
     method on this class is connect_mugshot_handler."""
     def __init__(self, *args, **kwargs):
         super(AbstractMugshotStock, self).__init__(*args, **kwargs)
+        self.__auth = False
+        self.__have_contacts = False        
         self._mugshot_initialized = False
         self._dependent_handlers = []
         
         self._mugshot = mugshot.get_mugshot()
         self._mugshot.connect("initialized", lambda mugshot: self._on_mugshot_initialized())
+        self._mugshot.connect("connection-status", lambda mugshot, auth, xmpp, contacts: self.__handle_mugshot_connection_status(auth, xmpp, contacts))  
         
+        self.__cursize = None
+        self.__box = hippo.CanvasBox()
+        
+        self.__signin = big_widgets.ActionLink(text="Sign in to Mugshot")
+        
+    def __sync_content(self):
+        self.__box.remove_all()        
+        if self.__auth:
+            self.__box.append(self.get_authed_content(self.__cursize))
+        else:
+            self.__box.append(self.__signin)
+            
+    def get_content(self, size):
+        if size == self.__cursize:
+            return self.__box
+        self.__cursize = size        
+        self.__sync_content()
+        return self.__box
+         
     # protected
     def get_mugshot_initialized(self):
         return self._mugshot_initialized
@@ -220,6 +244,22 @@ class AbstractMugshotStock(Stock):
         self._mugshot_initialized = True
         for object, signal, handler in self._dependent_handlers:
             object.connect(signal, handler)
+        self.__check_ready()            
+            
+    def _on_mugshot_ready(self):
+        """Should be overridden by subclasses to handle the state where mugshot
+        is initialized and connected."""
+        pass
+            
+    def __handle_mugshot_connection_status(self, auth, xmpp, contacts):
+        self.__auth = auth
+        self.__sync_content()        
+        self.__have_contacts = contacts
+        self.__check_ready()
+            
+    def __check_ready(self):
+        if self._mugshot_initialized and self.__have_contacts:
+            self._on_mugshot_ready()
         
     # protected
     def connect_mugshot_handler(self, object, signal, handler):
