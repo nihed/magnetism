@@ -1791,7 +1791,9 @@ handle_message(DBusConnection     *connection,
             reply = NULL;
             result = DBUS_HANDLER_RESULT_HANDLED;
 
-            if (strcmp(member, "NotifyAllWhereim") == 0) {
+			if (strcmp(member, "GetConnectionStatus") == 0) {
+				reply = hippo_dbus_handle_mugshot_get_connection_status(dbus, message);
+			} else if (strcmp(member, "NotifyAllWhereim") == 0) {
                 reply = hippo_dbus_handle_mugshot_get_whereim(dbus, xmpp_connection, message);
             } else if (strcmp(member, "NotifyAllNetwork") == 0) {
                 reply = hippo_dbus_handle_mugshot_get_network(dbus, message);
@@ -1892,26 +1894,49 @@ handle_message(DBusConnection     *connection,
 }
 
 void
+hippo_dbus_notify_auth_changed(HippoDBus   *dbus)
+{
+	DBusMessage *message;
+	message = hippo_dbus_mugshot_signal_connection_changed(dbus);
+    dbus_connection_send(dbus->connection, message, NULL);
+    dbus_message_unref(message);	
+}                               
+
+void
+hippo_dbus_notify_contacts_loaded(HippoDBus   *dbus)
+{
+	DBusMessage *message;
+	message = hippo_dbus_mugshot_signal_connection_changed(dbus);
+    dbus_connection_send(dbus->connection, message, NULL);
+    dbus_message_unref(message);	
+}   
+
+void
 hippo_dbus_notify_xmpp_connected(HippoDBus   *dbus,
                                  gboolean     connected)
 {
+	DBusMessage *message;
     if (dbus->xmpp_connected == (connected != FALSE))
         return;
     
     dbus->xmpp_connected = connected != FALSE;
 
+	message = hippo_dbus_mugshot_signal_connection_changed(dbus);
+    dbus_connection_send(dbus->connection, message, NULL);
+    dbus_message_unref(message);	
+
     if (dbus->xmpp_connected) {
         /* notify all the listeners */
-        DBusMessage *message = dbus_message_new_signal(HIPPO_DBUS_LISTENER_PATH,
-                                                       HIPPO_DBUS_LISTENER_INTERFACE,
-                                                       "Connected");
+        message = dbus_message_new_signal(HIPPO_DBUS_LISTENER_PATH,
+                                          HIPPO_DBUS_LISTENER_INTERFACE,
+                                          "Connected");
         
         dbus_connection_send(dbus->connection, message, NULL);
         dbus_message_unref(message);
     } else {
-        DBusMessage *message = dbus_message_new_signal(HIPPO_DBUS_LISTENER_PATH,
-                                                       HIPPO_DBUS_LISTENER_INTERFACE,
-                                                       "Disconnected");
+        message = dbus_message_new_signal(HIPPO_DBUS_LISTENER_PATH,
+                                          HIPPO_DBUS_LISTENER_INTERFACE,
+                                          "Disconnected");
         
         dbus_connection_send(dbus->connection, message, NULL);
         dbus_message_unref(message);        
