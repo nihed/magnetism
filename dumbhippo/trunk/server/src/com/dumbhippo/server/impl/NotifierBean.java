@@ -47,6 +47,7 @@ import com.dumbhippo.server.listeners.GroupCreationListener;
 import com.dumbhippo.server.listeners.GroupMembershipListener;
 import com.dumbhippo.server.listeners.MusicChatListener;
 import com.dumbhippo.server.listeners.MusicListener;
+import com.dumbhippo.server.listeners.PicasaListener;
 import com.dumbhippo.server.listeners.PostChatListener;
 import com.dumbhippo.server.listeners.PostClickedListener;
 import com.dumbhippo.server.listeners.PostListener;
@@ -55,6 +56,7 @@ import com.dumbhippo.server.listeners.UserCreationListener;
 import com.dumbhippo.server.listeners.YouTubeListener;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.FlickrPhotosView;
+import com.dumbhippo.services.PicasaAlbum;
 import com.dumbhippo.services.YouTubeVideo;
 
 /**
@@ -340,6 +342,12 @@ public class NotifierBean implements Notifier {
 	public void onRevisionAdded(Revision revision) {
 		for (RevisionListener l : getListeners(RevisionListener.class)) {
 			l.onRevisionAdded(revision);
+		}
+	}
+
+	public void onPicasaRecentAlbumsChanged(String username, List<? extends PicasaAlbum> albums) {
+		for (PicasaListener l : getListeners(PicasaListener.class)) {
+			l.onPicasaRecentAlbumsChanged(username, albums);
 		}
 	}
 }
