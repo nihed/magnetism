@@ -82,6 +82,9 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self.__app_browser = appbrowser.AppBrowser()
         self._add_more_link(self.__on_more_link)
         
+        self._mugshot.connect("my-top-apps-changed", self.__handle_my_top_apps_changed)      
+        self._mugshot.connect("pinned-apps-changed", self.__handle_pinned_apps_changed)        
+        
         self.__static_set_ids = {}
         self.__set_message('Loading...')
         
@@ -94,14 +97,12 @@ class AppsStock(bigboard.AbstractMugshotStock):
         if text:
             self.__message.set_property("text", text)
 
-    def _on_mugshot_initialized(self):
-        super(AppsStock, self)._on_mugshot_initialized()
-        self._mugshot.connect("my-top-apps-changed", self.__handle_my_top_apps_changed)      
-        self._mugshot.connect("pinned-apps-changed", self.__handle_pinned_apps_changed)
+    def _on_mugshot_ready(self):
+        super(AppsStock, self)._on_mugshot_ready()
         self._mugshot.get_pinned_apps()        
         self._mugshot.get_my_top_apps()
 
-    def get_content(self, size):
+    def get_authed_content(self, size):
         return self.__box
             
     def __set_item_size(self, item, size):

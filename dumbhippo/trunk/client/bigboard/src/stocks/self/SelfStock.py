@@ -52,10 +52,11 @@ class SelfStock(AbstractMugshotStock):
         
         self._whereim = {}
         
-    def _on_mugshot_initialized(self):
-        super(SelfStock, self)._on_mugshot_initialized()
         self._mugshot.connect("self-changed", self._handle_self_changed)
-        self._mugshot.connect('whereim-added', self._handle_whereim_added)        
+        self._mugshot.connect('whereim-added', self._handle_whereim_added)         
+        
+    def _on_mugshot_ready(self):
+        super(SelfStock, self)._on_mugshot_ready()       
         self._mugshot.get_self()
         self._mugshot.get_whereim()        
         
@@ -63,7 +64,7 @@ class SelfStock(AbstractMugshotStock):
         baseurl = self._mugshot.get_baseurl()
         libbig.show_url(baseurl + "/account")
         
-    def get_content(self, size):
+    def get_authed_content(self, size):
         return self._box
     
     def set_size(self, size):
@@ -76,7 +77,9 @@ class SelfStock(AbstractMugshotStock):
         self._name.set_property("text", myself.get_name())
     
     def _handle_whereim_added(self, mugshot, acct):
-        name = acct.get_name()
+        name = acct.get_name()        
+        if self._whereim.has_key(name):
+            return
         self._whereim[name] = ExternalAccountIcon(acct)
         self._logger.debug("appending external account %s" % (name,))
         self._whereim_box.append(self._whereim[name])
