@@ -45,8 +45,14 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	
 	this.defaultText = defaultText;
 	this.showingDefaultText = false;
+	this.cancelEdit = false;
+	// this timeout is used for checking if cancel was selected next
+	// and the change should not be applied
+	this.timeoutBeforeChange = 0;
 	
 	this._handlingFocusEvent = false;
+	this._focusOn = false;
+
 	
 	// if empty is invalid, we always show default text if value is empty
 	this.emptyIsValid = false;
@@ -99,7 +105,8 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 		this.elem.value = value;
 		if (noEmitChanged)
 			this.lastValue = value;
-		this._emitValueChanged();
+		if (!me._focusOn)	
+		    this._emitValueChanged();
 	}
 	
 	this.getValue = function() {
@@ -109,8 +116,7 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 			return this.elem.value;
 	}
 	
-	this.onValueChanged = function() {
-		
+	this.onValueChanged = function() {	
 	}
 	
 	this.setDisabled = function() {
@@ -124,32 +130,43 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	this.activate = function() {
 		this._emitValueChanged();
 	}
-	
-	this.elem.onchange = function(ev) {
-		me.activate();
-	}
 
 	this.onfocus = function () {
 	}
 
 	this.elem.onfocus = function(ev) {
-		if (me._handlingFocusEvent)
+	    me.handleFocus();
+	}
+	
+	this.handleFocus = function() {
+		if (me._handlingFocusEvent || me._focusOn)
 			return;
+		me._focusOn = true;					
 		me._handlingFocusEvent = true;
 		me.hideDefaultText();
 		me.onfocus();
 		me._handlingFocusEvent = false;
 	}
 	
-	this.onblur = function() {
+	this.elem.onblur = function(ev) {
+	    me._focusOn = false;
+		setTimeout(function() {	
+				me.applyChange();
+			}, me.timeoutBeforeChange);
 	}
 	
-	this.elem.onblur = function(ev) {
-		if (me._handlingFocusEvent)
+	this.elem.onchange = function(ev) {
+		setTimeout(function() {
+				me.applyChange();
+			}, me.timeoutBeforeChange);
+	}
+	
+	this.applyChange = function() {
+		if (me._handlingFocusEvent || me.cancelEdit)
 			return;	
+	
 		me._handlingFocusEvent = true;			
 		me.activate();
-		me.onblur();
 		me._handlingFocusEvent = false;		
 	}
 	
@@ -160,5 +177,12 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 		if (key == ENTER && me.elem.nodeName.toUpperCase() != 'TEXTAREA') {
 			me.activate();
 		}
+	}
+	
+	this.elem.onkeyup = function(ev) {
+	    me.onkeyup();
+	}
+	
+	this.onkeyup = function() {
 	}
 }

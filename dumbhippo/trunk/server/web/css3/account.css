@@ -68,10 +68,20 @@
 	font-weight:		bold;
 }
 
-.dh-placebo-link {
+.dh-active-link {
 	color:	blue;
 	cursor:	pointer;
 	_cursor: hand;
+}
+
+.dh-placebo-link {
+	color:	gray;
+	cursor:	pointer;
+	_cursor: hand;
+}
+
+.dh-placebo-active-link {
+	color:	blue;
 }
 
 .dh-saved-link {

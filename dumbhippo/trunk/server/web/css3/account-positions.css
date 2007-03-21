@@ -176,3 +176,8 @@ tr.dh-email-address-spacer {
     margin-top:         0px;
     margin-bottom:      0px;
 }
+
+.dh-active-link, .dh-placebo-link, .dh-saved-link {
+    margin-left:        3px;
+    margin-right:       5px;
+}
