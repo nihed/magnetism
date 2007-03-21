@@ -56,6 +56,10 @@ HippoState       hippo_connection_get_state                 (HippoConnection  *c
  * (right now this means state == AUTHENTICATED) 
  */
 gboolean         hippo_connection_get_connected             (HippoConnection  *connection);
+
+/* Essentially whether or not the data cache has been primed */
+gboolean         hippo_connection_get_contacts_loaded       (HippoConnection  *connection);
+
 /* signin returns TRUE if we're waiting on the user to set the login cookie, FALSE if we already have it */
 gboolean         hippo_connection_signin                    (HippoConnection  *connection);
 void             hippo_connection_signout                   (HippoConnection  *connection);
@@ -152,7 +156,7 @@ void hippo_connection_notify_myspace_contact_post   (HippoConnection *connection
 const char*      hippo_connection_get_tooltip       (HippoConnection *connection);
 
 /* return string form of enum values */
-const char*      hippo_state_debug_string(HippoState state);
+const char*      hippo_state_to_string(HippoState state);
 
 
 /* Convenience wrappers around open_url that create part of the url for you */
