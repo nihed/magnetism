@@ -57,7 +57,9 @@ class Mugshot(gobject.GObject):
         self.__baseprops = None
         
         self.__whereim = None # <str>,<ExternalAccount>
+        self.__self_proxy = None
         self.__self = None
+        self.__self_path = None
         self.__network = None
         self.__entities = {} # <str>,<Entity>
         self.__applications = {} # <str>,<Application>
@@ -128,17 +130,17 @@ class Mugshot(gobject.GObject):
     def __on_xmpp_disconnected(self):
         self._logger.debug("got xmpp disconnected")
     
-    def __whereimChanged(self, name, icon_url):
-        self._logger.debug("whereimChanged: %s %s" % (name, icon_url))
+    def __whereimChanged(self, props):
+        self._logger.debug("whereimChanged: %s" % (props,))
         if self.__whereim is None:
             self.__whereim = {}
             self.__network = {}
-        attrs = {'name': name, 'icon_url': icon_url}
+        name = props['name']
         if not self.__whereim.has_key(name):
-            self.__whereim[name] = ExternalAccount(attrs)
+            self.__whereim[name] = ExternalAccount(props)
             self.emit('whereim-added', self.__whereim[name])     
         else:
-            self.__whereim[name].update(attrs)
+            self.__whereim[name].update(props)
         
     def __entityChanged(self, attrs):
         self._logger.debug("entityChanged: %s" % (attrs,))
@@ -171,10 +173,25 @@ class Mugshot(gobject.GObject):
         # information
         self._logger.exception("D-BUS error: %s" % (err,))
     
-    def __on_get_self(self, myself):
-        self._logger.debug("self changed: %s" % (myself,))
-        self.__self = Entity(myself)
-        self.emit("self-changed", self.__self)
+    def __on_self_changed(self):
+        self.__self_proxy.GetProperties(reply_handler=_log_cb(self.__on_get_self_properties),
+                                        error_handler=_log_cb(self.__on_dbus_error))        
+    
+    def __on_get_self(self, myself_path):
+        self._logger.debug("got self path: %s" % (myself_path,))
+        self.__self_proxy = dbus.SessionBus().get_object('org.mugshot.Mugshot', myself_path)
+        self.__on_self_changed()
+        self.__self_proxy.connect_to_signal("Changed", 
+                                            _log_cb(self.__on_self_changed), 
+                                            'org.mugshot.Mugshot.Entity')
+        
+    def __on_get_self_properties(self, myself):
+        self._logger.debug("self properties: %s" % (myself,))
+        if self.__self:
+            self.__self.update(myself)
+        else:
+            self.__self = Entity(myself)
+        self.emit("self-changed", self.__self)        
     
     def __on_get_baseprops(self, props):
         self.__baseprops = {}
