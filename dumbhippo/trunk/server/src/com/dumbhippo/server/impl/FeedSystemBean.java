@@ -579,6 +579,9 @@ public class FeedSystemBean implements FeedSystem {
 	private Feed getOrCreateFeed(final LinkResource source) throws XmlMethodException {
 		Feed feed = lookupExistingFeed(source);
 		if (feed != null) {
+			// FIXME I believe there's a problem here - this creates a polling task for any feed, while we really 
+			// only want to poll feeds that are returned by getInUseFeeds().
+			
 			/* We want to ensure that we create a task for feeds which existed before
 			 * the PollingTask system was implemented as well, which were not caught
 			 * by migration because they were not in use when it was run.

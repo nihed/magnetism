@@ -83,6 +83,7 @@ import com.dumbhippo.server.blocks.MusicChatBlockHandler;
 import com.dumbhippo.server.blocks.MusicPersonBlockHandler;
 import com.dumbhippo.server.blocks.MySpacePersonBlockHandler;
 import com.dumbhippo.server.blocks.NetflixBlockHandler;
+import com.dumbhippo.server.blocks.PicasaBlockHandler;
 import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.blocks.RedditBlockHandler;
 import com.dumbhippo.server.blocks.TwitterPersonBlockHandler;
@@ -205,6 +206,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			break;
 		case GOOGLE_READER_SHARED_ITEM:
 			handlerClass = GoogleReaderBlockHandler.class;
+			break;
+		case PICASA_PERSON:
+			handlerClass = PicasaBlockHandler.class;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
@@ -2035,6 +2039,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case NETFLIX_MOVIE:
 		case ACCOUNT_QUESTION:
 		case GOOGLE_READER_SHARED_ITEM:
+		case PICASA_PERSON:
 			isGroupParticipation = false;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:

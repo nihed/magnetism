@@ -871,6 +871,14 @@ public enum ExternalAccountType {
 			return handle != null;
 		}
 		
+		@Override
+		public String formatThumbnailCount(int count) {
+			if (count == 1)
+				return count + " album";
+			else
+				return count + " albums";
+		}
+		
 		@Override 
 		public boolean isNew() {
 			return true;

@@ -29,15 +29,18 @@ import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
+import com.dumbhippo.server.PicasaUpdater;
 import com.dumbhippo.server.YouTubeUpdater;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FlickrPhotoSize;
 import com.dumbhippo.services.FlickrPhotosView;
+import com.dumbhippo.services.PicasaAlbum;
 import com.dumbhippo.services.YouTubeVideo;
 import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.FlickrUserPhotosCache;
+import com.dumbhippo.services.caches.PicasaAlbumsCache;
 import com.dumbhippo.services.caches.WebServiceCache;
 import com.dumbhippo.services.caches.YouTubeVideosCache;
 
@@ -56,6 +59,10 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	private YouTubeUpdater youTubeUpdater;
 	
 	@EJB
+	@IgnoreDependency
+	private PicasaUpdater picasaUpdater;
+	
+	@EJB
 	private Notifier notifier;
 	
 	@PersistenceContext(unitName = "dumbhippo")
@@ -66,6 +73,9 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	
 	@WebServiceCache
 	private YouTubeVideosCache youTubeVideosCache;
+	
+	@WebServiceCache
+	private PicasaAlbumsCache picasaAlbumsCache;
 	
 	@EJB
 	private CacheFactory cacheFactory;	
@@ -198,6 +208,35 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		accountView.setThumbnailsData(TypeUtils.castList(Thumbnail.class, videos), videos.size(), 
 					videos.get(0).getThumbnailWidth(), videos.get(0).getThumbnailHeight());
 	}	
+
+	private void loadPicasaThumbnails(Viewpoint viewpoint, ExternalAccountView accountView) {
+		ExternalAccount account = accountView.getExternalAccount();
+		
+		if (account.getAccountType() != ExternalAccountType.PICASA)
+			throw new IllegalArgumentException("should be a Picasa account here");
+	
+		if (account.getSentiment() != Sentiment.LOVE)
+			throw new IllegalArgumentException("Picasa account is unloved =(");
+		
+		if (account.getHandle() == null)
+			return;
+		
+		try {
+			picasaUpdater.getCachedStatus(account);
+		} catch (NotFoundException e) {
+			logger.debug("No cached Picasa status for {}", account);
+			return;
+		}
+		
+		List<? extends PicasaAlbum> albums = picasaAlbumsCache.getSync(account.getHandle());
+		if (albums.isEmpty()) {
+			logger.debug("Empty list of albums for {}", account);
+			return;
+		}
+		
+		accountView.setThumbnailsData(TypeUtils.castList(Thumbnail.class, albums), albums.size(), 
+					albums.get(0).getThumbnailWidth(), albums.get(0).getThumbnailHeight());
+	}		
 	
 	private void loadThumbnails(Viewpoint viewpoint, ExternalAccountView externalAccountView) {
 		ExternalAccount externalAccount = externalAccountView.getExternalAccount();
@@ -212,6 +251,9 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			break;
 		case YOUTUBE:
 			loadYouTubeThumbnails(viewpoint, externalAccountView);
+			break;
+		case PICASA:
+			loadPicasaThumbnails(viewpoint, externalAccountView);
 			break;
 		default:
 			// most accounts lack thumbnails
