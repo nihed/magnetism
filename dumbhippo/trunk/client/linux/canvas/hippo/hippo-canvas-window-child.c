@@ -136,6 +136,9 @@ hippo_canvas_window_child_expose_event(GtkWidget         *widget,
 {
     HippoCanvasWindowChild *window_child = HIPPO_CANVAS_WINDOW_CHILD(widget);
 
+    if (window_child->helper == NULL)
+        return FALSE; /* we've already been destroyed */
+    
     if (event->window == widget->window)
         hippo_canvas_helper_expose_event(window_child->helper, event);
 
@@ -189,7 +192,6 @@ hippo_canvas_window_child_hierarchy_changed (GtkWidget    *widget,
                                              GtkWidget    *old_toplevel)
 {
     HippoCanvasWindowChild *window_child = HIPPO_CANVAS_WINDOW_CHILD(widget);
-
 
     if (window_child->helper) /* hierarchy changed can happen during dispose */
         hippo_canvas_helper_hierarchy_changed(window_child->helper, old_toplevel);
