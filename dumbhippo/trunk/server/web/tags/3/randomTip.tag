@@ -6,7 +6,7 @@
 
 <dh:bean id="browser" class="com.dumbhippo.web.BrowserBean" scope="request"/>
 
-<c:set var="tipIndex" value="${dh:randomInt(14)}" scope="page"/>
+<c:set var="tipIndex" value="${dh:randomInt(16)}" scope="page"/>
 
 <div class="dh-page-options-tip-area">
 	<c:choose>
@@ -54,7 +54,13 @@
 		</c:when>		
 		<c:when test="${tipIndex == 13}">
 			<a class="dh-page-options-tip-link" href="/account">Netflix movie queue updates</a>
-		</c:when>	
+		</c:when>
+		<c:when test="${tipIndex == 14}">
+			<a class="dh-page-options-tip-link" href="/account">Picasa public gallery updates</a>
+		</c:when>
+		<c:when test="${tipIndex == 15}">
+			<a class="dh-page-options-tip-link" href="/account">Google Reader shared item updates</a>
+		</c:when>					
 		<c:otherwise>
 		    &nbsp;
 		</c:otherwise>
