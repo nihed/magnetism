@@ -112,7 +112,6 @@ class Mugshot(gobject.GObject):
                 self._logger.debug("owner for org.mugshot.Mugshot changed, recreating proxies")
                 self.__create_proxy()
                 self.__create_ws_proxy()
-                self.__create_listener_proxy()
             else:
                 self.__proxy = None
                 self.__ws_proxy = None
