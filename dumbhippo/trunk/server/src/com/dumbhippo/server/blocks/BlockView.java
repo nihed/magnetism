@@ -137,6 +137,7 @@ public abstract class BlockView implements ObjectView {
 		boolean isTitle = this instanceof TitleBlockView;
 		boolean isTitleDescription = this instanceof TitleDescriptionBlockView;
 		boolean hasSource = this instanceof EntitySourceBlockView;
+		boolean hasThumbnails = this instanceof ThumbnailsBlockView;
 		
 		// the "generic type" of a block allows the client to use a fallback 
 		// means of displaying the block
@@ -153,6 +154,12 @@ public abstract class BlockView implements ObjectView {
 				sb.append(",");
 			sb.append("ENTITY_SOURCE");
 		}
+		if (hasThumbnails) {
+			if (sb.length() > 0)
+				sb.append(",");
+			sb.append("THUMBNAILS");
+		}
+		
 		String genericTypes = sb.length() > 0 ? sb.toString() : null;
 		
 		builder.openElement("block",
@@ -183,6 +190,9 @@ public abstract class BlockView implements ObjectView {
 		
 		if (isTitleDescription)
 			builder.appendTextNode("description", ((TitleDescriptionBlockView) this).getDescription());
+		
+		if (hasThumbnails)
+			writeThumbnailsToXmlBuilder(builder, ((ThumbnailsBlockView) this));
 		
 		writeDetailsToXmlBuilder(builder);
 		
