@@ -1142,16 +1142,9 @@ hippo_canvas_block_set_sent_to(HippoCanvasBlock *canvas_block,
                                GSList           *entities)
 {    
     GSList *entity;
-    HippoCanvasItem *sent_to_label;
     gboolean first = TRUE;
 
     hippo_canvas_box_remove_all(canvas_block->sent_to_box);
-
-    sent_to_label = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                 "xalign", HIPPO_ALIGNMENT_END,
-                                 "yalign", HIPPO_ALIGNMENT_START,
-                                 "text", " Sent to ",
-                                 NULL);
 
     for (entity = entities; entity; entity = g_slist_next(entity)) {
         HippoCanvasItem *name = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
@@ -1175,6 +1168,14 @@ hippo_canvas_block_set_sent_to(HippoCanvasBlock *canvas_block,
     }
 
     if (entities != NULL) {
+        HippoCanvasItem *sent_to_label;
+        
+        sent_to_label = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                     "xalign", HIPPO_ALIGNMENT_END,
+                                     "yalign", HIPPO_ALIGNMENT_START,
+                                     "text", " Sent to ",
+                                     NULL);
+
         hippo_canvas_box_append(canvas_block->sent_to_box, sent_to_label, HIPPO_PACK_END);
         canvas_block->sent_to_set = TRUE;
     } else {

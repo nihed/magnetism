@@ -59,6 +59,7 @@ hippo_entity_finalize(GObject *object)
     g_free(entity->guid);
     g_free(entity->name);
     g_free(entity->photo_url);
+    g_free(entity->home_url);
 
     G_OBJECT_CLASS(hippo_entity_parent_class)->finalize(object); 
 }
