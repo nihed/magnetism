@@ -41,13 +41,17 @@
 </c:if>
 
 <head>
-	<title><c:out value="${person.viewedPerson.name}"/>'s ${pageName} - Mugshot</title>
+	<title><c:out value="${possessive}"/> ${pageName} - Mugshot</title>
 	<dht3:stylesheet name="site" iefixes="true"/>
 	<dht3:stylesheet name="person"/>
 	<dht3:stylesheet name="groups"/>
 	<dh:script module="dh.groups"/>
 	<dht:faviconIncludes/>
 </head>
+
+<c:if test="${person.self}">
+    <c:set var="offerCreateGroupLink" value="true"/>
+</c:if>
 
 <dht3:page currentPageLink="groups">	
 	<c:if test="${person.self}">
@@ -65,17 +69,11 @@
 
 	<c:choose>
 		<c:when test="${person.activeAndFollowedGroupsCount > 0}">
-			<div class="dh-page-title-container">
-				<span class="dh-page-title"><c:out value="${possessive}"/> ${pageName} (${person.activeAndFollowedGroupsCount})</span>
-				<c:if test="${signin.active}">
-					<a class="dh-groups-create-link dh-underlined-link" href="/create-group">Create a Group</a>
-				</c:if>
-				<div class="dh-page-options-container">
-					<div class="dh-page-options">
-						<dht3:randomTip isSelf="${person.self}"/><dht3:personRelatedPagesTabs selected="groups"/>
-					</div>
-				</div>
-			</div>
+	        <dht3:pageSubHeader title="${possessive} ${pageName} (${person.activeAndFollowedGroupsCount})"
+		                        offerCreateGroupLink="${offerCreateGroupLink}">
+		        <dht3:randomTip isSelf="${person.self}"/>
+		        <dht3:personRelatedPagesTabs selected="groups"/>
+	        </dht3:pageSubHeader>
 			<div class="dh-page-options-sub-options-area dh-page-options">Show: 
 			    <c:choose>
 				     <c:when test="${!followed}">
@@ -109,60 +107,52 @@
 		    <dht:expandablePager pageable="${displayedGroups}"/>
 	    </c:when>
 	    <c:otherwise>
-			<div class="dh-page-title-container">
-				<span class="dh-page-title"><c:out value="${possessive}"/> ${pageName}</span>
-				<div class="dh-page-options-container">
-					<div class="dh-page-options">
-						<dht3:randomTip isSelf="${person.self}"/><dht3:personRelatedPagesTabs selected="groups"/>
-					</div>
-				</div>
-			</div>
+	        <dht3:pageSubHeader title="${possessive} ${pageName}" offerCreateGroupLink="${offerCreateGroupLink}">
+		        <dht3:randomTip isSelf="${person.self}"/>
+		        <dht3:personRelatedPagesTabs selected="groups"/>
+	        </dht3:pageSubHeader>
 			<dht3:shinyBox color="orange">
-			    <div class="dh-person-stacker-header">			
+			    <div class="dh-person-stacker-header dh-shinybox-bottom-content">			
 				<table cellpadding="0" cellspacing="0">
 					<tbody>
 						<tr valign="top">
 						<td>
 						<div class="dh-image">
-							<dh:png src="/images2/${buildStamp}/user_pix1/nophoto.png?size=60" style="width: 60; height: 60"/>
+							<dh:png src="/images2/${buildStamp}/group_pix1/nogroupphoto.png?size=60" style="width: 60; height: 60"/>
 						</div>
 						</td>
 						<td>
-						<div class="dh-person-header-next-to-image">
-							<span class="dh-person-header-name">
 							<c:choose>
 								<c:when test="${!person.self}">
-						    		<c:out value="${person.viewedPerson.name}"/> doesn't have any groups
+								    <div class="dh-person-header-next-to-image">
+						    		    <c:out value="${person.viewedPerson.name}"/> doesn't have any groups
+						    		</div>
 						    	</c:when>
-						    	<c:otherwise>My Groups</c:otherwise>
-						    </c:choose>	
-						</div>
-						</td>
-						<td align="right">
-							<c:if test="${person.self}">
-								<dht3:tip>						
-								<div>
-									<c:choose>
-										<c:when test="${!signin.user.account.hasAcceptedTerms}">
-											Here is where you can join and see updates from groups when you activate
-											your Mugshot account above.
-										</c:when>
-										<c:when test="${signin.user.account.disabled || signin.user.account.adminDisabled}">
-											You must reenable your account to join and see updates from groups.
-										</c:when>
-										<c:otherwise>
-											Here is where you will see updates from groups that you join or create.
-										</c:otherwise>
-									</c:choose>
-								</div>
-								<div class="dh-tip-secondary">
-									<a href="/active-groups">Browse active groups</a>
-									<c:if test="${signin.user.account.hasAcceptedTerms && !(signin.user.account.disabled || signin.user.account.adminDisabled)}">
-										| <a href="/create-group">Create a group</a>
-									</c:if>
-								</div>
-								</dht3:tip>
-							</c:if>
+							    <c:otherwise>
+								    <dht3:tip>						
+								        <div>
+									        <c:choose>
+										        <c:when test="${!signin.user.account.hasAcceptedTerms}">
+											        Here is where you can join and see updates from groups when you activate
+											        your Mugshot account above.
+										        </c:when>
+										        <c:when test="${signin.user.account.disabled || signin.user.account.adminDisabled}">
+											        You must reenable your account to join and see updates from groups.
+										        </c:when>
+										        <c:otherwise>
+											        Here is where you will see updates from groups that you join or create.
+										        </c:otherwise>
+									        </c:choose>
+								        </div>
+								        <div class="dh-tip-secondary">
+									        <a href="/active-groups">Browse active groups</a>
+									        <c:if test="${signin.user.account.hasAcceptedTerms && !(signin.user.account.disabled || signin.user.account.adminDisabled)}">
+										        | <a href="/create-group">Create a group</a>
+									        </c:if>
+								        </div>
+								    </dht3:tip>
+								</c:otherwise>
+							</c:choose>	
 						</td>
 						</tr>
 					</tbody>

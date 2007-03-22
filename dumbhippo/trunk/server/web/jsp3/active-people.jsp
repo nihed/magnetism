@@ -15,8 +15,7 @@
 </head>
 
 <dht3:page currentPageLink="active-people">
-	<dht3:pageSubHeader title="Active People">
-	</dht3:pageSubHeader>
+	<dht3:pageSubHeader title="Active People" offerInviteFriendsLink="true"/>
 	
 	<c:forEach items="${activePeople.activePeople.results}" var="person" varStatus="stackStatus">
 		<dht3:personStack person="${person.personView}" stackOrder="${stackStatus.count + 1}" stackType="dhMugshot" blocks="${person.blocks}" showFrom="true"/>
