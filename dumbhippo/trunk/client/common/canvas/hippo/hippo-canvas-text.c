@@ -265,10 +265,17 @@ hippo_canvas_text_get_tooltip (HippoCanvasItem *item,
                                HippoRectangle  *for_area)
 {
     HippoCanvasText *text = HIPPO_CANVAS_TEXT(item);
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
 
-    if (text->is_ellipsized && text->text)
+    
+    if (text->is_ellipsized && text->text) {
+        for_area->x = 0;
+        for_area->y = 0;
+        for_area->width = box->allocated_width;
+        for_area->height = box->allocated_height;
+
         return g_strdup(text->text);
-    else
+    } else
         return item_parent_class->get_tooltip(item, x, y, for_area);
 }
 
@@ -410,6 +417,7 @@ layout_is_ellipsized(PangoLayout *layout)
     PangoLogAttr *log_attrs;
     int n_attrs;
     PangoLayoutIter *iter;
+    gboolean result = FALSE;
 
     /* Short circuit when we aren't ellipsizing at all */
     if (pango_layout_get_ellipsize(layout) == PANGO_ELLIPSIZE_NONE)
@@ -454,13 +462,16 @@ layout_is_ellipsized(PangoLayout *layout)
          * the text consists of just the letters 'ffi' and the font has a ligature
          * for that or something, but it's not too likely.
          */
-        return TRUE;
+        result = TRUE;
+        break;
                 
     } while (pango_layout_iter_next_run(iter));
 
+    pango_layout_iter_free(iter);
+
     g_free(log_attrs);
 
-    return FALSE;
+    return result;
 }
 
 static void

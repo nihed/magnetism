@@ -247,6 +247,9 @@ hippo_block_finalize(GObject *object)
     HippoBlock *block = HIPPO_BLOCK(object);
 
     g_free(block->guid);
+    g_free(block->icon_url);
+    g_free(block->title);
+    g_free(block->title_link);
 
     G_OBJECT_CLASS(hippo_block_parent_class)->finalize(object); 
 }

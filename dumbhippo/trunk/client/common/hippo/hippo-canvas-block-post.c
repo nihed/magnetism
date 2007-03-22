@@ -40,7 +40,6 @@ static void hippo_canvas_block_post_set_block       (HippoCanvasBlock *canvas_bl
 
 static void hippo_canvas_block_post_title_activated (HippoCanvasBlock *canvas_block);
 
-static void hippo_canvas_block_post_clicked_count_changed (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_post_significant_clicked_count_changed (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_post_stack_reason_changed (HippoCanvasBlock *canvas_block);
 
@@ -69,7 +68,6 @@ struct _HippoCanvasBlockPost {
     HippoCanvasItem *reason_item;
     HippoCanvasItem *quipper;
     HippoCanvasItem *single_message_preview;
-    HippoCanvasItem *clicked_count_item;
     HippoCanvasItem *details_box;
     HippoCanvasItem *chat_preview;
     HippoCanvasItem *faves_link;
@@ -131,7 +129,6 @@ hippo_canvas_block_post_class_init(HippoCanvasBlockPostClass *klass)
     canvas_block_class->append_content_items = hippo_canvas_block_post_append_content_items;
     canvas_block_class->set_block = hippo_canvas_block_post_set_block;
     canvas_block_class->title_activated = hippo_canvas_block_post_title_activated;
-    canvas_block_class->clicked_count_changed = hippo_canvas_block_post_clicked_count_changed;
     canvas_block_class->significant_clicked_count_changed = hippo_canvas_block_post_significant_clicked_count_changed;
     canvas_block_class->stack_reason_changed = hippo_canvas_block_post_stack_reason_changed;
     canvas_block_class->expand = hippo_canvas_block_post_expand;
@@ -246,13 +243,6 @@ hippo_canvas_block_post_append_content_items (HippoCanvasBlock *block,
                                        block_post->details_box,
                                        FALSE); /* not expanded at first */
     
-    block_post->clicked_count_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                                  "text", NULL,
-                                                  NULL);
-#if 0
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_post->details_box), block_post->clicked_count_item, 0);
-#endif
-
 #if 0
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "text", " | ",
@@ -523,20 +513,6 @@ hippo_canvas_block_post_title_activated(HippoCanvasBlock *canvas_block)
     hippo_actions_visit_post(actions, post);
 
     g_object_unref(post);
-}
-
-static void
-hippo_canvas_block_post_clicked_count_changed (HippoCanvasBlock *canvas_block)
-{
-    HippoCanvasBlockPost *canvas_block_post = HIPPO_CANVAS_BLOCK_POST(canvas_block);
-    char *s;
-    
-    s = g_strdup_printf(_("%d views"), hippo_block_get_clicked_count(canvas_block->block));
-    
-    g_object_set(G_OBJECT(canvas_block_post->clicked_count_item),
-                 "text", s,
-                 NULL);
-    g_free(s);
 }
 
 static void
