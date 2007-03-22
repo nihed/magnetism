@@ -41,22 +41,15 @@ public class FacebookTrackerPeriodicJob implements PeriodicJob {
 				public void run() {
 					final FacebookTracker facebookTracker = EJBUtil.defaultLookup(FacebookTracker.class);
 					if (facebookAccount.isSessionKeyValid()) {
-						// FIXME: we might end up calling web services multiple times with an expired session
-						// key, perhaps have the functions should return a boolean on whether the session key
-						// is still fine or unite them in one function
+						// even if we find out that the session key is expired in updateMessageCount,
+						// we still want to call updateTaggedPhotos, because it removes the cached
+						// photos that we can't keep anymore when the session key is expired
 						facebookTracker.updateMessageCount(facebookAccount.getId());
 						facebookTracker.updateTaggedPhotos(facebookAccount.getId());
 						// don't do anything about albums for now, since we aren't showing
 						// facebook updates to anyone but the album owner, so it's not interesting,
 						// and we don't have a system for clearing the cached facebook info about albums
 						// facebookTracker.updateAlbums(facebookAccount.getId());
-					} else {			
-						// we can't tell anything if the facebookAccount does not have any tagged 
-						// photos associated with it, because we might be keeping the no results marker 
-						// in the cache, which we should delete too
-						// TODO: if there are photos, we could go through them and if all the CachedFacebookPhotoData
-						// on them is null, we don't have to make this call
-						facebookTracker.removeExpiredTaggedPhotos(facebookAccount.getId());
 					}
 				}
 			});
