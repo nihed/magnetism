@@ -220,6 +220,7 @@ class AbstractMugshotStock(Stock):
         self.__box = hippo.CanvasBox()
         
         self.__signin = big_widgets.ActionLink(text="Sign in to Mugshot")
+        self.__signin.connect("button-press-event", lambda signin, event: self.__on_signin_press())
         
     def __sync_content(self):
         self.__box.remove_all()        
@@ -270,3 +271,7 @@ class AbstractMugshotStock(Stock):
             object.connect(signal, handler)
         else:
             self._dependent_handlers.append((object, signal, handler))
+            
+    def __on_signin_press(self):
+        baseurl = self._mugshot.get_baseurl()
+        libbig.show_url(baseurl + "/who-are-you")        
