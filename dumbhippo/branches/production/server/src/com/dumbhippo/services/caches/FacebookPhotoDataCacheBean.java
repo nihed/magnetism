@@ -45,19 +45,17 @@ public class FacebookPhotoDataCacheBean
 	@IgnoreDependency
 	protected FacebookTracker facebookTracker;	
 	
-	// this is 11 1/2 hours because: 
-	//   -- 12 hours is the limit for how long we can keep the data retrieved from facebook,	
-	//      so we'll always be within the 12 hours limit for keeping the data, as long as the 
-	//      periodic job for facebook runs more frequently than every 30 minutes (which it 
-	//      now runs every 11 minutes)
-	//   -- it allows us to fetch the data three times before someone's 24 hour session
-	//      has expired, so we'll keep it for longer when the session is over
-    //
-	// we can keep data from facebook for longer, if the same user session is valid, but we 
-	// are better off fetching it again, because, if we do, we can keep it for another 
-	// 11 1/2 hours after that, while otherwise we'd need to remove it as soon as the session
-	// is over
-	static private final long FACEBOOK_PHOTO_DATA_EXPIRATION = 1000 * 60 * 30 * 23;
+	// Facebook no longer specifies a maximum time for which we can keep the data that is "not
+	// storable", so we should delete the data whenever the session in which we obtained it expires.
+	// We can make the expiration period here arbitrarily long to cut back on the number of requests
+	// we make to Facebook, even though having it at 11 1/2 hours as it used to be was still
+	// insignificant, it resulted in additional ~3 requests per person in 24 hours vs. ~393 requests
+	// for updates that we currently make per person per day. (11 1/2 hour number was designed for 24 hour
+	// sessions.)
+	// Let's make it 14 days like for many other types of cached data. When we believe the data has changed
+	// we explicitly expire it. (This might catch some new photos if the same number of photos was added
+	// and deleted between our checks, which are every 11 minutes.)
+	static private final long FACEBOOK_PHOTO_DATA_EXPIRATION = 1000 * 60 * 60 * 24 * 14;
 	
 	public FacebookPhotoDataCacheBean() {
 		super(Request.FACEBOOK_PHOTO_DATA, FacebookPhotoDataCache.class, FACEBOOK_PHOTO_DATA_EXPIRATION, CachedFacebookPhotoData.class);

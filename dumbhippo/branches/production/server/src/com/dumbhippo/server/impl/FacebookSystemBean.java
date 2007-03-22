@@ -145,8 +145,12 @@ public class FacebookSystemBean implements FacebookSystem {
 	}
 	
 	public String getEventLink(FacebookEvent facebookEvent) {
-        if ((facebookEvent.getEventType() == FacebookEventType.LOGIN_STATUS_EVENT) && (facebookEvent.getCount() == 0)) {		
-	        return "http://api.facebook.com/login.php?api_key=" + getApiKey() + "&next=/";
+        if ((facebookEvent.getEventType() == FacebookEventType.LOGIN_STATUS_EVENT) && (facebookEvent.getCount() <= 0)) {
+        	// facebookEvent.getCount() = -1 is a special event for prompting the user to save their Facebook login info
+        	if (facebookEvent.getCount() == 0)
+	            return "http://api.facebook.com/login.php?api_key=" + getApiKey() + "&v=1.0&next=/";
+        	else 
+        		return "http://api.facebook.com/login.php?api_key=" + getApiKey() + "&v=1.0&skipcookie=1&next=/";
 	    } else {
 		    return "http://www.facebook.com/" + facebookEvent.getEventType().getPageName() +  ".php?uid=" 
 	               + facebookEvent.getFacebookAccount().getFacebookUserId();

@@ -248,7 +248,7 @@
 				                            You are logged in <a href="javascript:dh.account.disableFacebookSession();">Log out</a>
 				                        </c:when>
 				                        <c:otherwise>
-				                            <a href="http://api.facebook.com/login.php?api_key=${account.facebookApiKey}&next=/account">Log in to receive updates</a>
+				                            <a href="http://api.facebook.com/login.php?api_key=${account.facebookApiKey}&v=1.0&next=/account">Log in to receive updates</a>
 				                        </c:otherwise>
 				                    </c:choose>    	
                                 </c:when>
