@@ -33,6 +33,11 @@ public abstract class ExternalThumbnailedPersonBlockView extends AbstractPersonB
 		return "/images3/" + getAccountType().getIconName();
 	}
 
+	/** 
+	 * FIXME this is only for compatibility with old code in the client.
+	 * The generic implementation of writing to XML in BlockView already writes the source and the thumbnails.
+	 * So this is pure duplication.
+	 */
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.openElement(getElementName(),
