@@ -68,6 +68,11 @@ public class PicasaBlockHandlerBean extends
 	public void onPicasaRecentAlbumsChanged(String username, List<? extends PicasaAlbum> albums) {
 		logger.debug("most recent Picasa albums changed for " + username);
 
+		if (albums.size() == 0) {
+			logger.debug("not restacking picasa person block since album count is 0");
+			return;
+		}
+		
 		long now = System.currentTimeMillis();
 		Collection<User> users = picasaUpdater.getAccountLovers(username);
 		for (User user : users) {
