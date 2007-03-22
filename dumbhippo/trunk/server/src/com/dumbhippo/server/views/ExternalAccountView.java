@@ -84,8 +84,16 @@ public class ExternalAccountView {
 	public String getLink() {
 		if (link != null)
 		    return link;
+		if (!externalAccount.isLovedAndEnabled())
+			return null;
 		
 		return externalAccount.getLink();
+	}
+	
+	public String getLinkText() {
+		if (!externalAccount.isLovedAndEnabled())
+			return null;
+		return getExternalAccount().getLinkText();		
 	}
 	
 	public boolean getHasThumbnails() {
@@ -117,8 +125,10 @@ public class ExternalAccountView {
 	public void writeToXmlBuilder(XmlBuilder builder) {
 		builder.appendEmptyNode("externalAccount",
 				"type", getExternalAccount().getAccountType().name(),
+				"sentiment", getSentiment(),
+				"icon", "/images3/" + getExternalAccount().getIconName(),
+				// The following will not be added unless the account is loved and enabled
 				"link", getLink(),
-				"linkText", getExternalAccount().getLinkText(),
-				"icon", "/images3/" + getExternalAccount().getIconName());
+				"linkText", getLinkText());
 	}
 }
