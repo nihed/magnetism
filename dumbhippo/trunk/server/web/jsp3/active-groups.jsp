@@ -13,10 +13,9 @@
 	<dht3:stylesheet name="person"/>
 	<dht:faviconIncludes/>
 </head>
-
+			
 <dht3:page currentPageLink="active-groups">
-	<dht3:pageSubHeader title="Active Groups">
-	</dht3:pageSubHeader>
+	<dht3:pageSubHeader title="Active Groups" offerCreateGroupLink="true"/>
 	
 	<c:forEach items="${activeGroups.activeGroups.results}" var="group" varStatus="stackStatus">
 	    <dht3:groupStack who="${group.groupView}" stackOrder="${stackStatus.count}" blocks="${group.blocks}" showFrom="true"/>
