@@ -17,8 +17,13 @@
 	<form id="dhLoginForm" name="dhLoginForm" action="/signinpost" method="post">
 		<c:if test='${!empty param["next"]}'>
 			<input type="hidden" value='${param["next"]}' name="next"/>
-		</c:if>				
-		<div class="dh-title">Log in</div>
+		</c:if>	
+		<table width="100%">
+		<tr>
+		  <td><div class="dh-title">Log in</div></td>
+		  <td align="right"><div id="dhSignupLink"><a href="/signup">Need to sign up?</a></div></td>
+		</tr>
+		</table>
 		<div id="dhLoginNotification" style="display: none;"></div>
 		<div>Email address:</div>
 		<div>
