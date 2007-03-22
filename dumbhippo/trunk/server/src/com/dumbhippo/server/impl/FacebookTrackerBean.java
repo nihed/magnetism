@@ -185,6 +185,8 @@ public class FacebookTrackerBean implements FacebookTracker {
 		FacebookTracker proxy = EJBUtil.defaultLookup(FacebookTracker.class);
 		if (newPhotoCount == -1) {
 			if (!facebookAccount.isSessionKeyValid()) {
+				// delete cache because the photo data is not storable past the end of the session				
+				taggedPhotosCache.deleteCache(user.getGuid().toString());
 				// that was a detached copy of facebookAccount, we need to set isSessionKeyValid on an attached copy
 				proxy.handleExpiredSessionKey(facebookAccountId);
 		    }
@@ -217,7 +219,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 				taggedPhotosCache.expireCache(user.getGuid().toString());
 			}
 			
-//			 FIXME CachedFacebookPhotoData should not be leaking out of its cache bean
+            // FIXME CachedFacebookPhotoData should not be leaking out of its cache bean
 			List<? extends CachedFacebookPhotoData> cachedPhotos = taggedPhotosCache.getSync(user.getGuid().toString());
 			
 			proxy.saveUpdatedTaggedPhotos(facebookAccountId, cachedPhotos);
@@ -295,6 +297,12 @@ public class FacebookTrackerBean implements FacebookTracker {
 		}
 	}
 
+	// Not currently used, we now delete cached photos as soon as the session key expires.
+	// Now that Facebook has infinite session keys, we don't need to squeeze out the additional 12 hours or so
+	// of keeping the cached photos, particularly becuase their terms of service seem to have changed to
+	// say that we must remove stuff no later than the session expires "or such other time as Facebook may 
+	// specify to you from time to time". Go figure what that means :).
+	// This also allows us to not expire photos as often, cutting back on the number of requests we make to Facebook.
 	public void removeExpiredTaggedPhotos(long facebookAccountId) {
 		FacebookAccount facebookAccount = em.find(FacebookAccount.class, facebookAccountId);	
 					

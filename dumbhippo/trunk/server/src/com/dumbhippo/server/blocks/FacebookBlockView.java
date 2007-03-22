@@ -155,8 +155,10 @@ public class FacebookBlockView extends AbstractPersonBlockView
 			case LOGIN_STATUS_EVENT :
 				if (event.getCount() == 0) 
 					return "Log in to receive updates";
-				else 
+				else if (event.getCount() == 1) 
 					return "You are now logged in and will receive updates";
+				else if (event.getCount() == -1) 
+				    return "New! Save your Facebook login permanently";
 	   	    // no default, it hides bugs
 		}
 		
