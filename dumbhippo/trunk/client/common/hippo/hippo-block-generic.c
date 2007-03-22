@@ -3,6 +3,7 @@
 #include "hippo-block.h"
 #include "hippo-block-generic.h"
 #include "hippo-xml-utils.h"
+#include "hippo-thumbnails.h"
 #include <string.h>
 
 static void      hippo_block_generic_init                (HippoBlockGeneric       *block_generic);
@@ -24,12 +25,15 @@ static void hippo_block_generic_get_property (GObject      *object,
                                               GValue       *value,
                                               GParamSpec   *pspec);
 
+static void set_thumbnails (HippoBlockGeneric      *block_generic,
+                            HippoThumbnails        *thumbnails);
+
 struct _HippoBlockGeneric {
     HippoBlock       parent;
     char            *title;
     char            *link;
     char            *description;
-    HippoEntity     *source;
+    HippoThumbnails *thumbnails;
 };
 
 struct _HippoBlockGenericClass {
@@ -48,7 +52,8 @@ enum {
     PROP_0,
     PROP_TITLE,
     PROP_LINK,
-    PROP_DESCRIPTION
+    PROP_DESCRIPTION,
+    PROP_THUMBNAILS
 };
 
 G_DEFINE_TYPE(HippoBlockGeneric, hippo_block_generic, HIPPO_TYPE_BLOCK);
@@ -95,11 +100,23 @@ hippo_block_generic_class_init(HippoBlockGenericClass *klass)
                                                         _("Description of the block, may be NULL"),
                                                         NULL,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_THUMBNAILS,
+                                    g_param_spec_object("thumbnails",
+                                                        _("Thumbnails"),
+                                                        _("The thumbnails or NULL if none"),
+                                                        HIPPO_TYPE_THUMBNAILS,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));    
 }
 
 static void
 hippo_block_generic_dispose(GObject *object)
 {
+    HippoBlockGeneric *block_generic = HIPPO_BLOCK_GENERIC(object);
+    
+    set_thumbnails(block_generic, NULL);
+    
     G_OBJECT_CLASS(hippo_block_generic_parent_class)->dispose(object);
 }
 
@@ -136,6 +153,9 @@ hippo_block_generic_set_property(GObject         *object,
         g_free(block_generic->link);
         block_generic->link = g_value_dup_string(value);
         break;
+    case PROP_THUMBNAILS:
+        set_thumbnails(block_generic, (HippoThumbnails*) g_value_get_object(value));
+        break;        
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -160,10 +180,34 @@ hippo_block_generic_get_property(GObject         *object,
     case PROP_DESCRIPTION:
         g_value_set_string(value, block_generic->description);
         break;
+    case PROP_THUMBNAILS:
+        g_value_set_object(value, (GObject*) block_generic->thumbnails);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
+}
+
+static void
+set_thumbnails (HippoBlockGeneric      *block_generic,
+                HippoThumbnails        *thumbnails)
+{
+    if (block_generic->thumbnails == thumbnails)
+        return;
+
+    if (block_generic->thumbnails) {
+        g_object_unref(block_generic->thumbnails);
+
+        block_generic->thumbnails = NULL;
+    }
+
+    if (thumbnails) {
+        g_object_ref(thumbnails);
+        block_generic->thumbnails = thumbnails;
+    }
+
+    g_object_notify(G_OBJECT(block_generic), "thumbnails");
 }
 
 static gboolean
@@ -174,18 +218,22 @@ hippo_block_generic_update_from_xml (HippoBlock           *block,
     /* HippoBlockGeneric *block_generic = HIPPO_BLOCK_GENERIC(block); */
     LmMessageNode *title_node;
     LmMessageNode *description_node;
+    LmMessageNode *thumbnails_node;
     const char *description;
     const char *title;
     const char *link;
+    HippoThumbnails *thumbnails;
 
     if (!HIPPO_BLOCK_CLASS(hippo_block_generic_parent_class)->update_from_xml(block, cache, node))
         return FALSE;
 
     title_node = NULL;
     description_node = NULL;
+    thumbnails_node = NULL;
     if (!hippo_xml_split(cache, node, NULL,
                          "title", HIPPO_SPLIT_NODE, &title_node,
                          "description", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &description_node,
+                         "thumbnails", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &thumbnails_node,
                          NULL))
         return FALSE;
 
@@ -200,11 +248,25 @@ hippo_block_generic_update_from_xml (HippoBlock           *block,
         description = lm_message_node_get_value(description_node);
     }
 
+    thumbnails = NULL;
+    
+    if (thumbnails_node != NULL) {
+        thumbnails = hippo_thumbnails_new_from_xml(cache, thumbnails_node);
+        if (thumbnails == NULL)
+            g_warning("Failed to parse <thumbnails> node");
+        else
+            g_debug("Parsed %d thumbnails", hippo_thumbnails_get_count(thumbnails));
+    }
+    
     g_object_set(G_OBJECT(block),
                  "title", title,
                  "link", link,
                  "description", description,
+                 "thumbnails", thumbnails,
                  NULL);
 
+    if (thumbnails != NULL)
+        g_object_unref(thumbnails);
+    
     return TRUE;
 }

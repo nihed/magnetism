@@ -2,6 +2,8 @@
 #include "hippo-common-internal.h"
 #include "hippo-canvas-block.h"
 #include "hippo-canvas-block-generic.h"
+#include "hippo-thumbnails.h"
+#include "hippo-canvas-thumbnails.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-text.h>
@@ -51,6 +53,9 @@ struct _HippoCanvasBlockGeneric {
     HippoCanvasItem *clicked_count_item;
     HippoCanvasBox *parent_box;
     HippoCanvasItem *details_box;
+    HippoCanvasItem *thumbnails_item;
+    unsigned int have_description : 1;
+    unsigned int have_thumbnails : 1;
 };
 
 struct _HippoCanvasBlockGenericClass {
@@ -202,7 +207,14 @@ hippo_canvas_block_generic_append_content_items(HippoCanvasBlock *block,
     block_generic->clicked_count_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                                      "text", NULL,
                                                      NULL);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_generic->details_box), block_generic->clicked_count_item, 0);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_generic->details_box),
+                            block_generic->clicked_count_item, 0);
+    
+    block_generic->thumbnails_item = g_object_new(HIPPO_TYPE_CANVAS_THUMBNAILS,
+                                                  "actions", block->actions,
+                                                  NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_generic->parent_box),
+                            block_generic->thumbnails_item, 0);
 }
 
 static void
@@ -306,6 +318,10 @@ hippo_canvas_block_generic_update_visibility(HippoCanvasBlockGeneric *block_gene
                                        block_generic->details_box,
                                        canvas_block->expanded);
 
+    hippo_canvas_box_set_child_visible(block_generic->parent_box,
+                                       block_generic->thumbnails_item,
+                                       canvas_block->expanded && block_generic->have_thumbnails);
+    
     /* The description is always visible when expanded, otherwise we sometimes
      * show a single line summary
      */
@@ -321,7 +337,7 @@ hippo_canvas_block_generic_update_visibility(HippoCanvasBlockGeneric *block_gene
                                         canvas_block->expanded ? HIPPO_PACK_CLEAR_RIGHT : 0);
 
     show_reason = stack_reason == HIPPO_STACK_VIEWER_COUNT;
-    show_description = canvas_block->expanded || !show_reason;
+    show_description = (canvas_block->expanded || !show_reason) && block_generic->have_description;
 
     hippo_canvas_box_set_child_visible(block_generic->parent_box,
                                        block_generic->description_item,
@@ -351,6 +367,21 @@ hippo_canvas_block_generic_unexpand(HippoCanvasBlock *canvas_block)
     hippo_canvas_block_generic_update_visibility(block_generic);
 }
 
+static void
+update_expandable(HippoCanvasBlock *canvas_block)
+{
+    HippoCanvasBlockGeneric *block_generic;
+
+    block_generic = HIPPO_CANVAS_BLOCK_GENERIC(canvas_block);
+    
+    canvas_block->expandable = block_generic->have_description ||
+        block_generic->have_thumbnails;
+
+    if (!canvas_block->expandable) {
+        hippo_canvas_block_set_expanded(canvas_block, FALSE);
+    }
+}
+    
 static void
 on_block_title_changed(HippoBlock *block,
                        GParamSpec *arg, /* null when first calling this */
@@ -390,16 +421,15 @@ on_block_description_changed(HippoBlock *block,
     description = NULL;
     g_object_get(G_OBJECT(block), "description", &description, NULL);
 
-    if (description == NULL) {
-        hippo_canvas_block_set_expanded(canvas_block, FALSE);
-    }
-    canvas_block->expandable = description != NULL;
-
     g_object_set(G_OBJECT(block_generic->description_item),
                  "text", description,
                  NULL);
 
     g_free(description);
+
+    block_generic->have_description = description != NULL;
+    
+    update_expandable(canvas_block);
 }
 
 static void
@@ -423,6 +453,34 @@ on_block_source_changed(HippoBlock *block,
 }
 
 static void
+on_block_thumbnails_changed(HippoBlock *block,
+                            GParamSpec *arg, /* null when first calling this */
+                            void       *data)
+{
+    HippoCanvasBlock *canvas_block;
+    HippoCanvasBlockGeneric *canvas_block_generic;
+    HippoThumbnails *thumbnails;
+
+    canvas_block = HIPPO_CANVAS_BLOCK(data);
+    canvas_block_generic = HIPPO_CANVAS_BLOCK_GENERIC(data);
+    
+    thumbnails = NULL;
+    g_object_get(G_OBJECT(block), "thumbnails", &thumbnails, NULL);
+
+    /* g_printerr("Thumbnails = %p count %d\n", thumbnails, thumbnails ? hippo_thumbnails_get_count(thumbnails) : 0); */
+    
+    g_object_set(G_OBJECT(canvas_block_generic->thumbnails_item), "thumbnails", thumbnails, NULL);
+
+    canvas_block_generic->have_thumbnails = thumbnails != NULL && hippo_thumbnails_get_count(thumbnails) > 0;
+    
+    if (thumbnails)
+        g_object_unref(thumbnails);
+
+    update_expandable(canvas_block);
+    hippo_canvas_block_generic_update_visibility(canvas_block_generic);
+}
+
+static void
 hippo_canvas_block_generic_set_block(HippoCanvasBlock *canvas_block,
                                      HippoBlock       *block)
 {
@@ -439,6 +497,9 @@ hippo_canvas_block_generic_set_block(HippoCanvasBlock *canvas_block,
                                              canvas_block);
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_block_source_changed),
+                                             canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_block_thumbnails_changed),
                                              canvas_block);
     }
     
@@ -458,9 +519,14 @@ hippo_canvas_block_generic_set_block(HippoCanvasBlock *canvas_block,
                          "notify::source",
                          G_CALLBACK(on_block_source_changed),
                          canvas_block);
-
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::thumbnails",
+                         G_CALLBACK(on_block_thumbnails_changed),
+                         canvas_block);
+        
         on_block_title_changed(canvas_block->block, NULL, canvas_block);
         on_block_description_changed(canvas_block->block, NULL, canvas_block);
         on_block_source_changed(canvas_block->block, NULL, canvas_block);
+        on_block_thumbnails_changed(canvas_block->block, NULL, canvas_block);
     }
 }

@@ -177,10 +177,12 @@ image_set_on_canvas_item_func(HippoSurface *surface,
                               void         *data)
 {
     HippoCanvasItem *item = HIPPO_CANVAS_ITEM(data);
-
-    /* g_debug("Setting image on canvas item, surface=%p", surface); */
     
     if (surface != NULL) {
+        /* g_debug("Setting image on canvas item, surface=%p %d x %d", surface,
+                cairo_image_surface_get_width(hippo_surface_get_surface(surface)),
+                cairo_image_surface_get_height(hippo_surface_get_surface(surface))); */
+        
         g_object_set(G_OBJECT(item),
                      "image",
                      hippo_surface_get_surface(surface),
