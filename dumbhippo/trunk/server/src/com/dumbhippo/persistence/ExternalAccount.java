@@ -206,7 +206,10 @@ public class ExternalAccount extends DBUnique {
 	
 	@Transient
 	public String getLink() {
-		return accountType.getLink(handle, extra);
+		if (isLovedAndEnabled())
+			return accountType.getLink(handle, extra);
+		else
+			throw new RuntimeException("can't getLink() on a not-loved-and-enabled account");
 	}
 	
 	@Transient
@@ -225,7 +228,10 @@ public class ExternalAccount extends DBUnique {
 	
 	@Transient
 	public String getLinkText() {
-		return accountType.getLinkText(handle, extra);
+		if (isLovedAndEnabled())
+			return accountType.getLinkText(handle, extra);
+		else
+			throw new RuntimeException("can't getLinkText() on a not-loved-and-enabled account");
 	}
 	
 	@Transient
@@ -240,6 +246,12 @@ public class ExternalAccount extends DBUnique {
 		return hasLovedAndEnabledType(accountType);
 	}
 	
+	/** 
+	 * I think we've declared this deprecated on the grounds that if sentiment is LOVE then 
+	 * the account info is required to be there ... but there is probably code and/or old db state that doesn't 
+	 * reflect this.
+	 * @return
+	 */
 	@Transient
 	public boolean hasAccountInfo() {
 		return accountType.getHasAccountInfo(handle, extra);
