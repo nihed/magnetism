@@ -371,9 +371,9 @@ hippo_dbus_mugshot_signal_whereim_changed(HippoDBus            *dbus,
 {
     DBusMessage *signal;
     DBusMessageIter iter;
-    char *name, *icon_url, *link;
+    char *name, *sentiment, *icon_url, *link;
 
-    g_object_get(acct, "name", &name, "icon-url", &icon_url, "link", &link, NULL);
+    g_object_get(acct, "name", &name, "sentiment", &sentiment, "icon-url", &icon_url, "link", &link, NULL);
 
     signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
                                      HIPPO_DBUS_MUGSHOT_INTERFACE,
@@ -382,10 +382,12 @@ hippo_dbus_mugshot_signal_whereim_changed(HippoDBus            *dbus,
                                          
 	append_strings_as_dict(&iter, 
 						   "name", name,
+						   "sentiment", sentiment,
 						   "icon-url", icon_url,
 						   "link", link,
 						   NULL);
     g_free(name);
+    g_free(sentiment);
     g_free(icon_url);
     g_free(link);
     return signal;

@@ -20,6 +20,7 @@ struct _HippoExternalAccount {
     GObject parent;
     
     char *name;
+    char *sentiment;
     char *icon_url;
     char *link;
 };
@@ -41,6 +42,7 @@ static int signals[LAST_SIGNAL];
 enum {
     PROP_0,
     PROP_NAME,
+    PROP_SENTIMENT,    
     PROP_ICON_URL,
     PROP_LINK
 };
@@ -67,6 +69,15 @@ hippo_external_account_class_init(HippoExternalAccountClass *klass)
                                                         _("Name of account"),
                                                         NULL,
                                                         G_PARAM_READABLE));
+                                                        
+    g_object_class_install_property(object_class,
+                                    PROP_SENTIMENT,
+                                    g_param_spec_string("sentiment",
+                                                        _("Sentiment"),
+                                                        _("love, indifferent, or hate"),
+                                                        NULL,
+                                                        G_PARAM_READABLE));                                                        
+                                                        
     g_object_class_install_property(object_class,
                                     PROP_ICON_URL,
                                     g_param_spec_string("icon-url",
@@ -90,7 +101,9 @@ hippo_external_account_finalize(GObject *object)
     HippoExternalAccount *track = HIPPO_EXTERNAL_ACCOUNT(object);
     
     g_free(track->name);
+    g_free(track->sentiment);
     g_free(track->icon_url);
+    g_free(track->link);    
   
     G_OBJECT_CLASS(hippo_external_account_parent_class)->finalize(object); 
 }
@@ -118,6 +131,9 @@ hippo_external_account_get_property(GObject         *object,
     case PROP_NAME:
         g_value_set_string(value, track->name);
         break;
+    case PROP_SENTIMENT:
+        g_value_set_string(value, track->sentiment);
+        break;        
     case PROP_ICON_URL:
         g_value_set_string(value, track->icon_url);
         break;
@@ -138,18 +154,21 @@ hippo_external_account_new_from_xml(HippoDataCache *cache,
 {
     HippoExternalAccount *acct;
     const char *name;
-    const char *icon_url;
-    const char *link;
+    const char *sentiment;
+    const char *icon_url = NULL;
+    const char *link = NULL;
 
     acct = g_object_new(HIPPO_TYPE_EXTERNAL_ACCOUNT, NULL);
 
     if (!hippo_xml_split(cache, node, NULL,
                          "type", HIPPO_SPLIT_STRING, &name,
-                         "icon", HIPPO_SPLIT_STRING, &icon_url,
-                         "link", HIPPO_SPLIT_STRING, &link,
+                         "sentiment", HIPPO_SPLIT_STRING, &sentiment,
+                         "icon", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &icon_url,
+                         "link", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &link,
                          NULL))
         return NULL;
     acct->name = g_strdup(name);
+    acct->sentiment = g_strdup(sentiment);
     acct->icon_url = g_strdup(icon_url);
     acct->link = g_strdup(link);
 
