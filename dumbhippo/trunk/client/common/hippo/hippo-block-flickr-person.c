@@ -186,6 +186,8 @@ hippo_block_flickr_person_update_from_xml (HippoBlock           *block,
     
     set_thumbnails(block_flickr_person, thumbnails);
 
+    g_object_unref(thumbnails);
+    
     return TRUE;
 }
 

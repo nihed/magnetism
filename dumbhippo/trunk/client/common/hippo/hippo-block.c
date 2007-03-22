@@ -1030,7 +1030,7 @@ hippo_block_type_from_attributes(const char *type,
 
         if (generics != NULL) {
             for (i = 0; generics[i] != NULL; ++i) {
-                /* TITLE_DESCRIPTION and ENTITY_SOURCE are also possible,
+                /* TITLE_DESCRIPTION, ENTITY_SOURCE, THUMBNAILS are also possible,
                  * the generic block type simply uses the description and source
                  * information if it's available, but requires the title information.
                  */

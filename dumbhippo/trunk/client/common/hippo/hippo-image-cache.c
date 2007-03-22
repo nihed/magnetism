@@ -117,6 +117,8 @@ hippo_image_cache_parse(HippoObjectCache      *cache,
     cairo_surface_t *csurface;
     HippoSurface *surface;
 
+    g_debug("image cache parse '%s'", url);
+    
     if (has_prefix(content, PNG_MAGIC_PREFIX)) {
         GStringReader reader;
         
@@ -148,11 +150,14 @@ hippo_image_cache_parse(HippoObjectCache      *cache,
         }
     } else if (has_prefix(content, JPEG_MAGIC_PREFIX)) {
         csurface = hippo_parse_jpeg(content->str, content->len, error_p);
-        if (csurface == NULL)
+        if (csurface == NULL) {
+            g_debug("JPEG parse failed for '%s'", url);
             goto failed;
+        }
         surface = hippo_surface_new(csurface);
         cairo_surface_destroy(csurface);
     } else {
+        g_debug("Unknown image format for '%s'", url);
         g_set_error(error_p, HIPPO_ERROR, HIPPO_ERROR_FAILED, _("Unknown image format"));
         goto failed;
     }
@@ -160,8 +165,10 @@ hippo_image_cache_parse(HippoObjectCache      *cache,
     return G_OBJECT(surface);
     
   failed:
-    g_assert(error_p == NULL || *error_p != NULL);    
-
+    g_debug("Image parse failed for '%s'", url);
+    
+    g_assert(error_p == NULL || *error_p != NULL);
+    
     return NULL;
 }
 
@@ -171,7 +178,7 @@ hippo_image_cache_load(HippoImageCache          *cache,
                        HippoImageCacheLoadFunc   func,
                        void                     *data)
 {
-    /* g_debug("image cache load '%s'", url); */
+    g_debug("image cache load '%s'", url);
     hippo_object_cache_load(HIPPO_OBJECT_CACHE(cache),
                             url,
                             (HippoObjectCacheLoadFunc) func,
