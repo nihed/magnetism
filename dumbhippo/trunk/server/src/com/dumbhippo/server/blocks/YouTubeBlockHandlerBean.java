@@ -68,6 +68,11 @@ public class YouTubeBlockHandlerBean extends
 	public void onYouTubeRecentVideosChanged(String username, List<? extends YouTubeVideo> videos) {
 		logger.debug("most recent YouTube videos changed for " + username);
 
+		if (videos.size() == 0) {
+			logger.debug("not restacking youtube block since videos count is 0");
+			return;
+		}
+		
 		long now = System.currentTimeMillis();
 		Collection<User> users = youTubeUpdater.getAccountLovers(username);
 		for (User user : users) {
