@@ -73,6 +73,7 @@ public class HippoPlugin implements Plugin {
 			addIQHandler(new SettingsIQHandler());
 			addIQHandler(new WhereImIQHandler());
 			addIQHandler(new ContactsIQHandler());
+			addIQHandler(new EntityIQHandler());			
 			
 			Log.debug("... done initializing Hippo plugin");
 		} catch (Exception e) {
