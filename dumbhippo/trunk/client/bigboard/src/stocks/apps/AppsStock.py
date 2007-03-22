@@ -71,13 +71,9 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self.__message = hippo.CanvasText()
         self.__static_set = CanvasVBox()
         self.__dynamic_set = CanvasVBox()
-        self.__dynamic_set_container = HideableBox('Hide Recent', 'Show Recent')
-        
-        self.__dynamic_set_container.set_content(self.__dynamic_set)
         
         self.__box.append(self.__message)
         self.__box.append(self.__static_set)
-        self.__box.append(self.__dynamic_set_container)
         
         self.__app_browser = appbrowser.AppBrowser()
         self._add_more_link(self.__on_more_link)
@@ -129,8 +125,6 @@ class AppsStock(bigboard.AbstractMugshotStock):
             
         if not self.__initialized:
             self.__initialized = True
-            if len(self.__static_set.get_children()) > 0:
-                self.__dynamic_set_container.set_shown(False)
             
     def __handle_my_top_apps_changed(self, mugshot, apps):
         self._logger.debug("my apps changed")
@@ -162,5 +156,4 @@ class AppsStock(bigboard.AbstractMugshotStock):
             display = apps_widgets.AppDisplay(app)
             display.connect("button-press-event", lambda display, event: display.launch())             
             self.__dynamic_set.append(display)
-        self.__dynamic_set_container.set_showtext("Show Recent (%d)" % (len(self.__dynamic_set.get_children()),))
             

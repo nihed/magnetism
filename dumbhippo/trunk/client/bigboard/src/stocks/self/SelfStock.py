@@ -81,6 +81,8 @@ class SelfStock(AbstractMugshotStock):
         if self._whereim.has_key(name):
             return
         self._whereim[name] = ExternalAccountIcon(acct)
+        if not acct.get_sentiment() == 'love':
+            self._logger.debug("ignoring account %s with sentiment %s", acct, acct.get_sentiment())
+            return
         self._logger.debug("appending external account %s" % (name,))
         self._whereim_box.append(self._whereim[name])
-
