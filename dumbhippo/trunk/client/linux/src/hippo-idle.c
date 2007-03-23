@@ -48,6 +48,7 @@ get_active_application_properties(HippoIdleMonitor *monitor,
     unsigned long n_items;
     unsigned long bytes_after;
     guchar *data;
+    gboolean is_desktop = FALSE;
         
     if (wm_class)
         *wm_class = NULL;
@@ -93,8 +94,20 @@ get_active_application_properties(HippoIdleMonitor *monitor,
                 count = gdk_text_property_to_utf8_list_for_display(monitor->display, GDK_TARGET_STRING,
                                                                    8, data, n_items, &list);
 
-                if (count > 1)
-                    *wm_class = g_strdup(list[1]);
+                if (count > 1) {
+		    /* This is a check for Nautilus, which sets the instance to this
+		     * value for the desktop window; we do this rather than check for
+		     * the more general _NET_WM_WINDOW_TYPE_DESKTOP to avoid having
+		     * to do another XGetProperty on every iteration. We generally
+		     * don't want to count the desktop being focused as application
+		     * usage because it frequently can be a false-positive of an
+		     * empty workspace.
+		     */
+		    if (strcmp(list[0], "desktop_window") == 0)
+			is_desktop = TRUE;
+		    else
+			*wm_class = g_strdup(list[1]);
+		}
 
                 if (list)
                     g_strfreev(list);
@@ -103,6 +116,9 @@ get_active_application_properties(HippoIdleMonitor *monitor,
             XFree(data);
         }
     }
+
+    if (is_desktop)
+	active_window = None;
 
     if (active_window && title) {
         Atom utf8_string = gdk_x11_get_xatom_by_name_for_display(monitor->display, "UTF8_STRING");
