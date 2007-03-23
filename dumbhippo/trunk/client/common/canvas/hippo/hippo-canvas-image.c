@@ -151,6 +151,9 @@ set_surface(HippoCanvasImage *image,
             cairo_surface_t  *surface)
 {
     if (surface != image->surface) {
+        int old_width, old_height;
+        gboolean request_changed = FALSE;
+        
 #if 0
         /* The FC5 version of Cairo doesn't have this API */
         if (cairo_surface_get_type(surface) != CAIRO_SURFACE_TYPE_IMAGE) {
@@ -158,13 +161,28 @@ set_surface(HippoCanvasImage *image,
             return;
         }
 #endif
+        old_width = image->surface ? cairo_image_surface_get_width(image->surface) : 0;
+        old_height = image->surface ? cairo_image_surface_get_height(image->surface) : 0;
+        
         if (surface)
             cairo_surface_reference(surface);
         if (image->surface)
             cairo_surface_destroy(image->surface);
         image->surface = surface;
-        
-        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(image));
+
+        if (image->scale_width < 0) {
+            int width = image->surface ? cairo_image_surface_get_width(image->surface) : 0;
+            if (width != old_width)
+                request_changed = TRUE;
+        }
+        if (image->scale_height < 0) {
+            int height = image->surface ? cairo_image_surface_get_height(image->surface) : 0;
+            if (height != old_height)
+                request_changed = TRUE;
+        }
+
+        if (request_changed)
+            hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(image));
         hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(image), 0, 0, -1, -1);
 
         g_object_notify(G_OBJECT(image), "image");
