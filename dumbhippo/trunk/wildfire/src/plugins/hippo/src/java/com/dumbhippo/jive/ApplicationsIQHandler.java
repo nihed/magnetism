@@ -112,7 +112,7 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler  implements LiveEv
 		Element childElement = document.addElement("topApplications", APPLICATIONS_NAMESPACE);
 		
 		int position = 0;
-		String positionStr = childElement.attributeValue("start");
+		String positionStr = request.getChildElement().attributeValue("start");
 		if (positionStr != null)
 			position = Integer.valueOf(positionStr);
 		if (position < 0 || position > 4096) // Arbitrary but reasonable limit
