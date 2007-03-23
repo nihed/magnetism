@@ -4,6 +4,7 @@ mugshot_CPPFLAGS = 			\
 	$(AM_CPPFLAGS)			\
 	-I $(top_srcdir)		\
 	$(MUGSHOT_CFLAGS)		\
+       -DHOST_CPU=\"$(host_cpu)\"       \
 	-I$(top_srcdir)/canvas
 
 mugshot_LDFLAGS=$(MUGSHOT_LIBS)
