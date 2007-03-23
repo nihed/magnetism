@@ -82,6 +82,20 @@ struct _HippoPlatformImpl {
     char *jabber_resource;
     HippoSystemDBus *system_dbus;
     HippoNetworkStatus network_status;
+
+    /* This is a hack to simulate forgetting the username password after
+     * an authentication failure without having to actually worry about
+     * how to change cookies.txt if there is currently a browser running.
+     * 
+     * Instead of deleting the cookie, we just remember that the last
+     * value we read is "deleted" and ignore it if we read it again.
+     *
+     * This case is only hit in the relatively rare case of rejected
+     * authentication.
+     */
+    char *last_username;
+    char *last_password;
+    gboolean forget_auth;
 };
 
 struct _HippoPlatformImplClass {
@@ -195,6 +209,8 @@ hippo_platform_impl_finalize(GObject *object)
     g_debug("Finalizing platform impl");
 
     g_free(impl->jabber_resource);
+    g_free(impl->last_username);
+    g_free(impl->last_password);
     
     G_OBJECT_CLASS(hippo_platform_impl_parent_class)->finalize(object);
 }
@@ -253,12 +269,15 @@ hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
                                       char            **username_p,
                                       char            **password_p)
 {
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
     GSList *cookies;
     char *web_host;
     int web_port;
-    gboolean success;
+    gboolean success = FALSE;
     HippoCookie *cookie;
     char *value;
+    char *username = NULL;
+    char *password = NULL;
 
     hippo_platform_get_web_host_port(platform, &web_host, &web_port);
     
@@ -271,7 +290,7 @@ hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
     
     if (cookies == NULL) {
         g_free(web_host);
-        return FALSE;
+        goto out;
     }        
 
     /* Extract value from first cookie and free the rest of them 
@@ -295,22 +314,59 @@ hippo_platform_impl_read_login_cookie(HippoPlatform    *platform,
     /* Parse the value and return username/password
      * hippo_parse_login_cookie allows a NULL value
      */
-     
-    success = hippo_parse_login_cookie(value, web_host, username_p, password_p);
+
+    success = hippo_parse_login_cookie(value, web_host, &username, &password);
     g_free(value);
     g_free(web_host);
+
+ out:
+    if (success && impl->forget_auth &&
+        (username == impl->last_username ||
+         (username && impl->last_username && strcmp(username, impl->last_username) == 0)) &&
+        (password == impl->last_password ||
+         (password && impl->last_password && strcmp(password, impl->last_password) == 0)))
+    {
+        g_free(impl->last_username);
+        g_free(impl->last_password);
+        
+        impl->last_username = username;
+        impl->last_password = password;
+
+        username = NULL;
+        password = NULL;
+        success = FALSE;
+    } else {
+        impl->forget_auth = FALSE;
+        
+        g_free(impl->last_username);
+        g_free(impl->last_password);
+        
+        impl->last_username = g_strdup(username);
+        impl->last_password = g_strdup(password);
+    }
+
+    if (username_p)
+        *username_p = username;
+    else
+        g_free(username);
+
+    if (password_p)
+        *password_p = password;
+    else
+        g_free(password);
+    
     return success;
 }
 
 static void
 hippo_platform_impl_delete_login_cookie(HippoPlatform *platform)
 {
-    /* FIXME this is going to be a serious headache. 
-     * For browsers that aren't running we have to blow the cookie
-     * out of cookies.txt, for running browsers we have to hook into them
-     * and export an API to drop the cookie or something.
+    /* Hack; don't delete the cookie, just remember that we should
+     * have deleted it; see comment in the HippoPlatformImpl structure.
      */
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
 
+    impl->forget_auth = TRUE;
 }
 
 static const char*
