@@ -609,6 +609,7 @@ hippo_canvas_box_set_property(GObject         *object,
         g_object_set_property(G_OBJECT(box->style), "color", value);
         hippo_canvas_context_emit_style_changed(HIPPO_CANVAS_CONTEXT(box),
                                                 FALSE);
+        need_resize = FALSE;
         break;
     case PROP_COLOR_SET:
         if (g_value_get_boolean(value) || box->style != NULL) {
@@ -617,6 +618,7 @@ hippo_canvas_box_set_property(GObject         *object,
             hippo_canvas_context_emit_style_changed(HIPPO_CANVAS_CONTEXT(box),
                                                     FALSE);
         }
+        need_resize = FALSE;
         break;
     case PROP_COLOR_CASCADE:
         {
@@ -627,6 +629,7 @@ hippo_canvas_box_set_property(GObject         *object,
                                                         FALSE);
             }
         }
+        need_resize = FALSE;
         break;
     case PROP_FONT:
         if (!(g_value_get_string(value) == NULL && box->style == NULL)) {
@@ -672,6 +675,7 @@ hippo_canvas_box_set_property(GObject         *object,
                 }
             }
         }
+        need_resize = FALSE;
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -3569,8 +3573,19 @@ hippo_canvas_box_set_child_visible (HippoCanvasBox              *box,
         return;
     
     c->visible = visible;
-    
-    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
+
+    if (c->fixed) {
+        int w, h;
+        
+        /* We only repaint, don't queue a resize - fixed items don't affect the
+         * size request.
+         */
+        hippo_canvas_item_get_allocation(child, &w, &h);
+        
+        if (c->visible)
+            hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box), c->x, c->y, w, h);
+    } else
+        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }
 
 void
