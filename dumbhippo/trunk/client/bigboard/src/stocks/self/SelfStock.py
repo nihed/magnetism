@@ -19,7 +19,7 @@ class ExternalAccountIcon(CanvasMugshotURLImage):
         self._sync()
         
     def _sync(self):
-        self.set_url(self._acct.get_icon_url())
+        self.set_url(self._acct.get_icon())
         
     def __launch_browser(self):
         libbig.show_url(self._acct.get_link())
@@ -50,15 +50,16 @@ class SelfStock(AbstractMugshotStock):
         
         self._box.append(self._whereim_box)
         
-        self._whereim = {}
-        
-        self._mugshot.connect("self-changed", self._handle_self_changed)
-        self._mugshot.connect('whereim-added', self._handle_whereim_added)         
-        
     def _on_mugshot_ready(self):
         super(SelfStock, self)._on_mugshot_ready()       
-        self._mugshot.get_self()
-        self._mugshot.get_whereim()        
+        if self._mugshot.get_self():
+            self.__init_self()
+        self._mugshot.connect("self-known", lambda mugshot: self.__init_self())
+            
+    def __init_self(self):
+        myself = self._mugshot.get_self()
+        myself.connect("changed", lambda myself: self.__handle_self_changed())        
+        self.__handle_self_changed()        
         
     def _on_edit_self(self):
         baseurl = self._mugshot.get_baseurl()
@@ -71,18 +72,22 @@ class SelfStock(AbstractMugshotStock):
         super(SelfStock, self).set_size(size)
         self._namephoto_box.set_size(size)
     
-    def _handle_self_changed(self, mugshot, myself):
+    def __handle_self_changed(self):
+        myself = self._mugshot.get_self()
         self._logger.debug("self (%s) changed" % (myself.get_guid(),))
         self._photo.set_url(myself.get_photo_url())
         self._name.set_property("text", myself.get_name())
-    
-    def _handle_whereim_added(self, mugshot, acct):
-        name = acct.get_name()        
-        if self._whereim.has_key(name):
+        
+        self._whereim_box.remove_all()
+        accts = myself.get_external_accounts()        
+        if not accts:  # don't have them yet, will get async
+            self._logger.debug("no accounts known yet")
             return
-        self._whereim[name] = ExternalAccountIcon(acct)
-        if not acct.get_sentiment() == 'love':
-            self._logger.debug("ignoring account %s with sentiment %s", acct, acct.get_sentiment())
-            return
-        self._logger.debug("appending external account %s" % (name,))
-        self._whereim_box.append(self._whereim[name])
+        for acct in accts:
+            name = acct.get_type()             
+            if not acct.get_sentiment() == 'love':
+                self._logger.debug("ignoring account %s with sentiment %s", name, acct.get_sentiment())
+                continue
+            icon = ExternalAccountIcon(acct)
+            self._logger.debug("appending external account %s" % (name,))
+            self._whereim_box.append(icon)

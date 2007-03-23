@@ -39,12 +39,6 @@ def get_bigboard_config_file(name):
         pass
     return os.path.join(basepath, name)
 
-def snarf_attributes_from_xml_node(node, attrlist):
-    attrs = {}
-    for attr in attrlist:
-        attrs[attr] = node.getAttribute(attr)
-    return attrs
-
 def get_attr_or_none(dict, attr):
     if dict.has_key(attr):
         return dict[attr]
@@ -107,27 +101,99 @@ class BiMap(object):
             raise ValueError("Unknown bimap set name %s" % (key,))    
         
 def _traverse_nodes(node, matches, index): 
-    if index == len(matches):
-        return node
+    gather = index+1 == len(matches)
+    gather_result = []
     if node.nodeType == xml.dom.Node.ELEMENT_NODE:
         for subnode in node.childNodes:
             if subnode.nodeType == xml.dom.Node.ELEMENT_NODE and subnode.tagName == matches[index]:
-                return _traverse_nodes(subnode, matches, index+1)
-    raise KeyError("Couldn't find path %s from node %s" % ('/'.join(matches), node))
+                if gather:
+                    gather_result.append(subnode)
+                else:
+                    _traverse_nodes(subnode, matches, index+1)
+    if not gather:
+        raise KeyError("Couldn't find path %s from node %s" % ('/'.join(matches), node))
+    return gather_result
+        
+def xml_query(node, *queries):
+    """A braindead-simple xpath-like minilanguage for querying an xml node.
+    Examples:
+    
+    foo/bar/baz*    Returns all baz subelements of foo/bar
+    foo/bar/baz     Returns the first baz subelement of foo/bar
+    \@date          Returns the date attribute of the current node
+    bar#            Returns the text content the first node named bar
+    baz\@moo        Returns the moo attribute of the first node named baz
+    
+    A query may also be a tuple of (querystr, conversion_func).  So for example:
+    
+    (timestamp, link, contents) = xml_query(node, ("\@timestamp", int), "\@link", "content#")"""
+    
+    def gather_node_value(node):
+        result = ""
+        for subnode in node.childNodes:
+            if subnode.nodeType == xml.dom.Node.TEXT_NODE:
+                result += subnode.nodeValue
+        return result
+    
+    def first_or_lose(query, elt_name, nodeset):
+        if len(nodeset) == 0:
+            raise KeyError("Couldn't find element %s from query %s" % (elt_name, query))   
+        return nodeset[0]
+    
+    results = []
+    for query in queries:
+        conversion_func = lambda x: x
+        if type(query) == tuple:
+            (query_str, conversion_func) = query
+        else:
+            query_str = query
+            
+        query_components = query_str.split('/')
+        last_query = query_components[-1]
+        
+        get_first_element_func = lambda results: first_or_lose(query_str, last_query, results)
+        
+        attr_pos = last_query.find('@')
+        hash_pos = last_query.find('#')
+        star_pos = last_query.find('*')
+        if attr_pos > 0:
+            query_func = lambda results: get_first_element_func(results).getAttribute(last_query[attr_pos+1:])
+            last_query = last_query[:attr_pos]            
+        elif hash_pos > 0:
+            query_func = lambda results: gather_node_value(get_first_element_func(results))
+            last_query = last_query[:hash_pos]
+        elif star_pos > 0:
+            query_func = lambda results: results
+            last_query = last_query[:star_pos]
+        else:
+            query_func = get_first_element_func
+        node_matches = query_components[:-1]
+        node_matches.append(last_query)
+        resultset = _traverse_nodes(node, node_matches, 0)
+        result = conversion_func(query_func(resultset))      
+        results.append(result)
+    if len(results) == 1:
+        return results[0]
+    else:
+        return results
+
+def xml_gather_attrs(node, attrlist):
+    attrs = {}
+    for attr in attrlist:
+        attrs[attr] = node.getAttribute(attr)
+        if not attrs[attr]:
+            raise KeyError("Failed to find attribute %s of node %s" %(attr, node))
+    return attrs    
         
 def get_xml_element(node, path):
     """Traverse a path like foo/bar/baz from a DOM node, using the first matching
     element."""
-    return _traverse_nodes(node, path.split('/'), 0)
+    return xml_query(node, path)
 
-def get_xml_element_value(start_node, path):
-    node = get_xml_element(start_node, path)
-    if node.firstChild:
-        return node.firstChild.nodeValue
-    else:
-        return ""
+def get_xml_element_value(node, path):
+    return xml_query(node, path+"#")
     
-class AutoStruct:
+class AutoStruct(object):
     """Kind of like a dictionary, except the values are accessed using
     normal method calls, i.e. get_VALUE(), and the keys are determined
     by arguments passed to the constructor (and are immutable thereafter).
@@ -136,18 +202,20 @@ class AutoStruct:
     applied to make the key more friendly to the get_VALUE syntax.  
     First, hyphens (-) are transformed to underscore (_).  Second,
     studlyCaps style names are replaced by their underscored versions;
-    e.g. fooBarBaz is transformed to foo_bar_baz.
+    e.g. fooBarBaz is transformed to foo_bar_baz.    
     """
     def __init__(self, values):    
         self._struct_values = {}
         self._struct_values.update(self._transform_values(values))
         
-    def __getattr__(self, name):
-        if name[0:4] == 'get_':
-            attr = name[4:] # skip over get_
-            return lambda: get_attr_or_none(self._struct_values, attr)
-        else:
-            raise AttributeError, name # if we return None, it *overrides* other __getattr__ so e.g. __nonzero__ doesn't work
+    def __getattribute__(self, name):
+        try:
+            return object.__getattribute__(self, name)
+        except AttributeError:
+            if name[0:4] == 'get_':
+                attr = name[4:] # skip over get_
+                return lambda: get_attr_or_none(self._struct_values, attr)
+            raise AttributeError,name
     
     def _get_keys(self):
         return self._struct_values.keys()
@@ -189,6 +257,7 @@ class AutoSignallingStruct(gobject.GObject, AutoStruct):
         changed = False
         values = self._transform_values(values)
         for k,v in values.items():
+            # FIXME use deep comparison here
             if self._get_value(k) != v:
                 changed = True
         AutoStruct.update(self, values)
@@ -314,3 +383,22 @@ qualname=bigboard.%s
     
     logging.debug("Initialized logging")
     
+if __name__ == '__main__':
+    a = AutoSignallingStruct({'foo': 10, 'bar': 20})
+    assert(a.get_foo() == 10)
+    assert(a.get_bar() == 20)
+    try:
+        v = a.get_baz()
+        assert(True)
+    except AttributeError:
+        assert(False)
+    
+    class Bar(AutoSignallingStruct):
+        def __init__(self, *args, **kwargs):
+            super(Bar, self).__init__(*args, **kwargs)
+            
+        def get_baz(self):
+            return 30
+        
+    b = Bar({'foo': 10, 'bar': 20})
+    assert(b.get_baz() == 30)

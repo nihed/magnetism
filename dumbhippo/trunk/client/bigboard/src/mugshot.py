@@ -7,9 +7,40 @@ from libbig import _log_cb
 
 class ExternalAccount(libbig.AutoSignallingStruct):
     pass
+
+class ExternalAccountThumbnail(libbig.AutoStruct):
+    pass
     
 class Entity(libbig.AutoSignallingStruct):
-    """A Mugshot entity such as person, group, or feed."""
+    """Abstract superclass of a Mugshot entity such as person, group, or feed; see
+    subclasses."""
+    pass
+    
+class Person(Entity):
+    def __init__(self, *args, **kwargs):
+        super(Person, self).__init__(*args, **kwargs)
+        self.__requesting_accts = False
+        self.__external_accounts = None
+    
+    def get_external_accounts(self):
+        # FIXME - server needs to notify us
+        if self.__external_accounts:
+            return self.__external_accounts
+        else:
+            mugshot = get_mugshot()
+            mugshot.get_person_accounts(self)
+            
+    def set_external_accounts(self, accts):
+        self.__external_accounts = accts
+        self.emit("changed")
+        
+class Group(Entity):
+    pass
+
+class Resource(Entity):
+    pass
+
+class Feed(Entity):
     pass
 
 class Application(libbig.AutoSignallingStruct):
@@ -21,9 +52,8 @@ class Mugshot(gobject.GObject):
     __gsignals__ = {
         "initialized" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "connection-status": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
-        "self-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "whereim-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "entity-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "self-known" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        "network-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "global-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "my-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "pinned-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))        
@@ -56,7 +86,6 @@ class Mugshot(gobject.GObject):
         # Generic properties
         self.__baseprops = None
         
-        self.__whereim = None # <str>,<ExternalAccount>
         self.__self_proxy = None
         self.__self = None
         self.__self_path = None
@@ -90,9 +119,7 @@ class Mugshot(gobject.GObject):
             bus = dbus.SessionBus()
             self._logger.debug("creating proxy for org.mugshot.Mugshot")
             self.__proxy = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
-            self.__proxy.connect_to_signal('ConnectionStatusChanged', _log_cb(self.__on_connection_status_changed))          
-            self.__proxy.connect_to_signal('WhereimChanged', _log_cb(self.__whereimChanged))
-            self.__proxy.connect_to_signal('EntityChanged', _log_cb(self.__entityChanged))
+            self.__proxy.connect_to_signal('ConnectionStatusChanged', _log_cb(self.__on_connection_status_changed))
             self.__proxy.connect_to_signal('ExternalIQReturn', _log_cb(self.__externalIQReturn))
             self.__get_connection_status()    
             self.__proxy.GetBaseProperties(reply_handler=_log_cb(self.__on_get_baseprops), error_handler=self.__on_dbus_error)            
@@ -127,41 +154,12 @@ class Mugshot(gobject.GObject):
     def __on_connection_status_changed(self):
         self._logger.debug("connection status changed")        
         self.__get_connection_status()
-    
-    def __whereimChanged(self, props):
-        self._logger.debug("whereimChanged: %s" % (props,))
-        if self.__whereim is None:
-            self.__whereim = {}
-            self.__network = {}
-        name = props['name']
-        if not self.__whereim.has_key(name):
-            self.__whereim[name] = ExternalAccount(props)
-            self.emit('whereim-added', self.__whereim[name])     
-        else:
-            self.__whereim[name].update(props)
-        
-    def __entityChanged(self, attrs):
-        self._logger.debug("entityChanged: %s" % (attrs,))
-        if self.__network is None:
-            self.__network = {}
-        
-        guid = attrs[u'guid']
-        if not self.__entities.has_key(guid):
-            self.__entities[guid] = Entity(attrs)
-            self.emit("entity-added", self.__entities[guid])
-        else:
-            self.__entities.update(attrs)
             
     def __externalIQReturn(self, id, content):
         if self.__external_iqs.has_key(id):
             self._logger.debug("got external IQ reply for %d (%d outstanding)", id, len(self.__external_iqs.keys())-1)            
             self.__external_iqs[id](content)
             del self.__external_iqs[id]
-    
-    def __do_proxy_call(self, ):
-        if self.__proxy is None:
-            bus = dbus.SessionBus()
-        return self.__proxy
     
     def get_entity(self, guid):
         return self.__entites[guid]
@@ -188,8 +186,9 @@ class Mugshot(gobject.GObject):
         if self.__self:
             self.__self.update(myself)
         else:
-            self.__self = Entity(myself)
-        self.emit("self-changed", self.__self)        
+            self.__self = Person(myself)
+            self._logger.debug("emitting self known")
+            self.emit("self-known")  
     
     def __on_get_baseprops(self, props):
         self.__baseprops = {}
@@ -209,17 +208,36 @@ class Mugshot(gobject.GObject):
             return None
         return self.__self
     
-    def get_whereim(self):
-        if (self.__whereim is None):
-            self.__proxy.NotifyAllWhereim()
-            return None
-        return self.__whereim.values()
+    def __on_get_network_entity_props(self, proxy, attrs):
+        self._logger.debug("entity properties: %s" % (attrs,))
+        
+        guid = attrs[u'guid']
+        if not self.__network.has_key(guid):
+            entity_type = attrs['type']
+            entity_class = {'person': Person, 'group': Group, 
+                            'resource': Resource, 'feed': Feed}
+            self.__network[guid] = entity_class[attrs['type']](attrs)
+            self.emit("network-changed")
+        else:
+            self.__network.update(attrs)        
+        if proxy:
+            proxy.connect_to_signal("Changed", 
+                                    _log_cb(lambda props: self.__on_get_network_entity_props(None, props)), 
+                                    'org.mugshot.Mugshot.Entity')
+        
+    
+    def __on_get_network(self, opaths):
+        self.__network = {}
+        for opath in opaths:
+            proxy = dbus.SessionBus().get_object('org.mugshot.Mugshot', opath)
+            proxy.GetProperties(reply_handler=_log_cb(lambda props: self.__on_get_network_entity_props(proxy, props)),
+                                error_handler=_log_cb(self.__on_dbus_error))              
     
     def get_network(self):
         if self.__network is None:
-            self.__proxy.NotifyAllNetwork()
+            self.__proxy.GetNetwork(reply_handler=_log_cb(self.__on_get_network), error_handler=self.__on_dbus_error)
             return None
-        return self.__network.values()
+        return self.__network.itervalues()
 
     def get_cookies(self, url):
         cookies = self.__ws_proxy.GetCookiesToSend(url)
@@ -227,23 +245,60 @@ class Mugshot(gobject.GObject):
         #print cookies
         return cookies
 
-    def __do_external_iq(self, name, xmlns, content, cb, is_set=False):
+    def __do_external_iq(self, name, xmlns, cb, attrs={}, content="", is_set=False):
         """Sends a raw IQ request to Mugshot server, indirecting
         via D-BUS to client."""     
         if self.__proxy is None:
             self._logger.warn("No Mugshot active, not sending IQ")
             return
-        self._logger.debug("sending external IQ request: set=%s %s %s (%d bytes)", is_set, name, xmlns, len(content))
-        id = self.__proxy.SendExternalIQ(is_set, name, xmlns, content)
+        self._logger.debug("sending external IQ request: set=%s %s %s %s (%d bytes)", is_set, name, xmlns, attrs, len(content))
+        attrs['xmlns'] = xmlns
+        flattened_attrs = []
+        for k,v in attrs.iteritems():
+            flattened_attrs.append(k)
+            flattened_attrs.append(v)
+        id = self.__proxy.SendExternalIQ(is_set, name, flattened_attrs, content)
         self.__external_iqs[id] = cb
+        return id
+        
+    def __on_get_person_accounts(self, person, xml_str):
+        doc = xml.dom.minidom.parseString(xml_str) 
+        accts = []
+        for child in libbig.xml_query(doc.documentElement, 'externalAccount*'):
+            attrs = libbig.xml_gather_attrs(child, ['type', 
+                                                    'sentiment', 
+                                                    'icon'])
+            accttype = attrs['type']
+            if attrs['sentiment'] == 'love':
+                attrs['link'] = child.getAttribute('link')
+            thumbnails = []            
+            try:
+                thumbnails_node = libbig.xml_query(child, 'thumbnails')
+            except KeyError:
+                thumbnails_node = None
+            if thumbnails_node:
+                for thumbnail in libbig.xml_query(thumbnails_node, 'thumbnail*'):
+                    attrs = libbig.xml_gather_attrs(thumbnail, ['src', 'title', 'href'])
+                    thumbnails.append(ExternalAccountThumbnail(attrs))               
+                self._logger.debug("%d thumbnails found for account %s (user %s)" % (len(thumbnails), accttype, person))                    
+                attrs['thumbnails'] = thumbnails
+            acct = ExternalAccount(attrs)
+            accts.append(acct)
+        self._logger.debug("setting %d accounts for user %s" % (len(accts), person))
+        person.set_external_accounts(accts)
+        
+    def get_person_accounts(self, person):
+        return self.__do_external_iq("whereim", "http://dumbhippo.com/protocol/whereim",
+                                     lambda node: self.__on_get_person_accounts(person, node),
+                                     attrs={'who': person.get_guid()})
     
     def __load_app_from_xml(self, node):
         id = node.getAttribute("id")
         self._logger.debug("parsing application id=%s", id)
-        attrs = libbig.snarf_attributes_from_xml_node(node, ['id', 'rank', 'usageCount', 
-                                                             'iconUrl', 'description',
-                                                             'category', 'tooltip',
-                                                             'name', 'desktopNames'])
+        attrs = libbig.xml_gather_attrs(node, ['id', 'rank', 'usageCount', 
+                                               'iconUrl', 'description',
+                                               'category',
+                                               'name', 'desktopNames'])
         app = None
         if not self.__applications.has_key(attrs['id']):
             app = Application(attrs)
@@ -280,11 +335,11 @@ class Mugshot(gobject.GObject):
         self.emit("global-top-apps-changed", self.__global_top_apps)        
     
     def __request_my_top_apps(self):
-        self.__do_external_iq("myTopApplications", "http://dumbhippo.com/protocol/applications", "",
+        self.__do_external_iq("myTopApplications", "http://dumbhippo.com/protocol/applications",
                              self.__on_my_top_applications)
     
     def __request_global_top_apps(self):
-        self.__do_external_iq("topApplications", "http://dumbhippo.com/protocol/applications", "",
+        self.__do_external_iq("topApplications", "http://dumbhippo.com/protocol/applications",
                              self.__on_top_applications)        
             
     def __idle_poll_my_apps(self):
@@ -320,7 +375,7 @@ class Mugshot(gobject.GObject):
         self.emit("pinned-apps-changed", self.__pinned_apps)        
     
     def get_pinned_apps(self):
-        self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications", "",
+        self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications",
                               self.__on_pinned_apps)
         
     def set_pinned_apps(self, ids):
