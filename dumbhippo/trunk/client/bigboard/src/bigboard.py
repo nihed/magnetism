@@ -162,6 +162,7 @@ class Stock(object):
         # For use in subclasses as well
         self._logger = logging.getLogger('bigboard.stocks.' + self._id)  
         self._state = PrefixedState('/stock/' + self._id)
+        self._logger.debug("initializing")
         
     def get_id(self):
         return self._id
