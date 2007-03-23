@@ -10,6 +10,7 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.jive.annotations.IQHandler;
 import com.dumbhippo.jive.annotations.IQMethod;
 import com.dumbhippo.live.ExternalAccountChangedEvent;
@@ -20,7 +21,10 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.views.ExternalAccountView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.UserViewpoint;
 
 /** 
@@ -38,6 +42,9 @@ public class WhereImIQHandler extends AnnotatedIQHandler implements LiveEventLis
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private PersonViewer personViewer;
 	
 	public WhereImIQHandler() {
 		super("Hippo WhereIm IQ Handler");
@@ -60,7 +67,25 @@ public class WhereImIQHandler extends AnnotatedIQHandler implements LiveEventLis
 	
 	@IQMethod(name="whereim", type=IQ.Type.get)
 	public void getWhereIm(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
-		Set<ExternalAccountView> externalAccountViews = externalAccountSystem.getExternalAccountViews(viewpoint, viewpoint.getViewer());		
+		String userGuid = request.getChildElement().attributeValue("who");
+		PersonView personView;
+		User user = null;
+		
+		if (userGuid == null)
+			user = viewpoint.getViewer();
+		else {
+			try {
+				user = identitySpider.lookupGuidString(User.class, userGuid);
+			} catch (ParseException e) {
+	        	throw IQException.createBadRequest("Invalid user");				
+			} catch (NotFoundException e) {
+	        	throw IQException.createBadRequest("Invalid user");				
+			}
+		}
+		
+		personView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.EXTERNAL_ACCOUNTS, PersonViewExtra.CONTACT_STATUS);
+		
+		Set<ExternalAccountView> externalAccountViews = personView.getExternalAccountViews();		
 
 		reply.setChildElement(externalAccountViewsToElement(externalAccountViews));
 	}
