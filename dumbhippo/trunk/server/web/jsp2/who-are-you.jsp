@@ -21,7 +21,7 @@
 		<table width="100%">
 		<tr>
 		  <td><div class="dh-title">Log in</div></td>
-		  <td align="right"><div id="dhSignupLink"><a href="/signup">Need to sign up?</a></div></td>
+		  <td align="right"><div id="dhSignupLink"><a href="/signup">Don't have an account?</a></div></td>
 		</tr>
 		</table>
 		<div id="dhLoginNotification" style="display: none;"></div>
