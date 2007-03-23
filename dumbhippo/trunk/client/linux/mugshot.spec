@@ -151,6 +151,8 @@ fi
 
 killall -q -HUP gconfd-2 || :
 
+echo %{version} > %{_datadir}/mugshot/version
+
 %preun
 # On removal (but not upgrade), remove our schemas
 if [ $1 = 0 ] ; then
@@ -204,11 +206,16 @@ fi
 %{_datadir}/icons/hicolor/48x48/apps/*.gif
 %{_datadir}/icons/hicolor/128x128/apps/*.png
 %{_datadir}/mugshot
+%ghost %{_datadir}/mugshot/version
 %{_libdir}/mugshot
 %{_datadir}/gnome/autostart/mugshot.desktop
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
+* Fri Mar 23 2007 Owen Taylor <otaylor@fresnel.dumbhippo.com> - 1.1.38-1
+- Create %%{_datadir}/mugshot/version at the end of %%post to avoid
+  the client prematurely prompting to restart itself
+
 * Mon Mar 19 2007 Owen Taylor <otaylor@redhat.com> - 1.1.38-1
 - Don't package the .la file for libhippofirefox
 - Use desktop-file-install to validate mugshot.spec and make
