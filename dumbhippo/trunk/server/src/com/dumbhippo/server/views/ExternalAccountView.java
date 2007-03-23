@@ -123,12 +123,27 @@ public class ExternalAccountView {
 	}
 	
 	public void writeToXmlBuilder(XmlBuilder builder) {
-		builder.appendEmptyNode("externalAccount",
+		builder.openElement("externalAccount",
 				"type", getExternalAccount().getAccountType().name(),
 				"sentiment", getSentiment(),
 				"icon", "/images3/" + getExternalAccount().getIconName(),
 				// The following will not be added unless the account is loved and enabled
 				"link", getLink(),
 				"linkText", getLinkText());
+		if (getHasThumbnails()) {
+			Thumbnails thumbnails = getThumbnails();
+			builder.openElement("thumbnails", "width", ""+thumbnails.getThumbnailWidth(), 
+					            "height", ""+thumbnails.getThumbnailHeight());
+			for (Thumbnail thumbnail : thumbnails.getThumbnails()) {
+				builder.appendEmptyNode("thumbnail", 
+						                "src", thumbnail.getThumbnailSrc(),
+						                "title", thumbnail.getThumbnailTitle(),
+						                "href", thumbnail.getThumbnailHref(),
+						                "width", ""+thumbnail.getThumbnailWidth(),
+						                "height", ""+thumbnail.getThumbnailHeight());
+			}
+			builder.closeElement();
+		}
+		builder.closeElement();
 	}
 }
