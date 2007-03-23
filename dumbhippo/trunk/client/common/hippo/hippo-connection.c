@@ -25,6 +25,9 @@ static const int RETRY_TIMEOUT_FUZZ = 60*1000*5;        /* add up to this much t
                                                          * at the same time.
                                                          */
 
+/* We delay this long after a music change before sending it to the server */
+static const int MUSIC_GRACE_PERIOD = 7000;             /* 7 seconds */
+
 typedef struct MessageContext MessageContext;
 
 /* This structure is generated internally if 
@@ -145,6 +148,7 @@ static void     hippo_connection_start_signin_timeout (HippoConnection *connecti
 static void     hippo_connection_stop_signin_timeout  (HippoConnection *connection);
 static void     hippo_connection_start_retry_timeout  (HippoConnection *connection);
 static void     hippo_connection_stop_retry_timeout   (HippoConnection *connection);
+static void     hippo_connection_stop_music_timeout   (HippoConnection *connection);
 static void     hippo_connection_queue_request_blocks (HippoConnection *connection);
 static void     hippo_connection_unqueue_request_blocks (HippoConnection *connection);
 static void     hippo_connection_connect              (HippoConnection *connection,
@@ -218,11 +222,13 @@ struct _HippoConnection {
     int signin_timeout_id;
     int signin_timeout_count;
     int retry_timeout_id;
+    int music_timeout_id;
     LmConnection *lm_connection;
     /* queue of OutgoingMessage objects */
     GQueue *pending_outgoing_messages;
     /* queue of LmMessage */
     GQueue *pending_room_messages;
+    HippoSong pending_song;
     HippoBrowserKind login_browser;
     int message_port;
     char *username;
@@ -461,6 +467,7 @@ hippo_connection_finalize(GObject *object)
     g_debug("Finalizing connection");
 
     hippo_connection_unqueue_request_blocks(connection);
+    hippo_connection_stop_music_timeout(connection);
     hippo_connection_stop_signin_timeout(connection);
     hippo_connection_stop_retry_timeout(connection);
     
@@ -729,10 +736,10 @@ hippo_connection_do_invite_to_group (HippoConnection  *connection,
     lm_message_unref(message);
 }
 
-void
-hippo_connection_notify_music_changed(HippoConnection *connection,
-                                      gboolean         currently_playing,
-                                      const HippoSong *song)
+static void
+do_notify_music_changed(HippoConnection *connection,
+                        gboolean         currently_playing,
+                        const HippoSong *song)
 {
     LmMessage *message;
     LmMessageNode *node;
@@ -765,6 +772,47 @@ hippo_connection_notify_music_changed(HippoConnection *connection,
 
     lm_message_unref(message);
     /* g_print("Sent music changed xmpp message"); */
+}
+
+static gboolean 
+music_timeout(gpointer data)
+{
+    HippoConnection *connection = data;
+    
+    do_notify_music_changed(connection,
+                            TRUE,
+                            &connection->pending_song);
+    
+    hippo_connection_stop_music_timeout(connection);
+    
+    return FALSE;
+}
+
+void
+hippo_connection_notify_music_changed(HippoConnection *connection,
+                                      gboolean         currently_playing,
+                                      const HippoSong *song)
+{
+    g_return_if_fail(HIPPO_IS_CONNECTION(connection));
+    g_return_if_fail(!currently_playing || song != NULL);
+
+    hippo_connection_stop_music_timeout(connection);
+
+    /* When the user switches to a new song, we give them MUSIC_GRACE_PERIOD
+     * milliseconds before we send it to the server, in case it is embarrassing.
+     * Stopping the music is, however, sent immediately.
+     */
+    if (currently_playing) {
+        connection->pending_song.keys = g_strdupv(song->keys);
+        connection->pending_song.values = g_strdupv(song->values);
+
+        connection->music_timeout_id = g_timeout_add(MUSIC_GRACE_PERIOD, 
+                                                     music_timeout, connection);
+    } else {
+        do_notify_music_changed(connection,
+                                FALSE,
+                                NULL);
+    }
 }
 
 void
@@ -947,6 +995,21 @@ hippo_connection_stop_retry_timeout(HippoConnection *connection)
         g_signal_handlers_disconnect_by_func(G_OBJECT(connection->platform),
                                              G_CALLBACK(on_network_status_changed),
                                              connection);
+    }
+}
+
+static void
+hippo_connection_stop_music_timeout(HippoConnection *connection)
+{
+    if (connection->music_timeout_id != 0) {
+        g_source_remove (connection->music_timeout_id);
+        connection->music_timeout_id = 0;
+
+        g_strfreev(connection->pending_song.keys);
+        connection->pending_song.keys = NULL;
+        
+        g_strfreev(connection->pending_song.values);
+        connection->pending_song.keys = NULL;
     }
 }
 
