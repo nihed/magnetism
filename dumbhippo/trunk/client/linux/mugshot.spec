@@ -83,6 +83,9 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/mugshot/firefox/components/*.la
 # Run desktop-file-install to so we get validation (and to make
 # things fedora-packaging-guidelines compliant)
 desktop-file-install 					\
+  --vendor=mugshot   					\
+  mugshot.desktop
+desktop-file-install 					\
   --dir=$RPM_BUILD_ROOT%{_datadir}/gnome/autostart 	\
   --vendor=mugshot   					\
   mugshot.desktop

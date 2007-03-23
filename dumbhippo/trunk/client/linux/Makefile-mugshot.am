@@ -138,14 +138,20 @@ mugshot-dist-hook:
 	mkdir $(distdir)/common-dist/images
 	cp $(EMBEDDED_IMAGES) $(distdir)/common-dist/images
 
-desktopfilesdir=$(datadir)/gnome/autostart
+autostartdir=$(datadir)/gnome/autostart
+autostart_in_files=mugshot.desktop.in
+autostart_files=$(autostart_in_files:.desktop.in=.desktop)
+autostart_DATA = $(autostart_files)
+
+desktopfilesdir=$(datadir)/applications
 desktopfiles_in_files=mugshot.desktop.in
 desktopfiles_files=$(desktopfiles_in_files:.desktop.in=.desktop)
 desktopfiles_DATA = $(desktopfiles_files)
+
 # intltool not here until po exists and all that
 #@INTLTOOL_DESKTOP_RULE@
 mugshot.desktop: mugshot.desktop.in
 	cat $(srcdir)/mugshot.desktop.in | sed -e 's/^_//g' > mugshot.desktop
 
-EXTRA_DIST += $(desktopfiles_in_files)
-MAINTAINERCLEANFILES +=	$(desktopfiles_files)
+EXTRA_DIST += $(autostart_in_files) $(desktopfiles_in_files)
+MAINTAINERCLEANFILES +=	$(autostart_files) $(desktopfiles_files)

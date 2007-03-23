@@ -133,16 +133,6 @@ hippo_status_icon_activate(GtkStatusIcon *gtk_icon)
 }
 
 static void
-append_escaped(GString    *str,
-               const char *text)
-{
-    char *escaped;
-    escaped = g_markup_escape_text(text, -1);
-    g_string_append(str, escaped);
-    g_free(escaped);
-}
-
-static void
 hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
                              guint          button,
                              guint32        activate_time)
@@ -150,6 +140,9 @@ hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
     HippoStatusIcon *icon = HIPPO_STATUS_ICON(gtk_icon);
     GtkWidget *menu_item;
     GtkWidget *label;
+
+#if 0
+    /* We used to only show the Quit item in "leet_mode" */
     GdkModifierType state;
     gboolean leet_mode;
     
@@ -158,6 +151,7 @@ hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
         if (state & GDK_CONTROL_MASK)
             leet_mode = TRUE;
     }
+#endif    
     
     destroy_menu(icon);
     
@@ -177,17 +171,15 @@ hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
     gtk_widget_show(menu_item);
     gtk_menu_shell_append(GTK_MENU_SHELL(icon->popup_menu), menu_item);
 
-    if (leet_mode) {
-        menu_item = gtk_separator_menu_item_new();
-        gtk_widget_show(menu_item);
-        gtk_menu_shell_append(GTK_MENU_SHELL(icon->popup_menu), menu_item);
-            
-        menu_item = gtk_image_menu_item_new_from_stock (GTK_STOCK_QUIT, NULL);
-        g_signal_connect_swapped(menu_item, "activate", G_CALLBACK(hippo_app_quit),
-            hippo_get_app());
-        gtk_widget_show(menu_item);
-        gtk_menu_shell_append(GTK_MENU_SHELL(icon->popup_menu), menu_item);
-    }        
+    menu_item = gtk_separator_menu_item_new();
+    gtk_widget_show(menu_item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(icon->popup_menu), menu_item);
+    
+    menu_item = gtk_image_menu_item_new_from_stock (GTK_STOCK_QUIT, NULL);
+    g_signal_connect_swapped(menu_item, "activate", G_CALLBACK(hippo_app_quit),
+                             hippo_get_app());
+    gtk_widget_show(menu_item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(icon->popup_menu), menu_item);
     
     gtk_menu_popup (GTK_MENU(icon->popup_menu), NULL, NULL,
                     gtk_status_icon_position_menu, icon,
