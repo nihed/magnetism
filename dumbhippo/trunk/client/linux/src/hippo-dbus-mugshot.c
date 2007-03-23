@@ -246,7 +246,8 @@ hippo_dbus_handle_mugshot_send_external_iq(HippoDBus   *dbus,
     DBusMessage *reply;
     gboolean is_set;
     const char *element;
-    const char *xmlns;
+    char **attrs;
+    int attrs_count;
     const char *content;
     DBusError error;
     HippoConnection *connection;
@@ -258,7 +259,7 @@ hippo_dbus_handle_mugshot_send_external_iq(HippoDBus   *dbus,
                                &error, 
                                DBUS_TYPE_BOOLEAN, &is_set,
                                DBUS_TYPE_STRING, &element,
-                               DBUS_TYPE_STRING, &xmlns,
+                               DBUS_TYPE_ARRAY, DBUS_TYPE_STRING, &attrs, &attrs_count,
                                DBUS_TYPE_STRING, &content,
                                DBUS_TYPE_INVALID)) {
         reply = dbus_message_new_error(message, error.name, error.message);
@@ -266,9 +267,15 @@ hippo_dbus_handle_mugshot_send_external_iq(HippoDBus   *dbus,
         return reply;
     }
     
+    if (attrs_count % 2 != 0) {
+    	return dbus_message_new_error(message, "org.mugshot.Mugshot.InvalidAttributes", "Invalid attribute count");	
+    }
+    
     connection = hippo_data_cache_get_connection(hippo_app_get_data_cache(hippo_get_app()));
     
-    request_id = hippo_connection_send_external_iq(connection, is_set, element, xmlns, content);    
+    request_id = hippo_connection_send_external_iq(connection, is_set, element, attrs_count, attrs, content);
+    
+    dbus_free_string_array(attrs);    
     
     reply = dbus_message_new_method_return(message);
     dbus_message_append_args(reply, DBUS_TYPE_UINT32, &request_id, NULL);
@@ -276,24 +283,39 @@ hippo_dbus_handle_mugshot_send_external_iq(HippoDBus   *dbus,
 }
 
 static void
-signal_entity_changed(gpointer entity_ptr, gpointer data)
+append_network_ref(gpointer entity_ptr, gpointer data)
 {
-    HippoDBus *dbus = HIPPO_DBUS(data);
-    HippoEntity *entity = (HippoEntity*) entity_ptr;  
+    HippoEntity *entity = (HippoEntity*) entity_ptr; 	
+    DBusMessageIter *iter = (DBusMessageIter*) data; 
 
-    if (hippo_entity_get_in_network(entity))
-        hippo_dbus_notify_entity_changed(dbus, entity);
+    if (hippo_entity_get_in_network(entity)) {
+    	char *ref;
+    	ref = get_entity_path(entity);
+        dbus_message_iter_append_basic(iter, DBUS_TYPE_OBJECT_PATH, &ref);
+        g_free(ref);
+    }   
 }
 
 DBusMessage*
 hippo_dbus_handle_mugshot_get_network(HippoDBus   *dbus,
                                       DBusMessage  *message)
 {
+	DBusMessage *reply;
+	DBusMessageIter iter, array_iter;
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
 
-    hippo_data_cache_foreach_entity(cache, signal_entity_changed, dbus);
+	reply = dbus_message_new_method_return(message);
+	dbus_message_iter_init_append(reply, &iter);
+	dbus_message_iter_open_container(&iter, 
+	                                 DBUS_TYPE_ARRAY,
+	                                 DBUS_TYPE_OBJECT_PATH_AS_STRING,
+	                                 &array_iter);
 
-    return dbus_message_new_method_return(message);  /* Send out the results as signals.  */
+    hippo_data_cache_foreach_entity(cache, append_network_ref, &array_iter);
+    
+    dbus_message_iter_close_container(&iter, &array_iter);
+
+    return reply;
 }
 
 DBusMessage*
@@ -330,7 +352,7 @@ hippo_dbus_handle_mugshot_introspect(HippoDBus   *dbus,
                     "    <method name=\"SendExternalIQ\">\n"
                     "      <arg direction=\"in\" type=\"b\"/>\n"
                     "      <arg direction=\"in\" type=\"s\"/>\n"
-                    "      <arg direction=\"in\" type=\"s\"/>\n"
+                    "      <arg direction=\"in\" type=\"as\"/>\n"                    
                     "      <arg direction=\"in\" type=\"s\"/>\n"
                     "      <arg direction=\"out\" type=\"u\"/>\n"                    
                     "    </method>"
@@ -338,7 +360,10 @@ hippo_dbus_handle_mugshot_introspect(HippoDBus   *dbus,
     g_string_append(xml,
                     "    <method name=\"NotifyAllWhereim\"/>\n");
     g_string_append(xml,
-                    "    <method name=\"NotifyAllNetwork\"/>\n");
+                    "    <method name=\"GetNetwork\">\n"
+                    "      <arg direction=\"out\" type=\"ao\"/>\n"
+                    "    </method>"
+                    );
 
     g_string_append(xml,
                     "    <signal name=\"WhereimChanged\">\n"
