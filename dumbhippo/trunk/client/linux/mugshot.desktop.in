@@ -9,4 +9,4 @@ Terminal=false
 Type=Application
 Icon=mugshot
 StartupNotify=false
-Categories=
+Categories=Network;GNOME;GTK;X-Fedora;X-Red-Hat-Base;
