@@ -698,6 +698,14 @@ login_response_cb(GtkDialog *dialog,
     if (response_id == GTK_RESPONSE_ACCEPT) {
         hippo_connection_open_maybe_relative_url(dialogs->connection,
                                                  "/who-are-you");
+
+        /* Though we don't expect this to succeed immediately (the
+         * user has not yet had the chance to login) calling this
+         * here has the side-effect of putting us into the mode where
+         * we check for a new auth token every 5 seconds for a
+         * few minutes.
+         */
+        hippo_connection_signin(dialogs->connection);
     }
     g_object_run_dispose(G_OBJECT(dialog));
 }
