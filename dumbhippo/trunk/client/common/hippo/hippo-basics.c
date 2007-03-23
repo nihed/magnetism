@@ -556,6 +556,7 @@ hippo_parse_options(int          *argc_p,
     static gboolean initial_debug_share = FALSE;
     static gboolean verbose = FALSE;
     static gboolean verbose_xmpp = FALSE;
+    static gboolean debug_updates = FALSE;
     static char *crash_dump = NULL;
     char *argv0;
     GError *error;
@@ -574,6 +575,7 @@ hippo_parse_options(int          *argc_p,
         { "replace", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&replace_existing, "Replace existing instance, if any" },
         { "quit", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&quit_existing, "Tell any existing instances to quit" },
         { "debug-share", 0, 0, G_OPTION_ARG_NONE, (gpointer)&initial_debug_share, "Show an initial dummy debug share" },
+        { "debug-updates", 0, 0, G_OPTION_ARG_NONE, (gpointer)&debug_updates, "Show debugging animation for display updates" },
         { "verbose", 0, 0, G_OPTION_ARG_NONE, (gpointer)&verbose, "Print lots of debugging information" },
         { "verbose-xmpp", 0, 0, G_OPTION_ARG_NONE, (gpointer)&verbose_xmpp, "Print lots of debugging information about raw XMPP traffic" },
         { NULL }
@@ -621,6 +623,7 @@ hippo_parse_options(int          *argc_p,
     results->initial_debug_share = initial_debug_share;
     results->verbose = verbose;
     results->verbose_xmpp = verbose_xmpp;
+    results->debug_updates = debug_updates;
     results->crash_dump = g_strdup(crash_dump);
 
     hippo_print_debug_level = results->verbose;

@@ -1458,6 +1458,9 @@ main(int argc, char **argv)
     if (!hippo_parse_options(&argc, &argv, &options))
         return 1;
 
+    if (options.debug_updates)
+        gdk_window_set_debug_updates(TRUE);
+    
     if (options.instance_type == HIPPO_INSTANCE_DEBUG) {
         gtk_icon_theme_append_search_path(gtk_icon_theme_get_default(),
                                           ABSOLUTE_TOP_SRCDIR "/icons");
