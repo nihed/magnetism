@@ -1201,6 +1201,16 @@ on_connected_changed(HippoConnection *connection,
 }
 
 static void
+on_auth_failed(HippoConnection *connection,
+               void            *data)
+{
+    HippoApp *app = data;
+
+    hippo_platform_show_disconnected_window(app->platform,
+                                            app->connection);
+}
+
+static void
 on_has_auth_changed(HippoConnection *connection,
                     void            *data)
 {
@@ -1309,12 +1319,16 @@ hippo_app_new(HippoInstanceType  instance_type,
     app->cache = hippo_data_cache_new(app->connection);
     g_object_unref(app->connection); /* let the data cache keep it alive */
     app->icon = hippo_status_icon_new(app->cache);
+
+    /*** If you add handlers here, disconnect them in hipp_app_free() ***/
     
     g_signal_connect(G_OBJECT(app->cache), "entity-added",
                      G_CALLBACK(on_entity_added), app);
     
     g_signal_connect(G_OBJECT(app->connection), "client-info-available", 
                      G_CALLBACK(on_client_info_available), app);
+    g_signal_connect(G_OBJECT(app->connection), "auth-failed",
+                     G_CALLBACK(on_auth_failed), app);                     
     g_signal_connect(G_OBJECT(app->connection), "has-auth-changed",
                      G_CALLBACK(on_has_auth_changed), app);                     
     g_signal_connect(G_OBJECT(app->connection), "connected-changed",
@@ -1366,14 +1380,26 @@ hippo_app_free(HippoApp *app)
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->dbus),
                                          G_CALLBACK(on_dbus_song_changed), app);
     
+    g_signal_handlers_disconnect_by_func(G_OBJECT(app->cache),
+                                         G_CALLBACK(on_entity_added), app);
+    
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
                                          G_CALLBACK(on_client_info_available), app);
-
+    g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
+                                         G_CALLBACK(on_auth_failed), app);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
+                                         G_CALLBACK(on_has_auth_changed), app);
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
                                          G_CALLBACK(on_connected_changed), app);
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
                                          G_CALLBACK(on_initial_application_burst), app);
-    
+    g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
+                                         G_CALLBACK(on_contacts_loaded), app);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
+                                         G_CALLBACK(on_whereim_changed), app);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
+                                         G_CALLBACK(on_external_iq_return), app);
+
     hippo_stack_manager_unmanage(app->cache);
     
     if (app->about_dialog)
@@ -1519,10 +1545,9 @@ main(int argc, char **argv)
     server = NULL;
 
     if (hippo_connection_signin(the_app->connection))
-        g_debug("Waiting for user to sign in");
-    else
-        g_debug("Found login cookie");
-
+        hippo_platform_show_disconnected_window(the_app->platform,
+                                                the_app->connection);
+        
     gtk_status_icon_set_visible(GTK_STATUS_ICON(the_app->icon), TRUE);
 
     g_signal_connect(G_OBJECT(the_app->icon),
