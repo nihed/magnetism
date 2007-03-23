@@ -652,6 +652,14 @@ get_canonical_name(const char *raw_name)
 static void
 find_architecture(HippoDistribution *distro)
 {
+    /* We really are interested in the architecture of this Mugshot binary for
+     * determining the appropriate upgrade, not the architecture of the system;
+     * someone might be running the x86 binary of Mugshot on a x86_64 machine
+     * to match their usage of a 32-bit Firefox.
+     */
+#if 1
+    distro->architecture = g_strdup(HOST_CPU);
+#else    
     GError *error = NULL;
     int status;
     const char *args[] = {
@@ -670,6 +678,7 @@ find_architecture(HippoDistribution *distro)
             g_warning("uname -i failed");
         }
     }
+#endif
 }
 
 static void
