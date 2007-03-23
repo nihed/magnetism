@@ -1819,7 +1819,7 @@ handle_message(DBusConnection     *connection,
 				reply = hippo_dbus_handle_mugshot_get_connection_status(dbus, message);
 			} else if (strcmp(member, "NotifyAllWhereim") == 0) {
                 reply = hippo_dbus_handle_mugshot_get_whereim(dbus, xmpp_connection, message);
-            } else if (strcmp(member, "NotifyAllNetwork") == 0) {
+            } else if (strcmp(member, "GetNetwork") == 0) {
                 reply = hippo_dbus_handle_mugshot_get_network(dbus, message);
             } else if (strcmp(member, "SendExternalIQ") == 0) {
                 reply = hippo_dbus_handle_mugshot_send_external_iq(dbus, message);                       

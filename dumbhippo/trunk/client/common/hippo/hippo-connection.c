@@ -4449,19 +4449,25 @@ guint
 hippo_connection_send_external_iq(HippoConnection *connection,
                                   gboolean         is_set,
                                   const char      *element,
-                                  const char      *xmlns,
+                                  int              attrs_count,
+                                  char           **attrs,
                                   const char      *content)
 {
     LmMessage *message;
     LmMessageNode *node;
     LmMessageNode *child;
+    int i;
+    
+    g_return_val_if_fail(attrs_count % 2 == 0, 0);
     
     message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            is_set ? LM_MESSAGE_SUB_TYPE_SET : LM_MESSAGE_SUB_TYPE_GET);
     node = lm_message_get_node(message);
     
     child = lm_message_node_add_child (node, element, NULL);
-    lm_message_node_set_attribute(child, "xmlns", xmlns);
+    for (i = 0; i < attrs_count; i += 2) {
+		lm_message_node_set_attribute(child, attrs[i], attrs[i+1]);	
+    }
     lm_message_node_set_raw_mode(child, TRUE);    
     lm_message_node_set_value(child, content);
     
@@ -4472,6 +4478,6 @@ hippo_connection_send_external_iq(HippoConnection *connection,
 
     lm_message_unref(message);
 
-    g_debug("Sent external IQ: %s %s (%d content characters)", element, xmlns, strlen(content));         
+    g_debug("Sent external IQ: %s (%d content characters)", element, strlen(content));         
     return connection->external_iq_serial;
 }  
