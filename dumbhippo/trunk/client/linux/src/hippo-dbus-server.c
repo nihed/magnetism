@@ -14,6 +14,7 @@
 #include "hippo-dbus-settings.h"
 #include "hippo-distribution.h"
 #include <hippo/hippo-endpoint-proxy.h>
+#include <hippo/hippo-stack-manager.h>
 #include "main.h"
 
 /* rhythmbox messages */
@@ -209,7 +210,7 @@ hippo_dbus_try_to_acquire(const char  *server,
     if (!(result == DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER ||
           result == DBUS_REQUEST_NAME_REPLY_ALREADY_OWNER)) {
         g_free(bus_name);
-        g_set_error(error, HIPPO_ERROR, HIPPO_ERROR_FAILED,
+        g_set_error(error, HIPPO_ERROR, HIPPO_ERROR_ALREADY_RUNNING,
                     _("Another copy of %s is already running in this session for server %s"),
                     g_get_application_name(), server);
         /* FIXME leak bus connection since unref isn't allowed */
@@ -1214,6 +1215,27 @@ handle_run_application(HippoDBus   *dbus,
     return reply;
 }
 
+static DBusMessage*
+handle_show_browser(HippoDBus   *dbus,
+                    DBusMessage *message)
+{
+    DBusMessage *reply;
+    HippoDataCache *cache;
+    
+    if (!dbus_message_get_args(message, NULL,
+			       DBUS_TYPE_INVALID)) {
+        return dbus_message_new_error(message,
+				      DBUS_ERROR_INVALID_ARGS,
+				      _("Expected no arguments"));
+    }
+
+    cache = hippo_app_get_data_cache(hippo_get_app());
+    hippo_stack_manager_show_browser(cache, FALSE);
+    
+    reply = dbus_message_new_method_return(message);
+    return reply;
+}
+
 static void
 emit_song_changed_from_rb_message(HippoDBus   *dbus,
                                   DBusMessage *message)
@@ -1726,6 +1748,8 @@ handle_message(DBusConnection     *connection,
                 reply = handle_install_application(dbus, message);
 	    } else if (strcmp(member, "RunApplication") == 0) {
                 reply = handle_run_application(dbus, message);
+	    } else if (strcmp(member, "ShowBrowser") == 0) {
+                reply = handle_show_browser(dbus, message);
             } else {
                 /* Set this back so the default handler can return an error */
                 result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;

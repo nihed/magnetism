@@ -124,7 +124,7 @@ hippo_status_icon_activate(GtkStatusIcon *gtk_icon)
         button = 1;
 
     if (button == 1) {
-        hippo_stack_manager_toggle_browser(icon->cache);
+        hippo_stack_manager_show_browser(icon->cache, TRUE);
     } else if (button == 3) {
         time = gtk_get_current_event_time();
     

@@ -30,6 +30,8 @@ gboolean hippo_dbus_open_chat_blocking(const char   *server,
                                        HippoChatKind kind,
                                        const char   *chat_id,
                                        GError      **error);
+gboolean hippo_dbus_show_browser_blocking(const char   *server,
+                                          GError      **error);
 
 void     hippo_dbus_debug_log_error   (const char   *where,
                                        DBusMessage  *message);

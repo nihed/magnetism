@@ -413,10 +413,11 @@ manager_set_browser_visible(StackManager *manager,
 }
 
 static void
-manager_toggle_browser(StackManager *manager)
+manager_show_browser(StackManager *manager,
+                     gboolean      hide_if_visible)
 {
     if (manager->browser_open) {
-        if (browser_is_active(manager))
+        if (hide_if_visible && browser_is_active(manager))
             manager_set_browser_visible(manager, FALSE);
         else {
             hippo_window_present(manager->browser_window);
@@ -1083,7 +1084,8 @@ hippo_stack_manager_close_browser(HippoDataCache  *cache)
 }
 
 void
-hippo_stack_manager_toggle_browser(HippoDataCache  *cache)
+hippo_stack_manager_show_browser(HippoDataCache  *cache,
+                                 gboolean         hide_if_visible)
 {
     StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
     HippoConnection *connection = hippo_data_cache_get_connection(manager->cache);
@@ -1098,7 +1100,7 @@ hippo_stack_manager_toggle_browser(HippoDataCache  *cache)
         return;
     }
 
-    manager_toggle_browser(manager);
+    manager_show_browser(manager, hide_if_visible);
 }
 
 void

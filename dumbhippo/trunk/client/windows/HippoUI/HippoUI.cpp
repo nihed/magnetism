@@ -606,8 +606,7 @@ HippoUI::getPreferences()
 HRESULT
 HippoUI::ShowRecent()
 {
-    // FIXME this is not used, but it's in the COM IDL so maybe
-    // it's bad to just delete
+    hippo_stack_manager_show_browser(dataCache_, FALSE);    
 
     return S_OK;
 }
@@ -896,7 +895,7 @@ HippoUI::showMenu(UINT buttonFlag)
 
         PostMessage(window_, WM_NULL, 0, 0);
     } else {
-        hippo_stack_manager_toggle_browser(dataCache_);
+        hippo_stack_manager_show_browser(dataCache_, TRUE);
     }
 }
 
