@@ -3581,9 +3581,7 @@ hippo_canvas_box_set_child_visible (HippoCanvasBox              *box,
          * size request.
          */
         hippo_canvas_item_get_allocation(child, &w, &h);
-        
-        if (c->visible)
-            hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box), c->x, c->y, w, h);
+        hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box), c->x, c->y, w, h);
     } else
         hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }
