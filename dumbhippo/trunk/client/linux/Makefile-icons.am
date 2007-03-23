@@ -6,29 +6,24 @@ hugeicon_DATA=				\
 NORMALICONSUBDIR=icons/hicolor/48x48/apps
 normalicondir=$(datadir)/$(NORMALICONSUBDIR)
 normalicon_DATA=				\
-	$(NORMALICONSUBDIR)/mugshot.gif
+	$(NORMALICONSUBDIR)/mugshot.png
 
 MEDIUMICONSUBDIR=icons/hicolor/32x32/apps
 mediumicondir=$(datadir)/$(MEDIUMICONSUBDIR)
 mediumicon_DATA=				\
-	$(MEDIUMICONSUBDIR)/mugshot.gif
+	$(MEDIUMICONSUBDIR)/mugshot.png
 
 SMALLISHICONSUBDIR=icons/hicolor/24x24/apps
 smallishicondir=$(datadir)/$(SMALLISHICONSUBDIR)
 smallishicon_DATA=				\
-	$(SMALLISHICONSUBDIR)/mugshot.gif
+	$(SMALLISHICONSUBDIR)/mugshot.png
 
 
 SMALLICONSUBDIR=icons/hicolor/22x22/apps
 smallicondir=$(datadir)/$(SMALLICONSUBDIR)
 smallicon_DATA=							\
 	$(SMALLICONSUBDIR)/mugshot_notification.png		\
-	$(SMALLICONSUBDIR)/mugshot_notification_disabled.png	\
-	$(SMALLICONSUBDIR)/mugshot_swarm_1.png			\
-	$(SMALLICONSUBDIR)/mugshot_swarm_2.png			\
-	$(SMALLICONSUBDIR)/mugshot_swarm_3.png			\
-	$(SMALLICONSUBDIR)/mugshot_swarm_4.png			\
-	$(SMALLICONSUBDIR)/mugshot_swarm_5.png
+	$(SMALLICONSUBDIR)/mugshot_notification_disabled.png
 
 SMALLERICONSUBDIR=icons/hicolor/16x16/apps
 smallericondir=$(datadir)/$(SMALLERICONSUBDIR)
