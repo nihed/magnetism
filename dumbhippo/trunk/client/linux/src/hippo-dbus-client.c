@@ -160,6 +160,62 @@ hippo_dbus_open_chat_blocking(const char   *server,
     return result;
 }
 
+gboolean
+hippo_dbus_show_browser_blocking(const char   *server,
+                                 GError      **error)
+{
+    DBusConnection *connection;
+    gboolean result;
+    DBusError derror;
+    DBusMessage *message;
+    DBusMessage *reply;
+    char *bus_name;
+
+    g_return_val_if_fail(error == NULL || *error == NULL, FALSE);
+
+    connection = get_connection(error);
+    if (connection == NULL)
+        return FALSE;
+
+    result = FALSE;
+    
+    bus_name = hippo_dbus_full_bus_name(server);
+    
+    message = dbus_message_new_method_call(bus_name,
+                                           HIPPO_DBUS_PATH,
+                                           HIPPO_DBUS_INTERFACE,
+                                           "ShowBrowser");
+    if (message == NULL)
+        g_error("out of memory");
+        
+    /* we don't want to start a client if none is already there */
+    dbus_message_set_auto_start(message, FALSE);
+    
+    if (!dbus_message_append_args(message,
+                                  DBUS_TYPE_INVALID))
+        g_error("out of memory");                                  
+
+    dbus_error_init(&derror);
+    reply = dbus_connection_send_with_reply_and_block(connection, message, -1,
+                                                      &derror);
+
+    dbus_message_unref (message);
+
+    if (reply == NULL) {
+        propagate_dbus_error(error, &derror);
+        goto out;
+    }
+
+    dbus_message_unref(reply);
+    
+    result = TRUE;
+
+  out:
+    /* any cleanup goes here */
+
+    return result;
+}
+
 void
 hippo_dbus_debug_log_error(const char   *where,
                            DBusMessage  *message)

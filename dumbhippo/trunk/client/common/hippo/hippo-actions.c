@@ -337,7 +337,7 @@ void
 hippo_actions_expand_notification(HippoActions *actions)
 {
     hippo_stack_manager_close_notification(actions->cache);
-    hippo_stack_manager_toggle_browser(actions->cache);
+    hippo_stack_manager_show_browser(actions->cache, FALSE);
 }
 
 void

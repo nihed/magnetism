@@ -18,7 +18,9 @@ typedef struct _HippoConnectionClass HippoConnectionClass;
 typedef struct _HippoChatRoom      HippoChatRoom;
 typedef struct _HippoChatRoomClass HippoChatRoomClass;
 
+/* Having a single error enum for everything is pretty crazy */
 typedef enum {
+    HIPPO_ERROR_ALREADY_RUNNING, /* Client already running for this server */
     HIPPO_ERROR_FAILED
 } HippoError;
 

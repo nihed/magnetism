@@ -27,9 +27,10 @@ void hippo_stack_manager_hush               (HippoDataCache   *cache);
 void hippo_stack_manager_close_notification (HippoDataCache   *cache);
 /* Called on explicit close of browser window */
 void hippo_stack_manager_close_browser      (HippoDataCache   *cache);
-/* If the browser is closed or obscured, show it / raise it. If open
- * and not obscured, hide it */
-void hippo_stack_manager_toggle_browser     (HippoDataCache   *cache);
+/* If the browser is closed or obscured, show it / raise it. If
+ * hide_if_visible is true and it's open and not obscured, hide it */
+void hippo_stack_manager_show_browser       (HippoDataCache   *cache,
+                                             gboolean          hide_if_visible);
 /* Show/Hide stack filter */
 void hippo_stack_manager_toggle_filter      (HippoDataCache   *cache);
 /* Enable/Disable feed filter */

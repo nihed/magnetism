@@ -11,6 +11,7 @@
 #include "hippo-platform-impl.h"
 #include "hippo-status-icon.h"
 #include "hippo-dbus-server.h"
+#include "hippo-dbus-client.h"
 #include "hippo-embedded-image.h"
 #include "hippo-idle.h"
 #include <hippo/hippo-canvas.h>
@@ -1518,9 +1519,25 @@ main(int argc, char **argv)
                                      &error);
     if (dbus == NULL) {
         g_assert(error != NULL);
-        g_printerr(_("Can't connect to session message bus: %s\n"), error->message);
-        g_error_free(error);
-        return 1;
+
+        if (g_error_matches(error, HIPPO_ERROR, HIPPO_ERROR_ALREADY_RUNNING)) {
+            g_debug("%s\n", error->message);
+            g_error_free(error);
+            error = NULL;
+            
+            if (!hippo_dbus_show_browser_blocking(server, &error)) {
+                g_printerr(_("Can't talking to existing instance: %s\n"), error->message);
+                g_error_free(error);
+                return 1;
+            }
+
+            return 0;
+
+        } else {
+            g_printerr(_("Can't connect to session message bus: %s\n"), error->message);
+            g_error_free(error);
+            return 1;
+        }
     } else {
         g_assert(error == NULL);
     }
