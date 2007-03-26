@@ -15,20 +15,29 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
         'dimension': (gobject.TYPE_UINT, 'Dimension', 'Scale to this size', 0, 2**32-1, 0, gobject.PARAM_READWRITE)
     }    
     
+    TRANSITION_STEPS = 10
+    
     def __init__(self, **kwargs):
         hippo.CanvasBox.__init__(self, **kwargs)
         self.__current_url = None
+        self.__prev_url = None
         self.__surface = None
+        self.__prev_surface = None
+        self.__transition_count = 0
+        self.__transition_idle_id = 0
         
-        #self.connect("paint", self.__handle_paint)
-        
-    # override
     def set_url(self, url):
+        self.__prev_url = self.__current_url
+        self.__current_url = url
         image_cache = libbig.URLImageCache.getInstance()
         image_cache.get(url, self.__handle_image_load, self.__handle_image_error)
             
     def __handle_image_load(self, url, surface):
         print "img loaded"
+
+        if url != self.__current_url:
+            return
+        
         req_changed = False
         if self.__surface:
             old_width = self.__surface.get_width()
@@ -37,7 +46,12 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
                 req_changed = True
         else:
             req_changed = True
-            
+        
+        self.__transition_count = 0
+        if self.__transition_idle_id > 0:
+            gobject.source_remove(self.__transition_idle_id)
+        self.__transition_idle_id = gobject.timeout_add(100, self.__idle_step_transition)
+        self.__prev_surface = self.__surface
         self.__surface = surface            
             
         if req_changed:
@@ -49,6 +63,18 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
     def __handle_image_error(self, url, exc):
         pass        
     
+    def __idle_step_transition(self):
+        print "transition"
+        
+        self.__transition_count += 1
+        self.emit_paint_needed(0, 0, -1, -1)
+        
+        if self.__transition_count >= self.TRANSITION_STEPS:
+            self.__transition_idle_id = 0
+            return False
+        return True
+    
+    # override
     def do_paint_below_children(self, cr, box):    
         print "painting"
         
@@ -78,21 +104,28 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
         cr.clip()
         cr.scale(scale, scale)
         cr.translate(x, y)
-        cr.set_source_surface(self.__surface, 0, 0)
-        cr.paint()
+        if self.__prev_surface:
+            cr.set_source_surface(self.__prev_surface, 0, 0)
+            #cr.paint_with_alpha((1.0*self.TRANSITION_STEPS-self.__transition_count)/self.TRANSITION_STEPS)
+            cr.paint()
+        cr.set_source_surface(self.__surface)
+        cr.paint_with_alpha((1.0*self.__transition_count)/self.TRANSITION_STEPS)        
         
+    # override
     def do_get_content_width_request(self):
         (children_min, children_natural) = hippo.CanvasBox.do_get_content_width_request(self)
         print "width %s %s %s" % (self.__dimension, children_min, children_natural)
         dim = self.__dimension or 0
         return (max(dim, children_min), max(dim, children_natural))
     
+    # override
     def do_get_content_height_request(self, for_width):
         (children_min, children_natural) = hippo.CanvasBox.do_get_content_height_request(self, for_width)
         print "height %s %s %s" % (self.__dimension, children_min, children_natural)
         dim = self.__dimension or 0        
         return (max(dim, children_min), max(dim, children_natural))
     
+    # override
     def do_set_property(self, pspec, value):
         if pspec.name == 'dimension':
             self.__dimension = value
@@ -100,6 +133,7 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
         else:
             raise AttributeError, 'unknown property %s' % pspec.name
         
+    # override
     def do_get_property(self, pspec):
         if pspec.name == 'dimension':
             return self.__dimension
