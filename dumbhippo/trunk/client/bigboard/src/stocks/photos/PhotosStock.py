@@ -6,7 +6,7 @@ import hippo
 
 import mugshot,libbig
 from bigboard import Stock, AbstractMugshotStock
-from big_widgets import CanvasURLImage,CanvasVBox,CanvasHBox,CanvasMugshotURLImage
+from big_widgets import CanvasURLImage, CanvasVBox, CanvasHBox, CanvasMugshotURLImage, ActionLink
 
 class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
     __gtype_name__ = 'TransitioningURLImage' 
@@ -19,6 +19,7 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
     
     def __init__(self, **kwargs):
         hippo.CanvasBox.__init__(self, **kwargs)
+        self.set_clickable(True)
         self.__current_url = None
         self.__prev_url = None
         self.__surface = None
@@ -33,8 +34,6 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
         image_cache.get(url, self.__handle_image_load, self.__handle_image_error)
             
     def __handle_image_load(self, url, surface):
-        print "img loaded"
-
         if url != self.__current_url:
             return
         
@@ -55,7 +54,6 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
         self.__surface = surface            
             
         if req_changed:
-            print "request changed"
             self.emit_request_changed()
         
         self.emit_paint_needed(0, 0, -1, -1)
@@ -64,8 +62,6 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
         pass        
     
     def __idle_step_transition(self):
-        print "transition"
-        
         self.__transition_count += 1
         self.emit_paint_needed(0, 0, -1, -1)
         
@@ -76,17 +72,13 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
     
     # override
     def do_paint_below_children(self, cr, box):    
-        print "painting"
-        
         if not self.__surface:
-            print "no surface"
             return
 
         img_width = self.__surface.get_width()
         img_height = self.__surface.get_height()        
         
-        if self.__dimension == 0 or img_width == 0 or img_height == 0:
-            print "no dimension (%s %s %s)" % (self.__dimension, img_width, img_height)            
+        if self.__dimension == 0 or img_width == 0 or img_height == 0:       
             return
         
         xdelta = abs(img_width - self.__dimension)
@@ -94,9 +86,7 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
         if xdelta > ydelta:
             scale = (1.0*self.__dimension) / img_width
         else:
-            scale = (1.0*self.__dimension) / img_height
-            
-        print "painting scale=%s" % (scale,)            
+            scale = (1.0*self.__dimension) / img_height       
         
         (x,y,w,h) = self.align(int(img_width*scale), int(img_height*scale))
                 
@@ -109,19 +99,17 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
             #cr.paint_with_alpha((1.0*self.TRANSITION_STEPS-self.__transition_count)/self.TRANSITION_STEPS)
             cr.paint()
         cr.set_source_surface(self.__surface)
-        cr.paint_with_alpha((1.0*self.__transition_count)/self.TRANSITION_STEPS)        
+        cr.paint_with_alpha((1.0*self.__transition_count)/self.TRANSITION_STEPS)
         
     # override
     def do_get_content_width_request(self):
         (children_min, children_natural) = hippo.CanvasBox.do_get_content_width_request(self)
-        print "width %s %s %s" % (self.__dimension, children_min, children_natural)
         dim = self.__dimension or 0
         return (max(dim, children_min), max(dim, children_natural))
     
     # override
     def do_get_content_height_request(self, for_width):
         (children_min, children_natural) = hippo.CanvasBox.do_get_content_height_request(self, for_width)
-        print "height %s %s %s" % (self.__dimension, children_min, children_natural)
         dim = self.__dimension or 0        
         return (max(dim, children_min), max(dim, children_natural))
     
@@ -145,6 +133,8 @@ class PhotosStock(AbstractMugshotStock):
     def __init__(self, *args, **kwargs):
         super(PhotosStock,self).__init__(*args, **kwargs)
 
+        self.__current_image = None
+
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4)
         
         self.__photosize = 120
@@ -152,11 +142,12 @@ class PhotosStock(AbstractMugshotStock):
         self.__idle_display_id = 0
         self.__text = hippo.CanvasText(text="No thumbnails found")
         
-        self.__displaybox = CanvasVBox()
+        self.__displaybox = CanvasVBox(spacing=4)
         
-        self.__photo_header = CanvasHBox()
+        self.__photo_header = CanvasHBox(spacing=4)
         self.__favicon = CanvasMugshotURLImage()
-        self.__title = hippo.CanvasText(size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        self.__title = ActionLink(size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        self.__title.connect("button-press-event", lambda photo, event: self.__visit_photo())        
         self.__photo_header.append(self.__favicon)
         self.__photo_header.append(self.__title)
         
@@ -164,11 +155,16 @@ class PhotosStock(AbstractMugshotStock):
         
         self.__photobox = CanvasHBox(spacing=6)
         self.__photo = TransitioningURLImage(dimension=self.__photosize)
+        self.__photo.connect("button-press-event", lambda photo, event: self.__visit_photo())
         self.__metabox = CanvasVBox()
         self.__metabox.append(hippo.CanvasText(text="from"))
         self.__fromphoto = CanvasMugshotURLImage()
+        self.__fromphoto.set_clickable(True)
+        self.__fromphoto.connect("button-press-event", lambda photo, event: self.__visit_person())           
         self.__metabox.append(self.__fromphoto)
-        self.__fromname = hippo.CanvasText(text="somebody", size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        self.__fromname = ActionLink(size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        self.__fromname.connect("button-press-event", lambda photo, event: self.__visit_person())              
+        self.__metabox.append(self.__fromname)
         self.__photobox.append(self.__photo)
         self.__photobox.append(self.__metabox)
         
@@ -184,6 +180,18 @@ class PhotosStock(AbstractMugshotStock):
         
     def get_authed_content(self, size):
         return self.__box
+    
+    def __visit_photo(self):
+        self._logger.debug("visiting photo for %s", self.__current_image)
+        if not self.__current_image:
+            return
+        libbig.show_url(self.__current_image[2].get_href())
+        
+    def __visit_person(self):
+        self._logger.debug("visiting person for %s", self.__current_image)
+        if not self.__current_image:
+            return
+        libbig.show_url(mugshot.get_mugshot().get_baseurl() + self.__current_image[0].get_home_url())    
     
     def __thumbnails_generator(self):
         """The infinite photos function.  Cool."""
@@ -202,6 +210,7 @@ class PhotosStock(AbstractMugshotStock):
                 return
     
     def __set_image(self, imageinfo):
+        self.__current_image = imageinfo
         (entity, acct, thumbnail) = imageinfo
         self._logger.debug("switching to %s %s %s" % (entity,acct,thumbnail))
         self.__favicon.set_url(acct.get_icon())
