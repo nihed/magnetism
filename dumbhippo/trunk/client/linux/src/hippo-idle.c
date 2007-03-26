@@ -1,11 +1,13 @@
 /* -*- mode; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include <config.h>
-#include "hippo-idle.h"
+#include <string.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/scrnsaver.h>
 #include <gdk/gdkx.h>
+
+#include "hippo-idle.h"
 
 typedef struct HippoApplicationInfo HippoApplicationInfo;
 

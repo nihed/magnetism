@@ -1097,7 +1097,7 @@ handle_get_application_info(HippoDBus   *dbus,
     if (!proxy)
 	return reply;
 
-    g_debug("GetApplicationInfo(%lld, %s, %s, %s)\n", endpoint, application_id, package_names, desktop_names);
+    g_debug("GetApplicationInfo(%" G_GUINT64_FORMAT ", %s, %s, %s)\n", endpoint, application_id, package_names, desktop_names);
 
     request = hippo_application_request_new(listener, endpoint, application_id, package_names, desktop_names);
     do_get_application_info(request);
@@ -1162,7 +1162,7 @@ handle_install_application(HippoDBus   *dbus,
     if (!proxy)
 	return reply;
 
-    g_debug("InstallApplication(%lld, %s, %s, %s)\n", endpoint, application_id, package_names, desktop_names);
+    g_debug("InstallApplication(%" G_GUINT64_FORMAT ", %s, %s, %s)\n", endpoint, application_id, package_names, desktop_names);
 
     request = hippo_application_request_new(listener, endpoint, application_id, package_names, desktop_names);
     do_install_application(request);
