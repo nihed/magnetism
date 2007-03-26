@@ -4492,6 +4492,6 @@ hippo_connection_send_external_iq(HippoConnection *connection,
 
     lm_message_unref(message);
 
-    g_debug("Sent external IQ: %s (%d content characters)", element, strlen(content));         
+    g_debug("Sent external IQ: %s (%d content characters)", element, (int)strlen(content));
     return connection->external_iq_serial;
 }  
