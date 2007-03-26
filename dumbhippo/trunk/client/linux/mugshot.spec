@@ -1,5 +1,5 @@
 Name:           mugshot
-Version:        1.1.38
+Version:        1.1.39
 Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
@@ -83,6 +83,7 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/mugshot/firefox/components/*.la
 # Run desktop-file-install to so we get validation (and to make
 # things fedora-packaging-guidelines compliant)
 desktop-file-install 					\
+  --dir=$RPM_BUILD_ROOT%{_datadir}/applications 	\
   --vendor=mugshot   					\
   mugshot.desktop
 desktop-file-install 					\
@@ -204,17 +205,22 @@ fi
 %{_bindir}/mugshot-uri-handler
 %{_datadir}/icons/hicolor/16x16/apps/*.png
 %{_datadir}/icons/hicolor/22x22/apps/*.png
-%{_datadir}/icons/hicolor/24x24/apps/*.gif
-%{_datadir}/icons/hicolor/32x32/apps/*.gif
-%{_datadir}/icons/hicolor/48x48/apps/*.gif
+%{_datadir}/icons/hicolor/24x24/apps/*.png
+%{_datadir}/icons/hicolor/32x32/apps/*.png
+%{_datadir}/icons/hicolor/48x48/apps/*.png
 %{_datadir}/icons/hicolor/128x128/apps/*.png
 %{_datadir}/mugshot
 %ghost %{_datadir}/mugshot/version
 %{_libdir}/mugshot
+%{_datadir}/applications/mugshot.desktop
 %{_datadir}/gnome/autostart/mugshot.desktop
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
+* Mon Mar 26 2007 Owen Taylor <otaylor@fresnel.dumbhippo.com> - 1.1.39-1
+- 1.1.39
+- Package mugshot.desktop for the menus as well
+
 * Fri Mar 23 2007 Owen Taylor <otaylor@fresnel.dumbhippo.com> - 1.1.38-1
 - Create %%{_datadir}/mugshot/version at the end of %%post to avoid
   the client prematurely prompting to restart itself
