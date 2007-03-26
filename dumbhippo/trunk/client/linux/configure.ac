@@ -204,15 +204,34 @@ else
 fi
 AM_CONDITIONAL(COMMON_OUTSIDE_TREE, $common_outside_tree)
 
+# res_init() can be used to work around the inability to see changes
+# in /etc/resolv.conf. We need to use AC_TRY_LINK since on GNU libc
+# it's a #define for for __res_init
+hippo_save_LIBS="$LIBS"
+LIBS="-lresolv $LIBS"
+
+AC_MSG_CHECKING(for res_init() in -lresolv)
+AC_TRY_LINK([#include <resolv.h>], [
+res_init();
+], have_res_init=yes, have_res_init=no)
+AC_MSG_RESULT($have_res_init)
+
+if test "$have_res_init" = "yes"; then
+    RESOLV_LIBS="-lresolv"
+    AC_DEFINE(HAVE_RES_INIT, 1, [Define to 1 if you have res_init()])
+fi
+
+LIBS="$hippo_save_LIBS"
+
 # sigsetjmp is a macro on some platforms, so AC_CHECK_FUNCS is not reliable
 AC_MSG_CHECKING(for sigsetjmp)
 AC_TRY_LINK([#include <setjmp.h>], [
 sigjmp_buf env;
 sigsetjmp(env, 0);
-], gtk_ok=yes, gtk_ok=no)
-AC_MSG_RESULT($gtk_ok)
-if test "$gtk_ok" = "yes"; then
-  AC_DEFINE(HAVE_SIGSETJMP, , [whether we have SIGSETJMP])
+], have_sigsetjmp=yes, have_sigsetjmp=no)
+AC_MSG_RESULT($have_sigsetjmp)
+if test "$have_sigsetjmp" = "yes"; then
+  AC_DEFINE(HAVE_SIGSETJMP, 1, [Define to 1 if you have sigsetjmp()])
 fi
 
 
@@ -341,7 +360,7 @@ AC_DEFINE(HIPPO_LOUDMOUTH_IS_10, 1, [Define if Loudmouth is version 1.0 or below
 PKG_CHECK_MODULES(LIBHIPPOIPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)
 PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED gnome-desktop-2.0 >= $GNOME_DESKTOP_REQUIRED gnome-vfs-2.0 $XSCREENSAVER_PACKAGES)
-MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $CURL_LIBS $XSCREENSAVER_LIBS $JPEG_LIBS"
+MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $CURL_LIBS $XSCREENSAVER_LIBS $JPEG_LIBS $RESOLV_LIBS"
 MUGSHOT_CFLAGS="$MUGSHOT_BASE_CFLAGS $CURL_CFLAGS $XSCREENSAVER_CFLAGS"
 AC_SUBST(MUGSHOT_LIBS)
 AC_SUBST(MUGSHOT_CFLAGS)
