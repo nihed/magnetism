@@ -10,6 +10,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef HAVE_RES_INIT
+#include <resolv.h>
+#endif
+
 /* === CONSTANTS === */
 
 static const int KEEP_ALIVE_RATE = 60;                  /* 1 minute; 0 disables */
@@ -1069,6 +1073,16 @@ hippo_connection_connect(HippoConnection *connection, const char *redirect_host)
 
     error = NULL;
 
+#ifdef HAVE_RES_INIT
+    /* With GNU libc (and possibly on other systems), if the DNS configuration
+     * changes, libc will *never* notice until you tell it explicitly to look
+     * again by calling res_init(). Since we already throttle how often
+     * we try to connect, we just call res_init() before every connection
+     * attempt.
+     */
+    res_init();
+#endif
+            
     /* If lm_connection returns FALSE, then handle_open won't be called
      * at all. On a TRUE return it will be called exactly once, but that 
      * call might occur before or after lm_connection_open() returns, and
