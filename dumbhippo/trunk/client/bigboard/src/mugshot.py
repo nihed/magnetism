@@ -278,9 +278,9 @@ class Mugshot(gobject.GObject):
                 thumbnails_node = None
             if thumbnails_node:
                 for thumbnail in libbig.xml_query(thumbnails_node, 'thumbnail*'):
-                    attrs = libbig.xml_gather_attrs(thumbnail, ['src', 'title', 'href'])
-                    thumbnails.append(ExternalAccountThumbnail(attrs))               
-                self._logger.debug("%d thumbnails found for account %s (user %s)" % (len(thumbnails), accttype, person))                    
+                    subattrs = libbig.xml_gather_attrs(thumbnail, ['src', 'title', 'href'])
+                    thumbnails.append(ExternalAccountThumbnail(subattrs)) 
+                self._logger.debug("%d thumbnails found for account %s (user %s)" % (len(thumbnails), accttype, person)) 
                 attrs['thumbnails'] = thumbnails
             acct = ExternalAccount(attrs)
             accts.append(acct)
