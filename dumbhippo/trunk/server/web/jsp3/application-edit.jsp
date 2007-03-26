@@ -122,6 +122,7 @@
 		    				Names used when finding a desktop file to launch this application. (; separated)
 		    			</jsp:attribute>
 		    		</dht3:applicationEditRow>
+		    		<input type="hidden" name="packageNames" value="${appinfo.packageNames}"></input>
 		    		<tr>
 	    			<td class="dh-application-edit-label">
 	    			Icons:
