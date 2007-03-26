@@ -24,13 +24,15 @@ class Person(Entity):
     
     def get_external_accounts(self):
         # FIXME - server needs to notify us
-        if self.__external_accounts:
+        if self.__external_accounts is not None:
             return self.__external_accounts
-        else:
+        elif not self.__requesting_accts:
+            self.__requesting_accts = True
             mugshot = get_mugshot()
             mugshot.get_person_accounts(self)
             
     def set_external_accounts(self, accts):
+        self.__requesting_accts = False
         self.__external_accounts = accts
         self.emit("changed")
         
@@ -219,7 +221,7 @@ class Mugshot(gobject.GObject):
             self.__network[guid] = entity_class[attrs['type']](attrs)
             self.emit("network-changed")
         else:
-            self.__network.update(attrs)        
+            self.__network[guid].update(attrs)        
         if proxy:
             proxy.connect_to_signal("Changed", 
                                     _log_cb(lambda props: self.__on_get_network_entity_props(None, props)), 
