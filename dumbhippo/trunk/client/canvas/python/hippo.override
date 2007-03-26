@@ -222,6 +222,25 @@ _wrap_hippo_canvas_box_insert_sorted(PyGObject *self, PyObject *args, PyObject *
 	return Py_None;
 }
 %%
+override hippo_canvas_box_align kwargs
+static PyObject *
+_wrap_hippo_canvas_box_align(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "req_width", "req_height", NULL };
+	int req_width, req_height;
+	int x,y,w,h;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"ii:HippoCanvasBox.align", kwlist,
+    								 &req_width,
+    								 &req_height))
+        return NULL;
+
+	hippo_canvas_box_align(HIPPO_CANVAS_BOX(self->obj), 
+						   req_width, req_height, &x, &y, &w, &h);
+						   
+	return Py_BuildValue("(iiii)", x, y, w, h);
+}
+%%
 override HippoCanvasBox__do_get_content_width_request kwargs
 static PyObject *
 _wrap_HippoCanvasBox__do_get_content_width_request(PyObject *cls, PyObject *args, PyObject *kwargs)
