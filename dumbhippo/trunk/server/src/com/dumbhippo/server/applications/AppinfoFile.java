@@ -397,7 +397,7 @@ public class AppinfoFile extends JarFile {
 	}
 
 	public void setPackageNames(String packageNames) throws ValidationException {
-		this.packageNames = validateString(description, "packageNames", PACKAGE_NAMES_REGEX, true);
+		this.packageNames = validateString(packageNames, "packageNames", PACKAGE_NAMES_REGEX, true);
 		setProperty("packagenames", getPackageNames());
 	}
 	
