@@ -91,16 +91,18 @@ public class ApplicationIconServlet extends AbstractServlet {
 		
 		if (size <= 0)
 			size = DEFAULT_SIZE;
-
-		ApplicationIconView iconView;
+	
+		ApplicationIconView iconView;		
 		try {
-			iconView = applicationSystem.getIcon(appId, size);
+			iconView = applicationSystem.getIcon(appId, size);			
 		} catch (NotFoundException e) {
-			// FIXME: We really should be using a default icon instead
-			throw new HttpException(HttpResponseCode.NOT_FOUND, "No such image");
+			if (size == 24)
+				response.sendRedirect("/images3/unknownapp24.png");
+			else
+				response.sendRedirect("/images3/unknownapp48.png");
+			return null;
 		}
 
-		File toServe = new File(saveDir, iconView.getIcon().getIconKey() + ".png");
 		
 		// If the requester passes a version with the URL, that's a signal that
 		// it can be cached without checking for up-to-dateness. There's no
@@ -108,6 +110,7 @@ public class ApplicationIconServlet extends AbstractServlet {
 		if (request.getParameter("v") != null)
 			setInfiniteExpires(response);
 		
+		File toServe = new File(saveDir, iconView.getIcon().getIconKey() + ".png");		
 		sendFile(request, response, "image/png", toServe);
 		
 		return null;

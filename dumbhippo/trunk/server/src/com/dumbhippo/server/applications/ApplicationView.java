@@ -18,6 +18,12 @@ public class ApplicationView {
 	public ApplicationIconView getIcon() {
 		return icon;
 	}
+	
+	public String getIconUrl() {
+		if (icon != null)
+			return icon.getUrl();
+		return "/images3/unknownapp48.png";
+	}
 
 	public void setIcon(ApplicationIconView icon) {
 		this.icon = icon;
@@ -31,7 +37,7 @@ public class ApplicationView {
 				                "category", application.getCategory().getDisplayName(),
 				                "description", application.getDescription(),
 				                "desktopNames", application.getDesktopNames(),
-				                "iconUrl", getIcon().getUrl(),
+				                "iconUrl", getIconUrl(),
 				                "usageCount", "" + application.getUsageCount(),
 				                "rank", "" + application.getRank());
 				       
