@@ -12,7 +12,7 @@
 #include "hippo-distribution.h"
 
 /* Method for testing: yum in a gnome-terminal */
-#define ENABLE_INSTALL_PACKAGE_YUM 1
+#define ENABLE_INSTALL_PACKAGE_YUM 0
 
 /* This file contains functions to do various distribution speciifc functions like
  * determining the distribution name and version, checking if a package is installed,
