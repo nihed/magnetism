@@ -268,9 +268,13 @@ class PhotosStock(AbstractMugshotStock):
                 person.connect("changed", self.__handle_person_change)
             accts = person.get_external_accounts()
             self.__person_accts_len[person] = accts and len(accts) or 0
+        not_in_network = []
         for person in self.__person_accts_len.iterkeys():
-            if not person.get_guid() in self._mugshot.get_network():
-                print "delete this"
+            if not person in self._mugshot.get_network():
+                not_in_network.append(person)
+        for person in not_in_network:
+            self._logger.debug("removing not-in-network person %s", person.get_guid())
+            del self.__person_accts_len[person]
         self.__reset()
 
     def __do_next(self):
