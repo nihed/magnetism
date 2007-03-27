@@ -279,7 +279,7 @@ class AsyncHTTPFetcher(Singleton):
         
         for i in range(self.__worker_count):
             self.__logger.debug('creating http worker thread')            
-            t = threading.Thread(target=self.__worker, name="AsyncHTTPWorker")
+            t = threading.Thread(target=self.__worker, name="AsyncHTTPWorker%d"%(i,))
             self.__workers.add(t)
             t.setDaemon(True)
             t.start()        

@@ -244,9 +244,10 @@ class AppBrowser(hippo.CanvasWindow):
         self.set_root(self.__box)
         
         self.__mugshot = mugshot.get_mugshot()
-        self.__mugshot.connect("initialized", self.__on_mugshot_initialized)
+        self.__mugshot.connect("initialized", lambda mugshot: self.__sync())
         self.__mugshot.connect("global-top-apps-changed", 
-                               lambda mugshot, apps: self.__on_top_apps_changed(apps))          
+                               lambda mugshot, apps: self.__sync())          
+        self.__sync()
                 
         
     def __on_app_selected(self, app):
@@ -271,9 +272,10 @@ class AppBrowser(hippo.CanvasWindow):
         self.__idle_search_id = 0
         
     def __on_mugshot_initialized(self, mugshot):
-        self.__on_top_apps_changed(self.__mugshot.get_global_top_apps())
+        self.__sync()
                 
-    def __on_top_apps_changed(self, apps):
+    def __sync(self):
+        apps = self.__mugshot.get_global_top_apps()
         if not apps:
             return
         _logger.debug("handling top apps changed")        

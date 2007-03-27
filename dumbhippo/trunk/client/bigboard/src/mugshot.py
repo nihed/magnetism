@@ -247,13 +247,15 @@ class Mugshot(gobject.GObject):
         #print cookies
         return cookies
 
-    def __do_external_iq(self, name, xmlns, cb, attrs={}, content="", is_set=False):
+    def __do_external_iq(self, name, xmlns, cb, attrs=None, content="", is_set=False):
         """Sends a raw IQ request to Mugshot server, indirecting
         via D-BUS to client."""     
         if self.__proxy is None:
             self._logger.warn("No Mugshot active, not sending IQ")
             return
-        self._logger.debug("sending external IQ request: set=%s %s %s %s (%d bytes)", is_set, name, xmlns, attrs, len(content))
+        self._logger.debug("sending external IQ request: set=%s name=%s xmlns=%s attrs=%s (%d bytes)", is_set, name, xmlns, attrs, len(content))
+        if attrs is None:
+            attrs = {}
         attrs['xmlns'] = xmlns
         flattened_attrs = []
         for k,v in attrs.iteritems():
@@ -352,6 +354,9 @@ class Mugshot(gobject.GObject):
         self.__request_global_top_apps()
         return True    
     
+    def get_app(self, guid):
+        return self.__applications[guid]
+    
     def get_my_top_apps(self):
         if self.__my_top_apps is None:
             self.__request_my_top_apps()
@@ -380,15 +385,16 @@ class Mugshot(gobject.GObject):
         self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications",
                               self.__on_pinned_apps)
         
-    def set_pinned_apps(self, ids):
+    def set_pinned_apps(self, ids, cb):
         iq = StringIO.StringIO()
         for id in ids:
             iq.write('<appId>')
             iq.write(id)
             iq.write('</appId>')
         self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications", 
-                              iq.getvalue(),
-                              lambda *args: self._logger.debug("app pin set succeeded"), is_set=True)     
+                              lambda *args: cb(), 
+                              content=iq.getvalue(),
+                              is_set=True)     
     
 mugshot_inst = None
 def get_mugshot():
