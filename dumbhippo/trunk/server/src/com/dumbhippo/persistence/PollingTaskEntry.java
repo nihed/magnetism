@@ -6,6 +6,9 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.UniqueConstraint;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
 
 @Entity
@@ -13,6 +16,7 @@ import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
 		uniqueConstraints = {
 			@UniqueConstraint(columnNames={"family","taskId"})
 		})
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)		
 public class PollingTaskEntry extends DBUnique {
 	
 	private static final long serialVersionUID = 1L;
