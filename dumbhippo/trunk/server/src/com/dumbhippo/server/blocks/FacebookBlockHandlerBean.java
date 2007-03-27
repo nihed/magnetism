@@ -1,11 +1,10 @@
 package com.dumbhippo.server.blocks;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
@@ -28,6 +27,9 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.services.caches.CacheFactory;
+import com.dumbhippo.services.caches.FacebookPhotoDataCache;
+import com.dumbhippo.services.caches.WebServiceCache;
 
 @Stateless
 public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookBlockView> implements
@@ -37,6 +39,17 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 
 	@EJB
 	private FacebookSystem facebookSystem;
+	
+	@WebServiceCache
+	private FacebookPhotoDataCache photoCache;
+	
+	@EJB
+	private CacheFactory cacheFactory;
+	
+	@PostConstruct
+	public void init() {
+		cacheFactory.injectCaches(this);
+	}
 	
 	public FacebookBlockHandlerBean() {
 		super(FacebookBlockView.class);
@@ -80,10 +93,11 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 			} catch (NotFoundException e) {
 				throw new BlockNotVisibleException("external facebook account for block is not visible", e);
 			}							
-		    List<FacebookEvent> facebookEvents = new ArrayList<FacebookEvent>();
-		    facebookEvents.add(facebookEvent);
-		    
-		    blockView.populate(userView, facebookEvents, facebookSystem.getEventLink(facebookEvent));
+		    // would get and set the CachedFacebookPhotoData for the event here
+		    blockView.populate(userView, facebookEvent, facebookSystem.getEventLink(facebookEvent));
+		    if (facebookEvent.getPhotos().size() != 0) {
+		    	blockView.setPhotoData(photoCache.queryExisting(user.getId(), facebookEvent.getPhotos()));
+		    }
 		} else if (block.getBlockType() == BlockType.FACEBOOK_PERSON) {
 		    logger.error("Will not populate a block view for BlockType.FACEBOOK_PERSON, " +
 		    		     "we should not have blocks with that type around anymore!");		

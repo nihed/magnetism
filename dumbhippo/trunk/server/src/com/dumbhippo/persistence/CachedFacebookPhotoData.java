@@ -14,9 +14,8 @@ import com.dumbhippo.services.FacebookPhotoDataView;
 import com.dumbhippo.services.FacebookWebServices;
 
 @Entity
-// we do not store the photoId in the purified form, we only store it as part of the
-// link to the photo
-@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"userId", "link"})})
+
+@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"userId", "facebookPhotoId"})})
 public class CachedFacebookPhotoData extends DBUnique implements CachedListItem {
 	// if multiple users have the same facebook account registered, we need to know whose 
 	// session to use to update the cached data, so we should store the mugshot user 
@@ -28,6 +27,7 @@ public class CachedFacebookPhotoData extends DBUnique implements CachedListItem 
 	private long createdTimestamp;
 	private String albumId;
 	private long lastUpdated;
+	private String facebookPhotoId;
 	
 	// for hibernate
 	protected CachedFacebookPhotoData() {	
@@ -40,6 +40,7 @@ public class CachedFacebookPhotoData extends DBUnique implements CachedListItem 
         this.caption = caption;
         this.createdTimestamp = createdTimestamp;
         this.albumId = albumId;
+        this.facebookPhotoId = getPhotoId();
 	}
 	
 	public CachedFacebookPhotoData(String userId, FacebookPhotoDataView photoData) {
@@ -53,7 +54,7 @@ public class CachedFacebookPhotoData extends DBUnique implements CachedListItem 
 		photoData.setCaption(caption);
 		photoData.setCreatedTimestamp(new Date(createdTimestamp));
 		photoData.setAlbumId(albumId);
-		photoData.setPhotoId(getPhotoId());
+		photoData.setPhotoId(facebookPhotoId);
 		return photoData;
 	}
 	
@@ -72,6 +73,7 @@ public class CachedFacebookPhotoData extends DBUnique implements CachedListItem 
 	    caption = photoData.getCaption();
 	    createdTimestamp = photoData.getCreatedTimestampAsLong();
 	    albumId = photoData.getAlbumId();
+	    facebookPhotoId = photoData.getFacebookPhotoId();
 	}
 	
 	@Column(nullable=false, length=Guid.STRING_LENGTH)
@@ -83,15 +85,24 @@ public class CachedFacebookPhotoData extends DBUnique implements CachedListItem 
 		this.userId = userId;
 	}
 	
-	@Column(nullable=false, length=FacebookWebServices.MAX_FACEBOOK_PHOTO_LINK_LENGTH)
+	@Column(nullable=false)
 	public String getLink() {
 		return link;
+	}
+	
+	public void setFacebookPhotoId(String facebookPhotoId) {
+		this.facebookPhotoId = facebookPhotoId;
+	}	
+
+	@Column(nullable=false, length=FacebookWebServices.MAX_FACEBOOK_PHOTO_ID_LENGTH)
+	public String getFacebookPhotoId() {
+		return facebookPhotoId;
 	}
 	
 	public void setLink(String link) {
 		this.link = link;
 	}	
-
+	
 	@Column(nullable=false)
 	public String getSource() {
 		return source;
@@ -148,17 +159,7 @@ public class CachedFacebookPhotoData extends DBUnique implements CachedListItem 
 	
 	@Transient 
 	public String getPhotoId() {
-		int startOfPid = link.indexOf("pid=");
-		
-		if (startOfPid < 0)
-			return "";
-		
-		int endOfPid = link.indexOf("&", startOfPid);
-		// pid is not the last parameter normally, but just in case
-		if (endOfPid < 0)
-			endOfPid = link.length();
-		
-		return link.substring(startOfPid + 4, endOfPid);
+		return FacebookPhotoData.getPhotoIdFromLink(link);
 	}
 	
 	@Transient
@@ -174,6 +175,6 @@ public class CachedFacebookPhotoData extends DBUnique implements CachedListItem 
 		if (isNoResultsMarker())
 			return "{CachedFacebookPhotoData:NoResultsMarker}";
 		else
-			return "{userId=" + userId + " photoId=" + getPhotoId() + " caption='" + caption + "'}";
+			return "{userId=" + userId + " facebookPhotoId=" + facebookPhotoId + " caption='" + caption + "'}";
 	}	
 }

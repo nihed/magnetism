@@ -2,13 +2,11 @@ package com.dumbhippo.services.caches;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.EJB;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.Query;
 
-import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -18,32 +16,22 @@ import com.dumbhippo.persistence.CachedFacebookPhotoData;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookPhotoDataStatus;
 import com.dumbhippo.server.FacebookSystem;
-import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.services.FacebookPhotoData;
+import com.dumbhippo.services.FacebookPhotoDataView;
 import com.dumbhippo.services.FacebookWebServices;
 
-
-// FIXME the ResultType and EntityType should not be the same. It leads to all kinds of confusion. To avoid
-// cut-and-paste, you can use various tricks (have an interface for ResultType that's implemented by the 
-// EntityType for example). The ResultType should be the same as whatever the raw, uncached, 
-// nothing-to-do-with-the-database web service returns. It's bad if anything is using attached
-// EntityType objects outside of the cache code itself.
 //@Stateless // for now, these cache beans are our own special kind of bean and not EJBs due to a jboss bug
 public class FacebookPhotoDataCacheBean 
-    extends AbstractListCacheWithStorageBean<String,CachedFacebookPhotoData,CachedFacebookPhotoData> 
+    extends AbstractListCacheWithStorageBean<String,FacebookPhotoDataView,CachedFacebookPhotoData> 
     implements FacebookPhotoDataCache {
 
 	static private final Logger logger = GlobalSetup.getLogger(FacebookPhotoDataCacheBean.class);
 
 	@EJB
 	protected FacebookSystem facebookSystem;	
-
-	@EJB
-	@IgnoreDependency
-	protected FacebookTracker facebookTracker;	
 	
 	// Facebook no longer specifies a maximum time for which we can keep the data that is "not
 	// storable", so we should delete the data whenever the session in which we obtained it expires.
@@ -58,7 +46,7 @@ public class FacebookPhotoDataCacheBean
 	static private final long FACEBOOK_PHOTO_DATA_EXPIRATION = 1000 * 60 * 60 * 24 * 14;
 	
 	public FacebookPhotoDataCacheBean() {
-		super(Request.FACEBOOK_PHOTO_DATA, FacebookPhotoDataCache.class, FACEBOOK_PHOTO_DATA_EXPIRATION, CachedFacebookPhotoData.class);
+		super(Request.FACEBOOK_PHOTO_DATA, FacebookPhotoDataCache.class, FACEBOOK_PHOTO_DATA_EXPIRATION, FacebookPhotoDataView.class);
 	}
 
 	@Override
@@ -66,6 +54,36 @@ public class FacebookPhotoDataCacheBean
 		Query q = em.createQuery("SELECT photo FROM CachedFacebookPhotoData photo WHERE photo.userId = :userId");
 		q.setParameter("userId", key);
 		List<CachedFacebookPhotoData> results = TypeUtils.castList(CachedFacebookPhotoData.class, q.getResultList());
+		return results;
+	}
+	
+	public List<FacebookPhotoDataView> queryExisting(String key, Set<FacebookPhotoDataStatus> photos) {
+		List<FacebookPhotoDataView> results = new ArrayList<FacebookPhotoDataView>();
+		StringBuilder sb = new StringBuilder();
+		sb.append("SELECT photo FROM CachedFacebookPhotoData photo WHERE photo.userId = :userId" +
+				      " AND photo.facebookPhotoId IN (");
+		boolean facebookPhotoIdsAvailable = false; 
+		for (FacebookPhotoDataStatus photoStatus : photos) {
+			if (photoStatus.getFacebookPhotoId() != null) {
+			    sb.append(photoStatus.getFacebookPhotoId());
+			    sb.append(",");
+			    facebookPhotoIdsAvailable = true; 
+			}
+		}
+		
+		// no need to do the query if we don't have a single id
+		if (!facebookPhotoIdsAvailable) {
+			return results;
+		}
+		
+		sb.setLength(sb.length() - 1); // chop comma
+		sb.append(")");
+        Query q = em.createQuery(sb.toString());	
+		q.setParameter("userId", key);
+		List<CachedFacebookPhotoData> entities = TypeUtils.castList(CachedFacebookPhotoData.class, q.getResultList());
+		for (CachedFacebookPhotoData entity : entities) {
+			results.add(resultFromEntity(entity));
+		}
 		return results;
 	}
 
@@ -81,61 +99,30 @@ public class FacebookPhotoDataCacheBean
 		logger.debug("{} cached items expired for key {}", updated, key);
 	}	
 	
-	@TransactionAttribute(TransactionAttributeType.REQUIRED)
 	@Override
-	public void deleteCache(String key) {
-		FacebookAccount facebookAccount = lookupFacebookAccount(key);
-		int deletedItemsCount = 0;
-		for (FacebookPhotoDataStatus photoDataStatus : facebookAccount.getTaggedPhotos()) {
-			CachedFacebookPhotoData cachedPhotoData = photoDataStatus.getPhotoData();			
-			if (cachedPhotoData != null) {
-			    photoDataStatus.setNewPhotoData(null);
-			    em.remove(cachedPhotoData);
-			    deletedItemsCount++;
-			} 
-		}
-		logger.debug("removed {} cached items for key {}", deletedItemsCount, key);
-
-		// we might still have a no results marker which we should also remove			
-		List<CachedFacebookPhotoData> oldItems = queryExisting(key);
-		for (CachedFacebookPhotoData d : oldItems) {
-			if (!d.isNoResultsMarker())
-				logger.warn("Removing a cached photo data which was not a no results marker and was"
-						    + " not associated with any photoDataStatus for the key {}", key);
-			em.remove(d);
-		}		
-	}
-	
-	@Override
-	public CachedFacebookPhotoData resultFromEntity(CachedFacebookPhotoData entity) {
-		return entity;
+	public FacebookPhotoDataView resultFromEntity(CachedFacebookPhotoData entity) {
+		return entity.toPhotoData();
 	}
 
 	@Override
-	public CachedFacebookPhotoData entityFromResult(String key, CachedFacebookPhotoData result) {
-		return result;
+	public CachedFacebookPhotoData entityFromResult(String key, FacebookPhotoDataView result) {
+		return new CachedFacebookPhotoData(key, result);
 	}
 
 	@Override
-	protected List<CachedFacebookPhotoData> fetchFromNetImpl(String key) {
+	protected List<FacebookPhotoDataView> fetchFromNetImpl(String key) {
 		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
 	    FacebookAccount facebookAccount = lookupFacebookAccount(key);
 	    // this facebookAccount is detached
 		List<FacebookPhotoData> photos = ws.getTaggedPhotos(facebookAccount);
 		
-		if (photos == null) {
-			if (!facebookAccount.isSessionKeyValid())
-		        facebookTracker.handleExpiredSessionKey(facebookAccount.getId());
-		    return null;
-		}
-		
-		List<CachedFacebookPhotoData> taggedPhotosToBeCached = new ArrayList<CachedFacebookPhotoData>();
-		for (FacebookPhotoData photoData : photos) {
-			CachedFacebookPhotoData photoDataToBeCached = new CachedFacebookPhotoData(key, photoData);
-			taggedPhotosToBeCached.add(photoDataToBeCached);
-		}
-		
-		return taggedPhotosToBeCached;
+        // we don't want to call facebookTracker.handleExpiredSessionKey(facebookAccount.getId());
+		// here because we'll handle that when we are updating tagged photos and we also
+		// need to drop the photos cache for the user in that case, which we do there
+		if (photos == null)
+			return null;
+		else
+			return TypeUtils.castList(FacebookPhotoDataView.class, photos);
 	}
 
 	@Override

@@ -30,9 +30,12 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	// The longest link I saw was 123 characters, they are usually pretty standard, 
 	// including an apid, uid, and apikey. With the 1000 bytes table key limit in 
 	// mysql, we should not have this variable longer than 236 to use it together 
-	// with a user guid as a key in the CachedFacebookPhotoData table. 
+	// with a user guid as a key in the CachedFacebookPhotoData table.  
 	// (14*4 + 236*4 = 1000)
+	// The link is no longer used to create a unique key, the photo id is used instead.
 	static public final int MAX_FACEBOOK_PHOTO_LINK_LENGTH = 200;
+	// Facebook photo ids are usually 8 digits long
+	static public final int MAX_FACEBOOK_PHOTO_ID_LENGTH = 20;
 	
 	private String apiKey;
 	private String secret;

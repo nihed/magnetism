@@ -6,7 +6,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
+import javax.persistence.Transient;
 
 import org.slf4j.Logger;
 
@@ -22,17 +22,17 @@ public class FacebookPhotoDataStatus extends DBUnique {
 	
 	private FacebookAccount facebookAccount;
 	private FacebookEvent facebookEvent;
-	// a hex-encoded SHA-1 hash of the photoId is stored
+	// a hex-encoded SHA-1 hash of the photoId is stored, deprecated
 	private String photoId;
+	// deprecated
 	private Integer photoIdSalt;
-	private CachedFacebookPhotoData photoData;
+	private String facebookPhotoId;
 	
 	protected FacebookPhotoDataStatus() {}
 	
-	public FacebookPhotoDataStatus(FacebookAccount facebookAccount, CachedFacebookPhotoData photoData) {
+	public FacebookPhotoDataStatus(FacebookAccount facebookAccount, String facebookPhotoId) {
         this.facebookAccount = facebookAccount;
-        this.photoData = photoData;
-        setPhotoIdPlainText(photoData.getPhotoId());
+        this.facebookPhotoId = facebookPhotoId;
 	}
 	
 	@ManyToOne
@@ -59,7 +59,7 @@ public class FacebookPhotoDataStatus extends DBUnique {
 	 * Get the salt for the photoId
 	 * @return salt bytes as String
 	 */
-	@Column(nullable = false)
+	@Column(nullable = true)
 	public Integer getPhotoIdSalt() {
 		// logger.debug("photoIdSalt is {}", photoIdSalt);
 		return photoIdSalt;
@@ -78,7 +78,7 @@ public class FacebookPhotoDataStatus extends DBUnique {
 	 * Get the hash of the photoId.
 	 * @return A String containing the hash of the photoId
 	 */
-	@Column(nullable = false)
+	@Column(nullable = true)
 	protected String getPhotoId() {
 		return photoId;
 	}
@@ -88,7 +88,10 @@ public class FacebookPhotoDataStatus extends DBUnique {
 	 * @param photoId A String with the hash of the photoId
 	 */
 	public void setPhotoId(String photoId) {
-		this.photoId = photoId.trim(); // paranoia
+		if (photoId != null)
+		    this.photoId = photoId.trim(); // paranoia
+		else
+			this.photoId = null;
 	}
 
 	/**
@@ -112,7 +115,15 @@ public class FacebookPhotoDataStatus extends DBUnique {
 	 * @param match A String with the plain text photoId
 	 * @return A boolean true if the photoIds match
 	 */
+	@Transient
 	public boolean matchPhotoId(String match) {
+		// to support the transition from using encoded ids to using 
+		// actual photo ids, if facebookPhotoId is not null, we do the match 
+		// based on that, if it is null, we do the match based on the encoded id
+		// if that doesn't work
+		if (facebookPhotoId != null)
+			return (facebookPhotoId.equals(match));
+		
 		String photoIdHash = getPhotoId();
 		Integer photoIdSalt = getPhotoIdSalt();
 		// logger.debug("match is {} photoIdSalt is {}", match, photoIdSalt);
@@ -124,29 +135,29 @@ public class FacebookPhotoDataStatus extends DBUnique {
 		return matchHash.equals(photoIdHash);
 	}
 	
-	@OneToOne
-	@JoinColumn(nullable=true)
-	public CachedFacebookPhotoData getPhotoData() {
-		return photoData;
+	@Column(nullable = true)
+	public String getFacebookPhotoId() {
+		return facebookPhotoId;
 	}
 
-	// if we set the new photo data, we want it to match the photoId,
-	// so we should call setNewPhotoData from the rest of our code 
-	protected void setPhotoData(CachedFacebookPhotoData photoData) {
-		this.photoData = photoData;
+	public void setFacebookPhotoId(String facebookPhotoId) {
+		this.facebookPhotoId = facebookPhotoId;
 	}
 	
-	public void setNewPhotoData(CachedFacebookPhotoData photoData) {
-		if ((photoData != null) && (!matchPhotoId(photoData.getPhotoId())))
+	// we should use this function to make sure we transition correctly
+	public void setRecoveredFacebookPhotoId(String facebookPhotoId) {
+		if (!matchPhotoId(facebookPhotoId))
 			throw new RuntimeException("Updating a FacebookPhotoDataStatus " + this + 
-					                   " with the the photoData that doesn't match the photo id: " + photoData);
-		setPhotoData(photoData);
+					                   " with the new facebookPhotoId " + facebookPhotoId + " that doesn't match the original photo id");
+		setFacebookPhotoId(facebookPhotoId);
+		setPhotoId(null);
+		setPhotoIdSalt(null);
 	}
 	
 	@Override
 	public String toString() {
 		return ("FacebookAccount: " + facebookAccount + " FacebookEvent " + facebookEvent 
-				+ " CachedFacebookPhotoData: " + photoData);
+				+ " facebookPhotoId: " + facebookPhotoId);
 	}
 	
 }
