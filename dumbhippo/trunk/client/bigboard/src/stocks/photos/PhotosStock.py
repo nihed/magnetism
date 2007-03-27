@@ -11,6 +11,10 @@ from big_widgets import CanvasURLImage, CanvasVBox, CanvasHBox, CanvasMugshotURL
 class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
     __gtype_name__ = 'TransitioningURLImage' 
     
+    __gsignals__ = {
+        "loaded" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,))
+    }
+    
     __gproperties__ = {
         'dimension': (gobject.TYPE_UINT, 'Dimension', 'Scale to this size', 0, 2**32-1, 0, gobject.PARAM_READWRITE)
     }    
@@ -37,6 +41,8 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
         if url != self.__current_url:
             return
         
+        self.emit("loaded", True)
+        
         req_changed = False
         if self.__surface:
             old_width = self.__surface.get_width()
@@ -59,7 +65,7 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
         self.emit_paint_needed(0, 0, -1, -1)
             
     def __handle_image_error(self, url, exc):
-        pass        
+        self.emit("loaded", False) 
     
     def __idle_step_transition(self):
         self.__transition_count += 1
@@ -133,6 +139,7 @@ class PhotosStock(AbstractMugshotStock):
     def __init__(self, *args, **kwargs):
         super(PhotosStock,self).__init__(*args, **kwargs)
 
+        self.__images = None
         self.__current_image = None
 
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4)
@@ -155,6 +162,7 @@ class PhotosStock(AbstractMugshotStock):
         
         self.__photobox = CanvasHBox(spacing=6)
         self.__photo = TransitioningURLImage(dimension=self.__photosize)
+        self.__photo.connect("loaded", lambda photo, loaded: self.__on_image_load(loaded))
         self.__photo.connect("button-press-event", lambda photo, event: self.__visit_photo())
         self.__metabox = CanvasVBox()
         self.__metabox.append(hippo.CanvasText(text="from"))
@@ -212,15 +220,30 @@ class PhotosStock(AbstractMugshotStock):
     def __set_image(self, imageinfo):
         self.__current_image = imageinfo
         (entity, acct, thumbnail) = imageinfo
-        self._logger.debug("switching to %s %s %s" % (entity,acct,thumbnail))
+        
+        self._logger.debug("starting load of url %s" % (thumbnail.get_src(),))
+        self.__photo.set_url(thumbnail.get_src())
+        
+    def __on_image_load(self, success):
+        if self.__current_image is None:
+            self._logger.debug("image load complete, but no current image")       
+            return
+        if not success:
+            self._logger.debug("image load failed, skipping to next")                   
+            self.__do_next()
+        
+        self._logger.debug("image load success, syncing metadata")          
+        (entity, acct, thumbnail) = self.__current_image
+
         self.__favicon.set_url(acct.get_icon())
         self.__title.set_property("text", thumbnail.get_title())
-        self.__photo.set_url(thumbnail.get_src())        
+     
         self.__fromname.set_property("text", entity.get_name())
-        self.__fromphoto.set_url(entity.get_photo_url())
+        self.__fromphoto.set_url(entity.get_photo_url())        
     
-    def __idle_display_image(self, images):
-        imageinfo = images.next()
+    def __idle_display_image(self):
+        self._logger.debug("in idle, doing next image")          
+        imageinfo = self.__images.next()
         self.__set_image(imageinfo)
         return True
     
@@ -249,19 +272,21 @@ class PhotosStock(AbstractMugshotStock):
             if not person.get_guid() in self._mugshot.get_network():
                 print "delete this"
         self.__reset()
+
+    def __do_next(self):
+        self._logger.debug("skipping to next")                  
+        try:
+            self.__set_image(self.__images.next())
+            self.__box.append(self.__displaybox)
+        except StopIteration:
+            self._logger.debug("caught StopIteration, displaying no photos text")            
+            self.__box.append(self.__text)        
+        if self.__idle_display_id > 0:
+            gobject.source_remove(self.__idle_display_id)            
+        self.__idle_display_id = gobject.timeout_add(10000, self.__idle_display_image)        
         
     def __reset(self):
         self._logger.debug("resetting")        
-        if self.__idle_display_id > 0:
-            gobject.source_remove(self.__idle_display_id)
-        images = self.__thumbnails_generator()
+        self.__images = self.__thumbnails_generator()
         self.__box.remove_all()        
-        try:
-            self.__set_image(images.next())
-            self.__box.append(self.__displaybox)
-        except StopIteration:
-            self.__box.append(self.__text)
-        self.__idle_display_id = gobject.timeout_add(10000, self.__idle_display_image, 
-                                                     images)
-
-            
+        self.__do_next()
