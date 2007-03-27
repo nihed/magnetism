@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
-import com.dumbhippo.persistence.CachedFacebookPhotoData;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
@@ -37,6 +36,7 @@ import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.services.FacebookPhotoDataView;
 import com.dumbhippo.services.FacebookWebServices;
 import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.ExpiredCacheException;
@@ -158,23 +158,17 @@ public class FacebookTrackerBean implements FacebookTracker {
 	
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public void updateTaggedPhotos(final long facebookAccountId) {
-		Pair <FacebookAccount, Integer> facebookAccountPair;
+		FacebookAccount facebookAccount;
 		try {
-			facebookAccountPair = runner.runTaskInNewTransaction(new Callable<Pair<FacebookAccount, Integer>>() {
-				public Pair <FacebookAccount, Integer> call() {
-					FacebookAccount facebookAccount = em.find(FacebookAccount.class, facebookAccountId);		
-					// the photos are loaded lazily, so we need to get their count up-front
-					return new Pair<FacebookAccount, Integer>(facebookAccount, facebookAccount.getTaggedPhotos().size());
+			facebookAccount = runner.runTaskInNewTransaction(new Callable<FacebookAccount>() {
+				public FacebookAccount call() {
+					return em.find(FacebookAccount.class, facebookAccountId);		
 				}	
 			});
 		} catch (Exception e) {
 			logger.error("Failed to find facebookAccount for " + facebookAccountId, e.getMessage());
 			throw new RuntimeException(e);
 		}
-			
-		FacebookAccount facebookAccount = facebookAccountPair.getFirst();
-		int oldPhotoCount = facebookAccountPair.getSecond();
-		
 		if (facebookAccount == null)
 			throw new RuntimeException("Invalid FacebookAccount id " + facebookAccountId + " is passed in to updateTaggedPhotos()");
 		User user = facebookAccount.getExternalAccount().getAccount().getOwner();
@@ -193,43 +187,32 @@ public class FacebookTrackerBean implements FacebookTracker {
 			return;			
 		}
 	
-		// we will catch a NotCachedException if we don't have anything in cache (we never had it or had to delete it),
-		// we will catch its subtype ExpiredCacheException if what we have in cache is expired (either we deliberately 
-		// expired it because we expect an update or it naturally expired because it's old)
-		boolean needCacheUpdate = false;       
-		boolean expiredCache = false;		
+		// we no longer need to delete cache if it is expired in here, because we always do it when the Facebook 
+		// session is no longer valid, so if cache is expired here it must mean we couldn't get the new results
+		// before, but there is no need to explicitly delete the old results
+		// ExpiredCacheException is a subtype of NotCachedException, so we don't need to catch it explicitly
+		boolean needCacheUpdate = false;       	
+		int cachedPhotoCount = -1;
 		try {
-		    taggedPhotosCache.checkCache(user.getGuid().toString());
-		} catch (ExpiredCacheException e) {
-			expiredCache = true;
-			needCacheUpdate = true;
+			List<? extends FacebookPhotoDataView> cachedPhotos = taggedPhotosCache.checkCache(user.getGuid().toString());
+			cachedPhotoCount = cachedPhotos.size();
 		} catch (NotCachedException e) {
 			needCacheUpdate = true;
 		}
 	
-		if (needCacheUpdate || (newPhotoCount != oldPhotoCount)) {
-			if (expiredCache) {
-				// with facebook, if the cache is expired we need to delete it
-				taggedPhotosCache.deleteCache(user.getGuid().toString());
-			} else if (newPhotoCount != oldPhotoCount) {
-				// we just hope we will be able to get all the photos back right away
-				// and not be hit by the cache that we ourselves expired on the next
-				// iteration and have to delete it; what we really need to distinguish
-				// these two situations is a needsRefresh flag on the cached data
+		if (needCacheUpdate || (newPhotoCount != cachedPhotoCount)) {
+			if ((cachedPhotoCount != -1) && (newPhotoCount != cachedPhotoCount)) {
 				taggedPhotosCache.expireCache(user.getGuid().toString());
 			}
 			
-            // FIXME CachedFacebookPhotoData should not be leaking out of its cache bean
-			List<? extends CachedFacebookPhotoData> cachedPhotos = taggedPhotosCache.getSync(user.getGuid().toString());
+			List<? extends FacebookPhotoDataView> cachedPhotos = taggedPhotosCache.getSync(user.getGuid().toString());
 			
 			proxy.saveUpdatedTaggedPhotos(facebookAccountId, cachedPhotos);
 		}	
 	}
 	
-	// cachedPhotos that we get here are not attached
-	public void saveUpdatedTaggedPhotos(long facebookAccountId, List<? extends CachedFacebookPhotoData> cachedPhotos) { 
+	public void saveUpdatedTaggedPhotos(long facebookAccountId, List<? extends FacebookPhotoDataView> cachedPhotos) { 
 		FacebookAccount facebookAccount = em.find(FacebookAccount.class, facebookAccountId);	
-
 		if (!facebookAccount.getTaggedPhotosPrimed() && cachedPhotos.isEmpty()) {
 			// this covers the case when the user did not have any photos tagged with them on facebook prior 
 			// to adding their facebook account to mugshot
@@ -238,16 +221,20 @@ public class FacebookTrackerBean implements FacebookTracker {
 		}
 			
 		Set<FacebookPhotoDataStatus> oldPhotos = facebookAccount.getTaggedPhotos();
-		Set<FacebookPhotoDataStatus> oldPhotosToRemove = new HashSet<FacebookPhotoDataStatus>(oldPhotos);
-		List<CachedFacebookPhotoData> newPhotosToAdd = new ArrayList<CachedFacebookPhotoData>(cachedPhotos);
+		List<? extends FacebookPhotoDataView> newPhotosToAdd = new ArrayList<FacebookPhotoDataView>(cachedPhotos);
 		
+		// We are not doing anything with photo data statuses we couldn't match up with new photos,
+		// because deleting these photos would make us restack them if the web service glitched and
+		// only returned a subset of photos at some point. Keeping them around should be harmless,
+		// we simply wouldn't find cached photos for them, so will not display them.
 		for (FacebookPhotoDataStatus oldPhoto : oldPhotos) {
-			CachedFacebookPhotoData foundPhoto = null;
-			for (CachedFacebookPhotoData newPhoto : newPhotosToAdd) {
-				if (oldPhoto.matchPhotoId(newPhoto.getPhotoId())) {
-					CachedFacebookPhotoData attachedCachedPhoto = em.find(CachedFacebookPhotoData.class, newPhoto.getId());
-					oldPhoto.setNewPhotoData(attachedCachedPhoto);					
-					oldPhotosToRemove.remove(oldPhoto);
+			FacebookPhotoDataView foundPhoto = null;
+			for (FacebookPhotoDataView newPhoto : newPhotosToAdd) {
+				if (oldPhoto.matchPhotoId(newPhoto.getPhotoId())) {	
+					// store the Facebook photo id for the photo if it is not yet stored
+                    if (oldPhoto.getFacebookPhotoId() == null) {
+					    oldPhoto.setRecoveredFacebookPhotoId(newPhoto.getPhotoId());			
+                    } 
 					foundPhoto = newPhoto;
 					break;
 				}
@@ -256,24 +243,12 @@ public class FacebookTrackerBean implements FacebookTracker {
 			    newPhotosToAdd.remove(foundPhoto);
 		}
 		
-		for (FacebookPhotoDataStatus oldPhotoToRemove : oldPhotosToRemove) {
-			// deleting these photos would make us restack them if the web service glitched and
-			// only returned a suset of photos at some point, let's rather keep the photos
-			// with the ids we did not get, but make sure that the cached photos they point to are null
-            if (oldPhotoToRemove.getPhotoData() != null) {
-            	logger.warn("The cached photo data that was no longer returned for the facebookAccount was" +
-            			    " still set on the FacebookPhotoDataStatus {}", oldPhotoToRemove);
-            	oldPhotoToRemove.setNewPhotoData(null);
-            }
-		}
-		
 		if (newPhotosToAdd.size() > 0) {
 			if (!facebookAccount.getTaggedPhotosPrimed()) {
 				// this covers the case when the user has some photos tagged with them on facebook prior to adding
 				// their facebook account to mugshot
-			    for (CachedFacebookPhotoData newPhotoToAdd : newPhotosToAdd) {
-			    	CachedFacebookPhotoData attachedCachedPhoto = em.find(CachedFacebookPhotoData.class, newPhotoToAdd.getId());
-			    	FacebookPhotoDataStatus photoDataStatus = new FacebookPhotoDataStatus(facebookAccount, attachedCachedPhoto);
+			    for (FacebookPhotoDataView newPhotoToAdd : newPhotosToAdd) {
+			    	FacebookPhotoDataStatus photoDataStatus = new FacebookPhotoDataStatus(facebookAccount, newPhotoToAdd.getPhotoId());
 				    em.persist(photoDataStatus);
 				    facebookAccount.addTaggedPhoto(photoDataStatus);
 			    }
@@ -284,9 +259,8 @@ public class FacebookTrackerBean implements FacebookTracker {
 		    FacebookEvent taggedPhotosEvent = new FacebookEvent(facebookAccount, FacebookEventType.NEW_TAGGED_PHOTOS_EVENT, 
                                                                 newPhotosToAdd.size(), (new Date()).getTime());		
 			persistFacebookEvent(taggedPhotosEvent);
-		    for (CachedFacebookPhotoData newPhotoToAdd : newPhotosToAdd) {
-		    	CachedFacebookPhotoData attachedCachedPhoto = em.find(CachedFacebookPhotoData.class, newPhotoToAdd.getId());
-		    	FacebookPhotoDataStatus photoDataStatus = new FacebookPhotoDataStatus(facebookAccount, attachedCachedPhoto);
+		    for (FacebookPhotoDataView newPhotoToAdd : newPhotosToAdd) {
+		    	FacebookPhotoDataStatus photoDataStatus = new FacebookPhotoDataStatus(facebookAccount, newPhotoToAdd.getPhotoId());
 		    	photoDataStatus.setFacebookEvent(taggedPhotosEvent);
 			    em.persist(photoDataStatus);
 			    taggedPhotosEvent.addPhoto(photoDataStatus);

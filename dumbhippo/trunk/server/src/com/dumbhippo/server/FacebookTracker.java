@@ -4,9 +4,9 @@ import java.util.List;
 
 import javax.ejb.Local;
 
-import com.dumbhippo.persistence.CachedFacebookPhotoData;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.services.FacebookPhotoDataView;
 
 @Local
 public interface FacebookTracker {
@@ -17,8 +17,7 @@ public interface FacebookTracker {
 	
 	public void updateTaggedPhotos(long facebookAccountId);
 	
-	// FIXME CachedFacebookPhotoData should not be leaking out of its cache bean
-	public void saveUpdatedTaggedPhotos(long facebookAccountId, List<? extends CachedFacebookPhotoData> cachedPhotos);
+	public void saveUpdatedTaggedPhotos(long facebookAccountId, List<? extends FacebookPhotoDataView> cachedPhotos);
 
 	public void removeExpiredTaggedPhotos(long facebookAccountId);
 	

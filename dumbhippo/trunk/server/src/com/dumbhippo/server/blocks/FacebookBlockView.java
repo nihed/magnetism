@@ -9,67 +9,47 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookEvent;
-import com.dumbhippo.persistence.FacebookEventType;
-import com.dumbhippo.persistence.FacebookPhotoDataStatus;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FacebookPhotoData;
 import com.dumbhippo.services.FacebookPhotoDataView;
-import com.dumbhippo.web.ListBean;
 
 public class FacebookBlockView extends AbstractPersonBlockView 
        implements ThumbnailsBlockView, ExternalAccountBlockView, TitleBlockView {
-	private List<FacebookEvent> facebookEvents;
+	
+	private FacebookEvent facebookEvent;
 	private String link;
+	private List<FacebookPhotoDataView> photoData; 
 	
 	public FacebookBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
 		super(viewpoint, block, ubd, participated);
+		this.photoData = new ArrayList<FacebookPhotoDataView>();
 	}
 	
 	public FacebookBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) {
 		super(viewpoint, block, gbd, participated);
+		this.photoData = new ArrayList<FacebookPhotoDataView>();
 	}
 	
-	void populate(PersonView userView, List<FacebookEvent> facebookEvents, String link) {
+	void populate(PersonView userView, FacebookEvent facebookEvent, String link) {
 		partiallyPopulate(userView);
-		this.facebookEvents = facebookEvents;
+		this.facebookEvent = facebookEvent;
 		this.link = link;
 		setPopulated(true);		
 	}
-		
-	public List<FacebookEvent> getFacebookEvents() {
-	    return facebookEvents;	
+	
+	public void setPhotoData(List<FacebookPhotoDataView> photoData) {
+	    this.photoData = photoData;	
 	}
 	
 	public FacebookEvent getFacebookEvent() {
-		if (facebookEvents.isEmpty())
-		    throw new RuntimeException("FacebookEvents list is empty in the FacebookBlockView");
-		
-	    return facebookEvents.get(0);	
+	    return facebookEvent;	
 	}	
 	
-	// this can later be a part of PhotoSetView interface implementation
-	public ListBean<FacebookPhotoDataStatus> getPhotos() {
-		List<FacebookPhotoDataStatus> photos = new ArrayList<FacebookPhotoDataStatus>();
-		if (getFacebookEvent().getPhotos().size() > 0) {
-			photos.addAll(getFacebookEvent().getPhotos());	
-		} else if (getFacebookEvent().getAlbum() != null){
-			photos.add(getFacebookEvent().getAlbum().getCoverPhoto());
-		}
-		return new ListBean<FacebookPhotoDataStatus>(photos);
-	}
-	
 	public Thumbnails getThumbnails() {
-		List<FacebookPhotoDataView> thumbnails = new ArrayList<FacebookPhotoDataView>();
-		for (FacebookPhotoDataStatus photoDataStatus : getFacebookEvent().getPhotos()) {
-			if (photoDataStatus.getPhotoData() != null) 
-			    thumbnails.add(photoDataStatus.getPhotoData().toPhotoData());
-		}
-		// TODO: check for the album cover photo once we support that
-		
-		return new BasicThumbnails(thumbnails, thumbnails.size(), 
+		return new BasicThumbnails(photoData, photoData.size(), 
 				                   FacebookPhotoData.FACEBOOK_THUMB_SIZE, FacebookPhotoData.FACEBOOK_THUMB_SIZE);
 	}
 
@@ -132,10 +112,7 @@ public class FacebookBlockView extends AbstractPersonBlockView
 				
 		String pluralChar = "";
 		
-		if (event.getEventType() == FacebookEventType.NEW_TAGGED_PHOTOS_EVENT) {
-		    if (event.getPhotos().size() != 1) 
-		        pluralChar = "s";
-		} else if (event.getCount() != 1) {
+		if (event.getCount() != 1) {
 			pluralChar = "s";
 		}
 		
@@ -147,7 +124,7 @@ public class FacebookBlockView extends AbstractPersonBlockView
 			case UNSEEN_POKES_UPDATE :
 				return event.getCount() + " unseen poke" + pluralChar;
 			case NEW_TAGGED_PHOTOS_EVENT :
-				return "You were tagged in " + event.getPhotos().size() + " photo" + pluralChar;
+				return "You were tagged in " + event.getCount() + " photo" + pluralChar;
 			case NEW_ALBUM_EVENT :
 				return "You created a new album '" + event.getAlbum().getName() + "'";
 			case MODIFIED_ALBUM_EVENT :
@@ -169,10 +146,7 @@ public class FacebookBlockView extends AbstractPersonBlockView
 		FacebookEvent event = getFacebookEvent();
 		String pluralChar = "";
 		
-		if (event.getEventType() == FacebookEventType.NEW_TAGGED_PHOTOS_EVENT) {
-		    if (event.getPhotos().size() != 1) 
-		        pluralChar = "s";
-		} else if (event.getCount() != 1) {
+		if (event.getCount() != 1) {
 			pluralChar = "s";
 		}
 		
@@ -180,7 +154,7 @@ public class FacebookBlockView extends AbstractPersonBlockView
 			case NEW_WALL_MESSAGES_EVENT :
 				return event.getCount() + " new wall message" + pluralChar;
 			case NEW_TAGGED_PHOTOS_EVENT :
-				return getPersonSource().getName() + " was tagged in " + event.getPhotos().size() + " photo" + pluralChar;
+				return getPersonSource().getName() + " was tagged in " +  event.getCount() + " photo" + pluralChar;
 			case NEW_ALBUM_EVENT :
 				return getPersonSource().getName() + " has created a new album '" + event.getAlbum().getName() + "'";
 			case MODIFIED_ALBUM_EVENT :

@@ -42,6 +42,7 @@ public class FacebookPhotoData implements FacebookPhotoDataView {
 	
 	public void setLink(String link) {
 		this.link = link;
+        setPhotoId(getPhotoIdFromLink(link));
 	}
 	
 	public String getSource() {
@@ -84,5 +85,22 @@ public class FacebookPhotoData implements FacebookPhotoDataView {
 	public String toString() {
 		return "{FacebookPhotoData photoId=" + photoId + " link=" + link + " source=" + source +
 		" caption=" + caption + " createdTimestamp" + createdTimestamp + "}";
+	}
+	
+	static public String getPhotoIdFromLink(String link) {
+		if (link == null)
+            return null;
+		
+		int startOfPid = link.indexOf("pid=");
+		
+		if (startOfPid < 0)
+			return "";
+		
+		int endOfPid = link.indexOf("&", startOfPid);
+		// pid is not the last parameter normally, but just in case
+		if (endOfPid < 0)
+			endOfPid = link.length();
+		
+		return link.substring(startOfPid + 4, endOfPid);		
 	}
 }

@@ -212,6 +212,7 @@ public class FacebookAccount extends DBUnique {
 	// who are in the same photo (user id is different in both link and 
 	// souce for the photo), so it is just more convenient to store all 
 	// photos returned for each account separately.
+	// lazy by default
 	@OneToMany(mappedBy="facebookAccount")
 	public Set<FacebookPhotoDataStatus> getTaggedPhotos() {
 		return taggedPhotos;
