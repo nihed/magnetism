@@ -418,7 +418,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	}
 	
 	private class TaskSet implements DaemonRunnable {
-		private static final long BUCKET_SPACING_SECONDS = 60 * 4; // 4 minutes
+		private static final long BUCKET_SPACING_SECONDS = 60 * 1; // 1 minute
 		
 		// These fields are immutable
 		private long timeout;
