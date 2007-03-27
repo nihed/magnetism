@@ -280,7 +280,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		try {
 			// if person is a User then this will do fixups
 			groupMember = getGroupMember(group, person);
-			canAddSelf = (groupMember.getStatus().ordinal() > MembershipStatus.REMOVED.ordinal());
+			canAddSelf = (groupMember.getStatus().ordinal() >= MembershipStatus.REMOVED.ordinal());
 		} catch (NotFoundException e) {
 			groupMember = null;
 		}
