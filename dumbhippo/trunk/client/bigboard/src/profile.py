@@ -48,7 +48,7 @@ class Profile(libbig.AutoStruct, xml.sax.ContentHandler):
 class ProfileFactory:
 
     def __init__(self):
-        self._fetcher = libbig.AsyncHTTPFetcher()
+        self._fetcher = libbig.AsyncHTTPFetcher.getInstance()
         self._mugshot = mugshot.get_mugshot()
         self._baseurl = None
         self._mugshot.connect("initialized", lambda mugshot: self._sync_baseurl())
