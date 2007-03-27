@@ -61,7 +61,7 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 	}
 	
 	private PollingTaskEntry getEntry(PollingTask task) {
-		return getEntry(PollingTaskFamilyType.valueOf(task.getFamily().getName()), task.getIdentifier());
+		return em.find(PollingTaskEntry.class, task.getDbId());
 	}
 	
 	public void snapshot(Set<PollingTask> tasks) {

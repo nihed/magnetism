@@ -133,6 +133,8 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		public static final int MAX_FAMILY_NAME_LENGTH = 20;
 		public static final int MAX_TASK_ID_LENGTH = 128;
 
+		private long taskDbId = -1;
+		
 		// The following fields are only read and modified from the polling
 		// thread for the taskset that this task is currently in, so 
 		// don't need locking
@@ -253,6 +255,11 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		}
 		
 		public synchronized void syncStateFromTaskEntry(PollingTaskEntry entry) {
+			if (taskDbId == -1)
+				taskDbId = entry.getId();
+			else
+				assert(taskDbId != entry.getId());
+			
 			if (entry.getLastExecuted() != null)
 			    lastExecuted = entry.getLastExecuted().getTime();
 			else 
@@ -276,6 +283,10 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 				
 				dirty = false;
 			}
+		}
+
+		public long getDbId() {
+			return taskDbId;
 		}
 	}
 	
