@@ -849,9 +849,13 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	}
 	
 	public Date getMyApplicationUsageStart(UserViewpoint viewpoint) {
-		Query q = em.createQuery("SELECT MIN(au.date) from ApplicationUsage au where au.user = :user")
-			.setParameter("user", viewpoint.getViewer());
-		return (Date) q.getSingleResult();
+		try {
+			Query q = em.createQuery("SELECT MIN(au.date) from ApplicationUsage au where au.user = :user")
+				.setParameter("user", viewpoint.getViewer());
+			return (Date) q.getSingleResult();
+		} catch (NoResultException e) {
+			return null;
+		}
 	}
 	
 	public List<CategoryView> getPopularCategories(Date since) {

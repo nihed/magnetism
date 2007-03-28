@@ -59,7 +59,8 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler  implements LiveEv
 		Element childElement = document.addElement("myTopApplications", APPLICATIONS_NAMESPACE);
 		
 		Date since = applicationSystem.getMyApplicationUsageStart(viewpoint);
-		childElement.addAttribute("since", "" + since.getTime());	
+		if (since != null)
+			childElement.addAttribute("since", "" + since.getTime());	
 
 		Pageable<ApplicationView> pageable = new Pageable<ApplicationView>("applications");
 		pageable.setPosition(0);
