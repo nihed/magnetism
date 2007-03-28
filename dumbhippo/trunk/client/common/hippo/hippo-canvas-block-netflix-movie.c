@@ -410,8 +410,11 @@ hippo_canvas_block_netflix_movie_set_block(HippoCanvasBlock *canvas_block,
                                  "xalign", HIPPO_ALIGNMENT_START,
                                  "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                                  "text", hippo_netflix_movie_get_title(movie),
+                                 "url", hippo_netflix_movie_get_url(movie),
+                                 "underline", FALSE,
                                  "padding-left", 4,
                                  NULL);
+      
             hippo_canvas_box_append(box, title, 0);
             
             hippo_canvas_box_append(block_netflix->queue_list_box, HIPPO_CANVAS_ITEM(box), 0);            

@@ -38,7 +38,8 @@ static int signals[LAST_SIGNAL];
 enum {
     PROP_0,
     PROP_ACTIONS,
-    PROP_URL
+    PROP_URL,
+    PROP_UNDERLINE
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasUrlLink, hippo_canvas_url_link, HIPPO_TYPE_CANVAS_TEXT,
@@ -47,6 +48,7 @@ G_DEFINE_TYPE_WITH_CODE(HippoCanvasUrlLink, hippo_canvas_url_link, HIPPO_TYPE_CA
 static void
 hippo_canvas_url_link_init(HippoCanvasUrlLink *link)
 {
+    link->underline = TRUE;
 }
 
 static HippoCanvasItemIface *item_parent_class;
@@ -88,6 +90,15 @@ hippo_canvas_url_link_class_init(HippoCanvasUrlLinkClass *klass)
                                                         _("UI actions object"),
                                                         HIPPO_TYPE_ACTIONS,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY)); 
+
+    g_object_class_install_property(object_class,
+                                    PROP_UNDERLINE,
+                                    g_param_spec_boolean("underline",
+                                                         _("Underline"),
+                                                         _("Whether the link should be underlined"),
+                                                         TRUE,
+                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+
 }
 
 static void
@@ -109,19 +120,9 @@ hippo_canvas_url_link_new(void)
     return HIPPO_CANVAS_ITEM(link);
 }
 
-static void
-hippo_canvas_url_link_set_url(HippoCanvasUrlLink *link,
-                              const char         *url)
+static void 
+update_url_link(HippoCanvasUrlLink *link)
 {
-
-    if (url == link->url)
-        return;
-
-    if (link->url)
-        g_free(link->url);
-    
-    link->url = g_strdup(url);
-
     if (link->url) {
         PangoAttrList *attrs;
         PangoAttribute *a;
@@ -130,16 +131,34 @@ hippo_canvas_url_link_set_url(HippoCanvasUrlLink *link,
         
         attrs = pango_attr_list_new();
         
-        a = pango_attr_underline_new(PANGO_UNDERLINE_SINGLE);
-        a->start_index = 0;
-        a->end_index = G_MAXUINT;
-        pango_attr_list_insert(attrs, a);
+        if (link->underline) {
+            a = pango_attr_underline_new(PANGO_UNDERLINE_SINGLE);
+            a->start_index = 0;
+            a->end_index = G_MAXUINT;
+            pango_attr_list_insert(attrs, a);
+        }
+ 
         g_object_set(link, "attributes", attrs, NULL);
         pango_attr_list_unref(attrs);
     } else {
         g_object_set(link, "attributes", NULL, NULL);
         HIPPO_CANVAS_BOX(link)->clickable = FALSE;
     }
+}
+
+static void
+hippo_canvas_url_link_set_url(HippoCanvasUrlLink *link,
+                              const char         *url)
+{
+    if (url == link->url)
+        return;
+
+    if (link->url)
+        g_free(link->url);
+    
+    link->url = g_strdup(url);
+
+    update_url_link(link);
 }
 
 static void
@@ -163,6 +182,20 @@ hippo_canvas_url_link_set_actions(HippoCanvasUrlLink *link,
 }
 
 static void
+hippo_canvas_url_link_set_underline(HippoCanvasUrlLink *link,
+                                    gboolean           value)
+{
+    value = value != FALSE;
+    
+    if (link->underline == value)
+        return;
+
+    link->underline = value;
+    
+    update_url_link(link);
+}
+
+static void
 hippo_canvas_url_link_set_property(GObject         *object,
                                    guint            prop_id,
                                    const GValue    *value,
@@ -181,6 +214,9 @@ hippo_canvas_url_link_set_property(GObject         *object,
             HippoActions *new_actions = (HippoActions*) g_value_get_object(value);
             hippo_canvas_url_link_set_actions(link, new_actions);
         }
+        break;
+    case PROP_UNDERLINE:
+        hippo_canvas_url_link_set_underline(link, g_value_get_boolean(value));
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -204,6 +240,9 @@ hippo_canvas_url_link_get_property(GObject         *object,
         break;
     case PROP_ACTIONS:
         g_value_set_object(value, (GObject*) link->actions);
+        break;
+    case PROP_UNDERLINE:
+        g_value_set_boolean(value, link->underline);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
