@@ -3,7 +3,7 @@ import logging, time
 import gmenu, gobject, pango, gnomedesktop
 import hippo
 
-import bigboard, mugshot
+import bigboard, mugshot, libbig
 from big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox, CanvasVBox, ActionLink
 
 import appbrowser, apps_widgets
@@ -62,17 +62,21 @@ class AppDisplayLauncher(apps_widgets.AppDisplay):
 class AppsStock(bigboard.AbstractMugshotStock):
     STATIC_SET_SIZE = 7
     DYNAMIC_SET_SIZE = 7    
-    STATIFICATION_TIME_SEC = 60 * 60 * 24 * 3; # 3 days
+    STATIFICATION_TIME_SEC = 60 * 60 #* 24 * 3; # 3 days
     def __init__(self, *args, **kwargs):
         super(AppsStock, self).__init__(*args, **kwargs)        
         
         self.__box = CanvasVBox(spacing=3)
         self.__message = hippo.CanvasText()
+        self.__message_link = ActionLink()
+        self.__message_link.connect("button-press-event", lambda link, event: self.__on_message_link())
+        self.__message_link_url = None
         self.__subtitle = hippo.CanvasText(font="Bold 12px")
         self.__static_set = CanvasVBox()
         self.__dynamic_set = CanvasVBox()
         
         self.__box.append(self.__message)
+        self.__box.append(self.__message_link)        
         self.__box.append(self.__subtitle)        
         self.__box.append(self.__static_set)
         self.__box.append(self.__dynamic_set)        
@@ -94,10 +98,17 @@ class AppsStock(bigboard.AbstractMugshotStock):
             self.__app_browser = appbrowser.AppBrowser()            
         self.__app_browser.present()
         
-    def __set_message(self, text):
-        self.__box.set_child_visible(self.__message, not text is None)
+    def __on_message_link(self):
+        libbig.show_url(self.__message_link_url)
+        
+    def __set_message(self, text, link=None):
+        self.__box.set_child_visible(self.__message, (not text is None) and link is None)
+        self.__box.set_child_visible(self.__message_link, not (text is None or link is None))        
         if text:
             self.__message.set_property("text", text)
+            self.__message_link.set_property("text", text)
+        if link:
+            self.__message_link_url = link
             
     def __set_subtitle(self, text):
         self.__box.set_child_visible(self.__subtitle, not text is None)
@@ -155,6 +166,9 @@ class AppsStock(bigboard.AbstractMugshotStock):
             self._logger.debug("setting pinned app: %s", app)
             self.__static_set.append(display)
             self.__static_set_ids[app.get_id()] = True   
+        if (not self._mugshot.get_pinned_apps()) and self._mugshot.get_apps_enabled() is False:
+            self.__set_message("Enable application tracking", 
+                               self._mugshot.get_baseurl() + "/account")
         
         if not self._mugshot.get_pinned_apps() and \
            self._mugshot.get_my_app_usage_start() and self._mugshot.get_my_top_apps():
@@ -174,7 +188,7 @@ class AppsStock(bigboard.AbstractMugshotStock):
                     # this is generally true of any state setting
                     self.__set_message("Saving your applications...")
                     self._logger.debug("creating initial pin set: %s", pinned_ids)
-                    self._mugshot.set_pinned_apps(pinned_ids, self.__on_pinned_apps_success(pinned_ids))
+                    self._mugshot.set_pinned_apps(pinned_ids, lambda: self.__on_pinned_apps_success(pinned_ids))
                 else:
                     self.__set_message("Finding your application list...")                    
         

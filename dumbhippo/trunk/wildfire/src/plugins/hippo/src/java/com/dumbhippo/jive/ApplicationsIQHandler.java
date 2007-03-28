@@ -61,6 +61,8 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler  implements LiveEv
 		Date since = applicationSystem.getMyApplicationUsageStart(viewpoint);
 		if (since != null)
 			childElement.addAttribute("since", "" + since.getTime());	
+		
+		childElement.addAttribute("enabled", ""+identitySpider.getApplicationUsageEnabled(viewpoint.getViewer()));
 
 		Pageable<ApplicationView> pageable = new Pageable<ApplicationView>("applications");
 		pageable.setPosition(0);
