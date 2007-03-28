@@ -316,7 +316,7 @@ class Mugshot(gobject.GObject):
         root = doc.documentElement
         if not root.nodeName == expected_name:
             self._logger.warn("invalid root node, expected %s", expected_name)
-            return None
+            return []
         apps = []
         for node in root.childNodes:
             if not (node.nodeType == xml.dom.Node.ELEMENT_NODE):
@@ -359,6 +359,7 @@ class Mugshot(gobject.GObject):
     
     def get_my_top_apps(self):
         if self.__my_top_apps is None:
+            self.__my_top_apps = []
             self.__request_my_top_apps()
             self.__reset_my_apps_poll()
             return None
@@ -369,6 +370,7 @@ class Mugshot(gobject.GObject):
     
     def get_global_top_apps(self):
         if self.__global_top_apps is None:
+            self.__global_top_apps = []
             self.__request_global_top_apps()
             self.__reset_global_apps_poll()
             return None    
@@ -382,8 +384,12 @@ class Mugshot(gobject.GObject):
         self.emit("pinned-apps-changed", self.__pinned_apps)        
     
     def get_pinned_apps(self):
-        self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications",
-                              self.__on_pinned_apps)
+        if self.__pinned_apps is None:
+            self.__pinned_apps = []
+            self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications",
+                                  self.__on_pinned_apps)
+            return None
+        return self.__pinned_apps
         
     def set_pinned_apps(self, ids, cb):
         iq = StringIO.StringIO()
