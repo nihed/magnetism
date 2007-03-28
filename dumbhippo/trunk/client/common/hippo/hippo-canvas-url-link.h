@@ -24,6 +24,7 @@ struct _HippoCanvasUrlLink {
     HippoCanvasText text;
     HippoActions *actions;
     char *url;
+    unsigned int underline : 1;
 };
 
 struct _HippoCanvasUrlLinkClass {
