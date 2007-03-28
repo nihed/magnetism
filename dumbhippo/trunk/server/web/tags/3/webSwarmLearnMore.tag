@@ -26,6 +26,7 @@
 			<li>Join Groups that suit your interests, and get notified about new activity</li>
 		</ul>
 		<jsp:doBody/>		
+	</div>
 	</td>
 	</tr>
 </table>
