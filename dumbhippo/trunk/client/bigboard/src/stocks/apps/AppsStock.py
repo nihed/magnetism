@@ -64,23 +64,26 @@ class AppsStock(bigboard.AbstractMugshotStock):
     DYNAMIC_SET_SIZE = 7    
     STATIFICATION_TIME_SEC = 60 * 60 * 24 * 3; # 3 days
     def __init__(self, *args, **kwargs):
-        super(AppsStock, self).__init__(*args, **kwargs) 
-                
-        self.__initialized = False           
+        super(AppsStock, self).__init__(*args, **kwargs)        
         
         self.__box = CanvasVBox(spacing=3)
         self.__message = hippo.CanvasText()
+        self.__subtitle = hippo.CanvasText(font="Bold 12px")
         self.__static_set = CanvasVBox()
         self.__dynamic_set = CanvasVBox()
         
         self.__box.append(self.__message)
+        self.__box.append(self.__subtitle)        
         self.__box.append(self.__static_set)
+        self.__box.append(self.__dynamic_set)        
+        self.__box.set_child_visible(self.__dynamic_set, False)
         
         self.__app_browser = None
         self._add_more_link(self.__on_more_link)
-        
-        self._mugshot.connect("my-top-apps-changed", self.__handle_my_top_apps_changed)      
-        self._mugshot.connect("pinned-apps-changed", self.__handle_pinned_apps_changed)        
+
+        self._mugshot.connect("global-top-apps-changed", lambda mugshot, apps: self.__sync())  
+        self._mugshot.connect("my-top-apps-changed", lambda mugshot, apps: self.__sync())      
+        self._mugshot.connect("pinned-apps-changed", lambda mugshot, apps: self.__sync())        
         
         self.__static_set_ids = {}
         self.__set_message('Loading...')
@@ -95,6 +98,11 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self.__box.set_child_visible(self.__message, not text is None)
         if text:
             self.__message.set_property("text", text)
+            
+    def __set_subtitle(self, text):
+        self.__box.set_child_visible(self.__subtitle, not text is None)
+        if text:
+            self.__subtitle.set_property("text", text)        
 
     def _on_mugshot_ready(self):
         super(AppsStock, self)._on_mugshot_ready()
@@ -116,59 +124,63 @@ class AppsStock(bigboard.AbstractMugshotStock):
         for child in self.__static_set.get_children() + self.__dynamic_set.get_children():
             self.__set_item_size(child, size)        
             
-    def __handle_pinned_apps_changed(self, mugshot, apps):
-        self._logger.debug("pinned apps changed: %s", apps)
-        self.__static_set.remove_all()
-        self.__static_set_ids = {}
-        for app in apps:
-            display = apps_widgets.AppDisplay(app)
-            display.connect("button-press-event", lambda display, event: display.launch()) 
-            self.__static_set.append(display)           
-            self.__static_set_ids[app.get_id()] = True
-            
-        if not self.__initialized:
-            self.__initialized = True
-            
     def __on_pinned_apps_success(self, pinned_ids):
         self._logger.debug("app pin set succeeded")       
-        pinned = []
-        for id in pinned_ids:
-            pinned.append(self._mugshot.get_app(id))
-        self.__handle_pinned_apps_changed(None, pinned)
             
-    def __handle_my_top_apps_changed(self, mugshot, apps):
-        self._logger.debug("my apps changed")
+    def __set_dynamic_set(self, apps):
+        self.__dynamic_set.remove_all()        
+        i = 0
+        for app in apps or []:
+            if self.__static_set_ids.has_key(app.get_id()):
+                continue
+            if i > self.DYNAMIC_SET_SIZE:
+                break
+            self._logger.debug("setting dynamic app: %s", app)            
+            i += 1
+            display = apps_widgets.AppDisplay(app)
+            display.connect("button-press-event", lambda display, event: display.launch())             
+            self.__dynamic_set.append(display)
+                        
+    def __sync(self):
+        self._logger.debug("doing sync")
         
-        if self._mugshot.get_my_app_usage_start():
+        self.__set_message(None)        
+             
+        self.__box.set_child_visible(self.__dynamic_set, False)
+        self.__static_set.remove_all()
+        self.__static_set_ids = {}
+        for app in self._mugshot.get_pinned_apps() or []:
+            display = apps_widgets.AppDisplay(app)
+            display.connect("button-press-event", lambda display, event: display.launch()) 
+            self._logger.debug("setting pinned app: %s", app)
+            self.__static_set.append(display)
+            self.__static_set_ids[app.get_id()] = True   
+        
+        if not self._mugshot.get_pinned_apps() and \
+           self._mugshot.get_my_app_usage_start() and self._mugshot.get_my_top_apps():
             app_stalking_duration = (time.mktime(time.gmtime())) - (int(self._mugshot.get_my_app_usage_start())/1000) 
             self._logger.debug("comparing stalking duration %s to statification time %s", app_stalking_duration, self.STATIFICATION_TIME_SEC)            
-            if app_stalking_duration <= self.STATIFICATION_TIME_SEC:
-                self.__set_message("Building application list...")
-            else:
-                self.__set_message(None) 
             if len(self.__static_set.get_children()) == 0:
                 self._logger.debug("no static set")
+                self.__box.set_child_visible(self.__dynamic_set, True)                
                 if app_stalking_duration > self.STATIFICATION_TIME_SEC:                    
                     # We don't have a static set yet, time to make it
                     pinned_ids = []
-                    for app in apps:
+                    for app in self._mugshot.get_my_top_apps():
                         if len(pinned_ids) >= self.STATIC_SET_SIZE:
                             break
                         pinned_ids.append(app.get_id())
                     # FIXME - we need to retry if this fails for some reason                    
                     # this is generally true of any state setting
+                    self.__set_message("Saving your applications...")
                     self._logger.debug("creating initial pin set: %s", pinned_ids)
                     self._mugshot.set_pinned_apps(pinned_ids, self.__on_pinned_apps_success(pinned_ids))
+                else:
+                    self.__set_message("Finding your application list...")                    
         
-        self.__dynamic_set.remove_all()
         i = 0
-        for app in apps:
-            if self.__static_set_ids.has_key(app.get_id()):
-                continue
-            if i > self.DYNAMIC_SET_SIZE:
-                break
-            i += 1
-            display = apps_widgets.AppDisplay(app)
-            display.connect("button-press-event", lambda display, event: display.launch())             
-            self.__dynamic_set.append(display)
-            
+        self.__set_dynamic_set(self._mugshot.get_my_top_apps() or self._mugshot.get_global_top_apps())
+        self.__set_subtitle(None)        
+        if (not self._mugshot.get_my_top_apps()) and self._mugshot.get_global_top_apps():
+            self.__set_subtitle("Popular Applications")     
+    
