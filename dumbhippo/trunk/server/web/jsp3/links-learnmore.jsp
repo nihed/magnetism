@@ -54,7 +54,7 @@
 					<td align="left" valign="bottom"><img src="/images2/${buildStamp}/dragthis.gif"/></td>
 					<td align="center" valign="bottom">
 					<div id="dhBookmarkLink">
-					<a href="javascript:window.open('${bookmark.baseUrl}/sharelink?v=1&url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)+'&next=close','_NEW','menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=400,width=550,top='+((screen.availHeight-400)/2)+',left='+((screen.availWidth-550)/2));void(0);">Mugshot Web Swarm</a>
+					<a href="javascript:window.open('${bookmark.baseUrl}/sharelink?v=1&amp;url='+encodeURIComponent(location.href)+'&amp;title='+encodeURIComponent(document.title)+'&amp;next=close','_NEW','menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=400,width=550,top='+((screen.availHeight-400)/2)+',left='+((screen.availWidth-550)/2));void(0);">Mugshot Web Swarm</a>
 					</div>
 					</td>
 					<td align="right" valign="bottom"><img src="/images2/${dragDestImg}"/></td>
