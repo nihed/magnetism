@@ -96,6 +96,7 @@ class Mugshot(gobject.GObject):
         self.__applications = {} # <str>,<Application>
         self.__my_top_apps = None # <Application>
         self.__my_app_usage_start = None
+        self.__apps_enabled = None
         self.__pinned_apps = None
         self.__global_top_apps = None # <Application>
         
@@ -329,6 +330,8 @@ class Mugshot(gobject.GObject):
         doc = xml.dom.minidom.parseString(xml_str)        
         self.__my_top_apps = self.__parse_app_set('myTopApplications', doc)
         self.__my_app_usage_start = doc.documentElement.getAttribute("since")
+        self.__apps_enabled = doc.documentElement.getAttribute("enabled").lower() == 'true'
+        self._logger.debug("apps enabled: %s", self.__apps_enabled)        
         self._logger.debug("emitting my-top-apps-changed")
         self.emit("my-top-apps-changed", self.__my_top_apps)
         
@@ -382,6 +385,9 @@ class Mugshot(gobject.GObject):
         self.__pinned_apps = self.__parse_app_set('pinned', doc)
         self._logger.debug("emitting pinned-apps-changed")
         self.emit("pinned-apps-changed", self.__pinned_apps)        
+    
+    def get_apps_enabled(self):
+        return self.__apps_enabled
     
     def get_pinned_apps(self):
         if self.__pinned_apps is None:
