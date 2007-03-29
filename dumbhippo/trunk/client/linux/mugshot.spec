@@ -1,5 +1,5 @@
 Name:           mugshot
-Version:        1.1.39
+Version:        1.1.40
 Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
@@ -217,6 +217,9 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
+* Thu Mar 29 2007 Owen Taylor <otaylor@redhat.com> - 1.1.40-1
+- 1.1.40
+
 * Mon Mar 26 2007 Owen Taylor <otaylor@fresnel.dumbhippo.com> - 1.1.39-1
 - 1.1.39
 - Package mugshot.desktop for the menus as well
