@@ -78,6 +78,7 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self.__box.append(self.__message)
         self.__box.append(self.__message_link)        
         self.__box.append(self.__subtitle)        
+        
         self.__box.append(self.__static_set)
         self.__box.append(self.__dynamic_set)        
         self.__box.set_child_visible(self.__dynamic_set, False)
@@ -88,6 +89,9 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self._mugshot.connect("global-top-apps-changed", lambda mugshot, apps: self.__sync())  
         self._mugshot.connect("my-top-apps-changed", lambda mugshot, apps: self.__sync())      
         self._mugshot.connect("pinned-apps-changed", lambda mugshot, apps: self.__sync())        
+        self._mugshot.connect("pref-changed", lambda mugshot, key, value: self.__handle_pref_change(key, value))          
+        
+        self.__usage_enabled = False
         
         self.__static_set_ids = {}
         self.__set_message('Loading...')
@@ -134,9 +138,16 @@ class AppsStock(bigboard.AbstractMugshotStock):
         super(AppsStock, self).set_size(size)
         for child in self.__static_set.get_children() + self.__dynamic_set.get_children():
             self.__set_item_size(child, size)        
+
+    def __handle_pref_change(self, key, value):          
+        if key != 'applicationUsageEnabled':
+            return
+        self._logger.debug("handling %s pref change: %s", key, value)              
+        self.__sync()
             
     def __on_pinned_apps_success(self, pinned_ids):
         self._logger.debug("app pin set succeeded")       
+        self._mugshot.get_pinned_apps(force=True)
             
     def __set_dynamic_set(self, apps):
         self.__dynamic_set.remove_all()        
@@ -151,6 +162,8 @@ class AppsStock(bigboard.AbstractMugshotStock):
             display = apps_widgets.AppDisplay(app)
             display.connect("button-press-event", lambda display, event: display.launch())             
             self.__dynamic_set.append(display)
+        if i > 0:
+            self.__box.set_child_visible(self.__dynamic_set,True)
                         
     def __sync(self):
         self._logger.debug("doing sync")
@@ -166,18 +179,21 @@ class AppsStock(bigboard.AbstractMugshotStock):
             self._logger.debug("setting pinned app: %s", app)
             self.__static_set.append(display)
             self.__static_set_ids[app.get_id()] = True   
-        if (not self._mugshot.get_pinned_apps()) and self._mugshot.get_apps_enabled() is False:
+        self._mugshot.set_my_apps_poll_frequency(30 * 60) # 30 minutes
+        usage = self._mugshot.get_pref('applicationUsageEnabled')
+        self._logger.debug("usage: %s", usage)
+        if usage is False:
             self.__set_message("Enable application tracking", 
                                self._mugshot.get_baseurl() + "/account")
         
-        if not self._mugshot.get_pinned_apps() and \
-           self._mugshot.get_my_app_usage_start() and self._mugshot.get_my_top_apps():
-            app_stalking_duration = (time.mktime(time.gmtime())) - (int(self._mugshot.get_my_app_usage_start())/1000) 
-            self._logger.debug("comparing stalking duration %s to statification time %s", app_stalking_duration, self.STATIFICATION_TIME_SEC)            
-            if len(self.__static_set.get_children()) == 0:
-                self._logger.debug("no static set")
-                self.__box.set_child_visible(self.__dynamic_set, True)                
-                if app_stalking_duration > self.STATIFICATION_TIME_SEC:                    
+        if not self._mugshot.get_pinned_apps() and usage:          
+            self.__set_message("Finding your application list...")
+            self._mugshot.set_my_apps_poll_frequency(3 * 60) # 3 minutes                
+            if len(self.__static_set.get_children()) == 0 and self._mugshot.get_my_app_usage_start():
+                self._logger.debug("no static set")           
+                app_stalking_duration = (time.mktime(time.gmtime())) - (int(self._mugshot.get_my_app_usage_start())/1000) 
+                self._logger.debug("comparing stalking duration %s to statification time %s", app_stalking_duration, self.STATIFICATION_TIME_SEC)                  
+                if app_stalking_duration > self.STATIFICATION_TIME_SEC and self._mugshot.get_my_top_apps(): 
                     # We don't have a static set yet, time to make it
                     pinned_ids = []
                     for app in self._mugshot.get_my_top_apps():
@@ -188,10 +204,8 @@ class AppsStock(bigboard.AbstractMugshotStock):
                     # this is generally true of any state setting
                     self.__set_message("Saving your applications...")
                     self._logger.debug("creating initial pin set: %s", pinned_ids)
-                    self._mugshot.set_pinned_apps(pinned_ids, lambda: self.__on_pinned_apps_success(pinned_ids))
-                else:
-                    self.__set_message("Finding your application list...")                    
-        
+                    self._mugshot.set_pinned_apps(pinned_ids, lambda: self.__on_pinned_apps_success(pinned_ids))       
+                    
         i = 0
         self.__set_dynamic_set(self._mugshot.get_my_top_apps() or self._mugshot.get_global_top_apps())
         self.__set_subtitle(None)        

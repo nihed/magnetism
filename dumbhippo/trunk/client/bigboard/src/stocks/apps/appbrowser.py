@@ -245,7 +245,7 @@ class AppBrowser(hippo.CanvasWindow):
         
         self.__mugshot = mugshot.get_mugshot()
         self.__mugshot.connect("initialized", lambda mugshot: self.__sync())
-        self.__mugshot.connect("global-top-apps-changed", 
+        self.__mugshot.connect("my-top-apps-changed", 
                                lambda mugshot, apps: self.__sync())          
         self.__sync()
                 
@@ -275,7 +275,7 @@ class AppBrowser(hippo.CanvasWindow):
         self.__sync()
                 
     def __sync(self):
-        apps = self.__mugshot.get_global_top_apps()
+        apps = self.__mugshot.get_my_top_apps()
         if not apps:
             return
         _logger.debug("handling top apps changed")        
