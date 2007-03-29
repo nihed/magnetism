@@ -757,7 +757,11 @@ public class FeedSystemBean implements FeedSystem {
 	}
 
 	public List<FeedEntry> getCurrentEntries(Feed feed) {
-		Query q = em.createQuery("SELECT fe FROM FeedEntry fe " +
+		// The FETCH join here is used to encourage Hibernate to go ahead and
+		// use a join query; the default behavior is to do a separate select
+		// per per result, possibly because LinkResource is cached in the
+		// second-level cache.
+		Query q = em.createQuery("SELECT fe FROM FeedEntry fe LEFT JOIN FETCH fe.link " +
 				                 "WHERE fe.feed = :feed AND fe.current = 1" +
 				                 "ORDER BY fe.date DESC");
 		q.setParameter("feed", feed);
