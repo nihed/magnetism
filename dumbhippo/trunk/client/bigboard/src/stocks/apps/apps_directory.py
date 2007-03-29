@@ -3,6 +3,9 @@ import logging, time
 import gmenu, gobject, pango, gnomedesktop
 
 class AppDirectory(gobject.GObject):
+    __gsignals__ = {
+        "changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+    }
     def __init__(self):
         gobject.GObject.__init__(self)
         self._logger = logging.getLogger('bigboard.AppsDirectory')
@@ -28,6 +31,10 @@ class AppDirectory(gobject.GObject):
         self._apps = {} 
         self._append_directory(self._tree.root)
         self._logger.debug("app read complete (%d apps)", len(self._apps.keys()))
+        self.emit("changed")
+        
+    def get_apps(self):
+        return self._apps.iterkeys()
         
     def lookup(self, desktop_name):
         if not (desktop_name[-8:] == '.desktop'):
