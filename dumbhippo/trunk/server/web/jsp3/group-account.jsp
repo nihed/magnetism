@@ -78,7 +78,7 @@
     
     <dht3:shinyBox color="orange">
         <c:choose>
-		    <c:when test="${group.public}">
+		    <c:when test="${!group.private}">
 		        <div class="dh-section-header">Public Info</div>
 		        <div class="dh-section-explanation">This information will be visible on the <a href="/group?who=${group.viewedGroupId}">group page</a>.</div>
 			</c:when>
