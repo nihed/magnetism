@@ -56,6 +56,7 @@ class Mugshot(gobject.GObject):
         "connection-status": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
         "self-known" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "network-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        "pref-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
         "global-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "my-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "pinned-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))        
@@ -70,7 +71,8 @@ class Mugshot(gobject.GObject):
             raise Exception("use mugshot.get_mugshot()")
         self.__my_apps_poll_id = 0
         self.__global_apps_poll_id = 0
-        
+
+        self.__my_app_poll_frequency_ms = 30 * 60 * 1000
         self.__app_poll_frequency_ms = 30 * 60 * 1000
         
         self._logger.debug("connecting to session bus")            
@@ -91,6 +93,7 @@ class Mugshot(gobject.GObject):
         self.__self_proxy = None
         self.__self = None
         self.__self_path = None
+        self.__prefs = {}
         self.__network = None
         self.__entities = {} # <str>,<Entity>
         self.__applications = {} # <str>,<Application>
@@ -109,13 +112,15 @@ class Mugshot(gobject.GObject):
         if self.__my_apps_poll_id > 0:
             gobject.source_remove(self.__my_apps_poll_id)
             self.__my_apps_poll_id = 0
-        self.__my_apps_poll_id = gobject.timeout_add(self.__app_poll_frequency_ms, self.__idle_poll_my_apps)
+        self.__my_apps_poll_id = gobject.timeout_add(self.__my_app_poll_frequency_ms, 
+                                                     self.__idle_poll_my_apps)
         
     def __reset_global_apps_poll(self):
         if self.__global_apps_poll_id > 0:
             gobject.source_remove(self.__global_apps_poll_id)
             self.__global_apps_poll_id = 0
-        self.__global_apps_poll_id = gobject.timeout_add(self.__app_poll_frequency_ms, self.__idle_poll_global_apps)        
+        self.__global_apps_poll_id = gobject.timeout_add(self.__app_poll_frequency_ms, 
+                                                         self.__idle_poll_global_apps)        
         
     def __create_proxy(self):
         try:        
@@ -123,6 +128,7 @@ class Mugshot(gobject.GObject):
             self._logger.debug("creating proxy for org.mugshot.Mugshot")
             self.__proxy = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
             self.__proxy.connect_to_signal('ConnectionStatusChanged', _log_cb(self.__on_connection_status_changed))
+            self.__proxy.connect_to_signal('PrefChanged', _log_cb(self.__on_pref_changed))            
             self.__proxy.connect_to_signal('ExternalIQReturn', _log_cb(self.__externalIQReturn))
             self.__get_connection_status()    
             self.__proxy.GetBaseProperties(reply_handler=_log_cb(self.__on_get_baseprops), error_handler=self.__on_dbus_error)            
@@ -157,6 +163,23 @@ class Mugshot(gobject.GObject):
     def __on_connection_status_changed(self):
         self._logger.debug("connection status changed")        
         self.__get_connection_status()
+    
+    def get_pref(self, key):
+        if self.__prefs.has_key(key):
+            return self.__prefs[key]
+        return None
+        
+    def __on_pref_changed(self, key, value):
+        self._logger.debug("pref %s changed: %s", key, value)  
+        changed = False
+        if not self.__prefs.has_key(key):
+            changed = True            
+            self.__prefs[key] = value
+        elif self.__prefs[key] != value:
+            changed = True
+            self.__prefs[key] = value
+        if changed:
+            self.emit("pref-changed", key, value)
             
     def __externalIQReturn(self, id, content):
         if self.__external_iqs.has_key(id):
@@ -330,8 +353,10 @@ class Mugshot(gobject.GObject):
         doc = xml.dom.minidom.parseString(xml_str)        
         self.__my_top_apps = self.__parse_app_set('myTopApplications', doc)
         self.__my_app_usage_start = doc.documentElement.getAttribute("since")
-        self.__apps_enabled = doc.documentElement.getAttribute("enabled").lower() == 'true'
-        self._logger.debug("apps enabled: %s", self.__apps_enabled)        
+        # kind of a hack, but we do this to ensure we always know the state; 
+        # currently prefs are not retrieved on startup
+        self.__prefs['applicationUsageEnabled'] = doc.documentElement.getAttribute("enabled").lower() == 'true'
+        self.emit("pref-changed", "applicationUsageEnabled", self.__prefs['applicationUsageEnabled'])   
         self._logger.debug("emitting my-top-apps-changed")
         self.emit("my-top-apps-changed", self.__my_top_apps)
         
@@ -349,9 +374,14 @@ class Mugshot(gobject.GObject):
         self.__do_external_iq("topApplications", "http://dumbhippo.com/protocol/applications",
                              self.__on_top_applications)        
             
+    def __request_pinned_apps(self):
+        self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications",
+                              self.__on_pinned_apps)
+            
     def __idle_poll_my_apps(self):
         self.__request_my_top_apps()
-        return True
+        self.__reset_my_apps_poll()
+        return False
     
     def __idle_poll_global_apps(self):
         self.__request_global_top_apps()
@@ -360,9 +390,10 @@ class Mugshot(gobject.GObject):
     def get_app(self, guid):
         return self.__applications[guid]
     
-    def get_my_top_apps(self):
-        if self.__my_top_apps is None:
-            self.__my_top_apps = []
+    def get_my_top_apps(self, force=False):
+        if self.__my_top_apps is None or force:
+            if not force:            
+                self.__my_top_apps = []
             self.__request_my_top_apps()
             self.__reset_my_apps_poll()
             return None
@@ -371,9 +402,17 @@ class Mugshot(gobject.GObject):
     def get_my_app_usage_start(self):
         return self.__my_app_usage_start
     
-    def get_global_top_apps(self):
-        if self.__global_top_apps is None:
-            self.__global_top_apps = []
+    def set_my_apps_poll_frequency(self, poll_interval_secs):
+        ms = poll_interval_secs * 1000
+        reset = ms < self.__my_app_poll_frequency_ms
+        self.__my_app_poll_frequency_ms = ms
+        if reset:
+            self.__reset_my_apps_poll()
+    
+    def get_global_top_apps(self, force=False):
+        if self.__global_top_apps is None or force:
+            if not force:            
+                self.__global_top_apps = []
             self.__request_global_top_apps()
             self.__reset_global_apps_poll()
             return None    
@@ -386,14 +425,11 @@ class Mugshot(gobject.GObject):
         self._logger.debug("emitting pinned-apps-changed")
         self.emit("pinned-apps-changed", self.__pinned_apps)        
     
-    def get_apps_enabled(self):
-        return self.__apps_enabled
-    
-    def get_pinned_apps(self):
-        if self.__pinned_apps is None:
-            self.__pinned_apps = []
-            self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications",
-                                  self.__on_pinned_apps)
+    def get_pinned_apps(self, force=False):
+        if self.__pinned_apps is None or force:
+            if not force:
+                self.__pinned_apps = []
+            self.__request_pinned_apps()
             return None
         return self.__pinned_apps
         
