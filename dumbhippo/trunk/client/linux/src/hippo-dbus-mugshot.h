@@ -57,6 +57,10 @@ DBusMessage* hippo_dbus_mugshot_signal_connection_changed       (HippoDBus      
 DBusMessage* hippo_dbus_mugshot_signal_whereim_changed      (HippoDBus            *dbus,
                                                              HippoConnection      *xmpp_connection,
                                                              HippoExternalAccount *acct);
+
+DBusMessage* hippo_dbus_mugshot_signal_pref_changed         (HippoDBus            *dbus,
+                                                             const char           *key,
+                                                             gboolean              value);
                                                              
 DBusMessage* hippo_dbus_mugshot_signal_entity_changed       (HippoDBus            *dbus,
                                                              HippoEntity          *entity);

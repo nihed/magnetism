@@ -30,6 +30,10 @@ void       hippo_dbus_notify_auth_changed      (HippoDBus   *dbus);
 
 void       hippo_dbus_notify_contacts_loaded   (HippoDBus   *dbus);
 
+void       hippo_dbus_notify_pref_changed      (HippoDBus   *dbus,
+                                                const char  *key,
+                                                gboolean     value);
+
 void       hippo_dbus_notify_xmpp_connected    (HippoDBus   *dbus,
                                                 gboolean     connected);
                                                 

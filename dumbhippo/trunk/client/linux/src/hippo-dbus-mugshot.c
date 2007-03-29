@@ -442,6 +442,22 @@ hippo_dbus_mugshot_signal_entity_changed(HippoDBus            *dbus,
     return signal;
 }
 
+DBusMessage*
+hippo_dbus_mugshot_signal_pref_changed(HippoDBus            *dbus,
+                                       const char           *key,
+                                       gboolean              value)
+{
+    DBusMessage *signal;
+    signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
+                                     HIPPO_DBUS_MUGSHOT_INTERFACE,
+                                     "PrefChanged");
+    dbus_message_append_args(signal, 
+                             DBUS_TYPE_STRING, &key,
+                             DBUS_TYPE_BOOLEAN, &value, 
+                             DBUS_TYPE_INVALID);
+    return signal;
+}
+
 DBusMessage* 
 hippo_dbus_mugshot_signal_external_iq_return(HippoDBus            *dbus,
                                              guint                 id,

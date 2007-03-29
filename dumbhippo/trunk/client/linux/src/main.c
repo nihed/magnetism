@@ -1230,6 +1230,17 @@ on_contacts_loaded(HippoConnection *connection,
 }
 
 static void
+on_pref_changed(HippoConnection *connection,
+                const char      *key,
+                gboolean         value,
+                void            *data)
+{
+    HippoApp *app = data;
+
+    hippo_dbus_notify_pref_changed(app->dbus, key, value);
+}
+
+static void
 on_whereim_changed(HippoConnection            *connection,
                    HippoExternalAccount       *acct,
                    void                       *data)
@@ -1337,7 +1348,9 @@ hippo_app_new(HippoInstanceType  instance_type,
     g_signal_connect(G_OBJECT(app->connection), "initial-application-burst",
                      G_CALLBACK(on_initial_application_burst), app);
     g_signal_connect(G_OBJECT(app->connection), "contacts-loaded", 
-                     G_CALLBACK(on_contacts_loaded), app);                     
+                     G_CALLBACK(on_contacts_loaded), app);
+    g_signal_connect(G_OBJECT(app->connection), "pref-changed", 
+                     G_CALLBACK(on_pref_changed), app);   
                      
     /* Hook up D-BUS reflectors */
     g_signal_connect(G_OBJECT(app->connection), "whereim-changed",

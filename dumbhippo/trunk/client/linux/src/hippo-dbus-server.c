@@ -2014,6 +2014,17 @@ hippo_dbus_notify_entity_changed(HippoDBus               *dbus,
     dbus_message_unref(signal);
 }
 
+void
+hippo_dbus_notify_pref_changed(HippoDBus   *dbus,
+                               const char  *key,
+                               gboolean     value)
+{
+    DBusMessage *signal;
+    signal = hippo_dbus_mugshot_signal_pref_changed(dbus, key, value);
+    dbus_connection_send(dbus->connection, signal, NULL);
+    dbus_message_unref(signal);	
+}
+       
 void       
 hippo_dbus_notify_external_iq_return (HippoDBus            *dbus,
                                       guint                 id,
