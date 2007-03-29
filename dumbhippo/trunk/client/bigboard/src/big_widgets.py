@@ -251,6 +251,7 @@ class CommandShell(gtk.Window):
         paned = gtk.VPaned()
         self.output = gtk.TextBuffer()
         self.output_view = gtk.TextView(self.output)
+        self.output_view.set_wrap_mode(gtk.WRAP_WORD)
         self.output_view.set_property("editable", False)
         scroll = gtk.ScrolledWindow()
         scroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_ALWAYS)
@@ -259,6 +260,7 @@ class CommandShell(gtk.Window):
 
         self.input = gtk.TextBuffer()
         self.input_view = gtk.TextView(self.input)
+        self.input_view.set_wrap_mode(gtk.WRAP_WORD)        
         self.input.connect("changed", self._handle_text_changed)
         scroll = gtk.ScrolledWindow()
         scroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_ALWAYS)        
