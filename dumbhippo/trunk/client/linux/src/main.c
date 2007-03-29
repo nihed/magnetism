@@ -840,6 +840,7 @@ hippo_app_get_pointer_position (HippoApp *app,
     return pointer_screen == screen;
 }
 
+#if 0
 static void
 on_new_installed_response(GtkWidget *dialog,
                           int        response_id,
@@ -854,6 +855,7 @@ on_new_installed_response(GtkWidget *dialog,
         ; /* nothing to do */
     }
 }
+#endif
 
 static void
 hippo_app_check_installed(HippoApp *app)
@@ -894,6 +896,12 @@ hippo_app_check_installed(HippoApp *app)
     g_free(contents);
     
     if (hippo_compare_versions(VERSION, version_str) < 0) {
+        /* Since our chat windows run in the Firefox process, we can just restart
+         * and not bother the user with a prompt (as in the commented out code
+         * below.)
+         */
+        hippo_app_restart(app);
+#if 0
         gboolean too_old;
         
         g_debug("Our version %s is older than installed '%s'", VERSION, version_str);
@@ -930,7 +938,8 @@ hippo_app_check_installed(HippoApp *app)
                 G_CALLBACK(gtk_widget_destroyed), &app->installed_dialog);
         }
         
-        gtk_window_present(GTK_WINDOW(app->installed_dialog));        
+        gtk_window_present(GTK_WINDOW(app->installed_dialog));
+#endif        
     }
     
     g_free(version_str);
