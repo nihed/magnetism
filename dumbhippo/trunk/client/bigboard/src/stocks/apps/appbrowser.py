@@ -12,7 +12,7 @@ _logger = logging.getLogger("bigboard.AppBrowser")
 
 class AppOverview(PrelightingCanvasBox):
     def __init__(self, app=None):
-        super(AppOverview, self).__init__(box_width=200, border=1, border_color=0x666666FF)
+        super(AppOverview, self).__init__(box_width=200, border=1, border_color=0x666666FF, padding=2)
         
         self.__header = apps_widgets.AppDisplay()
         self.append(self.__header)
@@ -21,11 +21,11 @@ class AppOverview(PrelightingCanvasBox):
                                               text="""Lorem ipsum dolor sit amet, consectetuer adipiscing elit.""")
         self.append(self.__description)     
         
-        self.__updated = hippo.CanvasText(text="Last updated")
+        self.__updated = hippo.CanvasText(text="Last updated", xalign=hippo.ALIGNMENT_START)
         self.append(self.__updated)
-        self.__homelink = ActionLink(text="Developer's home page")
+        self.__homelink = ActionLink(text="Developer's home page", xalign=hippo.ALIGNMENT_START)
         self.append(self.__homelink)
-        self.__bugreport = ActionLink(text="Submit a bug report")
+        self.__bugreport = ActionLink(text="Submit a bug report", xalign=hippo.ALIGNMENT_START)
         self.append(self.__bugreport)
         
         if app:
