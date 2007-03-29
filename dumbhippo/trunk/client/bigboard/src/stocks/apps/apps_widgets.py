@@ -28,6 +28,8 @@ class AppDisplay(PhotoContentItem):
         self.set_child(self.__box)
         
         self.__desktop_entry = None        
+        ad = apps_directory.get_app_directory()            
+        ad.connect("changed", lambda ad: self.__app_display_sync())
         
         if app:
             self.set_app(app)
@@ -62,6 +64,8 @@ class AppDisplay(PhotoContentItem):
         return not self.__desktop_entry is None
     
     def __app_display_sync(self):
+        if not self.__app:
+            return
         self.__title.set_property("text", self.__app.get_name())
         self.__description.set_property("text", self.__app.get_description())
         self.__photo.set_url(self.__app.get_icon_url())
