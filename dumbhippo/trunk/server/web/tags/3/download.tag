@@ -4,24 +4,25 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="page" required="false" type="java.lang.String" %>
+<%@ attribute name="allowInactive" required="false" type="java.lang.Boolean" %>
 
-<c:if test="${signin.active || !signin.valid}"> <%-- Skip the whole thing when disabled --%>
+<c:if test="${!signin.disabled}"> <%-- Skip the whole thing when disabled --%>
 
-<table id="dhLearnMoreNextStep" cellspacing="0" cellpadding="0">
+<table id="dhDownload" cellspacing="0" cellpadding="0">
 <tr>
 <c:choose>
 	<c:when test="${signin.valid}">
 		<td>
 		    <dh:bean id="download" class="com.dumbhippo.web.DownloadBean" scope="request"/>
 			<c:if test="${!empty download.download}">
-				<div class="dh-learnmore-summary">
+				<div class="dh-download-summary">
 					Get the Mugshot download to use all the Mugshot features<c:out value="${option}"/> It's easy and free!
 				</div>    
 			</c:if>
 		    <c:choose>
 			    <c:when test="${download.windowsRequested}">					
 					<div class="dh-download-buttons">
-						<a id="dhDownloadProduct" class="dh-download-product" href="${download.download.url}"><img id="dhDownloadImage" src="/images3/${buildStamp}/download_now_button.gif"/></a>
+						<a id="dhDownloadButton" class="dh-download-button" href="${download.download.url}"><img id="dhDownloadImage" src="/images3/${buildStamp}/download_now_button.gif"/></a>
 					</div>
 			    </c:when>
 			    <c:when test="${download.linuxRequested}">					
@@ -63,7 +64,7 @@
 							var downloadUrl = downloadSelect.options[downloadSelect.selectedIndex].value;
 
 							if (downloadUrl != null) {
-								var downloadButton = document.getElementById("dhDownloadProduct");
+								var downloadButton = document.getElementById("dhDownloadButton");
 								downloadButton.href = downloadUrl;
 								
 								var downloadImage = document.getElementById("dhDownloadImage");
@@ -72,20 +73,20 @@
 				    	}
 			    	</script>
 					<c:if test="${empty download.download}">
-						<div class="dh-learnmore-summary">
+						<div class="dh-download-summary">
 							We don't have an official binary of the Mugshot client for your version of Linux yet.
 						</div>    
-						<div class="dh-learnmore-subheading">
+						<div class="dh-download-subheading">
 							Downloads for other Linux versions
 						</div>
 					</c:if>
 					<div class="dh-download-buttons">
 						<c:choose>
 							<c:when test="${!empty download.download}">
-								<a id="dhDownloadProduct" class="dh-download-product" href="${download.download.url}"><img id="dhDownloadImage" src="/images3/${buildStamp}/download_now_button.gif"/></a>
+								<a id="dhDownloadButton" class="dh-download-button" href="${download.download.url}"><img id="dhDownloadImage" src="/images3/${buildStamp}/download_now_button.gif"/></a>
 							</c:when>
 							<c:otherwise>
-								<a id="dhDownloadProduct" class="dh-download-product"><img id="dhDownloadImage" src="/images3/${buildStamp}/download_now_disabled.gif"/></a>
+								<a id="dhDownloadButton" class="dh-download-button"><img id="dhDownloadImage" src="/images3/${buildStamp}/download_now_disabled.gif"/></a>
 							</c:otherwise>
 						</c:choose>
 					    <select id="dhDownloadDistribution" onChange="dhDistributionOnChange()">
@@ -121,18 +122,18 @@
 					    </select>
 					</div>
 					<c:if test="${empty download.download}">
-						<div class="dh-learnmore-subheading">
+						<div class="dh-download-subheading">
 						    <a href="http://developer.mugshot.org/wiki/Downloads">Source code and contributed binaries</a>
 						</div>    
 					</c:if>
 				</c:when>
 		        <c:when test="${download.macRequested}">
-					<div class="dh-learnmore-summary">
+					<div class="dh-download-summary">
 			            We're still working on Mac OS X support. However, you can view <a href="/">your Mugshot Stacker</a> on the web.
 		            </div>
 		        </c:when>
 			    <c:otherwise>
-					<div class="dh-learnmore-summary">
+					<div class="dh-download-summary">
 				        We don't have a Mugshot Client for your computer yet. However, you can view <a href="/">your Mugshot Stacker</a> on the web.
 			        </div>
 			    </c:otherwise>
@@ -171,7 +172,7 @@
 	</c:when>
 	<c:otherwise>
 		<td>
-		    <table id="dhLearnMoreButtons" class="dh-download-buttons" cellspacing="0" cellpadding="0">
+		    <table id="dhDownloadButtons" class="dh-download-buttons" cellspacing="0" cellpadding="0">
 		    <tr>
 		    <td><span class="dh-button"><a href="/signup"><img src="/images3/${buildStamp}/signup.gif"/></a></span></td>
 		    <td valign="middle" align="center"><span class="dh-download-buttons-or">or</span></td>

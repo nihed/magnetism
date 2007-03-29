@@ -17,7 +17,7 @@
 	<dht3:shinyBox color="grey">
 		<div class="dh-download-header-area">
 			<div class="dh-download-header">Mugshot Stacker</div>
-			<dht3:learnMoreNextStep page="stacker"/>
+			<dht3:download page="stacker-learnmore"/>
 		</div>
 		<dht3:stackerLearnMore>
 			<hr height="1px" color="#666666" style="margin: 10px 0px"/>
