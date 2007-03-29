@@ -54,18 +54,17 @@ class EventDisplay(PhotoContentItem):
         os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', self.__event.get_link())
 
 class CalendarStock(bigboard.AbstractMugshotStock):
-    def __init__(self):
-        super(CalendarStock, self).__init__("Calendar")
-        self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
-        self._events = {}
+    def __init__(self, *args, **kwargs):
+        super(CalendarStock, self).__init__(*args, **kwargs)
+        self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
+        self.__events = {}
 
+    def _on_mugshot_ready(self):
+        super(CalendarStock, self)._on_mugshot_ready()
         self.__update_events()
 
-    def _on_mugshot_initialized(self):
-        super(CalendarStock, self)._on_mugshot_initialized()
-
-    def get_content(self, size):
-        return self._box
+    def get_authed_content(self, size):
+        return self.__box
             
     def _set_item_size(self, item, size):
         if size == bigboard.Stock.SIZE_BULL:
@@ -76,14 +75,14 @@ class CalendarStock(bigboard.AbstractMugshotStock):
             
     def set_size(self, size):
         super(CalendarStock, self).set_size(size)
-        for child in self._box.get_children():
+        for child in self.__box.get_children():
             self._set_item_size(child, size)        
 
     def __on_load_events(self, events):
-        self._box.remove_all()
+        self.__box.remove_all()
         for event in events:
             display = EventDisplay(event)
-            self._box.append(display)
+            self.__box.append(display)
 
     def __on_failed_load(self, exc_info):
         pass
