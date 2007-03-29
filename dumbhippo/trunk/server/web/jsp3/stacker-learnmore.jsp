@@ -14,6 +14,7 @@
 </head>
 
 <dht3:page currentPageLink="stacker-learnmore">
+	<dht3:accountStatus includeDownload="false"/>
 	<dht3:shinyBox color="grey">
 		<div class="dh-download-header-area">
 			<div class="dh-download-header">Mugshot Stacker</div>

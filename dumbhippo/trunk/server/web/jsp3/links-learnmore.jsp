@@ -29,6 +29,7 @@
 </c:choose>
 
 <dht3:page currentPageLink="links-learnmore">
+	<dht3:accountStatus includeDownload="false"/>
 	<dht3:shinyBox color="grey">
 		<div class="dh-download-header-area">
 			<div class="dh-download-header">Web Swarm</div>

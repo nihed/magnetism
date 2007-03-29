@@ -8,10 +8,8 @@
 
 <c:if test="${!signin.disabled}"> <%-- Skip the whole thing when disabled --%>
 
-<table id="dhDownload" cellspacing="0" cellpadding="0">
-<tr>
-<c:choose>
-	<c:when test="${signin.valid}">
+	<table id="dhDownload" cellspacing="0" cellpadding="0">
+	<tr>
 		<td>
 		    <dh:bean id="download" class="com.dumbhippo.web.DownloadBean" scope="request"/>
 			<c:if test="${!empty download.download}">
@@ -21,9 +19,7 @@
 			</c:if>
 		    <c:choose>
 			    <c:when test="${download.windowsRequested}">					
-					<div class="dh-download-buttons">
-						<a id="dhDownloadButton" class="dh-download-button" href="${download.download.url}"><img id="dhDownloadImage" src="/images3/${buildStamp}/download_now_button.gif"/></a>
-					</div>
+					<dht3:downloadButton disabled="${(signin.valid && !signin.active) || empty download.download}" url="${download.download.url}"/>
 			    </c:when>
 			    <c:when test="${download.linuxRequested}">					
 				    <dh:script module="dh.util"/>
@@ -51,6 +47,7 @@
 					    		var downloads = dhDownloadDistributions[downloadIndex];
 				    		
 					    		var downloadSelect = document.getElementById("dhDownloadDownload");
+					    		downloadSelect.style.display = "inline";
 					    		downloadSelect.options.length = 0;
 					    		for (var i = 0; i < downloads.length; i++)
 						   			downloadSelect.add(new Option(downloads[i].architecture, downloads[i].url), null);
@@ -81,15 +78,8 @@
 						</div>
 					</c:if>
 					<div class="dh-download-buttons">
-						<c:choose>
-							<c:when test="${!empty download.download}">
-								<a id="dhDownloadButton" class="dh-download-button" href="${download.download.url}"><img id="dhDownloadImage" src="/images3/${buildStamp}/download_now_button.gif"/></a>
-							</c:when>
-							<c:otherwise>
-								<a id="dhDownloadButton" class="dh-download-button"><img id="dhDownloadImage" src="/images3/${buildStamp}/download_now_disabled.gif"/></a>
-							</c:otherwise>
-						</c:choose>
-					    <select id="dhDownloadDistribution" onChange="dhDistributionOnChange()">
+						<dht3:downloadButton disabled="${(signin.valid && !signin.active) || empty download.download}" url="${download.download.url}"/>
+					    <dht3:downloadSelect id="dhDownloadDistribution" onchange="dhDistributionOnChange()" disabled="${signin.valid && !signin.active}">
 					    	<c:if test="${empty download.download}">
 					    		<option value="-1" selected="1">&lt;Choose Version&gt;</option>
 				    		</c:if>
@@ -105,8 +95,8 @@
 				    				</c:choose>
 								</c:if> 
 				    		</c:forEach>
-					    </select>
-					    <select id="dhDownloadDownload" onChange="dhDownloadOnChange()">
+					    </dht3:downloadSelect>
+					    <dht3:downloadSelect id="dhDownloadDownload" onchange="dhDownloadOnChange()" disabled="${signin.valid && !signin.active}" style="${empty download.download ? 'display: none;' : ''}">
 					    	<c:if test="${!empty download.download}">
 					    		<c:forEach items="${download.download.distribution.downloads}" var="d">
 					    			<c:choose>
@@ -119,7 +109,7 @@
 				    				</c:choose>
 					    		</c:forEach>
 					    	</c:if>
-					    </select>
+					    </dht3:downloadSelect>
 					</div>
 					<c:if test="${empty download.download}">
 						<div class="dh-download-subheading">
@@ -169,20 +159,6 @@
 			    <a href="http://developer.mugshot.org/wiki/Downloads">Source code and contributed binaries for other platforms</a>.
 		    </c:if>
 		</td>
-	</c:when>
-	<c:otherwise>
-		<td>
-		    <table id="dhDownloadButtons" class="dh-download-buttons" cellspacing="0" cellpadding="0">
-		    <tr>
-		    <td><span class="dh-button"><a href="/signup"><img src="/images3/${buildStamp}/signup.gif"/></a></span></td>
-		    <td valign="middle" align="center"><span class="dh-download-buttons-or">or</span></td>
-		    <td><span class="dh-button"><a href="/who-are-you"><img src="/images3/${buildStamp}/login.gif"/></a></span></td>
-		    </tr>
-		    </table>
-	    </td>
-	</c:otherwise>
-</c:choose>
-</tr>
-</table>	
-
+	</tr>
+	</table>	
 </c:if>
