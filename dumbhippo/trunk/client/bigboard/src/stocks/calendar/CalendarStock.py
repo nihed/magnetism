@@ -11,8 +11,6 @@ class EventDisplay(PhotoContentItem):
         PhotoContentItem.__init__(self, border_right=6)
         self.__event = None
                 
-        self.__photo = CanvasMugshotURLImage(scale_width=30, scale_height=30)
-        self.set_photo(self.__photo)
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=2, 
                                      border_right=4)
         self.__title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
@@ -42,8 +40,8 @@ class EventDisplay(PhotoContentItem):
         return '<EventDisplay name="%s">' % (self.__get_title())
     
     def __event_display_sync(self):
-        self.__title.set_property("text", self.__event.get_title() + " " + str(self.__event.get_start_time()))
-        #self.__photo.set_url(self.__event.get_icon_url())
+        self.__title.set_property("text", self.__event.get_title())
+        self.__description.set_property("text", str(self.__event.get_start_time()))
         
     def __on_button_press(self, event):
         if event.button != 1:
@@ -71,7 +69,7 @@ class CalendarStock(bigboard.AbstractMugshotStock):
             item.set_property('xalign', hippo.ALIGNMENT_FILL)
         else:
             item.set_property('xalign', hippo.ALIGNMENT_CENTER)
-        item.set_size(size)            
+        item.set_size(size)       
             
     def set_size(self, size):
         super(CalendarStock, self).set_size(size)

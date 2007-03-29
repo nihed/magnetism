@@ -1,4 +1,4 @@
-import httplib2, keyring, libbig, sys, xml, xml.sax, logging, threading, gobject, gtk
+import httplib2, keyring, libbig, sys, xml, xml.sax, logging, threading, gobject, gtk, datetime
 
 class AbstractDocument(libbig.AutoStruct):
     def __init__(self):
@@ -59,6 +59,28 @@ class Event(libbig.AutoStruct):
         libbig.AutoStruct.__init__(self,
                                    { 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '' })
 
+## this is from the "Wuja" applet code, GPL v2
+def parse_timestamp(timestamp, tz=None):
+    """ Convert internet timestamp (RFC 3339) into a Python datetime
+    object.
+    """
+    date_str = None
+    hour = None
+    minute = None
+    second = None
+    # Single occurrence all day events return with only a date:
+    if timestamp.count('T') > 0:
+        date_str, time_str = timestamp.split('T')
+        time_str = time_str.split('.')[0]
+        hour, minute, second = time_str.split(':')
+    else:
+        date_str = timestamp
+        hour, minute, second = 0, 0, 0
+
+    year, month, day = date_str.split('-')
+    return datetime.datetime(int(year), int(month), int(day), int(hour), int(minute),
+        int(second), tzinfo=tz)
+
 class EventsParser(xml.sax.ContentHandler):
     def __init__(self):
         self.__events = []
@@ -76,8 +98,8 @@ class EventsParser(xml.sax.ContentHandler):
             if name == 'title':
                 self.__inside_title = True
             elif name == 'gd:when':
-                e.update({ 'start_time' : attrs.getValue('startTime'),
-                           'end_time' : attrs.getValue('endTime') })
+                e.update({ 'start_time' : parse_timestamp(attrs.getValue('startTime')),
+                           'end_time' : parse_timestamp(attrs.getValue('endTime')) })
             elif name == 'link':
                 rel = attrs.getValue('rel')
                 href = attrs.getValue('href')
@@ -356,7 +378,7 @@ if __name__ == '__main__':
     def display(x):
         print x
     
-    g.fetch_documents(display, display)
+    #g.fetch_documents(display, display)
     g.fetch_calendar(display, display)
 
     gtk.main()
