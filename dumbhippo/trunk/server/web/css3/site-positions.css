@@ -575,17 +575,26 @@ div.dh-person-header-title {
 }
 
 #dhLearnMoreButtons td { 
-    padding-right:   0px; 
+    paddi.dh-download-product {
+	vertical-align:	 -6px;
 }
-
 .dh-download-details {
+    vertical-align:  top;dh-download-details {
     border-left:     2px solid #999999;
     padding-left:    10px; 
-    white-space:     nowrap;
+    wh
+    
 }
 
 .dh-learnmore-summary {
     margin-bottom:  5px;
+}
+
+.dh-learnmore-subheading {
+	margin-top:		8px;
+	margin-botton:	5px;
+}
+in-bottom:  5px;
 }
 
 .dh-learnmore-illustration {

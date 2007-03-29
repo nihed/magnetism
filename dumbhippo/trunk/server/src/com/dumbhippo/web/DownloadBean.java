@@ -6,7 +6,9 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.downloads.Download;
+import com.dumbhippo.server.downloads.DownloadPlatform;
 
 public class DownloadBean extends BrowserBean {
 	private static final long serialVersionUID = 1L;
@@ -14,10 +16,39 @@ public class DownloadBean extends BrowserBean {
 	private static final Logger logger = GlobalSetup.getLogger(DownloadBean.class);
 	
 	private Configuration configuration;
+	private Download download;
+	private DownloadPlatform platform;
 	
 	private DownloadBean(HttpServletRequest request) {
 		super(request);
-		configuration = WebEJBUtil.defaultLookup(Configuration.class);	
+		configuration = WebEJBUtil.defaultLookup(Configuration.class);
+		
+		String platformString = null;
+		String distributionString = null; 
+		String osVersion = null;
+		String architecture = null;
+		
+		if (isLinuxRequested()) {
+			platformString = "linux";
+			if (getDistributionRequested() != null)
+				distributionString = getDistributionRequested().toString();
+			osVersion = getOsVersionRequested();
+			architecture = getArchitectureRequested();
+		} else if (isWindowsRequested()) {
+			platformString = "windows";
+		}
+
+		if (platformString != null) {
+			try {
+				platform = configuration.getDownloads().findPlatform(platformString);
+			} catch (NotFoundException e) {
+			}
+				
+			try {
+				download = configuration.getDownloads().findDownload(platformString, distributionString, osVersion, architecture);
+			} catch (NotFoundException e) {
+			}
+		}
 	}
 	
 	public static DownloadBean getForRequest(HttpServletRequest request) {
@@ -30,86 +61,11 @@ public class DownloadBean extends BrowserBean {
 		return bean;
 	}
 	
-	public boolean getHaveDownload() {
-		return getDownloadUrl() != null;
+	public DownloadPlatform getPlatform() {
+		return platform;
 	}
 	
-	public String getDownloadUrl() {
-		if (isFedora5Requested()) {
-			return getDownloadUrlFedora5();
-		} else if (isFedora6Requested()) {
-			return getDownloadUrlFedora6();
-		} else if (isWindowsRequested()) {
-			return getDownloadUrlWindows();
-		} else {
-			return null;
-		}
-	}
-	
-	// if linuxRequested && haveDownload then this should always return non-null
-	public String getDownloadUrlSrpm() {
-		if (isFedora5Requested())
-			return getDownloadUrlFedora5Srpm();
-		else if (isFedora6Requested()) {
-			return getDownloadUrlFedora6Srpm();
-		} else {
-			return null;
-		}
-	}
-	
-	public String getDownloadFor() {
-		if (isFedora5Requested()) {
-			return "Fedora Core 5";
-		} else if (isFedora6Requested()) {
-			return "Fedora Core 6";
-		} else if (isWindowsRequested()) {
-			return "Windows XP";
-		} else {
-			return null;
-		}
-	}
-	
-	public String getCurrentVersion() {
-		if (isFedora5Requested() || isFedora6Requested()) {
-			return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADINFO_LINUX_CURRENT);
-		} else if (isWindowsRequested()) {
-			return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADINFO_WINDOWS_CURRENT);
-		} else {
-			return null;
-		}
-	}
-	
-	public String getVersionDate() {
-		if (isFedora5Requested() || isFedora5Requested()) {
-			return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADINFO_LINUX_DATE);
-		} else if (isWindowsRequested()) {
-			return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADINFO_WINDOWS_DATE);
-		} else {
-			return null;
-		}
-	}
-	
-	public String getDownloadUrlWindows() {
-		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_WINDOWS);
-	}
-	
-	public String getDownloadUrlFedora5() {
-		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_FEDORA5);
-	}
-	
-	public String getDownloadUrlFedora6() {
-		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_FEDORA6);
-	}
-	
-	public String getDownloadUrlFedora5Srpm() {
-		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_FEDORA5_SRPM);
-	}
-	
-	public String getDownloadUrlFedora6Srpm() {
-		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_FEDORA6_SRPM);
-	}
-	
-	public String getDownloadUrlLinuxTar() {
-		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_LINUX_TAR);
+	public Download getDownload() {
+		return download;
 	}
 }

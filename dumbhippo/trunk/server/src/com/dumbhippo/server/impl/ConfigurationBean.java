@@ -10,6 +10,7 @@ import java.util.Properties;
 import org.jboss.annotation.ejb.Service;
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
@@ -93,6 +94,8 @@ public class ConfigurationBean implements Configuration, SimpleServiceMBean {
 		try {
 			DownloadSaxHandler handler = new DownloadSaxHandler(downloads);
 			handler.parse(downloadXml);
+		} catch (SAXParseException e) {
+			throw new RuntimeException("Failed to parse downloads property: line " + e.getLineNumber() + ": " + e.getMessage());
 		} catch (SAXException e) {
 			throw new RuntimeException("Failed to parse downloads property", e);
 		} catch (IOException e) {
@@ -166,5 +169,10 @@ public class ConfigurationBean implements Configuration, SimpleServiceMBean {
 	public static synchronized void setWebRealPath(File file) {
 		webRealPath = file;
 		logger.debug("setting .war path to {}", webRealPath);
+	}
+	
+	
+	public DownloadConfiguration getDownloads() {
+		return downloads;
 	}
 }

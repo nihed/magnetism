@@ -20,7 +20,7 @@ public class BrowserBean implements Serializable {
 	
 	private enum OS { Mac, Windows, Linux, Unknown };
 	private enum Browser { Khtml, Gecko, Opera, IE, Unknown };
-	private enum Distribution { Fedora5, Fedora6, Unknown };
+	public enum Distribution { Fedora, RHEL, Ubuntu, Unknown };
 	
 	private OS os;
 	private Browser browser;
@@ -31,6 +31,10 @@ public class BrowserBean implements Serializable {
 	private OS osRequested;
 	private Browser browserRequested;
 	private Distribution distributionRequested;
+	private String osVersion;
+	private String osVersionRequested;
+	private String architecture;
+	private String architectureRequested;
 	
 	protected BrowserBean(HttpServletRequest request) {
 		
@@ -52,12 +56,54 @@ public class BrowserBean implements Serializable {
 		else if (userAgent.contains("Windows"))
 			os = OS.Windows;
 
+		
 		distribution = Distribution.Unknown;
-		if (userAgent.contains("Fedora")) {
-			if (userAgent.contains("fc5"))
-				distribution = Distribution.Fedora5;
-			else if (userAgent.contains("fc6"))
-				distribution = Distribution.Fedora6;
+		if (os == OS.Linux) {
+			if (userAgent.contains("Fedora")) {
+				if (userAgent.contains("fc5")) {
+					distribution = Distribution.Fedora;
+					osVersion = "5";
+				} else if (userAgent.contains("fc6")) {
+					distribution = Distribution.Fedora;
+					osVersion = "6";
+				} else if (userAgent.contains("fc7")) {
+					distribution = Distribution.Fedora;
+					osVersion = "7";
+				}
+			} else if (userAgent.contains("Red Hat")) {
+				if (userAgent.contains("el4")) {
+					distribution = Distribution.RHEL;
+					osVersion = "4";
+				} else if (userAgent.contains("el5")) {
+					distribution = Distribution.RHEL;
+					osVersion = "5";
+				}
+				
+			} else if (userAgent.contains("Ubuntu")) {
+				if (userAgent.contains("Ubuntu/dapper")) {
+					distribution = Distribution.Ubuntu;
+					osVersion = "6.05";
+				} else if (userAgent.contains("Ubuntu-edgy")) {
+					distribution = Distribution.Ubuntu;
+					osVersion = "6.10";
+				} else if (userAgent.contains("Ubuntu-feisty")) {
+					distribution = Distribution.Ubuntu;
+					osVersion = "7.04";
+				}
+			}
+		
+			// Order is important here - "i686 (x86_64)" is a 32-bit browser on a 64-bit
+			// system, in which case we want to offer a 32-bit Mugshot download, so treat
+			// as i686.
+			
+			if (userAgent.contains("i686") || userAgent.contains("i586") || userAgent.contains("i386"))
+				architecture = "x86";
+			else if (userAgent.contains("x86_64"))
+				architecture = "x86_64";
+			else if (userAgent.contains("ppc64"))
+				architecture = "ppc64";
+			else if (userAgent.contains("ppc"))
+				architecture = "ppc";
 		}
 		
 		/* note that we aren't counting IE before 5.0 or not on Windows 
@@ -105,6 +151,7 @@ public class BrowserBean implements Serializable {
 		String platformOverrideStr = request.getParameter("platform");
 		String browserOverrideStr = request.getParameter("browser");
 		String distributionOverrideStr = request.getParameter("distribution");
+
 		osRequested = null;
 		browserRequested = null;
 		distributionRequested = null;
@@ -147,6 +194,9 @@ public class BrowserBean implements Serializable {
 			}
 		}
 		
+		osVersionRequested = request.getParameter("osVersion");
+		architectureRequested = request.getParameter("architecture");
+		
 		logger.debug("User agent is '{}' analysis {}", userAgent, this);
 	}
 	
@@ -176,10 +226,6 @@ public class BrowserBean implements Serializable {
 	
 	private boolean isRequested(OS o) {
 		return osRequested == o || (osRequested == null && os == o);
-	}
-	
-	private boolean isRequested(Distribution d) {
-		return distributionRequested == d || (distributionRequested == null && distribution == d);
 	}
 	
 	public boolean isGecko() {
@@ -227,7 +273,7 @@ public class BrowserBean implements Serializable {
 	public boolean isKhtmlRequested() {
 		return isRequested(Browser.Khtml);
 	}
-	
+
 	public boolean isLinux() {
 		return os == OS.Linux;
 	}
@@ -268,20 +314,28 @@ public class BrowserBean implements Serializable {
 		return isMacRequested() && isKhtmlRequested();
 	}
 	
-	public boolean isFedora5() {
-		return distribution == Distribution.Fedora5;
+	public Distribution getDistribution() {
+		return distribution; 
 	}
 	
-	public boolean isFedora6() {
-		return distribution == Distribution.Fedora6;
+	public Distribution getDistributionRequested() {
+		return distributionRequested != null ? distributionRequested : distribution; 
 	}
 	
-	public boolean isFedora5Requested() {
-		return isRequested(Distribution.Fedora5);
+	public String getOsVersion() {
+		return osVersion;
+	}
+
+	public String getOsVersionRequested() {
+		return osVersionRequested != null ? osVersionRequested : osVersion;
+	}
+
+	public String getArchitecture() {
+		return architecture;
 	}
 	
-	public boolean isFedora6Requested() {
-		return isRequested(Distribution.Fedora6);
+	public String getArchitectureRequested() {
+		return architectureRequested != null ? architectureRequested : architecture;
 	}
 	
 	public String getSupportedBrowsers() {
@@ -298,7 +352,17 @@ public class BrowserBean implements Serializable {
 	
 	@Override
 	public String toString() {
-		return "{os=" + os + " browser=" + browser + " version=" + browserVersion + " osRequested=" + osRequested + " browserRequested=" + browserRequested + " distribution=" + distribution + " distributionRequested=" + distributionRequested + "}";
+		return "{os=" + os + " " +
+				"browser=" + browser + 
+				" version=" + browserVersion + 
+				" osRequested=" + osRequested + 
+				" browserRequested=" + browserRequested + 
+				" distribution=" + distribution + 
+				" distributionRequested=" + distributionRequested +
+				" osVersion=" + osVersion + 
+				" osVersionRequested=" + osVersionRequested +
+				" architecture=" + architecture + 
+				" architectureRequested=" + architectureRequested + "}";
 	}
 	
 	@SuppressWarnings("unused")
