@@ -1,8 +1,6 @@
 package com.dumbhippo.server.downloads;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -10,60 +8,93 @@ import java.util.regex.Pattern;
 import com.dumbhippo.persistence.ValidationException;
 
 public class Download {
-	private List<Field> matchFields = new ArrayList<Field>();
+	private Map<String, Field> matchFields = new HashMap<String, Field>();
 	private Map<String, Field> substituteFields = new HashMap<String, Field>();
 	
-	String url;
+	private DownloadDistribution distribution;
+	private String url;
+	private String architecture;
 	
-	private void addField(Field parameter, boolean matchAgainst) {
-		substituteFields.put(parameter.getName(), parameter);
-		if (matchAgainst)
-			matchFields.add(parameter);
-	}
-	
-	private void addLiteralField(String name, String value, boolean matchAgainst) {
-		addField(new LiteralField(name, value), matchAgainst);
-	}
-	
-	private void addGlobField(String name, String value, boolean matchAgainst) {
-		if (value.indexOf("*") >= 0 || value.indexOf("?") >= 0)
-			addField(new GlobField(name, value), matchAgainst);
-		else
-			addField(new ListField(name, value), matchAgainst);
-	}
-	
-	public Download(DownloadPlatform platform, String distribution, String osVersion, String architecture, String release) {
-		addLiteralField("platform", platform.getName(), true);
-		addLiteralField("version", platform.getVersion(), false);
+	public Download(DownloadDistribution distribution) {
+		this.distribution = distribution;
+		
+		DownloadPlatform platform = distribution.getPlatform();
+		
+		addLiteralField("platform", platform.getName(), true, true);
+		addLiteralField("version", platform.getVersion(), false, true);
 
-		if (distribution != null)
-			addGlobField("distribution", distribution, true);
-		if (osVersion != null)
-			addGlobField("osVersion", osVersion, true);
-		if (architecture != null)
-			addGlobField("architecture", architecture, true);
+		if (distribution.getName() != null)
+			addLiteralField("distribution", distribution.getName(), true, true);
+
+		if (distribution.getOsVersionPattern() != null) {
+			addPatternField("osVersion", distribution.getOsVersionPattern(), true, false);
+			addLiteralField("osVersion", distribution.getOsVersionPattern(), false, true);
+		} else if (distribution.getOsVersion() != null) {
+			addLiteralField("osVersion", distribution.getOsVersion(), true, true);
+		}
 		
-		if (release != null)
-			addLiteralField("release", release, false);
+		if (distribution.getRelease() != null)
+			addLiteralField("release", distribution.getRelease(), false, true);
 	}
 	
-	private Map<String, String> makeParameters(String platform, String distribution, String osVersion, String architecture) {
-		HashMap<String, String> parameters = new HashMap<String, String>();
+	public DownloadDistribution getDistribution() {
+		return distribution;
+	}
+	
+	public void setArchitecture(String architecture) {
+		this.architecture = architecture;
 		
-		if (platform != null)
-			parameters.put("platform", platform);
-		if (distribution != null)
-			parameters.put("distribution", distribution);
-		if (osVersion != null)
-			parameters.put("osVersion", osVersion);
 		if (architecture != null)
-			parameters.put("architecture", architecture);
+			addLiteralField("architecture", architecture, true, true);
+		else
+			removeField("architecture", true, true);
+	}
+	
+	public String getArchitecture() {
+		return architecture;
+	}
+
+	public String getUrl() {
+		return expand(url);
+	}
+	
+	public void setUrl(String url) throws ValidationException {
+		checkExpand(url);
+		this.url = url;
+	}
+	
+	///////////////////////////////////////////////////////////////////////
+	
+	private void addField(Field parameter, boolean matchAgainst, boolean substitute) {
+		if (matchAgainst)
+			matchFields.put(parameter.getName(), parameter);
+		if (substitute)
+			substituteFields.put(parameter.getName(), parameter);
+	}
+	
+	private void removeField(String name, boolean matchAgainst, boolean substitute) {
+		if (matchAgainst)
+			matchFields.remove(name);
+		if (substitute)
+			substituteFields.remove(name);
+	}
+
+	private void addLiteralField(String name, String value, boolean matchAgainst, boolean substitute) {
+		addField(new LiteralField(name, value), matchAgainst, substitute);
+	}
+	
+	private void addPatternField(String name, String value, boolean matchAgainst, boolean substitute) {
+		if (substitute)
+			throw new RuntimeException("Cannot substitute on pattern field");
 		
-		return parameters;
+		if (value.indexOf("*") >= 0 || value.indexOf("?") >= 0)
+			addField(new PatternField(name, value), matchAgainst, substitute);
+		else
+			addField(new LiteralField(name, value), matchAgainst, substitute);
 	}
 	
 	public boolean matches(Map<String, String> parameters) {
-		for (Field field : matchFields) {
+		for (Field field : matchFields.values()) {
 			String parameter = parameters.get(field.getName());
 			if (parameter == null)
 				return false;
@@ -76,16 +107,39 @@ public class Download {
 	}
 
 	public boolean matches(String platform, String distribution, String osVersion, String architecture) {
-		return matches(makeParameters(platform, distribution, osVersion, architecture));
+		HashMap<String, String> parameters = new HashMap<String, String>();
+		
+		if (platform != null)
+			parameters.put("platform", platform);
+		if (distribution != null)
+			parameters.put("distribution", distribution);
+		if (osVersion != null)
+			parameters.put("osVersion", osVersion);
+		if (architecture != null)
+			parameters.put("architecture", architecture);
+		
+		return matches(parameters);
 	}
 	
 	private static final Pattern PARAMETER_REGEX = Pattern.compile("%\\{([a-zA-z]+)\\}");
+	
+	public void checkExpand(String toExpand) throws ValidationException {
+		Matcher m = PARAMETER_REGEX.matcher(toExpand);
+		
+		while (m.find()) {
+			String fieldName = m.group(1);
+			Field field = substituteFields.get(fieldName);
+
+			if (field == null)
+				throw new ValidationException("Parameter '" + fieldName + "' in expansion isn't recognized");
+		}
+	}
 	
 	private String escapeReplacement(String replacement) {
 		return replacement.replace("$", "\\$");
 	}
 	
-	public String expand(String toExpand, Map<String, String> parameters) {
+	public String expand(String toExpand) {
 		StringBuffer result = new StringBuffer();
 		Matcher m = PARAMETER_REGEX.matcher(toExpand);
 		
@@ -93,11 +147,7 @@ public class Download {
 			String fieldName = m.group(1);
 			Field field = substituteFields.get(fieldName);
 
-			if (parameters.containsKey(fieldName))
-				m.appendReplacement(result, escapeReplacement(parameters.get(fieldName)));
-			else {
-				m.appendReplacement(result, escapeReplacement(((LiteralField)field).getValue()));
-			}
+			m.appendReplacement(result, escapeReplacement(((LiteralField)field).getValue()));
 		}
 		
 		m.appendTail(result);
@@ -105,33 +155,7 @@ public class Download {
 		return result.toString();
 	}
 	
-	public String getUrl(String platform, String distribution, String osVersion, String architecture) {
-		return expand(url, makeParameters(platform, distribution, osVersion, architecture));
-	}
-	
-	private void checkExpansion(String toExpand) throws ValidationException {
-		Matcher m = PARAMETER_REGEX.matcher(toExpand);
-		
-		while (m.find()) {
-			String fieldName = m.group(1);
-			Field field = substituteFields.get(fieldName); 
-			
-			if (field == null)
-				throw new ValidationException("Parameter '" + fieldName + "' in expansion isn't recognized");
-			if (field.isGlobbed())
-				throw new ValidationException("Expansion of globbed parameter '" + fieldName + "' isn't allowed");
-		}
-		
-	}
-
-	public void setUrl(String url) throws ValidationException {
-		checkExpansion(url);
-		this.url = url;
-	}
-	
 	///////////////////////////////////////////////////////////////////////
-	
-	static final private Pattern SEPARATOR_REGEX = Pattern.compile("\\s*,\\s*");
 	
 	private static abstract class Field {
 		String name;
@@ -142,10 +166,6 @@ public class Download {
 		
 		public String getName() {
 			return name;
-		}
-		
-		public boolean isGlobbed() {
-			return false;
 		}
 		
 		public abstract boolean matches(String str);
@@ -169,82 +189,17 @@ public class Download {
 		}
 	}
 	
-	private static class ListField extends Field {
-		String[] values;
-
-		public ListField(String name, String str) {
-			super(name);
-			values = SEPARATOR_REGEX.split(str);
-		}
-
-		@Override
-		public boolean matches(String str) {
-			for (int i = 0 ; i < values.length; i++)
-				if (values[i].equals(str))
-					return true;
-			
-			return false;
-		}
-	}
-	
-	private static class GlobField extends Field {
-		private Pattern[] patterns;
+	private static class PatternField extends Field {
+		private Pattern pattern;
 		
-		private GlobField(String name, String str) {
+		private PatternField(String name, String str) {
 			super(name);
-			String[] globs = SEPARATOR_REGEX.split(str);
-			patterns = new Pattern[globs.length];
-			for (int i = 0; i < globs.length; i++)
-				patterns[i] = patternFromGlob(globs[i].trim());
+			pattern = Pattern.compile(str);
 		}
 		
-		private static Pattern patternFromGlob(String glob) {
-			StringBuilder pat = new StringBuilder();
-			
-			for (int i = 0; i < glob.length(); i++) {
-				char c = glob.charAt(i);
-				switch (c) {
-				case '*':
-					pat.append(".*");
-					break;
-				case '?':
-					pat.append('.');
-					break;
-				case '+':
-				case '|':
-				case '(':
-				case ')':
-				case '{':
-				case '}':
-				case '$':
-				case '^':
-				case '\\':
-					pat.append('\\');
-					pat.append(c);
-					break;
-				default:
-					pat.append(c);
-					break;
-				}
-			}
-			
-			return Pattern.compile(pat.toString());
-		}
-
 		@Override
 		public boolean matches(String str) {
-			for (int i = 0; i < patterns.length; i++)
-				if (patterns[i].matcher(str).matches())
-					return true;
-			
-			return false;
-		}
-
-		@Override
-		public boolean isGlobbed() {
-			return true;
+			return pattern.matcher(str).matches();
 		}
 	}
-
-
 }

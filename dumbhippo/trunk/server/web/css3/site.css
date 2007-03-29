@@ -517,6 +517,11 @@ div.dh-async-action-link-complete {
 	font-weight:        bold;
 }
 
+.dh-learnmore-subheading {
+	font-size:          16px;
+	font-weight:		bold;
+}
+
 .dh-download-details {
     font-size:         14px;
 }
@@ -528,6 +533,11 @@ div.dh-async-action-link-complete {
 
 .dh-download-product {
 	color:				#9648BC;
+}
+
+.dh-download-platform-selected {
+	color:				#000000;
+	font-weight:		bold;
 }
 
 #dhTermsOfUseNote, #dhFacebookNote {

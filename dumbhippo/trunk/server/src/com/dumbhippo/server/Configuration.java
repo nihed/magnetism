@@ -6,6 +6,8 @@ import java.net.URL;
 import javax.ejb.ApplicationException;
 import javax.ejb.Local;
 
+import com.dumbhippo.server.downloads.DownloadConfiguration;
+
 /**
  * Represents the configuration of the Dumbhippo server; just
  * a quick hack, later we'll replace it with UniConf of course.
@@ -99,4 +101,6 @@ public interface Configuration {
 	public boolean isFeatureEnabled(String name);
 	
 	public File getWebRealPath();
+	
+	public DownloadConfiguration getDownloads();
 }
