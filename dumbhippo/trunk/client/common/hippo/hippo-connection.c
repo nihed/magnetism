@@ -287,7 +287,8 @@ enum {
      * activity instead of just once an hour */
     INITIAL_APPLICATION_BURST,
     EXTERNAL_IQ_RETURN,
-   	CONTACTS_LOADED,    
+   	CONTACTS_LOADED,
+   	PREF_CHANGED,
     LAST_SIGNAL
 };
 
@@ -449,7 +450,16 @@ hippo_connection_class_init(HippoConnectionClass *klass)
                       0,
                       NULL, NULL,
                       g_cclosure_marshal_VOID__VOID,
-                      G_TYPE_NONE, 0);                          
+                      G_TYPE_NONE, 0);  
+                      
+	signals[PREF_CHANGED] =
+        g_signal_new ("pref-changed",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      hippo_common_marshal_VOID__STRING_BOOLEAN,
+                      G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_BOOLEAN);   
                       
     signals[EXTERNAL_IQ_RETURN] =
         g_signal_new ("external-iq-return",
@@ -1737,6 +1747,7 @@ hippo_connection_parse_prefs_node(HippoConnection *connection,
     for (child = prefs_node->children; child != NULL; child = child->next) {
         const char *key = lm_message_node_get_attribute(child, "key");
         const char *value = lm_message_node_get_value(child);
+        gboolean emit;
 
         if (key == NULL) {
             g_debug("ignoring node '%s' with no 'key' attribute in prefs reply",
@@ -1744,6 +1755,7 @@ hippo_connection_parse_prefs_node(HippoConnection *connection,
             continue;
         }
         
+        emit = TRUE;
         if (strcmp(key, "musicSharingEnabled") == 0) {
             music_sharing_enabled = value != NULL && parse_bool(value);
             saw_music_sharing_enabled = TRUE;
@@ -1755,7 +1767,11 @@ hippo_connection_parse_prefs_node(HippoConnection *connection,
             saw_application_usage_enabled = TRUE;
         } else {
             g_debug("Unknown pref '%s'", key);
+            emit = FALSE;
         }
+        if (emit)
+        	g_signal_emit(G_OBJECT(connection), signals[PREF_CHANGED], 0,
+        	              key, parse_bool(value));
     }
     
     /* Important to set primed then enabled, so when the signal is emitted from the 
@@ -2049,6 +2065,7 @@ hippo_connection_send_active_applications  (HippoConnection *connection,
         lm_message_node_set_attribute(appnode, "wmClass", (char *)l->data);
     }
     
+    g_debug("sending active applications");
     hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
     lm_message_unref(message);
 }
