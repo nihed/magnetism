@@ -188,7 +188,6 @@ class PhotoContentItem(PrelightingCanvasBox):
         self.append(self.__photo)       
         
     def set_child(self, child):
-        assert(not self.__photo is None)
         assert(self.__child is None)
         self.__child = child
         self.append(self.__child)         
@@ -197,16 +196,18 @@ class PhotoContentItem(PrelightingCanvasBox):
         assert(not None in (self.__photo, self.__child, self.__photo_native_width, self.__photo_native_height))
         if size == bigboard.Stock.SIZE_BULL:
             self.set_child_visible(self.__child, True)
-            self.__photo.set_property('xalign', hippo.ALIGNMENT_START)
-            self.__photo.set_property('yalign', hippo.ALIGNMENT_START)
-            self.__photo.set_property("scale-width", self.__photo_native_width)
-            self.__photo.set_property("scale-height", self.__photo_native_height)   
+            if self.__photo:
+                self.__photo.set_property('xalign', hippo.ALIGNMENT_START)
+                self.__photo.set_property('yalign', hippo.ALIGNMENT_START)
+                self.__photo.set_property("scale-width", self.__photo_native_width)
+                self.__photo.set_property("scale-height", self.__photo_native_height)   
         else:
             self.set_child_visible(self.__child, False)
-            self.__photo.set_property('xalign', hippo.ALIGNMENT_CENTER)
-            self.__photo.set_property('yalign', hippo.ALIGNMENT_CENTER)        
-            self.__photo.set_property("scale-width", 30)
-            self.__photo.set_property("scale-height", 30)            
+            if self.__photo:
+                self.__photo.set_property('xalign', hippo.ALIGNMENT_CENTER)
+                self.__photo.set_property('yalign', hippo.ALIGNMENT_CENTER)        
+                self.__photo.set_property("scale-width", 30)
+                self.__photo.set_property("scale-height", 30)            
 
 class Sidebar(DockWindow):
     __gsignals__ = {
