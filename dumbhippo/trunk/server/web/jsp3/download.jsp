@@ -20,57 +20,7 @@
 	<dht3:shinyBox color="grey">
 		<div class="dh-download-header-area">
 			<div class="dh-download-header">Download Mugshot</div>
-			<c:choose>
-				<c:when test="${download.haveDownload}">
-					<div class="dh-download-subtitle">Share cool sites. Get updates from friends on your desktop. Show off your music playlist. Mugshot is free and easy to use!</div>
-					<div class="dh-download-buttons">
-						<c:choose>
-							<c:when test="${signin.disabled}">
-								<a id="dhDownloadProduct"><img src="/images3/${buildStamp}/download_now_disabled.gif"/></a>
-							</c:when>
-							<c:otherwise>
-								<a id="dhDownloadProduct" href="${download.downloadUrl}"><img src="/images3/${buildStamp}/download_now_button.gif"/></a>
-							</c:otherwise>
-						</c:choose>
-						<i>  (This download is for <c:out value="${download.downloadFor}"/>.)</i>
-					</div>
-					<div class="dh-download-yadayada">
-						Or, get Mugshot for another platform instead:
-							<c:if test="${!download.fedora5Requested}">
-								<a href="/download?distribution=fedora5">Fedora Core 5</a>
-							</c:if>
-							<c:if test="${!download.fedora6Requested}">
-								<c:if test="${!download.fedora5Requested}">| </c:if>
-								<a href="/download?distribution=fedora6">Fedora Core 6</a>
-							</c:if>
-							<c:if test="${!download.windowsRequested}">
-								| <a href="/download?platform=windows">Windows XP</a>
-							</c:if>
-					</div>
-				</c:when>
-				<c:otherwise>
-					<div class="dh-download-yadayada">
-						We don't have Mugshot for your computer yet. (You can 
-						download for <a href="/download?platform=windows">Windows XP</a> or 
-						<a href="/download?distribution=fedora5">Fedora Core 5</a>.)
-						<c:if test="${download.macRequested}">We're still working on Mac OS X support.</c:if>
-						You can use Mugshot without the download, however.
-					</div>
-					<c:if test="${download.linuxRequested}">
-						<div class="dh-download-yadayada">						
-							Contributed third-party builds <a href="http://developer.mugshot.org/wiki/Downloads">can be found on the Mugshot Wiki</a>.
-						</div>
-					</c:if>
-				</c:otherwise>
-			</c:choose>
-			<c:choose>
-				<c:when test="${download.linuxRequested}">
-					<div class="dh-download-yadayada">
-						<i>Source code is available in <a href="${download.downloadUrlLinuxTar}">tar.gz</a> and
-						<a href="${download.downloadUrlSrpm}">SRPM</a> formats.</i>
-					</div>
-				</c:when>
-			</c:choose>			
+			<dht3:download page="download"/>
 			<div class="dh-download-subheader">Here's what you can do with the Mugshot download...</div>
 		</div>
 		<dht3:webSwarmLearnMore>

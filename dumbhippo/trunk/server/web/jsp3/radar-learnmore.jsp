@@ -17,7 +17,7 @@
 	<dht3:shinyBox color="grey">
 		<div class="dh-download-header-area">
 			<div class="dh-download-header">Music Radar</div>
-			<dht3:learnMoreNextStep page="musicRadar"/>
+			<dht3:download page="radar-learnmore"/>
 		</div>
 		<dht3:radarLearnMore>
 			<hr height="1px" color="#666666" style="margin: 10px 0px"/>

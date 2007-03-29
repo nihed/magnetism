@@ -17,7 +17,7 @@
 	<dht3:shinyBox color="grey">
 		<div class="dh-learnmore-section dh-learnmore-section-top">
 			<div class="dh-learnmore-header">Web Accounts</div>
-			<dht3:learnMoreNextStep page="webAccounts"/>
+			<dht3:download page="web-accounts-learnmore"/>
 			<c:if test="${signin.valid}">
 			    <span>
 			        Add external Web accounts on <i><a href="/account">your account page</a></i>.
