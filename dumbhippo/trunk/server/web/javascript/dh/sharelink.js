@@ -99,7 +99,8 @@ dh.sharelink.doCreateGroup = function() {
 					{ 
 						"name" : name, 
 						"members" : commaMembers,
-						"secret" : secret
+						"secret" : secret,
+						"open" : "false"						
 					},
 					function(type, data, http) {
 						dh.debug("got back a new group " + data);

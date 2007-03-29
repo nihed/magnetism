@@ -58,6 +58,15 @@ public interface GroupSystem {
 	 */
 	public boolean canSeeContent(Viewpoint viewpoint, Group group);
 	
+	/**
+	 * This checks if an adder can add members other than self.
+	 * Even if the group is public with open membership, you still have to be an active member
+	 * to add other people.
+	 * 
+	 * @param adder
+	 * @param group
+	 * @return true if an adder can add other people to the group
+	 */
 	public boolean canAddMembers(User adder, Group group);
 	
 	public void addMember(User adder, Group group, Person person);
@@ -150,7 +159,7 @@ public interface GroupSystem {
 	 */
 	public List<GroupMember> findGroups(Viewpoint viewpoint, Resource resource);
 	
-	public void pagePublicGroups(Pageable<GroupView> pageable);
+	public void pagePublicGroups(Viewpoint viewpoint, Pageable<GroupView> pageable);
 		
 	public int getPublicGroupCount();
 		

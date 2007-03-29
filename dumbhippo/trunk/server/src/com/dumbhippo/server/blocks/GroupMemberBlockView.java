@@ -68,9 +68,9 @@ public class GroupMemberBlockView extends BlockView {
 	}
 	
 	public boolean isStoppedFollowing() {
-		// It's a little tricky to detect when somewhen a block indicates that
+		// It's a little tricky to detect when a block indicates that
 		// the member stopped following a group; for a public group, a status of NONMEMBER 
-		// indicates. But for a secret group, NONMEMBER might mean that the person
+		// indicates that. But for a secret group, NONMEMBER might mean that the person
 		// left the group and you left the group as well, in which case you are no
 		// longer able to see that their status is REMOVED. So, we also have to take
 		// into account that it is impossible to follow a SECRET group.
