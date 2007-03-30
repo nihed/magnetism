@@ -20,7 +20,7 @@
 	    <hr>
 	    <table id="dhApplicationsColumns">
 	    <tr>
-	    <dht3:applicationsLeft/>
+	    <dht3:applicationsLeft currentCategory="${applications.category}"/>
 	    <td id="dhApplicationsMain">
 	    	<div class="dh-applications-heading">Popularity of 
 	    		<c:choose>
