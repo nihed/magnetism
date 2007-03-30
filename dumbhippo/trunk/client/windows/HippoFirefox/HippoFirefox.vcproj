@@ -52,6 +52,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				IgnoreDefaultLibraryNames="MSVCRT"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -180,7 +181,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="run-xpidl.bat &quot;$(InputPath)&quot; &quot;$(IntDir)\$(InputName).h&quot;  &quot;$(OutDir)\$(InputName).xpt&quot;"
+						CommandLine="run-xpidl.bat &quot;$(InputPath)&quot; &quot;$(IntDir)\$(InputName).h&quot;  &quot;$(OutDir)\$(InputName).xpt&quot;&#x0D;&#x0A;"
 						Outputs="$(IntDir)\$(InputName).h;$(OutDir)\$(InputName).xpt"
 					/>
 				</FileConfiguration>
@@ -202,7 +203,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="run-xpidl.bat &quot;$(InputPath)&quot; &quot;$(IntDir)\$(InputName).h&quot;  &quot;$(OutDir)\$(InputName).xpt&quot;"
+						CommandLine="run-xpidl.bat &quot;$(InputPath)&quot; &quot;$(IntDir)\$(InputName).h&quot;  &quot;$(OutDir)\$(InputName).xpt&quot;&#x0D;&#x0A;"
 						Outputs="$(IntDir)\$(InputName).h;$(OutDir)\$(InputName).xpt"
 					/>
 				</FileConfiguration>
@@ -224,7 +225,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="run-xpidl.bat &quot;$(InputPath)&quot; &quot;$(IntDir)\$(InputName).h&quot;  &quot;$(OutDir)\$(InputName).xpt&quot;"
+						CommandLine="run-xpidl.bat &quot;$(InputPath)&quot; &quot;$(IntDir)\$(InputName).h&quot;  &quot;$(OutDir)\$(InputName).xpt&quot;&#x0D;&#x0A;"
 						Outputs="$(IntDir)\$(InputName).h;$(OutDir)\$(InputName).xpt"
 					/>
 				</FileConfiguration>
