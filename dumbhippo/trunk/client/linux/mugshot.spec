@@ -212,6 +212,7 @@ fi
 %{_datadir}/mugshot
 %ghost %{_datadir}/mugshot/version
 %{_libdir}/mugshot
+%{_datadir}/dbus-1/services/*.service
 %{_datadir}/applications/mugshot.desktop
 %{_datadir}/gnome/autostart/mugshot.desktop
 %{_sysconfdir}/gconf/schemas/*.schemas

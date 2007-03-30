@@ -148,10 +148,17 @@ desktopfiles_in_files=mugshot.desktop.in
 desktopfiles_files=$(desktopfiles_in_files:.desktop.in=.desktop)
 desktopfiles_DATA = $(desktopfiles_files)
 
+# Dbus service file
+servicedir = $(datadir)/dbus-1/services
+service_in_files = org.mugshot.Mugshot.service.in
+service_DATA = $(service_in_files:.service.in=.service)
+$(service_DATA): $(service_in_files) Makefile
+	@sed -e "s|\@bindir\@|$(bindir)|" $< > $@
+
 # intltool not here until po exists and all that
 #@INTLTOOL_DESKTOP_RULE@
 mugshot.desktop: mugshot.desktop.in
 	cat $(srcdir)/mugshot.desktop.in | sed -e 's/^_//g' > mugshot.desktop
 
-EXTRA_DIST += $(autostart_in_files) $(desktopfiles_in_files)
-MAINTAINERCLEANFILES +=	$(autostart_files) $(desktopfiles_files)
+EXTRA_DIST += $(autostart_in_files) $(desktopfiles_in_files) $(service_in_files)
+MAINTAINERCLEANFILES +=	$(autostart_files) $(desktopfiles_files) $(service_DATA)
