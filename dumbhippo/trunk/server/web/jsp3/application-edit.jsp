@@ -65,6 +65,13 @@
 		
 		comment1.value = comment2.value;
 	}
+	function dhOnDescriptionChange() {
+		var textarea = document.getElementById("dhApplicationDescription");
+		if (textarea.value.length > 1020) {
+			alert("Maximum description length is 1020 characters");
+			textarea.value = textarea.value.substring(0,1020);
+		}
+	}
 	function dhApplicationSave() {
 		var comment = document.getElementById("dhApplicationComment1");
 		var commentValue = dh.util.trim(comment.value);
@@ -106,9 +113,9 @@
 							Short description of this application (Browse the Web).
 		    			</jsp:attribute>
 		    		</dht3:applicationEditRow>
-		    		<dht3:applicationEditRow id="dhApplicationDescription" name="description" label="Description" value="${appinfo.description}" multiline="true">
+		    		<dht3:applicationEditRow id="dhApplicationDescription" name="description" label="Description" value="${appinfo.description}" multiline="true" rowClass="dh-application-edit-description" onchange="dhOnDescriptionChange()">
 		    			<jsp:attribute name="help">
-		    				Detailed description of the application in a paragraph.
+		    				Detailed description of the application in a paragraph or two.
 		    			</jsp:attribute>
 		    		</dht3:applicationEditRow>
 		    		<dht3:applicationEditRow id="dhApplicationCategory" name="category" label="Category">

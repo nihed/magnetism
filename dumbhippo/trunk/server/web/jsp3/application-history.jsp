@@ -38,7 +38,7 @@
         	  "version" : uploadId,
         	  "comment" : comment },
             function(type, data, http) {
-            	document.location.href = "/application-history?id=" + applicationId;
+            	document.location.href = "/application?id=" + applicationId;
             },
             function(code, msg) {
                  alert("Failed to revert to previous version: " + msg);

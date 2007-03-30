@@ -66,7 +66,7 @@
 	width: 80px;
 }
 
-.dh-mini-applications .dh-applications-application-stats {
+.dh-applications-application-mini .dh-applications-application-stats {
 	position: relative;
 	left: 5px;
 	width: 25px;
@@ -77,18 +77,17 @@
 	text-align: center;
 }
 
-#dhApplicationsApplications .dh-applications-application-icon {
+.dh-applications-application-big .dh-applications-application-icon {
 	width: 62px;
 }
 
-.dh-mini-applications .dh-applications-application-icon {
+.dh-applications-application-mini .dh-applications-application-icon {
 	width: 31px;
 }
 
-#dhApplicationsApplications .dh-applications-application-details {
+.dh-applications-application-big .dh-applications-application-details {
 	position: relative;
 	left: 6px;
-	top: 6px;
 }
 
 .dh-applications-application-separator {
@@ -153,7 +152,12 @@
 	margin-bottom:	8px;
 }
 
-#dhApplicationEdit {
+.dh-application-description p {
+	margin-top:		8px;
+	margin-bottom:	8px;
+}
+
+.dh-application-edit {
 	table-layout: fixed;
 }
 
@@ -175,9 +179,17 @@
 	height:   5em;
 }
 
+.dh-application-edit-description textarea {
+	height:   10em;
+}
+
 .dh-application-edit-help {
 	width:    40em;
 	padding-bottom: 20px;
+}
+
+.dh-application-edit-comment .dh-application-edit-help {
+	padding-bottom: 10px;
 }
 
 .dh-application-edit-spacer-row {

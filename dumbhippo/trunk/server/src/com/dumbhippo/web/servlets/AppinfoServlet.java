@@ -401,7 +401,7 @@ public class AppinfoServlet extends AbstractServlet {
 		
 		logger.debug("Appinfo file succesfully written to {}", saveLocation.getPath());
 
-		response.sendRedirect("/application-edit?id=" + spec.getAppId());
+		response.sendRedirect("/application?id=" + spec.getAppId());
 		
 		return null;
 	}

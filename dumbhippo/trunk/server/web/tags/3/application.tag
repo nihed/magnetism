@@ -10,7 +10,7 @@
 <dh:default var="linkify" value="true"/>
 <dh:default var="includeStats" value="true"/>
 
-<div class="dh-applications-application">
+<div class="dh-applications-application dh-applications-application-big">
 	<c:if test="${includeStats}">
 		<div class="dh-applications-application-stats-outer">
 			<dht3:applicationStats application="${application}"/>
@@ -32,6 +32,9 @@
 					<c:out value="${application.application.name}"/>
 				</c:otherwise>
 			</c:choose>
+		</div>
+		<div class="dh-applications-application-generic-name">
+			<c:out value="${application.application.genericName}"/>
 		</div>
 		<div class="dh-applications-application-category">
 			<a href="/applications?category=${application.application.category.name}">

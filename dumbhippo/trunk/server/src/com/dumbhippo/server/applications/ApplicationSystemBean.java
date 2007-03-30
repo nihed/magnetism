@@ -47,7 +47,6 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
@@ -332,6 +331,8 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	
 	private void updateApplication(Application application, AppinfoFile appinfoFile) {
 		application.setName(appinfoFile.getName());
+		application.setGenericName(appinfoFile.getGenericName());
+		application.setTooltip(appinfoFile.getTooltip());
 		application.setDescription(appinfoFile.getDescription());
 		
 		application.setCategory(appinfoFile.getCategory());

@@ -40,7 +40,11 @@
 	font-size: 24px;
 }
 
-.dh-mini-applications .dh-applications-rank {
+.dh-applications-application-big .dh-applications-application-details {
+	line-height: 1.1;
+}
+
+.dh-applications-application-mini .dh-applications-rank {
 	font-size: 16px;
 }
 
@@ -50,14 +54,21 @@
 }
 
 .dh-applications-application-name {
-	font-size: 14px;
+	font-size:   14px;
+}
+
+.dh-applications-application-big .dh-applications-application-name {
+	font-size:   16px;
+	font-weight: bold;
+}
+
+.dh-applications-application-generic-name {
+	font-size: 12px;
+	font-style: italic;
+	color:	#777777;
 }
 
 .dh-applications-application-category {
-	font-size: 12px;
-}
-
-.dh-applications-application-description {
 	font-size: 12px;
 }
 
@@ -142,10 +153,6 @@
 
 .dh-application-edit-help {
 	font-style: italic;
-}
-
-.dh-application-edit-save {
-	text-align: right;
 }
 
 .dh-application-upload-history th { 

@@ -7,10 +7,12 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.server.util.EJBUtil;
 
 @Entity
@@ -21,7 +23,10 @@ public class Application {
 	private String name;
 	private String genericName;
 	private String tooltip;
-	private String description;
+	private String description1;
+	private String description2;
+	private String description3;
+	private String description4;
 	private ApplicationCategory category;
 	private String titlePatterns;
 	private String desktopNames;
@@ -85,14 +90,86 @@ public class Application {
 	}
 
 	@Column(nullable = true)
+	protected String getDescription1() {
+		return description1;
+	}
+
+	protected void setDescription1(String description) {
+		this.description1 = description;
+	}
+
+	@Column(nullable = true)
+	protected String getDescription2() {
+		return description2;
+	}
+
+	protected void setDescription2(String description) {
+		this.description2 = description;
+	}
+
+	@Column(nullable = true)
+	protected String getDescription3() {
+		return description3;
+	}
+
+	protected void setDescription3(String description) {
+		this.description3 = description;
+	}
+
+	@Column(nullable = true)
+	protected String getDescription4() {
+		return description4;
+	}
+
+	protected void setDescription4(String description) {
+		this.description4 = description;
+	}
+	
+	@Transient
 	public String getDescription() {
-		return description;
+		if (description1 == null)
+			return null;
+		
+		StringBuilder sb = new StringBuilder(description1);
+		if (description2 != null)
+			sb.append(description2);
+		if (description3 != null)
+			sb.append(description3);
+		if (description4 != null)
+			sb.append(description4);
+		
+		return sb.toString();
 	}
 
+	@Transient
 	public void setDescription(String description) {
-		this.description = description;
+		if (description == null) {
+			description1 = null;
+			description2 = null;
+			description3 = null;
+			description4 = null;
+			
+			return;
+		}
+		
+		int len = description.length();
+		
+		description1 = description.substring(0, Math.min(255, len));
+		if (len > 255)
+			description2 = description.substring(255, Math.min(510, len));
+		if (len > 510)
+			description3 = description.substring(510, Math.min(765, len));
+		if (len > 765)
+			description4 = description.substring(765, Math.min(1020, len));
 	}
-
+	
+	@Transient
+	public String getDescriptionAsHtml() {
+        XmlBuilder xml = new XmlBuilder();
+        xml.appendTextAsHtml(getDescription(), null);
+        return xml.toString(); 
+	}
+	
 	@Column(nullable = false)
 	public ApplicationCategory getCategory() {
 		return category;

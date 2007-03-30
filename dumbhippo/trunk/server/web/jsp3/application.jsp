@@ -86,7 +86,7 @@
 	    			<div class="dh-grow-div-around-floats"></div>
 	    		</div>
 	    		<div class="dh-application-description">
-	    			<c:out value="${appView.application.description}"/>
+	    			${appView.application.descriptionAsHtml}
 	    		</div>
 	    		<c:if test="${signin.valid}">
 					<a href="/application-edit?id=${appView.application.id}">Edit application database entry</a>
