@@ -5,7 +5,27 @@ import hippo
 import mugshot
 import libbig
 from bigboard import Stock, AbstractMugshotStock
-from big_widgets import CanvasMugshotURLImage, PhotoContentItem
+from big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox
+
+class FixedCountWrapBox(CanvasVBox):
+    def __init__(self, max_row_count, **kwargs):
+        super(FixedCountWrapBox, self).__init__(**kwargs)
+        self.__max_row_count = max_row_count     
+        
+    def __row(self, i=None):
+        if i is None:
+            index = len(self.get_children())-1
+        else:
+            index = i
+        return self.get_children()[index]
+        
+    def append(self, child):
+        if len(self.get_children()) == 0:
+            super(FixedCountWrapBox,self).append(CanvasHBox())             
+        if len(self.__row().get_children()) >= self.__max_row_count:
+            super(FixedCountWrapBox, self).append(CanvasHBox())
+        row = self.__row()
+        row.append(child)
 
 class ExternalAccountIcon(CanvasMugshotURLImage):
     def __init__(self, acct):
@@ -47,7 +67,7 @@ class SelfStock(AbstractMugshotStock):
         
         self._box.append(self._namephoto_box)
         
-        self._whereim_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL, spacing=2)
+        self._whereim_box = FixedCountWrapBox(7, spacing=2)
         self._whereim_box.set_property("padding-top", 4)
         
         self._box.append(self._whereim_box)
