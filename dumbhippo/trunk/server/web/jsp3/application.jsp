@@ -31,7 +31,9 @@
 			var install = !run && dhApplicationApplication.getCanInstall();
 			if (version != null)
 				version = version.replace(/(.*)-.*/, "$1")
+			var nolocal = version == null && !run && !install;
 			
+			document.getElementById("dhApplicationNoLocal").style.display = nolocal ? "block" : "none"; 
 			document.getElementById("dhApplicationVersionOuter").style.display = version != null ? "block" : "none"; 
 			document.getElementById("dhApplicationRun").style.display = run ? "block" : "none"; 
 			document.getElementById("dhApplicationInstall").style.display = install ? "block" : "none"; 
