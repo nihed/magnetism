@@ -29,14 +29,12 @@
 			var version = dhApplicationApplication.getVersion();
 			var run = dhApplicationApplication.getCanRun();
 			var install = !run && dhApplicationApplication.getCanInstall();
-			var separator = version != null && (install || run);
 			if (version != null)
 				version = version.replace(/(.*)-.*/, "$1")
 			
-			document.getElementById("dhApplicationVersionOuter").style.display = version != null ? "inline" : "none"; 
-			document.getElementById("dhApplicationSeparator").style.display = separator ? "inline" : "none"; 
-			document.getElementById("dhApplicationRun").style.display = run ? "inline" : "none"; 
-			document.getElementById("dhApplicationInstall").style.display = install ? "inline" : "none"; 
+			document.getElementById("dhApplicationVersionOuter").style.display = version != null ? "block" : "none"; 
+			document.getElementById("dhApplicationRun").style.display = run ? "block" : "none"; 
+			document.getElementById("dhApplicationInstall").style.display = install ? "block" : "none"; 
 			
 			var span = document.getElementById("dhApplicationVersion");
 			dh.util.clearNode(span);
@@ -65,46 +63,37 @@
 	    <table id="dhApplicationsColumns">
 	    <tr>
 	    <dht3:applicationsLeft/>
-	    <td id="dhApplicationsRight">
+	    <td id="dhApplicationsMain">
 			<div id="dhApplicationsApplications">
-		    	<div class="dh-applications-application">
-		    		<div class="dh-applications-application-stats-outer">
-	    				<div class="dh-applications-application-stats">
-		    				<div class="dh-applications-rank"><c:out value="${appView.application.rank}"/></div>
-			    			<div class="dh-applications-usage"><c:out value="${dh:format1('%,d', appView.application.usageCount)}"/></div>
-			    		</div>
+	    		<dht3:application application="${appView}" includeStats="false" linkify="false"/>
+				
+	    		<div class="dh-application-more">
+	    			<div class="dh-applications-application-stats-outer">
+	    				<div class="dh-applications-application-stats-heading">Rank &amp; Usage</div>
+		    			<dht3:applicationStats application="${appView}"/>
 	    			</div>
-		    		<div class="dh-applications-application-icon">
-						<dh:png src="${appView.icon.url}" 
-							style="width: ${appView.icon.displayWidth}; height: ${appView.icon.displayHeight}; overflow: hidden;"/>
-		    		</div>
-	    			<div class="dh-applications-application-details">
-	    				<div class="dh-applications-application-name">
-	    					<c:out value="${appView.application.name}"/>
-			    		</div>
-		    			<div class="dh-applications-application-category">
-			    			<a href="/applications?category=${appView.application.category.name}">
-								<c:out value="${appView.application.category.displayName}"/>
-							</a>
-			    		</div>
-	    				<div class="dh-applications-application-description">
-	    					<c:out value="${appView.application.description}"/>
-		    			</div>
-		    			<div class="dh-applications-application-local">
-			    			<span id="dhApplicationVersionOuter" style="display: none;">
-			    				Currently installed: <span id="dhApplicationVersion"></span>
-		   					</span>
-				    		<span id="dhApplicationSeparator" style="display: none;">&nbsp;|&nbsp;</span>
-		    				<span id="dhApplicationInstall" style="display: none;">
-	   							<a href="javascript:dhApplicationApplication.install()">Install</a>
-			    			</span>
-			    			<span id="dhApplicationRun" style="display: none;">
-			    				<a href="javascript:dhApplicationApplication.run()">Run</a>
-		   					</span>
-	  					</div>
-		    		</div>
-		   		</div>
+	       			<div id="dhApplicationRun" class="dh-application-action" style="display: none;">
+	    				<a href="javascript:dhApplicationApplication.run()">Run <c:out value="${appView.application.name}"/></a>
+  					</div>
+	   				<div id="dhApplicationInstall" class="dh-application-action" style="display: none;">
+						<a href="javascript:dhApplicationApplication.install()">Install Now</a>
+	    			</div>
+		    		<div class="dh-application-more-details">
+		    			<div id="dhApplicationVersionOuter" style="display: none;">
+	    					Installed version: <span id="dhApplicationVersion"></span>
+  						</div>
+ 					</div>
+	    			<div class="dh-grow-div-around-floats"></div>
+	    		</div>
+	    		<div class="dh-application-description">
+	    			<c:out value="${appView.application.description}"/>
+	    		</div>
+	    		<c:if test="${signin.valid}">
+					<a href="/application-edit?id=${appView.application.id}">Edit application database entry</a>
+	    		</c:if>
     		</div>
+	    </td>
+	    <td id="dhApplicationsRight">
 			<div class="dh-applications-subheading">Popular applications among <c:out value="${appView.application.name}"/> users:</div>
 			<dht3:miniApplicationList apps="${application.relatedApplications}"/>
 	    </td>
