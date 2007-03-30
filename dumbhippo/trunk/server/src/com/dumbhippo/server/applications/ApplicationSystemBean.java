@@ -71,9 +71,6 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	private Configuration config;
 	
 	@EJB
-	private IdentitySpider identitySpider;
-
-	@EJB
 	private PersonViewer personViewer;
 	
 	@EJB
@@ -81,7 +78,8 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	
 	public boolean canEditApplications(Viewpoint viewpoint) {
 		if (viewpoint instanceof UserViewpoint)
-			return identitySpider.isAdministrator(((UserViewpoint)viewpoint).getViewer());
+			return true;
+			// return identitySpider.isAdministrator(((UserViewpoint)viewpoint).getViewer());
 		else
 			return false;
 	}

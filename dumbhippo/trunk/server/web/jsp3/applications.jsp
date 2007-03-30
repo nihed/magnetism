@@ -21,7 +21,7 @@
 	    <table id="dhApplicationsColumns">
 	    <tr>
 	    <dht3:applicationsLeft/>
-	    <td id="dhApplicationsRight">
+	    <td id="dhApplicationsMain">
 	    	<div class="dh-applications-heading">Popularity of 
 	    		<c:choose>
 	    			<c:when test="${!empty applications.category}">
@@ -46,31 +46,7 @@
 				    	</div>	    		
 					    <c:forEach items="${applications.applications.results}" var="application">
 				    		<div class="dh-applications-application-separator"></div>
-					    	<div class="dh-applications-application">
-					    		<div class="dh-applications-application-stats-outer">
-						    		<div class="dh-applications-application-stats">
-						    			<div class="dh-applications-rank"><c:out value="${application.application.rank}"/></div>
-						    			<div class="dh-applications-usage"><c:out value="${dh:format1('%,d', application.application.usageCount)}"/></div>
-						    		</div>
-					    		</div>
-					    		<div class="dh-applications-application-icon">
-									<dh:png src="${application.icon.url}" 
-										style="width: ${application.icon.displayWidth}; height: ${application.icon.displayHeight}; overflow: hidden;"/>
-					    		</div>
-					    		<div class="dh-applications-application-details">
-					    			<div class="dh-applications-application-name">
-						    			<a href="/application?id=${application.application.id}">
-						    				<c:out value="${application.application.name}"/>
-			    						</a>
-						    		</div>
-					    			<div class="dh-applications-application-category">
-						    			<a href="/applications?category=${application.application.category.name}">
-				    						<c:out value="${application.application.category.displayName}"/>
-				    					</a>
-						    		</div>
-					    		</div>
-					    		<div class="dh-applications-application-separator"></div>
-			    			</div>
+				    		<dht3:application application="${application}"/>
 					    </c:forEach>
 					    <div class="dh-applications-more">
 						    <dht:expandablePager pageable="${applications.applications}"/>
