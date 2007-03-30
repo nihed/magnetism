@@ -49,13 +49,14 @@
 		<center>
 			<c:choose>
 				<c:when test="${download.linuxRequested}">
-					<c:if test="${download.haveDownload}">
-						<a href="${download.downloadUrl}"><c:out value="${download.downloadFor}"/> RPM</a>
+					<c:if test="${!empty download.download}">
+						<a href="${download.download.url}">
+							<c:out value="${download.download.distribution.name}"/>
+							<c:out value="${download.download.distribution.osVersion}"/>
+							(<c:out value="${download.download.architecture}"/>) RPM
 						<br/>
 					</c:if>
-					Source code: <a href="${download.downloadUrlLinuxTar}">tar.gz</a> | <a href="${download.downloadUrlSrpm}">SRPM</a>
-					<br/>
-					<a href="http://developer.mugshot.org/wiki/Downloads" target="_new">Packages for other distributions</a>
+					<a href="http://developer.mugshot.org/wiki/Downloads" target="_new">Source code and contributed binaries</a>
 				</c:when>
 				<c:otherwise>
 					<input type="button" value="Install now" onclick="window.external.application.DoUpgrade(); window.close();"/> 
