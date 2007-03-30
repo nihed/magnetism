@@ -195,7 +195,7 @@ hippo_canvas_control_position(HippoCanvasControl *control)
     
     if (control->control == NULL)
         return;
-    
+
     control->control->getLastRequest(&w, &h);
 
     hippo_canvas_box_align(box, w, h, &x, &y, &w, &h);
@@ -226,7 +226,6 @@ hippo_canvas_control_set_context(HippoCanvasItem    *item,
 
     if (box->context) {
         hippo_canvas_context_register_widget_item(box->context, item);
-        hippo_canvas_control_position(HIPPO_CANVAS_CONTROL(item));
     }
 }
 
