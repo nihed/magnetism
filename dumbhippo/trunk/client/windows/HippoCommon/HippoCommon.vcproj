@@ -359,6 +359,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-util.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-chat-room.c"
 				>
 			</File>
@@ -383,7 +387,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="genmarshal.bat"
+						CommandLine="genmarshal.bat&#x0D;&#x0A;"
 						Outputs="hippo-common-marshal.c;hippo-common-marshal.h"
 					/>
 				</FileConfiguration>
@@ -410,6 +414,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-event.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-external-account.c"
 				>
 			</File>
 			<File
@@ -478,6 +486,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-thumbnails.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-title-pattern.c"
 				>
 			</File>
 			<File
@@ -715,6 +727,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-util.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-widgets.h"
 				>
 			</File>
@@ -764,6 +780,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-event.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-external-account.h"
 				>
 			</File>
 			<File
@@ -832,6 +852,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-thumbnails.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-title-pattern.h"
 				>
 			</File>
 			<File
