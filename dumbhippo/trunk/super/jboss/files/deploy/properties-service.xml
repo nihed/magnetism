@@ -35,17 +35,6 @@
 		dumbhippo.server.aimbot.name=@@imbotScreenName:properties@@
 		dumbhippo.server.aim.presence.key=@@aimPresenceKey:properties@@
 		dumbhippo.server.downloads=@@clientDownloads:properties@@
-		dumbhippo.server.downloadurl.windows=@@clientWindowsDownload:properties@@
-		dumbhippo.server.downloadurl.windows.source=@@clientWindowsDownloadSource:properties@@
-		dumbhippo.server.downloadurl.fedora5=@@clientFedora5Download:properties@@
-		dumbhippo.server.downloadurl.fedora5.srpm=@@clientFedora5DownloadSRPM:properties@@
-		dumbhippo.server.downloadurl.fedora6=@@clientFedora6Download:properties@@
-		dumbhippo.server.downloadurl.fedora6.srpm=@@clientFedora6DownloadSRPM:properties@@
-		dumbhippo.server.downloadurl.linux.tar=@@clientLinuxDownloadTar:properties@@
-		dumbhippo.server.downloadinfo.windows.current=@@clientWindowsCurrent:properties@@
-		dumbhippo.server.downloadinfo.windows.date=@@clientWindowsDate:properties@@
-		dumbhippo.server.downloadinfo.linux.current=@@clientLinuxCurrent:properties@@
-		dumbhippo.server.downloadinfo.linux.date=@@clientLinuxDate:properties@@
 		dumbhippo.server.amazon.accesskeyid=@@amazonAccessKeyId:properties@@
 		dumbhippo.server.amazon.secretkey=@@amazonSecretKey@@		
 		dumbhippo.server.amazon.associatetag=@@amazonAssociateTag:properties@@
