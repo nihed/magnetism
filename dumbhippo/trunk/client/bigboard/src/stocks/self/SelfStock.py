@@ -11,6 +11,7 @@ class ExternalAccountIcon(CanvasMugshotURLImage):
     def __init__(self, acct):
         CanvasMugshotURLImage.__init__(self)
         self.connect("button-press-event", lambda img,event: self.__launch_browser())
+        self.set_clickable(True)
         self.set_acct(acct)
         
     def set_acct(self, acct):
@@ -32,9 +33,10 @@ class SelfStock(AbstractMugshotStock):
         self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4)
 
         self._namephoto_box = PhotoContentItem()
+        self._namephoto_box.set_clickable(True)        
         
         self._photo = CanvasMugshotURLImage(scale_width=48, scale_height=48)
-        self.connect_mugshot_handler(self._photo, "button-press-event", lambda button, event: self._on_edit_self())           
+        self.connect_mugshot_handler(self._photo, "button-press-event", lambda button, event: self._on_edit_self())
         #self._photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
             
         self._namephoto_box.set_photo(self._photo)

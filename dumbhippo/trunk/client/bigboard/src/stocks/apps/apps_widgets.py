@@ -18,6 +18,8 @@ class AppDisplay(PhotoContentItem):
         self.__photo = CanvasMugshotURLImage(scale_width=30, scale_height=30)
         self.set_photo(self.__photo)
         self.__box = CanvasVBox(spacing=2, border_right=4)
+        self.__photo.set_clickable(True)
+        self.__box.set_clickable(True)
         self.__title = ActionLink(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         self.__description = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         attrs = pango.AttrList()
