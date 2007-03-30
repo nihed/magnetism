@@ -31,10 +31,8 @@ import com.dumbhippo.persistence.VersionedEntity;
 	 GroupMember groupMember;
 	 Set<PersonView> inviters;
 	 int chattingUserCount;
-	 Viewpoint viewpoint;
 	 
-	 public GroupView(Viewpoint viewpoint, Group group, GroupMember groupMember, Set<PersonView> inviters) {
-         this.viewpoint = viewpoint;
+	 public GroupView(Group group, GroupMember groupMember, Set<PersonView> inviters) {
 		 this.group = group;
 		 this.groupMember = groupMember;
 		 this.inviters = inviters;
@@ -42,16 +40,8 @@ import com.dumbhippo.persistence.VersionedEntity;
 	 
 	 public Group getGroup() {
 		 return group;
-	 } 
+	 }
 	 
-	 public Viewpoint getViewpoint() {
-		 return viewpoint;
-	 }
-
-	 public void setViewpoint(Viewpoint viewpoint) {
-         this.viewpoint = viewpoint;
-	 }
-
 	 public MembershipStatus getStatus() {
 		 if (groupMember != null)
 			 return groupMember.getStatus();
@@ -73,7 +63,7 @@ import com.dumbhippo.persistence.VersionedEntity;
 	 
 	 public boolean getCanJoin() {
 		return !getGroupMember().getStatus().isParticipant() && 
-		       (group.getAccess().ordinal() >= GroupAccess.PUBLIC_INVITE.ordinal() ||
+		       (group.getAccess() == GroupAccess.PUBLIC_INVITE ||
 		        getGroupMember().getStatus() == MembershipStatus.REMOVED);
 	 }
 	 
@@ -97,84 +87,6 @@ import com.dumbhippo.persistence.VersionedEntity;
 		 return inviters;
 	 }
 	 
-     public String getJoinAction() {
-		if (!(viewpoint instanceof UserViewpoint))
-			return null;
-				
-		switch (getStatus()) {
-			case NONMEMBER:
-				if (group.getAccess() == GroupAccess.PUBLIC)
-					return "Join Group";
-				else
-					return "Follow Group";
-			case INVITED_TO_FOLLOW:
-				return "Follow Group";
-			case INVITED:
-				return "Join group (invited)";
-			case REMOVED: 
-				return "Join Group";
-			case ACTIVE:
-			case FOLLOWER:
-				return null;
-		}
-		return null;
-	}
-
- 	public String getJoinTooltip() {
-		if (!(viewpoint instanceof UserViewpoint))
-			return null;
-				
-		switch (getGroupMember().getStatus()) {
-			case NONMEMBER:
-				if (group.getAccess() == GroupAccess.PUBLIC)
-					return "Become a group member";
-				else 
-					return "Follow stack activity in this group";
-			case INVITED_TO_FOLLOW:	
-				return "Follow stack activity in this group";
-			case INVITED:
-				return "You were invited to join this group";
-			case REMOVED:
-				return "Rejoin this group";
-			case FOLLOWER:
-			case ACTIVE:
-				return null;
-		}
-		return null;
-	}	
- 	
-	public String getLeaveAction() {
-		if (!(viewpoint instanceof UserViewpoint))
-			return null;
-		
-		switch (getGroupMember().getStatus()) {
-			case NONMEMBER:
-			case REMOVED:			
-				return null;
-			case INVITED_TO_FOLLOW:
-			case FOLLOWER:
-				return "Stop Following";
-			case INVITED:
-			case ACTIVE:
-				return "Leave Group";
-		}	
-		return null;
-	}
-
-	public String getLeaveTooltip() {
-		switch (getGroupMember().getStatus()) {
-			case NONMEMBER:
-			case REMOVED:			
-				return null;
-			case INVITED_TO_FOLLOW:
-			case FOLLOWER:
-			case INVITED:
-			case ACTIVE:
-				return "Stop receiving stack activity from this group";
-		}
-		return null;
-	}
-		
 	/**
 	 * Convert an (unordered) set of groups into a a list and
 	 * sort alphabetically with the default collator. You generally

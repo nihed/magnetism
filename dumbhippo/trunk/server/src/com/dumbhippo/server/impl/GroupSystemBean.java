@@ -260,10 +260,15 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		GroupMember adderMember;
 		try {
 			adderMember = getGroupMember(group, adder);
-			return adderMember.getStatus().getCanAddMembers();
 		} catch (NotFoundException e) {
-			return false;
+			adderMember = null;
 		}		
+		
+		if ((adderMember != null && adderMember.getStatus().getCanAddMembers()) ||
+            group.getAccess() == GroupAccess.PUBLIC)
+				return true;
+			else
+				return false;
 	}
 	
 	public void addMember(User adder, Group group, Person person) {
@@ -275,11 +280,9 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		try {
 			// if person is a User then this will do fixups
 			groupMember = getGroupMember(group, person);
-			canAddSelf = (groupMember.getStatus().ordinal() >= MembershipStatus.REMOVED.ordinal() 
-					      || group.getAccess() == GroupAccess.PUBLIC);
+			canAddSelf = (groupMember.getStatus().ordinal() >= MembershipStatus.REMOVED.ordinal());
 		} catch (NotFoundException e) {
 			groupMember = null;
-			canAddSelf = (group.getAccess() == GroupAccess.PUBLIC);
 		}
 		
 		boolean adderCanAdd = canAddMembers(adder, group);
@@ -586,7 +589,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		if (type.equals(GroupFindType.PRIVATE))
 			return " AND g.access = " + GroupAccess.SECRET.ordinal();
 		else if (type.equals(GroupFindType.PUBLIC)) 
-			return " AND g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal();
+			return " AND g.access = " + GroupAccess.PUBLIC_INVITE.ordinal();
 		else
 			return "";
 	}
@@ -750,7 +753,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				}
 			}
 			
-			result.add(new GroupView(viewpoint, groupMember.getGroup(), groupMember, inviters));
+			result.add(new GroupView(groupMember.getGroup(), groupMember, inviters));
 		}
 		return result;	
 	}
@@ -775,7 +778,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	private static final String COUNT_PUBLIC_GROUPS_QUERY = 
 		"SELECT COUNT(g) FROM Group g WHERE ";
 	
-	public void pagePublicGroups(Viewpoint viewpoint, Pageable<GroupView> pageable) {
+	public void pagePublicGroups(Pageable<GroupView> pageable) {
 		Query q;
 		
 		q = em.createQuery(FIND_PUBLIC_GROUPS_QUERY + CAN_SEE_ANONYMOUS 
@@ -784,7 +787,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		q.setMaxResults(pageable.getCount());
 		List<GroupView> groups = new ArrayList<GroupView>();
 		for (Object o : q.getResultList()) {
-			groups.add(new GroupView(viewpoint, (Group) o, null, null));
+			groups.add(new GroupView((Group) o, null, null));
 		}
 		pageable.setResults(groups);
 		pageable.setTotalCount(getPublicGroupCount());
@@ -970,7 +973,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			groupMember = new GroupMember(group, null, MembershipStatus.NONMEMBER);			
 		}
 				
-		return new GroupView(viewpoint, group, groupMember, null);
+		return new GroupView(group, groupMember, null);
 	}
 
 	public void acceptInvitation(UserViewpoint viewpoint, Group group) {

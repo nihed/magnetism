@@ -50,27 +50,17 @@
 			<dht:formTableRow label="Privacy">
 		        <dht:formTable tableClass="dh-form-table-orange dh-no-extra-space-table">
 			        <dht:formTableRow info="Visible to anyone browsing the Mugshot website">  
-				        <input class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupVisibility" id="dhGroupVisibilityPublic" value="public" checked="yes" onclick="dh.groupaccount.groupPrivacyChanged();"><label class="dh-label" for="dhGroupVisibilityPublic">Public</label>
+				        <input class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupVisibility" id="dhGroupVisibilityPublic" value="public" checked="yes"><label class="dh-label" for="dhGroupVisibilityPublic">Public</label>
 				    </dht:formTableRow>
 				    <dht:formTableRow info="Visible only to group members">
-				        <input class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupVisibility" id="dhGroupVisibilityPrivate" value="private" onclick="dh.groupaccount.groupPrivacyChanged();"><label class="dh-label" for="dhGroupVisibilityPrivate">Private</label>
+				        <input class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupVisibility" id="dhGroupVisibilityPrivate" value="private"><label class="dh-label" for="dhGroupVisibilityPrivate">Private</label>
 				    </dht:formTableRow>
 				</dht:formTable>    
 			</dht:formTableRow>
-            <dht:formTableRow label="Membership" altRow="true">
-		        <dht:formTable tableClass="dh-form-table-orange dh-no-extra-space-table">
-			        <dht:formTableRow info="Anyone can join the group" altRow="true">  
-				        <input class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupMembership" id="dhGroupMembershipOpen" value="open" checked="yes"><label class="dh-label" for="dhGroupVisibilityOpen">Open</label>
-				    </dht:formTableRow>
-				    <dht:formTableRow info="Anyone can follow the group, they need an invitation to join" altRow="true">
-				        <input class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupMembership" id="dhGroupMembershipByInvitation" value="byInvitation"><label class="dh-label" for="dhGroupVisibilityByInvitation">By invitation</label>
-				    </dht:formTableRow>
-				</dht:formTable>    
-			</dht:formTableRow>			
-			<dht:formTableRow label="Group name">
+			<dht:formTableRow label="Group name" altRow="true">
 				<dht:textInput id="dhGroupNameEntry" disabled="${disabled}"/>
 			</dht:formTableRow>
-			<dht:formTableRow label="About group" altRow="true">
+			<dht:formTableRow label="About group">
 				<dht:textInput id="dhAboutGroupEntry" multiline="true" disabled="${disabled}"/>
 			</dht:formTableRow>
 		</dht:formTable>
