@@ -223,7 +223,7 @@ HippoComIpcProviderImpl::installApplication(HippoEndpointId endpoint, const char
 }
 
 void
-HippoComIpcProviderImpl:runApplication(const char *desktopNames, unsigned int timestamp)
+HippoComIpcProviderImpl::runApplication(const char *desktopNames, unsigned int timestamp)
 {
     // Not implemented for Windows
 }

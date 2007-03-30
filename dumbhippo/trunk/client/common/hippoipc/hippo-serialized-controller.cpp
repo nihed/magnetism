@@ -213,42 +213,42 @@ HippoSerializedControllerShowChatWindow::invoke(HippoIpcController *controller)
 class HippoSerializedControllerGetApplicationInfo : public HippoSerializedControllerArgs
 {
 public:
-    HippoSerializedControllerGetApplicationInfo(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char desktopNames) {
-        chatId_ = chatId;
-        applicationId_ = applicationId_;
-        packageNames_ = packageNames_;
-        desktopNames = desktopNames_;
+    HippoSerializedControllerGetApplicationInfo(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames) {
+        endpoint_ = endpoint;
+        applicationId_ = applicationId;
+        packageNames_ = packageNames;
+        desktopNames_ = desktopNames;
     }
     
     virtual void invoke(HippoIpcController *controller);
 
 private:
-    std::string endpoint_;
+    HippoEndpointId endpoint_;
     std::string applicationId_;
     std::string packageNames_;
     std::string desktopNames_;
 };
 
 void
-HippoSerializedControllerInstallApplication::invoke(HippoIpcController *controller)
+HippoSerializedControllerGetApplicationInfo::invoke(HippoIpcController *controller)
 {
-    controller->getApplicationInfo(endpoint_.c_str(), applicationId_.c_str(), packageNames_.c_str(), desktopNames_.c_str());
+    controller->getApplicationInfo(endpoint_, applicationId_.c_str(), packageNames_.c_str(), desktopNames_.c_str());
 }
 
 class HippoSerializedControllerInstallApplication : public HippoSerializedControllerArgs
 {
 public:
-    HippoSerializedControllerInstallApplication(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char desktopNames) {
-        chatId_ = chatId;
-        applicationId_ = applicationId_;
-        packageNames_ = packageNames_;
-        desktopNames = desktopNames_;
+    HippoSerializedControllerInstallApplication(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames) {
+        endpoint_ = endpoint;
+        applicationId_ = applicationId;
+        packageNames_ = packageNames;
+        desktopNames_ = desktopNames;
     }
     
     virtual void invoke(HippoIpcController *controller);
 
 private:
-    std::string endpoint_;
+    HippoEndpointId endpoint_;
     std::string applicationId_;
     std::string packageNames_;
     std::string desktopNames_;
@@ -257,14 +257,14 @@ private:
 void
 HippoSerializedControllerInstallApplication::invoke(HippoIpcController *controller)
 {
-    controller->installApplication(endpoint_.c_str(), applicationId_.c_str(), packageNames_.c_str(), desktopNames_.c_str());
+    controller->installApplication(endpoint_, applicationId_.c_str(), packageNames_.c_str(), desktopNames_.c_str());
 }
 
 class HippoSerializedControllerRunApplication : public HippoSerializedControllerArgs
 {
 public:
-    HippoSerializedControllerRunApplication(const char desktopNames, unsigned int timestamp) {
-        desktopNames = desktopNames_;
+    HippoSerializedControllerRunApplication(const char *desktopNames, unsigned int timestamp) {
+        desktopNames_ = desktopNames;
         timestamp_ = timestamp;
     }
     
@@ -375,24 +375,24 @@ HippoSerializedController::showChatWindow(const char *chatId)
 }
 
 void
-HippoSerializedIpcController::getApplicationInfo(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames)
+HippoSerializedController::getApplicationInfo(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames)
 {
     clear();
-    args_ = new HippoHippoSerializedControllerGetApplicationInfo(endpoint, applicationId, packageNames, desktopnames);
+    args_ = new HippoSerializedControllerGetApplicationInfo(endpoint, applicationId, packageNames, desktopNames);
 }
 
 void
-HippoSerializedIpcController::installApplication(const char *packageNames)
+HippoSerializedController::installApplication(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames)
 {
     clear();
-    args_ = new HippoHippoSerializedControllerInstallApplication(endpoint, applicationId, packageNames, desktopnames);
+    args_ = new HippoSerializedControllerInstallApplication(endpoint, applicationId, packageNames, desktopNames);
 }
 
 void
-HippoSerializedIpcController::runApplication(const char *desktopNames)
+HippoSerializedController::runApplication(const char *desktopNames, unsigned int timestamp)
 {
     clear();
-    args_ = new HippoHippoSerializedControllerRunApplication(desktopNames);
+    args_ = new HippoSerializedControllerRunApplication(desktopNames, timestamp);
 }
 
 void 

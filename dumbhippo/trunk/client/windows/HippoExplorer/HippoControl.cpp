@@ -573,27 +573,33 @@ HippoControl::getApplicationInfo(BSTR applicationId, BSTR packageNames, BSTR des
     HippoUStr desktopNamesU(desktopNames);
 
     if (controller_ && endpoint_)
-	controller_->getApplicationInfo(endpoint_, applicationIdU.c_str(), packageNamesU.c_str(), desktopNamesU.c_str());
+        controller_->getApplicationInfo(endpoint_, applicationIdU.c_str(), packageNamesU.c_str(), desktopNamesU.c_str());
 
     return S_OK;
 }
 
 STDMETHODIMP
-installApplication(BSTR applicationId, BSTR packageNames, BSTR desktopNames)
+HippoControl::installApplication(BSTR applicationId, BSTR packageNames, BSTR desktopNames)
 {
     HippoUStr packageNamesU(packageNames);
+    HippoUStr applicationIdU(applicationId);
+    HippoUStr desktopNamesU(desktopNames);
 
     if (controller_ && endpoint_)
-	controller_->installApplication(endpoint_, applicationIdU.c_str(), packageNamesU.c_str(), desktopNamesU.c_str());
+        controller_->installApplication(endpoint_, applicationIdU.c_str(), packageNamesU.c_str(), desktopNamesU.c_str());
+
+    return S_OK;
 }
 
 STDMETHODIMP
-runApplication(BSTR desktopNames)
+HippoControl::runApplication(BSTR desktopNames)
 {
     HippoUStr desktopNamesU(desktopNames);
 
     if (controller_)
-	controller_->runApplication(desktopNames, 0);
+        controller_->runApplication(desktopNamesU.c_str(), 0);
+
+    return S_OK;
 }
 
 STDMETHODIMP 
@@ -727,7 +733,7 @@ HippoControl::userInfo(HippoEndpointId endpoint, const char *userId, const char 
 }
 
 void
-HippoControll::applicationInfo(HippoEndpointId endpoint, const char *applicationId, bool canInstall, bool canRun, const char *version)
+HippoControl::applicationInfo(HippoEndpointId endpoint, const char *applicationId, bool canInstall, bool canRun, const char *version)
 {
     hippoDebugLogU("HippoControl::applicationInfo(%s,%d,%d,%s)", applicationId, canInstall, canRun, version);
 
@@ -742,7 +748,7 @@ HippoControll::applicationInfo(HippoEndpointId endpoint, const char *application
     invocation.add(HippoBSTR::fromUTF8(version, -1));
  
     invocation.run();
-}}
+}
 
 /////////////////////////////////////////////////////////////////////
 
