@@ -28,10 +28,12 @@
 			    			<c:forEach items="${download.platform.distributions}" var="distribution">
 								[
 					    			<c:forEach items="${distribution.downloads}" var="d">
-					    			{
-										architecture: <dh:jsString value="${d.architecture}"/>,
-										url: <dh:jsString value="${d.url}"/>
-					    			},
+					    				<c:if test="${d.architecture != 'source'}">
+						    			{
+											architecture: <dh:jsString value="${d.architecture}"/>,
+											url: <dh:jsString value="${d.url}"/>
+						    			},
+						    			</c:if>
 					    			</c:forEach>
 								],
 				    		</c:forEach>
@@ -100,6 +102,8 @@
 					    	<c:if test="${!empty download.download}">
 					    		<c:forEach items="${download.download.distribution.downloads}" var="d">
 					    			<c:choose>
+					    				<c:when test="${d.architecture == 'source'}">
+					    				</c:when>
 					    				<c:when test="${d == download.download}">
 					    					<option value="${d.url}" selected="1"><c:out value="${d.architecture}"/></option>
 					    				</c:when>
