@@ -65,8 +65,20 @@ public class ClientInfoIQHandler extends AnnotatedIQHandler {
         	osVersion = rawVersion;
         }
         
-        final String architecture = child.attributeValue("architecture");
-        
+        String rawArchitecture = child.attributeValue("architecture");
+        final String architecture;
+        if ("i386".equals(rawArchitecture) ||
+        	"i486".equals(rawArchitecture) ||
+        	"i586".equals(rawArchitecture) ||
+        	"i686".equals(rawArchitecture))
+        	architecture = "x86";
+        else if ("powerpc".equals(rawArchitecture))
+        	architecture = "ppc";
+        else if ("powerpc64".equals(rawArchitecture))
+        	architecture = "ppc64";
+        else
+        	architecture = rawArchitecture;
+        		
         DownloadConfiguration downloads = config.getDownloads();
         DownloadPlatform platform;
         try {

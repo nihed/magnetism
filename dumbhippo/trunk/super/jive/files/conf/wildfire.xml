@@ -4,23 +4,6 @@
   <dumbhippo>
     <adminuser>admin</adminuser>
     <adminpassword>@@jivePassword@@</adminpassword>
-    <client>
-      <windows>
-        <minimum>@@clientWindowsMinimum@@</minimum>
-        <current>@@clientWindowsCurrent@@</current>
-        <download>@@clientWindowsDownload@@</download>
-      </windows>
-      <linux>
-        <minimum>@@clientLinuxMinimum@@</minimum>
-        <current>@@clientLinuxCurrent@@</current>
-      </linux>
-      <fedora5>
-         <download>@@clientFedora5Download@@</download>
-      </fedora5>
-      <fedora6>
-         <download>@@clientFedora6Download@@</download>
-      </fedora6>
-    </client>
   </dumbhippo>
   <adminConsole> 
     <!-- Disable either port by setting the value to -1 -->  

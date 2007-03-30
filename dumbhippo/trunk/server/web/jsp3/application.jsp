@@ -72,6 +72,12 @@
 	    				<div class="dh-applications-application-stats-heading">Rank &amp; Usage</div>
 		    			<dht3:applicationStats application="${appView}"/>
 	    			</div>
+	    			<div id="dhApplicationNoLocal">
+	    				<div class="dh-application-no-local-header">No Local Information</div>
+	    				<div>
+	    					<a href="http://developer.mugshot.org/wiki/Local_Application_Information">Read More</a>
+	    				</div>
+	    			</div>
 	       			<div id="dhApplicationRun" class="dh-application-action" style="display: none;">
 	    				<a href="javascript:dhApplicationApplication.run()">Run <c:out value="${appView.application.name}"/></a>
   					</div>

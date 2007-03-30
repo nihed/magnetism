@@ -126,6 +126,12 @@
 	font-weight: bold;
 }
 
+.dh-application-no-local-header {
+	font-size: 	 16px;
+	font-weight: bold;
+	color:		 #777777;
+}
+
 .dh-application-more-details {
 	font-size:	14px;
 	color:		#444444;
