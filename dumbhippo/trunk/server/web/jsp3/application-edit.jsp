@@ -19,6 +19,7 @@
 	<title>Edit Application - <c:out value="${appinfo.name}"/></title>
 	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="applications"/>	
+	<dh:script module="dh.util"/>
 	<script type="text/javascript">
 	dhIconCounter = 0;
 	dhIconSizes = ["unspecified", "16x16", "22x22", "24x24", "32x32", "48x48", "64x64", "128x128", "scalable"];
@@ -52,6 +53,27 @@
 		
 		document.getElementById("dhAddIconBody").appendChild(row);
 	}
+	function dhOnComment1Change() {
+		var comment1 = document.getElementById("dhApplicationComment1");
+		var comment2 = document.getElementById("dhApplicationComment2");
+		
+		comment2.value = comment1.value;
+	}
+	function dhOnComment2Change() {
+		var comment1 = document.getElementById("dhApplicationComment1");
+		var comment2 = document.getElementById("dhApplicationComment2");
+		
+		comment1.value = comment2.value;
+	}
+	function dhApplicationSave() {
+		var comment = document.getElementById("dhApplicationComment1");
+		var commentValue = dh.util.trim(comment.value);
+		if (commentValue == "") {
+			alert("Please enter a comment describing the changes you are making");
+			return;
+		}
+		document.getElementById("dhApplicationEditForm").submit();
+	}
 	</script>
 </head>
 
@@ -65,9 +87,10 @@
 		</div>
 	    <hr>
 	    <div>
-	    	<form action="/upload/appinfo-edit" method="POST" enctype="multipart/form-data">
+	    	<form id="dhApplicationEditForm" action="/upload/appinfo-edit" method="POST" enctype="multipart/form-data">
+		    	<h3>Basic Application Information</h3>
 	    		<input type="hidden" name="appId" value="${appinfo.appId}"/>
-		    	<table id="dhApplicationEdit">
+		    	<table class="dh-application-edit">
 		    		<dht3:applicationEditRow id="dhApplicationName" name="name" label="Name" value="${appinfo.name}">
 		    			<jsp:attribute name="help">
 		    				Name displayed in the user interface.
@@ -107,22 +130,6 @@
 		    				</select>
 		    			</jsp:attribute>
 		    		</dht3:applicationEditRow>
-		    		<dht3:applicationEditRow id="dhApplicationWmClasses" name="wmClasses" label="WM Classes" value="${appinfo.wmClassesString}">
-		    			<jsp:attribute name="help">
-							List of WM class names that might be found on a window for this application (; separated)
-		    			</jsp:attribute>
-		    		</dht3:applicationEditRow>
-		    		<dht3:applicationEditRow id="dhApplicationTitlePatterns" name="titlePatterns" label="Title Patterns" value="${appinfo.titlePatternsString}">
-		    			<jsp:attribute name="help">
-							Regular expressions to match window titles and identify this application (; separated. generally should be empty unless multiple applications share the same window class.)
-		    			</jsp:attribute>
-		    		</dht3:applicationEditRow>
-		    		<dht3:applicationEditRow id="dhApplicationDesktopNames" name="desktopNames" label="Desktop Names" value="${appinfo.desktopNamesString}">
-		    			<jsp:attribute name="help">
-		    				Names used when finding a desktop file to launch this application. (; separated)
-		    			</jsp:attribute>
-		    		</dht3:applicationEditRow>
-		    		<input type="hidden" name="packageNames" value="${appinfo.packageNames}"></input>
 		    		<tr>
 	    			<td class="dh-application-edit-label">
 	    			Icons:
@@ -180,14 +187,52 @@
 					</td>
 					</tr>
 		    		<tr class="dh-application-edit-spacer-row"></tr>
-		    		<dht3:applicationEditRow id="dhApplicationDescription" name="comment" label="Comment" value="" multiline="true">
+		    		<dht3:applicationEditRow id="dhApplicationComment1" name="comment" label="Comment" value="" multiline="true" onchange="dhOnComment1Change()" rowClass="dh-application-edit-comment">
 		    			<jsp:attribute name="help">
-		    				Comment describing of the change you are making
+		    				Describe the changes you are making
 		    			</jsp:attribute>
 		    		</dht3:applicationEditRow>
 		    		<tr>
 		    			<td></td>
-		    			<td class="dh-application-edit-save"><input type="submit" value="Save"></input></td>
+		    			<td class="dh-application-edit-save"><input type="button" value="Save" onclick="dhApplicationSave()"></input></td>
+		    		</tr>
+		    	</table>
+		    	<hr/>
+		    	<h3>Identifying, Installing, and Launching</h3>
+		    	<table class="dh-application-edit">
+		    		<dht3:applicationEditRow id="dhApplicationWmClasses" name="wmClasses" label="WM Classes" value="${appinfo.wmClassesString}">
+		    			<jsp:attribute name="help">
+							List of window class names that might be found on a window for this application (;&nbsp;separated). 
+							You can find the window class for an application by looking at the output of 'xprop WM_CLASS'.
+							The appropriate value is the second of the two elements.
+		    			</jsp:attribute>
+		    		</dht3:applicationEditRow>
+		    		<dht3:applicationEditRow id="dhApplicationTitlePatterns" name="titlePatterns" label="Title Patterns" value="${appinfo.titlePatternsString}">
+		    			<jsp:attribute name="help">
+							Generally not needed. If this application shares the same WM class as other
+							applications, provide regular expressions here that will be downloaded 
+							to all clients and be matched against window titles (;&nbsp;separated).
+		    			</jsp:attribute>
+		    		</dht3:applicationEditRow>
+		    		<dht3:applicationEditRow id="dhApplicationDesktopNames" name="desktopNames" label="Desktop Names" value="${appinfo.desktopNamesString}">
+		    			<jsp:attribute name="help">
+		    				Names to look under when finding a desktop file to launch this application. (; separated)
+		    			</jsp:attribute>
+		    		</dht3:applicationEditRow>
+		    		<dht3:applicationEditRow id="dhApplicationPackageNames" name="packageNames" label="Package Names" value="${appinfo.packageNames}">
+		    			<jsp:attribute name="help">
+		    				Packages in which this application is included. (Of the form "&lt;distribution1&gt;=&lt;package1&gt;;&lt;distribution&gt;=&lt;package2&gt;;...")
+		    			</jsp:attribute>
+		    		</dht3:applicationEditRow>
+		    		<tr class="dh-application-edit-spacer-row"></tr>
+		    		<dht3:applicationEditRow id="dhApplicationComment2" name="comment2" label="Comment" value="" multiline="true" onchange="dhOnComment2Change()" rowClass="dh-application-edit-comment">
+		    			<jsp:attribute name="help">
+		    				Describe the changes you are making
+		    			</jsp:attribute>
+		    		</dht3:applicationEditRow>
+		    		<tr>
+		    			<td></td>
+		    			<td class="dh-application-edit-save"><input type="button" value="Save" onclick="dhApplicationSave()"></input></td>
 		    		</tr>
 		    	</table>
 	    	</form>
