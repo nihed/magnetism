@@ -182,7 +182,9 @@ int
 HippoCanvas::computeChildWidthRequest()
 {
     if (root_ != (HippoCanvasItem*) NULL) {
-        return hippo_canvas_item_get_width_request(root_);
+        int min_size, natural_size;
+        hippo_canvas_item_get_width_request(root_, &min_size, &natural_size);
+        return min_size;
     } else {
         return 0;
     }
@@ -192,7 +194,9 @@ int
 HippoCanvas::computeChildHeightRequest(int forWidth)
 {
     if (root_ != (HippoCanvasItem*) NULL) {
-        return hippo_canvas_item_get_height_request(root_, forWidth);
+        int min_size, natural_size;
+        hippo_canvas_item_get_height_request(root_, forWidth, &min_size, &natural_size);
+        return min_size;
     } else {
         return 0;
     }
@@ -622,19 +626,19 @@ HippoCanvas::onMouseDown(int button, WPARAM wParam, LPARAM lParam)
 }
 
 void
-HippoCanvas::onMouseClick(int count, WPARAM wParam, LPARAM lParam)
+HippoCanvas::onMouseDoubleClick(int button, WPARAM wParam, LPARAM lParam)
 {
     if (root_ != (HippoCanvasItem*) NULL) {
         int x, y;
         getMouseCoords(lParam, &x, &y); // don't check return value - emit even if outside the area
         hippo_canvas_item_emit_button_press_event(root_,
                 x, y, button,
-                0, 0, count);
+                0, 0, 0, 2);
     }
 }
 
 void
-HippoCanvas::onMouseDown(int button, WPARAM wParam, LPARAM lParam)
+HippoCanvas::onMouseUp(int button, WPARAM wParam, LPARAM lParam)
 {
     if (root_ != (HippoCanvasItem*) NULL) {
         int x, y;
@@ -943,7 +947,7 @@ HippoCanvas::processMessage(UINT   message,
             onMouseUp(1, wParam, lParam);
             return true;
         case WM_LBUTTONDBLCLK:
-        	onMouseClick(2, wParam, lParam);
+        	onMouseDoubleClick(1, wParam, lParam);
         	return true;
         case WM_MBUTTONDOWN:
             onMouseDown(2, wParam, lParam);

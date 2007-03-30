@@ -1316,7 +1316,7 @@ hippo_connection_send_message_with_reply(HippoConnection  *connection,
                                          LmHandleMessageFunction handler,
                                          SendMode          mode)
 {
-    return hippo_connection_send_message_with_reply_full(connection, message, handler, mode, NULL, NULL);
+    hippo_connection_send_message_with_reply_full(connection, message, handler, mode, NULL, NULL);
 }
 
 static void

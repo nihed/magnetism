@@ -42,7 +42,7 @@ public:
     virtual void getApplicationInfo(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames);
     virtual void installApplication(HippoEndpointId endpoint, const char *applicationId, const char *packageNames, const char *desktopNames);
     virtual void runApplication(const char *desktopNames, unsigned int timestamp);
-    
+
 private:
     void clear();
     HippoSerializedControllerArgs *args_;
