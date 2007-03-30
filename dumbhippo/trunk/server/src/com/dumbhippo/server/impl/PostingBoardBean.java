@@ -534,12 +534,12 @@ public class PostingBoardBean implements PostingBoard {
 		
 		if (viewpoint instanceof SystemViewpoint) {
 			for (Group g : post.getGroupRecipients()) {
-				recipients.add(new GroupView(viewpoint, g, null, null));
+				recipients.add(new GroupView(g, null, null));
 			}
 		} else if (viewpoint instanceof AnonymousViewpoint) {
 			for (Group g : post.getGroupRecipients()) {
 				if (g.getAccess().ordinal() >= GroupAccess.PUBLIC_INVITE.ordinal()) {
-					recipients.add(new GroupView(viewpoint, g, null, null));
+					recipients.add(new GroupView(g, null, null));
 				}
 			}
 		} else {
@@ -562,7 +562,7 @@ public class PostingBoardBean implements PostingBoard {
 								inviters.add(personViewer.getPersonView(viewpoint, adder));
 							}
 						}
-						recipients.add(new GroupView(viewpoint, g, member, inviters));
+						recipients.add(new GroupView(g, member, inviters));
 						added = true;
 						break;
 					}
@@ -573,7 +573,7 @@ public class PostingBoardBean implements PostingBoard {
 					// (do this second, since it will not add the inviter as above if 
 					//  we're only invited)
 					if (g.getAccess().ordinal() >= GroupAccess.PUBLIC_INVITE.ordinal()) {
-						recipients.add(new GroupView(viewpoint, g, null, null));
+						recipients.add(new GroupView(g, null, null));
 					}
 				}
 			}
@@ -1207,7 +1207,7 @@ public class PostingBoardBean implements PostingBoard {
 			// information.  Later, if for example we add the viewer's membership status
 			// to the toXml() method of GroupView, we should fix this function, probably 
 			// by adding a GroupSystem.getGroupView(viewpoint, g).
-			result.add(new GroupView(viewpoint, g, null, null));
+			result.add(new GroupView(g, null, null));
 		}
 		for (Resource r : post.getPersonRecipients()) {
 			result.add(personViewer.getPersonView(viewpoint, r));	

@@ -57,8 +57,8 @@
         </dht3:shinyBox>
     </c:if>
     
-    <%-- Only public "by invitation" groups can have followers --%>
-    <c:if test="${group.publicInvite}">
+    <%-- Only public groups can have followers --%>
+    <c:if test="${group.public}">
         <dht3:shinyBox color="orange">
             <div class="dh-page-shinybox-title-large"><span>Group Followers (<c:out value="${group.followers.size}"/>)</span></div>
             <c:choose>  
@@ -89,8 +89,8 @@
         <dht3:invitedMembers/>
     </c:if>
 
-    <%-- Only public "by invitation" groups can have followers; both members and followers can see people who are invited to follow --%>
-    <c:if test="${group.publicInvite && (group.viewedGroup.status.participant || group.viewedGroup.status.followingParticipant)}">
+    <%-- Only public groups can have followers; both members and followers can see people who are invited to follow --%>
+    <c:if test="${group.public && (group.viewedGroup.status.participant || group.viewedGroup.status.followingParticipant)}">
         <dht3:invitedFollowers/>
     </c:if>
        

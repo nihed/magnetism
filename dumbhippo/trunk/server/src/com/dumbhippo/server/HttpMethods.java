@@ -44,9 +44,9 @@ public interface HttpMethods {
 			throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
-	@HttpParams( { "name", "members", "secret", "open", "description" })
+	@HttpParams( { "name", "members", "secret", "description" })
 	@HttpOptions( optionalParams = { "members", "description" } )
-	public void doCreateGroup(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String name, String memberIds, boolean secret, boolean open, String description)
+	public void doCreateGroup(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String name, String memberIds, boolean secret, String description)
 			throws IOException, ParseException, NotFoundException;
 
 	@HttpContentTypes(HttpResponseData.XML)

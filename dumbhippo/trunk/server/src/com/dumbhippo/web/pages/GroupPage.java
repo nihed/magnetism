@@ -197,6 +197,78 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	public GroupMember getGroupMember() {
 		return groupMember;
 	}
+
+	public String getJoinAction() {
+		if (!getSignin().isValid())
+			return null;
+			
+		switch (getGroupMember().getStatus()) {
+		case NONMEMBER:
+		case INVITED_TO_FOLLOW:
+			if (viewedGroup.getGroup().getAccess() == GroupAccess.PUBLIC)
+				return "Join Group";
+			else
+				return "Follow Group";
+		case INVITED:
+		case REMOVED:
+			return "Join Group";
+		case ACTIVE:
+		case FOLLOWER:
+			return null;
+		}
+		return null;
+	}
+	
+	public String getLeaveAction() {
+		switch (getGroupMember().getStatus()) {
+		case NONMEMBER:
+		case REMOVED:			
+			return null;
+		case INVITED_TO_FOLLOW:
+		case FOLLOWER:
+			return "Stop Following";
+		case INVITED:
+		case ACTIVE:
+			return "Leave Group";
+		}
+		return null;
+	}
+	
+	public String getJoinTooltip() {
+		if (!getSignin().isValid())
+			return null;
+			
+		switch (getGroupMember().getStatus()) {
+		case NONMEMBER:
+		case INVITED_TO_FOLLOW:
+			if (viewedGroup.getGroup().getAccess() == GroupAccess.PUBLIC)
+				return "Become a group member";
+			else
+				return "Become a groupie! Get new stuff from this group.";
+		case INVITED:
+		case REMOVED:
+			return "Become a group member";
+		case FOLLOWER:
+		case ACTIVE:
+			return null;
+		}
+		return null;
+	}	
+	
+	public String getLeaveTooltip() {
+		switch (getGroupMember().getStatus()) {
+		case NONMEMBER:
+		case REMOVED:			
+			return null;
+		case INVITED_TO_FOLLOW:
+		case FOLLOWER:
+			return "Stop getting stuff from this group";
+		case INVITED:
+		case ACTIVE:
+			return "I can't take it anymore! Let yourself out of this group.";
+		}
+		return null;
+	}
 	
 	public String getShareSubject() {
 		// sharing isn't actually enabled for all statuses, but no need to have that logic here,
@@ -213,7 +285,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	}
 	
 	public boolean getCanAddMembers() {
-		return (getGroupMember().getStatus().getCanAddMembers() || isPublicOpen());
+		return (getGroupMember().getStatus().getCanAddMembers() || isForum());
 	}
 
 	public boolean getCanAddFollowers() {
@@ -242,11 +314,11 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		return false;
 	}
 
-	public boolean isPublicOpen() {
+	public boolean isForum() {
 		return viewedGroup.getGroup().getAccess() == GroupAccess.PUBLIC;
 	}
 	
-	public boolean isPublicInvite() {
+	public boolean isPublic() {
 		return viewedGroup.getGroup().getAccess() == GroupAccess.PUBLIC_INVITE;
 	}
 	

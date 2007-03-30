@@ -33,14 +33,28 @@
                 	<dht:actionLink oneLine="true" href="/group-account?group=${who.identifyingGuid}" title="Change Group Picture, Descriptions, and Add or Remove Group Feeds">Edit Group</dht:actionLink> |
               	</c:if>
 	            <c:choose>
-	                <c:when test="${who.joinAction != null}">
-                        <dh:script module="dh.actions"/>
-						<dht:actionLink oneLine="true" href="javascript:dh.actions.joinGroup('${who.identifyingGuid}')" title="${who.joinTooltip}"><c:out value="${who.joinAction}"/></dht:actionLink>					
-	                </c:when>
-	                <c:when test="${who.leaveAction != null}">
-                        <dh:script module="dh.actions"/>
-						<dht:actionLink oneLine="true" href="javascript:dh.actions.leaveGroup('${who.identifyingGuid}')" title="${who.leaveTooltip}"><c:out value="${who.leaveAction}"/></dht:actionLink>					
-	                </c:when>
+	        	    <c:when test="${who.active}">
+	        	    	<dh:script module="dh.actions"/>
+						<dht:actionLink oneLine="true" href="javascript:dh.actions.leaveGroup('${who.identifyingGuid}')" title="Stop receiving stack activity from this group">Leave Group</dht:actionLink>
+					</c:when>
+					<c:when test="${who.invited}">
+						<dh:script module="dh.actions"/>
+						 <dht:actionLink oneLine="true" href="javascript:dh.actions.joinGroup('${who.identifyingGuid}')" title="You were invited to join this group">Join group (invited)</dht:actionLink>					
+					</c:when>
+					<c:when test="${dh:enumIs(who.status, 'REMOVED')}">
+						<dh:script module="dh.actions"/>
+						<dht:actionLink oneLine="true" href="javascript:dh.actions.joinGroup('${who.identifyingGuid}')" title="Rejoin this group">Join group</dht:actionLink>
+					</c:when>
+					<c:when test="${dh:enumIs(who.status, 'NONMEMBER') && who.canJoin}">
+						<dh:script module="dh.actions"/>
+						<dht:actionLink oneLine="true" href="javascript:dh.actions.joinGroup('${who.identifyingGuid}')" title="Follow stack activity in this group">Follow group</dht:actionLink>
+					</c:when>
+					<c:when test="${dh:enumIs(who.status, 'FOLLOWER')}">
+						<dh:script module="dh.actions"/>
+						<dht:actionLink oneLine="true" href="javascript:dh.actions.leaveGroup('${who.identifyingGuid}')" title="Stop following this group">Stop Following</dht:actionLink>
+					</c:when>
+	        	    <c:otherwise>
+				    </c:otherwise>
 			    </c:choose>	
 			<c:if test="${who.status.canShare}">
 				| <dht:actionLink oneLine="true" href="/group-invitation?group=${who.identifyingGuid}" title="Invite other people to this group">Invite People</dht:actionLink>

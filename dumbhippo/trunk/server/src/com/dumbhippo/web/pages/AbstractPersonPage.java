@@ -216,7 +216,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			pageablePublicGroups.setInitialPerPage(GROUPS_PER_PAGE);
 			pageablePublicGroups.setSubsequentPerPage(GROUPS_PER_PAGE);
 			
-			groupSystem.pagePublicGroups(getSignin().getViewpoint(), pageablePublicGroups);
+			groupSystem.pagePublicGroups(pageablePublicGroups);
 		}
 		
 		return pageablePublicGroups;
