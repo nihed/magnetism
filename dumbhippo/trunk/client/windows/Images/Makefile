@@ -11,8 +11,12 @@ all:
 	copy $(IMGDIR)\bar_x.png $(OUTDIR)\images
 	copy $(IMGDIR)\blue_x.png $(OUTDIR)\images
 	copy $(IMGDIR)\chat.png $(OUTDIR)\images
+	copy $(IMGDIR)\checkbox.png $(OUTDIR)\images
+	copy $(IMGDIR)\checked_checkbox.png $(OUTDIR)\images
 	copy $(IMGDIR)\closetip.png $(OUTDIR)\images
 	copy $(IMGDIR)\expandtip.png $(OUTDIR)\images
+	copy $(IMGDIR)\filter2.png $(OUTDIR)\images
+	copy $(IMGDIR)\filter.png $(OUTDIR)\images
 	copy $(IMGDIR)\find.png $(OUTDIR)\images
 	copy $(IMGDIR)\flat_x.png $(OUTDIR)\images
 	copy $(IMGDIR)\home2.png $(OUTDIR)\images

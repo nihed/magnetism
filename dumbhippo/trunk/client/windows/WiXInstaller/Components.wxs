@@ -103,9 +103,13 @@
 	                    <File Id="barX2Png"          Name="bar_x2.png"   LongName="bar_x2.png"         src="images\bar_x2.png"         DiskId="1" Vital="yes"/>
 	                    <File Id="blueXPng"          Name="blue_x.png"   LongName="blue_x.png"         src="images\blue_x.png"         DiskId="1" Vital="yes"/>
 	                    <File Id="chatPng"           Name="chat.png"     LongName="chat.png"           src="images\chat.png"           DiskId="1" Vital="yes"/>
-	                    <File Id="closetipPng"       Name="closetip.png" LongName="closetip.png"       src="images\closetip.png"       DiskId="1" Vital="yes"/>
+                            <File Id="checkboxPng"       Name="checkbox.png" LongName="checkbox.png"       src="images\checkbox.png"       DiskId="1" Vital="yes"/>
+                            <File Id="checkedCheckboxPng" Name="checked_.png" LongName="checked_checkbox.png" src="images\checked_checkbox.png" DiskId="1" Vital="yes"/>
+                            <File Id="closetipPng"       Name="closetip.png" LongName="closetip.png"       src="images\closetip.png"       DiskId="1" Vital="yes"/>
 	                    <File Id="expandtipPng"      Name="expandti.png" LongName="expandtip.png"      src="images\expandtip.png"      DiskId="1" Vital="yes"/>
-	                    <File Id="findPng"           Name="find.png"     LongName="find.png"           src="images\find.png"           DiskId="1" Vital="yes"/>
+                            <File Id="filterPng"         Name="filter.png"   LongName="filter.png"         src="images\filter.png"         DiskId="1" Vital="yes"/>
+                            <File Id="filter2Png"        Name="filter2.png"  LongName="filter2.png"        src="images\filter2.png"        DiskId="1" Vital="yes"/>
+                            <File Id="findPng"           Name="find.png"     LongName="find.png"           src="images\find.png"           DiskId="1" Vital="yes"/>
 	                    <File Id="flatXPng"          Name="flat_x.png"   LongName="flat_x.png"         src="images\flat_x.png"         DiskId="1" Vital="yes"/>
 	                    <File Id="homePng"           Name="home.png"     LongName="home.png"           src="images\home.png"           DiskId="1" Vital="yes"/>
 	                    <File Id="home2Png"          Name="home2.png"    LongName="home2.png"          src="images\home2.png"          DiskId="1" Vital="yes"/>
