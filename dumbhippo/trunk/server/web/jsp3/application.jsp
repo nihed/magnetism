@@ -62,7 +62,7 @@
 	    <hr>
 	    <table id="dhApplicationsColumns">
 	    <tr>
-	    <dht3:applicationsLeft/>
+	    <dht3:applicationsLeft currentCategory="${appView.application.category}" linkifyCurrent="true"/>
 	    <td id="dhApplicationsMain">
 			<div id="dhApplicationsApplications">
 	    		<dht3:application application="${appView}" includeStats="false" linkify="false"/>

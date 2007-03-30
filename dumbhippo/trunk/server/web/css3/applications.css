@@ -65,12 +65,22 @@
 	font-size: 12px;
 }
 
+.dh-applications-categories {
+	border-collapse: collapse;
+}
+
 .dh-applications-category {
-	font-size: 14px;
+	font-size: 	      14px;
+	border-bottom:    1px solid #cccccc;
 }
 
 .dh-applications-current-category {
 	font-weight: bold;
+	background-color: #eeeeee;
+}
+
+.dh-applications-last-category {
+	border-bottom: none;
 }
 
 .dh-applications-no-applications {

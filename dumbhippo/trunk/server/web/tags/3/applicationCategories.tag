@@ -8,9 +8,9 @@
 
 <div class="dh-applications-heading">View Category:</div>
 <table class="dh-applications-categories" cellspacing="0" cellpadding="0">
+	<c:set var="current" value="${empty currentCategory}"/>
 	<tr class="dh-applications-category ${current ? 'dh-applications-current-category' : ''}">
-		<c:set var="current" value="${empty currentCategory}"/>
-		<td>
+		<td class="dh-applications-category-name">
 			<c:choose>
 				<c:when test="${current && !linkifyCurrent}">
     				All
@@ -18,13 +18,15 @@
     			<c:otherwise>
 	    			<a href="/applications">All</a>
     			</c:otherwise>
-  				</c:choose>
+			</c:choose>
+		</td>
+		<td class="dh-applications-category-bar-outer">	    			
 		</td>
 	</tr>
-   	<c:forEach items="${applications.categories}" var="category">
+   	<c:forEach items="${applications.categories}" var="category" varStatus="status">
 		<c:set var="current" value="${currentCategory == category.category}"/>
-   		<tr class="dh-applications-category ${current ? 'dh-applications-current-category' : ''}">
-   			<td class="dh-applications-category-name}">
+   		<tr class="dh-applications-category ${current ? 'dh-applications-current-category' : ''} ${status.last ? 'dh-applications-last-category' : ''}">
+   			<td class="dh-applications-category-name">
    				<c:choose>
    					<c:when test="${current && !linkifyCurrent}">
 	    				<c:out value="${category.category.displayName}"/>
