@@ -1,6 +1,7 @@
 package com.dumbhippo.server.views;
 
 import java.util.List;
+import java.util.Set;
 
 import com.dumbhippo.BasicThumbnails;
 import com.dumbhippo.Thumbnail;
@@ -8,6 +9,7 @@ import com.dumbhippo.Thumbnails;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.Sentiment;
 
 public class ExternalAccountView {
@@ -122,6 +124,10 @@ public class ExternalAccountView {
 		this.thumbnails = thumbnails;
 	}
 	
+	public Set<Feed> getFeeds() {
+		return getExternalAccount().getFeeds();
+	}
+	
 	public void writeToXmlBuilder(XmlBuilder builder) {
 		builder.openElement("externalAccount",
 				"type", getExternalAccount().getAccountType().name(),
@@ -130,6 +136,13 @@ public class ExternalAccountView {
 				// The following will not be added unless the account is loved and enabled
 				"link", getLink(),
 				"linkText", getLinkText());
+		if (getFeeds() != null) {
+			builder.openElement("feeds");
+			for (Feed f : getFeeds()) {
+				builder.appendEmptyNode("feed", "src", f.getLink().getUrl());
+			}
+			builder.closeElement();
+		}
 		if (getHasThumbnails()) {
 			Thumbnails thumbnails = getThumbnails();
 			builder.openElement("thumbnails", "width", ""+thumbnails.getThumbnailWidth(), 
