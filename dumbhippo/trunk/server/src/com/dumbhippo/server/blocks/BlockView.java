@@ -1,8 +1,5 @@
 package com.dumbhippo.server.blocks;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.dumbhippo.DateUtils;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.Thumbnail;
@@ -13,7 +10,6 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.GroupBlockData;
-import com.dumbhippo.persistence.StackFilterFlags;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.ObjectView;
@@ -102,14 +98,15 @@ public abstract class BlockView implements ObjectView {
 			return StackReason.NEW_BLOCK;
 	}
 	
-	private static String getBlockFilterFlagsList(Block block) {
-		List<String> flagStrings = new ArrayList<String>();
-		for (StackFilterFlags flag : StackFilterFlags.values()) {
-			if ((block.getFilterFlags() & flag.getValue()) != 0) {
-				flagStrings.add(flag.name());
-			}
-		}
-		return StringUtils.join(flagStrings, ",");
+	// Kind of ugly to have this here, but it seems cleaner to have all the logic
+	// for filtering in one place
+	public boolean isFeed() {
+		return false;
+	}
+	
+	public boolean isMine() {
+		return block.getBlockType().getBlockOwnership() == BlockType.BlockOwnership.DIRECT_DATA1 ||
+        	   block.getBlockType().getBlockOwnership() == BlockType.BlockOwnership.DIRECT_DATA2;
 	}
 	
 	public void writeToXmlBuilder(XmlBuilder builder) {
@@ -176,7 +173,8 @@ public abstract class BlockView implements ObjectView {
 							"clicked", Boolean.toString(userBlockData.isClicked()),
 							"clickedTimestamp", Long.toString(userBlockData.getClickedTimestampAsLong()),
 							"stackReason", getStackReason().name(),
-							"filterFlags", getBlockFilterFlagsList(block),
+							"isFeed", "" + isFeed(),
+							"isMine", "" + isMine(),
 							"icon", getIcon());
 
 		if (hasSource)

@@ -898,8 +898,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			sb.append(" AND block.filterFlags != " + StackFilterFlags.FEED.getValue());
 		
 		if (parsedExpression.isNoSelfSource() && viewpoint instanceof UserViewpoint) {
-			sb.append(" AND (NOT ((block.data1 = :viewpointGuid AND " + getData1UserBlockTypeClause() + ")" +
-					  "           OR (block.data2 = :viewpointGuid AND " + getData2UserBlockTypeClause() + ")))");
+			sb.append(" AND NOT ((block.data1 = :viewpointGuid  AND " + getDirectData1UserBlockTypeClause() + ")" +
+					  "          OR (block.data2 = :viewpointGuid AND " + getDirectData2UserBlockTypeClause() + "))");
 		}
 		
 		/* Inclusion clause */
@@ -941,7 +941,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		
 		return TypeUtils.castList(UserBlockData.class, q.getResultList());		
 	}
-	
+
 	private interface BlockSource<T> {
 		List<Pair<Block, T>> get(int start, int count);
 		BlockView prepareView(Viewpoint viewpoint, Block block, T t) throws BlockNotVisibleException;
@@ -1212,12 +1212,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}, pageable, expectedHitFactor);
 	}
 	
-	private static Set<BlockType> data1UserBlockTypes;
-	private static Set<BlockType> data2UserBlockTypes;
+	private static Set<BlockType> directData1UserBlockTypes;
+	private static Set<BlockType> directData2UserBlockTypes;
+	private static Set<BlockType> indirectData1UserBlockTypes;
+	private static Set<BlockType> indirectData2UserBlockTypes;
 
-	private static String joinBlockTypeOridnals(Set<BlockType> types) {
+	private static String joinBlockTypeOrdinals(Set<BlockType> types) {
 		StringBuilder builder = new StringBuilder();
-		Iterator<BlockType> it = data1UserBlockTypes.iterator();		
+		Iterator<BlockType> it = types.iterator();		
 		while (it.hasNext()) {
 			builder.append(Integer.toString(it.next().ordinal()));
 			if (it.hasNext()) {
@@ -1229,16 +1231,22 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	private static void initBlockTypeCache() {
 		synchronized (StackerBean.class) {
-			if (data1UserBlockTypes == null) {
-				data1UserBlockTypes = new HashSet<BlockType>();
-				data2UserBlockTypes = new HashSet<BlockType>();
+			if (directData1UserBlockTypes == null) {
+				directData1UserBlockTypes = new HashSet<BlockType>();
+				directData2UserBlockTypes = new HashSet<BlockType>();
+				indirectData1UserBlockTypes = new HashSet<BlockType>();
+				indirectData2UserBlockTypes = new HashSet<BlockType>();				
 				Iterator<BlockType> it = Arrays.asList(BlockType.values()).iterator();
 				while (it.hasNext()) {
 					BlockType blockType = it.next();
-					if (blockType.userOriginIsData1())
-						data1UserBlockTypes.add(blockType);
-					else if (blockType.userOriginIsData2())
-						data2UserBlockTypes.add(blockType);
+					if (blockType.getBlockOwnership() == BlockType.BlockOwnership.DIRECT_DATA1)
+						directData1UserBlockTypes.add(blockType);
+					else if (blockType.getBlockOwnership() == BlockType.BlockOwnership.DIRECT_DATA2)
+						directData2UserBlockTypes.add(blockType);
+					else if (blockType.getBlockOwnership() == BlockType.BlockOwnership.INDIRECT_DATA1)
+						indirectData1UserBlockTypes.add(blockType);
+					else if (blockType.getBlockOwnership() == BlockType.BlockOwnership.INDIRECT_DATA2)
+						indirectData2UserBlockTypes.add(blockType);
 				}
 			}
 		}	
@@ -1247,18 +1255,29 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	private String getData1UserBlockTypeClause() {
 		initBlockTypeCache();
 		StringBuilder builder = new StringBuilder(" block.blockType IN (");
-		builder.append(joinBlockTypeOridnals(data1UserBlockTypes));
+		Set<BlockType> allData1 = new HashSet<BlockType>();
+		allData1.addAll(directData1UserBlockTypes);
+		allData1.addAll(indirectData1UserBlockTypes);
+		builder.append(joinBlockTypeOrdinals(allData1));
 		builder.append(") ");
 		return builder.toString();
 	}
 	
-	private String getData2UserBlockTypeClause() {
+	private String getDirectData1UserBlockTypeClause() {
 		initBlockTypeCache();
 		StringBuilder builder = new StringBuilder(" block.blockType IN (");
-		builder.append(joinBlockTypeOridnals(data2UserBlockTypes));
+		builder.append(joinBlockTypeOrdinals(directData1UserBlockTypes));
 		builder.append(") ");
 		return builder.toString();
-	}	
+	}
+	
+	private String getDirectData2UserBlockTypeClause() {
+		initBlockTypeCache();
+		StringBuilder builder = new StringBuilder(" block.blockType IN (");
+		builder.append(joinBlockTypeOrdinals(directData2UserBlockTypes));
+		builder.append(") ");
+		return builder.toString();
+	}		
 	
 	private List<User> getRecentlyActiveContacts(Viewpoint viewpoint, User user, int start, int count) {
 		// The algorithm to find recently active contacts here is simply to select blocks from the user's
@@ -1267,12 +1286,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// the ideal which would be the participated blocks for all the user's contacts, but that query
 		// would be significantly slower.  This one will miss e.g. group chat and posts at the moment.
 		// When we extend this to support posts we need to be sure to filter by the user's actual contacts
-		// since the first assumption will no longer be true.
+		// since the first assumption will no longer be true.  We exclude data2 because posts may be
+		// sent to groups by someone who is not the user's contact.
 		Query q = em.createQuery("SELECT u FROM User u, UserBlockData ubd, Block block" +
                 " WHERE ubd.deleted = 0 AND ubd.block = block " +
-                " AND " + getData1UserBlockTypeClause() + 
+                " AND block.data1 = u.id AND " + getData1UserBlockTypeClause() +
                 " AND block.publicBlock = true " +
-                " AND u.id = block.data1 " +
                 " AND u != :user " +
                 " AND ubd.user = :user " +
                 " ORDER BY ubd.stackTimestamp DESC");

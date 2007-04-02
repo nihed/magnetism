@@ -99,6 +99,11 @@ public class PostBlockView extends BlockView implements TitleBlockView, EntitySo
 	public String getPrivacyTip() {
 		return "Private: Only you and the recipients can see this.";
 	}
+	
+	@Override
+	public boolean isFeed() {
+		return postView.getPost() instanceof FeedPost;		
+	}	
 
 	public String getTitleForHome() {
 		return getTitle();
