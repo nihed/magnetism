@@ -294,34 +294,38 @@ public class ApplicationSystemBean implements ApplicationSystem {
 						continue;
 					}
 					
-					runner.runTaskInNewTransaction(new Runnable() {
-						public void run() {
-							// Reattach application
-							Application application = em.find(Application.class, au.getApplication().getId());
-							if (application == null) {
-								logger.warn("Application {} disappeared from database", application.getId());
-								return;
+					try {
+						runner.runTaskInNewTransaction(new Runnable() {
+							public void run() {
+								// Reattach application
+								Application application = em.find(Application.class, au.getApplication().getId());
+								if (application == null) {
+									logger.warn("Application {} disappeared from database", application.getId());
+									return;
+								}
+	
+								logger.info("Reinstalling {}.appinfo for {}", au.getId(), application.getId());
+								
+								try {
+									AppinfoFile appinfoFile = getAppinfoFileInternal(au);
+									
+									updateApplication(application, appinfoFile);
+									updateApplicationCollections(application, appinfoFile);
+													
+									migrateUnmatchedUsage(application);
+									
+									seenApplications.add(application.getId());
+									
+								} catch (IOException e) {
+									logger.warn("Couldn't read saved {}.dappinfo file: {}", e.getMessage());
+								} catch (ValidationException e) {
+									logger.warn("Couldn't validate saved {}.dappinfo file: {}", e.getMessage());
+								}
 							}
-
-							logger.info("Reinstalling {}.appinfo for {}", au.getId(), application.getId());
-							
-							try {
-								AppinfoFile appinfoFile = getAppinfoFileInternal(au);
-								
-								updateApplication(application, appinfoFile);
-								updateApplicationCollections(application, appinfoFile);
-												
-								migrateUnmatchedUsage(application);
-								
-								seenApplications.add(application.getId());
-								
-							} catch (IOException e) {
-								logger.warn("Couldn't read saved {}.dappinfo file: {}", e.getMessage());
-							} catch (ValidationException e) {
-								logger.warn("Couldn't validate saved {}.dappinfo file: {}", e.getMessage());
-							}
-						}
-					});
+						});
+					} catch (RuntimeException e) {
+						logger.error("Failed to reinstall this application: " + au.getApplication().getId(), e);
+					}
 				}
 				
 				logger.info("Finished reinstalling all applications");
