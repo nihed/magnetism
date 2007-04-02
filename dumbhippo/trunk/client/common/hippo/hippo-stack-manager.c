@@ -443,11 +443,9 @@ static gboolean
 apply_current_filter(StackManager *manager,
                      HippoBlock   *block)
 {
-    if (manager->nofeed_active &&
-        hippo_block_get_filter_flags(block) & HIPPO_BLOCK_FILTER_FLAG_FEED)
+    if (manager->nofeed_active && hippo_block_get_is_feed(block))
         return FALSE;
-    else if (manager->noselfsource_active &&
-             hippo_block_get_source(block) == ((HippoEntity*) hippo_data_cache_get_self(manager->cache)))
+    else if (manager->noselfsource_active && hippo_block_get_is_mine(block))
         return FALSE;
            
     return TRUE;
