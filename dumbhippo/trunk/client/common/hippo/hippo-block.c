@@ -62,7 +62,8 @@ enum {
     PROP_TITLE,
     PROP_TITLE_LINK,
     PROP_STACK_REASON,
-    PROP_FILTER_FLAGS
+    PROP_IS_FEED,
+    PROP_IS_MINE
 };
 
 static void
@@ -233,12 +234,20 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                      G_PARAM_READABLE));
                                                      
    g_object_class_install_property(object_class,
-                                    PROP_FILTER_FLAGS,
-                                    g_param_spec_uint("filter-flags",
-                                                      _("Filter flags"),
-                                                      _("Flags applicable to this block, used for filtering"),
-                                                      0, G_MAXUINT, 0,
-                                                      G_PARAM_READABLE));                                                     
+                                   PROP_IS_FEED,
+                                   g_param_spec_boolean("is-feed",
+                                                        _("Feed"),
+                                                        _("Whether or not this block is a feed block"),
+                                                   	    FALSE,
+                                                        G_PARAM_READABLE));
+                                                        
+	g_object_class_install_property(object_class,
+                                   PROP_IS_MINE,
+                                   g_param_spec_boolean("is-mine",
+                                                        _("Mine"),
+                                                        _("Whether or not this block originates from the user directly"),
+                                                   	    FALSE,
+                                                        G_PARAM_READABLE));   
 }
 
 static void
@@ -386,6 +395,12 @@ hippo_block_get_property(GObject         *object,
     case PROP_TITLE_LINK:
         g_value_set_string(value, block->title_link);
         break;
+    case PROP_IS_FEED:
+        g_value_set_boolean(value, block->is_feed);
+        break;
+    case PROP_IS_MINE:
+        g_value_set_boolean(value, block->is_mine);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -433,8 +448,8 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     const char *stack_reason_str = NULL;
     const char *generic_types = NULL;
     HippoStackReason stack_reason = HIPPO_STACK_NEW_BLOCK;
-    guint filter_flags_value = 0;
-    const char *filter_flags = NULL;
+	gboolean is_mine = 0;
+	gboolean is_feed = 0;
     LmMessageNode *source_node = NULL;
     HippoEntity *source;
     
@@ -455,7 +470,8 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
                          "ignored", HIPPO_SPLIT_BOOLEAN, &ignored,
                          "icon", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &icon_url,
                          "stackReason", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &stack_reason_str,
-                         "filterFlags", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &filter_flags,
+                         "isFeed", HIPPO_SPLIT_BOOLEAN, &is_feed,                         
+                         "isMine", HIPPO_SPLIT_BOOLEAN, &is_mine,
                          "source", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &source_node,                         
                          NULL)) {
         g_debug("missing attributes on <block> %s update", block->guid);
@@ -483,19 +499,8 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     hippo_block_set_clicked(block, clicked);
     hippo_block_set_ignored(block, ignored);
     hippo_block_set_icon_url(block, icon_url);
-    
-    if (filter_flags != NULL) {
-        char **flags = g_strsplit(filter_flags, ",", 0);
-        char **flag;
-        for (flag = flags; *flag; flag++) {
-            if (strcmp(*flag, "FEED") == 0) {
-                filter_flags_value ^= HIPPO_BLOCK_FILTER_FLAG_FEED;
-            }       
-        }
-        g_strfreev(flags);
-    }
-    
-    hippo_block_set_filter_flags(block, filter_flags_value);
+    hippo_block_set_is_feed(block, is_feed);
+    hippo_block_set_is_mine(block, is_mine);    
 
     if (source_node != NULL) {
         if (!hippo_xml_split(cache, source_node, NULL,
@@ -870,23 +875,43 @@ hippo_block_set_stack_reason(HippoBlock      *block,
     }
 }
 
-guint
-hippo_block_get_filter_flags(HippoBlock *block)
+gboolean
+hippo_block_get_is_feed(HippoBlock *block)
 {
     g_return_val_if_fail(HIPPO_IS_BLOCK(block), FALSE);
 
-    return block->filter_flags;
+    return block->is_feed;
 }
 
 void
-hippo_block_set_filter_flags(HippoBlock *block,
-                             guint       flags)
+hippo_block_set_is_feed(HippoBlock *block,
+                        gboolean    feed)
 {
     g_return_if_fail(HIPPO_IS_BLOCK(block));
 
-    if (flags != block->filter_flags) {
-        block->filter_flags = flags;
-        g_object_notify(G_OBJECT(block), "filter-flags");
+    if (feed != block->is_feed) {
+        block->is_feed = feed;
+        g_object_notify(G_OBJECT(block), "is-feed");
+    }
+}
+
+gboolean
+hippo_block_get_is_mine(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), FALSE);
+
+    return block->is_mine;
+}
+
+void
+hippo_block_set_is_mine(HippoBlock *block,
+                        gboolean    mine)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (mine != block->is_mine) {
+        block->is_mine = mine;
+        g_object_notify(G_OBJECT(block), "is-mine");
     }
 }
 

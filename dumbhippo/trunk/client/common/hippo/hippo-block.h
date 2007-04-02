@@ -64,7 +64,8 @@ struct _HippoBlock {
     char *title;
     char *title_link;
     HippoStackReason stack_reason;
-    guint filter_flags;
+    guint is_feed : 1;
+    guint is_mine : 1;
     guint clicked : 1;
     guint ignored : 1;
     guint pinned : 1;
@@ -127,6 +128,14 @@ void     hippo_block_set_ignored           (HippoBlock *block,
 gboolean hippo_block_get_pinned            (HippoBlock *block);
 void     hippo_block_set_pinned            (HippoBlock *block,
                                             gboolean    pinned);
+
+gboolean hippo_block_get_is_feed           (HippoBlock *block);
+void     hippo_block_set_is_feed           (HippoBlock *block,
+                                            gboolean    feed);     
+                                                                                        
+gboolean hippo_block_get_is_mine           (HippoBlock *block);
+void     hippo_block_set_is_mine           (HippoBlock *block,
+                                            gboolean    mine);                                            
     
 HippoStackReason hippo_block_get_stack_reason (HippoBlock      *block);
 void             hippo_block_set_stack_reason (HippoBlock      *block,
