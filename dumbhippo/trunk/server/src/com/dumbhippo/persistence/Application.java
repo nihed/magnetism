@@ -165,8 +165,12 @@ public class Application {
 	
 	@Transient
 	public String getDescriptionAsHtml() {
+		String description = getDescription();
+		if (description == null)
+			return "";
+		
         XmlBuilder xml = new XmlBuilder();
-        xml.appendTextAsHtml(getDescription(), null);
+        xml.appendTextAsHtml(description, null);
         return xml.toString(); 
 	}
 	
