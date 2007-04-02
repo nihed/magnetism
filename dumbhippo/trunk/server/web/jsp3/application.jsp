@@ -75,9 +75,9 @@
 		    			<dht3:applicationStats application="${appView}"/>
 	    			</div>
 	    			<div id="dhApplicationNoLocal">
-	    				<div class="dh-application-no-local-header">No Local Information</div>
+	    				<div class="dh-application-no-local-header">No Package Information</div>
 	    				<div>
-	    					<a href="http://developer.mugshot.org/wiki/Local_Application_Information">Read More</a>
+	    					<a href="http://developer.mugshot.org/wiki/Package_Information">Read More</a>
 	    				</div>
 	    			</div>
 	       			<div id="dhApplicationRun" class="dh-application-action" style="display: none;">
