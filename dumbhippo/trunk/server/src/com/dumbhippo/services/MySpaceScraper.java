@@ -28,16 +28,26 @@ public class MySpaceScraper {
 		}
 	}	
 	
+	private static String[] friendIdPatterns = {"FriendsView.aspx?friendID=([0-9]+)",
+										 "fuseaction=user.viewPicture&amp;friendID=([0-9]+)",
+										 "fuseaction=user.viewComments&amp;friendID=([0-9]+)",										 
+										 "fuseaction=user.viewAlbums&amp;friendID=([0-9]+)"};										 
+	private static Pattern[] friendIdCompiledPatterns;
+	
 	private static String scrapeFriendID(String html) {
-		Pattern p = Pattern.compile("FriendsView.aspx?friendID=([0-9]+)");
-		Matcher m = p.matcher(html);
-		if (m.find())
-			return m.group(1);
-		p = Pattern.compile("fuseaction=user.viewPicture&amp;friendID=([0-9]+)");
-		m = p.matcher(html);
-		if (!m.find())
-			return null;
-		return m.group(1);
+		synchronized (MySpaceScraper.class) {
+			if (friendIdCompiledPatterns == null) {
+				friendIdCompiledPatterns = new Pattern[friendIdPatterns.length];
+				for (int i = 0; i < friendIdPatterns.length; i++)
+					friendIdCompiledPatterns[i] = Pattern.compile(friendIdPatterns[i]);
+			}
+		}
+		for (Pattern p : friendIdCompiledPatterns) {
+			Matcher m = p.matcher(html);
+			if (m.find())
+				return m.group(1);
+		}
+		return null;
 	}	
 	
 	private static boolean isPrivateProfile(String html) {
