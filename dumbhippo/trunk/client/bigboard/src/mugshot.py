@@ -315,7 +315,8 @@ class Mugshot(gobject.GObject):
                 feeds_node = libbig.xml_query(child, 'feeds')
             except KeyError:
                 feeds_node = None
-                for feed in libbig.xml_query(thumbnails_node, 'feed*'):
+            if feeds_node:
+                for feed in libbig.xml_query(feeds_node, 'feed*'):
                     feeds.append(feed.getAttribute('src'))   
                 attrs['feeds'] = feeds          
             acct = ExternalAccount(attrs)
