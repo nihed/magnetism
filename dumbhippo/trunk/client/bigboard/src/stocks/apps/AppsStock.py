@@ -6,53 +6,56 @@ import hippo
 import bigboard, mugshot, libbig
 from big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox, CanvasVBox, ActionLink
 
-import appbrowser, apps_widgets
+import appbrowser, apps_widgets, apps_directory
 
-class HideableBox(hippo.CanvasBox):
-    def __init__(self, hidetext, showtext, **kwargs):
-        if not kwargs.has_key('spacing'):
-            kwargs['spacing'] = 4
-        hippo.CanvasBox.__init__(self, **kwargs)
+class Application(gobject.GObject):
+    __gsignals__ = {
+        "changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+    }    
+    def __init__(self, app):
+        super(Application, self).__init__()
+        self.__app = app
+        self.__install_checked = False
+        self.__desktop_entry = None
+        ad = apps_directory.get_app_directory()            
+        ad.connect("changed", lambda ad: self.__recheck_installed())        
         
-        self.__shown = True
-        self.__hidetext = hidetext
-        self.__showtext = showtext
-        self.__text = hippo.CanvasLink(xalign=hippo.ALIGNMENT_CENTER)
-        self.__text.connect("button-press-event", lambda text, event: self.__toggle_show())
+    def get_id(self):
+        return self.__app.get_id()
         
-        self.append(self.__text)
+    def get_mugshot_app(self):
+        return self.__app
         
-        self.__content = None
+    def __lookup_desktop(self):
+        names = self.__app.get_desktop_names()        
+        for name in names.split(';'):
+            ad = apps_directory.get_app_directory()            
+            menuitem = None
+            try:
+                menuitem = ad.lookup(name)
+            except KeyError, e:
+                continue
+            entry_path = menuitem.get_desktop_file_path()
+            desktop = gnomedesktop.item_new_from_file(entry_path, 0)
+            if desktop:
+                return desktop
+        return None
         
-        self.__sync_show()
-        
-    def set_hidetext(self, text):
-        self.__hidetext = text
-        self.__sync_show()
-        
-    def set_showtext(self, text):
-        self.__showtext = text
-        self.__sync_show()
-                
-    def set_content(self, content):
-        assert(self.__content is None)
-        self.__content = content
-        self.append(self.__content)
-        
-    def set_shown(self, shown):
-        shown = not not shown
-        if shown != self.__shown:
-            self.__toggle_show()
-        
-    def __toggle_show(self):
-        assert(not self.__content is None)        
-        self.__shown = not self.__shown
-        self.__sync_show()
-        
-    def __sync_show(self):
-        self.__text.set_property("text", (self.__shown and self.__hidetext) or self.__showtext)
-        if self.__content:
-            self.set_child_visible(self.__content, self.__shown)
+    def is_installed(self):
+        if not self.__install_checked:
+            self.__recheck_installed()            
+        self.__install_checked = True               
+        return self.__desktop_entry is not None      
+   
+    def __recheck_installed(self):
+        old_installed = self.__desktop_entry is not None
+        self.__desktop_entry = self.__lookup_desktop()
+        if (self.__desktop_entry is not None) != old_installed:
+            self.emit("changed")
+            
+    def launch(self):
+        if self.__desktop_entry:
+            self.__desktop_entry.launch()
             
 class AppDisplayLauncher(apps_widgets.AppDisplay):
     def __init__(self):
@@ -96,10 +99,12 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self.__static_set_ids = {}
         self.__set_message('Loading...')
         
+        self.__apps = {} # mugshot app -> app
+        
     def __on_more_link(self):
         self._logger.debug("more!")
         if self.__app_browser is None:
-            self.__app_browser = appbrowser.AppBrowser()            
+            self.__app_browser = appbrowser.AppBrowser(self)            
         self.__app_browser.present()
         
     def __on_message_link(self):
@@ -149,10 +154,11 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self._logger.debug("app pin set succeeded")       
         self._mugshot.get_pinned_apps(force=True)
             
-    def __set_dynamic_set(self, apps):
+    def __set_dynamic_set(self, mugshot_apps):
         self.__dynamic_set.remove_all()        
         i = 0
-        for app in apps or []:
+        for mugshot_app in mugshot_apps or []:
+            app = self.get_app(mugshot_app)
             if self.__static_set_ids.has_key(app.get_id()):
                 continue
             if i > self.DYNAMIC_SET_SIZE:
@@ -165,6 +171,11 @@ class AppsStock(bigboard.AbstractMugshotStock):
         if i > 0:
             self.__box.set_child_visible(self.__dynamic_set,True)
                         
+    def get_app(self, mugshot_app):
+        if not self.__apps.has_key(mugshot_app.get_id()):
+            self.__apps[mugshot_app.get_id()] = Application(mugshot_app)
+        return self.__apps[mugshot_app.get_id()]
+        
     def __sync(self):
         self._logger.debug("doing sync")
         
@@ -173,7 +184,8 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self.__box.set_child_visible(self.__dynamic_set, False)
         self.__static_set.remove_all()
         self.__static_set_ids = {}
-        for app in self._mugshot.get_pinned_apps() or []:
+        for mugshot_app in self._mugshot.get_pinned_apps() or []:
+            app = self.get_app(mugshot_app)
             display = apps_widgets.AppDisplay(app)
             display.connect("button-press-event", lambda display, event: display.launch()) 
             self._logger.debug("setting pinned app: %s", app)
