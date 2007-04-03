@@ -168,18 +168,16 @@ hippo_canvas_block_group_chat_append_content_items (HippoCanvasBlock *block,
                                              NULL);
     hippo_canvas_box_append(parent_box,
                             block_group_chat->quipper, 0);
-    hippo_canvas_box_set_child_visible(parent_box,
-                                       block_group_chat->quipper,
-                                       FALSE); /* not expanded at first */
+    hippo_canvas_item_set_visible(block_group_chat->quipper,
+                                  FALSE); /* not expanded at first */
 
     block_group_chat->single_message_preview = g_object_new(HIPPO_TYPE_CANVAS_MESSAGE_PREVIEW,
                                                            "actions", hippo_canvas_block_get_actions(block),
                                                            NULL);
     hippo_canvas_box_append(parent_box,
                             block_group_chat->single_message_preview, 0);
-    hippo_canvas_box_set_child_visible(parent_box,
-                                       block_group_chat->single_message_preview,
-                                       TRUE); /* not expanded at first */
+    hippo_canvas_item_set_visible(block_group_chat->single_message_preview,
+                                  TRUE); /* not expanded at first */
 
     
     block_group_chat->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
@@ -189,9 +187,8 @@ hippo_canvas_block_group_chat_append_content_items (HippoCanvasBlock *block,
     hippo_canvas_box_append(parent_box,
                             block_group_chat->chat_preview,
                             HIPPO_PACK_CLEAR_RIGHT);
-    hippo_canvas_box_set_child_visible(parent_box,
-                                       block_group_chat->chat_preview,
-                                       FALSE); /* not expanded at first */
+    hippo_canvas_item_set_visible(block_group_chat->chat_preview,
+                                  FALSE); /* not expanded at first */
 
 }
 
@@ -364,15 +361,12 @@ hippo_canvas_block_group_update_visibility(HippoCanvasBlockGroupChat *block_grou
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_group_chat);
     
-    hippo_canvas_box_set_child_visible(canvas_block->main_box,
-                                       block_group_chat->single_message_preview,
-                                       !canvas_block->expanded && block_group_chat->have_messages);
-    hippo_canvas_box_set_child_visible(canvas_block->main_box,
-                                       block_group_chat->chat_preview,
-                                       canvas_block->expanded);
-    hippo_canvas_box_set_child_visible(canvas_block->main_box,
-                                       block_group_chat->quipper,
-                                       canvas_block->expanded);
+    hippo_canvas_item_set_visible(block_group_chat->single_message_preview,
+                                  !canvas_block->expanded && block_group_chat->have_messages);
+    hippo_canvas_item_set_visible(block_group_chat->chat_preview,
+                                  canvas_block->expanded);
+    hippo_canvas_item_set_visible(block_group_chat->quipper,
+                                  canvas_block->expanded);
 }
 
 static void

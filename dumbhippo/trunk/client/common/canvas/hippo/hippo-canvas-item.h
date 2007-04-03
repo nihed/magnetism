@@ -35,6 +35,11 @@ struct _HippoCanvasItemIface {
     
     void     (* set_context)        (HippoCanvasItem    *canvas_item,
                                      HippoCanvasContext *context);
+
+    void                   (* set_parent)         (HippoCanvasItem      *canvas_item,
+                                                   HippoCanvasContainer *container);
+    HippoCanvasContainer*  (* get_parent)         (HippoCanvasItem      *canvas_item);
+    
     void     (* paint)              (HippoCanvasItem  *canvas_item,
                                      cairo_t          *cr,
                                      HippoRectangle   *damaged_box);
@@ -70,7 +75,7 @@ struct _HippoCanvasItemIface {
                                      const HippoRectangle *damage_box);
     gboolean (* get_needs_request)  (HippoCanvasItem *canvas_item);
 
-    char*              (* get_tooltip) (HippoCanvasItem *canvas_item,
+    char*    (* get_tooltip)           (HippoCanvasItem *canvas_item,
                                         int              x,
                                         int              y,
                                         HippoRectangle  *for_area);
@@ -86,6 +91,11 @@ void               hippo_canvas_item_sink               (HippoCanvasItem    *can
 
 void               hippo_canvas_item_set_context        (HippoCanvasItem    *canvas_item,
                                                          HippoCanvasContext *context);
+
+void                  hippo_canvas_item_set_parent      (HippoCanvasItem      *canvas_item,
+                                                         HippoCanvasContainer *container);
+HippoCanvasContainer* hippo_canvas_item_get_parent      (HippoCanvasItem      *canvas_item);
+
 void               hippo_canvas_item_get_width_request  (HippoCanvasItem    *canvas_item,
                                                          int                *min_width_p,
                                                          int                *natural_width_p);
@@ -108,6 +118,9 @@ char*              hippo_canvas_item_get_tooltip        (HippoCanvasItem    *can
 HippoCanvasPointer hippo_canvas_item_get_pointer        (HippoCanvasItem    *canvas_item,
                                                          int                 x,
                                                          int                 y);
+
+void               hippo_canvas_item_set_visible        (HippoCanvasItem    *canvas_item,
+                                                         gboolean            visible); 
 
 gboolean hippo_canvas_item_emit_button_press_event (HippoCanvasItem *canvas_item,
                                                     int              x,

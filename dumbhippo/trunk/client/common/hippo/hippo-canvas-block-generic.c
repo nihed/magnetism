@@ -51,7 +51,6 @@ struct _HippoCanvasBlockGeneric {
     HippoCanvasItem *description_item;
     HippoCanvasItem *reason_item;
     HippoCanvasItem *clicked_count_item;
-    HippoCanvasBox *parent_box;
     HippoCanvasItem *details_box;
     HippoCanvasItem *thumbnails_item;
     unsigned int have_description : 1;
@@ -179,9 +178,8 @@ hippo_canvas_block_generic_append_content_items(HippoCanvasBlock *block,
                                               "font", "Italic 11px",
                                               NULL);
     hippo_canvas_box_append(parent_box, block_generic->reason_item, 0);
-    hippo_canvas_box_set_child_visible(parent_box,
-                                       block_generic->reason_item,
-                                       FALSE);
+    hippo_canvas_item_set_visible(block_generic->reason_item,
+                                  FALSE);
 
     block_generic->description_parent = parent_box;
     block_generic->description_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
@@ -199,10 +197,9 @@ hippo_canvas_block_generic_append_content_items(HippoCanvasBlock *block,
                                               "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
                                               NULL);
     hippo_canvas_box_append(parent_box, block_generic->details_box, HIPPO_PACK_CLEAR_RIGHT);
-    block_generic->parent_box = parent_box;
-    hippo_canvas_box_set_child_visible(block_generic->parent_box,
-                                       block_generic->details_box,
-                                       FALSE); /* not expanded at first */
+
+    hippo_canvas_item_set_visible(block_generic->details_box,
+                                  FALSE); /* not expanded at first */
 
     block_generic->clicked_count_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                                      "text", NULL,
@@ -213,7 +210,7 @@ hippo_canvas_block_generic_append_content_items(HippoCanvasBlock *block,
     block_generic->thumbnails_item = g_object_new(HIPPO_TYPE_CANVAS_THUMBNAILS,
                                                   "actions", block->actions,
                                                   NULL);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_generic->parent_box),
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(parent_box),
                             block_generic->thumbnails_item, 0);
 }
 
@@ -314,13 +311,11 @@ hippo_canvas_block_generic_update_visibility(HippoCanvasBlockGeneric *block_gene
 
     /* the details box shows iff. we are expanded
      */
-    hippo_canvas_box_set_child_visible(block_generic->parent_box,
-                                       block_generic->details_box,
-                                       canvas_block->expanded);
-
-    hippo_canvas_box_set_child_visible(block_generic->parent_box,
-                                       block_generic->thumbnails_item,
-                                       canvas_block->expanded && block_generic->have_thumbnails);
+    hippo_canvas_item_set_visible(block_generic->details_box,
+                                  canvas_block->expanded);
+    
+    hippo_canvas_item_set_visible(block_generic->thumbnails_item,
+                                  canvas_block->expanded && block_generic->have_thumbnails);
     
     /* The description is always visible when expanded, otherwise we sometimes
      * show a single line summary
@@ -339,12 +334,10 @@ hippo_canvas_block_generic_update_visibility(HippoCanvasBlockGeneric *block_gene
     show_reason = stack_reason == HIPPO_STACK_VIEWER_COUNT;
     show_description = (canvas_block->expanded || !show_reason) && block_generic->have_description;
 
-    hippo_canvas_box_set_child_visible(block_generic->parent_box,
-                                       block_generic->description_item,
-                                       show_description);
-    hippo_canvas_box_set_child_visible(block_generic->parent_box,
-                                       block_generic->reason_item,
-                                       show_reason);
+    hippo_canvas_item_set_visible(block_generic->description_item,
+                                  show_description);
+    hippo_canvas_item_set_visible(block_generic->reason_item,
+                                  show_reason);
 }
 
 static void

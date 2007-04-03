@@ -196,9 +196,8 @@ update_time(HippoCanvasBlock *canvas_block)
         nonempty = set_timestamp_item(canvas_block, canvas_block->age_parent, canvas_block->age_item, 
                                       (GTime) (hippo_block_get_timestamp(canvas_block->block) / 1000));
         
-        hippo_canvas_box_set_child_visible(canvas_block->age_parent,
-                                           canvas_block->age_item,
-                                           nonempty);
+        hippo_canvas_item_set_visible(canvas_block->age_item,
+                                      nonempty);
     }
 }
 
@@ -428,14 +427,14 @@ hippo_canvas_block_constructor (GType                  type,
                      "image-name", "expandtip",
                      NULL);
     hippo_canvas_box_append(block->main_box, block->expand_pointer, HIPPO_PACK_FIXED);
-    hippo_canvas_box_set_child_visible(block->main_box, block->expand_pointer, FALSE);
+    hippo_canvas_item_set_visible(block->expand_pointer, FALSE);
 
     block->unexpand_pointer =
         g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
                      "image-name", "closetip",
                      NULL);
     hippo_canvas_box_append(block->main_box, block->unexpand_pointer, HIPPO_PACK_FIXED);
-    hippo_canvas_box_set_child_visible(block->main_box, block->unexpand_pointer, FALSE);
+    hippo_canvas_item_set_visible(block->unexpand_pointer, FALSE);
 
     /* Create floating items to go at the right... these need to be packed before the
      * main content items since they floats after the content items would appear below
@@ -544,7 +543,6 @@ hippo_canvas_block_constructor (GType                  type,
                                 HIPPO_PACK_END);
         
         hippo_canvas_box_append(right_beside, HIPPO_CANVAS_ITEM(block->original_age_box), 0);
-        block->original_age_parent = right_beside;
         
         block->sent_to_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                           "orientation", HIPPO_ORIENTATION_HORIZONTAL,
@@ -552,8 +550,7 @@ hippo_canvas_block_constructor (GType                  type,
                                           "yalign", HIPPO_ALIGNMENT_START,                        
                                           NULL);
         
-        block->sent_to_parent = right_beside;
-        hippo_canvas_box_append(block->sent_to_parent, HIPPO_CANVAS_ITEM(block->sent_to_box), 0);
+        hippo_canvas_box_append(right_beside, HIPPO_CANVAS_ITEM(block->sent_to_box), 0);
     }
     
     if (klass->append_right_items)
@@ -586,7 +583,7 @@ hippo_canvas_block_constructor (GType                  type,
                                                     "border-right", 4,
                                                     NULL);
             hippo_canvas_box_append(box, block->heading_lock_item, 0);
-            hippo_canvas_box_set_child_visible(box, block->heading_lock_item, FALSE);
+            hippo_canvas_item_set_visible(block->heading_lock_item, FALSE);
         }
             
 #if 0
@@ -715,10 +712,8 @@ update_expand_pointer(HippoCanvasBlock *canvas_block,
         }
     }
         
-    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(canvas_block->main_box),
-                                       canvas_block->expand_pointer, expandable);
-    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(canvas_block->main_box),
-                                       canvas_block->unexpand_pointer, closeable);
+    hippo_canvas_item_set_visible(canvas_block->expand_pointer, expandable);
+    hippo_canvas_item_set_visible(canvas_block->unexpand_pointer, closeable);
 }
 
 static gboolean
@@ -938,9 +933,8 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
             on_block_icon_url_changed(new_block, NULL, canvas_block);
 
             if (canvas_block->heading_lock_item)
-                hippo_canvas_box_set_child_visible(canvas_block->heading_box,
-                                                   canvas_block->heading_lock_item,
-                                                   !hippo_block_is_public(canvas_block->block));
+                hippo_canvas_item_set_visible(canvas_block->heading_lock_item,
+                                              !hippo_block_is_public(canvas_block->block));
         }
         
         g_object_notify(G_OBJECT(canvas_block), "block");
@@ -952,14 +946,14 @@ static void
 hippo_canvas_block_update_item_expansion(HippoCanvasBlock *canvas_block)
 {
     if (canvas_block->sent_to_box)
-        hippo_canvas_box_set_child_visible(canvas_block->sent_to_parent, HIPPO_CANVAS_ITEM(canvas_block->sent_to_box),
-                                           canvas_block->expanded && canvas_block->sent_to_set);
+        hippo_canvas_item_set_visible(HIPPO_CANVAS_ITEM(canvas_block->sent_to_box),
+                                      canvas_block->expanded && canvas_block->sent_to_set);
     if (canvas_block->age_prefix_item)
-        hippo_canvas_box_set_child_visible(canvas_block->age_parent, canvas_block->age_prefix_item,
-                                           canvas_block->expanded);
-    if (canvas_block->original_age_parent)
-        hippo_canvas_box_set_child_visible(canvas_block->original_age_parent, HIPPO_CANVAS_ITEM(canvas_block->original_age_box),
-                                           canvas_block->expanded && canvas_block->original_age_set);
+        hippo_canvas_item_set_visible(canvas_block->age_prefix_item,
+                                      canvas_block->expanded);
+    if (canvas_block->original_age_box)
+        hippo_canvas_item_set_visible(HIPPO_CANVAS_ITEM(canvas_block->original_age_box),
+                                      canvas_block->expanded && canvas_block->original_age_set);
 }
 
 static void

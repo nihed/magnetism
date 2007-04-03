@@ -40,8 +40,6 @@ static void hippo_canvas_block_group_member_unhush   (HippoCanvasBlock *canvas_b
 
 struct _HippoCanvasBlockGroupMember {
     HippoCanvasBlock canvas_block;
-
-    HippoCanvasBox  *invite_parent;
     HippoCanvasItem *invite_image;
     HippoCanvasItem *invite_link;
 };
@@ -183,21 +181,22 @@ hippo_canvas_block_group_member_append_content_items (HippoCanvasBlock *block,
                                                       HippoCanvasBox   *parent_box)
 {
     HippoCanvasBlockGroupMember *canvas_group_member = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(block);
+    HippoCanvasBox *invite_parent;
     
     hippo_canvas_block_set_heading(block, _("Group Update"));
-
-    canvas_group_member->invite_parent = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                                                      "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                                                      "spacing", 4,
-                                                      NULL);
-    hippo_canvas_box_append(parent_box, HIPPO_CANVAS_ITEM(canvas_group_member->invite_parent), 0);
+    
+    invite_parent = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                 "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                                 "spacing", 4,
+                                 NULL);
+    hippo_canvas_box_append(parent_box, HIPPO_CANVAS_ITEM(invite_parent), 0);
     
     canvas_group_member->invite_image = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
                                                      "normal-image-name", "add_icon",
                                                      "xalign", HIPPO_ALIGNMENT_CENTER,
                                                      "yalign", HIPPO_ALIGNMENT_CENTER,
                                                      NULL);
-    hippo_canvas_box_append(canvas_group_member->invite_parent, canvas_group_member->invite_image, 0);
+    hippo_canvas_box_append(invite_parent, canvas_group_member->invite_image, 0);
 
     g_signal_connect(G_OBJECT(canvas_group_member->invite_image),
                      "activated", G_CALLBACK(on_invite_activated), block);
@@ -206,7 +205,7 @@ hippo_canvas_block_group_member_append_content_items (HippoCanvasBlock *block,
                                                     "text", "Invite to group",
                                                     "color-cascade", HIPPO_CASCADE_MODE_NONE,
                                                     NULL);
-    hippo_canvas_box_append(canvas_group_member->invite_parent, canvas_group_member->invite_link, 0);
+    hippo_canvas_box_append(invite_parent, canvas_group_member->invite_link, 0);
 
     g_signal_connect(G_OBJECT(canvas_group_member->invite_link),
                      "activated", G_CALLBACK(on_invite_activated), block);
@@ -290,12 +289,10 @@ update_member_and_status(HippoCanvasBlockGroupMember *canvas_group_member,
     hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_group_member),
                                  title, tooltip, FALSE);
 
-    hippo_canvas_box_set_child_visible(canvas_group_member->invite_parent,
-                                       canvas_group_member->invite_image,
-                                       show_invite_link);
-    hippo_canvas_box_set_child_visible(canvas_group_member->invite_parent,
-                                       canvas_group_member->invite_link,
-                                       show_invite_link);
+    hippo_canvas_item_set_visible(canvas_group_member->invite_image,
+                                  show_invite_link);
+    hippo_canvas_item_set_visible(canvas_group_member->invite_link,
+                                  show_invite_link);
 
     if (member)
         g_object_unref(member);

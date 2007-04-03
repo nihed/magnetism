@@ -44,7 +44,6 @@ static void set_person (HippoCanvasBlockYouTubePerson *block_youtube_person,
 
 struct _HippoCanvasBlockYouTubePerson {
     HippoCanvasBlock canvas_block;
-    HippoCanvasBox *thumbnails_parent;
     HippoCanvasItem *tip;
     HippoCanvasItem *thumbnails;
     HippoPerson *person;
@@ -168,8 +167,6 @@ hippo_canvas_block_youtube_person_append_content_items (HippoCanvasBlock *block,
 
     hippo_canvas_block_set_heading(block, _("New YouTube videos"));
 
-    block_youtube_person->thumbnails_parent = parent_box;
-
     block_youtube_person->thumbnails =
         g_object_new(HIPPO_TYPE_CANVAS_THUMBNAILS,
                      "actions", block->actions,
@@ -187,9 +184,8 @@ hippo_canvas_block_youtube_person_append_content_items (HippoCanvasBlock *block,
     hippo_canvas_box_append(parent_box,
                             block_youtube_person->thumbnails, 0);
 
-    hippo_canvas_box_set_child_visible(parent_box,
-                                       block_youtube_person->thumbnails,
-                                       FALSE);
+    hippo_canvas_item_set_visible(block_youtube_person->thumbnails,
+                                  FALSE);
 }
 
 static void
@@ -291,12 +287,10 @@ hippo_canvas_block_youtube_person_expand(HippoCanvasBlock *canvas_block)
 {
     HippoCanvasBlockYouTubePerson *block_youtube_person = HIPPO_CANVAS_BLOCK_YOUTUBE_PERSON(canvas_block);
 
-    hippo_canvas_box_set_child_visible(block_youtube_person->thumbnails_parent,
-                                       block_youtube_person->thumbnails,
-                                       TRUE);
-    hippo_canvas_box_set_child_visible(block_youtube_person->thumbnails_parent,
-                                       block_youtube_person->tip,
-                                       FALSE);
+    hippo_canvas_item_set_visible(block_youtube_person->thumbnails,
+                                  TRUE);
+    hippo_canvas_item_set_visible(block_youtube_person->tip,
+                                  FALSE);
 
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_youtube_person_parent_class)->expand(canvas_block);
 }
@@ -306,12 +300,10 @@ hippo_canvas_block_youtube_person_unexpand(HippoCanvasBlock *canvas_block)
 {
     HippoCanvasBlockYouTubePerson *block_youtube_person = HIPPO_CANVAS_BLOCK_YOUTUBE_PERSON(canvas_block);
 
-    hippo_canvas_box_set_child_visible(block_youtube_person->thumbnails_parent,
-                                       block_youtube_person->thumbnails,
-                                       FALSE);
-    hippo_canvas_box_set_child_visible(block_youtube_person->thumbnails_parent,
-                                       block_youtube_person->tip,
-                                       TRUE);
+    hippo_canvas_item_set_visible(block_youtube_person->thumbnails,
+                                  FALSE);
+    hippo_canvas_item_set_visible(block_youtube_person->tip,
+                                  TRUE);
 
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_youtube_person_parent_class)->unexpand(canvas_block);
 }

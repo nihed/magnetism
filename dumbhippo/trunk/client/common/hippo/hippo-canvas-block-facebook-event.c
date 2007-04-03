@@ -42,7 +42,6 @@ static void set_person (HippoCanvasBlockFacebookEvent *block_facebook_event,
 
 struct _HippoCanvasBlockFacebookEvent {
     HippoCanvasBlock canvas_block;
-    HippoCanvasBox *thumbnails_parent;
     HippoCanvasItem *thumbnails;
     HippoPerson *person;
 };
@@ -165,8 +164,6 @@ hippo_canvas_block_facebook_event_append_content_items (HippoCanvasBlock *block,
 
     hippo_canvas_block_set_heading(block, _("Facebook event"));
 
-    block_facebook_event->thumbnails_parent = parent_box;
-
     block_facebook_event->thumbnails =
         g_object_new(HIPPO_TYPE_CANVAS_THUMBNAILS,
                      "actions", block->actions,
@@ -175,9 +172,8 @@ hippo_canvas_block_facebook_event_append_content_items (HippoCanvasBlock *block,
     hippo_canvas_box_append(parent_box,
                             block_facebook_event->thumbnails, 0);
 
-    hippo_canvas_box_set_child_visible(parent_box,
-                                       block_facebook_event->thumbnails,
-                                       FALSE);
+    hippo_canvas_item_set_visible(block_facebook_event->thumbnails,
+                                  FALSE);
 }
 
 static void
@@ -308,9 +304,8 @@ hippo_canvas_block_facebook_event_expand(HippoCanvasBlock *canvas_block)
 {
     HippoCanvasBlockFacebookEvent *block_facebook_event = HIPPO_CANVAS_BLOCK_FACEBOOK_EVENT(canvas_block);
 
-    hippo_canvas_box_set_child_visible(block_facebook_event->thumbnails_parent,
-                                       block_facebook_event->thumbnails,
-                                       TRUE);
+    hippo_canvas_item_set_visible(block_facebook_event->thumbnails,
+                                  TRUE);
 
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_facebook_event_parent_class)->expand(canvas_block);
 }
@@ -320,9 +315,8 @@ hippo_canvas_block_facebook_event_unexpand(HippoCanvasBlock *canvas_block)
 {
     HippoCanvasBlockFacebookEvent *block_facebook_event = HIPPO_CANVAS_BLOCK_FACEBOOK_EVENT(canvas_block);
 
-    hippo_canvas_box_set_child_visible(block_facebook_event->thumbnails_parent,
-                                       block_facebook_event->thumbnails,
-                                       FALSE);
+    hippo_canvas_item_set_visible(block_facebook_event->thumbnails,
+                                  FALSE);
 
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_facebook_event_parent_class)->unexpand(canvas_block);
 }

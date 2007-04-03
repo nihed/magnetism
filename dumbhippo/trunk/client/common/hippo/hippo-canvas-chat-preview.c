@@ -67,7 +67,6 @@ struct _HippoCanvasChatPreview {
     GSList *recent_messages;
 
     HippoCanvasItem *chat_link;
-    HippoCanvasBox *count_parent;
     HippoCanvasItem *count_item;
     HippoCanvasItem *count_separator_item;
     HippoCanvasItem *message_previews[MAX_PREVIEWED];
@@ -350,7 +349,6 @@ hippo_canvas_chat_preview_constructor (GType                  type,
     
     chat_preview->count_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                             NULL);
-    chat_preview->count_parent = box;
     hippo_canvas_box_append(box, chat_preview->count_item, 0);
 
     chat_preview->count_separator_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
@@ -434,8 +432,7 @@ update_recent_messages(HippoCanvasChatPreview *chat_preview)
                      "message", message,
                      NULL);
         
-        hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(chat_preview),
-                                           message_preview, message != NULL);
+        hippo_canvas_item_set_visible(message_preview, message != NULL);
     }
 }
 
@@ -696,16 +693,13 @@ hippo_canvas_chat_preview_update_visibility(HippoCanvasChatPreview *chat_preview
     gboolean show_chat = chat_preview->room != NULL || chat_preview->chat_id != NULL;
     gboolean show_count = chat_preview->room != NULL;
 
-    if (!chat_preview->count_parent) /* During initialization */
+    if (chat_preview->chat_link == NULL) /* during initialization */
         return;
     
-    hippo_canvas_box_set_child_visible(chat_preview->count_parent,
-                                       chat_preview->chat_link,
-                                       show_chat);
-    hippo_canvas_box_set_child_visible(chat_preview->count_parent,
-                                       chat_preview->count_separator_item,
-                                       show_chat && show_count);
-    hippo_canvas_box_set_child_visible(chat_preview->count_parent,
-                                       chat_preview->count_item,
-                                       show_count);
+    hippo_canvas_item_set_visible(chat_preview->chat_link,
+                                  show_chat);
+    hippo_canvas_item_set_visible(chat_preview->count_separator_item,
+                                  show_chat && show_count);
+    hippo_canvas_item_set_visible(chat_preview->count_item,
+                                  show_count);
 }

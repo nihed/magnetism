@@ -3,6 +3,7 @@
 #include "hippo-canvas-type-builtins.h"
 #include "hippo-canvas-internal.h"
 #include "hippo-canvas-box.h"
+#include "hippo-canvas-container.h"
 #include "hippo-canvas-style.h"
 
 typedef struct {
@@ -10,12 +11,16 @@ typedef struct {
     unsigned int does_not_fit : 1;
 } AdjustInfo;
 
-static void hippo_canvas_box_init               (HippoCanvasBox          *box);
-static void hippo_canvas_box_class_init         (HippoCanvasBoxClass     *klass);
-static void hippo_canvas_box_iface_init         (HippoCanvasItemIface    *klass);
-static void hippo_canvas_box_iface_init_context (HippoCanvasContextIface *klass);
-static void hippo_canvas_box_dispose            (GObject                 *object);
-static void hippo_canvas_box_finalize           (GObject                 *object);
+
+static void hippo_canvas_box_init                 (HippoCanvasBox            *box);
+static void hippo_canvas_box_class_init           (HippoCanvasBoxClass       *klass);
+static void hippo_canvas_box_iface_init           (HippoCanvasItemIface      *klass);
+static void hippo_canvas_box_iface_init_context   (HippoCanvasContextIface   *klass);
+static void hippo_canvas_box_iface_init_container (HippoCanvasContainerIface *klass);
+static void hippo_canvas_box_dispose              (GObject                   *object);
+static void hippo_canvas_box_finalize             (GObject                   *object);
+
+
 
 
 static void hippo_canvas_box_set_property (GObject      *object,
@@ -54,21 +59,28 @@ static void             hippo_canvas_box_style_changed          (HippoCanvasCont
                                                                  gboolean              resize_needed);
 
 
+/* Canvas container methods */
+static void             hippo_canvas_box_set_child_visible      (HippoCanvasContainer *container,
+                                                                 HippoCanvasItem      *child,
+                                                                 gboolean              visible);
 
 /* Canvas item methods */
 static void               hippo_canvas_box_sink                (HippoCanvasItem    *item);
 static void               hippo_canvas_box_set_context         (HippoCanvasItem    *item,
                                                                 HippoCanvasContext *context);
+static void               hippo_canvas_box_set_parent          (HippoCanvasItem    *item,
+                                                                HippoCanvasContainer *container);
+static HippoCanvasContainer* hippo_canvas_box_get_parent       (HippoCanvasItem    *item);
 static void               hippo_canvas_box_paint               (HippoCanvasItem    *item,
                                                                 cairo_t            *cr,
                                                                 HippoRectangle     *damaged_box);
-static void                hippo_canvas_box_get_width_request   (HippoCanvasItem   *item,
-                                                                 int               *min_width_p,
-                                                                 int               *natural_width_p);
-static void                hippo_canvas_box_get_height_request  (HippoCanvasItem   *item,
-                                                                 int                for_width,
-                                                                 int               *min_height_p,
-                                                                 int               *natural_height_p);
+static void               hippo_canvas_box_get_width_request   (HippoCanvasItem   *item,
+                                                                int               *min_width_p,
+                                                                int               *natural_width_p);
+static void               hippo_canvas_box_get_height_request  (HippoCanvasItem   *item,
+                                                                int                for_width,
+                                                                int               *min_height_p,
+                                                                int               *natural_height_p);
 static void               hippo_canvas_box_allocate            (HippoCanvasItem    *item,
                                                                 int                 width,
                                                                 int                 height,
@@ -180,13 +192,16 @@ enum {
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasBox, hippo_canvas_box, G_TYPE_OBJECT,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_ITEM, hippo_canvas_box_iface_init);
-                        G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_CONTEXT, hippo_canvas_box_iface_init_context));
+                        G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_CONTEXT, hippo_canvas_box_iface_init_context);
+                        G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_CONTAINER, hippo_canvas_box_iface_init_container));
 
 static void
 hippo_canvas_box_iface_init(HippoCanvasItemIface *klass)
 {
     klass->sink = hippo_canvas_box_sink;
     klass->set_context = hippo_canvas_box_set_context;
+    klass->set_parent = hippo_canvas_box_set_parent;
+    klass->get_parent = hippo_canvas_box_get_parent;
     klass->paint = hippo_canvas_box_paint;
     klass->get_width_request = hippo_canvas_box_get_width_request;
     klass->get_height_request = hippo_canvas_box_get_height_request;
@@ -214,6 +229,12 @@ hippo_canvas_box_iface_init_context (HippoCanvasContextIface *klass)
     klass->affect_color = hippo_canvas_box_affect_color;
     klass->affect_font_desc = hippo_canvas_box_affect_font_desc;
     klass->style_changed = hippo_canvas_box_style_changed;
+}
+
+static void
+hippo_canvas_box_iface_init_container (HippoCanvasContainerIface *klass)
+{
+    klass->set_child_visible = hippo_canvas_box_set_child_visible;
 }
 
 static void
@@ -1018,6 +1039,31 @@ hippo_canvas_box_set_context(HippoCanvasItem    *item,
                                              box);
         box->context = context; /* set box context to NULL after removing it from children */
     }
+}
+
+static void
+hippo_canvas_box_set_parent (HippoCanvasItem      *item,
+                             HippoCanvasContainer *container)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+
+    /* Note that we do not ref the parent; the parent is responsible for setting
+     * it back to NULL before dropping the ref to the item.
+     */
+    if (box->parent == container)
+        return;
+
+    box->parent = container;
+
+    /* I believe GTK would queue resize here, but we do it in the container_add() equivalent */
+}
+
+static HippoCanvasContainer*
+hippo_canvas_box_get_parent (HippoCanvasItem    *item)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+
+    return box->parent;
 }
 
 void
@@ -3151,6 +3197,8 @@ static void
 child_setup(HippoCanvasBox              *box,
             HippoCanvasItem             *child)
 {
+    hippo_canvas_item_set_parent(child, HIPPO_CANVAS_CONTAINER(box));
+    
     if (box->context != NULL)
         hippo_canvas_item_set_context(child, HIPPO_CANVAS_CONTEXT(box));
     else
@@ -3530,36 +3578,16 @@ hippo_canvas_box_reverse(HippoCanvasBox  *box)
     hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }
 
-/* Making this a "child property" on the container instead of a flag on
- * HippoCanvasItem is perhaps a little surprising, but
- * is consistent with e.g. having the allocation origin in the container
- * also. The general theme is that HippoCanvasItem has minimal knowledge
- * of its context - doesn't know its origin coords, parent item,
- * or whether it will be painted at all. Which makes it easier to
- * implement canvas items and easier to use them in different/multiple
- * contexts, but makes containers harder and more complex. Given the
- * likelihood of implementing containers vs. items this makes sense to me.
- *
- * An implementation convenience of this approach is that the
- * Windows and Linux canvas widgets need not handle the visibility
- * of their root items.
- *
- * An annoying thing about it though is needing a pointer to both the
- * box and the item in order to toggle visibility. A way to
- * resolve that while keeping the current model might be to have a
- * HippoCanvasContainer interface with a set_child_visible method,
- * and add a parent container pointer to canvas items.
- */
 void
-hippo_canvas_box_set_child_visible (HippoCanvasBox              *box,
+hippo_canvas_box_set_child_visible (HippoCanvasContainer        *container,
                                     HippoCanvasItem             *child,
                                     gboolean                     visible)
 {
     HippoBoxChild *c;
+    HippoCanvasBox *box;
 
-    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
-    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
-
+    box = HIPPO_CANVAS_BOX(container);
+    
     c = find_child(box, child);
 
     if (c == NULL) {

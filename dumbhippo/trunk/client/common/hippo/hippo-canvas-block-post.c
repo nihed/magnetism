@@ -206,9 +206,8 @@ hippo_canvas_block_post_append_content_items (HippoCanvasBlock *block,
                                            "font", "Italic 11px",
                                            NULL);
     hippo_canvas_box_append(parent_box, block_post->reason_item, 0);
-    hippo_canvas_box_set_child_visible(parent_box,
-                                       block_post->reason_item,
-                                       FALSE);
+    hippo_canvas_item_set_visible(block_post->reason_item,
+                                  FALSE);
 
     block_post->description_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                                 "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
@@ -222,26 +221,23 @@ hippo_canvas_block_post_append_content_items (HippoCanvasBlock *block,
                                        "actions", hippo_canvas_block_get_actions(block),
                                        NULL);
     hippo_canvas_box_append(parent_box, block_post->quipper, 0);
-    hippo_canvas_box_set_child_visible(parent_box,
-                                       block_post->quipper,
-                                       FALSE); /* no messages yet */
+    hippo_canvas_item_set_visible(block_post->quipper,
+                                  FALSE); /* no messages yet */
 
     block_post->single_message_preview = g_object_new(HIPPO_TYPE_CANVAS_MESSAGE_PREVIEW,
                                                       "actions", hippo_canvas_block_get_actions(block),
                                                       NULL);
     hippo_canvas_box_append(parent_box, block_post->single_message_preview, 0);
-    hippo_canvas_box_set_child_visible(parent_box,
-                                       block_post->single_message_preview,
-                                       FALSE); /* no messages yet */
+    hippo_canvas_item_set_visible(block_post->single_message_preview,
+                                  FALSE); /* no messages yet */
 
     block_post->details_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                            "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                                            "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
                                            NULL);
     hippo_canvas_box_append(parent_box, block_post->details_box, 0);
-    hippo_canvas_box_set_child_visible(parent_box,
-                                       block_post->details_box,
-                                       FALSE); /* not expanded at first */
+    hippo_canvas_item_set_visible(block_post->details_box,
+                                  FALSE); /* not expanded at first */
     
 #if 0
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
@@ -266,9 +262,8 @@ hippo_canvas_block_post_append_content_items (HippoCanvasBlock *block,
                                             NULL);
     hippo_canvas_box_append(parent_box,
                             block_post->chat_preview, 0);
-    hippo_canvas_box_set_child_visible(parent_box,
-                                       block_post->chat_preview,
-                                       FALSE); /* not expanded at first */
+    hippo_canvas_item_set_visible(block_post->chat_preview,
+                                  FALSE); /* not expanded at first */
 }
 
 static void
@@ -571,17 +566,14 @@ hippo_canvas_block_post_update_visibility(HippoCanvasBlockPost *block_post)
 
     /* the details box / chat preview /quipper  show iff. we are expanded
      */
-    hippo_canvas_box_set_child_visible(canvas_block->main_box,
-                                       block_post->details_box,
-                                       canvas_block->expanded);
+    hippo_canvas_item_set_visible(block_post->details_box,
+                                  canvas_block->expanded);
 
-    hippo_canvas_box_set_child_visible(canvas_block->main_box,
-                                       block_post->chat_preview,
-                                       canvas_block->expanded);
+    hippo_canvas_item_set_visible(block_post->chat_preview,
+                                  canvas_block->expanded);
 
-    hippo_canvas_box_set_child_visible(canvas_block->main_box,
-                                       block_post->quipper,
-                                       canvas_block->expanded);
+    hippo_canvas_item_set_visible(block_post->quipper,
+                                  canvas_block->expanded);
 
     /* The description is always visible when expanded, otherwise we sometimes
      * show a single line summary
@@ -594,15 +586,12 @@ hippo_canvas_block_post_update_visibility(HippoCanvasBlockPost *block_post)
     show_reason = stack_reason == HIPPO_STACK_VIEWER_COUNT;
     show_description = canvas_block->expanded || (!show_single_message && !show_reason);
 
-    hippo_canvas_box_set_child_visible(canvas_block->main_box,
-                                       block_post->description_item,
-                                       show_description);
-    hippo_canvas_box_set_child_visible(canvas_block->main_box,
-                                       block_post->reason_item,
-                                       show_reason);
-    hippo_canvas_box_set_child_visible(canvas_block->main_box,
-                                       block_post->single_message_preview,
-                                       show_single_message);
+    hippo_canvas_item_set_visible(block_post->description_item,
+                                  show_description);
+    hippo_canvas_item_set_visible(block_post->reason_item,
+                                  show_reason);
+    hippo_canvas_item_set_visible(block_post->single_message_preview,
+                                  show_single_message);
 }
 
 static void

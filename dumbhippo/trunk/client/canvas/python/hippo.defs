@@ -45,6 +45,12 @@
   (gtype-id "HIPPO_TYPE_CANVAS_CONTEXT")
 )
 
+(define-interface CanvasContainer
+  (in-module "Hippo")
+  (c-name "HippoCanvasContainer")
+  (gtype-id "HIPPO_TYPE_CANVAS_CONTAINER")
+)
+
 (define-object CanvasImage
   (in-module "Hippo")
   (parent "HippoCanvasBox")
@@ -486,8 +492,8 @@
 )
 
 (define-method set_child_visible
-  (of-object "HippoCanvasBox")
-  (c-name "hippo_canvas_box_set_child_visible")
+  (of-object "HippoCanvasContainer")
+  (c-name "hippo_canvas_container_set_child_visible")
   (return-type "none")
   (parameters
     '("HippoCanvasItem*" "child")
@@ -810,6 +816,21 @@
   )
 )
 
+(define-method set_parent
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_set_parent")
+  (return-type "none")
+  (parameters
+    '("HippoCanvasContainer*" "container")
+  )
+)
+
+(define-method get_parent
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_get_parent")
+  (return-type "HippoCanvasContainer*")
+)
+
 (define-method get_width_request
   (of-object "HippoCanvasItem")
   (c-name "hippo_canvas_item_get_width_request")
@@ -897,6 +918,15 @@
   (parameters
     '("int" "x")
     '("int" "y")
+  )
+)
+
+(define-method set_visible
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_set_visible")
+  (return-type "none")
+  (parameters
+    '("gboolean" "visible")
   )
 )
 

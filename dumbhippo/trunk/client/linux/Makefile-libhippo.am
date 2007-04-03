@@ -115,6 +115,7 @@ GENERATEDSRCDIR_FILES = 			\
 
 CANVAS_PUBLIC_HEADERFILES = 						\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-box.h		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-container.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-context.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-gradient.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-image.h		\
@@ -131,6 +132,7 @@ CANVAS_PUBLIC_HEADERFILES = 						\
 CANVAS_SRCDIR_FILES = 					\
 	$(CANVAS_PUBLIC_HEADERFILES)				\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-box.c		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-container.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-context.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-gradient.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-image.c		\
