@@ -448,6 +448,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     const char *stack_reason_str = NULL;
     const char *generic_types = NULL;
     HippoStackReason stack_reason = HIPPO_STACK_NEW_BLOCK;
+    const char *filter_flags;
 	gboolean is_mine = 0;
 	gboolean is_feed = 0;
     LmMessageNode *source_node = NULL;
@@ -470,8 +471,9 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
                          "ignored", HIPPO_SPLIT_BOOLEAN, &ignored,
                          "icon", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &icon_url,
                          "stackReason", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &stack_reason_str,
-                         "isFeed", HIPPO_SPLIT_BOOLEAN, &is_feed,                         
-                         "isMine", HIPPO_SPLIT_BOOLEAN, &is_mine,
+                         "filterFlags", HIPPO_SPLIT_STRING, &filter_flags,
+                         "isFeed", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_OPTIONAL, &is_feed,                         
+                         "isMine", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_OPTIONAL, &is_mine,
                          "source", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &source_node,                         
                          NULL)) {
         g_debug("missing attributes on <block> %s update", block->guid);
@@ -499,7 +501,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     hippo_block_set_clicked(block, clicked);
     hippo_block_set_ignored(block, ignored);
     hippo_block_set_icon_url(block, icon_url);
-    hippo_block_set_is_feed(block, is_feed);
+    hippo_block_set_is_feed(block, strcmp(filter_flags, "FEED") == 0); /* replace with is_feed later */
     hippo_block_set_is_mine(block, is_mine);    
 
     if (source_node != NULL) {
