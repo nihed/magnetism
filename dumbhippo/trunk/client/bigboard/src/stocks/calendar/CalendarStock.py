@@ -4,11 +4,11 @@ import gobject
 import hippo
 
 import bigboard, mugshot, google, pango, os
-from big_widgets import CanvasMugshotURLImage, PhotoContentItem
+from big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox
 
-class EventDisplay(PhotoContentItem):
+class EventDisplay(CanvasVBox):
     def __init__(self, event):
-        PhotoContentItem.__init__(self, border_right=6)
+        super(EventDisplay, self).__init__(border_right=6)
         self.__event = None
                 
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=2, 
@@ -20,7 +20,8 @@ class EventDisplay(PhotoContentItem):
         self.__description.set_property("attributes", attrs)        
         self.__box.append(self.__title)
         self.__box.append(self.__description)        
-        self.set_child(self.__box)
+        
+        self.append(self.__box)
     
         self.connect("button-press-event", lambda self, event: self.__on_button_press(event))
         
