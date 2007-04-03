@@ -173,6 +173,7 @@ public abstract class BlockView implements ObjectView {
 							"clicked", Boolean.toString(userBlockData.isClicked()),
 							"clickedTimestamp", Long.toString(userBlockData.getClickedTimestampAsLong()),
 							"stackReason", getStackReason().name(),
+							"filterFlags", isFeed() ? "FEED" : "",
 							"isFeed", "" + isFeed(),
 							"isMine", "" + isMine(),
 							"icon", getIcon());
