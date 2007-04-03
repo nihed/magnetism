@@ -6,7 +6,7 @@ import hippo
 import bigboard, mugshot
 from big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, ActionLink, CanvasEntry, PrelightingCanvasBox
 
-import apps_widgets
+import apps_widgets, apps_directory
 
 _logger = logging.getLogger("bigboard.AppBrowser")
 
@@ -46,10 +46,11 @@ def categorize(apps):
     """Given a set of applications, returns a map <string,set<Application>> based on category name."""
     categories = {}
     for app in apps:
-        cat = app.get_category()
+        mugshot_app = app.get_mugshot_app()
+        cat = mugshot_app.get_category()
         if not categories.has_key(cat):
             categories[cat] = set()
-        categories[cat].add(app)   
+        categories[cat].add(app)  
     return categories
         
 class MultiVTable(CanvasHBox):
@@ -131,7 +132,8 @@ class AppCategoryUsage(MultiVTable):
         for category,apps in categories.iteritems():
             cat_usage_count = 0
             for app in apps:
-                cat_usage_count += int(app.get_usage_count())
+                mugshot_app = app.get_mugshot_app()
+                cat_usage_count += int(mugshot_app.get_usage_count())
             if cat_usage_count > max_usage_count[1]:
                 max_usage_count = (category, cat_usage_count)
             cat_usage[category] = cat_usage_count
@@ -185,7 +187,8 @@ class AppList(MultiVTable):
         if not self.__search:
             return True
         search = self.__search.lower()
-        keys = (app.get_name(), app.get_description())
+        mugshot_app = app.get_mugshot_app()
+        keys = (mugshot_app.get_name(), mugshot_app.get_description())
         for key in keys:
             if key.lower().find(search) >= 0:
                 return True
@@ -204,8 +207,10 @@ class AppList(MultiVTable):
              self.emit("launch")
              
 class AppBrowser(hippo.CanvasWindow):
-    def __init__(self):
+    def __init__(self, stock):
         super(AppBrowser, self).__init__(gtk.WINDOW_TOPLEVEL)
+        
+        self.__stock = stock
         
         self.set_keep_above(1)
         self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))        
@@ -275,10 +280,13 @@ class AppBrowser(hippo.CanvasWindow):
         self.__sync()
                 
     def __sync(self):
-        apps = self.__mugshot.get_my_top_apps()
-        if not apps:
-            return
+        mugshot_apps = self.__mugshot.get_my_top_apps()
+        if not mugshot_apps:
+            mugshot_apps = self.__mugshot.get_global_top_apps()
         _logger.debug("handling top apps changed")        
+      
+        apps = map(lambda app: self.__stock.get_app(app), mugshot_apps)
         
-        self.__app_list.set_apps(apps)
-        self.__cat_usage.set_apps(apps)
+        installed_apps = filter(lambda app: app.is_installed(), apps)
+        self.__app_list.set_apps(installed_apps)
+        self.__cat_usage.set_apps(installed_apps)

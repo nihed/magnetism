@@ -333,9 +333,11 @@ class Mugshot(gobject.GObject):
         id = node.getAttribute("id")
         self._logger.debug("parsing application id=%s", id)
         attrs = libbig.xml_gather_attrs(node, ['id', 'rank', 'usageCount', 
-                                               'iconUrl', 'description',
+                                               'iconUrl',
                                                'category',
                                                'name', 'desktopNames'])
+        if node.getAttribute('description'):
+            attrs['description'] = node.getAttribute('description')
         app = None
         if not self.__applications.has_key(attrs['id']):
             app = Application(attrs)

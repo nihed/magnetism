@@ -29,10 +29,6 @@ class AppDisplay(PhotoContentItem):
         self.__box.append(self.__description)        
         self.set_child(self.__box)
         
-        self.__desktop_entry = None        
-        ad = apps_directory.get_app_directory()            
-        ad.connect("changed", lambda ad: self.__app_display_sync())
-        
         if app:
             self.set_app(app)
         
@@ -41,6 +37,7 @@ class AppDisplay(PhotoContentItem):
         
     def set_app(self, app):
         self.__app = app
+        self.__app.get_mugshot_app().connect("changed", lambda app: self.__app_display_sync())
         self.__app.connect("changed", lambda app: self.__app_display_sync())
         self.__app_display_sync()
     
@@ -51,44 +48,19 @@ class AppDisplay(PhotoContentItem):
     
     def __str__(self):
         return '<AppDisplay name="%s">' % (self.__get_name())
-    
-    def __set_app_installed(self, installed):
-        pass
-#        attrs = pango.AttrList()
-#        if installed:
-#            attrs.insert(pango.AttrForeground(0x0, 0x0, 0xFFFF, 0, 0xFFFF))
-#        else:
-#            self._logger.debug("app %s is not installed", self)
-#        self.__title.set_property("attributes", attrs)
         
     # override
     def do_prelight(self):
-        return not self.__desktop_entry is None
+        return self.__app.is_installed()
     
     def __app_display_sync(self):
         if not self.__app:
             return
-        self.__title.set_property("text", self.__app.get_name())
-        self.__description.set_property("text", self.__app.get_description())
-        self.__photo.set_url(self.__app.get_icon_url())
-        names = self.__app.get_desktop_names()
-        for name in names.split(';'):
-            ad = apps_directory.get_app_directory()            
-            menuitem = None
-            try:
-                menuitem = ad.lookup(name)
-            except KeyError, e:
-                continue
-            entry_path = menuitem.get_desktop_file_path()
-            self._logger.debug("loading desktop file %s", entry_path) 
-            desktop = gnomedesktop.item_new_from_file(entry_path, 0)
-            self.__desktop_entry = desktop
-            break
-        self.__set_app_installed(not self.__desktop_entry is None)
+        app = self.__app.get_mugshot_app()
+        self.__title.set_property("text", app.get_name())
+        self.__description.set_property("text", app.get_description())
+        self.__photo.set_url(app.get_icon_url())
         
     def launch(self):
         self._logger.debug("launching app %s", self)
-        if self.__desktop_entry is None:
-            self._logger.error("couldn't find installed app %s, ignoring activate", self)
-            return
-        self.__desktop_entry.launch(())
+        self.__app.launch(())
