@@ -8,8 +8,9 @@ from bigboard import Stock, AbstractMugshotStock
 from big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox
 
 class FixedCountWrapBox(CanvasVBox):
-    def __init__(self, max_row_count, **kwargs):
+    def __init__(self, max_row_count, spacing=0, **kwargs):
         super(FixedCountWrapBox, self).__init__(**kwargs)
+        self.__spacing = spacing
         self.__max_row_count = max_row_count     
         
     def __row(self, i=None):
@@ -21,9 +22,9 @@ class FixedCountWrapBox(CanvasVBox):
         
     def append(self, child):
         if len(self.get_children()) == 0:
-            super(FixedCountWrapBox,self).append(CanvasHBox())             
+            super(FixedCountWrapBox,self).append(CanvasHBox(spacing=self.__spacing)) 
         if len(self.__row().get_children()) >= self.__max_row_count:
-            super(FixedCountWrapBox, self).append(CanvasHBox())
+            super(FixedCountWrapBox, self).append(CanvasHBox(spacing=self.__spacing))
         row = self.__row()
         row.append(child)
 
@@ -50,7 +51,7 @@ class SelfStock(AbstractMugshotStock):
     def __init__(self, *args, **kwargs):
         super(SelfStock,self).__init__(*args, **kwargs)
 
-        self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4)
+        self._box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4, padding_top=2)
 
         self._namephoto_box = PhotoContentItem()
         self._namephoto_box.set_clickable(True)        
