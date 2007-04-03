@@ -139,7 +139,7 @@ public class ExternalAccountView {
 		if (getFeeds() != null) {
 			builder.openElement("feeds");
 			for (Feed f : getFeeds()) {
-				builder.appendEmptyNode("feed", "src", f.getLink().getUrl());
+				builder.appendEmptyNode("feed", "src", f.getSource().getUrl());
 			}
 			builder.closeElement();
 		}
