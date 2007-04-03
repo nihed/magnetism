@@ -23,15 +23,15 @@
 			<dht3:download page="download"/>
 			<div class="dh-download-subheader">Here's what you can do with the Mugshot download...</div>
 		</div>
-		<dht3:webSwarmLearnMore>
-			<a class="dh-download-learnmore dh-underlined-link" href="/links-learnmore">Learn more</a>		
-		</dht3:webSwarmLearnMore>
+		<dht3:stackerLearnMore>
+			<a class="dh-download-learnmore dh-underlined-link" href="/stacker-learnmore">Learn more</a>
+		</dht3:stackerLearnMore>		
 		<dht3:radarLearnMore>
 			<a class="dh-download-learnmore dh-underlined-link" href="/radar-learnmore">Learn more</a>	
 		</dht3:radarLearnMore>
-		<dht3:stackerLearnMore>
-			<a class="dh-download-learnmore dh-underlined-link" href="/stacker-learnmore">Learn more</a>
-		</dht3:stackerLearnMore>
+		<dht3:webSwarmLearnMore>
+			<a class="dh-download-learnmore dh-underlined-link" href="/links-learnmore">Learn more</a>		
+		</dht3:webSwarmLearnMore>		
 		<div class="dh-download-faqs-header">Mugshot Download FAQs</div>
 		<div class="dh-download-faq">
 			<div class="dh-download-faq-q">Why do I need to download anything to use Mugshot?</div>
