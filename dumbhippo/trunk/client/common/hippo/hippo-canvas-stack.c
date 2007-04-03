@@ -342,7 +342,7 @@ hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
     hippo_canvas_box_insert_sorted(HIPPO_CANVAS_BOX(canvas_stack), item, 0,
                                    canvas_block_compare, canvas_stack);
 
-    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(canvas_stack), item, visible);
+    hippo_canvas_item_set_visible(item, visible);
     remove_extra_children(canvas_stack);
     
     g_object_unref(item);
@@ -415,8 +415,7 @@ foreach_update_hidden(HippoCanvasItem *child,
         if (play_id)
             seen_track = g_hash_table_lookup(uhd->chatted, play_id) != NULL;
 
-        hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(uhd->canvas_stack), 
-                                           child, !seen_track);
+        hippo_canvas_item_set_visible(child, !seen_track);
     }
 
     if (child_block)

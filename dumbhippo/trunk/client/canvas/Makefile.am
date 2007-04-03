@@ -115,6 +115,7 @@ STAMPS =				\
 
 COMMON_CANVAS_HEADERFILES = 					\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-box.h		\
+	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-container.h	\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-context.h	\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-gradient.h	\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-image.h	\
@@ -137,6 +138,7 @@ COMMON_CANVAS_SOURCEFILES = 					\
 	$(COMMON_CANVAS_HEADERFILES)				\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-internal.h	\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-box.c		\
+	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-container.c	\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-context.c	\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-gradient.c	\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-image.c	\

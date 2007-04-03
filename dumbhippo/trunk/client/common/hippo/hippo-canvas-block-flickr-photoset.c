@@ -43,7 +43,6 @@ static void set_person (HippoCanvasBlockFlickrPhotoset *block_flickr_photoset,
 
 struct _HippoCanvasBlockFlickrPhotoset {
     HippoCanvasBlock canvas_block;
-    HippoCanvasBox *thumbnails_parent;
     HippoCanvasItem *thumbnails;
     HippoPerson *person;
 };
@@ -166,8 +165,6 @@ hippo_canvas_block_flickr_photoset_append_content_items (HippoCanvasBlock *block
 
     hippo_canvas_block_set_heading(block, _("Flickr photoset"));
 
-    block_flickr_photoset->thumbnails_parent = parent_box;
-
     block_flickr_photoset->thumbnails =
         g_object_new(HIPPO_TYPE_CANVAS_THUMBNAILS,
                      "actions", block->actions,
@@ -176,9 +173,8 @@ hippo_canvas_block_flickr_photoset_append_content_items (HippoCanvasBlock *block
     hippo_canvas_box_append(parent_box,
                             block_flickr_photoset->thumbnails, 0);
 
-    hippo_canvas_box_set_child_visible(parent_box,
-                                       block_flickr_photoset->thumbnails,
-                                       FALSE);
+    hippo_canvas_item_set_visible(block_flickr_photoset->thumbnails,
+                                  FALSE);
 }
 
 static void
@@ -281,9 +277,8 @@ hippo_canvas_block_flickr_photoset_expand(HippoCanvasBlock *canvas_block)
 {
     HippoCanvasBlockFlickrPhotoset *block_flickr_photoset = HIPPO_CANVAS_BLOCK_FLICKR_PHOTOSET(canvas_block);
 
-    hippo_canvas_box_set_child_visible(block_flickr_photoset->thumbnails_parent,
-                                       block_flickr_photoset->thumbnails,
-                                       TRUE);
+    hippo_canvas_item_set_visible(block_flickr_photoset->thumbnails,
+                                  TRUE);
 
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_flickr_photoset_parent_class)->expand(canvas_block);
 }
@@ -293,9 +288,8 @@ hippo_canvas_block_flickr_photoset_unexpand(HippoCanvasBlock *canvas_block)
 {
     HippoCanvasBlockFlickrPhotoset *block_flickr_photoset = HIPPO_CANVAS_BLOCK_FLICKR_PHOTOSET(canvas_block);
 
-    hippo_canvas_box_set_child_visible(block_flickr_photoset->thumbnails_parent,
-                                       block_flickr_photoset->thumbnails,
-                                       FALSE);
+    hippo_canvas_item_set_visible(block_flickr_photoset->thumbnails,
+                                  FALSE);
 
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_flickr_photoset_parent_class)->unexpand(canvas_block);
 }

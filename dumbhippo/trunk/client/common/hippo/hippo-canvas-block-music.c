@@ -192,7 +192,6 @@ hippo_canvas_block_music_append_content_items (HippoCanvasBlock *block,
                                             "xalign", HIPPO_ALIGNMENT_START,
                                             "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                                             NULL);
-    block_music->artist_link_parent = box;
     hippo_canvas_box_append(box, block_music->artist_link, 0);
     
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
@@ -205,7 +204,6 @@ hippo_canvas_block_music_append_content_items (HippoCanvasBlock *block,
                                           "xalign", HIPPO_ALIGNMENT_START,
                                           "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                                           NULL);
-    block_music->name_link_parent = box;
     hippo_canvas_box_append(box, block_music->name_link, 0);
 
     block_music->quipper = g_object_new(HIPPO_TYPE_CANVAS_QUIPPER,
@@ -218,7 +216,6 @@ hippo_canvas_block_music_append_content_items (HippoCanvasBlock *block,
                                                        "actions", hippo_canvas_block_get_actions(block),
                                                        NULL);
 
-    block_music->single_message_preview_parent = beside_box;
     hippo_canvas_box_append(beside_box, block_music->single_message_preview, 0);
     
     block_music->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
@@ -226,13 +223,11 @@ hippo_canvas_block_music_append_content_items (HippoCanvasBlock *block,
                                              "message-count", 0,
                                              NULL);
 
-    block_music->chat_preview_parent = parent_box;
     hippo_canvas_box_append(parent_box, block_music->chat_preview, 0);
 
     block_music->old_tracks_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                                "orientation", HIPPO_ORIENTATION_VERTICAL,
                                                NULL);
-    block_music->old_tracks_box_parent = parent_box;
     hippo_canvas_box_append(parent_box, HIPPO_CANVAS_ITEM(block_music->old_tracks_box), 0);
     
     hippo_canvas_block_music_update_visibility(block_music);
@@ -247,7 +242,6 @@ hippo_canvas_block_music_append_right_items (HippoCanvasBlock *block,
     block_music->downloads_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                           "orientation", HIPPO_ORIENTATION_VERTICAL,
                                           NULL);
-    block_music->downloads_box_parent = parent_box;
     hippo_canvas_box_append(parent_box, HIPPO_CANVAS_ITEM(block_music->downloads_box), HIPPO_PACK_FLOAT_RIGHT);
 }
 
@@ -286,9 +280,8 @@ set_track(HippoCanvasBlockMusic *block_music,
                      "url", &url,
                      NULL);
 
-        hippo_canvas_box_set_child_visible(block_music->artist_link_parent,
-                                           block_music->artist_link,
-                                           artist != NULL);
+        hippo_canvas_item_set_visible(block_music->artist_link,
+                                      artist != NULL);
             
         if (artist)
             g_object_set(block_music->artist_link,
@@ -298,9 +291,8 @@ set_track(HippoCanvasBlockMusic *block_music,
                          "url", url,
                          NULL);
         
-        hippo_canvas_box_set_child_visible(block_music->name_link_parent,
-                                           block_music->name_link,
-                                           name != NULL);
+        hippo_canvas_item_set_visible(block_music->name_link,
+                                      name != NULL);
             
         if (name)
             g_object_set(block_music->name_link,
@@ -587,16 +579,12 @@ hippo_canvas_block_music_update_visibility(HippoCanvasBlockMusic *block_music)
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_music);
     
-    hippo_canvas_box_set_child_visible(block_music->single_message_preview_parent,
-                                       block_music->single_message_preview,
-                                       !canvas_block->expanded && block_music->have_messages);
-    hippo_canvas_box_set_child_visible(block_music->chat_preview_parent,
-                                       block_music->chat_preview,
-                                       canvas_block->expanded);
-    hippo_canvas_box_set_child_visible(block_music->downloads_box_parent,
-                                       HIPPO_CANVAS_ITEM(block_music->downloads_box),
-                                       canvas_block->expanded);
-    hippo_canvas_box_set_child_visible(block_music->old_tracks_box_parent,
-                                       HIPPO_CANVAS_ITEM(block_music->old_tracks_box),
-                                       canvas_block->expanded);
+    hippo_canvas_item_set_visible(block_music->single_message_preview,
+                                  !canvas_block->expanded && block_music->have_messages);
+    hippo_canvas_item_set_visible(block_music->chat_preview,
+                                  canvas_block->expanded);
+    hippo_canvas_item_set_visible(HIPPO_CANVAS_ITEM(block_music->downloads_box),
+                                  canvas_block->expanded);
+    hippo_canvas_item_set_visible(HIPPO_CANVAS_ITEM(block_music->old_tracks_box),
+                                  canvas_block->expanded);
 }

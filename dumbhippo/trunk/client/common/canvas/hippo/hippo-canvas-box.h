@@ -2,7 +2,8 @@
 #ifndef __HIPPO_CANVAS_BOX_H__
 #define __HIPPO_CANVAS_BOX_H__
 
-#include "hippo-canvas-item.h"
+#include <hippo/hippo-canvas-item.h>
+#include <hippo/hippo-canvas-container.h>
 
 G_BEGIN_DECLS
 
@@ -54,7 +55,8 @@ typedef struct _HippoCanvasBoxClass HippoCanvasBoxClass;
 #define HIPPO_CANVAS_BOX_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_BOX, HippoCanvasBoxClass))
 
 struct _HippoCanvasBox {
-    GObject parent;
+    GObject base;
+    HippoCanvasContainer *parent;
     HippoCanvasContext *context;
     HippoCanvasStyle *style; /* may be NULL if no relevant props set */
     GSList *children;
@@ -103,7 +105,7 @@ struct _HippoCanvasBox {
 };
 
 struct _HippoCanvasBoxClass {
-    GObjectClass parent_class;
+    GObjectClass base_class;
 
     guint32  default_color;
     
@@ -181,10 +183,6 @@ void             hippo_canvas_box_insert_sorted     (HippoCanvasBox             
                                                      HippoPackFlags               flags,
                                                      HippoCanvasCompareChildFunc  compare_func,
                                                      void                        *data);
-
-void             hippo_canvas_box_set_child_visible (HippoCanvasBox              *box,
-                                                     HippoCanvasItem             *child,
-                                                     gboolean                     visible);
 void             hippo_canvas_box_set_child_packing (HippoCanvasBox              *box,
                                                      HippoCanvasItem             *child,
                                                      HippoPackFlags               flags);

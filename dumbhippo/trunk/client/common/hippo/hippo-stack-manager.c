@@ -434,9 +434,8 @@ manager_toggle_filter(StackManager *manager)
 {
     manager->filter_area_visible = !manager->filter_area_visible;
     g_debug("Setting filter area visible: %d", manager->filter_area_visible);
-    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(manager->browser_box),
-                                       manager->browser_filter_area_item,
-                                       manager->filter_area_visible);                
+    hippo_canvas_item_set_visible(manager->browser_filter_area_item,
+                                  manager->filter_area_visible);                
 }
 
 static gboolean
@@ -458,9 +457,8 @@ filter_canvas_item(HippoCanvasItem *item,
     StackManager *manager = (StackManager*) data;
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(item);
     
-    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(manager->browser_item),
-                                       HIPPO_CANVAS_ITEM(canvas_block),
-                                       apply_current_filter(manager, canvas_block->block));
+    hippo_canvas_item_set_visible(HIPPO_CANVAS_ITEM(canvas_block),
+                                  apply_current_filter(manager, canvas_block->block));
 }
 
 static void
@@ -942,10 +940,9 @@ manager_attach(StackManager    *manager,
                             0);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->browser_box),
                             manager->browser_filter_area_item,
-                            0);                            
-    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(manager->browser_box),
-                                       manager->browser_filter_area_item,
-                                       FALSE);
+                            0);
+    hippo_canvas_item_set_visible(manager->browser_filter_area_item, FALSE);
+
     hippo_canvas_scrollbars_set_root(HIPPO_CANVAS_SCROLLBARS(manager->browser_scroll_item),
                                      manager->browser_item);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->browser_box),

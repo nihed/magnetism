@@ -1,6 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-canvas-internal.h"
 #include "hippo-canvas-item.h"
+#include "hippo-canvas-container.h"
 #include "hippo-canvas-marshal.h"
 
 static void     hippo_canvas_item_base_init (void                  *klass);
@@ -139,6 +140,23 @@ hippo_canvas_item_set_context(HippoCanvasItem    *canvas_item,
     HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->set_context(canvas_item, context);
 }
 
+void
+hippo_canvas_item_set_parent(HippoCanvasItem      *canvas_item,
+                             HippoCanvasContainer *container)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
+
+    HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->set_parent(canvas_item, container);
+}
+
+HippoCanvasContainer*
+hippo_canvas_item_get_parent(HippoCanvasItem      *canvas_item)
+{
+    g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), NULL);
+
+    return HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_parent(canvas_item);
+}
+
 /* The natural width should be thought of as the width at which
  * alignment (HIPPO_ALIGNMENT_START etc.) makes no difference but at
  * which nothing will be chopped off or wrapped.  There is no real
@@ -215,6 +233,23 @@ hippo_canvas_item_get_pointer(HippoCanvasItem *canvas_item,
     g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), FALSE);
 
     return HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_pointer(canvas_item, x, y);
+}
+
+void
+hippo_canvas_item_set_visible(HippoCanvasItem    *canvas_item,
+                              gboolean            visible)
+{
+    HippoCanvasContainer *parent;
+    
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
+
+    parent = hippo_canvas_item_get_parent(canvas_item);
+    if (parent == NULL) {
+        g_warning("Visibility is a property of the container+item pair, not just the item; so you can't set visibility on an item that isn't in a container");
+        return;
+    }
+
+    hippo_canvas_container_set_child_visible(parent, canvas_item, visible != FALSE);
 }
 
 gboolean

@@ -10,6 +10,7 @@
 Pycairo_CAPI_t *Pycairo_CAPI;
 
 #include <hippo/hippo-canvas-item.h>
+#include <hippo/hippo-canvas-container.h>
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-util.h>
 

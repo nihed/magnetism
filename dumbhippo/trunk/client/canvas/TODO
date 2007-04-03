@@ -1,10 +1,5 @@
 List of possible future enhancements / likely directions, we are doing these "as needed"
 
-- HippoCanvasContainer
- 
-  add HippoCanvasContainer interface, add set_parent/get_parent on canvas item that 
-  gets/sets a container, move get_position and set_child_visible from box to container
-
 - Avoid having to always align images
 
   image item should maybe default to center alignment instead of fill like most items do
@@ -24,7 +19,8 @@ List of possible future enhancements / likely directions, we are doing these "as
 
   Right now affect_font_desc / affect_color / get_color are on HippoCanvasContext,
   they should probably all be on a separate interface (HippoStylist?) or something
-  like that. Then HippoStyle would also implement this interface perhaps.
+  like that. Then HippoStyle would also implement this interface perhaps. Or maybe 
+  these go on HippoCanvasContainer somehow?
 
 - Set class-default font and colors
 

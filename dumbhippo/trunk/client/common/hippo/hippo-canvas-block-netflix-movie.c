@@ -51,8 +51,6 @@ struct _HippoCanvasBlockNetflixMovie {
     HippoCanvasItem *favicon;
     HippoCanvasItem *title_link;
     HippoCanvasItem *description_item;
-    HippoCanvasBox *description_parent;
-    HippoCanvasBox *queue_parent;
     HippoCanvasBox *queue_box;
     HippoCanvasBox *queue_list_box;    
     HippoPerson *person;
@@ -174,7 +172,7 @@ update_visibility(HippoCanvasBlockNetflixMovie *block)
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block);
     
-    hippo_canvas_box_set_child_visible(block->queue_parent, HIPPO_CANVAS_ITEM(block->queue_box), canvas_block->expanded);
+    hippo_canvas_item_set_visible(HIPPO_CANVAS_ITEM(block->queue_box), canvas_block->expanded);
 }
 
 static void
@@ -233,7 +231,6 @@ hippo_canvas_block_netflix_movie_append_content_items (HippoCanvasBlock *block,
                        NULL);
     hippo_canvas_box_append(beside_box, HIPPO_CANVAS_ITEM(box), 0);  
     
-    block_netflix->description_parent = beside_box;
     block_netflix->description_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                                    "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD,
                                                    "xalign", HIPPO_ALIGNMENT_START,
@@ -242,7 +239,7 @@ hippo_canvas_block_netflix_movie_append_content_items (HippoCanvasBlock *block,
                                                    "border-top", 4,
                                                    "border-bottom", 4,
                                                    NULL);
-    hippo_canvas_box_append(block_netflix->description_parent, block_netflix->description_item, 0);
+    hippo_canvas_box_append(beside_box, block_netflix->description_item, 0);
     
     block_netflix->queue_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                             "orientation", HIPPO_ORIENTATION_VERTICAL,
@@ -257,8 +254,7 @@ hippo_canvas_block_netflix_movie_append_content_items (HippoCanvasBlock *block,
                                                  NULL);
     hippo_canvas_box_append(block_netflix->queue_box, HIPPO_CANVAS_ITEM(block_netflix->queue_list_box), 0);
     
-    block_netflix->queue_parent = parent_box;
-    hippo_canvas_box_append(block_netflix->queue_parent, HIPPO_CANVAS_ITEM(block_netflix->queue_box), 0);
+    hippo_canvas_box_append(parent_box, HIPPO_CANVAS_ITEM(block_netflix->queue_box), 0);
     
     update_visibility(block_netflix);
 }

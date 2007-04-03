@@ -55,7 +55,6 @@ struct _HippoCanvasBlockAccountQuestion {
 
     HippoCanvasItem *description_item;
     HippoCanvasItem *read_more_item;
-    HippoCanvasBox *timestamp_parent;
     HippoCanvasItem *timestamp_item;
     
     HippoCanvasBox *buttons_box;
@@ -204,14 +203,13 @@ hippo_canvas_block_account_question_append_right_items (HippoCanvasBlock *block,
                                                         HippoCanvasBox   *parent_box)
 {
     HippoCanvasBlockAccountQuestion *block_account_question = HIPPO_CANVAS_BLOCK_ACCOUNT_QUESTION(block);
-
-    block_account_question->timestamp_parent = parent_box;
+     
     block_account_question->timestamp_item = g_object_new(HIPPO_TYPE_CANVAS_TIMESTAMP,
                                                           "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
                                                           "actions", block->actions,
                                                           NULL);
     hippo_canvas_box_append(parent_box, block_account_question->timestamp_item, HIPPO_PACK_FLOAT_RIGHT);
-    hippo_canvas_box_set_child_visible(parent_box, block_account_question->timestamp_item, FALSE);
+    hippo_canvas_item_set_visible(block_account_question->timestamp_item, FALSE);
 }
 
 static void
@@ -340,7 +338,7 @@ on_answer_changed(HippoBlock                      *block,
                  NULL);
 
     /* We only show a timestamp if the user has answered the question */
-    hippo_canvas_box_set_child_visible(block_account_question->timestamp_parent, block_account_question->timestamp_item, answer != NULL);
+    hippo_canvas_item_set_visible(block_account_question->timestamp_item, answer != NULL);
 
     g_free(answer);
 }

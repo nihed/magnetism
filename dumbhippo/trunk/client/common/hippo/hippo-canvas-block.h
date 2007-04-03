@@ -35,11 +35,9 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *age_separator_item;
     HippoCanvasItem *age_prefix_item;
     HippoCanvasItem *age_item;
-    HippoCanvasBox  *original_age_parent;
     HippoCanvasBox  *original_age_box;
     HippoCanvasItem *original_age_prefix_item;
     HippoCanvasItem *original_age_item;
-    HippoCanvasBox  *sent_to_parent;
     HippoCanvasBox  *sent_to_box;
     HippoCanvasItem *sent_to_text_item;
     HippoCanvasItem *sent_to_item;

@@ -3,15 +3,19 @@
 #define __HIPPO_CANVAS_CONTEXT_H__
 
 /*
- * Canvas context gives an item a way to communicate with its "parent"
- * but in a more controlled fashion than just giving each item a pointer
- * to the canvas widget and parent item. Setting a context is sort
- * of like the GTK concept of "realization" - it does not necessarily
- * map to the item being in a container, and in fact the root item
- * has a context but would not have a parent item, for example.
- * Also an item can be in a container item and not have a context if the
- * container item does not have a context, for example if the tree of
- * items is not in a HippoCanvas widget.
+ * Setting a context is sort of like the GTK concept of "realization"
+ * - it does not necessarily map to the item being in a container, and
+ * in fact the root item has a context but would not have a parent
+ * container, for example.  Also an item can be in a container item and not
+ * have a context if the container item does not have a context, for
+ * example if the whole tree of items is not in a HippoCanvas widget.
+ * 
+ * If for example we were printing a tree of canvas items, we
+ * might have to temporarily set the context to a special print
+ * context (though this has problems, such as temporarily unrealizing
+ * any widget items; so print support may require larger changes than
+ * just creating a print context).
+ *
  */
 
 #include <hippo/hippo-graphics.h>
@@ -22,6 +26,9 @@ G_BEGIN_DECLS
 
 typedef struct _HippoCanvasItem      HippoCanvasItem;
 typedef struct _HippoCanvasItemIface HippoCanvasItemIface;
+
+typedef struct _HippoCanvasContainer      HippoCanvasContainer;
+typedef struct _HippoCanvasContainerIface HippoCanvasContainerIface;
 
 typedef enum {
     HIPPO_STOCK_COLOR_BG_NORMAL,
