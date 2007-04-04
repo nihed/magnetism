@@ -88,7 +88,7 @@
    	<dht3:shinyBox color="grey">
 		<div class="dh-page-shinybox-title-large">Edit Application - <c:out value="${appinfo.name}"/></div>
 		<div>
-   			This page allow allows you to edit the application database information for <c:out value="${appinfo.name}"/>.
+   			This page allows you to edit the application database information for <c:out value="${appinfo.name}"/>.
 			<a href="/application-history?id=${appinfo.appId}">View history</a> |
 			<a href="/application?id=${appinfo.appId}">Go back to browsing</a>
 		</div>
