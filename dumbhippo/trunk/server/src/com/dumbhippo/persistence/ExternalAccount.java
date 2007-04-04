@@ -206,10 +206,10 @@ public class ExternalAccount extends DBUnique {
 	
 	@Transient
 	public String getLink() {
-		if (isLovedAndEnabled())
+		if (hasAccountInfo())
 			return accountType.getLink(handle, extra);
 		else
-			throw new RuntimeException("can't getLink() on a not-loved-and-enabled account");
+			throw new RuntimeException("can't getLink() on account without handle/extra");
 	}
 	
 	@Transient
@@ -237,7 +237,7 @@ public class ExternalAccount extends DBUnique {
 	@Transient
 	public boolean hasLovedAndEnabledType(ExternalAccountType type) {
 		return accountType == type && getSentiment() == Sentiment.LOVE &&
-		getAccount().isActive() && 
+		getAccount().isActive() && hasAccountInfo() &&
 		(!accountType.isAffectedByMusicSharing() || getAccount().isMusicSharingEnabledWithDefault());
 	}
 	
