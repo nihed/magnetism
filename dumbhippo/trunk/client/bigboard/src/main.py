@@ -23,6 +23,42 @@ class Separator(hippo.CanvasBox):
     def __init__(self):
         hippo.CanvasBox.__init__(self, border_top=1, border_color=0x999999FF)
         
+class PrelistedStock(object):
+    def __init__(self, id, stockdir):
+        self.__id = id
+        self.__stockdir = stockdir
+        self.__logger = logging.getLogger('bigboard.StockReader')        
+        
+    def get_id(self):
+        return self.__id
+        
+    def get(self):
+        listing = os.path.join(self.__stockdir, 'listing.xml')
+        if not os.access(listing, os.R_OK):
+            raise OSError("stock listing %s vanished!" % listing)
+        self.__logger.debug("parsing %s", listing)
+        doc = xml.dom.minidom.parse(listing)
+        stock = doc.documentElement
+        fmt_version = int(stock.getAttribute("version") or "0")            
+        class_name = self.__id.split('.')[-1]
+        try:
+            ticker = libbig.get_xml_element_value(stock, 'ticker')
+        except KeyError:
+            ticker = ""
+            
+        sys.path.append(self.__stockdir)
+        try:
+            self.__logger.info("importing module %s (%s) %s", class_name, self.__id, self.__stockdir)
+            module = __import__(class_name)
+            class_constructor = getattr(module, class_name)
+            self.__logger.debug("got constructor %s", class_constructor)
+            
+            stock = class_constructor({'id': self.__id, 'ticker': ticker})
+            return stock                  
+        except:
+            self.__logger.exception("failed to add stock %s", id)        
+            return None
+        
 class StockReader(gobject.GObject):
     __gsignals__ = {
         "stock-added" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
@@ -46,29 +82,12 @@ class StockReader(gobject.GObject):
                 if not os.access(listing, os.R_OK):
                     self.__logger.debug("ignoring missing %s", listing)
                     continue
-                self.__logger.debug("parsing %s", listing)
+                self.__logger.debug("parsing prelisting %s", listing)
                 doc = xml.dom.minidom.parse(listing)
-                
                 stock = doc.documentElement
-                fmt_version = int(stock.getAttribute("version") or "0")
                 id = libbig.get_xml_element_value(stock, 'id')
-                class_name = id.split('.')[-1]
-                try:
-                    ticker = libbig.get_xml_element_value(stock, 'ticker')
-                except KeyError:
-                    ticker = ""
-                    
-                sys.path.append(stockdir)
-                try:
-                    self.__logger.info("importing module %s (%s) %s", class_name, id, stockdir)
-                    module = __import__(class_name)
-                    class_constructor = getattr(module, class_name)
-                    self.__logger.debug("got constructor %s", class_constructor)
-                    
-                    stock = class_constructor({'id': id, 'ticker': ticker})
-                    self.emit("stock-added", stock)                    
-                except:
-                    self.__logger.exception("failed to add stock %s", id)
+
+                self.emit("stock-added", PrelistedStock(id, stockdir))
                 
                 
 class Exchange(hippo.CanvasBox):
@@ -176,7 +195,14 @@ class BigBoardPanel(object):
   
         self._canvas.show()
         
-    def __on_stock_added(self, stock):
+    def __on_stock_added(self, prestock):
+        if not prestock.get_id() in self.__state['listed'].split(';'):
+            self.__logger.debug("ignoring unlisted stock %s")
+            return
+        stock = prestock.get()
+        if not stock:
+            self.__logger.debug("stock %s failed to load", prestock.get_id())
+            return
         self.list(stock)
         
     def __get_size(self):
