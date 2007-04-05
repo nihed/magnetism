@@ -1395,7 +1395,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		Query q = em.createQuery("SELECT g FROM Group g, GroupBlockData gbd, Block block, GroupMember gm WHERE" +
 				" gbd.group = g AND gm.group = g AND gbd.block = block " + 
 				" AND gbd.participatedTimestamp IS NOT NULL " +
-				(viewpoint.isOfUser(user) ? "" : (" and g.access = " + GroupAccess.PUBLIC_INVITE.ordinal())) +
+				(viewpoint.isOfUser(user) ? "" : (" and g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal())) +
 				" AND gm.status = " + groupQueryTypeToMembershipStatus(groupType).ordinal() +    
 				" AND gm.member = :acct ORDER BY gbd.participatedTimestamp DESC");
 		q.setParameter("acct", user.getAccount());

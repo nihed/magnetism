@@ -25,8 +25,19 @@ dh.groupaccount.stopWait = function(message) {
     }
 }
 
+dh.groupaccount.groupPrivacyChanged = function() {
+    if (document.getElementById("dhGroupVisibilityPrivate").checked) {
+        document.getElementById("dhGroupMembershipOpen").disabled = true;
+        document.getElementById("dhGroupMembershipByInvitation").disabled = true;
+    } else {
+        document.getElementById("dhGroupMembershipOpen").disabled = false;
+        document.getElementById("dhGroupMembershipByInvitation").disabled = false;    
+    }   
+}
+
 dh.groupaccount.createGroup = function() {
 	var secret = document.getElementById("dhGroupVisibilityPrivate").checked
+	var open = document.getElementById("dhGroupMembershipOpen").checked
 	var groupName = dh.util.trim(dh.groupaccount.groupNameEntry.getValue())
 	var description = dh.util.trim(dh.groupaccount.aboutGroupEntry.getValue())
 	
@@ -40,6 +51,7 @@ dh.groupaccount.createGroup = function() {
 					{
 						"name" : groupName,
 						"secret" : secret,
+						"open" : open,
 						"description" : description
 					},
                     function(type, doc, http) {

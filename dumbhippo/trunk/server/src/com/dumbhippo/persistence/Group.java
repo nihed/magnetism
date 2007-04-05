@@ -34,29 +34,15 @@ public class Group extends GuidPersistable implements VersionedEntity {
 	private Set<GroupFeed> feeds;
 	private boolean markedForDelete;
 		
-	private void initMissing() {
-		if (access == null)
-			access = GroupAccess.PUBLIC_INVITE;
-		if (members == null)
-			members = new HashSet<GroupMember>();
-		if (feeds == null)
-			feeds = new HashSet<GroupFeed>();
-	}
-	
-	public Group() {
-		initMissing();
+	protected Group() {
+	    this("", GroupAccess.PUBLIC);	
 	}
 	
 	public Group(String name, GroupAccess access) {
 		this.name = name;
 		this.access = access;
-		initMissing();
-	}
-	
-	public Group(String name, Set<GroupMember> members) {
-		this.name = name;
-		setMembers(members);
-		initMissing();
+		members = new HashSet<GroupMember>();
+		feeds = new HashSet<GroupFeed>();
 	}
 	
 	@Column(nullable=false)
