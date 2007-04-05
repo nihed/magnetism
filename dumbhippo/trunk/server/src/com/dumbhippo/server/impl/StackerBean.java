@@ -898,8 +898,19 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			sb.append(" AND block.filterFlags != " + StackFilterFlags.FEED.getValue());
 		
 		if (parsedExpression.isNoSelfSource() && viewpoint instanceof UserViewpoint) {
-			sb.append(" AND NOT ((block.data1 = :viewpointGuid  AND " + getDirectData1UserBlockTypeClause() + ")" +
-					  "          OR (block.data2 = :viewpointGuid AND " + getDirectData2UserBlockTypeClause() + "))");
+			
+			sb.append(" AND NOT (");
+			String data1Clause = getDirectData1UserBlockTypeClause();
+			if (data1Clause != null) {
+				sb.append("(block.data1 = :viewpointGuid  AND " + data1Clause + ")");
+			}
+			String data2Clause = getDirectData2UserBlockTypeClause();
+			if (data2Clause != null) {
+				if (data1Clause != null)
+					sb.append(" OR ");
+				sb.append("(block.data2 = :viewpointGuid AND " + data2Clause + ")");
+			}
+			sb.append(")");
 		}
 		
 		/* Inclusion clause */
@@ -1265,18 +1276,26 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	private String getDirectData1UserBlockTypeClause() {
 		initBlockTypeCache();
-		StringBuilder builder = new StringBuilder(" block.blockType IN (");
-		builder.append(joinBlockTypeOrdinals(directData1UserBlockTypes));
-		builder.append(") ");
-		return builder.toString();
+		if (directData1UserBlockTypes.size() > 0) {		
+			StringBuilder builder = new StringBuilder(" block.blockType IN (");
+			builder.append(joinBlockTypeOrdinals(directData1UserBlockTypes));
+			builder.append(") ");
+			return builder.toString();
+		} else {
+			return null;
+		}
 	}
 	
 	private String getDirectData2UserBlockTypeClause() {
 		initBlockTypeCache();
-		StringBuilder builder = new StringBuilder(" block.blockType IN (");
-		builder.append(joinBlockTypeOrdinals(directData2UserBlockTypes));
-		builder.append(") ");
-		return builder.toString();
+		if (directData2UserBlockTypes.size() > 0) {
+			StringBuilder builder = new StringBuilder(" block.blockType IN (");
+			builder.append(joinBlockTypeOrdinals(directData2UserBlockTypes));
+			builder.append(") ");
+			return builder.toString();
+		} else {
+			return null;
+		}
 	}		
 	
 	private List<User> getRecentlyActiveContacts(Viewpoint viewpoint, User user, int start, int count) {

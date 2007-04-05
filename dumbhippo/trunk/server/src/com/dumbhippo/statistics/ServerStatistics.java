@@ -187,13 +187,5 @@ public class ServerStatistics implements StatisticsSource {
 			type=ColumnType.SNAPSHOT)
 	public long getPollingTaskCount3() {
 		return getTaskCount(3);
-	}		
-	
-	@Column(id="pollingTaskCount4",
-			name="Polling Task Set 4 Size",
-			units=ColumnUnit.COUNT,
-			type=ColumnType.SNAPSHOT)
-	public long getPollingTaskCount4() {
-		return getTaskCount(4);
 	}
 }
