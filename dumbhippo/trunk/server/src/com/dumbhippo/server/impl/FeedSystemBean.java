@@ -2,6 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -532,6 +533,9 @@ public class FeedSystemBean implements FeedSystem {
 			// if it's not cached... but since 1) usually we'll be downloading html and not rss here and 2) many feeds
 			// will be cached, it's really not worth making a mess to move the downloaded bytes from FeedScraper to FeedSystem
 			scraper.analyzeURL(url);
+		} catch (SocketTimeoutException e) {
+			logger.debug("IO error analyzing url {}: {}", url, e.getMessage());
+			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Unable to contact the site (" + e.getMessage() + ") Please try again in a few minutes");			
 		} catch (IOException e) {
 			logger.debug("IO error analyzing url {}: {}", url, e.getMessage());
 			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Unable to contact the site (" + e.getMessage() + ")");
@@ -546,15 +550,23 @@ public class FeedSystemBean implements FeedSystem {
 		return feed;
 	}
 	
-	public Pair<Feed, Boolean> createFeedFromUrl(URL url) throws XmlMethodException {
+	public Pair<Feed, Boolean> createFeedFromUrl(URL url, boolean validateUrl) throws XmlMethodException {
 		FeedScraper scraper = new FeedScraper();
 		URL feedSource = null;
 		boolean feedFound = true;
 		try {
 			scraper.analyzeURL(url);
 			feedSource = scraper.getFeedSource();
+		} catch (SocketTimeoutException e) {
+			if (validateUrl) {
+			    logger.debug("IO error analyzing url {}: {}", url, e.getMessage());
+			    throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Unable to contact the site (" + e.getMessage() + ") Please try again in a few minutes");			
+			}
 		} catch (IOException e) {
-		    // nothing to do
+			if (validateUrl) {
+				logger.debug("IO error analyzing url {}: {}", url, e.getMessage());
+				throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Unable to contact the site (" + e.getMessage() + ")");
+			}
 		}
 	
 		if (feedSource == null) {

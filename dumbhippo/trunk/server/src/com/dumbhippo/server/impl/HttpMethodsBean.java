@@ -1831,25 +1831,38 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.TWITTER);
+		String validatedHandle = null;
 		try {
-			external.setHandleValidating(name);
+			validatedHandle = external.validateHandle(name);
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
-		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		Feed feed;
+		boolean feedFound;
 		try {
-			feed = feedSystem.scrapeFeedFromUrl(new URL("http://twitter.com/" + StringUtils.urlEncode(external.getHandle())));
+			Pair<Feed, Boolean> twitterFeedPair = feedSystem.createFeedFromUrl(new URL("http://twitter.com/" + StringUtils.urlEncode(validatedHandle)), true);
+			feed = twitterFeedPair.getFirst();
+			feedFound = twitterFeedPair.getSecond();
 		} catch (MalformedURLException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage() + " (check that updates are public in Twitter settings)");
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
 		}
+		
+		// we should only set the handle only if we were able to validate the url and are also setting the feed
+		external.setHandle(validatedHandle);
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		
 		EJBUtil.forceInitialization(feed.getAccounts());
 		
 		external.setFeed(feed);
 		feed.getAccounts().add(external);
 		
 		xml.appendTextNode("username", external.getHandle());
+		
+	    if (!feedFound) {	
+		    xml.appendTextNode("message", "It looks like your Twitter updates are not public, if you want them to be available " +
+		    		                      "on Mugshot, you should make them public in Twitter settings");
+	    }
 	}
 
 	public void doSetDiggName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
@@ -1917,10 +1930,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		try {
 			feed = feedSystem.scrapeFeedFromUrl(new URL("http://reddit.com/user/" + StringUtils.urlEncode(external.getHandle())));
             // we create feeds for likes and dislikes regardless of whether they are actually found
-			Pair<Feed, Boolean> likedFeedPair = feedSystem.createFeedFromUrl(new URL("http://reddit.com/user/" + StringUtils.urlEncode(external.getHandle()) + "/liked.rss"));
+			Pair<Feed, Boolean> likedFeedPair = feedSystem.createFeedFromUrl(new URL("http://reddit.com/user/" + StringUtils.urlEncode(external.getHandle()) + "/liked.rss"), false);
 			likedFeed = likedFeedPair.getFirst();
 			likedFeedFound = likedFeedPair.getSecond();
-			Pair<Feed, Boolean> dislikedFeedPair = feedSystem.createFeedFromUrl(new URL("http://reddit.com/user/" + StringUtils.urlEncode(external.getHandle()) + "/disliked.rss"));
+			Pair<Feed, Boolean> dislikedFeedPair = feedSystem.createFeedFromUrl(new URL("http://reddit.com/user/" + StringUtils.urlEncode(external.getHandle()) + "/disliked.rss"), false);
 			dislikedFeed = dislikedFeedPair.getFirst();
 			dislikedFeedFound = dislikedFeedPair.getSecond(); 			
 		} catch (MalformedURLException e) {

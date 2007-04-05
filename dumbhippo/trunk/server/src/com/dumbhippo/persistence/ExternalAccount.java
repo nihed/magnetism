@@ -88,8 +88,7 @@ public class ExternalAccount extends DBUnique {
 		}
 	}
 
-	// used when setting a handle for loved accounts
-	public void setHandleValidating(String handle) throws ValidationException {
+	public String validateHandle(String handle) throws ValidationException {
 		String validatedHandle = accountType.canonicalizeHandle(handle);
 		if (accountType.requiresHandleIfLoved() && validatedHandle == null) {
 			String usedForSite = "";
@@ -100,6 +99,12 @@ public class ExternalAccount extends DBUnique {
 			throw new ValidationException("If you love " + this.getSiteName() + " let us know by entering your " 
 					                      + this.getAccountType().getSiteUserInfoType() + usedForSite);
 		}
+		return validatedHandle;
+	}
+	
+	// used when setting a handle for loved accounts
+	public void setHandleValidating(String handle) throws ValidationException {
+		String validatedHandle = validateHandle(handle);
 		this.handle = validatedHandle;
 	}	
 	
