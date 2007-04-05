@@ -10,6 +10,7 @@ Source0:        bigboard-0.1.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:       mugshot
+Requires:       hippo-canvas
 Requires:       gnome-python2-desktop
 Requires:       gnome-python2-gnomedesktop
 Requires:       gnome-python2-gnomekeyring
