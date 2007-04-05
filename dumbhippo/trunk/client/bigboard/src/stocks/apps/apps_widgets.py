@@ -18,8 +18,6 @@ class AppDisplay(PhotoContentItem):
         self.__photo = CanvasMugshotURLImage(scale_width=30, scale_height=30)
         self.set_photo(self.__photo)
         self.__box = CanvasVBox(spacing=2, border_right=4)
-        self.__photo.set_clickable(True)
-        self.__box.set_clickable(True)
         self.__title = ActionLink(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         self.__description = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         attrs = pango.AttrList()
@@ -56,6 +54,8 @@ class AppDisplay(PhotoContentItem):
     def __app_display_sync(self):
         if not self.__app:
             return
+        self.__photo.set_clickable(self.__app.is_installed())
+        self.__box.set_clickable(self.__app.is_installed())  
         app = self.__app.get_mugshot_app()
         self.__title.set_property("text", app.get_name())
         self.__description.set_property("text", app.get_description())
@@ -63,4 +63,4 @@ class AppDisplay(PhotoContentItem):
         
     def launch(self):
         self._logger.debug("launching app %s", self)
-        self.__app.launch(())
+        self.__app.launch()
