@@ -174,7 +174,7 @@ class BigBoardPanel(object):
      
         self._header_box = GradientHeader()
      
-        self._title = hippo.CanvasText(text="My Fedora", font="Bold 14px", xalign=hippo.ALIGNMENT_START)
+        self._title = hippo.CanvasText(text="My Desktop", font="Bold 14px", xalign=hippo.ALIGNMENT_START)
      
         self._header_box.append(self._title, hippo.PACK_EXPAND)
         
