@@ -367,6 +367,11 @@ dh.account.onTwitterLoveSaved = function(value) {
 						if (child.nodeName == "username") {
 							username = dh.dom.textContent(child);
 						}
+						
+						if (child.nodeName == "message") {
+							msg = dh.dom.textContent(child);
+							alert(msg);
+						}
 	 	    	 	}
 					entry.setLoveValueAlreadySaved(username);
 	 	    	 	entry.setMode('love');

@@ -30,15 +30,21 @@ public interface FeedSystem extends PollingTaskLoader {
 	
 	/**
 	 * Creates or returns an existing Feed object regardless of whether a feed was found
-	 * at the specified url or the url is valid. This is useful in cases when a certain
-	 * feed might not be available due to privacy settings, but can become available later
-	 * if those privacy settings change.
+	 * at the specified url or the url is valid (if validateUrl is false). This is useful 
+	 * in cases when a certain feed might not be available due to privacy settings, but 
+	 * can become available later if those privacy settings change.
+	 * 
+	 * Sometimes we expect the url to be available, but not have a feed on it (like when 
+	 * Twitter updates are for friends only), so it is still useful to validate the url, 
+	 * and sometimes those urls give a 404 error (like liked and disliked pages on Reddit 
+	 * when someone doesn't share their votes).			
 	 * 
 	 * @param url
+	 * @param validateUrl
 	 * @return feed and a flag indicating whether the feed was actually found at the url
 	 * @throws XmlMethodException
 	 */
-	public Pair<Feed, Boolean> createFeedFromUrl(URL url) throws XmlMethodException;
+	public Pair<Feed, Boolean> createFeedFromUrl(URL url, boolean validateUrl) throws XmlMethodException;
 	
 	public Feed getExistingFeed(final LinkResource source) throws XmlMethodException;
 	
