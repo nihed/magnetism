@@ -297,10 +297,10 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		181,              // ~3 minutes 
 		307,              // ~5 minutes
 	    907,              // ~15 minutes
-	    1801,			  // ~30 minutes
-		3607              // ~1 hour
+	    1801			  // ~30 minutes
 		// Presently we really don't have anything we want to poll with
-		// periodicity this long
+		// periodicity this long	    
+		// 3607              // ~1 hour
 		// 28807,            // ~8 hours
 		// 86413,            // ~1 day
 		// 259201            // ~3 days
@@ -416,7 +416,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	private synchronized Set<PollingTask> bumpTasks(TaskSet currentSet, Set<PollingTask> tasks, boolean slower) {
 		for (int i = 0; i < taskSetWorkers.length; i++) {
 			if (taskSetWorkers[i] == currentSet) {
-				taskSetWorkers[i + (slower ? 1 : -1)].addTasks(tasks);
+				taskSetWorkers[slower ? i+1 : 0].addTasks(tasks);
 				return tasks;
 			}
 		}
@@ -580,9 +580,14 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 					// Both successful and failed tasks can be bumped to different sets, but we 
 					// just delete obsolete ones.
 					if (!result.isObsolete()) {
-						if (result.isChanged() && task.getPeriodicityAverage() != -1 && task.getPeriodicityAverage() < (timeout * 1.1)) {
-							// Tasks which changed this round, and with a periodicity average 
-							// within 10% of this task set get bumped to a faster set if possible
+						// There used to be additional logic here similar to:
+						// && task.getPeriodicityAverage() != -1 && task.getPeriodicityAverage() < (timeout * 1.1)
+						// which meant tasks with a periodicity average within 10% of this task set
+						// got bumped, but we decided it makes more sense for most tasks just to bump them
+						// to the very fastest set if they change; tasks which change in bursts will be
+						// caught better by this, and tasks which go from rarely to frequently changing
+						// will more quickly adjust.
+						if (result.isChanged()) {
 							fasterCandidates.add(task);
 						} else if ((System.currentTimeMillis() - task.getLastChange()) > timeout * 2.1) {
 							// Tasks who have not changed in more than two iterations get bumped 
