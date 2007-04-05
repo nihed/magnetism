@@ -34,7 +34,7 @@ class AppOverview(PrelightingCanvasBox):
     def set_app(self, app):
         self.__app = app
         self.__header.set_app(app)
-        self.__description.set_property("text", app.get_description())
+        self.__description.set_property("text", app.get_mugshot_app().get_description())
         
     def launch(self):
         return self.__header.launch()
