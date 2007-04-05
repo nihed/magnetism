@@ -482,7 +482,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doCreateGroup(OutputStream out, HttpResponseData contentType,
-			UserViewpoint viewpoint, String name, String members, boolean secret, String description)
+			UserViewpoint viewpoint, String name, String members, boolean secret, boolean open, String description)
 			throws IOException, ParseException, NotFoundException {
 		Set<Person> memberPeople;
 		
@@ -495,7 +495,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		Group group = 
 			groupSystem.createGroup(viewpoint.getViewer(), name,
-			 	                    secret ? GroupAccess.SECRET : GroupAccess.PUBLIC_INVITE,
+			 	                    secret ? GroupAccess.SECRET : open ? GroupAccess.PUBLIC : GroupAccess.PUBLIC_INVITE,
 			 	                   	description);
 		for (Person p : memberPeople)
 			groupSystem.addMember(viewpoint.getViewer(), group, p);

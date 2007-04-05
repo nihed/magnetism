@@ -87,8 +87,8 @@
         <dht3:invitedMembers forInvitationPage="true"/>
     </c:if>
     
-    <%-- Only public groups can have followers --%>
-    <c:if test="${group.public}">
+    <%-- Only public "by invitation" groups can have followers --%>
+    <c:if test="${group.publicInvite}">
         <dht3:invitedFollowers forInvitationPage="true"/>
     </c:if>
     
