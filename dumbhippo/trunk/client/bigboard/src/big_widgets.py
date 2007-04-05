@@ -1,4 +1,4 @@
-import os, code, sys, traceback, logging, StringIO, threading
+import os, code, sys, traceback, logging, StringIO, threading, urlparse
 
 import cairo, gtk, gobject
 
@@ -111,7 +111,7 @@ class CanvasMugshotURLImageMixin:
     def __sync(self):
         baseurl = mugshot.get_mugshot().get_baseurl()
         if not (baseurl is None or self.__rel_url is None):
-            CanvasURLImageMixin.set_url(self, baseurl + self.__rel_url)
+            CanvasURLImageMixin.set_url(self, urlparse.urljoin(baseurl, self.__rel_url))
 
 class CanvasURLImage(hippo.CanvasImage, CanvasURLImageMixin):
     """A wrapper for CanvasImage which has a set_url method to retrieve
