@@ -339,10 +339,11 @@ td.dhRecipientName {
 
 
 .dh-help-bubble {
-	width:				200px;
-	height:				75px;
+	width:				350px;
+	height:				90px;
 	position:			absolute;
 }
+
 .dh-help-bubble-triangle {
 	position:		relative;
 	display:		block;
