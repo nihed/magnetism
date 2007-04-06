@@ -29,3 +29,11 @@
   width: expression(Math.max(parseInt(this.offsetWidth), Math.floor(0.5*document.body.clientWidth)) + "px");
   height: expression(Math.max(parseInt(this.offsetHeight), 75) + "px")
 }
+
+.dh-help-bubble-message {
+	font-size:			x-small;
+}
+
+.dh-help-bubble a {
+	font-size:			x-small;
+}

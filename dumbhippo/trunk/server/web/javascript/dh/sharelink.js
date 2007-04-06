@@ -23,18 +23,36 @@ dh.sharelink.createGroupNameEntry = null;
 dh.sharelink.createGroupLink = null;
 dh.sharelink.createGroupPrivateRadio = null;
 dh.sharelink.createGroupPublicRadio = null;
+dh.sharelink.createGroupOpenRadio = null;
+dh.sharelink.createGroupByInvitationRadio = null;
 dh.sharelink.addMemberLink = null;
 dh.sharelink.addMemberDescription = null;
 dh.sharelink.addMemberGroup = null;
 dh.sharelink.highlightingGroup = false;
 
-dh.sharelink.updateAccessTip = function() {
-	if (dh.sharelink.createGroupPrivateRadio.checked) {
-		dh.util.showId('dhPrivateGroupAccessTip');
-		dh.util.hideId('dhPublicGroupAccessTip');
+dh.sharelink.updateGroupTip = function() {
+	if (dh.sharelink.createGroupPublicRadio.checked) {
+	    if (dh.sharelink.createGroupOpenRadio.disabled) {
+            dh.util.selectCheckBox("dhCreateGroupOpenRadio");  	
+        }
+	    if (dh.sharelink.createGroupOpenRadio.checked) {
+		    dh.util.hideId('dhPrivateGroupTip');
+		    dh.util.hideId('dhByInvitationPublicGroupTip');
+		    dh.util.showId('dhOpenPublicGroupTip');
+        } else {
+		    dh.util.hideId('dhPrivateGroupTip');
+		    dh.util.showId('dhByInvitationPublicGroupTip');
+		    dh.util.hideId('dhOpenPublicGroupTip');        
+        }    
+        dh.sharelink.createGroupOpenRadio.disabled = false;
+        dh.sharelink.createGroupByInvitationRadio.disabled = false;	
 	} else {
-		dh.util.hideId('dhPrivateGroupAccessTip');
-		dh.util.showId('dhPublicGroupAccessTip');
+		dh.util.showId('dhPrivateGroupTip');
+		dh.util.hideId('dhByInvitationPublicGroupTip');
+		dh.util.hideId('dhOpenPublicGroupTip');
+		dh.util.selectCheckBox("dhCreateGroupByInvitationRadio");  			
+		dh.sharelink.createGroupOpenRadio.disabled = true;
+        dh.sharelink.createGroupByInvitationRadio.disabled = true;			
 	}
 }
 
@@ -94,13 +112,14 @@ dh.sharelink.doCreateGroup = function() {
 	var commaMembers = dh.util.join(groupMembers, ",", "id");
 		
 	var secret = dh.sharelink.createGroupPrivateRadio.checked;
+    var open = dh.sharelink.createGroupOpenRadio.checked;
 		
 	dh.server.getXmlPOST("creategroup",
 					{ 
 						"name" : name, 
 						"members" : commaMembers,
 						"secret" : secret,
-						"open" : "false"						
+						"open" : open						
 					},
 					function(type, data, http) {
 						dh.debug("got back a new group " + data);
@@ -138,8 +157,12 @@ dhDoCreateGroupKeyUp = function(event) {
 	}
 }
 
-dhCreateGroupAccessChanged = function() {
-	dh.sharelink.updateAccessTip();
+dhCreateGroupOptionChanged = function() {
+	dh.sharelink.updateGroupTip();
+}
+
+dhCreateGroupMembershipChanged = function() {
+	dh.sharelink.updateMembershipTip();
 }
 
 dh.sharelink.doAddMembers = function() {
@@ -356,15 +379,21 @@ dh.sharelink.init = function() {
 	dh.sharelink.createGroupNameEntry = document.getElementById("dhCreateGroupName");
 	dojo.event.connect(dh.sharelink.createGroupNameEntry, "onkeyup",
 						dj_global, "dhDoCreateGroupKeyUp");
+    dh.sharelink.createGroupPublicRadio = document.getElementById("dhCreateGroupPublicRadio");
 	dh.sharelink.createGroupPrivateRadio = document.getElementById("dhCreateGroupPrivateRadio");
-	dh.sharelink.createGroupPublicRadio = document.getElementById("dhCreateGroupPublicRadio");
 	// HTML is stupid; you only get the signal on the one that changed, not the whole group
-	dojo.event.connect(dh.sharelink.createGroupPrivateRadio, "onclick",
-						dj_global, "dhCreateGroupAccessChanged");
 	dojo.event.connect(dh.sharelink.createGroupPublicRadio, "onclick",
-						dj_global, "dhCreateGroupAccessChanged");
-	dh.sharelink.updateAccessTip();
-	dh.sharelink.createGroupLink = document.getElementById("dhCreateGroupLink");
+						dj_global, "dhCreateGroupOptionChanged");
+	dojo.event.connect(dh.sharelink.createGroupPrivateRadio, "onclick",
+						dj_global, "dhCreateGroupOptionChanged");
+	dh.sharelink.createGroupOpenRadio = document.getElementById("dhCreateGroupOpenRadio");		
+	dh.sharelink.createGroupByInvitationRadio = document.getElementById("dhCreateGroupByInvitationRadio");
+	dojo.event.connect(dh.sharelink.createGroupOpenRadio, "onclick",
+						dj_global, "dhCreateGroupOptionChanged");
+	dojo.event.connect(dh.sharelink.createGroupByInvitationRadio, "onclick",
+						dj_global, "dhCreateGroupOptionChanged");						
+	dh.sharelink.updateGroupTip();
+	dh.sharelink.createGroupLink = document.getElementById("dhCreateGroupLink");	
 	dh.sharelink.addMemberLink = document.getElementById("dhAddMemberLink");
 	dh.sharelink.addMemberDescription = document.getElementById("dhAddMemberDescription");
 	dh.sharelink.addMemberGroup = document.getElementById("dhAddMemberGroup");
