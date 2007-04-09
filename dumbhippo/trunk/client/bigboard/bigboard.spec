@@ -1,12 +1,12 @@
 Name:           bigboard
-Version:        0.1
+Version:        0.1.1
 Release:        1
 Summary:        Sidebar application launcher using mugshot.org
 
 Group:          Applications/Internet
 License:        GPL
 URL:            http://mugshot.org/
-Source0:        bigboard-0.1.tar.gz
+Source0:        bigboard-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:       mugshot
@@ -45,6 +45,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/bigboard
 
 %changelog
+* Mon Apr 09 2007 Colin Walters <walters@redhat.com> - 2
+- Update 
+
 * Fri Mar 30 2007 Colin Walters <walters@redhat.com> - 1
 - Initial public offering 
 
