@@ -35,7 +35,6 @@ class AppDisplay(PhotoContentItem):
         
     def set_app(self, app):
         self.__app = app
-        self.__app.get_mugshot_app().connect("changed", lambda app: self.__app_display_sync())
         self.__app.connect("changed", lambda app: self.__app_display_sync())
         self.__app_display_sync()
     
@@ -56,10 +55,14 @@ class AppDisplay(PhotoContentItem):
             return
         self.__photo.set_clickable(self.__app.is_installed())
         self.__box.set_clickable(self.__app.is_installed())  
-        app = self.__app.get_mugshot_app()
-        self.__title.set_property("text", app.get_name())
-        self.__description.set_property("text", app.get_description())
-        self.__photo.set_url(app.get_icon_url())
+        self.__title.set_property("text", self.__app.get_name())
+        self.__description.set_property("text", self.__app.get_description())
+        if self.__app.get_mugshot_app():
+            self.__photo.set_url(self.__app.get_mugshot_app().get_icon_url())
+        else:
+            pixbuf = self.__app.get_local_pixbuf()
+            if pixbuf:
+                self.__photo.set_property("image", hippo.cairo_surface_from_gdk_pixbuf(pixbuf))
         
     def launch(self):
         self._logger.debug("launching app %s", self)

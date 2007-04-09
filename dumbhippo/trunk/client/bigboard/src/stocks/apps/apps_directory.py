@@ -34,7 +34,7 @@ class AppDirectory(gobject.GObject):
         self.emit("changed")
         
     def get_apps(self):
-        return self._apps.iterkeys()
+        return self._apps.itervalues()
         
     def lookup(self, desktop_name):
         if not (desktop_name[-8:] == '.desktop'):

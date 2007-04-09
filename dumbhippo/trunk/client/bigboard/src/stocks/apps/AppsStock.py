@@ -1,6 +1,6 @@
-import logging, time
+import logging, time, re
 
-import gmenu, gobject, pango, gnomedesktop
+import gmenu, gobject, pango, gnomedesktop, gtk
 import hippo
 
 import bigboard, mugshot, libbig
@@ -12,11 +12,12 @@ class Application(gobject.GObject):
     __gsignals__ = {
         "changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
     }    
-    def __init__(self, app):
+    def __init__(self, mugshot_app=None, menu_entry=None):
         super(Application, self).__init__()
-        self.__app = app
+        self.__app = mugshot_app
         self.__install_checked = False
         self.__desktop_entry = None
+        self.__menu_entry = menu_entry
         ad = apps_directory.get_app_directory()            
         ad.connect("changed", lambda ad: self.__recheck_installed())        
         
@@ -25,8 +26,40 @@ class Application(gobject.GObject):
         
     def get_mugshot_app(self):
         return self.__app
+
+    def get_menu(self):
+        return self.__menu_entry
+
+    def get_desktop(self):
+        return self.__desktop_entry
+    
+    def get_name(self):
+        return self.__app and self.__app.get_name() or self.__menu_entry.get_name()
+    
+    def get_description(self):
+        return self.__app and self.__app.get_description() or ""
+    
+    def get_category(self):
+        return self.__app and self.__app.get_category() or self.__menu_entry.parent.get_name()
         
+    def get_local_pixbuf(self):
+        if self.__desktop_entry:
+            # strip off .png
+            icon_name = re.sub(r'\.[a-z]+$','', self.__menu_entry.get_icon()) 
+            theme = gtk.icon_theme_get_default()
+            try:
+                pixbuf = theme.load_icon(icon_name, 48, 0)
+            except gobject.GError, e:
+                return None
+            return pixbuf
+        return None        
+
     def __lookup_desktop(self):
+        if self.__menu_entry:
+            entry_path = self.__menu_entry.get_desktop_file_path()
+            desktop = gnomedesktop.item_new_from_file(entry_path, 0)
+            if desktop:
+                return desktop            
         names = self.__app.get_desktop_names()        
         for name in names.split(';'):
             ad = apps_directory.get_app_directory()            
@@ -35,12 +68,14 @@ class Application(gobject.GObject):
                 menuitem = ad.lookup(name)
             except KeyError, e:
                 continue
+            if not self.__menu_entry:
+                self.__menu_entry = menuitem
             entry_path = menuitem.get_desktop_file_path()
             desktop = gnomedesktop.item_new_from_file(entry_path, 0)
             if desktop:
                 return desktop
         return None
-        
+
     def is_installed(self):
         if not self.__install_checked:
             self.__recheck_installed()            
@@ -100,6 +135,8 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self.__set_message('Loading...')
         
         self.__apps = {} # mugshot app -> app
+        # apps installed locally and not known in Mugshot
+        self.__local_apps = {} # desktop -> app
         
     def __on_more_link(self):
         self._logger.debug("more!")
@@ -173,8 +210,23 @@ class AppsStock(bigboard.AbstractMugshotStock):
                         
     def get_app(self, mugshot_app):
         if not self.__apps.has_key(mugshot_app.get_id()):
-            self.__apps[mugshot_app.get_id()] = Application(mugshot_app)
+            self.__apps[mugshot_app.get_id()] = Application(mugshot_app=mugshot_app)
         return self.__apps[mugshot_app.get_id()]
+    
+    def get_local_app(self, menu):
+        if self.__local_apps.has_key(menu.get_name()):
+            return self.__local_apps[menu.get_name()]
+        app = None
+        for appvalue in self.__apps.itervalues():
+            if not appvalue.get_menu():
+                continue
+            if appvalue.get_menu().get_name() == menu.get_name():
+                app = appvalue
+                break
+        if app is None:
+            app = Application(menu_entry=menu)
+            self.__local_apps[menu.get_name()] = app
+        return app
         
     def __sync(self):
         self._logger.debug("doing sync")
