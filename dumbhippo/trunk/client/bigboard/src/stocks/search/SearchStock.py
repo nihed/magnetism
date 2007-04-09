@@ -10,10 +10,9 @@ except:
 
 import hippo
 
-import mugshot
-import libbig
+import mugshot, libbig
 from bigboard import Stock
-from big_widgets import CanvasMugshotURLImage, CanvasEntry
+from big_widgets import CanvasMugshotURLImage, CanvasEntry, CanvasVBox
         
 class SearchStock(Stock):
     """Search.  It's what's for dinner."""
@@ -35,12 +34,10 @@ class SearchStock(Stock):
         self.__applet.reparent(self.__vbox)
         
         self.__box.append(self.__widget)
+        self.__empty_box = CanvasVBox()
         
     def get_content(self, size):
-        return self.__box
-    
-    def set_size(self, size):
-        super(SearchStock, self).set_size(size)
+        return size == self.SIZE_BULL and self.__box or self.__empty_box
         
     def __queue_search(self):
         text = self.__input.get_property("text")

@@ -180,6 +180,11 @@ class PhotosStock(AbstractMugshotStock):
         
         self.__person_accts_len = {} # <Person,int>
         
+        self.__bearbox = CanvasVBox()
+        self.__bearphoto = TransitioningURLImage(dimension=self.SIZE_BEAR_CONTENT_PX-6)
+        self.__bearphoto.connect("button-press-event", lambda photo, event: self.__visit_photo())        
+        self.__bearbox.append(self.__bearphoto)
+        
         self._mugshot.connect("network-changed", lambda mugshot: self.__handle_network_change())  
         
     def _on_mugshot_ready(self):
@@ -187,7 +192,7 @@ class PhotosStock(AbstractMugshotStock):
         self._mugshot.get_network()
         
     def get_authed_content(self, size):
-        return self.__box
+        return size == self.SIZE_BULL and self.__box or self.__bearbox
     
     def __visit_photo(self):
         self._logger.debug("visiting photo for %s", self.__current_image)
@@ -223,6 +228,7 @@ class PhotosStock(AbstractMugshotStock):
         
         self._logger.debug("starting load of url %s" % (thumbnail.get_src(),))
         self.__photo.set_url(thumbnail.get_src())
+        self.__bearphoto.set_url(thumbnail.get_src())
         
     def __on_image_load(self, success):
         if self.__current_image is None:

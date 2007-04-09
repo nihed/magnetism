@@ -241,7 +241,7 @@ class BigBoardPanel(object):
         if self.__get_size() == Stock.SIZE_BEAR:
             self._header_box.remove(self._size_button)
             self._header_box.append(self._size_button, hippo.PACK_EXPAND)
-            self._size_button.set_property("text", u"\u00bb large")
+            self._size_button.set_property("text", u"\u00bb")
             self._canvas.set_size_request(Stock.SIZE_BEAR_CONTENT_PX, 42)
         else:
             self._header_box.remove(self._size_button)
