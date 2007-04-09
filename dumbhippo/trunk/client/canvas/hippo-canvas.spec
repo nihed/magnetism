@@ -2,13 +2,13 @@
 
 Name:           hippo-canvas
 Version:        0.2.13
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        A canvas widget
 
 Group:          System Environment/Libraries
 License:        GPL
 URL:            http://developer.mugshot.org/wiki/Hippo_Canvas
-Source0:        hippo-canvas-%{version}.tar.gz
+Source0:        http://download.mugshot.org/extras/canvas/source/hippo-canvas-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  cairo-devel
@@ -18,7 +18,7 @@ BuildRequires:  gtk2-devel
 
 %description
 The hippo-canvas library contains a canvas widget developed by the 
-Mugshot team for displaying GTK+ UI across multipul platforms
+Mugshot team for displaying GTK+ UI across multiple platforms
 
 %package        devel
 Summary:        Development files for hippo-canvas
@@ -77,7 +77,10 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitearch}/*.so
 
 %changelog
-* Tue Apr 03 2007 Colin Walters <walters@redhat.com> - 0.3-1
+* Mon Apr 09 2007 Colin Walters <walters@redhat.com> - 0.2.13-2
+- Fully qualify source url
+
+* Tue Apr 03 2007 Colin Walters <walters@redhat.com> - 0.2.13-1
 - Tweak for mugshot.org releases
 
 * Tue Oct 03 2006 John (J5) Palmieri <johnp@redhat.com> - 0.1.2-1
