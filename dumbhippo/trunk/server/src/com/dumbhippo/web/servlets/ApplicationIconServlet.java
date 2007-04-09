@@ -96,13 +96,14 @@ public class ApplicationIconServlet extends AbstractServlet {
 		try {
 			iconView = applicationSystem.getIcon(appId, size);			
 		} catch (NotFoundException e) {
-			if (size == 24)
-				response.sendRedirect("/images3/unknownapp24.png");
-			else
-				response.sendRedirect("/images3/unknownapp48.png");
-			return null;
+			throw new HttpException(HttpResponseCode.NOT_FOUND, "No such application");
 		}
 
+		// The ApplicationIconView normally points directly to the icon, and we
+		// want to server that icon, but if the application doesn't have an icon,
+		// then we need to forward to the URL. 
+		if (iconView.getIcon() == null)
+			return iconView.getUrl();
 		
 		// If the requester passes a version with the URL, that's a signal that
 		// it can be cached without checking for up-to-dateness. There's no

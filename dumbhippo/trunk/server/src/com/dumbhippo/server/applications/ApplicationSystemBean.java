@@ -555,7 +555,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		return new File(saveUri);
 	}
 
-	private ApplicationIconView getIcon(Application application, int desiredSize) throws NotFoundException {
+	private ApplicationIconView getIcon(Application application, int desiredSize) {
 		ApplicationIcon unsizedIcon = null;
 		ApplicationIcon sizedIcon = null;
 		
@@ -580,10 +580,23 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		ApplicationIcon icon;
 		
 		if (sizedIcon == null) {
-			if (unsizedIcon == null)
-				throw new NotFoundException("No icons for application");
+			if (unsizedIcon != null) {
+				icon = unsizedIcon;
+			} else {
+				String url;
+				int actualSize;
+				
+				if (desiredSize >= 22 && desiredSize <= 26) {
+					url = "/images3/unknownapp24.png";
+					actualSize = 24;
+				} else {
+					url = "/images3/unknownapp48.png";
+					actualSize = 48;
+				}
+				
+				return new ApplicationIconView(url, actualSize, desiredSize);
+			}
 
-			icon = unsizedIcon;
 		} else {
 			// We really don't want to scale up, so if we're going to
 			// use a smaller size, we double check to see if we have a
@@ -615,11 +628,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 			throw new NotFoundException("No such application");
 		
 		ApplicationView applicationView = new ApplicationView(application);
-		try {
-			applicationView.setIcon(getIcon(application, iconSize));
-		} catch (NotFoundException e) {
-			// FIXME: Default icon (maybe in getIcon())
-		}
+		applicationView.setIcon(getIcon(application, iconSize));
 		
 		return applicationView;
 	}
@@ -940,11 +949,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	}
 	
 	private void setViewIcon(ApplicationView view, int size) {
-		try {
-			view.setIcon(getIcon(view.getApplication(), size));
-		} catch (NotFoundException e) {
-			// FIXME: Default icon (maybe in getIcon())
-		}				
+		view.setIcon(getIcon(view.getApplication(), size));
 	}
 	
 	public List<ApplicationView> viewApplications(UserViewpoint viewpoint, List<Application> apps, int iconSize) {
