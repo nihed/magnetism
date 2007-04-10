@@ -43,6 +43,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Stacker;
+import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.blocks.GroupChatBlockHandler;
 import com.dumbhippo.server.blocks.MusicChatBlockHandler;
 import com.dumbhippo.server.blocks.PostBlockHandler;
@@ -87,6 +88,7 @@ public class ChatSystemBean implements ChatSystem {
 	private PostingBoard postingBoard;
 	
 	@EJB
+	@IgnoreDependency
 	private Stacker stacker;
 	
 	// We order and select on pm.id, though in rare cases the order by pm.id and by pm.timestamp
@@ -112,12 +114,7 @@ public class ChatSystemBean implements ChatSystem {
 			return Collections.emptyList();
 		}
 		
-		List<?> messages = em.createQuery(BLOCK_MESSAGE_QUERY + BLOCK_MESSAGE_SELECT + BLOCK_MESSAGE_ORDER)
-			.setParameter("block", block)
-			.setParameter("lastSeenSerial", lastSeenSerial)
-			.getResultList();
-		
-		return TypeUtils.castList(BlockMessage.class, messages);
+		return getBlockMessages(block, lastSeenSerial);
 	}
 	
 	public List<? extends ChatMessage> getNewestMessages(Block block, int maxResults) {
@@ -136,14 +133,9 @@ public class ChatSystemBean implements ChatSystem {
 			return Collections.emptyList();
 		}
 		
-		List<?> messages = em.createQuery("SELECT pm from BlockMessage pm WHERE pm.block = :block ORDER BY pm.timestamp DESC")
-			.setParameter("block", block)
-			.setMaxResults(maxResults)
-			.getResultList();
-		
-		return TypeUtils.castList(BlockMessage.class, messages);		
+		return getNewestBlockMessages(block, maxResults);
 	}
-	
+		
 	public int getMessageCount(Block block) {
 		switch (block.getBlockType()) {
 		case GROUP_CHAT:
@@ -160,18 +152,40 @@ public class ChatSystemBean implements ChatSystem {
 			return 0;
 		}
 		
+		return getBlockMessageCount(block);
+	}
+	
+	private List<BlockMessage> getBlockMessages(Block block, long lastSeenSerial) {
+		List<?> messages = em.createQuery(BLOCK_MESSAGE_QUERY + BLOCK_MESSAGE_SELECT + BLOCK_MESSAGE_ORDER)
+			.setParameter("block", block)
+			.setParameter("lastSeenSerial", lastSeenSerial)
+			.getResultList();
+		
+		return TypeUtils.castList(BlockMessage.class, messages);
+	}
+	
+	private List<BlockMessage> getNewestBlockMessages(Block block, int maxResults) {
+		List<?> messages = em.createQuery("SELECT pm from BlockMessage pm WHERE pm.block = :block ORDER BY pm.timestamp DESC")
+			.setParameter("block", block)
+			.setMaxResults(maxResults)
+			.getResultList();
+		
+		return TypeUtils.castList(BlockMessage.class, messages);		
+	}
+	
+	private int getBlockMessageCount(Block block) {
 		Query q = em.createQuery("SELECT COUNT(pm) FROM BlockMessage pm WHERE pm.block = :block")
 			.setParameter("block", block);
 		
 		return ((Number)q.getSingleResult()).intValue();
 	}
 	
-//	private void addBlockMessage(Block block, User fromUser, String text, Sentiment sentiment, Date timestamp) {
-//		BlockMessage blockMessage = new BlockMessage(block, fromUser, text, sentiment, timestamp);
-//		em.persist(blockMessage);
-//		
-//		notifier.onBlockMessageCreated(blockMessage);
-//	}
+	private ChatMessage addBlockMessage(Block block, User fromUser, String text, Sentiment sentiment, Date timestamp) {
+		BlockMessage blockMessage = new BlockMessage(block, fromUser, text, sentiment, timestamp);
+		em.persist(blockMessage);
+		
+		return blockMessage;
+	}
 	
 	// We order and select on pm.id, though in rare cases the order by pm.id and by pm.timestamp
 	// might be different if two messages arrive almost at once. In this case, the timestamps will
@@ -310,6 +324,10 @@ public class ChatSystemBean implements ChatSystem {
 		return musicSystem.lookupTrackHistory(roomGuid);
 	}
 
+	private Block getBlockForRoom(Guid roomGuid) throws NotFoundException {
+		return stacker.lookupBlock(roomGuid);
+	}
+	
 	private ChatRoomUser newChatRoomUser(User user) {
 		return new ChatRoomUser(user.getGuid().toJabberId(null),
 				                user.getNickname(), user.getPhotoUrl());
@@ -336,6 +354,13 @@ public class ChatSystemBean implements ChatSystem {
 		return new ChatRoomInfo(ChatRoomKind.MUSIC, roomGuid, trackView.getDisplayTitle(), history, true);
 	}
 	
+	private ChatRoomInfo getChatRoomInfo(Guid roomGuid, Block block) throws NotFoundException {
+		BlockView blockView = stacker.loadBlock(SystemViewpoint.getInstance(), block);
+		List<? extends ChatMessage> history = getBlockMessages(block, -1);
+		
+		return new ChatRoomInfo(ChatRoomKind.MUSIC, roomGuid, blockView.getSummaryHeading(), history, block.isPublicBlock());
+	}
+	
 	public ChatRoomUser getChatRoomUser(Guid roomGuid, ChatRoomKind kind, String username) {
 		User user;
 		// Note: we could add access controls here as well, requiring that the username
@@ -353,6 +378,7 @@ public class ChatSystemBean implements ChatSystem {
 		Post post = null;
 		Group group = null;
 		TrackHistory trackHistory = null;
+		Block block = null;
 		int count = 0;
 		try {
 			post = getPostForRoom(roomGuid);
@@ -367,6 +393,14 @@ public class ChatSystemBean implements ChatSystem {
 		try {
 			trackHistory = getTrackHistoryForRoom(roomGuid);
 			count++;
+		} catch (NotFoundException e) {
+		}
+		try {
+			block = getBlockForRoom(roomGuid);
+			if (block.getBlockType().isDirectlyChattable())
+				count++;
+			else
+				block = null;
 		} catch (NotFoundException e) {
 		}
 		
@@ -384,7 +418,14 @@ public class ChatSystemBean implements ChatSystem {
 			return getChatRoomInfo(roomGuid, group);
 		else if (trackHistory != null)
 			return getChatRoomInfo(roomGuid, trackHistory);
-		else {
+		else if (block != null) {
+			try {
+				return getChatRoomInfo(roomGuid, block);
+			} catch (NotFoundException e) {
+				logger.debug("Block not visible for chat room {}", roomGuid.toString());
+				return null;
+			}
+		} else {
 			logger.debug("Room name {} doesn't correspond to a post or group, or user not allowed to see it", roomGuid.toString());
 			return null;
 		}
@@ -416,6 +457,14 @@ public class ChatSystemBean implements ChatSystem {
 				throw new RuntimeException("Track not found", e);
 			}
 			return getTrackMessages(trackHistory, lastSeenSerial);
+		case BLOCK:
+			Block block;
+			try {
+				block = stacker.lookupBlock(roomGuid);
+			} catch (NotFoundException e) {
+				throw new RuntimeException("Block not found", e);
+			}
+			return getBlockMessages(block, lastSeenSerial);
 		}
 		throw new IllegalArgumentException("Bad chat room type");
 	}
@@ -460,6 +509,13 @@ public class ChatSystemBean implements ChatSystem {
 			block = stacker.getOrCreateBlock(musicChatBlockHandler.getKey(trackHistory));
 			message = addTrackMessage(trackHistory, fromUser, text, sentiment, timestamp);
 			break;
+		case BLOCK:
+			try {
+				block = stacker.lookupBlock(roomGuid);
+			} catch (NotFoundException e) {
+				throw new RuntimeException("Block not found", e);
+			}
+			message = addBlockMessage(block, fromUser, text, sentiment, timestamp);
 		default:
 			throw new RuntimeException("Can't add a chat message to a chat room of unknown kind");
 		}
@@ -476,18 +532,29 @@ public class ChatSystemBean implements ChatSystem {
 		try {
 			User user = getUserFromGuid(userId);
 			UserViewpoint viewpoint = new UserViewpoint(user);
-			if (kind == ChatRoomKind.POST) {
+			switch (kind) {
+			case POST:
 				Post post = getPostForRoom(roomGuid);
 				return postingBoard.canViewPost(viewpoint, post);
-			} else if (kind == ChatRoomKind.GROUP) {
+			case GROUP:
 				Group group = getGroupForRoom(roomGuid);
 				return groupSystem.isMember(group, user);
-			} else if (kind == ChatRoomKind.MUSIC) {
+			case MUSIC:
 				TrackHistory trackHistory = getTrackHistoryForRoom(roomGuid);
-				identitySpider.isViewerSystemOrFriendOf(viewpoint, trackHistory.getUser());
-				return true;
-			} else
+				return identitySpider.isViewerSystemOrFriendOf(viewpoint, trackHistory.getUser());
+			case BLOCK:
+				try {
+					// For now say that you can chat on block if you are a recipient
+					// we might want to open it up to "if you can view it", but it
+					// wouldn't match our rules for POST/GROUP/MUSIC
+					stacker.lookupUserBlockData(viewpoint, roomGuid);
+					return true;
+				} catch (NotFoundException e) {
+					return false;
+				}
+			default:
 				throw new RuntimeException("Unknown chat room type " + kind);
+			}
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}

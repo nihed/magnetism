@@ -298,6 +298,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
+	public Block lookupBlock(Guid guid) throws NotFoundException {
+		Block block = em.find(Block.class, guid.toString());
+		if (block == null)
+			throw new NotFoundException("No such block");
+		
+		return block;
+	}
+	
 	private UserBlockData queryUserBlockData(User user, BlockKey key) throws NotFoundException {
 		Guid data1 = key.getData1();
 		Guid data2 = key.getData2();
@@ -813,6 +821,19 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		} catch (BlockNotVisibleException e) {
 			throw new NotFoundException("Can't see this block", e);
 		}
+	}
+	
+	public BlockView loadBlock(Viewpoint viewpoint, Block block) throws NotFoundException {
+		UserBlockData ubd = null;
+		
+		if (viewpoint instanceof UserViewpoint) {
+			try {
+				ubd = lookupUserBlockData((UserViewpoint)viewpoint, block.getGuid());
+			} catch (NotFoundException e) {
+			}
+		}
+		
+		return getBlockView(viewpoint, block, ubd, false);
 	}
 	
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException {	

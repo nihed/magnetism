@@ -31,6 +31,7 @@ public interface Stacker {
 	public Block getOrCreateBlock(BlockKey key);
 	public Block createBlock(BlockKey key);
 	public Block queryBlock(BlockKey key) throws NotFoundException;
+	public Block lookupBlock(Guid guid) throws NotFoundException;
 
 	public Block stack(BlockKey key, long activity, User participant, boolean isGroupParticipation, StackReason reason);
 	public Block stack(BlockKey key, long activity, StackReason reason);
@@ -59,6 +60,7 @@ public interface Stacker {
 	public void blockClicked(BlockKey key, User user, long clickedTime);
 	public void blockClicked(UserBlockData ubd, long clickedTime);
 	
+	public BlockView loadBlock(Viewpoint viewpoint, Block block) throws NotFoundException;
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException;
 	
 	/**
