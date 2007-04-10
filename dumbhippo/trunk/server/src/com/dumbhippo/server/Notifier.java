@@ -7,13 +7,10 @@ import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
 import com.dumbhippo.server.listeners.ExternalAccountsListener;
 import com.dumbhippo.server.listeners.FacebookListener;
 import com.dumbhippo.server.listeners.FlickrListener;
-import com.dumbhippo.server.listeners.GroupChatListener;
 import com.dumbhippo.server.listeners.GroupCreationListener;
 import com.dumbhippo.server.listeners.GroupMembershipListener;
-import com.dumbhippo.server.listeners.MusicChatListener;
 import com.dumbhippo.server.listeners.MusicListener;
 import com.dumbhippo.server.listeners.PicasaListener;
-import com.dumbhippo.server.listeners.PostChatListener;
 import com.dumbhippo.server.listeners.PostClickedListener;
 import com.dumbhippo.server.listeners.PostListener;
 import com.dumbhippo.server.listeners.RevisionListener;
@@ -47,7 +44,7 @@ import com.dumbhippo.server.listeners.YouTubeListener;
 public interface Notifier 
 	extends AccountStatusListener, UserCreationListener, GroupCreationListener,
 	PostListener, ExternalAccountsListener, GroupMembershipListener,
-	MusicChatListener, MusicListener, GroupChatListener, PostChatListener, PostClickedListener,
+	MusicListener, PostClickedListener,
 	ExternalAccountFeedListener, FacebookListener, FlickrListener, YouTubeListener,
 	RevisionListener, PicasaListener {
 

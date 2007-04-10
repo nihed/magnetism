@@ -29,12 +29,9 @@ import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
-import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.Post;
-import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Revision;
 import com.dumbhippo.persistence.Track;
-import com.dumbhippo.persistence.TrackMessage;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.listeners.AccountStatusListener;
@@ -42,13 +39,10 @@ import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
 import com.dumbhippo.server.listeners.ExternalAccountsListener;
 import com.dumbhippo.server.listeners.FacebookListener;
 import com.dumbhippo.server.listeners.FlickrListener;
-import com.dumbhippo.server.listeners.GroupChatListener;
 import com.dumbhippo.server.listeners.GroupCreationListener;
 import com.dumbhippo.server.listeners.GroupMembershipListener;
-import com.dumbhippo.server.listeners.MusicChatListener;
 import com.dumbhippo.server.listeners.MusicListener;
 import com.dumbhippo.server.listeners.PicasaListener;
-import com.dumbhippo.server.listeners.PostChatListener;
 import com.dumbhippo.server.listeners.PostClickedListener;
 import com.dumbhippo.server.listeners.PostListener;
 import com.dumbhippo.server.listeners.RevisionListener;
@@ -267,27 +261,9 @@ public class NotifierBean implements Notifier {
 		}
 	}
 	
-	public void onTrackMessageCreated(TrackMessage trackMessage) {
-		for (MusicChatListener l : getListeners(MusicChatListener.class)) {
-			l.onTrackMessageCreated(trackMessage);
-		}
-	}
-
 	public void onTrackPlayed(User user, Track track, Date when) {
 		for (MusicListener l : getListeners(MusicListener.class)) {
 			l.onTrackPlayed(user, track, when);
-		}
-	}
-
-	public void onGroupMessageCreated(GroupMessage message) {
-		for (GroupChatListener l : getListeners(GroupChatListener.class)) {
-			l.onGroupMessageCreated(message);
-		}
-	}
-
-	public void onPostMessageCreated(PostMessage message) {
-		for (PostChatListener l : getListeners(PostChatListener.class)) {
-			l.onPostMessageCreated(message);
 		}
 	}
 

@@ -13,9 +13,7 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.TrackHistory;
-import com.dumbhippo.persistence.TrackMessage;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.MusicSystem;
@@ -64,13 +62,13 @@ public class MusicChatBlockHandlerBean extends AbstractBlockHandlerBean<MusicCha
 		// no resource needed just to display user.getName()
 		PersonView userView = personViewer.getPersonView(viewpoint, user);
 		
-		List<ChatMessageView> messageViews = chatSystem.viewMessages(chatSystem.getNewestTrackMessages(trackHistory, MusicChatBlockView.RECENT_MESSAGE_COUNT), viewpoint);
+		List<ChatMessageView> messageViews = chatSystem.viewMessages(chatSystem.getNewestMessages(block, MusicChatBlockView.RECENT_MESSAGE_COUNT), viewpoint);
 		
 		int messageCount;
 		if (messageViews.size() < MusicChatBlockView.RECENT_MESSAGE_COUNT) // Optimize out a query
 			messageCount = messageViews.size();
 		else
-			messageCount = chatSystem.getTrackMessageCount(trackHistory);
+			messageCount = chatSystem.getMessageCount(block);
 		
 		blockView.populate(userView, trackView, messageViews, messageCount);
 	}
@@ -81,19 +79,5 @@ public class MusicChatBlockHandlerBean extends AbstractBlockHandlerBean<MusicCha
 
 	public Set<Group> getInterestedGroups(Block block) {
 		return getGroupsData1UserIsIn(block);
-	}
-
-	public void onTrackMessageCreated(TrackMessage message) {
-		TrackHistory trackHistory = message.getTrackHistory();
-		
-		// We don't create these blocks on TrackHistory creation, since most TrackHistory
-		// objects will never be chatted on, so we have to demand create at this time
-		stacker.getOrCreateBlock(getKey(message.getTrackHistory()));
-		
-		// It's not completely clear that we want to to treat quipping on a music
-		// block as participation... it's a little funny for other people's music
-		// blocks to appear on your page; OTOH, it's consistent with how we handle
-		// commenting/quipping elsewhere.
-		stacker.stack(getKey(trackHistory), message.getTimestamp().getTime(), message.getFromUser(), false, StackReason.CHAT_MESSAGE);
 	}
 }

@@ -8,14 +8,13 @@ import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.listeners.PostChatListener;
 import com.dumbhippo.server.listeners.PostClickedListener;
 import com.dumbhippo.server.listeners.PostListener;
 import com.dumbhippo.server.views.UserViewpoint;
 
 @Local
 public interface PostBlockHandler
-	extends BlockHandler, PostListener, PostChatListener, PostClickedListener {
+	extends BlockHandler, PostListener, PostClickedListener {
 
 	public BlockKey getLookupOnlyKey(Post post);
 	public BlockKey getLookupOnlyKey(Guid postId);
