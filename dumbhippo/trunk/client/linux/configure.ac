@@ -94,6 +94,11 @@ addCommonWarnings() {
   *) result="$result -Wsign-compare" ;;
   esac
 
+  case " $result " in
+  *[\ \	]-fno-strict-aliasing[\ \	]*) ;;
+  *) result="$result -fno-strict-aliasing" ;;
+  esac
+
   if test "x$enable_ansi" = "xyes"; then
     case " $result " in
     *[\ \	]-ansi[\ \	]*) ;;
