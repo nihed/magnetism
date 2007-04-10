@@ -8,7 +8,7 @@ import javax.ejb.Local;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockMessage;
-import com.dumbhippo.persistence.EmbeddedMessage;
+import com.dumbhippo.persistence.ChatMessage;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.Post;
@@ -110,7 +110,7 @@ public interface ChatSystem {
 	 */
 	public int getTrackMessageCount(TrackHistory trackHistory);
 	
-	public List<ChatMessageView> viewMessages(List<? extends EmbeddedMessage> messages, Viewpoint viewpoint);
+	public List<ChatMessageView> viewMessages(List<? extends ChatMessage> messages, Viewpoint viewpoint);
 
 	/**
 	 * Returns the information associated with the potential user of a chat room.
@@ -141,7 +141,7 @@ public interface ChatSystem {
 	 *        to get all messages)
 	 * @return a list of chat room messages.
 	 */
-	List<ChatRoomMessage> getChatRoomMessages(Guid roomGuid, ChatRoomKind kind, long lastSeenSerial);
+	List<? extends ChatMessage> getChatRoomMessages(Guid roomGuid, ChatRoomKind kind, long lastSeenSerial);
 	
 	public boolean canJoinChat(Guid roomGuid, ChatRoomKind kind, Guid userId);
 	

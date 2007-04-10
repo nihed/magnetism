@@ -19,7 +19,7 @@ import com.dumbhippo.live.ChatRoomEvent;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockMessage;
-import com.dumbhippo.persistence.EmbeddedMessage;
+import com.dumbhippo.persistence.ChatMessage;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.Post;
@@ -31,7 +31,6 @@ import com.dumbhippo.persistence.TrackMessage;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ChatRoomInfo;
 import com.dumbhippo.server.ChatRoomKind;
-import com.dumbhippo.server.ChatRoomMessage;
 import com.dumbhippo.server.ChatRoomUser;
 import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.GroupSystem;
@@ -197,9 +196,9 @@ public class ChatSystemBean implements ChatSystem {
 		notifier.onGroupMessageCreated(groupMessage);
 	}
 
-	public List<ChatMessageView> viewMessages(List<? extends EmbeddedMessage> messages, Viewpoint viewpoint) {
+	public List<ChatMessageView> viewMessages(List<? extends ChatMessage> messages, Viewpoint viewpoint) {
 		List<ChatMessageView> viewedMsgs = new ArrayList<ChatMessageView>();
-		for (EmbeddedMessage m : messages) {
+		for (ChatMessage m : messages) {
 			viewedMsgs.add(new ChatMessageView(m, personViewer.getPersonView(viewpoint, m.getFromUser())));
 		}
 		return viewedMsgs;
@@ -256,68 +255,28 @@ public class ChatSystemBean implements ChatSystem {
 		return musicSystem.lookupTrackHistory(roomGuid);
 	}
 
-	private ChatRoomMessage newChatRoomMessage(EmbeddedMessage message) {
-		String username = message.getFromUser().getGuid().toJabberId(null);
-		return new ChatRoomMessage(username, message.getMessageText(), message.getSentiment(),
-				message.getTimestamp(), message.getId()); 		
-	}
-	
 	private ChatRoomUser newChatRoomUser(User user) {
 		return new ChatRoomUser(user.getGuid().toJabberId(null),
 				                user.getNickname(), user.getPhotoUrl());
 	}
 	
-	private List<ChatRoomMessage> getChatRoomMessages(Group group, long lastSeenSerial) {
-		List<GroupMessage> messages = getGroupMessages(group, lastSeenSerial);
-
-		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
-		
-		for (GroupMessage m : messages)
-			history.add(newChatRoomMessage(m));
-
-		return history;
-	}
-
 	private ChatRoomInfo getChatRoomInfo(Guid roomGuid, Group group) {
-		List<ChatRoomMessage> history = getChatRoomMessages(group, -1);
+		List<? extends ChatMessage> history = getGroupMessages(group, -1);
 		return new ChatRoomInfo(ChatRoomKind.GROUP, roomGuid, group.getName(), history, false);
 	}
 
-	private List<ChatRoomMessage> getChatRoomMessages(Post post, long lastSeenSerial) {
-		List<PostMessage> messages = getPostMessages(post, lastSeenSerial);
-
-		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
-
-		for (PostMessage postMessage : messages) {
-			history.add(newChatRoomMessage(postMessage));
-		}
-		
-		return history;
-	}
-	
 	private ChatRoomInfo getChatRoomInfo(Guid roomGuid, Post post) {
 		boolean worldAccessible = true;
 		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY)
 			worldAccessible = false;
 		
-		List<ChatRoomMessage> history = getChatRoomMessages(post, -1);
+		List<? extends ChatMessage> history = getPostMessages(post, -1);
 		return new ChatRoomInfo(ChatRoomKind.POST, roomGuid, post.getTitle(), history, worldAccessible);
-	}
-	
-	private List<ChatRoomMessage> getChatRoomMessages(TrackHistory trackHistory, long lastSeenSerial) {
-		List<TrackMessage> messages = getTrackMessages(trackHistory, lastSeenSerial);
-
-		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
-
-		for (TrackMessage trackMessage : messages)
-			history.add(newChatRoomMessage(trackMessage));
-		
-		return history;
 	}
 	
 	private ChatRoomInfo getChatRoomInfo(Guid roomGuid, TrackHistory trackHistory) {
 		TrackView trackView = musicSystem.getTrackView(trackHistory);
-		List<ChatRoomMessage> history = getChatRoomMessages(trackHistory, -1);
+		List<? extends ChatMessage> history = getTrackMessages(trackHistory, -1);
 		
 		return new ChatRoomInfo(ChatRoomKind.MUSIC, roomGuid, trackView.getDisplayTitle(), history, true);
 	}
@@ -376,7 +335,7 @@ public class ChatSystemBean implements ChatSystem {
 		}
 	}
 	
-	public List<ChatRoomMessage> getChatRoomMessages(Guid roomGuid, ChatRoomKind kind, long lastSeenSerial) {
+	public List<? extends ChatMessage> getChatRoomMessages(Guid roomGuid, ChatRoomKind kind, long lastSeenSerial) {
 		switch (kind) {
 		case POST:
 			Post post;
@@ -385,7 +344,7 @@ public class ChatSystemBean implements ChatSystem {
 			} catch (NotFoundException e) {
 				throw new RuntimeException("post chat not found", e);
 			}
-			return getChatRoomMessages(post, lastSeenSerial);
+			return getPostMessages(post, lastSeenSerial);
 		case GROUP:
 			Group group;
 			try {
@@ -393,7 +352,7 @@ public class ChatSystemBean implements ChatSystem {
 			} catch (NotFoundException e) {
 				throw new RuntimeException("group chat not found", e);
 			}
-			return getChatRoomMessages(group, lastSeenSerial);
+			return getGroupMessages(group, lastSeenSerial);
 		case MUSIC:
 			TrackHistory trackHistory;
 			try {
@@ -401,7 +360,7 @@ public class ChatSystemBean implements ChatSystem {
 			} catch (NotFoundException e) {
 				throw new RuntimeException("Track not found", e);
 			}
-			return getChatRoomMessages(trackHistory, lastSeenSerial);
+			return getTrackMessages(trackHistory, lastSeenSerial);
 		}
 		throw new IllegalArgumentException("Bad chat room type");
 	}

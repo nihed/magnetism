@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.ChatMessage;
 
 /**
  * Object representing a chat room for transfer to the web tier or to Jive.
@@ -22,9 +23,9 @@ public class ChatRoomInfo implements Serializable {
 	private boolean worldAccessible;
 	private Guid roomGuid;
 	private String title;
-	private List<ChatRoomMessage> history;
+	private List<? extends ChatMessage> history;
 	
-	public ChatRoomInfo(ChatRoomKind kind, Guid roomGuid, String postTitle, List<ChatRoomMessage> history, boolean world) {
+	public ChatRoomInfo(ChatRoomKind kind, Guid roomGuid, String postTitle, List<? extends ChatMessage> history, boolean world) {
 		this.kind = kind;
 		this.roomGuid = roomGuid;
 		this.title = postTitle;
@@ -44,7 +45,7 @@ public class ChatRoomInfo implements Serializable {
 		return title;
 	}
 
-	public List<ChatRoomMessage> getHistory() {
+	public List<? extends ChatMessage> getHistory() {
 		return Collections.unmodifiableList(history);
 	}
 

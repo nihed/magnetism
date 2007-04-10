@@ -28,10 +28,10 @@ import com.dumbhippo.jive.MessageSender;
 import com.dumbhippo.jive.XmlParser;
 import com.dumbhippo.live.PresenceListener;
 import com.dumbhippo.live.PresenceService;
+import com.dumbhippo.persistence.ChatMessage;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.server.ChatRoomInfo;
 import com.dumbhippo.server.ChatRoomKind;
-import com.dumbhippo.server.ChatRoomMessage;
 import com.dumbhippo.server.ChatRoomUser;
 import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.MessengerGlue;
@@ -233,10 +233,10 @@ public class Room implements PresenceListener {
 		PresenceService.getInstance().addListener(getPresenceLocation(), this);
 	}
 	
-	private void addMessages(List<ChatRoomMessage> toAdd, boolean notify) {
-		for (ChatRoomMessage message : toAdd) {
-			UserInfo userInfo = lookupUserInfo(message.getFromUsername());
-			MessageInfo messageInfo = new MessageInfo(userInfo, message.getText(), message.getSentiment(), message.getTimestamp(), message.getSerial());
+	private void addMessages(List<? extends ChatMessage> toAdd, boolean notify) {
+		for (ChatMessage message : toAdd) {
+			UserInfo userInfo = lookupUserInfo(message.getFromUser().getGuid().toJabberId(null));
+			MessageInfo messageInfo = new MessageInfo(userInfo, message.getMessageText(), message.getSentiment(), message.getTimestamp(), message.getId());
 			messages.add(messageInfo);
 			if (messageInfo.getSerial() > maxMessageSerial)
 				maxMessageSerial = messageInfo.getSerial();
@@ -763,7 +763,7 @@ public class Room implements PresenceListener {
 	 */
 	public synchronized void onMessagesChanged() {
 		ChatSystem chatSystem = EJBUtil.defaultLookup(ChatSystem.class);
-		List<ChatRoomMessage> newMessages = chatSystem.getChatRoomMessages(roomGuid, kind, maxMessageSerial);
+		List<? extends ChatMessage> newMessages = chatSystem.getChatRoomMessages(roomGuid, kind, maxMessageSerial);
 		
 		addMessages(newMessages, true);
 	}
