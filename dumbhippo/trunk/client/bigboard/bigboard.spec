@@ -25,7 +25,7 @@ to provide an online experience.
 %setup -q
 
 %build
-%configure 
+%configure --disable-static
 make %{?_smp_mflags}
 
 %install
@@ -40,14 +40,15 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %doc COPYING
+%attr(0755,root,root) %{_libexecdir}/bigboard/*
 %{_libdir}/python*/site-packages/bigboard/*
 %{_datadir}/bigboard/stocks/*
 %{_bindir}/bigboard
 
 %changelog
-* Mon Apr 09 2007 Colin Walters <walters@redhat.com> - 2
+* Mon Apr 09 2007 Colin Walters <walters@redhat.com> - 0.1.1-1
 - Update 
 
-* Fri Mar 30 2007 Colin Walters <walters@redhat.com> - 1
+* Fri Mar 30 2007 Colin Walters <walters@redhat.com> - 0.1-1
 - Initial public offering 
 
