@@ -57,6 +57,8 @@ mugshot_SOURCES	=				\
 	src/hippo-person-renderer.h		\
 	src/hippo-platform-impl.c		\
 	src/hippo-platform-impl.h		\
+	src/hippo-ui.c				\
+	src/hippo-ui.h				\
 	src/hippo-status-icon.c			\
 	src/hippo-status-icon.h			\
 	src/hippo-window-gtk.c			\
