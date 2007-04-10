@@ -28,11 +28,21 @@ public enum BlockType {
 		public boolean isChatGroupParticipation() {
 			return true;
 		}
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return false;
+		}
 	}, 
 	GROUP_MEMBER { // 1 
 		@Override
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.INDIRECT_DATA2;
+		}
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return false;
 		}
 	},
 	GROUP_CHAT { // 2
@@ -40,22 +50,41 @@ public enum BlockType {
 		public boolean isChatGroupParticipation() {
 			return true;
 		}
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return false;
+		}
 	},
 	MUSIC_PERSON { // 3
 		@Override
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.DIRECT_DATA1;
 		}
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return false;
+		}
 	},
 	/** This is just placeholding a historically-used ordinal that should not be 
 	 * reused to avoid database confusion.
 	 */
-	OBSOLETE_EXTERNAL_ACCOUNT_UPDATE, // 4
+	OBSOLETE_EXTERNAL_ACCOUNT_UPDATE { // 4
+		@Override
+		public boolean isDirectlyChattable() {
+			return false;
+		}
+	},
 	/** This is just placeholding a historically-used ordinal that should not be 
 	 * reused to avoid database confusion.
 	 */
-	OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF, // 5
-	
+	OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF { // 5
+		@Override
+		public boolean isDirectlyChattable() {
+			return false;
+		}
+	},
 	/** This is just placeholding a historically-used ordinal that should not be 
 	 * reused to avoid database confusion.
 	 */
@@ -68,7 +97,12 @@ public enum BlockType {
 		@Override
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.DIRECT_DATA1;
-		}		
+		}
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return false;
+		}
 	},
 	FACEBOOK_PERSON { // 7
 		@Override
@@ -79,7 +113,12 @@ public enum BlockType {
 		@Override
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.INDIRECT_DATA1;
-		}	
+		}
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return false; // ?
+		}
 	},
 	FACEBOOK_EVENT { // 8
 		@Override
@@ -91,6 +130,11 @@ public enum BlockType {
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.INDIRECT_DATA1;
 		}			
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return true; // ?
+		}
 	},
 	FLICKR_PERSON { // 9
 		// Right now we only get completely public Flickr photos
@@ -103,6 +147,11 @@ public enum BlockType {
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.DIRECT_DATA1;
 		}		
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return true; // ?
+		}
 	},
 	FLICKR_PHOTOSET { // 10
 		// Right now we only get completely public Flickr photosets
@@ -114,7 +163,12 @@ public enum BlockType {
 		@Override
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.DIRECT_DATA1;
-		}			
+		}
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return true;
+		}
 	},
 	YOUTUBE_PERSON { // 11
 		@Override
@@ -126,6 +180,11 @@ public enum BlockType {
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.DIRECT_DATA1;
 		}		
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return true; // ?
+		}
 	},
 	MYSPACE_PERSON { // 12
 		@Override
@@ -137,6 +196,11 @@ public enum BlockType {
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.DIRECT_DATA1;
 		}		
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return false; // ?
+		}
 	},
 	MUSIC_CHAT { // 13
 		@Override
@@ -148,6 +212,11 @@ public enum BlockType {
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.INDIRECT_DATA1;
 		}				
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return false;
+		}
 	},
 	BLOG_ENTRY { // 14
 		@Override
@@ -158,7 +227,12 @@ public enum BlockType {
 		@Override
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.DIRECT_DATA1;
-		}	
+		}
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return true;
+		}
 	},
 	DELICIOUS_PUBLIC_BOOKMARK { // 15
 		@Override
@@ -170,6 +244,11 @@ public enum BlockType {
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.DIRECT_DATA1;
 		}	
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return true;
+		}
 	},
 	TWITTER_PERSON { // 16
 		@Override
@@ -181,6 +260,11 @@ public enum BlockType {
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.DIRECT_DATA1;
 		}		
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return false; // ?
+		}
 	},
 	// an item from the Digg "stuff you Dugg" feed
 	DIGG_DUGG_ENTRY { // 17
@@ -192,7 +276,12 @@ public enum BlockType {
 		@Override
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.DIRECT_DATA1;
-		}		
+		}
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return true;
+		}
 	},
 	// an item from the Reddit Overview feed, which is your comments and submissions both
 	REDDIT_ACTIVITY_ENTRY { // 18
@@ -204,10 +293,19 @@ public enum BlockType {
 		@Override
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.DIRECT_DATA1;
-		}	
+		}
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return true;
+		}
 	},
 	// a revision to a group's attributes
 	GROUP_REVISION { // 19		
+		@Override
+		public boolean isDirectlyChattable() {
+			return false;
+		}
 	},
 	// a Netflix movie
 	NETFLIX_MOVIE { // 20
@@ -222,7 +320,12 @@ public enum BlockType {
 		@Override
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.INDIRECT_DATA1;
-		}				
+		}		
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return true; // ?
+		}
 	},
 	// a question to the user about account options
 	ACCOUNT_QUESTION { // 21
@@ -235,6 +338,11 @@ public enum BlockType {
 		public StackInclusion getDefaultStackInclusion() {
 			return StackInclusion.ONLY_WHEN_VIEWING_SELF;
 		}		
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return false;
+		}
 	},
 	GOOGLE_READER_SHARED_ITEM { // 22
 		@Override
@@ -245,6 +353,11 @@ public enum BlockType {
 		@Override
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.DIRECT_DATA1;
+		}
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return true;
 		}
 	},
 	PICASA_PERSON { // 23
@@ -257,6 +370,11 @@ public enum BlockType {
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.DIRECT_DATA1;
 		}	
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return true; // ?
+		}
 	};
 	
 	// This enumeration specifies a number of qualities.  First, whether
@@ -294,6 +412,12 @@ public enum BlockType {
     public StackInclusion getDefaultStackInclusion() {
     	return StackInclusion.IN_ALL_STACKS;
     }
+    
+    // return true if we chat on this block type by creating
+    // BlockType objects. false can mean either that there is
+    // a different way to chat on the block (GroupMessage, etc)
+    // or that it isn't interesting to chat on it at all
+    abstract public boolean isDirectlyChattable();
     
     // return if chatting on a block of this type should count as
     // participation in the group
