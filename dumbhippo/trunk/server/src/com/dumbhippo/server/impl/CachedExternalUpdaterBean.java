@@ -17,13 +17,13 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.PollingTaskEntry;
 import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.polling.PollingTask;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.Configuration;

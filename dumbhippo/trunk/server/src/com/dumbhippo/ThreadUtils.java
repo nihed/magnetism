@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -51,6 +52,21 @@ public class ThreadUtils {
 		}
 	}
 	
+	private static ThreadFactory createSequencedThreadFactory(final String baseName) {
+		return new ThreadFactory() {
+			private int nextThreadId = 0;
+			
+			public synchronized Thread newThread(Runnable r) {
+				Thread t = new Thread(r);
+				t.setDaemon(true);
+				t.setName(baseName + " " + nextThreadId);
+				nextThreadId += 1;
+				t.setUncaughtExceptionHandler(exceptionHandler);
+				return t;
+			}
+		};
+	}
+	
 	/**
 	 * Like Executors.newCachedThreadPool, but you can specify the name of 
 	 * the threads that will be created and the threads are daemon threads.
@@ -61,38 +77,21 @@ public class ThreadUtils {
 	 * @return a newly created ExecutorService. You should call shutdown()
 	 *   on this service when you are finished using it.
 	 */
-	public static ExecutorService newCachedThreadPool(final String baseName) {
-		return Executors.newCachedThreadPool(new ThreadFactory() {
-			private int nextThreadId = 0;
-			
-			public synchronized Thread newThread(Runnable r) {
-				Thread t = new Thread(r);
-				t.setDaemon(true);
-				t.setName(baseName + " " + nextThreadId);
-				nextThreadId += 1;
-				t.setUncaughtExceptionHandler(exceptionHandler);
-				return t;
-			}
-		});
+	public static ExecutorService newCachedThreadPool(String baseName) {
+		return Executors.newCachedThreadPool(createSequencedThreadFactory(baseName));
 	}
 
 	/**
 	 * Like Executors.newFixedThreadPool, but you can specify the name of 
 	 * the thread that will be created and the threads are daemon threads.
 	 */
-	public static ExecutorService newFixedThreadPool(final String baseName, int numThreads) {
-		return Executors.newFixedThreadPool(numThreads, new ThreadFactory() {
-			private int nextThreadId = 0;
-			
-			public synchronized Thread newThread(Runnable r) {
-				Thread t = new Thread(r);
-				t.setDaemon(true);
-				t.setName(baseName + " " + nextThreadId);
-				nextThreadId += 1;
-				t.setUncaughtExceptionHandler(exceptionHandler);
-				return t;
-			}
-		});
+	public static ExecutorService newFixedThreadPool(String baseName, int numThreads) {
+		return Executors.newFixedThreadPool(numThreads, createSequencedThreadFactory(baseName));
+	}
+	
+	public static ScheduledExecutorService newScheduledThreadPoolExecutor(String baseName, int numThreads) {
+		return Executors.newScheduledThreadPool(numThreads, createSequencedThreadFactory(baseName));
+		
 	}
 
 	/**

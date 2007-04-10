@@ -4,9 +4,9 @@ import java.util.Set;
 
 import javax.ejb.Local;
 
-import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
 import com.dumbhippo.persistence.PollingTaskEntry;
 import com.dumbhippo.persistence.PollingTaskFamilyType;
+import com.dumbhippo.polling.PollingTask;
 
 @Local
 public interface PollingTaskPersistence {

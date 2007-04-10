@@ -131,6 +131,7 @@
 				<include name="**/live/*.class" />
 				<include name="**/mbean/*.class" />
 				<include name="**/recommender/*.class" />
+				<include name="**/polling/*.class" />
 				<include name="**/postinfo/*.class" />
 				<include name="**/services/*.class" />
 				<include name="**/services/caches/*.class" />

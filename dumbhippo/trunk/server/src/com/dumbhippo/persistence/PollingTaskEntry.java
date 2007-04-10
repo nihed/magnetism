@@ -9,7 +9,7 @@ import javax.persistence.UniqueConstraint;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
+import com.dumbhippo.polling.PollingTask;
 
 @Entity
 @javax.persistence.Table(name="PollingTaskEntry",

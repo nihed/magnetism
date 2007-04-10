@@ -2,8 +2,8 @@ package com.dumbhippo.server;
 
 import java.util.Set;
 
-import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
-import com.dumbhippo.mbean.DynamicPollingSystem.PollingTaskFamily;
+import com.dumbhippo.polling.PollingTask;
+import com.dumbhippo.polling.PollingTaskFamily;
 
 public interface DynamicPollingSource {
 	

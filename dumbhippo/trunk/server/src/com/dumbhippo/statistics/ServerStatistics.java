@@ -17,7 +17,7 @@ import org.jboss.mx.util.MBeanProxyExt;
 import org.jboss.mx.util.MBeanServerLocator;
 
 import com.dumbhippo.logging.CountingAppender;
-import com.dumbhippo.mbean.DynamicPollingSystem;
+import com.dumbhippo.polling.DynamicPollingSystem;
 import com.dumbhippo.server.impl.MessengerGlueBean;
 
 /**

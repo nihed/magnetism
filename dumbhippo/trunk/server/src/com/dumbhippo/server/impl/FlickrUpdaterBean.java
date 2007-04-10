@@ -17,13 +17,14 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
-import com.dumbhippo.mbean.DynamicPollingSystem.PollingTaskFamily;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.FlickrUpdateStatus;
 import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.polling.PollResult;
+import com.dumbhippo.polling.PollingTask;
+import com.dumbhippo.polling.PollingTaskFamily;
 import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.FlickrUpdater;
 import com.dumbhippo.server.NotFoundException;

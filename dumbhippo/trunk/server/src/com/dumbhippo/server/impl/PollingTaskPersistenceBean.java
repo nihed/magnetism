@@ -18,9 +18,9 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
 import com.dumbhippo.persistence.PollingTaskEntry;
 import com.dumbhippo.persistence.PollingTaskFamilyType;
+import com.dumbhippo.polling.PollingTask;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.TransactionRunner;
