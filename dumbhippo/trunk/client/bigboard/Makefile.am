@@ -16,6 +16,9 @@ bin_SCRIPTS = bigboard
 
 noinst_SCRIPTS = bigboard-uninst 
 
+mainscriptdir = $(libexecdir)/bigboard
+mainscript_PYTHON = src/main.py
+
 bigboarddir = $(pythondir)/bigboard
 bigboard_PYTHON = src/bigboard.py \
                   src/big_widgets.py \
@@ -23,7 +26,6 @@ bigboard_PYTHON = src/bigboard.py \
                   src/keyring.py \
                   src/libbig.py \
                   src/libgimmie.py \
-                  src/main.py \
                   src/mugshot.py \
                   src/profile.py \
                   src/singletonmixin.py \
@@ -65,7 +67,7 @@ selfstock_PYTHON = \
 bigboard: src/bigboard.in
 	sed \
 	    -e s!\@PYTHON\@!@PYTHON@! \
-	    -e s!\@BB_PYDIR\@!$(bigboarddir)! \
+	    -e s!\@BB_PYDIR\@!$(mainscriptdir)! \
 	    -e s!\@BB_STOCKDIR\@!$(stocksdir)! \
 	    < $< > $@
 	chmod a+x $@
