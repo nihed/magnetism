@@ -11,6 +11,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -59,6 +60,7 @@ public class ChatSystemBean implements ChatSystem {
 	private EntityManager em;
 	
 	@EJB
+	@IgnoreDependency
 	private GroupChatBlockHandler groupChatBlockHandler;
 
 	@EJB
@@ -68,6 +70,7 @@ public class ChatSystemBean implements ChatSystem {
 	private IdentitySpider identitySpider;
 	
 	@EJB
+	@IgnoreDependency
 	private MusicChatBlockHandler musicChatBlockHandler;
 
 	@EJB
@@ -77,6 +80,7 @@ public class ChatSystemBean implements ChatSystem {
 	private PersonViewer personViewer;
 
 	@EJB
+	@IgnoreDependency
 	private PostBlockHandler postBlockHandler;
 
 	@EJB
@@ -461,7 +465,9 @@ public class ChatSystemBean implements ChatSystem {
 		}
 
 		stacker.stack(block, message.getTimestamp().getTime(),
-					  message.getFromUser(), true, StackReason.CHAT_MESSAGE);
+					  message.getFromUser(),
+					  block.getBlockType().isChatGroupParticipation(),
+					  StackReason.CHAT_MESSAGE);
 		
 		LiveState.getInstance().queueUpdate(new ChatRoomEvent(roomGuid, ChatRoomEvent.Detail.MESSAGES_CHANGED));
 	}
