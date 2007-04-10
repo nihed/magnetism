@@ -1,6 +1,5 @@
 package com.dumbhippo.server.blocks;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -18,6 +17,7 @@ import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.TrackMessage;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.ChatMessageView;
@@ -31,6 +31,9 @@ public class MusicChatBlockHandlerBean extends AbstractBlockHandlerBean<MusicCha
 
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(MusicChatBlockHandlerBean.class);
+	
+	@EJB
+	protected ChatSystem chatSystem;
 	
 	@EJB
 	MusicSystem musicSystem;
@@ -61,17 +64,13 @@ public class MusicChatBlockHandlerBean extends AbstractBlockHandlerBean<MusicCha
 		// no resource needed just to display user.getName()
 		PersonView userView = personViewer.getPersonView(viewpoint, user);
 		
-		List<ChatMessageView> messageViews = new ArrayList<ChatMessageView>();
-		for (TrackMessage message : musicSystem.getNewestTrackMessages(trackHistory, MusicChatBlockView.RECENT_MESSAGE_COUNT)) {
-			PersonView senderView = personViewer.getPersonView(viewpoint, message.getFromUser());
-			messageViews.add(new ChatMessageView(message, senderView));
-		}
+		List<ChatMessageView> messageViews = chatSystem.viewMessages(chatSystem.getNewestTrackMessages(trackHistory, MusicChatBlockView.RECENT_MESSAGE_COUNT), viewpoint);
 		
 		int messageCount;
 		if (messageViews.size() < MusicChatBlockView.RECENT_MESSAGE_COUNT) // Optimize out a query
 			messageCount = messageViews.size();
 		else
-			messageCount = musicSystem.getTrackMessageCount(trackHistory);
+			messageCount = chatSystem.getTrackMessageCount(trackHistory);
 		
 		blockView.populate(userView, trackView, messageViews, messageCount);
 	}

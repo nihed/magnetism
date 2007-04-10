@@ -53,12 +53,10 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.MembershipStatus;
-import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.TrackHistory;
-import com.dumbhippo.persistence.TrackMessage;
 import com.dumbhippo.persistence.TrackType;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.search.SearchSystem;
@@ -2075,36 +2073,5 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			return 0;
 		else
 			return history.get(0).getLastUpdated().getTime();
-	}
-
-	public List<TrackMessage> getNewestTrackMessages(TrackHistory trackHistory, int maxResults) {
-		Query q = em.createQuery("SELECT tm from TrackMessage tm WHERE tm.trackHistory = :trackHistory ORDER by tm.timestamp DESC");
-		q.setParameter("trackHistory", trackHistory);
-		if (maxResults >= 0)
-			q.setMaxResults(maxResults);
-		
-		return TypeUtils.castList(TrackMessage.class, q.getResultList());
-	}
-
-	public List<TrackMessage> getTrackMessages(TrackHistory trackHistory, long lastSeenSerial) {
-		Query q = em.createQuery("SELECT tm from TrackMessage tm WHERE tm.trackHistory = :trackHistory AND tm.id >= :lastSeenSerial ORDER by tm.id");
-		q.setParameter("trackHistory", trackHistory);
-		q.setParameter("lastSeenSerial", lastSeenSerial);
-		
-		return TypeUtils.castList(TrackMessage.class, q.getResultList());
-	}
-	
-	public int getTrackMessageCount(TrackHistory trackHistory) {
-		Query q = em.createQuery("SELECT count(tm) from TrackMessage tm WHERE tm.trackHistory = :trackHistory");
-		q.setParameter("trackHistory", trackHistory);
-		
-		return ((Number)q.getSingleResult()).intValue();
-	}
-	
-	public void addTrackMessage(TrackHistory trackHistory, User fromUser, String text, Sentiment sentiment, Date timestamp) {
-		TrackMessage trackMessage = new TrackMessage(trackHistory, fromUser, text, timestamp, sentiment);
-		em.persist(trackMessage);
-		
-		notifier.onTrackMessageCreated(trackMessage);
 	}
 }

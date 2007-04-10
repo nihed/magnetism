@@ -3,7 +3,6 @@ package com.dumbhippo.server.impl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,11 +33,9 @@ import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
-import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
-import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.search.SearchSystem;
@@ -52,7 +49,6 @@ import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.util.EJBUtil;
-import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupMemberView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
@@ -874,53 +870,6 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return result;
 	}	
 	
-	// We order and select on pm.id, though in rare cases the order by pm.id and by pm.timestamp
-	// might be different if two messages arrive almost at once. In this case, the timestamps will
-	// likely be within a second of each other and its much cheaper this way.
-	private static final String GROUP_MESSAGE_QUERY = "SELECT gm FROM GroupMessage gm WHERE gm.group = :group ";
-	private static final String GROUP_MESSAGE_SELECT = " AND gm.id >= :lastSeenSerial ";
-	private static final String GROUP_MESSAGE_ORDER = " ORDER BY gm.id";
-	
-	public List<GroupMessage> getGroupMessages(Group group, long lastSeenSerial) {
-		List<?> messages = em.createQuery(GROUP_MESSAGE_QUERY + GROUP_MESSAGE_SELECT + GROUP_MESSAGE_ORDER)
-		.setParameter("group", group)
-		.setParameter("lastSeenSerial", lastSeenSerial)
-		.getResultList();
-		
-		return TypeUtils.castList(GroupMessage.class, messages);
-	}
-	
-	public List<GroupMessage> getNewestGroupMessages(Group group, int maxResults) {
-		List<?> messages =  em.createQuery(GROUP_MESSAGE_QUERY + GROUP_MESSAGE_ORDER + " DESC")
-		.setParameter("group", group)
-		.setMaxResults(maxResults)
-		.getResultList();
-		
-		return TypeUtils.castList(GroupMessage.class, messages);		
-	}
-	
-	public int getGroupMessageCount(Group group) {
-		Query q = em.createQuery("SELECT COUNT(gm) FROM GroupMessage gm WHERE gm.group = :group")
-			.setParameter("group", group);
-		
-		return ((Number)q.getSingleResult()).intValue();
-	}
-
-	public List<ChatMessageView> viewGroupMessages(List<GroupMessage> messages, Viewpoint viewpoint) {
-		List<ChatMessageView> viewedMsgs = new ArrayList<ChatMessageView>();
-		for (GroupMessage m : messages) {
-			viewedMsgs.add(new ChatMessageView(m, personViewer.getPersonView(viewpoint, m.getFromUser())));
-		}
-		return viewedMsgs;
-	}	
-	
-	public void addGroupMessage(Group group, User fromUser, String text, Sentiment sentiment, Date timestamp) {
-		GroupMessage groupMessage = new GroupMessage(group, fromUser, text, sentiment, timestamp);
-		em.persist(groupMessage);
-
-		notifier.onGroupMessageCreated(groupMessage);
-	}
-
 	public boolean canEditGroup(UserViewpoint viewpoint, Group group) {
 		try {
 			GroupMember member = getGroupMember(group, viewpoint.getViewer());

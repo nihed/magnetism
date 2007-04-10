@@ -54,13 +54,13 @@ import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
-import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.SimpleServiceMBean;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
@@ -123,7 +123,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	private PersonViewer personViewer;
 
 	@EJB
-	private PostingBoard postingBoard;
+	private ChatSystem chatSystem;
 	
 	@EJB
 	private XmppMessageSender xmppMessageSystem;	
@@ -1859,7 +1859,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		
 		// Now that PersonPostData is gone, we can no longer migrate it here...
 
-		List<PostMessage> messages = postingBoard.getNewestPostMessages(post, 1);
+		List<PostMessage> messages = chatSystem.getNewestPostMessages(post, 1);
 		if (messages.size() > 0) {
 			PostMessage m = messages.get(0);
 			long newestMessageTime = m.getTimestamp().getTime();
@@ -1901,7 +1901,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	    }
 	    // we want the ordering to be ascending by the timestamp to set the participation
 	    // timestamps in the right order, which is what getPostMessages should return
-		List<PostMessage> messages = postingBoard.getPostMessages(post, 0);
+		List<PostMessage> messages = chatSystem.getPostMessages(post, 0);
 		for (PostMessage message: messages) {
 			try {
 		        UserBlockData fromUserBlockData = queryUserBlockData(block, message.getFromUser());
@@ -1960,7 +1960,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		logger.debug("    migrating group chat for {}", groupId);
 		Group group = em.find(Group.class, groupId);
 		getOrCreateBlock(getGroupChatKey(group.getGuid()), group.isPublic());
-		List<GroupMessage> messages = groupSystem.getNewestGroupMessages(group, 1);
+		List<GroupMessage> messages = chatSystem.getNewestGroupMessages(group, 1);
 		if (!messages.isEmpty()) {
 			stack(getGroupChatKey(group.getGuid()), messages.get(0).getTimestamp().getTime(), StackReason.CHAT_MESSAGE);
 		}
@@ -1980,7 +1980,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 		// try and catch blocks are per UserBlockData query, because we can still update the other
 		// UserBlackData(s) if one is not found
-		List<GroupMessage> messages = groupSystem.getGroupMessages(group, 0);
+		List<GroupMessage> messages = chatSystem.getGroupMessages(group, 0);
 		for (GroupMessage message: messages) {
 			try {
 		        UserBlockData fromUserBlockData = queryUserBlockData(block, message.getFromUser());

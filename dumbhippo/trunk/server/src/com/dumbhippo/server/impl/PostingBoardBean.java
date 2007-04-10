@@ -54,10 +54,8 @@ import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
-import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
-import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.postinfo.NodeName;
@@ -90,7 +88,6 @@ import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.GuidNotFoundException;
 import com.dumbhippo.server.views.AnonymousViewpoint;
-import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.FeedView;
 import com.dumbhippo.server.views.GroupView;
@@ -1152,53 +1149,6 @@ public class PostingBoardBean implements PostingBoard {
 		pageable.setTotalCount(getReceivedFeedPostsCount(viewpoint, recipient, null));		
 	}
 	
-	// We order and select on pm.id, though in rare cases the order by pm.id and by pm.timestamp
-	// might be different if two messages arrive almost at once. In this case, the timestamps will
-	// likely be within a second of each other and its much cheaper this way.
-	private static final String POST_MESSAGE_QUERY = "SELECT pm from PostMessage pm WHERE pm.post = :post";
-	private static final String POST_MESSAGE_SELECT = " AND pm.id >= :lastSeenSerial ";
-	private static final String POST_MESSAGE_ORDER = " ORDER BY pm.id";
-	
-	public List<PostMessage> getPostMessages(Post post, long lastSeenSerial) {
-		List<?> messages = em.createQuery(POST_MESSAGE_QUERY + POST_MESSAGE_SELECT + POST_MESSAGE_ORDER)
-		.setParameter("post", post)
-		.setParameter("lastSeenSerial", lastSeenSerial)
-		.getResultList();
-		
-		return TypeUtils.castList(PostMessage.class, messages);
-	}
-	
-	public List<PostMessage> getNewestPostMessages(Post post, int maxResults) {
-		List<?> messages = em.createQuery("SELECT pm from PostMessage pm WHERE pm.post = :post ORDER BY pm.timestamp DESC")
-		.setParameter("post", post)
-		.setMaxResults(maxResults)
-		.getResultList();
-		
-		return TypeUtils.castList(PostMessage.class, messages);		
-	}
-	
-	public int getPostMessageCount(Post post) {
-		Query q = em.createQuery("SELECT COUNT(pm) FROM PostMessage pm WHERE pm.post = :post")
-			.setParameter("post", post);
-		
-		return ((Number)q.getSingleResult()).intValue();
-	}
-	
-	public List<ChatMessageView> viewPostMessages(List<PostMessage> messages, Viewpoint viewpoint) {
-		List<ChatMessageView> viewedMsgs = new ArrayList<ChatMessageView>();
-		for (PostMessage m : messages) {
-			viewedMsgs.add(new ChatMessageView(m, personViewer.getPersonView(viewpoint, m.getFromUser())));
-		}
-		return viewedMsgs;
-	}	
-	
-	public void addPostMessage(Post post, User fromUser, String text, Sentiment sentiment, Date timestamp) {
-		PostMessage postMessage = new PostMessage(post, fromUser, text, sentiment, timestamp);
-		em.persist(postMessage);
-		
-		notifier.onPostMessageCreated(postMessage);
-	}
-
 	public Set<EntityView> getReferencedEntities(Viewpoint viewpoint, Post post) {
 		Set<EntityView> result = new HashSet<EntityView>();
 		for (Group g : post.getGroupRecipients()) {

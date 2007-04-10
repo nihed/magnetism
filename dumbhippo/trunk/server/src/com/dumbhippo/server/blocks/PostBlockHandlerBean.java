@@ -24,6 +24,7 @@ import com.dumbhippo.persistence.StackFilterFlags;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.util.EJBUtil;
@@ -40,6 +41,9 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 	
 	@EJB
 	private PostingBoard postingBoard;
+	
+	@EJB
+	private ChatSystem chatSystem;
 	
 	public PostBlockHandlerBean() {
 		super(PostBlockView.class);
@@ -69,15 +73,15 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 		} catch (NotFoundException e) {
 			throw new BlockNotVisibleException("Post for the block wasn't visible", e);
 		}
-	    List<ChatMessageView> recentMessages = postingBoard.viewPostMessages(
-	        postingBoard.getNewestPostMessages(postView.getPost(), PostBlockView.RECENT_MESSAGE_COUNT),
+	    List<ChatMessageView> recentMessages = chatSystem.viewMessages(
+	        chatSystem.getNewestPostMessages(postView.getPost(), PostBlockView.RECENT_MESSAGE_COUNT),
 			viewpoint);
 	    
 		int messageCount;
 		if (recentMessages.size() < PostBlockView.RECENT_MESSAGE_COUNT) // Optimize out a query
 			messageCount = recentMessages.size();
 		else
-			messageCount = postingBoard.getPostMessageCount(postView.getPost());
+			messageCount = chatSystem.getPostMessageCount(postView.getPost());
 			    
 	    blockView.populate(postView, recentMessages, messageCount);
 	}
