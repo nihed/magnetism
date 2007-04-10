@@ -9,7 +9,6 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.Sentiment;
 
 @Local
 public interface MessengerGlue {
@@ -146,53 +145,6 @@ public interface MessengerGlue {
 	 */
 	public void updateLogoutDate(String user, Date timestamp);
 
-	/**
-	 * Returns the information associated with the potential user of a chat room.
-	 * 
-	 * @param roomName the name of the chat room
-	 * @param kind the kind of the chat room
-	 * @param username name of the user for whom we look up information
-	 * @return blob of information about the user
-	 */
-	public ChatRoomUser getChatRoomUser(String roomName, ChatRoomKind kind, String username);
-	
-	/**
-	 * Get the information needed to manage a chatroom for a post.
-	 * 
-	 * @param roomName The GUID for the post that the chat is about,
-	 *   encoded in jabber node form. 
-	 * @return a blob of information about the chatroom. Will
-	 *   be null if no such post exists or the user isn't allowed
-	 *   to see it.
-	 */
-	public ChatRoomInfo getChatRoomInfo(String roomName);
-	
-	/**
-	 * Get messages that have been sent to the chatroom since the specified serial
-	 * 
-	 * @param roomName the GUID of the group or post the chat is about, in jabber node form.
-	 *        This must exist or an exception will be thrown
-	 * @param kind the kind of chatroom (group or post)
-	 * @param lastSeenSerial retrieve only messages with serials greater than this (use -1
-	 *        to get all messages)
-	 * @return a list of chat room messages.
-	 */
-	List<ChatRoomMessage> getChatRoomMessages(String roomName, ChatRoomKind kind, long lastSeenSerial);
-	
-	public boolean canJoinChat(String roomName, ChatRoomKind kind, String username);
-	
-	/**
-	 * Adds a new message to a chatroom.
-	 * 
-	 * @param roomName the GUID of the group or post the chat is about, in jabber node form
-	 * @param kind the kind of chatroom (group or post)
-	 * @param userName the GUID of the user posting the message, in jabber node form
-	 * @param text the text of the message
-	 * @param timestamp the timestamp for the message
-	 * @param sentiment the sentiment of the message INDIFFERENT=Chat LOVE/HATE=Quip
-	 */
-	public void addChatRoomMessage(String roomName, ChatRoomKind kind, String userName, String text, Sentiment sentiment, Date timestamp);
-	
 	/**
 	 * Get current music info for a given user.
 	 * @param username the username for the user 

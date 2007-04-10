@@ -1,6 +1,5 @@
 package com.dumbhippo.server;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -10,13 +9,10 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
-import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
-import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupMemberView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
@@ -182,52 +178,6 @@ public interface GroupSystem {
 	 * @return the contacts of owner that aren't already members of the group
 	 */
 	public Set<PersonView> findAddableContacts(UserViewpoint viewpoint, User owner, String groupId, PersonViewExtra... extras);
-	
-	/**
-	 * Get all messages that were posted in the chatroom about this group.
-	 * 
-	 * @param group the group the look up the messages for
-	 * @param lastSeenSerial return only messages with serials greater than this
-	 * @return the list of mesages, sorted by date (newest last)
-	 */
-	public List<GroupMessage> getGroupMessages(Group group, long lastSeenSerial);
-	
-	/**
-	 * Get up to maxResults newest messages in the group chat, sorted descending (newest first)
-	 * 
-	 * @param group
-	 * @param maxResults
-	 * @return
-	 */
-	public List<GroupMessage> getNewestGroupMessages(Group group, int maxResults);
-	
-	/**
-	 * Get the total number of messages sent to this group
-	 * 
-	 * @param group the group the look up the messages for
-	 * @return total number of messages
-	 */
-	public int getGroupMessageCount(Group group);
-	
-	/**
-	 * Add a new message that was sent to the chatroom about this group
-	 * 
-	 * @param group the group the message is about.
-	 * @param fromUser the user who sent the message
-	 * @param text the text of the message
-	 * @param sentiment the type of message (INDIFFERENT=normal chat message, LOVE/HATE=quip)
-	 * @param timestamp the time when the message was posted
-	 */
-	public void addGroupMessage(Group group, User fromUser, String text, Sentiment sentiment, Date timestamp);
-
-	/**
-	 * Return a view of chat messages based on a viewpoint.
-	 * 
-	 * @param messages group chat messages
-	 * @param viewpoint 
-	 * @return view of chat messages
-	 */
-	public List<ChatMessageView> viewGroupMessages(List<GroupMessage> messages, Viewpoint viewpoint);	
 	
 	/**
 	 * Checks whether the given viewpoint is allowed to change settings of a group

@@ -7,6 +7,8 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
+import com.dumbhippo.identity20.Guid;
+
 /**
  * Object representing a chat room for transfer to the web tier or to Jive.
  * 
@@ -18,13 +20,13 @@ public class ChatRoomInfo implements Serializable {
 	
 	private ChatRoomKind kind;
 	private boolean worldAccessible;
-	private String roomName;
+	private Guid roomGuid;
 	private String title;
 	private List<ChatRoomMessage> history;
 	
-	public ChatRoomInfo(ChatRoomKind kind, String roomName, String postTitle, List<ChatRoomMessage> history, boolean world) {
+	public ChatRoomInfo(ChatRoomKind kind, Guid roomGuid, String postTitle, List<ChatRoomMessage> history, boolean world) {
 		this.kind = kind;
-		this.roomName = roomName;
+		this.roomGuid = roomGuid;
 		this.title = postTitle;
 		this.history = history;
 		this.worldAccessible = world;
@@ -34,8 +36,8 @@ public class ChatRoomInfo implements Serializable {
 		return kind;
 	}
 	
-	public String getChatId() {
-		return roomName;
+	public Guid getChatId() {
+		return roomGuid;
 	}
 	
 	public String getTitle() {

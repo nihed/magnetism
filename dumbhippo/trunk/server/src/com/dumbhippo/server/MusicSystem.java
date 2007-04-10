@@ -7,9 +7,7 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.TrackHistory;
-import com.dumbhippo.persistence.TrackMessage;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.AlbumView;
 import com.dumbhippo.server.views.ArtistView;
@@ -212,39 +210,5 @@ public interface MusicSystem {
 	
 	public TrackHistory lookupTrackHistory(Guid trackHistoryId) throws NotFoundException;
 	public TrackView getTrackView(TrackHistory trackHistory);
-	public TrackView getTrackView(Guid trackHistoryId) throws NotFoundException;
-	
-	/**
-	 * Get all messages/quips that were sent about this TrackHistory
-	 * 
-	 * @param post the post the look up the messages for
-	 * @param lastSeenSerial return only messages with serials greater than this
-	 * @return the list of mesages, sorted by date (newest last)
-	 */
-	public List<TrackMessage> getTrackMessages(TrackHistory trackHistory, long lastSeenSerial);
-
-	/**
-	 * Get up to maxResults newest messages about this TrackHistory, sorted descending (newest first)
-	 * 
-  	 * @param post the post the look up the messages for
-	 * @param maxResults
-	 * @return the list of mesages, sorted by date (newest first)
-	 */
-	public List<TrackMessage> getNewestTrackMessages(TrackHistory trackHistory, int maxResults);
-	
-	/**
-	 * Get the total number of messages about this TrackHistory
-	 */
-	public int getTrackMessageCount(TrackHistory trackHistory);
-	
-	/**
-	 * Add a new message that was sent to the chatroom about this post
-	 * 
-	 * @param post the post the message is about.
-	 * @param fromUser the user who sent the message
-	 * @param text the text of the message
-	 * @param sentiment the type of message (INDIFFERENT=normal chat message, LOVE/HATE=quip)
-	 * @param timestamp the time when the message was posted
-	 */
-	public void addTrackMessage(TrackHistory trackHistory, User fromUser, String text, Sentiment sentiment, Date timestamp);	
+	public TrackView getTrackView(Guid trackHistoryId) throws NotFoundException;	
 }

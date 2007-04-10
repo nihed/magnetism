@@ -33,6 +33,7 @@ import com.dumbhippo.server.ChatRoomInfo;
 import com.dumbhippo.server.ChatRoomKind;
 import com.dumbhippo.server.ChatRoomMessage;
 import com.dumbhippo.server.ChatRoomUser;
+import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
@@ -222,8 +223,8 @@ public class Room implements PresenceListener {
 		presentUsers = new HashMap<String, UserInfo>();
 		messages = new ArrayList<MessageInfo>();
 		
-		roomName = info.getChatId();
-		roomGuid = Guid.parseTrustedJabberId(roomName);
+		roomGuid = info.getChatId();
+		roomName = roomGuid.toJabberId(null);	
 		kind = info.getKind();
 		title = info.getTitle();
 		
@@ -254,8 +255,8 @@ public class Room implements PresenceListener {
 	private UserInfo lookupUserInfo(String username, boolean refresh) {
 		UserInfo info;
 		if (refresh || !userInfoCache.containsKey(username)) {
-			MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-			ChatRoomUser user = glue.getChatRoomUser(roomName, kind, username);		
+			ChatSystem chatSystem = EJBUtil.defaultLookup(ChatSystem.class);
+			ChatRoomUser user = chatSystem.getChatRoomUser(roomGuid, kind, username);		
 			if (!userInfoCache.containsKey(username)) {
 				info = new UserInfo(user.getUsername(), user.getName(), user.getSmallPhotoUrl());
 				userInfoCache.put(username, info);				
@@ -321,9 +322,19 @@ public class Room implements PresenceListener {
 	
 	public static Room loadFromServer(String roomName) {
 		Log.debug("Querying server for information on chat room " + roomName);
-		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
+		ChatSystem chatSystem = EJBUtil.defaultLookup(ChatSystem.class);
 		
-		ChatRoomInfo info = glue.getChatRoomInfo(roomName);
+		ChatRoomInfo info;
+		try {
+			info = chatSystem.getChatRoomInfo(Guid.parseJabberId(roomName));
+		} catch (NotFoundException e) {
+			Log.debug("  no such room");
+			return null;
+		} catch (ParseException e) {
+			Log.debug("  no such room");
+			return null;
+		}
+
 		if (info == null) {
 			Log.debug("  no such room");
 			return null;
@@ -378,13 +389,13 @@ public class Room implements PresenceListener {
 			if (kind == ChatRoomKind.GROUP) {
 				try {			
 					objectXml = glue.getGroupXml(Guid.parseTrustedJabberId(viewpointGuid), 
-							                     Guid.parseTrustedJabberId(roomName));
+							                     roomGuid);
 				} catch (NotFoundException e) {
 					Log.error("failed to find group", e);				
 				}				
 			} else if (kind == ChatRoomKind.POST) {
 			       objectXml = glue.getPostsXml(Guid.parseTrustedJabberId(viewpointGuid), 
-			    		                        Guid.parseTrustedJabberId(roomName), 
+			    		                        roomGuid, 
 			    		                        elementName);
 			}
 			if (objectXml != null) {
@@ -524,7 +535,7 @@ public class Room implements PresenceListener {
 			MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 			try {
 				glue.setPostIgnored(Guid.parseTrustedJabberId(username), 
-								    Guid.parseTrustedJabberId(roomName), false);
+								    roomGuid, false);
 			} catch (NotFoundException e) {
 				Log.error(e);								
 			} catch (ParseException e) {
@@ -610,11 +621,12 @@ public class Room implements PresenceListener {
 			return;
 		
 		String username = fromJid.getNode();
+		Guid userId = Guid.parseTrustedJabberId(username);
 		
 		// We call a MessengerGlue method to stick the message into the database. A message
 		// will then be sent to all nodes, including us, saying that there are new messages.
 		// We'll (in onMessagesChanged) query for new messages and send them to the connected clients.
-		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
+		ChatSystem chatSystem = EJBUtil.defaultLookup(ChatSystem.class);
 		
 		Element messageInfo = packet.getChildElement("messageInfo", "http://dumbhippo.com/protocol/rooms");
 		if (messageInfo != null) {
@@ -627,7 +639,7 @@ public class Room implements PresenceListener {
 			}
 		}
 		
-		glue.addChatRoomMessage(roomName, kind, username, packet.getBody(), sentiment, new Date());
+		chatSystem.addChatRoomMessage(roomGuid, kind, userId, packet.getBody(), sentiment, new Date());
 	}
 	
 	private void processIQPacket(IQ packet) {
@@ -717,8 +729,14 @@ public class Room implements PresenceListener {
 	 * @return true if the user can join this room
 	 */
 	public boolean checkUserCanJoin(String username) {
-		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-		return glue.canJoinChat(roomName, kind, username);
+		ChatSystem chatSystem = EJBUtil.defaultLookup(ChatSystem.class);
+		Guid userId;
+		try {
+			userId = Guid.parseJabberId(username);
+		} catch (ParseException e) {
+			return false;
+		}
+		return chatSystem.canJoinChat(roomGuid, kind, userId);
 	}
 
 	/**
@@ -744,8 +762,8 @@ public class Room implements PresenceListener {
 	 * Called when the messages for the chat room have changed 
 	 */
 	public synchronized void onMessagesChanged() {
-		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-		List<ChatRoomMessage> newMessages = glue.getChatRoomMessages(roomName, kind, maxMessageSerial);
+		ChatSystem chatSystem = EJBUtil.defaultLookup(ChatSystem.class);
+		List<ChatRoomMessage> newMessages = chatSystem.getChatRoomMessages(roomGuid, kind, maxMessageSerial);
 		
 		addMessages(newMessages, true);
 	}

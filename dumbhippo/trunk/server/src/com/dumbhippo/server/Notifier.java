@@ -50,6 +50,7 @@ public interface Notifier
 	MusicChatListener, MusicListener, GroupChatListener, PostChatListener, PostClickedListener,
 	ExternalAccountFeedListener, FacebookListener, FlickrListener, YouTubeListener,
 	RevisionListener, PicasaListener {
+
 	// Nothing in Notifier itself; Notifier just "aggregates"
 	// the listener interfaces. If you do add something here
 	// then remember that NotifierBean has a non-default transaction 

@@ -177,39 +177,6 @@ public interface PostingBoard {
 	public void postViewedBy(String postId, User clicker);
 	
 	/**
-	 * Get all messages that were posted in the chatroom about this post.
-	 * 
-	 * @param post the post the look up the messages for
-	 * @param lastSeenSerial return only messages with serials greater than this
-	 * @return the list of mesages, sorted by date (newest last)
-	 */
-	public List<PostMessage> getPostMessages(Post post, long lastSeenSerial);
-	
-	public List<PostMessage> getNewestPostMessages(Post post, int maxResults);
-
-	/**
-	 * Get the total count of messages that were sent to the chatroom about this
-	 * post.
-	 * 
-	 * @param post the post to count the messages for
-	 * @return the total number of messages about this post
-	 */
-	public int getPostMessageCount(Post post);
-	
-	public List<ChatMessageView> viewPostMessages(List<PostMessage> messages, Viewpoint viewpoint);
-	
-	/**
-	 * Add a new message that was sent to the chatroom about this post
-	 * 
-	 * @param post the post the message is about.
-	 * @param fromUser the user who sent the message
-	 * @param text the text of the message
-	 * @param sentiment the type of message (INDIFFERENT=normal chat message, LOVE/HATE=quip)
-	 * @param timestamp the time when the message was posted
-	 */
-	public void addPostMessage(Post post, User fromUser, String text, Sentiment sentiment, Date timestamp);
-	
-	/**
 	 * Search the database of posts using Lucene.
 	 * 
 	 * @param viewpoint the viewpoint being searched from

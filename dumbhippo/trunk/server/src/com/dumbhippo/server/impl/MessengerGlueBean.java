@@ -22,26 +22,13 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.live.ChatRoomEvent;
-import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.Account;
-import com.dumbhippo.persistence.EmbeddedMessage;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Post;
-import com.dumbhippo.persistence.PostMessage;
-import com.dumbhippo.persistence.PostVisibility;
-import com.dumbhippo.persistence.Sentiment;
-import com.dumbhippo.persistence.TrackHistory;
-import com.dumbhippo.persistence.TrackMessage;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.ChatRoomInfo;
-import com.dumbhippo.server.ChatRoomKind;
-import com.dumbhippo.server.ChatRoomMessage;
-import com.dumbhippo.server.ChatRoomUser;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
@@ -59,7 +46,6 @@ import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PostView;
-import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
 
@@ -306,235 +292,11 @@ public class MessengerGlueBean implements MessengerGlue {
 		}
 	}
 	
-	private User getUserFromUsername(String username) {
-		return getUserFromGuid(Guid.parseTrustedJabberId(username));
-	}
-	
-	private Post getPostFromRoomName(String roomName) throws NotFoundException {
-		return postingBoard.loadRawPost(SystemViewpoint.getInstance(), Guid.parseTrustedJabberId(roomName));
-	}
-	
-	private Group getGroupFromRoomName(String roomName) throws NotFoundException {
-		return groupSystem.lookupGroupById(SystemViewpoint.getInstance(), Guid.parseTrustedJabberId(roomName));
-	}
-	
-	private TrackHistory getTrackHistoryFromRoomName(String roomName) throws NotFoundException {
-		return musicSystem.lookupTrackHistory(Guid.parseTrustedJabberId(roomName));
-	}
-
-	private ChatRoomMessage newChatRoomMessage(EmbeddedMessage message) {
-		String username = message.getFromUser().getGuid().toJabberId(null);
-		return new ChatRoomMessage(username, message.getMessageText(), message.getSentiment(),
-				message.getTimestamp(), message.getId()); 		
-	}
-	
-	private ChatRoomUser newChatRoomUser(User user) {
-		return new ChatRoomUser(user.getGuid().toJabberId(null),
-				                user.getNickname(), user.getPhotoUrl());
-	}
-	
-	private List<ChatRoomMessage> getChatRoomMessages(Group group, long lastSeenSerial) {
-		List<GroupMessage> messages = groupSystem.getGroupMessages(group, lastSeenSerial);
-
-		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
-		
-		for (GroupMessage m : messages)
-			history.add(newChatRoomMessage(m));
-
-		return history;
-	}
-
-	private ChatRoomInfo getChatRoomInfo(String roomName, Group group) {
-		List<ChatRoomMessage> history = getChatRoomMessages(group, -1);
-		return new ChatRoomInfo(ChatRoomKind.GROUP, roomName, group.getName(), history, false);
-	}
-
-	private List<ChatRoomMessage> getChatRoomMessages(Post post, long lastSeenSerial) {
-		List<PostMessage> messages = postingBoard.getPostMessages(post, lastSeenSerial);
-
-		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
-
-		for (PostMessage postMessage : messages) {
-			history.add(newChatRoomMessage(postMessage));
-		}
-		
-		return history;
-	}
-	
-	private ChatRoomInfo getChatRoomInfo(String roomName, Post post) {
-		boolean worldAccessible = true;
-		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY)
-			worldAccessible = false;
-		
-		List<ChatRoomMessage> history = getChatRoomMessages(post, -1);
-		return new ChatRoomInfo(ChatRoomKind.POST, roomName, post.getTitle(), history, worldAccessible);
-	}
-	
-	private List<ChatRoomMessage> getChatRoomMessages(TrackHistory trackHistory, long lastSeenSerial) {
-		List<TrackMessage> messages = musicSystem.getTrackMessages(trackHistory, lastSeenSerial);
-
-		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
-
-		for (TrackMessage trackMessage : messages)
-			history.add(newChatRoomMessage(trackMessage));
-		
-		return history;
-	}
-	
-	private ChatRoomInfo getChatRoomInfo(String roomName, TrackHistory trackHistory) {
-		TrackView trackView = musicSystem.getTrackView(trackHistory);
-		List<ChatRoomMessage> history = getChatRoomMessages(trackHistory, -1);
-		
-		return new ChatRoomInfo(ChatRoomKind.MUSIC, roomName, trackView.getDisplayTitle(), history, true);
-	}
-	
-	public ChatRoomUser getChatRoomUser(String roomName, ChatRoomKind kind, String username) {
-		User user;
-		// Note: we could add access controls here as well, requiring that the username
-		// is allowed to join the chat room.  But for now that's checked in the chat room
-		// code.
-		try {
-			user = identitySpider.lookupGuid(User.class, Guid.parseTrustedJabberId(username));
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
-		return newChatRoomUser(user);
-	}
-	
-	public ChatRoomInfo getChatRoomInfo(String roomName) {
-		Post post = null;
-		Group group = null;
-		TrackHistory trackHistory = null;
-		int count = 0;
-		try {
-			post = getPostFromRoomName(roomName);
-			count++;
-		} catch (NotFoundException e) {
-		}
-		try {
-			group = getGroupFromRoomName(roomName);
-			count++;
-		} catch (NotFoundException e) {
-		}
-		try {
-			trackHistory = getTrackHistoryFromRoomName(roomName);
-			count++;
-		} catch (NotFoundException e) {
-		}
-		
-		if (count > 1) {
-			// this should theoretically be very, very unlikely so we won't bother to fix it unless 
-			// it happens on production, and even then we could just munge the database instead of 
-			// bothering...
-			logger.error("GUID collision... we'll have to put a type marker in the room ID string");
-			// we'll just guess
-		}
-		
-		if (post != null)
-			return getChatRoomInfo(roomName, post);
-		else if (group != null)
-			return getChatRoomInfo(roomName, group);
-		else if (trackHistory != null)
-			return getChatRoomInfo(roomName, trackHistory);
-		else {
-			logger.debug("Room name {} doesn't correspond to a post or group, or user not allowed to see it", roomName);
-			return null;
-		}
-	}
-	
-	public List<ChatRoomMessage> getChatRoomMessages(String roomName, ChatRoomKind kind, long lastSeenSerial) {
-		switch (kind) {
-		case POST:
-			Post post;
-			try {
-				post = postingBoard.loadRawPost(SystemViewpoint.getInstance(), Guid.parseTrustedJabberId(roomName));
-			} catch (NotFoundException e) {
-				throw new RuntimeException("post chat not found", e);
-			}
-			return getChatRoomMessages(post, lastSeenSerial);
-		case GROUP:
-			Group group;
-			try {
-				group = groupSystem.lookupGroupById(SystemViewpoint.getInstance(), Guid.parseTrustedJabberId(roomName));
-			} catch (NotFoundException e) {
-				throw new RuntimeException("group chat not found", e);
-			}
-			return getChatRoomMessages(group, lastSeenSerial);
-		case MUSIC:
-			TrackHistory trackHistory;
-			try {
-				trackHistory = musicSystem.lookupTrackHistory(Guid.parseTrustedJabberId(roomName));
-			} catch (NotFoundException e) {
-				throw new RuntimeException("Track not found", e);
-			}
-			return getChatRoomMessages(trackHistory, lastSeenSerial);
-		}
-		throw new IllegalArgumentException("Bad chat room type");
-	}
-
-	public void addChatRoomMessage(String roomName, ChatRoomKind kind, String userName, String text, Sentiment sentiment, Date timestamp) {
-		Guid chatRoomId = Guid.parseTrustedJabberId(roomName);
-		User fromUser = getUserFromUsername(userName);
-		UserViewpoint viewpoint = new UserViewpoint(fromUser);
-		switch (kind) {
-		case POST:
-			Post post;
-			try {
-				post = postingBoard.loadRawPost(viewpoint, Guid.parseTrustedJabberId(roomName));
-			} catch (NotFoundException e) {
-				throw new RuntimeException("post chat not found", e);
-			}
-			postingBoard.addPostMessage(post, fromUser, text, sentiment, timestamp);
-			break;
-		case GROUP:
-			Group group;
-			try {
-				group = groupSystem.lookupGroupById(viewpoint, Guid.parseTrustedJabberId(roomName));
-			} catch (NotFoundException e) {
-				throw new RuntimeException("group chat not found", e);
-			}
-			groupSystem.addGroupMessage(group, fromUser, text, sentiment, timestamp);
-			break;
-		case MUSIC:
-			TrackHistory trackHistory;
-			try {
-				trackHistory = musicSystem.lookupTrackHistory(Guid.parseTrustedJabberId(roomName));
-			} catch (NotFoundException e) {
-				throw new RuntimeException("track not found", e);
-			}
-			musicSystem.addTrackMessage(trackHistory, fromUser, text, sentiment, timestamp);
-			break;
-		}
-		
-		LiveState.getInstance().queueUpdate(new ChatRoomEvent(chatRoomId, ChatRoomEvent.Detail.MESSAGES_CHANGED));
-	}
-
-	public boolean canJoinChat(String roomName, ChatRoomKind kind, String username) {
-		try {
-			User user = getUserFromUsername(username);
-			UserViewpoint viewpoint = new UserViewpoint(user);
-			if (kind == ChatRoomKind.POST) {
-				Post post = getPostFromRoomName(roomName);
-				return postingBoard.canViewPost(viewpoint, post);
-			} else if (kind == ChatRoomKind.GROUP) {
-				Group group = getGroupFromRoomName(roomName);
-				return groupSystem.isMember(group, user);
-			} else if (kind == ChatRoomKind.MUSIC) {
-				TrackHistory trackHistory = getTrackHistoryFromRoomName(roomName);
-				identitySpider.isViewerSystemOrFriendOf(viewpoint, trackHistory.getUser());
-				return true;
-			} else
-				throw new RuntimeException("Unknown chat room type " + kind);
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
-	}	
-	
 	public Map<String, String> getCurrentMusicInfo(String username) {
 		Map<String,String> musicInfo = new HashMap<String,String>();
 		
 		// would through an exception if the user does not exist
-		User user = getUserFromUsername(username);
+		User user = getUserFromGuid(Guid.parseTrustedJabberId(username));
 		try {
 			// because we are asking only for one recent track, we do not need to
 			// pass a viewpoint
