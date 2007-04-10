@@ -1031,6 +1031,9 @@ hippo_stack_manager_set_idle (HippoDataCache  *cache,
 
     manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
 
+    if (manager == NULL)
+        return;
+    
     manager->idle = idle != FALSE;
     
     if (idle)
