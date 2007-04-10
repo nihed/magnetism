@@ -7,15 +7,8 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
-import com.dumbhippo.persistence.BlockMessage;
 import com.dumbhippo.persistence.ChatMessage;
-import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.GroupMessage;
-import com.dumbhippo.persistence.Post;
-import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Sentiment;
-import com.dumbhippo.persistence.TrackHistory;
-import com.dumbhippo.persistence.TrackMessage;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -28,9 +21,9 @@ public interface ChatSystem {
 	 * @param lastSeenSerial return only messages with serials greater than this
 	 * @return the list of mesages, sorted by date (newest last)
 	 */
-	public List<BlockMessage> getBlockMessages(Block block, long lastSeenSerial);
+	public List<? extends ChatMessage> getMessages(Block block, long lastSeenSerial);
 	
-	public List<BlockMessage> getNewestBlockMessages(Block block, int maxResults);
+	public List<? extends ChatMessage> getNewestMessages(Block block, int maxResults);
 
 	/**
 	 * Get the total count of messages that were sent to the chatroom about this
@@ -39,76 +32,7 @@ public interface ChatSystem {
 	 * @param block the block to count the messages for
 	 * @return the total number of messages about this block
 	 */
-	public int getBlockMessageCount(Block block);
-	
-	/**
-	 * Get all messages that were posted in the chatroom about this post.
-	 * 
-	 * @param post the post the look up the messages for
-	 * @param lastSeenSerial return only messages with serials greater than this
-	 * @return the list of mesages, sorted by date (newest last)
-	 */
-	public List<PostMessage> getPostMessages(Post post, long lastSeenSerial);
-	
-	public List<PostMessage> getNewestPostMessages(Post post, int maxResults);
-
-	/**
-	 * Get the total count of messages that were sent to the chatroom about this
-	 * post.
-	 * 
-	 * @param post the post to count the messages for
-	 * @return the total number of messages about this post
-	 */
-	public int getPostMessageCount(Post post);
-	
-	/**
-	 * Get all messages that were posted in the chatroom about this group.
-	 * 
-	 * @param group the group the look up the messages for
-	 * @param lastSeenSerial return only messages with serials greater than this
-	 * @return the list of mesages, sorted by date (newest last)
-	 */
-	public List<GroupMessage> getGroupMessages(Group group, long lastSeenSerial);
-	
-	/**
-	 * Get up to maxResults newest messages in the group chat, sorted descending (newest first)
-	 * 
-	 * @param group
-	 * @param maxResults
-	 * @return
-	 */
-	public List<GroupMessage> getNewestGroupMessages(Group group, int maxResults);
-	
-	/**
-	 * Get the total number of messages sent to this group
-	 * 
-	 * @param group the group the look up the messages for
-	 * @return total number of messages
-	 */
-	public int getGroupMessageCount(Group group);
-
-	/**
-	 * Get all messages/quips that were sent about this TrackHistory
-	 * 
-	 * @param post the post the look up the messages for
-	 * @param lastSeenSerial return only messages with serials greater than this
-	 * @return the list of mesages, sorted by date (newest last)
-	 */
-	public List<TrackMessage> getTrackMessages(TrackHistory trackHistory, long lastSeenSerial);
-
-	/**
-	 * Get up to maxResults newest messages about this TrackHistory, sorted descending (newest first)
-	 * 
-  	 * @param post the post the look up the messages for
-	 * @param maxResults
-	 * @return the list of mesages, sorted by date (newest first)
-	 */
-	public List<TrackMessage> getNewestTrackMessages(TrackHistory trackHistory, int maxResults);
-	
-	/**
-	 * Get the total number of messages about this TrackHistory
-	 */
-	public int getTrackMessageCount(TrackHistory trackHistory);
+	public int getMessageCount(Block block);
 	
 	public List<ChatMessageView> viewMessages(List<? extends ChatMessage> messages, Viewpoint viewpoint);
 

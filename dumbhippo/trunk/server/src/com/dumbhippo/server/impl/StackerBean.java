@@ -40,15 +40,14 @@ import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.ChatMessage;
 import com.dumbhippo.persistence.FeedPost;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.GroupMember;
-import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Post;
-import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.StackFilterFlags;
 import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.StackReason;
@@ -1859,9 +1858,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		
 		// Now that PersonPostData is gone, we can no longer migrate it here...
 
-		List<PostMessage> messages = chatSystem.getNewestPostMessages(post, 1);
+		List<? extends ChatMessage> messages = chatSystem.getNewestMessages(block, 1);
 		if (messages.size() > 0) {
-			PostMessage m = messages.get(0);
+			ChatMessage m = messages.get(0);
 			long newestMessageTime = m.getTimestamp().getTime();
 			if (newestMessageTime > activity) {
 				activity = newestMessageTime;
@@ -1900,9 +1899,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		    logger.warn("UserBlockData for block {} and poster user {} was not found", block, post.getPoster());
 	    }
 	    // we want the ordering to be ascending by the timestamp to set the participation
-	    // timestamps in the right order, which is what getPostMessages should return
-		List<PostMessage> messages = chatSystem.getPostMessages(post, 0);
-		for (PostMessage message: messages) {
+	    // timestamps in the right order, which is what getMessages should return
+		for (ChatMessage message : chatSystem.getMessages(block, 0)) {
 			try {
 		        UserBlockData fromUserBlockData = queryUserBlockData(block, message.getFromUser());
 		        fromUserBlockData.setParticipatedTimestamp(message.getTimestamp());
@@ -1959,8 +1957,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	public void migrateGroupChat(String groupId) {
 		logger.debug("    migrating group chat for {}", groupId);
 		Group group = em.find(Group.class, groupId);
-		getOrCreateBlock(getGroupChatKey(group.getGuid()), group.isPublic());
-		List<GroupMessage> messages = chatSystem.getNewestGroupMessages(group, 1);
+		Block block = getOrCreateBlock(getGroupChatKey(group.getGuid()), group.isPublic());
+		List<? extends ChatMessage> messages = chatSystem.getNewestMessages(block, 1);
 		if (!messages.isEmpty()) {
 			stack(getGroupChatKey(group.getGuid()), messages.get(0).getTimestamp().getTime(), StackReason.CHAT_MESSAGE);
 		}
@@ -1980,8 +1978,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 		// try and catch blocks are per UserBlockData query, because we can still update the other
 		// UserBlackData(s) if one is not found
-		List<GroupMessage> messages = chatSystem.getGroupMessages(group, 0);
-		for (GroupMessage message: messages) {
+		for (ChatMessage message: chatSystem.getMessages(block, 0)) {
 			try {
 		        UserBlockData fromUserBlockData = queryUserBlockData(block, message.getFromUser());
 		        fromUserBlockData.setParticipatedTimestamp(message.getTimestamp());

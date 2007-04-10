@@ -18,7 +18,6 @@ import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.FeedPost;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Post;
-import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.StackFilterFlags;
 import com.dumbhippo.persistence.StackReason;
@@ -74,14 +73,14 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 			throw new BlockNotVisibleException("Post for the block wasn't visible", e);
 		}
 	    List<ChatMessageView> recentMessages = chatSystem.viewMessages(
-	        chatSystem.getNewestPostMessages(postView.getPost(), PostBlockView.RECENT_MESSAGE_COUNT),
+	        chatSystem.getNewestMessages(block, PostBlockView.RECENT_MESSAGE_COUNT),
 			viewpoint);
 	    
 		int messageCount;
 		if (recentMessages.size() < PostBlockView.RECENT_MESSAGE_COUNT) // Optimize out a query
 			messageCount = recentMessages.size();
 		else
-			messageCount = chatSystem.getPostMessageCount(postView.getPost());
+			messageCount = chatSystem.getMessageCount(block);
 			    
 	    blockView.populate(postView, recentMessages, messageCount);
 	}
@@ -133,11 +132,6 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 		block.setPublicBlock(post.isPublic() && !post.isDisabled());
 	}
 
-	public void onPostMessageCreated(PostMessage message) {
-		stacker.stack(getLookupOnlyKey(message.getPost()), message.getTimestamp().getTime(),
-				message.getFromUser(), true, StackReason.CHAT_MESSAGE);
-	}
-
 	public void onPostClicked(Post post, User user, long clickedTime) {
 		stacker.blockClicked(getLookupOnlyKey(post), user, clickedTime);
 	}
@@ -146,8 +140,9 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 		try {
 			return stacker.queryBlock(getLookupOnlyKey(post));
 		} catch (NotFoundException e) {
-			throw new RuntimeException("No Block found for Post {}, migration needed?", e);
+			throw new RuntimeException("No Block found for Post " + post.getId() + ", migration needed?", e);
 		}
+			
 	}
 	
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Post post) throws NotFoundException {

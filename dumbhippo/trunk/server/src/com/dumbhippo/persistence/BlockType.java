@@ -23,6 +23,11 @@ public enum BlockType {
 		public BlockOwnership getBlockOwnership() {
 			return BlockOwnership.INDIRECT_DATA2;
 		}
+		
+		@Override
+		public boolean isChatGroupParticipation() {
+			return true;
+		}
 	}, 
 	GROUP_MEMBER { // 1 
 		@Override
@@ -30,7 +35,12 @@ public enum BlockType {
 			return BlockOwnership.INDIRECT_DATA2;
 		}
 	},
-	GROUP_CHAT, // 2
+	GROUP_CHAT { // 2
+		@Override
+		public boolean isChatGroupParticipation() {
+			return true;
+		}
+	},
 	MUSIC_PERSON { // 3
 		@Override
 		public BlockOwnership getBlockOwnership() {
@@ -283,6 +293,12 @@ public enum BlockType {
     // inclusions
     public StackInclusion getDefaultStackInclusion() {
     	return StackInclusion.IN_ALL_STACKS;
+    }
+    
+    // return if chatting on a block of this type should count as
+    // participation in the group
+    public boolean isChatGroupParticipation() {
+    	return false;
     }
     
     /** returns true if the block keeps track of clicks */
