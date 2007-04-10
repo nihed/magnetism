@@ -83,7 +83,7 @@
     </mbean>
 
     <!-- The cluster singleton service for polling dynamic sources --> 
-    <mbean code="com.dumbhippo.mbean.DynamicPollingSystem" name="dumbhippo.com:service=DynamicPollingSystem">
+    <mbean code="com.dumbhippo.polling.DynamicPollingSystem" name="dumbhippo.com:service=DynamicPollingSystem">
     	<depends>jboss.j2ee:ear=dumbhippo.ear,jar=dumbhippo.ejb3,name=ConfigurationBean,service=EJB3</depends>    	
     	<depends>jboss.j2ee:ear=dumbhippo.ear,jar=dumbhippo.ejb3,name=PollingTaskPersistenceBean,service=EJB3</depends>
     </mbean>

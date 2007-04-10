@@ -12,11 +12,12 @@ import javax.persistence.Query;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
-import com.dumbhippo.mbean.DynamicPollingSystem.PollingTaskFamily;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.persistence.PicasaUpdateStatus;
+import com.dumbhippo.polling.PollResult;
+import com.dumbhippo.polling.PollingTask;
+import com.dumbhippo.polling.PollingTaskFamily;
 import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;

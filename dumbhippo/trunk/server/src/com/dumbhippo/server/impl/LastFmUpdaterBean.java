@@ -14,13 +14,14 @@ import javax.persistence.Query;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.mbean.DynamicPollingSystem;
-import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
-import com.dumbhippo.mbean.DynamicPollingSystem.PollingTaskFamily;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.LastFmUpdateStatus;
 import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.polling.PollResult;
+import com.dumbhippo.polling.PollingTask;
+import com.dumbhippo.polling.PollingTaskFamily;
+import com.dumbhippo.polling.PollingTaskNormalExecutionException;
 import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.LastFmUpdater;
 import com.dumbhippo.server.MusicSystemInternal;
@@ -181,7 +182,7 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 			try {
 				tracks = LastFmWebServices.getTracksForUser(username);
 			} catch (TransientServiceException e) {
-				throw new DynamicPollingSystem.PollingTaskNormalExecutionException(e);
+				throw new PollingTaskNormalExecutionException(e);
 			}
 			
 			LastFmUpdater updater = EJBUtil.defaultLookup(LastFmUpdater.class);

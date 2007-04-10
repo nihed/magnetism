@@ -33,9 +33,6 @@ import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.mbean.DynamicPollingSystem;
-import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
-import com.dumbhippo.mbean.DynamicPollingSystem.PollingTaskFamily;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
@@ -49,6 +46,10 @@ import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.polling.PollResult;
+import com.dumbhippo.polling.PollingTask;
+import com.dumbhippo.polling.PollingTaskFamily;
+import com.dumbhippo.polling.PollingTaskNormalExecutionException;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
@@ -922,7 +923,7 @@ public class FeedSystemBean implements FeedSystem {
 	private static class FeedTaskFamily implements PollingTaskFamily {
 
 		public long getDefaultPeriodicity() {
-			return 5 * 60 * 1000; // 5 minutes
+			return 30 * 60 * 1000; // 30 minutes
 		}
 
 		public long getMaxOutstanding() {
@@ -960,16 +961,16 @@ public class FeedSystemBean implements FeedSystem {
 				result = FeedSystemBean.getRawFeed(source);
 			} catch (FeedFetcher.FetchFailedException e) {
 				feedSystem.markFeedFailedLastUpdate(feed);
-				throw new DynamicPollingSystem.PollingTaskNormalExecutionException("Feed " + feed.getSource() + " fetch failed: " + e.getMessage(), e);
+				throw new PollingTaskNormalExecutionException("Feed " + feed.getSource() + " fetch failed: " + e.getMessage(), e);
 			}
 			final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
 			changed = runner.runTaskRetryingOnDuplicateEntry(new Callable<Boolean>() {
-				public Boolean call() throws DynamicPollingSystem.PollingTaskNormalExecutionException {
+				public Boolean call() throws PollingTaskNormalExecutionException {
 					try {
 						return feedSystem.storeRawUpdatedFeed(feed.getId(), result.getFeed());
 					} catch (FeedLinkUnknownException e) {
 						feedSystem.markFeedFailedLastUpdate(feed);
-						throw new DynamicPollingSystem.PollingTaskNormalExecutionException("Feed " + feed.getSource() + " link unknown: " + e.getMessage(), e);						
+						throw new PollingTaskNormalExecutionException("Feed " + feed.getSource() + " link unknown: " + e.getMessage(), e);						
 					}
 				}
 			});
