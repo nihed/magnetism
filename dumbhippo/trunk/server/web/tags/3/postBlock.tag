@@ -26,7 +26,7 @@
 	    <dht3:blockDescription blockId="${blockId}" literalBody="${chatHeader}">${block.postView.textAsHtml}</dht3:blockDescription>   
         <c:if test="${!chatHeader}">
 			<dht3:blockContent blockId="${blockId}">
-				<dht3:chatPreview block="${block}" chatId="${block.postView.post.id}" chatKind="group" chattingCount="${block.postView.chattingUserCount}"/>
+				<dht3:chatPreview block="${block}"/>
 			</dht3:blockContent>		    
 		</c:if>
 	</dht3:blockLeft>

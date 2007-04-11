@@ -51,10 +51,7 @@ public class EntityListTag extends SimpleTagSupport {
 		} else if (o instanceof GroupView) {
 			// TODO: Finish this, including accompanying GroupView work
 		} else if (o instanceof PostView) {
-			PostView postView = (PostView)o;
-			if (postView.isChatRoomActive()) {
-				returnString = "<a href='javascript:dh.actions.requestJoinRoom(\"" + postView.getPost().getId() + "\")' alt=\"" + postView.getChatRoomMembers() + "\"><img src=\"/images/online.gif\" height=16 width=16 border=0 valign=center></a>";
-			}
+			// We don't use this anymore
 		}
 		
 		return returnString;

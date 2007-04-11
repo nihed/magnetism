@@ -112,4 +112,9 @@ public class MusicPersonBlockView extends AbstractPersonBlockView implements Mus
 			return null;
 		}
 	}
+	
+	@Override
+	public String getChatKind() {
+		return "music";
+	}
 }

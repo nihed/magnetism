@@ -9,6 +9,7 @@ import com.dumbhippo.Thumbnail;
 import com.dumbhippo.Thumbnails;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.FeedEntry;
@@ -378,5 +379,20 @@ public abstract class BlockView implements ObjectView {
 			return block.getId();
 		else
 			return null;
+	}
+	
+	public String getChatKind() {
+		if (block.getBlockType().isDirectlyChattable())
+			return "block";
+		else
+			return null;
+	}
+	
+	public int getChattingCount() {
+		String chatId = getChatId();
+		if (chatId != null)
+			return PresenceService.getInstance().getPresentUsers("/rooms/" + chatId, 2).size();
+		else
+			return 0;
 	}
 }

@@ -15,7 +15,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.FeedPost;
 import com.dumbhippo.persistence.Post;
@@ -234,21 +233,6 @@ public class PostView implements ObjectView {
 	
 	public boolean isIgnored() {
 		return ignored;
-	}
-	
-	public String getChatRoomMembers() {
-		return "Start chatting";
-
-//      return "Start a new chat!";
-//		String memberlist = "Join chat with ";
-//		for (ChatRoomScreenName mem: members) {
-//			memberlist = memberlist + mem.getScreenName() + " ";
-//		}
-//				return memberlist;
-	}
-
-	public int getChattingUserCount() {
-		return PresenceService.getInstance().getPresentUsers("/rooms/" + post.getId(), 2).size();
 	}
 	
 	public Collection<String> getSearchTerms() {
