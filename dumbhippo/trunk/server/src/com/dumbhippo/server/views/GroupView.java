@@ -11,7 +11,6 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.LiveGroup;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
@@ -27,11 +26,10 @@ import com.dumbhippo.persistence.VersionedEntity;
  * this object access pre-computed data.
  */ 
  public class GroupView extends EntityView {
-	 Group group;
-	 GroupMember groupMember;
-	 Set<PersonView> inviters;
-	 int chattingUserCount;
-	 Viewpoint viewpoint;
+	 private Group group;
+	 private GroupMember groupMember;
+	 private Set<PersonView> inviters;
+	 private Viewpoint viewpoint;
 	 
 	 public GroupView(Viewpoint viewpoint, Group group, GroupMember groupMember, Set<PersonView> inviters) {
          this.viewpoint = viewpoint;
@@ -250,9 +248,5 @@ import com.dumbhippo.persistence.VersionedEntity;
 
 	public GroupMember getGroupMember() {
 		return groupMember;
-	}
-	
-	public int getChattingUserCount() {
-		return PresenceService.getInstance().getPresentUsers("/rooms/" + group.getId(), 2).size();
 	}
 }

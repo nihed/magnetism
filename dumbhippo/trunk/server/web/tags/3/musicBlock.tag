@@ -70,7 +70,7 @@
 				</table>
 				<dht3:blockContent blockId="${blockId}">
 					<c:if test="${!chatHeader}">
-						<dht3:chatPreview block="${block}" chatId="${track.playId}" chatKind="music" chattingCount="0" showChatLink="${false}"/>
+						<dht3:chatPreview block="${block}"/>
 					</c:if>
 					<c:forEach items="${block.oldTracks}" var="track">
 						<div class="dh-music-block-history-item">

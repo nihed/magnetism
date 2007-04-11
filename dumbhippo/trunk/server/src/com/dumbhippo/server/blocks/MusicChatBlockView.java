@@ -100,4 +100,9 @@ public class MusicChatBlockView extends AbstractPersonBlockView implements Music
 	public String getChatId() {
 		return trackView.getPlayId();
 	}
+	
+	@Override
+	public String getChatKind() {
+		return "music";
+	}
 }

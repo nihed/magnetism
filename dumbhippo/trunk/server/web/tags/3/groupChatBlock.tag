@@ -24,7 +24,7 @@
         </c:if>
         <c:if test="${!chatHeader}">
 			<dht3:blockContent blockId="${blockId}">
-				<dht3:chatPreview block="${block}" chatId="${block.groupView.group.id}" chatKind="group" chattingCount="${block.groupView.chattingUserCount}"/>
+				<dht3:chatPreview block="${block}"/>
 			</dht3:blockContent>
 		</c:if>
 	</dht3:blockLeft>

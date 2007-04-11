@@ -18,6 +18,11 @@
 		<c:if test="${!oneLine && hasDescription}">
 			<dht3:blockDescription blockId="${blockId}" literalBody="${chatHeader}">${block.descriptionAsHtml}</dht3:blockDescription>
 		</c:if>
+        <c:if test="${!chatHeader && !empty block.chatId}">
+			<dht3:blockContent blockId="${blockId}">
+				<dht3:chatPreview block="${block}"/>
+			</dht3:blockContent>		    
+		</c:if>
 	</dht3:blockLeft>
 	<dht3:blockRight blockId="${blockId}" from="${block.entitySource}" showFrom="${showFrom}" chatHeader="${chatHeader}">
 		<c:choose>
