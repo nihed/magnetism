@@ -181,6 +181,11 @@ hippo_block_music_person_update_from_xml (HippoBlock           *block,
             track_history = g_slist_prepend(track_history, g_object_ref(track));
     }
 
+    if (track_history) {
+        HippoTrack *track = track_history->data;
+        hippo_block_set_chat_id(block, hippo_track_get_play_id(track));
+    }
+
     hippo_block_music_person_set_track_history(block_music_person, track_history);
 
     g_slist_foreach(track_history, (GFunc)g_object_unref, NULL);

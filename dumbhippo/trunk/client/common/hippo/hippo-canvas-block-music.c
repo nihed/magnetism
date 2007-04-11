@@ -4,7 +4,7 @@
 #include "hippo-canvas-block.h"
 #include "hippo-canvas-block-music.h"
 #include "hippo-canvas-chat-preview.h"
-#include "hippo-canvas-message-preview.h"
+#include "hippo-canvas-last-message-preview.h"
 #include "hippo-canvas-quipper.h"
 #include "hippo-canvas-timestamp.h"
 #include "hippo-canvas-url-image.h"
@@ -212,15 +212,14 @@ hippo_canvas_block_music_append_content_items (HippoCanvasBlock *block,
                                         NULL);
     hippo_canvas_box_append(beside_box, block_music->quipper, 0);
 
-    block_music->single_message_preview = g_object_new(HIPPO_TYPE_CANVAS_MESSAGE_PREVIEW,
-                                                       "actions", hippo_canvas_block_get_actions(block),
-                                                       NULL);
+    block_music->last_message_preview = g_object_new(HIPPO_TYPE_CANVAS_LAST_MESSAGE_PREVIEW,
+                                                     "actions", hippo_canvas_block_get_actions(block),
+                                                     NULL);
 
-    hippo_canvas_box_append(beside_box, block_music->single_message_preview, 0);
+    hippo_canvas_box_append(beside_box, block_music->last_message_preview, 0);
     
     block_music->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
                                              "actions", hippo_canvas_block_get_actions(block),
-                                             "message-count", 0,
                                              NULL);
 
     hippo_canvas_box_append(parent_box, block_music->chat_preview, 0);
@@ -251,7 +250,6 @@ set_track(HippoCanvasBlockMusic *block_music,
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_music);
     HippoActions *actions = hippo_canvas_block_get_actions(canvas_block);
-    const char *chat_id = NULL;
     char *title = NULL;
 
     if (track == block_music->track)
@@ -365,7 +363,6 @@ set_track(HippoCanvasBlockMusic *block_music,
                                     link, 0);
         }
 
-        chat_id = hippo_track_get_play_id(track);
         title = hippo_track_get_display_title(track);
         
         g_free(artist);
@@ -376,11 +373,7 @@ set_track(HippoCanvasBlockMusic *block_music,
         hippo_canvas_box_remove_all(block_music->downloads_box);
     }
 
-    g_object_set(G_OBJECT(block_music->chat_preview),
-                 "chat-id", chat_id,
-                 NULL);
     g_object_set(G_OBJECT(block_music->quipper),
-                 "chat-id", chat_id,
                  "title", title,
                  NULL);
 
@@ -479,36 +472,6 @@ hippo_canvas_block_music_set_track_history(HippoCanvasBlockMusic *block_music,
     }
 }
 
-void 
-hippo_canvas_block_music_set_recent_messages(HippoCanvasBlockMusic *block_music,
-                                             GSList                *recent_messages)
-{
-    HippoChatMessage *last_message = NULL;
-
-    if (recent_messages)
-        last_message = recent_messages->data;
-
-    g_object_set(G_OBJECT(block_music->chat_preview),
-                 "recent-messages", recent_messages,
-                 NULL);
-    g_object_set(G_OBJECT(block_music->single_message_preview),
-                 "message", last_message,
-                 NULL);
-
-    block_music->have_messages = last_message != NULL;
-
-    hippo_canvas_block_music_update_visibility(block_music);
-}
-
-void
-hippo_canvas_block_music_set_message_count(HippoCanvasBlockMusic *block_music,
-                                           int                    message_count)
-{
-    g_object_set(G_OBJECT(block_music->chat_preview),
-                 "message-count", message_count,
-                 NULL);
-}
-
 static void
 on_user_changed(HippoBlock *block,
                 GParamSpec *arg, /* null when first calling this */
@@ -529,6 +492,8 @@ static void
 hippo_canvas_block_music_set_block(HippoCanvasBlock *canvas_block,
                                    HippoBlock       *block)
 {
+    HippoCanvasBlockMusic *block_music = HIPPO_CANVAS_BLOCK_MUSIC(canvas_block);
+
     /* g_debug("canvas-block-music-person set block %p", block); */
 
     if (block == canvas_block->block)
@@ -543,14 +508,23 @@ hippo_canvas_block_music_set_block(HippoCanvasBlock *canvas_block,
     /* Chain up to get the block really changed */
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_music_parent_class)->set_block(canvas_block, block);
 
+    g_object_set(G_OBJECT(block_music->quipper),
+                 "block", canvas_block->block,
+                 NULL);
+    g_object_set(G_OBJECT(block_music->last_message_preview),
+                 "block", canvas_block->block,
+                 NULL);
+    g_object_set(G_OBJECT(block_music->chat_preview),
+                 "block", canvas_block->block,
+                 NULL);
+
     if (canvas_block->block != NULL) {
         g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::user",
                          G_CALLBACK(on_user_changed),
                          canvas_block);
 
-        on_user_changed(canvas_block->block, NULL,
-                        HIPPO_CANVAS_BLOCK_MUSIC(canvas_block));
+        on_user_changed(canvas_block->block, NULL, block_music);
     }
 }
 
@@ -578,9 +552,15 @@ static void
 hippo_canvas_block_music_update_visibility(HippoCanvasBlockMusic *block_music)
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_music);
+    HippoStackReason stack_reason;
     
-    hippo_canvas_item_set_visible(block_music->single_message_preview,
-                                  !canvas_block->expanded && block_music->have_messages);
+    if (canvas_block->block)
+        stack_reason = hippo_block_get_stack_reason(canvas_block->block);
+    else
+        stack_reason = HIPPO_STACK_BLOCK_UPDATE;
+
+    hippo_canvas_item_set_visible(block_music->last_message_preview,
+                                  !canvas_block->expanded && stack_reason == HIPPO_STACK_CHAT_MESSAGE);
     hippo_canvas_item_set_visible(block_music->chat_preview,
                                   canvas_block->expanded);
     hippo_canvas_item_set_visible(HIPPO_CANVAS_ITEM(block_music->downloads_box),

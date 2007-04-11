@@ -28,8 +28,6 @@ static void hippo_block_post_get_property (GObject      *object,
 struct _HippoBlockPost {
     HippoBlock       parent;
     HippoPost       *post;
-
-    GSList *recent_messages;
 };
 
 struct _HippoBlockPostClass {
@@ -46,8 +44,7 @@ static int signals[LAST_SIGNAL];
 
 enum {
     PROP_0,
-    PROP_POST,
-    PROP_RECENT_MESSAGES
+    PROP_POST
 };
 
 G_DEFINE_TYPE(HippoBlockPost, hippo_block_post, HIPPO_TYPE_BLOCK);
@@ -78,12 +75,6 @@ hippo_block_post_class_init(HippoBlockPostClass *klass)
                                                         _("Post displayed in the block"),
                                                         HIPPO_TYPE_POST,
                                                         G_PARAM_READABLE));
-    g_object_class_install_property(object_class,
-                                    PROP_RECENT_MESSAGES,
-                                    g_param_spec_pointer("recent-messages",
-                                                         _("Recent Messages"),
-                                                         _("Recent Messages in the Post's Chat Room"),
-                                                         G_PARAM_READABLE));
 }
 
 static void
@@ -115,31 +106,11 @@ set_post(HippoBlockPost *block_post,
 }
 
 static void
-set_recent_messages(HippoBlockPost  *block_post,
-                    GSList          *recent_messages)
-{
-    GSList *l;
-    
-    g_slist_foreach(block_post->recent_messages, (GFunc)hippo_chat_message_free, NULL);
-    g_slist_free(block_post->recent_messages);
-    block_post->recent_messages = NULL;
-    
-    for (l = recent_messages; l; l = l->next) {
-        block_post->recent_messages = g_slist_prepend(block_post->recent_messages, hippo_chat_message_copy(l->data));
-    }
-
-    block_post->recent_messages = g_slist_reverse(block_post->recent_messages);
-
-    g_object_notify(G_OBJECT(block_post), "recent-messages");
-}
-
-static void
 hippo_block_post_dispose(GObject *object)
 {
     HippoBlockPost *block_post = HIPPO_BLOCK_POST(object);
 
     set_post(block_post, NULL);
-    set_recent_messages(block_post, NULL);
     
     G_OBJECT_CLASS(hippo_block_post_parent_class)->dispose(object); 
 }
@@ -162,9 +133,6 @@ hippo_block_post_set_property(GObject         *object,
     case PROP_POST:
         set_post(block_post, (HippoPost*) g_value_get_object(value));
         break;
-    case PROP_RECENT_MESSAGES:
-        set_recent_messages(block_post, g_value_get_pointer(value));
-        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -183,9 +151,6 @@ hippo_block_post_get_property(GObject         *object,
     case PROP_POST:
         g_value_set_object(value, G_OBJECT(block_post->post));
         break;
-    case PROP_RECENT_MESSAGES:
-        g_value_set_pointer(value, block_post->recent_messages);
-        break;        
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -201,8 +166,6 @@ hippo_block_post_update_from_xml (HippoBlock           *block,
     LmMessageNode *post_node;
     HippoPost *post;
     LmMessageNode *recent_messages_node = NULL;
-    LmMessageNode *subchild;
-    GSList *recent_messages = NULL;
 
     if (!HIPPO_BLOCK_CLASS(hippo_block_post_parent_class)->update_from_xml(block, cache, node))
         return FALSE;
@@ -218,27 +181,12 @@ hippo_block_post_update_from_xml (HippoBlock           *block,
                          NULL))
         return FALSE;
 
-        
-    for (subchild = recent_messages_node->children; subchild; subchild = subchild->next) {
-        HippoChatMessage *chat_message;
-        
-        if (!strcmp(subchild->name, "message") == 0)
-            continue;
-        
-        chat_message = hippo_chat_message_new_from_xml(cache, subchild);
-        if (!chat_message)
-            continue;
-        
-        recent_messages = g_slist_prepend(recent_messages, chat_message);
-    }
+    if (!hippo_block_set_recent_messages_from_xml(block, cache, recent_messages_node))
+        return FALSE;
     
-    recent_messages = g_slist_reverse(recent_messages);
+    hippo_block_set_chat_id(block, hippo_post_get_guid(post));
     
     set_post(block_post, post);
-    set_recent_messages(block_post, recent_messages);
-
-    g_slist_foreach(recent_messages, (GFunc)hippo_chat_message_free, NULL);
-    g_slist_free(recent_messages);
 
     return TRUE;
 }

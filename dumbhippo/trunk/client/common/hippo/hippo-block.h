@@ -60,10 +60,12 @@ struct _HippoBlock {
     int significant_clicked_count;
     int clicked_count;
     int message_count;
+    char *chat_id;
     char *icon_url;
     char *title;
     char *title_link;
     HippoStackReason stack_reason;
+    GSList *recent_messages;
     guint is_feed : 1;
     guint is_mine : 1;
     guint clicked : 1;
@@ -140,7 +142,19 @@ void     hippo_block_set_is_mine           (HippoBlock *block,
 HippoStackReason hippo_block_get_stack_reason (HippoBlock      *block);
 void             hippo_block_set_stack_reason (HippoBlock      *block,
                                                HippoStackReason value);
-                                               
+
+GSList * hippo_block_get_recent_messages(HippoBlock *block);
+void     hippo_block_set_recent_messages(HippoBlock *block,
+                                         GSList     *recent_messages);
+
+/* For subclassses that support legacy recentMessages nodes not in the toplevel */
+gboolean hippo_block_set_recent_messages_from_xml (HippoBlock     *block,
+                                                   HippoDataCache *cache,
+                                                   LmMessageNode  *node);
+    
+const char * hippo_block_get_chat_id       (HippoBlock *block);
+void         hippo_block_set_chat_id       (HippoBlock *block,
+                                            const char *chat_id);
 guint    hippo_block_get_filter_flags      (HippoBlock *block);
 void     hippo_block_set_filter_flags      (HippoBlock *block, guint flags);
 
