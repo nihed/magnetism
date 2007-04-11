@@ -35,23 +35,6 @@ static void hippo_canvas_message_preview_set_actions (HippoCanvasMessagePreview 
 static void hippo_canvas_message_preview_set_hushed  (HippoCanvasMessagePreview *message_preview,
                                                       gboolean                   value);
 
-struct _HippoCanvasMessagePreview {
-    HippoCanvasBox parent;
-    
-    HippoChatMessage *message;
-    HippoActions *actions;
-    unsigned int hushed : 1;
-
-    HippoCanvasItem *icon;
-    HippoCanvasItem *message_text;
-    HippoCanvasItem *entity_name;
-    HippoCanvasItem *time_ago;
-};
-
-struct _HippoCanvasMessagePreviewClass {
-    HippoCanvasBoxClass parent_class;
-};
-
 #if 0
 enum {
     NO_SIGNALS_YET,

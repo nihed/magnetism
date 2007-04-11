@@ -3,14 +3,14 @@
 #include <hippo/hippo-post.h>
 #include "hippo-canvas-block.h"
 #include "hippo-canvas-block-post.h"
+#include "hippo-canvas-chat-preview.h"
+#include "hippo-canvas-last-message-preview.h"
 #include "hippo-canvas-quipper.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-text.h>
 #include <hippo/hippo-canvas-gradient.h>
 #include <hippo/hippo-canvas-link.h>
-#include <hippo/hippo-canvas-message-preview.h>
-#include <hippo/hippo-canvas-chat-preview.h>
 
 static void      hippo_canvas_block_post_init                (HippoCanvasBlockPost       *block);
 static void      hippo_canvas_block_post_class_init          (HippoCanvasBlockPostClass  *klass);
@@ -67,12 +67,10 @@ struct _HippoCanvasBlockPost {
     HippoCanvasItem *description_item;
     HippoCanvasItem *reason_item;
     HippoCanvasItem *quipper;
-    HippoCanvasItem *single_message_preview;
+    HippoCanvasItem *last_message_preview;
     HippoCanvasItem *details_box;
     HippoCanvasItem *chat_preview;
     HippoCanvasItem *faves_link;
-
-    guint have_messages : 1;
 };
 
 struct _HippoCanvasBlockPostClass {
@@ -224,11 +222,11 @@ hippo_canvas_block_post_append_content_items (HippoCanvasBlock *block,
     hippo_canvas_item_set_visible(block_post->quipper,
                                   FALSE); /* no messages yet */
 
-    block_post->single_message_preview = g_object_new(HIPPO_TYPE_CANVAS_MESSAGE_PREVIEW,
-                                                      "actions", hippo_canvas_block_get_actions(block),
-                                                      NULL);
-    hippo_canvas_box_append(parent_box, block_post->single_message_preview, 0);
-    hippo_canvas_item_set_visible(block_post->single_message_preview,
+    block_post->last_message_preview = g_object_new(HIPPO_TYPE_CANVAS_LAST_MESSAGE_PREVIEW,
+                                                    "actions", hippo_canvas_block_get_actions(block),
+                                                    NULL);
+    hippo_canvas_box_append(parent_box, block_post->last_message_preview, 0);
+    hippo_canvas_item_set_visible(block_post->last_message_preview,
                                   FALSE); /* no messages yet */
 
     block_post->details_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
@@ -300,53 +298,11 @@ on_block_post_post_changed(HippoBlock *block,
 }
 
 static void
-on_block_post_recent_messages_changed(HippoBlock *block,
-                                      GParamSpec *arg, /* null when first calling this */
-                                      void       *data)
-{
-    HippoCanvasBlockPost *canvas_block_post = HIPPO_CANVAS_BLOCK_POST(data);
-    HippoChatMessage *last_message;
-    GSList *messages;
-
-    last_message = NULL;
-    messages = NULL;
-    g_object_get(G_OBJECT(block),
-                 "recent-messages", &messages,
-                 NULL);
-        
-    if (messages)
-        last_message = messages->data;
-    
-    g_object_set(G_OBJECT(canvas_block_post->chat_preview),
-                 "recent-messages", messages,
-                 NULL);
-    g_object_set(G_OBJECT(canvas_block_post->single_message_preview),
-                 "message", last_message,
-                 NULL);
-        
-    canvas_block_post->have_messages = last_message != NULL;
-
-    hippo_canvas_block_post_update_visibility(canvas_block_post);
-}
-
-static void
-on_message_count_changed(HippoBlock *block,
-                         GParamSpec *arg, /* null when first calling this */
-                         HippoCanvasBlockPost *canvas_block_post)
-{
-    int message_count = -1;
-
-    g_object_get(block, "message-count", &message_count, NULL);
-    
-    g_object_set(G_OBJECT(canvas_block_post->chat_preview),
-                 "message-count", message_count,
-                 NULL);
-}
-
-static void
 hippo_canvas_block_post_set_block(HippoCanvasBlock *canvas_block,
                                   HippoBlock       *block)
 {
+    HippoCanvasBlockPost *block_post = HIPPO_CANVAS_BLOCK_POST(canvas_block);
+
     /* g_debug("canvas-block-post set block %p", block); */
     
     if (block == canvas_block->block)
@@ -356,35 +312,28 @@ hippo_canvas_block_post_set_block(HippoCanvasBlock *canvas_block,
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_block_post_post_changed),
                                              canvas_block);
-        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
-                                             G_CALLBACK(on_block_post_recent_messages_changed),
-                                             canvas_block);
-        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
-                                             G_CALLBACK(on_message_count_changed),
-                                             canvas_block);
     }
     
     /* Chain up to get the block really changed */
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_post_parent_class)->set_block(canvas_block, block);
 
+    g_object_set(block_post->quipper,
+                 "block", canvas_block->block,
+                 NULL);
+    g_object_set(block_post->last_message_preview,
+                 "block", canvas_block->block,
+                 NULL);
+    g_object_set(block_post->chat_preview,
+                 "block", canvas_block->block,
+                 NULL);
+    
     if (canvas_block->block != NULL) {
         g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::post",
                          G_CALLBACK(on_block_post_post_changed),
                          canvas_block);
-        g_signal_connect(G_OBJECT(canvas_block->block),
-                         "notify::recent-messages",
-                         G_CALLBACK(on_block_post_recent_messages_changed),
-                         canvas_block);
-        g_signal_connect(G_OBJECT(canvas_block->block),
-                         "notify::message-count",
-                         G_CALLBACK(on_message_count_changed),
-                         canvas_block);
         
         on_block_post_post_changed(canvas_block->block, NULL, canvas_block);
-        on_block_post_recent_messages_changed(canvas_block->block, NULL, canvas_block);
-        on_message_count_changed(canvas_block->block, NULL,
-                                 HIPPO_CANVAS_BLOCK_POST(canvas_block));
     }
 }
 
@@ -407,11 +356,7 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
         g_object_set(G_OBJECT(canvas_block_post->description_item),
                      "text", NULL,
                      NULL);
-        g_object_set(G_OBJECT(canvas_block_post->chat_preview),
-                     "chat-id", NULL,
-                     NULL);
         g_object_set(G_OBJECT(canvas_block_post->quipper),
-                     "chat-id", NULL,
                      "title", NULL,
                      NULL);
     } else {
@@ -429,11 +374,7 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
                      "text", hippo_post_get_description(post),
                      NULL);
 
-        g_object_set(G_OBJECT(canvas_block_post->chat_preview),
-                     "chat-id", hippo_post_get_guid(post),
-                     NULL);
         g_object_set(G_OBJECT(canvas_block_post->quipper),
-                     "chat-id", hippo_post_get_guid(post),
                      "title", hippo_post_get_title(post),
                      NULL);
     }
@@ -582,7 +523,7 @@ hippo_canvas_block_post_update_visibility(HippoCanvasBlockPost *block_post)
                  "size-mode", canvas_block->expanded ? HIPPO_CANVAS_SIZE_WRAP_WORD : HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                  NULL);
     
-    show_single_message = !canvas_block->expanded && stack_reason == HIPPO_STACK_CHAT_MESSAGE && block_post->have_messages;
+    show_single_message = !canvas_block->expanded && stack_reason == HIPPO_STACK_CHAT_MESSAGE;
     show_reason = stack_reason == HIPPO_STACK_VIEWER_COUNT;
     show_description = canvas_block->expanded || (!show_single_message && !show_reason);
 
@@ -590,7 +531,7 @@ hippo_canvas_block_post_update_visibility(HippoCanvasBlockPost *block_post)
                                   show_description);
     hippo_canvas_item_set_visible(block_post->reason_item,
                                   show_reason);
-    hippo_canvas_item_set_visible(block_post->single_message_preview,
+    hippo_canvas_item_set_visible(block_post->last_message_preview,
                                   show_single_message);
 }
 

@@ -14,7 +14,7 @@
  * state of the block.
  */
 
-#include <hippo/hippo-canvas-item.h>
+#include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-chat-room.h>
 
 G_BEGIN_DECLS
@@ -28,6 +28,23 @@ typedef struct _HippoCanvasMessagePreviewClass HippoCanvasMessagePreviewClass;
 #define HIPPO_IS_CANVAS_MESSAGE_PREVIEW(object)        (G_TYPE_CHECK_INSTANCE_TYPE ((object), HIPPO_TYPE_CANVAS_MESSAGE_PREVIEW))
 #define HIPPO_IS_CANVAS_MESSAGE_PREVIEW_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_MESSAGE_PREVIEW))
 #define HIPPO_CANVAS_MESSAGE_PREVIEW_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_MESSAGE_PREVIEW, HippoCanvasMessagePreviewClass))
+
+struct _HippoCanvasMessagePreview {
+    HippoCanvasBox parent;
+    
+    HippoChatMessage *message;
+    HippoActions *actions;
+    unsigned int hushed : 1;
+
+    HippoCanvasItem *icon;
+    HippoCanvasItem *message_text;
+    HippoCanvasItem *entity_name;
+    HippoCanvasItem *time_ago;
+};
+
+struct _HippoCanvasMessagePreviewClass {
+    HippoCanvasBoxClass parent_class;
+};
 
 GType            hippo_canvas_message_preview_get_type    (void) G_GNUC_CONST;
 

@@ -3,14 +3,14 @@
 #include <hippo/hippo-group.h>
 #include "hippo-canvas-block.h"
 #include "hippo-canvas-block-group-chat.h"
+#include "hippo-canvas-chat-preview.h"
+#include "hippo-canvas-last-message-preview.h"
+#include "hippo-canvas-quipper.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
-#include <hippo/hippo-canvas-quipper.h>
 #include <hippo/hippo-canvas-text.h>
 #include <hippo/hippo-canvas-gradient.h>
 #include <hippo/hippo-canvas-link.h>
-#include <hippo/hippo-canvas-chat-preview.h>
-#include <hippo/hippo-canvas-message-preview.h>
 
 static void      hippo_canvas_block_group_chat_init                (HippoCanvasBlockGroupChat       *block);
 static void      hippo_canvas_block_group_chat_class_init          (HippoCanvasBlockGroupChatClass  *klass);
@@ -44,10 +44,8 @@ static void hippo_canvas_block_group_update_visibility(HippoCanvasBlockGroupChat
 struct _HippoCanvasBlockGroupChat {
     HippoCanvasBlock canvas_block;
     HippoCanvasItem *quipper;
-    HippoCanvasItem *single_message_preview;
+    HippoCanvasItem *last_message_preview;
     HippoCanvasItem *chat_preview;
-
-    guint have_messages : 1;
 };
 
 struct _HippoCanvasBlockGroupChatClass {
@@ -162,6 +160,9 @@ hippo_canvas_block_group_chat_append_content_items (HippoCanvasBlock *block,
     HippoCanvasBlockGroupChat *block_group_chat = HIPPO_CANVAS_BLOCK_GROUP_CHAT(block);
         
     hippo_canvas_block_set_heading(block, _("Group Chat"));
+    hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(block_group_chat),
+                                 "New chat activity",
+                                 "Click to join group chat", FALSE);
 
     block_group_chat->quipper = g_object_new(HIPPO_TYPE_CANVAS_QUIPPER,
                                              "actions", hippo_canvas_block_get_actions(block),
@@ -171,13 +172,13 @@ hippo_canvas_block_group_chat_append_content_items (HippoCanvasBlock *block,
     hippo_canvas_item_set_visible(block_group_chat->quipper,
                                   FALSE); /* not expanded at first */
 
-    block_group_chat->single_message_preview = g_object_new(HIPPO_TYPE_CANVAS_MESSAGE_PREVIEW,
-                                                           "actions", hippo_canvas_block_get_actions(block),
-                                                           NULL);
+    block_group_chat->last_message_preview = g_object_new(HIPPO_TYPE_CANVAS_LAST_MESSAGE_PREVIEW,
+                                                          "actions", hippo_canvas_block_get_actions(block),
+                                                          NULL);
     hippo_canvas_box_append(parent_box,
-                            block_group_chat->single_message_preview, 0);
-    hippo_canvas_item_set_visible(block_group_chat->single_message_preview,
-                                  TRUE); /* not expanded at first */
+                            block_group_chat->last_message_preview, 0);
+    hippo_canvas_item_set_visible(block_group_chat->last_message_preview,
+                                  TRUE); /* initially expanded */
 
     
     block_group_chat->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
@@ -190,42 +191,6 @@ hippo_canvas_block_group_chat_append_content_items (HippoCanvasBlock *block,
     hippo_canvas_item_set_visible(block_group_chat->chat_preview,
                                   FALSE); /* not expanded at first */
 
-}
-
-static void
-update_chat_messages(HippoCanvasBlockGroupChat *canvas_group_chat)
-{
-    HippoBlock *block;
-    HippoCanvasBlock *canvas_block;
-    HippoChatMessage *last_message = NULL;
-    GSList *messages;
-    
-    canvas_block = HIPPO_CANVAS_BLOCK(canvas_group_chat);
-    block = canvas_block->block;
-    g_assert(block != NULL);
-
-    /* FIXME the title should probably be something like "N people chatting" or
-     * "N messages" but we don't have that info yet
-     */
-    hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_group_chat),
-                                 "New chat activity",
-                                 "Click to join group chat", FALSE);
-    
-    g_object_get(G_OBJECT(block), "recent-messages", &messages, NULL);
-    
-    if (messages)
-        last_message = messages->data;
-
-    g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
-                 "recent-messages", messages,
-                 NULL);
-    g_object_set(G_OBJECT(canvas_group_chat->single_message_preview),
-                 "message", last_message,
-                 NULL);
-
-    canvas_group_chat->have_messages = last_message != NULL;
-
-    hippo_canvas_block_group_update_visibility(canvas_group_chat);
 }
 
 static void
@@ -242,19 +207,11 @@ on_group_changed(HippoBlock *block,
     g_object_get(G_OBJECT(block), "group", &group, NULL);
 
     if (group == NULL) {
-        g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
-                     "chat-id", NULL,
-                     NULL);
         g_object_set(G_OBJECT(canvas_group_chat->quipper),
-                     "chat-id", NULL,
                      "title", NULL,
                      NULL);
     } else {
-        g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
-                     "chat-id", hippo_entity_get_guid(HIPPO_ENTITY(group)),
-                     NULL);
         g_object_set(G_OBJECT(canvas_group_chat->quipper),
-                     "chat-id", hippo_entity_get_guid(HIPPO_ENTITY(group)),
                      "title", hippo_entity_get_name(HIPPO_ENTITY(group)),
                      NULL);
                                      
@@ -266,43 +223,17 @@ on_group_changed(HippoBlock *block,
 }
 
 static void
-on_recent_messages_changed(HippoBlock *block,
-                           GParamSpec *arg, /* null when first calling this */
-                           HippoCanvasBlock *canvas_block)
-{
-    update_chat_messages(HIPPO_CANVAS_BLOCK_GROUP_CHAT(canvas_block));
-}
-
-static void
-on_message_count_changed(HippoBlock *block,
-                         GParamSpec *arg, /* null when first calling this */
-                         HippoCanvasBlockGroupChat *canvas_group_chat)
-{
-    int message_count = -1;
-
-    g_object_get(block, "message-count", &message_count, NULL);
-    
-    g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
-                 "message-count", message_count,
-                 NULL);
-}
-
-static void
 hippo_canvas_block_group_chat_set_block(HippoCanvasBlock *canvas_block,
                                         HippoBlock       *block)
 {
+    HippoCanvasBlockGroupChat *block_group_chat = HIPPO_CANVAS_BLOCK_GROUP_CHAT(canvas_block);
+    
     /* g_debug("canvas-block-group-chat set block %p", block); */
 
     if (block == canvas_block->block)
         return;
 
     if (canvas_block->block != NULL) {
-        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
-                                             G_CALLBACK(on_recent_messages_changed),
-                                             canvas_block);
-        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
-                                             G_CALLBACK(on_message_count_changed),
-                                             canvas_block);
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_group_changed),
                                              canvas_block);        
@@ -311,24 +242,23 @@ hippo_canvas_block_group_chat_set_block(HippoCanvasBlock *canvas_block,
     /* Chain up to get the block really changed */
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_group_chat_parent_class)->set_block(canvas_block, block);
 
+    g_object_set(block_group_chat->quipper,
+                 "block", canvas_block->block,
+                 NULL);
+    g_object_set(block_group_chat->last_message_preview,
+                 "block", canvas_block->block,
+                 NULL);
+    g_object_set(block_group_chat->chat_preview,
+                 "block", canvas_block->block,
+                 NULL);
+    
     if (canvas_block->block != NULL) {
-        g_signal_connect(G_OBJECT(canvas_block->block),
-                         "notify::recent-messages",
-                         G_CALLBACK(on_recent_messages_changed),
-                         canvas_block);
-        g_signal_connect(G_OBJECT(canvas_block->block),
-                         "notify::message-count",
-                         G_CALLBACK(on_message_count_changed),
-                         canvas_block);
         g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::group",
                          G_CALLBACK(on_group_changed),
                          canvas_block);
 
         on_group_changed(canvas_block->block, NULL, canvas_block);
-        on_recent_messages_changed(canvas_block->block, NULL, canvas_block);
-        on_message_count_changed(canvas_block->block, NULL,
-                                 HIPPO_CANVAS_BLOCK_GROUP_CHAT(canvas_block));
     }
 }
 
@@ -361,8 +291,8 @@ hippo_canvas_block_group_update_visibility(HippoCanvasBlockGroupChat *block_grou
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_group_chat);
     
-    hippo_canvas_item_set_visible(block_group_chat->single_message_preview,
-                                  !canvas_block->expanded && block_group_chat->have_messages);
+    hippo_canvas_item_set_visible(block_group_chat->last_message_preview,
+                                  !canvas_block->expanded);
     hippo_canvas_item_set_visible(block_group_chat->chat_preview,
                                   canvas_block->expanded);
     hippo_canvas_item_set_visible(block_group_chat->quipper,

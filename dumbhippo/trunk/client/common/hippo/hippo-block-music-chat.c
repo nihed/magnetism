@@ -30,7 +30,6 @@ struct _HippoBlockMusicChat {
     HippoBlockAbstractPerson            parent;
 
     HippoTrack *track;
-    GSList *recent_messages;
 };
 
 struct _HippoBlockMusicChatClass {
@@ -47,8 +46,7 @@ static int signals[LAST_SIGNAL];
 
 enum {
     PROP_0,
-    PROP_TRACK,
-    PROP_RECENT_MESSAGES
+    PROP_TRACK
 };
 
 G_DEFINE_TYPE(HippoBlockMusicChat, hippo_block_music_chat, HIPPO_TYPE_BLOCK_ABSTRACT_PERSON);
@@ -79,32 +77,6 @@ hippo_block_music_chat_class_init(HippoBlockMusicChatClass *klass)
                                                          _("Track the chat is about"),
                                                         HIPPO_TYPE_TRACK,
                                                         G_PARAM_READABLE));
-    g_object_class_install_property(object_class,
-                                    PROP_RECENT_MESSAGES,
-                                    g_param_spec_pointer("recent-messages",
-                                                         _("Recent Messages"),
-                                                         _("Recent Messages in the Group's Chat Room"),
-                                                         G_PARAM_READABLE));
-}
-
-static void
-set_recent_messages(HippoBlockMusicChat *block_music_chat,
-                    GSList              *recent_messages)
-{
-    GSList *l;
-    
-    g_slist_foreach(block_music_chat->recent_messages, (GFunc)hippo_chat_message_free, NULL);
-    g_slist_free(block_music_chat->recent_messages);
-    block_music_chat->recent_messages = NULL;
-
-    for (l = recent_messages; l; l = l->next) {
-        block_music_chat->recent_messages = g_slist_prepend(block_music_chat->recent_messages,
-                                                            hippo_chat_message_copy(l->data));
-    }
-
-    block_music_chat->recent_messages = g_slist_reverse(block_music_chat->recent_messages);
-
-    g_object_notify(G_OBJECT(block_music_chat), "recent-messages");
 }
 
 static void
@@ -134,7 +106,6 @@ hippo_block_music_chat_dispose(GObject *object)
     HippoBlockMusicChat *block_music_chat = HIPPO_BLOCK_MUSIC_CHAT(object);
 
     set_track(block_music_chat, NULL);
-    set_recent_messages(block_music_chat, NULL);
     
     G_OBJECT_CLASS(hippo_block_music_chat_parent_class)->dispose(object); 
 }
@@ -170,9 +141,6 @@ hippo_block_music_chat_get_property(GObject         *object,
     case PROP_TRACK:
         g_value_set_object(value, block_music_chat->track);
         break;
-    case PROP_RECENT_MESSAGES:
-        g_value_set_pointer(value, block_music_chat->recent_messages);
-        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -188,10 +156,8 @@ hippo_block_music_chat_update_from_xml (HippoBlock           *block,
     LmMessageNode *music_node;
     LmMessageNode *track_node;
     LmMessageNode *recent_messages_node = NULL;
-    LmMessageNode *subchild;
     HippoPerson *user;
     HippoTrack *track;
-    GSList *recent_messages = NULL;
 
     if (!HIPPO_BLOCK_CLASS(hippo_block_music_chat_parent_class)->update_from_xml(block, cache, node))
         return FALSE;
@@ -208,34 +174,19 @@ hippo_block_music_chat_update_from_xml (HippoBlock           *block,
                          NULL))
         return FALSE;
 
+    if (!hippo_block_set_recent_messages_from_xml(block, cache, recent_messages_node))
+        return FALSE;
+    
     hippo_block_abstract_person_set_user(HIPPO_BLOCK_ABSTRACT_PERSON(block), user);
 
     track = hippo_track_new_from_xml(cache, track_node);
     if (!track)
         return FALSE;
+
+    hippo_block_set_chat_id(block, hippo_track_get_play_id(track));
     
     set_track(block_music_chat, track);
     g_object_unref(track);
-
-    for (subchild = recent_messages_node->children; subchild; subchild = subchild->next) {
-        HippoChatMessage *chat_message;
-        
-        if (!strcmp(subchild->name, "message") == 0)
-            continue;
-        
-        chat_message = hippo_chat_message_new_from_xml(cache, subchild);
-        if (!chat_message)
-            continue;
-        
-        recent_messages = g_slist_prepend(recent_messages, chat_message);
-    }
-    
-    recent_messages = g_slist_reverse(recent_messages);
-    
-    set_recent_messages(block_music_chat, recent_messages);
-
-    g_slist_foreach(recent_messages, (GFunc)hippo_chat_message_free, NULL);
-    g_slist_free(recent_messages);
 
     return TRUE;
 }

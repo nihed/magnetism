@@ -230,6 +230,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-filter-area.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-grip.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-grip.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-last-message-preview.c	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-last-message-preview.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-message-preview.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-message-preview.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-quipper.c		\
