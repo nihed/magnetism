@@ -405,12 +405,12 @@ hippo_dbus_mugshot_signal_whereim_changed(HippoDBus            *dbus,
                                      "WhereimChanged");
     dbus_message_iter_init_append(signal, &iter);
                                          
-	append_strings_as_dict(&iter, 
-						   "name", name,
-						   "sentiment", sentiment,
-						   "icon-url", icon_url,
-						   "link", link,
-						   NULL);
+    append_strings_as_dict(&iter, 
+                           "name", name,
+                           "sentiment", sentiment,
+                           "icon-url", icon_url,
+                           "link", link,
+                           NULL);
     g_free(name);
     g_free(sentiment);
     g_free(icon_url);
