@@ -20,6 +20,9 @@ public abstract class PollingTask implements Callable<PollingTaskExecutionResult
 	// Exponentially weighted average executation time
 	private long executionAverage = -1;
 	
+	// Used for the default polling frequency algorithm
+	private long recentChangeDecayFactor = -1;
+	
 	// Used to calculate periodicity
 	private long lastChange = 0;
 	
@@ -54,6 +57,12 @@ public abstract class PollingTask implements Callable<PollingTaskExecutionResult
 		return getIdentifier().hashCode();
 	}
 	
+	// Subclasses may override this to enforce e.g. a minimum polling
+	// periodicity
+	public long rescheduleSeconds(PollingTaskExecutionResult result, long suggested) { 
+		return suggested; 
+	};
+	
 	protected abstract PollResult execute() throws Exception;
 
 	public final long getLastChange() {
@@ -61,6 +70,7 @@ public abstract class PollingTask implements Callable<PollingTaskExecutionResult
 	}
 
 	public final PollingTaskExecutionResult call() throws Exception {
+		logger.debug("Executing polling task {}-{}", getFamily(), getIdentifier());
 		long executionStart = System.currentTimeMillis();
 		// Update stuff saved to database
 		synchronized (this) {
@@ -137,7 +147,7 @@ public abstract class PollingTask implements Callable<PollingTaskExecutionResult
 	
 			// Fixup for a bug
 			if (periodicityAverage < 0)
-				periodicityAverage = getFamily().getDefaultPeriodicity();
+				periodicityAverage = getFamily().getDefaultPeriodicitySeconds()*1000;
 			
 			entry.setPeriodicityAverage(periodicityAverage);
 			
@@ -147,5 +157,13 @@ public abstract class PollingTask implements Callable<PollingTaskExecutionResult
 
 	public long getDbId() {
 		return taskDbId;
+	}
+
+	public long getRecentChangeDecayFactor() {
+		return recentChangeDecayFactor;
+	}
+
+	public void setRecentChangeDecayFactor(long recentChangeDecayFactor) {
+		this.recentChangeDecayFactor = recentChangeDecayFactor;
 	}
 }

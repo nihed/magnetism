@@ -48,8 +48,10 @@ import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.polling.PollResult;
 import com.dumbhippo.polling.PollingTask;
+import com.dumbhippo.polling.PollingTaskExecutionResult;
 import com.dumbhippo.polling.PollingTaskFamily;
 import com.dumbhippo.polling.PollingTaskNormalExecutionException;
+import com.dumbhippo.polling.ServicePollingRestrictions;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
@@ -922,17 +924,13 @@ public class FeedSystemBean implements FeedSystem {
 	
 	private static class FeedTaskFamily implements PollingTaskFamily {
 
-		public long getDefaultPeriodicity() {
-			return 30 * 60 * 1000; // 30 minutes
+		public long getDefaultPeriodicitySeconds() {
+			return 30 * 60; // 30 minutes
 		}
-
-		public long getMaxOutstanding() {
-			return 100;
-		}
-
-		public long getMaxPerSecond() {
-			return -1;
-		}
+		
+		public long rescheduleSeconds(long suggestedSeconds) {
+			return Math.max(suggestedSeconds, 5 * 60);
+		}		
 
 		public String getName() {
 			return PollingTaskFamilyType.FEED.name();
@@ -945,11 +943,22 @@ public class FeedSystemBean implements FeedSystem {
 		private Feed feed;  // detached
 		private LinkResource source; // detatched
 		private Guid linkId;
+		private ServicePollingRestrictions restrictions;
 		
 		public FeedTask(Feed feed, Guid id) {
 			this.feed = feed;
 			this.source = feed.getSource();
 			this.linkId = id;
+			restrictions = ServicePollingRestrictions.lookupByDomain(this.source.getUrl());
+		}
+
+		@Override
+		public long rescheduleSeconds(PollingTaskExecutionResult result, long suggested) {
+			if (restrictions != null) {
+				if (suggested < restrictions.getMaxRateSeconds())
+					suggested = restrictions.getMaxRateSeconds();
+			}
+			return suggested;
 		}
 
 		@Override

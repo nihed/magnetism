@@ -48,20 +48,16 @@ public class MySpaceUpdaterBean implements MySpaceUpdater {
 	
 	private static class MySpaceTaskFamily implements PollingTaskFamily {
 
-		public long getDefaultPeriodicity() {
-			return  60 * 60 * 1000; // 1 hour
-		}
-
-		public long getMaxOutstanding() {
-			return 10;
-		}
-
-		public long getMaxPerSecond() {
-			return 5;
+		public long getDefaultPeriodicitySeconds() {
+			return  60 * 60; // 1 hour
 		}
 
 		public String getName() {
 			return PollingTaskFamilyType.MYSPACE.name();
+		}
+		
+		public long rescheduleSeconds(long suggestedSeconds) {
+			return suggestedSeconds;
 		}
 	}
 	
