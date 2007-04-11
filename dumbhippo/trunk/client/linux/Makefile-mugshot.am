@@ -33,6 +33,8 @@ mugshot_SOURCES	=				\
 	src/hippo-distribution.h		\
 	src/hippo-dbus-client.c			\
 	src/hippo-dbus-client.h			\
+	src/hippo-dbus-contacts.c		\
+	src/hippo-dbus-contacts.h		\
 	src/hippo-dbus-cookies.c		\
 	src/hippo-dbus-cookies.h		\
 	src/hippo-dbus-helper.c			\
