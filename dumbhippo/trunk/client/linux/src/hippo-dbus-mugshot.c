@@ -90,19 +90,19 @@ entity_from_ref(HippoDBus *dbus,
                 const char *ref)
 {
     HippoDataCache *cache;
-     
+
     cache = hippo_app_get_data_cache(hippo_get_app());
-    
+
     if (!g_str_has_prefix(ref, HIPPO_DBUS_MUGSHOT_DATACACHE_PATH_PREFIX))
         return NULL;
-    
+
     return hippo_data_cache_lookup_entity(cache, ref + strlen(HIPPO_DBUS_MUGSHOT_DATACACHE_PATH_PREFIX));
 }
-                
+
 static char *
 get_entity_path(HippoEntity *entity)
 {
-	return g_strdup_printf(HIPPO_DBUS_MUGSHOT_DATACACHE_PATH_PREFIX "%s", hippo_entity_get_guid(entity));  
+    return g_strdup_printf(HIPPO_DBUS_MUGSHOT_DATACACHE_PATH_PREFIX "%s", hippo_entity_get_guid(entity));
 }
 
 static void
@@ -110,8 +110,8 @@ append_entity_ref(HippoDBus *dbus,
                   DBusMessage *message,
                   HippoEntity *entity)
 {
-	char *opath;
-	opath = get_entity_path(entity);
+    char *opath;
+    opath = get_entity_path(entity);
     dbus_message_append_args(message, DBUS_TYPE_OBJECT_PATH, &opath, DBUS_TYPE_INVALID);
 }
 
@@ -132,7 +132,7 @@ hippo_dbus_try_acquire_mugshot(DBusConnection *connection,
                           NULL);
 }
 
-DBusMessage* 
+DBusMessage*
 hippo_dbus_handle_mugshot_get_baseprops(HippoDBus       *dbus,
                                         DBusMessage     *message)
 {
@@ -144,18 +144,18 @@ hippo_dbus_handle_mugshot_get_baseprops(HippoDBus       *dbus,
 
     cache = hippo_app_get_data_cache(hippo_get_app());
     connection = hippo_data_cache_get_connection(cache);
-    
+
     baseurl = hippo_connection_make_absolute_url(connection, "/");
-    
-    reply = dbus_message_new_method_return(message);   
+
+    reply = dbus_message_new_method_return(message);
     dbus_message_iter_init_append(reply, &iter);
-     
-    append_strings_as_dict(&iter, 
+
+    append_strings_as_dict(&iter,
                            "baseurl", baseurl,
                            NULL);
     g_free(baseurl);
-    
-    return reply;    
+
+    return reply;
 }
 
 DBusMessage*
@@ -174,7 +174,7 @@ hippo_dbus_handle_mugshot_get_self(HippoDBus   *dbus,
     }
 
     reply = dbus_message_new_method_return(message);
-    append_entity_ref(dbus, reply, HIPPO_ENTITY(self));					
+    append_entity_ref(dbus, reply, HIPPO_ENTITY(self));
     return reply;
 }
 
@@ -182,26 +182,26 @@ DBusMessage*
 hippo_dbus_handle_mugshot_get_connection_status(HippoDBus   *dbus,
                                                 DBusMessage  *message)
 {
-    DBusMessage *reply;	
-	gboolean have_auth;
-	gboolean connected;
-	gboolean contacts_loaded;
+    DBusMessage *reply;
+    gboolean have_auth;
+    gboolean connected;
+    gboolean contacts_loaded;
     HippoDataCache *cache;
-	HippoConnection *connection;
-	
+    HippoConnection *connection;
+
     cache = hippo_app_get_data_cache(hippo_get_app());
     connection = hippo_data_cache_get_connection(cache);
-    
+
     have_auth = hippo_connection_get_has_auth(connection);
-	connected = hippo_connection_get_connected(connection);
-	contacts_loaded = hippo_connection_get_contacts_loaded(connection);
-    
-    reply = dbus_message_new_method_return(message);    
-    dbus_message_append_args(reply, DBUS_TYPE_BOOLEAN, &have_auth, 
-                                    DBUS_TYPE_BOOLEAN, &connected,
-                                    DBUS_TYPE_BOOLEAN, &contacts_loaded, 
-                                    DBUS_TYPE_INVALID);
-    
+    connected = hippo_connection_get_connected(connection);
+    contacts_loaded = hippo_connection_get_contacts_loaded(connection);
+
+    reply = dbus_message_new_method_return(message);
+    dbus_message_append_args(reply, DBUS_TYPE_BOOLEAN, &have_auth,
+                             DBUS_TYPE_BOOLEAN, &connected,
+                             DBUS_TYPE_BOOLEAN, &contacts_loaded,
+                             DBUS_TYPE_INVALID);
+
     return reply;
 }
 
@@ -209,23 +209,23 @@ DBusMessage*
 hippo_dbus_handle_mugshot_entity_message(HippoDBus   *dbus,
                                          DBusMessage  *message)
 {
-	DBusError error;
+    DBusError error;
     HippoEntity *entity;
     DBusMessage *reply = NULL;
 
     dbus_error_init(&error);
-    
+
     entity = entity_from_ref(dbus, dbus_message_get_path(message));
-    
+
     if (!entity) {
-    	return dbus_message_new_error(message, "org.mugshot.Mugshot.UnknownEntity", "Unknown entity");    	
+    	return dbus_message_new_error(message, "org.mugshot.Mugshot.UnknownEntity", "Unknown entity");
     }
-    
+
     if (!strcmp(dbus_message_get_member(message), "GetProperties")) {
-	    reply = dbus_message_new_method_return(message);
-        append_entity(dbus, reply, HIPPO_ENTITY(entity));	
+        reply = dbus_message_new_method_return(message);
+        append_entity(dbus, reply, HIPPO_ENTITY(entity));
     }
-    	
+
     return reply;
 }
 
@@ -252,11 +252,11 @@ hippo_dbus_handle_mugshot_send_external_iq(HippoDBus   *dbus,
     DBusError error;
     HippoConnection *connection;
     guint request_id;
-    
+
     dbus_error_init(&error);
-    
+
     if (!dbus_message_get_args(message,
-                               &error, 
+                               &error,
                                DBUS_TYPE_BOOLEAN, &is_set,
                                DBUS_TYPE_STRING, &element,
                                DBUS_TYPE_ARRAY, DBUS_TYPE_STRING, &attrs, &attrs_count,
@@ -266,17 +266,17 @@ hippo_dbus_handle_mugshot_send_external_iq(HippoDBus   *dbus,
         dbus_error_free(&error);
         return reply;
     }
-    
+
     if (attrs_count % 2 != 0) {
-    	return dbus_message_new_error(message, "org.mugshot.Mugshot.InvalidAttributes", "Invalid attribute count");	
+    	return dbus_message_new_error(message, "org.mugshot.Mugshot.InvalidAttributes", "Invalid attribute count");
     }
-    
+
     connection = hippo_data_cache_get_connection(hippo_app_get_data_cache(hippo_get_app()));
-    
+
     request_id = hippo_connection_send_external_iq(connection, is_set, element, attrs_count, attrs, content);
-    
-    dbus_free_string_array(attrs);    
-    
+
+    dbus_free_string_array(attrs);
+
     reply = dbus_message_new_method_return(message);
     dbus_message_append_args(reply, DBUS_TYPE_UINT32, &request_id, NULL);
     return reply;
@@ -285,34 +285,34 @@ hippo_dbus_handle_mugshot_send_external_iq(HippoDBus   *dbus,
 static void
 append_network_ref(gpointer entity_ptr, gpointer data)
 {
-    HippoEntity *entity = (HippoEntity*) entity_ptr; 	
-    DBusMessageIter *iter = (DBusMessageIter*) data; 
+    HippoEntity *entity = (HippoEntity*) entity_ptr;
+    DBusMessageIter *iter = (DBusMessageIter*) data;
 
     if (hippo_entity_get_in_network(entity)) {
     	char *ref;
     	ref = get_entity_path(entity);
         dbus_message_iter_append_basic(iter, DBUS_TYPE_OBJECT_PATH, &ref);
         g_free(ref);
-    }   
+    }
 }
 
 DBusMessage*
 hippo_dbus_handle_mugshot_get_network(HippoDBus   *dbus,
                                       DBusMessage  *message)
 {
-	DBusMessage *reply;
-	DBusMessageIter iter, array_iter;
+    DBusMessage *reply;
+    DBusMessageIter iter, array_iter;
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
 
-	reply = dbus_message_new_method_return(message);
-	dbus_message_iter_init_append(reply, &iter);
-	dbus_message_iter_open_container(&iter, 
-	                                 DBUS_TYPE_ARRAY,
-	                                 DBUS_TYPE_OBJECT_PATH_AS_STRING,
-	                                 &array_iter);
+    reply = dbus_message_new_method_return(message);
+    dbus_message_iter_init_append(reply, &iter);
+    dbus_message_iter_open_container(&iter,
+                                     DBUS_TYPE_ARRAY,
+                                     DBUS_TYPE_OBJECT_PATH_AS_STRING,
+                                     &array_iter);
 
     hippo_data_cache_foreach_entity(cache, append_network_ref, &array_iter);
-    
+
     dbus_message_iter_close_container(&iter, &array_iter);
 
     return reply;
@@ -352,11 +352,11 @@ hippo_dbus_handle_mugshot_introspect(HippoDBus   *dbus,
                     "    <method name=\"SendExternalIQ\">\n"
                     "      <arg direction=\"in\" type=\"b\"/>\n"
                     "      <arg direction=\"in\" type=\"s\"/>\n"
-                    "      <arg direction=\"in\" type=\"as\"/>\n"                    
+                    "      <arg direction=\"in\" type=\"as\"/>\n"
                     "      <arg direction=\"in\" type=\"s\"/>\n"
-                    "      <arg direction=\"out\" type=\"u\"/>\n"                    
+                    "      <arg direction=\"out\" type=\"u\"/>\n"
                     "    </method>"
-                    );                    
+                    );
     g_string_append(xml,
                     "    <method name=\"NotifyAllWhereim\"/>\n");
     g_string_append(xml,
@@ -404,8 +404,8 @@ hippo_dbus_mugshot_signal_whereim_changed(HippoDBus            *dbus,
                                      HIPPO_DBUS_MUGSHOT_INTERFACE,
                                      "WhereimChanged");
     dbus_message_iter_init_append(signal, &iter);
-                                         
-    append_strings_as_dict(&iter, 
+
+    append_strings_as_dict(&iter,
                            "name", name,
                            "sentiment", sentiment,
                            "icon-url", icon_url,
@@ -425,7 +425,7 @@ hippo_dbus_mugshot_signal_connection_changed(HippoDBus            *dbus)
     signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
                                      HIPPO_DBUS_MUGSHOT_INTERFACE,
                                      "ConnectionStatusChanged");
-    return signal;	
+    return signal;
 }
 
 DBusMessage*
@@ -451,14 +451,14 @@ hippo_dbus_mugshot_signal_pref_changed(HippoDBus            *dbus,
     signal = dbus_message_new_signal(HIPPO_DBUS_MUGSHOT_PATH,
                                      HIPPO_DBUS_MUGSHOT_INTERFACE,
                                      "PrefChanged");
-    dbus_message_append_args(signal, 
+    dbus_message_append_args(signal,
                              DBUS_TYPE_STRING, &key,
-                             DBUS_TYPE_BOOLEAN, &value, 
+                             DBUS_TYPE_BOOLEAN, &value,
                              DBUS_TYPE_INVALID);
     return signal;
 }
 
-DBusMessage* 
+DBusMessage*
 hippo_dbus_mugshot_signal_external_iq_return(HippoDBus            *dbus,
                                              guint                 id,
                                              const char           *content)
@@ -469,4 +469,4 @@ hippo_dbus_mugshot_signal_external_iq_return(HippoDBus            *dbus,
                                      "ExternalIQReturn");
     dbus_message_append_args(signal, DBUS_TYPE_UINT32, &id, DBUS_TYPE_STRING, &content, DBUS_TYPE_INVALID);
     return signal;
-}                                                   
+}
