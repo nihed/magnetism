@@ -70,4 +70,4 @@ DBusMessage* hippo_dbus_mugshot_signal_external_iq_return (HippoDBus            
                                                            const char           *content);
 G_END_DECLS
 
-#endif /* __HIPPO_DBUS_SETTINGS_H__ */
+#endif /* __HIPPO_DBUS_MUGSHOT_H__ */
