@@ -1,6 +1,7 @@
 package com.dumbhippo.server.blocks;
 
 import java.util.Date;
+import java.util.List;
 
 import com.dumbhippo.DateUtils;
 import com.dumbhippo.StringUtils;
@@ -9,6 +10,7 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -31,8 +33,10 @@ public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView
 		super(viewpoint, block, gbd, participated);
 	}
 	
-	void populate(PersonView userView, FeedEntry entry) {
+	void populate(PersonView userView, FeedEntry entry, List<ChatMessageView> recentMessages, int messageCount) {
 		partiallyPopulate(userView);
+		setRecentMessages(recentMessages);
+		setMessageCount(messageCount);
 		this.entry = entry;
 		setPopulated(true);
 	}

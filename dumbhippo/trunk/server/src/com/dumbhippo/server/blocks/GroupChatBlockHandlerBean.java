@@ -3,7 +3,6 @@ package com.dumbhippo.server.blocks;
 import java.util.List;
 import java.util.Set;
 
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import com.dumbhippo.identity20.Guid;
@@ -12,7 +11,6 @@ import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupView;
@@ -21,9 +19,6 @@ import com.dumbhippo.server.views.Viewpoint;
 @Stateless
 public class GroupChatBlockHandlerBean extends AbstractBlockHandlerBean<GroupChatBlockView> implements
 		GroupChatBlockHandler {
-	
-	@EJB
-	protected ChatSystem chatSystem;
 	
 	public GroupChatBlockHandlerBean() {
 		super(GroupChatBlockView.class);

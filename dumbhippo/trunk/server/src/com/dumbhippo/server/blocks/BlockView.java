@@ -1,5 +1,8 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.dumbhippo.DateUtils;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.Thumbnail;
@@ -12,15 +15,19 @@ import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.ObjectView;
 import com.dumbhippo.server.views.Viewpoint;
 
 public abstract class BlockView implements ObjectView {
-	
+	public static final int RECENT_MESSAGE_COUNT = 5;
+		
 	private Block block;
 	private UserBlockData userBlockData;
 	private GroupBlockData groupBlockData;
 	private Viewpoint viewpoint;
+	private List<ChatMessageView> recentMessages;
+	private int messageCount = -1;
 	private boolean populated;
 	private boolean participated; 
 
@@ -75,6 +82,36 @@ public abstract class BlockView implements ObjectView {
 	
 	public String getTimeAgo() {
 		return DateUtils.formatTimeAgo(block.getTimestamp());
+	}
+	
+	public List<ChatMessageView> getRecentMessages() {
+		if (recentMessages != null)
+			return recentMessages;
+		else
+			return Collections.emptyList();
+	}
+
+	public void setRecentMessages(List<ChatMessageView> recentMessages) {
+		this.recentMessages = recentMessages;
+	}
+
+	public int getMessageCount() {
+		return messageCount;
+	}
+
+	public void setMessageCount(int messageCount) {
+		this.messageCount = messageCount;
+	}
+	
+	public ChatMessageView getLastMessage() {
+		if (recentMessages == null)
+			return null;
+		
+		try {
+			return recentMessages.get(0);
+		} catch (IndexOutOfBoundsException e) {
+			return null;
+		} 
 	}
 	
 	public Guid getIdentifyingGuid() {
@@ -166,6 +203,7 @@ public abstract class BlockView implements ObjectView {
 							"isPublic", Boolean.toString(isPublic()),							
 							"timestamp", Long.toString(block.getTimestampAsLong()),
 							"clickedCount", clickedCountString,
+							"chatId", getChatId(),
 							"messageCount", messageCountString,
 							"significantClickedCount", significantClickedCountString,
 							"ignored", Boolean.toString(userBlockData.isIgnored()),
@@ -192,6 +230,14 @@ public abstract class BlockView implements ObjectView {
 		
 		if (hasThumbnails)
 			writeThumbnailsToXmlBuilder(builder, ((ThumbnailsBlockView) this));
+		
+		if (block.getBlockType().isDirectlyChattable()) {
+			builder.openElement("recentMessages");
+			for (ChatMessageView message : getRecentMessages()) {
+				message.writeToXmlBuilder(builder);
+			}
+			builder.closeElement();
+		}
 		
 		writeDetailsToXmlBuilder(builder);
 		
@@ -322,14 +368,15 @@ public abstract class BlockView implements ObjectView {
 	}
 	
 	/**
-	 * Gets the total count of messages (quips and comments) for this
-	 * block. 
+	 * Gets the ID of the chat room that should be used for chatting about
+	 * this block.
 	 * 
-	 * @return total number of messages, -1 means that quipping isn't
-	 *   applicable to this block type. (A transient thing until we
-	 *   implement quipping on all blocks)
+	 * @return the ID of the chat room, or null if the block isn't chattable.
 	 */
-	public int getMessageCount() {
-		return -1;
+	public String getChatId() {
+		if (block.getBlockType().isDirectlyChattable())
+			return block.getId();
+		else
+			return null;
 	}
 }

@@ -19,6 +19,7 @@ import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -48,8 +49,20 @@ public abstract class AbstractBlockPerFeedEntryHandlerBean<ViewType extends Abst
 		PersonView userView = personViewer.getPersonView(viewpoint, user);
 		
 		FeedEntry entry = em.find(FeedEntry.class, block.getData3());
+		
+		List<ChatMessageView> messageViews = null;
+		int messageCount = -1;
 
-	    blockView.populate(userView, entry);
+		if (block.getBlockType().isDirectlyChattable()) {
+			messageViews = chatSystem.viewMessages(chatSystem.getNewestMessages(block, MusicChatBlockView.RECENT_MESSAGE_COUNT), viewpoint);
+			
+			if (messageViews.size() < BlockView.RECENT_MESSAGE_COUNT) // Optimize out a query
+				messageCount = messageViews.size();
+			else
+				messageCount = chatSystem.getMessageCount(block);
+		}
+			
+	    blockView.populate(userView, entry, messageViews, messageCount);
 	}
 
 	public Set<User> getInterestedUsers(Block block) {

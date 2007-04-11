@@ -24,6 +24,7 @@ public class MusicPersonBlockView extends AbstractPersonBlockView implements Mus
 	
 	void populate(PersonView userView) {
 		partiallyPopulate(userView);
+		setMessageCount(0);
 		setPopulated(true);
 	}
 	
@@ -104,7 +105,11 @@ public class MusicPersonBlockView extends AbstractPersonBlockView implements Mus
 	}
 	
 	@Override
-	public int getMessageCount() {
-		return 0; // If there were messages, it would be a MUSIC_CHAT block instead
+	public String getChatId() {
+		try {
+			return getPersonSource().getTrackHistory().get(0).getPlayId();
+		} catch (IndexOutOfBoundsException e) {
+			return null;
+		}
 	}
 }

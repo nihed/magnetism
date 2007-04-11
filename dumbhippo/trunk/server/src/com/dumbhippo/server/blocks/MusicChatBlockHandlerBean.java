@@ -15,7 +15,6 @@ import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.ChatMessageView;
@@ -29,9 +28,6 @@ public class MusicChatBlockHandlerBean extends AbstractBlockHandlerBean<MusicCha
 
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(MusicChatBlockHandlerBean.class);
-	
-	@EJB
-	protected ChatSystem chatSystem;
 	
 	@EJB
 	MusicSystem musicSystem;

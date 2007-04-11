@@ -23,7 +23,6 @@ import com.dumbhippo.persistence.StackFilterFlags;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
-import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.util.EJBUtil;
@@ -40,9 +39,6 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 	
 	@EJB
 	private PostingBoard postingBoard;
-	
-	@EJB
-	private ChatSystem chatSystem;
 	
 	public PostBlockHandlerBean() {
 		super(PostBlockView.class);
