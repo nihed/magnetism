@@ -57,7 +57,7 @@ void              hippo_dbus_helper_register_object    (DBusConnection          
                                                         const char              *path,
                                                         void                    *object,
                                                         const char              *first_interface,
-                                                        ...);
+                                                        ...) G_GNUC_NULL_TERMINATED;
 void              hippo_dbus_helper_unregister_object  (DBusConnection          *connection,
                                                         const char              *path);
 DBusHandlerResult hippo_dbus_helper_handle_message     (DBusConnection          *connection,

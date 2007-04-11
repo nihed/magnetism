@@ -12,6 +12,8 @@
 #include "hippo-dbus-cookies.h"
 #include "hippo-dbus-mugshot.h"
 #include "hippo-dbus-settings.h"
+#include "hippo-dbus-helper.h"
+#include "hippo-dbus-contacts.h"
 #include "hippo-distribution.h"
 #include <hippo/hippo-endpoint-proxy.h>
 #include <hippo/hippo-stack-manager.h>
@@ -226,6 +228,8 @@ hippo_dbus_try_to_acquire(const char  *server,
      * this.
      */
     hippo_dbus_try_acquire_online_prefs_manager(connection, FALSE);
+
+    hippo_dbus_init_contacts(connection, FALSE);
     
     /* Add Rhythmbox signal match */
     dbus_bus_add_match(connection,
@@ -1707,8 +1711,11 @@ handle_message(DBusConnection     *connection,
 
     cache = hippo_app_get_data_cache(hippo_get_app());
     xmpp_connection = hippo_data_cache_get_connection(cache);
-        
-    if (type == DBUS_MESSAGE_TYPE_METHOD_CALL) {
+
+    result = hippo_dbus_helper_handle_message(connection, message);
+    if (result == DBUS_HANDLER_RESULT_HANDLED) {
+        ; /* we're done, something registered with the helper did the work */
+    } else if (type == DBUS_MESSAGE_TYPE_METHOD_CALL) {
         const char *sender = dbus_message_get_sender(message);
         const char *interface = dbus_message_get_interface(message);
         const char *member = dbus_message_get_member(message);
