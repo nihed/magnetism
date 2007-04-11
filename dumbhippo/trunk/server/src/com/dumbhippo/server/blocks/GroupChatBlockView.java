@@ -12,11 +12,7 @@ import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.Viewpoint;
 
 public class GroupChatBlockView extends BlockView implements TitleBlockView {
-	public static final int RECENT_MESSAGE_COUNT = 5;
-	
 	private GroupView group;
-	private List<ChatMessageView> recentMessages;
-	int messageCount = -1;
 	
 	public GroupChatBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
 		super(viewpoint, block, ubd, participated);
@@ -28,17 +24,13 @@ public class GroupChatBlockView extends BlockView implements TitleBlockView {
 	
 	void populate(GroupView group, List<ChatMessageView> recentMessages, int messageCount) {
 		this.group = group;
-		this.recentMessages = recentMessages;
-		this.messageCount = messageCount;
+		setRecentMessages(recentMessages);
+		setMessageCount(messageCount);
 		setPopulated(true);
 	}
 	
 	public GroupView getGroupView() {
 		return this.group;
-	}
-	
-	public List<ChatMessageView> getRecentMessages() {
-		return recentMessages;
 	}
 	
 	@Override
@@ -106,7 +98,7 @@ public class GroupChatBlockView extends BlockView implements TitleBlockView {
 	}
 	
 	@Override
-	public int getMessageCount() {
-		return messageCount;
+	public String getChatId() {
+		return group.getGroup().getId();
 	}
 }

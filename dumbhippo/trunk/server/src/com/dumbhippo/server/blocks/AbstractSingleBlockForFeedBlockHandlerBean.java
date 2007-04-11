@@ -1,5 +1,6 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.List;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -17,6 +18,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.FeedSystem.NoFeedEntryException;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -62,7 +64,19 @@ public abstract class AbstractSingleBlockForFeedBlockHandlerBean<ViewType extend
 			throw new BlockNotVisibleException("Can't view block with no feed entry", e);
 		}
 
-	    blockView.populate(userView, lastEntry);
+		List<ChatMessageView> messageViews = null;
+		int messageCount = -1;
+
+		if (block.getBlockType().isDirectlyChattable()) {
+			messageViews = chatSystem.viewMessages(chatSystem.getNewestMessages(block, MusicChatBlockView.RECENT_MESSAGE_COUNT), viewpoint);
+			
+			if (messageViews.size() < BlockView.RECENT_MESSAGE_COUNT) // Optimize out a query
+				messageCount = messageViews.size();
+			else
+				messageCount = chatSystem.getMessageCount(block);
+		}
+			
+	    blockView.populate(userView, lastEntry, messageViews, messageCount);
 	}
 
 	public Set<User> getInterestedUsers(Block block) {

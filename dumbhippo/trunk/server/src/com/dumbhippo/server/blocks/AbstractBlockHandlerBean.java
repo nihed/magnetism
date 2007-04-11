@@ -20,6 +20,7 @@ import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
@@ -38,6 +39,9 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 
 	@PersistenceContext(unitName = "dumbhippo")
 	protected EntityManager em;
+	
+	@EJB
+	protected ChatSystem chatSystem;
 	
 	@EJB
 	protected IdentitySpider identitySpider;
