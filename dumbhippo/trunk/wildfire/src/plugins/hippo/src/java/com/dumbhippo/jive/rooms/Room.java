@@ -414,7 +414,7 @@ public class Room implements PresenceListener {
 		Presence presence = new Presence((Presence.Type)null);
 		presence.setFrom(new JID(roomName, getServiceDomain(), userInfo.getUsername()));
 		
-		Log.debug("Sending presence available from " + presence.getFrom() + " to " + presence.getTo());
+		Log.debug("Sending presence available from " + presence.getFrom());
 		
 		// Sending the (human-readable) name of the user here is a significant optimization, 
 		// since otherwise the client would have to query it from the user before

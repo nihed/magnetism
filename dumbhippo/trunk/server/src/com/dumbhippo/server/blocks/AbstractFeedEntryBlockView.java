@@ -1,5 +1,8 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.Date;
+
+import com.dumbhippo.DateUtils;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
@@ -73,6 +76,14 @@ public abstract class AbstractFeedEntryBlockView extends AbstractPersonBlockView
 	
 	public String getTitle() {
 		return getEntry().getTitle();
+	}
+	
+	public Date getSentDate() {
+		return getEntry().getDate();
+	}
+	
+	public String getSentTimeAgo() {
+		return DateUtils.formatTimeAgo(getSentDate());
 	}
 
 	public String getLink() {

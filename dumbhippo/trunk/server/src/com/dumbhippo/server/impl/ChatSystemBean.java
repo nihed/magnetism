@@ -358,7 +358,7 @@ public class ChatSystemBean implements ChatSystem {
 		BlockView blockView = stacker.loadBlock(SystemViewpoint.getInstance(), block);
 		List<? extends ChatMessage> history = getBlockMessages(block, -1);
 		
-		return new ChatRoomInfo(ChatRoomKind.MUSIC, roomGuid, blockView.getSummaryHeading(), history, block.isPublicBlock());
+		return new ChatRoomInfo(ChatRoomKind.BLOCK, roomGuid, blockView.getSummaryLinkText(), history, block.isPublicBlock());
 	}
 	
 	public ChatRoomUser getChatRoomUser(Guid roomGuid, ChatRoomKind kind, String username) {
@@ -516,6 +516,7 @@ public class ChatSystemBean implements ChatSystem {
 				throw new RuntimeException("Block not found", e);
 			}
 			message = addBlockMessage(block, fromUser, text, sentiment, timestamp);
+			break;
 		default:
 			throw new RuntimeException("Can't add a chat message to a chat room of unknown kind");
 		}
