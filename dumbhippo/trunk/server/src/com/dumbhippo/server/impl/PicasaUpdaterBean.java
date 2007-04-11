@@ -122,21 +122,16 @@ public class PicasaUpdaterBean extends CachedExternalUpdaterBean<PicasaUpdateSta
 
 	private static class PicasaTaskFamily implements PollingTaskFamily {
 
-		public long getDefaultPeriodicity() {
-			return 20 * 60 * 1000; // 20 minutes
-		}
-
-		// Rough numbers, hopefully they're reasonable
-		public long getMaxOutstanding() {
-			return 10;
-		}
-
-		public long getMaxPerSecond() {
-			return 5;
+		public long getDefaultPeriodicitySeconds() {
+			return 20 * 60; // 20 minutes
 		}
 
 		public String getName() {
 			return PollingTaskFamilyType.PICASA.name();
+		}
+
+		public long rescheduleSeconds(long suggestedSeconds) {
+			return suggestedSeconds;
 		}
 	}
 	

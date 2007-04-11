@@ -1,9 +1,12 @@
 package com.dumbhippo.polling;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.jboss.system.ServiceMBeanSupport;
 import org.slf4j.Logger;
@@ -12,7 +15,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ScheduledExecutorCompletionService;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.ThreadUtils.DaemonRunnable;
-import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoadResult;
 import com.dumbhippo.server.util.EJBUtil;
@@ -33,6 +35,13 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(SwarmPollingSystem.class);
 	
+	private static final int MIN_TASK_PERIODICITY_SEC = 7 * 60; // 7 minutes
+	private static final int MAX_TASK_PERIODICITY_SEC = 2 * 60 * 60; // 2 hours
+	
+	// How quickly to reschedule a task if it's changed
+	private static final int TASK_CHANGE_RESCHEDULE_SEC = 4 * 60; // 4 minutes
+	
+	private static final int TASK_LOAD_PER_SEC = 10; // How many tasks can be queued per second
 	private static final int MAX_CONCURRENT_THREADS = 1000;
 	
 	private static SwarmPollingSystem instance;
@@ -80,9 +89,9 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 
 			if (changed) {
 				if (task.getPeriodicityAverage() == -1) {
-					long defaultPeriodicity = task.getFamily().getDefaultPeriodicity();
+					long defaultPeriodicity = task.getFamily().getDefaultPeriodicitySeconds();
 					if (defaultPeriodicity != -1)
-						task.setPeriodicityAverage(defaultPeriodicity);
+						task.setPeriodicityAverage(defaultPeriodicity*1000);
 					else {
 						// We initialize task periodicity to 30 minutes as a guess, but task families
 						// should really be picking their own
@@ -100,8 +109,43 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 		
 		public void run() throws InterruptedException {		
 			while (true) {
-				Future<PollingTaskExecutionResult> result = taskCompletion.take();
-				
+				Future<PollingTaskExecutionResult> futureResult = taskCompletion.take();
+				PollingTask task;
+				PollingTaskExecutionResult result;				
+				try {
+					result = futureResult.get();
+					task = result.getTask();
+				} catch (ExecutionException e) {
+					// We catch Exception inside PollingTask.call, so if we get an exception
+					// here something went seriously wrong
+					throw new RuntimeException(e);
+				}
+				if (result.isObsolete()) {
+					obsoleteTasks(Collections.singleton(task));
+				} else {
+					recalculateTaskStats(task, result);
+					long periodicityScheduleSecs;
+					// Fallback wait is slightly faster than the calculated average periodicity
+					periodicityScheduleSecs = (long) (0.75 * (task.getPeriodicityAverage()/1000));
+					long scheduleSecs;					
+					if (result.isChanged()) {
+						// If we changed recently, start polling more frequently, decaying exponentially
+						// to a frequency calculated from the periodicity.
+						if (task.getRecentChangeDecayFactor() == -1)
+							task.setRecentChangeDecayFactor(1);
+						else
+							task.setRecentChangeDecayFactor(task.getRecentChangeDecayFactor() + 1);
+						scheduleSecs = TASK_CHANGE_RESCHEDULE_SEC * task.getRecentChangeDecayFactor();
+					} else {
+						scheduleSecs = periodicityScheduleSecs;
+					}
+					if (scheduleSecs > periodicityScheduleSecs)
+						scheduleSecs = periodicityScheduleSecs;
+					scheduleSecs = task.rescheduleSeconds(result, scheduleSecs);
+					scheduleSecs = Math.max(scheduleSecs, MIN_TASK_PERIODICITY_SEC);
+					scheduleSecs = Math.min(scheduleSecs, MAX_TASK_PERIODICITY_SEC);
+					taskCompletion.schedule(task, scheduleSecs, TimeUnit.SECONDS);
+				}
 			}
 		}
 	}
@@ -142,8 +186,10 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 				PollingTaskPersistence persister = EJBUtil.defaultLookup(PollingTaskPersistence.class);
 
 				PollingTaskLoadResult loadResult = persister.loadNewTasks(lastSeenTaskDatabaseId);
+				int i = 0;
 				for (PollingTask task : loadResult.getTasks()) {
-					
+					taskCompletion.schedule(task, i / TASK_LOAD_PER_SEC, TimeUnit.SECONDS);
+					i++;
 				}
 				lastSeenTaskDatabaseId = loadResult.getLastDbId();
 				long totalLoaded = loadResult.getTasks().size();
@@ -171,18 +217,21 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 	}
 	
 	public synchronized void startSingleton() {
-		Configuration config = EJBUtil.defaultLookup(Configuration.class);
-		logger.info("Starting DynamicPollingSystem singleton");
+		logger.info("Starting SwarmPollingSystem singleton");
 
 		taskPersistenceWorker = new TaskPersistenceWorker();
-		taskPersistenceThread = ThreadUtils.newDaemonThread("dynamic task set persister", taskPersistenceWorker);
+		taskPersistenceThread = ThreadUtils.newDaemonThread("dynamic task persister", taskPersistenceWorker);
 		taskPersistenceThread.start();
+		
+		taskCompletionWorker = new TaskCompletionWorker();
+		taskCompletionThread = ThreadUtils.newDaemonThread("dynamic task completion", taskCompletionWorker);
+		taskCompletionThread.start();
 		
 		instance = this;
 	}
 	
 	public synchronized void stopSingleton() {		
-		logger.info("Stopping DynamicPollingSystem singleton");
+		logger.info("Stopping SwarmPollingSystem singleton");
 		
 		taskPersistenceThread.interrupt();
 		try {
@@ -194,6 +243,6 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 		
 		instance = null;
 		
-		logger.debug("DynamicPollingSystem singleton stopped");
+		logger.debug("SwarmPollingSystem singleton stopped");
 	}
 }

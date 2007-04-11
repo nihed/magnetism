@@ -71,36 +71,8 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	// Computed from DEFAULT_POLLING_SET_TIME
 	private int defaultSetIndex;
 	
+	// Not used anymore
 	static class PollingTaskFamilyExecutionState {
-		private PollingTaskFamily family;
-		private long currentTaskCount;
-		
-		public PollingTaskFamilyExecutionState(PollingTaskFamily family) {
-			this.family = family;
-			currentTaskCount = 0;
-		}
-		
-		public PollingTaskFamily getFamily() {
-			return family;
-		}
-
-		// Invoked from task worker threads
-		public void awaitEligibility() throws InterruptedException {
-			synchronized (this) {
-				while ((family.getMaxOutstanding() > 0 &&
-					    currentTaskCount >= family.getMaxOutstanding()))
-					wait();
-				currentTaskCount++;		
-			}
-		}
-		
-		// Invoked from task worker threads
-		void notifyComplete() {
-			synchronized (this) {
-		 		currentTaskCount--;
-				notifyAll();			
-			}
-		}		
 	}
 	
 	private Map<PollingTaskFamily, PollingTaskFamilyExecutionState> taskFamilies = new HashMap<PollingTaskFamily, PollingTaskFamilyExecutionState>();
@@ -234,9 +206,9 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			// even if the item isn't changing.
 			if (changed || !hasSlowerSet) {
 				if (task.getPeriodicityAverage() == -1) {
-					long defaultPeriodicity = task.getFamily().getDefaultPeriodicity();
+					long defaultPeriodicity = task.getFamily().getDefaultPeriodicitySeconds();
 					if (defaultPeriodicity != -1)
-						task.setPeriodicityAverage(defaultPeriodicity);
+						task.setPeriodicityAverage(defaultPeriodicity*1000);
 					else {
 						// We initialize task periodicity to 1.5 * set timeout at first as a random guess
 						task.setPeriodicityAverage((long) (timeout * 1.5));
@@ -572,16 +544,12 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			this.family = type;
 		}
 		
-		public long getDefaultPeriodicity() {
-			return -1;
+		public long getDefaultPeriodicitySeconds() {
+			return 30 * 60; // 30 minutes
 		}
-
-		public long getMaxOutstanding() {
-			return 3;
-		}
-
-		public long getMaxPerSecond() {
-			return 5;
+		
+		public long rescheduleSeconds(long secs) {
+			return secs;
 		}
 
 		public String getName() {

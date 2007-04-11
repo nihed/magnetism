@@ -4,11 +4,9 @@
 package com.dumbhippo.polling;
 
 public interface PollingTaskFamily {
-	public long getDefaultPeriodicity();
+	public long getDefaultPeriodicitySeconds();
 	
-	public long getMaxOutstanding();
-	
-	public long getMaxPerSecond();
+	public long rescheduleSeconds(long suggestedSeconds);
 	
 	public String getName();
 }

@@ -122,21 +122,16 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 
 	private static class YouTubeTaskFamily implements PollingTaskFamily {
 
-		public long getDefaultPeriodicity() {
-			return 20 * 60 * 1000; // 20 minutes
+		public long getDefaultPeriodicitySeconds() {
+			return 20 * 60; // 20 minutes
 		}
-
-		// Rough numbers, hopefully they're reasonable
-		public long getMaxOutstanding() {
-			return 10;
-		}
-
-		public long getMaxPerSecond() {
-			return 5;
-		}
-
+		
 		public String getName() {
 			return PollingTaskFamilyType.YOUTUBE.name();
+		}
+		
+		public long rescheduleSeconds(long suggestedSeconds) {
+			return suggestedSeconds;
 		}
 	}
 	

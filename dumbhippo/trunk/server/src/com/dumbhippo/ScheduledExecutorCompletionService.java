@@ -4,6 +4,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -26,6 +27,7 @@ public class ScheduledExecutorCompletionService <V> {
 	
 	public ScheduledExecutorCompletionService(ScheduledExecutorService executor) {
 		this.executor = executor;
+		queue = new LinkedBlockingQueue<FutureTask<V>>();
 	}
 	
 	// TODO - note here there is no timeout.  There is also not one in the

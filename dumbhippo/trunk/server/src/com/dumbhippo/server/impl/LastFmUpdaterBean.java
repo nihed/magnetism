@@ -149,20 +149,16 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 
 	private static class LastFmTaskFamily implements PollingTaskFamily {
 
-		public long getDefaultPeriodicity() {
-			return 5 * 60 * 1000; // 5 minutes
-		}
-
-		public long getMaxOutstanding() {
-			return 2;
-		}
-
-		public long getMaxPerSecond() {
-			return 1;
+		public long getDefaultPeriodicitySeconds() {
+			return 15 * 60; // 15 minutes
 		}
 
 		public String getName() {
 			return PollingTaskFamilyType.LASTFM.name();
+		}
+
+		public long rescheduleSeconds(long suggestedSeconds) {
+			return suggestedSeconds;
 		}
 	}
 	
