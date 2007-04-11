@@ -220,7 +220,7 @@ hippo_canvas_block_post_append_content_items (HippoCanvasBlock *block,
                                        NULL);
     hippo_canvas_box_append(parent_box, block_post->quipper, 0);
     hippo_canvas_item_set_visible(block_post->quipper,
-                                  FALSE); /* no messages yet */
+                                  FALSE); /* not expanded */
 
     block_post->last_message_preview = g_object_new(HIPPO_TYPE_CANVAS_LAST_MESSAGE_PREVIEW,
                                                     "actions", hippo_canvas_block_get_actions(block),
