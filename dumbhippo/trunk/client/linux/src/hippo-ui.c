@@ -11,7 +11,6 @@
 #include <gdk/gdkx.h>
 #include <X11/Xatom.h>
 
-
 struct HippoUI {
     HippoPlatform *platform;
     HippoDataCache *cache;
@@ -22,7 +21,6 @@ struct HippoUI {
     GtkWidget *about_dialog;
     HippoPixbufCache *photo_cache;
 };
-
 
 static void
 activate_window(Display *display, Window window)
