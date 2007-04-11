@@ -1059,6 +1059,8 @@ hippo_parse_chat_kind(const char *str)
         return HIPPO_CHAT_KIND_GROUP;
     else if (strcmp(str, "music") == 0)
         return HIPPO_CHAT_KIND_MUSIC;
+    else if (strcmp(str, "block") == 0)
+        return HIPPO_CHAT_KIND_BLOCK;
     else if (strcmp(str, "unknown") == 0)
         return HIPPO_CHAT_KIND_UNKNOWN;
     else
@@ -1075,6 +1077,8 @@ hippo_chat_kind_as_string(HippoChatKind kind)
         return "group";
     case HIPPO_CHAT_KIND_MUSIC:
         return "music";
+    case HIPPO_CHAT_KIND_BLOCK:
+        return "block";
     case HIPPO_CHAT_KIND_UNKNOWN:
         return "unknown";
     case HIPPO_CHAT_KIND_BROKEN:
