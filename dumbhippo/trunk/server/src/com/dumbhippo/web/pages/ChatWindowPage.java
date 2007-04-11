@@ -148,6 +148,17 @@ public class ChatWindowPage {
 		}
     }
     
+    public void setBlockId(String blockId) {
+    	logger.debug("Setting blockId {}", blockId);;
+		try {
+			Block block = stacker.lookupBlock(new Guid(blockId));
+			blockView = stacker.loadBlock(signin.getViewpoint(), block);
+		} catch (NotFoundException e) {
+			// Not a block ID
+		} catch (ParseException e) {
+		}
+    }
+    
     /**
      * Some callers of this page might not know what kind of chat it is, so they 
      * call this... it's important that if this is called with null though, 
@@ -162,6 +173,8 @@ public class ChatWindowPage {
     		setGroupId(someId);
     	if (blockView == null) // don't overwrite a trackId
     		setTrackId(someId);
+    	if (blockView == null) // don't overwrite a blockId
+    		setBlockId(someId);
     }
     
     private PostView getPost() {
@@ -195,6 +208,7 @@ public class ChatWindowPage {
     		case POST:
     			return getPost().getPost().getId();
 			default:
+				return blockView.getBlock().getId();
     		}
     	}
     	
@@ -211,6 +225,7 @@ public class ChatWindowPage {
     		case POST:
     			return getPost().getTitle();
 			default:
+				return blockView.getSummaryLinkText();
     		}
     	}
     	

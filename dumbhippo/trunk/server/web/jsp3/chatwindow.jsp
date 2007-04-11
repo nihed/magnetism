@@ -12,6 +12,7 @@
 <jsp:setProperty name="chatwindow" property="postId" param="postId"/>
 <jsp:setProperty name="chatwindow" property="groupId" param="groupId"/>
 <jsp:setProperty name="chatwindow" property="trackId" param="trackId"/>
+<jsp:setProperty name="chatwindow" property="blockId" param="blockId"/>
 <jsp:setProperty name="chatwindow" property="chatId" param="chatId"/>
 
 <c:if test="${! chatwindow.aboutSomething}">
