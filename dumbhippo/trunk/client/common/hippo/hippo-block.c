@@ -481,7 +481,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     const char *icon_url = NULL;
     const char *stack_reason_str = NULL;
     const char *generic_types = NULL;
-    const char *chat_id;
+    const char *chat_id = NULL;
     HippoStackReason stack_reason = HIPPO_STACK_NEW_BLOCK;
     const char *filter_flags;
     LmMessageNode *recent_messages_node = NULL;

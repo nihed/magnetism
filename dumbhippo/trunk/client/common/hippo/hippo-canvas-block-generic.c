@@ -4,6 +4,9 @@
 #include "hippo-canvas-block-generic.h"
 #include "hippo-thumbnails.h"
 #include "hippo-canvas-thumbnails.h"
+#include "hippo-canvas-chat-preview.h"
+#include "hippo-canvas-last-message-preview.h"
+#include "hippo-canvas-quipper.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-text.h>
@@ -39,6 +42,8 @@ static void hippo_canvas_block_generic_stack_reason_changed (HippoCanvasBlock *c
 
 static void hippo_canvas_block_generic_expand   (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_generic_unexpand (HippoCanvasBlock *canvas_block);
+static void hippo_canvas_block_generic_hush     (HippoCanvasBlock *canvas_block);
+static void hippo_canvas_block_generic_unhush   (HippoCanvasBlock *canvas_block);
 
 
 /* Our own methods */
@@ -51,6 +56,9 @@ struct _HippoCanvasBlockGeneric {
     HippoCanvasItem *description_item;
     HippoCanvasItem *reason_item;
     HippoCanvasItem *clicked_count_item;
+    HippoCanvasItem *quipper;
+    HippoCanvasItem *last_message_preview;
+    HippoCanvasItem *chat_preview;
     HippoCanvasItem *details_box;
     HippoCanvasItem *thumbnails_item;
     unsigned int have_description : 1;
@@ -114,6 +122,8 @@ hippo_canvas_block_generic_class_init(HippoCanvasBlockGenericClass *klass)
     canvas_block_class->stack_reason_changed = hippo_canvas_block_generic_stack_reason_changed;
     canvas_block_class->expand = hippo_canvas_block_generic_expand;
     canvas_block_class->unexpand = hippo_canvas_block_generic_unexpand;
+    canvas_block_class->hush = hippo_canvas_block_generic_hush;
+    canvas_block_class->unhush = hippo_canvas_block_generic_unhush;
 }
 
 static void
@@ -192,6 +202,20 @@ hippo_canvas_block_generic_append_content_items(HippoCanvasBlock *block,
                                                    NULL);
     hippo_canvas_box_append(parent_box, block_generic->description_item, 0);
 
+    block_generic->quipper = g_object_new(HIPPO_TYPE_CANVAS_QUIPPER,
+                                          "actions", hippo_canvas_block_get_actions(block),
+                                          NULL);
+    hippo_canvas_box_append(parent_box, block_generic->quipper, 0);
+    hippo_canvas_item_set_visible(block_generic->quipper,
+                                  FALSE); /* not expanded */
+
+    block_generic->last_message_preview = g_object_new(HIPPO_TYPE_CANVAS_LAST_MESSAGE_PREVIEW,
+                                                       "actions", hippo_canvas_block_get_actions(block),
+                                                       NULL);
+    hippo_canvas_box_append(parent_box, block_generic->last_message_preview, 0);
+    hippo_canvas_item_set_visible(block_generic->last_message_preview,
+                                  FALSE); /* no messages yet */
+
     block_generic->details_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                               "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                                               "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
@@ -212,6 +236,15 @@ hippo_canvas_block_generic_append_content_items(HippoCanvasBlock *block,
                                                   NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(parent_box),
                             block_generic->thumbnails_item, 0);
+
+    block_generic->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
+                                               "actions", hippo_canvas_block_get_actions(block),
+                                               "padding-top", 8,
+                                               NULL);
+    hippo_canvas_box_append(parent_box,
+                            block_generic->chat_preview, 0);
+    hippo_canvas_item_set_visible(block_generic->chat_preview,
+                                  FALSE); /* not expanded at first */
 }
 
 static void
@@ -303,17 +336,29 @@ hippo_canvas_block_generic_update_visibility(HippoCanvasBlockGeneric *block_gene
     HippoStackReason stack_reason;
     gboolean show_description;
     gboolean show_reason;
+    gboolean show_single_message;
+    gboolean have_chat_id;
 
     if (canvas_block->block)
         stack_reason = hippo_block_get_stack_reason(canvas_block->block);
     else
         stack_reason = HIPPO_STACK_BLOCK_UPDATE;
 
-    /* the details box shows iff. we are expanded
+    have_chat_id = FALSE;
+    if (canvas_block->block)
+        have_chat_id = hippo_block_get_chat_id(canvas_block->block) != NULL;
+
+    /* Things that show only when we are expanded
      */
+    hippo_canvas_item_set_visible(block_generic->quipper,
+                                  canvas_block->expanded && have_chat_id);
+
     hippo_canvas_item_set_visible(block_generic->details_box,
                                   canvas_block->expanded);
     
+    hippo_canvas_item_set_visible(block_generic->chat_preview,
+                                  canvas_block->expanded && have_chat_id);
+
     hippo_canvas_item_set_visible(block_generic->thumbnails_item,
                                   canvas_block->expanded && block_generic->have_thumbnails);
     
@@ -331,13 +376,16 @@ hippo_canvas_block_generic_update_visibility(HippoCanvasBlockGeneric *block_gene
                                         block_generic->description_item,
                                         canvas_block->expanded ? HIPPO_PACK_CLEAR_RIGHT : 0);
 
+    show_single_message = !canvas_block->expanded && stack_reason == HIPPO_STACK_CHAT_MESSAGE;
     show_reason = stack_reason == HIPPO_STACK_VIEWER_COUNT;
-    show_description = (canvas_block->expanded || !show_reason) && block_generic->have_description;
+    show_description = (canvas_block->expanded || (!show_single_message && !show_reason)) && block_generic->have_description;
 
     hippo_canvas_item_set_visible(block_generic->description_item,
                                   show_description);
     hippo_canvas_item_set_visible(block_generic->reason_item,
                                   show_reason);
+    hippo_canvas_item_set_visible(block_generic->last_message_preview,
+                                  show_single_message);
 }
 
 static void
@@ -474,9 +522,20 @@ on_block_thumbnails_changed(HippoBlock *block,
 }
 
 static void
+on_block_chat_id_changed(HippoBlock *block,
+                         GParamSpec *arg, /* null when first calling this */
+                         void       *data)
+{
+    HippoCanvasBlockGeneric *canvas_block_generic = HIPPO_CANVAS_BLOCK_GENERIC(data);
+    
+    hippo_canvas_block_generic_update_visibility(canvas_block_generic);
+}
+
+static void
 hippo_canvas_block_generic_set_block(HippoCanvasBlock *canvas_block,
                                      HippoBlock       *block)
 {
+    HippoCanvasBlockGeneric *block_generic = HIPPO_CANVAS_BLOCK_GENERIC(canvas_block);
     
     if (block == canvas_block->block)
         return;
@@ -494,11 +553,24 @@ hippo_canvas_block_generic_set_block(HippoCanvasBlock *canvas_block,
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_block_thumbnails_changed),
                                              canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_block_chat_id_changed),
+                                             canvas_block);
     }
     
     /* Chain up to get the block really changed */
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_generic_parent_class)->set_block(canvas_block, block);
 
+    g_object_set(block_generic->quipper,
+                 "block", canvas_block->block,
+                 NULL);
+    g_object_set(block_generic->last_message_preview,
+                 "block", canvas_block->block,
+                 NULL);
+    g_object_set(block_generic->chat_preview,
+                 "block", canvas_block->block,
+                 NULL);
+    
     if (canvas_block->block != NULL) {
         g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::title",
@@ -516,10 +588,38 @@ hippo_canvas_block_generic_set_block(HippoCanvasBlock *canvas_block,
                          "notify::thumbnails",
                          G_CALLBACK(on_block_thumbnails_changed),
                          canvas_block);
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::thumbnails",
+                         G_CALLBACK(on_block_chat_id_changed),
+                         canvas_block);
         
         on_block_title_changed(canvas_block->block, NULL, canvas_block);
         on_block_description_changed(canvas_block->block, NULL, canvas_block);
         on_block_source_changed(canvas_block->block, NULL, canvas_block);
         on_block_thumbnails_changed(canvas_block->block, NULL, canvas_block);
+        on_block_chat_id_changed(canvas_block->block, NULL, canvas_block);
     }
 }
+
+static void
+hippo_canvas_block_generic_hush(HippoCanvasBlock *canvas_block)
+{
+    HippoCanvasBlockGeneric *block_generic = HIPPO_CANVAS_BLOCK_GENERIC(canvas_block);
+    
+    HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_generic_parent_class)->hush(canvas_block);
+
+    hippo_canvas_chat_preview_set_hushed(HIPPO_CANVAS_CHAT_PREVIEW(block_generic->chat_preview),
+                                         TRUE);
+}
+
+static void
+hippo_canvas_block_generic_unhush(HippoCanvasBlock *canvas_block)
+{
+    HippoCanvasBlockGeneric *block_generic = HIPPO_CANVAS_BLOCK_GENERIC(canvas_block);
+    
+    HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_generic_parent_class)->unhush(canvas_block);
+
+    hippo_canvas_chat_preview_set_hushed(HIPPO_CANVAS_CHAT_PREVIEW(block_generic->chat_preview),
+                                         FALSE);
+}
+
