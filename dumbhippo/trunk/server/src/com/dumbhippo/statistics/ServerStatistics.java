@@ -17,7 +17,7 @@ import org.jboss.mx.util.MBeanProxyExt;
 import org.jboss.mx.util.MBeanServerLocator;
 
 import com.dumbhippo.logging.CountingAppender;
-import com.dumbhippo.polling.DynamicPollingSystem;
+import com.dumbhippo.polling.SwarmPollingSystem;
 import com.dumbhippo.server.impl.MessengerGlueBean;
 
 /**
@@ -149,43 +149,12 @@ public class ServerStatistics implements StatisticsSource {
 		return CountingAppender.getErrorCount();
 	}
 	
-	private long getTaskCount(int i) {
-		DynamicPollingSystem pollsys = DynamicPollingSystem.getInstance();
-		if (pollsys == null)
-			return 0;
-		else
-			return pollsys.getTaskCount(i);
-	}
-	
-	@Column(id="pollingTaskCount0",
-			name="Polling Task Set 0 Size",
+	@Column(id="runningTaskCount",
+			name="Approximate running tasks",
 			units=ColumnUnit.COUNT,
 			type=ColumnType.SNAPSHOT)
-	public long getPollingTaskCount0() {
-		return getTaskCount(0);
-	}
-	
-	@Column(id="pollingTaskCount1",
-			name="Polling Task Set 1 Size",
-			units=ColumnUnit.COUNT,
-			type=ColumnType.SNAPSHOT)
-	public long getPollingTaskCount1() {
-		return getTaskCount(1);
-	}	
-	
-	@Column(id="pollingTaskCount2",
-			name="Polling Task Set 2 Size",
-			units=ColumnUnit.COUNT,
-			type=ColumnType.SNAPSHOT)
-	public long getPollingTaskCount2() {
-		return getTaskCount(2);
-	}
-	
-	@Column(id="pollingTaskCount3",
-			name="Polling Task Set 3 Size",
-			units=ColumnUnit.COUNT,
-			type=ColumnType.SNAPSHOT)
-	public long getPollingTaskCount3() {
-		return getTaskCount(3);
+	public long getRunningTaskCount() {
+		SwarmPollingSystem swarm = SwarmPollingSystem.getInstance();
+		return swarm.getRunningCount();
 	}
 }

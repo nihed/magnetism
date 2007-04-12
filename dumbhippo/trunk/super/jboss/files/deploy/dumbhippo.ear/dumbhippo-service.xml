@@ -83,7 +83,7 @@
     </mbean>
 
     <!-- The cluster singleton service for polling dynamic sources --> 
-    <mbean code="com.dumbhippo.polling.DynamicPollingSystem" name="dumbhippo.com:service=DynamicPollingSystem">
+    <mbean code="com.dumbhippo.polling.SwarmPollingSystem" name="dumbhippo.com:service=SwarmPollingSystem">
     	<depends>jboss.j2ee:ear=dumbhippo.ear,jar=dumbhippo.ejb3,name=ConfigurationBean,service=EJB3</depends>    	
     	<depends>jboss.j2ee:ear=dumbhippo.ear,jar=dumbhippo.ejb3,name=PollingTaskPersistenceBean,service=EJB3</depends>
     </mbean>
@@ -99,12 +99,12 @@
         <attribute name="TargetStopMethod">stopSingleton</attribute>
     </mbean>
     
-    <mbean code="org.jboss.ha.singleton.HASingletonController" name="dumbhippo.com:service=DynamicPollingSystem-HASingletonController">
+    <mbean code="org.jboss.ha.singleton.HASingletonController" name="dumbhippo.com:service=SwarmPollingSystem-HASingletonController">
         <depends optional-attribute-name="ClusterPartition" proxy-type="attribute">
             jboss:service=${jboss.partition.name:DefaultPartition}
         </depends>
         <depends optional-attribute-name="TargetName">
-            dumbhippo.com:service=DynamicPollingSystem
+            dumbhippo.com:service=SwarmPollingSystem
         </depends>
         <attribute name="TargetStartMethod">startSingleton</attribute>
         <attribute name="TargetStopMethod">stopSingleton</attribute>

@@ -2,10 +2,13 @@ package com.dumbhippo.polling;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.jboss.system.ServiceMBeanSupport;
@@ -15,6 +18,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ScheduledExecutorCompletionService;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.ThreadUtils.DaemonRunnable;
+import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoadResult;
 import com.dumbhippo.server.util.EJBUtil;
@@ -41,7 +45,6 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 	// How quickly to reschedule a task if it's changed
 	private static final int TASK_CHANGE_RESCHEDULE_SEC = 4 * 60; // 4 minutes
 	
-	private static final int TASK_LOAD_PER_SEC = 10; // How many tasks can be queued per second
 	private static final int MAX_CONCURRENT_THREADS = 1000;
 	
 	private static SwarmPollingSystem instance;
@@ -50,6 +53,7 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 		return instance;
 	}
 	
+	private Set<PollingTask> tasks = new HashSet<PollingTask>();
 	private ScheduledExecutorService executor = ThreadUtils.newScheduledThreadPoolExecutor("polling task worker", MAX_CONCURRENT_THREADS);
 	private ScheduledExecutorCompletionService<PollingTaskExecutionResult> taskCompletion = new ScheduledExecutorCompletionService<PollingTaskExecutionResult>(executor);
 	
@@ -62,11 +66,27 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 	public SwarmPollingSystem() {
 	}
 	
-	public void pokeTask(int family, String id) {
+	public void executeTaskNow(PollingTaskFamilyType family, String id) throws Exception {
+		String expectedName = family.name();
+		for (PollingTask task : tasks) {
+			if (task.getFamily().getName().equals(expectedName) && 
+					task.getIdentifier().equals(id)) {
+				task.call();
+			}
+		}
 	}
 
-	private synchronized void obsoleteTasks(Set<PollingTask> tasks) {
-		taskPersistenceWorker.addObsoleteTasks(tasks);
+	private synchronized void obsoleteTasks(Set<PollingTask> obsoleteTasks) {
+		tasks.removeAll(obsoleteTasks);
+		taskPersistenceWorker.addObsoleteTasks(obsoleteTasks);
+	}
+	
+	public int getRunningCount() {
+		// Kind of a hack but it seems cleaner than declaring executor as a ThreadPoolExecutor
+		// everywhere
+		if (executor == null || !(executor instanceof ThreadPoolExecutor))
+			return 0;
+		return ((ThreadPoolExecutor) executor).getActiveCount();
 	}
 	
 	private class TaskCompletionWorker implements DaemonRunnable {
@@ -119,6 +139,9 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 					// We catch Exception inside PollingTask.call, so if we get an exception
 					// here something went seriously wrong
 					throw new RuntimeException(e);
+				} catch (CancellationException e) {
+					// Ignore cancelled tasks
+					continue;
 				}
 				if (result.isObsolete()) {
 					obsoleteTasks(Collections.singleton(task));
@@ -187,8 +210,14 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 
 				PollingTaskLoadResult loadResult = persister.loadNewTasks(lastSeenTaskDatabaseId);
 				int i = 0;
+				Random r = new Random();
 				for (PollingTask task : loadResult.getTasks()) {
-					taskCompletion.schedule(task, i / TASK_LOAD_PER_SEC, TimeUnit.SECONDS);
+					tasks.add(task);
+					long periodicitySecs = task.getFamily().getDefaultPeriodicitySeconds();
+					if (periodicitySecs < 0)
+						periodicitySecs = MAX_TASK_PERIODICITY_SEC;
+					int offsetSecs = r.nextInt((int) periodicitySecs);
+					taskCompletion.schedule(task, offsetSecs, TimeUnit.SECONDS);
 					i++;
 				}
 				lastSeenTaskDatabaseId = loadResult.getLastDbId();
