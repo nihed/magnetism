@@ -193,19 +193,17 @@ class AppsStock(bigboard.AbstractMugshotStock):
             
     def __set_dynamic_set(self, mugshot_apps):
         self.__dynamic_set.remove_all()        
-        i = 0
-        for mugshot_app in mugshot_apps or []:
+        for i, mugshot_app in enumerate(mugshot_apps or []):
             app = self.get_app(mugshot_app)
             if self.__static_set_ids.has_key(app.get_id()):
                 continue
-            if i > self.DYNAMIC_SET_SIZE:
+            if i >= self.DYNAMIC_SET_SIZE:
                 break
             self._logger.debug("setting dynamic app: %s", app)            
-            i += 1
             display = apps_widgets.AppDisplay(app)
             display.connect("button-press-event", lambda display, event: display.launch())             
             self.__dynamic_set.append(display)
-        if i > 0:
+        if mugshot_apps:
             self.__box.set_child_visible(self.__dynamic_set,True)
                         
     def get_app(self, mugshot_app):
@@ -236,7 +234,9 @@ class AppsStock(bigboard.AbstractMugshotStock):
         self.__box.set_child_visible(self.__dynamic_set, False)
         self.__static_set.remove_all()
         self.__static_set_ids = {}
-        for mugshot_app in self._mugshot.get_pinned_apps() or []:
+        for i, mugshot_app in enumerate(self._mugshot.get_pinned_apps() or []):
+            if i >= self.STATIC_SET_SIZE:
+                break
             app = self.get_app(mugshot_app)
             display = apps_widgets.AppDisplay(app)
             display.connect("button-press-event", lambda display, event: display.launch()) 
