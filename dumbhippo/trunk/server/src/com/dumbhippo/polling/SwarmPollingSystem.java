@@ -81,12 +81,18 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 		taskPersistenceWorker.addObsoleteTasks(obsoleteTasks);
 	}
 	
-	public int getRunningCount() {
+	public int getExecutingTaskCount() {
 		// Kind of a hack but it seems cleaner than declaring executor as a ThreadPoolExecutor
 		// everywhere
 		if (executor == null || !(executor instanceof ThreadPoolExecutor))
 			return 0;
 		return ((ThreadPoolExecutor) executor).getActiveCount();
+	}
+	
+	public int getPendingTaskCount() {
+		if (executor == null || !(executor instanceof ThreadPoolExecutor))
+			return 0;
+		return ((ThreadPoolExecutor) executor).getQueue().size();		
 	}
 	
 	private class TaskCompletionWorker implements DaemonRunnable {

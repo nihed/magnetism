@@ -149,12 +149,25 @@ public class ServerStatistics implements StatisticsSource {
 		return CountingAppender.getErrorCount();
 	}
 	
-	@Column(id="runningTaskCount",
-			name="Approximate running tasks",
+	@Column(id="executingTaskCount",
+			name="Executing task count",
 			units=ColumnUnit.COUNT,
 			type=ColumnType.SNAPSHOT)
-	public long getRunningTaskCount() {
+	public long getExecutingTaskCount() {
 		SwarmPollingSystem swarm = SwarmPollingSystem.getInstance();
-		return swarm.getRunningCount();
+		if (swarm != null)
+			return swarm.getExecutingTaskCount();
+		return 0;
 	}
+	
+	@Column(id="pendingTaskCount",
+			name="Pending task count",
+			units=ColumnUnit.COUNT,
+			type=ColumnType.SNAPSHOT)
+	public long getPendgingTaskCount() {
+		SwarmPollingSystem swarm = SwarmPollingSystem.getInstance();
+		if (swarm != null)
+			return swarm.getPendingTaskCount();
+		return 0;
+	}	
 }
