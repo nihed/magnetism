@@ -1349,7 +1349,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 
 			@Override
 			Collection<User> getRemainder() {
-				return identitySpider.getRawUserContacts(viewpoint, user, false);
+				return identitySpider.getRawUserContacts(viewpoint, user);
 			}
 		}, start, count, 4);		
 		
