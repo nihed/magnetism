@@ -214,18 +214,17 @@ hippo_dbus_helper_register_interface(DBusConnection          *connection,
     g_hash_table_replace(helper->interfaces, iface->name, iface);
 }
 
-void
-hippo_dbus_helper_register_object(DBusConnection    *connection,
-                                  const char        *path,
-                                  void              *object,
-                                  const char        *first_interface,
-                                  ...)
+static void
+hippo_dbus_helper_register_object_valist(DBusConnection    *connection,
+                                         const char        *path,
+                                         void              *object,
+                                         const char        *first_interface,
+                                         va_list            args)
 {
     HippoDBusObject *o;
     HippoDBusHelper *helper;
 #define MAX_IFACES 10
     HippoDBusInterface *ifaces[MAX_IFACES];
-    va_list args;
     int i;
 
     helper = get_helper(connection);
@@ -237,7 +236,6 @@ hippo_dbus_helper_register_object(DBusConnection    *connection,
         g_return_if_fail(ifaces[i] != NULL);
         ++i;
 
-        va_start(args, first_interface);
         name = va_arg(args, const char*);
         while (name != NULL) {
             g_assert(i < MAX_IFACES);
@@ -274,6 +272,71 @@ hippo_dbus_helper_unregister_object(DBusConnection    *connection,
     g_hash_table_remove(helper->objects, path);
 
     object_free(o);
+}
+
+gboolean
+hippo_dbus_helper_object_is_registered (DBusConnection          *connection,
+                                        const char              *path)
+{
+    HippoDBusObject *o;
+    HippoDBusHelper *helper;
+
+    helper = get_helper(connection);
+
+    o = g_hash_table_lookup(helper->objects, path);
+
+    return o != NULL;
+}
+
+void
+hippo_dbus_helper_register_object(DBusConnection    *connection,
+                                  const char        *path,
+                                  void              *object,
+                                  const char        *first_interface,
+                                  ...)
+{
+    va_list args;
+    va_start(args, first_interface);
+    hippo_dbus_helper_register_object_valist(connection, path, object, first_interface, args);
+    va_end(args);
+}
+
+typedef struct {
+    DBusConnection *connection;
+    char *path;
+} UnregisterInfo;
+
+static void
+unregister_destroyed_object(void         *data,
+                            GObject      *where_the_object_was)
+{
+    UnregisterInfo *info = data;
+
+    hippo_dbus_helper_unregister_object(info->connection, info->path);
+
+    g_free(info->path);
+    g_free(info);
+}
+
+void
+hippo_dbus_helper_register_g_object(DBusConnection          *connection,
+                                    const char              *path,
+                                    GObject                 *object,
+                                    const char              *first_interface,
+                                    ...)
+{
+    va_list args;
+    UnregisterInfo *info;
+    
+    va_start(args, first_interface);
+    hippo_dbus_helper_register_object_valist(connection, path, object, first_interface, args);
+    va_end(args);
+
+    info = g_new(UnregisterInfo, 1);
+    info->connection = connection;
+    info->path = g_strdup(path);
+    
+    g_object_weak_ref(object, unregister_destroyed_object, info);
 }
 
 static DBusHandlerResult
@@ -512,8 +575,23 @@ handle_method(DBusConnection  *connection,
         goto out;
     }
 
+    if (!dbus_message_has_signature(message, member->in_args)) {
+        dbus_set_error(&derror, DBUS_ERROR_FAILED,
+                       _("'%s' should have signature '%s' not '%s'"),
+                       member_name, member->in_args, dbus_message_get_signature(message));
+        goto out;
+    }
+    
     reply = (* member->handler) (o->object, message, &derror);
 
+    if (reply != NULL && dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_METHOD_RETURN) {
+        if (!dbus_message_has_signature(reply, member->out_args)) {
+            g_warning("Wrong method reply signature for '%s' should be '%s' was '%s'",
+                      member_name, member->out_args, dbus_message_get_signature(reply));
+            goto out;
+        }
+    }
+    
  out:
 
     if (dbus_error_is_set(&derror)) {

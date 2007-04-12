@@ -7,10 +7,10 @@
 #include <glib-object.h>
 #include <hippo/hippo-basics.h>
 #include <hippo/hippo-external-account.h>
+#include "main.h"
 
 G_BEGIN_DECLS
 
-typedef struct _HippoDBus      HippoDBus;
 typedef struct _HippoDBusClass HippoDBusClass;
 
 #define HIPPO_TYPE_DBUS              (hippo_dbus_get_type ())
