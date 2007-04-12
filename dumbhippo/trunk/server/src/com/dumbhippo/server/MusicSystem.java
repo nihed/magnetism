@@ -12,9 +12,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.AlbumView;
 import com.dumbhippo.server.views.ArtistView;
 import com.dumbhippo.server.views.ExpandedArtistView;
-import com.dumbhippo.server.views.PersonMusicView;
 import com.dumbhippo.server.views.TrackView;
-import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
 @Local
@@ -107,16 +105,6 @@ public interface MusicSystem {
 	public void pageOnePlayTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable);
 
 	/**
-	 * Retrieve a list of songs played most recently by friends of the viewing user.
-	 * (This could be extended easily to handle friends of a different user, but
-	 * we don't need that at the moment.)
-	 * 
-	 * @param viewpoint Viewpoint retrieving the information
-	 * @param pageable object providing range to retrieve and in which to store results  
-	 */
-	public void pageFriendsLatestTrackViews(UserViewpoint viewpoint, Pageable<TrackView> pageable);
-	
-	/**
 	 * Returns a track view for a matching track.
 	 * 
 	 * @param viewpoint
@@ -167,12 +155,6 @@ public interface MusicSystem {
 	 * @throws NotFoundException
 	 */
 	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, String album, String name, Pageable<AlbumView> pageable) throws NotFoundException;
-	
-	public List<PersonMusicView> getRelatedPeopleWithTracks(Viewpoint viewpoint, String artist, String album, String name);
-	
-	public List<PersonMusicView> getRelatedPeopleWithAlbums(Viewpoint viewpoint, String artist, String album, String name);
-	
-	public List<PersonMusicView> getRelatedPeopleWithArtists(Viewpoint viewpoint, String artist, String album, String name);
 	
 	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults);
 	

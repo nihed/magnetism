@@ -78,7 +78,6 @@ import com.dumbhippo.server.views.AlbumView;
 import com.dumbhippo.server.views.ArtistView;
 import com.dumbhippo.server.views.ExpandedArtistView;
 import com.dumbhippo.server.views.PersonMusicPlayView;
-import com.dumbhippo.server.views.PersonMusicView;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
@@ -1411,43 +1410,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return getArtistViewsFromTracks(tracks);		
 	}
 	
-	public void pageFriendsLatestTrackViews(UserViewpoint viewpoint, Pageable<TrackView> pageable) {
-		// FIXME: We really want to do something along the lines of 
-		// GROUP BY h.track ORDER BY max(h.lastUpdated), but that won't work
-		// with MySQL 4, so we accept the possibility of duplicate tracks for 
-		// the moment. The way to fix this is to use native SQL ... see the handling
-		// of similar queries globally with the queries defined in TrackHistory.java
-		Set<User> contacts = identitySpider.getRawUserContacts(viewpoint, viewpoint.getViewer(), true);
-		
-		// filter out ourselves
-		Iterator<User> iterator = contacts.iterator();
-		while (iterator.hasNext()) {
-			User user = iterator.next();
-			if (user.equals(viewpoint.getViewer()))
-			    iterator.remove();
-		}
- 		
-		if (contacts.size() == 0) { // h.user IN () isn't legal
-			List<TrackView> empty = Collections.emptyList();
-			pageable.setResults(empty);
-			pageable.setTotalCount(0);
-			return;
-		}
-		
-		String where = "WHERE h.user IN " + getUserSetSQL(contacts);
-				
-		Query q = em.createQuery("SELECT h FROM TrackHistory h " + where + " ORDER BY h.lastUpdated DESC");
-		q.setFirstResult(pageable.getStart());
-		q.setMaxResults(pageable.getCount());
-		List<?> results = q.getResultList();
-		
-		pageable.setResults(getViewsFromTrackHistories(viewpoint, TypeUtils.castList(TrackHistory.class, results), true));
-		
-		q = em.createQuery("SELECT COUNT(*) FROM TrackHistory h " + where);
-		Object o = q.getSingleResult();
-		pageable.setTotalCount(((Number)o).intValue()); 
-	}
-	
 	private Query buildSongQuery(Viewpoint viewpoint, String artist, String album, String name, int maxResults) throws NotFoundException {
 		int count = 0;
 		if (artist != null)
@@ -1618,32 +1580,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 
-	private static final int MAX_RELATED_FRIENDS_RESULTS = 5;
-	private static final int MAX_RELATED_ANON_RESULTS = 5;
-	private static final int MAX_SUGGESTIONS_PER_FRIEND = 3;
 	private static final int MAX_RELATED_PEOPLE_RESULTS = 3;
-	
-	private enum RelatedType {
-		ALBUMS,
-		TRACKS,
-		ARTISTS
-	}
-	
-	private String getUserSetSQL(Set<User> users) {
-		StringBuilder sb = new StringBuilder("(");
-		
-		for (User u : users) {
-			sb.append("'");
-			sb.append(u.getId());
-			sb.append("',");
-		}
-		if (sb.charAt(sb.length()-1) == ',') {
-			sb.setLength(sb.length() - 1);
-		}
-		sb.append(")");
-		
-		return new String(sb);
-	}
 	
 	private void fillTrackViewWithTrackHistory(Viewpoint viewpoint, TrackView trackView) {
 
@@ -1672,7 +1609,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
         if (viewpoint instanceof UserViewpoint) {
         	// we will not limit the query to h.user.id being in the contacts list, but we
         	// will give a preference to people in that list when constructing the list to return
-            contacts = identitySpider.getRawUserContacts(viewpoint, ((UserViewpoint)viewpoint).getViewer(), true);
+            contacts = identitySpider.getRawUserContacts(viewpoint, ((UserViewpoint)viewpoint).getViewer());
         }
 
         // we want to desplay the most recent plays
@@ -1778,153 +1715,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 	}
 	
-	private List<PersonMusicView> getRelatedPeople(Viewpoint viewpoint, String artist, String album, String name, RelatedType type) {
-
-		if (viewpoint == null)
-			throw new IllegalArgumentException("System view not supported here");
-		
-		List<PersonMusicView> ret = new ArrayList<PersonMusicView>();
-		
-		List<Track> tracks = getMatchingTracks(viewpoint, artist, album, name);
-		if (tracks.size() == 0)
-			return ret;
-
-		// FIXME Query.setParameter(List<Track>) doesn't seem to work, a hibernate bug?
-		// also, we could merge this with the query to get the matching tracks and be
-		// more efficient, but too lazy right now
-		StringBuilder sb = new StringBuilder("FROM TrackHistory h WHERE h.track.id IN (");
-		for (Track t : tracks) {
-			sb.append(t.getId());
-			sb.append(",");
-		}
-		if (sb.charAt(sb.length()-1) == ',') {
-			sb.setLength(sb.length() - 1);
-		}
-		sb.append(")");
-		
-		Set<User> contacts = null;
-		if (viewpoint instanceof UserViewpoint) {
-			contacts = identitySpider.getRawUserContacts(viewpoint, ((UserViewpoint)viewpoint).getViewer(), true);
-
-			// disabled for now since we want to return anonymous recommendations too
-			// if you renable, take care of the fact that IN () isn't allowed if contacts is empty
-			if (true && false) {
-				sb.append(" AND h.user.id IN ");
-				sb.append(getUserSetSQL(contacts));
-			}
-		}
-		
-		Query q = em.createQuery(sb.toString());
-		
-		Map<User,PersonMusicView> views = new HashMap<User,PersonMusicView>();
-		
-		int contactViews = 0;
-		int anonViews = 0;
-		
-		// FIXME this is more parallelizable than it is here, i.e. we could
-		// first collect all the Track then convert each one to TrackView all in 
-		// parallel
-		
-		List<?> history = q.getResultList();
-		for (Object o : history) {
-			TrackHistory h = (TrackHistory) o;
-			
-			User user = h.getUser();
-
-			// If the viewer is the user themself, we want to include
-			// them in the result, because that prevents our pages
-			// from looking strangely empty, but we don't want the
-			// recommendation lists, since that is just strange.
-			boolean isSelf = viewpoint.isOfUser(user);
-			
-			PersonMusicView pmv = views.get(user);
-			if (pmv == null) {
-				if (isSelf || contacts.contains(user)) {
-					if (contactViews < MAX_RELATED_FRIENDS_RESULTS) {
-						pmv = new PersonMusicView(personViewer.getPersonView(viewpoint, user));
-
-						if (!isSelf) {
-							switch (type) {
-							case TRACKS: {
-								List<TrackView> latest = getLatestTrackViews(viewpoint, user, MAX_SUGGESTIONS_PER_FRIEND);
-								pmv.setTracks(latest);
-							}
-							break;
-							case ALBUMS: {
-								List<AlbumView> latest = getLatestAlbumViews(viewpoint, user, MAX_SUGGESTIONS_PER_FRIEND);
-								pmv.setAlbums(latest);
-							}
-							break;
-							case ARTISTS: {
-								List<ArtistView> latest = getLatestArtistViews(viewpoint, user, MAX_SUGGESTIONS_PER_FRIEND);
-								pmv.setArtists(latest);
-							}
-							break;
-							}
-						}
-						++contactViews;
-					}
-				} else {
-					if (anonViews < MAX_RELATED_ANON_RESULTS) {
-						switch (type) {
-						case TRACKS: {
-							// get latest tracks from system view
-							List<TrackView> latest = getLatestTrackViews(null, user, MAX_SUGGESTIONS_PER_FRIEND);
-							if (latest.size() > 0) {
-								pmv = new PersonMusicView(); // don't load a PersonView
-								pmv.setTracks(latest);
-								++anonViews;
-							}
-						} 
-						break;
-						case ALBUMS: {								
-							List<AlbumView> latest = getLatestAlbumViews(null, user, MAX_SUGGESTIONS_PER_FRIEND);
-							if (latest.size() > 0) {
-								pmv = new PersonMusicView(); // don't load a PersonView
-								pmv.setAlbums(latest);
-								++anonViews;
-							}
-						}
-						break;
-						case ARTISTS: {
-							List<ArtistView> latest = getLatestArtistViews(null, user, MAX_SUGGESTIONS_PER_FRIEND);
-							if (latest.size() > 0) {
-								pmv = new PersonMusicView(); // don't load a PersonView
-								pmv.setArtists(latest);
-								++anonViews;
-							}				
-						}
-						break;
-						}
-					}
-				}
-				
-				if (pmv != null)
-					views.put(user, pmv);
-			}
-			
-			if (contactViews >= MAX_RELATED_FRIENDS_RESULTS &&
-					anonViews >= MAX_RELATED_ANON_RESULTS)
-				break;
-		}
-		
-		ret.addAll(views.values());
-		
-		return ret;
-	}
-
-	public List<PersonMusicView> getRelatedPeopleWithTracks(Viewpoint viewpoint, String artist, String album, String name) {
-		return getRelatedPeople(viewpoint, artist, album, name, RelatedType.TRACKS);
-	}
-
-	public List<PersonMusicView> getRelatedPeopleWithAlbums(Viewpoint viewpoint, String artist, String album, String name) {
-		return getRelatedPeople(viewpoint, artist, album, name, RelatedType.ALBUMS);
-	}
-
-	public List<PersonMusicView> getRelatedPeopleWithArtists(Viewpoint viewpoint, String artist, String album, String name) {
-		return getRelatedPeople(viewpoint, artist, album, name, RelatedType.ARTISTS);
-	}
-
 	public TrackSearchResult searchTracks(Viewpoint viewpoint, String queryString) {
 		final String[] fields = { "artist", "album", "name" };
 		QueryParser queryParser = new MultiFieldQueryParser(fields, TrackIndexer.getInstance().createAnalyzer());

@@ -1,7 +1,6 @@
 package com.dumbhippo.server;
 
 import java.net.URL;
-import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
@@ -9,7 +8,6 @@ import javax.ejb.Local;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.LiveUser;
-import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
@@ -154,15 +152,6 @@ public interface IdentitySpider {
 	 */
 	public void removeVerifiedOwnershipClaim(UserViewpoint viewpoint, User owner, Resource res);
 	
-	/**
-	 * Retrieve the list of accounts which have the given user as a contact.
-	 * 
-	 * @param user user for whom returned accounts have a contact
-	 * @return list of accounts
-	 */
-	public List<Account> getAccountsWhoHaveUserAsContact(User user);	
-	
-	
 	public Contact findContactByResource(User owner, Resource resource) throws NotFoundException;	
 	
 	/**
@@ -240,14 +229,19 @@ public interface IdentitySpider {
 	public int computeContactsCount(User user);
 		
 	/** 
-	 * Get the contacts of a given person who have an account; including the person themselves
+	 * Get the contacts of a given person who have an account
 	 * @param user who to get contacts of
-	 * @param includeSelf TODO
+	 * @param includeSelf ; whether to include the person themselves
 	 * @return their friends
-	 * 
 	 */
-	public Set<User> getRawUserContacts(Viewpoint viewpoint, User user, boolean includeSelf);
+	public Set<User> getRawUserContacts(Viewpoint viewpoint, User user);
 	
+	/**
+	 * Retrieve the list of users which have the given user as a contact.
+	 * 
+	 * @param user user for whom returned users have a contact
+	 * @return list of users
+	 */
 	public Set<User> getUsersWhoHaveUserAsContact(Viewpoint viewpoint, User user);
 	
 	/**

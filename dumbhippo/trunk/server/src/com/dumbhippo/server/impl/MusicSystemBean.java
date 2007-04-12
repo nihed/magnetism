@@ -18,9 +18,7 @@ import com.dumbhippo.server.TrackSearchResult;
 import com.dumbhippo.server.views.AlbumView;
 import com.dumbhippo.server.views.ArtistView;
 import com.dumbhippo.server.views.ExpandedArtistView;
-import com.dumbhippo.server.views.PersonMusicView;
 import com.dumbhippo.server.views.TrackView;
-import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
 /**
@@ -100,19 +98,6 @@ public class MusicSystemBean implements MusicSystem {
 		internal.pageOnePlayTrackViews(viewpoint, pageable);
 	}
 
-	public void pageFriendsLatestTrackViews(UserViewpoint viewpoint, Pageable<TrackView> pageable) {
-		internal.pageFriendsLatestTrackViews(viewpoint, pageable);
-	}
-	
-	public List<PersonMusicView> getRelatedPeopleWithTracks(Viewpoint viewpoint, String artist, String album, String name) {
-		return internal.getRelatedPeopleWithTracks(viewpoint, artist, album, name);
-	}
-
-	public List<PersonMusicView> getRelatedPeopleWithAlbums(Viewpoint viewpoint, String artist, String album, String name) {
-		return internal.getRelatedPeopleWithAlbums(viewpoint, artist, album, name);
-	}
-
-	
 	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults) {
 		return internal.getLatestAlbumViews(viewpoint, user, maxResults);
 	}
@@ -129,10 +114,6 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.expandedArtistSearch(viewpoint, artist, album, name, albumsByArtist);
 	}
 	
-	public List<PersonMusicView> getRelatedPeopleWithArtists(Viewpoint viewpoint, String artist, String album, String name) {
-		return internal.getRelatedPeopleWithArtists(viewpoint, artist, album, name);
-	}
-
 	public List<ArtistView> getLatestArtistViews(Viewpoint viewpoint, User user, int maxResults) {
 		return internal.getLatestArtistViews(viewpoint, user, maxResults);
 	}

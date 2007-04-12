@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -628,40 +627,34 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return ((Number)q.getSingleResult()).intValue();
 	}
 
-	public Set<User> getRawUserContacts(Viewpoint viewpoint, User user, boolean includeSelf) {
+	public Set<User> getRawUserContacts(Viewpoint viewpoint, User user) {
 		if (!isViewerSystemOrFriendOf(viewpoint, user))
 			return Collections.emptySet();
 
 		Guid viewedUserId = user.getGuid();
 		Set<User> ret = new HashSet<User>();
 		for (Guid guid : LiveState.getInstance().getContacts(viewedUserId)) {
-			if (!includeSelf && viewedUserId.equals(guid))
+			// The user might be listed as their own contact, but avoid revealing that
+			if (viewedUserId.equals(guid))
 				continue;
 			ret.add(em.find(User.class, guid.toString()));
 		}
 		return ret;
 	}
 
-	static final private String GET_ACCOUNTS_WITH_ACCOUNT_AS_CONTACT_QUERY = "SELECT cc.account FROM ContactClaim cc WHERE cc.resource = :account";
-
-	public List<Account> getAccountsWhoHaveUserAsContact(User user) {
-		Query q = em.createQuery(GET_ACCOUNTS_WITH_ACCOUNT_AS_CONTACT_QUERY);
-		q.setParameter("account", user.getAccount());
-		List<Account> accounts = TypeUtils.castList(Account.class, q
-				.getResultList());
-		return accounts;
-	}
-
 	public Set<User> getUsersWhoHaveUserAsContact(Viewpoint viewpoint, User user) {
-		if (!(viewpoint.isOfUser(user) || viewpoint instanceof SystemViewpoint)) {
+		if (!isViewerSystemOrFriendOf(viewpoint, user))
 			return Collections.emptySet();
+
+		Guid viewedUserId = user.getGuid();
+		Set<User> ret = new HashSet<User>();
+		for (Guid guid : LiveState.getInstance().getContacters(viewedUserId)) {
+			// The user might be listed as their own contact, but avoid revealing that
+			if (viewedUserId.equals(guid))
+				continue;
+			ret.add(em.find(User.class, guid.toString()));
 		}
-		List<Account> accounts = getAccountsWhoHaveUserAsContact(user);
-		Set<User> users = new HashSet<User>();
-		for (Account a : accounts) {
-			users.add(a.getOwner());
-		}
-		return users;
+		return ret;
 	}
 
 	/**
@@ -927,30 +920,27 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 
 	public Set<User> getMySpaceContacts(UserViewpoint viewpoint) {
-		Set<User> contacts = getRawUserContacts(viewpoint, viewpoint
-				.getViewer(), true);
+		Set<User> contacts = getRawUserContacts(viewpoint, viewpoint.getViewer());
 
-		// filter out ourselves and anyone with no myspace
+		// filter out anyone with no myspace
 		Iterator<User> iterator = contacts.iterator();
 		while (iterator.hasNext()) {
 			User user = iterator.next();
 
-			if (!user.equals(viewpoint.getViewer())) {
-				ExternalAccount external;
-				try {
-					// not using externalAccounts.getMySpaceName() because we
-					// also want to check we have the friend id
-					external = externalAccounts.lookupExternalAccount(
-							viewpoint, user, ExternalAccountType.MYSPACE);
-					if (external.getSentiment() == Sentiment.LOVE
-							&& external.getHandle() != null
-							&& external.getExtra() != null) {
-						// we have myspace name AND friend ID
-						continue;
-					}
-				} catch (NotFoundException e) {
-					// nothing
+			ExternalAccount external;
+			try {
+				// not using externalAccounts.getMySpaceName() because we
+				// also want to check we have the friend id
+				external = externalAccounts.lookupExternalAccount(
+						viewpoint, user, ExternalAccountType.MYSPACE);
+				if (external.getSentiment() == Sentiment.LOVE
+						&& external.getHandle() != null
+						&& external.getExtra() != null) {
+					// we have myspace name AND friend ID
+					continue;
 				}
+			} catch (NotFoundException e) {
+				// nothing
 			}
 
 			// remove - did not have a myspace name
