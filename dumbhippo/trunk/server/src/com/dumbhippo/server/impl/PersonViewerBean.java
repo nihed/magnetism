@@ -29,6 +29,8 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.HippoProperty;
@@ -71,6 +73,9 @@ public class PersonViewerBean implements PersonViewer {
 	@EJB
 	private Configuration config;
 
+	@EJB
+	private AccountSystem accountSystem;
+	
 	private Set<Resource> getResourcesForPerson(Person person) {
 		Set<Resource> resources = new HashSet<Resource>();
 		if (person instanceof User) {
@@ -186,6 +191,12 @@ public class PersonViewerBean implements PersonViewer {
 
 			pv.setContactOfViewer(isContact);
 			break;
+		case MUGSHOT_CHARACTER_STATUS:
+			boolean isMugshotCharacter = false;
+			if (pv.getUser() != null)
+			    isMugshotCharacter = pv.getUser().equals(accountSystem.getCharacter(Character.MUGSHOT));
+			
+			pv.setMugshotCharacter(isMugshotCharacter);    
 		}
 	}
 

@@ -8,5 +8,6 @@ package com.dumbhippo.server.views;
 public enum PersonViewExtra {
 	INVITED_STATUS,
 	EXTERNAL_ACCOUNTS,
-	CONTACT_STATUS;
+	CONTACT_STATUS,
+	MUGSHOT_CHARACTER_STATUS
 }

@@ -3,6 +3,7 @@ package com.dumbhippo.server.impl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,12 +35,15 @@ import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
+import com.dumbhippo.persistence.GroupMembershipPolicyRevision;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.search.SearchSystem;
+import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.Character;
 import com.dumbhippo.server.GroupIndexer;
 import com.dumbhippo.server.GroupSearchResult;
 import com.dumbhippo.server.GroupSystem;
@@ -49,6 +53,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
+import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.GroupMemberView;
 import com.dumbhippo.server.views.GroupView;
@@ -78,6 +83,12 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	
 	@EJB
 	private Notifier notifier;
+	
+	@EJB
+	private AccountSystem accountSystem;
+	
+	@EJB
+	private RevisionControl revisionControl;
 	
 	public Group createGroup(User creator, String name, GroupAccess access, String description) {
 		if (creator == null)
@@ -211,6 +222,10 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		if (resource instanceof Account)
 			return getGroupMemberForUser(group, ((Account)resource).getOwner(), true);
 		
+		AccountClaim ac = resource.getAccountClaim();
+		if (ac != null)
+			return getGroupMemberForUser(group, ac.getOwner(), true);
+		
 		for (GroupMember member : group.getMembers()) {
 			if (member.getMember().equals(resource))
 				return member;
@@ -266,11 +281,18 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}		
 	}
 	
-	public void addMember(User adder, Group group, Resource resource, boolean notifyGroupMembers) {
+	private void addMember(User adder, Group group, Resource resource, boolean openGroupAdjustment) {
+		if (openGroupAdjustment && group.getAccess() != GroupAccess.PUBLIC) 
+			throw new RuntimeException("Open group membership adjustment can only be applied to an open group");
+		
+		if (!openGroupAdjustment && adder == null) 
+            throw new RuntimeException("Adder can only be null when we are doing membership adjustments for an open group");
+		
+		boolean notifyGroupMembers = !openGroupAdjustment;
 		GroupMember groupMember;
 		
 		boolean selfAdd = false;
-		if (resource instanceof Account) {
+		if (resource instanceof Account && adder != null) {
 		    selfAdd = adder.equals(((Account)resource).getOwner());
 		}
 		boolean canAddSelf = false;
@@ -283,8 +305,12 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			groupMember = null;
 			canAddSelf = (group.getAccess() == GroupAccess.PUBLIC);
 		}
-		
-		boolean adderCanAdd = canAddMembers(adder, group);
+				
+		boolean adderCanAdd = true;	
+		if (adder != null)
+		    adderCanAdd = canAddMembers(adder, group);
+
+		boolean addAdder = (adder != null && !selfAdd);
 		
 		long now = System.currentTimeMillis();
 		
@@ -305,6 +331,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		if (newStatus.worseThan(oldStatus))
 			newStatus = oldStatus;
 
+		
 		if (groupMember != null) {
 			switch (groupMember.getStatus()) {
 			case NONMEMBER:
@@ -316,11 +343,11 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 					newStatus = MembershipStatus.ACTIVE;
 				break;
 			case INVITED_TO_FOLLOW:
-				if (!selfAdd)
+				if (addAdder)
 					groupMember.addAdder(adder);				
 				break;
 			case REMOVED:
-				if (!selfAdd) {
+				if (addAdder) {
 					groupMember.addAdder(adder); // Mark adder for "please come back"
 					// We don't want to change REMOVED status except by the user
 					// who was removed
@@ -328,7 +355,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				}
 				break;
 			case INVITED:
-				if (!selfAdd) {
+				if (addAdder) {
 					// already invited, add the new adder, let the block be restacked  
 					groupMember.addAdder(adder);	
 				}
@@ -341,7 +368,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			
 		} else {
 			groupMember = new GroupMember(group, resource, newStatus);
-			if (!selfAdd) { 
+			if (addAdder) { 
 				groupMember.addAdder(adder);
 				// Adding to a group for the first time, touch their last 
 				// added date
@@ -362,23 +389,69 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 	
 	public void addMember(User adder, Group group, Resource resource) {
-		addMember(adder, group, resource, true);		    	
+		addMember(adder, group, resource, false);		    	
 	}
 	
 	public void addMember(User adder, Group group, Person person) {
 		Resource resource = identitySpider.getBestResource(person);
-		addMember(adder, group, resource, true);		
+		addMember(adder, group, resource, false);		
+	}
+	
+	public void reviseGroupMembershipPolicy(User revisor, String groupId, boolean open) {
+	    User mugshot = accountSystem.getCharacter(Character.MUGSHOT);
+        Viewpoint viewpoint;
+        
+	    if (revisor.equals(mugshot))
+			viewpoint = SystemViewpoint.getInstance();
+		else 
+			viewpoint = new UserViewpoint(revisor);
+
+		try {
+			Group group = lookupGroupById(viewpoint, groupId);
+			
+			if (!(revisor.equals(mugshot) || canEditGroup((UserViewpoint)viewpoint, group)))
+				throw new RuntimeException("Only active members or Mugshot can edit a group");	
+			
+			if (group.getAccess() == GroupAccess.SECRET)
+				throw new RuntimeException("Only public groups can have their membership policy changed");	
+
+			boolean needToInviteFollowers = (group.getAccess() != GroupAccess.PUBLIC && open);
+			
+			group.setAccess(open ? GroupAccess.PUBLIC : GroupAccess.PUBLIC_INVITE);
+			
+			int followers = -1;
+			int invitedFollowers = -1;
+			if (needToInviteFollowers) {
+				// we need to make all of the groups' followers members,
+				// those notifications will not be pushed to group members' stacks
+				Pair<Integer, Integer> followerCounts = inviteAllFollowers((revisor.equals(mugshot) ? null : revisor), group);
+				followers = followerCounts.getFirst();
+				invitedFollowers = followerCounts.getSecond();
+			}
+			revisionControl.persistRevision(new GroupMembershipPolicyRevision(revisor, group, new Date(), open, followers, invitedFollowers));			
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}		
 	}
 	
 	public Pair<Integer, Integer> inviteAllFollowers(User adder, Group group) {
-		List<Resource> followers = getResourceMembers(new UserViewpoint(adder), group, -1, MembershipStatus.FOLLOWER);		
-		for (Resource follower : followers) {
-			addMember(adder, group, follower, false);
+		boolean openGroupAdjustment = (group.getAccess() == GroupAccess.PUBLIC);
+		
+		Viewpoint viewpoint;
+		if (adder != null) {
+			viewpoint = new UserViewpoint(adder);
+		} else {
+		    viewpoint =	SystemViewpoint.getInstance();
+		}
+		
+		Set<User> followers = getUserMembers(viewpoint, group, MembershipStatus.FOLLOWER);	
+		for (User follower : followers) {
+			addMember(follower, group, follower.getAccount(), openGroupAdjustment);
 		}	
 		
-		List<Resource> invitedFollowers = getResourceMembers(new UserViewpoint(adder), group, -1, MembershipStatus.INVITED_TO_FOLLOW);		
+		List<Resource> invitedFollowers = getResourceMembers(viewpoint, group, -1, MembershipStatus.INVITED_TO_FOLLOW);		
 		for (Resource invitedFollower : invitedFollowers) {
-			addMember(adder, group, invitedFollower, false);
+			addMember(adder, group, invitedFollower, openGroupAdjustment);
 		}		
 		
 		return new Pair<Integer, Integer>(followers.size(), invitedFollowers.size());
