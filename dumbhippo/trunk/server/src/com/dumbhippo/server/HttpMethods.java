@@ -90,6 +90,10 @@ public interface HttpMethods {
 	public void doLeaveGroup(UserViewpoint viewpoint, String groupId);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "groupId", "open" })
+	public void doSetGroupMembershipPolicy(UserViewpoint viewpoint, String groupId, boolean open);	
+	
+	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId", "name" })
 	public void doRenameGroup(UserViewpoint viewpoint, String groupId, String name);
 	

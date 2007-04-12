@@ -3,19 +3,26 @@ package com.dumbhippo.server.blocks;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.GroupFeedAddedRevision;
 import com.dumbhippo.persistence.GroupFeedRemovedRevision;
+import com.dumbhippo.persistence.GroupMembershipPolicyRevision;
 import com.dumbhippo.persistence.GroupNameChangedRevision;
 import com.dumbhippo.persistence.GroupRevision;
+import com.dumbhippo.persistence.RevisionType;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
 public class GroupRevisionBlockView extends BlockView implements PersonSourceBlockView, TitleBlockView {
+	static private final Logger logger = GlobalSetup.getLogger(GroupRevisionBlockView.class);
+	
 	private GroupView group;
 	private PersonView revisor;
 	private GroupRevision revision;
@@ -102,6 +109,29 @@ public class GroupRevisionBlockView extends BlockView implements PersonSourceBlo
 		return revisor;
 	}
 
+	public String getMembershipRevisionInfo() {
+		if (revision.getType() != RevisionType.GROUP_MEMBERSHIP_POLICY_CHANGED) {
+			logger.warn("Follower info was requested for a revision type {}", revision.getType());
+			return "";
+		}
+		
+		GroupMembershipPolicyRevision membershipRevision = (GroupMembershipPolicyRevision)revision;
+		
+		String followerInfo = "";
+		if (membershipRevision.getFollowers() == 1) {
+			followerInfo = ", 1 follower was changed into a member";
+		} else if (membershipRevision.getFollowers() > 1) {
+			followerInfo = ", " + membershipRevision.getFollowers() + " followers were changed into members";
+		}
+		if (membershipRevision.getInvitedFollowers() == 1) {
+			followerInfo = followerInfo + ", 1 invited follower was invited to be a member";
+		} else if (membershipRevision.getInvitedFollowers() > 1) {
+			followerInfo = followerInfo + ", " + membershipRevision.getInvitedFollowers() + " invited followers were invited to be members";
+		}		
+		
+		return " to be " + (membershipRevision.isOpen() ? "an open group" + followerInfo : "a by invitation only group");
+	}
+	
 	public String getTitleForHome() {
 		switch (revision.getType()) {
 		case GROUP_NAME_CHANGED:
@@ -112,6 +142,8 @@ public class GroupRevisionBlockView extends BlockView implements PersonSourceBlo
 			return "You added the feed '" + ((GroupFeedAddedRevision) revision).getFeed().getTitle() + "' to " + group.getName();
 		case GROUP_FEED_REMOVED:
 			return "You removed the feed '" + ((GroupFeedRemovedRevision) revision).getFeed().getTitle() + "' from " + group.getName();
+		case GROUP_MEMBERSHIP_POLICY_CHANGED:	
+			return "You changed " + group.getName() + getMembershipRevisionInfo();
 		case USER_EXTERNAL_ACCOUNT_CHANGED:
 		case USER_NAME_CHANGED:
 		case USER_BIO_CHANGED:
@@ -130,6 +162,8 @@ public class GroupRevisionBlockView extends BlockView implements PersonSourceBlo
 			return revisor.getName() + " added the feed '" + ((GroupFeedAddedRevision) revision).getFeed().getTitle() + "' to " + group.getName();
 		case GROUP_FEED_REMOVED:
 			return revisor.getName() + " removed the feed '" + ((GroupFeedRemovedRevision) revision).getFeed().getTitle() + "' from " + group.getName();
+		case GROUP_MEMBERSHIP_POLICY_CHANGED:	
+			return revisor.getName() + " changed " + group.getName() + getMembershipRevisionInfo();
 		case USER_EXTERNAL_ACCOUNT_CHANGED:
 		case USER_NAME_CHANGED:
 		case USER_BIO_CHANGED:

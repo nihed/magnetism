@@ -237,15 +237,15 @@ public class NotifierBean implements Notifier {
 		}
 	}
 
-	public void onGroupMemberCreated(GroupMember member, long when) {
+	public void onGroupMemberCreated(GroupMember member, long when, boolean notifyGroupMembers) {
 		for (GroupMembershipListener l : getListeners(GroupMembershipListener.class)) {
-			l.onGroupMemberCreated(member, when);
+			l.onGroupMemberCreated(member, when, notifyGroupMembers);
 		}
 	}
 
-	public void onGroupMemberStatusChanged(GroupMember member, long when) {
+	public void onGroupMemberStatusChanged(GroupMember member, long when, boolean notifyGroupMembers) {
 		for (GroupMembershipListener l : getListeners(GroupMembershipListener.class)) {
-			l.onGroupMemberStatusChanged(member, when);
+			l.onGroupMemberStatusChanged(member, when, notifyGroupMembers);
 		}
 	}
 	

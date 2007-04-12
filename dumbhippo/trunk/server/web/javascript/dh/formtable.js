@@ -32,8 +32,8 @@ dh.formtable.getStatusText = function(controlId) {
 	return document.getElementById(controlId + 'StatusText');
 }
 
-dh.formtable.getStatusLink = function(controlId) {
-	return document.getElementById(controlId + 'StatusLink');
+dh.formtable.getStatusLink = function(controlId, order) {
+	return document.getElementById(controlId + 'StatusLink' + order);
 }
 
 dh.formtable.hideStatus = function(controlId) {
@@ -43,20 +43,29 @@ dh.formtable.hideStatus = function(controlId) {
 	statusSpacer.style.display = 'none';
 }
 
-dh.formtable.showStatus = function(controlId, statusText, linkText, linkHref, linkTitle) {
+dh.formtable.showStatus = function(controlId, statusText, linkTexts, linkHrefs, linkTitles) {
 	var statusRow = dh.formtable.getStatusRow(controlId);
 	var statusSpacer = dh.formtable.getStatusSpacer(controlId);
 	var statusTextNode = dh.formtable.getStatusText(controlId);
-	var statusLinkNode = dh.formtable.getStatusLink(controlId);
 	dh.dom.textContent(statusTextNode, statusText);
 	
-	if (linkText) {
-		dh.dom.textContent(statusLinkNode, linkText);
-		statusLinkNode.href = linkHref;
-		statusLinkNode.title = linkTitle;
+	var statusLinkNode = null;
+	var i = 0;	
+	while (i < linkTexts.length) {
+	    statusLinkNode = dh.formtable.getStatusLink(controlId, i+1);	
+		dh.dom.textContent(statusLinkNode, linkTexts[i]);
+		statusLinkNode.href = linkHrefs[i];
+		statusLinkNode.title = linkTitles[i];
 		statusLinkNode.style.display = 'inline';
-	} else {
-		statusLinkNode.style.display = 'none';
+		i = i + 1;
+	}	
+
+	while (true) {
+	    statusLinkNode = dh.formtable.getStatusLink(controlId, i+1);
+	    if (statusLinkNode == null)
+	        break;
+	    statusLinkNode.style.display = 'none';
+		i = i + 1;	        
 	}
 	
 	// Show everything
@@ -72,11 +81,11 @@ dh.formtable.showStatus = function(controlId, statusText, linkText, linkHref, li
 }
 
 dh.formtable.showStatusMessage = function(controlId, message, hideClose) {
-	dh.formtable.showStatus(controlId, message, hideClose ? null : "Close",
-		hideClose ? null : dh.formtable.makeLinkClosure(function() {
+	dh.formtable.showStatus(controlId, message, hideClose ? [] : ["Close"],
+		hideClose ? [] : [dh.formtable.makeLinkClosure(function() {
 			dh.formtable.hideStatus(controlId);
-		}),
-		hideClose ? null : "I've read this already, go away");
+		})],
+		hideClose ? [] : ["I've read this already, go away"]);
 }
 
 dh.formtable.initExpanded = function (controlId, labelExpand) {
@@ -165,18 +174,18 @@ dh.formtable._onValueChanged = function(entryObject, isXmlMethod, postMethod, ar
  									   pendingMessage, successMessage, fixedArgs, onUpdate) {
 	var controlId = entryObject.elem.id;										
 
-	dh.formtable.showStatus(controlId, pendingMessage, null, null);
+	dh.formtable.showStatus(controlId, pendingMessage, {}, {}, {});
 
 	dh.formtable._doChange(controlId, isXmlMethod, postMethod, argName, value, fixedArgs,
 	                       function () {
 	                         var oldValue = dh.formtable.undoValues[controlId];
   				  	    	 dh.formtable.showStatus(controlId, successMessage,
-									  	    		 oldValue ? "Undo" : null,
+									  	    		 oldValue ? ["Undo"] : [],
 									  	    	 	 oldValue ?
-				  	    	                          dh.formtable.makeLinkClosure(function() {
+				  	    	                          [dh.formtable.makeLinkClosure(function() {
 									  	    			dh.formtable.undo(entryObject, oldValue, postMethod, argName, fixedArgs, onUpdate);
-				  							    		}) : null,
-										  	    	 oldValue ? "Change back to the previous setting" : null);
+				  							    		})] : [],
+										  	    	 oldValue ? ["Change back to the previous setting"] : []);
 							 if (onUpdate != null) {
 						 		 onUpdate(value);
 							 }
@@ -201,7 +210,7 @@ dh.formtable.onValueChangedXmlMethod = function(entryObject, postMethod, argName
 
 dh.formtable.undo = function(entryObject, oldValue, postMethod, argName, fixedArgs, onUpdate) {
 	var controlId = entryObject.elem.id;
-	dh.formtable.showStatus(controlId, "Undoing...", null, null, null);
+	dh.formtable.showStatus(controlId, "Undoing...", {}, {}, {});
 	var args
 	if (fixedArgs != null)
 		args = dh.lang.shallowCopy(fixedArgs)
@@ -219,7 +228,7 @@ dh.formtable.undo = function(entryObject, oldValue, postMethod, argName, fixedAr
 								onUpdate(oldValue)
 			  	    	},
 			  	    	function(type, error, http) {
-							dh.formtable.showStatus(controlId, "Failed to undo!", null, null, null);
+							dh.formtable.showStatus(controlId, "Failed to undo!", {}, {}, {});
 			  	    	});	
 }
 

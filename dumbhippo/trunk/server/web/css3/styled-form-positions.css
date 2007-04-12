@@ -4,6 +4,7 @@
     width:          100%;
 	margin-top:		5px;
 	margin-bottom:	5px;
+	table-layout:   fixed;
 }
 
 .dh-no-extra-space-table {

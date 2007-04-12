@@ -24,7 +24,8 @@
 <tr><td colspan="4" class="dh-padding-row ${rowClass}"></td></tr>
 
 <tr valign="top" class="${rowClass}" id="${controlId}FormContainer"> 
-    <c:if test="${!empty label}">
+    <c:choose>
+    <c:when test="${!empty label}">
 	    <td class="dh-label-cell">
 		    <div class="dh-label-cell-div ${withPrefixClass}" id="${controlId}FormLabel">
                 <c:if test="${!empty prefixIcon}"><dh:png klass="dh-form-table-row-icon" src="${prefixIcon}" style="width: ${prefixIconWidth}; height: ${prefixIconHeight}; border: none; overflow: hidden;"/></c:if>
@@ -32,7 +33,11 @@
 		        <c:out value="${label}"/>:
 	        </div>
 	    </td>
-	</c:if>
+	</c:when>
+	<c:otherwise>
+	    <td width="1px"></td>
+	</c:otherwise>
+	</c:choose>
 	<c:choose>
 	    <c:when test="${!empty info}">
 	        <td class="dh-control-cell dh-control-cell-next-to-info"><div class="dh-control-cell-div"><jsp:doBody/></div></td>

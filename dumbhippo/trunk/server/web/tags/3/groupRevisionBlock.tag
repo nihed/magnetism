@@ -19,6 +19,7 @@
 				<c:when test="${dh:enumIs(block.revision.type, 'GROUP_DESCRIPTION_CHANGED')}"> changed the description of <dht3:entityLink who="${block.groupView}"/></c:when>
 				<c:when test="${dh:enumIs(block.revision.type, 'GROUP_FEED_ADDED')}"> added the feed '<c:out value="${block.revision.feed.title}"/>' to <dht3:entityLink who="${block.groupView}"/> </c:when>
 				<c:when test="${dh:enumIs(block.revision.type, 'GROUP_FEED_REMOVED')}"> removed the feed '<c:out value="${block.revision.feed.title}"/>' from <dht3:entityLink who="${block.groupView}"/></c:when>
+                <c:when test="${dh:enumIs(block.revision.type, 'GROUP_MEMBERSHIP_POLICY_CHANGED')}"> changed <dht3:entityLink who="${block.groupView}"/> <c:out value="${block.membershipRevisionInfo}"/></c:when>
 			</c:choose>
 			
 		</dht3:blockTitle>
