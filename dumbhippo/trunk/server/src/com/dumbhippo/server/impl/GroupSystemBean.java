@@ -20,6 +20,7 @@ import org.apache.lucene.search.Hits;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Pair;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
@@ -95,7 +96,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		g.getMembers().add(groupMember);
 		
 		notifier.onGroupCreated(g);
-		notifier.onGroupMemberCreated(groupMember, System.currentTimeMillis());
+		notifier.onGroupMemberCreated(groupMember, System.currentTimeMillis(), true);
 		
 		searchSystem.indexGroup(g, false);
 		
@@ -168,7 +169,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				accountMember.setAdders(adders);
 			em.persist(accountMember);
 			group.getMembers().add(accountMember);
-			notifier.onGroupMemberCreated(accountMember, System.currentTimeMillis());
+			notifier.onGroupMemberCreated(accountMember, System.currentTimeMillis(), true);
 		}
 
 		return accountMember;
@@ -207,6 +208,9 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 	
 	public GroupMember getGroupMember(Group group, Resource resource) throws NotFoundException {
+		if (resource instanceof Account)
+			return getGroupMemberForUser(group, ((Account)resource).getOwner(), true);
+		
 		for (GroupMember member : group.getMembers()) {
 			if (member.getMember().equals(resource))
 				return member;
@@ -262,15 +266,17 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}		
 	}
 	
-	public void addMember(User adder, Group group, Person person) {
+	public void addMember(User adder, Group group, Resource resource, boolean notifyGroupMembers) {
 		GroupMember groupMember;
 		
-		boolean selfAdd = adder.equals(person);
+		boolean selfAdd = false;
+		if (resource instanceof Account) {
+		    selfAdd = adder.equals(((Account)resource).getOwner());
+		}
 		boolean canAddSelf = false;
 		
 		try {
-			// if person is a User then this will do fixups
-			groupMember = getGroupMember(group, person);
+			groupMember = getGroupMember(group, resource);
 			canAddSelf = (groupMember.getStatus().ordinal() >= MembershipStatus.REMOVED.ordinal() 
 					      || group.getAccess() == GroupAccess.PUBLIC);
 		} catch (NotFoundException e) {
@@ -331,11 +337,9 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				return; // Nothing to do
 			}
 			groupMember.setStatus(newStatus);
-			notifier.onGroupMemberStatusChanged(groupMember, now);
+			notifier.onGroupMemberStatusChanged(groupMember, now, notifyGroupMembers);
 			
 		} else {
-			Resource resource = identitySpider.getBestResource(person);
-		    
 			groupMember = new GroupMember(group, resource, newStatus);
 			if (!selfAdd) { 
 				groupMember.addAdder(adder);
@@ -350,11 +354,34 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			group.getMembers().add(groupMember);
 			em.persist(group);
 			
-			notifier.onGroupMemberCreated(groupMember, now);
+			notifier.onGroupMemberCreated(groupMember, now, notifyGroupMembers);
 		}
 		
         LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(),
         		GroupEvent.Detail.MEMBERS_CHANGED));
+	}
+	
+	public void addMember(User adder, Group group, Resource resource) {
+		addMember(adder, group, resource, true);		    	
+	}
+	
+	public void addMember(User adder, Group group, Person person) {
+		Resource resource = identitySpider.getBestResource(person);
+		addMember(adder, group, resource, true);		
+	}
+	
+	public Pair<Integer, Integer> inviteAllFollowers(User adder, Group group) {
+		List<Resource> followers = getResourceMembers(new UserViewpoint(adder), group, -1, MembershipStatus.FOLLOWER);		
+		for (Resource follower : followers) {
+			addMember(adder, group, follower, false);
+		}	
+		
+		List<Resource> invitedFollowers = getResourceMembers(new UserViewpoint(adder), group, -1, MembershipStatus.INVITED_TO_FOLLOW);		
+		for (Resource invitedFollower : invitedFollowers) {
+			addMember(adder, group, invitedFollower, false);
+		}		
+		
+		return new Pair<Integer, Integer>(followers.size(), invitedFollowers.size());
 	}
 	
 	public boolean canRemoveInvitation(User remover, GroupMember groupMember) {
@@ -396,7 +423,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		if (groupMember.getStatus().ordinal() > MembershipStatus.REMOVED.ordinal()) {
 			groupMember.setStatus(MembershipStatus.REMOVED);
 			
-			notifier.onGroupMemberStatusChanged(groupMember, System.currentTimeMillis());
+			notifier.onGroupMemberStatusChanged(groupMember, System.currentTimeMillis(), true);
 	        LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
 	        		groupMember.getMember().getGuid(), GroupEvent.Detail.MEMBERS_CHANGED));
 		} else if (groupMember.getStatus().ordinal() < MembershipStatus.REMOVED.ordinal()) {

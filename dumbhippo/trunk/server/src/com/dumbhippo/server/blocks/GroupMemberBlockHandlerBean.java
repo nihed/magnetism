@@ -102,7 +102,7 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 		return getData1GroupAsSet(block);
 	}
 	
-	public void onGroupMemberCreated(GroupMember member, long when) {
+	public void onGroupMemberCreated(GroupMember member, long when, boolean notifyGroupMembers ) {
 		// Blocks only exist for group members which correspond to accounts in the
 		// system. If the group member is (say) an email resource, and later joins
 		// the system, when they join, we'll delete this GroupMember, add a new one 
@@ -113,15 +113,19 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 			// get onGroupMemberCreated again later for the same group/person if they rejoin
 			Block block = stacker.getOrCreateBlock(getKey(member.getGroup(), a.getOwner()));
 			block.setPublicBlock(member.getGroup().isPublic());
-			stacker.stack(block, when, a.getOwner(), true, StackReason.BLOCK_UPDATE);
+			// we no longer consider membership status changes as group participation,
+			// because they make group mugshots too noisy
+			stacker.stack(block, when, a.getOwner(), false, StackReason.BLOCK_UPDATE, notifyGroupMembers);
 		}		
 	}
 
-	public void onGroupMemberStatusChanged(GroupMember member, long when) {
+	public void onGroupMemberStatusChanged(GroupMember member, long when, boolean notifyGroupMembers) {
 		AccountClaim a = member.getMember().getAccountClaim();
 		if (a == null)
 			return; // ignore "resource" members
 		
+		// we no longer consider membership status changes as group participation,
+		// because they make group mugshots too noisy
 		switch (member.getStatus()) {
 		case ACTIVE:
 		case FOLLOWER:
@@ -129,7 +133,7 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 		case INVITED:
 		case INVITED_TO_FOLLOW:			
 			stacker.stack(getKey(member.getGroup(), a.getOwner()),
-					when, a.getOwner(), true, StackReason.BLOCK_UPDATE);
+					when, a.getOwner(), false, StackReason.BLOCK_UPDATE, notifyGroupMembers);
 			break;
 		case NONMEMBER:
 			// moves to these states don't create a new timestamp

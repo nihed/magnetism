@@ -53,7 +53,7 @@
     
 <head>
     <title><c:out value="${person.viewedPerson.name}"/>'s ${pageName} - Mugshot</title>
-	<dht3:stylesheet name="site" iefixes="true"/>	
+	<dht3:stylesheet name="site" iefixes="true"/>			
 	<dht3:stylesheet name="account" iefixes="true"/>	
 	<dht:faviconIncludes/>
     <dh:script modules="dh.account,dh.password"/>
@@ -110,7 +110,7 @@
 			    <c:if test="${param.fromDownload != 'true' && !accountStatusShowing}">
 				    <div class="dh-page-shinybox-subtitle"><span class="dh-download-product">Get maximum Mugshot!</span> <a class="dh-underlined-link" href="/download">Download the Mugshot software</a> to use all of our features.  It's easy and free!</div>
 				</c:if>
-				<dht:formTable bodyId="dhAccountInfoForm">
+				<dht:formTable tableId="dhAccountInfoForm">
 				<dht3:formTableRowSeparator>
 				    <div class="dh-section-header">Public Info</div>
 				    <div class="dh-section-explanation">This information will be visible on your <a href="/person">Home</a> page.</div>
@@ -160,7 +160,7 @@
 					<div class="dh-grow-div-around-floats"><div></div></div>
 				</dht:formTableRow>
 				<dht:formTableRow label="Accounts" altRow="true">
-					<dht:formTable bodyId="dhAccounts">
+					<dht:formTable tableId="dhAccounts" hasInfoCells="true">
 				    <dht:formTableRowStatus controlId='dhEmailEntry'></dht:formTableRowStatus>
 				    <dht:formTableRow label="Email" icon="/images3/${buildStamp}/mail_icon.png" info="Only your Mugshot friends see this.">
 					    <table cellpadding="0" cellspacing="0" class="dh-address-table">

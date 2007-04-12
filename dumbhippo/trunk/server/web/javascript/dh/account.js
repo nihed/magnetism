@@ -16,8 +16,7 @@ dh.account.generateRandomBio = function() {
 		return;
 	}
 
-	dh.formtable.showStatus('dhBioEntry', "Generating random bio...", null,
-			  	    	 null, null);
+	dh.formtable.showStatus('dhBioEntry', "Generating random bio...", {}, {}, {});
 	dh.account.generatingRandomBio = true;
 	dh.server.getTextGET("randombio", 
 						{ },

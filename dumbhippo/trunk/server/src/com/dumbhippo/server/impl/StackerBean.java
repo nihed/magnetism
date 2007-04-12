@@ -389,6 +389,22 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
+	private void updateParticipantUserBlockData(Block block, Guid participantId, StackReason reason) {
+		User participant = em.find(User.class, participantId.toString());
+		UserBlockData userData = queryUserBlockData(block, participant);
+		if (userData != null) {
+			userData.setDeleted(false);
+			userData.setParticipatedTimestamp(block.getTimestamp());
+			userData.setParticipatedReason(reason);
+			if (!userData.isIgnored())
+				userData.setStackTimestamp(block.getTimestamp());
+			userData.setStackReason(reason);
+		} else {
+			UserBlockData data = new UserBlockData(participant, block, true, reason);
+			em.persist(data);
+		}
+	}
+	
 	private void updateUserBlockDatas(Block block, Set<User> desiredUsers, Guid participantId, StackReason reason) {
 		int addCount;
 		int removeCount;
@@ -673,9 +689,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		});
 		t.start();
 	}
-		
-	public void stack(final Block block, final long activity, final User participant, final boolean isGroupParticipation, final StackReason reason) {
-
+	
+	public void stack(final Block block, final long activity, final User participant, final boolean isGroupParticipation, final StackReason reason, final boolean updateAllUserBlockDatas) {
 		// never "roll back" to an earlier timestamp
 		if (block.getTimestampAsLong() < activity) { 
 			block.setTimestampAsLong(activity);
@@ -690,7 +705,11 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				runner.runTaskRetryingOnConstraintViolation(new Runnable() {
 					public void run() {
 						Block attached = em.find(Block.class, block.getId());
-						updateUserBlockDatas(attached, (participant != null ? participant.getGuid() : null), reason);
+						if (updateAllUserBlockDatas) {
+						    updateUserBlockDatas(attached, (participant != null ? participant.getGuid() : null), reason);
+					     } else if (participant != null) {
+					    	 updateParticipantUserBlockData(attached, participant.getGuid(), reason);					    	 
+					     }
 						updateGroupBlockDatas(attached, isGroupParticipation, reason);
 					}
 				});
@@ -698,23 +717,31 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		});
 	}
 	
-	public void stack(Block block, long activity, StackReason reason) {
-		stack(block, activity, null, false, reason);
+	public void stack(Block block, long activity, User participant, boolean isGroupParticipation, StackReason reason) {
+	    stack(block, activity, participant, isGroupParticipation, reason, true);	
 	}
 	
-	public Block stack(BlockKey key, long activity, User participant, boolean isGroupParticipation, StackReason reason) {
+	public void stack(Block block, long activity, StackReason reason) {
+		stack(block, activity, null, false, reason, true);
+	}
+	
+	public Block stack(BlockKey key, long activity, User participant, boolean isGroupParticipation, StackReason reason, boolean updateAllUserBlockDatas) {
 		Block block;
 		try {
 			block = queryBlock(key);
 		} catch (NotFoundException e) {
 			throw new RuntimeException("stack() called on block that doesn't exist; probably means a migration is needed. key=" + key, e);
 		}
-        stack(block, activity, participant, isGroupParticipation, reason);
+        stack(block, activity, participant, isGroupParticipation, reason, updateAllUserBlockDatas);
         return block;
 	}
 	
+	public Block stack(BlockKey key, long activity, User participant, boolean isGroupParticipation, StackReason reason) {
+		return stack(key, activity, participant, isGroupParticipation, reason, true);		
+	}
+	
 	public Block stack(BlockKey key, long activity, StackReason reason) {
-		return stack(key, activity, null, false, reason);
+		return stack(key, activity, null, false, reason, true);
 	}
 	
 	public void blockClicked(BlockKey key, User user, long clickedTime) {

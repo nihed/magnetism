@@ -48,9 +48,9 @@
         <dht:messageArea/>
 		<dht:formTable tableClass="dh-form-table-orange">
 			<dht:formTableRow label="Privacy">
-		        <dht:formTable tableClass="dh-form-table-orange dh-no-extra-space-table">
+		        <dht:formTable tableClass="dh-form-table-orange dh-no-extra-space-table" hasLabelCells="false" hasInfoCells="true">
 			        <dht:formTableRow info="Visible to anyone browsing the Mugshot website">  
-				        <input class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupVisibility" id="dhGroupVisibilityPublic" value="public" checked="yes" onclick="dh.groupaccount.groupPrivacyChanged();"><label class="dh-label" for="dhGroupVisibilityPublic">Public</label>
+				        <input class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupVisibility" id="dhGroupVisibilityPublic" value="public" checked="true" onclick="dh.groupaccount.groupPrivacyChanged();"><label class="dh-label" for="dhGroupVisibilityPublic">Public</label>
 				    </dht:formTableRow>
 				    <dht:formTableRow info="Visible only to group members">
 				        <input class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupVisibility" id="dhGroupVisibilityPrivate" value="private" onclick="dh.groupaccount.groupPrivacyChanged();"><label class="dh-label" for="dhGroupVisibilityPrivate">Private</label>
@@ -58,11 +58,11 @@
 				</dht:formTable>    
 			</dht:formTableRow>
             <dht:formTableRow label="Membership" altRow="true">
-		        <dht:formTable tableClass="dh-form-table-orange dh-no-extra-space-table">
+		        <dht:formTable tableClass="dh-form-table-orange dh-no-extra-space-table" hasLabelCells="false" hasInfoCells="true">
 			        <dht:formTableRow info="Anyone can join the group" altRow="true">  
-				        <input class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupMembership" id="dhGroupMembershipOpen" value="open" checked="yes"><label class="dh-label" for="dhGroupVisibilityOpen">Open</label>
+				        <input class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupMembership" id="dhGroupMembershipOpen" value="open" checked="true"><label class="dh-label" for="dhGroupVisibilityOpen">Open</label>
 				    </dht:formTableRow>
-				    <dht:formTableRow info="Anyone can follow the group, they need an invitation to join" altRow="true">
+				    <dht:formTableRow info="People need an invitation to join, public groups can have followers" altRow="true">
 				        <input class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupMembership" id="dhGroupMembershipByInvitation" value="byInvitation"><label class="dh-label" for="dhGroupVisibilityByInvitation">By invitation</label>
 				    </dht:formTableRow>
 				</dht:formTable>    

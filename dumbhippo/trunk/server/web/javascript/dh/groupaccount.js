@@ -27,9 +27,11 @@ dh.groupaccount.stopWait = function(message) {
 
 dh.groupaccount.groupPrivacyChanged = function() {
     if (document.getElementById("dhGroupVisibilityPrivate").checked) {
+        dh.util.selectCheckBox("dhGroupMembershipByInvitation"); 
         document.getElementById("dhGroupMembershipOpen").disabled = true;
         document.getElementById("dhGroupMembershipByInvitation").disabled = true;
     } else {
+        dh.util.selectCheckBox("dhGroupMembershipOpen"); 
         document.getElementById("dhGroupMembershipOpen").disabled = false;
         document.getElementById("dhGroupMembershipByInvitation").disabled = false;    
     }   
@@ -67,6 +69,67 @@ dh.groupaccount.createGroup = function() {
                     function(type, error, http) {
 						dh.groupaccount.stopWait("Couldn't create the group")
   	                })
+}
+
+dh.groupaccount.processMembershipSelection = function() {
+    if (dh.groupaccount.initialMembershipOpen) {
+        if (document.getElementById("dhGroupMembershipOpen").checked) {
+            dh.formtable.showStatusMessage('dhMembershipSelection', "No change.");
+        } else {
+            dh.formtable.showStatus('dhMembershipSelection', 
+                                    'Making this group "by invitation" means that in the future this group will ' +
+                                    'have followers, and its members will be able to select who to invite.',
+                                    ["Confirm", "Cancel"],
+                                    [dh.formtable.makeLinkClosure(function() {
+			                             dh.groupaccount.applyMembershipSelection();
+		                             }),
+		                             dh.formtable.makeLinkClosure(function() {
+			                             dh.groupaccount.revertMembershipSelection();
+		                             })],
+		                            ["Do it! This is going to be an exclusive group", "Nevermind, I was just playing with the controls"]);
+        }
+    } else {
+        if (document.getElementById("dhGroupMembershipOpen").checked) {
+            var message = "Are you sure you want to make this group open for anyone to join?";
+            if (dh.groupaccount.followersNumber > 0 || dh.groupaccount.invitedFollowersNumber > 0) {
+                message = "Making this group open for anyone to join will also invite its followers."
+            }         
+            dh.formtable.showStatus('dhMembershipSelection', 
+                                    message,
+                                    ["Confirm", "Cancel"],
+                                    [dh.formtable.makeLinkClosure(function() {
+			                             dh.groupaccount.applyMembershipSelection();
+		                             }),
+		                             dh.formtable.makeLinkClosure(function() {
+			                             dh.groupaccount.revertMembershipSelection();
+		                             })],
+		                            ["Do it! This group should be truly open", "Nevermind, I was just playing with the controls"]);           
+        } else {
+            dh.formtable.showStatusMessage('dhMembershipSelection', "No change.");        
+        }  
+    }   
+}
+
+dh.groupaccount.applyMembershipSelection = function() {
+	var open = document.getElementById("dhGroupMembershipOpen").checked;	
+   	dh.server.doPOST("setgroupmembershippolicy",
+				     { "groupId" : dh.groupaccount.groupId,
+				       "open" : open },
+		  	    	 function(childNodes, http) {
+						dh.util.refresh();
+		  	    	 },
+		  	    	 function(code, msg, http) {
+			  	    	 dh.formtable.showStatusMessage("Couldn't set a new membership policy");
+		  	    	 });
+}
+
+dh.groupaccount.revertMembershipSelection = function() {
+    if (dh.groupaccount.initialMembershipOpen) {
+        dh.util.selectCheckBox("dhGroupMembershipOpen");
+    } else {
+        dh.util.selectCheckBox("dhGroupMembershipByInvitation");
+    }          	
+    dh.formtable.hideStatus('dhMembershipSelection');
 }
 
 dh.groupaccount.hideAllFeedPopups = function() {

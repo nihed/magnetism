@@ -52,8 +52,8 @@
 
 <head>
 	<title><c:out value="${pageName}"/> - Mugshot</title>
-	<dht3:stylesheet name="site" iefixes="true"/>	
-	<dht3:stylesheet name="account" iefixes="true"/>	
+	<dht3:stylesheet name="site" iefixes="true"/>		
+	<dht3:stylesheet name="account" iefixes="true"/>		
 	<dht3:stylesheet name="group-account"/>		
 	<dht:faviconIncludes/>
 	<dh:script modules="dh.groupaccount,dh.event"/>
@@ -63,6 +63,9 @@
 			'dhAboutGroupEntry' : <dh:jsString value="${!empty group.viewedGroup.group.description ? group.viewedGroup.group.description : ''}"/>
 		};		
 		dh.groupaccount.groupId = <dh:jsString value="${group.viewedGroupId}"/>
+		dh.groupaccount.initialMembershipOpen = ${group.publicOpen};
+		dh.groupaccount.followersNumber = ${group.followers.size};
+		dh.groupaccount.invitedFollowersNumber = ${group.invitedFollowers.size};
 		dh.groupaccount.reloadPhoto = function() {
 			dh.photochooser.reloadPhoto([document.getElementById('dhHeadshotImageContainer')], 60);
 		}
@@ -88,19 +91,40 @@
 			</c:otherwise>
 		</c:choose>
 	
-		<dht:formTable bodyId="dhAccountInfoForm" tableClass="dh-form-table-orange">
+		<dht:formTable tableId="dhAccountInfoForm" tableClass="dh-form-table-orange">
+		    <c:if test="${!group.private}">
+		        <c:choose> 
+		            <c:when test="${group.publicOpen}">
+		                <c:set var="openChecked" value="checked"/>
+		            </c:when>
+		            <c:otherwise>
+		                <c:set var="byInvitationChecked" value="checked"/>
+		            </c:otherwise>
+		        </c:choose>    
+		        <dht:formTableRowStatus controlId='dhMembershipSelection' statusLinkCount='2'></dht:formTableRowStatus>
+                <dht:formTableRow label="Membership">
+		            <dht:formTable tableClass="dh-form-table-orange dh-no-extra-space-table" hasLabelCells="false" hasInfoCells="true">
+			            <dht:formTableRow info="Anyone can join the group">  
+				            <input ${openChecked} class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupMembership" id="dhGroupMembershipOpen" value="open" onclick="dh.groupaccount.processMembershipSelection();"><label class="dh-label" for="dhGroupVisibilityOpen">Open</label>
+				        </dht:formTableRow>
+				        <dht:formTableRow info="Anyone can follow the group, they need an invitation to join">
+				            <input ${byInvitationChecked} class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupMembership" id="dhGroupMembershipByInvitation" value="byInvitation" onclick="dh.groupaccount.processMembershipSelection();"><label class="dh-label" for="dhGroupVisibilityByInvitation">By invitation</label>
+				        </dht:formTableRow>
+				    </dht:formTable>    
+			    </dht:formTableRow>
+			</c:if>							
 		    <dht:formTableRowStatus controlId='dhGroupNameEntry'></dht:formTableRowStatus>
-			<dht:formTableRow label="Group name" controlId='dhGroupNameEntry'>
+			<dht:formTableRow label="Group name" altRow="${!group.private}" controlId='dhGroupNameEntry'>
 				<dht:textInput id="dhGroupNameEntry" extraClass="dh-name-input"/>
 				<div id="dhGroupNameEntryDescription" style="display: none"></div>
 			</dht:formTableRow>
-			<dht:formTableRow label="About group" altRow="true" controlId='dhAboutGroupEntry'>
+			<dht:formTableRow label="About group" altRow="${group.private}" controlId='dhAboutGroupEntry'>
 				<div>
 			        <dht:textInput id="dhAboutGroupEntry" multiline="true"/>
 					<div id="dhAboutGroupEntryDescription" style="display: none"></div>
 				</div>    
 			</dht:formTableRow>
-			<dht:formTableRow label="Picture">
+			<dht:formTableRow label="Picture" altRow="${!group.private}">
 				<div id="dhHeadshotImageContainer" class="dh-image">
 					<dht:groupshot group="${group.viewedGroup}" customLink="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.groupaccount.reloadPhoto);" />
 				</div>
@@ -127,7 +151,7 @@
 				<div class="dh-grow-div-around-floats"><div></div></div>				
 			</dht:formTableRow>						
 			<dht:formTableRowStatus controlId='dhFeedEntry'></dht:formTableRowStatus>
-			<dht:formTableRow label="Feeds" altRow="true">
+			<dht:formTableRow label="Feeds" altRow="${group.private}">
 				<table cellpadding="0" cellspacing="0" class="dh-address-table">
 					<tbody>	
 						<c:forEach items="${group.feeds.list}" var="feed" varStatus="status">

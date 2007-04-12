@@ -33,8 +33,10 @@ public interface Stacker {
 	public Block queryBlock(BlockKey key) throws NotFoundException;
 	public Block lookupBlock(Guid guid) throws NotFoundException;
 
+	public Block stack(BlockKey key, long activity, User participant, boolean isGroupParticipation, StackReason reason, boolean updateAllUserBlockDatas);
 	public Block stack(BlockKey key, long activity, User participant, boolean isGroupParticipation, StackReason reason);
 	public Block stack(BlockKey key, long activity, StackReason reason);
+	public void stack(Block block, long activity, User participant, boolean isGroupParticipation, StackReason reason, boolean updateAllUserBlockDatas);
 	public void stack(Block block, long activity, User participant, boolean isGroupParticipation, StackReason reason);
 	public void stack(Block block, long activity, StackReason reason);
 

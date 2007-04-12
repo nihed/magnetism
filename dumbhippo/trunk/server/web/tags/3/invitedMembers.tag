@@ -27,8 +27,10 @@
 			                            Re-send invitation
 			                        </a>
 			                    </c:if>   			                        
-			                </c:if>    
-			                <c:if test="${person.viewerCanRemoveInvitation}">
+			                </c:if> 
+			                <%-- TODO: should probably allow to remove the invitation even if don't know person's e-mail, should also --%>
+			                <%-- allow to re-send an invitation above by using EmailResource id, but without disclosing the e-mail --%>   
+			                <c:if test="${person.viewerCanRemoveInvitation && person.email != null}">
 			                    <c:if test="${group.canAddMembers}">
 			                        |
 			                    </c:if>    

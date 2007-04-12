@@ -65,6 +65,7 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupDescriptionChangedRevision;
 import com.dumbhippo.persistence.GroupMember;
+import com.dumbhippo.persistence.GroupMembershipPolicyRevision;
 import com.dumbhippo.persistence.GroupNameChangedRevision;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
@@ -508,16 +509,30 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			UserViewpoint viewpoint, String groupId, String memberIds) throws IOException,
 			ParseException, NotFoundException {
 		Set<String> memberGuids = splitIdList(memberIds);
-
-		Set<Person> memberPeople = identitySpider.lookupGuidStrings(
-				Person.class, memberGuids);
-
+        Set<Person> memberPeople = new HashSet<Person>();
+        Set<Resource> memberResources = new HashSet<Resource>();
+		
+		for (String memberGuid : memberGuids) {
+		    try {
+		        memberPeople.add(identitySpider.lookupGuidString(Person.class, memberGuid));
+		    } catch (ParseException e) {
+			    throw new RuntimeException("Bad Guid", e);
+	  	    } catch (NotFoundException e) {
+			    // when the person that is being invited is not a user and
+			    // is not a viewer's contact, what we'll get here is a
+			    // Resource Guid
+		        memberResources.add(identitySpider.lookupGuidString(Resource.class, memberGuid));	
+	  	    }
+		}
+		    
 		Group group = groupSystem.lookupGroupById(viewpoint, groupId);
 		if (group == null)
 			throw new RuntimeException("No such group");
 		for (Person p : memberPeople)
 			groupSystem.addMember(viewpoint.getViewer(), group, p);
-
+		for (Resource r : memberResources)
+			groupSystem.addMember(viewpoint.getViewer(), group, r);
+		
 		returnObjects(out, contentType, viewpoint, null, Collections
 				.singleton(group));
 	}
@@ -556,6 +571,34 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 
+	public void doSetGroupMembershipPolicy(UserViewpoint viewpoint, String groupId, boolean open) {
+		try {
+			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
+			
+			if (!groupSystem.canEditGroup(viewpoint, group))
+				throw new RuntimeException("Only active members can edit a group");	
+			
+			if (group.getAccess() == GroupAccess.SECRET)
+				throw new RuntimeException("Only public groups can have their membership policy changed");	
+
+			boolean needToInviteFollowers = (group.getAccess() != GroupAccess.PUBLIC && open);
+			
+			group.setAccess(open ? GroupAccess.PUBLIC : GroupAccess.PUBLIC_INVITE);
+			
+			int followers = -1;
+			int invitedFollowers = -1;
+			if (needToInviteFollowers) {
+				// we need to make all of the groups' followers members,
+				// those notifications will not be pushed to group members' stacks
+				Pair<Integer, Integer> followerCounts = groupSystem.inviteAllFollowers(viewpoint.getViewer(), group);
+				followers = followerCounts.getFirst();
+				invitedFollowers = followerCounts.getSecond();
+			}
+			revisionControl.persistRevision(new GroupMembershipPolicyRevision(viewpoint.getViewer(), group, new Date(), open, followers, invitedFollowers));			
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}		
+	}
 	public void doRenameGroup(UserViewpoint viewpoint, String groupId, String name) {
 		try {
 			Group group = groupSystem.lookupGroupById(viewpoint, groupId);

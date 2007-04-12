@@ -1,6 +1,6 @@
 @CHARSET "UTF-8";
 
-#dhAccountInfoForm .dh-form-table {
+#dhAccounts {
     margin:         0px;
 	table-layout:   auto;
 }
@@ -39,17 +39,17 @@
     bottom:   2px;
 }
 
-#dhAccountInfoForm .dh-form-table .dh-spacer-row {
+#dhAccounts .dh-spacer-row {
 	height:			5px;
 }
 
-#dhAccountInfoForm .dh-form-table .dh-padding-row {
+#dhAccounts .dh-padding-row {
     height:         0px;
 }
 
 div.dh-notification {
 	padding:		4px;
-	width:          100%;
+	width:          auto;
 }
 
 .dh-picture-instructions {

@@ -5,6 +5,7 @@ import java.util.Set;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.Pair;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
@@ -65,7 +66,13 @@ public interface GroupSystem {
 	 */
 	public boolean canAddMembers(User adder, Group group);
 	
+	public void addMember(User adder, Group group, Resource resource, boolean notifyGroupMembers);
+	
+	public void addMember(User adder, Group group, Resource resource);
+	
 	public void addMember(User adder, Group group, Person person);
+	
+	public Pair<Integer, Integer> inviteAllFollowers(User adder, Group group);
 	
 	public boolean canRemoveInvitation(User remover, GroupMember groupMember);
 	
