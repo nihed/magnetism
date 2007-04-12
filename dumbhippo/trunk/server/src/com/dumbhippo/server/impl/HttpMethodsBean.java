@@ -572,33 +572,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doSetGroupMembershipPolicy(UserViewpoint viewpoint, String groupId, boolean open) {
-		try {
-			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
-			
-			if (!groupSystem.canEditGroup(viewpoint, group))
-				throw new RuntimeException("Only active members can edit a group");	
-			
-			if (group.getAccess() == GroupAccess.SECRET)
-				throw new RuntimeException("Only public groups can have their membership policy changed");	
-
-			boolean needToInviteFollowers = (group.getAccess() != GroupAccess.PUBLIC && open);
-			
-			group.setAccess(open ? GroupAccess.PUBLIC : GroupAccess.PUBLIC_INVITE);
-			
-			int followers = -1;
-			int invitedFollowers = -1;
-			if (needToInviteFollowers) {
-				// we need to make all of the groups' followers members,
-				// those notifications will not be pushed to group members' stacks
-				Pair<Integer, Integer> followerCounts = groupSystem.inviteAllFollowers(viewpoint.getViewer(), group);
-				followers = followerCounts.getFirst();
-				invitedFollowers = followerCounts.getSecond();
-			}
-			revisionControl.persistRevision(new GroupMembershipPolicyRevision(viewpoint.getViewer(), group, new Date(), open, followers, invitedFollowers));			
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}		
+		groupSystem.reviseGroupMembershipPolicy(viewpoint.getViewer(), groupId, open);		
 	}
+	
 	public void doRenameGroup(UserViewpoint viewpoint, String groupId, String name) {
 		try {
 			Group group = groupSystem.lookupGroupById(viewpoint, groupId);

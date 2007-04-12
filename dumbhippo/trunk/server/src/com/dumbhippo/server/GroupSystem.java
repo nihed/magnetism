@@ -66,11 +66,11 @@ public interface GroupSystem {
 	 */
 	public boolean canAddMembers(User adder, Group group);
 	
-	public void addMember(User adder, Group group, Resource resource, boolean notifyGroupMembers);
-	
 	public void addMember(User adder, Group group, Resource resource);
 	
 	public void addMember(User adder, Group group, Person person);
+	
+	public void reviseGroupMembershipPolicy(User revisor, String groupId, boolean open);
 	
 	public Pair<Integer, Integer> inviteAllFollowers(User adder, Group group);
 	

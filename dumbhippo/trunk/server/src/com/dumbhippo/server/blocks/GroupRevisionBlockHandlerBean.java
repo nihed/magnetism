@@ -16,6 +16,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -50,7 +51,7 @@ public class GroupRevisionBlockHandlerBean
 			throw new BlockNotVisibleException("Group for the block is not visible", e);
 		}
 		
-		PersonView revisorView = personViewer.getPersonView(viewpoint, revision.getRevisor());
+		PersonView revisorView = personViewer.getPersonView(viewpoint, revision.getRevisor(), PersonViewExtra.MUGSHOT_CHARACTER_STATUS);
 
 		blockView.populate(groupView, revisorView, revision);
 	}
