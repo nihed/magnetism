@@ -113,6 +113,7 @@ append_entity_ref(HippoDBus *dbus,
     char *opath;
     opath = get_entity_path(entity);
     dbus_message_append_args(message, DBUS_TYPE_OBJECT_PATH, &opath, DBUS_TYPE_INVALID);
+    g_free(opath);
 }
 
 void

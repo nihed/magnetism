@@ -67,6 +67,12 @@ hippo_app_get_data_cache (HippoApp *app)
     return app->cache;
 }
 
+HippoDBus*
+hippo_app_get_dbus (HippoApp *app)
+{
+    return app->dbus;
+}
+
 static void
 hippo_app_restart(HippoApp *app)
 {

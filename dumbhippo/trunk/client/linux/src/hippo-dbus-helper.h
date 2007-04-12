@@ -5,6 +5,7 @@
 /* D-Bus convenience thingy */
 
 #include <dbus/dbus.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
@@ -49,19 +50,26 @@ struct HippoDBusProperty
     HippoDBusSetter setter;
 };
 
-void              hippo_dbus_helper_register_interface (DBusConnection          *connection,
-                                                        const char              *name,
-                                                        const HippoDBusMember   *members,
-                                                        const HippoDBusProperty *properties);
-void              hippo_dbus_helper_register_object    (DBusConnection          *connection,
-                                                        const char              *path,
-                                                        void                    *object,
-                                                        const char              *first_interface,
-                                                        ...) G_GNUC_NULL_TERMINATED;
-void              hippo_dbus_helper_unregister_object  (DBusConnection          *connection,
-                                                        const char              *path);
-DBusHandlerResult hippo_dbus_helper_handle_message     (DBusConnection          *connection,
-                                                        DBusMessage             *message);
+void              hippo_dbus_helper_register_interface   (DBusConnection          *connection,
+                                                          const char              *name,
+                                                          const HippoDBusMember   *members,
+                                                          const HippoDBusProperty *properties);
+void              hippo_dbus_helper_register_object      (DBusConnection          *connection,
+                                                          const char              *path,
+                                                          void                    *object,
+                                                          const char              *first_interface,
+                                                          ...) G_GNUC_NULL_TERMINATED;
+void              hippo_dbus_helper_register_g_object    (DBusConnection          *connection,
+                                                          const char              *path,
+                                                          GObject                 *object,
+                                                          const char              *first_interface,
+                                                          ...) G_GNUC_NULL_TERMINATED;
+void              hippo_dbus_helper_unregister_object    (DBusConnection          *connection,
+                                                          const char              *path);
+gboolean          hippo_dbus_helper_object_is_registered (DBusConnection          *connection,
+                                                          const char              *path);
+DBusHandlerResult hippo_dbus_helper_handle_message       (DBusConnection          *connection,
+                                                          DBusMessage             *message);
 
 
 

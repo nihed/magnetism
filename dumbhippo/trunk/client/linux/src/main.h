@@ -25,12 +25,17 @@
 
 G_BEGIN_DECLS
 
+typedef struct _HippoDBus      HippoDBus;
+
 typedef struct HippoApp HippoApp;
 
 HippoApp* hippo_get_app(void);
 
 void       hippo_app_quit           (HippoApp   *app);
+
 HippoDataCache *hippo_app_get_data_cache (HippoApp *app);
+HippoDBus      *hippo_app_get_dbus       (HippoApp *app);
+
 void       hippo_app_show_about     (HippoApp   *app);
 void       hippo_app_show_home      (HippoApp   *app);
 void       hippo_app_open_url       (HippoApp   *app,
