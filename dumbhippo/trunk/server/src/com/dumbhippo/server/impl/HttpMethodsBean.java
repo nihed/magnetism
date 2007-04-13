@@ -65,7 +65,6 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupDescriptionChangedRevision;
 import com.dumbhippo.persistence.GroupMember;
-import com.dumbhippo.persistence.GroupMembershipPolicyRevision;
 import com.dumbhippo.persistence.GroupNameChangedRevision;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
