@@ -5,6 +5,9 @@
 #include "hippo-block-netflix-movie.h"
 #include "hippo-netflix-movie.h"
 #include "hippo-canvas-block-netflix-movie.h"
+#include "hippo-canvas-chat-preview.h"
+#include "hippo-canvas-last-message-preview.h"
+#include "hippo-canvas-quipper.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-text.h>
@@ -51,6 +54,9 @@ struct _HippoCanvasBlockNetflixMovie {
     HippoCanvasItem *favicon;
     HippoCanvasItem *title_link;
     HippoCanvasItem *description_item;
+    HippoCanvasItem *quipper;
+    HippoCanvasItem *last_message_preview;
+    HippoCanvasItem *chat_preview;
     HippoCanvasBox *queue_box;
     HippoCanvasBox *queue_list_box;    
     HippoPerson *person;
@@ -168,11 +174,29 @@ hippo_canvas_block_netflix_movie_get_property(GObject         *object,
 }
 
 static void
-update_visibility(HippoCanvasBlockNetflixMovie *block)
+update_visibility(HippoCanvasBlockNetflixMovie *block_netflix)
 {
-    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block);
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_netflix);
+    HippoStackReason stack_reason;
+    gboolean have_chat_id;
     
-    hippo_canvas_item_set_visible(HIPPO_CANVAS_ITEM(block->queue_box), canvas_block->expanded);
+    hippo_canvas_item_set_visible(HIPPO_CANVAS_ITEM(block_netflix->queue_box), canvas_block->expanded);
+
+    if (canvas_block->block)
+        stack_reason = hippo_block_get_stack_reason(canvas_block->block);
+    else
+        stack_reason = HIPPO_STACK_BLOCK_UPDATE;
+
+    have_chat_id = FALSE;
+    if (canvas_block->block)
+        have_chat_id = hippo_block_get_chat_id(canvas_block->block) != NULL;
+
+    hippo_canvas_item_set_visible(block_netflix->quipper,
+                                  canvas_block->expanded && have_chat_id);
+    hippo_canvas_item_set_visible(block_netflix->last_message_preview,
+                                  !canvas_block->expanded && stack_reason == HIPPO_STACK_CHAT_MESSAGE);
+    hippo_canvas_item_set_visible(block_netflix->chat_preview,
+                                  canvas_block->expanded && have_chat_id);
 }
 
 static void
@@ -240,6 +264,30 @@ hippo_canvas_block_netflix_movie_append_content_items (HippoCanvasBlock *block,
                                                    "border-bottom", 4,
                                                    NULL);
     hippo_canvas_box_append(beside_box, block_netflix->description_item, 0);
+    
+    block_netflix->last_message_preview = g_object_new(HIPPO_TYPE_CANVAS_LAST_MESSAGE_PREVIEW,
+                                                       "actions", hippo_canvas_block_get_actions(block),
+                                                       NULL);
+    hippo_canvas_box_append(parent_box, block_netflix->last_message_preview, 0);
+    hippo_canvas_item_set_visible(block_netflix->last_message_preview,
+                                  FALSE); /* no messages yet */
+
+    block_netflix->quipper = g_object_new(HIPPO_TYPE_CANVAS_QUIPPER,
+                                          "actions", hippo_canvas_block_get_actions(block),
+                                          NULL);
+    hippo_canvas_box_append(parent_box, block_netflix->quipper, 0);
+    hippo_canvas_item_set_visible(block_netflix->quipper,
+                                  FALSE); /* not expanded */
+
+    block_netflix->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
+                                               "actions", hippo_canvas_block_get_actions(block),
+                                               "padding-top", 8,
+                                               "padding-bottom", 8,
+                                               NULL);
+    hippo_canvas_box_append(parent_box,
+                            block_netflix->chat_preview, 0);
+    hippo_canvas_item_set_visible(block_netflix->chat_preview,
+                                  FALSE); /* not expanded at first */
     
     block_netflix->queue_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                             "orientation", HIPPO_ORIENTATION_VERTICAL,
@@ -320,6 +368,16 @@ on_block_description_changed(HippoBlock *block,
 }
 
 static void
+on_block_chat_id_changed(HippoBlock *block,
+                         GParamSpec *arg, /* null when first calling this */
+                         void       *data)
+{
+    HippoCanvasBlockNetflixMovie *block_netflix = HIPPO_CANVAS_BLOCK_NETFLIX_MOVIE(data);
+    
+    update_visibility(block_netflix);
+}
+
+static void
 hippo_canvas_block_netflix_movie_set_block(HippoCanvasBlock *canvas_block,
                                            HippoBlock       *block)
 {
@@ -335,12 +393,25 @@ hippo_canvas_block_netflix_movie_set_block(HippoCanvasBlock *canvas_block,
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_block_description_changed),
                                              canvas_block);                                             
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_block_chat_id_changed),
+                                             canvas_block);
         set_person(HIPPO_CANVAS_BLOCK_NETFLIX_MOVIE(canvas_block), NULL);
     }
 
     /* Chain up to get the block really changed */
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_netflix_movie_parent_class)->set_block(canvas_block, block);
 
+    g_object_set(block_netflix->quipper,
+                 "block", canvas_block->block,
+                 NULL);
+    g_object_set(block_netflix->last_message_preview,
+                 "block", canvas_block->block,
+                 NULL);
+    g_object_set(block_netflix->chat_preview,
+                 "block", canvas_block->block,
+                 NULL);
+    
     if (canvas_block->block != NULL) {
         const char *thumbnail_url;
         GList *queue, *elt;
@@ -353,6 +424,10 @@ hippo_canvas_block_netflix_movie_set_block(HippoCanvasBlock *canvas_block,
                          "notify::description",
                          G_CALLBACK(on_block_description_changed),
                          canvas_block);                         
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::thumbnails",
+                         G_CALLBACK(on_block_chat_id_changed),
+                         canvas_block);
 
         on_user_changed(canvas_block->block, NULL,
                         HIPPO_CANVAS_BLOCK_NETFLIX_MOVIE(canvas_block));
@@ -415,6 +490,8 @@ hippo_canvas_block_netflix_movie_set_block(HippoCanvasBlock *canvas_block,
             
             hippo_canvas_box_append(block_netflix->queue_list_box, HIPPO_CANVAS_ITEM(box), 0);            
         }
+
+        on_block_chat_id_changed(canvas_block->block, NULL, canvas_block);
     }
 }
 
