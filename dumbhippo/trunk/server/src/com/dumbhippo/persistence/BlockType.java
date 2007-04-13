@@ -117,7 +117,7 @@ public enum BlockType {
 		
 		@Override
 		public boolean isDirectlyChattable() {
-			return false; // ?
+			return false;
 		}
 	},
 	FACEBOOK_EVENT { // 8
@@ -133,7 +133,7 @@ public enum BlockType {
 		
 		@Override
 		public boolean isDirectlyChattable() {
-			return true; // ?
+			return false; // not completely clear ... it would make sense for some subtypes and not others
 		}
 	},
 	FLICKR_PERSON { // 9
@@ -150,7 +150,7 @@ public enum BlockType {
 		
 		@Override
 		public boolean isDirectlyChattable() {
-			return true; // ?
+			return true; // per-photo chats might make more sense long-term
 		}
 	},
 	FLICKR_PHOTOSET { // 10
@@ -183,7 +183,7 @@ public enum BlockType {
 		
 		@Override
 		public boolean isDirectlyChattable() {
-			return true; // ?
+			return true;  // per-video chats might make more sense long-term
 		}
 	},
 	MYSPACE_PERSON { // 12
@@ -199,7 +199,7 @@ public enum BlockType {
 		
 		@Override
 		public boolean isDirectlyChattable() {
-			return false; // ?
+			return false; // wait until we have block-per-entry
 		}
 	},
 	MUSIC_CHAT { // 13
@@ -263,7 +263,7 @@ public enum BlockType {
 		
 		@Override
 		public boolean isDirectlyChattable() {
-			return false; // ?
+			return false;
 		}
 	},
 	// an item from the Digg "stuff you Dugg" feed
@@ -304,7 +304,7 @@ public enum BlockType {
 	GROUP_REVISION { // 19		
 		@Override
 		public boolean isDirectlyChattable() {
-			return false;
+			return true;
 		}
 	},
 	// a Netflix movie
@@ -324,7 +324,7 @@ public enum BlockType {
 		
 		@Override
 		public boolean isDirectlyChattable() {
-			return true; // ?
+			return true;
 		}
 	},
 	// a question to the user about account options
@@ -373,7 +373,7 @@ public enum BlockType {
 		
 		@Override
 		public boolean isDirectlyChattable() {
-			return true; // ?
+			return true; // might want per-album chats eventually
 		}
 	};
 	

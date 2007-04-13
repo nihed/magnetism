@@ -7,10 +7,11 @@
 <%@ attribute name="offset" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="chatHeader" required="false" type="java.lang.Boolean" %>
 
 <c:set var="hasDescription" value="${dh:myInstanceOf(block, 'com.dumbhippo.server.blocks.TitleDescriptionBlockView') && block.description != ''}"/>
 
-<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${block.queuedMovies != null}">
+<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${block.queuedMovies != null && !chatHeader}">
     <td class="dh-stacker-block-with-image-left" align="left" valign="top" width="75%">
 		<table cellspacing="0" cellpadding="0" width="100%">
 			<tr>
@@ -27,17 +28,27 @@
 					</div>
 				</td>
 			</tr>
-		</table>	
-		<dht3:blockContent blockId="${blockId}">
-		    Movies in the Queue:
-		    <c:forEach items="${block.queuedMovies.movies}" var="movie">
-		        <br/><c:out value="${movie.priority}"/> <a href="${movie.url}"><c:out value="${movie.title}"/></a>
-			</c:forEach>
-		</dht3:blockContent>	
+		</table>
+		<c:if test="${!chatHeader}">
+			<dht3:blockContent blockId="${blockId}">
+				<dht3:chatPreview block="${block}"/>
+			    Movies in the Queue:
+			    <c:forEach items="${block.queuedMovies.movies}" var="movie">
+			        <br/><c:out value="${movie.priority}"/> <a href="${movie.url}"><c:out value="${movie.title}"/></a>
+				</c:forEach>
+			</dht3:blockContent>	
+		</c:if>
 	</td>
 	<td width="0%">&nbsp;</td>
-	<dht3:blockRight blockId="${blockId}" from="${block.entitySource}" showFrom="${showFrom}">
-		<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>
+	<dht3:blockRight blockId="${blockId}" from="${block.entitySource}" showFrom="${showFrom}" chatHeader="${chatHeader}">
+		<c:choose>
+			<c:when test="${chatHeader}">
+				<dht3:blockSentTimeAgo chatHeader="true">${block.sentTimeAgo}</dht3:blockSentTimeAgo>
+			</c:when>
+			<c:otherwise>
+				<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>
+			</c:otherwise>
+		</c:choose>
 		<dht3:blockControls blockId="${blockId}">
 			&nbsp; <%-- http://bugzilla.mugshot.org/show_bug.cgi?id=1019 --%>
 		</dht3:blockControls>				
