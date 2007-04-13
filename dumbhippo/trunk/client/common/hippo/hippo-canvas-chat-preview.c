@@ -387,6 +387,7 @@ hippo_canvas_chat_preview_set_block(HippoCanvasChatPreview *chat_preview,
 
     update_message_count(chat_preview);
     update_recent_messages(chat_preview);
+    hippo_canvas_chat_preview_update_visibility(chat_preview);
     
     g_object_notify(G_OBJECT(chat_preview), "block");
 }
