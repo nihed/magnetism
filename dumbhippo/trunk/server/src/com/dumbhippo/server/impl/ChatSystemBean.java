@@ -1,7 +1,6 @@
 package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -111,7 +110,7 @@ public class ChatSystemBean implements ChatSystem {
 			return getPostMessages(post, lastSeenSerial);
 		case GROUP_MEMBER:
 		case MUSIC_PERSON:
-			return Collections.emptyList();
+			return TypeUtils.emptyList(ChatMessage.class);
 		}
 		
 		return getBlockMessages(block, lastSeenSerial);
@@ -130,7 +129,7 @@ public class ChatSystemBean implements ChatSystem {
 			return getNewestPostMessages(post, maxResults);
 		case GROUP_MEMBER:
 		case MUSIC_PERSON:
-			return Collections.emptyList();
+			return TypeUtils.emptyList(ChatMessage.class);
 		}
 		
 		return getNewestBlockMessages(block, maxResults);
