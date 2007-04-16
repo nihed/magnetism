@@ -7,6 +7,7 @@ import com.dumbhippo.persistence.ExternalAccountType;
 
 public enum ServicePollingRestrictions {
 	DELICIOUS(ExternalAccountType.DELICIOUS) {
+		@Override
 		public int getMaxRateSeconds() {
 			return 30 * 60;
 		}

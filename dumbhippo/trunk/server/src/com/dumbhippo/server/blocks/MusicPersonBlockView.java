@@ -88,10 +88,12 @@ public class MusicPersonBlockView extends AbstractPersonBlockView implements Mus
 			return history.subList(0, history.size() - 1);
 	}
 
+	@Override
 	public ChatMessageView getLastMessage() {
 		return null; 
 	}
 	
+	@Override
 	public List<ChatMessageView> getRecentMessages() {
 		return Collections.emptyList(); 
 	}
