@@ -129,7 +129,7 @@ public class GroupRevisionBlockView extends BlockView implements PersonSourceBlo
 			followerInfo = followerInfo + ", " + membershipRevision.getInvitedFollowers() + " invited followers were invited to be members";
 		}		
 		
-		return " to be " + (membershipRevision.isOpen() ? "an open group" + followerInfo : "a by invitation only group");
+		return " to be " + (membershipRevision.isOpen() ? "an \u201COpen\u201D group" + followerInfo : "a \u201CBy Invitation\u201D group");
 	}
 	
 	public String getTitleForHome() {
