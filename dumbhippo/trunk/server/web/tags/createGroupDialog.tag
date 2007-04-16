@@ -34,34 +34,29 @@
 		</td>
 		<td>    
 		    <input type="radio" id="dhCreateGroupByInvitationRadio" name="groupMembership" />
-		    <a href="javascript:dh.util.selectCheckBox('dhCreateGroupByInvitationRadio');dh.sharelink.updateGroupTip();">By invitation</a>
+		    <a href="javascript:dh.util.selectCheckBox('dhCreateGroupByInvitationRadio');dh.sharelink.updateGroupTip();">By Invitation</a>
 	    </td>
 	    </tr>
 	</table>           									            
 	<div id="dhOpenPublicGroupTip" class="dh-help-bubble">
 	    <dh:png style="left: 27px; width: 27px; height: 21px;" klass="dh-help-bubble-triangle" src="/images/${buildStamp}/triangle.png"/>
 		<div class="dh-help-bubble-message">
-			Public groups are for <strong>friends</strong>, <strong>co-workers</strong>, and others who don't
-		    mind people seeing the links they are sharing.<br/>			    
-			Open membership groups are for hobbies, geographical locations, and other activities where people can self-identify themselves.
-			<a href="/privacy" target="_blank">privacy</a>
+			Public groups are for <strong>communities</strong>, <strong>co-workers</strong>, and others who don't
+		    mind people seeing the links they are sharing. Anyone can <strong>join</strong> an "Open" group.
 		</div><!-- help bubble message -->
 	</div><!-- help bubble -->
 	<!-- EEEEEEEEEEEEEEEEEEEEE -->
 	<div id="dhByInvitationPublicGroupTip" class="dh-help-bubble">
 		<dh:png style="left: 27px; width: 27px; height: 21px;" klass="dh-help-bubble-triangle" src="/images/${buildStamp}/triangle.png"/>
 		<div class="dh-help-bubble-message">
-			Public groups are for <strong>friends</strong>, <strong>co-workers</strong>, and others who don't
-		    mind people seeing the links they are sharing.</br>			
-			By invitation groups are for organizations, developers, and gurus of all kinds that can have followers.
-			<a href="/privacy" target="_blank">privacy</a>
+			Public groups are for <strong>communities</strong>, <strong>co-workers</strong>, and others who don't
+		    mind people seeing the links they are sharing. Anyone can <strong>follow</strong> a "By Invitation" group, they need an <strong>invitation</strong> to join.
 		</div><!-- help bubble message -->
 	</div><!-- help bubble -->
     <div id="dhPrivateGroupTip" class="dh-help-bubble">
 		<dh:png style="left: 27px; width: 27px; height: 21px;" klass="dh-help-bubble-triangle" src="/images/${buildStamp}/triangle.png"/>
 		<div class="dh-help-bubble-message">
-			Private groups are for <strong>families</strong> and super secret CIA agents. They are by invitation only.
-			<a href="/privacy" target="_blank">privacy</a>
+			Private groups are for <strong>friends</strong>, <strong>families</strong>, and super secret CIA agents. They are by invitation only.
 		</div><!-- help bubble message -->
 	</div><!-- help bubble -->			
 	<p id="dhCreateGroupStatus" class="dhStatusLabel dhInvisible"></p>

@@ -108,7 +108,7 @@
 				            <input ${openChecked} class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupMembership" id="dhGroupMembershipOpen" value="open" onclick="dh.groupaccount.processMembershipSelection();"><label class="dh-label" for="dhGroupVisibilityOpen">Open</label>
 				        </dht:formTableRow>
 				        <dht:formTableRow info="Anyone can follow the group, they need an invitation to join">
-				            <input ${byInvitationChecked} class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupMembership" id="dhGroupMembershipByInvitation" value="byInvitation" onclick="dh.groupaccount.processMembershipSelection();"><label class="dh-label" for="dhGroupVisibilityByInvitation">By invitation</label>
+				            <input ${byInvitationChecked} class="dh-radio-input" ${disabledAttr} type="radio" name="dhGroupMembership" id="dhGroupMembershipByInvitation" value="byInvitation" onclick="dh.groupaccount.processMembershipSelection();"><label class="dh-label" for="dhGroupVisibilityByInvitation">By Invitation</label>
 				        </dht:formTableRow>
 				    </dht:formTable>    
 			    </dht:formTableRow>

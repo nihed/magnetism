@@ -77,7 +77,7 @@ dh.groupaccount.processMembershipSelection = function() {
             dh.formtable.showStatusMessage('dhMembershipSelection', "No change.");
         } else {
             dh.formtable.showStatus('dhMembershipSelection', 
-                                    'Making this group "by invitation" means that in the future this group will ' +
+                                    'Making this group \u201CBy Invitation\u201D means that in the future this group will ' +
                                     'have followers, and its members will be able to select who to invite.',
                                     ["Confirm", "Cancel"],
                                     [dh.formtable.makeLinkClosure(function() {
