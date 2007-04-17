@@ -36,7 +36,6 @@ static void hippo_canvas_block_generic_set_block       (HippoCanvasBlock *canvas
                                                         HippoBlock       *block);
 static void hippo_canvas_block_generic_title_activated (HippoCanvasBlock *canvas_block);
 
-static void hippo_canvas_block_generic_clicked_count_changed (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_generic_significant_clicked_count_changed (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_generic_stack_reason_changed (HippoCanvasBlock *canvas_block);
 
@@ -55,11 +54,9 @@ struct _HippoCanvasBlockGeneric {
     HippoCanvasBox *description_parent;
     HippoCanvasItem *description_item;
     HippoCanvasItem *reason_item;
-    HippoCanvasItem *clicked_count_item;
     HippoCanvasItem *quipper;
     HippoCanvasItem *last_message_preview;
     HippoCanvasItem *chat_preview;
-    HippoCanvasItem *details_box;
     HippoCanvasItem *thumbnails_item;
     unsigned int have_description : 1;
     unsigned int have_thumbnails : 1;
@@ -117,7 +114,6 @@ hippo_canvas_block_generic_class_init(HippoCanvasBlockGenericClass *klass)
     canvas_block_class->append_content_items = hippo_canvas_block_generic_append_content_items;
     canvas_block_class->set_block = hippo_canvas_block_generic_set_block;
     canvas_block_class->title_activated = hippo_canvas_block_generic_title_activated;
-    canvas_block_class->clicked_count_changed = hippo_canvas_block_generic_clicked_count_changed;
     canvas_block_class->significant_clicked_count_changed = hippo_canvas_block_generic_significant_clicked_count_changed;
     canvas_block_class->stack_reason_changed = hippo_canvas_block_generic_stack_reason_changed;
     canvas_block_class->expand = hippo_canvas_block_generic_expand;
@@ -216,21 +212,6 @@ hippo_canvas_block_generic_append_content_items(HippoCanvasBlock *block,
     hippo_canvas_item_set_visible(block_generic->last_message_preview,
                                   FALSE); /* no messages yet */
 
-    block_generic->details_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                                              "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                                              "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
-                                              NULL);
-    hippo_canvas_box_append(parent_box, block_generic->details_box, HIPPO_PACK_CLEAR_RIGHT);
-
-    hippo_canvas_item_set_visible(block_generic->details_box,
-                                  FALSE); /* not expanded at first */
-
-    block_generic->clicked_count_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                                     "text", NULL,
-                                                     NULL);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_generic->details_box),
-                            block_generic->clicked_count_item, 0);
-    
     block_generic->thumbnails_item = g_object_new(HIPPO_TYPE_CANVAS_THUMBNAILS,
                                                   "actions", block->actions,
                                                   NULL);
@@ -266,27 +247,6 @@ hippo_canvas_block_generic_title_activated(HippoCanvasBlock *canvas_block)
     }
 
     g_free(link);
-}
-
-static void
-hippo_canvas_block_generic_clicked_count_changed (HippoCanvasBlock *canvas_block)
-{
-    HippoCanvasBlockGeneric *canvas_block_generic = HIPPO_CANVAS_BLOCK_GENERIC(canvas_block);
-    char *s;
-    int count;
-
-    count = hippo_block_get_clicked_count(canvas_block->block);
-
-    if (count > 0) {
-        s = g_strdup_printf(_("%d views"), count);
-    } else {
-        s = NULL;
-    }
-
-    g_object_set(G_OBJECT(canvas_block_generic->clicked_count_item),
-                 "text", s,
-                 NULL);
-    g_free(s);
 }
 
 static void
@@ -353,9 +313,6 @@ hippo_canvas_block_generic_update_visibility(HippoCanvasBlockGeneric *block_gene
     hippo_canvas_item_set_visible(block_generic->quipper,
                                   canvas_block->expanded && have_chat_id);
 
-    hippo_canvas_item_set_visible(block_generic->details_box,
-                                  canvas_block->expanded);
-    
     hippo_canvas_item_set_visible(block_generic->chat_preview,
                                   canvas_block->expanded && have_chat_id);
 
