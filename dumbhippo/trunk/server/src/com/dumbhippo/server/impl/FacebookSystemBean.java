@@ -3,6 +3,7 @@ package com.dumbhippo.server.impl;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -11,6 +12,7 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
@@ -40,6 +42,10 @@ public class FacebookSystemBean implements FacebookSystem {
 	
 	// how long to wait on the Facebook API call
 	static protected final int REQUEST_TIMEOUT = 1000 * 12;
+
+	// how long we wait after the person logs out with the client or is last seen being active 
+	// on the web to stop frequent requests to Facebook, in milliseconds
+	static protected final int FREQUENT_REQUESTS_GRACE_PERIOD = 24 * 60 * 60 * 1000; // 24 hours
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em; 
@@ -54,6 +60,27 @@ public class FacebookSystemBean implements FacebookSystem {
 		List list = em.createQuery("SELECT fa FROM FacebookAccount fa").getResultList();
 		return TypeUtils.castList(FacebookAccount.class, list);
 	}
+
+	public List<FacebookAccount> getValidAccounts(boolean applyLoginConstraints) {
+		String loginConstraints = "";
+		if (applyLoginConstraints) {
+			loginConstraints = " AND (a.lastLoginDate > a.lastLogoutDate OR " +
+                               "(a.lastLoginDate IS NOT NULL AND a.lastLogoutDate IS NULL) OR " +
+                               "a.lastLogoutDate >= :tooLongAgo OR a.lastWebActivityDate >= :tooLongAgo)";
+		}
+		
+		Query q = em.createQuery("SELECT fa FROM FacebookAccount fa, ExternalAccount ea, Account a " +
+				                 "WHERE fa.sessionKeyValid = true AND fa.externalAccount = ea " +
+				                 "AND ea.account = a" + loginConstraints);
+         
+		if (applyLoginConstraints) {		                   
+		    q.setParameter("tooLongAgo",  new Date(System.currentTimeMillis() - FREQUENT_REQUESTS_GRACE_PERIOD));
+		}
+
+		return TypeUtils.castList(FacebookAccount.class, q.getResultList());
+	}
+	
+	
 	
 	public FacebookAccount lookupFacebookAccount(Viewpoint viewpoint, String userId) throws ParseException, NotFoundException {
         User user = EJBUtil.lookupGuid(em, User.class, new Guid(userId));
