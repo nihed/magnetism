@@ -21,7 +21,9 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FlickrUpdater;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FlickrPhoto;
 import com.dumbhippo.services.FlickrPhotoView;
 import com.dumbhippo.services.FlickrPhotos;
@@ -59,11 +61,13 @@ public class FlickrPhotosetBlockHandlerBean extends
 	@Override
 	protected void populateBlockViewImpl(FlickrPhotosetBlockView blockView)
 			throws BlockNotVisibleException {
+		Viewpoint viewpoint = blockView.getViewpoint();
+		Block block = blockView.getBlock();
 		
-		User user = getData1User(blockView.getBlock());
-		PersonView userView = personViewer.getPersonView(blockView.getViewpoint(), user);
+		User user = getData1User(block);
+		PersonView userView = personViewer.getPersonView(viewpoint, user);
 		
-		FlickrPhotosetStatus photosetStatus = em.find(FlickrPhotosetStatus.class, blockView.getBlock().getData2AsGuid().toString());
+		FlickrPhotosetStatus photosetStatus = em.find(FlickrPhotosetStatus.class, block.getData2AsGuid().toString());
 		
 		// This is all a screwy workaround for not having a "get photoset by ID" cached web service bean
 		FlickrPhotos photos = new FlickrPhotos();		
@@ -83,7 +87,15 @@ public class FlickrPhotosetBlockHandlerBean extends
 		
 		FlickrPhotosetView photosetView = photosetStatus.toPhotoset(photos);
 		
-		blockView.populate(userView, photosetView, photosetStatus.getOwnerId());
+		List<ChatMessageView> messageViews = chatSystem.viewMessages(chatSystem.getNewestMessages(block, BlockView.RECENT_MESSAGE_COUNT), viewpoint);
+		
+		int messageCount;
+		if (messageViews.size() < BlockView.RECENT_MESSAGE_COUNT) // Optimize out a query
+			messageCount = messageViews.size();
+		else
+			messageCount = chatSystem.getMessageCount(block);
+		
+		blockView.populate(userView, photosetView, photosetStatus.getOwnerId(), messageViews, messageCount);
 	}
 
 	public BlockKey getKey(User user, FlickrPhotosetStatus photosetStatus) {
