@@ -5,7 +5,6 @@ import java.util.Collections;
 import com.dumbhippo.BasicThumbnails;
 import com.dumbhippo.Thumbnail;
 import com.dumbhippo.Thumbnails;
-import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;

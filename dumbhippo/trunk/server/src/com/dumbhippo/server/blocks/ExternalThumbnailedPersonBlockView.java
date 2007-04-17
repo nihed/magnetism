@@ -1,6 +1,7 @@
 package com.dumbhippo.server.blocks;
 
 import java.util.Collections;
+import java.util.List;
 
 import com.dumbhippo.BasicThumbnails;
 import com.dumbhippo.Thumbnail;
@@ -10,6 +11,7 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
@@ -47,8 +49,10 @@ public abstract class ExternalThumbnailedPersonBlockView extends AbstractPersonB
 		builder.closeElement();		
 	}
 
-	void populate(PersonView userView, ExternalAccountView externalAccountView) {
+	void populate(PersonView userView, ExternalAccountView externalAccountView, List<ChatMessageView> recentMessages, int messageCount) {
 		super.partiallyPopulate(userView);
+		setRecentMessages(recentMessages);
+		setMessageCount(messageCount);
 		this.externalAccountView = externalAccountView;
 		setPopulated(true);
 	}
