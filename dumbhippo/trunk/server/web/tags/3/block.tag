@@ -37,7 +37,7 @@
 	   	<dht3:facebookBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}" homeStack="${homeStack}"/>
    	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'FLICKR_PHOTOSET')}">
-	   	<dht3:flickrPhotosetBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
+	   	<dht3:flickrPhotosetBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" chatHeader="${chatHeader}" oneLine="${oneLine}"/>
    	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'GROUP_REVISION')}">
 	   	<dht3:groupRevisionBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" chatHeader="${chatHeader}" oneLine="${oneLine}"/>
@@ -51,7 +51,7 @@
    	
    	<c:when test="${dh:myInstanceOf(block, 'com.dumbhippo.server.blocks.ExternalThumbnailedPersonBlockView')}">
    		<%-- this covers e.g. PICASA and YOUTUBE and FLICKR _PERSON --%>
-		<dht3:externalThumbnailedPersonBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>   	
+		<dht3:externalThumbnailedPersonBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" chatHeader="${chatHeader}" oneLine="${oneLine}"/>   	
    	</c:when>    	
    	<c:when test="${dh:myInstanceOf(block, 'com.dumbhippo.server.blocks.TitleBlockView')}">
    		<%-- This covers BLOG_ENTRY, MYSPACE_PERSON, DELICIOUS_PUBLIC_BOOKMARK, etc. and oneLine NETFLIX_MOVIE --%>
