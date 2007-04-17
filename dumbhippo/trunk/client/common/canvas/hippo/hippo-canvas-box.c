@@ -1027,7 +1027,8 @@ hippo_canvas_box_set_context(HippoCanvasItem    *item,
         HippoBoxChild *child = link->data;
         hippo_canvas_item_set_context(child->item, child_context);
 
-        /* clear button_release_pending flags */
+        /* clear child state flags */
+        child->hovering = FALSE;
         child->left_release_pending = FALSE;
         child->middle_release_pending = FALSE;
         child->middle_release_pending = FALSE; 
@@ -1039,6 +1040,8 @@ hippo_canvas_box_set_context(HippoCanvasItem    *item,
                                              box);
         box->context = context; /* set box context to NULL after removing it from children */
     }
+
+    box->hovering = FALSE;
 }
 
 static void

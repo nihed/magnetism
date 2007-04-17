@@ -981,8 +981,13 @@ void
 hippo_canvas_helper_set_root(HippoCanvasHelper *helper,
                              HippoCanvasItem   *root)
 {
+    GtkWidget *widget;
+    gboolean was_hovering = FALSE;
+
     g_return_if_fail(HIPPO_IS_CANVAS_HELPER(helper));
     g_return_if_fail(root == NULL || HIPPO_IS_CANVAS_ITEM(root));
+
+    widget = helper->widget;
 
     if (root == helper->root)
         return;
@@ -1000,6 +1005,9 @@ hippo_canvas_helper_set_root(HippoCanvasHelper *helper,
         hippo_canvas_item_set_context(helper->root, NULL);
         g_object_unref(helper->root);
         helper->root = NULL;
+
+        was_hovering = helper->root_hovering;
+        helper->root_hovering = FALSE;
     }
 
     if (root != NULL) {
@@ -1016,9 +1024,13 @@ hippo_canvas_helper_set_root(HippoCanvasHelper *helper,
                          G_CALLBACK(canvas_root_tooltip_changed),
                          helper);
         hippo_canvas_item_set_context(helper->root, HIPPO_CANVAS_CONTEXT(helper));
+
+        if (was_hovering)
+            handle_new_mouse_location(helper, widget->window,
+                                      HIPPO_MOTION_DETAIL_ENTER);
     }
 
-    gtk_widget_queue_resize(helper->widget);
+    gtk_widget_queue_resize(widget);
 }
 
 /*
