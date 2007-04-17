@@ -87,9 +87,6 @@ G_DEFINE_TYPE_WITH_CODE(HippoCanvasBlockGeneric, hippo_canvas_block_generic, HIP
 static void
 hippo_canvas_block_generic_init(HippoCanvasBlockGeneric *block_generic)
 {
-    HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(block_generic);
-
-    block->required_type = HIPPO_BLOCK_TYPE_GENERIC;
 }
 
 static HippoCanvasItemIface *item_parent_class;
@@ -251,7 +248,7 @@ hippo_canvas_block_generic_title_activated(HippoCanvasBlock *canvas_block)
     actions = hippo_canvas_block_get_actions(canvas_block);
 
     link = NULL;
-    g_object_get(G_OBJECT(canvas_block->block), "link", &link, NULL);
+    g_object_get(G_OBJECT(canvas_block->block), "title-link", &link, NULL);
 
     if (link != NULL && actions != NULL) {
         hippo_actions_open_url(actions, link);
@@ -416,7 +413,7 @@ on_block_title_changed(HippoBlock *block,
     link = NULL;
     g_object_get(G_OBJECT(block),
                  "title", &title,
-                 "link", &link,
+                 "title-link", &link,
                  NULL);
 
     hippo_canvas_block_set_title(canvas_block, title, link, FALSE);

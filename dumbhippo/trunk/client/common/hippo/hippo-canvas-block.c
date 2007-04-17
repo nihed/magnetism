@@ -9,10 +9,7 @@
 #include "hippo-canvas-block-group-member.h"
 #include "hippo-canvas-block-music-chat.h"
 #include "hippo-canvas-block-music-person.h"
-#include "hippo-canvas-block-flickr-person.h"
-#include "hippo-canvas-block-youtube-person.h"
 #include "hippo-canvas-block-netflix-movie.h"
-#include "hippo-canvas-block-flickr-photoset.h"
 #include "hippo-canvas-block-facebook-event.h"
 #include "hippo-canvas-block-generic.h"
 #include "hippo-canvas-entity-photo.h"
@@ -300,21 +297,15 @@ hippo_canvas_block_new(HippoBlockType type,
     case HIPPO_BLOCK_TYPE_GROUP_MEMBER:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_GROUP_MEMBER;
         break;
-    case HIPPO_BLOCK_TYPE_FLICKR_PERSON:
-        object_type = HIPPO_TYPE_CANVAS_BLOCK_FLICKR_PERSON;
-        break;
-    case HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET:
-        object_type = HIPPO_TYPE_CANVAS_BLOCK_FLICKR_PHOTOSET;
-        break;
     case HIPPO_BLOCK_TYPE_FACEBOOK_EVENT:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_FACEBOOK_EVENT;
-        break;
-    case HIPPO_BLOCK_TYPE_YOUTUBE_PERSON:
-        object_type = HIPPO_TYPE_CANVAS_BLOCK_YOUTUBE_PERSON;
         break;
     case HIPPO_BLOCK_TYPE_NETFLIX_MOVIE:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_NETFLIX_MOVIE;
         break;        
+    case HIPPO_BLOCK_TYPE_FLICKR_PERSON:
+    case HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET:
+    case HIPPO_BLOCK_TYPE_YOUTUBE_PERSON:
     case HIPPO_BLOCK_TYPE_GENERIC:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_GENERIC;
         break;
