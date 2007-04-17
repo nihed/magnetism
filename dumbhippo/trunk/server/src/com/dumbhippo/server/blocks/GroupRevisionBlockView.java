@@ -1,10 +1,12 @@
 package com.dumbhippo.server.blocks;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
 
+import com.dumbhippo.DateUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
@@ -16,6 +18,7 @@ import com.dumbhippo.persistence.GroupNameChangedRevision;
 import com.dumbhippo.persistence.GroupRevision;
 import com.dumbhippo.persistence.RevisionType;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
@@ -35,10 +38,12 @@ public class GroupRevisionBlockView extends BlockView implements PersonSourceBlo
 		super(viewpoint, block, gbd, participated);
 	}
 
-	void populate(GroupView group, PersonView revisor, GroupRevision revision) {
+	void populate(GroupView group, PersonView revisor, GroupRevision revision, List<ChatMessageView> recentMessages, int messageCount) {
 		this.group = group;
 		this.revisor = revisor;
 		this.revision = revision;
+		setRecentMessages(recentMessages);
+		setMessageCount(messageCount);
 		setPopulated(true);
 	}
 	
@@ -177,5 +182,13 @@ public class GroupRevisionBlockView extends BlockView implements PersonSourceBlo
 
 	public String getLink() {
 		return "/group?who=" + revision.getTarget().getId();
+	}
+	
+	public Date getSentDate() {
+		return getRevision().getTime();
+	}
+	
+	public String getSentTimeAgo() {
+		return DateUtils.formatTimeAgo(getSentDate());
 	}
 }

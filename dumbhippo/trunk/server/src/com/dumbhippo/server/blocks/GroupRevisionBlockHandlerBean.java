@@ -1,6 +1,7 @@
 package com.dumbhippo.server.blocks;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Stateless;
@@ -14,6 +15,7 @@ import com.dumbhippo.persistence.Revision;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
@@ -52,8 +54,16 @@ public class GroupRevisionBlockHandlerBean
 		}
 		
 		PersonView revisorView = personViewer.getPersonView(viewpoint, revision.getRevisor(), PersonViewExtra.MUGSHOT_CHARACTER_STATUS);
-
-		blockView.populate(groupView, revisorView, revision);
+		
+		List<ChatMessageView> messageViews = chatSystem.viewMessages(chatSystem.getNewestMessages(block, BlockView.RECENT_MESSAGE_COUNT), viewpoint);
+		
+		int messageCount;
+		if (messageViews.size() < BlockView.RECENT_MESSAGE_COUNT) // Optimize out a query
+			messageCount = messageViews.size();
+		else
+			messageCount = chatSystem.getMessageCount(block);
+		
+		blockView.populate(groupView, revisorView, revision, messageViews, messageCount);
 	}
 
 	public Set<User> getInterestedUsers(Block block) {

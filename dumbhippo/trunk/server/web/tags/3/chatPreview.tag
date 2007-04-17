@@ -6,6 +6,8 @@
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.blocks.BlockView" %>
 <%@ attribute name="showChatLink" required="false" type="java.lang.Boolean" %>
 
+<dh:default var="showChatLink" value="true"/>
+
 <c:if test="${showChatLink}">
 	<c:choose>
 		<c:when test="${block.chattingCount > 0}">
