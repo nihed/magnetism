@@ -75,7 +75,7 @@ public class CacheFactoryBean implements CacheFactory {
 			
 			final Method instanceMethod;
 			try {
-				instanceMethod = instance.getClass().getMethod(proxyMethod.getName(), (Class[]) proxyMethod.getParameterTypes());
+				instanceMethod = instance.getClass().getMethod(proxyMethod.getName(), proxyMethod.getParameterTypes());
 			} catch (NoSuchMethodException e) {
 				throw new RuntimeException("could not find same method on delegate object, params " + Arrays.toString(proxyMethod.getParameterTypes()));
 			}
