@@ -199,6 +199,8 @@ class AppsStock(bigboard.AbstractMugshotStock):
                 continue
             if i >= self.DYNAMIC_SET_SIZE:
                 break
+            if not app.is_installed():
+                continue            
             self._logger.debug("setting dynamic app: %s", app)            
             display = apps_widgets.AppDisplay(app)
             display.connect("button-press-event", lambda display, event: display.launch())             
@@ -238,6 +240,8 @@ class AppsStock(bigboard.AbstractMugshotStock):
             if i >= self.STATIC_SET_SIZE:
                 break
             app = self.get_app(mugshot_app)
+            if not app.is_installed():
+                continue
             display = apps_widgets.AppDisplay(app)
             display.connect("button-press-event", lambda display, event: display.launch()) 
             self._logger.debug("setting pinned app: %s", app)
