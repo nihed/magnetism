@@ -24,6 +24,16 @@ public interface FacebookSystem {
 	
 	public List<FacebookAccount> getAllAccounts();
 	
+	/**
+	 * Returns Facebook accounts that have a valid session key. If login constraints need to be 
+	 * applied, the accounts returned are for people who were logged in on Mugshot web site or 
+	 * with the client within the last 24 hours.
+	 * 
+	 * @param applyLoginConstraints
+	 * @return a list of Facebook accounts
+	 */
+	public List<FacebookAccount> getValidAccounts(boolean applyLoginConstraints);
+	
 	public FacebookAccount lookupFacebookAccount(Viewpoint viewpoint, String userId) throws ParseException, NotFoundException;
 
 	public FacebookAccount lookupFacebookAccount(Viewpoint viewpoint, User user) throws NotFoundException;

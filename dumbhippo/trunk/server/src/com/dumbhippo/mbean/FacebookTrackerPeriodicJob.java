@@ -16,9 +16,11 @@ import com.dumbhippo.server.util.EJBUtil;
 public class FacebookTrackerPeriodicJob implements PeriodicJob {
 	static private final Logger logger = GlobalSetup.getLogger(FacebookTrackerPeriodicJob.class);
 	
-	// How often to poll facebook
+	// How often to poll Facebook for active accounts
 	static final long FACEBOOK_UPDATE_TIME = 1000 * 60 * 11; // 11 minutes
-
+	// How often to poll Facebook for all accounts
+    static final long FACEBOOK_UPDATE_ALL_FREQUENCY = 11; // every 11 iterations, or 121 minutes, or roughly 2 hours
+	
 	public long getFrequencyInMilliseconds() {
 		return FACEBOOK_UPDATE_TIME;
 	}
@@ -29,7 +31,15 @@ public class FacebookTrackerPeriodicJob implements PeriodicJob {
 		// FacebookTracker rather than holding a single transaction over the whole
 		// process.
 		final FacebookSystem facebookSystem = EJBUtil.defaultLookup(FacebookSystem.class);
-		List<FacebookAccount> facebookAccounts = facebookSystem.getAllAccounts();
+		
+		// on most iterations, we want to check only accounts of people who were recently
+		// logged in with the client or on the web site, but sometimes we want to bring
+		// all accounts with a valid session key up to date
+		boolean applyLoginConstraints = true;
+		if (iteration % FACEBOOK_UPDATE_ALL_FREQUENCY == 0) {
+		    applyLoginConstraints = false;	
+		}
+		List<FacebookAccount> facebookAccounts = facebookSystem.getValidAccounts(applyLoginConstraints);
 		
 		logger.debug("FacebookUpdater slept " + sleepTime / 1000.0 + " seconds, and now has " 
 				     + facebookAccounts.size() + " facebook accounts to check, iteration " 
@@ -40,17 +50,15 @@ public class FacebookTrackerPeriodicJob implements PeriodicJob {
 		    threadPool.execute(new Runnable() {
 				public void run() {
 					final FacebookTracker facebookTracker = EJBUtil.defaultLookup(FacebookTracker.class);
-					if (facebookAccount.isSessionKeyValid()) {
-						// even if we find out that the session key is expired in updateMessageCount,
-						// we still want to call updateTaggedPhotos, because it removes the cached
-						// photos that we can't keep anymore when the session key is expired
-						facebookTracker.updateMessageCount(facebookAccount.getId());
-						facebookTracker.updateTaggedPhotos(facebookAccount.getId());
-						// don't do anything about albums for now, since we aren't showing
-						// facebook updates to anyone but the album owner, so it's not interesting,
-						// and we don't have a system for clearing the cached facebook info about albums
-						// facebookTracker.updateAlbums(facebookAccount.getId());
-					}
+					// even if we find out that the session key is expired in updateMessageCount,
+					// we still want to call updateTaggedPhotos, because it removes the cached
+					// photos that we can't keep anymore when the session key is expired
+					facebookTracker.updateMessageCount(facebookAccount.getId());
+					facebookTracker.updateTaggedPhotos(facebookAccount.getId());
+					// don't do anything about albums for now, since we aren't showing
+					// facebook updates to anyone but the album owner, so it's not interesting,
+					// and we don't have a system for clearing the cached facebook info about albums
+					// facebookTracker.updateAlbums(facebookAccount.getId());
 				}
 			});
 		}
