@@ -54,7 +54,7 @@ public class ListCacheStorage<KeyType, ResultType, EntityType extends CachedList
 		
 		if (haveNoResultsMarker) {
 			logger.debug("Negative result cached for key {}", key);
-			return TypeUtils.emptyList(resultClass);
+			return Collections.emptyList();
 		}
 		
 		sort(oldItems);

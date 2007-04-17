@@ -2,6 +2,7 @@ package com.dumbhippo;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -207,10 +208,10 @@ public class ThreadUtils {
 			return future.get();
 		} catch (InterruptedException e) {
 			logException(e, true);
-			return TypeUtils.emptyList(klass);
+			return Collections.emptyList();
 		} catch (ExecutionException e) {
 			logException(e, true);
-			return TypeUtils.emptyList(klass);
+			return Collections.emptyList();
 		}
 	}
 	

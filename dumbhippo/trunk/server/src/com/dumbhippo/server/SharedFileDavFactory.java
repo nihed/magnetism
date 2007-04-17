@@ -419,7 +419,7 @@ public class SharedFileDavFactory {
 			if ((v instanceof UserViewpoint))
 				getFileSystem().pagePrivateFiles((UserViewpoint) v, pageable);
 			else
-				pageable.setResults(TypeUtils.emptyList(SharedFile.class));
+				pageable.setResults(Collections.<SharedFile>emptyList()); // not clear to me why SharedFile can't be inferred
 		}
 		
 		@Override

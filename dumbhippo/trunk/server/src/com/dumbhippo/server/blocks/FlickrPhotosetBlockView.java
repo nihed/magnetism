@@ -1,5 +1,7 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.Collections;
+
 import com.dumbhippo.BasicThumbnails;
 import com.dumbhippo.Thumbnail;
 import com.dumbhippo.Thumbnails;
@@ -55,7 +57,7 @@ public class FlickrPhotosetBlockView extends AbstractPersonBlockView
 	public Thumbnails getThumbnails() {
 		Thumbnails thumbnails = photosetView.getThumbnails();
 		if (thumbnails == null) {
-			thumbnails = new BasicThumbnails(TypeUtils.emptyList(Thumbnail.class), 0, 50, 50);
+			thumbnails = new BasicThumbnails(Collections.<Thumbnail>emptyList(), 0, 50, 50);
 		}
 		return thumbnails;
 	}
