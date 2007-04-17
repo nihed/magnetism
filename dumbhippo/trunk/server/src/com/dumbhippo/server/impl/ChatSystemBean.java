@@ -165,7 +165,7 @@ public class ChatSystemBean implements ChatSystem {
 	}
 	
 	private List<BlockMessage> getNewestBlockMessages(Block block, int maxResults) {
-		List<?> messages = em.createQuery("SELECT pm from BlockMessage pm WHERE pm.block = :block ORDER BY pm.timestamp DESC")
+		List<?> messages = em.createQuery("SELECT bm from BlockMessage bm WHERE bm.block = :block ORDER BY bm.timestamp DESC")
 			.setParameter("block", block)
 			.setMaxResults(maxResults)
 			.getResultList();
@@ -174,7 +174,7 @@ public class ChatSystemBean implements ChatSystem {
 	}
 	
 	private int getBlockMessageCount(Block block) {
-		Query q = em.createQuery("SELECT COUNT(pm) FROM BlockMessage pm WHERE pm.block = :block")
+		Query q = em.createQuery("SELECT COUNT(bm) FROM BlockMessage bm WHERE bm.block = :block")
 			.setParameter("block", block);
 		
 		return ((Number)q.getSingleResult()).intValue();

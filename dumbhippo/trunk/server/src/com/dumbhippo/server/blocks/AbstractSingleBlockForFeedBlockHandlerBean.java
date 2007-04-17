@@ -68,7 +68,7 @@ public abstract class AbstractSingleBlockForFeedBlockHandlerBean<ViewType extend
 		int messageCount = -1;
 
 		if (block.getBlockType().isDirectlyChattable()) {
-			messageViews = chatSystem.viewMessages(chatSystem.getNewestMessages(block, MusicChatBlockView.RECENT_MESSAGE_COUNT), viewpoint);
+			messageViews = chatSystem.viewMessages(chatSystem.getNewestMessages(block, BlockView.RECENT_MESSAGE_COUNT), viewpoint);
 			
 			if (messageViews.size() < BlockView.RECENT_MESSAGE_COUNT) // Optimize out a query
 				messageCount = messageViews.size();
