@@ -384,11 +384,17 @@ static void
 update_expandable(HippoCanvasBlock *canvas_block)
 {
     HippoCanvasBlockGeneric *block_generic;
+    gboolean have_chat_id;
 
     block_generic = HIPPO_CANVAS_BLOCK_GENERIC(canvas_block);
-    
+
+    have_chat_id = FALSE;
+    if (canvas_block->block)
+        have_chat_id = hippo_block_get_chat_id(canvas_block->block) != NULL;
+
     canvas_block->expandable = block_generic->have_description ||
-        block_generic->have_thumbnails;
+        block_generic->have_thumbnails ||
+        have_chat_id;
 
     if (!canvas_block->expandable) {
         hippo_canvas_block_set_expanded(canvas_block, FALSE);
@@ -498,9 +504,12 @@ on_block_chat_id_changed(HippoBlock *block,
                          GParamSpec *arg, /* null when first calling this */
                          void       *data)
 {
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
     HippoCanvasBlockGeneric *canvas_block_generic = HIPPO_CANVAS_BLOCK_GENERIC(data);
     
     hippo_canvas_block_generic_update_visibility(canvas_block_generic);
+    
+    update_expandable(canvas_block);
 }
 
 static void
