@@ -20,8 +20,6 @@ typedef struct _HippoBlockYouTubePersonClass HippoBlockYouTubePersonClass;
 
 GType            hippo_block_youtube_person_get_type               (void) G_GNUC_CONST;
 
-HippoThumbnails* hippo_block_youtube_person_get_thumbnails  (HippoBlockYouTubePerson *block_youtube_person);
-
 G_END_DECLS
 
 #endif /* __HIPPO_BLOCK_YOUTUBE_PERSON_H__ */

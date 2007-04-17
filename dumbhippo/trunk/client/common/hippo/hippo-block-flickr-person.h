@@ -20,8 +20,6 @@ typedef struct _HippoBlockFlickrPersonClass HippoBlockFlickrPersonClass;
 
 GType            hippo_block_flickr_person_get_type               (void) G_GNUC_CONST;
 
-HippoThumbnails*  hippo_block_flickr_person_get_thumbnails  (HippoBlockFlickrPerson *block_flickr_person);
-
 G_END_DECLS
 
 #endif /* __HIPPO_BLOCK_FLICKR_PERSON_H__ */

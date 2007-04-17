@@ -110,7 +110,7 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                         _("Source"),
                                                         _("The entity which originated this block"),
                                                          HIPPO_TYPE_ENTITY,
-                                                         G_PARAM_READABLE));                                                     
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));  
     
     g_object_class_install_property(object_class,
                                     PROP_IS_PUBLIC,
@@ -349,6 +349,10 @@ hippo_block_set_property(GObject         *object,
     case PROP_TITLE_LINK:
         hippo_block_set_title_link(block,
                                    g_value_get_string(value));
+        break;
+    case PROP_SOURCE:
+        hippo_block_set_source(block,
+                               g_value_get_object(value));
         break;
     case PROP_GUID:                  /* read-only */
     case PROP_BLOCK_TYPE:            /* read-only */
