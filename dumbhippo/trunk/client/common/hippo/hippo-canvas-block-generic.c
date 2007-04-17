@@ -54,6 +54,7 @@ struct _HippoCanvasBlockGeneric {
     HippoCanvasBox *description_parent;
     HippoCanvasItem *description_item;
     HippoCanvasItem *reason_item;
+    HippoCanvasItem *expand_tip;
     HippoCanvasItem *quipper;
     HippoCanvasItem *last_message_preview;
     HippoCanvasItem *chat_preview;
@@ -186,6 +187,16 @@ hippo_canvas_block_generic_append_content_items(HippoCanvasBlock *block,
     hippo_canvas_box_append(parent_box, block_generic->reason_item, 0);
     hippo_canvas_item_set_visible(block_generic->reason_item,
                                   FALSE);
+    
+    block_generic->expand_tip = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                                             "text", _("View thumbnails"),
+                                             "xalign", HIPPO_ALIGNMENT_START,
+                                             NULL);
+    HIPPO_CANVAS_BOX(block_generic->expand_tip)->clickable = FALSE;
+    hippo_canvas_box_append(parent_box,
+                            block_generic->expand_tip, 0);
+    hippo_canvas_item_set_visible(block_generic->expand_tip,
+                                  FALSE);
 
     block_generic->description_parent = parent_box;
     block_generic->description_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
@@ -297,6 +308,7 @@ hippo_canvas_block_generic_update_visibility(HippoCanvasBlockGeneric *block_gene
     gboolean show_description;
     gboolean show_reason;
     gboolean show_single_message;
+    gboolean show_expand_tip;
     gboolean have_chat_id;
 
     if (canvas_block->block)
@@ -336,6 +348,7 @@ hippo_canvas_block_generic_update_visibility(HippoCanvasBlockGeneric *block_gene
     show_single_message = !canvas_block->expanded && stack_reason == HIPPO_STACK_CHAT_MESSAGE;
     show_reason = stack_reason == HIPPO_STACK_VIEWER_COUNT;
     show_description = (canvas_block->expanded || (!show_single_message && !show_reason)) && block_generic->have_description;
+    show_expand_tip = !canvas_block->expanded && !show_single_message && !show_reason && !show_description && block_generic->have_thumbnails;
 
     hippo_canvas_item_set_visible(block_generic->description_item,
                                   show_description);
@@ -343,6 +356,8 @@ hippo_canvas_block_generic_update_visibility(HippoCanvasBlockGeneric *block_gene
                                   show_reason);
     hippo_canvas_item_set_visible(block_generic->last_message_preview,
                                   show_single_message);
+    hippo_canvas_item_set_visible(block_generic->expand_tip,
+                                  show_expand_tip);
 }
 
 static void
