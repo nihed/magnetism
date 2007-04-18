@@ -1203,6 +1203,7 @@ hippo_canvas_box_paint(HippoCanvasItem *item,
 static void
 get_content_area_horizontal(HippoCanvasBox *box,
                             int             requested_content_width,
+                            int             natural_content_width,
                             int             allocated_box_width,
                             int            *x_p,
                             int            *width_p)
@@ -1210,9 +1211,15 @@ get_content_area_horizontal(HippoCanvasBox *box,
     int left = box->border_left + box->padding_left;
     int right = box->border_right + box->padding_right;
     int unpadded_box_width;
+    int content_width;
 
     g_return_if_fail(requested_content_width >= 0);
-    
+
+    if (natural_content_width < allocated_box_width)
+        content_width = natural_content_width;
+    else
+        content_width = MAX(requested_content_width, allocated_box_width);
+
     unpadded_box_width = allocated_box_width - left - right;
     
     switch (box->x_align) {
@@ -1226,19 +1233,19 @@ get_content_area_horizontal(HippoCanvasBox *box,
         if (x_p)
             *x_p = left;
         if (width_p)
-            *width_p = requested_content_width;
+            *width_p = content_width;
         break;
     case HIPPO_ALIGNMENT_END:
         if (x_p)
-            *x_p = allocated_box_width - right - requested_content_width;
+            *x_p = allocated_box_width - right - content_width;
         if (width_p)
-            *width_p = requested_content_width;
+            *width_p = content_width;
         break;
     case HIPPO_ALIGNMENT_CENTER:
         if (x_p)
-            *x_p = left + (unpadded_box_width - requested_content_width) / 2;
+            *x_p = left + (unpadded_box_width - content_width) / 2;
         if (width_p)
-            *width_p = requested_content_width;
+            *width_p = content_width;
         break;
     }
 }
@@ -1246,6 +1253,7 @@ get_content_area_horizontal(HippoCanvasBox *box,
 static void
 get_content_area_vertical(HippoCanvasBox *box,
                           int             requested_content_height,
+                          int             natural_content_height,
                           int             allocated_box_height,
                           int            *y_p,
                           int            *height_p)
@@ -1253,9 +1261,15 @@ get_content_area_vertical(HippoCanvasBox *box,
     int top = box->border_top + box->padding_top;
     int bottom = box->border_bottom + box->padding_bottom;
     int unpadded_box_height;
+    int content_height;
 
     g_return_if_fail(requested_content_height >= 0);
     
+    if (natural_content_height < allocated_box_height)
+        content_height = natural_content_height;
+    else
+        content_height = MAX(requested_content_height, allocated_box_height);
+
     unpadded_box_height = allocated_box_height - top - bottom;
 
     switch (box->y_align) {
@@ -1269,19 +1283,19 @@ get_content_area_vertical(HippoCanvasBox *box,
         if (y_p)
             *y_p = top;
         if (height_p)
-            *height_p = requested_content_height;
+            *height_p = content_height;
         break;
     case HIPPO_ALIGNMENT_END:
         if (y_p)
-            *y_p = allocated_box_height - bottom - requested_content_height;
+            *y_p = allocated_box_height - bottom - content_height;
         if (height_p)
-            *height_p = requested_content_height;
+            *height_p = content_height;
         break;
     case HIPPO_ALIGNMENT_CENTER:
         if (y_p)
-            *y_p = top + (unpadded_box_height - requested_content_height) / 2;
+            *y_p = top + (unpadded_box_height - content_height) / 2;
         if (height_p)
-            *height_p = requested_content_height;
+            *height_p = content_height;
         break;
     }
 }
@@ -1290,6 +1304,8 @@ static void
 get_content_area(HippoCanvasBox *box,
                  int             requested_content_width,
                  int             requested_content_height,
+                 int             natural_content_width,
+                 int             natural_content_height,
                  int             allocated_box_width,
                  int             allocated_box_height,
                  int            *x_p,
@@ -1298,9 +1314,11 @@ get_content_area(HippoCanvasBox *box,
                  int            *height_p)
 {
     get_content_area_horizontal(box, requested_content_width,
+                                natural_content_width,
                                 allocated_box_width,
                                 x_p, width_p);
     get_content_area_vertical(box, requested_content_height,
+                              natural_content_height,
                               allocated_box_height,
                               y_p, height_p);
 }
@@ -2206,6 +2224,7 @@ get_hbox_height_request(HippoCanvasBox *box,
     GSList *link;
     HippoCanvasBoxClass *klass;
     int requested_content_width;
+    int natural_content_width;
     int allocated_content_width;
     AdjustInfo *width_adjusts;
     int i;
@@ -2215,9 +2234,9 @@ get_hbox_height_request(HippoCanvasBox *box,
 
     klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
 
-    (* klass->get_content_width_request)(box, &requested_content_width, NULL);
+    (* klass->get_content_width_request)(box, &requested_content_width, &natural_content_width);
 
-    get_content_area_horizontal(box, requested_content_width,
+    get_content_area_horizontal(box, requested_content_width, natural_content_width,
                                 for_width, NULL, &allocated_content_width);
 
     compute_adjusts(box->children,
@@ -2391,16 +2410,21 @@ hippo_canvas_box_get_height_request(HippoCanvasItem *item,
  */
 void
 hippo_canvas_box_align(HippoCanvasBox *box,
-                       int             requested_content_width,
-                       int             requested_content_height,
+                       int             content_width,
+                       int             content_height,
                        int            *x_p,
                        int            *y_p,
                        int            *width_p,
                        int            *height_p)
 {
+    /* What the user passes in here is the content area they are actually
+     * using. For this, the distinction between the requested and natural
+     * size that we need when doing layout doesn't matter, so we pass the
+     * same value for both.
+     */
     get_content_area(box,
-                     requested_content_width,
-                     requested_content_height,
+                     content_width, content_height,
+                     content_width, content_height,
                      box->allocated_width, box->allocated_height,
                      x_p, y_p, width_p, height_p);
 }
@@ -2555,6 +2579,8 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     HippoCanvasBoxClass *klass;
     int requested_content_width;
     int requested_content_height;
+    int natural_content_width;
+    int natural_content_height;
     int allocated_content_width;
     int allocated_content_height;
     GSList *link;
@@ -2583,17 +2609,17 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     box->allocated_height = allocated_box_height;
     box->needs_allocate = FALSE;
 
-    (* klass->get_content_width_request)(box, &requested_content_width, NULL);  
+    (* klass->get_content_width_request)(box, &requested_content_width, &natural_content_width);  
 
-    get_content_area_horizontal(box, requested_content_width,
+    get_content_area_horizontal(box, requested_content_width, natural_content_width,
                                 allocated_box_width,
                                 &content_x, &allocated_content_width);
     
     (* klass->get_content_height_request)(box,
                                           allocated_content_width,
-                                          &requested_content_height, NULL);
+                                          &requested_content_height, &natural_content_height);
 
-    get_content_area_vertical(box, requested_content_height,
+    get_content_area_vertical(box, requested_content_height, natural_content_height,
                               allocated_box_height,
                               &content_y, &allocated_content_height);
     
