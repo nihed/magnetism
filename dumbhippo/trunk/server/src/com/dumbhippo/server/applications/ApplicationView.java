@@ -33,6 +33,7 @@ public class ApplicationView {
 		builder.appendEmptyNode("application",
 								"id", application.getId(),
 				                "name", application.getName(),
+				                "genericName", application.getGenericName(),				                
 				                "tooltip", application.getTooltip(),
 				                "category", application.getCategory().getDisplayName(),
 				                "description", application.getDescription(),
