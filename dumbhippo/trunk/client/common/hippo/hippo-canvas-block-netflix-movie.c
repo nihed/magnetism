@@ -414,7 +414,7 @@ hippo_canvas_block_netflix_movie_set_block(HippoCanvasBlock *canvas_block,
     
     if (canvas_block->block != NULL) {
         const char *thumbnail_url;
-        GList *queue, *elt;
+        GSList *queue, *elt;
         
         g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::user",
