@@ -180,9 +180,13 @@ def xml_query(node, *queries):
 def xml_gather_attrs(node, attrlist):
     attrs = {}
     for attr in attrlist:
-        attrs[attr] = node.getAttribute(attr)
-        if not attrs[attr]:
-            raise KeyError("Failed to find attribute %s of node %s" %(attr, node))
+        if isinstance(attr, str):
+            (attrname, optional) = (attr, False)
+        else:
+            (attrname, optional) = attr
+        attrs[attrname] = node.getAttribute(attrname)
+        if (not attrs[attrname]) and (not optional):
+            raise KeyError("Failed to find attribute %s of node %s" %(attrname, node))
     return attrs    
         
 def get_xml_element(node, path):
