@@ -4,9 +4,10 @@ import gobject, cairo
 
 import hippo
 
-import mugshot,libbig
-from bigboard import Stock, AbstractMugshotStock
-from big_widgets import CanvasURLImage, CanvasVBox, CanvasHBox, CanvasMugshotURLImage, ActionLink
+import bigboard.mugshot as mugshot
+import bigboard.libbig as libbig
+from bigboard.stock import Stock, AbstractMugshotStock
+from bigboard.big_widgets import CanvasURLImage, CanvasVBox, CanvasHBox, CanvasMugshotURLImage, ActionLink
 
 class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
     __gtype_name__ = 'TransitioningURLImage' 

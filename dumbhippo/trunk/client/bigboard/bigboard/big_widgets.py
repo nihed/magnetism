@@ -6,7 +6,7 @@ import hippo
 
 from libgimmie import DockWindow
 from libbig import URLImageCache
-import libbig, mugshot, bigboard
+import libbig, stock, mugshot, bigboard
 
 class CanvasVBox(hippo.CanvasBox):
     def __init__(self, **kwargs):
@@ -220,7 +220,7 @@ class PhotoContentItem(PrelightingCanvasBox):
         
     def set_size(self, size):
         assert(not None in (self.__photo, self.__child, self.__photo_native_width, self.__photo_native_height))
-        if size == bigboard.Stock.SIZE_BULL:
+        if size == stock.Stock.SIZE_BULL:
             self.set_child_visible(self.__child, True)
             if self.__photo:
                 self.__photo.set_property('xalign', hippo.ALIGNMENT_START)

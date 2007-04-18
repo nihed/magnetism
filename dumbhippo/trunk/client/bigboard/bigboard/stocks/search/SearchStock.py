@@ -10,9 +10,10 @@ except:
 
 import hippo
 
-import mugshot, libbig
-from bigboard import Stock
-from big_widgets import CanvasMugshotURLImage, CanvasEntry, CanvasVBox
+import bigboard.mugshot as mugshot
+import bigboard.libbig as libbig
+from bigboard.stock import Stock
+from bigboard.big_widgets import CanvasMugshotURLImage, CanvasEntry, CanvasVBox
         
 class SearchStock(Stock):
     """Search.  It's what's for dinner."""

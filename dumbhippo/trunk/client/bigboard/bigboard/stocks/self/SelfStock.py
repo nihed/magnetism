@@ -2,10 +2,10 @@ import logging, os
 
 import hippo
 
-import mugshot
-import libbig
-from bigboard import Stock, AbstractMugshotStock
-from big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox
+import bigboard.mugshot as mugshot
+import bigboard.libbig as libbig
+from bigboard.stock import Stock, AbstractMugshotStock
+from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox
 
 class FixedCountWrapBox(CanvasVBox):
     def __init__(self, max_row_count, spacing=0, **kwargs):

@@ -1,12 +1,12 @@
 dnl -*- mode: m4 -*-
 AC_PREREQ(2.59)
 
-AC_INIT(src/libbig.py)
+AC_INIT(bigboard/libbig.py)
 AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(bigboard, 0.1.1)
+AM_INIT_AUTOMAKE(bigboard, 0.1.2)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -175,5 +175,6 @@ AC_SUBST(PYGTK_DEFSDIR)
 
 AC_OUTPUT([
 Makefile
+bigboard/Makefile
 version
 ])

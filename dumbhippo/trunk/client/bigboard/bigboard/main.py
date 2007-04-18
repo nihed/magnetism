@@ -6,9 +6,12 @@ import xml.dom.minidom
 import gobject, gtk, pango, dbus, dbus.glib
 
 import hippo
-from big_widgets import Sidebar, CommandShell, CanvasHBox, ActionLink
-from bigboard import Stock, PrefixedState
-import libbig
+
+import bigboard
+import bigboard.big_widgets
+from bigboard.big_widgets import Sidebar, CommandShell, CanvasHBox, ActionLink
+from bigboard.stock import Stock
+import bigboard.libbig as libbig
 
 class GradientHeader(hippo.CanvasGradient):
     def __init__(self, **kwargs):
@@ -99,7 +102,7 @@ class Exchange(hippo.CanvasBox):
                                  spacing=4)      
         self.__stock = stock
         self.__ticker_text = None
-        self.__state = PrefixedState('/panel/stock/' + stock.get_id() + "/") 
+        self.__state = libbig.PrefixedState('/panel/stock/' + stock.get_id() + "/") 
         self.__state.set_default('expanded', True)
         if stock.get_ticker() == "-":
             sep = Separator()
@@ -153,7 +156,7 @@ class BigBoardPanel(object):
         
         self.__logger.info("constructing")
         
-        self.__state = PrefixedState('/panel/')  
+        self.__state = libbig.PrefixedState('/panel/')  
         
         self.__state.set_default('listed', 'org.mugshot.bigboard.SelfStock;org.mugshot.bigboard.SearchStock;org.mugshot.bigboard.AppsStock;org.mugshot.bigboard.PhotosStock')
                        
