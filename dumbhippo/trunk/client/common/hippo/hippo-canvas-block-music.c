@@ -477,15 +477,26 @@ on_user_changed(HippoBlock *block,
                 GParamSpec *arg, /* null when first calling this */
                 HippoCanvasBlockMusic *block_music)
 {
-    HippoPerson *person;
-    person = NULL;
-    g_object_get(G_OBJECT(block), "user", &person, NULL);
+    HippoPerson *person = NULL;
+
+    if (block)
+        g_object_get(G_OBJECT(block), "user", &person, NULL);
     
     hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(block_music),
                                   person ? hippo_entity_get_guid(HIPPO_ENTITY(person)) : NULL);
     
     if (person)
         g_object_unref(person);
+}
+
+static void
+on_block_chat_id_changed(HippoBlock *block,
+                         GParamSpec *arg, /* null when first calling this */
+                         void       *data)
+{
+    HippoCanvasBlockMusic *block_music = HIPPO_CANVAS_BLOCK_MUSIC(data);
+    
+    hippo_canvas_block_music_update_visibility(block_music);
 }
 
 static void
@@ -502,6 +513,9 @@ hippo_canvas_block_music_set_block(HippoCanvasBlock *canvas_block,
     if (canvas_block->block != NULL) {
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_user_changed),
+                                             canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_block_chat_id_changed),
                                              canvas_block);
     }
 
@@ -523,9 +537,15 @@ hippo_canvas_block_music_set_block(HippoCanvasBlock *canvas_block,
                          "notify::user",
                          G_CALLBACK(on_user_changed),
                          canvas_block);
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::chat-id",
+                         G_CALLBACK(on_block_chat_id_changed),
+                         canvas_block);
 
-        on_user_changed(canvas_block->block, NULL, block_music);
     }
+    
+    on_user_changed(canvas_block->block, NULL, block_music);
+    hippo_canvas_block_music_update_visibility(block_music);
 }
 
 static void
