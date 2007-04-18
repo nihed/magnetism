@@ -46,7 +46,40 @@ public class NetflixBlockView extends AbstractFeedEntryBlockView {
 	}	
 	
 	@Override
-	protected void writeExtendedDetailsToXmlBuilder(XmlBuilder builder) {
+	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
+		/* TODO: This XML schema is:
+		 * 
+		 * <netflixMovie>
+		 *    <queue imageUrl="[url]">
+		 *        <movie title="[title]" description="[description].../>
+		 *        ...
+		 *    </queue>
+		 * </netflixMovie>
+	     *
+	     * Which has a number of problems:
+		 *    - the imageUrl has nothing to do with the queue, it's a block property
+		 *    - in the XML subset we use, elements should either be "structures" or "arrays",
+		 *      and the queue element above is a mix
+		 *    - We try to use elements for free-form text like a description, not
+		 *      attributes. This allows easier extension if we ever support markup.
+	     * 
+	     * So, the schema should be:
+	     * 
+		 *  <netflixMovie imageUrl="[url]">
+		 *     <queue>
+		 *         <movie title="[title]" ...>
+		 *            <description>[description]</description>
+		 *         </movie>
+		 *         ...
+		 *     </queue>
+		 *  </netflixMovie>
+		 * 
+		 * But we can't just change it without breaking old clients. The client has
+		 * been fixed to support either form as of 2007-04-18 (Linux client version 1.1.41)
+		 */
+		
+		builder.openElement("netflixMovie",
+							"userId", getPersonSource().getUser().getId());
 		builder.openElement("queue", "imageUrl", getImageUrl());
 		if (getQueuedMovies() != null) {
 			for (NetflixMovieView movieView : getQueuedMovies().getMovies()) {
@@ -59,6 +92,24 @@ public class NetflixBlockView extends AbstractFeedEntryBlockView {
 			}
 		}
 		builder.closeElement();
+		builder.closeElement();
+
+//		builder.openElement("netflixMovie", 
+//							"imageUrl", getImageUrl(),
+//							"userId", getPersonSource().getUser().getId());
+//		builder.openElement("queue");
+//		if (getQueuedMovies() != null) {
+//			for (NetflixMovieView movieView : getQueuedMovies().getMovies()) {
+//				builder.openElement("movie", 
+//						"title", movieView.getTitle(),
+//						"priority", Long.toString(movieView.getPriority()),
+//						"url", movieView.getUrl());
+//					builder.appendTextNode("description", movieView.getDescription()); 
+//				builder.closeElement();
+//			}
+//		}
+//		builder.closeElement();
+//		builder.closeElement();
 	}
 
 	@Override
