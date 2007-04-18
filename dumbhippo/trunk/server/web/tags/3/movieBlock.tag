@@ -32,10 +32,12 @@
 		<c:if test="${!chatHeader}">
 			<dht3:blockContent blockId="${blockId}">
 				<dht3:chatPreview block="${block}"/>
-			    Movies in the Queue:
-			    <c:forEach items="${block.queuedMovies.movies}" var="movie">
-			        <br/><c:out value="${movie.priority}"/> <a href="${movie.url}"><c:out value="${movie.title}"/></a>
-				</c:forEach>
+				<div class="dh-movie-block-queue">
+				    Movies in the Queue:
+				    <c:forEach items="${block.queuedMovies.movies}" var="movie">
+				        <br/><c:out value="${movie.priority}"/> <a href="${movie.url}"><c:out value="${movie.title}"/></a>
+					</c:forEach>
+				</div>
 			</dht3:blockContent>	
 		</c:if>
 	</td>

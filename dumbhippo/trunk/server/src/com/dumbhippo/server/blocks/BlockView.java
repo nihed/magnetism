@@ -307,13 +307,6 @@ public abstract class BlockView implements ObjectView {
 	public abstract String getSummaryLinkText();
 	
 	// utility function for use in implementations of writeDetailsToXmlBuilder
-	protected void writeFeedEntryToXmlBuilder(XmlBuilder builder, FeedEntry entry) {
-		builder.appendTextNode("feedEntry", StringUtils.ellipsizeText(entry.getDescription()),
-				"title", entry.getTitle(),
-				"href", entry.getLink().getUrl());
-	}
-	
-	// utility function for use in implementations of writeDetailsToXmlBuilder
 	protected void writeThumbnailsToXmlBuilder(XmlBuilder builder, ThumbnailsBlockView thumbnailsBlock) {
 		Thumbnails thumbnails = thumbnailsBlock.getThumbnails();
 		
