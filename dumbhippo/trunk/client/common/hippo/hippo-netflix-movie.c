@@ -147,18 +147,28 @@ hippo_netflix_movie_new_from_xml(HippoDataCache *cache,
 {
     HippoNetflixMovie *movie;    
     const char *title;
-    const char *description;
+    const char *description = NULL;
     guint priority;
     const char *url = NULL;
     
+    /* Support description either as an element (the right way) or an attribute
+     * for backwards compatibility.
+     */
     if (!hippo_xml_split(cache, node, NULL,
                          "title", HIPPO_SPLIT_STRING, &title,
-                         "description", HIPPO_SPLIT_STRING, &description,
+                         "description", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &description,
                          "priority", HIPPO_SPLIT_INT32, &priority,
                          "url", HIPPO_SPLIT_STRING, &url,
                          NULL))
         return NULL;
 
+    if (description == NULL) {
+        if (!hippo_xml_split(cache, node, NULL,
+                             "description", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &description,
+                             NULL))
+        return NULL;
+    }
+    
     movie = g_object_new(HIPPO_TYPE_NETFLIX_MOVIE, NULL);
 
     movie->title = g_strdup(title);
