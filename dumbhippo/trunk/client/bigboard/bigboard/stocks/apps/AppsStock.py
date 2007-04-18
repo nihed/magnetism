@@ -3,8 +3,10 @@ import logging, time, re
 import gmenu, gobject, pango, gnomedesktop, gtk
 import hippo
 
-import bigboard, mugshot, libbig
-from big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox, CanvasVBox, ActionLink
+import bigboard.mugshot as mugshot
+import bigboard.libbig as libbig
+from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox, CanvasVBox, ActionLink
+import bigboard.stock
 
 import appbrowser, apps_widgets, apps_directory
 
@@ -97,7 +99,7 @@ class AppDisplayLauncher(apps_widgets.AppDisplay):
         super(AppDisplayLauncher, self).__init__()
   
 
-class AppsStock(bigboard.AbstractMugshotStock):
+class AppsStock(bigboard.stock.AbstractMugshotStock):
     STATIC_SET_SIZE = 7
     DYNAMIC_SET_SIZE = 7    
     STATIFICATION_TIME_SEC = 60 * 60 #* 24 * 3; # 3 days
@@ -170,7 +172,7 @@ class AppsStock(bigboard.AbstractMugshotStock):
         return self.__box
             
     def __set_item_size(self, item, size):
-        if size == bigboard.Stock.SIZE_BULL:
+        if size == bigboard.stock.Stock.SIZE_BULL:
             item.set_property('xalign', hippo.ALIGNMENT_FILL)
         else:
             item.set_property('xalign', hippo.ALIGNMENT_CENTER)

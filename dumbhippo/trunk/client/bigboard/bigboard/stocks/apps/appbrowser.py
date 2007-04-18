@@ -3,8 +3,8 @@ import logging, time
 import gobject, gtk
 import hippo
 
-import bigboard, mugshot
-from big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, \
+import bigboard.mugshot as mugshot
+from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, \
              ActionLink, CanvasEntry, PrelightingCanvasBox, CanvasScrollBars
 
 import apps_widgets, apps_directory
