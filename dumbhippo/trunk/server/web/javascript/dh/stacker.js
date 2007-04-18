@@ -130,6 +130,40 @@ dh.stacker.onBlockClick = function(e) {
 	dh.stacker.repositionPointer(block, e);
 }
 
+dh.stacker._onLinkMouseOver = function(block) {
+	return function (e) {
+		if (!e) e = window.event;
+			dh.log("stacker-cursor", "block: " + block.dhBlockId + " link mouseover")				
+			dh.stacker.hideBlockPointer(block);
+			dh.event.cancel(e);
+		};
+}
+
+dh.stacker._onLinkMouseOut = function(block) {
+	return function (e) {
+		if (!e) e = window.event;
+		var relTarget = e.relatedTarget || e.toElement;				
+		dh.log("stacker-cursor", "block: " + block.dhBlockId + " link mouseout to " + relTarget)					
+		if (!dh.util.isDescendant(block, relTarget))
+			dh.stacker.hideBlockPointer(block);				
+		dh.event.cancel(e);			
+	}
+}
+
+dh.stacker._onLinkClick = function(oldOnClick) {
+	return function (e) {
+		// We can't use dh.event.cancel() since we don't want to preventDefault
+		if (!e) e = window.event;
+		if (e.stopPropagation)
+			e.stopPropagation();
+		else
+			ev.cancelBubble = true;	
+			
+		if (oldOnClick != null)
+			oldOnClick(e);
+	}
+}
+
 dh.stacker.hookLinkChildren = function(block, startNode) {
 	var i;
 	if (startNode.nodeType != 1)
@@ -139,20 +173,9 @@ dh.stacker.hookLinkChildren = function(block, startNode) {
 		if (node.nodeType != 1)
 			continue;		
 		if (node.nodeName.toLowerCase() == "a") {
-			node.onmouseover = function (e) {
-				if (!e) e = window.event;
-				dh.log("stacker-cursor", "block: " + block.dhBlockId + " link mouseover")				
-				dh.stacker.hideBlockPointer(block);
-				dh.event.cancel(e);
-			};
-			node.onmouseout = function (e) {
-				if (!e) e = window.event;
-				var relTarget = e.relatedTarget || e.toElement;				
-				dh.log("stacker-cursor", "block: " + block.dhBlockId + " link mouseout to " + relTarget)					
-				if (!dh.util.isDescendant(block, relTarget))
-					dh.stacker.hideBlockPointer(block);				
-				dh.event.cancel(e);			
-			};			
+			node.onmouseover = dh.stacker._onLinkMouseOver(block);
+			node.onmouseout = dh.stacker._onLinkMouseOut(block);
+			node.onclick = dh.stacker._onLinkClick(node.onclick);
 		} else {
 			dh.stacker.hookLinkChildren(block, node);
 		}
