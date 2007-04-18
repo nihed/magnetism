@@ -567,7 +567,7 @@ hippo_canvas_block_generic_set_block(HippoCanvasBlock *canvas_block,
                          G_CALLBACK(on_block_thumbnails_changed),
                          canvas_block);
         g_signal_connect(G_OBJECT(canvas_block->block),
-                         "notify::thumbnails",
+                         "notify::chat-id",
                          G_CALLBACK(on_block_chat_id_changed),
                          canvas_block);
         
