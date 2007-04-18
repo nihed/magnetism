@@ -40,6 +40,9 @@ class Application(gobject.GObject):
     
     def get_description(self):
         return self.__app and self.__app.get_description() or ""
+
+    def get_tooltip(self):
+        return self.__app and self.__app.get_tooltip() or ""
     
     def get_category(self):
         return self.__app and self.__app.get_category() or self.__menu_entry.parent.get_name()

@@ -18,16 +18,15 @@ class AppOverview(PrelightingCanvasBox):
         self.__header = apps_widgets.AppDisplay()
         self.append(self.__header)
         
-        self.__description = hippo.CanvasText(size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END,
-                                              text="""Lorem ipsum dolor sit amet, consectetuer adipiscing elit.""")
+        self.__description = hippo.CanvasText(size_mode=hippo.CANVAS_SIZE_WRAP_WORD)
         self.append(self.__description)     
         
-        self.__updated = hippo.CanvasText(text="Last updated", xalign=hippo.ALIGNMENT_START)
-        self.append(self.__updated)
-        self.__homelink = ActionLink(text="Developer's home page", xalign=hippo.ALIGNMENT_START)
-        self.append(self.__homelink)
-        self.__bugreport = ActionLink(text="Submit a bug report", xalign=hippo.ALIGNMENT_START)
-        self.append(self.__bugreport)
+        #self.__updated = hippo.CanvasText(text="Last updated", xalign=hippo.ALIGNMENT_START)
+        #self.append(self.__updated)
+        #self.__homelink = ActionLink(text="Developer's home page", xalign=hippo.ALIGNMENT_START)
+        #self.append(self.__homelink)
+        #self.__bugreport = ActionLink(text="Submit a bug report", xalign=hippo.ALIGNMENT_START)
+        #self.append(self.__bugreport)
         
         if app:
             self.set_app(app)
