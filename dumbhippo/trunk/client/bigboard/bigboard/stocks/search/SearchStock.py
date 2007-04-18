@@ -34,6 +34,9 @@ class SearchStock(Stock):
         self.__deskbar = deskbar.DeskbarApplet.DeskbarApplet(self.__applet)
         self.__deskbar.loader.connect("modules-loaded", self.__override_modules_loaded)
         self.__applet.reparent(self.__vbox)
+        uiname = gconf.Value(gconf.VALUE_STRING)
+        uiname.set_string(deskbar.ENTRIAC_UI_NAME)
+        self.__deskbar.on_ui_changed(uiname)
         
         self.__box.append(self.__widget)
         self.__empty_box = CanvasVBox()
