@@ -19,12 +19,12 @@ class AppDisplay(PhotoContentItem):
         self.set_photo(self.__photo)
         self.__box = CanvasVBox(spacing=2, border_right=4)
         self.__title = ActionLink(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
-        self.__description = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        self.__subtitle = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         attrs = pango.AttrList()
         attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
-        self.__description.set_property("attributes", attrs)        
+        self.__subtitle.set_property("attributes", attrs)        
         self.__box.append(self.__title)
-        self.__box.append(self.__description)        
+        self.__box.append(self.__subtitle)        
         self.set_child(self.__box)
         
         if app:
@@ -56,7 +56,7 @@ class AppDisplay(PhotoContentItem):
         self.__photo.set_clickable(self.__app.is_installed())
         self.__box.set_clickable(self.__app.is_installed())  
         self.__title.set_property("text", self.__app.get_name())
-        self.__description.set_property("text", self.__app.get_description())
+        self.__subtitle.set_property("text", self.__app.get_tooltip())
         if self.__app.get_mugshot_app():
             self.__photo.set_url(self.__app.get_mugshot_app().get_icon_url())
         else:
