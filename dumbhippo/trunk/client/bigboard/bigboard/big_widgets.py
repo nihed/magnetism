@@ -172,6 +172,7 @@ class PrelightingCanvasBox(hippo.CanvasBox):
     def __init__(self, **kwargs):
         hippo.CanvasBox.__init__(self, **kwargs)
         self.__hovered = False
+        self.__force_prelight = False
         self.connect('motion-notify-event', lambda self, event: self.__handle_motion(event))
         
     def __handle_motion(self, event):
@@ -181,10 +182,14 @@ class PrelightingCanvasBox(hippo.CanvasBox):
             self.__hovered = False
 
         self.sync_prelight_color()
+
+    def set_force_prelight(self, force):
+        self.__force_prelight = force
+        self.sync_prelight_color()
         
     # protected
     def sync_prelight_color(self): 
-        if self.__hovered and self.do_prelight():
+        if self.__force_prelight or (self.__hovered and self.do_prelight()):
             self.set_property('background-color', 0xE2E2E2FF)
         else:
             self.set_property('background-color', 0x00000000)           

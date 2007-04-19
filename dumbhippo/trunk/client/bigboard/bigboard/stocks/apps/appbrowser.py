@@ -12,7 +12,7 @@ import apps_widgets, apps_directory
 
 _logger = logging.getLogger("bigboard.AppBrowser")
 
-class AppOverview(PrelightingCanvasBox):
+class AppOverview(CanvasVBox):
     __gsignals__ = {
         "more-info" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
     }
@@ -29,13 +29,6 @@ class AppOverview(PrelightingCanvasBox):
         self.__moreinfo = ActionLink(text="More Info", xalign=hippo.ALIGNMENT_START)
         self.__moreinfo.connect("button-press-event", lambda l,e: self.emit("more-info", self.__app))
         self.append(self.__moreinfo)
-
-        #self.__updated = hippo.CanvasText(text="Last updated", xalign=hippo.ALIGNMENT_START)
-        #self.append(self.__updated)
-        #self.__homelink = ActionLink(text="Developer's home page", xalign=hippo.ALIGNMENT_START)
-        #self.append(self.__homelink)
-        #self.__bugreport = ActionLink(text="Submit a bug report", xalign=hippo.ALIGNMENT_START)
-        #self.append(self.__bugreport)
         
         if app:
             self.set_app(app)
@@ -174,6 +167,7 @@ class AppList(MultiVTable):
         
         self.__search = None
         self.__all_apps = set()
+        self.__selected_app = None
         
     def set_apps(self, apps):
         self.__all_apps = set(apps)
@@ -211,8 +205,14 @@ class AppList(MultiVTable):
     def __on_overview_click(self, overview, event):
          _logger.debug("pressed %s %d", overview, event.count)
          
+         if self.__selected_app:
+             self.__selected_app.set_force_prelight(False)
+
          if event.count == 1:
-             self.emit("selected", overview.get_app())
+             app = overview.get_app()
+             self.__selected_app = overview
+             self.__selected_app.set_force_prelight(True)
+             self.emit("selected", app)
          else:
              self.emit("launch")
              
