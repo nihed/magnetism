@@ -462,6 +462,9 @@ on_block_title_changed(HippoBlock *block,
     g_object_set(block_netflix->title_link,
                  "text", title,
                  NULL);                        
+    g_object_set(G_OBJECT(block_netflix->quipper),
+                 "title", title,
+                 NULL);
 }
 
 static void
