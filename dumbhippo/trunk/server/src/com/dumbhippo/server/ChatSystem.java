@@ -53,7 +53,7 @@ public interface ChatSystem {
 	 * @param roomName The GUID for the post (etc.) that the chat is about
 	 * @return a blob of information about the chatroom.
 	 */
-	public ChatRoomInfo getChatRoomInfo(Guid roomGuid) throws NotFoundException;
+	public ChatRoomInfo getChatRoomInfo(Guid roomGuid, boolean includeHistory) throws NotFoundException;
 	
 	/**
 	 * Get messages that have been sent to the chatroom since the specified serial

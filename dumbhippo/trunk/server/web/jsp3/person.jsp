@@ -28,7 +28,7 @@
 </head>
 
 
-<dht3:page currentPageLink="person">
+<dht3:page currentPageLink="person" blocks="true">
 	<c:if test="${person.self}">
 		<dht3:accountStatus/>
 	</c:if>

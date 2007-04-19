@@ -326,7 +326,7 @@ public class Room implements PresenceListener {
 		
 		ChatRoomInfo info;
 		try {
-			info = chatSystem.getChatRoomInfo(Guid.parseJabberId(roomName));
+			info = chatSystem.getChatRoomInfo(Guid.parseJabberId(roomName), true);
 		} catch (NotFoundException e) {
 			Log.debug("  no such room");
 			return null;

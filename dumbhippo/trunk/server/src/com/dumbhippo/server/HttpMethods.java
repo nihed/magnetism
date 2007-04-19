@@ -430,4 +430,7 @@ public interface HttpMethods {
 	@HttpParams( { } )
 	public void getApplicationEditRSS(OutputStream out, HttpResponseData contentType, Viewpoint viewpoint) throws IOException, XmlMethodException;
 
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "chatId", "text", "sentiment" })
+	public void doAddChatMessage(XmlBuilder xml, UserViewpoint viewpoint, Guid chatId, String text, String sentiment) throws XmlMethodException;
 }

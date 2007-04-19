@@ -41,7 +41,21 @@
 		</dht3:blockContainer>
 	</c:when>
 	<c:otherwise>
-		<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${!chatHeader}">
+		<c:choose>
+			<c:when test="${!empty track.artist && !empty track.name}">
+				<c:set var="title" value="${track.artist} - ${track.name}"/>
+			</c:when>
+			<c:when test="${!empty track.artist}">
+				<c:set var="title" value="${track.artist}"/>
+			</c:when>
+			<c:when test="${!!empty track.name}">
+				<c:set var="title" value="${track.name}"/>
+			</c:when>
+			<c:otherwise>
+				<c:set var="title" value="Unknown Song"/>
+			</c:otherwise>
+		</c:choose>
+		<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${!chatHeader}" title="${title}">
 			<td class="dh-stacker-block-with-image-left" align="left" valign="top" width="75%">
 				<table cellspacing="0" cellpadding="0" width="100%">
 				<tr>
@@ -60,8 +74,13 @@
 						<div>
 							<div class="dh-music-block-artist"><a href="${track.artistPageLink}"><c:out value="${track.artist}"/></a></div>
 							<div class="dh-music-block-name"><a href="${track.artistPageLink}"><c:out value="${track.name}"/></a></div>
-							<c:if test="${!chatHeader && !empty block.lastMessage}">
-								<dht3:chatMessage id="dhMusicBlockMessage-${blockId}" msg="${block.lastMessage}"/>
+							<dht3:quipper blockId="${blockId}" block="${block}"/>
+							<c:if test="${!chatHeader}">
+								<div id="dhStackerBlockLastMessage-${blockId}">
+									<c:if test="${!empty block.lastMessage}">
+										<dht3:chatMessage msg="${block.lastMessage}"/>
+									</c:if>
+								</div>
 							</c:if>
 						</div>
 					</div>
@@ -70,7 +89,7 @@
 				</table>
 				<dht3:blockContent blockId="${blockId}">
 					<c:if test="${!chatHeader}">
-						<dht3:chatPreview block="${block}"/>
+						<dht3:chatPreview block="${block}" blockId="${blockId}"/>
 					</c:if>
 					<c:forEach items="${block.oldTracks}" var="track">
 						<div class="dh-music-block-history-item">

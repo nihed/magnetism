@@ -23,6 +23,7 @@ public class UserSigninBean extends SigninBean {
 
 	private IdentitySpider spider;
 	private PersonViewer viewer;
+	private PersonView userView;
 	private PersonView userFromSystemView;
 	private Guid userGuid;
 	private User user; // lazily initialized
@@ -61,6 +62,12 @@ public class UserSigninBean extends SigninBean {
 		}
 
 		return user;
+	}
+	
+	public PersonView getViewedUser() {
+		if (userView == null)
+			userView = getViewer().getPersonView(getViewpoint(), getUser());
+		return userView;
 	}
 	
 	public PersonView getViewedUserFromSystem() {

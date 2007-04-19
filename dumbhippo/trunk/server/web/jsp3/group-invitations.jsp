@@ -19,7 +19,7 @@
 	<dht:faviconIncludes/>
 </head>
 
-<dht3:page currentPageLink="group-invitations">	
+<dht3:page currentPageLink="group-invitations" blocks="true">	
 	<dht3:pageSubHeader title="My Group Invitations">
 		<dht3:personRelatedPagesTabs/> 	
 	</dht3:pageSubHeader>

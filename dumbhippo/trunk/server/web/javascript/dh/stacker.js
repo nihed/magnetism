@@ -1,6 +1,7 @@
 dojo.provide('dh.stacker');
 dojo.require('dh.util');
 dojo.require('dh.event');
+dojo.require('dh.quippopup');
 
 dh.stacker.removePrelight = function(node) {
 	dh.util.removeClass(node, "dh-box-prelighted")
@@ -26,7 +27,7 @@ dh.stacker.blockOpen = function(block) {
 	if (fullDesc && fullDesc.dhHideOnExpand) {
 		fullDesc.style.display = "none";
 	}
-	var message = document.getElementById("dhMusicBlockMessage-" + block.dhBlockId);
+	var message = document.getElementById("dhStackerBlockLastMessage-" + block.dhBlockId);
 	if (message)
 		message.style.display = "none";
 }
@@ -51,7 +52,7 @@ dh.stacker.blockClose = function(block) {
 	if (fullDesc && fullDesc.dhHideOnExpand) {
 		fullDesc.style.display = "block";
 	}	
-	var message = document.getElementById("dhMusicBlockMessage-" + block.dhBlockId);
+	var message = document.getElementById("dhStackerBlockLastMessage-" + block.dhBlockId);
 	if (message)
 		message.style.display = "block";
 }
@@ -192,4 +193,112 @@ dh.stacker.insertBlockHeaderDescription = function(blockId) {
 	if (text.length > shortText.length)
 		shortDesc.appendChild(document.createTextNode("..."));
 	fullDesc.style.display = "none";
+}
+
+dh.stacker._createMessage = function(name, homeUrl, text, sentiment) {
+    var messageDiv = document.createElement("div");
+    messageDiv.className = "dh-stacker-block-chat-container";
+    
+	var sentimentUrl;
+	var sentimentWidth = 11;
+	var sentimentHeight = 11;
+	
+	switch (sentiment) {
+	case dh.control.SENTIMENT_LOVE:
+		sentimentUrl = dhImageRoot3 + "quiplove_icon.png";
+		sentimentWidth = 12;
+		break;
+	case dh.control.SENTIMENT_HATE:
+		sentimentUrl = dhImageRoot3 + "quiphate_icon.png";
+		break;
+	default:
+		sentimentUrl = dhImageRoot3 + "comment_iconchat_icon.png";
+		break;
+	}
+		
+	if (dh.browser.ie && !dh.browser.ieAtLeast70) {
+		var image = dh.util.createPngElement(sentimentUrl, sentimentWidth, sentimentHeight);
+		image.style.display = "inline";
+	} else {
+		var image = document.createElement("img");
+		image.src = sentimentUrl;
+		image.style.overflow = "hidden";
+		image.style.width = sentimentWidth + "px";
+		image.style.height = sentimentHeight + "px";
+	}
+	messageDiv.appendChild(image);
+	
+	messageDiv.appendChild(document.createTextNode(" "));
+
+    var chatSpan = document.createElement("span");
+    chatSpan.className = "dh-stacker-block-chat";
+	messageDiv.appendChild(chatSpan);
+    
+	var chatMessageSpan = document.createElement("span");
+	chatMessageSpan.className = "dh-stacker-block-chat-message";
+	chatSpan.appendChild(chatMessageSpan);
+	chatMessageSpan.appendChild(document.createTextNode(text));
+	
+	chatSpan.appendChild(document.createTextNode(" - "));
+
+	var chatSenderSpan = document.createElement("span");
+	chatSenderSpan.className = "dh-stacker-block-chat-sender";
+	chatSpan.appendChild(chatSenderSpan);
+
+	var chatSenderLink = document.createElement("a");
+	chatSenderLink.className = "dh-underlined-link";
+	chatSenderLink.href = homeUrl; 
+	chatSenderLink.appendChild(document.createTextNode(name));
+	chatSenderSpan.appendChild(chatSenderLink);
+	
+	return messageDiv;
+}
+
+dh.stacker._addQuip = function(blockId, name, homeUrl, text, sentiment) {
+	var block = document.getElementById("dhStackerBlock-" + blockId);
+	var chatDiv = document.getElementById("dhStackerBlockChat-" + blockId);
+
+	var count = 0;
+	var firstChild = null;
+	var lastChild = null;
+	
+	var children = chatDiv.childNodes;
+    for (var i = 0; i < children.length; ++i) {
+    	var child = children[i];
+    	if (child.className == "dh-stacker-block-chat-container") {
+    		count++;
+    		if (firstChild == null)
+    			firstChild = child;
+    		lastChild = child;
+   		}
+    }
+    
+    if (count >= 5)
+    	chatDiv.removeChild(lastChild);
+    	
+	
+	chatDiv.insertBefore(this._createMessage(name, homeUrl, text, sentiment), firstChild);
+	
+	var lastMessageDiv = document.getElementById("dhStackerBlockLastMessage-" + blockId);
+	
+	if (lastMessageDiv != null) {
+		dh.util.clearNode(lastMessageDiv);
+		lastMessageDiv.appendChild(this._createMessage(name, homeUrl, text, sentiment));
+	} else if (!block.dhExpanded) {
+		this.blockOpen(block);
+	}
+}
+
+dh.stacker.quip = function(event, blockId, chatId, sentiment) {
+	var block = document.getElementById("dhStackerBlock-" + blockId);
+	var title = block.dhTitle;
+	
+	var xOffset = window.pageXOffset ? window.pageXOffset : document.body.scrollLeft;
+   	var yOffset = window.pageYOffset ? window.pageYOffset : document.body.scrollTop;
+	dh.quippopup.start(chatId, title,
+					   event.clientX + xOffset, event.clientY + yOffset,
+					   sentiment, 
+					   function(name, homeUrl, text, sentiment) {
+		dh.stacker._addQuip(blockId, name, homeUrl, text, sentiment);
+	});
 }

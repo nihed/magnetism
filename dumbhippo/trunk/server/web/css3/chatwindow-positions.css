@@ -37,35 +37,9 @@ body {
 	padding-right: 8px;
 }
 
-#dhChatSentiments {
-	margin-top: 4px;
-	padding-top: 4px;
-	padding-bottom: 4px;
-}
-
-.dh-chat-sentiment {
-	padding: 4px;		
-}
-
-#dhChatInputTable {
-	border: 0px;
-}
-
-#dhChatInputTable td {
-	padding: 0px;
-	vertical-align: top;
-}
-
 #dhChatMessageInput {
-   margin:			 0px;
-   border:			 0px;
-   overflow:         auto;
    height:			 3em;
    width:			 40em;
-}
-
-#dhChatAddButton {
-	margin-left: 4px;
 }
 
 #dhChatMessages {

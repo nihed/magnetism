@@ -14,7 +14,7 @@
 	<dht:faviconIncludes/>
 </head>
 
-<dht3:page currentPageLink="active-people">
+<dht3:page currentPageLink="active-people" blocks="true">
 	<dht3:pageSubHeader title="Active People" offerInviteFriendsLink="true"/>
 	
 	<c:forEach items="${activePeople.activePeople.results}" var="person" varStatus="stackStatus">

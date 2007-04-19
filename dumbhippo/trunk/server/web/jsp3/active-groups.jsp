@@ -14,7 +14,7 @@
 	<dht:faviconIncludes/>
 </head>
 			
-<dht3:page currentPageLink="active-groups">
+<dht3:page currentPageLink="active-groups" blocks="true">
 	<dht3:pageSubHeader title="Active Groups" offerCreateGroupLink="true"/>
 	
 	<c:forEach items="${activeGroups.activeGroups.results}" var="group" varStatus="stackStatus">
