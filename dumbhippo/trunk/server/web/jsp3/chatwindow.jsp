@@ -55,30 +55,7 @@
 			<div id="dhChatWhosAround">
 				Who's around: <span id="dhChatUserList"></span>
 			</div>
-			<div id="dhChatSentiments">
-				<span id="dhChatIndifferent" class="dh-chat-sentiment dh-chat-sentiment-selected" onselectstart="return false;">
-				    <dh:png src="/images3/${buildStamp}/comment_iconchat_icon.png" style="width: 11; height: 11; overflow: hidden;"/>
-				    Quip
-			    </span>
-				<span id="dhChatLove" class="dh-chat-sentiment" onselectstart="return false;">
-				    <dh:png src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/>
-					I love it!
-				</span>
-				<span id="dhChatHate" class="dh-chat-sentiment" onselectstart="return false;">
-				    <dh:png src="/images3/${buildStamp}/quiphate_icon.png" style="width: 11; height: 11; overflow: hidden;"/>
-					I hate it!
-				</span>
-			</div>
-			<table id="dhChatInputTable" cellspacing="0" cellpadding="0">
-			<tr>
-			<td id="dhChatMessageInputCell">
-				<textarea id="dhChatMessageInput"></textarea>
-			</td>
-			<td>
-				<input id="dhChatAddButton" type="button" value="Add" onclick="dh.chatwindow.sendClicked()"/>
-			</td>
-			</tr>
-			</table>
+			<dht3:chatInput multiline="true" sendlabel="Add" onsend="dh.chatwindow.sendClicked()"/>
 		</div>
 	</div>
 	<div id="dhChatMessages">

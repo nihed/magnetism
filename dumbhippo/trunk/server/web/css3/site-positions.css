@@ -780,3 +780,54 @@ in-bottom:  5px;
     position: relative;
     bottom:   1px;
 }
+
+#dhQuipPopup {
+	position:		absolute;
+	top:			0px;
+	left:			0px;
+	padding-top:	5px;
+	padding-left:	8px;
+	padding-bottom:	8px;
+	padding-right:	8px;
+	z-index:		2;
+}
+
+#dhQuipPopupTitle {
+	margin-bottom:	8px;
+}
+
+#dhQuipPopupClose {
+	position:		absolute;
+	top:			3px;
+	right:			3px;
+}
+
+#dhChatSentiments {
+	margin-top: 	4px;
+	padding-top: 	4px;
+	padding-bottom: 4px;
+}
+
+.dh-chat-sentiment {
+	padding: 4px;		
+}
+
+#dhChatInputTable {
+	border: 0px;
+}
+
+#dhChatInputTable td {
+	padding: 0px;
+	vertical-align: top;
+}
+
+#dhChatMessageInput {
+   margin:			 0px;
+   border:			 0px;
+   overflow:         auto;
+   width:			 20em;
+}
+
+#dhChatAddButton {
+	margin-left: 4px;
+}

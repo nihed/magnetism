@@ -659,3 +659,43 @@ div.dh-section-explanation {
 .dh-message .dh-confirm-link {
     color:              blue;
 }
+
+.dh-quipper {
+	font-size:			12px;
+}
+
+#dhQuipPopup {
+	text-align:			left;
+	background-color:	white;
+	border:				1px solid black;
+	font-size: 			12px;
+}
+
+#dhQuipPopupTitle {
+	font-size:			13px;
+	font-weight:		bold;
+}
+
+#dhQuipPopupClose {
+	border:				1px solid #999999;
+}
+
+#dhChatMessageInputCell {
+	border: 1px solid #999999;
+	font-family: sans-serif;
+	font-size: 12px;
+}
+
+#dhChatMessageInput {
+	font-family: sans-serif;
+	font-size: 12px;
+}
+
+.dh-chat-sentiment {
+	cursor: pointer;
+}
+
+.dh-chat-sentiment-selected {
+	color: #ffffff;
+	background-color: #ac6ac6;
+}

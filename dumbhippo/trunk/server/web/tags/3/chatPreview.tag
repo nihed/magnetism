@@ -4,11 +4,12 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.blocks.BlockView" %>
+<%@ attribute name="blockId" required="true" type="java.lang.String" %>
 <%@ attribute name="showChatLink" required="false" type="java.lang.Boolean" %>
 
 <dh:default var="showChatLink" value="true"/>
 
-<div>
+<div id="dhStackerBlockChat-${blockId}">
 	<c:if test="${showChatLink}">
 		<c:choose>
 			<c:when test="${block.chattingCount > 0}">
@@ -17,7 +18,7 @@
 			<c:otherwise><dht:actionLinkChat oneLine="true" chatId="${block.chatId}" kind="${block.chatKind}"/></c:otherwise>
 		</c:choose>
 	</c:if>
-	<c:forEach items="${block.recentMessages}" end="3" var="msg">
+	<c:forEach items="${block.recentMessages}" end="4" var="msg">
 		<dht3:chatMessage msg="${msg}"/>
 	</c:forEach>
 </div>

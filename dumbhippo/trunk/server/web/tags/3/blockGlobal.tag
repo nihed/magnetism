@@ -5,3 +5,4 @@
 
 <div id="dhStackerBlockExpandTip" class="dh-stacker-block-mouse-tip dh-stacker-block-expand-tip"><dh:png src="/images3/${buildStamp}/expandtip.png" style="width: 9px; height: 9px"/></div>
 <div id="dhStackerBlockCloseTip" class="dh-stacker-block-mouse-tip dh-stacker-block-close-tip"><dh:png src="/images3/${buildStamp}/closetip.png" style="width: 9px; height: 9px"/></div>		
+<dht3:quipPopup/>

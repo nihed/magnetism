@@ -82,6 +82,8 @@ import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
+import com.dumbhippo.server.ChatRoomInfo;
+import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
@@ -161,6 +163,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	@EJB
 	private ApplicationSystem applicationSystem;
 	
+	@EJB
+	private ChatSystem chatSystem;
+
 	@EJB
 	private GroupSystem groupSystem;
 
@@ -2451,5 +2456,27 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		out.write(rss.getBytes());
+	}
+	
+	public void doAddChatMessage(XmlBuilder xml, UserViewpoint viewpoint, Guid chatId, String text, String sentimentString) throws XmlMethodException {
+		ChatRoomInfo info;
+		User user = viewpoint.getViewer();
+		
+		Sentiment sentiment;
+		try {
+			sentiment = Sentiment.valueOf(sentimentString);
+		} catch (IllegalArgumentException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Bad value for sentiment");
+		}
+		
+		try {
+			info = chatSystem.getChatRoomInfo(chatId, false);
+			if (!chatSystem.canJoinChat(info.getChatId(), info.getKind(), user.getGuid()))
+				throw new NotFoundException("Chatroom not visible");
+		} catch (NotFoundException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "No such chatroom");
+		}
+		
+		chatSystem.addChatRoomMessage(info.getChatId(), info.getKind(), user.getGuid(), text, sentiment, new Date());
 	}
 }

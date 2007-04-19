@@ -27,7 +27,7 @@
 	<dht:faviconIncludes/>
 </head>
 
-<dht3:page currentPageLink="network">
+<dht3:page currentPageLink="network" blocks="true">
 	<c:if test="${person.self}">
 		<dht3:accountStatus/>
 	</c:if>

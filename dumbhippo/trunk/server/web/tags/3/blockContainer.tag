@@ -6,6 +6,7 @@
 <%@ attribute name="cssClass" required="true" type="java.lang.String" %>
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 <%@ attribute name="expandable" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="title" required="false" type="java.lang.String" %>
 
 <jsp:element name="table">
 	<jsp:attribute name="class">dh-stacker-block <c:if test="${expandable}">dh-stacker-block-expandable </c:if>${cssClass}</jsp:attribute>
@@ -27,7 +28,8 @@
 	block.onmousemove = dh.stacker.onBlockMouseMove;	
 	block.onmouseover = dh.stacker.onBlockMouseOver;
 	block.onmouseout = dh.stacker.onBlockMouseOut;	
-	dh.stacker.hookLinkChildren(block, block);
+	block.dhTitle = <dh:jsString value="${title}"/>;
+    dh.stacker.hookLinkChildren(block, block);
 </script>
 </c:if>
 

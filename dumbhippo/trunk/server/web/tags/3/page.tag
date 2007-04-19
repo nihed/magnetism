@@ -5,9 +5,12 @@
 
 <%@ attribute name="currentPageLink" required="true" type="java.lang.String" %>
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
+<%@ attribute name="blocks" required="false" type="java.lang.Boolean" %>
 
 <body class="dh-gray-background-page">
-	<dht3:blockGlobal/> <%-- Not needed on all pages, but harmless if it's not --%>
+	<c:if test="${blocks}">
+		<dht3:blockGlobal/>
+	</c:if>
 	<div id="dhPageOuter">
 		<div id="dhPage">
 			<dht3:header currentPageLink="${currentPageLink}" searchText="${searchText}"/>

@@ -4,6 +4,7 @@ dojo.require("dh.control")
 dojo.require("dh.chat")
 dojo.require("dh.dom")
 dojo.require("dh.event")
+dojo.require("dh.chatinput")
 dojo.require("dh.util")
 dojo.require("dojo.event")
 
@@ -183,39 +184,19 @@ dh.chatwindow._updateUser = function(user) {
 }
 
 dh.chatwindow.sendClicked = function() {
-    var messageInput = document.getElementById("dhChatMessageInput");
-    var text = messageInput.value;
-    text = text.replace(/^\s+/, "");
-    text = text.replace(/\s+?$/, "");
+    var text = dh.chatinput.getText();
     if (text == "") {
         alert("Please enter a non-empty message");
         return;
     }
 
-	dh.control.control.sendChatMessage(this.chatId, text, this._sentiment);
-    messageInput.value = "";
+	dh.control.control.sendChatMessage(this.chatId, text, dh.chatinput.getSentiment());
+	dh.chatinput.setText("");
     
     // Scroll to the bottom so that the user can see their own new message
     var messagesDiv = document.getElementById("dhChatMessages");
 	this._scrollToBottom(messagesDiv);
     this._atBottom = true;
-}
-
-// Note that this handler is used directly and not invoked
-// as a method with 'this'
-dh.chatwindow.onMessageKeyPress = function(e) {
-	var keycode = dh.event.getKeyCode(e);
-    if (keycode == 13) {
-    	dh.event.cancel(e);
-        dh.chatwindow.sendClicked();
-        return false;
-    } else if (keycode == 27) {
-    	dh.event.cancel(e);
-    	window.close();
-    	return false;
-    }
-	
-	return true;
 }
 
 // Note that this handler is used directly and not invoked
@@ -254,39 +235,6 @@ dh.chatwindow._createLists = function() {
 		function(user, participant) { return true; });
 }
 
-dh.chatwindow._sentimentMap = {
-	dhChatIndifferent: dh.control.SENTIMENT_INDIFFERENT,
-	dhChatLove:        dh.control.SENTIMENT_LOVE,
-	dhChatHate:        dh.control.SENTIMENT_HATE
-};
-
-dh.chatwindow.setSentiment = function(sentiment) {
-	this._sentiment = sentiment;
-
-	for (var id in this._sentimentMap) {
-		var span = document.getElementById(id);
-		if (sentiment == this._sentimentMap[id]) {
-			span.className = "dh-chat-sentiment dh-chat-sentiment-selected";
-		} else {
-			span.className = "dh-chat-sentiment";
-		}
-	}
-}
-
-// Called as an event handler, and not as a method with 'this'
-dh.chatwindow._onSentimentClick = function(e) {
-	var node = dh.event.getNode(e);
-	var sentiment = dh.chatwindow._sentimentMap[node.id];
-	dh.chatwindow.setSentiment(sentiment);
-
-	// Send the focus back to the input box
-    var messageInput = document.getElementById("dhChatMessageInput");
-    messageInput.focus();
-
-	dh.event.cancel(e);
-	return false;
-}
-
 dh.chatwindow.updateTimes = function() {
 	dh.chatwindow._messageList.foreachMessage(function(message) {
 		var span = dh.chatwindow._messageTimeElement(message);
@@ -301,30 +249,9 @@ dh.chatwindow.updateTimes = function() {
 	setTimeout(dh.chatwindow.updateTimes, 60 * 1000);
 }
 
-dh.chatwindow._noopEvent = function(e) {
-	dh.event.cancel(e);
-	return false;
-}
-
-dh.chatwindow._preventSelection = function(node) {
-    dh.event.addEventListener(node, "mousedown",
-							  dh.chatwindow._noopEvent);
-    dh.event.addEventListener(node, "move",
-							  dh.chatwindow._noopEvent);
-	
-	for (var i = 0; i < node.childNodes.length; i++) {
-		if (node.childNodes[i].nodeType == dh.dom.ELEMENT_NODE)
-			dh.chatwindow._preventSelection(node.childNodes[i]);
-	}
-}
-
 dh.chatwindow._init = function() {
 	dh.control.createControl();
 	
-    var messageInput = document.getElementById("dhChatMessageInput")
-    
-    dh.event.addEventListener(messageInput, "keypress",
-							  dh.chatwindow.onMessageKeyPress);
     dh.event.addEventListener(document.body, "keypress",
 							  dh.chatwindow.onBodyKeyPress);
 							  
@@ -341,17 +268,15 @@ dh.chatwindow._init = function() {
 	this._createLists()
 
 	this._chatRoom.join(true)
+	dh.chatinput.init();
+	
+	dh.chatinput.onCancel = function() {
+    	dh.event.cancel(e);
+    	window.close();
+    }
+    
+    dh.chatinput.focus();
 
-	this.setSentiment(dh.control.SENTIMENT_INDIFFERENT);
-	
-	for (var id in this._sentimentMap) {
-		var span = document.getElementById(id);
-		dh.chatwindow._preventSelection(span);
-    	dh.event.addEventListener(span, "click",
-						    	  dh.chatwindow._onSentimentClick);
-	}
-	
-	messageInput.focus()
 	setTimeout(dh.chatwindow.updateTimes, 60 * 1000);
 }
 

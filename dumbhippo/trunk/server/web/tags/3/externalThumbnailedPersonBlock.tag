@@ -20,7 +20,7 @@
 		    <dht3:blockContent blockId="${blockId}">
 		        <dht3:blockThumbnails block="${block}"/>
     	        <c:if test="${!empty block.chatId}">
-					<dht3:chatPreview block="${block}"/>
+					<dht3:chatPreview block="${block}" blockId="${blockId}"/>
 				</c:if>
 		    </dht3:blockContent>	
 	    </c:if>

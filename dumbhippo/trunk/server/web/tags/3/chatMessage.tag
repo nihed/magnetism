@@ -3,9 +3,8 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="msg" required="true" type="com.dumbhippo.server.views.ChatMessageView" %>
-<%@ attribute name="id" required="false" type="java.lang.String" %>
 
-<div class="dh-stacker-block-chat-container" id="${id}">
+<div class="dh-stacker-block-chat-container">
 	<c:choose>
 		<c:when test="${dh:enumIs(msg.msg.sentiment, 'INDIFFERENT')}">
 			<dh:png src="/images3/${buildStamp}/comment_iconchat_icon.png" style="width: 11px; height: 11px;; overflow: hidden;"/>

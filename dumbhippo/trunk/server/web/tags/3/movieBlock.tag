@@ -31,7 +31,7 @@
 		</table>
 		<c:if test="${!chatHeader}">
 			<dht3:blockContent blockId="${blockId}">
-				<dht3:chatPreview block="${block}"/>
+				<dht3:chatPreview block="${block}" blockId="${blockId}"/>
 				<div class="dh-movie-block-queue">
 				    Movies in the Queue:
 				    <c:forEach items="${block.queuedMovies.movies}" var="movie">

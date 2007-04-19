@@ -333,30 +333,30 @@ public class ChatSystemBean implements ChatSystem {
 				                user.getNickname(), user.getPhotoUrl());
 	}
 	
-	private ChatRoomInfo getChatRoomInfo(Guid roomGuid, Group group) {
-		List<? extends ChatMessage> history = getGroupMessages(group, -1);
+	private ChatRoomInfo getChatRoomInfo(Guid roomGuid, Group group, boolean includeHistory) {
+		List<? extends ChatMessage> history = includeHistory ? getGroupMessages(group, -1) : null;
 		return new ChatRoomInfo(ChatRoomKind.GROUP, roomGuid, group.getName(), history, false);
 	}
 
-	private ChatRoomInfo getChatRoomInfo(Guid roomGuid, Post post) {
+	private ChatRoomInfo getChatRoomInfo(Guid roomGuid, Post post, boolean includeHistory) {
 		boolean worldAccessible = true;
 		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY)
 			worldAccessible = false;
 		
-		List<? extends ChatMessage> history = getPostMessages(post, -1);
+		List<? extends ChatMessage> history = includeHistory ? getPostMessages(post, -1) : null;
 		return new ChatRoomInfo(ChatRoomKind.POST, roomGuid, post.getTitle(), history, worldAccessible);
 	}
 	
-	private ChatRoomInfo getChatRoomInfo(Guid roomGuid, TrackHistory trackHistory) {
+	private ChatRoomInfo getChatRoomInfo(Guid roomGuid, TrackHistory trackHistory, boolean includeHistory) {
 		TrackView trackView = musicSystem.getTrackView(trackHistory);
-		List<? extends ChatMessage> history = getTrackMessages(trackHistory, -1);
+		List<? extends ChatMessage> history = includeHistory ? getTrackMessages(trackHistory, -1) : null;
 		
 		return new ChatRoomInfo(ChatRoomKind.MUSIC, roomGuid, trackView.getDisplayTitle(), history, true);
 	}
 	
-	private ChatRoomInfo getChatRoomInfo(Guid roomGuid, Block block) throws NotFoundException {
+	private ChatRoomInfo getChatRoomInfo(Guid roomGuid, Block block, boolean includeHistory) throws NotFoundException {
 		BlockView blockView = stacker.loadBlock(SystemViewpoint.getInstance(), block);
-		List<? extends ChatMessage> history = getBlockMessages(block, -1);
+		List<? extends ChatMessage> history = includeHistory ? getBlockMessages(block, -1) : null;
 		
 		return new ChatRoomInfo(ChatRoomKind.BLOCK, roomGuid, blockView.getSummaryLinkText(), history, block.isPublicBlock());
 	}
@@ -374,7 +374,7 @@ public class ChatSystemBean implements ChatSystem {
 		return newChatRoomUser(user);
 	}
 	
-	public ChatRoomInfo getChatRoomInfo(Guid roomGuid) {
+	public ChatRoomInfo getChatRoomInfo(Guid roomGuid, boolean includeHistory) {
 		Post post = null;
 		Group group = null;
 		TrackHistory trackHistory = null;
@@ -413,14 +413,14 @@ public class ChatSystemBean implements ChatSystem {
 		}
 		
 		if (post != null)
-			return getChatRoomInfo(roomGuid, post);
+			return getChatRoomInfo(roomGuid, post, includeHistory);
 		else if (group != null)
-			return getChatRoomInfo(roomGuid, group);
+			return getChatRoomInfo(roomGuid, group, includeHistory);
 		else if (trackHistory != null)
-			return getChatRoomInfo(roomGuid, trackHistory);
+			return getChatRoomInfo(roomGuid, trackHistory, includeHistory);
 		else if (block != null) {
 			try {
-				return getChatRoomInfo(roomGuid, block);
+				return getChatRoomInfo(roomGuid, block, includeHistory);
 			} catch (NotFoundException e) {
 				logger.debug("Block not visible for chat room {}", roomGuid.toString());
 				return null;
@@ -430,7 +430,7 @@ public class ChatSystemBean implements ChatSystem {
 			return null;
 		}
 	}
-	
+
 	public List<? extends ChatMessage> getChatRoomMessages(Guid roomGuid, ChatRoomKind kind, long lastSeenSerial) {
 		switch (kind) {
 		case POST:
@@ -528,7 +528,7 @@ public class ChatSystemBean implements ChatSystem {
 		
 		LiveState.getInstance().queueUpdate(new ChatRoomEvent(roomGuid, ChatRoomEvent.Detail.MESSAGES_CHANGED));
 	}
-
+	
 	public boolean canJoinChat(Guid roomGuid, ChatRoomKind kind, Guid userId) {
 		try {
 			User user = getUserFromGuid(userId);
