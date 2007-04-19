@@ -17,7 +17,7 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
     }
     
     __gproperties__ = {
-        'dimension': (gobject.TYPE_UINT, 'Dimension', 'Scale to this size', 0, 2**32-1, 0, gobject.PARAM_READWRITE)
+        'dimension': (gobject.TYPE_UINT, 'Dimension', 'Scale to this size', 0, 1000, 0, gobject.PARAM_READWRITE)
     }    
     
     TRANSITION_STEPS = 10
