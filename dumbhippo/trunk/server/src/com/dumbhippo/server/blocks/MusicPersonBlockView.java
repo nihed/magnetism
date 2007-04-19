@@ -22,9 +22,10 @@ public class MusicPersonBlockView extends AbstractPersonBlockView implements Mus
 		super(viewpoint, block, gbd, participated);
 	}
 	
-	void populate(PersonView userView) {
+	public void populate(PersonView userView, List<ChatMessageView> recentMessages, int messageCount) {
 		partiallyPopulate(userView);
-		setMessageCount(0);
+		setRecentMessages(recentMessages);
+		setMessageCount(messageCount);
 		setPopulated(true);
 	}
 	
@@ -86,16 +87,6 @@ public class MusicPersonBlockView extends AbstractPersonBlockView implements Mus
 			return Collections.emptyList();
 		else
 			return history.subList(0, history.size() - 1);
-	}
-
-	@Override
-	public ChatMessageView getLastMessage() {
-		return null; 
-	}
-	
-	@Override
-	public List<ChatMessageView> getRecentMessages() {
-		return Collections.emptyList(); 
 	}
 
 	public List<TrackView> getTrackViews() {
