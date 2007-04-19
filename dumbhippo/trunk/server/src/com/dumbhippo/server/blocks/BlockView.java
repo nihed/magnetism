@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.List;
 
 import com.dumbhippo.DateUtils;
-import com.dumbhippo.StringUtils;
 import com.dumbhippo.Thumbnail;
 import com.dumbhippo.Thumbnails;
 import com.dumbhippo.XmlBuilder;
@@ -12,7 +11,6 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
-import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.UserBlockData;

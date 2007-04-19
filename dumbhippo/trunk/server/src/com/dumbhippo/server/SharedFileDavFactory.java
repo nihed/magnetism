@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StreamUtils;
-import com.dumbhippo.TypeUtils;
 import com.dumbhippo.dav.DavNode;
 import com.dumbhippo.dav.DavProperty;
 import com.dumbhippo.dav.DavResourceType;
