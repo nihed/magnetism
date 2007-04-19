@@ -59,7 +59,7 @@ class PrelistedStock(object):
             stock = class_constructor({'id': self.__id, 'ticker': ticker})
             return stock                  
         except:
-            self.__logger.exception("failed to add stock %s", id)        
+            self.__logger.exception("failed to add stock %s", self.__id)        
             return None
         
 class StockReader(gobject.GObject):

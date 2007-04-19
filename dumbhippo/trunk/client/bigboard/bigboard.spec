@@ -1,5 +1,5 @@
 Name:           bigboard
-Version:        0.1.2
+Version:        0.1.4
 Release:        1
 Summary:        Sidebar application launcher using mugshot.org
 
@@ -11,7 +11,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:       mugshot
 Requires:       deskbar-applet
-Requires:       hippo-canvas
+Requires:       hippo-canvas-python
 Requires:       gnome-python2-desktop
 Requires:       gnome-python2-gnomedesktop
 Requires:       gnome-python2-gnomekeyring
@@ -47,6 +47,13 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/bigboard
 
 %changelog
+* Thu Apr 19 2007 Colin Walters <walters@redhat.com> - 0.1.4-1
+- Update 
+
+* Wed Apr 18 2007 Colin Walters <walters@redhat.com> - 0.1.3-1
+- Update 
+- Require hippo-canvas-python
+
 * Tue Apr 17 2007 Colin Walters <walters@redhat.com> - 0.1.2-1
 - Update 
 

@@ -4,6 +4,7 @@ import gobject, gtk
 import hippo
 
 import bigboard.mugshot as mugshot
+import bigboard.libbig as libbig
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, \
              ActionLink, CanvasEntry, PrelightingCanvasBox, CanvasScrollBars
 
@@ -12,6 +13,10 @@ import apps_widgets, apps_directory
 _logger = logging.getLogger("bigboard.AppBrowser")
 
 class AppOverview(PrelightingCanvasBox):
+    __gsignals__ = {
+        "more-info" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
+    }
+
     def __init__(self, app=None):
         super(AppOverview, self).__init__(box_width=200, border=1, border_color=0x666666FF, padding=2)
         
@@ -21,6 +26,10 @@ class AppOverview(PrelightingCanvasBox):
         self.__description = hippo.CanvasText(size_mode=hippo.CANVAS_SIZE_WRAP_WORD)
         self.append(self.__description)     
         
+        self.__moreinfo = ActionLink(text="More Info", xalign=hippo.ALIGNMENT_START)
+        self.__moreinfo.connect("button-press-event", lambda l,e: self.emit("more-info", self.__app))
+        self.append(self.__moreinfo)
+
         #self.__updated = hippo.CanvasText(text="Last updated", xalign=hippo.ALIGNMENT_START)
         #self.append(self.__updated)
         #self.__homelink = ActionLink(text="Developer's home page", xalign=hippo.ALIGNMENT_START)
@@ -218,7 +227,7 @@ class AppBrowser(hippo.CanvasWindow):
     
         self.__box = CanvasHBox(spacing=10)
     
-        self.__left_box = CanvasVBox()
+        self.__left_box = CanvasVBox(spacing=4)
         self.__box.append(self.__left_box)
         
         self.__search_text = hippo.CanvasText(text="Search", font="Bold 12px")
@@ -229,11 +238,16 @@ class AppBrowser(hippo.CanvasWindow):
         self.__left_box.append(self.__search_input)        
     
         self.__overview = AppOverview()
+        self.__overview.connect("more-info", lambda o, app: self.__on_show_more_info(app))
         self.__left_box.append(self.__overview)
         self.__left_box.set_child_visible(self.__overview, False)     
         
         self.__cat_usage = AppCategoryUsage()
         self.__left_box.append(self.__cat_usage)   
+
+        browse_link = ActionLink(text="Browse popular applications") 
+        browse_link.connect("button-press-event", lambda l,e: self.__on_browse_popular_apps())
+        self.__left_box.append(browse_link)
     
         self.__right_scroll = CanvasScrollBars(horiz=hippo.SCROLLBAR_NEVER)
         self.__right_box = CanvasVBox(border=0)
@@ -262,6 +276,10 @@ class AppBrowser(hippo.CanvasWindow):
     def __on_app_selected(self, app):
         self.__left_box.set_child_visible(self.__overview, True)
         self.__overview.set_app(app)
+
+    def __on_show_more_info(self, app):
+        libbig.show_url("http://mugshot.org/application?id=" + app.get_mugshot_app().get_id())
+        self.hide()
         
     def __on_app_launch(self):
         self.__overview.launch()
@@ -270,6 +288,10 @@ class AppBrowser(hippo.CanvasWindow):
     def __on_keypress(self, event):
         if event.keyval == 65307:
             self.hide()
+
+    def __on_browse_popular_apps(self):
+        libbig.show_url("http://mugshot.org/applications")
+        self.hide()
             
     def __on_search_changed(self, input, text):
         if self.__idle_search_id > 0:
