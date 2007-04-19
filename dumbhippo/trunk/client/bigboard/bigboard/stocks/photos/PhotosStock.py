@@ -243,7 +243,7 @@ class PhotosStock(AbstractMugshotStock):
         (entity, acct, thumbnail) = self.__current_image
 
         self.__favicon.set_url(acct.get_icon())
-        self.__title.set_property("text", thumbnail.get_title())
+        self.__title.set_property("text", thumbnail.get_title() or "(untitled)")
      
         self.__fromname.set_property("text", entity.get_name())
         self.__fromphoto.set_url(entity.get_photo_url())        
