@@ -18,11 +18,13 @@ import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.Track;
+import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.AnonymousViewpoint;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.Viewpoint;
@@ -63,7 +65,21 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 		
 		userView.setTrackHistory(tracks);
 		
-		blockView.populate(userView);
+		// Naively, you might think that a MUSIC_PERSON block never has messages, because
+		// we suppress MUSIC_PERSON blocks when there is a MUSIC_CHAT block for the same
+		// track above it, but MUSIC_PERSON blocks with messages can appear in the
+		// "X's Mugshot" (participated) part of the web, since MUSIC_CHAT blocks won't
+		// appear there unless the chat messages are by the person playing the music.
+		TrackHistory trackHistory = tracks.get(0).getTrackHistory();
+		List<ChatMessageView> messageViews = chatSystem.viewMessages(chatSystem.getNewestTrackMessages(trackHistory, MusicChatBlockView.RECENT_MESSAGE_COUNT), viewpoint);
+		
+		int messageCount;
+		if (messageViews.size() < MusicChatBlockView.RECENT_MESSAGE_COUNT) // Optimize out a query
+			messageCount = messageViews.size();
+		else
+			messageCount = chatSystem.getTrackMessageCount(trackHistory);
+		
+		blockView.populate(userView, messageViews, messageCount);
 	}
 	
 	public Set<User> getInterestedUsers(Block block) {

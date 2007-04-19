@@ -230,6 +230,10 @@ public class TrackView {
 			return null;
 	}
 	
+	public TrackHistory getTrackHistory() {
+		return trackHistory;
+	}
+	
 	@Override
 	public String toString() {
 		return "{trackView artist=" + getArtist() + " album=" + getAlbum() + " name=" + getName() + "}";

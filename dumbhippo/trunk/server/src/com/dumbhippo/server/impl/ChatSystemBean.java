@@ -109,8 +109,11 @@ public class ChatSystemBean implements ChatSystem {
 		case POST:
 			Post post = em.find(Post.class, block.getData1AsGuid().toString());
 			return getPostMessages(post, lastSeenSerial);
-		case GROUP_MEMBER:
 		case MUSIC_PERSON:
+			// If the caller already has a BlockView and hence the latest TrackHistory,
+			// we don't want to look that up again here
+			throw new RuntimeException("Use getTrackMessages() instead"); 
+		case GROUP_MEMBER:
 			return Collections.emptyList();
 		}
 		
@@ -128,8 +131,9 @@ public class ChatSystemBean implements ChatSystem {
 		case POST:
 			Post post = em.find(Post.class, block.getData1AsGuid().toString());
 			return getNewestPostMessages(post, maxResults);
-		case GROUP_MEMBER:
 		case MUSIC_PERSON:
+			throw new RuntimeException("Use getNewestTrackMessages() instead"); // for efficiency 
+		case GROUP_MEMBER:
 			return Collections.emptyList();
 		}
 		
@@ -147,8 +151,9 @@ public class ChatSystemBean implements ChatSystem {
 		case POST:
 			Post post = em.find(Post.class, block.getData1AsGuid().toString());
 			return getPostMessageCount(post);
-		case GROUP_MEMBER:
 		case MUSIC_PERSON:
+			throw new RuntimeException("Use getTrackMessageCount() instead"); // for efficiency 
+		case GROUP_MEMBER:
 			return 0;
 		}
 		
@@ -265,7 +270,7 @@ public class ChatSystemBean implements ChatSystem {
 		return groupMessage;
 	}
 
-	private List<TrackMessage> getNewestTrackMessages(TrackHistory trackHistory, int maxResults) {
+	public List<TrackMessage> getNewestTrackMessages(TrackHistory trackHistory, int maxResults) {
 		Query q = em.createQuery("SELECT tm from TrackMessage tm WHERE tm.trackHistory = :trackHistory ORDER by tm.timestamp DESC");
 		q.setParameter("trackHistory", trackHistory);
 		if (maxResults >= 0)
@@ -282,7 +287,7 @@ public class ChatSystemBean implements ChatSystem {
 		return TypeUtils.castList(TrackMessage.class, q.getResultList());
 	}
 	
-	private int getTrackMessageCount(TrackHistory trackHistory) {
+	public int getTrackMessageCount(TrackHistory trackHistory) {
 		Query q = em.createQuery("SELECT count(tm) from TrackMessage tm WHERE tm.trackHistory = :trackHistory");
 		q.setParameter("trackHistory", trackHistory);
 		

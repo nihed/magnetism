@@ -9,6 +9,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ChatMessage;
 import com.dumbhippo.persistence.Sentiment;
+import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -24,6 +25,8 @@ public interface ChatSystem {
 	public List<? extends ChatMessage> getMessages(Block block, long lastSeenSerial);
 	
 	public List<? extends ChatMessage> getNewestMessages(Block block, int maxResults);
+	
+	public List<? extends ChatMessage> getNewestTrackMessages(TrackHistory trackHistory, int maxResults);
 
 	/**
 	 * Get the total count of messages that were sent to the chatroom about this
@@ -33,6 +36,8 @@ public interface ChatSystem {
 	 * @return the total number of messages about this block
 	 */
 	public int getMessageCount(Block block);
+	
+	public int getTrackMessageCount(TrackHistory trackHistory);
 	
 	public List<ChatMessageView> viewMessages(List<? extends ChatMessage> messages, Viewpoint viewpoint);
 
