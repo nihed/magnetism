@@ -403,12 +403,12 @@ on_block_title_changed(HippoBlock *block,
                        GParamSpec *arg, /* null when first calling this */
                        void       *data)
 {
-    HippoCanvasBlock *canvas_block;
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
+    HippoCanvasBlockGeneric *block_generic = HIPPO_CANVAS_BLOCK_GENERIC(canvas_block);
+    
     char *title;
     char *link;
 
-    canvas_block = HIPPO_CANVAS_BLOCK(data);
-    
     title = NULL;
     link = NULL;
     g_object_get(G_OBJECT(block),
@@ -417,6 +417,9 @@ on_block_title_changed(HippoBlock *block,
                  NULL);
 
     hippo_canvas_block_set_title(canvas_block, title, link, FALSE);
+    g_object_set(G_OBJECT(block_generic->quipper),
+                 "title", title,
+                 NULL);
     
     g_free(title);
     g_free(link);
@@ -552,6 +555,10 @@ hippo_canvas_block_generic_set_block(HippoCanvasBlock *canvas_block,
     if (canvas_block->block != NULL) {
         g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::title",
+                         G_CALLBACK(on_block_title_changed),
+                         canvas_block);
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::title-link",
                          G_CALLBACK(on_block_title_changed),
                          canvas_block);
         g_signal_connect(G_OBJECT(canvas_block->block),
