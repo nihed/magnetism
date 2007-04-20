@@ -49,6 +49,9 @@ class Application(gobject.GObject):
 
     def get_category(self):
         return self.__app and self.__app.get_category() or self.__menu_entry.parent.get_name()
+
+    def get_is_excluded(self):
+        return self.__menu_entry and self.__menu_entry.get_is_excluded()
         
     def get_local_pixbuf(self):
         if self.__desktop_entry:
