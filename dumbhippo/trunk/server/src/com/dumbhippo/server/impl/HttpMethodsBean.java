@@ -2050,6 +2050,30 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 	
+	public void doSetAmazonUrl(XmlBuilder xml, UserViewpoint viewpoint, String urlOrUserIdStr) throws XmlMethodException {		
+		String urlOrUserId = urlOrUserIdStr.trim();
+
+		String amazonUserId = StringUtils.findPathElementAfter(urlOrUserId, "/profile/");
+		if (amazonUserId == null) {
+			if (urlOrUserId.startsWith("http://") || urlOrUserId.toLowerCase().contains(("amazon"))) {
+			    throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Enter your public profile URL");
+			} else {
+				// we also want to handle a user entering only an id
+				amazonUserId = urlOrUserId;
+			}
+		}
+		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.AMAZON);
+		// TODO: we could make a LookupUserContent web request to Amazon before actually setting the handle 
+		try {
+			external.setHandleValidating(amazonUserId);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
+				
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+	}
+	
 	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException {
 		// DO NOT cut and paste this block into similar external account methods. It's only here because
 		// we don't use the "love hate" widget on /account for the website, and the javascript glue 

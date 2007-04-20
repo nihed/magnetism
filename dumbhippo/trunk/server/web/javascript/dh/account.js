@@ -160,6 +160,12 @@ dh.account.setPicasaName = function(name, loadFunc, errorFunc) {
 						loadFunc, errorFunc);
 }
 
+dh.account.setAmazonUrl = function(name, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("setAmazonUrl",
+				          { "urlOrUserId" : name },
+						  loadFunc, errorFunc);
+}
+
 dh.account.createExternalAccountOnHateSavedFunc = function(entry, accountType) {
 	return function(value) {
 		var oldMode = entry.getMode();
@@ -492,6 +498,20 @@ dh.account.onPicasaLoveSaved = function(value) {
 	  	    	 }); 
 }
 
+dh.account.onAmazonLoveSaved = function(value) {
+	var entry = dh.account.amazonEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+  	dh.account.setAmazonUrl(value, 
+	 	    	 function(childNodes, http) {
+	 	    	 	entry.setMode('love');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 }); 
+}
+
 dh.account.disableFacebookSession = function() {   
   	dh.server.doPOST("disablefacebooksession",
 			 	     {},
@@ -616,6 +636,17 @@ dh.account.createPicasaEntry = function() {
 	dh.account.picasaEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.picasaEntry, 'PICASA');
 }
 
+dh.account.createAmazonEntry = function() {	
+	dh.account.amazonEntry = new dh.lovehate.Entry('dhAmazon', 'Amazon profile URL', dh.account.initialAmazonUrl,
+					'I enjoy an ascetic lifestyle', dh.account.initialAmazonHateQuip, 
+					'Your friends see what you add to your public wish lists and your reviews.',
+					'http://www.amazon.com/gp/pdp/profile/');
+	dh.account.amazonEntry.setSpecialLoveValue("My Profile");				
+	dh.account.amazonEntry.onLoveSaved = dh.account.onAmazonLoveSaved;
+	dh.account.amazonEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.amazonEntry, 'AMAZON');
+	dh.account.amazonEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.amazonEntry, 'AMAZON');
+}
+
 dhAccountInit = function() {
 	if (!dh.account.active) {
 		dh.dom.disableChildren(document.getElementById("dhAccountContents"));
@@ -665,6 +696,7 @@ dhAccountInit = function() {
 	dh.account.createNetflixEntry();
 	dh.account.createGoogleReaderEntry();
 	dh.account.createPicasaEntry();	
+	// dh.account.createAmazonEntry();
 }
 
 dh.event.addPageLoadListener(dhAccountInit);

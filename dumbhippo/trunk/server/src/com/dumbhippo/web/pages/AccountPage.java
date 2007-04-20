@@ -325,6 +325,26 @@ public class AccountPage {
 		return getExternalAccountHandle(ExternalAccountType.PICASA);
 	}
 	
+	public String getAmazonSentiment() {
+		return getExternalAccountSentiment(ExternalAccountType.AMAZON);
+	}
+	
+	public String getAmazonHateQuip() {
+		return getExternalAccountHateQuip(ExternalAccountType.AMAZON);
+	}
+	
+	public String getAmazonUrl() {
+		ExternalAccount external;
+		try {
+			external = externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), ExternalAccountType.AMAZON);
+			if (external.hasAccountInfo()) {
+			    return external.getLink();
+			}
+		} catch (NotFoundException e) {
+			// nothing to do
+		}
+		return "";
+	}
 	
 	/**
 	 * Returns a list of supported account views; with the ExternalAccount information for the

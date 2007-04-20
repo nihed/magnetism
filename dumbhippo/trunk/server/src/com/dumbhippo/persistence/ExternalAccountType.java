@@ -749,12 +749,7 @@ public enum ExternalAccountType {
 		@Override
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
-		}
-		
-		@Override 
-		public boolean isNew() {
-			return true;
-		}		
+		}	
 	},
 	GOOGLE_READER("Google Reader") { // 16
 		@Override
@@ -882,6 +877,69 @@ public enum ExternalAccountType {
 		@Override 
 		public boolean isNew() {
 			return true;
+		}
+	},
+	AMAZON("Amazon") { // 18
+		@Override
+		public String getDomNodeIdName() {
+			return "Amazon";
+		}
+		
+		@Override
+		public String getIconName() {
+			return "favicon_amazon.png";
+		}
+		
+		@Override
+		public String getLink(String handle, String extra) {
+			return "http://www.amazon.com/gp/pdp/profile/" + StringUtils.urlEncode(handle);
+		}
+		
+		@Override
+		public String getSiteLink() {
+			return "http://amazon.com/";
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "My Profile";
+		}
+		
+		@Override
+	    public String getSiteUserInfoType() {
+	    	return "profile URL";
+	    }
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				if (!(StringUtils.isAlphanumeric(handle) && (handle.length() == 14)))
+					throw new ValidationException("Amazon user id can only have letters and digits and be 14 characters long");
+					
+				try {
+					new URL(getLink(handle, null));
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid Amazon user id '" + handle + "': " + e.getMessage());
+				}
+			}
+			return handle;
+		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}
+		
+		@Override 
+		public boolean isNew() {
+			return true;
+		}
+		
+		// This is temporary, so that it doesn't show up on the account page
+		@Override
+		public boolean isSupported() {
+			return false;
 		}
 	};
 	
