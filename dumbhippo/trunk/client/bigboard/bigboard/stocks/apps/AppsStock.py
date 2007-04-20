@@ -101,7 +101,7 @@ class Application(gobject.GObject):
             
     def launch(self):
         if self.__desktop_entry:
-            self.__desktop_entry.launch(())
+            self.__desktop_entry.launch([])
             
 class AppDisplayLauncher(apps_widgets.AppDisplay):
     def __init__(self):
