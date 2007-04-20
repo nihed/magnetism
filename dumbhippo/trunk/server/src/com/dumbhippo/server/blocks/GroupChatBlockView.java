@@ -99,7 +99,11 @@ public class GroupChatBlockView extends BlockView implements TitleBlockView {
 	
 	@Override
 	public String getChatId() {
-		return group.getGroup().getId();
+		// Only active group members can chat
+		if (group.getStatus().getCanChat())
+			return group.getGroup().getId();
+		else
+			return null;
 	}
 	
 	@Override
