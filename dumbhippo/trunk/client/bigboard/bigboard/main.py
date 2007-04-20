@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, sys, threading, getopt, logging, StringIO, stat
+import os, sys, threading, getopt, logging, StringIO, stat, signal
 import xml.dom.minidom
 
 import gobject, gtk, pango, dbus, dbus.glib
@@ -298,6 +298,8 @@ def main():
         elif o in ("-h", "--help"):
             usage()
             sys.exit()
+
+    signal.signal(signal.SIGINT, lambda i,frame: sys.stderr.write('Caught SIGINT, departing this dear world\n') or os._exit(0))
     
     def logger(domain, priority, msg):
         print msg
