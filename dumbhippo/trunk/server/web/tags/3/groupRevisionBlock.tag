@@ -13,7 +13,7 @@
 
 <c:set var="cssClass" value="dh-box-${chatHeader ? 'grey' : 'orange'}${offset ? 2 : 1}"/>
 
-<dht3:blockContainer cssClass="${cssClass}" blockId="${blockId}" expandable="${!oneLine && !chatHeader}">
+<dht3:blockContainer cssClass="${cssClass}" blockId="${blockId}" title="Change to ${block.groupView.name}" expandable="${!oneLine && !chatHeader}">
 	<dht3:blockLeft block="${block}" chatHeader="${chatHeader}">
 		<dht3:blockTitle>
 		    <c:choose>
@@ -39,6 +39,7 @@
 		</div>
         <c:if test="${!chatHeader && !empty block.chatId}">
 			<dht3:blockContent blockId="${blockId}">
+				<dht3:quipper block="${block}" blockId="${blockId}"/>
 				<dht3:chatPreview block="${block}" blockId="${blockId}"/>
 			</dht3:blockContent>		    
 		</c:if>

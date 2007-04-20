@@ -10,15 +10,11 @@
 <dh:default var="showChatLink" value="true"/>
 
 <div id="dhStackerBlockChat-${blockId}">
-	<c:if test="${showChatLink}">
-		<c:choose>
-			<c:when test="${block.chattingCount > 0}">
-				<span class="dh-stacker-block-content-post-chatting"><c:out value="${block.chattingCount}"/></span> people chatting <dht:actionLinkChat prefix=" | " oneLine="true" chatId="${block.chatId}" kind="${block.chatKind}"/>
-			</c:when>
-			<c:otherwise><dht:actionLinkChat oneLine="true" chatId="${block.chatId}" kind="${block.chatKind}"/></c:otherwise>
-		</c:choose>
-	</c:if>
 	<c:forEach items="${block.recentMessages}" end="4" var="msg">
 		<dht3:chatMessage msg="${msg}"/>
 	</c:forEach>
+	<c:if test="${showChatLink}">
+		<dht:setJoinChatUri chatId="${chatId}"/>
+		<dht:actionLink title="See all Quips and Comments" href="${joinChatUri}">Quips and Comments (${block.messageCount}) &raquo;</dht:actionLink>
+	</c:if>
 </div>

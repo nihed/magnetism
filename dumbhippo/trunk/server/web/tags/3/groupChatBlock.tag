@@ -12,7 +12,7 @@
 
 <c:set var="cssClass" value="dh-box-${chatHeader ? 'grey' : 'orange'}${offset ? 2 : 1}"/>
 
-<dht3:blockContainer cssClass="${cssClass}" blockId="${blockId}" expandable="${!oneLine && !chatHeader}">
+<dht3:blockContainer cssClass="${cssClass}" blockId="${blockId}" title="${block.groupView.name}" expandable="${!oneLine && !chatHeader}">
 	<dht3:blockLeft block="${block}" chatHeader="${chatHeader}">
 	    <dht3:blockTitle>
 		    <c:out value="${block.typeTitle}"/>: <dht:actionLinkChat linkText="${block.title}" oneLine="true" chatId="${block.groupView.group.id}" kind="${chatKind}"/>
@@ -24,6 +24,7 @@
         </c:if>
         <c:if test="${!chatHeader}">
 			<dht3:blockContent blockId="${blockId}">
+				<dht3:quipper block="${block}" blockId="${blockId}"/>
 				<dht3:chatPreview block="${block}" blockId="${blockId}"/>
 			</dht3:blockContent>
 		</c:if>
