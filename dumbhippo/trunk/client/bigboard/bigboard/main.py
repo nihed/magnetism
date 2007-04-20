@@ -11,7 +11,10 @@ import bigboard
 import bigboard.big_widgets
 from bigboard.big_widgets import Sidebar, CommandShell, CanvasHBox, ActionLink
 from bigboard.stock import Stock
-import bigboard.libbig as libbig
+import bigboard.libbig
+import bigboard.libbig.logutil
+import bigboard.libbig.xmlquery
+import bigboard.libbig.dbusutil
 
 class GradientHeader(hippo.CanvasGradient):
     def __init__(self, **kwargs):
@@ -45,7 +48,7 @@ class PrelistedStock(object):
         fmt_version = int(stock.getAttribute("version") or "0")            
         class_name = self.__id.split('.')[-1]
         try:
-            ticker = libbig.get_xml_element_value(stock, 'ticker')
+            ticker = bigboard.libbig.xmlquery.get_element_value(stock, 'ticker')
         except KeyError:
             ticker = ""
             
@@ -88,7 +91,7 @@ class StockReader(gobject.GObject):
                 self.__logger.debug("parsing prelisting %s", listing)
                 doc = xml.dom.minidom.parse(listing)
                 stock = doc.documentElement
-                id = libbig.get_xml_element_value(stock, 'id')
+                id = bigboard.libbig.xmlquery.get_element_value(stock, 'id')
 
                 self.emit("stock-added", PrelistedStock(id, stockdir))
                 
@@ -102,7 +105,7 @@ class Exchange(hippo.CanvasBox):
                                  spacing=4)      
         self.__stock = stock
         self.__ticker_text = None
-        self.__state = libbig.PrefixedState('/panel/stock/' + stock.get_id() + "/") 
+        self.__state = bigboard.libbig.state.PrefixedState('/panel/stock/' + stock.get_id() + "/") 
         self.__state.set_default('expanded', True)
         if stock.get_ticker() == "-":
             sep = Separator()
@@ -156,11 +159,11 @@ class BigBoardPanel(object):
         
         self.__logger.info("constructing")
         
-        self.__state = libbig.PrefixedState('/panel/')  
+        self.__state = bigboard.libbig.state.PrefixedState('/panel/')  
         
         self.__state.set_default('listed', 'org.mugshot.bigboard.SelfStock;org.mugshot.bigboard.SearchStock;org.mugshot.bigboard.AppsStock;org.mugshot.bigboard.PhotosStock')
                        
-        self.__size_str = libbig.BiMap("size", "str", {Stock.SIZE_BULL: u'bull', Stock.SIZE_BEAR: u'bear'})
+        self.__size_str = bigboard.libbig.BiMap("size", "str", {Stock.SIZE_BULL: u'bull', Stock.SIZE_BEAR: u'bear'})
         self.__state.set_default('size', self.__size_str['size'][Stock.SIZE_BULL])
 
         self.__stockreader = StockReader(dirs)
@@ -315,10 +318,17 @@ def main():
     if debug:
         default_log_level = 'DEBUG'
 
-    libbig.init_logging(default_log_level, debug_modules)
+    bigboard.libbig.logutil.init(default_log_level, debug_modules, 'bigboard.')
 
-    libbig.set_application_name("BigBoard")
-    libbig.set_program_name("bigboard")
+    logging.debug("Requesting D-BUS name")
+    try:
+        bigboard.libbig.dbusutil.take_name('org.mugshot.Bigboard')
+    except bigboard.libbig.dbusutil.DBusNameExistsException:
+        print "Big Board already running; exiting"
+        sys.exit(0)
+
+    bigboard.libbig.set_application_name("BigBoard")
+    bigboard.libbig.set_program_name("bigboard")
     
     hippo.canvas_set_load_image_hook(load_image_hook)    
     

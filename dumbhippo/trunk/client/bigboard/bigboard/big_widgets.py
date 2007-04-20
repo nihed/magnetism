@@ -5,7 +5,7 @@ import cairo, gtk, gobject
 import hippo
 
 from libgimmie import DockWindow
-from libbig import URLImageCache
+from libbig.imagecache import URLImageCache
 import libbig, stock, mugshot, bigboard
 
 class CanvasVBox(hippo.CanvasBox):

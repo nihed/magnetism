@@ -4,8 +4,8 @@ import gobject
 
 import hippo
 
-from singletonmixin import Singleton
-import big_widgets, mugshot, libbig
+import big_widgets, mugshot, libbig, libbig.state
+from libbig.singletonmixin import Singleton
 
 class Stock(object):
     """An item that can be placed on the big board.  Has
@@ -38,7 +38,7 @@ class Stock(object):
         
         # For use in subclasses as well
         self._logger = logging.getLogger('bigboard.stocks.' + self._id)  
-        self._state = libbig.PrefixedState('/stock/' + self._id)
+        self._state = libbig.state.PrefixedState('/stock/' + self._id)
         self._logger.debug("initializing")
         
     def get_id(self):

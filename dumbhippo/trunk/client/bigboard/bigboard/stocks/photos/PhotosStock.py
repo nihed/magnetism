@@ -36,7 +36,7 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
     def set_url(self, url):
         self.__prev_url = self.__current_url
         self.__current_url = url
-        image_cache = libbig.URLImageCache.getInstance()
+        image_cache = libbig.imagecache.URLImageCache.getInstance()
         image_cache.get(url, self.__handle_image_load, self.__handle_image_error)
             
     def __handle_image_load(self, url, surface):
