@@ -309,16 +309,5 @@ class AppBrowser(hippo.CanvasWindow):
         ad = apps_directory.get_app_directory()
         installed_apps = map(self.__stock.get_local_app, ad.get_apps())       
                 
-        mugshot_apps = self.__mugshot.get_my_top_apps()
-        if not mugshot_apps:
-            apps = installed_apps
-            _logger.debug("using installed apps, count=%d" % (len(apps),))            
-        else:
-            loaded_mugshot_apps = map(self.__stock.get_app, mugshot_apps)
-            apps = set(installed_apps)
-            apps.intersection_update(loaded_mugshot_apps)
-            _logger.debug("using favorite apps (%d), intersection count=%d" % (len(loaded_mugshot_apps), 
-                                                                               len(apps),))
-            
-        self.__app_list.set_apps(apps)
-        self.__cat_usage.set_apps(apps)
+        self.__app_list.set_apps(installed_apps)
+        self.__cat_usage.set_apps(installed_apps)
