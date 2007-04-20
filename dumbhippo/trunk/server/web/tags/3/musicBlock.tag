@@ -91,14 +91,16 @@
 					<c:if test="${!chatHeader}">
 						<dht3:chatPreview block="${block}" blockId="${blockId}"/>
 					</c:if>
-					<c:forEach items="${block.oldTracks}" var="track">
-						<div class="dh-music-block-history-item">
-							<span class="dh-music-block-history-artist"><a href="${track.artistPageLink}"><c:out value="${track.artist}"/></a></span>
-							<span class="dh-music-block-history-separator"> - </span>
-							<span class="dh-music-block-history-name"><a href="${track.artistPageLink}"><c:out value="${track.name}"/></a></span>
-							&nbsp;<span class="dh-stacker-block-time-ago"><c:out value="${track.lastListenString}"/></span>
-						</div>
-					</c:forEach>
+					<div class="dh-music-block-history">
+						<c:forEach items="${block.oldTracks}" var="track">
+							<div class="dh-music-block-history-item">
+								<span class="dh-music-block-history-artist"><a href="${track.artistPageLink}"><c:out value="${track.artist}"/></a></span>
+								<span class="dh-music-block-history-separator"> - </span>
+								<span class="dh-music-block-history-name"><a href="${track.artistPageLink}"><c:out value="${track.name}"/></a></span>
+								&nbsp;<span class="dh-stacker-block-time-ago"><c:out value="${track.lastListenString}"/></span>
+							</div>
+						</c:forEach>
+					</div>
 				</dht3:blockContent>			
 			</td>
 			<td width="0%">&nbsp;</td>
