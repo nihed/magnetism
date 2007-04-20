@@ -23,6 +23,7 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockMessage;
 import com.dumbhippo.persistence.ChatMessage;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
@@ -535,34 +536,45 @@ public class ChatSystemBean implements ChatSystem {
 	}
 	
 	public boolean canJoinChat(Guid roomGuid, ChatRoomKind kind, Guid userId) {
-		try {
-			User user = getUserFromGuid(userId);
-			UserViewpoint viewpoint = new UserViewpoint(user);
-			switch (kind) {
-			case POST:
+		User user = getUserFromGuid(userId);
+		UserViewpoint viewpoint = new UserViewpoint(user);
+		switch (kind) {
+		case POST:
+			try {
 				Post post = getPostForRoom(roomGuid);
 				return postingBoard.canViewPost(viewpoint, post);
-			case GROUP:
-				Group group = getGroupForRoom(roomGuid);
-				return groupSystem.isMember(group, user);
-			case MUSIC:
-				TrackHistory trackHistory = getTrackHistoryForRoom(roomGuid);
-				return identitySpider.isViewerSystemOrFriendOf(viewpoint, trackHistory.getUser());
-			case BLOCK:
-				try {
-					// For now say that you can chat on block if you are a recipient
-					// we might want to open it up to "if you can view it", but it
-					// wouldn't match our rules for POST/GROUP/MUSIC
-					stacker.lookupUserBlockData(viewpoint, roomGuid);
-					return true;
-				} catch (NotFoundException e) {
-					return false;
-				}
-			default:
-				throw new RuntimeException("Unknown chat room type " + kind);
+			} catch (NotFoundException e) {
+				return false;
 			}
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
+		case GROUP:
+			// We differ a bit from what we have for other chat types; to
+			// chat on a group you have to be a member, not just able to
+			// see the group
+			try {
+				Group group = getGroupForRoom(roomGuid);
+				GroupMember member = groupSystem.getGroupMember(viewpoint, group, user);
+				return member.getStatus().getCanChat();
+			} catch (NotFoundException e) {
+				return false;
+			}
+		case MUSIC:
+			// Music blocks are always visible, so everybody can chat on them
+			return true;
+		case BLOCK:
+			try {
+				// Most blocks are chattable for anybody that can see them if
+				// they are visbile. There are some exceptions like
+				// GroupRevision; those are handled in the getChatId()
+				// implementation.
+				
+				Block block = stacker.lookupBlock(roomGuid);
+				BlockView blockView = stacker.loadBlock(viewpoint, block);
+				return blockView.getChatId() != null;
+			} catch (NotFoundException e) {
+				return false;
+			}
+		default:
+			throw new RuntimeException("Unknown chat room type " + kind);
 		}
 	}	
 }

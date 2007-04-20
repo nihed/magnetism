@@ -13,8 +13,8 @@
 	<c:forEach items="${block.recentMessages}" end="4" var="msg">
 		<dht3:chatMessage msg="${msg}"/>
 	</c:forEach>
-	<c:if test="${showChatLink}">
-		<dht:setJoinChatUri chatId="${chatId}"/>
+	<c:if test="${showChatLink && !empty block.chatId}">
+		<dht:setJoinChatUri chatId="${block.chatId}"/>
 		<dht:actionLink title="See all Quips and Comments" href="${joinChatUri}">Quips and Comments (${block.messageCount}) &raquo;</dht:actionLink>
 	</c:if>
 </div>

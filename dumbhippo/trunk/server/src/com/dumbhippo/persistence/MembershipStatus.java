@@ -60,7 +60,7 @@ public enum MembershipStatus {
 	 * Can a member of this status chat in the group's chat room
 	 */
 	public boolean getCanChat() {
-		return ordinal() >= ACTIVE.ordinal();
+		return ordinal() >= INVITED.ordinal();
 	}
 
 	/**

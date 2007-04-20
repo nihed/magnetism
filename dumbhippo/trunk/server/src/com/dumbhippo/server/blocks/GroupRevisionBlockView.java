@@ -191,4 +191,12 @@ public class GroupRevisionBlockView extends BlockView implements PersonSourceBlo
 	public String getSentTimeAgo() {
 		return DateUtils.formatTimeAgo(getSentDate());
 	}
+	
+	@Override
+	public String getChatId() {
+		if (group.getStatus().getCanChat())
+			return getBlock().getId();
+		else
+			return null;
+	}
 }

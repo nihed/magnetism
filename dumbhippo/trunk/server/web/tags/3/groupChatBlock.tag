@@ -15,7 +15,15 @@
 <dht3:blockContainer cssClass="${cssClass}" blockId="${blockId}" title="${block.groupView.name}" expandable="${!oneLine && !chatHeader}">
 	<dht3:blockLeft block="${block}" chatHeader="${chatHeader}">
 	    <dht3:blockTitle>
-		    <c:out value="${block.typeTitle}"/>: <dht:actionLinkChat linkText="${block.title}" oneLine="true" chatId="${block.groupView.group.id}" kind="${chatKind}"/>
+		    <c:out value="${block.typeTitle}"/>:
+	    	<c:choose>
+	    		<c:when test="${block.groupView.status.canChat}">
+				     <dht:actionLinkChat linkText="${block.title}" oneLine="true" chatId="${block.groupView.group.id}" kind="${chatKind}"/>
+				</c:when>
+				<c:otherwise>
+					<c:out value="${block.title}"/>
+				</c:otherwise>
+			</c:choose>
         </dht3:blockTitle>
         <c:if test="${chatHeader}">
         	<div class="dh-stacker-block-header-description">
