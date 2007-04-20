@@ -1,9 +1,8 @@
 import httplib2, keyring, libbig, sys, xml, xml.sax, logging, threading, gobject, gtk, datetime
 
-class AbstractDocument(libbig.AutoStruct):
+class AbstractDocument(libbig.struct.AutoStruct):
     def __init__(self):
-        libbig.AutoStruct.__init__(self,
-                                   { 'title' : 'Untitled', 'link' : None })
+        super(AbstractDocument, self).__init__({ 'title' : 'Untitled', 'link' : None })
 
 class SpreadsheetDocument(AbstractDocument):
     def __init__(self):
@@ -54,10 +53,9 @@ class DocumentsParser(xml.sax.ContentHandler):
         return self.__docs
 
 
-class Event(libbig.AutoStruct):
+class Event(libbig.struct.AutoStruct):
     def __init__(self):
-        libbig.AutoStruct.__init__(self,
-                                   { 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '' })
+        super(Event, self).__init__({ 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '' })
 
 ## this is from the "Wuja" applet code, GPL v2
 def parse_timestamp(timestamp, tz=None):

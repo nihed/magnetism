@@ -4,14 +4,16 @@ import gobject, dbus
 
 import libbig
 from libbig import _log_cb
+from libbig.xmlquery import query as xml_query, get_attrs as xml_get_attrs
+from libbig.struct import AutoStruct, AutoSignallingStruct
 
-class ExternalAccount(libbig.AutoSignallingStruct):
+class ExternalAccount(AutoSignallingStruct):
     pass
 
-class ExternalAccountThumbnail(libbig.AutoStruct):
+class ExternalAccountThumbnail(AutoStruct):
     pass
     
-class Entity(libbig.AutoSignallingStruct):
+class Entity(AutoSignallingStruct):
     """Abstract superclass of a Mugshot entity such as person, group, or feed; see
     subclasses."""
     pass
@@ -45,7 +47,7 @@ class Resource(Entity):
 class Feed(Entity):
     pass
 
-class Application(libbig.AutoSignallingStruct):
+class Application(AutoSignallingStruct):
     pass
 
 class Mugshot(gobject.GObject):
@@ -292,31 +294,31 @@ class Mugshot(gobject.GObject):
     def __on_get_person_accounts(self, person, xml_str):
         doc = xml.dom.minidom.parseString(xml_str) 
         accts = []
-        for child in libbig.xml_query(doc.documentElement, 'externalAccount*'):
-            attrs = libbig.xml_gather_attrs(child, ['type', 
-                                                    'sentiment', 
-                                                    'icon'])
+        for child in xml_query(doc.documentElement, 'externalAccount*'):
+            attrs = xml_get_attrs(child, ['type', 
+                                          'sentiment', 
+                                          'icon'])
             accttype = attrs['type']
             if attrs['sentiment'] == 'love':
                 attrs['link'] = child.getAttribute('link')
             thumbnails = []            
             try:
-                thumbnails_node = libbig.xml_query(child, 'thumbnails')
+                thumbnails_node = xml_query(child, 'thumbnails')
             except KeyError:
                 thumbnails_node = None
             if thumbnails_node:
-                for thumbnail in libbig.xml_query(thumbnails_node, 'thumbnail*'):
-                    subattrs = libbig.xml_gather_attrs(thumbnail, ['src', ('title', True), 'href'])
+                for thumbnail in xml_query(thumbnails_node, 'thumbnail*'):
+                    subattrs = xml_get_attrs(thumbnail, ['src', ('title', True), 'href'])
                     thumbnails.append(ExternalAccountThumbnail(subattrs)) 
                 self._logger.debug("%d thumbnails found for account %s (user %s)" % (len(thumbnails), accttype, person)) 
                 attrs['thumbnails'] = thumbnails
             feeds = []
             try:
-                feeds_node = libbig.xml_query(child, 'feeds')
+                feeds_node = xml_query(child, 'feeds')
             except KeyError:
                 feeds_node = None
             if feeds_node:
-                for feed in libbig.xml_query(feeds_node, 'feed*'):
+                for feed in xml_query(feeds_node, 'feed*'):
                     feeds.append(feed.getAttribute('src'))   
                 attrs['feeds'] = feeds          
             acct = ExternalAccount(attrs)
@@ -332,14 +334,14 @@ class Mugshot(gobject.GObject):
     def __load_app_from_xml(self, node):
         id = node.getAttribute("id")
         self._logger.debug("parsing application id=%s", id)
-        attrs = libbig.xml_gather_attrs(node, ['id', 'rank', 'usageCount', 
-                                               'iconUrl', 
-                                               'category',
-                                               'name', 'desktopNames',
-                                               ('description', True),
-                                               ('tooltip', True),
-                                               ('genericName', True)
-                                              ])
+        attrs = xml_get_attrs(node, ['id', 'rank', 'usageCount', 
+                                     'iconUrl', 
+                                     'category',
+                                     'name', 'desktopNames',
+                                     ('description', True),
+                                     ('tooltip', True),
+                                     ('genericName', True)
+                                    ])
         app = None
         if not self.__applications.has_key(attrs['id']):
             app = Application(attrs)

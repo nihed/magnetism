@@ -5,10 +5,9 @@ import xml.sax
 import libbig, mugshot
 
 # object representing a profile; also a sax handler that can parse the xml form
-class Profile(libbig.AutoStruct, xml.sax.ContentHandler):
+class Profile(libbig.struct.AutoStruct, xml.sax.ContentHandler):
     def __init__(self, guid):
-        libbig.AutoStruct.__init__(self,
-                                   { 'name' : None, 'photo' : None, 'who' : str(guid), 'online' : None,
+        super(Profile, self__init__({ 'name' : None, 'photo' : None, 'who' : str(guid), 'online' : None,
                                      'home_url' : None, 'onlineIcon' : None, 'accounts' : [], 'stack' : [],
                                      'email' : None, 'aim' : None})
 
@@ -48,7 +47,7 @@ class Profile(libbig.AutoStruct, xml.sax.ContentHandler):
 class ProfileFactory:
 
     def __init__(self):
-        self._fetcher = libbig.AsyncHTTPFetcher.getInstance()
+        self._fetcher = libbig.http.AsyncHTTPFetcher.getInstance()
         self._mugshot = mugshot.get_mugshot()
         self._baseurl = None
         self._mugshot.connect("initialized", lambda mugshot: self._sync_baseurl())
