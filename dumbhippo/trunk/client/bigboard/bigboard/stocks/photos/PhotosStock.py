@@ -21,9 +21,10 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
     }    
     
     TRANSITION_STEPS = 10
-    
-    def __init__(self, **kwargs):
+
+    def __init__(self, logger, **kwargs):
         hippo.CanvasBox.__init__(self, **kwargs)
+        self._logger = logger
         self.set_clickable(True)
         self.__current_url = None
         self.__prev_url = None
@@ -42,6 +43,7 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
         if url != self.__current_url:
             return
         
+        self._logger.debug("loaded url=%s", url)
         self.emit("loaded", True)
         
         req_changed = False
@@ -84,7 +86,7 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
 
         img_width = self.__surface.get_width()
         img_height = self.__surface.get_height()        
-        
+
         if self.__dimension == 0 or img_width == 0 or img_height == 0:       
             return
         
@@ -94,7 +96,9 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
             scale = (1.0*self.__dimension) / img_width
         else:
             scale = (1.0*self.__dimension) / img_height       
-        
+
+        self._logger.debug("rendering img width=%s height=%s scale=%s", img_width, img_height, scale)
+
         (x,y,w,h) = self.align(int(img_width*scale), int(img_height*scale))
                 
         cr.rectangle(x, y, w, h)
@@ -136,11 +140,17 @@ class TransitioningURLImage(hippo.CanvasBox, hippo.CanvasItem):
             raise AttributeError, 'unknown property %s' % pspec.name        
 
 class PhotosStock(AbstractMugshotStock):
+    SLIDE_TIMEOUT_SEC = 1 * 60  # 1 minute
+    
+    MAX_PREV_IMAGES = 5
+
     """Cycles between photos from friends in Mugshot network"""
     def __init__(self, *args, **kwargs):
         super(PhotosStock,self).__init__(*args, **kwargs)
 
         self.__images = None
+        self.__images_reverse = []
+        self.__images_forward = []
         self.__current_image = None
 
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4)
@@ -149,6 +159,8 @@ class PhotosStock(AbstractMugshotStock):
 
         self.__idle_display_id = 0
         self.__text = hippo.CanvasText(text="No thumbnails found")
+
+        self.__displaymode = "uninitialized" # "none", "photo"
         
         self.__displaybox = CanvasVBox(spacing=4)
         
@@ -162,7 +174,7 @@ class PhotosStock(AbstractMugshotStock):
         self.__displaybox.append(self.__photo_header)
         
         self.__photobox = CanvasHBox(spacing=6)
-        self.__photo = TransitioningURLImage(dimension=self.__photosize)
+        self.__photo = TransitioningURLImage(self._logger, dimension=self.__photosize)
         self.__photo.connect("loaded", lambda photo, loaded: self.__on_image_load(loaded))
         self.__photo.connect("button-press-event", lambda photo, event: self.__visit_photo())
         self.__metabox = CanvasVBox()
@@ -176,13 +188,22 @@ class PhotosStock(AbstractMugshotStock):
         self.__metabox.append(self.__fromname)
         self.__photobox.append(self.__photo)
         self.__photobox.append(self.__metabox)
-        
+
         self.__displaybox.append(self.__photobox)        
+
+        self.__controlbox = CanvasHBox()
+        prev_link = ActionLink(text=u"\u00ab Prev", xalign=hippo.ALIGNMENT_START)
+        prev_link.connect("button-press-event", lambda b,e: self.__do_prev())
+        self.__controlbox.append(prev_link)
+        next_link = ActionLink(text=u"Next \u00bb", xalign=hippo.ALIGNMENT_END)
+        next_link.connect("button-press-event", lambda b,e: self.__do_next())
+        self.__controlbox.append(next_link, hippo.PACK_EXPAND)
+        self.__displaybox.append(self.__controlbox)        
         
         self.__person_accts_len = {} # <Person,int>
         
         self.__bearbox = CanvasVBox()
-        self.__bearphoto = TransitioningURLImage(dimension=self.SIZE_BEAR_CONTENT_PX-6)
+        self.__bearphoto = TransitioningURLImage(self._logger, dimension=self.SIZE_BEAR_CONTENT_PX-6)
         self.__bearphoto.connect("button-press-event", lambda photo, event: self.__visit_photo())        
         self.__bearbox.append(self.__bearphoto)
         
@@ -206,7 +227,7 @@ class PhotosStock(AbstractMugshotStock):
         if not self.__current_image:
             return
         libbig.show_url(mugshot.get_mugshot().get_baseurl() + self.__current_image[0].get_home_url())    
-    
+
     def __thumbnails_generator(self):
         """The infinite photos function.  Cool."""
         found_one = False
@@ -222,6 +243,21 @@ class PhotosStock(AbstractMugshotStock):
                             yield (entity, acct, thumbnail)
             if not found_one:
                 return
+            
+    def __next_image(self):
+        if self.__current_image:
+            self.__images_reverse.append(self.__current_image)
+            if len(self.__images_reverse) > self.MAX_PREV_IMAGES:
+                self.__images_reverse.pop(0)
+        if self.__images_forward:
+            return self.__images_forward.pop()
+        else:
+            return self.__images.next()
+
+    def __prev_image(self):
+        if self.__current_image:
+            self.__images_forward.append(self.__current_image)
+        return self.__images_reverse.pop()
     
     def __set_image(self, imageinfo):
         self.__current_image = imageinfo
@@ -247,12 +283,12 @@ class PhotosStock(AbstractMugshotStock):
      
         self.__fromname.set_property("text", entity.get_name())
         self.__fromphoto.set_url(entity.get_photo_url())        
-    
+
     def __idle_display_image(self):
         self._logger.debug("in idle, doing next image")          
-        imageinfo = self.__images.next()
-        self.__set_image(imageinfo)
-        return True
+        self.__idle_display_id = 0
+        self.__do_next()
+        return False
     
     def __handle_person_change(self, person):
         need_reset = False
@@ -284,20 +320,35 @@ class PhotosStock(AbstractMugshotStock):
             del self.__person_accts_len[person]
         self.__reset()
 
-    def __do_next(self):
-        self._logger.debug("skipping to next")                  
+    def __do_direction(self, is_next):
+        self._logger.debug("skipping to %s" % (is_next and "next" or "prev",))
         try:
-            self.__set_image(self.__images.next())
-            self.__box.append(self.__displaybox)
+            self.__set_image(is_next and self.__next_image() or self.__prev_image())
+            if self.__displaymode == 'text':
+                self.__box.remove(self.__text)
+            if self.__displaymode != 'photo':
+                self.__box.append(self.__displaybox)
+            self.__displaymode = 'photo'
         except StopIteration:
             self._logger.debug("caught StopIteration, displaying no photos text")            
-            self.__box.append(self.__text)        
+            if self.__displaymode == 'photo':
+                self.__box.remove(self.__displaybox)
+            if self.__displaymode != 'text':
+                self.__box.append(self.__text)        
+            self.__displaymode = 'text'
         if self.__idle_display_id > 0:
             gobject.source_remove(self.__idle_display_id)            
-        self.__idle_display_id = gobject.timeout_add(10000, self.__idle_display_image)        
+        self.__idle_display_id = gobject.timeout_add(self.SLIDE_TIMEOUT_SEC * 1000, self.__idle_display_image)        
+
+    def __do_next(self):
+        self.__do_direction(True)
         
+    def __do_prev(self):
+        self.__do_direction(False)
+
     def __reset(self):
         self._logger.debug("resetting")        
         self.__images = self.__thumbnails_generator()
         self.__box.remove_all()        
+        self.__displaymode = 'uninitialized'
         self.__do_next()

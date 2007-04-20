@@ -1,4 +1,4 @@
-import logging, time
+import logging, time, urlparse
 
 import gobject, gtk
 import hippo
@@ -278,7 +278,7 @@ class AppBrowser(hippo.CanvasWindow):
         self.__overview.set_app(app)
 
     def __on_show_more_info(self, app):
-        libbig.show_url("http://mugshot.org/application?id=" + app.get_mugshot_app().get_id())
+        libbig.show_url(urlparse.urljoin(mugshot.get_mugshot().get_baseurl(), "application?id=" + app.get_mugshot_app().get_id()))
         self.hide()
         
     def __on_app_launch(self):
@@ -290,7 +290,7 @@ class AppBrowser(hippo.CanvasWindow):
             self.hide()
 
     def __on_browse_popular_apps(self):
-        libbig.show_url("http://mugshot.org/applications")
+        libbig.show_url(urlparse.urljoin(mugshot.get_mugshot().get_baseurl(), "applications"))
         self.hide()
             
     def __on_search_changed(self, input, text):
@@ -307,7 +307,8 @@ class AppBrowser(hippo.CanvasWindow):
             
     def __sync(self):
         ad = apps_directory.get_app_directory()
-        installed_apps = map(self.__stock.get_local_app, ad.get_apps())       
+        apps = map(self.__stock.get_local_app, ad.get_apps())
+        apps = filter(lambda app: not app.get_is_excluded(), apps)
                 
-        self.__app_list.set_apps(installed_apps)
-        self.__cat_usage.set_apps(installed_apps)
+        self.__app_list.set_apps(apps)
+        self.__cat_usage.set_apps(apps)
