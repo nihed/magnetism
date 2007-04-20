@@ -1,5 +1,6 @@
 package com.dumbhippo.persistence;
 
+import com.dumbhippo.server.AmazonUpdater;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.FlickrUpdater;
 import com.dumbhippo.server.LastFmUpdater;
@@ -50,6 +51,12 @@ public enum PollingTaskFamilyType {
 		public Class<? extends PollingTaskLoader> getLoader() {
 			return PicasaUpdater.class;
 		}
+	},
+	AMAZON() { // 6
+		@Override
+		public Class<? extends PollingTaskLoader> getLoader() {
+			return AmazonUpdater.class;
+		}		
 	};
 	
 	public abstract Class<? extends PollingTaskLoader> getLoader();
