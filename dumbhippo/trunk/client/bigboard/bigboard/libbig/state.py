@@ -1,6 +1,8 @@
 import logging, os
 import xml.dom.minidom
 
+import gobject
+
 import libbig
 from libbig import BiMap
 from libbig.singletonmixin import Singleton
