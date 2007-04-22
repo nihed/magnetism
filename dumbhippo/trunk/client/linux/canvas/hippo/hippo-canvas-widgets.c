@@ -374,3 +374,30 @@ hippo_canvas_entry_new(void)
 {
     return g_object_new(HIPPO_TYPE_CANVAS_ENTRY, NULL);
 }
+
+guint 
+hippo_canvas_entry_get_position(HippoCanvasEntry      *entry)
+{
+    GtkEntry *gtk_entry;
+    guint pos;
+
+    g_object_get(entry, "widget", &gtk_entry, NULL);
+    pos = gtk_editable_get_position(GTK_EDITABLE(gtk_entry));
+    g_object_unref(gtk_entry);
+
+    return pos;
+}
+
+void
+hippo_canvas_entry_set_position(HippoCanvasEntry *entry,
+                                guint pos)
+{
+    GtkEntry *gtk_entry;
+
+    g_object_get(entry, "widget", &gtk_entry, NULL);
+    gtk_editable_set_position(GTK_EDITABLE(gtk_entry), pos);
+    g_object_unref(gtk_entry);
+
+    return pos;
+
+}
