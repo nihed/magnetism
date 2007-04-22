@@ -1178,6 +1178,21 @@
   (return-type "HippoCanvasItem*")
 )
 
+(define-method get_position
+  (of-object "HippoCanvasEntry")
+  (c-name "hippo_canvas_entry_get_position")
+  (return-type "guint")
+)
+
+(define-method set_position
+  (of-object "HippoCanvasEntry")
+  (c-name "hippo_canvas_entry_set_position")
+  (return-type "none")
+  (parameters
+    '("guint" "pos")
+  )
+)
+
 (define-function canvas_scrollbars_new
   (c-name "hippo_canvas_scrollbars_new")
   (is-constructor-of "HippoCanvasScrollbars")

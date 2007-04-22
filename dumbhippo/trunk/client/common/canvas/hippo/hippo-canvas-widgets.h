@@ -71,6 +71,9 @@ void hippo_canvas_scrollbars_set_policy (HippoCanvasScrollbars *scrollbars,
                                          HippoOrientation       orientation,
                                          HippoScrollbarPolicy   policy);
 
+guint hippo_canvas_entry_get_position   (HippoCanvasEntry      *entry);
+void  hippo_canvas_entry_set_position   (HippoCanvasEntry      *entry,
+                                         guint                  pos);
 
 G_END_DECLS
 
