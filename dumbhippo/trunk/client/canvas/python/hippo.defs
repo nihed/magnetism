@@ -106,6 +106,28 @@
   (gtype-id "HIPPO_TYPE_CANVAS_GRADIENT")
 )
 
+(define-object CanvasButton
+  (in-module "Hippo")
+  (parent "HippoCanvasWidget")
+  (c-name "HippoCanvasButton")
+  (gtype-id "HIPPO_TYPE_CANVAS_BUTTON")
+)
+
+
+(define-object CanvasScrollbars
+  (in-module "Hippo")
+  (parent "HippoCanvasWidget")
+  (c-name "HippoCanvasScrollbars")
+  (gtype-id "HIPPO_TYPE_CANVAS_SCROLLBARS")
+)
+
+(define-object CanvasEntry
+  (in-module "Hippo")
+  (parent "HippoCanvasWidget")
+  (c-name "HippoCanvasEntry")
+  (gtype-id "HIPPO_TYPE_CANVAS_ENTRY")
+)
+
 ;; Enumerations and flags ...
 
 (define-enum PackFlags
@@ -221,6 +243,19 @@
     '("unknown" "HIPPO_KEY_UNKNOWN")
     '("return" "HIPPO_KEY_RETURN")
     '("escape" "HIPPO_KEY_ESCAPE")
+    '("tab" "HIPPO_KEY_TAB")
+    '("lefttab" "HIPPO_KEY_LEFTTAB")
+  )
+)
+
+(define-flags Modifier
+  (in-module "Hippo")
+  (c-name "HippoModifier")
+  (gtype-id "HIPPO_TYPE_MODIFIER")
+  (values
+    '("shift" "HIPPO_MODIFIER_ALT")
+    '("ctrl" "HIPPO_MODIFIER_ALT")
+    '("alt" "HIPPO_MODIFIER_ALT")
   )
 )
 
@@ -977,6 +1012,7 @@
   (parameters
     '("HippoKey" "key")
     '("gunichar" "character")
+    '("guint" "modifiers")
   )
 )
 
@@ -1113,9 +1149,49 @@
   (return-type "HippoCanvasItem*")
 )
 
-
-
 ;; From hippo-canvas-widgets.h
+
+(define-function button_get_type
+  (c-name "hippo_button_get_type")
+  (return-type "GType")
+)
+
+(define-function entry_get_type
+  (c-name "hippo_entry_get_type")
+  (return-type "GType")
+)
+
+(define-function scrollbars_get_type
+  (c-name "hippo_scrollbars_get_type")
+  (return-type "GType")
+)
+
+(define-function canvas_button_new
+  (c-name "hippo_canvas_button_new")
+  (is-constructor-of "HippoCanvasButton")
+  (return-type "HippoCanvasItem*")
+)
+
+(define-function canvas_entry_new
+  (c-name "hippo_canvas_entry_new")
+  (is-constructor-of "HippoCanvasEntry")
+  (return-type "HippoCanvasItem*")
+)
+
+(define-function canvas_scrollbars_new
+  (c-name "hippo_canvas_scrollbars_new")
+  (is-constructor-of "HippoCanvasScrollbars")
+  (return-type "HippoCanvasItem*")
+)
+
+(define-method set_root
+  (of-object "HippoCanvasScrollbars")
+  (c-name "hippo_canvas_scrollbars_set_root")
+  (return-type "none")
+  (parameters
+    '("HippoCanvasItem*" "item")
+  )
+)
 
 (define-method set_policy
   (of-object "HippoCanvasScrollbars")
@@ -1126,8 +1202,6 @@
     '("HippoScrollbarPolicy" "policy")
   )
 )
-
-
 
 ;; From hippo-event.h
 
