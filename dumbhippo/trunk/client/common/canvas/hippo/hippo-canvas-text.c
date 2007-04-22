@@ -54,6 +54,7 @@ enum {
 enum {
     PROP_0,
     PROP_TEXT,
+    PROP_MARKUP,
     PROP_ATTRIBUTES,
     PROP_FONT_SCALE,
     PROP_SIZE_MODE
@@ -106,6 +107,15 @@ hippo_canvas_text_class_init(HippoCanvasTextClass *klass)
                                                         _("Text to display"),
                                                         NULL,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_MARKUP,
+                                    g_param_spec_string("markup",
+                                                        _("Markup"),
+                                                        _("Marked-up text to display"),
+                                                        NULL,
+                                                        G_PARAM_WRITABLE));
+
 
     g_object_class_install_property(object_class,
                                     PROP_ATTRIBUTES,
@@ -193,6 +203,27 @@ hippo_canvas_text_set_property(GObject         *object,
                 pango_attr_list_unref(text->attributes);            
             text->attributes = attrs;
             hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(text));
+        }
+        break;
+    case PROP_MARKUP:
+        {
+            char *text;
+            PangoAttrList *attrs;
+            GError *error = NULL;
+
+            if (!pango_parse_markup(g_value_get_string(value),
+                                    -1,
+                                    0,
+                                    &attrs,
+                                    &text,
+                                    NULL,
+                                    &error)) {
+                g_error("Failed to set markup: %s", error->message);
+                return;
+            }
+            g_object_set(object, "text", text, "attributes", attrs, NULL);
+            pango_attr_list_unref(attrs);
+            g_free(text);
         }
         break;
     case PROP_FONT_SCALE:
