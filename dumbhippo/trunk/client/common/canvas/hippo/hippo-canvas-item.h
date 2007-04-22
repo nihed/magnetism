@@ -143,7 +143,8 @@ gboolean hippo_canvas_item_emit_motion_notify_event (HippoCanvasItem  *canvas_it
                                                      HippoMotionDetail detail);
 gboolean hippo_canvas_item_emit_key_press_event     (HippoCanvasItem  *canvas_item,
                                                      HippoKey          key,
-                                                     gunichar          character);
+                                                     gunichar          character,
+                                                     guint             modifiers);
 void     hippo_canvas_item_emit_activated          (HippoCanvasItem *canvas_item);
 void     hippo_canvas_item_emit_paint_needed       (HippoCanvasItem *canvas_item,
                                                     int              x,

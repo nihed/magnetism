@@ -13,14 +13,12 @@
 #define HIPPO_DEFINE_WIDGET_ITEM(lower, Camel)                                         \
     struct _HippoCanvas##Camel { HippoCanvasWidget parent; };                          \
     struct _HippoCanvas##Camel##Class { HippoCanvasWidgetClass parent; };              \
-    static void hippo_canvas_##lower##_init(HippoCanvas##Camel *lower) {}              \
     static void hippo_canvas_##lower##_class_init(HippoCanvas##Camel##Class *lower) {} \
     G_DEFINE_TYPE(HippoCanvas##Camel, hippo_canvas_##lower, HIPPO_TYPE_CANVAS_WIDGET)
 
 #define HIPPO_DEFINE_WIDGET_ITEM_CUSTOM_INIT(lower, Camel)                             \
     struct _HippoCanvas##Camel { HippoCanvasWidget parent; };                          \
     struct _HippoCanvas##Camel##Class { HippoCanvasWidgetClass parent; };              \
-    static void hippo_canvas_##lower##_init(HippoCanvas##Camel *lower) {}              \
     G_DEFINE_TYPE(HippoCanvas##Camel, hippo_canvas_##lower, HIPPO_TYPE_CANVAS_WIDGET)
 
 
@@ -109,21 +107,22 @@ hippo_canvas_button_class_init(HippoCanvasButtonClass *class)
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
 }
 
+static void
+hippo_canvas_button_init(HippoCanvasButton * button)
+{
+    GtkWidget *gtk_button;
+
+    gtk_button = gtk_button_new();
+    g_object_set(button, "widget", gtk_button, NULL);
+
+    g_signal_connect(gtk_button, "clicked",
+                     G_CALLBACK(on_canvas_button_clicked), button);
+}
+
 HippoCanvasItem*
 hippo_canvas_button_new(void)
 {
-    GtkWidget *button;
-    HippoCanvasItem *item;
-    
-    button = gtk_button_new();
-    item = g_object_new(HIPPO_TYPE_CANVAS_BUTTON,
-                        "widget", button,
-                        NULL);
-
-    g_signal_connect(button, "clicked",
-                     G_CALLBACK(on_canvas_button_clicked), item);
-
-    return item;
+    return g_object_new(HIPPO_TYPE_CANVAS_BUTTON, NULL);
 }
 
 /* Hack to work-around GtkViewport bug http://bugzilla.gnome.org/show_bug.cgi?id=361781
@@ -148,9 +147,8 @@ suppress_shadow_width(GtkWidget *widget)
     gtk_widget_set_name(widget, "hippo-no-shadow-widget");
 }
 
-
-HippoCanvasItem*
-hippo_canvas_scrollbars_new(void)
+static void
+hippo_canvas_scrollbars_init(HippoCanvasScrollbars *scrollbars)
 {
     GtkWidget *widget;
     GtkWidget *canvas;
@@ -168,10 +166,14 @@ hippo_canvas_scrollbars_new(void)
     gtk_viewport_set_shadow_type(GTK_VIEWPORT(gtk_bin_get_child(GTK_BIN(widget))),
                                  GTK_SHADOW_NONE);
     suppress_shadow_width(gtk_bin_get_child(GTK_BIN(widget)));
+    g_object_set(scrollbars, "widget", widget, NULL);
+}
 
-    return g_object_new(HIPPO_TYPE_CANVAS_SCROLLBARS,
-                        "widget", widget,
-                        NULL);
+
+HippoCanvasItem*
+hippo_canvas_scrollbars_new(void)
+{
+    return g_object_new(HIPPO_TYPE_CANVAS_SCROLLBARS, NULL);
 }
 
 void
@@ -262,6 +264,12 @@ on_canvas_entry_key_press_event(GtkWidget        *widget,
     case GDK_Escape:
         key = HIPPO_KEY_ESCAPE;
         break;
+    case GDK_Tab:
+        key = HIPPO_KEY_TAB;
+        break;
+    case GDK_ISO_Left_Tab:
+        key = HIPPO_KEY_LEFTTAB;
+        break;
     default:
         key = HIPPO_KEY_UNKNOWN;
         break;
@@ -269,7 +277,10 @@ on_canvas_entry_key_press_event(GtkWidget        *widget,
 
     character = gdk_keyval_to_unicode(event->keyval);
         
-    return hippo_canvas_item_emit_key_press_event(HIPPO_CANVAS_ITEM(canvas_entry), key, character);
+    return hippo_canvas_item_emit_key_press_event(HIPPO_CANVAS_ITEM(canvas_entry), key, character,
+                                                  (event->state & GDK_SHIFT_MASK ? HIPPO_MODIFIER_SHIFT : 0) +
+                                                  (event->state & GDK_CONTROL_MASK ? HIPPO_MODIFIER_CTRL : 0) +
+                                                  (event->state & GDK_MOD1_MASK ? HIPPO_MODIFIER_ALT : 0));
 }
 
 static void
@@ -342,21 +353,24 @@ hippo_canvas_entry_class_init(HippoCanvasEntryClass *class)
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
 }
 
+static void
+hippo_canvas_entry_init(HippoCanvasEntry *entry)
+{
+    GtkWidget *gtk_entry;
+
+    gtk_entry = gtk_entry_new();
+    
+    g_object_set(entry, "widget", gtk_entry, NULL);
+
+    g_signal_connect(gtk_entry, "changed",
+                     G_CALLBACK(on_canvas_entry_changed), entry);
+    g_signal_connect(gtk_entry, "key-press-event",
+                     G_CALLBACK(on_canvas_entry_key_press_event), entry);
+
+}
+
 HippoCanvasItem*
 hippo_canvas_entry_new(void)
 {
-    GtkWidget *entry;
-    HippoCanvasItem *item;
-    
-    entry = gtk_entry_new();
-    item = g_object_new(HIPPO_TYPE_CANVAS_ENTRY,
-                        "widget", entry,
-                        NULL);
-
-    g_signal_connect(entry, "changed",
-                     G_CALLBACK(on_canvas_entry_changed), item);
-    g_signal_connect(entry, "key-press-event",
-                     G_CALLBACK(on_canvas_entry_key_press_event), item);
-
-    return item;
+    return g_object_new(HIPPO_TYPE_CANVAS_ENTRY, NULL);
 }

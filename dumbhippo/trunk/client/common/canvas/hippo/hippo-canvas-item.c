@@ -327,7 +327,8 @@ hippo_canvas_item_emit_motion_notify_event (HippoCanvasItem  *canvas_item,
 gboolean
 hippo_canvas_item_emit_key_press_event (HippoCanvasItem  *canvas_item,
                                         HippoKey          key,
-                                        gunichar          character)
+                                        gunichar          character,
+                                        guint             modifiers)
 {
     HippoEvent event;
     gboolean result;
@@ -339,6 +340,7 @@ hippo_canvas_item_emit_key_press_event (HippoCanvasItem  *canvas_item,
     event.y = 0;    
     event.u.key.key = key;
     event.u.key.character = character;
+    event.u.key.modifiers = modifiers;
     
     result = hippo_canvas_item_process_event(canvas_item, &event, 0, 0);
 

@@ -28,8 +28,16 @@ typedef struct _HippoEvent HippoEvent;
 typedef enum {
     HIPPO_KEY_UNKNOWN, 
     HIPPO_KEY_RETURN,
-    HIPPO_KEY_ESCAPE
+    HIPPO_KEY_ESCAPE,
+    HIPPO_KEY_TAB,
+    HIPPO_KEY_LEFTTAB
 } HippoKey;
+
+typedef enum {
+    HIPPO_MODIFIER_SHIFT = 1 << 0,
+    HIPPO_MODIFIER_CTRL = 1 << 1,
+    HIPPO_MODIFIER_ALT = 1 << 2
+} HippoModifier;
 
 struct _HippoEvent {
     HippoEventType type;
@@ -47,10 +55,12 @@ struct _HippoEvent {
             int x11_x_root;
             int x11_y_root;
             guint32 x11_time;
+            guint modifiers;
         } button;
         struct {
             HippoKey key;
             gunichar character; /* 0 if no translation */
+            guint modifiers;
         } key;
     } u;
 };
