@@ -133,9 +133,6 @@
 		</c:if>
 		<c:if test="${playItLink}">
 		    <c:if test="${!empty track.itunesUrl || !empty track.yahooUrl || !empty track.rhapsodyUrl}">
-				<c:set var="itunesDisabled" value='${empty track.itunesUrl ? "disabled" : ""}'/>
-				<c:set var="yahooDisabled" value='${empty track.yahooUrl ? "disabled" : ""}'/>
-				<c:set var="rhapsodyDisabled" value='${empty track.rhapsodyUrl ? "disabled" : ""}'/>
 				<div class="dh-song-links">play at 
 					<c:if test="${!empty track.itunesUrl}">
 						<a class="dh-music-source-link" href="${track.itunesUrl}">iTunes</a>
