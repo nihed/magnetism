@@ -7,7 +7,10 @@ import hippo
 import big_widgets, mugshot, libbig, libbig.state
 from libbig.singletonmixin import Singleton
 
-class Stock(object):
+class Stock(gobject.GObject):
+    __gsignals__ = {
+        "visible" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,))
+    }
     """An item that can be placed on the big board.  Has
     two primary properties: id and ticker.  The id is
     an internal unique identifier.  The ticker is the title
@@ -29,6 +32,7 @@ class Stock(object):
     SIZE_BEAR_CONTENT_PX = 36
     
     def __init__(self, metainfo):
+        super(Stock, self).__init__()
         self._id = metainfo['id']
         self._ticker = metainfo['ticker']
         self._bull_widgets = {}
@@ -85,7 +89,7 @@ class AbstractMugshotStock(Stock):
     method on this class is connect_mugshot_handler."""
     def __init__(self, *args, **kwargs):
         super(AbstractMugshotStock, self).__init__(*args, **kwargs)
-        self.__auth = False
+        self._auth = False
         self.__have_contacts = False        
         self._mugshot_initialized = False
         self._dependent_handlers = []
@@ -97,22 +101,26 @@ class AbstractMugshotStock(Stock):
         self.__cursize = None
         self.__box = hippo.CanvasBox()
         
-        self.__signin = big_widgets.ActionLink(text="Sign in to Mugshot")
-        self.__signin.connect("button-press-event", lambda signin, event: self.__on_signin_press())
-        
     def __sync_content(self):
         self.__box.remove_all()        
-        if self.__auth:
+        if self._auth:
             self.__box.append(self.get_authed_content(self.__cursize))
+            return self.__box
         else:
-            self.__box.append(self.__signin)
-            
+            unauthed = self.get_unauthed_content(self.__cursize)
+            if unauthed:
+                self.__box.append(unauthed)
+                return self.__box
+            return None
+
+    def get_unauthed_content(self, size):
+        return None 
+
     def get_content(self, size):
         if size == self.__cursize:
             return self.__box
         self.__cursize = size        
-        self.__sync_content()
-        return self.__box
+        return self.__sync_content()
          
     # protected
     def get_mugshot_initialized(self):
@@ -131,7 +139,7 @@ class AbstractMugshotStock(Stock):
         pass
             
     def __handle_mugshot_connection_status(self, auth, xmpp, contacts):
-        self.__auth = auth
+        self._auth = auth
         self.__sync_content()        
         self.__have_contacts = contacts
         self.__check_ready()
@@ -149,7 +157,3 @@ class AbstractMugshotStock(Stock):
             object.connect(signal, handler)
         else:
             self._dependent_handlers.append((object, signal, handler))
-            
-    def __on_signin_press(self):
-        baseurl = self._mugshot.get_baseurl()
-        libbig.show_url(baseurl + "/who-are-you")        
