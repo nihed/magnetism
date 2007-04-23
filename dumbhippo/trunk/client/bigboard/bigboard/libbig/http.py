@@ -1,4 +1,4 @@
-import threading, logging, urllib2, cookielib
+import threading, logging, urllib2, cookielib, sys
 
 import gobject
 
