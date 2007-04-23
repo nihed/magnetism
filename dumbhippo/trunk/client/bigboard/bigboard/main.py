@@ -41,7 +41,7 @@ class PrelistedStock(object):
     def get(self):
         listing = os.path.join(self.__stockdir, 'listing.xml')
         if not os.access(listing, os.R_OK):
-            raise OSError("stock listing %s vanished!" % listing)
+            raise Exception("stock listing %s vanished!" % listing)
         self.__logger.debug("parsing %s", listing)
         doc = xml.dom.minidom.parse(listing)
         stock = doc.documentElement
@@ -107,6 +107,7 @@ class Exchange(hippo.CanvasBox):
         self.__ticker_text = None
         self.__state = bigboard.libbig.state.PrefixedState('/panel/stock/' + stock.get_id() + "/") 
         self.__state.set_default('expanded', True)
+        self.__ticker_container = None
         if stock.get_ticker() == "-":
             sep = Separator()
             self.append(sep)            
@@ -142,7 +143,13 @@ class Exchange(hippo.CanvasBox):
     def set_size(self, size):
         self.__stockbox.remove_all()
         self.__stock.set_size(size)
-        self.__stockbox.append(self.__stock.get_content(size))
+        content = self.__stock.get_content(size) 
+        if self.__ticker_container:
+            self.set_child_visible(self.__ticker_container, not not content)
+        self.set_child_visible(self.__stockbox, not not content)
+        if not content:
+            return
+        self.__stockbox.append(content)
         padding = 4
         if size == Stock.SIZE_BEAR:
             padding = 2  

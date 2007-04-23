@@ -5,7 +5,7 @@ import hippo
 import bigboard.mugshot as mugshot
 import bigboard.libbig as libbig
 from bigboard.stock import Stock, AbstractMugshotStock
-from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox
+from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink
 
 class FixedCountWrapBox(CanvasVBox):
     def __init__(self, max_row_count, spacing=0, **kwargs):
@@ -57,13 +57,13 @@ class SelfStock(AbstractMugshotStock):
         self._namephoto_box.set_clickable(True)        
         
         self._photo = CanvasMugshotURLImage(scale_width=48, scale_height=48)
-        self.connect_mugshot_handler(self._photo, "button-press-event", lambda button, event: self._on_edit_self())
-        #self._photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
+        self._photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
+        self._photo.connect("button-press-event", lambda button, event: self.__on_activate())
             
         self._namephoto_box.set_photo(self._photo)
         
-        self._name = hippo.CanvasText()
-        self.connect_mugshot_handler(self._name, "button-press-event", lambda button, event: self._on_edit_self())        
+        self._name = hippo.CanvasText(text="Nobody")
+        self._name.connect("button-press-event", lambda button, event: self.__on_activate())        
         self._namephoto_box.set_child(self._name)        
         
         self._box.append(self._namephoto_box)
@@ -72,23 +72,40 @@ class SelfStock(AbstractMugshotStock):
         self._whereim_box.set_property("padding-top", 4)
         
         self._box.append(self._whereim_box)
+
+        self._signin = ActionLink(text="Please Login or Signup")
+        self._box.append(self._signin)
+        self._signin.connect("button-press-event", lambda signin, event: self.__on_activate())
+
+        self._mugshot.connect("connection-status", lambda mugshot, auth, xmpp, contacts: self.__handle_mugshot_connection_status(auth, xmpp, contacts))  
         
     def _on_mugshot_ready(self):
         super(SelfStock, self)._on_mugshot_ready()       
         if self._mugshot.get_self():
             self.__init_self()
         self._mugshot.connect("self-known", lambda mugshot: self.__init_self())
+
+    def __handle_mugshot_connection_status(self, auth, xmpp, contacts):
+        self._box.set_child_visible(self._whereim_box, not not auth)
+        self._box.set_child_visible(self._signin, not auth)
             
     def __init_self(self):
         myself = self._mugshot.get_self()
         myself.connect("changed", lambda myself: self.__handle_self_changed())        
         self.__handle_self_changed()        
-        
-    def _on_edit_self(self):
-        baseurl = self._mugshot.get_baseurl()
-        libbig.show_url(baseurl + "/account")
+
+    def __on_activate(self):
+        if self._auth:
+            baseurl = self._mugshot.get_baseurl()
+            libbig.show_url(baseurl + "/account")
+        else:
+            baseurl = self._mugshot.get_baseurl()
+            libbig.show_url(baseurl + "/who-are-you")        
         
     def get_authed_content(self, size):
+        return self._box
+
+    def get_unauthed_content(self, size):
         return self._box
     
     def set_size(self, size):

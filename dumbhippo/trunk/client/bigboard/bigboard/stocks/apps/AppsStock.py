@@ -179,6 +179,9 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
 
     def get_authed_content(self, size):
         return self.__box
+
+    def get_unauthed_content(self, size):
+        return self._box
             
     def __set_item_size(self, item, size):
         if size == bigboard.stock.Stock.SIZE_BULL:
