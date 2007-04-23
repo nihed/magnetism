@@ -1,7 +1,7 @@
 dnl -*- mode: m4 -*-
 AC_PREREQ(2.59)
 
-AC_INIT(bigboard/libbig.py)
+AC_INIT(bigboard/libbig/__init__.py)
 AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
