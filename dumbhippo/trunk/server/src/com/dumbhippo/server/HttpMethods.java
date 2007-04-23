@@ -417,6 +417,10 @@ public interface HttpMethods {
 	@HttpOptions( optionalParams = { "includeStack", "participantOnly" } )
 	public void getUserSummary(XmlBuilder xml, Viewpoint viewpoint, User who, boolean includeStack, boolean participantOnly) throws XmlMethodException;
 
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams({})
+	public void getPopularApplications(XmlBuilder xml, Viewpoint viewpoint) throws XmlMethodException;
+	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "who", "participantOnly" })
 	@HttpOptions( optionalParams = { "participantOnly" } )

@@ -115,6 +115,7 @@ import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.applications.AppinfoUploadView;
 import com.dumbhippo.server.applications.ApplicationSystem;
+import com.dumbhippo.server.applications.ApplicationView;
 import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.blocks.TitleBlockView;
 import com.dumbhippo.server.blocks.TitleDescriptionBlockView;
@@ -2371,6 +2372,21 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			bv.writeSummaryToXmlBuilder(xml);
 		}
 		
+		xml.closeElement();
+	}
+	
+	private static final String APPLICATIONS_NAMESPACE = "http://dumbhippo.com/protocol/applications";
+	
+	public void getPopularApplications(XmlBuilder xml, Viewpoint viewpoint) throws XmlMethodException {
+		Pageable<ApplicationView> pageable = new Pageable<ApplicationView>("applications");
+		pageable.setPosition(0);
+		pageable.setInitialPerPage(30);		
+		applicationSystem.pagePopularApplications(null, 24, null, pageable);
+		// Keep in sync with ApplicationsIQHandler
+		xml.openElement("topApplications", "xmlns", APPLICATIONS_NAMESPACE);
+		for (ApplicationView application : pageable.getResults()) {
+			application.writeToXmlBuilder(xml);		
+		}		
 		xml.closeElement();
 	}
 

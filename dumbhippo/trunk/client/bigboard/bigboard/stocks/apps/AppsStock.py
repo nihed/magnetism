@@ -172,6 +172,10 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         if text:
             self.__subtitle.set_property("text", text)        
 
+    def _on_mugshot_initialized(self):
+        super(AppsStock, self)._on_mugshot_initialized()
+        self._mugshot.get_global_top_apps()        
+
     def _on_mugshot_ready(self):
         super(AppsStock, self)._on_mugshot_ready()
         self._mugshot.get_pinned_apps()        
@@ -181,7 +185,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         return self.__box
 
     def get_unauthed_content(self, size):
-        return self._box
+        return self.__box
             
     def __set_item_size(self, item, size):
         if size == bigboard.stock.Stock.SIZE_BULL:

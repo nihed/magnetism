@@ -39,7 +39,7 @@ handlers=stderr
 propagate=0
 qualname=%s%s
 
-        """ % (module, prefix and "."+prefix or "",module)
+        """ % (module, prefix or "",module)
         )
     logging.config.fileConfig(StringIO.StringIO(logging_config.getvalue()))
     

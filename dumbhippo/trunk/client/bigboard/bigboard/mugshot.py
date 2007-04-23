@@ -1,9 +1,11 @@
-import logging, inspect, xml.dom, xml.dom.minidom, StringIO
+import logging, inspect, xml.dom, xml.dom.minidom
+import StringIO, urlparse, urllib
 
 import gobject, dbus
 
 import libbig
 from libbig import _log_cb
+from libbig.http import AsyncHTTPFetcher
 from libbig.xmlquery import query as xml_query, get_attrs as xml_get_attrs
 from libbig.struct import AutoStruct, AutoSignallingStruct
 
@@ -84,7 +86,7 @@ class Mugshot(gobject.GObject):
                                                        _log_cb(self.__on_dbus_name_owner_changed))
         self.__create_proxy()
         self.__create_ws_proxy()
-        
+
         self.__reset()        
         
     def __reset(self):
@@ -351,13 +353,16 @@ class Mugshot(gobject.GObject):
         app.update(attrs)            
         return app
     
-    def __parse_app_set(self, expected_name, doc):
-        root = doc.documentElement
-        if not root.nodeName == expected_name:
-            self._logger.warn("invalid root node, expected %s", expected_name)
-            return []
+    def __parse_app_set(self, expected_name, doc=None, child_nodes=None):
+        if doc:
+            root = doc.documentElement
+            if not root.nodeName == expected_name:
+                self._logger.warn("invalid root node, expected %s", expected_name)
+                return []
+        else:
+            root = None
         apps = []
-        for node in root.childNodes:
+        for node in (child_nodes or root.childNodes):
             if not (node.nodeType == xml.dom.Node.ELEMENT_NODE):
                 continue
             app = self.__load_app_from_xml(node)
@@ -375,19 +380,24 @@ class Mugshot(gobject.GObject):
         self._logger.debug("emitting my-top-apps-changed")
         self.emit("my-top-apps-changed", self.__my_top_apps)
         
-    def __on_top_applications(self, xml_str):     
-        doc = xml.dom.minidom.parseString(xml_str)        
-        self.__global_top_apps = self.__parse_app_set('topApplications', doc)
+    def __on_top_applications(self, url, child_nodes):     
+        self.__global_top_apps = self.__parse_app_set('topApplications', child_nodes=child_nodes[0].childNodes)
         self._logger.debug("emitting global-top-apps-changed")
         self.emit("global-top-apps-changed", self.__global_top_apps)        
+
+    def __on_top_applications_error(self, *args):
+        self._logger.error("failed to get top apps: %s", args)
     
     def __request_my_top_apps(self):
         self.__do_external_iq("myTopApplications", "http://dumbhippo.com/protocol/applications",
                              self.__on_my_top_applications)
     
     def __request_global_top_apps(self):
-        self.__do_external_iq("topApplications", "http://dumbhippo.com/protocol/applications",
-                             self.__on_top_applications)        
+        AsyncHTTPFetcher.getInstance().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/popularapplications'),
+                                                  (),
+                                                  self.__on_top_applications,
+                                                  self.__on_top_applications_error,
+                                                  self.__on_top_applications_error)
             
     def __request_pinned_apps(self):
         self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications",
