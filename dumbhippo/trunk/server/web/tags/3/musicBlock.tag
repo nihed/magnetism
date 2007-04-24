@@ -28,9 +28,9 @@
 								</a>
 							</c:when>
 							<c:otherwise>
-								<a href="${track.artistPageLink}"><c:out value="${track.artist}"/></a>
+								<dht3:trackLink track="${track}"><c:out value="${track.artist}"/></dht3:trackLink>
 								<span> - </span>
-								<a href="${track.artistPageLink}"><c:out value="${track.name}"/></a>
+								<dht3:trackLink track="${track}"><c:out value="${track.name}"/></dht3:trackLink>
 							</c:otherwise>
 						</c:choose>
 	               </dht3:blockTitle>
@@ -72,8 +72,8 @@
 				<td valign="top">
 					<div class="dh-stacker-block-with-image-beside">	
 						<div>
-							<div class="dh-music-block-artist"><a href="${track.artistPageLink}"><c:out value="${track.artist}"/></a></div>
-							<div class="dh-music-block-name"><a href="${track.artistPageLink}"><c:out value="${track.name}"/></a></div>
+							<div class="dh-music-block-artist"><dht3:trackLink track="${track}"><c:out value="${track.artist}"/></dht3:trackLink></div>
+							<div class="dh-music-block-name"><dht3:trackLink track="${track}"><c:out value="${track.name}"/></dht3:trackLink></div>
 							<dht3:quipper blockId="${blockId}" block="${block}"/>
 							<c:if test="${!chatHeader}">
 								<div id="dhStackerBlockLastMessage-${blockId}">
@@ -94,9 +94,9 @@
 					<div class="dh-music-block-history">
 						<c:forEach items="${block.oldTracks}" var="historyTrack">
 							<div class="dh-music-block-history-item">
-								<span class="dh-music-block-history-artist"><a href="${historyTrack.artistPageLink}"><c:out value="${historyTrack.artist}"/></a></span>
+								<span class="dh-music-block-history-artist"><dht3:trackLink track="${historyTrack}"><c:out value="${historyTrack.artist}"/></dht3:trackLink></span>
 								<span class="dh-music-block-history-separator"> - </span>
-								<span class="dh-music-block-history-name"><a href="${historyTrack.artistPageLink}"><c:out value="${historyTrack.name}"/></a></span>
+								<span class="dh-music-block-history-name"><dht3:trackLink track="${historyTrack}"><c:out value="${historyTrack.name}"/></dht3:trackLink></span>
 								&nbsp;<span class="dh-stacker-block-time-ago"><c:out value="${historyTrack.lastListenString}"/></span>
 							</div>
 						</c:forEach>
