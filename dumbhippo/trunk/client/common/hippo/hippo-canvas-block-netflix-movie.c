@@ -289,7 +289,6 @@ hippo_canvas_block_netflix_movie_append_content_items (HippoCanvasBlock *block,
 
     block_netflix->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
                                                "actions", hippo_canvas_block_get_actions(block),
-                                               "padding-top", 8,
                                                "padding-bottom", 8,
                                                NULL);
     hippo_canvas_box_append(parent_box,
