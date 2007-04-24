@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+# don't mark GMail for translation, it's a trademark/proper name
+Name=GMail
+GenericName=GMail
+_Comment=Google Mail
+Exec=gnome-open http://mail.google.com/mail
+Terminal=false
+Type=Application
+Icon=redhat-email.png
+StartupNotify=false
+Categories=X-Red-Hat-Base;X-Red-Hat-Base-Only;Network;Application;
