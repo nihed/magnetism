@@ -13,7 +13,7 @@ import hippo
 import bigboard.mugshot as mugshot
 import bigboard.libbig as libbig
 from bigboard.stock import Stock
-from bigboard.big_widgets import CanvasMugshotURLImage, CanvasEntry, CanvasVBox
+from bigboard.big_widgets import CanvasMugshotURLImage, CanvasVBox
         
 class SearchStock(Stock):
     """Search.  It's what's for dinner."""
