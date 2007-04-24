@@ -215,13 +215,6 @@ hippo_canvas_block_post_append_content_items (HippoCanvasBlock *block,
                                                 NULL);
     hippo_canvas_box_append(parent_box, block_post->description_item, 0);
 
-    block_post->quipper = g_object_new(HIPPO_TYPE_CANVAS_QUIPPER,
-                                       "actions", hippo_canvas_block_get_actions(block),
-                                       NULL);
-    hippo_canvas_box_append(parent_box, block_post->quipper, 0);
-    hippo_canvas_item_set_visible(block_post->quipper,
-                                  FALSE); /* not expanded */
-
     block_post->last_message_preview = g_object_new(HIPPO_TYPE_CANVAS_LAST_MESSAGE_PREVIEW,
                                                     "actions", hippo_canvas_block_get_actions(block),
                                                     NULL);
@@ -254,9 +247,16 @@ hippo_canvas_block_post_append_content_items (HippoCanvasBlock *block,
     g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_faves_activated), block_post);
 #endif
 
+    block_post->quipper = g_object_new(HIPPO_TYPE_CANVAS_QUIPPER,
+                                       "actions", hippo_canvas_block_get_actions(block),
+                                       "padding-top", 8,
+                                       NULL);
+    hippo_canvas_box_append(parent_box, block_post->quipper, 0);
+    hippo_canvas_item_set_visible(block_post->quipper,
+                                  FALSE); /* not expanded */
+
     block_post->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
                                             "actions", hippo_canvas_block_get_actions(block),
-                                            "padding-top", 8,
                                             NULL);
     hippo_canvas_box_append(parent_box,
                             block_post->chat_preview, 0);

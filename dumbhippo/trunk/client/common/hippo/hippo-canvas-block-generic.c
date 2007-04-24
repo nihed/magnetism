@@ -221,6 +221,7 @@ hippo_canvas_block_generic_append_content_items(HippoCanvasBlock *block,
 
     block_generic->quipper = g_object_new(HIPPO_TYPE_CANVAS_QUIPPER,
                                           "actions", hippo_canvas_block_get_actions(block),
+                                          "padding-top", 8,
                                           NULL);
     hippo_canvas_box_append(parent_box, block_generic->quipper, 0);
     hippo_canvas_item_set_visible(block_generic->quipper,
@@ -228,7 +229,6 @@ hippo_canvas_block_generic_append_content_items(HippoCanvasBlock *block,
 
     block_generic->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
                                                "actions", hippo_canvas_block_get_actions(block),
-                                               "padding-top", 8,
                                                NULL);
     hippo_canvas_box_append(parent_box,
                             block_generic->chat_preview, 0);
