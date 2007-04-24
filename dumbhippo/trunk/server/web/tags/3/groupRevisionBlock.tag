@@ -38,6 +38,7 @@
 			</c:if>
 		</div>
         <c:if test="${!chatHeader}">
+			<dht3:stackReason block="${block}" blockId="${blockId}"/>
 			<dht3:blockContent blockId="${blockId}">
 				<dht3:quipper block="${block}" blockId="${blockId}"/>
 				<dht3:chatPreview block="${block}" blockId="${blockId}"/>

@@ -22,9 +22,9 @@
 <dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" title="${block.title}" blockId="${blockId}" expandable="${!oneLine && !chatHeader}">
 	<dht3:blockLeft block="${block}" chatHeader="${chatHeader}">
 		<dht3:simpleBlockTitle block="${block}" oneLine="${oneLine}" homeStack="false"/>
-		<dht3:stackReason block="${block}" blockId="${blockId}"/>
 	    <dht3:blockDescription blockId="${blockId}" literalBody="${chatHeader}">${block.postView.textAsHtml}</dht3:blockDescription>   
         <c:if test="${!chatHeader}">
+			<dht3:stackReason block="${block}" blockId="${blockId}"/>
 			<dht3:blockContent blockId="${blockId}">
 				<dht3:quipper block="${block}" blockId="${blockId}"/>
 				<dht3:chatPreview block="${block}" blockId="${blockId}"/>

@@ -74,13 +74,9 @@
 						<div>
 							<div class="dh-music-block-artist"><dht3:trackLink track="${track}"><c:out value="${track.artist}"/></dht3:trackLink></div>
 							<div class="dh-music-block-name"><dht3:trackLink track="${track}"><c:out value="${track.name}"/></dht3:trackLink></div>
-							<dht3:quipper blockId="${blockId}" block="${block}"/>
 							<c:if test="${!chatHeader}">
-								<div id="dhStackerBlockLastMessage-${blockId}">
-									<c:if test="${!empty block.lastMessage}">
-										<dht3:chatMessage msg="${block.lastMessage}"/>
-									</c:if>
-								</div>
+								<dht3:quipper blockId="${blockId}" block="${block}"/>
+								<dht3:stackReason block="${block}" blockId="${blockId}"/>
 							</c:if>
 						</div>
 					</div>
