@@ -18,22 +18,33 @@ class AppOverview(CanvasVBox):
     }
 
     def __init__(self, app=None):
-        super(AppOverview, self).__init__(box_width=200, border=1, border_color=0x666666FF, padding=2)
+        super(AppOverview, self).__init__(box_width=200, box_height=160,
+                                          border=1, border_color=0x666666FF, padding=2)
+
+        self.__unselected = True
+        self.__app_unselected_text = hippo.CanvasText(text="Click an application to see its description here.\nDouble-click to launch.",
+                                                      size_mode=hippo.CANVAS_SIZE_WRAP_WORD,
+                                                      xalign=hippo.ALIGNMENT_CENTER,
+                                                      yalign=hippo.ALIGNMENT_CENTER)
+        self.append(self.__app_unselected_text, hippo.PACK_CLEAR_RIGHT)
         
         self.__header = apps_widgets.AppDisplay()
-        self.append(self.__header)
         
         self.__description = hippo.CanvasText(size_mode=hippo.CANVAS_SIZE_WRAP_WORD)
-        self.append(self.__description)     
         
         self.__moreinfo = ActionLink(text="More Info", xalign=hippo.ALIGNMENT_START)
         self.__moreinfo.connect("button-press-event", lambda l,e: self.emit("more-info", self.__app))
-        self.append(self.__moreinfo)
         
         if app:
             self.set_app(app)
 
     def set_app(self, app):
+        if self.__unselected:
+            self.__unselected = False
+            self.remove(self.__app_unselected_text)
+            self.append(self.__header)
+            self.append(self.__description, hippo.PACK_CLEAR_RIGHT)     
+            self.append(self.__moreinfo)
         self.__app = app
         self.__header.set_app(app)
         self.__description.set_property("text", app.get_description())
@@ -240,7 +251,6 @@ class AppBrowser(hippo.CanvasWindow):
         self.__overview = AppOverview()
         self.__overview.connect("more-info", lambda o, app: self.__on_show_more_info(app))
         self.__left_box.append(self.__overview)
-        self.__left_box.set_child_visible(self.__overview, False)     
         
         self.__cat_usage = AppCategoryUsage()
         self.__left_box.append(self.__cat_usage)   
@@ -274,7 +284,6 @@ class AppBrowser(hippo.CanvasWindow):
                 
         
     def __on_app_selected(self, app):
-        self.__left_box.set_child_visible(self.__overview, True)
         self.__overview.set_app(app)
 
     def __on_show_more_info(self, app):
