@@ -56,7 +56,7 @@ class AppDisplay(PhotoContentItem):
         self.__photo.set_clickable(self.__app.is_installed())
         self.__box.set_clickable(self.__app.is_installed())  
         self.__title.set_property("text", self.__app.get_name())
-        self.__subtitle.set_property("text", self.__app.get_generic_name() or self.__app.get_tooltip())
+        self.__subtitle.set_property("text", self.__app.get_generic_name() or self.__app.get_tooltip() or self.__app.get_comment())
         if self.__app.get_mugshot_app():
             self.__photo.set_url(self.__app.get_mugshot_app().get_icon_url())
         else:
