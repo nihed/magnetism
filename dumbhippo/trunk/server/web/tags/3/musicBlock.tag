@@ -92,12 +92,12 @@
 						<dht3:chatPreview block="${block}" blockId="${blockId}"/>
 					</c:if>
 					<div class="dh-music-block-history">
-						<c:forEach items="${block.oldTracks}" var="track">
+						<c:forEach items="${block.oldTracks}" var="historyTrack">
 							<div class="dh-music-block-history-item">
-								<span class="dh-music-block-history-artist"><a href="${track.artistPageLink}"><c:out value="${track.artist}"/></a></span>
+								<span class="dh-music-block-history-artist"><a href="${historyTrack.artistPageLink}"><c:out value="${historyTrack.artist}"/></a></span>
 								<span class="dh-music-block-history-separator"> - </span>
-								<span class="dh-music-block-history-name"><a href="${track.artistPageLink}"><c:out value="${track.name}"/></a></span>
-								&nbsp;<span class="dh-stacker-block-time-ago"><c:out value="${track.lastListenString}"/></span>
+								<span class="dh-music-block-history-name"><a href="${historyTrack.artistPageLink}"><c:out value="${historyTrack.name}"/></a></span>
+								&nbsp;<span class="dh-stacker-block-time-ago"><c:out value="${historyTrack.lastListenString}"/></span>
 							</div>
 						</c:forEach>
 					</div>
@@ -108,6 +108,14 @@
 				<c:if test="${!chatHeader}">
 					<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>
 				</c:if>
+				<dh:forEachDownload track="${track}" var="download" varStatus="status">
+					<div>
+						<c:if test="${status.first}">
+							Play with:
+						</c:if>
+						<a class="dh-music-source-link" href="${dh:xmlEscape(download.url)}"><c:out value="${download.source.shortName}"/></a>
+					</div>
+				</dh:forEachDownload>				
 				<dht3:blockControls blockId="${blockId}">
 					&nbsp; <%-- http://bugzilla.mugshot.org/show_bug.cgi?id=1019 --%>
 				</dht3:blockControls>				
