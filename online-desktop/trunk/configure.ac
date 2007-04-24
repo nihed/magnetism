@@ -173,6 +173,9 @@ AC_SUBST(LDFLAGS)
 ## used for .desktop file in theory, disabled until we have actual translations
 ## IT_PROG_INTLTOOL([0.34.90])
 
+GTK2_REQUIRED=2.6.0
+
+PKG_CHECK_MODULES(MAILTO_HANDLER, gtk+-2.0 >= $GTK2_REQUIRED)
 
 #### define absolute path to srcdir for debugging-only code
 ABSOLUTE_TOP_SRCDIR=`cd ${srcdir} && pwd`
@@ -190,6 +193,8 @@ echo "
 
         prefix:                   ${prefix}
         compiler:                 ${CC}
+        MAILTO_HANDLER_CFLAGS:    ${MAILTO_HANDLER_CFLAGS}
+        MAILTO_HANDLER_LIBS:      ${MAILTO_HANDLER_LIBS}
 
         Now type 'make' to build $PACKAGE
 "

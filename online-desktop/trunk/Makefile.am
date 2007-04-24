@@ -28,4 +28,5 @@ MAINTAINERCLEANFILES =
 BUILT_SOURCES =
 
 include Makefile-gmail.am
+include Makefile-mailto.am
 
