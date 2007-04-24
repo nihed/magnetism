@@ -17,6 +17,7 @@
 			<dht3:blockDescription blockId="${blockId}" literalBody="true" hideOnExpand="true">
 				<span style="color: blue">View thumbnails</span>
 			</dht3:blockDescription>			
+			<dht3:stackReason block="${block}" blockId="${blockId}"/>
 		    <dht3:blockContent blockId="${blockId}">
 		        <dht3:blockThumbnails block="${block}"/>
 				<dht3:quipper block="${block}" blockId="${blockId}"/>

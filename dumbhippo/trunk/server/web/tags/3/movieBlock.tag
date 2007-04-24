@@ -25,6 +25,10 @@
 						<div class="dh-stacker-block-header-description">
 						    ${block.descriptionAsHtml}
 						</div>    
+						<c:if test="${!chatHeader}">
+							<dht3:quipper blockId="${blockId}" block="${block}"/>
+							<dht3:stackReason block="${block}" blockId="${blockId}"/>
+						</c:if>
 					</div>
 				</td>
 			</tr>

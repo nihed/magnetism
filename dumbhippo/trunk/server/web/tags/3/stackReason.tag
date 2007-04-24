@@ -6,15 +6,24 @@
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.blocks.BlockView" %>
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 
-<c:if test="${dh:enumIs(block.stackReason, 'VIEWER_COUNT')}">
-	<div class="dh-stacker-stack-reason" id="dhStackerStackReason-${blockId}">
-		<c:choose>
-			<c:when test="${block.significantClickedCount == 1}">
-				1 person has now viewed this post.
-			</c:when>
-			<c:otherwise>
-				<c:out value="${block.significantClickedCount}"/> people have now viewed this post.
-			</c:otherwise>
-		</c:choose>
-	</div>
-</c:if>   	
+<c:choose>
+	<c:when test="${dh:enumIs(block.stackReason, 'VIEWER_COUNT')}">
+		<div class="dh-stacker-stack-reason" id="dhStackerStackReason-${blockId}">
+			<c:choose>
+				<c:when test="${block.significantClickedCount == 1}">
+					1 person has now viewed this post.
+				</c:when>
+				<c:otherwise>
+					<c:out value="${block.significantClickedCount}"/> people have now viewed this post.
+				</c:otherwise>
+			</c:choose>
+		</div>
+	</c:when>
+	<c:otherwise>
+		<div id="dhStackerBlockLastMessage-${blockId}">
+			<c:if test="${!empty block.lastMessage}">
+				<dht3:chatMessage msg="${block.lastMessage}"/>
+			</c:if>
+		</div>
+	</c:otherwise>
+</c:choose>
