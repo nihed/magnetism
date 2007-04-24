@@ -9,7 +9,7 @@ URL:            http://mugshot.org/
 Source0:        bigboard-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Requires:       mugshot
+Requires:       mugshot >= 1.1.39-1
 Requires:       deskbar-applet
 Requires:       hippo-canvas-python
 Requires:       gnome-python2-desktop
