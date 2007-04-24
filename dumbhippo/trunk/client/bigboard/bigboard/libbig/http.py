@@ -81,7 +81,7 @@ class AsyncHTTPFetcher(Singleton):
             data = opener.open(request).read()
             gobject.idle_add(lambda: cb(url, data) and False)
         except Exception, e:
-            self.__logger.error("caught error for fetch of %s: %s" % (url, e))
+            self.__logger.info("caught error for fetch of %s: %s" % (url, e))
             # in my experience sys.exc_info() is some kind of junk here, while "e" is useful
             gobject.idle_add(lambda: errcb(url, sys.exc_info()) and False)
     
