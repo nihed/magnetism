@@ -22,77 +22,7 @@ class ActionLink(hippo.CanvasLink):
     def __init__(self, **kwargs):
         hippo.CanvasLink.__init__(self, **kwargs)
         self.set_property("color", 0x0066DDFF)
-
-class CanvasScrollBars(hippo.CanvasWidget):
-    def __init__(self, horiz=hippo.SCROLLBAR_AUTOMATIC, vert=hippo.SCROLLBAR_AUTOMATIC, **kwargs):
-        self.__scrollbars = gtk.ScrolledWindow()
-        self.__scrollbars.set_policy(self.map_policy(horiz),
-                                     self.map_policy(vert))
-        self.__scrollbars.set_shadow_type(gtk.SHADOW_NONE)
-        self.__canvas = hippo.Canvas()
-        self.__canvas.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))        
-        self.__canvas.show()
-        self.__scrollbars.add_with_viewport(self.__canvas)        
-        self.__scrollbars.get_child().set_shadow_type(gtk.SHADOW_NONE)
-        super(CanvasScrollBars, self).__init__(widget=self.__scrollbars)
         
-    def set_root(self, root):
-        self.__canvas.set_root(root)
-        
-    def map_policy(self, policy):
-        if policy == hippo.SCROLLBAR_AUTOMATIC:
-            return gtk.POLICY_AUTOMATIC
-        elif policy == hippo.SCROLLBAR_ALWAYS:
-            return gtk.POLICY_ALWAYS
-        elif policy == hippo.SCROLLBAR_NEVER:
-            return gtk.POLICY_NEVER
-        else:
-            return None
-        
-class CanvasEntry(hippo.CanvasWidget):
-    __gproperties__ = {
-        'text': (gobject.TYPE_STRING, 'Text', 'Text', '', gobject.PARAM_READWRITE)
-    }
-    
-    def __init__(self, **kwargs):
-        self.__entry = gtk.Entry()
-        hippo.CanvasWidget.__init__(self, widget=self.__entry, **kwargs)
-        self.__entry.connect("changed", lambda *args: self.notify("text"))
-        self.__entry.connect("key-press-event", lambda entry, event: self.__handle_keypress(event))
-        self.__entry.connect("button-press-event", lambda entry, event: self.__focus_entry())
-        self.set_property("widget", self.__entry)
-        
-    def __focus_entry(self):
-        logging.debug("focusing entry")
-        window = self.__entry.get_toplevel()
-        if window:
-            window.present()
-        self.__entry.grab_focus()
-        
-    def __handle_keypress(self, event):
-        if event.keyval in (gtk.gdk.keyval_from_name('Enter'), gtk.gdk.keyval_from_name('Return')):
-            key = hippo.KEY_RETURN
-        elif event.keyval == gtk.gdk.keyval_from_name('Escape'):
-            key = hippo.KEY_ESCAPE
-        else:
-            key = hippo.KEY_UNKNOWN
-
-        character = unichr(gtk.gdk.keyval_to_unicode(event.keyval))
-        
-        self.emit_key_press_event(key, character)     
-        
-    def do_set_property(self, pspec, value):
-        if pspec.name == 'text':
-            self.__entry.set_property("text", value)
-        else:
-            raise AttributeError, 'unknown property %s' % pspec.name
-        
-    def do_get_property(self, pspec):
-        if pspec.name == 'text':
-            return self.__entry.get_property("text")
-        else:
-            raise AttributeError, 'unknown property %s' % pspec.name        
-
 class CanvasURLImageMixin:
     """A wrapper for CanvasImage which has a set_url method to retrieve
        images from a URL."""
