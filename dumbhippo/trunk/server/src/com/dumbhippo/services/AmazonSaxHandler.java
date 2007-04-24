@@ -32,7 +32,6 @@ public class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> {
 	
 	private String amazonUserId;
 	private boolean forTotalCount;
-	private int totalReviews;
 	private AmazonReviews reviews;
 	private AmazonReview currentReview;
 	
@@ -56,11 +55,11 @@ public class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> {
 	}
 	
 	private Date parseAmazonDate(Element c, String content) {
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy MM dd");
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		try {
 			return dateFormat.parse(content);
 		} catch (ParseException e) {
-			logger.warn("Failed to parse Amazon web services content {} for element {} as a 'yyyy MM dd' date",
+			logger.warn("Failed to parse Amazon web services content {} for element {} as a 'yyyy-MM-dd' date",
 				        content, c);
 			return new Date(-1);
 		}
@@ -82,22 +81,13 @@ public class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> {
 	protected void closeElement(Element c) throws SAXException {		
 		String currentContent = getCurrentContent().trim();  
 		if (c == Element.TotalReviews) {
-	    	totalReviews = parseCount(c, currentContent);
-	    } else if (c == Element.CustomerReviews) {
-	    	// We set totalReviews when we are closing CustomerReviews, and not when
-	    	// we encounter TotalReviews, because AmazonReviews would otherwise 
-	    	// reset it when we add the reviews one by one, and we don't want that
-	    	// because totalReviews might be greater than the number of review
-	    	// objects returned by Amazon web services.
-	    	reviews.setTotal(totalReviews);
-	    } else if (forTotalCount) {
+			reviews.setTotal(parseCount(c, currentContent));
+        } else if (forTotalCount) {
 	    	// we are not interested in anything else
 	    	return;
 	    } else if (c == Element.CustomerId) {
 			amazonUserId = currentContent;
-		} else if (c == Element.TotalReviews) {
-	    	totalReviews = parseCount(c, currentContent);
-	    } else if (c == Element.TotalReviewPages) {
+		} else if (c == Element.TotalReviewPages) {
 	    	reviews.setTotalReviewPages(parseCount(c, currentContent));
 	    } else if (c == Element.ASIN) {
 	    	currentReview.setItemId(currentContent);
@@ -114,7 +104,10 @@ public class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> {
 	    } else if (c == Element.Content) {
 	    	currentReview.setContent(currentContent);
 	    } else if (c == Element.Review) {
-	    	reviews.addReview(currentReview);
+	    	// Total reviews number might be greater than the number of review
+	    	// objects returned by Amazon web services, so we don't want adding
+	    	// a review to refresh the total count.
+	    	reviews.addReview(currentReview, false);
 	    	currentReview = null;
 	    }
 	}

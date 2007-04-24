@@ -62,7 +62,7 @@ public class CachedAmazonReview extends DBUnique implements CachedListItem {
 	public CachedAmazonReview(String amazonUserId, AmazonReviewView review) {
 		this(amazonUserId, review.getItemId(), review.getRating(), review.getHelpfulVotes(), review.getTotalVotes(),
 				 review.getTitle(), review.getContent(), review.getReviewDate());
-		if (amazonUserId != review.getAmazonUserId())
+		if (!amazonUserId.equals(review.getAmazonUserId()))
 			logger.warn("Created a CachedAmazonReview where user {} owns a review written by a different user {} for item {}", 
 					    new String[]{amazonUserId, review.getAmazonUserId(), review.getItemId()});
 	}

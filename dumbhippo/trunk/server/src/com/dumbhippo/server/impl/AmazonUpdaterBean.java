@@ -139,10 +139,8 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 		// We don't do anything if a review is no longer around, we keep the
 		// status around, but we will not be able to find review details the cache,
 		// so we'll just not display any details in the block about the review.
-		// We might also loose the details for very old reviews, because it appears
-		// that Amazon web services would only return 100 most recent reviews, in theory
-		// we should still be getting the count updated past 100, but we should test it on some
-		// active customer from Amazon. (TODO)
+		// We might also loose the details for very old reviews, because Amazon web 
+		// services only return 100 most recent reviews.
 		Query q = em.createQuery("SELECT activityStatus FROM AmazonActivityStatus activityStatus WHERE " + 
 		                         "activityStatus.amazonUserId = :amazonUserId AND " +
 				                 "activityStatus.activityType = " + AmazonActivityType.REVIEWED.ordinal());
@@ -232,7 +230,7 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 			boolean needCacheUpdate = false;       	
 			int cachedReviewCount = -1;
 			try {
-				AmazonReviewsView cachedReviews = reviewsCache.checkCache(amazonUserId);
+				AmazonReviewsView cachedReviews = reviewsCache.checkCache(amazonUserId);			
 				cachedReviewCount = cachedReviews.getTotal();
 			} catch (NotCachedException e) {
 				needCacheUpdate = true;
