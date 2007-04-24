@@ -6,7 +6,7 @@ import hippo
 import bigboard.mugshot as mugshot
 import bigboard.libbig as libbig
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, \
-             ActionLink, CanvasEntry, PrelightingCanvasBox, CanvasScrollBars
+             ActionLink, PrelightingCanvasBox
 
 import apps_widgets, apps_directory
 
@@ -86,7 +86,7 @@ class MultiVTable(CanvasHBox):
         
         self.__append_index = 0
         
-    def append_section_head(self, text):
+    def append_section_head(self, text, left_control=None, right_control=None):
         self.__setup()
         # Fill out empty spaces as necessary
         if self.__append_index != 0:
@@ -99,12 +99,22 @@ class MultiVTable(CanvasHBox):
         
         for i,v in enumerate(self.get_children()):
             subbox = CanvasVBox(color=0x666666FF, border_bottom=1, border_color=0x666666FF)
-            text_item = hippo.CanvasText(font="Bold 14px", xalign=hippo.ALIGNMENT_START)
             if i == 0:
-                text_item.set_property("text", text)
+                target_box = subbox
+                if left_control:
+                    target_box = CanvasHBox()
+                    target_box.append(left_control)
+                    left_control.set_property("padding-right", 8)
+                item = hippo.CanvasText(text=text, font="Bold 14px", xalign=hippo.ALIGNMENT_START)
+                if left_control:
+                    target_box.append(item)
+                    item = target_box
+            elif right_control and i == self.__column_count-1:
+                item = right_control
+                right_control.set_property("xalign", hippo.ALIGNMENT_END)
             else:
-                text_item.set_property("text", " ")
-            subbox.append(text_item)
+                item = hippo.CanvasText(text="")
+            subbox.append(item)
             v.append(subbox)
     
     def append_column_item(self, child):
@@ -169,6 +179,7 @@ class AppCategoryUsage(MultiVTable):
         
 class AppList(MultiVTable):
     __gsignals__ = {
+        "category-selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_STRING,)),
         "selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "launch" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())      
     }
@@ -177,11 +188,13 @@ class AppList(MultiVTable):
         super(AppList, self).__init__(columns=3,item_height=40)
         
         self.__search = None
-        self.__all_apps = set()
+        self.__all_apps = None
+        self.__categorized = None
         self.__selected_app = None
+        self.__selected_cat = None
         
     def set_apps(self, apps):
-        self.__all_apps = set(apps)
+        self.__all_apps = apps
         self.__sync_display()
         
     def __sync_display(self):
@@ -189,15 +202,34 @@ class AppList(MultiVTable):
         self.remove_all()
 
         categories = categorize(filter(self.__filter_app, self.__all_apps))
+        self.__categorized = categories
              
         cat_keys = categories.keys()
         cat_keys.sort()
-        for catname in cat_keys:
-            self.append_section_head(catname)
+        for catname in (self.__selected_cat and not self.__search) and [self.__selected_cat] or cat_keys:
+            if not self.__selected_cat:
+                right_link = ActionLink(text=u"More \u00BB")
+                right_link.connect("activated", self.__handle_category_more, catname)
+                left_link = None
+            else:
+                right_link = None
+                left_link = ActionLink(text=u"All Applications \u00BB")
+                left_link.connect("activated", self.__handle_nocategory)
+            self.append_section_head(catname, left_control=left_link, right_control=right_link)
             for app in categories[catname]:
                 overview = apps_widgets.AppDisplay(app)
                 overview.connect("button-press-event", self.__on_overview_click)             
                 self.append_column_item(overview)
+
+    def __handle_nocategory(self, l):
+        _logger.debug("no category selected")
+        self.__selected_cat = None
+        self.__sync_display()
+
+    def __handle_category_more(self, l, catname):
+        _logger.debug("category %s selected", catname)
+        self.__selected_cat = catname
+        self.__sync_display()
                 
     def __filter_app(self, app):
         if not self.__search:
@@ -232,6 +264,7 @@ class AppBrowser(hippo.CanvasWindow):
         super(AppBrowser, self).__init__(gtk.WINDOW_TOPLEVEL)
         
         self.__stock = stock
+        self.__all_apps = []
         
         self.set_keep_above(1)
         self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))        
@@ -243,7 +276,7 @@ class AppBrowser(hippo.CanvasWindow):
         
         self.__search_text = hippo.CanvasText(text="Search", font="Bold 12px")
         self.__left_box.append(self.__search_text)
-        self.__search_input = CanvasEntry()
+        self.__search_input = hippo.CanvasEntry()
         self.__search_input.connect("notify::text", self.__on_search_changed)
         self.__idle_search_id = 0
         self.__left_box.append(self.__search_input)        
@@ -259,12 +292,15 @@ class AppBrowser(hippo.CanvasWindow):
         browse_link.connect("button-press-event", lambda l,e: self.__on_browse_popular_apps())
         self.__left_box.append(browse_link)
     
-        self.__right_scroll = CanvasScrollBars(horiz=hippo.SCROLLBAR_NEVER)
-        self.__right_box = CanvasVBox(border=0)
+        self.__right_scroll = hippo.CanvasScrollbars()
+        self.__right_scroll.set_policy(hippo.ORIENTATION_HORIZONTAL,
+                                       hippo.SCROLLBAR_NEVER)
+        self.__right_box = CanvasVBox(border=0, background_color=0xFFFFFFFF)
         self.__box.append(self.__right_scroll, hippo.PACK_EXPAND)
         
         self.__app_list = AppList()
         self.__right_box.append(self.__app_list)
+        self.__app_list.connect("category-selected", lambda list, cat: self.__on_category_selected(cat))
         self.__app_list.connect("selected", lambda list, app: self.__on_app_selected(app))
         self.__app_list.connect("launch", lambda list: self.__on_app_launch()) 
         
@@ -282,7 +318,6 @@ class AppBrowser(hippo.CanvasWindow):
                                lambda mugshot, apps: self.__sync())          
         self.__sync()
                 
-        
     def __on_app_selected(self, app):
         self.__overview.set_app(app)
 
@@ -319,5 +354,6 @@ class AppBrowser(hippo.CanvasWindow):
         apps = map(self.__stock.get_local_app, ad.get_apps())
         apps = filter(lambda app: not app.get_is_excluded(), apps)
                 
+        self.__all_apps = apps
         self.__app_list.set_apps(apps)
         self.__cat_usage.set_apps(apps)
