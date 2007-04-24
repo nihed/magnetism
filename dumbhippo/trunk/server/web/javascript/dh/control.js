@@ -238,7 +238,7 @@ dh.lang.defineClass(dh.control.ChatRoom, null,
 		
 	_onUserLeave : function(person) {
 		var id = person.getId();
-		var chatUser = this._users[id].getParticipant();
+		var chatUser = this._users[id];
 		if (chatUser) {
 			delete this._users[id];
 			this.onUserLeave(person);
