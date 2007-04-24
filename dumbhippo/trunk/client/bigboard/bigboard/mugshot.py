@@ -1,5 +1,5 @@
 import logging, inspect, xml.dom, xml.dom.minidom
-import StringIO, urlparse, urllib
+import StringIO, urlparse, urllib, subprocess
 
 import gobject, dbus
 
@@ -78,7 +78,7 @@ class Mugshot(gobject.GObject):
 
         self.__my_app_poll_frequency_ms = 30 * 60 * 1000
         self.__app_poll_frequency_ms = 30 * 60 * 1000
-        
+
         self._logger.debug("connecting to session bus")            
         session_bus = dbus.SessionBus()
         bus_proxy = session_bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
@@ -130,6 +130,7 @@ class Mugshot(gobject.GObject):
         try:        
             bus = dbus.SessionBus()
             self._logger.debug("creating proxy for org.mugshot.Mugshot")
+            subprocess.Popen(['mugshot']).pid
             self.__proxy = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
             self.__proxy.connect_to_signal('ConnectionStatusChanged', _log_cb(self.__on_connection_status_changed))
             self.__proxy.connect_to_signal('PrefChanged', _log_cb(self.__on_pref_changed))            
