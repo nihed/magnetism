@@ -1,4 +1,8 @@
 2007-04-24  Havoc Pennington  <hp@redhat.com>
 
+	* mailto-handler/mailto-handler.c: add lame mailto-handler program
+
+2007-04-24  Havoc Pennington  <hp@redhat.com>
+
 	* Makefile.am: add build for gmail .desktop file
 	
