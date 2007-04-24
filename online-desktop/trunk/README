@@ -1,0 +1,17 @@
+This module contains integration points with web apps such as GMail or
+Flickr or any others, allowing them to be first-class substitutes for
+local desktop apps.
+
+For example:
+ 
+- .desktop files are needed to make it easy to add these apps as panel
+  launchers.
+- local executables are needed for mailto: or MIME handlers
+- often some type of notification of new mail or calendar appointments
+  comes in handy
+
+This is all in one big tarball since it would just be annoying to have
+a little tiny tarball for every web app. If anything in here gets
+large and complex, we can split it out.
+
+
