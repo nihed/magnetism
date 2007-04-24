@@ -2215,13 +2215,12 @@ WinMain(HINSTANCE hInstance,
     INITCOMMONCONTROLSEX initControls;
     initControls.dwSize = sizeof(initControls);
     initControls.dwICC = ICC_STANDARD_CLASSES | ICC_TAB_CLASSES;
-    if (!InitCommonControlsEx(&initControls)) {
-        // the error codes for this function are not documented
-        // anywhere I can find.
-        HRESULT e = GetLastError();
-        hippoDebugLogW(L"InitCommonControlsEx error %d", (int) e);
-        hippoDebugLastErr(L"Failed to initialize common controls");
-    }
+
+    // We used to check the return value of InitCommonControlsEx, but we
+    // had a report of failure, http://bugzilla.mugshot.org/show_bug.cgi?id=1196,
+    // and since there is no documentation as to why it might fails, we're
+    // better off just ignoring the return code. Nobody checks the result.
+    InitCommonControlsEx(&initControls);
 
     if (!initializeWinSock())
         return 0;
