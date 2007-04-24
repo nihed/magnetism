@@ -10,8 +10,12 @@ public final class AmazonReviews implements AmazonReviewsView {
 	private List<AmazonReviewView> reviews;
 	
 	public AmazonReviews() {
-		total = -1;
-		totalReviewPages = -1;
+		this(-1, -1);
+	}
+	
+	public AmazonReviews(int total, int totalReviewPages) {		
+		this.total = total;
+		this.totalReviewPages = totalReviewPages;
 		reviews = new ArrayList<AmazonReviewView>();
 	}
 	
@@ -19,14 +23,22 @@ public final class AmazonReviews implements AmazonReviewsView {
 		return reviews;
 	}
 	
-	void addReview(AmazonReview review) {
+	public void addReview(AmazonReviewView review, boolean refreshTotal) {
 		reviews.add(review);
-		// clear the stored total
-		total = -1;
+		if (refreshTotal) {
+		    // clear the stored total
+		    total = -1;
+		}
+	}
+	
+	public void addReviews(List<? extends AmazonReviewView> reviews, boolean refreshTotal) {
+		this.reviews.addAll(reviews);
+		if (refreshTotal) {
+		    // clear the stored total
+		    total = -1;
+		}
 	}
 
-	// when we get reviews from the web service we just count them to get the total, 
-	// but when restoring from cache we potentially have the total stored
 	// total might be different from reviews.size() if we didn't get all the reviews
 	// written by the user, but know the total number of reviews
 	public int getTotal() {
@@ -48,11 +60,13 @@ public final class AmazonReviews implements AmazonReviewsView {
         this.totalReviewPages = totalReviewPages;
 	}
 	
-	public void setReviews(List<? extends AmazonReviewView> reviews) {
+	public void setReviews(List<? extends AmazonReviewView> reviews, boolean refreshTotal) {
 		this.reviews.clear();
 		this.reviews.addAll(reviews);
-		// clear the stored total
-		total = -1;
+		if (refreshTotal) {
+		    // clear the stored total
+		    total = -1;
+		}
 	} 
 	
 	@Override

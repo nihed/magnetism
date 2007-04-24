@@ -128,7 +128,7 @@ public class AmazonReviewsCacheBean extends AbstractBasicCacheBean<String,Amazon
 	public AmazonReviewsView checkCache(String key) throws NotCachedException {
 		AmazonReviewsView summary = summaryStorage.checkCache(key);
 		List<? extends AmazonReviewView> reviewList = reviewListStorage.checkCache(key);
-		summary.setReviews(reviewList);
+		summary.setReviews(reviewList, false);
 		return summary;
 	}
 
@@ -141,23 +141,30 @@ public class AmazonReviewsCacheBean extends AbstractBasicCacheBean<String,Amazon
 				// the cache, checkCache here will return NotCachedException and we'll recover. Or as soon as someone 
 				// adds or removes another review we'll recover.)
 				AmazonReviewsView old = checkCache(key);
-				if (data != null && old.getTotal() == data.getTotal())
+				// chechCache for BasicCacheStorage will return null if we have a NoResultsMarker cached
+				if (old == null && data == null) {
+				    // data will be null if there was an error, old will be null if we have a no results marker stored
+					return new AmazonReviews();					
+				} else if (data == null || (data != null && old != null && old.getTotal() == data.getTotal())) {
+					// If data is null, but old is not null, we should keep around the old reviews until they expire.
+					// This is possible if the reviews were deleted, but since there are no updates we'd want to make
+				    // in that situation, we shouldn't rush to delete them.
 					return old;
-			} catch (ExpiredCacheException e) {
-				// we need to use the new results, or save a new no-results marker
-
+			    }
 			} catch (NotCachedException e) {
-				if (data == null)
-					return null;
-				
-				// we need to use the new results
+				// This could happen if we never cached anything for this key, or if
+				// the cache expired. We need to use the new results, or save a new 
+				// no-results marker.
 			}
 		}
 		
 		AmazonReviewsView summary = summaryStorage.saveInCacheInsideExistingTransaction(key, data, now, refetchedWithoutCheckingCache);
+		// if there are no results, we want to save a NoResultsMarker for the list as well
+  	    List<? extends AmazonReviewView> reviewList = reviewListStorage.saveInCacheInsideExistingTransaction(key, data != null ? data.getReviews() : null, now, refetchedWithoutCheckingCache);
 		if (summary != null) {
-			List<? extends AmazonReviewView> reviewList = reviewListStorage.saveInCacheInsideExistingTransaction(key, data != null ? data.getReviews() : null, now, refetchedWithoutCheckingCache);
-			summary.setReviews(reviewList);
+			summary.setReviews(reviewList, false);
+		} else {
+			summary = new AmazonReviews();
 		}
 		
 		return summary;
