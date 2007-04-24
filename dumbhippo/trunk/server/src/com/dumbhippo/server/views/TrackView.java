@@ -1,5 +1,7 @@
 package com.dumbhippo.server.views;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
@@ -8,7 +10,6 @@ import java.util.Map;
 
 import com.dumbhippo.DateUtils;
 import com.dumbhippo.StringUtils;
-import com.dumbhippo.URLUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.Track;
@@ -211,9 +212,20 @@ public class TrackView {
 	}
 	
 	public String getArtistPageLink() {
-		return URLUtils.buildUrl("/artist", "track", getName(),
-				"artist", getArtist(),
-				"album", getAlbum());
+// /artist doesn't work without the (currently non-functional) Yahoo song search,
+// so we just send people to last.fm instead.
+//		return URLUtils.buildUrl("/artist", "track", getName(),
+//				"artist", getArtist(),
+//				"album", getAlbum());
+		if (getArtist() != null && getName() != null) {
+			try {
+				return "http://last.fm/music/" + URLEncoder.encode(getArtist(), "UTF-8") + "/_/" + URLEncoder.encode(getName(), "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException("UTF-8 not supported!");
+			}
+		} else {
+			return null;
+		}
 	}
 	
 	public String getPlayId() {
