@@ -132,25 +132,15 @@
 			</div>
 		</c:if>
 		<c:if test="${playItLink}">
-		    <c:if test="${!empty track.itunesUrl || !empty track.yahooUrl || !empty track.rhapsodyUrl}">
-				<div class="dh-song-links">play at 
-					<c:if test="${!empty track.itunesUrl}">
-						<a class="dh-music-source-link" href="${track.itunesUrl}">iTunes</a>
-						<c:if test="${!empty track.yahooUrl || !empty track.rhapsodyUrl}">
-					        ,
-					    </c:if>
+			<div class="dh-song-links">
+				<dh:forEachDownload track="${track}" var="download" varStatus="status">
+					<c:if test="${status.first}">
+						play with 
 					</c:if>
-					<c:if test="${!empty track.yahooUrl}">
-						<a class="dh-music-source-link" href="${track.yahooUrl}">Yahoo! Music</a>
-						<c:if test="${!empty track.rhapsodyUrl}">
-					        ,
-					    </c:if>
-					</c:if>
-					<c:if test="${!empty track.rhapsodyUrl}">
-						<a class="dh-music-source-link" href="${track.rhapsodyUrl}">Rhapsody</a>
-					</c:if>
-				</div>
-			</c:if>
+					<a class="dh-music-source-link" href="${dh:xmlEscape(download.url)}"><c:out value="${download.source.shortName}"/></a>
+					<c:if test="${!status.last}">, </c:if>
+				</dh:forEachDownload>				
+			</div>
 		</c:if>
 		<c:if test="${displayAsAlbumTrack}">
 		    <div id="dhSongPlaysOpened${order}s${songOrder}" class="${songPlaysOpenedClass}">

@@ -177,6 +177,27 @@
    		</attribute>
    	</tag>
     <tag>
+    	<name>forEachDownload</name>
+    	<tagclass>com.dumbhippo.web.tags.ForEachDownload</tagclass>
+    	<bodycontent>scriptless</bodycontent>
+    	<info>Iterate over downloads for a TrackView</info>
+    	<attribute>
+    		<name>track</name>
+    		<required>true</required>
+    		<rtexprvalue>true</rtexprvalue>
+   		</attribute>
+    	<attribute>
+    		<name>var</name>
+    		<required>true</required>
+    		<rtexprvalue>false</rtexprvalue>
+   		</attribute>
+    	<attribute>
+    		<name>varStatus</name>
+    		<required>true</required>
+    		<rtexprvalue>false</rtexprvalue>
+   		</attribute>
+   	</tag>
+    <tag>
         <name>png</name>
         <tagclass>com.dumbhippo.web.tags.PngTag</tagclass>
         <bodycontent>empty</bodycontent>

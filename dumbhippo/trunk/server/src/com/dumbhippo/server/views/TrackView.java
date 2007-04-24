@@ -72,6 +72,13 @@ public class TrackView {
 		return album;
 	}
 	
+	public Map<SongDownloadSource, String> getDownloads() {
+		if (downloads == null)
+			return Collections.emptyMap();
+		else
+			return downloads;
+	}
+	
 	public String getDownloadUrl(SongDownloadSource source) {
 		if (downloads == null)
 			return null;
@@ -83,20 +90,6 @@ public class TrackView {
 		if (downloads == null)
 			downloads = new EnumMap<SongDownloadSource,String>(SongDownloadSource.class);
 		downloads.put(source, url);
-	}
-	
-	// These getDownloadUrl wrappers are convenient from JSTL expression language
-	
-	public String getYahooUrl() {
-		return getDownloadUrl(SongDownloadSource.YAHOO);
-	}
-
-	public String getItunesUrl() {
-		return getDownloadUrl(SongDownloadSource.ITUNES);
-	}
-
-	public String getRhapsodyUrl() {
-		return getDownloadUrl(SongDownloadSource.RHAPSODY);
 	}
 	
 	public String getAlbum() {
