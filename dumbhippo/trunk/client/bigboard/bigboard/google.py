@@ -1,6 +1,11 @@
-import httplib2, keyring, libbig, sys, xml, xml.sax, logging, threading, gobject, gtk, datetime
+import httplib2, keyring, sys, xml, xml.sax, logging, threading, gobject, gtk, datetime
+from bigboard import libbig
+import libbig.logutil
+from libbig.struct import AutoStruct, AutoSignallingStruct
+import libbig.polling
+import pynotify
 
-class AbstractDocument(libbig.struct.AutoStruct):
+class AbstractDocument(AutoStruct):
     def __init__(self):
         super(AbstractDocument, self).__init__({ 'title' : 'Untitled', 'link' : None })
 
@@ -53,7 +58,7 @@ class DocumentsParser(xml.sax.ContentHandler):
         return self.__docs
 
 
-class Event(libbig.struct.AutoStruct):
+class Event(AutoStruct):
     def __init__(self):
         super(Event, self).__init__({ 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '' })
 
@@ -123,25 +128,95 @@ class EventsParser(xml.sax.ContentHandler):
     def get_events(self):
         return self.__events
 
+class NewMail(AutoStruct):
+    def __init__(self):
+        super(NewMail, self).__init__({ 'title' : '', 'summary' : '', 'issued' : '', 'link' : '', 'id' : '', 'sender_name' : '' })
+
+class NewMailParser(xml.sax.ContentHandler):
+    def __init__(self):
+        self.__mails = []
+        self.__inside_title = False
+        self.__inside_summary = False
+        self.__inside_id = False
+        self.__inside_author = False
+        self.__inside_author_name = False
+
+    def startElement(self, name, attrs):
+        #print "<" + name + ">"
+        #print attrs.getNames() # .getValue('foo')
+
+        if name == 'entry':
+            d = NewMail()
+            self.__mails.append(d)
+        elif len(self.__mails) > 0:
+            d = self.__mails[-1]
+            if name == 'title':
+                self.__inside_title = True
+            elif name == 'summary':
+                self.__inside_summary = True                
+            elif name == 'id':
+                self.__inside_id = True
+            elif name == 'author':
+                self.__inside_author = True
+            elif self.__inside_author and name == 'name':
+                self.__inside_author_name = True
+            elif name == 'link':
+                rel = attrs.getValue('rel')
+                href = attrs.getValue('href')
+                type = attrs.getValue('type')
+                #print str((rel, href, type))
+                if rel == 'alternate' and type == 'text/html':
+                    d.update({'link' : href})
+
+    def endElement(self, name):
+        #print "</" + name + ">"
+        
+        if name == 'title':
+            self.__inside_title = False
+        elif name == 'summary':
+            self.__inside_summary = False
+        elif name == 'id':
+            self.__inside_id = False
+        elif name == 'name':
+            self.__inside_author_name = False
+        elif name == 'author':
+            self.__inside_author = False
+
+    def characters(self, content):
+        #print content
+        if len(self.__mails) > 0:
+            d = self.__mails[-1]
+            if self.__inside_title:
+                d.update({'title' : content})
+            elif self.__inside_summary:
+                d.update({'summary' : content})
+            elif self.__inside_id:
+                d.update({'id' : content})
+            elif self.__inside_author_name:
+                d.update({'sender_name' : content })
+
+    def get_new_mails(self):
+        return self.__mails
+
 class AsyncHTTPLib2Fetcher:
     """Asynchronously fetch objects over HTTP, invoking
        callbacks using the GLib main loop."""
     def fetch(self, url, username, password, cb, errcb, authcb):
         self.__logger = logging.getLogger("bigboard.AsyncHTTPLib2Fetcher")
-        self.__logger.debug('creating async HTTP request thread for %s' % (url,))
+        #self.__logger.debug('creating async HTTP request thread for %s' % (url,))
 
         thread = threading.Thread(target=self._do_fetch, name="AsyncHTTPLib2Fetch", args=(url, username, password, cb, errcb, authcb))
         thread.setDaemon(True)
         thread.start()
         
     def _do_fetch(self, url, username, password, cb, errcb, authcb):
-        self.__logger.debug("in thread fetch of %s" % (url,))
+        #self.__logger.debug("in thread fetch of %s" % (url,))
         try:
             h = httplib2.Http()
             h.add_credentials(username, password)
             h.follow_all_redirects = True
 
-            self.__logger.debug("sending http request")
+            #self.__logger.debug("sending http request")
 
             headers, data = h.request(url, "GET", headers = {})
 
@@ -149,7 +224,8 @@ class AsyncHTTPLib2Fetcher:
                 self.__logger.error("auth failure for fetch of %s: %s" % (url, headers.status))
                 gobject.idle_add(lambda: authcb(url) and False)
             else:
-                self.__logger.debug("adding idle after http request")
+                #self.__logger.debug("adding idle after http request")
+                pass
 
                 gobject.idle_add(lambda: cb(url, data) and False)
         except Exception, e:
@@ -248,6 +324,43 @@ class AuthDialog:
         self.__okcb = okcb
         self.__cancelcb = cancelcb
 
+class CheckMailTask(libbig.polling.Task):
+    def __init__(self, google):
+        libbig.polling.Task.__init__(self, 1000)
+        self.__google = google
+        self.__mails = {}
+        self.__notify = pynotify.Notification('foo') # empty string causes return_if_fail
+        self.__notify.add_action('open-no-icon', "Open Mail", self.__on_action)        
+        self.__notify.add_action('inbox-no-icon', "Inbox", self.__on_action)
+
+    def __on_action(self, action):
+        print action
+
+    def __on_fetched_mail(self, mails):
+        currently_new = {}
+        not_yet_seen = 0
+        for m in mails:
+            currently_new[m.get_id()] = m
+            if self.__mails.has_key(m.get_id()):
+                pass
+            else:
+                not_yet_seen = not_yet_seen + 1
+
+        self.__mails = currently_new
+
+        if not_yet_seen > 0:
+            first = mails[0]
+
+            self.__notify.update(first.get_title(), first.get_summary())
+
+            self.__notify.show()
+
+    def __on_fetch_error(self, exc_info):
+        pass
+
+    def do_periodic_task(self):
+        self.__google.fetch_new_mail(self.__on_fetched_mail, self.__on_fetch_error)
+
 class Google:
 
     def __init__(self):
@@ -268,6 +381,15 @@ class Google:
             self.__username = None
             self.__password = None
 
+        self.__mail_checker = CheckMailTask(self)
+        self.__consider_checking_mail()
+
+    def __consider_checking_mail(self):
+        if self.__username and self.__password:
+            self.__mail_checker.start()
+        else:
+            self.__mail_checker.stop()
+
     def __on_auth_dialog_ok(self):
         self.__username = self.__auth_dialog.get_username()
         self.__password = self.__auth_dialog.get_password()
@@ -278,9 +400,12 @@ class Google:
         for h in hooks:
             h()
 
+        self.__consider_checking_mail()
+
     def __on_auth_dialog_cancel(self):
         self.__username = None
         self.__password = None
+        self.__consider_checking_mail()
 
     def __open_auth_dialog(self):
         if not self.__auth_dialog:
@@ -304,6 +429,8 @@ class Google:
         # don't null username, leave it filled in
         self.__password = None
         self.__with_login_info(func)
+
+    ### Calendar
 
     def __on_calendar_load(self, url, data, cb, errcb):
         self.__logger.debug("loaded calendar from " + url)
@@ -330,6 +457,9 @@ class Google:
     def fetch_calendar(self, cb, errcb):
         self.__with_login_info(lambda: self.__have_login_fetch_calendar(cb, errcb))
 
+
+    ### Recent Documents
+
     def __on_documents_load(self, url, data, cb, errcb):
         self.__logger.debug("loaded documents from " + url)
         try:
@@ -354,6 +484,34 @@ class Google:
 
     def fetch_documents(self, cb, errcb):
         self.__with_login_info(lambda: self.__have_login_fetch_documents(cb, errcb))
+
+    ### New Mail
+
+    def __on_new_mail_load(self, url, data, cb, errcb):
+        #self.__logger.debug("loaded new mail from " + url)
+        #print data
+        try:
+            p = NewMailParser()
+            xml.sax.parseString(data, p)
+            cb(p.get_new_mails())
+        except xml.sax.SAXException, e:
+            errcb(sys.exc_info())
+
+    def __on_new_mail_error(self, url, exc_info, errcb):
+        self.__logger.debug("error loading new mail from " + url)
+        errcb(exc_info)
+
+    def __have_login_fetch_new_mail(self, cb, errcb):
+
+        uri = 'http://mail.google.com/mail/feed/atom'
+
+        self.__fetcher.fetch(uri, self.__username, self.__password,
+                             lambda url, data: self.__on_new_mail_load(url, data, cb, errcb),
+                             lambda url, exc_info: self.__on_new_mail_error(url, exc_info, errcb),
+                             lambda url: self.__on_bad_auth(lambda: self.__have_login_fetch_new_mail(cb, errcb)))
+
+    def fetch_new_mail(self, cb, errcb):
+        self.__with_login_info(lambda: self.__have_login_fetch_new_mail(cb, errcb))
         
 if __name__ == '__main__':
 
@@ -361,9 +519,10 @@ if __name__ == '__main__':
 
     gtk.gdk.threads_init()
 
-    libbig.init_logging('DEBUG', ['bigboard.AsyncHTTP2LibFetcher'])
+    libbig.logutil.init('DEBUG', ['bigboard.AsyncHTTP2LibFetcher'])
 
     libbig.set_application_name("BigBoard")
+    pynotify.init("BigBoard")
 
     #AuthDialog('foo', 'bar').present()
     #gtk.main()
@@ -377,7 +536,8 @@ if __name__ == '__main__':
         print x
     
     #g.fetch_documents(display, display)
-    g.fetch_calendar(display, display)
+    #g.fetch_calendar(display, display)
+    #g.fetch_new_mail(display, display)
 
     gtk.main()
 
