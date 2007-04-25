@@ -10,7 +10,11 @@ tr.dh-feed-spacer {
 }
 
 .dh-feed-status-icon {
-	margin-right:	10px;
+	margin-right:	25px;
+}
+
+.dh-feed-status img {
+	display:		inline-block;
 }
 
 #dhFeedEntry {

@@ -504,7 +504,7 @@ dh.util.getMSXML = function (text) {
 dh.util.createPngElement = function(src, width, height) {
 	// don't try to use <img> or <span>, it won't work; the <div> is why you have to provide width/height
 	var img = document.createElement("div");
-	if (dh.browser.ie) {
+	if (dh.browser.ieAlphaImage) {
 		// don't try to use setAttribute(), it won't work
 		img.style.width = width;
 		img.style.height = height;

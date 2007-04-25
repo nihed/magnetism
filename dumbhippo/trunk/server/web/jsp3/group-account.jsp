@@ -160,10 +160,10 @@
 								<td align="right" title="${feed.feed.lastFetchSucceeded ? 'This feed is working great!' : 'Something went wrong last time Mugshot checked this feed'}">
 									<c:choose>
 										<c:when test="${feed.feed.lastFetchSucceeded}">
-											<dh:png src="/images2/${buildStamp}/check10x10.png" style="width: 10; height: 10;" klass="dh-feed-status-icon"/>
+											<dh:png src="/images2/${buildStamp}/check10x10.png" style="width: 10; height: 10; overflow: hidden;" klass="dh-feed-status-icon"/>
 										</c:when>
 										<c:otherwise>
-											<dh:png src="/images2/${buildStamp}/alert10x10.png" style="width: 10; height: 10;" klass="dh-feed-status-icon"/>
+											<dh:png src="/images2/${buildStamp}/alert10x10.png" style="width: 10; height: 10; overflow: hidden;" klass="dh-feed-status-icon"/>
 										</c:otherwise>
 									</c:choose>
 								</td>

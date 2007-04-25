@@ -9,6 +9,9 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.util.EJBUtil;
 
 public class BrowserBean implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -21,6 +24,8 @@ public class BrowserBean implements Serializable {
 	private enum OS { Mac, Windows, Linux, Unknown };
 	private enum Browser { Khtml, Gecko, Opera, IE, Unknown };
 	public enum Distribution { Fedora, RHEL, Ubuntu, Unknown };
+	
+	private boolean forceIeAlphaImage = false;
 	
 	private OS os;
 	private Browser browser;
@@ -37,6 +42,9 @@ public class BrowserBean implements Serializable {
 	private String architectureRequested;
 	
 	protected BrowserBean(HttpServletRequest request) {
+		
+		Configuration config = EJBUtil.defaultLookup(Configuration.class);
+		forceIeAlphaImage = "true".equals(config.getProperty(HippoProperty.FORCE_IE_ALPHA_IMAGE));
 		
 		os = OS.Unknown;
 		browser = Browser.Unknown;
@@ -140,12 +148,14 @@ public class BrowserBean implements Serializable {
 		} else if (os == OS.Windows && userAgent.contains("MSIE 5.5")) {
 			browser = Browser.IE;
 			browserVersion = 55;
-		} else if (os == OS.Windows && 
-				(userAgent.contains("MSIE 6") ||
-				 userAgent.contains("MSIE 7") ||
-				 userAgent.contains("MSIE 8"))) {
+		} else if (os == OS.Windows && userAgent.contains("MSIE 6")) {
 			browser = Browser.IE;
 			browserVersion = 60;
+		} else if (os == OS.Windows && 
+				(userAgent.contains("MSIE 7") ||
+				 userAgent.contains("MSIE 8"))) {
+			browser = Browser.IE;
+			browserVersion = 70;
 		}
 		
 		String platformOverrideStr = request.getParameter("platform");
@@ -347,7 +357,7 @@ public class BrowserBean implements Serializable {
 	}
 	
 	public boolean getIeAlphaImage() {
-		return isIeAtLeast55() && browserVersion < 70;
+		return isIeAtLeast55() && (forceIeAlphaImage || browserVersion < 70);
 	}
 	
 	@Override
@@ -421,6 +431,10 @@ public class BrowserBean implements Serializable {
 		sb.append("    browser.ieAtLeast70 = av.indexOf('MSIE 7') >= 0;\n");
 		sb.append("    if (browser.ieAtLeast70) browser.ieAtLeast60 = true;\n");
 		sb.append("    if (browser.ieAtLeast60) browser.ieAtLeast55 = true;\n");
+		if (forceIeAlphaImage)
+			sb.append("    browser.ieAlphaImage = browser.ieAtLeast55;\n");
+		else
+			sb.append("    browser.ieAlphaImage = browser.ieAtLeast55 && !browser.ieAtLeast70;\n");
 		sb.append("    browser.linux = av.indexOf('X11') >= 0;\n");
 		sb.append("    browser.windows = av.indexOf('Windows') >= 0;\n");
 		sb.append("    browser.mac = av.indexOf('Macintosh') >= 0;\n");
