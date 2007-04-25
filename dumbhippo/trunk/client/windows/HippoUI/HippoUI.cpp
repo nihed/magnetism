@@ -14,7 +14,6 @@
 #include <HippoURLParser.h>
 #include <HippoUtil_i.c>
 #include <Winsock2.h>
-#include "cleangdiplus.h"
 #include <urlmon.h>   // For CoInternetParseUrl
 #include <wininet.h>  // for cookie retrieval
 #include <limits>
@@ -2224,11 +2223,6 @@ WinMain(HINSTANCE hInstance,
 
     if (!initializeWinSock())
         return 0;
-
-    Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-    ULONG_PTR gdiplusToken;
-   
-    Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     editToolbar();
     registerFirefoxComponent();

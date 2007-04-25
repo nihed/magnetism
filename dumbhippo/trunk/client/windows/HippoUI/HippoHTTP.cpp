@@ -10,14 +10,58 @@
 #include <HippoUtil.h>
 #include "HippoLogWindow.h"
 
+//
+// NOTE: Thread-safety issues in this code are rather complex; please make
+// sure you understand what's going on before you make changes. In outline:
+//
+//  - We start an asynchronous WinINet operation
+//  - WinINet makes callbacks back to us *from random threads*. In these 
+//    callbacks, we read data and progress through a state machine, defined
+//    by the ResponseState enumeration.
+//  - When there is anything we need to report to the handler (we've read
+//    a chunk of data, an error has occurred, etc), we queue that to the
+//    main thread using the "response idle"
+//  - In the response idle, we look at the current state, report things
+//    as necessary to the user, and record what we've reported so that
+//    the next time the response idle is run, we don't report them again.
+//  - The response idle is also responsible for freeing the HippoHTTPContext
+//    object, but needs to wait to do this until the HINTERNET handles
+//    are actually closed, which may occur asynchronously after we've
+//    finished other handling.
+//
+// Since the WinINet callbacks and the response idle happen in different
+// threads, member variables accessed from both, such as responseState_
+// need to be protected with a critical section.
+//
+// Things are made a little more complex by the fact that we have to do
+// things differently depending on whether the HTTP server sends us a size
+// in advance. If we have the size in advance, we can allocate a buffer
+// for the entire response that will be static and we can pass pointers
+// to this buffer to the response handler. If we don't have the size
+// in advance, we'll have to realloc the buffer bigger, so we have to wait
+// until the end to report.
+//
+// (The point of the incremental reporting is for the upgrader; on a slow
+// or intermittent connection, we might only download part of the download
+// before we lose the connection, and we'd like to save that to disk so
+// we can pick up where we left off. Since we don't have the code to 
+// resume a partial download, it doesn't *actually* do us much good, but
+// that's the idea, and the resume code could be added later.)
+//
+
+// Downloads are to a temporary memory buffer, so we need to limit the size
+static const long MAX_DOWNLOAD_SIZE = 16 * 1024 * 1024; // 16MB
+
 class HippoHTTPContext
 {
 public:
     enum ResponseState {
-        RESPONSE_STATE_STARTING,
-        RESPONSE_STATE_READING,
-        RESPONSE_STATE_DONE,
-        RESPONSE_STATE_ERROR
+        RESPONSE_STATE_STARTING, // Waiting for a server response
+        RESPONSE_STATE_HEADERS,  // Parsing information from the server headers
+        RESPONSE_STATE_READING,  // Reading data
+        RESPONSE_STATE_COMPLETE, // Got all the request data
+        RESPONSE_STATE_ERROR,    // Got an error
+        RESPONSE_STATE_DONE      // Everything done but freeing the context
     };
 
     HINTERNET connectionHandle_;
@@ -30,26 +74,34 @@ public:
     void *inputData_;
     long inputLen_;
 
+    // These are set before the first time the response idle is called and not changed,
+    // so are safe to access from the response idle
     long responseSize_;
     HippoBSTR responseContentType_;
     HippoBSTR responseContentCharset_;
 
+    // If responseSize_ >= 0, then responseBuffer_ is allocated in advance, and we can
+    // incrementally feed stuff to the handler in the response idle. If responseSize_ == -1,
+    // then responseBuffer_ may be realloc'ed, so we have to wait until the download
+    // is complete before the response idle can read from responseBuffer_.
+    void *responseBuffer_;
+    long responseBufferSize_;
+
     // -----------------------------------------------------------------------------
-    // These following items are shared between the read thread and response idle
+    // These following items are shared between the read thread and response idle,
+    //  and must be accessed from within the critical section.
     CRITICAL_SECTION criticalSection_;
 
     ResponseState responseState_;
-    bool seenResponseSize_;
-    bool seenResponseContentType_;
     long responseBytesRead_;
-    long responseBytesSeen_;
     unsigned responseIdle_;
     HRESULT responseError_;
 
-    // -----------------------------------------------------------------------------
+    // Used by the response idle to track what has been reported
+    bool reportedHeaders_;
+    long responseBytesSeen_;
 
-    void *responseBuffer_;
-    long responseBufferSize_;
+    // -----------------------------------------------------------------------------
 
     HippoHTTPAsyncHandler *handler_;
 
@@ -64,6 +116,7 @@ public:
     void enqueueError(HRESULT error);
     void readData();
     void closeHandles();
+    void onHandleClose(HINTERNET handle);
 };
 
 
@@ -72,34 +125,71 @@ HippoHTTPContext::doResponseIdle()
 {
     HippoHTTPContext::ResponseState state;
 
+    // We figure out what we need to do inside the critical section, then leave
+    // the critical section to actually make the callbacks to the handler
     EnterCriticalSection(&criticalSection_);
     state = responseState_;
-    bool oldSeenResponseSize = seenResponseSize_;
-    seenResponseSize_ = true;
+
+    // On error or receiving all the data, we're done with all our callbacks,
+    // be we might still be called again later to delete the object after
+    // the handles are asynchronously closed, so mark that state
+    if (state == RESPONSE_STATE_ERROR || state == RESPONSE_STATE_COMPLETE)
+        responseState_ = RESPONSE_STATE_DONE;
+
+    // Is it OK to go ahaead and free the connection
+    bool handlesClosed = connectionHandle_ == NULL && requestOpenHandle_ == NULL;
+
+    bool oldReportedHeaders = reportedHeaders_;
+    reportedHeaders_ = true;
+
     long oldResponseBytesSeen = responseBytesSeen_;
     long newResponseBytesSeen = responseBytesSeen_ = responseBytesRead_;
+
     responseIdle_ = 0;
     LeaveCriticalSection(&criticalSection_);
 
-    if (state == RESPONSE_STATE_ERROR) {
-        handler_->handleError(responseError_);
-        delete this;
+    // -------------------------------------------------------------------
+
+    if (state == RESPONSE_STATE_DONE) {
+        if (handlesClosed)
+            delete this;
         return;
     }
     
-    if (!oldSeenResponseSize) {
-        handler_->handleGotSize(responseSize_);
+    if (state == RESPONSE_STATE_ERROR) {
+        handler_->handleError(responseError_);
+        if (handlesClosed)
+            delete this;
+        return;
+    }
+
+    if (!oldReportedHeaders)
         handler_->handleContentType(responseContentType_, responseContentCharset_);
+
+    // We can only give incremental updates if we had the content size in advance,
+    // since otherwise responseBuffer_ may be reallocated under our feet; more
+    // obviously, if we don't have the content size in advance, we have to delay
+    // reporting it to the end
+    if (responseSize_ >= 0) {
+        if (!oldReportedHeaders)
+            handler_->handleGotSize(responseSize_);
+
+        if (oldResponseBytesSeen != newResponseBytesSeen) {
+            handler_->handleBytesRead((char *)responseBuffer_ + oldResponseBytesSeen, 
+                                      newResponseBytesSeen - oldResponseBytesSeen);
+        }
     }
 
-    if (oldResponseBytesSeen != newResponseBytesSeen) {
-        handler_->handleBytesRead((char *)responseBuffer_ + oldResponseBytesSeen, 
-                                  newResponseBytesSeen - oldResponseBytesSeen);
-    }
+    if (state == RESPONSE_STATE_COMPLETE) {
+        // If we couldn't give an incremental update, give it at the end
+        if (responseSize_ < 0) {
+            handler_->handleGotSize(responseBytesRead_);
+            handler_->handleBytesRead(responseBuffer_, responseBytesRead_);
+        }
 
-    if (state == RESPONSE_STATE_DONE) {
         handler_->handleComplete(responseBuffer_, responseBytesRead_);
-        delete this;
+        if (handlesClosed)
+            delete this;
     }
 }
 
@@ -123,10 +213,28 @@ HippoHTTPContext::ensureResponseIdle()
 void
 HippoHTTPContext::closeHandles()
 {
-    InternetCloseHandle(requestOpenHandle_);
-    requestOpenHandle_ = NULL;
-    InternetCloseHandle(connectionHandle_);
-    connectionHandle_ = NULL;
+    // Closing handles is asynchronous, we'll get a status update
+    // with a status of INTERNET_STATUS_HANDLE_CLOSING when it happens.
+
+    if (requestOpenHandle_)
+        InternetCloseHandle(requestOpenHandle_);
+    if (connectionHandle_)
+        InternetCloseHandle(connectionHandle_);
+}
+
+void 
+HippoHTTPContext::onHandleClose(HINTERNET handle)
+{
+    EnterCriticalSection(&criticalSection_);
+    if (handle == connectionHandle_) {
+        connectionHandle_ = NULL;
+    } else if (handle == requestOpenHandle_) {
+        requestOpenHandle_ = NULL;
+    }
+
+    if (connectionHandle_ == NULL && requestOpenHandle_ == NULL)
+        ensureResponseIdle();
+    LeaveCriticalSection(&criticalSection_);
 }
 
 void
@@ -167,20 +275,20 @@ HippoHTTPContext::readData()
         EnterCriticalSection(&criticalSection_);
 
         DWORD toRead;
-        if (responseSize_ > 0) {
+        if (responseSize_ >= 0) {
             toRead = responseSize_ - responseBytesRead_;
         } else {
-            toRead = 4096;
+            toRead = MIN(MAX_DOWNLOAD_SIZE - responseBytesRead_, 4096);
         }
         void *readLocation;
-        HRESULT allocResult;
 
         if (toRead > bytesAvailable)
             toRead = bytesAvailable;
 
         if (((long)toRead + responseBytesRead_) > responseBufferSize_) {
-            responseBuffer_ = realloc(responseBuffer_, responseBufferSize_ *= 2);
-            allocResult = GetLastError();
+            // No need to guard against overflow because of clamp to MAX_DOWNLOAD_SIZE
+            responseBufferSize_ *= 2;
+            responseBuffer_ = realloc(responseBuffer_, responseBufferSize_);
         }
 
         readLocation = ((char*)responseBuffer_) + responseBytesRead_;
@@ -188,7 +296,7 @@ HippoHTTPContext::readData()
         LeaveCriticalSection(&criticalSection_);
 
         if (responseBuffer_ == NULL) {
-            enqueueError(allocResult);
+            enqueueError(E_OUTOFMEMORY);
             return;
         }
 
@@ -206,7 +314,8 @@ HippoHTTPContext::readData()
             EnterCriticalSection(&criticalSection_);
             char *current = (char*)responseBuffer_;
             responseBytesRead_ += bytesRead;
-            ensureResponseIdle();
+            if (responseSize_ >= 0) // Only incremental report when we know the size in advance
+                ensureResponseIdle();
             LeaveCriticalSection(&criticalSection_);
 
             if (bytesRead == 0)
@@ -217,11 +326,7 @@ HippoHTTPContext::readData()
     closeHandles();
 
     EnterCriticalSection(&criticalSection_);
-    if (responseSize_ < 0 || responseSize_ - responseBytesRead_ != 0) { 
-        // Missing or invalid Content-Length
-        responseSize_ = responseBytesRead_;
-    }
-    responseState_ = HippoHTTPContext::RESPONSE_STATE_DONE;
+    responseState_ = HippoHTTPContext::RESPONSE_STATE_COMPLETE;
     ensureResponseIdle();
     LeaveCriticalSection(&criticalSection_);
 
@@ -233,7 +338,38 @@ static void
 handleCompleteRequest(HINTERNET ictx, HippoHTTPContext *ctx, DWORD status, LPVOID statusInfo, 
                       DWORD statusLength)
 {
-    if (ctx->responseBuffer_ == NULL) {
+    EnterCriticalSection(&(ctx->criticalSection_));
+    HippoHTTPContext::ResponseState state = ctx->responseState_;
+
+    if (state == HippoHTTPContext::RESPONSE_STATE_STARTING) {
+        ctx->responseState_ = HippoHTTPContext::RESPONSE_STATE_HEADERS;
+    }
+
+    LeaveCriticalSection(&(ctx->criticalSection_));
+
+    if (state == HippoHTTPContext::RESPONSE_STATE_HEADERS) {
+        // our assumption is that COMPLETE_REQUEST callbacks all occur serialized
+        // from a single thread. If we get a COMPLETE_REQUEST callback while we
+        // are processing the headers, that assumption has been violated.
+        // Ignoring such a call is probably right, since it's not clear what
+        // it would mean or what we should do ... if state == HEADERS, we
+        // are going to go ahead and try to read data in any case.
+
+        hippoDebugLogW(L"WARNING: handleCompleteRequest() called again while reading headers");
+        return;
+    }
+
+    if (state != HippoHTTPContext::RESPONSE_STATE_STARTING &&
+        state != HippoHTTPContext::RESPONSE_STATE_READING) {
+        // It seems to sometimes happen that handleCompleteRequest gets called after
+        // we've closed the handles in an error case. 
+        // (
+
+        hippoDebugLogW(L"handleCompleteRequest() called while cleaning up, ignoring");
+        return;
+    }
+
+    if (state == HippoHTTPContext::RESPONSE_STATE_STARTING) {
         DWORD statusCode;
         DWORD statusCodeSize = sizeof(statusCode);
 
@@ -245,7 +381,6 @@ handleCompleteRequest(HINTERNET ictx, HippoHTTPContext *ctx, DWORD status, LPVOI
         }
 
         WCHAR responseSize[80];
-        static const long MAX_SIZE = 16 * 1024 * 1024;
         DWORD responseDatumSize = sizeof(responseSize);
         WCHAR responseContentType[120];
         DWORD responseContentTypeSize = sizeof(responseContentType);
@@ -260,8 +395,8 @@ handleCompleteRequest(HINTERNET ictx, HippoHTTPContext *ctx, DWORD status, LPVOI
             ctx->responseSize_ = wcstoul(responseSize, NULL, 10);
             if (ctx->responseSize_ < 0)
                 ctx->responseSize_ = 0;
-            else if (ctx->responseSize_ > MAX_SIZE)
-                ctx->responseSize_ = MAX_SIZE;
+            else if (ctx->responseSize_ > MAX_DOWNLOAD_SIZE)
+                ctx->responseSize_ = MAX_DOWNLOAD_SIZE;
             ctx->responseBufferSize_ = ctx->responseSize_;
         }
 
@@ -276,7 +411,7 @@ handleCompleteRequest(HINTERNET ictx, HippoHTTPContext *ctx, DWORD status, LPVOI
             WCHAR *contentPtr = wcsstr(responseContentType, charsetDelim);
             if (contentPtr) {
                 ctx->responseContentType_ = HippoBSTR(contentPtr - responseContentType, responseContentType);
-                ctx->responseContentCharset_ = contentPtr + wcslen(charsetDelim) + 1;
+                ctx->responseContentCharset_ = contentPtr + wcslen(charsetDelim);
             } else {
                 ctx->responseContentType_ = responseContentType;
                 ctx->responseContentCharset_ = defaultCharset;
@@ -286,7 +421,7 @@ handleCompleteRequest(HINTERNET ictx, HippoHTTPContext *ctx, DWORD status, LPVOI
         ctx->responseBuffer_ = malloc (ctx->responseBufferSize_);
         ctx->responseState_ = HippoHTTPContext::RESPONSE_STATE_READING;
         EnterCriticalSection(&(ctx->criticalSection_));
-        ctx->ensureResponseIdle(); // To report that we have the size
+        ctx->ensureResponseIdle(); // To report the content type and maybe size
         LeaveCriticalSection(&(ctx->criticalSection_));
     }
 
@@ -309,6 +444,7 @@ asyncStatusUpdate(HINTERNET ictx, DWORD_PTR uctx, DWORD status, LPVOID statusInf
         case INTERNET_STATUS_CONNECTION_CLOSED:
             break;
         case INTERNET_STATUS_HANDLE_CLOSING:
+            ctx->onHandleClose(ictx);
             break;
         case INTERNET_STATUS_HANDLE_CREATED:
             break;
@@ -583,7 +719,7 @@ HippoHTTP::doAsync(WCHAR                 *host,
     context->contentType_ = contentType;
     context->responseState_ = HippoHTTPContext::RESPONSE_STATE_STARTING;
     context->responseSize_ = -1;
-    context->seenResponseSize_ = false;
+    context->reportedHeaders_ = false;
     context->responseBuffer_ = NULL;
     context->inputData_ = requestInput;
     context->inputLen_ = len;

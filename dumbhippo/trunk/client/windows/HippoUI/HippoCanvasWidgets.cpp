@@ -354,5 +354,14 @@ HippoCanvasEntryListener::onTextChanged() {
 
 bool 
 HippoCanvasEntryListener::onKeyPress(HippoKey key, gunichar character) {
-    return hippo_canvas_item_emit_key_press_event(item_, key, character) != FALSE;
+    int modifiers = 0;
+
+    if ((GetKeyState(VK_SHIFT) & 0x8000) != 0)
+        modifiers |= HIPPO_MODIFIER_SHIFT;
+    if ((GetKeyState(VK_CONTROL) & 0x8000) != 0)
+        modifiers |= HIPPO_MODIFIER_CTRL;
+    if ((GetKeyState(VK_MENU) & 0x8000) != 0)
+        modifiers |= HIPPO_MODIFIER_ALT;
+
+    return hippo_canvas_item_emit_key_press_event(item_, key, character, modifiers) != FALSE;
 }

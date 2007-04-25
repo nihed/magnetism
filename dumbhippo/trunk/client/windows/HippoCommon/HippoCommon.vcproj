@@ -215,14 +215,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-person.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-photoset.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-generic.c"
 				>
 			</File>
@@ -255,10 +247,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-youtube-person.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block.c"
 				>
 			</File>
@@ -268,6 +256,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-chat-preview.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-container.c"
 				>
 			</File>
 			<File
@@ -304,6 +296,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-item.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-last-message-preview.c"
 				>
 			</File>
 			<File
@@ -635,6 +631,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-container.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-context.h"
 				>
 			</File>
@@ -672,6 +672,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-item.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-last-message-preview.h"
 				>
 			</File>
 			<File

@@ -199,6 +199,9 @@ HippoInvocationImpl::run()
 HRESULT 
 HippoInvocationImpl::getResult(variant_t *result)
 {
+    if (!script_)
+        return E_UNEXPECTED;
+
     DISPID id = NULL;
 
     HRESULT hr = script_->GetIDsOfNames(IID_NULL, 
