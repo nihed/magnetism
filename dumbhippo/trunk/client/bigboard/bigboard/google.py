@@ -129,7 +129,9 @@ class EventsParser(xml.sax.ContentHandler):
 
 class NewMail(AutoStruct):
     def __init__(self):
-        super(NewMail, self).__init__({ 'title' : '', 'summary' : '', 'issued' : '', 'link' : '', 'id' : '', 'sender_name' : '' })
+        super(NewMail, self).__init__({ 'title' : '', 'summary' : '', 'issued' : '',
+                                        'link' : '', 'id' : '', 'sender_name' : '',
+                                        'sender_email' : ''})
 
 class NewMailParser(xml.sax.ContentHandler):
     def __init__(self):
@@ -139,6 +141,7 @@ class NewMailParser(xml.sax.ContentHandler):
         self.__inside_id = False
         self.__inside_author = False
         self.__inside_author_name = False
+        self.__inside_author_email = False
 
     def startElement(self, name, attrs):
         #print "<" + name + ">"
@@ -159,6 +162,8 @@ class NewMailParser(xml.sax.ContentHandler):
                 self.__inside_author = True
             elif self.__inside_author and name == 'name':
                 self.__inside_author_name = True
+            elif self.__inside_author and name == 'email':
+                self.__inside_author_email = True                
             elif name == 'link':
                 rel = attrs.getValue('rel')
                 href = attrs.getValue('href')
@@ -178,6 +183,8 @@ class NewMailParser(xml.sax.ContentHandler):
             self.__inside_id = False
         elif name == 'name':
             self.__inside_author_name = False
+        elif name == 'email':
+            self.__inside_author_email = False            
         elif name == 'author':
             self.__inside_author = False
 
@@ -192,6 +199,8 @@ class NewMailParser(xml.sax.ContentHandler):
                 d.update({'id' : d.get_id() + content})
             elif self.__inside_author_name:
                 d.update({'sender_name' : d.get_sender_name() + content })
+            elif self.__inside_author_email:
+                d.update({'sender_email' : d.get_sender_email() + content })
 
     def get_new_mails(self):
         return self.__mails
@@ -367,16 +376,19 @@ class CheckMailTask(libbig.polling.Task):
         if not_yet_seen > 0:
             first = mails[0]
 
+            body = "<i>from " + xml.sax.saxutils.escape(first.get_sender_name()) + \
+                   "&lt;" + xml.sax.saxutils.escape(first.get_sender_email()) + "&gt;</i>\n"
+            body = body + xml.sax.saxutils.escape(first.get_summary())
+
             notify_id = self.__notifications_proxy.Notify("BigBoard",
                                                           1, # "id" - should read docs on this ;-)
                                                           "", # icon name
                                                           first.get_title(),   # summary
-                                                          xml.sax.saxutils.escape(first.get_summary()), # body
-                                                           # action array
+                                                          body, # body
                                                           ['mail',
                                                            "OpenMessage",
                                                            'inbox-no-icon',
-                                                           "Inbox (%d)" % len(self.__mails)],
+                                                           "Inbox (%d)" % len(self.__mails)], # action array
                                                           {'foo' : 'bar'}, # hints (pydbus barfs if empty)
                                                           5000) # timeout
 
