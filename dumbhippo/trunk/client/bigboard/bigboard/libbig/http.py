@@ -27,9 +27,9 @@ class AsyncHTTPFetcher(Singleton):
             t.setDaemon(True)
             t.start()        
        
-    def fetch(self, url, cb, errcb, cookies=None, data=None):        
+    def fetch(self, url, cb, errcb, cookies=None, data=None, nocache=False):        
         self.__work_lock.acquire()
-        self.__work_queue.append((url, cb, errcb, cookies, data))
+        self.__work_queue.append((url, cb, errcb, cookies, data, nocache))
         self.__work_cond.notify()
         self.__work_lock.release()
 
@@ -38,7 +38,10 @@ class AsyncHTTPFetcher(Singleton):
         self.__logger.debug("doing XML method request '%s' params: '%s'", url, formdata)
         self.fetch(url,
                    lambda url, data: self.__handle_xml_method_return(url, data, cb, normerrcb),
-                   errcb, params)
+                   errcb,
+                   cookies=None,
+                   data=formdata,
+                   nocache=not not params)
 
     def __handle_xml_method_return(self, url, data, cb, normerrcb):
         doc = xml.dom.minidom.parseString(data) 
@@ -62,17 +65,21 @@ class AsyncHTTPFetcher(Singleton):
             self.__work_lock.acquire()
             while len(self.__work_queue) == 0:
                 self.__work_cond.wait()
-            (url, cb, errcb, cookies, data) = self.__work_queue.pop(0)
+            (url, cb, errcb, cookies, data, nocache) = self.__work_queue.pop(0)
             self.__work_lock.release()            
-            self.__do_fetch(url, cb, errcb, cookies, data)
+            self.__do_fetch(url, cb, errcb, cookies, data, nocache)
 
-    def __do_fetch(self, url, cb, errcb, cookies, data):
-        self.__logger.debug("in thread fetch of %s" % (url,))
+    def __do_fetch(self, url, cb, errcb, cookies, data, nocache):
+        self.__logger.debug("in thread fetch of %s (%s)" % (url, data))
         try:
-            (fname, fdata) = libbig.httpcache.load(url, cookies, data=data)
-            gobject.idle_add(lambda: cb(url, fdata or open(fname, 'rb').read()))
+            (fname, fdata) = libbig.httpcache.load(url, cookies, data=data, nocache=nocache)
+            gobject.idle_add(lambda: self.__emit_results(url, data, cb, fname, fdata))
         except Exception, e:
             self.__logger.info("caught error for fetch of %s: %s" % (url, e))
             # in my experience sys.exc_info() is some kind of junk here, while "e" is useful
             gobject.idle_add(lambda: errcb(url, sys.exc_info()) and False)
+
+    def __emit_results(self, url, data, cb, fname, fdata):
+        self.__logger.debug("fetch of %s (%s): results %s %s" % (url, data, fname, fdata))
+        cb(url, fdata or open(fname, 'rb').read())
     
