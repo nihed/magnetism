@@ -28,6 +28,7 @@
         dumbhippo.server.http.port=@@tomcatHttpPort:properties@@
 		dumbhippo.server.baseurl=@@baseurl:properties@@
 		dumbhippo.server.web.version=@@webVersion:properties@@
+        dumbhippo.server.web.ie.forcealphaimage=@@forceIEAlphaImage:properties@@
 		dumbhippo.server.appinfo.dir=@@appinfoDir:properties@@
 		dumbhippo.server.crashdump.dir=@@crashdumpDir:properties@@
 		dumbhippo.server.files.saveurl=file://@@filesavedir:properties@@

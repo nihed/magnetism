@@ -8,6 +8,7 @@ public enum HippoProperty {
 	FEEDBACK_EMAIL("dumbhippo.server.email.feedback", "feedback@mugshot.org"),
 	DOWNLOADS("dumbhippo.server.downloads", null),
 	WEB_VERSION("dumbhippo.server.web.version", null),
+	FORCE_IE_ALPHA_IMAGE("dumbhippo.server.web.ie.forcealphaimage", "false"),
 	XMPP_ADDRESS("dumbhippo.server.xmpp.address", null),
 	XMPP_PORT("dumbhippo.server.xmpp.port", null),
 	XMPP_ADMINUSER("dumbhippo.server.xmpp.adminuser", null),
