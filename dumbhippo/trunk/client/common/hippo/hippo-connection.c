@@ -1254,11 +1254,11 @@ send_immediately(HippoConnection         *connection,
 {
     GError *error;
     
-    if (connection->lm_connection == NULL) {
-        g_debug("not sending message, not connected");
+    if (!hippo_connection_get_connected(connection)) {
+        g_warning("SEND_MODE_IMMEDIATELY used when not authenticated");
         return;
     }
-    
+
     error = NULL;
     if (handler != NULL) {
         LmMessageHandler *handler_obj = lm_message_handler_new(handler, 
@@ -1621,7 +1621,7 @@ hippo_connection_request_title_patterns(HippoConnection *connection)
 
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/applications");
 
-    hippo_connection_send_message_with_reply(connection, message, on_title_patterns_reply, SEND_MODE_IMMEDIATELY);
+    hippo_connection_send_message_with_reply(connection, message, on_title_patterns_reply, SEND_MODE_IGNORE_IF_DISCONNECTED);
 
     lm_message_unref(message);
 }
