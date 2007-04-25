@@ -4,6 +4,7 @@ import xml.dom.minidom
 import gobject
 
 import libbig.xmlquery
+import libbig.httpcache
 from singletonmixin import Singleton
 
 class AsyncHTTPFetcher(Singleton):
@@ -68,18 +69,8 @@ class AsyncHTTPFetcher(Singleton):
     def __do_fetch(self, url, cb, errcb, cookies, data):
         self.__logger.debug("in thread fetch of %s" % (url,))
         try:
-            request = urllib2.Request(url, data)
-            # set our cookies
-            if cookies:
-                for c in cookies:
-                    header = c[0] + "=" + c[1] # oddly, apparently there's no escaping here
-                    request.add_header("Cookie", header)
-            # this cookie stuff is an attempt to be sure we use Set-Cookie cookies during this request,
-            # e.g. JSESSIONID, but not sure it's needed/correct
-            cj = cookielib.CookieJar()
-            opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookiejar=cj))
-            data = opener.open(request).read()
-            gobject.idle_add(lambda: cb(url, data) and False)
+            (fname, fdata) = libbig.httpcache.load(url, cookies, data=data)
+            gobject.idle_add(lambda: cb(url, fdata or open(fname, 'rb').read()))
         except Exception, e:
             self.__logger.info("caught error for fetch of %s: %s" % (url, e))
             # in my experience sys.exc_info() is some kind of junk here, while "e" is useful
