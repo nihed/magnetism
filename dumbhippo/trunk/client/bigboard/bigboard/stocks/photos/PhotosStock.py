@@ -154,6 +154,8 @@ class PhotosStock(AbstractMugshotStock):
         self.__current_image = None
 
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=4)
+
+        self.__successive_load_failures = 0
         
         self.__photosize = 120
 
@@ -272,8 +274,11 @@ class PhotosStock(AbstractMugshotStock):
             self._logger.debug("image load complete, but no current image")       
             return
         if not success:
-            self._logger.debug("image load failed, skipping to next")                   
-            self.__do_next()
+            self.__successive_load_failures = max(self.__successive_load_failures+1, 17)
+            self._logger.debug("image load failed, queueing skip to next")                   
+            gobject.timeout_add(8000 + (2 ** self.__successive_load_failures) * 1000, self.__do_next)
+        else:
+            self.__successive_load_failures = 0
         
         self._logger.debug("image load success, syncing metadata")          
         (entity, acct, thumbnail) = self.__current_image
