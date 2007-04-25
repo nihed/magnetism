@@ -141,13 +141,13 @@ class AppCategoryUsage(MultiVTable):
         
         self.__apps = set()
         
-    def set_apps(self, apps):
+    def set_apps(self, apps, used_apps):
         self.remove_all()
         
         self.append_column_item(hippo.CanvasText(text="Category", font="Bold 12px"))
         self.append_column_item(hippo.CanvasText(text="Your Usage", font="Bold 12px"))
         
-        categories = categorize(apps)
+        categories = categorize(used_apps)
         cat_usage = {}
         
         max_usage_count = ('', 0)
@@ -189,12 +189,14 @@ class AppList(MultiVTable):
         
         self.__search = None
         self.__all_apps = None
+        self.__used_apps = None
         self.__categorized = None
         self.__selected_app = None
         self.__selected_cat = None
         
-    def set_apps(self, apps):
+    def set_apps(self, apps, used_apps):
         self.__all_apps = apps
+        self.__used_apps = used_apps
         self.__sync_display()
         
     def __sync_display(self):
@@ -206,6 +208,8 @@ class AppList(MultiVTable):
              
         cat_keys = categories.keys()
         cat_keys.sort()
+
+        display_only_used = (not self.__selected_cat) and (not self.__search) 
         for catname in (self.__selected_cat and not self.__search) and [self.__selected_cat] or cat_keys:
             if not self.__selected_cat:
                 right_link = ActionLink(text=u"More \u00BB")
@@ -217,6 +221,8 @@ class AppList(MultiVTable):
                 left_link.connect("activated", self.__handle_nocategory)
             self.append_section_head(catname, left_control=left_link, right_control=right_link)
             for app in categories[catname]:
+                if display_only_used and not app in self.__used_apps:
+                    continue
                 overview = apps_widgets.AppDisplay(app)
                 overview.connect("button-press-event", self.__on_overview_click)             
                 self.append_column_item(overview)
@@ -355,5 +361,6 @@ class AppBrowser(hippo.CanvasWindow):
         apps = filter(lambda app: not app.get_is_excluded(), apps)
                 
         self.__all_apps = apps
-        self.__app_list.set_apps(apps)
-        self.__cat_usage.set_apps(apps)
+        self.__used_apps = map(self.__stock.get_app, self.__mugshot.get_my_top_apps() or [])
+        self.__app_list.set_apps(apps, self.__used_apps)
+        self.__cat_usage.set_apps(apps, self.__used_apps) 
