@@ -416,6 +416,7 @@ AC_ARG_WITH(xpidl,
 
 have_full_gecko=false
 sdk_includes_nspr=false
+need_separate_js=false
 
 if test "x$with_gecko_sdk" != x -a "x$with_gecko_sdk" != xyes -a "x$with_gecko_sdk" != xno ; then
    GECKO_IDLDIR="$with_gecko_sdk/idl"
@@ -506,6 +507,18 @@ else
     AC_MSG_ERROR([Must either specify --with-gecko-sdk=DIR or --with-gecko-headers=DIR])
 fi
 
+# If we are using the cut-and-paste version of nsIXPCSecurityManager.h, we don't
+# need the Javascript headers, otherwise we do. Debian packages the Javascript
+# files from XulRunner into a separate directory, so detect that and we'll look
+# for them later
+if $have_full_gecko ; then
+   if test -f "$GECKO_INCLUDEDIR/js/jspubtd.h" ; then
+      :
+   else
+       need_separate_js=true
+   fi
+fi
+
 if test "x$XPIDL" != x ; then
     if ! test -x "$XPIDL" ; then
         AC_MSG_ERROR([Cannot find xpidl at $XPIDL])
@@ -523,7 +536,7 @@ AC_SUBST(XPIDL)
 if $sdk_includes_nspr ; then
     NSPR_LIBS="-L $with_gecko_sdk/lib -lnspr4"
 else
-    for pkg in firefox-nspr nspr ; do
+    for pkg in firefox-nspr xulrunnner-nspr nspr ; do
         if test "x$NSPR_PACKAGES" = x ; then
 	    PKG_CHECK_EXISTS($pkg, NSPR_PACKAGES=$pkg)
 	fi
@@ -533,7 +546,18 @@ else
     fi
 fi
 
-PKG_CHECK_MODULES(LIBHIPPOFIREFOX, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED $NSPR_PACKAGES gtk+-2.0)
+if $need_separate_js ; then
+    for pkg in firefox-js xulrunner-js ; do
+        if test "x$JS_PACKAGES" = x ; then
+	    PKG_CHECK_EXISTS($pkg, JS_PACKAGES=$pkg)
+	fi
+    done
+    if test "x$JS_PACKAGES" = x ; then
+	AC_MSG_ERROR([Can't find Gecko Javascript package])
+    fi
+fi
+
+PKG_CHECK_MODULES(LIBHIPPOFIREFOX, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED $NSPR_PACKAGES $JS_PACKAGES gtk+-2.0)
 
 # Should have -lxpcom here, but that upsets libtool for unknown reasons. Or
 # should we use -lxpcomglue instead? We don't actually link to anything private, though
