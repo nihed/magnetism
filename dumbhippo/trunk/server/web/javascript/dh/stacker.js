@@ -158,7 +158,7 @@ dh.stacker._onLinkClick = function(oldOnClick) {
 		if (e.stopPropagation)
 			e.stopPropagation();
 		else
-			ev.cancelBubble = true;	
+			e.cancelBubble = true;	
 			
 		if (oldOnClick != null)
 			oldOnClick(e);
