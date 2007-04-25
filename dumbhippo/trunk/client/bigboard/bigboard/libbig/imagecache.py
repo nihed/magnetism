@@ -1,4 +1,4 @@
-import logging
+import sys,os,logging
 
 import gtk, hippo
 
