@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.AmazonActivityStatus;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FeedEntry;
@@ -35,6 +36,7 @@ import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.listeners.AccountStatusListener;
+import com.dumbhippo.server.listeners.AmazonListener;
 import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
 import com.dumbhippo.server.listeners.ExternalAccountsListener;
 import com.dumbhippo.server.listeners.FacebookListener;
@@ -324,6 +326,12 @@ public class NotifierBean implements Notifier {
 	public void onPicasaRecentAlbumsChanged(String username, List<? extends PicasaAlbum> albums) {
 		for (PicasaListener l : getListeners(PicasaListener.class)) {
 			l.onPicasaRecentAlbumsChanged(username, albums);
+		}
+	}
+	
+	public void onAmazonActivityCreated(AmazonActivityStatus activityStatus) {
+		for (AmazonListener l : getListeners(AmazonListener.class)) {
+			l.onAmazonActivityCreated(activityStatus);
 		}
 	}
 }
