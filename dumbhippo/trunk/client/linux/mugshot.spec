@@ -1,5 +1,5 @@
 Name:           mugshot
-Version:        1.1.40
+Version:        1.1.41
 Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
@@ -218,14 +218,17 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
+* Wed Apr 25 2007 Owen Taylor <otaylor@redhat.com> - 1.1.41-1
+- 1.1.41
+
 * Thu Mar 29 2007 Owen Taylor <otaylor@redhat.com> - 1.1.40-1
 - 1.1.40
 
-* Mon Mar 26 2007 Owen Taylor <otaylor@fresnel.dumbhippo.com> - 1.1.39-1
+* Mon Mar 26 2007 Owen Taylor <otaylor@redhat.com> - 1.1.39-1
 - 1.1.39
 - Package mugshot.desktop for the menus as well
 
-* Fri Mar 23 2007 Owen Taylor <otaylor@fresnel.dumbhippo.com> - 1.1.38-1
+* Fri Mar 23 2007 Owen Taylor <otaylor@redhat.com> - 1.1.38-1
 - Create %%{_datadir}/mugshot/version at the end of %%post to avoid
   the client prematurely prompting to restart itself
 
