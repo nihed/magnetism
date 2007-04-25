@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, sys, threading, getopt, logging, StringIO, stat, signal
+import os, sys, threading, getopt, logging, StringIO, stat, signal, google
 import xml.dom.minidom
 
 import gobject, gtk, pango, dbus, dbus.glib
@@ -338,7 +338,7 @@ def main():
     bigboard.libbig.set_program_name("bigboard")
     
     hippo.canvas_set_load_image_hook(load_image_hook)    
-    
+
     panel = BigBoardPanel(stockdirs)
     
     panel.show()
@@ -346,6 +346,8 @@ def main():
     if shell:
         cmdshell = CommandShell({'panel': panel})
         cmdshell.show_all()
+
+    google.get_google() # for side effect of creating the Google object
         
     gtk.main()
 

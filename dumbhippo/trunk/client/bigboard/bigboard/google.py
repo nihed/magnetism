@@ -418,11 +418,13 @@ class Google:
             self.__username = None
             self.__password = None
 
-        self.__mail_checker = CheckMailTask(self)
+        self.__mail_checker = None
         self.__consider_checking_mail()
 
     def __consider_checking_mail(self):
         if self.__username and self.__password:
+            if not self.__mail_checker:
+                self.__mail_checker = CheckMailTask(self)
             self.__mail_checker.start()
         else:
             self.__mail_checker.stop()
@@ -549,6 +551,11 @@ class Google:
 
     def fetch_new_mail(self, cb, errcb):
         self.__with_login_info(lambda: self.__have_login_fetch_new_mail(cb, errcb))
+
+__the_google = Google()
+
+def get_google():
+    return __the_google
         
 if __name__ == '__main__':
 
@@ -566,7 +573,7 @@ if __name__ == '__main__':
 
     #keyring.get_keyring().store_login('google', 'havoc.pennington', 'wrong')
 
-    g = Google()
+    g = get_google()
 
     def display(x):
         print x
