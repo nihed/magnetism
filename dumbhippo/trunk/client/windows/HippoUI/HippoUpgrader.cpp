@@ -184,6 +184,7 @@ HippoUpgrader::handleBytesRead(void *responseData, long responseBytes)
             return;
         }
         responseBytes -= bytesWritten;
+        responseData = (char *)responseData + bytesWritten;
     }
 }
 

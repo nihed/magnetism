@@ -227,15 +227,17 @@ HippoIEImpl::~HippoIEImpl(void)
 HippoInvocation
 HippoIEImpl::createInvocation(const HippoBSTR &functionName) 
 {
+    HippoPtr<IDispatch> script;
+
     HippoPtr<IDispatch> docDispatch;
     browser_->get_Document(&docDispatch);
-    assert(docDispatch != NULL);
-    HippoQIPtr<IHTMLDocument2> doc(docDispatch);
-    assert(doc != NULL);
-    HippoPtr<IDispatch> script;
-    doc->get_Script(&script);
-    assert(script != NULL);
+    if (docDispatch != NULL) {
+        HippoQIPtr<IHTMLDocument2> doc(docDispatch);
+        doc->get_Script(&script);
+    }
 
+    // HippoInvocation(NULL, ...) returns a HippoInvocation that
+    // always fails when invoked with E_UNEXPECTED
     return HippoInvocation(script, functionName);
 }
 
