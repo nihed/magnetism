@@ -29,7 +29,7 @@ public class NetflixBlockView extends AbstractFeedEntryBlockView {
 	
 	@Override
 	public String getIcon() {
-		return "/images3/favicon_netflix.png";
+		return "/images3/" + ExternalAccountType.NETFLIX.getIconName();
 	}
 
 	@Override
@@ -78,7 +78,7 @@ public class NetflixBlockView extends AbstractFeedEntryBlockView {
 		 * been fixed to support either form as of 2007-04-18 (Linux client version 1.1.41)
 		 */
 		
-		builder.openElement("netflixMovie",
+		builder.openElement(getElementName(),
 							"userId", getPersonSource().getUser().getId());
 		builder.openElement("queue", "imageUrl", getImageUrl());
 		if (getQueuedMovies() != null) {
@@ -94,7 +94,7 @@ public class NetflixBlockView extends AbstractFeedEntryBlockView {
 		builder.closeElement();
 		builder.closeElement();
 
-//		builder.openElement("netflixMovie", 
+//		builder.openElement(getElementName(), 
 //							"imageUrl", getImageUrl(),
 //							"userId", getPersonSource().getUser().getId());
 //		builder.openElement("queue");

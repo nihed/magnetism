@@ -74,4 +74,10 @@ public class AmazonActivityStatus extends EmbeddedGuidPersistable {
 		this.activityDate = activityDate.getTime();
 	}
 	*/	
+	
+	@Override
+	public String toString() {
+		return "{guid=" + getId() + " amazonUserId=" + amazonUserId + " itemId=" + itemId + 
+		       " wishListId=" + wishListId + " activityType=" + activityType + "}";
+	}
 }

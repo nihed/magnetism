@@ -55,6 +55,7 @@
    	</c:when>    	
    	<c:when test="${dh:myInstanceOf(block, 'com.dumbhippo.server.blocks.TitleBlockView')}">
    		<%-- This covers BLOG_ENTRY, MYSPACE_PERSON, DELICIOUS_PUBLIC_BOOKMARK, etc. and oneLine NETFLIX_MOVIE --%>
+   		<%-- For now, it also covers AMAZON_REVIEW and AMAZON_WISH_LIST_ITEM --%>
 	   	<dht3:simpleTitleDescriptionBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" chatHeader="${chatHeader}" oneLine="${oneLine}"/>
    	</c:when>  	
 </c:choose>

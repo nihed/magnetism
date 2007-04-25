@@ -65,6 +65,7 @@ import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.blocks.AccountQuestionBlockHandler;
+import com.dumbhippo.server.blocks.AmazonActivityBlockHandler;
 import com.dumbhippo.server.blocks.BlockHandler;
 import com.dumbhippo.server.blocks.BlockNotVisibleException;
 import com.dumbhippo.server.blocks.BlockView;
@@ -209,6 +210,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case PICASA_PERSON:
 			handlerClass = PicasaBlockHandler.class;
 			break;
+		case AMAZON_REVIEW:
+			handlerClass = AmazonActivityBlockHandler.class;
+			break;
+		case AMAZON_WISH_LIST_ITEM:
+			handlerClass = AmazonActivityBlockHandler.class;
+			break;			
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
 		case OBSOLETE_BLOG_PERSON:
@@ -2123,6 +2130,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case ACCOUNT_QUESTION:
 		case GOOGLE_READER_SHARED_ITEM:
 		case PICASA_PERSON:
+		case AMAZON_REVIEW:
+		case AMAZON_WISH_LIST_ITEM:	
 			isGroupParticipation = false;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:

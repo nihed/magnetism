@@ -3,6 +3,7 @@ package com.dumbhippo.server;
 import javax.ejb.Local;
 
 import com.dumbhippo.server.listeners.AccountStatusListener;
+import com.dumbhippo.server.listeners.AmazonListener;
 import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
 import com.dumbhippo.server.listeners.ExternalAccountsListener;
 import com.dumbhippo.server.listeners.FacebookListener;
@@ -46,7 +47,7 @@ public interface Notifier
 	PostListener, ExternalAccountsListener, GroupMembershipListener,
 	MusicListener, PostClickedListener,
 	ExternalAccountFeedListener, FacebookListener, FlickrListener, YouTubeListener,
-	RevisionListener, PicasaListener {
+	RevisionListener, PicasaListener, AmazonListener {
 
 	// Nothing in Notifier itself; Notifier just "aggregates"
 	// the listener interfaces. If you do add something here

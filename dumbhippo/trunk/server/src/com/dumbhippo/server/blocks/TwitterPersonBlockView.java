@@ -34,7 +34,7 @@ public class TwitterPersonBlockView extends AbstractFeedEntryBlockView {
 
 	@Override
 	public String getTypeTitle() {
-		return "Twitter Status";
+		return "Twitter status";
 	}
 
 	@Override 

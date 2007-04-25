@@ -375,6 +375,38 @@ public enum BlockType {
 		public boolean isDirectlyChattable() {
 			return true; // might want per-album chats eventually
 		}
+	},
+	AMAZON_REVIEW { // 24
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
+		
+		@Override
+		public BlockOwnership getBlockOwnership() {
+			return BlockOwnership.DIRECT_DATA1;
+		}	
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return true;
+		}
+	}, 
+	AMAZON_WISH_LIST_ITEM { // 25
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
+		
+		@Override
+		public BlockOwnership getBlockOwnership() {
+			return BlockOwnership.DIRECT_DATA1;
+		}	
+		
+		@Override
+		public boolean isDirectlyChattable() {
+			return true;
+		}
 	};
 	
 	// This enumeration specifies a number of qualities.  First, whether

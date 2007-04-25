@@ -70,7 +70,6 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 		return q;
 	}
 	
-	// TODO: will be used in AmazonReviewBlockHandlerBean::onExternalAccountLovedAndEnabledMaybeChanged()
 	public Collection<AmazonActivityStatus> getActivityStatusesForAmazonAccount(String amazonUserId) {
 		Query q = em.createQuery("SELECT activityStatus FROM AmazonActivityStatus activityStatus WHERE " + 
 				" activityStatus.amazonUserId = :amazonUserId");
@@ -167,8 +166,7 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 			// If we did not have an updateStatus before, it means that we just initialized
 			// this account, so we shouldn't create blocks for pre-existing reviews!
 			if (updateStatusFound) {
-			    // TODO: implement!
-			    //notifier.onAmazonReviewCreated(status);
+			    notifier.onAmazonActivityCreated(status);
 		    }
 		}
 		return reviewsChanged;
@@ -192,7 +190,7 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 	private static class AmazonTaskFamily implements PollingTaskFamily {
 
 		public long getDefaultPeriodicitySeconds() {
-			return 20 * 60; // 20 minutes
+			return 2 * 60; // 20 minutes
 		}
 
 		public String getName() {

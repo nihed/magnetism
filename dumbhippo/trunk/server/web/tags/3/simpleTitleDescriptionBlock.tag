@@ -28,7 +28,7 @@
 	</dht3:blockLeft>
 	<dht3:blockRight blockId="${blockId}" from="${block.entitySource}" showFrom="${showFrom}" chatHeader="${chatHeader}">
 		<c:choose>
-			<c:when test="${chatHeader}">
+			<c:when test="${chatHeader && block.sentTimeAgo != null}">
 				<dht3:blockSentTimeAgo chatHeader="true">${block.sentTimeAgo}</dht3:blockSentTimeAgo>
 			</c:when>
 			<c:otherwise>

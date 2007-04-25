@@ -87,7 +87,7 @@ public class AmazonReviewsCacheBean extends AbstractBasicCacheBean<String,Amazon
 				List<CachedAmazonReview> results = TypeUtils.castList(CachedAmazonReview.class, q.getResultList());
 				return results;
 			}
-
+			
 			public void setAllLastUpdatedToZero(String key) {
 				EJBUtil.prepareUpdate(em, CachedAmazonReview.class);
 				
@@ -132,6 +132,20 @@ public class AmazonReviewsCacheBean extends AbstractBasicCacheBean<String,Amazon
 		return summary;
 	}
 
+	public AmazonReviewView queryExisting(String key, String itemId) {
+		Query q = em.createQuery("SELECT review FROM CachedAmazonReview review " +
+                "WHERE review.amazonUserId = :amazonUserId " +
+                "AND review.itemId = :itemId");
+        q.setParameter("amazonUserId", key);	
+        q.setParameter("itemId", itemId);
+
+        try {
+            return ((CachedAmazonReview)q.getSingleResult()).toAmazonReview();
+        } catch (NoResultException e) {
+            return null;
+        }
+	}
+	
 	@TransactionAttribute(TransactionAttributeType.MANDATORY)
 	public AmazonReviewsView saveInCacheInsideExistingTransaction(String key, AmazonReviewsView data, Date now, boolean refetchedWithoutCheckingCache) {
 		if (refetchedWithoutCheckingCache) {
