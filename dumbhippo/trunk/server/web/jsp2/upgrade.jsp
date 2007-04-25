@@ -21,24 +21,18 @@
 	<c:choose>
 		<c:when test="${download.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.40</p>
+			<p>Version 1.1.41</p>
 			<ul>
-				<li><a href="/applications" target="_new">Application pages</a> now show "Install" and "Run" links when possible.</li>
-				<li>Support for Picasa photos and Google Reader shared items.</li>
-				<li>Facebook notifications no longer require frequent login.</li>
-				<li>Added a menu item to the desktop main menu and a "Quit" option to the tray icon.</li>
-				<li>Builds for Fedora Rawhide and all Fedora architectures (PowerPC and x86_64 in addition to x86).</li>
-				<li>Bug fixes and performance enhancements.</li>
+				<li>Allow quipping and chatting for all notification blocks.</li>
+				<li>Bug fixes.</li>
 			</ul>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.89</p>
+			<p>Version 1.1.91</p>
 			<ul>
-				<li>Ability to filter which blocks are displayed in the stacker.</li>
-				<li>Support for Picasa photos and Google Reader shared items.</li>
-				<li>Facebook notifications no longer require frequent login.</li>
-				<li>Bug fixes and performance enhancements.</li>
+				<li>Allow quipping and chatting for all notification blocks.</li>
+				<li>Bug fixes.</li>
 			</ul>
 		</c:otherwise>
 	</c:choose>
