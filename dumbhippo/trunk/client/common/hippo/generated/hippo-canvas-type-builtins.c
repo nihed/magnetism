@@ -193,6 +193,8 @@ const GEnumValue _hippo_key_values[] = {
   { HIPPO_KEY_UNKNOWN, "HIPPO_KEY_UNKNOWN", "unknown" },
   { HIPPO_KEY_RETURN, "HIPPO_KEY_RETURN", "return" },
   { HIPPO_KEY_ESCAPE, "HIPPO_KEY_ESCAPE", "escape" },
+  { HIPPO_KEY_TAB, "HIPPO_KEY_TAB", "tab" },
+  { HIPPO_KEY_LEFTTAB, "HIPPO_KEY_LEFTTAB", "lefttab" },
   { 0, NULL, NULL }
 };
 
@@ -203,6 +205,24 @@ hippo_key_get_type (void)
 
   if (G_UNLIKELY (type == 0))
     type = g_enum_register_static ("HippoKey", _hippo_key_values);
+
+  return type;
+}
+
+const GFlagsValue _hippo_modifier_values[] = {
+  { HIPPO_MODIFIER_SHIFT, "HIPPO_MODIFIER_SHIFT", "shift" },
+  { HIPPO_MODIFIER_CTRL, "HIPPO_MODIFIER_CTRL", "ctrl" },
+  { HIPPO_MODIFIER_ALT, "HIPPO_MODIFIER_ALT", "alt" },
+  { 0, NULL, NULL }
+};
+
+GType
+hippo_modifier_get_type (void)
+{
+  static GType type = 0;
+
+  if (G_UNLIKELY (type == 0))
+    type = g_flags_register_static ("HippoModifier", _hippo_modifier_values);
 
   return type;
 }
