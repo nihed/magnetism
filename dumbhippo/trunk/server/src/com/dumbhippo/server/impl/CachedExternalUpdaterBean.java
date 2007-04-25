@@ -133,16 +133,7 @@ public abstract class CachedExternalUpdaterBean<Status> implements CachedExterna
 		if (!external.hasLovedAndEnabledType(getAccountType()))
 			return;
 		
-		if (!configuration.isFeatureEnabled("pollingTask")) {
-			final String username = external.getHandle();
-			runner.runTaskOnTransactionCommit(new Runnable() {
-				public void run() {
-					EJBUtil.defaultLookup(getUpdater()).periodicUpdate(username);
-				}
-			});
-		} else {
-			pollingPersistence.createTaskIdempotent(getTaskFamily(), external.getHandle());			
-		}			
+		pollingPersistence.createTaskIdempotent(getTaskFamily(), external.getHandle());						
 	}
 	
 	public void migrateTasks() {
