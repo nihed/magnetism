@@ -1,5 +1,5 @@
 import logging, inspect, xml.dom, xml.dom.minidom
-import StringIO, urlparse, urllib, subprocess
+import StringIO, urlparse, urllib, subprocess, time
 
 import gobject, dbus
 
@@ -62,6 +62,7 @@ class Mugshot(gobject.GObject):
         "network-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "pref-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
         "global-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "category-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_STRING, gobject.TYPE_PYOBJECT,)),
         "my-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "pinned-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))        
         }    
@@ -76,7 +77,9 @@ class Mugshot(gobject.GObject):
         self.__my_apps_poll_id = 0
         self.__global_apps_poll_id = 0
 
-        self.__my_app_poll_frequency_ms = 30 * 60 * 1000
+        self.__category_app_poll_frequency_secs = 55 * 60
+
+        self.__my_app_poll_frequency_ms = 22 * 60 * 1000
         self.__app_poll_frequency_ms = 30 * 60 * 1000
 
         self._logger.debug("connecting to session bus")            
@@ -106,6 +109,8 @@ class Mugshot(gobject.GObject):
         self.__apps_enabled = None
         self.__pinned_apps = None
         self.__global_top_apps = None # <Application>
+        self.__category_top_apps = {}
+        self.__category_mapping = {}
         
         self.__external_iqs = {} # <int>,<function>
         
@@ -363,7 +368,7 @@ class Mugshot(gobject.GObject):
         else:
             root = None
         apps = []
-        for node in (child_nodes or root.childNodes):
+        for node in (child_nodes or (root and root.childNodes) or []):
             if not (node.nodeType == xml.dom.Node.ELEMENT_NODE):
                 continue
             app = self.__load_app_from_xml(node)
@@ -399,6 +404,27 @@ class Mugshot(gobject.GObject):
                                                   self.__on_top_applications,
                                                   self.__on_top_applications_error,
                                                   self.__on_top_applications_error)
+
+    def __on_category_applications(self, url, child_nodes):
+        reply_root = child_nodes[0]
+        catname = reply_root.getAttribute('category')
+        orig_catname = reply_root.getAttribute('origCategory')
+        apps = self.__parse_app_set('topApplications',
+                                    child_nodes=reply_root.childNodes)
+        self.__category_top_apps[catname] = (apps, time.time())
+        self.__category_mapping[orig_catname] = catname
+        self._logger.debug("emitting category-top-apps-changed")
+        self.emit("category-top-apps-changed", catname, self.__category_top_apps[catname][0])        
+
+    def __on_category_applications_error(self, *args):
+        self._logger.error("failed to get top apps for a category: %s", args)
+
+    def __request_category_top_apps(self, category):
+        AsyncHTTPFetcher.getInstance().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/popularapplications'),
+                                                  {'category': category},
+                                                  self.__on_category_applications,
+                                                  self.__on_category_applications_error,
+                                                  self.__on_category_applications_error)
             
     def __request_pinned_apps(self):
         self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications",
@@ -434,6 +460,22 @@ class Mugshot(gobject.GObject):
         self.__my_app_poll_frequency_ms = ms
         if reset:
             self.__reset_my_apps_poll()
+
+    def get_category_top_apps(self, category, force=False):
+        if self.__category_mapping.has_key(category):
+            category = self.__category_mapping[category] 
+        do_force = force
+        if self.__category_top_apps.has_key(category) and \
+           (time.time() - self.__category_top_apps[1] > self.__category_app_poll_frequency_secs):
+            do_force = True
+        if (not self.__category_top_apps.has_key(category)) or force:
+            if not force:            
+                self.__category_top_apps[category] = ([], 0)
+            self.__request_category_top_apps(category)
+            return None    
+        if self.__category_top_apps.has_key(category): 
+            return self.__category_top_apps[category][0]
+        return None
     
     def get_global_top_apps(self, force=False):
         if self.__global_top_apps is None or force:
