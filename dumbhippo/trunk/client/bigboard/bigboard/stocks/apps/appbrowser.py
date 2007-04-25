@@ -1,4 +1,4 @@
-import logging, time, urlparse
+import logging, time, urlparse, urllib
 
 import gobject, gtk
 import hippo
@@ -168,7 +168,7 @@ class AppCategoryUsage(MultiVTable):
                                                      yalign=hippo.ALIGNMENT_CENTER))
             factor = (usage * 1.0) / max_usage_count[1]
             box = CanvasHBox()
-            (r, g, b)= map(lambda (min,max): int(min * (1.0-factor)) + int(max*factor), zip(self.__bar_min_color, self.__bar_max_color))          
+            (r, g, b) = map(lambda (min,max): int(min * (1.0-factor)) + int(max*factor), zip(self.__bar_min_color, self.__bar_max_color))          
             box.append(CanvasVBox())            
             box.append(CanvasVBox(box_height=self.__bar_height,
                                   box_width=(int(self.__bar_width * factor)),
@@ -176,8 +176,71 @@ class AppCategoryUsage(MultiVTable):
                                   background_color=(r << 24) + (g << 16) + (b << 8) + (0xFF << 0)))
             box.append(CanvasVBox())
             self.append_column_item(box)
+
+class CategoryExtras(CanvasVBox):
+    __gsignals__ = {
+        "have-apps" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,))      
+    }
+    def __init__(self, **args):
+        super(CategoryExtras, self).__init__(background_color=0x555555FF,
+                                             color=0xFFFFFFFF,
+                                             **args)
+
+        self.__catname = None
+        self.__apps = None
+
+        self.__headerbox = CanvasHBox()
+        self.append(self.__headerbox)
+
+        self.__left_title = hippo.CanvasText(text="New Popular %s" % (self.__catname,),
+                                             font="12px Bold",
+                                             xalign=hippo.ALIGNMENT_START)
+        self.__headerbox.append(self.__left_title)
+
+        self.__right_title = ActionLink(font="12px",
+                                        xalign=hippo.ALIGNMENT_END)
+        self.__right_title.connect("activated", self.__on_more_popular)
+        self.__headerbox.append(self.__right_title, hippo.PACK_EXPAND)
+
+        self.__app_pair = CanvasHBox(box_height=120)
+        self.append(self.__app_pair)
+
+    def have_apps(self):
+        return not not self.__found_app_count
+
+    def set_catname(self, catname):
+        self.__catname = catname
+        if catname:
+            self.set_top_apps(mugshot.get_mugshot().get_category_top_apps(catname))
+        self.__sync()
+
+    def __on_more_popular(self, w):
+        libbig.show_url(urlparse.urljoin(mugshot.get_mugshot().get_baseurl(),
+                                         "applications?category=" + urllib.quote(self.__catname)))
+
+    def set_top_apps(self, apps):
+        self.__apps = apps
+        self.__sync()
+        self.emit("have-apps", self.have_apps())
+
+    def __sync(self):
+        if self.__catname:
+            self.__left_title.set_property('text', "New Popular %s" % (self.__catname,))
+            self.__right_title.set_property('text', "More Popular %s" % (self.__catname,))
+        self.__app_pair.remove_all()
+        found = 0
+        for i,app in self.__apps and enumerate(self.__apps) or []:
+            if app.is_installed():
+                continue
+            app_view = apps_widgets.AppDisplay(app)
+            app_view.set_description_mode(True)
+            self.__app_pair.append(app_view, hippo.PACK_EXPAND)
+            found += 1
+            if found > 1:
+                break
+        self.__found_app_count = found
         
-class AppList(MultiVTable):
+class AppList(CanvasVBox):
     __gsignals__ = {
         "category-selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_STRING,)),
         "selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
@@ -185,8 +248,15 @@ class AppList(MultiVTable):
     }
     
     def __init__(self):
-        super(AppList, self).__init__(columns=3,item_height=40)
+        super(AppList, self).__init__()
         
+        self.__table = MultiVTable(columns=3,item_height=40)
+        self.append(self.__table)
+
+        self.__extras_section = CategoryExtras(yalign=hippo.ALIGNMENT_END)
+        self.__extras_section.connect("have-apps", self.__on_have_extras)
+        self.append(self.__extras_section)
+
         self.__search = None
         self.__all_apps = None
         self.__used_apps = None
@@ -198,10 +268,13 @@ class AppList(MultiVTable):
         self.__all_apps = apps
         self.__used_apps = used_apps
         self.__sync_display()
+
+    def __on_have_extras(self, extras, have_extras):
+        self.set_child_visible(extras, self.__selected_cat and have_extras)
         
     def __sync_display(self):
         
-        self.remove_all()
+        self.__table.remove_all()
 
         categories = categorize(filter(self.__filter_app, self.__all_apps))
         self.__categorized = categories
@@ -209,9 +282,15 @@ class AppList(MultiVTable):
         cat_keys = categories.keys()
         cat_keys.sort()
 
+        if self.__selected_cat:
+            self.__extras_section.set_catname(self.__selected_cat)
+            self.set_child_visible(self.__extras_section, self.__extras_section.have_apps())
+        else:
+            self.set_child_visible(self.__extras_section, False)
+
         display_only_used = (not self.__selected_cat) and (not self.__search) 
         for catname in (self.__selected_cat and not self.__search) and [self.__selected_cat] or cat_keys:
-            if not self.__selected_cat:
+            if display_only_used:
                 right_link = ActionLink(text=u"More \u00BB")
                 right_link.connect("activated", self.__handle_category_more, catname)
                 left_link = None
@@ -219,13 +298,18 @@ class AppList(MultiVTable):
                 right_link = None
                 left_link = ActionLink(text=u"All Applications \u00BB")
                 left_link.connect("activated", self.__handle_nocategory)
-            self.append_section_head(catname, left_control=left_link, right_control=right_link)
+            self.__table.append_section_head(catname, left_control=left_link, right_control=right_link)
             for app in categories[catname]:
                 if display_only_used and not app in self.__used_apps:
                     continue
                 overview = apps_widgets.AppDisplay(app)
                 overview.connect("button-press-event", self.__on_overview_click)             
-                self.append_column_item(overview)
+                self.__table.append_column_item(overview)
+
+    def on_category_changed(self, cat, apps):
+        if cat != self.__selected_cat:
+            return
+        self.__extras_section.set_top_apps(apps)
 
     def __handle_nocategory(self, l):
         _logger.debug("no category selected")
@@ -322,7 +406,14 @@ class AppBrowser(hippo.CanvasWindow):
         self.__mugshot.connect("initialized", lambda mugshot: self.__sync())
         self.__mugshot.connect("my-top-apps-changed", 
                                lambda mugshot, apps: self.__sync())          
+        self.__mugshot.connect("category-top-apps-changed", 
+                               self.__handle_category_changed)          
         self.__sync()
+
+    def __handle_category_changed(self, m, cat, apps):
+        _logger.debug("category %s changed: %s", cat, apps)
+        apps = map(self.__stock.get_app, apps)
+        self.__app_list.on_category_changed(cat, apps)
                 
     def __on_app_selected(self, app):
         self.__overview.set_app(app)

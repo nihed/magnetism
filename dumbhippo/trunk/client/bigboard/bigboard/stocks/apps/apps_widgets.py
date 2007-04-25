@@ -12,6 +12,8 @@ class AppDisplay(PhotoContentItem):
     def __init__(self, app=None):
         PhotoContentItem.__init__(self, border_right=6)
         self.__app = None 
+
+        self.__description_mode = False
             
         self._logger = logging.getLogger('bigboard.AppDisplay')                
                 
@@ -26,9 +28,15 @@ class AppDisplay(PhotoContentItem):
         self.__box.append(self.__title)
         self.__box.append(self.__subtitle)        
         self.set_child(self.__box)
+
+        self.__description = hippo.CanvasText(size_mode=hippo.CANVAS_SIZE_WRAP_WORD)
+        self.__box.append(self.__description)
         
         if app:
             self.set_app(app)
+
+    def set_description_mode(self, mode):
+        self.__description_mode = mode
         
     def get_app(self):
         return self.__app
@@ -53,10 +61,17 @@ class AppDisplay(PhotoContentItem):
     def __app_display_sync(self):
         if not self.__app:
             return
+
+        self.__box.set_child_visible(self.__subtitle, not self.__description_mode)
+        self.__box.set_child_visible(self.__description, self.__description_mode)
+
         self.__photo.set_clickable(self.__app.is_installed())
         self.__box.set_clickable(self.__app.is_installed())  
         self.__title.set_property("text", self.__app.get_name())
         self.__subtitle.set_property("text", self.__app.get_generic_name() or self.__app.get_tooltip() or self.__app.get_comment())
+
+        self.__description.set_property("text", self.__app.get_description())
+
         if self.__app.get_mugshot_app():
             self.__photo.set_url(self.__app.get_mugshot_app().get_icon_url())
         else:
