@@ -54,6 +54,7 @@ import com.dumbhippo.live.LiveGroup;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Application;
+import com.dumbhippo.persistence.ApplicationCategory;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
@@ -2377,13 +2378,26 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	private static final String APPLICATIONS_NAMESPACE = "http://dumbhippo.com/protocol/applications";
 	
-	public void getPopularApplications(XmlBuilder xml, Viewpoint viewpoint) throws XmlMethodException {
+	public void getPopularApplications(XmlBuilder xml, Viewpoint viewpoint, String category) throws XmlMethodException {
 		Pageable<ApplicationView> pageable = new Pageable<ApplicationView>("applications");
 		pageable.setPosition(0);
 		pageable.setInitialPerPage(30);		
-		applicationSystem.pagePopularApplications(null, 24, null, pageable);
+		ApplicationCategory cat = null;
+		if (category != null) {
+			for (ApplicationCategory c : ApplicationCategory.values()) {
+				if (c.getDisplayName().equals(category)) {
+					cat = c;
+					break;
+				}
+			}
+			if (cat == null)
+				cat = ApplicationCategory.fromRaw(Collections.singleton(category));
+		}
+		applicationSystem.pagePopularApplications(null, 24, cat, pageable);
 		// Keep in sync with ApplicationsIQHandler
-		xml.openElement("topApplications", "xmlns", APPLICATIONS_NAMESPACE);
+		xml.openElement("topApplications", "xmlns", APPLICATIONS_NAMESPACE,
+						"category", cat != null ? cat.getDisplayName() : null,
+						"origCategory", category);
 		for (ApplicationView application : pageable.getResults()) {
 			application.writeToXmlBuilder(xml);		
 		}		
