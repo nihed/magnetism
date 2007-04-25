@@ -40,6 +40,8 @@ GType hippo_event_type_get_type (void);
 GType hippo_motion_detail_get_type (void);
 #define HIPPO_TYPE_KEY hippo_key_get_type()
 GType hippo_key_get_type (void);
+#define HIPPO_TYPE_MODIFIER hippo_modifier_get_type()
+GType hippo_modifier_get_type (void);
 
 /* --- hippo/hippo-graphics.h --- */
 #define HIPPO_TYPE_ORIENTATION hippo_orientation_get_type()
