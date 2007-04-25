@@ -244,7 +244,7 @@ class Cache:
         return (filename, None)
 
 _cache = None
-def load(uri, cookies, data=None, nonetwork=False):
+def load(uri, cookies, data=None, nonetwork=False, nocache=False):
     '''Downloads the file associated with the URI, and returns a local
     file name for contents.'''
     global _cache
