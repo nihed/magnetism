@@ -1,9 +1,8 @@
-import httplib2, keyring, sys, xml, xml.sax, logging, threading, gobject, gtk, datetime
+import httplib2, keyring, sys, xml, xml.sax, logging, threading, gobject, gtk, datetime, dbus
 from bigboard import libbig
 import libbig.logutil
 from libbig.struct import AutoStruct, AutoSignallingStruct
 import libbig.polling
-import pynotify
 
 class AbstractDocument(AutoStruct):
     def __init__(self):
@@ -183,17 +182,16 @@ class NewMailParser(xml.sax.ContentHandler):
             self.__inside_author = False
 
     def characters(self, content):
-        #print content
         if len(self.__mails) > 0:
             d = self.__mails[-1]
             if self.__inside_title:
-                d.update({'title' : content})
+                d.update({'title' : d.get_title() + content})
             elif self.__inside_summary:
-                d.update({'summary' : content})
+                d.update({'summary' : d.get_summary() + content})
             elif self.__inside_id:
-                d.update({'id' : content})
+                d.update({'id' : d.get_id() + content})
             elif self.__inside_author_name:
-                d.update({'sender_name' : content })
+                d.update({'sender_name' : d.get_sender_name() + content })
 
     def get_new_mails(self):
         return self.__mails
@@ -329,11 +327,29 @@ class CheckMailTask(libbig.polling.Task):
         libbig.polling.Task.__init__(self, 1000)
         self.__google = google
         self.__mails = {}
-        self.__notify = pynotify.Notification('foo') # empty string causes return_if_fail
-        self.__notify.add_action('open-no-icon', "Open Mail", self.__on_action)        
-        self.__notify.add_action('inbox-no-icon', "Inbox", self.__on_action)
 
-    def __on_action(self, action):
+        # we use dbus directly instead of libnotify because
+        # older versions of libnotify crashed us when an action
+        # was clicked and threads were initialized
+        #self.__notify = pynotify.Notification('foo') # empty string causes return_if_fail
+
+        bus = dbus.SessionBus()
+
+        o = bus.get_object('org.freedesktop.Notifications', '/org/freedesktop/Notifications')
+        self.__notifications_proxy = dbus.Interface(o, 'org.freedesktop.Notifications')
+
+        # introspection data for this signal is missing so proxy doesn't work
+        #self.__notifications_proxy.connect_to_signal('ActionInvoked', self.__on_action)
+
+        # also does not work for some reason
+        bus.add_signal_receiver(self.__on_action, signal_name='ActionInvoked',
+                                named_service='org.freedesktop.Notifications',
+                                dbus_interface='org.freedesktop.Notifications',
+                                path='/org/freedesktop/Notifications')
+
+    def __on_action(self, notify_id, action):
+        logging.getLogger("bigboard.Google").debug("FOO")
+        print "\nBOO\n"
         print action
 
     def __on_fetched_mail(self, mails):
@@ -351,9 +367,18 @@ class CheckMailTask(libbig.polling.Task):
         if not_yet_seen > 0:
             first = mails[0]
 
-            self.__notify.update(first.get_title(), first.get_summary())
-
-            self.__notify.show()
+            notify_id = self.__notifications_proxy.Notify("BigBoard",
+                                                          1, # "id" - should read docs on this ;-)
+                                                          "", # icon name
+                                                          first.get_title(),   # summary
+                                                          xml.sax.saxutils.escape(first.get_summary()), # body
+                                                           # action array
+                                                          ['mail',
+                                                           "OpenMessage",
+                                                           'inbox-no-icon',
+                                                           "Inbox (%d)" % len(self.__mails)],
+                                                          {'foo' : 'bar'}, # hints (pydbus barfs if empty)
+                                                          5000) # timeout
 
     def __on_fetch_error(self, exc_info):
         pass
@@ -522,7 +547,6 @@ if __name__ == '__main__':
     libbig.logutil.init('DEBUG', ['bigboard.AsyncHTTP2LibFetcher'])
 
     libbig.set_application_name("BigBoard")
-    pynotify.init("BigBoard")
 
     #AuthDialog('foo', 'bar').present()
     #gtk.main()
