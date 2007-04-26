@@ -8,6 +8,7 @@ import gobject, gtk, pango, dbus, dbus.glib
 import hippo
 
 import bigboard
+import bigboard.mugshot
 import bigboard.big_widgets
 from bigboard.big_widgets import Sidebar, CommandShell, CanvasHBox, ActionLink
 from bigboard.stock import Stock
@@ -281,11 +282,11 @@ def load_image_hook(img_name):
     return hippo.cairo_surface_from_gdk_pixbuf(pixbuf)
 
 def usage():
-    print "%s [--debug] [--debug-modules=mod1,mod2...] [--shell] [--stockdirs=dir1:dir2:...] [--help]" % (sys.argv[0])
+    print "%s [--debug] [--debug-modules=mod1,mod2...] [--info] [--no-autolaunch] [--shell] [--stockdirs=dir1:dir2:...] [--help]" % (sys.argv[0])
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hds", ["help", "debug", "info", "shell", "stockdirs=", "debug-modules="])
+        opts, args = getopt.getopt(sys.argv[1:], "hds", ["help", "debug", "na", "no-autolaunch", "info", "shell", "stockdirs=", "debug-modules="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -299,6 +300,8 @@ def main():
             debug = True
         elif o in ('--info',):
             info = True
+        elif o in ('--na', '--no-autolaunch'):
+            bigboard.mugshot.do_autolaunch = False
         elif o in ('-s', '--shell'):
             shell = True
         elif o in ('--stockdirs',):
