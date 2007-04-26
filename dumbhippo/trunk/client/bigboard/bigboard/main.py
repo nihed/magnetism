@@ -178,6 +178,7 @@ class BigBoardPanel(object):
         self.__stockreader.connect("stock-added", lambda reader, stock: self.__on_stock_added(stock))
 
         self._exchanges = []
+        self.__prelisted = {}
 
         self._canvas = hippo.Canvas()
         self._dw.get_content().add(self._canvas)
@@ -212,6 +213,7 @@ class BigBoardPanel(object):
     def __on_stock_added(self, prestock):
         if not prestock.get_id() in self.__state['listed'].split(';'):
             self.__logger.debug("ignoring unlisted stock %s")
+            self.__prelisted[prestock.get_id()] = prestock
             return
         stock = prestock.get()
         if not stock:
@@ -244,6 +246,10 @@ class BigBoardPanel(object):
 
     def get_stocks(self):
         return map(lambda e: e.get_stock(), self._exchanges)
+
+    def list_stock_id(self, id):
+        prelisted = self.__prelisted[id]
+        self.list(prelisted.get())
         
     def _toggle_size(self):
         self.__logger.debug("toggling size")
