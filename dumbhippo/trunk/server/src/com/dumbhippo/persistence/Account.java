@@ -10,13 +10,10 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -86,8 +83,6 @@ public class Account extends Resource {
 	
 	private NowPlayingTheme nowPlayingTheme;
 	
-	private Set<Post> favoritePosts;
-	
 	private String bio;
 	private String musicBio;
 	
@@ -120,7 +115,6 @@ public class Account extends Resource {
 	
 	public Account(User owner) {			
 		clients = new HashSet<Client>();
-		favoritePosts = new HashSet<Post>();
 		externalAccounts = new HashSet<ExternalAccount>();
 		creationDate = -1;
 		lastLoginDate = -1;
@@ -554,42 +548,6 @@ public class Account extends Resource {
 		return getHumanReadableString();
 	}
 	
-    // This is a @ManyToMany relationship because:
-    // -- a user with a given account can have many favorite posts
-	// -- the same post can have many users that marked it as a favorite post
-	@ManyToMany
-	@JoinTable(name="Account_Post",
-		       joinColumns=@JoinColumn(name="Account_id", referencedColumnName="id"),                 
-		       inverseJoinColumns=@JoinColumn(name="favoritePosts_id", referencedColumnName="id"),
-		       uniqueConstraints=@UniqueConstraint(columnNames={"Account_id", "favoritePosts_id"}))	
-	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
-	public Set<Post> getFavoritePosts() {
-		if (favoritePosts == null)
-			throw new RuntimeException("no favorite posts?");
-		return favoritePosts;
-	}
-
-	/**
-	 * This is protected because only Hibernate probably 
-	 * needs to call it. Use addFavoritePost/removeFavoritePost 
-	 * instead...
-	 * 
-	 * @param favoritePosts the faves
-	 */
-	protected void setFavoritePosts(Set<Post> favoritePosts) {
-		if (favoritePosts == null)
-			throw new IllegalArgumentException("null fave posts");
-		this.favoritePosts = favoritePosts;
-	}
-	
-	public void addFavoritePost(Post post) {
-		favoritePosts.add(post);
-	}
-	
-	public void removeFavoritePost(Post post) {
-		favoritePosts.remove(post);
-	}
-
 	public String getBio() {
 		return bio;
 	}

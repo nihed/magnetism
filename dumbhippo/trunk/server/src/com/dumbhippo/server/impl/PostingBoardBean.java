@@ -909,14 +909,6 @@ public class PostingBoardBean implements PostingBoard {
 		return searchResult.getPosts(this, viewpoint, start, count);
 	}
 	
-	public void setFavoritePost(UserViewpoint viewpoint, Post post, boolean favorite) {
-		Account account = viewpoint.getViewer().getAccount();
-		if (favorite)
-			account.addFavoritePost(post);
-		else
-			account.removeFavoritePost(post);
-	}
-	
 	public boolean worthEmailNotification(Post post, Resource recipient) {
 		if (post.getPersonRecipients().contains(recipient))
 			return true;
