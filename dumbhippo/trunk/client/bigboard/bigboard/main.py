@@ -291,22 +291,31 @@ class BigBoardPanel(object):
         self._dw.show_all()
 
 def load_image_hook(img_name):
-    print "loading: %s" % (img_name,)
+    logging.debug("loading: %s" % (img_name,))
     pixbuf = gtk.gdk.pixbuf_new_from_file(img_name)
-    return hippo.cairo_surface_from_gdk_pixbuf(pixbuf)
+    return hippo.cairo_surface_from_gdk_pixbuf(pixbuf)    
+
+BUS_NAME='org.mugshot.BigBoard'
+
+def on_name_lost(*args):
+    name = str(args[0])
+    logging.debug("Lost bus name " + name)
+    if name == BUS_NAME:
+        gtk.main_quit()
 
 def usage():
     print "%s [--debug] [--debug-modules=mod1,mod2...] [--info] [--no-autolaunch] [--shell] [--stockdirs=dir1:dir2:...] [--help]" % (sys.argv[0])
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hds", ["help", "debug", "na", "no-autolaunch", "info", "shell", "stockdirs=", "debug-modules="])
+        opts, args = getopt.getopt(sys.argv[1:], "hds", ["help", "debug", "na", "no-autolaunch", "info", "shell", "replace", "stockdirs=", "debug-modules="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
     info = False
     debug = False
     shell = False
+    replace = False
     stockdirs = []
     debug_modules = []
     for o, v in opts:
@@ -314,6 +323,8 @@ def main():
             debug = True
         elif o in ('--info',):
             info = True
+        elif o in ('--replace',):
+            replace = True            
         elif o in ('--na', '--no-autolaunch'):
             bigboard.mugshot.do_autolaunch = False
         elif o in ('-s', '--shell'):
@@ -346,7 +357,7 @@ def main():
 
     logging.debug("Requesting D-BUS name")
     try:
-        bigboard.libbig.dbusutil.take_name('org.mugshot.Bigboard')
+        bigboard.libbig.dbusutil.take_name(BUS_NAME, replace, on_name_lost)
     except bigboard.libbig.dbusutil.DBusNameExistsException:
         print "Big Board already running; exiting"
         sys.exit(0)
@@ -367,6 +378,9 @@ def main():
     google.get_google() # for side effect of creating the Google object
         
     gtk.main()
+
+    logging.debug("Exiting BigBoard")
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()
