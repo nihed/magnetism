@@ -426,7 +426,7 @@ class Google:
             if not self.__mail_checker:
                 self.__mail_checker = CheckMailTask(self)
             self.__mail_checker.start()
-        else:
+        elif self.__mail_checker:
             self.__mail_checker.stop()
 
     def __on_auth_dialog_ok(self):
