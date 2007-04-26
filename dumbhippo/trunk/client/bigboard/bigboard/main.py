@@ -241,6 +241,9 @@ class BigBoardPanel(object):
             for exchange in self._stocks_box.get_children():
                 if listed == exchange.get_stock().get_id(): 
                     last_matched = exchange
+
+    def get_stocks(self):
+        return map(lambda e: e.get_stock(), self._exchanges)
         
     def _toggle_size(self):
         self.__logger.debug("toggling size")

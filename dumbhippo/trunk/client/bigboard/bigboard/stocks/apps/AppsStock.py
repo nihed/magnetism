@@ -68,6 +68,10 @@ class Application(gobject.GObject):
             return pixbuf
         return None        
 
+    def set_app(self, app):
+        self.__app = app
+        self.emit("changed")
+
     def __lookup_desktop(self):
         if self.__menu_entry:
             entry_path = self.__menu_entry.get_desktop_file_path()
@@ -231,6 +235,18 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
                         
     def get_app(self, mugshot_app):
         if not self.__apps.has_key(mugshot_app.get_id()):
+            ad = apps_directory.get_app_directory()
+            for desktop_name in mugshot_app.get_desktop_names():
+                try:
+                    target_menuitem = ad.lookup(desktop_name)
+                except KeyError, e:
+                    continue
+                if self.__local_apps.has_key(target_menuitem.get_name()):
+                    existing_app = self.__local_apps[target_menuitem.get_name()]
+                    del self.__local_apps[target_menuitem.get_name()]
+                    existing_app.set_app(mugshot_app)
+                    self.__apps[mugshot_app.get_id()] = existing_app
+                    return existing_app
             self.__apps[mugshot_app.get_id()] = Application(mugshot_app=mugshot_app)
         return self.__apps[mugshot_app.get_id()]
     
