@@ -411,7 +411,7 @@ class AppBrowser(hippo.CanvasWindow):
         self.__sync()
 
     def __handle_category_changed(self, m, cat, apps):
-        _logger.debug("category %s changed: %s", cat, apps)
+        _logger.debug("category %s changed: %d apps", cat, len(apps))
         apps = map(self.__stock.get_app, apps)
         self.__app_list.on_category_changed(cat, apps)
                 
