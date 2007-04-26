@@ -82,10 +82,6 @@ public interface GroupSystem {
 	
 	public int getMembersCount(Viewpoint viewpoint, Group group, MembershipStatus status);
 	
-	public boolean isMember(Group group, User user);
-	
-	public Set<GroupMemberView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras);
-	
 	public Set<GroupMemberView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, int maxResults, PersonViewExtra... extras);
 
 	public Set<User> getUserMembers(Viewpoint viewpoint, Group group);
@@ -102,15 +98,7 @@ public interface GroupSystem {
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member);	
 	
-	public Set<Group> findRawPublicGroups(Viewpoint viewpoint, User member);
-
-	public Set<Group> findRawPublicGroups(Viewpoint viewpoint, User user, MembershipStatus active);	
-	
-	public Set<Group> findRawPrivateGroups(Viewpoint viewpoint, User member);	
-	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status);
-	
-	public Set<Group> findRawRecipientGroups(Viewpoint viewpoint, User member);
 
 	
 	/**
@@ -150,8 +138,6 @@ public interface GroupSystem {
 	public Set<GroupView> findGroups(Viewpoint viewpoint, User member, MembershipStatus status);
 	
 	public int findGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status);
-	
-	public int findPublicGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status);
 	
 	/**
 	 * Find the groups for a resource. 

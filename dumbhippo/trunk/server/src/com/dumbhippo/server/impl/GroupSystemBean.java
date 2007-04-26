@@ -589,10 +589,6 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return ((Number) result).intValue();		
 	}
 	
-	public Set<GroupMemberView> getMembers(Viewpoint viewpoint, Group group, PersonViewExtra... extras) {
-		return getMembers(viewpoint, group, null, -1, extras);
-	}
-	
 	public Set<GroupMemberView> getMembers(Viewpoint viewpoint, Group group, MembershipStatus status, int maxResults, PersonViewExtra... extras) {
 		
 		// The subversion history has some code to try doing this with fewer queries; 
@@ -720,22 +716,6 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return findRawGroups(viewpoint, member, null, GroupFindType.ANY, false);
 	}
 	
-	public Set<Group> findRawPublicGroups(Viewpoint viewpoint, User member) {
-		return findRawGroups(viewpoint, member, null, GroupFindType.PUBLIC, false);
-	}	
-	
-	public Set<Group> findRawPublicGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
-		return findRawGroups(viewpoint, member, status, GroupFindType.PUBLIC, false);
-	}		
-
-	public Set<Group> findRawPrivateGroups(Viewpoint viewpoint, User member) {
-		return findRawGroups(viewpoint, member, null, GroupFindType.PRIVATE, false);
-	}
-	
-	public Set<Group> findRawRecipientGroups(Viewpoint viewpoint, User member) {
-		return findRawGroups(viewpoint, member, null, GroupFindType.ANY, true);
-	}
- 
 	public void fixupGroupMemberships(User user) {
 		Set<Group> groups = findRawGroups(SystemViewpoint.getInstance(), user);
 		for (Group g : groups) {
@@ -814,12 +794,6 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		Object result = q.getSingleResult();
 		return ((Number) result).intValue();			
 	}
-	
-	public int findPublicGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status) {
-		Query q = buildFindGroupsQuery(viewpoint, member, true, status, false, GroupFindType.PUBLIC);
-		Object result = q.getSingleResult();
-		return ((Number) result).intValue();			
-	}	
 	
 	public Set<GroupView> findGroups(Viewpoint viewpoint, User member) {
 		return findGroups(viewpoint, member, null);
@@ -979,16 +953,6 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}
 	}
 
-	public boolean isMember(Group group, User user) {
-		try {
-			GroupMember member = getGroupMemberForUser(group, user, false);
-			assert member != null;
-			return true;
-		} catch (NotFoundException e) {
-			return false;
-		}
-	}
-	
 	public void setStockPhoto(UserViewpoint viewpoint, Group group, String photo) {
 		if (!canEditGroup(viewpoint, group))
 			throw new RuntimeException("Only active members can edit a group");
