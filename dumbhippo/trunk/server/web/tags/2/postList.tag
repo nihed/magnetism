@@ -6,7 +6,6 @@
 <%@ attribute name="format" required="true" type="java.lang.String" %>
 <%@ attribute name="separators" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="enumerateStart" required="false" type="java.lang.Integer" %>
-<%@ attribute name="favesMode" required="false" type="java.lang.String" %>
 
 <c:forEach items="${posts}" var="post" varStatus="status">
 	<c:choose>
@@ -17,10 +16,10 @@
 			<dht:post post="${post}" includeExtra="false" numeral="${status.index + enumerateStart}"/>
 		</c:when>
 		<c:when test="${format == 'full'}">
-			<dht:post post="${post}" favesMode="${favesMode}"/>
+			<dht:post post="${post}"/>
 		</c:when>
 		<c:when test="${format == 'full-with-photos'}">
-			<dht:post post="${post}" favesMode="${favesMode}" showPhoto="true"/>
+			<dht:post post="${post}" showPhoto="true"/>
 		</c:when>
 		<c:otherwise>
 			<dht:errorPage>Unknown post list format</dht:errorPage>

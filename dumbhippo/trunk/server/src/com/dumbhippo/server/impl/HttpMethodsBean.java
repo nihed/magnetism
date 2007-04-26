@@ -1228,22 +1228,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		searchSystem.reindexAll();
 	}
 	
-	public void doSetFavoritePost(UserViewpoint viewpoint, String postId, boolean favorite) {
-		Guid postGuid;
-		try {
-			postGuid = new Guid(postId);
-		} catch (ParseException e) {
-			throw new RuntimeException(e);
-		}
-		Post post;
-		try {
-			post = postingBoard.loadRawPost(viewpoint, postGuid);
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
-		postingBoard.setFavoritePost(viewpoint, post, favorite);
-	}
-	
 	public void getRandomBio(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint) throws IOException {
 		if (contentType != HttpResponseData.TEXT)
 			throw new IllegalArgumentException("only support TEXT replies");

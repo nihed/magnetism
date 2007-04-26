@@ -276,18 +276,6 @@ dh.actions.doChangePhoto = function(n) {
 	document.getElementById("dhChangePhotoLink" + n).disabled = true
 }
 
-dh.actions.setPostFavorite = function(postId, favorite) {
-   	dh.server.doPOST("setfavoritepost",
-				     { "postId" : postId,
-				     	"favorite" : favorite },
-		  	    	 function(type, data, http) {
-		  	    	 	 dh.util.refresh();
-		  	    	 },
-		  	    	 function(type, error, http) {
-		  	    	     alert("Couldn't change favoriteness of post");
-		  	    	 });
-}
-
 dh.actions.switchPage = function (name, anchor, newPage) {
 	var params = dh.util.getParamsFromLocation()
 	var positions = {}

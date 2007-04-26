@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +18,6 @@ import javax.interceptor.InvocationContext;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Account;
@@ -42,10 +40,8 @@ import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.ServerStatus;
 import com.dumbhippo.server.blocks.PostBlockHandler;
-import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
 
@@ -329,61 +325,11 @@ public class MessengerGlueBean implements MessengerGlue {
 	static final String RECENT_POSTS_ELEMENT_NAME = "recentPosts";
 	static final String RECENT_POSTS_NAMESPACE = "http://dumbhippo.com/protocol/post";
 	
-	public String getPostsXml(Guid userId, Guid id, String elementName) {
-		User user = getUserFromGuid(userId);
-		UserViewpoint viewpoint = new UserViewpoint(user);
-		List<PostView> views;
-		
-		if (id != null) {
-			PostView view;
-			try {
-				view = postingBoard.loadPost(viewpoint, id);
-			} catch (NotFoundException e) {
-				return null;
-			}	
-			
-			views = Collections.singletonList(view);
-		} else {
-			views = postingBoard.getReceivedPosts(viewpoint, user, 0, 4);
-		}
-
-		XmlBuilder builder = new XmlBuilder();
-		if (elementName == null)
-			elementName = RECENT_POSTS_ELEMENT_NAME;
-		builder.openElement(elementName, "xmlns", RECENT_POSTS_NAMESPACE);
-		
-		Set<EntityView> viewerEntities = new HashSet<EntityView>();
-		
-		for (PostView postView : views) {
-			for (EntityView ev : postingBoard.getReferencedEntities(viewpoint, postView.getPost())) {
-				viewerEntities.add(ev);
-			}			
-		}
-		
-		for (EntityView ev : viewerEntities) {
-			builder.append(ev.toXmlOld());
-		}
-		
-		for (PostView postView : views) {
-			builder.append(postView.toXmlOld());
-		}
-		
-		builder.closeElement();
-		return builder.toString();
-	}
-
 	public void setPostIgnored(Guid userId, Guid postId, boolean ignore) throws NotFoundException, ParseException {
 		User user = getUserFromGuid(userId);
 		Post post = postingBoard.loadRawPost(new UserViewpoint(user), postId);
 		
 		postBlockHandler.setPostHushed(new UserViewpoint(user), post, ignore);
-	}
-
-	public String getGroupXml(Guid userId, Guid groupId) throws NotFoundException {
-		User user = getUserFromGuid(userId);
-		UserViewpoint viewpoint = new UserViewpoint(user);		
-		GroupView groupView = groupSystem.loadGroup(viewpoint, groupId);
-		return groupView.toXmlOld();
 	}
 
 	public void addGroupMember(Guid userId, Guid groupId, Guid inviteeId) throws NotFoundException {

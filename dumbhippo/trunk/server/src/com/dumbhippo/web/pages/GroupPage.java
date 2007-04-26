@@ -17,16 +17,12 @@ import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
-import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.views.GroupMemberView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
-import com.dumbhippo.server.views.PostView;
-import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.web.ListBean;
@@ -41,8 +37,6 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	// This number will apply to each section of members (active/followers/invited/invited followers)
 	static private final int MEMBERS_PER_PAGE = 50;
 	
-	private PostingBoard postBoard;
-	private MusicSystem musicSystem;
 	private GroupSystem groupSystem;
 	
 	@PagePositions
@@ -52,7 +46,6 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private String viewedGroupId;
 	private boolean fromInvite;
 	private GroupMember groupMember;
-	private Pageable<TrackView> latestTracks;
 	private ListBean<GroupMemberView> activeMembers;
 	private ListBean<GroupMemberView> invitedMembers;
 	private ListBean<GroupMemberView> followers;
@@ -63,11 +56,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private Pageable<GroupMemberView> pageableInvitedFollowers;
 	private ListBean<GroupFeed> feeds;
 	
-	private Pageable<PostView> posts;
-	
 	public GroupPage() {		
-		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
-		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 	}
@@ -290,26 +279,5 @@ public class GroupPage extends AbstractSigninOptionalPage {
 			feeds = new ListBean<GroupFeed>(list);
 		}
 		return feeds;
-	}
-	
-	// No longer used
-	public Pageable<PostView> getPosts() {
-		assert getViewedGroup() != null;
-		
-		if (posts == null) {
-			posts = pagePositions.createPageable("groupPosts");
-			postBoard.getGroupPosts(getSignin().getViewpoint(), getViewedGroup().getGroup(), posts);
-		}
-		return posts;
-	}
-
-    // No longer used
-	public Pageable<TrackView> getLatestTracks() {
-		if (latestTracks == null) {
-			latestTracks = pagePositions.createPageable("latestTracks"); 
-			musicSystem.pageLatestTrackViews(getSignin().getViewpoint(), getViewedGroup().getGroup(), latestTracks);
-		}
-
-		return latestTracks;
 	}
 }

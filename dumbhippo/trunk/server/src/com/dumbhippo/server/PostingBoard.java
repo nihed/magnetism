@@ -1,7 +1,6 @@
 package com.dumbhippo.server;
 
 import java.net.URL;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -19,7 +18,6 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.PostView;
-import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
 @Local
@@ -27,52 +25,7 @@ public interface PostingBoard {
 	
 	public int getPostsForCount(Viewpoint viewpoint, Person forPerson);	
 	
-	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int start, int max);
-
-	public void pagePostsFor(Viewpoint viewpoint, Person poster, Pageable<PostView> pageable);
-
-	public int getReceivedPostsCount(UserViewpoint viewpoint, User recipient);
-	
-	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, int start, int max);
-	
-	/**
-	 * Gets information about received posts for display in pageable fashion; currently
-	 * posts must be retrieved from the viewpoint of the receiving user.
-	 * 
-	 * @param viewpoint the viewpoint retrieving the information
-	 * @param recipient the user receiving the posts
-	 * @param pageable provides information about what posts to view and receives the result
-	 */
-	public void pageReceivedPosts(UserViewpoint viewpoint, User recipient, Pageable<PostView> pageable);
-	
-	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max);
-	
-	/**
-	 * Gets information about posts sent to a group in a pageable fashion.
-	 * 
-	 * @param viewpoint the viewpoint retrieving the information
-	 * @param recipient the group that received the posts
-	 * @param pageable provides information about what posts to view and receives the result
-	 */
-	public void getGroupPosts(Viewpoint viewpoint, Group recipient, Pageable<PostView> pageable);
-
-	/**
-	 * Retrieve posts that a user has marked as "favorites"
-	 * @param viewpoint the viewpoint retrieving the information
-	 * @param user the user whose favorites to retrieve
-	 * @param pageable provides information about what posts to view and receives the result
-	 */
-	public void pageFavoritePosts(Viewpoint viewpoint, User user, Pageable<PostView> pageable);	
-	
 	public boolean canViewPost(Viewpoint viewpoint, Post post);	
-	
-	public int getPostsForCount(Viewpoint viewpoint, Person forPerson, String search);
-	
-	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, String search, int start, int max);
-	
-	public int getGroupPostsCount(Viewpoint viewpoint, Group recipient, String search);
-	
-	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max);
 	
 	/**
 	 * Count the number of posts sent to a group ignoring visibility.
@@ -83,12 +36,6 @@ public interface PostingBoard {
 	 * @return count of the number of posts sent to the group
 	 */
 	public int getGroupPostsCount(Group group);
-	
-	public void pageHotPosts(Viewpoint viewpoint, Pageable<PostView> pageable);
-	
-	public void pageRecentPosts(Viewpoint viewpoint, Pageable<PostView> pageable);
-	
-	public void pageReceivedFeedPosts(UserViewpoint viewpoint, User recipient, Pageable<PostView> pageable);
 	
 	enum InviteRecipients {
 		DONT_INVITE,         // Just send out plain emails without invitation links
@@ -158,8 +105,6 @@ public interface PostingBoard {
 	 */
 	public Set<EntityView> getReferencedEntities(Viewpoint viewpoint, Post post);
 		
-	public int getPostViewerCount(Post post);
-
 	/**
 	 * Notifies system that the post was viewed by the given person.
 	 * If the postId is bad, silently does nothing.  This also
@@ -201,14 +146,6 @@ public interface PostingBoard {
 	public List<PostView> getPostSearchPosts(Viewpoint viewpoint, PostSearchResult searchResult, int start, int count);
 	
 	/**
-	 * Sets whether the given post is a favorite of the given viewpoint user.
-	 * @param viewpoint
-	 * @param post
-	 * @param favorite
-	 */
-	public void setFavoritePost(UserViewpoint viewpoint, Post post, boolean favorite);
-
-	/**
 	 * Determines whether a post is sufficiently interesting to one of the recipients
 	 * to be worth sending an email notification for it. This is currently defined
 	 * as the recipient being either a direct personRecipient of the post or a member
@@ -225,14 +162,6 @@ public interface PostingBoard {
 	
 	public void sendPostNotifications(Post post, PostType postType);
 
-	/**
-	 * Sends messages that the user might have missed to them via XMPP.
-	 * 
-	 * @param user the user to send backlog to
-	 * @param lastLogoutDate date the user was last logged in, or %null
-	 */
-	public void sendBacklog(User user, Date lastLogoutDate);	
-	
 	/**
 	 * Sets the disabled status on the post. Can be used from the admin console
 	 * to disable posts.
