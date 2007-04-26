@@ -1,27 +1,16 @@
 package com.dumbhippo.server.impl;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import javax.ejb.EJB;
 import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.mail.internet.MimeMessage;
 
 import org.jboss.annotation.IgnoreDependency;
-import org.jivesoftware.smack.XMPPConnection;
-import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.packet.Message;
-import org.jivesoftware.smack.packet.PacketExtension;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
-import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.identity20.RandomToken;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Post;
@@ -37,7 +26,6 @@ import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -92,119 +80,8 @@ public class MessageSenderBean implements MessageSender {
 	
 	// Our delegates
 	
-	private XMPPSender xmppSender;
 	private EmailSender emailSender;
 	
-	private static class PrefsChangedExtension implements PacketExtension {
-		private static final String ELEMENT_NAME = "prefs";
-
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/prefs";
-		
-		Map<String,String> prefs;
-		
-		public PrefsChangedExtension(Map<String,String> prefs) {
-			this.prefs = new HashMap<String,String>(prefs);
-		}
-
-		public PrefsChangedExtension(String key, String value) {
-			this(Collections.singletonMap(key, value)); 
-		}
-		
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
-			for (String key : prefs.keySet()) {
-				builder.appendTextNode("prop", prefs.get(key), "key", key);
-			}
-			builder.closeElement();
-			return builder.toString();
-		}
-	}
-
-	private class XMPPSender {
-
-		private XMPPConnection connection;
-		
-		class NotConnectedException extends Exception {
-
-			private static final long serialVersionUID = 1L;
-
-			NotConnectedException(String message) {
-				super(message);
-			}
-			
-			NotConnectedException(String message, Throwable cause) {
-				super(message, cause);
-			}
-		}
-		
-		private synchronized XMPPConnection getConnection() throws NotConnectedException {
-			if (connection != null && !connection.isConnected()) {
-				logger.info("Disconnected from XMPP server");
-			}
-			if (connection == null || !connection.isConnected()) {			
-				try {
-					String addr = config.getPropertyNoDefault(HippoProperty.BIND_HOST);
-					String port = config.getPropertyNoDefault(HippoProperty.XMPP_PORT);
-					String user = config.getPropertyNoDefault(HippoProperty.XMPP_ADMINUSER);
-					String password = config.getPropertyNoDefault(HippoProperty.XMPP_PASSWORD);
-					connection = new XMPPConnection(addr, Integer.parseInt(port.trim()));
-					// We need to use a separate resource ID for each connection
-					// TODO create an overoptimized XMPP connection pool 
-					RandomToken token = RandomToken.createNew();
-					connection.login(user, password, StringUtils.hexEncode(token.getBytes()));
-					logger.info("Successfully reconnected to XMPP server");
-				} catch (XMPPException e) {
-					connection = null;
-					throw new NotConnectedException("Failed to log in to XMPP server: " + e.getMessage(), e);
-				} catch (PropertyNotFoundException e) { 
-					logger.error("configuration is f'd up, can't connect to XMPP"); 
-					connection = null;
-					throw new NotConnectedException("Configuration properties missing so can't connect to XMPP", e);
-				}
-			}
-			
-			if (connection == null)
-				throw new RuntimeException("connection == null and we didn't throw a NotConnectedException");
-
-			return connection;
-		}
-
-		private Message createMessageFor(Guid userId, Message.Type type) {
-			// FIXME should dumbhippo.com domain be hardcoded here?			
-			return new Message(userId.toJabberId("dumbhippo.com"), type);
-		}		
-		
-		private Message createMessageFor(User user, Message.Type type) {
-			return createMessageFor(user.getGuid(), type);
-		}
-		
-		public synchronized void sendPostNotification(User recipient, Post post, List<User> viewers, PostType postType) {
-		}
-		
-		public synchronized void sendPrefChanged(User user, String key, String value) {
-			XMPPConnection connection; 
-			try {
-				connection = getConnection();
-			} catch (NotConnectedException e) {
-				logger.warn("Not sending pref changed notification because not connected to xmpp: " + e.getMessage());
-				return;
-			}
-			Message message = createMessageFor(user, Message.Type.HEADLINE);
-			message.addExtension(new PrefsChangedExtension(key, value));
-			logger.debug("Sending prefs changed message to {}", message.getTo());			
-			connection.sendPacket(message);
-		}
-	}
-
 	private class EmailSender {
 
 		public void sendPostNotification(EmailResource recipient, Post post, PostType postType) {
@@ -416,7 +293,6 @@ public class MessageSenderBean implements MessageSender {
 	
 	public MessageSenderBean() {
 		this.emailSender = new EmailSender();
-		this.xmppSender = new XMPPSender();
 	}
 	
 	public void sendPostNotification(Resource recipient, Post post, PostType postType) {
@@ -429,8 +305,5 @@ public class MessageSenderBean implements MessageSender {
 		} else {
 			throw new IllegalStateException("Don't know how to send a notification to resource: " + recipient);
 		}
-	}
-	public void sendPrefChanged(User user, String key, String value) {
-		xmppSender.sendPrefChanged(user, key, value);
 	}
 }
