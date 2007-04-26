@@ -52,6 +52,8 @@ class Feed(Entity):
 class Application(AutoSignallingStruct):
     pass
 
+do_autolaunch = True
+
 class Mugshot(gobject.GObject):
     """A combination of a wrapper and cache for the Mugshot D-BUS API.  Access
     using the get_mugshot() module method."""
@@ -135,7 +137,8 @@ class Mugshot(gobject.GObject):
         try:        
             bus = dbus.SessionBus()
             self._logger.debug("creating proxy for org.mugshot.Mugshot")
-            subprocess.Popen(['mugshot']).pid
+            if do_autolaunch:
+                subprocess.Popen(['mugshot']).pid
             self.__proxy = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
             self.__proxy.connect_to_signal('ConnectionStatusChanged', _log_cb(self.__on_connection_status_changed))
             self.__proxy.connect_to_signal('PrefChanged', _log_cb(self.__on_pref_changed))            
@@ -511,7 +514,7 @@ class Mugshot(gobject.GObject):
                               lambda *args: cb(), 
                               content=iq.getvalue(),
                               is_set=True)     
-    
+
 mugshot_inst = None
 def get_mugshot():
     global mugshot_inst
