@@ -104,6 +104,8 @@ class Exchange(hippo.CanvasBox):
         hippo.CanvasBox.__init__(self,  
                                  orientation=hippo.ORIENTATION_VERTICAL,
                                  spacing=4)      
+        self.__size = None
+        self.__logger = logging.getLogger("bigboard.Panel")
         self.__stock = stock
         self.__ticker_text = None
         self.__state = bigboard.libbig.state.PrefixedState('/panel/stock/' + stock.get_id() + "/") 
@@ -126,6 +128,7 @@ class Exchange(hippo.CanvasBox):
                 self.__ticker_container.append(more_link)
             
             self.append(self.__ticker_container)
+        self.__stock.connect("visible", lambda s, v: self.set_size(self.__size))
         self.__stockbox = hippo.CanvasBox()
         self.append(self.__stockbox)
         self.__sync_expanded()
@@ -142,6 +145,7 @@ class Exchange(hippo.CanvasBox):
         return self.__stock
     
     def set_size(self, size):
+        self.__size = size
         self.__stockbox.remove_all()
         self.__stock.set_size(size)
         content = self.__stock.get_content(size) 
@@ -149,6 +153,7 @@ class Exchange(hippo.CanvasBox):
             self.set_child_visible(self.__ticker_container, not not content)
         self.set_child_visible(self.__stockbox, not not content)
         if not content:
+            self.__logger.debug("no content for stock %s", self.__stock)
             return
         self.__stockbox.append(content)
         padding = 4
