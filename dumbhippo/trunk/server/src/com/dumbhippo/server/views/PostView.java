@@ -54,7 +54,6 @@ public class PostView implements ObjectView {
 	private int totalViewers;
 	private boolean favorite;
 	private boolean ignored;
-	private boolean toWorld;
 	private String feedFavicon;
 	
 	public enum Context {
@@ -91,7 +90,6 @@ public class PostView implements ObjectView {
 		viewerHasViewed = (ubd != null && ubd.isClicked());
 		recipients = recipientList;
 		this.viewpoint = viewpoint;
-		this.toWorld = p.isToWorld();
 		
 		totalViewers = block.getClickedCount();
 	
@@ -224,10 +222,6 @@ public class PostView implements ObjectView {
 		return favorite;
 	}
 	
-	public boolean isToWorld() {
-		return toWorld;
-	}
-	
 	public boolean isIgnored() {
 		return ignored;
 	}
@@ -248,7 +242,6 @@ public class PostView implements ObjectView {
 		builder.appendTextNode("href", post.getUrl().toString());
 		builder.appendTextNode("title", post.getTitle());
 		builder.appendTextNode("text", post.getText());
-		builder.appendBooleanNode("toWorld", isToWorld());
 		builder.appendLongNode("postDate", post.getPostDate().getTime()/1000);
 		PostInfo pi = post.getPostInfo();
 		if (pi != null)
@@ -294,7 +287,6 @@ public class PostView implements ObjectView {
 						    "poster", posterView.getIdentifyingGuid().toString(),
 						    "href", post.getUrl().toString(),
 							"postDate", Long.toString(post.getPostDate().getTime()),
-							"toWorld", Boolean.toString(isToWorld()),
 							"viewed", Boolean.toString(isViewerHasViewed()),
 							"totalViewers", Integer.toString(getTotalViewers()));
 							

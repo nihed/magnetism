@@ -75,11 +75,6 @@ public class AccountSystemBean implements AccountSystem {
 		return account;
 	}
 
-	public Account createAccountFromEmail(String email) throws ValidationException {
-		Resource res = spider.getEmail(email);
-		return createAccountFromResource(res);
-	}
-
 	public Client authorizeNewClient(Account acct, String name) {
 		acct.prepareToAuthorizeClient();
 		

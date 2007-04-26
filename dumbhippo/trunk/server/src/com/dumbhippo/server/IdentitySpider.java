@@ -268,16 +268,6 @@ public interface IdentitySpider {
 	 */
 	public boolean isViewerSystemOrFriendOf(Viewpoint viewpoint, User user);
 	
-
-	/**
-	 * Check whether viewpoint user as seen by this user is considered
-	 * weird (marked as not desirable)
-	 * @param viewpoint the currently logged-in user
-	 * @param user the user we want to see if we're weird to
-	 * @return true if weird
-	 */
-	public boolean isViewerWeirdTo(Viewpoint viewpoint, User user);
-	
 	public boolean isAdministrator(User user);	
 
 	/**
@@ -331,10 +321,6 @@ public interface IdentitySpider {
 	
 	public void setApplicationUsageEnabled(User user, boolean enabled);
 	
-	public boolean getNotifyPublicShares(User user);
-	
-	public void setNotifyPublicShares(User user, boolean notify);	
-
 	/**
 	 * Set a user's bio 
 	 * 

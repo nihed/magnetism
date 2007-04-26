@@ -146,10 +146,6 @@ public interface HttpMethods {
 	@HttpParams( { "enabled" })
 	public void doSetMusicSharingEnabled(UserViewpoint viewpoint, boolean enabled) throws IOException;
 	
-	@HttpContentTypes(HttpResponseData.NONE)
-	@HttpParams( { "notify" })
-	public void doSetNotifyPublicShares(UserViewpoint viewpoint, boolean notify) throws IOException;
-	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "who", "theme" })
 	@HttpOptions( optionalParams = { "theme" } )

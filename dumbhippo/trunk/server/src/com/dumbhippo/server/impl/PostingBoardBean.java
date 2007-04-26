@@ -37,7 +37,6 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.GroupEvent;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.PostCreatedEvent;
-import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.FeedEntry;
@@ -149,35 +148,16 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	public Set<Resource> getPostRecipients(Post post) {
-		Set<Resource> addressedRecipients = post.getExpandedRecipients();  
-		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY || !post.isToWorld()) {
-			return addressedRecipients;
-		} else if (post.getVisibility() == PostVisibility.ANONYMOUSLY_PUBLIC || 
-				   post.getVisibility() == PostVisibility.ATTRIBUTED_PUBLIC) {
-			Set<Resource> recipients = new HashSet<Resource>();
-			for (Account acct : accountSystem.getRecentlyActiveAccounts()) {
-				if (identitySpider.getNotifyPublicShares(acct.getOwner())) {
-					recipients.add(acct);
-				}
-			}
-			recipients.addAll(addressedRecipients);
-			return recipients;
-		} else {
-			throw new RuntimeException("invalid visibility on post " + post.getId());
-		}		
+		return post.getExpandedRecipients();  
 	}
 	
 	public void sendPostNotifications(Post post, PostType postType) {
-		logger.debug("Sending out jabber/email notifications...");
+		logger.debug("Sending out email notifications...");
 		
-		// We only notify "everyone" if the post was explicitly sent to "the world", 
-		// public posts can also happen implicitly by copying a public group; those
-		// posts are still visible to the world, but aren't sent out to the world
-		
-		for (Resource r : getPostRecipients(post)) {
+		for (Resource r : post.getExpandedRecipients()) {
 			messageSender.sendPostNotification(r, post, postType);
 		}
-		logger.debug("Sending out jabber/email notifications...done");		
+		logger.debug("Sending out email notifications...done");		
 	}
 	
 	/**
