@@ -19,7 +19,6 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.FeedPost;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
-import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.postinfo.PostInfoType;
@@ -101,8 +100,6 @@ public class PostView implements ObjectView {
 		}
 		
 		if (viewpoint instanceof UserViewpoint) {
-			User viewer = ((UserViewpoint) viewpoint).getViewer();
-			this.favorite = viewer.getAccount().getFavoritePosts().contains(post);
 			this.ignored = (ubd != null && ubd.isIgnored());
 		}
 		
@@ -267,7 +264,6 @@ public class PostView implements ObjectView {
 			}			
 		}
 		builder.closeElement();		
-		builder.appendBooleanNode("favorite", favorite);
 		builder.appendBooleanNode("ignored", ignored);
 		builder.closeElement();
 	}
@@ -300,8 +296,7 @@ public class PostView implements ObjectView {
 							"postDate", Long.toString(post.getPostDate().getTime()),
 							"toWorld", Boolean.toString(isToWorld()),
 							"viewed", Boolean.toString(isViewerHasViewed()),
-							"totalViewers", Integer.toString(getTotalViewers()),
-							"favorite", Boolean.toString(favorite));
+							"totalViewers", Integer.toString(getTotalViewers()));
 							
 		builder.appendTextNode("title", post.getTitle());
 		builder.appendTextNode("description", StringUtils.ellipsizeText(post.getText()));
