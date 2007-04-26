@@ -229,7 +229,7 @@ class CategoryExtras(CanvasVBox):
             self.__right_title.set_property('text', "More Popular %s" % (self.__catname,))
         self.__app_pair.remove_all()
         found = 0
-        for i,app in self.__apps and enumerate(self.__apps) or []:
+        for i,app in enumerate(self.__apps or []):
             if app.is_installed():
                 continue
             app_view = apps_widgets.AppDisplay(app)
