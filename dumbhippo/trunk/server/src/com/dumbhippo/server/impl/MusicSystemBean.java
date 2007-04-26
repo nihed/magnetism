@@ -1,13 +1,11 @@
 package com.dumbhippo.server.impl;
 
-import java.util.Date;
 import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.MusicSystem;
@@ -16,7 +14,6 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.TrackSearchResult;
 import com.dumbhippo.server.views.AlbumView;
-import com.dumbhippo.server.views.ArtistView;
 import com.dumbhippo.server.views.ExpandedArtistView;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.Viewpoint;
@@ -38,68 +35,12 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.getCurrentTrackView(viewpoint, user);
 	}
 
-	public int countTrackHistory(Viewpoint viewpoint, User user) {
-	    return internal.countTrackHistory(viewpoint, user);
-	}
-	
 	public boolean hasTrackHistory(Viewpoint viewpoint, User user) {
 		return internal.hasTrackHistory(viewpoint, user);
 	}
 	
-	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable) {
-		internal.pageLatestTrackViews(viewpoint, pageable);
-	}
-	
-	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable, boolean filledTracksOnly) {
-		internal.pageLatestTrackViews(viewpoint, pageable, filledTracksOnly);		
-	}
-	
-	public List<TrackView> getPopularTrackViews(Viewpoint viewpoint, int maxResults) {
-		return internal.getPopularTrackViews(viewpoint, maxResults);
-	}
-	
-	public void pageLatestTrackViews(Viewpoint viewpoint, User user, Pageable<TrackView> pageable) {
-		internal.pageLatestTrackViews(viewpoint, user, pageable);
-	}
-	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) {
 		return internal.getLatestTrackViews(viewpoint, user, maxResults);
-	}
-
-	public void pageFrequentTrackViews(Viewpoint viewpoint, User user, Pageable<TrackView> pageable) {
-		internal.pageFrequentTrackViews(viewpoint, user, pageable);
-	}
-	
-	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults) {
-		return internal.getFrequentTrackViews(viewpoint, user, maxResults);
-	}
-
-	public void pageLatestTrackViews(Viewpoint viewpoint, Group group, Pageable<TrackView> pageable) {
-		internal.pageLatestTrackViews(viewpoint, group, pageable);
-	}
-	
-	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults) {
-		return internal.getLatestTrackViews(viewpoint, group, maxResults);
-	}
-
-	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults) {
-		return internal.getFrequentTrackViews(viewpoint, group, maxResults);
-	}
-		
-	public void pageFrequentTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable) {
-		internal.pageFrequentTrackViews(viewpoint, pageable);
-	}
-	
-	public void pageFrequentTrackViewsSince(Viewpoint viewpoint, Date since, Pageable<TrackView> pageable) {
-		internal.pageFrequentTrackViewsSince(viewpoint, since, pageable);
-	}
-
-	public void pageOnePlayTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable) {
-		internal.pageOnePlayTrackViews(viewpoint, pageable);
-	}
-
-	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults) {
-		return internal.getLatestAlbumViews(viewpoint, user, maxResults);
 	}
 
 	public TrackView songSearch(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {	
@@ -112,10 +53,6 @@ public class MusicSystemBean implements MusicSystem {
 
 	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, String album, String name, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
 		return internal.expandedArtistSearch(viewpoint, artist, album, name, albumsByArtist);
-	}
-	
-	public List<ArtistView> getLatestArtistViews(Viewpoint viewpoint, User user, int maxResults) {
-		return internal.getLatestArtistViews(viewpoint, user, maxResults);
 	}
 	
 	public TrackSearchResult searchTracks(Viewpoint viewpoint, String queryString) {
@@ -136,9 +73,5 @@ public class MusicSystemBean implements MusicSystem {
 	
 	public TrackView getTrackView(TrackHistory trackHistory) {
 		return internal.getTrackView(trackHistory);
-	}
-
-	public TrackView getTrackView(Guid trackHistoryId) throws NotFoundException {
-		return internal.getTrackView(trackHistoryId);
 	}
 }

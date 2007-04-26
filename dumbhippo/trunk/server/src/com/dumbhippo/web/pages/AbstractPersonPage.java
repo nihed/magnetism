@@ -25,7 +25,6 @@ import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.InvitationView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
-import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.PagePositions;
 import com.dumbhippo.web.PagePositionsBean;
@@ -76,9 +75,6 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private ListBean<PersonView> contactsWithoutInvites;
 	private Pageable<PersonView> pageableContactsWithoutInvites;
 	
-	private boolean lookedUpCurrentTrack;
-	private TrackView currentTrack;
-	
 	protected Set<PersonView> unsortedContacts; 
 	
 	protected ListBean<PersonView> contacts;
@@ -101,7 +97,6 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
 		facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
 		stacker = WebEJBUtil.defaultLookup(Stacker.class);
-		lookedUpCurrentTrack = false;
 		facebookErrorMessage = null;
 	}
 	
@@ -385,17 +380,6 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		}
 		
 		return pageableFollowers;
-	}
-	
-	public TrackView getCurrentTrack() {
-		if (!lookedUpCurrentTrack) {
-			try {
-			lookedUpCurrentTrack = true;
-				currentTrack = getMusicSystem().getCurrentTrackView(getSignin().getViewpoint(), getViewedUser());
-			} catch (NotFoundException e) {
-			}
-		}
-		return currentTrack;
 	}
 	
 	private ListBean<PersonView> convertToPersonViews(List<InvitationView> invitationViews) {

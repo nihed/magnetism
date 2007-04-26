@@ -51,8 +51,6 @@ import com.dumbhippo.live.UserChangedEvent;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FeedEntry;
-import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.TrackFeedEntry;
@@ -62,7 +60,6 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.Enabled;
-import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystemInternal;
@@ -75,7 +72,6 @@ import com.dumbhippo.server.TrackSearchResult;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.AlbumView;
-import com.dumbhippo.server.views.ArtistView;
 import com.dumbhippo.server.views.ExpandedArtistView;
 import com.dumbhippo.server.views.PersonMusicPlayView;
 import com.dumbhippo.server.views.TrackView;
@@ -116,9 +112,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	@EJB
 	private PersonViewer personViewer;
 	
-	@EJB
-	private GroupSystem groupSystem;
-
 	@EJB
 	private Configuration config;
 	
@@ -456,14 +449,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 	
-	public int countTrackHistory(Viewpoint viewpoint, User user) {
-		if (!identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE)) {
-			return 0;
-		}
-		
-		return queryCount(user, false);		
-	}
-
 	public boolean hasTrackHistory(Viewpoint viewpoint, User user) {
 		if (!identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE)) {
 			return false;
@@ -471,86 +456,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return queryCount(user, true) > 0;
 	}
 	
-	static final private int MAX_GROUP_HISTORY_TRACKS = 200;
-	static final private int MAX_GROUP_HISTORY_TRACKS_PER_MEMBER = 8;
-	
-	private void chopTrackHistory(List<TrackHistory> results, int firstResult, int maxResults) {
-		// chop out before firstResult
-		if (firstResult > 0) {
-			results.subList(0, Math.min(firstResult, results.size())).clear();
-		}
-		
-		// chop off the end of the list if it's longer than needed
-		if (results.size() > maxResults) {
-			results.subList(maxResults, results.size()).clear();
-		}
-	}
-	
-	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, Group group, History type, int firstResult, int maxResults) {
-		List<TrackHistory> results = getEntireTrackHistory(viewpoint, group, type);
-		chopTrackHistory(results, firstResult, maxResults);
-		return results;
-	}
-	
-	private List<TrackHistory> getEntireTrackHistory(Viewpoint viewpoint, Group group, History type) {
-		//logger.debug("getTrackHistory() type {} for {} max results " + maxResults, type, group);
-
-		// This is not very efficient now is it...
-		
-		Set<User> members = groupSystem.getUserMembers(viewpoint, group, MembershipStatus.ACTIVE);
-		List<TrackHistory> results = new ArrayList<TrackHistory>();
-		for (User m : members) {
-			List<TrackHistory> memberHistory = getTrackHistory(viewpoint, m, type, 0,
-							MAX_GROUP_HISTORY_TRACKS_PER_MEMBER);
-			results.addAll(memberHistory);
-			if (results.size() > MAX_GROUP_HISTORY_TRACKS)
-				break; // enough! this arbitrarily ignores certain users, but oh well.
-		}
-		
-		Comparator<TrackHistory> comparator;
-		switch (type) {
-		case FREQUENT:
-			comparator = new Comparator<TrackHistory>() {
-			
-			// we want the list in descending order of frequency, so this is "backward"
-			public int compare(TrackHistory a, TrackHistory b) {
-				int aPlayed = a.getTimesPlayed();
-				int bPlayed = b.getTimesPlayed();
-				if (aPlayed > bPlayed)
-					return -1;
-				else if (aPlayed < bPlayed)
-					return 1;
-				else
-					return 0;
-			}	
-		};
-		break;
-		case LATEST:
-			comparator = new Comparator<TrackHistory>() {
-			
-			public int compare(TrackHistory a, TrackHistory b) {
-				long aUpdated = a.getLastUpdated().getTime();
-				long bUpdated = b.getLastUpdated().getTime();
-				if (aUpdated > bUpdated)
-					return -1;
-				else if (aUpdated < bUpdated)
-					return 1;
-				else
-					return 0;
-			}	
-		};
-		
-		break;
-		default:
-			comparator = null;
-		break;
-		}
-		
-		Collections.sort(results, comparator);
-
-		return results;
-	}
-		
 	static private class GetTrackViewTask implements Callable<TrackView> {
 
 		private Track track;
@@ -575,27 +480,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 
-	static private class GetAlbumViewTask implements Callable<AlbumView> {
-
-		private Future<YahooAlbumData> futureYahooAlbum;
-		private Future<AmazonAlbumData> futureAmazonAlbum;
-		
-		public GetAlbumViewTask(Future<YahooAlbumData> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum) {
-			this.futureYahooAlbum = futureYahooAlbum;
-			this.futureAmazonAlbum = futureAmazonAlbum;
-		}
-		
-		public AlbumView call() {
-			logger.debug("Entering GetAlbumViewTask thread for a futureYahooAlbum and a futureAmazonAlbum");
-			// we do this instead of an inner class to work right with threads
-			MusicSystemInternal musicSystem = EJBUtil.defaultLookup(MusicSystemInternal.class);
-			
-			logger.debug("Obtained transaction in GetAlbumViewTask thread for a futureYahooAlbum and a futureAmazonAlbum");
-			
-			return musicSystem.getAlbumView(futureYahooAlbum, futureAmazonAlbum);
-		}
-	}
-	
 	static private void hintNeedsRefresh(final long trackId) {
 		// this has to be in another thread since it's called from 
 		// an after-commit handler and looking up session beans doesn't 
@@ -820,11 +704,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return getTrackView(trackHistory.getTrack(), trackHistory);
 	}
 	
-	public TrackView getTrackView(Guid trackHistoryId) throws NotFoundException {
-		TrackHistory trackHistory = lookupTrackHistory(trackHistoryId);
-		return getTrackView(trackHistory.getTrack(), trackHistory);
-	}
-	
 	private TrackView getTrackView(Track track, TrackHistory trackHistory) {
 
 		TrackView view = new TrackView(track, trackHistory);
@@ -886,27 +765,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return view;
 	}
 
-	public AlbumView getAlbumView(Future<YahooAlbumData> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum) {
-		// this method should never throw due to Yahoo or Amazon failure;
-		// we should just return a view without the extra information.
-		
-		AlbumView view = new AlbumView();
-		fillAlbumInfo(futureYahooAlbum, futureAmazonAlbum, view);
-		return view;
-	}
-	
 	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongData yahooSong, YahooAlbumData yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<? extends YahooSongData>> futureAlbumTracks) {
 		AlbumView view = new AlbumView();
 		fillAlbumTracks(viewpoint, yahooSong, futureAlbumTracks, view);
 		fillAlbumInfo(yahooAlbum, futureAmazonAlbum, view);
 
 		return view;		
-	}
-	
-	public ArtistView getArtistView(Track track) {
-		// right now ArtistView has no info in it, so this isn't too complex
-		ArtistView view = new ArtistView(track.getArtist());
-		return view;
 	}
 	
 	private void fillArtistInfo(YahooArtistData yahooArtist, ExpandedArtistView artistView) {		
@@ -987,7 +851,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}	
 	}
 	
-	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, String artist, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
+	private ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, String artist, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
 		ExpandedArtistView view = new ExpandedArtistView(artist);
 
 	    // this call would throw a NotFoundException if an artist was not found, and would never return null
@@ -1064,34 +928,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return futureView;
 	}
 	
-	public Future<TrackView> getCurrentTrackViewAsync(Viewpoint viewpoint, User user) throws NotFoundException {
-		TrackHistory current = getCurrentTrack(viewpoint, user);
-		return getTrackViewAsync(current);
-	}
-	
-	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumData> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum) {
-		FutureTask<AlbumView> futureView = 
-			new FutureTask<AlbumView>(new GetAlbumViewTask(futureYahooAlbum, futureAmazonAlbum));
-		getThreadPool().execute(futureView);
-		return futureView;
-	}
-
-	public Future<ArtistView> getArtistViewAsync(Track track) {
-		// right now ArtistView has no info in it, so this isn't too complex
-		ArtistView view = new ArtistView(track.getArtist());
-		
-		// java std lib should have a subclass of Future that just isn't in the future,
-		// but this is a fine hack for now
-		FutureTask<ArtistView> futureView = new FutureTask<ArtistView>(new Runnable() {
-			public void run() {
-				// does nothing
-			}
-		},
-		view);
-		futureView.run(); // so we can call get()
-		return futureView;
-	}
-	
 	private List<TrackView> getViewsFromTrackHistories(Viewpoint viewpoint, List<TrackHistory> tracks, boolean includePersonMusicPlay) {
 		
 		logger.debug("Getting TrackViews from tracks list with {} items", tracks.size());
@@ -1122,292 +958,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return views;
 	}
 
-	private List<AlbumView> getAlbumViewsFromTracks(List<Track> tracks) {
-		
-		logger.debug("Getting AlbumViews from tracks list with {} items", tracks.size());
-		
-		// spawn threads in parallel
-		List<Future<AlbumView>> futureViews = new ArrayList<Future<AlbumView>>(tracks.size());
-		for (Track t : tracks) {
-			Future<AmazonAlbumData> futureAmazonAlbum;
-			if (t.getAlbum() != null && t.getArtist() != null)
-				futureAmazonAlbum = amazonAlbumCache.getAsync(new AlbumAndArtist(t.getAlbum(), t.getArtist()));
-			else
-				futureAmazonAlbum = null;
-			
-			List<? extends YahooSongData> songs = yahooSongCache.getSync(t);
-			Future<YahooAlbumData> futureYahooAlbum = null;
-		
-		    if (!songs.isEmpty()) {
-		    	YahooArtistData yahooArtist = yahooArtistCache.getSyncByName(t.getArtist());
-		    	if (yahooArtist != null) {
-				    YahooSongData yahooSong = null;
-				
-			        for (YahooSongData songForTrack : songs) {
-			        	if (songForTrack.getArtistId().equals(yahooArtist.getArtistId())) {
-			    	    	yahooSong = songForTrack;
-			    		    break;
-			    	    }
-			        }
-		    	
-	                if (yahooSong != null) { 	    
-			            futureYahooAlbum = yahooAlbumCache.getAsync(yahooSong.getAlbumId());
-	                }
-		    	} else {
-					//nothing to do, it's ok for futureYahooAlbum to be null
-				}
-		    }
-		    
-			futureViews.add(getAlbumViewAsync(futureYahooAlbum, futureAmazonAlbum));
-		}
-	
-		// now harvest all the results
-		List<AlbumView> views = new ArrayList<AlbumView>(tracks.size());
-		for (Future<AlbumView> fv : futureViews) {
-			AlbumView v = ThreadUtils.getFutureResult(fv); // throws on exception in the thread
-			
-			assert v != null;
-			
-			views.add(v);
-		}
-		
-		return views;
-	}
-
-	private List<ArtistView> getArtistViewsFromTracks(List<Track> tracks) {
-		
-		logger.debug("Getting ArtistViews from tracks list with {} items", tracks.size());
-		
-		// spawn threads in parallel
-		List<Future<ArtistView>> futureViews = new ArrayList<Future<ArtistView>>(tracks.size());
-		for (Track t : tracks) {
-			futureViews.add(getArtistViewAsync(t));
-		}
-	
-		// now harvest all the results
-		List<ArtistView> views = new ArrayList<ArtistView>(tracks.size());
-		for (Future<ArtistView> fv : futureViews) {
-			ArtistView v = ThreadUtils.getFutureResult(fv); // throws on exception in the thread
-			
-			assert v != null;
-			
-			views.add(v);
-		}
-		
-		return views;
-	}
-
-	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable) {
-		pageLatestTrackViews(viewpoint, pageable, false);
-	}
-	
-	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable, boolean filledTracksOnly) {
-        List<TrackView> trackViewResults = new ArrayList<TrackView>();
-	    int count = pageable.getCount();
-	    int totalResults = 0; 
-	    
-		while (trackViewResults.size() < pageable.getCount()) {
-		    Query q = em.createQuery("SELECT h FROM TrackHistory h ORDER BY h.lastUpdated DESC");
-		    q.setFirstResult(pageable.getStart() + totalResults);
-		    if (filledTracksOnly) {
-		    	// always get 3 times more albums than we need, so that there is a good chance we will get enough
-		    	// albums with album art, but not too many albums
-			    count = (pageable.getCount() - trackViewResults.size())*3;
-		    }
-		    q.setMaxResults(count);
-		    List<?> results = q.getResultList();		    
-		    if (results.size() == 0)
-		    	break;
-		    totalResults = totalResults + results.size();
-		    
-		    // filledTracksOnly flag currently means that the album art for the track has to be present
-		    // we do fillAlbumView which sets an album url last when we create a TrackView, so there is no big saving in
-		    // trying to propagate logic about having to have album art to getViewsFromTrackHistories
-		    List<TrackView> trackViews = getViewsFromTrackHistories(viewpoint, TypeUtils.castList(TrackHistory.class, results), false);
-		    for (TrackView trackView : trackViews) {
-		        if (!filledTracksOnly || (filledTracksOnly && trackView.isSmallImageUrlAvailable())) {
-		    	    trackViewResults.add(trackView);
-		            if (trackViewResults.size() == pageable.getCount()) 
-		                break;
-		        }
-		    }
-		}
-		
-		pageable.setResults(trackViewResults);
-		// Doing an exact count is expensive, our assumption is "lots and lots"
-		pageable.setTotalCount(pageable.getBound());
-	}
-	
-	// FIXME right now this returns the latest songs globally, since that's the easiest thing 
-	// to get, but I guess we could try to be fancier
-	public List<TrackView> getPopularTrackViews(Viewpoint viewpoint, int maxResults) {
-		Query q;
-	
-		// FIXME this should try to get only one track per user or something, but 
-		// I can't figure out the sql in a brief attempt
-		q = em.createQuery("FROM TrackHistory h ORDER BY h.lastUpdated DESC");
-		q.setMaxResults(maxResults);
-		
-		List<TrackHistory> results = new ArrayList<TrackHistory>();
-		List<?> rawResults = q.getResultList();
-		for (Object o : rawResults) {
-			TrackHistory h = (TrackHistory) o;
-			if (h.getTrack() != null) // force-loads the track if it wasn't
-				results.add(h);
-			else
-				logger.debug("Ignoring TrackHistory with null track");
-		}
-		
-		return getViewsFromTrackHistories(viewpoint, results, false);
-	}
-	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults) {
 		//logger.debug("getLatestTrackViews() for user {}", user);
 		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, 0, maxResults);
 		return getViewsFromTrackHistories(viewpoint, history, false);
-	}
-	
-	public void pageLatestTrackViews(Viewpoint viewpoint, User user, Pageable<TrackView> pageable) {
-		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, pageable.getStart(), pageable.getCount());
-		pageable.setResults(getViewsFromTrackHistories(viewpoint, history, false));
-		pageable.setTotalCount(countTrackHistory(viewpoint, user));
-	}
-	
-	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults) {
-		//logger.debug("getFrequentTrackViews() for user {}", user);
-		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.FREQUENT, 0, maxResults);
-		
-		return getViewsFromTrackHistories(viewpoint, history, false);
-	}
-	
-	public void pageFrequentTrackViews(Viewpoint viewpoint, User user, Pageable<TrackView> pageable) {
-		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.FREQUENT, pageable.getStart(), pageable.getCount());
-		pageable.setResults(getViewsFromTrackHistories(viewpoint, history, false));
-		pageable.setTotalCount(countTrackHistory(viewpoint, user));
-	}
-
-	public void pageLatestTrackViews(Viewpoint viewpoint, Group group, Pageable<TrackView> pageable) {
-		List<TrackHistory> history = getEntireTrackHistory(viewpoint, group, History.LATEST);
-		pageable.setTotalCount(history.size());
-		chopTrackHistory(history, pageable.getStart(), pageable.getCount());
-		pageable.setResults(getViewsFromTrackHistories(viewpoint, history, true));
-	}
-	
-	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults) {
-		//logger.debug("getLatestTrackViews() for group {}", group);
-		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.LATEST, 0, maxResults);
-		
-		return getViewsFromTrackHistories(viewpoint, history, true);
-	}
-
-	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults) {
-		//logger.debug("getFrequentTrackViews() for group {}", group);
-		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.FREQUENT, 0, maxResults);
-		
-		return getViewsFromTrackHistories(viewpoint, history, false);
-	}
-	
-	private List<TrackView> getTrackViewResults(List<Future<TrackView>> futureViews) {
-		
-		// now harvest all the results
-		List<TrackView> views = new ArrayList<TrackView>(futureViews.size());
-		for (Future<TrackView> fv : futureViews) {
-			TrackView v = ThreadUtils.getFutureResult(fv); // throws on exception in the thread
-			
-			assert v != null;
-			
-			views.add(v);
-		}
-		
-		return views;
-	}
-	
-	private void pageTrackViewsFromQuery(Query query, Pageable<TrackView> pageable) {
-		query.setFirstResult(pageable.getStart());
-		query.setMaxResults(pageable.getCount());
-		
-		List<?> objects = query.getResultList();
-		List<Future<TrackView>> futureViews = new ArrayList<Future<TrackView>>(objects.size());
-		for (Object o : objects) {
-			futureViews.add(getTrackViewAsync((Track)o));
-		}
-		
-		pageable.setResults(getTrackViewResults(futureViews));
-	}
-
-	public void pageFrequentTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable) {
-		pageTrackViewsFromQuery(em.createNamedQuery("trackHistoryMostPopularTracks"), pageable);
-		
-		// Doing an exact count is expensive, our assumption is "lots and lots"
-		pageable.setTotalCount(pageable.getBound());
-	}
-	
-	public void pageOnePlayTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable) {
-		pageTrackViewsFromQuery(em.createNamedQuery("trackHistoryOnePlayTracks"), pageable);
-		
-		// Doing an exact count is expensive and hard, our assumption is "lots and lots"
-		pageable.setTotalCount(pageable.getBound());
-	}
-	
-	public void pageFrequentTrackViewsSince(Viewpoint viewpoint, Date since, Pageable<TrackView> pageable) {
-		Query query = em.createNamedQuery("trackHistoryMostPopularTracksSince");
-		query.setParameter("since", since);
-		pageTrackViewsFromQuery(query, pageable);
-		
-		Query countQuery = em.createQuery("SELECT COUNT(DISTINCT h.track) FROM TrackHistory h WHERE h.lastUpdated >= :since");
-		countQuery.setParameter("since", since);
-		Object o = countQuery.getSingleResult();
-		pageable.setTotalCount(((Number)o).intValue());
-	}
-
-	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults) {
-		//logger.debug("getLatestAlbumViews() for user {}", user);
-		
-		// FIXME we don't really have a way of knowing how many TrackHistory we need to get maxResults
-		// unique albums. For now, just heuristically ask for more results so we have a better shot
-		// at getting several albums, but probably some real solution would be nice.
-		// The case to think about is someone playing an entire album, so their last dozen 
-		// tracks or so are all from the same album.
-		
-		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, 0, maxResults*12);
-		
-		Set<String> albums = new HashSet<String>();
-		List<Track> tracks = new ArrayList<Track>(history.size());
-		for (TrackHistory h : history) {
-			Track t = h.getTrack();
-			if (!albums.contains(t.getAlbum())) {
-				tracks.add(t);
-				albums.add(t.getAlbum());
-			}
-			if (albums.size() >= maxResults)
-				break;
-		}
-		return getAlbumViewsFromTracks(tracks);		
-	}
-
-	public List<ArtistView> getLatestArtistViews(Viewpoint viewpoint, User user, int maxResults) {
-		//logger.debug("getLatestArtistViews() for user {}", user);
-		
-		// FIXME we don't really have a way of knowing how many TrackHistory we need to get maxResults
-		// unique artists. For now, just heuristically ask for more results so we have a better shot
-		// at getting several albums, but probably some real solution would be nice.
-		// The case to think about is someone playing an entire album, so their last dozen 
-		// tracks or so are all from the same album/artist.
-		
-		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, 0, maxResults*12);
-		
-		Set<String> artists = new HashSet<String>();
-		List<Track> tracks = new ArrayList<Track>(history.size());
-		for (TrackHistory h : history) {
-			Track t = h.getTrack();
-			if (!artists.contains(t.getArtist())) {
-				tracks.add(t);
-				artists.add(t.getArtist());
-			}
-			if (artists.size() >= maxResults)
-				break;
-		}
-		return getArtistViewsFromTracks(tracks);		
 	}
 	
 	private Query buildSongQuery(Viewpoint viewpoint, String artist, String album, String name, int maxResults) throws NotFoundException {
