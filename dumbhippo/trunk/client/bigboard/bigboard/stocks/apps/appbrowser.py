@@ -182,7 +182,7 @@ class CategoryExtras(CanvasVBox):
         "have-apps" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,))      
     }
     def __init__(self, **args):
-        super(CategoryExtras, self).__init__(background_color=0x555555FF,
+        super(CategoryExtras, self).__init__(background_color=0x888888FF,
                                              color=0xFFFFFFFF,
                                              **args)
 
@@ -251,7 +251,7 @@ class AppList(CanvasVBox):
         super(AppList, self).__init__()
         
         self.__table = MultiVTable(columns=3,item_height=40)
-        self.append(self.__table)
+        self.append(self.__table, hippo.PACK_EXPAND)
 
         self.__extras_section = CategoryExtras(yalign=hippo.ALIGNMENT_END)
         self.__extras_section.connect("have-apps", self.__on_have_extras)
@@ -290,8 +290,10 @@ class AppList(CanvasVBox):
 
         display_only_used = (not self.__selected_cat) and (not self.__search) 
         for catname in (self.__selected_cat and not self.__search) and [self.__selected_cat] or cat_keys:
+            cat_used_apps = filter(lambda app: app in self.__used_apps, categories[catname])
+            cat_used_apps_count = len(cat_used_apps)
             if display_only_used:
-                right_link = ActionLink(text=u"More \u00BB")
+                right_link = ActionLink(text=u"More (%d) \u00BB" % (len(categories[catname]) - cat_used_apps_count,))
                 right_link.connect("activated", self.__handle_category_more, catname)
                 left_link = None
             else:
@@ -299,9 +301,11 @@ class AppList(CanvasVBox):
                 left_link = ActionLink(text=u"All Applications \u00BB")
                 left_link.connect("activated", self.__handle_nocategory)
             self.__table.append_section_head(catname, left_control=left_link, right_control=right_link)
-            for app in categories[catname]:
-                if display_only_used and not app in self.__used_apps:
-                    continue
+            if display_only_used:
+                appsource = cat_used_apps
+            else:
+                appsource = categories[catname]
+            for app in appsource:
                 overview = apps_widgets.AppDisplay(app)
                 overview.connect("button-press-event", self.__on_overview_click)             
                 self.__table.append_column_item(overview)
@@ -389,7 +393,7 @@ class AppBrowser(hippo.CanvasWindow):
         self.__box.append(self.__right_scroll, hippo.PACK_EXPAND)
         
         self.__app_list = AppList()
-        self.__right_box.append(self.__app_list)
+        self.__right_box.append(self.__app_list, hippo.PACK_EXPAND)
         self.__app_list.connect("category-selected", lambda list, cat: self.__on_category_selected(cat))
         self.__app_list.connect("selected", lambda list, app: self.__on_app_selected(app))
         self.__app_list.connect("launch", lambda list: self.__on_app_launch()) 
