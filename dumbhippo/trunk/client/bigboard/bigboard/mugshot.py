@@ -466,7 +466,7 @@ class Mugshot(gobject.GObject):
             category = self.__category_mapping[category] 
         do_force = force
         if self.__category_top_apps.has_key(category) and \
-           (time.time() - self.__category_top_apps[1] > self.__category_app_poll_frequency_secs):
+           (time.time() - self.__category_top_apps(category)[1] > self.__category_app_poll_frequency_secs):
             do_force = True
         if (not self.__category_top_apps.has_key(category)) or force:
             if not force:            
