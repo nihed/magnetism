@@ -210,17 +210,6 @@ dh.actions.setMusicSharingEnabled = function(enabled) {
 		  	    	 });
 }
 
-dh.actions.setNotifyPublicShares = function(notify) {
-   	dh.server.doPOST("setnotifypublicshares",
-   					{ "notify" : notify ? "true" : "false" },
-		  	    	 function(type, data, http) {
-			  	    	 dh.util.refresh();
-		  	    	 },
-		  	    	 function(type, error, http) {
-		  	    	     alert("Couldn't toggle default public share");
-		  	    	 });
-}
-
 dh.actions.setPersonQuip = function(entity, isLove, text) {
    	dh.server.doPOST("setquip",
    					{ entityType: "person", entity : entity, isLove: isLove, text: text },

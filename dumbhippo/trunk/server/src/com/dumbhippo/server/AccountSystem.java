@@ -11,23 +11,12 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.views.UserViewpoint;
 
 @Local
 public interface AccountSystem {
 	public static final boolean DEFAULT_ENABLE_MUSIC_SHARING = true;	
 	public static final boolean DEFAULT_APPLICATION_USAGE_ENABLED = false;	
-	
-	/**
-	 * Create a new Account owning the specified email
-	 * address.  @see createAccountFromResource
-	 * 
-	 * @param email
-	 * @return
-	 * @throws ValidationException  if the email address is bogus
-	 */
-	public Account createAccountFromEmail(String email) throws ValidationException;
 	
 	/**
 	 * Adds a new Account (and Person) with verified ownership

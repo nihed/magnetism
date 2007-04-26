@@ -54,7 +54,6 @@ public class Post extends GuidPersistable {
 	private String info;
 	private long infoDate;
 	private boolean disabled;
-	private boolean toWorld;
 	transient private PostInfo cachedPostInfo;
 	transient private boolean leaveInfoUnmodified;
 	private Set<Resource> personRecipients;
@@ -95,7 +94,6 @@ public class Post extends GuidPersistable {
 			Set<Group> groupRecipients, Set<Resource> expandedRecipients, Set<Resource> resources) {
 		this.poster = poster;
 		this.visibility = visibility;
-		this.toWorld = toWorld;
 		this.text = text;
 		this.personRecipients = personRecipients;
 		this.groupRecipients = groupRecipients;
@@ -134,15 +132,6 @@ public class Post extends GuidPersistable {
 		this.disabled = disabled;
 	}	
 
-	@Column(nullable = false)
-	public boolean isToWorld() {
-		return toWorld;
-	}
-
-	public void setToWorld(boolean toWorld) {
-		this.toWorld = toWorld;
-	}	
-	
 	@ManyToMany
 	@JoinTable(name="Post_PersonRecipient")
 	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)

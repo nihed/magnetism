@@ -73,8 +73,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	static private final Logger logger = GlobalSetup
 			.getLogger(IdentitySpider.class);
 
-	private static final boolean DEFAULT_DEFAULT_SHARE_PUBLIC = true;
-
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
 
@@ -714,11 +712,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
     
-	public boolean isViewerWeirdTo(Viewpoint viewpoint, User user) {
-		// FIXME haven't implemented this feature yet
-		return false;
-	}
-
 	static final String GET_CONTACT_RESOURCES_QUERY = "SELECT cc.resource FROM ContactClaim cc WHERE cc.contact = :contact";
 
 	private Resource getFirstContactResource(Contact contact) {
@@ -854,22 +847,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 		if (enabled != wasEnabled || !wasSet)
 			notifier.onApplicationUsageToggled(account);
-	}
-
-	public boolean getNotifyPublicShares(User user) {
-		Account account = user.getAccount();
-		Boolean defaultSharePublic = account.isNotifyPublicShares();
-		if (defaultSharePublic == null)
-			return DEFAULT_DEFAULT_SHARE_PUBLIC;
-		return defaultSharePublic;
-	}
-
-	public void setNotifyPublicShares(User user, boolean defaultPublic) {
-		Account account = getAttachedAccount(user);
-		if (account.isNotifyPublicShares() == null
-				|| account.isNotifyPublicShares() != defaultPublic) {
-			account.setNotifyPublicShares(defaultPublic);
-		}
 	}
 
 	public void incrementUserVersion(final User user) {

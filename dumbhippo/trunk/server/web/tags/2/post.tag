@@ -47,15 +47,7 @@
 										<c:out value="${post.poster.name}"/>
 									</a>
 							        to 
-							        <c:choose>
-										<c:when test="${post.toWorld}">
-											<c:set var="recipientsPrefix" value="The World" scope="page"/>
-										</c:when>
-										<c:otherwise>
-											<c:set var="recipientsPrefix" value="" scope="page"/>					
-										</c:otherwise>
-									</c:choose>
-							        <dh:entityList prefixValue="${recipientsPrefix}" value="${post.recipients}" separator=", "/>			
+							        <dh:entityList value="${post.recipients}" separator=", "/>			
 								</div>
 							</td>
 							<td align="right">

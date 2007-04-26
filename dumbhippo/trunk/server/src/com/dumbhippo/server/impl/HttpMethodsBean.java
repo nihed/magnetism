@@ -726,11 +726,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		identitySpider.setMusicSharingEnabled(viewpoint.getViewer(), enabled);
 	}
 	
-	public void doSetNotifyPublicShares(UserViewpoint viewpoint, boolean notify)
-		throws IOException {
-		identitySpider.setNotifyPublicShares(viewpoint.getViewer(), notify);
-	}	
-
 	public void doSetBio(UserViewpoint viewpoint, String bio) {
 		identitySpider.setBio(viewpoint, viewpoint.getViewer(), bio);
 	}

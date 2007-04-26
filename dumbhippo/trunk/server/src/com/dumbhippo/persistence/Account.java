@@ -79,8 +79,6 @@ public class Account extends Resource {
 	private boolean musicSharingPrimed;
 	private long nativeMusicSharingTimestamp;
 	
-	private Boolean notifyPublicShares;
-	
 	private NowPlayingTheme nowPlayingTheme;
 	
 	private String bio;
@@ -511,15 +509,6 @@ public class Account extends Resource {
 			this.nativeMusicSharingTimestamp = nativeMusicSharingTimestamp.getTime();
 	}
 
-	@Column(nullable=true)
-	public Boolean isNotifyPublicShares() {
-		return notifyPublicShares;
-	}
-
-	public void setNotifyPublicShares(Boolean notify) {
-		this.notifyPublicShares = notify;
-	}
-	
 	/**
 	 * Get the theme for the flash embed. Multiple users can be
 	 * using the same theme, hence @ManyToOne.
