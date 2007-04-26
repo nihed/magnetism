@@ -16,7 +16,6 @@ public class UserChangedEvent implements LiveEvent {
 	private Detail detail;
 	
 	public enum Detail {
-		MUSIC,
 		PHOTO,
 		PREFS
 	}

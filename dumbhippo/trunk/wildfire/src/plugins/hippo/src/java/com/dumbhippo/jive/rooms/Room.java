@@ -65,9 +65,6 @@ public class Room implements PresenceListener {
 		private String username;
 		private String name;
 		private String smallPhotoUrl;		
-		private String arrangementName;
-		private String artist;
-		private boolean musicPlaying;
 		private int participantCount;
 		private int presentCount;
 		private RoomUserStatus globalStatus;
@@ -76,9 +73,6 @@ public class Room implements PresenceListener {
 			this.username = username;
 			this.name = name;
 			this.smallPhotoUrl = smallPhotoUrl;			
-			this.arrangementName = "";
-			this.artist = "";
-			this.musicPlaying = false;
 			this.participantCount = 0;
 			this.presentCount = 0;
 			this.globalStatus = RoomUserStatus.NONMEMBER;
@@ -110,39 +104,6 @@ public class Room implements PresenceListener {
 		
 		public void setPresentCount(int presentCount) {
 			this.presentCount = presentCount; 
-		}
-		
-		public String getArrangementName() {
-			return arrangementName;
-		}
-		
-		public void setArrangementName(String arrangementName) {
-			if (arrangementName == null) {
-				this.arrangementName = "";
-			} else {
-			    this.arrangementName = arrangementName;
-
-			}
-		}
-		
-		public String getArtist() {
-			return artist;
-		}
-		
-		public void setArtist(String artist) {
-			if (artist == null) {
-				this.artist = "";
-			} else {
-			    this.artist = artist;
-			}
-		}
-		
-		public boolean isMusicPlaying() {
-			return musicPlaying;
-		}
-		
-		public void setMusicPlaying(boolean musicPlaying) {
-			    this.musicPlaying = musicPlaying;
 		}
 		
 		public RoomUserStatus getLocalStatus() {
@@ -344,23 +305,6 @@ public class Room implements PresenceListener {
 		return new Room(info);
 	}
 	
-	private static Map<String, String> getCurrentMusicFromServer(String username) {
-		Log.debug("Querying server for current music for " + username);
-		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-		
-		Map<String, String> musicInfo = glue.getCurrentMusicInfo(username);
-		
-		if (musicInfo == null) {
-			Log.debug("  user has no music info");
-			return null;
-		}
-
-		Log.debug("  got response from server with the music info");
-		
-		return musicInfo;
-		
-	}
-	
 	private static String roleString(RoomUserStatus status) {
 		switch (status) {
 		case NONMEMBER:
@@ -399,9 +343,6 @@ public class Room implements PresenceListener {
 		if (oldStatus != null) {
 			info.addAttribute("oldRole", roleString(oldStatus));
 		}
-		info.addAttribute("arrangementName", userInfo.getArrangementName());
-		info.addAttribute("artist", userInfo.getArtist()); 
-		info.addAttribute("musicPlaying", Boolean.toString(userInfo.isMusicPlaying()));
 
 		addRoomInfo(presence, false, null);
 		
@@ -479,16 +420,6 @@ public class Room implements PresenceListener {
 		}
 
 		if (participant && !resourceWasParticipant) {
-			// we only care about the current music selection when a resource becomes
-			// a participant, so get the current music in this case
-			Map<String, String> properties = getCurrentMusicFromServer(username);
-            if (properties != null) {
-			    userInfo.setArrangementName(properties.get("name"));
-			    userInfo.setArtist(properties.get("artist"));
-			    if (properties.get("musicPlaying") != null) {
-			        userInfo.setMusicPlaying(properties.get("musicPlaying").equals("true"));
-			    }
-            }
 			userInfo.setParticipantCount(userInfo.getParticipantCount() + 1);
 			participantResources.put(jid, userInfo);
 			if (userInfo.getParticipantCount() == 1) {
@@ -645,22 +576,9 @@ public class Room implements PresenceListener {
 		XMPPServer.getInstance().getPacketRouter().route(reply);
 	}
 
-	public synchronized void processUserChange(String username, boolean music) {
+	public synchronized void processUserChange(String username) {
 		// update UserInfo for username
 		UserInfo userInfo = lookupUserInfo(username, true);
-		if (music) {
-			Map<String,String> properties = getCurrentMusicFromServer(username);
-			// if name and artist are not set in the element, it means that we got a message
-			// about the music having stopped, preserve the information about the last played 
-			// arrangement and set the nowPlaying flag to false  
-			if (properties == null || ((properties.get("name") == null) && (properties.get("artist") == null))) {
-				userInfo.setMusicPlaying(false);
-			} else {
-				userInfo.setArrangementName(properties.get("name"));
-				userInfo.setArtist(properties.get("artist"));
-				userInfo.setMusicPlaying(true);		    
-			}
-		}
 		
 		// To communicate the change in music, we send a new Presence message
 		// We send it only to users currently in the chatroom, not to everybody,

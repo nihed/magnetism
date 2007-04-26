@@ -117,7 +117,6 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 					Map<String, String> props = lastFmTrackToProps(lastFmTrack);
 					musicSystem.addHistoricalTrack(user, props, lastFmTrack.getListenTime() * 1000, false);
 				}
-				musicSystem.queueMusicChange(user.getGuid());
 			}
 			return true;
 		}

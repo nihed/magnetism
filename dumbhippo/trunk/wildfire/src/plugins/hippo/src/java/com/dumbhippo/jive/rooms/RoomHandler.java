@@ -42,7 +42,7 @@ public class RoomHandler implements Component {
 		public void onEvent(UserChangedEvent event) {
 			String username = event.getUserId().toJabberId(null);
 			for (Room room : getRoomsForUser(username)) {
-				room.processUserChange(username, event.getDetail() == UserChangedEvent.Detail.MUSIC);
+				room.processUserChange(username);
 			}
 		}
 	};	
