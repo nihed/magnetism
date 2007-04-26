@@ -25,12 +25,17 @@ dh.quippopup.send = function() {
     	sentimentString = "LOVE";
     else if (sentiment == dh.control.SENTIMENT_HATE)
     	sentimentString = "HATE";
+    	
+	var button = document.getElementById("dhChatAddButton");
+	button.disabled = true;
 
     dh.server.doXmlMethod("addChatMessage",
 	                      { "chatId" : this._chatId,
 	                        "text" : text,
 	                        "sentiment" : sentimentString },
 	                      function() {
+							  button.disabled = false;
+							  
 					          dh.chatinput.setText("");
                          	  dh.quippopup._end();
                          	  if (dh.quippopup._onComplete != null) {
@@ -38,6 +43,7 @@ dh.quippopup.send = function() {
                          	  }
 	                      },
 	                      function(code, msg) {
+	                          button.disabled = false;
 	                       	  alert("Unable to add the quip: ", msg);
 	                      });
 }
