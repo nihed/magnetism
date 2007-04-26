@@ -139,6 +139,9 @@ class AbstractMugshotStock(Stock):
         pass
             
     def __handle_mugshot_connection_status(self, auth, xmpp, contacts):
+        if auth != self._auth:
+            self._logger.debug("emitting visibility: %s", auth)
+            self.emit("visible", auth)
         self._auth = auth
         self.__sync_content()        
         self.__have_contacts = contacts
