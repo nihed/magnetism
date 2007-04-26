@@ -13,7 +13,6 @@ EXTRA_DIST=
 distclean-local:
 	if test $(srcdir) != . ; then		\
 	  rm -f $(MAINTAINERCLEANFILES) ;	\
-	  rmdir $(BUILT_SRC_DIR) ;		\
 	fi
 
 #dist-hook: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mugshot-dist-hook
