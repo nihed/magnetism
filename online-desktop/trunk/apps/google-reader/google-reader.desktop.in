@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+# don't mark for translation, it's a trademark/proper name
+Name=Google Reader
+GenericName=Google Reader
+_Comment=RSS Feed Reader
+Exec=gnome-open http://www.google.com/reader/view
+Terminal=false
+Type=Application
+Icon=google-reader.png
+StartupNotify=false
+Categories=X-Red-Hat-Base;X-Red-Hat-Base-Only;Network;Application;
