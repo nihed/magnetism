@@ -1254,7 +1254,7 @@ send_immediately(HippoConnection         *connection,
 {
     GError *error;
     
-    if (!hippo_connection_get_connected(connection)) {
+    if (connection->state < HIPPO_STATE_AWAITING_CLIENT_INFO) {
         g_warning("SEND_MODE_IMMEDIATELY used when not authenticated");
         return;
     }
@@ -3332,7 +3332,6 @@ parse_chat_user_info(HippoConnection *connection,
     }
 
     {
-        HippoTrack *track;
         HippoChatState status;
         const char *name;
         const char *photo_url = NULL;
@@ -4172,8 +4171,8 @@ handle_authenticate(LmConnection *lconnection,
                                            LM_MESSAGE_TYPE_PRESENCE, 
                                            LM_MESSAGE_SUB_TYPE_AVAILABLE);
 
-    hippo_connection_send_message(connection, message, SEND_MODE_IMMEDIATELY);
     hippo_connection_state_change(connection, HIPPO_STATE_AWAITING_CLIENT_INFO);
+    hippo_connection_send_message(connection, message, SEND_MODE_IMMEDIATELY);
 
     hippo_connection_request_client_info(connection);
     
