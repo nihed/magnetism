@@ -3338,18 +3338,11 @@ parse_chat_user_info(HippoConnection *connection,
         const char *photo_url = NULL;
         const char *role = NULL;
         const char *old_role = NULL;
-        const char *arrangement_name = NULL;
-        const char *artist = NULL;
-        gboolean music_playing = FALSE;
 
         if (!hippo_xml_split(connection->cache, info_node, NULL,
                              "name", HIPPO_SPLIT_STRING, &name,
                              "smallPhotoUrl", HIPPO_SPLIT_URI_RELATIVE | HIPPO_SPLIT_OPTIONAL, &photo_url,
                              "role", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &role,
-                             "old_role", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &old_role,
-                             "arrangementName", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &arrangement_name,
-                             "artist", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &artist,
-                             "musicPlaying", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_OPTIONAL, &music_playing,
                              NULL))
             return FALSE;
 
@@ -3365,10 +3358,6 @@ parse_chat_user_info(HippoConnection *connection,
         /* FIXME this is a temporary hack to deal with stale photos in chat */
         if (hippo_entity_get_photo_url(HIPPO_ENTITY(person)) == NULL)
             hippo_entity_set_photo_url(HIPPO_ENTITY(person), photo_url);
-
-        track = hippo_track_new_deprecated(artist, arrangement_name, music_playing);
-        g_object_set(G_OBJECT(person), "current-track", track, NULL);
-        g_object_unref(track);
     }
 
     return TRUE;

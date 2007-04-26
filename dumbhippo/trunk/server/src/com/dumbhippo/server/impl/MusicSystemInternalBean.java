@@ -46,8 +46,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.live.LiveState;
-import com.dumbhippo.live.UserChangedEvent;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FeedEntry;
@@ -359,18 +357,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			}
 		});
 	}
-	
-	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public void queueMusicChange(final Guid userId) {
-		// LiveState.queueUpdate() expects to be called in a transaction, and we
-		// don't have one since the music system code needs to be called not
-		// in a transaction.
-		runner.runTaskInNewTransaction(new Runnable() {
-			public void run() {
-				LiveState.getInstance().queueUpdate(new UserChangedEvent(userId, UserChangedEvent.Detail.MUSIC)); 
-			}
-		});
-	}	
 	
 	private TrackHistory getCurrentTrack(Viewpoint viewpoint, User user) throws NotFoundException {
 		List<TrackHistory> list = getTrackHistory(viewpoint, user, History.LATEST, 0, 1);

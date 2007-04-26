@@ -92,24 +92,6 @@ public interface MessengerGlue {
 		throws JabberUserNotFoundException;
 
 	/**
-	 * Thrown when the server identifier passed to one of the functions
-	 * for maintaining Jabber state is unknown. This could happen for
-	 * one of two reasons; either the application server has been 
-	 * restarted in between, or because the Jabber server did not
-	 * ping frequently enough and the application server assumed
-	 * that it had died. In either case, when you get this exception
-	 * you must get a new server identifier and replay the current
-	 * state.
-	 */
-	public class NoSuchServerException extends Exception {
-		private static final long serialVersionUID = 1L;
-
-		public NoSuchServerException(String message) {
-			super(message);
-		}
-	}
-	
-	/**
 	 * Called whenever a new resource connects associated with a user. Sends
 	 * that user any messages that the might have missed or other notifications
 	 * that are needed on connection. This is separate from updateLoginDate

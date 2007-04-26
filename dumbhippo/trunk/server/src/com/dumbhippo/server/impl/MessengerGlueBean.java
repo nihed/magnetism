@@ -353,7 +353,6 @@ public class MessengerGlueBean implements MessengerGlue {
 	public void handleMusicChanged(Guid userId, Map<String, String> properties) {
 		User user = getUserFromGuid(userId);
 		musicSystemInternal.setCurrentTrack(user, properties, true);
-		musicSystemInternal.queueMusicChange(userId);
 	}
 
 	@TransactionAttribute(TransactionAttributeType.NEVER)
@@ -375,6 +374,5 @@ public class MessengerGlueBean implements MessengerGlue {
 		// don't do this again
 		identitySpider.setMusicSharingPrimed(user, true);
 		logger.debug("Primed user with {} tracks", tracks.size());	
-		musicSystemInternal.queueMusicChange(userId);
 	}
 }
