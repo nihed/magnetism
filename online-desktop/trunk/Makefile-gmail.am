@@ -1,15 +1,2 @@
 
-desktopfilesdir=$(datadir)/applications
-desktopfiles_in_files=apps/gmail/gmail.desktop.in
-desktopfiles_files=$(desktopfiles_in_files:.desktop.in=.desktop)
-desktopfiles_DATA = $(desktopfiles_files)
-
-# intltool not here until po exists and all that
-#@INTLTOOL_DESKTOP_RULE@
-# this mkdir is totally unportable (gnu make, gnu -p), feel free to fix it somehow
-%.desktop: %.desktop.in
-	mkdir -p $(@D) && cat $< | sed -e 's/^_//g' > $@
-
-EXTRA_DIST += $(desktopfiles_in_files)
-MAINTAINERCLEANFILES +=	$(desktopfiles_files)
-
+## nothing in here for now
