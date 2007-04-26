@@ -25,7 +25,6 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.jive.MessageSender;
-import com.dumbhippo.jive.XmlParser;
 import com.dumbhippo.live.PresenceListener;
 import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.persistence.ChatMessage;
@@ -381,33 +380,6 @@ public class Room implements PresenceListener {
 		roomInfo.addAttribute("kind", kind.name().toLowerCase());
 		if (includeDetails)
 			roomInfo.addAttribute("title", title);
-		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-		String objectXml = null;
-		if (includeDetails) {
-			String elementName = "objects";
-			
-			if (kind == ChatRoomKind.GROUP) {
-				try {			
-					objectXml = glue.getGroupXml(Guid.parseTrustedJabberId(viewpointGuid), 
-							                     roomGuid);
-				} catch (NotFoundException e) {
-					Log.error("failed to find group", e);				
-				}				
-			} else if (kind == ChatRoomKind.POST) {
-			       objectXml = glue.getPostsXml(Guid.parseTrustedJabberId(viewpointGuid), 
-			    		                        roomGuid, 
-			    		                        elementName);
-			}
-			if (objectXml != null) {
-				Element childElement = XmlParser.elementFromXml(objectXml);
-				if (kind == ChatRoomKind.GROUP) { 
-				    Element objectElt = roomInfo.addElement(elementName);
-				    objectElt.add(childElement);
-				} else if (kind == ChatRoomKind.POST) {
-					roomInfo.add(childElement);
-				}
-			}
-		}
 	}
 	
 	private Presence makePresenceAvailable(UserInfo userInfo, RoomUserStatus oldStatus) {

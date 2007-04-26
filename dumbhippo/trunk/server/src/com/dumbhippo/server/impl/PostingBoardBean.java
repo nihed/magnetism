@@ -8,11 +8,8 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -74,7 +71,6 @@ import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
-import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostInfoSystem;
@@ -83,7 +79,6 @@ import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RecommenderSystem;
 import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.GuidNotFoundException;
@@ -138,9 +133,6 @@ public class PostingBoardBean implements PostingBoard {
 	
 	@EJB
 	private TransactionRunner runner;
-	
-	@EJB
-	private XmppMessageSender xmppMessageSender;
 	
 	@EJB
 	@IgnoreDependency
@@ -520,11 +512,6 @@ public class PostingBoardBean implements PostingBoard {
 	static private final String CAN_VIEW_ANONYMOUS = 
 		" (post.disabled != true) AND (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + ")";
 	
-	static private final String VIEWER_RECEIVED = 
-		" EXISTS(SELECT ac FROM AccountClaim ac " +
-		"        WHERE ac.owner = :viewer " +
-		"            AND ac.resource MEMBER OF post.expandedRecipients) ";
-
 	static private final String ORDER_RECENT = " ORDER BY post.postDate DESC ";
 
 	private void addGroupRecipients(Viewpoint viewpoint, Post post, List<EntityView> recipients) {
@@ -668,30 +655,6 @@ public class PostingBoardBean implements PostingBoard {
 				viewpoint);
 	}
 	
-	private List<PostView> getPostViews(Viewpoint viewpoint, Query q, String search, int start, int max) {
-		if (max > 0)
-			q.setMaxResults(max);
-		
-		q.setFirstResult(start);
-		
-		List<Post> posts = TypeUtils.castList(Post.class, q.getResultList());	
-
-		// parallelize all the post updaters
-		for (Post p : posts) {
-			infoSystem.hintWillUpdateSoon(p);
-		}
-		
-		List<PostView> result = new ArrayList<PostView>();
-		for (Post p : posts) {
-			PostView pv = getPostView(viewpoint, p);
-			if (search != null)
-				pv.setSearch(search);
-			result.add(pv);
-		}
-		
-		return result;		
-	}
-	
 	private void appendPostLikeClause(StringBuilder queryText, String search) {
 		if (search != null) {
 			String likeClause = EJBUtil.likeClauseFromUserSearch(search, "post.text", "post.explicitTitle");
@@ -816,193 +779,6 @@ public class PostingBoardBean implements PostingBoard {
 		return ((Number) result).intValue();	
 	}
 
-	
-	public List<PostView> getPostsFor(Viewpoint viewpoint, Person forPerson, String search, int start, int max) {
-		Query q = buildGetPostsForQuery(viewpoint, forPerson, search, false);
-		return getPostViews(viewpoint, q, search, start, max);
-	}
-	
-	public void pagePostsFor(Viewpoint viewpoint, Person poster, Pageable<PostView> pageable) {
-		pageable.setResults(getPostsFor(viewpoint, poster, pageable.getStart(), pageable.getCount()));
-		pageable.setTotalCount(getPostsForCount(viewpoint, poster));
-	}
-	
-	private enum PostFilter {
-		NO_FEEDS,
-		ONLY_FEEDS,
-		ALL_POSTS
-	}
-
-	private Query buildReceivedPostsQuery(UserViewpoint viewpoint, User recipient,
-			String search, boolean isCount, PostFilter filter, Date since) {
-		// There's an efficiency win here by specializing to the case where
-		// viewer == recipient ... we know that posts are always visible
-		// to the recipient; we don't bother implementing the other case for
-		// now.
-		if (!viewpoint.isOfUser(recipient))
-			throw new IllegalArgumentException("recipient isn't the viewer");
-		
-		Query q;
-		
-		StringBuilder queryText = new StringBuilder("SELECT ");
-		if (isCount)
-			queryText.append("COUNT(post)");
-		else
-			queryText.append("post");
-		
-		switch (filter) {
-		case NO_FEEDS:
-		case ALL_POSTS:
-			queryText.append(" FROM Post post ");
-			break;
-		case ONLY_FEEDS:
-			queryText.append(" FROM FeedPost post ");
-			break;
-		}
-		
-		queryText.append("WHERE (post.poster IS NULL OR post.poster != :viewer) ");
-		
-		if (filter == PostFilter.NO_FEEDS)
-			queryText.append(" AND NOT EXISTS (SELECT fp.id FROM FeedPost fp WHERE post.id=fp.id) ");
-		
-		queryText.append("AND " + VIEWER_RECEIVED);
-		
-		if (since != null) {
-			queryText.append(" AND post.postDate > :since");
-		}
-		
-		appendPostLikeClause(queryText, search);
-
-		if (!isCount)
-			queryText.append(ORDER_RECENT);
-		
-		//logger.debug("Full getReceivedPosts search query is: '{}'", queryText);
-		
-		q = em.createQuery(queryText.toString());
-		
-		q.setParameter("viewer", recipient);
-		
-		if (since != null)
-			q.setParameter("since", since);
-		
-		return q;
-	}
-	
-	private int getReceivedPostsCount(UserViewpoint viewpoint, User recipient, String search) {
-		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, PostFilter.NO_FEEDS, null);
-		Object result = q.getSingleResult();
-		return ((Number) result).intValue();
-	}
-	
-	private List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
-		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, PostFilter.NO_FEEDS, null);
-		return getPostViews(viewpoint, q, search, start, max);
-	}
-
-	private int getReceivedFeedPostsCount(UserViewpoint viewpoint, User recipient, String search) {
-		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, PostFilter.ONLY_FEEDS, null);
-		Object result = q.getSingleResult();
-		//logger.debug("feed posts count {}", result);
-		return ((Number) result).intValue();
-	}
-	
-	private List<PostView> getReceivedFeedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
-		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false,  PostFilter.ONLY_FEEDS, null);
-		return getPostViews(viewpoint, q, search, start, max);
-	}
-	
-	private Query buildGetGroupPostsQuery(Viewpoint viewpoint, Group recipient, String search, boolean isCount) {
-		User viewer = null;
-		Query q;
-
-		StringBuilder queryText = new StringBuilder("SELECT ");
-		if (isCount)
-			queryText.append("count(post)");
-		else
-			queryText.append("post");
-		queryText.append(" FROM Post post WHERE :recipient MEMBER OF post.groupRecipients ");
-
-		if (viewpoint instanceof SystemViewpoint) {
-		    // No access control clause
-		} else if (viewpoint instanceof UserViewpoint) {
-			viewer = ((UserViewpoint)viewpoint).getViewer();
-			queryText.append(" AND ");
-			queryText.append(CAN_VIEW);
-		} else {
-			queryText.append(" AND ");			
-			queryText.append(CAN_VIEW_ANONYMOUS);
-		}
-		
-		appendPostLikeClause(queryText, search);
-		
-		if (!isCount)
-			queryText.append(ORDER_RECENT);
-		
-		q = em.createQuery(queryText.toString());
-		
-		q.setParameter("recipient", recipient);
-		if (viewer != null)
-			q.setParameter("viewer", viewer);
-		return q;
-	}
-	
-	public int getGroupPostsCount(Viewpoint viewpoint, Group recipient, String search) {
-		Query q = buildGetGroupPostsQuery(viewpoint, recipient, search, true);
-		Object result = q.getSingleResult();
-		return ((Number) result).intValue();		
-	}
-	
-	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max) {
-		Query q = buildGetGroupPostsQuery(viewpoint, recipient, search, false);
-		return getPostViews(viewpoint, q, search, start, max);
-	}
-	
-	public void pageFavoritePosts(Viewpoint viewpoint, User user, Pageable<PostView> pageable) {
-		
-		/*
-		 // if only friends could see the faves list...
-		 // right now though, anyone can see it, if they can see the posts 
-		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user))
-			return Collections.emptyList();
-		*/
-		
-		Account account = accountSystem.lookupAccountByUser(user);
-		Set<Post> faves = account.getFavoritePosts();
-		List<Post> dateSorted = new ArrayList<Post>();
-		
-		for (Post p : faves) {
-			if (canViewPost(viewpoint, p))
-				dateSorted.add(p);
-		}
-		
-		Collections.sort(dateSorted, new Comparator<Post>() {
-
-			public int compare(Post a, Post b) {
-				long aDate = a.getPostDate().getTime();
-				long bDate = b.getPostDate().getTime();
-				if (aDate < bDate)
-					return -1;
-				else if (aDate > bDate)
-					return 1;
-				else
-					return 0;
-			}
-			
-		});
-		
-		pageable.setTotalCount(dateSorted.size());
-		
-		List<PostView> views = new ArrayList<PostView>();
-		int i = Math.min(dateSorted.size(), pageable.getStart());
-		int count = Math.min(dateSorted.size() - pageable.getStart(), pageable.getCount());
-		while (count > 0) {
-			views.add(getPostView(viewpoint, dateSorted.get(i)));
-			--count;
-			++i;
-		}
-		pageable.setResults(views);
-	}
-	
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid) throws NotFoundException {
 		Post post = EJBUtil.lookupGuid(em, Post.class, guid);
 		if (canViewPost(viewpoint, post)) {
@@ -1019,11 +795,6 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostView(viewpoint, p);
 	}
 
-	public int getPostViewerCount(Post post) {
-		Block block = postBlockHandler.lookupBlock(post);
-		return block.getClickedCount();
-	}
-	
 	public void postViewedBy(final Post post, final User user) {
 		logger.debug("Post {} clicked by {}", post.getId(), user);
 		final long clickTime = System.currentTimeMillis();
@@ -1072,24 +843,6 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostsForCount(viewpoint, forPerson, null);
 	}	
 	
-	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, int start, int max) {
-		return getPostsFor(viewpoint, poster, null, start, max);
-	}
-
-	public int getReceivedPostsCount(UserViewpoint viewpoint, User recipient) {
-		return getReceivedPostsCount(viewpoint, recipient, null);
-	}
-	
-	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, int start, int max) {
-		return getReceivedPosts(viewpoint, recipient, null, start, max);
-	}
-	
-	public void pageReceivedPosts(UserViewpoint viewpoint, User recipient, Pageable<PostView> pageable) {
-		pageable.setResults(getReceivedPosts(viewpoint, recipient, null, pageable.getStart(), pageable.getCount()));
-		pageable.setTotalCount(getReceivedPostsCount(viewpoint, recipient));
-	}
-	
-
 	public int getGroupPostsCount(Group recipient) {
 		// We need to use a native query here since Hibernate is unable properly optimize
 		// SELECT count(*) from Post p, Group g WHERE g.id = '12312312' AND g MEMBER OF p.groupRecipients
@@ -1097,56 +850,6 @@ public class PostingBoardBean implements PostingBoard {
 		return ((Number)em.createNamedQuery("groupPostCount")
 					.setParameter("id", recipient.getId())
 					.getSingleResult()).intValue();
-	}
-	
-	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max) {
-		return getGroupPosts(viewpoint, recipient, null, start, max);
-	}
-	
-	public void getGroupPosts(Viewpoint viewpoint, Group recipient, Pageable<PostView> pageable) {
-		pageable.setResults(getGroupPosts(viewpoint, recipient, pageable.getStart(), pageable.getCount()));
-		pageable.setTotalCount(getGroupPostsCount(viewpoint, recipient, null));
-	}
-	
-	public void pageHotPosts(Viewpoint viewpoint, Pageable<PostView> pageable) {
-		// FIXME
-		pageRecentPosts(viewpoint, pageable);
-	}
-
-	static final private String GET_ALL_POSTS_QUERY = 
-		"SELECT post FROM Post post WHERE ";
-	
-	public void pageRecentPosts(Viewpoint viewpoint, Pageable<PostView> pageable) {
-		User viewer = null;
-		Query q;
-
-		StringBuilder queryText = new StringBuilder(GET_ALL_POSTS_QUERY);
-
-		if (viewpoint instanceof SystemViewpoint) {
-		    // No access control clause
-		} else if (viewpoint instanceof UserViewpoint) {
-			viewer = ((UserViewpoint)viewpoint).getViewer();
-			queryText.append(CAN_VIEW);
-		} else {
-			queryText.append(CAN_VIEW_ANONYMOUS);
-		}
-		
-		queryText.append(ORDER_RECENT);
-		
-		q = em.createQuery(queryText.toString());
-		
-		if (viewer != null)
-			q.setParameter("viewer", viewer);
-		
-		pageable.setResults(getPostViews(viewpoint, q, null, pageable.getStart(), pageable.getCount()));
-		
-		// Doing an exact count is expensive, our assumption is "lots and lots"
-		pageable.setTotalCount(pageable.getBound());		
-	}
-	
-	public void pageReceivedFeedPosts(UserViewpoint viewpoint, User recipient, Pageable<PostView> pageable) {
-		pageable.setResults(getReceivedFeedPosts(viewpoint, recipient, null, pageable.getStart(), pageable.getCount()));
-		pageable.setTotalCount(getReceivedFeedPostsCount(viewpoint, recipient, null));		
 	}
 	
 	public Set<EntityView> getReferencedEntities(Viewpoint viewpoint, Post post) {
@@ -1232,19 +935,6 @@ public class PostingBoardBean implements PostingBoard {
 	
 	static final int MAX_BACKLOG = 20;
 
-	public void sendBacklog(User user, Date lastLogoutDate) {
-		UserViewpoint viewpoint = new UserViewpoint(user);
-		
-		Query q = buildReceivedPostsQuery(viewpoint, user, null, false, PostFilter.ALL_POSTS, lastLogoutDate);
-		q.setMaxResults(MAX_BACKLOG);
-		List<Post> posts = TypeUtils.castList(Post.class, q.getResultList());
-		
-		// Send the messages in reverse order - oldest first
-		ListIterator<Post> i = posts.listIterator(posts.size());
-		while (i.hasPrevious())
-			xmppMessageSender.sendNewPostMessage(user, i.previous());
-	}
-	
 	public void setPostDisabled(Post post, boolean disabled) {
 		if (post.isDisabled() != disabled) {
 			post.setDisabled(disabled);

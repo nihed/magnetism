@@ -200,10 +200,6 @@ public interface HttpMethods {
 	@HttpParams( {} )
 	public void doReindexAll(UserViewpoint viewpoint);
 	
-	@HttpContentTypes(HttpResponseData.NONE)
-	@HttpParams( { "postId", "favorite" })
-	public void doSetFavoritePost(UserViewpoint viewpoint, String postId, boolean favorite);
-	
 	@HttpContentTypes(HttpResponseData.TEXT)
 	@HttpParams( {  })
 	public void getRandomBio(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint)

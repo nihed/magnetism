@@ -3,7 +3,6 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%@ attribute name="post" required="true" type="com.dumbhippo.server.views.PostView" %>
-<%@ attribute name="favesMode" required="false" type="java.lang.String" %>
 <%@ attribute name="includeExtra" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="showPhoto" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="numeral" required="false" type="java.lang.Integer" %>
@@ -68,20 +67,6 @@
 										</c:when>
 										<c:otherwise>
 											${post.totalViewers} views
-										</c:otherwise>
-									</c:choose>
-									<dh:script module="dh.actions"/>
-									<c:choose>
-										<c:when test="${favesMode == 'none' || !signin.valid}">
-											
-										</c:when>
-										<c:when test="${post.favorite}">
-											<c:if test="${favesMode != 'add-only'}">
-											 | <a href="javascript:dh.actions.setPostFavorite('${post.post.id}', false);">remove</a>
-											</c:if>
-										</c:when>
-										<c:otherwise>
-											| <a href="javascript:dh.actions.setPostFavorite('${post.post.id}', true);">add to faves</a>
 										</c:otherwise>
 									</c:choose>
 								</div>

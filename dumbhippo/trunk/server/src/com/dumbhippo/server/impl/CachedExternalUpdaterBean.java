@@ -29,7 +29,6 @@ import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PollingTaskPersistence;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 
 public abstract class CachedExternalUpdaterBean<Status> implements CachedExternalUpdater<Status> {
@@ -46,9 +45,6 @@ public abstract class CachedExternalUpdaterBean<Status> implements CachedExterna
 	@EJB
 	@IgnoreDependency
 	protected Configuration configuration;	
-	
-	@EJB
-	private TransactionRunner runner;
 	
 	protected abstract ExternalAccountType getAccountType();
 	protected abstract PollingTaskFamilyType getTaskFamily();
