@@ -1,4 +1,4 @@
-import httplib2, keyring, sys, xml, xml.sax, logging, threading, gobject, gtk, datetime, dbus
+import httplib2, keyring, sys, xml, xml.sax, logging, threading, gobject, gtk, datetime, dbus, dbus.glib
 from bigboard import libbig
 import libbig.logutil
 from libbig.struct import AutoStruct, AutoSignallingStruct
@@ -333,7 +333,7 @@ class AuthDialog:
 
 class CheckMailTask(libbig.polling.Task):
     def __init__(self, google):
-        libbig.polling.Task.__init__(self, 1000)
+        libbig.polling.Task.__init__(self, 1000 * 120)
         self.__google = google
         self.__mails = {}
 
@@ -347,19 +347,23 @@ class CheckMailTask(libbig.polling.Task):
         o = bus.get_object('org.freedesktop.Notifications', '/org/freedesktop/Notifications')
         self.__notifications_proxy = dbus.Interface(o, 'org.freedesktop.Notifications')
 
-        # introspection data for this signal is missing so proxy doesn't work
-        #self.__notifications_proxy.connect_to_signal('ActionInvoked', self.__on_action)
+        self.__notifications_proxy.connect_to_signal('ActionInvoked', self.__on_action)
 
-        # also does not work for some reason
-        bus.add_signal_receiver(self.__on_action, signal_name='ActionInvoked',
-                                named_service='org.freedesktop.Notifications',
-                                dbus_interface='org.freedesktop.Notifications',
-                                path='/org/freedesktop/Notifications')
+        self.__latest_mail = None
 
-    def __on_action(self, notify_id, action):
-        logging.getLogger("bigboard.Google").debug("FOO")
-        print "\nBOO\n"
-        print action
+        self.__notify_id = 0
+
+    def __on_action(self, *args):
+        notification_id = args[0]
+        action = args[1]
+
+        if action == 'mail':
+            if self.__latest_mail:
+                print "Open message " + self.__latest_mail.get_link()
+        elif action == 'inbox-no-icon' or action == 'default':
+            print "Open inbox " + "http://mail.google.com/mail"
+        else:
+            print "unknown action " + action
 
     def __on_fetched_mail(self, mails):
         currently_new = {}
@@ -381,16 +385,19 @@ class CheckMailTask(libbig.polling.Task):
             body = body + xml.sax.saxutils.escape(first.get_summary())
 
             notify_id = self.__notifications_proxy.Notify("BigBoard",
-                                                          1, # "id" - should read docs on this ;-)
+                                                          self.__notify_id, # "id" - 0 to not replace any existing
                                                           "", # icon name
                                                           first.get_title(),   # summary
                                                           body, # body
                                                           ['mail',
-                                                           "OpenMessage",
+                                                           "Open Message",
                                                            'inbox-no-icon',
                                                            "Inbox (%d)" % len(self.__mails)], # action array
                                                           {'foo' : 'bar'}, # hints (pydbus barfs if empty)
                                                           5000) # timeout
+
+            self.__notify_id = notify_id
+            self.__latest_mail = first
 
     def __on_fetch_error(self, exc_info):
         pass
