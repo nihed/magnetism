@@ -87,7 +87,8 @@ dh.chatinput._onMessageKeyPress = function(e) {
     	dh.event.cancel(e);
     	
     	var addButton = document.getElementById("dhChatAddButton");
-    	addButton.onclick();
+    	if (!addButton.disabled)
+	    	addButton.onclick();
     	
         return false;
     } else if (keycode == 27) {
