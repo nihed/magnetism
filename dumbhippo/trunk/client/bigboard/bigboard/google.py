@@ -353,19 +353,23 @@ class CheckMailTask(libbig.polling.Task):
 
         self.__notify_id = 0
 
+        self.__pending = False
+
     def __on_action(self, *args):
         notification_id = args[0]
         action = args[1]
 
         if action == 'mail':
             if self.__latest_mail:
-                print "Open message " + self.__latest_mail.get_link()
+                libbig.show_url(self.__latest_mail.get_link())
         elif action == 'inbox-no-icon' or action == 'default':
-            print "Open inbox " + "http://mail.google.com/mail"
+            libbig.show_url("http://mail.google.com/mail")
         else:
             print "unknown action " + action
 
     def __on_fetched_mail(self, mails):
+        self.__pending = False
+        
         currently_new = {}
         not_yet_seen = 0
         for m in mails:
@@ -400,9 +404,13 @@ class CheckMailTask(libbig.polling.Task):
             self.__latest_mail = first
 
     def __on_fetch_error(self, exc_info):
+        self.__pending = False
         pass
 
     def do_periodic_task(self):
+        if self.__pending: # prevent "pile up" if we spend longer than the interval on checking
+            return
+        self.__pending = True
         self.__google.fetch_new_mail(self.__on_fetched_mail, self.__on_fetch_error)
 
 class Google:
