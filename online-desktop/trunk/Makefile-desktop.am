@@ -4,6 +4,7 @@
 desktopfilesdir=$(datadir)/applications
 desktopfiles_in_files=					\
 	apps/gmail/gmail.desktop.in			\
+	apps/google-calendar/google-calendar.desktop.in \
 	apps/google-docs/google-docs.desktop.in		\
 	apps/google-reader/google-reader.desktop.in	\
 	apps/flickr/flickr.desktop.in

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Encoding=UTF-8
+# don't mark for translation, it's a trademark/proper name
+Name=Google Calendar
+GenericName=Google Calendar
+_Comment=Calendar
+Exec=gnome-open http://www.google.com/calendar/render
+Terminal=false
+Type=Application
+Icon=google-calendar.png
+StartupNotify=false
+Categories=X-Red-Hat-Base;X-Red-Hat-Base-Only;Office;Application;
+
