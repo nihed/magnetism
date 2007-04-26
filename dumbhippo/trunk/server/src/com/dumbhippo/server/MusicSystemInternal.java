@@ -16,7 +16,6 @@ import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
 import com.dumbhippo.server.views.AlbumView;
-import com.dumbhippo.server.views.ArtistView;
 import com.dumbhippo.server.views.ExpandedArtistView;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.Viewpoint;
@@ -75,23 +74,13 @@ public interface MusicSystemInternal
 	 */
 	public void queueMusicChange(final Guid userId);	
 		
-	public int countTrackHistory(Viewpoint viewpoint, User user);
-	
 	public TrackView getTrackView(Track track);
 
 	public Future<TrackView> getTrackViewAsync(long trackId);	
 	
 	public Future<TrackView> getTrackViewAsync(TrackHistory trackHistory);
 	
-	public Future<TrackView> getCurrentTrackViewAsync(Viewpoint viewpoint, User user) throws NotFoundException;
-	
-	public AlbumView getAlbumView(Future<YahooAlbumData> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum);
-
 	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongData yahooSong, YahooAlbumData yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<? extends YahooSongData>> futureAlbumTracks);
-	
-	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumData> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum);
-	
-	public ArtistView getArtistView(Track track);
 	
 	/**
 	 * Returns a track view for a matching track.
@@ -107,17 +96,6 @@ public interface MusicSystemInternal
 
 	/**
 	 * Returns a view of an artist that includes artist's albums that fall into albumsByArtist pageable object criteria.
-	 * 
-	 * @param viewpoint
-	 * @param artist artist's name
-	 * @param albumsByArtist a Pageable object that contains information on what albums should be added to the artist view
-	 * @return view of an artist that contains requested albums
-	 * @throws NotFoundException
-	 */
-	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, String artist, Pageable<AlbumView> albumsByArtist) throws NotFoundException;
-	
-	/**
-	 * Returns a view of an artist that includes artist's albums that fall into albumsByArtist pageable object criteria.
 	 * Keeps the position of the requested album as a top album on the first page. 
 	 *  
 	 * @param viewpoint 
@@ -128,8 +106,6 @@ public interface MusicSystemInternal
 	 * @throws NotFoundException
 	 */
 	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, YahooSongData song, YahooAlbumData album, Pageable<AlbumView> albumsByArtist) throws NotFoundException;
-	
-	public Future<ArtistView> getArtistViewAsync(Track track);
 	
 	/**
 	 * Add the track given by a set of ids to the specified Lucene index. This is used internally

@@ -1,16 +1,13 @@
 package com.dumbhippo.server;
 
-import java.util.Date;
 import java.util.List;
 
 import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.AlbumView;
-import com.dumbhippo.server.views.ArtistView;
 import com.dumbhippo.server.views.ExpandedArtistView;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.Viewpoint;
@@ -20,90 +17,10 @@ public interface MusicSystem {
 	
 	public TrackView getCurrentTrackView(Viewpoint viewpoint, User user) throws NotFoundException;
 	
-	public int countTrackHistory(Viewpoint viewpoint, User user);
-	
 	public boolean hasTrackHistory(Viewpoint viewpoint, User user);
-	
-	/**
-	 * Retrieve the set of tracks that were played globally on the system most recently
-	 * 
-	 * @param viewpoint Viewpoint retrieving the information
-	 * @param pageable object providing range to retrieve and in which to store results
-	 */
-	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable);
-	
-	/**
-	 * Retrieve the set of tracks that were played globally on the system most recently,
-	 * return only tracks that are more filled in (i.e. have album art) if 
-	 * filledTracksOnly is set to true.
-	 * 
-	 * @param viewpoint Viewpoint retrieving the information
-	 * @param pageable object providing range to retrieve and in which to store results
-	 * @param filledTracksOnly whether or not all results must be filled in according to
-	 *                         certain requirements, currently the one requirement is that
-	 *                         the result has album art
-	 */
-	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable, boolean filledTracksOnly);
-
-	public List<TrackView> getPopularTrackViews(Viewpoint viewpoint, int maxResults);
-	
-	/**
-	 * Retrieve the tracks that a user has listened to most recently
-	 * 
-	 * @param viewpoint Viewpoint retrieving the information
-	 * @param user the user listening to tracks
-	 * @param pageable object providing range to retrieve and in which to store results
-	 */
-	public void pageLatestTrackViews(Viewpoint viewpoint, User user, Pageable<TrackView> pageable);
 	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, User user, int maxResults);
 	
-	/**
-	 * Retrieve the tracks a user has listened to most frequently.
-	 * 
-	 * @param viewpoint Viewpoint retrieving the information
-	 * @param user the user listening to tracks
-	 * @param pageable object providing range to retrieve and in which to store results  
-	 */
-	public void pageFrequentTrackViews(Viewpoint viewpoint, User user, Pageable<TrackView> pageable);
-	
-	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults);
-	
-	public void pageLatestTrackViews(Viewpoint viewpoint, Group group, Pageable<TrackView> pageable);
-	
-	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults);
-	
-	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults);
-
-	/**
-	 * Retrieve the globally most played tracks in the system.
-	 * 
-	 * @param viewpoint Viewpoint retrieving the information
-	 * @param pageable object providing range to retrieve and in which to store results  
-	 */
-	public void pageFrequentTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable);
-	
-	/**
-	 * Retrieve the globally most played tracks in the system since a specified
-	 * date/time. (Since we only store one date per track per user, unlike
-	 * getFrequentTrackViews, "most played" is computed not as number of total
-	 * plays, but rather as number of distinct users playing the track)
-	 * 
-	 * @param viewpoint Viewpoint retrieving the information
-	 * @param since only consider tracks played after this date.
-	 * @param pageable object providing range to retrieve and in which to store results  
-	 */
-	public void pageFrequentTrackViewsSince(Viewpoint viewpoint, Date since, Pageable<TrackView> pageable);
-	
-	/**
-	 * Retrieve the most recent tracks in the system that have only been
-	 * played once, ever.
-	 * 
-	 * @param viewpoint Viewpoint retrieving the information
-	 * @param pageable object providing range to retrieve and in which to store results  
-	 */
-	public void pageOnePlayTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable);
-
 	/**
 	 * Returns a track view for a matching track.
 	 * 
@@ -156,10 +73,6 @@ public interface MusicSystem {
 	 */
 	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, String album, String name, Pageable<AlbumView> pageable) throws NotFoundException;
 	
-	public List<AlbumView> getLatestAlbumViews(Viewpoint viewpoint, User user, int maxResults);
-	
-	public List<ArtistView> getLatestArtistViews(Viewpoint viewpoint, User user, int maxResults);
-	
 	/**
 	 * Search the database of tracks using Lucene.
 	 * 
@@ -192,5 +105,4 @@ public interface MusicSystem {
 	
 	public TrackHistory lookupTrackHistory(Guid trackHistoryId) throws NotFoundException;
 	public TrackView getTrackView(TrackHistory trackHistory);
-	public TrackView getTrackView(Guid trackHistoryId) throws NotFoundException;	
 }
