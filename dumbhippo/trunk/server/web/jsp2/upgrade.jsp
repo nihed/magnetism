@@ -21,7 +21,7 @@
 	<c:choose>
 		<c:when test="${download.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.41</p>
+			<p>Version 1.1.42</p>
 			<ul>
 				<li>Allow quipping and chatting for all notification blocks.</li>
 				<li>Bug fixes.</li>
