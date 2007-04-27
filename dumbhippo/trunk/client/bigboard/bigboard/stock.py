@@ -104,7 +104,10 @@ class AbstractMugshotStock(Stock):
     def __sync_content(self):
         self.__box.remove_all()        
         if self._auth:
-            self.__box.append(self.get_authed_content(self.__cursize))
+            content = self.get_authed_content(self.__cursize)
+            if not content:
+                return None
+            self.__box.append(content)
             return self.__box
         else:
             unauthed = self.get_unauthed_content(self.__cursize)

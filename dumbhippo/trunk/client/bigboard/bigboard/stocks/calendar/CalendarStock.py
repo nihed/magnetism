@@ -92,20 +92,10 @@ class CalendarStock(AbstractMugshotStock, libbig.polling.Task):
         self.__update_events()
 
     def get_authed_content(self, size):
-        return self.__box
-            
-    def _set_item_size(self, item, size):
-        if size == bigboard.stock.Stock.SIZE_BULL:
-            item.set_property('xalign', hippo.ALIGNMENT_FILL)
-        else:
-            item.set_property('xalign', hippo.ALIGNMENT_CENTER)
-        item.set_size(size)
+        return size == self.SIZE_BULL and self.__box or None
             
     def set_size(self, size):
         super(CalendarStock, self).set_size(size)
-        for child in self.__box.get_children():
-            if child != self.__auth_ui:
-                self._set_item_size(child, size)
 
     def __on_load_events(self, events):
         auth_was_visible = self.__auth_ui.get_visible()
