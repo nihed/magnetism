@@ -3638,7 +3638,7 @@ hippo_canvas_box_get_child_visible (HippoCanvasContainer        *container,
 
     if (c == NULL) {
         g_warning("Trying to get visibility on a canvas item that isn't in the box");
-        return;
+        return FALSE;
     }
     g_assert(c->item == child);
 
