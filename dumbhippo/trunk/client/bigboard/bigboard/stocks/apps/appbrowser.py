@@ -214,10 +214,13 @@ class AppExtras(CanvasVBox):
     def set_catname(self, catname):
         self.__catname = catname
         if catname:
-            self.set_top_apps(map(self.__stock.get_app, mugshot.get_mugshot().get_category_top_apps(catname) or []))
+            mugshot_apps = mugshot.get_mugshot().get_category_top_apps(catname)
         else:
-            self.set_top_apps(map(self.__stock.get_app, mugshot.get_mugshot().get_global_top_apps() or []))
-        self.__sync()
+            mugshot_apps = mugshot.get_mugshot().get_global_top_apps()  
+        if mugshot_apps is None:
+            self.set_top_apps(None)
+        else:
+            self.set_top_apps(map(self.__stock.get_app, mugshot_apps))
 
     def __on_more_popular(self, w):
         libbig.show_url(urlparse.urljoin(mugshot.get_mugshot().get_baseurl(),
@@ -241,8 +244,8 @@ class AppExtras(CanvasVBox):
             self.__left_title.set_property('text', '')
             self.__right_title.set_property("text", "No popular %s found" % (thing,))
 
-        self.set_child_visible(self.__app_pair, not not self.__apps)
         self.__app_pair.remove_all()
+        self.set_child_visible(self.__app_pair, not not self.__apps)
         found = 0
         for i,app in enumerate(self.__apps or []):
             if app.is_installed():
