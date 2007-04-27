@@ -3,6 +3,7 @@ from bigboard import libbig
 import libbig.logutil
 from libbig.struct import AutoStruct, AutoSignallingStruct
 import libbig.polling
+import hippo
 
 class AbstractDocument(AutoStruct):
     def __init__(self):
@@ -246,9 +247,79 @@ class AsyncHTTPLib2Fetcher:
             # in my experience sys.exc_info() is some kind of junk here, while "e" is useful
             gobject.idle_add(lambda: errcb(url, sys.exc_info()) and False)
 
+## interface to be implemented by an authentication UI
+class AuthUI:
+    def __init__(self):
+        self.__okcb = None
+        self.__cancelcb = None
 
-class AuthDialog:
-    def __init__(self, username, password):
+    # virtual
+    def present(self, username, password):
+        pass
+
+    # virtual
+    def hide(self):
+        pass
+
+    # final
+    def set_callbacks(self, okcb, cancelcb):
+        self.__okcb = okcb
+        self.__cancelcb = cancelcb
+
+    # protected
+    def run_ok_callback(self, username, password):
+        if self.__okcb:
+            self.__okcb(username, password)
+
+    # protected
+    def run_cancel_callback(self):
+        if self.__cancelcb:
+            self.__cancelcb()
+
+class AuthCanvasItem (hippo.CanvasBox, AuthUI):
+    def __init__(self):
+        hippo.CanvasBox.__init__(self, orientation=hippo.ORIENTATION_VERTICAL, spacing=3)        
+        AuthUI.__init__(self)
+
+        # I can't get Pango to take just "Bold" without a size; not sure what the problem is here
+        self.append(hippo.CanvasText(text="Google Login", xalign=hippo.ALIGNMENT_START, font="Bold 12px"))
+
+        box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
+        self.append(box)
+
+        box.append(hippo.CanvasText(text="Username:", xalign=hippo.ALIGNMENT_START, border_right=3))
+        self.__username_entry = hippo.CanvasEntry()
+        self.__username_entry.set_property("xalign", hippo.ALIGNMENT_FILL)
+        box.append(self.__username_entry, hippo.PACK_EXPAND)
+
+        box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
+        self.append(box)
+
+        box.append(hippo.CanvasText(text="Password:", xalign=hippo.ALIGNMENT_START, border_right=3))
+        self.__password_entry = hippo.CanvasEntry()
+        self.__password_entry.set_property("xalign", hippo.ALIGNMENT_FILL)
+        box.append(self.__password_entry, hippo.PACK_EXPAND)
+
+        self.__password_entry.set_property("password-mode", True)
+        
+        self.__ok_button = hippo.CanvasButton()
+        # why don't keywords work on CanvasButton constructor?
+        self.__ok_button.set_property("text", "Login")
+        self.__ok_button.set_property("xalign", hippo.ALIGNMENT_END)
+        self.append(self.__ok_button)
+
+    def present(self, username, password):
+        self.__username_entry.set_property("text", username)
+        self.__password_entry.set_property("text", password)
+        self.set_visible(True)
+
+    def hide(self):
+        self.set_visible(False)
+
+class AuthDialog (AuthUI):
+    def __init__(self):
+        AuthUI.__init__(self)
+        
         ## dialog code based on gnome-python-desktop example
         
         dialog = gtk.Dialog("Google Login", None, 0,
@@ -280,8 +351,6 @@ class AuthDialog:
         table.attach(label, 0, 1, 0, 1)
         local_entry1 = gtk.Entry()
         local_entry1.set_activates_default(True)
-        if username is not None:
-            local_entry1.set_text(username)
         table.attach(local_entry1, 1, 2, 0, 1)
         label.set_mnemonic_widget(local_entry1)
 
@@ -292,8 +361,6 @@ class AuthDialog:
         local_entry2 = gtk.Entry()
         local_entry2.set_visibility(False)
         local_entry2.set_activates_default(True)
-        if password is not None:
-            local_entry2.set_text(password)
         table.attach(local_entry2, 1, 2, 1, 2)
         label.set_mnemonic_widget(local_entry2)
 
@@ -308,34 +375,32 @@ class AuthDialog:
         self.__username_entry = local_entry1
         self.__password_entry = local_entry2
 
-        self.__okcb = None
-        self.__cancelcb = None
-
     def __on_delete_event(self, dialog, event):
-        self.__dialog.hide()
+        self.hide()
         return True # prevent destroy
 
     def __on_response(self, dialog, id):
         if id == gtk.RESPONSE_OK:
-            if self.__okcb:
-                self.__okcb()
+            self.run_ok_callback(self.__get_username(), self.__get_password())
         elif id == gtk.RESPONSE_CANCEL or id == gtk.RESPONSE_DELETE_EVENT:
-            if self.__cancelcb:
-                self.__cancelcb()
+            self.run_cancel_callback()
         self.__dialog.hide()
 
-    def present(self):
+    def hide(self):
+        self.__dialog.hide()
+
+    def present(self, username, password):
+        if username:
+            self.__username_entry.set_text(username)
+        if password:
+            self.__password_entry.set_text(password)
         self.__dialog.present()
 
-    def get_username(self):
+    def __get_username(self):
         return self.__username_entry.get_text()
 
-    def get_password(self):
+    def __get_password(self):
         return self.__password_entry.get_text()
-        
-    def set_callbacks(self, okcb, cancelcb):
-        self.__okcb = okcb
-        self.__cancelcb = cancelcb
 
 class CheckMailTask(libbig.polling.Task):
     def __init__(self, google):
@@ -419,6 +484,7 @@ class Google:
         self.__password = None
         self.__fetcher = AsyncHTTPLib2Fetcher()
         self.__auth_dialog = None
+        self.__auth_uis = []
         self.__post_auth_hooks = []
 
         k = keyring.get_keyring()
@@ -442,10 +508,16 @@ class Google:
         elif self.__mail_checker:
             self.__mail_checker.stop()
 
-    def __on_auth_dialog_ok(self):
-        self.__username = self.__auth_dialog.get_username()
-        self.__password = self.__auth_dialog.get_password()
+    def __on_auth_ok(self, username, password):
+        self.__username = username
+        self.__password = password
         keyring.get_keyring().store_login('google', self.__username, self.__password)
+
+        for ui in self.__auth_uis:
+            ui.hide()
+
+        if self.__auth_dialog:
+            self.__auth_dialog.hide()
 
         hooks = self.__post_auth_hooks
         self.__post_auth_hooks = []
@@ -454,25 +526,34 @@ class Google:
 
         self.__consider_checking_mail()
 
-    def __on_auth_dialog_cancel(self):
+    def __on_auth_cancel(self):
         self.__username = None
         self.__password = None
         self.__consider_checking_mail()
 
-    def __open_auth_dialog(self):
-        if not self.__auth_dialog:
-            self.__auth_dialog = AuthDialog(self.__username, self.__password)
-            self.__auth_dialog.set_callbacks(self.__on_auth_dialog_ok,
-                                             self.__on_auth_dialog_cancel)
+    def __open_auth_uis(self):
+        # we use the registered "auth uis" if available, else
+        # the auth dialog. The "auth uis" are inline login boxes
+        # in the stocks
+        if len(self.__auth_uis) == 0:
+            if not self.__auth_dialog:
+                self.__auth_dialog = AuthDialog(self.__username, self.__password)
+                self.__auth_dialog.set_callbacks(self.__on_auth_ok,
+                                                 self.__on_auth_cancel)
             
-        self.__auth_dialog.present()
+            self.__auth_dialog.present(self.__username, self.__password)
+        else:
+            for ui in self.__auth_uis:
+                ui.set_callbacks(self.__on_auth_ok,
+                                 self.__on_auth_cancel)
+                ui.present(self.__username, self.__password)
 
     def __with_login_info(self, func):
         """Call func after we get username and password"""
 
         if not self.__username or not self.__password:
             self.__post_auth_hooks.append(func)
-            self.__open_auth_dialog()
+            self.__open_auth_uis()
             return
 
         func()
@@ -481,6 +562,15 @@ class Google:
         # don't null username, leave it filled in
         self.__password = None
         self.__with_login_info(func)
+
+    ### Authentication
+
+    def add_auth_ui(self, ui):
+        ui.hide()
+        self.__auth_uis.append(ui)
+
+    def remove_auth_ui(self, ui):
+        self.__auth_uis.remove(ui)
 
     ### Calendar
 

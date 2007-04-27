@@ -119,6 +119,8 @@ HippoCanvasPointer hippo_canvas_item_get_pointer        (HippoCanvasItem    *can
                                                          int                 x,
                                                          int                 y);
 
+gboolean           hippo_canvas_item_get_visible        (HippoCanvasItem    *canvas_item);
+
 void               hippo_canvas_item_set_visible        (HippoCanvasItem    *canvas_item,
                                                          gboolean            visible); 
 

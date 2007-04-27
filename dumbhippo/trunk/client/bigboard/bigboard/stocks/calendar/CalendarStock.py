@@ -3,7 +3,7 @@ import logging, os
 import gobject, pango 
 import hippo
 
-import mugshot, stock, google
+import mugshot, stock, google, bigboard.stock
 from bigboard.stock import AbstractMugshotStock
 from big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox
 import libbig.polling
@@ -56,10 +56,16 @@ class EventDisplay(CanvasVBox):
 
 class CalendarStock(AbstractMugshotStock, libbig.polling.Task):
     def __init__(self, *args, **kwargs):
-        AbstractMugshotStock.__init__(self, *args, **kwargs)
-        libbig.polling.Task.__init__(self, 1000 * 120)
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
         self.__events = {}
+
+        self.__auth_ui = google.AuthCanvasItem()
+        self.__box.append(self.__auth_ui)
+        google.get_google().add_auth_ui(self.__auth_ui)
+
+        # these are at the end since they have the side effect of calling on_mugshot_ready it seems?
+        AbstractMugshotStock.__init__(self, *args, **kwargs)
+        libbig.polling.Task.__init__(self, 1000 * 120)
 
     def _on_mugshot_ready(self):
         super(CalendarStock, self)._on_mugshot_ready()
@@ -72,19 +78,23 @@ class CalendarStock(AbstractMugshotStock, libbig.polling.Task):
         return self.__box
             
     def _set_item_size(self, item, size):
-        if size == bigboard.Stock.SIZE_BULL:
+        if size == bigboard.stock.Stock.SIZE_BULL:
             item.set_property('xalign', hippo.ALIGNMENT_FILL)
         else:
             item.set_property('xalign', hippo.ALIGNMENT_CENTER)
-        item.set_size(size)       
+        item.set_size(size)
             
     def set_size(self, size):
         super(CalendarStock, self).set_size(size)
         for child in self.__box.get_children():
-            self._set_item_size(child, size)        
+            if child != self.__auth_ui:
+                self._set_item_size(child, size)
 
     def __on_load_events(self, events):
+        auth_was_visible = self.__auth_ui.get_visible()
         self.__box.remove_all()
+        self.__box.append(self.__auth_ui) # put this back, kind of a hack
+        self.__auth_ui.set_visible(auth_was_visible)
         for event in events:
             display = EventDisplay(event)
             self.__box.append(display)
@@ -94,4 +104,4 @@ class CalendarStock(AbstractMugshotStock, libbig.polling.Task):
             
     def __update_events(self):
         logging.debug("retrieving events")
-        google.Google().fetch_calendar(self.__on_load_events, self.__on_failed_load)
+        google.get_google().fetch_calendar(self.__on_load_events, self.__on_failed_load)
