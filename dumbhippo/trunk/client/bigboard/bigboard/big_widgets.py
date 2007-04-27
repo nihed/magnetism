@@ -20,8 +20,9 @@ class CanvasHBox(hippo.CanvasBox):
         
 class ActionLink(hippo.CanvasLink):
     def __init__(self, **kwargs):
+        if not kwargs.has_key('color'):
+            kwargs['color'] = 0x0066DDFF 
         hippo.CanvasLink.__init__(self, **kwargs)
-        self.set_property("color", 0x0066DDFF)
         
 class CanvasURLImageMixin:
     """A wrapper for CanvasImage which has a set_url method to retrieve

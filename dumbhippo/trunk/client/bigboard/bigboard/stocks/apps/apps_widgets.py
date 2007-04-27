@@ -9,8 +9,8 @@ from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, Canvas
 import apps_directory
 
 class AppDisplay(PhotoContentItem):
-    def __init__(self, app=None):
-        PhotoContentItem.__init__(self, border_right=6)
+    def __init__(self, app=None, **kwargs):
+        PhotoContentItem.__init__(self, border_right=6, **kwargs)
         self.__app = None 
 
         self.__description_mode = False
@@ -20,7 +20,10 @@ class AppDisplay(PhotoContentItem):
         self.__photo = CanvasMugshotURLImage(scale_width=30, scale_height=30)
         self.set_photo(self.__photo)
         self.__box = CanvasVBox(spacing=2, border_right=4)
-        self.__title = ActionLink(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        sub_kwargs = {}
+        if kwargs.has_key('color'): 
+            sub_kwargs['color'] = kwargs['color']
+        self.__title = ActionLink(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END, **sub_kwargs)
         self.__subtitle = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         attrs = pango.AttrList()
         attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
@@ -29,7 +32,7 @@ class AppDisplay(PhotoContentItem):
         self.__box.append(self.__subtitle)        
         self.set_child(self.__box)
 
-        self.__description = hippo.CanvasText(size_mode=hippo.CANVAS_SIZE_WRAP_WORD)
+        self.__description = hippo.CanvasText(size_mode=hippo.CANVAS_SIZE_WRAP_WORD, **sub_kwargs)
         self.__box.append(self.__description)
         
         if app:
@@ -37,6 +40,7 @@ class AppDisplay(PhotoContentItem):
 
     def set_description_mode(self, mode):
         self.__description_mode = mode
+        self.__app_display_sync()
         
     def get_app(self):
         return self.__app
