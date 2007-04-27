@@ -308,9 +308,17 @@ class AuthCanvasItem (hippo.CanvasBox, AuthUI):
         self.__ok_button.set_property("xalign", hippo.ALIGNMENT_END)
         self.append(self.__ok_button)
 
+        self.__ok_button.connect("activated", self.__on_login_activated)
+
+    def __on_login_activated(self, somearg):
+        self.run_ok_callback(self.__username_entry.get_property("text"),
+                             self.__password_entry.get_property("text"))
+
     def present(self, username, password):
-        self.__username_entry.set_property("text", username)
-        self.__password_entry.set_property("text", password)
+        if username:
+            self.__username_entry.set_property("text", username)
+        if password:
+            self.__password_entry.set_property("text", password)
         self.set_visible(True)
 
     def hide(self):
@@ -674,7 +682,7 @@ if __name__ == '__main__':
     #gtk.main()
     #sys.exit(0)
 
-    #keyring.get_keyring().store_login('google', 'havoc.pennington', 'wrong')
+    keyring.get_keyring().store_login('google', 'havoc.pennington', 'wrong')
 
     g = get_google()
 

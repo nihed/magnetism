@@ -238,10 +238,13 @@ hippo_canvas_widget_allocate(HippoCanvasItem *item,
     /* get the box set up */
     item_parent_class->allocate(item, width, height, origin_changed);
 
-    /* Now do the GTK allocation for the child widget */
-    if (widget->widget == NULL || !GTK_WIDGET_VISIBLE(widget->widget))
+    if (widget->widget == NULL)
         return;
     
+    /* this probably queues a resize, which is not ideal */
+    update_widget_visibility(widget);
+    
+    /* Now do the GTK allocation for the child widget */
     w = widget->widget->requisition.width;
     h = widget->widget->requisition.height;
 
@@ -255,13 +258,10 @@ hippo_canvas_widget_allocate(HippoCanvasItem *item,
 
     child_allocation.x = widget_x + x;
     child_allocation.y = widget_y + y;
-    child_allocation.width = w;
-    child_allocation.height = h;
+    child_allocation.width = MAX(w, 1);
+    child_allocation.height = MAX(h, 1);
 
     gtk_widget_size_allocate(widget->widget, &child_allocation);
-
-    /* this probably queues a resize, which is not ideal */
-    update_widget_visibility(widget);
 }
 
 static void
@@ -298,7 +298,14 @@ hippo_canvas_widget_get_content_width_request(HippoCanvasBox *box,
                                                                                         &children_min_width,
                                                                                         &children_natural_width);
 
-    if (widget->widget && GTK_WIDGET_VISIBLE(widget->widget)) {
+    /* Note that we get the widget's size request even if the GTK widget visibility flag is
+     * false; that's because we are slaving GTK visibility to whether we have a nonzero
+     * allocation (canvas item visibility), so it would make a circular mess if
+     * our size request depended on visibility. This means you can't set visibility
+     * on the underlying GtkWidget and expect anything sensible to happen.
+     */
+    
+    if (widget->widget) {
         gtk_widget_size_request(widget->widget, &req);
         widget_width = req.width;
     } else {
@@ -327,8 +334,15 @@ hippo_canvas_widget_get_content_height_request(HippoCanvasBox  *box,
                                                                                          for_width,
                                                                                          &children_min_height,
                                                                                          &children_natural_height);
+
+    /* Note that we get the widget's size request even if the GTK widget visibility flag is
+     * false; that's because we are slaving GTK visibility to whether we have a nonzero
+     * allocation (canvas item visibility), so it would make a circular mess if
+     * our size request depended on visibility. This means you can't set visibility
+     * on the underlying GtkWidget and expect anything sensible to happen.
+     */
     
-    if (widget->widget && GTK_WIDGET_VISIBLE(widget->widget)) {
+    if (widget->widget) {
         /* We know a get_height_request was done first, so we can
          * just get widget->requisition instead of doing the size request
          * computation again.
