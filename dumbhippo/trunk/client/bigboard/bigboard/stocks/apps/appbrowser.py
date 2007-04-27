@@ -234,9 +234,12 @@ class AppExtras(CanvasVBox):
         if self.__apps:
             self.__left_title.set_property('text', "New Popular %s" % (thing,))
             self.__right_title.set_property('text', u"More Popular %s \u00BB" % (thing,))
-        else:
+        elif self.__apps is None:
             self.__left_title.set_property('text', '')
             self.__right_title.set_property("text", "Loading popular %s..." % (thing,))
+        else:
+            self.__left_title.set_property('text', '')
+            self.__right_title.set_property("text", "No popular %s found" % (thing,))
 
         self.set_child_visible(self.__app_pair, not not self.__apps)
         self.__app_pair.remove_all()
@@ -304,8 +307,11 @@ class AppList(CanvasVBox):
                 left_link = None
             else:
                 right_link = None
-                left_link = ActionLink(text=u"All Applications \u00BB")
-                left_link.connect("activated", self.__handle_nocategory)
+                if self.__selected_cat:
+                    left_link = ActionLink(text=u"All Applications \u00BB")
+                    left_link.connect("activated", self.__handle_nocategory)
+                else:
+                    left_link = None
             self.__table.append_section_head(catname, left_control=left_link, right_control=right_link)
             if display_only_used:
                 appsource = cat_used_apps

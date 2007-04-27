@@ -1,4 +1,4 @@
-import logging, time, re
+import logging, time, re, os
 
 import gmenu, gobject, pango, gnomedesktop, gtk
 import hippo
@@ -85,10 +85,23 @@ class Application(gobject.GObject):
             try:
                 menuitem = ad.lookup(name)
             except KeyError, e:
-                continue
-            if not self.__menu_entry:
+                pass
+                
+            if menuitem and not self.__menu_entry:
                 self.__menu_entry = menuitem
-            entry_path = menuitem.get_desktop_file_path()
+                entry_path = menuitem.get_desktop_file_path()
+            else:
+                entry_path = None
+                for dir in libbig.get_xdg_datadirs():
+                    appdir = os.path.join(dir, 'applications')
+                    path = os.path.join(appdir, name + '.desktop') 
+                    print "lookup: %s" % (path,)
+                    if os.access(path, os.R_OK):
+                        entry_path = path
+                        break
+                                                   
+            if not entry_path:
+                continue
             desktop = gnomedesktop.item_new_from_file(entry_path, 0)
             if desktop:
                 return desktop

@@ -33,6 +33,17 @@ def get_bigboard_config_file(name):
         pass
     return os.path.join(basepath, name)
 
+def get_xdg_datadirs():
+    result = []
+    default = '/usr/share'
+    try:
+        for x in os.environ['XDG_DATA_DIRS'].split(':'):
+            result.append(x)
+    except KeyError, e:
+        pass
+    result.append(default)
+    return result
+
 def _log_cb(func, errtext=None):
     """Wraps callbacks in a function that catches exceptions and logs them
     to the logging system."""
