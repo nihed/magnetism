@@ -177,14 +177,15 @@ class AppCategoryUsage(MultiVTable):
             box.append(CanvasVBox())
             self.append_column_item(box)
 
-class CategoryExtras(CanvasVBox):
+class AppExtras(CanvasVBox):
     __gsignals__ = {
         "have-apps" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,))      
     }
     def __init__(self, stock, **args):
-        super(CategoryExtras, self).__init__(background_color=0x888888FF,
-                                             color=0xFFFFFFFF,
-                                             **args)
+        super(AppExtras, self).__init__(background_color=0x888888FF,
+                                        color=0xFFFFFFFF,
+                                        padding=4,
+                                        **args)
 
         self.__stock = stock
         self.__catname = None
@@ -199,6 +200,7 @@ class CategoryExtras(CanvasVBox):
         self.__headerbox.append(self.__left_title)
 
         self.__right_title = ActionLink(font="12px",
+                                        color=0xFFFFFFFF,
                                         xalign=hippo.ALIGNMENT_END)
         self.__right_title.connect("activated", self.__on_more_popular)
         self.__headerbox.append(self.__right_title, hippo.PACK_EXPAND)
@@ -213,11 +215,14 @@ class CategoryExtras(CanvasVBox):
         self.__catname = catname
         if catname:
             self.set_top_apps(map(self.__stock.get_app, mugshot.get_mugshot().get_category_top_apps(catname) or []))
+        else:
+            self.set_top_apps(map(self.__stock.get_app, mugshot.get_mugshot().get_global_top_apps() or []))
         self.__sync()
 
     def __on_more_popular(self, w):
         libbig.show_url(urlparse.urljoin(mugshot.get_mugshot().get_baseurl(),
-                                         "applications?category=" + urllib.quote(self.__catname)))
+                                         "applications%s" % (self.__catname and ("?category=" + urllib.quote(self.__catname))
+                                                             or '',)))
 
     def set_top_apps(self, apps):
         self.__apps = apps
@@ -225,15 +230,21 @@ class CategoryExtras(CanvasVBox):
         self.emit("have-apps", self.have_apps())
 
     def __sync(self):
-        if self.__catname:
-            self.__left_title.set_property('text', "New Popular %s" % (self.__catname,))
-            self.__right_title.set_property('text', "More Popular %s" % (self.__catname,))
+        thing = self.__catname or 'apps'
+        if self.__apps:
+            self.__left_title.set_property('text', "New Popular %s" % (thing,))
+            self.__right_title.set_property('text', u"More Popular %s \u00BB" % (thing,))
+        else:
+            self.__left_title.set_property('text', '')
+            self.__right_title.set_property("text", "Loading popular %s..." % (thing,))
+
+        self.set_child_visible(self.__app_pair, not not self.__apps)
         self.__app_pair.remove_all()
         found = 0
         for i,app in enumerate(self.__apps or []):
             if app.is_installed():
                 continue
-            app_view = apps_widgets.AppDisplay(app)
+            app_view = apps_widgets.AppDisplay(app, color=0xFFFFFFFF)
             app_view.set_description_mode(True)
             self.__app_pair.append(app_view, hippo.PACK_EXPAND)
             found += 1
@@ -254,8 +265,7 @@ class AppList(CanvasVBox):
         self.__table = MultiVTable(columns=3,item_height=40)
         self.append(self.__table, hippo.PACK_EXPAND)
 
-        self.__extras_section = CategoryExtras(stock, yalign=hippo.ALIGNMENT_END)
-        self.__extras_section.connect("have-apps", self.__on_have_extras)
+        self.__extras_section = AppExtras(stock, yalign=hippo.ALIGNMENT_END)
         self.append(self.__extras_section)
 
         self.__stock = stock
@@ -272,9 +282,6 @@ class AppList(CanvasVBox):
         self.__used_apps = used_apps
         self.__sync_display()
 
-    def __on_have_extras(self, extras, have_extras):
-        self.set_child_visible(extras, self.__selected_cat and have_extras)
-        
     def __sync_display(self):
         
         self.__table.remove_all()
@@ -285,13 +292,9 @@ class AppList(CanvasVBox):
         cat_keys = categories.keys()
         cat_keys.sort()
 
-        if self.__selected_cat:
-            self.__extras_section.set_catname(self.__selected_cat)
-            self.set_child_visible(self.__extras_section, self.__extras_section.have_apps())
-        else:
-            self.set_child_visible(self.__extras_section, False)
+        self.__extras_section.set_catname(self.__selected_cat)
 
-        display_only_used = (not self.__selected_cat) and (not self.__search) 
+        display_only_used = (self.__used_apps) and (not self.__selected_cat) and (not self.__search) 
         for catname in (self.__selected_cat and not self.__search) and [self.__selected_cat] or cat_keys:
             cat_used_apps = filter(lambda app: app in self.__used_apps, categories[catname])
             cat_used_apps_count = len(cat_used_apps)
@@ -413,9 +416,14 @@ class AppBrowser(hippo.CanvasWindow):
         self.__mugshot.connect("initialized", lambda mugshot: self.__sync())
         self.__mugshot.connect("my-top-apps-changed", 
                                lambda mugshot, apps: self.__sync())          
+        self.__mugshot.connect("global-top-apps-changed", 
+                               self.__handle_global_changed)          
         self.__mugshot.connect("category-top-apps-changed", 
                                self.__handle_category_changed)          
         self.__sync()
+
+    def __handle_global_changed(self, m, apps):
+        self.__handle_category_changed(m, None, apps)
 
     def __handle_category_changed(self, m, cat, apps):
         _logger.debug("category %s changed: %d apps", cat, len(apps))
