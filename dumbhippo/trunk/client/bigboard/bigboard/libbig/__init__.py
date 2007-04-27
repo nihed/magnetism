@@ -22,6 +22,9 @@ def set_application_name(name):
 def set_program_name(name):
     bignative.set_program_name(name)
 
+def install_focus_docks_hack():
+    bignative.install_focus_docks_hack()
+
 def gnome_keyring_find_items_sync(type, attributes):
     return bignative.keyring_find_items_sync(type, attributes)
     

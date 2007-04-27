@@ -377,6 +377,7 @@ def main():
 
     bigboard.libbig.set_application_name("BigBoard")
     bigboard.libbig.set_program_name("bigboard")
+    bigboard.libbig.install_focus_docks_hack()
     
     hippo.canvas_set_load_image_hook(load_image_hook)    
 
