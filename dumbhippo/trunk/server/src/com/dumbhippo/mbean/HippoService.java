@@ -1,5 +1,15 @@
 package com.dumbhippo.mbean;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Formatter;
+
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 
@@ -15,10 +25,10 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.SchemaUpdater;
-import com.dumbhippo.services.caches.AbstractCacheBean;
 import com.dumbhippo.server.impl.MusicSystemInternalBean;
 import com.dumbhippo.server.impl.TransactionRunnerBean;
 import com.dumbhippo.server.util.FaviconCache;
+import com.dumbhippo.services.caches.AbstractCacheBean;
 
 // The point of this extremely simple MBean is to get notification
 // when our application is loaded and unloaded; in particular, we
@@ -27,6 +37,7 @@ import com.dumbhippo.server.util.FaviconCache;
 // we just need to provide the code to run on start and shutdown.
 public class HippoService extends ServiceMBeanSupport implements HippoServiceMBean {
 	private static final Logger logger = GlobalSetup.getLogger(HippoService.class);
+	private Thread heartbeatThread;
 	
 	@Override
 	protected void startService() {
@@ -63,6 +74,9 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 		} catch (CacheException e) {
 			throw new RuntimeException(e);
 		}
+		
+		heartbeatThread = new Thread(new Heartbeat());
+		heartbeatThread.start();
     }
 	
     @Override
@@ -76,5 +90,51 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 		MusicSystemInternalBean.shutdown();
 		TransactionRunnerBean.shutdown();
 		FaviconCache.shutdown();
+		
+		heartbeatThread.interrupt();
+		try {
+			heartbeatThread.join();
+		} catch (InterruptedException e) {
+			logger.warn("Can't stop heartbeat thread");
+		}
    }
+    
+    private static class Heartbeat implements Runnable {
+    	public void run() {
+    		Calendar calendar = Calendar.getInstance();
+
+    		Formatter formatter = new Formatter();
+    		formatter.format("%04d%02d%02d-%02d:%02d:%02d.heartbeat",
+    					     calendar.get(Calendar.YEAR),
+    					     calendar.get(Calendar.MONTH) + 1,
+    					     calendar.get(Calendar.DAY_OF_MONTH),
+    					     calendar.get(Calendar.HOUR_OF_DAY),
+    					     calendar.get(Calendar.MINUTE),
+    					     calendar.get(Calendar.SECOND));
+    		
+    		File file = new File(formatter.toString());
+    		
+    		try {
+				OutputStream ostream = new FileOutputStream(file);
+				Writer writer = new OutputStreamWriter(ostream);
+				long lastTime = System.currentTimeMillis();
+				
+				while (true) {
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						break;
+					}
+					long newTime = System.currentTimeMillis();
+					Long slept = newTime - lastTime;
+					lastTime = newTime;
+					writer.write(new Date() + " " + slept + "\n");
+					writer.flush();
+				}
+				
+				writer.close();
+			} catch (IOException e) {
+			}
+    	}
+    }
 }
