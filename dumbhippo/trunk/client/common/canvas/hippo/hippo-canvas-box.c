@@ -2636,37 +2636,52 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     }
 #endif
 
-    /* Allocate fixed children their natural size and invisible
-     * children 0x0
-     */
-    for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
-        if (!child->visible) {
+    if (allocated_content_width == 0 || allocated_content_height == 0) {
+
+        /* If we are !visible (0 allocation) then allocate all our
+         * children to 0.  This should happen in the layout algorithms
+         * below, but they are all lame about dealing with too-small
+         * allocations, so they don't "just work" for this.
+         */
+        
+        for (link = box->children; link != NULL; link = link->next) {
+            HippoBoxChild *child = link->data;
             hippo_canvas_item_allocate(child->item, 0, 0, FALSE);
-        } else if (child->fixed) {
-            hippo_canvas_item_allocate(child->item,
-                                       child->natural_width,
-                                       child->natural_height,
-                                       origin_changed);
-        } else {
-            continue;
         }
-    }
+    } else {    
 
-    /* Now layout the box */
+        /* Allocate fixed children their natural size and invisible
+         * children 0x0
+         */
+        for (link = box->children; link != NULL; link = link->next) {
+            HippoBoxChild *child = link->data;
+            if (!child->visible) {
+                hippo_canvas_item_allocate(child->item, 0, 0, FALSE);
+            } else if (child->fixed) {
+                hippo_canvas_item_allocate(child->item,
+                                           child->natural_width,
+                                           child->natural_height,
+                                           origin_changed);
+            } else {
+                continue;
+            }
+        }
 
-    has_floats = box_validate_packing(box);
+        /* Now layout the box */
+
+        has_floats = box_validate_packing(box);
     
-    if (box->orientation == HIPPO_ORIENTATION_VERTICAL && has_floats) {
-        layout_floats(box, content_x, content_y,
-                      allocated_content_width, allocated_content_height,
-                      requested_content_width, requested_content_height,
-                      origin_changed);
-    } else {
-        layout_box(box, content_x, content_y,
-                   allocated_content_width, allocated_content_height,
-                   requested_content_width, requested_content_height,
-                   origin_changed);
+        if (box->orientation == HIPPO_ORIENTATION_VERTICAL && has_floats) {
+            layout_floats(box, content_x, content_y,
+                          allocated_content_width, allocated_content_height,
+                          requested_content_width, requested_content_height,
+                          origin_changed);
+        } else {
+            layout_box(box, content_x, content_y,
+                       allocated_content_width, allocated_content_height,
+                       requested_content_width, requested_content_height,
+                       origin_changed);
+        }
     }
 }
 
