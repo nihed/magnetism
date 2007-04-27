@@ -95,7 +95,6 @@ class Application(gobject.GObject):
                 for dir in libbig.get_xdg_datadirs():
                     appdir = os.path.join(dir, 'applications')
                     path = os.path.join(appdir, name + '.desktop') 
-                    print "lookup: %s" % (path,)
                     if os.access(path, os.R_OK):
                         entry_path = path
                         break
