@@ -6,6 +6,7 @@ import hippo
 import mugshot, stock, google
 from bigboard.stock import AbstractMugshotStock
 from big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox
+import libbig.polling
 
 class EventDisplay(CanvasVBox):
     def __init__(self, event):
@@ -53,14 +54,18 @@ class EventDisplay(CanvasVBox):
 
         os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', self.__event.get_link())
 
-class CalendarStock(AbstractMugshotStock):
+class CalendarStock(AbstractMugshotStock, libbig.polling.Task):
     def __init__(self, *args, **kwargs):
-        super(CalendarStock, self).__init__(*args, **kwargs)
+        AbstractMugshotStock.__init__(self, *args, **kwargs)
+        libbig.polling.Task.__init__(self, 1000 * 120)
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
         self.__events = {}
 
     def _on_mugshot_ready(self):
         super(CalendarStock, self)._on_mugshot_ready()
+        self.__update_events()
+
+    def do_periodic_task(self):
         self.__update_events()
 
     def get_authed_content(self, size):
