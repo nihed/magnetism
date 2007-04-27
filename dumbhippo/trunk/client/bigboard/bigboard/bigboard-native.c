@@ -14,6 +14,8 @@
 
 #include <gnome-keyring.h>
 
+#include <gtk/gtk.h>
+
 static PyObject *logging_cb = NULL;
 
 static gboolean initialized_loghandler = FALSE;
@@ -95,6 +97,51 @@ bigboard_set_program_name(PyObject *self, PyObject *args)
     return result;
 }
 
+static gboolean
+button_press_event_hook(GSignalInvocationHint  *ihint,
+                        guint			n_param_values,
+                        const GValue	       *param_values,
+                        gpointer		data)
+{
+    GObject *object;
+    GtkWidget *toplevel;
+
+    object = g_value_get_object(param_values);
+    
+    /* g_printerr("Button press on %s\n", g_type_name_from_instance(object)); */
+    
+    if (!(GTK_IS_ENTRY(object) || GTK_IS_TEXT_VIEW(object)))
+        return TRUE;
+
+    toplevel = gtk_widget_get_toplevel(GTK_WIDGET(object));
+    if (!toplevel)
+        return TRUE;
+
+    if (!GTK_IS_WINDOW(toplevel))
+        return TRUE;
+
+    if (gtk_window_get_type_hint(GTK_WINDOW(toplevel)) != GDK_WINDOW_TYPE_HINT_DOCK)
+        return TRUE;
+
+    gtk_window_present_with_time(GTK_WINDOW(toplevel), gtk_get_current_event_time());
+    
+    return TRUE;
+}
+
+PyObject*
+bigboard_install_focus_docks_hack(PyObject *self, PyObject *args)
+{
+    PyObject *result = NULL;
+
+    g_signal_add_emission_hook(g_signal_lookup("button-press-event",
+                                               GTK_TYPE_WIDGET),
+                               0, button_press_event_hook,
+                               NULL, NULL);
+    
+    Py_INCREF(Py_None);
+    result = Py_None;
+    return result;
+}
 
 /* gnome-keyring stuff here is because find_items_sync() is broken in the official bindings */
 

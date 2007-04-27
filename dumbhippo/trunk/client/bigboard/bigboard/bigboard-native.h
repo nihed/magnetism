@@ -11,6 +11,7 @@ PyObject * bigboard_set_log_handler			(PyObject *self, PyObject *func);
 PyObject*  bigboard_set_application_name                (PyObject *self, PyObject *args);
 PyObject*  bigboard_set_program_name                    (PyObject *self, PyObject *args);
 PyObject*  bigboard_gnomekeyring_find_items_sync        (PyObject *self, PyObject *args, PyObject *kwargs);
+PyObject*  bigboard_install_focus_docks_hack            (PyObject *self, PyObject *args);
 
 /* Workaround gunge for gnome-keyring python binding bugs */
 GType pygnome_keyring_found_get_type(void);

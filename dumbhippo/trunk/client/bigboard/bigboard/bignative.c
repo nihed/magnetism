@@ -19,6 +19,8 @@ PyMethodDef bignative_functions[] = {
      "Set the GLib app name."},
     {"set_program_name", bigboard_set_program_name, METH_VARARGS,
      "Set the GLib program name."},
+    {"install_focus_docks_hack", bigboard_install_focus_docks_hack, METH_VARARGS,
+     "Focus dock windows when clicking focusable widgets in them."},    
     {"keyring_find_items_sync", (PyCFunction) bigboard_gnomekeyring_find_items_sync, METH_VARARGS | METH_KEYWORDS,
      "Find gnomekeyring items."},    
     {NULL, NULL, 0, NULL}        /* Sentinel */
