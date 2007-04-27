@@ -24,13 +24,17 @@ G_BEGIN_DECLS
 struct _HippoCanvasContainerIface {
     GTypeInterface base_iface;
 
-    void (* set_child_visible) (HippoCanvasContainer        *container,
-                                HippoCanvasItem             *child,
-                                gboolean                     visible);
+    gboolean (* get_child_visible) (HippoCanvasContainer        *container,
+                                    HippoCanvasItem             *child);
+    void     (* set_child_visible) (HippoCanvasContainer        *container,
+                                    HippoCanvasItem             *child,
+                                    gboolean                     visible);
 };
 
 GType            hippo_canvas_container_get_type               (void) G_GNUC_CONST;
 
+gboolean         hippo_canvas_container_get_child_visible      (HippoCanvasContainer        *container,
+                                                                HippoCanvasItem             *child);
 void             hippo_canvas_container_set_child_visible      (HippoCanvasContainer        *container,
                                                                 HippoCanvasItem             *child,
                                                                 gboolean                     visible);

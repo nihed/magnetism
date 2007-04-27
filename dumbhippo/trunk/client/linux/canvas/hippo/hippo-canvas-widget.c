@@ -131,6 +131,22 @@ hippo_canvas_widget_new(void)
 }
 
 static void
+update_widget_visibility(HippoCanvasWidget *widget)
+{
+    int w, h;
+
+    if (widget->widget == NULL)
+        return;
+    
+    hippo_canvas_item_get_allocation(HIPPO_CANVAS_ITEM(widget), &w, &h);
+
+    if (w == 0 || h == 0)
+        gtk_widget_hide(widget->widget);
+    else
+        gtk_widget_show(widget->widget);
+}
+
+static void
 hippo_canvas_widget_set_property(GObject         *object,
                                  guint            prop_id,
                                  const GValue    *value,
@@ -153,11 +169,8 @@ hippo_canvas_widget_set_property(GObject         *object,
                     g_object_unref(widget->widget);
                 widget->widget = w;
 
-                /* when/if canvas items have a visibility flag,
-                 * we'd force the widget to match it here
-                 */
-                if (widget->widget)
-                    gtk_widget_show(widget->widget);
+                update_widget_visibility(widget);
+
                 hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(widget));
             }
         }
@@ -246,6 +259,9 @@ hippo_canvas_widget_allocate(HippoCanvasItem *item,
     child_allocation.height = h;
 
     gtk_widget_size_allocate(widget->widget, &child_allocation);
+
+    /* this probably queues a resize, which is not ideal */
+    update_widget_visibility(widget);
 }
 
 static void

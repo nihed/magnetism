@@ -238,8 +238,9 @@ hippo_canvas_scrollbars_set_policy (HippoCanvasScrollbars *scrollbars,
 
 enum {
     ENTRY_PROP_0,
-    ENTRY_PROP_TEXT
-} ;
+    ENTRY_PROP_TEXT,
+    ENTRY_PROP_PASSWORD_MODE
+};
 
 static void
 on_canvas_entry_changed(GtkEditable      *editable,
@@ -299,9 +300,9 @@ hippo_canvas_entry_dispose(GObject *object)
 
 static void
 hippo_canvas_entry_set_property(GObject        *object,
-                                   guint            prop_id,
-                                   const GValue    *value,
-                                   GParamSpec      *pspec)
+                                guint            prop_id,
+                                const GValue    *value,
+                                GParamSpec      *pspec)
 {
     /* HippoCanvasEntry *canvas_entry = HIPPO_CANVAS_ENTRY(object); */
     GtkWidget *entry = HIPPO_CANVAS_WIDGET(object)->widget;
@@ -309,6 +310,9 @@ hippo_canvas_entry_set_property(GObject        *object,
     switch (prop_id) {
     case ENTRY_PROP_TEXT:
         gtk_entry_set_text(GTK_ENTRY(entry), g_value_get_string(value));
+        break;
+    case ENTRY_PROP_PASSWORD_MODE:
+        gtk_entry_set_visibility(GTK_ENTRY(entry), !g_value_get_boolean(value));
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -328,6 +332,9 @@ hippo_canvas_entry_get_property(GObject        *object,
     switch (prop_id) {
     case ENTRY_PROP_TEXT:
         g_value_set_string(value, gtk_entry_get_text(GTK_ENTRY(entry)));
+        break;
+    case ENTRY_PROP_PASSWORD_MODE:
+        g_value_set_boolean(value, !gtk_entry_get_visibility(GTK_ENTRY(entry)));
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -351,6 +358,14 @@ hippo_canvas_entry_class_init(HippoCanvasEntryClass *class)
                                                         _("Text in the entry"),
                                                         NULL,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    ENTRY_PROP_PASSWORD_MODE,
+                                    g_param_spec_boolean("password-mode",
+                                                         _("Password mode"),
+                                                         _("Show text as bullets/stars"),
+                                                         FALSE,
+                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
 }
 
 static void
@@ -359,6 +374,9 @@ hippo_canvas_entry_init(HippoCanvasEntry *entry)
     GtkWidget *gtk_entry;
 
     gtk_entry = gtk_entry_new();
+
+    /* GTK forces a min width of 150, which is often too big for our canvas layouts */
+    gtk_widget_set_size_request(gtk_entry, 60, -1);
     
     g_object_set(entry, "widget", gtk_entry, NULL);
 
@@ -397,7 +415,4 @@ hippo_canvas_entry_set_position(HippoCanvasEntry *entry,
     g_object_get(entry, "widget", &gtk_entry, NULL);
     gtk_editable_set_position(GTK_EDITABLE(gtk_entry), pos);
     g_object_unref(gtk_entry);
-
-    return pos;
-
 }

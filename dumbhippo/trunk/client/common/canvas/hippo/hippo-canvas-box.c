@@ -60,6 +60,8 @@ static void             hippo_canvas_box_style_changed          (HippoCanvasCont
 
 
 /* Canvas container methods */
+static gboolean         hippo_canvas_box_get_child_visible      (HippoCanvasContainer *container,
+                                                                 HippoCanvasItem      *child);
 static void             hippo_canvas_box_set_child_visible      (HippoCanvasContainer *container,
                                                                  HippoCanvasItem      *child,
                                                                  gboolean              visible);
@@ -234,6 +236,7 @@ hippo_canvas_box_iface_init_context (HippoCanvasContextIface *klass)
 static void
 hippo_canvas_box_iface_init_container (HippoCanvasContainerIface *klass)
 {
+    klass->get_child_visible = hippo_canvas_box_get_child_visible;
     klass->set_child_visible = hippo_canvas_box_set_child_visible;
 }
 
@@ -3605,6 +3608,26 @@ hippo_canvas_box_reverse(HippoCanvasBox  *box)
     }
 
     hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
+}
+
+gboolean
+hippo_canvas_box_get_child_visible (HippoCanvasContainer        *container,
+                                    HippoCanvasItem             *child)
+{
+    HippoBoxChild *c;
+    HippoCanvasBox *box;
+
+    box = HIPPO_CANVAS_BOX(container);
+    
+    c = find_child(box, child);
+
+    if (c == NULL) {
+        g_warning("Trying to get visibility on a canvas item that isn't in the box");
+        return;
+    }
+    g_assert(c->item == child);
+
+    return c->visible;
 }
 
 void

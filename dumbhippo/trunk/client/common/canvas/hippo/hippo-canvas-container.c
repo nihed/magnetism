@@ -43,6 +43,16 @@ hippo_canvas_container_base_init(void *klass)
     }
 }
 
+gboolean
+hippo_canvas_container_get_child_visible(HippoCanvasContainer        *container,
+                                         HippoCanvasItem             *child)
+{
+    g_return_val_if_fail(HIPPO_IS_CANVAS_CONTAINER(container), FALSE);
+    g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(child), FALSE);
+
+    return HIPPO_CANVAS_CONTAINER_GET_IFACE(container)->get_child_visible(container, child) != FALSE;
+}
+
 /* Making this a "child property" on the container instead of a flag on
  * HippoCanvasItem is perhaps a little surprising, but
  * is consistent with e.g. having the allocation origin in the container

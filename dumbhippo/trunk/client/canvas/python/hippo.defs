@@ -526,6 +526,15 @@
   )
 )
 
+(define-method get_child_visible
+  (of-object "HippoCanvasContainer")
+  (c-name "hippo_canvas_container_get_child_visible")
+  (return-type "gboolean")
+  (parameters
+    '("HippoCanvasItem*" "child")
+  )
+)
+
 (define-method set_child_visible
   (of-object "HippoCanvasContainer")
   (c-name "hippo_canvas_container_set_child_visible")
@@ -954,6 +963,12 @@
     '("int" "x")
     '("int" "y")
   )
+)
+
+(define-method get_visible
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_get_visible")
+  (return-type "gboolean")
 )
 
 (define-method set_visible
