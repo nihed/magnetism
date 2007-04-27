@@ -181,11 +181,12 @@ class CategoryExtras(CanvasVBox):
     __gsignals__ = {
         "have-apps" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,))      
     }
-    def __init__(self, **args):
+    def __init__(self, stock, **args):
         super(CategoryExtras, self).__init__(background_color=0x888888FF,
                                              color=0xFFFFFFFF,
                                              **args)
 
+        self.__stock = stock
         self.__catname = None
         self.__apps = None
 
@@ -211,7 +212,7 @@ class CategoryExtras(CanvasVBox):
     def set_catname(self, catname):
         self.__catname = catname
         if catname:
-            self.set_top_apps(mugshot.get_mugshot().get_category_top_apps(catname))
+            self.set_top_apps(map(self.__stock.get_app, mugshot.get_mugshot().get_category_top_apps(catname) or []))
         self.__sync()
 
     def __on_more_popular(self, w):
@@ -247,15 +248,17 @@ class AppList(CanvasVBox):
         "launch" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())      
     }
     
-    def __init__(self):
+    def __init__(self, stock):
         super(AppList, self).__init__()
-        
+
         self.__table = MultiVTable(columns=3,item_height=40)
         self.append(self.__table, hippo.PACK_EXPAND)
 
-        self.__extras_section = CategoryExtras(yalign=hippo.ALIGNMENT_END)
+        self.__extras_section = CategoryExtras(stock, yalign=hippo.ALIGNMENT_END)
         self.__extras_section.connect("have-apps", self.__on_have_extras)
         self.append(self.__extras_section)
+
+        self.__stock = stock
 
         self.__search = None
         self.__all_apps = None
@@ -392,7 +395,7 @@ class AppBrowser(hippo.CanvasWindow):
         self.__right_box = CanvasVBox(border=0, background_color=0xFFFFFFFF)
         self.__box.append(self.__right_scroll, hippo.PACK_EXPAND)
         
-        self.__app_list = AppList()
+        self.__app_list = AppList(self.__stock)
         self.__right_box.append(self.__app_list, hippo.PACK_EXPAND)
         self.__app_list.connect("category-selected", lambda list, cat: self.__on_category_selected(cat))
         self.__app_list.connect("selected", lambda list, app: self.__on_app_selected(app))
