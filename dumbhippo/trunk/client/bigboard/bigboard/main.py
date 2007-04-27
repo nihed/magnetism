@@ -111,10 +111,10 @@ class Exchange(hippo.CanvasBox):
         self.__state = bigboard.libbig.state.PrefixedState('/panel/stock/' + stock.get_id() + "/") 
         self.__state.set_default('expanded', True)
         self.__ticker_container = None
-        if stock.get_ticker() == "-":
-            sep = Separator()
-            self.append(sep)            
-        elif not stock.get_ticker() == "":
+        self.__mini_more_link = None
+        self.__sep = Separator()
+        self.append(self.__sep)
+        if not stock.get_ticker() in ("-", ""):
             text = stock.get_ticker()
             self.__ticker_container = GradientHeader()
             self.__ticker_text = hippo.CanvasText(text=text, font="14px", xalign=hippo.ALIGNMENT_START)
@@ -124,8 +124,12 @@ class Exchange(hippo.CanvasBox):
             if stock.has_more_link():
                 more_link = ActionLink(xalign=hippo.ALIGNMENT_END, 
                                        text=u"More \u00BB")
-                more_link.connect("button-press-event", lambda link, event: stock.on_more_clicked())
+                more_link.connect("activated", lambda l: stock.on_more_clicked())
                 self.__ticker_container.append(more_link)
+                self.__mini_more_link = ActionLink(xalign=hippo.ALIGNMENT_CENTER, 
+                                                   text=u"More") 
+                self.__mini_more_link.connect("activated", lambda l: stock.on_more_clicked())
+                self.append(self.__mini_more_link)
             
             self.append(self.__ticker_container)
         self.__stock.connect("visible", lambda s, v: self.set_size(self.__size))
@@ -151,6 +155,13 @@ class Exchange(hippo.CanvasBox):
         content = self.__stock.get_content(size) 
         if self.__ticker_container:
             self.set_child_visible(self.__ticker_container, not not content)
+        self.set_child_visible(self.__sep,
+                               (not not content) and \
+                               ((self.__ticker_container and size == Stock.SIZE_BEAR) \
+                                or (size == Stock.SIZE_BULL
+                                    and ((not self.__ticker_container) or (self.__stock.get_ticker() == "-")))))
+        if self.__mini_more_link:
+            self.set_child_visible(self.__mini_more_link, size == Stock.SIZE_BEAR)
         self.set_child_visible(self.__stockbox, not not content)
         if not content:
             self.__logger.debug("no content for stock %s", self.__stock)
