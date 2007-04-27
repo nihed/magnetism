@@ -253,8 +253,10 @@ class BigBoardPanel(object):
         return map(lambda e: e.get_stock(), self._exchanges)
 
     def list_stock_id(self, id):
+        self.__state['listed'] += u';%s' % (id,)
         prelisted = self.__prelisted[id]
         self.list(prelisted.get())
+        del self.__prelisted[id]
         
     def _toggle_size(self):
         self.__logger.debug("toggling size")
