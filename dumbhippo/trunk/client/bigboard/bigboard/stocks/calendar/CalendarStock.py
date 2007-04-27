@@ -1,4 +1,4 @@
-import logging, os
+import logging, os, datetime
 
 import gobject, pango 
 import hippo
@@ -17,9 +17,6 @@ class EventDisplay(CanvasVBox):
                                      border_right=4)
         self.__title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         self.__description = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
-        attrs = pango.AttrList()
-        attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
-        self.__description.set_property("attributes", attrs)        
         self.__box.append(self.__title)
         self.__box.append(self.__description)        
         
@@ -41,10 +38,30 @@ class EventDisplay(CanvasVBox):
     
     def __str__(self):
         return '<EventDisplay name="%s">' % (self.__get_title())
+
+    def _fmt_time(self, dt):
+        date_str = str(dt.date())
+        if dt.time().hour == 0 and dt.time().minute == 0 and  dt.time().second == 0:
+            return date_str
+        return date_str + " " + str(dt.time())
     
     def __event_display_sync(self):
         self.__title.set_property("text", self.__event.get_title())
-        self.__description.set_property("text", str(self.__event.get_start_time()))
+        self.__description.set_property("text", "  " + (self._fmt_time(self.__event.get_start_time())))
+
+        now = datetime.datetime.now()
+        if self.__event.get_end_time() < now:
+            attrs = pango.AttrList()
+            attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
+            self.__title.set_property("attributes", attrs)        
+            self.__description.set_property("attributes", attrs)        
+        # stuff for today is bold
+        if self.__event.get_start_time() < now:
+            delta = now - self.__event.get_start_time()
+        else:
+            delta = self.__event.get_start_time() - now
+        if delta.days == 0:
+            self.__title.set_property("font", "12px Bold")
         
     def __on_button_press(self, event):
         if event.button != 1:
@@ -95,7 +112,15 @@ class CalendarStock(AbstractMugshotStock, libbig.polling.Task):
         self.__box.remove_all()
         self.__box.append(self.__auth_ui) # put this back, kind of a hack
         self.__auth_ui.set_visible(auth_was_visible)
+        events = list(events)
+        events.reverse()
         for event in events:
+            now = datetime.datetime.now()            
+            if event.get_end_time() < now:
+                delta = now - event.get_end_time()
+                # don't show stuff older than a week
+                if delta.days >= 7:
+                    continue
             display = EventDisplay(event)
             self.__box.append(display)
 
