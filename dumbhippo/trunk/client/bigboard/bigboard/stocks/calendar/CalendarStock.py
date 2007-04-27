@@ -1,9 +1,10 @@
-import logging
+import logging, os
 
-import gobject
+import gobject, pango 
 import hippo
 
-import bigboard, mugshot, google, pango, os
+import mugshot, stock, google
+from bigboard.stock import AbstractMugshotStock
 from big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox
 
 class EventDisplay(CanvasVBox):
@@ -52,7 +53,7 @@ class EventDisplay(CanvasVBox):
 
         os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', self.__event.get_link())
 
-class CalendarStock(bigboard.AbstractMugshotStock):
+class CalendarStock(AbstractMugshotStock):
     def __init__(self, *args, **kwargs):
         super(CalendarStock, self).__init__(*args, **kwargs)
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
