@@ -1,0 +1,4 @@
+stocksdir = $(datadir)/bigboard/stocks
+
+mainscriptdir = $(libexecdir)/bigboard
+
