@@ -47,6 +47,7 @@ public class RedditBlockHandlerBean extends AbstractBlockPerFeedEntryHandlerBean
 		if (!entry.getFeed().getSource().getUrl().contains("liked") && 
 			!entry.getFeed().getSource().getUrl().contains("disliked")) {
 			for (Feed feed : external.getFeeds()) {
+				// note that both liked and disliked urls will contain "liked"
 				if (feed.getSource().getUrl().contains("liked")) {
 					if (feed.getLastFetchSucceeded())
 						return;
@@ -69,12 +70,13 @@ public class RedditBlockHandlerBean extends AbstractBlockPerFeedEntryHandlerBean
 	    super.populateBlockViewImpl(blockView);
 	    FeedEntry feedEntry = blockView.getEntry();
 
-		if (feedEntry.getFeed().getSource().getUrl().contains("liked")) {
-			blockView.setTypeTitle("Liked on Reddit");			
-		} else if (feedEntry.getFeed().getSource().getUrl().contains("disliked")) {
+	    // check "disliked" first - "liked" is a substring of it...
+	    if (feedEntry.getFeed().getSource().getUrl().contains("disliked")) {
 			blockView.setTypeTitle("Disliked on Reddit");
+		} else if (feedEntry.getFeed().getSource().getUrl().contains("liked")) {
+			blockView.setTypeTitle("Liked on Reddit");			
 		} else {
 			blockView.setTypeTitle(RedditBlockView.DEFAULT_TYPE_TITLE);
-		}	
+		}
 	}
 }
