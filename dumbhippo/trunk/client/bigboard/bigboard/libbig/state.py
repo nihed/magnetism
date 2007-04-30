@@ -3,9 +3,9 @@ import xml.dom.minidom
 
 import gobject
 
-import libbig
-from libbig import BiMap
-from libbig.singletonmixin import Singleton
+import bigboard.libbig as libbig
+from bigboard.libbig import BiMap
+from bigboard.libbig.singletonmixin import Singleton
 
 class State(Singleton):
     """Extremely simple state saving mechanism.  Intended to be

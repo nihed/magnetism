@@ -2,8 +2,8 @@ import sys,os,logging
 
 import gtk, hippo
 
-from libbig.http import AsyncHTTPFetcher
-from libbig.singletonmixin import Singleton
+from bigboard.libbig.http import AsyncHTTPFetcher
+from bigboard.libbig.singletonmixin import Singleton
 
 class URLImageCache(Singleton):
     def __init__(self):

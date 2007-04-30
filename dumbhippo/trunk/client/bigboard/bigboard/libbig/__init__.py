@@ -2,8 +2,6 @@ import os, logging
 
 import gnome, hippo
 
-import bignative
-
 def run_program(name, args):
     pid = os.fork()
     if pid == 0:
@@ -13,21 +11,6 @@ def run_program(name, args):
 def show_url(url):
     gnome.url_show(url)
 
-def set_log_handler(handler):
-    bignative.set_log_handler(handler)
-
-def set_application_name(name):
-    bignative.set_application_name(name)
-
-def set_program_name(name):
-    bignative.set_program_name(name)
-
-def install_focus_docks_hack():
-    bignative.install_focus_docks_hack()
-
-def gnome_keyring_find_items_sync(type, attributes):
-    return bignative.keyring_find_items_sync(type, attributes)
-    
 def get_bigboard_config_file(name):
     basepath = os.path.expanduser("~/.bigboard")
     try:

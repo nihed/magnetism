@@ -24,13 +24,24 @@ bigboard_PYTHON = __init__.py \
                   big_widgets.py \
                   google.py \
                   keyring.py \
-                  libbig.py \
                   libgimmie.py \
                   mugshot.py \
                   profile.py \
-                  singletonmixin.py \
                   slideout.py \
 		  stock.py
+
+libbigdir=$(bigboarddir)/libbig
+libbig_PYTHON = libbig/__init__.py \
+	       	libbig/dbusutil.py \
+	       	libbig/httpcache.py \
+	       	libbig/http.py \
+	       	libbig/imagecache.py \
+	       	libbig/logutil.py \
+	       	libbig/polling.py \
+	       	libbig/singletonmixin.py \
+	       	libbig/state.py \
+	       	libbig/struct.py \
+	       	libbig/xmlquery.py
 
 httplibdir=$(bigboarddir)/httplib2
 httplib_PYTHON = httplib2/__init__.py \
