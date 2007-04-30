@@ -1,8 +1,8 @@
 %{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
 
 Name:           hippo-canvas
-Version:        0.2.13
-Release:        2%{?dist}
+Version:        0.2.16
+Release:        1%{?dist}
 Summary:        A canvas widget
 
 Group:          System Environment/Libraries
@@ -77,6 +77,9 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitearch}/*.so
 
 %changelog
+* Mon Apr 30 2007 Colin Walters <walters@redhat.com> - 0.2.16-1
+- New upstream
+
 * Mon Apr 09 2007 Colin Walters <walters@redhat.com> - 0.2.13-2
 - Fully qualify source url
 
