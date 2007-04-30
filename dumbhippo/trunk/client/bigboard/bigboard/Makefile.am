@@ -1,3 +1,5 @@
+include $(top_srcdir)/Makefile-include.am
+
 bignative_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)			\
 	$(PYTHON_INCLUDES)		\
@@ -11,13 +13,6 @@ bignative_la_LIBADD =					\
 	$(BIGBOARD_LIBS)
 
 bignative_la_SOURCES = bignative.c bigboard-native.h bigboard-native.c
-
-bin_SCRIPTS = bigboard
-
-noinst_SCRIPTS = bigboard-uninst 
-
-mainscriptdir = $(libexecdir)/bigboard
-mainscript_PYTHON = main.py
 
 bigboarddir = $(pythondir)/bigboard
 bigboard_PYTHON = __init__.py \
@@ -47,7 +42,6 @@ httplibdir=$(bigboarddir)/httplib2
 httplib_PYTHON = httplib2/__init__.py \
                  httplib2/iri2uri.py
 
-stocksdir = $(datadir)/bigboard/stocks
 appstockdir=$(stocksdir)/apps
 appstock_PYTHON = \
                 stocks/apps/appbrowser.py \
@@ -75,25 +69,3 @@ selfstockdir=$(stocksdir)/self
 selfstock_PYTHON = \
                 stocks/self/SelfStock.py \
                 stocks/self/listing.xml
-
-bigboard: bigboard.in
-	sed \
-	    -e s!\@PYTHON\@!@PYTHON@!g \
-	    -e s!\@BB_PYDIR\@!$(mainscriptdir)!g \
-	    -e s!\@BB_STOCKDIR\@!$(stocksdir)!g \
-	    < $< > $@
-	chmod a+x $@
-
-bigboard-uninst: bigboard-uninst.in
-	sed \
-	    -e s!\@PYTHON\@!@PYTHON@!g \
-	    -e s!\@BB_TOPSRCDIR\@!$(top_srcdir)!g \
-	    -e s!\@BB_PYDIR\@!$(srcdir)/!g \
-	    -e s!\@BB_STOCKDIR\@!$(srcdir)/stocks!g \
-	    < $< > $@
-	chmod a+x $@
-
-
-EXTRA_DIST = bigboard.in bigboard-uninst.in
-
-CLEANFILES = bigboard bigboard-uninst

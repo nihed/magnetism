@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(bigboard, 0.1.5)
+AM_INIT_AUTOMAKE(bigboard, 0.1.6)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -176,5 +176,6 @@ AC_SUBST(PYGTK_DEFSDIR)
 AC_OUTPUT([
 Makefile
 bigboard/Makefile
+scripts/Makefile
 version
 ])

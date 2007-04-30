@@ -1,3 +1,0 @@
-#!/bin/sh
-builddir=$(dirname $0)
-PYTHONPATH=${builddir}/@BB_TOPSRCDIR@/../canvas/build/.libs/:${builddir}/@BB_TOPSRCDIR@/../canvas/.libs:${builddir}/.libs:${builddir}/@BB_TOPSRCDIR@:${builddir}/@BB_PYDIR@ exec setsid $BB_DEBUG_CMD @PYTHON@ ${builddir}/@BB_PYDIR@main.py "--stockdirs=${builddir}/@BB_STOCKDIR@" "$@"

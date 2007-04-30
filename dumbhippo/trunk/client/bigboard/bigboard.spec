@@ -1,5 +1,5 @@
 Name:           bigboard
-Version:        0.1.5
+Version:        0.1.6
 Release:        1
 Summary:        Sidebar application launcher using mugshot.org
 
@@ -47,6 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/bigboard
 
 %changelog
+* Mon Apr 30 2007 Colin Walters <walters@redhat.com> - 0.1.6-1
+- Update 
+
 * Mon Apr 30 2007 Colin Walters <walters@redhat.com> - 0.1.5-1
 - Update 
 - Bump some rpm requirements

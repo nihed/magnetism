@@ -1,0 +1,3 @@
+#!/bin/sh
+builddir=$(dirname $0)
+PYTHONPATH=$PYTHONPATH:${builddir}/../bigboard/.libs exec @PYTHON@ ${builddir}/@BB_TOPSRCDIR@/main.py "$@"
