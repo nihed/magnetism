@@ -3,6 +3,7 @@ import logging, os, datetime
 import gobject, pango 
 import hippo
 
+import bigboard.libbig as libbig
 import bigboard.mugshot as mugshot
 import bigboard.stock as stock
 import bigboard.google as google
@@ -89,7 +90,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self._add_more_link(self.__on_more_link)
 
     def __on_more_link(self):
-        bigboard.libbig.show_url('http://calendar.google.com')
+        libbig.show_url('http://calendar.google.com')
         
 
     def _on_mugshot_ready(self):
