@@ -3,9 +3,9 @@ import xml.dom.minidom
 
 import gobject
 
-import libbig.xmlquery
-import libbig.httpcache
-from singletonmixin import Singleton
+import bigboard.libbig.xmlquery as xmlquery
+import bigboard.libbig.httpcache as httpcache
+from bigboard.libbig.singletonmixin import Singleton
 
 class AsyncHTTPFetcher(Singleton):
     """Asynchronously fetch objects over HTTP, invoking
@@ -53,7 +53,7 @@ class AsyncHTTPFetcher(Singleton):
                 cb(url, resp.childNodes)
         else:
             self.__logger.debug("got XML method %s error")
-            errnode = libbig.xmlquery.query(resp, 'err')
+            errnode = xmlquery.query(resp, 'err')
             code = errnode.getAttribute('code') or 'red'
             msg = errnode.getAttribute('msg') or 'Unknown error'
             self.__logger.debug("got XML method %s error %s %s", url, code, msg)
@@ -72,7 +72,7 @@ class AsyncHTTPFetcher(Singleton):
     def __do_fetch(self, url, cb, errcb, cookies, data, nocache):
         self.__logger.debug("in thread fetch of %s (%s)" % (url, data))
         try:
-            (fname, fdata) = libbig.httpcache.load(url, cookies, data=data, nocache=nocache)
+            (fname, fdata) = httpcache.load(url, cookies, data=data, nocache=nocache)
             gobject.idle_add(lambda: self.__emit_results(url, data, cb, fname, fdata))
         except Exception, e:
             self.__logger.info("caught error for fetch of %s: %s" % (url, e))

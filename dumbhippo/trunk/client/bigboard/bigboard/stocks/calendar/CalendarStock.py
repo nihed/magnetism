@@ -3,10 +3,12 @@ import logging, os, datetime
 import gobject, pango 
 import hippo
 
-import mugshot, stock, google, bigboard.stock
+import bigboard.mugshot as mugshot
+import bigboard.stock as stock
+import bigboard.google as google
 from bigboard.stock import AbstractMugshotStock
-from big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox
-import libbig.polling
+from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox
+import bigboard.libbig.polling as polling
 
 class EventDisplay(CanvasVBox):
     def __init__(self, event):
@@ -71,7 +73,7 @@ class EventDisplay(CanvasVBox):
 
         os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', self.__event.get_link())
 
-class CalendarStock(AbstractMugshotStock, libbig.polling.Task):
+class CalendarStock(AbstractMugshotStock, polling.Task):
     def __init__(self, *args, **kwargs):
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
         self.__events = {}
@@ -82,7 +84,7 @@ class CalendarStock(AbstractMugshotStock, libbig.polling.Task):
 
         # these are at the end since they have the side effect of calling on_mugshot_ready it seems?
         AbstractMugshotStock.__init__(self, *args, **kwargs)
-        libbig.polling.Task.__init__(self, 1000 * 120)
+        polling.Task.__init__(self, 1000 * 120)
 
     def _on_mugshot_ready(self):
         super(CalendarStock, self)._on_mugshot_ready()

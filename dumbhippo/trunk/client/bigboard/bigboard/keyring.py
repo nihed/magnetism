@@ -1,4 +1,9 @@
-import gnomekeyring, libbig
+import gnomekeyring
+
+try:
+    import bigboard.bignative as bignative
+except:
+    import bignative
 
 class Keyring:
     def __init__(self, is_singleton):
@@ -26,8 +31,8 @@ class Keyring:
             id = self.__ids[whatfor]
         else:
             # don't try to use gnomekeyring.find_items_sync, it's broken
-            found = libbig.gnome_keyring_find_items_sync(gnomekeyring.ITEM_GENERIC_SECRET,
-                                                       { 'whatfor' : whatfor } )
+            found = bignative.keyring_find_items_sync(gnomekeyring.ITEM_GENERIC_SECRET,
+                                                      { 'whatfor' : whatfor } )
             ids = []
             for f in found:
                 ids.append(f.item_id)

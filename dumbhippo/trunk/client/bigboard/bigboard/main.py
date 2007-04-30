@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import os, sys, threading, getopt, logging, StringIO, stat, signal, google
+import os, sys, threading, getopt, logging, StringIO, stat, signal
 import xml.dom.minidom
 
 import gobject, gtk, pango, dbus, dbus.glib
@@ -13,6 +13,11 @@ import bigboard.big_widgets
 from bigboard.big_widgets import Sidebar, CommandShell, CanvasHBox, ActionLink
 from bigboard.stock import Stock
 import bigboard.libbig
+try:
+    import bigboard.bignative as bignative
+except:
+    import bignative
+import bigboard.google
 import bigboard.libbig.logutil
 import bigboard.libbig.xmlquery
 import bigboard.libbig.dbusutil
@@ -355,8 +360,6 @@ def main():
     def logger(domain, priority, msg):
         print msg
 
-    #libbig.set_log_handler(logger)    
-    
     gtk.gdk.threads_init()
     dbus.glib.threads_init()    
     
@@ -375,9 +378,9 @@ def main():
         print "Big Board already running; exiting"
         sys.exit(0)
 
-    bigboard.libbig.set_application_name("BigBoard")
-    bigboard.libbig.set_program_name("bigboard")
-    bigboard.libbig.install_focus_docks_hack()
+    bignative.set_application_name("BigBoard")
+    bignative.set_program_name("bigboard")
+    bignative.install_focus_docks_hack()
     
     hippo.canvas_set_load_image_hook(load_image_hook)    
 
@@ -389,7 +392,7 @@ def main():
         cmdshell = CommandShell({'panel': panel})
         cmdshell.show_all()
 
-    google.get_google() # for side effect of creating the Google object
+    bigboard.google.get_google() # for side effect of creating the Google object
         
     gtk.main()
 
