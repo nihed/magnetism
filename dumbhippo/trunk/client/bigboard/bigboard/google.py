@@ -1,9 +1,13 @@
-import httplib2, keyring, sys, xml, xml.sax, logging, threading, gobject, gtk, datetime, dbus, dbus.glib
+import httplib2, sys, logging, threading, datetime, re
+import xml, xml.sax
+
+import hippo, gobject, gtk, dbus, dbus.glib
+
 from bigboard import libbig
+import bigboard.keyring as keyring
 import libbig.logutil
 from libbig.struct import AutoStruct, AutoSignallingStruct
 import libbig.polling
-import hippo
 
 class AbstractDocument(AutoStruct):
     def __init__(self):
@@ -80,7 +84,10 @@ def parse_timestamp(timestamp, tz=None):
         date_str = timestamp
         hour, minute, second = 0, 0, 0
 
-    year, month, day = date_str.split('-')
+    if date_str.find('-') >= 0:
+        year, month, day = date_str.split('-')
+    else:
+        year, month, day = (date_str[0:4], date_str[4:6], date_str[6:8])
     return datetime.datetime(int(year), int(month), int(day), int(hour), int(minute),
         int(second), tzinfo=tz)
 
@@ -89,10 +96,14 @@ class EventsParser(xml.sax.ContentHandler):
         self.__events = []
         self.__events_sorted = False
         self.__inside_title = False
+        self.__inside_recurrence = False
+        self.__content = ""
+        self.__dt_re = re.compile(r'DT\w+;VALUE=DATE:(\d+)\s')
 
     def startElement(self, name, attrs):
         #print "<" + name + ">"
         #print attrs.getNames() # .getValue('foo')
+        self.__content = ""
 
         if name == 'entry':
             e = Event()
@@ -104,6 +115,8 @@ class EventsParser(xml.sax.ContentHandler):
             elif name == 'gd:when':
                 e.update({ 'start_time' : parse_timestamp(attrs.getValue('startTime')),
                            'end_time' : parse_timestamp(attrs.getValue('endTime')) })
+            elif name == 'gd:recurrence':
+                self.__inside_recurrence = True
             elif name == 'link':
                 rel = attrs.getValue('rel')
                 href = attrs.getValue('href')
@@ -115,15 +128,27 @@ class EventsParser(xml.sax.ContentHandler):
     def endElement(self, name):
         #print "</" + name + ">"
 
-        if name == 'title':
-            self.__inside_title = False
-
-    def characters(self, content):
-        #print content
         if len(self.__events) > 0:
             e = self.__events[-1]
-            if self.__inside_title:
-                e.update({'title' : content})
+        if name == 'title' and self.__inside_title:
+            e.update({'title' : self.__content})
+            self.__inside_title = False
+        elif name == 'gd:recurrence' and self.__inside_recurrence:
+            self.__inside_recurrence = False
+            dt_start = None
+            dt_end = None
+            match = self.__dt_re.search(self.__content)
+            if match:
+                dt_start = match.group(1)
+                match = self.__dt_re.search(self.__content, match.end())
+                if match:
+                    dt_end = match.group(1)
+            if dt_start and dt_end:
+                e.update({ 'start_time' : parse_timestamp(dt_start),
+                           'end_time' : parse_timestamp(dt_end) })
+
+    def characters(self, content):
+        self.__content += content
         
     def __compare_by_date(self, a, b):
         return cmp(a.get_start_time(), b.get_start_time())
@@ -672,17 +697,19 @@ if __name__ == '__main__':
 
     import gtk, gtk.gdk
 
+    import bigboard.libbig, bigboard.bignative
+
     gtk.gdk.threads_init()
 
-    libbig.logutil.init('DEBUG', ['bigboard.AsyncHTTP2LibFetcher'])
+    libbig.logutil.init(logging.DEBUG, ['AsyncHTTP2LibFetcher'])
 
-    libbig.set_application_name("BigBoard")
+    bigboard.bignative.set_application_name("BigBoard")
 
-    #AuthDialog('foo', 'bar').present()
-    #gtk.main()
-    #sys.exit(0)
+    AuthDialog().present('foo', 'bar')
+    gtk.main()
+    sys.exit(0)
 
-    keyring.get_keyring().store_login('google', 'havoc.pennington', 'wrong')
+    #keyring.get_keyring().store_login('google', 'havoc.pennington', 'wrong')
 
     g = get_google()
 
@@ -690,7 +717,7 @@ if __name__ == '__main__':
         print x
     
     #g.fetch_documents(display, display)
-    #g.fetch_calendar(display, display)
+    g.fetch_calendar(display, display)
     #g.fetch_new_mail(display, display)
 
     gtk.main()
