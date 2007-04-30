@@ -86,6 +86,12 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         AbstractMugshotStock.__init__(self, *args, **kwargs)
         polling.Task.__init__(self, 1000 * 120)
 
+        self._add_more_link(self.__on_more_link)
+
+    def __on_more_link(self):
+        bigboard.libbig.show_url('http://calendar.google.com')
+        
+
     def _on_mugshot_ready(self):
         super(CalendarStock, self)._on_mugshot_ready()
         self.__update_events()

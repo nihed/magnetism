@@ -384,6 +384,8 @@ def main():
     
     hippo.canvas_set_load_image_hook(load_image_hook)    
 
+    if not stockdirs:
+        stockdirs = [os.path.join(os.path.dirname(bigboard.__file__), 'stocks')]
     panel = BigBoardPanel(stockdirs)
     
     panel.show()
