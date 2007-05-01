@@ -697,19 +697,23 @@ if __name__ == '__main__':
 
     import gtk, gtk.gdk
 
-    import bigboard.libbig, bigboard.bignative
+    import bigboard.libbig
+    try:
+        import bigboard.bignative as bignative
+    except:
+        import bignative
 
     gtk.gdk.threads_init()
 
-    libbig.logutil.init(logging.DEBUG, ['AsyncHTTP2LibFetcher'])
+    libbig.logutil.init('DEBUG', ['AsyncHTTP2LibFetcher'])
 
-    bigboard.bignative.set_application_name("BigBoard")
+    bignative.set_application_name("BigBoard")
 
-    AuthDialog().present('foo', 'bar')
-    gtk.main()
+    keyring.get_keyring().store_login('google', 'havoc.pennington', 'wrong')
+
+    #AuthDialog().present('foo', 'bar')
+    #gtk.main()
     sys.exit(0)
-
-    #keyring.get_keyring().store_login('google', 'havoc.pennington', 'wrong')
 
     g = get_google()
 
