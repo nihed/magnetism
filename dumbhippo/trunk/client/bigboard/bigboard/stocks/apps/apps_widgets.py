@@ -26,9 +26,11 @@ class AppDisplay(PhotoContentItem):
         sub_kwargs = {}
         if kwargs.has_key('color'): 
             sub_kwargs['color'] = kwargs['color']
-        self.__title = ActionLink(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END, **sub_kwargs)
+
+        self.__title = ActionLink(font="14px",xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END, **sub_kwargs)
         self.__title.connect("activated", lambda t: self.emit("title-clicked"))
-        self.__subtitle = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        self.__subtitle = hippo.CanvasText(font="10px",xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+
         attrs = pango.AttrList()
         attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
         self.__subtitle.set_property("attributes", attrs)        
