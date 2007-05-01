@@ -29,4 +29,5 @@ BUILT_SOURCES =
 include Makefile-gmail.am
 include Makefile-mailto.am
 include Makefile-desktop.am
+include Makefile-icons.am
 
