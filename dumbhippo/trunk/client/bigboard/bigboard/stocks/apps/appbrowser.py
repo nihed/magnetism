@@ -58,11 +58,19 @@ class AppOverview(CanvasVBox):
 def categorize(apps):    
     """Given a set of applications, returns a map <string,set<Application>> based on category name."""
     categories = {}
+    local_categories = {}
     for app in apps:
         cat = app.get_category()
+        local_cat = app.get_local_category()
         if not categories.has_key(cat):
             categories[cat] = set()
         categories[cat].add(app)  
+        if not local_categories.has_key(local_cat):
+            local_categories[local_cat] = set()
+        local_categories[local_cat].add(app)
+    # heuristic for detecting when we don't have enough data from Mugshot
+    if len(categories) <= 2:
+        return local_categories
     return categories
         
 class MultiVTable(CanvasHBox):
