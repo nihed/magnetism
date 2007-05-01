@@ -179,7 +179,8 @@ class AppCategoryUsage(MultiVTable):
 
 class AppExtras(CanvasVBox):
     __gsignals__ = {
-        "have-apps" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,))      
+        "have-apps" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,)),
+        "more-info" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
     }
     def __init__(self, stock, **args):
         super(AppExtras, self).__init__(background_color=0x888888FF,
@@ -251,18 +252,24 @@ class AppExtras(CanvasVBox):
             if app.is_installed():
                 continue
             app_view = apps_widgets.AppDisplay(app, color=0xFFFFFFFF)
+            app_view.connect("title-clicked", self.__on_app_clicked)
             app_view.set_description_mode(True)
             self.__app_pair.append(app_view, hippo.PACK_EXPAND)
             found += 1
             if found > 1:
                 break
         self.__found_app_count = found
+
+    def __on_app_clicked(self, a):
+        self.emit("more-info", a.get_app())
+        
         
 class AppList(CanvasVBox):
     __gsignals__ = {
         "category-selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_STRING,)),
         "selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "launch" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())      
+        "launch" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        "more-info" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))      
     }
     
     def __init__(self, stock):
@@ -272,6 +279,7 @@ class AppList(CanvasVBox):
         self.append(self.__table, hippo.PACK_EXPAND)
 
         self.__extras_section = AppExtras(stock, yalign=hippo.ALIGNMENT_END)
+        self.__extras_section.connect("more-info", lambda e, app: self.emit("more-info", app))
         self.append(self.__extras_section)
 
         self.__stock = stock
@@ -412,6 +420,7 @@ class AppBrowser(hippo.CanvasWindow):
         self.__app_list.connect("category-selected", lambda list, cat: self.__on_category_selected(cat))
         self.__app_list.connect("selected", lambda list, app: self.__on_app_selected(app))
         self.__app_list.connect("launch", lambda list: self.__on_app_launch()) 
+        self.__app_list.connect("more-info", lambda list, app: self.__on_show_more_info(app)) 
         
         self.__right_scroll.set_root(self.__right_box)        
         

@@ -9,6 +9,9 @@ from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, Canvas
 import apps_directory
 
 class AppDisplay(PhotoContentItem):
+    __gsignals__ = {
+        "title-clicked" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+    }
     def __init__(self, app=None, **kwargs):
         PhotoContentItem.__init__(self, border_right=6, **kwargs)
         self.__app = None 
@@ -24,6 +27,7 @@ class AppDisplay(PhotoContentItem):
         if kwargs.has_key('color'): 
             sub_kwargs['color'] = kwargs['color']
         self.__title = ActionLink(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END, **sub_kwargs)
+        self.__title.connect("activated", lambda t: self.emit("title-clicked"))
         self.__subtitle = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         attrs = pango.AttrList()
         attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
