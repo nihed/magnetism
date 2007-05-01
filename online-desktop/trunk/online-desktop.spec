@@ -1,6 +1,6 @@
 Name:           online-desktop
 Version:        0.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Desktop built around web sites and online services
 
 Group:          Applications/Internet
@@ -10,13 +10,46 @@ Source0:        online-desktop-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  glib2-devel
-#Requires:       
+BuildRequires:  desktop-file-utils
 
 %description
 
-Desktop built around web sites and online services. This package
-contains a grab-bag of integration points with various sites and
-services, such as mailto: handlers, .desktop files, and so forth.
+The "online desktop" is a flavor of the GNOME desktop built around web
+sites and online services. This package contains a grab-bag of
+integration points with various sites and services, such as mailto:
+handlers, .desktop files, and so forth.
+
+%package flickr
+Summary: Flickr integration for your desktop
+Group: Applications/Internet
+%description flickr
+Contains a menu entry for the Flickr photo sharing site.
+
+%package gmail
+Summary: GMail integration for your desktop
+Group: Applications/Internet
+# requires mailto-handler (which is theoretically also required by other web mail)
+Requires: online-desktop
+%description gmail
+Contains a menu entry for GMail.
+
+%package google-calendar
+Summary: Google Calendar integration for your desktop
+Group: Applications/Internet
+%description google-calendar
+Contains a menu entry for Google Calendar.
+
+%package google-docs
+Summary: Google Docs and Spreadsheets integration for your desktop
+Group: Applications/Internet
+%description google-docs
+Contains a menu entry for Google Docs and Spreadsheets.
+
+%package google-reader
+Summary: Google Reader integration for your desktop
+Group: Applications/Internet
+%description google-reader
+Contains a menu entry for Google Reader.
 
 %prep
 %setup -q
@@ -32,6 +65,12 @@ rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 
 
+## not sure yet what vendor should/will be
+desktop-file-install --vendor="fedora"                  \
+  --dir=${RPM_BUILD_ROOT}%{_datadir}/applications       \
+  --delete-original                                     \
+  %{buildroot}/%{_datadir}/applications/*.desktop
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -39,13 +78,38 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %{_bindir}/*
-%{_datadir}/applications/*.desktop
+# not used yet
+%{_datadir}/icons/hicolor/*/apps/picasa.png
+%{_datadir}/icons/hicolor/*/apps/yahoo-mail.png
 
-%doc
+%files flickr
+%defattr(-,root,root,-)
+%{_datadir}/applications/fedora-flickr.desktop
+%{_datadir}/icons/hicolor/*/apps/flickr.png
 
+%files gmail
+%defattr(-,root,root,-)
+%{_datadir}/applications/fedora-gmail.desktop
+%{_datadir}/icons/hicolor/*/apps/gmail.png
 
+%files google-calendar
+%defattr(-,root,root,-)
+%{_datadir}/applications/fedora-google-calendar.desktop
+
+%files google-docs
+%defattr(-,root,root,-)
+%{_datadir}/applications/fedora-google-docs.desktop
+%{_datadir}/icons/hicolor/*/apps/google-docs.png
+
+%files google-reader
+%defattr(-,root,root,-)
+%{_datadir}/applications/fedora-google-reader.desktop
+%{_datadir}/icons/hicolor/*/apps/google-reader.png
 
 %changelog
+* Tue May  1 2007 Havoc Pennington <hp@redhat.com> - 0.1-2
+- add subpackage for each user-visible app
+
 * Thu Apr 26 2007 Havoc Pennington <hp@redhat.com> - 0.1-1
 - created package
 
