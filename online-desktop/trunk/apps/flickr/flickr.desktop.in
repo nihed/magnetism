@@ -7,6 +7,6 @@ _Comment=Photo gallery and organizer
 Exec=gnome-open http://flickr.com
 Terminal=false
 Type=Application
-Icon=flickr.png
+Icon=flickr
 StartupNotify=false
 Categories=X-Red-Hat-Base;X-Red-Hat-Base-Only;Graphics;Application;

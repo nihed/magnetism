@@ -7,6 +7,6 @@ _Comment=Google online word processor and spreadsheet
 Exec=gnome-open http://docs.google.com/
 Terminal=false
 Type=Application
-Icon=google-docs.png
+Icon=google-docs
 StartupNotify=false
 Categories=X-Red-Hat-Base;X-Red-Hat-Base-Only;Office;Application;
