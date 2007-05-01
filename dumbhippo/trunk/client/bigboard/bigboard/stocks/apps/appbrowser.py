@@ -360,7 +360,7 @@ class AppList(CanvasVBox):
         if not self.__search:
             return True
         search = self.__search.lower()
-        keys = (app.get_name(), app.get_description())
+        keys = (app.get_name(), app.get_description(), app.get_generic_name(), app.get_tooltip())
         for key in keys:
             if key.lower().find(search) >= 0:
                 return True
@@ -399,7 +399,7 @@ class AppBrowser(hippo.CanvasWindow):
         self.__left_box = CanvasVBox(spacing=4)
         self.__box.append(self.__left_box)
         
-        self.__search_text = hippo.CanvasText(text="Search", font="Bold 12px")
+        self.__search_text = hippo.CanvasText(text="Search All Applications:", font="Bold 12px", xalign=hippo.ALIGNMENT_START)
         self.__left_box.append(self.__search_text)
         self.__search_input = hippo.CanvasEntry()
         self.__search_input.connect("notify::text", self.__on_search_changed)
@@ -490,9 +490,10 @@ class AppBrowser(hippo.CanvasWindow):
     def __sync(self):
         ad = apps_directory.get_app_directory()
         apps = map(self.__stock.get_local_app, ad.get_apps())
-        apps = filter(lambda app: not app.get_is_excluded(), apps)
+        mugshot_apps = map(self.__stock.get_app, self.__mugshot.get_global_top_apps() or [])
+        #apps = filter(lambda app: not app.get_is_excluded(), apps)
                 
-        self.__all_apps = apps
+        self.__all_apps = set(apps).union(set(mugshot_apps))
         self.__used_apps = map(self.__stock.get_app, self.__mugshot.get_my_top_apps() or [])
-        self.__app_list.set_apps(apps, self.__used_apps)
-        self.__cat_usage.set_apps(apps, self.__used_apps) 
+        self.__app_list.set_apps(self.__all_apps, self.__used_apps)
+        self.__cat_usage.set_apps(self.__all_apps, self.__used_apps) 
