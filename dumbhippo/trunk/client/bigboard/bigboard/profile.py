@@ -2,12 +2,13 @@
 
 import logging
 import xml.sax
-import libbig, mugshot
+import libbig
+import mugshot
 
 # object representing a profile; also a sax handler that can parse the xml form
 class Profile(libbig.struct.AutoStruct, xml.sax.ContentHandler):
     def __init__(self, guid):
-        super(Profile, self__init__({ 'name' : None, 'photo' : None, 'who' : str(guid), 'online' : None,
+        super(Profile, self).__init__({ 'name' : None, 'photo' : None, 'who' : str(guid), 'online' : None,
                                      'home_url' : None, 'onlineIcon' : None, 'accounts' : [], 'stack' : [],
                                      'email' : None, 'aim' : None})
 

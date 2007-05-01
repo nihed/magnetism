@@ -7,6 +7,14 @@ import hippo
 import big_widgets, mugshot, libbig, libbig.state
 from libbig.singletonmixin import Singleton
 
+## FIXME remove these from the Stock class ... I can't figure out how to
+## refer to them from outside a Stock instance with them there, anyway
+SIZE_BEAR = 1
+SIZE_BULL = 2
+SIZE_BULL_CONTENT_PX = 200
+SIZE_BEAR_CONTENT_PX = 36
+
+
 class Stock(gobject.GObject):
     __gsignals__ = {
         "visible" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,))

@@ -570,7 +570,7 @@ class Google:
         # in the stocks
         if len(self.__auth_uis) == 0:
             if not self.__auth_dialog:
-                self.__auth_dialog = AuthDialog(self.__username, self.__password)
+                self.__auth_dialog = AuthDialog()
                 self.__auth_dialog.set_callbacks(self.__on_auth_ok,
                                                  self.__on_auth_cancel)
             

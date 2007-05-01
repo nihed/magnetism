@@ -3,10 +3,11 @@ import logging
 import hippo
 
 import os
-import bigboard, mugshot
-from big_widgets import CanvasMugshotURLImage, CanvasMugshotURLImageButton, PhotoContentItem
-import slideout
-import profile
+import bigboard
+from bigboard.big_widgets import CanvasMugshotURLImage, CanvasMugshotURLImageButton, PhotoContentItem
+from bigboard.stock import AbstractMugshotStock
+import bigboard.slideout
+import bigboard.profile
 import cgi
 
 class EntityItem(PhotoContentItem):
@@ -65,7 +66,7 @@ class EntityItem(PhotoContentItem):
         return self.__entity
 
     def set_size(self, size):
-        if size == bigboard.Stock.SIZE_BULL:
+        if size == bigboard.stock.SIZE_BULL:
             self.set_child_visible(self.__name, True)
             self.__photo.set_property('xalign', hippo.ALIGNMENT_START)
             self.__photo.set_property('yalign', hippo.ALIGNMENT_START)
@@ -161,9 +162,9 @@ class ProfileItem(hippo.CanvasBox):
             aim.connect('activated', self.__on_activate_aim, profile)
             self.__address_box.append(aim)
 
-class PeopleStock(bigboard.AbstractMugshotStock):
-    def __init__(self):
-        super(PeopleStock, self).__init__("People")
+class PeopleStock(AbstractMugshotStock):
+    def __init__(self, *args, **kwargs):
+        super(PeopleStock, self).__init__(*args, **kwargs)
         
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
 
@@ -172,20 +173,20 @@ class PeopleStock(bigboard.AbstractMugshotStock):
         self.__slideout = None
         self.__slideout_item = None
 
-        self.__profiles = profile.ProfileFactory()
+        self.__profiles = bigboard.profile.ProfileFactory()
         
     def _on_mugshot_initialized(self):
         super(PeopleStock, self)._on_mugshot_initialized()
-        self._mugshot.connect("entity-added", self.__handle_entity_added)
-        self._mugshot.connect("self-changed", self.__handle_self_changed)        
-        self._mugshot.get_self()
+        self._mugshot.connect("self-known", self.__handle_self_known)
+        self._mugshot.connect("network-changed", self.__handle_network_changed)
+        self._mugshot.get_self()        
         self._mugshot.get_network()
         
-    def get_content(self, size):
+    def get_authed_content(self, size):
         return self.__box
 
     def __set_item_size(self, item, size):
-        if size == bigboard.Stock.SIZE_BULL:
+        if size == bigboard.stock.SIZE_BULL:
             item.set_property('xalign', hippo.ALIGNMENT_FILL)
         else:
             item.set_property('xalign', hippo.ALIGNMENT_CENTER)
@@ -196,20 +197,28 @@ class PeopleStock(bigboard.AbstractMugshotStock):
         super(PeopleStock, self).set_size(size)
         for i in self.__items.values():
             self.__set_item_size(i, size)
-            
-    def __handle_self_changed(self, mugshot, myself):
-        self._logger.debug("self (%s) changed" % (myself.get_guid(),))
-    
-    def __handle_entity_added(self, mugshot, entity):
+
+    def __add_network_member(self, entity):
         self._logger.debug("entity added to people stock %s" % (entity.get_name()))
         if entity.get_type() != 'person':
             return
+        if self.__items.has_key(entity.get_guid()):
+            return
+        
         item = EntityItem()
         item.set_entity(entity)
         self.__box.append(item, hippo.PACK_IF_FITS)
         self.__items[entity.get_guid()] = item
         self.__set_item_size(item, self.get_size())
         item.connect('button-press-event', self.__handle_item_pressed)
+
+    def __handle_network_changed(self, mugshot):
+        network = mugshot.get_network()
+        for entity in network:
+            self.__add_network_member(entity)
+    
+    def __handle_self_known(self, mugshot):
+        pass
 
     def __handle_item_pressed(self, item, event):
         if self.__slideout:
@@ -219,7 +228,7 @@ class PeopleStock(bigboard.AbstractMugshotStock):
                 self.__slideout_item = None
                 return
 
-        self.__slideout = slideout.Slideout()
+        self.__slideout = bigboard.slideout.Slideout()
         self.__slideout_item = item
         coords = item.get_screen_coords()
         self.__slideout.slideout_from(coords[0] + item.get_allocation()[0] + 4, coords[1])
