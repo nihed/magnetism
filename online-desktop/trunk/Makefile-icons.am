@@ -1,0 +1,40 @@
+all_sizes_icons=				\
+	SUBDIR/picasa.png			\
+	SUBDIR/greader.png			\
+	SUBDIR/gmail.png			\
+	SUBDIR/gdocs.png			\
+	SUBDIR/flickr.png			\
+	SUBDIR/ymail.png
+
+#HUGEICONSUBDIR=icons/hicolor/128x128/apps
+#hugeicondir=$(datadir)/$(HUGEICONSUBDIR)
+#hugeicon_DATA=				\
+#	$(HUGEICONSUBDIR)/mugshot.png
+
+NORMALICONSUBDIR=icons/hicolor/48x48/apps
+normalicondir=$(datadir)/$(NORMALICONSUBDIR)
+normalicon_DATA=$(subst SUBDIR,$(NORMALICONSUBDIR),$(all_sizes_icons))
+
+#MEDIUMICONSUBDIR=icons/hicolor/32x32/apps
+#mediumicondir=$(datadir)/$(MEDIUMICONSUBDIR)
+#mediumicon_DATA=				\
+#	$(MEDIUMICONSUBDIR)/mugshot.png
+
+#SMALLISHICONSUBDIR=icons/hicolor/24x24/apps
+#smallishicondir=$(datadir)/$(SMALLISHICONSUBDIR)
+#smallishicon_DATA=				\
+#	$(SMALLISHICONSUBDIR)/mugshot.png
+
+
+SMALLICONSUBDIR=icons/hicolor/22x22/apps
+smallicondir=$(datadir)/$(SMALLICONSUBDIR)
+smallicon_DATA=$(subst SUBDIR,$(SMALLICONSUBDIR),$(all_sizes_icons))
+
+SMALLERICONSUBDIR=icons/hicolor/16x16/apps
+smallericondir=$(datadir)/$(SMALLERICONSUBDIR)
+smallericon_DATA=$(subst SUBDIR,$(SMALLERICONSUBDIR),$(all_sizes_icons))
+
+EXTRA_DIST +=					\
+	$(smallicon_DATA)			\
+	$(smallericon_DATA)			\
+	$(normalicon_DATA)
