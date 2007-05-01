@@ -1,10 +1,10 @@
 all_sizes_icons=				\
 	SUBDIR/picasa.png			\
-	SUBDIR/greader.png			\
+	SUBDIR/google-reader.png		\
 	SUBDIR/gmail.png			\
-	SUBDIR/gdocs.png			\
+	SUBDIR/google-docs.png			\
 	SUBDIR/flickr.png			\
-	SUBDIR/ymail.png
+	SUBDIR/yahoo-mail.png
 
 #HUGEICONSUBDIR=icons/hicolor/128x128/apps
 #hugeicondir=$(datadir)/$(HUGEICONSUBDIR)
