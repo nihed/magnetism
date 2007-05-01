@@ -48,7 +48,10 @@ class Application(gobject.GObject):
         return self.__app and self.__app.get_generic_name() or ""
 
     def get_category(self):
-        return self.__app and self.__app.get_category() or self.__menu_entry.parent.get_name()
+        return self.__app and self.__app.get_category() or "Other"
+
+    def get_local_category(self):
+        return self.__menu_entry and self.__menu_entry.parent.get_name() or "Other"
 
     def get_comment(self):
         return self.__desktop_entry and self.__desktop_entry.get_localestring('Comment')
