@@ -18,7 +18,7 @@ class AppOverview(CanvasVBox):
     }
 
     def __init__(self, app=None):
-        super(AppOverview, self).__init__(box_width=200, box_height=160,
+        super(AppOverview, self).__init__(box_width=200, box_height=260,
                                           border=1, border_color=0x666666FF, padding=2)
 
         self.__unselected = True
@@ -30,7 +30,7 @@ class AppOverview(CanvasVBox):
         
         self.__header = apps_widgets.AppDisplay()
         
-        self.__description = hippo.CanvasText(size_mode=hippo.CANVAS_SIZE_WRAP_WORD)
+        self.__description = hippo.CanvasText(font="12px",size_mode=hippo.CANVAS_SIZE_WRAP_WORD)
         
         self.__moreinfo = ActionLink(text="More Info", xalign=hippo.ALIGNMENT_START)
         self.__moreinfo.connect("button-press-event", lambda l,e: self.emit("more-info", self.__app))
@@ -171,10 +171,13 @@ class AppCategoryUsage(MultiVTable):
         
         if max_usage_count[1] == 0:
             return
-        for category, usage in cat_usage.iteritems():
+
+        cat_keys_sorted = cat_usage.keys()
+        cat_keys_sorted.sort()
+        for category in cat_keys_sorted:
             self.append_column_item(hippo.CanvasText(text=category, 
                                                      yalign=hippo.ALIGNMENT_CENTER))
-            factor = (usage * 1.0) / max_usage_count[1]
+            factor = (cat_usage[category] * 1.0) / max_usage_count[1]
             box = CanvasHBox()
             (r, g, b) = map(lambda (min,max): int(min * (1.0-factor)) + int(max*factor), zip(self.__bar_min_color, self.__bar_max_color))          
             box.append(CanvasVBox())            
@@ -413,7 +416,7 @@ class AppBrowser(hippo.CanvasWindow):
         self.__cat_usage = AppCategoryUsage()
         self.__left_box.append(self.__cat_usage)   
 
-        browse_link = ActionLink(text="Browse popular applications") 
+        browse_link = ActionLink(text="Find New Applications") 
         browse_link.connect("button-press-event", lambda l,e: self.__on_browse_popular_apps())
         self.__left_box.append(browse_link)
     
