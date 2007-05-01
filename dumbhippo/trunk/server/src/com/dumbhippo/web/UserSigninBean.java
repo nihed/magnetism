@@ -19,7 +19,6 @@ public class UserSigninBean extends SigninBean {
 	private static final Logger logger = GlobalSetup.getLogger(UserSigninBean.class);
 
 	private Boolean musicSharingEnabled; // lazily initialized
-	private Boolean defaultSharePublic; // lazily initialized
 
 	private IdentitySpider spider;
 	private PersonViewer viewer;
