@@ -72,6 +72,14 @@ DBusHandlerResult hippo_dbus_helper_handle_message       (DBusConnection        
                                                           DBusMessage             *message);
 
 
+DBusMessage*      hippo_dbus_client_call_method_sync     (DBusConnection          *connection,
+                                                          const char              *bus_name,
+                                                          const char              *path,
+                                                          const char              *interface,
+                                                          const char              *method,
+                                                          DBusError               *error,
+                                                          int                      first_arg_type,
+                                                          ...);
 
 G_END_DECLS
 

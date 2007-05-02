@@ -854,3 +854,43 @@ hippo_dbus_helper_handle_message(DBusConnection *connection,
         return DBUS_HANDLER_RESULT_HANDLED;
     }
 }
+
+DBusMessage*
+hippo_dbus_client_call_method_sync(DBusConnection          *connection,
+                                   const char              *bus_name,
+                                   const char              *path,
+                                   const char              *interface,
+                                   const char              *method,
+                                   DBusError               *error,
+                                   int                      first_arg_type,
+                                   ...)
+{
+    DBusMessage *call;
+    DBusMessage *reply;
+    va_list args;
+
+    reply = NULL;
+    call = dbus_message_new_method_call(bus_name, path, interface, method);
+    
+    va_start(args, first_arg_type);
+    if (!dbus_message_append_args_valist(call, first_arg_type, args)) {
+        va_end(args);
+        dbus_set_error_const(error, DBUS_ERROR_NO_MEMORY, "No memory");
+        goto failed;
+    }
+    va_end(args);
+
+    reply = dbus_connection_send_with_reply_and_block(connection, call, -1, error);
+
+    dbus_message_unref(call);
+    
+    return reply;
+
+ failed:
+    if (call)
+        dbus_message_unref(call);
+    if (reply)
+        dbus_message_unref(reply);
+
+    return FALSE;
+}
