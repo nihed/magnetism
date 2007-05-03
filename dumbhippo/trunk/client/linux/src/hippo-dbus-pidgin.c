@@ -266,7 +266,7 @@ hippo_dbus_init_pidgin(DBusConnection *connection)
     reload_from_new_owner(connection, GAIM_BUS_NAME);
 }
 
-#if 1
+#if 0
 
 /* cc -Wall -ggdb -O2 `pkg-config --cflags --libs dbus-glib-1 glib-2.0 dbus-1` -I ../build/config hippo-dbus-pidgin.c hippo-dbus-helper.c -o foo && ./foo */
 
