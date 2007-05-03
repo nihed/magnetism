@@ -11,6 +11,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.jms.JmsConnectionType;
 import com.dumbhippo.jms.JmsConsumer;
 import com.dumbhippo.jms.JmsShutdownException;
+import com.dumbhippo.server.ApplicationIndexer;
 import com.dumbhippo.server.GroupIndexer;
 import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.TrackIndexer;
@@ -114,6 +115,9 @@ public class IndexerService extends ServiceMBeanSupport implements IndexerServic
 					case INDEX_GROUP:
 						GroupIndexer.getInstance().index(task.getId(), task.isReindex());
 						break;
+					case INDEX_APPLICATION:
+						ApplicationIndexer.getInstance().index(task.getId(), task.isReindex());
+						break;						
 					case INDEX_TRACK:
 						TrackIndexer.getInstance().index(task.getId(), task.isReindex());
 						break;

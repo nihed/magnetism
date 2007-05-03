@@ -29,6 +29,12 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.queryParser.MultiFieldQueryParser;
+import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryParser.QueryParser.Operator;
+import org.apache.lucene.search.Hits;
 import org.slf4j.Logger;
 
 import com.dumbhippo.Digest;
@@ -45,6 +51,7 @@ import com.dumbhippo.persistence.ApplicationWmClass;
 import com.dumbhippo.persistence.UnmatchedApplicationUsage;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
+import com.dumbhippo.server.ApplicationIndexer;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
@@ -82,6 +89,17 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		else
 			return false;
 	}
+	
+	public Application lookupById(String id) throws NotFoundException {	
+		Application app = em.find(Application.class, id);
+		if (app == null)
+			throw new NotFoundException(id);
+		return app;
+	}	
+	
+	public List<String> getAllApplicationIds() {
+		return TypeUtils.castList(String.class, em.createQuery("SELECT a.id FROM Application a").getResultList());		
+	}	
 	
 	private Date getDefaultSince() {
 		return new Date(System.currentTimeMillis() - 31 * 24 * 60 * 60 * 1000L);
@@ -966,6 +984,43 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		Query q = em.createQuery("SELECT aus.application FROM ApplicationUserState aus WHERE aus.user = :user AND aus.pinned = TRUE")
 			.setParameter("user", user);
 		return TypeUtils.castList(Application.class, q.getResultList());
+	}
+	
+	public void search(String search, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
+		final String[] fields = { "name", "genericName", "tooltip", "description1", "description2", "description3", "description4" };
+		Analyzer analyzer = ApplicationIndexer.getInstance().createAnalyzer();
+		QueryParser queryParser = new MultiFieldQueryParser(fields, analyzer);
+		queryParser.setDefaultOperator(Operator.AND);
+		org.apache.lucene.search.Query query;
+		
+		List<Application> appHits = new ArrayList<Application>();
+		try {
+			query = queryParser.parse(search);
+			
+			Hits hits = ApplicationIndexer.getInstance().getSearcher().search(query);
+			for (int i = pageable.getStart(); pageable.getCount() > 0 && i < hits.length(); i++) {
+				try {
+					Document d = hits.doc(i);
+					String id = d.get("id");
+					if (id == null) {
+						logger.error("Document didn't have id field");
+						continue;
+					}
+					
+					Application app = lookupById(id);
+					appHits.add(app);
+				} catch (NotFoundException e) {
+				}
+			}
+		} catch (org.apache.lucene.queryParser.ParseException e) {
+			logger.error("Failed to parse query string", e);
+			return;
+		} catch (IOException e) {
+			logger.error("Caught I/O error during search", e);
+			return;
+		}
+		pageable.setResults(viewApplications(null, appHits, iconSize));
+		pageable.setTotalCount(appHits.size());
 	}
 
 	public void updateUsages() {

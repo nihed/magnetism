@@ -414,6 +414,10 @@ public interface HttpMethods {
 	@HttpOptions( optionalParams = { "category" } )	
 	public void getPopularApplications(XmlBuilder xml, Viewpoint viewpoint, String category) throws XmlMethodException;
 	
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams({ "search" })	
+	public void getSearchApplications(XmlBuilder xml, Viewpoint viewpoint, String search) throws XmlMethodException;		
+	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "who", "participantOnly" })
 	@HttpOptions( optionalParams = { "participantOnly" } )

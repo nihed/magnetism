@@ -1,17 +1,19 @@
 package com.dumbhippo.server;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.SystemViewpoint;
 
-public class PostIndexer extends GuidPersistableIndexer<Post> {
+public class PostIndexer extends UniqueObjectIndexer<Post> {
 	static PostIndexer instance = new PostIndexer();
 	
 	public static PostIndexer getInstance() {
@@ -38,15 +40,15 @@ public class PostIndexer extends GuidPersistableIndexer<Post> {
 	}
 
 	@Override
-	protected List<Guid> loadAllIds() {
-		return EJBUtil.defaultLookup(PostingBoard.class).getAllPostIds();
+	protected List<Serializable> loadAllIds() {
+		return TypeUtils.castList(Serializable.class, EJBUtil.defaultLookup(PostingBoard.class).getAllPostIds());
 	}
 
 	@Override
-	protected Post loadObject(Guid guid) {
+	protected Post loadObject(Serializable guid) {
 		try {
 			PostingBoard board = EJBUtil.defaultLookup(PostingBoard.class);
-			Post post = board.loadRawPost(SystemViewpoint.getInstance(), guid);
+			Post post = board.loadRawPost(SystemViewpoint.getInstance(), (Guid) guid);
 			// Filter group notifications from search results
 			if (board.postIsGroupNotification(post))
 				return null;

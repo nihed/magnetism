@@ -2382,6 +2382,18 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}		
 		xml.closeElement();
 	}
+	
+	public void getSearchApplications(XmlBuilder xml, Viewpoint viewpoint, String search) throws XmlMethodException {	
+		Pageable<ApplicationView> pageable = new Pageable<ApplicationView>("applications");
+		pageable.setPosition(0);
+		pageable.setInitialPerPage(30);		
+		applicationSystem.search(search, 24, null, pageable);
+		xml.openElement("applications", "xmlns", APPLICATIONS_NAMESPACE);
+		for (ApplicationView application : pageable.getResults()) {
+			application.writeToXmlBuilder(xml);		
+		}		
+		xml.closeElement();			
+	}
 
 	public void getUserRSS(OutputStream out, HttpResponseData contentType, User who, boolean participantOnly) throws IOException, XmlMethodException {
 		

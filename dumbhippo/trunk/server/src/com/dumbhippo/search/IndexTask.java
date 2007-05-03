@@ -17,6 +17,7 @@ public class IndexTask implements Serializable {
 		INDEX_GROUP,
 		INDEX_POST,
 		INDEX_TRACK,
+		INDEX_APPLICATION,		
 		INDEX_ALL
 	};
 	

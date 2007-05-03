@@ -22,6 +22,9 @@ import com.dumbhippo.server.views.Viewpoint;
 public interface ApplicationSystem {
 	boolean canEditApplications(Viewpoint viewpoint);
 		
+	public List<String> getAllApplicationIds();	
+	Application lookupById(String id) throws NotFoundException;
+	
 	void addUpload(Guid uploaderId, Guid uploadId, AppinfoFile appinfoFile, String comment);
 	void deleteApplication(UserViewpoint viewpoint, String applicationId, String comment);
 	void reinstallAllApplications();
@@ -58,4 +61,6 @@ public interface ApplicationSystem {
 	public ApplicationUserState getUserState(User user, Application app);
 
 	void updateUsages();
+	
+	void search(String search, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable);
 }

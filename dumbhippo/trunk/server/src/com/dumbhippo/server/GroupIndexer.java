@@ -1,17 +1,19 @@
 package com.dumbhippo.server;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.SystemViewpoint;
 
-public final class GroupIndexer extends GuidPersistableIndexer<Group> {
+public final class GroupIndexer extends UniqueObjectIndexer<Group> {
 	static GroupIndexer instance = new GroupIndexer();
 	
 	public static GroupIndexer getInstance() {
@@ -28,14 +30,14 @@ public final class GroupIndexer extends GuidPersistableIndexer<Group> {
 	}
 	
 	@Override
-	protected List<Guid> loadAllIds() {
-		return EJBUtil.defaultLookup(GroupSystem.class).getAllGroupIds();
+	protected List<Serializable> loadAllIds() {
+		return TypeUtils.castList(Serializable.class, EJBUtil.defaultLookup(GroupSystem.class).getAllGroupIds());
 	}
 
 	@Override
-	protected Group loadObject(Guid guid) {
+	protected Group loadObject(Serializable guid) {
 		try {
-			return EJBUtil.defaultLookup(GroupSystem.class).lookupGroupById(SystemViewpoint.getInstance(), guid);
+			return EJBUtil.defaultLookup(GroupSystem.class).lookupGroupById(SystemViewpoint.getInstance(), (Guid) guid);
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}
