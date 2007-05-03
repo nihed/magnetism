@@ -1,7 +1,7 @@
 %{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
 
 Name:           hippo-canvas
-Version:        0.2.16
+Version:        0.2.17
 Release:        1%{?dist}
 Summary:        A canvas widget
 
@@ -18,7 +18,7 @@ BuildRequires:  gtk2-devel
 
 %description
 The hippo-canvas library contains a canvas widget developed by the 
-Mugshot team for displaying GTK+ UI across multiple platforms
+Mugshot team for displaying GTK+ UI across multiple platforms.
 
 %package        devel
 Summary:        Development files for hippo-canvas
@@ -27,13 +27,15 @@ Requires:       %{name} = %{version}-%{release}
 
 %description    devel
 The hippo-canvas-devel package contains libraries and header files for
-developing applications that use hippo-canvas
+developing applications that use hippo-canvas.
 
 %package        python
 Summary:        Python module for hippo-canvas
 Group:          Development/Languages
 Requires:       %{name} = %{version}-%{release}
 BuildRequires:  python-devel
+BuildRequires:  pycairo-devel
+BuildRequires:  pygtk2-devel
 
 %description    python 
 The hippo-canvas-python package contains a Python interface.
@@ -70,6 +72,7 @@ rm -rf $RPM_BUILD_ROOT
 %files devel
 %defattr(-,root,root,-)
 %{_includedir}/*
+%{_libdir}/pkgconfig/hippo-canvas.pc
 %{_libdir}/*.so
 
 %files python
@@ -77,6 +80,11 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitearch}/*.so
 
 %changelog
+* Thu May 02 2007 Colin Walters <walters@redhat.com> - 0.2.17-1
+- New upstream
+- Package pc file
+- Add BRs on pycairo-devel, pygtk-devel
+
 * Mon Apr 30 2007 Colin Walters <walters@redhat.com> - 0.2.16-1
 - New upstream
 
