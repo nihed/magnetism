@@ -11,11 +11,15 @@ import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.lucene.Indexed;
+import org.hibernate.lucene.Keyword;
+import org.hibernate.lucene.Text;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.server.util.EJBUtil;
 
 @Entity
+@Indexed(index="applications")
 @Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public class Application {
 	private String id;
@@ -44,6 +48,7 @@ public class Application {
 	}
 	
 	@Id
+	@Keyword(id=true)	
 	@Column(nullable = false, length=64)
 	public String getId() {
 		return id;
@@ -63,6 +68,7 @@ public class Application {
 	}
 
 	@Column(nullable = false)
+	@Text
 	public String getName() {
 		return name;
 	}
@@ -72,6 +78,7 @@ public class Application {
 	}
 
 	@Column(nullable = true)
+	@Text
 	public String getGenericName() {
 		return genericName;
 	}
@@ -81,6 +88,7 @@ public class Application {
 	}
 
 	@Column(nullable = true)
+	@Text
 	public String getTooltip() {
 		return tooltip;
 	}
@@ -90,7 +98,8 @@ public class Application {
 	}
 
 	@Column(nullable = true)
-	protected String getDescription1() {
+	@Text	
+	public String getDescription1() {
 		return description1;
 	}
 
@@ -99,7 +108,8 @@ public class Application {
 	}
 
 	@Column(nullable = true)
-	protected String getDescription2() {
+	@Text	
+	public String getDescription2() {
 		return description2;
 	}
 
@@ -108,7 +118,8 @@ public class Application {
 	}
 
 	@Column(nullable = true)
-	protected String getDescription3() {
+	@Text	
+	public String getDescription3() {
 		return description3;
 	}
 
@@ -117,7 +128,8 @@ public class Application {
 	}
 
 	@Column(nullable = true)
-	protected String getDescription4() {
+	@Text	
+	public String getDescription4() {
 		return description4;
 	}
 

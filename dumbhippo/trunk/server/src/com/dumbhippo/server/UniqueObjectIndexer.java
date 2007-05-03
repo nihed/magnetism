@@ -1,6 +1,7 @@
 package com.dumbhippo.server;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 
 import org.apache.lucene.document.Document;
@@ -8,29 +9,27 @@ import org.apache.lucene.index.IndexWriter;
 import org.hibernate.lucene.DocumentBuilder;
 
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.server.util.EJBUtil;
 
-public abstract class GuidPersistableIndexer<T extends GuidPersistable> extends Indexer<T> {
+public abstract class UniqueObjectIndexer<T> extends Indexer<T> {
 	
-	protected GuidPersistableIndexer(Class<T> clazz) {
+	protected UniqueObjectIndexer(Class<T> clazz) {
 		super(clazz);
 	}
 
-	protected abstract T loadObject(Guid guid);
+	protected abstract T loadObject(Serializable id);
 	
-	protected abstract List<Guid> loadAllIds();
+	protected abstract List<Serializable> loadAllIds();
 
-	private void doIndexObjects(final IndexWriter writer, final DocumentBuilder<T> builder, List<Guid> ids) {		
-		for (final Guid id : ids) {
+	private void doIndexObjects(final IndexWriter writer, final DocumentBuilder<T> builder, final List<Serializable> ids) {		
+		for (final Serializable id : ids) {
 			EJBUtil.defaultLookup(TransactionRunner.class).runTaskInNewTransaction(new Runnable() {
 				public void run() {
 					T obj = loadObject(id);
 					// loadObject returns null for objects to skip
 					if (obj == null)
 						return;
-					Document document = builder.getDocument(obj, obj.getId());
+					Document document = builder.getDocument(obj, id);
 					try {
 						writer.addDocument(document);
 					} catch (IOException e) {
@@ -43,7 +42,7 @@ public abstract class GuidPersistableIndexer<T extends GuidPersistable> extends 
 	
 	@Override
 	protected void doIndex(IndexWriter writer, List<Object> ids) throws IOException {
-		doIndexObjects(writer, getBuilder(), TypeUtils.castList(Guid.class, ids));
+		doIndexObjects(writer, getBuilder(), TypeUtils.castList(Serializable.class, ids));
 	}
 
 	@Override
