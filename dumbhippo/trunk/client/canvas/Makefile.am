@@ -13,6 +13,9 @@ else
 LINUXSRCDIR=$(top_srcdir)/linux-dist
 endif
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = hippo-canvas.pc
+
 # note that target-specific CPPFLAGS will REPLACE
 # not augment these default flags by default,
 # so we manually put AM_CPPFLAGS in the target flags
@@ -25,7 +28,7 @@ BUILT_SRC_DIR=$(top_builddir)/config/hippo-canvas
 MARSHAL_DIR=$(BUILT_SRC_DIR)
 ENUMS_DIR=$(BUILT_SRC_DIR)
 
-EXTRA_DIST = LICENSE
+EXTRA_DIST = LICENSE hippo-canvas.pc.in
 
 # if srcdir!=builddir, clean out maintainer-clean files from builddir
 # this allows dist to pass.

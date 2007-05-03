@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(hippo-canvas, 0.2.16)
+AM_INIT_AUTOMAKE(hippo-canvas, 0.2.17)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -199,6 +199,7 @@ AC_SUBST(PYGTK_DEFSDIR)
 
 AC_OUTPUT([
 Makefile
+hippo-canvas.pc
 ])
 
 dnl ==========================================================================
