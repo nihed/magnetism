@@ -11,6 +11,7 @@ import javax.ejb.Stateless;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.AmazonActivityStatus;
 import com.dumbhippo.persistence.AmazonActivityType;
 import com.dumbhippo.persistence.Block;
@@ -25,7 +26,9 @@ import com.dumbhippo.server.AmazonUpdater;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.services.AmazonListItemView;
 import com.dumbhippo.services.AmazonReviewView;
+import com.dumbhippo.services.caches.AmazonListItemsCache;
 import com.dumbhippo.services.caches.AmazonReviewsCache;
 import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.WebServiceCache;
@@ -42,6 +45,9 @@ public class AmazonActivityBlockHandlerBean extends
 	
 	@WebServiceCache
 	private AmazonReviewsCache reviewsCache;
+
+	@WebServiceCache
+	private AmazonListItemsCache listItemsCache;
 	
 	@EJB
 	private CacheFactory cacheFactory;	
@@ -67,10 +73,14 @@ public class AmazonActivityBlockHandlerBean extends
 		AmazonActivityStatus activityStatus = em.find(AmazonActivityStatus.class, block.getData2AsGuid().toString());
 		
 		AmazonReviewView reviewView = null;
-		if (activityStatus.getActivityType() == AmazonActivityType.REVIEWED) {
-			reviewView = reviewsCache.queryExisting(activityStatus.getAmazonUserId(), activityStatus.getItemId());		
+		AmazonListItemView listItemView = null;
+		switch (activityStatus.getActivityType()) {
+	        case REVIEWED :
+			    reviewView = reviewsCache.queryExisting(activityStatus.getAmazonUserId(), activityStatus.getItemId());		
+	        case WISH_LISTED :
+			    listItemView = listItemsCache.queryExisting(new Pair<String, String>(activityStatus.getAmazonUserId(), activityStatus.getListId()), activityStatus.getItemId());		
 		}
-
+		
 		List<ChatMessageView> messageViews = chatSystem.viewMessages(chatSystem.getNewestMessages(block, BlockView.RECENT_MESSAGE_COUNT), viewpoint);
 		
 		int messageCount;
@@ -79,7 +89,7 @@ public class AmazonActivityBlockHandlerBean extends
 		else
 			messageCount = chatSystem.getMessageCount(block);
 		
-		blockView.populate(userView, activityStatus, reviewView, messageViews, messageCount);
+		blockView.populate(userView, activityStatus, reviewView, listItemView, messageViews, messageCount);
 	}
 
 	public BlockKey getKey(User user, AmazonActivityStatus activityStatus) {

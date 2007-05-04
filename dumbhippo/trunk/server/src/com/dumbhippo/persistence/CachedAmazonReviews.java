@@ -87,8 +87,9 @@ public class CachedAmazonReviews extends DBUnique implements CachedItem {
 	@Override
 	public String toString() {
 		if (isNoResultsMarker())
-			return "{CachedAmazonReview:NoResultsMarker}";
+			return "{CachedAmazonReviews:NoResultsMarker}";
 		else
-			return "{amazonUserId=" + amazonUserId + "}";
+			return "{CachedAmazonReviews: amazonUserId=" + amazonUserId +
+		           " totalCount=" + totalCount + "}";
 	}
 }

@@ -55,7 +55,9 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 		YOUTUBE_VIDEOS,
 		NETFLIX_QUEUE_MOVIES,
 		PICASA_ALBUMS,
-		AMAZON_REVIEWS
+		AMAZON_REVIEWS,
+		AMAZON_LISTS,
+		AMAZON_LIST_ITEMS
 	}
 	
 	private static EnumMap<Request,UniqueTaskExecutor> executors;

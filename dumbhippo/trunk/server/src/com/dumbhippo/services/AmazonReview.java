@@ -18,10 +18,12 @@ public class AmazonReview implements AmazonReviewView {
 		rating = -1;
 		helpfulVotes = -1;
 		totalVotes = -1;
+		reviewDate = new Date(-1);
 	}
 
 	public AmazonReview(String amazonUserId, String itemId, int rating, int helpfulVotes, int totalVotes,
 	                    String title, String content, Date reviewDate) {
+		this();
 		this.amazonUserId = amazonUserId;
 		this.itemId = itemId;
 		this.rating = rating;

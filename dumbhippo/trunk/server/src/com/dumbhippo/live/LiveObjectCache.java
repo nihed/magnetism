@@ -293,7 +293,7 @@ class LiveObjectCache<T extends LiveObject> {
 	}		
 	
 	/**
-	 * Remove a LiveObject in the cache, if present, because te
+	 * Remove a LiveObject in the cache, if present, because the
 	 * data in the LiveObject has changed; note that this is incompatible 
 	 * with addStrongReference(). If addStrongReference() is used, you must
 	 * update cached objects instead of invalidating them.

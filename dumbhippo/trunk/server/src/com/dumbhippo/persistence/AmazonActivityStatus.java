@@ -8,11 +8,11 @@ import javax.persistence.UniqueConstraint;
 import com.dumbhippo.services.AmazonWebServices;
 
 @Entity
-@Table(uniqueConstraints = {@UniqueConstraint(columnNames={"amazonUserId","itemId","wishListId","activityType"})})
+@Table(uniqueConstraints = {@UniqueConstraint(columnNames={"amazonUserId","itemId","listId","activityType"})})
 public class AmazonActivityStatus extends EmbeddedGuidPersistable {
     private String amazonUserId;
     private String itemId;
-    private String wishListId;
+    private String listId;
     private AmazonActivityType activityType;
     // TODO: see if this is actually useful
     // private long activityDate;
@@ -20,10 +20,10 @@ public class AmazonActivityStatus extends EmbeddedGuidPersistable {
 	protected AmazonActivityStatus() {
 	}
 	
-	public AmazonActivityStatus(String amazonUserId, String itemId, String wishListId, AmazonActivityType activityType) {
+	public AmazonActivityStatus(String amazonUserId, String itemId, String listId, AmazonActivityType activityType) {
 		this.amazonUserId = amazonUserId;
 		this.itemId = itemId;
-		this.wishListId = wishListId;
+		this.listId = listId;
 		this.activityType = activityType;
 		// this.activityDate = activityDate.getTime();
 	}
@@ -46,13 +46,13 @@ public class AmazonActivityStatus extends EmbeddedGuidPersistable {
 		this.itemId = itemId;
 	}
 
-	@Column(nullable=false, length=AmazonWebServices.MAX_AMAZON_WISH_LIST_ID_LENGTH)
-	public String getWishListId() {
-		return wishListId;
+	@Column(nullable=false, length=AmazonWebServices.MAX_AMAZON_LIST_ID_LENGTH)
+	public String getListId() {
+		return listId;
 	}
 	
-	public void setWishListId(String wishListId) {
-		this.wishListId = wishListId;
+	public void setListId(String listId) {
+		this.listId = listId;
 	}
 	
 	@Column(nullable=false)
@@ -78,6 +78,6 @@ public class AmazonActivityStatus extends EmbeddedGuidPersistable {
 	@Override
 	public String toString() {
 		return "{guid=" + getId() + " amazonUserId=" + amazonUserId + " itemId=" + itemId + 
-		       " wishListId=" + wishListId + " activityType=" + activityType + "}";
+		       " listId=" + listId + " activityType=" + activityType + "}";
 	}
 }
