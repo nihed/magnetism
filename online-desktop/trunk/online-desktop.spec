@@ -95,6 +95,7 @@ rm -rf $RPM_BUILD_ROOT
 %files google-calendar
 %defattr(-,root,root,-)
 %{_datadir}/applications/fedora-google-calendar.desktop
+%{_datadir}/icons/hicolor/*/apps/google-calendar.png
 
 %files google-docs
 %defattr(-,root,root,-)

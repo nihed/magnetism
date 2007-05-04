@@ -32,7 +32,8 @@ smallicon_DATA=$(subst SUBDIR,$(SMALLICONSUBDIR),$(all_sizes_icons))
 
 SMALLERICONSUBDIR=icons/hicolor/16x16/apps
 smallericondir=$(datadir)/$(SMALLERICONSUBDIR)
-smallericon_DATA=$(subst SUBDIR,$(SMALLERICONSUBDIR),$(all_sizes_icons))
+smallericon_DATA=$(subst SUBDIR,$(SMALLERICONSUBDIR),$(all_sizes_icons)) \
+	$(SMALLERICONSUBDIR)/google-calendar.png
 
 EXTRA_DIST +=					\
 	$(smallicon_DATA)			\
