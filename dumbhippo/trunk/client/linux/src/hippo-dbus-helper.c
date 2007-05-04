@@ -20,8 +20,11 @@ typedef struct {
 
 typedef struct {
     GHashTable *interfaces;
-    GHashTable *objects;
 } HippoDBusHelper;
+
+static DBusHandlerResult hippo_dbus_helper_handle_object_message(DBusConnection  *connection,
+                                                                 DBusMessage     *message,
+                                                                 HippoDBusObject *object);
 
 static HippoDBusInterface*
 iface_new(const char              *name,
@@ -168,7 +171,6 @@ helper_free(void *data)
     /* FIXME free the hash contents */
 
     g_hash_table_destroy(helper->interfaces);
-    g_hash_table_destroy(helper->objects);
     g_free(helper);
 }
 
@@ -187,7 +189,6 @@ get_helper(DBusConnection *connection)
     if (helper == NULL) {
         helper = g_new0(HippoDBusHelper, 1);
         helper->interfaces = g_hash_table_new(g_str_hash, g_str_equal);
-        helper->objects = g_hash_table_new(g_str_hash, g_str_equal);
 
         dbus_connection_set_data(connection, slot, helper, helper_free);
     }
@@ -213,6 +214,27 @@ hippo_dbus_helper_register_interface(DBusConnection          *connection,
 
     g_hash_table_replace(helper->interfaces, iface->name, iface);
 }
+
+static void
+unregister_object (DBusConnection  *connection,
+                   void            *user_data)
+{
+    object_free(user_data);
+}
+
+static DBusHandlerResult
+handle_object_message(DBusConnection  *connection,
+                      DBusMessage     *message,
+                      void            *user_data)
+{
+    return hippo_dbus_helper_handle_object_message(connection, message, user_data);
+}
+
+static DBusObjectPathVTable object_vtable = {
+    unregister_object,
+    handle_object_message,
+    NULL, NULL, NULL, NULL
+};
 
 static void
 hippo_dbus_helper_register_object_valist(DBusConnection    *connection,
@@ -252,40 +274,25 @@ hippo_dbus_helper_register_object_valist(DBusConnection    *connection,
 
     o = object_new(path, object, ifaces, i);
 
-    g_return_if_fail(g_hash_table_lookup(helper->objects, o->path) == NULL);
-
-    g_hash_table_replace(helper->objects, o->path, o);
+    dbus_connection_register_object_path(connection, path, &object_vtable, o);
 }
 
 void
 hippo_dbus_helper_unregister_object(DBusConnection    *connection,
                                     const char        *path)
 {
-    HippoDBusObject *o;
-    HippoDBusHelper *helper;
-
-    helper = get_helper(connection);
-
-    o = g_hash_table_lookup(helper->objects, path);
-    g_return_if_fail(o != NULL);
-
-    g_hash_table_remove(helper->objects, path);
-
-    object_free(o);
+    dbus_connection_unregister_object_path(connection, path);
 }
 
 gboolean
 hippo_dbus_helper_object_is_registered (DBusConnection          *connection,
                                         const char              *path)
 {
-    HippoDBusObject *o;
-    HippoDBusHelper *helper;
+    void *object_data;
 
-    helper = get_helper(connection);
+    dbus_connection_get_object_path_data(connection, path, &object_data);
 
-    o = g_hash_table_lookup(helper->objects, path);
-
-    return o != NULL;
+    return object_data != NULL;
 }
 
 void
@@ -723,10 +730,11 @@ handle_introspection(DBusConnection  *connection,
     DBusError derror;
     GString *xml;
     int i;
-
+    char **children;  
+    
     if (!(iface == NULL || strcmp(iface, DBUS_INTERFACE_INTROSPECTABLE) == 0))
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-
+    
     reply = NULL;
     dbus_error_init(&derror);
 
@@ -737,26 +745,46 @@ handle_introspection(DBusConnection  *connection,
     g_string_append       (xml,
                            "<node>\n");
 
-    g_string_append_printf(xml,
-                           "  <interface name=\"%s\">\n", DBUS_INTERFACE_INTROSPECTABLE);
+    /* Some boilerplate here from dbus-glib */
+    
+    /* We are introspectable, though I guess that was pretty obvious */
+    g_string_append_printf (xml, "  <interface name=\"%s\">\n", DBUS_INTERFACE_INTROSPECTABLE);
+    g_string_append (xml, "    <method name=\"Introspect\">\n");
+    g_string_append_printf (xml, "      <arg name=\"data\" direction=\"out\" type=\"%s\"/>\n", DBUS_TYPE_STRING_AS_STRING);
+    g_string_append (xml, "    </method>\n");
+    g_string_append (xml, "  </interface>\n");
 
-    g_string_append       (xml,
-                           "    <method name=\"Introspect\">\n");
-
-    g_string_append_printf(xml,
-                           "      <arg name=\"data\" direction=\"out\" type=\"%s\"/>\n",
-                           DBUS_TYPE_STRING_AS_STRING);
-
-    g_string_append       (xml,
-                           "    </method>\n");
-
-    g_string_append       (xml,
-                           "  </interface>\n");
+    /* We support get/set properties */
+    g_string_append_printf (xml, "  <interface name=\"%s\">\n", DBUS_INTERFACE_PROPERTIES);
+    g_string_append (xml, "    <method name=\"Get\">\n");
+    g_string_append_printf (xml, "      <arg name=\"interface\" direction=\"in\" type=\"%s\"/>\n", DBUS_TYPE_STRING_AS_STRING);
+    g_string_append_printf (xml, "      <arg name=\"propname\" direction=\"in\" type=\"%s\"/>\n", DBUS_TYPE_STRING_AS_STRING);
+    g_string_append_printf (xml, "      <arg name=\"value\" direction=\"out\" type=\"%s\"/>\n", DBUS_TYPE_VARIANT_AS_STRING);
+    g_string_append (xml, "    </method>\n");
+    g_string_append (xml, "    <method name=\"Set\">\n");
+    g_string_append_printf (xml, "      <arg name=\"interface\" direction=\"in\" type=\"%s\"/>\n", DBUS_TYPE_STRING_AS_STRING);
+    g_string_append_printf (xml, "      <arg name=\"propname\" direction=\"in\" type=\"%s\"/>\n", DBUS_TYPE_STRING_AS_STRING);
+    g_string_append_printf (xml, "      <arg name=\"value\" direction=\"in\" type=\"%s\"/>\n", DBUS_TYPE_VARIANT_AS_STRING);
+    g_string_append (xml, "    </method>\n");
+    g_string_append (xml, "  </interface>\n");
 
     for (i = 0; o->interfaces[i] != NULL; ++i) {
         append_interface(xml, o->interfaces[i]);
     }
 
+    /* Child nodes */
+    if (!dbus_connection_list_registered (connection, 
+                                          dbus_message_get_path (message),
+                                          &children))
+        g_error ("Out of memory");
+
+    for (i = 0; children[i]; i++)
+        g_string_append_printf (xml, "  <node name=\"%s\"/>\n",
+                                children[i]);
+
+    dbus_free_string_array(children);
+
+    /* Close the document */
     g_string_append(xml, "</node>\n");
 
     reply = dbus_message_new_method_return(message);
@@ -784,12 +812,11 @@ handle_introspection(DBusConnection  *connection,
     }
 }
 
-DBusHandlerResult
-hippo_dbus_helper_handle_message(DBusConnection *connection,
-                                 DBusMessage    *message)
+static DBusHandlerResult
+hippo_dbus_helper_handle_object_message(DBusConnection  *connection,
+                                        DBusMessage     *message,
+                                        HippoDBusObject *o)
 {
-    HippoDBusObject *o;
-    HippoDBusHelper *helper;
     const char *path;
     const char *member;
     const char *iface;
@@ -800,13 +827,6 @@ hippo_dbus_helper_handle_message(DBusConnection *connection,
     path = dbus_message_get_path(message);
 
     if (path == NULL)
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-
-    helper = get_helper(connection);
-
-    o = g_hash_table_lookup(helper->objects, path);
-
-    if (o == NULL)
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
     member = dbus_message_get_member(message);
@@ -855,9 +875,16 @@ hippo_dbus_helper_handle_message(DBusConnection *connection,
     }
 }
 
+DBusHandlerResult
+hippo_dbus_helper_filter_message(DBusConnection *connection,
+                                 DBusMessage    *message)
+{
+    /* Everything we do now is on a specific registered object */
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
 
 struct HippoDBusProxy {
-    int refcount;
+    int                refcount;
     DBusConnection    *connection;
     char              *bus_name;
     char              *path;
