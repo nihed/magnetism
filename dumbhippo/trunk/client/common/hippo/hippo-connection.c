@@ -126,7 +126,6 @@ outgoing_message_unref(OutgoingMessage *outgoing)
 
 typedef enum {
     PROCESS_MESSAGE_IGNORE,
-    PROCESS_MESSAGE_PEND,
     PROCESS_MESSAGE_CONSUME
 } ProcessMessageResult;
 
@@ -177,7 +176,6 @@ static void     hippo_connection_parse_prefs_node     (HippoConnection *connecti
                                                        LmMessageNode   *prefs_node);
 static gboolean hippo_connection_parse_entity         (HippoConnection *connection,
                                                        LmMessageNode   *node);
-static void     hippo_connection_process_pending_room_messages(HippoConnection *connection);
 
 /* enter/leave unconditionally send the presence message; send_state will 
  * send the presence only if there's a need given old_state -> new_state
@@ -230,8 +228,6 @@ struct _HippoConnection {
     LmConnection *lm_connection;
     /* queue of OutgoingMessage objects */
     GQueue *pending_outgoing_messages;
-    /* queue of LmMessage */
-    GQueue *pending_room_messages;
     HippoSong pending_song;
     HippoBrowserKind login_browser;
     int message_port;
@@ -299,7 +295,6 @@ hippo_connection_init(HippoConnection *connection)
 {
     connection->state = HIPPO_STATE_SIGNED_OUT;
     connection->pending_outgoing_messages = g_queue_new();
-    connection->pending_room_messages = g_queue_new();
 
     /* default browsers if we don't discover otherwise 
      * (we'll use whatever the user has logged in with
@@ -490,10 +485,6 @@ hippo_connection_finalize(GObject *object)
     g_queue_foreach(connection->pending_outgoing_messages,
                     (GFunc) outgoing_message_unref, NULL);
     g_queue_free(connection->pending_outgoing_messages);
-
-    g_queue_foreach(connection->pending_room_messages,
-                    (GFunc)lm_message_unref, NULL);
-    g_queue_free(connection->pending_room_messages);
 
     g_free(connection->username);
     g_free(connection->password);
@@ -2747,6 +2738,15 @@ hippo_connection_send_chat_room_state(HippoConnection *connection,
         hippo_connection_send_chat_room_enter(connection, room, new_state);
     } else if (new_state == HIPPO_CHAT_STATE_NONMEMBER) {
         hippo_connection_send_chat_room_leave(connection, room);
+
+        /* once we've left the chat room, we aren't updated on the contents, so
+         * clear everything. We *could* leave the messages around since they 
+         * shouldn't change, but there's not much point, and could result
+         * in gaps, where we have messages from a week ago, but not from
+         * yesterday, since the server only sends a limited history on
+         * reconnect. Plus, discarding everything saves memory.
+         */
+        hippo_chat_room_clear(room);
     } else {
         /* Change from Visitor => Participant or vice-versa */
         hippo_connection_send_chat_room_enter(connection, room, new_state);
@@ -2809,8 +2809,10 @@ hippo_connection_rejoin_chat_room(HippoConnection *connection,
     self = hippo_data_cache_get_self(connection->cache);
     g_return_if_fail(self != NULL);
 
-    /* clear all data we have cached about the chat room */
-    hippo_chat_room_reconnected(connection, room);
+    /* when we get disconnected from the server, we don't clear the old state immediately, but
+     * immediately, but wait until wereconnect 
+     */
+    hippo_chat_room_clear(room);
 
     /* but we preserved our "join count" so we know if we wanted
      * to be in the room
@@ -2980,107 +2982,6 @@ parse_room_info(HippoConnection *connection,
     
     return TRUE;
 }            
-
-/* This reply has no content, it just signals the end of the 
- * chat room data we asked the server to send.
- */
-static LmHandlerResult
-on_get_chat_room_details_reply(LmMessageHandler *handler,
-                               LmConnection     *lconnection,
-                               LmMessage        *message,
-                               gpointer          data)
-{
-    HippoConnection *connection = HIPPO_CONNECTION(data);
-    const char *from;
-    char *chat_id;
-    char *user_id;
-    HippoChatRoom *room;
-    HippoChatKind kind;
-    LmMessageSubType subtype;
-    
-    subtype = lm_message_get_sub_type(message);
-
-    if (!(subtype == LM_MESSAGE_SUB_TYPE_ERROR || subtype == LM_MESSAGE_SUB_TYPE_RESULT)) {
-        g_warning("Chat room details IQ reply has unexpected subtype %d", subtype);
-        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-    }
-
-    from = lm_message_node_get_attribute(message->node, "from");
-
-    if (!from || !parse_room_jid(from, &chat_id, &user_id)) {
-        g_warning("getChatRoomDetails reply doesn't come from a chat room!");
-        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-    }
-
-    g_debug("got chat room details reply for %s", chat_id);
-
-    room = hippo_data_cache_lookup_chat_room(connection->cache, chat_id, &kind);
-    if (!room) {
-        g_warning("getChatRoomDetails reply for an unknown chatroom");
-        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-    }
-    
-    if (!hippo_chat_room_get_loading(room)) {
-        /* If this prints it's probably because of calling chat_room_clear without
-         * actually disconnecting... so loading was set to false but the reply
-         * still arrived.
-         */
-        g_warning("chat room should have loading=TRUE but does not on details reply");
-    }
-    
-    g_object_ref(room); /* since we'll be emitting some signals */
-
-    if (subtype == LM_MESSAGE_SUB_TYPE_ERROR) {
-        hippo_chat_room_set_kind(room, HIPPO_CHAT_KIND_BROKEN);
-    } else {
-        /* Sets the kind */
-        parse_room_info(connection, message, chat_id, NULL);
-    }
- 
-    /* if we still don't know the kind, this thing is hosed, e.g. bad roomInfo */
-    if (hippo_chat_room_get_kind(room) == HIPPO_CHAT_KIND_UNKNOWN)   
-        hippo_chat_room_set_kind(room, HIPPO_CHAT_KIND_BROKEN);
-    kind = hippo_chat_room_get_kind(room);
-
-    g_debug("Chat room loaded, kind=%d", hippo_chat_room_get_kind(room));
-    /* notify listeners we're loaded */
-    hippo_chat_room_set_loading(room, connection->generation, FALSE);
-
-    /* process any pending notifications of new users / messages */
-    hippo_connection_process_pending_room_messages(connection);
-
-    g_object_unref(room);
-
-    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-}
-
-void
-hippo_connection_request_chat_room_details(HippoConnection *connection,
-                                           HippoChatRoom   *room)
-{
-    const char *to;
-    LmMessage *message;    
-    LmMessageNode *child;
-    
-    if (hippo_chat_room_get_loading(room)) {
-        g_debug("already loading chat room, not doing it again");
-        return;
-    }
-
-    hippo_chat_room_set_loading(room, connection->generation, TRUE);
-    to = hippo_chat_room_get_jabber_id(room);
-
-    message = lm_message_new_with_sub_type(to, LM_MESSAGE_TYPE_IQ, LM_MESSAGE_SUB_TYPE_GET);
-
-    child = lm_message_node_add_child (message->node, "details", NULL);
-    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/rooms");
-
-    hippo_connection_send_message_with_reply(connection, message, on_get_chat_room_details_reply,
-                                             SEND_MODE_AFTER_AUTH);
-
-    g_debug("Sent request for chat room details on '%s' '%s'",
-            hippo_chat_room_get_id(room), hippo_chat_room_get_jabber_id(room));
-}
 
 static void
 hippo_connection_parse_settings_node(HippoConnection *connection,
@@ -3381,8 +3282,7 @@ static void
 process_room_chat_message(HippoConnection *connection,
                           LmMessage       *message,
                           HippoChatRoom   *room,
-                          const char      *user_id,
-                          gboolean         was_pending)
+                          const char      *user_id)
 {
     const char *text;
     LmMessageNode *body_node;
@@ -3430,8 +3330,7 @@ static void
 process_room_presence(HippoConnection *connection,
                       LmMessage       *message,
                       HippoChatRoom   *room,
-                      const char      *user_id,
-                      gboolean         was_pending)
+                      const char      *user_id)
 {
     LmMessageSubType subtype;
     HippoPost *post;
@@ -3536,8 +3435,7 @@ process_room_presence(HippoConnection *connection,
 
 static ProcessMessageResult
 process_room_message(HippoConnection *connection,
-                     LmMessage       *message,
-                     gboolean         was_pending)
+                     LmMessage       *message)
 {
     /* this could be a chat message or a presence notification */
 
@@ -3592,22 +3490,12 @@ process_room_message(HippoConnection *connection,
         }
     }
 
-    /* If we got a message and started loading the room in response to that,
-     * we need to wait until we finish loading before we can start processing 
-     * any non-history messages.  History messages are immediately appended to the 
-     * chat room.
-     */
-    if (!is_history_message && hippo_chat_room_get_loading(room)) {
-        result = PROCESS_MESSAGE_PEND;
-        goto out;
-    }
-
     if (lm_message_get_type(message) == LM_MESSAGE_TYPE_MESSAGE) {
         g_debug("hippo-connection::process_room_message processing room message");
-        process_room_chat_message(connection, message, room, user_id, was_pending);
+        process_room_chat_message(connection, message, room, user_id);
     } else if (lm_message_get_type(message) == LM_MESSAGE_TYPE_PRESENCE) {
         g_debug("hippo-connection::process_room_message processing room presence");
-        process_room_presence(connection, message, room, user_id, was_pending);
+        process_room_presence(connection, message, room, user_id);
     } else {
         g_debug("hippo-connection::process_room_message unknown message type");
     }
@@ -3620,23 +3508,6 @@ process_room_message(HippoConnection *connection,
     g_free(user_id);
     
     return result;
-}
-
-static void 
-hippo_connection_process_pending_room_messages(HippoConnection *connection)
-{
-    GList *l = connection->pending_room_messages->head;
-    while (l) {
-        GList *next = l->next;
-
-        LmMessage *message = l->data;
-        if (process_room_message(connection, message, TRUE) != PROCESS_MESSAGE_PEND) {
-            g_queue_delete_link(connection->pending_room_messages, l);
-            lm_message_unref(message);
-        }
-        
-        l = next;
-    }
 }
 
 /* === HippoConnection Loudmouth handlers === */
@@ -3973,14 +3844,10 @@ handle_message (LmMessageHandler *handler,
 {
     HippoConnection *connection = HIPPO_CONNECTION(data);
     
-    switch (process_room_message(connection, message, FALSE)) {
+    switch (process_room_message(connection, message)) {
     case PROCESS_MESSAGE_IGNORE:
         break;
     case PROCESS_MESSAGE_CONSUME:
-        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-    case PROCESS_MESSAGE_PEND:
-        lm_message_ref(message);
-        g_queue_push_tail(connection->pending_room_messages, message);
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
@@ -4055,12 +3922,8 @@ handle_presence (LmMessageHandler *handler,
                  gpointer          data)
 {
     HippoConnection *connection = HIPPO_CONNECTION(data);
-    g_debug("handle_presence");
 
-    if (process_room_message(connection, message, FALSE) == PROCESS_MESSAGE_PEND) {
-        lm_message_ref(message);
-        g_queue_push_tail(connection->pending_room_messages, message);
-    }
+    process_room_message(connection, message);
 
     return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }

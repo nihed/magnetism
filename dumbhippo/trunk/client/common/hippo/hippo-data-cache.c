@@ -970,7 +970,11 @@ hippo_data_cache_ensure_chat_room(HippoDataCache  *cache,
         g_signal_connect(room, "loaded",
                          G_CALLBACK(hippo_data_cache_on_chat_room_loaded), cache);
             
-        hippo_connection_request_chat_room_details(cache->connection, room);
+        /* We don't try to find out the contents of the chat room immediately, since
+         * we don't get updates on a chatroom until we join it; we just wait until
+         * we first join it (which will usually be immediately after this.)
+         */
+
         /* hand our refcount to the chats hashtable */
         g_hash_table_replace(cache->chats, g_strdup(chat_id), room);
     }
