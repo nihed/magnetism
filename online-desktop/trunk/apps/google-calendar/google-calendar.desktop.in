@@ -7,7 +7,7 @@ _Comment=Calendar
 Exec=gnome-open http://www.google.com/calendar/render
 Terminal=false
 Type=Application
-Icon=google-calendar.png
+Icon=google-calendar
 StartupNotify=false
 Categories=X-Red-Hat-Base;X-Red-Hat-Base-Only;Office;Application;
 
