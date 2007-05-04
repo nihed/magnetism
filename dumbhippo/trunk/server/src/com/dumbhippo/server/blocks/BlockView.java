@@ -1,5 +1,6 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -281,6 +282,29 @@ public abstract class BlockView implements ObjectView {
 				"linkText", getSummaryLinkText());
 	}
 	
+
+	public List<Object> getReferencedObjects() {
+		if (!isPopulated())
+			throw new IllegalStateException("BlockView not populated yet, can't get referenced objects");
+		
+		// Note that we always return a mutable list; this allows subclasses
+		// to chain up then extend. The more efficient thing to do would
+		// be to change getReferencedObjects() into visitReferencedObjects()
+		// to avoid creating the temporary lists.
+		
+		List<Object> result = new ArrayList<Object>();
+
+		if (this instanceof EntitySourceBlockView) {
+			result.add(((EntitySourceBlockView)this).getEntitySource());
+		} 
+		
+		for (ChatMessageView message : getRecentMessages()) {
+			result.add(message.getSenderView());
+		}
+
+		return result;
+	}
+
 	/** See writeSummaryToXmlBuilder(), this provides the time ago shown in the
 	 * flash badge which has short summary versions of blocks 
 	 */

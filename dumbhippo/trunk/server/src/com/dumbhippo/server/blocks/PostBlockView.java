@@ -1,6 +1,5 @@
 package com.dumbhippo.server.blocks;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.dumbhippo.DateUtils;
@@ -62,11 +61,9 @@ public class PostBlockView extends BlockView implements TitleBlockView, EntitySo
 	}
 
 	public List<Object> getReferencedObjects() {
-		List<Object> result = new ArrayList<Object>();
+		List<Object> result = super.getReferencedObjects();
 		result.add(postView);
-		for (ChatMessageView message : getRecentMessages()) {
-			result.add(message.getSenderView());
-		}
+
 		return result;
 	}
 	
