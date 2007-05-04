@@ -15,48 +15,58 @@
 #define PIDGIN_INTERFACE_NAME "im.pidgin.purple.PurpleInterface"
 
 typedef struct {
-    dbus_int32_t *statuses;
-    int n_statuses;
-    char **status_names;
-} PidginStatusList;
+    dbus_int32_t id;
+    char *name;
+    dbus_int32_t is_online;
+} PidginBuddy;
+
+typedef struct {
+    dbus_int32_t id;
+    char *protocol_id;
+    char *protocol_name;
+    GSList *buddies;
+} PidginAccount;
 
 typedef struct {
     char *bus_name;
     HippoDBusProxy *gaim_proxy;
-    dbus_int32_t blist_id;
-    dbus_int32_t blist_root_id;
-    dbus_int32_t *accounts;
-    int n_accounts;
-    dbus_int32_t *account_presences;
-    PidginStatusList **account_statuses;
+    GSList *accounts;
 } PidginState;
 
+static PidginState *pidgin_state = NULL;
+
 static void
-pidgin_status_list_free(PidginStatusList *statuses)
+pidgin_buddy_free(PidginBuddy *buddy)
 {
-    g_free(statuses->statuses);
-    g_free(statuses);
+    g_free(buddy->name);
+    g_free(buddy);
 }
 
+static void
+pidgin_account_free(PidginAccount *account)
+{
+    while (account->buddies) {
+        PidginBuddy *buddy = account->buddies->data;
+        account->buddies = g_slist_remove(account->buddies, account->buddies->data);
+
+        pidgin_buddy_free(buddy);
+    }
+
+    g_free(account->protocol_id);
+    g_free(account->protocol_name);
+    g_free(account);
+}
 
 static void
 pidgin_state_free(PidginState *state)
 {
-    int i;
+    while (state->accounts) {
+        PidginAccount *account = state->accounts->data;
+        state->accounts = g_slist_remove(state->accounts, state->accounts->data);
 
-    if (state->account_statuses) {
-        for (i = 0; i < state->n_accounts; ++i) {
-            if (state->account_statuses[i]) {
-                pidgin_status_list_free(state->account_statuses[i]);
-            }
-        }
-        g_free(state->account_statuses);
+        pidgin_account_free(account);
     }
-
-    g_free(state->account_presences);
     
-    g_free(state->accounts);
-
     hippo_dbus_proxy_unref(state->gaim_proxy);
     
     g_free(state->bus_name);
@@ -64,62 +74,39 @@ pidgin_state_free(PidginState *state)
 }
 
 static void
-reload_status_list(HippoDBusProxy   *proxy,
-                   PidginStatusList *status_list)
+pidgin_state_set(PidginState *new_state)
 {
-    int i;
+    if (new_state == pidgin_state)
+        return;
+    
+    if (pidgin_state)
+        pidgin_state_free(pidgin_state);
 
-    for (i = 0; i < status_list->n_statuses; ++i) {
-        char *status_name;
-        
-        if (!hippo_dbus_proxy_STRING__INT32(proxy, 
-                                            "GaimStatusGetName",
-                                            status_list->statuses[i],
-                                            &status_name))
-            return;
+    pidgin_state = new_state;
+}
 
-        g_printerr("status %d name '%s'\n", status_list->statuses[i], status_name);
-        g_free(status_name);
+static PidginBuddy*
+pidgin_account_get_buddy(PidginAccount *account,
+                         dbus_int32_t   buddy_id)
+{
+    GSList *tmp;
+
+    for (tmp = account->buddies; tmp != NULL; tmp = tmp->next) {
+        PidginBuddy *buddy = tmp->data;
+
+        if (buddy->id == buddy_id) {
+            return buddy;
+        }
     }
+    return NULL;
 }
 
 static void
-walk_blist_node(HippoDBusProxy *proxy,
-                dbus_int32_t    node_id)
+pidgin_buddy_set_online(PidginBuddy *buddy,
+                        dbus_bool_t  is_online)
 {
-    dbus_int32_t is_buddy = FALSE;
-    dbus_int32_t is_contact = FALSE;
-    dbus_int32_t is_group = FALSE;
-    dbus_int32_t is_chat = FALSE;
-    dbus_int32_t is_online = FALSE;
-    
-    if (!hippo_dbus_proxy_INT32__INT32(proxy, "GaimBlistNodeIsContact", node_id, &is_contact))
-        goto failed;
-
-    if (!is_contact) {
-        if (!hippo_dbus_proxy_INT32__INT32(proxy, "GaimBlistNodeIsBuddy", node_id, &is_buddy))
-            goto failed;
-        if (!is_buddy) {
-            if (!hippo_dbus_proxy_INT32__INT32(proxy, "GaimBlistNodeIsGroup", node_id, &is_group))
-                goto failed;
-            if (!is_group) {
-                if (!hippo_dbus_proxy_INT32__INT32(proxy, "GaimBlistNodeIsChat", node_id, &is_chat))
-                    goto failed;
-            }
-        }
-    }
-
-    if (is_buddy)
-        if (!hippo_dbus_proxy_INT32__INT32(proxy, "GaimBuddyIsOnline", node_id, &is_online))
-            goto failed;
-
-    g_printerr("blist node %d is_buddy %d is_contact %d is_group %d is_chat %d is_online %d\n",
-               node_id, is_buddy, is_contact, is_group, is_chat, is_online);
-
-    return;
-    
- failed:
-    return;
+    g_printerr("Buddy %s is_online = %d\n", buddy->name, is_online);
+    buddy->is_online = is_online;
 }
 
 static PidginState*
@@ -128,91 +115,95 @@ reload_from_new_owner(DBusConnection *connection,
 {
     PidginState *state;
     int i;
+    dbus_int32_t *accounts;
+    dbus_int32_t n_accounts;
+    GSList *tmp;
     
     state = g_new0(PidginState, 1);
     state->bus_name = g_strdup(bus_name);
 
-    state->gaim_proxy = hippo_dbus_proxy_new(connection, bus_name, GAIM_OBJECT_NAME,
-                                             GAIM_INTERFACE_NAME);
-
-    if (!hippo_dbus_proxy_INT32__VOID(state->gaim_proxy,
-                                      "GaimGetBlist", &state->blist_id))
+    if (strcmp(bus_name, GAIM_BUS_NAME) == 0)
+        state->gaim_proxy = hippo_dbus_proxy_new(connection, bus_name, GAIM_OBJECT_NAME,
+                                                 GAIM_INTERFACE_NAME);
+    else if (strcmp(bus_name, PIDGIN_BUS_NAME) == 0)
+        state->gaim_proxy = hippo_dbus_proxy_new(connection, bus_name, PIDGIN_OBJECT_NAME,
+                                                 PIDGIN_INTERFACE_NAME);
+    else
         goto failed;
-
-    if (!hippo_dbus_proxy_INT32__VOID(state->gaim_proxy,
-                                      "GaimBlistGetRoot", &state->blist_root_id))
-        goto failed;
-
-    walk_blist_node(state->gaim_proxy, state->blist_root_id);
     
     if (!hippo_dbus_proxy_ARRAYINT32__VOID(state->gaim_proxy,
                                            "GaimAccountsGetAllActive",
-                                           &state->accounts, &state->n_accounts))
+                                           &accounts, &n_accounts))
         goto failed;                                            
 
-    for (i = 0; i < state->n_accounts; ++i) {
+    for (i = 0; i < n_accounts; ++i) {
+        PidginAccount *account;
+
+        account = g_new0(PidginAccount, 1);
+        account->id = accounts[i];
+        state->accounts = g_slist_append(state->accounts, account);
+    }
+    g_free(accounts);
+    
+    for (tmp = state->accounts; tmp != NULL; tmp = tmp->next) {
+        PidginAccount *account;
+
+        account = tmp->data;
+        
+        if (!hippo_dbus_proxy_STRING__INT32(state->gaim_proxy,
+                                            "GaimAccountGetProtocolId",
+                                            account->id,
+                                            &account->protocol_id))
+            goto failed;
+
+        if (!hippo_dbus_proxy_STRING__INT32(state->gaim_proxy,
+                                            "GaimAccountGetProtocolName",
+                                            account->id,
+                                            &account->protocol_name))
+            goto failed;
+        
+        g_printerr("Account %d id '%s' name '%s'\n", account->id,
+                   account->protocol_id, account->protocol_name);
+    }
+
+    for (tmp = state->accounts; tmp != NULL; tmp = tmp->next) {
+        PidginAccount *account;
         dbus_int32_t *buddies = NULL;
         dbus_int32_t buddies_len = 0;
+
+        account = tmp->data;
+        
         if (!hippo_dbus_proxy_ARRAYINT32__INT32_STRING(state->gaim_proxy,
                                                        "GaimFindBuddies",
-                                                       state->accounts[i], "",
+                                                       account->id, "",
                                                        &buddies, &buddies_len))
             goto failed;
-        g_printerr("Found %d buddies\n", buddies_len);
+        g_printerr("Found %d buddies in account %d\n", buddies_len, account->id);
 
         {
             int j;
             for (j = 0; j < buddies_len; ++j) {
-                dbus_int32_t is_online;
-                char *name;
+                PidginBuddy *buddy;
+
+                buddy = g_new0(PidginBuddy, 1);
+                buddy->id = buddies[j];
+                account->buddies = g_slist_prepend(account->buddies, buddy);
                 
                 if (!hippo_dbus_proxy_INT32__INT32(state->gaim_proxy,
-                                                   "GaimBuddyIsOnline", buddies[j], &is_online))
-                    break;
-
-                name = NULL;
-                if (!hippo_dbus_proxy_STRING__INT32(state->gaim_proxy,
-                                                    "GaimBuddyGetName", buddies[j], &name))
-                    break;
+                                                   "GaimBuddyIsOnline",
+                                                   buddy->id, &buddy->is_online))
+                    goto failed;
                 
-                g_printerr("buddy %d '%s' is_online=%d\n", buddies[j], name, is_online);
-
-                g_free(name);
+                if (!hippo_dbus_proxy_STRING__INT32(state->gaim_proxy,
+                                                    "GaimBuddyGetName",
+                                                    buddy->id, &buddy->name))
+                    goto failed;
+                
+                g_printerr("buddy %d '%s' is_online=%d\n", buddy->id, buddy->name, buddy->is_online);
             }
         }
-
-        g_free(buddies);
-    }
-    
-    state->account_presences = g_new0(dbus_int32_t, state->n_accounts);
-    for (i = 0; i < state->n_accounts; ++i) {
-        if (!hippo_dbus_proxy_INT32__INT32(state->gaim_proxy,
-                                           "GaimAccountGetPresence",
-                                           state->accounts[i],
-                                           &state->account_presences[i]))
-            goto failed;
-    }
-
-    state->account_statuses = g_new0(PidginStatusList*, state->n_accounts);
-    for (i = 0; i < state->n_accounts; ++i) {
-        PidginStatusList *status_list;
         
-        status_list = g_new0(PidginStatusList, 1);
-
-        if (!hippo_dbus_proxy_ARRAYINT32__INT32(state->gaim_proxy,
-                                                "GaimPresenceGetStatuses",
-                                                state->account_presences[i],
-                                                &status_list->statuses,
-                                                &status_list->n_statuses)) {
-            pidgin_status_list_free(status_list);
-            goto failed;
-        }
-
-        state->account_statuses[i] = status_list;
-    }
-
-    for (i = 0; i < state->n_accounts; ++i) {
-        reload_status_list(state->gaim_proxy, state->account_statuses[i]);
+        g_free(buddies);
     }
     
     return state;
@@ -238,7 +229,91 @@ handle_message(DBusConnection     *connection,
         g_print("got error\n");
     } else if (type == DBUS_MESSAGE_TYPE_SIGNAL) {
 
-        g_print("got signal %s\n", dbus_message_get_member(message));
+        g_print("got signal %s signature %s\n", dbus_message_get_member(message),
+                dbus_message_get_signature(message));
+
+        if (dbus_message_has_member(message, "BuddySignedOn") ||
+            dbus_message_has_member(message, "BuddySignedOff")) {
+            dbus_int32_t buddy_id = 0;
+            dbus_uint64_t buddy_id_64 = 0; /* if Gaim was compiled on a 64-bit system it does this */
+            dbus_bool_t is_online;
+            
+            if (dbus_message_get_args(message, NULL, DBUS_TYPE_INT32, &buddy_id, DBUS_TYPE_INVALID))
+                g_print(" buddy id was %d\n", buddy_id);
+            if (dbus_message_get_args(message, NULL, DBUS_TYPE_UINT64, &buddy_id_64, DBUS_TYPE_INVALID)) {
+                g_print(" buddy id was %d\n", (dbus_int32_t) buddy_id_64);
+                buddy_id = (dbus_int32_t) buddy_id_64;
+            }
+
+            is_online = dbus_message_has_member(message, "BuddySignedOn");
+            
+            if (buddy_id != 0 && pidgin_state) {
+                GSList *tmp;
+
+                for (tmp = pidgin_state->accounts;
+                     tmp != NULL;
+                     tmp = tmp->next) {
+                    PidginAccount *account = tmp->data;
+                    PidginBuddy *buddy;
+
+                    buddy = pidgin_account_get_buddy(account, buddy_id);
+                    if (buddy != NULL) {
+                        pidgin_buddy_set_online(buddy, is_online);
+                        break;
+                    }
+                }
+            }
+        } else if (dbus_message_is_signal(message, DBUS_INTERFACE_DBUS,
+                                          "NameOwnerChanged")) {
+            const char *name = NULL;
+            const char *old = NULL;
+            const char *new = NULL;
+            if (dbus_message_get_args(message, NULL,
+                                      DBUS_TYPE_STRING, &name,
+                                      DBUS_TYPE_STRING, &old,
+                                      DBUS_TYPE_STRING, &new,
+                                      DBUS_TYPE_INVALID)) {
+                g_debug("pidgin.c NameOwnerChanged %s '%s' -> '%s'", name, old, new);
+                if (*old == '\0')
+                    old = NULL;
+                if (*new == '\0')
+                    new = NULL;
+
+                /* If old gaim goes away, drop the state */
+                if (old && pidgin_state &&
+                    strcmp(pidgin_state->bus_name, old) == 0) {
+                    g_debug("Old Gaim/Pidgin (%s) going away", old);
+                    pidgin_state_set(NULL);
+                }
+                
+                if (new && (strcmp(new, GAIM_BUS_NAME) == 0 || strcmp(new, PIDGIN_BUS_NAME) == 0)) {
+                    PidginState *state;
+
+                    g_debug("New Gaim/Pidgin (%s) appeared", new);
+                    
+                    state = reload_from_new_owner(connection, new);
+                    if (state != NULL) {
+                        pidgin_state_set(state);
+                    }
+                }
+            } else {
+                g_warning("NameOwnerChanged had wrong args???");
+            }
+        } else if (dbus_message_is_signal(message, GAIM_INTERFACE_NAME, "BuddyAdded") ||
+                   dbus_message_is_signal(message, GAIM_INTERFACE_NAME, "BuddyRemoved") ||
+                   dbus_message_is_signal(message, PIDGIN_INTERFACE_NAME, "BuddyAdded") ||
+                   dbus_message_is_signal(message, PIDGIN_INTERFACE_NAME, "BuddyRemoved")) {
+            PidginState *state;
+            
+            g_debug("Reloading Pidgin state due to buddy list change");
+            
+            if (pidgin_state) {
+                state = reload_from_new_owner(connection, pidgin_state->bus_name);
+                if (state != NULL) {
+                    pidgin_state_set(state);
+                }
+            }
+        }
     }
     
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -281,6 +356,8 @@ connect_pidgin(DBusConnection *connection,
 void
 hippo_dbus_init_pidgin(DBusConnection *connection)
 {
+    PidginState *state;
+    
     connect_with_name_and_iface(connection,
                                 DBUS_SERVICE_DBUS,
                                 DBUS_INTERFACE_DBUS,
@@ -297,7 +374,12 @@ hippo_dbus_init_pidgin(DBusConnection *connection)
                                     NULL, NULL))
         g_error("no memory adding dbus connection filter");
 
-    reload_from_new_owner(connection, GAIM_BUS_NAME);
+    state = reload_from_new_owner(connection, PIDGIN_BUS_NAME);
+    if (state == NULL)
+        state = reload_from_new_owner(connection, GAIM_BUS_NAME);
+    if (state != NULL) {
+        pidgin_state_set(state);
+    }
 }
 
 #if 0
