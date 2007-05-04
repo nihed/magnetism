@@ -980,6 +980,7 @@ hippo_dbus_proxy_call_method_sync(HippoDBusProxy          *proxy,
 
 dbus_bool_t
 hippo_dbus_proxy_finish_method_call_freeing_reply (DBusMessage *reply,
+                                                   const char  *method,
                                                    DBusError   *error,
                                                    int          first_arg_type,
                                                    ...)
@@ -987,7 +988,7 @@ hippo_dbus_proxy_finish_method_call_freeing_reply (DBusMessage *reply,
     va_list args;
 
     if (reply == NULL) {
-        g_warning("No method reply: %s", error->message);
+        g_warning("No reply to %s: %s", method, error->message);
         dbus_error_free(error);
         return FALSE;
     }
@@ -1001,7 +1002,7 @@ hippo_dbus_proxy_finish_method_call_freeing_reply (DBusMessage *reply,
         va_end(args);
         dbus_message_unref(reply);
 
-        g_warning("Error getting method call reply: %s", error->message);
+        g_warning("Error getting method call %s reply: %s", method, error->message);
         dbus_error_free(error);
         
         return FALSE;
@@ -1010,6 +1011,7 @@ hippo_dbus_proxy_finish_method_call_freeing_reply (DBusMessage *reply,
 
 dbus_bool_t
 hippo_dbus_proxy_finish_method_call_keeping_reply (DBusMessage *reply,
+                                                   const char  *method,
                                                    DBusError   *error,
                                                    int          first_arg_type,
                                                    ...)
@@ -1017,7 +1019,7 @@ hippo_dbus_proxy_finish_method_call_keeping_reply (DBusMessage *reply,
     va_list args;
 
     if (reply == NULL) {
-        g_warning("No method reply: %s", error->message);
+        g_warning("No reply to %s: %s", method, error->message);
         dbus_error_free(error);
         return FALSE;
     }
@@ -1029,7 +1031,7 @@ hippo_dbus_proxy_finish_method_call_keeping_reply (DBusMessage *reply,
     } else {
         va_end(args);
 
-        g_warning("Error getting method call reply: %s", error->message);
+        g_warning("Error getting method call %s reply: %s", method, error->message);
         dbus_error_free(error);
         
         return FALSE;
@@ -1049,7 +1051,7 @@ hippo_dbus_proxy_INT32__VOID(HippoDBusProxy *proxy,
     reply = hippo_dbus_proxy_call_method_sync(proxy, method, &derror,
                                               DBUS_TYPE_INVALID);
     
-    return hippo_dbus_proxy_finish_method_call_freeing_reply(reply, &derror,
+    return hippo_dbus_proxy_finish_method_call_freeing_reply(reply, method, &derror,
                                                              DBUS_TYPE_INT32, out1_p,
                                                              DBUS_TYPE_INVALID);
 }
@@ -1068,7 +1070,7 @@ hippo_dbus_proxy_INT32__INT32(HippoDBusProxy *proxy,
                                               DBUS_TYPE_INT32, &in1_p,
                                               DBUS_TYPE_INVALID);
     
-    return hippo_dbus_proxy_finish_method_call_freeing_reply(reply, &derror,
+    return hippo_dbus_proxy_finish_method_call_freeing_reply(reply, method, &derror,
                                                              DBUS_TYPE_INT32, out1_p,
                                                              DBUS_TYPE_INVALID);
 }
@@ -1076,7 +1078,7 @@ hippo_dbus_proxy_INT32__INT32(HippoDBusProxy *proxy,
 dbus_bool_t
 hippo_dbus_proxy_ARRAYINT32__INT32(HippoDBusProxy *proxy,
                                    const char     *method,
-                                   dbus_int32_t    in1_p,
+                                   dbus_int32_t    in1,
                                    dbus_int32_t  **out1_p,
                                    dbus_int32_t   *out1_len)
 {
@@ -1088,12 +1090,12 @@ hippo_dbus_proxy_ARRAYINT32__INT32(HippoDBusProxy *proxy,
 
     dbus_error_init(&derror);    
     reply = hippo_dbus_proxy_call_method_sync(proxy, method, &derror,
-                                              DBUS_TYPE_INT32, &in1_p,
+                                              DBUS_TYPE_INT32, &in1,
                                               DBUS_TYPE_INVALID);
 
     v_OUT1 = NULL;
     len_OUT1 = 0;
-    retval = hippo_dbus_proxy_finish_method_call_keeping_reply(reply, &derror,
+    retval = hippo_dbus_proxy_finish_method_call_keeping_reply(reply, method, &derror,
                                                                DBUS_TYPE_ARRAY, DBUS_TYPE_INT32,
                                                                &v_OUT1, &len_OUT1,
                                                                DBUS_TYPE_INVALID);
@@ -1105,7 +1107,8 @@ hippo_dbus_proxy_ARRAYINT32__INT32(HippoDBusProxy *proxy,
     }
     *out1_len = len_OUT1;
 
-    dbus_message_unref(reply);
+    if (reply != NULL)
+        dbus_message_unref(reply);
 
     return retval;
 }
@@ -1128,7 +1131,7 @@ hippo_dbus_proxy_ARRAYINT32__VOID(HippoDBusProxy *proxy,
 
     v_OUT1 = NULL;
     len_OUT1 = 0;
-    retval = hippo_dbus_proxy_finish_method_call_keeping_reply(reply, &derror,
+    retval = hippo_dbus_proxy_finish_method_call_keeping_reply(reply, method, &derror,
                                                                DBUS_TYPE_ARRAY, DBUS_TYPE_INT32,
                                                                &v_OUT1, &len_OUT1,
                                                                DBUS_TYPE_INVALID);
@@ -1140,7 +1143,48 @@ hippo_dbus_proxy_ARRAYINT32__VOID(HippoDBusProxy *proxy,
     }
     *out1_len = len_OUT1;
 
-    dbus_message_unref(reply);
+    if (reply != NULL)
+        dbus_message_unref(reply);
+
+    return retval;
+}
+
+dbus_bool_t
+hippo_dbus_proxy_ARRAYINT32__INT32_STRING(HippoDBusProxy *proxy,
+                                          const char     *method,
+                                          dbus_int32_t    in1,
+                                          const char     *in2,
+                                          dbus_int32_t  **out1_p,
+                                          dbus_int32_t   *out1_len)
+{
+    DBusMessage *reply;
+    DBusError derror;
+    dbus_bool_t retval;
+    const dbus_int32_t *v_OUT1;
+    dbus_int32_t len_OUT1;
+
+    dbus_error_init(&derror);    
+    reply = hippo_dbus_proxy_call_method_sync(proxy, method, &derror,
+                                              DBUS_TYPE_INT32, &in1,
+                                              DBUS_TYPE_STRING, &in2,
+                                              DBUS_TYPE_INVALID);
+
+    v_OUT1 = NULL;
+    len_OUT1 = 0;
+    retval = hippo_dbus_proxy_finish_method_call_keeping_reply(reply, method, &derror,
+                                                               DBUS_TYPE_ARRAY, DBUS_TYPE_INT32,
+                                                               &v_OUT1, &len_OUT1,
+                                                               DBUS_TYPE_INVALID);
+    if (v_OUT1 != NULL) {
+        *out1_p = g_new(dbus_int32_t, len_OUT1);
+        memcpy(*out1_p, v_OUT1, sizeof(dbus_int32_t) * len_OUT1);
+    } else {
+        *out1_p = NULL;
+    }
+    *out1_len = len_OUT1;
+
+    if (reply != NULL)
+        dbus_message_unref(reply);
 
     return retval;
 }
@@ -1162,14 +1206,15 @@ hippo_dbus_proxy_STRING__INT32(HippoDBusProxy *proxy,
                                               DBUS_TYPE_INVALID);
 
     v_OUT1 = NULL;
-    retval = hippo_dbus_proxy_finish_method_call_keeping_reply(reply, &derror,
+    retval = hippo_dbus_proxy_finish_method_call_keeping_reply(reply, method, &derror,
                                                                DBUS_TYPE_STRING,
                                                                &v_OUT1,
                                                                DBUS_TYPE_INVALID);
 
     *out1_p = g_strdup(v_OUT1);
 
-    dbus_message_unref(reply);
+    if (reply != NULL)
+        dbus_message_unref(reply);
 
     return retval;
 }
