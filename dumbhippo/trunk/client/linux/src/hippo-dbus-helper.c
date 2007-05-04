@@ -41,12 +41,14 @@ iface_new(const char              *name,
     return iface;
 }
 
+#if 0
 static void
 iface_free(HippoDBusInterface *iface)
 {
     g_free(iface->name);
     g_free(iface);
 }
+#endif
 
 static const HippoDBusProperty*
 iface_find_property(HippoDBusInterface *iface,
