@@ -1,5 +1,4 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-#include "hippo-chat-room.h"
 #include "hippo-group.h"
 #include "hippo-entity-protected.h"
 #include "hippo-xml-utils.h"
@@ -18,7 +17,6 @@ static void     hippo_group_finalize             (GObject *object);
 struct _HippoGroup {
     HippoEntity parent;
 
-    HippoChatRoom *room;
     /* date updates about this group were last ignored */
     GTime date_last_ignored;
 };
@@ -61,22 +59,6 @@ hippo_group_finalize(GObject *object)
 /* === HippoGroup exported API === */
 
 
-HippoChatRoom*   
-hippo_group_get_chat_room(HippoGroup    *group)
-{
-    g_return_val_if_fail(HIPPO_IS_GROUP(group), NULL);
-    return group->room;
-}
-
-int
-hippo_group_get_chatting_user_count(HippoGroup *group)
-{
-    if (group->room)
-        return hippo_chat_room_get_chatting_user_count(group->room);
-    else
-        return 0;
-}
-
 GTime            
 hippo_group_get_date_last_ignored(HippoGroup   *group)
 {
@@ -103,27 +85,6 @@ hippo_group_get_ignored(HippoGroup  *group)
         return FALSE;
     
     return TRUE;
-}
-
-void
-hippo_group_set_chat_room(HippoGroup    *group,
-                           HippoChatRoom  *room)
-{
-    g_return_if_fail(HIPPO_IS_GROUP(group));
-    
-    if (room == group->room)
-        return;
-    
-    if (room)
-        g_object_ref(room);
-    if (group->room)
-        g_object_unref(group->room);
-    group->room = room;
-
-    if (group->room)
-        hippo_chat_room_set_title(group->room, hippo_entity_get_name(HIPPO_ENTITY(group)));
-    
-    hippo_entity_notify(HIPPO_ENTITY(group));
 }
 
 void             

@@ -240,12 +240,12 @@ hippo_canvas_item_get_visible(HippoCanvasItem    *canvas_item)
 {
     HippoCanvasContainer *parent;
     
-    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
+    g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), FALSE);
 
     parent = hippo_canvas_item_get_parent(canvas_item);
     if (parent == NULL) {
         g_warning("Visibility is a property of the container+item pair, not just the item; so you can't get visibility on an item that isn't in a container");
-        return;
+        return FALSE;
     }
 
     return hippo_canvas_container_get_child_visible(parent, canvas_item);

@@ -47,9 +47,6 @@ gboolean          hippo_chat_room_get_loading             (HippoChatRoom  *room)
 HippoChatKind     hippo_chat_room_get_kind                (HippoChatRoom  *room);
 HippoChatState    hippo_chat_room_get_user_state          (HippoChatRoom  *room,
                                                            HippoPerson    *person);
-void              hippo_chat_room_set_title               (HippoChatRoom  *room,
-                                                           const char     *title);
-const char*       hippo_chat_room_get_title               (HippoChatRoom  *room);
 HippoChatMessage* hippo_chat_room_get_last_message        (HippoChatRoom  *room);
 /* need to unref each element and free the list when done with this */
 GSList*           hippo_chat_room_get_users               (HippoChatRoom  *room);

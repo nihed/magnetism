@@ -26,7 +26,6 @@ struct _HippoPost {
      */
     guint is_new : 1;
     guint is_ignored : 1;
-    HippoChatRoom *chat_room;
 
     /* Once we load the chat room, it overrides viewing_user_count and chatting_user_count
      * which are the CURRENT counts of people actively present. The total_viewers and 
@@ -82,9 +81,6 @@ static void
 hippo_post_finalize(GObject *object)
 {
     HippoPost *post = HIPPO_POST(object);
-
-    if (post->chat_room)
-        g_object_unref(post->chat_room);
 
     g_free(post->guid);
     g_free(post->sender);
@@ -308,14 +304,7 @@ hippo_post_get_viewing_user_count(HippoPost *post)
 {
     g_return_val_if_fail(HIPPO_IS_POST(post), 0);
 
-    /* When we first get a Post, the data in the post is more accurate -
-     * waiting until we are filled to use the chatroom count avoids
-     * the user seeing a count-up as the chatroom fills
-     */
-    if (post->chat_room && !hippo_chat_room_get_loading(post->chat_room))
-        return hippo_chat_room_get_viewing_user_count(post->chat_room);
-    else
-        return post->viewing_user_count;
+    return post->viewing_user_count;
 }
 
 int
@@ -323,10 +312,7 @@ hippo_post_get_chatting_user_count(HippoPost *post)
 {
     g_return_val_if_fail(HIPPO_IS_POST(post), 0);
 
-    if (post->chat_room && !hippo_chat_room_get_loading(post->chat_room))
-        return hippo_chat_room_get_chatting_user_count(post->chat_room);
-    else
-        return post->chatting_user_count;
+    return post->chatting_user_count;
 }
 
 int
@@ -393,9 +379,6 @@ hippo_post_set_title(HippoPost  *post,
 {
     g_return_if_fail(HIPPO_IS_POST(post));
     set_str(post, &post->title, value);
-    
-    if (post->chat_room)
-        hippo_chat_room_set_title(post->chat_room, post->title);
 }
 
 void
@@ -575,33 +558,4 @@ hippo_post_set_new(HippoPost  *post,
         post->is_new = value;
         hippo_post_notify(post);
     }
-}
-
-HippoChatRoom*
-hippo_post_get_chat_room(HippoPost *post)
-{
-    g_return_val_if_fail(HIPPO_IS_POST(post), NULL);
-    
-    return post->chat_room;
-}
-
-void
-hippo_post_set_chat_room(HippoPost     *post,
-                         HippoChatRoom *room)
-{
-    g_return_if_fail(HIPPO_IS_POST(post));
-
-    if (room == post->chat_room)
-        return;
-            
-    if (room)
-        g_object_ref(room);
-    if (post->chat_room)
-        g_object_unref(post->chat_room);
-    post->chat_room = room;
-
-    if (post->chat_room)
-        hippo_chat_room_set_title(post->chat_room, post->title);
-    
-    hippo_post_notify(post);
 }
