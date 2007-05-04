@@ -1,6 +1,5 @@
 package com.dumbhippo.server.blocks;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -56,7 +55,7 @@ public class GroupMemberBlockView extends BlockView {
 	}
 
 	public List<Object> getReferencedObjects() {
-		List<Object> result = new ArrayList<Object>();
+		List<Object> result = super.getReferencedObjects();
 		result.add(group);
 		result.add(member);
 

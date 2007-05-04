@@ -1,8 +1,5 @@
 package com.dumbhippo.server.blocks;
 
-import java.util.Collections;
-import java.util.List;
-
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
@@ -48,11 +45,5 @@ public abstract class AbstractPersonBlockView extends BlockView implements Perso
 		if (!isPopulated())
 			throw new IllegalStateException("BlockView not populated yet, can't get source");
 	    return userView;
-	}
-
-	public List<Object> getReferencedObjects() {
-		if (!isPopulated())
-			throw new IllegalStateException("BlockView not populated yet, can't get referenced objects");		
-		return Collections.singletonList((Object)userView);
 	}
 }

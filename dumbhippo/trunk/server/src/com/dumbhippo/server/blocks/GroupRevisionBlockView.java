@@ -1,6 +1,5 @@
 package com.dumbhippo.server.blocks;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -67,7 +66,7 @@ public class GroupRevisionBlockView extends BlockView implements PersonSourceBlo
 	}
 
 	public List<Object> getReferencedObjects() {
-		List<Object> result = new ArrayList<Object>();
+		List<Object> result = super.getReferencedObjects();
 		result.add(group);
 		result.add(revisor);
 

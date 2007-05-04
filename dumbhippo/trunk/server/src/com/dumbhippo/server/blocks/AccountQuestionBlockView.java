@@ -1,8 +1,5 @@
 package com.dumbhippo.server.blocks;
 
-import java.util.Collections;
-import java.util.List;
-
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.UserBlockData;
@@ -81,9 +78,5 @@ public class AccountQuestionBlockView extends BlockView {
 		}
 		
 		builder.closeElement();
-	}
-
-	public List<Object> getReferencedObjects() {
-		return Collections.emptyList();
 	}
 }

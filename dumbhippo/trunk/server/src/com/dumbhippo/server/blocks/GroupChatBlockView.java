@@ -1,6 +1,5 @@
 package com.dumbhippo.server.blocks;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.dumbhippo.XmlBuilder;
@@ -48,11 +47,9 @@ public class GroupChatBlockView extends BlockView implements TitleBlockView {
 	}
 
 	public List<Object> getReferencedObjects() {
-		List<Object> result = new ArrayList<Object>();
+		List<Object> result = super.getReferencedObjects();
 		result.add(group);
-		for (ChatMessageView message : getRecentMessages()) {
-			result.add(message.getSenderView());
-		}
+		
 		return result;
 	}
 
