@@ -193,12 +193,14 @@ class AppExtras(CanvasVBox):
         "have-apps" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,)),
         "more-info" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
     }
-    def __init__(self, stock, **args):
+    def __init__(self, stock, filterfunc, **args):
         super(AppExtras, self).__init__(background_color=0x888888FF,
                                         color=0xFFFFFFFF,
                                         padding=4,
                                         **args)
 
+        self.__search = False
+        self.__search_filter = filterfunc
         self.__stock = stock
         self.__catname = None
         self.__apps = None
@@ -218,36 +220,57 @@ class AppExtras(CanvasVBox):
         self.__headerbox.append(self.__right_title, hippo.PACK_EXPAND)
 
         self.__app_pair = CanvasHBox(box_height=120)
+        self.__app_pair2 = CanvasHBox(box_height=120)
         self.append(self.__app_pair)
+        self.append(self.__app_pair2)
+
+        mugshot.get_mugshot().connect("apps-search-changed", self.__handle_mugshot_results)
 
     def have_apps(self):
         return not not self.__found_app_count
 
-    def set_catname(self, catname):
+    def set_catname(self, catname, search):
         self.__catname = catname
         if catname:
             mugshot_apps = mugshot.get_mugshot().get_category_top_apps(catname)
         else:
             mugshot_apps = mugshot.get_mugshot().get_global_top_apps()  
         if mugshot_apps is None:
-            self.set_top_apps(None)
+            self.set_top_apps(None, search)
         else:
-            self.set_top_apps(map(self.__stock.get_app, mugshot_apps))
+            self.set_top_apps(map(self.__stock.get_app, mugshot_apps), search)
+
+    def __handle_mugshot_results(self, mugshot, search, apps):
+        if search != self.__search:
+            return
+        self.__mugshot_search_hits = not not apps
+        self.__sync()
 
     def __on_more_popular(self, w):
         libbig.show_url(urlparse.urljoin(mugshot.get_mugshot().get_baseurl(),
-                                         "applications%s" % (self.__catname and ("?category=" + urllib.quote(self.__catname))
-                                                             or '',)))
+                                         "applications%s" % ((self.__search and ("?q=" + urllib.quote(self.__search)))
+                                                             or self.__catname and ("?category=" + urllib.quote(self.__catname)))))
+        # more-info with None just means hide window
+        self.emit("more-info", None)
 
-    def set_top_apps(self, apps):
+    def set_top_apps(self, apps, search):
         self.__apps = apps
+        self.__search = search
+        self.__mugshot_search_hits = None
         self.__sync()
         self.emit("have-apps", self.have_apps())
 
     def __sync(self):
         thing = self.__catname or 'apps'
         if self.__apps:
-            self.__left_title.set_property('text', "New Popular %s" % (thing,))
+            if self.__search:
+                if self.__mugshot_search_hits is None:
+                    self.__left_title.set_property('markup', "Searching for <b>%s</b>" % (gobject.markup_escape_text(self.__search),))
+
+                else:
+                    self.__left_title.set_property('markup', "No results for <b>%s</b>" % (gobject.markup_escape_text(self.__search),))
+            else:
+                self.__left_title.set_property('text', "New Popular %s" % (thing,))
             self.__right_title.set_property('text', u"More Popular %s \u00BB" % (thing,))
         elif self.__apps is None:
             self.__left_title.set_property('text', '')
@@ -262,13 +285,20 @@ class AppExtras(CanvasVBox):
         for i,app in enumerate(self.__apps or []):
             if app.is_installed():
                 continue
+            if self.__search_filter and (not self.__search_filter(app)):
+                continue
             app_view = apps_widgets.AppDisplay(app, color=0xFFFFFFFF)
             app_view.connect("title-clicked", self.__on_app_clicked)
             app_view.set_description_mode(True)
-            self.__app_pair.append(app_view, hippo.PACK_EXPAND)
-            found += 1
             if found > 1:
+                self.__app_pair2.append(app_view, hippo.PACK_EXPAND)
+            else:
+                self.__app_pair.append(app_view, hippo.PACK_EXPAND)
+            found += 1
+            if found > 3:
                 break
+        self.set_child_visible(self.__app_pair, found > 0)
+        self.set_child_visible(self.__app_pair2, found > 2 and (not not self.__search))
         self.__found_app_count = found
 
     def __on_app_clicked(self, a):
@@ -289,7 +319,7 @@ class AppList(CanvasVBox):
         self.__table = MultiVTable(columns=3,item_height=40)
         self.append(self.__table, hippo.PACK_EXPAND)
 
-        self.__extras_section = AppExtras(stock, yalign=hippo.ALIGNMENT_END)
+        self.__extras_section = AppExtras(stock, self._filter_app, yalign=hippo.ALIGNMENT_END)
         self.__extras_section.connect("more-info", lambda e, app: self.emit("more-info", app))
         self.append(self.__extras_section)
 
@@ -311,13 +341,13 @@ class AppList(CanvasVBox):
         
         self.__table.remove_all()
 
-        categories = categorize(filter(self.__filter_app, self.__all_apps))
+        categories = categorize(filter(self._filter_app, self.__all_apps))
         self.__categorized = categories
              
         cat_keys = categories.keys()
         cat_keys.sort()
 
-        self.__extras_section.set_catname(self.__selected_cat)
+        self.__extras_section.set_catname(self.__selected_cat, self.__search)
 
         display_only_used = (self.__used_apps) and (not self.__selected_cat) and (not self.__search) 
         for catname in (self.__selected_cat and not self.__search) and [self.__selected_cat] or cat_keys:
@@ -347,7 +377,7 @@ class AppList(CanvasVBox):
     def on_category_changed(self, cat, apps):
         if cat != self.__selected_cat:
             return
-        self.__extras_section.set_top_apps(apps)
+        self.__extras_section.set_top_apps(apps, self.__search)
 
     def __handle_nocategory(self, l):
         _logger.debug("no category selected")
@@ -359,7 +389,7 @@ class AppList(CanvasVBox):
         self.__selected_cat = catname
         self.__sync_display()
                 
-    def __filter_app(self, app):
+    def _filter_app(self, app):
         if not self.__search:
             return True
         search = self.__search.lower()
@@ -407,6 +437,7 @@ class AppBrowser(hippo.CanvasWindow):
         self.__search_input = hippo.CanvasEntry()
         self.__search_input.connect("notify::text", self.__on_search_changed)
         self.__idle_search_id = 0
+        self.__idle_search_mugshot_id = 0
         self.__left_box.append(self.__search_input)        
     
         self.__overview = AppOverview()
@@ -447,6 +478,8 @@ class AppBrowser(hippo.CanvasWindow):
                                lambda mugshot, apps: self.__sync())          
         self.__mugshot.connect("global-top-apps-changed", 
                                self.__handle_global_changed)          
+        self.__mugshot.connect("apps-search-changed", 
+                               lambda *args: self.__sync())          
         self.__mugshot.connect("category-top-apps-changed", 
                                self.__handle_category_changed)          
         self.__sync()
@@ -463,7 +496,8 @@ class AppBrowser(hippo.CanvasWindow):
         self.__overview.set_app(app)
 
     def __on_show_more_info(self, app):
-        libbig.show_url(urlparse.urljoin(mugshot.get_mugshot().get_baseurl(), "application?id=" + app.get_mugshot_app().get_id()))
+        if app:
+            libbig.show_url(urlparse.urljoin(mugshot.get_mugshot().get_baseurl(), "application?id=" + app.get_mugshot_app().get_id()))
         self.hide()
         
     def __on_app_launch(self):
@@ -482,11 +516,18 @@ class AppBrowser(hippo.CanvasWindow):
         if self.__idle_search_id > 0:
             return
         self.__idle_search_id = gobject.timeout_add(500, self.__idle_do_search)
+        if self.__idle_search_mugshot_id > 0:
+            return
+        self.__idle_search_mugshot_id = gobject.timeout_add(2000, self.__idle_do_mugshot_search)
         
     def __idle_do_search(self):
         self.__app_list.set_search(self.__search_input.get_property("text"))
         self.__idle_search_id = 0
         
+    def __idle_do_mugshot_search(self):
+        mugshot.get_mugshot().request_app_search(self.__search_input.get_property("text"))
+        self.__idle_mugshot_search_id = 0
+
     def __on_mugshot_initialized(self, mugshot):
         self.__sync()
             

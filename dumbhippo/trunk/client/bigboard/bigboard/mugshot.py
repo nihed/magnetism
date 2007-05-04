@@ -66,6 +66,7 @@ class Mugshot(gobject.GObject):
         "global-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "category-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_STRING, gobject.TYPE_PYOBJECT,)),
         "my-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "apps-search-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)),
         "pinned-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))        
         }    
     
@@ -422,12 +423,29 @@ class Mugshot(gobject.GObject):
     def __on_category_applications_error(self, *args):
         self._logger.error("failed to get top apps for a category: %s", args)
 
+    def __on_applications_search(self, search, url, child_nodes):
+        reply_root = child_nodes[0]
+        apps = self.__parse_app_set('applications',
+                                    child_nodes=reply_root.childNodes)
+        self._logger.debug("emitting apps-search-changed")
+        self.emit("apps-search-changed", search, apps)        
+
+    def __on_applications_search_error(self, *args):
+        self._logger.error("failed to search apps: %s", args)
+
     def __request_category_top_apps(self, category):
         AsyncHTTPFetcher.getInstance().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/popularapplications'),
                                                   {'category': category},
                                                   self.__on_category_applications,
                                                   self.__on_category_applications_error,
                                                   self.__on_category_applications_error)
+
+    def request_app_search(self, search):
+        AsyncHTTPFetcher.getInstance().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/searchapplications'),
+                                                  {'search': search},
+                                                  lambda url, nodes: self.__on_applications_search(search, url, nodes),
+                                                  self.__on_applications_search_error,
+                                                  self.__on_applications_search_error)
             
     def __request_pinned_apps(self):
         self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications",
