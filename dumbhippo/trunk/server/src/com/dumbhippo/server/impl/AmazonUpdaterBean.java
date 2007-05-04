@@ -15,6 +15,7 @@ import javax.persistence.Query;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Pair;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.AmazonActivityStatus;
 import com.dumbhippo.persistence.AmazonActivityType;
@@ -30,9 +31,16 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.services.AmazonList;
+import com.dumbhippo.services.AmazonListItemView;
+import com.dumbhippo.services.AmazonListView;
+import com.dumbhippo.services.AmazonLists;
+import com.dumbhippo.services.AmazonListsView;
 import com.dumbhippo.services.AmazonReviewView;
 import com.dumbhippo.services.AmazonReviewsView;
 import com.dumbhippo.services.AmazonWebServices;
+import com.dumbhippo.services.caches.AmazonListItemsCache;
+import com.dumbhippo.services.caches.AmazonListsCache;
 import com.dumbhippo.services.caches.AmazonReviewsCache;
 import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.CacheFactoryBean;
@@ -95,44 +103,22 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 		}
 		return sb.toString();
 	}
+
+	private String computeListHash(AmazonListView listView) {
+		List<? extends AmazonListItemView> listItems = listView.getListItems();
+		StringBuilder sb = new StringBuilder();
+		sb.append(listView.getListId());
+		sb.append("-");
+		for (int i = 0; i < 5; ++i) {
+			if (i >= listItems.size())
+				break;
+			sb.append(listItems.get(i).getItemId());
+			sb.append("-"); // just leave it trailing on the last one, doesn't matter
+		}
+		return sb.toString();
+	}
 	
-	public boolean saveUpdatedStatus(String amazonUserId, AmazonReviewsView reviewsView) { 
-		if (reviewsView == null)
-			throw new IllegalArgumentException("null reviewsView");
-
-		logger.debug("Saving new amazon status for " + amazonUserId + ": reviews {}", reviewsView.getTotal());
-		
-		AmazonUpdateStatus updateStatus;
-		boolean updateStatusFound = false;
-		try {
-			updateStatus = getCachedStatus(amazonUserId);
-			updateStatusFound = true;
-		} catch (NotFoundException e) {
-			updateStatus = new AmazonUpdateStatus(amazonUserId);
-			em.persist(updateStatus);
-		}
-		
-		String reviewsHash = computeReviewsHash(reviewsView.getReviews());
-
-		boolean reviewsChanged = false;
-		
-		if (!updateStatus.getReviewsHash().equals(reviewsHash)) {
-			logger.debug("Most recent reviews changed '{}' -> '{}'",
-					updateStatus.getReviewsHash(), reviewsHash);
-			reviewsChanged = true;
-			updateStatus.setReviewsHash(reviewsHash);
-		}
-
-		// Push the updateStatus object to the database. The theory here is that 
-		// it keeps Hibernate from reordering saving the new UpdateStatus vs. 
-		// the other work we're about to do below, which might help avoid 
-		// deadlock situations with the 2nd level cache. 
-		// (If two threads both do A,B that's safer than having one do A,B and
-		// one B,A.) Since we're done with the updateStatus
-		// at this point, it shouldn't hurt efficiency too much to do this.
-		em.flush();
-		
-		
+	private void updateReviews(String amazonUserId, AmazonReviewsView reviewsView, boolean initializingAmazonAccount) {
 		// Go over all AmazonActivityStatuses for reviews, and figure out which
 		// ones we don't have.
 		// We don't do anything if a review is no longer around, we keep the
@@ -163,13 +149,142 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 			
 			logger.debug("created new Amazon review status {}", status);
 	
-			// If we did not have an updateStatus before, it means that we just initialized
-			// this account, so we shouldn't create blocks for pre-existing reviews!
-			if (updateStatusFound) {
+			// don't create blocks for pre-existing reviews
+			if (!initializingAmazonAccount) {
 			    notifier.onAmazonActivityCreated(status);
 		    }
+		}		
+	}
+	
+	private void updateListItems(String amazonUserId, AmazonListView listView, boolean initializingAmazonAccount) {
+		// Go over all AmazonActivityStatuses for the list, and figure out which
+		// ones we don't have.
+		// We don't do anything if a list item is no longer around, we keep the
+		// status around, but we will not be able to find list item details in the cache,
+		// so we'll just not display any details in the block about the list item.
+		// We might also loose the details for very old list items, because Amazon web 
+		// services only return 300 list items per list.
+		Query q = em.createQuery("SELECT activityStatus FROM AmazonActivityStatus activityStatus WHERE " + 
+		                         "activityStatus.amazonUserId = :amazonUserId AND " +
+		                         "activityStatus.listId = :listId AND " +
+				                 "activityStatus.activityType = " + AmazonActivityType.WISH_LISTED.ordinal());
+        q.setParameter("amazonUserId", amazonUserId);
+        q.setParameter("listId", listView.getListId());
+        List<AmazonActivityStatus> statuses = TypeUtils.castList(AmazonActivityStatus.class, q.getResultList());
+    
+        Map<String,AmazonListItemView> listItemsByItemId = new HashMap<String,AmazonListItemView>();
+        for (AmazonListItemView listItem : listView.getListItems()) {
+	        listItemsByItemId.put(listItem.getItemId(), listItem);
+        }
+
+        // this will leave only list items for which we don't have statuses in listItemsByItemId
+		for (AmazonActivityStatus status : statuses) {            
+			listItemsByItemId.remove(status.getItemId());
 		}
-		return reviewsChanged;
+		
+		// remaining list items require creating a new status object
+		for (AmazonListItemView listItem : listItemsByItemId.values()) {
+			AmazonActivityStatus status = new AmazonActivityStatus(amazonUserId, listItem.getItemId(), listView.getListId(), AmazonActivityType.WISH_LISTED);
+			em.persist(status);
+			
+			logger.debug("created new Amazon list item status {}", status);
+	
+			// don't create blocks for pre-existing list items
+			if (!initializingAmazonAccount) {
+			    notifier.onAmazonActivityCreated(status);
+		    }
+		}		
+	}
+	
+	public boolean saveUpdatedStatus(String amazonUserId, AmazonReviewsView reviewsView, AmazonListsView listsView) { 
+		String reviewsStatus = "were not changed";
+		if (reviewsView != null) {
+			reviewsStatus = Integer.toString(reviewsView.getTotal());
+		}
+		
+		logger.debug("Saving new amazon status for {} : reviews {} lists {}", 
+				     new String[]{amazonUserId, reviewsStatus, Integer.toString(listsView.getTotal())});
+		
+		AmazonUpdateStatus updateStatus;
+		boolean updateStatusFound = false;
+		try {
+			updateStatus = getCachedStatus(amazonUserId);
+			updateStatusFound = true;
+		} catch (NotFoundException e) {
+			updateStatus = new AmazonUpdateStatus(amazonUserId);
+			em.persist(updateStatus);
+		}
+		
+		boolean reviewsChanged = false;     
+		
+		if (reviewsView != null) {
+			String reviewsHash = computeReviewsHash(reviewsView.getReviews());
+			
+			if (!updateStatus.getReviewsHash().equals(reviewsHash)) {
+				logger.debug("Most recent reviews changed '{}' -> '{}'",
+						updateStatus.getReviewsHash(), reviewsHash);
+				reviewsChanged = true;
+				updateStatus.setReviewsHash(reviewsHash);
+			}
+		}
+		
+		AmazonLists listsThatHaveChanged = new AmazonLists();
+		Map<String, String> listHashesMap = updateStatus.getListHashesMap();
+		
+		for (AmazonListView listView : listsView.getLists()) {
+			// if a listView doesn't have any items, it most likely means we didn't set them
+			// because we already believe they haven't changed
+			// if a list really does not have any items, it's ok not to have a listHash for it
+			if (listView.hasSomeItems()) {
+			    String newListHash = computeListHash(listView);
+			    if (!listHashesMap.values().contains(newListHash)) {
+			    	String oldListHash = listHashesMap.get(listView.getListId());
+			    	logger.debug("Most recent items changed for list {} : '{}' -> '{}'",
+			    			     new String[]{listView.getListId(), oldListHash, newListHash});
+			    	listsThatHaveChanged.addList(listView, true);
+			    	if (oldListHash != null) {
+			    	    updateStatus.removeListHash(listHashesMap.get(listView.getListId()));
+			    	}    
+			    	updateStatus.addListHash(newListHash);
+			    }
+			}	
+			// it's ok if the hash for the list was not previously there
+			listHashesMap.remove(listView.getListId());
+		}
+		
+		// the lists that remain in the map are no longer present 
+		for (String key : listHashesMap.keySet()) {
+		    updateStatus.removeListHash(listHashesMap.get(key));	
+		    // Calling updateListItems on a list with no items will not do anything
+		    // now, because if we ever decide to remove or mark as removed corresponding
+		    // AmazonActivityStatuses, this call will be useful. It is better to only
+		    // mark things as removed to avoid duplicate notifications in case the 
+		    // there was a glitch in getting the data from the web services.
+		    AmazonList removedList = new AmazonList();
+		    removedList.setListId(key);
+		    listsThatHaveChanged.addList(removedList, true);
+		}
+		
+		// Push the updateStatus object to the database. The theory here is that 
+		// it keeps Hibernate from reordering saving the new UpdateStatus vs. 
+		// the other work we're about to do below, which might help avoid 
+		// deadlock situations with the 2nd level cache. 
+		// (If two threads both do A,B that's safer than having one do A,B and
+		// one B,A.) Since we're done with the updateStatus
+		// at this point, it shouldn't hurt efficiency too much to do this.
+		em.flush();
+		
+        if (reviewsChanged) {
+			// If we did not have an updateStatus before, it means that we just initialized
+			// this account.
+			updateReviews(amazonUserId, reviewsView, !updateStatusFound);
+        }
+        
+        for (AmazonListView listView : listsThatHaveChanged.getLists()) {
+        	updateListItems(amazonUserId, listView, !updateStatusFound);
+        }
+
+		return reviewsChanged || (listsThatHaveChanged.getTotal() > 0);
 	}
 	
 	@Override
@@ -190,7 +305,7 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 	private static class AmazonTaskFamily implements PollingTaskFamily {
 
 		public long getDefaultPeriodicitySeconds() {
-			return 2 * 60; // 20 minutes
+			return 20 * 60; // 20 minutes
 		}
 
 		public String getName() {
@@ -217,6 +332,8 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 			AmazonUpdater proxy = EJBUtil.defaultLookup(AmazonUpdater.class);
 			Configuration config = EJBUtil.defaultLookup(Configuration.class);
 			AmazonReviewsCache reviewsCache = CacheFactoryBean.defaultLookup(AmazonReviewsCache.class);
+			AmazonListsCache listsCache = CacheFactoryBean.defaultLookup(AmazonListsCache.class);
+			AmazonListItemsCache listItemsCache = CacheFactoryBean.defaultLookup(AmazonListItemsCache.class);
 			
 			// refetching all reviews each time through cache would require paging through Amazon
 			// results and making multiple requests for that, we are better off making one request here,
@@ -225,22 +342,63 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 			
 			int newReviewCount = ws.getReviewsCount(amazonUserId);
 			
-			boolean needCacheUpdate = false;       	
+			boolean needReviewsCacheUpdate = false;       	
 			int cachedReviewCount = -1;
 			try {
 				AmazonReviewsView cachedReviews = reviewsCache.checkCache(amazonUserId);			
 				cachedReviewCount = cachedReviews.getTotal();
 			} catch (NotCachedException e) {
-				needCacheUpdate = true;
+				needReviewsCacheUpdate = true;
 			}
 			
-			if (needCacheUpdate || (newReviewCount != cachedReviewCount)) {
-				AmazonReviewsView reviewsView = reviewsCache.getSync(amazonUserId, true);
-				
-				// changed might be false here if we were saving updated status because
-				// the previous set of results has expired, but nothing really changed
-				changed = proxy.saveUpdatedStatus(amazonUserId, reviewsView);
+			AmazonReviewsView reviewsView = null;
+			if (needReviewsCacheUpdate || (newReviewCount != cachedReviewCount)) {
+				reviewsView = reviewsCache.getSync(amazonUserId, true);
 			}	
+
+			// For the wish list items, we first get the wish lists, we can
+			// update the wish lists list only once every 24 hours, but because people
+			// might wonder if Mugshot picked up their new wish list right away,
+			// we should actually check it on every iteration. Because it's not
+			// unlikely for someone to remove one wish list and add another at the
+			// same time and people generally have few wish lists, we just always 
+			// check if wish list ids and names match what we have.
+			AmazonListsView listsView = listsCache.getSync(amazonUserId, true);
+			
+			AmazonListsView refreshedListsView = new AmazonLists();
+			
+			for (AmazonListView list : listsView.getLists()) {
+				// we would not have list details if it is new or has expired in our database
+				boolean needListCacheUpdate = !list.hasListDetails();
+				
+				if (!needListCacheUpdate) {
+	                // refetching all wish list items each time through cache would require paging through Amazon
+					// results and making multiple requests for that, we are better off making one request here,
+					// and getting the results only if the wish list items count changed or the results in cache expired	
+					// we also get the results if the list name changed
+				    AmazonListView newList = ws.getListDetails(list.getListId());
+                    if (newList.getTotalItems() != list.getTotalItems() ||
+                        !newList.getListName().equals(list.getListName())) {
+                    	needListCacheUpdate = true;
+                    }
+				}
+				
+				if (needListCacheUpdate) {
+					// AmazonListView also serves as what could have been called AmazonListItemsView
+					AmazonListView listWithItems = 
+						listItemsCache.getSync(new Pair<String, String>(amazonUserId, list.getListId()), true);
+					refreshedListsView.addList(listWithItems, true);
+				} else {
+					// we will know that this list has not changed because hasSomeItems() will be false 
+					// for it; we want to have all lists in the refreshedListsView so that saveUpdatedStatus
+					// can figure out if some lists were deleted
+					refreshedListsView.addList(list, true);
+				}
+			}
+			
+			// this might return false for changed if we were saving something because it 
+			// expired, but nothing really changed
+			changed = proxy.saveUpdatedStatus(amazonUserId, reviewsView, refreshedListsView);
 			
 			return new PollResult(changed, false);
 		}

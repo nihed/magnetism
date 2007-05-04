@@ -45,9 +45,9 @@ public class CachedAmazonReview extends DBUnique implements CachedListItem {
         this.rating = rating;
         this.helpfulVotes = helpfulVotes;
         this.totalVotes = totalVotes;
-        this.title = title;
-        this.content = content;
-        this.reviewDate = reviewDate.getTime();
+        this.title = (title == null ? "" : title);
+        this.content = (content == null ? "" : content);
+        this.reviewDate = (reviewDate == null ? -1 : reviewDate.getTime());
     }
 	
 	static public CachedAmazonReview newNoResultsMarker(String amazonUserId) {

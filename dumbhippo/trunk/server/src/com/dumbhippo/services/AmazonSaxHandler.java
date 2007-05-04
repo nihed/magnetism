@@ -15,18 +15,31 @@ public class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> {
 
 	enum Element {
 		CustomerId,
+		WishListId,
+		List,
+		    ListId,
+		    ListName,
+		    TotalItems,
+		    TotalPages,
+		    DateCreated,
+		    ListItem,
+		        ListItemId,
+		        DateAdded,
+		        Comment,
+		        QuantityDesired,
+		        QuantityReceived,		        
 		CustomerReviews,
 		    TotalReviews,
 		    TotalReviewPages,
 		    Review,
-		        ASIN,
 		        Rating,
 		        HelpfulVotes,
 		        TotalVotes,
 		        Date,
 		        Summary,
 		        Content,	
-		        // TODO: add error message handling
+		ASIN, // can be found both under Review and under ListItem/Item       
+		// TODO: add error message handling
 		IGNORED // an element we don't care about
 	};	
 	
@@ -34,6 +47,9 @@ public class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> {
 	private boolean forTotalCount;
 	private AmazonReviews reviews;
 	private AmazonReview currentReview;
+	private AmazonLists lists;
+	private AmazonList list;
+	private AmazonListItem currentListItem;
 	
 	AmazonSaxHandler() {
 		this(false);
@@ -67,14 +83,20 @@ public class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> {
 	
 	@Override
 	protected void openElement(Element c) throws SAXException {
-		if (c == Element.CustomerReviews) {
+		if (c == Element.List) {
+			if (list != null)
+				throw new SAXException("two <List> elements in response");
+			list = new AmazonList();
+		} if (c == Element.CustomerReviews) {
 			if (reviews != null)
 				throw new SAXException("two <CustomerReviews> elements in response");
             reviews = new AmazonReviews();
 		} else if (c == Element.Review && !forTotalCount) {
 		    currentReview = new AmazonReview();
 			currentReview.setAmazonUserId(amazonUserId);
-		} 
+		} else if (c == Element.ListItem) {
+			currentListItem = new AmazonListItem();
+		}
 	}
 	
 	@Override
@@ -90,7 +112,11 @@ public class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> {
 		} else if (c == Element.TotalReviewPages) {
 	    	reviews.setTotalReviewPages(parseCount(c, currentContent));
 	    } else if (c == Element.ASIN) {
-	    	currentReview.setItemId(currentContent);
+	    	if (currentReview != null) {
+	    	    currentReview.setItemId(currentContent);
+	    	} else if (currentListItem != null) {
+	    		currentListItem.setItemId(currentContent);
+	    	}
 	    } else if (c == Element.Rating) {
 	    	currentReview.setRating(parseCount(c, currentContent));
 	    } else if (c == Element.HelpfulVotes) {
@@ -109,10 +135,51 @@ public class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> {
 	    	// a review to refresh the total count.
 	    	reviews.addReview(currentReview, false);
 	    	currentReview = null;
-	    }
+	    } else if (c == Element.WishListId) {
+			if (lists == null) 
+				lists = new AmazonLists();		
+			AmazonList listWithId = new AmazonList();
+			listWithId.setListId(currentContent);
+			lists.addList(listWithId, true);			
+		} else if (c == Element.ListId) {
+			// ListId first occures when the request parmeters are repeated
+			// in the response, we can ignore it then
+			if (list != null) {
+			    list.setListId(currentContent);
+			}
+		} else if (c == Element.ListName) {
+			list.setListName(currentContent);
+		} else if (c == Element.TotalItems) {
+			list.setTotalItems(parseCount(c, currentContent));			
+		} else if (c == Element.TotalPages) {
+			list.setTotalPages(parseCount(c, currentContent));
+		} else if (c == Element.DateCreated) {
+			list.setDateCreated(parseAmazonDate(c, currentContent));
+		} else if (c == Element.ListItemId) {
+			currentListItem.setListItemId(currentContent);			
+		} else if (c == Element.DateAdded) {
+			currentListItem.setDateAdded(parseAmazonDate(c, currentContent));
+		} else if (c == Element.Comment) {
+			currentListItem.setComment(currentContent);
+		} else if (c == Element.QuantityDesired) {
+			currentListItem.setQuantityDesired(parseCount(c, currentContent));
+		} else if (c == Element.QuantityReceived) {
+			currentListItem.setQuantityReceived(parseCount(c, currentContent));
+		} else if (c == Element.ListItem) {
+		    list.addListItem(currentListItem);
+		    currentListItem = null;
+		}
 	}
 	
 	public AmazonReviews getReviews() {
 		return reviews;
+	}
+	
+	public AmazonLists getLists() {
+		return lists;
+	}
+	
+	public AmazonList getList() {
+		return list;
 	}
 }

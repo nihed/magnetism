@@ -1,5 +1,6 @@
 package com.dumbhippo.services;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -18,10 +19,15 @@ public class AmazonWebServices extends AbstractXmlRequest<AmazonSaxHandler> {
     // typical Amazon product id is 10 characters		
 	public static final int MAX_AMAZON_ITEM_ID_LENGTH = 20;
 
-    // typical Amazon wish list id is 13 characters		
-	public static final int MAX_AMAZON_WISH_LIST_ID_LENGTH = 20;
+    // typical Amazon list id is 13 characters		
+	public static final int MAX_AMAZON_LIST_ID_LENGTH = 20;
+	
+	// typical Amazon list item id is 14 characters
+	public static final int MAX_AMAZON_LIST_ITEM_ID_LENGTH = 20;
 	
 	public static final int MAX_AMAZON_REVIEW_PAGES_RETURNED = 10;
+
+	public static final int MAX_AMAZON_LIST_PAGES_RETURNED = 30;
 	
 	static private final Logger logger = GlobalSetup.getLogger(AmazonWebServices.class);
 	
@@ -125,6 +131,109 @@ public class AmazonWebServices extends AbstractXmlRequest<AmazonSaxHandler> {
 		sb.append(page);
 		sb.append("&CustomerId=");
 		sb.append(amazonUserId);
+		sb.append("&AWSAccessKeyId=");
+		sb.append(this.accessKeyId);
+		if (this.associateTagId != null) {
+			sb.append("&AssociateTag=");
+			sb.append(this.associateTagId);
+		}
+		String wsUrl = sb.toString();
+		logger.debug("Loading amazon web services url {}", wsUrl);
+		return wsUrl;
+	}
+	
+	public AmazonLists lookupLists(String amazonUserId) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("http://webservices.amazon.com/onca/xml?Service=AWSECommerceService"
+				+ "&Operation=CustomerContentLookup&ResponseGroup=CustomerLists&CustomerId=");
+		sb.append(amazonUserId);
+		sb.append("&AWSAccessKeyId=");
+		sb.append(this.accessKeyId);
+		if (this.associateTagId != null) {
+			sb.append("&AssociateTag=");
+			sb.append(this.associateTagId);
+		}
+		String wsUrl = sb.toString();
+		logger.debug("Loading amazon web services url {}", wsUrl);
+	    AmazonSaxHandler handler = parseUrl(new AmazonSaxHandler(false), wsUrl);
+	    return handler.getLists();
+	}
+	
+	public AmazonList lookupListItems(String amazonUserId, String listId) {
+		int page = 1;
+		int totalPages = 1;
+		AmazonList amazonList = null; 
+		// we have this in case the results shift over while we are getting multiple pages
+		// (see lookupReviews for a longer explanation)
+		Set<String> itemIds = new HashSet<String>();
+		
+		while (page <= totalPages) {
+		    String wsUrl = createListRequest(listId, true, page);		
+		    AmazonSaxHandler handler = parseUrl(new AmazonSaxHandler(false), wsUrl);
+		    if (amazonList == null) {
+		    	if (page != 1) {
+		    		logger.warn("amazonList was null when getting items for page {}", page);	
+		    	}
+		    	if (handler.getList() != null) {
+		    		amazonList = new AmazonList(amazonUserId, listId, handler.getList().getListName(), handler.getList().getTotalItems(),
+		    				                    handler.getList().getTotalPages(), handler.getList().getDateCreated(),
+		    				                    new ArrayList<AmazonListItem>());
+		    	    for (AmazonListItemView listItem : handler.getList().getListItems()) {
+		    	    	if (!itemIds.contains(listItem.getItemId())) {
+		    	    		amazonList.addListItem(listItem);
+		    	    		itemIds.add(listItem.getItemId());
+		    	    	}
+		    	    }
+		    	    // the web services tell us how many pages total there are, but only return reviews
+		    	    // from the first MAX_AMAZON_LIST_PAGES_RETURNED pages
+		    	    totalPages = Math.min(amazonList.getTotalPages(), MAX_AMAZON_LIST_PAGES_RETURNED);
+		    	} else {
+		    		// There must be no list with this id, nothing to do, we should return null
+		    		// we will not overwrite the old data till it expires, and then we will stop 
+		    		// looking up that list. We will also stop looking up that list if it's no
+		    		// longer in the list of user's lists.
+		    	}
+		    } else {
+		        if (handler.getList() == null) {
+		            logger.warn("Amazon list is null when we were expecting page {} of Amazon list items", page);
+		        } else {
+		    	    for (AmazonListItemView listItem : handler.getList().getListItems()) {
+		    	    	if (!itemIds.contains(listItem.getItemId())) {
+		    	    		amazonList.addListItem(listItem);
+		    	    		itemIds.add(listItem.getItemId());
+		    	    	}
+		    	    }
+		        }		    	
+		    }
+		    page++;
+		}
+		    	    
+		return amazonList;	
+	}
+	
+	public AmazonList getListDetails(String listId) {
+	    String wsUrl = createListRequest(listId, false, -1);	
+	    AmazonSaxHandler handler = parseUrl(new AmazonSaxHandler(false), wsUrl);
+	    return handler.getList();
+	}
+	
+	private String createListRequest(String listId, boolean includeItems, int page) {
+		StringBuilder sb = new StringBuilder();
+		// sorting by last updated will ensure we always store updated information about
+		// list items (like quantity desired, quantity received, and comment)
+		// ListFull response group gives us the list of items, we could also include
+		// Images, ItemAttributes, and EditorialReview response groups to get information
+		// about each item, but we need to do item lookups more frequently than we get list
+		// items anyway, so we do that in a separate cache update activity
+		// ListFull response group has all elements from ListInfo and ListItems groups
+		sb.append("http://webservices.amazon.com/onca/xml?Service=AWSECommerceService"
+				+ "&Operation=ListLookup&ListType=WishList&Sort=LastUpdated");
+		if (includeItems) {
+	        sb.append("&ResponseGroup=ListFull&ProductPage=");
+		    sb.append(page);
+		}
+		sb.append("&ListId=");
+		sb.append(listId);
 		sb.append("&AWSAccessKeyId=");
 		sb.append(this.accessKeyId);
 		if (this.associateTagId != null) {
