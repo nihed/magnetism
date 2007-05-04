@@ -70,7 +70,8 @@ gboolean          hippo_dbus_helper_object_is_registered (DBusConnection        
                                                           const char              *path);
 DBusHandlerResult hippo_dbus_helper_handle_message       (DBusConnection          *connection,
                                                           DBusMessage             *message);
-
+DBusHandlerResult hippo_dbus_helper_filter_message       (DBusConnection          *connection,
+                                                          DBusMessage             *message);
 
 typedef struct HippoDBusProxy HippoDBusProxy;
 

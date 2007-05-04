@@ -41,23 +41,6 @@ void       hippo_app_show_home      (HippoApp   *app);
 void       hippo_app_open_url       (HippoApp   *app,
                                      gboolean    use_login_browser,
                                      const char *url);
-void       hippo_app_visit_post     (HippoApp   *app,
-                                     HippoPost  *post);
-void       hippo_app_visit_post_id  (HippoApp   *app,
-                                     const char *guid);                                     
-void       hippo_app_ignore_post_id (HippoApp   *app,
-                                     const char *guid);                                                                          
-void       hippo_app_ignore_entity_id(HippoApp   *app,
-                                      const char *guid);                                        
-void       hippo_app_ignore_entity_chat_id(HippoApp   *app,
-                                           const char *guid);                                       
-void       hippo_app_visit_entity   (HippoApp    *app,
-                                     HippoEntity *entity);
-void       hippo_app_visit_entity_id(HippoApp    *app,
-                                     const char  *guid);
-void       hippo_app_invite_to_group(HippoApp   *app,
-                                     const char *group_id,
-                                     const char *user_id);
 
 void              hippo_app_join_chat     (HippoApp   *app,
                                            const char *chat_id);
