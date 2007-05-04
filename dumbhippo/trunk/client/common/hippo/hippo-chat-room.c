@@ -8,10 +8,6 @@
 
 /* === CONSTANTS === */
 
-/* 2 hours chat room ignore timeout, in seconds; make this a parameter that can be set */
-/* if want different ignore timeouts or want ignore to remain in effect indefinitely */
-static const int CHAT_ROOM_IGNORE_TIMEOUT = 2*60*60; 
-
 static void      hippo_chat_room_init        (HippoChatRoom       *room);
 static void      hippo_chat_room_class_init  (HippoChatRoomClass  *klass);
 static void      hippo_chat_room_finalize    (GObject             *object);
@@ -36,13 +32,6 @@ struct _HippoChatRoom {
     int participant_count;
     /* number of times we want to be a viewer */
     int visitor_count;
-
-    int generation;
-    int loading_generation;
-    guint loading : 1;
-    /* date this chat room was last ignored; ignore for posts (including post-related chat rooms) */
-    /* is handled separately */
-    GTime date_last_ignored;
 };
 
 struct _HippoChatRoomClass {
@@ -56,13 +45,14 @@ enum {
     TITLE_CHANGED,
     USER_STATE_CHANGED,
     /* JOINED is emitted for a subset of STATE_CHANGED where the state went
-     * from nonmember to either viewer or participant, and the chat room
-     * isn't in the "loading" state. This means we may want to specially
-     * indicate the new member of the chat to users.
+     * from nonmember to either viewer or participant; we used to try to
+     * distinguish the case when other users appeared when we were loading
+     * the chatroom from the case when other users joined after that,
+     * with the idea you could notify on the second case, but we've dropped
+     * tracking of that distinction.
      */
     USER_JOINED,
     MESSAGE_ADDED,
-    LOADED,
     CLEARED,
     LAST_SIGNAL
 };
@@ -125,15 +115,6 @@ hippo_chat_room_class_init(HippoChatRoomClass *klass)
                       g_cclosure_marshal_VOID__POINTER,
                       G_TYPE_NONE, 1, G_TYPE_POINTER);
 
-    signals[LOADED] =
-        g_signal_new ("loaded",
-                      G_TYPE_FROM_CLASS (object_class),
-                      G_SIGNAL_RUN_LAST,
-                      0,
-                      NULL, NULL,
-                      g_cclosure_marshal_VOID__VOID,
-                      G_TYPE_NONE, 0);
-
     signals[CLEARED] =
         g_signal_new ("cleared",
                       G_TYPE_FROM_CLASS (object_class),
@@ -177,9 +158,6 @@ hippo_chat_room_new(const char   *chat_id,
     room->id = g_strdup(chat_id);
     room->kind = kind;
 
-    room->generation = -1;
-    room->loading_generation = -1;
-
     return room;
 }
 
@@ -209,34 +187,6 @@ hippo_chat_room_get_kind(HippoChatRoom *room)
 {
     g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), HIPPO_CHAT_KIND_UNKNOWN);
     return room->kind;
-}
-
-GTime            
-hippo_chat_room_get_date_last_ignored(HippoChatRoom   *room)
-{
-    g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), 0);
-    return room->date_last_ignored;
-}
-
-gboolean         
-hippo_chat_room_get_ignored(HippoChatRoom  *room)
-{
-    GTimeVal timeval;
-
-    g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), FALSE);
-
-    // date_last_ignored being 0 means that the chat room was never ignored 
-    // or that the chat room was explicitly unignored; we want to check for 
-    // it explicitly here, rather than let this special meaning of 0 be lost
-    // in the check below
-    if (room->date_last_ignored == 0)
-        return FALSE;
-
-    g_get_current_time(&timeval);
-    if (room->date_last_ignored + CHAT_ROOM_IGNORE_TIMEOUT < timeval.tv_sec)
-        return FALSE;
-
-    return TRUE;
 }
 
 HippoChatMessage*
@@ -305,51 +255,11 @@ hippo_chat_room_get_messages(HippoChatRoom *room)
     return room->messages;
 }
 
-gboolean
-hippo_chat_room_get_loading(HippoChatRoom *room)
-{
-    g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), FALSE);
-
-    if (room->generation > room->loading_generation)
-        return FALSE; /* haven't called set_loading yet in this generation */
-    
-    return room->loading;
-}
-
-void
-hippo_chat_room_set_loading(HippoChatRoom *room,
-                            int            generation,
-                            gboolean       loading)
-{
-    g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
-
-    g_debug("Setting loading=%d generation %d on room %s (%p) old loading %d old generation %d",
-            loading, generation, room->id, room, room->loading, room->loading_generation);
-    
-    if (room->loading_generation != generation) {
-        room->loading_generation = generation;
-        /* the old pending chat details isn't going to show */
-        room->loading = FALSE;
-    }
-    
-    loading = loading != FALSE;
-    
-    if (room->loading == loading)
-        return;
-    
-    room->loading = loading;
-    
-    if (!room->loading) {
-        g_signal_emit(G_OBJECT(room), signals[LOADED], 0);
-    }
-}
-
 void
 hippo_chat_room_set_kind(HippoChatRoom *room,
                          HippoChatKind  kind)
 {
     g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
-    g_return_if_fail(room->loading);
     
     if (room->kind == kind)
         return;
@@ -444,7 +354,7 @@ hippo_chat_room_set_user_state(HippoChatRoom *room,
 
     g_signal_emit(room, signals[USER_STATE_CHANGED], 0, person);
 
-    if (!room->loading && old_state == HIPPO_CHAT_STATE_NONMEMBER) {
+     if (old_state == HIPPO_CHAT_STATE_NONMEMBER) {
         g_signal_emit(room, signals[USER_JOINED], 0, person);
     }
 
@@ -497,26 +407,12 @@ hippo_chat_room_add_message(HippoChatRoom    *room,
 
 /* Called on reconnect, since users and messages will be resent */
 void
-hippo_chat_room_reconnected(HippoConnection *connection,
-                            HippoChatRoom   *room)
+hippo_chat_room_clear(HippoChatRoom   *room)
 {
     GHashTable *old_viewers;
     GHashTable *old_chatters;
-    int new_generation;
     
     g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
-
-    new_generation = hippo_connection_get_generation(connection);
-
-    g_debug("Clearing chat room old generation %d new %d",
-            room->generation, new_generation);
-
-    if (room->generation == new_generation) {
-        g_debug("No disconnect has happened, no need to clear");
-        return;
-    }
-    
-    room->generation = new_generation;
 
     /* Save old tables to hold refs while
      * we emit the "cleared" signal so 
@@ -532,8 +428,6 @@ hippo_chat_room_reconnected(HippoConnection *connection,
     
     free_messages(room);
 
-    hippo_connection_request_chat_room_details(connection, room);
-    
     g_signal_emit(room, signals[CLEARED], 0);
     
     g_hash_table_destroy(old_viewers);
@@ -724,28 +618,3 @@ hippo_chat_message_get_serial(HippoChatMessage *message)
     return message->serial;
 }
 
-void             
-hippo_chat_room_set_date_last_ignored(HippoChatRoom *room,
-                                      GTime          date) 
-{
-    g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
-    if (room->date_last_ignored != date) {
-        room->date_last_ignored = date;
-    }
-}
-
-void             
-hippo_chat_room_set_ignored(HippoChatRoom    *room,
-                            gboolean          is_ignored)
-{
-    GTimeVal timeval;
-
-    g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
-    
-    if (is_ignored) {
-        g_get_current_time(&timeval);
-        room->date_last_ignored = timeval.tv_sec; 
-    } else {
-        room->date_last_ignored = 0;
-    }
-}

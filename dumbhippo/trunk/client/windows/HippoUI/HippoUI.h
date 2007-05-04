@@ -90,9 +90,6 @@ public:
     void launchBrowser(BSTR url);
     void displaySharedLink(BSTR postId, BSTR url);
 
-    void ignorePost(BSTR postId);
-    void ignoreEntity(BSTR entityId);
-    void ignoreChat(BSTR chatId);
     void groupInvite(BSTR groupId, BSTR userId);
 
     HippoWindowState getChatWindowState(BSTR chatId);

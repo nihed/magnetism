@@ -6,27 +6,6 @@
 
 G_BEGIN_DECLS
 
-/*
- * CHAT ROOM LIFECYCLE OVERVIEW
- * 
- * When a chat room is created, it asks the server for the current chat state.
- * during this time, loading = TRUE. When the room is fully loaded, loading=FALSE
- * and the room emits the "loaded" signal.
- * 
- * (note, loading=FALSE when a chat room is just created, the loading flag means 
- * we've called request_details and don't have a reply yet. but we always request_details
- * right away)
- * 
- * Once a room is loaded, it's guaranteed to have known kind POST, GROUP, or BROKEN.
- * BROKEN means the server hadn't heard of the room.
- * 
- * Before a room is loaded, if the kind is known it will be set, but the kind may
- * be UNKNOWN.
- * 
- * If we disconnect and reconnect to the server, the chat room can re-enter the
- * loading=TRUE state. If it does so, the "cleared" signal will be emitted first.
- */
-
 typedef struct _HippoChatMessage   HippoChatMessage;
 
 #define HIPPO_TYPE_CHAT_ROOM              (hippo_chat_room_get_type ())
@@ -43,7 +22,6 @@ HippoChatRoom*    hippo_chat_room_new                     (const char   *chat_id
 
 const char*       hippo_chat_room_get_id                  (HippoChatRoom  *room);
 const char*       hippo_chat_room_get_jabber_id           (HippoChatRoom  *room);
-gboolean          hippo_chat_room_get_loading             (HippoChatRoom  *room);
 HippoChatKind     hippo_chat_room_get_kind                (HippoChatRoom  *room);
 HippoChatState    hippo_chat_room_get_user_state          (HippoChatRoom  *room,
                                                            HippoPerson    *person);
@@ -59,20 +37,11 @@ gboolean          hippo_chat_room_get_ignored             (HippoChatRoom  *room)
 
 /* === Methods used by HippoConnection to keep chat room updated === */
 
-/* Set while we are loading the chat room details with connection_request_details */
-void     hippo_chat_room_set_loading             (HippoChatRoom *room,
-                                                  int            generation,
-                                                  gboolean       loading);
 void     hippo_chat_room_set_kind                (HippoChatRoom *room,
                                                   HippoChatKind  kind);
 void     hippo_chat_room_set_user_state          (HippoChatRoom *room,
                                                   HippoPerson   *person,
                                                   HippoChatState state);
-void     hippo_chat_room_set_date_last_ignored   (HippoChatRoom *room,
-                                                  GTime          date); 
-void     hippo_chat_room_set_ignored             (HippoChatRoom *room,
-                                                  gboolean       is_ignored);
-
 
 /* Ownership of the message passes to the chat room, which may IMMEDIATELY FREE
  * the message if it's a dup
@@ -80,8 +49,7 @@ void     hippo_chat_room_set_ignored             (HippoChatRoom *room,
 void     hippo_chat_room_add_message             (HippoChatRoom    *room,
                                                   HippoChatMessage *message);
 /* Called on reconnect, since users and messages will be resent */
-void     hippo_chat_room_reconnected             (HippoConnection *connection,
-                                                  HippoChatRoom   *room);
+void     hippo_chat_room_clear                   (HippoChatRoom    *room);
 
 /* bump our count of desiring PARTICIPANT or VISITOR */
 void            hippo_chat_room_increment_state_count (HippoChatRoom *room,

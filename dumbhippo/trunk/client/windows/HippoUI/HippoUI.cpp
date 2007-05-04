@@ -449,36 +449,6 @@ HippoUI::timeoutShowDebugShare()
 }
 
 void 
-HippoUI::ignorePost(BSTR postId)
-{
-    HippoUStr postIdU(postId);
-    HippoPost *post;
-    // We set this value immediately locally
-    post = hippo_data_cache_lookup_post(getDataCache(), postIdU.c_str());
-    hippo_post_set_ignored(post, TRUE);
-    hippo_connection_set_post_ignored(getConnection(), postIdU.c_str());
-}
-
-void 
-HippoUI::ignoreEntity(BSTR entityId)
-{
-    HippoUStr entityIdU(entityId);
-    HippoEntity *entity;
-    entity = hippo_data_cache_lookup_entity(getDataCache(), entityIdU.c_str());
-    if (entity && HIPPO_IS_GROUP(entity))
-        hippo_group_set_ignored(HIPPO_GROUP(entity), TRUE);
-}
-
-void 
-HippoUI::ignoreChat(BSTR chatId)
-{
-    HippoUStr chatIdU(chatId);
-    HippoChatRoom *room;
-    room = hippo_data_cache_lookup_chat_room(getDataCache(), chatIdU.c_str(), NULL);
-    hippo_chat_room_set_ignored(room, TRUE);
-}
-
-void 
 HippoUI::groupInvite(BSTR groupId, BSTR userId)
 {
     HippoUStr groupIdU(groupId);
