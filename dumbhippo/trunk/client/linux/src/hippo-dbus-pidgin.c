@@ -149,6 +149,40 @@ reload_from_new_owner(DBusConnection *connection,
                                            "GaimAccountsGetAllActive",
                                            &state->accounts, &state->n_accounts))
         goto failed;                                            
+
+    for (i = 0; i < state->n_accounts; ++i) {
+        dbus_int32_t *buddies = NULL;
+        dbus_int32_t buddies_len = 0;
+        if (!hippo_dbus_proxy_ARRAYINT32__INT32_STRING(state->gaim_proxy,
+                                                       "GaimFindBuddies",
+                                                       state->accounts[i], "",
+                                                       &buddies, &buddies_len))
+            goto failed;
+        g_printerr("Found %d buddies\n", buddies_len);
+
+        {
+            int j;
+            for (j = 0; j < buddies_len; ++j) {
+                dbus_int32_t is_online;
+                char *name;
+                
+                if (!hippo_dbus_proxy_INT32__INT32(state->gaim_proxy,
+                                                   "GaimBuddyIsOnline", buddies[j], &is_online))
+                    break;
+
+                name = NULL;
+                if (!hippo_dbus_proxy_STRING__INT32(state->gaim_proxy,
+                                                    "GaimBuddyGetName", buddies[j], &name))
+                    break;
+                
+                g_printerr("buddy %d '%s' is_online=%d\n", buddies[j], name, is_online);
+
+                g_free(name);
+            }
+        }
+
+        g_free(buddies);
+    }
     
     state->account_presences = g_new0(dbus_int32_t, state->n_accounts);
     for (i = 0; i < state->n_accounts; ++i) {

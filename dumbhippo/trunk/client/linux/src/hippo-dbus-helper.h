@@ -96,36 +96,45 @@ DBusMessage*      hippo_dbus_proxy_call_method_sync_valist (HippoDBusProxy      
  * frees the returned args unless they are just primitives. Not usable with array returns.
  */
 dbus_bool_t       hippo_dbus_proxy_finish_method_call_freeing_reply (DBusMessage *reply,
+                                                                     const char  *method,
                                                                      DBusError   *error,
                                                                      int          first_arg_type,
                                                                      ...);
 
 /* This one frees the error but not the reply */
 dbus_bool_t       hippo_dbus_proxy_finish_method_call_keeping_reply (DBusMessage *reply,
+                                                                     const char  *method,
                                                                      DBusError   *error,
                                                                      int          first_arg_type,
                                                                      ...);
 
-dbus_bool_t hippo_dbus_proxy_INT32__VOID       (HippoDBusProxy  *proxy,
-                                                const char      *method,
-                                                dbus_int32_t    *out1_p);
-dbus_bool_t hippo_dbus_proxy_INT32__INT32      (HippoDBusProxy  *proxy,
-                                                const char      *method,
-                                                dbus_int32_t     in1_p,
-                                                dbus_int32_t    *out1_p);
-dbus_bool_t hippo_dbus_proxy_ARRAYINT32__INT32 (HippoDBusProxy  *proxy,
-                                                const char      *method,
-                                                dbus_int32_t     in1_p,
-                                                dbus_int32_t   **out1_p,
-                                                dbus_int32_t    *out1_len);
-dbus_bool_t hippo_dbus_proxy_ARRAYINT32__VOID  (HippoDBusProxy  *proxy,
-                                                const char      *method,
-                                                dbus_int32_t   **out1_p,
-                                                dbus_int32_t    *out1_len);
-dbus_bool_t hippo_dbus_proxy_STRING__INT32     (HippoDBusProxy  *proxy,
-                                                const char      *method,
-                                                dbus_int32_t     in1_p,
-                                                char           **out1_p);
+dbus_bool_t hippo_dbus_proxy_INT32__VOID              (HippoDBusProxy  *proxy,
+                                                       const char      *method,
+                                                       dbus_int32_t    *out1_p);
+dbus_bool_t hippo_dbus_proxy_INT32__INT32             (HippoDBusProxy  *proxy,
+                                                       const char      *method,
+                                                       dbus_int32_t     in1_p,
+                                                       dbus_int32_t    *out1_p);
+dbus_bool_t hippo_dbus_proxy_ARRAYINT32__INT32        (HippoDBusProxy  *proxy,
+                                                       const char      *method,
+                                                       dbus_int32_t     in1_p,
+                                                       dbus_int32_t   **out1_p,
+                                                       dbus_int32_t    *out1_len);
+dbus_bool_t hippo_dbus_proxy_ARRAYINT32__VOID         (HippoDBusProxy  *proxy,
+                                                       const char      *method,
+                                                       dbus_int32_t   **out1_p,
+                                                       dbus_int32_t    *out1_len);
+dbus_bool_t hippo_dbus_proxy_ARRAYINT32__INT32_STRING (HippoDBusProxy  *proxy,
+                                                       const char      *method,
+                                                       dbus_int32_t     in1_p,
+                                                       const char      *in2_p,
+                                                       dbus_int32_t   **out1_p,
+                                                       dbus_int32_t    *out1_len);
+dbus_bool_t hippo_dbus_proxy_STRING__INT32            (HippoDBusProxy  *proxy,
+                                                       const char      *method,
+                                                       dbus_int32_t     in1_p,
+                                                       char           **out1_p);
+
 
 
 G_END_DECLS
