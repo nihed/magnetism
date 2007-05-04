@@ -107,8 +107,6 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 	private String computeListHash(AmazonListView listView) {
 		List<? extends AmazonListItemView> listItems = listView.getListItems();
 		StringBuilder sb = new StringBuilder();
-		sb.append(listView.getListId());
-		sb.append("-");
 		for (int i = 0; i < 5; ++i) {
 			if (i >= listItems.size())
 				break;
@@ -229,7 +227,10 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 		}
 		
 		AmazonLists listsThatHaveChanged = new AmazonLists();
-		Map<String, String> listHashesMap = updateStatus.getListHashesMap();
+		// we want to make a copy of the map because we'll be removing
+		// the lists we find from it
+		Map<String, String> listHashesMap = new HashMap<String, String>();
+		listHashesMap.putAll(updateStatus.getListHashes());
 		
 		for (AmazonListView listView : listsView.getLists()) {
 			// if a listView doesn't have any items, it most likely means we didn't set them
@@ -237,24 +238,24 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 			// if a list really does not have any items, it's ok not to have a listHash for it
 			if (listView.hasSomeItems()) {
 			    String newListHash = computeListHash(listView);
-			    if (!listHashesMap.values().contains(newListHash)) {
+			    if (!listHashesMap.containsKey(listView.getListId()) ||
+			        !listHashesMap.get(listView.getListId()).equals(newListHash)) {
+			    	// this might be null if the key was not previously there
 			    	String oldListHash = listHashesMap.get(listView.getListId());
 			    	logger.debug("Most recent items changed for list {} : '{}' -> '{}'",
 			    			     new String[]{listView.getListId(), oldListHash, newListHash});
 			    	listsThatHaveChanged.addList(listView, true);
-			    	if (oldListHash != null) {
-			    	    updateStatus.removeListHash(listHashesMap.get(listView.getListId()));
-			    	}    
-			    	updateStatus.addListHash(newListHash);
+			    	// this will overwrite oldListHash if it was there
+			    	updateStatus.putListHash(listView.getListId(), newListHash);
 			    }
 			}	
-			// it's ok if the hash for the list was not previously there
+			// remove just won't do anything if the hash for the list was not previously there
 			listHashesMap.remove(listView.getListId());
 		}
 		
 		// the lists that remain in the map are no longer present 
 		for (String key : listHashesMap.keySet()) {
-		    updateStatus.removeListHash(listHashesMap.get(key));	
+		    updateStatus.removeListHash(key);	
 		    // Calling updateListItems on a list with no items will not do anything
 		    // now, because if we ever decide to remove or mark as removed corresponding
 		    // AmazonActivityStatuses, this call will be useful. It is better to only
