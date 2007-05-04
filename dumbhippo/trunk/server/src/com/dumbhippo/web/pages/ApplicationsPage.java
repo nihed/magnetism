@@ -25,6 +25,7 @@ public class ApplicationsPage extends AbstractSigninOptionalPage {
 	public Pageable<ApplicationView> applications;
 	public Pageable<ApplicationView> myApplications;
 	private ApplicationCategory category;
+	private String search;
 	
 	private static final int MY_APPLICATIONS_PER_PAGE = 5; 
 	private static final int APPLICATIONS_PER_PAGE = 10;
@@ -89,6 +90,14 @@ public class ApplicationsPage extends AbstractSigninOptionalPage {
 		applicationSystem = WebEJBUtil.defaultLookup(ApplicationSystem.class);
 	}
 	
+	public void setSearch(String search) {
+		this.search = search;
+	}	
+	
+	public String getSearch() {
+		return search;
+	}
+	
 	public void setCategoryName(String categoryName) {
 		for (ApplicationCategory c : ApplicationCategory.values()) {
 			if (c.name().equalsIgnoreCase(categoryName)) {
@@ -145,7 +154,10 @@ public class ApplicationsPage extends AbstractSigninOptionalPage {
 		if (applications == null) {
 			applications = pagePositions.createPageable("applications", APPLICATIONS_PER_PAGE);
 			applications.setSubsequentPerPage(APPLICATIONS_PER_PAGE);
-			applicationSystem.pagePopularApplications(null, ICON_SIZE, category, applications);
+			if (search == null)
+				applicationSystem.pagePopularApplications(null, ICON_SIZE, category, applications);
+			else
+				applicationSystem.search(search, ICON_SIZE, category, applications);
 		}
 		
 		return applications;
