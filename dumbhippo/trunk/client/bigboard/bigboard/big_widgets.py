@@ -48,7 +48,7 @@ class CanvasURLImageMixin:
         
     def __handle_image_error(self, url, exc):
         # note exception is automatically added to log
-        logging.exception("failed to load image for '%s'", url)  #FIXME queue retry
+        logging.error("failed to load image for '%s': %s", url, exc)  #FIXME queue retry
 
     def _set_is_button(self, is_button):
         self.__is_button = is_button
