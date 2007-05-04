@@ -1712,7 +1712,7 @@ handle_message(DBusConnection     *connection,
     cache = hippo_app_get_data_cache(hippo_get_app());
     xmpp_connection = hippo_data_cache_get_connection(cache);
 
-    result = hippo_dbus_helper_handle_message(connection, message);
+    result = hippo_dbus_helper_filter_message(connection, message);
     if (result == DBUS_HANDLER_RESULT_HANDLED) {
         ; /* we're done, something registered with the helper did the work */
     } else if (type == DBUS_MESSAGE_TYPE_METHOD_CALL) {
