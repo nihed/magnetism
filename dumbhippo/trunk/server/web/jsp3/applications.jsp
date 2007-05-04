@@ -7,6 +7,7 @@
 
 <dh:bean id="applications" class="com.dumbhippo.web.pages.ApplicationsPage" scope="request"/>
 <jsp:setProperty name="applications" property="categoryName" param="category"/>
+<jsp:setProperty name="applications" property="search" param="q"/>
 
 <head>
 	<title>Application Statistics</title>
@@ -14,7 +15,7 @@
 	<dht3:stylesheet name="applications"/>	
 </head>
 
-<dht3:page currentPageLink="applications">
+<dht3:page currentPageLink="application-search">
    	<dht3:shinyBox color="grey">
 	    <dht3:applicationsTop/>
 	    <hr>
@@ -22,16 +23,23 @@
 	    <tr>
 	    <dht3:applicationsLeft currentCategory="${applications.category}"/>
 	    <td id="dhApplicationsMain">
-	    	<div class="dh-applications-heading">Popularity of 
-	    		<c:choose>
-	    			<c:when test="${!empty applications.category}">
-	    				<c:out value="${applications.category.displayName}"/>
-	    			</c:when>
-	    			<c:otherwise>
-	    				All
-	    			</c:otherwise>
-	    		</c:choose>
-	    	Applications</div>
+	    	<c:choose>
+	    		<c:when test="${empty applications.search}">
+			    	<div class="dh-applications-heading">Popularity of 
+			    		<c:choose>
+			    			<c:when test="${!empty applications.category}">
+			    				<c:out value="${applications.category.displayName}"/>
+			    			</c:when>
+			    			<c:otherwise>
+			    				All
+			    			</c:otherwise>
+			    		</c:choose>
+			    	Applications</div>
+	    		</c:when>
+	    		<c:otherwise>
+	    			Results for <b><c:out value="${applications.search}"/></b>
+	    		</c:otherwise>
+	    	</c:choose>
 	    	<c:choose>
 	    		<c:when test="${applications.applications.resultCount == 0}">
 	    			<div class="dh-applications-no-applications">
@@ -46,7 +54,8 @@
 				    	</div>	    		
 					    <c:forEach items="${applications.applications.results}" var="application">
 				    		<div class="dh-applications-application-separator"></div>
-				    		<dht3:application application="${application}"/>
+				    		<dht3:application application="${application}"
+				    		                  description="${!empty applications.search}"/>
 					    </c:forEach>
 					    <div class="dh-applications-more">
 						    <dht:expandablePager pageable="${applications.applications}"/>
