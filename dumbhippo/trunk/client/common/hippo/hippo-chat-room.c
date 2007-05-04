@@ -21,7 +21,6 @@ struct _HippoChatRoom {
     char *id;
     char *jabber_id;
     HippoChatKind kind;
-    char *title;
     GHashTable *viewers;
     GHashTable *chatters;
     GSList *messages; /* sorted latest -> oldest */
@@ -163,7 +162,6 @@ hippo_chat_room_finalize(GObject *object)
     free_messages(room);
     g_hash_table_destroy(room->viewers);
     g_hash_table_destroy(room->chatters);
-    g_free(room->title);
     g_free(room->jabber_id);
     g_free(room->id);
     
@@ -181,8 +179,6 @@ hippo_chat_room_new(const char   *chat_id,
 
     room->generation = -1;
     room->loading_generation = -1;
-
-    hippo_chat_room_set_title(room, NULL);
 
     return room;
 }
@@ -241,33 +237,6 @@ hippo_chat_room_get_ignored(HippoChatRoom  *room)
         return FALSE;
 
     return TRUE;
-}
-
-void
-hippo_chat_room_set_title(HippoChatRoom  *room,
-                          const char     *title)
-{
-    g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
-    
-    if (title == NULL) {
-        title = _("Loading...");
-    }
-    
-    if (title == room->title ||
-        (title && room->title && strcmp(title, room->title) == 0))
-        return;
-        
-    g_free(room->title);
-    room->title = g_strdup(title);
-        
-    g_signal_emit(room, signals[TITLE_CHANGED], 0, room->title);
-}
-
-const char*
-hippo_chat_room_get_title(HippoChatRoom  *room)
-{
-    g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), NULL);
-    return room->title;
 }
 
 HippoChatMessage*

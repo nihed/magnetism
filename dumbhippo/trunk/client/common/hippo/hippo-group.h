@@ -19,12 +19,8 @@ typedef struct _HippoGroupClass HippoGroupClass;
 GType            hippo_group_get_type                  (void) G_GNUC_CONST;
 HippoGroup*      hippo_group_new                       (const char  *guid);
 
-HippoChatRoom* hippo_group_get_chat_room           (HippoGroup    *group);
-int            hippo_group_get_chatting_user_count (HippoGroup    *group);
 GTime          hippo_group_get_date_last_ignored   (HippoGroup    *group);
 gboolean       hippo_group_get_ignored             (HippoGroup    *group);
-void           hippo_group_set_chat_room           (HippoGroup    *group,
-                                                    HippoChatRoom *room);
 void           hippo_group_set_date_last_ignored   (HippoGroup    *group,
                                                     GTime          date);
 void           hippo_group_set_ignored             (HippoGroup    *group,

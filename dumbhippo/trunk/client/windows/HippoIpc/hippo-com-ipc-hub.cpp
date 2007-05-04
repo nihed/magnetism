@@ -281,6 +281,8 @@ HippoComIpcHubImpl::checkUIInstance(HippoUIInstance instance, BSTR serverName, I
     if (FAILED(hr))
         return hr;
 
+    hippoDebugLogW(L"Found server %ls", instanceName ? instanceName.m_str : L"(no name)");
+
     if (!instanceName || !serverName || wcscmp(instanceName.m_str, serverName) != 0)
         return E_FAIL;
     
@@ -294,6 +296,10 @@ HRESULT
 HippoComIpcHubImpl::getUI(const char *serverName, IHippoUI **ui)
 {
     HippoBSTR serverNameW = HippoBSTR::fromUTF8(serverName);
+    // Server name returned by GetServerName call on UI always includes the port
+    if (wcschr(serverNameW, ':') == 0)
+        serverNameW.Append(L":80");
+    hippoDebugLogW(L"Checking for server: %ls\n", serverNameW.m_str);
 
     if (SUCCEEDED(checkUIInstance(HIPPO_UI_INSTANCE_PRODUCTION, serverNameW, ui)) ||
         SUCCEEDED(checkUIInstance(HIPPO_UI_INSTANCE_DOGFOOD, serverNameW, ui)) ||

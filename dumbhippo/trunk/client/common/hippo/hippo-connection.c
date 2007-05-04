@@ -2928,7 +2928,6 @@ parse_room_info(HippoConnection *connection,
     HippoChatKind existing_kind;
     HippoChatKind kind;
     const char *kind_str;
-    const char *title;
     LmMessageNode *info_node;
     LmMessageNode *child;
 
@@ -2952,9 +2951,6 @@ parse_room_info(HippoConnection *connection,
         }
     }
 
-    title = lm_message_node_get_attribute(info_node, "title");
-    /* title can be NULL, roomInfo only optionally has it */
-
     /* Look for the object associated with this room */
     for (child = info_node->children; child; child = child->next) {
         if (strcmp (child->name, "objects") == 0 && child->children) {
@@ -2968,9 +2964,6 @@ parse_room_info(HippoConnection *connection,
     room = hippo_data_cache_lookup_chat_room(connection->cache, chat_id, &existing_kind);
     
     if (room) {
-        if (title)
-            hippo_chat_room_set_title(room, title);
-    
         if (existing_kind != HIPPO_CHAT_KIND_UNKNOWN && existing_kind != kind) {
             g_warning("confusion about kind of room %s, giving up", chat_id);
             return FALSE;
@@ -3049,37 +3042,13 @@ on_get_chat_room_details_reply(LmMessageHandler *handler,
         hippo_chat_room_set_kind(room, HIPPO_CHAT_KIND_BROKEN);
     kind = hippo_chat_room_get_kind(room);
 
-    /* We require that the associated entity be loaded when we signal
-     * a chat room as loaded, otherwise we crash.
-     */
-    if (kind == HIPPO_CHAT_KIND_POST && 
-        hippo_data_cache_lookup_post(connection->cache, chat_id) == NULL) {
-        g_warning("Couldn't find post associated with chat");
-        goto out;
-    } else if (kind == HIPPO_CHAT_KIND_GROUP &&
-               hippo_data_cache_lookup_entity(connection->cache, chat_id) == NULL) {
-        g_warning("Couldn't find entity associated with chat");
-        goto out;
-    }
-
     g_debug("Chat room loaded, kind=%d", hippo_chat_room_get_kind(room));
     /* notify listeners we're loaded */
     hippo_chat_room_set_loading(room, connection->generation, FALSE);
 
-    /* FIXME the old code did the equivalent of emitting "changed" on 
-     * HippoPost here so the UI could update. We want to do this by having
-     * hippo_chat_room do that when set_loading(FALSE) perhaps, or just 
-     * by allowing the UI to update as we go along. Or have the UI 
-     * queue an idle when it gets the post changed signal, is another option.
-     * Anyway, doing it here isn't convenient anymore with the new code.
-     *
-     * Remove this comment once we're sure we've replaced the functionality.
-     */
-
     /* process any pending notifications of new users / messages */
     hippo_connection_process_pending_room_messages(connection);
 
- out:
     g_object_unref(room);
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;

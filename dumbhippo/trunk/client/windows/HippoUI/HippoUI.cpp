@@ -1226,37 +1226,6 @@ HippoUI::onAuthFailed()
 }
 
 
-bool 
-HippoUI::isGroupChatActive(HippoGroup *group)
-{
-    HippoChatRoom *chatRoom = hippo_group_get_chat_room(group);
-        
-    if (chatRoom != NULL &&
-        hippo_chat_room_get_desired_state(chatRoom) != HIPPO_CHAT_STATE_NONMEMBER) {
-        return true;
-    }
-    
-    return false;
-}
-
-bool 
-HippoUI::isShareActive(HippoPost *post)
-{
-    HippoChatRoom *chatRoom = hippo_post_get_chat_room(post);
-        
-    if (chatRoom != NULL &&
-        hippo_chat_room_get_desired_state(chatRoom) != HIPPO_CHAT_STATE_NONMEMBER)
-        return true;
-    
-    HippoBSTR postId = HippoBSTR::fromUTF8(hippo_post_get_guid(post), -1);
-    for (UINT i = 0; i < browsers_.length(); i++) {
-        if (isFramedPost(browsers_[i].url, postId)) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void
 HippoUI::onAuthSucceeded()
 {
@@ -1281,12 +1250,6 @@ HippoUI::onUpgradeReady()
     HippoBSTR url;
     getRemoteURL(HippoBSTR(L"upgrade"), &url);
     upgradeWindow_->navigate(url);
-}
-
-int
-HippoUI::getRecentMessageCount()
-{
-    return hippo_data_cache_get_recent_posts_count(getDataCache());
 }
 
 // Tries to register as the singleton HippoUI, returns true on success
