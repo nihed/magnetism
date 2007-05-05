@@ -502,16 +502,22 @@ dh.util.getMSXML = function (text) {
 }
 
 dh.util.createPngElement = function(src, width, height) {
-	// don't try to use <img> or <span>, it won't work; the <div> is why you have to provide width/height
-	var img = document.createElement("div");
+	// <dh:png/> is a little different; it creates an inline element rather than a block element
+	var img;
 	if (dh.browser.ieAlphaImage) {
-		// don't try to use setAttribute(), it won't work
-		img.style.width = width;
-		img.style.height = height;
+		// don't try to use <img>, it won't work; the <div> is why you have to provide width/height
+		img = document.createElement("div");
+		img.style.width = width + "px";
+		img.style.height = height + "px";
 		img.style.overflow = "hidden";
 		img.style.filter = "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + src + "', sizingMethod='scale');"
+		return img;
 	} else {
-		img.setAttribute("style", "background-image: url( " + src + " ); width: " + width + "; height: " + height + "; overflow: hidden;");
+		var img = document.createElement("img");
+		img.width = width;
+		img.height = height;
+		img.src = src;
+		img.style.display = "block";
 	}
 	return img;
 }
