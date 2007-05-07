@@ -207,6 +207,15 @@ test_has_auth_cookie(cache_server_conf *conf, const char *header, int expected)
     }
 }
 
+static void
+test_has_authenticated_cookie(cache_server_conf *conf, const char *header, int expected) 
+{
+    int result = hippo_has_cookie(conf, "authenticated", header);
+    if (result != expected) {
+	fprintf(stderr, "has_authenticated_cookie: '%s' => %d, expected %d\n", header, result, expected);
+    }
+}
+
 
 int main() 
 {
@@ -228,6 +237,7 @@ int main()
     test_has_auth_cookie(&conf, "auth=\"host=dogfood.dumbhippo.com\"", 1);
     test_has_auth_cookie(&conf, "auth = \"host=dogfood.dumbhippo.com\"", 1);
     test_has_auth_cookie(&conf, "auth=host=dumbhippo.com", 0);
+    test_has_auth_cookie(&conf, "authenticated=host=dogfood.dumbhippo.com", 0);
     test_has_auth_cookie(&conf, "$Version=1; Customer=\"WILE_E_COYOTE\"; $Path=\"/acme\"; auth=\"host=dogfood.dumbhippo.com\"; $Path=\"/\"", 1);
     test_has_auth_cookie(&conf, "$Version=1; auth=\"host=dumbhippo.com\" , auth=\"host=dogfood.dumbhippo.com\"", 1);
     test_has_auth_cookie(&conf, "$Version=1; auth=\"host=dumb\\\"hippo.com\", auth=\"host=dogfood.dumbhippo.com\"", 1);
@@ -235,6 +245,9 @@ int main()
     test_has_auth_cookie(&conf, "$Version=1; auth=\"host=dumbhippo.com\",", 0);
     test_has_auth_cookie(&conf, "", 0);
   
+    test_has_authenticated_cookie(&conf, "authenticated=host=dogfood.dumbhippo.com", 1);
+    test_has_authenticated_cookie(&conf, "auth=host=dogfood.dumbhippo.com", 0);
+
     return 0;
 }
 
