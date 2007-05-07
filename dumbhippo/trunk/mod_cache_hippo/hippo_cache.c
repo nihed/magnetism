@@ -61,7 +61,7 @@ static int hippo_auth_is_for_server(cache_server_conf *conf, const char *cookie,
  * a cookie from http://mugshot.org can be sent to
  * http://dogfood.mugshot.org, for example.
  **/
-static int hippo_has_auth_cookie(cache_server_conf *conf, const char *header)
+static int hippo_has_cookie(cache_server_conf *conf, const char *cookie_name, const char *header)
 {
     /* The Cookie: header was defined successively in:
      *
@@ -160,7 +160,7 @@ static int hippo_has_auth_cookie(cache_server_conf *conf, const char *header)
 	/* Did we find the cookie we were looking for? */
 
 	if (name_end - name_start == 4 &&
-	    strncmp(name_start, "auth", 4) == 0 &&
+	    strncmp(name_start, cookie_name, 4) == 0 &&
 	    hippo_auth_is_for_server(conf, value_start, value_end))
 	    return 1;
 
@@ -200,7 +200,7 @@ test_auth_is_for_server(cache_server_conf *conf, const char *cookie, int expecte
 static void
 test_has_auth_cookie(cache_server_conf *conf, const char *header, int expected) 
 {
-    int result = hippo_has_auth_cookie(conf, header);
+    int result = hippo_has_cookie(conf, "auth", header);
     if (result != expected) {
 	fprintf(stderr, "has_auth_cookie: '%s' => %d, expected %d\n", header, result, expected);
     }
@@ -286,8 +286,9 @@ int hippo_cache_check(request_rec *r,
 	return 1;
     }
 
-    /* See if the auth= cookie is set for our configured server */
-    if (!hippo_has_auth_cookie(conf, cookie_header)) {
+    /* See if a auth= or authenticated= cookie is set for our configured server */
+    if (!hippo_has_cookie(conf, "auth", cookie_header) &&
+	!hippo_has_cookie(conf, "authenticated", cookie_header)) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, r->server,
 		     "hippo_cache: Cookie header sent for %s doesn't have auth cookie, can cache", url);
 	return 1;
