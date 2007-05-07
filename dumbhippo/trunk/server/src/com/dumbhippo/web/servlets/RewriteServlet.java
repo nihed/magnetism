@@ -228,8 +228,17 @@ public class RewriteServlet extends HttpServlet {
 				// (for example, when using the forward/back buttons). That breaks how 
 				// we do action links that cause the page to reload. Preventing that 
 				// caching will make back/forward a little slower, but as long as we 
-				// keep our page load times snappy it isn't a big deal.				
-				response.setHeader("Cache-Control", "no-cache");
+				// keep our page load times snappy it isn't a big deal.
+				//
+				// no-store is the means no caching whatsoever; no-cache would allow
+				// shared caches to use stored content as long as they validated 
+				// it first, which is harmless, since we'll never validated old content, 
+				// but also not useful, since we'll never validate old content. If
+				// we *did* want to allow caching, we'd need to use 
+				// Cache-control: private for signed-in content, since it is different
+				// for each user.
+				//
+				response.setHeader("Cache-Control", "no-store");
 				
 				// Also update their last web login time
 				UserSigninBean userSignin = (UserSigninBean) signin;
