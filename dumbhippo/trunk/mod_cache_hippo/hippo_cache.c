@@ -87,6 +87,7 @@ static int hippo_has_cookie(cache_server_conf *conf, const char *cookie_name, co
      * for whitespace or the specific separator that follows.
      */
     const char *p = header;
+    int cookie_name_len = strlen(cookie_name);
 
     while (*p) {
 	const char *name_start;
@@ -159,8 +160,8 @@ static int hippo_has_cookie(cache_server_conf *conf, const char *cookie_name, co
 
 	/* Did we find the cookie we were looking for? */
 
-	if (name_end - name_start == 4 &&
-	    strncmp(name_start, cookie_name, 4) == 0 &&
+	if (name_end - name_start == cookie_name_len &&
+	    strncmp(name_start, cookie_name, cookie_name_len) == 0 &&
 	    hippo_auth_is_for_server(conf, value_start, value_end))
 	    return 1;
 
