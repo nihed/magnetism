@@ -495,22 +495,29 @@ class AppBrowser(hippo.CanvasWindow):
     def __on_app_selected(self, app):
         self.__overview.set_app(app)
 
+    def __reset(self):
+        self.__search_input.set_property('text', '')
+
+    def __hide_reset(self):
+        self.__reset()
+        self.hide()
+
     def __on_show_more_info(self, app):
         if app:
             libbig.show_url(urlparse.urljoin(mugshot.get_mugshot().get_baseurl(), "application?id=" + app.get_mugshot_app().get_id()))
-        self.hide()
-        
+        self.__hide_reset()
+
     def __on_app_launch(self):
         self.__overview.launch()
-        self.hide()
+        self.__hide_reset()
         
     def __on_keypress(self, event):
         if event.keyval == 65307:
-            self.hide()
+            self.__hide_reset()
 
     def __on_browse_popular_apps(self):
         libbig.show_url(urlparse.urljoin(mugshot.get_mugshot().get_baseurl(), "applications"))
-        self.hide()
+        self.__hide_reset()
             
     def __on_search_changed(self, input, text):
         if self.__idle_search_id > 0:
