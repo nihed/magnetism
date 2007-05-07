@@ -424,7 +424,6 @@ class AppBrowser(hippo.CanvasWindow):
         self.__stock = stock
         self.__all_apps = []
         
-        self.set_keep_above(1)
         self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))        
     
         self.__box = CanvasHBox(spacing=10)
@@ -467,7 +466,7 @@ class AppBrowser(hippo.CanvasWindow):
         self.__right_scroll.set_root(self.__right_box)        
         
         self.set_default_size(750, 600)
-        self.connect("delete-event", gtk.Widget.hide_on_delete)
+        self.connect("delete-event", lambda *args: self.__hide_reset() or True)
         self.connect("key-press-event", lambda win, event: self.__on_keypress(event))
                
         self.set_root(self.__box)
