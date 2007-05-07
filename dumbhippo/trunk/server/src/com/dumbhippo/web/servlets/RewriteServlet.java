@@ -240,6 +240,10 @@ public class RewriteServlet extends HttpServlet {
 				//
 				response.setHeader("Cache-Control", "no-store");
 				
+				// Simulate Cache-Control: no-cache for HTTP-1.0 caches, as recommended
+				// by the HTTP-1.1 spec.
+				AbstractServlet.setPastExpires(response);
+				
 				// Also update their last web login time
 				UserSigninBean userSignin = (UserSigninBean) signin;
 				User user = userSignin.getUser();
