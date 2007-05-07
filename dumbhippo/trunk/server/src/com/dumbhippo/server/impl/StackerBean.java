@@ -945,8 +945,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		/* Timestamp clause */
 		
 		// if lastTimestamp == 0 then all blocks are included so just skip the test in the sql
+		// The timestamp here is the timestamp of the block last seen by the client. 
+		// Using > here rather than >= means that if two blocks are stacked within the
+		// same millisecond and notified on separately, then the second block will get
+		// lost, but that's better than always sending two blocks.
 		if (lastTimestamp > 0)
-			sb.append(" AND ubd.stackTimestamp >= :timestamp ");
+			sb.append(" AND ubd.stackTimestamp > :timestamp ");
 		
 		if (parsedExpression.isNoFeed())
 			sb.append(" AND block.filterFlags != " + StackFilterFlags.FEED.getValue());
