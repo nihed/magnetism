@@ -289,6 +289,20 @@ public abstract class AbstractServlet extends HttpServlet {
 		response.setHeader("Expires", expires);	
 	}
 	
+	/**
+	 * Set headers on a response indicating that the response data has already
+	 * expired. This is a HTTP-1.0 compatibility version of Cache-Control: no-cache.
+	 * 
+	 * @param response the response object 
+	 */
+	public static void setPastExpires(HttpServletResponse response) {
+		String expires;
+		synchronized(format) {
+			expires = format.format(new Date(System.currentTimeMillis() - (24 * 60 * 60 * 1000l)));
+		}
+		response.setHeader("Expires", expires);	
+	}
+	
 	protected abstract boolean requiresTransaction(HttpServletRequest request);
 	
 	private Object runWithTransaction(HttpServletRequest request, Callable func) throws HumanVisibleException, HttpException {
