@@ -2118,6 +2118,14 @@ hippo_connection_parse_blocks(HippoConnection *connection,
     return TRUE;
 }
 
+static gint64
+get_time() {
+    GTimeVal t;
+    g_get_current_time(&t);
+
+    return (gint64)t.tv_sec * 1000 + (gint64)t.tv_usec / 1000;
+}
+
 static LmHandlerResult
 on_request_blocks_reply(LmMessageHandler *handler,
                         LmConnection     *lconnection,
@@ -2129,7 +2137,7 @@ on_request_blocks_reply(LmMessageHandler *handler,
 
     child = message->node->children;
 
-    g_debug("got reply for blocks");
+    g_debug("XXX - %lld: got reply for blocks", get_time());
 
     if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/blocks", "blocks")) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
@@ -2154,6 +2162,8 @@ hippo_connection_request_blocks(HippoConnection *connection,
     message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
     node = lm_message_get_node(message);
+
+    g_debug("XXX - %lld: Requesting blocks newer than %lld, with filter %s\n", get_time(), last_timestamp, filter ? filter : "<none>");
     
     child = lm_message_node_add_child (node, "blocks", NULL);
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/blocks");

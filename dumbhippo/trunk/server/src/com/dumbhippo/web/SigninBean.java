@@ -127,7 +127,8 @@ public abstract class SigninBean  {
 			setCookie(response, user.getGuid(), client.getAuthKey());
 		} else {
 			SigninBean.storeGuid(request.getSession(), user.getGuid());
-			request.getSession().setAttribute(CLIENT_ID_KEY, client.getId());		
+			request.getSession().setAttribute(CLIENT_ID_KEY, client.getId());
+			setAuthenticatedCookie(response);
 		}		
 
 		return "/";
@@ -149,8 +150,10 @@ public abstract class SigninBean  {
 				Account account = client.getAccount();
 				if (account.isActive())
 					setCookie(response, userId, client.getAuthKey());
-				else
+				else {
 					unsetCookie(response);
+					setAuthenticatedCookie(response);
+				}
 			} catch (NotFoundException e) {
 				// Client must have been deleted since we first authorized the session, do nothing
 			}
@@ -164,6 +167,19 @@ public abstract class SigninBean  {
 		LoginCookie loginCookie = new LoginCookie(host, personId.toString(), authKey);
 		response.addCookie(loginCookie.getCookie());
 		logger.debug("Set cookie for personId = {} authKey = {}", personId, authKey);
+	}
+	
+	// The authenticated= cookie is a sesssion cookie we set that says that the user
+	// has authenticated, but unlike auth= doesn't include the user's credentials.
+	// This is set in the "signed in but account is not active" state and used
+	// by  by our caching infrastructure to know that the user shouldn't be served
+	// anonymous cached content.
+	private static void setAuthenticatedCookie(HttpServletResponse response) {
+		Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
+		String host = config.getBaseUrl().getHost();
+
+		response.addCookie(LoginCookie.newAuthenticatedCookie(host));
+		logger.debug("Set authenticated cookie");
 	}
 
 	public static void unsetCookie(HttpServletResponse response) {

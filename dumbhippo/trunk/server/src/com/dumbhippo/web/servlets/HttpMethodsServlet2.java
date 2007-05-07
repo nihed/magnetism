@@ -1155,6 +1155,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 					// cookie.
 					
 					response.addCookie(LoginCookie.newDeleteCookie());
+					response.addCookie(LoginCookie.newDeleteAuthenticatedCookie());
 				}
 			};
 		}

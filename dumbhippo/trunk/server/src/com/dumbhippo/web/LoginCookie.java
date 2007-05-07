@@ -15,6 +15,9 @@ import com.dumbhippo.identity20.Guid.ParseException;
 public class LoginCookie {
 	
 	static final String COOKIE_NAME = "auth";
+	// Authenticated is like auth, but without the credentials; it's used
+	// as a flag for knowing whether caching is OK.
+	static final String AUTHENTICATED_COOKIE_NAME = "authenticated";
 	static private final String COOKIE_HOST_HEADER = "host=";
 	static private final String COOKIE_NAME_HEADER = "name=";
 	static private final String COOKIE_PASSWORD_HEADER = "password=";
@@ -117,6 +120,33 @@ public class LoginCookie {
 
 	static public Cookie newDeleteCookie() {
 		Cookie cookie = new Cookie(COOKIE_NAME, "deleted");
+		// 0 max age means nuke the cookie
+		cookie.setMaxAge(0);
+		cookie.setPath("/");
+		return cookie;
+	}
+	
+	private static String getAuthenticatedCookieValue(String host) {
+		StringBuilder val;
+		val = new StringBuilder();
+		
+		val.append(COOKIE_HOST_HEADER);
+		val.append(host);
+		
+		return new String(val);
+	}
+	
+	static public Cookie newAuthenticatedCookie(String host) {
+		Cookie cookie = new Cookie(AUTHENTICATED_COOKIE_NAME, getAuthenticatedCookieValue(host));
+		
+		cookie.setMaxAge(-1); // Session cookie
+		cookie.setPath("/");
+		
+		return cookie;
+	}
+	
+	static public Cookie newDeleteAuthenticatedCookie() {
+		Cookie cookie = new Cookie(AUTHENTICATED_COOKIE_NAME, "deleted");
 		// 0 max age means nuke the cookie
 		cookie.setMaxAge(0);
 		cookie.setPath("/");
