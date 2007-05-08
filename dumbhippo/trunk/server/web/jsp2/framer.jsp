@@ -94,7 +94,7 @@
 						</c:if>
 					   <c:if test="${!param.browserBar}">
 							<div class="dh-post-action">
-								<a href="${url}" target="_top"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="${url}" target="_top">Remove Frame</a>
+								<a href="javascript:dh.framer.removeFrame();"><img class="dh-post-action-arrow" src="/images/framerArrowRight.gif"/></a><a href="javascript:dh.framer.removeFrame()">Remove Frame</a>
 							</div>
 						</c:if>
 						<div class="dh-post-action">

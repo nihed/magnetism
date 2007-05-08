@@ -6,6 +6,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <dh:bean id="framer" class="com.dumbhippo.web.pages.FramerPage" scope="request"/>
+
 <jsp:setProperty name="framer" property="isVisit" value="true"/>
 <jsp:setProperty name="framer" property="postId" param="post"/>
 
@@ -14,6 +15,7 @@
 <c:set var="title" value="${framer.post.title}" scope="page"/>
 <head>
 	<dht:embedObject/>
+	<dh:script module="dh.control"/>
 	<script type="text/javascript">
 		var escapedTitle = <dh:jsString value="${dh:xmlEscape(framer.post.title)}"/>;
 		var escapedUrl = <dh:jsString value="${dh:xmlEscape(framer.post.url)}"/>;	
@@ -45,13 +47,21 @@
 			document.close();
 		}
 		function dhInit() {
+			dh.control.createControl();
+			if (dh.control.control.haveBrowserBar()) {
+				dh.control.control.openBrowserBar();
+  		        window.open(<dh:jsString value="${framer.post.url}"/>, "_self", "", true);
+  		        return;
+  		    }
+		
 			var embedObject = document.getElementById("dhEmbedObject");
 	        if (embedObject && embedObject.readyState && embedObject.readyState == 4) {
 				embedObject.OpenBrowserBar();
   		        window.open(<dh:jsString value="${framer.post.url}"/>, "_self", "", true);
-			} else {
-				dhWriteFramesPage();
-			}
+  		        return;
+			} 
+			
+			dhWriteFramesPage();
 		}
 	</script>
     <title><c:out value="${framer.post.title}"/></title>

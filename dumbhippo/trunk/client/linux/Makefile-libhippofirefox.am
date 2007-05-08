@@ -12,7 +12,10 @@ CONTENT_SRCDIR=$(EXTENSION_SRCDIR)/chrome/content
 content_DATA =					\
 	$(CONTENT_SRCDIR)/chatWindow.js		\
 	$(CONTENT_SRCDIR)/chatWindow.xul	\
+	$(CONTENT_SRCDIR)/hippo.js		\
 	$(CONTENT_SRCDIR)/overlay.js		\
+	$(CONTENT_SRCDIR)/tabcontext.js		\
+	$(CONTENT_SRCDIR)/windowcontext.js	\
 	$(CONTENT_SRCDIR)/overlay.xul
 
 defaulticonsdir=$(extensiondir)/chrome/icons/default

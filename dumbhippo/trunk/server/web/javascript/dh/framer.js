@@ -10,10 +10,28 @@ dh.framer._selfId = null
 
 // Go back to the user's home page, possibly closing the browser bar
 dh.framer.goHome = function() {
+	if (dh.control.control.haveBrowserBar()) {
+		dh.control.control.closeBrowserBar(dhBaseUrl);
+		return;
+	}
+
 	var embed = document.getElementById("dhEmbedObject")
     if (embed && embed.readyState && embed.readyState >= 3)
     	embed.CloseBrowserBar()
-	window.open("/", "_top")
+	window.open(dhBaseUrl, "_top")
+}
+
+// Remove the frame, staying on the current page if possible
+dh.framer.removeFrame = function() {
+	if (dh.control.control.haveBrowserBar()) {
+		dh.control.control.closeBrowserBar(null);
+		return;
+	}
+
+	var embed = document.getElementById("dhEmbedObject")
+    if (embed && embed.readyState && embed.readyState >= 3)
+    	embed.CloseBrowserBar()
+	window.open(this.forwardUrl, "_top")
 }
 
 dh.framer.setSelfId = function(id) {
