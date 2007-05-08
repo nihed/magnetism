@@ -208,7 +208,9 @@
                 <contains string="${ant.java.version}" substring="1.5"/>
             </not>
         </condition>
-        <fail if="ant.not.ok" message="Must use Ant 1.6.x to build Wildfire"/>
+		<!-- HIPPO: we use ant 1.7, should work...
+          <fail if="ant.not.ok" message="Must use Ant 1.6.x to build Wildfire"/>
+        -->
         <fail if="java.not.ok" message="Must use JDK 1.5.x to build Wildfire"/>
 
         <tstamp/>
