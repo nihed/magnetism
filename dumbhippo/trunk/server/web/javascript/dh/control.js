@@ -390,6 +390,7 @@ dh.lang.defineClass(dh.control.AbstractControl, null,
 	},
 	
 	_reconnect : function() {
+		this._connected = true;
 		this.setWindow();
 	
 		this._allEntities = {}		
@@ -402,6 +403,7 @@ dh.lang.defineClass(dh.control.AbstractControl, null,
 	},
 	
 	_disconnect : function() {
+		this._connected = false;
 		for (var id in this._allChatRooms) {
 			this._allChatRooms[id]._disconnect();
 		}
@@ -479,8 +481,12 @@ dh.lang.defineClass(dh.control.WebOnlyControl, dh.control.AbstractControl, {
 		return false
 	},
 	
+	haveBrowserBar : function() {
+		return false
+	},
+	
 	getVersion : function() {
-		return "1.2.0";
+		return "1.3.0";
 	}
 });
 
@@ -537,12 +543,24 @@ dh.lang.defineClass(dh.control.NativeControl, dh.control.AbstractControl, {
 		this._native.runApplication(desktopNames);
 	},
 	
+	openBrowserBar : function() {
+		this._native.openBrowserBar();
+	},
+	
+	closeBrowserBar : function(nextUrl) {
+		this._native.closeBrowserBar(nextUrl);
+	},
+	
 	haveLiveChat : function() {
 		return true;
 	},
 	
 	haveApplications : function() {
 		return this.versionAtLeast("1.2.0");
+	},
+	
+	haveBrowserBar : function() {
+		return this.versionAtLeast("1.3.0");
 	},
 	
 	getVersion : function() {
