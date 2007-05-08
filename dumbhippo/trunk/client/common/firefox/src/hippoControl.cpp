@@ -133,6 +133,8 @@ NS_IMETHODIMP hippoControl::SetListener(hippoIControlListener *listener)
 /* void setListener (in hippoIControlListener listener); */
 NS_IMETHODIMP hippoControl::SetWindow(nsIDOMWindow *window)
 {
+    window_ = do_GetWeakReference(window);
+
 #ifdef HIPPO_OS_LINUX
     HippoWindowId windowId = 0;
     
@@ -337,6 +339,23 @@ NS_IMETHODIMP hippoControl::NotifyPageShared(const nsACString & postId, const ns
     return NS_OK;
 }
 
+NS_IMETHODIMP
+hippoControl::OpenBrowserBar()
+{
+    return showHideBrowserBar(true, nsnull);
+}
+
+NS_IMETHODIMP hippoControl::CloseBrowserBar(const nsACString & nextUrl)
+{
+    nsresult rv;
+
+    rv = checkString(nextUrl);
+    if (NS_FAILED(rv))
+        return rv;
+
+    return showHideBrowserBar(false, NS_ConvertUTF8toUTF16(nextUrl).BeginReading());
+}
+
 void 
 hippoControl::onConnect()
 {
@@ -480,5 +499,24 @@ hippoControl::checkString(const nsACString &str)
     if (!UTF8_VALIDATE(start, end - start, NULL))
         return NS_ERROR_INVALID_ARG;
 
+    return NS_OK;
+}
+
+nsresult
+hippoControl::showHideBrowserBar(bool doShow, const PRUnichar *data)
+{
+    nsresult rv;
+
+    nsCOMPtr<nsIDOMWindow> window = do_QueryReferent(window_);
+    if (!window)
+        return NS_ERROR_NOT_INITIALIZED;
+
+    nsCOMPtr<nsIObserverService> observerService;
+    observerService = do_GetService("@mozilla.org/observer-service;1", &rv);
+    if (NS_FAILED(rv))
+        return rv;
+
+    observerService->NotifyObservers(window, doShow ? "hippo-open-bar" : "hippo-close-bar", data);
+    
     return NS_OK;
 }

@@ -12,7 +12,7 @@
 #include <hippo-ipc.h>
 #include "HippoExplorer_h.h"
 
-#define HIPPO_IE_CONTROL_VERSION L"1.2.0";
+#define HIPPO_IE_CONTROL_VERSION L"1.3.0";
 
 class HippoControl :
     public IObjectWithSite,
@@ -83,8 +83,9 @@ public:
    STDMETHODIMP installApplication(BSTR applicationId, BSTR packageNames, BSTR desktopNames);
    STDMETHODIMP runApplication(BSTR desktopNames);
 
-   STDMETHODIMP OpenBrowserBar();
-   STDMETHODIMP CloseBrowserBar();
+   STDMETHODIMP openBrowserBar();
+   STDMETHODIMP closeBrowserBar(BSTR nextUrl);
+   STDMETHODIMP notifyPageShared(BSTR postId, BSTR url);
 
    // HippoIpcListener methods
    virtual void onConnect();
