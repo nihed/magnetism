@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AppinfoUpload;
 import com.dumbhippo.persistence.Application;
@@ -56,6 +57,8 @@ public interface ApplicationSystem {
 	void pinApplicationIds(User user, List<String> applicationIds, boolean pin);
 	
 	public List<ApplicationView> viewApplications(UserViewpoint viewpoint, List<Application> apps, int iconSize);
+	
+	public void writeAllApplicationsToXml(int iconSize, XmlBuilder xml);	
 	
 	public List<Application> getPinnedApplications(User user); 
 	public ApplicationUserState getUserState(User user, Application app);

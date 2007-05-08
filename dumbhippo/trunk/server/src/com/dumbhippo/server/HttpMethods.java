@@ -416,7 +416,11 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams({ "search" })	
-	public void getSearchApplications(XmlBuilder xml, Viewpoint viewpoint, String search) throws XmlMethodException;		
+	public void getSearchApplications(XmlBuilder xml, Viewpoint viewpoint, String search) throws XmlMethodException;
+	
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams({ })	
+	public void getAllApplications(XmlBuilder xml, Viewpoint viewpoint) throws XmlMethodException;		
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "who", "participantOnly" })
