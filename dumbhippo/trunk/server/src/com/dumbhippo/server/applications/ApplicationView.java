@@ -30,17 +30,17 @@ public class ApplicationView {
 	}
 
 	public void writeToXmlBuilder(XmlBuilder builder) {
-		builder.appendEmptyNode("application",
-								"id", application.getId(),
-				                "name", application.getName(),
-				                "genericName", application.getGenericName(),				                
-				                "tooltip", application.getTooltip(),
-				                "category", application.getCategory().getDisplayName(),
-				                "description", application.getDescription(),
-				                "desktopNames", application.getDesktopNames(),
-				                "iconUrl", getIconUrl(),
-				                "usageCount", "" + application.getUsageCount(),
-				                "rank", "" + application.getRank());
-				       
+		builder.openElement("application",
+							"id", application.getId(),
+				            "name", application.getName(),
+				            "genericName", application.getGenericName(),				                
+				            "tooltip", application.getTooltip(),
+				            "category", application.getCategory().getDisplayName(),
+				            "desktopNames", application.getDesktopNames(),
+				            "iconUrl", getIconUrl(),
+				            "usageCount", "" + application.getUsageCount(),
+				            "rank", "" + application.getRank());
+		builder.appendTextNode("description", application.getDescription());
+		builder.closeElement();
 	}
 }
