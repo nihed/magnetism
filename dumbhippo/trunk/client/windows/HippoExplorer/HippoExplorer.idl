@@ -61,7 +61,7 @@ library HippoExplorer {
 
         HRESULT setListener([in] IDispatch *listener); 
 
-        HRESULT setWindow([in] IDispatch *window); // No-op for Windows
+        HRESULT setWindow([in] IDispatch *window); // No-op for IE
 
         HRESULT joinChatRoom([in] BSTR chatId, [in] BOOL participant);
         HRESULT leaveChatRoom([in] BSTR chatId);
@@ -69,16 +69,15 @@ library HippoExplorer {
         HRESULT sendChatMessage([in] BSTR chatId, [in] BSTR text);
         HRESULT sendChatMessageSentiment([in] BSTR chatId, [in] BSTR text, [in] int sentiment);
 
-        // No-op for windows
+        // Added in version 1.2; no-op for windows
         HRESULT getApplicationInfo([in] BSTR applicationId, [in] BSTR packageNames, [in] BSTR desktopNames);
         HRESULT installApplication([in] BSTR applicationId, [in] BSTR packageNames, [in] BSTR desktopNames);
         HRESULT runApplication([in] BSTR desktopNames);
 
-        // IE specific operations
-        [helpstring("Open the post information bar (the post will be determined from the current URL)")]
-        HRESULT OpenBrowserBar();
-        [helpstring("Close the post information bar")]
-        HRESULT CloseBrowserBar();
+        // Added in version 1.3
+        HRESULT openBrowserBar();
+        HRESULT closeBrowserBar([in] BSTR nextUrl);
+        HRESULT notifyPageShared([in] BSTR postId, [in] BSTR url); // Not implemented for IE
     }
     [
         uuid(5A96BF90-0D8A-4200-A23B-1C8DABC0CC04) // CLSID_HippoEmbed

@@ -26,6 +26,8 @@ interface hippoIControl : nsISupports {
     void installApplication(in AUTF8String applicationId, in AUTF8String packageNames, in AUTF8String desktopNames);
     void runApplication (in AUTF8String desktopNames);
 
+    void openBrowserBar();
+    void closeBrowserBar(in AUTF8String nextUrl);
     void notifyPageShared(in AUTF8String postId, in AUTF8String url);
 };
 

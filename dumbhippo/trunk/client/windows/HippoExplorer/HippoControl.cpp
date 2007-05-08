@@ -603,7 +603,7 @@ HippoControl::runApplication(BSTR desktopNames)
 }
 
 STDMETHODIMP 
-HippoControl::OpenBrowserBar()
+HippoControl::openBrowserBar()
 {
     // Checking that we are connected here isn't a good idea, since that would mean
     // that the browser bar doesn't show up if the XMPP connection is missing. Instead
@@ -618,9 +618,34 @@ HippoControl::OpenBrowserBar()
 }
 
 STDMETHODIMP 
-HippoControl::CloseBrowserBar()
+HippoControl::closeBrowserBar(BSTR nextUrl)
 {
-    return showHideBrowserBar(true);
+    HRESULT hr;
+
+    hr = showHideBrowserBar(false);
+    if (FAILED(hr))
+        return hr;
+
+    if (nextUrl != NULL && *nextUrl != '\0') {
+        HippoPtr<IWebBrowser2> toplevelBrowser;
+        if (!getToplevelBrowser(&toplevelBrowser))
+            return E_FAIL;
+
+        variant_t flags;
+        variant_t targetFrameName(L"_self");
+        variant_t postData;
+        variant_t headers;
+
+        return toplevelBrowser->Navigate(nextUrl, &flags, &targetFrameName, &postData, &headers);
+    }
+
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoControl::notifyPageShared(BSTR postId, BSTR url)
+{
+    return E_NOTIMPL;
 }
 
 /////////////////////////////////////////////////////////////////////

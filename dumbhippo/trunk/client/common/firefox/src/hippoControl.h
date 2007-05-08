@@ -2,8 +2,10 @@
 #include "hippoIControl.h"
 #include "hippo-ipc.h"
 #include "nsCOMPtr.h"
+#include "nsIWeakReference.h"
+#include "nsIWeakReferenceUtils.h"
 
-#define HIPPO_FIREFOX_CONTROL_VERSION "1.2.0"
+#define HIPPO_FIREFOX_CONTROL_VERSION "1.3.0"
 
 class hippoControl: public hippoIControl, public HippoIpcListener
 {
@@ -29,11 +31,13 @@ private:
     nsresult checkServerUrl(const nsACString &serverUrl, nsACString &hostPort);
     nsresult checkGuid(const nsACString &guid);
     nsresult checkString(const nsACString &str);
+    nsresult showHideBrowserBar(bool doShow, const PRUnichar *data);
     
     ~hippoControl();
     
     nsCString serverUrl_;
     hippoIControlListener *listener_;
+    nsWeakPtr window_;
     HippoIpcLocator *locator_;
     HippoIpcController *controller_;
     HippoEndpointId endpoint_;

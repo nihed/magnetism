@@ -24,6 +24,16 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
+				BuildCommandLine="nmake OUTDIR=..\$(ConfigurationName) INTDIR=$(ConfigurationName) all"
+				ReBuildCommandLine="nmake OUTDIR=..\$(ConfigurationName) INTDIR=$(ConfigurationName) clean all"
+				CleanCommandLine="nmake OUTDIR=..\$(ConfigurationName) INTDIR=$(ConfigurationName) clean"
+				Output=""
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
 			/>
 		</Configuration>
 		<Configuration
@@ -35,6 +45,16 @@
 			>
 			<Tool
 				Name="VCNMakeTool"
+				BuildCommandLine="nmake OUTDIR=..\$(ConfigurationName) INTDIR=$(ConfigurationName) all"
+				ReBuildCommandLine="nmake OUTDIR=..\$(ConfigurationName) INTDIR=$(ConfigurationName) clean all"
+				CleanCommandLine="nmake OUTDIR=..\$(ConfigurationName) INTDIR=$(ConfigurationName) clean"
+				Output=""
+				PreprocessorDefinitions=""
+				IncludeSearchPath=""
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
 			/>
 		</Configuration>
 	</Configurations>
@@ -42,7 +62,35 @@
 	</References>
 	<Files>
 		<File
+			RelativePath="..\..\common\firefox\extension\chrome\content\chatWindow.js"
+			>
+		</File>
+		<File
+			RelativePath="..\..\common\firefox\extension\chrome\content\chatWindow.xul"
+			>
+		</File>
+		<File
+			RelativePath="..\..\common\firefox\extension\chrome\content\hippo.js"
+			>
+		</File>
+		<File
 			RelativePath=".\Makefile"
+			>
+		</File>
+		<File
+			RelativePath="..\..\common\firefox\extension\chrome\content\overlay.js"
+			>
+		</File>
+		<File
+			RelativePath="..\..\common\firefox\extension\chrome\content\overlay.xul"
+			>
+		</File>
+		<File
+			RelativePath="..\..\common\firefox\extension\chrome\content\tabcontext.js"
+			>
+		</File>
+		<File
+			RelativePath="..\..\common\firefox\extension\chrome\content\windowcontext.js"
 			>
 		</File>
 	</Files>
