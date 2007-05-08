@@ -975,7 +975,9 @@
             <available property="plugin.@{plugin}.webdocs.available"
                 type="dir" file="@{pluginsrc}/@{plugin}/src/web"/>
             <if>
-                <equals arg1="${plugin.@{plugin}.webdocs.available}" arg2="true"/>
+			    <!-- HIPPO: kill off JSPC, we don't use it and some of the plugins fail to build
+			    -->
+                <equals arg1="${plugin.@{plugin}.webdocs.available}" arg2="HIPPO_DISABLED"/>
                 <then>
 
                     <!-- Continue with JSPC tasks... -->
