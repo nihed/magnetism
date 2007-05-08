@@ -2396,7 +2396,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	public void getAllApplications(XmlBuilder xml, Viewpoint viewpoint) throws XmlMethodException {
+		xml.openElement("applications", "xmlns", APPLICATIONS_NAMESPACE);		
 		applicationSystem.writeAllApplicationsToXml(24, xml);
+		xml.closeElement();			
 	}
 
 	public void getUserRSS(OutputStream out, HttpResponseData contentType, User who, boolean participantOnly) throws IOException, XmlMethodException {
