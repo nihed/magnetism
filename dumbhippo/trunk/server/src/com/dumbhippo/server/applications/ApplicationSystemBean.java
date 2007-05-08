@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AppinfoUpload;
 import com.dumbhippo.persistence.Application;
@@ -1022,6 +1023,17 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		pageable.setResults(viewApplications(null, appHits, iconSize));
 		pageable.setTotalCount(appHits.size());
 	}
+	
+
+	public void writeAllApplicationsToXml(int iconSize, XmlBuilder xml) {
+		List<Application> apps = TypeUtils.castList(Application.class,
+													em.createQuery("SELECT a FROM Application a").getResultList());
+		for (Application app : apps) {
+			ApplicationView viewedApp = new ApplicationView(app);
+			setViewIcon(viewedApp, iconSize);
+			viewedApp.writeToXmlBuilder(xml);
+		}
+	}	
 
 	public void updateUsages() {
 		Set<String> usedApps = new HashSet<String>();
