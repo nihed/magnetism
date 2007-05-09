@@ -48,6 +48,7 @@ class AppOverview(CanvasVBox):
         self.__app = app
         self.__header.set_app(app)
         self.__description.set_property("text", app.get_description())
+        self.set_child_visible(self.__moreinfo, not not self.__app.get_mugshot_app())
         
     def launch(self):
         return self.__header.launch()
@@ -341,7 +342,7 @@ class AppList(CanvasVBox):
         
         self.__table.remove_all()
 
-        categories = categorize(filter(self._filter_app, self.__all_apps))
+        categories = categorize(filter(self.__filter_app_and_installed, self.__all_apps))
         self.__categorized = categories
              
         cat_keys = categories.keys()
@@ -388,6 +389,11 @@ class AppList(CanvasVBox):
         _logger.debug("category %s selected", catname)
         self.__selected_cat = catname
         self.__sync_display()
+
+    def __filter_app_and_installed(self, app):
+        if not app.is_installed():
+            return False
+        return self._filter_app(app)
                 
     def _filter_app(self, app):
         if not self.__search:
@@ -425,6 +431,8 @@ class AppBrowser(hippo.CanvasWindow):
         self.__all_apps = []
         
         self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))        
+
+        self.set_title('Applications')
     
         self.__box = CanvasHBox(spacing=10)
     
@@ -481,7 +489,8 @@ class AppBrowser(hippo.CanvasWindow):
                                lambda *args: self.__sync())          
         self.__mugshot.connect("category-top-apps-changed", 
                                self.__handle_category_changed)          
-        self.__mugshot.request_all_apps()
+        self.__stock.connect("all-apps-loaded",
+                             lambda as: self.__sync())
         self.__sync()
 
     def __handle_global_changed(self, m, apps):
@@ -542,11 +551,11 @@ class AppBrowser(hippo.CanvasWindow):
             
     def __sync(self):
         ad = apps_directory.get_app_directory()
-        apps = map(self.__stock.get_local_app, ad.get_apps())
-        mugshot_apps = map(self.__stock.get_app, self.__mugshot.get_global_top_apps() or [])
+        local_apps = map(self.__stock.get_local_app, ad.get_apps())
+        mugshot_apps = self.__stock.get_all_apps()
         #apps = filter(lambda app: not app.get_is_excluded(), apps)
                 
-        self.__all_apps = set(apps).union(set(mugshot_apps))
+        self.__all_apps = set(local_apps).union(set(mugshot_apps))
         self.__used_apps = map(self.__stock.get_app, self.__mugshot.get_my_top_apps() or [])
         self.__app_list.set_apps(self.__all_apps, self.__used_apps)
         self.__cat_usage.set_apps(self.__all_apps, self.__used_apps) 

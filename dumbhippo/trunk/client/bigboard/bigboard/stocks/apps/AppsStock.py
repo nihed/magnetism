@@ -134,6 +134,9 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
     STATIC_SET_SIZE = 7
     DYNAMIC_SET_SIZE = 7    
     STATIFICATION_TIME_SEC = 60 * 60 #* 24 * 3; # 3 days
+    __gsignals__ = {
+        "all-apps-loaded" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+    }    
     def __init__(self, *args, **kwargs):
         super(AppsStock, self).__init__(*args, **kwargs)        
         
@@ -157,6 +160,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__app_browser = None
         self._add_more_link(self.__on_more_link)
 
+        self._mugshot.connect("all-apps-loaded", lambda mugshot: self.__merge_apps())  
         self._mugshot.connect("global-top-apps-changed", lambda mugshot, apps: self.__sync())  
         self._mugshot.connect("my-top-apps-changed", lambda mugshot, apps: self.__sync())      
         self._mugshot.connect("pinned-apps-changed", lambda mugshot, apps: self.__sync())        
@@ -170,7 +174,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__apps = {} # mugshot app -> app
         # apps installed locally and not known in Mugshot
         self.__local_apps = {} # desktop -> app
-        
+
     def __on_more_link(self):
         self._logger.debug("more!")
         if self.__app_browser is None:
@@ -197,6 +201,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
     def _on_mugshot_initialized(self):
         super(AppsStock, self)._on_mugshot_initialized()
         self._mugshot.get_global_top_apps()        
+        self._mugshot.request_all_apps()
 
     def _on_mugshot_ready(self):
         super(AppsStock, self)._on_mugshot_ready()
@@ -266,6 +271,9 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
             self._logger.debug("creating app %s", mugshot_app.get_id())
             self.__apps[mugshot_app.get_id()] = Application(mugshot_app=mugshot_app)
         return self.__apps[mugshot_app.get_id()]
+
+    def get_all_apps(self):
+        return self.__apps.itervalues()
     
     def get_local_app(self, menu):
         if self.__local_apps.has_key(menu.get_name()):
@@ -282,6 +290,11 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
             self._logger.debug("creating local app %s", menu.get_name())
             self.__local_apps[menu.get_name()] = app
         return app
+
+    def __merge_apps(self):
+        for app in self._mugshot.get_all_apps():
+            self.get_app(app)
+        self.emit("all-apps-loaded")
         
     def __sync(self):
         self._logger.debug("doing sync")

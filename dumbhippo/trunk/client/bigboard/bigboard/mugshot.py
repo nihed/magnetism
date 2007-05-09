@@ -65,6 +65,7 @@ class Mugshot(gobject.GObject):
         "pref-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
         "global-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "category-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_STRING, gobject.TYPE_PYOBJECT,)),
+        "all-apps-loaded" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
         "my-top-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "apps-search-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_STRING, gobject.TYPE_PYOBJECT)),
         "pinned-apps-changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))        
@@ -453,6 +454,7 @@ class Mugshot(gobject.GObject):
         reply_root = child_nodes[0]
         apps = self.__parse_app_set('applications',
                                     child_nodes=reply_root.childNodes)
+        self.emit("all-apps-loaded")
 
     def __on_all_applications_error(self, *args):
         self._logger.error("failed to get all apps: %s", args)
@@ -476,6 +478,9 @@ class Mugshot(gobject.GObject):
     def __idle_poll_global_apps(self):
         self.__request_global_top_apps()
         return True    
+
+    def get_all_apps(self):
+        return self.__applications.itervalues()
     
     def get_app(self, guid):
         return self.__applications[guid]
