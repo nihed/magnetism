@@ -3,6 +3,9 @@ package com.dumbhippo.server.blocks;
 import java.util.Date;
 import java.util.List;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.AmazonActivityStatus;
@@ -13,19 +16,19 @@ import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.services.AmazonItemView;
 import com.dumbhippo.services.AmazonListItemView;
 import com.dumbhippo.services.AmazonReviewView;
 
 public class AmazonActivityBlockView extends AbstractPersonBlockView 
                                      implements ExternalAccountBlockView, TitleDescriptionBlockView {	
-	// if we will not be caching wish list items, AmazonActivityStatus will be almost all we need
-	// for displaying a block about a wish list item
-	// the link for the wish list can be obtained using wish list id stored in AmazonActivityStatus
-	// if we want the name of the wish list, we'll need an AmazonWishListView object
-	// once we display item details in the Amazon blocks, we will also need an AmazonItemView object
+	@SuppressWarnings("unused")
+	static private final Logger logger = GlobalSetup.getLogger(AmazonActivityBlockView.class);	
+	
 	private AmazonActivityStatus activityStatus;
 	private AmazonReviewView reviewView;
 	private AmazonListItemView listItemView;
+	private AmazonItemView itemView;
 	
 	public AmazonActivityBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
 		super(viewpoint, block, ubd, participated);
@@ -36,13 +39,14 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 	}
 	
 	void populate(PersonView userView, AmazonActivityStatus activityStatus, AmazonReviewView reviewView, 
-			      AmazonListItemView listItemView, List<ChatMessageView> recentMessages, int messageCount) {
+			      AmazonListItemView listItemView, AmazonItemView itemView, List<ChatMessageView> recentMessages, int messageCount) {
 		partiallyPopulate(userView);
 		setRecentMessages(recentMessages);
 		setMessageCount(messageCount);
+		this.activityStatus = activityStatus;
 		this.reviewView = reviewView;
 		this.listItemView = listItemView;
-		this.activityStatus = activityStatus;
+        this.itemView = itemView;
 		setPopulated(true);
 	}
 	
@@ -71,10 +75,10 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
             	else
             		return activityStatus.getItemId();
             case WISH_LISTED:
-             	// will be returning the name of the item here
-            	// for now this is whatever we have in the listItemView
-            	if (listItemView != null)
-	                return listItemView.getQuantityDesired() + " of " + listItemView.getItemId();
+            	if (listItemView != null && itemView != null)
+	                return listItemView.getQuantityDesired() + " of " + itemView.getTitle();
+            	else if (itemView != null)
+            		return itemView.getTitle();
             	else 
             		return activityStatus.getItemId();
      	    // no default, it hides bugs 
@@ -168,11 +172,13 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 	        	else 
 	        		return "This review is no longer available";
 	        case WISH_LISTED:
-	        	// will be returning editor review for the item here,
-	        	// for now return the comment we have in listItemView
-		        if (listItemView != null)
+		        if (listItemView != null && (listItemView.getComment().trim().length() > 0) && itemView != null)
+		        	return StringUtils.ellipsizeText(listItemView.getComment() + "\n\n" + itemView.getEditorialReview());
+		        else if (itemView != null) 
+		        	return StringUtils.ellipsizeText(itemView.getEditorialReview());
+		        else if	(listItemView != null)
 		        	return StringUtils.ellipsizeText(listItemView.getComment());
-		        else 
+		        else 			
 		        	return "This item is no longer on the list";
 	     	// no default, it hides bugs 
         }

@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.AmazonActivityStatus;
-import com.dumbhippo.persistence.AmazonActivityType;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
@@ -26,8 +25,10 @@ import com.dumbhippo.server.AmazonUpdater;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.services.AmazonItemView;
 import com.dumbhippo.services.AmazonListItemView;
 import com.dumbhippo.services.AmazonReviewView;
+import com.dumbhippo.services.caches.AmazonItemCache;
 import com.dumbhippo.services.caches.AmazonListItemsCache;
 import com.dumbhippo.services.caches.AmazonReviewsCache;
 import com.dumbhippo.services.caches.CacheFactory;
@@ -48,6 +49,9 @@ public class AmazonActivityBlockHandlerBean extends
 
 	@WebServiceCache
 	private AmazonListItemsCache listItemsCache;
+
+	@WebServiceCache
+	private AmazonItemCache itemCache;
 	
 	@EJB
 	private CacheFactory cacheFactory;	
@@ -77,10 +81,17 @@ public class AmazonActivityBlockHandlerBean extends
 		switch (activityStatus.getActivityType()) {
 	        case REVIEWED :
 			    reviewView = reviewsCache.queryExisting(activityStatus.getAmazonUserId(), activityStatus.getItemId());		
+			    break;
 	        case WISH_LISTED :
 			    listItemView = listItemsCache.queryExisting(new Pair<String, String>(activityStatus.getAmazonUserId(), activityStatus.getListId()), activityStatus.getItemId());		
+			    break;
 		}
 		
+		// we don't maintain all items updated in cache, so sometimes we will have to make a request to web services
+		// at this point
+		// we do get the item before we create a notification about it, so that should help
+		// we can also create create an AmazonItemUpdater that periodically updates items for recent Amazon activity statuses
+		AmazonItemView itemView = itemCache.getSync(activityStatus.getItemId());
 		List<ChatMessageView> messageViews = chatSystem.viewMessages(chatSystem.getNewestMessages(block, BlockView.RECENT_MESSAGE_COUNT), viewpoint);
 		
 		int messageCount;
@@ -89,7 +100,7 @@ public class AmazonActivityBlockHandlerBean extends
 		else
 			messageCount = chatSystem.getMessageCount(block);
 		
-		blockView.populate(userView, activityStatus, reviewView, listItemView, messageViews, messageCount);
+		blockView.populate(userView, activityStatus, reviewView, listItemView, itemView, messageViews, messageCount);
 	}
 
 	public BlockKey getKey(User user, AmazonActivityStatus activityStatus) {

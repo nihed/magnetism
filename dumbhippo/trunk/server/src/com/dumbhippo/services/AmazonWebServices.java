@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
-import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.util.ConfigurationUtil;
 
 public class AmazonWebServices extends AbstractXmlRequest<AmazonSaxHandler> {
 
@@ -34,22 +34,10 @@ public class AmazonWebServices extends AbstractXmlRequest<AmazonSaxHandler> {
 	private String accessKeyId;
 	private String associateTagId;
 	
-	static private String loadProperty(Configuration config, HippoProperty property) {
-		String propertyValue;
-		try {
-			propertyValue = config.getPropertyNoDefault(property);
-			if (propertyValue.trim().length() == 0)
-				propertyValue = null;
-		} catch (PropertyNotFoundException e) {
-			propertyValue = null;
-		}
-		return propertyValue;
-	}
-	
 	public AmazonWebServices(int timeoutMilliseconds, Configuration config) {
 		super(timeoutMilliseconds);
-		this.accessKeyId = loadProperty(config, HippoProperty.AMAZON_ACCESS_KEY_ID);
-		this.associateTagId = loadProperty(config, HippoProperty.AMAZON_ASSOCIATE_TAG_ID);
+		this.accessKeyId = ConfigurationUtil.loadProperty(config, HippoProperty.AMAZON_ACCESS_KEY_ID);
+		this.associateTagId = ConfigurationUtil.loadProperty(config, HippoProperty.AMAZON_ASSOCIATE_TAG_ID);
 		
 		if (this.accessKeyId == null)
 			logger.warn("Amazon access key id is not set, can't make Amazon web services calls.");		

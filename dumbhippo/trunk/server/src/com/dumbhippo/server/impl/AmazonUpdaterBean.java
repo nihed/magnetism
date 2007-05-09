@@ -1,6 +1,8 @@
 package com.dumbhippo.server.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,8 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.services.AmazonItem;
+import com.dumbhippo.services.AmazonItemLookupWebServices;
 import com.dumbhippo.services.AmazonList;
 import com.dumbhippo.services.AmazonListItemView;
 import com.dumbhippo.services.AmazonListView;
@@ -39,12 +43,14 @@ import com.dumbhippo.services.AmazonListsView;
 import com.dumbhippo.services.AmazonReviewView;
 import com.dumbhippo.services.AmazonReviewsView;
 import com.dumbhippo.services.AmazonWebServices;
+import com.dumbhippo.services.caches.AmazonItemCache;
 import com.dumbhippo.services.caches.AmazonListItemsCache;
 import com.dumbhippo.services.caches.AmazonListsCache;
 import com.dumbhippo.services.caches.AmazonReviewsCache;
 import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.CacheFactoryBean;
 import com.dumbhippo.services.caches.NotCachedException;
+import com.dumbhippo.services.caches.WebServiceCache;
 
 @Stateless
 public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateStatus> implements AmazonUpdater {
@@ -55,15 +61,14 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 	// how long to wait on the Amazon API call
 	static protected final int REQUEST_TIMEOUT = 1000 * 12;
 	
-	@SuppressWarnings("unused")
-	@EJB
-	private Notifier notifier;
-	
 	// do away without AmazonWishListItemsCache for now, just use AmazonActivityStatus table to
 	// keep what's on people's wish lists
 
 	@EJB
 	private CacheFactory cacheFactory;	
+	
+	@WebServiceCache
+	private AmazonItemCache itemCache;
 	
 	@PostConstruct
 	public void init() {
@@ -116,7 +121,7 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 		return sb.toString();
 	}
 	
-	private void updateReviews(String amazonUserId, AmazonReviewsView reviewsView, boolean initializingAmazonAccount) {
+	private List<AmazonActivityStatus> updateReviews(String amazonUserId, AmazonReviewsView reviewsView, boolean initializingAmazonAccount) {
 		// Go over all AmazonActivityStatuses for reviews, and figure out which
 		// ones we don't have.
 		// We don't do anything if a review is no longer around, we keep the
@@ -140,6 +145,7 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 			reviewsByItemId.remove(status.getItemId());
 		}
 		
+		List<AmazonActivityStatus> newStatusesToNotifyAbout = new ArrayList<AmazonActivityStatus>();
 		// remaining reviews require creating a new status object
 		for (AmazonReviewView review : reviewsByItemId.values()) {
 			AmazonActivityStatus status = new AmazonActivityStatus(amazonUserId, review.getItemId(), "", AmazonActivityType.REVIEWED);
@@ -149,12 +155,14 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 	
 			// don't create blocks for pre-existing reviews
 			if (!initializingAmazonAccount) {
-			    notifier.onAmazonActivityCreated(status);
+				 newStatusesToNotifyAbout.add(status);
 		    }
 		}		
+		
+		return newStatusesToNotifyAbout;		
 	}
 	
-	private void updateListItems(String amazonUserId, AmazonListView listView, boolean initializingAmazonAccount) {
+	private List<AmazonActivityStatus> updateListItems(String amazonUserId, AmazonListView listView, boolean initializingAmazonAccount) {
 		// Go over all AmazonActivityStatuses for the list, and figure out which
 		// ones we don't have.
 		// We don't do anything if a list item is no longer around, we keep the
@@ -180,6 +188,7 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 			listItemsByItemId.remove(status.getItemId());
 		}
 		
+		List<AmazonActivityStatus> newStatusesToNotifyAbout = new ArrayList<AmazonActivityStatus>();
 		// remaining list items require creating a new status object
 		for (AmazonListItemView listItem : listItemsByItemId.values()) {
 			AmazonActivityStatus status = new AmazonActivityStatus(amazonUserId, listItem.getItemId(), listView.getListId(), AmazonActivityType.WISH_LISTED);
@@ -189,12 +198,14 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 	
 			// don't create blocks for pre-existing list items
 			if (!initializingAmazonAccount) {
-			    notifier.onAmazonActivityCreated(status);
+			   newStatusesToNotifyAbout.add(status);
 		    }
-		}		
+		}	
+		return newStatusesToNotifyAbout;		
 	}
 	
-	public boolean saveUpdatedStatus(String amazonUserId, AmazonReviewsView reviewsView, AmazonListsView listsView) { 
+	
+	public List<AmazonActivityStatus> saveUpdatedStatus(String amazonUserId, AmazonReviewsView reviewsView, AmazonListsView listsView) { 
 		String reviewsStatus = "were not changed";
 		if (reviewsView != null) {
 			reviewsStatus = Integer.toString(reviewsView.getTotal());
@@ -275,17 +286,32 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 		// at this point, it shouldn't hurt efficiency too much to do this.
 		em.flush();
 		
+		List<AmazonActivityStatus> newStatusesToNotifyAbout = new ArrayList<AmazonActivityStatus>();
         if (reviewsChanged) {
 			// If we did not have an updateStatus before, it means that we just initialized
 			// this account.
-			updateReviews(amazonUserId, reviewsView, !updateStatusFound);
+			newStatusesToNotifyAbout.addAll(updateReviews(amazonUserId, reviewsView, !updateStatusFound));
         }
         
         for (AmazonListView listView : listsThatHaveChanged.getLists()) {
-        	updateListItems(amazonUserId, listView, !updateStatusFound);
+        	newStatusesToNotifyAbout.addAll(updateListItems(amazonUserId, listView, !updateStatusFound));
         }
 
-		return reviewsChanged || (listsThatHaveChanged.getTotal() > 0);
+		if (!reviewsChanged && (listsThatHaveChanged.getTotal() == 0)) {
+			// this means that there was no change
+			return null;
+		} else {
+			// when we are initializing somone's Amazon account, this will be empty,
+			// but we will count it as a "changed" result, so that we don't start polling
+			// less frequently right away
+			return newStatusesToNotifyAbout;
+		}
+	}
+	
+	public void saveItemsInCache(List<AmazonItem> items) {
+	    for (AmazonItem item : items) {
+	        itemCache.saveInCacheInsideExistingTransaction(item.getItemId(), item, new Date(), true);	
+	    }
 	}
 	
 	@Override
@@ -329,9 +355,9 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 
 		@Override
 		protected PollResult execute() throws Exception {
-			boolean changed = false;
 			AmazonUpdater proxy = EJBUtil.defaultLookup(AmazonUpdater.class);
 			Configuration config = EJBUtil.defaultLookup(Configuration.class);
+			Notifier notifier = EJBUtil.defaultLookup(Notifier.class);
 			AmazonReviewsCache reviewsCache = CacheFactoryBean.defaultLookup(AmazonReviewsCache.class);
 			AmazonListsCache listsCache = CacheFactoryBean.defaultLookup(AmazonListsCache.class);
 			AmazonListItemsCache listItemsCache = CacheFactoryBean.defaultLookup(AmazonListItemsCache.class);
@@ -397,11 +423,46 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 				}
 			}
 			
-			// this might return false for changed if we were saving something because it 
+			// the returned list will be null if we were saving something because it 
 			// expired, but nothing really changed
-			changed = proxy.saveUpdatedStatus(amazonUserId, reviewsView, refreshedListsView);
+			List<AmazonActivityStatus> statuses = proxy.saveUpdatedStatus(amazonUserId, reviewsView, refreshedListsView);
 			
-			return new PollResult(changed, false);
+			if (statuses == null) 
+				return new PollResult(false, false);
+			
+			// we first want to get information about all Amazon items we have new statuses about, and
+			// then we can create notifications
+			
+			StringBuilder sb = new StringBuilder();
+			int count = 0;
+			AmazonItemLookupWebServices ailws = new AmazonItemLookupWebServices(REQUEST_TIMEOUT, config);
+			
+			for (AmazonActivityStatus status : statuses) {
+				sb.append(status.getItemId());
+				sb.append(",");
+				count++;
+				// we don't expect many items to be added on each iteration, but we should
+				// limit our calls to Amazon web services to MAX_AMAZON_ITEMS_FOR_LOOKUP at a time
+				if (count == AmazonItemLookupWebServices.MAX_AMAZON_ITEMS_FOR_LOOKUP) {
+				    sb.setLength(sb.length() - 1);
+				    List<AmazonItem> items = ailws.getItems(sb.toString());
+				    proxy.saveItemsInCache(items);
+				    count = 0;
+				    sb.setLength(0);
+				}
+			}
+			// get the remainder of new items
+			if (sb.length() > 0) {
+			    sb.setLength(sb.length() - 1);
+			    List<AmazonItem> items = ailws.getItems(sb.toString());
+			    proxy.saveItemsInCache(items);				
+			}
+			
+			for (AmazonActivityStatus status : statuses) {
+			    notifier.onAmazonActivityCreated(status);
+			}
+			
+			return new PollResult(true, false);
 		}
 
 		@Override

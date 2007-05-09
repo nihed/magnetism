@@ -9,6 +9,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
+
+import com.dumbhippo.persistence.Group;
 
 public class StringUtils {
 	public static String hexEncode(byte[] strs) {
@@ -265,5 +268,25 @@ public class StringUtils {
 		} else {
 			return null;
 		}
+	}
+	
+	/**
+	 * Returns a String in which List items are separated by a separator.
+	 * Common examples are "," or ", "
+	 * @param strings
+	 * @return a String in which List items are separated by a separator
+	 */
+	public static String concatenateUsingSeparator(List<String> strings, String separator) {
+		StringBuilder sb = new StringBuilder();
+		for (String str : strings) {
+			sb.append(str);
+			sb.append(separator);
+		}
+		
+		if (sb.length() >= separator.length()) {
+		    sb.setLength(sb.length() - separator.length()); // chop the last separator
+		}
+		
+		return sb.toString();
 	}
 }
