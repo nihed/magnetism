@@ -110,14 +110,15 @@
 			<tr>
 			  <dht3:featuresItem prefix="Webswarm"
 			                     icon="webswarm_icon.png"
-			                     text="\"Swarm\" notifications of new and popular content"
 			                     tipIcon="webswarm_block.png"
 			                     tipIconWidth="450"
 			                     tipIconHeight="70"
-			                     tipText="Get updates when people in your Mugshot network share and swarm around links"/>
+			                     tipText="Get updates when people in your Mugshot network share and swarm around links">
+			      <a href="/links-learnmore">Web Swarm</a> notifications of new and popular content
+			  </dht3:featuresItem>                       
 			  <dht3:featuresItem prefix="Quips"
 			                     icon="quips_16x16.png"
-			                     text="\"Quips\" to rate and comment on anything shared on Mugshot"
+			                     text="Quips to rate and comment on anything shared on Mugshot"
 			                     tipIcon="quip.png"
 			                     tipIconWidth="243"
 			                     tipIconHeight="116"
