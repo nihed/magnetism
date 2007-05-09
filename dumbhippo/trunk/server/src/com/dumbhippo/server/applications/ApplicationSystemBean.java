@@ -988,6 +988,11 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	}
 	
 	public void search(String search, int iconSize, ApplicationCategory category, Pageable<ApplicationView> pageable) {
+		if (search.equals("")) {
+			pageable.setResults(TypeUtils.castList(ApplicationView.class, Collections.emptyList()));
+			pageable.setTotalCount(0);
+		}
+		
 		final String[] fields = { "name", "genericName", "tooltip", "description1", "description2", "description3", "description4" };
 		Analyzer analyzer = ApplicationIndexer.getInstance().createAnalyzer();
 		QueryParser queryParser = new MultiFieldQueryParser(fields, analyzer);
