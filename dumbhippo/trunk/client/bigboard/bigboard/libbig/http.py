@@ -28,10 +28,15 @@ class AsyncHTTPFetcher(Singleton):
             t.start()        
        
     def fetch(self, url, cb, errcb, cookies=None, data=None, nocache=False):        
-        self.__work_lock.acquire()
-        self.__work_queue.append((url, cb, errcb, cookies, data, nocache))
-        self.__work_cond.notify()
-        self.__work_lock.release()
+        try:
+            # try the local cache first
+            (fname, fdata) = httpcache.load(url, cookies, data=data, nonetwork=True)
+            gobject.idle_add(lambda: self.__emit_results(url, data, cb, fname, fdata))
+        except RuntimeError, e:
+            self.__work_lock.acquire()
+            self.__work_queue.append((url, cb, errcb, cookies, data, nocache))
+            self.__work_cond.notify()
+            self.__work_lock.release()
 
     def xml_method(self, url, params, cb, normerrcb, errcb):
         formdata = urllib.urlencode(params)
