@@ -949,7 +949,13 @@ public class FeedSystemBean implements FeedSystem {
 			this.feed = feed;
 			this.source = feed.getSource();
 			this.linkId = id;
-			restrictions = ServicePollingRestrictions.lookupByDomain(this.source.getUrl());
+			URL url;
+			try {
+				url = new URL(this.source.getUrl());
+			} catch (MalformedURLException e) {
+				throw new RuntimeException(e);
+			}
+			restrictions = ServicePollingRestrictions.lookupByDomain(url.getHost());
 		}
 
 		@Override
