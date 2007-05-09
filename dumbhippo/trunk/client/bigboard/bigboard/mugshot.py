@@ -350,10 +350,12 @@ class Mugshot(gobject.GObject):
                                      'iconUrl', 
                                      'category',
                                      'name', 'desktopNames',
-                                     ('description', True),
                                      ('tooltip', True),
                                      ('genericName', True)
                                     ])
+        description = xml_query(node, 'description#')
+        if description:
+            attrs['description'] = description
         app = None
         if not self.__applications.has_key(attrs['id']):
             app = Application(attrs)
@@ -447,6 +449,21 @@ class Mugshot(gobject.GObject):
                                                   self.__on_applications_search_error,
                                                   self.__on_applications_search_error)
             
+    def __on_all_applications(self, url, child_nodes):
+        reply_root = child_nodes[0]
+        apps = self.__parse_app_set('applications',
+                                    child_nodes=reply_root.childNodes)
+
+    def __on_all_applications_error(self, *args):
+        self._logger.error("failed to get all apps: %s", args)
+
+    def request_all_apps(self):
+        AsyncHTTPFetcher.getInstance().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/allapplications'),
+                                                  {},
+                                                  self.__on_all_applications,
+                                                  self.__on_all_applications_error,
+                                                  self.__on_all_applications_error)
+        
     def __request_pinned_apps(self):
         self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications",
                               self.__on_pinned_apps)
@@ -532,6 +549,7 @@ class Mugshot(gobject.GObject):
                               lambda *args: cb(), 
                               content=iq.getvalue(),
                               is_set=True)     
+
 
 mugshot_inst = None
 def get_mugshot():

@@ -34,6 +34,7 @@ class ExternalAccountIcon(CanvasMugshotURLImage):
         self.connect("button-press-event", lambda img,event: self.__launch_browser())
         self.set_clickable(True)
         self.set_acct(acct)
+        self.set_property('tooltip', self._acct.get_link())
         
     def set_acct(self, acct):
         self._acct = acct

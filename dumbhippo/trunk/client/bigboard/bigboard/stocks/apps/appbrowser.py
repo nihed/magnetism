@@ -470,7 +470,7 @@ class AppBrowser(hippo.CanvasWindow):
         self.connect("key-press-event", lambda win, event: self.__on_keypress(event))
                
         self.set_root(self.__box)
-        
+
         self.__mugshot = mugshot.get_mugshot()
         self.__mugshot.connect("initialized", lambda mugshot: self.__sync())
         self.__mugshot.connect("my-top-apps-changed", 
@@ -481,6 +481,7 @@ class AppBrowser(hippo.CanvasWindow):
                                lambda *args: self.__sync())          
         self.__mugshot.connect("category-top-apps-changed", 
                                self.__handle_category_changed)          
+        self.__mugshot.request_all_apps()
         self.__sync()
 
     def __handle_global_changed(self, m, apps):
@@ -531,7 +532,9 @@ class AppBrowser(hippo.CanvasWindow):
         self.__idle_search_id = 0
         
     def __idle_do_mugshot_search(self):
-        mugshot.get_mugshot().request_app_search(self.__search_input.get_property("text"))
+        searchtext = self.__search_input.get_property("text")
+        if searchtext:
+            mugshot.get_mugshot().request_app_search(searchtext)
         self.__idle_mugshot_search_id = 0
 
     def __on_mugshot_initialized(self, mugshot):
