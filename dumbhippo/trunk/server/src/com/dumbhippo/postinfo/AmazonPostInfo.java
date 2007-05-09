@@ -1,16 +1,18 @@
 package com.dumbhippo.postinfo;
 
-import com.dumbhippo.services.AmazonItemData;
+import com.dumbhippo.services.AmazonItemView;
 
-public class AmazonPostInfo extends PostInfo implements AmazonItemData {
+public class AmazonPostInfo extends PostInfo implements AmazonItemView {
 
 	AmazonPostInfo() {
 		super(null, PostInfoType.AMAZON);
 	}
 
-	public void merge(AmazonItemData itemData) {
+	public void merge(AmazonItemView itemData) {
 		Node amazon = getTree().resolveOrCreatePath(NodeName.amazon);
-		amazon.updateContentChild(itemData.getASIN(), NodeName.itemId);
+		amazon.updateContentChild(itemData.getItemId(), NodeName.itemId);
+		amazon.updateContentChild(itemData.getTitle(), NodeName.title);
+		amazon.updateContentChild(itemData.getEditorialReview(), NodeName.editorialReview);
 		amazon.updateContentChild(itemData.getNewPrice(), NodeName.newPrice);
 		amazon.updateContentChild(itemData.getUsedPrice(), NodeName.usedPrice);
 		amazon.updateContentChild(itemData.getRefurbishedPrice(), NodeName.refurbishedPrice);
@@ -27,10 +29,18 @@ public class AmazonPostInfo extends PostInfo implements AmazonItemData {
 		getTree().removeChildIfNoChildren(NodeName.amazon);
 	}
 	
-	public String getASIN() {
+	public String getItemId() {
 		return getTree().getContentIfExists(NodeName.amazon, NodeName.itemId);
 	}
 
+	public String getTitle() {
+		return getTree().getContentIfExists(NodeName.amazon, NodeName.title);
+	}
+	
+	public String getEditorialReview() {
+		return getTree().getContentIfExists(NodeName.amazon, NodeName.editorialReview);
+	}
+	
 	public String getNewPrice() {
 		return getTree().getContentIfExists(NodeName.amazon, NodeName.newPrice);
 	}

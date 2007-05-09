@@ -3,7 +3,8 @@
  */
 package com.dumbhippo.services;
 
-import java.util.EnumMap;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
@@ -11,13 +12,17 @@ import org.xml.sax.SAXException;
 import com.dumbhippo.EnumSaxHandler;
 import com.dumbhippo.GlobalSetup;
 
-class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandler.Element> implements AmazonItemData {
+class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandler.Element> {
 	
 	static private final Logger logger = GlobalSetup.getLogger(AmazonItemLookupSaxHandler.class);
 	
 	// The enum names should match the xml element names (including case)
 	enum Element {
 		Item, ASIN,
+		Title, 
+		EditorialReview,
+		    Source,
+		    Content,
 		SmallImage, URL, Height, Width,
 		OfferSummary,
 		LowestNewPrice, LowestUsedPrice,
@@ -27,40 +32,75 @@ class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandl
 		IGNORED // an element we don't care about
 	};	
 
-	private String ASIN;
-	private String smallImageUrl;
-	private int smallImageWidth;
-	private int smallImageHeight;
-	private EnumMap<Element,String> prices;
+	private List<AmazonItem> items;
 	private String errorCode;
 	private String errorMessage;
 	
 	AmazonItemLookupSaxHandler() {
 		super(Element.class, Element.IGNORED);
-		prices = new EnumMap<Element,String>(Element.class);
+		items = new ArrayList<AmazonItem>();
 	}
 
+	private int parseCount(Element c, String content) {
+	    try {	
+			return Integer.parseInt(content);			
+		} catch (NumberFormatException e) {
+			logger.warn("Amazon web services content {} for element {} was not a valid number",
+					    content, c);
+			return -1;
+		}
+	}
+	
+	private AmazonItem currentItem() {
+		if (items.size() > 0)
+			return items.get(items.size() - 1);
+		else
+			return null;
+	}
+	
+	@Override
+	protected void openElement(Element c) throws SAXException {
+		if (c == Element.Item) {
+			AmazonItem item = new AmazonItem();
+			items.add(item);
+		}
+	}
+	
 	@Override
 	protected void closeElement(Element c) throws SAXException {
-		
+		String currentContent = getCurrentContent().trim();  
 		if (c == Element.ASIN) {
-			ASIN = getCurrentContent();
+			if (currentItem() != null)
+				currentItem().setItemId(currentContent);
+		} else if (c == Element.Title) {
+			currentItem().setTitle(currentContent);
+		} else if (c == Element.Content && parent() == Element.EditorialReview)	{
+			currentItem().setEditorialReview(currentContent);
 		} else if (parent() == Element.SmallImage) {
 			if (c == Element.URL) {
-				smallImageUrl = getCurrentContent();
+				currentItem().setSmallImageUrl(currentContent);
 			} else if (c == Element.Width) {
-				String v = getCurrentContent();
-				smallImageWidth = Integer.parseInt(v);
+				currentItem().setSmallImageWidth(parseCount(c, currentContent));
 			} else if (c == Element.Height) {
-				String v = getCurrentContent();
-				smallImageHeight = Integer.parseInt(v);					
+				currentItem().setSmallImageHeight(parseCount(c, currentContent));		
 			}
 		} else if (c == Element.FormattedPrice) {
 			Element p = parent();
 			if (p != null) {
-				String price = getCurrentContent();
-				//logger.debug("saving price " + price + " for " + p);
-				prices.put(p, price);
+				switch (p) {
+				    case LowestNewPrice :
+				    	currentItem().setNewPrice(currentContent);
+				  	    break;
+				    case LowestUsedPrice :
+				    	currentItem().setUsedPrice(currentContent);
+					    break;
+				    case LowestCollectiblePrice :
+				    	currentItem().setCollectiblePrice(currentContent);
+				    	break;
+				    case LowestRefurbishedPrice :
+				    	currentItem().setCollectiblePrice(currentContent);
+				    	break;
+				}
 			}
 		} else if (parent() == Element.Error) {
 			// we don't throw or anything since the other fields 
@@ -76,56 +116,15 @@ class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandl
 		}
 	}
 	
-	@Override 
-	public void endDocument() throws SAXException {
-		//logger.debug("Parsed ASIN = " + ASIN + " prices = " + prices + " smallImageUrl = " + smallImageUrl + " " + smallImageWidth + "x" + smallImageHeight);
-		if (!isValid()) {
-			if (errorCode != null) {
-				boolean unexpected = !errorCode.equals("AWS.ECommerceService.NoExactMatches");
-				throw new ServiceException(unexpected, errorCode + " " + (errorMessage != null ? errorMessage : "no message"));
-			} else {
-	 			throw new SAXException("Missing needed amazon fields, have ASIN " + ASIN + " smallImageUrl " + smallImageUrl +
-	 					" " + smallImageWidth + "x" + smallImageHeight + " error message " + errorMessage);
-			}
-		}
+	public List<AmazonItem> getItems() {
+		return items;
 	}
 	
-	private boolean isValid() {
-		// prices can all be absent if the product is sold out, so we don't 
-		// validate that we have prices.
-		return ASIN != null && smallImageUrl != null && 
-		smallImageWidth > 0 && smallImageHeight > 0;
+	public String getErrorCode() {
+		return errorCode;
 	}
 	
-	public String getASIN() {
-		return ASIN;
-	}
-
-	public String getNewPrice() {
-		return prices.get(Element.LowestNewPrice);
-	}
-
-	public String getUsedPrice() {
-		return prices.get(Element.LowestUsedPrice);
-	}
-
-	public String getCollectiblePrice() {
-		return prices.get(Element.LowestCollectiblePrice);
-	}
-
-	public String getRefurbishedPrice() {
-		return prices.get(Element.LowestRefurbishedPrice);
-	}
-	
-	public String getSmallImageUrl() {
-		return smallImageUrl;
-	}
-
-	public int getSmallImageWidth() {
-		return smallImageWidth;
-	}
-
-	public int getSmallImageHeight() {
-		return smallImageHeight;
+	public String getErrorMessage() {
+		return errorMessage;
 	}
 }

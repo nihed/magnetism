@@ -44,6 +44,8 @@ public enum NodeName {
 	groupId,
 	favicon,
 	itemId,
+	title,
+	editorialReview,
 	smallPhoto,
 	url,
 	width,

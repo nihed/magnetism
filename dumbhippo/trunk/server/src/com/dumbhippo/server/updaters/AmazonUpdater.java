@@ -8,12 +8,11 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.postinfo.AmazonPostInfo;
 import com.dumbhippo.postinfo.PostInfoType;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
-import com.dumbhippo.server.Configuration.PropertyNotFoundException;
-import com.dumbhippo.services.AmazonItemData;
-import com.dumbhippo.services.AmazonItemLookup;
+import com.dumbhippo.services.AmazonItemView;
+import com.dumbhippo.services.AmazonItemLookupWebServices;
 
 public class AmazonUpdater extends AbstractUpdater<AmazonPostInfo> {
+	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AmazonUpdater.class);
 	
 	static private final String[] domains = { "amazon.com" };
@@ -26,33 +25,11 @@ public class AmazonUpdater extends AbstractUpdater<AmazonPostInfo> {
 		return new AmazonUpdater(config);
 	}
 
-	private String amazonAccessKeyId;
-	private String amazonAssociateTag;
+	private Configuration config;
 	
 	public AmazonUpdater(Configuration config) {
 		super(AmazonPostInfo.class);
-		try {
-			amazonAccessKeyId = config.getPropertyNoDefault(HippoProperty.AMAZON_ACCESS_KEY_ID);
-			if (amazonAccessKeyId.trim().length() == 0)
-				amazonAccessKeyId = null;
-		} catch (PropertyNotFoundException e) {
-			amazonAccessKeyId = null;
-		}
-		
-		if (amazonAccessKeyId == null)
-			logger.warn("Amazon web services access key is not set, can't make Amazon calls.");
-		
-		try {
-			amazonAssociateTag = config.getPropertyNoDefault(HippoProperty.AMAZON_ASSOCIATE_TAG_ID);
-			if (amazonAssociateTag.trim().length() == 0)
-				amazonAssociateTag = null;
-		} catch (PropertyNotFoundException e) {
-			amazonAssociateTag = null;
-		}
-		
-		if (amazonAssociateTag == null)
-			logger.warn("Amazon associate tag is not set: Amazon calls will work, but without associate program");
-
+		this.config = config;
 	}
 
 	@Override
@@ -68,10 +45,8 @@ public class AmazonUpdater extends AbstractUpdater<AmazonPostInfo> {
 	
 	@Override
 	protected void update(AmazonPostInfo postInfo, URL url) {
-		if (amazonAccessKeyId == null)
-			return;
-		AmazonItemLookup itemLookup = new AmazonItemLookup(getUpdateTimeoutMilliseconds());
-		AmazonItemData itemData = itemLookup.getItemForUrl(amazonAccessKeyId, amazonAssociateTag, url);
+		AmazonItemLookupWebServices itemLookup = new AmazonItemLookupWebServices(getUpdateTimeoutMilliseconds(), config);
+		AmazonItemView itemData = itemLookup.getItemForUrl(url);
 		
 		// if the update fails, just stick with whatever old information we had
 		if (itemData != null) {

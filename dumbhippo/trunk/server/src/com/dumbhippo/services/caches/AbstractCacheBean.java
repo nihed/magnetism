@@ -57,7 +57,8 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 		PICASA_ALBUMS,
 		AMAZON_REVIEWS,
 		AMAZON_LISTS,
-		AMAZON_LIST_ITEMS
+		AMAZON_LIST_ITEMS,
+		AMAZON_ITEM
 	}
 	
 	private static EnumMap<Request,UniqueTaskExecutor> executors;
