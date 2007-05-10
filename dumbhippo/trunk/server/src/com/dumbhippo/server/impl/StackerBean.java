@@ -632,18 +632,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		refreshDeletedFlags(block);
 	}
 	
-	public void refreshDeletedFlags(final Block block) {
-		runner.runTaskOnTransactionCommit(new Runnable() {
-			public void run() {
-				runner.runTaskInNewTransaction(new Runnable() {
-					public void run() {
-						Block attached = em.find(Block.class, block.getId());
-						refreshUserBlockDatasDeleted(attached, false);
-						refreshGroupBlockDatasDeleted(attached, false);
-					}
-				});
-			}
-		});		
+	public void refreshDeletedFlags(Block block) {
+		refreshUserBlockDatasDeleted(block, false);
+		refreshGroupBlockDatasDeleted(block, false);
 	}
 
 	public void refreshDeletedFlagsOnAllBlocks() {

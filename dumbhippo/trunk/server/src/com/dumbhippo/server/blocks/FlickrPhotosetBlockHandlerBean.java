@@ -147,6 +147,10 @@ public class FlickrPhotosetBlockHandlerBean extends
 			return;
 		if (external.getHandle() == null)
 			return;
+		
+		// Our assumption here is that the user only has a limited number of photosets,
+		// so it's fine to just do them all in the current transaction; if we needed
+		// to update hundreds or thousands of items, then it would be necessary to do async.
 		Collection<FlickrPhotosetStatus> statuses = flickrUpdater.getPhotosetStatusesForFlickrAccount(external.getHandle());
 		for (FlickrPhotosetStatus status : statuses) {
 			stacker.refreshDeletedFlags(getKey(user, status));

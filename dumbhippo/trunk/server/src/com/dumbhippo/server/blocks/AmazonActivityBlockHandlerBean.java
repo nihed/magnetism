@@ -1,5 +1,6 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -7,11 +8,13 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.AmazonActivityStatus;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
@@ -22,6 +25,7 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AmazonUpdater;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
@@ -54,7 +58,10 @@ public class AmazonActivityBlockHandlerBean extends
 	private AmazonItemCache itemCache;
 	
 	@EJB
-	private CacheFactory cacheFactory;	
+	private CacheFactory cacheFactory;
+	
+	@EJB
+	protected TransactionRunner runner;
 	
 	@PostConstruct
 	public void init() {
@@ -104,6 +111,8 @@ public class AmazonActivityBlockHandlerBean extends
 	}
 
 	public BlockKey getKey(User user, AmazonActivityStatus activityStatus) {
+		// If you change this, to add, say, more block types, you'll need to update
+		// the query in onExternalAccountLovedAndEnabledMaybeChanged
 		switch (activityStatus.getActivityType()) {
 		    case REVIEWED :
 		        return new BlockKey(BlockType.AMAZON_REVIEW, user.getGuid(), activityStatus.getGuid());
@@ -136,14 +145,34 @@ public class AmazonActivityBlockHandlerBean extends
 		// nothing to do, just wait for a photoset to appear in periodic job updater
 	}
 
-	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
+	public void onExternalAccountLovedAndEnabledMaybeChanged(final User user, ExternalAccount external) {
 		if (external.getAccountType() != ExternalAccountType.AMAZON)
 			return;
-		if (external.getHandle() == null)
-			return;
-		Collection<AmazonActivityStatus> statuses = amazonUpdater.getActivityStatusesForAmazonAccount(external.getHandle());
-		for (AmazonActivityStatus status : statuses) {
-			stacker.refreshDeletedFlags(getKey(user, status));
-		}
+		
+		runner.runTaskOnTransactionCommit(new Runnable() {
+			public void run() {
+				final List<String> results = new ArrayList<String>();
+				runner.runTaskInNewTransaction(new Runnable() {
+					public void run() {
+						Query q = em.createQuery("SELECT b.id from Block b  " +
+		                                         " WHERE (b.blockType = " + BlockType.AMAZON_REVIEW.ordinal() + " OR " +
+		                                         "        b.blockType = " +  BlockType.AMAZON_WISH_LIST_ITEM.ordinal() + ") " +
+		                                         "   AND b.data1 = :userId");
+						q.setParameter("userId", user.getId());
+						results.addAll(TypeUtils.castList(String.class, q.getResultList()));
+					}
+				});
+				
+				for (final String id : results) {
+					runner.runTaskInNewTransaction(new Runnable() {
+						public void run() {
+							Block block = em.find(Block.class, id);
+							if (block != null)
+								stacker.refreshDeletedFlags(block);
+						}
+					});
+				}
+			}
+		});
 	}
 }

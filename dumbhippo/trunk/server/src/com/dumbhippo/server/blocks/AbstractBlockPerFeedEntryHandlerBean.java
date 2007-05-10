@@ -1,8 +1,10 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import javax.ejb.EJB;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
@@ -14,11 +16,11 @@ import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
-import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
@@ -26,6 +28,9 @@ import com.dumbhippo.server.views.Viewpoint;
 public abstract class AbstractBlockPerFeedEntryHandlerBean<ViewType extends AbstractFeedEntryBlockView> extends AbstractBlockHandlerBean<ViewType> implements BlockPerFeedEntryBlockHandler {
 	
 	static private final Logger logger = GlobalSetup.getLogger(AbstractBlockPerFeedEntryHandlerBean.class);
+	
+	@EJB
+	protected TransactionRunner runner;
 	
 	protected AbstractBlockPerFeedEntryHandlerBean(Class<? extends ViewType> viewClass) {
 		super(viewClass);
@@ -98,19 +103,33 @@ public abstract class AbstractBlockPerFeedEntryHandlerBean<ViewType extends Abst
 		stacker.stack(block, now, user, false, StackReason.NEW_BLOCK);
 	}
 
-	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
+	public void onExternalAccountLovedAndEnabledMaybeChanged(final User user, ExternalAccount external) {
 		if (external.getAccountType() != getAccountType())
 			return;
 		
-		for (Feed feed : external.getFeeds()) {
-			Query q = em.createQuery("SELECT fe FROM FeedEntry fe WHERE fe.feed = :feed AND EXISTS (SELECT b FROM Block b WHERE b.blockType = " + 
-					getBlockType().ordinal() + " AND b.data1 = :userId AND b.data3 = fe.id)");
-			q.setParameter("feed", feed);
-			q.setParameter("userId", user.getId());
-			List<?> results = q.getResultList();
-			for (FeedEntry e : TypeUtils.castList(FeedEntry.class, results)) {
-				stacker.refreshDeletedFlags(getKey(user, e));
+		runner.runTaskOnTransactionCommit(new Runnable() {
+			public void run() {
+				final List<String> results = new ArrayList<String>();
+				runner.runTaskInNewTransaction(new Runnable() {
+					public void run() {
+						Query q = em.createQuery("SELECT b.id from Block b  " +
+		                                         " WHERE b.blockType = " + getBlockType().ordinal() + " " +
+		                                         "   AND b.data1 = :userId");
+						q.setParameter("userId", user.getId());
+						results.addAll(TypeUtils.castList(String.class, q.getResultList()));
+					}
+				});
+				
+				for (final String id : results) {
+					runner.runTaskInNewTransaction(new Runnable() {
+						public void run() {
+							Block block = em.find(Block.class, id);
+							if (block != null)
+								stacker.refreshDeletedFlags(block);
+						}
+					});
+				}
 			}
-		}
+		});
 	}
 }
