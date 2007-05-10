@@ -3,6 +3,9 @@ package com.dumbhippo.statistics;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
+import java.lang.management.MemoryManagerMXBean;
+import java.lang.management.MemoryPoolMXBean;
+import java.util.List;
 
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
@@ -31,13 +34,39 @@ public class ServerStatistics implements StatisticsSource {
 		return instance;
 	}
   	
-	@Column(id="heapUsed",
-			name="Heap Used", 
+	// The pool names are specific to the CMS garbage collector; if we switch
+	// to a different collection algorithm , then the names need to be updated.
+	private long getPoolUsed(String poolName) {
+		for (MemoryPoolMXBean pool : ManagementFactory.getMemoryPoolMXBeans()) {
+			if (poolName.equals(pool.getName()))
+				return pool.getUsage().getUsed();
+		}
+		
+		return 0;
+	}
+	
+	@Column(id="edenSpaceUsed",
+			name="Eden Space Used", 
 			units=ColumnUnit.BYTES, 
 			type=ColumnType.SNAPSHOT)
-	public long getHeapSize() {
-		MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
-		return memoryBean.getHeapMemoryUsage().getUsed();
+	public long getEdenSpaceUsed() {
+		return getPoolUsed("Par Eden Space");
+	}
+	
+	@Column(id="survivorSpaceUsed",
+			name="Survivor Space Used", 
+			units=ColumnUnit.BYTES, 
+			type=ColumnType.SNAPSHOT)
+	public long getSurvivorSpaceUsed() {
+		return getPoolUsed("Par Survivor Space");
+	}
+	
+	@Column(id="oldSpaceUsed",
+			name="Old Space Used", 
+			units=ColumnUnit.BYTES, 
+			type=ColumnType.SNAPSHOT)
+	public long getOldSpaceUsed() {
+		return getPoolUsed("CMS Old Gen");
 	}
 	
 	@Column(id="collectionTime",
