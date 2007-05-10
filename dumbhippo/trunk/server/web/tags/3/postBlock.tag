@@ -23,7 +23,7 @@
 	<dht3:blockLeft block="${block}" chatHeader="${chatHeader}">
 		<dht3:simpleBlockTitle block="${block}" oneLine="${oneLine}" homeStack="false"/>
 	    <dht3:blockDescription blockId="${blockId}" literalBody="${chatHeader}">${block.postView.textAsHtml}</dht3:blockDescription>   
-        <c:if test="${!chatHeader}">
+        <c:if test="${!oneLine && !chatHeader}">
 			<dht3:stackReason block="${block}" blockId="${blockId}"/>
 			<dht3:blockContent blockId="${blockId}">
 				<dht3:quipper block="${block}" blockId="${blockId}"/>
