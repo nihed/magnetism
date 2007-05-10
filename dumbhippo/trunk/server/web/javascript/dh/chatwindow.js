@@ -271,7 +271,6 @@ dh.chatwindow._init = function() {
 	dh.chatinput.init();
 	
 	dh.chatinput.onCancel = function() {
-    	dh.event.cancel(e);
     	window.close();
     }
     
