@@ -3,7 +3,9 @@ package com.dumbhippo.persistence;
 import javax.persistence.Entity;
 
 /**
- * Subclass of FeedEntry representing a track list feed (e.g., from Rhapsody's web services)
+ * Subclass of FeedEntry representing a track list feed from Rhapsody's web services.
+ * FIXME: The name is generic, but the contents are Rhapsody-specific. If this 
+ *   class really was generic, it would have 'int duration' in seconds, for example.
  */
 
 @Entity
