@@ -1329,7 +1329,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		String name = entry.getTrack();
 		String album = entry.getAlbum();
 		String url = entry.getPlayHref();
-		String duration = entry.getDuration();
 		String artist = entry.getArtist();
 		if (artist == null || artist.trim().length() == 0) {
 			logger.debug("Rhapsody feed has blank artist field");
@@ -1341,12 +1340,13 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		properties.put("album", album);
 		properties.put("url", url);
 		
+		String duration = entry.getDuration();
 		if (duration != null && duration.trim().length() > 0) {
 			try {
 				Integer durationInt = Integer.parseInt(duration);
 				durationInt = durationInt/1000;  // Rhapsody duration info is in milliseconds, elswhere it's seconds
 			
-				properties.put("duration", ""+duration);
+				properties.put("duration", ""+durationInt);
 			} catch (NumberFormatException e) {
 				logger.debug("bad duration in rhapsody feed '{}'", duration);
 				// just don't store the duration
