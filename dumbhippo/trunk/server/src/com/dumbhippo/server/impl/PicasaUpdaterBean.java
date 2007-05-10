@@ -11,6 +11,7 @@ import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
+import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.PollingTaskFamilyType;
@@ -60,7 +61,11 @@ public class PicasaUpdaterBean extends CachedExternalUpdaterBean<PicasaUpdateSta
 		proxy.saveUpdatedStatus(username, albums);
 	}
 	
-	//TODO: Identify the unique part of picasa urls instead of using the whole thing
+	//TODO: Identify the unique part of picasa urls instead of using the whole thing,
+	// though it doesn't really matter once we digest. What might be better is
+	// to use guid from the feed items rather than the thumbnail link, since
+	// the guid presumably won't change if the album is renamed, but that poses
+	// a migration problem since we don't curently store the ID.
 	private String computeHash(List<? extends PicasaAlbum> albums) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < 5; ++i) {
@@ -68,7 +73,7 @@ public class PicasaUpdaterBean extends CachedExternalUpdaterBean<PicasaUpdateSta
 				break;
 			sb.append(albums.get(i).getThumbnailHref());
 		}
-		return sb.toString();
+		return Digest.computeDigestMD5(sb.toString());
 	}	
 
 	public boolean saveUpdatedStatus(String username, List<? extends PicasaAlbum> albums) {
