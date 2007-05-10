@@ -92,6 +92,7 @@ dh.chatinput._onMessageKeyPress = function(e) {
     	
         return false;
     } else if (keycode == 27) {
+    	dh.event.cancel(e);
     	dh.chatinput.onCancel();
     	return false;
     }
