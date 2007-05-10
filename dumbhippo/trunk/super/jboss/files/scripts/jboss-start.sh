@@ -66,7 +66,25 @@ if [ "x$JAVA" = "x" ]; then
     fi
 fi
 
-$JAVA -classpath $JAVA_HOME/lib/tools.jar:${jbossdir}/bin/run.jar -XX:MaxPermSize=128M -Xmx${javaMaxHeap}m -Xms${javaMaxHeap}m -Xdebug $jdwpopt -Djava.endorsed.dirs=${jbossdir}/lib/endorsed  -Djboss.partition.udpGroup=@@multicastAddress@@ -Djboss.server.home.dir=$targetdir -Djboss.server.home.url=file://$targetdir org.jboss.Main --partition=@@jbossPartition@@ $bindopt > /dev/null 2>&1 &
+JAVA_OPTS="\
+-classpath $JAVA_HOME/lib/tools.jar:${jbossdir}/bin/run.jar  \
+-XX:MaxPermSize=128M \
+-Xmx${javaMaxHeap}m \
+-Xms${javaMaxHeap}m \
+-XX:+UseConcMarkSweepGC \
+-Xdebug \
+$jdwpopt \
+-Djava.endorsed.dirs=${jbossdir}/lib/endorsed \
+-Djboss.partition.udpGroup=@@multicastAddress@@ \
+-Djboss.server.home.dir=$targetdir \
+-Djboss.server.home.url=file://$targetdir org.jboss.Main \
+-Dsun.rmi.dgc.client.gcInterval=3600000 \
+-Dsun.rmi.dgc.server.gcInterval=3600000 \
+--partition=@@jbossPartition@@ \
+$bindopt \
+"
+
+$JAVA $JAVA_OPTS > /dev/null 2>&1 &
 pid=$!
 started=false
 for i in `seq 1 30` ; do
