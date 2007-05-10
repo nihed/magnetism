@@ -18,7 +18,7 @@
 		<c:if test="${!oneLine && hasDescription}">
 			<dht3:blockDescription blockId="${blockId}" literalBody="${chatHeader}">${block.descriptionAsHtml}</dht3:blockDescription>
 		</c:if>
-        <c:if test="${!chatHeader}">
+        <c:if test="${!oneLine && !chatHeader}">
 			<dht3:stackReason block="${block}" blockId="${blockId}"/>
 			<dht3:blockContent blockId="${blockId}">
 				<dht3:quipper block="${block}" blockId="${blockId}"/>
