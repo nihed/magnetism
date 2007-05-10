@@ -180,9 +180,9 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	}
 	
 	this.elem.onkeyup = function(ev) {
-	    me.onkeyup();
+	    me.onkeyup(ev);
 	}
 	
-	this.onkeyup = function() {
+	this.onkeyup = function(ev) {
 	}
 }

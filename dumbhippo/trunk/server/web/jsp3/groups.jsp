@@ -53,7 +53,7 @@
     <c:set var="offerCreateGroupLink" value="true"/>
 </c:if>
 
-<dht3:page currentPageLink="groups">	
+<dht3:page currentPageLink="groups" blocks="true">	
 	<c:if test="${person.self}">
 		<dht3:accountStatus/>
 	</c:if>
