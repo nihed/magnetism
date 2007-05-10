@@ -110,12 +110,24 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 					logger.debug("Ignoring music update due to recent native update");
 					continue;
 				}
+				long now = System.currentTimeMillis();
 				for (int i = tracks.size() - 1; i >= 0; i--) {
 					LastFmTrack lastFmTrack = tracks.get(i);
 					if (computeTrackHash(lastFmTrack).equals(previousHash))
 						break; // Stop when we get to the last track we saw
 					Map<String, String> props = lastFmTrackToProps(lastFmTrack);
-					musicSystem.addHistoricalTrack(user, props, lastFmTrack.getListenTime() * 1000, false);
+					
+					// The data we get from last.fm/audioscrobbler simply includes the 
+					// literal date provided by the audioscrobbler client. If the audioscrobbler
+					// client is broken or the user's clock is off, this might be in the
+					// future. Stacking blocks in the future is bad, since (among other things)
+					// it will make the user *always* the most recently active user on the system.
+					// So clamp play times to the current time.
+					long listenTime = lastFmTrack.getListenTime() * 1000;
+					if (listenTime > now)
+						listenTime = now;
+					
+					musicSystem.addHistoricalTrack(user, props, listenTime, false);
 				}
 			}
 			return true;
