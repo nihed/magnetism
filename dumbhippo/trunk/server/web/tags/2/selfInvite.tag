@@ -21,8 +21,13 @@
 		
 		var dhSelfInviteInit${N} = function() {
 	        selfInviteAddressNode = document.getElementById('dhSelfInviteAddress${N}');
-	        if (selfInviteAddressNode != null)
+	        if (selfInviteAddressNode != null) {
 	            selfInviteAddress${N} = new dh.textinput.Entry(selfInviteAddressNode, "someone@example.com", "");    
+	            selfInviteAddress${N}.onkeyup = function(event) {
+	            	if (dh.event.getKeyCode(event) == ENTER)
+	            		dhSelfInvite${N}();
+	            }
+	        }
 		}
 			
 		var dhSelfInviteComplete${N} = function(message) {
