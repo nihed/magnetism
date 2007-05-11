@@ -45,7 +45,7 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 	// How quickly to reschedule a task if it's changed
 	private static final int TASK_CHANGE_RESCHEDULE_SEC = 4 * 60; // 4 minutes
 	
-	private static final int MAX_CONCURRENT_THREADS = 1000;
+	private static final int MAX_CONCURRENT_THREADS = 500;
 	
 	private static SwarmPollingSystem instance;
 	
