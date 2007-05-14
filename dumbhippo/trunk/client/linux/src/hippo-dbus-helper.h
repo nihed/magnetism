@@ -68,10 +68,21 @@ void              hippo_dbus_helper_unregister_object    (DBusConnection        
                                                           const char              *path);
 gboolean          hippo_dbus_helper_object_is_registered (DBusConnection          *connection,
                                                           const char              *path);
-DBusHandlerResult hippo_dbus_helper_handle_message       (DBusConnection          *connection,
-                                                          DBusMessage             *message);
 DBusHandlerResult hippo_dbus_helper_filter_message       (DBusConnection          *connection,
                                                           DBusMessage             *message);
+void              hippo_dbus_helper_emit_signal          (DBusConnection          *connection,
+                                                          const char              *path,
+                                                          const char              *interface,
+                                                          const char              *signal_name,
+                                                          int                      first_arg_type,
+                                                          ...);
+void              hippo_dbus_helper_emit_signal_valist   (DBusConnection          *connection,
+                                                          const char              *path,
+                                                          const char              *interface,
+                                                          const char              *signal_name,
+                                                          int                      first_arg_type,
+                                                          va_list                  args);
+
 
 typedef struct HippoDBusProxy HippoDBusProxy;
 

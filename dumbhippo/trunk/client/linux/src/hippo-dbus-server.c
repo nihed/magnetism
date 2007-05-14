@@ -14,6 +14,8 @@
 #include "hippo-dbus-settings.h"
 #include "hippo-dbus-helper.h"
 #include "hippo-dbus-contacts.h"
+#include "hippo-dbus-pidgin.h"
+#include "hippo-dbus-im.h"
 #include "hippo-distribution.h"
 #include <hippo/hippo-endpoint-proxy.h>
 #include <hippo/hippo-stack-manager.h>
@@ -230,6 +232,9 @@ hippo_dbus_try_to_acquire(const char  *server,
     hippo_dbus_try_acquire_online_prefs_manager(connection, FALSE);
 
     hippo_dbus_init_contacts(connection, FALSE);
+
+    hippo_dbus_init_pidgin(connection);
+    hippo_dbus_init_im(connection, FALSE);
     
     /* Add Rhythmbox signal match */
     dbus_bus_add_match(connection,
