@@ -885,6 +885,63 @@ hippo_dbus_helper_filter_message(DBusConnection *connection,
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
+void
+hippo_dbus_helper_emit_signal_valist(DBusConnection          *connection,
+                                     const char              *path,
+                                     const char              *interface,
+                                     const char              *signal_name,
+                                     int                      first_arg_type,
+                                     va_list                  args)
+{
+    DBusMessage *message;
+    void *object_data;
+    const HippoDBusMember *member;
+    
+    dbus_connection_get_object_path_data(connection, path, &object_data);
+    if (object_data == NULL) {
+        g_warning("No object at %s found to emit %s", path, signal_name);
+        return;
+    }
+
+    member = object_find_member(object_data, interface, signal_name);
+    if (member == NULL) {
+        g_warning("Object %s does not have signal %s on %s",
+                  path, signal_name, interface);
+        return;
+    }
+        
+    message = dbus_message_new_signal(path, interface, signal_name);
+    dbus_message_append_args_valist(message, first_arg_type, args);
+
+    if (!dbus_message_has_signature(message, member->out_args)) {
+        g_warning("Tried to emit signal %s %s with args %s but should have been %s",
+                  interface, signal_name, dbus_message_get_signature(message), member->out_args);
+        dbus_message_unref(message);
+        return;
+    }
+    
+    dbus_connection_send(connection, message, NULL);
+
+    dbus_message_unref(message);
+}
+
+void
+hippo_dbus_helper_emit_signal(DBusConnection          *connection,
+                              const char              *path,
+                              const char              *interface,
+                              const char              *signal_name,
+                              int                      first_arg_type,
+                              ...)
+{
+    va_list args;
+    
+    va_start(args, first_arg_type);
+
+    hippo_dbus_helper_emit_signal_valist(connection, path, interface, signal_name,
+                                         first_arg_type, args);
+    va_end(args);
+}
+
 struct HippoDBusProxy {
     int                refcount;
     DBusConnection    *connection;
