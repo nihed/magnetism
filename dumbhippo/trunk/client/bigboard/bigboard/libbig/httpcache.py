@@ -163,7 +163,7 @@ class Cache:
                 base = base + '-'
         return base
 
-    def load(self, uri, cookies, input_data=None, nonetwork=False):
+    def load(self, uri, cookies, input_data=None, nonetwork=False, cache_time=None):
         '''Downloads the file associated with the URI, and returns a local
         file name for contents.'''
         # pass file URIs straight through -- no need to cache them
@@ -177,7 +177,7 @@ class Cache:
         self.read_cache()
         entry = self.entries.get(uri)
         if (not input_data) and entry:
-            if (nonetwork or now <= entry.expires):
+            if ((nonetwork or now <= entry.expires) or cache_time == -1):
                 fname = os.path.join(self.cachedir, entry.local) 
                 return (fname, None)
 
@@ -244,9 +244,9 @@ class Cache:
         return (filename, None)
 
 _cache = None
-def load(uri, cookies, data=None, nonetwork=False, nocache=False):
+def load(uri, cookies, data=None, nonetwork=False, nocache=False, cache_time=None):
     '''Downloads the file associated with the URI, and returns a local
     file name for contents.'''
     global _cache
     if not _cache: _cache = Cache()
-    return _cache.load(uri, cookies, input_data=data, nonetwork=nonetwork)
+    return _cache.load(uri, cookies, input_data=data, nonetwork=nonetwork, cache_time=cache_time)
