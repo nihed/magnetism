@@ -51,6 +51,32 @@ class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandl
 		}
 	}
 	
+	private String parseEditorialReview(String content) {
+	    // remove tags and truncate to the maximum length we can store in the database
+		StringBuilder sb = new StringBuilder();
+		int currentIndex = 0;
+		while (((content.indexOf("<", currentIndex) >= 0) && sb.length() < AmazonItemView.MAX_EDITORIAL_REVIEW_LENGTH)) {
+			sb.append(content.substring(currentIndex, content.indexOf("<", currentIndex)));
+			// returned content should not have unclosed tags, so if we see a "<" without a matching ">", we can
+			// just leave it in place
+			if (content.indexOf(">", currentIndex + 1) > 0) {	
+			    currentIndex = content.indexOf(">", currentIndex + 1) + 1;
+			} else {
+				currentIndex = content.indexOf("<", currentIndex);
+			}
+		}
+		
+		// if there are no more tags in the editorial review, but we have not reached the max length,
+		// just append the rest of the review to the string buffer
+		if (((currentIndex < content.length()) && (content.indexOf("<", currentIndex) < 0) 
+			&& sb.length() < AmazonItemView.MAX_EDITORIAL_REVIEW_LENGTH)) {
+		    sb.append(content.substring(currentIndex, content.length()));	
+		}
+		
+		sb.setLength(Math.min(sb.length(), AmazonItemView.MAX_EDITORIAL_REVIEW_LENGTH));
+		return sb.toString();
+	}
+	
 	private AmazonItem currentItem() {
 		if (items.size() > 0)
 			return items.get(items.size() - 1);
@@ -75,7 +101,7 @@ class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandl
 		} else if (c == Element.Title) {
 			currentItem().setTitle(currentContent);
 		} else if (c == Element.Content && parent() == Element.EditorialReview)	{
-			currentItem().setEditorialReview(currentContent);
+			currentItem().setEditorialReview(parseEditorialReview(currentContent));
 		} else if (parent() == Element.SmallImage) {
 			if (c == Element.URL) {
 				currentItem().setSmallImageUrl(currentContent);
