@@ -124,6 +124,10 @@ class Application(gobject.GObject):
     def launch(self):
         if self.__desktop_entry:
             self.__desktop_entry.launch([])
+
+    def __str__(self):
+        return "App: %s mugshot: %s menu: %s local: %s" % (self.get_name(), self.__app, self.__menu_entry,
+                                                           self.__desktop_entry)
             
 class AppDisplayLauncher(apps_widgets.AppDisplay):
     def __init__(self):
@@ -174,6 +178,10 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__apps = {} # mugshot app -> app
         # apps installed locally and not known in Mugshot
         self.__local_apps = {} # desktop -> app
+
+        ad = apps_directory.get_app_directory()
+        for app in ad.get_apps():
+            self.get_local_app(app)
 
     def __on_more_link(self):
         self._logger.debug("more!")
@@ -274,6 +282,9 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
 
     def get_all_apps(self):
         return self.__apps.itervalues()
+
+    def get_local_apps(self):
+        return self.__local_apps.itervalues()
     
     def get_local_app(self, menu):
         if self.__local_apps.has_key(menu.get_name()):
