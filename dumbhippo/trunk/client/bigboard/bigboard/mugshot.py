@@ -410,7 +410,8 @@ class Mugshot(gobject.GObject):
                                                   (),
                                                   self.__on_top_applications,
                                                   self.__on_top_applications_error,
-                                                  self.__on_top_applications_error)
+                                                  self.__on_top_applications_error,
+                                                  cache_time=-1)
 
     def __on_category_applications(self, url, child_nodes):
         reply_root = child_nodes[0]

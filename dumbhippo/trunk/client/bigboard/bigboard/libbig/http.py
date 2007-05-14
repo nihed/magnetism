@@ -27,18 +27,18 @@ class AsyncHTTPFetcher(Singleton):
             t.setDaemon(True)
             t.start()        
        
-    def fetch(self, url, cb, errcb, cookies=None, data=None, nocache=False):        
+    def fetch(self, url, cb, errcb, cookies=None, data=None, nocache=False, cache_time=None):        
         try:
             # try the local cache first
-            (fname, fdata) = httpcache.load(url, cookies, data=data, nonetwork=True)
+            (fname, fdata) = httpcache.load(url, cookies, data=data, nonetwork=True, cache_time=cache_time)
             gobject.idle_add(lambda: self.__emit_results(url, data, cb, fname, fdata))
         except RuntimeError, e:
             self.__work_lock.acquire()
-            self.__work_queue.append((url, cb, errcb, cookies, data, nocache))
+            self.__work_queue.append((url, cb, errcb, cookies, data, nocache, cache_time))
             self.__work_cond.notify()
             self.__work_lock.release()
 
-    def xml_method(self, url, params, cb, normerrcb, errcb):
+    def xml_method(self, url, params, cb, normerrcb, errcb, cache_time=None):
         formdata = urllib.urlencode(params)
         self.__logger.debug("doing XML method request '%s' params: '%s'", url, formdata)
         self.fetch(url,
@@ -46,7 +46,8 @@ class AsyncHTTPFetcher(Singleton):
                    errcb,
                    cookies=None,
                    data=formdata,
-                   nocache=not not params)
+                   nocache=not not params,
+                   cache_time=cache_time)
 
     def __handle_xml_method_return(self, url, data, cb, normerrcb):
         doc = xml.dom.minidom.parseString(data) 
@@ -70,14 +71,14 @@ class AsyncHTTPFetcher(Singleton):
             self.__work_lock.acquire()
             while len(self.__work_queue) == 0:
                 self.__work_cond.wait()
-            (url, cb, errcb, cookies, data, nocache) = self.__work_queue.pop(0)
+            args = self.__work_queue.pop(0)
             self.__work_lock.release()            
-            self.__do_fetch(url, cb, errcb, cookies, data, nocache)
+            self.__do_fetch(*args)
 
-    def __do_fetch(self, url, cb, errcb, cookies, data, nocache):
+    def __do_fetch(self, url, cb, errcb, cookies, data, nocache, cache_time):
         self.__logger.debug("in thread fetch of %s (%s)" % (url, data))
         try:
-            (fname, fdata) = httpcache.load(url, cookies, data=data, nocache=nocache)
+            (fname, fdata) = httpcache.load(url, cookies, data=data, nocache=nocache, cache_time=cache_time)
             gobject.idle_add(lambda: self.__emit_results(url, data, cb, fname, fdata))
         except Exception, e:
             self.__logger.info("caught error for fetch of %s: %s" % (url, e))
