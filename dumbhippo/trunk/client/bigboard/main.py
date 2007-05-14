@@ -190,7 +190,7 @@ class BigBoardPanel(object):
         
         self.__state = bigboard.libbig.state.PrefixedState('/panel/')  
         
-        self.__state.set_default('listed', 'org.mugshot.bigboard.SelfStock;org.mugshot.bigboard.SearchStock;org.mugshot.bigboard.AppsStock;org.mugshot.bigboard.PhotosStock;org.mugshot.bigboard.PeopleStock')
+        self.__state.set_default('listed', 'org.mugshot.bigboard.SelfStock;org.mugshot.bigboard.SearchStock;org.mugshot.bigboard.AppsStock;org.mugshot.bigboard.PhotosStock')
                        
         self.__size_str = bigboard.libbig.BiMap("size", "str", {Stock.SIZE_BULL: u'bull', Stock.SIZE_BEAR: u'bear'})
         self.__state.set_default('size', self.__size_str['size'][Stock.SIZE_BULL])
