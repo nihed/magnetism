@@ -550,10 +550,8 @@ class AppBrowser(hippo.CanvasWindow):
         self.__sync()
             
     def __sync(self):
-        ad = apps_directory.get_app_directory()
-        local_apps = map(self.__stock.get_local_app, ad.get_apps())
+        local_apps = self.__stock.get_local_apps() 
         mugshot_apps = self.__stock.get_all_apps()
-        #apps = filter(lambda app: not app.get_is_excluded(), apps)
                 
         self.__all_apps = set(local_apps).union(set(mugshot_apps))
         self.__used_apps = map(self.__stock.get_app, self.__mugshot.get_my_top_apps() or [])
