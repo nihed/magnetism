@@ -18,6 +18,8 @@ typedef struct {
     dbus_int32_t id;
     char *name;
     dbus_int32_t is_online;
+    dbus_int32_t presence_id;
+    dbus_int32_t status_id;
 } PidginBuddy;
 
 typedef struct {
@@ -28,9 +30,15 @@ typedef struct {
 } PidginAccount;
 
 typedef struct {
+    dbus_int32_t id;
+    char *name;
+} PidginStatus;
+
+typedef struct {
     char *bus_name;
     HippoDBusProxy *gaim_proxy;
     GSList *accounts;
+    GHashTable *statuses;
 } PidginState;
 
 static PidginState *pidgin_state = NULL;
@@ -66,6 +74,8 @@ pidgin_state_free(PidginState *state)
 
         pidgin_account_free(account);
     }
+
+    g_hash_table_destroy(state->statuses);
     
     hippo_dbus_proxy_unref(state->gaim_proxy);
     
@@ -109,6 +119,55 @@ pidgin_buddy_set_online(PidginBuddy *buddy,
     buddy->is_online = is_online;
 }
 
+static void
+pidgin_buddy_set_status(PidginBuddy *buddy,
+                        dbus_int32_t status_id)
+{
+    g_printerr("Buddy %s status_id = %d\n", buddy->name, status_id);
+    buddy->status_id = status_id;
+}
+
+static PidginStatus*
+pidgin_state_lookup_status(PidginState *state,
+                           dbus_int32_t id)
+{
+    PidginStatus *status;
+
+    status = g_hash_table_lookup(state->statuses, &id);
+
+    if (status == NULL) {
+        char *name = NULL;
+        
+        if (!hippo_dbus_proxy_STRING__INT32(state->gaim_proxy,
+                                            "GaimStatusGetName",
+                                            id,
+                                            &name))
+            return NULL;
+        
+        status = g_new0(PidginStatus, 1);
+        status->id = id;
+        status->name = name;
+        g_hash_table_replace(state->statuses, &status->id, status);
+
+        g_print("Cached new status %d: %s\n", status->id, status->name);
+    }
+
+    return status;
+}
+
+static void
+pidgin_status_free(PidginStatus *status)
+{
+    g_free(status->name);
+    g_free(status);
+}
+
+static void
+pidgin_status_free_hash_value(void *data)
+{
+    pidgin_status_free(data);
+}
+
 static PidginState*
 reload_from_new_owner(DBusConnection *connection,
                       const char     *bus_name)
@@ -122,6 +181,9 @@ reload_from_new_owner(DBusConnection *connection,
     state = g_new0(PidginState, 1);
     state->bus_name = g_strdup(bus_name);
 
+    state->statuses = g_hash_table_new_full(g_int_hash, g_int_equal,
+                                            NULL, pidgin_status_free_hash_value);
+    
     if (strcmp(bus_name, GAIM_BUS_NAME) == 0)
         state->gaim_proxy = hippo_dbus_proxy_new(connection, bus_name, GAIM_OBJECT_NAME,
                                                  GAIM_INTERFACE_NAME);
@@ -178,6 +240,7 @@ reload_from_new_owner(DBusConnection *connection,
                                                        account->id, "",
                                                        &buddies, &buddies_len))
             goto failed;
+
         g_printerr("Found %d buddies in account %d\n", buddies_len, account->id);
 
         {
@@ -198,8 +261,20 @@ reload_from_new_owner(DBusConnection *connection,
                                                     "GaimBuddyGetName",
                                                     buddy->id, &buddy->name))
                     goto failed;
+
+                if (!hippo_dbus_proxy_INT32__INT32(state->gaim_proxy,
+                                                   "GaimBuddyGetPresence",
+                                                   buddy->id, &buddy->presence_id))
+                    goto failed;
+
+                if (!hippo_dbus_proxy_INT32__INT32(state->gaim_proxy,
+                                                   "GaimPresenceGetActiveStatus",
+                                                   buddy->presence_id, &buddy->status_id))
+                    goto failed;
                 
-                g_printerr("buddy %d '%s' is_online=%d\n", buddy->id, buddy->name, buddy->is_online);
+                g_printerr("buddy %d '%s' is_online=%d presence_id=%d status_id=%d\n",
+                           buddy->id, buddy->name, buddy->is_online,
+                           buddy->presence_id, buddy->status_id);
             }
         }
         
@@ -262,6 +337,81 @@ handle_message(DBusConnection     *connection,
                         break;
                     }
                 }
+            }
+        } else if (dbus_message_has_member(message, "BuddyStatusChanged")) {
+            dbus_int32_t buddy_id = 0;
+            dbus_uint64_t buddy_id_64 = 0; /* if Gaim was compiled on a 64-bit system it does this */
+            dbus_int32_t old_status_id = 0;
+            dbus_uint64_t old_status_id_64 = 0;
+            dbus_int32_t new_status_id = 0;
+            dbus_uint64_t new_status_id_64 = 0;
+            
+            if (dbus_message_get_args(message, NULL, DBUS_TYPE_INT32, &buddy_id,
+                                      DBUS_TYPE_INT32, &old_status_id,
+                                      DBUS_TYPE_INT32, &new_status_id,
+                                      DBUS_TYPE_INVALID))
+                g_print("got 32-bit status changed message\n");
+
+            if (dbus_message_get_args(message, NULL, DBUS_TYPE_UINT64, &buddy_id_64,
+                                      DBUS_TYPE_UINT64, &old_status_id_64,
+                                      DBUS_TYPE_UINT64, &new_status_id_64,
+                                      DBUS_TYPE_INVALID)) {
+                g_print("got 64-bit status changed message\n");
+                buddy_id = buddy_id_64;
+                old_status_id = old_status_id_64;
+                new_status_id = new_status_id_64;
+            }
+
+            g_print(" buddy id was %d old status id %d new status id %d\n", buddy_id,
+                    old_status_id, new_status_id);
+
+            if (buddy_id != 0 && pidgin_state) {
+                PidginStatus *new_status;
+                GSList *tmp;
+
+                new_status = pidgin_state_lookup_status(pidgin_state, new_status_id);
+                if (new_status != NULL)
+                    g_print("New status %d '%s'\n", new_status->id, new_status->name);
+                
+                for (tmp = pidgin_state->accounts;
+                     tmp != NULL;
+                     tmp = tmp->next) {
+                    PidginAccount *account = tmp->data;
+                    PidginBuddy *buddy;
+
+                    buddy = pidgin_account_get_buddy(account, buddy_id);
+                    if (buddy != NULL) {
+                        pidgin_buddy_set_status(buddy, new_status_id);
+                        break;
+                    }
+                }
+            }
+        } else if (dbus_message_has_member(message, "BuddyIdleChanged")) {
+            dbus_int32_t buddy_id = 0;
+            dbus_uint64_t buddy_id_64 = 0; /* if Gaim was compiled on a 64-bit system it does this */
+            /* the idles are always 32-bit since they aren't gaim "object ids" just ints */
+            dbus_int32_t old_idle = 0;
+            dbus_int32_t new_idle = 0;
+            
+            if (dbus_message_get_args(message, NULL, DBUS_TYPE_INT32, &buddy_id,
+                                      DBUS_TYPE_INT32, &old_idle,
+                                      DBUS_TYPE_INT32, &new_idle,
+                                      DBUS_TYPE_INVALID))
+                g_print("got 32-bit idle changed message\n");
+            
+            if (dbus_message_get_args(message, NULL, DBUS_TYPE_UINT64, &buddy_id_64,
+                                      DBUS_TYPE_INT32, &old_idle,
+                                      DBUS_TYPE_INT32, &new_idle,
+                                      DBUS_TYPE_INVALID)) {
+                g_print("got 64-bit idle changed message\n");
+                buddy_id = (dbus_int32_t) buddy_id_64;
+            }
+
+            g_print(" buddy id was %d old idle %d new idle %d\n", buddy_id,
+                    old_idle, new_idle);
+            
+            if (buddy_id != 0 && pidgin_state) {
+                
             }
         } else if (dbus_message_is_signal(message, DBUS_INTERFACE_DBUS,
                                           "NameOwnerChanged")) {
@@ -374,7 +524,9 @@ hippo_dbus_init_pidgin(DBusConnection *connection)
                                     NULL, NULL))
         g_error("no memory adding dbus connection filter");
 
-    state = reload_from_new_owner(connection, PIDGIN_BUS_NAME);
+    state = NULL;
+    if (dbus_bus_name_has_owner(connection, PIDGIN_BUS_NAME, NULL))
+        state = reload_from_new_owner(connection, PIDGIN_BUS_NAME);
     if (state == NULL)
         state = reload_from_new_owner(connection, GAIM_BUS_NAME);
     if (state != NULL) {
