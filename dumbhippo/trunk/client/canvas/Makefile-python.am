@@ -7,7 +7,7 @@ hippo_la_CPPFLAGS =			\
 
 PYTHONSRCDIR=$(top_srcdir)/python
 
-hippodir = $(pythondir)
+hippodir = $(pyexecdir)
 pkgpyexecdir = $(hippodir)
 
 pkgpyexec_LTLIBRARIES=hippo.la
