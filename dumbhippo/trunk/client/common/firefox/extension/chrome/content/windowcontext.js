@@ -131,10 +131,20 @@ Hippo.extend(Hippo.WindowContext, {
         this.observerService.addObserver(this, "hippo-close-bar", false);
    	},
 
+	_isFirefox20 : function() {
+		var appInfo = Components.classes["@mozilla.org/xre/app-info;1"]
+           		           .getService(Components.interfaces.nsIXULAppInfo);
+	    var versionChecker = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
+                              .getService(Components.interfaces.nsIVersionComparator);
+
+		return (versionChecker.compare(appInfo.version, "2.0") >= 0);
+	},
+
     addTabListeners : function() {
     	var me = this;
 
-    	if (gBrowser.tabContainer) { // Firefox 2.0+
+		// Firefox-2.0 adds a better mechanism for watching tabs
+    	if (this._isFirefox20()) {
     	    gBrowser.tabContainer.addEventListener("TabSelect",
     	                                           function(event) { me.onTabSelect(event) },
     	                                           false);
