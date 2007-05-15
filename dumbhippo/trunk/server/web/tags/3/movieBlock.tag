@@ -9,13 +9,11 @@
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="chatHeader" required="false" type="java.lang.Boolean" %>
 
-<c:set var="hasDescription" value="${dh:myInstanceOf(block, 'com.dumbhippo.server.blocks.TitleDescriptionBlockView') && block.description != ''}"/>
-
 <dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" title="${block.title}" expandable="${(block.queuedMovies != null || !empty block.chatId || block.messageCount > 0) && !chatHeader}">
     <td class="dh-stacker-block-with-image-left" align="left" valign="top" width="75%">
 		<table cellspacing="0" cellpadding="0" width="100%">
 			<tr>
-			    <td valign="top" class="dh-music-block-icon" width="65">
+			    <td valign="top" class="dh-block-image-cell" width="65">
                     <img src="${block.imageUrl}" width="65" height="90"/>
 				</td>
 				<td valign="top">
@@ -35,7 +33,6 @@
 		</table>
 		<c:if test="${!chatHeader}">
 			<dht3:blockContent blockId="${blockId}">
-				<dht3:quipper block="${block}" blockId="${blockId}"/>
 				<dht3:chatPreview block="${block}" blockId="${blockId}"/>
 				<div class="dh-movie-block-queue">
 				    Movies in the Queue:
