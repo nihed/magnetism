@@ -19,10 +19,10 @@ class AppOverview(CanvasVBox):
 
     def __init__(self, app=None):
         super(AppOverview, self).__init__(box_width=200, box_height=260,
-                                          border=1, border_color=0x666666FF, padding=2)
+                                          border=1, border_color=0xAAAAAAFF, background_color=0xFFFFFFFF, padding=5)
 
         self.__unselected = True
-        self.__app_unselected_text = hippo.CanvasText(text="Click an application to see its description here.\nDouble-click to launch.",
+        self.__app_unselected_text = hippo.CanvasText(text="Click an application to see its description here.\n\nDouble-click to launch.",
                                                       size_mode=hippo.CANVAS_SIZE_WRAP_WORD,
                                                       xalign=hippo.ALIGNMENT_CENTER,
                                                       yalign=hippo.ALIGNMENT_CENTER)
@@ -107,7 +107,7 @@ class MultiVTable(CanvasHBox):
         self.__append_index = 0
         
         for i,v in enumerate(self.get_children()):
-            subbox = CanvasVBox(color=0x666666FF, border_bottom=1, border_color=0x666666FF)
+            subbox = CanvasVBox(color=0xAAAAAAFF, border_bottom=1, border_color=0xAAAAAAFF)
             if i == 0:
                 target_box = subbox
                 if left_control:
@@ -149,12 +149,15 @@ class AppCategoryUsage(MultiVTable):
         self.__bar_max_color = (0xa4, 0x5a, 0xc6);        
         
         self.__apps = set()
-        
+
+        self.set_property('background-color', 0xFFFFFFFF)
+        self.set_property('padding', 5)
+                
     def set_apps(self, apps, used_apps):
         self.remove_all()
-        
-        self.append_column_item(hippo.CanvasText(text="Category", font="Bold 12px"))
-        self.append_column_item(hippo.CanvasText(text="Your Usage", font="Bold 12px"))
+
+        self.append_column_item(hippo.CanvasText(text="Category", font="Bold 12px", color=0x3F3F3FFF))
+        self.append_column_item(hippo.CanvasText(text="Your Usage", font="Bold 12px", color=0x3F3F3FFF))
         
         categories = categorize(used_apps)
         cat_usage = {}
@@ -177,17 +180,19 @@ class AppCategoryUsage(MultiVTable):
         cat_keys_sorted.sort()
         for category in cat_keys_sorted:
             self.append_column_item(hippo.CanvasText(text=category, 
-                                                     yalign=hippo.ALIGNMENT_CENTER))
+                                                     yalign=hippo.ALIGNMENT_CENTER,
+                                                     xalign=hippo.ALIGNMENT_START,color=0x0066DDFF))
             factor = (cat_usage[category] * 1.0) / max_usage_count[1]
             box = CanvasHBox()
             (r, g, b) = map(lambda (min,max): int(min * (1.0-factor)) + int(max*factor), zip(self.__bar_min_color, self.__bar_max_color))          
-            box.append(CanvasVBox())            
+
             box.append(CanvasVBox(box_height=self.__bar_height,
                                   box_width=(int(self.__bar_width * factor)),
                                   yalign=hippo.ALIGNMENT_CENTER,
                                   background_color=(r << 24) + (g << 16) + (b << 8) + (0xFF << 0)))
-            box.append(CanvasVBox())
+
             self.append_column_item(box)
+            
 
 class AppExtras(CanvasVBox):
     __gsignals__ = {
@@ -315,7 +320,7 @@ class AppList(CanvasVBox):
     }
     
     def __init__(self, stock):
-        super(AppList, self).__init__()
+        super(AppList, self).__init__(padding=6)
 
         self.__table = MultiVTable(columns=3,item_height=40)
         self.append(self.__table, hippo.PACK_EXPAND)
@@ -434,14 +439,17 @@ class AppBrowser(hippo.CanvasWindow):
 
         self.set_title('Applications')
     
-        self.__box = CanvasHBox(spacing=10)
+        self.__box = CanvasHBox()
     
-        self.__left_box = CanvasVBox(spacing=4)
+        self.__left_box = CanvasVBox(spacing=6, padding=6)
+        self.__left_box.set_property('background-color', 0xEEEEEEFF)                
         self.__box.append(self.__left_box)
         
-        self.__search_text = hippo.CanvasText(text="Search All Applications:", font="Bold 12px", xalign=hippo.ALIGNMENT_START)
+        self.__search_text = hippo.CanvasText(text="Search All Applications:", font="Bold 12px",
+                                              color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START)
         self.__left_box.append(self.__search_text)
         self.__search_input = hippo.CanvasEntry()
+        #self.__search_input.set_property('border-color', 0xAAAAAAFF)
         self.__search_input.connect("notify::text", self.__on_search_changed)
         self.__idle_search_id = 0
         self.__idle_search_mugshot_id = 0
@@ -454,7 +462,10 @@ class AppBrowser(hippo.CanvasWindow):
         self.__cat_usage = AppCategoryUsage()
         self.__left_box.append(self.__cat_usage)   
 
-        browse_link = ActionLink(text="Find New Applications") 
+        self.__left_box.append(hippo.CanvasText(text="Tools", font="Bold 12px",
+                                                color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START))
+
+        browse_link = ActionLink(text="Find New Applications", xalign=hippo.ALIGNMENT_START) 
         browse_link.connect("button-press-event", lambda l,e: self.__on_browse_popular_apps())
         self.__left_box.append(browse_link)
     
