@@ -9,7 +9,7 @@ public enum ServicePollingRestrictions {
 	DELICIOUS(ExternalAccountType.DELICIOUS) {
 		@Override
 		public int getMaxRateSeconds() {
-			return 30 * 60;
+			return 35 * 60;
 		}
 	};
 	
