@@ -17,6 +17,10 @@ Requires:       gnome-python2-gnomedesktop
 Requires:       gnome-python2-gnomekeyring
 Requires:       dbus-python
 
+BuildRequires:	pkgconfig
+BuildRequires:	gtk2-devel
+BuildRequires:	pygtk2-devel
+BuildRequires:	gnome-keyring-devel
 
 %description
 Bigboard is a sidebar and application launcher that works with mugshot.org
