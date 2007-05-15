@@ -40,6 +40,9 @@ class SearchStock(Stock):
         
         self.__box.append(self.__widget)
         self.__empty_box = CanvasVBox()
+
+    def focus(self):
+        self.__deskbar.on_keybinding_button_press(None, gtk.get_current_event_time())
         
     def get_content(self, size):
         return size == self.SIZE_BULL and self.__box or self.__empty_box
