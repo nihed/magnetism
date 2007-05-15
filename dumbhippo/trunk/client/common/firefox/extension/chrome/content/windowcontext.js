@@ -83,14 +83,42 @@ Hippo.extend(Hippo.WindowContext, {
         this.setBarCollapsed(false);
 	},
 
-	hideBar : function(browser, nextUrl) {
+	// This check is to make sure that the framer content can't redirect the 
+	// main window to javascript:, chrome:, file:, etc. The result is the
+	// resolved URI using the fromUrl as the base (if url is relative),
+	// or null if the security check failed.
+	_checkLoadUri : function(fromUrl, url) {
+	    try {
+			const nsIIOService = Components.interfaces.nsIIOService;
+			var ioServ = Components.classes["@mozilla.org/network/io-service;1"]
+            	.getService(nsIIOService);
+			var fromUri = ioServ.newURI(fromUrl, null /* charset */, null /* baseURI */ );
+			var uri = ioServ.newURI(url, null, fromUri);
+
+	        const nsIScriptSecurityManager = Components.interfaces.nsIScriptSecurityManager;
+			var secMan = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
+                         .getService(nsIScriptSecurityManager);
+			secMan.checkLoadURI(fromUri, uri, nsIScriptSecurityManager.DISALLOW_SCRIPT_OR_DATA);
+
+			return uri.spec;
+		} catch (e) {
+			alert(e);
+			return null;
+	    }
+	},
+
+	hideBar : function(browser, barUrl, nextUrl) {
 	    this.setBarCollapsed(true);
 	    browser.hippoTabContext.close();
 	    browser.hippoTabContext = null;
-	    
+
+		var resolved;
 	    nextUrl = Hippo.trim(nextUrl);
 	    if (nextUrl != '')
-    		browser.loadURI(nextUrl);
+			resolved = this._checkLoadUri(barUrl, nextUrl);
+
+		if (resolved != null)
+    		browser.loadURI(resolved);
 	},
 	
 	addObservers : function() {
@@ -244,7 +272,7 @@ Hippo.extend(Hippo.WindowContext, {
 	    	for (i = 0; i < contentNode.browsers.length; ++i) {
 	    		var browser = contentNode.browsers[i];
 	    		if (browser.hippoTabContext != null && browser.hippoTabContext.getContentWindow() == subject)
-	    		    this.hideBar(browser, data);
+	    		    this.hideBar(browser, subject.document.location.href, data);
 	   		}
         }
     },
