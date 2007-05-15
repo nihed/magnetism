@@ -1,6 +1,6 @@
 INCLUDES = $(PYTHON_INCLUDES) $(BIGBOARD_CFLAGS)
 
-_keybinderdir = $(pythondir)/deskbar/keybinder
+_keybinderdir = $(pyexecdir)/bigboard/keybinder
 _keybinder_LTLIBRARIES = _keybinder.la
 _keybinder_la_LDFLAGS = -module -avoid-version -export-symbols-regex init_keybinder
 _keybinder_la_LIBADD = $(BIGBOARD_LIBS)
