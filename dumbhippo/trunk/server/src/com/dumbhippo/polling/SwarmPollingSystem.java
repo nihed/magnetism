@@ -173,9 +173,9 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 					scheduleSecs = task.rescheduleSeconds(result, scheduleSecs);
 					scheduleSecs = Math.max(scheduleSecs, MIN_TASK_PERIODICITY_SEC);
 					scheduleSecs = Math.min(scheduleSecs, MAX_TASK_PERIODICITY_SEC);
-					int scheduleSecsRange = (int) (scheduleSecs * 0.1); 
-					int scheduleSecsOffset = new Random().nextInt(scheduleSecsRange * 2) - scheduleSecsRange;
-					taskCompletion.schedule(task, scheduleSecs+scheduleSecsOffset, TimeUnit.SECONDS);
+
+					long scheduleOffsetMs = (long) (Math.random() * scheduleSecs * 1000.0 * 0.1);
+					taskCompletion.schedule(task, 1000*scheduleSecs+scheduleOffsetMs, TimeUnit.MILLISECONDS);
 				}
 			}
 		}
