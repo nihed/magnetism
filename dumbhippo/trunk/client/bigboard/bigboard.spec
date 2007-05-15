@@ -1,12 +1,14 @@
+%{!?python_sitelib: %define python_sitelib %(python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+
 Name:           bigboard
-Version:        0.3
+Version:        0.3.1
 Release:        1
 Summary:        Sidebar application launcher using mugshot.org
 
 Group:          Applications/Internet
 License:        GPL
 URL:            http://mugshot.org/
-Source0:        bigboard-%{version}.tar.gz
+Source0:        http://download.mugshot.org/extras/bigboard/source/bigboard-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 Requires:       mugshot >= 1.1.42-1
@@ -35,9 +37,7 @@ make %{?_smp_mflags}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-export GCONF_DISABLE_MAKEFILE_SCHEMA_INSTALL=1
 make install DESTDIR=$RPM_BUILD_ROOT
-unset GCONF_DISABLE_MAKEFILE_SCHEMA_INSTALL
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -46,11 +46,28 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %doc COPYING
 %attr(0755,root,root) %{_libexecdir}/bigboard/*
-%{_libdir}/python*/site-packages/bigboard/*
+%dir %{python_sitelib}/bigboard
+%{python_sitelib}/bigboard/*.so
+%{python_sitelib}/bigboard/*.la
+%{python_sitelib}/bigboard/*.py
+%{python_sitelib}/bigboard/*.pyc
+%{python_sitelib}/bigboard/*.pyo
+%{python_sitelib}/bigboard/libbig/*.py
+%{python_sitelib}/bigboard/libbig/*.pyc
+%{python_sitelib}/bigboard/libbig/*.pyo
+%{python_sitelib}/bigboard/httplib2/*.py
+%{python_sitelib}/bigboard/httplib2/*.pyc
+%{python_sitelib}/bigboard/httplib2/*.pyo
 %{_datadir}/bigboard/stocks/*
 %{_bindir}/bigboard
 
 %changelog
+* Tue May 15 2007 Colin Walters <walters@redhat.com> - 0.3.1-1
+- Update
+- Use python sitelib
+- Remove unused gconf bits
+- Use full source url 
+
 * Mon May 14 2007 Colin Walters <walters@redhat.com> - 0.3-1
 - Update 
 
