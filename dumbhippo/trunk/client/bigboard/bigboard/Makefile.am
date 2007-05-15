@@ -5,7 +5,7 @@ bignative_la_CPPFLAGS =			\
 	$(PYTHON_INCLUDES)		\
 	$(BIGBOARD_CFLAGS)
 
-pkgpyexecdir = $(pythondir)/bigboard
+pkgpyexecdir = $(pyexecdir)/bigboard
 pkgpyexec_LTLIBRARIES=bignative.la
 
 bignative_la_LDFLAGS = -module -avoid-version
