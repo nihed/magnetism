@@ -1,5 +1,7 @@
 include $(top_srcdir)/Makefile-include.am
 
+SUBDIRS = keybinder
+
 bignative_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)			\
 	$(PYTHON_INCLUDES)		\

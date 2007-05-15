@@ -21,6 +21,7 @@ import bigboard.google
 import bigboard.libbig.logutil
 import bigboard.libbig.xmlquery
 import bigboard.libbig.dbusutil
+import bigboard.keybinder
 
 class GradientHeader(hippo.CanvasGradient):
     def __init__(self, **kwargs):
@@ -268,6 +269,13 @@ class BigBoardPanel(object):
     def get_stocks(self):
         return map(lambda e: e.get_stock(), self._exchanges)
 
+    def get_stock(self, id):
+        for xcg in self._exchanges:
+            stock = xcg.get_stock()
+            if stock.get_id() == id:
+                return stock
+        raise KeyError("Couldn't find stock %s" % (id,))
+
     def list_stock_id(self, id):
         self.__state['listed'] += u';%s' % (id,)
         prelisted = self.__prelisted[id]
@@ -308,6 +316,16 @@ class BigBoardPanel(object):
     def show(self):
         self._dw.show_all()
 
+    def external_toggle_size(self):
+        self._toggle_size()
+        if self.__get_size() == Stock.SIZE_BULL:
+            try:
+                search = self.get_stock('org.mugshot.bigboard.SearchStock')
+            except KeyError, e:
+                _logger.debug("Couldn't find search stock")
+                return
+            search.focus()
+
 def load_image_hook(img_name):
     logging.debug("loading: %s" % (img_name,))
     pixbuf = gtk.gdk.pixbuf_new_from_file(img_name)
@@ -320,6 +338,10 @@ def on_name_lost(*args):
     logging.debug("Lost bus name " + name)
     if name == BUS_NAME:
         gtk.main_quit()
+
+def on_focus(panel):
+    logging.debug("got focus keypress")
+    panel.external_toggle_size()
 
 def usage():
     print "%s [--debug] [--debug-modules=mod1,mod2...] [--info] [--no-autolaunch] [--shell] [--stockdirs=dir1:dir2:...] [--help]" % (sys.argv[0])
@@ -389,6 +411,10 @@ def main():
     panel = BigBoardPanel(stockdirs)
     
     panel.show()
+
+    keybinding = "Super_L"
+    if not bigboard.keybinder.tomboy_keybinder_bind(keybinding, on_focus, panel):
+        logging.warn("Failed to bind '%s'" % (keybinding,))
     
     if shell:
         cmdshell = CommandShell({'panel': panel})

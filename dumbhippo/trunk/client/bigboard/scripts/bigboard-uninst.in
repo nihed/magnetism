@@ -1,4 +1,4 @@
 #!/bin/sh
 builddir=$(dirname $0)
 canvas=${builddir}/@BB_TOPSRCDIR@/../canvas
-PYTHONPATH=$PYTHONPATH:${builddir}/../bigboard/.libs:${canvas}/.libs:${canvas}/build/.libs exec $BB_DEBUG @PYTHON@ ${builddir}/@BB_TOPSRCDIR@/main.py "$@"
+PYTHONPATH=$PYTHONPATH:${builddir}/../bigboard/.libs:${builddir}/../bigboard/keybinder/.libs:${canvas}/.libs:${canvas}/build/.libs exec $BB_DEBUG @PYTHON@ ${builddir}/@BB_TOPSRCDIR@/main.py "$@"

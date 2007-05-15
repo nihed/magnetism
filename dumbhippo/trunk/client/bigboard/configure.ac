@@ -176,6 +176,7 @@ AC_SUBST(PYGTK_DEFSDIR)
 AC_OUTPUT([
 Makefile
 bigboard/Makefile
+bigboard/keybinder/Makefile
 scripts/Makefile
 version
 ])
