@@ -265,10 +265,10 @@ dh.stacker._addQuip = function(blockId, name, homeUrl, text, sentiment) {
 	var children = chatDiv.childNodes;
     for (var i = 0; i < children.length; ++i) {
     	var child = children[i];
+    	if (firstChild == null)
+    		firstChild = child;
     	if (child.className == "dh-stacker-block-chat-container") {
     		count++;
-    		if (firstChild == null)
-    			firstChild = child;
     		lastChild = child;
    		}
     }

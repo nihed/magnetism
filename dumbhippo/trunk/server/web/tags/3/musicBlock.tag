@@ -59,7 +59,7 @@
 			<td class="dh-stacker-block-with-image-left" align="left" valign="top" width="75%">
 				<table cellspacing="0" cellpadding="0" width="100%">
 				<tr>
-				<td valign="top" class="dh-music-block-icon" width="${imageWidth}">
+				<td valign="top" class="dh-block-image-cell" width="${imageWidth}">
 					<c:choose>
 						<c:when test="${track.smallImageUrlAvailable}">
 							<img src="${track.smallImageUrl}" width="${imageWidth}" height="${track.smallImageHeight}"/>
