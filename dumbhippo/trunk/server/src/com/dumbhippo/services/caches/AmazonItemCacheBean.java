@@ -18,9 +18,9 @@ public class AmazonItemCacheBean extends AbstractBasicCacheWithStorageBean<Strin
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AmazonItemCacheBean.class);
 	
-	// 1 hour since the price information needs to be refreshed every hour to show it in
-	// a simpler format, otherwise it can be 24 hours
-	static private final int AMAZON_ITEM_EXPIRATION_TIMEOUT = 1000 * 60 * 60;	
+	// 24 hours because we are not using the price for now, if we ever decide to use it,
+	// we should make this 1 hour, so that we can display the price in a simpler format
+	static private final int AMAZON_ITEM_EXPIRATION_TIMEOUT = 1000 * 60 * 60 * 24;	
 	
 	public AmazonItemCacheBean() {
 		super(Request.AMAZON_ITEM, AmazonItemCache.class, AMAZON_ITEM_EXPIRATION_TIMEOUT);

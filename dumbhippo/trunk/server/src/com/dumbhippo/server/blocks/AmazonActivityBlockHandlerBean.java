@@ -31,9 +31,11 @@ import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.AmazonItemView;
 import com.dumbhippo.services.AmazonListItemView;
+import com.dumbhippo.services.AmazonListView;
 import com.dumbhippo.services.AmazonReviewView;
 import com.dumbhippo.services.caches.AmazonItemCache;
 import com.dumbhippo.services.caches.AmazonListItemsCache;
+import com.dumbhippo.services.caches.AmazonListsCache;
 import com.dumbhippo.services.caches.AmazonReviewsCache;
 import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.WebServiceCache;
@@ -51,6 +53,9 @@ public class AmazonActivityBlockHandlerBean extends
 	@WebServiceCache
 	private AmazonReviewsCache reviewsCache;
 
+	@WebServiceCache
+	private AmazonListsCache listsCache;
+	
 	@WebServiceCache
 	private AmazonListItemsCache listItemsCache;
 
@@ -84,12 +89,14 @@ public class AmazonActivityBlockHandlerBean extends
 		AmazonActivityStatus activityStatus = em.find(AmazonActivityStatus.class, block.getData2AsGuid().toString());
 		
 		AmazonReviewView reviewView = null;
+		AmazonListView listView = null;
 		AmazonListItemView listItemView = null;
 		switch (activityStatus.getActivityType()) {
 	        case REVIEWED :
 			    reviewView = reviewsCache.queryExisting(activityStatus.getAmazonUserId(), activityStatus.getItemId());		
 			    break;
 	        case WISH_LISTED :
+	        	listView = listsCache.queryExisting(activityStatus.getAmazonUserId(), activityStatus.getListId());
 			    listItemView = listItemsCache.queryExisting(new Pair<String, String>(activityStatus.getAmazonUserId(), activityStatus.getListId()), activityStatus.getItemId());		
 			    break;
 		}
@@ -107,7 +114,7 @@ public class AmazonActivityBlockHandlerBean extends
 		else
 			messageCount = chatSystem.getMessageCount(block);
 		
-		blockView.populate(userView, activityStatus, reviewView, listItemView, itemView, messageViews, messageCount);
+		blockView.populate(userView, activityStatus, reviewView, listView, listItemView, itemView, messageViews, messageCount);
 	}
 
 	public BlockKey getKey(User user, AmazonActivityStatus activityStatus) {

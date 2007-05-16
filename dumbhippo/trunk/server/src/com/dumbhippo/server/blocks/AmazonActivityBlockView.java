@@ -9,6 +9,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.AmazonActivityStatus;
+import com.dumbhippo.persistence.AmazonActivityType;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.GroupBlockData;
@@ -18,6 +19,7 @@ import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.AmazonItemView;
 import com.dumbhippo.services.AmazonListItemView;
+import com.dumbhippo.services.AmazonListView;
 import com.dumbhippo.services.AmazonReviewView;
 
 public class AmazonActivityBlockView extends AbstractPersonBlockView 
@@ -27,6 +29,7 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 	
 	private AmazonActivityStatus activityStatus;
 	private AmazonReviewView reviewView;
+	private AmazonListView listView;
 	private AmazonListItemView listItemView;
 	private AmazonItemView itemView;
 	
@@ -38,13 +41,14 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 		super(viewpoint, block, gbd, participated);
 	}
 	
-	void populate(PersonView userView, AmazonActivityStatus activityStatus, AmazonReviewView reviewView, 
+	void populate(PersonView userView, AmazonActivityStatus activityStatus, AmazonReviewView reviewView, AmazonListView listView,
 			      AmazonListItemView listItemView, AmazonItemView itemView, List<ChatMessageView> recentMessages, int messageCount) {
 		partiallyPopulate(userView);
 		setRecentMessages(recentMessages);
 		setMessageCount(messageCount);
 		this.activityStatus = activityStatus;
 		this.reviewView = reviewView;
+		this.listView = listView;
 		this.listItemView = listItemView;
         this.itemView = itemView;
 		setPopulated(true);
@@ -67,25 +71,16 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 	}
 	
 	public String getTitle() {
-		switch (activityStatus.getActivityType()) {
-            case REVIEWED :
-            	// reviewView might be null if the review was deleted
-            	if (reviewView != null)
-                    return reviewView.getTitle();
-            	else
-            		return activityStatus.getItemId();
-            case WISH_LISTED:
-            	if (listItemView != null && itemView != null)
-	                return listItemView.getQuantityDesired() + " of " + itemView.getTitle();
-            	else if (itemView != null)
-            		return itemView.getTitle();
-            	else 
-            		return activityStatus.getItemId();
-     	    // no default, it hides bugs 
-        }    
-
-        throw new RuntimeException("need to support activity type for " + activityStatus + " in getTitle()");		 
-	}	
+    	// if we wanted to not display what item was reviewed/wish-listed
+    	// if the review/listing is no longer there, we'd need to return
+    	// some message saying that the item is no longer in the list 
+    	// here and not return links/images of the item if reviewView or
+    	// listItemView is null
+    	if (itemView != null)
+    		return itemView.getTitle();
+    	else 
+    		return "Information about the item is no longer available";
+    }	
 	
 	public String getTitleForHome() {
 		return getTitle();
@@ -94,12 +89,18 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 	public String getLink() {
 		// TODO: use our associate id for these links, figure out how exactly to add it to
 		// the link, as this is not something returned by the web services
-		// TODO: include somewhere a link to the wish list for wish list items
 		switch (activityStatus.getActivityType()) {
             case REVIEWED :
 		        return "http://www.amazon.com/o/ASIN/" + activityStatus.getItemId();
             case WISH_LISTED :
-            	return "http://www.amazon.com/gp/registry/" + activityStatus.getListId();
+            	if (listView != null && listItemView != null) {
+            		// if the item is added to the cart after following this link, it is added to
+            		// be purchased for someone's wish list
+            	    return "http://www.amazon.com/o/ASIN/" + activityStatus.getItemId() + 
+            	           "/?coliid=" + listItemView.getListItemId() + "&colid=" + listView.getListId();
+            	} else {
+            		return "http://www.amazon.com/o/ASIN/" + activityStatus.getItemId();
+            	}
 		}
 
         throw new RuntimeException("need to support activity type for " + activityStatus + " in getLink()");	
@@ -121,7 +122,7 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 		    case REVIEWED :
 		        return "Amazon review";
 		    case WISH_LISTED:
-			    return "Amazon wish list item";
+			    return "Amazon item";
 		   	// no default, it hides bugs 
 	    }
 		
@@ -172,18 +173,93 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 	        	else 
 	        		return "This review is no longer available";
 	        case WISH_LISTED:
-		        if (listItemView != null && (listItemView.getComment().trim().length() > 0) && itemView != null)
-		        	return StringUtils.ellipsizeText(listItemView.getComment() + "\n\n" + itemView.getEditorialReview());
-		        else if (itemView != null) 
-		        	return StringUtils.ellipsizeText(itemView.getEditorialReview());
-		        else if	(listItemView != null)
-		        	return StringUtils.ellipsizeText(listItemView.getComment());
+		        if (itemView != null) 
+		        	return StringUtils.ellipsizeText(itemView.getEditorialReview());		     
 		        else 			
-		        	return "This item is no longer on the list";
+		        	return "";
 	     	// no default, it hides bugs 
         }
 	
 	    throw new RuntimeException("need to support activity type for " + activityStatus + " in getDescription()");		 
 	}
+	
+	public String getReviewTitle() {
+		if (activityStatus.getActivityType() != AmazonActivityType.REVIEWED) {
+		    throw new RuntimeException("Should only be getting a review title for a REVIEWED activity type"); 	
+		}
+		
+		if (reviewView != null)
+	        return reviewView.getTitle();
+		else 
+			return "";
+	}
+	
+	public int getReviewRating() {
+		if (activityStatus.getActivityType() != AmazonActivityType.REVIEWED) {
+		    throw new RuntimeException("Should only be getting a review rating for a REVIEWED activity type"); 	
+		}
+		
+		if (reviewView != null)		
+		    return reviewView.getRating();
+		else
+			return -1;
+	}
+	
+	public String getListName() {
+		if (activityStatus.getActivityType() != AmazonActivityType.WISH_LISTED) {
+		    throw new RuntimeException("Should only be getting a list name for a WISH_LISTED activity type"); 	
+		}
+		
+		if (listView != null)
+			return listView.getListName();
+		else 
+			return "wish list";
+	}
+	
+	public String getListLink() {
+		if (activityStatus.getActivityType() != AmazonActivityType.WISH_LISTED) {
+		    throw new RuntimeException("Should only be getting a list link for a WISH_LISTED activity type"); 	
+		}
+		
+		return "http://www.amazon.com/gp/registry/" + activityStatus.getListId();
+	}
+	
+	public String getListItemComment() {
+		if (activityStatus.getActivityType() != AmazonActivityType.WISH_LISTED) {
+		    throw new RuntimeException("Should only be getting a list item comment for a WISH_LISTED activity type"); 	
+		}
+		
+		// Though this comment is typically short, the limit for it on Amazon is greater than our database column 
+		// limit, so we should ellipsize.
+		if (listItemView != null)
+		    return StringUtils.ellipsizeText(listItemView.getComment());
+		else
+			return "";
+	}
+	
+	public boolean isImageUrlAvailable() {
+	    return 	(itemView != null && itemView.getImageUrl().length() > 0 
+				&& itemView.getImageWidth() > 0 && itemView.getImageHeight() > 0);
+	}
+	
+	public String getImageUrl() {
+		if (isImageUrlAvailable())
+			return itemView.getImageUrl();
+		else
+			return "/images3/amazon_no_image_medium.png";		
+	}
+	
+	public int getImageWidth() {
+		if (isImageUrlAvailable())
+			return itemView.getImageWidth();
+		else
+			return 88;
+	}
 
+	public int getImageHeight() {
+		if (isImageUrlAvailable())
+			return itemView.getImageHeight();
+		else
+			return 104;
+	}	
 }

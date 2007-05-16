@@ -14,11 +14,11 @@ public interface AmazonItemView {
 	
 	String getEditorialReview();
 	
-	String getSmallImageUrl();
+	String getImageUrl();
 	
-	int getSmallImageWidth();
+	int getImageWidth();
 	
-	int getSmallImageHeight();
+	int getImageHeight();
 	
 	String getNewPrice();
 	

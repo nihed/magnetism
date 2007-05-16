@@ -4,28 +4,28 @@ public class AmazonItem implements AmazonItemView {
 	private String itemId;
 	private String title;
 	private String editorialReview;
-	private String smallImageUrl;
-	private int smallImageWidth;
-	private int smallImageHeight;
+	private String imageUrl;
+	private int imageWidth;
+	private int imageHeight;
 	private String newPrice;
 	private String usedPrice;
 	private String collectiblePrice;
 	private String refurbishedPrice;
 
 	public AmazonItem() {
-		smallImageWidth = -1;
-		smallImageHeight = -1;
+		imageWidth = -1;
+		imageHeight = -1;
 	}
 	
-	public AmazonItem(String itemId, String title, String editorialReview, String smallImageUrl,
-			          int smallImageWidth, int smallImageHeight, String newPrice, String usedPrice,
+	public AmazonItem(String itemId, String title, String editorialReview, String imageUrl,
+			          int imageWidth, int imageHeight, String newPrice, String usedPrice,
 			          String collectiblePrice, String refurbishedPrice) {
 		this.itemId = itemId;
 		this.title = title;
 		this.editorialReview = editorialReview;
-		this.smallImageUrl = smallImageUrl;
-		this.smallImageWidth = smallImageWidth;
-		this.smallImageHeight = smallImageHeight;
+		this.imageUrl = imageUrl;
+		this.imageWidth = imageWidth;
+		this.imageHeight = imageHeight;
 		this.newPrice = newPrice;
 		this.usedPrice = usedPrice;
 		this.collectiblePrice = collectiblePrice;
@@ -56,28 +56,28 @@ public class AmazonItem implements AmazonItemView {
 		this.editorialReview = editorialReview;
 	}
 
-	public String getSmallImageUrl() {
-		return smallImageUrl;
+	public String getImageUrl() {
+		return imageUrl;
 	}
 	
-	public void setSmallImageUrl(String smallImageUrl) {
-		this.smallImageUrl = smallImageUrl;
+	public void setImageUrl(String imageUrl) {
+		this.imageUrl = imageUrl;
 	}
 	
-	public int getSmallImageWidth() {
-		return smallImageWidth;
+	public int getImageWidth() {
+		return imageWidth;
 	}
 	
-	public void setSmallImageWidth(int smallImageWidth) {
-	    this.smallImageWidth = smallImageWidth;	
+	public void setImageWidth(int imageWidth) {
+	    this.imageWidth = imageWidth;	
 	}
 	
-	public int getSmallImageHeight() {
-		return smallImageHeight;
+	public int getImageHeight() {
+		return imageHeight;
 	}
 
-	public void setSmallImageHeight(int smallImageHeight) {
-	    this.smallImageHeight = smallImageHeight;	
+	public void setImageHeight(int imageHeight) {
+	    this.imageHeight = imageHeight;	
 	}
 	
 	public String getNewPrice() {
