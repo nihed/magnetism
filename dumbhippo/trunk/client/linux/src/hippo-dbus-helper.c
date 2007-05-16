@@ -3,7 +3,6 @@
 #include <glib/gi18n-lib.h>
 #include <glib.h>
 #include <string.h>
-#define DBUS_API_SUBJECT_TO_CHANGE 1
 #include "hippo-dbus-helper.h"
 
 typedef struct {
