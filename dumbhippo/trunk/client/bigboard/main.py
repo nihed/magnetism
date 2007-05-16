@@ -316,15 +316,15 @@ class BigBoardPanel(object):
     def show(self):
         self._dw.show_all()
 
-    def external_toggle_size(self):
-        self._toggle_size()
-        if self.__get_size() == Stock.SIZE_BULL:
-            try:
-                search = self.get_stock('org.mugshot.bigboard.SearchStock')
-            except KeyError, e:
-                _logger.debug("Couldn't find search stock")
-                return
-            search.focus()
+    def external_focus(self):
+        if self.__get_size() == Stock.SIZE_BEAR:
+            self._toggle_size()
+        try:
+            search = self.get_stock('org.mugshot.bigboard.SearchStock')
+        except KeyError, e:
+            _logger.debug("Couldn't find search stock")
+            return
+        search.focus()
 
 def load_image_hook(img_name):
     logging.debug("loading: %s" % (img_name,))
@@ -341,7 +341,7 @@ def on_name_lost(*args):
 
 def on_focus(panel):
     logging.debug("got focus keypress")
-    panel.external_toggle_size()
+    panel.external_focus()
 
 def usage():
     print "%s [--debug] [--debug-modules=mod1,mod2...] [--info] [--no-autolaunch] [--shell] [--stockdirs=dir1:dir2:...] [--help]" % (sys.argv[0])
