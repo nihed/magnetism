@@ -1,20 +1,21 @@
 package com.dumbhippo.search;
 
+import java.util.List;
+
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.ObjectMessage;
 
+import org.hibernate.search.backend.LuceneWork;
 import org.jboss.system.ServiceMBeanSupport;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.jms.JmsConnectionType;
 import com.dumbhippo.jms.JmsConsumer;
 import com.dumbhippo.jms.JmsShutdownException;
-import com.dumbhippo.server.ApplicationIndexer;
-import com.dumbhippo.server.GroupIndexer;
-import com.dumbhippo.server.PostIndexer;
-import com.dumbhippo.server.TrackIndexer;
+import com.dumbhippo.server.util.EJBUtil;
 
 /**
  * Cluster global singleton that takes tasks from the Indexer queue and dispatches them
@@ -32,6 +33,8 @@ import com.dumbhippo.server.TrackIndexer;
  */
 public class IndexerService extends ServiceMBeanSupport implements IndexerServiceMBean {
 	private static final Logger logger = GlobalSetup.getLogger(IndexerService.class);
+	
+	public static final String QUEUE_NAME = "queue/IndexQueue";
 
 	private JmsConsumer consumer;
 	private Thread consumerThread;
@@ -59,7 +62,7 @@ public class IndexerService extends ServiceMBeanSupport implements IndexerServic
 		
 		logger.info("Starting IndexQueue consumer thread");
 		
-		consumer = new JmsConsumer(IndexTask.QUEUE_NAME, JmsConnectionType.NONTRANSACTED_IN_SERVER);
+		consumer = new JmsConsumer(QUEUE_NAME, JmsConnectionType.NONTRANSACTED_IN_SERVER);
 		consumerThread = new Thread(new QueueConsumer(), "IndexQueueConsumer");
 		consumerThread.start(); 
 	}
@@ -102,30 +105,27 @@ public class IndexerService extends ServiceMBeanSupport implements IndexerServic
 						continue;
 					}
 					
-					if (!(object instanceof IndexTask)) {
-						logger.warn("Got unexpected type of object in queue.");
+					SearchSystem searchSystem = EJBUtil.defaultLookup(SearchSystem.class);
+					
+					/**
+					 * We have two different types of message to send over the queue
+					 * 
+					 *  A) Perform the LuceneWork indices in this List
+					 *  B) Clear the index for this Class
+					 *  
+					 *  Rather than getting fancy and wrapping things up in a nice
+					 *  message object, we just use instanceof to distinguish the two.
+					 */
+					
+					if (object instanceof List<?>) {
+						searchSystem.doIndexWork(TypeUtils.castList(LuceneWork.class, (List<?>)object));
+					} else if (object instanceof Class<?>) {
+						searchSystem.clearIndex((Class<?>)object);
+					} else {
+						logger.warn("Got unexpected type of object in indexing queue.");
 						continue;
 					}
 	
-					IndexTask task = (IndexTask)object;
-					switch (task.getType()) {
-					case INDEX_POST:
-						PostIndexer.getInstance().index(task.getId(), task.isReindex());
-						break;
-					case INDEX_GROUP:
-						GroupIndexer.getInstance().index(task.getId(), task.isReindex());
-						break;
-					case INDEX_APPLICATION:
-						ApplicationIndexer.getInstance().index(task.getId(), task.isReindex());
-						break;						
-					case INDEX_TRACK:
-						TrackIndexer.getInstance().index(task.getId(), task.isReindex());
-						break;
-					case INDEX_ALL:
-						PostIndexer.getInstance().reindexAll();
-						GroupIndexer.getInstance().reindexAll();
-						TrackIndexer.getInstance().reindexAll();
-					}
 				} catch (JmsShutdownException e) {
 					logger.debug("Queue was shut down, exiting thread");
 					break;

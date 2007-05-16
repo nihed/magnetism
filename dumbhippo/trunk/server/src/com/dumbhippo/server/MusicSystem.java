@@ -105,4 +105,12 @@ public interface MusicSystem {
 	
 	public TrackHistory lookupTrackHistory(Guid trackHistoryId) throws NotFoundException;
 	public TrackView getTrackView(TrackHistory trackHistory);
+	
+	/**
+	 * Get all track IDs. Used when reindexing. This is possible a bad idea, since
+	 * we have half-a-million tracks right now.
+	 *  
+	 * @return all track IDs in the system
+	 */
+	public List<Long> getAllTrackIds();
 }

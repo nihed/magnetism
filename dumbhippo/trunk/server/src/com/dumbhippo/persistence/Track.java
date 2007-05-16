@@ -12,8 +12,10 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-import org.hibernate.lucene.Indexed;
-import org.hibernate.lucene.Text;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Index;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.Store;
 import org.slf4j.Logger;
 
 import com.dumbhippo.Digest;
@@ -212,7 +214,7 @@ public class Track extends DBUnique implements Serializable {
 	}
 	
 	@Column(nullable=true)
-	@Text
+	@Field(index=Index.TOKENIZED, store=Store.YES)
 	public String getAlbum() {
 		return album;
 	}
@@ -222,7 +224,7 @@ public class Track extends DBUnique implements Serializable {
 	}
 
 	@Column(nullable=true)
-	@Text
+	@Field(index=Index.TOKENIZED, store=Store.YES)
 	public String getArtist() {
 		return artist;
 	}
@@ -268,7 +270,7 @@ public class Track extends DBUnique implements Serializable {
 	}
 
 	@Column(nullable=true)
-	@Text
+	@Field(index=Index.TOKENIZED, store=Store.YES)
 	public String getName() {
 		return name;
 	}

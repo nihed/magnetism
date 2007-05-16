@@ -34,11 +34,9 @@ import javax.persistence.Query;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.queryParser.MultiFieldQueryParser;
-import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
-import org.hibernate.lucene.DocumentBuilder;
+import org.hibernate.search.engine.DocumentBuilder;
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
@@ -65,7 +63,6 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
-import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackSearchResult;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
@@ -114,6 +111,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private Configuration config;
 	
 	@EJB
+	@IgnoreDependency
 	private SearchSystem searchSystem;
 	
 	@WebServiceCache
@@ -239,7 +237,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					return res;	
 				}			
 			});
-			searchSystem.indexTrack(track);
 			return track;
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
@@ -1257,13 +1254,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	public TrackSearchResult searchTracks(Viewpoint viewpoint, String queryString) {
 		final String[] fields = { "artist", "album", "name" };
-		QueryParser queryParser = new MultiFieldQueryParser(fields, TrackIndexer.getInstance().createAnalyzer());
-		queryParser.setDefaultOperator(Operator.AND);
-		org.apache.lucene.search.Query query;
 		try {
-			query = queryParser.parse(queryString);
-			
-			Hits hits = TrackIndexer.getInstance().getSearcher().search(query);
+			Hits hits = searchSystem.search(Track.class, fields, queryString);
 			
 			return new TrackSearchResult(hits);
 			
@@ -1295,15 +1287,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 	}
 	
-	public void indexAllTracks(IndexWriter writer, DocumentBuilder<Track> builder) throws IOException {
-		List<?> l = em.createQuery("SELECT t FROM Track t").getResultList();
-		List<Track> tracks = TypeUtils.castList(Track.class, l);
-		
-		for (Track track : tracks) {
-			Document document = builder.getDocument(track, track.getId());
-			writer.addDocument(document);
-		}
-	}
 
 	// FIXMEFIXMEFIXME - this needs to be annotated to mandate no transaction,
     // since it can deadlock if called for the same track twice in the same transaction
@@ -1403,5 +1386,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			return 0;
 		else
 			return history.get(0).getLastUpdated().getTime();
+	}
+
+	public List<Long> getAllTrackIds() {
+		Query q = em.createQuery("SELECT t.id FROM Track t");
+		return TypeUtils.castList(Long.class, q.getResultList());
 	}
 }
