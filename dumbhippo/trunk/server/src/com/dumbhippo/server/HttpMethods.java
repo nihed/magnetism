@@ -194,6 +194,7 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( {} )
+	@HttpOptions( adminOnly = true, transaction = false )	
 	public void doReindexAll(UserViewpoint viewpoint);
 	
 	@HttpContentTypes(HttpResponseData.TEXT)

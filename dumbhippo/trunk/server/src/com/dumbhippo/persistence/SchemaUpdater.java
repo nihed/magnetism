@@ -199,7 +199,7 @@ public class SchemaUpdater {
 	
 	private void updateTable(Table tableAnnotation) {
 		String name = tableAnnotation.appliesTo();
-		TableMetadata tableMeta = meta.getTableMetadata(name , "dumbhippo", null);
+		TableMetadata tableMeta = meta.getTableMetadata(name , "dumbhippo", null, false);
 		if (tableMeta == null) {
 			logger.warn("Couldn't find metadata for table {}, it probably doesn't exist yet", name);
 		} else {

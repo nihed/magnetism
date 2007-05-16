@@ -29,12 +29,9 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.queryParser.MultiFieldQueryParser;
-import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.Digest;
@@ -52,7 +49,7 @@ import com.dumbhippo.persistence.ApplicationWmClass;
 import com.dumbhippo.persistence.UnmatchedApplicationUsage;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
-import com.dumbhippo.server.ApplicationIndexer;
+import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
@@ -79,6 +76,10 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	
 	@EJB
 	private PersonViewer personViewer;
+	
+	@EJB
+	@IgnoreDependency
+	private SearchSystem searchSystem;
 	
 	@EJB
 	private TransactionRunner runner;
@@ -994,16 +995,10 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		}
 		
 		final String[] fields = { "name", "genericName", "tooltip", "description1", "description2", "description3", "description4" };
-		Analyzer analyzer = ApplicationIndexer.getInstance().createAnalyzer();
-		QueryParser queryParser = new MultiFieldQueryParser(fields, analyzer);
-		queryParser.setDefaultOperator(Operator.AND);
-		org.apache.lucene.search.Query query;
 		
 		List<Application> appHits = new ArrayList<Application>();
 		try {
-			query = queryParser.parse(search);
-			
-			Hits hits = ApplicationIndexer.getInstance().getSearcher().search(query);
+			Hits hits = searchSystem.search(Application.class, fields, search);
 			for (int i = pageable.getStart(); pageable.getCount() > 0 && i < hits.length(); i++) {
 				try {
 					Document d = hits.doc(i);

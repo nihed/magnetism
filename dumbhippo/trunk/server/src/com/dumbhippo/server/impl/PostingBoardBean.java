@@ -20,9 +20,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.apache.lucene.queryParser.MultiFieldQueryParser;
-import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
 import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
@@ -71,7 +68,6 @@ import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.PersonViewer;
-import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostInfoSystem;
 import com.dumbhippo.server.PostSearchResult;
 import com.dumbhippo.server.PostType;
@@ -128,6 +124,7 @@ public class PostingBoardBean implements PostingBoard {
 	private GroupSystem groupSystem;
 	
 	@EJB
+	@IgnoreDependency
 	private SearchSystem searchSystem;
 	
 	@EJB
@@ -425,7 +422,6 @@ public class PostingBoardBean implements PostingBoard {
 	private Post createAndIndexPost(Callable<Post> creator) {
 		try {
 			Post detached = runner.runTaskNotInNewTransaction(creator);
-			searchSystem.indexPost(detached, false);
 			Post post = em.find(Post.class, detached.getId());
 			if (post == null)
 				logger.error("reattach after creating new post FAILED ...");
@@ -865,13 +861,8 @@ public class PostingBoardBean implements PostingBoard {
 	
 	public PostSearchResult searchPosts(Viewpoint viewpoint, String queryString) {
 		final String[] fields = { "explicitTitle", "text" };
-		QueryParser queryParser = new MultiFieldQueryParser(fields, PostIndexer.getInstance().createAnalyzer());
-		queryParser.setDefaultOperator(Operator.AND);
-		org.apache.lucene.search.Query query;
 		try {
-			query = queryParser.parse(queryString);
-			
-			Hits hits = PostIndexer.getInstance().getSearcher().search(query);
+			Hits hits = searchSystem.search(Post.class, fields, queryString);
 			
 			return new PostSearchResult(hits);
 			

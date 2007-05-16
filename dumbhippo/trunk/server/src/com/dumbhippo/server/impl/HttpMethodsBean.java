@@ -590,7 +590,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 						
 			group.setName(name);
 			revisionControl.persistRevision(new GroupNameChangedRevision(viewpoint.getViewer(), group, new Date(), name));
-			searchSystem.indexGroup(group, true);
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}		
@@ -607,7 +606,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			
 			group.setDescription(description);
 			revisionControl.persistRevision(new GroupDescriptionChangedRevision(viewpoint.getViewer(), group, new Date(), description));
-			searchSystem.indexGroup(group, true);
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}
@@ -1214,13 +1212,14 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public void doReindexAll(UserViewpoint viewpoint) 
 	{
 		if (!identitySpider.isAdministrator(viewpoint.getViewer())) {
 			throw new RuntimeException("Only administrators can recreate the search indices");
 		}
 		
-		searchSystem.reindexAll();
+		searchSystem.reindexAll(null);
 	}
 	
 	public void getRandomBio(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint) throws IOException {

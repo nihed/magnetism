@@ -9,10 +9,15 @@
         <include name="lib/jboss-system.jar"/>
         <include name="client/jbossall-client.jar"/>
         <include name="server/all/lib/jboss-cache.jar"/>
-        <include name="server/all/lib/hibernate-annotations.jar"/>
         <include name="server/all/lib/jgroups.jar"/>
         <include name="server/default/deploy/ejb3.deployer/*ejb3*.jar"/>
-        <include name="server/default/deploy/ejb3.deployer/hibernate-entitymanager.jar"/>
         <include name="server/default/lib/*ejb3*.jar"/>
+    </fileset>
+    <fileset id="dumbhippo.global.lib.jars" dir="${dumbhippo.global.lib}/">
+        <include name="server/hibernate3.jar"/>
+        <include name="server/hibernate-commons-annotations.jar"/>
+        <include name="server/hibernate-annotations.jar"/>
+        <include name="server/hibernate-entitymanager.jar"/>
+        <include name="server/hibernate-search.jar"/>
     </fileset>
 </project>

@@ -246,6 +246,7 @@
     	<copy todir="${jar.dest.dir}" flatten="true">
     		<fileset dir="${hippo.server.path}/target/classes" includes="dumbhippo-client.jar"/>
 		<fileset refid="dumbhippo.global.jboss.jars"/>
+		<fileset refid="dumbhippo.global.lib.jars"/>
     	</copy>
     </target>
 

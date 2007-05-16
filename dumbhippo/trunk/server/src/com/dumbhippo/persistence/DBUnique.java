@@ -6,7 +6,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 
-import org.hibernate.lucene.Keyword;
+import org.hibernate.search.annotations.DocumentId;
 
 @MappedSuperclass
 public abstract class DBUnique implements Comparable {
@@ -18,7 +18,7 @@ public abstract class DBUnique implements Comparable {
 	@Id
 	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Column(nullable=false)
-	@Keyword(id=true) // No effect except for subclasses that are @Indexed
+	@DocumentId // No effect except for subclasses that are @Indexed
 	public long getId() {
 		return this.id;
 	}

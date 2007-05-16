@@ -74,4 +74,8 @@ public class MusicSystemBean implements MusicSystem {
 	public TrackView getTrackView(TrackHistory trackHistory) {
 		return internal.getTrackView(trackHistory);
 	}
+	
+	public List<Long> getAllTrackIds() {
+		return internal.getAllTrackIds();
+	}
 }

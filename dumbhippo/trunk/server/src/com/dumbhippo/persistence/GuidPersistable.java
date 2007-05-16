@@ -10,7 +10,10 @@ import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.lucene.Keyword;
+import org.hibernate.search.annotations.DocumentId;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Index;
+import org.hibernate.search.annotations.Store;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -68,7 +71,9 @@ public abstract class GuidPersistable {
 	 * @return the hex string form of the GUID
 	 */
 	@Id
-	@Keyword(id=true) // No effect except for subclasses that are @Indexed
+	@Field(index=Index.TOKENIZED, store=Store.NO)
+
+	@DocumentId // No effect except for subclasses that are @Indexed
 	@Column(length = Guid.STRING_LENGTH, nullable = false)
 	public String getId() {
 		String s = getGuid().toString();

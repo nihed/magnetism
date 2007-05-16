@@ -14,10 +14,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.apache.lucene.queryParser.MultiFieldQueryParser;
-import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -44,7 +42,6 @@ import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
-import com.dumbhippo.server.GroupIndexer;
 import com.dumbhippo.server.GroupSearchResult;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupSystemRemote;
@@ -79,6 +76,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	private PersonViewer personViewer;
 	
 	@EJB
+	@IgnoreDependency
 	private SearchSystem searchSystem;
 	
 	@EJB
@@ -108,8 +106,6 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		notifier.onGroupCreated(g);
 		notifier.onGroupMemberCreated(groupMember, System.currentTimeMillis(), true);
-		
-		searchSystem.indexGroup(g, false);
 		
 		return g;
 	}
@@ -994,13 +990,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 
 	public GroupSearchResult searchGroups(Viewpoint viewpoint, String queryString) {
 		final String[] fields = { "name", "description" };
-		QueryParser queryParser = new MultiFieldQueryParser(fields, GroupIndexer.getInstance().createAnalyzer());
-		queryParser.setDefaultOperator(Operator.AND);
-		org.apache.lucene.search.Query query;
 		try {
-			query = queryParser.parse(queryString);
-			
-			Hits hits = GroupIndexer.getInstance().getSearcher().search(query);
+			Hits hits = searchSystem.search(Group.class, fields, queryString);
 			
 			return new GroupSearchResult(hits);
 			

@@ -16,8 +16,10 @@ import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.lucene.Indexed;
-import org.hibernate.lucene.Unstored;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Index;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.Store;
 
 @Entity
 @Indexed(index="group")
@@ -78,7 +80,7 @@ public class Group extends GuidPersistable implements VersionedEntity {
 		this.members = members;
 	}
 	
-	@Unstored
+	@Field(index=Index.TOKENIZED, store=Store.NO)
 	@Column(nullable=false)
 	public String getName() {
 		return name;
@@ -97,7 +99,7 @@ public class Group extends GuidPersistable implements VersionedEntity {
 		this.version = version;
 	}
 	
-	@Unstored
+	@Field(index=Index.TOKENIZED, store=Store.NO)
 	@Column(nullable=true)
 	public String getDescription() {
 		return description;

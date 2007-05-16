@@ -8,7 +8,7 @@ import java.util.concurrent.Future;
 import javax.ejb.Local;
 
 import org.apache.lucene.index.IndexWriter;
-import org.hibernate.lucene.DocumentBuilder;
+import org.hibernate.search.engine.DocumentBuilder;
 
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.TrackHistory;
@@ -109,14 +109,4 @@ public interface MusicSystemInternal
 	 * @throws IOException
 	 */
 	public void indexTracks(IndexWriter writer, DocumentBuilder<Track> builder, List<Object> ids) throws IOException;
-	
-	/**
-	 * Add all tracks in the database to the specified Lucene index. This is an internal implementation
-	 * detail of TrackIndex.reindex().
-	 * 
-	 * @param writer a Lucene IndexWriter
-	 * @param builder a DocumentBuilder to use to create Lucene Document objects from Track
-	 * @throws IOException
-	 */
-	public void indexAllTracks(IndexWriter writer, DocumentBuilder<Track> builder) throws IOException;
 }

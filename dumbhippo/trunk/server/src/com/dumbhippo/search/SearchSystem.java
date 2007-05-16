@@ -1,45 +1,55 @@
 package com.dumbhippo.search;
 
+import java.io.IOException;
+import java.util.List;
+
 import javax.ejb.Local;
 
-import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.Post;
-import com.dumbhippo.persistence.Track;
+import org.apache.lucene.search.Hits;
+import org.hibernate.search.backend.LuceneWork;
 
 @Local
 public interface SearchSystem {
 	/**
-	 * Asynchronously index or reindex the given post after the end of the
-	 * current transaction.
-	 *  
-	 * @param post the post to index.
-	 * @param reindex true if the item already exists and needs to be reindexed.
-	 *   (Posts are currently never modified, so this option is mostly provided 
-	 *   as a matter of completeness)  
+	 * Search the given entity with the given query
+	 * 
+	 * @param entity the entity class to search entities in
+	 * @param query the query to search the entities with
 	 */
-	void indexPost(Post post, boolean reindex);
-
-	/**
-	 * Asynchronously index or reindex the given group after the end of the
-	 * current transaction.
-	 *  
-	 * @param group the group to index.
-	 * @param reindex true if the item already exists and needs to be reindexed
-	 */
-	void indexGroup(Group group, boolean reindex);
-
-	/**
-	 * Asynchronously index the given track after the end of the
-	 * current transaction. (There is no reindex parameter since Tracks have
-	 * no identity other than the Artist/Album/Song triple, so are conceptually
-	 * immutable.)
-	 *  
-	 * @param track the track to index.
-	 */
-	void indexTrack(Track track);
+	Hits search(Class<?> clazz, String[] fields, String queryString) throws IOException, org.apache.lucene.queryParser.ParseException;
 	
 	/**
 	 * Asynchronously reindex all indexed items
+	 * 
+	 * @param what a comma-separated list of unqualified entity class type
+	 *   names to reindex, or null to reindex everything.
 	 */
-	void reindexAll();
+	void reindexAll(String what);
+	
+	/////////////////////////////////////////////////////////////////////
+	//
+	// Internals
+	//
+	/////////////////////////////////////////////////////////////////////
+	
+	/**
+	 * Method called to queue index work over jms
+	 * 
+	 * @param queue items to index
+	 */
+	void queueIndexWork(List<LuceneWork> queue);
+	
+	/**
+	 * Method called when we get a queued index method over JMS 
+	 * 
+	 * @param queue items to index
+	 */
+	void doIndexWork(List<LuceneWork> queue);
+	
+	/**
+	 * Method called when we get a request to clear an index over JMS 
+	 * 
+	 * @param class for which to clear the index
+	 */
+	void clearIndex(Class<?> clazz);
 }

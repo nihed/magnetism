@@ -11,9 +11,11 @@ import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.lucene.Indexed;
-import org.hibernate.lucene.Keyword;
-import org.hibernate.lucene.Text;
+import org.hibernate.search.annotations.DocumentId;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Index;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.Store;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.server.util.EJBUtil;
@@ -48,7 +50,7 @@ public class Application {
 	}
 	
 	@Id
-	@Keyword(id=true)	
+	@DocumentId
 	@Column(nullable = false, length=64)
 	public String getId() {
 		return id;
@@ -68,7 +70,7 @@ public class Application {
 	}
 
 	@Column(nullable = false)
-	@Text
+	@Field(index=Index.TOKENIZED, store=Store.NO)
 	public String getName() {
 		return name;
 	}
@@ -78,7 +80,7 @@ public class Application {
 	}
 
 	@Column(nullable = true)
-	@Text
+	@Field(index=Index.TOKENIZED, store=Store.NO)
 	public String getGenericName() {
 		return genericName;
 	}
@@ -88,7 +90,7 @@ public class Application {
 	}
 
 	@Column(nullable = true)
-	@Text
+	@Field(index=Index.TOKENIZED, store=Store.NO)
 	public String getTooltip() {
 		return tooltip;
 	}
@@ -98,7 +100,7 @@ public class Application {
 	}
 
 	@Column(nullable = true)
-	@Text	
+	@Field(index=Index.TOKENIZED, store=Store.NO)
 	public String getDescription1() {
 		return description1;
 	}
@@ -108,7 +110,7 @@ public class Application {
 	}
 
 	@Column(nullable = true)
-	@Text	
+	@Field(index=Index.TOKENIZED, store=Store.NO)
 	public String getDescription2() {
 		return description2;
 	}
@@ -118,7 +120,7 @@ public class Application {
 	}
 
 	@Column(nullable = true)
-	@Text	
+	@Field(index=Index.TOKENIZED, store=Store.NO)
 	public String getDescription3() {
 		return description3;
 	}
@@ -128,7 +130,7 @@ public class Application {
 	}
 
 	@Column(nullable = true)
-	@Text	
+	@Field(index=Index.TOKENIZED, store=Store.NO)
 	public String getDescription4() {
 		return description4;
 	}

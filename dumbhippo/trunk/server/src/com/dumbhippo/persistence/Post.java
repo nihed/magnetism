@@ -19,8 +19,9 @@ import javax.persistence.Transient;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Index;
-import org.hibernate.lucene.Indexed;
-import org.hibernate.lucene.Unstored;
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.Store;
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
@@ -185,14 +186,14 @@ public class Post extends GuidPersistable {
 	// properly convert the clob to a string, so we can't 
 	// use this anyway. 255 char limit it is.
 	//@Lob(type=LobType.CLOB, fetch=FetchType.EAGER)
-	@Unstored
+	@Field(index=org.hibernate.search.annotations.Index.TOKENIZED, store=Store.NO)
 	public String getText() {
 		return text;
 	}
 	public void setText(String text) {
 		this.text = text;
 	}
-	@Unstored
+	@Field(index=org.hibernate.search.annotations.Index.TOKENIZED, store=Store.NO)
 	public String getExplicitTitle() {
 		return explicitTitle;
 	}
