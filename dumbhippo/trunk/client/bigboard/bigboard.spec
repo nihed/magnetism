@@ -2,7 +2,7 @@
 
 Name:           bigboard
 Version:        0.3.2
-Release:        1
+Release:        3
 Summary:        Sidebar application launcher using mugshot.org
 
 Group:          Applications/Internet
@@ -53,23 +53,32 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/bigboard/*.py
 %{python_sitelib}/bigboard/*.pyc
 %{python_sitelib}/bigboard/*.pyo
+%dir %{python_sitelib}/bigboard/libbig
 %{python_sitelib}/bigboard/libbig/*.py
 %{python_sitelib}/bigboard/libbig/*.pyc
 %{python_sitelib}/bigboard/libbig/*.pyo
+%dir %{python_sitelib}/bigboard/httplib2
 %{python_sitelib}/bigboard/httplib2/*.py
 %{python_sitelib}/bigboard/httplib2/*.pyc
 %{python_sitelib}/bigboard/httplib2/*.pyo
+%dir %{python_sitelib}/bigboard/keybinder
 %{python_sitelib}/bigboard/keybinder/*.py
 %{python_sitelib}/bigboard/keybinder/*.pyc
 %{python_sitelib}/bigboard/keybinder/*.pyo
 %{python_sitelib}/bigboard/keybinder/*.so
 %dir %{_datadir}/bigboard
-%{_datadir}/bigboard/stocks/*
+%{_datadir}/bigboard/*
 %{_bindir}/bigboard
 # no desktop file included because the bigboard is launched as part of online
 # desktop mode
 
 %changelog
+* Wed May 16 2007 Colin Walters <walters@redhat.com> - 0.3.2-3
+- Own more dirs
+
+* Wed May 16 2007 Colin Walters <walters@redhat.com> - 0.3.2-2
+- Ownzor datadir directly
+
 * Tue May 15 2007 Colin Walters <walters@redhat.com> - 0.3.2-1
 - Update
 - Remove la files
