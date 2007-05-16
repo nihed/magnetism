@@ -93,6 +93,7 @@ class Mugshot(gobject.GObject):
                                                        _log_cb(self.__on_dbus_name_owner_changed))
         self.__create_proxy()
         self.__create_ws_proxy()
+        self.__create_im_proxy()
 
         self.__reset()        
         
@@ -100,7 +101,7 @@ class Mugshot(gobject.GObject):
         self._logger.debug("reset")  
         # Generic properties
         self.__baseprops = None
-        
+
         self.__self_proxy = None
         self.__self = None
         self.__self_path = None
@@ -134,6 +135,9 @@ class Mugshot(gobject.GObject):
             self.__global_apps_poll_id = 0
         self.__global_apps_poll_id = gobject.timeout_add(self.__app_poll_frequency_ms, 
                                                          self.__idle_poll_global_apps)        
+
+    def get_im_proxy(self):
+        return self.__im_proxy
         
     def __create_proxy(self):
         try:        
@@ -146,7 +150,8 @@ class Mugshot(gobject.GObject):
             self.__proxy.connect_to_signal('PrefChanged', _log_cb(self.__on_pref_changed))            
             self.__proxy.connect_to_signal('ExternalIQReturn', _log_cb(self.__externalIQReturn))
             self.__get_connection_status()    
-            self.__proxy.GetBaseProperties(reply_handler=_log_cb(self.__on_get_baseprops), error_handler=self.__on_dbus_error)            
+            self.__proxy.GetBaseProperties(reply_handler=_log_cb(self.__on_get_baseprops), error_handler=self.__on_dbus_error)
+            
         except dbus.DBusException:
             self.__proxy = None
 
@@ -156,6 +161,13 @@ class Mugshot(gobject.GObject):
             self.__ws_proxy = bus.get_object('org.mugshot.Mugshot', '/org/gnome/web_services')
         except dbus.DBusException:
             self.__ws_proxy = None        
+
+    def __create_im_proxy(self):
+        try:
+            bus = dbus.SessionBus()
+            self.__im_proxy = bus.get_object('org.mugshot.Mugshot', '/org/freedesktop/od/im')
+        except dbus.DBusException:
+            self.__im_proxy = None
         
     def __on_dbus_name_owner_changed(self, name, prev_owner, new_owner):
         if name == 'org.mugshot.Mugshot':
@@ -163,9 +175,11 @@ class Mugshot(gobject.GObject):
                 self._logger.debug("owner for org.mugshot.Mugshot changed, recreating proxies")
                 self.__create_proxy()
                 self.__create_ws_proxy()
+                self.__create_im_proxy()
             else:
                 self.__proxy = None
                 self.__ws_proxy = None
+                self.__im_proxy = None
 
     def __on_connection_status(self, has_auth, connected, contacts):
         self._logger.debug("connection status auth=%s connected=%s contacts=%s" % (has_auth, connected, contacts))

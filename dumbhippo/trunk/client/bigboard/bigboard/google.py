@@ -11,7 +11,7 @@ import libbig.polling
 
 class AbstractDocument(AutoStruct):
     def __init__(self):
-        super(AbstractDocument, self).__init__({ 'title' : 'Untitled', 'link' : None })
+        AutoStruct.__init__(self, { 'title' : 'Untitled', 'link' : None })
 
 class SpreadsheetDocument(AbstractDocument):
     def __init__(self):

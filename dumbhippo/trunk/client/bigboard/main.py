@@ -18,6 +18,7 @@ try:
 except:
     import bignative
 import bigboard.google
+import bigboard.presence
 import bigboard.libbig.logutil
 import bigboard.libbig.xmlquery
 import bigboard.libbig.dbusutil
@@ -421,6 +422,7 @@ def main():
         cmdshell.show_all()
 
     bigboard.google.get_google() # for side effect of creating the Google object
+    bigboard.presence.get_presence() # for side effect of creating Presence object
         
     gtk.main()
 
