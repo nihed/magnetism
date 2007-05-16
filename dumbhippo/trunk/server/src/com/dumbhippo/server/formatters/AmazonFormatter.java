@@ -24,11 +24,11 @@ public class AmazonFormatter extends DefaultFormatter {
 		
 		XmlBuilder xml = new XmlBuilder();
 		xml.append("<div class=\"dh-amazon-item\">");
-		if (itemData.getSmallImageUrl() != null) {
+		if (itemData.getImageUrl() != null) {
 			xml.append("  <img class=\"dh-amazon-small-image\" style=\"float: left;\" src=\"");
-			xml.appendEscaped(itemData.getSmallImageUrl());
-			xml.append("\" width=\"" + itemData.getSmallImageWidth());
-			xml.append("\" height=\"" + itemData.getSmallImageHeight());
+			xml.appendEscaped(itemData.getImageUrl());
+			xml.append("\" width=\"" + itemData.getImageWidth());
+			xml.append("\" height=\"" + itemData.getImageHeight());
 			xml.append("\"/> ");
 		}
 		addPrice(xml, "New", itemData.getNewPrice());

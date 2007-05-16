@@ -839,3 +839,15 @@ in-bottom:  5px;
 #dhChatAddButton {
 	margin-left: 4px;
 }
+
+.dh-rating-star {
+    margin-right:   -3px;
+}
+
+.dh-amazon-review-title {
+    margin-left:     3px;
+}
+
+.dh-amazon-list-item-description {
+    margin-top:      5px;
+}

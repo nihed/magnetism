@@ -17,11 +17,11 @@ public class AmazonPostInfo extends PostInfo implements AmazonItemView {
 		amazon.updateContentChild(itemData.getUsedPrice(), NodeName.usedPrice);
 		amazon.updateContentChild(itemData.getRefurbishedPrice(), NodeName.refurbishedPrice);
 		amazon.updateContentChild(itemData.getCollectiblePrice(), NodeName.collectiblePrice);
-		String smallImageUrl = itemData.getSmallImageUrl();
-		if (smallImageUrl != null) {
-			amazon.resolveOrCreatePath(NodeName.smallPhoto, NodeName.url).setContent(smallImageUrl);
-			amazon.resolveOrCreatePath(NodeName.smallPhoto, NodeName.width).setInteger(itemData.getSmallImageWidth());
-			amazon.resolveOrCreatePath(NodeName.smallPhoto, NodeName.height).setInteger(itemData.getSmallImageHeight());
+		String imageUrl = itemData.getImageUrl();
+		if (imageUrl != null) {
+			amazon.resolveOrCreatePath(NodeName.smallPhoto, NodeName.url).setContent(imageUrl);
+			amazon.resolveOrCreatePath(NodeName.smallPhoto, NodeName.width).setInteger(itemData.getImageWidth());
+			amazon.resolveOrCreatePath(NodeName.smallPhoto, NodeName.height).setInteger(itemData.getImageHeight());
 		} else {
 			amazon.removeChildIfExists(NodeName.smallPhoto);
 		}
@@ -57,11 +57,11 @@ public class AmazonPostInfo extends PostInfo implements AmazonItemView {
 		return getTree().getContentIfExists(NodeName.amazon, NodeName.refurbishedPrice);
 	}
 
-	public String getSmallImageUrl() {
+	public String getImageUrl() {
 		return getTree().getContentIfExists(NodeName.amazon, NodeName.smallPhoto, NodeName.url);
 	}
 
-	public int getSmallImageWidth() {
+	public int getImageWidth() {
 		try {
 			return getTree().getInteger(NodeName.amazon, NodeName.smallPhoto, NodeName.width);
 		} catch (NoSuchNodeException e) {
@@ -69,7 +69,7 @@ public class AmazonPostInfo extends PostInfo implements AmazonItemView {
 		}
 	}
 
-	public int getSmallImageHeight() {
+	public int getImageHeight() {
 		try {
 			return getTree().getInteger(NodeName.amazon, NodeName.smallPhoto, NodeName.height);
 		} catch (NoSuchNodeException e) {

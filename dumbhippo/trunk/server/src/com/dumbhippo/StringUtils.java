@@ -11,8 +11,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import com.dumbhippo.persistence.Group;
-
 public class StringUtils {
 	public static String hexEncode(byte[] strs) {
 		StringWriter str = new StringWriter();

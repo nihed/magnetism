@@ -27,9 +27,9 @@ public class CachedAmazonItem extends DBUnique implements CachedItem {
 	private String itemId;
 	private String title;
 	private String editorialReview;
-	private String smallImageUrl;
-	private int smallImageWidth;
-	private int smallImageHeight;
+	private String imageUrl;
+	private int imageWidth;
+	private int imageHeight;
 	// prices are stored in format "$ddd.cc"
 	private String newPrice;
 	private String usedPrice;
@@ -41,15 +41,15 @@ public class CachedAmazonItem extends DBUnique implements CachedItem {
 	protected CachedAmazonItem() {	
 	}
 	
-	public CachedAmazonItem(String itemId, String title, String editorialReview, String smallImageUrl,
-			                int smallImageWidth, int smallImageHeight, String newPrice, String usedPrice,
+	public CachedAmazonItem(String itemId, String title, String editorialReview, String imageUrl,
+			                int imageWidth, int imageHeight, String newPrice, String usedPrice,
 			                String collectiblePrice, String refurbishedPrice) {
 		setItemId(itemId);
 		setTitle(title);
 		setEditorialReview(editorialReview);
-		setSmallImageUrl(smallImageUrl);
-		setSmallImageWidth(smallImageWidth);
-		setSmallImageHeight(smallImageHeight);
+		setImageUrl(imageUrl);
+		setImageWidth(imageWidth);
+		setImageHeight(imageHeight);
 		setNewPrice(newPrice);
 		setUsedPrice(usedPrice);
 		setCollectiblePrice(collectiblePrice);
@@ -66,8 +66,8 @@ public class CachedAmazonItem extends DBUnique implements CachedItem {
 	}
 	
 	public CachedAmazonItem(String itemId, AmazonItemView itemData) {
-		this(itemId, itemData.getTitle(), itemData.getEditorialReview(), itemData.getSmallImageUrl(),
-			 itemData.getSmallImageWidth(), itemData.getSmallImageHeight(), itemData.getNewPrice(),
+		this(itemId, itemData.getTitle(), itemData.getEditorialReview(), itemData.getImageUrl(),
+			 itemData.getImageWidth(), itemData.getImageHeight(), itemData.getNewPrice(),
 			 itemData.getUsedPrice(), itemData.getCollectiblePrice(), itemData.getRefurbishedPrice());
 		if (!itemId.equals(itemData.getItemId()))
 			logger.warn("Created a CachedAmazonItem where item with id {} was assigned attributes of an item with id {} that has title {}", 
@@ -79,9 +79,9 @@ public class CachedAmazonItem extends DBUnique implements CachedItem {
 	    item.setItemId(itemId);
         item.setTitle(title);
         item.setEditorialReview(editorialReview);
-        item.setSmallImageUrl(smallImageUrl);
-        item.setSmallImageWidth(smallImageWidth);
-        item.setSmallImageHeight(smallImageHeight);
+        item.setImageUrl(imageUrl);
+        item.setImageWidth(imageWidth);
+        item.setImageHeight(imageHeight);
         item.setNewPrice(newPrice);
         item.setUsedPrice(usedPrice);
         item.setCollectiblePrice(collectiblePrice);
@@ -95,9 +95,9 @@ public class CachedAmazonItem extends DBUnique implements CachedItem {
 		
         setTitle(result.getTitle());
         setEditorialReview(result.getEditorialReview());
-        setSmallImageUrl(result.getSmallImageUrl());
-        setSmallImageWidth(result.getSmallImageWidth());
-        setSmallImageHeight(result.getSmallImageHeight());
+        setImageUrl(result.getImageUrl());
+        setImageWidth(result.getImageWidth());
+        setImageHeight(result.getImageHeight());
         setNewPrice(result.getNewPrice());
         setUsedPrice(result.getUsedPrice());
         setCollectiblePrice(result.getCollectiblePrice());
@@ -132,30 +132,30 @@ public class CachedAmazonItem extends DBUnique implements CachedItem {
 	}
 	
 	@Column(nullable=false)
-	public String getSmallImageUrl() {
-		return smallImageUrl;
+	public String getImageUrl() {
+		return imageUrl;
 	}
 	
-	public void setSmallImageUrl(String smallImageUrl) {
-		this.smallImageUrl = (smallImageUrl == null ? "" : smallImageUrl);
-	}
-	
-	@Column(nullable=false)
-	public int getSmallImageWidth() {
-		return smallImageWidth;
-	}
-	
-	public void setSmallImageWidth(int smallImageWidth) {
-	    this.smallImageWidth = smallImageWidth;	
+	public void setImageUrl(String imageUrl) {
+		this.imageUrl = (imageUrl == null ? "" : imageUrl);
 	}
 	
 	@Column(nullable=false)
-	public int getSmallImageHeight() {
-		return smallImageHeight;
+	public int getImageWidth() {
+		return imageWidth;
+	}
+	
+	public void setImageWidth(int imageWidth) {
+	    this.imageWidth = imageWidth;	
+	}
+	
+	@Column(nullable=false)
+	public int getImageHeight() {
+		return imageHeight;
 	}
 
-	public void setSmallImageHeight(int smallImageHeight) {
-	    this.smallImageHeight = smallImageHeight;	
+	public void setImageHeight(int imageHeight) {
+	    this.imageHeight = imageHeight;	
 	}
 	
 	@Column(nullable=false)

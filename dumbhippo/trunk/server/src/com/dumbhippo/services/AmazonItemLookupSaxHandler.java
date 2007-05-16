@@ -23,7 +23,7 @@ class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandl
 		EditorialReview,
 		    Source,
 		    Content,
-		SmallImage, URL, Height, Width,
+		Image, MediumImage, URL, Height, Width,
 		OfferSummary,
 		LowestNewPrice, LowestUsedPrice,
 		LowestCollectiblePrice, LowestRefurbishedPrice,
@@ -102,13 +102,20 @@ class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandl
 			currentItem().setTitle(currentContent);
 		} else if (c == Element.Content && parent() == Element.EditorialReview)	{
 			currentItem().setEditorialReview(parseEditorialReview(currentContent));
-		} else if (parent() == Element.SmallImage) {
+        // a product can have multiple images of different views, we are nly interested
+	    // in getting the first one
+		} else if (parent() == Element.MediumImage) {
+			if (currentItem().getImageUrl() == null || currentItem().getImageUrl().trim().length() == 0) {
+				logger.debug("current item getImageUrl is null or empty");
+			} else {
+				logger.debug("getImageUrl {}", currentItem().getImageUrl());
+			}
 			if (c == Element.URL) {
-				currentItem().setSmallImageUrl(currentContent);
+				currentItem().setImageUrl(currentContent);
 			} else if (c == Element.Width) {
-				currentItem().setSmallImageWidth(parseCount(c, currentContent));
+				currentItem().setImageWidth(parseCount(c, currentContent));
 			} else if (c == Element.Height) {
-				currentItem().setSmallImageHeight(parseCount(c, currentContent));		
+				currentItem().setImageHeight(parseCount(c, currentContent));		
 			}
 		} else if (c == Element.FormattedPrice) {
 			Element p = parent();

@@ -364,7 +364,7 @@ div.dh-async-action-link-complete {
 	font-size:			12px;
 }
 
-.dh-stacker-block-title .dh-action-link {
+.dh-stacker-block-title .dh-action-link, .dh-stacker-block-title a {
 	text-decoration:	underline;
 }
 
@@ -699,4 +699,11 @@ div.dh-section-explanation {
 .dh-chat-sentiment-selected {
 	color: #ffffff;
 	background-color: #ac6ac6;
+}
+.dh-amazon-review-title {
+    font-weight:      bold;
+}
+
+.dh-amazon-description {
+	font-style:		  italic;
 }
