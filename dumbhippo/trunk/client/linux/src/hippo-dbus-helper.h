@@ -4,6 +4,7 @@
 
 /* D-Bus convenience thingy */
 
+#define DBUS_API_SUBJECT_TO_CHANGE 1
 #include <dbus/dbus.h>
 #include <glib-object.h>
 
