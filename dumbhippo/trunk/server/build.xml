@@ -36,6 +36,7 @@
 		<!-- a little hard-coded, but ... -->
 		<pathelement location="/usr/share/java/junit.jar" />
 		<pathelement location="/usr/share/java/ant/ant-junit.jar" />
+		<pathelement location="${jboss.root}/lib/commons-logging.jar"/>
 		<pathelement location="${jboss.root}/client/javax.servlet.jar"/>		
 		<pathelement location="${jboss.root}/client/mail.jar"/>
 		<pathelement location="${jboss.root}/client/activation.jar"/>
@@ -50,6 +51,10 @@
 
 	<path id="tests.class.path">
 		<pathelement location="${build.tests}"/>
+                <pathelement location="${buildjar.dir}/dmtest.par"/>
+		<pathelement location="${jboss.root}/server/default/lib/hsqldb.jar"/>
+		<pathelement location="${jboss.root}/server/default/lib/javassist.jar"/>
+		<pathelement location="${jboss.root}/server/default/lib/cglib.jar"/>
 		<path refid="project.class.path" />
 	</path>
 		
@@ -83,10 +88,34 @@
 		</copy>
 	</target>
 
-	<target name="test" depends="compile">
+	<target name="compiletests" depends="compile">
 		<javac srcdir="${src.tests}" destdir="${build.tests}" source="1.5" encoding="UTF-8">
 			<classpath refid="tests.class.path" />
 		</javac>
+
+		<!-- copy over properties files -->
+		<copy todir="${build.tests}">
+			<fileset dir="${src.tests}">
+				<include name="**/*.properties" />
+			</fileset>
+		</copy>
+	</target>
+	
+	<target name="dmtestpar" depends="compiletests">
+		<jar destfile="${buildjar.dir}/dmtest.par">
+			<metainf dir="tests-dd/dmtest">
+				<include name="persistence.xml" />
+			</metainf>
+			<fileset dir="${build.tests}">
+				<include name="**/dm/persistence/**/*.class" />
+			</fileset>
+			<manifest>
+				<attribute name="Class-Path" value="${bundled-classpath}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="test" depends="compile,compiletests,dmtestpar">
 		<!-- fork=yes required for assertions to be enabled -->
 		<junit printsummary="yes" haltonfailure="yes">
 			<assertions enableSystemAssertions="true">
@@ -102,7 +131,21 @@
 			<classpath refid="tests.class.path"/>
 		</junit>
 	</target>
-	
+
+        <property name="test.name" value="com.example.SetMe"/>
+	<target name="singletest" depends="compile,compiletests,dmtestpar">
+		<!-- fork=yes required for assertions to be enabled -->
+		<junit printsummary="yes" haltonfailure="yes">
+			<assertions enableSystemAssertions="true">
+				<enable />
+			</assertions>
+			<formatter type="plain" usefile="false" />
+			<formatter type="xml" />
+			<test name="${test.name}" todir="${reports.tests}"/>
+			<classpath refid="tests.class.path"/>
+		</junit>
+	</target>
+
 	<target name="loggingjar" depends="compile">
 		<jar destfile="${buildjar.dir}/dumbhippo-logging.jar">
 			<fileset dir="${build}">
