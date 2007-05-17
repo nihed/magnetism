@@ -2,6 +2,10 @@ package com.dumbhippo.dm;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javassist.CannotCompileException;
 import javassist.ClassPool;
@@ -106,6 +110,36 @@ public class DMClass<T> {
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////////
+
+	static final Pattern TEMPLATE_PARAMETER = Pattern.compile("%([A-Za-z_][A-Za-z0-9_]+)%");
+
+	// Simple string-template facility for the generated methods
+	private static class Template {
+		private String template;
+		private Map<String, String> parameters = new HashMap<String, String>();
+		
+		public Template(String template) {
+			this.template = template;
+		}
+		
+		public void setParameter(String name, String value) {
+			parameters.put(name, value);
+		}
+		
+		@Override
+		public String toString() {
+			StringBuffer sb = new StringBuffer();
+			Matcher m = TEMPLATE_PARAMETER.matcher(template);
+			while (m.find()) {
+				String replacement = parameters.get(m.group(1));
+				if (replacement == null)
+					throw new RuntimeException("No replacement for template parameter '" + m.group(1) + "'");
+			    m.appendReplacement(sb, replacement);
+			}
+			 m.appendTail(sb);
+			 return sb.toString();
+		}
+	}
 	
 	private CtClass ctClassForClass(Class<?> c) {
 		ClassPool classPool = cache.getClassPool();
@@ -138,20 +172,22 @@ public class DMClass<T> {
 		
 		CtConstructor constructor = new CtConstructor(new CtClass[] { keyCtClass, dmSessionCtClass }, wrapperCtClass);
 		
-		constructor.setBody("{ super($1); $0._dm_session = $2;}");
+		constructor.setBody("{ super($1); _dm_session = $2;}");
 		
 		wrapperCtClass.addConstructor(constructor);
 	}
 	
 	private void addInitMethod(CtClass baseCtClass, CtClass wrapperCtClass) throws CannotCompileException {
 		CtMethod wrapperMethod = new CtMethod(CtClass.voidType, "_dm_init", new CtClass[] {}, wrapperCtClass);
-		wrapperMethod.setBody(
-				"{" +
-				"    if (!$0._dm_initialized) {" +
-				"        $0._dm_session.internalInit(" + baseCtClass.getName() + ".class, $0);" +
-				"        $0._dm_initialized = true;" +
-				"    }" +
-				"}");
+		Template body = new Template(
+			"{" +
+			"    if (!_dm_initialized) {" +
+			"        _dm_session.internalInit(%className%.class, $0);" +
+			"        _dm_initialized = true;" +
+			"    }" +
+			"}");
+		body.setParameter("className", baseCtClass.getName());
+		wrapperMethod.setBody(body.toString());
 		
 		wrapperCtClass.addMethod(wrapperMethod);
 	}
@@ -185,24 +221,27 @@ public class DMClass<T> {
 		
 		CtMethod wrapperMethod = new CtMethod(propertyType, methodName, new CtClass[] {}, wrapperCtClass);
 		
-		String className = baseCtClass.getName();
-		String propertyTypeName = propertyType.getName(); 
-		
 		// TODO: Deal with primitive types, where we need to box/unbox
 		
-		wrapperMethod.setBody(
-				"{" +
-				"    if (!$0._dm_" + propertyName + "Initialized) {" +
-				"    	 try {" +
-				"           $0._dm_" + propertyName + " = (" + propertyTypeName + ")$0._dm_session.fetchAndFilter(" + className + ".class, getKey(), \"" + propertyName + "\");" +
-				"    	 } catch (com.dumbhippo.dm.NotCachedException e) {" +
-				"           $0._dm_init();" +
-				"           $0._dm_" + propertyName + " = (" + propertyTypeName + ")$0._dm_session.storeAndFilter(" + className + ".class, getKey(), \"" + propertyName + "\", $0._dm_" + propertyName + " = super." + methodName + "());" +
-				"        }" +
-				"        $0._dm_" + propertyName + "Initialized = true;" +
-				"    }" +
-				"    return $0._dm_" + propertyName + ";" +
-				"}");
+		Template body = new Template(
+			"{" +
+			"    if (!_dm_%propertyName%Initialized) {" +
+			"    	 try {" +
+			"           _dm_%propertyName% = (%propertyTypeName%)_dm_session.fetchAndFilter(%className%.class, getKey(), \"%propertyName%\");" +
+			"    	 } catch (com.dumbhippo.dm.NotCachedException e) {" +
+			"           _dm_init();" +
+			"           _dm_%propertyName% = (%propertyTypeName%)_dm_session.storeAndFilter(%className%.class, getKey(), \"%propertyName%\", super.%methodName%());" +
+			"        }" +
+			"        _dm_%propertyName%Initialized = true;" +
+			"    }" +
+			"    return _dm_%propertyName%;" +
+			"}");
+
+		body.setParameter("propertyName", propertyName);
+		body.setParameter("propertyTypeName", propertyType.getName());
+		body.setParameter("methodName", methodName);
+		body.setParameter("className", baseCtClass.getName());
+		wrapperMethod.setBody(body.toString());
 		
 		wrapperCtClass.addMethod(wrapperMethod);
 	}
