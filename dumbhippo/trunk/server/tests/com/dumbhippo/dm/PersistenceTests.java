@@ -2,8 +2,6 @@ package com.dumbhippo.dm;
 
 import javax.persistence.EntityManager;
 
-import junit.framework.TestCase;
-
 import com.dumbhippo.dm.persistence.TestGroup;
 
 /**
@@ -12,17 +10,13 @@ import com.dumbhippo.dm.persistence.TestGroup;
  * 
  * @author otaylor
  */
-public class PersistenceTests  extends TestCase {
-	TestSupport support;
-	
+public class PersistenceTests  extends AbstractSupportedTests {
 	public void testCommit() {
 		TestGroup group;
 		EntityManager em;
 		String id;
 		
-		em = support.createEntityManager();
-		
-		em.getTransaction().begin();
+		em = support.beginTransaction();
 		group = new TestGroup("Hippos");
 		id = group.getId();
 		em.persist(group);
@@ -30,7 +24,7 @@ public class PersistenceTests  extends TestCase {
 		
 		//////////////////////////////////////
 		
-		em.getTransaction().begin();
+		em = support.beginTransaction();
 		group = em.find(TestGroup.class, id);
 		assertTrue(group != null);
 		assertTrue(group.getName().equals("Hippos"));
@@ -42,9 +36,7 @@ public class PersistenceTests  extends TestCase {
 		EntityManager em;
 		String id;
 		
-		em = support.createEntityManager();
-		
-		em.getTransaction().begin();
+		em = support.beginTransaction();
 		group = new TestGroup("Hippos");
 		id = group.getId();
 		em.persist(group);
@@ -52,19 +44,9 @@ public class PersistenceTests  extends TestCase {
 		
 		//////////////////////////////////////
 		
-		em.getTransaction().begin();
+		em = support.beginTransaction();
 		group = em.find(TestGroup.class, id);
 		assertTrue(group == null);
 		em.getTransaction().commit();
-	}
-
-	@Override
-	protected void setUp()  {
-		support = TestSupport.getInstance();
-	}
-	
-	@Override
-	protected void tearDown() {
-		support = null;
 	}
 }
