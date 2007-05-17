@@ -19,6 +19,8 @@ deploy-hasingleton/jms/hsqldb-jdbc2-service.xml
 /lib/hibernate3.jar
 /lib/hibernate-annotations.jar
 /lib/hibernate-entitymanager.jar
+# and this one
+/lib/javassist.jar
 #/lib/jbossha.jar
 #/lib/jbossmqha.jar
 /lib/xmlsec.jar

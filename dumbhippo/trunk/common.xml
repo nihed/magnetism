@@ -19,5 +19,6 @@
         <include name="server/hibernate-annotations.jar"/>
         <include name="server/hibernate-entitymanager.jar"/>
         <include name="server/hibernate-search.jar"/>
+        <include name="server/javassist.jar"/>
     </fileset>
 </project>
