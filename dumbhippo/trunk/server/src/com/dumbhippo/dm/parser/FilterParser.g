@@ -10,9 +10,14 @@ class FilterParser extends Parser;
 
 options {
    k = 2;
+   defaultErrorHandler = false; // We want error to be immediately fatal
+                                // this isn't a compiler where the user needs all the errors
 }
 
 {
+	// I'm not sure if reportError is ever called now that we've turned of the
+	// defaultErrorHandler. But just in case...
+	
 	private static final Logger logger = GlobalSetup.getLogger(FilterParser.class);
 	
 	@Override
@@ -31,34 +36,34 @@ options {
 	}
 }
 
-startRule returns [Filter f = null]
+startRule returns [Filter f]
     :   f=orExpression EOF
     ;
     
-orExpression returns [Filter f = null]
+orExpression returns [Filter f]
 { Filter f2; }
 	: f=andExpression ( OR f2=andExpression { f = new OrFilter(f, f2); } ) *
 	;
 	
-andExpression returns [Filter f = null]
+andExpression returns [Filter f]
 { Filter f2; }
 	: f=notExpression ( AND f2=notExpression { f = new AndFilter(f, f2); } ) *
 	;
 	
-notExpression returns [Filter f = null]
+notExpression returns [Filter f]
 { Filter f1; }
 	:   f=term
 	  |	NOT f1=term { f = new NotFilter(f1); }
 	;
 	
-term returns [Filter f = null]
-{ FilterTermType type = null; }
+term returns [Filter f]
+{ FilterTermType type; }
 	:	LPAREN f=orExpression RPAREN 
 	  | "viewer" DOT pred:NAME LPAREN type=termType ( DOT prop:NAME )? RPAREN 
 	    { f = new SimpleFilter(pred.getText(), type, prop != null ? prop.getText() : null); }
 	;
 	  
-termType returns [FilterTermType t = null]
+termType returns [FilterTermType t]
 	: "key" { t = FilterTermType.KEY; }
 	| "item" { t = FilterTermType.ITEM; }
 	| "any" { t = FilterTermType.ANY; }
@@ -66,6 +71,10 @@ termType returns [FilterTermType t = null]
 	;
 
 class FilterLexer extends Lexer ;
+
+options {
+   defaultErrorHandler = false;
+}
 
 OR : "||" ;
 AND : "&&" ;
