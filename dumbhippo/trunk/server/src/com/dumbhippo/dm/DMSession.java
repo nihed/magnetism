@@ -40,12 +40,8 @@ public class DMSession {
 			
 			DMClass<T> dmClass = cache.getDMClass(clazz); 
 			
-			result = dmClass.createInstance(key);
+			result = dmClass.createInstance(key, this);
 			sessionDMOs.put(key, result);
-			
-			// FIXME: Just a temporary hack
-			dmClass.processInjections(this, result);
-			result.init();
 		}
 		
 		return result;
@@ -56,6 +52,28 @@ public class DMSession {
 			return find(clazz, key);
 		} catch (NotFoundException e) {
 			throw new RuntimeException("Entity unexpectedly missing, class=" + clazz.getName() + ", key=" + key);
+		}
+	}
+	
+	/**
+	 * For use in generated code; this isn't part of the public interface 
+	 * 
+	 * @param <T>
+	 * @param clazz
+	 * @param t
+	 */
+	public <T extends DMObject<?>> void internalInit(Class<T> clazz, T t) {
+		DMClass<T> dmClass = cache.getDMClass(clazz); 
+		
+		dmClass.processInjections(this, t);
+		
+		// FIXME: sort this out, or at least throw a specific unchecked exception
+		//   If we init() immediately on objects not found in the cache we
+		//   could cut down on having to expect lazy exceptions.
+		try {
+			t.init();
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
 		}
 	}
 

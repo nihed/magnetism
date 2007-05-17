@@ -3,11 +3,21 @@ package com.dumbhippo.dm;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 
+import javassist.CannotCompileException;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtConstructor;
+import javassist.CtField;
+import javassist.CtMethod;
+import javassist.Modifier;
+import javassist.NotFoundException;
+
 import javax.persistence.EntityManager;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
 import com.dumbhippo.identity20.Guid;
 
@@ -15,14 +25,15 @@ public class DMClass<T> {
 	@SuppressWarnings("unused")
 	static private Logger logger = GlobalSetup.getLogger(DMClass.class);
 	
-//	private DMCache cache;
-	private Class<T> clazz;
+	private DMCache cache;
+	private Class<T> baseClass;
 	private Class<?> keyClass;
 	private Constructor keyConstructor;
+	private Constructor wrapperConstructor;
 
 	public DMClass(DMCache cache, Class<T> clazz) {
-//		this.cache = cache;
-		this.clazz = clazz;
+		this.cache = cache;
+		this.baseClass = clazz;
 
 		for (Constructor c : clazz.getConstructors()) {
 			Class<?>[] parameterTypes = c.getParameterTypes();
@@ -43,6 +54,8 @@ public class DMClass<T> {
 			keyConstructor = c;
 			keyClass = parameterTypes[0];
 		}
+		
+		buildWrapperClass();
 	}
 
 	// FIXME: do we need this?
@@ -50,18 +63,18 @@ public class DMClass<T> {
 		return keyClass;
 	}
 	
-	public T createInstance(Object key) {
+	public T createInstance(Object key, DMSession session) {
 		try {
 			@SuppressWarnings("unchecked")
-			T result = (T)keyConstructor.newInstance(key);
+			T result = (T)wrapperConstructor.newInstance(key, session);
 			return result;
 		} catch (Exception e) {
-			throw new RuntimeException("Error creating instance of class " + clazz.getName(), e);
+			throw new RuntimeException("Error creating instance of class " + baseClass.getName(), e);
 		}
 	}
 	
 	public void processInjections(DMSession session, T t) {
-		for (Field field : clazz.getDeclaredFields()) {
+		for (Field field : baseClass.getDeclaredFields()) {
 			if (field.isAnnotationPresent(Inject.class)) {
 				injectField(session, t, field);
 			}
@@ -89,6 +102,131 @@ public class DMClass<T> {
 			field.set(t, value);
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException("Error injecting object", e);
+		}
+	}
+	
+	////////////////////////////////////////////////////////////////////////////////////
+	
+	private CtClass ctClassForClass(Class<?> c) {
+		ClassPool classPool = cache.getClassPool();
+		String className = c.getName();
+
+		try {
+			return classPool.get(className);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("Can't find the bytecode for" + className);
+		}
+	}
+	
+	private void addCommonFields(CtClass wrapperCtClass) throws CannotCompileException {
+		CtField field;
+		
+		CtClass dmSessionCtClass = ctClassForClass(DMSession.class);
+		
+		field = new CtField(dmSessionCtClass, "_dm_session", wrapperCtClass);
+		field.setModifiers(Modifier.PRIVATE);
+		wrapperCtClass.addField(field);
+		
+		field = new CtField(CtClass.booleanType, "_dm_initialized", wrapperCtClass);
+		field.setModifiers(Modifier.PRIVATE);
+		wrapperCtClass.addField(field);
+	}
+	
+	private void addConstructor(CtClass wrapperCtClass) throws CannotCompileException {
+		CtClass dmSessionCtClass = ctClassForClass(DMSession.class);
+		CtClass keyCtClass = ctClassForClass(keyClass);
+		
+		CtConstructor constructor = new CtConstructor(new CtClass[] { keyCtClass, dmSessionCtClass }, wrapperCtClass);
+		
+		constructor.setBody("{ super($1); $0._dm_session = $2;}");
+		
+		wrapperCtClass.addConstructor(constructor);
+	}
+	
+	private void addInitMethod(CtClass baseCtClass, CtClass wrapperCtClass) throws CannotCompileException {
+		CtMethod wrapperMethod = new CtMethod(CtClass.voidType, "_dm_init", new CtClass[] {}, wrapperCtClass);
+		wrapperMethod.setBody(
+				"{" +
+				"    if (!$0._dm_initialized) {" +
+				"        $0._dm_session.internalInit(" + baseCtClass.getName() + ".class, $0);" +
+				"        $0._dm_initialized = true;" +
+				"    }" +
+				"}");
+		
+		wrapperCtClass.addMethod(wrapperMethod);
+	}
+	
+	private void addWrapperGetter(CtClass baseCtClass, CtClass wrapperCtClass, CtMethod method) throws CannotCompileException, NotFoundException {
+		String methodName = method.getName();
+		if (!methodName.startsWith("get") || methodName.length() < 4) {
+			throw new RuntimeException("DMProperty method name '" + method.getName() + "' doesn't look like a getter");
+		}
+		
+		if (method.getParameterTypes().length > 0) {
+			throw new RuntimeException("DMProperty method " + method.getName() + " has arguments");
+		}
+		
+		String propertyName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);  
+		CtClass propertyType = method.getReturnType();
+		
+		// FIXME: Not sure which is the case here
+		if (propertyType == null || propertyType == CtClass.voidType)
+			throw new RuntimeException("DMProperty method doesn't have a result");
+		
+		CtField field;
+			
+		field = new CtField(CtClass.booleanType, "_dm_" + propertyName + "Initialized", wrapperCtClass);
+		field.setModifiers(Modifier.PRIVATE);
+		wrapperCtClass.addField(field);
+
+		field = new CtField(propertyType, "_dm_" + propertyName, wrapperCtClass);
+		field.setModifiers(Modifier.PRIVATE);
+		wrapperCtClass.addField(field);
+		
+		CtMethod wrapperMethod = new CtMethod(propertyType, methodName, new CtClass[] {}, wrapperCtClass);
+		wrapperMethod.setBody(
+				"{" +
+				"    $0._dm_init();" +
+				"    if (!$0._dm_" + propertyName + "Initialized) {" +
+				"        $0._dm_" + propertyName + " = super." + methodName + "();" +
+				"        $0._dm_" + propertyName + "Initialized = true;" +
+				"    }" +
+				"    return $0._dm_" + propertyName + ";" +
+				"}");
+		
+		wrapperCtClass.addMethod(wrapperMethod);
+	}
+
+	private void addWrapperGetters(CtClass baseCtClass, CtClass wrapperCtClass) throws CannotCompileException, NotFoundException {
+		for (CtMethod method : baseCtClass.getMethods()) {
+			for (Object o : method.getAvailableAnnotations()) {
+				if (o instanceof DMProperty) {
+					addWrapperGetter(baseCtClass, wrapperCtClass, method);
+				}
+			}
+		}
+	}
+	
+	private void buildWrapperClass() {
+		String className = baseClass.getName();
+		ClassPool classPool = cache.getClassPool();
+		CtClass baseCtClass = ctClassForClass(baseClass);
+		
+		CtClass wrapperCtClass = classPool.makeClass(className + "_DMWrapper", baseCtClass);
+		
+		try {
+			addCommonFields(wrapperCtClass);
+			addConstructor(wrapperCtClass);
+			addInitMethod(baseCtClass, wrapperCtClass);
+			addWrapperGetters(baseCtClass, wrapperCtClass);
+			
+			@SuppressWarnings("unchecked")
+			Class<?> wrapperClass  = wrapperCtClass.toClass();
+			wrapperConstructor = wrapperClass.getDeclaredConstructors()[0]; 
+		} catch (CannotCompileException e) {
+			throw new RuntimeException("Error compiling wrapper for " + className, e);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("Cannot look up class compiling wrapper for " + className, e);
 		}
 	}
 }

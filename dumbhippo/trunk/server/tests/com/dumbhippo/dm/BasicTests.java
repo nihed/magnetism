@@ -29,7 +29,7 @@ public class BasicTests  extends AbstractSupportedTests {
 		em.getTransaction().commit();
 		
 		//////////////////////////////////////
-		
+
 		em = support.beginSessionRO(viewpoint);
 		
 		session = ReadOnlySession.getCurrent();

@@ -54,7 +54,6 @@
 		<pathelement location="${build.tests}"/>
                 <pathelement location="${buildjar.dir}/dmtest.par"/>
 		<pathelement location="${jboss.root}/server/default/lib/hsqldb.jar"/>
-		<pathelement location="${jboss.root}/server/default/lib/javassist.jar"/>
 		<pathelement location="${jboss.root}/server/default/lib/cglib.jar"/>
 		<path refid="project.class.path" />
 	</path>
