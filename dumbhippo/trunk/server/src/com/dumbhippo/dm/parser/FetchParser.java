@@ -93,7 +93,7 @@ public FetchParser(ParserSharedInputState state) {
 			p=propertyFetch();
 			props.add(p);
 			{
-			_loop4267:
+			_loop29:
 			do {
 				if ((LA(1)==SEMICOLON)) {
 					match(SEMICOLON);
@@ -101,7 +101,7 @@ public FetchParser(ParserSharedInputState state) {
 					props.add(p);
 				}
 				else {
-					break _loop4267;
+					break _loop29;
 				}
 				
 			} while (true);
@@ -146,7 +146,7 @@ public FetchParser(ParserSharedInputState state) {
 				a=attribute();
 				attrs.add(a);
 				{
-				_loop4272:
+				_loop34:
 				do {
 					if ((LA(1)==COMMA)) {
 						match(COMMA);
@@ -154,7 +154,7 @@ public FetchParser(ParserSharedInputState state) {
 						attrs.add(a);
 					}
 					else {
-						break _loop4272;
+						break _loop34;
 					}
 					
 				} while (true);
