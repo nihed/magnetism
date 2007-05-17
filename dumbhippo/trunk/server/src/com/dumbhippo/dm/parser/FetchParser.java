@@ -93,7 +93,7 @@ public FetchParser(ParserSharedInputState state) {
 			p=propertyFetch();
 			props.add(p);
 			{
-			_loop4059:
+			_loop4267:
 			do {
 				if ((LA(1)==SEMICOLON)) {
 					match(SEMICOLON);
@@ -101,7 +101,7 @@ public FetchParser(ParserSharedInputState state) {
 					props.add(p);
 				}
 				else {
-					break _loop4059;
+					break _loop4267;
 				}
 				
 			} while (true);
@@ -128,6 +128,7 @@ public FetchParser(ParserSharedInputState state) {
 		
 		String p;
 		FetchAttribute a;
+		PropertyFetch childPf;
 		List<FetchAttribute> attrs = new ArrayList<FetchAttribute>();
 		Fetch children = null;
 		
@@ -145,7 +146,7 @@ public FetchParser(ParserSharedInputState state) {
 				a=attribute();
 				attrs.add(a);
 				{
-				_loop4064:
+				_loop4272:
 				do {
 					if ((LA(1)==COMMA)) {
 						match(COMMA);
@@ -153,7 +154,7 @@ public FetchParser(ParserSharedInputState state) {
 						attrs.add(a);
 					}
 					else {
-						break _loop4064;
+						break _loop4272;
 					}
 					
 				} while (true);
@@ -177,6 +178,9 @@ public FetchParser(ParserSharedInputState state) {
 		case SEMICOLON:
 		case LBRACKET:
 		case RBRACKET:
+		case PLUS:
+		case STAR:
+		case NAME:
 		{
 			break;
 		}
@@ -188,17 +192,40 @@ public FetchParser(ParserSharedInputState state) {
 		}
 		{
 		switch ( LA(1)) {
-		case LBRACKET:
-		{
-			match(LBRACKET);
-			children=fetchString();
-			match(RBRACKET);
-			break;
-		}
 		case EOF:
 		case SEMICOLON:
+		case LBRACKET:
 		case RBRACKET:
 		{
+			{
+			switch ( LA(1)) {
+			case LBRACKET:
+			{
+				match(LBRACKET);
+				children=fetchString();
+				match(RBRACKET);
+				break;
+			}
+			case EOF:
+			case SEMICOLON:
+			case RBRACKET:
+			{
+				break;
+			}
+			default:
+			{
+				throw new NoViableAltException(LT(1), getFilename());
+			}
+			}
+			}
+			break;
+		}
+		case PLUS:
+		case STAR:
+		case NAME:
+		{
+			childPf=propertyFetch();
+			children = new Fetch(new PropertyFetch[] { childPf });
 			break;
 		}
 		default:

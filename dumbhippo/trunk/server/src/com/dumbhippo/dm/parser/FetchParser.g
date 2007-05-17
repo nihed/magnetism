@@ -53,12 +53,15 @@ fetchString returns [Fetch f]
 propertyFetch returns [PropertyFetch pf]
 { String p;
   FetchAttribute a;
+  PropertyFetch childPf;
   List<FetchAttribute> attrs = new ArrayList<FetchAttribute>();
   Fetch children = null;
 }
 	: p=property
 	  ( LPAREN ( a=attribute { attrs.add(a); } ( COMMA a=attribute { attrs.add(a); } ) * )? RPAREN )?
-	  ( LBRACKET children=fetchString RBRACKET )?
+	  (   ( LBRACKET children=fetchString RBRACKET )?
+	     | childPf=propertyFetch { children = new Fetch(new PropertyFetch[] { childPf }); }
+	  )
 	  { pf = new PropertyFetch(p, 
 	  	                       attrs.toArray(new FetchAttribute[attrs.size()]), 
 	  	                       children != null && children.getProperties().length > 0 ? children : null); }

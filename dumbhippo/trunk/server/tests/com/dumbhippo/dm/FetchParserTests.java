@@ -24,9 +24,10 @@ public class FetchParserTests extends AbstractParserTests {
 		
 		expectIdentity("+");
 		expectIdentity("name");
-		expectIdentity("contact[+]");
-		expectIdentity("name;contact[name;photoUrl]");
-		expectIdentity("name(notify=false)[name;photoUrl(notify=false)]");
+		expectIdentity("contact +");
+		expectIdentity("name;contact [name;photoUrl]");
+		expectIdentity("name(notify=false) [name;photoUrl(notify=false)]");
+		expectIdentity("a;b [a;b [a;b]]");
 		
 		expectSuccess("member()[]", "member");
 		
