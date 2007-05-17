@@ -3,9 +3,12 @@ package com.dumbhippo.dm;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.transaction.Synchronization;
 
+import org.hibernate.Session;
 import org.hibernate.context.ThreadLocalSessionContext;
 import org.hibernate.ejb.HibernateEntityManager;
+import org.hibernate.ejb.HibernateEntityManagerFactory;
 
 public class TestSupport {
 	EntityManagerFactory emf;
@@ -29,8 +32,14 @@ public class TestSupport {
 	
 	public EntityManager beginTransaction() {
 		EntityManager em = emf.createEntityManager(); 
+		Session session = ((HibernateEntityManager)em).getSession();
+		ThreadLocalSessionContext.bind(session);
+		
+		// This is a workaround for a ThreadLocalSessionContext bug hwere bind() doesn't 
+		// register the cleanup synchronization as an implicit bind on first use would
+		session.getTransaction().registerSynchronization(new CleanupSynchronization());
+
 		em.getTransaction().begin();
-		ThreadLocalSessionContext.bind(((HibernateEntityManager)em).getSession());
 		
 		return em;
 	}
@@ -46,9 +55,18 @@ public class TestSupport {
 	public EntityManager beginSessionRO(DMViewpoint viewpoint) {
 		EntityManager em = beginTransaction();
 		
-		em.getTransaction().begin();
 		DMCache.getInstance().initializeReadOnlySession(viewpoint);
 		
 		return em;
+	}
+	
+	public class CleanupSynchronization implements Synchronization {
+		public void afterCompletion(int status) {
+			ThreadLocalSessionContext.unbind(((HibernateEntityManagerFactory)emf).getSessionFactory());
+		}
+
+		public void beforeCompletion() {
+		}
+		
 	}
 }
