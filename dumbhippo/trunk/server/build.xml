@@ -90,7 +90,7 @@
 	</target>
 
 	<target name="compiletests" depends="compile">
-		<javac srcdir="${src.tests}" destdir="${build.tests}" source="1.5" encoding="UTF-8">
+		<javac debug="on" srcdir="${src.tests}" destdir="${build.tests}" source="1.5" encoding="UTF-8">
 			<classpath refid="tests.class.path" />
 		</javac>
 
