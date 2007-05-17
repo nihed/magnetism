@@ -271,7 +271,7 @@ tryAgain:
 		}
 		}
 		{
-		_loop1079:
+		_loop4051:
 		do {
 			switch ( LA(1)) {
 			case 'a':  case 'b':  case 'c':  case 'd':
@@ -310,7 +310,7 @@ tryAgain:
 			}
 			default:
 			{
-				break _loop1079;
+				break _loop4051;
 			}
 			}
 		} while (true);
