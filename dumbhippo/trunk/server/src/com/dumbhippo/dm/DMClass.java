@@ -184,11 +184,21 @@ public class DMClass<T> {
 		wrapperCtClass.addField(field);
 		
 		CtMethod wrapperMethod = new CtMethod(propertyType, methodName, new CtClass[] {}, wrapperCtClass);
+		
+		String className = baseCtClass.getName();
+		String propertyTypeName = propertyType.getName(); 
+		
+		// TODO: Deal with primitive types, where we need to box/unbox
+		
 		wrapperMethod.setBody(
 				"{" +
-				"    $0._dm_init();" +
 				"    if (!$0._dm_" + propertyName + "Initialized) {" +
-				"        $0._dm_" + propertyName + " = super." + methodName + "();" +
+				"    	 try {" +
+				"           $0._dm_" + propertyName + " = (" + propertyTypeName + ")$0._dm_session.fetchAndFilter(" + className + ".class, getKey(), \"" + propertyName + "\");" +
+				"    	 } catch (com.dumbhippo.dm.NotCachedException e) {" +
+				"           $0._dm_init();" +
+				"           $0._dm_" + propertyName + " = (" + propertyTypeName + ")$0._dm_session.storeAndFilter(" + className + ".class, getKey(), \"" + propertyName + "\", $0._dm_" + propertyName + " = super." + methodName + "());" +
+				"        }" +
 				"        $0._dm_" + propertyName + "Initialized = true;" +
 				"    }" +
 				"    return $0._dm_" + propertyName + ";" +
