@@ -3,6 +3,9 @@ package com.dumbhippo.dm;
 import java.util.HashMap;
 import java.util.Map;
 
+import javassist.ClassClassPath;
+import javassist.ClassPool;
+
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
@@ -16,9 +19,18 @@ public class DMCache {
 	private DMSessionMap sessionMap = new DMSessionMapJTA();
 	private EntityManagerFactory emf = null;
 	private Map<Class, DMClass> classes = new HashMap<Class, DMClass>();
-
+	private ClassPool classPool = new ClassPool();
 	private static DMCache instance = new DMCache();
 
+	private DMCache() {
+		classPool = new ClassPool();
+	
+		// FIXME. We actually want the class path to be the class path of the class loader
+		// where the DMO's live. Something to fix when we add jar-file scanning to 
+		// find DMOs.
+		classPool.insertClassPath(new ClassClassPath(this.getClass()));
+	}
+	
 	public static DMCache getInstance() {
 		return instance;
 	}
@@ -83,5 +95,9 @@ public class DMCache {
 			throw new IllegalStateException("DM session wasn't initialized");
 
 		return session;
+	}
+	
+	public ClassPool getClassPool() {
+		return classPool;
 	}
 }

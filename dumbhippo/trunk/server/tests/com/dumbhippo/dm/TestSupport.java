@@ -35,8 +35,9 @@ public class TestSupport {
 		Session session = ((HibernateEntityManager)em).getSession();
 		ThreadLocalSessionContext.bind(session);
 		
-		// This is a workaround for a ThreadLocalSessionContext bug hwere bind() doesn't 
-		// register the cleanup synchronization as an implicit bind on first use would
+		// If we bind the session to the thread explicitly with bind(), then we have
+		// to unbind() it ourself. (Sessions created implicitly are automatically
+		// cleaned up on transaction completion.)
 		session.getTransaction().registerSynchronization(new CleanupSynchronization());
 
 		em.getTransaction().begin();
@@ -67,6 +68,5 @@ public class TestSupport {
 
 		public void beforeCompletion() {
 		}
-		
 	}
 }
