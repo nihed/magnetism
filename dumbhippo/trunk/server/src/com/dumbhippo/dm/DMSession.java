@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.NotFoundException;
 
-public class DMSession {
+public abstract class DMSession {
 	static private Logger logger = GlobalSetup.getLogger(DMSession.class);
 
 	private Map<Object, DMObject> sessionDMOs = new HashMap<Object, DMObject>();
@@ -76,6 +76,34 @@ public class DMSession {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	/**
+	 * Internal API: looks for cached data for the specified resource property. If found, filters it
+	 *   for this session's viewpoint, and returns the result.
+	 * 
+	 * @param <K>
+	 * @param <T>
+	 * @param clazz
+	 * @param key
+	 * @param propertyName
+	 * @return
+	 * @throws NotCachedException
+	 */
+	public abstract <K, T extends DMObject<K>> Object fetchAndFilter(Class<T> clazz, K key, String propertyName) throws NotCachedException;
+
+	/**
+	 * Internal API: Stores the specified (unfiltered) value in the cache, then filters it
+	 *   for this session's viewpoint, and returns the result.
+	 * 
+	 * @param <K>
+	 * @param <T>
+	 * @param clazz
+	 * @param key
+	 * @param propertyName
+	 * @return
+	 * @throws NotCachedException
+	 */
+	public abstract <K, T extends DMObject<K>> Object storeAndFilter(Class<T> clazz, K key, String propertyName, Object value);
 
 	public Object getInjectableEntityManager() {
 		if (injectableEntityManager == null)
