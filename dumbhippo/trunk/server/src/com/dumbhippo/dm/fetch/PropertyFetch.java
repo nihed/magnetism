@@ -46,9 +46,14 @@ public class PropertyFetch {
 		}
 		
 		if (children != null) {
-			b.append('[');
-			b.append(children.toString());
-			b.append(']');
+			b.append(' ');
+			if (children.getProperties().length == 1) {
+				b.append(children.getProperties()[0].toString());
+			} else {
+				b.append('[');
+				b.append(children.toString());
+				b.append(']');
+			}
 		}
 		
 		return b.toString();
