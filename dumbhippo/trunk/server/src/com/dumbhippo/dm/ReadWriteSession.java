@@ -2,12 +2,12 @@ package com.dumbhippo.dm;
 
 
 public class ReadWriteSession extends DMSession {
-	protected ReadWriteSession(DMCache cache, DMViewpoint viewpoint) {
-		super(cache, viewpoint);
+	protected ReadWriteSession(DataModel model, DMViewpoint viewpoint) {
+		super(model, viewpoint);
 	}
 	
 	public static ReadWriteSession getCurrent() {
-		DMSession session = DMCache.getInstance().getCurrentSession();
+		DMSession session = DataModel.getInstance().getCurrentSession();
 		if (session instanceof ReadWriteSession)
 			return (ReadWriteSession)session;
 		

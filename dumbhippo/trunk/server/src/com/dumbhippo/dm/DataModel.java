@@ -14,16 +14,16 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 
-public class DMCache {
-	protected static final Logger logger = GlobalSetup.getLogger(DMCache.class);
+public class DataModel {
+	protected static final Logger logger = GlobalSetup.getLogger(DataModel.class);
 	
 	private DMSessionMap sessionMap = new DMSessionMapJTA();
 	private EntityManagerFactory emf = null;
 	private Map<Class, DMClassHolder> classes = new HashMap<Class, DMClassHolder>();
 	private ClassPool classPool = new ClassPool();
-	private static DMCache instance = new DMCache();
+	private static DataModel instance = new DataModel();
 
-	private DMCache() {
+	private DataModel() {
 		classPool = new ClassPool();
 	
 		// FIXME. We actually want the class path to be the class path of the class loader
@@ -32,7 +32,7 @@ public class DMCache {
 		classPool.insertClassPath(new ClassClassPath(this.getClass()));
 	}
 	
-	public static DMCache getInstance() {
+	public static DataModel getInstance() {
 		return instance;
 	}
 
