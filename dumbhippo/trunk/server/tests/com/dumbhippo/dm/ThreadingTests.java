@@ -5,6 +5,7 @@ import javax.persistence.EntityManager;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.dm.TestGroupDMO;
 import com.dumbhippo.dm.persistence.TestGroup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.test.util.Sequence;
