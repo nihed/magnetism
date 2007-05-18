@@ -2,16 +2,11 @@ import logging, os
 
 import gobject, gtk, gnomeapplet, gconf
 
-try:
-    import deskbar, deskbar.DeskbarApplet
-    deskbar_available = True    
-except:
-    deskbar_available = False
-
 import hippo
 
 import bigboard.mugshot as mugshot
 import bigboard.libbig as libbig
+import bigboard.deskbar_embed as deskbar_embed
 from bigboard.stock import Stock
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasVBox
         
@@ -22,45 +17,14 @@ class SearchStock(Stock):
         
         self.__box = hippo.CanvasBox()
         
-        if not deskbar_available:
-            self.__box.append(hippo.CanvasText(text="Deskbar not installed"))
-            return
-        
-        self.__vbox = gtk.VBox()
-        self.__widget = hippo.CanvasWidget(widget=self.__vbox)
-        
-        self.__applet = gnomeapplet.Applet()
-        self.__applet.get_orient = lambda: gnomeapplet.ORIENT_DOWN
-        self.__deskbar = deskbar.DeskbarApplet.DeskbarApplet(self.__applet)
-        self.__deskbar.loader.connect("modules-loaded", self.__override_modules_loaded)
-        self.__applet.reparent(self.__vbox)
-        uiname = gconf.Value(gconf.VALUE_STRING)
-        uiname.set_string(deskbar.ENTRIAC_UI_NAME)
-        self.__deskbar.on_ui_changed(uiname)
-        
+        self.__deskbar = deskbar_embed.Deskbar()
+        self.__widget = hippo.CanvasWidget(widget=self.__deskbar)
         self.__box.append(self.__widget)
         self.__empty_box = CanvasVBox()
 
     def focus(self):
-        self.__deskbar.on_keybinding_button_press(None, gtk.get_current_event_time())
+        self.__deskbar.get_deskbar().on_keybinding_button_press(None, gtk.get_current_event_time())
         
     def get_content(self, size):
         return size == self.SIZE_BULL and self.__box or self.__empty_box
 
-    def __override_modules_loaded(self, loader):
-        self._logger.debug("got modules loaded")        
-        gobject.idle_add(self.__idle_override_modules_loaded)
-
-    def __idle_override_modules_loaded(self):
-        self._logger.debug("idle override modules")
-        enabled_handlers = gconf.Value(gconf.VALUE_LIST)
-        def make_str_val(s):
-            v = gconf.Value(gconf.VALUE_STRING)
-            v.set_string(s)
-            return v
-        enabled_handlers.set_list_type(gconf.VALUE_STRING)
-        enabled_handlers.set_list(map(make_str_val, ['ProgramsHandler', 'MozillaBookmarksHandler', 'YahooHandler']))
-        self.__deskbar.on_config_handlers(enabled_handlers)  
-        self._logger.debug("idle override modules complete")
-
-       
