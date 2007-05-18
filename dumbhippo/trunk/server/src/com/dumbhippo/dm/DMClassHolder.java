@@ -28,15 +28,15 @@ public class DMClassHolder<T> {
 	@SuppressWarnings("unused")
 	static private Logger logger = GlobalSetup.getLogger(DMClassHolder.class);
 	
-	private DMCache cache;
+	private DataModel model;
 	private Class<T> baseClass;
 	private Class<?> keyClass;
 	private Constructor keyConstructor;
 	private Constructor wrapperConstructor;
 	private Map<String, DMPropertyHolder> properties = new HashMap<String, DMPropertyHolder>();
 
-	public DMClassHolder(DMCache cache, Class<T> clazz) {
-		this.cache = cache;
+	public DMClassHolder(DataModel model, Class<T> clazz) {
+		this.model = model;
 		this.baseClass = clazz;
 
 		for (Constructor c : clazz.getConstructors()) {
@@ -150,7 +150,7 @@ public class DMClassHolder<T> {
 	}
 	
 	private CtClass ctClassForClass(Class<?> c) {
-		ClassPool classPool = cache.getClassPool();
+		ClassPool classPool = model.getClassPool();
 		String className = c.getName();
 
 		try {
@@ -250,7 +250,7 @@ public class DMClassHolder<T> {
 	
 	private void buildWrapperClass() {
 		String className = baseClass.getName();
-		ClassPool classPool = cache.getClassPool();
+		ClassPool classPool = model.getClassPool();
 		CtClass baseCtClass = ctClassForClass(baseClass);
 		
 		CtClass wrapperCtClass = classPool.makeClass(className + "_DMWrapper", baseCtClass);

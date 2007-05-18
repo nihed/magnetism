@@ -22,12 +22,12 @@ public class TestSupport {
 	}
 	
 	private TestSupport() {
-		DMCache cache = DMCache.getInstance();
+		DataModel model = DataModel.getInstance();
 		
 		emf = Persistence.createEntityManagerFactory("dmtest");
-		cache.setSessionMap(new TestSessionMap(emf));
-		cache.setEntityManagerFactory(emf);
-		cache.addDMClass(TestGroupDMO.class);
+		model.setSessionMap(new TestSessionMap(emf));
+		model.setEntityManagerFactory(emf);
+		model.addDMClass(TestGroupDMO.class);
 	}
 	
 	public EntityManager beginTransaction() {
@@ -48,7 +48,7 @@ public class TestSupport {
 	public EntityManager beginSessionRW(DMViewpoint viewpoint) {
 		EntityManager em = beginTransaction();
 		
-		DMCache.getInstance().initializeReadWriteSession(viewpoint);
+		DataModel.getInstance().initializeReadWriteSession(viewpoint);
 		
 		return em;
 	}
@@ -56,7 +56,7 @@ public class TestSupport {
 	public EntityManager beginSessionRO(DMViewpoint viewpoint) {
 		EntityManager em = beginTransaction();
 		
-		DMCache.getInstance().initializeReadOnlySession(viewpoint);
+		DataModel.getInstance().initializeReadOnlySession(viewpoint);
 		
 		return em;
 	}

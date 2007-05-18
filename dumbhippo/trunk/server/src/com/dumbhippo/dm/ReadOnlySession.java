@@ -8,12 +8,12 @@ import com.dumbhippo.GlobalSetup;
 public class ReadOnlySession extends DMSession {
 	static private Logger logger = GlobalSetup.getLogger(DMSession.class);
 
-	protected ReadOnlySession(DMCache cache, DMViewpoint viewpoint) {
-		super(cache, viewpoint);
+	protected ReadOnlySession(DataModel model, DMViewpoint viewpoint) {
+		super(model, viewpoint);
 	}
 	
 	public static ReadOnlySession getCurrent() {
-		DMSession session = DMCache.getInstance().getCurrentSession();
+		DMSession session = DataModel.getInstance().getCurrentSession();
 		if (session instanceof ReadOnlySession)
 			return (ReadOnlySession)session;
 		
@@ -22,8 +22,8 @@ public class ReadOnlySession extends DMSession {
 	
 	public <K, T extends DMObject<K>> Object fetchAndFilter(Class<T> clazz, K key, String propertyName) throws NotCachedException {
 		// Ordering here increases effiicency in not-cached case
-		Object value = cache.fetchFromCache(clazz, key, propertyName);
-		DMPropertyHolder property = cache.getDMClass(clazz).getProperty(propertyName);
+		Object value = model.fetchFromCache(clazz, key, propertyName);
+		DMPropertyHolder property = model.getDMClass(clazz).getProperty(propertyName);
 		
 		logger.debug("Found value for {}#{}.{} in the cache", new Object[] { clazz.getSimpleName(), key, propertyName });
 
@@ -33,8 +33,8 @@ public class ReadOnlySession extends DMSession {
 	public <K, T extends DMObject<K>> Object storeAndFilter(Class<T> clazz, K key, String propertyName, Object value) {
 		logger.debug("Caching new value for {}#{}.{}", new Object[] { clazz.getSimpleName(), key, propertyName });
 		
-		DMPropertyHolder property = cache.getDMClass(clazz).getProperty(propertyName);
-		cache.storeInCache(clazz, key, propertyName, property.dehydrate(value));
+		DMPropertyHolder property = model.getDMClass(clazz).getProperty(propertyName);
+		model.storeInCache(clazz, key, propertyName, property.dehydrate(value));
 		
 		return value;
 	}
