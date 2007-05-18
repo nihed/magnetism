@@ -19,6 +19,7 @@ bigboard.libbig.httpcache._cache = bigboard.libbig.httpcache.Cache(cachedir=os.p
 from bigboard.libbig.http import AsyncHTTPFetcher
 from bigboard.libbig.imagecache import URLImageCache
 import bigboard.mugshot as mugshot
+import bigboard.deskbar_embed as deskbar_embed
 
 _logger = logging.getLogger("bigboard.Applet")
 
@@ -53,7 +54,10 @@ class BigBoardApplet(gobject.GObject):
         self.__mugshot.connect("self-known", self.__on_self_known)
         
         self.__img = UrlImage()
-        self.__box.pack_start(self.__img, expand=True)
+        self.__box.pack_start(self.__img, expand=False)
+
+        self.__deskbar = deskbar_embed.Deskbar()
+        self.__box.pack_start(self.__deskbar, expand=True)
 
         self.__box.show_all()
         self.__applet.add(self.__box)
@@ -103,6 +107,7 @@ if __name__ == "__main__":
     if window:
         _logger.debug("adding %s to path", srcdir)
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window.set_geometry_hints(max_height=24)
         box = gtk.VBox()
         window.add(box)
         applet = gnomeapplet.Applet()
