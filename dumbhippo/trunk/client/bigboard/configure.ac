@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(bigboard, 0.3.2)
+AM_INIT_AUTOMAKE(bigboard, 0.3.3)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -175,6 +175,7 @@ AC_SUBST(PYGTK_DEFSDIR)
 
 AC_OUTPUT([
 Makefile
+applet/Makefile
 bigboard/Makefile
 bigboard/keybinder/Makefile
 scripts/Makefile

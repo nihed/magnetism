@@ -1,8 +1,8 @@
 %{!?python_sitelib: %define python_sitelib %(python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name:           bigboard
-Version:        0.3.2
-Release:        3
+Version:        0.3.3
+Release:        1
 Summary:        Sidebar application launcher using mugshot.org
 
 Group:          Applications/Internet
@@ -46,6 +46,8 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %doc COPYING
+%{_libexecdir}/bigboard-applet
+%{_libdir}/bonobo/servers/*
 %dir %{_libexecdir}/bigboard
 %attr(0755,root,root) %{_libexecdir}/bigboard/*
 %dir %{python_sitelib}/bigboard
@@ -73,6 +75,9 @@ rm -rf $RPM_BUILD_ROOT
 # desktop mode
 
 %changelog
+* Wed May 16 2007 Colin Walters <walters@redhat.com> - 0.3.3-1
+- Update
+
 * Wed May 16 2007 Colin Walters <walters@redhat.com> - 0.3.2-3
 - Own more dirs
 

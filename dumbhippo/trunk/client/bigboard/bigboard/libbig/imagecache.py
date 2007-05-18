@@ -12,13 +12,13 @@ class URLImageCache(Singleton):
         self.__logger = logging.getLogger('bigboard.URLImageCache')
         self._fetcher = AsyncHTTPFetcher.getInstance()
     
-    def get(self, url, cb, errcb):
+    def get(self, url, cb, errcb, format='surface'):
         if self._cache.has_key(url): # TODO expire
-            surface = self._cache[url]
-            cb(url, surface)
+            pixbuf = self._cache[url]
+            cb(url, format == 'surface' and hippo.cairo_surface_from_gdk_pixbuf(pixbuf) or pixbuf)
             return
 
-        cbdata = (cb, errcb)
+        cbdata = (cb, errcb, format)
         if self._loads.has_key(url):
             self._loads[url].append(cbdata)
         else:
@@ -33,13 +33,12 @@ class URLImageCache(Singleton):
             loader.write(data)
             loader.close()            
             pixbuf = loader.get_pixbuf()
-            surface = hippo.cairo_surface_from_gdk_pixbuf(pixbuf)
             self.__logger.debug("invoking callback for %s url='%s'" % (self, url))
-            self._cache[url] = surface
-            for cb, errcb in self._loads[url]:
-                cb(url, surface)
+            self._cache[url] = pixbuf
+            for cb, errcb, fmt in self._loads[url]:
+                cb(url, fmt == 'surface' and hippo.cairo_surface_from_gdk_pixbuf(pixbuf) or pixbuf)
         except:
-            for cb, errcb in self._loads[url]:
+            for cb, errcb, fmt in self._loads[url]:
                 errcb(url, sys.exc_info())
         del self._loads[url]            
         
