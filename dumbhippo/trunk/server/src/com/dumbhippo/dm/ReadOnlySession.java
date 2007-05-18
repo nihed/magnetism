@@ -21,11 +21,21 @@ public class ReadOnlySession extends DMSession {
 	}
 	
 	public <K, T extends DMObject<K>> Object fetchAndFilter(Class<T> clazz, K key, String propertyName) throws NotCachedException {
-		throw new NotCachedException();
+		// Ordering here increases effiicency in not-cached case
+		Object value = cache.fetchFromCache(clazz, key, propertyName);
+		DMPropertyHolder property = cache.getDMClass(clazz).getProperty(propertyName);
+		
+		logger.debug("Found value for {}#{}.{} in the cache", new Object[] { clazz.getSimpleName(), key, propertyName });
+
+		return property.rehydrate(value, this);
 	}
 
 	public <K, T extends DMObject<K>> Object storeAndFilter(Class<T> clazz, K key, String propertyName, Object value) {
 		logger.debug("Caching new value for {}#{}.{}", new Object[] { clazz.getSimpleName(), key, propertyName });
+		
+		DMPropertyHolder property = cache.getDMClass(clazz).getProperty(propertyName);
+		cache.storeInCache(clazz, key, propertyName, property.dehydrate(value));
+		
 		return value;
 	}
 }

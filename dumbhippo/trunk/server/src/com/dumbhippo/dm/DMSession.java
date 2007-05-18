@@ -14,7 +14,7 @@ public abstract class DMSession {
 	static private Logger logger = GlobalSetup.getLogger(DMSession.class);
 
 	private Map<Object, DMObject> sessionDMOs = new HashMap<Object, DMObject>();
-	private DMCache cache;
+	protected DMCache cache;
 	private DMViewpoint viewpoint;
 	private EntityManager injectableEntityManager;
 	
@@ -38,7 +38,7 @@ public abstract class DMSession {
 		if (result == null) {
 			logger.debug("Didn't find object for key {}, creating a new one", key);
 			
-			DMClass<T> dmClass = cache.getDMClass(clazz); 
+			DMClassHolder<T> dmClass = cache.getDMClass(clazz); 
 			
 			result = dmClass.createInstance(key, this);
 			sessionDMOs.put(key, result);
@@ -63,7 +63,7 @@ public abstract class DMSession {
 	 * @param t
 	 */
 	public <T extends DMObject<?>> void internalInit(Class<T> clazz, T t) {
-		DMClass<T> dmClass = cache.getDMClass(clazz); 
+		DMClassHolder<T> dmClass = cache.getDMClass(clazz); 
 		
 		dmClass.processInjections(this, t);
 		

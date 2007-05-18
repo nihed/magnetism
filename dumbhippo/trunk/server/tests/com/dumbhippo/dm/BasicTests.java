@@ -12,7 +12,7 @@ import com.dumbhippo.server.NotFoundException;
  * @author otaylor
  */
 public class BasicTests  extends AbstractSupportedTests {
-	public void testCreate() throws NotFoundException {
+	public void testCaching() throws NotFoundException {
 		TestGroup group;
 		TestGroupDMO groupDMO;
 		EntityManager em;
@@ -33,6 +33,31 @@ public class BasicTests  extends AbstractSupportedTests {
 		em = support.beginSessionRO(viewpoint);
 		
 		session = ReadOnlySession.getCurrent();
+		
+		// First time stores in session-local and global caches
+		groupDMO = session.find(TestGroupDMO.class, guid);
+		assertTrue(groupDMO != null);
+		assertTrue(groupDMO.getKey().equals(guid));
+		assertTrue(groupDMO.getName().equals("Hippos"));
+		
+		// Second time within session finds the existing DMO in
+		// the session-local cache. The property value is cached
+		// in the DMO.
+		groupDMO = session.find(TestGroupDMO.class, guid);
+		assertTrue(groupDMO != null);
+		assertTrue(groupDMO.getKey().equals(guid));
+		assertTrue(groupDMO.getName().equals("Hippos"));
+
+		em.getTransaction().commit();
+		
+		//////////////////////////////////////////////////
+		
+		em = support.beginSessionRO(viewpoint);
+
+		session = ReadOnlySession.getCurrent();
+		
+		// Creates a new GroupDMO. The property value will be found
+		// from the global cache
 		groupDMO = session.find(TestGroupDMO.class, guid);
 		assertTrue(groupDMO != null);
 		assertTrue(groupDMO.getKey().equals(guid));
