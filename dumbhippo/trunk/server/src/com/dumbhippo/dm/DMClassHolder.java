@@ -21,21 +21,21 @@ import javax.persistence.EntityManager;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
 import com.dumbhippo.identity20.Guid;
 
-public class DMClass<T> {
+public class DMClassHolder<T> {
 	@SuppressWarnings("unused")
-	static private Logger logger = GlobalSetup.getLogger(DMClass.class);
+	static private Logger logger = GlobalSetup.getLogger(DMClassHolder.class);
 	
 	private DMCache cache;
 	private Class<T> baseClass;
 	private Class<?> keyClass;
 	private Constructor keyConstructor;
 	private Constructor wrapperConstructor;
+	private Map<String, DMPropertyHolder> properties = new HashMap<String, DMPropertyHolder>();
 
-	public DMClass(DMCache cache, Class<T> clazz) {
+	public DMClassHolder(DMCache cache, Class<T> clazz) {
 		this.cache = cache;
 		this.baseClass = clazz;
 
@@ -65,6 +65,14 @@ public class DMClass<T> {
 	// FIXME: do we need this?
 	public Class<?> getKeyClass() {
 		return keyClass;
+	}
+	
+	public Class<T> getBaseClass() {
+		return baseClass;
+	}
+	
+	public DMPropertyHolder getProperty(String name) {
+		return properties.get(name);
 	}
 	
 	public T createInstance(Object key, DMSession session) {
@@ -192,34 +200,18 @@ public class DMClass<T> {
 		wrapperCtClass.addMethod(wrapperMethod);
 	}
 	
-	private void addWrapperGetter(CtClass baseCtClass, CtClass wrapperCtClass, CtMethod method) throws CannotCompileException, NotFoundException {
-		String methodName = method.getName();
-		if (!methodName.startsWith("get") || methodName.length() < 4) {
-			throw new RuntimeException("DMProperty method name '" + method.getName() + "' doesn't look like a getter");
-		}
-		
-		if (method.getParameterTypes().length > 0) {
-			throw new RuntimeException("DMProperty method " + method.getName() + " has arguments");
-		}
-		
-		String propertyName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);  
-		CtClass propertyType = method.getReturnType();
-		
-		// FIXME: Not sure which is the case here
-		if (propertyType == null || propertyType == CtClass.voidType)
-			throw new RuntimeException("DMProperty method doesn't have a result");
-		
+	private void addWrapperGetter(CtClass baseCtClass, CtClass wrapperCtClass, DMPropertyHolder property) throws CannotCompileException, NotFoundException {
 		CtField field;
 			
-		field = new CtField(CtClass.booleanType, "_dm_" + propertyName + "Initialized", wrapperCtClass);
+		field = new CtField(CtClass.booleanType, "_dm_" + property.getName() + "Initialized", wrapperCtClass);
 		field.setModifiers(Modifier.PRIVATE);
 		wrapperCtClass.addField(field);
 
-		field = new CtField(propertyType, "_dm_" + propertyName, wrapperCtClass);
+		field = new CtField(property.getCtClass(), "_dm_" + property.getName(), wrapperCtClass);
 		field.setModifiers(Modifier.PRIVATE);
 		wrapperCtClass.addField(field);
 		
-		CtMethod wrapperMethod = new CtMethod(propertyType, methodName, new CtClass[] {}, wrapperCtClass);
+		CtMethod wrapperMethod = new CtMethod(property.getCtClass(), property.getMethodName(), new CtClass[] {}, wrapperCtClass);
 		
 		// TODO: Deal with primitive types, where we need to box/unbox
 		
@@ -237,9 +229,9 @@ public class DMClass<T> {
 			"    return _dm_%propertyName%;" +
 			"}");
 
-		body.setParameter("propertyName", propertyName);
-		body.setParameter("propertyTypeName", propertyType.getName());
-		body.setParameter("methodName", methodName);
+		body.setParameter("propertyName", property.getName());
+		body.setParameter("propertyTypeName", property.getCtClass().getName());
+		body.setParameter("methodName", property.getMethodName());
 		body.setParameter("className", baseCtClass.getName());
 		wrapperMethod.setBody(body.toString());
 		
@@ -248,10 +240,10 @@ public class DMClass<T> {
 
 	private void addWrapperGetters(CtClass baseCtClass, CtClass wrapperCtClass) throws CannotCompileException, NotFoundException {
 		for (CtMethod method : baseCtClass.getMethods()) {
-			for (Object o : method.getAvailableAnnotations()) {
-				if (o instanceof DMProperty) {
-					addWrapperGetter(baseCtClass, wrapperCtClass, method);
-				}
+			DMPropertyHolder property = DMPropertyHolder.getForMethod(this, method);
+			if (property != null) {
+				properties.put(property.getName(), property);
+				addWrapperGetter(baseCtClass, wrapperCtClass, property);
 			}
 		}
 	}
@@ -269,7 +261,6 @@ public class DMClass<T> {
 			addInitMethod(baseCtClass, wrapperCtClass);
 			addWrapperGetters(baseCtClass, wrapperCtClass);
 			
-			@SuppressWarnings("unchecked")
 			Class<?> wrapperClass  = wrapperCtClass.toClass();
 			wrapperConstructor = wrapperClass.getDeclaredConstructors()[0]; 
 		} catch (CannotCompileException e) {
