@@ -2,7 +2,9 @@ package com.dumbhippo.dm;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,7 +35,8 @@ public class DMClassHolder<T> {
 	private Class<?> keyClass;
 	private Constructor keyConstructor;
 	private Constructor wrapperConstructor;
-	private Map<String, DMPropertyHolder> properties = new HashMap<String, DMPropertyHolder>();
+	private DMPropertyHolder[] properties;
+	private Map<String, Integer> propertiesMap = new HashMap<String, Integer>();
 
 	public DMClassHolder(DataModel model, Class<T> clazz) {
 		this.model = model;
@@ -71,8 +74,20 @@ public class DMClassHolder<T> {
 		return baseClass;
 	}
 	
-	public DMPropertyHolder getProperty(String name) {
-		return properties.get(name);
+	public int getPropertyIndex(String name) {
+		Integer index = propertiesMap.get(name);
+		if (index == null)
+			throw new IllegalArgumentException("No property named " + name);
+		
+		return index;
+	}
+	
+	public int getPropertyCount() {
+		return properties.length;
+	}
+	
+	public DMPropertyHolder getProperty(int propertyIndex) {
+		return properties[propertyIndex];
 	}
 	
 	public T createInstance(Object key, DMSession session) {
@@ -200,7 +215,7 @@ public class DMClassHolder<T> {
 		wrapperCtClass.addMethod(wrapperMethod);
 	}
 	
-	private void addWrapperGetter(CtClass baseCtClass, CtClass wrapperCtClass, DMPropertyHolder property) throws CannotCompileException, NotFoundException {
+	private void addWrapperGetter(CtClass baseCtClass, CtClass wrapperCtClass, DMPropertyHolder property, int propertyIndex) throws CannotCompileException, NotFoundException {
 		CtField field;
 			
 		field = new CtField(CtClass.booleanType, "_dm_" + property.getName() + "Initialized", wrapperCtClass);
@@ -219,10 +234,10 @@ public class DMClassHolder<T> {
 			"{" +
 			"    if (!_dm_%propertyName%Initialized) {" +
 			"    	 try {" +
-			"           _dm_%propertyName% = (%propertyTypeName%)_dm_session.fetchAndFilter(%className%.class, getKey(), \"%propertyName%\");" +
+			"           _dm_%propertyName% = (%propertyTypeName%)_dm_session.fetchAndFilter(%className%.class, getKey(), %propertyIndex%);" +
 			"    	 } catch (com.dumbhippo.dm.NotCachedException e) {" +
 			"           _dm_init();" +
-			"           _dm_%propertyName% = (%propertyTypeName%)_dm_session.storeAndFilter(%className%.class, getKey(), \"%propertyName%\", super.%methodName%());" +
+			"           _dm_%propertyName% = (%propertyTypeName%)_dm_session.storeAndFilter(%className%.class, getKey(), %propertyIndex%, super.%methodName%());" +
 			"        }" +
 			"        _dm_%propertyName%Initialized = true;" +
 			"    }" +
@@ -231,6 +246,7 @@ public class DMClassHolder<T> {
 
 		body.setParameter("propertyName", property.getName());
 		body.setParameter("propertyTypeName", property.getCtClass().getName());
+		body.setParameter("propertyIndex", Integer.toString(propertyIndex));
 		body.setParameter("methodName", property.getMethodName());
 		body.setParameter("className", baseCtClass.getName());
 		wrapperMethod.setBody(body.toString());
@@ -239,13 +255,20 @@ public class DMClassHolder<T> {
 	}
 
 	private void addWrapperGetters(CtClass baseCtClass, CtClass wrapperCtClass) throws CannotCompileException, NotFoundException {
+		List<DMPropertyHolder> foundProperties = new ArrayList<DMPropertyHolder>();
+		
+		int propertyIndex = 0;
 		for (CtMethod method : baseCtClass.getMethods()) {
 			DMPropertyHolder property = DMPropertyHolder.getForMethod(this, method);
 			if (property != null) {
-				properties.put(property.getName(), property);
-				addWrapperGetter(baseCtClass, wrapperCtClass, property);
+				foundProperties.add(property);
+				propertiesMap.put(property.getName(), propertyIndex);
+				addWrapperGetter(baseCtClass, wrapperCtClass, property, propertyIndex);
+				propertyIndex++;
 			}
 		}
+		
+		properties = foundProperties.toArray(new DMPropertyHolder[foundProperties.size()]);
 	}
 	
 	private void buildWrapperClass() {

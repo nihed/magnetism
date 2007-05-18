@@ -68,19 +68,19 @@ public class DMSessionMapJTA implements DMSessionMap {
 	
 	private class CleanupSynchronization implements Synchronization {
 		private Transaction transaction;
-//		private DMSession session;
+		private DMSession session;
 
 		public CleanupSynchronization(Transaction transaction, DMSession session) {
 			this.transaction = transaction;
-//			this.session = session;
+			this.session = session;
 		}
 		
 		public void beforeCompletion() {
 		}
 
-		public void afterCompletion(int arg0) {
+		public void afterCompletion(int status) {
 			sessions.remove(transaction);
-			// FIXME: Mark the session as closed
+			session.afterCompletion(status);
 		}		
 	}
 }

@@ -11,7 +11,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.NotFoundException;
 
 public abstract class DMSession {
-	static private Logger logger = GlobalSetup.getLogger(DMSession.class);
+	private static Logger logger = GlobalSetup.getLogger(DMSession.class);
 
 	private Map<Object, DMObject> sessionDMOs = new HashMap<Object, DMObject>();
 	protected DataModel model;
@@ -85,11 +85,11 @@ public abstract class DMSession {
 	 * @param <T>
 	 * @param clazz
 	 * @param key
-	 * @param propertyName
+	 * @param propertyIndex
 	 * @return
 	 * @throws NotCachedException
 	 */
-	public abstract <K, T extends DMObject<K>> Object fetchAndFilter(Class<T> clazz, K key, String propertyName) throws NotCachedException;
+	public abstract <K, T extends DMObject<K>> Object fetchAndFilter(Class<T> clazz, K key, int propertyIndex) throws NotCachedException;
 
 	/**
 	 * Internal API: Stores the specified (unfiltered) value in the cache, then filters it
@@ -99,11 +99,12 @@ public abstract class DMSession {
 	 * @param <T>
 	 * @param clazz
 	 * @param key
-	 * @param propertyName
+	 * @param propertyIndex
+	 * @param value
 	 * @return
 	 * @throws NotCachedException
 	 */
-	public abstract <K, T extends DMObject<K>> Object storeAndFilter(Class<T> clazz, K key, String propertyName, Object value);
+	public abstract <K, T extends DMObject<K>> Object storeAndFilter(Class<T> clazz, K key, int propertyIndex, Object value);
 
 	public Object getInjectableEntityManager() {
 		if (injectableEntityManager == null)
@@ -111,4 +112,6 @@ public abstract class DMSession {
 		
 		return injectableEntityManager;
 	}
+	
+	public abstract void afterCompletion(int status);
 }

@@ -2,7 +2,6 @@ package com.dumbhippo.dm;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javassist.ClassClassPath;
 import javassist.ClassPool;
@@ -10,6 +9,7 @@ import javassist.ClassPool;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
+import org.hibernate.cache.Timestamper;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -21,6 +21,8 @@ public class DataModel {
 	private EntityManagerFactory emf = null;
 	private Map<Class, DMClassHolder> classes = new HashMap<Class, DMClassHolder>();
 	private ClassPool classPool = new ClassPool();
+	private DMStore store = new DMStore();
+
 	private static DataModel instance = new DataModel();
 
 	private DataModel() {
@@ -102,52 +104,14 @@ public class DataModel {
 		return classPool;
 	}
 	
-	private static class PropertyKey<K,T> {
-		private Class<T> resourceClass;
-		private K key;
-		private String propertyName;
-
-		public PropertyKey(Class<T> resourceClass, K key, String propertyName) {
-			this.resourceClass = resourceClass;
-			this.key = key;
-			this.propertyName = propertyName;
-		}
-		
-		@Override
-		public boolean equals(Object o) {
-			if (!(o instanceof PropertyKey))
-				return false;
-			
-			PropertyKey<?,?> other = (PropertyKey<?,?>)o;
-			
-			return resourceClass == other.resourceClass &&
-				key.equals(other.key) &&
-				propertyName.equals(other.propertyName);
-		}
-		
-		@Override
-		public int hashCode() {
-			return 11 * resourceClass.hashCode() + 17 * key.hashCode() + 23 * propertyName.hashCode();
-		}
-	}
-	
-	private Map<PropertyKey, Object> cachedProperties = new ConcurrentHashMap<PropertyKey, Object>();
-	private static Object nil = new Boolean(false);
-	
-	public <K, T extends DMObject<K>> Object fetchFromCache(Class<T> clazz, K key, String propertyName) throws NotCachedException {
-		Object value = cachedProperties.get(new PropertyKey<K,T>(clazz, key, propertyName));
-		if (value == null)
-			throw new NotCachedException();
-		else if (value == nil)
-			return null;
-		else
-			return value;
+	public DMStore getStore() {
+		return store;
 	}
 
-	public <K, T extends DMObject<K>> void storeInCache(Class<T> clazz, K key, String propertyName, Object value) {
-		if (value == null)
-			value = nil;
+	public long getTimestamp() {
+		// FIXME: This doesn't fully work in a clustered configuration; we should use
+		// timestamps/serials from the invalidation protocol instead.
 		
-		cachedProperties.put(new PropertyKey<K,T>(clazz, key, propertyName), value);
+		return Timestamper.next();
 	}
 }
