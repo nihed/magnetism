@@ -6,10 +6,12 @@ import com.dumbhippo.GlobalSetup;
 
 
 public class ReadOnlySession extends DMSession {
-	static private Logger logger = GlobalSetup.getLogger(DMSession.class);
+	private static Logger logger = GlobalSetup.getLogger(ReadOnlySession.class);
+	private long txTimestamp;
 
 	protected ReadOnlySession(DataModel model, DMViewpoint viewpoint) {
 		super(model, viewpoint);
+		this.txTimestamp = model.getTimestamp();
 	}
 	
 	public static ReadOnlySession getCurrent() {
@@ -20,22 +22,26 @@ public class ReadOnlySession extends DMSession {
 		throw new IllegalStateException("ReadOnlySession.getCurrent() called when not inside a ReadOnlySession");
 	}
 	
-	public <K, T extends DMObject<K>> Object fetchAndFilter(Class<T> clazz, K key, String propertyName) throws NotCachedException {
-		// Ordering here increases effiicency in not-cached case
-		Object value = model.fetchFromCache(clazz, key, propertyName);
-		DMPropertyHolder property = model.getDMClass(clazz).getProperty(propertyName);
+	public <K, T extends DMObject<K>> Object fetchAndFilter(Class<T> clazz, K key, int propertyIndex) throws NotCachedException {
+		DMClassHolder classHolder = model.getDMClass(clazz);
+		Object value = model.getStore().fetch(classHolder, key, propertyIndex);
+		DMPropertyHolder property = classHolder.getProperty(propertyIndex);
 		
-		logger.debug("Found value for {}#{}.{} in the cache", new Object[] { clazz.getSimpleName(), key, propertyName });
+		logger.debug("Found value for {}#{}.{} in the cache", new Object[] { clazz.getSimpleName(), key, property.getName() });
 
 		return property.rehydrate(value, this);
 	}
 
-	public <K, T extends DMObject<K>> Object storeAndFilter(Class<T> clazz, K key, String propertyName, Object value) {
-		logger.debug("Caching new value for {}#{}.{}", new Object[] { clazz.getSimpleName(), key, propertyName });
+	public <K, T extends DMObject<K>> Object storeAndFilter(Class<T> clazz, K key, int propertyIndex, Object value) {
+		DMClassHolder classHolder = model.getDMClass(clazz);
+		DMPropertyHolder property = classHolder.getProperty(propertyIndex);
+		model.getStore().store(classHolder, key, propertyIndex, property.dehydrate(value), txTimestamp);
 		
-		DMPropertyHolder property = model.getDMClass(clazz).getProperty(propertyName);
-		model.storeInCache(clazz, key, propertyName, property.dehydrate(value));
+		logger.debug("Cached new value for {}#{}.{}", new Object[] { clazz.getSimpleName(), key, property.getName() });
 		
 		return value;
+	}
+	
+	public void afterCompletion(int status) {
 	}
 }

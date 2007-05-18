@@ -11,7 +11,8 @@ import org.hibernate.ejb.HibernateEntityManager;
 import org.hibernate.ejb.HibernateEntityManagerFactory;
 
 public class TestSupport {
-	EntityManagerFactory emf;
+	TestEntityManagerFactory testEmf;
+	EntityManagerFactory delegateEmf;
 	static TestSupport instance;
 	
 	public static synchronized TestSupport getInstance() {
@@ -24,14 +25,15 @@ public class TestSupport {
 	private TestSupport() {
 		DataModel model = DataModel.getInstance();
 		
-		emf = Persistence.createEntityManagerFactory("dmtest");
-		model.setSessionMap(new TestSessionMap(emf));
-		model.setEntityManagerFactory(emf);
+		delegateEmf = Persistence.createEntityManagerFactory("dmtest");
+		testEmf = new TestEntityManagerFactory(delegateEmf);
+		model.setSessionMap(new TestSessionMap(delegateEmf));
+		model.setEntityManagerFactory(testEmf);
 		model.addDMClass(TestGroupDMO.class);
 	}
 	
 	public EntityManager beginTransaction() {
-		EntityManager em = emf.createEntityManager(); 
+		EntityManager em = testEmf.createDelegate(); 
 		Session session = ((HibernateEntityManager)em).getSession();
 		ThreadLocalSessionContext.bind(session);
 		
@@ -63,7 +65,7 @@ public class TestSupport {
 	
 	public class CleanupSynchronization implements Synchronization {
 		public void afterCompletion(int status) {
-			ThreadLocalSessionContext.unbind(((HibernateEntityManagerFactory)emf).getSessionFactory());
+			ThreadLocalSessionContext.unbind(((HibernateEntityManagerFactory)delegateEmf).getSessionFactory());
 		}
 
 		public void beforeCompletion() {
