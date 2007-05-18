@@ -7,16 +7,22 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.slf4j.Logger;
+
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.annotations.DMFilter;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.ViewerDependent;
 import com.dumbhippo.identity20.Guid;
 
 public class DMPropertyHolder {
+	@SuppressWarnings("unused")
+	static private final Logger logger = GlobalSetup.getLogger(DMPropertyHolder.class);
+	
 	private CtClass ctClass;
 	private Class elementType;
 	private boolean multiValued;
@@ -26,8 +32,16 @@ public class DMPropertyHolder {
 	private boolean defaultInclude;
 	
 	public DMPropertyHolder (DMClassHolder<?> classHolder, CtMethod method, DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
+		boolean booleanOnly = false; 
+		
 		methodName = method.getName();
-		if (!methodName.startsWith("get") || methodName.length() < 4) {
+		
+		if (methodName.startsWith("get") && methodName.length() >= 4) {
+			name = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
+		} else if (methodName.startsWith("is") && methodName.length() >= 4) {
+			name = Character.toLowerCase(methodName.charAt(2)) + methodName.substring(3);
+			booleanOnly = true;
+		} else {
 			throw new RuntimeException("DMProperty method name '" + method.getName() + "' doesn't look like a getter");
 		}
 		
@@ -35,12 +49,13 @@ public class DMPropertyHolder {
 			if (method.getParameterTypes().length > 0) {
 				throw new RuntimeException("DMProperty method " + method.getName() + " has arguments");
 			}
-			
-			name = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);  
+
 			ctClass = method.getReturnType();
 			
-			// FIXME: Not sure which is the case here
-			if (ctClass == null || ctClass == CtClass.voidType)
+			if (booleanOnly && ctClass != CtClass.booleanType)
+				throw new RuntimeException("Getter starting with 'is' must have a boolean return");
+
+			if (ctClass == CtClass.voidType)
 				throw new RuntimeException("DMProperty method doesn't have a result");
 			
 		} catch (NotFoundException e) {
@@ -115,6 +130,91 @@ public class DMPropertyHolder {
 	
 	public boolean getDefaultInclude() {
 		return defaultInclude;
+	}
+	
+	public String getBoxPrefix() {
+		if (!multiValued && elementType.isPrimitive()) {
+			if (elementType == Boolean.TYPE)
+				return "new Boolean(";
+			else if (elementType == Byte.TYPE)
+				return "new Byte(";
+			else if (elementType == Character.TYPE)
+				return "new Character(";
+			else if (elementType == Short.TYPE)
+				return "new Short(";
+			else if (elementType == Integer.TYPE)
+				return "new Integer(";
+			else if (elementType == Long.TYPE)
+				return "new Long(";
+			else if (elementType == Float.TYPE)
+				return "new Float(";
+			else if (elementType == Double.TYPE)
+				return "new Double(";
+			else
+				throw new RuntimeException("Unexpected primitive type");
+		} else {
+			return "";
+		}
+	}
+	
+	public String getBoxSuffix() {
+		if (!multiValued && elementType.isPrimitive()) {
+			return ")";
+		} else {
+			return "";
+		}
+	}
+	
+	public String getUnboxPrefix() {
+		if (!multiValued && elementType.isPrimitive()) {
+			if (elementType == Boolean.TYPE)
+				return "((Boolean)";
+			else if (elementType == Byte.TYPE)
+				return "((Byte)";
+			else if (elementType == Character.TYPE)
+				return "((Character)";
+			else if (elementType == Short.TYPE)
+				return "((Short)";
+			else if (elementType == Integer.TYPE)
+				return "((Integer)";
+			else if (elementType == Long.TYPE)
+				return "((Long)";
+			else if (elementType == Float.TYPE)
+				return "((Float)";
+			else if (elementType == Double.TYPE)
+				return "((Double)";
+			else
+				throw new RuntimeException("Unexpected primitive type");
+		} else if (multiValued) {
+			return "(java.util.List)";
+		} else {
+			return "(" + elementType.getName() + ")";
+		}
+	}
+	
+	public String getUnboxSuffix() {
+		if (!multiValued && elementType.isPrimitive()) {
+			if (elementType == Boolean.TYPE)
+				return ").booleanValue()";
+			else if (elementType == Byte.TYPE)
+				return ").byteValue()";
+			else if (elementType == Character.TYPE)
+				return ").charValue()";
+			else if (elementType == Short.TYPE)
+				return ").shortValue()";
+			else if (elementType == Integer.TYPE)
+				return ").intValue()";
+			else if (elementType == Long.TYPE)
+				return ").longValue()";
+			else if (elementType == Float.TYPE)
+				return ").floatValue()";
+			else if (elementType == Double.TYPE)
+				return ").doubleValue()";
+			else
+				throw new RuntimeException("Unexpected primitive type");
+		} else {
+			return "";
+		}
 	}
 	
 	private Object dehydrateDMO(Object value) {

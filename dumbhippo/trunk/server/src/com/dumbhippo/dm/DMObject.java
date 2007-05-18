@@ -7,8 +7,8 @@ public abstract class DMObject<KeyType> {
 	private KeyType key;
 	Guid guid;
 	
-	protected DMObject(KeyType resource) {
-		this.key = resource;
+	protected DMObject(KeyType key) {
+		this.key = key;
 	}
 	
 	public KeyType getKey() {

@@ -28,7 +28,7 @@ import com.dumbhippo.identity20.Guid;
 
 public class DMClassHolder<T> {
 	@SuppressWarnings("unused")
-	static private Logger logger = GlobalSetup.getLogger(DMClassHolder.class);
+	static private final Logger logger = GlobalSetup.getLogger(DMClassHolder.class);
 	
 	private DataModel model;
 	private Class<T> baseClass;
@@ -42,7 +42,7 @@ public class DMClassHolder<T> {
 		this.model = model;
 		this.baseClass = clazz;
 
-		for (Constructor c : clazz.getConstructors()) {
+		for (Constructor c : clazz.getDeclaredConstructors()) {
 			Class<?>[] parameterTypes = c.getParameterTypes();
 			if (parameterTypes.length != 1)
 				continue;
@@ -61,6 +61,9 @@ public class DMClassHolder<T> {
 			keyConstructor = c;
 			keyClass = parameterTypes[0];
 		}
+		
+		if (keyConstructor == null)
+			throw new RuntimeException("No candidate constructors found for class " + clazz.getName());
 		
 		buildWrapperClass();
 	}
@@ -109,8 +112,10 @@ public class DMClassHolder<T> {
 	}
 
 	private void injectField(DMSession session, T t, Field field) {
-		if (field.getType().equals(EntityManager.class)) {
+		if (field.getType() == EntityManager.class) {
 			setField(t, field, session.getInjectableEntityManager());
+		} else if (field.getType() == DMSession.class) {
+			setField(t, field, session);
 		} else if (DMViewpoint.class.isAssignableFrom(field.getType())) {
 			// We use a isAssignableFrom check here to allow people to @Inject fields
 			// that are subclasses of DMViewpoint. If the type of the @Inject field
@@ -234,10 +239,10 @@ public class DMClassHolder<T> {
 			"{" +
 			"    if (!_dm_%propertyName%Initialized) {" +
 			"    	 try {" +
-			"           _dm_%propertyName% = (%propertyTypeName%)_dm_session.fetchAndFilter(%className%.class, getKey(), %propertyIndex%);" +
+			"           _dm_%propertyName% = %unboxPre%_dm_session.fetchAndFilter(%className%.class, getKey(), %propertyIndex%)%unboxPost%;" +
 			"    	 } catch (com.dumbhippo.dm.NotCachedException e) {" +
 			"           _dm_init();" +
-			"           _dm_%propertyName% = (%propertyTypeName%)_dm_session.storeAndFilter(%className%.class, getKey(), %propertyIndex%, super.%methodName%());" +
+			"           _dm_%propertyName% = %unboxPre%_dm_session.storeAndFilter(%className%.class, getKey(), %propertyIndex%, %boxPre%super.%methodName%()%boxPost%)%unboxPost%;" +
 			"        }" +
 			"        _dm_%propertyName%Initialized = true;" +
 			"    }" +
@@ -245,7 +250,10 @@ public class DMClassHolder<T> {
 			"}");
 
 		body.setParameter("propertyName", property.getName());
-		body.setParameter("propertyTypeName", property.getCtClass().getName());
+		body.setParameter("boxPre", property.getBoxPrefix());
+		body.setParameter("boxPost", property.getBoxSuffix());
+		body.setParameter("unboxPre", property.getUnboxPrefix());
+		body.setParameter("unboxPost", property.getUnboxSuffix());
 		body.setParameter("propertyIndex", Integer.toString(propertyIndex));
 		body.setParameter("methodName", property.getMethodName());
 		body.setParameter("className", baseCtClass.getName());
