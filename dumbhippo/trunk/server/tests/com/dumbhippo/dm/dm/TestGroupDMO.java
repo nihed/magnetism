@@ -7,6 +7,7 @@ import javax.persistence.EntityManager;
 
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
+import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
 import com.dumbhippo.dm.persistence.TestGroup;
@@ -14,6 +15,7 @@ import com.dumbhippo.dm.persistence.TestGroupMember;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.server.NotFoundException;
 
+@DMO(classId="http://mugshot.org/p/o/test/group", resourceBase="/o/test/group")
 public abstract class TestGroupDMO extends DMObject<Guid> {
 	@Inject
 	EntityManager em;
@@ -34,7 +36,7 @@ public abstract class TestGroupDMO extends DMObject<Guid> {
 			throw new NotFoundException("No such group");
 	}
 	
-	@DMProperty
+	@DMProperty(defaultInclude=true)
 	public String getName() {
 		return group.getName();
 	}

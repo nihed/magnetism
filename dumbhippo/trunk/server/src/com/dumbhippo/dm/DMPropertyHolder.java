@@ -3,20 +3,28 @@ package com.dumbhippo.dm;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import org.slf4j.Logger;
 
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 
+import org.slf4j.Logger;
+
+import antlr.RecognitionException;
+import antlr.TokenStreamException;
+
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.annotations.DMFilter;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.ViewerDependent;
+import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.FetchNode;
+import com.dumbhippo.dm.parser.FetchParser;
 import com.dumbhippo.identity20.Guid;
 
 public class DMPropertyHolder {
@@ -29,10 +37,12 @@ public class DMPropertyHolder {
 	private boolean resourceValued;
 	private String methodName;
 	private String name;
+	private String propertyId;
 	private boolean defaultInclude;
+	private Fetch defaultChildren;
 	
-	public DMPropertyHolder (DMClassHolder<?> classHolder, CtMethod method, DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
-		boolean booleanOnly = false; 
+	public DMPropertyHolder (DMClassHolder<? extends DMObject> classHolder, CtMethod method, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
+		boolean booleanOnly = false;
 		
 		methodName = method.getName();
 		
@@ -62,13 +72,39 @@ public class DMPropertyHolder {
 			throw new RuntimeException("Can't find bytecode for method return or parameters", e);
 		}
 		
+		if (annotation.propertyId().equals(""))
+			propertyId = classHolder.getClassId() + "#" + name;
+		else
+			propertyId = annotation.propertyId();
+		
+		// Validate the propertyId as an URI
+		try {
+			URI uri = new URI(propertyId);
+			if (uri.getFragment() == null)
+				throw new RuntimeException("propertyId '" + propertyId + "' must have a fragment identifier");
+		} catch (URISyntaxException e1) {
+			throw new RuntimeException("propertyId '" + propertyId + "' is not a valid URI");
+		}
+		
+		defaultInclude = annotation.defaultInclude();
+		if (!"".equals(annotation.defaultChildren())) {
+			defaultInclude = true;
+			
+			try {
+				FetchNode node = FetchParser.parse(annotation.defaultChildren());
+				defaultChildren = node.bind(classHolder);
+			} catch (RecognitionException e) {
+				throw new RuntimeException(propertyId + ": failed to parse defaultChildren at char " + e.getColumn(), e);
+			} catch (TokenStreamException e) {
+				throw new RuntimeException(propertyId + ": failed to parse defaultChildren", e);
+			}
+		}
+		
 		try {
 			determineType(classHolder.getBaseClass().getMethod(methodName, new Class[] {}));
 		} catch (NoSuchMethodException e) {
 			throw new RuntimeException("Can't find Java class object for method return type", e);
 		}
-		
-		defaultInclude = property.defaultInclude();
 	}
 
 	private void determineType(Method method) {
@@ -108,6 +144,18 @@ public class DMPropertyHolder {
 			throw new RuntimeException("Property type must be primitive, string");
 	}
 	
+	public String getPropertyId() {
+		return propertyId;
+	}
+	
+	public boolean getDefaultInclude() {
+		return defaultInclude;
+	}
+	
+	public Fetch getDefaultChildren() {
+		return defaultChildren;
+	}
+	
 	public CtClass getCtClass() {
 		return ctClass; 
 	}
@@ -116,7 +164,22 @@ public class DMPropertyHolder {
 		return multiValued;
 	}
 	
-	public Class getElementType() {
+	public boolean isResourceValued() {
+		return resourceValued;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T extends DMObject> Class<T> getResourceType() {
+		if (!resourceValued)
+			throw new UnsupportedOperationException("Not a resource-valued property");
+		
+		return (Class<T>)elementType;
+	}
+	
+	public Class<?> getPlainType() {
+		if (resourceValued)
+			throw new UnsupportedOperationException("Not a plain-valued property");
+
 		return elementType;
 	}
 	
@@ -126,10 +189,6 @@ public class DMPropertyHolder {
 	
 	public String getName() {
 		return name;
-	}
-	
-	public boolean getDefaultInclude() {
-		return defaultInclude;
 	}
 	
 	public String getBoxPrefix() {
@@ -268,7 +327,7 @@ public class DMPropertyHolder {
 		}
 	}
 
-	public static DMPropertyHolder getForMethod(DMClassHolder<?> classHolder, CtMethod method) {
+	public static DMPropertyHolder getForMethod(DMClassHolder<? extends DMObject> classHolder, CtMethod method) {
 		DMProperty property = null;
 		DMFilter filter = null;
 		ViewerDependent viewerDependent = null;

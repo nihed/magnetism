@@ -1,22 +1,13 @@
 package com.dumbhippo.dm;
 
-import java.io.Reader;
-import java.io.StringReader;
-
 import antlr.RecognitionException;
 import antlr.TokenStreamException;
 
-import com.dumbhippo.dm.filter.Filter;
-import com.dumbhippo.dm.parser.FilterLexer;
 import com.dumbhippo.dm.parser.FilterParser;
 
 public class FilterParserTests extends AbstractParserTests {
 	public String parse(String input) throws RecognitionException, TokenStreamException {
-		Reader in = new StringReader(input);
-		FilterParser parser = new FilterParser(new FilterLexer(in));
-		Filter filter = parser.startRule();
-		
-		return filter.toString();
+		return FilterParser.parse(input).toString();
 	}
 		
 	public void testParser() throws Exception {

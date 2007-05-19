@@ -1,5 +1,11 @@
 package com.dumbhippo.dm.fetch;
 
+import java.util.List;
+
+import com.dumbhippo.dm.DMClassHolder;
+import com.dumbhippo.dm.DMObject;
+import com.dumbhippo.dm.DMPropertyHolder;
+
 
 public class PropertyFetchNode {
 	private String property;
@@ -27,6 +33,34 @@ public class PropertyFetchNode {
 		}
 		
 		return null;
+	}
+	
+
+	/**
+	 * Finds all properties in the given class and in *subclasses* of the given class
+	 * that match this node, bind them and return the result.
+	 * 
+	 * TODO: Implement the subclass part
+	 * 
+	 * @param classHolder
+	 * @param whether to skip properties that are marked as defaultInclude
+	 * @param resultList list to append the results to 
+	 */
+	public void bind(DMClassHolder<? extends DMObject> classHolder, boolean skipDefault, List<PropertyFetch> resultList) {
+		int propertyIndex = classHolder.getPropertyIndex(property);
+		if (propertyIndex >= 0) {
+			DMPropertyHolder propertyHolder = classHolder.getProperty(propertyIndex);
+			if (propertyHolder.getDefaultInclude() && skipDefault)
+				return;
+			
+			Fetch boundChildren = null;
+			if (children != null && propertyHolder.isResourceValued()) {
+				DMClassHolder<? extends DMObject> childClassHolder = classHolder.getModel().getDMClass(propertyHolder.getResourceType());
+				boundChildren = children.bind(childClassHolder);
+			}
+			
+			resultList.add(new PropertyFetch(propertyHolder, attributes, boundChildren));
+		}
 	}
 	
 	@Override
@@ -58,5 +92,4 @@ public class PropertyFetchNode {
 		
 		return b.toString();
 	}
-	
 }

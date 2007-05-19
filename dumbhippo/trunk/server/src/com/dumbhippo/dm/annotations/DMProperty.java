@@ -11,4 +11,5 @@ import java.lang.annotation.Target;
 public @interface DMProperty {
 	boolean defaultInclude() default false;
 	String propertyId() default "";
+	String defaultChildren() default "";
 }

@@ -3,12 +3,14 @@ package com.dumbhippo.dm.dm;
 import javax.persistence.EntityManager;
 
 import com.dumbhippo.dm.DMObject;
+import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
 import com.dumbhippo.dm.persistence.TestUser;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.server.NotFoundException;
 
+@DMO(classId="http://mugshot.org/p/o/test/user", resourceBase="/o/test/user")
 public abstract class TestUserDMO extends DMObject<Guid> {
 	@Inject
 	EntityManager em;
@@ -26,7 +28,7 @@ public abstract class TestUserDMO extends DMObject<Guid> {
 			throw new NotFoundException("No such user");
 	}
 	
-	@DMProperty
+	@DMProperty(defaultInclude=true)
 	public String getName() {
 		return user.getName();
 	}

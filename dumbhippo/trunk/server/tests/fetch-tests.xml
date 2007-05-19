@@ -4,7 +4,7 @@
     xmlns:u="http://mugshot.org/p/o/test/user"
     xmlns:g="http://mugshot.org/p/o/test/group"
 	xmlns:gm="http://mugshot.org/p/o/test/groupMember"
-	m:resourceBase="http://test.mugshot.org/o/test/">
+	m:resourceBase="http://mugshot.org/o/test/">
 
 	<fetchResult id="bobAndJane">
 		<u:resource m:resourceId="groupMember/$(bob)" m:indirect="true" m:fetch="name">

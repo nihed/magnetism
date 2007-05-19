@@ -1,22 +1,13 @@
 package com.dumbhippo.dm;
 
-import java.io.Reader;
-import java.io.StringReader;
-
 import antlr.RecognitionException;
 import antlr.TokenStreamException;
 
-import com.dumbhippo.dm.fetch.FetchNode;
-import com.dumbhippo.dm.parser.FetchLexer;
 import com.dumbhippo.dm.parser.FetchParser;
 
 public class FetchParserTests extends AbstractParserTests {
 	protected String parse(String input) throws RecognitionException, TokenStreamException {
-		Reader in = new StringReader(input);
-		FetchParser parser = new FetchParser(new FetchLexer(in));
-		FetchNode filter = parser.startRule();
-		
-		return filter.toString();
+		return FetchParser.parse(input).toString();
 	}
 	
 	public void testParser() throws Exception {
