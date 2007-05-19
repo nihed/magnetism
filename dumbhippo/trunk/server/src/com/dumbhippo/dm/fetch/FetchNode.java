@@ -1,13 +1,13 @@
 package com.dumbhippo.dm.fetch;
 
-public class Fetch {
-	private PropertyFetch[] properties;
+public class FetchNode {
+	private PropertyFetchNode[] properties;
 	
-	public Fetch(PropertyFetch[] properties) {
+	public FetchNode(PropertyFetchNode[] properties) {
 		this.properties = properties;
 	}
 	
-	public PropertyFetch[] getProperties() {
+	public PropertyFetchNode[] getProperties() {
 		return properties;
 	}
 	
