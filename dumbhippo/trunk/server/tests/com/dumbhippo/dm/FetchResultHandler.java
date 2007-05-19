@@ -2,6 +2,8 @@ package com.dumbhippo.dm;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,14 +11,19 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.slf4j.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import com.dumbhippo.GlobalSetup;
+
 public class FetchResultHandler extends DefaultHandler {
-	private static final String MUGSHOT_SYSTEM_NS = "http://mugshot.org/p/system";
+	public static final Logger logger = GlobalSetup.getLogger(FetchResultHandler.class);
+	
+	public static final String MUGSHOT_SYSTEM_NS = "http://mugshot.org/p/system";
 	
 	private Locator locator;
 	private State state = State.OUTSIDE;
@@ -24,7 +31,9 @@ public class FetchResultHandler extends DefaultHandler {
 	private FetchResultResource currentResource;
 	private FetchResultProperty currentProperty;
 	private StringBuilder currentChars;
-	private List<FetchResult> results = new ArrayList<FetchResult>(); 
+	private List<FetchResult> results = new ArrayList<FetchResult>();
+	private List<URI> resourceBaseStack = new ArrayList<URI>();
+	private URI resourceBase;
 	
 	private static enum State {
 		OUTSIDE,
@@ -36,6 +45,21 @@ public class FetchResultHandler extends DefaultHandler {
 
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXParseException {
+		resourceBaseStack.add(resourceBase);
+		for (int i = 0; i < attributes.getLength(); i++) {
+			if (MUGSHOT_SYSTEM_NS.equals(attributes.getURI(i))) {
+				String name = attributes.getLocalName(i);
+				if ("resourceBase".equals(name)) {
+					try {
+						resourceBase = new URI(attributes.getValue(i));
+					} catch (URISyntaxException e) {
+						// TODO Auto-generated catch block
+						throw new SAXParseException("resourceBase element must be a valid URI", locator);
+					}
+				}
+			} 
+		}
+		
 		switch (state) {
 		case OUTSIDE:
 			if (!("".equals(uri) && "fetchResults".equals(localName)))
@@ -75,35 +99,65 @@ public class FetchResultHandler extends DefaultHandler {
 		
 		currentResult = new FetchResult(id);
 	}
-
+	
+	private String resolveResourceId(String resourceId) throws SAXParseException {
+		if (resourceBase == null)
+			return resourceId;
+		else {
+			try {
+				return resourceBase.resolve(resourceId).toString();
+			} catch (IllegalArgumentException e) {
+				logger.debug("Cannot resolve resource {}: {}", resourceId, e);
+				throw new SAXParseException("Cannot resolve resourceId against current resourceBase", locator);
+			}
+		}
+	}
+	
 	private void startResourceElement(String uri, String localName, Attributes attributes) throws SAXParseException {
 		String fetch = null;
 		String resourceId = null;
+		String classId = null;
+		
+		if (!"resource".equals(localName))
+			throw new SAXParseException("Local name of resource element must be 'resource'", locator);
 		
 		for (int i = 0; i < attributes.getLength(); i++) {
 			if (MUGSHOT_SYSTEM_NS.equals(attributes.getURI(i))) {
 				String name = attributes.getLocalName(i);
 				if ("fetch".equals(name))
 					fetch = attributes.getValue(i);
+				else if ("classId".equals(name))
+					classId = attributes.getValue(i);
 				else if ("resourceId".equals(name))
-					resourceId = attributes.getValue(i);
+					resourceId = resolveResourceId(attributes.getValue(i));
 			} 
+		}
+		
+		if (MUGSHOT_SYSTEM_NS.equals(uri)) {
+			if (classId == null)
+				throw new SAXParseException("classId argument mandatory for <mugs:resource/> element", locator);
+		} else if (uri != null) {
+			if (classId != null)
+				throw new SAXParseException("classId argument present on namespaced resource <resource/> element", locator);
+			classId = uri;
+		} else {
+			throw new SAXParseException("no namespace for <resource/> element", locator);
 		}
 		
 		if (resourceId == null)
 			throw new SAXParseException("mugs:resourceId attribute required on resource element", locator);
 		
-		currentResource = new FetchResultResource(resourceId, uri, fetch);
+		currentResource = new FetchResultResource(classId, resourceId, fetch);
 	}
 
-	private void startPropertyElement(String uri, String localName, Attributes attributes) {
+	private void startPropertyElement(String uri, String localName, Attributes attributes) throws SAXParseException {
 		String resourceId = null;
 		
 		for (int i = 0; i < attributes.getLength(); i++) {
 			if (MUGSHOT_SYSTEM_NS.equals(attributes.getURI(i))) {
 				String name = attributes.getLocalName(i);
 				if ("resourceId".equals(name))
-					resourceId = attributes.getValue(i);
+					resourceId = resolveResourceId(attributes.getValue(i));
 			} 
 		}
 		
@@ -137,10 +191,12 @@ public class FetchResultHandler extends DefaultHandler {
 			break;
 		case FETCH_RESULT:
 			results.add(currentResult);
+			currentResult = null;
 			state = State.FETCH_RESULTS;
 			break;
 		case RESOURCE:
 			currentResult.addResource(currentResource);
+			currentResource = null;
 			state = State.FETCH_RESULT;
 			break;
 		case PROPERTY:
@@ -148,9 +204,13 @@ public class FetchResultHandler extends DefaultHandler {
 				currentProperty.setValue(currentChars.toString());
 				currentChars = null;
 			}
+			currentResource.addProperty(currentProperty);
+			currentProperty = null;
 			state = State.RESOURCE;
 			break;
 		}
+		
+		resourceBase = resourceBaseStack.remove(resourceBaseStack.size() - 1);
 	}
 
 	@Override
