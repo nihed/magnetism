@@ -93,10 +93,11 @@
 			<classpath refid="tests.class.path" />
 		</javac>
 
-		<!-- copy over properties files -->
+		<!-- copy over properties files and other resources for tests -->
 		<copy todir="${build.tests}">
 			<fileset dir="${src.tests}">
 				<include name="**/*.properties" />
+				<include name="**/*.xml" />
 			</fileset>
 		</copy>
 	</target>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fetchResults
+	xmlns:m="http://mugshot.org/p/system"
+    xmlns:u="http://mugshot.org/p/o/test/user"
+    xmlns:g="http://mugshot.org/p/o/test/group"
+	xmlns:gm="http://mugshot.org/p/o/test/groupMember"
+	m:resourceBase="http://test.mugshot.org/o/test/">
+
+	<fetchResult id="bobAndJane">
+		<u:resource m:resourceId="groupMember/${bob}" m:indirect="true" m:fetch="name">
+			<u:name>Bob</u:name>
+		</u:resource>
+		<gm:resource m:resourceId="groupMember/${group}.${bob}" m:indirect="true" m:fetch="member name">
+			<gm:member m:resourceId="user/${bob}"/>
+		</gm:resource>
+		<u:resource m:resourceId="groupMember/${jane}" m:indirect="true" m:fetch="name">
+			<u:name>Jane</u:name>
+		</u:resource>
+		<gm:resource m:resourceId="groupMember/${group}.${jane}" m:indirect="true" m:fetch="member name">
+			<gm:member m:resourceId="user/${jane}"/>
+		</gm:resource>
+		<g:resource m:resourceId="group/${group}" m:fetch="name;members member name">
+			<g:members m:resourceId="groupMember/${group}.${bob}"/>
+			<g:members m:resourceId="groupMember/${group}.${jane}"/>
+		</g:resource>
+	</fetchResult>
+</fetchResults>
