@@ -172,6 +172,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-block-account-question.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-abstract-person.c	\
 	$(COMMONSRCDIR)/hippo/hippo-block-abstract-person.h	\
+	$(COMMONSRCDIR)/hippo/hippo-block-amazon-activity.c	\
+	$(COMMONSRCDIR)/hippo/hippo-block-amazon-activity.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-facebook-person.c	\
 	$(COMMONSRCDIR)/hippo/hippo-block-facebook-person.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-flickr-person.c	\
@@ -196,6 +198,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-account-question.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-account-question.h	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-amazon-activity.c	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-amazon-activity.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-generic.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-generic.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-facebook-event.c	\

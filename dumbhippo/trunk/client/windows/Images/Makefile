@@ -3,6 +3,7 @@ IMGDIR=..\..\common\images
 all:
 	-mkdir $(OUTDIR)\images
 	copy $(IMGDIR)\add_icon.png $(OUTDIR)\images
+	copy $(IMGDIR)\amazon_no_image.png $(OUTDIR)\images
 	copy $(IMGDIR)\arrow.png $(OUTDIR)\images
 	copy $(IMGDIR)\arrow2.png $(OUTDIR)\images
 	copy $(IMGDIR)\bar_middle.png $(OUTDIR)\images
@@ -32,6 +33,8 @@ all:
 	copy $(IMGDIR)\photo_icon.png $(OUTDIR)\images
 	copy $(IMGDIR)\quiphate_icon.png $(OUTDIR)\images
 	copy $(IMGDIR)\quiplove_icon.png $(OUTDIR)\images
+	copy $(IMGDIR)\rating_star_blank.png $(OUTDIR)\images
+	copy $(IMGDIR)\rating_star.png $(OUTDIR)\images
 	copy $(IMGDIR)\search_x.png $(OUTDIR)\images
 	copy $(IMGDIR)\unhush2.png $(OUTDIR)\images
 	copy $(IMGDIR)\unhush.png $(OUTDIR)\images
