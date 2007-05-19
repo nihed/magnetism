@@ -1,6 +1,7 @@
 header { 
 package com.dumbhippo.dm.parser;
 
+import java.io.StringReader;
 import java.util.List;
 import java.util.ArrayList;
 import com.dumbhippo.dm.fetch.*;
@@ -17,10 +18,10 @@ options {
 }
 
 {
+	private static final Logger logger = GlobalSetup.getLogger(FetchParser.class);
+	
 	// I'm not sure if reportError is ever called now that we've turned of the
 	// defaultErrorHandler. But just in case...
-	
-	private static final Logger logger = GlobalSetup.getLogger(FetchParser.class);
 	
 	@Override
 	public void reportError(RecognitionException e) {
@@ -35,6 +36,15 @@ options {
 	@Override
 	public void reportWarning(String warning) {
 		logger.debug(warning);
+	}
+	
+	public static FetchNode parse(String input) throws RecognitionException, TokenStreamException {
+		StringReader in = new StringReader(input);
+		FetchParser parser = new FetchParser(new FetchLexer(in));
+		FetchNode fetchNode = parser.startRule();
+		in.close();
+		
+		return fetchNode;
 	}
 }
 

@@ -5,11 +5,13 @@ import javax.persistence.EntityManager;
 
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
+import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
 import com.dumbhippo.dm.persistence.TestGroupMember;
 import com.dumbhippo.server.NotFoundException;
 
+@DMO(classId="http://mugshot.org/p/o/test/groupMember", resourceBase="/o/test/groupMember")
 public abstract class TestGroupMemberDMO extends DMObject<TestGroupMemberKey> {
 	@Inject
 	EntityManager em;
@@ -40,8 +42,8 @@ public abstract class TestGroupMemberDMO extends DMObject<TestGroupMemberKey> {
 	public TestGroupDMO getGroup() {
 		return session.findMustExist(TestGroupDMO.class, groupMember.getGroup().getGuid());
 	}
-	
-	@DMProperty
+
+	@DMProperty(defaultChildren="+")
 	public TestUserDMO getMember() {
 		return session.findMustExist(TestUserDMO.class, groupMember.getMember().getGuid());
 	}

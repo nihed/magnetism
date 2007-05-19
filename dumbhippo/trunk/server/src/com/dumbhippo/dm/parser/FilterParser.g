@@ -1,6 +1,7 @@
 header { 
 package com.dumbhippo.dm.parser;
 
+import java.io.StringReader;
 import com.dumbhippo.dm.filter.*;
 import com.dumbhippo.GlobalSetup;
 import org.slf4j.Logger;
@@ -33,6 +34,15 @@ options {
 	@Override
 	public void reportWarning(String warning) {
 		logger.debug(warning);
+	}
+	
+	public static Filter parse(String input) throws RecognitionException, TokenStreamException {
+		StringReader in = new StringReader(input);
+		FilterParser parser = new FilterParser(new FilterLexer(in));
+		Filter f = parser.startRule();
+		in.close();
+		
+		return f;
 	}
 }
 

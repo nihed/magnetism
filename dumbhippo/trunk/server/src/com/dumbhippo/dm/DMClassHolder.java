@@ -2,6 +2,8 @@ package com.dumbhippo.dm;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,10 +25,11 @@ import javax.persistence.EntityManager;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.Inject;
 import com.dumbhippo.identity20.Guid;
 
-public class DMClassHolder<T> {
+public class DMClassHolder<T extends DMObject> {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(DMClassHolder.class);
 	
@@ -37,11 +40,26 @@ public class DMClassHolder<T> {
 	private Constructor wrapperConstructor;
 	private DMPropertyHolder[] properties;
 	private Map<String, Integer> propertiesMap = new HashMap<String, Integer>();
+	private DMO annotation;
 
 	public DMClassHolder(DataModel model, Class<T> clazz) {
 		this.model = model;
 		this.baseClass = clazz;
+		
+		annotation = clazz.getAnnotation(DMO.class);
+		if (annotation == null)
+			throw new RuntimeException("DMObject class " + clazz.getName() + " doesn't have a @DMO annotation");
+		
+		// Validate the classId as an URI
+		try {
+			URI uri = new URI(annotation.classId());
+			if (uri.getFragment() != null)
+				throw new RuntimeException(clazz.getName() + ": classId '" + annotation.classId() + "' can't have a fragment identifier");
 
+		} catch (URISyntaxException e1) {
+			throw new RuntimeException(clazz.getName() + ": classId '" + annotation.classId() + "' is not a valid URI");
+		}
+		
 		for (Constructor c : clazz.getDeclaredConstructors()) {
 			Class<?>[] parameterTypes = c.getParameterTypes();
 			if (parameterTypes.length != 1)
@@ -68,6 +86,18 @@ public class DMClassHolder<T> {
 		buildWrapperClass();
 	}
 
+	public DataModel getModel() {
+		return model;
+	}
+	
+	public String getResourceBase() {
+		return annotation.resourceBase();
+	}
+	
+	public String getClassId() {
+		return annotation.classId();
+	}
+
 	// FIXME: do we need this?
 	public Class<?> getKeyClass() {
 		return keyClass;
@@ -80,7 +110,7 @@ public class DMClassHolder<T> {
 	public int getPropertyIndex(String name) {
 		Integer index = propertiesMap.get(name);
 		if (index == null)
-			throw new IllegalArgumentException("No property named " + name);
+			return -1;
 		
 		return index;
 	}

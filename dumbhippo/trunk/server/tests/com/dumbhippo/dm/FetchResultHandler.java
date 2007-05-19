@@ -144,6 +144,9 @@ public class FetchResultHandler extends DefaultHandler {
 			throw new SAXParseException("no namespace for <resource/> element", locator);
 		}
 		
+		if (classId.contains("#"))
+			throw new SAXParseException("property class ID can't have a fragment identifier", locator);
+		
 		if (resourceId == null)
 			throw new SAXParseException("mugs:resourceId attribute required on resource element", locator);
 		

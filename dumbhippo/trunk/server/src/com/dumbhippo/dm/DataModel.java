@@ -64,7 +64,7 @@ public class DataModel {
 	 * @param <T>
 	 * @param clazz
 	 */
-	public <T> void addDMClass(Class<T> clazz) {
+	public <T extends DMObject> void addDMClass(Class<T> clazz) {
 		classes.put(clazz, new DMClassHolder<T>(this, clazz));
 	}
 	
@@ -78,6 +78,9 @@ public class DataModel {
 	public <T extends DMObject<?>> DMClassHolder<T> getDMClass(Class<T> clazz) {
 		@SuppressWarnings("unchecked")
 		DMClassHolder<T> dmClass = classes.get(clazz);
+		
+		if (dmClass == null)
+			throw new IllegalArgumentException("Class " + clazz.getName() + " is not bound as a DMO");
 		
 		return dmClass;
 	}

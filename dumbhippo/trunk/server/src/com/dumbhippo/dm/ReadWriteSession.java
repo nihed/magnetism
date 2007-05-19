@@ -34,30 +34,37 @@ public class ReadWriteSession extends DMSession {
 	}
 
 	private static class QueuedNotification<K,T extends DMObject<K>> {
-		protected Class<T> clazz;
+		protected DMClassHolder<T> classHolder;
 		protected K key;
-		protected String propertyName;
+		protected int propertyIndex;
 
-		public QueuedNotification(Class<T> clazz, K key, String propertyName) {
-			this.clazz = clazz;
+		public QueuedNotification(DMClassHolder<T> classHolder, K key, int propertyIndex) {
+			this.classHolder = classHolder;
 			this.key = key;
-			this.propertyName = propertyName;
+			this.propertyIndex = propertyIndex;
 		}
 	}
 	
 	public <K, T extends DMObject<K>> void notify(Class<T> clazz, K key, String propertyName) {
-		notifications.add(new QueuedNotification<K,T>(clazz, key, propertyName));
+		DMClassHolder<T> classHolder = model.getDMClass(clazz);
+		int propertyIndex = classHolder.getPropertyIndex(propertyName);
+		if (propertyIndex < 0)
+			throw new RuntimeException("Class " + clazz.getName() + " has no property " + propertyName);
+
+		notifications.add(new QueuedNotification<K,T>(classHolder, key, propertyIndex));
 	}
 	
 	public void afterCompletion(int status) {
 		long timestamp = model.getTimestamp();
 		
 		for (QueuedNotification<?, ?> notification : notifications) {
-			DMClassHolder classHolder = model.getDMClass(notification.clazz);
-			int propertyIndex = classHolder.getPropertyIndex(notification.propertyName); 
-			model.getStore().invalidate(classHolder, notification.key, propertyIndex, timestamp);
+			DMClassHolder<?> classHolder = notification.classHolder;
+			model.getStore().invalidate(classHolder, notification.key, notification.propertyIndex, timestamp);
 		
-			logger.debug("Invalidated {}#{}.{}", new Object[] { notification.clazz.getSimpleName(), notification.key, notification.propertyName });
+			logger.debug("Invalidated {}#{}.{}", new Object[] { 
+					classHolder.getClass().getSimpleName(),
+					notification.key, 
+					classHolder.getProperty(notification.propertyIndex).getName() });
 		}
 	}
 }
