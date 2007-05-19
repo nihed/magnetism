@@ -61,8 +61,30 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 	
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
+		// product title and editorial review or user review are passed
+		// as block title and description
 		builder.openElement("amazonActivity",
-					"userId", getPersonSource().getUser().getId());	
+				            "imageUrl", getImageUrl(),
+				            "imageWidth", Long.toString(getImageWidth()),
+				            "imageHeight", Long.toString(getImageHeight()),
+					        "userId", getPersonSource().getUser().getId());	
+
+		switch (activityStatus.getActivityType()) {
+            case REVIEWED :
+                builder.openElement("review", 
+                		            "title", getReviewTitle(),             
+                		            "rating", Long.toString(getReviewRating()));        
+		        builder.closeElement();            	
+		        break;
+            case WISH_LISTED :    	
+                builder.openElement("listItem",
+                		            "listName", getListName(),
+                		            "listLink", getListLink());	
+                builder.appendTextNode("comment", getListItemComment());
+		        builder.closeElement();
+		        break;
+		}
+		
 		builder.closeElement();
 	}
 	
