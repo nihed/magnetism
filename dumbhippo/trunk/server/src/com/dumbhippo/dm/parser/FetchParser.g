@@ -38,33 +38,33 @@ options {
 	}
 }
 
-startRule returns [Fetch f]
+startRule returns [FetchNode f]
 	: f=fetchString EOF
 	;
 
-fetchString returns [Fetch f]
-{ List<PropertyFetch> props = new ArrayList<PropertyFetch>();
-  PropertyFetch p; 
+fetchString returns [FetchNode f]
+{ List<PropertyFetchNode> props = new ArrayList<PropertyFetchNode>();
+  PropertyFetchNode p; 
 }
     : ( p=propertyFetch { props.add(p); } ( SEMICOLON p=propertyFetch { props.add(p); } )* )?
-    { f = new Fetch(props.toArray(new PropertyFetch[props.size()])); }
+    { f = new FetchNode(props.toArray(new PropertyFetchNode[props.size()])); }
     ;
     
-propertyFetch returns [PropertyFetch pf]
+propertyFetch returns [PropertyFetchNode pf]
 { String p;
   FetchAttribute a;
-  PropertyFetch childPf;
+  PropertyFetchNode childPf;
   List<FetchAttribute> attrs = new ArrayList<FetchAttribute>();
-  Fetch children = null;
+  FetchNode children = null;
 }
 	: p=property
 	  ( LPAREN ( a=attribute { attrs.add(a); } ( COMMA a=attribute { attrs.add(a); } ) * )? RPAREN )?
 	  (   ( LBRACKET children=fetchString RBRACKET )?
-	     | childPf=propertyFetch { children = new Fetch(new PropertyFetch[] { childPf }); }
+	     | childPf=propertyFetch { children = new FetchNode(new PropertyFetchNode[] { childPf }); }
 	  )
-	  { pf = new PropertyFetch(p, 
-	  	                       attrs.toArray(new FetchAttribute[attrs.size()]), 
-	  	                       children != null && children.getProperties().length > 0 ? children : null); }
+	  { pf = new PropertyFetchNode(p, 
+	  	                           attrs.toArray(new FetchAttribute[attrs.size()]), 
+	  	                           children != null && children.getProperties().length > 0 ? children : null); }
 	;
         
 property returns [String s]

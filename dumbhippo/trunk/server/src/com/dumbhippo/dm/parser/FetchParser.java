@@ -68,8 +68,8 @@ public FetchParser(ParserSharedInputState state) {
   tokenNames = _tokenNames;
 }
 
-	public final Fetch  startRule() throws RecognitionException, TokenStreamException {
-		Fetch f;
+	public final FetchNode  startRule() throws RecognitionException, TokenStreamException {
+		FetchNode f;
 		
 		
 		f=fetchString();
@@ -77,11 +77,11 @@ public FetchParser(ParserSharedInputState state) {
 		return f;
 	}
 	
-	public final Fetch  fetchString() throws RecognitionException, TokenStreamException {
-		Fetch f;
+	public final FetchNode  fetchString() throws RecognitionException, TokenStreamException {
+		FetchNode f;
 		
-		List<PropertyFetch> props = new ArrayList<PropertyFetch>();
-		PropertyFetch p; 
+		List<PropertyFetchNode> props = new ArrayList<PropertyFetchNode>();
+		PropertyFetchNode p; 
 		
 		
 		{
@@ -93,7 +93,7 @@ public FetchParser(ParserSharedInputState state) {
 			p=propertyFetch();
 			props.add(p);
 			{
-			_loop29:
+			_loop113:
 			do {
 				if ((LA(1)==SEMICOLON)) {
 					match(SEMICOLON);
@@ -101,7 +101,7 @@ public FetchParser(ParserSharedInputState state) {
 					props.add(p);
 				}
 				else {
-					break _loop29;
+					break _loop113;
 				}
 				
 			} while (true);
@@ -119,18 +119,18 @@ public FetchParser(ParserSharedInputState state) {
 		}
 		}
 		}
-		f = new Fetch(props.toArray(new PropertyFetch[props.size()]));
+		f = new FetchNode(props.toArray(new PropertyFetchNode[props.size()]));
 		return f;
 	}
 	
-	public final PropertyFetch  propertyFetch() throws RecognitionException, TokenStreamException {
-		PropertyFetch pf;
+	public final PropertyFetchNode  propertyFetch() throws RecognitionException, TokenStreamException {
+		PropertyFetchNode pf;
 		
 		String p;
 		FetchAttribute a;
-		PropertyFetch childPf;
+		PropertyFetchNode childPf;
 		List<FetchAttribute> attrs = new ArrayList<FetchAttribute>();
-		Fetch children = null;
+		FetchNode children = null;
 		
 		
 		p=property();
@@ -146,7 +146,7 @@ public FetchParser(ParserSharedInputState state) {
 				a=attribute();
 				attrs.add(a);
 				{
-				_loop34:
+				_loop118:
 				do {
 					if ((LA(1)==COMMA)) {
 						match(COMMA);
@@ -154,7 +154,7 @@ public FetchParser(ParserSharedInputState state) {
 						attrs.add(a);
 					}
 					else {
-						break _loop34;
+						break _loop118;
 					}
 					
 				} while (true);
@@ -225,7 +225,7 @@ public FetchParser(ParserSharedInputState state) {
 		case NAME:
 		{
 			childPf=propertyFetch();
-			children = new Fetch(new PropertyFetch[] { childPf });
+			children = new FetchNode(new PropertyFetchNode[] { childPf });
 			break;
 		}
 		default:
@@ -234,9 +234,9 @@ public FetchParser(ParserSharedInputState state) {
 		}
 		}
 		}
-		pf = new PropertyFetch(p, 
-			  	                       attrs.toArray(new FetchAttribute[attrs.size()]), 
-			  	                       children != null && children.getProperties().length > 0 ? children : null);
+		pf = new PropertyFetchNode(p, 
+			  	                           attrs.toArray(new FetchAttribute[attrs.size()]), 
+			  	                           children != null && children.getProperties().length > 0 ? children : null);
 		return pf;
 	}
 	
