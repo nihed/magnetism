@@ -14,6 +14,7 @@ public class AllTests {
         
         suite.addTest(new TestSuite(BasicTests.class));
         
+        suite.addTest(new TestSuite(FetchTests.class));
         suite.addTest(new TestSuite(ThreadingTests.class));
         
         return suite;
