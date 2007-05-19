@@ -2,6 +2,7 @@
  
 package com.dumbhippo.dm.parser;
 
+import java.io.StringReader;
 import com.dumbhippo.dm.filter.*;
 import com.dumbhippo.GlobalSetup;
 import org.slf4j.Logger;

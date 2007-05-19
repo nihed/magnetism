@@ -2,6 +2,7 @@
  
 package com.dumbhippo.dm.parser;
 
+import java.io.StringReader;
 import com.dumbhippo.dm.filter.*;
 import com.dumbhippo.GlobalSetup;
 import org.slf4j.Logger;
@@ -271,7 +272,7 @@ tryAgain:
 		}
 		}
 		{
-		_loop21:
+		_loop345:
 		do {
 			switch ( LA(1)) {
 			case 'a':  case 'b':  case 'c':  case 'd':
@@ -310,7 +311,7 @@ tryAgain:
 			}
 			default:
 			{
-				break _loop21;
+				break _loop345;
 			}
 			}
 		} while (true);

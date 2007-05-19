@@ -2,6 +2,7 @@
  
 package com.dumbhippo.dm.parser;
 
+import java.io.StringReader;
 import com.dumbhippo.dm.filter.*;
 import com.dumbhippo.GlobalSetup;
 import org.slf4j.Logger;
@@ -41,6 +42,15 @@ public class FilterParser extends antlr.LLkParser       implements FilterParserT
 	@Override
 	public void reportWarning(String warning) {
 		logger.debug(warning);
+	}
+	
+	public static Filter parse(String input) throws RecognitionException, TokenStreamException {
+		StringReader in = new StringReader(input);
+		FilterParser parser = new FilterParser(new FilterLexer(in));
+		Filter f = parser.startRule();
+		in.close();
+		
+		return f;
 	}
 
 protected FilterParser(TokenBuffer tokenBuf, int k) {
@@ -82,7 +92,7 @@ public FilterParser(ParserSharedInputState state) {
 		
 		f=andExpression();
 		{
-		_loop4:
+		_loop328:
 		do {
 			if ((LA(1)==OR)) {
 				match(OR);
@@ -90,7 +100,7 @@ public FilterParser(ParserSharedInputState state) {
 				f = new OrFilter(f, f2);
 			}
 			else {
-				break _loop4;
+				break _loop328;
 			}
 			
 		} while (true);
@@ -105,7 +115,7 @@ public FilterParser(ParserSharedInputState state) {
 		
 		f=notExpression();
 		{
-		_loop7:
+		_loop331:
 		do {
 			if ((LA(1)==AND)) {
 				match(AND);
@@ -113,7 +123,7 @@ public FilterParser(ParserSharedInputState state) {
 				f = new AndFilter(f, f2);
 			}
 			else {
-				break _loop7;
+				break _loop331;
 			}
 			
 		} while (true);

@@ -2,6 +2,7 @@
  
 package com.dumbhippo.dm.parser;
 
+import java.io.StringReader;
 import java.util.List;
 import java.util.ArrayList;
 import com.dumbhippo.dm.fetch.*;
