@@ -151,6 +151,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-amazon-activity.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-block-facebook-event.c"
 				>
 			</File>
@@ -208,6 +212,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-account-question.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-amazon-activity.c"
 				>
 			</File>
 			<File
@@ -523,6 +531,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-amazon-activity.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-block-facebook-event.h"
 				>
 			</File>
@@ -580,6 +592,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-account-question.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-amazon-activity.h"
 				>
 			</File>
 			<File

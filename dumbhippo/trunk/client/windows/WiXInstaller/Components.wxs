@@ -95,6 +95,7 @@
 		    <Directory Id="dhImagesDir" Name="Images">
         		<Component Id="images" Guid="681D6075-3B98-428C-8B73-68D9F15133AD">
 	        	    <File Id="addIconPng"        Name="add_icon.png" LongName="add_icon.png"       src="images\add_icon.png"       DiskId="1" Vital="yes"/>
+                    <File Id="amazonNoImagePng" Name="amazonno.png" LongName="amazon_no_image.png" src="images\amazon_no_image.png" DiskId="1" Vital="yes"/>	        	    
 	        	    <File Id="arrowPng"          Name="arrow.png"    LongName="arrow.png"          src="images\arrow.png"          DiskId="1" Vital="yes"/>
 	        	    <File Id="arrow2Png"         Name="arrow2.png"   LongName="arrow2.png"         src="images\arrow2.png"         DiskId="1" Vital="yes"/>
 	        	    <File Id="barMiddlePng"      Name="bar_midd.png" LongName="bar_middle.png"     src="images\bar_middle.png"     DiskId="1" Vital="yes"/>
@@ -124,6 +125,8 @@
 	                    <File Id="photoIconPng"      Name="photo_ic.png" LongName="photo_icon.png"     src="images\photo_icon.png"     DiskId="1" Vital="yes"/>
 	                    <File Id="quiphateIconPng"   Name="quiphate.png" LongName="quiphate_icon.png"  src="images\quiphate_icon.png"  DiskId="1" Vital="yes"/>
 	                    <File Id="quiploveIconPng"   Name="quiplove.png" LongName="quiplove_icon.png"  src="images\quiplove_icon.png"  DiskId="1" Vital="yes"/>
+	                    <File Id="ratingStarBlankPng"   Name="ratingsb.png" LongName="rating_star_blank.png"  src="images\rating_star_blank.png"  DiskId="1" Vital="yes"/>	                    
+	                    <File Id="ratingStarPng"     Name="ratingst.png" LongName="rating_star.png"    src="images\rating_star.png"    DiskId="1" Vital="yes"/>
 	                    <File Id="searchXPng"        Name="search_x.png" LongName="search_x.png"       src="images\search_x.png"       DiskId="1" Vital="yes"/>
 	                    <File Id="unhushPng"         Name="unhush.png"   LongName="unhush.png"         src="images\unhush.png"         DiskId="1" Vital="yes"/>
 	                    <File Id="unhush2Png"        Name="unhush2.png"  LongName="unhush2.png"        src="images\unhush2.png"        DiskId="1" Vital="yes"/>

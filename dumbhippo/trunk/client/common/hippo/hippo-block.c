@@ -14,6 +14,7 @@
 #include "hippo-block-flickr-photoset.h"
 #include "hippo-block-facebook-event.h"
 #include "hippo-block-netflix-movie.h"
+#include "hippo-block-amazon-activity.h"
 #include "hippo-xml-utils.h"
 #include <string.h>
 
@@ -628,6 +629,9 @@ hippo_block_new(const char    *guid,
     case HIPPO_BLOCK_TYPE_NETFLIX_MOVIE:
         object_type = HIPPO_TYPE_BLOCK_NETFLIX_MOVIE;
         break;        
+    case HIPPO_BLOCK_TYPE_AMAZON_ACTIVITY:
+        object_type = HIPPO_TYPE_BLOCK_AMAZON_ACTIVITY;
+        break;        
     case HIPPO_BLOCK_TYPE_GENERIC:
         object_type = HIPPO_TYPE_BLOCK_GENERIC;
         break;
@@ -1171,7 +1175,9 @@ hippo_block_type_from_attributes(const char *type,
         { "FLICKR_PHOTOSET", HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET },
         { "FACEBOOK_EVENT", HIPPO_BLOCK_TYPE_FACEBOOK_EVENT },
         { "YOUTUBE_PERSON", HIPPO_BLOCK_TYPE_YOUTUBE_PERSON },
-        { "NETFLIX_MOVIE", HIPPO_BLOCK_TYPE_NETFLIX_MOVIE }
+        { "NETFLIX_MOVIE", HIPPO_BLOCK_TYPE_NETFLIX_MOVIE },
+        { "AMAZON_REVIEW", HIPPO_BLOCK_TYPE_AMAZON_ACTIVITY },
+        { "AMAZON_WISH_LIST_ITEM", HIPPO_BLOCK_TYPE_AMAZON_ACTIVITY }
     };
     unsigned int i;
 

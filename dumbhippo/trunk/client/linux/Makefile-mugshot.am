@@ -80,6 +80,7 @@ mugshot_SOURCES	=				\
 EMBEDDEDIMAGEDIR=$(COMMONSRCDIR)/images
 EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/add_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/amazon_no_image.png	\
 	$(EMBEDDEDIMAGEDIR)/arrow.png		\
 	$(EMBEDDEDIMAGEDIR)/arrow2.png		\
 	$(EMBEDDEDIMAGEDIR)/bar_middle.png	\
@@ -109,12 +110,14 @@ EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/photo_icon.png	\
 	$(EMBEDDEDIMAGEDIR)/quiphate_icon.png	\
 	$(EMBEDDEDIMAGEDIR)/quiplove_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/rating_star_blank.png \
+	$(EMBEDDEDIMAGEDIR)/rating_star.png	\
 	$(EMBEDDEDIMAGEDIR)/search_x.png	\
 	$(EMBEDDEDIMAGEDIR)/unhush2.png		\
 	$(EMBEDDEDIMAGEDIR)/unhush.png
 
 EMBEDDED_IMAGE_HEADER=$(BUILT_SRC_DIR)/hippo-embedded-image-data.h
-$(EMBEDDED_IMAGE_HEADER):	$(EMBEDDED_IMAGES)
+$(EMBEDDED_IMAGE_HEADER):	$(EMBEDDED_IMAGES) Makefile
 	mkdir $(MARSHAL_DIR) || true
 	cat </dev/null > $(EMBEDDED_IMAGE_HEADER) || exit 1 ;				\
 	ALL_NAMES="" ;									\
