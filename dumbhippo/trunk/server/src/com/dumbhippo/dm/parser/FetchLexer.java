@@ -2,6 +2,7 @@
  
 package com.dumbhippo.dm.parser;
 
+import java.io.StringReader;
 import java.util.List;
 import java.util.ArrayList;
 import com.dumbhippo.dm.fetch.*;
@@ -317,7 +318,7 @@ tryAgain:
 		}
 		}
 		{
-		_loop54:
+		_loop378:
 		do {
 			switch ( LA(1)) {
 			case 'a':  case 'b':  case 'c':  case 'd':
@@ -356,7 +357,7 @@ tryAgain:
 			}
 			default:
 			{
-				break _loop54;
+				break _loop378;
 			}
 			}
 		} while (true);
@@ -374,17 +375,17 @@ tryAgain:
 		int _saveIndex;
 		
 		{
-		int _cnt57=0;
-		_loop57:
+		int _cnt381=0;
+		_loop381:
 		do {
 			if (((LA(1) >= '0' && LA(1) <= '9'))) {
 				matchRange('0','9');
 			}
 			else {
-				if ( _cnt57>=1 ) { break _loop57; } else {throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());}
+				if ( _cnt381>=1 ) { break _loop381; } else {throw new NoViableAltForCharException((char)LA(1), getFilename(), getLine(), getColumn());}
 			}
 			
-			_cnt57++;
+			_cnt381++;
 		} while (true);
 		}
 		if ( _createToken && _token==null && _ttype!=Token.SKIP ) {

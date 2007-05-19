@@ -2,6 +2,7 @@
  
 package com.dumbhippo.dm.parser;
 
+import java.io.StringReader;
 import java.util.List;
 import java.util.ArrayList;
 import com.dumbhippo.dm.fetch.*;
@@ -25,10 +26,10 @@ import antlr.collections.impl.BitSet;
 public class FetchParser extends antlr.LLkParser       implements FetchParserTokenTypes
  {
 
+	private static final Logger logger = GlobalSetup.getLogger(FetchParser.class);
+	
 	// I'm not sure if reportError is ever called now that we've turned of the
 	// defaultErrorHandler. But just in case...
-	
-	private static final Logger logger = GlobalSetup.getLogger(FetchParser.class);
 	
 	@Override
 	public void reportError(RecognitionException e) {
@@ -43,6 +44,15 @@ public class FetchParser extends antlr.LLkParser       implements FetchParserTok
 	@Override
 	public void reportWarning(String warning) {
 		logger.debug(warning);
+	}
+	
+	public static FetchNode parse(String input) throws RecognitionException, TokenStreamException {
+		StringReader in = new StringReader(input);
+		FetchParser parser = new FetchParser(new FetchLexer(in));
+		FetchNode fetchNode = parser.startRule();
+		in.close();
+		
+		return fetchNode;
 	}
 
 protected FetchParser(TokenBuffer tokenBuf, int k) {
@@ -93,7 +103,7 @@ public FetchParser(ParserSharedInputState state) {
 			p=propertyFetch();
 			props.add(p);
 			{
-			_loop113:
+			_loop353:
 			do {
 				if ((LA(1)==SEMICOLON)) {
 					match(SEMICOLON);
@@ -101,7 +111,7 @@ public FetchParser(ParserSharedInputState state) {
 					props.add(p);
 				}
 				else {
-					break _loop113;
+					break _loop353;
 				}
 				
 			} while (true);
@@ -146,7 +156,7 @@ public FetchParser(ParserSharedInputState state) {
 				a=attribute();
 				attrs.add(a);
 				{
-				_loop118:
+				_loop358:
 				do {
 					if ((LA(1)==COMMA)) {
 						match(COMMA);
@@ -154,7 +164,7 @@ public FetchParser(ParserSharedInputState state) {
 						attrs.add(a);
 					}
 					else {
-						break _loop118;
+						break _loop358;
 					}
 					
 				} while (true);
