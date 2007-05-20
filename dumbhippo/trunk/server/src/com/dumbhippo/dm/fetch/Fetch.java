@@ -2,6 +2,8 @@ package com.dumbhippo.dm.fetch;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -270,10 +272,20 @@ public final class Fetch<T extends DMObject> {
 		if (includeDefault)
 			b.append('+');
 		
-		for (int i = 0; i < properties.length; i++) {
+		// This method is primarily for our tests. For testing purposes, we want a
+		// human-predictable ordering for properties, instead of a MD5-hash ordering
+		//
+		PropertyFetch[] sortedProperties = (PropertyFetch[])properties.clone();
+		Arrays.sort(sortedProperties, new Comparator<PropertyFetch>() {
+			public int compare(PropertyFetch a, PropertyFetch b) {
+				return a.getProperty().getPropertyId().compareTo(b.getProperty().getPropertyId());
+			}
+		});
+		
+		for (int i = 0; i < sortedProperties.length; i++) {
 			if (i != 0 || includeDefault)
 				b.append(';');
-			b.append(properties[i].toString());
+			b.append(sortedProperties[i].toString());
 		}
 		
 		return b.toString();

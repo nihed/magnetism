@@ -425,11 +425,16 @@ public class DMPropertyHolder implements Comparable<DMPropertyHolder> {
 	// b) Using the ordering of the propertyId string, but that's slow,
 	//    especially since all propertyIds share a long common prefix.
 	// c) Do a post-pass once all properties are registered to assign
-	//    integer ordering, but that's inconvenient
+	//    integer ordering. This would be very annoying since we use the 
+	//    ordering when building DMClassHolder.
 	//
-	// So we instead do:
+	// Instead do:
 	//
-	// d) Compute 64-bits of a hash of the property ID and store it for later use.
+	// d) Compute 64-bits of a hash of the property ID and store it for later use
+	//   
+	// The main disadvantage of this compared to b) or c) is that the ordering
+	// isn't predictable in advance or meaningful, though it should be stable
+	// across server restart and even between different server instances.
 	//
 	private void computeOrdering() {
 		MessageDigest messageDigest = Digest.newDigestMD5();
