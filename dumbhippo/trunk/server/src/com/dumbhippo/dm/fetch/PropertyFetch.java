@@ -6,7 +6,6 @@ import com.dumbhippo.dm.DMPropertyHolder;
 public final class PropertyFetch implements Comparable<PropertyFetch> {
 	private DMPropertyHolder property;
 	private Fetch children;
-	private boolean mustQualify;
 	private boolean notify;
 	
 	public PropertyFetch(DMPropertyHolder property, Fetch children, boolean notify) {
@@ -64,13 +63,10 @@ public final class PropertyFetch implements Comparable<PropertyFetch> {
 	public String toString() {
 		StringBuilder b = new StringBuilder();
 		
-		if (mustQualify)
-			b.append(property.getPropertyId());
-		else
-			b.append(property.getName());
+		b.append(property.getPropertyId());
 		
-		if (notify)
-			b.append("notify=true");
+		if (!notify)
+			b.append("(notify=false)");
 		
 		if (children != null) {
 			b.append(' ');

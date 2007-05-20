@@ -26,8 +26,8 @@ public class FetchBindingTests extends AbstractSupportedTests {
 	// Test basic operation of binding
 	public void testBasic() throws Exception {
 		doTest(TestGroupDMO.class, "name", "@/group#name");
-		doTest(TestGroupDMO.class, "name;members", "@/group#name;@/group#members");
-		doTest(TestGroupDMO.class, "name;members member", "@/group#name;@/group#members @/groupMember#member");
+		doTest(TestGroupDMO.class, "name;members", "@/group#members;@/group#name");
+		doTest(TestGroupDMO.class, "name;members member", "@/group#members @/groupMember#member;@/group#name");
 	}
 	
 	// Test '+' meaning 'defaults'
