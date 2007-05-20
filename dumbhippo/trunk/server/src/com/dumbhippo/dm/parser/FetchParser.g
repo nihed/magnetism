@@ -2,6 +2,7 @@ header {
 package com.dumbhippo.dm.parser;
 
 import java.io.StringReader;
+import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import com.dumbhippo.dm.fetch.*;
@@ -64,25 +65,38 @@ propertyFetch returns [PropertyFetchNode pf]
 { String p;
   FetchAttribute a;
   PropertyFetchNode childPf;
-  List<FetchAttribute> attrs = new ArrayList<FetchAttribute>();
+  List<FetchAttribute> attrs = Collections.emptyList();
   FetchNode children = null;
 }
-	: p=property
-	  ( LPAREN ( a=attribute { attrs.add(a); } ( COMMA a=attribute { attrs.add(a); } ) * )? RPAREN )?
-	  (   ( LBRACKET children=fetchString RBRACKET )?
-	     | childPf=propertyFetch { children = new FetchNode(new PropertyFetchNode[] { childPf }); }
+	: (
+	    p=namedProperty ( attrs=attributes )?
+	    (   
+	      LBRACKET children=fetchString RBRACKET
+	    | 
+	      childPf=propertyFetch { children = new FetchNode(new PropertyFetchNode[] { childPf }); }
+	    )?
+      |
+        p=specialProperty ( attrs=attributes )?
 	  )
 	  { pf = new PropertyFetchNode(p, 
 	  	                           attrs.toArray(new FetchAttribute[attrs.size()]), 
-	  	                           children != null && children.getProperties().length > 0 ? children : null); }
+	   	                           children != null && children.getProperties().length > 0 ? children : null); }
+	;
+     
+attributes returns [ArrayList<FetchAttribute> attrs = new ArrayList<FetchAttribute>();]
+{ FetchAttribute a; }
+    : LPAREN ( a=attribute { attrs.add(a); } ( COMMA a=attribute { attrs.add(a); } ) * )? RPAREN
 	;
         
-property returns [String s]
-	:   PLUS { s = "+"; }
-  	  | STAR { s = "*"; }
-	  | n:NAME { s = n.getText(); }
+namedProperty returns [String s]
+	: n:NAME { s = n.getText(); }
 	;
 	
+specialProperty returns [String s]
+	:   PLUS { s = "+"; }
+  	  | STAR { s = "*"; }
+	;
+        
 attribute returns [FetchAttribute a]
 { FetchAttributeType t; 
   Object v; 

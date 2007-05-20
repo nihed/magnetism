@@ -3,6 +3,7 @@
 package com.dumbhippo.dm.parser;
 
 import java.io.StringReader;
+import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import com.dumbhippo.dm.fetch.*;
@@ -96,14 +97,14 @@ public FetchParser(ParserSharedInputState state) {
 		
 		{
 		switch ( LA(1)) {
+		case NAME:
 		case PLUS:
 		case STAR:
-		case NAME:
 		{
 			p=propertyFetch();
 			props.add(p);
 			{
-			_loop353:
+			_loop1012:
 			do {
 				if ((LA(1)==SEMICOLON)) {
 					match(SEMICOLON);
@@ -111,7 +112,7 @@ public FetchParser(ParserSharedInputState state) {
 					props.add(p);
 				}
 				else {
-					break _loop353;
+					break _loop1012;
 				}
 				
 			} while (true);
@@ -139,39 +140,29 @@ public FetchParser(ParserSharedInputState state) {
 		String p;
 		FetchAttribute a;
 		PropertyFetchNode childPf;
-		List<FetchAttribute> attrs = new ArrayList<FetchAttribute>();
+		List<FetchAttribute> attrs = Collections.emptyList();
 		FetchNode children = null;
 		
 		
-		p=property();
 		{
 		switch ( LA(1)) {
-		case LPAREN:
+		case NAME:
 		{
-			match(LPAREN);
+			p=namedProperty();
 			{
 			switch ( LA(1)) {
-			case LITERAL_notify:
+			case LPAREN:
 			{
-				a=attribute();
-				attrs.add(a);
-				{
-				_loop358:
-				do {
-					if ((LA(1)==COMMA)) {
-						match(COMMA);
-						a=attribute();
-						attrs.add(a);
-					}
-					else {
-						break _loop358;
-					}
-					
-				} while (true);
-				}
+				attrs=attributes();
 				break;
 			}
-			case RPAREN:
+			case EOF:
+			case SEMICOLON:
+			case LBRACKET:
+			case RBRACKET:
+			case NAME:
+			case PLUS:
+			case STAR:
 			{
 				break;
 			}
@@ -181,32 +172,6 @@ public FetchParser(ParserSharedInputState state) {
 			}
 			}
 			}
-			match(RPAREN);
-			break;
-		}
-		case EOF:
-		case SEMICOLON:
-		case LBRACKET:
-		case RBRACKET:
-		case PLUS:
-		case STAR:
-		case NAME:
-		{
-			break;
-		}
-		default:
-		{
-			throw new NoViableAltException(LT(1), getFilename());
-		}
-		}
-		}
-		{
-		switch ( LA(1)) {
-		case EOF:
-		case SEMICOLON:
-		case LBRACKET:
-		case RBRACKET:
-		{
 			{
 			switch ( LA(1)) {
 			case LBRACKET:
@@ -214,6 +179,14 @@ public FetchParser(ParserSharedInputState state) {
 				match(LBRACKET);
 				children=fetchString();
 				match(RBRACKET);
+				break;
+			}
+			case NAME:
+			case PLUS:
+			case STAR:
+			{
+				childPf=propertyFetch();
+				children = new FetchNode(new PropertyFetchNode[] { childPf });
 				break;
 			}
 			case EOF:
@@ -232,10 +205,27 @@ public FetchParser(ParserSharedInputState state) {
 		}
 		case PLUS:
 		case STAR:
-		case NAME:
 		{
-			childPf=propertyFetch();
-			children = new FetchNode(new PropertyFetchNode[] { childPf });
+			p=specialProperty();
+			{
+			switch ( LA(1)) {
+			case LPAREN:
+			{
+				attrs=attributes();
+				break;
+			}
+			case EOF:
+			case SEMICOLON:
+			case RBRACKET:
+			{
+				break;
+			}
+			default:
+			{
+				throw new NoViableAltException(LT(1), getFilename());
+			}
+			}
+			}
 			break;
 		}
 		default:
@@ -246,14 +236,66 @@ public FetchParser(ParserSharedInputState state) {
 		}
 		pf = new PropertyFetchNode(p, 
 			  	                           attrs.toArray(new FetchAttribute[attrs.size()]), 
-			  	                           children != null && children.getProperties().length > 0 ? children : null);
+			   	                           children != null && children.getProperties().length > 0 ? children : null);
 		return pf;
 	}
 	
-	public final String  property() throws RecognitionException, TokenStreamException {
+	public final String  namedProperty() throws RecognitionException, TokenStreamException {
 		String s;
 		
 		Token  n = null;
+		
+		n = LT(1);
+		match(NAME);
+		s = n.getText();
+		return s;
+	}
+	
+	public final ArrayList<FetchAttribute>  attributes() throws RecognitionException, TokenStreamException {
+		ArrayList<FetchAttribute> attrs = new ArrayList<FetchAttribute>();;
+		
+		FetchAttribute a;
+		
+		match(LPAREN);
+		{
+		switch ( LA(1)) {
+		case LITERAL_notify:
+		{
+			a=attribute();
+			attrs.add(a);
+			{
+			_loop1021:
+			do {
+				if ((LA(1)==COMMA)) {
+					match(COMMA);
+					a=attribute();
+					attrs.add(a);
+				}
+				else {
+					break _loop1021;
+				}
+				
+			} while (true);
+			}
+			break;
+		}
+		case RPAREN:
+		{
+			break;
+		}
+		default:
+		{
+			throw new NoViableAltException(LT(1), getFilename());
+		}
+		}
+		}
+		match(RPAREN);
+		return attrs;
+	}
+	
+	public final String  specialProperty() throws RecognitionException, TokenStreamException {
+		String s;
+		
 		
 		switch ( LA(1)) {
 		case PLUS:
@@ -266,13 +308,6 @@ public FetchParser(ParserSharedInputState state) {
 		{
 			match(STAR);
 			s = "*";
-			break;
-		}
-		case NAME:
-		{
-			n = LT(1);
-			match(NAME);
-			s = n.getText();
 			break;
 		}
 		default:
@@ -367,14 +402,14 @@ public FetchParser(ParserSharedInputState state) {
 		"<2>",
 		"NULL_TREE_LOOKAHEAD",
 		"SEMICOLON",
+		"LBRACKET",
+		"RBRACKET",
 		"LPAREN",
 		"COMMA",
 		"RPAREN",
-		"LBRACKET",
-		"RBRACKET",
+		"NAME",
 		"PLUS",
 		"STAR",
-		"NAME",
 		"EQUALS",
 		"\"notify\"",
 		"DIGITS",
