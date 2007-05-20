@@ -22,6 +22,7 @@ public class DataModel {
 	private Map<Class, DMClassHolder> classes = new HashMap<Class, DMClassHolder>();
 	private ClassPool classPool = new ClassPool();
 	private DMStore store = new DMStore();
+	private boolean completed = false;
 
 	private static DataModel instance = new DataModel();
 
@@ -59,13 +60,30 @@ public class DataModel {
 	/**
 	 * Add a DMO class to those managed by the cache. Eventually, we probably want
 	 * to search for classes marked with @DMO rather than requiring manual 
-	 * registration. 
+	 * registration. After adding all classes, call completeDMClasses(). 
 	 * 
 	 * @param <T>
 	 * @param clazz
 	 */
 	public <T extends DMObject> void addDMClass(Class<T> clazz) {
+		if (completed)
+			throw new IllegalStateException("completeDMClasses has already been callled");
+		
 		classes.put(clazz, new DMClassHolder<T>(this, clazz));
+	}
+	
+	/**
+	 * Do any necessary post-processing after all DMO classes managed by the cache
+	 * have been added.
+	 */
+	public void completeDMClasses() {
+		if (completed)
+			throw new IllegalStateException("completeDMClasses has already been callled");
+
+		completed = true;
+		
+		for (DMClassHolder classHolder : classes.values())
+			classHolder.complete();
 	}
 	
 	/**
@@ -77,12 +95,12 @@ public class DataModel {
 	
 	public <T extends DMObject<?>> DMClassHolder<T> getDMClass(Class<T> clazz) {
 		@SuppressWarnings("unchecked")
-		DMClassHolder<T> dmClass = classes.get(clazz);
+		DMClassHolder<T> classHolder = classes.get(clazz);
 		
-		if (dmClass == null)
+		if (classHolder == null)
 			throw new IllegalArgumentException("Class " + clazz.getName() + " is not bound as a DMO");
 		
-		return dmClass;
+		return classHolder;
 	}
 	
 	public void initializeReadOnlySession(DMViewpoint viewpoint) {

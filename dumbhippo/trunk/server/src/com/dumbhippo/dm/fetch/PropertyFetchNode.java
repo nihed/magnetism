@@ -2,17 +2,22 @@ package com.dumbhippo.dm.fetch;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.DMClassHolder;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMPropertyHolder;
 
 
 public class PropertyFetchNode {
+	static private final Logger logger = GlobalSetup.getLogger(PropertyFetchNode.class); 
+	
 	private String property;
 	private FetchNode children;
-	private FetchAttribute[] attributes;
+	private FetchAttributeNode[] attributes;
 	
-	public PropertyFetchNode(String property, FetchAttribute[] attributes, FetchNode children) {
+	public PropertyFetchNode(String property, FetchAttributeNode[] attributes, FetchNode children) {
 		this.property = property;
 		this.attributes = attributes;
 		this.children = children;
@@ -27,7 +32,7 @@ public class PropertyFetchNode {
 	}
 	
 	public Object getAttribute(FetchAttributeType type) {
-		for (FetchAttribute attr : attributes) {
+		for (FetchAttributeNode attr : attributes) {
 			if (attr.getType() == type)
 				return attr.getValue();
 		}
@@ -43,23 +48,54 @@ public class PropertyFetchNode {
 	 * TODO: Implement the subclass part
 	 * 
 	 * @param classHolder
-	 * @param whether to skip properties that are marked as defaultInclude
+	 * @param whether to skip properties that are marked as defaultInclude 
+	 *   (the property will still not be skipped if the children overridden)
 	 * @param resultList list to append the results to 
 	 */
 	public void bind(DMClassHolder<? extends DMObject> classHolder, boolean skipDefault, List<PropertyFetch> resultList) {
+		boolean notify = true;
+		for (FetchAttributeNode attribute : attributes) {
+			switch (attribute.getType()) {
+			case NOTIFY:
+				// FIXME: We probably should make bind() throw an exception and make this fatal
+				if (!(attribute.getValue() instanceof Boolean)) {
+					logger.warn("Ignoring non-boolean notify attribute");
+					continue;
+				}
+				notify = ((Boolean)(attribute.getValue())).booleanValue();
+				break;
+			}
+		}
+		
 		int propertyIndex = classHolder.getPropertyIndex(property);
 		if (propertyIndex >= 0) {
 			DMPropertyHolder propertyHolder = classHolder.getProperty(propertyIndex);
-			if (propertyHolder.getDefaultInclude() && skipDefault)
-				return;
+			boolean maybeSkip = skipDefault && propertyHolder.getDefaultInclude(); 
 			
 			Fetch boundChildren = null;
-			if (children != null && propertyHolder.isResourceValued()) {
-				DMClassHolder<? extends DMObject> childClassHolder = classHolder.getModel().getDMClass(propertyHolder.getResourceType());
-				boundChildren = children.bind(childClassHolder);
+			if (propertyHolder.isResourceValued()) {
+				Fetch defaultChildren = propertyHolder.getDefaultChildren();
+				
+				if (maybeSkip && children == null && defaultChildren == null) {
+					return;
+				}
+
+				if (children != null) {
+					DMClassHolder<? extends DMObject> childClassHolder = propertyHolder.getResourceClassHolder();
+					boundChildren = children.bind(childClassHolder);
+				}
+
+				if (maybeSkip && boundChildren != null && defaultChildren != null) {
+					if (boundChildren.equals(defaultChildren))
+						return;
+				}
+				
+			} else {
+				if (maybeSkip)
+					return;
 			}
-			
-			resultList.add(new PropertyFetch(propertyHolder, attributes, boundChildren));
+
+			resultList.add(new PropertyFetch(propertyHolder, boundChildren, notify));
 		}
 	}
 	

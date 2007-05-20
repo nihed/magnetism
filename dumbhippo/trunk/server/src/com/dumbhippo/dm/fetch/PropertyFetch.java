@@ -3,15 +3,16 @@ package com.dumbhippo.dm.fetch;
 import com.dumbhippo.dm.DMPropertyHolder;
 
 
-public class PropertyFetch {
+public final class PropertyFetch implements Comparable<PropertyFetch> {
 	private DMPropertyHolder property;
 	private Fetch children;
-	private FetchAttribute[] attributes;
+	private boolean mustQualify;
+	private boolean notify;
 	
-	public PropertyFetch(DMPropertyHolder property, FetchAttribute[] attributes, Fetch children) {
+	public PropertyFetch(DMPropertyHolder property, Fetch children, boolean notify) {
 		this.property = property;
-		this.attributes = attributes;
 		this.children = children;
+		this.notify = notify;
 	}
 
 	public Fetch getChildren() {
@@ -22,30 +23,54 @@ public class PropertyFetch {
 		return property;
 	}
 	
-	public Object getAttribute(FetchAttributeType type) {
-		for (FetchAttribute attr : attributes) {
-			if (attr.getType() == type)
-				return attr.getValue();
-		}
+	public boolean getNotify() {
+		return notify;
+	}
+	
+	public int compareTo(PropertyFetch other) {
+		return property.compareTo(other.property);
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof PropertyFetch))
+			return false;
 		
-		return null;
+		PropertyFetch other = (PropertyFetch)o;
+		if (property != other.property)
+			return false;
+		
+		if (notify != other.notify)
+			return false;
+		
+		if ((children == null && other.children != null) ||
+			(children != null && !children.equals(other.children)))
+			return false;
+		
+		return true;
+	}
+	
+	@Override
+	public int hashCode() {
+		int value = notify ? 0 : 113;
+		value += property.hashCode() * 17;
+		if (children != null)
+			value += children.hashCode() * 23;
+		
+		return value;
 	}
 	
 	@Override
 	public String toString() {
 		StringBuilder b = new StringBuilder();
 		
-		b.append(property.getPropertyId());
+		if (mustQualify)
+			b.append(property.getPropertyId());
+		else
+			b.append(property.getName());
 		
-		if (attributes.length > 0) {
-			b.append('(');
-			for (int i = 0; i < attributes.length; i++) {
-				if (i != 0)
-					b.append(',');
-				b.append(attributes[i].toString());
-			}
-			b.append(')');
-		}
+		if (notify)
+			b.append("notify=true");
 		
 		if (children != null) {
 			b.append(' ');
@@ -60,5 +85,4 @@ public class PropertyFetch {
 		
 		return b.toString();
 	}
-	
 }

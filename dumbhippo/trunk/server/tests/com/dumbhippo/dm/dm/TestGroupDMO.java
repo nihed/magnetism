@@ -50,4 +50,9 @@ public abstract class TestGroupDMO extends DMObject<Guid> {
 		
 		return result;
 	}
+	
+	@DMProperty
+	public boolean isSecret() {
+		return group.isSecret();
+	}
 }

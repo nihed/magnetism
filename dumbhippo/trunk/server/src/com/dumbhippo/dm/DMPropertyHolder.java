@@ -5,6 +5,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -18,7 +19,9 @@ import org.slf4j.Logger;
 import antlr.RecognitionException;
 import antlr.TokenStreamException;
 
+import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StringUtils;
 import com.dumbhippo.dm.annotations.DMFilter;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.ViewerDependent;
@@ -27,24 +30,34 @@ import com.dumbhippo.dm.fetch.FetchNode;
 import com.dumbhippo.dm.parser.FetchParser;
 import com.dumbhippo.identity20.Guid;
 
-public class DMPropertyHolder {
+public class DMPropertyHolder implements Comparable<DMPropertyHolder> {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(DMPropertyHolder.class);
 	
+	private DMClassHolder<? extends DMObject> declaringClassHolder;
+	private DMProperty annotation;
 	private CtClass ctClass;
 	private Class elementType;
 	private boolean multiValued;
 	private boolean resourceValued;
+	private DMClassHolder<? extends DMObject> resourceClassHolder;
 	private String methodName;
+	private Method method;
 	private String name;
+	private String namespace;
 	private String propertyId;
 	private boolean defaultInclude;
 	private Fetch defaultChildren;
+	private long ordering;
+	private boolean completed;
 	
-	public DMPropertyHolder (DMClassHolder<? extends DMObject> classHolder, CtMethod method, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
+	public DMPropertyHolder (DMClassHolder<? extends DMObject> declaringClassHolder, CtMethod ctMethod, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
 		boolean booleanOnly = false;
 		
-		methodName = method.getName();
+		this.annotation = annotation;
+		this.declaringClassHolder = declaringClassHolder;
+		
+		methodName = ctMethod.getName();
 		
 		if (methodName.startsWith("get") && methodName.length() >= 4) {
 			name = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
@@ -52,15 +65,15 @@ public class DMPropertyHolder {
 			name = Character.toLowerCase(methodName.charAt(2)) + methodName.substring(3);
 			booleanOnly = true;
 		} else {
-			throw new RuntimeException("DMProperty method name '" + method.getName() + "' doesn't look like a getter");
+			throw new RuntimeException("DMProperty method name '" + ctMethod.getName() + "' doesn't look like a getter");
 		}
 		
 		try {
-			if (method.getParameterTypes().length > 0) {
-				throw new RuntimeException("DMProperty method " + method.getName() + " has arguments");
+			if (ctMethod.getParameterTypes().length > 0) {
+				throw new RuntimeException("DMProperty method " + ctMethod.getName() + " has arguments");
 			}
 
-			ctClass = method.getReturnType();
+			ctClass = ctMethod.getReturnType();
 			
 			if (booleanOnly && ctClass != CtClass.booleanType)
 				throw new RuntimeException("Getter starting with 'is' must have a boolean return");
@@ -73,7 +86,7 @@ public class DMPropertyHolder {
 		}
 		
 		if (annotation.propertyId().equals(""))
-			propertyId = classHolder.getClassId() + "#" + name;
+			propertyId = declaringClassHolder.getClassId() + "#" + name;
 		else
 			propertyId = annotation.propertyId();
 		
@@ -82,28 +95,56 @@ public class DMPropertyHolder {
 			URI uri = new URI(propertyId);
 			if (uri.getFragment() == null)
 				throw new RuntimeException("propertyId '" + propertyId + "' must have a fragment identifier");
+			
+			// FIXME: Check that the fragment matches the name or implement code to manage
+			//   the case. (How do you put two properties with the same localname on the
+			//   same class if you require the method name to match the property name?)
+			
 		} catch (URISyntaxException e1) {
 			throw new RuntimeException("propertyId '" + propertyId + "' is not a valid URI");
 		}
 		
+		int hashIndex = propertyId.indexOf('#');
+		namespace = propertyId.substring(0, hashIndex);
+		
+		computeOrdering();
+		
+
+		try {
+			method = declaringClassHolder.getBaseClass().getMethod(methodName, new Class[] {});
+		} catch (NoSuchMethodException e) {
+			throw new RuntimeException("Can't find Java class object for method return type", e);
+		}
+		
+		determineType(method);
+	}
+	
+	public void complete() {
+		if (completed)
+			return;
+		
+		completed = true;
+		
+		if (resourceValued)
+			resourceClassHolder = declaringClassHolder.getModel().getDMClass(getResourceType());
+
 		defaultInclude = annotation.defaultInclude();
 		if (!"".equals(annotation.defaultChildren())) {
 			defaultInclude = true;
 			
 			try {
 				FetchNode node = FetchParser.parse(annotation.defaultChildren());
-				defaultChildren = node.bind(classHolder);
+				if (node.getProperties().length > 0) {
+					if (!resourceValued)
+						throw new RuntimeException(propertyId + ": non-empty defaultChildren can only be specified on a resource-valued property");
+					
+					defaultChildren = node.bind(resourceClassHolder);
+				}
 			} catch (RecognitionException e) {
 				throw new RuntimeException(propertyId + ": failed to parse defaultChildren at char " + e.getColumn(), e);
 			} catch (TokenStreamException e) {
 				throw new RuntimeException(propertyId + ": failed to parse defaultChildren", e);
 			}
-		}
-		
-		try {
-			determineType(classHolder.getBaseClass().getMethod(methodName, new Class[] {}));
-		} catch (NoSuchMethodException e) {
-			throw new RuntimeException("Can't find Java class object for method return type", e);
 		}
 	}
 
@@ -148,6 +189,10 @@ public class DMPropertyHolder {
 		return propertyId;
 	}
 	
+	public String getNameSpace() {
+		return namespace;
+	}
+
 	public boolean getDefaultInclude() {
 		return defaultInclude;
 	}
@@ -176,6 +221,16 @@ public class DMPropertyHolder {
 		return (Class<T>)elementType;
 	}
 	
+	public DMClassHolder<? extends DMObject> getResourceClassHolder() {
+		if (!resourceValued)
+			throw new UnsupportedOperationException("Not a resource-valued property");
+
+		if (completed)
+			return resourceClassHolder;
+		else
+			return declaringClassHolder.getModel().getDMClass(getResourceType());
+	}
+	
 	public Class<?> getPlainType() {
 		if (resourceValued)
 			throw new UnsupportedOperationException("Not a plain-valued property");
@@ -185,6 +240,10 @@ public class DMPropertyHolder {
 	
 	public String getMethodName() {
 		return methodName;
+	}
+	
+	public Method getMethod() { 
+		return method;
 	}
 	
 	public String getName() {
@@ -353,5 +412,41 @@ public class DMPropertyHolder {
 		}
 		
 		return new DMPropertyHolder(classHolder, method, property, filter, viewerDependent);
+	}
+	
+	// Having a quick global ordering for all properties allows us to easily
+	// compute the intersection/difference of two sorted lists of properties,
+	// something we need to do when fetching.
+	//
+	// We could do this by:
+	//
+	// a) Using java.lang.Object.hashCode(), but that's not 64-bit safe (though
+	//    the chances of problems are miniscule.
+	// b) Using the ordering of the propertyId string, but that's slow,
+	//    especially since all propertyIds share a long common prefix.
+	// c) Do a post-pass once all properties are registered to assign
+	//    integer ordering, but that's inconvenient
+	//
+	// So we instead do:
+	//
+	// d) Compute 64-bits of a hash of the property ID and store it for later use.
+	//
+	private void computeOrdering() {
+		MessageDigest messageDigest = Digest.newDigestMD5();
+		byte[] bytes = messageDigest.digest(StringUtils.getBytes(propertyId));
+		long result = 0;
+		for (int i = 0; i < 8; i++) {
+			result = (result << 8) + bytes[i];
+		}
+		
+		ordering = result;
+	}
+
+	public long getOrdering() {
+		return ordering;
+	}
+	
+	public int compareTo(DMPropertyHolder other) {
+		return ordering < other.ordering ? -1 : (ordering == other.ordering ? 0 : 1);
 	}
 }

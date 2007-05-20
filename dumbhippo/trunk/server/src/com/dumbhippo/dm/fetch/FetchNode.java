@@ -1,6 +1,7 @@
 package com.dumbhippo.dm.fetch;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -22,7 +23,7 @@ public class FetchNode {
 		return properties;
 	}
 	
-	public Fetch bind(DMClassHolder<? extends DMObject> classHolder) {
+	public <T extends DMObject> Fetch<T> bind(DMClassHolder<T> classHolder) {
 		boolean includeDefault = false;
 		
 		List<PropertyFetch> boundProperties = new ArrayList<PropertyFetch>(properties.length);
@@ -34,13 +35,17 @@ public class FetchNode {
 		for (PropertyFetchNode property : properties) {
 			if ("+".equals(property.getProperty()))
 				continue;
-			if ("*".equals(property.getProperty()))
-				continue; // * is ignored in a fetch-string specification
-		
+			if ("*".equals(property.getProperty())) {
+				// FIXME: We probably should make bind() throw an exception and make this fatal
+				logger.warn("Ignoring '*' in property fetch string");
+				continue;
+			}
 			property.bind(classHolder, includeDefault, boundProperties);
 		}
+
+		Collections.sort(boundProperties);
 		
-		return new Fetch(boundProperties.toArray(new PropertyFetch[boundProperties.size()]), includeDefault);
+		return new Fetch<T>(classHolder, boundProperties.toArray(new PropertyFetch[boundProperties.size()]), includeDefault);
 	}
 	
 	@Override

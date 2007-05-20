@@ -1,5 +1,7 @@
 package com.dumbhippo.dm;
 
+import java.util.Map;
+
 import com.dumbhippo.XmlBuilder;
 
 public class FetchResultProperty implements Comparable<FetchResultProperty> {
@@ -46,7 +48,7 @@ public class FetchResultProperty implements Comparable<FetchResultProperty> {
 	}
 	
 	public void writeToXmlBuilder(XmlBuilder builder, String defaultNS) {
-		String ns = defaultNS.equals(namespace) ? defaultNS : namespace;
+		String ns = defaultNS.equals(namespace) ? null : namespace;
 		
 		if (resource)
 			builder.appendEmptyNode(name, "m:resourceId", value, "xmlns", ns);
@@ -63,6 +65,15 @@ public class FetchResultProperty implements Comparable<FetchResultProperty> {
 
 		if (resource != other.resource)
 			throw new FetchValidationException("%s:%s expected isResource %s, got %s", context, propertyId,  other.resource, resource);
+	}
+
+	public FetchResultProperty substitute(Map<String, String> parametersMap) {
+		if (resource) {
+			String newResourceId = FetchResultResource.substituteResourceId(value, parametersMap);
+			return createResource(name, namespace, newResourceId);
+		} else {
+			return this;
+		}
 	}
 
 	public int compareTo(FetchResultProperty other) {

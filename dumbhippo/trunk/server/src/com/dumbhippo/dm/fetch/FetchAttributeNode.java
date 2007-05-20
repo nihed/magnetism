@@ -1,10 +1,10 @@
 package com.dumbhippo.dm.fetch;
 
-public class FetchAttribute {
+public class FetchAttributeNode {
 	private FetchAttributeType type;
 	private Object value;
 	
-	public FetchAttribute(FetchAttributeType type, Object value) {
+	public FetchAttributeNode(FetchAttributeType type, Object value) {
 		this.type = type;
 		this.value = value;
 	}

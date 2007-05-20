@@ -11,12 +11,14 @@ import javax.persistence.OneToMany;
 public class TestGroup extends TestGuidPersistable {
 	private String name;
 	private Set<TestGroupMember> members;
+	private boolean secret;
 	
 	protected TestGroup() {
 	}
 	
 	public TestGroup(String name) {
 		this.name = name;
+		this.secret = false;
 	}
 
 	@Column(nullable = false)
@@ -39,5 +41,14 @@ public class TestGroup extends TestGuidPersistable {
 	
 	public void setMembers(Set<TestGroupMember> members) {
 		this.members = members;
+	}
+	
+	@Column(nullable = false)
+	public boolean isSecret() {
+		return secret;
+	}
+	
+	public void setSecret(boolean secret) {
+		this.secret = secret;
 	}
 }

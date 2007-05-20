@@ -1,8 +1,12 @@
 package com.dumbhippo.dm;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.dumbhippo.XmlBuilder;
 
@@ -49,6 +53,32 @@ public class FetchResultResource implements Comparable<FetchResultResource> {
 		
 		builder.closeElement();
 	}
+	
+	private boolean compareFetchStrings(String fetchA, String fetchB) {
+		if (fetchA == null && fetchB == null)
+			return true;
+		if (fetchA == null || fetchB == null)
+			return false;
+		
+		// Short-circuit for the common case of "*", "*", etc
+		if (fetchA.equals(fetchB))
+			return true;
+		
+		String[] componentsA = fetchA.split(";");
+		String[] componentsB = fetchB.split(";");
+		
+		if (componentsA.length != componentsB.length)
+			return false;
+		
+		Arrays.sort(componentsA);
+		Arrays.sort(componentsB);
+		
+		for (int i = 0; i < componentsA.length; i++)
+			if (!componentsA[i].equals(componentsB[i]))
+				return false;
+		
+		return true;
+	}
 
 	public void validateAgainst(FetchResultResource other) throws FetchValidationException {
 		if (!resourceId.equals(other.resourceId))
@@ -57,7 +87,7 @@ public class FetchResultResource implements Comparable<FetchResultResource> {
 		if (!classId.equals(other.classId))
 			throw new FetchValidationException("%s: expected classId %s, got %s", resourceId, other.classId, classId);
 		
-		if (!((fetch == null && other.fetch == null) || fetch.equals(other.fetch)))
+		if (!compareFetchStrings(fetch, other.fetch))
 			throw new FetchValidationException("%s: expected fetch %s, got %s", resourceId, other.fetch, fetch);
 		
 		////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -87,6 +117,31 @@ public class FetchResultResource implements Comparable<FetchResultResource> {
 			
 			property.validateAgainst(resourceId, otherProperty);
 		}
+	}
+	
+	static final Pattern PARAMETER = Pattern.compile("\\$\\(([A-Za-z_][A-Za-z0-9_]+)\\)");
+
+	public static String substituteResourceId(String resourceId, Map<String, String> parametersMap) {
+		StringBuffer sb = new StringBuffer();
+		Matcher m = PARAMETER.matcher(resourceId);
+		while (m.find()) {
+			String replacement = parametersMap.get(m.group(1));
+			if (replacement == null)
+				throw new RuntimeException("No replacement for parameter '" + m.group(1) + "'");
+		    m.appendReplacement(sb, replacement);
+		}
+		 m.appendTail(sb);
+		 return sb.toString();
+	}
+
+	public FetchResultResource substitute(Map<String, String> parametersMap) {
+		String newResourceId = substituteResourceId(resourceId, parametersMap);
+		FetchResultResource substituted = new FetchResultResource(classId, newResourceId, fetch);
+		
+		for (FetchResultProperty property : properties)
+			substituted.addProperty(property.substitute(parametersMap));
+		
+		return substituted;
 	}
 
 	public int compareTo(FetchResultResource other) {
