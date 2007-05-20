@@ -138,9 +138,9 @@ public FetchParser(ParserSharedInputState state) {
 		PropertyFetchNode pf;
 		
 		String p;
-		FetchAttribute a;
+		FetchAttributeNode a;
 		PropertyFetchNode childPf;
-		List<FetchAttribute> attrs = Collections.emptyList();
+		List<FetchAttributeNode> attrs = Collections.emptyList();
 		FetchNode children = null;
 		
 		
@@ -235,7 +235,7 @@ public FetchParser(ParserSharedInputState state) {
 		}
 		}
 		pf = new PropertyFetchNode(p, 
-			  	                           attrs.toArray(new FetchAttribute[attrs.size()]), 
+			  	                           attrs.toArray(new FetchAttributeNode[attrs.size()]), 
 			   	                           children != null && children.getProperties().length > 0 ? children : null);
 		return pf;
 	}
@@ -251,10 +251,10 @@ public FetchParser(ParserSharedInputState state) {
 		return s;
 	}
 	
-	public final ArrayList<FetchAttribute>  attributes() throws RecognitionException, TokenStreamException {
-		ArrayList<FetchAttribute> attrs = new ArrayList<FetchAttribute>();;
+	public final ArrayList<FetchAttributeNode>  attributes() throws RecognitionException, TokenStreamException {
+		ArrayList<FetchAttributeNode> attrs = new ArrayList<FetchAttributeNode>();;
 		
-		FetchAttribute a;
+		FetchAttributeNode a;
 		
 		match(LPAREN);
 		{
@@ -318,8 +318,8 @@ public FetchParser(ParserSharedInputState state) {
 		return s;
 	}
 	
-	public final FetchAttribute  attribute() throws RecognitionException, TokenStreamException {
-		FetchAttribute a;
+	public final FetchAttributeNode  attribute() throws RecognitionException, TokenStreamException {
+		FetchAttributeNode a;
 		
 		FetchAttributeType t; 
 		Object v; 
@@ -346,7 +346,7 @@ public FetchParser(ParserSharedInputState state) {
 		}
 		}
 		}
-		a = new FetchAttribute(t, v);
+		a = new FetchAttributeNode(t, v);
 		return a;
 	}
 	

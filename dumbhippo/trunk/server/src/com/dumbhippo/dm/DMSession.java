@@ -8,6 +8,8 @@ import javax.persistence.EntityManager;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.server.NotFoundException;
 
 public abstract class DMSession {
@@ -23,7 +25,7 @@ public abstract class DMSession {
 		this.viewpoint = viewpoint;
 	}
 	
-	protected DataModel getModel() {
+	public DataModel getModel() {
 		return model;
 	}
 
@@ -38,9 +40,9 @@ public abstract class DMSession {
 		if (result == null) {
 			logger.debug("Didn't find object for key {}, creating a new one", key);
 			
-			DMClassHolder<T> dmClass = model.getDMClass(clazz); 
+			DMClassHolder<T> classHolder = model.getDMClass(clazz); 
 			
-			result = dmClass.createInstance(key, this);
+			result = classHolder.createInstance(key, this);
 			sessionDMOs.put(key, result);
 		}
 		
@@ -55,6 +57,10 @@ public abstract class DMSession {
 		}
 	}
 	
+	public <T extends DMObject> void visitFetch(T object, Fetch<T> fetch, FetchVisitor visitor) {
+		fetch.visit(this, object, visitor);
+	}
+
 	/**
 	 * For use in generated code; this isn't part of the public interface 
 	 * 
@@ -63,9 +69,9 @@ public abstract class DMSession {
 	 * @param t
 	 */
 	public <T extends DMObject<?>> void internalInit(Class<T> clazz, T t) {
-		DMClassHolder<T> dmClass = model.getDMClass(clazz); 
+		DMClassHolder<T> classHolder = model.getDMClass(clazz); 
 		
-		dmClass.processInjections(this, t);
+		classHolder.processInjections(this, t);
 		
 		// FIXME: sort this out, or at least throw a specific unchecked exception
 		//   If we init() immediately on objects not found in the cache we
@@ -76,6 +82,7 @@ public abstract class DMSession {
 			throw new RuntimeException(e);
 		}
 	}
+	
 	
 	/**
 	 * Internal API: looks for cached data for the specified resource property. If found, filters it

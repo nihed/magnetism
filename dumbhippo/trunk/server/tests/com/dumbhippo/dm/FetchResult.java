@@ -3,6 +3,7 @@ package com.dumbhippo.dm;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import com.dumbhippo.XmlBuilder;
 
@@ -64,5 +65,21 @@ public class FetchResult {
 			
 			resource.validateAgainst(otherResource);
 		}
+	}
+
+	public FetchResult substitute(Map<String, String> parametersMap) {
+		FetchResult substituted = new FetchResult(id);
+		
+		for (FetchResultResource resource : resources)
+			substituted.addResource(resource.substitute(parametersMap));
+		
+		return substituted;
+	}
+	
+	@Override
+	public String toString() {
+		XmlBuilder builder = new XmlBuilder();
+		writeToXmlBuilder(builder);
+		return builder.toString();
 	}
 }

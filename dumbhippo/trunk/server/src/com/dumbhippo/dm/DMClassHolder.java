@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ public class DMClassHolder<T extends DMObject> {
 	private Constructor keyConstructor;
 	private Constructor wrapperConstructor;
 	private DMPropertyHolder[] properties;
+	private boolean[] mustQualify;
 	private Map<String, Integer> propertiesMap = new HashMap<String, Integer>();
 	private DMO annotation;
 
@@ -85,6 +87,11 @@ public class DMClassHolder<T extends DMObject> {
 		
 		buildWrapperClass();
 	}
+	
+	public void complete() {
+		for (DMPropertyHolder property : properties)
+			property.complete();
+	}
 
 	public DataModel getModel() {
 		return model;
@@ -123,6 +130,14 @@ public class DMClassHolder<T extends DMObject> {
 		return properties[propertyIndex];
 	}
 	
+	public DMPropertyHolder[] getProperties() {
+		return properties;
+	}
+	
+	public boolean mustQualifyProperty(int propertyIndex) {
+		return mustQualify[propertyIndex];
+	}
+
 	public T createInstance(Object key, DMSession session) {
 		try {
 			@SuppressWarnings("unchecked")
@@ -294,19 +309,33 @@ public class DMClassHolder<T extends DMObject> {
 
 	private void addWrapperGetters(CtClass baseCtClass, CtClass wrapperCtClass) throws CannotCompileException, NotFoundException {
 		List<DMPropertyHolder> foundProperties = new ArrayList<DMPropertyHolder>();
+		Map<String, Integer> nameCount = new HashMap<String, Integer>();
 		
-		int propertyIndex = 0;
 		for (CtMethod method : baseCtClass.getMethods()) {
 			DMPropertyHolder property = DMPropertyHolder.getForMethod(this, method);
 			if (property != null) {
 				foundProperties.add(property);
-				propertiesMap.put(property.getName(), propertyIndex);
-				addWrapperGetter(baseCtClass, wrapperCtClass, property, propertyIndex);
-				propertyIndex++;
+				if (!nameCount.containsKey(property.getName()))
+					nameCount.put(property.getName(), 1);
+				else
+					nameCount.put(property.getName(), 1 + nameCount.get(property.getName()));
 			}
 		}
 		
+		// Sort the properties based on the ordering we impose on DMPropertyHolder 
+		// (see comment for DMPropertyHolder.computeHash()
+		Collections.sort(foundProperties);
+		
 		properties = foundProperties.toArray(new DMPropertyHolder[foundProperties.size()]);
+		mustQualify = new boolean[foundProperties.size()];
+
+		for (int i = 0; i < properties.length; i++) {
+			DMPropertyHolder property = properties[i];
+			
+			propertiesMap.put(property.getName(), i);
+			mustQualify[i] = nameCount.get(property.getName()) > 1;
+			addWrapperGetter(baseCtClass, wrapperCtClass, property, i);
+		}
 	}
 	
 	private void buildWrapperClass() {

@@ -8,12 +8,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.persistence.EntityManager;
+
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import antlr.RecognitionException;
+import antlr.TokenStreamException;
+
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.dm.dm.TestGroupDMO;
+import com.dumbhippo.dm.fetch.Fetch;
+import com.dumbhippo.dm.fetch.FetchNode;
+import com.dumbhippo.dm.parser.FetchParser;
+import com.dumbhippo.dm.persistence.TestGroup;
+import com.dumbhippo.dm.persistence.TestGroupMember;
+import com.dumbhippo.dm.persistence.TestUser;
+import com.dumbhippo.identity20.Guid;
 
 public class FetchTests extends AbstractSupportedTests {
 	static private final Logger logger = GlobalSetup.getLogger(BasicTests.class);
@@ -93,4 +106,110 @@ public class FetchTests extends AbstractSupportedTests {
 			}
 		}
 	}
+	
+	public <T extends DMObject> void doTest(Class<T> clazz, T object, String fetchString, String resultId, String... parameters) throws RecognitionException, TokenStreamException, FetchValidationException {
+		FetchNode fetchNode = FetchParser.parse(fetchString);
+		Fetch<T> fetch = fetchNode.bind(DataModel.getInstance().getDMClass(clazz));
+		
+		FetchResultVisitor visitor = new FetchResultVisitor();
+		ReadOnlySession.getCurrent().visitFetch(object, fetch, visitor);
+		
+		Map<String, String> parametersMap = new HashMap<String, String>();
+		for (int i = 0; i  < parameters.length; i += 2)
+			parametersMap.put(parameters[i], parameters[i + 1]); 
+		
+		FetchResult expected = expectedResults.get(resultId).substitute(parametersMap);
+		logger.debug("Result for {} is {}", resultId, visitor.getResult());
+		
+		visitor.getResult().validateAgainst(expected);
+	}
+
+	private void createData(Guid bobId, Guid janeId, Guid groupId) {
+		EntityManager em;
+		
+		/////////////////////////////////////////////////
+		// Setup
+
+		em = support.beginTransaction();
+
+		TestUser bob = new TestUser("Bob");
+		bob.setId(bobId.toString());
+		em.persist(bob);
+		
+		TestUser jane = new TestUser("Jane");
+		jane.setId(janeId.toString());
+		em.persist(jane);
+
+		TestGroup group = new TestGroup("BobAndJane");
+		group.setId(groupId.toString());
+		em.persist(group);
+		
+		TestGroupMember groupMember;
+		
+		groupMember = new TestGroupMember(group, bob);
+		em.persist(groupMember);
+		group.getMembers().add(groupMember);
+
+		groupMember = new TestGroupMember(group, jane);
+		em.persist(groupMember);
+		group.getMembers().add(groupMember);
+
+		em.getTransaction().commit();
+	}
+	
+	// Basic operation of fetching, no subclassing, no defaults
+	public void testBasicFetch() throws Exception {
+		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
+		EntityManager em;
+		
+		/////////////////////////////////////////////////
+		// Setup
+
+		Guid bobId = Guid.createNew();
+		Guid janeId = Guid.createNew();
+		Guid groupId = Guid.createNew();
+		
+		createData(bobId, janeId, groupId);
+		
+		//////////////////////////////////////////////////
+		
+		em = support.beginSessionRO(viewpoint);
+		
+		TestGroupDMO groupDMO = ReadOnlySession.getCurrent().findMustExist(TestGroupDMO.class, groupId);
+		doTest(TestGroupDMO.class, groupDMO, "name;members member name", "bobAndJane",
+				"group", groupId.toString(),
+				"bob", bobId.toString(),
+				"jane", janeId.toString());
+		
+		em.getTransaction().commit();
+	}
+	
+	// Like testBasicFetch but using defaulted fetches
+	public void testDefaultFetch() throws Exception {
+		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
+		EntityManager em;
+		
+		/////////////////////////////////////////////////
+		// Setup
+
+		Guid bobId = Guid.createNew();
+		Guid janeId = Guid.createNew();
+		Guid groupId = Guid.createNew();
+		
+		createData(bobId, janeId, groupId);
+		
+		//////////////////////////////////////////////////
+		
+		em = support.beginSessionRO(viewpoint);
+		
+		TestGroupDMO groupDMO = ReadOnlySession.getCurrent().findMustExist(TestGroupDMO.class, groupId);
+		doTest(TestGroupDMO.class, groupDMO, "+;members +", "bobAndJane",
+				"group", groupId.toString(),
+				"bob", bobId.toString(),
+				"jane", janeId.toString());
+		
+		em.getTransaction().commit();
+	}
+
+	// TODO: add tests here for fetching against subclassed objects, with defaults, etc
 }

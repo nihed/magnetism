@@ -36,6 +36,7 @@ public class TestSupport {
 		model.addDMClass(TestUserDMO.class);
 		model.addDMClass(TestGroupDMO.class);
 		model.addDMClass(TestGroupMemberDMO.class);
+		model.completeDMClasses();
 	}
 	
 	public EntityManager beginTransaction() {
