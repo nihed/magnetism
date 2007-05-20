@@ -21,8 +21,13 @@ public class FetchParserTests extends AbstractParserTests {
 		expectIdentity("a;b [a;b [a;b]]");
 		
 		expectSuccess("member()[]", "member");
-		
+	
+		// No trailing ";" allowed
 		expectFailure("member;");
 		expectFailure(";");
+		
+		// + can't have children
+		expectFailure("+ name");
+		expectFailure("+ [name]");
 	}
 }
