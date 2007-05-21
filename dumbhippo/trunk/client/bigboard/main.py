@@ -3,7 +3,7 @@
 import os, sys, threading, getopt, logging, StringIO, stat, signal
 import xml.dom.minidom
 
-import gobject, gtk, pango, dbus, dbus.glib
+import gobject, gtk, pango, dbus, dbus.glib, dbus.service
 
 import hippo
 
@@ -23,6 +23,11 @@ import bigboard.libbig.logutil
 import bigboard.libbig.xmlquery
 import bigboard.libbig.dbusutil
 import bigboard.keybinder
+
+BUS_NAME_STR='org.mugshot.BigBoard'
+BUS_NAME=dbus.service.BusName(BUS_NAME_STR, bus=dbus.SessionBus())
+BUS_IFACE=BUS_NAME_STR
+BUS_IFACE_PANEL=BUS_IFACE + ".Panel"
 
 class GradientHeader(hippo.CanvasGradient):
     def __init__(self, **kwargs):
@@ -182,9 +187,11 @@ class Exchange(hippo.CanvasBox):
         if self.__ticker_text:
             self.set_child_visible(self.__ticker_container, size == Stock.SIZE_BULL)
 
-class BigBoardPanel(object):
+class BigBoardPanel(dbus.service.Object):
     def __init__(self, dirs):
+        dbus.service.Object.__init__(self, BUS_NAME, '/bigboard/panel')
         self._dw = Sidebar(True)
+        self._shown = False
         
         self.__logger = logging.getLogger("bigboard.Panel")
         
@@ -316,6 +323,7 @@ class BigBoardPanel(object):
         
     def show(self):
         self._dw.show_all()
+        self._shown = True
 
     def external_focus(self):
         if self.__get_size() == Stock.SIZE_BEAR:
@@ -327,17 +335,40 @@ class BigBoardPanel(object):
             return
         search.focus()
 
+    def __do_unexpand(self):
+        self._dw.hide()
+
+    @dbus.service.method(BUS_IFACE_PANEL,
+                         in_signature='', out_signature='')
+    def unexpand(self):
+        self.__do_unexpand()
+
+    def __do_expand(self):
+        self._dw.show()
+
+    @dbus.service.method(BUS_IFACE_PANEL,
+                         in_signature='', out_signature='')
+    def expand(self):
+        self.__do_expand()
+
+    @dbus.service.method(BUS_IFACE_PANEL,
+                         in_signature='', out_signature='')
+    def toggleExpand(self):
+        self._shown = not self._shown
+        if self._shown:
+            self.__do_expand()
+        else:
+            self.__do_unexpand()
+
 def load_image_hook(img_name):
     logging.debug("loading: %s" % (img_name,))
     pixbuf = gtk.gdk.pixbuf_new_from_file(img_name)
     return hippo.cairo_surface_from_gdk_pixbuf(pixbuf)    
 
-BUS_NAME='org.mugshot.BigBoard'
-
 def on_name_lost(*args):
     name = str(args[0])
     logging.debug("Lost bus name " + name)
-    if name == BUS_NAME:
+    if name == BUS_NAME_STR:
         gtk.main_quit()
 
 def on_focus(panel):
@@ -396,7 +427,7 @@ def main():
 
     logging.debug("Requesting D-BUS name")
     try:
-        bigboard.libbig.dbusutil.take_name(BUS_NAME, replace, on_name_lost)
+        bigboard.libbig.dbusutil.take_name(BUS_NAME_STR, replace, on_name_lost)
     except bigboard.libbig.dbusutil.DBusNameExistsException:
         print "Big Board already running; exiting"
         sys.exit(0)
