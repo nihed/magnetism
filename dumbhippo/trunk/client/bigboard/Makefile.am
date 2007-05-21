@@ -1,7 +1,15 @@
 include $(top_srcdir)/Makefile-include.am
 
-SUBDIRS = bigboard scripts
+SUBDIRS = applet bigboard scripts po
 
 mainscript_PYTHON = main.py
 
-EXTRA_DIST = bigboard.spec
+DISTCLEANFILES = \
+	intltool-extract \
+	intltool-merge \
+	intltool-update
+
+EXTRA_DIST = \
+	intltool-update.in \
+	intltool-extract.in	\
+	intltool-merge.in

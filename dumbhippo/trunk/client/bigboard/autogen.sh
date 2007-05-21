@@ -1,84 +1,42 @@
 #!/bin/sh
+# Run this to generate all the initial makefiles, etc.
 
 srcdir=`dirname $0`
 test -z "$srcdir" && srcdir=.
 
-ORIGDIR=`pwd`
-cd $srcdir
-PACKAGE="bigboard"
+PKG_NAME="bigboard"
+ACLOCAL_FLAGS="$ACLOCAL_FLAGS -I m4"
+REQUIRED_AUTOCONF_VERSION=2.59
+REQUIRED_AUTOMAKE_VERSION=1.9.2
+REQUIRED_MACROS="python.m4"
 
-have_libtool=false
-have_autoconf=false
-have_automake=false
-need_configure_in=false
-
-have_gtk_doc=false
-want_gtk_doc=false
-
-if libtool --version < /dev/null > /dev/null 2>&1 ; then
-	libtool_version=`libtoolize --version | sed 's/^[^0-9]*\([0-9.][0-9.]*\).*/\1/'`
-	have_libtool=true
-	case $libtool_version in
-	    1.3*)
-		need_configure_in=true
-		;;
-	esac
-fi
-
-if autoconf --version < /dev/null > /dev/null 2>&1 ; then
-	autoconf_version=`autoconf --version | sed 's/^[^0-9]*\([0-9.][0-9.]*\).*/\1/'`
-	have_autoconf=true
-	case $autoconf_version in
-	    2.13)
-		need_configure_in=true
-		;;
-	esac
-fi
-
-if $have_libtool ; then : ; else
-	echo;
-	echo "You must have libtool >= 1.3 installed to compile $PACKAGE";
-	echo;
-	exit;
-fi
-
-if grep "^GTK_DOC_CHECK" ./configure.ac; then
-	want_gtk_doc=true
-fi
-
-if $want_gtk_doc; then
-	(gtkdocize --version) < /dev/null > /dev/null 2>&1 || {
-	        echo;
-		echo "You need gtk-doc to build $PACKAGE";
-		echo;
-	}
-fi
-
-(automake --version) < /dev/null > /dev/null 2>&1 || {
-	echo;
-	echo "You must have automake installed to compile $PACKAGE";
-	echo;
-	exit;
+(test -f $srcdir/configure.ac \
+  && test -f $srcdir/autogen.sh) || {
+    echo -n "**Error**: Directory "$srcdir" does not look like the"
+    echo " top-level $PKG_NAME directory"
+    exit 1
 }
 
-echo "Generating configuration files for $PACKAGE, please wait...."
-echo;
+DIE=0
 
-if $need_configure_in ; then
-    if test ! -f configure.in ; then
-	echo "Creating symlink from configure.in to configure.ac..."
-	echo
-	ln -s configure.ac configure.in
-    fi
+gnome_autogen=
+gnome_datadir=
+
+ifs_save="$IFS"; IFS=":"
+for dir in $PATH ; do
+  test -z "$dir" && dir=.
+  if test -f $dir/gnome-autogen.sh ; then
+    gnome_autogen="$dir/gnome-autogen.sh"
+    gnome_datadir=`echo $dir | sed -e 's,/bin$,/share,'`
+    break
+  fi
+done
+IFS="$ifs_save"
+
+if test -z "$gnome_autogen" ; then
+  echo "You need to install the gnome-common module and make"
+  echo "sure the gnome-autogen.sh script is in your \$PATH."
+  exit 1
 fi
 
-aclocal $ACLOCAL_FLAGS
-libtoolize --force
-autoheader
-automake --add-missing -Woverride
-autoconf
-
-cd $ORIGDIR || exit $?
-
-$srcdir/configure $@ --enable-maintainer-mode --enable-compile-warnings
-
+GNOME_DATADIR="$gnome_datadir" USE_GNOME2_MACROS=1 . $gnome_autogen
