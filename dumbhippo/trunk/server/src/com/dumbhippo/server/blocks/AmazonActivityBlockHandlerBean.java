@@ -25,7 +25,10 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AmazonUpdater;
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.util.ConfigurationUtil;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
@@ -68,6 +71,9 @@ public class AmazonActivityBlockHandlerBean extends
 	@EJB
 	protected TransactionRunner runner;
 	
+	@EJB
+	private Configuration config;   
+	
 	@PostConstruct
 	public void init() {
 		cacheFactory.injectCaches(this);
@@ -106,6 +112,9 @@ public class AmazonActivityBlockHandlerBean extends
 		// we do get the item before we create a notification about it, so that should help
 		// we can also create create an AmazonItemUpdater that periodically updates items for recent Amazon activity statuses
 		AmazonItemView itemView = itemCache.getSync(activityStatus.getItemId());
+		
+		String associateTagId = ConfigurationUtil.loadProperty(config, HippoProperty.AMAZON_ASSOCIATE_TAG_ID);
+		
 		List<ChatMessageView> messageViews = chatSystem.viewMessages(chatSystem.getNewestMessages(block, BlockView.RECENT_MESSAGE_COUNT), viewpoint);
 		
 		int messageCount;
@@ -114,7 +123,8 @@ public class AmazonActivityBlockHandlerBean extends
 		else
 			messageCount = chatSystem.getMessageCount(block);
 		
-		blockView.populate(userView, activityStatus, reviewView, listView, listItemView, itemView, messageViews, messageCount);
+		blockView.populate(userView, activityStatus, reviewView, listView, listItemView, 
+				           itemView, associateTagId, messageViews, messageCount);
 	}
 
 	public BlockKey getKey(User user, AmazonActivityStatus activityStatus) {

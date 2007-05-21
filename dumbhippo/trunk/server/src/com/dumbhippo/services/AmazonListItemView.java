@@ -4,7 +4,8 @@ import java.util.Date;
 
 public interface AmazonListItemView {
 
-	// not sure if this is useful for anything
+	// this is useful for creating link to the
+	// product to be purchased for someone's wish list
 	public String getListItemId();
 	
 	public String getItemId();
@@ -14,8 +15,6 @@ public interface AmazonListItemView {
 	public int getQuantityReceived();
 	
 	public Date getDateAdded();
-	
-	// not sure if we'll want to include the comment when 
-	// we display the notification
+
 	public String getComment();
 }
