@@ -14,6 +14,9 @@
 #include "hippo-canvas-url-image.h"
 #include <string.h>
 
+/* number of rating stars for reviews */
+#define RATING_STARS_COUNT 5
+
 static void      hippo_canvas_block_amazon_activity_init                (HippoCanvasBlockAmazonActivity       *block);
 static void      hippo_canvas_block_amazon_activity_class_init          (HippoCanvasBlockAmazonActivityClass  *klass);
 static void      hippo_canvas_block_amazon_activity_iface_init          (HippoCanvasItemIface   *item_class);
@@ -52,7 +55,7 @@ struct _HippoCanvasBlockAmazonActivity {
     HippoCanvasItem *favicon;
     HippoCanvasItem *title_link;
     HippoCanvasItem *description_item;
-    HippoCanvasItem *rating;
+    HippoCanvasItem *rating_stars[RATING_STARS_COUNT];
     HippoCanvasItem *quipper;
     HippoCanvasItem *last_message_preview;
     HippoCanvasItem *chat_preview;
@@ -174,7 +177,8 @@ update_visibility(HippoCanvasBlockAmazonActivity *block_amazon_activity)
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_amazon_activity);
     HippoStackReason stack_reason;
-    gboolean have_chat_id;
+    gboolean have_chat_id, have_rating;
+    int i;
 
     if (canvas_block->block)
         stack_reason = hippo_block_get_stack_reason(canvas_block->block);
@@ -191,6 +195,14 @@ update_visibility(HippoCanvasBlockAmazonActivity *block_amazon_activity)
                                   !canvas_block->expanded && stack_reason == HIPPO_STACK_CHAT_MESSAGE);
     hippo_canvas_item_set_visible(block_amazon_activity->chat_preview,
                                   canvas_block->expanded && have_chat_id);
+
+    have_rating = FALSE;
+    if (canvas_block->block)
+        have_rating = (hippo_block_amazon_activity_get_review_rating(HIPPO_BLOCK_AMAZON_ACTIVITY(canvas_block->block)) > 0);
+        
+    for (i = 0; i < RATING_STARS_COUNT; ++i) {
+        hippo_canvas_item_set_visible(block_amazon_activity->rating_stars[i], have_rating);  
+    }
 }
 
 static void
@@ -202,6 +214,7 @@ hippo_canvas_block_amazon_activity_append_content_items (HippoCanvasBlock *block
     HippoCanvasBox *top_box;
     HippoCanvasBox *beside_box;
     HippoCanvasBox *review_details_box;    
+    int i;
 
     top_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                            "orientation", HIPPO_ORIENTATION_HORIZONTAL,
@@ -255,15 +268,20 @@ hippo_canvas_block_amazon_activity_append_content_items (HippoCanvasBlock *block
                                       NULL);
     hippo_canvas_box_append(beside_box, HIPPO_CANVAS_ITEM(review_details_box), 0);
 
-    block_amazon_activity->rating = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                                                 "image-name", "rating_star",
-                                                 "xalign", HIPPO_ALIGNMENT_CENTER,
-                                                 "yalign", HIPPO_ALIGNMENT_END,
-                                                 "scale-width", 13,
-                                                 "scale-height", 12,
-                                                 NULL);
-    hippo_canvas_box_append(review_details_box, block_amazon_activity->rating, 0);
-    
+    for (i=0; i < RATING_STARS_COUNT; ++i) {
+        block_amazon_activity->rating_stars[i] = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                                                               "padding-top", 2,
+                                                               "image-name", "rating_star",
+                                                               "xalign", HIPPO_ALIGNMENT_CENTER,
+                                                               "yalign", HIPPO_ALIGNMENT_CENTER,
+                                                               "scale-width", 13,
+                                                               "scale-height", 12,
+                                                               NULL);
+        hippo_canvas_box_append(review_details_box, block_amazon_activity->rating_stars[i], 0);
+        hippo_canvas_item_set_visible(block_amazon_activity->rating_stars[i],
+                                      FALSE); /* we don't yet know if this is a review */    
+    }
+
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                        NULL);
@@ -485,6 +503,30 @@ on_block_icon_url_changed(HippoBlock *block,
 }
 
 static void
+on_block_review_rating_changed(HippoBlock *block,
+                        GParamSpec *arg, /* null when first calling this */
+                        void       *data)
+{
+    HippoCanvasBlockAmazonActivity *block_amazon_activity = HIPPO_CANVAS_BLOCK_AMAZON_ACTIVITY(data);
+    guint review_rating = -1;
+    int i; 
+
+    if (block)
+        review_rating = hippo_block_amazon_activity_get_review_rating(HIPPO_BLOCK_AMAZON_ACTIVITY(block));
+
+    // 0 stars is not a valid number of stars for an Amazon review
+    if (review_rating > 0) {
+        for (i = RATING_STARS_COUNT; i > review_rating ; --i) {
+            g_object_set(block_amazon_activity->rating_stars[i-1],
+                         "image-name", "rating_star_blank",
+                         NULL);
+        }
+    }
+
+    update_visibility(block_amazon_activity);
+}
+
+static void
 hippo_canvas_block_amazon_activity_set_block(HippoCanvasBlock *canvas_block,
                                            HippoBlock       *block)
 {
@@ -520,6 +562,9 @@ hippo_canvas_block_amazon_activity_set_block(HippoCanvasBlock *canvas_block,
                                              canvas_block);
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_block_icon_url_changed),
+                                             canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_block_review_rating_changed),
                                              canvas_block);
         set_person(HIPPO_CANVAS_BLOCK_AMAZON_ACTIVITY(canvas_block), NULL);
     }
@@ -574,6 +619,10 @@ hippo_canvas_block_amazon_activity_set_block(HippoCanvasBlock *canvas_block,
                          "notify::icon-url",
                          G_CALLBACK(on_block_icon_url_changed),
                          canvas_block);
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::review-rating",
+                         G_CALLBACK(on_block_review_rating_changed),
+                         canvas_block);
     }
 
     on_user_changed(canvas_block->block, NULL, block_amazon_activity);
@@ -585,6 +634,7 @@ hippo_canvas_block_amazon_activity_set_block(HippoCanvasBlock *canvas_block,
     on_block_title_changed(canvas_block->block, NULL, block_amazon_activity);
     on_block_title_link_changed(canvas_block->block, NULL, block_amazon_activity);
     on_block_icon_url_changed(canvas_block->block, NULL, block_amazon_activity);
+    on_block_review_rating_changed(canvas_block->block, NULL, block_amazon_activity);
 }
 
 static void
