@@ -12,4 +12,8 @@ public class TestViewpoint implements DMViewpoint {
 	public Guid getViewerId() {
 		return viewerId;
 	}
+	
+	public boolean sameAs(Guid id) {
+		return viewerId.equals(id);
+	}
 }
