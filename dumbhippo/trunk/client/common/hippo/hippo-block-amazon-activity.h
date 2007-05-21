@@ -21,7 +21,7 @@ GType            hippo_block_amazon_activity_get_type               (void) G_GNU
 
 const char *     hippo_block_amazon_activity_get_image_url          (HippoBlockAmazonActivity *activity);
 guint            hippo_block_amazon_activity_get_image_width        (HippoBlockAmazonActivity *activity);
-guint            hippo_block_amazon_activity_get_image_height        (HippoBlockAmazonActivity *activity);
+guint            hippo_block_amazon_activity_get_image_height       (HippoBlockAmazonActivity *activity);
 const char *     hippo_block_amazon_activity_get_review_title       (HippoBlockAmazonActivity *activity);
 int              hippo_block_amazon_activity_get_review_rating      (HippoBlockAmazonActivity *activity);
 const char *     hippo_block_amazon_activity_get_list_name          (HippoBlockAmazonActivity *activity);

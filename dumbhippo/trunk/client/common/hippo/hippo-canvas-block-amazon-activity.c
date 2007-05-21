@@ -56,6 +56,7 @@ struct _HippoCanvasBlockAmazonActivity {
     HippoCanvasItem *title_link;
     HippoCanvasItem *description_item;
     HippoCanvasItem *rating_stars[RATING_STARS_COUNT];
+    HippoCanvasItem *review_title;
     HippoCanvasItem *quipper;
     HippoCanvasItem *last_message_preview;
     HippoCanvasItem *chat_preview;
@@ -203,6 +204,9 @@ update_visibility(HippoCanvasBlockAmazonActivity *block_amazon_activity)
     for (i = 0; i < RATING_STARS_COUNT; ++i) {
         hippo_canvas_item_set_visible(block_amazon_activity->rating_stars[i], have_rating);  
     }
+    // if we have the review rating, it means we must have the review details, and will
+    // be displaying the review title as well
+    hippo_canvas_item_set_visible(block_amazon_activity->review_title, have_rating);
 }
 
 static void
@@ -258,7 +262,7 @@ hippo_canvas_block_amazon_activity_append_content_items (HippoCanvasBlock *block
                                              "actions", hippo_canvas_block_get_actions(block),
                                              "xalign", HIPPO_ALIGNMENT_START,
                                              "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                                             "font", "12px",
+                                             "font", "Bold 12px",
                                              "tooltip", "More information about this item",
                                              NULL);
     hippo_canvas_box_append(box, block_amazon_activity->title_link, 0);
@@ -270,17 +274,29 @@ hippo_canvas_block_amazon_activity_append_content_items (HippoCanvasBlock *block
 
     for (i=0; i < RATING_STARS_COUNT; ++i) {
         block_amazon_activity->rating_stars[i] = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                                                               "padding-top", 2,
-                                                               "image-name", "rating_star",
-                                                               "xalign", HIPPO_ALIGNMENT_CENTER,
-                                                               "yalign", HIPPO_ALIGNMENT_CENTER,
-                                                               "scale-width", 13,
-                                                               "scale-height", 12,
-                                                               NULL);
+                                                              "padding-top", 2,
+                                                              "image-name", "rating_star",
+                                                              "xalign", HIPPO_ALIGNMENT_CENTER,
+                                                              "yalign", HIPPO_ALIGNMENT_START,
+                                                              "scale-width", 13,
+                                                              "scale-height", 12,
+                                                              NULL);
         hippo_canvas_box_append(review_details_box, block_amazon_activity->rating_stars[i], 0);
         hippo_canvas_item_set_visible(block_amazon_activity->rating_stars[i],
                                       FALSE); /* we don't yet know if this is a review */    
     }
+
+    block_amazon_activity->review_title = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                                       "padding-top", 2,
+                                                       "padding-left", 2,  
+                                                       "xalign", HIPPO_ALIGNMENT_START,
+                                                       "yalign", HIPPO_ALIGNMENT_END,
+                                                       "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                                                       "font", "Bold 11px",
+                                                       NULL);
+    hippo_canvas_box_append(review_details_box, block_amazon_activity->review_title, 0);
+    hippo_canvas_item_set_visible(block_amazon_activity->review_title,
+                                  FALSE); /* we don't yet know if this is a review */          
 
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
@@ -292,7 +308,7 @@ hippo_canvas_block_amazon_activity_append_content_items (HippoCanvasBlock *block
                                                    "xalign", HIPPO_ALIGNMENT_START,
                                                    "yalign", HIPPO_ALIGNMENT_START,
                                                    "text", NULL,
-                                                   "border-top", 4,
+                                                   "border-top", 2,
                                                    "border-bottom", 4,
                                                    NULL);
     hippo_canvas_box_append(beside_box, block_amazon_activity->description_item, 0);
@@ -508,7 +524,7 @@ on_block_review_rating_changed(HippoBlock *block,
                         void       *data)
 {
     HippoCanvasBlockAmazonActivity *block_amazon_activity = HIPPO_CANVAS_BLOCK_AMAZON_ACTIVITY(data);
-    guint review_rating = -1;
+    int review_rating = -1;
     int i; 
 
     if (block)
@@ -524,6 +540,26 @@ on_block_review_rating_changed(HippoBlock *block,
     }
 
     update_visibility(block_amazon_activity);
+}
+
+static void
+on_block_review_title_changed(
+HippoBlock *block,
+                        GParamSpec *arg, /* null when first calling this */
+                        void       *data)
+{
+    HippoCanvasBlockAmazonActivity *block_amazon_activity = HIPPO_CANVAS_BLOCK_AMAZON_ACTIVITY(data);
+    const char *review_title = NULL;
+   
+    if (block)
+        review_title = hippo_block_amazon_activity_get_review_title(HIPPO_BLOCK_AMAZON_ACTIVITY(block));
+
+    g_object_set(block_amazon_activity->review_title,
+                 "text", review_title,
+                 NULL);                        
+    
+    // we can update review details visibility only once when review rating is set, since
+    // the rating is always expected to be there
 }
 
 static void
@@ -565,6 +601,9 @@ hippo_canvas_block_amazon_activity_set_block(HippoCanvasBlock *canvas_block,
                                              canvas_block);
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_block_review_rating_changed),
+                                             canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_block_review_title_changed),
                                              canvas_block);
         set_person(HIPPO_CANVAS_BLOCK_AMAZON_ACTIVITY(canvas_block), NULL);
     }
@@ -623,6 +662,10 @@ hippo_canvas_block_amazon_activity_set_block(HippoCanvasBlock *canvas_block,
                          "notify::review-rating",
                          G_CALLBACK(on_block_review_rating_changed),
                          canvas_block);
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::review-title",
+                         G_CALLBACK(on_block_review_title_changed),
+                         canvas_block);
     }
 
     on_user_changed(canvas_block->block, NULL, block_amazon_activity);
@@ -635,6 +678,7 @@ hippo_canvas_block_amazon_activity_set_block(HippoCanvasBlock *canvas_block,
     on_block_title_link_changed(canvas_block->block, NULL, block_amazon_activity);
     on_block_icon_url_changed(canvas_block->block, NULL, block_amazon_activity);
     on_block_review_rating_changed(canvas_block->block, NULL, block_amazon_activity);
+    on_block_review_title_changed(canvas_block->block, NULL, block_amazon_activity);
 }
 
 static void
