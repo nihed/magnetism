@@ -45,6 +45,8 @@ class BigBoardApplet(gobject.GObject):
         self.__applet = applet
         self.__iid = iid
 
+        self.__bb = dbus.SessionBus().get_object('org.mugshot.BigBoard', '/bigboard/panel')
+
         if applet.get_orient() in (gnomeapplet.ORIENT_UP, gnomeapplet.ORIENT_DOWN):
             self.__box = gtk.HBox()
         else:
@@ -53,8 +55,12 @@ class BigBoardApplet(gobject.GObject):
         self.__mugshot = mugshot.get_mugshot()
         self.__mugshot.connect("self-known", self.__on_self_known)
         
+        ebox = gtk.EventBox()
+        ebox.add_events(gtk.gdk.BUTTON_PRESS_MASK)
+        ebox.connect("button-press-event", lambda ebox, e: self.__onclick())
         self.__img = UrlImage()
-        self.__box.pack_start(self.__img, expand=False)
+        ebox.add(self.__img)
+        self.__box.pack_start(ebox, expand=False)
 
         self.__deskbar = deskbar_embed.Deskbar()
         self.__box.pack_start(self.__deskbar, expand=True)
@@ -63,6 +69,10 @@ class BigBoardApplet(gobject.GObject):
         self.__applet.add(self.__box)
 
         self.__sync()
+
+    def __onclick(self):
+        _logger.debug("got click")
+        self.__bb.toggleExpand()
 
     def __on_self_known(self, mugshot):
         _logger.debug("got mugshot self known")
@@ -107,7 +117,7 @@ if __name__ == "__main__":
     if window:
         _logger.debug("adding %s to path", srcdir)
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_geometry_hints(max_height=24)
+        window.set_geometry_hints(None, max_height=24)
         box = gtk.VBox()
         window.add(box)
         applet = gnomeapplet.Applet()
@@ -118,4 +128,4 @@ if __name__ == "__main__":
     else:
         gnomeapplet.bonobo_factory("OAFIID:BigBoard_Applet_Factory", 
                                    gnomeapplet.Applet.__gtype__, 
-                                   "", "0", lambda a,i: BigBoardApplet(a,i) or True)
+                                   "bigboard", "0", lambda a,i: BigBoardApplet(a,i) or True)
