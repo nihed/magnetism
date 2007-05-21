@@ -253,7 +253,7 @@ hippo_canvas_block_netflix_movie_append_content_items (HippoCanvasBlock *block,
                                              "actions", hippo_canvas_block_get_actions(block),
                                              "xalign", HIPPO_ALIGNMENT_START,
                                              "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                                             "font", "12px",
+                                             "font", "Bold 12px",
                                              "tooltip", "More information about this movie",
                                              NULL);
     hippo_canvas_box_append(box, block_netflix->title_link, 0);

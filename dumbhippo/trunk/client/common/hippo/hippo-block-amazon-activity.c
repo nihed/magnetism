@@ -443,6 +443,12 @@ hippo_block_amazon_activity_get_image_height(HippoBlockAmazonActivity *amazon_ac
     return amazon_activity->image_height;
 }
 
+const char *
+hippo_block_amazon_activity_get_review_title(HippoBlockAmazonActivity *amazon_activity)
+{
+    return amazon_activity->review_title;
+}
+
 int
 hippo_block_amazon_activity_get_review_rating(HippoBlockAmazonActivity *amazon_activity)
 {
