@@ -21,6 +21,7 @@ import com.dumbhippo.services.AmazonItemView;
 import com.dumbhippo.services.AmazonListItemView;
 import com.dumbhippo.services.AmazonListView;
 import com.dumbhippo.services.AmazonReviewView;
+import com.dumbhippo.services.AmazonWebServices;
 
 public class AmazonActivityBlockView extends AbstractPersonBlockView 
                                      implements ExternalAccountBlockView, TitleDescriptionBlockView {	
@@ -32,6 +33,7 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 	private AmazonListView listView;
 	private AmazonListItemView listItemView;
 	private AmazonItemView itemView;
+	private String associateTagId;
 	
 	public AmazonActivityBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
 		super(viewpoint, block, ubd, participated);
@@ -41,8 +43,9 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 		super(viewpoint, block, gbd, participated);
 	}
 	
-	void populate(PersonView userView, AmazonActivityStatus activityStatus, AmazonReviewView reviewView, AmazonListView listView,
-			      AmazonListItemView listItemView, AmazonItemView itemView, List<ChatMessageView> recentMessages, int messageCount) {
+	void populate(PersonView userView, AmazonActivityStatus activityStatus, AmazonReviewView reviewView, 
+			      AmazonListView listView, AmazonListItemView listItemView, AmazonItemView itemView, 
+			      String associateTagId, List<ChatMessageView> recentMessages, int messageCount) {
 		partiallyPopulate(userView);
 		setRecentMessages(recentMessages);
 		setMessageCount(messageCount);
@@ -51,6 +54,7 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 		this.listView = listView;
 		this.listItemView = listItemView;
         this.itemView = itemView;
+        this.associateTagId = associateTagId;
 		setPopulated(true);
 	}
 	
@@ -109,19 +113,14 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 	}
 	 
 	public String getLink() {
-		// TODO: use our associate id for these links, figure out how exactly to add it to
-		// the link, as this is not something returned by the web services
 		switch (activityStatus.getActivityType()) {
             case REVIEWED :
-		        return "http://www.amazon.com/o/ASIN/" + activityStatus.getItemId();
+            	return AmazonWebServices.getItemLink(activityStatus.getItemId(), associateTagId) ;
             case WISH_LISTED :
             	if (listView != null && listItemView != null) {
-            		// if the item is added to the cart after following this link, it is added to
-            		// be purchased for someone's wish list
-            	    return "http://www.amazon.com/o/ASIN/" + activityStatus.getItemId() + 
-            	           "/?coliid=" + listItemView.getListItemId() + "&colid=" + listView.getListId();
+            		return AmazonWebServices.getListItemLink(activityStatus.getItemId(), listItemView.getListItemId(), listView.getListId(), associateTagId);
             	} else {
-            		return "http://www.amazon.com/o/ASIN/" + activityStatus.getItemId();
+            		return AmazonWebServices.getItemLink(activityStatus.getItemId(), associateTagId) ;
             	}
 		}
 
@@ -243,7 +242,7 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 		    throw new RuntimeException("Should only be getting a list link for a WISH_LISTED activity type"); 	
 		}
 		
-		return "http://www.amazon.com/gp/registry/" + activityStatus.getListId();
+		return AmazonWebServices.getListLink(activityStatus.getListId(), associateTagId);
 	}
 	
 	public String getListItemComment() {

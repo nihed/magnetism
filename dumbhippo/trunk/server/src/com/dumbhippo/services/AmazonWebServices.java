@@ -232,4 +232,39 @@ public class AmazonWebServices extends AbstractXmlRequest<AmazonSaxHandler> {
 		logger.debug("Loading amazon web services url {}", wsUrl);
 		return wsUrl;
 	}
+
+
+	// associateTagId can be null for all of the following functions, but other
+	// parameters are expected to be valid
+	    
+	public static String getItemLink(String itemId, String associateTagId) {
+	    return "http://www.amazon.com/gp/product/" + itemId + createTagString(associateTagId, true);
+	}
+	    
+	public static String getListLink(String listId, String associateTagId) {
+	    return "http://www.amazon.com/gp/registry/" + listId + createTagString(associateTagId, true);
+	}
+	   
+	// if an item is added to the cart after following this link, it is added to be purchased for someone's 
+	// wish list
+	public static String getListItemLink(String itemId, String listItemId, String listId, String associateTagId) {
+	    return "http://www.amazon.com/gp/product/" + itemId +
+	           "/?coliid=" + listItemId + "&colid=" + listId + createTagString(associateTagId, false);
+	}
+    
+	public static String getMemberReviewsLink(String amazonUserId, String associateTagId) {
+	    return "http://www.amazon.com/gp/cdp/member-reviews/" + amazonUserId + createTagString(associateTagId, true);     
+	}
+	    
+	private static String createTagString(String associateTagId, boolean firstParam) {
+        String tagString = "";
+	    if (associateTagId != null && associateTagId.trim().length() > 0) {
+	        if (firstParam)
+	            tagString = "?tag=" + associateTagId.trim();
+	        else
+	            tagString = "&tag=" + associateTagId.trim();
+	    }
+	          
+        return tagString;
+	}
 }
