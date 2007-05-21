@@ -1,36 +1,32 @@
-dnl -*- mode: m4 -*-
-AC_PREREQ(2.59)
+AC_INIT(bigboard, 0.3.4.pre, feedback@mugshot.org)
+AC_CONFIG_SRCDIR(main.py)
+AC_CONFIG_MACRO_DIR([m4])
 
-AC_INIT(bigboard/libbig/__init__.py)
-AC_CONFIG_AUX_DIR(config)
+AM_INIT_AUTOMAKE
+GNOME_COMMON_INIT
 
-AC_CANONICAL_TARGET
+AM_MAINTAINER_MODE
+AM_DISABLE_STATIC
+AM_PROG_LIBTOOL
+AC_SUBST(ACLOCAL_AMFLAGS, "$ACLOCAL_FLAGS -I m4")
+AC_PROG_CC
 
-AM_INIT_AUTOMAKE(bigboard, 0.3.3)
-
-AM_CONFIG_HEADER(config/config.h)
-
-# Honor aclocal flags
-ACLOCAL="$ACLOCAL $ACLOCAL_FLAGS"
+AC_CHECK_PROG(HAVE_PKGCONFIG, pkg-config, yes, no)
 
 GETTEXT_PACKAGE=bigboard
+IT_PROG_INTLTOOL([0.35.0])
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE",[The name of the gettext domain])
+AM_GLIB_GNU_GETTEXT
 
  ## must come before we use the $USE_MAINTAINER_MODE variable later
 AM_MAINTAINER_MODE
-
-## don't rerun to this point if we abort
-AC_CACHE_SAVE
 
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_LIBTOOL
 AC_ISC_POSIX
 AC_HEADER_STDC
-
-## don't rerun to this point if we abort
-AC_CACHE_SAVE
 
 #### gcc warning flags
 
@@ -179,5 +175,6 @@ applet/Makefile
 bigboard/Makefile
 bigboard/keybinder/Makefile
 scripts/Makefile
+po/Makefile.in
 version
 ])
