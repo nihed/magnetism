@@ -92,7 +92,7 @@ public FilterParser(ParserSharedInputState state) {
 		
 		f=andExpression();
 		{
-		_loop1098:
+		_loop1172:
 		do {
 			if ((LA(1)==OR)) {
 				match(OR);
@@ -100,7 +100,7 @@ public FilterParser(ParserSharedInputState state) {
 				f = new OrFilter(f, f2);
 			}
 			else {
-				break _loop1098;
+				break _loop1172;
 			}
 			
 		} while (true);
@@ -115,7 +115,7 @@ public FilterParser(ParserSharedInputState state) {
 		
 		f=notExpression();
 		{
-		_loop1101:
+		_loop1175:
 		do {
 			if ((LA(1)==AND)) {
 				match(AND);
@@ -123,7 +123,7 @@ public FilterParser(ParserSharedInputState state) {
 				f = new AndFilter(f, f2);
 			}
 			else {
-				break _loop1101;
+				break _loop1175;
 			}
 			
 		} while (true);
@@ -217,10 +217,10 @@ public FilterParser(ParserSharedInputState state) {
 		
 		
 		switch ( LA(1)) {
-		case LITERAL_key:
+		case LITERAL_this:
 		{
-			match(LITERAL_key);
-			t = ConditionType.KEY;
+			match(LITERAL_this);
+			t = ConditionType.THIS;
 			break;
 		}
 		case LITERAL_item:
@@ -263,7 +263,7 @@ public FilterParser(ParserSharedInputState state) {
 		"\"viewer\"",
 		"DOT",
 		"NAME",
-		"\"key\"",
+		"\"this\"",
 		"\"item\"",
 		"\"any\"",
 		"\"all\"",
