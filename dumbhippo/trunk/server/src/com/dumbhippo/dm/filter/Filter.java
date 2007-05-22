@@ -1,5 +1,8 @@
 package com.dumbhippo.dm.filter;
 
-public interface Filter {
+import java.util.List;
 
+public interface Filter {
+	public void appendConditions(List<Condition> result);
+	public Filter reduce(Condition condition, boolean value);
 }

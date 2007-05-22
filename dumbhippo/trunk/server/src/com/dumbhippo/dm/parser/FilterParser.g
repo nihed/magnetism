@@ -67,17 +67,17 @@ notExpression returns [Filter f]
 	;
 	
 term returns [Filter f]
-{ FilterTermType type; }
+{ ConditionType type; }
 	:	LPAREN f=orExpression RPAREN 
-	  | "viewer" DOT pred:NAME LPAREN type=termType ( DOT prop:NAME )? RPAREN 
-	    { f = new SimpleFilter(pred.getText(), type, prop != null ? prop.getText() : null); }
+	  | "viewer" DOT pred:NAME LPAREN type=conditionType ( DOT prop:NAME )? RPAREN 
+	    { f = new Condition(pred.getText(), type, prop != null ? prop.getText() : null); }
 	;
 	  
-termType returns [FilterTermType t]
-	: "key" { t = FilterTermType.KEY; }
-	| "item" { t = FilterTermType.ITEM; }
-	| "any" { t = FilterTermType.ANY; }
-	| "all" { t = FilterTermType.ALL; }
+conditionType returns [ConditionType t]
+	: "key" { t = ConditionType.KEY; }
+	| "item" { t = ConditionType.ITEM; }
+	| "any" { t = ConditionType.ANY; }
+	| "all" { t = ConditionType.ALL; }
 	;
 
 class FilterLexer extends Lexer ;
