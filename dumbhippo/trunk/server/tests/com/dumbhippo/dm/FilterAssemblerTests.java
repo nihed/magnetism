@@ -141,7 +141,7 @@ public class FilterAssemblerTests extends TestCase {
 		assertEquals(viewpoint.getViewerId(), filter.filter(viewpoint, key).getMemberId());
 		
 		key = new TestGroupMemberKey(Guid.createNew(), Guid.createNew());
-		assertNull(filter.filter(viewpoint, key).getMemberId());
+		assertNull(filter.filter(viewpoint, key));
 	}
 
 	// test switchState()

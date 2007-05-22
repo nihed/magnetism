@@ -92,7 +92,7 @@ public FilterParser(ParserSharedInputState state) {
 		
 		f=andExpression();
 		{
-		_loop328:
+		_loop1098:
 		do {
 			if ((LA(1)==OR)) {
 				match(OR);
@@ -100,7 +100,7 @@ public FilterParser(ParserSharedInputState state) {
 				f = new OrFilter(f, f2);
 			}
 			else {
-				break _loop328;
+				break _loop1098;
 			}
 			
 		} while (true);
@@ -115,7 +115,7 @@ public FilterParser(ParserSharedInputState state) {
 		
 		f=notExpression();
 		{
-		_loop331:
+		_loop1101:
 		do {
 			if ((LA(1)==AND)) {
 				match(AND);
@@ -123,7 +123,7 @@ public FilterParser(ParserSharedInputState state) {
 				f = new AndFilter(f, f2);
 			}
 			else {
-				break _loop331;
+				break _loop1101;
 			}
 			
 		} while (true);
@@ -163,7 +163,7 @@ public FilterParser(ParserSharedInputState state) {
 		
 		Token  pred = null;
 		Token  prop = null;
-		FilterTermType type;
+		ConditionType type;
 		
 		switch ( LA(1)) {
 		case LPAREN:
@@ -180,7 +180,7 @@ public FilterParser(ParserSharedInputState state) {
 			pred = LT(1);
 			match(NAME);
 			match(LPAREN);
-			type=termType();
+			type=conditionType();
 			{
 			switch ( LA(1)) {
 			case DOT:
@@ -201,7 +201,7 @@ public FilterParser(ParserSharedInputState state) {
 			}
 			}
 			match(RPAREN);
-			f = new SimpleFilter(pred.getText(), type, prop != null ? prop.getText() : null);
+			f = new Condition(pred.getText(), type, prop != null ? prop.getText() : null);
 			break;
 		}
 		default:
@@ -212,33 +212,33 @@ public FilterParser(ParserSharedInputState state) {
 		return f;
 	}
 	
-	public final FilterTermType  termType() throws RecognitionException, TokenStreamException {
-		FilterTermType t;
+	public final ConditionType  conditionType() throws RecognitionException, TokenStreamException {
+		ConditionType t;
 		
 		
 		switch ( LA(1)) {
 		case LITERAL_key:
 		{
 			match(LITERAL_key);
-			t = FilterTermType.KEY;
+			t = ConditionType.KEY;
 			break;
 		}
 		case LITERAL_item:
 		{
 			match(LITERAL_item);
-			t = FilterTermType.ITEM;
+			t = ConditionType.ITEM;
 			break;
 		}
 		case LITERAL_any:
 		{
 			match(LITERAL_any);
-			t = FilterTermType.ANY;
+			t = ConditionType.ANY;
 			break;
 		}
 		case LITERAL_all:
 		{
 			match(LITERAL_all);
-			t = FilterTermType.ALL;
+			t = ConditionType.ALL;
 			break;
 		}
 		default:

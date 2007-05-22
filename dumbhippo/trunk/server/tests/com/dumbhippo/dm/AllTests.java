@@ -9,6 +9,8 @@ public class AllTests {
         
         suite.addTest(new TestSuite(FetchParserTests.class));
         suite.addTest(new TestSuite(FilterParserTests.class));
+        suite.addTest(new TestSuite(FilterAssemblerTests.class));
+        suite.addTest(new TestSuite(FilterStateMapTests.class));
 
         suite.addTest(new TestSuite(PersistenceTests.class));
         
