@@ -51,10 +51,10 @@ public class FilterAssembler {
 	private boolean dereference;
 	private boolean listFilter;
 	private String viewpointClassName;
-	private Class<?> keyClass; 
-	private String keyClassName;
-	private Class<?> itemClass; 
-	private String itemClassName;
+	private Class<?> objectKeyClass; 
+	private String objectKeyClassName;
+	private Class<?> itemKeyClass; 
+	private String itemKeyClassName;
 	private boolean needsBadState;
 
 	// Can be loaded/stored with a 1 byte {a,i}{load,store}_n opcode 
@@ -70,18 +70,18 @@ public class FilterAssembler {
 	private static final int MAX_LOCALS = RESULT_LOCAL + 1;
 	
 	/**
-	 * Create an assembler used to produce one of the two filter methods of CompiledKeyFilter:
+	 * Create an assembler used to produce one of the two filter methods of CompiledFilter:
 	 * 
 	 * 	K1 filter(DMViewpoint viewpoint, K1 key);
 	 *  T1 filter(DMViewpoint viewpoint, T1 object);
 	 * 
 	 * @param viewpointClass subclass of DMViewpoint
-	 * @param keyClass class of the key
+	 * @param objectKeyClass class of the object's key
 	 * @param dereference if true, filter DMObjects, not keys
 	 * @return
 	 */
-	public static FilterAssembler createForKeyFilter(Class<? extends DMViewpoint> viewpointClass, Class<?> keyClass, boolean dereference) {
-		return new FilterAssembler(viewpointClass, keyClass, null, false, dereference);
+	public static FilterAssembler createForFilter(Class<? extends DMViewpoint> viewpointClass, Class<?> objectKeyClass, boolean dereference) {
+		return new FilterAssembler(viewpointClass, objectKeyClass, null, false, dereference);
 	}
 	
 	/**
@@ -91,13 +91,13 @@ public class FilterAssembler {
   	 *  T2 filter(DMViewpoint viewpoint, T1 object, T2 item);
 	 * 
 	 * @param viewpointClass subclass of DMViewpoint
-	 * @param keyClass class of the key
-	 * @param itemClass class of the item
+	 * @param objectKeyClass class of the object's key
+	 * @param itemKeyClass class of the item's key
 	 * @param dereference if true, filter DMObjects, not keys
 	 * @return
 	 */
-	public static FilterAssembler createForItemFilter(Class<? extends DMViewpoint> viewpointClass, Class<?> keyClass, Class<?> itemClass, boolean dereference) {
-		return new FilterAssembler(viewpointClass, keyClass, itemClass, false, dereference);
+	public static FilterAssembler createForItemFilter(Class<? extends DMViewpoint> viewpointClass, Class<?> objectKeyClass, Class<?> itemKeyClass, boolean dereference) {
+		return new FilterAssembler(viewpointClass, objectKeyClass, itemKeyClass, false, dereference);
 	}
 	
 	/**
@@ -107,24 +107,24 @@ public class FilterAssembler {
  	 *  List<T2> filter(DMViewpoint viewpoint, T1 object, List<T2> items);
 	 * 
 	 * @param viewpointClass subclass of DMViewpoint
-	 * @param keyClass class of the key
-	 * @param itemClass class of the items
+	 * @param objectKeyClass class of the object's key
+	 * @param itemKeyClass class of the item's key
 	 * @param dereference if true, filter DMObjects, not keys
 	 * @return
 	 */
-	public static FilterAssembler createForListFilter(Class<? extends DMViewpoint> viewpointClass, Class<?> keyClass, Class<?> itemClass, boolean dereference) {
-		return new FilterAssembler(viewpointClass, keyClass, itemClass, true ,dereference);
+	public static FilterAssembler createForListFilter(Class<? extends DMViewpoint> viewpointClass, Class<?> objectKeyClass, Class<?> itemKeyClass, boolean dereference) {
+		return new FilterAssembler(viewpointClass, objectKeyClass, itemKeyClass, true ,dereference);
 	}
 	
-	private FilterAssembler(Class<? extends DMViewpoint> viewpointClass, Class<?> keyClass, Class<?> itemClass, boolean listFilter, boolean dereference) {
+	private FilterAssembler(Class<? extends DMViewpoint> viewpointClass, Class<?> objectKeyClass, Class<?> itemKeyClass, boolean listFilter, boolean dereference) {
 		this.dereference = dereference;
 		this.listFilter = listFilter;
 		viewpointClassName = Descriptor.toJvmName(viewpointClass.getName());
-		this.keyClass = keyClass;
-		keyClassName = Descriptor.toJvmName(keyClass.getName());
-		if (itemClass != null) {
-			this.itemClass = itemClass;
-			itemClassName = Descriptor.toJvmName(itemClass.getName());
+		this.objectKeyClass = objectKeyClass;
+		objectKeyClassName = Descriptor.toJvmName(objectKeyClass.getName());
+		if (itemKeyClass != null) {
+			this.itemKeyClass = itemKeyClass;
+			itemKeyClassName = Descriptor.toJvmName(itemKeyClass.getName());
 		}
 		
 		// Do a cast-check for the viewpoint before anything else
@@ -185,15 +185,15 @@ public class FilterAssembler {
 	}
 
 	/**
-	 * Calls a viewpoint condition function with the key (or a property of the key) as the argument
+	 * Calls a viewpoint condition function with the object's key (or a property of the key) as the argument
 	 * 
 	 * @param condition the name of the condition function
 	 * @param property key property to use as the argument, or null to use the key itself
 	 * @param branchWhen if true, branch when the condition is true, if false, branch when the condition is false
 	 * @param label label to branch to
 	 */
-	public void keyCondition(String condition, String property, boolean branchWhen, String label) {
-		fops.add(new KeyConditionFop(condition, property, branchWhen, label));
+	public void thisCondition(String condition, String property, boolean branchWhen, String label) {
+		fops.add(new ThisConditionFop(condition, property, branchWhen, label));
 	}
 	
 	/**
@@ -208,8 +208,8 @@ public class FilterAssembler {
 	 * @param label label to branch to
 	 */
 	public void itemCondition(String condition, String property, boolean branchWhen, String label) {
-		if (itemClass == null)
-			throw new RuntimeException("Assembler was not created for a key filter, no items");
+		if (itemKeyClass == null)
+			throw new RuntimeException("Assembler was created for a plain filter, no items");
 
 		fops.add(new ItemConditionFop(condition, property, branchWhen, label));
 	}
@@ -258,15 +258,15 @@ public class FilterAssembler {
 	}	
 
 	/**
-	 * Return the key 
+	 * Return the target object (note that this *does not* return the 'this' of the generated method)
 	 */
-	public void returnKey() {
+	public void returnThis() {
 		if (listFilter)
 			throw new RuntimeException("Assembler was created for a list filter, must return a list");
-		if (itemClass != null)
+		if (itemKeyClass != null)
 			throw new RuntimeException("Assembler was created for an item filter, must return an item");
 
-		fops.add(new ReturnKeyFop());
+		fops.add(new ReturnThisFop());
 	}	
 
 	/**
@@ -275,8 +275,8 @@ public class FilterAssembler {
 	public void returnItem() {
 		if (listFilter)
 			throw new RuntimeException("Assembler was created for a list filter, must return a list");
-		if (itemClass == null)
-			throw new RuntimeException("Assembler was created for a key filter, can't return an item");
+		if (itemKeyClass == null)
+			throw new RuntimeException("Assembler was created for a plain filter, can't return an item");
 
 		fops.add(new ReturnItemFop());
 	}	
@@ -353,7 +353,7 @@ public class FilterAssembler {
 		if (listFilter) {
 			arg3 = "Ljava/util/List;";
 			result = "Ljava/util/List;";
-		} else if (itemClass != null) {
+		} else if (itemKeyClass != null) {
 			arg3 = elementType;
 			result = elementType;
 		} else {
@@ -646,12 +646,12 @@ public class FilterAssembler {
 					Method propertyMethod = getArgumentClass().getMethod(propertyMethodName, new Class<?>[] {});
 					Class<?> propertyReturnClass = propertyMethod.getReturnType();
 					if (propertyReturnClass == null)
-						throw new RuntimeException("property " + property + " in key class " + keyClass.getName() + " doesn't have a return value");
+						throw new RuntimeException("property " + property + " in key class " + objectKeyClass.getName() + " doesn't have a return value");
 					propertyClassName = Descriptor.toJvmName(propertyReturnClass.getName());
 				} catch (SecurityException e) {
-					throw new RuntimeException("Can't find property '" + property + "' in key class " + keyClass.getName(), e);
+					throw new RuntimeException("Can't find property '" + property + "' in key class " + objectKeyClass.getName(), e);
 				} catch (NoSuchMethodException e) {
-					throw new RuntimeException("Can't find property '" + property + "' in key class " + keyClass.getName(), e);
+					throw new RuntimeException("Can't find property '" + property + "' in key class " + objectKeyClass.getName(), e);
 				}
 			}
 		}
@@ -706,8 +706,8 @@ public class FilterAssembler {
 		}
 	}
 
-	private class KeyConditionFop extends AbstractConditionFop {
-		public KeyConditionFop(String condition, String property, boolean branchWhen, String label) {
+	private class ThisConditionFop extends AbstractConditionFop {
+		public ThisConditionFop(String condition, String property, boolean branchWhen, String label) {
 			super(condition, property, branchWhen, label);
 		}
 
@@ -716,15 +716,15 @@ public class FilterAssembler {
 		}
 		
 		protected Class<?> getArgumentClass() {
-			return keyClass;
+			return objectKeyClass;
 		}
 
 		protected String getArgumentClassName() {
-			return keyClassName;
+			return objectKeyClassName;
 		}
 		
 		protected String getName() {
-			return "keyCondition";
+			return "thisCondition";
 		}
 	}
 
@@ -738,11 +738,11 @@ public class FilterAssembler {
 		}
 		
 		protected Class<?> getArgumentClass() {
-			return itemClass;
+			return itemKeyClass;
 		}
 
 		protected String getArgumentClassName() {
-			return itemClassName;
+			return itemKeyClassName;
 		}
 		
 		protected String getName() {
@@ -840,8 +840,8 @@ public class FilterAssembler {
 		}
 	}
 
-	private class ReturnKeyFop extends Fop {
-		public ReturnKeyFop() {
+	private class ReturnThisFop extends Fop {
+		public ReturnThisFop() {
 		}
 		
 		public int setOffset(int offset) {
@@ -856,7 +856,7 @@ public class FilterAssembler {
 		
 		@Override
 		public String toString() {
-			return prefix() + "    returnKey()\n";
+			return prefix() + "    returnThis()\n";
 		}
 	}
 

@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.dm.TestUserDMO;
 import com.dumbhippo.dm.filter.CompiledItemFilter;
-import com.dumbhippo.dm.filter.CompiledKeyFilter;
+import com.dumbhippo.dm.filter.CompiledFilter;
 import com.dumbhippo.dm.filter.CompiledListFilter;
 import com.dumbhippo.dm.filter.Filter;
 import com.dumbhippo.dm.filter.FilterCompiler;
@@ -22,10 +22,10 @@ public class FilterCompilerTests extends TestCase {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(FilterCompilerTests.class);
 
-	public void testKeyFilterSimple() throws Exception {
-		Filter filter =  FilterParser.parse("viewer.sameAs(key)");
-		Class<? extends CompiledKeyFilter<Guid,TestUserDMO>> compiled = FilterCompiler.compileKeyFilter(TestViewpoint.class, Guid.class, filter);
-		CompiledKeyFilter<Guid,TestUserDMO> instance = compiled.newInstance();
+	public void testFilterSimple() throws Exception {
+		Filter filter =  FilterParser.parse("viewer.sameAs(this)");
+		Class<? extends CompiledFilter<Guid,TestUserDMO>> compiled = FilterCompiler.compileFilter(TestViewpoint.class, Guid.class, filter);
+		CompiledFilter<Guid,TestUserDMO> instance = compiled.newInstance();
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		
@@ -86,7 +86,7 @@ public class FilterCompilerTests extends TestCase {
 		// - The person themselves can see the entire list
 		// - You can any mutual friends on the list unless you are an enemy of any of the friends 
 		
-		Filter filter =  FilterParser.parse("viewer.sameAs(key)||(viewer.isBuddy(item) && !viewer.isEnemy(any))");
+		Filter filter =  FilterParser.parse("viewer.sameAs(this)||(viewer.isBuddy(item) && !viewer.isEnemy(any))");
 		Class<? extends CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO>> compiled = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
 		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = compiled.newInstance();
 		
@@ -113,7 +113,7 @@ public class FilterCompilerTests extends TestCase {
 		input = new ArrayList<Guid>();
 		input.add(buddy1);
 		input.add(buddy2);
-		input.add(enemy1); // Both a friend and an enemy? sameAs(key) makes it visible anyways
+		input.add(enemy1); // Both a friend and an enemy? sameAs(this) makes it visible anyways
 		
 		assertEquals(3, instance.filter(viewpoint, viewer, input).size());
 		
@@ -140,7 +140,7 @@ public class FilterCompilerTests extends TestCase {
 		// - Non-enemies can see all the list, if there is at least one mutual friend,
 		//   unless the list contains one of their enemies
 		
-		Filter filter =  FilterParser.parse("!viewer.isEnemy(any)&&(viewer.isBuddy(key)||(!viewer.isEnemy(key)&&viewer.isBuddy(any)))");
+		Filter filter =  FilterParser.parse("!viewer.isEnemy(any)&&(viewer.isBuddy(this)||(!viewer.isEnemy(this)&&viewer.isBuddy(any)))");
 		Class<? extends CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO>> compiled = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
 		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = compiled.newInstance();
 		
@@ -190,7 +190,7 @@ public class FilterCompilerTests extends TestCase {
 		// - Non-enemies can see mutual friends in the list
 		// - Enemies see nothing
 		
-		Filter filter =  FilterParser.parse("(viewer.isBuddy(key)&&!viewer.isEnemy(item))||(!viewer.isEnemy(key)&&viewer.isBuddy(item))");
+		Filter filter =  FilterParser.parse("(viewer.isBuddy(this)&&!viewer.isEnemy(item))||(!viewer.isEnemy(this)&&viewer.isBuddy(item))");
 		Class<? extends CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO>> compiled = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
 		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = compiled.newInstance();
 		

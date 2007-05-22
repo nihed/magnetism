@@ -20,18 +20,18 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 	static private final Logger logger = GlobalSetup.getLogger(FilterCompiler.class);
 
 	/**
-	 * Compile a Filter expression into a CompiledKeyFilter, specifying the types of the
+	 * Compile a Filter expression into a CompiledFilter, specifying the types of the
 	 * key for the objects that that this filter filters. 
 	 * 
 	 * @param <K>
 	 * @param <T>
 	 * @param viewpointClass subclass of DMViewpoint
-	 * @param keyClass
+	 * @param objectKeyClass class of the object's key
 	 * @param filter
 	 * @return
 	 */
-	static public <K, T extends DMObject<K>> Class<? extends CompiledKeyFilter<K,T>> compileKeyFilter(Class<? extends DMViewpoint> viewpointClass, Class<K> keyClass, Filter filter) {
-		return new FilterCompiler<K,T,Guid,DMObject<Guid>>(viewpointClass, keyClass, null, filter).doCompileKeyFilter();
+	static public <K, T extends DMObject<K>> Class<? extends CompiledFilter<K,T>> compileFilter(Class<? extends DMViewpoint> viewpointClass, Class<K> objectKeyClass, Filter filter) {
+		return new FilterCompiler<K,T,Guid,DMObject<Guid>>(viewpointClass, objectKeyClass, null, filter).doCompileFilter();
 	}
 	
 	/**
@@ -43,13 +43,13 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 	 * @param <KI>
 	 * @param <TI>
 	 * @param viewpointClass subclass of DMViewpoint
-	 * @param keyClass Class of the object key
-	 * @param itemClass Class of the items *key* (not of the item)
+	 * @param objectKeyClass Class of the object's key
+	 * @param itemKeyClass Class of the item's key
 	 * @param filter
 	 * @return
 	 */
-	public static <K, T extends DMObject<K>, KI, TI extends DMObject<KI>> Class<? extends CompiledItemFilter<K,T,KI,TI>> compileItemFilter(Class<? extends DMViewpoint> viewpointClass, Class<K> keyClass, Class<KI> itemClass, Filter filter) {
-		return new FilterCompiler<K,T,KI,TI>(viewpointClass, keyClass, itemClass, filter).doCompileItemFilter();
+	public static <K, T extends DMObject<K>, KI, TI extends DMObject<KI>> Class<? extends CompiledItemFilter<K,T,KI,TI>> compileItemFilter(Class<? extends DMViewpoint> viewpointClass, Class<K> objectKeyClass, Class<KI> itemKeyClass, Filter filter) {
+		return new FilterCompiler<K,T,KI,TI>(viewpointClass, objectKeyClass, itemKeyClass, filter).doCompileItemFilter();
 	}
 
 	/**
@@ -61,47 +61,47 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 	 * @param <KI>
 	 * @param <TI>
 	 * @param viewpointClass subclass of DMViewpoint
-	 * @param keyClass Class of the object key
-	 * @param itemClass Class of the items *key* (not of the item)
+	 * @param objectKeyClass Class of the object's key
+	 * @param itemKeyClass Class of the item's key
 	 * @param filter
 	 * @return
 	 */
-	public static <K, T extends DMObject<K>, KI, TI extends DMObject<KI>> Class<? extends CompiledListFilter<K,T,KI,TI>> compileListFilter(Class<? extends DMViewpoint> viewpointClass, Class<K> keyClass, Class<KI> itemClass, Filter filter) {
-		return new FilterCompiler<K,T,KI,TI>(viewpointClass, keyClass, itemClass, filter).doCompileListFilter();
+	public static <K, T extends DMObject<K>, KI, TI extends DMObject<KI>> Class<? extends CompiledListFilter<K,T,KI,TI>> compileListFilter(Class<? extends DMViewpoint> viewpointClass, Class<K> objectKeyClass, Class<KI> itemKeyClass, Filter filter) {
+		return new FilterCompiler<K,T,KI,TI>(viewpointClass, objectKeyClass, itemKeyClass, filter).doCompileListFilter();
 	}
 
 	private Class<? extends DMViewpoint> viewpointClass;
-	private Class<K> keyClass; 
-	private Class<KI> itemClass;
+	private Class<K> objectKeyClass; 
+	private Class<KI> itemKeyClass;
 	private Filter filter; 
 	private ClassPool classPool;
 	private static int serial = 1;
 	
-	private FilterCompiler(Class<? extends DMViewpoint> viewpointClass, Class<K> keyClass, Class<KI> itemClass, Filter filter) {
+	private FilterCompiler(Class<? extends DMViewpoint> viewpointClass, Class<K> objectKeyClass, Class<KI> itemKeyClass, Filter filter) {
 		this.filter = filter;
 		this.viewpointClass = viewpointClass;
-		this.keyClass = keyClass;
-		this.itemClass = itemClass;
+		this.objectKeyClass = objectKeyClass;
+		this.itemKeyClass = itemKeyClass;
 		
 		classPool = DataModel.getInstance().getClassPool();
 	}
 	
-	private Class<? extends CompiledKeyFilter<K,T>> doCompileKeyFilter() {
+	private Class<? extends CompiledFilter<K,T>> doCompileFilter() {
 		CtClass ctClass = makeCtClass();
-		ctClass.addInterface(ctClassForClass(CompiledKeyFilter.class));
+		ctClass.addInterface(ctClassForClass(CompiledFilter.class));
 
 		FilterStateMap stateMap = new FilterStateMap(filter, false);
 		logger.debug("State map for {} is:\n{}",  filter, stateMap);
 		
 		FilterAssembler assembler;
-		assembler = FilterAssembler.createForKeyFilter(viewpointClass, keyClass, false);
+		assembler = FilterAssembler.createForFilter(viewpointClass, objectKeyClass, false);
 		generateKeyPhaseCode(assembler, stateMap, ReturnAction.RETURN_KEY, ReturnAction.RETURN_NULL);
 		assembler.optimize(); // call explicitly for better debug output
 		logger.debug("KeyFilter assembly code for {} is:\n{}",  filter, assembler);
 		
 		assembler.addMethodToClass(ctClass);
 
-		assembler = FilterAssembler.createForKeyFilter(viewpointClass, keyClass, true);
+		assembler = FilterAssembler.createForFilter(viewpointClass, objectKeyClass, true);
 		generateKeyPhaseCode(assembler, stateMap, ReturnAction.RETURN_KEY, ReturnAction.RETURN_NULL);
 		assembler.addMethodToClass(ctClass);
 
@@ -113,7 +113,7 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 		}
 		
 		@SuppressWarnings("unchecked")
-		Class<? extends CompiledKeyFilter<K,T>> subclass = (Class<? extends CompiledKeyFilter<K,T>>)clazz.asSubclass(CompiledKeyFilter.class);
+		Class<? extends CompiledFilter<K,T>> subclass = (Class<? extends CompiledFilter<K,T>>)clazz.asSubclass(CompiledFilter.class);
 
 		return subclass;
 	}
@@ -126,14 +126,14 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 		logger.debug("State map (singlePhase) for {} is:\n{}",  filter, stateMap);
 		
 		FilterAssembler assembler;
-		assembler = FilterAssembler.createForItemFilter(viewpointClass, keyClass, itemClass, false);
+		assembler = FilterAssembler.createForItemFilter(viewpointClass, objectKeyClass, itemKeyClass, false);
 		generateKeyPhaseCode(assembler, stateMap, ReturnAction.RETURN_ITEM, ReturnAction.RETURN_NULL);
 		assembler.optimize(); // call explicitly for better debug output
 		logger.debug("ItemFilter assembly code for {} is:\n{}",  filter, assembler);
 
 		assembler.addMethodToClass(ctClass);
 		
-		assembler = FilterAssembler.createForItemFilter(viewpointClass, keyClass, itemClass, true);
+		assembler = FilterAssembler.createForItemFilter(viewpointClass, objectKeyClass, itemKeyClass, true);
 		generateKeyPhaseCode(assembler, stateMap, ReturnAction.RETURN_ITEM, ReturnAction.RETURN_NULL);
 		assembler.addMethodToClass(ctClass);
 		
@@ -158,7 +158,7 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 		logger.debug("State map for {} is:\n{}",  filter, stateMap);
 		
 		FilterAssembler assembler;
-		assembler = FilterAssembler.createForListFilter(viewpointClass, keyClass, itemClass, false);
+		assembler = FilterAssembler.createForListFilter(viewpointClass, objectKeyClass, itemKeyClass, false);
 		generateKeyPhaseCode(assembler, stateMap, ReturnAction.RETURN_ITEMS, ReturnAction.RETURN_EMPTY);
 		generateAnyAllPhaseCode(assembler, stateMap);
 		generateItemPhaseCode(assembler, stateMap);
@@ -167,7 +167,7 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 
 		assembler.addMethodToClass(ctClass);
 		
-		assembler = FilterAssembler.createForListFilter(viewpointClass, keyClass, itemClass, true);
+		assembler = FilterAssembler.createForListFilter(viewpointClass, objectKeyClass, itemKeyClass, true);
 		generateKeyPhaseCode(assembler, stateMap, ReturnAction.RETURN_ITEMS, ReturnAction.RETURN_EMPTY);
 		generateAnyAllPhaseCode(assembler, stateMap);
 		generateItemPhaseCode(assembler, stateMap);
@@ -217,7 +217,7 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 	private void addReturn(FilterAssembler assembler, ReturnAction action) {
 		switch (action) {
 		case RETURN_KEY:
-			assembler.returnKey();
+			assembler.returnThis();
 			break;
 		case RETURN_ITEM:
 			assembler.returnItem();
@@ -259,12 +259,12 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 	private static final String TRUE_RETURN = "TRUE_RETURN";
 
 	/**
-	 * Generates the code for phase 0, conventionally called the "key phase". For key filters and 
-	 * for list filters, we only process key conditions in this phase, so the name is accurate.
-	 * For an item filter, we actually process all conditions in this phase. For an item filter, 
-	 * all of the conditions will have been marked as "phase 0" because singlePhase was passed 
-	 * to the FilterStateMap constructor, but we still need to process them a little differently - 
-	 * see the switch over condition.getType() below.
+	 * Generates the code for phase 0, the "global phase. For plain filters and 
+	 * for list filters, we only process key conditions in this phase.
+	 * For an item filter, all of the conditions will have been marked as "phase 0" because 
+	 * singlePhase was passed to the FilterStateMap constructor, and will be processed
+	 * here, but we do need to process them a little differently - see the switch 
+	 * over condition.getType() below.
 	 * 
 	 * @param assembler
 	 * @param stateMap
@@ -277,7 +277,7 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 	private void generateKeyPhaseCode(FilterAssembler assembler, FilterStateMap stateMap, ReturnAction onTrueReturn, ReturnAction onFalseReturn) {
 		boolean needTrueReturn = false;
 		
-		for (FilterState state : stateMap.getKeyStates()) {
+		for (FilterState state : stateMap.getGlobalStates()) {
 			assembler.label(state.getName(), state.getFilter().toString());
 			Condition condition = state.getChildCondition(0);
 			String branchLabel;
@@ -320,13 +320,13 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 				throw new RuntimeException("Both child states are FALSE_STATE");
 			}
 			
-			// For key/list filters, the condition type has to be KEY, but for an item filter
-			// we can get any of the 4 condition types here. When we have only a single item,
+			// For plain/list filters, the condition type has to be THIS in this phase, but for an item 
+			// filter we can get any of the 4 condition types here. When we have only a single item,
 			// item/any/all can be treated uniformly.
 			//
 			switch (condition.getType()) {
-			case KEY:
-				assembler.keyCondition(condition.getPredicateName(), condition.getPropertyName(), branchWhen, branchLabel);
+			case THIS:
+				assembler.thisCondition(condition.getPredicateName(), condition.getPropertyName(), branchWhen, branchLabel);
 				break;
 			case ANY:
 			case ALL:
@@ -430,7 +430,7 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 					resolveOn = false;
 					resolvedState = state.getChildState(i, false);
 					break;
-				case KEY:
+				case THIS:
 				case ITEM:
 					throw new RuntimeException("Invalid condition type in any/all phase");
 				}

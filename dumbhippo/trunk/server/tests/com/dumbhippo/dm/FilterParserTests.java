@@ -11,13 +11,13 @@ public class FilterParserTests extends AbstractParserTests {
 	}
 		
 	public void testParser() throws Exception {
-		expectIdentity("viewer.p(key)");
+		expectIdentity("viewer.p(this)");
 		expectIdentity("viewer.p(item)");
 		expectIdentity("viewer.p(all)");
-		expectIdentity("viewer.p(key.property)");
-		expectSuccess("!viewer.p(key)", "!(viewer.p(key))");
-		expectSuccess("viewer.p(key)||viewer.q(key)&&viewer.r(key)", "(viewer.p(key))||((viewer.q(key))&&(viewer.r(key)))");
-		expectSuccess("viewer.p(key)&&viewer.q(key)||viewer.r(key)", "((viewer.p(key))&&(viewer.q(key)))||(viewer.r(key))");
+		expectIdentity("viewer.p(this.property)");
+		expectSuccess("!viewer.p(this)", "!(viewer.p(this))");
+		expectSuccess("viewer.p(this)||viewer.q(this)&&viewer.r(this)", "(viewer.p(this))||((viewer.q(this))&&(viewer.r(this)))");
+		expectSuccess("viewer.p(this)&&viewer.q(this)||viewer.r(this)", "((viewer.p(this))&&(viewer.q(this)))||(viewer.r(this))");
 		expectFailure("+");
 		expectFailure("viewer.p()");
 	}
