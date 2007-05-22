@@ -14,6 +14,7 @@ public class FilterState {
 	private Condition[] conditions;
 	private int childCount;
 	private FilterState[] childStates;
+	private FilterState defaultResolvedState;
 	private int index = -1;
 	private int phase;
 	private boolean root;
@@ -76,6 +77,14 @@ public class FilterState {
 		return conditions[index];
 	}
 	
+	public void setDefaultResolvedState(FilterState defaultResolvedState) {
+		this.defaultResolvedState = defaultResolvedState;
+	}
+	
+	public FilterState getDefaultResolvedState() {
+		return defaultResolvedState;
+	}
+	
 	public FilterState getChildState(int index, boolean value) {
 		return childStates[index * 2 + (value ? 1 : 0)];
 	}
@@ -86,6 +95,10 @@ public class FilterState {
 	
 	public void setRoot(boolean root) {
 		this.root = root;
+	}
+	
+	public int getIndex() {
+		return index;
 	}
 	
 	public void setIndex(int index) {

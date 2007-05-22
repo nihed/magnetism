@@ -43,7 +43,7 @@ public class FilterAssemblerTests extends TestCase {
 		}
 	}
 	
-	private <K1,T1 extends DMObject<K1>> CompiledKeyFilter<K1,T1> createKeyFilter(String name, FilterAssembler assembler) throws CannotCompileException, InstantiationException, IllegalAccessException {
+	private <K,T extends DMObject<K>> CompiledKeyFilter<K,T> createKeyFilter(String name, FilterAssembler assembler) throws CannotCompileException, InstantiationException, IllegalAccessException {
 		ClassPool classPool = DataModel.getInstance().getClassPool();
 		CtClass ctClass = classPool.makeClass("com.dumbhippo.tests." + name);
 		
@@ -54,11 +54,11 @@ public class FilterAssemblerTests extends TestCase {
 		Class<?> clazz = ctClass.toClass();
 		
 		@SuppressWarnings("unchecked")
-		Class<? extends CompiledKeyFilter<K1,T1>> subclass = (Class<? extends CompiledKeyFilter<K1,T1>>)clazz.asSubclass(CompiledKeyFilter.class);
+		Class<? extends CompiledKeyFilter<K,T>> subclass = (Class<? extends CompiledKeyFilter<K,T>>)clazz.asSubclass(CompiledKeyFilter.class);
 		return subclass.newInstance();
 	}
 	
-	private <K1,K2,T1 extends DMObject<K1>,T2 extends DMObject<K2>> CompiledItemFilter<K1,K2,T1,T2> createItemFilter(String name, FilterAssembler assembler) throws CannotCompileException, InstantiationException, IllegalAccessException {
+	private <K,T extends DMObject<K>,KI,TI extends DMObject<KI>> CompiledItemFilter<K,T,KI,TI> createItemFilter(String name, FilterAssembler assembler) throws CannotCompileException, InstantiationException, IllegalAccessException {
 		ClassPool classPool = DataModel.getInstance().getClassPool();
 		CtClass ctClass = classPool.makeClass("com.dumbhippo.tests." + name);
 		
@@ -69,11 +69,11 @@ public class FilterAssemblerTests extends TestCase {
 		Class<?> clazz = ctClass.toClass();
 		
 		@SuppressWarnings("unchecked")
-		Class<? extends CompiledItemFilter<K1,K2,T1,T2>> subclass = (Class<? extends CompiledItemFilter<K1,K2,T1,T2>>)clazz.asSubclass(CompiledItemFilter.class);
+		Class<? extends CompiledItemFilter<K,T,KI,TI>> subclass = (Class<? extends CompiledItemFilter<K,T,KI,TI>>)clazz.asSubclass(CompiledItemFilter.class);
 		return subclass.newInstance();
 	}
 	
-	private <K1,K2,T1 extends DMObject<K1>,T2 extends DMObject<K2>> CompiledListFilter<K1,K2,T1,T2> createListFilter(String name, FilterAssembler assembler) throws CannotCompileException, InstantiationException, IllegalAccessException {
+	private <K,T extends DMObject<K>,KI,TI extends DMObject<KI>> CompiledListFilter<K,T,KI,TI> createListFilter(String name, FilterAssembler assembler) throws CannotCompileException, InstantiationException, IllegalAccessException {
 		ClassPool classPool = DataModel.getInstance().getClassPool();
 		CtClass ctClass = classPool.makeClass("com.dumbhippo.tests." + name);
 		
@@ -84,7 +84,7 @@ public class FilterAssemblerTests extends TestCase {
 		Class<?> clazz = ctClass.toClass();
 		
 		@SuppressWarnings("unchecked")
-		Class<? extends CompiledListFilter<K1,K2,T1,T2>> subclass = (Class<? extends CompiledListFilter<K1,K2,T1,T2>>)clazz.asSubclass(CompiledListFilter.class);
+		Class<? extends CompiledListFilter<K,T,KI,TI>> subclass = (Class<? extends CompiledListFilter<K,T,KI,TI>>)clazz.asSubclass(CompiledListFilter.class);
 		return subclass.newInstance();
 	}
 	
@@ -174,7 +174,7 @@ public class FilterAssemblerTests extends TestCase {
 		assembler.label("NULL");
 		assembler.returnNull();
 		
-		CompiledItemFilter<Guid, Guid, ?, ?> filter = createItemFilter("ItemFilter", assembler);
+		CompiledItemFilter<Guid, ?, Guid, ?> filter = createItemFilter("ItemFilter", assembler);
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		Guid result;
@@ -192,7 +192,7 @@ public class FilterAssemblerTests extends TestCase {
 		
 		assembler.returnEmpty();
 		
-		CompiledListFilter<Guid, Guid, ?, ?> filter = createListFilter("ReturnEmptyFilter", assembler);
+		CompiledListFilter<Guid, ?, Guid, ?> filter = createListFilter("ReturnEmptyFilter", assembler);
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		
@@ -206,7 +206,7 @@ public class FilterAssemblerTests extends TestCase {
 		
 		assembler.returnItems();
 		
-		CompiledListFilter<Guid, Guid, ?, ?> filter = createListFilter("ReturnItemsFilter", assembler);
+		CompiledListFilter<Guid, ?, Guid, ?> filter = createListFilter("ReturnItemsFilter", assembler);
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		
@@ -229,7 +229,7 @@ public class FilterAssemblerTests extends TestCase {
 		assembler.label("DONE");
 		assembler.returnResult();
 		
-		CompiledListFilter<Guid, Guid, ?, ?> filter = createListFilter("IterateItemsFilter", assembler);
+		CompiledListFilter<Guid, ?, Guid, ?> filter = createListFilter("IterateItemsFilter", assembler);
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		
@@ -256,7 +256,7 @@ public class FilterAssemblerTests extends TestCase {
 		assembler.label("DONE");
 		assembler.returnResult();
 		
-		CompiledListFilter<Guid, TestGroupMemberKey, ?, ?> filter = createListFilter("ItemPropertyFilter", assembler);
+		CompiledListFilter<Guid, ?, TestGroupMemberKey, ?> filter = createListFilter("ItemPropertyFilter", assembler);
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		

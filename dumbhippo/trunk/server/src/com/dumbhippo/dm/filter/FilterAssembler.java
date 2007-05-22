@@ -136,8 +136,17 @@ public class FilterAssembler {
 	 * @param name name of the label
 	 */
 	public void label(String name) {
+		label(name, null);
+	}
+	
+	/**
+	 * Add a label to act as a branch target
+	 * @param name name of the label
+	 * @param comment comment for this label (for debugging purposes)
+	 */
+	public void label(String name, String comment) {
 		labels.put(name, fops.size());
-		fops.add(new LabelFop(name));
+		fops.add(new LabelFop(name, comment));
 	}
 	
 	/**
@@ -159,14 +168,20 @@ public class FilterAssembler {
 	/**
 	 * Jump to one of a list of labels depending on the value of the state variable
 	 * If the state variable isn't one of the specified values, throws IllegalStateException
+	 * (The check and throw will be optimized out if there is only a single state in 
+	 * the passed in value; it's just a debugging aid.)
 	 * 
 	 * @param states array of states, must be consecutive ascending integers
 	 *    (can be fixed if needed)
 	 * @param labels label to branch to for each state
 	 */
 	public void switchState(int[] states, String[] labels) {
-		fops.add(new SwitchStateFop(states, labels));
-		needsBadState = true;
+		if (states.length == 1 && labels.length == 1)
+			fops.add(new JumpFop(labels[0]));
+		else {
+			fops.add(new SwitchStateFop(states, labels));
+			needsBadState = true;
+		}
 	}
 
 	/**
@@ -364,10 +379,15 @@ public class FilterAssembler {
 			badState();
 		}
 		
+		// "Optimization" stage; we remove all unconditional jumps to labels immediately following
+		optimize();
+		
 		// First pass, assign offsets to all the fops; we need the offsets to compute the
 		// offsets for the branches that we emit in the second pass.
 		int offset = 0;
 		for (Fop fop : fops) {
+			if (fop == null)
+				continue;
 			offset = fop.setOffset(offset);
 		}
 		
@@ -379,6 +399,8 @@ public class FilterAssembler {
 		// Second pass, emit the code
 		Fop previousFop = null;
 		for (Fop fop : fops) {
+			if (fop == null)
+				continue;
 			// This check makes sure that our size computations in the setOffset() methods match what
 			// Javassist Bytecode's object actually generates
 			if (fop.offset != bytecode.currentPc())
@@ -391,9 +413,35 @@ public class FilterAssembler {
 		if (totalLength != bytecode.currentPc())
 			throw new RuntimeException("Bad total length " + totalLength + " should have been " + bytecode.currentPc() + " previous fop was:\n" + previousFop);
 		
-		logger.debug("Generated code is:\n" + this.toString());
-		
 		return bytecode.toCodeAttribute();
+	}
+	
+	/**
+	 * Does basic optimization like eliminating unconditional jumps to labels immediately
+	 * following. Calling addMethodToClass() automatically runs this; it's public so you
+	 * can call it explicitly to get better debugging output of what code is actually
+	 * generated, at a little cost in efficiency. (It's idempotent, so harmless if it's
+	 * called twice.)
+	 */
+	public void optimize() {
+		JumpFop lastJumpFop = null;
+		int lastJumpIndex = -1;
+		
+		int i = 0;
+		for (Fop fop : fops) {
+			if (fop instanceof JumpFop) {
+				lastJumpFop = (JumpFop)fop;
+				lastJumpIndex = i;
+			} else if (fop instanceof LabelFop) {
+				if (lastJumpFop != null && ((LabelFop)fop).name.equals(lastJumpFop.label)) {
+					fops.set(lastJumpIndex, null);
+					lastJumpFop = null;
+				}
+			} else {
+				lastJumpFop = null;
+			}
+			i++;
+		}
 	}
 	
 	// Compute the offset from the given base offset to the offset of the label
@@ -410,8 +458,10 @@ public class FilterAssembler {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		
-		for (Fop fop : fops)
-			sb.append(fop.toString());
+		for (Fop fop : fops) {
+			if (fop != null)
+				sb.append(fop.toString());
+		}
 		
 		return sb.toString();
 	}
@@ -436,9 +486,11 @@ public class FilterAssembler {
 	
 	private class LabelFop extends Fop {
 		private String name;
+		private String comment;
 
-		public LabelFop(String name) {
+		public LabelFop(String name, String comment) {
 			this.name = name; 
+			this.comment = comment;
 		}
 		
 		public int setOffset(int offset) {
@@ -451,7 +503,7 @@ public class FilterAssembler {
 
 		@Override
 		public String toString() {
-			return prefix() + " " + name + ":\n";
+			return prefix() + " " + name + ":" + (comment != null ? " // " + comment : "") + "\n";
 		}
 	}
 
@@ -606,7 +658,11 @@ public class FilterAssembler {
 		
 		public int setOffset(int offset) {
 			this.offset = offset;
-			return offset + 11 + (getArgumentLocalIndex() > 3 ? 1 : 0) + (dereference ? 3 : 0) + (propertyMethodName != null ? 3 : 0);
+			return offset + 11 + 
+				(getArgumentLocalIndex() > 3 ? 1 : 0) + 
+				(dereference ? 3 : 0) + 
+				(dereference && listFilter ? 3 : 0) + 
+				(propertyMethodName != null ? 3 : 0);
 		}
 		
 		public void emit(Bytecode bytecode) {
@@ -614,6 +670,8 @@ public class FilterAssembler {
 			bytecode.addAload(VIEWPOINT_PARAM);                                                           // 1 byte
 			bytecode.addAload(getArgumentLocalIndex());                                                   // 1-2 bytes
 			if (dereference) {
+				if (listFilter)
+					bytecode.addCheckcast("com/dumbhippo/dm/DMObject");                                   // 3 bytes
 				bytecode.addInvokevirtual("com/dumbhippo/dm/DMObject", "getKey", "()Ljava/lang/Object;"); // 3 bytes
 			}
 			bytecode.addCheckcast(argumentClassName);                                                     // 3 bytes

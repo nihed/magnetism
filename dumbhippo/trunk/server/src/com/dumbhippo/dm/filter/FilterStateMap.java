@@ -164,11 +164,10 @@ public class FilterStateMap {
 		computeChildStates(newState);
 	}
 	
-	private FilterState computeChildState(FilterState state, Condition condition, boolean value) {
-		Filter reducedFilter = state.getFilter().reduce(condition, value);
-		FilterState newState = states.get(reducedFilter);
+	private FilterState computeChildState(FilterState state, Filter newFilter) {
+		FilterState newState = states.get(newFilter);
 		if (newState == null) {
-			newState = makeState(reducedFilter);
+			newState = makeState(newFilter);
 			addState(newState);
 		}
 		
@@ -180,8 +179,25 @@ public class FilterStateMap {
 
 	private void computeChildStates(FilterState state) {
 		for (int i = 0; i < state.getChildCount(); i++) {
-			state.setChildState(i, true, computeChildState(state, state.getChildCondition(i), true));
-			state.setChildState(i, false, computeChildState(state, state.getChildCondition(i), false));
+			state.setChildState(i, true, computeChildState(state, state.getFilter().reduce(state.getChildCondition(i), true)));
+			state.setChildState(i, false, computeChildState(state, state.getFilter().reduce(state.getChildCondition(i), false)));
+		}
+		
+		// For the any/all phase, we have to also compute the state that results if we resolve
+		// all conditions to their defaults values ... this is what happens if we are still
+		// in the state when we get to the end of the item list
+		if (state.getPhase() == 1) {
+			Filter newFilter = state.getFilter();
+			
+			for (int i = 0; i < state.getChildCount(); i++) {
+				Condition condition = state.getChildCondition(i);
+				if (condition.getType() == ConditionType.ANY)
+					newFilter = newFilter.reduce(condition, false);
+				else // ALL
+					newFilter = newFilter.reduce(condition, true);
+			}
+			
+			state.setDefaultResolvedState(computeChildState(state, newFilter));
 		}
 	}
 
@@ -244,6 +260,11 @@ public class FilterStateMap {
 			sb.append(", ");
 			sb.append(state.getChildState(i, false).getName());
 			sb.append(")\n");
+		}
+		if (state.getDefaultResolvedState() != null) {
+			sb.append("        defaults => ");
+			sb.append(state.getDefaultResolvedState().getName());
+			sb.append("\n");
 		}
 	}
 	
