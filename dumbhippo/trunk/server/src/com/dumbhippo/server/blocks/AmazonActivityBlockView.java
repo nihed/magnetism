@@ -274,13 +274,13 @@ public class AmazonActivityBlockView extends AbstractPersonBlockView
 		if (isImageUrlAvailable())
 			return itemView.getImageWidth();
 		else
-			return 88;
+			return 80;
 	}
 
 	public int getImageHeight() {
 		if (isImageUrlAvailable())
 			return itemView.getImageHeight();
 		else
-			return 104;
+			return 100;
 	}	
 }
