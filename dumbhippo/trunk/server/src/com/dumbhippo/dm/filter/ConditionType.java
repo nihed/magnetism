@@ -1,7 +1,7 @@
 package com.dumbhippo.dm.filter;
 
 public enum ConditionType {
-	KEY("key", 0),
+	THIS("this", 0),
 	ALL("all", 1),
 	ANY("any", 1),
 	ITEM("item", 2);

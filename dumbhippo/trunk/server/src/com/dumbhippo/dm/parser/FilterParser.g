@@ -74,7 +74,7 @@ term returns [Filter f]
 	;
 	  
 conditionType returns [ConditionType t]
-	: "key" { t = ConditionType.KEY; }
+	: "this" { t = ConditionType.THIS; }
 	| "item" { t = ConditionType.ITEM; }
 	| "any" { t = ConditionType.ANY; }
 	| "all" { t = ConditionType.ALL; }

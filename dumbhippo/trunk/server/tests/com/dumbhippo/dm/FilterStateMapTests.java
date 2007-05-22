@@ -19,14 +19,14 @@ public class FilterStateMapTests extends TestCase {
 	}
 	
 	public void testMultipleConditions() throws Exception {
-		String test = "(viewer.k(key) || viewer.a(all)) && viewer.i(item)";
+		String test = "(viewer.t(this) || viewer.a(all)) && viewer.i(item)";
 		FilterStateMap map = createMap(test, false);
 		String mapString = map.toString();
 		logger.debug("Map of {} is:\n{}", test, mapString);
 		assertEquals(
-			"KeyPhase:\n" +
-			"    State0: ((viewer.k(key))||(viewer.a(all)))&&(viewer.i(item)) [r]\n" +
-			"        viewer.k(key) => (State2, State1)\n" +
+			"GlobalPhase:\n" +
+			"    State0: ((viewer.t(this))||(viewer.a(all)))&&(viewer.i(item)) [r]\n" +
+			"        viewer.t(this) => (State2, State1)\n" +
 			"AnyAllPhase:\n" +
 			"    State1: (viewer.a(all))&&(viewer.i(item)) [r]\n" +
 			"        viewer.a(all) => (State2, FalseState)\n" +
@@ -43,7 +43,7 @@ public class FilterStateMapTests extends TestCase {
 		String mapString = map.toString();
 		logger.debug("Map of {} is:\n{}", test, mapString);
 		assertEquals(
-			"KeyPhase:\n" +
+			"GlobalPhase:\n" +
 			"AnyAllPhase:\n" +
 			"    State0: (viewer.a1(any))||(viewer.a2(any)) [r]\n" +
 			"        viewer.a1(any) => (TrueState, State1)\n" +
@@ -60,28 +60,28 @@ public class FilterStateMapTests extends TestCase {
 	}
 	
 	public void testNot() throws Exception {
-		String test = "!viewer.k(key)";
+		String test = "!viewer.t(this)";
 		FilterStateMap map = createMap(test, false);
 		String mapString = map.toString();
 		logger.debug("Map of {} is:\n{}", test, mapString);
 		assertEquals(
-			"KeyPhase:\n" +
-			"    State0: !(viewer.k(key)) [r]\n" +
-			"        viewer.k(key) => (FalseState, TrueState)\n" +
+			"GlobalPhase:\n" +
+			"    State0: !(viewer.t(this)) [r]\n" +
+			"        viewer.t(this) => (FalseState, TrueState)\n" +
 			"AnyAllPhase:\n" +
 			"ItemPhase:\n",
 			mapString);
 	}
 	
 	public void testSinglePhase() throws Exception {
-		String test = "(viewer.k(key) || viewer.a(all)) && viewer.i(item)";
+		String test = "(viewer.t(this) || viewer.a(all)) && viewer.i(item)";
 		FilterStateMap map = createMap(test, true);
 		String mapString = map.toString();
 		logger.debug("Map of {} is:\n{}", test, mapString);
 		assertEquals(
-			"KeyPhase:\n" +
-			"    State0: ((viewer.k(key))||(viewer.a(all)))&&(viewer.i(item)) [r]\n" +
-			"        viewer.k(key) => (State1, State2)\n" +
+			"GlobalPhase:\n" +
+			"    State0: ((viewer.t(this))||(viewer.a(all)))&&(viewer.i(item)) [r]\n" +
+			"        viewer.t(this) => (State1, State2)\n" +
 			"    State1: viewer.i(item)\n" +
 			"        viewer.i(item) => (TrueState, FalseState)\n" +
 			"    State2: (viewer.a(all))&&(viewer.i(item))\n" +

@@ -16,8 +16,7 @@ import com.dumbhippo.GlobalSetup;
  * 
  * The states of the state machine fall into one of four phases:
  * 
- * 0) Computing the value of conditions that operate on the key, and are global to
- *    all list items.
+ * 0) Computing the value of conditions that are global to all list items.
  * 1) Computing the value of "any/all" conditions (first scan through the list)
  * 2) Computing the value of "item" conditions for each item (second scan through the list)
  * 3) All conditions computed (not really a phase...)
@@ -26,16 +25,16 @@ import com.dumbhippo.GlobalSetup;
  * if the end-result is uniquely determined. For exampel 'true && (true || ?)) == true'.
  * 
  * The state-machine representation isn't particular useful if we only had the initial
- * key phase, since we could just evaluate the filter tree directly, but in the any/all
+ * global phase, since we could just evaluate the filter tree directly, but in the any/all
  * phase, we need to be able to take the conditions in whatever order they end up being
  * resolved as we go through the items. 
  * 
  * The states we work with correspond to reduced version filter expressions from
  * eliminating the conditions in the filter expression one by one.
  * 
- * For example, if we start with "(viewer.k(key) || viewer.a(all)) && viewer.i(item)"
+ * For example, if we start with "(viewer.k(this) || viewer.a(all)) && viewer.i(item)"
  * and set the left-most condition  'true', then we'd get 
- * "(true || viewer.a(all)) && viewer.i(item)", but that reduces immediatley,
+ * "(true || viewer.a(all)) && viewer.i(item)", but that reduces immediately,
  * to "viewer.i(item)", which is our next state.
  * 
  * The states form an acyclic directed graph - a particular state may be reachable
@@ -43,7 +42,7 @@ import com.dumbhippo.GlobalSetup;
  * end up at one of two special states FilterState.TRUE_STATE or FilterState.FALSE_STATE.
  * 
  * The handling of TRUE_STATE/FALSE_STATE varies depending on the phase. For example, in 
- * the key phase, TRUE_STATE means "return the original list of items", while in 
+ * the global phase, TRUE_STATE means "return the original list of items", while in 
  * the item phase, TRUE_STATE means "add the item to the list, reset the state machine
  * to the start of the item state and go to the next item. That difference is
  * handled as we generate the filter method from the state machine.
@@ -70,7 +69,7 @@ public class FilterStateMap {
 	
 	private FilterState root;
 	private Map<Filter, FilterState> states = new HashMap<Filter, FilterState>();
-	private List<FilterState> keyStates = new ArrayList<FilterState>();
+	private List<FilterState> globalStates = new ArrayList<FilterState>();
 	private List<FilterState> anyAllStates = new ArrayList<FilterState>();
 	private List<FilterState> itemStates = new ArrayList<FilterState>();
 	private boolean singlePhase;
@@ -80,9 +79,9 @@ public class FilterStateMap {
 	 * 
 	 * @param filter the filter that this map is for.
 	 * @param singlePhase if we should treat all conditions as part of the
-	 *    first (key) phase. This is the correct handling when we are filtering
+	 *    first (global) phase. This is the correct handling when we are filtering
 	 *    a single item and not a list. Note that in this case there is 
-	 *    still a distinction between conditions that act on the key and 
+	 *    still a distinction between conditions that act on the 'this' and 
 	 *    conditions that act on the item, but we don't care here ... a condition
 	 *    is just something that is true or false. 
 	 */
@@ -114,13 +113,13 @@ public class FilterStateMap {
 			}			
 		};
 		
-		Collections.sort(keyStates, compare);
+		Collections.sort(globalStates, compare);
 		Collections.sort(anyAllStates, compare);
 		Collections.sort(itemStates, compare);
 		
 		// Now label all the states with individual indices
 		int i = 0;
-		for (FilterState state : keyStates)
+		for (FilterState state : globalStates)
 			state.setIndex(i++);
 		for (FilterState state : anyAllStates)
 			state.setIndex(i++);
@@ -151,7 +150,7 @@ public class FilterStateMap {
 		
 		switch (newState.getPhase()) {
 		case 0:
-			keyStates.add(newState);
+			globalStates.add(newState);
 			break;
 		case 1:
 			anyAllStates.add(newState);
@@ -211,13 +210,13 @@ public class FilterStateMap {
 	}
 	
 	/**
-	 * Get states for the key-condition evaluation phase. The root state will be the
+	 * Get states for the global-condition evaluation phase. The root state will be the
 	 * first state in the list.
 	 * 
-	 * @return the list of key states.
+	 * @return the list of global states.
 	 */
-	public List<FilterState> getKeyStates() {
-		return keyStates;
+	public List<FilterState> getGlobalStates() {
+		return globalStates;
 	}
 
 	/**
@@ -272,8 +271,8 @@ public class FilterStateMap {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		
-		sb.append("KeyPhase:\n");
-		for (FilterState state : keyStates)
+		sb.append("GlobalPhase:\n");
+		for (FilterState state : globalStates)
 			appendState(sb, state);
 		
 		sb.append("AnyAllPhase:\n");

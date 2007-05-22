@@ -23,7 +23,7 @@ import com.dumbhippo.dm.dm.TestGroupMemberDMO;
 import com.dumbhippo.dm.dm.TestGroupMemberKey;
 import com.dumbhippo.dm.dm.TestUserDMO;
 import com.dumbhippo.dm.filter.CompiledItemFilter;
-import com.dumbhippo.dm.filter.CompiledKeyFilter;
+import com.dumbhippo.dm.filter.CompiledFilter;
 import com.dumbhippo.dm.filter.CompiledListFilter;
 import com.dumbhippo.dm.filter.FilterAssembler;
 import com.dumbhippo.identity20.Guid;
@@ -43,18 +43,18 @@ public class FilterAssemblerTests extends TestCase {
 		}
 	}
 	
-	private <K,T extends DMObject<K>> CompiledKeyFilter<K,T> createKeyFilter(String name, FilterAssembler assembler) throws CannotCompileException, InstantiationException, IllegalAccessException {
+	private <K,T extends DMObject<K>> CompiledFilter<K,T> createFilter(String name, FilterAssembler assembler) throws CannotCompileException, InstantiationException, IllegalAccessException {
 		ClassPool classPool = DataModel.getInstance().getClassPool();
 		CtClass ctClass = classPool.makeClass("com.dumbhippo.tests." + name);
 		
-		ctClass.addInterface(ctClassForClass(CompiledKeyFilter.class));
+		ctClass.addInterface(ctClassForClass(CompiledFilter.class));
 		
 		assembler.addMethodToClass(ctClass);
 		
 		Class<?> clazz = ctClass.toClass();
 		
 		@SuppressWarnings("unchecked")
-		Class<? extends CompiledKeyFilter<K,T>> subclass = (Class<? extends CompiledKeyFilter<K,T>>)clazz.asSubclass(CompiledKeyFilter.class);
+		Class<? extends CompiledFilter<K,T>> subclass = (Class<? extends CompiledFilter<K,T>>)clazz.asSubclass(CompiledFilter.class);
 		return subclass.newInstance();
 	}
 	
@@ -104,17 +104,17 @@ public class FilterAssemblerTests extends TestCase {
 	
 	////////////////////////////////////////////////////////////////////////////////
 	
-	// test keyCondition(), no property, returnNull, returnKey()
-	public void testKeyConditionFilterMethod() throws CannotCompileException, InstantiationException, IllegalAccessException {
-		FilterAssembler assembler = FilterAssembler.createForKeyFilter(TestViewpoint.class, Guid.class, false);
+	// test thisCondition(), no property, returnNull, returnThis()
+	public void testThisConditionFilterMethod() throws CannotCompileException, InstantiationException, IllegalAccessException {
+		FilterAssembler assembler = FilterAssembler.createForFilter(TestViewpoint.class, Guid.class, false);
 		
-		assembler.keyCondition("sameAs", null, true, "STATE1");
+		assembler.thisCondition("sameAs", null, true, "STATE1");
 		assembler.label("STATE0");
 		assembler.returnNull();
 		assembler.label("STATE1");
-		assembler.returnKey();
+		assembler.returnThis();
 		
-		CompiledKeyFilter<Guid, TestUserDMO> filter = createKeyFilter("KeyConditionFilter", assembler);
+		CompiledFilter<Guid, TestUserDMO> filter = createFilter("KeyConditionFilter", assembler);
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		
@@ -122,17 +122,17 @@ public class FilterAssemblerTests extends TestCase {
 		assertNull(filter.filter(viewpoint, Guid.createNew()));
 	}
 	
-	// test keyCondition(), with a property
+	// test thisCondition(), with a property
 	public void testKeyPropertyConditionFilterMethod() throws CannotCompileException, InstantiationException, IllegalAccessException {
-		FilterAssembler assembler = FilterAssembler.createForKeyFilter(TestViewpoint.class, TestGroupMemberKey.class, false);
+		FilterAssembler assembler = FilterAssembler.createForFilter(TestViewpoint.class, TestGroupMemberKey.class, false);
 		
-		assembler.keyCondition("sameAs", "memberId", true, "STATE1");
+		assembler.thisCondition("sameAs", "memberId", true, "STATE1");
 		assembler.label("STATE0");
 		assembler.returnNull();
 		assembler.label("STATE1");
-		assembler.returnKey();
+		assembler.returnThis();
 		
-		CompiledKeyFilter<TestGroupMemberKey, TestGroupMemberDMO> filter = createKeyFilter("KeyPropertyConditionFilter", assembler);
+		CompiledFilter<TestGroupMemberKey, TestGroupMemberDMO> filter = createFilter("KeyPropertyConditionFilter", assembler);
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		TestGroupMemberKey key;
@@ -146,7 +146,7 @@ public class FilterAssemblerTests extends TestCase {
 
 	// test switchState()
 	public void testSwitchFilterMethod() throws CannotCompileException, InstantiationException, IllegalAccessException {
-		FilterAssembler assembler = FilterAssembler.createForKeyFilter(TestViewpoint.class, Guid.class, false);
+		FilterAssembler assembler = FilterAssembler.createForFilter(TestViewpoint.class, Guid.class, false);
 		
 		assembler.setState(1);
 		assembler.switchState(
@@ -156,9 +156,9 @@ public class FilterAssemblerTests extends TestCase {
 		assembler.label("STATE0");
 		assembler.returnNull();
 		assembler.label("STATE1");
-		assembler.returnKey();
+		assembler.returnThis();
 		
-		CompiledKeyFilter<Guid, TestUserDMO> filter = createKeyFilter("SwitchFilter", assembler);
+		CompiledFilter<Guid, TestUserDMO> filter = createFilter("SwitchFilter", assembler);
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		
