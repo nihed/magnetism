@@ -23,10 +23,31 @@ import bigboard.deskbar_embed as deskbar_embed
 
 _logger = logging.getLogger("bigboard.Applet")
 
-
-class UrlImage(gtk.Image):
+class ScaledPixbufImage(gtk.Image):
     def __init__(self):
-        super(UrlImage, self).__init__()
+        super(ScaledPixbufImage, self).__init__()
+        self.__orig_pixbuf = None
+        self.__width = 24
+        self.__height = 24
+
+    def set_orig_pixbuf(self, pixbuf):
+        self.__orig_pixbuf = pixbuf
+        self.__sync()
+
+    def __sync(self):
+        rect = self.get_allocation()
+        if not self.__width:
+            self.__width = rect.width
+        if not self.__height:
+            self.__height = rect.height
+        if not self.__orig_pixbuf:
+            return
+        pixbuf = self.__orig_pixbuf.scale_simple(self.__width, self.__height, gtk.gdk.INTERP_HYPER) 
+        self.set_from_pixbuf(pixbuf)
+
+class UrlScaledPixbufImage(ScaledPixbufImage):
+    def __init__(self):
+        super(UrlScaledPixbufImage, self).__init__()
 
     def set_url(self, url):
         image_cache = URLImageCache.getInstance()
@@ -34,7 +55,7 @@ class UrlImage(gtk.Image):
         
     def __handle_image_load(self, url, pixbuf):
         _logger.debug("Got image load result from %s", url)
-        self.set_from_pixbuf(pixbuf)
+        self.set_orig_pixbuf(pixbuf)
         
     def __handle_image_error(self, url, exc):
         logging.exception("failed to load image for '%s'", url)
@@ -58,7 +79,7 @@ class BigBoardApplet(gobject.GObject):
         ebox = gtk.EventBox()
         ebox.add_events(gtk.gdk.BUTTON_PRESS_MASK)
         ebox.connect("button-press-event", lambda ebox, e: self.__onclick())
-        self.__img = UrlImage()
+        self.__img = UrlScaledPixbufImage()
         ebox.add(self.__img)
         self.__box.pack_start(ebox, expand=False)
 
@@ -66,10 +87,15 @@ class BigBoardApplet(gobject.GObject):
         self.__box.pack_start(self.__deskbar, expand=True)
 
         self.__applet.add(self.__box)
+        self.__applet.set_applet_flags(gnomeapplet.EXPAND_MINOR)
+		self.__applet.connect('change-size', lambda applet, orient: self.__on_change_size())
 
         self.__sync()
 
         self.__applet.show_all()
+
+    def __on_change_size(self):
+        pass
 
     def __onclick(self):
         _logger.debug("got click")
