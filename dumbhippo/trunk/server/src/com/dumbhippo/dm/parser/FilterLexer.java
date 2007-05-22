@@ -50,8 +50,8 @@ public FilterLexer(LexerSharedInputState state) {
 	literals.put(new ANTLRHashString("viewer", this), new Integer(9));
 	literals.put(new ANTLRHashString("any", this), new Integer(14));
 	literals.put(new ANTLRHashString("all", this), new Integer(15));
+	literals.put(new ANTLRHashString("this", this), new Integer(12));
 	literals.put(new ANTLRHashString("item", this), new Integer(13));
-	literals.put(new ANTLRHashString("key", this), new Integer(12));
 }
 
 public Token nextToken() throws TokenStreamException {
@@ -272,7 +272,7 @@ tryAgain:
 		}
 		}
 		{
-		_loop345:
+		_loop1189:
 		do {
 			switch ( LA(1)) {
 			case 'a':  case 'b':  case 'c':  case 'd':
@@ -311,7 +311,7 @@ tryAgain:
 			}
 			default:
 			{
-				break _loop345;
+				break _loop1189;
 			}
 			}
 		} while (true);

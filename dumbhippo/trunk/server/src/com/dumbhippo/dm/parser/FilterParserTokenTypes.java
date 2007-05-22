@@ -18,7 +18,7 @@ public interface FilterParserTokenTypes {
 	int LITERAL_viewer = 9;
 	int DOT = 10;
 	int NAME = 11;
-	int LITERAL_key = 12;
+	int LITERAL_this = 12;
 	int LITERAL_item = 13;
 	int LITERAL_any = 14;
 	int LITERAL_all = 15;
