@@ -8,9 +8,11 @@ public class AllTests {
         TestSuite suite = new TestSuite("Data Model tests");
         
         suite.addTest(new TestSuite(FetchParserTests.class));
+        
         suite.addTest(new TestSuite(FilterParserTests.class));
         suite.addTest(new TestSuite(FilterAssemblerTests.class));
         suite.addTest(new TestSuite(FilterStateMapTests.class));
+        suite.addTest(new TestSuite(FilterCompilerTests.class));
 
         suite.addTest(new TestSuite(PersistenceTests.class));
         

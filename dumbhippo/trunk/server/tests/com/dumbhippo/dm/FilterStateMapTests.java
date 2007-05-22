@@ -30,6 +30,7 @@ public class FilterStateMapTests extends TestCase {
 			"AnyAllPhase:\n" +
 			"    State1: (viewer.a(all))&&(viewer.i(item)) [r]\n" +
 			"        viewer.a(all) => (State2, FalseState)\n" +
+			"        defaults => State2\n" +
 			"ItemPhase:\n" +
 			"    State2: viewer.i(item) [r]\n" +
 			"        viewer.i(item) => (TrueState, FalseState)\n",
@@ -47,10 +48,13 @@ public class FilterStateMapTests extends TestCase {
 			"    State0: (viewer.a1(any))||(viewer.a2(any)) [r]\n" +
 			"        viewer.a1(any) => (TrueState, State1)\n" +
 			"        viewer.a2(any) => (TrueState, State2)\n" +
+			"        defaults => FalseState\n" +
 			"    State1: viewer.a2(any)\n" +
 			"        viewer.a2(any) => (TrueState, FalseState)\n" +
+			"        defaults => FalseState\n" +
 			"    State2: viewer.a1(any)\n" +
 			"        viewer.a1(any) => (TrueState, FalseState)\n" +
+			"        defaults => FalseState\n" +
 			"ItemPhase:\n",
 			mapString);
 	}
