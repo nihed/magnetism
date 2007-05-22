@@ -65,10 +65,11 @@ class BigBoardApplet(gobject.GObject):
         self.__deskbar = deskbar_embed.Deskbar()
         self.__box.pack_start(self.__deskbar, expand=True)
 
-        self.__box.show_all()
         self.__applet.add(self.__box)
 
         self.__sync()
+
+        self.applet.show_all()
 
     def __onclick(self):
         _logger.debug("got click")
