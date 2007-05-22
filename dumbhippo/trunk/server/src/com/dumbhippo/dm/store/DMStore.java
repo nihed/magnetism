@@ -1,4 +1,4 @@
-package com.dumbhippo.dm;
+package com.dumbhippo.dm.store;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,6 +6,10 @@ import java.util.Map;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.DMClassHolder;
+import com.dumbhippo.dm.DMKey;
+import com.dumbhippo.dm.DMObject;
+import com.dumbhippo.dm.NotCachedException;
 
 public class DMStore {
 	@SuppressWarnings("unused")
