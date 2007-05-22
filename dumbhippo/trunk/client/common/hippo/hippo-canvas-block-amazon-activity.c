@@ -16,6 +16,9 @@
 
 /* number of rating stars for reviews */
 #define RATING_STARS_COUNT 5
+#define HIPPO_CANVAS_BLOCK_AMAZON_ITEM_IMAGE_WIDTH 80
+#define HIPPO_CANVAS_BLOCK_AMAZON_ITEM_DEFAULT_IMAGE_WIDTH 80
+#define HIPPO_CANVAS_BLOCK_AMAZON_ITEM_DEFAULT_IMAGE_HEIGHT 100
 
 static void      hippo_canvas_block_amazon_activity_init                (HippoCanvasBlockAmazonActivity       *block);
 static void      hippo_canvas_block_amazon_activity_class_init          (HippoCanvasBlockAmazonActivityClass  *klass);
@@ -256,8 +259,8 @@ hippo_canvas_block_amazon_activity_append_content_items (HippoCanvasBlock *block
                                             "actions", hippo_canvas_block_get_actions(block),
                                             "xalign", HIPPO_ALIGNMENT_START,
                                             "yalign", HIPPO_ALIGNMENT_START,
-					    "box-width", 88,
-					    "box-height", 104,
+					    "scale-width", HIPPO_CANVAS_BLOCK_AMAZON_ITEM_IMAGE_WIDTH,
+					    "scale-height",  HIPPO_CANVAS_BLOCK_AMAZON_ITEM_DEFAULT_IMAGE_HEIGHT * HIPPO_CANVAS_BLOCK_AMAZON_ITEM_IMAGE_WIDTH /  HIPPO_CANVAS_BLOCK_AMAZON_ITEM_DEFAULT_IMAGE_WIDTH,
                                             NULL);
     hippo_canvas_box_append(top_box, block_amazon_activity->thumbnail, 0);
 
@@ -419,6 +422,9 @@ set_list_link_text(HippoCanvasBlockAmazonActivity *block_amazon_activity)
 
         g_string_append(list_link_text, (const char*) hippo_block_amazon_activity_get_list_name(HIPPO_BLOCK_AMAZON_ACTIVITY(canvas_block->block)));
 
+        // because we have to keep the whole wish list info line as a link, it looks nicer without
+        // a period in the end
+        // g_string_append(list_link_text, ".");
 
         g_object_set(block_amazon_activity->list_link,
                      "text", list_link_text->str,
@@ -507,14 +513,16 @@ on_block_description_changed(HippoBlock *block,
                  "text", description,
                  NULL);
 
-    description_markup = g_markup_printf_escaped ("<i>Editorial review:</i> %s", description);
+    if (description != NULL && (strcmp(description, "") != 0)) {
+        description_markup = g_markup_printf_escaped ("<i>Editorial review:</i> %s", description);
 
-    g_object_set(G_OBJECT(block_amazon_activity->editorial_review),
-                 "markup", description_markup,
-                 NULL);
+        g_object_set(G_OBJECT(block_amazon_activity->editorial_review),
+                     "markup", description_markup,
+                     NULL);
+        g_free(description_markup);
+    }
 
     g_free(description);
-    g_free(description_markup);
 }
 
 static void
@@ -550,35 +558,23 @@ on_block_image_url_changed(HippoBlock *block,
 }
 
 static void
-on_block_image_width_changed(HippoBlock *block,
-                             GParamSpec *arg, /* null when first calling this */
-                             void       *data)
+on_block_image_dimension_changed(HippoBlock *block,
+                                 GParamSpec *arg, /* null when first calling this */
+                                 void       *data)
 {
     HippoCanvasBlockAmazonActivity *block_amazon_activity = HIPPO_CANVAS_BLOCK_AMAZON_ACTIVITY(data);
     guint image_width = 0;
-
-    if (block)
-        image_width = hippo_block_amazon_activity_get_image_width(HIPPO_BLOCK_AMAZON_ACTIVITY(block));
-
-    g_object_set(block_amazon_activity->thumbnail,
-                 "box-width", image_width,
-                 NULL); 
-}
-
-static void
-on_block_image_height_changed(HippoBlock *block,
-                             GParamSpec *arg, /* null when first calling this */
-                             void       *data)
-{
-    HippoCanvasBlockAmazonActivity *block_amazon_activity = HIPPO_CANVAS_BLOCK_AMAZON_ACTIVITY(data);
     guint image_height = 0;
 
-    if (block)
+    if (block) {
+        image_width = hippo_block_amazon_activity_get_image_width(HIPPO_BLOCK_AMAZON_ACTIVITY(block));
         image_height = hippo_block_amazon_activity_get_image_height(HIPPO_BLOCK_AMAZON_ACTIVITY(block));
+    }
 
-    g_object_set(block_amazon_activity->thumbnail,
-                 "box-height", image_height,
-                 NULL); 
+    if (image_width > 0 && image_height > 0)
+        g_object_set(block_amazon_activity->thumbnail,
+                     "scale-height", image_height * HIPPO_CANVAS_BLOCK_AMAZON_ITEM_IMAGE_WIDTH / image_width,
+                     NULL); 
 }
 
 static void
@@ -747,10 +743,7 @@ hippo_canvas_block_amazon_activity_set_block(HippoCanvasBlock *canvas_block,
                                              G_CALLBACK(on_block_image_url_changed),
                                              canvas_block);
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
-                                             G_CALLBACK(on_block_image_width_changed),
-                                             canvas_block);
-        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
-                                             G_CALLBACK(on_block_image_height_changed),
+                                             G_CALLBACK(on_block_image_dimension_changed),
                                              canvas_block);
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_block_title_changed),
@@ -811,11 +804,11 @@ hippo_canvas_block_amazon_activity_set_block(HippoCanvasBlock *canvas_block,
                          canvas_block);
         g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::image-width",
-                         G_CALLBACK(on_block_image_width_changed),
+                         G_CALLBACK(on_block_image_dimension_changed),
                          canvas_block);
         g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::image-height",
-                         G_CALLBACK(on_block_image_height_changed),
+                         G_CALLBACK(on_block_image_dimension_changed),
                          canvas_block);
         g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::title",
@@ -855,8 +848,7 @@ hippo_canvas_block_amazon_activity_set_block(HippoCanvasBlock *canvas_block,
     on_block_description_changed(canvas_block->block, NULL, block_amazon_activity);
     on_block_chat_id_changed(canvas_block->block, NULL, block_amazon_activity);
     on_block_image_url_changed(canvas_block->block, NULL, block_amazon_activity);
-    on_block_image_width_changed(canvas_block->block, NULL, block_amazon_activity);
-    on_block_image_height_changed(canvas_block->block, NULL, block_amazon_activity);
+    on_block_image_dimension_changed(canvas_block->block, NULL, block_amazon_activity);
     on_block_title_changed(canvas_block->block, NULL, block_amazon_activity);
     on_block_title_link_changed(canvas_block->block, NULL, block_amazon_activity);
     on_block_icon_url_changed(canvas_block->block, NULL, block_amazon_activity);
