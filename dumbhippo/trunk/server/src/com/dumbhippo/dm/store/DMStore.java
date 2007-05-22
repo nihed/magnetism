@@ -15,20 +15,20 @@ public class DMStore {
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(DMStore.class);
 	
-	public Map<PropertyKey, DMStoreNode> nodes = new HashMap<PropertyKey, DMStoreNode>();
+	public Map<PropertyKey, StoreNode> nodes = new HashMap<PropertyKey, StoreNode>();
 	
-	private synchronized <K, T extends DMObject<K>> DMStoreNode getNode(DMClassHolder classHolder, K key) {
+	private synchronized <K, T extends DMObject<K>> StoreNode getNode(DMClassHolder classHolder, K key) {
 		PropertyKey<K,T> propertyKey = new PropertyKey<K,T>(classHolder, key);
 		return nodes.get(propertyKey);
 	}
 	
-	private synchronized <K, T extends DMObject<K>> DMStoreNode ensureNode(DMClassHolder classHolder, K key, int nProperties) {
+	private synchronized <K, T extends DMObject<K>> StoreNode ensureNode(DMClassHolder classHolder, K key, int nProperties) {
 		PropertyKey<K,T> propertyKey = new PropertyKey<K,T>(classHolder, key);
-		DMStoreNode node = nodes.get(propertyKey);
+		StoreNode node = nodes.get(propertyKey);
 		if (node != null)
 			return node;
 		
-		node = new DMStoreNode(nProperties);
+		node = new StoreNode(nProperties);
 		if (key instanceof DMKey) {
 			@SuppressWarnings("unchecked")
 			K clonedKey = (K)((DMKey)key).clone();
@@ -41,7 +41,7 @@ public class DMStore {
 	}
 	
 	public <K, T extends DMObject<K>> Object fetch(DMClassHolder classHolder, K key, int propertyIndex) throws NotCachedException {
-		DMStoreNode node = getNode(classHolder, key);
+		StoreNode node = getNode(classHolder, key);
 		if (node == null)
 			throw new NotCachedException();
 		
@@ -49,7 +49,7 @@ public class DMStore {
 	}
 
 	public <K, T extends DMObject<K>> void store(DMClassHolder classHolder, K key, int propertyIndex, Object value, long timestamp) {
-		DMStoreNode node = ensureNode(classHolder, key, classHolder.getPropertyCount());
+		StoreNode node = ensureNode(classHolder, key, classHolder.getPropertyCount());
 
 		node.store(propertyIndex, value, timestamp);
 	}
@@ -58,7 +58,7 @@ public class DMStore {
 		// Note that we need to ensure that the node exists so we have a place to store the timestamp
 		// If we were expiring, we could give empty nodes a short expiration time, or even expire them
 		// after all sessions (on the cluster) started before their creation were closed.
-		DMStoreNode node = ensureNode(classHolder, key, classHolder.getPropertyCount());
+		StoreNode node = ensureNode(classHolder, key, classHolder.getPropertyCount());
 		node.invalidate(propertyIndex, timestamp);
 	}
 	

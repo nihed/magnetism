@@ -2,13 +2,13 @@ package com.dumbhippo.dm.store;
 
 import com.dumbhippo.dm.NotCachedException;
 
-public class DMStoreNode {
+public class StoreNode {
 	private static Object nil = new Boolean(false);
 
 	private long timestamp = -1;
 	private Object[] properties;
 
-	DMStoreNode(int propertyCount) {
+	StoreNode(int propertyCount) {
 		this.properties = new Object[propertyCount];
 	}
 	
