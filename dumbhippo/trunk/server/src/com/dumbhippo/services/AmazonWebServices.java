@@ -167,12 +167,14 @@ public class AmazonWebServices extends AbstractXmlRequest<AmazonSaxHandler> {
 		    				                    handler.getList().getTotalPages(), handler.getList().getDateCreated(),
 		    				                    new ArrayList<AmazonListItem>());
 		    	    for (AmazonListItemView listItem : handler.getList().getListItems()) {
-		    	    	if (!itemIds.contains(listItem.getItemId())) {
+		    	    	// sometimes list items are returned without item information,
+		    	    	// we can skip those
+		    	    	if ((listItem.getItemId() != null) && !itemIds.contains(listItem.getItemId())) {
 		    	    		amazonList.addListItem(listItem);
 		    	    		itemIds.add(listItem.getItemId());
 		    	    	}
 		    	    }
-		    	    // the web services tell us how many pages total there are, but only return reviews
+		    	    // the web services tell us how many pages total there are, but only return items
 		    	    // from the first MAX_AMAZON_LIST_PAGES_RETURNED pages
 		    	    totalPages = Math.min(amazonList.getTotalPages(), MAX_AMAZON_LIST_PAGES_RETURNED);
 		    	} else {
@@ -186,7 +188,7 @@ public class AmazonWebServices extends AbstractXmlRequest<AmazonSaxHandler> {
 		            logger.warn("Amazon list is null when we were expecting page {} of Amazon list items", page);
 		        } else {
 		    	    for (AmazonListItemView listItem : handler.getList().getListItems()) {
-		    	    	if (!itemIds.contains(listItem.getItemId())) {
+		    	    	if ((listItem.getItemId() != null) && !itemIds.contains(listItem.getItemId())) {
 		    	    		amazonList.addListItem(listItem);
 		    	    		itemIds.add(listItem.getItemId());
 		    	    	}
