@@ -13,6 +13,7 @@ import org.hibernate.cache.Timestamper;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.store.DMStore;
 
 public class DataModel {
 	protected static final Logger logger = GlobalSetup.getLogger(DataModel.class);

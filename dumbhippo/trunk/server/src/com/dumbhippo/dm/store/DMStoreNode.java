@@ -1,4 +1,6 @@
-package com.dumbhippo.dm;
+package com.dumbhippo.dm.store;
+
+import com.dumbhippo.dm.NotCachedException;
 
 public class DMStoreNode {
 	private static Object nil = new Boolean(false);
