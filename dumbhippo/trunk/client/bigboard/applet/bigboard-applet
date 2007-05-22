@@ -69,7 +69,7 @@ class BigBoardApplet(gobject.GObject):
 
         self.__sync()
 
-        self.applet.show_all()
+        self.__applet.show_all()
 
     def __onclick(self):
         _logger.debug("got click")
@@ -127,6 +127,9 @@ if __name__ == "__main__":
         window.show_all()
         gtk.main()
     else:
+        def factory(a,i):
+           BigBoardApplet(a,i)
+           return True
         gnomeapplet.bonobo_factory("OAFIID:BigBoard_Applet_Factory", 
                                    gnomeapplet.Applet.__gtype__, 
-                                   "bigboard", "0", lambda a,i: BigBoardApplet(a,i) or True)
+                                   "bigboard", "0.3.4", factory)

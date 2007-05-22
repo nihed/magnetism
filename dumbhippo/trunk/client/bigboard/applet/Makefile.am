@@ -7,6 +7,9 @@ server_DATA = $(server_in_files:.server.in=.server)
 $(server_in_files): $(server_in_files:.server.in=.server.in.in)
 	sed -e "s|\@LIBEXECDIR\@|$(libexecdir)|" $< > $@
 
+appletdir = $(libexecdir)
+applet_SCRIPTS = bigboard-applet
+
 DISTCLEANFILES = $(server_in_files)
 
-EXTRA_DIST = $(server_in_files:.server.in=.server.in.in) 
+EXTRA_DIST = bigboard-applet $(server_in_files:.server.in=.server.in.in) 
