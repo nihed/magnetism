@@ -64,7 +64,7 @@ public class CachedAmazonList extends DBUnique implements CachedItem, CachedList
 	public CachedAmazonList(String amazonUserId, AmazonListView list) {
 		this(amazonUserId, list.getListId(), list.getListName(), list.getTotalItems(), list.getTotalPages(),
 		     list.getDateCreated());
-		if (!amazonUserId.equals(list.getAmazonUserId()))
+		if ((list.getAmazonUserId() != null) && !amazonUserId.equals(list.getAmazonUserId()))
 			logger.warn("Created a CachedAmazonList where user {} was assigned a list that belongs to a different user {}", 
 					    amazonUserId, list.getAmazonUserId());
 	}

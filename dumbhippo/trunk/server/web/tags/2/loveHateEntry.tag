@@ -9,6 +9,12 @@
 <%@ attribute name="baseId" required="true" type="java.lang.String" %>
 <%@ attribute name="mode" required="true" type="java.lang.String" %>
 
+<%-- Note: <jsp:doBody/> is used only when an account is loved to dispay additional details --%>
+<%-- because right now it is only useful when an account is loved. It's ok to use it when an --%>
+<%-- account is not loved if necessary. The only difference would be that we will not remove --%>
+<%-- Amazon wish list and review details when someone is editing an account and selects "hate it", --%>
+<%-- but doesn't yet apply the change. --%>
+
 <%--  the Javascript manages this visibility also, but we want to get it right on page load --%>
 <c:choose>
 	<c:when test="${mode == 'love'}">
@@ -37,6 +43,7 @@
 			<dh:png klass="dh-love-hate-icon" src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/>
 			<span id="${baseId}LoveValueId"></span>
 		</a>
+	    <jsp:doBody/>
 	</div>
 	<div id="${baseId}HateId" style="display: ${hateDisplay};">
 		<a href="javascript:dh.lovehate.setMode('${baseId}', 'hateEdit')" title="Click to change">
@@ -59,6 +66,7 @@
 		<dht:textInput id="${baseId}LoveEntryId" maxlength="255"/>
 		<img src="/images3/${buildStamp}/save_button.gif" onclick="dh.lovehate.saveClicked('${baseId}', 'love')"/>
 		<a href="javascript:dh.lovehate.cancelClicked('${baseId}')" title="I don't love it anymore - go back to being indifferent"><img src="/images3/${buildStamp}/x_button.gif"/></a>
+	    <jsp:doBody/>
 		<dht:loveHateEntryDescription isEditing="true" baseId="${baseId}" name="${name}" userInfoType="${userInfoType}" isInfoTypeProvidedBySite="${isInfoTypeProvidedBySite}" link="${link}"/>
 	</div>	
 	<div id="${baseId}HateEditId" style="display: none;">

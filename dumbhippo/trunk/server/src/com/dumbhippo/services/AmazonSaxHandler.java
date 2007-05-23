@@ -142,7 +142,7 @@ public class AmazonSaxHandler extends EnumSaxHandler<AmazonSaxHandler.Element> {
 			listWithId.setListId(currentContent);
 			lists.addList(listWithId, true);			
 		} else if (c == Element.ListId) {
-			// ListId first occures when the request parmeters are repeated
+			// ListId first occures when the request parameters are repeated
 			// in the response, we can ignore it then
 			if (list != null) {
 			    list.setListId(currentContent);

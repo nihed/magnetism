@@ -67,8 +67,17 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 	@EJB
 	private CacheFactory cacheFactory;	
 	
+	@EJB
+	private Configuration config;
+	
 	@WebServiceCache
 	private AmazonItemCache itemCache;
+	
+	@WebServiceCache
+	private AmazonListsCache listsCache;
+
+	@WebServiceCache
+	private AmazonListItemsCache listItemsCache;
 	
 	@PostConstruct
 	public void init() {
@@ -481,6 +490,37 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 		return new AmazonTask(handle);
 	}		
 	
+	public List<Pair<String, String>> getAmazonLinks(String amazonUserId, boolean alwaysRefetchEvenIfCached) {
+		List<Pair<String, String>> amazonLinks = new ArrayList<Pair<String, String>>();
+		
+		Pair<String, String> reviewLink = 
+			new Pair<String, String>("My Reviews", AmazonWebServices.getMemberReviewsLink(amazonUserId, null));
+		amazonLinks.add(reviewLink);
+	
+	    AmazonListsView lists = listsCache.getSync(amazonUserId, alwaysRefetchEvenIfCached);
+	    if (lists != null) {	
+			AmazonWebServices ws = new AmazonWebServices(REQUEST_TIMEOUT, config);
+		    for (AmazonListView list : lists.getLists()) {	
+		        String listName = list.getListName();	
+		    	// Just getting the list for the first time, doesn't get its name.
+		    	// So we should get list details.
+		    	if (alwaysRefetchEvenIfCached || (listName == null) || (listName.trim().length() == 0)) {
+			        AmazonListView newList = ws.getListDetails(list.getListId());
+                    if (newList.getTotalItems() != list.getTotalItems() 
+                    	|| !newList.getListName().equals(listName)) {
+                    	listName = newList.getListName();    
+                    	// at this point we know that we definitely want to refetch
+    		    	    listItemsCache.getAsync(new Pair<String, String>(amazonUserId, list.getListId()), true);                	
+                    }                       
+                }
+			    Pair<String, String> listLink = 
+				    new Pair<String, String>(listName, AmazonWebServices.getListLink(list.getListId(), null));
+			    amazonLinks.add(listLink);						
+		    }
+	    }
+		
+		return amazonLinks;
+	}
 }
 	
 	

@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.AmazonActivityStatus;
 import com.dumbhippo.persistence.AmazonUpdateStatus;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoader;
@@ -27,4 +28,6 @@ public interface AmazonUpdater extends CachedExternalUpdater<AmazonUpdateStatus>
 	public List<AmazonActivityStatus> saveUpdatedStatus(String amazonUserId, AmazonReviewsView reviewsView, AmazonListsView listsView);
 	
 	public void saveItemsInCache(List<AmazonItem> items);
+	
+	public List<Pair<String, String>> getAmazonLinks(String amazonUserId, boolean alwaysRefetchEvenIfCached);
 }
