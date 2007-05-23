@@ -60,6 +60,7 @@ public class PostBlockView extends BlockView implements TitleBlockView, EntitySo
 		builder.closeElement();
 	}
 
+	@Override
 	public List<Object> getReferencedObjects() {
 		List<Object> result = super.getReferencedObjects();
 		result.add(postView);
