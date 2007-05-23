@@ -25,10 +25,12 @@ public class ReadWriteSession extends DMSession {
 	}
 	
 
+	@Override
 	public <K, T extends DMObject<K>> Object fetchAndFilter(Class<T> clazz, K key, int propertyIndex) throws NotCachedException {
 		throw new NotCachedException();
 	}
 
+	@Override
 	public <K, T extends DMObject<K>> Object storeAndFilter(Class<T> clazz, K key, int propertyIndex, Object value) {
 		return value;
 	}
@@ -54,6 +56,7 @@ public class ReadWriteSession extends DMSession {
 		notifications.add(new QueuedNotification<K,T>(classHolder, key, propertyIndex));
 	}
 	
+	@Override
 	public void afterCompletion(int status) {
 		long timestamp = model.getTimestamp();
 		

@@ -22,6 +22,7 @@ public class ReadOnlySession extends DMSession {
 		throw new IllegalStateException("ReadOnlySession.getCurrent() called when not inside a ReadOnlySession");
 	}
 	
+	@Override
 	public <K, T extends DMObject<K>> Object fetchAndFilter(Class<T> clazz, K key, int propertyIndex) throws NotCachedException {
 		DMClassHolder classHolder = model.getDMClass(clazz);
 		Object value = model.getStore().fetch(classHolder, key, propertyIndex);
@@ -32,6 +33,7 @@ public class ReadOnlySession extends DMSession {
 		return property.rehydrate(value, this);
 	}
 
+	@Override
 	public <K, T extends DMObject<K>> Object storeAndFilter(Class<T> clazz, K key, int propertyIndex, Object value) {
 		DMClassHolder classHolder = model.getDMClass(clazz);
 		DMPropertyHolder property = classHolder.getProperty(propertyIndex);
@@ -42,6 +44,7 @@ public class ReadOnlySession extends DMSession {
 		return value;
 	}
 	
+	@Override
 	public void afterCompletion(int status) {
 	}
 }
