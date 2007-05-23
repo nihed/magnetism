@@ -92,7 +92,7 @@ public final class Fetch<T extends DMObject> {
 						emitPlainValue(session, propertyHolder, value, visitor);
 					}
 				} else {
-					Object value = (Object)method.invoke(object);
+					Object value = method.invoke(object);
 					emitPlainValue(session, propertyHolder, value, visitor);
 				}
 			}
@@ -279,7 +279,7 @@ public final class Fetch<T extends DMObject> {
 		// This method is primarily for our tests. For testing purposes, we want a
 		// human-predictable ordering for properties, instead of a MD5-hash ordering
 		//
-		PropertyFetch[] sortedProperties = (PropertyFetch[])properties.clone();
+		PropertyFetch[] sortedProperties = properties.clone();
 		Arrays.sort(sortedProperties, new Comparator<PropertyFetch>() {
 			public int compare(PropertyFetch a, PropertyFetch b) {
 				return a.getProperty().getPropertyId().compareTo(b.getProperty().getPropertyId());
