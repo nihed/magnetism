@@ -12,9 +12,9 @@ public class FetchResultVisitor implements FetchVisitor {
 		return "http://mugshot.org" + resourceBase + "/" + key.toString();
 	}
 
-	public <T extends DMObject> void beginResource(DMClassHolder<T> classHolder, Object key, Fetch<T> fetch) {
+	public <T extends DMObject> void beginResource(DMClassHolder<T> classHolder, Object key, Fetch<T> fetch, boolean indirect) {
 		String resourceId = makeResourceId(classHolder, key);
-		currentResource = new FetchResultResource(classHolder.getClassId(), resourceId, fetch.makeFetchString(classHolder));
+		currentResource = new FetchResultResource(classHolder.getClassId(), resourceId, fetch.makeFetchString(classHolder), indirect);
 	}
 
 	public void endResource() {

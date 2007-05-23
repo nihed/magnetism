@@ -117,6 +117,7 @@ public class FetchResultHandler extends DefaultHandler {
 		String fetch = null;
 		String resourceId = null;
 		String classId = null;
+		boolean indirect = false;
 		
 		if (!"resource".equals(localName))
 			throw new SAXParseException("Local name of resource element must be 'resource'", locator);
@@ -124,12 +125,17 @@ public class FetchResultHandler extends DefaultHandler {
 		for (int i = 0; i < attributes.getLength(); i++) {
 			if (MUGSHOT_SYSTEM_NS.equals(attributes.getURI(i))) {
 				String name = attributes.getLocalName(i);
+				String value = attributes.getValue(i);
+				
 				if ("fetch".equals(name))
-					fetch = attributes.getValue(i);
+					fetch = value;
 				else if ("classId".equals(name))
-					classId = attributes.getValue(i);
+					classId = value;
 				else if ("resourceId".equals(name))
-					resourceId = resolveResourceId(attributes.getValue(i));
+					resourceId = resolveResourceId(value);
+				else if ("indirect".equals(name)) {
+					indirect = Boolean.valueOf(value);
+				}
 			} 
 		}
 		
@@ -150,7 +156,7 @@ public class FetchResultHandler extends DefaultHandler {
 		if (resourceId == null)
 			throw new SAXParseException("mugs:resourceId attribute required on resource element", locator);
 		
-		currentResource = new FetchResultResource(classId, resourceId, fetch);
+		currentResource = new FetchResultResource(classId, resourceId, fetch, indirect);
 	}
 
 	private void startPropertyElement(String uri, String localName, Attributes attributes) throws SAXParseException {

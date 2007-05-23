@@ -15,11 +15,13 @@ public class FetchResultResource implements Comparable<FetchResultResource> {
 	private String resourceId;
 	private String classId;
 	private String fetch;
+	private boolean indirect;
 
-	public FetchResultResource(String classId, String resourceId, String fetch) {
+	public FetchResultResource(String classId, String resourceId, String fetch, boolean indirect) {
 		this.classId = classId;
 		this.resourceId = resourceId;
 		this.fetch = fetch;
+		this.indirect = indirect;
 	}
 	
 	public void addProperty(FetchResultProperty property) {
@@ -43,10 +45,13 @@ public class FetchResultResource implements Comparable<FetchResultResource> {
 	}
 	
 	public void writeToXmlBuilder(XmlBuilder builder) {
+		String indirectValue = indirect ? "true" : null;
+		
 		builder.openElement("resource", 
 				"xmlns", classId,
 				"m:resourceId", resourceId,
-				"m:fetch", fetch);
+				"m:fetch", fetch,
+				"m:indirect", indirectValue);
 		
 		for (FetchResultProperty property : properties)
 			property.writeToXmlBuilder(builder, classId);
@@ -90,6 +95,9 @@ public class FetchResultResource implements Comparable<FetchResultResource> {
 		if (!compareFetchStrings(fetch, other.fetch))
 			throw new FetchValidationException("%s: expected fetch %s, got %s", resourceId, other.fetch, fetch);
 		
+		if (indirect != other.indirect)
+			throw new FetchValidationException("%s: expected indirect %s, got %s", resourceId, other.fetch, fetch);
+
 		////////////////////////////////////////////////////////////////////////////////////////////////////
 		
 		List<FetchResultProperty> sortedProperties = new ArrayList<FetchResultProperty>(properties);
@@ -136,7 +144,7 @@ public class FetchResultResource implements Comparable<FetchResultResource> {
 
 	public FetchResultResource substitute(Map<String, String> parametersMap) {
 		String newResourceId = substituteResourceId(resourceId, parametersMap);
-		FetchResultResource substituted = new FetchResultResource(classId, newResourceId, fetch);
+		FetchResultResource substituted = new FetchResultResource(classId, newResourceId, fetch, indirect);
 		
 		for (FetchResultProperty property : properties)
 			substituted.addProperty(property.substitute(parametersMap));
