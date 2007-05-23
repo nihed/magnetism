@@ -37,7 +37,7 @@ public final class Fetch<T extends DMObject> {
 	}
 	
 	private void recurseIntoValue(DMSession session, DMPropertyHolder propertyHolder, Fetch children, DMObject value, FetchVisitor visitor) {
-		children.visit(session, value, visitor);
+		children.visit(session, value, visitor, true);
 	}
 
 	public void recurseIntoProperty(DMSession session, DMPropertyHolder propertyHolder, Fetch children, DMObject object, FetchVisitor visitor) {
@@ -105,7 +105,7 @@ public final class Fetch<T extends DMObject> {
 		}
 	}
 
-	public void visit(DMSession session, DMObject object, FetchVisitor visitor) {
+	public void visit(DMSession session, DMObject object, FetchVisitor visitor, boolean indirect) {
 		DMPropertyHolder[] classProperties = classHolder.getProperties();
 
 		int i = 0, j = 0;
@@ -138,7 +138,7 @@ public final class Fetch<T extends DMObject> {
 			}
 		}
 		
-		visitor.beginResource(classHolder, object.getKey(), this);
+		visitor.beginResource(classHolder, object.getKey(), this, indirect);
 
 		i = 0; j = 0;
 		while (i < properties.length || j < classProperties.length) {
@@ -162,6 +162,10 @@ public final class Fetch<T extends DMObject> {
 		}
 		
 		visitor.endResource();
+	}
+	
+	public void visit(DMSession session, DMObject object, FetchVisitor visitor) {
+		visit(session, object, visitor, false);
 	}
 	
 	private void appendToFetchString(StringBuilder sb, DMPropertyHolder propertyHolder, boolean qualify) {
