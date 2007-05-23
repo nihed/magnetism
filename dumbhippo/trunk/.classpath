@@ -94,7 +94,7 @@
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/hibernate-commons-annotations.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/hibernate-entitymanager.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/hibernate-search.jar"/>
-	<classpathentry kind="var" path="ANTLR_HOME/antlr.jar" sourcepath="ANTLR_HOME/antlrsrc.zip"/>
+	<classpathentry kind="var" path="ANTLR_HOME/antlr.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/javassist.jar"/>
 	<classpathentry kind="output" path="eclipse-build"/>
 </classpath>

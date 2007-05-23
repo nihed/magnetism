@@ -46,6 +46,7 @@ public class GroupChatBlockView extends BlockView implements TitleBlockView {
 		builder.closeElement();
 	}
 
+	@Override
 	public List<Object> getReferencedObjects() {
 		List<Object> result = super.getReferencedObjects();
 		result.add(group);

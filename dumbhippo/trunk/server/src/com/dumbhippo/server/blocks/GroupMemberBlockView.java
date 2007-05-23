@@ -54,6 +54,7 @@ public class GroupMemberBlockView extends BlockView {
 							    "viewerCanInvite", Boolean.toString(viewerCanInvite));
 	}
 
+	@Override
 	public List<Object> getReferencedObjects() {
 		List<Object> result = super.getReferencedObjects();
 		result.add(group);

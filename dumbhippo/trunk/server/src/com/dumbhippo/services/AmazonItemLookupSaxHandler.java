@@ -133,6 +133,8 @@ class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandl
 				    case LowestRefurbishedPrice :
 				    	currentItem().setCollectiblePrice(currentContent);
 				    	break;
+				    default:
+				    	break;
 				}
 			}
 		} else if (parent() == Element.Error) {

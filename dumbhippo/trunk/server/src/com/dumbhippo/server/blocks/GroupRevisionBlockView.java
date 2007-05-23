@@ -65,6 +65,7 @@ public class GroupRevisionBlockView extends BlockView implements PersonSourceBlo
 							    "revisorId", revisor.getIdentifyingGuid().toString());
 	}
 
+	@Override
 	public List<Object> getReferencedObjects() {
 		List<Object> result = super.getReferencedObjects();
 		result.add(group);

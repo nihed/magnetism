@@ -6,6 +6,7 @@ import antlr.TokenStreamException;
 import com.dumbhippo.dm.parser.FilterParser;
 
 public class FilterParserTests extends AbstractParserTests {
+	@Override
 	public String parse(String input) throws RecognitionException, TokenStreamException {
 		return FilterParser.parse(input).toString();
 	}

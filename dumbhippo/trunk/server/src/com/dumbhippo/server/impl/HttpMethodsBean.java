@@ -1958,7 +1958,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		// we should really always either find or not find both feeds
 		if (likedFeedFound != dislikedFeedFound) {
-		    logger.warn("likedFeedFound was {}, while displikedFeedFound was {}", likedFeedFound, dislikedFeedFound);				
+		    logger.warn("likedFeedFound was {}, while dislikedFeedFound was {}", likedFeedFound, dislikedFeedFound);				
 		}
 		
 	    if (!likedFeedFound || !dislikedFeedFound) {	
