@@ -3,7 +3,10 @@
 import os, sys, threading, getopt, logging, StringIO, stat, signal
 import xml.dom.minidom
 
-import gobject, gtk, pango, dbus, dbus.glib, dbus.service
+import gobject, gtk, pango
+import dbus
+import dbus.service
+import dbus.glib
 
 import hippo
 
@@ -25,7 +28,6 @@ import bigboard.libbig.dbusutil
 import bigboard.keybinder
 
 BUS_NAME_STR='org.mugshot.BigBoard'
-BUS_NAME=dbus.service.BusName(BUS_NAME_STR, bus=dbus.SessionBus())
 BUS_IFACE=BUS_NAME_STR
 BUS_IFACE_PANEL=BUS_IFACE + ".Panel"
 
@@ -188,8 +190,8 @@ class Exchange(hippo.CanvasBox):
             self.set_child_visible(self.__ticker_container, size == Stock.SIZE_BULL)
 
 class BigBoardPanel(dbus.service.Object):
-    def __init__(self, dirs):
-        dbus.service.Object.__init__(self, BUS_NAME, '/bigboard/panel')
+    def __init__(self, dirs, bus_name):
+        dbus.service.Object.__init__(self, bus_name, '/bigboard/panel')
         self._dw = Sidebar(True)
         self._shown = False
         
@@ -337,28 +339,30 @@ class BigBoardPanel(dbus.service.Object):
 
     def __do_unexpand(self):
         self._dw.hide()
+        return 0
 
-    @dbus.service.method(BUS_IFACE_PANEL,
-                         in_signature='', out_signature='')
+    @dbus.service.method(BUS_IFACE_PANEL)
     def unexpand(self):
-        self.__do_unexpand()
+        self.__logger.debug("got unexpand method call")
+        return self.__do_unexpand()
 
     def __do_expand(self):
         self._dw.show()
+        return 0
 
-    @dbus.service.method(BUS_IFACE_PANEL,
-                         in_signature='', out_signature='')
+    @dbus.service.method(BUS_IFACE_PANEL)
     def expand(self):
-        self.__do_expand()
+        self.__logger.debug("got expand method call")
+        return self.__do_expand()
 
-    @dbus.service.method(BUS_IFACE_PANEL,
-                         in_signature='', out_signature='')
+    @dbus.service.method(BUS_IFACE_PANEL)
     def toggleExpand(self):
+        self.__logger.debug("got toggleExpand method call")
         self._shown = not self._shown
         if self._shown:
-            self.__do_expand()
+            return self.__do_expand()
         else:
-            self.__do_unexpand()
+            return self.__do_unexpand()
 
 def load_image_hook(img_name):
     logging.debug("loading: %s" % (img_name,))
@@ -425,22 +429,25 @@ def main():
 
     bigboard.libbig.logutil.init(default_log_level, debug_modules, 'bigboard.')
 
-    logging.debug("Requesting D-BUS name")
-    try:
-        bigboard.libbig.dbusutil.take_name(BUS_NAME_STR, replace, on_name_lost)
-    except bigboard.libbig.dbusutil.DBusNameExistsException:
-        print "Big Board already running; exiting"
-        sys.exit(0)
-
     bignative.set_application_name("BigBoard")
     bignative.set_program_name("bigboard")
     bignative.install_focus_docks_hack()
     
     hippo.canvas_set_load_image_hook(load_image_hook)    
 
+    bus = dbus.SessionBus() 
+    bus_name = dbus.service.BusName(BUS_NAME_STR, bus=bus)
+
+##     logging.debug("Requesting D-BUS name")
+##     try:
+##         bigboard.libbig.dbusutil.take_name(BUS_NAME_STR, replace, on_name_lost)
+##     except bigboard.libbig.dbusutil.DBusNameExistsException:
+##         print "Big Board already running; exiting"
+##         sys.exit(0)
+
     if not stockdirs:
         stockdirs = [os.path.join(os.path.dirname(bigboard.__file__), 'stocks')]
-    panel = BigBoardPanel(stockdirs)
+    panel = BigBoardPanel(stockdirs, bus_name)
     
     panel.show()
 
@@ -455,7 +462,9 @@ def main():
     bigboard.google.get_google() # for side effect of creating the Google object
     bigboard.presence.get_presence() # for side effect of creating Presence object
         
+    gtk.gdk.threads_enter()
     gtk.main()
+    gtk.gdk.threads_leave()
 
     logging.debug("Exiting BigBoard")
     sys.exit(0)

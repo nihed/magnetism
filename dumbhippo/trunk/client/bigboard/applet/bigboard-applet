@@ -66,7 +66,8 @@ class BigBoardApplet(gobject.GObject):
         self.__applet = applet
         self.__iid = iid
 
-        self.__bb = dbus.SessionBus().get_object('org.mugshot.BigBoard', '/bigboard/panel')
+        self.__bb_obj = dbus.SessionBus().get_object('org.mugshot.BigBoard', '/bigboard/panel')
+        self.__bb = dbus.Interface(self.__bb_obj, 'org.mugshot.BigBoard.Panel')
 
         if applet.get_orient() in (gnomeapplet.ORIENT_UP, gnomeapplet.ORIENT_DOWN):
             self.__box = gtk.HBox()
