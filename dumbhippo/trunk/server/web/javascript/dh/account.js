@@ -696,7 +696,7 @@ dhAccountInit = function() {
 	dh.account.createNetflixEntry();
 	dh.account.createGoogleReaderEntry();
 	dh.account.createPicasaEntry();	
-	// dh.account.createAmazonEntry();
+	dh.account.createAmazonEntry();
 }
 
 dh.event.addPageLoadListener(dhAccountInit);
