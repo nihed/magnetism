@@ -214,11 +214,11 @@ public class DMPropertyHolder implements Comparable<DMPropertyHolder> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <T extends DMObject> Class<T> getResourceType() {
+	public Class<? extends DMObject> getResourceType() {
 		if (!resourceValued)
 			throw new UnsupportedOperationException("Not a resource-valued property");
-		
-		return (Class<T>)elementType;
+	
+		return elementType;
 	}
 	
 	public DMClassHolder<? extends DMObject> getResourceClassHolder() {
