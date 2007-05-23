@@ -82,6 +82,7 @@ import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.AmazonUpdater;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ChatRoomInfo;
 import com.dumbhippo.server.ChatSystem;
@@ -221,6 +222,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private TransactionRunner runner;
+	
+	@EJB
+	private AmazonUpdater amazonUpdater;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -2052,6 +2056,17 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 				
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		
+		xml.openElement("amazonDetails");
+		
+		for (Pair<String, String> link : amazonUpdater.getAmazonLinks(amazonUserId, true)) {
+		    xml.openElement("link");
+		    xml.appendTextNode("name", link.getFirst());
+		    xml.appendTextNode("url", link.getSecond());
+		    xml.closeElement();
+		}
+		
+		xml.closeElement();
 	}
 	
 	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException {

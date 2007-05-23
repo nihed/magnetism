@@ -173,6 +173,14 @@ dh.account.createExternalAccountOnHateSavedFunc = function(entry, accountType) {
 		dh.account.hateExternalAccount(accountType, value,
 		 	    	 function(childNodes, http) {
 		 	    	 	entry.setMode('hate');
+		 	    	 	if (accountType == 'AMAZON') {
+	 	    	            var amazonDetailsNodes = dh.html.getElementsByClass('dh-amazon-details');
+	                        var i = 0;
+	                        for (i = 0; i < amazonDetailsNodes.length; ++i) {
+	                            var amazonDetailsNode = amazonDetailsNodes[i];
+	 	    	                dh.dom.removeChildren(amazonDetailsNode);
+	 	    	            }    
+	 	    	        }
 		  	    	 },
 		  	    	 function(code, msg, http) {
 		  	    	 	alert(msg);
@@ -188,6 +196,14 @@ dh.account.createExternalAccountOnCanceledFunc = function(entry, accountType) {
 		dh.account.removeExternalAccount(accountType, 
 		 	    	 function(childNodes, http) {
 		 	    	 	entry.setMode('indifferent');
+		 	    	 	if (accountType == 'AMAZON') {
+	 	    	            var amazonDetailsNodes = dh.html.getElementsByClass('dh-amazon-details');
+	                        var i = 0;
+	                        for (i = 0; i < amazonDetailsNodes.length; ++i) {
+	                            var amazonDetailsNode = amazonDetailsNodes[i];
+	 	    	                dh.dom.removeChildren(amazonDetailsNode);
+	 	    	            }    
+	 	    	        }
 		  	    	 },
 		  	    	 function(code, msg, http) {
 		  	    	 	alert(msg);
@@ -505,6 +521,42 @@ dh.account.onAmazonLoveSaved = function(value) {
   	dh.account.setAmazonUrl(value, 
 	 	    	 function(childNodes, http) {
 	 	    	 	entry.setMode('love');
+	 	    	    var amazonDetailsNodes = dh.html.getElementsByClass('dh-amazon-details');
+	                var i = 0;
+	                for (i = 0; i < amazonDetailsNodes.length; ++i) {
+	                    var amazonDetailsNode = amazonDetailsNodes[i];
+	 	    	        dh.dom.removeChildren(amazonDetailsNode);
+					    var j = 0;
+					    for (j = 0; j < childNodes.length; ++j) {
+						    var child = childNodes.item(j);
+						    if (child.nodeType != dh.dom.ELEMENT_NODE)
+							    continue;
+			
+						    if (child.nodeName == "amazonDetails") {
+						        var k = 0;
+						        for (k = 0; k < child.childNodes.length; ++k) {
+						            var linkChild = child.childNodes.item(k);
+						            if (linkChild.nodeType != dh.dom.ELEMENT_NODE)
+							            continue;			
+						
+						            if (linkChild.nodeName == "link") {
+						                var nameNode = linkChild.firstChild;
+						                var urlNode = linkChild.lastChild;
+						                if (nameNode.nodeName != "name" || urlNode.nodeName != "url")
+						                    continue;
+
+						                var linkDiv = document.createElement("div");
+						                amazonDetailsNode.appendChild(linkDiv);
+						                var linkElement = document.createElement("a");
+                                        linkElement.href = dh.util.getPreparedUrl(dh.dom.textContent(urlNode));						            
+                                        var linkTextNode = document.createTextNode(dh.dom.textContent(nameNode));
+                                        linkElement.appendChild(linkTextNode);
+                                        linkDiv.appendChild(linkElement);						                 
+                                    }
+                                }
+						    }
+	 	    	 	    }	 	    	    
+	 	    	    }
 	  	    	 },
 	  	    	 function(code, msg, http) {
 	  	    	 	alert(msg);

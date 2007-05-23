@@ -181,3 +181,8 @@ tr.dh-email-address-spacer {
     margin-left:        3px;
     margin-right:       5px;
 }
+
+.dh-amazon-details div {
+    margin-left:        16px; 
+    margin-bottom:      1px; 
+}

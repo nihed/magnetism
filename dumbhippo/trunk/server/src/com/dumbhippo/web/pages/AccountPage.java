@@ -6,10 +6,12 @@ import java.util.List;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.Sentiment;
+import com.dumbhippo.server.AmazonUpdater;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
@@ -49,6 +51,7 @@ public class AccountPage {
 	private FacebookSystem facebookSystem;
 	private String facebookAuthToken;
 	private String facebookErrorMessage;
+	private AmazonUpdater amazonUpdater;
 	
 	public AccountPage() {
 		personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
@@ -59,6 +62,7 @@ public class AccountPage {
 		facebookSystem =  WebEJBUtil.defaultLookup(FacebookSystem.class);
 		facebookAuthToken = null;
 		facebookErrorMessage = null;
+		amazonUpdater = WebEJBUtil.defaultLookup(AmazonUpdater.class);
 	}
 	
 	public SigninBean getSignin() {
@@ -364,6 +368,18 @@ public class AccountPage {
 			}
 		}
 		return new ListBean<ExternalAccountView>(supportedAccounts);
+	}
+	
+	/**
+	 * Returns names and links for user's Amazon reviews page and public wish lists.
+	 */
+	public List<Pair<String, String>> getAmazonLinks() {
+		if (!getAmazonSentiment().equalsIgnoreCase(Sentiment.LOVE.name()))
+			return null;
+		
+		String amazonUserId = getExternalAccountHandle(ExternalAccountType.AMAZON);
+		
+		return amazonUpdater.getAmazonLinks(amazonUserId, false);
 	}
 	
 	public String getWebsiteUrl() {

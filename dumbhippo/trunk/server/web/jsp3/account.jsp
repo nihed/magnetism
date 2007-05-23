@@ -264,7 +264,19 @@
 		                    	        isInfoTypeProvidedBySite="${supportedAccount.infoTypeProvidedBySite}"
 		                    	        link="${supportedAccount.externalAccountType.siteLink}"
 		                    	        baseId="dh${supportedAccount.domNodeIdName}" 
-		                    	        mode="${supportedAccount.sentiment}"/>
+		                    	        mode="${supportedAccount.sentiment}">
+		                    	        
+		                    	        <c:if test="${supportedAccount.siteName == 'Amazon'}">   
+		                    	            <div class="dh-amazon-details">
+		                    	                <c:forEach items="${account.amazonLinks}" var="amazonLinkPair">
+		                    	                    <div>		                    	        
+		                    	                        <a href="${amazonLinkPair.second}">${amazonLinkPair.first}</a>
+		                    	                    </div>
+		                    	                </c:forEach>    
+		                    	            </div>
+		                    	        </c:if>
+		                    	        
+		                    	    </dht:loveHateEntry>    
 		                        </c:otherwise>
 		                    </c:choose>    	
 				        </dht:formTableRow>	
