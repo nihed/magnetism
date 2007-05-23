@@ -936,11 +936,12 @@ public enum ExternalAccountType {
 			return true;
 		}
 		
+		// TODO: uncomment or remove
 		// This is temporary, so that it doesn't show up on the account page
-		@Override
-		public boolean isSupported() {
-			return false;
-		}
+		// @Override
+		// public boolean isSupported() {
+		//	return false;
+		//}
 	};
 	
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountType.class);	
