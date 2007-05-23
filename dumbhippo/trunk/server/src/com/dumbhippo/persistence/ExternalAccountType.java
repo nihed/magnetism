@@ -914,8 +914,9 @@ public enum ExternalAccountType {
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
-				if (!(StringUtils.isAlphanumeric(handle) && (handle.length() == 14)))
-					throw new ValidationException("Amazon user id can only have letters and digits and be 14 characters long");
+				// we've seen Amazon handles that are 13 and 14 characters long, so let's accept 10-16 characters range
+				if (!(StringUtils.isAlphanumeric(handle) && (handle.length() >= 10) && (handle.length() <= 16)))
+					throw new ValidationException("Amazon user id can only have letters and digits and be between 10 and 16 characters long");
 					
 				try {
 					new URL(getLink(handle, null));
