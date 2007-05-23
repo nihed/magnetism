@@ -6,6 +6,7 @@ import antlr.TokenStreamException;
 import com.dumbhippo.dm.parser.FetchParser;
 
 public class FetchParserTests extends AbstractParserTests {
+	@Override
 	protected String parse(String input) throws RecognitionException, TokenStreamException {
 		return FetchParser.parse(input).toString();
 	}

@@ -493,11 +493,13 @@ public class FilterAssembler {
 			this.comment = comment;
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			return offset;
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 		}
 
@@ -514,11 +516,13 @@ public class FilterAssembler {
 			this.label = label; 
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			return offset + 3;
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			bytecode.addOpcode(Bytecode.GOTO);             // 1 byte
 			bytecode.addIndex(labelOffset(offset, label)); // 2 bytes
@@ -537,6 +541,7 @@ public class FilterAssembler {
 			this.state = state; 
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 
@@ -553,6 +558,7 @@ public class FilterAssembler {
 			return offset + iconstLength + 2;
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			bytecode.addIconst(state);        // 1-3 bytes
 			bytecode.addIstore(STATE_LOCAL);  // 2 bytes
@@ -585,6 +591,7 @@ public class FilterAssembler {
 			}
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			
@@ -594,6 +601,7 @@ public class FilterAssembler {
 			return afterGap + 4 * (3 + states.length);
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			int low = states[0];
 			int high = low + states.length - 1;
@@ -656,6 +664,7 @@ public class FilterAssembler {
 			}
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			return offset + 11 + 
@@ -665,6 +674,7 @@ public class FilterAssembler {
 				(propertyMethodName != null ? 3 : 0);
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			String argumentClassName = getArgumentClassName();
 			bytecode.addAload(VIEWPOINT_PARAM);                                                           // 1 byte
@@ -711,18 +721,22 @@ public class FilterAssembler {
 			super(condition, property, branchWhen, label);
 		}
 
+		@Override
 		protected int getArgumentLocalIndex() {
 			return KEY_PARAM;
 		}
 		
+		@Override
 		protected Class<?> getArgumentClass() {
 			return objectKeyClass;
 		}
 
+		@Override
 		protected String getArgumentClassName() {
 			return objectKeyClassName;
 		}
 		
+		@Override
 		protected String getName() {
 			return "thisCondition";
 		}
@@ -733,18 +747,22 @@ public class FilterAssembler {
 			super(condition, property, branchWhen, label);
 		}
 
+		@Override
 		protected int getArgumentLocalIndex() {
 			return listFilter ? ITEM_LOCAL : ITEM_PARAM;
 		}
 		
+		@Override
 		protected Class<?> getArgumentClass() {
 			return itemKeyClass;
 		}
 
+		@Override
 		protected String getArgumentClassName() {
 			return itemKeyClassName;
 		}
 		
+		@Override
 		protected String getName() {
 			return "itemCondition";
 		}
@@ -754,11 +772,13 @@ public class FilterAssembler {
 		public StartItemsFop() {
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			return offset + 8;
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			bytecode.addAload(ITEMS_PARAM);                                                               // 1 byte
 			bytecode.addInvokeinterface("java/util/Collection", "iterator", "()Ljava/util/Iterator;", 1); // 5 bytes
@@ -778,11 +798,13 @@ public class FilterAssembler {
 			this.label = label;
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			return offset + 19;
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			bytecode.addAload(ITER_LOCAL);                                                          // 2 bytes
 			bytecode.addInvokeinterface("java/util/Iterator", "hasNext", "()Z", 1);                 // 5 bytes
@@ -804,11 +826,13 @@ public class FilterAssembler {
 		public ReturnNullFop() {
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			return offset + 2;
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			bytecode.addOpcode(Bytecode.ACONST_NULL); // 1 byte
 			bytecode.addOpcode(Bytecode.ARETURN);     // 1 byte
@@ -824,11 +848,13 @@ public class FilterAssembler {
 		public ReturnEmptyFop() {
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			return offset + 4;
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			bytecode.addGetstatic("java/util/Collections", "EMPTY_LIST", "Ljava/util/List;"); // 3 bytes
 			bytecode.addOpcode(Bytecode.ARETURN);                                             // 1 byte
@@ -844,11 +870,13 @@ public class FilterAssembler {
 		public ReturnThisFop() {
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			return offset + 2;
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			bytecode.addAload(KEY_PARAM);         // 1 byte
 			bytecode.addOpcode(Bytecode.ARETURN); // 1 byte
@@ -864,11 +892,13 @@ public class FilterAssembler {
 		public ReturnItemFop() {
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			return offset + 2;
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			bytecode.addAload(ITEM_PARAM);        // 1 byte
 			bytecode.addOpcode(Bytecode.ARETURN); // 1 byte
@@ -884,11 +914,13 @@ public class FilterAssembler {
 		public ReturnItemsFop() {
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			return offset + 2;
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			bytecode.addAload(ITEMS_PARAM );      // 1 byte
 			bytecode.addOpcode(Bytecode.ARETURN); // 1 byte
@@ -904,11 +936,13 @@ public class FilterAssembler {
 		public StartResultFop() {
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			return offset + 9;
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			bytecode.addNew("java/util/ArrayList");                            // 3 bytes
 			bytecode.addOpcode(Bytecode.DUP);                                  // 1 byte
@@ -926,11 +960,13 @@ public class FilterAssembler {
 		public AddResultItemFop() {
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			return offset + 10;
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			bytecode.addAload(RESULT_LOCAL);                                                        // 2 bytes
 			bytecode.addAload(ITEM_LOCAL);                                                          // 2 bytes
@@ -948,11 +984,13 @@ public class FilterAssembler {
 		public ReturnResultFop() {
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			return offset + 3;
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			bytecode.addAload(RESULT_LOCAL);      // 2 bytes
 			bytecode.addOpcode(Bytecode.ARETURN); // 1 byte
@@ -968,11 +1006,13 @@ public class FilterAssembler {
 		public CheckViewpointFop() {
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			return offset + 5;
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			bytecode.addAload(VIEWPOINT_PARAM);         // 1 byte
 			bytecode.addCheckcast(viewpointClassName);  // 3 bytes
@@ -989,11 +1029,13 @@ public class FilterAssembler {
 		public BadStateFop() {
 		}
 		
+		@Override
 		public int setOffset(int offset) {
 			this.offset = offset;
 			return offset + 10;
 		}
 		
+		@Override
 		public void emit(Bytecode bytecode) {
 			bytecode.addNew("java/lang/IllegalStateException");                                              // 3 bytes
 			bytecode.addOpcode(Bytecode.DUP);                                                                // 1 byte
