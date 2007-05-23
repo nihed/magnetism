@@ -1,7 +1,9 @@
 import logging, os
 
+import gobject
 import hippo
 
+import bigboard.slideout
 import bigboard.mugshot as mugshot
 import bigboard.libbig as libbig
 from bigboard.stock import Stock, AbstractMugshotStock
@@ -47,6 +49,34 @@ class ExternalAccountIcon(CanvasMugshotURLImage):
     def __launch_browser(self):
         libbig.show_url(self._acct.get_link())
 
+class SelfSlideout(CanvasVBox):
+    __gsignals__ = {
+        "close" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
+    }
+    def __init__(self, stock, **kwargs):
+        kwargs['border'] = 1
+        kwargs['border-color'] = 0x0000000ff
+        super(SelfSlideout, self).__init__(**kwargs)
+        self.__stock = stock
+
+        if self.__stock._auth:
+            link = hippo.CanvasLink(text='Visit account page', xalign=hippo.ALIGNMENT_START)
+            link.connect("activated", self.__show_mugshot_link, "/account")
+        else:
+            link = hippo.CanvasLink(text='Sign in', xalign=hippo.ALIGNMENT_START)
+            link.connect("activated", self.__show_mugshot_link, "/who-are-you")
+        self.append(link)
+        link = hippo.CanvasLink(text='Programmer mode', xalign=hippo.ALIGNMENT_START)
+        link.connect("activated", self.__on_applet_mode)
+        self.append(link)
+
+    def __show_mugshot_link(self, l, url):
+        libbig.show_url(mugshot.get_mugshot().get_baseurl() + url)        
+        self.emit('close')
+
+    def __on_applet_mode(self): 
+        self.emit('close')
+
 class SelfStock(AbstractMugshotStock):
     """Shows a user's Mugshot personal information."""
     def __init__(self, *args, **kwargs):
@@ -79,6 +109,8 @@ class SelfStock(AbstractMugshotStock):
         self._signin.connect("button-press-event", lambda signin, event: self.__on_activate())
 
         self._mugshot.connect("connection-status", lambda mugshot, auth, xmpp, contacts: self.__handle_mugshot_connection_status(auth, xmpp, contacts))  
+
+        self.__slideout = None
         
     def _on_mugshot_ready(self):
         super(SelfStock, self)._on_mugshot_ready()       
@@ -96,12 +128,18 @@ class SelfStock(AbstractMugshotStock):
         self.__handle_self_changed()        
 
     def __on_activate(self):
-        if self._auth:
-            baseurl = self._mugshot.get_baseurl()
-            libbig.show_url(baseurl + "/account")
-        else:
-            baseurl = self._mugshot.get_baseurl()
-            libbig.show_url(baseurl + "/who-are-you")        
+        if self.__slideout:
+            self.__slideout.destroy()
+            self.__slideout = None
+            return
+
+        self.__slideout = bigboard.slideout.Slideout()
+        widget = self._box
+        coords = widget.get_context().translate_to_screen(widget)
+        self.__slideout.slideout_from(coords[0] + widget.get_allocation()[0] + 4, coords[1])
+        slideout_display = SelfSlideout(self)
+        slideout_display.connect('close', lambda s: self.__on_activate())
+        self.__slideout.get_root().append(slideout_display)
         
     def get_authed_content(self, size):
         return self._box
