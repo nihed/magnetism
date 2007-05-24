@@ -324,12 +324,16 @@ public class PersonView extends EntityView {
 				if (first.getExternalAccount().getAccountType() == second.getExternalAccount().getAccountType())
 					return 0;
 				
-				// We want "my website" first, then everything alphabetized by the human-readable name.
+				// We want "my website" first, "blog" second, then everything alphabetized by the human-readable name.
 				
 				if (first.getExternalAccount().getAccountType() == ExternalAccountType.WEBSITE)
 					return -1;
 				if (second.getExternalAccount().getAccountType() == ExternalAccountType.WEBSITE)
 					return 1;
+				if (first.getExternalAccount().getAccountType() == ExternalAccountType.BLOG)
+					return -1;
+				if (second.getExternalAccount().getAccountType() == ExternalAccountType.BLOG)
+					return 1;				
 				
 				return String.CASE_INSENSITIVE_ORDER.compare(first.getExternalAccount().getSiteName(), second.getExternalAccount().getSiteName());
 			}

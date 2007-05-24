@@ -1,7 +1,5 @@
 package com.dumbhippo.services.caches;
 
-import java.util.Collection;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 

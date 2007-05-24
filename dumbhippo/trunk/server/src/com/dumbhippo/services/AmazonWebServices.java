@@ -1,7 +1,10 @@
 package com.dumbhippo.services;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -48,18 +51,26 @@ public class AmazonWebServices extends AbstractXmlRequest<AmazonSaxHandler> {
 	public AmazonReviews lookupReviews(String amazonUserId) {
 		// We need to page through all the available review pages before returning all reviews.
 		// We need to make sure we return most recent reviews first in the list when we page the reviews.
+		
+		// Amazon returns the oldest review first on the first page, so we need to insert the reviews to
+		// the front of the list we are creating as we get them. There currently doesn't seem to be a way
+		// to request for the reviews to be sorted by date, getting the newest ones first. This means
+		// that we will not be able to pull in new reviews for users who have written more than 100 reviews
+		// on Amazon.
+		
 		int page = 1;
 		int totalPages = 1;
 		AmazonReviews amazonReviews = null; 
-		// This helps us filter out duplicate reviews. Amazon sometimes has duplicate reviews by the same person
-		// for the same item (usually they are identical, so possibly they used to have some problems with people
-		// submitting the same review twice), in which case we want to keep the more recent review. This should also
-		// help avoid duplicates if while we were making multiple requests to get all the pages, someone added a 
-		// review, and all reviews have shifted over, resulting in us getting the same review on multiple pages.
+		// Keeping a reviewMap helps us filter out duplicate reviews. Amazon sometimes has duplicate reviews by 
+		// the same person for the same item (usually they are identical, so possibly they used to have some 
+		// problems with people submitting the same review twice), in which case we want to keep the more recent review.
 		// If someone had deleted a review while we were getting the reviews, we will be missing some other review,
 		// but we should recover it on the next iteration, unless there is a net change of 0 in the review count.
-		// For the above two scenarios to affect us, the count also had to change before we request the first page.
-		Set<String> itemIds = new HashSet<String>();
+		// For this scenario to affect us, the count had to change before we request the first page.	
+		// LinkedHashMap did not allow inserting pairs to the front, which is what we needed. It also returned
+		// a Collection for values() which could not be reversed. So we need to keep both a Map and a List here.
+		Map<String, AmazonReviewView> reviewMap = new HashMap<String, AmazonReviewView>();
+        List<AmazonReviewView> reviewList = new ArrayList<AmazonReviewView>();
 		
 		while (page <= totalPages) {
 		    String wsUrl = createReviewsRequest(amazonUserId, page);		
@@ -71,9 +82,15 @@ public class AmazonWebServices extends AbstractXmlRequest<AmazonSaxHandler> {
 		    	if (handler.getReviews() != null) {
 		    		amazonReviews = new AmazonReviews(handler.getReviews().getTotal(), handler.getReviews().getTotalReviewPages());
 		    	    for (AmazonReviewView review : handler.getReviews().getReviews()) {
-		    	    	if (!itemIds.contains(review.getItemId())) {
-		    	    		amazonReviews.addReview(review, false);
-		    	    		itemIds.add(review.getItemId());
+		    	    	AmazonReviewView reviewInMap = reviewMap.get(review.getItemId());
+		    	    	if (reviewInMap == null) {
+		    	    		// insert it in the front
+		    	    		reviewList.add(0, review);
+		    	    		reviewMap.put(review.getItemId(), review);
+		    	    	} else {
+		    	    		// remove a duplicate review that must have been older
+		    	    		reviewList.remove(reviewInMap);
+		    	    		reviewList.add(0, review);		    	    		
 		    	    	}
 		    	    }
 		    	    // the web services tell us how many pages total there are, but only return reviews
@@ -89,9 +106,15 @@ public class AmazonWebServices extends AbstractXmlRequest<AmazonSaxHandler> {
 		            logger.warn("Reviews are null when we were expecting page {} of Amazon reviews", page);
 		        } else {
 		    	    for (AmazonReviewView review : handler.getReviews().getReviews()) {
-		    	    	if (!itemIds.contains(review.getItemId())) {
-		    	    		amazonReviews.addReview(review, false);
-		    	    		itemIds.add(review.getItemId());
+		    	    	AmazonReviewView reviewInMap = reviewMap.get(review.getItemId());
+		    	    	if (reviewInMap == null) {
+		    	    		// insert it in the front
+		    	    		reviewList.add(0, review);
+		    	    		reviewMap.put(review.getItemId(), review);
+		    	    	} else {
+		    	    		// remove a duplicate review that must have been older
+		    	    		reviewList.remove(reviewInMap);
+		    	    		reviewList.add(0, review);		    	    		
 		    	    	}
 		    	    }
 		        }		    	
@@ -99,6 +122,7 @@ public class AmazonWebServices extends AbstractXmlRequest<AmazonSaxHandler> {
 		    page++;
 		}
 		    	    
+		amazonReviews.addReviews(reviewList, false);
 		return amazonReviews;
 	}
 	
