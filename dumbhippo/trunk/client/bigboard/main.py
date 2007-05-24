@@ -194,6 +194,7 @@ class BigBoardPanel(dbus.service.Object):
         dbus.service.Object.__init__(self, bus_name, '/bigboard/panel')
         self._dw = Sidebar(True)
         self._shown = False
+        self.__shell = None
         
         self.__logger = logging.getLogger("bigboard.Panel")
         
@@ -364,6 +365,13 @@ class BigBoardPanel(dbus.service.Object):
         else:
             return self.__do_unexpand()
 
+    @dbus.service.method(BUS_IFACE_PANEL)
+    def shell(self):
+        if self.__shell:
+            self.__shell.destroy()
+        self.__shell = CommandShell({'panel': self})
+        self.__shell.show_all()
+
 def load_image_hook(img_name):
     logging.debug("loading: %s" % (img_name,))
     pixbuf = gtk.gdk.pixbuf_new_from_file(img_name)
@@ -380,17 +388,16 @@ def on_focus(panel):
     panel.external_focus()
 
 def usage():
-    print "%s [--debug] [--debug-modules=mod1,mod2...] [--info] [--no-autolaunch] [--shell] [--stockdirs=dir1:dir2:...] [--help]" % (sys.argv[0])
+    print "%s [--debug] [--debug-modules=mod1,mod2...] [--info] [--no-autolaunch] [--stockdirs=dir1:dir2:...] [--help]" % (sys.argv[0])
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hds", ["help", "debug", "na", "no-autolaunch", "info", "shell", "replace", "stockdirs=", "debug-modules="])
+        opts, args = getopt.getopt(sys.argv[1:], "hds", ["help", "debug", "na", "no-autolaunch", "info", "replace", "stockdirs=", "debug-modules="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
     info = False
     debug = False
-    shell = False
     replace = False
     stockdirs = []
     debug_modules = []
@@ -403,8 +410,6 @@ def main():
             replace = True            
         elif o in ('--na', '--no-autolaunch'):
             bigboard.mugshot.do_autolaunch = False
-        elif o in ('-s', '--shell'):
-            shell = True
         elif o in ('--stockdirs',):
             stockdirs = map(os.path.abspath, v.split(':'))
         elif o in ('--debug-modules'):
@@ -455,10 +460,6 @@ def main():
     if not bigboard.keybinder.tomboy_keybinder_bind(keybinding, on_focus, panel):
         logging.warn("Failed to bind '%s'" % (keybinding,))
     
-    if shell:
-        cmdshell = CommandShell({'panel': panel})
-        cmdshell.show_all()
-
     bigboard.google.get_google() # for side effect of creating the Google object
     bigboard.presence.get_presence() # for side effect of creating Presence object
         
