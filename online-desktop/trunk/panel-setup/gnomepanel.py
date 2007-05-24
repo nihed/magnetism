@@ -61,7 +61,7 @@ def add_applet(panel, name, iid, pos, right=False):
     client.set_int(dir + '/position', pos)
     client.set_bool(dir + '/panel_right_stick', not not right)
 
-    client.set_string(dir + '/bonobo_iid', iid)
+    client.set_string(dir + '/bonobo_iid', 'OAFIID:' + iid)
     
     _add_to_id_list('applet_id_list', name)
 
