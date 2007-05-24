@@ -47,35 +47,8 @@ class DockWindow(gtk.Window):
     def get_edge_gravity(self):
         return self.edge_gravity
 
-    def get_win_placement(self):
-        '''This will place the window on the edge corresponding to the edge gravity'''
-        
-        width, height = self.size_request()
-        geom = self.get_screen().get_monitor_geometry(0)
-        eg = self.edge_gravity
-            
-        if eg in (gtk.gdk.GRAVITY_SOUTH, gtk.gdk.GRAVITY_NORTH):
-            x = (geom.width / 2) - (width / 2)
-        elif eg == gtk.gdk.GRAVITY_EAST:
-            x = geom.width - width
-        elif eg == gtk.gdk.GRAVITY_WEST:
-            x = 0
-
-        if eg in (gtk.gdk.GRAVITY_EAST, gtk.gdk.GRAVITY_WEST):
-            y = (geom.height / 2) - (height / 2)
-        elif eg == gtk.gdk.GRAVITY_SOUTH:
-            y = geom.height - height
-        elif eg == gtk.gdk.GRAVITY_NORTH:
-            y = 0
-
-        return [geom.x + x, geom.y + y] # Compensate for multiple monitors
-
-    def move_to_position(self):
-        apply(self.move, self.get_win_placement())
-
     def do_realize(self):
         ret = gtk.Window.do_realize(self)
-        self.move_to_position()
         self.do_set_wm_strut()
         return ret      
 
