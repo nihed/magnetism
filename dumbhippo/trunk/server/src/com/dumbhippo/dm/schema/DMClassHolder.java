@@ -1,4 +1,4 @@
-package com.dumbhippo.dm;
+package com.dumbhippo.dm.schema;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -26,6 +26,11 @@ import javax.persistence.EntityManager;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.DMKey;
+import com.dumbhippo.dm.DMObject;
+import com.dumbhippo.dm.DMSession;
+import com.dumbhippo.dm.DMViewpoint;
+import com.dumbhippo.dm.DataModel;
 import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.Inject;
 import com.dumbhippo.identity20.Guid;
@@ -62,6 +67,16 @@ public class DMClassHolder<T extends DMObject> {
 			throw new RuntimeException(clazz.getName() + ": classId '" + annotation.classId() + "' is not a valid URI");
 		}
 		
+		keyConstructor = findKeyConstructor(clazz);
+		
+		keyClass = keyConstructor.getParameterTypes()[0];
+
+		buildWrapperClass();
+	}
+	
+	private static Constructor findKeyConstructor(Class<?> clazz) {
+		Constructor keyConstructor = null;
+		
 		for (Constructor c : clazz.getDeclaredConstructors()) {
 			Class<?>[] parameterTypes = c.getParameterTypes();
 			if (parameterTypes.length != 1)
@@ -79,13 +94,16 @@ public class DMClassHolder<T extends DMObject> {
 										   c.toGenericString());
 			
 			keyConstructor = c;
-			keyClass = parameterTypes[0];
 		}
-		
+
 		if (keyConstructor == null)
 			throw new RuntimeException("No candidate constructors found for class " + clazz.getName());
 		
-		buildWrapperClass();
+		return keyConstructor;
+	}
+	
+	public static Class<?> findKeyClass(Class<?> clazz) {
+		return findKeyConstructor(clazz).getParameterTypes()[0];
 	}
 	
 	public void complete() {
@@ -105,7 +123,6 @@ public class DMClassHolder<T extends DMObject> {
 		return annotation.classId();
 	}
 
-	// FIXME: do we need this?
 	public Class<?> getKeyClass() {
 		return keyClass;
 	}
@@ -255,14 +272,29 @@ public class DMClassHolder<T extends DMObject> {
 		Template body = new Template(
 			"{" +
 			"    if (!_dm_initialized) {" +
-			"        _dm_session.internalInit(%className%.class, $0);" +
+			"        _dm_session.internalInit($0);" +
 			"        _dm_initialized = true;" +
 			"    }" +
 			"}");
-		body.setParameter("className", baseCtClass.getName());
 		wrapperMethod.setBody(body.toString());
 		
 		wrapperCtClass.addMethod(wrapperMethod);
+	}
+	
+	private void addGetClassHolderMethod(CtClass wrapperCtClass) throws CannotCompileException {
+		CtClass dmClassHolderCtClass = ctClassForClass(DMClassHolder.class);
+
+		CtField field = new CtField(dmClassHolderCtClass, "_dm_classHolder", wrapperCtClass);
+		field.setModifiers(Modifier.PRIVATE | Modifier.STATIC);
+		wrapperCtClass.addField(field);
+
+		CtMethod method = new CtMethod(dmClassHolderCtClass, "getClassHolder", new CtClass[] {}, wrapperCtClass);
+		method.setBody(
+			"{" +
+			"    return _dm_classHolder;" +
+			"}");
+		
+		wrapperCtClass.addMethod(method);
 	}
 	
 	private void addWrapperGetter(CtClass baseCtClass, CtClass wrapperCtClass, DMPropertyHolder property, int propertyIndex) throws CannotCompileException, NotFoundException {
@@ -284,10 +316,10 @@ public class DMClassHolder<T extends DMObject> {
 			"{" +
 			"    if (!_dm_%propertyName%Initialized) {" +
 			"    	 try {" +
-			"           _dm_%propertyName% = %unboxPre%_dm_session.fetchAndFilter(%className%.class, getKey(), %propertyIndex%)%unboxPost%;" +
+			"           _dm_%propertyName% = %unboxPre%_dm_session.fetchAndFilter(getStoreKey(), %propertyIndex%)%unboxPost%;" +
 			"    	 } catch (com.dumbhippo.dm.NotCachedException e) {" +
 			"           _dm_init();" +
-			"           _dm_%propertyName% = %unboxPre%_dm_session.storeAndFilter(%className%.class, getKey(), %propertyIndex%, %boxPre%super.%methodName%()%boxPost%)%unboxPost%;" +
+			"           _dm_%propertyName% = %unboxPre%_dm_session.storeAndFilter(getStoreKey(), %propertyIndex%, %boxPre%super.%methodName%()%boxPost%)%unboxPost%;" +
 			"        }" +
 			"        _dm_%propertyName%Initialized = true;" +
 			"    }" +
@@ -301,7 +333,6 @@ public class DMClassHolder<T extends DMObject> {
 		body.setParameter("unboxPost", property.getUnboxSuffix());
 		body.setParameter("propertyIndex", Integer.toString(propertyIndex));
 		body.setParameter("methodName", property.getMethodName());
-		body.setParameter("className", baseCtClass.getName());
 		wrapperMethod.setBody(body.toString());
 		
 		wrapperCtClass.addMethod(wrapperMethod);
@@ -338,6 +369,17 @@ public class DMClassHolder<T extends DMObject> {
 		}
 	}
 	
+	private void injectClassHolder(Class<?> wrapperClass) {
+		try {
+			Field classHolderField = wrapperClass.getDeclaredField("_dm_classHolder");
+			classHolderField.setAccessible(true);
+			classHolderField.set(null, this);
+			classHolderField.setAccessible(false);
+		} catch (Exception e) {
+			throw new RuntimeException("Error injecting DMClassHolder into wrapper class", e);
+		}
+	}
+	
 	private void buildWrapperClass() {
 		String className = baseClass.getName();
 		ClassPool classPool = model.getClassPool();
@@ -349,9 +391,12 @@ public class DMClassHolder<T extends DMObject> {
 			addCommonFields(wrapperCtClass);
 			addConstructor(wrapperCtClass);
 			addInitMethod(baseCtClass, wrapperCtClass);
+			addGetClassHolderMethod(wrapperCtClass);
 			addWrapperGetters(baseCtClass, wrapperCtClass);
 			
 			Class<?> wrapperClass  = wrapperCtClass.toClass();
+			injectClassHolder(wrapperClass);
+			
 			wrapperConstructor = wrapperClass.getDeclaredConstructors()[0]; 
 		} catch (CannotCompileException e) {
 			throw new RuntimeException("Error compiling wrapper for " + className, e);

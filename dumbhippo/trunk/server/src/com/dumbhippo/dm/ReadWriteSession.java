@@ -1,19 +1,23 @@
 package com.dumbhippo.dm;
 
-import java.util.ArrayList;
-import java.util.List;
+import javax.transaction.Status;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.store.StoreKey;
 
 
 public class ReadWriteSession extends DMSession {
+	@SuppressWarnings("unused")
 	private static Logger logger = GlobalSetup.getLogger(ReadWriteSession.class);
-	private List<QueuedNotification> notifications = new ArrayList<QueuedNotification>();
+	
+	private ChangeNotificationSet notificationSet;
 
 	protected ReadWriteSession(DataModel model, DMViewpoint viewpoint) {
 		super(model, viewpoint);
+		
+		notificationSet = new ChangeNotificationSet(model);
 	}
 	
 	public static ReadWriteSession getCurrent() {
@@ -26,48 +30,22 @@ public class ReadWriteSession extends DMSession {
 	
 
 	@Override
-	public <K, T extends DMObject<K>> Object fetchAndFilter(Class<T> clazz, K key, int propertyIndex) throws NotCachedException {
+	public <K, T extends DMObject<K>> Object fetchAndFilter(StoreKey<K,T> key, int propertyIndex) throws NotCachedException {
 		throw new NotCachedException();
 	}
 
 	@Override
-	public <K, T extends DMObject<K>> Object storeAndFilter(Class<T> clazz, K key, int propertyIndex, Object value) {
+	public <K, T extends DMObject<K>> Object storeAndFilter(StoreKey<K,T> key, int propertyIndex, Object value) {
 		return value;
 	}
 
-	private static class QueuedNotification<K,T extends DMObject<K>> {
-		protected DMClassHolder<T> classHolder;
-		protected K key;
-		protected int propertyIndex;
-
-		public QueuedNotification(DMClassHolder<T> classHolder, K key, int propertyIndex) {
-			this.classHolder = classHolder;
-			this.key = key;
-			this.propertyIndex = propertyIndex;
-		}
-	}
-	
-	public <K, T extends DMObject<K>> void notify(Class<T> clazz, K key, String propertyName) {
-		DMClassHolder<T> classHolder = model.getDMClass(clazz);
-		int propertyIndex = classHolder.getPropertyIndex(propertyName);
-		if (propertyIndex < 0)
-			throw new RuntimeException("Class " + clazz.getName() + " has no property " + propertyName);
-
-		notifications.add(new QueuedNotification<K,T>(classHolder, key, propertyIndex));
+	public <K, T extends DMObject<K>> void changed(Class<T> clazz, K key, String propertyName) {
+		notificationSet.changed(clazz, key, propertyName);
 	}
 	
 	@Override
 	public void afterCompletion(int status) {
-		long timestamp = model.getTimestamp();
-		
-		for (QueuedNotification<?, ?> notification : notifications) {
-			DMClassHolder<?> classHolder = notification.classHolder;
-			model.getStore().invalidate(classHolder, notification.key, notification.propertyIndex, timestamp);
-		
-			logger.debug("Invalidated {}#{}.{}", new Object[] { 
-					classHolder.getClass().getSimpleName(),
-					notification.key, 
-					classHolder.getProperty(notification.propertyIndex).getName() });
-		}
+		if (status == Status.STATUS_COMMITTED)
+			notificationSet.commit();
 	}
 }

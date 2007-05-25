@@ -7,8 +7,8 @@ import java.util.List;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.dm.DMClassHolder;
 import com.dumbhippo.dm.DMObject;
+import com.dumbhippo.dm.schema.DMClassHolder;
 
 public class FetchNode {
 	static public final Logger logger = GlobalSetup.getLogger(FetchNode.class);
@@ -23,7 +23,7 @@ public class FetchNode {
 		return properties;
 	}
 	
-	public <T extends DMObject> Fetch<T> bind(DMClassHolder<T> classHolder) {
+	public <K,T extends DMObject<K>> Fetch<K,T> bind(DMClassHolder<T> classHolder) {
 		boolean includeDefault = false;
 		
 		List<PropertyFetch> boundProperties = new ArrayList<PropertyFetch>(properties.length);
@@ -45,7 +45,7 @@ public class FetchNode {
 
 		Collections.sort(boundProperties);
 		
-		return new Fetch<T>(classHolder, boundProperties.toArray(new PropertyFetch[boundProperties.size()]), includeDefault);
+		return new Fetch<K,T>(boundProperties.toArray(new PropertyFetch[boundProperties.size()]), includeDefault);
 	}
 	
 	@Override

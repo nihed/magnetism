@@ -2,6 +2,8 @@ package com.dumbhippo.dm;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javassist.ClassClassPath;
 import javassist.ClassPool;
@@ -13,7 +15,11 @@ import org.hibernate.cache.Timestamper;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.ThreadUtils;
+import com.dumbhippo.dm.fetch.FetchVisitor;
+import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.dm.store.DMStore;
+import com.dumbhippo.dm.store.StoreClient;
 
 public class DataModel {
 	protected static final Logger logger = GlobalSetup.getLogger(DataModel.class);
@@ -24,6 +30,7 @@ public class DataModel {
 	private ClassPool classPool = new ClassPool();
 	private DMStore store = new DMStore();
 	private boolean completed = false;
+	private ExecutorService notificationExecutor = ThreadUtils.newSingleThreadExecutor("DataModel-notification");
 
 	private static DataModel instance = new DataModel();
 
@@ -94,7 +101,7 @@ public class DataModel {
 		return emf.createEntityManager();
 	}
 	
-	public <T extends DMObject<?>> DMClassHolder<T> getDMClass(Class<T> clazz) {
+	public <T extends DMObject> DMClassHolder<T> getDMClass(Class<T> clazz) {
 		@SuppressWarnings("unchecked")
 		DMClassHolder<T> classHolder = classes.get(clazz);
 		
@@ -104,14 +111,18 @@ public class DataModel {
 		return classHolder;
 	}
 	
-	public void initializeReadOnlySession(DMViewpoint viewpoint) {
-		DMSession session = new ReadOnlySession(this, viewpoint);
+	public ReadOnlySession initializeReadOnlySession(DMViewpoint viewpoint) {
+		ReadOnlySession session = new ReadOnlySession(this, viewpoint);
 		sessionMap.initCurrent(session);
+		
+		return session;
 	}
 	
-	public void initializeReadWriteSession(DMViewpoint viewpoint) {
-		DMSession session = new ReadWriteSession(this, viewpoint);
+	public ReadWriteSession initializeReadWriteSession(DMViewpoint viewpoint) {
+		ReadWriteSession session = new ReadWriteSession(this, viewpoint);
 		sessionMap.initCurrent(session);
+		
+		return session;
 	}
 	
 	protected DMSession getCurrentSession() {
@@ -135,5 +146,42 @@ public class DataModel {
 		// timestamps/serials from the invalidation protocol instead.
 		
 		return Timestamper.next();
+	}
+	
+	public void notifyAsync(ChangeNotificationSet notificationSet) {
+		notificationExecutor.execute(notificationSet);
+	}
+	
+	/**
+	 * Testing hook, not fully thread safe.
+	 */
+	public void waitForAllNotifications() {
+		ExecutorService oldExecutor = notificationExecutor;
+		notificationExecutor = ThreadUtils.newSingleThreadExecutor("DataModel-notification");
+		
+		oldExecutor.shutdown();
+		try {
+			oldExecutor.awaitTermination(300, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			throw new RuntimeException("Timed out waiting for pending notifications to clear");
+		}
+	}
+
+	public void sendNotification(final ClientNotification clientNotification) {
+		logger.debug("Sending notification to {}", clientNotification.getClient());
+		
+		sessionMap.runInTransaction(new Runnable() {
+			public void run() {
+				StoreClient client = clientNotification.getClient();
+				
+				long serial = client.allocateSerial(); 
+				FetchVisitor visitor = client.beginNotification();
+				
+				ReadOnlySession session = initializeReadOnlySession(client.getViewpoint());
+				
+				clientNotification.visitNotification(session, visitor);
+				client.endNotification(visitor, serial);
+			}
+		});
 	}
 }

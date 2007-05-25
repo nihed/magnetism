@@ -5,9 +5,10 @@ import java.util.List;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.dm.DMClassHolder;
 import com.dumbhippo.dm.DMObject;
-import com.dumbhippo.dm.DMPropertyHolder;
+import com.dumbhippo.dm.schema.DMClassHolder;
+import com.dumbhippo.dm.schema.DMPropertyHolder;
+import com.dumbhippo.dm.schema.ResourcePropertyHolder;
 
 
 public class PropertyFetchNode {
@@ -39,7 +40,32 @@ public class PropertyFetchNode {
 		
 		return null;
 	}
-	
+
+	public <K,T extends DMObject<K>> void bindResourceProperty(ResourcePropertyHolder<K,T> resourceHolder, List<PropertyFetch> resultList, boolean maybeSkip, boolean notify) {
+		Fetch<K,T> defaultChildren = resourceHolder.getDefaultChildren();
+		Fetch<K,T> boundChildren = null;
+		
+		if (maybeSkip && children == null && defaultChildren == null) {
+			return;
+		}
+
+		if (children != null) {
+			DMClassHolder<T> childClassHolder = resourceHolder.getResourceClassHolder();
+			boundChildren = children.bind(childClassHolder);
+		}
+
+		if (maybeSkip && boundChildren != null && defaultChildren != null) {
+			if (boundChildren.equals(defaultChildren))
+				return;
+		}
+		
+		resultList.add(new PropertyFetch(resourceHolder, boundChildren, notify));
+	}
+
+	public void bindPlainProperty(DMPropertyHolder propertyHolder, List<PropertyFetch> resultList, boolean maybeSkip, boolean notify) {
+		if (!maybeSkip)
+			resultList.add(new PropertyFetch(propertyHolder, null, notify));
+	}
 
 	/**
 	 * Finds all properties in the given class and in *subclasses* of the given class
@@ -72,30 +98,11 @@ public class PropertyFetchNode {
 			DMPropertyHolder propertyHolder = classHolder.getProperty(propertyIndex);
 			boolean maybeSkip = skipDefault && propertyHolder.getDefaultInclude(); 
 			
-			Fetch boundChildren = null;
-			if (propertyHolder.isResourceValued()) {
-				Fetch defaultChildren = propertyHolder.getDefaultChildren();
-				
-				if (maybeSkip && children == null && defaultChildren == null) {
-					return;
-				}
-
-				if (children != null) {
-					DMClassHolder<? extends DMObject> childClassHolder = propertyHolder.getResourceClassHolder();
-					boundChildren = children.bind(childClassHolder);
-				}
-
-				if (maybeSkip && boundChildren != null && defaultChildren != null) {
-					if (boundChildren.equals(defaultChildren))
-						return;
-				}
-				
+			if (propertyHolder instanceof ResourcePropertyHolder) {
+				bindResourceProperty(propertyHolder.asResourcePropertyHolder(propertyHolder.getKeyClass()), resultList, maybeSkip, notify);
 			} else {
-				if (maybeSkip)
-					return;
+				bindPlainProperty(propertyHolder, resultList, maybeSkip, notify);
 			}
-
-			resultList.add(new PropertyFetch(propertyHolder, boundChildren, notify));
 		}
 	}
 	

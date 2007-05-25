@@ -10,12 +10,14 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
+import com.dumbhippo.dm.schema.DMClassHolder;
+import com.dumbhippo.dm.store.StoreKey;
 import com.dumbhippo.server.NotFoundException;
 
 public abstract class DMSession {
 	private static Logger logger = GlobalSetup.getLogger(DMSession.class);
 
-	private Map<Object, DMObject> sessionDMOs = new HashMap<Object, DMObject>();
+	private Map<StoreKey, DMObject> sessionDMOs = new HashMap<StoreKey, DMObject>();
 	protected DataModel model;
 	private DMViewpoint viewpoint;
 	private EntityManager injectableEntityManager;
@@ -34,16 +36,21 @@ public abstract class DMSession {
 	}
 	
 	public <K, T extends DMObject<K>> T find(Class<T> clazz, K key) throws NotFoundException {
+		DMClassHolder<T> classHolder = model.getDMClass(clazz); 
+		StoreKey<K,T> storeKey = new StoreKey<K,T>(classHolder, key);
+		
+		return find(storeKey);
+	}
+	
+	public <K, T extends DMObject<K>> T find(StoreKey<K,T> storeKey) throws NotFoundException {
 		@SuppressWarnings("unchecked")
-		T result = (T)sessionDMOs.get(key);
+		T result = (T)sessionDMOs.get(storeKey);
 		
 		if (result == null) {
-			logger.debug("Didn't find object for key {}, creating a new one", key);
+			logger.debug("Didn't find object for key {}, creating a new one", storeKey.getKey());
 			
-			DMClassHolder<T> classHolder = model.getDMClass(clazz); 
-			
-			result = classHolder.createInstance(key, this);
-			sessionDMOs.put(key, result);
+			result = storeKey.getClassHolder().createInstance(storeKey.getKey(), this);
+			sessionDMOs.put(storeKey, result);
 		}
 		
 		return result;
@@ -57,8 +64,10 @@ public abstract class DMSession {
 		}
 	}
 	
-	public <T extends DMObject> void visitFetch(T object, Fetch<T> fetch, FetchVisitor visitor) {
-		fetch.visit(this, object, visitor);
+	public <K,T extends DMObject<K>> void visitFetch(T object, Fetch<K,? super T> fetch, FetchVisitor visitor) {
+		@SuppressWarnings("unchecked")
+		DMClassHolder<? extends T> classHolder = object.getClassHolder();
+		fetch.visit(this, classHolder, object, visitor);
 	}
 
 	/**
@@ -68,8 +77,9 @@ public abstract class DMSession {
 	 * @param clazz
 	 * @param t
 	 */
-	public <T extends DMObject<?>> void internalInit(Class<T> clazz, T t) {
-		DMClassHolder<T> classHolder = model.getDMClass(clazz); 
+	public <T extends DMObject<?>> void internalInit(T t) {
+		@SuppressWarnings("unchecked")
+		DMClassHolder<T> classHolder = t.getClassHolder(); 
 		
 		classHolder.processInjections(this, t);
 		
@@ -96,7 +106,7 @@ public abstract class DMSession {
 	 * @return
 	 * @throws NotCachedException
 	 */
-	public abstract <K, T extends DMObject<K>> Object fetchAndFilter(Class<T> clazz, K key, int propertyIndex) throws NotCachedException;
+	public abstract <K, T extends DMObject<K>> Object fetchAndFilter(StoreKey<K,T> key, int propertyIndex) throws NotCachedException;
 
 	/**
 	 * Internal API: Stores the specified (unfiltered) value in the cache, then filters it
@@ -111,7 +121,7 @@ public abstract class DMSession {
 	 * @return
 	 * @throws NotCachedException
 	 */
-	public abstract <K, T extends DMObject<K>> Object storeAndFilter(Class<T> clazz, K key, int propertyIndex, Object value);
+	public abstract <K, T extends DMObject<K>> Object storeAndFilter(StoreKey<K,T> key, int propertyIndex, Object value);
 
 	public Object getInjectableEntityManager() {
 		if (injectableEntityManager == null)

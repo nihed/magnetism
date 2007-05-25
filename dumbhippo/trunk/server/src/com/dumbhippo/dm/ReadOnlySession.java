@@ -3,6 +3,8 @@ package com.dumbhippo.dm;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.schema.DMPropertyHolder;
+import com.dumbhippo.dm.store.StoreKey;
 
 
 public class ReadOnlySession extends DMSession {
@@ -23,23 +25,21 @@ public class ReadOnlySession extends DMSession {
 	}
 	
 	@Override
-	public <K, T extends DMObject<K>> Object fetchAndFilter(Class<T> clazz, K key, int propertyIndex) throws NotCachedException {
-		DMClassHolder classHolder = model.getDMClass(clazz);
-		Object value = model.getStore().fetch(classHolder, key, propertyIndex);
-		DMPropertyHolder property = classHolder.getProperty(propertyIndex);
-		
-		logger.debug("Found value for {}#{}.{} in the cache", new Object[] { clazz.getSimpleName(), key, property.getName() });
+	public <K, T extends DMObject<K>> Object fetchAndFilter(StoreKey<K,T> key, int propertyIndex) throws NotCachedException {
+		Object value = model.getStore().fetch(key, propertyIndex);
+
+		DMPropertyHolder property = key.getClassHolder().getProperty(propertyIndex);
+		logger.debug("Found value for {}.{} in the cache", key, property.getName());
 
 		return property.rehydrate(value, this);
 	}
 
 	@Override
-	public <K, T extends DMObject<K>> Object storeAndFilter(Class<T> clazz, K key, int propertyIndex, Object value) {
-		DMClassHolder classHolder = model.getDMClass(clazz);
-		DMPropertyHolder property = classHolder.getProperty(propertyIndex);
-		model.getStore().store(classHolder, key, propertyIndex, property.dehydrate(value), txTimestamp);
+	public <K, T extends DMObject<K>> Object storeAndFilter(StoreKey<K,T> key, int propertyIndex, Object value) {
+		DMPropertyHolder property = key.getClassHolder().getProperty(propertyIndex);
+		model.getStore().store(key, propertyIndex, property.dehydrate(value), txTimestamp);
 		
-		logger.debug("Cached new value for {}#{}.{}", new Object[] { clazz.getSimpleName(), key, property.getName() });
+		logger.debug("Cached new value for {}.{}", key, property.getName());
 		
 		return value;
 	}

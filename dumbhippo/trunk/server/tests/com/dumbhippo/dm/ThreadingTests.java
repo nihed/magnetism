@@ -46,7 +46,7 @@ public class ThreadingTests extends AbstractSupportedTests {
 
 				group = em.find(TestGroup.class, groupId.toString());
 				group.setName("Aardvarks");
-				session.notify(TestGroupDMO.class, groupId, "name");
+				session.changed(TestGroupDMO.class, groupId, "name");
 				
 				em.getTransaction().commit();
 			}

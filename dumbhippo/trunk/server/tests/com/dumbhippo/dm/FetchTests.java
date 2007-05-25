@@ -107,21 +107,33 @@ public class FetchTests extends AbstractSupportedTests {
 		}
 	}
 	
-	public <T extends DMObject> void doTest(Class<T> clazz, T object, String fetchString, String resultId, String... parameters) throws RecognitionException, TokenStreamException, FetchValidationException {
-		FetchNode fetchNode = FetchParser.parse(fetchString);
-		Fetch<T> fetch = fetchNode.bind(DataModel.getInstance().getDMClass(clazz));
-		
-		FetchResultVisitor visitor = new FetchResultVisitor();
-		ReadOnlySession.getCurrent().visitFetch(object, fetch, visitor);
-		
+	public FetchResult getExpected(String resultId, String... parameters) {
 		Map<String, String> parametersMap = new HashMap<String, String>();
 		for (int i = 0; i  < parameters.length; i += 2)
-			parametersMap.put(parameters[i], parameters[i + 1]); 
+			parametersMap.put(parameters[i], parameters[i + 1]);
 		
-		FetchResult expected = expectedResults.get(resultId).substitute(parametersMap);
+		FetchResult raw = expectedResults.get(resultId);
+		if (raw == null)
+			throw new RuntimeException("No expected result set with id='" + resultId + "'");
+		
+		return raw.substitute(parametersMap);
+	}
+	
+	public <K,T extends DMObject<K>> void doTest(Class<T> clazz, T object, TestDMClient client, String fetchString, String resultId, String... parameters) throws RecognitionException, TokenStreamException, FetchValidationException {
+		FetchNode fetchNode = FetchParser.parse(fetchString);
+		Fetch<K,T> fetch = fetchNode.bind(DataModel.getInstance().getDMClass(clazz));
+		
+		FetchResultVisitor visitor = new FetchResultVisitor(client);
+		ReadOnlySession.getCurrent().visitFetch(object, fetch, visitor);
+		
+		FetchResult expected = getExpected(resultId, parameters);
+		
 		logger.debug("Result for {} is {}", resultId, visitor.getResult());
-		
 		visitor.getResult().validateAgainst(expected);
+	}
+
+	public <K,T extends DMObject<K>> void doTest(Class<T> clazz, T object, String fetchString, String resultId, String... parameters) throws RecognitionException, TokenStreamException, FetchValidationException {
+		doTest(clazz, object, null, fetchString, resultId, parameters);
 	}
 
 	private void createData(Guid bobId, Guid janeId, Guid groupId) {
@@ -210,6 +222,135 @@ public class FetchTests extends AbstractSupportedTests {
 		
 		em.getTransaction().commit();
 	}
+	
+	// Test suppression of already known information for repeated fetches with the same client
+	public void testMultipleFetch() throws Exception {
+		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
+		TestDMClient client = new TestDMClient(viewpoint);
+		EntityManager em;
+		
+		/////////////////////////////////////////////////
+		// Setup
 
-	// TODO: add tests here for fetching against subclassed objects, with defaults, etc
+		Guid bobId = Guid.createNew();
+		Guid janeId = Guid.createNew();
+		Guid groupId = Guid.createNew();
+		
+		createData(bobId, janeId, groupId);
+		
+		//////////////////////////////////////////////////
+		
+		em = support.beginSessionRO(viewpoint);
+		
+		TestGroupDMO groupDMO = ReadOnlySession.getCurrent().findMustExist(TestGroupDMO.class, groupId);
+		doTest(TestGroupDMO.class, groupDMO, client, "name", "bobAndJaneSmall",
+				"group", groupId.toString(),
+				"bob", bobId.toString(),
+				"jane", janeId.toString());
+		
+		doTest(TestGroupDMO.class, groupDMO, client, "+;members +", "bobAndJaneRemaining",
+				"group", groupId.toString(),
+				"bob", bobId.toString(),
+				"jane", janeId.toString());
+
+		doTest(TestGroupDMO.class, groupDMO, client, "members group", "bobAndJaneAddOn",
+				"group", groupId.toString(),
+				"bob", bobId.toString(),
+				"jane", janeId.toString());
+
+		em.getTransaction().commit();
+	}
+	
+	// Test a fetch that loops back to the same object
+	public void testLoopFetch() throws Exception {
+		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
+		TestDMClient client = new TestDMClient(viewpoint);
+		EntityManager em;
+		
+		/////////////////////////////////////////////////
+		// Setup
+
+		Guid bobId = Guid.createNew();
+		Guid janeId = Guid.createNew();
+		Guid groupId = Guid.createNew();
+		
+		createData(bobId, janeId, groupId);
+		
+		//////////////////////////////////////////////////
+		
+		em = support.beginSessionRO(viewpoint);
+		
+		TestGroupDMO groupDMO = ReadOnlySession.getCurrent().findMustExist(TestGroupDMO.class, groupId);
+		doTest(TestGroupDMO.class, groupDMO, client, "+;members group +", "bobAndJaneLoop",
+				"group", groupId.toString(),
+				"bob", bobId.toString(),
+				"jane", janeId.toString());
+
+		em.getTransaction().commit();
+	}
+	
+	public void testNotificationFetch() throws Exception {
+		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
+		TestDMClient client = new TestDMClient(viewpoint);
+		TestGroup group;
+		EntityManager em;
+		
+		/////////////////////////////////////////////////
+		// Setup
+
+		Guid bobId = Guid.createNew();
+		Guid janeId = Guid.createNew();
+		Guid victorId = Guid.createNew();
+		Guid groupId = Guid.createNew();
+		
+		createData(bobId, janeId, groupId);
+		
+		//////////////////////////////////////////////////
+		
+		em = support.beginSessionRO(viewpoint);
+		
+		TestGroupDMO groupDMO = ReadOnlySession.getCurrent().findMustExist(TestGroupDMO.class, groupId);
+		doTest(TestGroupDMO.class, groupDMO, client, "name;members member name", "bobAndJane",
+				"group", groupId.toString(),
+				"bob", bobId.toString(),
+				"jane", janeId.toString());
+		
+		em.getTransaction().commit();
+
+		em = support.beginSessionRW(viewpoint);
+
+		ReadWriteSession session = ReadWriteSession.getCurrent();
+		
+		group = em.find(TestGroup.class, groupId.toString());
+		
+		TestUser victor = new TestUser("Victor");
+		victor.setId(victorId.toString());
+		em.persist(victor);
+
+		TestGroupMember groupMember;
+		
+		groupMember = new TestGroupMember(group, victor);
+		em.persist(groupMember);
+		group.getMembers().add(groupMember);
+		session.changed(TestGroupDMO.class, groupId, "members");
+
+		group.setName("BobAndJaneAndVictor");
+		session.changed(TestGroupDMO.class, groupId, "name");
+
+		em.getTransaction().commit();
+		
+		DataModel.getInstance().waitForAllNotifications();
+		
+		FetchResult expected = getExpected("andNowVictor",
+				"group", groupId.toString(),
+				"bob", bobId.toString(),
+				"jane", janeId.toString(),
+				"victor", victorId.toString());
+		assertNotNull(client.getLastNotification());
+		
+		logger.debug("Notification from addition of Victor is {}", client.getLastNotification());
+		client.getLastNotification().validateAgainst(expected);
+	}
+
+	// TODO: add tests here for fetching against subclassed objects
 }

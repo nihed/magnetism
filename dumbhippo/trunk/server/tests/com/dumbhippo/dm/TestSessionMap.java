@@ -4,7 +4,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.RollbackException;
 import javax.transaction.Synchronization;
 
 import org.hibernate.SessionFactory;
@@ -54,5 +56,22 @@ public class TestSessionMap implements DMSessionMap {
 			sessions.remove(transaction);
 			session.afterCompletion(status);
 		}		
+	}
+
+	public void runInTransaction(Runnable runnable) {
+		EntityManager em = TestSupport.getInstance().beginTransaction();
+		
+		try {
+			runnable.run();
+		} catch (RuntimeException e) {
+			em.getTransaction().setRollbackOnly();
+			throw new RuntimeException("Error in transaction", e);
+		} finally {
+			try {
+				em.getTransaction().commit();
+			} catch (RollbackException e) {
+				// Presumably because we set rollback-only above
+			}
+		}
 	}
 }

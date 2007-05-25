@@ -1,6 +1,6 @@
 package com.dumbhippo.dm.fetch;
 
-import com.dumbhippo.dm.DMPropertyHolder;
+import com.dumbhippo.dm.schema.DMPropertyHolder;
 
 
 public final class PropertyFetch implements Comparable<PropertyFetch> {

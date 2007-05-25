@@ -78,6 +78,7 @@
 		<!-- Compile the java code -->
 		<javac debug="on" srcdir="${src}" destdir="${build}" source="1.5" encoding="UTF-8">
 			<classpath refid="project.class.path" />
+			<compilerarg value="-Xlint:unchecked"/>
 		</javac>
 		
 		<!-- copy over properties files -->
