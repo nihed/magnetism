@@ -31,7 +31,7 @@ if __name__ == '__main__':
         apostate_mode()
         try:
             bb_obj = dbus.SessionBus().get_object('org.mugshot.BigBoard', '/bigboard/panel')
-            bb = dbus.Interface(self.__bb_obj, 'org.mugshot.BigBoard.Panel')
+            bb = dbus.Interface(bb_obj, 'org.mugshot.BigBoard.Panel')
             bb.exit()
         except:
             logging.exception("Failed to shut down bigboard")
