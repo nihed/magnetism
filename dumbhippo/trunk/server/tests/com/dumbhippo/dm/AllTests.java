@@ -21,6 +21,7 @@ public class AllTests {
         suite.addTest(new TestSuite(FetchBindingTests.class));
         suite.addTest(new TestSuite(FetchTests.class));
         suite.addTest(new TestSuite(ThreadingTests.class));
+        suite.addTest(new TestSuite(FilterTests.class));
         
         return suite;
     }
