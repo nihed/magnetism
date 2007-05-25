@@ -3,21 +3,22 @@ package com.dumbhippo.dm;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.dm.store.StoreClient;
+import com.dumbhippo.identity20.Guid;
 
 public class TestDMClient implements DMClient {
-	TestViewpoint viewpoint;
+	private Guid viewerId;
 	private StoreClient storeClient;
 	private FetchResult lastNotification;
 	private long lastSeenSerial = -1;
 
-	public TestDMClient(TestViewpoint viewpoint) {
-		this.viewpoint = viewpoint;
+	public TestDMClient(Guid viewerId) {
+		this.viewerId = viewerId;
 		
 		storeClient = DataModel.getInstance().getStore().openClient(this);
 	}
 
-	public DMViewpoint getViewpoint() {
-		return viewpoint;
+	public DMViewpoint createViewpoint() {
+		return new TestViewpoint(viewerId);
 	}
 	
 	public FetchResult getLastNotification() {
@@ -41,7 +42,7 @@ public class TestDMClient implements DMClient {
 		}
 	}
 
-	public <K, T extends DMObject<K>> void notifyEviction(DMClassHolder<T> classHolder, K key, long serial) {
+	public <K, T extends DMObject<K>> void notifyEviction(DMClassHolder<K,T> classHolder, K key, long serial) {
 	}
 
 	public void nullNotification(long serial) {
@@ -49,6 +50,6 @@ public class TestDMClient implements DMClient {
 	
 	@Override
 	public String toString() {
-		return "TestDMClient(" + viewpoint.getViewerId() + ")"; 
+		return "TestDMClient(" + viewerId + ")"; 
 	}
 }

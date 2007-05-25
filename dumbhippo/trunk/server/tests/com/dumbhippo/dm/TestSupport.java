@@ -33,6 +33,8 @@ public class TestSupport {
 		testEmf = new TestEntityManagerFactory(delegateEmf);
 		model.setSessionMap(new TestSessionMap(delegateEmf));
 		model.setEntityManagerFactory(testEmf);
+		model.setViewpointClass(TestViewpoint.class);
+		model.setSystemViewpoint(new TestViewpoint(null));
 		model.addDMClass(TestUserDMO.class);
 		model.addDMClass(TestGroupDMO.class);
 		model.addDMClass(TestGroupMemberDMO.class);

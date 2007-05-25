@@ -1,6 +1,6 @@
 package com.dumbhippo.test.util;
 
-public abstract class Sequence implements Runnable {
+public abstract class Sequence {
 	private Sequencer sequencer;
 	int step = -1;
 	
@@ -26,4 +26,6 @@ public abstract class Sequence implements Runnable {
 			throw new RuntimeException("Interrupted while waiting for other threads", e);
 		}
 	}
+	
+	abstract public void run() throws Exception;
 }

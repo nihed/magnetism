@@ -7,6 +7,7 @@ import javax.persistence.EntityManager;
 
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
+import com.dumbhippo.dm.annotations.DMFilter;
 import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
@@ -15,6 +16,7 @@ import com.dumbhippo.dm.persistence.TestGroupMember;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.server.NotFoundException;
 
+@DMFilter("viewer.canSeeGroup(this)")
 @DMO(classId="http://mugshot.org/p/o/test/group", resourceBase="/o/test/group")
 public abstract class TestGroupDMO extends DMObject<Guid> {
 	@Inject
@@ -45,7 +47,7 @@ public abstract class TestGroupDMO extends DMObject<Guid> {
 	public List<TestGroupMemberDMO> getMembers() {
 		List<TestGroupMemberDMO> result = new ArrayList<TestGroupMemberDMO>();
 		for (TestGroupMember member : group.getMembers()) {
-			result.add(session.findMustExist(TestGroupMemberDMO.class, new TestGroupMemberKey(member)));
+			result.add(session.findUnchecked(TestGroupMemberDMO.class, new TestGroupMemberKey(member)));
 		}
 		
 		return result;

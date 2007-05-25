@@ -4,10 +4,10 @@ import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.schema.DMClassHolder;
 
 public class StoreKey<K,T extends DMObject<K>> {
-	protected DMClassHolder<T> classHolder;
+	protected DMClassHolder<K,T> classHolder;
 	protected K key;
 
-	public StoreKey(DMClassHolder<T> classHolder, K key) {
+	public StoreKey(DMClassHolder<K,T> classHolder, K key) {
 		this.classHolder = classHolder;
 		this.key = key;
 	}
@@ -20,7 +20,7 @@ public class StoreKey<K,T extends DMObject<K>> {
 		return key;
 	}
 	
-	public DMClassHolder<T> getClassHolder() {
+	public DMClassHolder<K,T> getClassHolder() {
 		return classHolder;
 	}
 	

@@ -50,4 +50,8 @@ public class AndFilter implements Filter {
 		AndFilter other = (AndFilter)o;
 		return a.equals(other.a) && b.equals(other.b);
 	}
+
+	public Filter asItemFilter() {
+		return new AndFilter(a.asItemFilter(), b.asItemFilter());
+	}
 }

@@ -6,6 +6,6 @@ import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMViewpoint;
 
 public interface CompiledListFilter<K,T extends DMObject<K>,KI,TI extends DMObject<KI>> {
-	List<KI> filter(DMViewpoint viewpoint, K key, List<KI> items);
-	List<TI> filter(DMViewpoint viewpoint, T object, List<TI> items);
+	List<KI> filterKeys(DMViewpoint viewpoint, K key, List<KI> items);
+	List<TI> filterObjects(DMViewpoint viewpoint, K key, List<TI> items);
 }

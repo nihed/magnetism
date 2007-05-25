@@ -18,7 +18,7 @@ public class StoreNode<K,T extends DMObject<K>> extends StoreKey<K,T> {
 	private List<Registration<K,T>> registrations;
 	private boolean evicted;
 
-	StoreNode(DMClassHolder<T> classHolder, K key) {
+	StoreNode(DMClassHolder<K,T> classHolder, K key) {
 		super(classHolder, key);
 		
 		this.properties = new Object[classHolder.getPropertyCount()];

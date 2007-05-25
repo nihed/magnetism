@@ -25,11 +25,11 @@ public interface DMClient {
 	 */
 	FetchVisitor beginNotification();
 	
-	DMViewpoint getViewpoint();
+	DMViewpoint createViewpoint();
 	
 	void endNotification(FetchVisitor visitor, long serial);
 	
-	<K,T extends DMObject<K>> void notifyEviction(DMClassHolder<T> classHolder, K key, long serial);
+	<K,T extends DMObject<K>> void notifyEviction(DMClassHolder<K,T> classHolder, K key, long serial);
 	
 	void nullNotification(long serial);
 }

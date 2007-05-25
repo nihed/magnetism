@@ -28,7 +28,7 @@ public class FetchResultVisitor implements FetchVisitor {
 		return "http://mugshot.org" + resourceBase + "/" + key.toString();
 	}
 
-	public <K,T extends DMObject<K>> void beginResource(DMClassHolder<T> classHolder, K key, String fetchString, boolean indirect) {
+	public <K,T extends DMObject<K>> void beginResource(DMClassHolder<K,T> classHolder, K key, String fetchString, boolean indirect) {
 		String resourceId = makeResourceId(classHolder, key);
 		currentResource = new FetchResultResource(classHolder.getClassId(), resourceId, fetchString, indirect);
 	}
@@ -44,8 +44,8 @@ public class FetchResultVisitor implements FetchVisitor {
 		currentResource.addProperty(property);
 	}
 
-	public <KP,TP extends DMObject<KP>> void resourceProperty(ResourcePropertyHolder<KP,TP> propertyHolder, KP key) {
-		DMClassHolder<TP> classHolder = propertyHolder.getResourceClassHolder();
+	public <KP,TP extends DMObject<KP>> void resourceProperty(ResourcePropertyHolder<?,?,KP,TP> propertyHolder, KP key) {
+		DMClassHolder<KP,TP> classHolder = propertyHolder.getResourceClassHolder();
 		String resourceId = makeResourceId(classHolder, key);
 		
 		FetchResultProperty property = FetchResultProperty.createResource(propertyHolder.getName(), propertyHolder.getNameSpace(), resourceId);

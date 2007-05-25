@@ -8,7 +8,6 @@ import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.schema.DMPropertyHolder;
 import com.dumbhippo.dm.store.StoreClient;
 import com.dumbhippo.dm.store.StoreKey;
-import com.dumbhippo.server.NotFoundException;
 
 public class ClientNotification {
 	private StoreClient client;
@@ -50,43 +49,38 @@ public class ClientNotification {
 		}
 		
 		public void visitNotification(DMSession session, FetchVisitor visitor) {
-			try {
-				DMObject<K> object = session.find(key);
-				DMPropertyHolder[] classProperties = key.getClassHolder().getProperties();
+			T object = session.findUnchecked(key);
+			DMPropertyHolder<K,T,?>[] classProperties = key.getClassHolder().getProperties();
 
-				long v;
-				int propertyIndex;
-				
-				if (childFetches != null) {
-					v = propertyMask;
-					propertyIndex = 0;
-					while (v != 0) {
-						if ((v & 1) != 0 && childFetches[propertyIndex] != null) {
-							classProperties[propertyIndex].visitChildren(session, childFetches[propertyIndex], object, visitor);
-						}
-	
-						v >>= 1;
-						propertyIndex++;
-					}
-				}
-				
-				visitor.beginResource(key.getClassHolder(), key.getKey(), fetch.getFetchString(key.getClassHolder()), false);
-				
+			long v;
+			int propertyIndex;
+			
+			if (childFetches != null) {
 				v = propertyMask;
 				propertyIndex = 0;
 				while (v != 0) {
-					if ((v & 1) != 0)
-						classProperties[propertyIndex].visitProperty(session, object, visitor);
+					if ((v & 1) != 0 && childFetches[propertyIndex] != null) {
+						classProperties[propertyIndex].visitChildren(session, childFetches[propertyIndex], object, visitor);
+					}
 
 					v >>= 1;
 					propertyIndex++;
 				}
-				
-				visitor.endResource();
-				
-			} catch (NotFoundException e) {
-				// Ignore
 			}
+			
+			visitor.beginResource(key.getClassHolder(), key.getKey(), fetch.getFetchString(key.getClassHolder()), false);
+			
+			v = propertyMask;
+			propertyIndex = 0;
+			while (v != 0) {
+				if ((v & 1) != 0)
+					classProperties[propertyIndex].visitProperty(session, object, visitor);
+
+				v >>= 1;
+				propertyIndex++;
+			}
+			
+			visitor.endResource();
 		}
 		
 		@Override

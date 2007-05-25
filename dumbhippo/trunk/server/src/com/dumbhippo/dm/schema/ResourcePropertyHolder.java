@@ -16,24 +16,26 @@ import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.parser.FetchParser;
 import com.dumbhippo.identity20.Guid;
 
-public abstract class ResourcePropertyHolder<K,T extends DMObject<K>> extends DMPropertyHolder {
-	private boolean completed;
-	private DMClassHolder<T> resourceClassHolder;
-	private Fetch<K,T> defaultChildren;
+public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI extends DMObject<KI>> extends DMPropertyHolder<K,T,TI> {
+	private DMClassHolder<KI,TI> resourceClassHolder;
+	protected Class<TI> objectType;
+	protected Class<KI> keyType;
+	private Fetch<KI,TI> defaultChildren;
 
-	public ResourcePropertyHolder(DMClassHolder<? extends DMObject> declaringClassHolder, CtMethod ctMethod, Class<T> elementType, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
-		super(declaringClassHolder, ctMethod, elementType, annotation, filter, viewerDependent);
+	public ResourcePropertyHolder(DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, DMClassInfo<KI,TI> classInfo, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
+		super(declaringClassHolder, ctMethod, classInfo.getObjectClass(), annotation, filter, viewerDependent);
+		objectType = classInfo.getObjectClass();
+		keyType = classInfo.getKeyClass();
 	}
 
 	@Override
 	public void complete() {
-		super.complete();
 		if (completed)
 			return;
+
+		super.complete();
 		
-		completed = true;
-		
-		resourceClassHolder = declaringClassHolder.getModel().getDMClass(getResourceType());
+		resourceClassHolder = declaringClassHolder.getModel().getClassHolder(keyType, getResourceType());
 
 		if (!"".equals(annotation.defaultChildren())) {
 			defaultInclude = true;
@@ -52,20 +54,23 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>> extends DM
 	}
 
 	@Override
-	public Fetch<K,T> getDefaultChildren() {
+	public Fetch<KI,TI> getDefaultChildren() {
 		return defaultChildren;
 	}
 	
 	@SuppressWarnings("unchecked")
-	public Class<T> getResourceType() {
+	public Class<TI> getResourceType() {
 		return elementType;
 	}
 	
-	public DMClassHolder<T> getResourceClassHolder() {
+	public DMClassHolder<KI,TI> getResourceClassHolder() {
 		if (completed)
 			return resourceClassHolder;
-		else
-			return declaringClassHolder.getModel().getDMClass(getResourceType());
+		else {
+			@SuppressWarnings("unchecked")
+			DMClassHolder<KI,TI> classHolder = declaringClassHolder.getModel().getClassHolder(keyType, getResourceType()); 
+			return classHolder;
+		}
 	}
 	
 	protected Object dehydrateDMO(Object value) {
@@ -78,20 +83,17 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>> extends DM
 	}
 
 	@SuppressWarnings("unchecked")
-	protected Object rehydrateDMO(Object value, DMSession session) {
-		try {
-			return session.find(elementType, value);
-		} catch (com.dumbhippo.server.NotFoundException e) {
-			// FIXME: find() basically always has to exceed, because of lazy initialization
-			throw new RuntimeException("Unexpectedly could not find object when rehydrating");
-		}
+	protected TI rehydrateDMO(Object value, DMSession session) {
+		@SuppressWarnings("unchecked")
+		KI key = (KI)value;
+		return session.findUnchecked(objectType, key);
 	}
 	
-	protected void visitChild(DMSession session, Fetch<K,T> children, T value, FetchVisitor visitor) {
+	protected void visitChild(DMSession session, Fetch<KI,TI> children, TI value, FetchVisitor visitor) {
 		children.visit(session, resourceClassHolder, value, visitor, true);
 	}
 
-	protected void visitResourceValue(DMSession session, T value, FetchVisitor visitor) {
+	protected void visitResourceValue(DMSession session, TI value, FetchVisitor visitor) {
 		visitor.resourceProperty(this, value.getKey());
 	}
 

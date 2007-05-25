@@ -41,7 +41,7 @@ public class PropertyFetchNode {
 		return null;
 	}
 
-	public <K,T extends DMObject<K>> void bindResourceProperty(ResourcePropertyHolder<K,T> resourceHolder, List<PropertyFetch> resultList, boolean maybeSkip, boolean notify) {
+	public <K,T extends DMObject<K>> void bindResourceProperty(ResourcePropertyHolder<?,?,K,T> resourceHolder, List<PropertyFetch> resultList, boolean maybeSkip, boolean notify) {
 		Fetch<K,T> defaultChildren = resourceHolder.getDefaultChildren();
 		Fetch<K,T> boundChildren = null;
 		
@@ -50,7 +50,7 @@ public class PropertyFetchNode {
 		}
 
 		if (children != null) {
-			DMClassHolder<T> childClassHolder = resourceHolder.getResourceClassHolder();
+			DMClassHolder<K,T> childClassHolder = resourceHolder.getResourceClassHolder();
 			boundChildren = children.bind(childClassHolder);
 		}
 
@@ -78,7 +78,7 @@ public class PropertyFetchNode {
 	 *   (the property will still not be skipped if the children overridden)
 	 * @param resultList list to append the results to 
 	 */
-	public void bind(DMClassHolder<? extends DMObject> classHolder, boolean skipDefault, List<PropertyFetch> resultList) {
+	public void bind(DMClassHolder<?,?> classHolder, boolean skipDefault, List<PropertyFetch> resultList) {
 		boolean notify = true;
 		for (FetchAttributeNode attribute : attributes) {
 			switch (attribute.getType()) {
@@ -95,7 +95,7 @@ public class PropertyFetchNode {
 		
 		int propertyIndex = classHolder.getPropertyIndex(property);
 		if (propertyIndex >= 0) {
-			DMPropertyHolder propertyHolder = classHolder.getProperty(propertyIndex);
+			DMPropertyHolder<?,?,?> propertyHolder = classHolder.getProperty(propertyIndex);
 			boolean maybeSkip = skipDefault && propertyHolder.getDefaultInclude(); 
 			
 			if (propertyHolder instanceof ResourcePropertyHolder) {

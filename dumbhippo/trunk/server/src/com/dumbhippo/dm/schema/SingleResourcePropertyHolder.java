@@ -4,15 +4,45 @@ import javassist.CtMethod;
 
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
+import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.dm.annotations.DMFilter;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.ViewerDependent;
 import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
+import com.dumbhippo.dm.filter.AndFilter;
+import com.dumbhippo.dm.filter.CompiledItemFilter;
+import com.dumbhippo.dm.filter.Filter;
+import com.dumbhippo.dm.filter.FilterCompiler;
 
-public class SingleResourcePropertyHolder<K, T extends DMObject<K>> extends ResourcePropertyHolder<K,T> {
-	public SingleResourcePropertyHolder(DMClassHolder<? extends DMObject> declaringClassHolder, CtMethod ctMethod, Class<T> elementType, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
-		super(declaringClassHolder, ctMethod, elementType, annotation, filter, viewerDependent);
+public class SingleResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends DMObject<KI>> extends ResourcePropertyHolder<K,T,KI,TI> {
+	private CompiledItemFilter<K,T,KI,TI> itemFilter;
+
+	public SingleResourcePropertyHolder(DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, DMClassInfo<KI,TI> classInfo, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
+		super(declaringClassHolder, ctMethod, classInfo, annotation, filter, viewerDependent);
+	}
+
+	@Override
+	public void complete() {
+		if (completed)
+			return;
+		
+		super.complete();
+		
+		Filter classFilter = getResourceClassHolder().getUncompiledItemFilter();
+		if (classFilter != null && propertyFilter == null) {
+			itemFilter = getResourceClassHolder().getItemFilter();
+		} else if (classFilter != null || propertyFilter != null) {
+			Filter toCompile;
+			if (classFilter != null)
+				toCompile = new AndFilter(classFilter, propertyFilter);
+			else
+				toCompile = propertyFilter;
+			
+			itemFilter = FilterCompiler.compileItemFilter(declaringClassHolder.getModel().getViewpointClass(), 
+														  declaringClassHolder.getKeyClass(), 
+														  keyType, toCompile);
+		}
 	}
 
 	@Override
@@ -21,21 +51,41 @@ public class SingleResourcePropertyHolder<K, T extends DMObject<K>> extends Reso
 	}
 	
 	@Override
-	public Object rehydrate(Object value, DMSession session) {
-		return rehydrateDMO(value, session);
-	}
-	
-	@Override
-	@SuppressWarnings("unchecked")
-	public void visitChildren(DMSession session, Fetch<?,?> children, DMObject object, FetchVisitor visitor) {
-		Fetch<K,T> typedChildren = (Fetch<K,T>)children;
+	public Object rehydrate(DMViewpoint viewpoint, K key, Object value, DMSession session) {
+		if (itemFilter == null)
+			return rehydrateDMO(value, session);
 		
-		visitChild(session, typedChildren, (T)getRawPropertyValue(object), visitor);
+		@SuppressWarnings("unchecked")
+		KI itemKey = (KI)value;
+		KI filtered = itemFilter.filterKey(viewpoint, key, itemKey);
+		if (filtered != null)
+			return rehydrateDMO(filtered, session);
+		else
+			return null;
+	}
+	
+
+	@Override
+	public Object filter(DMViewpoint viewpoint, K key, Object value) {
+		if (itemFilter == null)
+			return value;
+		
+		@SuppressWarnings("unchecked")
+		TI item = (TI)value;
+		return itemFilter.filterObject(viewpoint, key, item);
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public void visitChildren(DMSession session, Fetch<?,?> children, T object, FetchVisitor visitor) {
+		Fetch<KI,TI> typedChildren = (Fetch<KI,TI>)children;
+		
+		visitChild(session, typedChildren, (TI)getRawPropertyValue(object), visitor);
 	}
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	public void visitProperty(DMSession session, DMObject object, FetchVisitor visitor) {
-		visitResourceValue(session, (T)getRawPropertyValue(object), visitor);
+	public void visitProperty(DMSession session, T object, FetchVisitor visitor) {
+		visitResourceValue(session, (TI)getRawPropertyValue(object), visitor);
 	}
 }

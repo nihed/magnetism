@@ -48,7 +48,8 @@ public class FilterAssembler {
 
 	private Map<String, Integer> labels = new HashMap<String, Integer>();
 	private List<Fop> fops = new ArrayList<Fop>();
-	private boolean dereference;
+	private boolean dereferenceObject;
+	private boolean dereferenceItem;
 	private boolean listFilter;
 	private String viewpointClassName;
 	private Class<?> objectKeyClass; 
@@ -81,14 +82,14 @@ public class FilterAssembler {
 	 * @return
 	 */
 	public static FilterAssembler createForFilter(Class<? extends DMViewpoint> viewpointClass, Class<?> objectKeyClass, boolean dereference) {
-		return new FilterAssembler(viewpointClass, objectKeyClass, null, false, dereference);
+		return new FilterAssembler(viewpointClass, objectKeyClass, null, false, dereference, false);
 	}
 	
 	/**
 	 * Create an assembler used to produce one of the two filter methods of CompiledItemFilter:
 	 * 
-	 * 	K2 filter(DMViewpoint viewpoint, K1 key, K2 item);
-  	 *  T2 filter(DMViewpoint viewpoint, T1 object, T2 item);
+	 * 	K2 filter(DMViewpoint viewpoint, K key, KI item);
+  	 *  T2 filter(DMViewpoint viewpoint, K key, TI item);
 	 * 
 	 * @param viewpointClass subclass of DMViewpoint
 	 * @param objectKeyClass class of the object's key
@@ -97,14 +98,14 @@ public class FilterAssembler {
 	 * @return
 	 */
 	public static FilterAssembler createForItemFilter(Class<? extends DMViewpoint> viewpointClass, Class<?> objectKeyClass, Class<?> itemKeyClass, boolean dereference) {
-		return new FilterAssembler(viewpointClass, objectKeyClass, itemKeyClass, false, dereference);
+		return new FilterAssembler(viewpointClass, objectKeyClass, itemKeyClass, false, false, dereference);
 	}
 	
 	/**
 	 * Create an assembler used to produce one of the two filter methods of CompiledListFilter:
 	 * 
-	 * 	List<K2> filter(DMViewpoint viewpoint, K1 key, List<K2> items);
- 	 *  List<T2> filter(DMViewpoint viewpoint, T1 object, List<T2> items);
+	 * 	List<K2> filter(DMViewpoint viewpoint, K key, List<KI> items);
+ 	 *  List<T2> filter(DMViewpoint viewpoint, K, List<TI> items);
 	 * 
 	 * @param viewpointClass subclass of DMViewpoint
 	 * @param objectKeyClass class of the object's key
@@ -113,11 +114,12 @@ public class FilterAssembler {
 	 * @return
 	 */
 	public static FilterAssembler createForListFilter(Class<? extends DMViewpoint> viewpointClass, Class<?> objectKeyClass, Class<?> itemKeyClass, boolean dereference) {
-		return new FilterAssembler(viewpointClass, objectKeyClass, itemKeyClass, true ,dereference);
+		return new FilterAssembler(viewpointClass, objectKeyClass, itemKeyClass, true, false, dereference);
 	}
 	
-	private FilterAssembler(Class<? extends DMViewpoint> viewpointClass, Class<?> objectKeyClass, Class<?> itemKeyClass, boolean listFilter, boolean dereference) {
-		this.dereference = dereference;
+	private FilterAssembler(Class<? extends DMViewpoint> viewpointClass, Class<?> objectKeyClass, Class<?> itemKeyClass, boolean listFilter, boolean dereferenceObject, boolean dereferenceItem) {
+		this.dereferenceObject = dereferenceObject;
+		this.dereferenceItem = dereferenceItem;
 		this.listFilter = listFilter;
 		viewpointClassName = Descriptor.toJvmName(viewpointClass.getName());
 		this.objectKeyClass = objectKeyClass;
@@ -342,11 +344,12 @@ public class FilterAssembler {
 	 * 
 	 * @param ctClass the class to add the method to
 	 */
-	public void addMethodToClass(CtClass ctClass) {
+	public void addMethodToClass(CtClass ctClass, String methodName) {
 		ClassFile classFile = ctClass.getClassFile();
-		String elementType = dereference ? "Lcom/dumbhippo/dm/DMObject;" : "Ljava/lang/Object;"; 
+		String objectType = dereferenceObject ? "Lcom/dumbhippo/dm/DMObject;" : "Ljava/lang/Object;"; 
+		String itemType = dereferenceItem ? "Lcom/dumbhippo/dm/DMObject;" : "Ljava/lang/Object;";
 		String arg1 = "Lcom/dumbhippo/dm/DMViewpoint;";
-		String arg2 = elementType;
+		String arg2 = objectType;
 		String arg3 = "";
 		String result;
 		
@@ -354,15 +357,15 @@ public class FilterAssembler {
 			arg3 = "Ljava/util/List;";
 			result = "Ljava/util/List;";
 		} else if (itemKeyClass != null) {
-			arg3 = elementType;
-			result = elementType;
+			arg3 = itemType;
+			result = itemType;
 		} else {
-			result = elementType;
+			result = objectType;
 		}
 
 		String descriptor = "(" + arg1 + arg2 + arg3 + ")" + result;
 		
-		MethodInfo methodInfo = new MethodInfo(classFile.getConstPool(), "filter", descriptor);
+		MethodInfo methodInfo = new MethodInfo(classFile.getConstPool(), methodName, descriptor);
 		methodInfo.setAccessFlags(AccessFlag.PUBLIC);
 		methodInfo.setCodeAttribute(toCode(classFile.getConstPool()));
 
@@ -669,8 +672,8 @@ public class FilterAssembler {
 			this.offset = offset;
 			return offset + 11 + 
 				(getArgumentLocalIndex() > 3 ? 1 : 0) + 
-				(dereference ? 3 : 0) + 
-				(dereference && listFilter ? 3 : 0) + 
+				(dereference() ? 3 : 0) + 
+				(dereference() && listFilter ? 3 : 0) + 
 				(propertyMethodName != null ? 3 : 0);
 		}
 		
@@ -679,7 +682,7 @@ public class FilterAssembler {
 			String argumentClassName = getArgumentClassName();
 			bytecode.addAload(VIEWPOINT_PARAM);                                                           // 1 byte
 			bytecode.addAload(getArgumentLocalIndex());                                                   // 1-2 bytes
-			if (dereference) {
+			if (dereference()) {
 				if (listFilter)
 					bytecode.addCheckcast("com/dumbhippo/dm/DMObject");                                   // 3 bytes
 				bytecode.addInvokevirtual("com/dumbhippo/dm/DMObject", "getKey", "()Ljava/lang/Object;"); // 3 bytes
@@ -700,6 +703,7 @@ public class FilterAssembler {
 		protected abstract Class<?> getArgumentClass();
 		protected abstract String getArgumentClassName();
 		protected abstract String getName();
+		protected abstract boolean dereference();
 		
 		@Override
 		public String toString() {
@@ -740,6 +744,11 @@ public class FilterAssembler {
 		protected String getName() {
 			return "thisCondition";
 		}
+
+		@Override
+		protected boolean dereference() {
+			return dereferenceObject;
+		}
 	}
 
 	private class ItemConditionFop extends AbstractConditionFop {
@@ -765,6 +774,11 @@ public class FilterAssembler {
 		@Override
 		protected String getName() {
 			return "itemCondition";
+		}
+
+		@Override
+		protected boolean dereference() {
+			return dereferenceItem;
 		}
 	}
 

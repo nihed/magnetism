@@ -49,7 +49,7 @@ public class FilterAssemblerTests extends TestCase {
 		
 		ctClass.addInterface(ctClassForClass(CompiledFilter.class));
 		
-		assembler.addMethodToClass(ctClass);
+		assembler.addMethodToClass(ctClass, "filterKey");
 		
 		Class<?> clazz = ctClass.toClass();
 		
@@ -64,7 +64,7 @@ public class FilterAssemblerTests extends TestCase {
 		
 		ctClass.addInterface(ctClassForClass(CompiledItemFilter.class));
 		
-		assembler.addMethodToClass(ctClass);
+		assembler.addMethodToClass(ctClass, "filterKey");
 		
 		Class<?> clazz = ctClass.toClass();
 		
@@ -79,7 +79,7 @@ public class FilterAssemblerTests extends TestCase {
 		
 		ctClass.addInterface(ctClassForClass(CompiledListFilter.class));
 		
-		assembler.addMethodToClass(ctClass);
+		assembler.addMethodToClass(ctClass, "filterKeys");
 		
 		Class<?> clazz = ctClass.toClass();
 		
@@ -118,8 +118,8 @@ public class FilterAssemblerTests extends TestCase {
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		
-		assertEquals(viewpoint.getViewerId(), filter.filter(viewpoint, viewpoint.getViewerId()));
-		assertNull(filter.filter(viewpoint, Guid.createNew()));
+		assertEquals(viewpoint.getViewerId(), filter.filterKey(viewpoint, viewpoint.getViewerId()));
+		assertNull(filter.filterKey(viewpoint, Guid.createNew()));
 	}
 	
 	// test thisCondition(), with a property
@@ -138,10 +138,10 @@ public class FilterAssemblerTests extends TestCase {
 		TestGroupMemberKey key;
 		
 		key = new TestGroupMemberKey(Guid.createNew(), viewpoint.getViewerId());
-		assertEquals(viewpoint.getViewerId(), filter.filter(viewpoint, key).getMemberId());
+		assertEquals(viewpoint.getViewerId(), filter.filterKey(viewpoint, key).getMemberId());
 		
 		key = new TestGroupMemberKey(Guid.createNew(), Guid.createNew());
-		assertNull(filter.filter(viewpoint, key));
+		assertNull(filter.filterKey(viewpoint, key));
 	}
 
 	// test switchState()
@@ -162,7 +162,7 @@ public class FilterAssemblerTests extends TestCase {
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		
-		assertEquals(viewpoint.getViewerId(), filter.filter(viewpoint, viewpoint.getViewerId()));
+		assertEquals(viewpoint.getViewerId(), filter.filterKey(viewpoint, viewpoint.getViewerId()));
 	}
 
 	// Test returnItem(), itemCondition() for an item filter 
@@ -179,10 +179,10 @@ public class FilterAssemblerTests extends TestCase {
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		Guid result;
 
-		result = filter.filter(viewpoint, Guid.createNew(), viewpoint.getViewerId());
+		result = filter.filterKey(viewpoint, Guid.createNew(), viewpoint.getViewerId());
 		assertEquals(viewpoint.getViewerId().toString(), result.toString());
 		
-		result = filter.filter(viewpoint, Guid.createNew(), Guid.createNew());
+		result = filter.filterKey(viewpoint, Guid.createNew(), Guid.createNew());
 		assertNull(result);
 	}
 	
@@ -196,7 +196,7 @@ public class FilterAssemblerTests extends TestCase {
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		
-		List<Guid> result = filter.filter(viewpoint, viewpoint.getViewerId(), Collections.singletonList(viewpoint.getViewerId()));
+		List<Guid> result = filter.filterKeys(viewpoint, viewpoint.getViewerId(), Collections.singletonList(viewpoint.getViewerId()));
 		assertEquals(0, result.size());
 	}
 	
@@ -210,7 +210,7 @@ public class FilterAssemblerTests extends TestCase {
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		
-		List<Guid> result = filter.filter(viewpoint, Guid.createNew(), Collections.singletonList(viewpoint.getViewerId()));
+		List<Guid> result = filter.filterKeys(viewpoint, Guid.createNew(), Collections.singletonList(viewpoint.getViewerId()));
 		assertEquals(1, result.size());
 		assertEquals(viewpoint.getViewerId().toString(), result.get(0).toString());
 	}
@@ -237,7 +237,7 @@ public class FilterAssemblerTests extends TestCase {
 		items.add(Guid.createNew());
 		items.add(viewpoint.getViewerId());
 		
-		List<Guid> result = filter.filter(viewpoint, Guid.createNew(), items);
+		List<Guid> result = filter.filterKeys(viewpoint, Guid.createNew(), items);
 		assertEquals(1, result.size());
 		assertEquals(viewpoint.getViewerId().toString(), result.get(0).toString());
 	}
@@ -265,7 +265,7 @@ public class FilterAssemblerTests extends TestCase {
 		items.add(new TestGroupMemberKey(groupId, Guid.createNew()));
 		items.add(new TestGroupMemberKey(groupId, viewpoint.getViewerId()));
 		
-		List<TestGroupMemberKey> result = filter.filter(viewpoint, Guid.createNew(), items);
+		List<TestGroupMemberKey> result = filter.filterKeys(viewpoint, Guid.createNew(), items);
 		assertEquals(1, result.size());
 		assertEquals(viewpoint.getViewerId().toString(), result.get(0).getMemberId().toString());
 	}

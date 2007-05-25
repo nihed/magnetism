@@ -43,4 +43,8 @@ public class NotFilter implements Filter {
 		NotFilter other = (NotFilter)o;
 		return f.equals(other.f);
 	}
+
+	public Filter asItemFilter() {
+		return new NotFilter(f.asItemFilter());
+	}
 }

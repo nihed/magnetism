@@ -26,6 +26,8 @@ import com.dumbhippo.dm.parser.FetchParser;
 import com.dumbhippo.dm.persistence.TestGroup;
 import com.dumbhippo.dm.persistence.TestGroupMember;
 import com.dumbhippo.dm.persistence.TestUser;
+import com.dumbhippo.dm.schema.DMClassHolder;
+import com.dumbhippo.dm.schema.DMClassInfo;
 import com.dumbhippo.identity20.Guid;
 
 public class FetchTests extends AbstractSupportedTests {
@@ -119,9 +121,16 @@ public class FetchTests extends AbstractSupportedTests {
 		return raw.substitute(parametersMap);
 	}
 	
-	public <K,T extends DMObject<K>> void doTest(Class<T> clazz, T object, TestDMClient client, String fetchString, String resultId, String... parameters) throws RecognitionException, TokenStreamException, FetchValidationException {
+	// Hack to work around generic system
+	public <K,T extends DMObject<K>> Fetch<?,?> bindToClass(FetchNode fetchNode, DMClassInfo<K,T> classInfo) {
+		@SuppressWarnings("unchecked")
+		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)DataModel.getInstance().getClassHolder(classInfo.getClass());
+		return fetchNode.bind(classHolder);
+	}
+	
+	public <K,T extends DMObject<K>> void doTest(Class<K> keyClass, Class<T> objectClass, T object, TestDMClient client, String fetchString, String resultId, String... parameters) throws RecognitionException, TokenStreamException, FetchValidationException {
 		FetchNode fetchNode = FetchParser.parse(fetchString);
-		Fetch<K,T> fetch = fetchNode.bind(DataModel.getInstance().getDMClass(clazz));
+		Fetch<K,T> fetch = fetchNode.bind(DataModel.getInstance().getClassHolder(keyClass, objectClass));
 		
 		FetchResultVisitor visitor = new FetchResultVisitor(client);
 		ReadOnlySession.getCurrent().visitFetch(object, fetch, visitor);
@@ -132,8 +141,8 @@ public class FetchTests extends AbstractSupportedTests {
 		visitor.getResult().validateAgainst(expected);
 	}
 
-	public <K,T extends DMObject<K>> void doTest(Class<T> clazz, T object, String fetchString, String resultId, String... parameters) throws RecognitionException, TokenStreamException, FetchValidationException {
-		doTest(clazz, object, null, fetchString, resultId, parameters);
+	public <K,T extends DMObject<K>> void doTest(Class<K> keyClass, Class<T> objectClass, T object, String fetchString, String resultId, String... parameters) throws RecognitionException, TokenStreamException, FetchValidationException {
+		doTest(keyClass, objectClass, object, null, fetchString, resultId, parameters);
 	}
 
 	private void createData(Guid bobId, Guid janeId, Guid groupId) {
@@ -187,8 +196,8 @@ public class FetchTests extends AbstractSupportedTests {
 		
 		em = support.beginSessionRO(viewpoint);
 		
-		TestGroupDMO groupDMO = ReadOnlySession.getCurrent().findMustExist(TestGroupDMO.class, groupId);
-		doTest(TestGroupDMO.class, groupDMO, "name;members member name", "bobAndJane",
+		TestGroupDMO groupDMO = ReadOnlySession.getCurrent().find(TestGroupDMO.class, groupId);
+		doTest(Guid.class, TestGroupDMO.class, groupDMO, "name;members member name", "bobAndJane",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
@@ -214,8 +223,8 @@ public class FetchTests extends AbstractSupportedTests {
 		
 		em = support.beginSessionRO(viewpoint);
 		
-		TestGroupDMO groupDMO = ReadOnlySession.getCurrent().findMustExist(TestGroupDMO.class, groupId);
-		doTest(TestGroupDMO.class, groupDMO, "+;members +", "bobAndJane",
+		TestGroupDMO groupDMO = ReadOnlySession.getCurrent().find(TestGroupDMO.class, groupId);
+		doTest(Guid.class, TestGroupDMO.class, groupDMO, "+;members +", "bobAndJane",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
@@ -226,7 +235,7 @@ public class FetchTests extends AbstractSupportedTests {
 	// Test suppression of already known information for repeated fetches with the same client
 	public void testMultipleFetch() throws Exception {
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
-		TestDMClient client = new TestDMClient(viewpoint);
+		TestDMClient client = new TestDMClient(viewpoint.getViewerId());
 		EntityManager em;
 		
 		/////////////////////////////////////////////////
@@ -242,18 +251,18 @@ public class FetchTests extends AbstractSupportedTests {
 		
 		em = support.beginSessionRO(viewpoint);
 		
-		TestGroupDMO groupDMO = ReadOnlySession.getCurrent().findMustExist(TestGroupDMO.class, groupId);
-		doTest(TestGroupDMO.class, groupDMO, client, "name", "bobAndJaneSmall",
+		TestGroupDMO groupDMO = ReadOnlySession.getCurrent().find(TestGroupDMO.class, groupId);
+		doTest(Guid.class, TestGroupDMO.class, groupDMO, client, "name", "bobAndJaneSmall",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
 		
-		doTest(TestGroupDMO.class, groupDMO, client, "+;members +", "bobAndJaneRemaining",
+		doTest(Guid.class, TestGroupDMO.class, groupDMO, client, "+;members +", "bobAndJaneRemaining",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
 
-		doTest(TestGroupDMO.class, groupDMO, client, "members group", "bobAndJaneAddOn",
+		doTest(Guid.class, TestGroupDMO.class, groupDMO, client, "members group", "bobAndJaneAddOn",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
@@ -264,7 +273,7 @@ public class FetchTests extends AbstractSupportedTests {
 	// Test a fetch that loops back to the same object
 	public void testLoopFetch() throws Exception {
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
-		TestDMClient client = new TestDMClient(viewpoint);
+		TestDMClient client = new TestDMClient(viewpoint.getViewerId());
 		EntityManager em;
 		
 		/////////////////////////////////////////////////
@@ -280,8 +289,8 @@ public class FetchTests extends AbstractSupportedTests {
 		
 		em = support.beginSessionRO(viewpoint);
 		
-		TestGroupDMO groupDMO = ReadOnlySession.getCurrent().findMustExist(TestGroupDMO.class, groupId);
-		doTest(TestGroupDMO.class, groupDMO, client, "+;members group +", "bobAndJaneLoop",
+		TestGroupDMO groupDMO = ReadOnlySession.getCurrent().find(TestGroupDMO.class, groupId);
+		doTest(Guid.class, TestGroupDMO.class, groupDMO, client, "+;members group +", "bobAndJaneLoop",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
@@ -291,7 +300,7 @@ public class FetchTests extends AbstractSupportedTests {
 	
 	public void testNotificationFetch() throws Exception {
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
-		TestDMClient client = new TestDMClient(viewpoint);
+		TestDMClient client = new TestDMClient(viewpoint.getViewerId());
 		TestGroup group;
 		EntityManager em;
 		
@@ -309,8 +318,8 @@ public class FetchTests extends AbstractSupportedTests {
 		
 		em = support.beginSessionRO(viewpoint);
 		
-		TestGroupDMO groupDMO = ReadOnlySession.getCurrent().findMustExist(TestGroupDMO.class, groupId);
-		doTest(TestGroupDMO.class, groupDMO, client, "name;members member name", "bobAndJane",
+		TestGroupDMO groupDMO = ReadOnlySession.getCurrent().find(TestGroupDMO.class, groupId);
+		doTest(Guid.class, TestGroupDMO.class, groupDMO, client, "name;members member name", "bobAndJane",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());

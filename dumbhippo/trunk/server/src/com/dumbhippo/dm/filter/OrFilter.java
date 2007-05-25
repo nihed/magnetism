@@ -51,4 +51,8 @@ public class OrFilter implements Filter {
 		OrFilter other = (OrFilter)o;
 		return a.equals(other.a) && b.equals(other.b);
 	}
+
+	public Filter asItemFilter() {
+		return new OrFilter(a.asItemFilter(), b.asItemFilter());
+	}
 }

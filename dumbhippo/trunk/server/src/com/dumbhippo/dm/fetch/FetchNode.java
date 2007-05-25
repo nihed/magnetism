@@ -23,7 +23,7 @@ public class FetchNode {
 		return properties;
 	}
 	
-	public <K,T extends DMObject<K>> Fetch<K,T> bind(DMClassHolder<T> classHolder) {
+	public <K,T extends DMObject<K>> Fetch<K,T> bind(DMClassHolder<K,T> classHolder) {
 		boolean includeDefault = false;
 		
 		List<PropertyFetch> boundProperties = new ArrayList<PropertyFetch>(properties.length);
