@@ -7,13 +7,13 @@
 	m:resourceBase="http://mugshot.org/o/test/">
 
 	<fetchResult id="bobAndJane">
-		<u:resource m:resourceId="user/$(bob)" m:indirect="true" m:fetch="*">
+		<u:resource m:resourceId="user/$(bob)" m:indirect="true" m:fetch="name">
 			<u:name>Bob</u:name>
 		</u:resource>
 		<gm:resource m:resourceId="groupMember/$(group).$(bob)" m:indirect="true" m:fetch="member">
 			<gm:member m:resourceId="user/$(bob)"/>
 		</gm:resource>
-		<u:resource m:resourceId="user/$(jane)" m:indirect="true" m:fetch="*">
+		<u:resource m:resourceId="user/$(jane)" m:indirect="true" m:fetch="name">
 			<u:name>Jane</u:name>
 		</u:resource>
 		<gm:resource m:resourceId="groupMember/$(group).$(jane)" m:indirect="true" m:fetch="member">
@@ -33,13 +33,13 @@
 	</fetchResult>
 	
 	<fetchResult id="bobAndJaneRemaining">
-		<u:resource m:resourceId="user/$(bob)" m:indirect="true" m:fetch="*">
+		<u:resource m:resourceId="user/$(bob)" m:indirect="true" m:fetch="name">
 			<u:name>Bob</u:name>
 		</u:resource>
 		<gm:resource m:resourceId="groupMember/$(group).$(bob)" m:indirect="true" m:fetch="member">
 			<gm:member m:resourceId="user/$(bob)"/>
 		</gm:resource>
-		<u:resource m:resourceId="user/$(jane)" m:indirect="true" m:fetch="*">
+		<u:resource m:resourceId="user/$(jane)" m:indirect="true" m:fetch="name">
 			<u:name>Jane</u:name>
 		</u:resource>
 		<gm:resource m:resourceId="groupMember/$(group).$(jane)" m:indirect="true" m:fetch="member">
@@ -77,7 +77,7 @@
 	</fetchResult>
 	
 	<fetchResult id="andNowVictor">
-		<u:resource m:resourceId="user/$(victor)" m:indirect="true" m:fetch="*">
+		<u:resource m:resourceId="user/$(victor)" m:indirect="true" m:fetch="name">
 			<u:name>Victor</u:name>
 		</u:resource>
 		<gm:resource m:resourceId="groupMember/$(group).$(victor)" m:indirect="true" m:fetch="member">
