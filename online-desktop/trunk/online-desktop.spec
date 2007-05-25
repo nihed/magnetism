@@ -1,6 +1,9 @@
+%{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+%{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
+
 Name:           online-desktop
-Version:        0.1
-Release:        2%{?dist}
+Version:        0.2
+Release:        1%{?dist}
 Summary:        Desktop built around web sites and online services
 
 Group:          Applications/Internet
@@ -77,10 +80,12 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%{_bindir}/*
+%{_bindir}/god-mode
 # not used yet
 %{_datadir}/icons/hicolor/*/apps/picasa.png
 %{_datadir}/icons/hicolor/*/apps/yahoo-mail.png
+%dir %{python_sitelib}/godmode
+%{python_sitelib}/godmode/*
 
 %files flickr
 %defattr(-,root,root,-)
@@ -108,6 +113,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/icons/hicolor/*/apps/google-reader.png
 
 %changelog
+* Fri May 25 2007 Colin Walters <walters@redhat.com> - 0.2
+- Add god-mode
+
 * Tue May  1 2007 Havoc Pennington <hp@redhat.com> - 0.1-2
 - add subpackage for each user-visible app
 

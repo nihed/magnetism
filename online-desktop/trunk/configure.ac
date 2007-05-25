@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(online-desktop, 0.1)
+AM_INIT_AUTOMAKE(online-desktop, 0.2)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -176,6 +176,8 @@ AC_SUBST(LDFLAGS)
 GTK2_REQUIRED=2.6.0
 
 PKG_CHECK_MODULES(MAILTO_HANDLER, gtk+-2.0 >= $GTK2_REQUIRED)
+
+AM_PATH_PYTHON
 
 #### define absolute path to srcdir for debugging-only code
 ABSOLUTE_TOP_SRCDIR=`cd ${srcdir} && pwd`

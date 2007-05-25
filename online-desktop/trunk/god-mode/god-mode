@@ -1,11 +1,14 @@
 #!/usr/bin/python
 # ~ god_mode 1
 
-import os,sys
+import os,sys,subprocess,logging
+
+import dbus
+import dbus.glib
 
 import gobject
 
-import gnomepanel
+from godmode import gnomepanel
 
 def god_mode():
     godpanel = 'bottom_panel_GOD'
@@ -16,6 +19,7 @@ def god_mode():
     gnomepanel.add_applet(godpanel, 'clock_GOD', 'GNOME_ClockApplet', 1, right=True)
     gnomepanel.add_applet(godpanel, 'tray_GOD', 'GNOME_SystemTrayApplet', 0, right=True)
     gnomepanel.set_toplevels([godpanel])
+    subprocess.Popen(['bigboard'])
     
 def apostate_mode():
     gnomepanel.set_toplevels(['bottom_panel', 'top_panel'])
@@ -25,3 +29,10 @@ if __name__ == '__main__':
         god_mode()
     else:
         apostate_mode()
+        try:
+            bb_obj = dbus.SessionBus().get_object('org.mugshot.BigBoard', '/bigboard/panel')
+            bb = dbus.Interface(self.__bb_obj, 'org.mugshot.BigBoard.Panel')
+            bb.exit()
+        except:
+            logging.exception("Failed to shut down bigboard")
+        
