@@ -195,6 +195,24 @@ class BigBoardPanel(dbus.service.Object):
         self._dw = Sidebar(True)
         self._shown = False
         self.__shell = None
+        self.__autostart_data = '''
+[Desktop Entry]
+Name=bigboard
+Encoding=UTF-8
+Version=1.0
+Exec=bigboard
+X-GNOME-Autostart-enabled=true
+'''
+        autostart_dir = os.path.expanduser('~/.config/autostart') 
+        self.__autostart_file = os.path.join(autostart_dir, 'bigboard.desktop')
+        if not os.access(self.__autostart_file, os.R_OK):
+            try:
+                os.makedirs(autostart_dir)
+            except OSError, e:
+                pass
+            af = open(self.__autostart_file, 'w')
+            af.write(self.__autostart_data)
+            af.close()
         
         self.__logger = logging.getLogger("bigboard.Panel")
         
@@ -371,6 +389,14 @@ class BigBoardPanel(dbus.service.Object):
             self.__shell.destroy()
         self.__shell = CommandShell({'panel': self})
         self.__shell.show_all()
+
+    @dbus.service.method(BUS_IFACE_PANEL)
+    def exit(self):
+        try:
+            os.unlink(self.__autostart_file)
+        except OSError, e:
+            pass
+        gtk.main_quit()
 
 def load_image_hook(img_name):
     logging.debug("loading: %s" % (img_name,))
