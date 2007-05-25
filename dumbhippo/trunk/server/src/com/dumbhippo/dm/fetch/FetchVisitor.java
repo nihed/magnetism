@@ -1,12 +1,17 @@
 package com.dumbhippo.dm.fetch;
 
-import com.dumbhippo.dm.DMClassHolder;
 import com.dumbhippo.dm.DMObject;
-import com.dumbhippo.dm.DMPropertyHolder;
+import com.dumbhippo.dm.schema.DMClassHolder;
+import com.dumbhippo.dm.schema.PlainPropertyHolder;
+import com.dumbhippo.dm.schema.ResourcePropertyHolder;
+import com.dumbhippo.dm.store.StoreClient;
 
 public interface FetchVisitor {
-	<T extends DMObject> void beginResource(DMClassHolder<T> classHolder, Object key, Fetch<T> fetch, boolean indirect);
-	void plainProperty(DMPropertyHolder propertyHolder, Object value);
-	void resourceProperty(DMPropertyHolder propertyHolder, Object key);
+	StoreClient getClient();
+	boolean getNeedFetch();
+	
+	<K,T extends DMObject<K>> void beginResource(DMClassHolder<T> classHolder, K key, String fetchString, boolean indirect);
+	void plainProperty(PlainPropertyHolder propertyHolder, Object value);
+	<KP,TP extends DMObject<KP>> void resourceProperty(ResourcePropertyHolder<KP,TP> propertyHolder, KP key);
 	void endResource();
 }

@@ -13,7 +13,13 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
+
 public class DMSessionMapJTA implements DMSessionMap {
+	protected static final Logger logger = GlobalSetup.getLogger(DMSessionMapJTA.class);
+	
 	// We can use a synchronizedMap here since only one thread should be accessing the entry
 	// for a particular transaction at once
 	private Map<Transaction, DMSession> sessions = Collections.synchronizedMap(new HashMap<Transaction, DMSession>());
@@ -82,5 +88,28 @@ public class DMSessionMapJTA implements DMSessionMap {
 			sessions.remove(transaction);
 			session.afterCompletion(status);
 		}		
+	}
+
+	public void runInTransaction(Runnable runnable) {
+		TransactionManager tm = getTransactionManager();
+		
+		try {
+			runnable.run();
+		} catch (RuntimeException e) {
+			try {
+				tm.setRollbackOnly();
+			} catch (Exception e2) {
+				logger.error("Error marking transaction rollback only: {}", e2);
+			}
+			throw new RuntimeException("Error in transaction", e);
+		} finally {
+			try {
+				tm.getTransaction().commit();
+			} catch (RollbackException e) {
+				// Presumably because we set rollback-only above
+			} catch (Exception e) {
+				throw new RuntimeException("Error committing transaction", e);
+			}
+		}
 	}
 }

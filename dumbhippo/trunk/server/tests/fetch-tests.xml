@@ -25,4 +25,69 @@
 			<g:members m:resourceId="groupMember/$(group).$(jane)"/>
 		</g:resource>
 	</fetchResult>
+	
+	<fetchResult id="bobAndJaneSmall">
+		<g:resource m:resourceId="group/$(group)" m:fetch="name">
+			<g:name>BobAndJane</g:name>
+		</g:resource>
+	</fetchResult>
+	
+	<fetchResult id="bobAndJaneRemaining">
+		<u:resource m:resourceId="user/$(bob)" m:indirect="true" m:fetch="*">
+			<u:name>Bob</u:name>
+		</u:resource>
+		<gm:resource m:resourceId="groupMember/$(group).$(bob)" m:indirect="true" m:fetch="member">
+			<gm:member m:resourceId="user/$(bob)"/>
+		</gm:resource>
+		<u:resource m:resourceId="user/$(jane)" m:indirect="true" m:fetch="*">
+			<u:name>Jane</u:name>
+		</u:resource>
+		<gm:resource m:resourceId="groupMember/$(group).$(jane)" m:indirect="true" m:fetch="member">
+			<gm:member m:resourceId="user/$(jane)"/>
+		</gm:resource>
+		<g:resource m:resourceId="group/$(group)" m:fetch="name;members">
+			<g:members m:resourceId="groupMember/$(group).$(bob)"/>
+			<g:members m:resourceId="groupMember/$(group).$(jane)"/>
+		</g:resource>
+	</fetchResult>
+	
+	<fetchResult id="bobAndJaneAddOn">
+		<gm:resource m:resourceId="groupMember/$(group).$(bob)" m:indirect="true" m:fetch="group;member">
+			<gm:group m:resourceId="group/$(group)"/>
+		</gm:resource>
+		<gm:resource m:resourceId="groupMember/$(group).$(jane)" m:indirect="true" m:fetch="group;member">
+			<gm:group m:resourceId="group/$(group)"/>
+		</gm:resource>
+		<g:resource m:resourceId="group/$(group)" m:fetch="name;members">
+		</g:resource>
+	</fetchResult>
+
+	<fetchResult id="bobAndJaneLoop">
+		<gm:resource m:resourceId="groupMember/$(group).$(bob)" m:indirect="true" m:fetch="group">
+			<gm:group m:resourceId="group/$(group)"/>
+		</gm:resource>
+		<gm:resource m:resourceId="groupMember/$(group).$(jane)" m:indirect="true" m:fetch="group">
+			<gm:group m:resourceId="group/$(group)"/>
+		</gm:resource>
+		<g:resource m:resourceId="group/$(group)" m:fetch="name;members">
+			<g:name>BobAndJane</g:name>
+			<g:members m:resourceId="groupMember/$(group).$(bob)"/>
+			<g:members m:resourceId="groupMember/$(group).$(jane)"/>
+		</g:resource>
+	</fetchResult>
+	
+	<fetchResult id="andNowVictor">
+		<u:resource m:resourceId="user/$(victor)" m:indirect="true" m:fetch="*">
+			<u:name>Victor</u:name>
+		</u:resource>
+		<gm:resource m:resourceId="groupMember/$(group).$(victor)" m:indirect="true" m:fetch="member">
+			<gm:member m:resourceId="user/$(victor)"/>
+		</gm:resource>
+		<g:resource m:resourceId="group/$(group)" m:fetch="name;members">
+			<g:name>BobAndJaneAndVictor</g:name>
+			<g:members m:resourceId="groupMember/$(group).$(bob)"/>
+			<g:members m:resourceId="groupMember/$(group).$(jane)"/>
+			<g:members m:resourceId="groupMember/$(group).$(victor)"/>
+		</g:resource>
+	</fetchResult>
 </fetchResults>

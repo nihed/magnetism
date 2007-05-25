@@ -63,9 +63,9 @@ fetchString returns [FetchNode f]
     
 propertyFetch returns [PropertyFetchNode pf]
 { String p;
-  FetchAttribute a;
+  FetchAttributeNode a;
   PropertyFetchNode childPf;
-  List<FetchAttribute> attrs = Collections.emptyList();
+  List<FetchAttributeNode> attrs = Collections.emptyList();
   FetchNode children = null;
 }
 	: (
@@ -79,12 +79,12 @@ propertyFetch returns [PropertyFetchNode pf]
         p=specialProperty ( attrs=attributes )?
 	  )
 	  { pf = new PropertyFetchNode(p, 
-	  	                           attrs.toArray(new FetchAttribute[attrs.size()]), 
+	  	                           attrs.toArray(new FetchAttributeNode[attrs.size()]), 
 	   	                           children != null && children.getProperties().length > 0 ? children : null); }
 	;
      
-attributes returns [ArrayList<FetchAttribute> attrs = new ArrayList<FetchAttribute>();]
-{ FetchAttribute a; }
+attributes returns [ArrayList<FetchAttributeNode> attrs = new ArrayList<FetchAttributeNode>();]
+{ FetchAttributeNode a; }
     : LPAREN ( a=attribute { attrs.add(a); } ( COMMA a=attribute { attrs.add(a); } ) * )? RPAREN
 	;
         
@@ -97,12 +97,12 @@ specialProperty returns [String s]
   	  | STAR { s = "*"; }
 	;
         
-attribute returns [FetchAttribute a]
+attribute returns [FetchAttributeNode a]
 { FetchAttributeType t; 
   Object v; 
 }
 	: t=attributeType EQUALS (v=positiveInteger | v=bool) 
-	  { a = new FetchAttribute(t, v); }
+	  { a = new FetchAttributeNode(t, v); }
 	;
 	
 attributeType returns [FetchAttributeType t]
