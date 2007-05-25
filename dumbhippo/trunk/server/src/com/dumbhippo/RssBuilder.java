@@ -87,7 +87,7 @@ public class RssBuilder {
 			}
 		}
 		if (guid != null)
-			xml.appendTextNode("guid", guid);
+			xml.appendTextNode("guid", guid, "isPermaLink", "false");
 		xml.closeElement();
 	}
 	
