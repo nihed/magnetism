@@ -24,4 +24,8 @@ public class TrueFilter implements Filter {
 	public String toString() {
 		return "true";
 	}
+
+	public Filter asItemFilter() {
+		return this;
+	}
 }

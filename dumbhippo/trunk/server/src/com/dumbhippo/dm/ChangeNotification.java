@@ -13,7 +13,7 @@ public class ChangeNotification<K, T extends DMObject<K>> extends StoreKey<K,T> 
 	private DataModel model;
 	private long propertyMask; // bitset
 
-	public ChangeNotification(DataModel model, DMClassHolder<T> classHolder, K key) {
+	public ChangeNotification(DataModel model, DMClassHolder<K,T> classHolder, K key) {
 		super(classHolder, key);
 		this.model = model;
 	}

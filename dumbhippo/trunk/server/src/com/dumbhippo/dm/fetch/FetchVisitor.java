@@ -10,8 +10,8 @@ public interface FetchVisitor {
 	StoreClient getClient();
 	boolean getNeedFetch();
 	
-	<K,T extends DMObject<K>> void beginResource(DMClassHolder<T> classHolder, K key, String fetchString, boolean indirect);
+	<K,T extends DMObject<K>> void beginResource(DMClassHolder<K,T> classHolder, K key, String fetchString, boolean indirect);
 	void plainProperty(PlainPropertyHolder propertyHolder, Object value);
-	<KP,TP extends DMObject<KP>> void resourceProperty(ResourcePropertyHolder<KP,TP> propertyHolder, KP key);
+	<KP,TP extends DMObject<KP>> void resourceProperty(ResourcePropertyHolder<?,?,KP,TP> propertyHolder, KP key);
 	void endResource();
 }

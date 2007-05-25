@@ -21,7 +21,8 @@ public class ChangeNotificationSet implements Runnable {
 	}
 
 	public <K, T extends DMObject<K>> void changed(Class<T> clazz, K key, String propertyName) {
-		DMClassHolder<T> classHolder = model.getDMClass(clazz);
+		@SuppressWarnings("unchecked")
+		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
 		int propertyIndex = classHolder.getPropertyIndex(propertyName);
 		if (propertyIndex < 0)
 			throw new RuntimeException("Class " + clazz.getName() + " has no property " + propertyName);

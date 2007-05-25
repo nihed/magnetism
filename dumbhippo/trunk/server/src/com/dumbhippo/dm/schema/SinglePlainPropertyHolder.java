@@ -4,22 +4,17 @@ import javassist.CtMethod;
 
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
+import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.dm.annotations.DMFilter;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.ViewerDependent;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 
-public class SinglePlainPropertyHolder extends PlainPropertyHolder {
-	public SinglePlainPropertyHolder(DMClassHolder<? extends DMObject> declaringClassHolder, CtMethod ctMethod, Class<?> elementType, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
+public class SinglePlainPropertyHolder<K,T extends DMObject<K>, TI> extends PlainPropertyHolder<K,T,TI> {
+	public SinglePlainPropertyHolder(DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, Class<TI> elementType, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
 		super(declaringClassHolder, ctMethod, elementType, annotation, filter, viewerDependent);
 	}
 
-	@Override
-	public void visitProperty(DMSession session, DMObject object, FetchVisitor visitor) {
-		Object value = getRawPropertyValue(object);
-		visitor.plainProperty(this, value);
-	}
-	
 	@Override
 	public String getBoxPrefix() {
 		if (elementType.isPrimitive()) {
@@ -105,5 +100,20 @@ public class SinglePlainPropertyHolder extends PlainPropertyHolder {
 		} else {
 			return super.getUnboxSuffix();
 		}
+	}
+	
+	@Override
+	public Object filter(DMViewpoint viewpoint, K key, Object value) {
+		if (itemFilter == null)
+			return value;
+		
+		// We cheat here to filter a non-key value, because we never dereference
+		return itemFilter.filterKey(viewpoint, key, value);
+	}
+
+	@Override
+	public void visitProperty(DMSession session, T object, FetchVisitor visitor) {
+		Object value = getRawPropertyValue(object);
+		visitor.plainProperty(this, value);
 	}
 }

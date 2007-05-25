@@ -30,7 +30,7 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 	 * @param filter
 	 * @return
 	 */
-	static public <K, T extends DMObject<K>> Class<? extends CompiledFilter<K,T>> compileFilter(Class<? extends DMViewpoint> viewpointClass, Class<K> objectKeyClass, Filter filter) {
+	static public <K, T extends DMObject<K>> CompiledFilter<K,T> compileFilter(Class<? extends DMViewpoint> viewpointClass, Class<K> objectKeyClass, Filter filter) {
 		return new FilterCompiler<K,T,Guid,DMObject<Guid>>(viewpointClass, objectKeyClass, null, filter).doCompileFilter();
 	}
 	
@@ -48,7 +48,7 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 	 * @param filter
 	 * @return
 	 */
-	public static <K, T extends DMObject<K>, KI, TI extends DMObject<KI>> Class<? extends CompiledItemFilter<K,T,KI,TI>> compileItemFilter(Class<? extends DMViewpoint> viewpointClass, Class<K> objectKeyClass, Class<KI> itemKeyClass, Filter filter) {
+	public static <K, T extends DMObject<K>, KI, TI extends DMObject<KI>> CompiledItemFilter<K,T,KI,TI> compileItemFilter(Class<? extends DMViewpoint> viewpointClass, Class<K> objectKeyClass, Class<KI> itemKeyClass, Filter filter) {
 		return new FilterCompiler<K,T,KI,TI>(viewpointClass, objectKeyClass, itemKeyClass, filter).doCompileItemFilter();
 	}
 
@@ -66,7 +66,7 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 	 * @param filter
 	 * @return
 	 */
-	public static <K, T extends DMObject<K>, KI, TI extends DMObject<KI>> Class<? extends CompiledListFilter<K,T,KI,TI>> compileListFilter(Class<? extends DMViewpoint> viewpointClass, Class<K> objectKeyClass, Class<KI> itemKeyClass, Filter filter) {
+	public static <K, T extends DMObject<K>, KI, TI extends DMObject<KI>> CompiledListFilter<K,T,KI,TI> compileListFilter(Class<? extends DMViewpoint> viewpointClass, Class<K> objectKeyClass, Class<KI> itemKeyClass, Filter filter) {
 		return new FilterCompiler<K,T,KI,TI>(viewpointClass, objectKeyClass, itemKeyClass, filter).doCompileListFilter();
 	}
 
@@ -86,7 +86,7 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 		classPool = DataModel.getInstance().getClassPool();
 	}
 	
-	private Class<? extends CompiledFilter<K,T>> doCompileFilter() {
+	private CompiledFilter<K,T> doCompileFilter() {
 		CtClass ctClass = makeCtClass();
 		ctClass.addInterface(ctClassForClass(CompiledFilter.class));
 
@@ -99,11 +99,11 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 		assembler.optimize(); // call explicitly for better debug output
 		logger.debug("KeyFilter assembly code for {} is:\n{}",  filter, assembler);
 		
-		assembler.addMethodToClass(ctClass);
+		assembler.addMethodToClass(ctClass, "filterKey");
 
 		assembler = FilterAssembler.createForFilter(viewpointClass, objectKeyClass, true);
 		generateKeyPhaseCode(assembler, stateMap, ReturnAction.RETURN_KEY, ReturnAction.RETURN_NULL);
-		assembler.addMethodToClass(ctClass);
+		assembler.addMethodToClass(ctClass, "filterObject");
 
 		Class<?> clazz;
 		try {
@@ -114,11 +114,17 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 		
 		@SuppressWarnings("unchecked")
 		Class<? extends CompiledFilter<K,T>> subclass = (Class<? extends CompiledFilter<K,T>>)clazz.asSubclass(CompiledFilter.class);
-
-		return subclass;
+		
+		try {
+			return subclass.newInstance();
+		} catch (InstantiationException e) {
+			throw new RuntimeException("Error creating filter instance", e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException("Error creating filter instance", e);
+		}
 	}
 	
-	private Class<? extends CompiledItemFilter<K,T,KI,TI>> doCompileItemFilter() {
+	private CompiledItemFilter<K,T,KI,TI> doCompileItemFilter() {
 		CtClass ctClass = makeCtClass();
 		ctClass.addInterface(ctClassForClass(CompiledItemFilter.class));
 
@@ -131,11 +137,11 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 		assembler.optimize(); // call explicitly for better debug output
 		logger.debug("ItemFilter assembly code for {} is:\n{}",  filter, assembler);
 
-		assembler.addMethodToClass(ctClass);
+		assembler.addMethodToClass(ctClass, "filterKey");
 		
 		assembler = FilterAssembler.createForItemFilter(viewpointClass, objectKeyClass, itemKeyClass, true);
 		generateKeyPhaseCode(assembler, stateMap, ReturnAction.RETURN_ITEM, ReturnAction.RETURN_NULL);
-		assembler.addMethodToClass(ctClass);
+		assembler.addMethodToClass(ctClass, "filterObject");
 		
 		Class<?> clazz;
 		try {
@@ -146,11 +152,17 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 		
 		@SuppressWarnings("unchecked")
 		Class<? extends CompiledItemFilter<K,T,KI,TI>> subclass = (Class<? extends CompiledItemFilter<K,T,KI,TI>>)clazz.asSubclass(CompiledItemFilter.class);
-
-		return subclass;
+		
+		try {
+			return subclass.newInstance();
+		} catch (InstantiationException e) {
+			throw new RuntimeException("Error creating filter instance", e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException("Error creating filter instance", e);
+		}
 	}
 	
-	private Class<? extends CompiledListFilter<K,T,KI,TI>> doCompileListFilter() {
+	private CompiledListFilter<K,T,KI,TI> doCompileListFilter() {
 		CtClass ctClass = makeCtClass();
 		ctClass.addInterface(ctClassForClass(CompiledListFilter.class));
 
@@ -165,13 +177,13 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 		assembler.optimize(); // call explicitly for better debug output
 		logger.debug("ItemFilter assembly code for {} is:\n{}",  filter, assembler);
 
-		assembler.addMethodToClass(ctClass);
+		assembler.addMethodToClass(ctClass, "filterKeys");
 		
 		assembler = FilterAssembler.createForListFilter(viewpointClass, objectKeyClass, itemKeyClass, true);
 		generateKeyPhaseCode(assembler, stateMap, ReturnAction.RETURN_ITEMS, ReturnAction.RETURN_EMPTY);
 		generateAnyAllPhaseCode(assembler, stateMap);
 		generateItemPhaseCode(assembler, stateMap);
-		assembler.addMethodToClass(ctClass);
+		assembler.addMethodToClass(ctClass, "filterObjects");
 
 		Class<?> clazz;
 		try {
@@ -183,7 +195,14 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 		@SuppressWarnings("unchecked")
 		Class<? extends CompiledListFilter<K,T,KI,TI>> subclass = (Class<? extends CompiledListFilter<K,T,KI,TI>>)clazz.asSubclass(CompiledListFilter.class);
 
-		return subclass;
+		
+		try {
+			return subclass.newInstance();
+		} catch (InstantiationException e) {
+			throw new RuntimeException("Error creating filter instance", e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException("Error creating filter instance", e);
+		}
 	}
 
 	private static synchronized int nextSerial() {

@@ -43,8 +43,8 @@ public final class Fetch<K,T extends DMObject<K>> {
 		return classIndex < classProperties.length ? classProperties[classIndex].getOrdering() : Long.MAX_VALUE;
 	}
 	
-	public <U extends T> void visit(DMSession session, DMClassHolder<U> classHolder, T object, FetchVisitor visitor, boolean indirect) {
-		DMPropertyHolder[] classProperties = classHolder.getProperties();
+	public <U extends T> void visit(DMSession session, DMClassHolder<K,U> classHolder, U object, FetchVisitor visitor, boolean indirect) {
+		DMPropertyHolder<K,U,?>[] classProperties = classHolder.getProperties();
 		Fetch<K,? super U> oldFetch;
 		
 		StoreClient client = visitor.getClient();
@@ -160,7 +160,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 		visitor.endResource();
 	}
 	
-	public void visit(DMSession session, DMClassHolder<? extends T> classHolder, T object, FetchVisitor visitor) {
+	public <U extends T>  void visit(DMSession session, DMClassHolder<K,U> classHolder, U object, FetchVisitor visitor) {
 		visit(session, classHolder, object, visitor, false);
 	}
 	
@@ -332,7 +332,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 			result.addNotification(client, key, this, notifiedMask, childFetches);
 	}
 	
-	public <U extends T> String getFetchString(DMClassHolder<U> classHolder) {
+	public <U extends T> String getFetchString(DMClassHolder<K,U> classHolder) {
 		DMPropertyHolder[] classProperties = classHolder.getProperties();
 		
 		boolean allFetched = true;

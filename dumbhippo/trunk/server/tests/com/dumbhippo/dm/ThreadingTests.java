@@ -16,11 +16,13 @@ public class ThreadingTests extends AbstractSupportedTests {
 	private static Logger logger = GlobalSetup.getLogger(ThreadingTests.class);
 
 	public void testStaleData() {
-		final TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
+		final Guid viewerId = Guid.createNew();
 		final Guid groupId = Guid.createNew();
 		
 		Sequencer.run2(new Sequence() {
+			@Override
 			public void run() {
+				TestViewpoint viewpoint = new TestViewpoint(viewerId);
 				EntityManager em;
 				TestGroup group;
 				ReadWriteSession session;
@@ -51,7 +53,9 @@ public class ThreadingTests extends AbstractSupportedTests {
 				em.getTransaction().commit();
 			}
 		},new Sequence() {
-			public void run() {
+			@Override
+			public void run() throws Exception {
+				TestViewpoint viewpoint = new TestViewpoint(viewerId);
 				EntityManager em;
 				TestGroup group;
 				TestGroupDMO groupDMO;
@@ -73,7 +77,7 @@ public class ThreadingTests extends AbstractSupportedTests {
 				// committed to the object,  would normally cause the property values
 				// read in step 2 to get written to the global cache
 				
-				groupDMO = session.findMustExist(TestGroupDMO.class, groupId);
+				groupDMO = session.find(TestGroupDMO.class, groupId);
 				assertEquals("Hippos", groupDMO.getName());
 				
 				em.getTransaction().commit();
@@ -84,7 +88,7 @@ public class ThreadingTests extends AbstractSupportedTests {
 				em = support.beginSessionRO(viewpoint);
 				session = ReadOnlySession.getCurrent();
 				
-				groupDMO = session.findMustExist(TestGroupDMO.class, groupId);
+				groupDMO = session.find(TestGroupDMO.class, groupId);
 				assertEquals("Aardvarks", groupDMO.getName());
 
 				em.getTransaction().commit();

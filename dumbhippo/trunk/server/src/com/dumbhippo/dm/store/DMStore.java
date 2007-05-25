@@ -30,7 +30,7 @@ public class DMStore {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private <K, T extends DMObject<K>> StoreNode<K,T> getNode(DMClassHolder<T> classHolder, K key) {
+	private <K, T extends DMObject<K>> StoreNode<K,T> getNode(DMClassHolder<K,T> classHolder, K key) {
 		synchronized(nodes) {
 			StoreKey<K,T> storeKey = new StoreKey<K,T>(classHolder, key);
 			return nodes.get(storeKey);
@@ -61,7 +61,7 @@ public class DMStore {
 		
 	}
 	
-	private <K, T extends DMObject<K>> StoreNode<K,T> ensureNode(DMClassHolder<T> classHolder, K key) {
+	private <K, T extends DMObject<K>> StoreNode<K,T> ensureNode(DMClassHolder<K,T> classHolder, K key) {
 		StoreKey<K,T> storeKey = new StoreKey<K,T>(classHolder, key);
 		
 		return ensureNode(storeKey);
@@ -94,6 +94,11 @@ public class DMStore {
 		return node.fetch(propertyIndex);
 	}
 
+	public <K, T extends DMObject<K>> boolean checkCached(StoreKey<K,T> key) {
+		StoreNode<K,T> node = getNode(key);
+		return node != null;
+	}
+
 	public <K, T extends DMObject<K>> void store(StoreKey<K,T> key, int propertyIndex, Object value, long timestamp) {
 		StoreNode<K,T> node = ensureNode(key);
 		
@@ -101,7 +106,7 @@ public class DMStore {
 		node.store(propertyIndex, value, timestamp);
 	}
 
-	public <K, T extends DMObject<K>> void invalidate(DMClassHolder<T> classHolder, K key, int propertyIndex, long timestamp) {
+	public <K, T extends DMObject<K>> void invalidate(DMClassHolder<K,T> classHolder, K key, int propertyIndex, long timestamp) {
 		// We need to make sure that we store the timestamp to deal with in-flight 
 		// fetch-NotCached / store pairs. So, we ensureNode() and, if after invalidating, the
 		// node is evicted, then we try again. Note that we still don't handle everything - the
@@ -138,7 +143,7 @@ public class DMStore {
 		return new StoreClient(client);
 	}
 	
-	public <K, T extends DMObject<K>> Fetch<K,? super T> addRegistration(DMClassHolder<T> classHolder, K key, StoreClient client, Fetch<K,? super T> fetch) {
+	public <K, T extends DMObject<K>> Fetch<K,? super T> addRegistration(DMClassHolder<K,T> classHolder, K key, StoreClient client, Fetch<K,? super T> fetch) {
 		StoreNode<K,T> node;
 		Registration<K,T> registration;
 		
@@ -161,7 +166,7 @@ public class DMStore {
 		return oldFetch;
 	}
 	
-	public <K, T extends DMObject<K>> void removeRegistration(DMClassHolder<T> classHolder, K key, StoreClient client) {
+	public <K, T extends DMObject<K>> void removeRegistration(DMClassHolder<K,T> classHolder, K key, StoreClient client) {
 		StoreNode<K,T> node = getNode(classHolder, key);
 		if (node == null)
 			return;
@@ -182,7 +187,7 @@ public class DMStore {
 		}
 	}
 	
-	public <K, T extends DMObject<K>> void evict(DMClassHolder<T> classHolder, K key) {
+	public <K, T extends DMObject<K>> void evict(DMClassHolder<K,T> classHolder, K key) {
 		StoreNode<K,T> node = getNode(classHolder, key);
 		if (node == null)
 			return;

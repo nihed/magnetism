@@ -78,7 +78,7 @@ public class BasicTests  extends AbstractSupportedTests {
 	}
 
 	// Test multi-valued properties and custom keys
-	public void testMultiValued() {
+	public void testMultiValued() throws Exception {
 		EntityManager em;
 
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
@@ -136,10 +136,10 @@ public class BasicTests  extends AbstractSupportedTests {
 		em.getTransaction().commit();
 	}
 
-	private void checkGroupValidity(Guid groupId, Guid bobId, Guid janeId) {
+	private void checkGroupValidity(Guid groupId, Guid bobId, Guid janeId) throws NotFoundException {
 		ReadOnlySession session = ReadOnlySession.getCurrent();
 		
-		TestGroupDMO groupDMO = session.findMustExist(TestGroupDMO.class, groupId);
+		TestGroupDMO groupDMO = session.find(TestGroupDMO.class, groupId);
 		assertNotNull(groupDMO);
 		assertEquals(groupId, groupDMO.getKey());
 

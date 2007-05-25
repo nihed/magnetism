@@ -26,10 +26,13 @@ public abstract class DMObject<KeyType> {
 	
 	protected abstract void init() throws NotFoundException;
 	
-	public abstract DMClassHolder getClassHolder();
+	/**
+	 * To check if an object has been initialized. Don't implement this; it's implemented
+	 * in the wrapper that is derived from your object. 
+	 * 
+	 * @return
+	 */
+	protected abstract boolean isInitialized();
 	
-	@SuppressWarnings("unchecked")
-	static public <K,T extends DMObject<K>> Class<T> classCast(Class<K> keyClassclazz, Class<?> elementClass) {
-		return (Class<T>)elementClass;
-	}
+	public abstract DMClassHolder getClassHolder();
 }

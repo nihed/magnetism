@@ -55,8 +55,8 @@ public class StoreClient implements DMClient {
 		}
 	}
 	
-	public DMViewpoint getViewpoint() {
-		return client.getViewpoint();
+	public DMViewpoint createViewpoint() {
+		return client.createViewpoint();
 	}
 	
 	public FetchVisitor beginNotification() {
@@ -67,7 +67,7 @@ public class StoreClient implements DMClient {
 		client.endNotification(visitor, serial);
 	}
 
-	public <K, T extends DMObject<K>> void notifyEviction(DMClassHolder<T> classHolder, K key, long serial) {
+	public <K, T extends DMObject<K>> void notifyEviction(DMClassHolder<K,T> classHolder, K key, long serial) {
 		client.notifyEviction(classHolder, key, serial);
 	}
 

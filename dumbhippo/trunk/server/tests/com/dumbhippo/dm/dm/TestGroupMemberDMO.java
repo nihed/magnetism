@@ -40,12 +40,12 @@ public abstract class TestGroupMemberDMO extends DMObject<TestGroupMemberKey> {
 	
 	@DMProperty
 	public TestGroupDMO getGroup() {
-		return session.findMustExist(TestGroupDMO.class, groupMember.getGroup().getGuid());
+		return session.findUnchecked(TestGroupDMO.class, groupMember.getGroup().getGuid());
 	}
 
 	@DMProperty(defaultChildren="+")
 	public TestUserDMO getMember() {
-		return session.findMustExist(TestUserDMO.class, groupMember.getMember().getGuid());
+		return session.findUnchecked(TestUserDMO.class, groupMember.getMember().getGuid());
 	}
 	
 	@DMProperty

@@ -24,30 +24,27 @@ public class FilterCompilerTests extends TestCase {
 
 	public void testFilterSimple() throws Exception {
 		Filter filter =  FilterParser.parse("viewer.sameAs(this)");
-		Class<? extends CompiledFilter<Guid,TestUserDMO>> compiled = FilterCompiler.compileFilter(TestViewpoint.class, Guid.class, filter);
-		CompiledFilter<Guid,TestUserDMO> instance = compiled.newInstance();
+		CompiledFilter<Guid,TestUserDMO> instance = FilterCompiler.compileFilter(TestViewpoint.class, Guid.class, filter);
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		
-		assertEquals(viewpoint.getViewerId().toString(), instance.filter(viewpoint, viewpoint.getViewerId()).toString());
-		assertNull(instance.filter(viewpoint, Guid.createNew()));
+		assertEquals(viewpoint.getViewerId().toString(), instance.filterKey(viewpoint, viewpoint.getViewerId()).toString());
+		assertNull(instance.filterKey(viewpoint, Guid.createNew()));
 	}
 	
 	public void testItemFilterSimple() throws Exception {
 		Filter filter =  FilterParser.parse("viewer.sameAs(item)");
-		Class<? extends CompiledItemFilter<Guid,TestUserDMO,Guid,TestUserDMO>> compiled = FilterCompiler.compileItemFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
-		CompiledItemFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = compiled.newInstance();
+		CompiledItemFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileItemFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		
-		assertEquals(viewpoint.getViewerId().toString(), instance.filter(viewpoint, Guid.createNew(), viewpoint.getViewerId()).toString());
-		assertNull(instance.filter(viewpoint, Guid.createNew(), Guid.createNew()));
+		assertEquals(viewpoint.getViewerId().toString(), instance.filterKey(viewpoint, Guid.createNew(), viewpoint.getViewerId()).toString());
+		assertNull(instance.filterKey(viewpoint, Guid.createNew(), Guid.createNew()));
 	}
 	
 	public void testListFilterSimple() throws Exception {
 		Filter filter =  FilterParser.parse("viewer.sameAs(item)");
-		Class<? extends CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO>> compiled = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
-		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = compiled.newInstance();
+		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 
@@ -55,7 +52,7 @@ public class FilterCompilerTests extends TestCase {
 		input.add(viewpoint.getViewerId());
 		input.add(Guid.createNew());
 		
-		List<Guid> result = instance.filter(viewpoint, Guid.createNew(), input);
+		List<Guid> result = instance.filterKeys(viewpoint, Guid.createNew(), input);
 		
 		assertEquals(1, result.size());
 		assertEquals(viewpoint.getViewerId().toString(), result.get(0).toString());
@@ -63,8 +60,7 @@ public class FilterCompilerTests extends TestCase {
 	
 	public void testAnyAllPhase() throws Exception {
 		Filter filter =  FilterParser.parse("viewer.sameAs(any)||viewer.isBuddy(all)");
-		Class<? extends CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO>> compiled = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
-		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = compiled.newInstance();
+		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
 		
 		List<Guid> buddies = new ArrayList<Guid>();
 		buddies.add(Guid.createNew());
@@ -76,9 +72,9 @@ public class FilterCompilerTests extends TestCase {
 		input.add(viewpoint.getViewerId());
 		input.add(Guid.createNew());
 		
-		assertEquals(2, instance.filter(viewpoint, viewpoint.getViewerId(), buddies).size());
-		assertEquals(1, instance.filter(viewpoint, viewpoint.getViewerId(), Collections.singletonList(viewpoint.getViewerId())).size());
-		assertEquals(0, instance.filter(viewpoint, viewpoint.getViewerId(), Collections.singletonList(Guid.createNew())).size());
+		assertEquals(2, instance.filterKeys(viewpoint, viewpoint.getViewerId(), buddies).size());
+		assertEquals(1, instance.filterKeys(viewpoint, viewpoint.getViewerId(), Collections.singletonList(viewpoint.getViewerId())).size());
+		assertEquals(0, instance.filterKeys(viewpoint, viewpoint.getViewerId(), Collections.singletonList(Guid.createNew())).size());
 	}
 	
 	public void testMultiplePhases() throws Exception {
@@ -87,8 +83,7 @@ public class FilterCompilerTests extends TestCase {
 		// - You can any mutual friends on the list unless you are an enemy of any of the friends 
 		
 		Filter filter =  FilterParser.parse("viewer.sameAs(this)||(viewer.isBuddy(item) && !viewer.isEnemy(any))");
-		Class<? extends CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO>> compiled = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
-		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = compiled.newInstance();
+		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
 		
 		Guid viewer = Guid.createNew();
 
@@ -115,14 +110,14 @@ public class FilterCompilerTests extends TestCase {
 		input.add(buddy2);
 		input.add(enemy1); // Both a friend and an enemy? sameAs(this) makes it visible anyways
 		
-		assertEquals(3, instance.filter(viewpoint, viewer, input).size());
+		assertEquals(3, instance.filterKeys(viewpoint, viewer, input).size());
 		
 		input = new ArrayList<Guid>();
 		input.add(buddy1);
 		input.add(buddy2);
 		input.add(stranger1);
 		
-		assertEquals(2, instance.filter(viewpoint, stranger2, input).size());
+		assertEquals(2, instance.filterKeys(viewpoint, stranger2, input).size());
 		
 		input = new ArrayList<Guid>();
 		input.add(buddy1);
@@ -130,7 +125,7 @@ public class FilterCompilerTests extends TestCase {
 		input.add(stranger1);
 		input.add(enemy1);
 
-		assertEquals(0, instance.filter(viewpoint, stranger2, input).size());
+		assertEquals(0, instance.filterKeys(viewpoint, stranger2, input).size());
 	}
 	
 	// Tests the case where we have multiple distinct rules when entering the any-all phase
@@ -141,8 +136,7 @@ public class FilterCompilerTests extends TestCase {
 		//   unless the list contains one of their enemies
 		
 		Filter filter =  FilterParser.parse("!viewer.isEnemy(any)&&(viewer.isBuddy(this)||(!viewer.isEnemy(this)&&viewer.isBuddy(any)))");
-		Class<? extends CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO>> compiled = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
-		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = compiled.newInstance();
+		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
 		
 		Guid viewer = Guid.createNew();
 
@@ -168,18 +162,18 @@ public class FilterCompilerTests extends TestCase {
 		input.add(viewer);
 		input.add(buddy2);
 		
-		assertEquals(2, instance.filter(viewpoint, buddy1, input).size());
+		assertEquals(2, instance.filterKeys(viewpoint, buddy1, input).size());
 		
 		input.add(enemy1);
-		assertEquals(0, instance.filter(viewpoint, buddy1, input).size());
+		assertEquals(0, instance.filterKeys(viewpoint, buddy1, input).size());
 		
 		input = new ArrayList<Guid>();
 		input.add(stranger1);
 		
-		assertEquals(0, instance.filter(viewpoint, stranger2, input).size());
+		assertEquals(0, instance.filterKeys(viewpoint, stranger2, input).size());
 		
 		input.add(buddy1);
-		assertEquals(2, instance.filter(viewpoint, stranger2, input).size());
+		assertEquals(2, instance.filterKeys(viewpoint, stranger2, input).size());
 	}
 	
 	// Tests the case where we have two multiple rules we use when scanning the items
@@ -191,8 +185,7 @@ public class FilterCompilerTests extends TestCase {
 		// - Enemies see nothing
 		
 		Filter filter =  FilterParser.parse("(viewer.isBuddy(this)&&!viewer.isEnemy(item))||(!viewer.isEnemy(this)&&viewer.isBuddy(item))");
-		Class<? extends CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO>> compiled = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
-		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = compiled.newInstance();
+		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
 		
 		Guid viewer = Guid.createNew();
 
@@ -219,20 +212,20 @@ public class FilterCompilerTests extends TestCase {
 		input.add(buddy2);
 		input.add(enemy1);
 		
-		assertEquals(2, instance.filter(viewpoint, buddy1, input).size());
+		assertEquals(2, instance.filterKeys(viewpoint, buddy1, input).size());
 		
 		input = new ArrayList<Guid>();
 		input.add(buddy1);
 		input.add(buddy2);
 		input.add(stranger1);
 		
-		assertEquals(2, instance.filter(viewpoint, stranger2, input).size());
+		assertEquals(2, instance.filterKeys(viewpoint, stranger2, input).size());
 		
 		input = new ArrayList<Guid>();
 		input.add(buddy1);
 		input.add(buddy2);
 		input.add(stranger1);
 
-		assertEquals(0, instance.filter(viewpoint, enemy1, input).size());
+		assertEquals(0, instance.filterKeys(viewpoint, enemy1, input).size());
 	}
 }

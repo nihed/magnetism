@@ -16,26 +16,34 @@ import javassist.NotFoundException;
 
 import org.slf4j.Logger;
 
+import antlr.RecognitionException;
+import antlr.TokenStreamException;
+
 import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
+import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.dm.annotations.DMFilter;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.ViewerDependent;
 import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
+import com.dumbhippo.dm.filter.Filter;
+import com.dumbhippo.dm.parser.FilterParser;
 
-public abstract class DMPropertyHolder implements Comparable<DMPropertyHolder> {
+public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements Comparable<DMPropertyHolder> {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(DMPropertyHolder.class);
 	
-	protected DMClassHolder<? extends DMObject> declaringClassHolder;
+	protected DMClassHolder<K,T> declaringClassHolder;
 	protected DMProperty annotation;
 	protected boolean defaultInclude;
 	protected String propertyId;
-	protected Class elementType;
+	protected Class<TI> elementType;
+	protected Filter propertyFilter;
+	protected boolean completed;
 	
 	private CtClass ctClass;
 	private Method method;
@@ -43,9 +51,8 @@ public abstract class DMPropertyHolder implements Comparable<DMPropertyHolder> {
 	private String name;
 	private String namespace;
 	private long ordering;
-	private boolean completed;
 	
-	public DMPropertyHolder (DMClassHolder<? extends DMObject> declaringClassHolder, CtMethod ctMethod, Class<?> elementType, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
+	public DMPropertyHolder (DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, Class<TI> elementType, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
 		boolean booleanOnly = false;
 		
 		this.annotation = annotation;
@@ -109,6 +116,17 @@ public abstract class DMPropertyHolder implements Comparable<DMPropertyHolder> {
 		namespace = propertyId.substring(0, hashIndex);
 		
 		computeOrdering();
+		
+		if (filter != null) {
+			try {
+				propertyFilter = FilterParser.parse(filter.value());
+			} catch (RecognitionException e) {
+				throw new RuntimeException(propertyId + ": Error parsing filter at " + e.line + ":" + e.column, e);
+			} catch (TokenStreamException e) {
+				throw new RuntimeException(propertyId + ": Error parsing filter", e);
+			}
+			
+		}
 	}
 	
 	public void complete() {
@@ -165,9 +183,10 @@ public abstract class DMPropertyHolder implements Comparable<DMPropertyHolder> {
 	}
 	
 	abstract public Object dehydrate(Object value);
-	abstract public Object rehydrate(Object value, DMSession session);
+	abstract public Object rehydrate(DMViewpoint viewpoint, K key, Object value, DMSession session);
+	abstract public Object filter(DMViewpoint viewpoint, K key, Object value);
 	
-	protected Object getRawPropertyValue(DMObject object) {
+	public Object getRawPropertyValue(DMObject object) {
 		try {
 			return method.invoke(object);
 		} catch (InvocationTargetException e) {
@@ -179,7 +198,7 @@ public abstract class DMPropertyHolder implements Comparable<DMPropertyHolder> {
 		}
 	}
 	
-	public static DMPropertyHolder getForMethod(DMClassHolder<? extends DMObject> classHolder, CtMethod ctMethod) {
+	public static <K,T extends DMObject<K>> DMPropertyHolder<K,T,?> getForMethod(DMClassHolder<K,T> classHolder, CtMethod ctMethod) {
 		DMProperty property = null;
 		DMFilter filter = null;
 		ViewerDependent viewerDependent = null;
@@ -239,9 +258,10 @@ public abstract class DMPropertyHolder implements Comparable<DMPropertyHolder> {
 		else
 			throw new RuntimeException("Unexpected non-class type");
 		
-		if (DMObject.class.isAssignableFrom(elementType)) {
-			Class<?> keyType = DMClassHolder.findKeyClass(elementType);
-			return createResourcePropertyHolder(classHolder, ctMethod, DMObject.classCast(keyType, elementType), property, filter, viewerDependent, multiValued);
+		DMClassInfo<?,?> classInfo = DMClassInfo.getForClass(elementType);
+
+		if (classInfo != null) {
+			return createResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent, multiValued);
 		} else if (elementType.isPrimitive() || (elementType == String.class)) { 
 			return createPlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent, multiValued);
 		} else {
@@ -249,14 +269,16 @@ public abstract class DMPropertyHolder implements Comparable<DMPropertyHolder> {
 		}
 	}
 	
-	private static <K, T extends DMObject<K>> DMPropertyHolder createResourcePropertyHolder(DMClassHolder<?> classHolder, CtMethod ctMethod, Class<T> elementType, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean multiValued) {
+	@SuppressWarnings("unchecked")
+	private static <K, T extends DMObject<K>> DMPropertyHolder<K,T,?> createResourcePropertyHolder(DMClassHolder<K,T> classHolder, CtMethod ctMethod, DMClassInfo<?,?> classInfo, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean multiValued) {
 		if (multiValued)
-			return new MultiResourcePropertyHolder<K,T>(classHolder, ctMethod, elementType, property, filter, viewerDependent);
+			return new MultiResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
 		else
-			return new SingleResourcePropertyHolder<K,T>(classHolder, ctMethod, elementType, property, filter, viewerDependent);
+			return new SingleResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
 	}
 
-	private static DMPropertyHolder createPlainPropertyHolder(DMClassHolder<?> classHolder, CtMethod ctMethod, Class<?> elementType, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean multiValued) {
+	@SuppressWarnings("unchecked")
+	private static <K, T extends DMObject<K>> DMPropertyHolder<K,T,?> createPlainPropertyHolder(DMClassHolder<K,T> classHolder, CtMethod ctMethod, Class<?> elementType, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean multiValued) {
 		if (multiValued)
 			return new MultiPlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent);
 		else
@@ -304,8 +326,8 @@ public abstract class DMPropertyHolder implements Comparable<DMPropertyHolder> {
 		return ordering < other.ordering ? -1 : (ordering == other.ordering ? 0 : 1);
 	}
 	
-	public abstract void visitChildren(DMSession session, Fetch<?,?> children, DMObject object, FetchVisitor visitor);
-	public abstract void visitProperty(DMSession session, DMObject object, FetchVisitor visitor);
+	public abstract void visitChildren(DMSession session, Fetch<?,?> children, T object, FetchVisitor visitor);
+	public abstract void visitProperty(DMSession session, T object, FetchVisitor visitor);
 
 	public abstract Fetch<?,?> getDefaultChildren();
 	public Class<?> getKeyClass() {
@@ -313,7 +335,7 @@ public abstract class DMPropertyHolder implements Comparable<DMPropertyHolder> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <K, T extends DMObject<K>> ResourcePropertyHolder<K,T> asResourcePropertyHolder(Class<K> keyClass) {
-		return (ResourcePropertyHolder<K,T>)this;
+	public <KI2,TI2 extends DMObject<KI2>> ResourcePropertyHolder<K,T,KI2,TI2> asResourcePropertyHolder(Class<KI2> keyClass) {
+		return (ResourcePropertyHolder<K,T,KI2,TI2>)this;
 	}
 }

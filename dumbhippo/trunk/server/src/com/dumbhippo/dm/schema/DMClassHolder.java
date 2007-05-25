@@ -25,89 +25,87 @@ import javax.persistence.EntityManager;
 
 import org.slf4j.Logger;
 
+import antlr.RecognitionException;
+import antlr.TokenStreamException;
+
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.dm.DMKey;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.dm.DataModel;
+import com.dumbhippo.dm.annotations.DMFilter;
 import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.Inject;
-import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.dm.filter.CompiledFilter;
+import com.dumbhippo.dm.filter.CompiledItemFilter;
+import com.dumbhippo.dm.filter.CompiledListFilter;
+import com.dumbhippo.dm.filter.Filter;
+import com.dumbhippo.dm.filter.FilterCompiler;
+import com.dumbhippo.dm.parser.FilterParser;
 
-public class DMClassHolder<T extends DMObject> {
+public class DMClassHolder<K,T extends DMObject<K>> {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(DMClassHolder.class);
 	
 	private DataModel model;
 	private Class<T> baseClass;
-	private Class<?> keyClass;
-	private Constructor keyConstructor;
+	private Class<K> keyClass;
 	private Constructor wrapperConstructor;
-	private DMPropertyHolder[] properties;
+	private DMPropertyHolder<K,T,?>[] properties;
 	private boolean[] mustQualify;
 	private Map<String, Integer> propertiesMap = new HashMap<String, Integer>();
 	private DMO annotation;
 
-	public DMClassHolder(DataModel model, Class<T> clazz) {
+	private Filter filter;
+	private Filter itemFilter;
+	private CompiledFilter<K,T> compiledFilter;
+	private CompiledListFilter<?,?,K,T> compiledListFilter;
+	private CompiledItemFilter<?,?,K,T> compiledItemFilter;
+
+	public DMClassHolder(DataModel model, DMClassInfo<K,T> classInfo) {
 		this.model = model;
-		this.baseClass = clazz;
+		baseClass = classInfo.getObjectClass();
+		keyClass = classInfo.getKeyClass();
 		
-		annotation = clazz.getAnnotation(DMO.class);
+		annotation = baseClass.getAnnotation(DMO.class);
 		if (annotation == null)
-			throw new RuntimeException("DMObject class " + clazz.getName() + " doesn't have a @DMO annotation");
+			throw new RuntimeException("DMObject class " + baseClass.getName() + " doesn't have a @DMO annotation");
 		
 		// Validate the classId as an URI
 		try {
 			URI uri = new URI(annotation.classId());
 			if (uri.getFragment() != null)
-				throw new RuntimeException(clazz.getName() + ": classId '" + annotation.classId() + "' can't have a fragment identifier");
+				throw new RuntimeException(baseClass.getName() + ": classId '" + annotation.classId() + "' can't have a fragment identifier");
 
 		} catch (URISyntaxException e1) {
-			throw new RuntimeException(clazz.getName() + ": classId '" + annotation.classId() + "' is not a valid URI");
+			throw new RuntimeException(baseClass.getName() + ": classId '" + annotation.classId() + "' is not a valid URI");
 		}
 		
-		keyConstructor = findKeyConstructor(clazz);
-		
-		keyClass = keyConstructor.getParameterTypes()[0];
 
 		buildWrapperClass();
-	}
-	
-	private static Constructor findKeyConstructor(Class<?> clazz) {
-		Constructor keyConstructor = null;
 		
-		for (Constructor c : clazz.getDeclaredConstructors()) {
-			Class<?>[] parameterTypes = c.getParameterTypes();
-			if (parameterTypes.length != 1)
-				continue;
+		DMFilter filterAnnotation = baseClass.getAnnotation(DMFilter.class);
+		if (filterAnnotation != null) {
+			try {
+				filter = FilterParser.parse(filterAnnotation.value());
+			} catch (RecognitionException e) {
+				throw new RuntimeException(baseClass.getName() + ": Error parsing filter at " + e.line + ":" + e.column, e);
+			} catch (TokenStreamException e) {
+				throw new RuntimeException(baseClass.getName() + ": Error parsing filter", e);
+			}
 			
-			if (!(parameterTypes[0].equals(Guid.class) ||
-				  parameterTypes[0].equals(String.class) ||
-				  DMKey.class.isAssignableFrom(parameterTypes[0])))
-				  continue;
-			
-			if (keyConstructor != null)
-				throw new RuntimeException("Multiple candidate constructors found for class " + 
-										   clazz.getName() + ": " +
-										   keyConstructor.toGenericString() + ", " +
-										   c.toGenericString());
-			
-			keyConstructor = c;
+			itemFilter = filter.asItemFilter();
+		
+			compiledFilter = FilterCompiler.compileFilter(model.getViewpointClass(), keyClass, filter);
+			CompiledItemFilter<Object,DMObject<Object>,K,T> genericItemFilter = FilterCompiler.compileItemFilter(model.getViewpointClass(), Object.class, keyClass, itemFilter);
+			compiledItemFilter = genericItemFilter;
+			CompiledListFilter<Object,DMObject<Object>,K,T> genericListFilter = FilterCompiler.compileListFilter(model.getViewpointClass(), Object.class, keyClass, itemFilter);
+			compiledListFilter = genericListFilter;
 		}
-
-		if (keyConstructor == null)
-			throw new RuntimeException("No candidate constructors found for class " + clazz.getName());
-		
-		return keyConstructor;
-	}
-	
-	public static Class<?> findKeyClass(Class<?> clazz) {
-		return findKeyConstructor(clazz).getParameterTypes()[0];
 	}
 	
 	public void complete() {
-		for (DMPropertyHolder property : properties)
+		for (DMPropertyHolder<?,?,?> property : properties)
 			property.complete();
 	}
 
@@ -123,7 +121,7 @@ public class DMClassHolder<T extends DMObject> {
 		return annotation.classId();
 	}
 
-	public Class<?> getKeyClass() {
+	public Class<K> getKeyClass() {
 		return keyClass;
 	}
 	
@@ -143,11 +141,11 @@ public class DMClassHolder<T extends DMObject> {
 		return properties.length;
 	}
 	
-	public DMPropertyHolder getProperty(int propertyIndex) {
+	public DMPropertyHolder<K,T,?> getProperty(int propertyIndex) {
 		return properties[propertyIndex];
 	}
 	
-	public DMPropertyHolder[] getProperties() {
+	public DMPropertyHolder<K,T,?>[] getProperties() {
 		return properties;
 	}
 	
@@ -172,7 +170,29 @@ public class DMClassHolder<T extends DMObject> {
 			}
 		}
 	}
+	
+	public Filter getUncompiledFilter() {
+		return filter;
+	}
+	
+	public Filter getUncompiledItemFilter() {
+		return itemFilter;
+	}
+	
+	public CompiledFilter<K,T> getFilter() {
+		return compiledFilter;
+	}
 
+	@SuppressWarnings("unchecked")
+	public <KO, TO extends DMObject<KO>> CompiledItemFilter<KO,TO,K,T> getItemFilter() {
+		return (CompiledItemFilter<KO,TO,K,T>)compiledItemFilter;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <KO, TO extends DMObject<KO>> CompiledListFilter<KO,TO,K,T> getListFilter() {
+		return (CompiledListFilter<KO,TO,K,T>)compiledListFilter;
+	}
+	
 	private void injectField(DMSession session, T t, Field field) {
 		if (field.getType() == EntityManager.class) {
 			setField(t, field, session.getInjectableEntityManager());
@@ -268,7 +288,7 @@ public class DMClassHolder<T extends DMObject> {
 	}
 	
 	private void addInitMethod(CtClass baseCtClass, CtClass wrapperCtClass) throws CannotCompileException {
-		CtMethod wrapperMethod = new CtMethod(CtClass.voidType, "_dm_init", new CtClass[] {}, wrapperCtClass);
+		CtMethod method = new CtMethod(CtClass.voidType, "_dm_init", new CtClass[] {}, wrapperCtClass);
 		Template body = new Template(
 			"{" +
 			"    if (!_dm_initialized) {" +
@@ -276,9 +296,15 @@ public class DMClassHolder<T extends DMObject> {
 			"        _dm_initialized = true;" +
 			"    }" +
 			"}");
-		wrapperMethod.setBody(body.toString());
+		method.setBody(body.toString());
+		wrapperCtClass.addMethod(method);
 		
-		wrapperCtClass.addMethod(wrapperMethod);
+		method = new CtMethod(CtClass.booleanType, "isInitialized", new CtClass[] {}, wrapperCtClass);
+		method.setBody(
+		   "{" +
+		   "    return _dm_initialized;" +
+		   "}");
+		wrapperCtClass.addMethod(method);
 	}
 	
 	private void addGetClassHolderMethod(CtClass wrapperCtClass) throws CannotCompileException {
@@ -297,7 +323,7 @@ public class DMClassHolder<T extends DMObject> {
 		wrapperCtClass.addMethod(method);
 	}
 	
-	private void addWrapperGetter(CtClass baseCtClass, CtClass wrapperCtClass, DMPropertyHolder property, int propertyIndex) throws CannotCompileException, NotFoundException {
+	private void addWrapperGetter(CtClass baseCtClass, CtClass wrapperCtClass, DMPropertyHolder<?,?,?> property, int propertyIndex) throws CannotCompileException, NotFoundException {
 		CtField field;
 			
 		field = new CtField(CtClass.booleanType, "_dm_" + property.getName() + "Initialized", wrapperCtClass);
@@ -339,11 +365,11 @@ public class DMClassHolder<T extends DMObject> {
 	}
 
 	private void addWrapperGetters(CtClass baseCtClass, CtClass wrapperCtClass) throws CannotCompileException, NotFoundException {
-		List<DMPropertyHolder> foundProperties = new ArrayList<DMPropertyHolder>();
+		List<DMPropertyHolder<K,T,?>> foundProperties = new ArrayList<DMPropertyHolder<K,T,?>>();
 		Map<String, Integer> nameCount = new HashMap<String, Integer>();
 		
 		for (CtMethod method : baseCtClass.getMethods()) {
-			DMPropertyHolder property = DMPropertyHolder.getForMethod(this, method);
+			DMPropertyHolder<K,T,?> property = DMPropertyHolder.getForMethod(this, method);
 			if (property != null) {
 				foundProperties.add(property);
 				if (!nameCount.containsKey(property.getName()))
@@ -357,7 +383,10 @@ public class DMClassHolder<T extends DMObject> {
 		// (see comment for DMPropertyHolder.computeHash()
 		Collections.sort(foundProperties);
 		
-		properties = foundProperties.toArray(new DMPropertyHolder[foundProperties.size()]);
+		@SuppressWarnings("unchecked")
+		DMPropertyHolder<K,T,?>[] tmpProperties = foundProperties.toArray(new DMPropertyHolder[foundProperties.size()]);
+		
+		properties = tmpProperties;
 		mustQualify = new boolean[foundProperties.size()];
 
 		for (int i = 0; i < properties.length; i++) {
@@ -403,5 +432,10 @@ public class DMClassHolder<T extends DMObject> {
 		} catch (NotFoundException e) {
 			throw new RuntimeException("Cannot look up class compiling wrapper for " + className, e);
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public static DMClassHolder<?,?> createForClass(DataModel model, Class<? extends DMObject> clazz) {
+		return new DMClassHolder(model, DMClassInfo.getForClass(clazz));
 	}
 }

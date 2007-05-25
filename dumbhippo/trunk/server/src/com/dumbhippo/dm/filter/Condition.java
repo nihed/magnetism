@@ -59,4 +59,11 @@ public class Condition implements Filter {
 		else
 			return this;
 	}
+
+	public Filter asItemFilter() {
+		if (type != ConditionType.THIS)
+			throw new RuntimeException("asItemFilter() called on filter with item/any/key conditions");
+		
+		return new Condition(predicateName, ConditionType.ITEM, propertyName);
+	}
 }

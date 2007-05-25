@@ -25,12 +25,15 @@ public class DataModel {
 	protected static final Logger logger = GlobalSetup.getLogger(DataModel.class);
 	
 	private DMSessionMap sessionMap = new DMSessionMapJTA();
+	private UnfilteredSession unfilteredSession;
 	private EntityManagerFactory emf = null;
 	private Map<Class, DMClassHolder> classes = new HashMap<Class, DMClassHolder>();
 	private ClassPool classPool = new ClassPool();
 	private DMStore store = new DMStore();
 	private boolean completed = false;
 	private ExecutorService notificationExecutor = ThreadUtils.newSingleThreadExecutor("DataModel-notification");
+	private Class<? extends DMViewpoint> viewpointClass;
+	private DMViewpoint systemViewpoint;
 
 	private static DataModel instance = new DataModel();
 
@@ -41,6 +44,8 @@ public class DataModel {
 		// where the DMO's live. Something to fix when we add jar-file scanning to 
 		// find DMOs.
 		classPool.insertClassPath(new ClassClassPath(this.getClass()));
+		
+		unfilteredSession = new UnfilteredSession(this);
 	}
 	
 	public static DataModel getInstance() {
@@ -66,6 +71,28 @@ public class DataModel {
 	}
 	
 	/**
+	 * Sets the class of the viewpoint objects that will be used with this model
+	 * (might be the base class of a hierarchy)
+	 * 
+	 * @param viewpointClass the viewpoint class
+	 */
+	public void setViewpointClass(Class<? extends DMViewpoint> viewpointClass) {
+		this.viewpointClass = viewpointClass;
+	}
+	
+	/**
+	 * Sets the system viewpoint for this data model; this system viewpoint is a 
+	 * viewpoint that is allowed to see all data.
+	 */
+	public void setSystemViewpoint(DMViewpoint systemViewpoint) {
+		this.systemViewpoint = systemViewpoint;
+	}
+	
+	public DMViewpoint getSystemViewpoint() {
+		return systemViewpoint;
+	}
+	
+	/**
 	 * Add a DMO class to those managed by the cache. Eventually, we probably want
 	 * to search for classes marked with @DMO rather than requiring manual 
 	 * registration. After adding all classes, call completeDMClasses(). 
@@ -73,11 +100,11 @@ public class DataModel {
 	 * @param <T>
 	 * @param clazz
 	 */
-	public <T extends DMObject> void addDMClass(Class<T> clazz) {
+	public void addDMClass(Class<? extends DMObject> clazz) {
 		if (completed)
 			throw new IllegalStateException("completeDMClasses has already been callled");
 		
-		classes.put(clazz, new DMClassHolder<T>(this, clazz));
+		classes.put(clazz, DMClassHolder.createForClass(this, clazz));
 	}
 	
 	/**
@@ -101,9 +128,8 @@ public class DataModel {
 		return emf.createEntityManager();
 	}
 	
-	public <T extends DMObject> DMClassHolder<T> getDMClass(Class<T> clazz) {
-		@SuppressWarnings("unchecked")
-		DMClassHolder<T> classHolder = classes.get(clazz);
+	public DMClassHolder<?,?> getClassHolder(Class<?> clazz) {
+		DMClassHolder<?,?> classHolder = classes.get(clazz);
 		
 		if (classHolder == null)
 			throw new IllegalArgumentException("Class " + clazz.getName() + " is not bound as a DMO");
@@ -111,6 +137,16 @@ public class DataModel {
 		return classHolder;
 	}
 	
+	public <K, T extends DMObject<K>> DMClassHolder<K,T> getClassHolder(Class<K> keyClass, Class<T> objectClass) {
+		@SuppressWarnings("unchecked")
+		DMClassHolder<K,T> classHolder = classes.get(objectClass);
+		
+		if (classHolder == null)
+			throw new IllegalArgumentException("Class " + objectClass.getName() + " is not bound as a DMO");
+		
+		return classHolder;
+	}
+
 	public ReadOnlySession initializeReadOnlySession(DMViewpoint viewpoint) {
 		ReadOnlySession session = new ReadOnlySession(this, viewpoint);
 		sessionMap.initCurrent(session);
@@ -177,11 +213,19 @@ public class DataModel {
 				long serial = client.allocateSerial(); 
 				FetchVisitor visitor = client.beginNotification();
 				
-				ReadOnlySession session = initializeReadOnlySession(client.getViewpoint());
+				ReadOnlySession session = initializeReadOnlySession(client.createViewpoint());
 				
 				clientNotification.visitNotification(session, visitor);
 				client.endNotification(visitor, serial);
 			}
 		});
+	}
+	
+	public UnfilteredSession getUnfilteredSession() {
+		return unfilteredSession;
+	}
+
+	public Class<? extends DMViewpoint> getViewpointClass() {
+		return viewpointClass;
 	}
 }
