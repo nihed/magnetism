@@ -94,6 +94,7 @@ class SelfStock(AbstractMugshotStock):
         self._namephoto_box.set_photo(self._photo)
         
         self._name = hippo.CanvasText(text="Nobody")
+        self._name.set_property("font", "14px Bold")
         self._name.connect("button-press-event", lambda button, event: self.__on_activate())        
         self._namephoto_box.set_child(self._name)        
         
