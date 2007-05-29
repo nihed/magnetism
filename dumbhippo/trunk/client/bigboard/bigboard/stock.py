@@ -39,10 +39,11 @@ class Stock(gobject.GObject):
     SIZE_BULL_CONTENT_PX = 200
     SIZE_BEAR_CONTENT_PX = 36
     
-    def __init__(self, metainfo):
+    def __init__(self, metainfo, panel=None):
         super(Stock, self).__init__()
         self._id = metainfo['id']
         self._ticker = metainfo['ticker']
+        self._panel = panel
         self._bull_widgets = {}
         self._size = Stock.SIZE_BULL
         

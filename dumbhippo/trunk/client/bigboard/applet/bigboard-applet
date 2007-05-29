@@ -5,12 +5,6 @@ import sys, os, os.path, re, getopt, urlparse, logging
 
 import gtk, gobject, gnomeapplet, dbus, dbus.glib
 
-basedir = os.path.dirname(sys.argv[0])
-if os.access(os.path.join(basedir, 'Makefile.am'), os.R_OK):
-    srcdir = os.path.abspath(os.path.join(basedir, ".."))
-    print "adding %s to path" % (srcdir,)
-    sys.path.insert(0, srcdir)
-
 import bigboard.libbig
 import bigboard.libbig.logutil
 import bigboard.libbig.httpcache
@@ -18,6 +12,7 @@ import bigboard.libbig.httpcache
 bigboard.libbig.httpcache._cache = bigboard.libbig.httpcache.Cache(cachedir=os.path.join(os.path.expanduser("~"), '.gnome2', 'bigboard-applet', 'cache'))
 from bigboard.libbig.http import AsyncHTTPFetcher
 from bigboard.libbig.imagecache import URLImageCache
+import bigboard.keybinder
 import bigboard.mugshot as mugshot
 import bigboard.deskbar_embed as deskbar_embed
 
@@ -66,8 +61,13 @@ class BigBoardApplet(gobject.GObject):
         self.__applet = applet
         self.__iid = iid
 
-        self.__bb_obj = dbus.SessionBus().get_object('org.mugshot.BigBoard', '/bigboard/panel')
-        self.__bb = dbus.Interface(self.__bb_obj, 'org.mugshot.BigBoard.Panel')
+        self.__keybinding = "Super_L"
+        self.__keybinding_bound = False
+
+        session_bus = dbus.SessionBus()
+        bus_proxy = session_bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
+        self.__bus_proxy = bus_proxy.connect_to_signal("NameOwnerChanged", self.__on_dbus_name_owner_changed)
+        self.__create_proxy()
 
         if applet.get_orient() in (gnomeapplet.ORIENT_UP, gnomeapplet.ORIENT_DOWN):
             self.__box = gtk.HBox()
@@ -95,12 +95,58 @@ class BigBoardApplet(gobject.GObject):
 
         self.__applet.show_all()
 
+    def __create_proxy(self):
+        try:
+            self.__bb_obj = dbus.SessionBus().get_object('org.mugshot.BigBoard', '/bigboard/panel')
+            self.__bb = dbus.Interface(self.__bb_obj, 'org.mugshot.BigBoard.Panel')
+            self.__bb.connect_to_signal("expanded", self.__on_bb_expanded)
+        except dbus.DBusException:
+            self.__bb_obj = None
+            self.__bb = None
+
+    def __on_dbus_name_owner_changed(self, name, prev_owner, new_owner):
+        if name == 'org.mugshot.BigBoard':
+            if new_owner != '':
+                _logger.debug("owner for org.mugshot.BigBoard changed, recreating proxies")
+                self.__create_proxy()
+            else:
+                self.__bb_obj = None
+                self.__bb = None
+
+    def __on_focus(self):
+        _logger.debug("got focus keypress")
+        self.__deskbar.focus()
+
+    def __unbind(self):
+        if self.__keybinding_bound:
+            try:
+                _logger.debug("unbinding '%s'", self.__keybinding)
+                bigboard.keybinder.tomboy_keybinder_unbind(self.__keybinding)
+            except KeyError, e:
+                pass
+            self.__keybinding_bound = False
+
+    def __bind(self):
+        if not self.__keybinding_bound:
+            _logger.debug("binding '%s'", self.__keybinding)
+            bigboard.keybinder.tomboy_keybinder_bind(self.__keybinding, self.__on_focus)
+            self.__keybinding_bound = True
+
+    def __on_bb_expanded(self, is_expanded):
+        if is_expanded:
+            self.__unbind()
+            self.__applet.hide()
+        else:
+            self.__bind()
+            self.__applet.show()
+
     def __on_change_size(self):
         pass
 
     def __onclick(self):
         _logger.debug("got click")
-        self.__bb.toggleExpand()
+        self.__unbind()
+        self.__bb.expand()
 
     def __on_self_known(self, mugshot):
         _logger.debug("got mugshot self known")
@@ -143,7 +189,6 @@ if __name__ == "__main__":
     bigboard.libbig.logutil.init(default_log_level, debug_modules, 'bigboard.')
 
     if window:
-        _logger.debug("adding %s to path", srcdir)
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_geometry_hints(None, max_height=24)
         box = gtk.VBox()

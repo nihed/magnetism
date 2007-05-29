@@ -53,7 +53,7 @@ class PrelistedStock(object):
     def get_id(self):
         return self.__id
         
-    def get(self):
+    def get(self, panel=None):
         listing = os.path.join(self.__stockdir, 'listing.xml')
         if not os.access(listing, os.R_OK):
             raise Exception("stock listing %s vanished!" % listing)
@@ -74,7 +74,7 @@ class PrelistedStock(object):
             class_constructor = getattr(module, class_name)
             self.__logger.debug("got constructor %s", class_constructor)
             
-            stock = class_constructor({'id': self.__id, 'ticker': ticker})
+            stock = class_constructor({'id': self.__id, 'ticker': ticker}, panel=panel)
             return stock                  
         except:
             self.__logger.exception("failed to add stock %s", self.__id)        
@@ -213,6 +213,9 @@ X-GNOME-Autostart-enabled=true
             af = open(self.__autostart_file, 'w')
             af.write(self.__autostart_data)
             af.close()
+
+        self.__keybinding = "Super_L"
+        self.__keybinding_bound = False
         
         self.__logger = logging.getLogger("bigboard.Panel")
         
@@ -260,13 +263,17 @@ X-GNOME-Autostart-enabled=true
         self.__stockreader.load()        
   
         self._canvas.show()
+
+    def __on_focus(self):
+        self.__logger.debug("got focus keypress")
+        self.external_focus()
         
     def __on_stock_added(self, prestock):
         if not prestock.get_id() in self.__state['listed'].split(';'):
             self.__logger.debug("ignoring unlisted stock %s")
             self.__prelisted[prestock.get_id()] = prestock
             return
-        stock = prestock.get()
+        stock = prestock.get(panel=self)
         if not stock:
             self.__logger.debug("stock %s failed to load", prestock.get_id())
             return
@@ -345,6 +352,7 @@ X-GNOME-Autostart-enabled=true
     def show(self):
         self._dw.show_all()
         self._shown = True
+        self.__do_expand()
 
     def external_focus(self):
         if self.__get_size() == Stock.SIZE_BEAR:
@@ -357,8 +365,15 @@ X-GNOME-Autostart-enabled=true
         search.focus()
 
     def __do_unexpand(self):
+        if self.__keybinding_bound:
+            try:
+                bigboard.keybinder.tomboy_keybinder_unbind(self.__keybinding)
+            except KeyError, e:
+                self.__logger.exception("failed to unbind '%s'", self.__keybinding)
+            self.__logger.debug("unbound '%s'", self.__keybinding)
+            self.__keybinding_bound = False
         self._dw.hide()
-        return 0
+        self.expanded(False)
 
     @dbus.service.method(BUS_IFACE_PANEL)
     def unexpand(self):
@@ -366,8 +381,12 @@ X-GNOME-Autostart-enabled=true
         return self.__do_unexpand()
 
     def __do_expand(self):
+        if not self.__keybinding_bound:
+            bigboard.keybinder.tomboy_keybinder_bind(self.__keybinding, self.__on_focus)
+            self.__logger.debug("bound '%s'", self.__keybinding)
+            self.__keybinding_bound = True
         self._dw.show()
-        return 0
+        self.expanded(True)
 
     @dbus.service.method(BUS_IFACE_PANEL)
     def expand(self):
@@ -398,6 +417,11 @@ X-GNOME-Autostart-enabled=true
             pass
         gtk.main_quit()
 
+    @dbus.service.signal(BUS_IFACE_PANEL,
+                         signature='b')
+    def expanded(self, is_expanded):
+        pass
+
 def load_image_hook(img_name):
     logging.debug("loading: %s" % (img_name,))
     pixbuf = gtk.gdk.pixbuf_new_from_file(img_name)
@@ -408,10 +432,6 @@ def on_name_lost(*args):
     logging.debug("Lost bus name " + name)
     if name == BUS_NAME_STR:
         gtk.main_quit()
-
-def on_focus(panel):
-    logging.debug("got focus keypress")
-    panel.external_focus()
 
 def usage():
     print "%s [--debug] [--debug-modules=mod1,mod2...] [--info] [--no-autolaunch] [--stockdirs=dir1:dir2:...] [--help]" % (sys.argv[0])
@@ -469,12 +489,12 @@ def main():
     bus = dbus.SessionBus() 
     bus_name = dbus.service.BusName(BUS_NAME_STR, bus=bus)
 
-##     logging.debug("Requesting D-BUS name")
-##     try:
-##         bigboard.libbig.dbusutil.take_name(BUS_NAME_STR, replace, on_name_lost)
-##     except bigboard.libbig.dbusutil.DBusNameExistsException:
-##         print "Big Board already running; exiting"
-##         sys.exit(0)
+    logging.debug("Requesting D-BUS name")
+    try:
+        bigboard.libbig.dbusutil.take_name(BUS_NAME_STR, replace, on_name_lost)
+    except bigboard.libbig.dbusutil.DBusNameExistsException:
+        print "Big Board already running; exiting"
+        sys.exit(0)
 
     if not stockdirs:
         stockdirs = [os.path.join(os.path.dirname(bigboard.__file__), 'stocks')]
@@ -482,12 +502,8 @@ def main():
     
     panel.show()
 
-    keybinding = "Super_L"
-    if not bigboard.keybinder.tomboy_keybinder_bind(keybinding, on_focus, panel):
-        logging.warn("Failed to bind '%s'" % (keybinding,))
-    
     bigboard.google.get_google() # for side effect of creating the Google object
-    bigboard.presence.get_presence() # for side effect of creating Presence object
+    #bigboard.presence.get_presence() # for side effect of creating Presence object
         
     gtk.gdk.threads_enter()
     gtk.main()

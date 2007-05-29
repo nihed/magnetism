@@ -2,11 +2,7 @@ import os, sys, re, logging
 
 import gtk, gobject, gnomeapplet, gconf
 
-try:
-    import deskbar, deskbar.DeskbarApplet
-    deskbar_available = True    
-except:
-    deskbar_available = False
+import deskbar, deskbar.DeskbarApplet
 
 class Deskbar(gtk.VBox):
     def __init__(self, **kwargs):
@@ -14,17 +10,14 @@ class Deskbar(gtk.VBox):
 
         self._logger = logging.getLogger("bigboard.Deskbar")
 
-        if not deskbar_available:
-            self.append(hippo.CanvasText(text="Deskbar not installed"))
-        else:
-            self.__applet = gnomeapplet.Applet()
-            self.__applet.get_orient = lambda: gnomeapplet.ORIENT_DOWN
-            self.__deskbar = deskbar.DeskbarApplet.DeskbarApplet(self.__applet)
-            self.__deskbar.loader.connect("modules-loaded", self.__override_modules_loaded)
-            self.__applet.reparent(self)
-            uiname = gconf.Value(gconf.VALUE_STRING)
-            uiname.set_string(deskbar.ENTRIAC_UI_NAME)
-            self.__deskbar.on_ui_changed(uiname)
+        self.__applet = gnomeapplet.Applet()
+        self.__applet.get_orient = lambda: gnomeapplet.ORIENT_DOWN
+        self.__deskbar = deskbar.DeskbarApplet.DeskbarApplet(self.__applet)
+        self.__deskbar.loader.connect("modules-loaded", self.__override_modules_loaded)
+        self.__applet.reparent(self)
+        uiname = gconf.Value(gconf.VALUE_STRING)
+        uiname.set_string(deskbar.ENTRIAC_UI_NAME)
+        self.__deskbar.on_ui_changed(uiname)
 
     def __override_modules_loaded(self, loader):
         self._logger.debug("got modules loaded")        
@@ -45,4 +38,7 @@ class Deskbar(gtk.VBox):
     def get_deskbar(self):
         return self.__deskbar
 
+    def focus(self):
+        self.__deskbar.on_keybinding_button_press(None, gtk.get_current_event_time())
+        
        

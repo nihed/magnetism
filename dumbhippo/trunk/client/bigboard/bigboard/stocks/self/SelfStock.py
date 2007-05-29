@@ -51,6 +51,7 @@ class ExternalAccountIcon(CanvasMugshotURLImage):
 
 class SelfSlideout(CanvasVBox):
     __gsignals__ = {
+        "minimize" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
         "close" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
     }
     def __init__(self, stock, **kwargs):
@@ -66,15 +67,16 @@ class SelfSlideout(CanvasVBox):
             link = hippo.CanvasLink(text='Sign in', xalign=hippo.ALIGNMENT_START)
             link.connect("activated", self.__show_mugshot_link, "/who-are-you")
         self.append(link)
-        link = hippo.CanvasLink(text='Programmer mode', xalign=hippo.ALIGNMENT_START)
-        link.connect("activated", self.__on_applet_mode)
+        link = hippo.CanvasLink(text='Minimize', xalign=hippo.ALIGNMENT_START)
+        link.connect("activated", self.__on_minimize_mode)
         self.append(link)
 
     def __show_mugshot_link(self, l, url):
         libbig.show_url(mugshot.get_mugshot().get_baseurl() + url)        
         self.emit('close')
 
-    def __on_applet_mode(self): 
+    def __on_minimize_mode(self, l): 
+        self.emit('minimize')
         self.emit('close')
 
 class SelfStock(AbstractMugshotStock):
@@ -128,6 +130,9 @@ class SelfStock(AbstractMugshotStock):
         myself.connect("changed", lambda myself: self.__handle_self_changed())        
         self.__handle_self_changed()        
 
+    def __do_minimize(self):
+        self._panel.unexpand()
+    
     def __on_activate(self):
         if self.__slideout:
             self.__slideout.destroy()
@@ -139,6 +144,7 @@ class SelfStock(AbstractMugshotStock):
         coords = widget.get_context().translate_to_screen(widget)
         self.__slideout.slideout_from(coords[0] + widget.get_allocation()[0] + 4, coords[1])
         slideout_display = SelfSlideout(self)
+        slideout_display.connect('minimize', lambda s: self.__do_minimize())
         slideout_display.connect('close', lambda s: self.__on_activate())
         self.__slideout.get_root().append(slideout_display)
         
