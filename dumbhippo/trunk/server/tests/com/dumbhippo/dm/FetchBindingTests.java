@@ -17,7 +17,7 @@ public class FetchBindingTests extends AbstractSupportedTests {
 		Reader in = new StringReader(input);
 		FetchParser parser = new FetchParser(new FetchLexer(in));
 		FetchNode fetchNode = parser.startRule();
-		String output = fetchNode.bind(DataModel.getInstance().getClassHolder(keyClass, objectClass)).toString();
+		String output = fetchNode.bind(support.getModel().getClassHolder(keyClass, objectClass)).toString();
 		
 		assertEquals(expected.replace("@", "http://mugshot.org/p/o/test"), output);
 	}

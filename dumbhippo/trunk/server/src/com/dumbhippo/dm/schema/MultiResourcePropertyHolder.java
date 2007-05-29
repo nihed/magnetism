@@ -41,7 +41,7 @@ public class MultiResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extend
 			else
 				toCompile = propertyFilter;
 			
-			listFilter = FilterCompiler.compileListFilter(declaringClassHolder.getModel().getViewpointClass(), 
+			listFilter = FilterCompiler.compileListFilter(declaringClassHolder.getModel(), 
 														  declaringClassHolder.getKeyClass(), 
 														  keyType, toCompile);
 		}

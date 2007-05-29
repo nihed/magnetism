@@ -43,7 +43,7 @@ public class BasicTests  extends AbstractSupportedTests {
 
 		em = support.beginSessionRO(viewpoint);
 		
-		session = ReadOnlySession.getCurrent();
+		session = support.currentSessionRO();
 		
 		// First time stores in session-local and global caches
 		groupDMO = session.find(TestGroupDMO.class, guid);
@@ -65,7 +65,7 @@ public class BasicTests  extends AbstractSupportedTests {
 		
 		em = support.beginSessionRO(viewpoint);
 
-		session = ReadOnlySession.getCurrent();
+		session = support.currentSessionRO();
 		
 		// Creates a new GroupDMO. The property value will be found
 		// from the global cache
@@ -137,7 +137,7 @@ public class BasicTests  extends AbstractSupportedTests {
 	}
 
 	private void checkGroupValidity(Guid groupId, Guid bobId, Guid janeId) throws NotFoundException {
-		ReadOnlySession session = ReadOnlySession.getCurrent();
+		ReadOnlySession session = support.currentSessionRO();
 		
 		TestGroupDMO groupDMO = session.find(TestGroupDMO.class, groupId);
 		assertNotNull(groupDMO);

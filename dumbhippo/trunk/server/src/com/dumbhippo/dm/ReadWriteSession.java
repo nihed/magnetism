@@ -21,15 +21,6 @@ public class ReadWriteSession extends CachedSession {
 		notificationSet = new ChangeNotificationSet(model);
 	}
 	
-	public static ReadWriteSession getCurrent() {
-		DMSession session = DataModel.getInstance().getCurrentSession();
-		if (session instanceof ReadWriteSession)
-			return (ReadWriteSession)session;
-		
-		throw new IllegalStateException("ReadWriteSession.getCurrent() called when not inside a ReadWriteSession");
-	}
-	
-
 	@Override
 	public <K, T extends DMObject<K>> Object fetchAndFilter(StoreKey<K,T> key, int propertyIndex) throws NotCachedException {
 		throw new NotCachedException();

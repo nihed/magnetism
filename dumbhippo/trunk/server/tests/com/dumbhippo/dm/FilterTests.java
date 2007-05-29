@@ -82,7 +82,7 @@ public class FilterTests extends AbstractSupportedTests {
 		/////////////////////////////////////////////////
 		
 		em = support.beginSessionRO(new TestViewpoint(bobId));
-		session = ReadOnlySession.getCurrent();
+		session = support.currentSessionRO();
 
 		// Bob can see both all three groups
 		session.find(TestGroupDMO.class, bobAndJaneId); 
@@ -94,7 +94,7 @@ public class FilterTests extends AbstractSupportedTests {
 		/////////////////////////////////////////////////
 		
 		em = support.beginSessionRO(new TestViewpoint(janeId));
-		session = ReadOnlySession.getCurrent();
+		session = support.currentSessionRO();
 
 		// But Jane can't see bobOnlyId. because it's secret and 
 		// she's not in it
@@ -126,7 +126,7 @@ public class FilterTests extends AbstractSupportedTests {
 		/////////////////////////////////////////////////
 		
 		em = support.beginSessionRO(new TestViewpoint(bobId));
-		session = ReadOnlySession.getCurrent();
+		session = support.currentSessionRO();
 
 		// Bob can see both of Jane's groups
 		assertEquals(2, session.find(TestUserDMO.class, janeId).getGroups().size()); 
@@ -136,7 +136,7 @@ public class FilterTests extends AbstractSupportedTests {
 		/////////////////////////////////////////////////
 		
 		em = support.beginSessionRO(new TestViewpoint(janeId));
-		session = ReadOnlySession.getCurrent();
+		session = support.currentSessionRO();
 
 		// Jane only sees Bob's public group
 		assertEquals(1, session.find(TestUserDMO.class, bobId).getGroups().size());
@@ -149,7 +149,7 @@ public class FilterTests extends AbstractSupportedTests {
 		TestViewpoint victorViewpoint = new TestViewpoint(victorId, null, Collections.singletonList(janeId));
 		
 		em = support.beginSessionRO(victorViewpoint);
-		session = ReadOnlySession.getCurrent();
+		session = support.currentSessionRO();
 
 		assertEquals(0, session.find(TestUserDMO.class, janeId).getGroups().size());
 		

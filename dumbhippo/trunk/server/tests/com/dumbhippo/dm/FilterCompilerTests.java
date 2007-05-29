@@ -4,27 +4,25 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import junit.framework.TestCase;
-
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.dm.TestUserDMO;
-import com.dumbhippo.dm.filter.CompiledItemFilter;
 import com.dumbhippo.dm.filter.CompiledFilter;
+import com.dumbhippo.dm.filter.CompiledItemFilter;
 import com.dumbhippo.dm.filter.CompiledListFilter;
 import com.dumbhippo.dm.filter.Filter;
 import com.dumbhippo.dm.filter.FilterCompiler;
 import com.dumbhippo.dm.parser.FilterParser;
 import com.dumbhippo.identity20.Guid;
 
-public class FilterCompilerTests extends TestCase {
+public class FilterCompilerTests extends AbstractSupportedTests {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(FilterCompilerTests.class);
 
 	public void testFilterSimple() throws Exception {
 		Filter filter =  FilterParser.parse("viewer.sameAs(this)");
-		CompiledFilter<Guid,TestUserDMO> instance = FilterCompiler.compileFilter(TestViewpoint.class, Guid.class, filter);
+		CompiledFilter<Guid,TestUserDMO> instance = FilterCompiler.compileFilter(support.getModel(), Guid.class, filter);
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		
@@ -34,7 +32,7 @@ public class FilterCompilerTests extends TestCase {
 	
 	public void testItemFilterSimple() throws Exception {
 		Filter filter =  FilterParser.parse("viewer.sameAs(item)");
-		CompiledItemFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileItemFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
+		CompiledItemFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileItemFilter(support.getModel(), Guid.class, Guid.class, filter);
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 		
@@ -44,7 +42,7 @@ public class FilterCompilerTests extends TestCase {
 	
 	public void testListFilterSimple() throws Exception {
 		Filter filter =  FilterParser.parse("viewer.sameAs(item)");
-		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
+		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(support.getModel(), Guid.class, Guid.class, filter);
 		
 		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
 
@@ -60,7 +58,7 @@ public class FilterCompilerTests extends TestCase {
 	
 	public void testAnyAllPhase() throws Exception {
 		Filter filter =  FilterParser.parse("viewer.sameAs(any)||viewer.isBuddy(all)");
-		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
+		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(support.getModel(), Guid.class, Guid.class, filter);
 		
 		List<Guid> buddies = new ArrayList<Guid>();
 		buddies.add(Guid.createNew());
@@ -83,7 +81,7 @@ public class FilterCompilerTests extends TestCase {
 		// - You can any mutual friends on the list unless you are an enemy of any of the friends 
 		
 		Filter filter =  FilterParser.parse("viewer.sameAs(this)||(viewer.isBuddy(item) && !viewer.isEnemy(any))");
-		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
+		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(support.getModel(), Guid.class, Guid.class, filter);
 		
 		Guid viewer = Guid.createNew();
 
@@ -136,7 +134,7 @@ public class FilterCompilerTests extends TestCase {
 		//   unless the list contains one of their enemies
 		
 		Filter filter =  FilterParser.parse("!viewer.isEnemy(any)&&(viewer.isBuddy(this)||(!viewer.isEnemy(this)&&viewer.isBuddy(any)))");
-		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
+		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(support.getModel(), Guid.class, Guid.class, filter);
 		
 		Guid viewer = Guid.createNew();
 
@@ -185,7 +183,7 @@ public class FilterCompilerTests extends TestCase {
 		// - Enemies see nothing
 		
 		Filter filter =  FilterParser.parse("(viewer.isBuddy(this)&&!viewer.isEnemy(item))||(!viewer.isEnemy(this)&&viewer.isBuddy(item))");
-		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(TestViewpoint.class, Guid.class, Guid.class, filter);
+		CompiledListFilter<Guid,TestUserDMO,Guid,TestUserDMO> instance = FilterCompiler.compileListFilter(support.getModel(), Guid.class, Guid.class, filter);
 		
 		Guid viewer = Guid.createNew();
 

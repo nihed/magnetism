@@ -39,7 +39,7 @@ public class SingleResourcePropertyHolder<K, T extends DMObject<K>, KI, TI exten
 			else
 				toCompile = propertyFilter;
 			
-			itemFilter = FilterCompiler.compileItemFilter(declaringClassHolder.getModel().getViewpointClass(), 
+			itemFilter = FilterCompiler.compileItemFilter(declaringClassHolder.getModel(), 
 														  declaringClassHolder.getKeyClass(), 
 														  keyType, toCompile);
 		}

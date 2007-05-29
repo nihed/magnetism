@@ -20,7 +20,7 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 		super(declaringClassHolder, ctMethod, elementType, annotation, filter, viewerDependent);
 
 		if (propertyFilter != null)
-			itemFilter = FilterCompiler.compileItemFilter(declaringClassHolder.getModel().getViewpointClass(), 
+			itemFilter = FilterCompiler.compileItemFilter(declaringClassHolder.getModel(), 
 			 										      declaringClassHolder.getKeyClass(), 
 													      Object.class, propertyFilter);
 	}

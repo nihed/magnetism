@@ -96,10 +96,10 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 			
 			itemFilter = filter.asItemFilter();
 		
-			compiledFilter = FilterCompiler.compileFilter(model.getViewpointClass(), keyClass, filter);
-			CompiledItemFilter<Object,DMObject<Object>,K,T> genericItemFilter = FilterCompiler.compileItemFilter(model.getViewpointClass(), Object.class, keyClass, itemFilter);
+			compiledFilter = FilterCompiler.compileFilter(model, keyClass, filter);
+			CompiledItemFilter<Object,DMObject<Object>,K,T> genericItemFilter = FilterCompiler.compileItemFilter(model, Object.class, keyClass, itemFilter);
 			compiledItemFilter = genericItemFilter;
-			CompiledListFilter<Object,DMObject<Object>,K,T> genericListFilter = FilterCompiler.compileListFilter(model.getViewpointClass(), Object.class, keyClass, itemFilter);
+			CompiledListFilter<Object,DMObject<Object>,K,T> genericListFilter = FilterCompiler.compileListFilter(model, Object.class, keyClass, itemFilter);
 			compiledListFilter = genericListFilter;
 		}
 	}

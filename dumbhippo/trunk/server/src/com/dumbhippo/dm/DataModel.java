@@ -35,9 +35,23 @@ public class DataModel {
 	private Class<? extends DMViewpoint> viewpointClass;
 	private DMViewpoint systemViewpoint;
 
-	private static DataModel instance = new DataModel();
-
-	private DataModel() {
+	/**
+	 * Create a new DataModel object 
+	 * 
+	 * @param sessionMap Session map object that handles associating sessions with
+	 *   transactions
+	 * @param emf Entity manager factory to create entity managers for injection into
+	 *   sessions
+	 * @param viewpointClass the class of the viewpoint objects that will be used with this model
+	 *   (might be the base class of a hierarchy)
+	 * @param systemViewpoint  the system viewpoint for this data model; this system viewpoint 
+	 *   is a viewpoint that is allowed to see all data.
+	 */
+	public DataModel(DMSessionMap                 sessionMap,
+			         EntityManagerFactory         emf,
+			         Class<? extends DMViewpoint> viewpointClass,
+			         DMViewpoint                  systemViewpoint) {
+		
 		classPool = new ClassPool();
 	
 		// FIXME. We actually want the class path to be the class path of the class loader
@@ -46,45 +60,10 @@ public class DataModel {
 		classPool.insertClassPath(new ClassClassPath(this.getClass()));
 		
 		unfilteredSession = new UnfilteredSession(this);
-	}
-	
-	public static DataModel getInstance() {
-		return instance;
-	}
-
-	/**
-	 * Public for use in tests which aren't using JTA transactions
-	 * 
-	 * @param sessionMap the session map
-	 */
-	public void setSessionMap(DMSessionMap sessionMap) {
-		this.sessionMap = sessionMap;
-	}
 		
-	/**
-	 * Public for use in tests which aren't using container-managed entity-managers
-	 * 
-	 * @param sessionMap the session map
-	 */
-	public void setEntityManagerFactory(EntityManagerFactory emf) {
+		this.sessionMap = sessionMap;
 		this.emf = emf;
-	}
-	
-	/**
-	 * Sets the class of the viewpoint objects that will be used with this model
-	 * (might be the base class of a hierarchy)
-	 * 
-	 * @param viewpointClass the viewpoint class
-	 */
-	public void setViewpointClass(Class<? extends DMViewpoint> viewpointClass) {
 		this.viewpointClass = viewpointClass;
-	}
-	
-	/**
-	 * Sets the system viewpoint for this data model; this system viewpoint is a 
-	 * viewpoint that is allowed to see all data.
-	 */
-	public void setSystemViewpoint(DMViewpoint systemViewpoint) {
 		this.systemViewpoint = systemViewpoint;
 	}
 	
@@ -161,14 +140,23 @@ public class DataModel {
 		return session;
 	}
 	
-	protected DMSession getCurrentSession() {
-		DMSession session = sessionMap.getCurrent();
-		if (session == null)
-			throw new IllegalStateException("DM session wasn't initialized");
 
-		return session;
+	public ReadOnlySession currentSessionRO() {
+		DMSession session = sessionMap.getCurrent();
+		if (!(session instanceof ReadOnlySession))
+			throw new IllegalStateException("currentSessionRO() called when not inside a ReadOnlySession");
+		
+		return (ReadOnlySession)session;
 	}
 	
+	public ReadWriteSession currentSessionRW() {
+		DMSession session = sessionMap.getCurrent();
+		if (!(session instanceof ReadWriteSession))
+			throw new IllegalStateException("currentSessionRW() called when not inside a ReadWriteSession");
+		
+		return (ReadWriteSession)session;
+	}
+
 	public ClassPool getClassPool() {
 		return classPool;
 	}
