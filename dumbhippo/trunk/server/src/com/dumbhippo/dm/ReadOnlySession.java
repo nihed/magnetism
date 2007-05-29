@@ -16,14 +16,6 @@ public class ReadOnlySession extends CachedSession {
 		this.txTimestamp = model.getTimestamp();
 	}
 	
-	public static ReadOnlySession getCurrent() {
-		DMSession session = DataModel.getInstance().getCurrentSession();
-		if (session instanceof ReadOnlySession)
-			return (ReadOnlySession)session;
-		
-		throw new IllegalStateException("ReadOnlySession.getCurrent() called when not inside a ReadOnlySession");
-	}
-	
 	@Override
 	public <K, T extends DMObject<K>> Object fetchAndFilter(StoreKey<K,T> key, int propertyIndex) throws NotCachedException {
 		DMPropertyHolder<K,T,?> property = key.getClassHolder().getProperty(propertyIndex);

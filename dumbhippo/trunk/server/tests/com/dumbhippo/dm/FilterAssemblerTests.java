@@ -14,7 +14,6 @@ import javassist.bytecode.CodeAttribute;
 import javassist.bytecode.Descriptor;
 import javassist.bytecode.DuplicateMemberException;
 import javassist.bytecode.MethodInfo;
-import junit.framework.TestCase;
 
 import org.slf4j.Logger;
 
@@ -22,18 +21,18 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.dm.TestGroupMemberDMO;
 import com.dumbhippo.dm.dm.TestGroupMemberKey;
 import com.dumbhippo.dm.dm.TestUserDMO;
-import com.dumbhippo.dm.filter.CompiledItemFilter;
 import com.dumbhippo.dm.filter.CompiledFilter;
+import com.dumbhippo.dm.filter.CompiledItemFilter;
 import com.dumbhippo.dm.filter.CompiledListFilter;
 import com.dumbhippo.dm.filter.FilterAssembler;
 import com.dumbhippo.identity20.Guid;
 
-public class FilterAssemblerTests extends TestCase {
+public class FilterAssemblerTests extends AbstractSupportedTests {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(FilterAssemblerTests.class);
 	
 	private CtClass ctClassForClass(Class<?> c) {
-		ClassPool classPool = DataModel.getInstance().getClassPool();
+		ClassPool classPool = support.getModel().getClassPool();
 		String className = c.getName();
 
 		try {
@@ -44,7 +43,7 @@ public class FilterAssemblerTests extends TestCase {
 	}
 	
 	private <K,T extends DMObject<K>> CompiledFilter<K,T> createFilter(String name, FilterAssembler assembler) throws CannotCompileException, InstantiationException, IllegalAccessException {
-		ClassPool classPool = DataModel.getInstance().getClassPool();
+		ClassPool classPool = support.getModel().getClassPool();
 		CtClass ctClass = classPool.makeClass("com.dumbhippo.tests." + name);
 		
 		ctClass.addInterface(ctClassForClass(CompiledFilter.class));
@@ -59,7 +58,7 @@ public class FilterAssemblerTests extends TestCase {
 	}
 	
 	private <K,T extends DMObject<K>,KI,TI extends DMObject<KI>> CompiledItemFilter<K,T,KI,TI> createItemFilter(String name, FilterAssembler assembler) throws CannotCompileException, InstantiationException, IllegalAccessException {
-		ClassPool classPool = DataModel.getInstance().getClassPool();
+		ClassPool classPool = support.getModel().getClassPool();
 		CtClass ctClass = classPool.makeClass("com.dumbhippo.tests." + name);
 		
 		ctClass.addInterface(ctClassForClass(CompiledItemFilter.class));
@@ -74,7 +73,7 @@ public class FilterAssemblerTests extends TestCase {
 	}
 	
 	private <K,T extends DMObject<K>,KI,TI extends DMObject<KI>> CompiledListFilter<K,T,KI,TI> createListFilter(String name, FilterAssembler assembler) throws CannotCompileException, InstantiationException, IllegalAccessException {
-		ClassPool classPool = DataModel.getInstance().getClassPool();
+		ClassPool classPool = support.getModel().getClassPool();
 		CtClass ctClass = classPool.makeClass("com.dumbhippo.tests." + name);
 		
 		ctClass.addInterface(ctClassForClass(CompiledListFilter.class));

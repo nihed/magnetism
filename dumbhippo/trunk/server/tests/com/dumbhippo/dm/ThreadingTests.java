@@ -44,7 +44,7 @@ public class ThreadingTests extends AbstractSupportedTests {
 				// Modify the object's properties
 				
 				em = support.beginSessionRW(viewpoint);
-				session = ReadWriteSession.getCurrent();
+				session = support.currentSessionRW();
 
 				group = em.find(TestGroup.class, groupId.toString());
 				group.setName("Aardvarks");
@@ -66,7 +66,7 @@ public class ThreadingTests extends AbstractSupportedTests {
 				// Load the object into a new Hibernate session
 				
 				em = support.beginSessionRO(viewpoint);
-				session = ReadOnlySession.getCurrent();
+				session = support.currentSessionRO();
 								
 				group = em.find(TestGroup.class, groupId.toString());
 				assertEquals("Hippos", group.getName());
@@ -86,7 +86,7 @@ public class ThreadingTests extends AbstractSupportedTests {
 				// values we read in the last transaction
 				
 				em = support.beginSessionRO(viewpoint);
-				session = ReadOnlySession.getCurrent();
+				session = support.currentSessionRO();
 				
 				groupDMO = session.find(TestGroupDMO.class, groupId);
 				assertEquals("Aardvarks", groupDMO.getName());

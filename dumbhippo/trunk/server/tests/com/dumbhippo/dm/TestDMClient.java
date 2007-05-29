@@ -11,10 +11,10 @@ public class TestDMClient implements DMClient {
 	private FetchResult lastNotification;
 	private long lastSeenSerial = -1;
 
-	public TestDMClient(Guid viewerId) {
+	public TestDMClient(DataModel model, Guid viewerId) {
 		this.viewerId = viewerId;
 		
-		storeClient = DataModel.getInstance().getStore().openClient(this);
+		storeClient = model.getStore().openClient(this);
 	}
 
 	public DMViewpoint createViewpoint() {

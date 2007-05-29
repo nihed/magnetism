@@ -17,6 +17,7 @@ import com.dumbhippo.dm.dm.TestUserDMO;
 public class TestSupport {
 	TestEntityManagerFactory testEmf;
 	EntityManagerFactory delegateEmf;
+	DataModel model;
 	static TestSupport instance;
 	
 	public static synchronized TestSupport getInstance() {
@@ -27,14 +28,13 @@ public class TestSupport {
 	}
 	
 	private TestSupport() {
-		DataModel model = DataModel.getInstance();
 		
 		delegateEmf = Persistence.createEntityManagerFactory("dmtest");
 		testEmf = new TestEntityManagerFactory(delegateEmf);
-		model.setSessionMap(new TestSessionMap(delegateEmf));
-		model.setEntityManagerFactory(testEmf);
-		model.setViewpointClass(TestViewpoint.class);
-		model.setSystemViewpoint(new TestViewpoint(null));
+		model = new DataModel(new TestSessionMap(delegateEmf),
+							  testEmf,
+							  TestViewpoint.class,
+							  new TestViewpoint(null));
 		model.addDMClass(TestUserDMO.class);
 		model.addDMClass(TestGroupDMO.class);
 		model.addDMClass(TestGroupMemberDMO.class);
@@ -59,7 +59,7 @@ public class TestSupport {
 	public EntityManager beginSessionRW(DMViewpoint viewpoint) {
 		EntityManager em = beginTransaction();
 		
-		DataModel.getInstance().initializeReadWriteSession(viewpoint);
+		model.initializeReadWriteSession(viewpoint);
 		
 		return em;
 	}
@@ -67,7 +67,7 @@ public class TestSupport {
 	public EntityManager beginSessionRO(DMViewpoint viewpoint) {
 		EntityManager em = beginTransaction();
 		
-		DataModel.getInstance().initializeReadOnlySession(viewpoint);
+		model.initializeReadOnlySession(viewpoint);
 		
 		return em;
 	}
@@ -79,5 +79,17 @@ public class TestSupport {
 
 		public void beforeCompletion() {
 		}
+	}
+	
+	public DataModel getModel() {
+		return model;
+	}
+
+	public ReadOnlySession currentSessionRO() {
+		return model.currentSessionRO();
+	}
+	
+	public ReadWriteSession currentSessionRW() {
+		return model.currentSessionRW();
 	}
 }

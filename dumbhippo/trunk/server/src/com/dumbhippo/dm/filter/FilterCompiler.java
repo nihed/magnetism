@@ -30,8 +30,8 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 	 * @param filter
 	 * @return
 	 */
-	static public <K, T extends DMObject<K>> CompiledFilter<K,T> compileFilter(Class<? extends DMViewpoint> viewpointClass, Class<K> objectKeyClass, Filter filter) {
-		return new FilterCompiler<K,T,Guid,DMObject<Guid>>(viewpointClass, objectKeyClass, null, filter).doCompileFilter();
+	static public <K, T extends DMObject<K>> CompiledFilter<K,T> compileFilter(DataModel model, Class<K> objectKeyClass, Filter filter) {
+		return new FilterCompiler<K,T,Guid,DMObject<Guid>>(model, objectKeyClass, null, filter).doCompileFilter();
 	}
 	
 	/**
@@ -48,8 +48,8 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 	 * @param filter
 	 * @return
 	 */
-	public static <K, T extends DMObject<K>, KI, TI extends DMObject<KI>> CompiledItemFilter<K,T,KI,TI> compileItemFilter(Class<? extends DMViewpoint> viewpointClass, Class<K> objectKeyClass, Class<KI> itemKeyClass, Filter filter) {
-		return new FilterCompiler<K,T,KI,TI>(viewpointClass, objectKeyClass, itemKeyClass, filter).doCompileItemFilter();
+	public static <K, T extends DMObject<K>, KI, TI extends DMObject<KI>> CompiledItemFilter<K,T,KI,TI> compileItemFilter(DataModel model, Class<K> objectKeyClass, Class<KI> itemKeyClass, Filter filter) {
+		return new FilterCompiler<K,T,KI,TI>(model, objectKeyClass, itemKeyClass, filter).doCompileItemFilter();
 	}
 
 	/**
@@ -66,8 +66,8 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 	 * @param filter
 	 * @return
 	 */
-	public static <K, T extends DMObject<K>, KI, TI extends DMObject<KI>> CompiledListFilter<K,T,KI,TI> compileListFilter(Class<? extends DMViewpoint> viewpointClass, Class<K> objectKeyClass, Class<KI> itemKeyClass, Filter filter) {
-		return new FilterCompiler<K,T,KI,TI>(viewpointClass, objectKeyClass, itemKeyClass, filter).doCompileListFilter();
+	public static <K, T extends DMObject<K>, KI, TI extends DMObject<KI>> CompiledListFilter<K,T,KI,TI> compileListFilter(DataModel model, Class<K> objectKeyClass, Class<KI> itemKeyClass, Filter filter) {
+		return new FilterCompiler<K,T,KI,TI>(model, objectKeyClass, itemKeyClass, filter).doCompileListFilter();
 	}
 
 	private Class<? extends DMViewpoint> viewpointClass;
@@ -77,13 +77,13 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 	private ClassPool classPool;
 	private static int serial = 1;
 	
-	private FilterCompiler(Class<? extends DMViewpoint> viewpointClass, Class<K> objectKeyClass, Class<KI> itemKeyClass, Filter filter) {
+	private FilterCompiler(DataModel model, Class<K> objectKeyClass, Class<KI> itemKeyClass, Filter filter) {
 		this.filter = filter;
-		this.viewpointClass = viewpointClass;
+		this.viewpointClass = model.getViewpointClass();
 		this.objectKeyClass = objectKeyClass;
 		this.itemKeyClass = itemKeyClass;
 		
-		classPool = DataModel.getInstance().getClassPool();
+		classPool = model.getClassPool();
 	}
 	
 	private CompiledFilter<K,T> doCompileFilter() {
@@ -215,7 +215,6 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 	}
 	
 	private CtClass ctClassForClass(Class<?> c) {
-		ClassPool classPool = DataModel.getInstance().getClassPool();
 		String className = c.getName();
 
 		try {
