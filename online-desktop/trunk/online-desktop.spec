@@ -9,9 +9,12 @@ Summary:        Desktop built around web sites and online services
 Group:          Applications/Internet
 License:        GPL
 URL:            http://developer.mugshot.org/
-Source0:        online-desktop-%{version}.tar.gz
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+Source0:        http://download.mugshot.org/online-desktop/source/online-desktop-%{version}.tar.gz
+BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+Requires:	python-dbus
+Requires:	gnome-python2-gconf
 
+BuildRequires:	python-devel
 BuildRequires:  glib2-devel
 BuildRequires:  desktop-file-utils
 
@@ -86,34 +89,40 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/icons/hicolor/*/apps/yahoo-mail.png
 %dir %{python_sitelib}/godmode
 %{python_sitelib}/godmode/*
+%doc COPYING README
 
 %files flickr
 %defattr(-,root,root,-)
 %{_datadir}/applications/fedora-flickr.desktop
 %{_datadir}/icons/hicolor/*/apps/flickr.png
+%doc README
 
 %files gmail
 %defattr(-,root,root,-)
 %{_datadir}/applications/fedora-gmail.desktop
 %{_datadir}/icons/hicolor/*/apps/gmail.png
+%doc README
 
 %files google-calendar
 %defattr(-,root,root,-)
 %{_datadir}/applications/fedora-google-calendar.desktop
 %{_datadir}/icons/hicolor/*/apps/google-calendar.png
+%doc README
 
 %files google-docs
 %defattr(-,root,root,-)
 %{_datadir}/applications/fedora-google-docs.desktop
 %{_datadir}/icons/hicolor/*/apps/google-docs.png
+%doc README
 
 %files google-reader
 %defattr(-,root,root,-)
 %{_datadir}/applications/fedora-google-reader.desktop
 %{_datadir}/icons/hicolor/*/apps/google-reader.png
+%doc README
 
 %changelog
-* Fri May 25 2007 Colin Walters <walters@redhat.com> - 0.2
+* Fri May 25 2007 Colin Walters <walters@redhat.com> - 0.2-1
 - Add god-mode
 
 * Tue May  1 2007 Havoc Pennington <hp@redhat.com> - 0.1-2
