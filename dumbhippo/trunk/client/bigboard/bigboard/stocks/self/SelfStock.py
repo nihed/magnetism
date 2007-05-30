@@ -1,13 +1,14 @@
 import logging, os
 
-import gobject
+import gobject, gtk
+import gnome.ui
 import hippo
 
 import bigboard.slideout
 import bigboard.mugshot as mugshot
 import bigboard.libbig as libbig
 from bigboard.stock import Stock, AbstractMugshotStock
-from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink
+from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink, Separator
 
 class FixedCountWrapBox(CanvasVBox):
     def __init__(self, max_row_count, spacing=0, **kwargs):
@@ -30,46 +31,86 @@ class FixedCountWrapBox(CanvasVBox):
         row = self.__row()
         row.append(child)
 
-class ExternalAccountIcon(CanvasMugshotURLImage):
-    def __init__(self, acct):
-        CanvasMugshotURLImage.__init__(self)
-        self.connect("button-press-event", lambda img,event: self.__launch_browser())
+class ExternalAccountText(CanvasHBox):
+    def __init__(self, acct, show_text=True):
+        super(ExternalAccountText, self).__init__()
+        self.__acct = None
+        self.__img = CanvasMugshotURLImage()
+        self.append(self.__img)
+        self.__text = hippo.CanvasLink()
+        if show_text:
+            self.append(self.__text)
+        self.connect("activated", lambda s2: self.__launch_browser())
         self.set_clickable(True)
         self.set_acct(acct)
-        self.set_property('tooltip', self._acct.get_link())
         
     def set_acct(self, acct):
-        self._acct = acct
-        self._acct.connect("changed", self._sync)
-        self._sync()
+        self.__acct = acct
+        self.__acct.connect("changed", self.__sync)
+        self.__sync()
         
-    def _sync(self):
-        self.set_url(self._acct.get_icon())
+    def __sync(self):
+        self.__img.set_url(self.__acct.get_icon())
+        self.__text.set_property('text', self.__acct.get_sentiment())
         
     def __launch_browser(self):
-        libbig.show_url(self._acct.get_link())
+        libbig.show_url(self.__acct.get_link())
 
 class SelfSlideout(CanvasVBox):
     __gsignals__ = {
         "minimize" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
         "close" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
     }
-    def __init__(self, stock, **kwargs):
-        kwargs['border'] = 1
-        kwargs['border-color'] = 0x0000000ff
-        super(SelfSlideout, self).__init__(**kwargs)
+    def __init__(self, stock):
+        super(SelfSlideout, self).__init__(border=1, border_color=0x0000000ff,
+                                           spacing=4, padding=4)
         self.__stock = stock
 
+        myself = mugshot.get_mugshot().get_self()
+
+        self.__personal_box = CanvasHBox()
+        self.append(self.__personal_box)
+       
+        self.__photo = CanvasMugshotURLImage(scale_width=48, scale_height=48)
+        if myself:
+            self.__photo.set_url(myself.get_photo_url())
+        else:
+            self.__photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
+            
+        self.__personal_box.append(self.__photo)
+
+        self.__personal_box_right = CanvasVBox()
+        self.__personal_box.append(self.__personal_box_right)
+        
+        self.__name_logout = CanvasHBox()
+        self.__name = hippo.CanvasText(text="Nobody", font="14px Bold",
+                                       xalign=hippo.ALIGNMENT_START)
+        if myself:
+            self.__name.set_property("text", myself.get_name())
+        self.__name_logout.append(self.__name)
+        self.__logout = hippo.CanvasLink(text='[logout]', xalign=hippo.ALIGNMENT_END,
+                                         padding_left=10)
+        self.__logout.connect("activated", self.__on_logout)
+        self.__name_logout.append(self.__logout, hippo.PACK_EXPAND)
+        self.__personal_box_right.append(self.__name_logout)
+
+        self.append(Separator())
+
+        self.__personalization_box = CanvasVBox()
+        self.append(self.__personalization_box)
+        self.__personalization_box.append(hippo.CanvasText(text='Personalization',
+                                                           font='12px Bold',
+                                                           xalign=hippo.ALIGNMENT_START))
         if self.__stock._auth:
             link = hippo.CanvasLink(text='Visit account page', xalign=hippo.ALIGNMENT_START)
             link.connect("activated", self.__show_mugshot_link, "/account")
         else:
             link = hippo.CanvasLink(text='Sign in', xalign=hippo.ALIGNMENT_START)
             link.connect("activated", self.__show_mugshot_link, "/who-are-you")
-        self.append(link)
-        link = hippo.CanvasLink(text='Minimize', xalign=hippo.ALIGNMENT_START)
+        self.__personalization_box.append(link)
+        link = hippo.CanvasLink(text='Minimize sidebar', xalign=hippo.ALIGNMENT_START)
         link.connect("activated", self.__on_minimize_mode)
-        self.append(link)
+        self.__personalization_box.append(link)
 
     def __show_mugshot_link(self, l, url):
         libbig.show_url(mugshot.get_mugshot().get_baseurl() + url)        
@@ -77,6 +118,27 @@ class SelfSlideout(CanvasVBox):
 
     def __on_minimize_mode(self, l): 
         self.emit('minimize')
+        self.emit('close')
+
+    def __on_logout(self, l):
+        win = gtk.MessageDialog(None,
+                                gtk.DIALOG_MODAL,
+                                gtk.MESSAGE_QUESTION,
+                                gtk.BUTTONS_OK_CANCEL,
+                                "Log out?")
+        win.set_skip_pager_hint(True)
+        win.set_skip_taskbar_hint(True)
+        win.set_keep_above(True)
+        win.stick()
+        resp = win.run()
+        win.destroy()
+        if resp == gtk.RESPONSE_OK:
+            master = gnome.ui.master_client()
+            master.request_save(gnome.ui.SAVE_GLOBAL,
+                                True,
+                                gnome.ui.INTERACT_ANY,
+                                True,
+                                True)
         self.emit('close')
 
 class SelfStock(AbstractMugshotStock):
@@ -174,6 +236,6 @@ class SelfStock(AbstractMugshotStock):
             if not acct.get_sentiment() == 'love':
                 self._logger.debug("ignoring account %s with sentiment %s", name, acct.get_sentiment())
                 continue
-            icon = ExternalAccountIcon(acct)
+            icon = ExternalAccountText(acct, show_text=False)
             self._logger.debug("appending external account %s" % (name,))
             self._whereim_box.append(icon)
