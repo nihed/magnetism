@@ -11,6 +11,7 @@ License:        GPL
 URL:            http://developer.mugshot.org/
 Source0:        http://download.mugshot.org/online-desktop/source/online-desktop-%{version}.tar.gz
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+BuildArch:	noarch
 Requires:	python-dbus
 Requires:	gnome-python2-gconf
 
