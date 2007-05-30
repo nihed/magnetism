@@ -1,0 +1,46 @@
+#!/usr/bin/python
+
+import os,sys,re,string,urllib,subprocess
+
+def parse_mailto(url):
+    scheme, target = url.split(':', 1)
+    if not scheme == "mailto":
+        raise ValueError("invalid scheme")
+    try:
+        addr, subj = target.split('?', 1)
+    except ValueError, e:
+        addr = target
+    return (addr, None)
+
+def handle_gmail(url):
+    (addr, subj) = parse_mailto(url)
+
+    target_url = "https://mail.google.com/mail?view=cm&tf=0&to=" 
+    target_url += urllib.quote(addr)
+
+    if subj:
+        target_url += '&su='
+        target_url += urllib.quote(subj)
+
+    # other GMail url params are "cc" for CC and "body" for body
+    subprocess.Popen(['gnome-open', target_url])
+
+handlers = {'gmail': handle_gmail}
+
+def usage():
+    print "Usage: mailto-handler [APP] [MAILTO-URL]\n";
+    print "Available apps: %s" % (string.join(handlers.iterkeys(), ' '),)
+
+def main():
+    if len(sys.argv) != 3:
+        usage()
+        sys.exit(1)
+
+    handler = sys.argv[1] 
+    url = sys.argv[2]
+    if not handlers.has_key(handler):
+        print "Unknown app %s" % (handler,)
+    handlers[handler](url)
+
+if __name__ == '__main__':
+    main()

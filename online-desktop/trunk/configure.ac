@@ -24,14 +24,15 @@ AM_MAINTAINER_MODE
 AC_CACHE_SAVE
 
 
-AC_PROG_CC
+# disable all this
+#AC_PROG_CC
 # no libs for now anyway but this is here for future safety
-AM_DISABLE_STATIC
+#AM_DISABLE_STATIC
 # no C++ for the moment
 #AC_PROG_CXX
-AC_PROG_LIBTOOL
-AC_ISC_POSIX
-AC_HEADER_STDC
+#AC_PROG_LIBTOOL
+#AC_ISC_POSIX
+#AC_HEADER_STDC
 
 ## don't rerun to this point if we abort
 AC_CACHE_SAVE
@@ -173,9 +174,9 @@ AC_SUBST(LDFLAGS)
 ## used for .desktop file in theory, disabled until we have actual translations
 ## IT_PROG_INTLTOOL([0.34.90])
 
-GTK2_REQUIRED=2.6.0
+#GTK2_REQUIRED=2.6.0
 
-PKG_CHECK_MODULES(MAILTO_HANDLER, gtk+-2.0 >= $GTK2_REQUIRED)
+#PKG_CHECK_MODULES(MAILTO_HANDLER, gtk+-2.0 >= $GTK2_REQUIRED)
 
 AM_PATH_PYTHON
 
