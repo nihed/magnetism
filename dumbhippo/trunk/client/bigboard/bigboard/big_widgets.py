@@ -97,6 +97,9 @@ class CanvasMugshotURLImageButton(CanvasMugshotURLImageMixin, CanvasURLImageButt
         CanvasURLImageButton.__init__(self, **kwargs)
         CanvasMugshotURLImageMixin.__init__(self, url)
 
+class Separator(hippo.CanvasBox):
+    def __init__(self):
+        hippo.CanvasBox.__init__(self, border_top=1, border_color=0x999999FF, padding_left=6, padding_right=6)
 
 class PrelightingCanvasBox(hippo.CanvasBox):
     """A box with a background that changes color on mouse hover."""

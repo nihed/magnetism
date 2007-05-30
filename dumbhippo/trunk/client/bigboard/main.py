@@ -4,6 +4,7 @@ import os, sys, threading, getopt, logging, StringIO, stat, signal
 import xml.dom.minidom
 
 import gobject, gtk, pango
+import gnome.ui
 import dbus
 import dbus.service
 import dbus.glib
@@ -471,6 +472,8 @@ def main():
 
     gtk.gdk.threads_init()
     dbus.glib.threads_init()    
+
+    gnome.program_init("bigboard", "0.3")
     
     default_log_level = 'ERROR'
     if info:
