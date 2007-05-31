@@ -3,7 +3,7 @@
 
 Name:           online-desktop
 Version:        0.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Desktop built around web sites and online services
 
 Group:          Applications/Internet
@@ -12,8 +12,9 @@ URL:            http://developer.mugshot.org/
 Source0:        http://download.mugshot.org/online-desktop/source/online-desktop-%{version}.tar.gz
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch:	noarch
-Requires:	python-dbus
+Requires:	dbus-python
 Requires:	gnome-python2-gconf
+Requires:	bigboard
 
 BuildRequires:	python-devel
 BuildRequires:  glib2-devel
@@ -123,6 +124,10 @@ rm -rf $RPM_BUILD_ROOT
 %doc README
 
 %changelog
+* Thu May 31 2007 Colin Walters <walters@redhat.com> - 0.2-2
+- Require bigboard
+- Fix dbus-python dep
+
 * Fri May 25 2007 Colin Walters <walters@redhat.com> - 0.2-1
 - Add god-mode
 
