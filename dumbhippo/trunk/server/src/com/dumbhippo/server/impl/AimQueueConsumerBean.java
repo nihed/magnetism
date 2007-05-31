@@ -28,6 +28,9 @@ import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.TokenExpiredException;
 import com.dumbhippo.server.TokenSystem;
 import com.dumbhippo.server.TokenUnknownException;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.views.AnonymousViewpoint;
+import com.dumbhippo.server.views.SystemViewpoint;
 
 @MessageDriven(activationConfig =
  {
@@ -91,6 +94,8 @@ public class AimQueueConsumerBean implements MessageListener {
 			throw new RuntimeException("broken, invalid screen name from AIM bot", e);
 		}
 		
+		DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
+		
 		try {
 			claimVerifier.verify(null, claim, resource);
 			sendReplyMessage(event, event.getAimName(), "The screen name " + event.getAimName() + " was added to your Mugshot account");
@@ -111,6 +116,8 @@ public class AimQueueConsumerBean implements MessageListener {
 	}
 
 	public void onMessage(Message message) {
+		DataService.getModel().initializeReadWriteSession(AnonymousViewpoint.getInstance());
+		
 		try {
 			if (message instanceof ObjectMessage) {
 				ObjectMessage objectMessage = (ObjectMessage) message;
