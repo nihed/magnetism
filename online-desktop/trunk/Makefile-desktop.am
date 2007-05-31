@@ -3,6 +3,7 @@
 
 desktopfilesdir=$(datadir)/applications
 desktopfiles_in_files=					\
+	online-desktop.desktop.in			\
 	apps/gmail/gmail.desktop.in			\
 	apps/google-calendar/google-calendar.desktop.in \
 	apps/google-docs/google-docs.desktop.in		\

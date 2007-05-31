@@ -2,8 +2,8 @@
 %{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
 
 Name:           online-desktop
-Version:        0.2
-Release:        2%{?dist}
+Version:        0.2.1
+Release:        1%{?dist}
 Summary:        Desktop built around web sites and online services
 
 Group:          Applications/Internet
@@ -16,6 +16,7 @@ Requires:	dbus-python
 Requires:	gnome-python2-gconf
 Requires:	bigboard
 
+BuildRequires:	intltool
 BuildRequires:	python-devel
 BuildRequires:  glib2-devel
 BuildRequires:  desktop-file-utils
@@ -87,6 +88,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_bindir}/god-mode
 # not used yet
+%{_datadir}/applications/fedora-online-desktop.desktop
 %{_datadir}/icons/hicolor/*/apps/picasa.png
 %{_datadir}/icons/hicolor/*/apps/yahoo-mail.png
 %dir %{python_sitelib}/godmode
@@ -124,7 +126,8 @@ rm -rf $RPM_BUILD_ROOT
 %doc README
 
 %changelog
-* Thu May 31 2007 Colin Walters <walters@redhat.com> - 0.2-2
+* Thu May 31 2007 Colin Walters <walters@redhat.com> - 0.2.1-1
+- Update
 - Require bigboard
 - Fix dbus-python dep
 
