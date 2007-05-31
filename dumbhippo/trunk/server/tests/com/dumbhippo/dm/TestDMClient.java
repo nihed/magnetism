@@ -30,7 +30,7 @@ public class TestDMClient implements DMClient {
 	}
 
 	public FetchVisitor beginNotification() {
-		return new FetchResultVisitor(this);
+		return new FetchResultVisitor();
 	}
 
 	public void endNotification(FetchVisitor visitor, long serial) {

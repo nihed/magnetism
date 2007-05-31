@@ -21,6 +21,7 @@ public abstract class DMSession {
 		return model;
 	}
 
+	public abstract DMClient getClient();
 	public abstract DMViewpoint getViewpoint();
 	
 	public abstract <K, T extends DMObject<K>> T find(StoreKey<K,T> storeKey) throws NotFoundException;
@@ -53,6 +54,34 @@ public abstract class DMSession {
 	 */
 	public <K, T extends DMObject<K>> T findUnchecked(Class<T> clazz, K key) {
 		return findUnchecked(makeStoreKey(clazz, key));
+	}
+	
+	@SuppressWarnings("unchecked")
+	private DMObject find(DMClassHolder classHolder, String keyString) throws NotFoundException {
+		if (classHolder == null)
+			throw new NotFoundException("Unknown type of resource");
+		
+		try {
+			StoreKey storeKey = classHolder.makeStoreKey(keyString);
+			return find(storeKey);
+		} catch (BadIdException e) {
+			throw new NotFoundException("Bad ID in resourceId: " + e.getMessage(), e);
+		}
+	}
+	
+	public DMObject<?> find(String resourceId) throws NotFoundException {
+		if (!resourceId.startsWith(model.getBaseUrl()))
+			throw new NotFoundException("resourceId doesn't identify a resource on this server: " + resourceId);
+		int relativeBaseStart = model.getBaseUrl().length();
+		int lastSlash = resourceId.lastIndexOf('/');
+		if (lastSlash < 0 || lastSlash < relativeBaseStart)
+			throw new NotFoundException("Badly formed resourceId: " + resourceId);
+		String relativeBase = resourceId.substring(relativeBaseStart, lastSlash);
+		DMClassHolder<?,?> classHolder = model.getClassHolder(relativeBase);
+		if (classHolder == null)
+			throw new NotFoundException("Unknown type of resource in resourceId: " + resourceId);
+		
+		return find(classHolder, resourceId.substring(lastSlash + 1));
 	}
 	
 	public <K,T extends DMObject<K>> void visitFetch(T object, Fetch<K,? super T> fetch, FetchVisitor visitor) {
@@ -181,5 +210,6 @@ public abstract class DMSession {
 		return injectableEntityManager;
 	}
 	
+
 	public abstract void afterCompletion(int status);
 }

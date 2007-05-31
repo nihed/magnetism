@@ -7,17 +7,14 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.MessageDigest;
-import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.NotFoundException;
 
 import org.slf4j.Logger;
-
-import antlr.RecognitionException;
-import antlr.TokenStreamException;
 
 import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
@@ -32,6 +29,7 @@ import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.filter.Filter;
 import com.dumbhippo.dm.parser.FilterParser;
+import com.dumbhippo.dm.parser.ParseException;
 
 public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements Comparable<DMPropertyHolder> {
 	@SuppressWarnings("unused")
@@ -120,9 +118,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		if (filter != null) {
 			try {
 				propertyFilter = FilterParser.parse(filter.value());
-			} catch (RecognitionException e) {
-				throw new RuntimeException(propertyId + ": Error parsing filter at " + e.line + ":" + e.column, e);
-			} catch (TokenStreamException e) {
+			} catch (ParseException e) {
 				throw new RuntimeException(propertyId + ": Error parsing filter", e);
 			}
 			
@@ -233,22 +229,24 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		Type genericType = method.getGenericReturnType();
 		Type genericElementType = genericType;
 		
-		boolean multiValued = false;
+		boolean listValued = false;
+		boolean setValued = false;
 		Class<?> elementType;
 		
 		if (genericType instanceof ParameterizedType) {
 			ParameterizedType paramType = (ParameterizedType)genericType;
 			Class<?> rawType = (Class<?>)paramType.getRawType();
-			if (Collection.class.isAssignableFrom(rawType)) {
-				if (rawType != List.class)
-					throw new RuntimeException("List<?> is the only currently supported parameterized type");
+			if (rawType == List.class)
+				listValued = true;
+			else if (rawType == Set.class)
+				setValued = true;
+			else
+				throw new RuntimeException("List<?> and Set<?> are the only currently supported parameterized types");
 				
-				multiValued = true;
-				if (paramType.getActualTypeArguments().length != 1)
-					throw new RuntimeException("Couldn't understand type arguments to parameterized return type");
-				
-				genericElementType = paramType.getActualTypeArguments()[0];
-			}
+			if (paramType.getActualTypeArguments().length != 1)
+				throw new RuntimeException("Couldn't understand type arguments to parameterized return type");
+			
+			genericElementType = paramType.getActualTypeArguments()[0];
 		}
 		
 		if (genericElementType instanceof Class<?>)
@@ -261,26 +259,30 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		DMClassInfo<?,?> classInfo = DMClassInfo.getForClass(elementType);
 
 		if (classInfo != null) {
-			return createResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent, multiValued);
+			return createResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent, listValued, setValued);
 		} else if (elementType.isPrimitive() || (elementType == String.class)) { 
-			return createPlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent, multiValued);
+			return createPlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent, listValued, setValued);
 		} else {
 			throw new RuntimeException("Property type must be DMObject, primitive, or string");
 		}
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static <K, T extends DMObject<K>> DMPropertyHolder<K,T,?> createResourcePropertyHolder(DMClassHolder<K,T> classHolder, CtMethod ctMethod, DMClassInfo<?,?> classInfo, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean multiValued) {
-		if (multiValued)
-			return new MultiResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
+	private static <K, T extends DMObject<K>> DMPropertyHolder<K,T,?> createResourcePropertyHolder(DMClassHolder<K,T> classHolder, CtMethod ctMethod, DMClassInfo<?,?> classInfo, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean listValued, boolean setValued) {
+		if (listValued)
+			return new ListResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
+		else if (setValued)
+			return new SetResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
 		else
 			return new SingleResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
 	}
 
 	@SuppressWarnings("unchecked")
-	private static <K, T extends DMObject<K>> DMPropertyHolder<K,T,?> createPlainPropertyHolder(DMClassHolder<K,T> classHolder, CtMethod ctMethod, Class<?> elementType, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean multiValued) {
-		if (multiValued)
-			return new MultiPlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent);
+	private static <K, T extends DMObject<K>> DMPropertyHolder<K,T,?> createPlainPropertyHolder(DMClassHolder<K,T> classHolder, CtMethod ctMethod, Class<?> elementType, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean listValued, boolean setValued) {
+		if (listValued)
+			return new ListPlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent);
+		else if (setValued)
+			return new SetPlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent);
 		else
 			return new SinglePlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent);
 	}

@@ -94,12 +94,18 @@ public class DMSessionMapJTA implements DMSessionMap {
 		TransactionManager tm = getTransactionManager();
 		
 		try {
+			tm.begin();
+		} catch (Exception e) {
+			throw new RuntimeException("Error starting transaction", e);
+		}
+
+		try {
 			runnable.run();
 		} catch (RuntimeException e) {
 			try {
 				tm.setRollbackOnly();
 			} catch (Exception e2) {
-				logger.error("Error marking transaction rollback only: {}", e2);
+				logger.error("Error marking transaction rollback only", e2);
 			}
 			throw new RuntimeException("Error in transaction", e);
 		} finally {

@@ -2,6 +2,7 @@ package com.dumbhippo.dm.schema;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -21,14 +22,13 @@ import javassist.CtMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
 
+import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 
 import org.slf4j.Logger;
 
-import antlr.RecognitionException;
-import antlr.TokenStreamException;
-
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.BadIdException;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
@@ -39,9 +39,14 @@ import com.dumbhippo.dm.annotations.Inject;
 import com.dumbhippo.dm.filter.CompiledFilter;
 import com.dumbhippo.dm.filter.CompiledItemFilter;
 import com.dumbhippo.dm.filter.CompiledListFilter;
+import com.dumbhippo.dm.filter.CompiledSetFilter;
 import com.dumbhippo.dm.filter.Filter;
 import com.dumbhippo.dm.filter.FilterCompiler;
 import com.dumbhippo.dm.parser.FilterParser;
+import com.dumbhippo.dm.store.StoreKey;
+import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.server.util.EJBUtil;
 
 public class DMClassHolder<K,T extends DMObject<K>> {
 	@SuppressWarnings("unused")
@@ -50,6 +55,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	private DataModel model;
 	private Class<T> baseClass;
 	private Class<K> keyClass;
+	private Constructor keyStringConstructor;
 	private Constructor wrapperConstructor;
 	private DMPropertyHolder<K,T,?>[] properties;
 	private boolean[] mustQualify;
@@ -59,13 +65,28 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	private Filter filter;
 	private Filter itemFilter;
 	private CompiledFilter<K,T> compiledFilter;
-	private CompiledListFilter<?,?,K,T> compiledListFilter;
 	private CompiledItemFilter<?,?,K,T> compiledItemFilter;
+	private CompiledListFilter<?,?,K,T> compiledListFilter;
+	private CompiledSetFilter<?,?,K,T> compiledSetFilter;
 
 	public DMClassHolder(DataModel model, DMClassInfo<K,T> classInfo) {
 		this.model = model;
 		baseClass = classInfo.getObjectClass();
 		keyClass = classInfo.getKeyClass();
+		
+		if (keyClass != Guid.class && keyClass != String.class) {
+			try {
+				keyStringConstructor = keyClass.getConstructor(String.class);
+			} catch (NoSuchMethodException e) {
+				throw new RuntimeException(baseClass.getName() + ": Can't find constructor for key class from a string");
+			}
+			
+			for (Class<?> exceptionClass : keyStringConstructor.getExceptionTypes()) {
+				if (!(RuntimeException.class.isAssignableFrom(exceptionClass) ||
+					  BadIdException.class.isAssignableFrom(exceptionClass)))
+					throw new RuntimeException(baseClass.getName() + ": String key constructor can only throw BadIdException");
+			}
+		}
 		
 		annotation = baseClass.getAnnotation(DMO.class);
 		if (annotation == null)
@@ -88,9 +109,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		if (filterAnnotation != null) {
 			try {
 				filter = FilterParser.parse(filterAnnotation.value());
-			} catch (RecognitionException e) {
-				throw new RuntimeException(baseClass.getName() + ": Error parsing filter at " + e.line + ":" + e.column, e);
-			} catch (TokenStreamException e) {
+			} catch (com.dumbhippo.dm.parser.ParseException e) {
 				throw new RuntimeException(baseClass.getName() + ": Error parsing filter", e);
 			}
 			
@@ -101,6 +120,8 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 			compiledItemFilter = genericItemFilter;
 			CompiledListFilter<Object,DMObject<Object>,K,T> genericListFilter = FilterCompiler.compileListFilter(model, Object.class, keyClass, itemFilter);
 			compiledListFilter = genericListFilter;
+			CompiledSetFilter<Object,DMObject<Object>,K,T> genericSetFilter = FilterCompiler.compileSetFilter(model, Object.class, keyClass, itemFilter);
+			compiledSetFilter = genericSetFilter;
 		}
 	}
 	
@@ -167,6 +188,9 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		for (Field field : baseClass.getDeclaredFields()) {
 			if (field.isAnnotationPresent(Inject.class)) {
 				injectField(session, t, field);
+			} else if (field.isAnnotationPresent(EJB.class)) {
+				Object bean = EJBUtil.defaultLookup(field.getType());
+				setField(t, field, bean);			
 			}
 		}
 	}
@@ -192,7 +216,57 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	public <KO, TO extends DMObject<KO>> CompiledListFilter<KO,TO,K,T> getListFilter() {
 		return (CompiledListFilter<KO,TO,K,T>)compiledListFilter;
 	}
+
+	@SuppressWarnings("unchecked")
+	public <KO, TO extends DMObject<KO>>  CompiledSetFilter<KO,TO,K,T> getSetFilter() {
+		return (CompiledSetFilter<KO,TO,K,T>)compiledSetFilter;
+	}
+
+	public String makeResourceId(K key) {
+		return model.getBaseUrl() + annotation.resourceBase() + "/" + key.toString();
+	}
 	
+	public String makeRelativeId(K key) {
+		return annotation.resourceBase() + "/" + key.toString();
+	}
+
+	public StoreKey<K,T> makeStoreKey(String string) throws BadIdException {
+		if (keyClass == Guid.class) {
+			try {
+				Guid guid = new Guid(string);
+				
+				@SuppressWarnings("unchecked")
+				StoreKey<K,T> key = new StoreKey(this, guid);
+				return key;
+			} catch (ParseException e) {
+				throw new BadIdException("Invalid GUID in resourceId");
+			}
+			
+		} else if (keyClass == String.class) {
+			@SuppressWarnings("unchecked")
+			StoreKey<K,T> key = new StoreKey(this, string);
+			return key;
+		} else {
+			try {
+				Object keyObject = keyStringConstructor.newInstance(string);
+				
+				@SuppressWarnings("unchecked")
+				StoreKey<K,T> key = new StoreKey(this, keyObject);
+				return key;
+			} catch (InstantiationException e) {
+				throw new RuntimeException("Error creating key object from string", e);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException("Error creating key object from string", e);
+			} catch (InvocationTargetException e) {
+				Throwable targetException = e.getTargetException();
+				if (targetException instanceof BadIdException)
+					throw (BadIdException)targetException;
+				else
+					throw new RuntimeException("Unexpected exception creating key object from string", e);
+			}
+		}
+	}
+
 	private void injectField(DMSession session, T t, Field field) {
 		if (field.getType() == EntityManager.class) {
 			setField(t, field, session.getInjectableEntityManager());

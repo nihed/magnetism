@@ -10,6 +10,7 @@
         <include name="client/jbossall-client.jar"/>
         <include name="server/all/lib/jboss-cache.jar"/>
         <include name="server/all/lib/jgroups.jar"/>
+        <include name="server/all/lib/antlr-*.jar"/>
         <include name="server/default/deploy/ejb3.deployer/*ejb3*.jar"/>
         <include name="server/default/lib/*ejb3*.jar"/>
     </fileset>

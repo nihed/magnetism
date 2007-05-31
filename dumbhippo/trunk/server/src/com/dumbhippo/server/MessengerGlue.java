@@ -98,13 +98,13 @@ public interface MessengerGlue {
 	 * because we want to separate out a potentionally expensive read-only transaction
 	 * from a short write transaction.  
 	 * 
-	 * @param user the username associated with resource
+	 * @param userId the ID associated with resource
 	 * @param wasAlreadyConnected true if the user was connected to the cluster
 	 *   (this node or another) before this resource connected. Note that this
 	 *   value is only approximate: if two resources connect simultaneously, they
 	 *   both can end up with wasAlreadyConnected = false. 
 	 */
-	public void sendConnectedResourceNotifications(String user, boolean wasAlreadyConnected);	
+	public void sendConnectedResourceNotifications(Guid userId, boolean wasAlreadyConnected);	
 	
 	/**
 	 * Called whenever a new resource connects associated with a user. Note that
@@ -112,20 +112,20 @@ public interface MessengerGlue {
 	 * connects momentarily, though the timestamps passed in will be reliably
 	 * ordered (or equal).
 	 * 
-	 * @param user the username associated with resource
+	 * @param userId the ID associated with resource
 	 * @param timestamp a timestamp for the user connecting
 	 */
-	public void updateLoginDate(String user, Date timestamp);	
+	public void updateLoginDate(Guid userId, Date timestamp);	
 	
 	/**
 	 * Called when the last resource for a user logged out; this information
 	 * is used for statistical purposes and also to (not perfectly reliably)
 	 * track what posts the user has seen. 
 	 * 
-	 * @param user the jabber username of the user
+	 * @param userId the ID of the user
 	 * @param date a timestamp for the user disconnecting.
 	 */
-	public void updateLogoutDate(String user, Date timestamp);
+	public void updateLogoutDate(Guid userId, Date timestamp);
 
 	/**
 	 * Get current music info for a given user.

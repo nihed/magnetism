@@ -11,8 +11,8 @@ public class ReadOnlySession extends CachedSession {
 	private static Logger logger = GlobalSetup.getLogger(ReadOnlySession.class);
 	private long txTimestamp;
 
-	protected ReadOnlySession(DataModel model, DMViewpoint viewpoint) {
-		super(model, viewpoint);
+	protected ReadOnlySession(DataModel model, DMClient client, DMViewpoint viewpoint) {
+		super(model, client, viewpoint);
 		this.txTimestamp = model.getTimestamp();
 	}
 	

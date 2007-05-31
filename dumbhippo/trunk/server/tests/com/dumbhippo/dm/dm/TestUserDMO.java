@@ -1,7 +1,7 @@
 package com.dumbhippo.dm.dm;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 
@@ -44,8 +44,8 @@ public abstract class TestUserDMO extends DMObject<Guid> {
 	
 	@DMProperty
 	@DMFilter("!viewer.isEnemy(this)")
-	public List<TestGroupDMO> getGroups() {
-		List<TestGroupDMO> result = new ArrayList<TestGroupDMO>();
+	public Set<TestGroupDMO> getGroups() {
+		Set<TestGroupDMO> result = new HashSet<TestGroupDMO>();
 		
 		for (TestGroupMember groupMember : user.getGroupMembers()) {
 			if (!groupMember.isRemoved())

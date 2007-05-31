@@ -182,6 +182,7 @@
 				<include name="**/services/*.class" />
 				<include name="**/services/caches/*.class" />
 				<include name="**/dav/*.class" />
+				<include name="**/dm/**/*.class" />
 				<include name="**/email/*.class" />
 				<include name="**/storage/*.class" />
 				<include name="**/search/*.class" />
@@ -379,6 +380,7 @@
 		<jar destfile="${buildjar.dir}/dumbhippo-client.jar">
 			<fileset dir="${build}">
 				<include name="*.properties" />
+				<include name="**/dm/**/*.class" />
 				<include name="**/dumbhippo/*.class" />
 				<include name="**/live/**/*.class" />				
 				<include name="**/dumbhippo/*.properties" />
@@ -389,6 +391,7 @@
 				<include name="**/persistence/**/*.class" />
 				<!-- server+util but not server/impl -->
 				<include name="**/server/*.class" />
+				<include name="**/server/dm/**/*.class" />
 				<include name="**/server/listeners/*.class" />
 				<include name="**/server/applications/ApplicationSystem.class" />
 				<include name="**/server/applications/ApplicationUsageProperties.class" />	

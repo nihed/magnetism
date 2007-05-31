@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import com.dumbhippo.dm.fetch.*;
+import com.dumbhippo.dm.parser.ParseException;
 import com.dumbhippo.GlobalSetup;
 import org.slf4j.Logger;
 }
@@ -39,13 +40,19 @@ options {
 		logger.debug(warning);
 	}
 	
-	public static FetchNode parse(String input) throws RecognitionException, TokenStreamException {
-		StringReader in = new StringReader(input);
-		FetchParser parser = new FetchParser(new FetchLexer(in));
-		FetchNode fetchNode = parser.startRule();
-		in.close();
+	public static FetchNode parse(String input) throws ParseException {
+		try {
+   		    StringReader in = new StringReader(input);
+		    FetchParser parser = new FetchParser(new FetchLexer(in));
+	        FetchNode fetchNode = parser.startRule();
+		    in.close();
 		
-		return fetchNode;
+			return fetchNode;
+		} catch (RecognitionException e) {
+			throw new ParseException(e);
+		} catch (TokenStreamException e) {
+			throw new ParseException(e);
+		}
 	}
 }
 

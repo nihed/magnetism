@@ -4,10 +4,8 @@ import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.dm.schema.PlainPropertyHolder;
 import com.dumbhippo.dm.schema.ResourcePropertyHolder;
-import com.dumbhippo.dm.store.StoreClient;
 
 public interface FetchVisitor {
-	StoreClient getClient();
 	boolean getNeedFetch();
 	
 	<K,T extends DMObject<K>> void beginResource(DMClassHolder<K,T> classHolder, K key, String fetchString, boolean indirect);

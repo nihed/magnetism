@@ -15,8 +15,8 @@ public class ReadWriteSession extends CachedSession {
 	
 	private ChangeNotificationSet notificationSet;
 
-	protected ReadWriteSession(DataModel model, DMViewpoint viewpoint) {
-		super(model, viewpoint);
+	protected ReadWriteSession(DataModel model, DMClient client, DMViewpoint viewpoint) {
+		super(model, client, viewpoint);
 		
 		notificationSet = new ChangeNotificationSet(model);
 	}

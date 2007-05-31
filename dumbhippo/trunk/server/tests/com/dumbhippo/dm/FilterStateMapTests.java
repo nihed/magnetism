@@ -1,20 +1,19 @@
 package com.dumbhippo.dm;
 
-import org.slf4j.Logger;
-
 import junit.framework.TestCase;
-import antlr.RecognitionException;
-import antlr.TokenStreamException;
+
+import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.filter.FilterStateMap;
 import com.dumbhippo.dm.parser.FilterParser;
+import com.dumbhippo.dm.parser.ParseException;
 
 public class FilterStateMapTests extends TestCase {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(FilterStateMapTests.class);
 
-	private FilterStateMap createMap(String filterString, boolean singlePhase) throws RecognitionException, TokenStreamException {
+	private FilterStateMap createMap(String filterString, boolean singlePhase) throws ParseException {
 		return new FilterStateMap(FilterParser.parse(filterString), singlePhase);
 	}
 	

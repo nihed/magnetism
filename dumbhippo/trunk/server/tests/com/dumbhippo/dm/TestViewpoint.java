@@ -2,7 +2,7 @@ package com.dumbhippo.dm;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 import com.dumbhippo.dm.dm.TestGroupDMO;
 import com.dumbhippo.dm.dm.TestUserDMO;
@@ -68,7 +68,7 @@ public class TestViewpoint implements DMViewpoint {
 		// agains causes filtering involving canSeeGroup.
 		try {
 			@SuppressWarnings("unchecked")
-			List<Guid> groupIds = (List<Guid>)session.getRawProperty(TestUserDMO.class, viewerId, "groups");
+			Set<Guid> groupIds = (Set<Guid>)session.getRawProperty(TestUserDMO.class, viewerId, "groups");
 			
 			return groupIds.contains(groupId);
 		} catch (NotFoundException e) {

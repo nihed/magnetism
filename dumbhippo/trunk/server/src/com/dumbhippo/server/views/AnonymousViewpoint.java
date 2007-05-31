@@ -1,5 +1,6 @@
 package com.dumbhippo.server.views;
 
+import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.persistence.User;
 
 /**
@@ -33,5 +34,8 @@ public class AnonymousViewpoint extends Viewpoint {
 	@Override
 	public String toString() {
 		return "{AnonymousViewpoint}";
+	}
+
+	public void setSession(DMSession session) {
 	}
 }

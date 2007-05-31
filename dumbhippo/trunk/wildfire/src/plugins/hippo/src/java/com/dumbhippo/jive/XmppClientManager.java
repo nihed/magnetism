@@ -9,67 +9,93 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.SessionManagerListener;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.xmpp.packet.JID;
 
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.server.MessengerGlue;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
 
-public class PresenceMonitor implements SessionManagerListener {
-
-	private Map<String, UserInfo> userInfo;
+public class XmppClientManager implements SessionManagerListener {
+	private static XmppClientManager instance;
+	ExecutorService senderPool = ThreadUtils.newCachedThreadPool("XmppClient-sender-pool");
+	private Map<JID, XmppClient> clients = new HashMap<JID, XmppClient>();
+	private Map<Guid, UserInfo> userInfo = new HashMap<Guid, UserInfo>();
 	private ExecutorService executor;
 	
 	private static class UserInfo {
 		private int sessionCount;
 	}
 
-	public PresenceMonitor() {
-		userInfo = new HashMap<String, UserInfo>();
+	public XmppClientManager() {
 		// It might be better to use a multiple-thread executor, since the work done when a
 		// resource connects is potentially parallelizable. On the other hand, using
 		// a single thread here will minimize server load during restart, which is a good
 		// thing.
 		executor = ThreadUtils.newSingleThreadExecutor("PresenceMonitor-notification");
+		
+		instance = this;
 	}
 
-	public void shutdown() {
-		executor.shutdown();
+	/**
+	 * @return the static singleton instance of this class. May be null during startup
+	 *  or shutdown, but otherwise will always exist.
+	 */
+	static public XmppClientManager getInstance() {
+		return instance;
 	}
 	
-	private void onSessionCountChange(ClientSession session, int increment) {
-		int oldCount, newCount;
-		final String user;
+	public void shutdown() {
+		senderPool.shutdown();
+		executor.shutdown();
 		
+		instance = null;
+	}
+	
+	public void addClientSender(final XmppClient client) {
+		senderPool.execute(new Runnable() {
+			public void run() {
+				client.processPackets();
+			}
+		});
+	}
+	
+	private Guid getUserId(ClientSession session) {
+		final String user;
+
 		try {
 			user = session.getUsername();
 		} catch (UserNotFoundException e) {
-			Log.error("should not happen, couldn't look up username in " + PresenceMonitor.class.getCanonicalName(), e);
+			Log.error("should not happen, couldn't look up username in " + XmppClientManager.class.getCanonicalName(), e);
 			// shouldn't happen afaik since we are only called on non-anon sessions, but don't throw from here
-			return;
+			return null;
 		}
 		
 		// TODO remove this later when we don't have a special admin user
 		if (user.equals("admin"))
-			return;
+			return null;
 		
-		Guid userGuid;
 		try {
-			userGuid = Guid.parseJabberId(user);
+			return Guid.parseJabberId(user);
 		} catch (ParseException e) {
 			Log.error("Can't parse username as a guid");
-			return;
+			return null;
 		}
+	}
+	
+	private void onSessionCountChange(final Guid userId, int increment) {
+		int oldCount, newCount;
 		
-		Log.debug("User '" + user + "' session count incrementing by " + increment);
+		Log.debug("User '" + userId + "' session count incrementing by " + increment);
 		
 		synchronized (userInfo) {			
-			UserInfo info = userInfo.get(user);
+			UserInfo info = userInfo.get(userId);
 			if (info == null) {
 				info = new UserInfo();
-				userInfo.put(user, info);
+				userInfo.put(userId, info);
 			}
 			
 			oldCount = info.sessionCount;
@@ -78,13 +104,13 @@ public class PresenceMonitor implements SessionManagerListener {
 				Log.error("Bug! decremented user session count below 0, old count " + oldCount + " increment " + increment);
 				newCount = 0; // "fix it"
 			}
-			Log.debug("User " + user + " now has " + newCount + " sessions was " + oldCount);
+			Log.debug("User " + userId + " now has " + newCount + " sessions was " + oldCount);
 		
 			info.sessionCount = newCount;
 			
 			PresenceService presenceService = PresenceService.getInstance();
 			
-			final boolean wasAlreadyConnected = presenceService.getPresence("/users", userGuid) > 0;
+			final boolean wasAlreadyConnected = presenceService.getPresence("/users", userId) > 0;
 			
 			// We are holding a lock on the userInfo object and possibly locks inside
 			// Wildfire, so we have to be careful not to do database operations synchronously, 
@@ -99,16 +125,16 @@ public class PresenceMonitor implements SessionManagerListener {
 			final Date timestamp = new Date();
 			
 			if (oldCount > 0 && newCount == 0) {
-				presenceService.setLocalPresence("/users", userGuid, 0);
+				presenceService.setLocalPresence("/users", userId, 0);
 				
 				executor.execute(new Runnable() {
 					public void run() {
 						MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-						glue.updateLogoutDate(user, timestamp);
+						glue.updateLogoutDate(userId, timestamp);
 					}
 				});
 			} else if (oldCount == 0 && newCount > 0) {
-				presenceService.setLocalPresence("/users", userGuid, 1);
+				presenceService.setLocalPresence("/users", userId, 1);
 			}
 			
 			// We potentially do lots of work when a resource connects, including sending
@@ -118,8 +144,8 @@ public class PresenceMonitor implements SessionManagerListener {
 				executor.execute(new Runnable() {
 					public void run() {
 						MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-						glue.updateLoginDate(user, timestamp);
-						glue.sendConnectedResourceNotifications(user, wasAlreadyConnected);
+						glue.updateLoginDate(userId, timestamp);
+						glue.sendConnectedResourceNotifications(userId, wasAlreadyConnected);
 					}
 				});
 			}
@@ -129,11 +155,38 @@ public class PresenceMonitor implements SessionManagerListener {
 	
 	public void onClientSessionAvailable(ClientSession session) {
 		Log.debug("Client session now available: " + session.getStreamID());
-		onSessionCountChange(session, 1);
+
+		Guid userId = getUserId(session);
+		if (userId == null)
+			return;
+		
+		XmppClient client = new XmppClient(this, DataService.getModel(), session, userId);
+		synchronized(clients) {
+			clients.put(session.getAddress(), client);
+		}
+		
+		onSessionCountChange(userId, 1);
 	}
 
 	public void onClientSessionUnavailable(ClientSession session) {
 		Log.debug("Client session now unavailable: " + session.getStreamID());
-		onSessionCountChange(session, -1);
+
+		Guid userId = getUserId(session);
+		if (userId == null)
+			return;
+
+		onSessionCountChange(userId, -1);
+		
+		XmppClient client;
+		synchronized(clients) {
+			client = clients.remove(session.getAddress());
+		}
+		client.close();
+	}
+
+	public XmppClient getClient(JID from) {
+		synchronized(clients) {
+			return clients.get(from);
+		}
 	}
 }

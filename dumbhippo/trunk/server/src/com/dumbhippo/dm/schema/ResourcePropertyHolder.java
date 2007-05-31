@@ -1,8 +1,6 @@
 package com.dumbhippo.dm.schema;
 
 import javassist.CtMethod;
-import antlr.RecognitionException;
-import antlr.TokenStreamException;
 
 import com.dumbhippo.dm.DMKey;
 import com.dumbhippo.dm.DMObject;
@@ -14,6 +12,7 @@ import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchNode;
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.parser.FetchParser;
+import com.dumbhippo.dm.parser.ParseException;
 import com.dumbhippo.identity20.Guid;
 
 public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI extends DMObject<KI>> extends DMPropertyHolder<K,T,TI> {
@@ -45,9 +44,7 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI exte
 				if (node.getProperties().length > 0) {
 					defaultChildren = node.bind(resourceClassHolder);
 				}
-			} catch (RecognitionException e) {
-				throw new RuntimeException(propertyId + ": failed to parse defaultChildren at char " + e.getColumn(), e);
-			} catch (TokenStreamException e) {
+			} catch (ParseException e) {
 				throw new RuntimeException(propertyId + ": failed to parse defaultChildren", e);
 			}
 		}

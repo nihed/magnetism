@@ -75,7 +75,7 @@ public class StoreNode<K,T extends DMObject<K>> extends StoreKey<K,T> {
 		if (evicted || registrations == null)
 			return;
 		
-		registrations.remove(registrations);
+		registrations.remove(registration);
 	}
 	
 	public synchronized Registration<K,T> removeRegistration(StoreClient client) {
