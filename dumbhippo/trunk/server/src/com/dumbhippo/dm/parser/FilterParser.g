@@ -3,6 +3,7 @@ package com.dumbhippo.dm.parser;
 
 import java.io.StringReader;
 import com.dumbhippo.dm.filter.*;
+import com.dumbhippo.dm.parser.ParseException;
 import com.dumbhippo.GlobalSetup;
 import org.slf4j.Logger;
 }
@@ -36,13 +37,19 @@ options {
 		logger.debug(warning);
 	}
 	
-	public static Filter parse(String input) throws RecognitionException, TokenStreamException {
-		StringReader in = new StringReader(input);
-		FilterParser parser = new FilterParser(new FilterLexer(in));
-		Filter f = parser.startRule();
-		in.close();
+	public static Filter parse(String input) throws ParseException {
+		try {
+			StringReader in = new StringReader(input);
+			FilterParser parser = new FilterParser(new FilterLexer(in));
+			Filter f = parser.startRule();
+			in.close();
 		
-		return f;
+			return f;
+		} catch (RecognitionException e) {
+			throw new ParseException(e);
+		} catch (TokenStreamException e) {
+			throw new ParseException(e);
+		}		
 	}
 }
 

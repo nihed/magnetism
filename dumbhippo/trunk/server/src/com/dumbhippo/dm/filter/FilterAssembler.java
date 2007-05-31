@@ -45,12 +45,48 @@ import com.dumbhippo.dm.DMViewpoint;
 public class FilterAssembler {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(FilterAssembler.class);
+	
+	private enum FilterType {
+		PLAIN(),
+		ITEM(),
+		LIST("java/util/List", "java/util/ArrayList", "EMPTY_LIST"),
+		SET("java/util/Set", "java/util/HashSet", "EMPTY_SET");
+		
+		private String collectionType;
+		private String newCollectionType;
+		private String emptyCollectionField;
+
+		private FilterType() {
+		}
+
+		private FilterType(String collectionType, String newCollectionType, String emptyCollection) {
+			this.collectionType = collectionType;
+			this.newCollectionType = newCollectionType;
+			this.emptyCollectionField = emptyCollection;
+		}
+		
+		private boolean isMultivalued() {
+			return collectionType != null;
+		}
+
+		public String getCollectionType() {
+			return collectionType;
+		}
+
+		public String getNewCollectionType() {
+			return newCollectionType;
+		}
+		
+		public String getEmptyCollectionField() {
+			return emptyCollectionField;
+		}
+	}
 
 	private Map<String, Integer> labels = new HashMap<String, Integer>();
 	private List<Fop> fops = new ArrayList<Fop>();
 	private boolean dereferenceObject;
 	private boolean dereferenceItem;
-	private boolean listFilter;
+	private FilterType filterType;
 	private String viewpointClassName;
 	private Class<?> objectKeyClass; 
 	private String objectKeyClassName;
@@ -62,7 +98,7 @@ public class FilterAssembler {
 	private static final int VIEWPOINT_PARAM = 1;
 	private static final int KEY_PARAM = 2;
 	private static final int ITEM_PARAM = 3;  // createForItemFilter
-	private static final int ITEMS_PARAM = 3; // createForListFilter
+	private static final int ITEMS_PARAM = 3; // createFor[List/Set]Filter
 	// Take 2 bytes to load/store 
 	private static final int STATE_LOCAL = 4;
 	private static final int ITEM_LOCAL = 5;
@@ -82,7 +118,7 @@ public class FilterAssembler {
 	 * @return
 	 */
 	public static FilterAssembler createForFilter(Class<? extends DMViewpoint> viewpointClass, Class<?> objectKeyClass, boolean dereference) {
-		return new FilterAssembler(viewpointClass, objectKeyClass, null, false, dereference, false);
+		return new FilterAssembler(viewpointClass, objectKeyClass, null, FilterType.PLAIN, dereference, false);
 	}
 	
 	/**
@@ -98,7 +134,7 @@ public class FilterAssembler {
 	 * @return
 	 */
 	public static FilterAssembler createForItemFilter(Class<? extends DMViewpoint> viewpointClass, Class<?> objectKeyClass, Class<?> itemKeyClass, boolean dereference) {
-		return new FilterAssembler(viewpointClass, objectKeyClass, itemKeyClass, false, false, dereference);
+		return new FilterAssembler(viewpointClass, objectKeyClass, itemKeyClass, FilterType.ITEM, false, dereference);
 	}
 	
 	/**
@@ -114,13 +150,29 @@ public class FilterAssembler {
 	 * @return
 	 */
 	public static FilterAssembler createForListFilter(Class<? extends DMViewpoint> viewpointClass, Class<?> objectKeyClass, Class<?> itemKeyClass, boolean dereference) {
-		return new FilterAssembler(viewpointClass, objectKeyClass, itemKeyClass, true, false, dereference);
+		return new FilterAssembler(viewpointClass, objectKeyClass, itemKeyClass, FilterType.LIST, false, dereference);
 	}
 	
-	private FilterAssembler(Class<? extends DMViewpoint> viewpointClass, Class<?> objectKeyClass, Class<?> itemKeyClass, boolean listFilter, boolean dereferenceObject, boolean dereferenceItem) {
+	/**
+	 * Create an assembler used to produce one of the two filter methods of CompiledSetFilter:
+	 * 
+	 * 	Set<K2> filter(DMViewpoint viewpoint, K key, Set<KI> items);
+ 	 *  Set<T2> filter(DMViewpoint viewpoint, K, Set<TI> items);
+	 * 
+	 * @param viewpointClass subclass of DMViewpoint
+	 * @param objectKeyClass class of the object's key
+	 * @param itemKeyClass class of the item's key
+	 * @param dereference if true, filter DMObjects, not keys
+	 * @return
+	 */
+	public static FilterAssembler createForSetFilter(Class<? extends DMViewpoint> viewpointClass, Class<?> objectKeyClass, Class<?> itemKeyClass, boolean dereference) {
+		return new FilterAssembler(viewpointClass, objectKeyClass, itemKeyClass, FilterType.SET, false, dereference);
+	}
+	
+	private FilterAssembler(Class<? extends DMViewpoint> viewpointClass, Class<?> objectKeyClass, Class<?> itemKeyClass, FilterType filterType, boolean dereferenceObject, boolean dereferenceItem) {
 		this.dereferenceObject = dereferenceObject;
 		this.dereferenceItem = dereferenceItem;
-		this.listFilter = listFilter;
+		this.filterType = filterType;
 		viewpointClassName = Descriptor.toJvmName(viewpointClass.getName());
 		this.objectKeyClass = objectKeyClass;
 		objectKeyClassName = Descriptor.toJvmName(objectKeyClass.getName());
@@ -221,8 +273,8 @@ public class FilterAssembler {
 	 * must call nextItem() for that.) 
 	 */
 	public void startItems() {
-		if (!listFilter)
-			throw new RuntimeException("Assembler was not created for a list filter");
+		if (!filterType.isMultivalued())
+			throw new RuntimeException("Assembler was not created for a list or set filter");
 		
 		fops.add(new StartItemsFop());
 	}
@@ -233,8 +285,8 @@ public class FilterAssembler {
 	 * @param label label to branch to
 	 */
 	public void nextItem(String label) {
-		if (!listFilter)
-			throw new RuntimeException("Assembler was not created for a list filter");
+		if (!filterType.isMultivalued())
+			throw new RuntimeException("Assembler was not created for a list or set filter");
 
 		fops.add(new NextItemFop(label));
 	}	
@@ -243,8 +295,8 @@ public class FilterAssembler {
 	 * Return null 
 	 */
 	public void returnNull() {
-		if (listFilter)
-			throw new RuntimeException("Assembler was created for a list filter, must return a list");
+		if (filterType.isMultivalued())
+			throw new RuntimeException("Assembler was created for a list or set filter, must return a collection");
 
 		fops.add(new ReturnNullFop());
 	}	
@@ -253,8 +305,8 @@ public class FilterAssembler {
 	 * Return any empty list 
 	 */
 	public void returnEmpty() {
-		if (!listFilter)
-			throw new RuntimeException("Assembler was not created for a list filter");
+		if (!filterType.isMultivalued())
+			throw new RuntimeException("Assembler was not created for a list or set filter");
 
 		fops.add(new ReturnEmptyFop());
 	}	
@@ -263,8 +315,8 @@ public class FilterAssembler {
 	 * Return the target object (note that this *does not* return the 'this' of the generated method)
 	 */
 	public void returnThis() {
-		if (listFilter)
-			throw new RuntimeException("Assembler was created for a list filter, must return a list");
+		if (filterType.isMultivalued())
+			throw new RuntimeException("Assembler was created for a list or set filter, must return a collection");
 		if (itemKeyClass != null)
 			throw new RuntimeException("Assembler was created for an item filter, must return an item");
 
@@ -275,8 +327,8 @@ public class FilterAssembler {
 	 * Return the item passed in 
 	 */
 	public void returnItem() {
-		if (listFilter)
-			throw new RuntimeException("Assembler was created for a list filter, must return a list");
+		if (filterType.isMultivalued())
+			throw new RuntimeException("Assembler was created for a list or set filter, must return a collection");
 		if (itemKeyClass == null)
 			throw new RuntimeException("Assembler was created for a plain filter, can't return an item");
 
@@ -287,8 +339,8 @@ public class FilterAssembler {
 	 * Return the original item list
 	 */
 	public void returnItems() {
-		if (!listFilter)
-			throw new RuntimeException("Assembler was not created for a list filter");
+		if (!filterType.isMultivalued())
+			throw new RuntimeException("Assembler was not created for a list or set filter");
 
 		fops.add(new ReturnItemsFop());
 	}	
@@ -297,8 +349,8 @@ public class FilterAssembler {
 	 * Create a list to store result items in 
 	 */
 	public void startResult() {
-		if (!listFilter)
-			throw new RuntimeException("Assembler was not created for a list filter");
+		if (!filterType.isMultivalued())
+			throw new RuntimeException("Assembler was not created for a list or set filter");
 
 		fops.add(new StartResultFop());
 	}	
@@ -307,8 +359,8 @@ public class FilterAssembler {
 	 * Add an item to the result item list 
 	 */
 	public void addResultItem() {
-		if (!listFilter)
-			throw new RuntimeException("Assembler was not created for a list filter");
+		if (!filterType.isMultivalued())
+			throw new RuntimeException("Assembler was not created for a list or set filter");
 
 		fops.add(new AddResultItemFop());
 	}	
@@ -317,8 +369,8 @@ public class FilterAssembler {
 	 * Return the result item list 
 	 */
 	public void returnResult() {
-		if (!listFilter)
-			throw new RuntimeException("Assembler was not created for a list filter");
+		if (!filterType.isMultivalued())
+			throw new RuntimeException("Assembler was not created for a list or set filter");
 
 		fops.add(new ReturnResultFop());
 	}
@@ -353,12 +405,10 @@ public class FilterAssembler {
 		String arg3 = "";
 		String result;
 		
-		if (listFilter) {
-			arg3 = "Ljava/util/List;";
-			result = "Ljava/util/List;";
+		if (filterType.isMultivalued()) {
+			arg3 = result = "L" + filterType.getCollectionType() + ";";
 		} else if (itemKeyClass != null) {
-			arg3 = itemType;
-			result = itemType;
+			arg3 = result = itemType;
 		} else {
 			result = objectType;
 		}
@@ -673,7 +723,7 @@ public class FilterAssembler {
 			return offset + 11 + 
 				(getArgumentLocalIndex() > 3 ? 1 : 0) + 
 				(dereference() ? 3 : 0) + 
-				(dereference() && listFilter ? 3 : 0) + 
+				(dereference() && filterType.isMultivalued() ? 3 : 0) + 
 				(propertyMethodName != null ? 3 : 0);
 		}
 		
@@ -683,7 +733,7 @@ public class FilterAssembler {
 			bytecode.addAload(VIEWPOINT_PARAM);                                                           // 1 byte
 			bytecode.addAload(getArgumentLocalIndex());                                                   // 1-2 bytes
 			if (dereference()) {
-				if (listFilter)
+				if (filterType.isMultivalued())
 					bytecode.addCheckcast("com/dumbhippo/dm/DMObject");                                   // 3 bytes
 				bytecode.addInvokevirtual("com/dumbhippo/dm/DMObject", "getKey", "()Ljava/lang/Object;"); // 3 bytes
 			}
@@ -758,7 +808,7 @@ public class FilterAssembler {
 
 		@Override
 		protected int getArgumentLocalIndex() {
-			return listFilter ? ITEM_LOCAL : ITEM_PARAM;
+			return filterType.isMultivalued() ? ITEM_LOCAL : ITEM_PARAM;
 		}
 		
 		@Override
@@ -870,7 +920,7 @@ public class FilterAssembler {
 		
 		@Override
 		public void emit(Bytecode bytecode) {
-			bytecode.addGetstatic("java/util/Collections", "EMPTY_LIST", "Ljava/util/List;"); // 3 bytes
+			bytecode.addGetstatic("java/util/Collections", filterType.getEmptyCollectionField(), "L" + filterType.collectionType + ";"); // 3 bytes
 			bytecode.addOpcode(Bytecode.ARETURN);                                             // 1 byte
 		}
 		
@@ -958,10 +1008,10 @@ public class FilterAssembler {
 		
 		@Override
 		public void emit(Bytecode bytecode) {
-			bytecode.addNew("java/util/ArrayList");                            // 3 bytes
-			bytecode.addOpcode(Bytecode.DUP);                                  // 1 byte
-			bytecode.addInvokespecial("java/util/ArrayList", "<init>", "()V"); // 3 bytes
-			bytecode.addAstore(RESULT_LOCAL);                                  // 2 bytes
+			bytecode.addNew(filterType.getNewCollectionType());                            // 3 bytes
+			bytecode.addOpcode(Bytecode.DUP);                                              // 1 byte
+			bytecode.addInvokespecial(filterType.getNewCollectionType(), "<init>", "()V"); // 3 bytes
+			bytecode.addAstore(RESULT_LOCAL);                                              // 2 bytes
 		}
 		
 		@Override

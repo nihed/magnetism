@@ -1,5 +1,6 @@
 package com.dumbhippo.server.views;
 
+import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.persistence.User;
 
 /**
@@ -29,7 +30,7 @@ import com.dumbhippo.persistence.User;
  * 
  * @author otaylor
  */
-public abstract class Viewpoint {
+public abstract class Viewpoint implements DMViewpoint {
 	/**
 	 * Checks to see if the Viewpoint is the Viewpoint of a particular
 	 * user. This is useful because we frequently handle the case where

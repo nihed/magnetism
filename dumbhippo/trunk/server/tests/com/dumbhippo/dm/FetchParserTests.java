@@ -1,13 +1,11 @@
 package com.dumbhippo.dm;
 
-import antlr.RecognitionException;
-import antlr.TokenStreamException;
-
 import com.dumbhippo.dm.parser.FetchParser;
+import com.dumbhippo.dm.parser.ParseException;
 
 public class FetchParserTests extends AbstractParserTests {
 	@Override
-	protected String parse(String input) throws RecognitionException, TokenStreamException {
+	protected String parse(String input) throws ParseException {
 		return FetchParser.parse(input).toString();
 	}
 	

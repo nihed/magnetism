@@ -24,6 +24,11 @@ public abstract class DMObject<KeyType> {
 		return storeKey;
 	}
 	
+	@SuppressWarnings("unchecked")
+	public String getResourceId() {
+		return getClassHolder().makeResourceId(key);
+	}
+	
 	protected abstract void init() throws NotFoundException;
 	
 	/**

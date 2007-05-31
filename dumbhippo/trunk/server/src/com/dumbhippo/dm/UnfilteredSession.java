@@ -9,6 +9,11 @@ public class UnfilteredSession extends DMSession {
 	}
 
 	@Override
+	public DMClient getClient() {
+		return null;
+	}
+	
+	@Override
 	public DMViewpoint getViewpoint() {
 		return model.getSystemViewpoint();
 	}

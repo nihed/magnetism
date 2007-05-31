@@ -14,15 +14,13 @@ import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import antlr.RecognitionException;
-import antlr.TokenStreamException;
-
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.dm.dm.TestGroupDMO;
 import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchNode;
 import com.dumbhippo.dm.parser.FetchParser;
+import com.dumbhippo.dm.parser.ParseException;
 import com.dumbhippo.dm.persistence.TestGroup;
 import com.dumbhippo.dm.persistence.TestGroupMember;
 import com.dumbhippo.dm.persistence.TestUser;
@@ -128,21 +126,17 @@ public class FetchTests extends AbstractSupportedTests {
 		return fetchNode.bind(classHolder);
 	}
 	
-	public <K,T extends DMObject<K>> void doTest(Class<K> keyClass, Class<T> objectClass, T object, TestDMClient client, String fetchString, String resultId, String... parameters) throws RecognitionException, TokenStreamException, FetchValidationException {
+	public <K,T extends DMObject<K>> void doTest(Class<K> keyClass, Class<T> objectClass, T object, String fetchString, String resultId, String... parameters) throws ParseException, FetchValidationException {
 		FetchNode fetchNode = FetchParser.parse(fetchString);
 		Fetch<K,T> fetch = fetchNode.bind(support.getModel().getClassHolder(keyClass, objectClass));
 		
-		FetchResultVisitor visitor = new FetchResultVisitor(client);
+		FetchResultVisitor visitor = new FetchResultVisitor();
 		support.currentSessionRO().visitFetch(object, fetch, visitor);
 		
 		FetchResult expected = getExpected(resultId, parameters);
 		
 		logger.debug("Result for {} is {}", resultId, visitor.getResult());
 		visitor.getResult().validateAgainst(expected);
-	}
-
-	public <K,T extends DMObject<K>> void doTest(Class<K> keyClass, Class<T> objectClass, T object, String fetchString, String resultId, String... parameters) throws RecognitionException, TokenStreamException, FetchValidationException {
-		doTest(keyClass, objectClass, object, null, fetchString, resultId, parameters);
 	}
 
 	private void createData(Guid bobId, Guid janeId, Guid groupId) {
@@ -249,20 +243,20 @@ public class FetchTests extends AbstractSupportedTests {
 		
 		//////////////////////////////////////////////////
 		
-		em = support.beginSessionRO(viewpoint);
+		em = support.beginSessionRO(client);
 		
 		TestGroupDMO groupDMO = support.currentSessionRO().find(TestGroupDMO.class, groupId);
-		doTest(Guid.class, TestGroupDMO.class, groupDMO, client, "name", "bobAndJaneSmall",
+		doTest(Guid.class, TestGroupDMO.class, groupDMO, "name", "bobAndJaneSmall",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
 		
-		doTest(Guid.class, TestGroupDMO.class, groupDMO, client, "+;members +", "bobAndJaneRemaining",
+		doTest(Guid.class, TestGroupDMO.class, groupDMO, "+;members +", "bobAndJaneRemaining",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
 
-		doTest(Guid.class, TestGroupDMO.class, groupDMO, client, "members group", "bobAndJaneAddOn",
+		doTest(Guid.class, TestGroupDMO.class, groupDMO, "members group", "bobAndJaneAddOn",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
@@ -287,10 +281,10 @@ public class FetchTests extends AbstractSupportedTests {
 		
 		//////////////////////////////////////////////////
 		
-		em = support.beginSessionRO(viewpoint);
+		em = support.beginSessionRO(client);
 		
 		TestGroupDMO groupDMO = support.currentSessionRO().find(TestGroupDMO.class, groupId);
-		doTest(Guid.class, TestGroupDMO.class, groupDMO, client, "+;members group +", "bobAndJaneLoop",
+		doTest(Guid.class, TestGroupDMO.class, groupDMO, "+;members group +", "bobAndJaneLoop",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());
@@ -316,10 +310,10 @@ public class FetchTests extends AbstractSupportedTests {
 		
 		//////////////////////////////////////////////////
 		
-		em = support.beginSessionRO(viewpoint);
+		em = support.beginSessionRO(client);
 		
 		TestGroupDMO groupDMO = support.currentSessionRO().find(TestGroupDMO.class, groupId);
-		doTest(Guid.class, TestGroupDMO.class, groupDMO, client, "name;members member name", "bobAndJane",
+		doTest(Guid.class, TestGroupDMO.class, groupDMO, "name;members member name", "bobAndJane",
 				"group", groupId.toString(),
 				"bob", bobId.toString(),
 				"jane", janeId.toString());

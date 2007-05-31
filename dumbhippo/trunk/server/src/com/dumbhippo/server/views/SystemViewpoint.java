@@ -1,5 +1,6 @@
 package com.dumbhippo.server.views;
 
+import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.persistence.User;
 
 /**
@@ -40,5 +41,8 @@ public class SystemViewpoint extends Viewpoint {
 	@Override
 	public String toString() {
 		return "{SystemViewpoint}";
+	}
+
+	public void setSession(DMSession session) {
 	}
 }

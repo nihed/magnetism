@@ -5,7 +5,7 @@ import com.dumbhippo.identity20.Guid;
 /**
  * This interface is implemented by callback listeners for changes to presence at a location.
  * 
- * @see PresenceMonitor
+ * @see PresenceService
  * 
  * @author otaylor
  */

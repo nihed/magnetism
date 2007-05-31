@@ -135,6 +135,50 @@ public class BasicTests  extends AbstractSupportedTests {
 
 		em.getTransaction().commit();
 	}
+	
+	// Test looking up objects by String resource ID
+	public void testStringResourceId() throws NotFoundException {
+		EntityManager em;
+
+		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
+		
+		/////////////////////////////////////////////////
+		// Setup
+
+		em = support.beginSessionRW(viewpoint);
+
+		TestUser bob = new TestUser("Bob");
+		em.persist(bob);
+		
+		TestGroup group = new TestGroup("BobOnly");
+		Guid groupId = group.getGuid();
+		em.persist(group);
+		
+		TestGroupMember groupMember;
+		
+		groupMember = new TestGroupMember(group, bob);
+		em.persist(groupMember);
+		group.getMembers().add(groupMember);
+
+		em.getTransaction().commit();
+
+		/////////////////////////////////////////////////
+
+		em = support.beginSessionRO(viewpoint);
+
+		ReadOnlySession session = support.currentSessionRO();
+
+		// Test for a GUID key
+		TestGroupDMO groupDMO = session.find(TestGroupDMO.class, groupId);
+		assertEquals(groupDMO, session.find(groupDMO.getResourceId()));
+
+		// Test for a custom key
+		TestGroupMemberDMO groupMemberDMO = groupDMO.getMembers().get(0);
+		assertEquals(groupMemberDMO, session.find(groupMemberDMO.getResourceId()));
+
+		em.getTransaction().commit();
+		
+	}
 
 	private void checkGroupValidity(Guid groupId, Guid bobId, Guid janeId) throws NotFoundException {
 		ReadOnlySession session = support.currentSessionRO();

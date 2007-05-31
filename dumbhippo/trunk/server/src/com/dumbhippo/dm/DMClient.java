@@ -2,6 +2,7 @@ package com.dumbhippo.dm;
 
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.schema.DMClassHolder;
+import com.dumbhippo.dm.store.StoreClient;
 
 /**
  * The client is responsible for delivering the notifications in the order of the 
@@ -18,6 +19,8 @@ import com.dumbhippo.dm.schema.DMClassHolder;
  * @author otaylor
  */
 public interface DMClient {
+	StoreClient getStoreClient();
+	
 	/**
 	 * Start assembling a notification packet. Notifications will be added to the
 	 * packet via the returned FetchVisitor. When the notification is complete,

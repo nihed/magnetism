@@ -31,7 +31,8 @@ public class TestSupport {
 		
 		delegateEmf = Persistence.createEntityManagerFactory("dmtest");
 		testEmf = new TestEntityManagerFactory(delegateEmf);
-		model = new DataModel(new TestSessionMap(delegateEmf),
+		model = new DataModel("http://mugshot.org",
+							  new TestSessionMap(delegateEmf),
 							  testEmf,
 							  TestViewpoint.class,
 							  new TestViewpoint(null));
@@ -68,6 +69,14 @@ public class TestSupport {
 		EntityManager em = beginTransaction();
 		
 		model.initializeReadOnlySession(viewpoint);
+		
+		return em;
+	}
+
+	public EntityManager beginSessionRO(TestDMClient client) {
+		EntityManager em = beginTransaction();
+		
+		model.initializeReadOnlySession(client);
 		
 		return em;
 	}

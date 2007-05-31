@@ -20,10 +20,10 @@ import com.dumbhippo.dm.filter.CompiledListFilter;
 import com.dumbhippo.dm.filter.Filter;
 import com.dumbhippo.dm.filter.FilterCompiler;
 
-public class MultiResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends DMObject<KI>> extends ResourcePropertyHolder<K,T,KI,TI> {
+public class ListResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends DMObject<KI>> extends ResourcePropertyHolder<K,T,KI,TI> {
 	private CompiledListFilter<K,T,KI,TI> listFilter;
 
-	public MultiResourcePropertyHolder(DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, DMClassInfo<KI,TI> classInfo, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
+	public ListResourcePropertyHolder(DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, DMClassInfo<KI,TI> classInfo, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
 		super(declaringClassHolder, ctMethod, classInfo, annotation, filter, viewerDependent);
 	}
 	

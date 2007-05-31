@@ -1,18 +1,33 @@
 package com.dumbhippo.dm.dm;
 
+import com.dumbhippo.dm.BadIdException;
 import com.dumbhippo.dm.DMKey;
 import com.dumbhippo.dm.persistence.TestGroupMember;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 
 public class TestGroupMemberKey implements DMKey {
 	private Guid groupId;
 	private Guid memberId;
-
+	
 	public TestGroupMemberKey(Guid groupId, Guid memberId) {
 		this.groupId = groupId;
 		this.memberId = memberId;
 	}
 	
+	public TestGroupMemberKey(String keyString) throws BadIdException {
+		String[] strings = keyString.split("\\.");
+		if (strings.length != 2)
+			throw new BadIdException("Invalid group member key: " + keyString);
+		
+		try {
+			this.groupId = new Guid(strings[0]);
+			this.memberId = new Guid(strings[1]);
+		} catch (ParseException e) {
+			throw new BadIdException("Invalid GUID in group member key");
+		}
+	}
+
 	public TestGroupMemberKey(TestGroupMember groupMember) {
 		this.groupId = groupMember.getGroup().getGuid();
 		this.memberId = groupMember.getMember().getGuid();

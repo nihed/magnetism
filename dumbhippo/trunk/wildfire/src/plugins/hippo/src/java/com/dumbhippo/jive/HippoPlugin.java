@@ -27,7 +27,7 @@ import com.dumbhippo.server.util.EJBUtil;
 public class HippoPlugin implements Plugin {
 	
 	private RoomHandler roomHandler = new RoomHandler();
-	private PresenceMonitor presenceMonitor = new PresenceMonitor();
+	private XmppClientManager clientManager = new XmppClientManager();
 	private MessageSender messageSenderProvider = new MessageSender();
 	private CompatibilityNotifier compatibilityNotifier = new CompatibilityNotifier();
 	private List<Module> internalModules = new ArrayList<Module>();
@@ -49,7 +49,7 @@ public class HippoPlugin implements Plugin {
 			
 			Log.debug("Adding PresenceMonitor");
 			SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
-			sessionManager.registerListener(presenceMonitor);
+			sessionManager.registerListener(clientManager);
 					
 			try {
 				InternalComponentManager.getInstance().addComponent("rooms", roomHandler);
@@ -59,6 +59,7 @@ public class HippoPlugin implements Plugin {
 			
 			compatibilityNotifier.start();
 			
+			addIQHandler(new SystemIQHandler());			
 			addIQHandler(new ApplicationsIQHandler());
 			addIQHandler(new ClientInfoIQHandler());
 			addIQHandler(new MySpaceIQHandler());					
@@ -95,7 +96,7 @@ public class HippoPlugin implements Plugin {
 		InternalComponentManager.getInstance().removeComponent("rooms");
 		
 		Log.debug("Shutting down presence monitor");
-		presenceMonitor.shutdown();
+		clientManager.shutdown();
 		
 		PresenceService.getInstance().clearLocalPresence();
 

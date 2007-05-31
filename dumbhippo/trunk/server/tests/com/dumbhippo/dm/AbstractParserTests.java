@@ -1,18 +1,18 @@
 package com.dumbhippo.dm;
 
 import junit.framework.TestCase;
-import antlr.RecognitionException;
-import antlr.TokenStreamException;
+
+import com.dumbhippo.dm.parser.ParseException;
 
 public abstract class AbstractParserTests extends TestCase {
-	protected abstract String parse(String input) throws RecognitionException, TokenStreamException;
+	protected abstract String parse(String input) throws ParseException;
 	
-	public void expectSuccess(String input, String expectedOutput) throws RecognitionException, TokenStreamException {
+	public void expectSuccess(String input, String expectedOutput) throws ParseException {
 		String output = parse(input);
 		assertEquals(expectedOutput, output);
 	}
 	
-	public void expectIdentity(String input) throws RecognitionException, TokenStreamException {
+	public void expectIdentity(String input) throws ParseException {
 		expectSuccess(input, input);
 	}
 

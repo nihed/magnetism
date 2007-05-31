@@ -1,7 +1,6 @@
 package com.dumbhippo.jive;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,21 +11,14 @@ import javax.ejb.EJB;
 import org.dom4j.Element;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.IQHandlerInfo;
-import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
-import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.jive.annotations.IQHandler;
-import com.dumbhippo.jive.annotations.IQMethod;
-import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
-import com.dumbhippo.server.views.UserViewpoint;
 
 /**
  * This class provides a base class for writing Wildfire IQ Handlers for use within
@@ -49,36 +41,9 @@ import com.dumbhippo.server.views.UserViewpoint;
  * @author otaylor
  */
 public class AnnotatedIQHandler extends org.jivesoftware.wildfire.handler.IQHandler {
-	private static class MethodInfo {
-		private Method method;
-		private IQMethod annotation;
-		private boolean needsViewpoint;
-		
-		public MethodInfo(Method method, IQMethod annotation, boolean needsViewpoint) {
-			this.method = method;
-			this.annotation = annotation;
-			this.needsViewpoint = needsViewpoint;
-		}
-
-		public IQMethod getAnnotation() {
-			return annotation;
-		}
-
-		public Method getMethod() {
-			return method;
-		}
-
-		public boolean getNeedsViewpoint() {
-			return needsViewpoint;
-		}
-	}
-	
 	private IQHandlerInfo info;
-	private Map<String, MethodInfo> getMethods = new HashMap<String, MethodInfo>();
-	private Map<String, MethodInfo> setMethods = new HashMap<String, MethodInfo>();
-	
-	@EJB
-	private IdentitySpider identitySpider;
+	private Map<String, AnnotatedIQMethod> getMethods = new HashMap<String, AnnotatedIQMethod>();
+	private Map<String, AnnotatedIQMethod> setMethods = new HashMap<String, AnnotatedIQMethod>();
 	
 	@EJB
 	private TransactionRunner transactionRunner;
@@ -95,12 +60,12 @@ public class AnnotatedIQHandler extends org.jivesoftware.wildfire.handler.IQHand
 	
 	private void resolveMethods() {
 		for (Method method : getClass().getMethods()) {
-			IQMethod annotation = method.getAnnotation(IQMethod.class);
-			if (annotation == null)
+			AnnotatedIQMethod iqMethod = AnnotatedIQMethod.getForMethod(this, method);
+			if (iqMethod == null)
 				continue;
 			
-			Map<String, MethodInfo> methods;
-			switch (annotation.type()) {
+			Map<String, AnnotatedIQMethod> methods;
+			switch (iqMethod.getType()) {
 			case get:
 				methods = getMethods;
 				break;
@@ -108,35 +73,15 @@ public class AnnotatedIQHandler extends org.jivesoftware.wildfire.handler.IQHand
 				methods = setMethods;
 				break;
 			default:
-				throw new RuntimeException("Unexpected IQ type " + annotation.type().name() + " for method " + method.getName());
+				throw new RuntimeException("Unexpected IQ type " + iqMethod.getType().name() + " for method " + method.getName());
 			}
 			
-			if (methods.containsKey(annotation.name()))
-				throw new RuntimeException("Duplicate handler methods for " + annotation.name());
+			if (methods.containsKey(iqMethod.getName()))
+				throw new RuntimeException("Duplicate handler methods for " + iqMethod.getName());
 			
-			Class<?>[] parameterTypes = method.getParameterTypes();
+			methods.put(iqMethod.getName(), iqMethod);
 			
-			boolean needsViewpoint;
-			
-			if (parameterTypes.length == 2 && 
-				parameterTypes[0].equals(IQ.class) &&
-				parameterTypes[1].equals(IQ.class)) {
-				needsViewpoint = false;
-			} else if (parameterTypes.length == 3 && 
-				parameterTypes[0].equals(UserViewpoint.class) &&
-				parameterTypes[1].equals(IQ.class) &&
-				parameterTypes[2].equals(IQ.class)) {
-				needsViewpoint = true;
-			} else {
-				throw new RuntimeException("Unexpected signature for IQ handler method " + method.getName());
-			}
-				
-			if (!method.getReturnType().equals(void.class))
-				throw new RuntimeException("IQ Handler method " + method.getName() + "can't have a return value");
-			
-			Log.debug(info.getNamespace() + ": Found IQ " + annotation.name() + "/" + annotation.type().name() + " => " + method.getName());
-			
-			methods.put(annotation.name(), new MethodInfo(method, annotation, needsViewpoint));
+			Log.debug(info.getNamespace() + ": Found IQ " + iqMethod.getName() + "/" + iqMethod.getType().name() + " => " + method.getName());
 		}
 	}
 
@@ -180,69 +125,16 @@ public class AnnotatedIQHandler extends org.jivesoftware.wildfire.handler.IQHand
 		injectEjbs();
 	}
 
-	private Object[] getParams(MethodInfo methodInfo, IQ request, IQ reply) throws IQException {
-		if (methodInfo.getNeedsViewpoint()) {
-			JID from = request.getFrom();
-			if (!from.getDomain().equals(XMPPServer.getInstance().getServerInfo().getName()))
-				throw IQException.createForbidden();
-			
-			Guid guid;
-			try {
-				 guid = Guid.parseJabberId(from.getNode());
-			} catch (ParseException e) {
-				throw IQException.createForbidden();
-			}
-			
-			User user = identitySpider.lookupUser(guid);
-			if (user == null)
-				throw IQException.createForbidden();
-			
-			return new Object[] { new UserViewpoint(user), request, reply };
-
-		} else {
-			return new Object[] { request, reply };
-		}
-	}
-
-	private void runIQ(MethodInfo methodInfo, IQ request, IQ reply) throws IQException {
-		try {
-			methodInfo.getMethod().invoke(this, getParams(methodInfo, request, reply));
-		} catch (IllegalAccessException e) {
-			throw new RuntimeException("Error invoking IQ method", e);
-		} catch (InvocationTargetException e) {
-			Throwable targetException = e.getTargetException(); 
-			if (targetException instanceof IQException)
-				throw (IQException)targetException;
-			else
-				throw new RuntimeException("Unexpected exception invoking IQ method", targetException);
-		}
-	}
-
-	private void runIQWithTx(final MethodInfo methodInfo, final IQ request, final IQ reply) throws IQException {
-		try {
-			transactionRunner.runTaskInNewTransaction(new Callable<Boolean>() {
-				public Boolean call() throws IQException {
-					runIQ(methodInfo, request, reply);
-					return true;
-				}
-			});
-		} catch (IQException e) {
-			throw e;
-		} catch (RuntimeException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RuntimeException("Unexpected exception running IQ method in transaction", e);
-		}
-	}
-	
 	@Override
-	public IQ handleIQ(IQ request) throws UnauthorizedException {
+	public void process(Packet packet) {
+		IQ request = (IQ)packet;
+		
 		Log.debug("handling IQ packet " + request);
 		
-		IQ reply = IQ.createResultIQ(request);
+		IQ reply = null;
 		
 		try {
-			Map<String, MethodInfo> methods;
+			Map<String, AnnotatedIQMethod> methods;
 			switch (request.getType()) {
 			case get:
 				methods = getMethods;
@@ -258,14 +150,11 @@ public class AnnotatedIQHandler extends org.jivesoftware.wildfire.handler.IQHand
 			if (child == null)
 				throw IQException.createBadRequest("No child element");
 			
-			MethodInfo methodInfo = methods.get(child.getName());
-			if (methodInfo == null)
+			AnnotatedIQMethod iqMethod = methods.get(child.getName());
+			if (iqMethod == null)
 				throw IQException.createBadRequest("Unknown IQ");
 			
-			if (methodInfo.getAnnotation().needsTransaction())
-				runIQWithTx(methodInfo, request, reply);
-			else
-				runIQ(methodInfo, request, reply);
+			iqMethod.runIQ(request);
 
 		} catch (IQException e) {
 			// Create a new reply to avoid anything already written to the reply
@@ -279,11 +168,27 @@ public class AnnotatedIQHandler extends org.jivesoftware.wildfire.handler.IQHand
 					       				   "Internal server error"));
 		}
 		
-		return reply;
+		if (reply != null) {
+			try {
+				deliverer.deliver(reply);
+			} catch (UnauthorizedException e) {
+				Log.error("Got UnauthorizedException sending error reply, giving up", e);
+			}
+		}
 	}
-
+	
 	@Override
 	public IQHandlerInfo getInfo() {
 		return info;
+	}
+	
+	public <T> T runTaskInNewTransaction(Callable<T> callable) throws Exception {
+		return transactionRunner.runTaskInNewTransaction(callable);
+	}
+
+	@Override
+	public IQ handleIQ(IQ packet) throws UnauthorizedException {
+		// We override process, so we don't need to implement this 
+		throw new UnsupportedOperationException();
 	}
 }

@@ -70,6 +70,24 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 		return new FilterCompiler<K,T,KI,TI>(model, objectKeyClass, itemKeyClass, filter).doCompileListFilter();
 	}
 
+	/**
+	 * Compile a Filter expression into a CompiledSetFilter, specifying the types of the
+	 * key of the object that the items are retrieved from and the type of the key for the item themselves.
+	 * 
+	 * @param <K>
+	 * @param <T>
+	 * @param <KI>
+	 * @param <TI>
+	 * @param viewpointClass subclass of DMViewpoint
+	 * @param objectKeyClass Class of the object's key
+	 * @param itemKeyClass Class of the item's key
+	 * @param filter
+	 * @return
+	 */
+	public static <K, T extends DMObject<K>, KI, TI extends DMObject<KI>> CompiledSetFilter<K,T,KI,TI> compileSetFilter(DataModel model, Class<K> objectKeyClass, Class<KI> itemKeyClass, Filter filter) {
+		return new FilterCompiler<K,T,KI,TI>(model, objectKeyClass, itemKeyClass, filter).doCompileSetFilter();
+	}
+
 	private Class<? extends DMViewpoint> viewpointClass;
 	private Class<K> objectKeyClass; 
 	private Class<KI> itemKeyClass;
@@ -194,6 +212,49 @@ public class FilterCompiler<K, T extends DMObject<K>, KI, TI extends DMObject<KI
 		
 		@SuppressWarnings("unchecked")
 		Class<? extends CompiledListFilter<K,T,KI,TI>> subclass = (Class<? extends CompiledListFilter<K,T,KI,TI>>)clazz.asSubclass(CompiledListFilter.class);
+
+		
+		try {
+			return subclass.newInstance();
+		} catch (InstantiationException e) {
+			throw new RuntimeException("Error creating filter instance", e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException("Error creating filter instance", e);
+		}
+	}
+
+	private CompiledSetFilter<K,T,KI,TI> doCompileSetFilter() {
+		CtClass ctClass = makeCtClass();
+		ctClass.addInterface(ctClassForClass(CompiledSetFilter.class));
+
+		FilterStateMap stateMap = new FilterStateMap(filter, false);
+		logger.debug("State map for {} is:\n{}",  filter, stateMap);
+		
+		FilterAssembler assembler;
+		assembler = FilterAssembler.createForSetFilter(viewpointClass, objectKeyClass, itemKeyClass, false);
+		generateKeyPhaseCode(assembler, stateMap, ReturnAction.RETURN_ITEMS, ReturnAction.RETURN_EMPTY);
+		generateAnyAllPhaseCode(assembler, stateMap);
+		generateItemPhaseCode(assembler, stateMap);
+		assembler.optimize(); // call explicitly for better debug output
+		logger.debug("ItemFilter assembly code for {} is:\n{}",  filter, assembler);
+
+		assembler.addMethodToClass(ctClass, "filterKeys");
+		
+		assembler = FilterAssembler.createForSetFilter(viewpointClass, objectKeyClass, itemKeyClass, true);
+		generateKeyPhaseCode(assembler, stateMap, ReturnAction.RETURN_ITEMS, ReturnAction.RETURN_EMPTY);
+		generateAnyAllPhaseCode(assembler, stateMap);
+		generateItemPhaseCode(assembler, stateMap);
+		assembler.addMethodToClass(ctClass, "filterObjects");
+
+		Class<?> clazz;
+		try {
+			clazz = ctClass.toClass();
+		} catch (CannotCompileException e) {
+			throw new RuntimeException("Error compiling generated class", e);
+		}
+		
+		@SuppressWarnings("unchecked")
+		Class<? extends CompiledSetFilter<K,T,KI,TI>> subclass = (Class<? extends CompiledSetFilter<K,T,KI,TI>>)clazz.asSubclass(CompiledSetFilter.class);
 
 		
 		try {

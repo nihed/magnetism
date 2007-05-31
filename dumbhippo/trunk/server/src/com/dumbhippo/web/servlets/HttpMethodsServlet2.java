@@ -48,6 +48,7 @@ import com.dumbhippo.server.SharedFileSystem;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -842,6 +843,12 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 			viewpoint = userViewpoint;
 		else
 			viewpoint = AnonymousViewpoint.getInstance();
+		
+		if (m.isRequiresPost()) {
+			DataService.getModel().initializeReadWriteSession(viewpoint);
+		} else {
+			DataService.getModel().initializeReadOnlySession(viewpoint);
+		}
   
 		// FIXME allow an XmlBuilder arg instead of output stream for 
 		// HttpResponseData.XML as well as XMLMETHOD

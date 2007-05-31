@@ -30,6 +30,9 @@
         <property name="hibernate.dialect"
               value="org.hibernate.dialect.MySQLDialect" />
         -->
+        <!--  Bind an entity manager factory into JDNI so we can get access to entity
+              managers outside of session beans -->
+        <property name="jboss.entity.manager.factory.jndi.name" value="java:/DumbHippoManagerFactory"/>
   	</properties>
   	</persistence-unit>
 </persistence>

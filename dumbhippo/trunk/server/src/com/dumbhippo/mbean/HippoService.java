@@ -82,6 +82,7 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
     @Override
 	protected void stopService() {
 		logger.info("Stopping HippoService MBean");
+		
 		// The order of these matters - if one of them 
 		// uses another one, then it will "resurrect" the one it uses,
 		// or throw an exception ...

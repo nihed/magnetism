@@ -24,11 +24,13 @@ import com.dumbhippo.dm.store.StoreClient;
 public class DataModel {
 	protected static final Logger logger = GlobalSetup.getLogger(DataModel.class);
 	
+	private String baseUrl;
 	private DMSessionMap sessionMap = new DMSessionMapJTA();
 	private UnfilteredSession unfilteredSession;
 	private EntityManagerFactory emf = null;
 	private Map<Class, DMClassHolder> classes = new HashMap<Class, DMClassHolder>();
-	private ClassPool classPool = new ClassPool();
+	private Map<String, DMClassHolder> classesByBase = new HashMap<String, DMClassHolder>();
+	private ClassPool classPool;
 	private DMStore store = new DMStore();
 	private boolean completed = false;
 	private ExecutorService notificationExecutor = ThreadUtils.newSingleThreadExecutor("DataModel-notification");
@@ -38,6 +40,7 @@ public class DataModel {
 	/**
 	 * Create a new DataModel object 
 	 * 
+	 * @param baseUrl base URL for all resources managed by this model
 	 * @param sessionMap Session map object that handles associating sessions with
 	 *   transactions
 	 * @param emf Entity manager factory to create entity managers for injection into
@@ -47,10 +50,15 @@ public class DataModel {
 	 * @param systemViewpoint  the system viewpoint for this data model; this system viewpoint 
 	 *   is a viewpoint that is allowed to see all data.
 	 */
-	public DataModel(DMSessionMap                 sessionMap,
+	public DataModel(String                       baseUrl,
+			         DMSessionMap                 sessionMap,
 			         EntityManagerFactory         emf,
 			         Class<? extends DMViewpoint> viewpointClass,
 			         DMViewpoint                  systemViewpoint) {
+		
+		if (baseUrl.endsWith("/"))
+			baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+		this.baseUrl = baseUrl;
 		
 		classPool = new ClassPool();
 	
@@ -65,6 +73,10 @@ public class DataModel {
 		this.emf = emf;
 		this.viewpointClass = viewpointClass;
 		this.systemViewpoint = systemViewpoint;
+	}
+
+	public String getBaseUrl() {
+		return baseUrl;
 	}
 	
 	public DMViewpoint getSystemViewpoint() {
@@ -83,7 +95,9 @@ public class DataModel {
 		if (completed)
 			throw new IllegalStateException("completeDMClasses has already been callled");
 		
-		classes.put(clazz, DMClassHolder.createForClass(this, clazz));
+		DMClassHolder classHolder = DMClassHolder.createForClass(this, clazz);
+		classes.put(clazz, classHolder);
+		classesByBase.put(classHolder.getResourceBase(), classHolder);
 	}
 	
 	/**
@@ -116,6 +130,12 @@ public class DataModel {
 		return classHolder;
 	}
 	
+
+	public DMClassHolder<?, ?> getClassHolder(String relativeBase) {
+		return classesByBase.get(relativeBase);
+	}
+
+	
 	public <K, T extends DMObject<K>> DMClassHolder<K,T> getClassHolder(Class<K> keyClass, Class<T> objectClass) {
 		@SuppressWarnings("unchecked")
 		DMClassHolder<K,T> classHolder = classes.get(objectClass);
@@ -126,20 +146,35 @@ public class DataModel {
 		return classHolder;
 	}
 
-	public ReadOnlySession initializeReadOnlySession(DMViewpoint viewpoint) {
-		ReadOnlySession session = new ReadOnlySession(this, viewpoint);
+	private ReadOnlySession initializeReadOnlySession(DMClient client, DMViewpoint viewpoint) {
+		ReadOnlySession session = new ReadOnlySession(this, client, viewpoint);
 		sessionMap.initCurrent(session);
 		
 		return session;
+	}
+	
+	private ReadWriteSession initializeReadWriteSession(DMClient client, DMViewpoint viewpoint) {
+		ReadWriteSession session = new ReadWriteSession(this, client, viewpoint);
+		sessionMap.initCurrent(session);
+		
+		return session;
+	}
+
+	public ReadOnlySession initializeReadOnlySession(DMClient client) {
+		return initializeReadOnlySession(client, client.createViewpoint());
+	}
+	
+	public ReadWriteSession initializeReadWriteSession(DMClient client) {
+		return initializeReadWriteSession(client, client.createViewpoint());
+	}
+	
+	public ReadOnlySession initializeReadOnlySession(DMViewpoint viewpoint) {
+		return initializeReadOnlySession(null, viewpoint);
 	}
 	
 	public ReadWriteSession initializeReadWriteSession(DMViewpoint viewpoint) {
-		ReadWriteSession session = new ReadWriteSession(this, viewpoint);
-		sessionMap.initCurrent(session);
-		
-		return session;
+		return initializeReadWriteSession(null, viewpoint);
 	}
-	
 
 	public ReadOnlySession currentSessionRO() {
 		DMSession session = sessionMap.getCurrent();
@@ -199,12 +234,19 @@ public class DataModel {
 				StoreClient client = clientNotification.getClient();
 				
 				long serial = client.allocateSerial(); 
-				FetchVisitor visitor = client.beginNotification();
 				
-				ReadOnlySession session = initializeReadOnlySession(client.createViewpoint());
-				
-				clientNotification.visitNotification(session, visitor);
-				client.endNotification(visitor, serial);
+				boolean success = false;
+				try {
+					ReadOnlySession session = initializeReadOnlySession(client);
+					
+					FetchVisitor visitor = client.beginNotification();
+					clientNotification.visitNotification(session, visitor);
+					client.endNotification(visitor, serial);
+					success = true;
+				} finally {
+					if (!success)
+						client.nullNotification(serial);
+				}
 			}
 		});
 	}

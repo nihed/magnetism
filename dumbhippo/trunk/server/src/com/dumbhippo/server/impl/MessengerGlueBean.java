@@ -135,16 +135,21 @@ public class MessengerGlueBean implements MessengerGlue {
 	}
 	
 	private Account accountFromUsername(String username) throws JabberUserNotFoundException {
-		Guid guid;
 		try {
-			guid = Guid.parseJabberId(username);
-			Account account = accountSystem.lookupAccountByOwnerId(guid);
-			
-			assert account.getOwner().getId().equals(username);
-			
-			return account;
+			Guid guid = Guid.parseJabberId(username);
+			return accountFromUserId(guid);
 		} catch (ParseException e) {
 			throw new JabberUserNotFoundException("corrupt username");
+		}
+	}
+	
+	private Account accountFromUserId(Guid userId) throws JabberUserNotFoundException {
+		try {
+			Account account = accountSystem.lookupAccountByOwnerId(userId);
+			
+			assert account.getOwner().getId().equals(userId);
+			
+			return account;
 		} catch (NotFoundException e) {
 			throw new JabberUserNotFoundException("username does not exist");
 		}
@@ -235,16 +240,15 @@ public class MessengerGlueBean implements MessengerGlue {
 		account.setWasSentShareLinkTutorial(true);
 	}
 
-	public void updateLoginDate(String username, Date timestamp) {
+	public void updateLoginDate(Guid userId, Date timestamp) {
 		// account could be missing due to debug users or our own
 		// send-notifications user. In fact any user on the jabber server 
 		// that we don't know about
 		Account account;
 		try {
-			account = accountFromUsername(username);
+			account = accountFromUserId(userId);
 		} catch (JabberUserNotFoundException e) {
-			if (!username.equals("admin"))
-				logger.warn("username logged in that we don't know: {}", username);
+			logger.warn("username logged in that we don't know: {}", userId);
 			return;
 		}
 		
@@ -252,26 +256,24 @@ public class MessengerGlueBean implements MessengerGlue {
 		account.setLastLoginDate(timestamp);
 	}	
 
-	public void updateLogoutDate(String username, Date timestamp) {
+	public void updateLogoutDate(Guid userId, Date timestamp) {
 		Account account;
 		try {
-			account = accountFromUsername(username);
+			account = accountFromUserId(userId);
 		} catch (JabberUserNotFoundException e) {
-			if (!username.equals("admin"))
-				logger.warn("username logged out that we don't know: {}", username);
+			logger.warn("username logged out that we don't know: {}", userId);
 			return;
 		}
 		
 		account.setLastLogoutDate(timestamp);
 	}
 	
-	public void sendConnectedResourceNotifications(String username, boolean wasAlreadyConnected) {
+	public void sendConnectedResourceNotifications(Guid userId, boolean wasAlreadyConnected) {
 		Account account;
 		try {
-			account = accountFromUsername(username);
+			account = accountFromUserId(userId);
 		} catch (JabberUserNotFoundException e) {
-			if (!username.equals("admin"))
-				logger.warn("username signed on that we don't know: {}", username);
+			logger.warn("username signed on that we don't know: {}", userId);
 			return;
 		}
 

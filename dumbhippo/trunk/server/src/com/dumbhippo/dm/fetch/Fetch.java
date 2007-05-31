@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.ClientNotificationSet;
+import com.dumbhippo.dm.DMClient;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.schema.DMClassHolder;
@@ -47,12 +48,17 @@ public final class Fetch<K,T extends DMObject<K>> {
 		DMPropertyHolder<K,U,?>[] classProperties = classHolder.getProperties();
 		Fetch<K,? super U> oldFetch;
 		
-		StoreClient client = visitor.getClient();
+		StoreClient storeClient;
+		DMClient client = session.getClient();
+		if (client != null)
+			storeClient = client.getStoreClient();
+		else
+			storeClient = null;
+		
 		boolean needFetch = visitor.getNeedFetch(); 
 		
-		if (client != null) {
-			oldFetch = session.getModel().getStore().addRegistration(classHolder, object.getKey(), client, this);
-			logger.debug("Old fetch is {}", oldFetch);
+		if (storeClient != null) {
+			oldFetch = session.getModel().getStore().addRegistration(classHolder, object.getKey(), storeClient, this);
 		} else
 			oldFetch = null;
 

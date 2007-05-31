@@ -20,7 +20,7 @@ public abstract class TestGroupMemberDMO extends DMObject<TestGroupMemberKey> {
 	DMSession session;
 
 	TestGroupMember groupMember;
-	
+
 	protected TestGroupMemberDMO(TestGroupMemberKey key) {
 		super(key);
 	}

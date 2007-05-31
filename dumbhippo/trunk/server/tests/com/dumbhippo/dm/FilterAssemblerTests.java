@@ -2,18 +2,16 @@ package com.dumbhippo.dm;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javassist.CannotCompileException;
+import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.NotFoundException;
-import javassist.bytecode.AccessFlag;
-import javassist.bytecode.ClassFile;
-import javassist.bytecode.CodeAttribute;
-import javassist.bytecode.Descriptor;
-import javassist.bytecode.DuplicateMemberException;
-import javassist.bytecode.MethodInfo;
+import junit.framework.TestCase;
 
 import org.slf4j.Logger;
 
@@ -24,15 +22,28 @@ import com.dumbhippo.dm.dm.TestUserDMO;
 import com.dumbhippo.dm.filter.CompiledFilter;
 import com.dumbhippo.dm.filter.CompiledItemFilter;
 import com.dumbhippo.dm.filter.CompiledListFilter;
+import com.dumbhippo.dm.filter.CompiledSetFilter;
 import com.dumbhippo.dm.filter.FilterAssembler;
 import com.dumbhippo.identity20.Guid;
 
-public class FilterAssemblerTests extends AbstractSupportedTests {
+public class FilterAssemblerTests extends TestCase {
+	ClassPool classPool;
+	
+	@Override
+	protected void setUp()  {
+		classPool = new ClassPool();
+		classPool.insertClassPath(new ClassClassPath(this.getClass()));
+	}
+	
+	@Override
+	protected void tearDown() {
+		classPool = null;
+	}
+	
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(FilterAssemblerTests.class);
 	
 	private CtClass ctClassForClass(Class<?> c) {
-		ClassPool classPool = support.getModel().getClassPool();
 		String className = c.getName();
 
 		try {
@@ -43,7 +54,6 @@ public class FilterAssemblerTests extends AbstractSupportedTests {
 	}
 	
 	private <K,T extends DMObject<K>> CompiledFilter<K,T> createFilter(String name, FilterAssembler assembler) throws CannotCompileException, InstantiationException, IllegalAccessException {
-		ClassPool classPool = support.getModel().getClassPool();
 		CtClass ctClass = classPool.makeClass("com.dumbhippo.tests." + name);
 		
 		ctClass.addInterface(ctClassForClass(CompiledFilter.class));
@@ -58,7 +68,6 @@ public class FilterAssemblerTests extends AbstractSupportedTests {
 	}
 	
 	private <K,T extends DMObject<K>,KI,TI extends DMObject<KI>> CompiledItemFilter<K,T,KI,TI> createItemFilter(String name, FilterAssembler assembler) throws CannotCompileException, InstantiationException, IllegalAccessException {
-		ClassPool classPool = support.getModel().getClassPool();
 		CtClass ctClass = classPool.makeClass("com.dumbhippo.tests." + name);
 		
 		ctClass.addInterface(ctClassForClass(CompiledItemFilter.class));
@@ -73,7 +82,6 @@ public class FilterAssemblerTests extends AbstractSupportedTests {
 	}
 	
 	private <K,T extends DMObject<K>,KI,TI extends DMObject<KI>> CompiledListFilter<K,T,KI,TI> createListFilter(String name, FilterAssembler assembler) throws CannotCompileException, InstantiationException, IllegalAccessException {
-		ClassPool classPool = support.getModel().getClassPool();
 		CtClass ctClass = classPool.makeClass("com.dumbhippo.tests." + name);
 		
 		ctClass.addInterface(ctClassForClass(CompiledListFilter.class));
@@ -87,18 +95,18 @@ public class FilterAssemblerTests extends AbstractSupportedTests {
 		return subclass.newInstance();
 	}
 	
-	public void addListFilterMethod(CtClass ctClass, CodeAttribute code) throws DuplicateMemberException { 
-		ClassFile classFile = ctClass.getClassFile();
-		String desc = Descriptor.ofMethod(ctClassForClass(List.class), 
-				                          new CtClass[] { ctClassForClass(DMViewpoint.class), 
-				                                          ctClassForClass(Object.class),
-				                                          ctClassForClass(List.class) });
+	private <K,T extends DMObject<K>,KI,TI extends DMObject<KI>> CompiledSetFilter<K,T,KI,TI> createSetFilter(String name, FilterAssembler assembler) throws CannotCompileException, InstantiationException, IllegalAccessException {
+		CtClass ctClass = classPool.makeClass("com.dumbhippo.tests." + name);
 		
-		MethodInfo methodInfo = new MethodInfo(classFile.getConstPool(), "filter", desc);
-		methodInfo.setAccessFlags(AccessFlag.PUBLIC);
-		methodInfo.setCodeAttribute(code);
-
-		classFile.addMethod(methodInfo);
+		ctClass.addInterface(ctClassForClass(CompiledSetFilter.class));
+		
+		assembler.addMethodToClass(ctClass, "filterKeys");
+		
+		Class<?> clazz = ctClass.toClass();
+		
+		@SuppressWarnings("unchecked")
+		Class<? extends CompiledSetFilter<K,T,KI,TI>> subclass = (Class<? extends CompiledSetFilter<K,T,KI,TI>>)clazz.asSubclass(CompiledSetFilter.class);
+		return subclass.newInstance();
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////
@@ -268,4 +276,32 @@ public class FilterAssemblerTests extends AbstractSupportedTests {
 		assertEquals(1, result.size());
 		assertEquals(viewpoint.getViewerId().toString(), result.get(0).getMemberId().toString());
 	}
+	
+	// Test startResult(), addResultItem(), startItems(), nextItem(), itemCondition() for a list, no property
+	public void testSetFilterMethod() throws CannotCompileException, InstantiationException, IllegalAccessException {
+		FilterAssembler assembler = FilterAssembler.createForSetFilter(TestViewpoint.class, Guid.class, Guid.class, false);
+		
+		assembler.startResult();
+		assembler.startItems();
+		assembler.label("NEXT");
+		assembler.nextItem("DONE");
+		assembler.itemCondition("sameAs", null, false, "NEXT");
+		assembler.addResultItem();
+		assembler.jump("NEXT");
+		assembler.label("DONE");
+		assembler.returnResult();
+		
+		CompiledSetFilter<Guid, ?, Guid, ?> filter = createSetFilter("SetFilter", assembler);
+		
+		TestViewpoint viewpoint = new TestViewpoint(Guid.createNew());
+		
+		Set<Guid> items = new HashSet<Guid>();
+		items.add(Guid.createNew());
+		items.add(viewpoint.getViewerId());
+		
+		Set<Guid> result = filter.filterKeys(viewpoint, Guid.createNew(), items);
+		assertEquals(1, result.size());
+		assertEquals(viewpoint.getViewerId().toString(), result.iterator().next().toString());
+	}
+
 }

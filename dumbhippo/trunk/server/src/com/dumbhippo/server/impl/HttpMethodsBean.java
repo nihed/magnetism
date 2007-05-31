@@ -121,6 +121,8 @@ import com.dumbhippo.server.applications.ApplicationView;
 import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.blocks.TitleBlockView;
 import com.dumbhippo.server.blocks.TitleDescriptionBlockView;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.EntityView;
@@ -489,6 +491,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void doRenamePerson(UserViewpoint viewpoint, String name) {
 		name = name.trim();
 		viewpoint.getViewer().setNickname(name);
+		DataService.currentSessionRW().changed(UserDMO.class, viewpoint.getViewer().getGuid(), "name");
 		revisionControl.persistRevision(new UserNameChangedRevision(viewpoint.getViewer(), new Date(), name));
 	}
 

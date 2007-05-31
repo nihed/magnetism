@@ -12,16 +12,23 @@ import com.dumbhippo.server.NotFoundException;
 
 public abstract class CachedSession extends DMSession {
 	private static Logger logger = GlobalSetup.getLogger(CachedSession.class);
+	private DMClient client;
 	private DMViewpoint viewpoint;
 
 	private Map<StoreKey, DMObject> sessionDMOs = new HashMap<StoreKey, DMObject>();
 
-	protected CachedSession(DataModel model, DMViewpoint viewpoint) {
+	protected CachedSession(DataModel model, DMClient client, DMViewpoint viewpoint) {
 		super(model);
+		this.client = client;
 		this.viewpoint = viewpoint;
 		viewpoint.setSession(this);
 	}
 
+	@Override
+	public DMClient getClient() {
+		return client;
+	}
+	
 	@Override
 	public DMViewpoint getViewpoint() {
 		return viewpoint;

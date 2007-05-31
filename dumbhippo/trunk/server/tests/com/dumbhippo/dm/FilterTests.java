@@ -110,7 +110,7 @@ public class FilterTests extends AbstractSupportedTests {
 		em.getTransaction().commit();
 	}
 	
-	public void testFilterList() throws NotFoundException {
+	public void testFilterSet() throws NotFoundException {
 		EntityManager em;
 		ReadOnlySession session;
 		
