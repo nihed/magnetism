@@ -16,6 +16,10 @@ public abstract class CachedSession extends DMSession {
 	private DMViewpoint viewpoint;
 
 	private Map<StoreKey, DMObject> sessionDMOs = new HashMap<StoreKey, DMObject>();
+	
+	// Set true when we are running with a temporary viewpoint ("su"); in that case
+	// we must bypass the cache to avoid cross-polution with the parent viewpoint
+	private boolean bypassCache;
 
 	protected CachedSession(DataModel model, DMClient client, DMViewpoint viewpoint) {
 		super(model);
@@ -35,6 +39,9 @@ public abstract class CachedSession extends DMSession {
 	}
 	
 	private <K, T extends DMObject<K>> T findRawObject(StoreKey<K,T> storeKey) {
+		if (bypassCache)
+			return null;
+		
 		@SuppressWarnings("unchecked")
 		T raw = (T)sessionDMOs.get(storeKey);
 		
@@ -55,7 +62,7 @@ public abstract class CachedSession extends DMSession {
 			return raw;
 		}
 	}
-
+	
 	@Override
 	public <K, T extends DMObject<K>> T findUnchecked(StoreKey<K,T> storeKey) {
 		T raw = findRawObject(storeKey);
@@ -64,13 +71,15 @@ public abstract class CachedSession extends DMSession {
 		
 		raw = createRawObject(storeKey);
 		
-		// Despite the fact that we aren't supposed to return filtered results,
-		// we have to filter before storing into the local cache (or alternatively, we'd
-		// have to filter before returning a result from the local cache)
-		
-		T filtered = filterRawObject(storeKey, raw);
-		if (filtered != null)
-			sessionDMOs.put(storeKey, filtered);
+		if (!bypassCache) {
+			// Despite the fact that we aren't supposed to return filtered results,
+			// we have to filter before storing into the local cache (or alternatively, we'd
+			// have to filter before returning a result from the local cache)
+			
+			T filtered = filterRawObject(storeKey, raw);
+			if (filtered != null)
+				sessionDMOs.put(storeKey, filtered);
+		}
 		
 		return raw;
 	}
@@ -88,8 +97,32 @@ public abstract class CachedSession extends DMSession {
 		if (filtered == null)
 			throw new NotFoundException("No such object");
 
-		sessionDMOs.put(storeKey, filtered);
+		if (!bypassCache)
+			sessionDMOs.put(storeKey, filtered);
 		
 		return filtered;
+	}
+
+	public void runWithViewpoint(DMViewpoint newViewpoint, Runnable runnable) {
+		DMClient oldClient = client;
+		DMViewpoint oldViewpoint = viewpoint;
+		boolean oldBypassCache = bypassCache;
+		
+		try {
+			client = null;
+			viewpoint = newViewpoint;
+			bypassCache = true;
+			
+			runnable.run();
+			
+		} finally {
+			client = oldClient;
+			viewpoint = oldViewpoint;
+			bypassCache = oldBypassCache;
+		}
+	}
+	
+	public void runAsSystem(Runnable runnable) {
+		runWithViewpoint(model.getSystemViewpoint(), runnable);
 	}
 }

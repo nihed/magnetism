@@ -1,6 +1,7 @@
 package com.dumbhippo.server.impl;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -372,11 +373,19 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		groupSystem.fixupGroupMemberships(claimedOwner);
 		
 		// People may have listed the newly claimed resource as a contact
-		LiveState.getInstance().invalidateContacters(claimedOwner.getGuid());
+		Collection<Guid> newContacters = findResourceContacters(res);
+		if (!newContacters.isEmpty()) {
+			LiveState.getInstance().invalidateContacters(claimedOwner.getGuid());
+			
+			for (Guid contacter : newContacters)
+				LiveState.getInstance().invalidateContacts(contacter);
+		}						
 	}
 
 	public void removeVerifiedOwnershipClaim(UserViewpoint viewpoint,
 			User owner, Resource res) {
+		Collection<Guid> oldContacters = findResourceContacters(res);
+		
 		if (!viewpoint.isOfUser(owner)) {
 			throw new RuntimeException(
 					"can only remove your own ownership claims");
@@ -395,15 +404,36 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				claims.remove(claim);
 				em.remove(claim);
 				
-				// People may have listed the old resource as a contact
-				LiveState.getInstance().invalidateContacters(owner.getGuid());
+				// People may have listed resource as a contact
+				if (!oldContacters.isEmpty()) {
+					LiveState.getInstance().invalidateContacters(owner.getGuid());
+					
+					for (Guid contacter : oldContacters)
+						LiveState.getInstance().invalidateContacts(contacter);
+				}						
 				
 				return;
 			}
 		}
-		logger
-				.warn("Tried but failed to remove claim for {} on {}", owner,
-						res);
+		logger.warn("Tried but failed to remove claim for {} on {}", owner,	res);
+	}
+
+	private Collection<Guid> findResourceContacters(Resource res) {
+		Query q = em.createQuery("SELECT cc.account.owner.id " +
+		 		                 "  FROM ContactClaim cc " +
+				                 "  WHERE cc.resource = :resource");
+		q.setParameter("resource", res);
+
+		Set<Guid> result = new HashSet<Guid>();
+		for (String id : TypeUtils.castList(String.class, q.getResultList())) {
+			try {
+				result.add(new Guid(id));
+			} catch (ParseException e) {
+				logger.error("Bad GUID in database: {}", id);
+			}
+		}
+		
+		return result;
 	}
 
 	private Contact findContactByUser(User owner, User contactUser) throws NotFoundException {

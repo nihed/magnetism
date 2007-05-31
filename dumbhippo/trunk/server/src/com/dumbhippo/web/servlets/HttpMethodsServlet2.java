@@ -48,7 +48,6 @@ import com.dumbhippo.server.SharedFileSystem;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
-import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -844,12 +843,6 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		else
 			viewpoint = AnonymousViewpoint.getInstance();
 		
-		if (m.isRequiresPost()) {
-			DataService.getModel().initializeReadWriteSession(viewpoint);
-		} else {
-			DataService.getModel().initializeReadOnlySession(viewpoint);
-		}
-  
 		// FIXME allow an XmlBuilder arg instead of output stream for 
 		// HttpResponseData.XML as well as XMLMETHOD
 		XmlBuilder xml = null;
@@ -993,6 +986,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		public boolean getRequiresTransaction();
 		public void handle(HttpServletRequest request, HttpServletResponse response, boolean isPost)
 			throws HttpException, IOException;
+		public boolean isReadWrite();
 	}
 	
 	private static class HttpMethodRequestHandler implements RequestHandler {
@@ -1011,6 +1005,10 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		
 		public boolean getRequiresTransaction() {
 			return method.isRequiresTransaction();
+		}
+		
+		public boolean isReadWrite() {
+			return method.isRequiresPost();
 		}
 
 		public void handle(HttpServletRequest request, HttpServletResponse response, boolean isPost) throws HttpException, IOException {
@@ -1063,7 +1061,6 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 					sess.invalidate();	
 			}			
 		}
-		
 	}
 	
 	private String[] parseUri(String uri) {
@@ -1117,6 +1114,10 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 					return true;
 				}
 
+				public boolean isReadWrite() {
+					return true;
+				}
+				
 				public void handle(HttpServletRequest request, HttpServletResponse response, boolean isPost)
 					throws HttpException, IOException {
 					// special method that magically causes us to look at your cookie and log you 
@@ -1132,7 +1133,6 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 						out.write("false".getBytes());
 					out.flush();					
 				}
-				
 			};
 		}
 	}
@@ -1150,7 +1150,11 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 				public boolean getRequiresTransaction() {
 					return false;
 				}
-				
+
+				public boolean isReadWrite() {
+					return false;
+				}
+
 				public void handle(HttpServletRequest request, HttpServletResponse response, boolean isPost)
 					throws HttpException, IOException {
 					HttpSession session = request.getSession();
@@ -1188,6 +1192,10 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 			public boolean getRequiresTransaction() {
 				return false;
 			}
+			
+			public boolean isReadWrite() {
+				return false;
+			}
 
 			public void handle(HttpServletRequest request, HttpServletResponse response, boolean isPost)
 				throws HttpException, IOException {
@@ -1210,7 +1218,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 	
 	private void doRequest(HttpServletRequest request, HttpServletResponse response, boolean isPost)
 		throws HttpException, IOException {
-		RequestHandler handler = (RequestHandler) request.getAttribute("request-handler");
+		RequestHandler handler = getRequestHandler(request);
 		if (handler == null) {
 			logger.debug("Found no handler for url '{}'", request.getRequestURI());
 			throw new HttpException(HttpResponseCode.NOT_FOUND, "unknown URI");
@@ -1237,13 +1245,12 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		return null;
 	}
 
-	@Override
-	protected boolean requiresTransaction(HttpServletRequest request) {
+	// the idea is to do the "request analysis" only once 
+	private RequestHandler getRequestHandler(HttpServletRequest request) {
+		RequestHandler handler = (RequestHandler)request.getAttribute("request-handler");
+		if (handler != null)
+			return handler;
 		
-		// the idea is to do the "request analysis" only once, rather than both 
-		// here and also in the doGet/doPost
-		
-		RequestHandler handler = null;
 		boolean isPost = request.getMethod().toUpperCase().equals("POST");
 		if (isPost) {
 			if (handler == null)
@@ -1259,10 +1266,28 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		
 		if (handler != null) {
 			request.setAttribute("request-handler", handler);
+			return handler;
+		} else {
+			return null;
+		}
+	}
+	
+	@Override
+	protected boolean requiresTransaction(HttpServletRequest request) {
+		RequestHandler handler = getRequestHandler(request);
+		
+		if (handler != null) {
 			return handler.getRequiresTransaction();
 		} else {
 			// we're going to throw an error later
 			return false;
 		}
+	}
+	
+	@Override
+	protected boolean isReadWrite(HttpServletRequest request) {
+		RequestHandler handler = getRequestHandler(request);
+		
+		return handler.isReadWrite();
 	}
 }
