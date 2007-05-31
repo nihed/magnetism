@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 import com.dumbhippo.dm.fetch.*;
+import com.dumbhippo.dm.parser.ParseException;
 import com.dumbhippo.GlobalSetup;
 import org.slf4j.Logger;
 
@@ -47,13 +48,19 @@ public class FetchParser extends antlr.LLkParser       implements FetchParserTok
 		logger.debug(warning);
 	}
 	
-	public static FetchNode parse(String input) throws RecognitionException, TokenStreamException {
-		StringReader in = new StringReader(input);
-		FetchParser parser = new FetchParser(new FetchLexer(in));
-		FetchNode fetchNode = parser.startRule();
-		in.close();
+	public static FetchNode parse(String input) throws ParseException {
+		try {
+   		    StringReader in = new StringReader(input);
+		    FetchParser parser = new FetchParser(new FetchLexer(in));
+	        FetchNode fetchNode = parser.startRule();
+		    in.close();
 		
-		return fetchNode;
+			return fetchNode;
+		} catch (RecognitionException e) {
+			throw new ParseException(e);
+		} catch (TokenStreamException e) {
+			throw new ParseException(e);
+		}
 	}
 
 protected FetchParser(TokenBuffer tokenBuf, int k) {
@@ -104,7 +111,7 @@ public FetchParser(ParserSharedInputState state) {
 			p=propertyFetch();
 			props.add(p);
 			{
-			_loop1012:
+			_loop83:
 			do {
 				if ((LA(1)==SEMICOLON)) {
 					match(SEMICOLON);
@@ -112,7 +119,7 @@ public FetchParser(ParserSharedInputState state) {
 					props.add(p);
 				}
 				else {
-					break _loop1012;
+					break _loop83;
 				}
 				
 			} while (true);
@@ -264,7 +271,7 @@ public FetchParser(ParserSharedInputState state) {
 			a=attribute();
 			attrs.add(a);
 			{
-			_loop1021:
+			_loop92:
 			do {
 				if ((LA(1)==COMMA)) {
 					match(COMMA);
@@ -272,7 +279,7 @@ public FetchParser(ParserSharedInputState state) {
 					attrs.add(a);
 				}
 				else {
-					break _loop1021;
+					break _loop92;
 				}
 				
 			} while (true);
