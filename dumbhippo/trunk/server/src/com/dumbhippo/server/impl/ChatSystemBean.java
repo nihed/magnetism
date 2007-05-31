@@ -116,9 +116,9 @@ public class ChatSystemBean implements ChatSystem {
 			throw new RuntimeException("Use getTrackMessages() instead"); 
 		case GROUP_MEMBER:
 			return Collections.emptyList();
+		default:
+			return getBlockMessages(block, lastSeenSerial);
 		}
-		
-		return getBlockMessages(block, lastSeenSerial);
 	}
 	
 	public List<? extends ChatMessage> getNewestMessages(Block block, int maxResults) {
@@ -136,9 +136,9 @@ public class ChatSystemBean implements ChatSystem {
 			throw new RuntimeException("Use getNewestTrackMessages() instead"); // for efficiency 
 		case GROUP_MEMBER:
 			return Collections.emptyList();
+		default:
+			return getNewestBlockMessages(block, maxResults);
 		}
-		
-		return getNewestBlockMessages(block, maxResults);
 	}
 		
 	public int getMessageCount(Block block) {
@@ -156,9 +156,9 @@ public class ChatSystemBean implements ChatSystem {
 			throw new RuntimeException("Use getTrackMessageCount() instead"); // for efficiency 
 		case GROUP_MEMBER:
 			return 0;
+		default:	
+			return getBlockMessageCount(block);
 		}
-		
-		return getBlockMessageCount(block);
 	}
 	
 	private List<BlockMessage> getBlockMessages(Block block, long lastSeenSerial) {

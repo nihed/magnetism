@@ -4,6 +4,9 @@ import java.util.Collections;
 
 import javax.persistence.EntityManager;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.dm.TestGroupDMO;
 import com.dumbhippo.dm.dm.TestUserDMO;
 import com.dumbhippo.dm.persistence.TestGroup;
@@ -13,6 +16,9 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.server.NotFoundException;
 
 public class FilterTests extends AbstractSupportedTests {
+	@SuppressWarnings("unused")
+	static private final Logger logger = GlobalSetup.getLogger(FilterTests.class);
+	
 	public void createData(Guid bobId, Guid janeId, Guid victorId, 
 			               Guid bobAndJaneId, Guid bobOnlyId, Guid janeOnlyId) 
 	{ 
@@ -114,7 +120,7 @@ public class FilterTests extends AbstractSupportedTests {
 		EntityManager em;
 		ReadOnlySession session;
 		
-		Guid bobId = Guid.createNew();
+		final Guid bobId = Guid.createNew();
 		Guid janeId = Guid.createNew();
 		Guid victorId = Guid.createNew();
 		Guid bobAndJaneId = Guid.createNew();
@@ -128,18 +134,30 @@ public class FilterTests extends AbstractSupportedTests {
 		em = support.beginSessionRO(new TestViewpoint(bobId));
 		session = support.currentSessionRO();
 
-		// Bob can see both of Jane's groups
+		// Bob can see both of Jane's groups, and both of his own
 		assertEquals(2, session.find(TestUserDMO.class, janeId).getGroups().size()); 
+		assertEquals(2, session.find(TestUserDMO.class, bobId).getGroups().size());
 
 		em.getTransaction().commit();
 		
 		/////////////////////////////////////////////////
 		
 		em = support.beginSessionRO(new TestViewpoint(janeId));
-		session = support.currentSessionRO();
+		final ReadOnlySession testSession = support.currentSessionRO();
 
 		// Jane only sees Bob's public group
-		assertEquals(1, session.find(TestUserDMO.class, bobId).getGroups().size());
+		assertEquals(1, testSession.find(TestUserDMO.class, bobId).getGroups().size());
+		
+		// But we can "su" and see everything
+		testSession.runAsSystem(new Runnable() {
+			public void run() {
+				try {
+					assertEquals(2, testSession.find(TestUserDMO.class, bobId).getGroups().size());
+				} catch (NotFoundException e) {
+					throw new RuntimeException("Can't find Bob");
+				}
+			}
+		});
 		
 		em.getTransaction().commit();
 		

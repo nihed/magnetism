@@ -38,14 +38,23 @@ public class TestViewpoint implements DMViewpoint {
 	}
 	
 	public boolean sameAs(Guid id) {
+		if (viewerId == null) // system viewpoint
+			return true;
+
 		return viewerId.equals(id);
 	}
 	
 	public boolean isBuddy(Guid id) {
+		if (viewerId == null) // system viewpoint
+			return true;
+		
 		return buddies.contains(id);
 	}
 	
 	public boolean isEnemy(Guid id) {
+		if (viewerId == null) // system viewpoint
+			return false;
+		
 		return enemies.contains(id);
 	}
 

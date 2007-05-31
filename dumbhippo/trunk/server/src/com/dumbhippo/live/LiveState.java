@@ -32,6 +32,8 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class LiveState {
@@ -599,6 +601,9 @@ public class LiveState {
 	 * @param userId the user to invalidate the cache entry for
 	 */
 	public void invalidateContacts(final Guid userId) {
+		// The new way of doing things, will eventually replace all of this
+		DataService.currentSessionRW().changed(UserDMO.class, userId, "contacts");
+		
 		// Invalidate locally synchronously on commit
 		runTaskOnTransactionComplete(new Runnable() {
 			public void run() {
@@ -624,6 +629,9 @@ public class LiveState {
 	 * @param userId the user to invalidate the cache entry for
 	 */
 	public void invalidateContacters(final Guid userId) {
+		// The new way of doing things, will eventually replace all of this
+		DataService.currentSessionRW().changed(UserDMO.class, userId, "contacters");
+		
 		// Invalidate locally synchronously on commit
 		runTaskOnTransactionComplete(new Runnable() {
 			public void run() {

@@ -43,6 +43,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.ClusterUtil;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.Viewpoint;
@@ -305,6 +306,18 @@ public abstract class AbstractServlet extends HttpServlet {
 	
 	protected abstract boolean requiresTransaction(HttpServletRequest request);
 	
+	/**
+	 * Is the servlet going to write to the database in response to the request? The
+	 * default is to look at GET vs. POST, but subclasses can refine. (A GET request
+	 * can't have side-effects, but a POST request is allowed to be side-effect-free)
+	 * 
+	 * @param request
+	 * @return
+	 */
+	protected boolean isReadWrite(HttpServletRequest request) {
+		return request.getMethod().toUpperCase().equals("POST");
+	}
+	
 	private Object runWithTransaction(HttpServletRequest request, Callable func) throws HumanVisibleException, HttpException {
 		long startTime = System.currentTimeMillis();
 		UserTransaction tx;
@@ -323,6 +336,12 @@ public abstract class AbstractServlet extends HttpServlet {
 			throw new RuntimeException("Error starting transaction", e); 
 		}
 		try {
+			Viewpoint viewpoint = getViewpoint(request);
+			if (isReadWrite(request))
+				DataService.getModel().initializeReadWriteSession(viewpoint);
+			else
+				DataService.getModel().initializeReadOnlySession(viewpoint);
+			
 			Object result = func.call();
 			logger.debug("Handled {} in {} milliseconds", request.getPathInfo(), System.currentTimeMillis() - startTime);
 			return result;
