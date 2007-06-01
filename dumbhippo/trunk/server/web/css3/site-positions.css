@@ -304,6 +304,11 @@ div.dh-notification {
 	width:				100%;
 }
 
+.dh-stacker-block-with-image-beside {
+	padding-left:		8px;
+	font-size:			12px;
+}
+
 .dh-stacker-block-mouse-tip {
 	display:			none;
 	position:			absolute;
@@ -342,7 +347,7 @@ div.dh-notification {
 	margin:	            5px;
 }
 
-.dh-stacker-block-beside-image .dh-stacker-block-icon {
+.dh-stacker-block-with-image-beside .dh-stacker-block-icon {
     margin:             0px;
 }
 

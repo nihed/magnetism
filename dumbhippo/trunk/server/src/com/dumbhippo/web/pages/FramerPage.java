@@ -7,8 +7,13 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.Stacker;
+import com.dumbhippo.server.blocks.BlockView;
+import com.dumbhippo.server.blocks.PostBlockHandler;
+import com.dumbhippo.server.blocks.PostBlockView;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.web.Signin;
@@ -31,11 +36,14 @@ public class FramerPage {
 	private SigninBean signin;
 	
     private PostingBoard postBoard;
+    private Stacker stacker;
     private PostView post;
+    private BlockView block;
     private boolean isVisit = false;
 	
     public FramerPage() {
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
+		stacker =  WebEJBUtil.defaultLookup(Stacker.class);
     }
 	
     public SigninBean getSignin() {
@@ -54,6 +62,17 @@ public class FramerPage {
     	this.isVisit = isVisit;
     }
 
+    // TODO: this was copied over from ChatWindowPage; the two classes should have
+    // a common superclass BlockPage
+    private PostBlockView loadPostBlockView(Guid postId) throws NotFoundException {
+    	PostBlockHandler handler = WebEJBUtil.defaultLookup(PostBlockHandler.class);
+    	BlockKey key = handler.getLookupOnlyKey(postId);
+    	
+    	PostBlockView result = (PostBlockView)stacker.loadBlock(signin.getViewpoint(), key);
+    		
+    	return result;
+    }
+    
      public void setPostId(String postId) {
 		if (postId == null) {
 			errorText = "No post specified";
@@ -65,6 +84,8 @@ public class FramerPage {
 			this.postId = postId;
 			
 			this.post = postBoard.loadPost(signin.getViewpoint(), guid);
+			this.block = loadPostBlockView(new Guid(postId));
+			
 			logger.debug("viewing post: {}", this.postId);
 			
 			if (isVisit && signin.isValid()) {
@@ -72,7 +93,7 @@ public class FramerPage {
 				postBoard.postViewedBy(post.getPost(), viewpoint.getViewer());
 			}
 		} catch (NotFoundException e) {
-			errorText = "Can't find a visible post for the post ID '" + postId + "'";
+			errorText = "Can't find a visible post or post block for the post ID '" + postId + "'";
 		} catch (ParseException e) {
 			errorText = "The post ID '" + postId + "' doesn't make sense";
 		}
@@ -80,5 +101,9 @@ public class FramerPage {
 	
     public PostView getPost() {
 		return post;
+    }
+    
+    public BlockView getBlock() {
+    	return block;
     }
 }

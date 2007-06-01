@@ -74,28 +74,53 @@ dh.framer._messageTimeElement = function(message) {
 	return document.getElementById(this._messageTimeElementId(message));
 }
 
-dh.framer._addMessage = function(message, before) {
-	var nameDiv = document.createElement("div")
-    nameDiv.id = this._messageNameDivId(message)
-    nameDiv.className = "dh-chat-name"
-  	nameDiv.appendChild(document.createTextNode(message.getEntity().getName()))
-  	 
+dh.framer._addMessage = function(message, before) {  	 
     var messageDiv = document.createElement("div")
 	messageDiv.id = this._messageDivId(message)
     messageDiv.className = "dh-chat-message"	
+    
+    var sentimentDiv = document.createElement("div");
+	sentimentDiv.className = "dh-chat-message-sentiment";
+	messageDiv.appendChild(sentimentDiv);
+
+	var sentimentUrl;
+	var sentimentWidth = 11;
+	var sentimentHeight = 11;
+		
+	switch(message.getSentiment()) {
+	case dh.control.SENTIMENT_LOVE:
+		sentimentUrl = dhImageRoot3 + "quiplove_icon.png";
+		sentimentWidth = 12;
+		break;
+	case dh.control.SENTIMENT_HATE:
+		sentimentUrl = dhImageRoot3 + "quiphate_icon.png";
+		break;
+	default:
+		sentimentUrl = dhImageRoot3 + "comment_iconchat_icon.png";
+		break;
+	}
+		
+	var image = dh.util.createPngElement(sentimentUrl, sentimentWidth, sentimentHeight);
+	sentimentDiv.appendChild(image);
+    
     dh.util.insertTextWithLinks(messageDiv, message.getMessage()) 
+		
+    messageDiv.appendChild(document.createTextNode(" - "));
+    
+    var userUrl = "/person?who=" + message.getEntity().getId()    
+	var whoElement = dh.util.createLinkElement(userUrl, message.getEntity().getName());
+	whoElement.className = "dh-chat-message-who";
+	whoElement.id = this._messageNameDivId(message)
+	messageDiv.appendChild(whoElement);
 	
 	var timeSpan = document.createElement("span");
 	timeSpan.className = "dh-chat-message-time";
 	timeSpan.id = this._messageTimeElementId(message);
-	timeSpan.appendChild(document.createTextNode(" - " + message.timeString()));
+	timeSpan.appendChild(document.createTextNode(" " + message.timeString()));
 	messageDiv.appendChild(timeSpan);
 	
 	var beforeMessageDiv = before ? this._messageDiv(before) : null;
-	var beforeNameDiv = before ? this._messageNameDiv(before) : null;
 	
-	var namesArea = document.getElementById('dhPostChatNames')
-	namesArea.insertBefore(nameDiv, beforeNameDiv)
 	var messageArea = document.getElementById('dhPostChatMessages')
 	messageArea.insertBefore(messageDiv, beforeMessageDiv)
 }
@@ -114,13 +139,16 @@ dh.framer._removeMessage = function(message) {
 }
 
 dh.framer._addUser = function(user, before, participant) {
-	var userList = document.getElementById("dhPostViewingListPeople")
-    
-    var span = document.createElement("span")
-    span.id = this._userSpanId(user)
-    span.appendChild(document.createTextNode(user.getName()))
+	var userList = document.getElementById("dhPostViewingListPeople");
+	
+    var userUrl = "/person?who=" + user.getId();
+    var userElement = dh.util.createLinkElement(userUrl, user.getName());
+            
+    var span = document.createElement("span");
+    span.id = this._userSpanId(user);	
+    span.appendChild(userElement);
 
-	userList.insertBefore(span, before ? this._userSpan(before) : null)
+	userList.insertBefore(span, before ? this._userSpan(before) : null);
 	if (span.nextSibling)
 		userList.insertBefore(document.createTextNode(", "), span.nextSibling);
 	else if (span.previousSibling)
@@ -147,7 +175,7 @@ dh.framer.updateTimes = function() {
 	dh.framer._messageList.foreachMessage(function(message) {
 		var span = dh.framer._messageTimeElement(message);
 		var currentText = dh.dom.textContent(span);
-		var newText = " - " + message.timeString();
+		var newText = " " + message.timeString();
 		if (newText != currentText); // Avoid spurious redraws
 			dh.dom.textContent(span, newText);
 	});
@@ -157,16 +185,32 @@ dh.framer.updateTimes = function() {
 	setTimeout(dh.framer.updateTimes, 60 * 1000);
 }
 
+dh.framer._onMessage = function(message) {
+    if (message.getSerial() > dh.framer.initialLastMessageId) {
+        dh.framer.currentMessageCount++;
+        var countSpan = document.getElementById('dhQuipsCount');
+        countSpan.replaceChild(document.createTextNode(dh.framer.currentMessageCount), countSpan.firstChild);    
+    }
+}
+
+dh.framer._onReconnect = function() {
+    dh.framer.currentMessageCount = dh.framer.initialMessageCount;
+}
+	
 dh.framer.init = function() {
 	dh.control.createControl();
 
 	this._chatRoom = dh.control.control.getOrCreateChatRoom(this.chatId)
 
+	dojo.event.connect(this._chatRoom, "onMessage", this, "_onMessage")
+	dojo.event.connect(this._chatRoom, "onReconnect", this, "_onReconnect")
+	
 	this._messageList = new dh.chat.MessageList(
 		this._chatRoom,
 		function(message, before) { dh.framer._addMessage(message, before) },
 		function(message) { dh.framer._removeMessage(message) },
-		3);
+		3,
+		true);
 		
 	this._userList = new dh.chat.UserList(
 		this._chatRoom,

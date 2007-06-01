@@ -26,9 +26,14 @@ body {
 }
 
 .dh-chat-message-who {
-	color: #0000cc;
+	color:       #0000cc;	
+    font-style:  italic;	
 }
 
+a.dh-chat-message-who {
+    text-decoration: underline;   
+}
+ 
 .dh-chat-message-time {
 	color: #a7a7a7;
 }

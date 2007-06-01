@@ -18,7 +18,7 @@
 	<tr>
 	<td valign="top"><div class="dh-stacker-block-right">
 		<c:if test="${showFrom}">
-			<div class="dh-stacker-block-right-from-name">from <dht3:entityLink who="${from}" onlineIcon="${!chatHeader}"/></div>
+			<div>from <span class="dh-stacker-block-right-from-name"><dht3:entityLink who="${from}" onlineIcon="${!chatHeader}"/></span></div>
 		</c:if>
 		<jsp:doBody/>
 	</div></td>

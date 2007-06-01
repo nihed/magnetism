@@ -375,9 +375,17 @@ div.dh-async-action-link-complete {
 .dh-stacker-block-title-title {
 }
 
-.dh-stacker-block-right, .dh-stacker-block-controls, .dh-stacker-block-sent-to {
+.dh-stacker-block-right, .dh-stacker-block-controls, .dh-stacker-block-sent-to, .dh-block-details {
 	font-size:			11px;
 	color:				#666666;
+}
+
+.dh-entity-list {
+    font-style:         italic;
+}
+
+.dh-entity-list a {
+	text-decoration:	underline;
 }
 
 .dh-stacker-block-from {
@@ -577,15 +585,6 @@ div.dh-async-action-link-complete {
 
 .dh-block-image-cell img {
 	display:			block;
-}
-
-.dh-stacker-block-with-image-beside {
-	padding-left:		8px;
-	font-size:			12px;
-}
-
-.dh-stacker-block-with-image-beside .dh-stacker-block-icon {
-    margin:             0px;
 }
 
 .dh-music-block-artist {
