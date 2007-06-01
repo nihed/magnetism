@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Thumbnail;
 import com.dumbhippo.TypeUtils;
+import com.dumbhippo.dm.ReadWriteSession;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
@@ -31,6 +32,9 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.PicasaUpdater;
 import com.dumbhippo.server.YouTubeUpdater;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.ExternalAccountDMO;
+import com.dumbhippo.server.dm.ExternalAccountKey;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
@@ -273,6 +277,12 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		}
 		
 		externalAccount.setSentiment(sentiment);
+		
+		ExternalAccountKey key = new ExternalAccountKey(externalAccount);
+		ReadWriteSession session = DataService.currentSessionRW();
+		session.changed(ExternalAccountDMO.class, key, "sentiment");
+		session.changed(ExternalAccountDMO.class, key, "quip"); // Quip is only present for HATE
+		
 		notifier.onExternalAccountLovedAndEnabledMaybeChanged(externalAccount.getAccount().getOwner(), externalAccount);
 	}
 

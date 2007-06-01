@@ -79,13 +79,17 @@ public class SingleResourcePropertyHolder<K, T extends DMObject<K>, KI, TI exten
 	@SuppressWarnings("unchecked")
 	public void visitChildren(DMSession session, Fetch<?,?> children, T object, FetchVisitor visitor) {
 		Fetch<KI,TI> typedChildren = (Fetch<KI,TI>)children;
-		
-		visitChild(session, typedChildren, (TI)getRawPropertyValue(object), visitor);
+
+		TI value = (TI)getRawPropertyValue(object);
+		if (value != null)
+			visitChild(session, typedChildren, value, visitor);
 	}
 	
 	@Override
 	@SuppressWarnings("unchecked")
 	public void visitProperty(DMSession session, T object, FetchVisitor visitor) {
-		visitResourceValue(session, (TI)getRawPropertyValue(object), visitor);
+		TI value = (TI)getRawPropertyValue(object);
+		if (value != null)
+			visitResourceValue(session, value, visitor);
 	}
 }

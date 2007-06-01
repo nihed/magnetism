@@ -62,7 +62,7 @@ public abstract class UserDMO extends DMObject<Guid> {
 	}
 	
 	@DMProperty
-	public List<ExternalAccountDMO> getExternalAccounts() {
+	public List<ExternalAccountDMO> getLovedAccounts() {
 		List<ExternalAccountDMO> result = new ArrayList<ExternalAccountDMO>();
 		
 		for (ExternalAccount externalAccount : user.getAccount().getExternalAccounts()) {

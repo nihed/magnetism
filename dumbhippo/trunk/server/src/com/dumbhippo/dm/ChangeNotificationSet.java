@@ -26,6 +26,12 @@ public class ChangeNotificationSet implements Runnable {
 		int propertyIndex = classHolder.getPropertyIndex(propertyName);
 		if (propertyIndex < 0)
 			throw new RuntimeException("Class " + clazz.getName() + " has no property " + propertyName);
+		
+		if (key instanceof DMKey) {
+			@SuppressWarnings("unchecked")
+			K clonedKey = (K)((DMKey)key).clone(); 
+			key = clonedKey;
+		}
 
 		ChangeNotification notification = new ChangeNotification<K,T>(model, classHolder, key);
 		ChangeNotification oldNotification = notifications.get(notification);

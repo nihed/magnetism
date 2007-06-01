@@ -1,5 +1,11 @@
 package com.dumbhippo.dm;
 
+/**
+ * Indicates that the string form of a resource ID could not be parsed. Typically
+ * thrown by a {@link DMKey} constructor.
+ *  
+ * @author otaylor
+ */
 public class BadIdException extends Exception {
 	private static final long serialVersionUID = 1L;
 	

@@ -10,6 +10,10 @@ import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ExternalAccountChangePropagator;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.ExternalAccountDMO;
+import com.dumbhippo.server.dm.ExternalAccountKey;
+import com.dumbhippo.server.dm.UserDMO;
 
 @Stateless
 public class ExternalAccountChangePropagatorBean implements ExternalAccountChangePropagator {
@@ -22,10 +26,13 @@ public class ExternalAccountChangePropagatorBean implements ExternalAccountChang
 	}
 	
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
+		DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "lovedAccounts");
 		notify(user, external);
 	}
 
 	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
+		DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "lovedAccounts");
+		DataService.currentSessionRW().changed(ExternalAccountDMO.class, new ExternalAccountKey(external), "link");
 		notify(user, external);
 	}
 }
