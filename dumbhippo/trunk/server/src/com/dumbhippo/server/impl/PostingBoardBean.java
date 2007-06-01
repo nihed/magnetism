@@ -543,7 +543,7 @@ public class PostingBoardBean implements PostingBoard {
 	private List<Resource> getVisiblePersonRecipients(UserViewpoint viewpoint, Post post) {
 		boolean canSeeRecipients = false;
 
-		if (viewpoint.isOfUser(post.getPoster())) {
+		if (post.getPoster() != null && viewpoint.isOfUser(post.getPoster())) {
 			canSeeRecipients = true;
 		} else {
 			// If you are a recipient, you can see the other recipients
@@ -686,7 +686,7 @@ public class PostingBoardBean implements PostingBoard {
 		}
 		
 		/* Optimization for a common case */
-		if (viewpoint.isOfUser(post.getPoster()))
+		if (post.getPoster() != null && viewpoint.isOfUser(post.getPoster()))
 			return true;
 		
 		/* public post */
