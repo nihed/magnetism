@@ -24,10 +24,18 @@ def god_mode():
 def apostate_mode():
     gnomepanel.set_toplevels(['bottom_panel', 'top_panel'])
 
+def usage():
+    print "Usage: god-mode 1|0"
+    print "  1 turns on online desktop mode"
+    print "  0 disables online desktop mode"
+
 if __name__ == '__main__':
-    if len(sys.argv) == 2 and sys.argv[1] == '1':
+    if len(sys.argv) != 2:
+        usage()
+        sys.exit(1)
+    if sys.argv[1] == '1':
         god_mode()
-    else:
+    elif sys.argv[1] == '0':
         apostate_mode()
         try:
             bb_obj = dbus.SessionBus().get_object('org.mugshot.BigBoard', '/bigboard/panel')
@@ -35,5 +43,7 @@ if __name__ == '__main__':
             bb.exit()
         except:
             logging.exception("Failed to shut down bigboard")
+    else:
+        usage()
     sys.exit(0)
         
