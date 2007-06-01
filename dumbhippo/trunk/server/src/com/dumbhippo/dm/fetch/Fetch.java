@@ -160,7 +160,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 			boolean newFetched = newOrdering == classOrdering || (includeDefault && classProperties[classIndex].getDefaultInclude());
 			
 			if (newFetched && !oldFetched)
-				classProperties[classIndex].visitProperty(session, object, visitor);
+				classProperties[classIndex].visitProperty(session, object, visitor, false);
 		}
 		
 		visitor.endResource();

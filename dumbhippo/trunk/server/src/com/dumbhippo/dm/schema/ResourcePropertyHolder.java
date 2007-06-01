@@ -1,5 +1,7 @@
 package com.dumbhippo.dm.schema;
 
+import java.util.Collection;
+
 import javassist.CtMethod;
 
 import com.dumbhippo.dm.DMKey;
@@ -92,6 +94,15 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI exte
 
 	protected void visitResourceValue(DMSession session, TI value, FetchVisitor visitor) {
 		visitor.resourceProperty(this, value.getKey());
+	}
+
+	protected void visitResourceValues(DMSession session, Collection<? extends TI> values, FetchVisitor visitor) {
+		if (values.isEmpty()) {
+			visitor.emptyProperty(this);
+		} else {
+			for (TI value : values)
+				visitor.resourceProperty(this, value.getKey());
+		}
 	}
 
 	@Override

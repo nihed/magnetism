@@ -2,6 +2,7 @@ package com.dumbhippo.dm.schema;
 
 import javassist.CtMethod;
 
+import com.dumbhippo.dm.Cardinality;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
@@ -87,9 +88,16 @@ public class SingleResourcePropertyHolder<K, T extends DMObject<K>, KI, TI exten
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	public void visitProperty(DMSession session, T object, FetchVisitor visitor) {
+	public void visitProperty(DMSession session, T object, FetchVisitor visitor, boolean forceEmpty) {
 		TI value = (TI)getRawPropertyValue(object);
 		if (value != null)
 			visitResourceValue(session, value, visitor);
+		else if (forceEmpty)
+			visitor.emptyProperty(this);
+	}
+
+	@Override
+	public Cardinality getCardinality() {
+		return Cardinality.ZERO_ONE;
 	}
 }

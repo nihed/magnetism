@@ -5,6 +5,7 @@ import java.util.List;
 
 import javassist.CtMethod;
 
+import com.dumbhippo.dm.Cardinality;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
@@ -42,8 +43,13 @@ public class ListPlainPropertyHolder<K, T extends DMObject<K>, TI>  extends Plai
 	}
 
 	@Override
-	public void visitProperty(DMSession session, T object, FetchVisitor visitor) {
-		for (Object value : (List<?>)getRawPropertyValue(object))
-			visitor.plainProperty(this, value);
+	@SuppressWarnings("unchecked")
+	public void visitProperty(DMSession session, T object, FetchVisitor visitor, boolean forceEmpty) {
+		visitPlainValues(session, (List<TI>)getRawPropertyValue(object), visitor);
+	}
+
+	@Override
+	public Cardinality getCardinality() {
+		return Cardinality.ANY;
 	}
 }

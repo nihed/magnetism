@@ -74,7 +74,7 @@ public class ClientNotification {
 			propertyIndex = 0;
 			while (v != 0) {
 				if ((v & 1) != 0)
-					classProperties[propertyIndex].visitProperty(session, object, visitor);
+					classProperties[propertyIndex].visitProperty(session, object, visitor, true);
 
 				v >>= 1;
 				propertyIndex++;

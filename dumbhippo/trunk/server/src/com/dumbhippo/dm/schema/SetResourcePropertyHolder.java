@@ -7,6 +7,7 @@ import java.util.Set;
 
 import javassist.CtMethod;
 
+import com.dumbhippo.dm.Cardinality;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
@@ -108,9 +109,12 @@ public class SetResourcePropertyHolder<K, T extends DMObject<K>, KI, TI extends 
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void visitProperty(DMSession session, T object, FetchVisitor visitor) {
-		for (DMObject value : (Set<? extends DMObject>)getRawPropertyValue(object)) {
-			visitResourceValue(session, (TI)value, visitor);
-		}
+	public void visitProperty(DMSession session, T object, FetchVisitor visitor, boolean forceEmpty) {
+		visitResourceValues(session, (Set<? extends TI>)getRawPropertyValue(object), visitor);
+	}
+	
+	@Override
+	public Cardinality getCardinality() {
+		return Cardinality.ANY;
 	}
 }

@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.dm.Cardinality;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
@@ -181,6 +182,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	abstract public Object dehydrate(Object value);
 	abstract public Object rehydrate(DMViewpoint viewpoint, K key, Object value, DMSession session);
 	abstract public Object filter(DMViewpoint viewpoint, K key, Object value);
+	abstract public Cardinality getCardinality();
 	
 	public Object getRawPropertyValue(DMObject object) {
 		try {
@@ -329,7 +331,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	}
 	
 	public abstract void visitChildren(DMSession session, Fetch<?,?> children, T object, FetchVisitor visitor);
-	public abstract void visitProperty(DMSession session, T object, FetchVisitor visitor);
+	public abstract void visitProperty(DMSession session, T object, FetchVisitor visitor, boolean forceEmpty);
 
 	public abstract Fetch<?,?> getDefaultChildren();
 	public Class<?> getKeyClass() {
