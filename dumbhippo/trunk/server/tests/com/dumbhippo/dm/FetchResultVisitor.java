@@ -2,6 +2,7 @@ package com.dumbhippo.dm;
 
 import com.dumbhippo.dm.fetch.FetchVisitor;
 import com.dumbhippo.dm.schema.DMClassHolder;
+import com.dumbhippo.dm.schema.DMPropertyHolder;
 import com.dumbhippo.dm.schema.PlainPropertyHolder;
 import com.dumbhippo.dm.schema.ResourcePropertyHolder;
 
@@ -42,5 +43,9 @@ public class FetchResultVisitor implements FetchVisitor {
 	
 	public FetchResult getResult() {
 		return result;
+	}
+
+	public void emptyProperty(DMPropertyHolder propertyHolder) {
+		// FIXME: test this
 	}
 }

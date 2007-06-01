@@ -2,6 +2,7 @@ package com.dumbhippo.dm.schema;
 
 import javassist.CtMethod;
 
+import com.dumbhippo.dm.Cardinality;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
@@ -112,9 +113,19 @@ public class SinglePlainPropertyHolder<K,T extends DMObject<K>, TI> extends Plai
 	}
 
 	@Override
-	public void visitProperty(DMSession session, T object, FetchVisitor visitor) {
+	public void visitProperty(DMSession session, T object, FetchVisitor visitor, boolean forceEmpty) {
 		Object value = getRawPropertyValue(object);
 		if (value != null)
 			visitor.plainProperty(this, value);
+		else if (forceEmpty)
+			visitor.emptyProperty(this);
+	}
+
+	@Override
+	public Cardinality getCardinality() {
+		if (elementType.isPrimitive())
+			return Cardinality.ONE;
+		else
+			return Cardinality.ZERO_ONE;
 	}
 }

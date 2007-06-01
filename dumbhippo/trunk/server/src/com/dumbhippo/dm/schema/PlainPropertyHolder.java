@@ -1,5 +1,7 @@
 package com.dumbhippo.dm.schema;
 
+import java.util.Collection;
+
 import javassist.CtMethod;
 
 import com.dumbhippo.dm.DMObject;
@@ -46,5 +48,14 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 
 	@Override
 	public void visitChildren(DMSession session, Fetch<?, ?> children, T object, FetchVisitor visitor) {
+	}
+	
+	protected void visitPlainValues(DMSession session, Collection<TI> values, FetchVisitor visitor) {
+		if (values.isEmpty()) {
+			visitor.emptyProperty(this);
+		} else {
+			for (TI value : values)
+				visitor.plainProperty(this, value);
+		}
 	}
 }
