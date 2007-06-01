@@ -58,6 +58,7 @@ class ExternalAccountText(CanvasHBox):
 
 class SelfSlideout(CanvasVBox):
     __gsignals__ = {
+        "logout" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
         "minimize" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
         "close" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
     }
@@ -121,24 +122,7 @@ class SelfSlideout(CanvasVBox):
         self.emit('close')
 
     def __on_logout(self, l):
-        win = gtk.MessageDialog(None,
-                                gtk.DIALOG_MODAL,
-                                gtk.MESSAGE_QUESTION,
-                                gtk.BUTTONS_OK_CANCEL,
-                                "Log out?")
-        win.set_skip_pager_hint(True)
-        win.set_skip_taskbar_hint(True)
-        win.set_keep_above(True)
-        win.stick()
-        resp = win.run()
-        win.destroy()
-        if resp == gtk.RESPONSE_OK:
-            master = gnome.ui.master_client()
-            master.request_save(gnome.ui.SAVE_GLOBAL,
-                                True,
-                                gnome.ui.INTERACT_ANY,
-                                True,
-                                True)
+        self.emit('logout')
         self.emit('close')
 
 class SelfStock(AbstractMugshotStock):
@@ -192,6 +176,9 @@ class SelfStock(AbstractMugshotStock):
         myself.connect("changed", lambda myself: self.__handle_self_changed())        
         self.__handle_self_changed()        
 
+    def __do_logout(self):
+        self._panel.logout()
+
     def __do_minimize(self):
         self._panel.unexpand()
     
@@ -207,6 +194,7 @@ class SelfStock(AbstractMugshotStock):
         self.__slideout.slideout_from(coords[0] + widget.get_allocation()[0] + 4, coords[1])
         slideout_display = SelfSlideout(self)
         slideout_display.connect('minimize', lambda s: self.__do_minimize())
+        slideout_display.connect('logout', lambda s: self.__do_logout())
         slideout_display.connect('close', lambda s: self.__on_activate())
         self.__slideout.get_root().append(slideout_display)
         

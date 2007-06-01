@@ -404,6 +404,29 @@ X-GNOME-Autostart-enabled=true
             return self.__do_unexpand()
 
     @dbus.service.method(BUS_IFACE_PANEL)
+    def logout(self):
+        win = gtk.MessageDialog(None,
+                                gtk.DIALOG_MODAL,
+                                gtk.MESSAGE_QUESTION,
+                                gtk.BUTTONS_OK_CANCEL,
+                                "Log out?")
+        win.set_skip_pager_hint(True)
+        win.set_skip_taskbar_hint(True)
+        win.set_keep_above(True)
+        win.show_all()
+        win.stick()
+        resp = win.run()
+        win.destroy()
+        if resp == gtk.RESPONSE_OK:
+            master = gnome.ui.master_client()
+            master.request_save(gnome.ui.SAVE_GLOBAL,
+                                True,
+                                gnome.ui.INTERACT_ANY,
+                                True,
+                                True)
+
+
+    @dbus.service.method(BUS_IFACE_PANEL)
     def shell(self):
         if self.__shell:
             self.__shell.destroy()
