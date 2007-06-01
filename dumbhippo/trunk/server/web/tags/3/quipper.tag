@@ -8,15 +8,15 @@
 
 <c:if test="${!empty block.chatId && signin.valid}">
 	<div class="dh-quipper">
-		<a class="dh-quip-indifferent dh-quip-sentiment"  href="javascript:void(0)" onclick="dh.stacker.quip(event, '${blockId}', '${block.chatId}', dh.control.SENTIMENT_INDIFFERENT)">
+		<a class="dh-quip-indifferent dh-quip-sentiment"  href="javascript:void(0)" onclick="dh.quippopup.quip(event, '${blockId}', '${block.chatId}', dh.control.SENTIMENT_INDIFFERENT)">
 		    <dh:png src="/images3/${buildStamp}/comment_iconchat_icon.png" style="width: 11; height: 11; overflow: hidden;"/>
 		    Quip
 	    </a>
-		<a class="dh-quip-love dh-quip-sentiment"  href="javascript:void(0)" onclick="dh.stacker.quip(event, '${blockId}', '${block.chatId}', dh.control.SENTIMENT_LOVE)">
+		<a class="dh-quip-love dh-quip-sentiment"  href="javascript:void(0)" onclick="dh.quippopup.quip(event, '${blockId}', '${block.chatId}', dh.control.SENTIMENT_LOVE)">
 		    <dh:png src="/images3/${buildStamp}/quiplove_icon.png" style="width: 12; height: 11; overflow: hidden;"/>
 			I love it!
 		</a>
-		<a class="dh-quip-hate dh-quip-sentiment"  href="javascript:void(0)" onclick="dh.stacker.quip(event, '${blockId}', '${block.chatId}', dh.control.SENTIMENT_HATE)">
+		<a class="dh-quip-hate dh-quip-sentiment"  href="javascript:void(0)" onclick="dh.quippopup.quip(event, '${blockId}', '${block.chatId}', dh.control.SENTIMENT_HATE)">
 		    <dh:png src="/images3/${buildStamp}/quiphate_icon.png" style="width: 11; height: 11; overflow: hidden;"/>
 			I hate it!
 		</a>

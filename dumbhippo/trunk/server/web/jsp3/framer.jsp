@@ -33,7 +33,7 @@
    	dh.framer.setSelfId("${framer.signin.userId}")
    	dh.framer.chatId = "${framer.post.post.id}"
    	dh.framer.forwardUrl = <dh:jsString value="${url}"/>;
-		dh.framer.forwardTitle = <dh:jsString value="${title}"/>;
+	dh.framer.forwardTitle = <dh:jsString value="${title}"/>;
 	</script>
 	<script type="text/javascript">
 		// This is called by the Explorer browser bar code when the browser bar
@@ -50,10 +50,13 @@
 		dh.framer.initialLastMessageId = "${lastMessageId}";
 		dh.framer.initialMessageCount = "${framer.block.messageCount}";
 		dh.framer.currentMessageCount = "${framer.block.messageCount}";
+		// we decided not to include the title in the framer quip popup
+		// dh.framer.title = <dh:jsString value="${framer.block.title}"/>;
 	</script>
 </head>	
 
 <body onload="dh.framer.init()">
+    <dht3:quipPopup/>
     <table id="dhFramerTable" cellpadding="0" cellspacing="5">
         <tr>
             <td id="dhFramerLeft" width="50%" valign="top">
@@ -65,7 +68,7 @@
             <td width="50%" valign="top">
                 <div id="dhPostChatLog">
                     <div id="dhQuipper">
-                        Chat preview:
+                        <dht3:quipper blockId="${framer.block.identifyingGuid}" block="${framer.block}"/>
                     </div>
                     <c:if test="${!param.browserBar}"> 
                         <div id="dhFramerClose">
