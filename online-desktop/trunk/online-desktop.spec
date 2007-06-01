@@ -14,7 +14,7 @@ BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch:	noarch
 Requires:	dbus-python
 Requires:	gnome-python2-gconf
-Requires:	bigboard
+Requires:	bigboard >= 0.4.0
 
 BuildRequires:	intltool
 BuildRequires:	python-devel
