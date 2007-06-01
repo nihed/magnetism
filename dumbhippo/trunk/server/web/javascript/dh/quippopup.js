@@ -87,6 +87,28 @@ dh.quippopup.start = function(chatId, title, x, y, sentiment, onComplete) {
 	dh.chatinput.focus();
 }
 
+dh.quippopup.quip = function(event, blockId, chatId, sentiment) {
+	var block = document.getElementById("dhStackerBlock-" + blockId);
+	var forStacker = true;
+	if (block == null) {
+	    block = document.getElementById("dhQuipper");
+	    forStacker = false; 
+	}    
+	var title = null
+	if (block.dhTitle != null)    
+	    title = block.dhTitle;
+	
+	var xOffset = window.pageXOffset ? window.pageXOffset : document.body.scrollLeft;
+   	var yOffset = window.pageYOffset ? window.pageYOffset : document.body.scrollTop;
+	dh.quippopup.start(chatId, title,
+					   event.clientX + xOffset, event.clientY + yOffset,
+					   sentiment, 
+					   forStacker ?
+					   function(name, homeUrl, text, sentiment) {
+		dh.stacker.addQuip(blockId, name, homeUrl, text, sentiment);
+	} : null);
+}
+
 dh.quippopup._end = function() {
 	var quipPopup = document.getElementById("dhQuipPopup");
 	quipPopup.style.display = "none";

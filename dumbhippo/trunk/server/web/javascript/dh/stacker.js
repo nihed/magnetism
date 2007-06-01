@@ -254,7 +254,7 @@ dh.stacker._createMessage = function(name, homeUrl, text, sentiment) {
 	return messageDiv;
 }
 
-dh.stacker._addQuip = function(blockId, name, homeUrl, text, sentiment) {
+dh.stacker.addQuip = function(blockId, name, homeUrl, text, sentiment) {
 	var block = document.getElementById("dhStackerBlock-" + blockId);
 	var chatDiv = document.getElementById("dhStackerBlockChat-" + blockId);
 
@@ -287,18 +287,4 @@ dh.stacker._addQuip = function(blockId, name, homeUrl, text, sentiment) {
 	} else if (!block.dhExpanded) {
 		this.blockOpen(block);
 	}
-}
-
-dh.stacker.quip = function(event, blockId, chatId, sentiment) {
-	var block = document.getElementById("dhStackerBlock-" + blockId);
-	var title = block.dhTitle;
-	
-	var xOffset = window.pageXOffset ? window.pageXOffset : document.body.scrollLeft;
-   	var yOffset = window.pageYOffset ? window.pageYOffset : document.body.scrollTop;
-	dh.quippopup.start(chatId, title,
-					   event.clientX + xOffset, event.clientY + yOffset,
-					   sentiment, 
-					   function(name, homeUrl, text, sentiment) {
-		dh.stacker._addQuip(blockId, name, homeUrl, text, sentiment);
-	});
 }

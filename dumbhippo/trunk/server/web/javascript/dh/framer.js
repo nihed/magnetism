@@ -1,6 +1,7 @@
 dojo.provide("dh.framer");
 
 dojo.require("dh.chat");
+dojo.require("dh.chatinput")
 dojo.require("dh.control");
 dojo.require("dh.util");
 dojo.require("dojo.event");
@@ -220,7 +221,9 @@ dh.framer.init = function() {
 		function(user, participant) { return true });
 
 	this._chatRoom.join(false)
-
+	
+	dh.chatinput.init();
+	
 	if (!dh.control.control.haveLiveChat()) {
 		// NOTE this is currently partially handled in the jsp, where 
 		// we have non-activex fallbacks sometimes. So be careful.
@@ -234,4 +237,8 @@ dh.framer.init = function() {
     } else {
 	   	setTimeout(dh.framer.updateTimes, 60 * 1000);
    	}
+   	
+   	// we decided not to include the title in the framer quip popup
+   	// var quipper = document.getElementById("dhQuipper");
+	// quipper.dhTitle = dh.framer.title;
 }

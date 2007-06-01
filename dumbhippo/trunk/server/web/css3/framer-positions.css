@@ -38,7 +38,7 @@ body table {
 }
 
 .dh-chat-message-sentiment {
-	padding-top:   1px;
+	padding-top:   2px;
 	padding-left:  0px;
 	padding-right: 2px;
 }
@@ -51,4 +51,17 @@ body table {
 #dhFramerClose {
     display: block;
     float:   right;
+}
+
+#dhChatMessageInput {
+   height:	 2em;
+   width:	 20em;
+}
+
+#dhQuipPopupTitle {
+	margin-bottom:	0px;
+}
+
+.dh-chat-sentiment img, .dh-quip-sentiment img  {
+	margin-bottom:  -1px;		
 }
