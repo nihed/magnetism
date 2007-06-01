@@ -122,6 +122,8 @@ import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.blocks.TitleBlockView;
 import com.dumbhippo.server.blocks.TitleDescriptionBlockView;
 import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.ExternalAccountDMO;
+import com.dumbhippo.server.dm.ExternalAccountKey;
 import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.AnonymousViewpoint;
@@ -1663,6 +1665,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				quip = null;
 		}
 		external.setQuip(quip);
+		DataService.currentSessionRW().changed(ExternalAccountDMO.class, new ExternalAccountKey(external), "quip");
 	}
 
 	public void doRemoveExternalAccount(XmlBuilder xml, UserViewpoint viewpoint, String type) throws XmlMethodException {

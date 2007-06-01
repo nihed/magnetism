@@ -55,10 +55,10 @@ public class ExternalAccountKey implements DMKey {
 	
 	@Override
 	public ExternalAccountKey clone() {
-		if (id == -1)
-			return this;
-		else
-			return new ExternalAccountKey(userId, type);
+		// We never delete an ExternalAccount object, so the id field can be kept
+		// around permanently, and will save a little effort on future lookups.
+		
+		return this;
 	}
 	
 	@Override

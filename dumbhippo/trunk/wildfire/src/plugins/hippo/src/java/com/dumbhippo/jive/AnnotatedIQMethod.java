@@ -92,12 +92,10 @@ public abstract class AnnotatedIQMethod {
 			} else {
 				doIQ(new UserViewpoint(getUserId(request)), request, reply);
 			}
-			
+
 			client.queuePacket(reply, serial);
 				
 		} catch (IQException e) {
-			throw e;
-		} catch (RuntimeException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException("Unexpected exception running IQ method in transaction", e);

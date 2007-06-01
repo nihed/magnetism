@@ -114,6 +114,7 @@ public class SinglePlainPropertyHolder<K,T extends DMObject<K>, TI> extends Plai
 	@Override
 	public void visitProperty(DMSession session, T object, FetchVisitor visitor) {
 		Object value = getRawPropertyValue(object);
-		visitor.plainProperty(this, value);
+		if (value != null)
+			visitor.plainProperty(this, value);
 	}
 }

@@ -10,6 +10,12 @@ import com.dumbhippo.dm.filter.CompiledFilter;
 import com.dumbhippo.dm.store.StoreKey;
 import com.dumbhippo.server.NotFoundException;
 
+/**
+ * CachedSession is an abstract base class for the DMSession subclasses that keep
+ * around a session-local cache of DMObjects.
+ * 
+ * @author otaylor
+ */
 public abstract class CachedSession extends DMSession {
 	private static Logger logger = GlobalSetup.getLogger(CachedSession.class);
 	private DMClient client;
@@ -103,7 +109,23 @@ public abstract class CachedSession extends DMSession {
 		return filtered;
 	}
 
-	public void runWithViewpoint(DMViewpoint newViewpoint, Runnable runnable) {
+	/**
+	 * Temporarily sets a new viewpoint as the viewpoint of the session while running
+	 * the given code. While the new viewpoint is set, the session's cache of DMOs
+	 * will not be read from or stored into, preventing leakage between the two
+	 * viewpoints. (You should not access DMO's from the session inside the 
+	 * runnable or you'll defeat this isolation; look them up again.)
+	 * 
+	 * If the session has a client (and thus will trigger notifications), you should not 
+	 * run fetch operations while the new viewpoint is set, since the data returned
+	 * will be incoherent with future notifications that are registered by the fetch. 
+	 * Generally, this operation is expected to be most useful to perform a few
+	 * privileged actions in the scope of a longer operation. 
+	 * 
+	 * @param newViewpoint
+	 * @param runnable
+	 */
+	private void runWithViewpoint(DMViewpoint newViewpoint, Runnable runnable) {
 		DMClient oldClient = client;
 		DMViewpoint oldViewpoint = viewpoint;
 		boolean oldBypassCache = bypassCache;
@@ -122,6 +144,14 @@ public abstract class CachedSession extends DMSession {
 		}
 	}
 	
+	/**
+	 * Temporarily sets the system viewpoint as the viewpoint of the session while running
+	 * the given code. See {@link #runWithViewpoint(DMViewpoint, Runnable)} for details
+	 * and cautions.
+	 * 
+	 * @param newViewpoint
+	 * @param runnable
+	 */
 	public void runAsSystem(Runnable runnable) {
 		runWithViewpoint(model.getSystemViewpoint(), runnable);
 	}

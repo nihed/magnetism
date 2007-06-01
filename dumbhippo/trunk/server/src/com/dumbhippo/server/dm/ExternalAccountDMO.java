@@ -5,9 +5,9 @@ import javax.persistence.EntityManager;
 
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.annotations.DMO;
+import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
 import com.dumbhippo.persistence.ExternalAccount;
-import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ExternalAccountSystem;
@@ -44,18 +44,27 @@ public abstract class ExternalAccountDMO extends DMObject<ExternalAccountKey> {
 		}
 	}
 		
-	public ExternalAccountType getAccountType() {
-		return externalAccount.getAccountType();
+	// FIXME: probably should add enum support and only convert to string when going to XML
+	@DMProperty(defaultInclude=true)
+	public String getAccountType() {
+		return externalAccount.getAccountType().toString();
 	}
 	
+	// FIXME: probably should add enum support and only convert to string when going to XML
+	@DMProperty(defaultInclude=true)
+	public String getSentiment() {
+		return externalAccount.getSentiment().toString();
+	}
+	
+	@DMProperty(defaultInclude=true)
 	public String getQuip() {
-		return externalAccount.getQuip();
+		if (externalAccount.getSentiment() == Sentiment.HATE)
+			return externalAccount.getQuip();
+		else
+			return null;
 	}
 	
-	public Sentiment getSentiment() {
-		return externalAccount.getSentiment();
-	}
-	
+	@DMProperty(defaultInclude=true)
 	public String getLink() {
 		if (externalAccount.isLovedAndEnabled())
 			return externalAccount.getLink();

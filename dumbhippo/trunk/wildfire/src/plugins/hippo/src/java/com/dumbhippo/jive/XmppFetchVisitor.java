@@ -55,6 +55,7 @@ public class XmppFetchVisitor implements FetchVisitor {
 			String prefix = "r" + (seenNamespaces.size() + 1);
 			ns = DocumentFactory.getInstance().createNamespace(prefix, namespace);
 			rootElement.add(ns);
+			seenNamespaces.put(namespace, ns);
 		}
 		
 		return DocumentFactory.getInstance().createQName(localname, ns);
@@ -73,13 +74,13 @@ public class XmppFetchVisitor implements FetchVisitor {
 	}
 
 	public void plainProperty(PlainPropertyHolder propertyHolder, Object value) {
-		Element element = rootElement.addElement(createQName(propertyHolder.getName(), propertyHolder.getNameSpace()));
+		Element element = currentResourceElement.addElement(createQName(propertyHolder.getName(), propertyHolder.getNameSpace()));
 		element.addText(value.toString());
 	}
 
 	public <KP, TP extends DMObject<KP>> void resourceProperty(ResourcePropertyHolder<?, ?, KP, TP> propertyHolder, KP key) {
 		DMClassHolder<KP,TP> classHolder = propertyHolder.getResourceClassHolder();
-		Element element = rootElement.addElement(createQName(propertyHolder.getName(), propertyHolder.getNameSpace()));
+		Element element = currentResourceElement.addElement(createQName(propertyHolder.getName(), propertyHolder.getNameSpace()));
 		element.addAttribute(resourceIdAttr, classHolder.makeRelativeId(key));
 	}
 }

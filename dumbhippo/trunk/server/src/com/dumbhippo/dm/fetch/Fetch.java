@@ -57,9 +57,9 @@ public final class Fetch<K,T extends DMObject<K>> {
 		
 		boolean needFetch = visitor.getNeedFetch(); 
 		
-		if (storeClient != null) {
+		if (storeClient != null)
 			oldFetch = session.getModel().getStore().addRegistration(classHolder, object.getKey(), storeClient, this);
-		} else
+		else
 			oldFetch = null;
 
 		boolean allFetched = true;
