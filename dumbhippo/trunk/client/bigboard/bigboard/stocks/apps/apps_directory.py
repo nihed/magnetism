@@ -12,8 +12,8 @@ class AppDirectory(gobject.GObject):
         self._tree = gmenu.lookup_tree('applications.menu', gmenu.FLAGS_INCLUDE_EXCLUDED)
         self._apps = {}
         # with gnome-menus-2.16.0-2.fc6 omitting the user_data arg crashes the gmenu module
-        self._tree.add_monitor(lambda tree: self._on_apps_changed, None)
-        self._on_apps_changed()
+        self._tree.add_monitor(self._on_apps_changed, None)
+        self._on_apps_changed(None, None)
         
     def _append_directory(self, directory):
         for child in directory.contents:
@@ -26,7 +26,7 @@ class AppDirectory(gobject.GObject):
             
             self._apps[child.desktop_file_id] = child
             
-    def _on_apps_changed(self):
+    def _on_apps_changed(self, tree, data):
         self._logger.debug("installed apps changed")
         self._apps = {} 
         self._append_directory(self._tree.root)
