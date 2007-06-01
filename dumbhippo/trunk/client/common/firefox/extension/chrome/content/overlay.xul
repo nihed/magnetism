@@ -17,7 +17,7 @@
 
     <vbox id="appcontent">  
         <separator id="hippoContentSplitter" class="thin" collapsed="true"/>
-        <deck id="hippoContentDeck" collapsed="true" height="128">
+        <deck id="hippoContentDeck" collapsed="true" height="104">
             <browser id="hippoBarBrowser" type="content" src="about:blank" flex="1"/>
         </deck>
     </vbox>

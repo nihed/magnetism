@@ -10,16 +10,18 @@
 
 <div class="dh-stacker-block-sent-to" id="dhStackerBlockRightSentTo-${blockId}">
 	<c:if test="${fn:length(who) > 0 || !empty singleWho}">
-		Sent to: 
-		<c:choose>
-			<c:when test="${!empty singleWho}">
-				<dht3:entityLink who="${singleWho}"/>
-			</c:when>
-			<c:otherwise>
-				<c:forEach end="9" items="${who}" var="ent" varStatus="entIdx">
-					<dht3:entityLink who="${ent}"/><c:if test="${!entIdx.last}">, </c:if>
-				</c:forEach>
-			</c:otherwise>
-		</c:choose>
+		sent to 
+		<span class="dh-entity-list">
+		    <c:choose>
+			    <c:when test="${!empty singleWho}">
+				    <dht3:entityLink who="${singleWho}"/>
+		 	    </c:when>
+			    <c:otherwise>
+				    <c:forEach end="9" items="${who}" var="ent" varStatus="entIdx">
+					    <dht3:entityLink who="${ent}"/><c:if test="${!entIdx.last}">, </c:if>
+				    </c:forEach>
+			    </c:otherwise>
+		    </c:choose>
+		</span>
 	</c:if>
 </div>

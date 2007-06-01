@@ -4,9 +4,10 @@ dojo.require("dh.event");
 dh.chat.MESSAGE_FONT_STYLE = "normal" 
 dh.chat.DESCRIPTION_MESSAGE_FONT_STYLE = "italic"  
 
-dh.chat.MessageList = function(chatRoom, insertCallback, removeCallback, limit) {
+dh.chat.MessageList = function(chatRoom, insertCallback, removeCallback, limit, newestOnTop) {
 	this._chatRoom = chatRoom
 	this._limit = limit
+	this._newestOnTop = newestOnTop
 	this._insertCallback = insertCallback
 	this._removeCallback = removeCallback
 	
@@ -17,30 +18,55 @@ dh.chat.MessageList = function(chatRoom, insertCallback, removeCallback, limit) 
 
 	this._onMessage = function(message) {
 		// Find the place to insert this message in the list
-		var insertPos = this._messages.length
+	    var insertPos 
+		if (this._newestOnTop)
+		    insertPos = 0
+		else
+		    insertPos = this._messages.length
+	
 		for (var i = 0; i < this._messages.length; i++) {
-			if (this._messages[i].getSerial() == message.getSerial()) // Already in the list
-				return
-			if (this._messages[i].getSerial() > message.getSerial()) {
-				insertPos = i
-				break
+		    if (this._newestOnTop) {
+		        j = this._messages.length - i - 1;
+			    if (this._messages[j].getSerial() == message.getSerial()) // Already in the list
+				    return
+			    if (this._messages[j].getSerial() > message.getSerial()) {
+				    insertPos = j + 1
+				    break
+			    }			
+			} else {
+			    if (this._messages[i].getSerial() == message.getSerial()) // Already in the list
+				    return
+			    if (this._messages[i].getSerial() > message.getSerial()) {
+				    insertPos = i
+				    break
+			    }
 			}
 		}
 		
 		// Shorten the current list of messages if necessary
 		if (this._limit && this._messages.length == this._limit) {
-			if (insertPos == 0)
+		    // return if we have no space for the message we were considering adding 
+			if ((insertPos == 0 && !this._newestOnTop) || (insertPos == this._messages.length && this._newestOnTop))
 				return
 		
-			var old = this._messages.shift()
+		    var old
+		    if (this._newestOnTop) {
+		        old =  this._messages.pop()
+		    } else {        
+			    old = this._messages.shift()
+			    insertPos--
+			}
 			this._removeCallback(old)
-			insertPos--
 		}
 		
-		if (insertPos > 0) {
+		if (insertPos > 0 && !this._newestOnTop) {
 		    var previous = this._messages[insertPos - 1];
 		    message.userFirst = message.getEntity() != previous.getEntity();
 			message.sentimentFirst = message.userFirst || (message.getSentiment() != previous.getSentiment());
+		} else if (insertPos < this._messages.length - 1 && this._newestOnTop) {
+		    var previous = this._messages[insertPos + 1];
+		    message.userFirst = message.getEntity() != previous.getEntity();
+			message.sentimentFirst = message.userFirst || (message.getSentiment() != previous.getSentiment());			
 		} else {
 			message.userFirst = true;
 			message.sentimentFirst = true;
@@ -53,7 +79,10 @@ dh.chat.MessageList = function(chatRoom, insertCallback, removeCallback, limit) 
 			before = this._messages[insertPos + 1]
 		this._insertCallback(message, before)		
 		
-		if (before) {
+		// we don't care about readjusting userFirst and sentimentFirst
+		// in the newestOnTop mode, but if we did, we'd need to do it here
+		// for a message after which we've inserted the new message
+		if (before && !this._newestOnTop) {
 			// We might have to reinsert the next entry if 
 			// "userFirst" or "sentimentFirst" for it changed
 			var oldNextIsUserFirst = before.userFirst;

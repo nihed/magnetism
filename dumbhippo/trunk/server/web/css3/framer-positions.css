@@ -1,0 +1,54 @@
+@CHARSET "UTF-8";
+
+body {
+	margin:				0px;
+	line-height:        100%; 
+}
+
+/* the default space between lines in Linux Firefox is too big */
+body table {
+	line-height:        100%; 
+}
+
+#dhFramerTable {
+    table-layout: fixed;
+    width:        100%;
+}
+
+#dhFramerLeft .dh-stacker-block-icon {
+    margin:    0px;
+}
+
+#dhFramerLeft .dh-stacker-block-title-lock {
+    padding-right:		0px;
+    padding-left:		0px;		  
+}
+
+#dhFramerLeft .dh-photo {
+    margin-right:       5px;
+}
+
+#dhFramerLeft p {
+    margin:             0px;
+}
+
+#dhPostChatMessages {
+    display: block;
+    clear:   both;
+}
+
+.dh-chat-message-sentiment {
+	padding-top:   1px;
+	padding-left:  0px;
+	padding-right: 2px;
+}
+
+#dhQuipper {
+    display: block;
+    float:   left;
+}
+
+#dhFramerClose {
+    display: block;
+    float:   right;
+}

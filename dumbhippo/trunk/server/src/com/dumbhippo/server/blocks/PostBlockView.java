@@ -128,4 +128,12 @@ public class PostBlockView extends BlockView implements TitleBlockView, EntitySo
 	public String getChatKind() {
 		return "post";
 	}
+	
+	public String getDescription() {
+		return postView.getText();
+	}
+	
+	public String getDescriptionAsHtml() {
+		return postView.getTextAsHtml();
+	}
 }

@@ -1,0 +1,39 @@
+@CHARSET "UTF-8";
+@IMPORT url("framer-positions.css");
+
+body {
+	background-color: 	white;
+	font-family: 		sans-serif;
+	overflow: 			hidden; /* no scrollbar */
+}
+
+#dhFramerTable {
+	border:      1px solid #c9c9c9;
+	overflow:    hidden; 
+}
+
+#dhFramerLeft {
+    border-right:  1px solid #c9c9c9;
+}
+
+#dhFramerTable .dh-block-details {
+	white-space:		nowrap;
+}
+
+#dhPostChatLog {
+    font-size:      12px;
+}
+
+.dh-chat-message {
+	font-size:      11px;
+	white-space:	nowrap;
+}
+
+.dh-chat-message-time {
+    color:          #666666;
+}
+
+#dhFrameActions {
+    font-size:      12px;
+    color:          #666666;    
+}
