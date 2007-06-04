@@ -9,4 +9,4 @@ Terminal=false
 Type=Application
 Icon=google-docs
 StartupNotify=false
-Categories=X-Red-Hat-Base;X-Red-Hat-Base-Only;Office;Application;
+Categories=Office;
