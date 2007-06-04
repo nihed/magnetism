@@ -8,7 +8,14 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.schema.DMPropertyHolder;
 import com.dumbhippo.dm.store.StoreKey;
 
-
+/**
+ * ReadWriteSession is a session used when modifying the data that is exposed as
+ * DMObjects. It is possible to load DMOs in a ReadWriteSession, but the typical
+ * use of a ReadWriteSession is the notifying property changes via it's
+ * {@link #changed(Class, Object, String)} method.
+ * 
+ * @author otaylor
+ */
 public class ReadWriteSession extends CachedSession {
 	@SuppressWarnings("unused")
 	private static Logger logger = GlobalSetup.getLogger(ReadWriteSession.class);
@@ -33,8 +40,22 @@ public class ReadWriteSession extends CachedSession {
 		return property.filter(getViewpoint(), key.getKey(), value);
 	}
 
+	/**
+	 * Indicate that a resource property has changed; this invalidates any cached value for the
+	 * property and also triggers sending notifications to any clients that have registered
+	 * for notification on the property. Notifications will only be sent after the current
+	 * transaction commits succesfully.
+	 * 
+	 * @param <K>
+	 * @param <T>
+	 * @param clazz the class of the resource where the property changed
+	 * @param key the key of the resource  where the property changed
+	 * @param propertyName the name of the property that changed
+	 */
 	public <K, T extends DMObject<K>> void changed(Class<T> clazz, K key, String propertyName) {
 		notificationSet.changed(clazz, key, propertyName);
+		
+		// FIXME: invalidate the property in the session-local cached object if one exists
 	}
 	
 	@Override

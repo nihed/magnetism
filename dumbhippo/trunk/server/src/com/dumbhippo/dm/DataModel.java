@@ -21,6 +21,15 @@ import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.dm.store.DMStore;
 import com.dumbhippo.dm.store.StoreClient;
 
+/**
+ * A DataModel is a central object holding information about entire data model; this 
+ * includes schema information (which resource classes there are, which
+ * properties do these classes have), cached resource property data, and information
+ * about which clients are connected to the server and which resource properties
+ * each client has registered for notification.  
+ * 
+ * @author otaylor
+ */
 public class DataModel {
 	protected static final Logger logger = GlobalSetup.getLogger(DataModel.class);
 	

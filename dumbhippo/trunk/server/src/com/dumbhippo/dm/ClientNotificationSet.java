@@ -12,6 +12,13 @@ import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.store.StoreClient;
 import com.dumbhippo.dm.store.StoreKey;
 
+/**
+ * A ClientNotificationSet keeps track of which notifications need to be sent to which
+ * clients. It is the result of resolving a {@link ChangeNotificationSet} after the
+ * end of a transaction.
+ * 
+ * @author otaylor
+ */
 public class ClientNotificationSet {
 	@SuppressWarnings("unused")
 	static final private Logger logger = GlobalSetup.getLogger(ClientNotificationSet.class);

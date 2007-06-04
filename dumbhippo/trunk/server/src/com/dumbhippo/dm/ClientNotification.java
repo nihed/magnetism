@@ -9,6 +9,12 @@ import com.dumbhippo.dm.schema.DMPropertyHolder;
 import com.dumbhippo.dm.store.StoreClient;
 import com.dumbhippo.dm.store.StoreKey;
 
+/**
+ * ClientNotification stores information about notifications that need to be sent to 
+ * a connected client.
+ *  
+ * @author otaylor
+ */
 public class ClientNotification {
 	private StoreClient client;
 	private List<ObjectNotification> notifications = new ArrayList<ObjectNotification>();

@@ -3,6 +3,11 @@ package com.dumbhippo.dm;
 import com.dumbhippo.dm.store.StoreKey;
 import com.dumbhippo.server.NotFoundException;
 
+/*
+ * UnfilteredSession is a session we use when we need to get a property value without
+ * invoking the filtering mechanisms. The typical time we need to do this is when
+ * evaluating a condition in a filter.
+ */
 public class UnfilteredSession extends DMSession {
 	protected UnfilteredSession(DataModel model) {
 		super(model);
