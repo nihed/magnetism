@@ -99,7 +99,8 @@ class BigBoardApplet(gobject.GObject):
         try:
             self.__bb_obj = dbus.SessionBus().get_object('org.mugshot.BigBoard', '/bigboard/panel')
             self.__bb = dbus.Interface(self.__bb_obj, 'org.mugshot.BigBoard.Panel')
-            self.__bb.connect_to_signal("expanded", self.__on_bb_expanded)
+            self.__bb.connect_to_signal("Expanded", self.__on_bb_expanded)
+            self.__bb.SignalExpanded()
         except dbus.DBusException:
             self.__bb_obj = None
             self.__bb = None
@@ -135,10 +136,10 @@ class BigBoardApplet(gobject.GObject):
     def __on_bb_expanded(self, is_expanded):
         if is_expanded:
             self.__unbind()
-            self.__applet.hide()
+            self.__deskbar.hide()
         else:
             self.__bind()
-            self.__applet.show()
+            self.__deskbar.show()
 
     def __on_change_size(self):
         pass
@@ -146,7 +147,8 @@ class BigBoardApplet(gobject.GObject):
     def __onclick(self):
         _logger.debug("got click")
         self.__unbind()
-        self.__bb.expand()
+        if self.__bb:
+            self.__bb.Expand()
 
     def __on_self_known(self, mugshot):
         _logger.debug("got mugshot self known")

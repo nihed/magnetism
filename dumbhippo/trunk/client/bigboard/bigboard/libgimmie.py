@@ -1,10 +1,12 @@
 # Stuff imported from gimmie
 
-import os, logging
+import os, sys, logging
 from gettext import gettext as _
 
 import gobject
 import gtk
+
+_logger = logging.getLogger("bigboard.DockWindow")
 
 # gimmie_gui.py
 class DockWindow(gtk.Window):
@@ -69,7 +71,7 @@ class DockWindow(gtk.Window):
             geom = self.get_screen().get_monitor_geometry(0)
             alloc = self.allocation
 
-            logging.debug("setting west strut to %d width" % (alloc.width,))
+            _logger.debug("setting west strut to %d width" % (alloc.width,))
 
             propvals[0] = alloc.width
 
@@ -79,4 +81,6 @@ class DockWindow(gtk.Window):
                                         32,
                                         gtk.gdk.PROP_MODE_REPLACE,
                                         propvals)
-
+        else:
+            _logger.debug("no window, ignoring strut")
+            
