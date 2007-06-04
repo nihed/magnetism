@@ -6,7 +6,15 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.schema.DMPropertyHolder;
 import com.dumbhippo.dm.store.StoreKey;
 
-
+/**
+ * ReadOnlySession is a session used for reading from the database. It is an error to
+ * write to the database in the same transaction as a ReadOnlySession. The separation
+ * of sessions into read-only sessions and read-write sessions allows read-only sessions
+ * to use cached data aggressively without worrying about invalidation or isolation
+ * between different read-only sessions.
+ *  
+ * @author otaylor
+ */
 public class ReadOnlySession extends CachedSession {
 	private static Logger logger = GlobalSetup.getLogger(ReadOnlySession.class);
 	private long txTimestamp;

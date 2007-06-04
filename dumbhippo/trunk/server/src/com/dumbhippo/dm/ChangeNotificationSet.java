@@ -9,6 +9,15 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.dm.store.StoreKey;
 
+/**
+ * A ChangeNotificationSet stores information about all changes to the data model that
+ * are notified through {@link DMSession#changed()} during a single read-write session.
+ * After the transaction for the session is committed succesfully, a ChangeNotificationSet
+ * is resolved into a {@link ClientNotificationSet}, and notifications are sent to the
+ * clients. 
+ *  
+ * @author otaylor
+ */
 public class ChangeNotificationSet implements Runnable {
 	@SuppressWarnings("unused")
 	private static Logger logger = GlobalSetup.getLogger(ChangeNotificationSet.class);

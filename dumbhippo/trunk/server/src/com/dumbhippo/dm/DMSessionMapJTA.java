@@ -17,6 +17,11 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 
+/**
+ * Implementation of DMSessionMap for use within a JTA environment.
+ * 
+ * @author otaylor
+ */
 public class DMSessionMapJTA implements DMSessionMap {
 	protected static final Logger logger = GlobalSetup.getLogger(DMSessionMapJTA.class);
 	

@@ -7,6 +7,12 @@ import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.dm.store.DMStore;
 import com.dumbhippo.dm.store.StoreKey;
 
+/**
+ * ChangeNotification represents pending notifications for a single resource.
+ * 
+ * @param <K>
+ * @param <T>
+ */
 public class ChangeNotification<K, T extends DMObject<K>> extends StoreKey<K,T> {
 	private static Logger logger = GlobalSetup.getLogger(ChangeNotification.class);
 
