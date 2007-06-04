@@ -9,4 +9,4 @@ Terminal=false
 Type=Application
 Icon=google-reader
 StartupNotify=false
-Categories=X-Red-Hat-Base;X-Red-Hat-Base-Only;Network;Application;
+Categories=Network;

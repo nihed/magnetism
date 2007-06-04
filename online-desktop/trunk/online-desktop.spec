@@ -2,14 +2,14 @@
 %{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
 
 Name:           online-desktop
-Version:        0.2.1
+Version:        0.2.4
 Release:        1%{?dist}
 Summary:        Desktop built around web sites and online services
 
 Group:          Applications/Internet
 License:        GPL
 URL:            http://developer.mugshot.org/
-Source0:        http://download.mugshot.org/online-desktop/source/online-desktop-%{version}.tar.gz
+Source0:        http://download.mugshot.org/online-desktop/sources/online-desktop-%{version}.tar.gz
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 BuildArch:	noarch
 Requires:	dbus-python
@@ -45,52 +45,50 @@ Contains a menu entry for GMail.
 %package google-calendar
 Summary: Google Calendar integration for your desktop
 Group: Applications/Internet
+Requires: online-desktop
 %description google-calendar
 Contains a menu entry for Google Calendar.
 
 %package google-docs
 Summary: Google Docs and Spreadsheets integration for your desktop
 Group: Applications/Internet
+Requires: online-desktop
 %description google-docs
 Contains a menu entry for Google Docs and Spreadsheets.
 
 %package google-reader
 Summary: Google Reader integration for your desktop
 Group: Applications/Internet
+Requires: online-desktop
 %description google-reader
 Contains a menu entry for Google Reader.
 
 %prep
 %setup -q
 
-
 %build
 %configure
 make %{?_smp_mflags}
-
 
 %install
 rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 
-
-## not sure yet what vendor should/will be
 desktop-file-install --vendor="fedora"                  \
   --dir=${RPM_BUILD_ROOT}%{_datadir}/applications       \
   --delete-original                                     \
-  %{buildroot}/%{_datadir}/applications/*.desktop
+  ${RPM_BUILD_ROOT}/%{_datadir}/applications/*.desktop
 
 %clean
 rm -rf $RPM_BUILD_ROOT
-
 
 %files
 %defattr(-,root,root,-)
 %{_bindir}/god-mode
 # not used yet
 %{_datadir}/applications/fedora-online-desktop.desktop
-%{_datadir}/icons/hicolor/*/apps/picasa.png
-%{_datadir}/icons/hicolor/*/apps/yahoo-mail.png
+%exclude %{_datadir}/icons/hicolor/*/apps/picasa.png
+%exclude %{_datadir}/icons/hicolor/*/apps/yahoo-mail.png
 %dir %{python_sitelib}/godmode
 %{python_sitelib}/godmode/*
 %doc COPYING README
@@ -125,7 +123,24 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/icons/hicolor/*/apps/google-reader.png
 %doc README
 
+%post
+touch --no-create %{_datadir}/icons/hicolor || :
+%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+
+%postun
+touch --no-create %{_datadir}/icons/hicolor || :
+%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+
 %changelog
+* Fri Jun 01 2007 Colin Walters <walters@redhat.com> - 0.2.4-1
+- Update
+- Icon cache update in post/postun
+- Install desktop files in post
+- Exclude unused desktop files
+- Require newest bigboard
+- Typo in sources
+- Add subpackage requires
+
 * Thu May 31 2007 Colin Walters <walters@redhat.com> - 0.2.1-1
 - Update
 - Require bigboard
