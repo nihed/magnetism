@@ -23,6 +23,7 @@ except:
     import bignative
 import bigboard.google
 import bigboard.presence
+from bigboard.libbig.logutil import log_except
 import bigboard.libbig.logutil
 import bigboard.libbig.xmlquery
 import bigboard.libbig.dbusutil
@@ -228,6 +229,7 @@ X-GNOME-Autostart-enabled=true
                        
         self.__size_str = bigboard.libbig.BiMap("size", "str", {Stock.SIZE_BULL: u'bull', Stock.SIZE_BEAR: u'bear'})
         self.__state.set_default('size', self.__size_str['size'][Stock.SIZE_BULL])
+        self.__state.set_default('expanded', True)
 
         self.__stockreader = StockReader(dirs)
         self.__stockreader.connect("stock-added", lambda reader, stock: self.__on_stock_added(stock))
@@ -262,8 +264,15 @@ X-GNOME-Autostart-enabled=true
         self._sync_size()
         
         self.__stockreader.load()        
+
+        if self.__state['expanded']:
+            self.Expand()
+        else:
+            self.Unexpand()
   
         self._canvas.show()
+
+        self.__queue_strut()
 
     def __on_focus(self):
         self.__logger.debug("got focus keypress")
@@ -319,6 +328,7 @@ X-GNOME-Autostart-enabled=true
         self.list(prelisted.get())
         del self.__prelisted[id]
         
+    @log_except()
     def _toggle_size(self):
         self.__logger.debug("toggling size")
         if self.__get_size() == Stock.SIZE_BULL:
@@ -344,11 +354,24 @@ X-GNOME-Autostart-enabled=true
             self.__logger.debug("resizing exchange %s to %s", exchange, self.__get_size())
             exchange.set_size(self.__get_size())
         
+        self.__logger.debug("queuing resize")
         self._dw.queue_resize()  
+        self.__logger.debug("queuing strut")
+        self.__queue_strut()
+        self.__logger.debug("queuing strut complete")
+
+    @log_except()
+    def __idle_do_strut(self):
+        self.__logger.debug("idle strut set")
+        self._dw.do_set_wm_strut()
+        self.__logger.debug("idle strut set complete")
+        return False
+
+    def __queue_strut(self):
         # TODO - this is kind of gross; we need the strut change to happen after
         # the resize, but that appears to be an ultra-low priority internally
         # so we can't easily queue something directly after.
-        gobject.timeout_add(250, lambda : self._dw.do_set_wm_strut() and False)
+        gobject.timeout_add(250, self.__idle_do_strut)
         
     def show(self):
         self._dw.show_all()
@@ -374,10 +397,11 @@ X-GNOME-Autostart-enabled=true
             self.__logger.debug("unbound '%s'", self.__keybinding)
             self.__keybinding_bound = False
         self._dw.hide()
-        self.expanded(False)
+        self.__state['expanded'] = False
+        self.Expanded(False)
 
     @dbus.service.method(BUS_IFACE_PANEL)
-    def unexpand(self):
+    def Unexpand(self):
         self.__logger.debug("got unexpand method call")
         return self.__do_unexpand()
 
@@ -387,24 +411,21 @@ X-GNOME-Autostart-enabled=true
             self.__logger.debug("bound '%s'", self.__keybinding)
             self.__keybinding_bound = True
         self._dw.show()
-        self.expanded(True)
+        self.__state['expanded'] = True
+        self.Expanded(True)
 
     @dbus.service.method(BUS_IFACE_PANEL)
-    def expand(self):
+    def Expand(self):
         self.__logger.debug("got expand method call")
         return self.__do_expand()
 
     @dbus.service.method(BUS_IFACE_PANEL)
-    def toggleExpand(self):
-        self.__logger.debug("got toggleExpand method call")
-        self._shown = not self._shown
-        if self._shown:
-            return self.__do_expand()
-        else:
-            return self.__do_unexpand()
+    def SignalExpanded(self):
+        self.__logger.debug("got signalExpanded method call")
+        self.Expanded(self.__state['expanded'])
 
     @dbus.service.method(BUS_IFACE_PANEL)
-    def logout(self):
+    def Logout(self):
         win = gtk.MessageDialog(None,
                                 gtk.DIALOG_MODAL,
                                 gtk.MESSAGE_QUESTION,
@@ -427,14 +448,14 @@ X-GNOME-Autostart-enabled=true
 
 
     @dbus.service.method(BUS_IFACE_PANEL)
-    def shell(self):
+    def Shell(self):
         if self.__shell:
             self.__shell.destroy()
         self.__shell = CommandShell({'panel': self})
         self.__shell.show_all()
 
     @dbus.service.method(BUS_IFACE_PANEL)
-    def exit(self):
+    def Exit(self):
         try:
             os.unlink(self.__autostart_file)
         except OSError, e:
@@ -443,7 +464,7 @@ X-GNOME-Autostart-enabled=true
 
     @dbus.service.signal(BUS_IFACE_PANEL,
                          signature='b')
-    def expanded(self, is_expanded):
+    def Expanded(self, is_expanded):
         pass
 
 def load_image_hook(img_name):

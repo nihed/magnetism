@@ -177,10 +177,10 @@ class SelfStock(AbstractMugshotStock):
         self.__handle_self_changed()        
 
     def __do_logout(self):
-        self._panel.logout()
+        self._panel.Logout()
 
     def __do_minimize(self):
-        self._panel.unexpand()
+        self._panel.Unexpand()
     
     def __on_activate(self):
         if self.__slideout:
