@@ -45,6 +45,18 @@ hippo_canvas_item_base_init(void *klass)
 
     if (!initialized) {
         /* create signals in here */
+
+        /**
+         * HippoCanvasItem::paint
+         *
+         * All drawing of a canvas item happens in the handlers for
+         * this signal. The rectangle is the bounding box of the
+         * damage region. Most concrete items derive from #HippoCanvasBox,
+         * whose default paint handler invokes a series of more fine-grained
+         * paint handlers to paint the background, content, etc.; usually you
+         * should override one of those fine-grained handlers rather than this
+         * all-encompassing paint.
+         */
         signals[PAINT] =
             g_signal_new ("paint",
                           HIPPO_TYPE_CANVAS_ITEM,
@@ -53,6 +65,12 @@ hippo_canvas_item_base_init(void *klass)
                           NULL, NULL,
                           hippo_canvas_marshal_VOID__POINTER_BOXED,
                           G_TYPE_NONE, 2, G_TYPE_POINTER, HIPPO_TYPE_RECTANGLE);
+        /**
+         * HippoCanvasItem::request-changed
+         * Signal emitted when the natural or minimum size of the canvas item
+         * may have changed. The parent canvas or parent canvas item will normally
+         * need to recompute its layout in response.
+         */
         signals[REQUEST_CHANGED] =
             g_signal_new ("request-changed",
                           HIPPO_TYPE_CANVAS_ITEM,
@@ -61,6 +79,11 @@ hippo_canvas_item_base_init(void *klass)
                           NULL, NULL,
                           g_cclosure_marshal_VOID__VOID,
                           G_TYPE_NONE, 0);
+        /**
+         * HippoCanvasItem::paint-needed
+         * Signal emitted when a canvas item needs to be repainted. The
+         * rectangle is the bounding box of the areas that need repainting.
+         */
         signals[PAINT_NEEDED] =
             g_signal_new ("paint-needed",
                           HIPPO_TYPE_CANVAS_ITEM,
@@ -69,6 +92,10 @@ hippo_canvas_item_base_init(void *klass)
                           NULL, NULL,
                           g_cclosure_marshal_VOID__BOXED,
                           G_TYPE_NONE, 1, HIPPO_TYPE_RECTANGLE);
+        /**
+         * HippoCanvasItem::button-press-event
+         * Signal emitted when a mouse button is pressed down on the canvas item.
+         */
         signals[BUTTON_PRESS_EVENT] =
             g_signal_new ("button-press-event",
                           HIPPO_TYPE_CANVAS_ITEM,
@@ -77,6 +104,10 @@ hippo_canvas_item_base_init(void *klass)
                           g_signal_accumulator_true_handled, NULL,
                           hippo_canvas_marshal_BOOLEAN__BOXED,
                       G_TYPE_BOOLEAN, 1, HIPPO_TYPE_EVENT);
+        /**
+         * HippoCanvasItem::button-release-event
+         * Signal emitted when a mouse button is released on the canvas item.
+         */        
         signals[BUTTON_RELEASE_EVENT] =
             g_signal_new ("button-release-event",
                           HIPPO_TYPE_CANVAS_ITEM,
@@ -85,6 +116,12 @@ hippo_canvas_item_base_init(void *klass)
                           g_signal_accumulator_true_handled, NULL,
                           hippo_canvas_marshal_BOOLEAN__BOXED,
                           G_TYPE_BOOLEAN, 1, HIPPO_TYPE_EVENT);
+        /**
+         * HippoCanvasItem::motion-notify-event
+         * Signal emitted when the mouse pointer enters, leaves, or moves within
+         * a canvas item. Note that unlike #GtkWidget, there are not separate
+         * events for enter and leave.
+         */                
         signals[MOTION_NOTIFY_EVENT] =
             g_signal_new ("motion-notify-event",
                           HIPPO_TYPE_CANVAS_ITEM,
@@ -93,6 +130,11 @@ hippo_canvas_item_base_init(void *klass)
                           g_signal_accumulator_true_handled, NULL,
                           hippo_canvas_marshal_BOOLEAN__BOXED,
                           G_TYPE_BOOLEAN, 1, HIPPO_TYPE_EVENT);
+        /**
+         * HippoCanvasItem::key-press-event
+         *
+         * Signal emitted when a key is pressed while the canvas item is focused.
+         */
         signals[KEY_PRESS_EVENT] =
             g_signal_new ("key-press-event",
                           HIPPO_TYPE_CANVAS_ITEM,
@@ -101,6 +143,12 @@ hippo_canvas_item_base_init(void *klass)
                           g_signal_accumulator_true_handled, NULL,
                           hippo_canvas_marshal_BOOLEAN__BOXED,
                           G_TYPE_BOOLEAN, 1, HIPPO_TYPE_EVENT);
+        /**
+         * HippoCanvasItem::activated
+         *
+         * Signal emitted when the canvas item is "activated" (e.g. if a button is clicked or
+         * an url is clicked).
+         */        
         signals[ACTIVATED] =
             g_signal_new ("activated",
                           HIPPO_TYPE_CANVAS_ITEM,
@@ -108,7 +156,13 @@ hippo_canvas_item_base_init(void *klass)
                           G_STRUCT_OFFSET(HippoCanvasItemIface, activated),
                           NULL, NULL,
                           g_cclosure_marshal_VOID__VOID,
-                          G_TYPE_NONE, 0);        
+                          G_TYPE_NONE, 0);
+        /**
+         * HippoCanvasItem::tooltip-changed
+         *
+         * Signal emitted when the canvas item's tooltip changes. The code displaying the
+         * tooltip may need this signal in order to update in response to changes.
+         */                
         signals[TOOLTIP_CHANGED] =
             g_signal_new ("tooltip-changed",
                           HIPPO_TYPE_CANVAS_ITEM,

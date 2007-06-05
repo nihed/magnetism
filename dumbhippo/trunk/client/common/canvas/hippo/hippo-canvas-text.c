@@ -134,6 +134,22 @@ hippo_canvas_text_class_init(HippoCanvasTextClass *klass)
                                                         1.0,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
 
+    /**
+     * HippoCanvasText:size-mode
+     *
+     * Three "size modes" are available. In #HIPPO_CANVAS_SIZE_FULL_WIDTH mode, the
+     * text item will give the width of its text as its minimum size. In #HIPPO_CANVAS_SIZE_WRAP_WORD,
+     * the text item will wrap to fit available space - its minimum width will be pretty small, but as
+     * the width decreases its height will increase. In #HIPPO_CANVAS_SIZE_ELLIPSIZE_END mode, the
+     * width of the text will be the natural width of the item, but the minimum width will be small.
+     * If the item gets less than its natural width, it will ellipsize the text in order to fit
+     * in available space.
+     *
+     * If none of that made sense, just decide whether you want to
+     * always display all the text without wrapping, want to be able
+     * to wrap as the available space shrinks, or want to ellipsize
+     * the text as the available space shrinks.
+     */
     g_object_class_install_property(object_class,
                                     PROP_SIZE_MODE,
                                     g_param_spec_enum("size-mode",

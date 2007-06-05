@@ -176,6 +176,20 @@ hippo_canvas_get_property(GObject         *object,
     }
 }
 
+/**
+ * hippo_canvas_new:
+ *
+ * A #HippoCanvas is simply a #GtkWidget that displays a single #HippoCanvasItem.
+ * The single #HippoCanvasItem is normally a container item that serves as a root,
+ * and contains a number of other canvas items.
+ *
+ * The size of the #HippoCanvas will match the size of its contained canvas items.
+ *
+ * You can place a #HippoCanvas inside a #GtkScrolledWindow.
+ * 
+ * 
+ * Return value: the new canvas widget
+ */
 GtkWidget*
 hippo_canvas_new(void)
 {

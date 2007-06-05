@@ -284,7 +284,13 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                       g_cclosure_marshal_VOID__BOOLEAN,
                       G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
     
-    /* we're supposed to register the enum yada yada, but doesn't matter */
+    /**
+     * HippoCanvasBox:orientation
+     *
+     * A box can stack items vertically #HIPPO_ORIENTATION_VERTICAL, like #GtkVBox,
+     * or put them in a horizontal row, #HIPPO_ORIENTATION_HORIZONTAL, like #GtkHBox.
+     *
+     */
     g_object_class_install_property(object_class,
                                     PROP_ORIENTATION,
                                     g_param_spec_enum("orientation",
@@ -292,7 +298,15 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                       _("Direction of the box"),
                                                       HIPPO_TYPE_ORIENTATION,
                                                       HIPPO_ORIENTATION_VERTICAL,
-                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));    
+                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    /**
+     * HippoCanvasBox:padding-top
+     *
+     * Space inside the background color, on the top edge. Contrast with the
+     * border, which is outside the background color.
+     *
+     */
     g_object_class_install_property(object_class,
                                     PROP_PADDING_TOP,
                                     g_param_spec_int("padding-top",
@@ -302,6 +316,14 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      255,
                                                      0,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    /**
+     * HippoCanvasBox:padding-bottom
+     *
+     * Space inside the background color, on the bottom edge. Contrast with the
+     * border, which is outside the background color.
+     *
+     */    
     g_object_class_install_property(object_class,
                                     PROP_PADDING_BOTTOM,
                                     g_param_spec_int("padding-bottom",
@@ -311,6 +333,14 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      255,
                                                      0,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    /**
+     * HippoCanvasBox:padding-left
+     *
+     * Space inside the background color, on the left edge. Contrast with the
+     * border, which is outside the background color.
+     *
+     */    
     g_object_class_install_property(object_class,
                                     PROP_PADDING_LEFT,
                                     g_param_spec_int("padding-left",
@@ -320,6 +350,14 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      255,
                                                      0,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    /**
+     * HippoCanvasBox:padding-right
+     *
+     * Space inside the background color, on the right edge. Contrast with the
+     * border, which is outside the background color.
+     *
+     */    
     g_object_class_install_property(object_class,
                                     PROP_PADDING_RIGHT,
                                     g_param_spec_int("padding-right",
@@ -329,6 +367,14 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      255,
                                                      0,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    /**
+     * HippoCanvasBox:padding
+     *
+     * Write-only convenience property to set padding-top,
+     * padding-bottom, padding-left, and padding-right all at once.
+     *
+     */    
     g_object_class_install_property(object_class,
                                     PROP_PADDING,
                                     g_param_spec_int("padding",
@@ -338,6 +384,14 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      255,
                                                      0,
                                                      G_PARAM_WRITABLE));
+
+    
+    /**
+     * HippoCanvasBox:border-top
+     *
+     * Space outside the background color, on the top edge. Contrast with the
+     * padding, which is inside the background color.     
+     */
     g_object_class_install_property(object_class,
                                     PROP_BORDER_TOP,
                                     g_param_spec_int("border-top",
@@ -347,6 +401,13 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      255,
                                                      0,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    /**
+     * HippoCanvasBox:border-bottom
+     *
+     * Space outside the background color, on the bottom edge. Contrast with the
+     * padding, which is inside the background color.     
+     */    
     g_object_class_install_property(object_class,
                                     PROP_BORDER_BOTTOM,
                                     g_param_spec_int("border-bottom",
@@ -356,6 +417,12 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      255,
                                                      0,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+    /**
+     * HippoCanvasBox:border-left
+     *
+     * Space outside the background color, on the left edge. Contrast with the
+     * padding, which is inside the background color.     
+     */        
     g_object_class_install_property(object_class,
                                     PROP_BORDER_LEFT,
                                     g_param_spec_int("border-left",
@@ -365,6 +432,13 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      255,
                                                      0,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    /**
+     * HippoCanvasBox:border-right
+     *
+     * Space outside the background color, on the right edge. Contrast with the
+     * padding, which is inside the background color.     
+     */            
     g_object_class_install_property(object_class,
                                     PROP_BORDER_RIGHT,
                                     g_param_spec_int("border-right",
@@ -374,6 +448,14 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      255,
                                                      0,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    /**
+     * HippoCanvasBox:border
+     *
+     * Write-only convenience property to set border-top,
+     * border-bottom, border-left, and border-right all at once.
+     *
+     */        
     g_object_class_install_property(object_class,
                                     PROP_BORDER,
                                     g_param_spec_int("border",
@@ -383,7 +465,18 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      255,
                                                      0,
                                                      G_PARAM_WRITABLE));
-    
+
+    /**
+     * HippoCanvasBox:box-width
+     *
+     * This forces both the natural and minimum width (for the entire
+     * box, including border and padding). It should probably be
+     * deprecated in favor of separate natural-width and min-width
+     * properties, and potentially those properties should not include
+     * the border and/or padding. Feel free to analyze and then resolve
+     * the issue and send us a patch!
+     *
+     */            
     g_object_class_install_property(object_class,
                                     PROP_BOX_WIDTH,
                                     g_param_spec_int("box-width",
@@ -393,6 +486,18 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      G_MAXINT,
                                                      -1,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    /**
+     * HippoCanvasBox:box-height
+     *
+     * This forces both the natural and minimum height (for the entire
+     * box, including border and padding). It should probably be
+     * deprecated in favor of separate natural-height and min-height
+     * properties, and potentially those properties should not include
+     * the border and/or padding. Feel free to analyze and then resolve
+     * the issue and send us a patch!
+     *
+     */
     g_object_class_install_property(object_class,
                                     PROP_BOX_HEIGHT,
                                     g_param_spec_int("box-height",
@@ -402,7 +507,20 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      G_MAXINT,
                                                      -1,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
-    
+
+    /**
+     * HippoCanvasBox:xalign
+     *
+     * Remember that most canvas items, including text and image
+     * items, derive from #HippoCanvasBox.  The alignment properties
+     * determine whether the "content" of the box - which may be the
+     * child items, image, text, or other main point of the canvas
+     * item you're using - will be aligned start (left/top), aligned center,
+     * aligned end (right/bottom), or stretched to fill the whole box.
+     *
+     * Alignment only matters if the box gets extra space (more space than
+     * the natural size of the item).
+     */
     g_object_class_install_property(object_class,
                                     PROP_XALIGN,
                                     g_param_spec_enum("xalign",
@@ -411,6 +529,20 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                       HIPPO_TYPE_ITEM_ALIGNMENT,
                                                       HIPPO_ALIGNMENT_FILL,
                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    /**
+     * HippoCanvasBox:yalign
+     *
+     * Remember that most canvas items, including text and image
+     * items, derive from #HippoCanvasBox.  The alignment properties
+     * determine whether the "content" of the box - which may be the
+     * child items, image, text, or other main point of the canvas
+     * item you're using - will be aligned start (left/top), aligned center,
+     * aligned end (right/bottom), or stretched to fill the whole box.
+     *
+     * Alignment only matters if the box gets extra space (more space than
+     * the natural size of the item).
+     */    
     g_object_class_install_property(object_class,
                                     PROP_YALIGN,
                                     g_param_spec_enum("yalign",
@@ -419,7 +551,14 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                       HIPPO_TYPE_ITEM_ALIGNMENT,
                                                       HIPPO_ALIGNMENT_FILL,
                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
-    
+
+    /**
+     * HippoCanvasBox:background-color
+     *
+     * Sets an RGBA background color (pack the color into 32-bit unsigned int, just type
+     * "0xff0000ff" for example for opaque red). The background color covers the
+     * padding but not the border of the box.
+     */
     g_object_class_install_property(object_class,
                                     PROP_BACKGROUND_COLOR,
                                     g_param_spec_uint("background-color",
@@ -430,6 +569,16 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                       HIPPO_CANVAS_DEFAULT_BACKGROUND_COLOR,
                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
 
+    /**
+     * HippoCanvasBox:border-color
+     *
+     * Sets an RGBA border color (pack the color into 32-bit unsigned int, just type
+     * "0xff0000ff" for example for opaque red). The border color covers the
+     * border of the box; you have to set the border to a nonzero size with the
+     * border property.
+     *
+     * Frequently, the border is transparent and just used for spacing.
+     */    
     g_object_class_install_property(object_class,
                                     PROP_BORDER_COLOR,
                                     g_param_spec_uint("border-color",
@@ -439,7 +588,14 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                       G_MAXUINT,
                                                       HIPPO_CANVAS_DEFAULT_BACKGROUND_COLOR,
                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
-    
+
+    /**
+     * HippoCanvasBox:spacing
+     *
+     * The spacing is a gap to leave between all child items in the box. If you want a gap
+     * in only one place, try setting a transparent border on one side of the child, rather than
+     * setting the spacing.
+     */        
     g_object_class_install_property(object_class,
                                     PROP_SPACING,
                                     g_param_spec_int("spacing",
@@ -449,6 +605,18 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      255,
                                                      0,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    /**
+     * HippoCanvasBox:color
+     *
+     * This property only matters if the subclass of #HippoCanvasBox you are using supports
+     * it. Specifically text items use this color for the text color.
+     *
+     * The value is an RGBA color, i.e. a 32-bit unsigned int,
+     * "0xff0000ff" for example for opaque red.
+     *
+     * This property is ignored if the color-set property is %FALSE.
+     */
     g_object_class_install_property(object_class,
                                     PROP_COLOR,
                                     g_param_spec_uint("color",
@@ -458,6 +626,13 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                       G_MAXUINT,
                                                       HIPPO_CANVAS_DEFAULT_COLOR,
                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
+    /**
+     * HippoCanvasBox:color-cascade
+     *
+     * If the color-set property is %FALSE, this property determines whether the item inherits
+     * its foreground color property from its containing canvas item, or whether the item uses
+     * a default color which may depend on the canvas item type.
+     */    
     g_object_class_install_property(object_class,
                                     PROP_COLOR_CASCADE,
                                     g_param_spec_enum("color-cascade",
@@ -466,13 +641,32 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                       HIPPO_TYPE_CASCADE_MODE,
                                                       HIPPO_CASCADE_MODE_INHERIT,
                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
+    /**
+     * HippoCanvasBox:color-set
+     *
+     * Determines whether the color property is used, or whether a default color is
+     * used according to the color-cascade property. This flag gets set automatically
+     * if you write to the color property.
+     */        
     g_object_class_install_property(object_class,
                                     PROP_COLOR_SET,
                                     g_param_spec_boolean("color-set",
                                                          _("Foreground Color Set"),
                                                          _("Whether a foreground color was set"),
                                                          FALSE,
-                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));    
+                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+    /**
+     * HippoCanvasBox:font
+     * 
+     * The font to use as a Pango font description string. Only matters for text items, or for
+     * boxes that contain text items. If a box contains text items, and the child items
+     * have the font-cascade property set to #HIPPO_CASCADE_MODE_INHERIT, then the child
+     * items will use the font from the containing box unless they have explicitly set
+     * their own font.
+     *
+     * This property is just a way to set the font-desc property, using a string
+     * instead of a #PangoFontDescription object.
+     */
     g_object_class_install_property(object_class,
                                     PROP_FONT,
                                     g_param_spec_string("font",
@@ -480,6 +674,16 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                         _("Font description as a string"),
                                                         NULL,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+    /**
+     * HippoCanvasBox:font-desc
+     *
+     * The font to use for text in the item and its children. Children will inherit this font
+     * if their font-cascade is set to #HIPPO_CASCADE_MODE_INHERIT and they don't set a font
+     * themselves.
+     *
+     * If the font description is %NULL then the font will be inherited or a default will be
+     * used, according to the font-cascade property.
+     */
     g_object_class_install_property(object_class,
                                     PROP_FONT_DESC,
                                     g_param_spec_boxed("font-desc",
@@ -487,6 +691,15 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                        _("Font description as a PangoFontDescription object"),
                                                        PANGO_TYPE_FONT_DESCRIPTION,
                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    /**
+     * HippoCanvasBox:font-cascade
+     *
+     * If the font-desc property is %NULL, this property determines whether the item inherits
+     * its font property from its containing canvas item, or whether the item uses
+     * a default font.
+     * 
+     */    
     g_object_class_install_property(object_class,
                                     PROP_FONT_CASCADE,
                                     g_param_spec_enum("font-cascade",
@@ -495,6 +708,13 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                       HIPPO_TYPE_CASCADE_MODE,
                                                       HIPPO_CASCADE_MODE_INHERIT,
                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    /**
+     * HippoCanvasBox:tooltip
+     *
+     * A string to display as a tooltip on this canvas item.
+     * 
+     */
     g_object_class_install_property(object_class,
                                     PROP_TOOLTIP,
                                     g_param_spec_string("tooltip",
@@ -2408,8 +2628,23 @@ hippo_canvas_box_get_height_request(HippoCanvasItem *item,
     }
 }
 
-/* Pass in a size request, and have it converted to the right place
+/**
+ * hippo_canvas_box_align:
+ * @content_width: width of the content of your item (text, image, children, whatever)
+ * @content_height: height of the content
+ * @x_p: output the X origin where you should put your content
+ * @y_p: output the Y origin where you should put your content
+ * @width_p: output the width of your content (may exceed the
+ * passed-in width/height if alignment mode is #HIPPO_ALIGNMENT_FILL
+ * for example)
+ * @height_p: output the height of your content
+ * 
+ * This is a "protected" method intended for use by #HippoCanvasBox
+ * subclasses (basically all items are box subclasses right now).
+ * Pass in a size request, and have it converted to the right place
  * to actually draw, with padding/border removed and alignment performed.
+ * In other words this sorts out the padding, border, and xalign/yalign
+ * properties for you.
  */
 void
 hippo_canvas_box_align(HippoCanvasBox *box,
@@ -3343,6 +3578,14 @@ hippo_canvas_box_insert_sorted(HippoCanvasBox              *box,
     child_setup(box, child);
 }
 
+/**
+ * hippo_canvas_box_prepend:
+ * @box: the canvas box
+ * @child: the child to prepend
+ * @flags: flags for how to layout the child
+ *
+ * See hippo_canvas_box_append() for all the details.
+ */
 void
 hippo_canvas_box_prepend(HippoCanvasBox  *box,
                          HippoCanvasItem *child,
@@ -3361,6 +3604,33 @@ hippo_canvas_box_prepend(HippoCanvasBox  *box,
     child_setup(box, child);
 }
 
+/**
+ * hippo_canvas_box_append:
+ * @box: the canvas box
+ * @child: the child to append
+ * @flags: flags for how to layout the child
+ *
+ * Adds a child item to the box.  #HIPPO_PACK_END means the child
+ * should be added at the end of the box while normally the child
+ * would be added at the start of the box. This is just like the "pack
+ * end" concept in #GtkBox. #HIPPO_PACK_FIXED means the child is not
+ * included in the layout algorithm, you have to set its position
+ * manually with hippo_canvas_box_set_position(). #HIPPO_PACK_IF_FITS
+ * means the child is "all or nothing"; if there isn't room to give
+ * all children their natural width, then the "if fits" children can
+ * be dropped. Dropping some children is often nicer than having all
+ * the children squished or forcing the entire box to be too big.
+ *
+ * If you are familiar with GTK+ widget layout, note that #GtkMisc
+ * functionality (alignment and padding) are incorporated into the
+ * items themselves in the form of the alignment and border/padding
+ * properties. #GtkFixed functionality is part of #HippoCanvasBox
+ * because children can be packed #HIPPO_PACK_FIXED. #HippoCanvasBox
+ * has an orientation property, rather than two subclasses for
+ * horizontal and vertical. And #HIPPO_PACK_IF_FITS is not available
+ * in GTK+ because it requires the "natural size" vs. "minimum size"
+ * distinction that GTK+ lacks.
+ */
 void
 hippo_canvas_box_append(HippoCanvasBox  *box,
                         HippoCanvasItem *child,
@@ -3625,7 +3895,7 @@ hippo_canvas_box_reverse(HippoCanvasBox  *box)
     hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }
 
-gboolean
+static gboolean
 hippo_canvas_box_get_child_visible (HippoCanvasContainer        *container,
                                     HippoCanvasItem             *child)
 {
@@ -3645,7 +3915,7 @@ hippo_canvas_box_get_child_visible (HippoCanvasContainer        *container,
     return c->visible;
 }
 
-void
+static void
 hippo_canvas_box_set_child_visible (HippoCanvasContainer        *container,
                                     HippoCanvasItem             *child,
                                     gboolean                     visible)

@@ -86,7 +86,12 @@ hippo_canvas_image_class_init(HippoCanvasImageClass *klass)
     box_class->paint_below_children = hippo_canvas_image_paint_below_children;
     box_class->get_content_width_request = hippo_canvas_image_get_content_width_request;
     box_class->get_content_height_request = hippo_canvas_image_get_content_height_request;
-    
+
+    /**
+     * HippoCanvasImage:image
+     *
+     * Specifies the Cairo surface to display.
+     */
     g_object_class_install_property(object_class,
                                     PROP_IMAGE,
                                     g_param_spec_boxed("image",
@@ -95,6 +100,12 @@ hippo_canvas_image_class_init(HippoCanvasImageClass *klass)
                                                          HIPPO_TYPE_CAIRO_SURFACE,
                                                          G_PARAM_READABLE | G_PARAM_WRITABLE));
 
+    /**
+     * HippoCanvasImage:image-name
+     *
+     * Specifies an image name to display; with GTK+ the image name is
+     * an image name registered with the GTK+ theme system.
+     */    
     g_object_class_install_property(object_class,
                                     PROP_IMAGE_NAME,
                                     g_param_spec_string("image-name",
@@ -103,6 +114,11 @@ hippo_canvas_image_class_init(HippoCanvasImageClass *klass)
                                                         NULL,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
 
+    /**
+     * HippoCanvasImage:scale-width
+     *
+     * A width in pixels to scale the image to, or -1 to use the image's original width.
+     */
     g_object_class_install_property(object_class,
                                     PROP_SCALE_WIDTH,
                                     g_param_spec_int("scale-width",
@@ -112,6 +128,11 @@ hippo_canvas_image_class_init(HippoCanvasImageClass *klass)
                                                      G_MAXINT,
                                                      -1,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+    /**
+     * HippoCanvasImage:scale-height
+     *
+     * A height in pixels to scale the image to, or -1 to use the image's original height.
+     */    
     g_object_class_install_property(object_class,
                                     PROP_SCALE_HEIGHT,
                                     g_param_spec_int("scale-height",
