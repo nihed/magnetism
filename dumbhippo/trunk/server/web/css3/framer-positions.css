@@ -11,8 +11,9 @@ body table {
 }
 
 #dhFramerTable {
-    table-layout: fixed;
     width:        100%;
+    height:       101px; 
+    table-layout: fixed;   
 }
 
 #dhFramerLeft .dh-stacker-block-icon {
@@ -31,6 +32,21 @@ body table {
 #dhFramerLeft p {
     margin:             0px;
 }
+
+#dhBlockInfoTable {
+    width:        100%;
+    table-layout: fixed;   
+}
+
+#dhBlockContent {
+    height:             60px;
+    overflow:           hidden;
+}
+
+.dh-block-details {
+    overflow:           hidden;
+}
+
 #dhPostChatLog {
     width:              100%;
 }
