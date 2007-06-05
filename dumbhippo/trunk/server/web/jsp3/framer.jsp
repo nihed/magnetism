@@ -55,7 +55,7 @@
 	</script>
 </head>	
 
-<body onload="dh.framer.init()">
+<body onload="dh.framer.init()" onresize="dh.framer.updateWidth()">
     <dht3:quipPopup/>
     <table id="dhFramerTable" cellpadding="0" cellspacing="5">
         <tr>
@@ -65,7 +65,7 @@
 					Who's around: <span id="dhPostViewingListPeople" class="dh-entity-list"></span>
 				</div>
             </td>
-            <td width="50%" valign="top">
+            <td id="dhFramerRight" width="50%" valign="top">
                 <div id="dhPostChatLog">
                     <div id="dhQuipper">
                         <dht3:quipper blockId="${framer.block.identifyingGuid}" block="${framer.block}"/>
@@ -79,7 +79,7 @@
 					    <!-- dynamically gets divs class="dh-chat-message" -->
 					</div>
 				</div>	
-				<div id="dhFrameActions">
+				<div id="dhFramerActions">
 			        <c:if test="${!empty joinChatUri}">
 				        <a id="dhPostJoinChat" href="${joinChatUri}">All quips (<span id="dhQuipsCount">${framer.block.messageCount}</span>)</a> |
 				    </c:if>

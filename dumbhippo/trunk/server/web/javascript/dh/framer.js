@@ -80,9 +80,9 @@ dh.framer._addMessage = function(message, before) {
 	messageDiv.id = this._messageDivId(message)
     messageDiv.className = "dh-chat-message"	
     
-    var sentimentDiv = document.createElement("div");
-	sentimentDiv.className = "dh-chat-message-sentiment";
-	messageDiv.appendChild(sentimentDiv);
+    var sentimentSpan = document.createElement("span");
+	sentimentSpan.className = "dh-chat-message-sentiment";
+	messageDiv.appendChild(sentimentSpan);
 
 	var sentimentUrl;
 	var sentimentWidth = 11;
@@ -102,9 +102,17 @@ dh.framer._addMessage = function(message, before) {
 	}
 		
 	var image = dh.util.createPngElement(sentimentUrl, sentimentWidth, sentimentHeight);
-	sentimentDiv.appendChild(image);
+	sentimentSpan.appendChild(image);
     
-    dh.util.insertTextWithLinks(messageDiv, message.getMessage()) 
+    var textSpan = document.createElement("span");
+	textSpan.className = "dh-chat-message-text";
+	messageDiv.appendChild(textSpan);
+	    
+    dh.util.insertTextWithLinks(textSpan, message.getMessage());
+    // we use titles for both displaying the full text when the user rolls over
+    // a message and for updating the visible text to a longer version
+    // when the page is resized
+    textSpan.title = message.getMessage();
 		
     messageDiv.appendChild(document.createTextNode(" - "));
     
@@ -123,7 +131,52 @@ dh.framer._addMessage = function(message, before) {
 	var beforeMessageDiv = before ? this._messageDiv(before) : null;
 	
 	var messageArea = document.getElementById('dhPostChatMessages')
-	messageArea.insertBefore(messageDiv, beforeMessageDiv)
+	if (dh.framer.messagesInitialized)
+	    messageDiv.style.visibility = "hidden";
+	messageArea.insertBefore(messageDiv, beforeMessageDiv);
+
+	var framerRight = document.getElementById('dhFramerRight');
+	    
+	if (dh.framer.messagesInitialized) {
+	    // we reserve a 100 pixels for the sentiment, the '-', and the timestamp
+	    // the timestamp can vary in length, but that whould not affect the length of the text
+	    dh.util.ellipseText(textSpan, framerRight.offsetWidth - whoElement.offsetWidth - 100); 
+	    messageDiv.style.visibility = "visible";	    
+	} else if (message.getSerial() >= dh.framer.initialLastMessageId) {
+	    // If we loaded in the initial last message, we are done initializing messages.
+        // If we happened to get a 100 messages between the time we start loading
+        // the framer page and we request the messages, we would not get the message
+        // with the initial last message id, but will get a message with a greater 
+        // message id. 
+		messageArea.style.visibility = "hidden";
+	    messageArea.style.display = "block";
+	
+	    dh.framer.updateWidth()
+        dh.framer.messagesInitialized = true;	   	
+	}    
+}
+
+dh.framer.updateWidth = function() {   		
+	var framerRight = document.getElementById('dhFramerRight');		
+    var messageArea = document.getElementById('dhPostChatMessages')
+    messageArea.style.visibility = "hidden";
+    
+	var chatMessages = dh.html.getElementsByClass('dh-chat-message', messageArea);
+	var i = 0;
+	while (i < chatMessages.length) {
+	    var chatMessageText = dh.html.getElementsByClass('dh-chat-message-text', chatMessages[i]);	
+        if (chatMessageText.length != 1)
+	        throw "chat message div should contain a single chat message text element";
+	        
+	    var chatMessageWho = dh.html.getElementsByClass('dh-chat-message-who', chatMessages[i]);	
+        if (chatMessageWho.length != 1)
+	        throw "chat message div should contain a single chat message who element";
+ 	        
+        dh.util.ellipseText(chatMessageText[0], framerRight.offsetWidth - chatMessageWho[0].offsetWidth - 100, chatMessageText[0].title); 
+        i++;
+    }
+		
+	messageArea.style.visibility = "visible";
 }
 
 dh.framer._removeMessage = function(message) {
@@ -198,7 +251,14 @@ dh.framer._onReconnect = function() {
     dh.framer.currentMessageCount = dh.framer.initialMessageCount;
 }
 	
-dh.framer.init = function() {
+dh.framer.init = function() {	
+    dh.framer.messagesInitialized = false;
+    if (dh.framer.initialMessageCount <= 0) {
+	    var messageArea = document.getElementById('dhPostChatMessages');     
+	    messageArea.style.display = "block";
+        dh.framer.messagesInitialized = true;	       
+    }
+    
 	dh.control.createControl();
 
 	this._chatRoom = dh.control.control.getOrCreateChatRoom(this.chatId)

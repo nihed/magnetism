@@ -582,33 +582,44 @@ dh.util.getTextWidth = function(text, fontFamily, fontSize, fontStyle, fontVaria
 
 // parses text into elements containing links and plain text, appends
 // them as children to the textElement
-dh.util.insertTextWithLinks = function(textElement, text) {
+//
+// n is an optional parameter for the number of characters from text to insert
+// Knowing the complete text allows us to link to the right site when we are 
+// truncating the text in the middle of the site link.
+dh.util.insertTextWithLinks = function(textElement, text, n) {
+    if (n == null)
+        n = text.length
+        
     var done = false
-    var i = 0
 
-    var urlArray = dh.util.getNextUrl(text, i)
+    var urlArray = dh.util.getNextUrl(text, 0)
     if (urlArray == null) {    
-        var textNode = document.createTextNode(text)
+        var textNode = document.createTextNode(text.substring(0, n))
         textElement.appendChild(textNode)           
         return
     }
     
     var url = urlArray[0]
     var validUrl = urlArray[1]     
-    var urlStart = text.indexOf(url, i)
-    var textNode = document.createTextNode(text.substring(0, urlStart))
+    var urlStart = text.indexOf(url)
+    var textNode = document.createTextNode(text.substring(0, Math.min(urlStart, n)))
     textElement.appendChild(textNode)          
 
-    while (urlArray != null) {
+    while (urlArray != null && urlStart < n) {       
+        var urlEnd = urlStart + url.length   
+        if (urlEnd > n)
+            url = url.substring(0, n - urlStart)    
         dh.util.addLinkElement(textElement, validUrl, url)  
-        var urlEnd = urlStart + url.length          
+        if (urlEnd > n)       
+            break
+            
         urlArray = dh.util.getNextUrl(text, urlEnd)      
-        var moreText = text.substring(urlEnd, text.length)  
+        var moreText = text.substring(urlEnd, Math.min(text.length, n))  
         if (urlArray != null) {
             url = urlArray[0]
             validUrl = urlArray[1]               
             urlStart = text.indexOf(url, urlEnd) 
-            moreText = text.substring(urlEnd, urlStart)
+            moreText = text.substring(urlEnd, Math.min(urlStart, n))
         }
         var textNode = document.createTextNode(moreText)
         textElement.appendChild(textNode)         
@@ -639,7 +650,7 @@ dh.util.getNextUrl = function(text, i) {
         urlStart = i + regArray.index
 
     if (urlStart >= 0) {          
-        var urlEndReg = /(["'<>[\]\s$])/    
+        var urlEndReg = /(["'<>[\]\s$])|(\.{2,})/    
         var urlEndRegArray = urlEndReg.exec(text.substring(urlStart, text.length))      
         var urlEnd = text.length
         // normally, urlEndRegArray should not be null because at the very least we should get the end of string      
@@ -876,4 +887,42 @@ dh.util.formatTimeAgo = function(date) {
 		return "1 year ago";
 	else
 		return Math.round(deltaYears) + " years ago";
+}
+
+// based on the example from http://blog.paranoidferret.com/?p=15
+dh.util.ellipseText = function (element, width, text)
+{
+   if (text != null) {
+       dh.dom.removeChildren(element);
+       dh.util.insertTextWithLinks(element, text);                 
+   } else {    
+       text = dh.util.getTextFromHtmlNode(element);
+   }
+   
+   if (element.offsetWidth > width) {
+      var tooMany = text.length;
+      var tooFew = 0;    
+      var i = 0;
+      while(tooMany - tooFew > 1) {      
+          dh.dom.removeChildren(element); 
+          i = Math.floor((tooMany + tooFew) / 2);      
+          var textNode = document.createTextNode(text.substring(0, i) + "...");
+          element.appendChild(textNode);       
+                         
+          if (element.offsetWidth  > width)
+              tooMany = i;
+          else if (element.offsetWidth  == width)
+              break;
+          else    
+              tooFew = i;    
+      }
+
+      dh.dom.removeChildren(element);      
+      if (i > 0) {
+          // we don't want to check for links each time, so we only do this once in the end
+          dh.util.insertTextWithLinks(element, text, i);
+          var dotsNode = document.createTextNode("...");
+          element.appendChild(dotsNode);          
+      }    
+   }
 }
