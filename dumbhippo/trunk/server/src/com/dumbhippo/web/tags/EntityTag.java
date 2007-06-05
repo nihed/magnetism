@@ -166,10 +166,10 @@ public class EntityTag extends SimpleTagSupport {
 			    xml.appendTextNode("a", body, "href", link, "target", "_top");
 			} else {
 				if (!cssArea.equals("")) {
-					xml.openElement("div", "class", cssArea);
+					xml.openElement("span", "class", cssArea);
 					openElements++;
 				}
-				xml.openElement("div", "class", cssClass, "title", bodyOriginal);
+				xml.openElement("span", "class", cssClass, "title", bodyOriginal);
 				xml.appendEscaped(longerBody);
 				xml.closeElement();				
 			}

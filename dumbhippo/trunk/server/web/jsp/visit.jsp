@@ -35,7 +35,7 @@
 "		}\n" +
 "	<" + "/script>\n" +
 "</head>\n" +
-"<frameset rows='*,125'>\n" +
+"<frameset rows='*,101'>\n" +
 "   <frame name='top' src='" + escapedUrl + "'>\n" +
 "    <frame name='bottom' src='framer?postId=${framer.postId}' scrolling='no' noresize bordercolor='#cccccc' marginwidth='0' marginheight='0'>\n" +
 "</frameset>\n" +
