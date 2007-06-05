@@ -31,10 +31,14 @@ body table {
 #dhFramerLeft p {
     margin:             0px;
 }
+#dhPostChatLog {
+    width:              100%;
+}
 
 #dhPostChatMessages {
-    display: block;
+    display: none;
     clear:   both;
+    width:   100%;
 }
 
 .dh-chat-message-sentiment {
@@ -64,4 +68,8 @@ body table {
 
 .dh-chat-sentiment img, .dh-quip-sentiment img  {
 	margin-bottom:  -1px;		
+}
+
+#dhFramerActions {
+    clear:   both;
 }
