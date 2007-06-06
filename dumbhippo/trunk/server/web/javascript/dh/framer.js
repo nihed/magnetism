@@ -9,6 +9,9 @@ dojo.require("dh.dom");
 
 dh.framer._selfId = null
 
+dh.framer._initialTitle = null
+dh.framer._initialDescription = null
+
 // Go back to the user's home page, possibly closing the browser bar
 dh.framer.goHome = function() {
 	if (dh.control.control.haveBrowserBar()) {
@@ -111,7 +114,7 @@ dh.framer._addMessage = function(message, before) {
     dh.util.insertTextWithLinks(textSpan, message.getMessage());
     // we use titles for both displaying the full text when the user rolls over
     // a message and for updating the visible text to a longer version
-    // when the page is resized
+    // when the window is resized
     textSpan.title = message.getMessage();
 		
     messageDiv.appendChild(document.createTextNode(" - "));
@@ -148,19 +151,60 @@ dh.framer._addMessage = function(message, before) {
         // the framer page and we request the messages, we would not get the message
         // with the initial last message id, but will get a message with a greater 
         // message id. 
-		messageArea.style.visibility = "hidden";
-	    messageArea.style.display = "block";
-	
-	    dh.framer.updateWidth()
+	    messageArea.style.display = "block";	
+	    dh.framer.updateMessagesWidth()
         dh.framer.messagesInitialized = true;	   	
 	}    
 }
 
-dh.framer.updateWidth = function() {   		
+dh.framer.updateWidth = function() {
+    dh.framer.updateBlockContentWidth();
+	dh.framer.updateMessagesWidth();			
+}
+
+dh.framer.updateBlockContentWidth = function() {
+    var contentArea = document.getElementById('dhBlockContent');	
+	var titleList = dh.html.getElementsByClass('dh-stacker-block-title', contentArea);
+    if (titleList.length != 1)
+	    throw "framer should contain a single title div";
+    var titleLinkList = dh.html.getElementsByClass('dh-framer-title', titleList[0]);    	    
+	var titleEllipsed = false;
+	var titleLinkHeight = 0;
+	if (titleLinkList.length > 0) {
+	    // unless the block has no title, the title is the first link element in the contentArea
+	    var titleLink = titleLinkList[0];
+	    if (dh.framer._initialTitle == null) {
+	        dh.framer._initialTitle = dh.util.getTextFromHtmlNode(titleLink);
+	        titleEllipsed = dh.util.ellipseWrappingText(titleLink, 60, null, titleList[0]); 
+	    } else {
+	        titleEllipsed = dh.util.ellipseWrappingText(titleLink, 60, dh.framer._initialTitle, titleList[0]);
+	    } 
+	    titleLinkHeight = titleLink.offsetHeight;
+	}    
+	   
+	var descriptionList = dh.html.getElementsByClass('dh-stacker-block-header-description', contentArea);
+    if (descriptionList.length != 1)
+	    throw "framer should contain a single block description";
+	var description = descriptionList[0];    	
+	if (dh.framer._initialDescription == null) { 
+	    dh.framer._initialDescription = dh.util.getTextFromHtmlNode(description);
+	    if (titleEllipsed) {
+	        dh.dom.removeChildren(description);
+	    } else {
+	        dh.util.ellipseWrappingText(description, 60 - titleList[0].offsetHeight); 
+	    } 
+	} else {   	    
+	    if (titleEllipsed) {
+	        dh.dom.removeChildren(description);
+	    } else {
+	        dh.util.ellipseWrappingText(description, 60 - titleList[0].offsetHeight, dh.framer._initialDescription); 
+	    } 
+	}    	    
+}
+
+dh.framer.updateMessagesWidth = function() {   		
 	var framerRight = document.getElementById('dhFramerRight');		
-    var messageArea = document.getElementById('dhPostChatMessages')
-    messageArea.style.visibility = "hidden";
-    
+    var messageArea = document.getElementById('dhPostChatMessages')   
 	var chatMessages = dh.html.getElementsByClass('dh-chat-message', messageArea);
 	var i = 0;
 	while (i < chatMessages.length) {
@@ -175,8 +219,6 @@ dh.framer.updateWidth = function() {
         dh.util.ellipseText(chatMessageText[0], framerRight.offsetWidth - chatMessageWho[0].offsetWidth - 100, chatMessageText[0].title); 
         i++;
     }
-		
-	messageArea.style.visibility = "visible";
 }
 
 dh.framer._removeMessage = function(message) {
@@ -258,7 +300,8 @@ dh.framer.init = function() {
 	    messageArea.style.display = "block";
         dh.framer.messagesInitialized = true;	       
     }
-    
+    dh.framer.updateBlockContentWidth();
+        
 	dh.control.createControl();
 
 	this._chatRoom = dh.control.control.getOrCreateChatRoom(this.chatId)

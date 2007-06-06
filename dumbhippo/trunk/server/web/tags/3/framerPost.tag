@@ -15,7 +15,7 @@
 		<td valign="top">
 		    <div id="dhBlockContent">
 	        <dh:png klass="dh-stacker-block-icon" src="${block.icon}" style="width: 16; height: 16; border: none;"/>
-			<dht3:simpleBlockTitle block="${block}" oneLine="false" homeStack="false" framerPostId="${post.post.id}"/>
+			<dht3:simpleBlockTitle block="${block}" oneLine="false" homeStack="false" linkClass="dh-framer-title" framerPostId="${post.post.id}"/>
 			<%-- TODO: see if we need to truncate this, it used to be limited to 70 characters --%>
 			<%-- it is overflow: hidden, so at the very least should set height on this table row, so that --%>
 			<%-- we have enough space for the list of people it was sent to, and who's around --%> 
