@@ -919,10 +919,58 @@ dh.util.ellipseText = function (element, width, text)
 
       dh.dom.removeChildren(element);      
       if (i > 0) {
+          if (tooMany - tooFew == 1)
+              i = tooFew;
           // we don't want to check for links each time, so we only do this once in the end
           dh.util.insertTextWithLinks(element, text, i);
           var dotsNode = document.createTextNode("...");
           element.appendChild(dotsNode);          
       }    
    }
+}
+
+// sometimes the element for whatever reason does not accurately reflect the
+// offset height it has with the content in it (for example, the title link 
+// for the block), so elementToMeasure can be passed in as a work around for that
+dh.util.ellipseWrappingText = function (element, height, text, elementToMeasure)
+{
+   if (text != null) {
+       dh.dom.removeChildren(element);
+       var textNode = document.createTextNode(text);
+       element.appendChild(textNode);                           
+   } else {    
+       text = dh.util.getTextFromHtmlNode(element);
+   }
+   
+   if (elementToMeasure == null)
+       elementToMeasure = element
+       
+   if (elementToMeasure.offsetHeight > height) {
+      
+      var tooMany = text.length;
+      var tooFew = 0;    
+      var i = 0;
+      while(tooMany - tooFew > 1) {      
+          dh.dom.removeChildren(element); 
+          i = Math.floor((tooMany + tooFew) / 2);      
+          var textNode = document.createTextNode(text.substring(0, i) + "...");
+          element.appendChild(textNode);       
+          if (elementToMeasure.offsetHeight > height)
+              tooMany = i;
+          else if (elementToMeasure.offsetHeight  == height)
+              break;
+          else    
+              tooFew = i;    
+      }
+          
+      if (tooMany - tooFew == 1) {
+          dh.dom.removeChildren(element); 
+          var textNode = document.createTextNode(text.substring(0, tooFew) + "...");
+          element.appendChild(textNode);            
+      }
+      
+      return true;
+   }
+   
+   return false; 
 }
