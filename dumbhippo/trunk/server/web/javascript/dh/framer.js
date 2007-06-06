@@ -11,6 +11,7 @@ dh.framer._selfId = null
 
 dh.framer._initialTitle = null
 dh.framer._initialDescription = null
+dh.framer._recipientsNode = null
 
 // Go back to the user's home page, possibly closing the browser bar
 dh.framer.goHome = function() {
@@ -159,6 +160,7 @@ dh.framer._addMessage = function(message, before) {
 
 dh.framer.updateWidth = function() {
     dh.framer.updateBlockContentWidth();
+    dh.framer.updateBlockDetailsWidth();
 	dh.framer.updateMessagesWidth();			
 }
 
@@ -200,6 +202,22 @@ dh.framer.updateBlockContentWidth = function() {
 	        dh.util.ellipseWrappingText(description, 60 - titleList[0].offsetHeight, dh.framer._initialDescription); 
 	    } 
 	}    	    
+}
+
+dh.framer.updateBlockDetailsWidth = function() {
+	var framerLeft = document.getElementById('dhFramerLeft');		
+    var blockInfo = document.getElementById('dhBlockInfoTable');	
+	var entityListList = dh.html.getElementsByClass('dh-entity-list', blockInfo);
+    if (entityListList.length != 2)
+	    throw "block info should contain two entity lists: one for the sender and one for recipients";
+	var senderSpan = entityListList[0];
+	if (dh.framer._recipientsNode == null) {
+	    dh.framer._recipientsNode = entityListList[1].cloneNode(true);
+	    // 135 is for 'From', 'Sent to', and the timestamp
+	    dh.util.ellipseNodeWithChildren(entityListList[1], framerLeft.offsetWidth - senderSpan.offsetWidth - 135, null, 2);
+	} else {
+	    dh.util.ellipseNodeWithChildren(entityListList[1], framerLeft.offsetWidth - senderSpan.offsetWidth - 135, dh.framer._recipientsNode, 2);
+	}    	    	
 }
 
 dh.framer.updateMessagesWidth = function() {   		
@@ -300,8 +318,10 @@ dh.framer.init = function() {
 	    messageArea.style.display = "block";
         dh.framer.messagesInitialized = true;	       
     }
+
     dh.framer.updateBlockContentWidth();
-        
+    dh.framer.updateBlockDetailsWidth();
+            
 	dh.control.createControl();
 
 	this._chatRoom = dh.control.control.getOrCreateChatRoom(this.chatId)
