@@ -2,6 +2,9 @@
 #include "hippo-common-internal.h"
 #include "hippo-connection.h"
 #include "hippo-data-cache-internal.h"
+#include "hippo-data-model-internal.h"
+#include "hippo-data-resource-internal.h"
+#include "hippo-data-query-internal.h"
 #include "hippo-common-marshal.h"
 #include "hippo-external-account.h"
 #include "hippo-title-pattern.h"
@@ -213,6 +216,9 @@ static void            handle_open        (LmConnection *connection,
 static void            handle_authenticate(LmConnection *connection,
                                            gboolean      success,
                                            gpointer      data);
+
+static gboolean handle_data_notify (HippoConnection *connection,
+                                    LmMessage       *message);
 
 struct _HippoConnection {
     GObject parent;
@@ -3851,6 +3857,10 @@ handle_message (LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
+    if (handle_data_notify(connection, message)) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+    
     if (handle_blocks_changed(connection, message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
@@ -4331,4 +4341,507 @@ hippo_connection_send_external_iq(HippoConnection *connection,
 
     g_debug("Sent external IQ: %s (%d content characters)", element, (int)strlen(content));
     return connection->external_iq_serial;
-}  
+}
+
+
+/**********************************************************************
+ * Handling of DataModel IQ's and messages.
+ *
+ * The complexity here is largely because loudmouth doesn't have proper
+ * namespace support, so we have to roll our own.
+ */
+
+typedef struct {
+    LmMessageNode *node;
+    const char *prefix;
+    const char *uri;
+} DMNamespace;
+
+typedef struct {
+    HippoDataModel *model;
+    const char *system_uri;
+    GSList *nodes;
+    GSList *resource_bases;
+    GSList *default_namespaces;
+    GSList *namespaces;
+} DMContext;
+
+/* Cut-and-paste to poke into loudmouth internal structures :-( */
+typedef struct {
+        gchar *key;
+        gchar *value;
+} CutPasteKeyValuePair;
+
+static void
+dm_context_init(DMContext      *context,
+                HippoDataModel *model)
+{
+    context->model = model;
+    context->system_uri = g_intern_string("http://mugshot.org/p/system");
+    context->nodes = NULL;
+    context->resource_bases = NULL;
+    context->default_namespaces = NULL;
+    context->namespaces = NULL;
+}
+
+static gboolean
+dm_context_decode(DMContext    *context,
+                  const char   *prefixed_name,
+                  const char  **uri,
+                  const char  **name)
+{
+    const char *colon = strchr(prefixed_name, ':');
+    if (colon == NULL) {
+        *uri = context->default_namespaces->data;
+        *name = prefixed_name;
+
+        return TRUE;
+    } else {
+        int prefix_len = colon - prefixed_name;
+        GSList *l2;
+        
+        for (l2 = context->namespaces; l2; l2 = l2->next) {
+            DMNamespace *namespace = l2->data;
+
+            if (strncmp(namespace->prefix, prefixed_name, prefix_len) == 0 &&
+                namespace->prefix[prefix_len] == '\0')
+            {
+                *uri = namespace->uri;
+                *name = colon + 1;
+
+                return TRUE;
+            }
+        }
+    }
+
+    return FALSE;
+}
+                          
+
+static const char *
+dm_context_get_system_attribute(DMContext  *context,
+                                const char *name)
+{
+    LmMessageNode *node = context->nodes->data;
+    GSList *l;
+
+    for (l = node->attributes; l; l = l->next) {
+        CutPasteKeyValuePair *kvp = l->data;
+
+        const char *attr_uri;
+        const char *attr_name;
+
+        if (dm_context_decode(context, kvp->key, &attr_uri, &attr_name)) {
+            if (attr_uri == context->system_uri && strcmp(attr_name, name) == 0)
+                return kvp->value;
+        }
+    }
+
+    return NULL;
+}
+
+static void
+dm_context_push_node(DMContext     *context,
+                     LmMessageNode *node)
+{
+    GSList *l;
+
+    const char *new_default_namespace;
+    const char *new_resource_base;
+
+    context->nodes = g_slist_prepend(context->nodes, node);
+
+    if (context->default_namespaces)
+        new_default_namespace = context->default_namespaces->data;
+    else
+        new_default_namespace = NULL;
+    
+    for (l = node->attributes; l; l = l->next) {
+        CutPasteKeyValuePair *kvp = l->data;
+        if (g_str_has_prefix(kvp->key, "xmlns")) {
+            if (kvp->key[5] == '\0') {
+                new_default_namespace = g_intern_string(kvp->value);
+            } else if (kvp->key[5] == ':') {
+                DMNamespace *namespace = g_new(DMNamespace, 1);
+                namespace->node = node;
+                namespace->prefix = g_intern_string(kvp->key + 6);
+                namespace->uri = g_intern_string(kvp->value);
+
+                context->namespaces = g_slist_prepend(context->namespaces, namespace);
+            }
+        }
+    }
+
+    context->default_namespaces = g_slist_prepend(context->default_namespaces, (char *)new_default_namespace);
+
+    new_resource_base = dm_context_get_system_attribute(context, "resourceBase");
+    if (new_resource_base == NULL && context->resource_bases)
+        new_resource_base = context->resource_bases->data;
+
+    context->resource_bases = g_slist_prepend(context->resource_bases, (char *)new_resource_base);
+}
+
+static void
+dm_context_pop_node(DMContext *context)
+{
+    LmMessageNode *node = context->nodes->data;
+    context->nodes = g_slist_delete_link(context->nodes, context->nodes);
+
+    context->resource_bases = g_slist_delete_link(context->resource_bases, context->resource_bases);
+    context->default_namespaces = g_slist_delete_link(context->default_namespaces, context->default_namespaces);
+        
+    while (context->namespaces) {
+        DMNamespace *namespace = context->namespaces->data;
+        if (namespace->node != node)
+            break;
+
+        context->namespaces = g_slist_delete_link(context->namespaces, context->namespaces);
+        g_free(namespace);
+    }
+}
+
+static gboolean
+dm_context_node_info(DMContext   *context,
+                     const char **uri,
+                     const char **name)
+{
+    LmMessageNode *node = context->nodes->data;
+
+    return dm_context_decode(context, node->name, uri, name);
+}
+
+static char *
+dm_context_get_resource_id(DMContext *context)
+{
+    const char *value = dm_context_get_system_attribute(context, "resourceId");
+    const char *resource_base = context->resource_bases->data;
+    if (value == NULL)
+        return NULL;
+
+    /* FIXME: check to see if value is absolute */
+    if (resource_base != NULL)
+        return g_strconcat(resource_base, value, NULL);
+    else
+        return g_strdup(value);
+}
+
+static gboolean
+dm_context_get_indirect(DMContext *context)
+{
+    const char *indirect_attr = dm_context_get_system_attribute(context, "indirect");
+    if (indirect_attr != NULL)
+        return g_ascii_strcasecmp(indirect_attr, "true") == 0;
+    else
+        return FALSE;
+}
+
+static HippoDataUpdate
+dm_context_get_update(DMContext *context)
+{
+    const char *update_attr = dm_context_get_system_attribute(context, "update");
+    if (update_attr != NULL) {
+        if (strcmp(update_attr, "add") == 0)
+            return HIPPO_DATA_UPDATE_ADD;
+        else if (strcmp(update_attr, "replace") == 0)
+            return HIPPO_DATA_UPDATE_REPLACE;
+        else if (strcmp(update_attr,"remove") == 0)
+            return HIPPO_DATA_UPDATE_REMOVE;
+        else if (strcmp(update_attr, "clear") == 0)
+            return HIPPO_DATA_UPDATE_CLEAR;
+        else {
+            g_warning("Unknown value for m:update attribute. Assuming 'replace'");
+        }
+    }
+
+    return HIPPO_DATA_UPDATE_REPLACE;
+}
+
+static HippoDataUpdate
+dm_context_get_cardinality(DMContext *context)
+{
+    const char *cardinality_attr = dm_context_get_system_attribute(context, "cardinality");
+    if (cardinality_attr != NULL) {
+        if (strcmp(cardinality_attr, "01") == 0)
+            return HIPPO_DATA_CARDINALITY_01;
+        else if (strcmp(cardinality_attr, "1") == 0)
+            return HIPPO_DATA_CARDINALITY_01;
+        else if (strcmp(cardinality_attr, "N") == 0)
+            return HIPPO_DATA_CARDINALITY_N;
+        else {
+            g_warning("Unknown value for m:cardinality attribute. Assuming '01'");
+        }
+    }
+
+    return HIPPO_DATA_CARDINALITY_01;
+}
+
+static gboolean
+dm_context_get_value(DMContext      *context,
+                     HippoDataValue *value)
+{
+    char *resource_id = dm_context_get_resource_id(context);
+    
+    if (resource_id != NULL) {
+        HippoDataResource *resource = _hippo_data_model_get_resource(context->model, resource_id);
+        
+        if (resource == NULL) {
+            // FIXME: We need to handle circular references
+            g_warning("Reference to a resource %s that we don't know about", resource_id);
+            g_free(resource_id);
+            return FALSE;
+        }
+        g_free(resource_id);
+
+        value->type = HIPPO_DATA_RESOURCE;
+        value->u.resource = resource;
+
+        return TRUE;
+    } else {
+        LmMessageNode *node = context->nodes->data;
+
+        value->type = HIPPO_DATA_STRING;
+        if (node->value != NULL)
+            value->u.string = node->value;
+        else
+            value->u.string = "";
+    }
+
+    return TRUE;
+}
+
+static void
+update_property(DMContext            *context,
+                HippoDataResource    *resource,
+                HippoNotificationSet *notifications)
+{
+    const char *property_uri;
+    const char *property_name;
+    HippoQName *property_qname;
+    HippoDataUpdate update;
+    HippoDataCardinality cardinality;
+    
+    if (!dm_context_node_info(context, &property_uri, &property_name) || property_uri == NULL) {
+        g_warning("Couldn't resolve the namespace for child element of a resource %s",
+                  hippo_data_resource_get_resource_id(resource));
+        return;
+    }
+    
+    property_qname = hippo_qname_get(property_uri, property_name);
+    
+    update = dm_context_get_update(context);
+    cardinality = dm_context_get_cardinality(context);
+    
+    if (update == HIPPO_DATA_UPDATE_CLEAR) {
+        _hippo_data_resource_update_property(resource, property_qname, update, cardinality,
+                                             NULL, notifications);
+    } else {
+        HippoDataValue value;
+        
+        if (dm_context_get_value(context, &value)) {
+            _hippo_data_resource_update_property(resource, property_qname, update, cardinality,
+                                                 &value,
+                                                 notifications);
+        }
+    }
+}
+
+static HippoDataResource *
+update_resource(DMContext            *context,
+                HippoNotificationSet *notifications)
+{
+    const char *uri;
+    const char *name;
+    char *resource_id = NULL;
+    HippoDataResource *resource;
+    LmMessageNode *node = context->nodes->data;
+    LmMessageNode *property_node;
+    gboolean indirect;
+    
+    if (!dm_context_node_info(context, &uri, &name))
+        return NULL;
+    
+    if (uri == NULL)
+        return NULL;
+    
+    if (strcmp(name, "resource") != 0)
+        return NULL;
+    
+    resource_id = dm_context_get_resource_id(context);
+    if (resource_id == NULL) {
+        g_warning("Didn't find a resource ID for a resource node, ignoring");
+        return NULL;
+    }
+
+    resource = _hippo_data_model_ensure_resource(context->model, resource_id, uri); 
+    indirect = dm_context_get_indirect(context);
+    
+    for (property_node = node->children; property_node; property_node = property_node->next) {
+        dm_context_push_node(context, property_node);
+        update_property(context, resource, indirect ? NULL :  notifications);
+        dm_context_pop_node(context);
+    }
+    
+    g_free(resource_id);
+
+    if (indirect)
+        return NULL;
+    else
+        return resource;
+}
+
+static LmHandlerResult
+on_query_reply(LmMessageHandler *handler,
+               LmConnection     *lm_connection,
+               LmMessage        *message,
+               gpointer          data)
+{
+    MessageContext *message_context = data;
+    HippoDataQuery *query = message_context->data;
+    HippoQName *query_qname = hippo_data_query_get_qname(query);
+    LmMessageNode *node = lm_message_get_node(message);
+    DMContext context;
+    LmMessageNode *child;
+    LmMessageNode *resource_node;
+    const char *child_uri;
+    const char *child_name;
+    GSList *results = NULL;
+    
+    dm_context_init(&context, hippo_data_cache_get_model(message_context->connection->cache));
+    dm_context_push_node(&context, node);
+
+    // FIXME: Check for <iq type="error">
+
+    child = node->children;
+    if (child == NULL || child->next != NULL) {
+        g_warning("Reply to query didn't have a single child of the <iq/> node");
+        goto pop_node;
+    }
+
+    dm_context_push_node(&context, child);
+    if (!dm_context_node_info(&context, &child_uri, &child_name)) {
+        g_warning("Couldn't resolve the namespace for the <iq/> child in a query reply");
+        goto pop_child;
+    }
+
+    if (child_uri != query_qname->uri || strcmp(child_name, query_qname->name) != 0) {
+        g_warning("<iq/> child name didn't match the query");
+        goto pop_child;
+    }
+    
+    for (resource_node = child->children; resource_node; resource_node = resource_node->next) {
+        HippoDataResource *resource;
+        
+        dm_context_push_node(&context, resource_node);
+        resource = update_resource(&context, NULL);
+        if (resource != NULL)
+            results = g_slist_prepend(results, resource); 
+        
+        dm_context_pop_node(&context);
+    }
+
+    _hippo_data_query_response(query, results);
+    g_slist_free(results);
+
+ pop_child:
+    dm_context_pop_node(&context);
+
+ pop_node:
+    dm_context_pop_node(&context);
+    g_assert(context.nodes == NULL);
+    
+    // FIXME: _hippo_data_query_error() if we had a validation error above
+    
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+void
+hippo_connection_send_query(HippoConnection *connection,
+                            HippoDataQuery  *query,
+                            const char      *fetch,
+                            va_list          args)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    HippoQName *query_qname = hippo_data_query_get_qname(query);
+    
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    node = lm_message_get_node(message);
+
+    child = lm_message_node_add_child (node, query_qname->name, NULL);
+    lm_message_node_set_attribute(child, "xmlns", query_qname->uri);
+    lm_message_node_set_attribute(child, "xmlns:m", "http://mugshot.org/p/system");
+
+    if (fetch != NULL) 
+        lm_message_node_set_attribute(child, "m:fetch", fetch);
+    
+    while (TRUE) {
+        LmMessageNode *param_node;
+        
+        const char *param_name = va_arg(args, const char *);
+        const char *param_value;
+        if (param_name == NULL)
+            break;
+        
+        param_value = va_arg(args, const char *);
+
+        param_node = lm_message_node_add_child (child, "m:param", NULL);
+        lm_message_node_set_attribute(param_node, "name", param_name);
+        lm_message_node_set_value(param_node, param_value);
+    }
+
+    hippo_connection_send_message_with_reply_full(connection, message, on_query_reply, SEND_MODE_AFTER_AUTH, query, NULL);
+
+    lm_message_unref(message);
+}
+
+static gboolean
+handle_data_notify (HippoConnection *connection,
+                    LmMessage       *message)
+{
+    DMContext context;
+    LmMessageNode *node = lm_message_get_node(message);
+    LmMessageNode *child;
+    LmMessageNode *resource_node;
+    gboolean found = FALSE;
+    
+    dm_context_init(&context, hippo_data_cache_get_model(connection->cache));
+    dm_context_push_node(&context, node);
+
+    for (child = node->children; !found && child; child = child->next) {
+        const char *child_uri;
+        const char *child_name;
+        HippoNotificationSet *notifications;
+    
+        dm_context_push_node(&context, child);
+        if (!dm_context_node_info(&context, &child_uri, &child_name)) {
+            goto next_child;
+        }
+        
+        if (child_uri != context.system_uri || strcmp(child_name, "notify") != 0) {
+            goto next_child;
+        }
+
+        found = TRUE;
+
+        notifications = _hippo_notification_set_new(context.model);
+        
+        for (resource_node = child->children; resource_node; resource_node = resource_node->next) {
+            dm_context_push_node(&context, resource_node);
+            update_resource(&context, notifications);
+            dm_context_pop_node(&context);
+        }
+
+        _hippo_notification_set_send(notifications);
+
+    next_child:
+        dm_context_pop_node(&context);
+    }
+
+    dm_context_pop_node(&context);
+    g_assert(context.nodes == NULL);
+    
+    return found;
+}
+

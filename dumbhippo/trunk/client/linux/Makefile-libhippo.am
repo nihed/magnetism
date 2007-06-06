@@ -255,6 +255,15 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-data-cache.c		\
 	$(COMMONSRCDIR)/hippo/hippo-data-cache.h		\
 	$(COMMONSRCDIR)/hippo/hippo-data-cache-internal.h	\
+	$(COMMONSRCDIR)/hippo/hippo-data-model.c		\
+	$(COMMONSRCDIR)/hippo/hippo-data-model.h		\
+	$(COMMONSRCDIR)/hippo/hippo-data-model-internal.h	\
+	$(COMMONSRCDIR)/hippo/hippo-data-resource.c		\
+	$(COMMONSRCDIR)/hippo/hippo-data-resource.h		\
+	$(COMMONSRCDIR)/hippo/hippo-data-resource-internal.h	\
+	$(COMMONSRCDIR)/hippo/hippo-data-query.c		\
+	$(COMMONSRCDIR)/hippo/hippo-data-query.h		\
+	$(COMMONSRCDIR)/hippo/hippo-data-query-internal.h	\
 	$(COMMONSRCDIR)/hippo/hippo-entity.c			\
 	$(COMMONSRCDIR)/hippo/hippo-entity.h			\
 	$(COMMONSRCDIR)/hippo/hippo-external-account.c		\
@@ -278,12 +287,16 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-myspace.h			\
 	$(COMMONSRCDIR)/hippo/hippo-netflix-movie.c		\
 	$(COMMONSRCDIR)/hippo/hippo-netflix-movie.h		\
+	$(COMMONSRCDIR)/hippo/hippo-notification-set.c		\
+	$(COMMONSRCDIR)/hippo/hippo-notification-set.h		\
 	$(COMMONSRCDIR)/hippo/hippo-person.c			\
 	$(COMMONSRCDIR)/hippo/hippo-person.h			\
 	$(COMMONSRCDIR)/hippo/hippo-platform.c			\
 	$(COMMONSRCDIR)/hippo/hippo-platform.h			\
 	$(COMMONSRCDIR)/hippo/hippo-post.c			\
 	$(COMMONSRCDIR)/hippo/hippo-post.h			\
+	$(COMMONSRCDIR)/hippo/hippo-qname.c			\
+	$(COMMONSRCDIR)/hippo/hippo-qname.h			\
 	$(COMMONSRCDIR)/hippo/hippo-quip-window.c		\
 	$(COMMONSRCDIR)/hippo/hippo-quip-window.h		\
 	$(COMMONSRCDIR)/hippo/hippo-resource.c			\
