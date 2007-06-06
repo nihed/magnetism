@@ -74,6 +74,7 @@ fi
 
 aclocal $ACLOCAL_FLAGS
 libtoolize --force
+gtkdocize
 autoheader
 automake --add-missing -Woverride
 autoconf

@@ -186,6 +186,8 @@ AC_SUBST(GLIB_GENMARSHAL)
 GLIB_MKENUMS=`$PKG_CONFIG --variable=glib_mkenums glib-2.0`
 AC_SUBST(GLIB_MKENUMS)
 
+GTK_DOC_CHECK([1.6])
+
 ## Python bindings
 AM_PATH_PYTHON
 AM_CHECK_PYTHON_HEADERS(,[AC_MSG_ERROR(could not find Python headers)])
@@ -200,6 +202,7 @@ AC_SUBST(PYGTK_DEFSDIR)
 AC_OUTPUT([
 Makefile
 hippo-canvas.pc
+docs/Makefile
 ])
 
 dnl ==========================================================================
