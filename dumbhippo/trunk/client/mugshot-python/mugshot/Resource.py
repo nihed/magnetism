@@ -90,7 +90,7 @@ class Resource:
     def _update_property(self, property, update, cardinality, value, notifications=None):
         property_id = self.__insert_property_id(property[0], property[1])
 
-        if update == UPDATE_ADD and not self.__properties.has_key(property_id):
+        if update == UPDATE_REMOVE and not self.__properties.has_key(property_id):
             raise Exception("Remove of a property we don't have")
 
         if cardinality == CARDINALITY_01:
@@ -190,6 +190,7 @@ class Resource:
         for (handler,property) in self.__connections:
             if property == None:
                 handler(self)
+                
     def _on_property_change(self, changed_property):
         for (handler,property) in self.__connections:
             if property != None:

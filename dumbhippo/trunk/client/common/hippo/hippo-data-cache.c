@@ -1,5 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-data-cache-internal.h"
+#include "hippo-data-model-internal.h"
 #include "hippo-connection.h"
 #include "hippo-group.h"
 #include "hippo-block-post.h"
@@ -42,6 +43,7 @@ struct _HippoDataCache {
     unsigned int     application_usage_enabled : 1;
     HippoClientInfo  client_info;
     GSList          *title_patterns;
+    HippoDataModel  *model;
 };
 
 struct _HippoDataCacheClass {
@@ -90,7 +92,9 @@ hippo_data_cache_init(HippoDataCache *cache)
     cache->music_sharing_enabled = FALSE;
     cache->music_sharing_primed = TRUE;
     
-    cache->hotness = HIPPO_HOTNESS_UNKNOWN;                                               
+    cache->hotness = HIPPO_HOTNESS_UNKNOWN;
+
+    cache->model = _hippo_data_model_new(cache);
 }
 
 static void
@@ -1164,6 +1168,14 @@ hippo_data_cache_match_application_title(HippoDataCache *cache,
     return NULL;
 }
     
+HippoDataModel *
+hippo_data_cache_get_model(HippoDataCache   *cache)
+{
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+
+    return cache->model;
+}
+
 static HippoEntity *
 add_debug_person(HippoDataCache *cache, const char *guid, const char *name)
 {
