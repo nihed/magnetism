@@ -890,8 +890,7 @@ dh.util.formatTimeAgo = function(date) {
 }
 
 // based on the example from http://blog.paranoidferret.com/?p=15
-dh.util.ellipseText = function (element, width, text)
-{
+dh.util.ellipseText = function (element, width, text) {
    if (text != null) {
        dh.dom.removeChildren(element);
        dh.util.insertTextWithLinks(element, text);                 
@@ -932,8 +931,7 @@ dh.util.ellipseText = function (element, width, text)
 // sometimes the element for whatever reason does not accurately reflect the
 // offset height it has with the content in it (for example, the title link 
 // for the block), so elementToMeasure can be passed in as a work around for that
-dh.util.ellipseWrappingText = function (element, height, text, elementToMeasure)
-{
+dh.util.ellipseWrappingText = function (element, height, text, elementToMeasure) {
    if (text != null) {
        dh.dom.removeChildren(element);
        var textNode = document.createTextNode(text);
@@ -974,3 +972,56 @@ dh.util.ellipseWrappingText = function (element, height, text, elementToMeasure)
    
    return false; 
 }
+
+// countToAddTogether tells us how many children to add at a time, the default is one
+// for example countToAddTogether = 2 is useful for a comma separated list, so that each
+// item is followed by a comma
+// this method can also be changed to work in a binary fashion, but it's fine like it is
+// for the current use since we know we are only adding a few items 
+dh.util.ellipseNodeWithChildren = function (element, width, originalElement, countToAddTogether) {
+    var i = 0, j, k;    
+    if (countToAddTogether == null)
+        countToAddTogether = 1;  
+     
+    if (originalElement != null) {        
+        dh.dom.removeChildren(element);  
+        while (i < originalElement.childNodes.length) {
+            element.appendChild(originalElement.childNodes[i].cloneNode(true));   
+            i++;
+        }
+    } else {
+        originalElement = element.cloneNode(true);        
+    }
+    
+    if (element.offsetWidth > width) {
+        dh.dom.removeChildren(element);  
+        i = 0;          
+        while ((element.offsetWidth < width) && (i < originalElement.childNodes.length)) {    
+            // remove the previous dotdotdot
+            if (i > 0) 
+                element.removeChild(element.lastChild);   
+                
+            j = 0;                   
+            while ((j < countToAddTogether) && (i < originalElement.childNodes.length)) {    
+                element.appendChild(originalElement.childNodes[i].cloneNode(true));                 
+                j++;
+                i++;   
+            }    
+            var dotsNode = document.createTextNode("...");
+            element.appendChild(dotsNode);           
+        }
+        
+        if (i > 0) {           
+            element.removeChild(element.lastChild);
+            // we want to remove exactly as many children as we added the last time
+            k = j;                   
+            while (k > 0) {   
+                element.removeChild(element.lastChild); 
+                k--;
+            }    
+            var dotsNode = document.createTextNode("...");
+            element.appendChild(dotsNode);     
+        }
+    }                          
+}
+        
