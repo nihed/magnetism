@@ -99,7 +99,12 @@ hippo_canvas_text_class_init(HippoCanvasTextClass *klass)
     box_class->paint_below_children = hippo_canvas_text_paint_below_children;
     box_class->get_content_width_request = hippo_canvas_text_get_content_width_request;
     box_class->get_content_height_request = hippo_canvas_text_get_content_height_request;
-    
+
+    /**
+     * HippoCanvasText:text
+     *
+     * The text to display.
+     */
     g_object_class_install_property(object_class,
                                     PROP_TEXT,
                                     g_param_spec_string("text",
@@ -108,6 +113,12 @@ hippo_canvas_text_class_init(HippoCanvasTextClass *klass)
                                                         NULL,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
 
+    /**
+     * HippoCanvasText:markup
+     *
+     * The text to display in Pango markup format, allowing you to do bold and other text styles.
+     * This is a shortcut way to set the 'text' and 'attributes' properties.
+     */    
     g_object_class_install_property(object_class,
                                     PROP_MARKUP,
                                     g_param_spec_string("markup",
@@ -116,7 +127,13 @@ hippo_canvas_text_class_init(HippoCanvasTextClass *klass)
                                                         NULL,
                                                         G_PARAM_WRITABLE));
 
-
+    
+    /**
+     * HippoCanvasText:attributes
+     *
+     * The Pango attributes of the text; usually it is more convenient to use the 'markup' property
+     * than to do the attributes by hand.
+     */    
     g_object_class_install_property(object_class,
                                     PROP_ATTRIBUTES,
                                     g_param_spec_boxed ("attributes",
@@ -124,6 +141,16 @@ hippo_canvas_text_class_init(HippoCanvasTextClass *klass)
                                                         _("A list of style attributes to apply to the text"),
                                                         PANGO_TYPE_ATTR_LIST,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    /**
+     * HippoCanvasText:font-scale
+     *
+     * A scale factor for the font; Pango exports constants for common
+     * factors, such as #PANGO_SCALE_LARGE, #PANGO_SCALE_X_SMALL and
+     * so forth. If you want to set an absolute font size, use the
+     * 'font' or 'font-desc' properties which are introduced in the
+     * HippoCanvasBox base class.
+     */
     g_object_class_install_property(object_class,
                                     PROP_FONT_SCALE,
                                     g_param_spec_double("font-scale",
