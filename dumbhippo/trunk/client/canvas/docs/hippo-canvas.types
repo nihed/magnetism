@@ -1,9 +1,19 @@
+#include <hippo/hippo-canvas.h>
+#include <hippo/hippo-canvas-box.h>
+#include <hippo/hippo-canvas-gradient.h>
+#include <hippo/hippo-canvas-text.h>
+#include <hippo/hippo-canvas-link.h>
+#include <hippo/hippo-canvas-image.h>
+#include <hippo/hippo-canvas-widgets.h>
+#include <hippo/hippo-canvas-image-button.h>
+#include <hippo/hippo-canvas-style.h>
+#include <hippo/hippo-graphics.h>
+
 hippo_canvas_style_get_type
 hippo_canvas_box_get_type
 hippo_canvas_image_get_type
 hippo_rectangle_get_type
 hippo_canvas_container_get_type
-hippo_cairo_surface_get_type
 hippo_event_get_type
 hippo_canvas_context_get_type
 hippo_canvas_text_get_type
