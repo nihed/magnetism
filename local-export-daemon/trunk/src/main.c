@@ -25,13 +25,28 @@
 #include "hippo-dbus-helper.h"
 #include <dbus/dbus-glib-lowlevel.h>
 #include "tcp-listener.h"
+#include "main.h"
 
-#define OUR_BUS_NAME "org.freedesktop.od.LocalExport"
+static char *machine_id;
+static char *session_id;
 
 static DBusHandlerResult handle_message         (DBusConnection     *connection,
                                                  DBusMessage        *message,
                                                  void               *user_data);
 static void              on_disconnected        (void);
+
+void
+get_machine_and_session_ids(const char **machine_id_p,
+                            const char **session_id_p)
+{
+    g_assert(machine_id != NULL);
+    g_assert(session_id != NULL);
+    
+    if (machine_id_p)
+        *machine_id_p = machine_id;
+    if (session_id_p)
+        *session_id_p = session_id;
+}
 
 static DBusHandlerResult
 handle_message(DBusConnection     *connection,
@@ -60,7 +75,7 @@ handle_message(DBusConnection     *connection,
             /* If we lose our name, we behave as if disconnected */
             const char *name = NULL;
             if (dbus_message_get_args(message, NULL, DBUS_TYPE_STRING, &name, DBUS_TYPE_INVALID) && 
-                strcmp(name, OUR_BUS_NAME) == 0) {
+                strcmp(name, LOCAL_EXPORT_BUS_NAME) == 0) {
                 on_disconnected();
             }
         } else if (dbus_message_has_sender(message, DBUS_SERVICE_DBUS) &&
@@ -112,21 +127,62 @@ request_bus_name(DBusConnection *connection,
         flags |= DBUS_NAME_FLAG_REPLACE_EXISTING;
     
     dbus_error_init(&derror);
-    result = dbus_bus_request_name(connection, OUR_BUS_NAME,
+    result = dbus_bus_request_name(connection, LOCAL_EXPORT_BUS_NAME,
                                    flags,
                                    &derror);
     if (dbus_error_is_set(&derror)) {
-        g_printerr("Failed to take bus name %s: %s", OUR_BUS_NAME, derror.message);
+        g_printerr("Failed to take bus name %s: %s", LOCAL_EXPORT_BUS_NAME, derror.message);
         return FALSE;
     }
     
     if (!(result == DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER ||
           result == DBUS_REQUEST_NAME_REPLY_ALREADY_OWNER)) {
-        g_printerr("Failed to take bus name %s (another copy of the daemon is probably running already)", OUR_BUS_NAME);
+        g_printerr("Failed to take bus name %s (another copy of the daemon is probably running already)", LOCAL_EXPORT_BUS_NAME);
         return FALSE;
     }
 
     return TRUE;
+}
+
+static char*
+get_session_guid_hack(void)
+{
+    /* We need a dbus_connection_get_server_guid(); until then we have to do this */
+    const char *address = g_getenv("DBUS_SESSION_BUS_ADDRESS");
+    const char *s;
+
+    if (address == NULL)
+        goto fallback;
+    
+    s = strstr(address, "guid=");
+    if (s == NULL)
+        goto fallback;
+
+    s += 5;
+    if (strlen(s) < 32)
+        goto fallback;
+
+    return g_strndup(s, 32);
+    
+ fallback:
+    /* The fallback is to make up an id for the local-export-daemon, which is less useful
+     * since it doesn't have any meaning
+     */
+    {
+        char buf[32];
+        int i;
+
+        /* glib seeds the process with urandom, which should be enough for network uniqueness,
+         * though this GUID will allow other processes to guess our next random number
+         * (which conceivably could matter, but in any case where it does
+         * the code should be using a new random seed and not the glib-global one)
+         */
+        for (i = 0; i < (int) sizeof(buf); ++i) {
+            buf[i] = g_random_int_range('a', 'z' + 1);
+        }
+
+        return g_strndup(buf, sizeof(buf));
+    }
 }
 
 int
@@ -154,9 +210,14 @@ main(int argc, char **argv)
     if (!request_bus_name(connection, TRUE))
         exit(1);
 
+    session_id = get_session_guid_hack();
+    machine_id = dbus_get_local_machine_id();
+
+    /* g_printerr("Session '%s' on machine '%s'\n", session_id, machine_id); */
+    
     if (!tcp_listener_init())
         exit(1);
-    
+
     loop = g_main_loop_new(NULL, FALSE);
 
     g_main_loop_run(loop);
