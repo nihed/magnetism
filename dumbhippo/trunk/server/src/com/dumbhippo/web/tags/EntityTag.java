@@ -46,12 +46,14 @@ public class EntityTag extends SimpleTagSupport {
 		String photoUrl = null;
 		String defaultCssClass = "dh-headshot";
 		String cssArea = "";
-		
+		String id = "";
+		String textLinkClass = "";
+
 		if (o instanceof PersonView) {
 			PersonView view = (PersonView)o;
 			User user = view.getUser();
 			if (user != null) {
-				String id = user.getId();
+				id = user.getId();
 				if (skipId != null && skipId.equals(id))
 					return null;
 				if (music)
@@ -68,13 +70,14 @@ public class EntityTag extends SimpleTagSupport {
 		} else if (o instanceof GroupView) {
 			GroupView groupView = (GroupView)o;
 			Group group = groupView.getGroup();
-			if (skipId != null && skipId.equals(group.getId()))
+			id = group.getId();
+			if (skipId != null && skipId.equals(id))
 				return null;
 			PersonView inviter = groupView.getInviter();
 			if (music)
-				link = "/musicgroup?who=" + group.getId();
+				link = "/musicgroup?who=" + id;
 			else
-				link = "/group?who=" + group.getId();
+				link = "/group?who=" + id;
 			if (inviter != null)
 				body = group.getName() + " (invited by " + inviter.getName() + ")";
 			else
@@ -83,18 +86,20 @@ public class EntityTag extends SimpleTagSupport {
 			defaultCssClass = "dh-group";
 		} else if (o instanceof Group) {
 			Group group = (Group)o;
-			if (skipId != null && skipId.equals(group.getId()))
+			id = group.getId();
+			if (skipId != null && skipId.equals(id))
 				return null;
 			if (music)
-				link = "/musicgroup?who=" + group.getId();
+				link = "/musicgroup?who=" + id;
 			else
-				link = "/group?who=" + group.getId();
+				link = "/group?who=" + id;
 			body = group.getName();
 			photoUrl = group.getPhotoUrl();
 			defaultCssClass = "dh-group";
 		} else if (o instanceof FeedView) {
 			FeedView feedView = (FeedView)o;
-			if (skipId != null && skipId.equals(feedView.getIdentifyingGuid()))
+			id = feedView.getIdentifyingGuid().toString();
+			if (skipId != null && skipId.equals(id))
 				return null;
 			link = feedView.getHomeUrl();
 			body = feedView.getName();
@@ -110,7 +115,10 @@ public class EntityTag extends SimpleTagSupport {
 		
 		if (cssClass == null)
 			cssClass = defaultCssClass;
-		
+	
+		if (cssClass.equals("dh-entity-"))
+			textLinkClass = "dh-entity-" + id;
+			
 		XmlBuilder xml = new XmlBuilder();
 
 		boolean showInviteLink = false;
@@ -163,7 +171,7 @@ public class EntityTag extends SimpleTagSupport {
 			// for listing recipients in comma separated list or
 			// for listing contacts with no accounts
 			if (link != null) { 
-			    xml.appendTextNode("a", body, "href", link, "target", "_top");
+			    xml.appendTextNode("a", body, "href", link, "target", "_top", "class", textLinkClass);
 			} else {
 				if (!cssArea.equals("")) {
 					xml.openElement("span", "class", cssArea);

@@ -12,6 +12,7 @@ dh.framer._selfId = null
 dh.framer._initialTitle = null
 dh.framer._initialDescription = null
 dh.framer._recipientsNode = null
+dh.framer._whoIsAroundNode = null
 
 // Go back to the user's home page, possibly closing the browser bar
 dh.framer.goHome = function() {
@@ -68,7 +69,14 @@ dh.framer._userSpanId = function(user) {
 }
 
 dh.framer._userSpan = function(user) {
-	return document.getElementById(this._userSpanId(user))
+    var i = 0;
+    var userId = this._userSpanId(user);
+    while (i < dh.framer._whoIsAroundNode.childNodes.length) {
+        if (dh.framer._whoIsAroundNode.childNodes[i].id == userId)
+            return dh.framer._whoIsAroundNode.childNodes[i];
+        i++;
+    }        
+	return null;
 }
 
 dh.framer._messageTimeElementId = function(message) {
@@ -122,7 +130,7 @@ dh.framer._addMessage = function(message, before) {
     
     var userUrl = "/person?who=" + message.getEntity().getId()    
 	var whoElement = dh.util.createLinkElement(userUrl, message.getEntity().getName());
-	whoElement.className = "dh-chat-message-who";
+	whoElement.className = "dh-chat-message-who dh-entity-" + message.getEntity().getId();
 	whoElement.id = this._messageNameDivId(message)
 	messageDiv.appendChild(whoElement);
 	
@@ -134,7 +142,7 @@ dh.framer._addMessage = function(message, before) {
 	
 	var beforeMessageDiv = before ? this._messageDiv(before) : null;
 	
-	var messageArea = document.getElementById('dhPostChatMessages')
+	var messageArea = document.getElementById('dhPostChatMessages');
 	if (dh.framer.messagesInitialized)
 	    messageDiv.style.visibility = "hidden";
 	messageArea.insertBefore(messageDiv, beforeMessageDiv);
@@ -153,14 +161,15 @@ dh.framer._addMessage = function(message, before) {
         // with the initial last message id, but will get a message with a greater 
         // message id. 
 	    messageArea.style.display = "block";	
-	    dh.framer.updateMessagesWidth()
+	    dh.framer.updateMessagesWidth();
         dh.framer.messagesInitialized = true;	   	
 	}    
 }
 
 dh.framer.updateWidth = function() {
     dh.framer.updateBlockContentWidth();
-    dh.framer.updateBlockDetailsWidth();
+    dh.framer.updateBlockDetails();
+    dh.framer.updateWhoIsAround();
 	dh.framer.updateMessagesWidth();			
 }
 
@@ -204,7 +213,7 @@ dh.framer.updateBlockContentWidth = function() {
 	}    	    
 }
 
-dh.framer.updateBlockDetailsWidth = function() {
+dh.framer.updateBlockDetails = function() {
 	var framerLeft = document.getElementById('dhFramerLeft');		
     var blockInfo = document.getElementById('dhBlockInfoTable');	
 	var entityListList = dh.html.getElementsByClass('dh-entity-list', blockInfo);
@@ -218,6 +227,19 @@ dh.framer.updateBlockDetailsWidth = function() {
 	} else {
 	    dh.util.ellipseNodeWithChildren(entityListList[1], framerLeft.offsetWidth - senderSpan.offsetWidth - 135, dh.framer._recipientsNode, 2);
 	}    	    	
+}
+
+dh.framer.updateWhoIsAround = function() {
+	var framerLeft = document.getElementById('dhFramerLeft');		
+	var whoIsAround = document.getElementById('dhPostViewingListPeople');
+    if (dh.framer._whoIsAroundNode == null) {
+        dh.framer._whoIsAroundNode = whoIsAround.cloneNode(true);
+        // we normally don't expect anyone to be around when we are initializing this, but just in case
+        // 80 is for 'Who's around:'
+	    dh.util.ellipseNodeWithChildren(whoIsAround, framerLeft.offsetWidth - 80, null, 2);   
+    } else {
+	    dh.util.ellipseNodeWithChildren(whoIsAround, framerLeft.offsetWidth - 80, dh.framer._whoIsAroundNode, 2);   
+	}     
 }
 
 dh.framer.updateMessagesWidth = function() {   		
@@ -253,8 +275,6 @@ dh.framer._removeMessage = function(message) {
 }
 
 dh.framer._addUser = function(user, before, participant) {
-	var userList = document.getElementById("dhPostViewingListPeople");
-	
     var userUrl = "/person?who=" + user.getId();
     var userElement = dh.util.createLinkElement(userUrl, user.getName());
             
@@ -262,27 +282,61 @@ dh.framer._addUser = function(user, before, participant) {
     span.id = this._userSpanId(user);	
     span.appendChild(userElement);
 
-	userList.insertBefore(span, before ? this._userSpan(before) : null);
+	dh.framer._whoIsAroundNode.insertBefore(span, before ? this._userSpan(before) : null);
 	if (span.nextSibling)
-		userList.insertBefore(document.createTextNode(", "), span.nextSibling);
+		dh.framer._whoIsAroundNode.insertBefore(document.createTextNode(", "), span.nextSibling);
 	else if (span.previousSibling)
-		userList.insertBefore(document.createTextNode(", "), span);
+		dh.framer._whoIsAroundNode.insertBefore(document.createTextNode(", "), span);
+	dh.framer.updateWhoIsAround();		
 }
 
 dh.framer._removeUser = function(user) {
-	var userList = document.getElementById("dhPostViewingListPeople")
 	var span = this._userSpan(user)
     
     if (span.nextSibling)
-	    userList.removeChild(span.nextSibling)
+	    dh.framer._whoIsAroundNode.removeChild(span.nextSibling)
     else if (span.previousSibling)
-	    userList.removeChild(span.previousSibling)
-    userList.removeChild(span)
+	    dh.framer._whoIsAroundNode.removeChild(span.previousSibling)
+    dh.framer._whoIsAroundNode.removeChild(span)
+
+	dh.framer.updateWhoIsAround();
 }
 
 dh.framer._updateUser = function(user) {
 	var span = this._userSpan(user)
-	span.replaceChild(document.createTextNode(user.getName()), span.firstChild)
+    var link = span.firstChild
+	link.replaceChild(document.createTextNode(user.getName()), link.firstChild)
+
+	dh.framer.updateWhoIsAround();
+	
+	var entityClassName = "dh-entity-" + user.getId();
+	var blockSender = document.getElementById("dhBlockSender");
+	var updateBlockDetails = false;
+	if (blockSender.className == entityClassName) {
+	    blockSender.replaceChild(document.createTextNode(user.getName()), blockSender.firstChild);
+	    updateBlockDetails = true;
+	}
+	
+	var recipientList = dh.html.getElementsByClass(entityClassName, dh.framer._recipientsNode);
+	// we expect 0 or 1 occurrences, if the person received a block because they were in some group
+	// it was sent to, the person's name would not be on the list of recipients 
+	if (recipientList.length == 1) {
+	    recipientList[0].replaceChild(document.createTextNode(user.getName()), recipientList[0].firstChild);
+        updateBlockDetails = true;
+    }	    
+    
+    if (updateBlockDetails) 
+        dh.framer.updateBlockDetails();
+        
+    var messageArea = document.getElementById('dhPostChatMessages');
+    messageSenders = dh.html.getElementsByClass(entityClassName, messageArea);
+	var i = 0;
+	while (i < messageSenders.length) {
+	    messageSenders[i].replaceChild(document.createTextNode(user.getName()), messageSenders[i].firstChild);
+	    i++;	
+	}    
+	if (i > 0)
+	    dh.framer.updateMessagesWidth();
 }
 
 dh.framer.updateTimes = function() {
@@ -320,7 +374,8 @@ dh.framer.init = function() {
     }
 
     dh.framer.updateBlockContentWidth();
-    dh.framer.updateBlockDetailsWidth();
+    dh.framer.updateBlockDetails();
+    dh.framer.updateWhoIsAround();
             
 	dh.control.createControl();
 
