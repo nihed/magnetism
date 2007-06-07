@@ -8,8 +8,14 @@ local_export_daemon_CPPFLAGS = 			\
 local_export_daemon_LDFLAGS=$(LOCAL_EXPORT_DAEMON_LIBS)
 local_export_daemon_LDADD= ## .la files for convenience libs here
 
-local_export_daemon_SOURCES= \
-	src/main.c
+local_export_daemon_SOURCES=			\
+	src/avahi-advertiser.c			\
+	src/avahi-advertiser.h			\
+	src/hippo-dbus-helper.c			\
+	src/hippo-dbus-helper.h			\
+	src/main.c				\
+	src/tcp-listener.h			\
+	src/tcp-listener.c
 
 # Dbus service file
 servicedir = $(datadir)/dbus-1/services
