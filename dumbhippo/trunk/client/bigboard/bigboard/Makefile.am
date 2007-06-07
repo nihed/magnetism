@@ -16,7 +16,7 @@ bignative_la_LIBADD =					\
 
 bignative_la_SOURCES = bignative.c bigboard-native.h bigboard-native.c
 
-bigboarddir = $(pythondir)/bigboard
+bigboarddir = $(pyexecdir)/bigboard
 bigboard_PYTHON = __init__.py \
                   big_widgets.py \
                   deskbar_embed.py \

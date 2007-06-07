@@ -69,11 +69,11 @@ class DockWindow(gtk.Window):
             propvals = [0, 0, 0, 0]
             
             geom = self.get_screen().get_monitor_geometry(0)
-            alloc = self.allocation
+            (width, height) = self.size_request()
 
-            _logger.debug("setting west strut to %d width" % (alloc.width,))
+            _logger.debug("setting west strut to %d width" % (width,))
 
-            propvals[0] = alloc.width
+            propvals[0] = width
 
             # tell window manager to not overlap buttons with maximized window
             self.window.property_change("_NET_WM_STRUT",

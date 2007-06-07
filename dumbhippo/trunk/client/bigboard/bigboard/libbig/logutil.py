@@ -1,15 +1,11 @@
 import logging, logging.config, StringIO
 
-def log_except(logger=None):
+def log_except(logger=None, text='Caught exception in callback'):
     def annotate(func):
         def _exec_cb(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
             except:
-                if errtext:
-                    text = errtext
-                else:
-                    text = "Caught exception in callback"
                 log_target = logger or logging
                 log_target.exception(text)
         return _exec_cb
