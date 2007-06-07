@@ -28,8 +28,8 @@
 	<tr>
 	    <td colspan="2">
 	        <div class="dh-block-details">
-	            From <span class="dh-entity-list"><a href="${post.poster.homeUrl}" target="_blank"><c:out value="${post.poster.name}"/></a></span>	        
-			    Sent to <span class="dh-entity-list"><dh:entityList value="${post.recipients}" separator=", "/></span>
+	            From <span class="dh-entity-list"><a href="${post.poster.homeUrl}" id="dhBlockSender" class="dh-entity-${post.poster.identifyingGuid}" target="_blank"><c:out value="${post.poster.name}"/></a></span>	        
+			    Sent to <span class="dh-entity-list"><dh:entityList value="${post.recipients}" separator=", " cssClass="dh-entity-"/></span>
 			    ${block.postTimeAgo}
 			</div>    			
 	    </td>

@@ -122,7 +122,7 @@ public class EntityListTag extends SimpleTagSupport {
 		this.photos = photos;
 	}
 	
-	public void entityCssClass(String klass) {
+	public void setCssClass(String klass) {
 		this.cssClass = klass;
 	}
 
