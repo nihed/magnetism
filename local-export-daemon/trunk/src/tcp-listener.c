@@ -22,8 +22,72 @@
 #include "avahi-advertiser.h"
 #include "hippo-dbus-helper.h"
 #include <dbus/dbus-glib-lowlevel.h>
+#include "main.h"
 
 static DBusServer *server = NULL;
+
+static DBusMessage*
+handle_get_info_for_session(void            *object,
+                            DBusMessage     *message,
+                            DBusError       *error)
+{
+    DBusMessage *reply;
+    DBusMessageIter iter, array_iter;
+    const char *requested_info;
+
+    requested_info = NULL;
+
+    if (!dbus_message_get_args(message, error, DBUS_TYPE_STRING, &requested_info,
+                               DBUS_TYPE_INVALID))
+        return NULL;
+    
+    reply = dbus_message_new_method_return(message);
+
+    dbus_message_iter_init_append(reply, &iter);
+
+    /* open an array of dict: each remote machine is a dict, where the dict is (string,variant) pairs and represents
+     * the particular info that was requested
+     */
+    dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "a{sv}", &array_iter);
+
+    /* FIXME put the info in here that matches requested_info */
+    
+    dbus_message_iter_close_container(&iter, &array_iter);
+
+    return reply;
+}
+
+static const HippoDBusMember session_info_members[] = {
+    /* the return value is machineId, sessionId, array of (namespacedInfoName, dict(string,variant)) */
+    { HIPPO_DBUS_MEMBER_METHOD, "GetInfoForSession", "", "ssa(sa{sv})", handle_get_info_for_session },
+    { 0, NULL }
+};
+
+
+static DBusHandlerResult
+handle_message_from_lan(DBusConnection     *connection,
+                        DBusMessage        *message,
+                        void               *user_data)
+{
+    int type;
+    DBusHandlerResult result;
+    
+    type = dbus_message_get_type(message);
+
+    result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+
+    result = hippo_dbus_helper_filter_message(connection, message);
+    if (result == DBUS_HANDLER_RESULT_HANDLED) {
+        ; /* we're done, something registered with the helper did the work */
+    } else if (type == DBUS_MESSAGE_TYPE_SIGNAL) {
+        if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL, "Disconnected")) {
+            /* client disconnected */
+            dbus_connection_unref(connection);
+        }        
+    }
+    
+    return result;
+}
 
 static void
 on_new_connection(DBusServer     *server,
@@ -31,7 +95,18 @@ on_new_connection(DBusServer     *server,
                   void           *data)
 {
     g_debug("Got a new connection");
+
+    dbus_connection_ref(new_connection);
+    if (!dbus_connection_add_filter(new_connection, handle_message_from_lan,
+                                    NULL, NULL))
+        g_error("no memory adding dbus connection filter");
+
+    hippo_dbus_helper_register_interface(new_connection, SESSION_INFO_INTERFACE,
+                                         session_info_members, NULL);
     
+    hippo_dbus_helper_register_object(new_connection, SESSION_INFO_OBJECT_PATH,
+                                      NULL, SESSION_INFO_INTERFACE,
+                                      NULL);
 }
 
 void
@@ -52,10 +127,13 @@ tcp_listener_init(void)
     
     g_assert(server == NULL);
 
+    /* FIXME newer versions of dbus allow omitting port so one is automatically chosen, which
+     * would be a lot better
+     */
     dbus_error_init(&derror);
-    server = dbus_server_listen("tcp:", &derror);
+    server = dbus_server_listen("tcp:port=23523", &derror);
     if (server == NULL) {
-        g_printerr("Error listening on TCP: %s", derror.message);
+        g_printerr("Error listening on TCP: %s\n", derror.message);
         return FALSE;
     }
 
