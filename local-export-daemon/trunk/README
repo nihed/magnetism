@@ -1,0 +1,16 @@
+The idea of this daemon is to have one daemon that exports info about
+a desktop session on the local network.
+
+This daemon uses mDNS, but individual desktop apps and services don't
+have to; they just export services via D-Bus which are then proxied by
+the local export daemon onto the LAN.
+
+The local export daemon will support one request to get a list of
+everything the user's session has to offer to other users on the LAN.
+The returned list of stuff can also contain so-called "metadata" for
+each item.
+
+This makes LAN traffic more efficient (each machine just queries for
+and resolves this one service), and makes it easier to write apps with
+local functionality. In theory anyway. We'll see.
+

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+_Name=Local Export Daemon
+_GenericName=Local Export Daemon
+_Comment=Daemon that exports certain services from the user's session to the local network
+Exec=local-export-daemon
+Terminal=false
+Type=Application
+#Icon=
+StartupNotify=false
+
