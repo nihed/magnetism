@@ -81,6 +81,7 @@ class BigBoardApplet(gobject.GObject):
         ebox.add_events(gtk.gdk.BUTTON_PRESS_MASK)
         ebox.connect("button-press-event", lambda ebox, e: self.__onclick())
         self.__img = UrlScaledPixbufImage()
+        self.__img.set_property("image-name", '/usr/share/pixmaps/nobody.png')
         ebox.add(self.__img)
         self.__box.pack_start(ebox, expand=False)
 
