@@ -1,4 +1,4 @@
-AC_INIT(bigboard, 0.4.3, feedback@mugshot.org)
+AC_INIT(bigboard, 0.4.4, feedback@mugshot.org)
 AC_CONFIG_SRCDIR(main.py)
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -163,6 +163,10 @@ AC_SUBST(BIGBOARD_CFLAGS)
 ## Python bindings
 AM_PATH_PYTHON
 AM_CHECK_PYTHON_HEADERS(,[AC_MSG_ERROR(could not find Python headers)])
+
+AM_CHECK_PYMOD(hippo,,,AC_MSG_ERROR([hippo module required (hippo-canvas)]))
+AM_CHECK_PYMOD(gnomeapplet,,,AC_MSG_ERROR([gnomeapplet module required]))
+AM_CHECK_PYMOD(dbus,,,AC_MSG_ERROR([dbus module required]))
 
 AC_PATH_PROG(PYGTK_CODEGEN, pygtk-codegen-2.0, no)
 
