@@ -27,23 +27,62 @@
 static DBusServer *server = NULL;
 static int listening_on_port = -1;
 
+static void
+append_string_pair(DBusMessageIter *dict_iter,
+                   const char      *key,
+                   const char      *value)
+{
+    DBusMessageIter entry_iter;
+    
+    dbus_message_iter_open_container(dict_iter, DBUS_TYPE_DICT_ENTRY, NULL, &entry_iter);
+
+    dbus_message_iter_append_basic(&entry_iter, DBUS_TYPE_STRING, &key);
+    dbus_message_iter_append_basic(&entry_iter, DBUS_TYPE_STRING, &value);
+
+    dbus_message_iter_close_container(dict_iter, &entry_iter);
+}
+
 static DBusMessage*
 handle_get_info_for_session(void            *object,
                             DBusMessage     *message,
                             DBusError       *error)
 {
     DBusMessage *reply;
-    DBusMessageIter iter, array_iter;
+    DBusMessageIter iter, array_iter, struct_iter, dict_iter;
+    const char *machine_id;
+    const char *session_id;
+    const char *info_name;
     
     reply = dbus_message_new_method_return(message);
 
     dbus_message_iter_init_append(reply, &iter);
 
-    /* FIXME append the machine ID and session ID */
-    
-    dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "a(sa{sv})", &array_iter);
+    get_machine_and_session_ids(&machine_id, &session_id);
 
-    /* FIXME put the info in here */
+    /* Append session properties */
+    
+    dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "{sv}", &array_iter);
+
+    append_string_pair(&array_iter, "machine", machine_id);
+    append_string_pair(&array_iter, "session", session_id);
+    
+    dbus_message_iter_close_container(&iter, &array_iter);
+    
+    /* Append session infos */
+    
+    dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "(sa{sv})", &array_iter);
+
+    dbus_message_iter_open_container(&array_iter, DBUS_TYPE_STRUCT, NULL, &struct_iter);
+
+    info_name = "org.freedesktop.od.ExampleInfo";
+    dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &info_name);
+
+    dbus_message_iter_open_container(&struct_iter, DBUS_TYPE_ARRAY, "{sv}", &dict_iter);
+    append_string_pair(&dict_iter, "foo", "bar");
+    append_string_pair(&dict_iter, "baz", "woot");
+    dbus_message_iter_close_container(&struct_iter, &dict_iter);
+    
+    dbus_message_iter_close_container(&array_iter, &struct_iter);
     
     dbus_message_iter_close_container(&iter, &array_iter);
 
@@ -51,8 +90,8 @@ handle_get_info_for_session(void            *object,
 }
 
 static const HippoDBusMember session_info_members[] = {
-    /* the return value is machineId, sessionId, array of (namespacedInfoName, dict(string,variant)) */
-    { HIPPO_DBUS_MEMBER_METHOD, "GetInfoForSession", "", "ssa(sa{sv})", handle_get_info_for_session },
+    /* the return value is dict of session props, then array of (namespacedInfoName, dict(string,variant)) */
+    { HIPPO_DBUS_MEMBER_METHOD, "GetInfoForSession", "", "a{sv}a(sa{sv})", handle_get_info_for_session },
     { 0, NULL }
 };
 

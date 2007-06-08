@@ -79,8 +79,12 @@ static const HippoDBusMember local_export_members[] = {
     { HIPPO_DBUS_MEMBER_METHOD, "AddInfoToOurSession", "sa{sv}", "", handle_add_info_to_our_session },
     /* arg is "s" the info to remove from our session */
     { HIPPO_DBUS_MEMBER_METHOD, "RemoveInfoFromOurSession", "s", "", handle_remove_info_from_our_session },
-    /* args are "s" the namespaced name of the info, and "aa{sv}" the array of infos, one per session that provided said info */
-    { HIPPO_DBUS_MEMBER_METHOD, "GetInfoFromOtherSessions", "s", "aa{sv}", handle_get_info_from_other_sessions },
+    /* args are "s" the namespaced name of the info, and returns an array of struct; each struct is a session that provided
+     * the requested info, and the first dict in the struct is props of said session, while the second dict is the info.
+     * Props of the session would be machine ID, session ID, and IP addresses of the session.
+     */
+    { HIPPO_DBUS_MEMBER_METHOD, "GetInfoFromOtherSessions", "s", "a(a{sv}a{sv})", handle_get_info_from_other_sessions },
+    /* FIXME here we would need change notification of some kind */
     { 0, NULL }
 };
 
