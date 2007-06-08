@@ -33,24 +33,16 @@ handle_get_info_for_session(void            *object,
 {
     DBusMessage *reply;
     DBusMessageIter iter, array_iter;
-    const char *requested_info;
-
-    requested_info = NULL;
-
-    if (!dbus_message_get_args(message, error, DBUS_TYPE_STRING, &requested_info,
-                               DBUS_TYPE_INVALID))
-        return NULL;
     
     reply = dbus_message_new_method_return(message);
 
     dbus_message_iter_init_append(reply, &iter);
 
-    /* open an array of dict: each remote machine is a dict, where the dict is (string,variant) pairs and represents
-     * the particular info that was requested
-     */
-    dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "a{sv}", &array_iter);
+    /* FIXME append the machine ID and session ID */
+    
+    dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "a(sa{sv})", &array_iter);
 
-    /* FIXME put the info in here that matches requested_info */
+    /* FIXME put the info in here */
     
     dbus_message_iter_close_container(&iter, &array_iter);
 
