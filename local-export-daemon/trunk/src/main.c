@@ -24,7 +24,7 @@
 #include <glib.h>
 #include "hippo-dbus-helper.h"
 #include <dbus/dbus-glib-lowlevel.h>
-#include "tcp-listener.h"
+#include "avahi-advertiser.h"
 #include "main.h"
 
 static char *machine_id;
@@ -214,10 +214,13 @@ main(int argc, char **argv)
     machine_id = dbus_get_local_machine_id();
 
     /* g_printerr("Session '%s' on machine '%s'\n", session_id, machine_id); */
-    
-    if (!tcp_listener_init())
-        exit(1);
 
+    if (!avahi_advertiser_init())
+        exit(1);
+    
+    if (!avahi_glue_init())
+        exit(1);
+    
     loop = g_main_loop_new(NULL, FALSE);
 
     g_main_loop_run(loop);

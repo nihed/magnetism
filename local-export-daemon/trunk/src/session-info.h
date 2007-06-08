@@ -23,17 +23,19 @@
 
 #include <config.h>
 #include <glib.h>
+#include <dbus/dbus.h>
 
 typedef struct SessionInfos SessionInfos;
 
 typedef struct Info Info;
 
-Info* info_new    (const char      *name,
-                   DBusMessageIter *dict_iter);
-void  info_unref  (Info            *info);
-/* write the info to the dict append iter */
-void  info_write  (Info            *info,
-                   DBusMessageIter *dict_iter);
+Info*       info_new        (const char      *name,
+                             DBusMessageIter *dict_iter);
+void        info_unref      (Info            *info);
+void        info_write      (Info            *info,
+                             DBusMessageIter *dict_iter);
+const char* info_get_name   (Info            *info);
+
 
 SessionInfos* session_infos_new    (void);
 void          session_infos_unref  (SessionInfos *infos);

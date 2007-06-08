@@ -18,18 +18,22 @@
  *
  */
 
-#ifndef __AVAHI_ADVERTISER_H__
-#define __AVAHI_ADVERTISER_H__
+#ifndef __AVAHI_GLUE_H__
+#define __AVAHI_GLUE_H__
 
 #include <config.h>
 #include <glib.h>
-#include "avahi-glue.h"
 
-gboolean avahi_advertiser_init               (void);
-void     avahi_advertiser_reset_entry_group  (void);
-gboolean avahi_advertiser_ensure_entry_group (AvahiClient *client);
+#include <avahi-client/client.h>
+#include <avahi-common/error.h>
+#include <avahi-common/timeval.h>
+#include <avahi-glib/glib-watch.h>
+#include <avahi-glib/glib-malloc.h>
 
+AvahiGLibPoll*   avahi_glue_get_glib_poll (void);
+const AvahiPoll* avahi_glue_get_poll      (void);
+AvahiClient*     avahi_glue_get_client    (void);
+gboolean         avahi_glue_init          (void);
 
-
-#endif /* __AVAHI_ADVERTISER_H__ */
+#endif /* __AVAHI_GLUE_H__ */
 

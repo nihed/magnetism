@@ -23,6 +23,7 @@
 
 #include <config.h>
 #include <glib.h>
+#include <dbus/dbus.h>
 
 gboolean avahi_scanner_init(DBusConnection *session_bus);
 

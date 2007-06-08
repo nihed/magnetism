@@ -18,18 +18,23 @@
  *
  */
 
-#ifndef __AVAHI_ADVERTISER_H__
-#define __AVAHI_ADVERTISER_H__
+#ifndef __MAIN_H__
+#define __MAIN_H__
 
 #include <config.h>
 #include <glib.h>
-#include "avahi-glue.h"
 
-gboolean avahi_advertiser_init               (void);
-void     avahi_advertiser_reset_entry_group  (void);
-gboolean avahi_advertiser_ensure_entry_group (AvahiClient *client);
+/* interface exported to the session bus */
+#define LOCAL_EXPORT_BUS_NAME "org.freedesktop.od.LocalExport"
+#define LOCAL_EXPORT_INTERFACE "org.freedesktop.od.LocalExport"
+#define LOCAL_EXPORT_OBJECT_PATH "/org/freedesktop/od/LocalExport"
 
+/* interface exported to the LAN containing info on our session */
+#define SESSION_INFO_INTERFACE "org.freedesktop.od.SessionInfo"
+#define SESSION_INFO_OBJECT_PATH "/org/freedesktop/od/SessionInfo"
 
+void get_machine_and_session_ids(const char **machine_id_p,
+                                 const char **session_id_p);
 
-#endif /* __AVAHI_ADVERTISER_H__ */
+#endif /*  __MAIN_H__ */
 

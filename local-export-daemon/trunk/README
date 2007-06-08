@@ -1,9 +1,9 @@
 The idea of this daemon is to have one daemon that exports info about
 a desktop session on the local network.
 
-This daemon uses mDNS, but individual desktop apps and services don't
-have to; they just export services via D-Bus which are then proxied by
-the local export daemon onto the LAN.
+This daemon uses mDNS and/or link-local XMPP, but individual desktop
+apps and services don't have to; they just export services via D-Bus
+which are then proxied by the local export daemon onto the LAN.
 
 The local export daemon will support one request to get a list of
 everything the user's session has to offer to other users on the LAN.
@@ -14,3 +14,8 @@ This makes LAN traffic more efficient (each machine just queries for
 and resolves this one service), and makes it easier to write apps with
 local functionality. In theory anyway. We'll see.
 
+According to http://www.zeroconf.org/Rendezvous/txtrecords.html TXT
+records should be used as an optimization rather than a necessary
+thing, perhaps this affects what we do here. We should be able to use
+TXT records to optimize in some cases, perhaps. I'm not clear on the
+performance issues.
