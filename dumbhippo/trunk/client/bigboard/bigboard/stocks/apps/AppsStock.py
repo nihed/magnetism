@@ -51,7 +51,7 @@ class Application(gobject.GObject):
         return self.__app and self.__app.get_category() or "Other"
 
     def get_local_category(self):
-        return self.__menu_entry and self.__menu_entry.parent.get_name() or "Other"
+        return ((self.__menu_entry and self.__menu_entry.parent) and self.__menu_entry.parent.get_name()) or "Other"
 
     def get_comment(self):
         return self.__desktop_entry and self.__desktop_entry.get_localestring('Comment')
@@ -78,9 +78,12 @@ class Application(gobject.GObject):
     def __lookup_desktop(self):
         if self.__menu_entry:
             entry_path = self.__menu_entry.get_desktop_file_path()
-            desktop = gnomedesktop.item_new_from_file(entry_path, 0)
-            if desktop:
-                return desktop            
+            try:
+                desktop = gnomedesktop.item_new_from_file(entry_path, 0)
+                if desktop:
+                    return desktop            
+            except gobject.GError, e:
+                desktop = None
         names = self.__app.get_desktop_names()        
         for name in names.split(';'):
             ad = apps_directory.get_app_directory()            
