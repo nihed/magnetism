@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class StringUtils {
+
 	public static String hexEncode(byte[] strs) {
 		StringWriter str = new StringWriter();
 		PrintWriter out = new PrintWriter(str);
@@ -260,9 +261,12 @@ public class StringUtils {
 			url = url.substring(0, url.length() - 1);
 		}
 		
-		int i = url.lastIndexOf("/");
+		int i = url.lastIndexOf("/");		
 		if (i >= 0) {
-			return url.substring(i + 1);
+			int j = url.lastIndexOf("?");
+			if (j < 0)
+				j = url.length();
+			return url.substring(i + 1, j);
 		} else {
 			return null;
 		}

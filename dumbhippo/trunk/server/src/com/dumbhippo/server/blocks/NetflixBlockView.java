@@ -129,7 +129,13 @@ public class NetflixBlockView extends AbstractFeedEntryBlockView {
 	}
 	
 	public String getImageUrl() {
-		String movieId = StringUtils.findParamValueInUrl(getLink(), "movieid");		
+		// movie id as a last element in the movie url path is the new format 
+		String movieId = StringUtils.findLastPathElement(getLink());
+		// /MovieDisplay?movieid=nnn is an old format, we still have it for 
+		// feed url for movies received before sometime in May'07
+		if (movieId.equals("MovieDisplay")) {
+		    movieId = StringUtils.findParamValueInUrl(getLink(), "movieid");
+		}
 		return "http://cdn.nflximg.com/us/boxshots/small/" + movieId + ".jpg";
 	}
 	
