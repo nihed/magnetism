@@ -1,4 +1,4 @@
-AC_INIT(bigboard, 0.4.4, feedback@mugshot.org)
+AC_INIT(bigboard, 0.4.5, feedback@mugshot.org)
 AC_CONFIG_SRCDIR(main.py)
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -164,9 +164,16 @@ AC_SUBST(BIGBOARD_CFLAGS)
 AM_PATH_PYTHON
 AM_CHECK_PYTHON_HEADERS(,[AC_MSG_ERROR(could not find Python headers)])
 
-AM_CHECK_PYMOD(hippo,,,AC_MSG_ERROR([hippo module required (hippo-canvas)]))
-AM_CHECK_PYMOD(gnomeapplet,,,AC_MSG_ERROR([gnomeapplet module required]))
-AM_CHECK_PYMOD(dbus,,,AC_MSG_ERROR([dbus module required]))
+AC_ARG_ENABLE(PYMOD_CHECKS, 
+              AC_HELP_STRING([--disable-pymod-checks], [Disable checks for Python modules]),
+              enable_pymod_checks=$enableval,
+	      enable_pymod_checks=yes)
+              
+if test x${enable_pymod_checks} = xyes; then
+  AM_CHECK_PYMOD(hippo,,,AC_MSG_ERROR([hippo module required (hippo-canvas)]))
+  AM_CHECK_PYMOD(gnomeapplet,,,AC_MSG_ERROR([gnomeapplet module required]))
+  AM_CHECK_PYMOD(dbus,,,AC_MSG_ERROR([dbus module required]))
+fi
 
 AC_PATH_PROG(PYGTK_CODEGEN, pygtk-codegen-2.0, no)
 
