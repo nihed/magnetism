@@ -175,6 +175,7 @@ dh.framer.updateWidth = function() {
 
 dh.framer.updateBlockContentWidth = function() {
     var contentArea = document.getElementById('dhBlockContent');	
+    var availableHeight = contentArea.offsetHeight;
 	var titleList = dh.html.getElementsByClass('dh-stacker-block-title', contentArea);
     if (titleList.length != 1)
 	    throw "framer should contain a single title div";
@@ -186,9 +187,9 @@ dh.framer.updateBlockContentWidth = function() {
 	    var titleLink = titleLinkList[0];
 	    if (dh.framer._initialTitle == null) {
 	        dh.framer._initialTitle = dh.util.getTextFromHtmlNode(titleLink);
-	        titleEllipsed = dh.util.ellipseWrappingText(titleLink, 60, null, titleList[0]); 
+	        titleEllipsed = dh.util.ellipseWrappingText(titleLink, availableHeight, null, titleList[0]); 
 	    } else {
-	        titleEllipsed = dh.util.ellipseWrappingText(titleLink, 60, dh.framer._initialTitle, titleList[0]);
+	        titleEllipsed = dh.util.ellipseWrappingText(titleLink, availableHeight, dh.framer._initialTitle, titleList[0]);
 	    } 
 	    titleLinkHeight = titleLink.offsetHeight;
 	}    
@@ -202,13 +203,13 @@ dh.framer.updateBlockContentWidth = function() {
 	    if (titleEllipsed) {
 	        dh.dom.removeChildren(description);
 	    } else {
-	        dh.util.ellipseWrappingText(description, 60 - titleList[0].offsetHeight); 
+	        dh.util.ellipseWrappingText(description, availableHeight - titleList[0].offsetHeight); 
 	    } 
 	} else {   	    
 	    if (titleEllipsed) {
 	        dh.dom.removeChildren(description);
 	    } else {
-	        dh.util.ellipseWrappingText(description, 60 - titleList[0].offsetHeight, dh.framer._initialDescription); 
+	        dh.util.ellipseWrappingText(description, availableHeight - titleList[0].offsetHeight, dh.framer._initialDescription); 
 	    } 
 	}    	    
 }
@@ -388,7 +389,7 @@ dh.framer.init = function() {
 		this._chatRoom,
 		function(message, before) { dh.framer._addMessage(message, before) },
 		function(message) { dh.framer._removeMessage(message) },
-		3,
+		4,
 		true);
 		
 	this._userList = new dh.chat.UserList(
