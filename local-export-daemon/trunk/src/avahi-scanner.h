@@ -24,8 +24,9 @@
 #include <config.h>
 #include <glib.h>
 #include <dbus/dbus.h>
+#include "avahi-glue.h"
 
-gboolean avahi_scanner_init(DBusConnection *session_bus);
+gboolean avahi_scanner_init(void);
 
 #endif /* __AVAHI_SCANNER_H__ */
 
