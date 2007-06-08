@@ -26,6 +26,7 @@
 
 gboolean tcp_listener_init     (void);
 void     tcp_listener_shutdown (void);
+int      tcp_listener_get_port (void);
 
 #endif /*  __TCP_LISTENER_H__ */
 

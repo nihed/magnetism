@@ -23,8 +23,12 @@
 
 #include <config.h>
 #include <glib.h>
+#include "avahi-glue.h"
 
-gboolean avahi_advertiser_init(const char *address);
+gboolean avahi_advertiser_init               (void);
+void     avahi_advertiser_reset_entry_group  (void);
+gboolean avahi_advertiser_ensure_entry_group (AvahiClient *client);
+
 
 
 #endif /* __AVAHI_ADVERTISER_H__ */

@@ -25,6 +25,7 @@
 #include "main.h"
 
 static DBusServer *server = NULL;
+static int listening_on_port = -1;
 
 static DBusMessage*
 handle_get_info_for_session(void            *object,
@@ -115,12 +116,11 @@ gboolean
 tcp_listener_init(void)
 {
     DBusError derror;
-    char *address;
     
     g_assert(server == NULL);
 
     /* FIXME newer versions of dbus allow omitting port so one is automatically chosen, which
-     * would be a lot better
+     * would be a lot better. Note that we pass this random port number below as well.
      */
     dbus_error_init(&derror);
     server = dbus_server_listen("tcp:port=23523", &derror);
@@ -133,12 +133,13 @@ tcp_listener_init(void)
 
     dbus_server_set_new_connection_function(server, on_new_connection, NULL, NULL);
 
-    address = dbus_server_get_address(server);
-    if (!avahi_advertiser_init(address)) {
-        tcp_listener_shutdown();
-        return FALSE;
-    }
-    dbus_free(address);
+    listening_on_port = 23523; /* FIXME don't hardcode */
     
     return TRUE;
+}
+
+int
+tcp_listener_get_port (void)
+{
+    return listening_on_port;
 }

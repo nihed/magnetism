@@ -86,7 +86,7 @@ static const HippoDBusMember local_export_members[] = {
 /* FIXME move the dbus stuff to another file */
 
 gboolean
-avahi_scanner_init(DBusConnection *session_bus)
+avahi_scanner_init(DBusConnection *session_bus_)
 {    
     session_bus = session_bus_;
 
