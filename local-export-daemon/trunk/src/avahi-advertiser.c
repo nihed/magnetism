@@ -20,6 +20,7 @@
 #include <config.h>
 #include <stdlib.h>
 #include <avahi-client/publish.h>
+#include "main.h"
 #include "avahi-advertiser.h"
 #include "tcp-listener.h"
 
@@ -28,11 +29,48 @@ static int name_number = 0;
 static int last_tried_name_number = -1;
 static int listening_on_port = -1;
 
+static AvahiStringList*
+new_text_record_list(const char *first_key,
+                     const char *first_value,
+                     ...)
+{
+    va_list args;
+    const char *k;
+    const char *v;
+    AvahiStringList *list;
+
+    if (first_key == NULL)
+        return NULL;
+
+    list = NULL;
+    
+    list = avahi_string_list_add_pair(list, first_key, first_value);
+    
+    va_start(args, first_value);
+    k = va_arg(args, const char*);
+    if (k)
+        v = va_arg(args, const char*);
+    while (k != NULL) {
+        list = avahi_string_list_add_pair(list, k, v);
+        
+        k = va_arg(args, const char*);
+        if (k)
+            v = va_arg(args, const char*);
+    }
+    
+    va_end(args);
+    
+    return list;
+}
+
 static gboolean
 avahi_advertiser_add_services(void)
 {
     int result;
     char *name;
+    AvahiStringList *text_records;
+    const char *machine_id;
+    const char *session_id;
     
     if (last_tried_name_number < name_number) {
         last_tried_name_number = name_number;
@@ -48,18 +86,27 @@ avahi_advertiser_add_services(void)
     }
 
     g_assert (listening_on_port >= 0);
+
+    get_machine_and_session_ids(&machine_id, &session_id);
+
+    /* Guidelines at http://www.zeroconf.org/Rendezvous/txtrecords.html say 1300 bytes is max
+     * size of all the TXT records that's a good idea, and smaller is better
+     */
     
-    result = avahi_entry_group_add_service(entry_group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC,
-                                           0, /* flags */
-                                           name, /* "user visible" name of the thing, like "Joe's Files" or whatever */
-                                           "_freedesktop_local_export._tcp", /* DNS service type */
-                                           NULL, /* domain, NULL for default */
-                                           NULL, /* host, NULL for default */
-                                           listening_on_port, /* port we are listening on */
-                                           /* NULL-terminated varargs list of key=value pairs to be used for TXT;
-                                            * alternate API is available that uses a string list instead of varargs
-                                            */
-                                           NULL);
+    text_records = new_text_record_list("org.freedesktop.od.machine", machine_id,
+                                        "org.freedesktop.od.session", session_id,
+                                        NULL);
+    
+    result = avahi_entry_group_add_service_strlst(entry_group, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC,
+                                                  0, /* flags */
+                                                  name, /* "user visible" name of the thing, like "Joe's Files" or whatever */
+                                                  "_freedesktop_local_export._tcp", /* DNS service type */
+                                                  NULL, /* domain, NULL for default */
+                                                  NULL, /* host, NULL for default */
+                                                  listening_on_port, /* port we are listening on */
+                                                  text_records);
+    avahi_string_list_free(text_records);
+    
     if (result < 0) {
         g_printerr("avahi_entry_group_add_service() failed: %s\n", avahi_strerror(result));
         goto failed;

@@ -209,6 +209,7 @@ main(int argc, char **argv)
                                     NULL, NULL))
         g_error("no memory adding dbus connection filter");
 
+    /* FIXME don't --replace by default, that's screwy */
     if (!request_bus_name(connection, TRUE))
         exit(1);
 
