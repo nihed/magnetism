@@ -25,6 +25,10 @@ class ScaledPixbufImage(gtk.Image):
         self.__width = 24
         self.__height = 24
 
+    def set_orig_pixbuf_file(self, path):
+        pixbuf = gtk.gdk.pixbuf_new_from_file(path)
+        self.set_orig_pixbuf(pixbuf)
+
     def set_orig_pixbuf(self, pixbuf):
         self.__orig_pixbuf = pixbuf
         self.__sync()
@@ -57,6 +61,7 @@ class UrlScaledPixbufImage(ScaledPixbufImage):
     
 class BigBoardApplet(gobject.GObject):
     def __init__(self, applet, iid):
+        _logger.debug("constructing")
         super(BigBoardApplet, self).__init__()
         self.__applet = applet
         self.__iid = iid
@@ -64,6 +69,7 @@ class BigBoardApplet(gobject.GObject):
         self.__keybinding = "Super_L"
         self.__keybinding_bound = False
 
+        _logger.debug("connecting to bus")
         session_bus = dbus.SessionBus()
         bus_proxy = session_bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
         self.__bus_proxy = bus_proxy.connect_to_signal("NameOwnerChanged", self.__on_dbus_name_owner_changed)
@@ -74,6 +80,7 @@ class BigBoardApplet(gobject.GObject):
         else:
             self.__box = gtk.VBox()
 
+        _logger.debug("getting mugshot")
         self.__mugshot = mugshot.get_mugshot()
         self.__mugshot.connect("self-known", self.__on_self_known)
         
@@ -81,12 +88,14 @@ class BigBoardApplet(gobject.GObject):
         ebox.add_events(gtk.gdk.BUTTON_PRESS_MASK)
         ebox.connect("button-press-event", lambda ebox, e: self.__onclick())
         self.__img = UrlScaledPixbufImage()
-        self.__img.set_property("image-name", '/usr/share/pixmaps/nobody.png')
+        self.__img.set_orig_pixbuf_file('/usr/share/pixmaps/nobody.png')
         ebox.add(self.__img)
         self.__box.pack_start(ebox, expand=False)
 
-        self.__deskbar = deskbar_embed.Deskbar()
-        self.__box.pack_start(self.__deskbar, expand=True)
+        _logger.debug("embedding deskbar")
+        #self.__deskbar = deskbar_embed.Deskbar()
+        #self.__box.pack_start(self.__deskbar, expand=True)
+        self.__deskbar = None
 
         self.__applet.add(self.__box)
         self.__applet.set_applet_flags(gnomeapplet.EXPAND_MINOR)
@@ -94,12 +103,14 @@ class BigBoardApplet(gobject.GObject):
 
         self.__sync()
 
+        _logger.debug("show all in applet")
         self.__applet.show_all()
 
     def __create_proxy(self):
         try:
             self.__bb_obj = dbus.SessionBus().get_object('org.mugshot.BigBoard', '/bigboard/panel')
             self.__bb = dbus.Interface(self.__bb_obj, 'org.mugshot.BigBoard.Panel')
+            self.__bb_expanded = None
             self.__bb.connect_to_signal("Expanded", self.__on_bb_expanded)
             self.__bb.SignalExpanded()
         except dbus.DBusException:
@@ -117,7 +128,8 @@ class BigBoardApplet(gobject.GObject):
 
     def __on_focus(self):
         _logger.debug("got focus keypress")
-        self.__deskbar.focus()
+        if self.__deskbar:
+            self.__deskbar.focus()
 
     def __unbind(self):
         if self.__keybinding_bound:
@@ -129,7 +141,7 @@ class BigBoardApplet(gobject.GObject):
             self.__keybinding_bound = False
 
     def __bind(self):
-        if not self.__keybinding_bound:
+        if (not self.__keybinding_bound) and (self.__deskbar):
             _logger.debug("binding '%s'", self.__keybinding)
             bigboard.keybinder.tomboy_keybinder_bind(self.__keybinding, self.__on_focus)
             self.__keybinding_bound = True
@@ -137,10 +149,12 @@ class BigBoardApplet(gobject.GObject):
     def __on_bb_expanded(self, is_expanded):
         if is_expanded:
             self.__unbind()
-            self.__deskbar.hide()
+            if self.__deskbar:
+                self.__deskbar.hide()
         else:
             self.__bind()
-            self.__deskbar.show()
+            if self.__deskbar:
+                self.__deskbar.show()
 
     def __on_change_size(self):
         pass
@@ -203,8 +217,10 @@ if __name__ == "__main__":
         gtk.main()
     else:
         def factory(a,i):
-           BigBoardApplet(a,i)
-           return True
+            BigBoardApplet(a,i)
+            return True
+        _logger.debug("calling factory")
         gnomeapplet.bonobo_factory("OAFIID:BigBoard_Applet_Factory", 
                                    gnomeapplet.Applet.__gtype__, 
-                                   "bigboard", "0.3.4", factory)
+                                   "bigboard-applet", "0.3.4", factory)
+        _logger.debug("factory done")
