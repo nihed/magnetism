@@ -38,10 +38,9 @@ def _log_cb(func, errtext=None):
             return func(*args, **kwargs)
         except:
             if errtext:
-                text = errtext
+                logging.exception(text)
             else:
-                text = "Caught exception in callback"
-            logging.exception(text)
+                logging.exception("Caught exception in callback %s", func)
     return exec_cb
 
 class BiMap(object):
