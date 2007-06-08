@@ -18,15 +18,14 @@
  *
  */
 
-#ifndef __AVAHI_SCANNER_H__
-#define __AVAHI_SCANNER_H__
+#ifndef __SESSION_API_H__
+#define __SESSION_API_H__
 
 #include <config.h>
 #include <glib.h>
 #include <dbus/dbus.h>
-#include "avahi-glue.h"
 
-gboolean avahi_scanner_init(void);
+gboolean session_api_init(DBusConnection *session_bus);
 
-#endif /* __AVAHI_SCANNER_H__ */
+#endif /* __SESSION_API_H__ */
 

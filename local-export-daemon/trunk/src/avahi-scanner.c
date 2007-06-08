@@ -18,84 +18,138 @@
  *
  */
 #include <config.h>
+#include <stdlib.h>
 #include "avahi-scanner.h"
 #include "hippo-dbus-helper.h"
 #include "main.h"
+#include <avahi-client/lookup.h>
 
-static DBusConnection *session_bus = NULL;
+static AvahiServiceBrowser *service_browser = NULL;
 
-static DBusMessage*
-handle_add_info_to_our_session(void            *object,
-                               DBusMessage     *message,
-                               DBusError       *error)
+static void
+resolve_callback(AvahiServiceResolver *r,
+                 AvahiIfIndex interface,
+                 AvahiProtocol protocol,
+                 AvahiResolverEvent event,
+                 const char *name,
+                 const char *type,
+                 const char *domain,
+                 const char *host_name,
+                 const AvahiAddress *address,
+                 uint16_t port,
+                 AvahiStringList *txt,
+                 AvahiLookupResultFlags flags,
+                 void* data)
 {
-    dbus_set_error(error, DBUS_ERROR_NOT_SUPPORTED, "Haven't implemented this yet");
-    return NULL;
+    /* Called whenever a service has been resolved successfully or timed out */
+
+    switch (event) {
+    case AVAHI_RESOLVER_FAILURE:
+        /* Silently ignore this one then */
+        break;
+        
+    case AVAHI_RESOLVER_FOUND:
+        {
+#if 0
+            char a[AVAHI_ADDRESS_STR_MAX], *t;
+            
+            fprintf(stderr, "Service '%s' of type '%s' in domain '%s':\n", name, type, domain);
+            
+            avahi_address_snprint(a, sizeof(a), address);
+            t = avahi_string_list_to_string(txt);
+            fprintf(stderr,
+                    "\t%s:%u (%s)\n"
+                    "\tTXT=%s\n"
+                    "\tcookie is %u\n"
+                    "\tis_local: %i\n"
+                    "\tour_own: %i\n"
+                    "\twide_area: %i\n"
+                    "\tmulticast: %i\n"
+                    "\tcached: %i\n",
+                    host_name, port, a,
+                    t,
+                    avahi_string_list_get_service_cookie(txt),
+                    !!(flags & AVAHI_LOOKUP_RESULT_LOCAL),
+                    !!(flags & AVAHI_LOOKUP_RESULT_OUR_OWN),
+                    !!(flags & AVAHI_LOOKUP_RESULT_WIDE_AREA),
+                    !!(flags & AVAHI_LOOKUP_RESULT_MULTICAST),
+                    !!(flags & AVAHI_LOOKUP_RESULT_CACHED));
+                
+            avahi_free(t);
+#endif
+        }
+    }
+
+    avahi_service_resolver_free(r);
 }
 
-static DBusMessage*
-handle_remove_info_from_our_session(void            *object,
-                                    DBusMessage     *message,
-                                    DBusError       *error)
-{
-    dbus_set_error(error, DBUS_ERROR_NOT_SUPPORTED, "Haven't implemented this yet");
-    return NULL;
+static void
+browse_callback(AvahiServiceBrowser *b,
+                AvahiIfIndex interface,
+                AvahiProtocol protocol,
+                AvahiBrowserEvent event,
+                const char *name,
+                const char *type,
+                const char *domain,
+                AvahiLookupResultFlags flags,
+                void* data)
+{    
+    /* Called whenever a new services becomes available on the LAN or is removed from the LAN */
+
+    switch (event) {
+    case AVAHI_BROWSER_FAILURE:
+        /* Nothing sane to do here - help */
+        g_printerr("Avahi browser failed: %s\n", avahi_strerror(avahi_client_errno(avahi_service_browser_get_client(b))));
+        exit(1);
+        return;
+
+    case AVAHI_BROWSER_NEW:
+
+        /* We ignore the returned resolver object. In the callback
+         * function we free it. If the server is terminated before
+         * the callback function is called the server will free
+         * the resolver for us.
+         */
+        {
+            AvahiServiceResolver *resolver;
+            
+            resolver = avahi_service_resolver_new(avahi_glue_get_client(),
+                                                  interface, protocol, name, type, domain, AVAHI_PROTO_UNSPEC, 0,
+                                                  resolve_callback, NULL /* callback data */);
+            if (resolver == NULL) {
+                g_printerr("Failed to create service resolver: '%s': %s\n", name, avahi_strerror(avahi_client_errno(avahi_glue_get_client())));
+            }
+        }
+        break;
+
+    case AVAHI_BROWSER_REMOVE:
+        /* FIXME */
+        /* fprintf(stderr, "(Browser) REMOVE: service '%s' of type '%s' in domain '%s'\n", name, type, domain); */
+        break;
+
+    case AVAHI_BROWSER_ALL_FOR_NOW:
+    case AVAHI_BROWSER_CACHE_EXHAUSTED:
+        /* fprintf(stderr, "(Browser) %s\n", event == AVAHI_BROWSER_CACHE_EXHAUSTED ? "CACHE_EXHAUSTED" : "ALL_FOR_NOW"); */
+        break;
+    }
 }
-
-static DBusMessage*
-handle_get_info_from_other_sessions(void            *object,
-                                    DBusMessage     *message,
-                                    DBusError       *error)
-{
-    DBusMessage *reply;
-    DBusMessageIter iter, array_iter;
-    const char *requested_info;
-
-    requested_info = NULL;
-
-    if (!dbus_message_get_args(message, error, DBUS_TYPE_STRING, &requested_info,
-                               DBUS_TYPE_INVALID))
-        return NULL;
-    
-    reply = dbus_message_new_method_return(message);
-
-    dbus_message_iter_init_append(reply, &iter);
-
-    /* open an array of dict: each remote machine is a dict, where the dict is (string,variant) pairs and represents
-     * the particular info that was requested
-     */
-    dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "a{sv}", &array_iter);
-
-    /* FIXME put the info in here that matches requested_info */
-    
-    dbus_message_iter_close_container(&iter, &array_iter);
-
-    return reply;
-}
-
-static const HippoDBusMember local_export_members[] = {
-    /* args are "s" the namespaced name of the info, and "a{sv}" the dict of (string,variant) to export on the LAN */
-    { HIPPO_DBUS_MEMBER_METHOD, "AddInfoToOurSession", "sa{sv}", "", handle_add_info_to_our_session },
-    /* arg is "s" the info to remove from our session */
-    { HIPPO_DBUS_MEMBER_METHOD, "RemoveInfoFromOurSession", "s", "", handle_remove_info_from_our_session },
-    /* args are "s" the namespaced name of the info, and "aa{sv}" the array of infos, one per session that provided said info */
-    { HIPPO_DBUS_MEMBER_METHOD, "GetInfoFromOtherSessions", "s", "aa{sv}", handle_get_info_from_other_sessions },
-    { 0, NULL }
-};
-
-/* FIXME move the dbus stuff to another file */
 
 gboolean
-avahi_scanner_init(DBusConnection *session_bus_)
-{    
-    session_bus = session_bus_;
-
-    hippo_dbus_helper_register_interface(session_bus, LOCAL_EXPORT_INTERFACE,
-                                         local_export_members, NULL);
+avahi_scanner_init(void)
+{
+    g_assert(service_browser == NULL);
     
-    hippo_dbus_helper_register_object(session_bus, LOCAL_EXPORT_OBJECT_PATH,
-                                      NULL, LOCAL_EXPORT_INTERFACE,
-                                      NULL);
+    service_browser = avahi_service_browser_new(avahi_glue_get_client(),
+                                                AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_freedesktop_local_export._tcp",
+                                                NULL, /* domain */
+                                                0, /* flags */
+                                                browse_callback,
+                                                NULL /* callback data */);
+    
+    if (service_browser == NULL) {
+        g_printerr("Failed to create service browser: %s\n", avahi_strerror(avahi_client_errno(avahi_glue_get_client())));
+        return FALSE;
+    }
     
     return TRUE;
 }

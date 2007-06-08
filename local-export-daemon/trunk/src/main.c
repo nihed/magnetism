@@ -25,6 +25,8 @@
 #include "hippo-dbus-helper.h"
 #include <dbus/dbus-glib-lowlevel.h>
 #include "avahi-advertiser.h"
+#include "avahi-scanner.h"
+#include "session-api.h"
 #include "main.h"
 
 static char *machine_id;
@@ -219,6 +221,12 @@ main(int argc, char **argv)
         exit(1);
     
     if (!avahi_glue_init())
+        exit(1);
+
+    if (!avahi_scanner_init())
+        exit(1);
+
+    if (!session_api_init(connection))
         exit(1);
     
     loop = g_main_loop_new(NULL, FALSE);

@@ -19,6 +19,8 @@ local_export_daemon_SOURCES=			\
 	src/hippo-dbus-helper.h			\
 	src/main.c				\
 	src/main.h				\
+	src/session-api.c			\
+	src/session-api.h			\
 	src/session-info.c			\
 	src/session-info.h			\
 	src/tcp-listener.h			\
