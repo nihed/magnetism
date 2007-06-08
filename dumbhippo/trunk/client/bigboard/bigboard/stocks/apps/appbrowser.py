@@ -25,7 +25,8 @@ class AppOverview(CanvasVBox):
         self.__app_unselected_text = hippo.CanvasText(text="Click an application to see its description here.\n\nDouble-click to launch.",
                                                       size_mode=hippo.CANVAS_SIZE_WRAP_WORD,
                                                       xalign=hippo.ALIGNMENT_CENTER,
-                                                      yalign=hippo.ALIGNMENT_CENTER)
+                                                      yalign=hippo.ALIGNMENT_CENTER,
+                                                      color=0x3F3F3FFF)
         self.append(self.__app_unselected_text, hippo.PACK_CLEAR_RIGHT)
         
         self.__header = apps_widgets.AppDisplay()
@@ -366,7 +367,7 @@ class AppList(CanvasVBox):
             else:
                 right_link = None
                 if self.__selected_cat:
-                    left_link = ActionLink(text=u"All Applications \u00BB")
+                    left_link = ActionLink(text=u"All Applications /")
                     left_link.connect("activated", self.__handle_nocategory)
                 else:
                     left_link = None
@@ -379,6 +380,9 @@ class AppList(CanvasVBox):
                 overview = apps_widgets.AppDisplay(app)
                 overview.connect("button-press-event", self.__on_overview_click)             
                 self.__table.append_column_item(overview)
+
+    def reset_category(self):
+        self.__handle_nocategory(None)
 
     def on_category_changed(self, cat, apps):
         if cat != self.__selected_cat:
@@ -517,6 +521,7 @@ class AppBrowser(hippo.CanvasWindow):
 
     def __reset(self):
         self.__search_input.set_property('text', '')
+        self.__app_list.reset_category()
 
     def __hide_reset(self):
         self.__reset()
