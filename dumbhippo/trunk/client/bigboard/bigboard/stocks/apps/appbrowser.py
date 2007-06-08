@@ -182,7 +182,7 @@ class AppCategoryUsage(MultiVTable):
         for category in cat_keys_sorted:
             self.append_column_item(hippo.CanvasText(text=category, 
                                                      yalign=hippo.ALIGNMENT_CENTER,
-                                                     xalign=hippo.ALIGNMENT_START,color=0x0066DDFF))
+                                                     xalign=hippo.ALIGNMENT_START, color=0x3F3F3FFF))
             factor = (cat_usage[category] * 1.0) / max_usage_count[1]
             box = CanvasHBox()
             (r, g, b) = map(lambda (min,max): int(min * (1.0-factor)) + int(max*factor), zip(self.__bar_min_color, self.__bar_max_color))          
