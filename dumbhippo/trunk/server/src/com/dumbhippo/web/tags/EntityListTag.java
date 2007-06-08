@@ -8,12 +8,6 @@ import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.el.ELException;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
-import com.dumbhippo.persistence.AimResource;
-import com.dumbhippo.server.views.GroupView;
-import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PostView;
-
-
 public class EntityListTag extends SimpleTagSupport {
 	private List<Object> entities;
 	private String skipRecipientId;
@@ -32,29 +26,6 @@ public class EntityListTag extends SimpleTagSupport {
 		longBodyLengthLimit = -1;
 		twoLineBody = false;
 		prefixValue = "";
-	}
-
-	static private String presenceHTML(Object o, String skipId) {	
-		String returnString = "";
-		
-		if (o instanceof PersonView) {
-			PersonView view = (PersonView)o;
-			AimResource primaryAim = view.getAim();
-			if (primaryAim != null) {
-				// Is this right? isOnline is the Mugshot status, not
-				// the aim status, but if you've entered your aim address into the
-				// account page, maybe they are close enough?
-				if (view.isOnline()) {
-					returnString = "<a href=\"aim:GoIm?ScreenName=" + primaryAim.getScreenName() + "\" alt=\"Send an message to " + primaryAim.getScreenName() + " via AIM\"><img src=\"/images/online.gif\" height=16 width=16 border=0 valign=center></a>";		
-				}
-			}
-		} else if (o instanceof GroupView) {
-			// TODO: Finish this, including accompanying GroupView work
-		} else if (o instanceof PostView) {
-			// We don't use this anymore
-		}
-		
-		return returnString;
 	}
 	
 	@Override
@@ -89,19 +60,13 @@ public class EntityListTag extends SimpleTagSupport {
 					                 photos, music, cssClass, 
 					                 bodyLengthLimit, longBodyLengthLimit, 
 					                 twoLineBody);
-            String presenceHtml = presenceHTML(o, skipRecipientId);
-
             if (html == null)
                 continue;
             
 			if (separator != null && !first)
 				writer.print(separator);
             first = false;
-            
-			if (presenceHtml != null) {
-				html = html + presenceHtml;
-			}
-				
+
 			writer.print(html);
 		}
 	}

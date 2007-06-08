@@ -39,12 +39,24 @@ body table {
 }
 
 #dhBlockContent {
-    height:             60px;
+    height:             62px;
     overflow:           hidden;
+}
+
+.dh-stacker-block-title {
+	line-height:        110%; 
+}
+
+.dh-stacker-block-header-description {
+	line-height:        110%; 
 }
 
 .dh-block-details {
     overflow:           hidden;
+}
+
+#dhpostSwarmInfo {
+    margin-top:         -1px;
 }
 
 #dhPostChatLog {
@@ -88,4 +100,5 @@ body table {
 
 #dhFramerActions {
     clear:   both;
+    margin-top:     -1px;
 }

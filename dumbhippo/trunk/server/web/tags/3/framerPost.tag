@@ -7,7 +7,7 @@
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.blocks.PostBlockView"%>
 
 <table id="dhBlockInfoTable" cellspacing="0" cellpadding="0" width="100%">
-    <tr height="60px">
+    <tr height="62px">
         <%-- 5 extra pixels are for the margin on the right --%>
         <td valign="top" width="65px">
             <dht:headshot person="${post.poster}" size="60"/>
