@@ -18,6 +18,14 @@ body {
 	border-top: 2px solid #c9c9c9;
 }
 
+#dhChatUserList {
+    font-style:  italic;	
+}
+
+#dhChatUserList a {
+    text-decoration: underline; 
+}
+
 #dhChatMessages {
 	font-size: 12px;
 }

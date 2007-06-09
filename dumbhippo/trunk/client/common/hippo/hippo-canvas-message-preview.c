@@ -214,6 +214,7 @@ hippo_canvas_message_preview_constructor (GType                  type,
     hippo_canvas_box_append(box, item, 0);
         
     message_preview->entity_name = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
+                                                "font", "Italic 11px",
                                                 "actions", message_preview->actions,
                                                 NULL);
     hippo_canvas_box_append(box, message_preview->entity_name, 0);
