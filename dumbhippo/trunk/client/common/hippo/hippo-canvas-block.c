@@ -1144,11 +1144,12 @@ hippo_canvas_block_set_sent_to(HippoCanvasBlock *canvas_block,
     canvas_block->sent_to_set = FALSE;
 
     for (entity = entities; entity; entity = g_slist_next(entity)) {
-        HippoCanvasItem *name_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                                                 "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                                                 "xalign", HIPPO_ALIGNMENT_FILL,
-                                                 "yalign", HIPPO_ALIGNMENT_START,                        
-                                                  NULL);
+        HippoCanvasBox *name_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                                "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                                                "xalign", HIPPO_ALIGNMENT_FILL,
+                                                "yalign", HIPPO_ALIGNMENT_START,                        
+                                                NULL);
+        HippoCanvasItem *name;
 
         if (!first) {
             HippoCanvasItem *comma = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
@@ -1160,12 +1161,12 @@ hippo_canvas_block_set_sent_to(HippoCanvasBlock *canvas_block,
             hippo_canvas_box_append(name_box, comma, HIPPO_PACK_END);
         }
 
-        HippoCanvasItem *name = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
-                                             "font", "Italic 11px", 
-                                             "actions", canvas_block->actions,
-                                             "xalign", HIPPO_ALIGNMENT_END,
-                                             "yalign", HIPPO_ALIGNMENT_START,
-                                             NULL);
+        name = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
+                            "font", "Italic 11px", 
+                            "actions", canvas_block->actions,
+                            "xalign", HIPPO_ALIGNMENT_END,
+                            "yalign", HIPPO_ALIGNMENT_START,
+                            NULL);
         g_object_set(G_OBJECT(name),
                      "entity", entity->data,
                      NULL);
@@ -1186,7 +1187,7 @@ hippo_canvas_block_set_sent_to(HippoCanvasBlock *canvas_block,
         }
         first = FALSE;
         i++;
-        hippo_canvas_box_append(canvas_block->sent_to_box, name_box, HIPPO_PACK_END);
+        hippo_canvas_box_append(canvas_block->sent_to_box, HIPPO_CANVAS_ITEM(name_box), HIPPO_PACK_END);
     }
 
     hippo_canvas_block_update_item_expansion(canvas_block);
