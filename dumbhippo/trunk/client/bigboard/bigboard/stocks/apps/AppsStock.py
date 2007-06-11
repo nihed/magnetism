@@ -253,6 +253,8 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
             app = self.get_app(mugshot_app)
             if self.__static_set_ids.has_key(app.get_id()):
                 continue
+            if app.get_is_excluded():
+                continue
             if i >= self.DYNAMIC_SET_SIZE:
                 break
             if not app.is_installed():
