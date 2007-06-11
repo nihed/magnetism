@@ -1,4 +1,4 @@
-AC_INIT(bigboard, 0.4.5, feedback@mugshot.org)
+AC_INIT(bigboard, 0.4.6, feedback@mugshot.org)
 AC_CONFIG_SRCDIR(main.py)
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -164,7 +164,7 @@ AC_SUBST(BIGBOARD_CFLAGS)
 AM_PATH_PYTHON
 AM_CHECK_PYTHON_HEADERS(,[AC_MSG_ERROR(could not find Python headers)])
 
-AC_ARG_ENABLE(PYMOD_CHECKS, 
+AC_ARG_ENABLE(pymod_checks, 
               AC_HELP_STRING([--disable-pymod-checks], [Disable checks for Python modules]),
               enable_pymod_checks=$enableval,
 	      enable_pymod_checks=yes)
