@@ -1,13 +1,15 @@
-import logging, inspect, xml.dom, xml.dom.minidom
+import logging, inspect, xml.dom, xml.dom.minidom, functools
 import StringIO, urlparse, urllib, subprocess, time
 
 import gobject, dbus
 
 import libbig
-from libbig import _log_cb
+from libbig.logutil import log_except
 from libbig.http import AsyncHTTPFetcher
 from libbig.xmlquery import query as xml_query, get_attrs as xml_get_attrs
 from libbig.struct import AutoStruct, AutoSignallingStruct
+
+_logger = logging.getLogger("bigboard.Mugshot")
 
 class ExternalAccount(AutoSignallingStruct):
     pass
@@ -90,7 +92,7 @@ class Mugshot(gobject.GObject):
         session_bus = dbus.SessionBus()
         bus_proxy = session_bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
         self.__bus_proxy = bus_proxy.connect_to_signal("NameOwnerChanged",
-                                                       _log_cb(self.__on_dbus_name_owner_changed))
+                                                       self.__on_dbus_name_owner_changed)
         self.__create_proxy()
         self.__create_ws_proxy()
         self.__create_im_proxy()
@@ -146,11 +148,11 @@ class Mugshot(gobject.GObject):
             if do_autolaunch:
                 subprocess.Popen(['mugshot']).pid
             self.__proxy = bus.get_object('org.mugshot.Mugshot', '/org/mugshot/Mugshot')
-            self.__proxy.connect_to_signal('ConnectionStatusChanged', _log_cb(self.__on_connection_status_changed))
-            self.__proxy.connect_to_signal('PrefChanged', _log_cb(self.__on_pref_changed))            
-            self.__proxy.connect_to_signal('ExternalIQReturn', _log_cb(self.__externalIQReturn))
+            self.__proxy.connect_to_signal('ConnectionStatusChanged', self.__on_connection_status_changed)
+            self.__proxy.connect_to_signal('PrefChanged', self.__on_pref_changed)            
+            self.__proxy.connect_to_signal('ExternalIQReturn', self.__externalIQReturn)
             self.__get_connection_status()    
-            self.__proxy.GetBaseProperties(reply_handler=_log_cb(self.__on_get_baseprops), error_handler=self.__on_dbus_error)
+            self.__proxy.GetBaseProperties(reply_handler=self.__on_get_baseprops, error_handler=self.__on_dbus_error)
             
         except dbus.DBusException:
             self.__proxy = None
@@ -169,6 +171,7 @@ class Mugshot(gobject.GObject):
         except dbus.DBusException:
             self.__im_proxy = None
         
+    @log_except(_logger)
     def __on_dbus_name_owner_changed(self, name, prev_owner, new_owner):
         if name == 'org.mugshot.Mugshot':
             if new_owner != '':
@@ -181,14 +184,16 @@ class Mugshot(gobject.GObject):
                 self.__ws_proxy = None
                 self.__im_proxy = None
 
+    @log_except(_logger)
     def __on_connection_status(self, has_auth, connected, contacts):
         self._logger.debug("connection status auth=%s connected=%s contacts=%s" % (has_auth, connected, contacts))
         self.emit("connection-status", has_auth, connected, contacts)         
 
     def __get_connection_status(self):
-        self.__proxy.GetConnectionStatus(reply_handler=_log_cb(self.__on_connection_status),
-                                         error_handler=_log_cb(self.__on_dbus_error))
+        self.__proxy.GetConnectionStatus(reply_handler=self.__on_connection_status,
+                                         error_handler=self.__on_dbus_error)
 
+    @log_except(_logger)
     def __on_connection_status_changed(self):
         self._logger.debug("connection status changed")        
         self.__get_connection_status()
@@ -198,6 +203,7 @@ class Mugshot(gobject.GObject):
             return self.__prefs[key]
         return None
         
+    @log_except(_logger)
     def __on_pref_changed(self, key, value):
         self._logger.debug("pref %s changed: %s", key, value)  
         changed = False
@@ -210,6 +216,7 @@ class Mugshot(gobject.GObject):
         if changed:
             self.emit("pref-changed", key, value)
             
+    @log_except(_logger)
     def __externalIQReturn(self, id, content):
         if self.__external_iqs.has_key(id):
             self._logger.debug("got external IQ reply for %d (%d outstanding)", id, len(self.__external_iqs.keys())-1)            
@@ -224,18 +231,21 @@ class Mugshot(gobject.GObject):
         # information
         self._logger.exception("D-BUS error: %s" % (err,))
     
+    @log_except(_logger)
     def __on_self_changed(self):
-        self.__self_proxy.GetProperties(reply_handler=_log_cb(self.__on_get_self_properties),
-                                        error_handler=_log_cb(self.__on_dbus_error))        
+        self.__self_proxy.GetProperties(reply_handler=self.__on_get_self_properties,
+                                        error_handler=self.__on_dbus_error)        
     
+    @log_except(_logger)
     def __on_get_self(self, myself_path):
         self._logger.debug("got self path: %s" % (myself_path,))
         self.__self_proxy = dbus.SessionBus().get_object('org.mugshot.Mugshot', myself_path)
         self.__on_self_changed()
         self.__self_proxy.connect_to_signal("Changed", 
-                                            _log_cb(self.__on_self_changed), 
+                                            self.__on_self_changed, 
                                             'org.mugshot.Mugshot.Entity')
         
+    @log_except(_logger)
     def __on_get_self_properties(self, myself):
         self._logger.debug("self properties: %s" % (myself,))
         if self.__self:
@@ -245,6 +255,7 @@ class Mugshot(gobject.GObject):
             self._logger.debug("emitting self known")
             self.emit("self-known")  
     
+    @log_except(_logger)
     def __on_get_baseprops(self, props):
         self.__baseprops = {}
         for k,v in props.items():
@@ -259,11 +270,12 @@ class Mugshot(gobject.GObject):
     
     def get_self(self):
         if self.__self is None:
-            self.__proxy.GetSelf(reply_handler=_log_cb(self.__on_get_self), error_handler=self.__on_dbus_error)
+            self.__proxy.GetSelf(reply_handler=self.__on_get_self, error_handler=self.__on_dbus_error)
             return None
         return self.__self
     
-    def __on_get_network_entity_props(self, proxy, attrs):
+    @log_except(_logger)
+    def __on_get_network_entity_props(self, proxy, attrs, connect=False):
         self._logger.debug("entity properties: %s" % (attrs,))
         
         guid = attrs[u'guid']
@@ -275,22 +287,23 @@ class Mugshot(gobject.GObject):
             self.emit("network-changed")
         else:
             self.__network[guid].update(attrs)        
-        if proxy:
+        if connect:
             proxy.connect_to_signal("Changed", 
-                                    _log_cb(lambda props: self.__on_get_network_entity_props(None, props)), 
+                                    self.__on_get_network_entity_props,
                                     'org.mugshot.Mugshot.Entity')
         
     
+    @log_except(_logger)
     def __on_get_network(self, opaths):
         self.__network = {}
         for opath in opaths:
             proxy = dbus.SessionBus().get_object('org.mugshot.Mugshot', opath)
-            proxy.GetProperties(reply_handler=_log_cb(lambda props: self.__on_get_network_entity_props(proxy, props)),
-                                error_handler=_log_cb(self.__on_dbus_error))              
+            proxy.GetProperties(reply_handler=functools.partial(self.__on_get_network_entity_props, connect=True),
+                                error_handler=_self.__on_dbus_error)              
     
     def get_network(self):
         if self.__network is None:
-            self.__proxy.GetNetwork(reply_handler=_log_cb(self.__on_get_network), error_handler=self.__on_dbus_error)
+            self.__proxy.GetNetwork(reply_handler=self.__on_get_network, error_handler=self.__on_dbus_error)
             return None
         return self.__network.itervalues()
 
