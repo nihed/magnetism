@@ -1,4 +1,4 @@
-import logging, os
+import logging, os, subprocess
 
 import gobject, gtk
 import gnome.ui
@@ -109,16 +109,23 @@ class SelfSlideout(CanvasVBox):
             link = hippo.CanvasLink(text='Sign in', xalign=hippo.ALIGNMENT_START)
             link.connect("activated", self.__show_mugshot_link, "/who-are-you")
         self.__personalization_box.append(link)
+        link = hippo.CanvasLink(text='System preferences', xalign=hippo.ALIGNMENT_START)
+        link.connect("activated", self.__on_system_preferences)
+        self.__personalization_box.append(link)
         link = hippo.CanvasLink(text='Minimize sidebar', xalign=hippo.ALIGNMENT_START)
         link.connect("activated", self.__on_minimize_mode)
         self.__personalization_box.append(link)
 
     def __show_mugshot_link(self, l, url):
-        libbig.show_url(mugshot.get_mugshot().get_baseurl() + url)        
+        libbig.show_url(mugshot.get_mugshot().get_baseurl() + url)
         self.emit('close')
 
     def __on_minimize_mode(self, l): 
         self.emit('minimize')
+        self.emit('close')
+
+    def __on_system_preferences(self, l):
+        subprocess.Popen(['gnome-control-center'])
         self.emit('close')
 
     def __on_logout(self, l):
