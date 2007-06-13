@@ -90,7 +90,7 @@ handle_message(DBusConnection     *connection,
                                       DBUS_TYPE_STRING, &old,
                                       DBUS_TYPE_STRING, &new,
                                       DBUS_TYPE_INVALID)) {
-                g_debug("NameOwnerChanged %s '%s' -> '%s'", name, old, new);
+                /* g_debug("NameOwnerChanged %s '%s' -> '%s'", name, old, new); */
                 if (*old == '\0')
                     old = NULL;
                 if (*new == '\0')

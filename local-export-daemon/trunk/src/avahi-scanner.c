@@ -24,6 +24,7 @@
 #include <string.h>
 #include "avahi-scanner.h"
 #include "hippo-dbus-helper.h"
+#include <dbus/dbus-glib-lowlevel.h>
 #include "main.h"
 #include <avahi-client/lookup.h>
 
@@ -147,6 +148,39 @@ session_fail_connect(Session *session)
 }
 
 static void
+print_sv_dict(const DBusMessageIter *orig_dict_iter)
+{
+    DBusMessageIter dict_iter;
+
+    dict_iter = *orig_dict_iter;
+    while (dbus_message_iter_get_arg_type(&dict_iter) == DBUS_TYPE_DICT_ENTRY) {
+        DBusMessageIter entry_iter;
+        DBusMessageIter variant_iter;
+        const char *key;
+        const char *value;
+        
+        dbus_message_iter_recurse(&dict_iter, &entry_iter);
+
+        key = NULL;
+        dbus_message_iter_get_basic(&entry_iter, &key);
+        dbus_message_iter_next(&entry_iter);
+
+        g_assert(dbus_message_iter_get_arg_type(&entry_iter) == DBUS_TYPE_VARIANT);
+        dbus_message_iter_recurse(&entry_iter, &variant_iter);
+
+        if (dbus_message_iter_get_arg_type(&variant_iter) == DBUS_TYPE_STRING) {
+            dbus_message_iter_get_basic(&variant_iter, &value);
+        } else {
+            value = "?";
+        }
+        
+        g_debug("prop '%s'='%s'", key, value);
+            
+        dbus_message_iter_next(&dict_iter);
+    }
+}
+
+static void
 on_get_session_info_reply(DBusPendingCall *pending,
                           void            *user_data)
 {
@@ -157,11 +191,52 @@ on_get_session_info_reply(DBusPendingCall *pending,
     
     reply = dbus_pending_call_steal_reply(pending);
 
-    /* FIXME read the info from the reply */
-    
-    dbus_message_unref(reply);
+    if (reply != NULL && dbus_message_has_signature(reply, "a{sv}a(sa{sv})")) {
+        DBusMessageIter iter;
+        DBusMessageIter dict_iter;        
+        DBusMessageIter infos_iter;
+        
+        g_debug("Got a reply");
+        
+        dbus_message_iter_init(reply, &iter);
+
+        dbus_message_iter_recurse(&iter, &dict_iter);
+        
+        print_sv_dict(&dict_iter);
+        
+        dbus_message_iter_next(&iter);
+        dbus_message_iter_recurse(&iter, &infos_iter);
+        while (dbus_message_iter_get_arg_type(&infos_iter) == DBUS_TYPE_STRUCT) {
+            DBusMessageIter info_iter;
+            const char *info_name;
+            
+            dbus_message_iter_recurse(&infos_iter, &info_iter);
+
+            info_name = NULL;
+            dbus_message_iter_get_basic(&info_iter, &info_name);
+
+            dbus_message_iter_next(&info_iter);
+
+            g_debug("Info '%s':", info_name);
+            dbus_message_iter_recurse(&info_iter, &dict_iter);            
+            print_sv_dict(&dict_iter);
+            
+            dbus_message_iter_next(&infos_iter);
+        }
+        
+    } else {
+        if (reply == NULL)
+            g_debug("NULL reply");
+        else
+            g_debug("reply had wrong signature '%s'", dbus_message_get_signature(reply));
+    }
+
+    if (reply != NULL)
+        dbus_message_unref(reply);
+
     dbus_pending_call_unref(pending);
 
+    g_debug("Disconnecting");
     dbus_connection_close(session->connection);
     session->connection = NULL;
     session->state = SESSION_STATE_DISCONNECTED;
@@ -180,23 +255,39 @@ session_connect(Session *session)
     
     if (session->state == SESSION_STATE_CONNECTING)
         return;
+
+#if 0
+    if (session->id.protocol == AVAHI_PROTO_INET6) {
+        /* dbus does not do IPv6 for now I don't think */
+        session_fail_connect(session);
+        return;
+    }
+#endif
     
     session->state = SESSION_STATE_CONNECTING;
     
     avahi_address_snprint(address_str, sizeof(address_str), &session->address);
     
     dbus_address = g_strdup_printf("tcp:host=%s,port=%u", address_str, session->port);
+
+    g_debug("Connecting to '%s' protocol = %d (v4=%d v6=%d)",
+            dbus_address, session->id.protocol, AVAHI_PROTO_INET, AVAHI_PROTO_INET6);
     
     dbus_error_init(&derror);
     session->connection = dbus_connection_open_private(dbus_address, &derror);
     g_free(dbus_address);
     
     if (session->connection == NULL) {
+        g_debug("Failed: %s", derror.message);
         dbus_error_free(&derror); /* this is going to happen often enough that printing it isn't a good idea */
         session_fail_connect(session);
         return;
     }
 
+    dbus_connection_setup_with_g_main(session->connection, NULL);
+
+    g_debug("Sending call");
+    
     message = dbus_message_new_method_call(NULL, SESSION_INFO_OBJECT_PATH,
                                            SESSION_INFO_INTERFACE,
                                            "GetInfoForSession");
@@ -272,11 +363,13 @@ resolve_callback(AvahiServiceResolver *r,
         break;
         
     case AVAHI_RESOLVER_FOUND:
-        {            
+        {
             session->host_name = g_strdup(host_name);
             session->address = *address;
             session->port = port;
-
+            
+            g_debug("Resolved %s:%d", host_name, port);
+            
             /* these may or may not be present. If they are, we verify their
              * accuracy later.
              */
@@ -324,6 +417,8 @@ browse_callback(AvahiServiceBrowser *b,
             AvahiServiceResolver *resolver;
             Session *session;
 
+            g_debug("Browsed %s", name);
+            
             session = get_session_by_service(&id);
             if (session != NULL) {
                 /* Should not happen - we already browsed this thing. Print a warning and ignore. */
