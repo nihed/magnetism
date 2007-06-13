@@ -47,8 +47,9 @@ get_connection(GError **error)
     return session_connection;
 }
 
-char*
-hippo_dbus_full_bus_name(const char *server)
+static char*
+hippo_dbus_full_bus_name_internal(const char *server,
+                                  gboolean    old_form)
 {
     GString *str;
     const char *p;
@@ -88,14 +89,32 @@ hippo_dbus_full_bus_name(const char *server)
             g_string_append_c(str, *p);
         } else {
             g_string_append_c(str, '_');
-            g_string_append_c(str, hexdigits[(*p) & 0xf]);
-            g_string_append_c(str, hexdigits[(*p) >> 4]);
+            if (old_form) {
+                /* Nibbles backwards */
+                g_string_append_c(str, hexdigits[(*p) & 0xf]);
+                g_string_append_c(str, hexdigits[(*p) >> 4]);
+            } else {
+                g_string_append_c(str, hexdigits[(*p) >> 4]);
+                g_string_append_c(str, hexdigits[(*p) & 0xf]);
+            }
         }
         ++p;
     }
     g_free(server_with_port);
-    
+
     return g_string_free(str, FALSE);
+}
+
+char*
+hippo_dbus_full_bus_name(const char *server)
+{
+    return hippo_dbus_full_bus_name_internal(server, FALSE);
+}
+
+char*
+hippo_dbus_full_bus_name_old(const char *server)
+{
+    return hippo_dbus_full_bus_name_internal(server, TRUE);
 }
 
 gboolean

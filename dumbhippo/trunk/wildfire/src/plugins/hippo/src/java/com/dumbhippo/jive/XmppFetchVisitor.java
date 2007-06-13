@@ -29,7 +29,8 @@ public class XmppFetchVisitor implements FetchVisitor {
 	private static final QName RESOURCE_ID_QNAME = QName.get("resourceId", SYSTEM_NAMESPACE);
 	private static final QName FETCH_QNAME = QName.get("fetch", SYSTEM_NAMESPACE);
 	private static final QName INDIRECT_QNAME = QName.get("indirect", SYSTEM_NAMESPACE);
-	private static final QName CARDINALITY_QNAME = QName.get("cardinality", SYSTEM_NAMESPACE);
+	private static final QName TYPE_QNAME = QName.get("type", SYSTEM_NAMESPACE);
+	private static final QName DEFAULT_CHILDREN_QNAME = QName.get("defaultChildren", SYSTEM_NAMESPACE);
 	private static final QName UPDATE_QNAME = QName.get("update", SYSTEM_NAMESPACE);
 	
 	public XmppFetchVisitor(Element rootElement, DataModel model) {
@@ -80,12 +81,18 @@ public class XmppFetchVisitor implements FetchVisitor {
 	private Element addPropertyElement(DMPropertyHolder propertyHolder) {
 		Element element = currentResourceElement.addElement(createQName(propertyHolder.getName(), propertyHolder.getNameSpace()));
 		
-		if (seenProperties.contains(propertyHolder))
+		if (seenProperties.contains(propertyHolder)) {
 			element.addAttribute(UPDATE_QNAME, "add");
-		else
+		} else {
+			element.addAttribute(TYPE_QNAME, propertyHolder.getTypeString());
+			if (propertyHolder.getDefaultInclude()) {
+				String defaultChildren = propertyHolder.getDefaultChildrenString();
+				if (defaultChildren != null)
+					element.addAttribute(DEFAULT_CHILDREN_QNAME, propertyHolder.getTypeString());
+			}
+				
 			seenProperties.add(propertyHolder);
-		
-		element.addAttribute(CARDINALITY_QNAME, propertyHolder.getCardinality().getValue());
+		}
 		
 		return element;
 	}
@@ -93,7 +100,6 @@ public class XmppFetchVisitor implements FetchVisitor {
 	public void plainProperty(PlainPropertyHolder propertyHolder, Object value) {
 		Element element = addPropertyElement(propertyHolder);
 			
-		element.addAttribute(CARDINALITY_QNAME, propertyHolder.getCardinality().getValue());
 		element.addText(value.toString());
 	}
 
@@ -108,6 +114,6 @@ public class XmppFetchVisitor implements FetchVisitor {
 		Element element = currentResourceElement.addElement(createQName(propertyHolder.getName(), propertyHolder.getNameSpace()));
 		
 		element.addAttribute(UPDATE_QNAME, "clear");
-		element.addAttribute(CARDINALITY_QNAME, propertyHolder.getCardinality().getValue());
+		element.addAttribute(TYPE_QNAME, propertyHolder.getTypeString());
 	}
 }

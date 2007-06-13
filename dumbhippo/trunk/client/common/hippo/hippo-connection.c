@@ -4544,8 +4544,8 @@ dm_context_get_update(DMContext *context)
             return HIPPO_DATA_UPDATE_ADD;
         else if (strcmp(update_attr, "replace") == 0)
             return HIPPO_DATA_UPDATE_REPLACE;
-        else if (strcmp(update_attr,"remove") == 0)
-            return HIPPO_DATA_UPDATE_REMOVE;
+        else if (strcmp(update_attr,"delete") == 0)
+            return HIPPO_DATA_UPDATE_DELETE;
         else if (strcmp(update_attr, "clear") == 0)
             return HIPPO_DATA_UPDATE_CLEAR;
         else {
@@ -4556,33 +4556,98 @@ dm_context_get_update(DMContext *context)
     return HIPPO_DATA_UPDATE_REPLACE;
 }
 
-static HippoDataUpdate
-dm_context_get_cardinality(DMContext *context)
+static gboolean
+dm_context_get_type(DMContext            *context,
+                    HippoDataType        *type,
+                    HippoDataCardinality *cardinality,
+                    gboolean             *default_include)
 {
-    const char *cardinality_attr = dm_context_get_system_attribute(context, "cardinality");
-    if (cardinality_attr != NULL) {
-        if (strcmp(cardinality_attr, "01") == 0)
-            return HIPPO_DATA_CARDINALITY_01;
-        else if (strcmp(cardinality_attr, "1") == 0)
-            return HIPPO_DATA_CARDINALITY_01;
-        else if (strcmp(cardinality_attr, "N") == 0)
-            return HIPPO_DATA_CARDINALITY_N;
-        else {
-            g_warning("Unknown value for m:cardinality attribute. Assuming '01'");
+    const char *type_attr = dm_context_get_system_attribute(context, "type");
+    const char *p;
+
+    if (type_attr == NULL) {
+        if (*type != HIPPO_DATA_NONE) {
+            /* we already had a type */
+            return TRUE;
+        } else {
+            g_warning("m:type attribute missing");
+            return FALSE;
         }
     }
 
-    return HIPPO_DATA_CARDINALITY_01;
+    p = type_attr;
+    if (*p == '+') {
+        *default_include = TRUE;
+        p++;
+    }
+
+    switch (*p) {
+    case 'b':
+        *type = HIPPO_DATA_BOOLEAN;
+        break;
+    case 'i':
+        *type = HIPPO_DATA_INTEGER;
+        break;
+    case 'l':
+        *type = HIPPO_DATA_LONG;
+        break;
+    case 'f':
+        *type = HIPPO_DATA_FLOAT;
+        break;
+    case 's':
+        *type = HIPPO_DATA_STRING;
+        break;
+    case 'r':
+        *type = HIPPO_DATA_RESOURCE;
+        break;
+    default:
+        g_warning("Can't understand m:type attribute '%s'", type_attr);
+        return FALSE;
+    }
+        
+    p++;
+
+    switch (*p) {
+    case '*':
+        *cardinality = HIPPO_DATA_CARDINALITY_N;
+        p++;
+        break;
+    case '?':
+        *cardinality = HIPPO_DATA_CARDINALITY_01;
+        p++;
+        break;
+    case '\0':
+        *cardinality = HIPPO_DATA_CARDINALITY_1;
+        break;
+    default:
+        g_warning("Can't understand m:type attribute '%s'", type_attr);
+        return FALSE;
+    }
+
+    if (*p != '\0') {
+        g_warning("Can't understand m:type attribute '%s'", type_attr);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 static gboolean
 dm_context_get_value(DMContext      *context,
+                     HippoDataType   type,
                      HippoDataValue *value)
 {
     char *resource_id = dm_context_get_resource_id(context);
     
     if (resource_id != NULL) {
-        HippoDataResource *resource = _hippo_data_model_get_resource(context->model, resource_id);
+        HippoDataResource *resource;
+
+        if (type != HIPPO_DATA_RESOURCE) {
+            g_warning("m:resourceId found for non-resource property value");
+            return FALSE;
+        }
+
+        resource = _hippo_data_model_get_resource(context->model, resource_id);
         
         if (resource == NULL) {
             // FIXME: We need to handle circular references
@@ -4598,15 +4663,68 @@ dm_context_get_value(DMContext      *context,
         return TRUE;
     } else {
         LmMessageNode *node = context->nodes->data;
+        gboolean result = TRUE;
+        char *str;
+        
+        if (type == HIPPO_DATA_RESOURCE) {
+            g_warning("m:resourceId not found for a resource property value");
+            return FALSE;
+        }
 
-        value->type = HIPPO_DATA_STRING;
-        if (node->value != NULL)
+        str = g_strdup(node->value != NULL ? node->value : "");
+        g_strstrip(str);
+
+        value->type = type;
+        switch (type) {
+        case HIPPO_DATA_BOOLEAN:
+            value->u.boolean = g_ascii_strcasecmp(str, "true") == 0;
+            break;
+        case HIPPO_DATA_INTEGER:
+            {
+                char *end;
+                long v = strtol(str, &end, 10);
+                if (*str == '\0' || *end != '\0') {
+                    g_warning("Invalid float property value '%s'", str);
+                    result = FALSE;
+                }
+                value->u.integer = CLAMP(v, G_MININT, G_MAXINT);
+            }
+            break;
+        case HIPPO_DATA_LONG:
+            {
+                char *end;
+                value->u.long_ = g_ascii_strtoll(str, &end, 10);
+                if (*str == '\0' || *end != '\0') {
+                    g_warning("Invalid long property value '%s'", str);
+                    result = FALSE;
+                }
+            }
+            break;
+        case HIPPO_DATA_FLOAT:
+            {
+                char *end;
+                value->u.float_ = g_ascii_strtod(str, &end);
+                if (*str == '\0' || *end != '\0') {
+                    g_warning("Invalid float property value '%s'", str);
+                    result = FALSE;
+                }
+            }
+            break;
+        case HIPPO_DATA_STRING:
             value->u.string = node->value;
-        else
-            value->u.string = "";
+            break;
+        case HIPPO_DATA_NONE:
+        case HIPPO_DATA_RESOURCE:
+        case HIPPO_DATA_LIST:
+            g_assert_not_reached();
+            break;
+        }
+
+        g_free(str);
+        
+        return result;
     }
 
-    return TRUE;
 }
 
 static void
@@ -4617,8 +4735,12 @@ update_property(DMContext            *context,
     const char *property_uri;
     const char *property_name;
     HippoQName *property_qname;
+    HippoDataProperty *old_property;
+    HippoDataType type = HIPPO_DATA_NONE;
     HippoDataUpdate update;
-    HippoDataCardinality cardinality;
+    HippoDataCardinality cardinality = HIPPO_DATA_CARDINALITY_1;
+    gboolean default_include = FALSE;
+    const char *default_children;
     
     if (!dm_context_node_info(context, &property_uri, &property_name) || property_uri == NULL) {
         g_warning("Couldn't resolve the namespace for child element of a resource %s",
@@ -4629,16 +4751,36 @@ update_property(DMContext            *context,
     property_qname = hippo_qname_get(property_uri, property_name);
     
     update = dm_context_get_update(context);
-    cardinality = dm_context_get_cardinality(context);
+
+    /* Look for an old value to get the type as a default if the server doesn't send it. (In particular,
+     * the type won't be sent for UPDATE_ADD
+     */
+    old_property = _hippo_data_resource_get_property_by_qname(resource, property_qname);
+    if (old_property != NULL) {
+        type = hippo_data_property_get_type(old_property);
+        cardinality = hippo_data_property_get_cardinality(old_property);
+        default_include = hippo_data_property_get_default_include(old_property);
+    }
+
+    if (!dm_context_get_type(context, &type, &cardinality, &default_include))
+        return;
+
+    if (default_include)
+        default_children = dm_context_get_system_attribute(context, "defaultChildren");
+    else
+        default_children = NULL;
     
     if (update == HIPPO_DATA_UPDATE_CLEAR) {
         _hippo_data_resource_update_property(resource, property_qname, update, cardinality,
-                                             NULL, notifications);
+                                             default_include, default_children,
+                                             NULL,
+                                             notifications);
     } else {
         HippoDataValue value;
         
-        if (dm_context_get_value(context, &value)) {
+        if (dm_context_get_value(context, type, &value)) {
             _hippo_data_resource_update_property(resource, property_qname, update, cardinality,
+                                                 default_include, default_children,
                                                  &value,
                                                  notifications);
         }
@@ -4754,11 +4896,26 @@ on_query_reply(LmMessageHandler *handler,
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
 
+static void
+add_param_foreach(gpointer key,
+                  gpointer value,
+                  gpointer data)
+{
+    const char *param_name = key;
+    const char *param_value = value;
+    LmMessageNode *node = data;
+    LmMessageNode *param_node;
+        
+    param_node = lm_message_node_add_child (node, "m:param", NULL);
+    lm_message_node_set_attribute(param_node, "name", param_name);
+    lm_message_node_set_value(param_node, param_value);
+}
+
 void
 hippo_connection_send_query(HippoConnection *connection,
                             HippoDataQuery  *query,
                             const char      *fetch,
-                            va_list          args)
+                            GHashTable      *params)
 {
     LmMessage *message;
     LmMessageNode *node;
@@ -4775,21 +4932,8 @@ hippo_connection_send_query(HippoConnection *connection,
 
     if (fetch != NULL) 
         lm_message_node_set_attribute(child, "m:fetch", fetch);
-    
-    while (TRUE) {
-        LmMessageNode *param_node;
-        
-        const char *param_name = va_arg(args, const char *);
-        const char *param_value;
-        if (param_name == NULL)
-            break;
-        
-        param_value = va_arg(args, const char *);
 
-        param_node = lm_message_node_add_child (child, "m:param", NULL);
-        lm_message_node_set_attribute(param_node, "name", param_name);
-        lm_message_node_set_value(param_node, param_value);
-    }
+    g_hash_table_foreach(params, add_param_foreach, child);
 
     hippo_connection_send_message_with_reply_full(connection, message, on_query_reply, SEND_MODE_AFTER_AUTH, query, NULL);
 

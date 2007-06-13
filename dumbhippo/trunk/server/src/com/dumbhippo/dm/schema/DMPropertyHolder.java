@@ -39,6 +39,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	protected DMClassHolder<K,T> declaringClassHolder;
 	protected DMProperty annotation;
 	protected boolean defaultInclude;
+	private String typeString;
 	protected String propertyId;
 	protected Class<TI> elementType;
 	protected Filter propertyFilter;
@@ -50,7 +51,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	private String name;
 	private String namespace;
 	private long ordering;
-	
+
 	public DMPropertyHolder (DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, Class<TI> elementType, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
 		boolean booleanOnly = false;
 		
@@ -133,8 +134,37 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		completed = true;
 		
 		defaultInclude = annotation.defaultInclude();
+		initTypeString();
 	}
 
+	abstract protected char getTypeChar();
+
+	private void initTypeString() {
+		StringBuilder sb = new StringBuilder();
+		
+		if (defaultInclude)
+			sb.append("+");
+		
+		sb.append(getTypeChar());
+		
+		switch (getCardinality()) {
+		case ZERO_ONE:
+			sb.append("?");
+			break;
+		case ONE:
+			break;
+		case ANY:
+			sb.append("*");
+			break;
+		}
+		
+		typeString = sb.toString(); 
+	}
+	
+	public String getTypeString() {
+		return typeString;
+	}
+	
 	public String getPropertyId() {
 		return propertyId;
 	}
@@ -334,6 +364,8 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	public abstract void visitProperty(DMSession session, T object, FetchVisitor visitor, boolean forceEmpty);
 
 	public abstract Fetch<?,?> getDefaultChildren();
+	public abstract String getDefaultChildrenString();
+	
 	public Class<?> getKeyClass() {
 		throw new UnsupportedOperationException();
 	}
