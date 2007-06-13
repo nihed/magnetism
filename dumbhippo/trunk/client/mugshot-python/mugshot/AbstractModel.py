@@ -1,6 +1,6 @@
 from Resource import *
 
-class AbstractModel:
+class AbstractModel(object):
     """
     Base class defining the operation of the Mugshot data model.
 

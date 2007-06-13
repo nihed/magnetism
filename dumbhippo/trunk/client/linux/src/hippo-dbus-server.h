@@ -26,6 +26,15 @@ HippoDBus* hippo_dbus_try_to_acquire           (const char  *server,
                                                 gboolean     replace_existing,
                                                 GError     **error);
 
+/* These add the signal match rules, but you need to modify
+ * hippo-dbus-server.c:handle_message() to actually deal with the notifications
+ */
+void hippo_dbus_watch_for_disconnect(HippoDBus  *dbus,
+                                     const char *name);
+void hippo_dbus_unwatch_for_disconnect(HippoDBus  *dbus,
+                                       const char *name);
+
+
 void       hippo_dbus_notify_auth_changed      (HippoDBus   *dbus);
 
 void       hippo_dbus_notify_contacts_loaded   (HippoDBus   *dbus);

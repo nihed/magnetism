@@ -255,6 +255,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-data-cache.c		\
 	$(COMMONSRCDIR)/hippo/hippo-data-cache.h		\
 	$(COMMONSRCDIR)/hippo/hippo-data-cache-internal.h	\
+	$(COMMONSRCDIR)/hippo/hippo-data-fetch.c		\
+	$(COMMONSRCDIR)/hippo/hippo-data-fetch.h		\
 	$(COMMONSRCDIR)/hippo/hippo-data-model.c		\
 	$(COMMONSRCDIR)/hippo/hippo-data-model.h		\
 	$(COMMONSRCDIR)/hippo/hippo-data-model-internal.h	\

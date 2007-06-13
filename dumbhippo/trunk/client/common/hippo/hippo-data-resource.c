@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "hippo-data-fetch.h"
 #include "hippo-data-resource-internal.h"
 
 typedef enum {
@@ -14,10 +15,12 @@ typedef enum {
 typedef struct _DataProperty DataProperty;
 typedef struct _DataConnection DataConnection;
 
-struct _DataProperty {
+struct _HippoDataProperty {
     HippoQName *qname;
-    HippoDataCardinality cardinality;
     HippoDataValue value;
+    HippoDataFetch *default_children;
+    guint cardinality : 4;
+    guint default_include : 1;
 };
 
 struct _DataConnection {
@@ -39,6 +42,91 @@ struct _HippoDataResource
     GSList *connections;
     GSList *properties;
 };
+
+void
+hippo_data_value_get_element(HippoDataValue *value,
+                             GSList         *node,
+                             HippoDataValue *element)
+{
+    g_return_if_fail(HIPPO_DATA_IS_LIST(value->type));
+
+    element->type = HIPPO_DATA_BASE(value->type);
+    
+    switch (element->type) {
+    case HIPPO_DATA_BOOLEAN:
+        element->u.boolean =  *(gboolean *)node->data;
+        return;
+    case HIPPO_DATA_INTEGER:
+        element->u.integer =  *(int *)node->data;
+        return;
+    case HIPPO_DATA_LONG:
+        element->u.long_ =  *(gint64 *)node->data;
+        return;
+    case HIPPO_DATA_FLOAT:
+        element->u.float_ =  *(double *)node->data;
+        return;
+    case HIPPO_DATA_STRING:
+        element->u.string  = (char *)node->data;
+        return;
+    case HIPPO_DATA_RESOURCE:
+        element->u.resource = (HippoDataResource *)node->data;
+        return;
+    case HIPPO_DATA_NONE:
+    case HIPPO_DATA_LIST:
+        break;
+    }
+
+    g_warning("Type value '%d' not valid", element->type);
+}
+
+HippoQName *
+hippo_data_property_get_qname(HippoDataProperty *property)
+{
+    g_return_val_if_fail(property != NULL, NULL);
+
+    return property->qname;
+}
+
+void
+hippo_data_property_get_value(HippoDataProperty *property,
+                              HippoDataValue    *value)
+{
+    g_return_if_fail(property != NULL);
+    
+    *value = property->value;
+}
+
+HippoDataType
+hippo_data_property_get_type(HippoDataProperty *property)
+{
+    g_return_val_if_fail(property != NULL, HIPPO_DATA_NONE);
+    
+    return HIPPO_DATA_BASE(property->value.type);
+}
+
+HippoDataCardinality
+hippo_data_property_get_cardinality(HippoDataProperty *property)
+{
+    g_return_val_if_fail(property != NULL, HIPPO_DATA_CARDINALITY_01);
+
+    return property->cardinality;
+}
+
+gboolean
+hippo_data_property_get_default_include(HippoDataProperty *property)
+{
+    g_return_val_if_fail(property != NULL, FALSE);
+    
+    return property->default_include;
+}
+
+HippoDataFetch *
+hippo_data_property_get_default_children(HippoDataProperty *property)
+{
+    g_return_val_if_fail(property != NULL, NULL);
+    
+    return property->default_children;
+}
 
 HippoDataResource *
 _hippo_data_resource_new(const char *resource_id,
@@ -70,6 +158,73 @@ hippo_data_resource_get_class_id (HippoDataResource *resource)
     return resource->class_id;
 }
 
+static void
+set_value(HippoDataType   type,
+          HippoDataValue *value,
+          void           *location)
+{
+    if (HIPPO_DATA_IS_LIST(type)) {
+        *((GSList **)location) = value->u.list;
+    } else {
+        switch (HIPPO_DATA_BASE(type)) {
+        case HIPPO_DATA_NONE:
+            break;
+        case HIPPO_DATA_BOOLEAN:
+            *((gboolean *)location) = value->u.boolean;
+            break;
+        case HIPPO_DATA_INTEGER:
+            *((int *)location) = value->u.integer;
+            break;
+        case HIPPO_DATA_LONG:
+            *((gint64 *)location) = value->u.long_;
+            break;
+        case HIPPO_DATA_FLOAT:
+            *((double *)location) = value->u.float_;
+            break;
+        case HIPPO_DATA_STRING:
+            *((const char **)location) = value->u.string;
+            break;
+        case HIPPO_DATA_RESOURCE:
+            *((HippoDataResource **)location) = value->u.resource;
+            break;
+        }
+    }
+}
+
+static void
+set_default_value(HippoDataType  type,
+                  void          *location)
+                  
+{
+    if (HIPPO_DATA_IS_LIST(type)) {
+        *((GSList **)location) = NULL;
+    } else {
+        switch (type) {
+        case HIPPO_DATA_BOOLEAN:
+            *((gboolean *)location) = FALSE;
+            break;
+        case HIPPO_DATA_INTEGER:
+            *((int *)location) = 0;
+            break;
+        case HIPPO_DATA_LONG:
+            *((gint64 *)location) = 0;
+            break;
+        case HIPPO_DATA_FLOAT:
+            *((double *)location) = 0.0;
+            break;
+        case HIPPO_DATA_STRING:
+            *((const char **)location) = NULL;
+            break;
+        case HIPPO_DATA_RESOURCE:
+            *((HippoDataResource **)location) = NULL;
+            break;
+        case HIPPO_DATA_LIST:
+        case HIPPO_DATA_NONE:
+            break;
+        }
+    }
+}
+
 void
 hippo_data_resource_get(HippoDataResource *resource,
                         ...)
@@ -92,43 +247,17 @@ hippo_data_resource_get(HippoDataResource *resource,
         location = va_arg(vap, void *);
 
         for (l = resource->properties; l; l = l->next) {
-            DataProperty *property = l->data;
+            HippoDataProperty *property = l->data;
             if (strcmp(name, property->qname->name) == 0 && type == property->value.type) {
-                switch (type) {
-                case HIPPO_DATA_NONE:
-                    break;
-                case HIPPO_DATA_STRING:
-                    *((const char **)location) = property->value.u.string;
-                    break;
-                case HIPPO_DATA_RESOURCE:
-                    *((HippoDataResource **)location) = property->value.u.resource;
-                    break;
-                case HIPPO_DATA_STRING_LIST:
-                case HIPPO_DATA_RESOURCE_LIST:
-                    *((GSList **)location) = property->value.u.list;
-                    break;
-                }
+                set_value(type, &property->value, location);
                 goto next_property;
             }
         }
 
-        switch (type) {
-        case HIPPO_DATA_NONE:
-            break;
-        case HIPPO_DATA_STRING:
-            *((const char **)location) = NULL;
-            break;
-        case HIPPO_DATA_RESOURCE:
-            *((HippoDataResource **)location) = NULL;
-            break;
-        case HIPPO_DATA_STRING_LIST:
-        case HIPPO_DATA_RESOURCE_LIST:
-            *((GSList **)location) = NULL;
-            break;
-        }
+        set_default_value(type, location);
         
-        next_property:
-            ;
+    next_property:
+        ;
     }
 
     va_end(vap);
@@ -156,46 +285,67 @@ hippo_data_resource_get_by_qname(HippoDataResource *resource,
         location = va_arg(vap, void *);
 
         for (l = resource->properties; l; l = l->next) {
-            DataProperty *property = l->data;
+            HippoDataProperty *property = l->data;
             if (qname == property->qname && type == property->value.type) {
-                switch (type) {
-                case HIPPO_DATA_NONE:
-                    break;
-                case HIPPO_DATA_STRING:
-                    *((const char **)location) = property->value.u.string;
-                    break;
-                case HIPPO_DATA_RESOURCE:
-                    *((HippoDataResource **)location) = property->value.u.resource;
-                    break;
-                case HIPPO_DATA_STRING_LIST:
-                case HIPPO_DATA_RESOURCE_LIST:
-                    *((GSList **)location) = property->value.u.list;
-                    break;
-                }
+                set_value(type, &property->value, location);
                 goto next_property;
             }
         }
 
-        switch (type) {
-        case HIPPO_DATA_NONE:
-            break;
-        case HIPPO_DATA_STRING:
-            *((const char **)location) = NULL;
-            break;
-        case HIPPO_DATA_RESOURCE:
-            *((HippoDataResource **)location) = NULL;
-            break;
-        case HIPPO_DATA_STRING_LIST:
-        case HIPPO_DATA_RESOURCE_LIST:
-            *((GSList **)location) = NULL;
-            break;
-        }
-        
-        next_property:
+        set_default_value(type, location);
+
+    next_property:
             ;
     }
 
     va_end(vap);
+}
+
+HippoDataProperty *
+_hippo_data_resource_get_property(HippoDataResource *resource,
+                                  const char        *name)
+{
+    GSList *l;
+    
+    for (l = resource->properties; l; l = l->next) {
+        HippoDataProperty *property = l->data;
+        
+        if (strcmp(name, property->qname->name) == 0)
+            return property;
+    }
+
+    return NULL;
+}
+
+HippoDataProperty *
+_hippo_data_resource_get_property_by_qname(HippoDataResource *resource,
+                                           HippoQName        *qname)
+{
+    GSList *l;
+    
+    for (l = resource->properties; l; l = l->next) {
+        HippoDataProperty *property = l->data;
+        
+        if (qname == property->qname)
+            return property;
+    }
+    
+    return NULL;
+}
+
+GSList *
+_hippo_data_resource_get_default_properties(HippoDataResource *resource)
+{
+    GSList *result = NULL;
+    GSList *l;
+
+    for (l = resource->properties; l; l = l->next) {
+        HippoDataProperty *property = l->data;
+        if (property->default_include)
+            result = g_slist_prepend(result, property);
+    }
+
+    return result;
 }
 
 void
@@ -260,31 +410,46 @@ hippo_data_resource_disconnect (HippoDataResource *resource,
 }
 
 static void
-data_property_clear(DataProperty *property)
+data_value_clear(HippoDataValue *value)
 {
-    switch (property->value.type) {
-    case HIPPO_DATA_NONE:
-        break;
-    case HIPPO_DATA_RESOURCE:
-        break;
-    case HIPPO_DATA_STRING:
-        g_free(property->value.u.string);
-        break;
-    case HIPPO_DATA_RESOURCE_LIST:
-        g_slist_free(property->value.u.list);
-        break;
-    case HIPPO_DATA_STRING_LIST:
-        g_slist_foreach(property->value.u.list, (GFunc)g_free, NULL);
-        g_slist_free(property->value.u.list);
-        break;
+    if (HIPPO_DATA_IS_LIST(value->type)) {
+        switch (HIPPO_DATA_BASE(value->type)) {
+        case HIPPO_DATA_BOOLEAN:
+        case HIPPO_DATA_INTEGER:
+        case HIPPO_DATA_LONG:
+        case HIPPO_DATA_FLOAT:
+        case HIPPO_DATA_STRING:
+            g_slist_foreach(value->u.list, (GFunc)g_free, NULL);
+            break;
+        case HIPPO_DATA_RESOURCE:
+        case HIPPO_DATA_NONE:
+        case HIPPO_DATA_LIST:
+            break;
+        }
+
+        g_slist_free(value->u.list);
+    } else {
+        switch (value->type) {
+        case HIPPO_DATA_NONE:
+        case HIPPO_DATA_BOOLEAN:
+        case HIPPO_DATA_INTEGER:
+        case HIPPO_DATA_LONG:
+        case HIPPO_DATA_FLOAT:
+        case HIPPO_DATA_RESOURCE:
+        case HIPPO_DATA_LIST:
+            break;
+        case HIPPO_DATA_STRING:
+            g_free(value->u.string);
+            break;
+        }
     }
 
-    property->value.type = HIPPO_DATA_NONE;
+    value->type = HIPPO_DATA_NONE;
 }
 
 static gboolean
-data_property_value_matches(DataProperty   *property,
-                            HippoDataValue *value)
+data_property_value_matches(HippoDataProperty   *property,
+                            HippoDataValue      *value)
 {
     if (value->type != property->value.type)
         return FALSE;
@@ -292,139 +457,133 @@ data_property_value_matches(DataProperty   *property,
     switch (property->value.type) {
     case HIPPO_DATA_NONE:
         return TRUE;
-        break;
+    case HIPPO_DATA_BOOLEAN:
+        return value->u.boolean != property->value.u.boolean;
+    case HIPPO_DATA_INTEGER:
+        return value->u.integer != property->value.u.integer;
+    case HIPPO_DATA_LONG:
+        return value->u.long_ != property->value.u.long_;
+    case HIPPO_DATA_FLOAT:
+        return value->u.float_ != property->value.u.float_;
     case HIPPO_DATA_RESOURCE:
         return value->u.resource != property->value.u.resource;
     case HIPPO_DATA_STRING:
         return strcmp(value->u.string, property->value.u.string) == 0;
-    case HIPPO_DATA_RESOURCE_LIST:
-    case HIPPO_DATA_STRING_LIST:
-        g_assert_not_reached();
+    case HIPPO_DATA_LIST:
         break;
     }
-    
+
+    g_assert_not_reached();
     return FALSE;
 }    
 
 static void
-data_property_set(DataProperty      *property,
+data_property_set(HippoDataProperty *property,
                   HippoDataValue    *value)
 {
+    data_value_clear(&property->value);
 
-    data_property_clear(property);
+    if (HIPPO_DATA_IS_LIST(property->value.type)) {
+        g_warning("data_property_set() called with a list type");
+        return;
+    }
 
-    switch (value->type) {
-    case HIPPO_DATA_NONE:
-        break;
-    case HIPPO_DATA_RESOURCE:
-        property->value.type = HIPPO_DATA_RESOURCE;
-        property->value.u.resource = value->u.resource;
-        break;
-    case HIPPO_DATA_STRING:
+    if (value->type == HIPPO_DATA_STRING) {
         property->value.type =  HIPPO_DATA_STRING;
         property->value.u.string = g_strdup(value->u.string);
-        break;
-    case HIPPO_DATA_RESOURCE_LIST:
-    case HIPPO_DATA_STRING_LIST:
-        g_warning("data_property_set() called with a list type");
-        break;
+    } else {
+        property->value = *value;
     }
 }
 
 static void
-data_property_append_value(DataProperty      *property,
+data_property_append_value(HippoDataProperty *property,
                            HippoDataValue    *value)
 {
+    if (property->value.type == HIPPO_DATA_NONE) {
+        property->value.type = value->type | HIPPO_DATA_LIST;
+        property->value.u.list = NULL;
+    } else {
+        if (!HIPPO_DATA_IS_LIST(property->value.type)) {
+            g_warning("data_property_append_value() called with a non-list existing property");
+            return;
+        }
+        
+        if (HIPPO_DATA_BASE(property->value.type) != value->type) {
+            g_warning("data_property_append_value() called with a mismatched type");
+            return;
+        }
+    }
+
     switch (value->type) {
-    case HIPPO_DATA_NONE:
-        g_warning("data_property_append_value() called with HIPPO_DATA_NONE");
+    case HIPPO_DATA_BOOLEAN:
+        property->value.u.list = g_slist_prepend(property->value.u.list, g_memdup(&value->u.boolean, sizeof(gboolean)));
+        return;
+    case HIPPO_DATA_INTEGER:
+        property->value.u.list = g_slist_prepend(property->value.u.list, g_memdup(&value->u.integer, sizeof(int)));
+        return;
+    case HIPPO_DATA_LONG:
+        property->value.u.list = g_slist_prepend(property->value.u.list, g_memdup(&value->u.long_, sizeof(gint64)));
+        return;
+    case HIPPO_DATA_FLOAT:
+        property->value.u.list = g_slist_prepend(property->value.u.list, g_memdup(&value->u.float_, sizeof(double)));
         return;
     case HIPPO_DATA_RESOURCE:
-        if (property->value.type == HIPPO_DATA_NONE) {
-            property->value.type = HIPPO_DATA_RESOURCE_LIST;
-            property->value.u.list = NULL;
-        } else if (property->value.type != HIPPO_DATA_RESOURCE_LIST) {
-            g_warning("Attempt to append a resource value to something other than a resource list");
-            return;
-        }
         property->value.u.list = g_slist_prepend(property->value.u.list, value->u.resource);
-        break;
-    case HIPPO_DATA_STRING:
-        if (property->value.type == HIPPO_DATA_NONE) {
-            property->value.type = HIPPO_DATA_STRING_LIST;
-            property->value.u.list = NULL;
-        } else if (property->value.type != HIPPO_DATA_STRING_LIST) {
-            g_warning("Attempt to append a string value to something other than a string list");
-            return;
-        }
-        property->value.u.list = g_slist_prepend(property->value.u.list, g_strdup(value->u.string));
-        break;
-    case HIPPO_DATA_RESOURCE_LIST:
-    case HIPPO_DATA_STRING_LIST:
-        g_warning("data_property_append_value() called with a list type");
         return;
+    case HIPPO_DATA_STRING:
+        property->value.u.list = g_slist_prepend(property->value.u.list, g_strdup(value->u.string));
+        return;
+    case HIPPO_DATA_NONE:
+    case HIPPO_DATA_LIST:
+        break;
     }
+
+    g_warning("data_property_append_value() called with a bad type %d", value->type);
 }
 
 static void
-data_property_remove_value(DataProperty   *property,
-                           HippoDataValue *value)
+data_property_remove_value(HippoDataProperty *property,
+                           HippoDataValue    *value)
 {
     GSList *l;
     
-    switch (value->type) {
-    case HIPPO_DATA_NONE:
-        g_warning("data_property_append_value() called with HIPPO_DATA_NONE");
+    if (property->value.type == HIPPO_DATA_NONE) {
+        g_warning("Attempt to remove a property value not there");
         return;
-    case HIPPO_DATA_RESOURCE:
-        if (property->value.type == HIPPO_DATA_NONE) {
-            property->value.type = HIPPO_DATA_RESOURCE_LIST;
-            property->value.u.list = NULL;
-        } else if (property->value.type != HIPPO_DATA_RESOURCE_LIST) {
-            g_warning("Attempt to remove a resource value from something other than a resource list");
+    } else {
+        if (!HIPPO_DATA_IS_LIST(property->value.type)) {
+            g_warning("data_property_remove_value() called with a non-list existing property");
             return;
         }
-
-        for (l = property->value.u.list; l; l = l->next) {
-            if (l->data == value->u.resource) {
-                property->value.u.list = g_slist_delete_link(property->value.u.list, l);
-                return;
-            }
-        }
-
-        break;
-    case HIPPO_DATA_STRING:
-        if (property->value.type == HIPPO_DATA_NONE) {
-            property->value.type = HIPPO_DATA_STRING_LIST;
-            property->value.u.list = NULL;
-        } else if (property->value.type != HIPPO_DATA_STRING_LIST) {
-            g_warning("Attempt to remove a string value from something other than a string list");
+        
+        if (!HIPPO_DATA_BASE(property->value.type) != value->type) {
+            g_warning("data_property_remove_value() called with a mismatched type");
             return;
         }
+    }
 
-        for (l = property->value.u.list; l; l = l->next) {
-            if (strcmp(l->data, value->u.string) == 0) {
-                property->value.u.list = g_slist_delete_link(property->value.u.list, l);
-                return;
-            }
+    for (l = property->value.u.list; l; l = l->next) {
+        HippoDataValue element;
+        hippo_data_value_get_element(&property->value, l, &element);
+
+        if (data_property_value_matches(property, value)) {
+            property->value.u.list = g_slist_delete_link(property->value.u.list, l);
+            data_value_clear(&element);
+
+            return;
         }
-
-        break;
-    case HIPPO_DATA_RESOURCE_LIST:
-    case HIPPO_DATA_STRING_LIST:
-        g_warning("data_property_remove_value() called with a list type");
-        return;
     }
 
     g_warning("Attempt to remove a property value not there");
 }
 
-static DataProperty *
+static HippoDataProperty *
 add_property(HippoDataResource   *resource,
              HippoQName          *qname,
              HippoDataCardinality cardinality)
 {
-    DataProperty *property = g_new0(DataProperty, 1);
+    HippoDataProperty *property = g_new0(HippoDataProperty, 1);
 
     property->qname = qname;
     property->cardinality = cardinality;
@@ -437,9 +596,15 @@ add_property(HippoDataResource   *resource,
 
 static void
 remove_property(HippoDataResource *resource,
-                DataProperty      *property)
+                HippoDataProperty *property)
 {
     resource->properties = g_slist_remove(resource->properties, property);
+    data_value_clear(&property->value);
+    if (property->default_children) {
+        hippo_data_fetch_unref(property->default_children);
+    }
+
+    g_free(property);
 }
 
 void
@@ -447,20 +612,22 @@ _hippo_data_resource_update_property(HippoDataResource    *resource,
                                      HippoQName           *property_id,
                                      HippoDataUpdate       update,
                                      HippoDataCardinality  cardinality,
+                                     gboolean              default_include,
+                                     const char           *default_children,
                                      HippoDataValue       *value,
                                      HippoNotificationSet *notifications)
 {
-    DataProperty *property = NULL;
+    HippoDataProperty *property = NULL;
     GSList *l;
 
     for (l = resource->properties; l; l = l->next) {
-        if (((DataProperty *)l->data)->qname == property_id) {
+        if (((HippoDataProperty *)l->data)->qname == property_id) {
             property = l->data;
             break;
         }
     }
 
-    if (update == HIPPO_DATA_UPDATE_REMOVE && property == NULL) {
+    if (update == HIPPO_DATA_UPDATE_DELETE && property == NULL) {
         g_warning("Remove of a property we don't have");
         return;
     }
@@ -487,7 +654,7 @@ _hippo_data_resource_update_property(HippoDataResource    *resource,
             }
             data_property_set(property, value);
             break;
-        case HIPPO_DATA_UPDATE_REMOVE:
+        case HIPPO_DATA_UPDATE_DELETE:
             if (property == NULL || !data_property_value_matches(property, value)) {
                 g_warning("remove of a property value not there");
                 return;
@@ -516,7 +683,7 @@ _hippo_data_resource_update_property(HippoDataResource    *resource,
             }
             data_property_set(property, value);
             break;
-        case HIPPO_DATA_UPDATE_REMOVE:
+        case HIPPO_DATA_UPDATE_DELETE:
             g_warning("Remove of a property with cardinality 1");
             break;
         case HIPPO_DATA_UPDATE_CLEAR:
@@ -535,13 +702,13 @@ _hippo_data_resource_update_property(HippoDataResource    *resource,
             break;
         case HIPPO_DATA_UPDATE_REPLACE:
             if (property != NULL) {
-                data_property_clear(property);
+                data_value_clear(&property->value);
             } else {
                 property = add_property(resource, property_id, cardinality);
             }
             data_property_append_value(property, value);
             break;
-        case HIPPO_DATA_UPDATE_REMOVE:
+        case HIPPO_DATA_UPDATE_DELETE:
             if (property) {
                 data_property_remove_value(property, value);
             } else {
@@ -552,11 +719,17 @@ _hippo_data_resource_update_property(HippoDataResource    *resource,
             if (property == NULL) {
                 property = add_property(resource, property_id, cardinality);
             } else {
-                data_property_clear(property);
+                data_value_clear(&property->value);
             }
             break;
         }
         break;
+    }
+
+    if (property != NULL) {
+        property->default_include = default_include;
+        if (default_children && !property->default_children)
+            property->default_children = hippo_data_fetch_from_string(default_children);
     }
 
     if (notifications)
@@ -602,6 +775,36 @@ _hippo_data_resource_on_resource_change(HippoDataResource *resource,
     }
 }
 
+static void
+print_value(HippoDataValue *value)
+{
+    switch (value->type) {
+    case HIPPO_DATA_NONE:
+        g_print("[]\n");
+        break;
+    case HIPPO_DATA_BOOLEAN:
+        g_print("'%s'\n", value->u.boolean ? "true" : "false");
+        break;
+    case HIPPO_DATA_INTEGER:
+        g_print("%d\n", value->u.integer);
+            break;
+    case HIPPO_DATA_LONG:
+        g_print("%" G_GINT64_FORMAT "\n", value->u.long_);
+        break;
+    case HIPPO_DATA_FLOAT:
+        g_print("%f\n", value->u.float_);
+        break;
+    case HIPPO_DATA_STRING:
+        g_print("'%s'\n", value->u.string);
+        break;
+    case HIPPO_DATA_RESOURCE:
+        g_print("%s\n", value->u.resource->resource_id);
+        break;
+    case HIPPO_DATA_LIST:
+        break;
+    }
+}
+
 void
 _hippo_data_resource_dump(HippoDataResource *resource)
 {
@@ -611,7 +814,7 @@ _hippo_data_resource_dump(HippoDataResource *resource)
     g_print("%s %s\n", resource->resource_id, resource->class_id);
 
     for (property_node = resource->properties; property_node; property_node = property_node->next) {
-        DataProperty *property = property_node->data;
+        HippoDataProperty *property = property_node->data;
         char *display;
 
         if (strcmp(property->qname->uri, resource->class_id) == 0)
@@ -622,34 +825,21 @@ _hippo_data_resource_dump(HippoDataResource *resource)
         g_print("   %s: ", display);
         g_free(display);
 
-        switch (property->value.type) {
-        case HIPPO_DATA_NONE:
-            g_print("[]\n");
-            break;
-        case HIPPO_DATA_STRING:
-            g_print("'%s'\n", property->value.u.string);
-            break;
-        case HIPPO_DATA_RESOURCE:
-            g_print("%s\n", property->value.u.resource->resource_id);
-            break;
-        case HIPPO_DATA_STRING_LIST:
+        if (HIPPO_DATA_IS_LIST(property->value.type)) {
             g_print("[");
             for (l = property->value.u.list; l; l = l->next) {
-                g_print("%s", (char *)l->data);
+                HippoDataValue element;
+                hippo_data_value_get_element(&property->value, l, &element);
+                print_value(&element);
+                
                 if (l->next)
                     g_print(", ");
             }
-            g_print("]\n");
-            break;
-        case HIPPO_DATA_RESOURCE_LIST:
-            g_print("[");
-            for (l = property->value.u.list; l; l = l->next) {
-                g_print("%s", ((HippoDataResource *)(l->data))->resource_id);
-                if (l->next)
-                    g_print(", ");
-            }
-            g_print("]\n");
-            break;
+            g_print("]");
+        } else {
+            print_value(&property->value);
+            g_print("\n");
         }
+        
     }
 }

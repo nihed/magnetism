@@ -112,13 +112,15 @@ class TwistedModel(AbstractModel):
         else:
             return resource_id
 
-    def __property_value(self, element):
+    def __property_value(self, element, type_char):
         value = self.__get_resource_id(element)
         if value != None:
+            if type_char != 'r':
+                raise Exception("Resource-valued property must have type char 'r'")
             try:
                 value = self._get_resource(value)
             except KeyError:
-                raise Exception("Resource-valued element points to a resource we don't know about")
+                raise Exception("Resource-valued property points to a resource we don't know about")
             
             return value
 
@@ -126,21 +128,40 @@ class TwistedModel(AbstractModel):
         for n in element.children:
             if isinstance(n, basestring):
                 value += n
-                
-        return value
 
-    def __update_property_from_element(self, resource, property_element, notifications):
-        cardinality_attr = property_element.getAttribute(("http://mugshot.org/p/system", "cardinality"))
-        if cardinality_attr == None:
-            cardinality = CARDINALITY_01
-        elif cardinality_attr == "01":
-            cardinality = CARDINALITY_01
-        elif cardinality_attr == "1":
-            cardinality = CARDINALITY_1
-        elif cardinality_attr == "N":
-            cardinality = CARDINALITY_N
+        if type_char == 'b':
+            return value.lower.equals("true")
+        elif type_char == 'i':
+            return int(value)
+        elif type_char == 'l':
+            return long(value)
+        elif type_char == 'f':
+            return float(type_char)
+        elif type_char == 's':
+            return value
+        elif type_char == 'r': 
+           raise Exception("resource_id attribute missing for resource-valued property")
+
+    def __update_property_from_element(self, resource, property_element, seen_types, notifications):
+        type_attr = property_element.getAttribute(("http://mugshot.org/p/system", "type"))
+        if (type_attr == None):
+            try:
+                type_attr = seen_types[(property_element.uri, property_element.name)]
+            except KeyError:
+                raise Exception("Type attribute missing")
         else:
-            raise Exception("Bad cardinality value: " + cardinality)
+            seen_types[(property_element.uri, property_element.name)] = type_attr
+
+        m = re.match(r"^(\+?)([bilfsr])([*?]?)$", type_attr)
+        if (m == None):
+            raise Exception("Unrecognized type string '%s'" % type_attr)
+
+        if (m.group(3) == '*'):
+            cardinality = CARDINALITY_N
+        elif (m.group(3) == '?'):
+            cardinality = CARDINALITY_01
+        else:
+            cardinality = CARDINALITY_1
 
         update_attr = property_element.getAttribute(("http://mugshot.org/p/system", "update"))
         if update_attr == None:
@@ -149,8 +170,8 @@ class TwistedModel(AbstractModel):
             update = UPDATE_ADD
         elif update_attr == "replace":
             update = UPDATE_REPLACE
-        elif update_attr == "remove":
-            update = UPDATE_REMOVE
+        elif update_attr == "delete":
+            update = UPDATE_DELETE
         elif update_attr == "clear":
             update = UPDATE_CLEAR
         else:
@@ -159,7 +180,7 @@ class TwistedModel(AbstractModel):
         if update == UPDATE_CLEAR:
             value = None
         else:
-            value = self.__property_value(property_element)
+            value = self.__property_value(property_element, m.group(2))
 
         resource._update_property((property_element.uri, property_element.name), update, cardinality, value, notifications=notifications)
 
@@ -169,8 +190,10 @@ class TwistedModel(AbstractModel):
             return
 
         resource = self._ensure_resource(resource_id, resource_element.uri)
+        
+        seen_types = {}
         for property_element in resource_element.elements():
-            self.__update_property_from_element(resource, property_element, notifications=notifications)
+            self.__update_property_from_element(resource, property_element, seen_types, notifications=notifications)
 
         return resource
                 
@@ -186,7 +209,7 @@ class TwistedQuery(Query):
     """Implementation of Query for TwistedModel"""
     
     def __init__(self, model, method, fetch, single_result, params):
-        Query.__init__(self)
+        Query.__init__(self, single_result)
         
         self.__model = model
         self.__iq = IQ(model._xmlstream, "get")
@@ -211,25 +234,12 @@ class TwistedQuery(Query):
     def __on_reply(self, iq):
         child = iq.firstChildElement()
 
-        if self.__single_result:
-            result = None
-            for resource_element in child.elements():
-                resource = self.__model._update_resource_from_element(resource_element)
-                if resource != None and not self.__is_indirect(resource_element):
-                    if result != None:
-                        self._on_error(ERROR_BAD_REPLY, "Multiple result items for a request that should have one result item")
-                        return
-                    result = resource
-            if result == None:
-                self._on_error(ERROR_ITEM_NOT_FOUND, "No result items for a request that should have one result item")
-                return
-        else:
-            result = []
-            for resource_element in child.elements():
-                resource = self.__model._update_resource_from_element(resource_element)
-                if resource != None and not self.__is_indirect(resource_element):
-                        result.append(resource)
-
+        result = []
+        for resource_element in child.elements():
+            resource = self.__model._update_resource_from_element(resource_element)
+            if resource != None and not self.__is_indirect(resource_element):
+                result.append(resource)
+                
         self._on_success(result)
 
     def execute(self):

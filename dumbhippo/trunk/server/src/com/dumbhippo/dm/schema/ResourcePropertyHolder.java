@@ -28,7 +28,7 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI exte
 		objectType = classInfo.getObjectClass();
 		keyType = classInfo.getKeyClass();
 	}
-
+	
 	@Override
 	public void complete() {
 		if (completed)
@@ -53,8 +53,21 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI exte
 	}
 
 	@Override
+	protected char getTypeChar() {
+		return 'r';
+	}
+
+	@Override
 	public Fetch<KI,TI> getDefaultChildren() {
 		return defaultChildren;
+	}
+	
+	@Override
+	public String getDefaultChildrenString() {
+		if ("".equals(annotation.defaultChildren()))
+			return null;
+		else
+			return annotation.defaultChildren();
 	}
 	
 	@SuppressWarnings("unchecked")

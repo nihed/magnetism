@@ -1,6 +1,6 @@
 UPDATE_ADD = 0
 UPDATE_REPLACE = 1
-UPDATE_REMOVE = 2
+UPDATE_DELETE = 2
 UPDATE_CLEAR = 3
 
 CARDINALITY_01 = 0
@@ -90,7 +90,7 @@ class Resource:
     def _update_property(self, property, update, cardinality, value, notifications=None):
         property_id = self.__insert_property_id(property[0], property[1])
 
-        if update == UPDATE_REMOVE and not self.__properties.has_key(property_id):
+        if update == UPDATE_DELETE and not self.__properties.has_key(property_id):
             raise Exception("Remove of a property we don't have")
 
         if cardinality == CARDINALITY_01:
@@ -100,7 +100,7 @@ class Resource:
                 if self.__properties.has_key(property_id):
                     raise Exception("add update for cardinality 01 with a property already there")
                 self.__properties[property_id] = value
-            elif update == UPDATE_REMOVE:
+            elif update == UPDATE_DELETE:
                 if self.__properties[property_id] != value:
                     raise Exception("remove of a property value not there")
                 del self.__properties[property_id]
@@ -116,7 +116,7 @@ class Resource:
                 if self.__properties.has_key(property_id):
                     raise Exception("add update for cardinality 1 with a property already there")
                 self.__properties[property_id] = value
-            elif update == UPDATE_REMOVE:
+            elif update == UPDATE_DELETE:
                 raise Exception("remove update for a property with cardinality 1")
             elif update == UPDATE_CLEAR:
                 raise Exception("clear update for a property with cardinality 1")
@@ -128,7 +128,7 @@ class Resource:
                     self.__properties[property_id].append(value)
                 except KeyError:
                     self.__properties[property_id] = [value]
-            elif update == UPDATE_REMOVE:
+            elif update == UPDATE_DELETE:
                 try:
                     self.__properties[property_id].remove(value)
                 except ValueError:
@@ -175,7 +175,7 @@ class Resource:
         if isinstance(property_id,list):
             raise Exception("%s is ambigious. Possibilities are %s", name, property_id)
 
-        return self._get_by_id(self, property_id)
+        return self._get_by_id(property_id)
         
     def _dump(self):
         print self.resource_id, self.class_id

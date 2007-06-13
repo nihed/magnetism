@@ -611,13 +611,13 @@ handle_method(DBusConnection  *connection,
         dbus_error_free(&derror);
     }
 
+    /* Null reply means the handler is handling the method async */
     if (reply != NULL) {
         dbus_connection_send(connection, reply, NULL);
         dbus_message_unref(reply);
-        return DBUS_HANDLER_RESULT_HANDLED;
-    } else {
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
+
+    return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 static void

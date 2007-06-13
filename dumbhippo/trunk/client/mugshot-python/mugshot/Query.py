@@ -14,7 +14,8 @@ class Query(object):
     completion and/or errors and then call execute()
     """
     
-    def __init__(self):
+    def __init__(self, single_result):
+        self.__single_result = single_result
         self.__handlers = []
         self.__error_handlers = []
     
@@ -48,6 +49,15 @@ class Query(object):
         raise NotImplementedException()
     
     def _on_success(self, result):
+        if self.__single_result:
+            if len(result) == 0:
+                self._on_error(ERROR_ITEM_NOT_FOUND, "No result items for a request that should have one result item")
+                return
+            elif len(result) > 1:
+                self._on_error(ERROR_BAD_REPLY, "Multiple result items for a request that should have one result item")
+                return
+            result = result[0]
+        
         for handler in self.__handlers:
             handler(result)
 

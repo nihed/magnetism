@@ -12,6 +12,13 @@ G_BEGIN_DECLS
 #define HIPPO_DBUS_IM_INTERFACE "org.freedesktop.od.IM"
 #define HIPPO_DBUS_IM_PATH "/org/freedesktop/od/im"
 
+typedef struct {
+    const char *protocol;
+    const char *name;
+    gboolean is_online;
+    const char *status;
+} HippoDBusImBuddy;
+
 void hippo_dbus_init_im(DBusConnection *connection,
                         gboolean        replace);
 

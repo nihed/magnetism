@@ -27,6 +27,28 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 													      Object.class, propertyFilter);
 	}
 
+	@Override
+	protected char getTypeChar() {
+		if (elementType.isPrimitive()) {
+			if (elementType == Boolean.TYPE)
+				return 'b';
+			else if (elementType == Byte.TYPE ||
+					 elementType == Character.TYPE ||
+					 elementType == Short.TYPE ||
+					 elementType == Integer.TYPE)
+				return 'i';
+			else if (elementType == Long.TYPE)
+				return 'l';
+			else if (elementType == Float.TYPE ||
+					 elementType == Double.TYPE)
+				return 'f';
+			else
+				throw new RuntimeException("Unexpected primitive type");
+		} else {
+			return 's';
+		}
+	}
+	
 	public Class<?> getPlainType() {
 		return elementType;
 	}
@@ -43,6 +65,11 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 
 	@Override
 	public Fetch<?,?> getDefaultChildren() {
+		return null;
+	}
+	
+	@Override
+	public String getDefaultChildrenString() {
 		return null;
 	}
 

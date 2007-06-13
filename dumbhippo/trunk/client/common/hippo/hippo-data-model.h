@@ -23,12 +23,19 @@ HippoDataQuery *hippo_data_model_query          (HippoDataModel *model,
                                                  const char     *method,
                                                  const char     *fetch,
                                                  ...) G_GNUC_NULL_TERMINATED;
+HippoDataQuery *hippo_data_model_query_params   (HippoDataModel *model,
+                                                 const char     *method,
+                                                 const char     *fetch,
+                                                 GHashTable     *params);
 HippoDataQuery *hippo_data_model_query_resource (HippoDataModel *model,
                                                  const char     *resource_id,
                                                  const char     *fetch);
 HippoDataQuery *hippo_data_model_update         (HippoDataModel *model,
                                                  const char     *method,
                                                  ...) G_GNUC_NULL_TERMINATED;
+HippoDataQuery *hippo_data_model_update_params  (HippoDataModel *model,
+                                                 const char     *method,
+                                                 GHashTable     *params);
 
 G_END_DECLS
 

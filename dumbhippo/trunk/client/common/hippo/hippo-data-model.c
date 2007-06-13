@@ -98,15 +98,33 @@ _hippo_data_model_new(HippoDataCache *cache)
     return model;
 }
 
+static GHashTable *
+params_from_valist(va_list vap)
+{
+    GHashTable *params = g_hash_table_new(g_str_hash, g_str_equal);
+    
+    while (TRUE) {
+        const char *param_name = va_arg(vap, const char *);
+        const char *param_value;
+        if (param_name == NULL)
+            break;
+        
+        param_value = va_arg(vap, const char *);
+
+        g_hash_table_insert(params, (char *)param_name, (char *)param_value);
+    }
+
+    return params;
+}
+
 HippoDataQuery *
-hippo_data_model_query(HippoDataModel *model,
-                       const char     *method,
-                       const char     *fetch,
-                       ...)
+hippo_data_model_query_params(HippoDataModel *model,
+                              const char     *method,
+                              const char     *fetch,
+                              GHashTable     *params)
 {
     HippoConnection *connection;
     HippoDataQuery *query;
-    va_list vap;
     const char *hash;
     const char *method_name;
     char *method_uri;
@@ -129,9 +147,28 @@ hippo_data_model_query(HippoDataModel *model,
     
     query = _hippo_data_query_new(method_qname);
 
+    hippo_connection_send_query(connection, query, fetch, params);
+
+    return query;
+}
+
+HippoDataQuery *
+hippo_data_model_query(HippoDataModel *model,
+                       const char     *method,
+                       const char     *fetch,
+                       ...)
+{
+    HippoDataQuery *query;
+    GHashTable *params;
+    va_list vap;
+    
     va_start(vap, fetch);
-    hippo_connection_send_query(connection, query, fetch, vap);
+    params = params_from_valist(vap);
     va_end(vap);
+
+    query = hippo_data_model_query_params(model, method, fetch, params);
+
+    g_hash_table_destroy(params);
 
     return query;
 }
@@ -149,15 +186,35 @@ hippo_data_model_query_resource(HippoDataModel *model,
 }
 
 HippoDataQuery *
-hippo_data_model_update(HippoDataModel *model,
-                        const char     *method,
-                        ...)
+hippo_data_model_update_params(HippoDataModel *model,
+                               const char     *method,
+                               GHashTable     *params)
 {
     g_return_val_if_fail (HIPPO_IS_DATA_MODEL(model), NULL);
 
     g_warning("%s is not implemented", G_STRFUNC);
 
     return NULL;
+}
+
+HippoDataQuery *
+hippo_data_model_update(HippoDataModel *model,
+                        const char     *method,
+                        ...)
+{
+    HippoDataQuery *query;
+    GHashTable *params;
+    va_list vap;
+    
+    va_start(vap, method);
+    params = params_from_valist(vap);
+    va_end(vap);
+
+    query = hippo_data_model_update_params(model, method, params);
+
+    g_hash_table_destroy(params);
+
+    return query;
 }
 
 HippoDataResource *

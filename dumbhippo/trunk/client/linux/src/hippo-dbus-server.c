@@ -8,14 +8,15 @@
 #include <dbus/dbus-glib-lowlevel.h>
 #include "hippo-dbus-server.h"
 #include "hippo-dbus-client.h"
-#include "hippo-dbus-web.h"
-#include "hippo-dbus-cookies.h"
-#include "hippo-dbus-mugshot.h"
-#include "hippo-dbus-settings.h"
-#include "hippo-dbus-helper.h"
 #include "hippo-dbus-contacts.h"
-#include "hippo-dbus-pidgin.h"
+#include "hippo-dbus-cookies.h"
+#include "hippo-dbus-helper.h"
 #include "hippo-dbus-im.h"
+#include "hippo-dbus-model.h"
+#include "hippo-dbus-mugshot.h"
+#include "hippo-dbus-pidgin.h"
+#include "hippo-dbus-settings.h"
+#include "hippo-dbus-web.h"
 #include "hippo-distribution.h"
 #include <hippo/hippo-endpoint-proxy.h>
 #include <hippo/hippo-stack-manager.h>
@@ -160,6 +161,41 @@ propagate_dbus_error(GError **error, DBusError *derror)
     }
 }
 
+static gboolean
+acquire_bus_name(DBusConnection *connection,
+                 const char     *server,
+                 gboolean        replace_existing,
+                 const char     *bus_name,
+                 GError        **error)
+{
+    DBusError derror;
+    unsigned int flags;
+    int result;
+    
+    flags = DBUS_NAME_FLAG_DO_NOT_QUEUE | DBUS_NAME_FLAG_ALLOW_REPLACEMENT;
+    if (replace_existing)
+        flags |= DBUS_NAME_FLAG_REPLACE_EXISTING;
+    
+    dbus_error_init(&derror);
+    result = dbus_bus_request_name(connection, bus_name,
+                                   flags,
+                                   &derror);
+    if (dbus_error_is_set(&derror)) {
+        propagate_dbus_error(error, &derror);
+        return FALSE;
+    }
+    
+    if (!(result == DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER ||
+          result == DBUS_REQUEST_NAME_REPLY_ALREADY_OWNER)) {
+        g_set_error(error, HIPPO_ERROR, HIPPO_ERROR_ALREADY_RUNNING,
+                    _("Another copy of %s is already running in this session for server %s"),
+                    g_get_application_name(), server);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 HippoDBus*
 hippo_dbus_try_to_acquire(const char  *server,
                           gboolean     replace_existing,
@@ -169,10 +205,11 @@ hippo_dbus_try_to_acquire(const char  *server,
     DBusGConnection *gconnection;
     DBusConnection *connection;
     char *bus_name;
-    int result;
+    char *old_bus_name;
     DBusError derror;
-    unsigned int flags;
     
+    dbus_error_init(&derror);
+
     /* dbus_bus_get is a little hosed since you can't unref 
      * unless you know it's disconnected. I guess it turns
      * out we more or less want to do that anyway.
@@ -195,31 +232,28 @@ hippo_dbus_try_to_acquire(const char  *server,
     }
 
     bus_name = hippo_dbus_full_bus_name(server);
-    
-    flags = DBUS_NAME_FLAG_DO_NOT_QUEUE | DBUS_NAME_FLAG_ALLOW_REPLACEMENT;
-    if (replace_existing)
-        flags |= DBUS_NAME_FLAG_REPLACE_EXISTING;
-    
-    dbus_error_init(&derror);
-    result = dbus_bus_request_name(connection, bus_name,
-                                   flags,
-                                   &derror);
-    if (dbus_error_is_set(&derror)) {
+    if (!acquire_bus_name(connection, server, replace_existing, bus_name, error)) {
         g_free(bus_name);
-        propagate_dbus_error(error, &derror);
         /* FIXME leak bus connection since unref isn't allowed */
         return NULL;
     }
+
+    /* We also acquire our old broken bus name for compatibility with old versions
+     * of client apps, and so that when this version is run with --replace
+     * old versions will exit. We *don't* exit if we lose ownership of this
+     * name ourself, since we running the older version with --replace to replace
+     * the new version isn't very interesting
+     */
     
-    if (!(result == DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER ||
-          result == DBUS_REQUEST_NAME_REPLY_ALREADY_OWNER)) {
-        g_free(bus_name);
-        g_set_error(error, HIPPO_ERROR, HIPPO_ERROR_ALREADY_RUNNING,
-                    _("Another copy of %s is already running in this session for server %s"),
-                    g_get_application_name(), server);
+    old_bus_name = hippo_dbus_full_bus_name_old(server);
+    if (!acquire_bus_name(connection, server, replace_existing, old_bus_name, error)) {
         /* FIXME leak bus connection since unref isn't allowed */
+        g_free(old_bus_name);
+        g_free(bus_name);
         return NULL;
     }
+
+    g_free(old_bus_name);
     
     /* Grab ownership of the Mugshot interface */
     hippo_dbus_try_acquire_mugshot(connection, FALSE);
@@ -235,7 +269,8 @@ hippo_dbus_try_to_acquire(const char  *server,
 
     hippo_dbus_init_pidgin(connection);
     hippo_dbus_init_im(connection, FALSE);
-    
+    hippo_dbus_init_model(connection);
+                        
     /* Add Rhythmbox signal match */
     dbus_bus_add_match(connection,
                        "type='signal',sender='"
@@ -412,9 +447,9 @@ connection_gone_rule(const char *listener_name)
 }
 
 /* this can be called more than once since the bus "refcounts" identical rules */
-static void
-watch_for_disconnect(HippoDBus  *dbus,
-                     const char *name)
+void
+hippo_dbus_watch_for_disconnect(HippoDBus  *dbus,
+                                const char *name)
 {
     char *rule;
     DBusError derror;
@@ -440,9 +475,9 @@ watch_for_disconnect(HippoDBus  *dbus,
     g_free(rule);
 }
 
-static void
-unwatch_for_disconnect(HippoDBus  *dbus,
-                       const char *name)
+void
+hippo_dbus_unwatch_for_disconnect(HippoDBus  *dbus,
+                                  const char *name)
 {
     char *rule;
     DBusError derror;
@@ -476,7 +511,7 @@ add_new_listener(HippoDBus   *dbus,
     listener->name = g_strdup(dbus_message_get_sender(message));
     dbus->listeners = g_slist_prepend(dbus->listeners, listener);
 
-    watch_for_disconnect(dbus, listener->name);
+    hippo_dbus_watch_for_disconnect(dbus, listener->name);
 
     g_debug("added listener %s", listener->name);
     
@@ -748,7 +783,7 @@ disconnect_listener(HippoDBus         *dbus,
     
     dbus->listeners = g_slist_remove(dbus->listeners, listener);
 
-    unwatch_for_disconnect(dbus, listener->name);
+    hippo_dbus_unwatch_for_disconnect(dbus, listener->name);
     
     g_free(listener->name);
     g_free(listener);
@@ -1899,6 +1934,8 @@ handle_message(DBusConnection     *connection,
                     if (listener != NULL) {
                         /* free this listener and forget about it (along with all its endpoints) */
                         disconnect_listener(dbus, listener);
+                    } else {
+                        hippo_dbus_model_name_gone(old);
                     }
                 }
             } else {

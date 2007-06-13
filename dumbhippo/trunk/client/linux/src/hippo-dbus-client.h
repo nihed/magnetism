@@ -26,6 +26,12 @@ G_BEGIN_DECLS
 
 char*    hippo_dbus_full_bus_name     (const char   *server);
 
+/* This has non-letter characters hex-encoded with the two nibbles backwards,
+ * we grab this name for backwards compatibility. This can be dropped in a
+ * few releases after 2007-06-08.
+ */
+char*    hippo_dbus_full_bus_name_old (const char   *server);
+
 gboolean hippo_dbus_open_chat_blocking(const char   *server,
                                        HippoChatKind kind,
                                        const char   *chat_id,

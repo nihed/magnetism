@@ -86,6 +86,8 @@ _hippo_data_query_new (HippoQName *qname)
     
     query->qname = qname;
     query->handler_type = HANDLER_NONE;
+
+    return query;
 }
 
 void
