@@ -392,7 +392,7 @@ handle_properties(DBusConnection  *connection,
         }
 
         reply = dbus_message_new_method_return(message);
-        dbus_message_iter_init_append(message, &iter);
+        dbus_message_iter_init_append(reply, &iter);
         dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT,
                                          prop->signature,
                                          &variant_iter);
@@ -401,6 +401,7 @@ handle_properties(DBusConnection  *connection,
             reply = NULL;
         } else {
             dbus_message_iter_close_container(&iter, &variant_iter);
+            
         }
     } else if (strcmp(member, "Set") == 0) {
         const char *prop_iface;
@@ -611,13 +612,13 @@ handle_method(DBusConnection  *connection,
         dbus_error_free(&derror);
     }
 
+    /* Null reply means the handler is handling the method async */
     if (reply != NULL) {
         dbus_connection_send(connection, reply, NULL);
         dbus_message_unref(reply);
-        return DBUS_HANDLER_RESULT_HANDLED;
-    } else {
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
+
+    return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 static void
@@ -639,7 +640,7 @@ append_properties(GString                 *xml,
             rw = ""; /* this is not going to work out well */
         
         g_string_append_printf(xml,
-                               "    <property name=\"%s\" type=\"%s\" access=\"%s\">\n",
+                               "    <property name=\"%s\" type=\"%s\" access=\"%s\"/>\n",
                                props[i].name, props[i].signature, rw);
         
     }
