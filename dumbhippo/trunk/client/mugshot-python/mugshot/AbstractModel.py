@@ -15,6 +15,7 @@ class AbstractModel(object):
         self.__connected_handlers = []
         self.__disconnected_handlers = []
         self.__resources = {}
+        self.connected = False
 
     def add_connected_handler(self, handler):
         """Add a handler that will be called when we become connected to the server"""
@@ -30,7 +31,7 @@ class AbstractModel(object):
 
     def remove_disconnected_handler(self, handler):
         """Remove a handler added with add_disconnected_handler"""
-        self.__connected_handlers.remove(handler)
+        self.__disconnected_handlers.remove(handler)
 
     def query(self, method, fetch=None, single_result=False, **kwargs):
         """Create a query object.
@@ -93,5 +94,23 @@ class AbstractModel(object):
             return resource
 
     def _on_connected(self):
+        if self.connected:
+            return
+
+        # On reconnection, all previous state is irrelevant
+        self.__resources = {}
+        
+        self.connected = True
         for handler in self.__connected_handlers:
             handler()
+
+    def _on_disconnected(self):
+        if not self.connected:
+            return
+        
+        self.connected = False
+        for handler in self.__disconnected_handlers:
+            handler()
+
+    def _set_self_id(self, self_id):
+        self.self_id = self_id

@@ -29,12 +29,13 @@ def on_query_failure(code, message):
 def on_connect():
     print "Connected"
 
-    # FIXME: having to include the port means won't work on non-debug servers
-    query = model.query_resource("http://localinstance.mugshot.org:8080/o/user/9XPMzKQpMA2LB2",
-                                 "+;contacts +;contacters +;lovedAccounts +")
+    query = model.query_resource(model.self_id, "+;contacts +;contacters +;lovedAccounts +")
     query.add_handler(on_query_success)
     query.add_error_handler(on_query_failure)
     query.execute()
+
+def on_disconnect():
+    print "Disconnected"
 
 parser = OptionParser()
 parser.add_option("-s", "--server", default="localinstance.mugshot.org:8080", help="Mugshot server to connect to (default localinstance.mugshot.org:21020)")
@@ -45,7 +46,9 @@ if len(args) > 0:
 
 model = DataModel(options.server)
 model.add_connected_handler(on_connect)
-on_connect()
+model.add_disconnected_handler(on_disconnect)
+if model.connected:
+    on_connect()
 
 loop = gobject.MainLoop()
 loop.run()
