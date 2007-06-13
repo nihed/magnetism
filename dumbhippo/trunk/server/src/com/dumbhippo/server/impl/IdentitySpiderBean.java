@@ -60,6 +60,8 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -923,6 +925,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			throw new RuntimeException("invalid stock photo name");
 
 		user.setStockPhoto(photo);
+		DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "photoUrl");
 		LiveState.getInstance().queueUpdate(new UserChangedEvent(user.getGuid(), UserChangedEvent.Detail.PHOTO)); 		
 	}
 

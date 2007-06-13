@@ -14,6 +14,8 @@ import org.apache.commons.fileupload.FileItem;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HumanVisibleException;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.views.UserViewpoint;
 
 public class PersonPhotoServlet extends AbstractPhotoServlet {
@@ -38,6 +40,9 @@ public class PersonPhotoServlet extends AbstractPhotoServlet {
 		writePhotos(scaled, personId, true);
 		
 		identitySpider.incrementUserVersion(user);
+		// The call to setStockPhoto also marks the change, but do it here in case we ever
+		// make setStockPhoto short-circuit the null => null case.
+		DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "photoUrl");
 		
 		// if we upload a photo we have to remove the stock photo that 
 		// would otherwise override
