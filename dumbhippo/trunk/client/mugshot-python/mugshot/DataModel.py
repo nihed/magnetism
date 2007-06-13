@@ -51,11 +51,44 @@ class DataModel(AbstractModel):
         
         self.server_name = server_name
 
-        # FIXME: catch dbus.DBusException and connect to NameOwnerChanged
         bus = dbus.SessionBus()
-        self._proxy = bus.get_object(_make_bus_name(server_name), '/org/mugshot/data_model')
+        bus_proxy = bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
+        bus_proxy.connect_to_signal("NameOwnerChanged",
+                                    self.__update_proxy,
+                                    arg0=_make_bus_name(server_name))
+        self.__update_proxy()
 
         self.callback = _DBusCallback(self, bus)
+
+    def __update_proxy(self):
+        self._on_disconnected()
+
+        bus = dbus.SessionBus()
+        try:
+            self._proxy = bus.get_object(_make_bus_name(self.server_name), '/org/mugshot/data_model')
+        except dbus.DBusException:
+            return
+        
+        # Order matters ... we want the self_id to be there before we call on_connect
+        self_id = self._proxy.Get('org.mugshot.dm.Model', 'SelfId', reply_handler=self.__get_self_id_reply, error_handler=lambda e: None)
+        self._proxy.Get('org.mugshot.dm.Model', 'Connected', reply_handler=self.__get_connected_reply, error_handler=lambda e: None)
+
+        self._proxy.connect_to_signal("Connected", self.__on_connected, dbus_interface='org.mugshot.dm.Model')
+        self._proxy.connect_to_signal("Disconnected", self.__on_disconnected, dbus_interface='org.mugshot.dm.Model')
+
+    def __on_connected(self, self_id):
+        self._set_self_id(self_id)
+        self._on_connected()
+
+    def __on_disconnected(self):
+        self._on_disconnected()
+
+    def __get_self_id_reply(self, self_id):
+        self._set_self_id(self_id)
+
+    def __get_connected_reply(self, connected):
+        if connected:
+            self._on_connected()
 
     def _get_proxy(self):
         return self._proxy
@@ -144,5 +177,11 @@ class _DBusQuery(Query):
         print args
 
     def execute(self):
+        # FIXME: Would it be better to call the __on_error? Doing that sync could cause problems.
+        #   If we decide to continue raising an exception here, we should use a subclass
+        if not self.__model.connected:
+            raise Exception("Not connected")
+        
         self.__model._get_proxy().Query(self.__model.callback.path, self.__method[0] + "#" + self.__method[1], self.__fetch, self.__params,
                                         dbus_interface='org.mugshot.dm.Model', reply_handler=self.__on_reply, error_handler=self.__on_error)
+        

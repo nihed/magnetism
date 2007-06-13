@@ -1994,10 +1994,12 @@ hippo_dbus_notify_xmpp_connected(HippoDBus   *dbus,
     
     dbus->xmpp_connected = connected != FALSE;
 
-	message = hippo_dbus_mugshot_signal_connection_changed(dbus);
+    message = hippo_dbus_mugshot_signal_connection_changed(dbus);
     dbus_connection_send(dbus->connection, message, NULL);
     dbus_message_unref(message);	
 
+    hippo_dbus_model_notify_connected_changed(dbus->xmpp_connected);
+        
     if (dbus->xmpp_connected) {
         /* notify all the listeners */
         message = dbus_message_new_signal(HIPPO_DBUS_LISTENER_PATH,
