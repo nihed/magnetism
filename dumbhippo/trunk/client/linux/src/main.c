@@ -553,10 +553,7 @@ static void
 on_auth_failed(HippoConnection *connection,
                void            *data)
 {
-    HippoApp *app = data;
-
-    hippo_platform_show_disconnected_window(app->platform,
-                                            app->connection);
+    /* Ignore this - we display as a disconnected icon */
 }
 
 static void
@@ -880,10 +877,9 @@ main(int argc, char **argv)
     platform = NULL;
     g_free(server);
     server = NULL;
-
-    if (hippo_connection_signin(the_app->connection))
-        hippo_platform_show_disconnected_window(the_app->platform,
-                                                the_app->connection);        
+    
+    /* Ignore failure here */
+    hippo_connection_signin(the_app->connection);
 
     hippo_ui_show(the_app->ui);
     
