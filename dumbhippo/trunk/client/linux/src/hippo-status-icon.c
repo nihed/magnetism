@@ -124,7 +124,16 @@ hippo_status_icon_activate(GtkStatusIcon *gtk_icon)
         button = 1;
 
     if (button == 1) {
-        hippo_stack_manager_show_browser(icon->cache, TRUE);
+        HippoConnection *connection;
+
+        connection = hippo_data_cache_get_connection(icon->cache);
+        if (!hippo_connection_get_connected(connection)) {
+            HippoPlatform *platform;
+            platform = hippo_connection_get_platform(connection);
+            hippo_platform_show_disconnected_window(platform, connection);
+        } else {
+            hippo_stack_manager_show_browser(icon->cache, TRUE);
+        }
     } else if (button == 3) {
         time = gtk_get_current_event_time();
     

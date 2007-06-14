@@ -864,7 +864,16 @@ HippoUI::showMenu(UINT buttonFlag)
 
         PostMessage(window_, WM_NULL, 0, 0);
     } else {
-        hippo_stack_manager_show_browser(dataCache_, TRUE);
+        HippoConnection *connection;
+
+        connection = hippo_data_cache_get_connection(cache);
+        if (!hippo_connection_get_connected(connection)) {
+            HippoPlatform *platform;
+            platform = hippo_connection_get_platform(connection);
+            hippo_platform_show_disconnected_window(platform, connection);
+        } else {
+            hippo_stack_manager_show_browser(dataCache_, TRUE);
+        }
     }
 }
 

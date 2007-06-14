@@ -1089,12 +1089,6 @@ hippo_stack_manager_show_browser(HippoDataCache  *cache,
     HippoConnection *connection = hippo_data_cache_get_connection(manager->cache);
 
     if (!hippo_connection_get_connected(connection)) {
-        HippoPlatform *platform;
-        
-        platform = hippo_connection_get_platform(manager->connection);
-        
-        hippo_platform_show_disconnected_window(platform, manager->connection);
-        
         return;
     }
 
