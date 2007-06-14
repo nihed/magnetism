@@ -7,6 +7,7 @@ import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
+import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
@@ -64,11 +65,16 @@ public abstract class ExternalAccountDMO extends DMObject<ExternalAccountKey> {
 			return null;
 	}
 	
-	@DMProperty(defaultInclude=true)
+	@DMProperty(defaultInclude=true, type=PropertyType.URL)
 	public String getLink() {
 		if (externalAccount.isLovedAndEnabled())
 			return externalAccount.getLink();
 		else
 			return null;
+	}
+	
+	@DMProperty(defaultInclude=true, type=PropertyType.URL)
+	public String getIconUrl() {
+		return "/images3/" + externalAccount.getIconName();
 	}
 }
