@@ -6,6 +6,7 @@ Hippo.TabContext = function(browser) {
     var contentDeck = document.getElementById("hippoContentDeck");
     this.barBrowser = document.getElementById("hippoBarBrowser").cloneNode(true);
     this.barBrowser.style.display = '';
+    this.barBrowser.setAttribute("tooltip", gBrowser.getAttribute("contenttooltip"))
 
     this._hookContentDOMActivate();
 
