@@ -38,3 +38,37 @@ Hippo.trim = function(s){
 
 	return s.replace(/^\s*/, "").replace(/\s*$/, "");
 };
+
+// This check is to make sure that the framer content can't redirect the 
+// main window to javascript:, chrome:, file:, etc. The result is the
+// resolved URI using the fromUrl as the base (if url is relative),
+// or null if the security check failed.
+Hippo.checkLoadUri = function(fromUrl, url) {
+    try {
+	const nsIIOService = Components.interfaces.nsIIOService;
+	var ioServ = Components.classes["@mozilla.org/network/io-service;1"]
+	    .getService(nsIIOService);
+	var fromUri = ioServ.newURI(fromUrl, null /* charset */, null /* baseURI */ );
+	var uri = ioServ.newURI(url, null, fromUri);
+	
+	const nsIScriptSecurityManager = Components.interfaces.nsIScriptSecurityManager;
+	var secMan = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
+	    .getService(nsIScriptSecurityManager);
+	secMan.checkLoadURI(fromUri, uri, nsIScriptSecurityManager.DISALLOW_SCRIPT_OR_DATA);
+	
+	return uri.spec;
+    } catch (e) {
+	alert(e);
+	return null;
+    }
+}
+
+Hippo.uriSchemeIs = function(baseUrl, url, scheme) {
+    const nsIIOService = Components.interfaces.nsIIOService;
+    var ioServ = Components.classes["@mozilla.org/network/io-service;1"]
+        .getService(nsIIOService);
+    var baseUri = ioServ.newURI(url, null /* charset */, null /* baseURI */ );
+    var uri = ioServ.newURI(url, null, baseUri);
+
+    return uri.schemeIs(scheme)
+}
