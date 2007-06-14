@@ -79,13 +79,19 @@
 					    <!-- dynamically gets divs class="dh-chat-message" -->
 					</div>
 				</div>	
-				<div id="dhFramerActions">
-			        <c:if test="${!empty joinChatUri}">
-				        <a id="dhPostJoinChat" href="${joinChatUri}">All quips (<span id="dhQuipsCount">${framer.block.messageCount}</span>)</a> |
-				    </c:if>
-				    <a href="javascript:dh.framer.openForwardWindow();">Share this</a> |
-                    <a href="javascript:dh.framer.goHome();">Mugshot home</a>
-                </div>     	
+				<table id="dhFramerActions" cellpadding="0" cellspacing="0">
+				    <tr>
+				       <td align="left" valign="top">
+			                <c:if test="${!empty joinChatUri}">
+				                <a id="dhPostJoinChat" href="${joinChatUri}">All quips (<span id="dhQuipsCount">${framer.block.messageCount}</span>)</a> |
+				            </c:if>
+				            <a href="javascript:dh.framer.openForwardWindow();">Share this</a>                 
+                       </td>     	
+                       <td align="right" valign="bottom">
+                           <a id="dhFramerLogo" href="javascript:dh.framer.goHome();"><img src="/images3/${buildStamp}/mugshot_68x16.png"/></a>     
+                       </td>
+                    </tr>
+                </table>    
             </td>
         </tr>
     </table>        

@@ -99,6 +99,13 @@ body table {
 }
 
 #dhFramerActions {
-    clear:   both;
-    margin-top:     -1px;
+    clear:          both;
+    width:          100%;
+    visibility:     hidden;
+}
+
+#dhFramerLogo {
+    position:       relative;
+    bottom:         3px;
+    margin-right:   -1px;
 }
