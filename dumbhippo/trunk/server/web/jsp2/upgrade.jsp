@@ -51,7 +51,7 @@
 							(<c:out value="${download.download.architecture}"/>) RPM
 						<br/>
 					</c:if>
-					<a href="http://developer.mugshot.org/wiki/Downloads" target="_new">Source code and contributed binaries</a>
+					<a href="http://developer.mugshot.org/wiki/Downloads" target="_blank">Source code and contributed binaries</a>
 				</c:when>
 				<c:otherwise>
 					<input type="button" value="Install now" onclick="window.external.application.DoUpgrade(); window.close();"/> 
