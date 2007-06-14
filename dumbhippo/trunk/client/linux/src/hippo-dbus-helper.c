@@ -948,6 +948,7 @@ struct HippoDBusProxy {
     char              *bus_name;
     char              *path;
     char              *interface;
+    char              *method_prefix;
 };
 
 HippoDBusProxy*
@@ -971,6 +972,19 @@ hippo_dbus_proxy_new(DBusConnection          *connection,
 }
 
 void
+hippo_dbus_proxy_set_method_prefix(HippoDBusProxy *proxy,
+                                   char           *method_prefix)
+{
+    if (proxy->method_prefix == method_prefix)
+        return;
+
+    if (proxy->method_prefix)
+        g_free(proxy->method_prefix);
+
+    proxy->method_prefix = g_strdup(method_prefix);
+}
+
+void
 hippo_dbus_proxy_unref(HippoDBusProxy          *proxy)
 {
     proxy->refcount -= 1;
@@ -979,6 +993,7 @@ hippo_dbus_proxy_unref(HippoDBusProxy          *proxy)
         g_free(proxy->bus_name);
         g_free(proxy->path);
         g_free(proxy->interface);
+        g_free(proxy->method_prefix);
         g_free(proxy);
     }
 }
@@ -993,9 +1008,19 @@ hippo_dbus_proxy_call_method_sync_valist (HippoDBusProxy          *proxy,
 {
     DBusMessage *call;
     DBusMessage *reply;
+    char *prefixed_method = NULL;
 
     reply = NULL;
+
+    if (proxy->method_prefix) {
+        prefixed_method = g_strconcat(proxy->method_prefix, method, NULL);
+        method = prefixed_method;
+    }
+
     call = dbus_message_new_method_call(proxy->bus_name, proxy->path, proxy->interface, method);
+
+    if (proxy->method_prefix)
+        g_free(prefixed_method);
     
     if (!dbus_message_append_args_valist(call, first_arg_type, args)) {
         dbus_set_error_const(error, DBUS_ERROR_NO_MEMORY, "No memory");
