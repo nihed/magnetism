@@ -1,7 +1,8 @@
 import logging, os, subprocess
 
-import gobject, gtk
+import gobject, gtk, pango
 import gnome.ui
+import dbus, dbus.glib
 import hippo
 
 from mugshot import DataModel
@@ -55,15 +56,36 @@ class ExternalAccountIcon(CanvasHBox):
     def __launch_browser(self):
         libbig.show_url(self.__acct.link)
 
+class LocalUserDisplay(CanvasVBox):
+    def __init__(self, dispname, loginname, displays):
+        super(LocalUserDisplay, self).__init__()
+        
+        self.set_clickable(True)
+        
+        self.__dispname = hippo.CanvasText(xalign=hippo.ALIGNMENT_END, text=dispname)
+        self.append(self.__dispname)
+        self.__loginname = hippo.CanvasText(xalign=hippo.ALIGNMENT_END, font='10px Italic', 
+                                            text=loginname) 
+        attrs = pango.AttrList()
+        attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
+        self.__loginname.set_property("attributes", attrs)        
+
+        self.append(self.__loginname)
+
+        self.displays = displays
+
 class SelfSlideout(CanvasVBox):
     __gsignals__ = {
         "logout" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
         "minimize" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
         "close" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
     }
-    def __init__(self, stock, myself):
+    def __init__(self, stock, myself, fus=None, logger=None):
         super(SelfSlideout, self).__init__(border=1, border_color=0x0000000ff,
                                            spacing=4, padding=4)
+
+        self._logger = logger
+        
         self.__stock = stock
 
         self.__personal_box = CanvasHBox()
@@ -106,6 +128,25 @@ class SelfSlideout(CanvasVBox):
         link.connect("activated", self.__on_minimize_mode)
         self.__personalization_box.append(link)
 
+        if fus:
+            self.__fus = dbus.Interface(fus, 'org.gnome.FastUserSwitch')
+            self.__fus.connect_to_signal('UsersChanged', self.__handle_fus_change)
+            self.__fus.connect_to_signal('DisplaysChanged', self.__handle_fus_change)
+            self.__fus.RecheckDisplays()
+
+            self.append(Separator())
+            self.__fus_box = CanvasVBox()
+            self.append(self.__fus_box)
+
+            self.__fus_users_box = CanvasVBox()
+            self.__fus_box.append(self.__fus_users_box)
+            
+            link = hippo.CanvasLink(text='Log in as another user', xalign=hippo.ALIGNMENT_START)
+            link.connect("activated", self.__do_fus_login_other_user)
+            self.__fus_box.append(link)
+            self.__fus_users = []
+            self.__handle_fus_change()
+
         self.update_self(myself)
 
     def update_self(self, myself):
@@ -138,6 +179,44 @@ class SelfSlideout(CanvasVBox):
 
     def __on_logout(self, l):
         self.emit('logout')
+        self.emit('close')
+
+    def __on_dbus_error(self, err):
+        self._logger.exception("D-BUS error: %s", err)
+
+    def __handle_fus_change(self):
+        self._logger.debug("Handling FUS change, requesting ListUsers")
+        self.__fus.ListUsers(reply_handler=self.__on_fus_users_reply,
+                             error_handler=self.__on_dbus_error) 
+
+    def __on_localdisplay_activated(self, disp):
+        displays = disp.displays
+        display = displays[0] # there should basically never be > 1 display for a user.
+                              # If there is, we just choose randomly.
+        self.__fus.ActivateDisplay(display)
+        self.__fus.RecheckDisplays()
+        self.emit('close')
+
+    def __on_fus_users_reply(self, users):
+        self.__fus_users_box.remove_all()
+        self._logger.debug("Got FUS reply: %s", users)
+        self.__fus_users = users
+        for user in users:
+            proxy = dbus.SessionBus().get_object('org.gnome.FastUserSwitch', user)
+            prop_iface = dbus.Interface(proxy, 'org.freedesktop.DBus.Properties')
+            props = prop_iface.GetAll('org.gnome.FastUserSwitch.User')
+            display_name = props[u'DisplayName']
+            login_name = props[u'UserName'] 
+            displays = props[u'Displays'] 
+            is_logged_in = len(displays) > 0
+            if is_logged_in:
+                disp = LocalUserDisplay(display_name, login_name, displays) 
+                disp.connect('activated', self.__on_localdisplay_activated)
+                self.__fus_users_box.append(disp)
+        
+    def __do_fus_login_other_user(self, l):
+        self._logger.debug("Doing NewConsole")
+        self.__fus.NewConsole()
         self.emit('close')
 
 class SelfStock(AbstractMugshotStock):
@@ -180,6 +259,19 @@ class SelfStock(AbstractMugshotStock):
 
         self.__slideout = None
 
+        self.__create_fus_proxy()
+
+    def __create_fus_proxy(self):
+        try:
+            self.__fus_service = dbus.SessionBus().get_object('org.gnome.FastUserSwitch',
+                                                              '/org/gnome/FastUserSwitch')
+            fus = dbus.Interface(self.__fus_service, 'org.gnome.FastUserSwitch')
+            fus.RecheckDisplays()
+        except dbus.DBusException, e:
+            self._logger.error("Couldn't find org.gnome.FastUserSwitch service")
+            self.__fus_service = None
+            pass
+
     def __on_connected(self):
         model = DataModel()
         self._box.set_child_visible(self._signin, model.self_id == None)
@@ -210,11 +302,12 @@ class SelfStock(AbstractMugshotStock):
             self.__slideout = None
             return
 
+        self.__create_fus_proxy()
         self.__slideout = bigboard.slideout.Slideout()
         widget = self._box
         coords = widget.get_context().translate_to_screen(widget)
         self.__slideout.slideout_from(coords[0] + widget.get_allocation()[0] + 4, coords[1])
-        self.__slideout_display = SelfSlideout(self, self.__myself)
+        self.__slideout_display = SelfSlideout(self, self.__myself, fus=self.__fus_service, logger=self._logger)
         self.__slideout_display.connect('minimize', lambda s: self.__do_minimize())
         self.__slideout_display.connect('logout', lambda s: self.__do_logout())
         self.__slideout_display.connect('close', lambda s: self.__on_activate())
