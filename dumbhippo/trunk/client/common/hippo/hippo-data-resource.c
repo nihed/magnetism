@@ -71,6 +71,9 @@ hippo_data_value_get_element(HippoDataValue *value,
     case HIPPO_DATA_RESOURCE:
         element->u.resource = (HippoDataResource *)node->data;
         return;
+    case HIPPO_DATA_URL:
+        element->u.string  = (char *)node->data;
+        return;
     case HIPPO_DATA_NONE:
     case HIPPO_DATA_LIST:
         break;
@@ -187,6 +190,9 @@ set_value(HippoDataType   type,
         case HIPPO_DATA_RESOURCE:
             *((HippoDataResource **)location) = value->u.resource;
             break;
+        case HIPPO_DATA_URL:
+            *((const char **)location) = value->u.string;
+            break;
         }
     }
 }
@@ -217,6 +223,9 @@ set_default_value(HippoDataType  type,
             break;
         case HIPPO_DATA_RESOURCE:
             *((HippoDataResource **)location) = NULL;
+            break;
+        case HIPPO_DATA_URL:
+            *((const char **)location) = NULL;
             break;
         case HIPPO_DATA_LIST:
         case HIPPO_DATA_NONE:
@@ -419,6 +428,7 @@ data_value_clear(HippoDataValue *value)
         case HIPPO_DATA_LONG:
         case HIPPO_DATA_FLOAT:
         case HIPPO_DATA_STRING:
+        case HIPPO_DATA_URL:
             g_slist_foreach(value->u.list, (GFunc)g_free, NULL);
             break;
         case HIPPO_DATA_RESOURCE:
@@ -439,6 +449,7 @@ data_value_clear(HippoDataValue *value)
         case HIPPO_DATA_LIST:
             break;
         case HIPPO_DATA_STRING:
+        case HIPPO_DATA_URL:
             g_free(value->u.string);
             break;
         }
@@ -468,6 +479,7 @@ data_property_value_matches(HippoDataProperty   *property,
     case HIPPO_DATA_RESOURCE:
         return value->u.resource != property->value.u.resource;
     case HIPPO_DATA_STRING:
+    case HIPPO_DATA_URL:
         return strcmp(value->u.string, property->value.u.string) == 0;
     case HIPPO_DATA_LIST:
         break;
@@ -488,8 +500,8 @@ data_property_set(HippoDataProperty *property,
         return;
     }
 
-    if (value->type == HIPPO_DATA_STRING) {
-        property->value.type =  HIPPO_DATA_STRING;
+    if (value->type == HIPPO_DATA_STRING || value->type == HIPPO_DATA_URL) {
+        property->value.type = value->type;
         property->value.u.string = g_strdup(value->u.string);
     } else {
         property->value = *value;
@@ -532,6 +544,7 @@ data_property_append_value(HippoDataProperty *property,
         property->value.u.list = g_slist_prepend(property->value.u.list, value->u.resource);
         return;
     case HIPPO_DATA_STRING:
+    case HIPPO_DATA_URL:
         property->value.u.list = g_slist_prepend(property->value.u.list, g_strdup(value->u.string));
         return;
     case HIPPO_DATA_NONE:
@@ -799,6 +812,9 @@ print_value(HippoDataValue *value)
         break;
     case HIPPO_DATA_RESOURCE:
         g_print("%s\n", value->u.resource->resource_id);
+        break;
+    case HIPPO_DATA_URL:
+        g_print("%s\n", value->u.string);
         break;
     case HIPPO_DATA_LIST:
         break;

@@ -25,6 +25,7 @@ import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.dm.annotations.DMFilter;
 import com.dumbhippo.dm.annotations.DMProperty;
+import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.dm.annotations.ViewerDependent;
 import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
@@ -137,7 +138,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		initTypeString();
 	}
 
-	abstract protected char getTypeChar();
+	abstract protected PropertyType getType();
 
 	private void initTypeString() {
 		StringBuilder sb = new StringBuilder();
@@ -145,7 +146,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		if (defaultInclude)
 			sb.append("+");
 		
-		sb.append(getTypeChar());
+		sb.append(getType().getTypeChar());
 		
 		switch (getCardinality()) {
 		case ZERO_ONE:

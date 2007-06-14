@@ -13,6 +13,7 @@ import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
+import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.User;
@@ -51,12 +52,12 @@ public abstract class UserDMO extends DMObject<Guid> {
 		return user.getNickname();
 	}
 
-	@DMProperty(defaultInclude=true)
+	@DMProperty(defaultInclude=true, type=PropertyType.URL)
 	public String getHomeUrl() {
 		return "/person?who=" + user.getId();
 	}
 	
-	@DMProperty(defaultInclude=true)
+	@DMProperty(defaultInclude=true, type=PropertyType.URL)
 	public String getPhotoUrl() {
 		return user.getPhotoUrl();
 	}

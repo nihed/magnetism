@@ -113,7 +113,7 @@ class DataModel(AbstractModel):
                 value = self._get_resource(value)
             except KeyError:
                 raise Exception("Resource-valued element points to a resource we don't know about")
-        elif type_byte == ord('s'):
+        elif type_byte == ord('s') or type_byte == ord('u'):
             value = value.__str__()
             
         if cardinality_byte == ord('.'):

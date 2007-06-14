@@ -354,6 +354,10 @@ add_property_value_to_message(DBusMessageIter      *property_array_iter,
         type_byte = 'r';
         value_signature = "s";
         break;
+    case HIPPO_DATA_URL:
+        type_byte = 'u';
+        value_signature = "s";
+        break;
     case HIPPO_DATA_LIST:
         break;
     }
@@ -404,6 +408,7 @@ add_property_value_to_message(DBusMessageIter      *property_array_iter,
         }
         break;
     case HIPPO_DATA_STRING:
+    case HIPPO_DATA_URL:
         dbus_message_iter_append_basic(&value_iter, DBUS_TYPE_STRING, &value->u.string);
         break;
     case HIPPO_DATA_RESOURCE:
