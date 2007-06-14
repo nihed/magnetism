@@ -4,6 +4,7 @@ import gobject, gtk
 import gnome.ui
 import hippo
 
+from mugshot import DataModel
 import bigboard.slideout
 import bigboard.mugshot as mugshot
 import bigboard.libbig as libbig
@@ -31,30 +32,28 @@ class FixedCountWrapBox(CanvasVBox):
         row = self.__row()
         row.append(child)
 
-class ExternalAccountText(CanvasHBox):
-    def __init__(self, acct, show_text=True):
-        super(ExternalAccountText, self).__init__()
+class ExternalAccountIcon(CanvasHBox):
+    def __init__(self, acct):
+        super(ExternalAccountIcon, self).__init__()
         self.__acct = None
         self.__img = CanvasMugshotURLImage()
         self.append(self.__img)
-        self.__text = hippo.CanvasLink()
-        if show_text:
-            self.append(self.__text)
         self.connect("activated", lambda s2: self.__launch_browser())
         self.set_clickable(True)
         self.set_acct(acct)
         
     def set_acct(self, acct):
+        if self.__acct:
+            self.__acct.disconnect(self.__sync)
         self.__acct = acct
-        self.__acct.connect("changed", self.__sync)
+        self.__acct.connect(self.__sync)
         self.__sync()
         
     def __sync(self):
-        self.__img.set_url(self.__acct.get_icon())
-        self.__text.set_property('text', self.__acct.get_sentiment())
+        self.__img.set_url(self.__acct.iconUrl)
         
     def __launch_browser(self):
-        libbig.show_url(self.__acct.get_link())
+        libbig.show_url(self.__acct.link)
 
 class SelfSlideout(CanvasVBox):
     __gsignals__ = {
@@ -62,32 +61,25 @@ class SelfSlideout(CanvasVBox):
         "minimize" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
         "close" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
     }
-    def __init__(self, stock):
+    def __init__(self, stock, myself):
         super(SelfSlideout, self).__init__(border=1, border_color=0x0000000ff,
                                            spacing=4, padding=4)
         self.__stock = stock
-
-        myself = mugshot.get_mugshot().get_self()
 
         self.__personal_box = CanvasHBox()
         self.append(self.__personal_box)
        
         self.__photo = CanvasMugshotURLImage(scale_width=48, scale_height=48)
-        if myself:
-            self.__photo.set_url(myself.get_photo_url())
-        else:
-            self.__photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
-            
+
         self.__personal_box.append(self.__photo)
 
         self.__personal_box_right = CanvasVBox()
         self.__personal_box.append(self.__personal_box_right)
         
         self.__name_logout = CanvasHBox()
-        self.__name = hippo.CanvasText(text="Nobody", font="14px Bold",
+        self.__name = hippo.CanvasText(font="14px Bold",
                                        xalign=hippo.ALIGNMENT_START)
-        if myself:
-            self.__name.set_property("text", myself.get_name())
+        
         self.__name_logout.append(self.__name)
         self.__logout = hippo.CanvasLink(text='[logout]', xalign=hippo.ALIGNMENT_END,
                                          padding_left=10)
@@ -102,13 +94,11 @@ class SelfSlideout(CanvasVBox):
         self.__personalization_box.append(hippo.CanvasText(text='Personalization',
                                                            font='12px Bold',
                                                            xalign=hippo.ALIGNMENT_START))
-        if self.__stock._auth:
-            link = hippo.CanvasLink(text='Visit account page', xalign=hippo.ALIGNMENT_START)
-            link.connect("activated", self.__show_mugshot_link, "/account")
-        else:
-            link = hippo.CanvasLink(text='Sign in', xalign=hippo.ALIGNMENT_START)
-            link.connect("activated", self.__show_mugshot_link, "/who-are-you")
-        self.__personalization_box.append(link)
+
+        self.__mugshot_link = hippo.CanvasLink(xalign=hippo.ALIGNMENT_START)
+        self.__mugshot_link.connect("activated", self.__show_mugshot_link)
+        self.__personalization_box.append(self.__mugshot_link)
+        
         link = hippo.CanvasLink(text='System preferences', xalign=hippo.ALIGNMENT_START)
         link.connect("activated", self.__on_system_preferences)
         self.__personalization_box.append(link)
@@ -116,7 +106,25 @@ class SelfSlideout(CanvasVBox):
         link.connect("activated", self.__on_minimize_mode)
         self.__personalization_box.append(link)
 
-    def __show_mugshot_link(self, l, url):
+        self.update_self(myself)
+
+    def update_self(self, myself):
+        self.__myself = myself
+        if myself:
+            self.__photo.set_url(myself.photoUrl)
+            self.__name.set_property("text", myself.name)
+            self.__mugshot_link.set_property("text", 'Visit account page')
+        else:
+            self.__photo.set_property("image-name", '/usr/share/pixmaps/nobody.png')
+            self.__name.set_property("text", "Nobody")
+            self.__mugshot_link.set_property("text", 'Sign in')
+        
+    def __show_mugshot_link(self, l):
+        if self.__myself:
+            url = "/account"
+        else:
+            url = "/who-are-you"
+            
         libbig.show_url(mugshot.get_mugshot().get_baseurl() + url)
         self.emit('close')
 
@@ -164,25 +172,32 @@ class SelfStock(AbstractMugshotStock):
         self._box.append(self._signin)
         self._signin.connect("button-press-event", lambda signin, event: self.__on_activate())
 
-        self._mugshot.connect("connection-status", lambda mugshot, auth, xmpp, contacts: self.__handle_mugshot_connection_status(auth, xmpp, contacts))  
+        self.__myself = None
+        model = DataModel()
+        model.add_connected_handler(self.__on_connected)
+        if model.connected:
+            self.__on_connected()
 
         self.__slideout = None
-        
-    def _on_mugshot_ready(self):
-        super(SelfStock, self)._on_mugshot_ready()       
-        if self._mugshot.get_self():
-            self.__init_self()
-        self._mugshot.connect("self-known", lambda mugshot: self.__init_self())
 
+    def __on_connected(self):
+        model = DataModel()
+        self._box.set_child_visible(self._signin, model.self_id == None)
+        self._box.set_child_visible(self._whereim_box, model.self_id != None)
+
+        query = model.query_resource(model.self_id, "+;lovedAccounts +")
+        query.add_handler(self.__on_got_self)
+        query.execute()
+        
+    def __on_got_self(self, myself):
+        self.__myself = myself
+        myself.connect(self.__on_self_changed)
+        self.__on_self_changed(myself)
+        
     def __handle_mugshot_connection_status(self, auth, xmpp, contacts):
         self._box.set_child_visible(self._whereim_box, not not auth)
         self._box.set_child_visible(self._signin, not auth)
             
-    def __init_self(self):
-        myself = self._mugshot.get_self()
-        myself.connect("changed", lambda myself: self.__handle_self_changed())        
-        self.__handle_self_changed()        
-
     def __do_logout(self):
         self._panel.Logout()
 
@@ -199,11 +214,11 @@ class SelfStock(AbstractMugshotStock):
         widget = self._box
         coords = widget.get_context().translate_to_screen(widget)
         self.__slideout.slideout_from(coords[0] + widget.get_allocation()[0] + 4, coords[1])
-        slideout_display = SelfSlideout(self)
-        slideout_display.connect('minimize', lambda s: self.__do_minimize())
-        slideout_display.connect('logout', lambda s: self.__do_logout())
-        slideout_display.connect('close', lambda s: self.__on_activate())
-        self.__slideout.get_root().append(slideout_display)
+        self.__slideout_display = SelfSlideout(self, self.__myself)
+        self.__slideout_display.connect('minimize', lambda s: self.__do_minimize())
+        self.__slideout_display.connect('logout', lambda s: self.__do_logout())
+        self.__slideout_display.connect('close', lambda s: self.__on_activate())
+        self.__slideout.get_root().append(self.__slideout_display)
         
     def get_authed_content(self, size):
         return self._box
@@ -215,22 +230,16 @@ class SelfStock(AbstractMugshotStock):
         super(SelfStock, self).set_size(size)
         self._namephoto_box.set_size(size)
     
-    def __handle_self_changed(self):
-        myself = self._mugshot.get_self()
-        self._logger.debug("self (%s) changed" % (myself.get_guid(),))
-        self._photo.set_url(myself.get_photo_url())
-        self._name.set_property("text", myself.get_name())
+    def __on_self_changed(self, myself):
+        self._logger.debug("self (%s) changed" % (myself.resource_id,))
+        self._photo.set_url(myself.photoUrl)
+        self._name.set_property("text", myself.name)
         
         self._whereim_box.remove_all()
-        accts = myself.get_external_accounts()        
-        if not accts:  # don't have them yet, will get async
-            self._logger.debug("no accounts known yet")
-            return
-        for acct in accts:
-            name = acct.get_type()             
-            if not acct.get_sentiment() == 'love':
-                self._logger.debug("ignoring account %s with sentiment %s", name, acct.get_sentiment())
-                continue
-            icon = ExternalAccountText(acct, show_text=False)
-            self._logger.debug("appending external account %s" % (name,))
+        for acct in myself.lovedAccounts:
+            icon = ExternalAccountIcon(acct)
+            self._logger.debug("appending external account %s" % (acct.accountType,))
             self._whereim_box.append(icon)
+
+        if self.__slideout_display != None:
+            self.__slideout_display.update_self(myself)

@@ -42,7 +42,7 @@ class DataModel(AbstractModel):
 
             return model
 
-    def __init__(cls, server_name):
+    def __init__(cls, server_name=None):
         # Don't chain up here, this is called for each singleton
         pass
 
@@ -77,14 +77,20 @@ class DataModel(AbstractModel):
         self._proxy.connect_to_signal("Disconnected", self.__on_disconnected, dbus_interface='org.mugshot.dm.Model')
 
     def __on_connected(self, self_id):
-        self._set_self_id(self_id)
+        if self_id == '':
+            self._set_self_id(None)
+        else:
+            self._set_self_id(self_id)
         self._on_connected()
 
     def __on_disconnected(self):
         self._on_disconnected()
 
     def __get_self_id_reply(self, self_id):
-        self._set_self_id(self_id)
+        if self_id == '':
+            self._set_self_id(None)
+        else:
+            self._set_self_id(self_id)
 
     def __get_connected_reply(self, connected):
         if connected:
