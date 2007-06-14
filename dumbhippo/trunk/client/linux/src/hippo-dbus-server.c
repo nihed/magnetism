@@ -267,8 +267,8 @@ hippo_dbus_try_to_acquire(const char  *server,
 
     hippo_dbus_init_contacts(connection, FALSE);
 
-    hippo_dbus_init_pidgin(connection);
     hippo_dbus_init_im(connection, FALSE);
+    hippo_dbus_init_pidgin(connection);
     hippo_dbus_init_model(connection);
                         
     /* Add Rhythmbox signal match */

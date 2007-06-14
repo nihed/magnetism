@@ -91,6 +91,12 @@ HippoDBusProxy*   hippo_dbus_proxy_new                     (DBusConnection      
                                                             const char              *bus_name,
                                                             const char              *path,
                                                             const char              *interface);
+/* Set a constant string to prepend to the method name passed to the following functions
+ * before calling it. This is to manage Gaim/Pidgin where all methods were previously
+ * Gaim* and now are Purple*
+ */
+void              hippo_dbus_proxy_set_method_prefix       (HippoDBusProxy          *proxy,
+                                                            char                    *method_prefix);
 void              hippo_dbus_proxy_unref                   (HippoDBusProxy          *proxy);
 
 DBusMessage*      hippo_dbus_proxy_call_method_sync        (HippoDBusProxy          *proxy,

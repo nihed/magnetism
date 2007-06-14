@@ -127,7 +127,7 @@ pidgin_state_lookup_status(PidginState *state,
         char *name = NULL;
         
         if (!hippo_dbus_proxy_STRING__INT32(state->gaim_proxy,
-                                            "GaimStatusGetName",
+                                            "StatusGetName",
                                             id,
                                             &name))
             return NULL;
@@ -230,17 +230,20 @@ reload_from_new_owner(DBusConnection *connection,
     state->statuses = g_hash_table_new_full(g_int_hash, g_int_equal,
                                             NULL, pidgin_status_free_hash_value);
     
-    if (strcmp(bus_name, GAIM_BUS_NAME) == 0)
+    if (strcmp(bus_name, GAIM_BUS_NAME) == 0) {
         state->gaim_proxy = hippo_dbus_proxy_new(connection, bus_name, GAIM_OBJECT_NAME,
                                                  GAIM_INTERFACE_NAME);
-    else if (strcmp(bus_name, PIDGIN_BUS_NAME) == 0)
+        hippo_dbus_proxy_set_method_prefix(state->gaim_proxy, "Gaim");
+    } else if (strcmp(bus_name, PIDGIN_BUS_NAME) == 0) {
         state->gaim_proxy = hippo_dbus_proxy_new(connection, bus_name, PIDGIN_OBJECT_NAME,
                                                  PIDGIN_INTERFACE_NAME);
-    else
+        hippo_dbus_proxy_set_method_prefix(state->gaim_proxy, "Purple");
+    } else {
         goto failed;
+    }
     
     if (!hippo_dbus_proxy_ARRAYINT32__VOID(state->gaim_proxy,
-                                           "GaimAccountsGetAllActive",
+                                           "AccountsGetAllActive",
                                            &accounts, &n_accounts))
         goto failed;                                            
 
@@ -259,13 +262,13 @@ reload_from_new_owner(DBusConnection *connection,
         account = tmp->data;
         
         if (!hippo_dbus_proxy_STRING__INT32(state->gaim_proxy,
-                                            "GaimAccountGetProtocolId",
+                                            "AccountGetProtocolId",
                                             account->id,
                                             &account->protocol_id))
             goto failed;
 
         if (!hippo_dbus_proxy_STRING__INT32(state->gaim_proxy,
-                                            "GaimAccountGetProtocolName",
+                                            "AccountGetProtocolName",
                                             account->id,
                                             &account->protocol_name))
             goto failed;
@@ -282,7 +285,7 @@ reload_from_new_owner(DBusConnection *connection,
         account = tmp->data;
         
         if (!hippo_dbus_proxy_ARRAYINT32__INT32_STRING(state->gaim_proxy,
-                                                       "GaimFindBuddies",
+                                                       "FindBuddies",
                                                        account->id, "",
                                                        &buddies, &buddies_len))
             goto failed;
@@ -299,22 +302,22 @@ reload_from_new_owner(DBusConnection *connection,
                 account->buddies = g_slist_prepend(account->buddies, buddy);
                 
                 if (!hippo_dbus_proxy_INT32__INT32(state->gaim_proxy,
-                                                   "GaimBuddyIsOnline",
+                                                   "BuddyIsOnline",
                                                    buddy->id, &buddy->is_online))
                     goto failed;
                 
                 if (!hippo_dbus_proxy_STRING__INT32(state->gaim_proxy,
-                                                    "GaimBuddyGetName",
+                                                    "BuddyGetName",
                                                     buddy->id, &buddy->name))
                     goto failed;
 
                 if (!hippo_dbus_proxy_INT32__INT32(state->gaim_proxy,
-                                                   "GaimBuddyGetPresence",
+                                                   "BuddyGetPresence",
                                                    buddy->id, &buddy->presence_id))
                     goto failed;
 
                 if (!hippo_dbus_proxy_INT32__INT32(state->gaim_proxy,
-                                                   "GaimPresenceGetActiveStatus",
+                                                   "PresenceGetActiveStatus",
                                                    buddy->presence_id, &buddy->status_id))
                     goto failed;
                 
