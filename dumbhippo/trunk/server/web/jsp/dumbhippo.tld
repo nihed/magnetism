@@ -93,6 +93,11 @@
            <required>false</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>      
+        <attribute>
+           <name>target</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>      
     </tag>
     <tag>
         <name>entityList</name>
@@ -154,6 +159,11 @@
            <required>false</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>                         
+        <attribute>
+           <name>target</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>      
     </tag>
     <tag>
     	<name>iterateStack</name>

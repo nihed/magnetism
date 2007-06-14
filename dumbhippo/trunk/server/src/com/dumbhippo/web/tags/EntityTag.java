@@ -31,6 +31,7 @@ public class EntityTag extends SimpleTagSupport {
 	private int longBodyLengthLimit;
 	private boolean music;	
 	private boolean twoLineBody;
+	private String target;
 	
 	public EntityTag() {
 		bodyLengthLimit = -1;
@@ -40,7 +41,8 @@ public class EntityTag extends SimpleTagSupport {
 	
 	static String entityHTML(JspContext context, Object o, String buildStamp, String skipId,
 			boolean showInviteLinks, boolean photo, boolean music,
-			String cssClass, int bodyLengthLimit, int longBodyLengthLimit, boolean twoLineBody) {
+			String cssClass, int bodyLengthLimit, int longBodyLengthLimit, boolean twoLineBody,
+			String target) {
 		String link = null;
 		String body;
 		String photoUrl = null;
@@ -158,7 +160,11 @@ public class EntityTag extends SimpleTagSupport {
 			String sizedPhotoUrl = EntityView.sizePhoto(photoUrl, Configuration.SHOT_SMALL_SIZE);
 			
 			if (link != null) {
-				xml.openElement("a", "href", link, "target", "_top", "class", cssClass, "title", bodyOriginal);
+				xml.openElement("a", 
+						        "href", link, 
+						        "target", target != null ? target : "_top", 
+						        "class", cssClass, 
+						        "title", bodyOriginal);
 				openElements++;
 			}
 			
@@ -171,7 +177,10 @@ public class EntityTag extends SimpleTagSupport {
 			// for listing recipients in comma separated list or
 			// for listing contacts with no accounts
 			if (link != null) { 
-			    xml.appendTextNode("a", body, "href", link, "target", "_top", "class", textLinkClass);
+			    xml.appendTextNode("a", body, 
+			    		           "href", link, 
+			    		           "target", target != null ? target : "_top", 
+			    		           "class", textLinkClass);
 			} else {
 				if (!cssArea.equals("")) {
 					xml.openElement("span", "class", cssArea);
@@ -214,7 +223,7 @@ public class EntityTag extends SimpleTagSupport {
 		}
 		writer.print(entityHTML(getJspContext(), entity, buildStamp, null, showInviteLinks, 
 				                photo, music, cssClass, bodyLengthLimit, longBodyLengthLimit, 
-				                twoLineBody));
+				                twoLineBody, target));
 	}
 	
 	public void setValue(Object value) {
@@ -247,5 +256,9 @@ public class EntityTag extends SimpleTagSupport {
 	
 	public void setTwoLineBody(boolean twoLineBody) {
 		this.twoLineBody = twoLineBody;
+	}
+	
+	public void setTarget(String target) {
+		this.target = target;
 	}
 }

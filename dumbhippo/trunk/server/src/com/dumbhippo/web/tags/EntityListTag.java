@@ -20,6 +20,7 @@ public class EntityListTag extends SimpleTagSupport {
 	private String separator;
 	private boolean music;
 	private boolean twoLineBody;
+	private String target;
 	
 	public EntityListTag() {
 		bodyLengthLimit = -1;
@@ -59,7 +60,7 @@ public class EntityListTag extends SimpleTagSupport {
 						             skipRecipientId, showInviteLinks, 
 					                 photos, music, cssClass, 
 					                 bodyLengthLimit, longBodyLengthLimit, 
-					                 twoLineBody);
+					                 twoLineBody, target);
             if (html == null)
                 continue;
             
@@ -113,5 +114,9 @@ public class EntityListTag extends SimpleTagSupport {
 
 	public void setTwoLineBody(boolean twoLineBody) {
 		this.twoLineBody = twoLineBody;
+	}
+	
+	public void setTarget(String target) {
+		this.target = target;
 	}
 }
