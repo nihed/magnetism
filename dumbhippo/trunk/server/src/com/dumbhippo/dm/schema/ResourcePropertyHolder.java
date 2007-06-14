@@ -9,6 +9,7 @@ import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.annotations.DMFilter;
 import com.dumbhippo.dm.annotations.DMProperty;
+import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.dm.annotations.ViewerDependent;
 import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchNode;
@@ -27,6 +28,10 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI exte
 		super(declaringClassHolder, ctMethod, classInfo.getObjectClass(), annotation, filter, viewerDependent);
 		objectType = classInfo.getObjectClass();
 		keyType = classInfo.getKeyClass();
+		
+		if (annotation.type() != PropertyType.AUTO && annotation.type() != PropertyType.RESOURCE) {
+			throw new RuntimeException("type=PropertyType." + annotation.type() + " found for a property with a resource return type"); 
+		}
 	}
 	
 	@Override
@@ -53,8 +58,8 @@ public abstract class ResourcePropertyHolder<K,T extends DMObject<K>, KI,TI exte
 	}
 
 	@Override
-	protected char getTypeChar() {
-		return 'r';
+	protected PropertyType getType() {
+		return PropertyType.RESOURCE;
 	}
 
 	@Override

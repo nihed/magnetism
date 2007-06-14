@@ -4358,6 +4358,7 @@ typedef struct {
 } DMNamespace;
 
 typedef struct {
+    HippoConnection *connection;
     HippoDataModel *model;
     const char *system_uri;
     GSList *nodes;
@@ -4373,10 +4374,11 @@ typedef struct {
 } CutPasteKeyValuePair;
 
 static void
-dm_context_init(DMContext      *context,
-                HippoDataModel *model)
+dm_context_init(DMContext       *context,
+                HippoConnection *connection)
 {
-    context->model = model;
+    context->connection = connection;
+    context->model = hippo_data_cache_get_model(connection->cache);
     context->system_uri = g_intern_string("http://mugshot.org/p/system");
     context->nodes = NULL;
     context->resource_bases = NULL;
@@ -4600,6 +4602,9 @@ dm_context_get_type(DMContext            *context,
     case 'r':
         *type = HIPPO_DATA_RESOURCE;
         break;
+    case 'u':
+        *type = HIPPO_DATA_URL;
+        break;
     default:
         g_warning("Can't understand m:type attribute '%s'", type_attr);
         return FALSE;
@@ -4712,6 +4717,9 @@ dm_context_get_value(DMContext      *context,
             break;
         case HIPPO_DATA_STRING:
             value->u.string = node->value;
+            break;
+        case HIPPO_DATA_URL:
+            value->u.string = hippo_connection_make_absolute_url(context->connection, str);
             break;
         case HIPPO_DATA_NONE:
         case HIPPO_DATA_RESOURCE:
@@ -4848,7 +4856,7 @@ on_query_reply(LmMessageHandler *handler,
     const char *child_name;
     GSList *results = NULL;
     
-    dm_context_init(&context, hippo_data_cache_get_model(message_context->connection->cache));
+    dm_context_init(&context, message_context->connection);
     dm_context_push_node(&context, node);
 
     // FIXME: Check for <iq type="error">
@@ -4950,7 +4958,7 @@ handle_data_notify (HippoConnection *connection,
     LmMessageNode *resource_node;
     gboolean found = FALSE;
     
-    dm_context_init(&context, hippo_data_cache_get_model(connection->cache));
+    dm_context_init(&context, connection);
     dm_context_push_node(&context, node);
 
     for (child = node->children; !found && child; child = child->next) {

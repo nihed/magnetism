@@ -22,6 +22,7 @@ typedef enum {
     HIPPO_DATA_FLOAT      = 4,
     HIPPO_DATA_STRING     = 5,
     HIPPO_DATA_RESOURCE   = 6,
+    HIPPO_DATA_URL        = 7,
     HIPPO_DATA_LIST       = 0x10
 } HippoDataType;
 

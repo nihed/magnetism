@@ -12,4 +12,5 @@ public @interface DMProperty {
 	boolean defaultInclude() default false;
 	String propertyId() default "";
 	String defaultChildren() default "";
+	PropertyType type() default PropertyType.AUTO;
 }

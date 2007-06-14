@@ -139,6 +139,8 @@ class TwistedModel(AbstractModel):
             return float(type_char)
         elif type_char == 's':
             return value
+        elif type_char == 'u':
+            return value
         elif type_char == 'r': 
            raise Exception("resource_id attribute missing for resource-valued property")
 
@@ -152,7 +154,7 @@ class TwistedModel(AbstractModel):
         else:
             seen_types[(property_element.uri, property_element.name)] = type_attr
 
-        m = re.match(r"^(\+?)([bilfsr])([*?]?)$", type_attr)
+        m = re.match(r"^(\+?)([bilfsru])([*?]?)$", type_attr)
         if (m == None):
             raise Exception("Unrecognized type string '%s'" % type_attr)
 

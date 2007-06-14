@@ -9,6 +9,7 @@ import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.dm.annotations.DMFilter;
 import com.dumbhippo.dm.annotations.DMProperty;
+import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.dm.annotations.ViewerDependent;
 import com.dumbhippo.dm.fetch.Fetch;
 import com.dumbhippo.dm.fetch.FetchVisitor;
@@ -17,6 +18,7 @@ import com.dumbhippo.dm.filter.FilterCompiler;
 
 public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends DMPropertyHolder<K,T,TI> {
 	protected CompiledItemFilter<K,T,Object,DMObject<Object>> itemFilter;
+	private PropertyType propertyType;
 	
 	public PlainPropertyHolder(DMClassHolder<K,T> declaringClassHolder, CtMethod ctMethod, Class<TI> elementType, DMProperty annotation, DMFilter filter, ViewerDependent viewerDependent) {
 		super(declaringClassHolder, ctMethod, elementType, annotation, filter, viewerDependent);
@@ -25,28 +27,59 @@ public abstract class PlainPropertyHolder<K,T extends DMObject<K>, TI> extends D
 			itemFilter = FilterCompiler.compileItemFilter(declaringClassHolder.getModel(), 
 			 										      declaringClassHolder.getKeyClass(), 
 													      Object.class, propertyFilter);
-	}
-
-	@Override
-	protected char getTypeChar() {
+		
+		PropertyType derivedType;
 		if (elementType.isPrimitive()) {
 			if (elementType == Boolean.TYPE)
-				return 'b';
+				derivedType = PropertyType.BOOLEAN;
 			else if (elementType == Byte.TYPE ||
 					 elementType == Character.TYPE ||
 					 elementType == Short.TYPE ||
 					 elementType == Integer.TYPE)
-				return 'i';
+				derivedType = PropertyType.INTEGER;
 			else if (elementType == Long.TYPE)
-				return 'l';
+				derivedType = PropertyType.LONG;
 			else if (elementType == Float.TYPE ||
 					 elementType == Double.TYPE)
-				return 'f';
+				derivedType = PropertyType.FLOAT;
 			else
-				throw new RuntimeException("Unexpected primitive type");
+				throw new RuntimeException("Unexpected primitive type" + elementType);
 		} else {
-			return 's';
+			if (elementType == String.class)
+				derivedType = PropertyType.STRING;
+			else
+				throw new RuntimeException("Unexpected type" + elementType);
 		}
+		
+		if (annotation.type() == PropertyType.AUTO)
+			propertyType = derivedType;
+		else {
+			switch (annotation.type()) {
+			case AUTO: // not reached
+				break;
+			case BOOLEAN:
+			case INTEGER:
+			case LONG:
+			case FLOAT:
+			case STRING:
+				if (annotation.type() != derivedType)
+					throw new RuntimeException("type=PropertyType." + annotation.type() + " found but expected " + derivedType + " from the return type"); 
+				break;
+			case URL:
+				if (derivedType != PropertyType.STRING)
+					throw new RuntimeException("PropertyType.URL for non-string property");
+				break;
+			case RESOURCE:
+				throw new RuntimeException("PropertyType.RESOURCE for non-resource property");
+			}
+			
+			propertyType = annotation.type();
+		}
+	}
+
+	@Override
+	protected PropertyType getType() {
+		return propertyType;
 	}
 	
 	public Class<?> getPlainType() {
