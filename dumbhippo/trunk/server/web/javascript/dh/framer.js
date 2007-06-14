@@ -150,6 +150,7 @@ dh.framer._addMessage = function(message, before) {
 	var framerRight = document.getElementById('dhFramerRight');
 	    
 	if (dh.framer.messagesInitialized) {
+	    dh.framer.updateFramerActionsHeight();
 	    // we reserve a 100 pixels for the sentiment, the '-', and the timestamp
 	    // the timestamp can vary in length, but that whould not affect the length of the text
 	    dh.util.ellipseText(textSpan, framerRight.offsetWidth - whoElement.offsetWidth - 100); 
@@ -163,7 +164,8 @@ dh.framer._addMessage = function(message, before) {
 	    messageArea.style.display = "block";	
 	    dh.framer.updateMessagesWidth();
         dh.framer.messagesInitialized = true;	   	
-	}    
+	    dh.framer.updateFramerActionsHeight();
+	}    	
 }
 
 dh.framer.updateWidth = function() {
@@ -260,6 +262,12 @@ dh.framer.updateMessagesWidth = function() {
         dh.util.ellipseText(chatMessageText[0], framerRight.offsetWidth - chatMessageWho[0].offsetWidth - 100, chatMessageText[0].title); 
         i++;
     }
+}
+
+dh.framer.updateFramerActionsHeight = function() {
+    var postChatLog = document.getElementById('dhPostChatLog');		
+	var framerActions = document.getElementById('dhFramerActions');
+	framerActions.style.height = (97 - postChatLog.offsetHeight) + "px";	
 }
 
 dh.framer._removeMessage = function(message) {
@@ -367,13 +375,18 @@ dh.framer._onReconnect = function() {
 }
 	
 dh.framer.init = function() {	
+    
     dh.framer.messagesInitialized = false;
     if (dh.framer.initialMessageCount <= 0) {
 	    var messageArea = document.getElementById('dhPostChatMessages');     
 	    messageArea.style.display = "block";
         dh.framer.messagesInitialized = true;	       
     }
-
+    
+    dh.framer.updateFramerActionsHeight();   
+    var framerActions = document.getElementById('dhFramerActions');
+    framerActions.style.visibility = "visible";
+    
     dh.framer.updateBlockContentWidth();
     dh.framer.updateBlockDetails();
     dh.framer.updateWhoIsAround();
