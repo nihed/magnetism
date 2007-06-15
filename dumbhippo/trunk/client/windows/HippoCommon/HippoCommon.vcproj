@@ -409,6 +409,22 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-data-fetch.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-data-model.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-data-query.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-data-resource.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-endpoint-proxy.c"
 				>
 			</File>
@@ -457,6 +473,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-notification-set.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-object-cache.c"
 				>
 			</File>
@@ -470,6 +490,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-post.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-qname.c"
 				>
 			</File>
 			<File
@@ -787,6 +811,34 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-data-fetch.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-data-model-internal.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-data-model.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-data-query-internal.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-data-query.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-data-resource-internal.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-data-resource.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-endpoint-proxy.h"
 				>
 			</File>
@@ -839,6 +891,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-notification-set.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-object-cache.h"
 				>
 			</File>
@@ -852,6 +908,10 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-post.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-qname.h"
 				>
 			</File>
 			<File

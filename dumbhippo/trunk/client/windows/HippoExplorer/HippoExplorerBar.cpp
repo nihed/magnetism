@@ -17,9 +17,9 @@
 // I don't understand why this is necessary with VS2005, but it (hopefully) should be harmless
 struct DECLSPEC_UUID("f1db8392-7331-11d0-8c99-00a0c92dbfe8") IInputObjectSite;
 
-static const int MIN_HEIGHT = 101;
-static const int MAX_HEIGHT = 101; // -1 is no max
-static const int DEFAULT_HEIGHT = 101;
+static const int MIN_HEIGHT = 108;
+static const int MAX_HEIGHT = 108  ; // -1 is no max
+static const int DEFAULT_HEIGHT = 108;
 static const WCHAR *TITLE = L"Mugshot";
 static const TCHAR *CLASS_NAME = TEXT("HippoExplorerBarClass");
 
