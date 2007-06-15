@@ -42,7 +42,7 @@
 			<tr>
 			  <dht3:featuresItem prefix="Flickr"
 			                     icon="favicon_flickr.png"
-			                     text="Flickr photo sets"
+			                     text="Flickr and Picasa photos"
 			                     tipIcon="flickr_thumbs.png"
 			                     tipIconWidth="400"
 			                     tipIconHeight="118"
@@ -63,13 +63,13 @@
 			                     tipIconWidth="400"
 			                     tipIconHeight="120"
 			                     tipText="Get updates when people in your Mugshot network post new YouTube videos."/>
-			  <dht3:featuresItem prefix="Twitter"
-			                     icon="favicon_twitter.png"
-			                     text="Twitter status updates"
-			                     tipIcon="twitter_block.png"
+			  <dht3:featuresItem prefix="Google Reader"
+			                     icon="favicon_google_reader.png"
+			                     text="Google reader shared items"
+			                     tipIcon="google_reader_block.png"
 			                     tipIconWidth="450"
-			                     tipIconHeight="34"
-			                     tipText="Get updates when people in your Mugshot network send Twitter updates."/>			  
+			                     tipIconHeight="36"
+			                     tipText="Get updates when people in your Mugshot network share items with Google Reader."/>			  
 			</tr>		
 			<tr>
 			  <dht3:featuresItem prefix="Delicious"
@@ -78,14 +78,14 @@
 			                     tipIcon="delicious_block.png"
 			                     tipIconWidth="450"
 			                     tipIconHeight="34"
-			                     tipText="Get updates when people in your Mugshot network post new public del.icio.us bookmarks"/>
-			  <dht3:featuresItem prefix="Facebook"
-			                     icon="favicon_facebook.png"
-			                     text="Facebook messages, photos, pokes, and wall messages"
-			                     tipIcon="facebook_block.png"
+			                     tipText="Get updates when people in your Mugshot network post new public del.icio.us bookmarks."/>
+			  <dht3:featuresItem prefix="Twitter"
+			                     icon="favicon_twitter.png"
+			                     text="Twitter status updates"
+			                     tipIcon="twitter_block.png"
 			                     tipIconWidth="450"
 			                     tipIconHeight="34"
-			                     tipText="Get updates when you get new Facebook updates like messages, photos, and pokes."/>			  
+			                     tipText="Get updates when people in your Mugshot network send Twitter updates."/>	 
 			</tr>	
 			<tr>
 			  <dht3:featuresItem prefix="Netflix"
@@ -95,6 +95,22 @@
 			                     tipIconWidth="450"
 			                     tipIconHeight="79"
 			                     tipText="Get updates when people in your Mugshot network queue Netflix movies."/> 			
+			  <dht3:featuresItem prefix="Facebook"
+			                     icon="favicon_facebook.png"
+			                     text="Facebook messages, photos, pokes, and wall messages"
+			                     tipIcon="facebook_block.png"
+			                     tipIconWidth="450"
+			                     tipIconHeight="34"
+			                     tipText="Get updates when you get new Facebook updates like messages, photos, and pokes."/>
+			</tr>	
+			<tr>
+			  <dht3:featuresItem prefix="Amazon"
+			                     icon="favicon_amazon.png"
+			                     text="Amazon reviews and wish list items"
+			                     tipIcon="amazon_review_block.png"
+			                     tipIconWidth="450"
+			                     tipIconHeight="97"
+			                     tipText="Get updates when people in your Mugshot network review items on Amazon or add them to their wish list."/> 			
 			  <dht3:featuresItem prefix="RSS"
 			                     icon="feed_icon16x16.png"
 			                     text="RSS feeds"
