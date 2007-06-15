@@ -6,8 +6,9 @@
 <%@ attribute name="currentPageLink" required="true" type="java.lang.String" %>
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
 <%@ attribute name="blocks" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="onresize" required="false" type="java.lang.String" %>
 
-<body class="dh-gray-background-page">
+<body class="dh-gray-background-page" onresize="${onresize}">
 	<c:if test="${blocks}">
 		<dht3:blockGlobal/>
 	</c:if>

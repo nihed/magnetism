@@ -890,15 +890,22 @@ dh.util.formatTimeAgo = function(date) {
 }
 
 // based on the example from http://blog.paranoidferret.com/?p=15
-dh.util.ellipseText = function (element, width, text) {
+dh.util.ellipseText = function (element, width, text, ignoreLinks, alwaysEllipse) {
    if (text != null) {
        dh.dom.removeChildren(element);
-       dh.util.insertTextWithLinks(element, text);                 
+       if (ignoreLinks) {
+          var textNode = document.createTextNode(text);
+          element.appendChild(textNode);   
+       } else {
+          dh.util.insertTextWithLinks(element, text);
+       }                     
    } else {    
        text = dh.util.getTextFromHtmlNode(element);
    }
    
-   if (element.offsetWidth > width) {
+   // if we need to alwaysEllipse, we can't just ellipse in the end because 
+   // the "..." might actually not fit
+   if (element.offsetWidth > width || alwaysEllipse) {
       var tooMany = text.length;
       var tooFew = 0;    
       var i = 0;
@@ -920,11 +927,17 @@ dh.util.ellipseText = function (element, width, text) {
       if (i > 0) {
           if (tooMany - tooFew == 1)
               i = tooFew;
-          // we don't want to check for links each time, so we only do this once in the end
-          dh.util.insertTextWithLinks(element, text, i);
-          var dotsNode = document.createTextNode("...");
-          element.appendChild(dotsNode);          
-      }    
+          
+          if (ignoreLinks) {
+              var textNode = document.createTextNode(text.substring(0, i) + "...");
+              element.appendChild(textNode);   
+          } else {   
+              // we don't want to check for links each time, so we only do this once in the end
+              dh.util.insertTextWithLinks(element, text, i);
+              var dotsNode = document.createTextNode("...");
+              element.appendChild(dotsNode);   
+          }           
+      }     
    }
 }
 
@@ -966,11 +979,7 @@ dh.util.ellipseWrappingText = function (element, height, text, elementToMeasure)
           var textNode = document.createTextNode(text.substring(0, tooFew) + "...");
           element.appendChild(textNode);            
       }
-      
-      return true;
    }
-   
-   return false; 
 }
 
 // countToAddTogether tells us how many children to add at a time, the default is one
@@ -978,6 +987,7 @@ dh.util.ellipseWrappingText = function (element, height, text, elementToMeasure)
 // item is followed by a comma
 // this method can also be changed to work in a binary fashion, but it's fine like it is
 // for the current use since we know we are only adding a few items 
+// this function ellipses after the last child that fully fits
 dh.util.ellipseNodeWithChildren = function (element, width, originalElement, countToAddTogether) {
     var i = 0, j, k;    
     if (countToAddTogether == null)
@@ -1021,6 +1031,66 @@ dh.util.ellipseNodeWithChildren = function (element, width, originalElement, cou
             }    
             var dotsNode = document.createTextNode("...");
             element.appendChild(dotsNode);     
+        }
+    }                          
+}
+ 
+// this function ellipses the text inside the last child that partially fits
+dh.util.ellipseNodeWithChildrenPlus = function (element, width, originalElement) {
+    var i = 0;     
+     
+    if (originalElement != null) {        
+        dh.dom.removeChildren(element);  
+        while (i < originalElement.childNodes.length) {
+            element.appendChild(originalElement.childNodes[i].cloneNode(true));   
+            i++;
+        }
+    } else {
+        originalElement = element.cloneNode(true);        
+    }
+    if (element.offsetWidth > width) {
+        dh.dom.removeChildren(element);  
+        i = 0;                     
+        while ((element.offsetWidth < width) && (i < originalElement.childNodes.length)) {    
+            // remove the previous dotdotdot
+            if (i > 0) 
+                element.removeChild(element.lastChild);   
+                   
+            element.appendChild(originalElement.childNodes[i].cloneNode(true));                 
+            i++;      
+            var dotsNode = document.createTextNode("...");
+            element.appendChild(dotsNode);      
+        }
+        
+        if (i > 0) {           
+            // this is "..."
+            element.removeChild(element.lastChild);           
+            removedChild = element.removeChild(element.lastChild); 
+            
+            var availableWidth = width - element.offsetWidth;    
+            // we are only adding one last element at this point           
+            element.appendChild(removedChild);
+            var textNode = element.lastChild;
+            var isLeaf = true;
+            while (textNode.hasChildNodes()) {       
+                var l = 0;
+				for (l = 0; l < textNode.childNodes.length; ++l) {
+				    if (textNode.childNodes[l].offsetWidth > 0 || l == textNode.childNodes.length - 1) {
+				        textNode = textNode.childNodes[l];
+				        break;
+				    }
+				}    
+                isLeaf = false;
+            }
+            if (isLeaf) {
+                // wrap it in a span element
+                var span = document.createElement('span');
+                span.appendChild(textNode);
+                element.appendChild(span);
+                dh.util.ellipseText(element.lastChild, availableWidth, null, true, true); 
+            } else {
+                dh.util.ellipseText(textNode.parentNode, availableWidth, null, true, true);                
+            }                 
         }
     }                          
 }
