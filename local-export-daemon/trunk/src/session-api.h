@@ -27,5 +27,7 @@
 
 gboolean session_api_init(DBusConnection *session_bus);
 
+gboolean session_api_append_all_infos(DBusMessageIter *array_iter);
+
 #endif /* __SESSION_API_H__ */
 

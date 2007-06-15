@@ -40,15 +40,20 @@ const char* info_get_name         (Info            *info);
 
 
 
-SessionInfos* session_infos_new    (void);
-void          session_infos_ref    (SessionInfos *infos);
-void          session_infos_unref  (SessionInfos *infos);
-void          session_infos_add    (SessionInfos *infos,
-                                    Info         *info);
-Info*         session_infos_get    (SessionInfos *infos,
-                                    const char   *name);
-void          session_infos_remove (SessionInfos *infos,
-                                    const char   *name);
+SessionInfos* session_infos_new               (void);
+SessionInfos* session_infos_new_with_builtins (void);
+void          session_infos_ref               (SessionInfos    *infos);
+void          session_infos_unref             (SessionInfos    *infos);
+void          session_infos_add               (SessionInfos    *infos,
+                                               Info            *info);
+Info*         session_infos_get               (SessionInfos    *infos,
+                                               const char      *name);
+void          session_infos_remove            (SessionInfos    *infos,
+                                               const char      *name);
+gboolean      session_infos_append_all        (SessionInfos    *infos,
+                                               DBusMessageIter *array_iter);
+
+
 
 
 #endif /* __SESSION_INFO_H__ */

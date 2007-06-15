@@ -18,6 +18,8 @@
  *
  */
 #include <config.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include "session-info.h"
 #include "hippo-dbus-helper.h"
 #include "main.h"
@@ -299,4 +301,111 @@ session_infos_remove (SessionInfos *infos,
         g_hash_table_remove(infos->by_name, name);
         info_unref(info);
     }
+}
+
+typedef struct {
+    DBusMessageIter *array_iter;
+    gboolean failed;
+} AppendAllData;
+
+static void
+append_all_foreach (gpointer  key,
+                    gpointer  value,
+                    gpointer  user_data)
+{
+    Info *info = value;
+    AppendAllData *aad = user_data;
+    DBusMessageIter struct_iter, dict_iter;
+    const char *info_name;
+    
+    if (aad->failed)
+        return;
+    
+    dbus_message_iter_open_container(aad->array_iter, DBUS_TYPE_STRUCT, NULL, &struct_iter);
+
+    info_name = info_get_name(info);
+    dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &info_name);
+
+    dbus_message_iter_open_container(&struct_iter, DBUS_TYPE_ARRAY, "{sv}", &dict_iter);
+
+    if (!info_write(info, &dict_iter)) {
+        aad->failed = TRUE;
+        return;
+    }
+
+    dbus_message_iter_close_container(&struct_iter, &dict_iter);
+    
+    dbus_message_iter_close_container(aad->array_iter, &struct_iter);    
+}
+
+gboolean
+session_infos_append_all (SessionInfos    *infos,
+                          DBusMessageIter *array_iter)
+{
+    AppendAllData aad;
+
+    g_assert(infos != NULL);
+    g_assert(array_iter != NULL);
+    
+    aad.array_iter = array_iter;
+    aad.failed = FALSE;
+
+    g_hash_table_foreach (infos->by_name, append_all_foreach, &aad);
+    
+    return !aad.failed;
+}
+
+typedef void (* AppendBuiltinFunc) (DBusMessageIter *dict_iter);
+
+static void
+append_unix_account_info(DBusMessageIter *dict_iter)
+{
+    char *s;
+    
+    append_string_pair(dict_iter, "name", g_get_real_name());
+
+    s = g_strdup_printf("%d", (int) getuid());
+    append_string_pair(dict_iter, "uid", s);
+    g_free(s);
+}
+
+static void
+add_builtin_info(SessionInfos     *infos,
+                 const char       *name,
+                 AppendBuiltinFunc func)
+{
+    DBusMessage *message;
+    DBusMessageIter iter, prop_iter;
+    Info *info;
+    
+    /* create dummy message just to store stuff in */
+    message = dbus_message_new_method_call("a.b.c", "/a/b", "a.b.c", "abc");
+
+    dbus_message_iter_init_append(message, &iter);
+    dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &name);
+
+    dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "{sv}", &prop_iter);
+
+    (* func) (&prop_iter);
+
+    dbus_message_iter_close_container(&iter, &prop_iter);
+
+    info = info_new_from_message(message);
+    dbus_message_unref(message);
+
+    session_infos_add(infos, info);
+    info_unref(info);
+}
+
+/* Create a SessionInfos with some builtin default info bundles */
+SessionInfos*
+session_infos_new_with_builtins (void)
+{
+    SessionInfos *infos;
+
+    infos = session_infos_new();
+    add_builtin_info(infos,
+                     "org.freedesktop.od.UnixAccount", append_unix_account_info);
+
+    return infos;
 }
