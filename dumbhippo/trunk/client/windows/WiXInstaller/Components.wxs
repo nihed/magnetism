@@ -153,11 +153,14 @@
     		        <Directory Id="dhFirefoxChromeDir" Name="chrome">
         		    <Directory Id="dhFirefoxChromeContentDir" Name="content">
     		                <Component Id="firefoxChromeContent" Guid="8CE1540B-F3B7-423E-A36E-1B0E87272A90">
-                                <File Id="chatWindowJs"  Name="chatWind.js"   LongName="chatWindow.js"   src="firefox\chrome\content\chatWindow.js"   DiskId="1" Vital="yes"/>
-                                <File Id="chatWindowXul" Name="chatWind.xul"  LongName="chatWindow.xul"  src="firefox\chrome\content\chatWindow.xul"  DiskId="1" Vital="yes"/>
-                                <File Id="overlayJs"     Name="overlay.js"    LongName="overlay.js"      src="firefox\chrome\content\overlay.js"   DiskId="1" Vital="yes"/>
-                                <File Id="overlayXul"    Name="overlay.xul"   LongName="overlay.xul"     src="firefox\chrome\content\overlay.xul"  DiskId="1" Vital="yes"/>
-	                        </Component>
+                                <File Id="chatWindowJs"    Name="chatWind.js"  LongName="chatWindow.js"    src="firefox\chrome\content\chatWindow.js"    DiskId="1" Vital="yes"/>
+                                <File Id="chatWindowXul"   Name="chatWind.xul" LongName="chatWindow.xul"   src="firefox\chrome\content\chatWindow.xul"   DiskId="1" Vital="yes"/>
+                                <File Id="hippoJs"         Name="hippo.js"     LongName="hippo.js"         src="firefox\chrome\content\hippo.js"         DiskId="1" Vital="yes"/>
+                                <File Id="overlayJs"       Name="overlay.js"   LongName="overlay.js"       src="firefox\chrome\content\overlay.js"       DiskId="1" Vital="yes"/>
+                                <File Id="overlayXul"      Name="overlay.xul"  LongName="overlay.xul"      src="firefox\chrome\content\overlay.xul"      DiskId="1" Vital="yes"/>
+                                <File Id="tabContextJs"    Name="tabconte.js"  LongName="tabcontext.js"    src="firefox\chrome\content\tabcontext.js"    DiskId="1" Vital="yes"/>
+                                <File Id="windowContextJs" Name="windowco.js"  LongName="windowcontext.js" src="firefox\chrome\content\windowcontext.js" DiskId="1" Vital="yes"/>
+                                </Component>
         		    </Directory>
                             <Directory Id="dhFirefoxChromeIconsDir" Name="icons">
                                 <Directory Id="dhFireFoxChromeIconsDefault" Name="default">

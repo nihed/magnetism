@@ -866,7 +866,7 @@ HippoUI::showMenu(UINT buttonFlag)
     } else {
         HippoConnection *connection;
 
-        connection = hippo_data_cache_get_connection(cache);
+        connection = hippo_data_cache_get_connection(dataCache_);
         if (!hippo_connection_get_connected(connection)) {
             HippoPlatform *platform;
             platform = hippo_connection_get_platform(connection);
