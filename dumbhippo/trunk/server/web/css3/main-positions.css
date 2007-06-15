@@ -47,6 +47,11 @@
     margin-top:     5px;
 }
 
+.dh-stacker-block-left {
+    white-space:    nowrap; 
+    overflow:       hidden;
+}
+
 .dh-stacker-block-right {
     margin-top:     0px;
 }
