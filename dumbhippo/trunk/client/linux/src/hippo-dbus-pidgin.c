@@ -15,6 +15,8 @@
 #define PIDGIN_OBJECT_NAME "/im/pidgin/purple/PurpleObject"
 #define PIDGIN_INTERFACE_NAME "im.pidgin.purple.PurpleInterface"
 
+#define PIDGIN_RESOURCE_BASE "online-desktop:/o/pidgin-buddy"
+
 typedef struct {
     dbus_int32_t id;
     char *name;
@@ -41,7 +43,13 @@ typedef struct {
     HippoDBusProxy *gaim_proxy;
     GSList *accounts;
     GHashTable *statuses;
+    GHashTable *resource_ids;
 } PidginState;
+
+static void pidgin_buddy_update(HippoNotificationSet *notifications,
+                                PidginState          *state,
+                                PidginAccount        *account,
+                                PidginBuddy          *buddy);
 
 static PidginState *pidgin_state = NULL;
 
@@ -85,18 +93,82 @@ pidgin_state_free(PidginState *state)
     g_free(state);
 }
 
+typedef struct {
+    HippoNotificationSet *notifications;
+    GHashTable *new_resource_ids;
+} FindRemovedResourcesClosure;
+
+static void
+find_removed_resources_foreach(gpointer key,
+                               gpointer value,
+                               gpointer data)
+{
+    const char *resource_id = key;
+    FindRemovedResourcesClosure *closure = data;
+
+    if (g_hash_table_lookup(closure->new_resource_ids, resource_id) == NULL)
+        hippo_dbus_im_remove_buddy(closure->notifications, resource_id);
+}
+
+static void
+pidgin_store_state(HippoNotificationSet *notifications)
+{
+    GSList *tmp;
+    
+    for (tmp = pidgin_state->accounts;
+         tmp != NULL;
+         tmp = tmp->next)
+    {
+        PidginAccount *account = tmp->data;
+        GSList *tmp2;
+
+        for (tmp2 = account->buddies;
+             tmp2 != NULL;
+             tmp2 = tmp2->next)
+        {
+            PidginBuddy *buddy = tmp2->data;
+            
+            pidgin_buddy_update(notifications, pidgin_state, account, buddy);
+        }
+    }
+}
+
+void
+hippo_dbus_pidgin_restore_state(void)
+{
+    pidgin_store_state(NULL);
+}
+
 static void
 pidgin_state_set(PidginState *new_state)
 {
+    HippoNotificationSet *notifications;
+    FindRemovedResourcesClosure closure;
+    
     if (new_state == pidgin_state)
         return;
+
+    notifications = hippo_dbus_im_start_notifications();
+
+    if (notifications) {
+        closure.notifications = notifications;
+        closure.new_resource_ids = new_state->resource_ids;
+
+        g_hash_table_foreach(pidgin_state->resource_ids,
+                             find_removed_resources_foreach,
+                             &closure);
+    }
     
     if (pidgin_state)
         pidgin_state_free(pidgin_state);
 
     pidgin_state = new_state;
 
-    hippo_dbus_im_emit_buddy_list_changed(pidgin_state->connection);
+    if (notifications) {
+        pidgin_store_state(notifications);
+
+        hippo_dbus_im_send_notifications(notifications);
+    }
 }
 
 static PidginBuddy*
@@ -143,27 +215,46 @@ pidgin_state_lookup_status(PidginState *state,
     return status;
 }
 
-static void
-pidgin_buddy_to_im_buddy(PidginState      *state,
-                         PidginAccount    *account,
-                         PidginBuddy      *buddy,
-                         HippoDBusImBuddy *imbuddy)
+static char *
+pidgin_buddy_make_resource_id(PidginAccount *account,
+                              PidginBuddy   *buddy)
 {
-    PidginStatus *status;
+    return g_strdup_printf(PIDGIN_RESOURCE_BASE "/%s.%s", account->protocol_id, buddy->name);
+}
+
+static void
+pidgin_buddy_update(HippoNotificationSet *notifications,
+                    PidginState          *state,
+                    PidginAccount        *account,
+                    PidginBuddy          *buddy)
+{
+    PidginStatus *pidgin_status;
+    const char *protocol;
+    const char *name;
+    gboolean is_online;
+    const char *status;
+    char *resource_id;
             
     if (strcmp(account->protocol_id, "prpl-aim") == 0)
-        imbuddy->protocol = "aim";
+        protocol = "aim";
     else
-        imbuddy->protocol = "unknown";
+        protocol = "unknown";
             
-    imbuddy->name = buddy->name;
-    imbuddy->is_online = buddy->is_online;
+    name = buddy->name;
+    is_online = buddy->is_online;
     
-    status = pidgin_state_lookup_status(state, buddy->status_id);
-    if (status != NULL)
-        imbuddy->status = status->name;
+    pidgin_status = pidgin_state_lookup_status(state, buddy->status_id);
+    if (pidgin_status != NULL)
+        status = pidgin_status->name;
     else
-        imbuddy->status = "Unknown";
+        status = "Unknown";
+
+    resource_id = pidgin_buddy_make_resource_id(account, buddy);
+
+    hippo_dbus_im_update_buddy(notifications, resource_id,
+                               protocol, name, is_online, status);
+
+    g_free(resource_id);
 }
 
 static void
@@ -171,11 +262,13 @@ emit_buddy_changed(PidginState      *state,
                    PidginAccount    *account,
                    PidginBuddy      *buddy)
 {
-    HippoDBusImBuddy imbuddy;
+    HippoNotificationSet *notifications;
 
-    pidgin_buddy_to_im_buddy(state, account, buddy, &imbuddy);
-
-    hippo_dbus_im_emit_buddy_changed(state->connection, &imbuddy);
+    notifications = hippo_dbus_im_start_notifications();
+    if (notifications) {
+        pidgin_buddy_update(notifications, state, account, buddy);
+        hippo_dbus_im_send_notifications(notifications);
+    }
 }
 
 static void
@@ -226,10 +319,14 @@ reload_from_new_owner(DBusConnection *connection,
     state = g_new0(PidginState, 1);
     state->connection = connection;
     state->bus_name = g_strdup(bus_name);
+                                                
 
     state->statuses = g_hash_table_new_full(g_int_hash, g_int_equal,
                                             NULL, pidgin_status_free_hash_value);
     
+    state->resource_ids = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                                g_free, NULL);
+                                                
     if (strcmp(bus_name, GAIM_BUS_NAME) == 0) {
         state->gaim_proxy = hippo_dbus_proxy_new(connection, bus_name, GAIM_OBJECT_NAME,
                                                  GAIM_INTERFACE_NAME);
@@ -324,6 +421,9 @@ reload_from_new_owner(DBusConnection *connection,
                 g_debug("buddy %d '%s' is_online=%d presence_id=%d status_id=%d\n",
                         buddy->id, buddy->name, buddy->is_online,
                         buddy->presence_id, buddy->status_id);
+
+                g_hash_table_replace(state->resource_ids,
+                                     pidgin_buddy_make_resource_id(account, buddy), GUINT_TO_POINTER(1));
             }
         }
         
@@ -576,43 +676,6 @@ hippo_dbus_init_pidgin(DBusConnection *connection)
         state = reload_from_new_owner(connection, GAIM_BUS_NAME);
     if (state != NULL) {
         pidgin_state_set(state);
-    }
-}
-
-void
-hippo_pidgin_append_buddies(DBusMessageIter *append_iter)
-{
-    GSList *tmp;
-
-    g_debug("Appending buddies from GAIM/Pidgin");
-    
-    if (pidgin_state == NULL)
-        return;
-    
-    for (tmp = pidgin_state->accounts;
-         tmp != NULL;
-         tmp = tmp->next) {
-        PidginAccount *account = tmp->data;
-        GSList *tmp2;
-        HippoDBusImBuddy imbuddy;
-
-        g_debug("Appending buddies from protocol id '%s'", account->protocol_id);
-        
-        if (imbuddy.protocol != NULL) {
-            for (tmp2 = account->buddies;
-                 tmp2 != NULL;
-                 tmp2 = tmp2->next) {
-                PidginBuddy *buddy = tmp2->data;
-
-                pidgin_buddy_to_im_buddy(pidgin_state, account, buddy, &imbuddy);
-                
-                g_debug("Appending buddy '%s'", imbuddy.name);
-                
-                hippo_dbus_im_append_buddy(append_iter, &imbuddy);
-            }
-        } else {
-            g_debug("not listing buddies for unknown protocol '%s'", account->protocol_id);
-        }
     }
 }
 

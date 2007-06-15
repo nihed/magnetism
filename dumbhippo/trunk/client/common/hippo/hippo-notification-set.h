@@ -14,6 +14,9 @@ void                  _hippo_notification_set_add  (HippoNotificationSet *notifi
                                                     HippoDataResource    *resource,
                                                     HippoQName           *property_id);
 void                  _hippo_notification_set_send (HippoNotificationSet *notifications);
+gboolean              _hippo_notification_set_has_property (HippoNotificationSet *notifications,
+                                                            const char           *resource_id,
+                                                            HippoQName           *property_id);
 
 G_END_DECLS
 

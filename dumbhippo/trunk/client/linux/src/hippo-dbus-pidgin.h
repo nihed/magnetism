@@ -11,7 +11,7 @@ G_BEGIN_DECLS
 
 void hippo_dbus_init_pidgin(DBusConnection *connection);
 
-void hippo_pidgin_append_buddies(DBusMessageIter *append_iter);
+void hippo_dbus_pidgin_restore_state(void);
 
 G_END_DECLS
 
