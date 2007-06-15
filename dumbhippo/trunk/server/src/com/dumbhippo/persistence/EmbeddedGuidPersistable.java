@@ -47,7 +47,7 @@ public abstract class EmbeddedGuidPersistable {
 	/* Should be final, except this makes Hibernate CGLIB enhancement barf */
 	@Override
 	public boolean equals(Object arg0) {
-		if (!(arg0 instanceof GuidPersistable))
+		if (!(arg0 instanceof EmbeddedGuidPersistable))
 			return false;
 		if (arg0 == this)
 			return true;
@@ -55,7 +55,7 @@ public abstract class EmbeddedGuidPersistable {
 		// we haven't generated a guid yet, they cannot be equal
 		if (guid == null)
 			return false;
-		return ((GuidPersistable) arg0).getGuid().equals(getGuid());
+		return ((EmbeddedGuidPersistable) arg0).getGuid().equals(getGuid());
 	}
 
 	/* Should be final, except this makes Hibernate CGLIB enhancement barf */	
