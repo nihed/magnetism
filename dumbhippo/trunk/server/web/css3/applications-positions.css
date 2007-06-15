@@ -33,6 +33,10 @@
 	margin-bottom: 7px;
 }
 
+#dhApplicationSearchEntry {
+	margin-bottom: 9px;
+}
+
 #dhApplicationsStatsHeader {
 	float: left;
 	width: 104px;

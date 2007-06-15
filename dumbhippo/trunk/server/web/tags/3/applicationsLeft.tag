@@ -12,7 +12,6 @@
 	<form action="/applications" method="get" name="dhApplicationSearchForm" id="dhApplicationSearchForm">	
   	  <label class="dh-applications-search" for="dhApplicationSearchEntry">Search:</label><br/>
   	  <input id="dhApplicationSearchEntry" name="q"></input>
-  	  <hr class="dh-applications-search" />  
   	</form>
 	</div>
 	<dht3:applicationCategories currentCategory="${currentCategory}" linkifyCurrent="${linkifyCurrent}"/>
