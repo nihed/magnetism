@@ -12,6 +12,7 @@ import org.xml.sax.SAXException;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
@@ -30,7 +31,7 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "groupId", "inviteeId" })
-	public void getAddableContacts(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String inviteeId)
+	public void getAddableContacts(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, Group group, String inviteeId)
 			throws IOException;
 
 	@HttpContentTypes(HttpResponseData.XML)
@@ -51,7 +52,7 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "groupId", "members" })
-	public void doAddMembers(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String memberIds)
+	public void doAddMembers(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, Group group, String memberIds)
 			throws IOException, ParseException, NotFoundException;
 
 	@HttpContentTypes(HttpResponseData.XML)
@@ -62,7 +63,7 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId", "recipients", "description" })
-	public void doShareGroup(UserViewpoint viewpoint, String groupId, String recipientIds, String description) throws ParseException,
+	public void doShareGroup(UserViewpoint viewpoint, Group group, String recipientIds, String description) throws ParseException,
 			NotFoundException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
@@ -83,27 +84,27 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId" })
-	public void doJoinGroup(UserViewpoint viewpoint, String groupId);
+	public void doJoinGroup(UserViewpoint viewpoint, Group group);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId" })
-	public void doLeaveGroup(UserViewpoint viewpoint, String groupId);
+	public void doLeaveGroup(UserViewpoint viewpoint, Group group);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId", "open" })
-	public void doSetGroupMembershipPolicy(UserViewpoint viewpoint, String groupId, boolean open);	
+	public void doSetGroupMembershipPolicy(UserViewpoint viewpoint, Group group, boolean open);	
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId", "name" })
-	public void doRenameGroup(UserViewpoint viewpoint, String groupId, String name);
+	public void doRenameGroup(UserViewpoint viewpoint, Group group, String name);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId", "description" })
-	public void doSetGroupDescription(UserViewpoint viewpoint, String groupId, String name);
+	public void doSetGroupDescription(UserViewpoint viewpoint, Group group, String name);
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "groupId", "photo" })
-	public void doSetGroupStockPhoto(UserViewpoint viewpoint, String groupId, String photo);
+	public void doSetGroupStockPhoto(UserViewpoint viewpoint, Group group, String photo);
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "email" })
@@ -182,7 +183,7 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "groupId", "inviteeId", "inviteeAddress", "subject", "message" })
 	@HttpOptions( optionalParams = { "inviteeId", "inviteeAddress" } )
-	public void doSendGroupInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String inviteeId, String inviteeAddress, String subject, String message) throws IOException;
+	public void doSendGroupInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, Group group, String inviteeId, String inviteeAddress, String subject, String message) throws IOException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address", "suggestedGroupIds", "desuggestedGroupIds" })
@@ -226,7 +227,7 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.TEXT)
 	@HttpParams( { "groupId", "size" })
-	public void getGroupPhoto(OutputStream out, HttpResponseData contentType, String groupId, String size)
+	public void getGroupPhoto(OutputStream out, HttpResponseData contentType, Group group, String size)
 		throws IOException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
@@ -264,11 +265,11 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "groupId", "url" })
-	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException;
+	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, Group group, String url) throws XmlMethodException;
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "groupId", "url" })
-	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, URL url) throws XmlMethodException;
+	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, Group group, URL url) throws XmlMethodException;
 
 	/**
 	 * Mark an external account as "hated" and give an optional quip about why.

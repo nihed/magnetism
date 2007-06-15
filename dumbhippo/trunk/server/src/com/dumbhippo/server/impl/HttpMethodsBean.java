@@ -341,15 +341,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		endReturnObjectsXml(out, xml);
 	}
 
-	// this could even be in HttpMethodServlet, would be nice sometime
-	private Group parseGroupId(Viewpoint viewpoint, String groupId) throws XmlMethodException {
-		try {
-			return groupSystem.lookupGroupById(viewpoint, groupId);
-		} catch (NotFoundException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.UNKNOWN_GROUP, "Unknown group");
-		}
-	}	
-	
 	private void throwIfUrlNotHttp(URL url) throws XmlMethodException {
 		if (!(url.getProtocol().equals("http") || url.getProtocol().equals("https")))
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "URL must be http or https: '" + url.toExternalForm() + "'");
@@ -376,10 +367,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	public void getAddableContacts(OutputStream out,
-			HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String inviteeId)
+			HttpResponseData contentType, UserViewpoint viewpoint, Group group, String inviteeId)
 			throws IOException {
-		Set<PersonView> persons = groupSystem.findAddableContacts(viewpoint,
-				viewpoint.getViewer(), groupId);
+		Set<PersonView> persons = groupSystem.findAddableContacts(viewpoint, viewpoint.getViewer(), group);
 
 		if (inviteeId != null && inviteeId.trim().length() > 0) {
 			try {
@@ -473,14 +463,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		out.write(xml.getBytes());
 	}
 
-	public void doShareGroup(UserViewpoint viewpoint, String groupId, String recipientIds,
+	public void doShareGroup(UserViewpoint viewpoint, Group group, String recipientIds,
 			String description) throws ParseException, NotFoundException {
 
 		Set<String> recipientGuids = splitIdList(recipientIds);
-
-		Group group = groupSystem.lookupGroupById(viewpoint, groupId);
-		if (group == null)
-			throw new RuntimeException("No such group");
 
 		// this is what can throw ParseException
 		Set<GuidPersistable> recipients = identitySpider.lookupGuidStrings(
@@ -521,7 +507,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doAddMembers(OutputStream out, HttpResponseData contentType,
-			UserViewpoint viewpoint, String groupId, String memberIds) throws IOException,
+			UserViewpoint viewpoint, Group group, String memberIds) throws IOException,
 			ParseException, NotFoundException {
 		Set<String> memberGuids = splitIdList(memberIds);
         Set<Person> memberPeople = new HashSet<Person>();
@@ -540,9 +526,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	  	    }
 		}
 		    
-		Group group = groupSystem.lookupGroupById(viewpoint, groupId);
-		if (group == null)
-			throw new RuntimeException("No such group");
 		for (Person p : memberPeople)
 			groupSystem.addMember(viewpoint.getViewer(), group, p);
 		for (Resource r : memberResources)
@@ -568,66 +551,38 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				.singleton(contactView), null);
 	}
 
-	public void doJoinGroup(UserViewpoint viewpoint, String groupId) {
-		try {
-			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
-			groupSystem.addMember(viewpoint.getViewer(), group, viewpoint.getViewer());
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
+	public void doJoinGroup(UserViewpoint viewpoint, Group group) {
+		groupSystem.addMember(viewpoint.getViewer(), group, viewpoint.getViewer());
 	}
 
-	public void doLeaveGroup(UserViewpoint viewpoint, String groupId) {
-		try {
-			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
-			groupSystem.removeMember(viewpoint.getViewer(), group, viewpoint.getViewer());
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
+	public void doLeaveGroup(UserViewpoint viewpoint, Group group) {
+		groupSystem.removeMember(viewpoint.getViewer(), group, viewpoint.getViewer());
 	}
 
-	public void doSetGroupMembershipPolicy(UserViewpoint viewpoint, String groupId, boolean open) {
-		groupSystem.reviseGroupMembershipPolicy(viewpoint.getViewer(), groupId, open);		
+	public void doSetGroupMembershipPolicy(UserViewpoint viewpoint, Group group, boolean open) {
+		groupSystem.reviseGroupMembershipPolicy(viewpoint.getViewer(), group, open);		
 	}
 	
-	public void doRenameGroup(UserViewpoint viewpoint, String groupId, String name) {
-		try {
-			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
-			
-			if (!groupSystem.canEditGroup(viewpoint, group))
-				throw new RuntimeException("Only active members can edit a group");
-						
-			group.setName(name);
-			revisionControl.persistRevision(new GroupNameChangedRevision(viewpoint.getViewer(), group, new Date(), name));
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}		
+	public void doRenameGroup(UserViewpoint viewpoint, Group group, String name) {
+		if (!groupSystem.canEditGroup(viewpoint, group))
+			throw new RuntimeException("Only active members can edit a group");
+					
+		group.setName(name);
+		revisionControl.persistRevision(new GroupNameChangedRevision(viewpoint.getViewer(), group, new Date(), name));
 	}
 	
-	public void doSetGroupDescription(UserViewpoint viewpoint, String groupId, String description) {
-		try {
-			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
-			
-			if (!groupSystem.canEditGroup(viewpoint, group))
-				throw new RuntimeException("Only active members can edit a group");
-			
-			description = description.trim();
-			
-			group.setDescription(description);
-			revisionControl.persistRevision(new GroupDescriptionChangedRevision(viewpoint.getViewer(), group, new Date(), description));
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
+	public void doSetGroupDescription(UserViewpoint viewpoint, Group group, String description) {
+		if (!groupSystem.canEditGroup(viewpoint, group))
+			throw new RuntimeException("Only active members can edit a group");
+		
+		description = description.trim();
+		
+		group.setDescription(description);
+		revisionControl.persistRevision(new GroupDescriptionChangedRevision(viewpoint.getViewer(), group, new Date(), description));
 	}
 	
-	public void doSetGroupStockPhoto(UserViewpoint viewpoint, String groupId, String photo) {
-		try {
-			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
-
-			groupSystem.setStockPhoto(viewpoint, group, photo);
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}		
+	public void doSetGroupStockPhoto(UserViewpoint viewpoint, Group group, String photo) {
+		groupSystem.setStockPhoto(viewpoint, group, photo);
 	}
 
 	public void doAddContactPerson(UserViewpoint viewpoint, String contactId) {
@@ -1092,20 +1047,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
         }
 	}
 	
-	public void doSendGroupInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String inviteeId, String inviteeAddress, String subject, String message) throws IOException
+	public void doSendGroupInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, Group group, String inviteeId, String inviteeAddress, String subject, String message) throws IOException
 	{
 		if (contentType != HttpResponseData.XML)
 			throw new IllegalArgumentException("only support XML replies");
 		Person person;
 		PostingBoard.InviteRecipients inviteRecipients;
 		
-		Group group;		
-		try {
-			group = groupSystem.lookupGroupById(viewpoint, groupId);
-		} catch (NotFoundException e) {
-			throw new RuntimeException("No such group");
-		}
-
 		if (inviteeId != null) {
 			try {
 				person = identitySpider.lookupGuidString(Person.class, inviteeId);
@@ -1281,18 +1229,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		out.flush();
 	}
 	
-	public void getGroupPhoto(OutputStream out, HttpResponseData contentType, String groupId, String size)
+	public void getGroupPhoto(OutputStream out, HttpResponseData contentType, Group group, String size)
 		throws IOException {
 		if (contentType != HttpResponseData.TEXT)
 			throw new IllegalArgumentException("only support TEXT replies");
 		
-		Group group;
-		try {
-			group = groupSystem.lookupGroupById(SystemViewpoint.getInstance(), groupId);
-		} catch (NotFoundException e) {
-			throw new RuntimeException("no such person", e);
-		}
-
 		int sizeValue = Integer.parseInt(size);
 		switch (sizeValue) {
 		case Configuration.SHOT_SMALL_SIZE:
@@ -1542,8 +1483,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.closeElement();
 	}
 	
-	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException {		
-		Group group = parseGroupId(viewpoint, groupId);
+	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, Group group, String url) throws XmlMethodException {		
 		Feed feed = getFeedFromUserEnteredUrl(url);
 
 		if (!groupSystem.canEditGroup(viewpoint, group))
@@ -1552,8 +1492,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feedSystem.addGroupFeed(viewpoint.getViewer(), group, feed);
 	}
 
-	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, URL url) throws XmlMethodException {		
-		Group group = parseGroupId(viewpoint, groupId);			
+	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, Group group, URL url) throws XmlMethodException {		
 		LinkResource link = identitySpider.lookupLink(url);
 		if (link == null)
 			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "Feed not found: " + url);

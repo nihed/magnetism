@@ -393,7 +393,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		addMember(adder, group, resource, false);		
 	}
 	
-	public void reviseGroupMembershipPolicy(User revisor, String groupId, boolean open) {
+	public void reviseGroupMembershipPolicy(User revisor, Group group, boolean open) {
 	    User mugshot = accountSystem.getCharacter(Character.MUGSHOT);
         Viewpoint viewpoint;
         
@@ -402,32 +402,26 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		else 
 			viewpoint = new UserViewpoint(revisor);
 
-		try {
-			Group group = lookupGroupById(viewpoint, groupId);
-			
-			if (!(revisor.equals(mugshot) || canEditGroup((UserViewpoint)viewpoint, group)))
-				throw new RuntimeException("Only active members or Mugshot can edit a group");	
-			
-			if (group.getAccess() == GroupAccess.SECRET)
-				throw new RuntimeException("Only public groups can have their membership policy changed");	
+		if (!(revisor.equals(mugshot) || canEditGroup((UserViewpoint)viewpoint, group)))
+			throw new RuntimeException("Only active members or Mugshot can edit a group");	
+		
+		if (group.getAccess() == GroupAccess.SECRET)
+			throw new RuntimeException("Only public groups can have their membership policy changed");	
 
-			boolean needToInviteFollowers = (group.getAccess() != GroupAccess.PUBLIC && open);
-			
-			group.setAccess(open ? GroupAccess.PUBLIC : GroupAccess.PUBLIC_INVITE);
-			
-			int followers = -1;
-			int invitedFollowers = -1;
-			if (needToInviteFollowers) {
-				// we need to make all of the groups' followers members,
-				// those notifications will not be pushed to group members' stacks
-				Pair<Integer, Integer> followerCounts = inviteAllFollowers((revisor.equals(mugshot) ? null : revisor), group);
-				followers = followerCounts.getFirst();
-				invitedFollowers = followerCounts.getSecond();
-			}
-			revisionControl.persistRevision(new GroupMembershipPolicyRevision(revisor, group, new Date(), open, followers, invitedFollowers));			
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}		
+		boolean needToInviteFollowers = (group.getAccess() != GroupAccess.PUBLIC && open);
+		
+		group.setAccess(open ? GroupAccess.PUBLIC : GroupAccess.PUBLIC_INVITE);
+		
+		int followers = -1;
+		int invitedFollowers = -1;
+		if (needToInviteFollowers) {
+			// we need to make all of the groups' followers members,
+			// those notifications will not be pushed to group members' stacks
+			Pair<Integer, Integer> followerCounts = inviteAllFollowers((revisor.equals(mugshot) ? null : revisor), group);
+			followers = followerCounts.getFirst();
+			invitedFollowers = followerCounts.getSecond();
+		}
+		revisionControl.persistRevision(new GroupMembershipPolicyRevision(revisor, group, new Date(), open, followers, invitedFollowers));			
 	}
 	
 	public Pair<Integer, Integer> inviteAllFollowers(User adder, Group group) {
@@ -922,7 +916,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				                      " OR gm.status = " + MembershipStatus.INVITED_TO_FOLLOW.ordinal() +
 				                      "))))";
 
-	public Set<PersonView> findAddableContacts(UserViewpoint viewpoint, User owner, String groupId, PersonViewExtra... extras) {
+	public Set<PersonView> findAddableContacts(UserViewpoint viewpoint, User owner, Group group, PersonViewExtra... extras) {
 		Person viewer = viewpoint.getViewer();
 		
 		if (!viewpoint.isOfUser(owner))
@@ -930,7 +924,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		Query q = em.createQuery(FIND_ADDABLE_CONTACTS_QUERY);
 		q.setParameter("viewer", viewer);
-		q.setParameter("groupid", groupId);
+		q.setParameter("groupid", group.getId());
 
 		Set<PersonView> result = new HashSet<PersonView>();
 
