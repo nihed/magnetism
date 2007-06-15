@@ -29,6 +29,8 @@ public class AmazonWebServices extends AbstractXmlRequest<AmazonSaxHandler> {
 	public static final int MAX_AMAZON_LIST_ITEM_ID_LENGTH = 20;
 	
 	public static final int MAX_AMAZON_REVIEW_PAGES_RETURNED = 10;
+	
+	public static final int AMAZON_REVIEWS_PER_PAGE = 10;
 
 	public static final int MAX_AMAZON_LIST_PAGES_RETURNED = 30;
 	
