@@ -22,6 +22,9 @@
 #include "hippo-dbus-helper.h"
 #include "main.h"
 
+static gboolean message_iter_copy(DBusMessageIter *src_iter,
+                                  DBusMessageIter *dest_iter);
+
 struct Info {
     int refcount;
     DBusMessage *message; /* signature is sa{sv} where the string is the info name and the dict is the info props */
@@ -33,7 +36,7 @@ struct SessionInfos {
 };
 
 Info*
-info_new (DBusMessage *method_call)
+info_new_from_message (DBusMessage *method_call)
 {
     Info *info;
 
@@ -44,6 +47,35 @@ info_new (DBusMessage *method_call)
     info->refcount = 1;
     info->message = method_call;
     dbus_message_ref(info->message);    
+
+    return info;
+}
+
+Info*
+info_new_from_data (const char      *name,
+                    DBusMessageIter *dict_iter)
+{
+    DBusMessage *message;
+    DBusMessageIter iter, prop_iter;
+    DBusMessageIter src;
+    Info *info;
+    
+    /* create dummy message just to store stuff in */
+    message = dbus_message_new_method_call("a.b.c", "/a/b", "a.b.c", "abc");
+
+    dbus_message_iter_init_append(message, &iter);
+    dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &name);
+
+    dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "{sv}", &prop_iter);
+    src = *dict_iter;
+    if (!message_iter_copy(&src, &prop_iter)) {
+        dbus_message_unref(message);
+        return NULL;
+    }
+    dbus_message_iter_close_container(&iter, &prop_iter);
+
+    info = info_new_from_message(message);
+    dbus_message_unref(message);
 
     return info;
 }
@@ -148,8 +180,6 @@ message_iter_copy(DBusMessageIter *src_iter,
         
         dbus_message_iter_close_container(dest_iter, &array_dest);
     }
-
-    g_assert (dbus_message_iter_has_next(src_iter));
 
     next = *src_iter;
     dbus_message_iter_next(&next);

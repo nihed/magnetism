@@ -38,6 +38,27 @@ static DBusHandlerResult handle_message         (DBusConnection     *connection,
 static void              on_disconnected        (void);
 
 void
+append_string_pair(DBusMessageIter *dict_iter,
+                   const char      *key,
+                   const char      *value)
+{
+    DBusMessageIter entry_iter;
+    DBusMessageIter variant_iter;
+    
+    dbus_message_iter_open_container(dict_iter, DBUS_TYPE_DICT_ENTRY, NULL, &entry_iter);
+
+    dbus_message_iter_append_basic(&entry_iter, DBUS_TYPE_STRING, &key);
+
+    dbus_message_iter_open_container(&entry_iter, DBUS_TYPE_VARIANT, "s", &variant_iter);
+    
+    dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_STRING, &value);
+
+    dbus_message_iter_close_container(&entry_iter, &variant_iter);
+    
+    dbus_message_iter_close_container(dict_iter, &entry_iter);
+}
+
+void
 get_machine_and_session_ids(const char **machine_id_p,
                             const char **session_id_p)
 {
