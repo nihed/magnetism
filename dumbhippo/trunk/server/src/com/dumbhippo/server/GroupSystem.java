@@ -70,7 +70,7 @@ public interface GroupSystem {
 	
 	public void addMember(User adder, Group group, Person person);
 	
-	public void reviseGroupMembershipPolicy(User revisor, String groupId, boolean open);
+	public void reviseGroupMembershipPolicy(User revisor, Group group, boolean open);
 	
 	public Pair<Integer, Integer> inviteAllFollowers(User adder, Group group);
 	
@@ -170,7 +170,7 @@ public interface GroupSystem {
 	 * @param extras info to put in each PersonView
 	 * @return the contacts of owner that aren't already members of the group
 	 */
-	public Set<PersonView> findAddableContacts(UserViewpoint viewpoint, User owner, String groupId, PersonViewExtra... extras);
+	public Set<PersonView> findAddableContacts(UserViewpoint viewpoint, User owner, Group group, PersonViewExtra... extras);
 	
 	/**
 	 * Checks whether the given viewpoint is allowed to change settings of a group
