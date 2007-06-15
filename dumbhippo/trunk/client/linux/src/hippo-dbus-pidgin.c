@@ -106,7 +106,8 @@ find_removed_resources_foreach(gpointer key,
     const char *resource_id = key;
     FindRemovedResourcesClosure *closure = data;
 
-    if (g_hash_table_lookup(closure->new_resource_ids, resource_id) == NULL)
+    if (closure->new_resource_ids == NULL ||
+        g_hash_table_lookup(closure->new_resource_ids, resource_id) == NULL)
         hippo_dbus_im_remove_buddy(closure->notifications, resource_id);
 }
 
@@ -114,6 +115,9 @@ static void
 pidgin_store_state(HippoNotificationSet *notifications)
 {
     GSList *tmp;
+
+    if (pidgin_state == NULL)
+        return;
     
     for (tmp = pidgin_state->accounts;
          tmp != NULL;
@@ -152,7 +156,10 @@ pidgin_state_set(PidginState *new_state)
 
     if (notifications) {
         closure.notifications = notifications;
-        closure.new_resource_ids = new_state->resource_ids;
+        if (new_state)
+            closure.new_resource_ids = new_state->resource_ids;
+        else
+            closure.new_resource_ids = NULL;
 
         g_hash_table_foreach(pidgin_state->resource_ids,
                              find_removed_resources_foreach,
