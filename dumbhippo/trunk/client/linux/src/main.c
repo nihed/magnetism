@@ -10,6 +10,7 @@
 #include "hippo-platform-impl.h"
 #include "hippo-dbus-server.h"
 #include "hippo-dbus-client.h"
+#include "hippo-dbus-pidgin.h"
 #include "hippo-idle.h"
 #include "hippo-ui.h"
 
@@ -878,6 +879,9 @@ main(int argc, char **argv)
     g_free(server);
     server = NULL;
     
+    /* Stuff local date into the data model */
+    hippo_dbus_pidgin_restore_state();
+
     /* Ignore failure here */
     hippo_connection_signin(the_app->connection);
 

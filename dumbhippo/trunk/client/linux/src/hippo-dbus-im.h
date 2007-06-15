@@ -4,6 +4,8 @@
 
 /* implement im-related dbus methods */
 
+#include <hippo/hippo-notification-set.h>
+
 #include "hippo-dbus-server.h"
 
 G_BEGIN_DECLS
@@ -12,23 +14,24 @@ G_BEGIN_DECLS
 #define HIPPO_DBUS_IM_INTERFACE "org.freedesktop.od.IM"
 #define HIPPO_DBUS_IM_PATH "/org/freedesktop/od/im"
 
-typedef struct {
-    const char *protocol;
-    const char *name;
-    gboolean is_online;
-    const char *status;
-} HippoDBusImBuddy;
-
 void hippo_dbus_init_im(DBusConnection *connection,
                         gboolean        replace);
 
+HippoNotificationSet *hippo_dbus_im_start_notifications(void);
 
-void hippo_dbus_im_emit_buddy_list_changed (DBusConnection         *connection);
-void hippo_dbus_im_emit_buddy_changed      (DBusConnection         *connection,
-                                            const HippoDBusImBuddy *buddy);
-void hippo_dbus_im_append_buddy            (DBusMessageIter        *append_iter,
-                                            const HippoDBusImBuddy *buddy);
+void hippo_dbus_im_update_buddy       (HippoNotificationSet *notifications,
+                                       const char           *buddy_id,
+                                       const char           *protocol,
+                                       const char           *name,
+                                       gboolean              is_online,
+                                       const char           *status);
+void hippo_dbus_im_remove_buddy       (HippoNotificationSet *notifications,
+                                       const char           *buddy_id);
 
+/* Differs from _hippo_notification_set_send(notifications) in that it will
+ * also send out a D-BUS signal if the list of buddies changed.
+ */
+void hippo_dbus_im_send_notifications (HippoNotificationSet *notifications);
 
 G_END_DECLS
 

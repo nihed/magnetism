@@ -6,6 +6,7 @@
 #include "hippo-dbus-helper.h"
 #include <hippo/hippo-data-cache.h>
 #include <hippo/hippo-data-fetch.h>
+#include <hippo/hippo-data-model-internal.h>
 #include "hippo-dbus-model.h"
 #include "main.h"
 
@@ -691,18 +692,51 @@ handle_query (void            *object,
                                       _("Couldn't parse fetch string"));
     }
         
-    query = hippo_data_model_query_params(model, method_uri, fetch_string, params);
-    g_hash_table_destroy(params);
-    
-    if (query == NULL)
-        return dbus_message_new_error(message,
-                                      DBUS_ERROR_FAILED,
-                                      _("Couldn't send query"));
-
     client_map = data_client_map_get(cache);
     client = data_client_map_get_client(client_map, dbus_message_get_sender(message), notification_path);
 
     closure = data_client_query_closure_new(client, message, fetch);
+
+    /* We short-circuit m:getResource requests for resources with the local
+     * online-desktop scheme and handle them against the current contents of the cache.
+     */
+    if (strcmp(method_uri, "http://mugshot.org/p/system#getResource") == 0) {
+        const char *resource_id = g_hash_table_lookup(params, "resourceId");
+        if (resource_id == NULL) {
+            data_client_query_closure_destroy(closure);
+            return dbus_message_new_error(message,
+                                          DBUS_ERROR_INVALID_ARGS,
+                                          _("resourceId parameter is mandatory for m:getResource query"));
+        }
+
+        if (g_str_has_prefix(resource_id, "online-desktop:")) {
+            HippoDataResource *resource = _hippo_data_model_get_resource(model, resource_id);
+            GSList *results;
+
+            if (resource == NULL) {
+                data_client_query_closure_destroy(closure);
+                return dbus_message_new_error(message,
+                                              DBUS_ERROR_FAILED,
+                                              _("Couldn't find local resource"));
+            }
+
+            results = g_slist_prepend(NULL, resource);
+            on_query_success(results, closure);
+            g_slist_free(results);
+
+            return NULL;
+        }
+    }
+
+    query = hippo_data_model_query_params(model, method_uri, fetch_string, params);
+    g_hash_table_destroy(params);
+    
+    if (query == NULL) {
+        data_client_query_closure_destroy(closure);
+        return dbus_message_new_error(message,
+                                      DBUS_ERROR_FAILED,
+                                      _("Couldn't send query"));
+    }
 
     hippo_data_query_set_multi_handler(query, on_query_success, closure);
     hippo_data_query_set_error_handler(query, on_query_error, closure);

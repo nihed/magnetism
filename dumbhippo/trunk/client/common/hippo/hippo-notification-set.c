@@ -64,6 +64,18 @@ send_notification_foreach(gpointer key,
     _hippo_data_resource_on_resource_change(info->resource, info->changed_properties);
 }
 
+gboolean
+_hippo_notification_set_has_property (HippoNotificationSet *notifications,
+                                      const char           *resource_id,
+                                      HippoQName           *property_id)
+{
+    ResourceInfo *info = g_hash_table_lookup(notifications->resources, resource_id);
+    if (info == NULL)
+        return FALSE;
+
+    return g_slist_find(info->changed_properties, property_id) != NULL;
+}
+
 void
 _hippo_notification_set_send (HippoNotificationSet *notifications)
 {
@@ -72,3 +84,4 @@ _hippo_notification_set_send (HippoNotificationSet *notifications)
     g_hash_table_destroy(notifications->resources);
     g_free(notifications);
 }
+
