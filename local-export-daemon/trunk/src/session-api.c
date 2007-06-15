@@ -121,7 +121,7 @@ session_api_init(DBusConnection *session_bus_)
 {    
     session_bus = session_bus_;
 
-    infos = session_infos_new();
+    infos = session_infos_new_with_builtins();
     
     hippo_dbus_helper_register_interface(session_bus, LOCAL_EXPORT_INTERFACE,
                                          local_export_members, NULL);
@@ -131,4 +131,10 @@ session_api_init(DBusConnection *session_bus_)
                                       NULL);
     
     return TRUE;
+}
+
+gboolean
+session_api_append_all_infos(DBusMessageIter *array_iter)
+{
+    return session_infos_append_all(infos, array_iter);
 }

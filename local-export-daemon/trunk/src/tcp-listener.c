@@ -58,21 +58,15 @@ handle_get_info_for_session(void            *object,
     
     dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "(sa{sv})", &array_iter);
 
-    dbus_message_iter_open_container(&array_iter, DBUS_TYPE_STRUCT, NULL, &struct_iter);
-
-    info_name = "org.freedesktop.od.ExampleInfo";
-    dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &info_name);
-
-    dbus_message_iter_open_container(&struct_iter, DBUS_TYPE_ARRAY, "{sv}", &dict_iter);
-    append_string_pair(&dict_iter, "name", g_get_real_name());
-    append_string_pair(&dict_iter, "foo", "bar");
-    append_string_pair(&dict_iter, "baz", "woot");
-    dbus_message_iter_close_container(&struct_iter, &dict_iter);
-    
-    dbus_message_iter_close_container(&array_iter, &struct_iter);
+    if (!session_api_append_all_infos(&array_iter)) {
+        dbus_set_error(error, DBUS_ERROR_FAILED,
+                       "Not enough memory to append everything");
+        dbus_message_unref(reply);
+        return NULL;
+    }
     
     dbus_message_iter_close_container(&iter, &array_iter);
-
+    
     return reply;
 }
 
