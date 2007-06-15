@@ -134,6 +134,7 @@ import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.services.AmazonWebServices;
 import com.dumbhippo.services.FlickrUser;
 import com.dumbhippo.services.FlickrWebServices;
 import com.dumbhippo.services.LastFmWebServices;
@@ -155,6 +156,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	private static final long serialVersionUID = 0L;
 
+	// how long to wait on the web services calls
+	static protected final int REQUEST_TIMEOUT = 1000 * 12;
+	
 	@EJB
 	private IdentitySpider identitySpider;
 	
@@ -2001,6 +2005,22 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 				
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		
+		// check how many reviews they have and warn them there will be no updates if there are too many
+		AmazonWebServices ws = new AmazonWebServices(REQUEST_TIMEOUT, config);		
+		int reviewCount = ws.getReviewsCount(amazonUserId);		
+		int reviewCountWeCanGet = AmazonWebServices.MAX_AMAZON_REVIEW_PAGES_RETURNED * AmazonWebServices.AMAZON_REVIEWS_PER_PAGE;
+		
+		if (reviewCount >= reviewCountWeCanGet) { 
+		    xml.appendTextNode("message", "You currently have " + reviewCount + " reviews on Amazon. " +
+		    		                      "We will not be able to get updates about your reviews, because for now "+
+		    		                      "we can only get the " + reviewCountWeCanGet + " oldest reviews.");	    
+		} else if (reviewCount >= reviewCountWeCanGet - 10) {
+		    xml.appendTextNode("message", "You currently have " + reviewCount + " reviews on Amazon. " +
+                                          "We will not be able to get updates about your reviews once you reach " +
+                                          reviewCountWeCanGet + " reviews because for now we can only get the " 
+                                          + reviewCountWeCanGet + " oldest reviews.");		
+		}
 		
 		xml.openElement("amazonDetails");
 		

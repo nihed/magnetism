@@ -557,6 +557,18 @@ dh.account.onAmazonLoveSaved = function(value) {
 						    }
 	 	    	 	    }	 	    	    
 	 	    	    }
+	 	    	    
+	 	    	    for (i = 0; i < childNodes.length; ++i) {
+				        var child = childNodes.item(i);
+						if (child.nodeType != dh.dom.ELEMENT_NODE)
+					        continue;
+			
+						if (child.nodeName == "message") {
+							msg = dh.dom.textContent(child);
+							alert(msg);
+							break;
+					    }
+	 	    	 	}	
 	  	    	 },
 	  	    	 function(code, msg, http) {
 	  	    	 	alert(msg);
