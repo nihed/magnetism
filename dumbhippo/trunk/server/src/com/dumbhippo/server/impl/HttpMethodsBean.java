@@ -2285,7 +2285,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			}
 		} else {
 			// If the user doesn't specify a timescale, try to get about 200 points
-			timescaleSeconds = (int)(end.getTime() - start.getTime()) / 1000 / 200;
+			timescaleSeconds = (int)((end.getTime() - start.getTime()) / 1000L / 200L);
 		}
 		
 		Timescale timescale = Timescale.get(timescaleSeconds);
