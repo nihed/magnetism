@@ -63,8 +63,12 @@
 				    	</div>	    		
 					    <c:forEach items="${applications.applications.results}" var="application">
 				    		<div class="dh-applications-application-separator"></div>
-				    		<dht3:application application="${application}"
-				    		                  description="${!empty applications.search}"/>
+				    		<dht3:application application="${application}"/>
+				    		<c:if test="${!empty applications.search}">
+								<div class="dh-application-description dh-application-description-in-list">
+									${application.application.descriptionAsHtml}
+								</div>
+							</c:if>
 					    </c:forEach>
 					    <div class="dh-applications-more">
 						    <dht:expandablePager pageable="${applications.applications}"/>
