@@ -23,6 +23,7 @@
 
 #include <config.h>
 #include <glib.h>
+#include <dbus/dbus.h>
 
 /* interface exported to the session bus */
 #define LOCAL_EXPORT_BUS_NAME "org.freedesktop.od.LocalExport"
@@ -35,6 +36,10 @@
 
 void get_machine_and_session_ids(const char **machine_id_p,
                                  const char **session_id_p);
+
+void append_string_pair(DBusMessageIter *dict_iter,
+                        const char      *key,
+                        const char      *value);
 
 #endif /*  __MAIN_H__ */
 

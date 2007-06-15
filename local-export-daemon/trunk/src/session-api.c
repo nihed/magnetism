@@ -20,6 +20,7 @@
 #include <config.h>
 #include "session-api.h"
 #include "session-info.h"
+#include "avahi-scanner.h"
 #include "hippo-dbus-helper.h"
 #include "main.h"
 
@@ -36,7 +37,7 @@ handle_add_info_to_our_session(void            *object,
     
     /* signature was already checked by dbus helper */
     
-    info = info_new(message);
+    info = info_new_from_message(message);
 
     session_infos_add(infos, info);
 
@@ -75,7 +76,7 @@ handle_get_info_from_other_sessions(void            *object,
                                     DBusError       *error)
 {
     DBusMessage *reply;
-    DBusMessageIter iter, array_iter;
+    DBusMessageIter iter, sessions_array_iter;
     const char *requested_info;
 
     requested_info = NULL;
@@ -88,15 +89,16 @@ handle_get_info_from_other_sessions(void            *object,
 
     dbus_message_iter_init_append(reply, &iter);
 
-    /* open an array of dict: each remote machine is a dict, where the dict is (string,variant) pairs and represents
-     * the particular info that was requested
-     */
-    dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "a{sv}", &array_iter);
+    dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "(a{sv}a{sv})", &sessions_array_iter);
 
-    /* FIXME put the info in here that matches requested_info */
+    if (!avahi_scanner_append_infos_with_name(requested_info, &sessions_array_iter)) {
+        dbus_set_error(error, DBUS_ERROR_FAILED, "No memory to return requested data");
+        dbus_message_unref(reply);
+        return NULL;
+    }
     
-    dbus_message_iter_close_container(&iter, &array_iter);
-
+    dbus_message_iter_close_container(&iter, &sessions_array_iter);
+    
     return reply;
 }
 

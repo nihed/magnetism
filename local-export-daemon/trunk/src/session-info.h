@@ -29,12 +29,15 @@ typedef struct SessionInfos SessionInfos;
 
 typedef struct Info Info;
 
-Info*       info_new        (DBusMessage     *method_call);
-void        info_ref        (Info            *info);
-void        info_unref      (Info            *info);
-gboolean    info_write      (Info            *info,
-                             DBusMessageIter *dict_iter);
-const char* info_get_name   (Info            *info);
+Info*       info_new_from_message (DBusMessage     *method_call);
+Info*       info_new_from_data    (const char      *name,
+                                   DBusMessageIter *dict_iter);
+void        info_ref              (Info            *info);
+void        info_unref            (Info            *info);
+gboolean    info_write            (Info            *info,
+                                   DBusMessageIter *dict_iter);
+const char* info_get_name         (Info            *info);
+
 
 
 SessionInfos* session_infos_new    (void);

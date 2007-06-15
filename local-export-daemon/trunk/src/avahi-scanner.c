@@ -24,6 +24,7 @@
 #include <string.h>
 #include "avahi-scanner.h"
 #include "hippo-dbus-helper.h"
+#include "session-info.h"
 #include <dbus/dbus-glib-lowlevel.h>
 #include "main.h"
 #include <avahi-client/lookup.h>
@@ -65,11 +66,13 @@ typedef struct {
     char *session_id;
     /* Exists only if we're connecting */
     DBusConnection *connection;
+    /* Exists only if we successfully requested it from the remote session */
+    SessionInfos *infos;
 } Session;
 
 static AvahiServiceBrowser *service_browser = NULL;
 static GTree *session_tree_by_service = NULL;
-static GHashTable *session_hash_by_session_id = NULL;
+/* static GHashTable *session_hash_by_session_id = NULL; */
 
 static void
 session_ref(Session *session)
@@ -91,6 +94,8 @@ session_unref(Session *session)
         g_free(session->session_id);
         if (session->connection != NULL)
             dbus_connection_unref(session->connection);
+        if (session->infos)
+            session_infos_unref(session->infos);
         g_free(session);
     }
 }
@@ -180,6 +185,64 @@ print_sv_dict(const DBusMessageIter *orig_dict_iter)
     }
 }
 
+static gboolean
+session_extract_values(Session *session,
+                       const DBusMessageIter *orig_dict_iter)
+{
+    DBusMessageIter dict_iter;
+
+    dict_iter = *orig_dict_iter;
+    while (dbus_message_iter_get_arg_type(&dict_iter) == DBUS_TYPE_DICT_ENTRY) {
+        DBusMessageIter entry_iter;
+        DBusMessageIter variant_iter;
+        const char *key;
+        const char *value;
+        
+        dbus_message_iter_recurse(&dict_iter, &entry_iter);
+
+        key = NULL;
+        dbus_message_iter_get_basic(&entry_iter, &key);
+        dbus_message_iter_next(&entry_iter);
+
+        g_assert(dbus_message_iter_get_arg_type(&entry_iter) == DBUS_TYPE_VARIANT);
+        dbus_message_iter_recurse(&entry_iter, &variant_iter);
+
+        if (dbus_message_iter_get_arg_type(&variant_iter) == DBUS_TYPE_STRING) {
+            dbus_message_iter_get_basic(&variant_iter, &value);
+        } else {
+            value = NULL;
+        }
+        
+        if (value != NULL) {
+            if (strcmp("key", "session") == 0) {
+                if (session->session_id == NULL) {
+                    session->session_id = g_strdup(value);
+                } else if (strcmp(session->session_id, value) != 0) {
+                    g_debug("Session ID in TXT record does not match session ID from protocol");
+                    return FALSE;
+                } else {
+                    g_debug("Session ID from TXT record confirmed: %s", value);
+                }
+            } else if (strcmp("key", "machine") == 0) {
+                if (session->machine_id == NULL) {
+                    session->machine_id = g_strdup(value);
+                } else if (strcmp(session->machine_id, value) != 0) {
+                    g_debug("Machine ID in TXT record does not match machine ID from protocol");
+                    return FALSE;
+                } else {
+                    g_debug("Machine ID from TXT record confirmed: %s", value);
+                }
+            } else {
+                /* some property we don't know about */
+            }
+        }
+            
+        dbus_message_iter_next(&dict_iter);
+    }
+
+    return TRUE;
+}
+
 static void
 on_get_session_info_reply(DBusPendingCall *pending,
                           void            *user_data)
@@ -201,14 +264,16 @@ on_get_session_info_reply(DBusPendingCall *pending,
         dbus_message_iter_init(reply, &iter);
 
         dbus_message_iter_recurse(&iter, &dict_iter);
-        
-        print_sv_dict(&dict_iter);
+
+        /* print_sv_dict(&dict_iter); */
+        session_extract_values(session, &dict_iter);
         
         dbus_message_iter_next(&iter);
         dbus_message_iter_recurse(&iter, &infos_iter);
         while (dbus_message_iter_get_arg_type(&infos_iter) == DBUS_TYPE_STRUCT) {
             DBusMessageIter info_iter;
             const char *info_name;
+            Info *info;
             
             dbus_message_iter_recurse(&infos_iter, &info_iter);
 
@@ -217,9 +282,17 @@ on_get_session_info_reply(DBusPendingCall *pending,
 
             dbus_message_iter_next(&info_iter);
 
-            g_debug("Info '%s':", info_name);
-            dbus_message_iter_recurse(&info_iter, &dict_iter);            
-            print_sv_dict(&dict_iter);
+            g_debug("Got info '%s':", info_name);
+            dbus_message_iter_recurse(&info_iter, &dict_iter);
+            
+            /* print_sv_dict(&dict_iter); */
+            info = info_new_from_data(info_name, &dict_iter);
+            if (info != NULL) {
+                if (session->infos == NULL)
+                    session->infos = session_infos_new();
+                session_infos_add(session->infos, info);
+                info_unref(info);
+            }
             
             dbus_message_iter_next(&infos_iter);
         }
@@ -527,4 +600,68 @@ avahi_scanner_init(void)
     }
     
     return TRUE;
+}
+
+typedef struct {
+    const char *info_name;
+    DBusMessageIter *array_iter;
+    gboolean failed;
+} TraverseAndAppendData;
+
+static gboolean
+session_traverse_and_append_func(void *key,
+                                 void *value,
+                                 void *data)
+{
+    TraverseAndAppendData *taad = data;
+    Session *session = value;
+    Info *info;
+    DBusMessageIter session_struct_iter, session_props_iter, info_dict_iter;
+
+    info = NULL;
+    if (session->infos != NULL)
+        info = session_infos_get(session->infos, taad->info_name);
+    if (info == NULL)
+        return FALSE; /* FALSE = keep traversing */
+    
+    dbus_message_iter_open_container(taad->array_iter, DBUS_TYPE_STRUCT, NULL, &session_struct_iter);
+    
+    /* Append session properties */
+    
+    dbus_message_iter_open_container(&session_struct_iter, DBUS_TYPE_ARRAY, "{sv}", &session_props_iter);
+
+    append_string_pair(&session_props_iter, "session", session->session_id);
+    append_string_pair(&session_props_iter, "machine", session->machine_id);
+    
+    dbus_message_iter_close_container(&session_struct_iter, &session_props_iter);
+    
+    /* Append requested info bundle */
+    
+    dbus_message_iter_open_container(&session_struct_iter, DBUS_TYPE_ARRAY, "{sv}", &info_dict_iter);
+
+    if (!info_write(info, &info_dict_iter)) {
+        taad->failed = TRUE;
+        return TRUE; /* stop traversing */
+    }
+    
+    dbus_message_iter_close_container(&session_struct_iter, &info_dict_iter);
+    
+    dbus_message_iter_close_container(taad->array_iter, &session_struct_iter);
+
+    return FALSE; /* keep traversing */
+}
+
+gboolean
+avahi_scanner_append_infos_with_name(const char      *name,
+                                     DBusMessageIter *array_iter)
+{
+    TraverseAndAppendData taad;
+
+    taad.info_name = name;
+    taad.array_iter = array_iter;
+    taad.failed = FALSE;
+    
+    g_tree_foreach(session_tree_by_service, session_traverse_and_append_func, &taad);
+
+    return !taad.failed;
 }

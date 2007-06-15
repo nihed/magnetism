@@ -28,5 +28,8 @@
 
 gboolean avahi_scanner_init(void);
 
+gboolean avahi_scanner_append_infos_with_name(const char      *name,
+                                              DBusMessageIter *array_iter);
+
 #endif /* __AVAHI_SCANNER_H__ */
 
