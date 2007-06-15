@@ -679,7 +679,7 @@ hippo_dbus_init_pidgin(DBusConnection *connection)
     state = NULL;
     if (dbus_bus_name_has_owner(connection, PIDGIN_BUS_NAME, NULL))
         state = reload_from_new_owner(connection, PIDGIN_BUS_NAME);
-    if (state == NULL)
+    if (state == NULL && dbus_bus_name_has_owner(connection, GAIM_BUS_NAME, NULL))
         state = reload_from_new_owner(connection, GAIM_BUS_NAME);
     if (state != NULL) {
         pidgin_state_set(state);
