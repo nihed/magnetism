@@ -19,19 +19,34 @@
  */
 #include <config.h>
 #include "session-api.h"
+#include "session-info.h"
 #include "hippo-dbus-helper.h"
 #include "main.h"
 
 
 static DBusConnection *session_bus = NULL;
+static SessionInfos *infos = NULL;
 
 static DBusMessage*
 handle_add_info_to_our_session(void            *object,
                                DBusMessage     *message,
                                DBusError       *error)
 {
-    dbus_set_error(error, DBUS_ERROR_NOT_SUPPORTED, "Haven't implemented this yet");
-    return NULL;
+    Info *info;
+    
+    /* signature was already checked by dbus helper */
+    
+    info = info_new(message);
+
+    session_infos_add(infos, info);
+
+    info_unref(info);
+
+    /* FIXME track the client that added this and remove the info when the client disappears?
+     * Or allow clients to add info without opening a persistent connection?
+     */
+    
+    return dbus_message_new_method_return(message);
 }
 
 static DBusMessage*
@@ -39,8 +54,19 @@ handle_remove_info_from_our_session(void            *object,
                                     DBusMessage     *message,
                                     DBusError       *error)
 {
-    dbus_set_error(error, DBUS_ERROR_NOT_SUPPORTED, "Haven't implemented this yet");
-    return NULL;
+    DBusMessageIter iter;
+    const char *name;
+    
+    /* signature was already checked by dbus helper */
+    
+    dbus_message_iter_init(message, &iter);
+
+    name = NULL;
+    dbus_message_iter_get_basic(&iter, &name);
+
+    session_infos_remove(infos, name);
+    
+    return dbus_message_new_method_return(message);
 }
 
 static DBusMessage*
@@ -93,6 +119,8 @@ session_api_init(DBusConnection *session_bus_)
 {    
     session_bus = session_bus_;
 
+    infos = session_infos_new();
+    
     hippo_dbus_helper_register_interface(session_bus, LOCAL_EXPORT_INTERFACE,
                                          local_export_members, NULL);
     
