@@ -23,27 +23,36 @@
 	    <tr>
 	    <dht3:applicationsLeft currentCategory="${applications.category}"/>
 	    <td id="dhApplicationsMain">
-	    	<c:choose>
-	    		<c:when test="${empty applications.search}">
-			    	<div class="dh-applications-heading">Popularity of 
-			    		<c:choose>
-			    			<c:when test="${!empty applications.category}">
-			    				<c:out value="${applications.category.displayName}"/>
-			    			</c:when>
-			    			<c:otherwise>
-			    				All
-			    			</c:otherwise>
-			    		</c:choose>
-			    	Applications</div>
-	    		</c:when>
-	    		<c:otherwise>
-	    			Results for <b><c:out value="${applications.search}"/></b>
-	    		</c:otherwise>
-	    	</c:choose>
+	    	<div class="dh-applications-heading">
+		    	<c:choose>
+		    		<c:when test="${empty applications.search}">
+				    	Popularity of 
+				    		<c:choose>
+				    			<c:when test="${!empty applications.category}">
+				    				<c:out value="${applications.category.displayName}"/>
+				    			</c:when>
+				    			<c:otherwise>
+				    				All
+				    			</c:otherwise>
+				    		</c:choose>
+				    	Applications
+		    		</c:when>
+		    		<c:otherwise>
+		    			Results for <b><c:out value="${applications.search}"/></b>
+		    		</c:otherwise>
+		    	</c:choose>
+    		</div>
 	    	<c:choose>
 	    		<c:when test="${applications.applications.resultCount == 0}">
 	    			<div class="dh-applications-no-applications">
-	    				There are no popular applications in this category.
+				    	<c:choose>
+		    				<c:when test="${empty applications.search}">
+			    				There are no popular applications in this category.
+				    		</c:when>
+				    		<c:otherwise>
+			    				There are no matching applications.
+		    				</c:otherwise>
+				    	</c:choose>
 	    			</div>
 	    		</c:when>
 	    		<c:otherwise>
