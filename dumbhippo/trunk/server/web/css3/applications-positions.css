@@ -156,9 +156,20 @@
 	margin-bottom:	8px;
 }
 
+.dh-application-description-in-list {
+	margin-top:		-2px;
+	margin-bottom:	12px;
+	margin-left:	172px;
+}
+
 .dh-application-description p {
 	margin-top:		8px;
 	margin-bottom:	8px;
+}
+
+.dh-application-description-in-list p {
+	margin-top:     0px;
+	margin-bottom:  4px;
 }
 
 .dh-application-edit {

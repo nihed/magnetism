@@ -6,7 +6,6 @@
 <%@ attribute name="application" required="true" type="com.dumbhippo.server.applications.ApplicationView" %>
 <%@ attribute name="linkify" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="includeStats" required="false" type="java.lang.Boolean" %>
-<%@ attribute name="description" required="false" type="java.lang.Boolean" %>
 
 <dh:default var="linkify" value="true"/>
 <dh:default var="includeStats" value="true"/>
@@ -42,10 +41,5 @@
 				<c:out value="${application.application.category.displayName}"/>
 			</a>
 		</div>
-		<c:if test="${description}">
-			<div class="dh-application-description">
-				<c:out value="${application.application.descriptionAsHtml}"/>
-			</div>
-		</c:if>
 	</div>
 </div>
