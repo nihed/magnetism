@@ -1,4 +1,4 @@
 #!/bin/sh
 gtkdocize
-autoreconf -i
+ACLOCAL="aclocal $ACLOCAL_FLAGS" autoreconf -i
 ./configure --enable-maintainer-mode "$@"
