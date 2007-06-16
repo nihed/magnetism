@@ -2,7 +2,7 @@ COMMONSRCDIR=$(top_srcdir)/common
 LINUXSRCDIR=$(top_srcdir)/linux
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = hippo-canvas-1.0.pc
+pkgconfig_DATA = hippo-canvas-1.pc
 
 # note that target-specific CPPFLAGS will REPLACE
 # not augment these default flags by default,
@@ -16,7 +16,7 @@ BUILT_SRC_DIR=$(top_builddir)/config/hippo-canvas
 MARSHAL_DIR=$(BUILT_SRC_DIR)
 ENUMS_DIR=$(BUILT_SRC_DIR)
 
-EXTRA_DIST = LICENSE hippo-canvas-1.0.pc.in docs/Makefile.am
+EXTRA_DIST = LICENSE hippo-canvas-1.pc.in docs/Makefile.am
 
 # if srcdir!=builddir, clean out maintainer-clean files from builddir
 # this allows dist to pass.
@@ -32,14 +32,14 @@ DISTCLEANFILES =
 MAINTAINERCLEANFILES =
 BUILT_SOURCES =
 
-lib_LTLIBRARIES += libhippocanvas-1.0.la
+lib_LTLIBRARIES += libhippocanvas-1.la
 
-libhippocanvas_1_0_la_CPPFLAGS =	\
+libhippocanvas_1_la_CPPFLAGS =		\
 	$(AM_CPPFLAGS)			\
 	-I $(MARSHAL_DIR)		\
 	$(LIBHIPPOCANVAS_CFLAGS)
 
-libhippocanvas_1_0_la_LIBADD = 		\
+libhippocanvas_1_la_LIBADD = 		\
 	$(LIBHIPPOCANVAS_LIBS)
 
 CANVAS_MARSHAL_LIST=$(COMMONSRCDIR)/hippo/hippo-canvas-marshal.list
@@ -168,7 +168,7 @@ BUILT_SOURCES += $(CANVAS_BUILT_SOURCEFILES)
 libhippocanvasincludedir = $(includedir)/hippo-canvas-1.0/hippo
 nodist_libhippocanvasinclude_HEADERS=$(COMMON_CANVAS_HEADERFILES) $(LINUX_CANVAS_HEADERFILES)
 
-nodist_libhippocanvas_1_0_la_SOURCES=$(COMMON_CANVAS_SOURCEFILES) $(LINUX_CANVAS_SOURCEFILES) $(CANVAS_BUILT_SOURCEFILES)
+nodist_libhippocanvas_1_la_SOURCES=$(COMMON_CANVAS_SOURCEFILES) $(LINUX_CANVAS_SOURCEFILES) $(CANVAS_BUILT_SOURCEFILES)
 dist-hook:
 	-mkdir $(distdir)/common-dist
 	mkdir $(distdir)/common-dist/canvas

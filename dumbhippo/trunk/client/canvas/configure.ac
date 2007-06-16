@@ -166,7 +166,7 @@ AC_SUBST(PYGTK_DEFSDIR)
 
 AC_OUTPUT([
 Makefile
-hippo-canvas-1.0.pc
+hippo-canvas-1.pc
 docs/Makefile
 ])
 
