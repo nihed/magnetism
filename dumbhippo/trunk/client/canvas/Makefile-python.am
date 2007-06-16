@@ -16,7 +16,7 @@ hippo_la_LDFLAGS = -module -avoid-version
 hippo_la_LIBADD =					\
 	$(PYTHON_BINDINGS_LIBS)				\
 	$(LIBHIPPOCANVAS_LIBS)				\
-	$(top_builddir)/libhippocanvas-1.0.la
+	$(top_builddir)/libhippocanvas-1.la
 
 hippo_la_SOURCES = 				\
 	$(PYTHONSRCDIR)/hippomodule.c
