@@ -7,5 +7,5 @@ Name: hippo-canvas
 Description: Crossplatform canvas
 Version: @VERSION@
 Requires: gtk+-2.0
-Libs: -L${libdir} -lhippo 
+Libs: -L${libdir} -lhippocanvas-1.0 
 Cflags: -I${includedir}/hippo-canvas-1.0
