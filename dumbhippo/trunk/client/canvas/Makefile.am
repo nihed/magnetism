@@ -1,17 +1,5 @@
-## this is a teenie bit weird; COMMONSRCDIR can be either ../common (build from CVS)
-## or common-dist in the current dir (build from tarball). We rename it to common-dist
-## when including it to be sure we don't mix the two up.
-if COMMON_OUTSIDE_TREE
-COMMONSRCDIR=$(top_srcdir)/../common
-else
-COMMONSRCDIR=$(top_srcdir)/common-dist
-endif
-
-if LINUX_OUTSIDE_TREE
-LINUXSRCDIR=$(top_srcdir)/../linux
-else
-LINUXSRCDIR=$(top_srcdir)/linux-dist
-endif
+COMMONSRCDIR=$(top_srcdir)/common
+LINUXSRCDIR=$(top_srcdir)/linux
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = hippo-canvas.pc
@@ -19,7 +7,7 @@ pkgconfig_DATA = hippo-canvas.pc
 # note that target-specific CPPFLAGS will REPLACE
 # not augment these default flags by default,
 # so we manually put AM_CPPFLAGS in the target flags
-AM_CPPFLAGS=-DHIPPO_COMPILATION -DHIPPO_OS_LINUX -I$(top_builddir)/config -I$(COMMONSRCDIR)/canvas -I$(LINUXSRCDIR)/canvas
+AM_CPPFLAGS=-DHIPPO_COMPILATION -DHIPPO_OS_LINUX -I$(top_builddir)/config -I$(COMMONSRCDIR) -I$(LINUXSRCDIR)
 
 # the "config" dir seems like a convenient place that's already 
 # in everyone's include path ... I dunno
@@ -28,7 +16,7 @@ BUILT_SRC_DIR=$(top_builddir)/config/hippo-canvas
 MARSHAL_DIR=$(BUILT_SRC_DIR)
 ENUMS_DIR=$(BUILT_SRC_DIR)
 
-EXTRA_DIST = LICENSE hippo-canvas.pc.in
+EXTRA_DIST = LICENSE hippo-canvas.pc.in docs/Makefile.am
 
 # if srcdir!=builddir, clean out maintainer-clean files from builddir
 # this allows dist to pass.
@@ -54,10 +42,7 @@ libhippocanvas_1_la_CPPFLAGS =		\
 libhippocanvas_1_la_LIBADD = 		\
 	$(LIBHIPPOCANVAS_LIBS)
 
-COMMONCANVASSRCDIR=$(COMMONSRCDIR)/canvas
-LINUXCANVASSRCDIR=$(LINUXSRCDIR)/canvas
-
-CANVAS_MARSHAL_LIST=$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-marshal.list
+CANVAS_MARSHAL_LIST=$(COMMONSRCDIR)/hippo/hippo-canvas-marshal.list
 CANVAS_MARSHAL_HEADER=$(MARSHAL_DIR)/hippo-canvas-marshal.h
 CANVAS_MARSHAL_BODY=$(MARSHAL_DIR)/hippo-canvas-marshal.c
 
@@ -77,7 +62,7 @@ CANVAS_ENUMS_BODY_STAMP=$(ENUMS_DIR)/stamp-hippo-canvas-type-builtins.c
 $(CANVAS_ENUMS_BODY): $(CANVAS_ENUMS_BODY_STAMP)
 	@true
 $(CANVAS_ENUMS_BODY_STAMP): $(COMMON_CANVAS_HEADERFILES)
-	(cd $(COMMONCANVASSRCDIR) && $(GLIB_MKENUMS) \
+	(cd $(COMMONSRCDIR) && $(GLIB_MKENUMS) \
 		--fhead "#include \"hippo-canvas-type-builtins.h\"\n\n" \
 		--fprod "\n/* enumerations from \"@filename@\" */" \
 		--fprod "\n#include \"@filename@\"" \
@@ -97,7 +82,7 @@ $(CANVAS_ENUMS_BODY_STAMP): $(COMMON_CANVAS_HEADERFILES)
 $(CANVAS_ENUMS_HEADER): $(CANVAS_ENUMS_HEADER_STAMP)
 	@true
 $(CANVAS_ENUMS_HEADER_STAMP): $(COMMON_CANVAS_HEADERFILES)
-	(cd $(COMMONCANVASSRCDIR) && $(GLIB_MKENUMS) \
+	(cd $(COMMONSRCDIR) && $(GLIB_MKENUMS) \
 		--fhead "#ifndef HIPPO_CANVAS_TYPE_BUILTINS_H\n" \
 		--fhead "#define HIPPO_CANVAS_TYPE_BUILTINS_H 1\n\n" \
 		--fhead "#include <glib-object.h>\n\n" \
@@ -117,55 +102,55 @@ STAMPS =				\
 	$(CANVAS_ENUMS_HEADER_STAMP)
 
 COMMON_CANVAS_HEADERFILES = 					\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-box.h		\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-container.h	\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-context.h	\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-gradient.h	\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-image.h	\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-image-button.h	\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-item.h		\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-link.h		\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-style.h	\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-text.h		\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-widgets.h	\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-util.h		\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-event.h		\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-graphics.h
+	$(COMMONSRCDIR)/hippo/hippo-canvas-box.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-container.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-context.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-gradient.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-image.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-image-button.h	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-item.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-link.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-style.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-text.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-widgets.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-util.h		\
+	$(COMMONSRCDIR)/hippo/hippo-event.h			\
+	$(COMMONSRCDIR)/hippo/hippo-graphics.h
 
 LINUX_CANVAS_HEADERFILES =					\
-	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas.h		\
-	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-window.h	\
-	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-widget.h
+	$(LINUXSRCDIR)/hippo/hippo-canvas.h			\
+	$(LINUXSRCDIR)/hippo/hippo-canvas-window.h		\
+	$(LINUXSRCDIR)/hippo/hippo-canvas-widget.h
 
 COMMON_CANVAS_SOURCEFILES = 					\
 	$(COMMON_CANVAS_HEADERFILES)				\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-internal.h	\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-box.c		\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-container.c	\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-context.c	\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-gradient.c	\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-image.c	\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-image-button.c	\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-item.c		\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-link.c		\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-style.c	\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-text.c		\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-test.c		\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-test.h		\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-util.c		\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-event.c		\
-	$(COMMONCANVASSRCDIR)/hippo/hippo-graphics.c
+	$(COMMONSRCDIR)/hippo/hippo-canvas-internal.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-box.c		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-container.c		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-context.c		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-gradient.c		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-image.c		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-image-button.c	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-item.c		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-link.c		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-style.c		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-text.c		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-test.c		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-test.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-util.c		\
+	$(COMMONSRCDIR)/hippo/hippo-event.c			\
+	$(COMMONSRCDIR)/hippo/hippo-graphics.c
 
 LINUX_CANVAS_SOURCEFILES =					\
 	$(LINUX_CANVAS_HEADERFILES)				\
-	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas.c		\
-	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-window.c	\
-	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-helper.c	\
-	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-helper.h	\
-	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-window-child.c	\
-	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-window-child.h	\
-	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-widget.c	\
-	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-widgets.c
+	$(LINUXSRCDIR)/hippo/hippo-canvas.c			\
+	$(LINUXSRCDIR)/hippo/hippo-canvas-window.c		\
+	$(LINUXSRCDIR)/hippo/hippo-canvas-helper.c		\
+	$(LINUXSRCDIR)/hippo/hippo-canvas-helper.h		\
+	$(LINUXSRCDIR)/hippo/hippo-canvas-window-child.c	\
+	$(LINUXSRCDIR)/hippo/hippo-canvas-window-child.h	\
+	$(LINUXSRCDIR)/hippo/hippo-canvas-widget.c		\
+	$(LINUXSRCDIR)/hippo/hippo-canvas-widgets.c
 
 CANVAS_BUILT_SOURCEFILES =			\
 	$(CANVAS_MARSHAL_HEADER)		\
@@ -191,7 +176,7 @@ dist-hook:
 	mkdir $(distdir)/linux-dist
 	mkdir $(distdir)/linux-dist/canvas
 	mkdir $(distdir)/linux-dist/canvas/hippo
-	cp $(COMMONCANVASSRCDIR)/hippo/hippo-canvas-marshal.list $(distdir)/common-dist/canvas/hippo
+	cp $(COMMONSRCDIR)/hippo/hippo-canvas-marshal.list $(distdir)/common-dist/canvas/hippo
 	cp $(COMMON_CANVAS_SOURCEFILES) $(distdir)/common-dist/canvas/hippo
 	cp $(LINUX_CANVAS_SOURCEFILES) $(distdir)/linux-dist/canvas/hippo
 

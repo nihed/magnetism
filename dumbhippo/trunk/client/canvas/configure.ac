@@ -140,41 +140,6 @@ fi
 AC_SUBST(CFLAGS)
 AC_SUBST(LDFLAGS)
 
-## we prefer to find common in ../common when building from 
-## subversion, but the distribution has it in top_srcdir
-AC_MSG_CHECKING(For "$srcdir/../common" or "$srcdir/common-dist")
-if test -d "$srcdir"/common ; then
-        AC_MSG_RESULT(found in wrong place)
-        AC_MSG_ERROR([The "common" directory should not be here; it should be a sibling of srcdir or be called common-dist and a subdir of it])
-elif test -d "$srcdir"/common-dist ; then
-        common_outside_tree=false
-        AC_MSG_RESULT(found common-dist inside tree)
-elif test -d "$srcdir"/../common ; then
-        common_outside_tree=true
-        AC_MSG_RESULT(found outside tree)
-else
-        AC_MSG_RESULT(not found)
-        AC_MSG_ERROR([The "common" or "common-dist" directory wasn't found])
-fi
-AM_CONDITIONAL(COMMON_OUTSIDE_TREE, $common_outside_tree)
-
-AC_MSG_CHECKING(For "$srcdir/../linux" or "$srcdir/linux-dist")
-if test -d "$srcdir"/linux ; then
-        AC_MSG_RESULT(found in wrong place)
-        AC_MSG_ERROR([The "linux" directory should not be here; it should be a sibling of srcdir or be called linux-dist and a subdir of it])
-elif test -d "$srcdir"/linux-dist ; then
-        linux_outside_tree=false
-        AC_MSG_RESULT(found linux-dist inside tree)
-elif test -d "$srcdir"/../linux ; then
-        linux_outside_tree=true
-        AC_MSG_RESULT(found outside tree)
-else
-        AC_MSG_RESULT(not found)
-        AC_MSG_ERROR([The "linux" or "linux-dist" directory wasn't found])
-fi
-AM_CONDITIONAL(LINUX_OUTSIDE_TREE, $linux_outside_tree)
-
-
 GLIB2_REQUIRED=2.6.0
 GTK2_REQUIRED=2.6.0
 
