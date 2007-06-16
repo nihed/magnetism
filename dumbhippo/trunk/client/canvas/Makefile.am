@@ -165,7 +165,7 @@ BUILT_SOURCES += $(CANVAS_BUILT_SOURCEFILES)
 ## ../common to distdir/../common which puts common outside of distdir.
 ## so we handle the disting manually so the destination is always distdir/common-dist
 
-libhippocanvasincludedir = $(includedir)/hippo-canvas-1.0/hippo
+libhippocanvasincludedir = $(includedir)/hippo-canvas-1/hippo
 nodist_libhippocanvasinclude_HEADERS=$(COMMON_CANVAS_HEADERFILES) $(LINUX_CANVAS_HEADERFILES)
 
 nodist_libhippocanvas_1_la_SOURCES=$(COMMON_CANVAS_SOURCEFILES) $(LINUX_CANVAS_SOURCEFILES) $(CANVAS_BUILT_SOURCEFILES)
