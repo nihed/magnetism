@@ -4,7 +4,7 @@
 COMMONSRCDIR=$(top_srcdir)/common
 LINUXSRCDIR=$(top_srcdir)/linux
 
-AM_CPPFLAGS=-DHIPPO_COMPILATION -DHIPPO_OS_LINUX -I$(top_builddir)/config -I$(COMMONSRCDIR)/canvas -I$(LINUXSRCDIR)/canvas
+AM_CPPFLAGS=-DHIPPO_COMPILATION -DHIPPO_OS_LINUX -I$(top_builddir)/config -I$(COMMONSRCDIR) -I$(LINUXSRCDIR)
 
 ### End cut-and-paste
 
@@ -14,7 +14,7 @@ DOC_MAIN_SGML_FILE=hippo-canvas.xml
 
 SCAN_OPTIONS=
 
-DOC_SOURCE_DIR=../../common/canvas/hippo
+DOC_SOURCE_DIR=$(top_srcdir)/common/hippo
 
 HFILE_GLOB=
 CFILE_GLOB=
@@ -25,7 +25,7 @@ INCLUDES= 			 \
 	$(AM_CPPFLAGS) 		 \
         $(LIBHIPPOCANVAS_CFLAGS)
 
-GTKDOC_LIBS=../libhippocanvas-1.la
+GTKDOC_LIBS=$(top_builddir)/libhippocanvas-1.la
 
 MKDB_OPTIONS=--sgml-mode --outputformat=xml
 
