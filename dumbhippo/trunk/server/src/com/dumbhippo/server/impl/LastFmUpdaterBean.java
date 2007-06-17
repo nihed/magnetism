@@ -24,7 +24,7 @@ import com.dumbhippo.polling.PollingTaskFamily;
 import com.dumbhippo.polling.PollingTaskNormalExecutionException;
 import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.LastFmUpdater;
-import com.dumbhippo.server.MusicSystemInternal;
+import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.LastFmTrack;
@@ -38,7 +38,7 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 	private static final Logger logger = GlobalSetup.getLogger(LastFmUpdaterBean.class);
 	
 	@EJB
-	private MusicSystemInternal musicSystem;
+	private MusicSystem musicSystem;
 
 	@Override
 	@TransactionAttribute(TransactionAttributeType.NEVER)	
@@ -106,7 +106,7 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 				// Don't add these tracks if we've gotten "recent" updates natively
 				if (lastNativeUpdate != null
 						&& (lastLastFmUpdate.before(lastNativeUpdate) || 
-						  (lastLastFmUpdate.getTime() - lastNativeUpdate.getTime()) < MusicSystemInternal.NATIVE_MUSIC_OVERRIDE_TIME_MS)) {
+						  (lastLastFmUpdate.getTime() - lastNativeUpdate.getTime()) < MusicSystem.NATIVE_MUSIC_OVERRIDE_TIME_MS)) {
 					logger.debug("Ignoring music update due to recent native update");
 					continue;
 				}
