@@ -33,7 +33,6 @@ import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.MusicSystem;
-import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
@@ -67,9 +66,6 @@ public class MessengerGlueBean implements MessengerGlue {
 
 	@EJB
 	private MusicSystem musicSystem;
-	
-	@EJB
-	private MusicSystemInternal musicSystemInternal;	
 	
 	@EJB
 	private InvitationSystem invitationSystem;
@@ -354,7 +350,7 @@ public class MessengerGlueBean implements MessengerGlue {
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public void handleMusicChanged(Guid userId, Map<String, String> properties) {
 		User user = getUserFromGuid(userId);
-		musicSystemInternal.setCurrentTrack(user, properties, true);
+		musicSystem.setCurrentTrack(user, properties, true);
 	}
 
 	@TransactionAttribute(TransactionAttributeType.NEVER)
@@ -371,7 +367,7 @@ public class MessengerGlueBean implements MessengerGlue {
 		tracks = new ArrayList<Map<String,String>>(tracks);
 		Collections.reverse(tracks);
 		for (Map<String,String> properties : tracks) {
-			musicSystemInternal.addHistoricalTrack(user, properties, true);
+			musicSystem.addHistoricalTrack(user, properties, true);
 		}
 		// don't do this again
 		identitySpider.setMusicSharingPrimed(user, true);

@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.SchemaUpdater;
-import com.dumbhippo.server.impl.MusicSystemInternalBean;
+import com.dumbhippo.server.impl.MusicSystemBean;
 import com.dumbhippo.server.impl.TransactionRunnerBean;
 import com.dumbhippo.server.util.FaviconCache;
 import com.dumbhippo.services.caches.AbstractCacheBean;
@@ -88,7 +88,7 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 		// or throw an exception ...
 		LiveState.getInstance().shutdown();
 		AbstractCacheBean.shutdown();
-		MusicSystemInternalBean.shutdown();
+		MusicSystemBean.shutdown();
 		TransactionRunnerBean.shutdown();
 		FaviconCache.shutdown();
 		
