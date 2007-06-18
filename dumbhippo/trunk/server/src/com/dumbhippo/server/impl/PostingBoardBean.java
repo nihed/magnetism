@@ -214,8 +214,6 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	private void postPost(final Post post, final PostType postType) {
-		final User poster = post.getPoster();
-		
 		// FIXME this should really NOT be in a transaction, we don't want to hold
 		// a transaction open while sending out the notifications. But currently 
 		// too lazy to test the below for "detached safety" (the issue is if 
@@ -223,31 +221,34 @@ public class PostingBoardBean implements PostingBoard {
 		// post)
 		TxUtils.runInTransactionOnCommit(new TxRunnable() {
 			public void run() throws RetryException {
-				// tell the recommender engine, so ratings can be updated
-				// can causes retry
-				recommenderSystem.addRatingForPostCreatedBy(post, poster);
-
 				PostingBoard board = EJBUtil.defaultLookup(PostingBoard.class);
-				Post currentPost;
+				Post attachedPost;
 				try {
-					currentPost = board.loadRawPost(SystemViewpoint.getInstance(), post.getGuid());
+					attachedPost = board.loadRawPost(SystemViewpoint.getInstance(), post.getGuid());
 				} catch (NotFoundException e) {
 					throw new RuntimeException(e);
 				}
-										
+				
+				User poster = attachedPost.getPoster();
+
+				// tell the recommender engine, so ratings can be updated
+				// can causes retry
+				if (poster != null)
+					recommenderSystem.addRatingForPostCreatedBy(attachedPost, poster);
+
 				// Sends out email notification. Can also cause retry. The actual
 				// email sending is queued to the end of the transaction, so a retry
 				// won't cause duplicate messages
-				board.sendPostNotifications(currentPost, postType);
+				board.sendPostNotifications(attachedPost, postType);
 				
 				LiveState liveState = LiveState.getInstance();			
-				for (Group g : post.getGroupRecipients()) {
-				    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Detail.POST_ADDED));
+				for (Group g : attachedPost.getGroupRecipients()) {
+				    liveState.queueUpdate(new GroupEvent(g.getGuid(), attachedPost.getGuid(), GroupEvent.Detail.POST_ADDED));
 				}
 				
 				// Other notifications occur form this
-				liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster != null ? 
-						poster.getGuid() : null));				
+				liveState.queueUpdate(new PostCreatedEvent(attachedPost.getGuid(), 
+														   poster != null ? poster.getGuid() : null));				
 			}
 		});
 	}
