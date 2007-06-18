@@ -266,6 +266,7 @@ public class EJBUtil {
 
 	static private final String[] beanIfacePackages = {
 		"com.dumbhippo.server",
+		"com.dumbhippo.server.applications",
 		"com.dumbhippo.server.blocks",
 		"com.dumbhippo.live",
 		"com.dumbhippo.search",
