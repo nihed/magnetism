@@ -23,6 +23,7 @@
 #include "tcp-listener.h"
 #include "avahi-advertiser.h"
 #include "hippo-dbus-helper.h"
+#include "session-api.h"
 #include <dbus/dbus-glib-lowlevel.h>
 #include "main.h"
 
