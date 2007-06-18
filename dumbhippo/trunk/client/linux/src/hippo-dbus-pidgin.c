@@ -39,7 +39,7 @@ typedef struct {
 
 typedef struct {
     DBusConnection *connection;
-    char *bus_name;
+    char *bus_name; /* the well-known name we are using (GAIM_BUS_NAME or PIDGIN_BUS_NAME) */
     HippoDBusProxy *gaim_proxy;
     GSList *accounts;
     GHashTable *statuses;
@@ -576,6 +576,7 @@ handle_message(DBusConnection     *connection,
                                       DBUS_TYPE_STRING, &new,
                                       DBUS_TYPE_INVALID)) {
                 g_debug("pidgin.c NameOwnerChanged %s '%s' -> '%s'", name, old, new);
+
                 if (*old == '\0')
                     old = NULL;
                 if (*new == '\0')
@@ -583,17 +584,17 @@ handle_message(DBusConnection     *connection,
 
                 /* If old gaim goes away, drop the state */
                 if (old && pidgin_state &&
-                    strcmp(pidgin_state->bus_name, old) == 0) {
-                    g_debug("Old Gaim/Pidgin (%s) going away", old);
+                    strcmp(pidgin_state->bus_name, name) == 0) {
+                    g_debug("Old Gaim/Pidgin (%s owned by %s) going away", name, old);
                     pidgin_state_set(NULL);
                 }
                 
-                if (new && (strcmp(new, GAIM_BUS_NAME) == 0 || strcmp(new, PIDGIN_BUS_NAME) == 0)) {
+                if (new && (strcmp(name, GAIM_BUS_NAME) == 0 || strcmp(name, PIDGIN_BUS_NAME) == 0)) {
                     PidginState *state;
-
+                    
                     g_debug("New Gaim/Pidgin (%s) appeared", new);
                     
-                    state = reload_from_new_owner(connection, new);
+                    state = reload_from_new_owner(connection, name);
                     if (state != NULL) {
                         pidgin_state_set(state);
                     }
