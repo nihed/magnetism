@@ -234,7 +234,14 @@ main(int argc, char **argv)
     if (!request_bus_name(connection, TRUE))
         exit(1);
 
-    session_id = get_session_guid_hack();
+    session_id = dbus_bus_get_id(connection, &derror);
+    if (session_id == NULL) {
+        g_printerr("Failed to get session bus ID: %s\n", derror.message);
+        /* this fallback is to fix the case where we upgrade the dbus package,
+         * but the session bus hasn't restarted yet
+         */
+        session_id = get_session_guid_hack();
+    }
     machine_id = dbus_get_local_machine_id();
 
     /* g_printerr("Session '%s' on machine '%s'\n", session_id, machine_id); */
