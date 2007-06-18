@@ -190,7 +190,7 @@ public class TxUtils {
 			} catch (Exception e2) {
 				logger.error("Error marking transaction rollback only", e2);
 			}
-			throw new RuntimeException("Error in transaction", e);
+			throw e;
 		} finally {
 			try {
 				tm.getTransaction().commit();
@@ -246,11 +246,10 @@ public class TxUtils {
 			DataService.flush();
 			return t;
 		} catch (RuntimeException e) {
-			if (ExceptionUtils.hasCause(e,
-					EJBUtil.CONSTRAINT_VIOLATION_EXCEPTIONS)) {
+			if (ExceptionUtils.hasCause(e, EJBUtil.CONSTRAINT_VIOLATION_EXCEPTIONS)) {
 				throw new RetryException(e);
 			} else {
-				throw (RuntimeException) e;
+				throw e;
 			}
 		}
 	}
@@ -269,11 +268,10 @@ public class TxUtils {
 			// point, not at transaction commit
 			DataService.flush();
 		} catch (RuntimeException e) {
-			if (ExceptionUtils.hasCause(e,
-					EJBUtil.CONSTRAINT_VIOLATION_EXCEPTIONS)) {
+			if (ExceptionUtils.hasCause(e, EJBUtil.CONSTRAINT_VIOLATION_EXCEPTIONS)) {
 				throw new RetryException(e);
 			} else {
-				throw (RuntimeException) e;
+				throw e;
 			}
 		}
 	}
