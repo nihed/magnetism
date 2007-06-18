@@ -95,9 +95,9 @@ public class ListCacheStorage<KeyType, ResultType, EntityType extends CachedList
 		
 		if (newItems == null)
 		 	return formResultTypeList(oldItems);	
-		
-		if (!oldItems.isEmpty())
-		    deleteCache(key);
+	
+		// Delete old items if any, the noResultsMarker if none
+	    deleteCache(key);
 		
 		// This is perhaps superstitious, but we do have an ordering constraint that we must 
 		// remove the old items then insert the new, or it will cause a constraint violation
