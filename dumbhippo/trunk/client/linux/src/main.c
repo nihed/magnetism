@@ -844,7 +844,7 @@ main(int argc, char **argv)
             error = NULL;
             
             if (!hippo_dbus_show_browser_blocking(server, &error)) {
-                g_printerr(_("Can't talking to existing instance: %s\n"), error->message);
+                g_printerr(_("Can't talk to existing instance: %s\n"), error->message);
                 g_error_free(error);
                 return 1;
             }

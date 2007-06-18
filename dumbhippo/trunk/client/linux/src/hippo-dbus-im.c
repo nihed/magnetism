@@ -262,7 +262,7 @@ hippo_dbus_im_update_buddy(HippoNotificationSet *notifications,
     }
 
     if (new_buddy || !compare_strings(name, buddy->name)) {
-        g_free(buddy->protocol);
+        g_free(buddy->name);
         buddy->name = g_strdup(name);
 
         value.type = HIPPO_DATA_STRING;
