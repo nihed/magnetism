@@ -29,11 +29,13 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.SharedFile;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HttpContentTypes;
 import com.dumbhippo.server.HttpMethods;
@@ -52,6 +54,7 @@ import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.web.LoginCookie;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.UserSigninBean;
@@ -236,6 +239,26 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 				
 			});
 			
+			marshallers.put(EmailResource.class, new Marshaller<EmailResource>() {
+				
+				public EmailResource marshal(Viewpoint viewpoint, String s) throws XmlMethodException, RetryException {
+					if (s == null)
+						return null;
+					
+					IdentitySpider identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+					try {
+						return identitySpider.getEmail(s);
+					} catch (ValidationException e) {
+						throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad eamil address " + s);
+					}
+				}
+
+				public Class<?> getType() {
+					return UserBlockData.class;
+				}
+				
+			});
+			
 			marshallers.put(URL.class, new Marshaller<URL>() {
 				public URL marshal(Viewpoint viewpoint, String s) throws XmlMethodException {
 					if (s == null)
@@ -396,8 +419,9 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		 * 
 		 * @return the marshaled object (null is allowed)
 		 * @throws XmlMethodException thrown if the string can't be parsed
+		 * @throws RetryException 
 		 */
-		public BoxedArgType marshal(Viewpoint viewpoint, String s) throws XmlMethodException;
+		public BoxedArgType marshal(Viewpoint viewpoint, String s) throws XmlMethodException, RetryException;
 		
 		/**
 		 * Gets the unboxed type that we marshal to; not templatized
@@ -807,8 +831,9 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 	 * @param response
 	 * @throws IOException
 	 * @throws XmlMethodException
+	 * @throws RetryException 
 	 */
-	static private void invokeMethod(HttpMethod m, HttpResponseData requestedContentType, HttpServletRequest request, HttpServletResponse response) throws IOException, XmlMethodException {
+	static private void invokeMethod(HttpMethod m, HttpResponseData requestedContentType, HttpServletRequest request, HttpServletResponse response) throws IOException, XmlMethodException, RetryException {
 		Class<?> iface = m.getMethod().getDeclaringClass();
 		Object instance = WebEJBUtil.defaultLookup(iface);
 		Method javaMethod = m.getMethod();
@@ -931,6 +956,9 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 			} else if (cause instanceof IOException) {
 				IOException ioException = (IOException) cause;
 				throw ioException;
+			} else if (cause instanceof RetryException) {
+				RetryException retryException = (RetryException) cause;
+				throw retryException;
 			} else {
 				logger.error("Exception root cause is {} message: {}", rootCause.getClass().getName(), rootCause.getMessage());
 				logger.error("invoking method on http methods bean, unexpected", e);
@@ -985,7 +1013,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		public boolean getNoCache();
 		public boolean getRequiresTransaction();
 		public void handle(HttpServletRequest request, HttpServletResponse response, boolean isPost)
-			throws HttpException, IOException;
+			throws HttpException, IOException, RetryException;
 		public boolean isReadWrite();
 	}
 	
@@ -1011,7 +1039,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 			return method.isRequiresPost();
 		}
 
-		public void handle(HttpServletRequest request, HttpServletResponse response, boolean isPost) throws HttpException, IOException {
+		public void handle(HttpServletRequest request, HttpServletResponse response, boolean isPost) throws HttpException, IOException, RetryException {
 			HttpResponseData requestedContentType;
 			if (typeDir.equals("xml")) {
 				// gets overwritten with XMLMETHOD later if appropriate
@@ -1217,7 +1245,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 	} 
 	
 	private void doRequest(HttpServletRequest request, HttpServletResponse response, boolean isPost)
-		throws HttpException, IOException {
+		throws HttpException, IOException, RetryException {
 		RequestHandler handler = getRequestHandler(request);
 		if (handler == null) {
 			logger.debug("Found no handler for url '{}'", request.getRequestURI());
@@ -1230,7 +1258,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 	
 	@Override
 	protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
-			IOException {
+			IOException, RetryException {
 		
 		doRequest(request, response, true);
 
@@ -1238,7 +1266,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 	}
 	
 	@Override
-	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException {
+	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException, RetryException {
 
 		doRequest(request, response, false);
 		

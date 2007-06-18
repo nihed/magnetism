@@ -14,9 +14,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -111,7 +113,6 @@ import com.dumbhippo.server.RevisionControl;
 import com.dumbhippo.server.SharedFileSystem;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.Stacker;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
@@ -146,6 +147,8 @@ import com.dumbhippo.statistics.Row;
 import com.dumbhippo.statistics.StatisticsService;
 import com.dumbhippo.statistics.StatisticsSet;
 import com.dumbhippo.statistics.Timescale;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class HttpMethodsBean implements HttpMethods, Serializable {
@@ -227,9 +230,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB 
 	private FeedSystem feedSystem;
-	
-	@EJB
-	private TransactionRunner runner;
 	
 	@EJB
 	private AmazonUpdater amazonUpdater;
@@ -407,20 +407,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doCreateOrGetContact(OutputStream out,
-			HttpResponseData contentType, UserViewpoint viewpoint, String email)
+			HttpResponseData contentType, UserViewpoint viewpoint, EmailResource email)
 			throws IOException {
 		XmlBuilder xml = new XmlBuilder();
 
 		startReturnObjectsXml(contentType, xml);
 
-		EmailResource resource;
-		try {
-			resource = identitySpider.getEmail(email);
-		} catch (ValidationException e) {
-			// FIXME this probably needs displaying to the user 
-			throw new RuntimeException(e);
-		}
-		Person contact = identitySpider.createContact(viewpoint.getViewer(), resource);
+		Person contact = identitySpider.createContact(viewpoint.getViewer(), email);
 		PersonView contactView = personViewer.getPersonView(viewpoint, contact);
 		returnPersonsXml(xml, viewpoint, Collections.singleton(contactView));
 
@@ -540,15 +533,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doAddContact(OutputStream out, HttpResponseData contentType,
-			UserViewpoint viewpoint, String email) throws IOException {
-		EmailResource emailResource;
-		try {
-			emailResource = identitySpider.getEmail(email);
-		} catch (ValidationException e) {
-			// FIXME needs displaying to the user
-			throw new RuntimeException(e);
-		}
-		Contact contact = identitySpider.createContact(viewpoint.getViewer(), emailResource);
+			UserViewpoint viewpoint, EmailResource email) throws IOException {
+		Contact contact = identitySpider.createContact(viewpoint.getViewer(), email);
 		PersonView contactView = personViewer.getPersonView(viewpoint, contact);
 
 		returnObjects(out, contentType, viewpoint, Collections
@@ -638,22 +624,25 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}    
 	}
 	
-	public void doSendLoginLinkEmail(XmlBuilder xml, String address) throws IOException, HumanVisibleException {
+	public void doSendLoginLinkEmail(XmlBuilder xml, String address) throws IOException, HumanVisibleException, RetryException {
 		signinSystem.sendSigninLinkEmail(address);
 	}
 
-	public void doSendClaimLinkEmail(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException {
+	public void doSendClaimLinkEmail(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException, RetryException {
 		claimVerifier.sendClaimVerifierLink(viewpoint, viewpoint.getViewer(), address);
 	}
 	
-	public void doSendClaimLinkAim(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException {
+	public void doSendClaimLinkAim(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException, RetryException {
 		claimVerifier.sendClaimVerifierLink(viewpoint, viewpoint.getViewer(), address);
 	}
 
 	public void doRemoveClaimEmail(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException {
-		Resource resource = identitySpider.lookupEmail(address);
-		if (resource == null)
+		Resource resource;
+		try {
+			resource = identitySpider.lookupEmail(address);
+		} catch (NotFoundException e) {
 			return; // doesn't exist anyhow
+		}
 		identitySpider.removeVerifiedOwnershipClaim(viewpoint, viewpoint.getViewer(), resource);
 	}
 	
@@ -667,9 +656,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doRemoveClaimAim(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException {
-		Resource resource = identitySpider.lookupAim(address);
-		if (resource == null)
+		Resource resource;
+		try {
+			resource = identitySpider.lookupAim(address);
+		} catch (NotFoundException e) {
 			throw new HumanVisibleException("That AIM screen name isn't associated with any account");
+		}
 		identitySpider.removeVerifiedOwnershipClaim(viewpoint, viewpoint.getViewer(), resource);
 	}
 	
@@ -882,7 +874,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		out.flush();
 	}
 	
-	public void doInviteSelf(OutputStream out, HttpResponseData contentType, String address, String promotion) throws IOException {
+	public void doInviteSelf(OutputStream out, HttpResponseData contentType, String address, String promotion) throws IOException, RetryException {
 		if (contentType != HttpResponseData.XML)
 			throw new IllegalArgumentException("only support XML replies");
 
@@ -956,11 +948,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		writeMessageReply(out, "inviteSelfReply", note);
 	}
 	
-	public void doSendEmailInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String address, String subject, String message, String suggestedGroupIds) throws IOException {
+	public void doSendEmailInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, EmailResource address, String subject, String message, String suggestedGroupIds) throws IOException {
 		if (contentType != HttpResponseData.XML)
 			throw new IllegalArgumentException("only support XML replies");
-		
-		address = address.trim();
 		
 		String note;
 		try {
@@ -968,11 +958,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			
 			Set<String> groupIdsSet = splitIdList(suggestedGroupIds);
 			
-		    EmailResource invitee = identitySpider.getEmail(address);
-
 			// this will try to findContact first, which should normally return an existing contact
 			// because the viewer has just sent the invitation to the system to the invitee 
-			Contact contact = identitySpider.createContact(viewpoint.getViewer(), invitee);
+			Contact contact = identitySpider.createContact(viewpoint.getViewer(), address);
 			
 			for (String groupId : groupIdsSet) {
 			    Group groupToSuggest = groupSystem.lookupGroupById(viewpoint, groupId);
@@ -980,78 +968,75 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			}
 		} catch (NotFoundException e) {
 				throw new RuntimeException("Group with a given id not found " + e);	
-		} catch (ValidationException e) {
-			// FIXME This error won't get back to the client			
-			throw new RuntimeException("Missing or invalid email address", e);			
 		}
 		
 		writeMessageReply(out, "sendEmailInvitationReply", note);
 	}
 	
 	
-	public void doInviteWantsIn(String countToInvite, String subject, String message, String suggestedGroupIds) throws IOException {	
+	public void doInviteWantsIn(String countToInvite, String subject, String message, String suggestedGroupIds) throws IOException, RetryException {	
 		logger.debug("Got into doInviteWantsIn");
 		int countToInviteValue = Integer.parseInt(countToInvite);
 		
 		String note = null;
 		
-		Character character = Character.MUGSHOT;
-		User inviter = accountSystem.getCharacter(character);
-			
+		User inviter = accountSystem.getMugshotCharacter();
+		
 		if (!inviter.getAccount().canSendInvitations(countToInviteValue)) {
             logger.debug("Mugshot character does not have enough invitations to invite {} people.", countToInviteValue);
-        } else {
-        	
-        	List<WantsIn> wantsInList = wantsInSystem.getWantsInWithoutInvites(countToInviteValue);
-        	
-    		for (WantsIn wantsIn : wantsInList) {    			
-                // this does NOT check whether the account has invitations left,
-                // that's why we do it above.
-			    try {
-					note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter), null, wantsIn.getAddress(),
-					                                            subject, message);
-				} catch (ValidationException e) {
-					// continue here, so we don't abort the whole thing if we got a bogus email address in the db
-					// (historically our validation is not so hot)
-					logger.warn("Tried to invite WantsIn with invalid email address", e);
-				}
-			    if (note == null) {
-                    logger.debug("Invitation for {} is on its way", wantsIn.getAddress());
-                    wantsIn.setInvitationSent(true);
-			    } else {
-				    logger.debug("Trying to send an invitation to {} produced the following note: {}", wantsIn.getAddress(), note);
-				    if (note.contains(InvitationSystem.INVITATION_SUCCESS_STRING)) {
-	                    wantsIn.setInvitationSent(true);				    	
-				    }
+            return;
+		}
+
+		/* Mapping the email strings to EmailResource can produce RetryException, causing us
+		 * to need to retry the transaction. Since we can't send out emails again for the
+		 * other recipients, we need to do the mapping first before starting to send out
+		 * invitations.
+		 */
+        List<WantsIn> wantsInList = wantsInSystem.getWantsInWithoutInvites(countToInviteValue);
+		final Map<WantsIn, EmailResource> resourcesToInvite = new HashMap<WantsIn, EmailResource>();
+		for (WantsIn wantsIn : wantsInList) {
+			try {
+			    resourcesToInvite.put(wantsIn, identitySpider.getEmail(wantsIn.getAddress()));
+			} catch (ValidationException e) {
+				logger.warn("Tried to invite WantsIn with invalid email address", e);
+			}
+		}
+
+		for (WantsIn wantsIn : wantsInList) {  
+			EmailResource invitee = resourcesToInvite.get(wantsIn);
+			if (invitee == null)
+				continue;
+			
+			note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter), null, invitee,
+			                                            subject, message);
+		    if (note == null) {
+                logger.debug("Invitation for {} is on its way", wantsIn.getAddress());
+                wantsIn.setInvitationSent(true);
+		    } else {
+			    logger.debug("Trying to send an invitation to {} produced the following note: {}", wantsIn.getAddress(), note);
+			    if (note.contains(InvitationSystem.INVITATION_SUCCESS_STRING)) {
+                    wantsIn.setInvitationSent(true);				    	
 			    }
+		    }
 			    
-				Set<String> groupIdsSet = splitIdList(suggestedGroupIds);
-				
-			    EmailResource invitee;
-				try {
-				    invitee = identitySpider.getEmail(wantsIn.getAddress());
-				} catch (ValidationException e) {
-					throw new RuntimeException("Missing or invalid email address", e);
-				}
+			Set<String> groupIdsSet = splitIdList(suggestedGroupIds);
+			
+			// this will try to findContact first, which should normally return an existing contact
+			// because Mugshot has already sent the invitation to the system to the invitee 
+			Contact contact = identitySpider.createContact(inviter, invitee);
 
-				// this will try to findContact first, which should normally return an existing contact
-				// because Mugshot has already sent the invitation to the system to the invitee 
-				Contact contact = identitySpider.createContact(inviter, invitee);
-
-				try {
-				    for (String groupId : groupIdsSet) {
-				        Group groupToSuggest = groupSystem.lookupGroupById(new UserViewpoint(inviter), groupId);
-				        groupSystem.addMember(inviter, groupToSuggest, contact);
-				    }
-				} catch (NotFoundException e) {
-					throw new RuntimeException("Group with a given id not found " + e);
-				}	    	
-				
-    		}
+			try {
+			    for (String groupId : groupIdsSet) {
+			        Group groupToSuggest = groupSystem.lookupGroupById(new UserViewpoint(inviter), groupId);
+			        groupSystem.addMember(inviter, groupToSuggest, contact);
+			    }
+			} catch (NotFoundException e) {
+				throw new RuntimeException("Group with a given id not found " + e);
+			}	    	
         }
 	}
 	
-	public void doSendGroupInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, Group group, String inviteeId, String inviteeAddress, String subject, String message) throws IOException
+	public void doSendGroupInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, Group group, String inviteeId, EmailResource inviteeAddress, String subject, String message) throws IOException
 	{
 		if (contentType != HttpResponseData.XML)
 			throw new IllegalArgumentException("only support XML replies");
@@ -1069,19 +1054,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			}
 			
 		} else if (inviteeAddress != null) {
-			EmailResource resource;
-			try {
-				resource = identitySpider.getEmail(inviteeAddress);
-			} catch (ValidationException e) {
-				throw new RuntimeException("Missing or invalid email address", e);
-			}
-
 			// If the recipient isn't yet a Mugshot member, make sure we can invite
 			// them to the system before sending out an email; the resulting email
 			// is very confusing if it is an invitation; this check is to produce
 			// a nice message back to the user; we do another check when actually
 			// sending out the invitation to prevent race conditions
-			User user = identitySpider.getUser(resource);
+			User user = identitySpider.getUser(inviteeAddress);
 			if (user == null && viewpoint.getViewer().getAccount().getInvitations() == 0) {
 				String note = "Sorry, " + inviteeAddress + " isn't a Mugshot member yet";
 				writeMessageReply(out, "sendGroupInvitationReply", note);
@@ -1089,7 +1067,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				return;
 			}
 
-			person = identitySpider.createContact(viewpoint.getViewer(), resource);
+			person = identitySpider.createContact(viewpoint.getViewer(), inviteeAddress);
 			inviteRecipients = PostingBoard.InviteRecipients.MUST_INVITE;
 		} else {
 			throw new RuntimeException("inviteeId and inviteeAddress can't both be null");
@@ -1118,22 +1096,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		writeMessageReply(out, "sendGroupInvitationReply", note);
 	}
 
-	public void doSuggestGroups(UserViewpoint viewpoint, String address, String suggestedGroupIds, String desuggestedGroupIds) {
+	public void doSuggestGroups(UserViewpoint viewpoint, EmailResource address, String suggestedGroupIds, String desuggestedGroupIds) {
 		Set<String> suggestedGroupIdsSet = splitIdList(suggestedGroupIds);
 		Set<String> desuggestedGroupIdsSet = splitIdList(desuggestedGroupIds);
 		
-		address = address.trim();
-
-		EmailResource invitee;
-		try {
-		    invitee = identitySpider.getEmail(address);
-		} catch (ValidationException e) {
-			throw new RuntimeException("Missing or invalid email address", e);
-		}
-
 		// this will try to findContact first, which should normally return an existing contact
 		// if the viewer has already sent the invitation to the system to the invitee 
-		Contact contact = identitySpider.createContact(viewpoint.getViewer(), invitee);
+		Contact contact = identitySpider.createContact(viewpoint.getViewer(), address);
 
 		try {
 		    for (String groupId : suggestedGroupIdsSet) {
@@ -1151,7 +1120,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}	    	
 	}
 	
-	public void doSendRepairEmail(UserViewpoint viewpoint, String userId)
+	public void doSendRepairEmail(UserViewpoint viewpoint, String userId) throws RetryException
 	{
 		if (!identitySpider.isAdministrator(viewpoint.getViewer())) {
 			throw new RuntimeException("Only administrators can send repair links");
@@ -1404,7 +1373,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		try {
 			Object result;
 			if (transaction) {
-				result = runner.runTaskInNewTransaction(execution);
+				result = TxUtils.runInTransaction(execution);
 			} else {
 				result = execution.call();
 			}
@@ -1417,7 +1386,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 	
-	private Feed getFeedFromUserEnteredUrl(String url) throws XmlMethodException {
+	private Feed getFeedFromUserEnteredUrl(String url) throws XmlMethodException, RetryException {
 		URL urlObject;
 		try {
 			urlObject = parseUserEnteredUrl(url, true);
@@ -1427,7 +1396,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		return feedSystem.scrapeFeedFromUrl(urlObject);
 	}
 	
-	public void getFeedDump(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String url) throws HumanVisibleException, IOException {
+	public void getFeedDump(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String url) throws HumanVisibleException, IOException, RetryException {
 		try {
 			PrintStream printer = new PrintStream(out);						
 			Feed feed = getFeedFromUserEnteredUrl(url);
@@ -1459,7 +1428,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 
-	public void doFeedPreview(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {		
+	public void doFeedPreview(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException, RetryException {		
 		Feed feed = getFeedFromUserEnteredUrl(url);
 		feedSystem.updateFeed(feed);
 
@@ -1487,7 +1456,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.closeElement();
 	}
 	
-	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, Group group, String url) throws XmlMethodException {		
+	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, Group group, String url) throws XmlMethodException, RetryException {		
 		Feed feed = getFeedFromUserEnteredUrl(url);
 
 		if (!groupSystem.canEditGroup(viewpoint, group))
@@ -1497,9 +1466,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, Group group, URL url) throws XmlMethodException {		
-		LinkResource link = identitySpider.lookupLink(url);
-		if (link == null)
+		LinkResource link;
+		try {
+			link = identitySpider.lookupLink(url);
+		} catch (NotFoundException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "Feed not found: " + url);
+		}
 		Feed feed = feedSystem.getExistingFeed(link);
 		
 		if (!groupSystem.canEditGroup(viewpoint, group))
@@ -1508,7 +1480,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feedSystem.removeGroupFeed(viewpoint.getViewer(), group, feed);		
 	}
 
-	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException {
+	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException, RetryException {
 		String urlOrId = urlOrIdStr.trim();
 
 		String rhapUserId = StringUtils.findParamValueInUrl(urlOrId, "rhapUserId");		
@@ -1542,7 +1514,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feed.getAccounts().add(external);
 	}
 	
-	public void doSetNetflixFeedUrl(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException {
+	public void doSetNetflixFeedUrl(XmlBuilder xml, UserViewpoint viewpoint, String urlOrIdStr) throws XmlMethodException, RetryException {
 		String urlOrId = urlOrIdStr.trim();
 
 		String netflixUserId = StringUtils.findParamValueInUrl(urlOrId, "id");		
@@ -1645,7 +1617,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 	}
 	
-	public void doSetMySpaceName(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException {
+	public void doSetMySpaceName(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException, RetryException {
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.MYSPACE);		
 		String friendId;		
 		boolean isPrivate;
@@ -1741,7 +1713,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}	
 	
-	public void doSetDeliciousName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+	public void doSetDeliciousName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
 		String name = urlOrName.trim();
 		// del.icio.us urls are just "http://del.icio.us/myusername"
 		
@@ -1774,7 +1746,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 	
-	public void doSetTwitterName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+	public void doSetTwitterName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
 		String name = urlOrName.trim();
 		
 		// Twitter urls are just "http://twitter.com/myusername"
@@ -1821,7 +1793,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	    }
 	}
 
-	public void doSetDiggName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+	public void doSetDiggName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
 		String name = urlOrName.trim();
 		
 		// Digg urls are "http://digg.com/users/myusername/stuff"
@@ -1855,7 +1827,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 
-	public void doSetRedditName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+	public void doSetRedditName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
 		String name = urlOrName.trim();
 
 		// Reddit urls are "http://reddit.com/user/myusername"
@@ -1945,7 +1917,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 
-	public void doSetPicasaName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+	public void doSetPicasaName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException {
 		String name = urlOrName.trim();
 		
 		// Picasa public urls are http://picasaweb.google.com/username
@@ -2062,7 +2034,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 	}
 
-	public void doSetBlog(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException {
+	public void doSetBlog(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException, RetryException {
 		
 		// DO NOT cut and paste this block into similar external account methods. It's only here because
 		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
@@ -2096,7 +2068,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feed.getAccounts().add(external);
 	}
 	
-	public void doSetGoogleReaderUrl(XmlBuilder xml, UserViewpoint viewpoint, String feedOrPageUrl) throws XmlMethodException {
+	public void doSetGoogleReaderUrl(XmlBuilder xml, UserViewpoint viewpoint, String feedOrPageUrl) throws XmlMethodException, RetryException {
 		feedOrPageUrl = feedOrPageUrl.trim();
 		
 		// the page url would be "http://www.google.com/reader/shared/10558901572126132384"
@@ -2271,7 +2243,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@TransactionAttribute(TransactionAttributeType.NEVER)
  	public void doDeleteFile(XmlBuilder xml, UserViewpoint viewpoint, Guid fileId) throws XmlMethodException {
-		EJBUtil.assertNoTransaction();
+		TxUtils.assertNoTransaction();
 		try {
 			sharedFileSystem.deleteFile(viewpoint, fileId);
 		} catch (HumanVisibleException e) {
@@ -2488,7 +2460,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		out.write(rss.getBytes());
 	}
 	
-	public void doAddChatMessage(XmlBuilder xml, UserViewpoint viewpoint, Guid chatId, String text, String sentimentString) throws XmlMethodException {
+	public void doAddChatMessage(XmlBuilder xml, UserViewpoint viewpoint, Guid chatId, String text, String sentimentString) throws XmlMethodException, RetryException {
 		ChatRoomInfo info;
 		User user = viewpoint.getViewer();
 		
@@ -2508,5 +2480,17 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		chatSystem.addChatRoomMessage(info.getChatId(), info.getKind(), user.getGuid(), text, sentiment, new Date());
+	}
+	
+	public void getAimVerifyLink(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint) throws IOException, RetryException {
+		if (contentType != HttpResponseData.TEXT)
+			throw new IllegalArgumentException("only support TEXT replies");
+
+		String token = claimVerifier.getAuthKey(viewpoint.getViewer(), null);
+		String link = "aim:GoIM?screenname=" + config.getPropertyFatalIfUnset(HippoProperty.AIMBOT_NAME) 
+			+ "&message=Hey+Bot!+Crunch+this:+" + token;
+		
+		out.write(StringUtils.getBytes(link));
+		out.flush();
 	}
 }

@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -20,7 +19,9 @@ import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.DesktopSetting;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.DesktopSettings;
-import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class DesktopSettingsBean implements DesktopSettings {
@@ -30,9 +31,6 @@ public class DesktopSettingsBean implements DesktopSettings {
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
-	
-	@EJB
-	private TransactionRunner runner;
 	
 	public Map<String, String> getSettings(User user) {
 		Query q = em.createQuery("SELECT ds FROM DesktopSetting ds WHERE ds.user = :user");
@@ -50,9 +48,8 @@ public class DesktopSettingsBean implements DesktopSettings {
 	}
 
 	// null value means unset
-	public void setSetting(final User user, final String key, final String value) {
-		runner.runTaskRetryingOnConstraintViolation(new Runnable() {
-
+	public void setSetting(final User user, final String key, final String value) throws RetryException {
+		TxUtils.runNeedsRetry(new TxRunnable() {
 			public void run() {
 				Query q = em.createQuery("SELECT ds FROM DesktopSetting ds WHERE ds.user = :user AND ds.keyName = :key");
 				q.setParameter("user", user);
@@ -72,7 +69,6 @@ public class DesktopSettingsBean implements DesktopSettings {
 				}
 				LiveState.getInstance().queueUpdate(new DesktopSettingChangedEvent(user.getGuid(), key, value));
 			}
-			
 		});
 	}
 

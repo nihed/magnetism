@@ -29,7 +29,7 @@ import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PollingTaskPersistence;
-import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.tx.TxUtils;
 
 public abstract class CachedExternalUpdaterBean<Status> implements CachedExternalUpdater<Status> {
 
@@ -119,7 +119,7 @@ public abstract class CachedExternalUpdaterBean<Status> implements CachedExterna
 	// avoid log messages in here that will happen on every call, or it could get noisy
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public void periodicUpdate(String handle) {
-		EJBUtil.assertNoTransaction();
+		TxUtils.assertNoTransaction();
 		doPeriodicUpdate(handle);
 	}
 	

@@ -62,7 +62,6 @@ import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.SimpleServiceMBean;
 import com.dumbhippo.server.Stacker;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.blocks.AccountQuestionBlockHandler;
 import com.dumbhippo.server.blocks.AmazonActivityBlockHandler;
@@ -97,6 +96,10 @@ import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxCallable;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 @Service
 public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListener<BlockEvent> {
@@ -109,9 +112,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	@EJB
 	private GroupSystem groupSystem;
-	
-	@EJB
-	private TransactionRunner runner;
 	
 	@EJB
 	private MusicSystem musicSystem;
@@ -355,23 +355,28 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return block;
 	}
 	
-	/** don't call this awkward method directly, call one of the two other overloads */
-	private Block getOrCreateBlock(BlockKey key, boolean changeDefaultPublicity, boolean publicBlockIfCreated) {
-		try {
-			return queryBlock(key);
-		} catch (NotFoundException e) {
-			Block block = createBlock(key);
-			if (changeDefaultPublicity)
-				block.setPublicBlock(publicBlockIfCreated);
-			return block;
-		}
+	/** don't call this awkward method directly, call one of the two other overloads 
+	 * @throws RetryException */
+	private Block getOrCreateBlock(final BlockKey key, final boolean changeDefaultPublicity, final boolean publicBlockIfCreated) throws RetryException {
+		return TxUtils.runNeedsRetry(new TxCallable<Block>() {
+			public Block call() throws RetryException {
+				try {
+					return queryBlock(key);
+				} catch (NotFoundException e) {
+					Block block = createBlock(key);
+					if (changeDefaultPublicity)
+						block.setPublicBlock(publicBlockIfCreated);
+					return block;
+				}
+			}
+		});
 	}
 	
-	private Block getOrCreateBlock(BlockKey key, boolean publicBlockIfCreated) {
+	private Block getOrCreateBlock(BlockKey key, boolean publicBlockIfCreated) throws RetryException {
 		return getOrCreateBlock(key, true, publicBlockIfCreated);
 	}
 	
-	public Block getOrCreateBlock(BlockKey key) {
+	public Block getOrCreateBlock(BlockKey key) throws RetryException {
 		return getOrCreateBlock(key, false, false);
 	}
 	
@@ -396,23 +401,28 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
-	private void updateParticipantUserBlockData(Block block, Guid participantId, StackReason reason) {
-		User participant = em.find(User.class, participantId.toString());
-		UserBlockData userData = queryUserBlockData(block, participant);
-		if (userData != null) {
-			userData.setDeleted(false);
-			userData.setParticipatedTimestamp(block.getTimestamp());
-			userData.setParticipatedReason(reason);
-			if (!userData.isIgnored())
-				userData.setStackTimestamp(block.getTimestamp());
-			userData.setStackReason(reason);
-		} else {
-			UserBlockData data = new UserBlockData(participant, block, true, reason);
-			em.persist(data);
-		}
+	private void updateParticipantUserBlockData(final Block block, final Guid participantId, final StackReason reason) throws RetryException {
+		TxUtils.runNeedsRetry(new TxRunnable() {
+			public void run() {
+				User participant = em.find(User.class, participantId.toString());
+				UserBlockData userData = queryUserBlockData(block, participant);
+				if (userData != null) {
+					userData.setDeleted(false);
+					userData.setParticipatedTimestamp(block.getTimestamp());
+					userData.setParticipatedReason(reason);
+					if (!userData.isIgnored())
+						userData.setStackTimestamp(block.getTimestamp());
+					userData.setStackReason(reason);
+				} else {
+					UserBlockData data = new UserBlockData(participant, block, true, reason);
+					em.persist(data);
+				}
+			}
+		});
 	}
 	
-	private void updateUserBlockDatas(Block block, Set<User> desiredUsers, Guid participantId, StackReason reason) {
+	// Don't call directly, RetryException is added in the wrapper for readability
+	private void updateUserBlockDatasInternal(Block block, Set<User> desiredUsers, Guid participantId, StackReason reason) {
 		int addCount;
 		int removeCount;
 		
@@ -479,10 +489,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		LiveState.getInstance().queueUpdate(event);
 	}
 	
-	private void updateUserBlockDatas(Block block, Guid participantId, StackReason reason) {
-		Set<User> desiredUsers = getHandler(block).getInterestedUsers(block);
-		
-		updateUserBlockDatas(block, desiredUsers, participantId, reason);
+	private void updateUserBlockDatas(final Block block, final Guid participantId, final StackReason reason) throws RetryException {
+		final Set<User> desiredUsers = getHandler(block).getInterestedUsers(block);
+
+		TxUtils.runNeedsRetry(new TxRunnable() {
+			public void run() throws RetryException {
+				updateUserBlockDatasInternal(block, desiredUsers, participantId, reason);
+			}
+		});
 	}
 	
 	private void refreshUserBlockDatasDeleted(Block block, boolean verbose) {
@@ -524,7 +538,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return TypeUtils.castList(GroupBlockData.class, q.getResultList());
 	}
 	
-	private void updateGroupBlockDatas(Block block, Set<Group> desiredGroups, boolean isGroupParticipation, StackReason reason) {
+	// Don't call directly, RetryException is added in the wrapper for readability
+	private void updateGroupBlockDatasInternal(Block block, Set<Group> desiredGroups, boolean isGroupParticipation, StackReason reason) {
 		int addCount;
 		int removeCount;
 		
@@ -583,10 +598,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		logger.debug("block {}, {} total groups {} added {} removed {}", new Object[] { block, affectedGuids.size(), addCount, removeCount } );
 	}		
 
-	private void updateGroupBlockDatas(Block block, boolean isGroupParticipation, StackReason reason) {
-		Set<Group> desiredGroups = getHandler(block).getInterestedGroups(block);
+	private void updateGroupBlockDatas(final Block block, final boolean isGroupParticipation, final StackReason reason) throws RetryException {
+		final Set<Group> desiredGroups = getHandler(block).getInterestedGroups(block);
 		
-		updateGroupBlockDatas(block, desiredGroups, isGroupParticipation, reason);
+		TxUtils.runNeedsRetry(new TxRunnable() {
+			public void run() throws RetryException {
+				updateGroupBlockDatasInternal(block, desiredGroups, isGroupParticipation, reason);
+			}
+		});
 	}
 	
 	private void refreshGroupBlockDatasDeleted(Block block, boolean verbose) {
@@ -662,7 +681,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 						logger.debug("processing block {} of {}", i, blockIds.size());
 					}
 					try {
-						runner.runTaskInNewTransaction(new Runnable() {
+						TxUtils.runInTransaction(new TxRunnable() {
 							public void run() {							
 								Block attached = em.find(Block.class, id);
 								refreshUserBlockDatasDeleted(attached, true);
@@ -698,19 +717,15 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// cached user timestamps. update{User,Group{BlockDatas(block) are always safe to call
 		// at any point without worrying about ordering. We queue the update asynchronously
 		// after commit, so we can do retries when demand-creating {User,Group}BlockData.
-		runner.runTaskOnTransactionCommit(new Runnable() {
-			public void run() {
-				runner.runTaskRetryingOnConstraintViolation(new Runnable() {
-					public void run() {
-						Block attached = em.find(Block.class, block.getId());
-						if (updateAllUserBlockDatas) {
-						    updateUserBlockDatas(attached, (participant != null ? participant.getGuid() : null), reason);
-					     } else if (participant != null) {
-					    	 updateParticipantUserBlockData(attached, participant.getGuid(), reason);					    	 
-					     }
-						updateGroupBlockDatas(attached, isGroupParticipation, reason);
-					}
-				});
+		TxUtils.runInTransactionOnCommit(new TxRunnable() {
+			public void run() throws RetryException {
+				Block attached = em.find(Block.class, block.getId());
+				if (updateAllUserBlockDatas) {
+				    updateUserBlockDatas(attached, (participant != null ? participant.getGuid() : null), reason);
+			     } else if (participant != null) {
+			    	 updateParticipantUserBlockData(attached, participant.getGuid(), reason);					    	 
+			     }
+				updateGroupBlockDatas(attached, isGroupParticipation, reason);
 			}
 		});
 	}
@@ -1601,20 +1616,20 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		xmppMessageSystem.sendLocalMessage(event.getAffectedUsers(), builder.toString());
 	}
 		
-	static private class PostMigrationTask implements Runnable {
+	static private class PostMigrationTask implements TxRunnable {
 		private String postId;
 		
 		PostMigrationTask(String postId) {
 			this.postId = postId;
 		}
 		
-		public void run() {
+		public void run() throws RetryException {
 			Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
 			stacker.migratePost(postId);
 		}
 	}
 
-	static private class PostParticipationMigrationTask implements Runnable {
+	static private class PostParticipationMigrationTask implements TxRunnable {
 		private String postId;
 		
 		PostParticipationMigrationTask(String postId) {
@@ -1627,20 +1642,20 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
-	static private class UserMigrationTask implements Runnable {
+	static private class UserMigrationTask implements TxRunnable {
 		private String userId;
 		
 		UserMigrationTask(String postId) {
 			this.userId = postId;
 		}
 		
-		public void run() {
+		public void run() throws RetryException {
 			Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
 			stacker.migrateUser(userId);
 		}
 	}
 
-	static private class BlockParticipationMigrationTask implements Runnable {
+	static private class BlockParticipationMigrationTask implements TxRunnable {
 		private String blockId;
 		
 		BlockParticipationMigrationTask(String blockId) {
@@ -1653,21 +1668,21 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
-	static private class GroupMigrationTask implements Runnable {
+	static private class GroupMigrationTask implements TxRunnable {
 		private String groupId;
 		
 		GroupMigrationTask(String groupId) {
 			this.groupId = groupId;
 		}
 		
-		public void run() {
+		public void run() throws RetryException {
 			Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
 			stacker.migrateGroupChat(groupId);
 			stacker.migrateGroupMembers(groupId);
 		}
 	}
 
-	static private class GroupParticipationMigrationTask implements Runnable {
+	static private class GroupParticipationMigrationTask implements TxRunnable {
 		private String groupId;
 		
 		GroupParticipationMigrationTask(String groupId) {
@@ -1680,14 +1695,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
-	static private class GroupBlockDataMigrationTask implements Runnable {
+	static private class GroupBlockDataMigrationTask implements TxRunnable {
 		private String blockId;
 		
 		GroupBlockDataMigrationTask(String blockId) {
 			this.blockId = blockId;
 		}
 		
-		public void run() {
+		public void run() throws RetryException {
 			Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
 			stacker.migrateGroupBlockData(blockId);
 		}
@@ -1700,9 +1715,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		private ExecutorService pool;
 		private long processed;
 		private long errorCount;
-		private Collection<Runnable> tasks;
+		private Collection<TxRunnable> tasks;
 		
-		public Migration(Collection<Runnable> tasks) {
+		public Migration(Collection<TxRunnable> tasks) {
 			this.tasks = tasks;
 		}
 
@@ -1721,7 +1736,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// and each call migrates one thing
 		public void run() {
 			try {
-				final Runnable task;
+				final TxRunnable task;
 				
 				// synchronize access to the pool of work to do
 				synchronized(this) {
@@ -1735,8 +1750,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				// cases. A more important reason in the long term is that other operations
 				// performed by a migration task could need the retry - see, for example,
 				// the comment in migratePost().
-				TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
-				runner.runTaskRetryingOnConstraintViolation(task);
+				TxUtils.runInTransaction(task);
 				
 				synchronized(this) {
 					processed += 1;
@@ -1802,7 +1816,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
-	private void runMigration(Collection<Runnable> tasks) {
+	private void runMigration(Collection<TxRunnable> tasks) {
 		final Migration migration = new Migration(tasks);
 		migration.start();
 		
@@ -1819,7 +1833,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void migrateEverything() {	
-		List<Runnable> tasks = new ArrayList<Runnable>();
+		List<TxRunnable> tasks = new ArrayList<TxRunnable>();
 		
 		Query q = em.createQuery("SELECT post.id FROM Post post");
 		for (String id : TypeUtils.castList(String.class, q.getResultList()))
@@ -1846,7 +1860,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		Query q = em.createQuery("SELECT block.id FROM Block block");
 		List<String> blocks = TypeUtils.castList(String.class, q.getResultList());
 	
-		List<Runnable> tasks = new ArrayList<Runnable>();
+		List<TxRunnable> tasks = new ArrayList<TxRunnable>();
 		for (String id : blocks) {
 			tasks.add(new GroupBlockDataMigrationTask(id));
 		}
@@ -1854,8 +1868,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		runMigration(tasks);
 	}
 		
-	private List<Runnable> generateParticipationMigrationTasks() {
-		List<Runnable> tasks = new ArrayList<Runnable>();
+	private List<TxRunnable> generateParticipationMigrationTasks() {
+		List<TxRunnable> tasks = new ArrayList<TxRunnable>();
 		
 		Query q = em.createQuery("SELECT post.id FROM Post post");
 		for (String id : TypeUtils.castList(String.class, q.getResultList()))
@@ -1877,7 +1891,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void migrateGroups() {
-		List<Runnable> tasks = new ArrayList<Runnable>();
+		List<TxRunnable> tasks = new ArrayList<TxRunnable>();
 
 		Query q = em.createQuery("SELECT group.id FROM Group group");
 		for (String id : TypeUtils.castList(String.class, q.getResultList())) {
@@ -1889,7 +1903,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void migrateUsers() {
-		List<Runnable> tasks = new ArrayList<Runnable>();
+		List<TxRunnable> tasks = new ArrayList<TxRunnable>();
 
 		Query q = em.createQuery("SELECT user.id FROM User user");
 		for (String id : TypeUtils.castList(String.class, q.getResultList()))
@@ -1899,7 +1913,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	// migratePostParticipation should also be called to do a complete migration of post participation
-	public void migratePost(String postId) {
+	public void migratePost(String postId) throws RetryException {
 		logger.debug("    migrating post {}", postId);
 		Post post = em.find(Post.class, postId);
 		Block block = getOrCreateBlock(getPostKey(post), post.isPublic());
@@ -1966,7 +1980,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
-	public void migrateUser(String userId) {
+	public void migrateUser(String userId) throws RetryException {
 		logger.debug("    migrating user {}", userId);
 		User user = em.find(User.class, userId);
 		BlockKey key = getMusicPersonKey(user.getGuid());
@@ -2004,7 +2018,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	// migrateGroupChatParticipation should also be called to do a complete migration of group chat participation
-	public void migrateGroupChat(String groupId) {
+	public void migrateGroupChat(String groupId) throws RetryException {
 		logger.debug("    migrating group chat for {}", groupId);
 		Group group = em.find(Group.class, groupId);
 		Block block = getOrCreateBlock(getGroupChatKey(group.getGuid()), group.isPublic());
@@ -2043,7 +2057,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}		
 	}
 	
-	public void migrateGroupMembers(String groupId) {
+	public void migrateGroupMembers(String groupId) throws RetryException {
 		logger.debug("    migrating group members for {}", groupId);
 		Group group = em.find(Group.class, groupId);
 		for (GroupMember member : group.getMembers()) {
@@ -2059,23 +2073,23 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 
-	public void migrateFlickr(User user) {
+	public void migrateFlickr(User user) throws RetryException {
 		getHandler(FlickrPersonBlockHandler.class, BlockType.FLICKR_PERSON).migrate(user);
 	}
 	
-	public void migrateYouTube(User user) {
+	public void migrateYouTube(User user) throws RetryException {
 		getHandler(YouTubeBlockHandler.class, BlockType.YOUTUBE_PERSON).migrate(user);
 	}
 	
-	public void migrateMySpace(User user) {
+	public void migrateMySpace(User user) throws RetryException {
 		getHandler(MySpacePersonBlockHandler.class, BlockType.MYSPACE_PERSON).migrate(user);
 	}	
 	
-	public void migrateTwitter(User user) {
+	public void migrateTwitter(User user) throws RetryException {
 		getHandler(TwitterPersonBlockHandler.class, BlockType.TWITTER_PERSON).migrate(user);
 	}
 	
-	public void migrateGroupBlockData(String blockId) {
+	public void migrateGroupBlockData(String blockId) throws RetryException {
 		logger.debug("    migrating group block data for {}", blockId);
 		
 		Block block = em.find(Block.class, blockId);

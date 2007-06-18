@@ -20,6 +20,7 @@ import com.dumbhippo.services.FlickrPhotosetView;
 import com.dumbhippo.services.FlickrPhotosets;
 import com.dumbhippo.services.FlickrPhotosetsView;
 import com.dumbhippo.services.FlickrWebServices;
+import com.dumbhippo.tx.TxUtils;
 
 //@Stateless // for now, these cache beans are our own special kind of bean and not EJBs due to a jboss bug
 public class FlickrUserPhotosetsCacheBean extends AbstractBasicCacheBean<String,FlickrPhotosetsView> implements
@@ -46,13 +47,13 @@ public class FlickrUserPhotosetsCacheBean extends AbstractBasicCacheBean<String,
 			new BasicCacheStorageMapper<String,FlickrPhotosetsView,CachedFlickrPhotosets>() {
 
 				public CachedFlickrPhotosets newNoResultsMarker(String key) {
-					EJBUtil.assertHaveTransaction();
+					TxUtils.assertHaveTransaction();
 					
 					return CachedFlickrPhotosets.newNoResultsMarker(key);
 				}
 
 				public CachedFlickrPhotosets queryExisting(String key) {
-					EJBUtil.assertHaveTransaction();
+					TxUtils.assertHaveTransaction();
 					
 					Query q = em.createQuery("SELECT photosets FROM CachedFlickrPhotosets photosets WHERE photosets.flickrId = :flickrId");
 					q.setParameter("flickrId", key);
@@ -98,7 +99,7 @@ public class FlickrUserPhotosetsCacheBean extends AbstractBasicCacheBean<String,
 				q.setParameter("ownerId", key);
 				int updated = q.executeUpdate();
 				logger.debug("{} cached items expired", updated);
-			}				
+			}
 
 			public FlickrPhotosetView resultFromEntity(CachedFlickrUserPhotoset entity) {
 				return entity.toPhotoset();
@@ -167,7 +168,7 @@ public class FlickrUserPhotosetsCacheBean extends AbstractBasicCacheBean<String,
 	@TransactionAttribute(TransactionAttributeType.REQUIRED)
 	@Override
 	public void expireCache(String key) {
-		EJBUtil.assertHaveTransaction();
+		TxUtils.assertHaveTransaction();
 		
 		summaryStorage.expireCache(key);
 		setListStorage.expireCache(key);

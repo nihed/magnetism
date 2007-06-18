@@ -24,6 +24,7 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
 
 @Stateless
 public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<AccountQuestionBlockView>
@@ -83,7 +84,7 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 		return Collections.singleton(getData1User(block));
 	}
 	
-	public void createApplicationUsageBlocks() {
+	public void createApplicationUsageBlocks() throws RetryException {
 		long when = System.currentTimeMillis();
 		
 		Query q = em.createQuery("SELECT a FROM Account a " +

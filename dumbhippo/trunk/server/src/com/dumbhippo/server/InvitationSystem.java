@@ -7,6 +7,7 @@ import javax.ejb.Local;
 import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
+import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
@@ -14,6 +15,7 @@ import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.views.InvitationView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
 
 @Local
 public interface InvitationSystem {
@@ -145,12 +147,14 @@ public interface InvitationSystem {
 	 * @param email
 	 * @param subject subject for the email, text format
 	 * @param message message to send (from the inviter to invitee), text format
-	 * @throws ValidationException if email address is bogus 
 	 * @returns note that will be displayed to the user or null
 	 */
-	public String sendEmailInvitation(UserViewpoint viewpoint, PromotionCode promotionCode, String email, 
-			                          String subject, String message) throws ValidationException;
+	public String sendEmailInvitation(UserViewpoint viewpoint, PromotionCode promotionCode, EmailResource email, 
+			                          String subject, String message);
 	
+	public String sendEmailInvitation(UserViewpoint viewpoint, PromotionCode promotionCode, String email, 
+            String subject, String message) throws ValidationException, RetryException;
+
 	/**
 	 * Mark an invitation as viewed; this creates an initial Account
 	 * for the user and such, and grants the client access to the account

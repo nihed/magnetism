@@ -1,5 +1,6 @@
 package com.dumbhippo.server.dm;
 
+import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
 import org.jboss.system.ServiceMBeanSupport;
@@ -20,6 +21,7 @@ import com.dumbhippo.server.views.Viewpoint;
 public class DataService extends ServiceMBeanSupport implements DataServiceMBean {
 	private static final Logger logger = GlobalSetup.getLogger(DataService.class);
 	private DataModel model;
+	private EntityManager em;
 	
 	private static DataService instance;
 	
@@ -27,6 +29,9 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 	protected void startService() {
 		logger.info("Starting DataService MBean");
 		EntityManagerFactory emf = new JBossInjectableEntityManagerFactory("java:/DumbHippoManagerFactory");
+		
+		// Used for flush()
+		em = emf.createEntityManager();
 
 		Configuration config = EJBUtil.defaultLookup(Configuration.class);
 		String baseUrl = config.getProperty(HippoProperty.BASEURL);
@@ -58,5 +63,14 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
     
     public static ReadOnlySession currentSessionRO() {
     	return instance.model.currentSessionRO();
+    }
+    
+    /**
+     * Flush any pending database operations to the database. This really has
+     * nothing to do with the data model, but we already did the work here
+     * to dig up a transaction-scoped entity manager. 
+     */
+    public static void flush() {
+    	instance.em.flush();
     }
 }

@@ -33,7 +33,6 @@ import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystemException;
 import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.Notifier;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.services.FacebookPhotoDataView;
@@ -43,6 +42,7 @@ import com.dumbhippo.services.caches.ExpiredCacheException;
 import com.dumbhippo.services.caches.FacebookPhotoDataCache;
 import com.dumbhippo.services.caches.NotCachedException;
 import com.dumbhippo.services.caches.WebServiceCache;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class FacebookTrackerBean implements FacebookTracker {
@@ -64,9 +64,6 @@ public class FacebookTrackerBean implements FacebookTracker {
 	@EJB
 	private Notifier notifier;
 	
-	@EJB
-	private TransactionRunner runner;
-
 	@WebServiceCache
 	private FacebookPhotoDataCache taggedPhotosCache;
 	
@@ -160,7 +157,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 	public void updateTaggedPhotos(final long facebookAccountId) {
 		FacebookAccount facebookAccount;
 		try {
-			facebookAccount = runner.runTaskInNewTransaction(new Callable<FacebookAccount>() {
+			facebookAccount = TxUtils.runInTransaction(new Callable<FacebookAccount>() {
 				public FacebookAccount call() {
 					return em.find(FacebookAccount.class, facebookAccountId);		
 				}	

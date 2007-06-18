@@ -12,7 +12,6 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.server.AmazonUpdater;
-import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystem;
@@ -45,7 +44,6 @@ public class AccountPage {
 	private PersonViewer personViewer;
 	private PersonView person;
 	private Configuration config;
-	private ClaimVerifier claimVerifier;
 	private ExternalAccountSystem externalAccounts;
 	private FacebookTracker facebookTracker;
 	private FacebookSystem facebookSystem;
@@ -56,7 +54,6 @@ public class AccountPage {
 	public AccountPage() {
 		personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
 		config = WebEJBUtil.defaultLookup(Configuration.class);
-		claimVerifier = WebEJBUtil.defaultLookup(ClaimVerifier.class);
 		externalAccounts = WebEJBUtil.defaultLookup(ExternalAccountSystem.class);
 		facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
 		facebookSystem =  WebEJBUtil.defaultLookup(FacebookSystem.class);
@@ -95,12 +92,6 @@ public class AccountPage {
 		} catch (PropertyNotFoundException pnfe) {
 			return null;
 		}
-	}
-	
-	public String getAddAimLink() {
-		String token = claimVerifier.getAuthKey(signin.getUser(), null); 
-		return "aim:GoIM?screenname=" + config.getPropertyFatalIfUnset(HippoProperty.AIMBOT_NAME) 
-		+ "&message=Hey+Bot!+Crunch+this:+" + token;
 	}
 	
 	public boolean getHasPassword() {

@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -23,8 +22,9 @@ import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.polling.PollingTask;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PollingTaskPersistence;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class PollingTaskPersistenceBean implements PollingTaskPersistence {
@@ -35,10 +35,6 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
 	
-	@EJB
-	private TransactionRunner runner;
-
-
 	public void createTask(PollingTaskFamilyType family, String id) {
 		PollingTaskEntry entry = new PollingTaskEntry(family, id);
 		em.persist(entry);		
@@ -111,7 +107,7 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 		
 		/* First get the list of ids in a single transaction */
 		final List<Long> entries = new ArrayList<Long>();		
-		runner.runTaskInNewTransaction(new Runnable() {
+		TxUtils.runInTransaction(new TxRunnable() {
 			public void run() {
 				String queryStr = "select task.id from PollingTaskEntry task";
 				if (dbId >= 0)
@@ -128,7 +124,7 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 		 * transaction.
 		 */
 		for (final Long id : entries) {
-			runner.runTaskInNewTransaction(new Runnable() {
+			TxUtils.runInTransaction(new TxRunnable() {
 				public void run()  {
 					PollingTaskEntry entry = em.find(PollingTaskEntry.class, id);
 					if (entry == null) {

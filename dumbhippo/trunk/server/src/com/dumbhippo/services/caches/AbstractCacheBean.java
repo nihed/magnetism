@@ -17,8 +17,8 @@ import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.UniqueTaskExecutor;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.tx.TxUtils;
 
 /**
  * Base class used for beans that implement a cached web service lookup.
@@ -71,9 +71,6 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	protected EntityManager em;
-	
-	@EJB
-	protected TransactionRunner runner;
 	
 	@EJB
 	protected Configuration config;			
@@ -145,16 +142,16 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 	
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public ResultType fetchFromNet(KeyType key) {
-		EJBUtil.assertNoTransaction();
+		TxUtils.assertNoTransaction();
 		return fetchFromNetImpl(key);
 	}
 
 	/** This is final since you should override saveInCacheInsideExistingTransaction instead, generally */
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public final ResultType saveInCache(final KeyType key, final ResultType data, final boolean refetchedWithoutCheckingCache) {
-		EJBUtil.assertNoTransaction();
+		TxUtils.assertNoTransaction();
 		try {
-			return runner.runTaskRetryingOnConstraintViolation(new Callable<ResultType>() {
+			return TxUtils.runInTransaction(new Callable<ResultType>() {
 				public ResultType call() {
 					return saveInCacheInsideExistingTransaction(key, data, new Date(), refetchedWithoutCheckingCache);
 				}

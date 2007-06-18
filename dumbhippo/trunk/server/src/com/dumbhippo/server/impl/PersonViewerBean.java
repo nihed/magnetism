@@ -194,7 +194,7 @@ public class PersonViewerBean implements PersonViewer {
 		case MUGSHOT_CHARACTER_STATUS:
 			boolean isMugshotCharacter = false;
 			if (pv.getUser() != null)
-			    isMugshotCharacter = pv.getUser().equals(accountSystem.getCharacter(Character.MUGSHOT));
+			    isMugshotCharacter = pv.getUser().equals(accountSystem.getMugshotCharacter());
 			
 			pv.setMugshotCharacter(isMugshotCharacter);    
 		}

@@ -1,6 +1,7 @@
 package com.dumbhippo.web.pages;
 
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.InvitationView;
 
 /**
@@ -48,13 +49,14 @@ public class InvitePage extends AbstractSigninRequiredPage {
 			// previousInvitation is probably null anyway, but set it to null just in case
             previousInvitation = null;
 		} else {
-		    Resource emailRes = identitySpider.lookupEmail(email);
-		    if (emailRes != null)
+			try {
+				Resource emailRes = identitySpider.lookupEmail(email);
 		        previousInvitation = 
 		        	invitationSystem.lookupInvitationViewFor(getUserSignin().getViewpoint(), 
 		        			                                 emailRes);
-		    else
+			} catch (NotFoundException e) {
 		    	previousInvitation = null;
+			}
 	    }
 	    
 	    return previousInvitation;

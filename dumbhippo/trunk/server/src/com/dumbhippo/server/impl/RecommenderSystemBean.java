@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.concurrent.Callable;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -18,7 +17,6 @@ import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Post;
@@ -28,9 +26,11 @@ import com.dumbhippo.recommender.HippoRecommender;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RecommenderSystem;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxCallable;
+import com.dumbhippo.tx.TxUtils;
 import com.planetj.taste.common.TasteException;
 import com.planetj.taste.model.Item;
 import com.planetj.taste.recommender.ItemFilter;
@@ -59,9 +59,6 @@ public class RecommenderSystemBean implements RecommenderSystem {
 	@EJB
 	private PostingBoard postingBoard;	
 	
-	@EJB
-	private TransactionRunner runner;
-	
 	private Recommender recommender;
 	private DataSource dataSource;
 	
@@ -78,36 +75,32 @@ public class RecommenderSystemBean implements RecommenderSystem {
 	 * @param user a User
 	 * @param item a Post
 	 * @return true if there was not previously a rating
+	 * @throws RetryException 
 	 */
-	private boolean updateRatingData(final User user, final Post item, final double score, final String reason, final String type) {
-		try {
-			return runner.runTaskThrowingConstraintViolation(new Callable<Boolean>() {
+	private boolean updateRatingData(final User user, final Post item, final double score, final String reason, final String type) throws RetryException {
+		return TxUtils.runNeedsRetry(new TxCallable<Boolean>() {
 
-				public Boolean call() {
-					
-					logger.debug("Update rating data for user={} item={}", user.getId(), item.getId());
-					
-					Rating rating;
-					
-					// TODO: maybe more efficient to use INSERT IGNORE; is that MySQL specific?
-					try {
-						rating = (Rating)em.createQuery("SELECT rating FROM Rating rating " +
-							                            "WHERE rating.item = :item AND rating.user = :user")
-				            .setParameter("item", item)
-				            .setParameter("user", user)
-				            .getSingleResult();
-						return false;
-					} catch (NoResultException e) {
-						rating = new Rating(user, item, score, reason, type); 
-						em.persist(rating);
-						return true;
-					}
+			public Boolean call() {
+				
+				logger.debug("Update rating data for user={} item={}", user.getId(), item.getId());
+				
+				Rating rating;
+				
+				// TODO: maybe more efficient to use INSERT IGNORE; is that MySQL specific?
+				try {
+					rating = (Rating)em.createQuery("SELECT rating FROM Rating rating " +
+						                            "WHERE rating.item = :item AND rating.user = :user")
+			            .setParameter("item", item)
+			            .setParameter("user", user)
+			            .getSingleResult();
+					return false;
+				} catch (NoResultException e) {
+					rating = new Rating(user, item, score, reason, type); 
+					em.persist(rating);
+					return true;
 				}
-			});
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			return false; // not reached
-		}
+			}
+		});
 	}
 
 	
@@ -115,8 +108,9 @@ public class RecommenderSystemBean implements RecommenderSystem {
 	 * Add a rating reflecting a clickthrough of a post by a user.
 	 * @param post	  The post clicked through on
 	 * @param viewer  The user who clicked through on it
+	 * @throws RetryException 
 	 */
-	public void addRatingForPostViewedBy(Post post, User viewer) {
+	public void addRatingForPostViewedBy(Post post, User viewer) throws RetryException {
 		if (updateRatingData(viewer, post, VIEW_SCORE, VIEW_REASON, Rating.POST_TYPE)) {
 			//logger.debug("created new rating");
 		} else {
@@ -128,8 +122,9 @@ public class RecommenderSystemBean implements RecommenderSystem {
 	 * Add a rating reflecting the initial share of a post by a user.
 	 * @param post    The post shared
 	 * @param viewer  The user who shared it
+	 * @throws RetryException 
 	 */
-	public void addRatingForPostCreatedBy(Post post, User viewer) { 
+	public void addRatingForPostCreatedBy(Post post, User viewer) throws RetryException { 
 		if (updateRatingData(viewer, post, CREATE_POST_SCORE, CREATE_POST_REASON, Rating.POST_TYPE)) {
 			//logger.debug("created new rating");
 		} else {

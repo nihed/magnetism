@@ -576,6 +576,17 @@ dh.account.onAmazonLoveSaved = function(value) {
 	  	    	 }); 
 }
 
+dh.account.aimVerify = function() {
+	dh.server.getTextGET("aimVerifyLink", 
+						{ },
+						function(type, data, http) {
+							window.open(data);
+						},
+						function(type, error, http) {
+							alert("Couldn't get link to verify AIM account");
+						});
+}
+
 dh.account.disableFacebookSession = function() {   
   	dh.server.doPOST("disablefacebooksession",
 			 	     {},

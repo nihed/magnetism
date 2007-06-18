@@ -9,6 +9,7 @@ import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.tx.RetryException;
 
 @Stateless
 public class MySpacePersonBlockHandlerBean extends AbstractSingleBlockForFeedBlockHandlerBean<MySpacePersonBlockView> implements MySpacePersonBlockHandler {
@@ -30,7 +31,7 @@ public class MySpacePersonBlockHandlerBean extends AbstractSingleBlockForFeedBlo
 	}
 	
 	
-	public void migrate(User user) {
+	public void migrate(User user) throws RetryException {
 		logger.debug("Migrating MySpace blocks for user {}", user);
 		ExternalAccount external = user.getAccount().getExternalAccount(ExternalAccountType.MYSPACE);
 		if (external == null) {

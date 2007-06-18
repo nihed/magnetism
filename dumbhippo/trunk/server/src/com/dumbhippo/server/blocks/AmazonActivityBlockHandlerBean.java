@@ -27,7 +27,6 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AmazonUpdater;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.ConfigurationUtil;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
@@ -42,6 +41,8 @@ import com.dumbhippo.services.caches.AmazonListsCache;
 import com.dumbhippo.services.caches.AmazonReviewsCache;
 import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.WebServiceCache;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class AmazonActivityBlockHandlerBean extends
@@ -67,9 +68,6 @@ public class AmazonActivityBlockHandlerBean extends
 	
 	@EJB
 	private CacheFactory cacheFactory;
-	
-	@EJB
-	protected TransactionRunner runner;
 	
 	@EJB
 	private Configuration config;   
@@ -166,10 +164,10 @@ public class AmazonActivityBlockHandlerBean extends
 		if (external.getAccountType() != ExternalAccountType.AMAZON)
 			return;
 		
-		runner.runTaskOnTransactionCommit(new Runnable() {
+		TxUtils.runOnCommit(new Runnable() {
 			public void run() {
 				final List<String> results = new ArrayList<String>();
-				runner.runTaskInNewTransaction(new Runnable() {
+				TxUtils.runInTransaction(new TxRunnable() {
 					public void run() {
 						Query q = em.createQuery("SELECT b.id from Block b  " +
 		                                         " WHERE (b.blockType = " + BlockType.AMAZON_REVIEW.ordinal() + " OR " +
@@ -181,7 +179,7 @@ public class AmazonActivityBlockHandlerBean extends
 				});
 				
 				for (final String id : results) {
-					runner.runTaskInNewTransaction(new Runnable() {
+					TxUtils.runInTransaction(new TxRunnable() {
 						public void run() {
 							Block block = em.find(Block.class, id);
 							if (block != null)

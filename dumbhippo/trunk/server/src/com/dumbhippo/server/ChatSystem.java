@@ -12,6 +12,7 @@ import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
 
 @Local
 public interface ChatSystem {
@@ -84,6 +85,7 @@ public interface ChatSystem {
 	 * @param text the text of the message
 	 * @param timestamp the timestamp for the message
 	 * @param sentiment the sentiment of the message INDIFFERENT=Chat LOVE/HATE=Quip
+	 * @throws RetryException 
 	 */
-	public void addChatRoomMessage(Guid roomGuid, ChatRoomKind kind, Guid userId, String text, Sentiment sentiment, Date timestamp);
+	public void addChatRoomMessage(Guid roomGuid, ChatRoomKind kind, Guid userId, String text, Sentiment sentiment, Date timestamp) throws RetryException;
 }

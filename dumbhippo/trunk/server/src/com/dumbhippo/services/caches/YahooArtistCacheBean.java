@@ -25,6 +25,9 @@ import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YahooArtistData;
 import com.dumbhippo.services.YahooSearchWebServices;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 @BanFromWebTier
 //@Stateless // for now, these cache beans are our own special kind of bean and not EJBs due to a jboss bug
@@ -250,7 +253,7 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 
 	@TransactionAttribute(TransactionAttributeType.MANDATORY)
 	public YahooArtistData saveInCacheInsideExistingTransaction(String artistId, YahooArtistData data, Date now, boolean refetchedWithoutCheckingCache) {
-		EJBUtil.assertHaveTransaction();
+		TxUtils.assertHaveTransaction();
 		CachedYahooArtistData d = artistByIdQuery(artistId);
 		if (d == null) {
 			d = new CachedYahooArtistData();
@@ -271,6 +274,53 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 			return data;		
 	}
 	
+	// Needs retry, see caller
+	private void saveArtistsInCache(String artist, List<YahooArtistData> artists) {
+		// We are saving two different things; the list of id's associated with the 
+		// artist name, then the info on each of those ids
+		
+		Date now = new Date();
+		
+		// kill old associations with this name
+		List<CachedYahooArtistIdByName> ids = artistIdsForNameQuery(artist);
+		for (CachedYahooArtistIdByName id : ids) {
+			em.remove(id);
+		}
+		
+		// this seems to be required to be sure the rows we just removed don't
+		// cause constraint violations; otherwise I guess Hibernate isn't 							// strict about doing the removes and inserts in order?
+		em.flush();					
+		
+		if (artists.isEmpty()) {
+			// save no results marker
+			CachedYahooArtistIdByName id = new CachedYahooArtistIdByName();
+			id.setLastUpdated(now);
+			id.setName(artist);
+			id.setArtistId(null); // this is the "no results marker"
+			assert id.isNoResultsMarker();
+			em.persist(id);	
+		} else {
+			for (YahooArtistData a : artists) {
+				CachedYahooArtistIdByName id = new CachedYahooArtistIdByName();
+				id.setLastUpdated(now);
+				// this is important; a.getName() is the "canonical" name 
+				// while "artist" is the name we searched by. The name we 
+				// searched by has to be in the cache or things won't work.
+				id.setName(artist);
+				id.setArtistId(a.getArtistId());
+				em.persist(id);
+			}
+		}
+		
+		// Now for each artist id, kill the old data (note that if we have no 
+		// results, we just do nothing here - there are no artist ids found 
+		// or involved). We would never save negative results here so 
+		// we don't need to filter them out.
+		for (YahooArtistData a : artists) {
+			saveInCacheInsideExistingTransaction(a.getArtistId(), a, now, false);
+		}
+	}
+	
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public List<YahooArtistData> saveInCacheByName(final String artist, List<YahooArtistData> newArtists) {
 		// null doesn't happen but if it did would be the same as empty list
@@ -280,65 +330,24 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 		final List<YahooArtistData> artists = newArtists;
 		
 		try {
-			return runner.runTaskRetryingOnConstraintViolation(new Callable<List<YahooArtistData>>() {
-				public List<YahooArtistData> call() {
-					// We are saving two different things; the list of id's associated with the 
-					// artist name, then the info on each of those ids
-					
-					Date now = new Date();
-					
-					// kill old associations with this name
-					List<CachedYahooArtistIdByName> ids = artistIdsForNameQuery(artist);
-					for (CachedYahooArtistIdByName id : ids) {
-						em.remove(id);
-					}
-					
-					// this seems to be required to be sure the rows we just removed don't
-					// cause constraint violations; otherwise I guess Hibernate isn't 
-					// strict about doing the removes and inserts in order?
-					em.flush();					
-					
-					if (artists.isEmpty()) {
-						// save no results marker
-						CachedYahooArtistIdByName id = new CachedYahooArtistIdByName();
-						id.setLastUpdated(now);
-						id.setName(artist);
-						id.setArtistId(null); // this is the "no results marker"
-						assert id.isNoResultsMarker();
-						em.persist(id);	
-					} else {
-						for (YahooArtistData a : artists) {
-							CachedYahooArtistIdByName id = new CachedYahooArtistIdByName();
-							id.setLastUpdated(now);
-							// this is important; a.getName() is the "canonical" name 
-							// while "artist" is the name we searched by. The name we 
-							// searched by has to be in the cache or things won't work.
-							id.setName(artist);
-							id.setArtistId(a.getArtistId());
-							em.persist(id);
+			TxUtils.runInTransaction(new TxRunnable() {
+				public void run() throws RetryException {
+					TxUtils.runNeedsRetry(new TxRunnable() {
+						public void run() {
+							saveArtistsInCache(artist, artists);
 						}
-					}
-					
-					// Now for each artist id, kill the old data (note that if we have no 
-					// results, we just do nothing here - there are no artist ids found 
-					// or involved). We would never save negative results here so 
-					// we don't need to filter them out.
-					for (YahooArtistData a : artists) {
-						saveInCacheInsideExistingTransaction(a.getArtistId(), a, now, false);
-					}
-					
-					return artists;
+					});
 				}
-				
 			});
 		} catch (Exception e) {
 			if (EJBUtil.isDatabaseException(e)) {
 				logger.warn("Ignoring database exception {}: {}", e.getClass().getName(), e.getMessage());
-				return artists;
 			} else {
 				ExceptionUtils.throwAsRuntimeException(e);
 				throw new RuntimeException(e); // not reached
 			}
 		}
+		
+		return artists;
 	}
 }

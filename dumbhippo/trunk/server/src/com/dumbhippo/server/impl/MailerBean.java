@@ -28,6 +28,7 @@ import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.TxUtils;
 
 
 /**
@@ -198,17 +199,32 @@ public class MailerBean implements Mailer {
 		setMessageContent(message, content.getSubject(), content.getTextAlternative(), content.getHtmlAlternative(), content.getHtmlReferencesLogoImage());
 	}
 	
-	public void sendMessage(MimeMessage message) {
-		// The primary reason for DISABLE_EMAIL is for test configurations, so
-		// we check only at the end of the process to catch bugs earlier
-		// in the process.
-		if (!configuration.getProperty(HippoProperty.DISABLE_EMAIL).equals("true")) {
-			try {
-				logger.debug("Sending email...");
-				Transport.send(message);
-			} catch (MessagingException e) {
-				throw new RuntimeException(e);
+	public void sendMessage(final MimeMessage message) {
+		//
+		// We are often sending out mail as part of a complicated transaction that
+		// might send out multiple messages and need to be retried. We must not send
+		// out messages multiple times if the retry happens, so here we take the
+		// simple approach and actually send out the message asynchronously if
+		// and when the transaction completes succesfully.
+		//
+		// A more sophisticated approach would be to enroll in the transaction as
+		// a XAResource, so that if sending the email fails, the transaction is
+		// rolled back. But most email failures are going to be asynchronous anyways...
+		//
+		TxUtils.runOnCommit(new Runnable() {
+			public void run() {
+				// The primary reason for DISABLE_EMAIL is for test configurations, so
+				// we check only at the end of the process to catch bugs earlier
+				// in the process.
+				if (!configuration.getProperty(HippoProperty.DISABLE_EMAIL).equals("true")) {
+					try {
+						logger.debug("Sending email...");
+						Transport.send(message);
+					} catch (MessagingException e) {
+						logger.warn("Failed to send mail message", e);
+					}
+				}
 			}
-		}
+		});
 	}
 }

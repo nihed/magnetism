@@ -10,8 +10,6 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.InvocationContext;
 
@@ -43,6 +41,7 @@ import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
 
 @Stateless
 public class MessengerGlueBean implements MessengerGlue {
@@ -208,7 +207,7 @@ public class MessengerGlueBean implements MessengerGlue {
 		return user;
 	}
 	
-	private void doShareLinkTutorial(Account account) {
+	private void doShareLinkTutorial(Account account) throws RetryException {
 		logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
 
 		InvitationToken invite = invitationSystem.getCreatingInvitation(account);
@@ -264,7 +263,7 @@ public class MessengerGlueBean implements MessengerGlue {
 		account.setLastLogoutDate(timestamp);
 	}
 	
-	public void sendConnectedResourceNotifications(Guid userId, boolean wasAlreadyConnected) {
+	public void sendConnectedResourceNotifications(Guid userId, boolean wasAlreadyConnected) throws RetryException {
 		Account account;
 		try {
 			account = accountFromUserId(userId);
@@ -347,15 +346,12 @@ public class MessengerGlueBean implements MessengerGlue {
 		}
 	}
 	
-	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public void handleMusicChanged(Guid userId, Map<String, String> properties) {
-		User user = getUserFromGuid(userId);
-		musicSystem.setCurrentTrack(user, properties, true);
+	public void handleMusicChanged(UserViewpoint viewpoint, Map<String, String> properties) throws RetryException {
+		musicSystem.setCurrentTrack(viewpoint.getViewer(), properties, true);
 	}
 
-	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public void handleMusicPriming(Guid userId, List<Map<String, String>> tracks) {
-		User user = getUserFromGuid(userId);
+	public void handleMusicPriming(UserViewpoint viewpoint, List<Map<String, String>> tracks) throws RetryException {
+		User user = viewpoint.getViewer();
 		if (identitySpider.getMusicSharingPrimed(user)) {
 			// at log .info, since it isn't really a problem, but if it happened a lot we'd 
 			// want to investigate why

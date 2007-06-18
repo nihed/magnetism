@@ -19,6 +19,7 @@ import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
 
 @Local
 public interface PostingBoard {
@@ -72,11 +73,11 @@ public interface PostingBoard {
 	 */
 	public void doFeedPost(GroupFeed feed, FeedEntry entry);
 
-	public void doGroupInvitationPost(User owner, Group group);	
+	public void doGroupInvitationPost(User owner, Group group) throws RetryException;	
 	
-	public void doShareLinkTutorialPost(User recipient);
+	public void doShareLinkTutorialPost(User recipient) throws RetryException;
 	
-	public void doNowPlayingTutorialPost(User recipient);
+	public void doNowPlayingTutorialPost(User recipient) throws RetryException;
 	
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid) throws NotFoundException;
 	
@@ -150,7 +151,7 @@ public interface PostingBoard {
 	
 	public boolean postIsGroupNotification(Post post);
 	
-	public void sendPostNotifications(Post post, PostType postType);
+	public void sendPostNotifications(Post post, PostType postType) throws RetryException;
 
 	/**
 	 * Sets the disabled status on the post. Can be used from the admin console

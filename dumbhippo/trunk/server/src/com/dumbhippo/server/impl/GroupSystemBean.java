@@ -41,7 +41,6 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.Character;
 import com.dumbhippo.server.GroupSearchResult;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupSystemRemote;
@@ -394,7 +393,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 	
 	public void reviseGroupMembershipPolicy(User revisor, Group group, boolean open) {
-	    User mugshot = accountSystem.getCharacter(Character.MUGSHOT);
+	    User mugshot = accountSystem.getMugshotCharacter();
         Viewpoint viewpoint;
         
 	    if (revisor.equals(mugshot))

@@ -29,6 +29,7 @@ import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
 
 /**
  * Send out messages when events happen (for now, when a link is shared).
@@ -84,7 +85,7 @@ public class MessageSenderBean implements MessageSender {
 	
 	private class EmailSender {
 
-		public void sendPostNotification(EmailResource recipient, Post post, PostType postType) {
+		public void sendPostNotification(EmailResource recipient, Post post, PostType postType) throws RetryException {
 			User poster = post.getPoster();
 			
 			// We only send out notifications for posts that come from users on the system
@@ -295,7 +296,7 @@ public class MessageSenderBean implements MessageSender {
 		this.emailSender = new EmailSender();
 	}
 	
-	public void sendPostNotification(Resource recipient, Post post, PostType postType) {
+	public void sendPostNotification(Resource recipient, Post post, PostType postType) throws RetryException {
 		User user = identitySpider.getUser(recipient);
 		if (user != null) {
 			// Nothing to do here; will be sent out from the XMPP server based on the 

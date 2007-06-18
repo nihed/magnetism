@@ -2,9 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -14,14 +12,15 @@ import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.WantsIn;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.views.WantsInView;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxCallable;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class WantsInSystemBean implements WantsInSystem {
@@ -32,10 +31,7 @@ public class WantsInSystemBean implements WantsInSystem {
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
 	
-	@EJB
-	private TransactionRunner runner;
-	
-	public void addWantsIn(String untrustedAddress) throws ValidationException {
+	public void addWantsIn(String untrustedAddress) throws ValidationException, RetryException {
 		
 		if (untrustedAddress == null)
 			throw new IllegalArgumentException("null wants in address");
@@ -44,36 +40,31 @@ public class WantsInSystemBean implements WantsInSystem {
 		
 		final boolean increment = true;
 		
-		try {
-			runner.runTaskThrowingConstraintViolation(new Callable<WantsIn>() {
+		TxUtils.runNeedsRetry(new TxCallable<WantsIn>() {
 
-				public WantsIn call() {
-					Query q;
-					
-					q = em.createQuery("FROM WantsIn w WHERE w.address = :address");
-					q.setParameter("address", address);
-					
-					WantsIn wantsIn;
-					try {
-						wantsIn = (WantsIn) q.getSingleResult();
-						if (increment) {
-							wantsIn.incrementCount();
-							em.persist(wantsIn);
-						}
-					} catch (NoResultException e) {
-						wantsIn = new WantsIn(address);
-						if (increment)
-							wantsIn.incrementCount();
+			public WantsIn call() {
+				Query q;
+				
+				q = em.createQuery("FROM WantsIn w WHERE w.address = :address");
+				q.setParameter("address", address);
+				
+				WantsIn wantsIn;
+				try {
+					wantsIn = (WantsIn) q.getSingleResult();
+					if (increment) {
+						wantsIn.incrementCount();
 						em.persist(wantsIn);
 					}
-					
-					return wantsIn;
-				}			
-			});
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			return; // not reached
-		}
+				} catch (NoResultException e) {
+					wantsIn = new WantsIn(address);
+					if (increment)
+						wantsIn.incrementCount();
+					em.persist(wantsIn);
+				}
+				
+				return wantsIn;
+			}			
+		});
 	}
 	
 	public List<WantsIn> getWantsInWithoutInvites(int count) {

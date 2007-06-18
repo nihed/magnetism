@@ -44,6 +44,7 @@ import com.dumbhippo.storage.StorageException;
 import com.dumbhippo.storage.StorageFactory;
 import com.dumbhippo.storage.StoredData;
 import com.dumbhippo.storage.TooBigException;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class SharedFileSystemBean implements SharedFileSystem {
@@ -321,7 +322,7 @@ public class SharedFileSystemBean implements SharedFileSystem {
 	public SharedFile storeFile(UserViewpoint userViewpoint, String relativeName, String mimeType, InputStream inputStream,
 			boolean worldReadable, Collection<Group> groups,
 			Collection<User> users) throws HumanVisibleException {
-		EJBUtil.assertNoTransaction();
+		TxUtils.assertNoTransaction();
 		
 		// get a proxy
 		SharedFileSystem sharedFileSystem = EJBUtil.defaultLookup(SharedFileSystem.class);
@@ -365,7 +366,7 @@ public class SharedFileSystemBean implements SharedFileSystem {
 	
 	@TransactionAttribute(TransactionAttributeType.NEVER)
  	public void deleteFile(UserViewpoint viewpoint, Guid fileId) throws HumanVisibleException {
-		EJBUtil.assertNoTransaction();
+		TxUtils.assertNoTransaction();
 
 		// get a proxy
 		SharedFileSystem sharedFileSystem = EJBUtil.defaultLookup(SharedFileSystem.class);

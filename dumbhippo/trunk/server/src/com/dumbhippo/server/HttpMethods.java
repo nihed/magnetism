@@ -12,10 +12,12 @@ import org.xml.sax.SAXException;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
 
 /**
  * - Methods must be named getFoo or doFoo
@@ -41,8 +43,8 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "email" })
-	public void doCreateOrGetContact(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String email)
-			throws IOException;
+	public void doCreateOrGetContact(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, EmailResource email)
+			throws IOException, RetryException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "name", "members", "secret", "open", "description" })
@@ -108,19 +110,19 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "email" })
-	public void doAddContact(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String email) throws IOException;
+	public void doAddContact(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, EmailResource email) throws IOException;
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "address" })
-	public void doSendLoginLinkEmail(XmlBuilder xml, String address) throws IOException, HumanVisibleException;
+	public void doSendLoginLinkEmail(XmlBuilder xml, String address) throws IOException, HumanVisibleException, RetryException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address" })
-	public void doSendClaimLinkEmail(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException;
+	public void doSendClaimLinkEmail(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException, RetryException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address" })
-	public void doSendClaimLinkAim(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException;
+	public void doSendClaimLinkAim(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException, RetryException;
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address" })
@@ -169,29 +171,29 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "address", "promotion" })
-	public void doInviteSelf(OutputStream out, HttpResponseData contentType, String address, String promotion) throws IOException;
+	public void doInviteSelf(OutputStream out, HttpResponseData contentType, String address, String promotion) throws IOException, RetryException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "address", "subject", "message", "suggestedGroupIds" })
-	public void doSendEmailInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String address, String subject, String message, String suggestedGroupIds) throws IOException;
+	public void doSendEmailInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, EmailResource address, String subject, String message, String suggestedGroupIds) throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "countToInvite", "subject", "message", "suggestedGroupIds" })	
     @HttpOptions( adminOnly = true )
-	public void doInviteWantsIn(String countToInvite, String subject, String message, String suggestedGroupIds) throws IOException;
+	public void doInviteWantsIn(String countToInvite, String subject, String message, String suggestedGroupIds) throws IOException, RetryException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "groupId", "inviteeId", "inviteeAddress", "subject", "message" })
 	@HttpOptions( optionalParams = { "inviteeId", "inviteeAddress" } )
-	public void doSendGroupInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, Group group, String inviteeId, String inviteeAddress, String subject, String message) throws IOException;
+	public void doSendGroupInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, Group group, String inviteeId, EmailResource inviteeAddress, String subject, String message) throws IOException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address", "suggestedGroupIds", "desuggestedGroupIds" })
-	public void doSuggestGroups(UserViewpoint viewpoint, String address, String suggestedGroupIds, String desuggestedGroupIds);
+	public void doSuggestGroups(UserViewpoint viewpoint, EmailResource address, String suggestedGroupIds, String desuggestedGroupIds);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "userId" })
-	public void doSendRepairEmail(UserViewpoint viewpoint, String userId);
+	public void doSendRepairEmail(UserViewpoint viewpoint, String userId) throws RetryException;
 	
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( {} )
@@ -257,15 +259,15 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
-	public void doFeedPreview(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;
+	public void doFeedPreview(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException, RetryException;
 	
 	@HttpContentTypes(HttpResponseData.TEXT)
 	@HttpParams( { "url" })
-	public void getFeedDump(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String url) throws HumanVisibleException, IOException;
+	public void getFeedDump(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String url) throws HumanVisibleException, IOException, RetryException;
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "groupId", "url" })
-	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, Group group, String url) throws XmlMethodException;
+	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, Group group, String url) throws XmlMethodException, RetryException;
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "groupId", "url" })
@@ -333,7 +335,7 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "name" })
-	public void doSetMySpaceName(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException;	
+	public void doSetMySpaceName(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException, RetryException;	
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })
@@ -349,31 +351,31 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })	
-	public void doSetDeliciousName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;	
+	public void doSetDeliciousName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException;	
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })	
-	public void doSetTwitterName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;	
+	public void doSetTwitterName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException;	
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })	
-	public void doSetDiggName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;
+	public void doSetDiggName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException;
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })	
-	public void doSetRedditName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;
+	public void doSetRedditName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException;
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
-	public void doSetNetflixFeedUrl(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;
+	public void doSetNetflixFeedUrl(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException, RetryException;
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
-	public void doSetGoogleReaderUrl(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;	
+	public void doSetGoogleReaderUrl(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException, RetryException;	
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })
-	public void doSetPicasaName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;
+	public void doSetPicasaName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException, RetryException;
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrUserId" })
@@ -385,11 +387,11 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
-	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;
+	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException, RetryException;
     
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
-	public void doSetBlog(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException;	
+	public void doSetBlog(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException, RetryException;	
 	
  	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "filename" })
@@ -443,5 +445,10 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "chatId", "text", "sentiment" })
-	public void doAddChatMessage(XmlBuilder xml, UserViewpoint viewpoint, Guid chatId, String text, String sentiment) throws XmlMethodException;
+	public void doAddChatMessage(XmlBuilder xml, UserViewpoint viewpoint, Guid chatId, String text, String sentiment) throws XmlMethodException, RetryException;
+	
+	@HttpContentTypes(HttpResponseData.TEXT)
+	@HttpParams( { } )
+	public void getAimVerifyLink(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint)
+		throws IOException, RetryException;
 }

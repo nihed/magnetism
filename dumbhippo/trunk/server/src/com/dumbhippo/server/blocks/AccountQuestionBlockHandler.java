@@ -8,12 +8,13 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.listeners.AccountStatusListener;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
 
 @Local
 public interface AccountQuestionBlockHandler extends BlockHandler, AccountStatusListener {
 	public BlockKey getKey(User user, AccountQuestion question);
 	
-	public void createApplicationUsageBlocks();
+	public void createApplicationUsageBlocks() throws RetryException;
 	
 	public class BadResponseCodeException extends Exception {
 		private static final long serialVersionUID = 1L;

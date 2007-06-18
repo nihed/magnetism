@@ -18,6 +18,9 @@ import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 public class XmppClientManager implements SessionManagerListener {
 	private static XmppClientManager instance;
@@ -143,9 +146,13 @@ public class XmppClientManager implements SessionManagerListener {
 			if (newCount > oldCount) {
 				executor.execute(new Runnable() {
 					public void run() {
-						MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-						glue.updateLoginDate(userId, timestamp);
-						glue.sendConnectedResourceNotifications(userId, wasAlreadyConnected);
+						TxUtils.runInTransaction(new TxRunnable() {
+							public void run() throws RetryException {
+								MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
+								glue.updateLoginDate(userId, timestamp);
+								glue.sendConnectedResourceNotifications(userId, wasAlreadyConnected);
+							}
+						});
 					}
 				});
 			}

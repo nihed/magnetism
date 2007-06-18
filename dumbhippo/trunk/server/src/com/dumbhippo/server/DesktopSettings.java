@@ -5,6 +5,7 @@ import java.util.Map;
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.tx.RetryException;
 
 /** 
  * A "desktop setting" is state stored for a user's desktop(s).
@@ -37,7 +38,8 @@ public interface DesktopSettings {
 	 * @param user whose setting is it
 	 * @param key the setting name
 	 * @param value new value, or null to unset
+	 * @throws RetryException 
 	 */
-	public void setSetting(User user, String key, String value);
+	public void setSetting(User user, String key, String value) throws RetryException;
 	
 }

@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 import javax.ejb.EJB;
 import javax.ejb.EJBContext;
@@ -25,7 +24,6 @@ import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.TypeUtils;
@@ -73,7 +71,6 @@ import com.dumbhippo.server.PostSearchResult;
 import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RecommenderSystem;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.GuidNotFoundException;
@@ -86,6 +83,9 @@ import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class PostingBoardBean implements PostingBoard {
@@ -128,9 +128,6 @@ public class PostingBoardBean implements PostingBoard {
 	private SearchSystem searchSystem;
 	
 	@EJB
-	private TransactionRunner runner;
-	
-	@EJB
 	@IgnoreDependency
 	private RecommenderSystem recommenderSystem;
 	
@@ -148,7 +145,7 @@ public class PostingBoardBean implements PostingBoard {
 		return post.getExpandedRecipients();  
 	}
 	
-	public void sendPostNotifications(Post post, PostType postType) {
+	public void sendPostNotifications(Post post, PostType postType) throws RetryException {
 		logger.debug("Sending out email notifications...");
 		
 		for (Resource r : post.getExpandedRecipients()) {
@@ -217,42 +214,40 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	private void postPost(final Post post, final PostType postType) {
-		// Update recommender synchronously; otherwise two things
-		// could try to create a recommendation simultaneously
-		// and cause a constraint violation
 		final User poster = post.getPoster();
-		if (poster != null) {
-			// tell the recommender engine, so ratings can be updated
-			recommenderSystem.addRatingForPostCreatedBy(post, poster);
-		}			
-		runner.runTaskOnTransactionCommit(new Runnable() {
-			public void run() {
-				// FIXME this should really NOT be in a transaction, we don't want to hold
-				// a transaction open while sending out the notifications. But currently 
-				// too lazy to test the below for "detached safety" (the issue is if 
-				// sendPostNotifications or post.getGroupRecipients() require an attached
-				// post)
-				runner.runTaskInNewTransaction(new Runnable() {
-					public void run() {
-						PostingBoard board = EJBUtil.defaultLookup(PostingBoard.class);
-						Post currentPost;
-						try {
-							currentPost = board.loadRawPost(SystemViewpoint.getInstance(), post.getGuid());
-						} catch (NotFoundException e) {
-							throw new RuntimeException(e);
-						}
-												
-						// Sends out XMPP notification
-						board.sendPostNotifications(currentPost, postType);
-						
-						LiveState liveState = LiveState.getInstance();			
-						for (Group g : post.getGroupRecipients()) {
-						    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Detail.POST_ADDED));
-						}
-						liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster != null ? 
-								poster.getGuid() : null));				
-					}
-				});
+		
+		// FIXME this should really NOT be in a transaction, we don't want to hold
+		// a transaction open while sending out the notifications. But currently 
+		// too lazy to test the below for "detached safety" (the issue is if 
+		// sendPostNotifications or post.getGroupRecipients() require an attached
+		// post)
+		TxUtils.runInTransactionOnCommit(new TxRunnable() {
+			public void run() throws RetryException {
+				// tell the recommender engine, so ratings can be updated
+				// can causes retry
+				recommenderSystem.addRatingForPostCreatedBy(post, poster);
+
+				PostingBoard board = EJBUtil.defaultLookup(PostingBoard.class);
+				Post currentPost;
+				try {
+					currentPost = board.loadRawPost(SystemViewpoint.getInstance(), post.getGuid());
+				} catch (NotFoundException e) {
+					throw new RuntimeException(e);
+				}
+										
+				// Sends out email notification. Can also cause retry. The actual
+				// email sending is queued to the end of the transaction, so a retry
+				// won't cause duplicate messages
+				board.sendPostNotifications(currentPost, postType);
+				
+				LiveState liveState = LiveState.getInstance();			
+				for (Group g : post.getGroupRecipients()) {
+				    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Detail.POST_ADDED));
+				}
+				
+				// Other notifications occur form this
+				liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster != null ? 
+						poster.getGuid() : null));				
 			}
 		});
 	}
@@ -371,7 +366,7 @@ public class PostingBoardBean implements PostingBoard {
 		return doLinkPostInternal(poster, false, title, text, url, recipients, inviteRecipients, postInfo, PostType.GROUP);		
 	}
 
-	private void doTutorialPost(User recipient, Character sender, String urlText, String title, String text) {
+	private void doTutorialPost(User recipient, Character sender, String urlText, String title, String text) throws RetryException {
 		logger.debug("Sending tutorial post to {}", recipient);
 		User poster = accountSystem.getCharacter(sender);
 		URL url;
@@ -392,14 +387,14 @@ public class PostingBoardBean implements PostingBoard {
 		logger.debug("Tutorial post done: {}", post);
 	}
 	
-	public void doShareLinkTutorialPost(User recipient) {
+	public void doShareLinkTutorialPost(User recipient) throws RetryException {
 		doTutorialPost(recipient, Character.LOVES_ACTIVITY, 
 				configuration.getProperty(HippoProperty.BASEURL) + "/account",
 				"What is this Mugshot thing?",
 				"Set up your account and learn to use Mugshot by visiting this link");
 	}
 
-	public void doNowPlayingTutorialPost(User recipient) {
+	public void doNowPlayingTutorialPost(User recipient) throws RetryException {
 		doTutorialPost(recipient, Character.MUSIC_GEEK, 
 				configuration.getProperty(HippoProperty.BASEURL) + "/nowplaying",
 				"Put your music online",
@@ -407,7 +402,7 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 
-	public void doGroupInvitationPost(User recipient, Group group) {
+	public void doGroupInvitationPost(User recipient, Group group) throws RetryException {
 		doTutorialPost(recipient, Character.LOVES_ACTIVITY, 
 				configuration.getProperty(HippoProperty.BASEURL) + "/group?who=" + group.getId(),
 				"Invitation to join " + group.getName(),
@@ -419,46 +414,23 @@ public class PostingBoardBean implements PostingBoard {
 		postPost(post, PostType.FEED);
 	}
 
-	private Post createAndIndexPost(Callable<Post> creator) {
-		try {
-			Post detached = runner.runTaskNotInNewTransaction(creator);
-			Post post = em.find(Post.class, detached.getId());
-			if (post == null)
-				logger.error("reattach after creating new post FAILED ...");
-			
-			return post;
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			logger.error("WHAT THE HELL");
-			return null; // not reached
-		}		
-	}
-	
 	private Post createPost(final User poster, final PostVisibility visibility, final boolean toWorld, final String title, final String text, final Set<Resource> resources, 
 			                		final Set<Resource> personRecipients, final Set<Group> groupRecipients, final Set<Resource> expandedRecipients, final PostInfo postInfo) {
-		return createAndIndexPost(new Callable<Post>() {
-				public Post call() {
-					Post post = new Post(poster, visibility, toWorld, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
-					post.setPostInfo(postInfo);
-					em.persist(post);
-					notifier.onPostCreated(post);
-					logger.debug("saved new Post {}", post);
-					return post;
-				}
-			});
+		Post post = new Post(poster, visibility, toWorld, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
+		post.setPostInfo(postInfo);
+		em.persist(post);
+		notifier.onPostCreated(post);
+		logger.debug("saved new Post {}", post);
+		return post;
 	}
 	
 	private Post createPost(final GroupFeed feed, final FeedEntry entry) {
-		return createAndIndexPost(new Callable<Post>() {
-			public Post call() {
-				FeedPost post = new FeedPost(feed, entry, expandVisibilityForGroup(PostVisibility.RECIPIENTS_ONLY, feed.getGroup()));
-				em.persist(post);
-				notifier.onPostCreated(post);
+		FeedPost post = new FeedPost(feed, entry, expandVisibilityForGroup(PostVisibility.RECIPIENTS_ONLY, feed.getGroup()));
+		em.persist(post);
+		notifier.onPostCreated(post);
 
-				logger.debug("saved new FeedPost {}", post);
-				return post;
-			}
-		});
+		logger.debug("saved new FeedPost {}", post);
+		return post;
 	}
 
 	/*
@@ -778,23 +750,18 @@ public class PostingBoardBean implements PostingBoard {
 		// We don't actually need to wait for transaction commit to do this (the
 		// transaction is going to be read-only typically), but this avoids having
 		// to write our own code for asynchronous execution
-		runner.runTaskOnTransactionCommit(new Runnable() {
-			public void run() {
-				runner.runTaskRetryingOnConstraintViolation(new Runnable() {
-					public void run() {
-						Post attachedPost = em.find(Post.class, post.getId());
-						User attachedUser = em.find(User.class, user.getId());
-		
-						// Notify the recommender system that a user clicked through, so that ratings can be updated
-						recommenderSystem.addRatingForPostViewedBy(attachedPost, attachedUser);
-						
-						// Update Block/UserBlockData for the new viewer and restack if necessary
-						notifier.onPostClicked(attachedPost, attachedUser, clickTime);
-					}
-				});
+		TxUtils.runInTransactionOnCommit(new TxRunnable() {
+			public void run() throws RetryException {
+				Post attachedPost = em.find(Post.class, post.getId());
+				User attachedUser = em.find(User.class, user.getId());
+
+				// Notify the recommender system that a user clicked through, so that ratings can be updated
+				recommenderSystem.addRatingForPostViewedBy(attachedPost, attachedUser);
+				
+				// Update Block/UserBlockData for the new viewer and restack if necessary
+				notifier.onPostClicked(attachedPost, attachedUser, clickTime);
 			}
 		});
-		
 	}
 
 	public void postViewedBy(String postId, User user) {

@@ -19,6 +19,9 @@ import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupMemberBlockView> implements
@@ -102,21 +105,30 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 		return getData1GroupAsSet(block);
 	}
 	
-	public void onGroupMemberCreated(GroupMember member, long when, boolean notifyGroupMembers ) {
-		// Blocks only exist for group members which correspond to accounts in the
-		// system. If the group member is (say) an email resource, and later joins
-		// the system, when they join, we'll delete this GroupMember, add a new one 
-		// for the Account and create a block for that GroupMember. 
-		AccountClaim a = member.getMember().getAccountClaim();
-		if (a != null) {
-			// This is getOrCreate because a GroupMember can be deleted and then we'll 
-			// get onGroupMemberCreated again later for the same group/person if they rejoin
-			Block block = stacker.getOrCreateBlock(getKey(member.getGroup(), a.getOwner()));
-			block.setPublicBlock(member.getGroup().isPublic());
-			// we no longer consider membership status changes as group participation,
-			// because they make group mugshots too noisy
-			stacker.stack(block, when, a.getOwner(), false, StackReason.BLOCK_UPDATE, notifyGroupMembers);
-		}		
+	public void onGroupMemberCreated(GroupMember member, final long when, final boolean notifyGroupMembers ) {
+		final long memberId = member.getId();
+		
+		// Do async after commit since we need the retry
+		TxUtils.runInTransactionOnCommit(new TxRunnable() {
+			public void run() throws RetryException {
+				GroupMember attached = em.find(GroupMember.class, memberId);
+				
+				// Blocks only exist for group members which correspond to accounts in the
+				// system. If the group member is (say) an email resource, and later joins
+				// the system, when they join, we'll delete this GroupMember, add a new one 
+				// for the Account and create a block for that GroupMember. 
+				AccountClaim a = attached.getMember().getAccountClaim();
+				if (a != null) {
+					// This is getOrCreate because a GroupMember can be deleted and then we'll 
+					// get onGroupMemberCreated again later for the same group/person if they rejoin
+					Block block = stacker.getOrCreateBlock(getKey(attached.getGroup(), a.getOwner()));
+					block.setPublicBlock(attached.getGroup().isPublic());
+					// we no longer consider membership status changes as group participation,
+					// because they make group mugshots too noisy
+					stacker.stack(block, when, a.getOwner(), false, StackReason.BLOCK_UPDATE, notifyGroupMembers);
+				}
+			}
+		});
 	}
 
 	public void onGroupMemberStatusChanged(GroupMember member, long when, boolean notifyGroupMembers) {

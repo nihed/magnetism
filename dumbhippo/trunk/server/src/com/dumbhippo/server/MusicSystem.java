@@ -22,6 +22,7 @@ import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.AmazonAlbumData;
 import com.dumbhippo.services.YahooAlbumData;
 import com.dumbhippo.services.YahooSongData;
+import com.dumbhippo.tx.RetryException;
 
 @Local
 public interface MusicSystem extends ExternalAccountFeedListener {
@@ -123,7 +124,7 @@ public interface MusicSystem extends ExternalAccountFeedListener {
 	
 	public TrackHistory lookupTrackHistory(Guid trackHistoryId) throws NotFoundException;
 	
-	public Track getTrack(Map<String,String> properties);
+	public Track getTrack(Map<String,String> properties) throws RetryException;
 
 	public TrackView getTrackView(Track track);
 	public TrackView getTrackView(TrackHistory trackHistory);
@@ -171,17 +172,19 @@ public interface MusicSystem extends ExternalAccountFeedListener {
 	 * @param user who listened
 	 * @param properties props of the track
 	 * @param listenDate milliseconds since the epoch
+	 * @throws RetryException 
 	 */	
-	public void addHistoricalTrack(User user, Map<String,String> properties, long listenDate, boolean isNative);
+	public void addHistoricalTrack(User user, Map<String,String> properties, long listenDate, boolean isNative) throws RetryException;
 	
 	/**
 	 * 
 	 * Add this track as if it were one we have listened to, but don't set it as current.
 	 * @param user who listened
 	 * @param properties props of the track
+	 * @throws RetryException 
 	 */
-	public void addHistoricalTrack(User user, Map<String,String> properties, boolean isNative);
+	public void addHistoricalTrack(User user, Map<String,String> properties, boolean isNative) throws RetryException;
 
-	public void setCurrentTrack(User user, Track track, boolean isNative);
-	public void setCurrentTrack(User user, Map<String,String> properties, boolean isNative);
+	public void setCurrentTrack(User user, Track track, boolean isNative) throws RetryException;
+	public void setCurrentTrack(User user, Map<String,String> properties, boolean isNative) throws RetryException;
 }

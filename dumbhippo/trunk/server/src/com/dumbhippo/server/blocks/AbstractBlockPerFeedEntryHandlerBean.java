@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import javax.ejb.EJB;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
@@ -20,17 +19,15 @@ import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 public abstract class AbstractBlockPerFeedEntryHandlerBean<ViewType extends AbstractFeedEntryBlockView> extends AbstractBlockHandlerBean<ViewType> implements BlockPerFeedEntryBlockHandler {
 	
 	static private final Logger logger = GlobalSetup.getLogger(AbstractBlockPerFeedEntryHandlerBean.class);
-	
-	@EJB
-	protected TransactionRunner runner;
 	
 	protected AbstractBlockPerFeedEntryHandlerBean(Class<? extends ViewType> viewClass) {
 		super(viewClass);
@@ -107,10 +104,10 @@ public abstract class AbstractBlockPerFeedEntryHandlerBean<ViewType extends Abst
 		if (external.getAccountType() != getAccountType())
 			return;
 		
-		runner.runTaskOnTransactionCommit(new Runnable() {
+		TxUtils.runOnCommit(new Runnable() {
 			public void run() {
 				final List<String> results = new ArrayList<String>();
-				runner.runTaskInNewTransaction(new Runnable() {
+				TxUtils.runInTransaction(new TxRunnable() {
 					public void run() {
 						Query q = em.createQuery("SELECT b.id from Block b  " +
 		                                         " WHERE b.blockType = " + getBlockType().ordinal() + " " +
@@ -121,7 +118,7 @@ public abstract class AbstractBlockPerFeedEntryHandlerBean<ViewType extends Abst
 				});
 				
 				for (final String id : results) {
-					runner.runTaskInNewTransaction(new Runnable() {
+					TxUtils.runInTransaction(new TxRunnable() {
 						public void run() {
 							Block block = em.find(Block.class, id);
 							if (block != null)

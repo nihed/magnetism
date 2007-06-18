@@ -31,6 +31,7 @@ import com.dumbhippo.server.TokenUnknownException;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.tx.RetryException;
 
 @MessageDriven(activationConfig =
  {
@@ -66,7 +67,7 @@ public class AimQueueConsumerBean implements MessageListener {
 		sendHtmlReplyMessage(event, aimName, XmlBuilder.escape(textMessage));
 	}
 	
-	private void processTokenEvent(BotEventToken event) {
+	private void processTokenEvent(BotEventToken event) throws RetryException {
 		Token token;
 		try {
 			token = tokenSystem.getTokenByKey(event.getToken());
@@ -105,7 +106,7 @@ public class AimQueueConsumerBean implements MessageListener {
 		}
 	}
 	
-	private void processLoginEvent(BotEventLogin event) {
+	private void processLoginEvent(BotEventLogin event) throws RetryException {
 		try {
 			String htmlSigninLinkMessage = signinSystem.getSigninLinkAim(event.getAimName());
 			sendHtmlReplyMessage(event, event.getAimName(), htmlSigninLinkMessage);
@@ -137,6 +138,11 @@ public class AimQueueConsumerBean implements MessageListener {
 			} else {
 				logger.warn("Got unknown jms message: {}", message);
 			}
+		} catch (RetryException e) {
+			// We hope that the messaging system will redeliver the message and provide
+			// the retry. We can't do the retry ourself since we are already in a 
+			// transaction
+			throw new RuntimeException(e);
 		} catch (JMSException e) {
 			logger.warn("JMS exception in bot event queue", e);
 		}

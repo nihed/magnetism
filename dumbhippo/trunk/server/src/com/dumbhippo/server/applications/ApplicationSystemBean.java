@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -55,12 +54,15 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxCallable;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class ApplicationSystemBean implements ApplicationSystem {
@@ -80,9 +82,6 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	@EJB
 	@IgnoreDependency
 	private SearchSystem searchSystem;
-	
-	@EJB
-	private TransactionRunner runner;
 	
 	public boolean canEditApplications(Viewpoint viewpoint) {
 		if (viewpoint instanceof UserViewpoint)
@@ -291,14 +290,14 @@ public class ApplicationSystemBean implements ApplicationSystem {
 	public void reinstallAllApplications() {
 		// We don't actually need to run on commit, just async, but on-commit
 		// is an easy way to get async
-		runner.runTaskOnTransactionCommit(new Runnable() {
+		TxUtils.runOnCommit(new Runnable() {
 			public void run() {
 				final List<AppinfoUpload> uploads = new ArrayList<AppinfoUpload>();
 				final Set<String> seenApplications = new HashSet<String>();
 				
 				logger.info("Getting list of applications to install");
 				
-				runner.runTaskInNewTransaction(new Runnable() {
+				TxUtils.runInTransaction(new TxRunnable() {
 					public void run() {
 						Query q = em.createQuery("SELECT au from AppinfoUpload au ORDER BY uploadDate DESC");
 						uploads.addAll(TypeUtils.castList(AppinfoUpload.class, q.getResultList()));
@@ -315,7 +314,7 @@ public class ApplicationSystemBean implements ApplicationSystem {
 					}
 					
 					try {
-						runner.runTaskInNewTransaction(new Runnable() {
+						TxUtils.runInTransaction(new TxRunnable() {
 							public void run() {
 								// Reattach application
 								Application application = em.find(Application.class, au.getApplication().getId());
@@ -931,32 +930,28 @@ public class ApplicationSystemBean implements ApplicationSystem {
 		return TypeUtils.castList(Application.class, q.getResultList());
 	}
 
-	public ApplicationUserState getUserState(final User user, final Application app) {
-		try {
-			return runner.runTaskThrowingConstraintViolation(new Callable<ApplicationUserState>() {
-				public ApplicationUserState call() {
-					Query q = em.createQuery("FROM ApplicationUserState aus WHERE aus.user = :user "
-							+ " AND aus.application = :app");
-					q.setParameter("user", user);
-					q.setParameter("app", app);
-	
-					ApplicationUserState res;
-					try {
-						res = (ApplicationUserState) q.getSingleResult();
-					} catch (NoResultException e) {
-						res = new ApplicationUserState(user, app);
-						em.persist(res);
-					}
-	
-					return res;	
+	public ApplicationUserState getUserState(final User user, final Application app) throws RetryException {
+		return TxUtils.runNeedsRetry(new TxCallable<ApplicationUserState>() {
+			public ApplicationUserState call() {
+				Query q = em.createQuery("FROM ApplicationUserState aus WHERE aus.user = :user "
+						+ " AND aus.application = :app");
+				q.setParameter("user", user);
+				q.setParameter("app", app);
+
+				ApplicationUserState res;
+				try {
+					res = (ApplicationUserState) q.getSingleResult();
+				} catch (NoResultException e) {
+					res = new ApplicationUserState(user, app);
+					em.persist(res);
 				}
-			});
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+
+				return res;	
+			}
+		});
 	}	
 
-	public void pinApplicationIds(User user, List<String> applicationIds, boolean pin) {
+	public void pinApplicationIds(User user, List<String> applicationIds, boolean pin) throws RetryException {
 		for (String appId : applicationIds) {
 			Application application = em.find(Application.class, appId);
 			if (application == null) {

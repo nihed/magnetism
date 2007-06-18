@@ -7,11 +7,12 @@ import javax.ejb.Local;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.server.views.WantsInView;
+import com.dumbhippo.tx.RetryException;
 
 @Local
 public interface WantsInSystem {
 
-	public void addWantsIn(String address) throws ValidationException;
+	public void addWantsIn(String address) throws ValidationException, RetryException;
 	
 	public List<WantsIn> getWantsInWithoutInvites(int count);
 	

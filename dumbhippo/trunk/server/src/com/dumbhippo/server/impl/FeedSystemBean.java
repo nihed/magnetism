@@ -59,7 +59,6 @@ import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RevisionControl;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.syndication.RhapModule;
@@ -69,6 +68,9 @@ import com.dumbhippo.server.util.HtmlTextExtractor;
 import com.dumbhippo.services.FeedFetcher;
 import com.dumbhippo.services.FeedFetcher.FeedFetchResult;
 import com.dumbhippo.services.FeedFetcher.FetchFailedException;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxCallable;
+import com.dumbhippo.tx.TxUtils;
 import com.sun.syndication.feed.module.Module;
 import com.sun.syndication.feed.synd.SyndContent;
 import com.sun.syndication.feed.synd.SyndEntry;
@@ -81,9 +83,6 @@ public class FeedSystemBean implements FeedSystem {
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
-	
-	@EJB
-	private TransactionRunner runner;	
 	
 	@EJB
 	private IdentitySpider identitySpider;
@@ -506,7 +505,7 @@ public class FeedSystemBean implements FeedSystem {
 			//
 			Collections.reverse(newEntryIds);
 			
-			runner.runTaskOnTransactionCommit(new Runnable() {
+			TxUtils.runOnCommit(new Runnable() {
 				public void run() {
 					logger.debug("  Transaction committed, running new entry notification for {} entries", newEntryIds.size());
 					for (final long entryId : newEntryIds) {
@@ -529,7 +528,7 @@ public class FeedSystemBean implements FeedSystem {
 		return true;
 	}
 
-	public Feed scrapeFeedFromUrl(URL url) throws XmlMethodException {
+	public Feed scrapeFeedFromUrl(URL url) throws XmlMethodException, RetryException {
 		FeedScraper scraper = new FeedScraper();
 		try {
 			// This downloads the url contents, and if it's already an RSS feed then FeedSystem will do it again 
@@ -553,7 +552,7 @@ public class FeedSystemBean implements FeedSystem {
 		return feed;
 	}
 	
-	public Pair<Feed, Boolean> createFeedFromUrl(URL url, boolean validateUrl) throws XmlMethodException {
+	public Pair<Feed, Boolean> createFeedFromUrl(URL url, boolean validateUrl) throws XmlMethodException, RetryException {
 		FeedScraper scraper = new FeedScraper();
 		URL feedSource = null;
 		boolean feedFound = true;
@@ -591,7 +590,7 @@ public class FeedSystemBean implements FeedSystem {
 			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "No such feed: " + source.getUrl());
 	}
 	
-	private Feed getOrCreateFeed(final LinkResource source) throws XmlMethodException {
+	private Feed getOrCreateFeed(final LinkResource source) throws XmlMethodException, RetryException {
 		Feed feed = lookupExistingFeed(source);
 		if (feed != null) {
 			// FIXME I believe there's a problem here - this creates a polling task for any feed, while we really 
@@ -614,38 +613,31 @@ public class FeedSystemBean implements FeedSystem {
 		}
 		final SyndFeed syndFeed = syndFeedTemp;
 		
-		try {
-			return runner.runTaskThrowingConstraintViolation(new Callable<Feed>() {
-				
-				public Feed call() throws XmlMethodException {
-					Feed newFeed = lookupExistingFeed(source);
-					if (newFeed != null) // Someone else already looked it up and stored it
-						return newFeed;
-					
-					newFeed = new Feed(source);
-					em.persist(newFeed);
-						
-					if (syndFeed != null) {
-					    try {
-						    initializeFeedFromSyndFeed(newFeed, syndFeed);
-					    } catch (FeedLinkUnknownException e) {
-						    throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR,
-							   	    "The feed is missing a <link> field, " + e.getMessage());
-					    }
-					}
-					
-					pollingPersistence.createTask(PollingTaskFamilyType.FEED, newFeed.getSource().getId());
-					
+		feed = TxUtils.runNeedsRetry(new TxCallable<Feed>() {
+			public Feed call() {
+				Feed newFeed = lookupExistingFeed(source);
+				if (newFeed != null) // Someone else already looked it up and stored it
 					return newFeed;
-				}
-			});
-			
-		} catch (Exception e) {
-			if (e instanceof XmlMethodException)
-				throw (XmlMethodException) e;
-			else
-				throw new RuntimeException("Error initializing feed from download result " + source.getUrl() + ": " + e.getMessage(), e);
+				
+				newFeed = new Feed(source);
+				em.persist(newFeed);
+				
+				return newFeed;
+			}
+		});
+						
+		if (syndFeed != null) {
+		    try {
+			    initializeFeedFromSyndFeed(feed, syndFeed);
+		    } catch (FeedLinkUnknownException e) {
+			    throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR,
+				   	    "The feed is missing a <link> field, " + e.getMessage());
+		    }
 		}
+					
+		pollingPersistence.createTask(PollingTaskFamilyType.FEED, feed.getSource().getId());
+		
+		return feed;
 	}
 
 	static class UpdateFeedContext {
@@ -711,26 +703,6 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 
-	// see docs in the interface for what's going on here.
-	// This is purely to avoid logfile clutter; it isn't needed
-	// for correctness.
-	public void updateFeedInternLinks(Object contextObject) {
-		UpdateFeedContext context = (UpdateFeedContext) contextObject;
-		SyndFeed syndFeed = context.getSyndFeed();
-		for (Object o : syndFeed.getEntries()) {
-			SyndEntry syndEntry = (SyndEntry)o;
-			URL entryUrl;
-			try {
-				if (syndFeed.getLink() == null)
-					throw new MalformedURLException("missing link for synd feed");
-				entryUrl = entryURLFromSyndEntry(new URL(syndFeed.getLink()), syndEntry);
-				identitySpider.getLink(entryUrl);
-			} catch (MalformedURLException e) {
-				// just ignore, it will break later on
-			}
-		}
-	}
-	
 	public boolean storeRawUpdatedFeed(long feedId, SyndFeed syndFeed) throws FeedLinkUnknownException {
 		Feed feed = em.find(Feed.class, feedId);
 		logger.debug("  Saving feed update results in db for {}", feed.getSource());
@@ -978,8 +950,7 @@ public class FeedSystemBean implements FeedSystem {
 				feedSystem.markFeedFailedLastUpdate(feed);
 				throw new PollingTaskNormalExecutionException("Feed " + feed.getSource() + " fetch failed: " + e.getMessage(), e);
 			}
-			final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
-			changed = runner.runTaskRetryingOnDuplicateEntry(new Callable<Boolean>() {
+			changed = TxUtils.runInTransaction(new Callable<Boolean>() {
 				public Boolean call() throws PollingTaskNormalExecutionException {
 					try {
 						return feedSystem.storeRawUpdatedFeed(feed.getId(), result.getFeed());

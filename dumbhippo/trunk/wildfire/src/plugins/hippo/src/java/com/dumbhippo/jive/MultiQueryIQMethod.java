@@ -21,6 +21,7 @@ import com.dumbhippo.dm.schema.DMClassInfo;
 import com.dumbhippo.jive.annotations.IQMethod;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
 
 public class MultiQueryIQMethod<K, T extends DMObject<K>> extends QueryIQMethod {
 	static final QName FETCH_QNAME = QName.get("fetch", Namespace.get("http://mugshot.org/p/system"));
@@ -34,7 +35,7 @@ public class MultiQueryIQMethod<K, T extends DMObject<K>> extends QueryIQMethod 
 	}
 
 	@Override
-	public void doIQ(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
+	public void doIQ(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException {
 		@SuppressWarnings("unchecked")
 		Collection<? extends T> resultObjects = (Collection)invokeMethod(getParams(viewpoint, request));
 		

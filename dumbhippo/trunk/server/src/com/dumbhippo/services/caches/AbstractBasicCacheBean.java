@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
 import com.dumbhippo.ThreadUtils;
-import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.tx.TxUtils;
 
 
 /** 
@@ -75,7 +75,7 @@ public abstract class AbstractBasicCacheBean<KeyType, ResultType> extends
 		// you really don't want a transaction open unless you can assume on average we aren't doing a
 		// remote request (i.e. assuming a cache hit is likely)
 		if (alwaysRefetchEvenIfCached)
-			EJBUtil.assertNoTransaction();
+			TxUtils.assertNoTransaction();
 		
 		try {
 			if (alwaysRefetchEvenIfCached)
