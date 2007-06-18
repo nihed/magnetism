@@ -55,8 +55,14 @@ body table {
     overflow:           hidden;
 }
 
-#dhpostSwarmInfo {
-    margin-top:         -1px;
+#dhPostSwarmInfo, #dhQuipper, #dhPostJoinChat, #dhChatMessagesHeader {
+    display: none;
+    float:   left;
+}
+
+#dhShareLink {
+    display: block;
+    float:   left;
 }
 
 #dhPostChatLog {
@@ -73,11 +79,6 @@ body table {
 	padding-top:   2px;
 	padding-left:  0px;
 	padding-right: 2px;
-}
-
-#dhQuipper {
-    display: block;
-    float:   left;
 }
 
 #dhFramerClose {
@@ -106,6 +107,6 @@ body table {
 
 #dhFramerLogo {
     position:       relative;
-    bottom:         3px;
+    bottom:         4px;
     margin-right:   -1px;
 }

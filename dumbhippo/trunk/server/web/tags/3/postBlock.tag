@@ -20,7 +20,7 @@
 </c:choose>
 
 <dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" title="${block.title}" blockId="${blockId}" expandable="${!oneLine && !chatHeader}">
-	<dht3:blockLeft block="${block}" chatHeader="${chatHeader}">
+	<dht3:blockLeft block="${block}" chatHeader="${chatHeader}" oneLine="${oneLine}">
 		<dht3:simpleBlockTitle block="${block}" oneLine="${oneLine}" homeStack="false"/>
 	    <dht3:blockDescription blockId="${blockId}" literalBody="${chatHeader}">${block.postView.textAsHtml}</dht3:blockDescription>   
         <c:if test="${!oneLine && !chatHeader}">
@@ -31,7 +31,7 @@
 			</dht3:blockContent>		    
 		</c:if>
 	</dht3:blockLeft>
-	<dht3:blockRight blockId="${blockId}" from="${block.postView.poster}" showFrom="${showFrom}" chatHeader="${chatHeader}">
+	<dht3:blockRight blockId="${blockId}" from="${block.postView.poster}" showFrom="${showFrom}" chatHeader="${chatHeader}" oneLine="${oneLine}">
 		<c:if test="${!chatHeader}">
 		    <c:if test="${!oneLine}"> 
 			    <c:choose>

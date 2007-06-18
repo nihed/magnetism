@@ -8,9 +8,10 @@
 <%@ attribute name="offset" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="oneLine" required="false" type="java.lang.Boolean" %>
 
 <dht3:blockContainer cssClass="${offset ? 'dh-box-orange2' : 'dh-box-orange1'}" blockId="${blockId}">
-	<dht3:blockLeft block="${block}">
+	<dht3:blockLeft block="${block}" oneLine="${oneLine}">
 		<dht3:blockTitle>
 			<span class="dh-stacker-block-title-group-member-name"><dht3:entityLink who="${block.memberView}"/></span>
 			<c:choose>
@@ -46,7 +47,7 @@
 			</c:choose>	
 		</dht3:blockDescription>				
 	</dht3:blockLeft>
-	<dht3:blockRight blockId="${blockId}" from="${block.groupView}" showFrom="${showFrom}">
+	<dht3:blockRight blockId="${blockId}" from="${block.groupView}" showFrom="${showFrom}" oneLine="${oneLine}">
 		<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>		
 	</dht3:blockRight>
 </dht3:blockContainer>

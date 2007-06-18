@@ -18,7 +18,7 @@
 <c:choose>
 	<c:when test="${oneLine}">
 		<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}">
-		       <dht3:blockLeft block="${block}">
+		       <dht3:blockLeft block="${block}" oneLine="${oneLine}">
 	               <dht3:blockTitle>
 		       	       <c:choose>
 		       			   <c:when test="${block.quip}">
@@ -100,7 +100,7 @@
 				</dht3:blockContent>			
 			</td>
 			<td width="0%">&nbsp;</td>
-			<dht3:blockRight blockId="${blockId}" from="${block.personSource}" showFrom="${showFrom}" chatHeader="${chatHeader}">
+			<dht3:blockRight blockId="${blockId}" from="${block.personSource}" showFrom="${showFrom}" chatHeader="${chatHeader}" oneLine="${oneLine}">
 				<c:if test="${!chatHeader}">
 					<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>
 				</c:if>

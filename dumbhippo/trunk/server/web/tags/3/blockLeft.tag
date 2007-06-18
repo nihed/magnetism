@@ -5,8 +5,9 @@
 
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.blocks.BlockView" %>
 <%@ attribute name="chatHeader" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="oneLine" required="false" type="java.lang.Boolean" %>
 
-<td align="left" valign="top" width="${chatHeader ? 70 : 75}%">
+<td align="left" valign="top" width="${chatHeader ? 70 : (oneLine ? 80 : 75)}%">
 <table cellspacing="0" cellpadding="0" width="100%">
 <tr>
 <td valign="top" class="dh-stacker-block-icon-column"><dh:png klass="dh-stacker-block-icon" src="${block.icon}" style="width: 16; height: 16; border: none;"/></td>

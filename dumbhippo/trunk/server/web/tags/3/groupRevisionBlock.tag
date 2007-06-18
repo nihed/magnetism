@@ -14,7 +14,7 @@
 <c:set var="cssClass" value="dh-box-${chatHeader ? 'grey' : 'orange'}${offset ? 2 : 1}"/>
 
 <dht3:blockContainer cssClass="${cssClass}" blockId="${blockId}" title="Change to ${block.groupView.name}" expandable="${!oneLine && !chatHeader && (!empty block.chatId || block.messageCount > 0)}">
-	<dht3:blockLeft block="${block}" chatHeader="${chatHeader}">
+	<dht3:blockLeft block="${block}" chatHeader="${chatHeader}" oneLine="${oneLine}">
 		<dht3:blockTitle>
 		    <c:choose>
 		        <c:when test="${block.revisorView.mugshotCharacter && dh:enumIs(block.revision.type, 'GROUP_MEMBERSHIP_POLICY_CHANGED')}">
@@ -45,7 +45,7 @@
 			</dht3:blockContent>		    
 		</c:if>
 	</dht3:blockLeft>
-	<dht3:blockRight blockId="${blockId}" from="${block.entitySource}" showFrom="${showFrom}" chatHeader="${chatHeader}">
+	<dht3:blockRight blockId="${blockId}" from="${block.entitySource}" showFrom="${showFrom}" chatHeader="${chatHeader}" oneLine="${oneLine}">
         <c:if test="${!oneLine}">  	
 		    <div class="dh-stacker-block-sent-to">
 			    change to <dht3:entityLink who="${block.groupView}"/>

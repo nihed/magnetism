@@ -28,7 +28,7 @@
    	<dht3:stylesheet name="chatwindow" iefixes="true"/>	
 	<dht3:stylesheet name="framer" iefixes="true" lffixes="true"/>			
 	<dht:faviconIncludes/>
-    <dh:script modules="dh.actions,dh.framer"/>
+    <dh:script modules="dh.actions,dh.framer,dh.control"/>
 	<script type="text/javascript">
    	dh.framer.setSelfId("${framer.signin.userId}")
    	dh.framer.chatId = "${framer.post.post.id}"
@@ -52,7 +52,24 @@
 		dh.framer.currentMessageCount = "${framer.block.messageCount}";
 		// we decided not to include the title in the framer quip popup
 		// dh.framer.title = <dh:jsString value="${framer.block.title}"/>;
+		dh.framer.preparedMessages = new Array();
+		dh.framer.haveChatUri = ${!empty joinChatUri};
 	</script>
+	<c:forEach items="${framer.block.recentMessages}" end="3" var="msg" varStatus="status">    
+	    <script type="text/javascript">
+	        var entity = new dh.control.Entity(<dh:jsString value="${msg.senderView.identifyingGuid}"/>); 
+	        entity.setName(<dh:jsString value="${msg.senderView.name}"/>);	 
+
+	        var sentiment = dh.control.SENTIMENT_INDIFFERENT;
+	        if (${dh:enumIs(msg.msg.sentiment, 'LOVE')})
+	            sentiment = dh.control.SENTIMENT_LOVE;
+	        else if (${dh:enumIs(msg.msg.sentiment, 'HATE')}) 
+	            sentiment = dh.control.SENTIMENT_HATE;           
+
+		    var message = new dh.control.ChatMessage(entity, <dh:jsString value="${msg.msg.messageText}"/>, sentiment, ${msg.msg.timestamp.time}, ${msg.msg.id});                                      
+		    dh.framer.preparedMessages[${status.index}] = message;  
+		</script>      
+	</c:forEach>
 </head>	
 
 <body onload="dh.framer.init()" onresize="dh.framer.updateWidth()">
@@ -69,7 +86,10 @@
                 <div id="dhPostChatLog">
                     <div id="dhQuipper">
                         <dht3:quipper blockId="${framer.block.identifyingGuid}" block="${framer.block}"/>
-                    </div>
+                    </div>   
+                    <div id="dhChatMessagesHeader">
+                        Recent chat messages:
+                    </div>   
                     <c:if test="${!param.browserBar}"> 
                         <div id="dhFramerClose">
                             <a href="javascript:dh.framer.removeFrame();"><img src="/images3/${buildStamp}/x-close.png"/></a>
@@ -82,10 +102,12 @@
 				<table id="dhFramerActions" cellpadding="0" cellspacing="0">
 				    <tr>
 				       <td align="left" valign="top">
-			                <c:if test="${!empty joinChatUri}">
-				                <a id="dhPostJoinChat" href="${joinChatUri}">All quips (<span id="dhQuipsCount">${framer.block.messageCount}</span>)</a> |
-				            </c:if>
-				            <a href="javascript:dh.framer.openForwardWindow();">Share this</a>                 
+				            <span id="dhPostJoinChat">
+				                <a href="${joinChatUri}">All quips (<span id="dhQuipsCount">${framer.block.messageCount}</span>)</a> |&nbsp; 
+                            </span> 
+				            <c:if test="${signin.valid}">
+				                <a id="dhShareLink" href="javascript:dh.framer.openForwardWindow();">Share this</a>  
+				            </c:if>                   
                        </td>     	
                        <td align="right" valign="bottom">
                            <a id="dhFramerLogo" href="javascript:dh.framer.goHome();"><img src="/images3/${buildStamp}/mugshot_68x16.png"/></a>     

@@ -15,7 +15,7 @@
 <%-- with them --%>
 
 <dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${(block.thumbnails.thumbnailCount > 0) && !oneLine}">
-	<dht3:blockLeft block="${block}">
+	<dht3:blockLeft block="${block}" oneLine="${oneLine}">
 	    <dht3:simpleBlockTitle block="${block}" oneLine="${oneLine}" homeStack="${homeStack}"/>
 	    <dht3:blockDescription blockId="${blockId}">
 	    </dht3:blockDescription>
@@ -23,7 +23,7 @@
 	        <dht3:blockThumbnails block="${block}"/> 
 	    </dht3:blockContent>			
 	</dht3:blockLeft>
-	<dht3:blockRight blockId="${blockId}" from="${block.personSource}" showFrom="${showFrom}">
+	<dht3:blockRight blockId="${blockId}" from="${block.personSource}" showFrom="${showFrom}" oneLine="${oneLine}">
 		<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>
 		<dht3:blockControls blockId="${blockId}">
 			&nbsp; <%-- http://bugzilla.mugshot.org/show_bug.cgi?id=1019 --%>

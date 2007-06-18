@@ -9,10 +9,11 @@
 <%@ attribute name="from" required="true" type="com.dumbhippo.server.views.EntityView" %>
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="chatHeader" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="oneLine" required="false" type="java.lang.Boolean" %>
 
 <c:set var="imageSize" value="${chatHeader ? 60 : 30}"/>
 
-<td align="right" valign="top" id="dhStackerBlockRightContainer-${blockId}" class="dh-stacker-block-right-container" width="${chatHeader ? 30 : 25}%">
+<td align="right" valign="top" id="dhStackerBlockRightContainer-${blockId}" class="dh-stacker-block-right-container" width="${chatHeader ? 30 : (oneLine ? 20 : 25)}%">
 <div class="dh-stacker-block-right-container-inner">
 	<table cellspacing="0" cellpadding="0" class="dh-stacker-block-right-container-inner-table">
 	<tr>
