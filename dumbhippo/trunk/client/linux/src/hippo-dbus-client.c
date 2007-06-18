@@ -214,6 +214,8 @@ hippo_dbus_show_browser_blocking(const char   *server,
                                   DBUS_TYPE_INVALID))
         g_error("out of memory");                                  
 
+    g_debug("Sending ShowBrowser to %s", bus_name);
+
     dbus_error_init(&derror);
     reply = dbus_connection_send_with_reply_and_block(connection, message, -1,
                                                       &derror);
@@ -231,6 +233,7 @@ hippo_dbus_show_browser_blocking(const char   *server,
 
   out:
     /* any cleanup goes here */
+    g_free(bus_name);
 
     return result;
 }

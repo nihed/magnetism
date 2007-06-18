@@ -10,7 +10,6 @@
 #include "hippo-dbus-client.h"
 #include "hippo-dbus-contacts.h"
 #include "hippo-dbus-cookies.h"
-#include "hippo-dbus-helper.h"
 #include "hippo-dbus-im.h"
 #include "hippo-dbus-model.h"
 #include "hippo-dbus-mugshot.h"
@@ -248,6 +247,13 @@ hippo_dbus_try_to_acquire(const char  *server,
     old_bus_name = hippo_dbus_full_bus_name_old(server);
     if (!acquire_bus_name(connection, server, replace_existing, old_bus_name, error)) {
         /* FIXME leak bus connection since unref isn't allowed */
+
+        /* We need to give up the new bus name because we call ShowBrowser on
+         * it in main.c if we fail to get both names, which deadlocks if
+         * we own the new name
+         */
+        dbus_bus_release_name(connection, bus_name, NULL);
+        
         g_free(old_bus_name);
         g_free(bus_name);
         return NULL;
@@ -1752,10 +1758,7 @@ handle_message(DBusConnection     *connection,
     cache = hippo_app_get_data_cache(hippo_get_app());
     xmpp_connection = hippo_data_cache_get_connection(cache);
 
-    result = hippo_dbus_helper_filter_message(connection, message);
-    if (result == DBUS_HANDLER_RESULT_HANDLED) {
-        ; /* we're done, something registered with the helper did the work */
-    } else if (type == DBUS_MESSAGE_TYPE_METHOD_CALL) {
+    if (type == DBUS_MESSAGE_TYPE_METHOD_CALL) {
         const char *sender = dbus_message_get_sender(message);
         const char *interface = dbus_message_get_interface(message);
         const char *member = dbus_message_get_member(message);
@@ -1956,8 +1959,9 @@ handle_message(DBusConnection     *connection,
     } else if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
         hippo_dbus_debug_log_error("main connection handler", message);
     } else {
-        g_debug("got message type %s\n", 
-                dbus_message_type_to_string(type));    
+        /* g_debug("got message type %s\n", 
+           dbus_message_type_to_string(type));    */
+        ;
     }
     
     if (dbus)

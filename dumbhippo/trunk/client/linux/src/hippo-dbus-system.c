@@ -166,8 +166,9 @@ handle_message(DBusConnection     *connection,
     } else if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
         hippo_dbus_debug_log_error("main connection handler", message);
     } else {
-        g_debug("got message type %s\n", 
-                dbus_message_type_to_string(type));    
+        /* g_debug("got message type %s\n", 
+           dbus_message_type_to_string(type));    */
+        ;
     }
         
     return result;

@@ -16,8 +16,9 @@ typedef enum {
 } HippoDBusMemberType;
 
 typedef struct HippoDBusMember HippoDBusMember;
-
 typedef struct HippoDBusProperty HippoDBusProperty;
+typedef struct HippoDBusServiceTracker HippoDBusServiceTracker;
+typedef struct HippoDBusSignalTracker HippoDBusSignalTracker;
 
 typedef DBusMessage* (* HippoDBusHandler) (void            *object,
                                            DBusMessage     *message,
@@ -30,6 +31,21 @@ typedef dbus_bool_t (* HippoDBusSetter)   (void            *object,
                                            const char      *prop_name,
                                            DBusMessageIter *value_iter,
                                            DBusError       *error);
+
+typedef void (* HippoDBusServiceAvailableHandler)   (DBusConnection *connection,
+                                                     const char     *well_known_name,
+                                                     const char     *unique_name,
+                                                     void           *data);
+typedef void (* HippoDBusServiceUnavailableHandler) (DBusConnection *connection,
+                                                     const char     *well_known_name,
+                                                     const char     *unique_name,
+                                                     void           *data);
+/* if we were ever "productizing" this file, signal handlers should really be on
+ * the DBusProxy objects or something, not on the service like this
+ */
+typedef void (* HippoDBusSignalHandler)             (DBusConnection *connection,
+                                                     DBusMessage    *message,
+                                                     void           *data);
 
 struct HippoDBusMember
 {
@@ -51,6 +67,19 @@ struct HippoDBusProperty
     HippoDBusSetter setter;
 };
 
+struct HippoDBusServiceTracker
+{
+    HippoDBusServiceAvailableHandler available_handler;
+    HippoDBusServiceUnavailableHandler unavailable_handler;
+};
+
+struct HippoDBusSignalTracker
+{
+    const char *interface;
+    const char *signal;
+    HippoDBusSignalHandler handler;
+};
+
 void              hippo_dbus_helper_register_interface   (DBusConnection          *connection,
                                                           const char              *name,
                                                           const HippoDBusMember   *members,
@@ -69,8 +98,6 @@ void              hippo_dbus_helper_unregister_object    (DBusConnection        
                                                           const char              *path);
 gboolean          hippo_dbus_helper_object_is_registered (DBusConnection          *connection,
                                                           const char              *path);
-DBusHandlerResult hippo_dbus_helper_filter_message       (DBusConnection          *connection,
-                                                          DBusMessage             *message);
 void              hippo_dbus_helper_emit_signal          (DBusConnection          *connection,
                                                           const char              *path,
                                                           const char              *interface,
@@ -84,6 +111,15 @@ void              hippo_dbus_helper_emit_signal_valist   (DBusConnection        
                                                           int                      first_arg_type,
                                                           va_list                  args);
 
+void hippo_dbus_helper_register_service_tracker   (DBusConnection                *connection,
+                                                   const char                    *well_known_name,
+                                                   const HippoDBusServiceTracker *tracker,
+                                                   const HippoDBusSignalTracker  *signal_handlers,
+                                                   void                          *data);
+void hippo_dbus_helper_unregister_service_tracker (DBusConnection                *connection,
+                                                   const char                    *well_known_name,
+                                                   const HippoDBusServiceTracker *tracker,
+                                                   void                          *data);
 
 typedef struct HippoDBusProxy HippoDBusProxy;
 

@@ -18,12 +18,25 @@ typedef struct {
 } HippoDBusObject;
 
 typedef struct {
+    char *well_known_name;
+    char *owner;
+    void *data;
+    const HippoDBusServiceTracker *tracker;
+    const HippoDBusSignalTracker  *signal_handlers;
+} HippoDBusService;
+
+typedef struct {
     GHashTable *interfaces;
+    GHashTable *services_by_well_known;
+    GHashTable *services_by_owner;
 } HippoDBusHelper;
 
 static DBusHandlerResult hippo_dbus_helper_handle_object_message(DBusConnection  *connection,
                                                                  DBusMessage     *message,
                                                                  HippoDBusObject *object);
+static DBusHandlerResult hippo_dbus_helper_filter_message       (DBusConnection  *connection,
+                                                                 DBusMessage     *message,
+                                                                 void            *data);
 
 static HippoDBusInterface*
 iface_new(const char              *name,
@@ -171,6 +184,8 @@ helper_free(void *data)
 
     /* FIXME free the hash contents */
 
+    g_hash_table_destroy(helper->services_by_well_known);
+    g_hash_table_destroy(helper->services_by_owner);
     g_hash_table_destroy(helper->interfaces);
     g_free(helper);
 }
@@ -191,7 +206,15 @@ get_helper(DBusConnection *connection)
         helper = g_new0(HippoDBusHelper, 1);
         helper->interfaces = g_hash_table_new(g_str_hash, g_str_equal);
 
+        helper->services_by_well_known = g_hash_table_new(g_str_hash, g_str_equal);
+        helper->services_by_owner = g_hash_table_new(g_str_hash, g_str_equal);
+        
         dbus_connection_set_data(connection, slot, helper, helper_free);
+
+        if (!dbus_connection_add_filter(connection,
+                                        hippo_dbus_helper_filter_message,
+                                        NULL, NULL))
+            g_error("no memory adding dbus helper connection filter");
     }
 
     return helper;
@@ -877,14 +900,6 @@ hippo_dbus_helper_handle_object_message(DBusConnection  *connection,
     }
 }
 
-DBusHandlerResult
-hippo_dbus_helper_filter_message(DBusConnection *connection,
-                                 DBusMessage    *message)
-{
-    /* Everything we do now is on a specific registered object */
-    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-}
-
 void
 hippo_dbus_helper_emit_signal_valist(DBusConnection          *connection,
                                      const char              *path,
@@ -940,6 +955,325 @@ hippo_dbus_helper_emit_signal(DBusConnection          *connection,
     hippo_dbus_helper_emit_signal_valist(connection, path, interface, signal_name,
                                          first_arg_type, args);
     va_end(args);
+}
+
+static HippoDBusService*
+service_new(const char                    *well_known_name,
+            const HippoDBusServiceTracker *tracker,
+            const HippoDBusSignalTracker  *signal_handlers,
+            void                          *data)
+{
+    HippoDBusService *service;
+
+    service = g_new0(HippoDBusService, 1);
+    service->well_known_name = g_strdup(well_known_name);
+    service->tracker = tracker;
+    service->signal_handlers = signal_handlers;
+    service->data = data;
+
+    return service;
+}
+
+static void
+service_free(HippoDBusService *service)
+{
+    g_free(service->well_known_name);
+    g_free(service->owner);
+    g_free(service);
+}
+
+static void
+set_signal_handlers_matched(DBusConnection                *connection,
+                            const char                    *bus_name,
+                            const HippoDBusSignalTracker  *signal_handlers,
+                            gboolean                       matched)
+{
+    int i;
+
+    for (i = 0; signal_handlers[i].interface != NULL; ++i) {
+        char *s;
+        
+        s = g_strdup_printf("type='signal',sender='"
+                            "%s"
+                            "',interface='"
+                            "%s"
+                            "',member='"
+                            "%s"
+                            "'",
+                            bus_name,
+                            signal_handlers[i].interface,
+                            signal_handlers[i].signal);
+        
+        /* Since we don't ask for the error, this should be async (not block) */
+        if (matched)
+            dbus_bus_add_match(connection, s, NULL);
+        else
+            dbus_bus_remove_match(connection, s, NULL);
+
+        g_free(s);
+    }
+}
+
+static void
+set_owner_matched(DBusConnection *connection,
+                  const char     *bus_name,
+                  gboolean        matched)
+{
+    char *s;
+    
+    s = g_strdup_printf("type='signal',sender='"
+                        DBUS_SERVICE_DBUS
+                        "',interface='"
+                        DBUS_INTERFACE_DBUS
+                        "',member='"
+                        "NameOwnerChanged"
+                        "',arg0='%s'",
+                        bus_name);
+    
+    /* this is nonblocking since we don't ask for errors */
+    if (matched)
+        dbus_bus_add_match(connection,
+                           s, NULL);
+    else
+        dbus_bus_remove_match(connection, s, NULL);
+    
+    g_free(s);
+}
+
+static void
+handle_name_owner_changed(DBusConnection *connection,
+                          const char     *well_known_name,
+                          /* old and new may be NULL */
+                          const char     *old_owner,
+                          const char     *new_owner)
+{
+    HippoDBusHelper *helper;
+    HippoDBusService *service;
+    
+    helper = get_helper(connection); 
+   
+    service = g_hash_table_lookup(helper->services_by_well_known, well_known_name);
+    if (service == NULL)
+        return; /* we don't care about this */
+
+    if (service->owner &&
+        (new_owner == NULL ||
+         strcmp(service->owner, new_owner) != 0)) {
+        /* Our previously-believed owner is going away */
+        char *owner;
+        
+        g_hash_table_remove(helper->services_by_owner,
+                            service->owner);
+        owner = service->owner;
+        service->owner = NULL;
+
+        g_debug("Service '%s' is now unavailable, old owner was '%s'",
+                service->well_known_name,
+                owner);
+        (* service->tracker->unavailable_handler) (connection,
+                                                   service->well_known_name,
+                                                   owner,
+                                                   service->data);
+        g_free(owner);
+    }
+
+    if (service->owner == NULL && new_owner) {
+        service->owner = g_strdup(new_owner);
+        /* We had no owner and now we do */
+        
+        g_hash_table_replace(helper->services_by_owner,
+                             service->owner, service);
+
+        g_debug("Service '%s' is now available, new owner is '%s'",
+                service->well_known_name,
+                service->owner);
+        
+        (* service->tracker->available_handler) (connection,
+                                                 service->well_known_name,
+                                                 service->owner,
+                                                 service->data);
+    }
+}
+
+typedef struct {
+    DBusConnection *connection;
+    char *well_known_name;
+} GetOwnerData;
+
+static GetOwnerData*
+get_owner_data_new(DBusConnection *connection,
+                   const char     *well_known_name)
+{
+    GetOwnerData *god;
+    god = g_new0(GetOwnerData, 1);
+    god->connection = connection;
+    god->well_known_name = g_strdup(well_known_name);
+    dbus_connection_ref(connection);
+
+    return god;
+}
+
+static void
+get_owner_data_free(GetOwnerData *god)
+{
+    dbus_connection_unref(god->connection);
+    g_free(god->well_known_name);
+    g_free(god);
+}
+
+static void
+on_get_owner_reply(DBusPendingCall *pending,
+                   void            *user_data)
+{
+    DBusMessage *reply;
+    GetOwnerData *god;
+
+    god = user_data;
+    
+    reply = dbus_pending_call_steal_reply(pending);
+    if (reply == NULL) {
+        g_warning("NULL reply in on_get_owner_reply?");
+        return;
+    }
+    
+    if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_METHOD_RETURN) {
+        const char *v_STRING = NULL;
+        if (!dbus_message_get_args(reply, NULL,
+                                   DBUS_TYPE_STRING, &v_STRING,
+                                   DBUS_TYPE_INVALID)) {
+            g_debug("GetNameOwner has wrong args '%s'",
+                    dbus_message_get_signature(reply));
+        } else {
+            g_debug("Got name owner '%s' for '%s'",
+                    v_STRING, god->well_known_name);
+            if (*v_STRING == '\0')
+                v_STRING = NULL;
+
+            handle_name_owner_changed(god->connection,
+                                      god->well_known_name,
+                                      NULL,
+                                      v_STRING);
+        }
+    }
+    
+    dbus_message_unref(reply);
+}
+
+void
+hippo_dbus_helper_register_service_tracker (DBusConnection                *connection,
+                                            const char                    *well_known_name,
+                                            const HippoDBusServiceTracker *tracker,
+                                            const HippoDBusSignalTracker  *signal_handlers,
+                                            void                          *data)
+{
+    HippoDBusHelper *helper;
+    HippoDBusService *service;
+    DBusPendingCall *call;
+    DBusMessage *get_owner;
+    
+    helper = get_helper(connection);
+
+    /* multiple registrations for the same name isn't allowed for now */
+    g_return_if_fail(g_hash_table_lookup(helper->services_by_well_known, well_known_name) == NULL);
+    
+    service = service_new(well_known_name, tracker, signal_handlers, data);
+
+    g_hash_table_replace(helper->services_by_well_known, service->well_known_name, service);
+
+    set_signal_handlers_matched(connection, well_known_name, signal_handlers, TRUE);
+
+    set_owner_matched(connection, well_known_name, TRUE);
+
+    /* Initially get the owner */
+
+    get_owner = dbus_message_new_method_call(DBUS_SERVICE_DBUS, DBUS_PATH_DBUS,
+                                             DBUS_INTERFACE_DBUS,
+                                             "GetNameOwner");
+    if (get_owner == NULL)
+        g_error("out of memory");
+    if (!dbus_message_append_args(get_owner, DBUS_TYPE_STRING, &well_known_name,
+                                  DBUS_TYPE_INVALID))
+        g_error("out of memory");
+    
+    call = NULL;               
+    dbus_connection_send_with_reply(connection, get_owner, &call, -1);
+    if (call != NULL) {
+        if (!dbus_pending_call_set_notify(call, on_get_owner_reply,
+                                          get_owner_data_new(connection, well_known_name),
+                                          (DBusFreeFunction) get_owner_data_free))
+            g_error("out of memory");
+        
+        /* rely on connection to hold a reference to it, if finalized
+         * I think on_get_song_props_reply won't get called though, 
+         * which is fine currently
+         */
+        dbus_pending_call_unref(call);        
+    }
+}
+
+void
+hippo_dbus_helper_unregister_service_tracker (DBusConnection                *connection,
+                                              const char                    *well_known_name,
+                                              const HippoDBusServiceTracker *tracker,
+                                              void                          *data)
+{
+    HippoDBusHelper *helper;
+    HippoDBusService *service;
+    
+    helper = get_helper(connection);
+
+    service = g_hash_table_lookup(helper->services_by_well_known, well_known_name);
+    g_return_if_fail(service != NULL);
+    if (service->tracker != tracker) {
+        g_warning("Multiple registered trackers for same service doesn't work yet");
+        return;
+    }
+    
+    set_signal_handlers_matched(connection, well_known_name, service->signal_handlers, FALSE);
+    set_owner_matched(connection, well_known_name, FALSE);
+    
+    if (service->owner)
+        g_hash_table_remove(helper->services_by_owner, service->owner);
+    g_hash_table_remove(helper->services_by_well_known, service->well_known_name);
+
+    if (service->owner) {
+        (* service->tracker->unavailable_handler) (connection,
+                                                   service->well_known_name,
+                                                   service->owner,
+                                                   service->data);
+    }
+
+    service_free(service);
+}
+
+static DBusHandlerResult
+hippo_dbus_helper_filter_message(DBusConnection *connection,
+                                 DBusMessage    *message,
+                                 void           *data)
+{
+    if (dbus_message_is_signal(message, DBUS_INTERFACE_DBUS, "NameOwnerChanged") &&
+        dbus_message_has_sender(message, DBUS_SERVICE_DBUS)) {
+        const char *name = NULL;
+        const char *old = NULL;
+        const char *new = NULL;
+        if (dbus_message_get_args(message, NULL,
+                                  DBUS_TYPE_STRING, &name,
+                                  DBUS_TYPE_STRING, &old,
+                                  DBUS_TYPE_STRING, &new,
+                                  DBUS_TYPE_INVALID)) {
+            g_debug("helper.c NameOwnerChanged %s '%s' -> '%s'", name, old, new);
+            if (*old == '\0')
+                old = NULL;
+            if (*new == '\0')
+                new = NULL;
+            
+            handle_name_owner_changed(connection, name, old, new);
+        } else {
+            g_warning("NameOwnerChanged had wrong args???");
+        }
+    }
+    
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
 struct HippoDBusProxy {
