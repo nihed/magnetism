@@ -281,9 +281,22 @@ dh.framer._removeMessage = function(message) {
 	    messageNameDiv.parentNode.removeChild(messageNameDiv)
 	    messageNameDiv = null;
 	}
+    dh.framer.updateFramerActionsHeight();
 }
 
 dh.framer._addUser = function(user, before, participant) {
+    // if you can see who's around, you are connected and can quip
+    var swarm = document.getElementById('dhPostSwarmInfo');
+    if ((!swarm.style.display || swarm.style.display == 'none') && dh.framer.haveChatUri) {
+        swarm.style.display = "block";
+        document.getElementById('dhChatMessagesHeader').style.display = "none";
+    	document.getElementById('dhQuipper').style.display = "block";
+	    document.getElementById('dhPostJoinChat').style.display = "block";
+	    document.getElementById('dhFramerLogo').style.bottom = 3;
+        dh.framer.updateFramerActionsHeight();  	    
+        dh.chatinput.init();
+    }
+   
     var userUrl = "/person?who=" + user.getId();
     var userElement = dh.util.createLinkElement(userUrl, user.getName());
             
@@ -373,7 +386,7 @@ dh.framer._onMessage = function(message) {
 dh.framer._onReconnect = function() {
     dh.framer.currentMessageCount = dh.framer.initialMessageCount;
 }
-	
+		
 dh.framer.init = function() {	
     
     dh.framer.messagesInitialized = false;
@@ -398,38 +411,30 @@ dh.framer.init = function() {
 	dojo.event.connect(this._chatRoom, "onMessage", this, "_onMessage")
 	dojo.event.connect(this._chatRoom, "onReconnect", this, "_onReconnect")
 	
-	this._messageList = new dh.chat.MessageList(
-		this._chatRoom,
-		function(message, before) { dh.framer._addMessage(message, before) },
-		function(message) { dh.framer._removeMessage(message) },
-		4,
-		true);
-		
 	this._userList = new dh.chat.UserList(
 		this._chatRoom,
 		function(user, before, participant) { dh.framer._addUser(user, before, true) },
 		function(user) { dh.framer._removeUser(user) },
 		function(user) { dh.framer._updateUser(user) },
 		function(user, participant) { return true });
+		
+	this._messageList = new dh.chat.MessageList(
+		this._chatRoom,
+		function(message, before) { dh.framer._addMessage(message, before) },
+		function(message) { dh.framer._removeMessage(message) },
+		4,
+		true);
 
 	this._chatRoom.join(false)
-	
-	dh.chatinput.init();
-	
-	if (!dh.control.control.haveLiveChat()) {
-		// NOTE this is currently partially handled in the jsp, where 
-		// we have non-activex fallbacks sometimes. So be careful.
-		
-    	document.getElementById("dhPostSwarmInfo").style.visibility = "hidden"
-    	document.getElementById("dhPostChatLog").style.visibility = "hidden"
-    	// there's a fallback for this at least part of the time
-    	// var joinChat = document.getElementById("dhPostJoinChat")
-    	// if (joinChat)
-	    //	joinChat.style.display = "none"
-    } else {
-	   	setTimeout(dh.framer.updateTimes, 60 * 1000);
-   	}
    	
+   	if (dh.framer.preparedMessages.length > 0)
+   	    document.getElementById('dhChatMessagesHeader').style.display = "block";
+   	    
+   	for (var i = 0; i < dh.framer.preparedMessages.length; ++i) {
+	   	this._chatRoom.onMessage(dh.framer.preparedMessages[i]);
+	}
+   	
+   	setTimeout(dh.framer.updateTimes, 60 * 1000);
    	// we decided not to include the title in the framer quip popup
    	// var quipper = document.getElementById("dhQuipper");
 	// quipper.dhTitle = dh.framer.title;

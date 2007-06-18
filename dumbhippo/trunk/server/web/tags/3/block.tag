@@ -31,7 +31,7 @@
    		<dht3:groupChatBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" chatHeader="${chatHeader}" oneLine="${oneLine}"/>
    	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'GROUP_MEMBER')}">
-   		<dht3:groupMemberBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>
+   		<dht3:groupMemberBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
    	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'FACEBOOK_EVENT')}">
 	   	<dht3:facebookBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}" homeStack="${homeStack}"/>
