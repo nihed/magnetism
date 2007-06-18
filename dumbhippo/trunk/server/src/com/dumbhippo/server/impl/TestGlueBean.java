@@ -24,6 +24,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.TestGlue;
 import com.dumbhippo.server.TestGlueRemote;
+import com.dumbhippo.tx.RetryException;
 
 /**
  * @author hp
@@ -73,6 +74,8 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 			EmailResource resource;
 			try {
 				resource = identitySpider.getEmail(e);
+			} catch (RetryException e1) {
+				throw new RuntimeException(e1);
 			} catch (ValidationException e1) {
 				resource = null;
 			}

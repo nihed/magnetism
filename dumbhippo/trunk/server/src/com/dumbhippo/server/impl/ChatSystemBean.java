@@ -53,6 +53,7 @@ import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
 
 @Stateless
 public class ChatSystemBean implements ChatSystem {
@@ -475,7 +476,7 @@ public class ChatSystemBean implements ChatSystem {
 		throw new IllegalArgumentException("Bad chat room type");
 	}
 
-	public void addChatRoomMessage(Guid roomGuid, ChatRoomKind kind, Guid userId, String text, Sentiment sentiment, Date timestamp) {
+	public void addChatRoomMessage(Guid roomGuid, ChatRoomKind kind, Guid userId, String text, Sentiment sentiment, Date timestamp) throws RetryException {
 		User fromUser = getUserFromGuid(userId);
 		UserViewpoint viewpoint = new UserViewpoint(fromUser);
 		Block block;

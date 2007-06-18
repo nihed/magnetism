@@ -1,7 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.util.concurrent.Callable;
-
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -11,7 +9,6 @@ import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.NoMail;
@@ -21,7 +18,9 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NoMailSystem;
-import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxCallable;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class NoMailSystemBean implements NoMailSystem {
@@ -34,9 +33,6 @@ public class NoMailSystemBean implements NoMailSystem {
 
 	@EJB
 	private IdentitySpider identitySpider;
-	
-	@EJB
-	private TransactionRunner runner;
 	
 	@EJB
 	private Configuration config;
@@ -54,33 +50,26 @@ public class NoMailSystemBean implements NoMailSystem {
 		}
 	}
 	
-	public void processAction(final EmailResource email, Action action) {
-		NoMail noMail;
-		try {
-			noMail = runner.runTaskThrowingConstraintViolation(new Callable<NoMail>() {
-
-				public NoMail call() {
-					Query q;
-					
-					q = em.createQuery("from NoMail t where t.email = :email");
-					q.setParameter("email", email);
-					
-					NoMail result;
-					try {
-						result = (NoMail) q.getSingleResult();
-					} catch (NoResultException e) {
-						result = new NoMail(email);
-						em.persist(result);
-					}
-					
-					return result;
+	public void processAction(final EmailResource email, Action action) throws RetryException {
+		NoMail noMail = TxUtils.runNeedsRetry(new TxCallable<NoMail>() {
+			public NoMail call() {
+				Query q;
+				
+				q = em.createQuery("from NoMail t where t.email = :email");
+				q.setParameter("email", email);
+				
+				NoMail result;
+				try {
+					result = (NoMail) q.getSingleResult();
+				} catch (NoResultException e) {
+					result = new NoMail(email);
+					em.persist(result);
 				}
 				
-			});
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			return; // not reached
-		}
+				return result;
+			}
+			
+		});
 		
 		if (action == Action.TOGGLE_MAIL)
 			noMail.setMailEnabled(!noMail.getMailEnabled());
@@ -91,43 +80,37 @@ public class NoMailSystemBean implements NoMailSystem {
 	}
 
 
-	public String getNoMailUrl(String address, Action action) throws ValidationException {
+	public String getNoMailUrl(String address, Action action) throws ValidationException, RetryException {
 		EmailResource email = identitySpider.getEmail(address);
 		return getNoMailUrl(email, action);
 	}
 	
-	public String getNoMailUrl(final EmailResource email, Action action) {
-		ToggleNoMailToken token;
-		try {
-			token = runner.runTaskThrowingConstraintViolation(new Callable<ToggleNoMailToken>() {
-
-				public ToggleNoMailToken call() {
-					Query q;
-					
-					q = em.createQuery("from ToggleNoMailToken t where t.email = :email");
-					q.setParameter("email", email);
-					
-					ToggleNoMailToken token;
-					try {
-						token = (ToggleNoMailToken) q.getSingleResult();
-						if (token.isExpired()) {
-							em.remove(token);
-							em.flush(); // Sync to database before creating a new token
-							throw new NoResultException("found expired nomail token, making a new one");
-						}
-					} catch (NoResultException e) {
-						token = new ToggleNoMailToken(email);
-						em.persist(token);
+	public String getNoMailUrl(final EmailResource email, Action action) throws RetryException {
+		ToggleNoMailToken token = TxUtils.runNeedsRetry(new TxCallable<ToggleNoMailToken>() {
+			public ToggleNoMailToken call() {
+				Query q;
+				
+				q = em.createQuery("from ToggleNoMailToken t where t.email = :email");
+				q.setParameter("email", email);
+				
+				ToggleNoMailToken token;
+				try {
+					token = (ToggleNoMailToken) q.getSingleResult();
+					if (token.isExpired()) {
+						em.remove(token);
+						em.flush(); // Sync to database before creating a new token
+						throw new NoResultException("found expired nomail token, making a new one");
 					}
-					
-					return token;
+				} catch (NoResultException e) {
+					token = new ToggleNoMailToken(email);
+					em.persist(token);
 				}
 				
-			});
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			return null; // not reached
-		}
+				return token;
+			}
+			
+		});
+
 		return getNoMailUrl(token, action);
 	}
 

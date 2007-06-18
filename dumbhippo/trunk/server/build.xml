@@ -189,6 +189,7 @@
 				<include name="**/server/**/*.class" />
 				<include name="**/server/**/*.properties" />
 				<include name="**/statistics/**/*.class" />
+				<include name="**/tx/**/*.class" />
 				<include name="**/views/**/*.class" />
 			</fileset>
 			<manifest>
@@ -386,7 +387,6 @@
 				<include name="**/dumbhippo/*.properties" />
 				<include name="**/jms/**/*.class" />
 				<include name="**/botcom/**/*.class" />
-				<include name="**/xmppcom/**/*.class" />
 				<include name="**/identity20/**/*.class" />
 				<include name="**/persistence/**/*.class" />
 				<!-- server+util but not server/impl -->
@@ -401,6 +401,7 @@
 				<include name="**/server/listeners/*.class" />	
 				<include name="**/server/util/*.class" />
 				<include name="**/server/views/*.class" />
+				<include name="**/tx/**/*.class" />
 			</fileset>
 		</jar>
 	</target>

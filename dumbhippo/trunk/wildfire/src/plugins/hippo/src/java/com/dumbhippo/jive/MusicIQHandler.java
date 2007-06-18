@@ -8,27 +8,21 @@ import java.util.Map;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.IQHandlerInfo;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
 
-import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.jive.rooms.RoomHandler;
+import com.dumbhippo.jive.annotations.IQHandler;
+import com.dumbhippo.jive.annotations.IQMethod;
 import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
 
-public class MusicIQHandler extends AbstractIQHandler {
+@IQHandler(namespace=MusicIQHandler.MUSIC_NAMESPACE)
+public class MusicIQHandler extends AnnotatedIQHandler {
+	static final String MUSIC_NAMESPACE = "http://dumbhippo.com/protocol/music";
 
-	private IQHandlerInfo info;
-	
-	public MusicIQHandler(RoomHandler roomHandler) {
+	public MusicIQHandler() {
 		super("DumbHippo Music IQ Handler");
-		
-		Log.debug("creaing Music handler");
-		info = new IQHandlerInfo("music", "http://dumbhippo.com/protocol/music");
-			
-		Log.debug("Done constructing Music IQ handler");
 	}
 	
 	@Override
@@ -36,27 +30,22 @@ public class MusicIQHandler extends AbstractIQHandler {
 		super.destroy();
 	}
 	
-	@Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException {		
-		Log.debug("handling IQ packet " + packet);
-		JID from = packet.getFrom();
-		IQ reply = IQ.createResultIQ(packet);
-		Element iq = packet.getChildElement();
+	@IQMethod(name="music", type=IQ.Type.set)
+	public IQ doMusic(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException {		
+		Log.debug("handling IQ packet " + request);
+		Element iq = request.getChildElement();
 
 		String type = iq.attributeValue("type");
 		if (type == null) {
-			makeError(reply, "No type attribute on the root iq element for music message");
-			return reply;
+			throw IQException.createBadRequest("No type attribute on the root iq element for music message");
 		}
 		
 		if (type.equals("musicChanged")) {
-			return processMusicChanged(from, iq, reply);	
+			return processMusicChanged(viewpoint, iq, reply);	
 		} else if (type.equals("primingTracks")) {
-			return processPrimingTracks(from, iq, reply);
+			return processPrimingTracks(viewpoint, iq, reply);
 		} else {
-			
-			makeError(reply, "Unknown music IQ type, known types are: musicChanged, primingTracks");
-			return reply;
+			throw IQException.createBadRequest("Unknown music IQ type, known types are: musicChanged, primingTracks");
 		}
 	}
 
@@ -91,23 +80,22 @@ public class MusicIQHandler extends AbstractIQHandler {
     	return properties;
 	}
 	
-	private IQ processMusicChanged(JID from, Element iq, IQ reply) {
+	private IQ processMusicChanged(UserViewpoint viewpoint, Element iq, IQ reply) throws IQException, RetryException {
 		Map<String,String> properties;
 		try {
 			properties = parseTrackNode(iq);
 		} catch (ParseException e) {
 		    Log.debug(e);
-			makeError(reply, e.getMessage());
-			return reply;
+		    throw IQException.createBadRequest(e.getMessage());
 		}
 		
 		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-		glue.handleMusicChanged(Guid.parseTrustedJabberId(from.getNode()), properties);
+		glue.handleMusicChanged(viewpoint, properties);
 		
 		return reply;
 	}
 
-	private IQ processPrimingTracks(JID from, Element iq, IQ reply) {	
+	private IQ processPrimingTracks(UserViewpoint viewpoint, Element iq, IQ reply) throws IQException, RetryException {	
 		List<Map<String,String>> primingTracks = new ArrayList<Map<String,String>>();		
 		for (Object argObj : iq.elements()) {
         	Node node = (Node) argObj;
@@ -116,8 +104,7 @@ public class MusicIQHandler extends AbstractIQHandler {
         		Element element = (Element) node;
         		
         		if (!element.getName().equals("track")) {
-        			makeError(reply, "Unknown node type: " + element.getName());
-        			return reply;
+        			throw IQException.createBadRequest("Unknown node type: " + element.getName());
         		}
         		
         		Map<String,String> properties;
@@ -125,20 +112,14 @@ public class MusicIQHandler extends AbstractIQHandler {
 					 properties = parseTrackNode(element);
 				} catch (ParseException e) {
 					Log.debug(e);
-					makeError(reply, e.getMessage());
-					return reply;
+					throw IQException.createBadRequest(e.getMessage());
 				}
         		primingTracks.add(properties);
         	}
         }
 		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-		glue.handleMusicPriming(Guid.parseTrustedJabberId(from.getNode()), primingTracks);		
+		glue.handleMusicPriming(viewpoint, primingTracks);		
         
 		return reply;
-	}
-	
-	@Override
-	public IQHandlerInfo getInfo() {
-		return info;
 	}
 }

@@ -21,6 +21,7 @@ import com.dumbhippo.services.AmazonList;
 import com.dumbhippo.services.AmazonListItemView;
 import com.dumbhippo.services.AmazonListView;
 import com.dumbhippo.services.AmazonWebServices;
+import com.dumbhippo.tx.TxUtils;
 
 //@Stateless // for now, these cache beans are our own special kind of bean and not EJBs due to a jboss bug
 public class AmazonListItemsCacheBean extends AbstractBasicCacheBean<Pair<String, String>,AmazonListView> implements
@@ -46,13 +47,13 @@ public class AmazonListItemsCacheBean extends AbstractBasicCacheBean<Pair<String
 			new BasicCacheStorageMapper<Pair<String, String>,AmazonListView,CachedAmazonList>() {
 
 				public CachedAmazonList newNoResultsMarker(Pair<String, String> key) {
-					EJBUtil.assertHaveTransaction();
+					TxUtils.assertHaveTransaction();
 					
 					return CachedAmazonList.newNoResultsMarker(key.getFirst(), key.getSecond());
 				}
 
 				public CachedAmazonList queryExisting(Pair<String, String> key) {
-					EJBUtil.assertHaveTransaction();
+					TxUtils.assertHaveTransaction();
 					
 					Query q = em.createQuery("SELECT list FROM CachedAmazonList list WHERE list.amazonUserId = :amazonUserId" +
 							                 " AND list.listId = :listId");
@@ -192,7 +193,7 @@ public class AmazonListItemsCacheBean extends AbstractBasicCacheBean<Pair<String
 	@TransactionAttribute(TransactionAttributeType.REQUIRED)
 	@Override
 	public void expireCache(Pair<String, String> key) {
-		EJBUtil.assertHaveTransaction();
+		TxUtils.assertHaveTransaction();
 		
 		summaryStorage.expireCache(key);
 		itemListStorage.expireCache(key.getSecond());

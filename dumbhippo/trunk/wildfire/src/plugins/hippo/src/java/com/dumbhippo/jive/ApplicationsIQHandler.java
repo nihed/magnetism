@@ -28,6 +28,7 @@ import com.dumbhippo.server.applications.ApplicationSystem;
 import com.dumbhippo.server.applications.ApplicationUsageProperties;
 import com.dumbhippo.server.applications.ApplicationView;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
 
 @IQHandler(namespace=ApplicationsIQHandler.APPLICATIONS_NAMESPACE)
 public class ApplicationsIQHandler extends AnnotatedIQHandler  implements LiveEventListener<UserPrefChangedEvent> {
@@ -85,7 +86,7 @@ public class ApplicationsIQHandler extends AnnotatedIQHandler  implements LiveEv
 	}
 
 	@IQMethod(name="pinned", type=IQ.Type.set)
-	public void setPinned(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
+	public void setPinned(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException {
 		Element child = request.getChildElement();
 		List<String> applicationIds = new ArrayList<String>();
 		

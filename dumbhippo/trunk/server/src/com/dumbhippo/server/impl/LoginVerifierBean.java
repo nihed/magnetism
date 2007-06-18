@@ -1,7 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.util.concurrent.Callable;
-
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -11,7 +9,6 @@ import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
@@ -24,8 +21,10 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.LoginVerifier;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxCallable;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class LoginVerifierBean implements LoginVerifier {
@@ -42,10 +41,7 @@ public class LoginVerifierBean implements LoginVerifier {
 	@EJB
 	private AccountSystem accounts;
 	
-	@EJB
-	private TransactionRunner runner;
-	
-	public LoginToken getLoginToken(final Resource resource) throws HumanVisibleException {
+	public LoginToken getLoginToken(final Resource resource) throws HumanVisibleException, RetryException {
 		
 		if (resource == null)
 			throw new IllegalArgumentException("null resource");
@@ -55,36 +51,31 @@ public class LoginVerifierBean implements LoginVerifier {
 			throw new HumanVisibleException("That address hasn't been added to any account");
 		}
 
-		try {
-			return runner.runTaskThrowingConstraintViolation(new Callable<LoginToken>() {
+		return TxUtils.runNeedsRetry(new TxCallable<LoginToken>() {
 
-				public LoginToken call() {
-					Query q;
-					
-					q = em.createQuery("from LoginToken t where t.resource = :resource");
-					q.setParameter("resource", resource);
-					
-					LoginToken token;
-					try {
-						token = (LoginToken) q.getSingleResult();
-						if (token.isExpired()) {
-							em.remove(token);
-							em.flush();
-							throw new NoResultException("found expired token, making a new one");
-						}
-					} catch (NoResultException e) {
-						token = new LoginToken(resource);
-						em.persist(token);
+			public LoginToken call() {
+				Query q;
+				
+				q = em.createQuery("from LoginToken t where t.resource = :resource");
+				q.setParameter("resource", resource);
+				
+				LoginToken token;
+				try {
+					token = (LoginToken) q.getSingleResult();
+					if (token.isExpired()) {
+						em.remove(token);
+						em.flush();
+						throw new NoResultException("found expired token, making a new one");
 					}
-					
-					return token;
+				} catch (NoResultException e) {
+					token = new LoginToken(resource);
+					em.persist(token);
 				}
 				
-			});
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			return null; // not reached
-		}
+				return token;
+			}
+			
+		});
 	}
 
 	public Client signIn(Token token, String clientName) throws HumanVisibleException {

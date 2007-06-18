@@ -9,6 +9,8 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
 
 @Local
 public interface MessengerGlue {
@@ -103,8 +105,9 @@ public interface MessengerGlue {
 	 *   (this node or another) before this resource connected. Note that this
 	 *   value is only approximate: if two resources connect simultaneously, they
 	 *   both can end up with wasAlreadyConnected = false. 
+	 * @throws RetryException 
 	 */
-	public void sendConnectedResourceNotifications(Guid userId, boolean wasAlreadyConnected);	
+	public void sendConnectedResourceNotifications(Guid userId, boolean wasAlreadyConnected) throws RetryException;	
 	
 	/**
 	 * Called whenever a new resource connects associated with a user. Note that
@@ -158,7 +161,7 @@ public interface MessengerGlue {
 
 	public boolean isServerTooBusy();
 	
-	public void handleMusicChanged(Guid userId, Map<String, String> properties);
+	public void handleMusicChanged(UserViewpoint viewpoint, Map<String, String> properties) throws RetryException;
 
-	public void handleMusicPriming(Guid userId, List<Map<String, String>> primingTracks);
+	public void handleMusicPriming(UserViewpoint viewpoint, List<Map<String, String>> primingTracks) throws RetryException;
 }

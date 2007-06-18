@@ -276,6 +276,8 @@ public class NotifierBean implements Notifier {
 	}
 
 	public void onExternalAccountFeedEntry(User user, ExternalAccount external, FeedEntry entry, int entryPosition) {
+		// FIXME: It's conceptualy broken if one of the listeners throws retryException and
+		// that causes all of the listeners to be retried.
 		for (ExternalAccountFeedListener l : getListeners(ExternalAccountFeedListener.class)) {
 			l.onExternalAccountFeedEntry(user, external, entry, entryPosition);
 		}

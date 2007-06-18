@@ -12,6 +12,7 @@ import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
 
 @Local
 public interface AccountSystem {
@@ -108,8 +109,28 @@ public interface AccountSystem {
 	 * is that we autocreate the account.
 	 *
 	 * @return the character's User
+	 * @throws RetryException 
 	 */
-	public User getCharacter(Character whichOne);
+	public User getCharacter(Character whichOne) throws RetryException;
+	
+	/**
+	 * Like getCharacter(), but won't create it if it doesn't exist 
+	 * 
+	 * @param whichOne
+	 * @return
+	 * @throws NotFoundException
+	 */
+	public User lookupCharacter(Character whichOne) throws NotFoundException;
+	
+	/**
+	 * Like getCharacter(Character.MUGSHOT), but without the exception return;
+	 * the idea here is that we use MUGSHOT all over the place, so so it
+	 * won't be newly created and thus the race condition that results in
+	 * RetryException won't happen.
+	 * 
+	 * @return Mugshot's user
+	 */
+	public User getMugshotCharacter();
 
 	/**
 	 * Return the "preferences" for this user.  Currently just two keys:
@@ -129,6 +150,7 @@ public interface AccountSystem {
 	 * @param platform platform string
 	 * @param distribution distribution string
 	 * @param architecture client operating system architecture
+	 * @throws RetryException 
 	 */
-	public void updateClientInfo(UserViewpoint viewpoint, String platform, String distribution, String version, String architecture);
+	public void updateClientInfo(UserViewpoint viewpoint, String platform, String distribution, String version, String architecture) throws RetryException;
 }

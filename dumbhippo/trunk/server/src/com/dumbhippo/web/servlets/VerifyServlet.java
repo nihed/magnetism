@@ -32,6 +32,7 @@ import com.dumbhippo.server.TokenExpiredException;
 import com.dumbhippo.server.TokenSystem;
 import com.dumbhippo.server.TokenUnknownException;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.WebEJBUtil;
 
@@ -152,7 +153,7 @@ public class VerifyServlet extends AbstractServlet {
 		return redirectToNextPage(request, response, next, null);
 	}
 	
-	private String doToggleNoMailToken(HttpServletRequest request, HttpServletResponse response, ToggleNoMailToken token) throws HumanVisibleException, ServletException, IOException {
+	private String doToggleNoMailToken(HttpServletRequest request, HttpServletResponse response, ToggleNoMailToken token) throws HumanVisibleException, ServletException, IOException, RetryException {
 		logger.debug("Processing toggle email token {}", token);
 		
 		NoMailSystem.Action action = NoMailSystem.Action.TOGGLE_MAIL;
@@ -179,7 +180,7 @@ public class VerifyServlet extends AbstractServlet {
 	}
 	
 	@Override
-	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws IOException, HumanVisibleException, HttpException, ServletException {
+	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws IOException, HumanVisibleException, HttpException, ServletException, RetryException {
 		String authKey = request.getParameter("authKey");
 		if (authKey != null)
 			authKey = authKey.trim();

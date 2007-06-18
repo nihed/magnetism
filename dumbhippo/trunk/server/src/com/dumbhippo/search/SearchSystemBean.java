@@ -49,8 +49,9 @@ import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.SimpleServiceMBean;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.applications.ApplicationSystem;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 @Service
 public class SearchSystemBean implements SearchSystem, SimpleServiceMBean {
@@ -85,9 +86,6 @@ public class SearchSystemBean implements SearchSystem, SimpleServiceMBean {
 	
 	@EJB
 	PostingBoard postingBoard;;
-	
-	@EJB
-	TransactionRunner runner;
 	
 	private Map<Class, Expirable<IndexReader>> readers = new HashMap<Class, Expirable<IndexReader>>();
 	private Map<Class, Expirable<IndexSearcher>> searchers = new HashMap<Class, Expirable<IndexSearcher>>();
@@ -268,7 +266,7 @@ public class SearchSystemBean implements SearchSystem, SimpleServiceMBean {
 		//
 		final Iterator<KeyClass> iterator = items.iterator();
 		while (iterator.hasNext()) {
-			runner.runTaskInNewTransaction(new Runnable() {
+			TxUtils.runInTransaction(new TxRunnable() {
 				public void run() {
 					reindexBatch(clazz, iterator);
 				}

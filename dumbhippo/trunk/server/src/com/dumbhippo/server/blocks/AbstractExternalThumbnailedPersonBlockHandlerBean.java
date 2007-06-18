@@ -19,6 +19,7 @@ import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
 
 public abstract class AbstractExternalThumbnailedPersonBlockHandlerBean<BlockViewSubType extends ExternalThumbnailedPersonBlockView> extends AbstractBlockHandlerBean<BlockViewSubType> implements ExternalThumbnailedPersonBlockHandler {
 	static private final Logger logger = GlobalSetup.getLogger(AbstractExternalThumbnailedPersonBlockHandlerBean.class);	
@@ -86,7 +87,7 @@ public abstract class AbstractExternalThumbnailedPersonBlockHandlerBean<BlockVie
 		stacker.refreshDeletedFlags(getKey(user));
 	}
 
-	public void migrate(User user) {
+	public void migrate(User user) throws RetryException {
 		logger.debug("Migrating {} blocks for user {}", blockType.name(), user);
 		ExternalAccount external = user.getAccount().getExternalAccount(accountType);
 		if (external == null) {

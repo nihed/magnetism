@@ -17,7 +17,6 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.LoginToken;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -25,11 +24,13 @@ import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.LoginVerifier;
 import com.dumbhippo.server.Mailer;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
 
 @Stateless
 public class SigninSystemBean implements SigninSystem {
@@ -54,15 +55,18 @@ public class SigninSystemBean implements SigninSystem {
 	@EJB
 	private Mailer mailer;
 	
-	private String getLoginLink(Resource resource) throws HumanVisibleException {
+	private String getLoginLink(Resource resource) throws HumanVisibleException, RetryException {
 		LoginToken token = loginVerifier.getLoginToken(resource);
 		return token.getAuthURL(configuration.getPropertyFatalIfUnset(HippoProperty.BASEURL));
 	}
 	
-	public void sendSigninLinkEmail(String address) throws HumanVisibleException {
-		EmailResource resource = identitySpider.lookupEmail(address);
-		if (resource == null)
+	public void sendSigninLinkEmail(String address) throws HumanVisibleException, RetryException {
+		EmailResource resource;
+		try {
+			resource = identitySpider.lookupEmail(address);
+		} catch (NotFoundException e) {
 			throw new HumanVisibleException("That isn't an email address we know about");
+		}
 		String link = getLoginLink(resource);
 		MimeMessage message = mailer.createMessage(Mailer.SpecialSender.LOGIN, resource.getEmail());
 		
@@ -82,10 +86,13 @@ public class SigninSystemBean implements SigninSystem {
 		mailer.sendMessage(message);
 	}
 	
-	public String getSigninLinkAim(String address) throws HumanVisibleException {
-		AimResource resource = identitySpider.lookupAim(address);
-		if (resource == null)
+	public String getSigninLinkAim(String address) throws HumanVisibleException, RetryException {
+		AimResource resource;
+		try {
+			resource = identitySpider.lookupAim(address);
+		} catch (NotFoundException e) {
 			throw new HumanVisibleException("That isn't an AIM screen name we know about");
+		}
 		
 		String link = getLoginLink(resource);
 		XmlBuilder bodyHtml = new XmlBuilder();
@@ -154,7 +161,7 @@ public class SigninSystemBean implements SigninSystem {
 		"</p>\n";
 		
 
-	public void sendRepairLink(User user) throws HumanVisibleException {		
+	public void sendRepairLink(User user) throws HumanVisibleException, RetryException {		
 		PersonView personView = personViewer.getPersonView(new UserViewpoint(user), user);
 		Resource resource = personView.getPrimaryResource();
 		if (resource == null || !(resource instanceof EmailResource))
@@ -197,16 +204,13 @@ public class SigninSystemBean implements SigninSystem {
 		
 		try {
 			if (address.contains("@")) {
-				resource = identitySpider.getEmail(address);
+				resource = identitySpider.lookupEmail(address);
 			} else {
-				resource = identitySpider.getAim(address);
+				resource = identitySpider.lookupAim(address);
 			}
-		} catch (ValidationException e) {
-			throw new HumanVisibleException("Invalid address '" + address + "': " + e.getMessage());
-		}
-		
-		if (resource == null)
+		} catch (NotFoundException e) {
 			throw new HumanVisibleException("You entered '" + address + "', we don't know about that email address or AIM screen name");
+		}
 		
 		Account account;
 		

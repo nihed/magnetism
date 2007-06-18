@@ -28,6 +28,7 @@ import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.CacheFactoryBean;
 import com.dumbhippo.services.caches.WebServiceCache;
 import com.dumbhippo.services.caches.YouTubeVideosCache;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateStatus> implements CachedExternalUpdater<YouTubeUpdateStatus>, YouTubeUpdater {
@@ -52,7 +53,7 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 	@Override
 	@TransactionAttribute(TransactionAttributeType.NEVER)	
 	public void doPeriodicUpdate(String username) {
-		EJBUtil.assertNoTransaction();
+		TxUtils.assertNoTransaction();
 		
 		YouTubeUpdater proxy = EJBUtil.defaultLookup(YouTubeUpdater.class);
 		
@@ -75,7 +76,7 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 		logger.debug("Saving new YouTube status for " + username + ": videos {}",
 				videos);
 		
-		EJBUtil.assertHaveTransaction();
+		TxUtils.assertHaveTransaction();
 		
 		YouTubeUpdateStatus updateStatus;
 		try {

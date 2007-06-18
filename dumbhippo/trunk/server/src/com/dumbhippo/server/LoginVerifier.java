@@ -6,6 +6,7 @@ import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.LoginToken;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Token;
+import com.dumbhippo.tx.RetryException;
 
 /**
  * Methods related to logging in by having a token sent to one of your
@@ -23,8 +24,9 @@ public interface LoginVerifier {
 	 * @param resource resource to be proven
 	 * @return new token for authentication
 	 * @throws HumanVisibleException if resource isn't associated with a user
+	 * @throws RetryException 
 	 */
-	public LoginToken getLoginToken(Resource resource) throws HumanVisibleException;
+	public LoginToken getLoginToken(Resource resource) throws HumanVisibleException, RetryException;
 	
 	/**
 	 * Try to sign in a login or previously-viewed invitation token, returning the person 

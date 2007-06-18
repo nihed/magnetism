@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -17,7 +16,6 @@ import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
@@ -34,10 +32,13 @@ import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UnauthorizedException;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxCallable;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class AccountSystemBean implements AccountSystem {
@@ -51,10 +52,7 @@ public class AccountSystemBean implements AccountSystem {
 	
 	@EJB
 	private IdentitySpider spider;
-	
-	@EJB
-	private TransactionRunner runner;
-	
+		
 	@EJB
 	private Notifier notifier;
 	
@@ -147,34 +145,45 @@ public class AccountSystemBean implements AccountSystem {
 		return TypeUtils.castList(Account.class, q.getResultList());
 	}
 
-	public User getCharacter(final Character whichOne) {
-		try {
-			return runner.runTaskThrowingConstraintViolation(new Callable<User>() {
-				public User call() {
-					EmailResource email;
-					try {
-						email = spider.getEmail(whichOne.getEmail());
-					} catch (ValidationException e) {
-						throw new RuntimeException("Character has invalid email address!");
-					}
-					User user = spider.getUser(email);
-					if (user == null) {
-						// don't add any special handling in here - it should be OK if 
-						// someone just creates the character accounts manually without running
-						// this code. We don't want to start doing "if (character) ; else ;" all
-						// over the place.
-						logger.info("Creating special user " + whichOne);
-						Account account = createAccountFromResource(email);
-						user = account.getOwner();
-						user.setNickname(whichOne.getDefaultNickname());
-					}
-					return user;
+	public User getCharacter(final Character whichOne) throws RetryException {
+		return TxUtils.runNeedsRetry(new TxCallable<User>() {
+			public User call() throws RetryException {
+				EmailResource email;
+				try {
+					email = spider.getEmail(whichOne.getEmail());
+				} catch (ValidationException e) {
+					throw new RuntimeException("Character has invalid email address!");
 				}
-			});
-			
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			return null; // not reached
+				User user = spider.getUser(email);
+				if (user == null) {
+					// don't add any special handling in here - it should be OK if 
+					// someone just creates the character accounts manually without running
+					// this code. We don't want to start doing "if (character) ; else ;" all
+					// over the place.
+					logger.info("Creating special user " + whichOne);
+					Account account = createAccountFromResource(email);
+					user = account.getOwner();
+					user.setNickname(whichOne.getDefaultNickname());
+				}
+				return user;
+			}
+		});
+	}
+	
+	public User lookupCharacter(Character whichOne) throws NotFoundException {
+		EmailResource email = spider.lookupEmail(whichOne.getEmail());
+		User user = spider.getUser(email);
+		if (user == null)
+			throw new NotFoundException("No user for character");
+		
+		return user;
+	}
+	
+	public User getMugshotCharacter() {
+		try {
+			return getCharacter(Character.MUGSHOT);
+		} catch (RetryException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -206,36 +215,37 @@ public class AccountSystemBean implements AccountSystem {
 		}
 	}
 
-	public void updateClientInfo(UserViewpoint viewpoint, String platform, String distribution, String version, String architecture) {
+	public void updateClientInfo(final UserViewpoint viewpoint, final String platform, String distribution, String version, String architecture) throws RetryException {
 		// NULL doesn't work well as a unique key, so use "" when no 
 		// distribution/version/architecture is specified
-		if (distribution == null)
-			distribution = "";
-		if (version == null)
-			version = "";
-		if (architecture == null)
-			architecture = "";
-		
-		Query q = em.createQuery("SELECT uci FROM UserClientInfo uci " +
-				                 " WHERE uci.user = :user " +
-				                 "   AND uci.platform = :platform " +
-				                 "   AND uci.distribution = :distribution" +
-				                 "   AND uci.version = :version" +
-				                 "   AND uci.architecture = :architecture")
-            .setParameter("user", viewpoint.getViewer())
-			.setParameter("platform", platform)
-			.setParameter("distribution", distribution)
-			.setParameter("version", version)
-			.setParameter("architecture", architecture);
-		
-		UserClientInfo uci;
-		try {
-			uci = (UserClientInfo)q.getSingleResult();
-			uci.setLastChecked(new Date());
-		} catch (NoResultException e) {
-			uci = new UserClientInfo(viewpoint.getViewer(), platform, distribution, version, architecture);
-			uci.setLastChecked(new Date());
-			em.persist(uci);
-		}
+		final String dbDistribution = distribution != null ? distribution : ""; 
+		final String dbVersion = version != null ? version : ""; 
+		final String dbArchitecture = architecture != null ? architecture : ""; 
+
+		TxUtils.runNeedsRetry(new TxRunnable() {
+			public void run() {
+				Query q = em.createQuery("SELECT uci FROM UserClientInfo uci " +
+						                 " WHERE uci.user = :user " +
+						                 "   AND uci.platform = :platform " +
+						                 "   AND uci.distribution = :distribution" +
+						                 "   AND uci.version = :version" +
+						                 "   AND uci.architecture = :architecture")
+		            .setParameter("user", viewpoint.getViewer())
+					.setParameter("platform", platform)
+					.setParameter("distribution", dbDistribution)
+					.setParameter("version", dbVersion)
+					.setParameter("architecture", dbArchitecture);
+				
+				UserClientInfo uci;
+				try {
+					uci = (UserClientInfo)q.getSingleResult();
+					uci.setLastChecked(new Date());
+				} catch (NoResultException e) {
+					uci = new UserClientInfo(viewpoint.getViewer(), platform, dbDistribution, dbVersion, dbArchitecture);
+					uci.setLastChecked(new Date());
+					em.persist(uci);
+				}
+			}
+		});
 	}
 }

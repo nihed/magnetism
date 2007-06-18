@@ -30,6 +30,9 @@ import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.LastFmTrack;
 import com.dumbhippo.services.LastFmWebServices;
 import com.dumbhippo.services.TransientServiceException;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateStatus> implements LastFmUpdater {
@@ -115,7 +118,7 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 					LastFmTrack lastFmTrack = tracks.get(i);
 					if (computeTrackHash(lastFmTrack).equals(previousHash))
 						break; // Stop when we get to the last track we saw
-					Map<String, String> props = lastFmTrackToProps(lastFmTrack);
+					final Map<String, String> props = lastFmTrackToProps(lastFmTrack);
 					
 					// The data we get from last.fm/audioscrobbler simply includes the 
 					// literal date provided by the audioscrobbler client. If the audioscrobbler
@@ -123,11 +126,16 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 					// future. Stacking blocks in the future is bad, since (among other things)
 					// it will make the user *always* the most recently active user on the system.
 					// So clamp play times to the current time.
-					long listenTime = lastFmTrack.getListenTime() * 1000;
-					if (listenTime > now)
-						listenTime = now;
+					long trackListenTime = lastFmTrack.getListenTime() * 1000;
+					final long listenTime = trackListenTime <= now ? trackListenTime : now;
 					
-					musicSystem.addHistoricalTrack(user, props, listenTime, false);
+					final String userId = user.getId();
+					TxUtils.runInTransactionOnCommit(new TxRunnable() {
+						public void run() throws RetryException {
+							User attached = em.find(User.class, userId);
+							musicSystem.addHistoricalTrack(attached, props, listenTime, false);
+						}
+					});
 				}
 			}
 			return true;

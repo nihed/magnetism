@@ -20,6 +20,7 @@ import com.dumbhippo.services.AmazonReviewView;
 import com.dumbhippo.services.AmazonReviews;
 import com.dumbhippo.services.AmazonReviewsView;
 import com.dumbhippo.services.AmazonWebServices;
+import com.dumbhippo.tx.TxUtils;
 
 //@Stateless // for now, these cache beans are our own special kind of bean and not EJBs due to a jboss bug
 public class AmazonReviewsCacheBean extends AbstractBasicCacheBean<String,AmazonReviewsView> implements
@@ -45,13 +46,13 @@ public class AmazonReviewsCacheBean extends AbstractBasicCacheBean<String,Amazon
 			new BasicCacheStorageMapper<String,AmazonReviewsView,CachedAmazonReviews>() {
 
 				public CachedAmazonReviews newNoResultsMarker(String key) {
-					EJBUtil.assertHaveTransaction();
+					TxUtils.assertHaveTransaction();
 					
 					return CachedAmazonReviews.newNoResultsMarker(key);
 				}
 
 				public CachedAmazonReviews queryExisting(String key) {
-					EJBUtil.assertHaveTransaction();
+					TxUtils.assertHaveTransaction();
 					
 					Query q = em.createQuery("SELECT reviews FROM CachedAmazonReviews reviews WHERE reviews.amazonUserId = :amazonUserId");
 					q.setParameter("amazonUserId", key);
@@ -187,7 +188,7 @@ public class AmazonReviewsCacheBean extends AbstractBasicCacheBean<String,Amazon
 	@TransactionAttribute(TransactionAttributeType.REQUIRED)
 	@Override
 	public void expireCache(String key) {
-		EJBUtil.assertHaveTransaction();
+		TxUtils.assertHaveTransaction();
 		
 		summaryStorage.expireCache(key);
 		reviewListStorage.expireCache(key);

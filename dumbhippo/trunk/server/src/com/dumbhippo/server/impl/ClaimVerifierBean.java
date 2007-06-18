@@ -1,7 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.util.concurrent.Callable;
-
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.mail.internet.MimeMessage;
@@ -12,7 +10,6 @@ import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.botcom.BotTaskMessage;
@@ -30,10 +27,12 @@ import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonViewer;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxCallable;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class ClaimVerifierBean implements ClaimVerifier {
@@ -51,9 +50,6 @@ public class ClaimVerifierBean implements ClaimVerifier {
 	private PersonViewer personViewer;
 	
 	@EJB
-	private TransactionRunner runner;
-
-	@EJB
 	private Configuration configuration;
 	
 	@EJB
@@ -62,52 +58,47 @@ public class ClaimVerifierBean implements ClaimVerifier {
 	@EJB
 	private AimQueueSender aimQueueSender;
 	
-	private ResourceClaimToken getToken(final User user, final Resource resource) {	
+	private ResourceClaimToken getToken(final User user, final Resource resource) throws RetryException {	
 		if (user == null && resource == null)
 			throw new IllegalArgumentException("one of user/resource has to be non-null");
 		
-		try {
-			return runner.runTaskThrowingConstraintViolation(new Callable<ResourceClaimToken>() {
+		return TxUtils.runNeedsRetry(new TxCallable<ResourceClaimToken>() {
+			
+			public ResourceClaimToken call() {
+				Query q;
 				
-				public ResourceClaimToken call() {
-					Query q;
-					
-					q = em.createQuery("from ResourceClaimToken t where t.user = :user and t.resource = :resource");
-					q.setParameter("user", user);
-					q.setParameter("resource", resource);
-					
-					ResourceClaimToken token;
-					try {
-						token = (ResourceClaimToken) q.getSingleResult();
-						if (token.isExpired()) {
-							em.remove(token);
-							throw new NoResultException("found expired token, making a new one");
-						}
-					} catch (NoResultException e) {
-						token = new ResourceClaimToken(user, resource);
-						em.persist(token);
+				q = em.createQuery("from ResourceClaimToken t where t.user = :user and t.resource = :resource");
+				q.setParameter("user", user);
+				q.setParameter("resource", resource);
+				
+				ResourceClaimToken token;
+				try {
+					token = (ResourceClaimToken) q.getSingleResult();
+					if (token.isExpired()) {
+						em.remove(token);
+						throw new NoResultException("found expired token, making a new one");
 					}
-					
-					return token;
+				} catch (NoResultException e) {
+					token = new ResourceClaimToken(user, resource);
+					em.persist(token);
 				}
 				
-			});
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			return null; // not reached
-		}
+				return token;
+			}
+			
+		});
 	}
 	
-	public String getAuthKey(final User user, final Resource resource) {
+	public String getAuthKey(final User user, final Resource resource) throws RetryException {
 		return getToken(user, resource).getAuthKey();
 	}
 	
-	private String getClaimVerifierLink(User user, Resource resource) throws HumanVisibleException {
+	private String getClaimVerifierLink(User user, Resource resource) throws HumanVisibleException, RetryException {
 		ResourceClaimToken token = getToken(user, resource);
 		return token.getAuthURL(configuration.getPropertyFatalIfUnset(HippoProperty.BASEURL));
 	}
 	
-	public void sendClaimVerifierLink(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException {
+	public void sendClaimVerifierLink(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException, RetryException {
 		if (!viewpoint.isOfUser(user)) {
 			throw new HumanVisibleException("You aren't signed in as the person you want to add an address for");
 		}

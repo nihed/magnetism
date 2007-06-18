@@ -26,10 +26,11 @@ import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.MySpaceUpdater;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PollingTaskPersistence;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.MySpaceScraper;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class MySpaceUpdaterBean implements MySpaceUpdater {
@@ -73,9 +74,8 @@ public class MySpaceUpdaterBean implements MySpaceUpdater {
 		@Override
 		protected PollResult execute() throws Exception {			
 			try {
-			    final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
-			    runner.runTaskInNewTransaction(new Callable<Object>() {
-					public Object call() throws XmlMethodException {
+			    TxUtils.runInTransaction(new Callable<Object>() {
+					public Object call() throws XmlMethodException, RetryException {
 						final MySpaceUpdater mySpaceUpdater = EJBUtil.defaultLookup(MySpaceUpdater.class);
 						mySpaceUpdater.createFeedForMySpaceBlog(external);
 						return null;
@@ -105,7 +105,7 @@ public class MySpaceUpdaterBean implements MySpaceUpdater {
 		return new MySpaceTask(external);
 	}
 
-	public void createFeedForMySpaceBlog(ExternalAccount external) throws XmlMethodException {
+	public void createFeedForMySpaceBlog(ExternalAccount external) throws XmlMethodException, RetryException {
 	    // the external account passed in here is detached
 		// external.getExtra() for MySpace is friendId
 		Feed feed = feedSystem.scrapeFeedFromUrl(MySpaceScraper.getBlogURLFromFriendId(external.getExtra()));

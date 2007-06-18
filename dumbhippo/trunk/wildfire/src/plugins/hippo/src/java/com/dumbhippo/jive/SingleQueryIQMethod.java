@@ -13,6 +13,7 @@ import com.dumbhippo.dm.schema.DMClassHolder;
 import com.dumbhippo.jive.annotations.IQMethod;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
 
 public class SingleQueryIQMethod extends QueryIQMethod {
 	public SingleQueryIQMethod(AnnotatedIQHandler handler, Method method, IQMethod annotation) {
@@ -28,7 +29,7 @@ public class SingleQueryIQMethod extends QueryIQMethod {
 	}
 	
 	@Override
-	public void doIQ(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
+	public void doIQ(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException {
 		DMSession session = DataService.currentSessionRO();
 		Element root = reply.setChildElement(annotation.name(), handler.getInfo().getNamespace());
 		

@@ -1,10 +1,12 @@
 package com.dumbhippo.server;
 
 import javax.ejb.Local;
+
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
 
 /**
  * Methods related to adding a new resource to your account.
@@ -24,8 +26,9 @@ public interface ClaimVerifier {
 	 * @param user user who will own the resource
 	 * @param resource resource to be owned
 	 * @return new auth key to prove this claim
+	 * @throws RetryException 
 	 */
-	public String getAuthKey(User user, Resource resource); 
+	public String getAuthKey(User user, Resource resource) throws RetryException; 
 	
 	/**
 	 * Try to verify ownership of a resource. If resource is null, then 
@@ -52,6 +55,7 @@ public interface ClaimVerifier {
 	 * @param user user to change
 	 * @param address the email or AIM address
 	 * @throws HumanVisibleException any error to display
+	 * @throws RetryException 
 	 */
-	public void sendClaimVerifierLink(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException;
+	public void sendClaimVerifierLink(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException, RetryException;
 }

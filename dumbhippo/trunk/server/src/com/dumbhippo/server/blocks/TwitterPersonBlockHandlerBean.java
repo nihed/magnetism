@@ -9,6 +9,7 @@ import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.tx.RetryException;
 
 @Stateless
 public class TwitterPersonBlockHandlerBean extends AbstractSingleBlockForFeedBlockHandlerBean<TwitterPersonBlockView> implements TwitterPersonBlockHandler {
@@ -30,7 +31,7 @@ public class TwitterPersonBlockHandlerBean extends AbstractSingleBlockForFeedBlo
 	}
 	
 	
-	public void migrate(User user) {
+	public void migrate(User user) throws RetryException {
 		logger.debug("Migrating Twitter blocks for user {}", user);
 		ExternalAccount external = user.getAccount().getExternalAccount(ExternalAccountType.TWITTER);
 		if (external == null) {

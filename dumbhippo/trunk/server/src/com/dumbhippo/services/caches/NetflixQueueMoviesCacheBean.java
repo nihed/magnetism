@@ -20,6 +20,7 @@ import com.dumbhippo.services.NetflixMovieView;
 import com.dumbhippo.services.NetflixMovies;
 import com.dumbhippo.services.NetflixMoviesView;
 import com.dumbhippo.services.NetflixWebServices;
+import com.dumbhippo.tx.TxUtils;
 
 //@Stateless // for now, these cache beans are our own special kind of bean and not EJBs due to a jboss bug
 public class NetflixQueueMoviesCacheBean extends AbstractBasicCacheBean<String,NetflixMoviesView> implements
@@ -46,13 +47,13 @@ public class NetflixQueueMoviesCacheBean extends AbstractBasicCacheBean<String,N
 			new BasicCacheStorageMapper<String,NetflixMoviesView,CachedNetflixMovies>() {
 
 				public CachedNetflixMovies newNoResultsMarker(String key) {
-					EJBUtil.assertHaveTransaction();
+					TxUtils.assertHaveTransaction();
 					
 					return CachedNetflixMovies.newNoResultsMarker(key);
 				}
 
 				public CachedNetflixMovies queryExisting(String key) {
-					EJBUtil.assertHaveTransaction();
+					TxUtils.assertHaveTransaction();
 					
 					Query q = em.createQuery("SELECT movies FROM CachedNetflixMovies movies WHERE movies.netflixUserId = :netflixUserId");
 					q.setParameter("netflixUserId", key);
@@ -147,7 +148,7 @@ public class NetflixQueueMoviesCacheBean extends AbstractBasicCacheBean<String,N
 	@TransactionAttribute(TransactionAttributeType.REQUIRED)
 	@Override
 	public void expireCache(String key) {
-		EJBUtil.assertHaveTransaction();
+		TxUtils.assertHaveTransaction();
 		
 		summaryStorage.expireCache(key);
 		movieListStorage.expireCache(key);

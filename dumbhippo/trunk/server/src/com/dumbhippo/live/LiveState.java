@@ -31,10 +31,11 @@ import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 public class LiveState {
 	@SuppressWarnings("unused")
@@ -480,8 +481,7 @@ public class LiveState {
 			
 			final List<Guid> toLookup = new ArrayList<Guid>();
 			
-			final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
-			runner.runTaskInNewTransaction(new Runnable() {
+			TxUtils.runInTransaction(new TxRunnable() {
 				public void run() {
 					AccountSystem accountSystem = EJBUtil.defaultLookup(AccountSystem.class);
 					
@@ -504,7 +504,7 @@ public class LiveState {
 				final long seed = baseSeed + i;
 				futures.add(threadPool.submit(new Callable<Object>() {
 					public Object call() {
-						runner.runTaskInNewTransaction(new Runnable() {
+						TxUtils.runInTransaction(new TxRunnable() {
 							public void run() {
 								for (Guid guid : shuffle(toLookup, seed)) {
 									try {

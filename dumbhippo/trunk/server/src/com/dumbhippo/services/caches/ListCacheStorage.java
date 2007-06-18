@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.CachedListItem;
-import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.tx.TxUtils;
 
 public class ListCacheStorage<KeyType, ResultType, EntityType extends CachedListItem>
 		extends AbstractCacheStorage<KeyType, List<? extends ResultType>, EntityType> {
@@ -83,7 +83,7 @@ public class ListCacheStorage<KeyType, ResultType, EntityType extends CachedList
 	// null means that we could not get the updated results, so leave the old results
 	// empty list results means that we should save a no results marker
 	public List<? extends ResultType> saveInCacheInsideExistingTransaction(KeyType key, List<? extends ResultType> newItems, Date now, boolean refetchedWithoutCheckingCache) {
-		EJBUtil.assertHaveTransaction();
+		TxUtils.assertHaveTransaction();
 	
 		logger.debug("Saving new results in cache");
 

@@ -13,6 +13,7 @@ import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoader;
 import com.dumbhippo.server.impl.FeedSystemBean.FeedLinkUnknownException;
+import com.dumbhippo.tx.RetryException;
 import com.sun.syndication.feed.synd.SyndFeed;
 
 @Local
@@ -25,8 +26,9 @@ public interface FeedSystem extends PollingTaskLoader {
 	 * @param url
 	 * @return feed
 	 * @throws XmlMethodException
+	 * @throws RetryException 
 	 */
-	public Feed scrapeFeedFromUrl(URL url) throws XmlMethodException;
+	public Feed scrapeFeedFromUrl(URL url) throws XmlMethodException, RetryException;
 	
 	/**
 	 * Creates or returns an existing Feed object regardless of whether a feed was found
@@ -43,8 +45,9 @@ public interface FeedSystem extends PollingTaskLoader {
 	 * @param validateUrl
 	 * @return feed and a flag indicating whether the feed was actually found at the url
 	 * @throws XmlMethodException
+	 * @throws RetryException 
 	 */
-	public Pair<Feed, Boolean> createFeedFromUrl(URL url, boolean validateUrl) throws XmlMethodException;
+	public Pair<Feed, Boolean> createFeedFromUrl(URL url, boolean validateUrl) throws XmlMethodException, RetryException;
 	
 	public Feed getExistingFeed(final LinkResource source) throws XmlMethodException;
 	

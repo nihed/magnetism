@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -19,7 +18,6 @@ import javax.persistence.Query;
 import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
@@ -59,13 +57,15 @@ import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.RevisionControl;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxCallable;
+import com.dumbhippo.tx.TxUtils;
 
 /*
  * An implementation of the Identity Spider.  It sucks your blood.
@@ -78,9 +78,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
-
-	@EJB
-	private TransactionRunner runner;
 
 	@EJB
 	@IgnoreDependency
@@ -99,14 +96,14 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	@EJB
 	private RevisionControl revisionControl;
 	
-	public User lookupUserByEmail(Viewpoint viewpoint, String email) {
+	public User lookupUserByEmail(Viewpoint viewpoint, String email) throws NotFoundException {
 		EmailResource res = lookupEmail(email);
 		if (res == null)
 			return null;
 		return lookupUserByResource(viewpoint, res);
 	}
 
-	public User lookupUserByAim(Viewpoint viewpoint, String aim) {
+	public User lookupUserByAim(Viewpoint viewpoint, String aim) throws NotFoundException {
 		AimResource res = lookupAim(aim);
 		if (res == null)
 			return null;
@@ -159,75 +156,55 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return ret;
 	}
 
-	public EmailResource getEmail(final String emailRaw)
-			throws ValidationException {
+	public EmailResource getEmail(final String emailRaw) throws ValidationException, RetryException {
 		// well, we could do a little better here with the validation...
 		final String email = EmailResource.canonicalize(emailRaw);
 
-		try {
-			return runner
-					.runTaskThrowingConstraintViolation(new Callable<EmailResource>() {
+		return TxUtils.runNeedsRetry(new TxCallable<EmailResource>() {
+			public EmailResource call() {
+				Query q;
 
-						public EmailResource call() throws Exception {
-							Query q;
+				q = em.createQuery("from EmailResource e where e.email = :email");
+				q.setParameter("email", email);
 
-							q = em
-									.createQuery("from EmailResource e where e.email = :email");
-							q.setParameter("email", email);
+				EmailResource res;
+				try {
+					res = (EmailResource) q.getSingleResult();
+				} catch (NoResultException e) {
+					res = new EmailResource(email);
+					em.persist(res);
+				}
 
-							EmailResource res;
-							try {
-								res = (EmailResource) q.getSingleResult();
-							} catch (NoResultException e) {
-								res = new EmailResource(email);
-								em.persist(res);
-							}
-
-							return res;
-						}
-					});
-
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			return null; // not reached
-		}
+				return res;
+			}
+		});
 	}
 
-	public AimResource getAim(final String screenNameRaw)
-			throws ValidationException {
+	public AimResource getAim(final String screenNameRaw) throws ValidationException, RetryException {
 		final String screenName = AimResource.canonicalize(screenNameRaw);
-		try {
-			return runner
-					.runTaskThrowingConstraintViolation(new Callable<AimResource>() {
-						public AimResource call() {
-							Query q;
+		return TxUtils.runNeedsRetry(new TxCallable<AimResource>() {
+			public AimResource call() {
+				Query q;
 
-							q = em
-									.createQuery("from AimResource a where a.screenName = :name");
-							q.setParameter("name", screenName);
+				q = em
+						.createQuery("from AimResource a where a.screenName = :name");
+				q.setParameter("name", screenName);
 
-							AimResource res;
-							try {
-								res = (AimResource) q.getSingleResult();
-							} catch (NoResultException e) {
-								try {
-									res = new AimResource(screenName);
-								} catch (ValidationException v) {
-									throw new RuntimeException(v);
-								}
-								em.persist(res);
-							}
+				AimResource res;
+				try {
+					res = (AimResource) q.getSingleResult();
+				} catch (NoResultException e) {
+					try {
+						res = new AimResource(screenName);
+					} catch (ValidationException v) {
+						throw new RuntimeException(v); // Already validated above
+					}
+					em.persist(res);
+				}
 
-							return res;
-						}
-					});
-
-		} catch (ValidationException e) {
-			throw e;
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			return null; // not reached
-		}
+				return res;
+			}
+		});
 	}
 
 	private <T extends Resource> T lookupResourceByName(Class<T> klass,
@@ -248,56 +225,51 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return res;
 	}
 
-	public AimResource lookupAim(String screenName) {
+	public AimResource lookupAim(String screenName) throws NotFoundException {
 		try {
 			screenName = AimResource.canonicalize(screenName);
 		} catch (ValidationException e) {
-			return null;
+			throw new NotFoundException("Not a valid AIM address", e);
 		}
 		return lookupResourceByName(AimResource.class, "screenName", screenName);
 	}
 
-	public EmailResource lookupEmail(String email) {
+	public EmailResource lookupEmail(String email) throws NotFoundException {
 		try {
 			email = EmailResource.canonicalize(email);
 		} catch (ValidationException e) {
-			return null;
+			throw new NotFoundException("Not a valid email address", e);
 		}
 		return lookupResourceByName(EmailResource.class, "email", email);
 	}
 
-	public LinkResource lookupLink(final URL url) {
+	public LinkResource lookupLink(final URL url) throws NotFoundException {
 		return lookupResourceByName(LinkResource.class, "url", url.toExternalForm());
 	}
 	
 	public LinkResource getLink(final URL url) {
-		try {
-			return runner
-					.runTaskThrowingConstraintViolation(new Callable<LinkResource>() {
+		// Retrying here causes side effects all over the code; the right solution
+		// is to get rid of LinkResource instead.
+		
+//		return TxUtils.runNeedsRetry(new TxCallable<LinkResource>() {
+//			public LinkResource call() {
+				Query q;
 
-						public LinkResource call() throws Exception {
-							Query q;
+				q = em.createQuery("SELECT l FROM LinkResource l WHERE l.url = :url");
+				q.setParameter("url", url.toExternalForm());
 
-							q = em.createQuery("SELECT l FROM LinkResource l WHERE l.url = :url");
-							q.setParameter("url", url.toExternalForm());
+				LinkResource res;
+				try {
+					res = (LinkResource) q.getSingleResult();
+				} catch (NoResultException e) {
+					res = new LinkResource(url.toExternalForm());
+					em.persist(res);
+				}
 
-							LinkResource res;
-							try {
-								res = (LinkResource) q.getSingleResult();
-							} catch (NoResultException e) {
-								res = new LinkResource(url.toExternalForm());
-								em.persist(res);
-							}
-
-							return res;
-						}
-
-					});
-
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			return null; // not reached
-		}
+				return res;
+//			}
+//
+//		});
 	}
 	
 	private User getUserForContact(Contact contact) {

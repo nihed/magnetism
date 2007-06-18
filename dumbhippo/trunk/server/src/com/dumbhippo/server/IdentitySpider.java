@@ -19,6 +19,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
 
 /*
  * This class represents the interface to the "Identity Spider",
@@ -40,17 +41,19 @@ public interface IdentitySpider {
 	 * 
 	 * @param email the address
 	 * @return a resource for the email
+	 * @throws RetryException 
 	 */
-	public EmailResource getEmail(String email) throws ValidationException;
+	public EmailResource getEmail(String email) throws ValidationException, RetryException;
+
 	
 	/**
 	 * Gets a Resource object for the given email address, only if it 
 	 * already exists.
 	 * 
 	 * @param email the address
-	 * @return a resource for the email or null
+	 * @return a resource for the email
 	 */
-	public EmailResource lookupEmail(String email);	
+	public EmailResource lookupEmail(String email) throws NotFoundException;	
 	
 	/**
 	 * Gets a Resource object for the given AIM address, creating
@@ -65,17 +68,18 @@ public interface IdentitySpider {
 	 * @param screenName the address
 	 * @return a resource for the address
 	 * @throws ValidationException if the AIM address is bogus
+	 * @throws RetryException 
 	 */
-	public AimResource getAim(String screenName) throws ValidationException;
+	public AimResource getAim(String screenName) throws ValidationException, RetryException;
 	
 	/**
 	 * Returns the AimResource for a given screen name, or null if there is none.
 	 * Does not create a new AimResource if it's not there already.
 	 * 
 	 * @param screenName
-	 * @return AimResource object, or null if it doesn't exist in the database
+	 * @return AimResource object
 	 */
-	public AimResource lookupAim(String screenName);
+	public AimResource lookupAim(String screenName) throws NotFoundException;
 	
 	/**
 	 * Gets a Resource object for the given URL, creating
@@ -83,6 +87,7 @@ public interface IdentitySpider {
 	 * 
 	 * @param url the url
 	 * @return a resource for the url
+	 * @throws RetryException 
 	 */
 	public LinkResource getLink(URL url);
 	
@@ -92,9 +97,9 @@ public interface IdentitySpider {
 	 * assuming you have a transaction open.
 	 * 
 	 * @param url the url
-	 * @return a resource for the url or null if it didn't exist in the db
+	 * @return a resource for the url
 	 */
-	public LinkResource lookupLink(URL url);	
+	public LinkResource lookupLink(URL url) throws NotFoundException;	
 	
 	/**
 	 * Finds the unique person which owns an email address
@@ -103,10 +108,11 @@ public interface IdentitySpider {
 	 * 
 	 * @param email the possibly-owned email address
 	 * @return the owning person, or null if none
+	 * @throws NotFoundException 
 	 */
-	public User lookupUserByEmail(Viewpoint viewpoint, String email);
+	public User lookupUserByEmail(Viewpoint viewpoint, String email) throws NotFoundException;
 
-	public User lookupUserByAim(Viewpoint viewpoint, String aim);
+	public User lookupUserByAim(Viewpoint viewpoint, String aim) throws NotFoundException;
 
 	/**
 	 * Finds the unique person which owns a resource
@@ -352,5 +358,6 @@ public interface IdentitySpider {
 	 * 
 	 * @param user the user to update
 	 */
-	public void incrementUserVersion(User user);;
+	public void incrementUserVersion(User user);
+
 }

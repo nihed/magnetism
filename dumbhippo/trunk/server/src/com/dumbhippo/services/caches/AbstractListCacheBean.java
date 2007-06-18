@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
 import com.dumbhippo.ThreadUtils;
-import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.tx.TxUtils;
 
 /** 
  * A session bean implementing the ListCache interface, which returns a list of objects (as opposed to one object) as the 
@@ -52,7 +52,7 @@ public abstract class AbstractListCacheBean<KeyType, ResultType>
 		public List<? extends ResultType> call() {
 			logger.debug("Entering AbstractListCacheTask thread for bean {} key {}", ejbIface.getName(), key);
 
-			EJBUtil.assertNoTransaction();
+			TxUtils.assertNoTransaction();
 			
 			// we do this instead of an inner class to work right with threads
 			ListCache<KeyType,ResultType> cache = CacheFactoryBean.defaultLookup(ejbIface);
@@ -88,7 +88,7 @@ public abstract class AbstractListCacheBean<KeyType, ResultType>
 		// you really don't want a transaction open unless you can assume on average we aren't doing a
 		// remote request (i.e. assuming a cache hit is likely)
 		if (alwaysRefetchEvenIfCached)
-			EJBUtil.assertNoTransaction();		
+			TxUtils.assertNoTransaction();		
 		
 		try {
 			if (alwaysRefetchEvenIfCached)

@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.CachedItem;
-import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.tx.TxUtils;
 
 /** 
  * Base class for cache beans that store each result in one database row 
@@ -51,7 +51,7 @@ public abstract class AbstractBasicCacheWithStorageBean<KeyType,ResultType,Entit
 	
 	@TransactionAttribute(TransactionAttributeType.REQUIRED) // would be the default, but we changed the class default
 	public ResultType checkCache(KeyType key) throws NotCachedException {
-		EJBUtil.assertHaveTransaction();
+		TxUtils.assertHaveTransaction();
 		return storage.checkCache(key);
 	}
 
@@ -60,7 +60,7 @@ public abstract class AbstractBasicCacheWithStorageBean<KeyType,ResultType,Entit
 	// null data means to save a negative result
 	@TransactionAttribute(TransactionAttributeType.MANDATORY)
 	public ResultType saveInCacheInsideExistingTransaction(KeyType key, ResultType data, Date now, boolean refetchedWithoutCheckingCache) {
-		EJBUtil.assertHaveTransaction();
+		TxUtils.assertHaveTransaction();
 		return storage.saveInCacheInsideExistingTransaction(key, data, now, refetchedWithoutCheckingCache);
 	}
 }

@@ -23,8 +23,8 @@ import javax.persistence.PersistenceContext;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.tx.TxUtils;
 
 /** 
  * Because this factory is thread-local, all the objects it creates and caches are also thread-local, in the same way 
@@ -49,21 +49,16 @@ public class CacheFactoryBean implements CacheFactory {
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
 	
-	@EJB
-	private TransactionRunner runner;
-
 	public CacheFactoryBean() {
 		cachedObjects = new HashMap<Class<?>,Object>();
 	}
 	
 	private static class HippoTxInterceptor implements InvocationHandler {
 		
-		private TransactionRunner runner;
 		private Object instance;
 		
-		HippoTxInterceptor(Object instance, TransactionRunner runner) {
+		HippoTxInterceptor(Object instance) {
 			this.instance = instance;
-			this.runner = runner;
 		}
 		
 		public Object invoke(final Object proxy, final Method proxyMethod, final Object[] args) throws Throwable {
@@ -104,19 +99,19 @@ public class CacheFactoryBean implements CacheFactory {
 			try {
 				switch (txType) {
 				case MANDATORY:
-					EJBUtil.assertHaveTransaction();
+					TxUtils.assertHaveTransaction();
 					return instanceMethod.invoke(instance, args);
 				case NEVER:
-					EJBUtil.assertNoTransaction();
+					TxUtils.assertNoTransaction();
 					return instanceMethod.invoke(instance, args);
 				case NOT_SUPPORTED:
 					throw new RuntimeException("we don't know how to suspend a transaction here");
 					
 				case REQUIRED:
-					if (EJBUtil.isTransactionActive()) {
+					if (TxUtils.isTransactionActive()) {
 						return instanceMethod.invoke(instance, args);
 					} else {
-						return runner.runTaskInNewTransaction(new Callable<Object>() {
+						return TxUtils.runInTransaction(new Callable<Object>() {
 		
 							public Object call() throws Exception {
 								return instanceMethod.invoke(instance, args);
@@ -125,7 +120,7 @@ public class CacheFactoryBean implements CacheFactory {
 						});
 					}
 				case REQUIRES_NEW:
-					return runner.runTaskInNewTransaction(new Callable<Object>() {
+					return TxUtils.runInTransaction(new Callable<Object>() {
 	
 						public Object call() throws Exception {
 							return instanceMethod.invoke(instance, args);
@@ -245,7 +240,7 @@ public class CacheFactoryBean implements CacheFactory {
 		CacheType bean = klass.cast(instantiateAndInject(beanClass));
 		
 		CacheType proxy = klass.cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[] { klass },
-				new HippoTxInterceptor(bean, runner))); 
+				new HippoTxInterceptor(bean))); 
 		
 		cachedObjects.put(klass, proxy);
 		

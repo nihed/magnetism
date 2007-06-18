@@ -39,7 +39,6 @@ import org.hibernate.search.engine.DocumentBuilder;
 import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
@@ -64,7 +63,6 @@ import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.TrackSearchResult;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.AlbumView;
 import com.dumbhippo.server.views.ExpandedArtistView;
@@ -88,6 +86,10 @@ import com.dumbhippo.services.caches.YahooArtistAlbumsCache;
 import com.dumbhippo.services.caches.YahooArtistCache;
 import com.dumbhippo.services.caches.YahooSongCache;
 import com.dumbhippo.services.caches.YahooSongDownloadCache;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxCallable;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class MusicSystemBean implements MusicSystem {
@@ -97,9 +99,6 @@ public class MusicSystemBean implements MusicSystem {
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
-	
-	@EJB
-	private TransactionRunner runner;
 	
 	@EJB
 	private IdentitySpider identitySpider;
@@ -174,78 +173,40 @@ public class MusicSystemBean implements MusicSystem {
 		}	
 	}	
 	
-	/**
-	 * Gets the ID of a potentially newly-created track.
-	 * Creates the track in another transaction, i.e. the caller
-	 * can't use this id, but can pass it to a new transaction for 
-	 * use.
-	 * 
-	 * Note that if the caller has previously looked up and modified
-	 * the same track (acquiring a write lock), this will deadlock, 
-	 * so use with great caution.
-	 * 
-	 * @param properties properties of the track
-	 * @return the track id
-	 */
-	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	private long getTrackIdIsolated(final Map<String, String> properties) {
-		Track detached;
-		try {
-			detached = runner.runTaskInNewTransaction(new Callable<Track>() {
-				public Track call() {
-					return getTrack(properties);
-				}
-			});
-		} catch (Exception e) {
-			logger.error("Failed to create Track: {}", e.getMessage());
-			ExceptionUtils.throwAsRuntimeException(e);
-			// not reached
-			throw new RuntimeException(e);
-		}
-		return detached.getId();
-	}
-	
-	public Track getTrack(Map<String, String> properties) {
+	public Track getTrack(Map<String, String> properties) throws RetryException {
 		
 		final Track key = new Track(properties);
-		try {
-			Track track = runner.runTaskThrowingConstraintViolation(new Callable<Track>() {
+		return TxUtils.runNeedsRetry(new TxCallable<Track>() {
+			public Track call() {
+				Query q;
 				
-				public Track call() throws Exception {
-					Query q;
+				q = em.createQuery("FROM Track t WHERE t.digest = :digest");
+				q.setParameter("digest", key.getDigest());
+				
+				Track res;
+				try {
+					res = (Track) q.getSingleResult();
+				} catch (NoResultException e) {
+					res = key;
+					em.persist(res);
 					
-					q = em.createQuery("FROM Track t WHERE t.digest = :digest");
-					q.setParameter("digest", key.getDigest());
-					
-					Track res;
-					try {
-						res = (Track) q.getSingleResult();
-					} catch (NoResultException e) {
-						res = key;
-						em.persist(res);
-						
-						final long trackId = res.getId();
-						// this is a fresh new track, so asynchronously fill in the Yahoo! search results
-						// only after we commit the transaction so the Track is visible
-						runner.runTaskOnTransactionCommit(new Runnable() {
-							public void run() {
-								hintNeedsRefresh(trackId);
-							}
-						});
-					}
-					
-					return res;	
-				}			
-			});
-			return track;
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			throw new RuntimeException(e); // not reached
-		}
+					final long trackId = res.getId();
+					// this is a fresh new track, so asynchronously fill in the Yahoo! search results
+					// only after we commit the transaction so the Track is visible
+					TxUtils.runOnCommit(new Runnable() {
+						public void run() {
+							hintNeedsRefresh(trackId);
+						}
+					});
+				}
+				
+				return res;	
+			}			
+		});
 	}
 
-	private void addTrackHistory(final User user, final Track track, final Date now, final boolean isNative) {
-		runner.runTaskRetryingOnConstraintViolation(new Runnable() {				
+	private void addTrackHistory(final User user, final Track track, final Date now, final boolean isNative) throws RetryException {
+		TxUtils.runNeedsRetry(new TxRunnable() {				
 			public void run() {
 				User u = em.find(User.class, user.getId());					
 				if (isNative) {
@@ -283,7 +244,7 @@ public class MusicSystemBean implements MusicSystem {
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public void setCurrentTrack(final User user, final Track track, final boolean isNative) {
+	public void setCurrentTrack(final User user, final Track track, final boolean isNative) throws RetryException {
 		addTrackHistory(user, track, new Date(), isNative);
 	}
 	 
@@ -291,42 +252,15 @@ public class MusicSystemBean implements MusicSystem {
 	// method from any code holding a transaction that could have potentially
 	// modified a Track
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public void setCurrentTrack(User user, Map<String,String> properties, final boolean isNative) {
-		
-		// empty properties means "not listening to any track" - we always
-		// keep the latest track with content, we don't set CurrentTrack to null
-		final long trackId;		
-		if (properties.size() == 0)
-			trackId = -1;
-		else
-			trackId = getTrackIdIsolated(properties);
-		
-		final String userId = user.getId();
-		
-		// trackId is invalid in this outer transaction, so we need a new one
-		runner.runTaskInNewTransaction(new Runnable() {
-
-			public void run() {
-				User u = em.find(User.class, userId);
-				if (u == null)
-					throw new RuntimeException("database isolation problem (?): user id not found " + userId);
-				Track t = null;				
-				if (trackId != -1) {
-					t = em.find(Track.class, trackId);
-					if (t == null)
-						throw new RuntimeException("database isolation problem (?): track id not found " + trackId);
-				}
-				setCurrentTrack(u, t, isNative);
-			}
-			
-		});
+	public void setCurrentTrack(User user, Map<String,String> properties, final boolean isNative) throws RetryException {
+		setCurrentTrack(user, getTrack(properties), isNative);
 	}
 	
 	// Although this is marked as SUPPORTS - you should never invoke this
 	// method from any code holding a transaction that could have potentially
 	// modified a Track	
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public void addHistoricalTrack(User user, Map<String,String> properties, final boolean isNative) {
+	public void addHistoricalTrack(User user, Map<String,String> properties, final boolean isNative) throws RetryException {
 		// for now there's no difference here, but eventually we might have the 
 		// client supply some properties like the date of listening instead of 
 		// pretending we "just" listened to this track.
@@ -337,22 +271,8 @@ public class MusicSystemBean implements MusicSystem {
 	// method from any code holding a transaction that could have potentially
 	// modified a Track		
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public void addHistoricalTrack(final User user, final Map<String,String> properties, final long listenDate, final boolean isNative) {
-		final long trackId = getTrackIdIsolated(properties);
-		
-		final String userId = user.getId();
-		// trackId is invalid in this outer transaction, so we need a new one
-		runner.runTaskInNewTransaction(new Runnable() {
-			public void run() {
-				Track t = em.find(Track.class, trackId);
-				if (t == null)
-					throw new RuntimeException("database isolation problem (?): track id not found " + trackId);
-				User u = em.find(User.class, userId);
-				if (u == null)
-					throw new RuntimeException("database isolation problem (?): user id not found " + userId);
-				addTrackHistory(user, t, new Date(listenDate), isNative);
-			}
-		});
+	public void addHistoricalTrack(final User user, final Map<String,String> properties, final long listenDate, final boolean isNative) throws RetryException {
+		addTrackHistory(user, getTrack(properties), new Date(listenDate), isNative);
 	}
 	
 	private TrackHistory getCurrentTrack(Viewpoint viewpoint, User user) throws NotFoundException {
@@ -1287,14 +1207,7 @@ public class MusicSystemBean implements MusicSystem {
 		
 	}
 	
-
-	// FIXMEFIXMEFIXME - this needs to be annotated to mandate no transaction,
-    // since it can deadlock if called for the same track twice in the same transaction
-	//
-	// Alternatively, and maybe better, unify the last segment of code with 
-	// setCurrentTrack and make adding tracks to the track database always async.
-	//
-	public void onExternalAccountFeedEntry(final User user, ExternalAccount external, FeedEntry feedEntry, int entryPosition) {
+	public void onExternalAccountFeedEntry(User user, ExternalAccount external, FeedEntry feedEntry, int entryPosition) {
 		if (!external.hasLovedAndEnabledType(ExternalAccountType.RHAPSODY))
 			return;
 		
@@ -1357,25 +1270,14 @@ public class MusicSystemBean implements MusicSystem {
 		
 		long now = System.currentTimeMillis();
 		final long virtualPlayTime = now - (1000 * 60 * entryPosition);
-	
-		// We need this track to be committed before the end of our current 
-		// transaction - conceptually, right now we should be in POJO code, 
-		// not inside any transaction most likely, FIXME
-		// FIXME retry on db errors
-		final long trackId = getTrackIdIsolated(properties);
 		
-		// Then we need another transaction because this outer transaction
-		// can't see the new track object due to isolation
-		// FIXME retry on db errors ?
-		runner.runTaskInNewTransaction(new Runnable() {
-			public void run() {
-				Track t = em.find(Track.class, trackId);
-				if (t == null)
-					throw new RuntimeException("database isolation mistake (?): null track " + trackId);
-				User u = em.find(User.class, user.getId());
-				if (u == null)
-					throw new RuntimeException("failed to reattach user");
-				addTrackHistory(u, t, new Date(virtualPlayTime), false);
+		final String userId = user.getId();
+		
+		// Add the track asynchronously after commit since we need a retry
+		TxUtils.runInTransactionOnCommit(new TxRunnable() {
+			public void run() throws RetryException {
+				User attached = em.find(User.class, userId);
+				addTrackHistory(attached, getTrack(properties), new Date(virtualPlayTime), false);
 			}
 		});
 	}

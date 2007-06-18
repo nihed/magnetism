@@ -13,25 +13,24 @@ import com.dumbhippo.jive.annotations.IQMethod;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.downloads.Download;
 import com.dumbhippo.server.downloads.DownloadConfiguration;
 import com.dumbhippo.server.downloads.DownloadPlatform;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 @IQHandler(namespace=ClientInfoIQHandler.CLIENT_INFO_NAMESPACE)
 public class ClientInfoIQHandler extends AnnotatedIQHandler {
 	static final String CLIENT_INFO_NAMESPACE = "http://dumbhippo.com/protocol/clientinfo";
 	
 	@EJB
-	Configuration config;
+	private Configuration config;
 
 	@EJB
-	AccountSystem accountSystem;
+	private AccountSystem accountSystem;
 	
-	@EJB
-	TransactionRunner runner;
-
 	public ClientInfoIQHandler() {
 		super("Dumbhippo clientInfo IQ Handler");
 		Log.debug("creating ClientInfoIQHandler");
@@ -104,8 +103,8 @@ public class ClientInfoIQHandler extends AnnotatedIQHandler {
 		
 		reply.setChildElement(childElement);
 		
-		runner.runTaskOnTransactionCommit(new Runnable() {
-			public void run() {
+		TxUtils.runInTransactionOnCommit(new TxRunnable() {
+			public void run() throws RetryException {
 				accountSystem.updateClientInfo(viewpoint, platformName, distributionVersion, osVersion, architecture);
 			}
 		});

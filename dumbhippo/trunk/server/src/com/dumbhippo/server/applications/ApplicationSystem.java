@@ -18,6 +18,7 @@ import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
 
 @Local
 public interface ApplicationSystem {
@@ -54,14 +55,14 @@ public interface ApplicationSystem {
 	
 	public List<Application> getApplicationsWithTitlePatterns();
 	
-	void pinApplicationIds(User user, List<String> applicationIds, boolean pin);
+	void pinApplicationIds(User user, List<String> applicationIds, boolean pin) throws RetryException;
 	
 	public List<ApplicationView> viewApplications(UserViewpoint viewpoint, List<Application> apps, int iconSize);
 	
 	public void writeAllApplicationsToXml(int iconSize, XmlBuilder xml);	
 	
 	public List<Application> getPinnedApplications(User user); 
-	public ApplicationUserState getUserState(User user, Application app);
+	public ApplicationUserState getUserState(User user, Application app) throws RetryException;
 
 	void updateUsages();
 	

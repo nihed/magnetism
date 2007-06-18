@@ -47,7 +47,6 @@ import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PromotionCode;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.views.InvitationView;
@@ -55,6 +54,8 @@ import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {
@@ -72,9 +73,6 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	@EJB
 	private GroupSystem groupSystem;
-	
-	@EJB
-	private TransactionRunner runner;
 	
 	@EJB
 	private IdentitySpider spider;
@@ -588,11 +586,14 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 	}
 
-	public String sendEmailInvitation(UserViewpoint viewpoint, PromotionCode promotionCode, String email, String subject, String message) throws ValidationException {
+	public String sendEmailInvitation(UserViewpoint viewpoint, PromotionCode promotionCode, String email, String subject, String message) throws ValidationException, RetryException {
 		Resource emailRes = spider.getEmail(email);
 		return sendInvitation(viewpoint, promotionCode, emailRes, subject, message);
 	}
 	
+	public String sendEmailInvitation(UserViewpoint viewpoint, PromotionCode promotionCode, EmailResource email, String subject, String message) {
+		return sendInvitation(viewpoint, promotionCode, email, subject, message);
+	}
 
 	protected void notifyInvitationViewed(InvitationToken invite) {
 		// adding @suppresswarnings here makes javac crash, whee
@@ -646,7 +647,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			    // invite has a List of inviters, let's rather use the Mugshot character explicitly here,
 			    // it is important that Mugshot is already a member of a group we are inviting to,
 			    // which it already is for the summit group
-			    groupSystem.addMember(accounts.getCharacter(Character.MUGSHOT), summitGroup, newUser);
+			    groupSystem.addMember(accounts.getMugshotCharacter(), summitGroup, newUser);
 			} catch (PropertyNotFoundException e) {
 				logger.error("Summit Group guid not found, exception: {}", e.getMessage());				
 		    } catch (NotFoundException e) {
@@ -750,11 +751,17 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		int count = 0;
 		for (Character c : Character.values()) {
 			// the character enum has the same user more than once
-			User u = accounts.getCharacter(c);
-			if (already.contains(u))
-				continue;
-			already.add(u);
-			count += u.getAccount().getInvitations();
+			User u;
+			try {
+				u = accounts.lookupCharacter(c);
+				if (already.contains(u))
+					continue;
+				already.add(u);
+				
+				count += u.getAccount().getInvitations();
+			} catch (NotFoundException e) {
+				// Character account never created
+			}
 		}
 		return count;
 	}
@@ -767,7 +774,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	}
 	
 	public int getSelfInvitationCount() {
-		return getInvitations(SystemViewpoint.getInstance(), accounts.getCharacter(Character.MUGSHOT));
+		return getInvitations(SystemViewpoint.getInstance(), accounts.getMugshotCharacter());
 	}
 	
 	static private class InviteMessageContent extends MessageContent {
@@ -854,7 +861,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			throw new RuntimeException(e);
 		}
 		
-		User mugshot = accounts.getCharacter(Character.MUGSHOT);
+		User mugshot = accounts.getMugshotCharacter();
 		boolean isMugshotInvite = (viewedInviter.getUser().equals(mugshot));
 		
 		if (subject == null || subject.trim().length() == 0) {
@@ -880,7 +887,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		
 		final MimeMessage finalizedMessage = msg;
 		
-		runner.runTaskOnTransactionCommit(new Runnable() {
+		TxUtils.runOnCommit(new Runnable() {
 			public void run() {
 		        mailer.sendMessage(finalizedMessage);
 			}

@@ -36,6 +36,9 @@ import com.dumbhippo.server.ChatSystem;
 import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxRunnable;
+import com.dumbhippo.tx.TxUtils;
 
 public class Room implements PresenceListener {
 	static final int MAX_HISTORY_COUNT = 100;
@@ -511,8 +514,18 @@ public class Room implements PresenceListener {
 		return outgoing;
 	}
 	
-	private void processMessagePacket(Message packet) {
-		Sentiment sentiment = Sentiment.INDIFFERENT;
+	private Sentiment sentimentFromString(String sentimentString) {
+		if (sentimentString != null) {
+			if (sentimentString.equals("LOVE"))
+				return Sentiment.LOVE;
+			else if (sentimentString.equals("HATE"))
+				return Sentiment.HATE;
+		}
+		
+		return Sentiment.INDIFFERENT;
+	}
+	
+	private void processMessagePacket(final Message packet) {
 		JID fromJid = packet.getFrom();
 		JID toJid = packet.getTo();
 		
@@ -524,25 +537,23 @@ public class Room implements PresenceListener {
 			return;
 		
 		String username = fromJid.getNode();
-		Guid userId = Guid.parseTrustedJabberId(username);
+		final Guid userId = Guid.parseTrustedJabberId(username);
 		
-		// We call a MessengerGlue method to stick the message into the database. A message
-		// will then be sent to all nodes, including us, saying that there are new messages.
-		// We'll (in onMessagesChanged) query for new messages and send them to the connected clients.
-		ChatSystem chatSystem = EJBUtil.defaultLookup(ChatSystem.class);
 		
 		Element messageInfo = packet.getChildElement("messageInfo", "http://dumbhippo.com/protocol/rooms");
-		if (messageInfo != null) {
-			String sentimentString = messageInfo.attributeValue("sentiment");
-			if (sentimentString != null) {
-				if (sentimentString.equals("LOVE"))
-					sentiment = Sentiment.LOVE;
-				else if (sentimentString.equals("HATE"))
-					sentiment = Sentiment.HATE;
-			}
-		}
 		
-		chatSystem.addChatRoomMessage(roomGuid, kind, userId, packet.getBody(), sentiment, new Date());
+		final Sentiment sentiment = sentimentFromString(messageInfo != null ? messageInfo.attributeValue("sentiment") : null); 
+
+		TxUtils.runInTransaction(new TxRunnable() {
+			public void run() throws RetryException {
+				// We call a MessengerGlue method to stick the message into the database. A message
+				// will then be sent to all nodes, including us, saying that there are new messages.
+				// We'll (in onMessagesChanged) query for new messages and send them to the connected clients.
+				ChatSystem chatSystem = EJBUtil.defaultLookup(ChatSystem.class);
+				
+				chatSystem.addChatRoomMessage(roomGuid, kind, userId, packet.getBody(), sentiment, new Date());
+			}
+		});
 	}
 	
 	private void processIQPacket(IQ packet) {

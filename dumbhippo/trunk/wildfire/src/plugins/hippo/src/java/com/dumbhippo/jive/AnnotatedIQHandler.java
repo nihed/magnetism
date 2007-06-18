@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 import javax.ejb.EJB;
 
@@ -17,7 +16,6 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
 import com.dumbhippo.jive.annotations.IQHandler;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 
 /**
@@ -44,9 +42,6 @@ public class AnnotatedIQHandler extends org.jivesoftware.wildfire.handler.IQHand
 	private IQHandlerInfo info;
 	private Map<String, AnnotatedIQMethod> getMethods = new HashMap<String, AnnotatedIQMethod>();
 	private Map<String, AnnotatedIQMethod> setMethods = new HashMap<String, AnnotatedIQMethod>();
-	
-	@EJB
-	private TransactionRunner transactionRunner;
 	
 	private void resolveHandlerInfo() {
 		IQHandler annotation = getClass().getAnnotation(IQHandler.class);
@@ -182,10 +177,6 @@ public class AnnotatedIQHandler extends org.jivesoftware.wildfire.handler.IQHand
 		return info;
 	}
 	
-	public <T> T runTaskInNewTransaction(Callable<T> callable) throws Exception {
-		return transactionRunner.runTaskInNewTransaction(callable);
-	}
-
 	@Override
 	public IQ handleIQ(IQ packet) throws UnauthorizedException {
 		// We override process, so we don't need to implement this 

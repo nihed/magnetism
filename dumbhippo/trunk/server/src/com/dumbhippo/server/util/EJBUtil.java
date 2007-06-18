@@ -16,9 +16,6 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
 
 import org.hibernate.JDBCException;
 import org.hibernate.NonUniqueObjectException;
@@ -335,20 +332,16 @@ public class EJBUtil {
 		//logger.debug("Done listing");
 		return beanClasses;
 	}
-	
-	public static Set<Class<?>> getConstraintViolationExceptions() {
-		HashSet<Class<?>> exceptions = new HashSet<Class<?>>();
-		exceptions.add(ConstraintViolationException.class);
-		exceptions.add(NonUniqueObjectException.class);		
-		return exceptions;
-	}
 
-	// Returns an exception we would get with a race condition
-	// between two transactions trying to create the same object at once
-	public static Set<Class<?>> getDuplicateEntryExceptions() {
-		HashSet<Class<?>> exceptions = new HashSet<Class<?>>();
-		exceptions.add(EntityExistsException.class);
-		return exceptions;
+	static final public Set<Class<?>> CONSTRAINT_VIOLATION_EXCEPTIONS = new HashSet<Class<?>>();
+	static {
+		CONSTRAINT_VIOLATION_EXCEPTIONS.add(ConstraintViolationException.class);
+		CONSTRAINT_VIOLATION_EXCEPTIONS.add(NonUniqueObjectException.class);
+		
+		// Hibernate (as of v3.2) doesn't actually distinguish between a 
+		// constraint violation on the ID field or a constraint violation 
+		// on some other field, and throws EntityExistsException for all
+		CONSTRAINT_VIOLATION_EXCEPTIONS.add(EntityExistsException.class);
 	}
 	
 	public static boolean isDatabaseException(Exception e) {
@@ -475,72 +468,5 @@ public class EJBUtil {
 			session.flush();
 			session.clear();
 		}
-	}
-
-	public static String transactionStatusString(int status) {
-		switch (status) {
-		case Status.STATUS_ACTIVE:
-			return "ACTIVE-" + status;
-		case Status.STATUS_COMMITTED:
-			return "COMMITTED-" + status;
-		case Status.STATUS_MARKED_ROLLBACK:
-			return "MARKED_ROLLBACK-" + status;
-		case Status.STATUS_NO_TRANSACTION:
-			return "NO_TRANSACTION-" + status;
-		case Status.STATUS_PREPARED:
-			return "PREPARED-" + status;
-		case Status.STATUS_PREPARING:
-			return "PREPARING-" + status;
-		case Status.STATUS_ROLLEDBACK:
-			return "ROLLEDBACK-" + status;
-		case Status.STATUS_ROLLING_BACK:
-			return "ROLLING_BACK-" + status;
-		case Status.STATUS_UNKNOWN:
-			return "UNKNOWN-" + status;
-		default:
-			return "NOT_HANDLED-" + status;
-		}
-	}	
-	
-	private static int getTransactionStatus() {
-		TransactionManager tm;
-		try {
-			tm = (TransactionManager) (new InitialContext()).lookup("java:/TransactionManager");
-		} catch (NamingException e) {
-			throw new RuntimeException("no TransactionManager found", e);
-		}
-
-		int txStatus;
-		try {
-			txStatus = tm.getStatus();
-		} catch (SystemException e) {
-			throw new RuntimeException("failed to get tx status", e);
-		}
-		return txStatus;
-	}
-	
-	public static boolean isTransactionActive() {
-		return getTransactionStatus() == Status.STATUS_ACTIVE;
-	}
-	
-	public static void assertTransactionStatus(int desired) {
-		int txStatus = getTransactionStatus();
-		
-		if (txStatus != desired) {
-			logger.warn("Unexpected tx status {} while expecting {}", transactionStatusString(txStatus),
-					transactionStatusString(desired));
-			// uncomment this once we haven't seen the above warning in a while, the backtrace 
-			// makes it much easier to debug this situation.
-			//throw new IllegalStateException("Unexpected tx status " + transactionStatusString(txStatus) + 
-			//		" expecting " + transactionStatusString(desired));
-		}
-	}
-	
-	public static void assertNoTransaction() {
-		assertTransactionStatus(Status.STATUS_NO_TRANSACTION);
-	}
-	
-	public static void assertHaveTransaction() {
-		assertTransactionStatus(Status.STATUS_ACTIVE);
 	}
 }

@@ -20,6 +20,7 @@ import com.dumbhippo.services.FlickrPhotoView;
 import com.dumbhippo.services.FlickrPhotos;
 import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.FlickrWebServices;
+import com.dumbhippo.tx.TxUtils;
 
 //@Stateless // for now, these cache beans are our own special kind of bean and not EJBs due to a jboss bug
 public class FlickrUserPhotosCacheBean extends AbstractBasicCacheBean<String,FlickrPhotosView> implements
@@ -51,13 +52,13 @@ public class FlickrUserPhotosCacheBean extends AbstractBasicCacheBean<String,Fli
 			new BasicCacheStorageMapper<String,FlickrPhotosView,CachedFlickrPhotos>() {
 
 				public CachedFlickrPhotos newNoResultsMarker(String key) {
-					EJBUtil.assertHaveTransaction();
+					TxUtils.assertHaveTransaction();
 					
 					return CachedFlickrPhotos.newNoResultsMarker(key);
 				}
 
 				public CachedFlickrPhotos queryExisting(String key) {
-					EJBUtil.assertHaveTransaction();
+					TxUtils.assertHaveTransaction();
 					
 					Query q = em.createQuery("SELECT photos FROM CachedFlickrPhotos photos WHERE photos.flickrId = :flickrId");
 					q.setParameter("flickrId", key);
@@ -87,7 +88,7 @@ public class FlickrUserPhotosCacheBean extends AbstractBasicCacheBean<String,Fli
 			new ListCacheStorageMapper<String,FlickrPhotoView,CachedFlickrUserPhoto>() {
 
 			public List<CachedFlickrUserPhoto> queryExisting(String key) {
-				EJBUtil.assertHaveTransaction();
+				TxUtils.assertHaveTransaction();
 				
 				Query q = em.createQuery("SELECT photo FROM CachedFlickrUserPhoto photo WHERE photo.ownerId = :ownerId");
 				q.setParameter("ownerId", key);
@@ -97,7 +98,7 @@ public class FlickrUserPhotosCacheBean extends AbstractBasicCacheBean<String,Fli
 			}
 
 			public void setAllLastUpdatedToZero(String key) {
-				EJBUtil.assertHaveTransaction();
+				TxUtils.assertHaveTransaction();
 				
 				EJBUtil.prepareUpdate(em, CachedFlickrUserPhoto.class);
 				
@@ -176,7 +177,7 @@ public class FlickrUserPhotosCacheBean extends AbstractBasicCacheBean<String,Fli
 	@TransactionAttribute(TransactionAttributeType.REQUIRED)
 	@Override
 	public void expireCache(String key) {
-		EJBUtil.assertHaveTransaction();
+		TxUtils.assertHaveTransaction();
 		
 		summaryStorage.expireCache(key);
 		photoListStorage.expireCache(key);

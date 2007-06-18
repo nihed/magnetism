@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
@@ -71,8 +70,7 @@ public class InvitationAdminPage extends AbstractSigninRequiredPage {
 	
 	public ListBean<GroupView> getGroups() {
 		if (groups == null) {
-		    Character character = Character.MUGSHOT;
-		    User inviter = accountSystem.getCharacter(character);
+		    User inviter = accountSystem.getMugshotCharacter();
 			groups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(new UserViewpoint(inviter), inviter, MembershipStatus.ACTIVE)));
 		}
 		return groups;		

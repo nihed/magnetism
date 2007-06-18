@@ -13,6 +13,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.WantsInSystem;
+import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class WantsInServlet extends AbstractServlet {
@@ -31,7 +32,7 @@ public class WantsInServlet extends AbstractServlet {
 	
 	@Override
 	protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
-			IOException, HttpException, HumanVisibleException {
+			IOException, HttpException, HumanVisibleException, RetryException {
 		String address = request.getParameter("address");
 		if (address != null)
 			address = address.trim();
@@ -56,6 +57,6 @@ public class WantsInServlet extends AbstractServlet {
 
 	@Override
 	protected boolean requiresTransaction(HttpServletRequest request) {
-		return false;
+		return true;
 	}
 }

@@ -4,6 +4,7 @@ import javax.ejb.Local;
 
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoader;
+import com.dumbhippo.tx.RetryException;
 
 /** 
  * This bean checks availability of the blog feeds for MySpace external accounts that did
@@ -20,6 +21,7 @@ public interface MySpaceUpdater extends PollingTaskLoader {
 	 * @param external 
 	 * @throws XmlMethodException if the feed for the MySpace blog could not be found,
 	 *                            for example, if the MySpace account is private 
+	 * @throws RetryException 
 	 */
-	public void createFeedForMySpaceBlog(ExternalAccount external) throws XmlMethodException;
+	public void createFeedForMySpaceBlog(ExternalAccount external) throws XmlMethodException, RetryException;
 }

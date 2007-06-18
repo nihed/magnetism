@@ -16,6 +16,7 @@ import com.dumbhippo.server.views.GroupMugshotView;
 import com.dumbhippo.server.views.PersonMugshotView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
 
 /** 
  * The stacker manages the stack of Block objects and the UserBlockData associated with them.
@@ -28,7 +29,7 @@ public interface Stacker {
 	public String getUserStackFilterPrefs(User user);
 	public void setUserStackFilterPrefs(User viewer, String filter);	
 	
-	public Block getOrCreateBlock(BlockKey key);
+	public Block getOrCreateBlock(BlockKey key) throws RetryException;
 	public Block createBlock(BlockKey key);
 	public Block queryBlock(BlockKey key) throws NotFoundException;
 	public Block lookupBlock(Guid guid) throws NotFoundException;
@@ -182,14 +183,14 @@ public interface Stacker {
 	public void migrateGroupBlockData();
 	public void migrateGroups();
 	public void migrateUsers();
-	public void migratePost(String postId);
+	public void migratePost(String postId) throws RetryException;
 	public void migratePostParticipation(String postId);
-	public void migrateUser(String userId);
+	public void migrateUser(String userId) throws RetryException;
 	public void migrateBlockParticipation(String blockId);
-	public void migrateGroupChat(String groupId);
+	public void migrateGroupChat(String groupId) throws RetryException;
 	public void migrateGroupChatParticipation(String groupId);
-	public void migrateGroupMembers(String groupId);
-	public void migrateGroupBlockData(String blockId);
-	public void migrateFlickr(User user);
-	public void migrateTwitter(User user);
+	public void migrateGroupMembers(String groupId) throws RetryException;
+	public void migrateGroupBlockData(String blockId) throws RetryException;
+	public void migrateFlickr(User user) throws RetryException;
+	public void migrateTwitter(User user) throws RetryException;
 }

@@ -206,7 +206,7 @@
 						    </div>
 					    </c:forEach>
 					    <div>
-						    <a href="${account.addAimLink}"><dh:png klass="dh-add-icon" src="/images3/${buildStamp}/add_icon.png" style="width: 10; height: 10; overflow: hidden;"/>IM our friendly bot to add a new screen name</a>
+						    <a href="javascript:dh.account.aimVerify()"><dh:png klass="dh-add-icon" src="/images3/${buildStamp}/add_icon.png" style="width: 10; height: 10; overflow: hidden;"/>IM our friendly bot to add a new screen name</a>
 					    </div>
 				    </dht:formTableRow>				
 				    <dht:formTableRow label="Website" icon="/images3/${buildStamp}/homepage_icon.png" controlId="dhWebsiteEntry">

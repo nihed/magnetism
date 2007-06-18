@@ -26,9 +26,9 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.SchemaUpdater;
 import com.dumbhippo.server.impl.MusicSystemBean;
-import com.dumbhippo.server.impl.TransactionRunnerBean;
 import com.dumbhippo.server.util.FaviconCache;
 import com.dumbhippo.services.caches.AbstractCacheBean;
+import com.dumbhippo.tx.TxUtils;
 
 // The point of this extremely simple MBean is to get notification
 // when our application is loaded and unloaded; in particular, we
@@ -89,7 +89,7 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 		LiveState.getInstance().shutdown();
 		AbstractCacheBean.shutdown();
 		MusicSystemBean.shutdown();
-		TransactionRunnerBean.shutdown();
+		TxUtils.shutdown();
 		FaviconCache.shutdown();
 		
 		heartbeatThread.interrupt();

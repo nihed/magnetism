@@ -18,6 +18,8 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.jive.annotations.IQMethod;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxUtils;
 
 public abstract class AnnotatedIQMethod {
 	protected IQMethod annotation;
@@ -38,9 +40,9 @@ public abstract class AnnotatedIQMethod {
 		return annotation.name();
 	}
 	
-	public abstract void doIQ(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException;
+	public abstract void doIQ(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException;
 	
-	protected Object invokeMethod(Object... params) throws IQException {
+	protected Object invokeMethod(Object... params) throws IQException, RetryException {
 		try {
 			return method.invoke(handler, params);
 		} catch (IllegalAccessException e) {
@@ -49,6 +51,8 @@ public abstract class AnnotatedIQMethod {
 			Throwable targetException = e.getTargetException(); 
 			if (targetException instanceof IQException)
 				throw (IQException)targetException;
+			else if (targetException instanceof RetryException)
+				throw (RetryException)targetException;
 			else
 				throw new RuntimeException("Unexpected exception invoking IQ method", targetException);
 		}
@@ -75,8 +79,8 @@ public abstract class AnnotatedIQMethod {
 			final IQ reply = IQ.createResultIQ(request);
 			
 			if (annotation.needsTransaction()) {
-				handler.runTaskInNewTransaction(new Callable<Boolean>() {
-					public Boolean call() throws IQException {
+				TxUtils.runInTransaction(new Callable<Boolean>() {
+					public Boolean call() throws IQException, RetryException {
 						DataModel model = DataService.getModel();
 						DMSession session;
 							

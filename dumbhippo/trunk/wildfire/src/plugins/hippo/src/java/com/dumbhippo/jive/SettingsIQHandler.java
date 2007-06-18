@@ -20,6 +20,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.DesktopSettings;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
 
 /** 
  * IQ handler for getting your desktop settings
@@ -112,7 +113,7 @@ public class SettingsIQHandler extends AnnotatedIQHandler implements LiveEventLi
 	}
 	
 	@IQMethod(name="setting", type=IQ.Type.set)
-	public void setSetting(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
+	public void setSetting(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException {
 		Element child = request.getChildElement();
 		
 		String key = child.attributeValue("key");

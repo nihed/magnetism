@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.CachedItem;
-import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.tx.TxUtils;
 
 public class BasicCacheStorage<KeyType, ResultType, EntityType extends CachedItem>
 		extends AbstractCacheStorage<KeyType, ResultType, EntityType> {
@@ -24,7 +24,7 @@ public class BasicCacheStorage<KeyType, ResultType, EntityType extends CachedIte
 	}
 		
 	public ResultType checkCache(KeyType key) throws NotCachedException {
-		EJBUtil.assertHaveTransaction();
+		TxUtils.assertHaveTransaction();
 		
 		EntityType result = mapper.queryExisting(key);
 
@@ -49,7 +49,7 @@ public class BasicCacheStorage<KeyType, ResultType, EntityType extends CachedIte
 	
 	// null data means to save a negative result
 	public ResultType saveInCacheInsideExistingTransaction(KeyType key, ResultType data, Date now, boolean refetchedWithoutCheckingCache) {
-		EJBUtil.assertHaveTransaction();
+		TxUtils.assertHaveTransaction();
 		
 		EntityType e = mapper.queryExisting(key);
 		if (e == null) {

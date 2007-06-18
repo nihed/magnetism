@@ -14,8 +14,8 @@ import org.slf4j.Logger;
 import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.ExternalAccountType;
-import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.persistence.PicasaUpdateStatus;
+import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.polling.PollResult;
 import com.dumbhippo.polling.PollingTask;
 import com.dumbhippo.polling.PollingTaskFamily;
@@ -27,8 +27,9 @@ import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.PicasaAlbum;
 import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.CacheFactoryBean;
-import com.dumbhippo.services.caches.WebServiceCache;
 import com.dumbhippo.services.caches.PicasaAlbumsCache;
+import com.dumbhippo.services.caches.WebServiceCache;
+import com.dumbhippo.tx.TxUtils;
 
 @Stateless
 public class PicasaUpdaterBean extends CachedExternalUpdaterBean<PicasaUpdateStatus> implements CachedExternalUpdater<PicasaUpdateStatus>, PicasaUpdater {
@@ -53,7 +54,7 @@ public class PicasaUpdaterBean extends CachedExternalUpdaterBean<PicasaUpdateSta
 	@Override
 	@TransactionAttribute(TransactionAttributeType.NEVER)	
 	public void doPeriodicUpdate(String username) {
-		EJBUtil.assertNoTransaction();
+		TxUtils.assertNoTransaction();
 		
 		PicasaUpdater proxy = EJBUtil.defaultLookup(PicasaUpdater.class);
 		
@@ -80,7 +81,7 @@ public class PicasaUpdaterBean extends CachedExternalUpdaterBean<PicasaUpdateSta
 		logger.debug("Saving new Picasa status for " + username + ": albums {}",
 				albums);
 		
-		EJBUtil.assertHaveTransaction();
+		TxUtils.assertHaveTransaction();
 		
 		PicasaUpdateStatus updateStatus;
 		try {

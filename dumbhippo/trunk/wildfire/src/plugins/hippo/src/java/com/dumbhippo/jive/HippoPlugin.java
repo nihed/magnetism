@@ -63,7 +63,7 @@ public class HippoPlugin implements Plugin {
 			addIQHandler(new ApplicationsIQHandler());
 			addIQHandler(new ClientInfoIQHandler());
 			addIQHandler(new MySpaceIQHandler());					
-			addIQHandler(new MusicIQHandler(roomHandler));
+			addIQHandler(new MusicIQHandler());
 			addIQHandler(new PrefsIQHandler());
 			addIQHandler(new HotnessIQHandler());	
 			addIQHandler(new RecentPostsIQHandler());

@@ -47,6 +47,7 @@ import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.ClusterUtil;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.web.CookieAuthentication;
 import com.dumbhippo.web.LoginCookie;
 import com.dumbhippo.web.SigninBean;
@@ -219,14 +220,15 @@ public abstract class AbstractServlet extends HttpServlet {
 	 * add around wrappedDoPost(). If you want a redirect, just call request.sendRedirect(),
 	 * since there is no issue with transactions in that case ... the client will make
 	 * a new request.
+	 * @throws RetryException 
 	 */
 	protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
-		  	HumanVisibleException, IOException, ServletException {
+		  	HumanVisibleException, IOException, ServletException, RetryException {
 		throw new HttpException(HttpResponseCode.NOT_FOUND, "POST not implemented");				 
 	}
 
 	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
-			HumanVisibleException, IOException, ServletException {
+			HumanVisibleException, IOException, ServletException, RetryException {
 		throw new HttpException(HttpResponseCode.NOT_FOUND, "GET not implemented");				 
 	}
 		

@@ -11,6 +11,7 @@ import com.dumbhippo.server.GroupSearchResult;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostSearchResult;
@@ -137,14 +138,16 @@ public class FindPage {
 			if (viewpoint instanceof UserViewpoint && searchText != null) {
 				// look up the search text as an email or AIM
 				User user;
-				if (searchText.contains("@"))
-					user = identitySpider.lookupUserByEmail(viewpoint, searchText);
-				else
-					user = identitySpider.lookupUserByAim(viewpoint, searchText);
-				
-				if (user != null) {
+				try {
+					if (searchText.contains("@"))
+						user = identitySpider.lookupUserByEmail(viewpoint, searchText);
+					else
+						user = identitySpider.lookupUserByAim(viewpoint, searchText);
+					
 					PersonView pv = personViewer.getPersonView(viewpoint, user);
 					results.add(pv);
+				} catch (NotFoundException e) {
+					// Ignore
 				}
 			}
 			people.setTotalCount(results.size());

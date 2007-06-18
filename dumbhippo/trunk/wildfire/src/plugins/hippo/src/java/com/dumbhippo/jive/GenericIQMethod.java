@@ -6,6 +6,7 @@ import org.xmpp.packet.IQ;
 
 import com.dumbhippo.jive.annotations.IQMethod;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.tx.RetryException;
 
 public class GenericIQMethod extends AnnotatedIQMethod {
 	private boolean needsViewpoint;
@@ -17,7 +18,7 @@ public class GenericIQMethod extends AnnotatedIQMethod {
 	}
 
 	@Override
-	public void doIQ(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
+	public void doIQ(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException {
 		if (needsViewpoint)
 			invokeMethod(viewpoint, request, reply);
 		else
