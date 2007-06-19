@@ -123,6 +123,12 @@ void hippo_dbus_helper_unregister_service_tracker (DBusConnection               
 
 typedef struct HippoDBusProxy HippoDBusProxy;
 
+typedef void        (* HippoDBusReplyHandler) (DBusMessage *reply,
+                                               void        *data);
+typedef dbus_bool_t (* HippoDBusArgAppender)  (DBusMessage *message,
+                                               void        *data);
+
+
 HippoDBusProxy*   hippo_dbus_proxy_new                     (DBusConnection          *connection,
                                                             const char              *bus_name,
                                                             const char              *path,
@@ -135,16 +141,43 @@ void              hippo_dbus_proxy_set_method_prefix       (HippoDBusProxy      
                                                             char                    *method_prefix);
 void              hippo_dbus_proxy_unref                   (HippoDBusProxy          *proxy);
 
-DBusMessage*      hippo_dbus_proxy_call_method_sync        (HippoDBusProxy          *proxy,
-                                                            const char              *method,
-                                                            DBusError               *error,
-                                                            int                      first_arg_type,
-                                                            ...);
-DBusMessage*      hippo_dbus_proxy_call_method_sync_valist (HippoDBusProxy          *proxy,
-                                                            const char              *method,
-                                                            DBusError               *error,
-                                                            int                      first_arg_type,
-                                                            va_list                  args);
+DBusMessage* hippo_dbus_proxy_call_method_sync           (HippoDBusProxy        *proxy,
+                                                          const char            *method,
+                                                          DBusError             *error,
+                                                          int                    first_arg_type,
+                                                          ...);
+DBusMessage* hippo_dbus_proxy_call_method_sync_valist    (HippoDBusProxy        *proxy,
+                                                          const char            *method,
+                                                          DBusError             *error,
+                                                          int                    first_arg_type,
+                                                          va_list                args);
+DBusMessage* hippo_dbus_proxy_call_method_sync_appender  (HippoDBusProxy        *proxy,
+                                                          const char            *method,
+                                                          DBusError             *error,
+                                                          HippoDBusArgAppender   appender,
+                                                          void                  *appender_data);
+void         hippo_dbus_proxy_call_method_async          (HippoDBusProxy        *proxy,
+                                                          const char            *method,
+                                                          HippoDBusReplyHandler  handler,
+                                                          void                  *data,
+                                                          DBusFreeFunction       free_data_func,
+                                                          int                    first_arg_type,
+                                                          ...);
+void         hippo_dbus_proxy_call_method_async_valist   (HippoDBusProxy        *proxy,
+                                                          const char            *method,
+                                                          HippoDBusReplyHandler  handler,
+                                                          void                  *data,
+                                                          DBusFreeFunction       free_data_func,
+                                                          int                    first_arg_type,
+                                                          va_list                args);
+void         hippo_dbus_proxy_call_method_async_appender (HippoDBusProxy        *proxy,
+                                                          const char            *method,
+                                                          HippoDBusReplyHandler  handler,
+                                                          void                  *data,
+                                                          DBusFreeFunction       free_data_func,
+                                                          HippoDBusArgAppender   appender,
+                                                          void                  *appender_data);
+
 
 /* this takes ownership of the error and the reply which means it also
  * frees the returned args unless they are just primitives. Not usable with array returns.

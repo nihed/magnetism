@@ -239,6 +239,7 @@ struct _HippoConnection {
     int message_port;
     char *username;
     char *password;
+    char *self_resource_id;
     gboolean contacts_loaded;
     char *download_url;
     char *tooltip;
@@ -495,6 +496,7 @@ hippo_connection_finalize(GObject *object)
     g_free(connection->username);
     g_free(connection->password);
     g_free(connection->tooltip);
+    g_free(connection->self_resource_id);
 
     g_object_unref(connection->platform);
     connection->platform = NULL;
@@ -610,7 +612,8 @@ hippo_connection_forget_auth(HippoConnection *connection)
     hippo_platform_delete_login_cookie(connection->platform);
     zero_str(&connection->username);
     zero_str(&connection->password);
-
+    zero_str(&connection->self_resource_id);
+    
     if (old_has_auth != hippo_connection_get_has_auth(connection)) {
         g_signal_emit(connection, signals[HAS_AUTH_CHANGED], 0);
     }
@@ -621,6 +624,25 @@ hippo_connection_get_self_guid(HippoConnection  *connection)
 {
     g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), NULL);
     return connection->username;
+}
+
+const char*
+hippo_connection_get_self_resource_id(HippoConnection  *connection)
+{
+    g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), NULL);
+
+    if (connection->self_resource_id == NULL) {
+        const char *server;
+        const char *self_guid;
+        
+        self_guid = hippo_connection_get_self_guid(connection);
+        
+        server = hippo_platform_get_web_server(connection->platform);
+        
+        connection->self_resource_id = g_strdup_printf("http://%s/o/user/%s", server, self_guid);
+    }
+
+    return connection->self_resource_id;
 }
 
 HippoState
@@ -1176,6 +1198,7 @@ hippo_connection_load_auth(HippoConnection *connection)
     /* always clear current username/password */
     zero_str(&connection->username);
     zero_str(&connection->password);
+    zero_str(&connection->self_resource_id);
     
     result = hippo_platform_read_login_cookie(connection->platform,
                                               &connection->login_browser,
@@ -3956,6 +3979,12 @@ disconnect_reason_debug_string(LmDisconnectReason reason)
         break;
     case LM_DISCONNECT_REASON_UNKNOWN:
         return "UNKNOWN";
+        break;
+    case LM_DISCONNECT_REASON_RESOURCE_CONFLICT:
+        return "RESOURCE_CONFLICT";
+        break;
+    case LM_DISCONNECT_REASON_INVALID_XML:
+        return "INVALID_XML";
         break;
     }
     return "WHAT THE?";
