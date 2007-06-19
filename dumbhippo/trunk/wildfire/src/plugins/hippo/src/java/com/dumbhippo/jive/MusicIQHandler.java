@@ -31,7 +31,7 @@ public class MusicIQHandler extends AnnotatedIQHandler {
 	}
 	
 	@IQMethod(name="music", type=IQ.Type.set)
-	public IQ doMusic(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException {		
+	public void doMusic(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException, RetryException {		
 		Log.debug("handling IQ packet " + request);
 		Element iq = request.getChildElement();
 
@@ -41,9 +41,9 @@ public class MusicIQHandler extends AnnotatedIQHandler {
 		}
 		
 		if (type.equals("musicChanged")) {
-			return processMusicChanged(viewpoint, iq, reply);	
+		    processMusicChanged(viewpoint, iq, reply);	
 		} else if (type.equals("primingTracks")) {
-			return processPrimingTracks(viewpoint, iq, reply);
+			processPrimingTracks(viewpoint, iq, reply);
 		} else {
 			throw IQException.createBadRequest("Unknown music IQ type, known types are: musicChanged, primingTracks");
 		}
@@ -80,7 +80,7 @@ public class MusicIQHandler extends AnnotatedIQHandler {
     	return properties;
 	}
 	
-	private IQ processMusicChanged(UserViewpoint viewpoint, Element iq, IQ reply) throws IQException, RetryException {
+	private void processMusicChanged(UserViewpoint viewpoint, Element iq, IQ reply) throws IQException, RetryException {
 		Map<String,String> properties;
 		try {
 			properties = parseTrackNode(iq);
@@ -91,11 +91,9 @@ public class MusicIQHandler extends AnnotatedIQHandler {
 		
 		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		glue.handleMusicChanged(viewpoint, properties);
-		
-		return reply;
 	}
 
-	private IQ processPrimingTracks(UserViewpoint viewpoint, Element iq, IQ reply) throws IQException, RetryException {	
+	private void processPrimingTracks(UserViewpoint viewpoint, Element iq, IQ reply) throws IQException, RetryException {	
 		List<Map<String,String>> primingTracks = new ArrayList<Map<String,String>>();		
 		for (Object argObj : iq.elements()) {
         	Node node = (Node) argObj;
@@ -119,7 +117,5 @@ public class MusicIQHandler extends AnnotatedIQHandler {
         }
 		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		glue.handleMusicPriming(viewpoint, primingTracks);		
-        
-		return reply;
 	}
 }
