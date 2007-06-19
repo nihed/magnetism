@@ -18,6 +18,8 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.UniqueTaskExecutor;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.tx.TxCallable;
 import com.dumbhippo.tx.TxUtils;
 
 /**
@@ -152,8 +154,16 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 		TxUtils.assertNoTransaction();
 		try {
 			return TxUtils.runInTransaction(new Callable<ResultType>() {
-				public ResultType call() {
-					return saveInCacheInsideExistingTransaction(key, data, new Date(), refetchedWithoutCheckingCache);
+				public ResultType call() throws RetryException {
+					// We do a blanket runNeedsRetry to avoid having to track down every place
+					// in the saving code that might cause a constraint violation and mark them
+					// individually. The assumption here is that 
+					// saveInCacheInsideExistingTransaction only does database work
+					return TxUtils.runNeedsRetry(new TxCallable<ResultType>() {
+						public ResultType call() {
+							return saveInCacheInsideExistingTransaction(key, data, new Date(), refetchedWithoutCheckingCache);
+						}
+					});
 				}
 			});
 		} catch (Exception e) {

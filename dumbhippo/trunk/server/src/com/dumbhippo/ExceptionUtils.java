@@ -58,7 +58,7 @@ public class ExceptionUtils {
 		return false;
 	}
 	
-	public static void throwAsRuntimeException(Exception e) {
+	public static void throwAsRuntimeException(Throwable e) {
 		if (e instanceof RuntimeException)
 			throw (RuntimeException) e;
 		else
