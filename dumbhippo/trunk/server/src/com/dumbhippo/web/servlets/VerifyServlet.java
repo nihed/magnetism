@@ -241,6 +241,16 @@ public class VerifyServlet extends AbstractServlet {
 			throw new RuntimeException("VerifyServlet not handling token type " + token.getClass().getName());
 		}
 	}
+	
+	@Override
+	protected boolean isReadWrite(HttpServletRequest request) {
+		// The method is GET, since we need links that the user can just click upon,
+		// but they have side effects. This is OK since the links are unique, so 
+		// caching won't happen.
+		
+		return true;
+	}
+	
 
 	@Override
 	protected boolean requiresTransaction(HttpServletRequest request) {
