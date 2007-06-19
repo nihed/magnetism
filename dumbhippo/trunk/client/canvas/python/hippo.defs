@@ -456,8 +456,8 @@
   (return-type "none")
   (parameters
     '("HippoCanvasItem*" "child")
-    '("int*" "x")
-    '("int*" "y")
+    '("int*" "x" (direction "out"))
+    '("int*" "y" (direction "out"))
   )
 )
 
@@ -1097,6 +1097,15 @@
   (return-type "gboolean")
   (parameters
     '("HippoEvent*" "event")
+  )
+)
+
+(define-virtual set_context
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_set_context")
+  (return-type "none")
+  (parameters
+    '("HippoCanvasContext*" "context")
   )
 )
 
