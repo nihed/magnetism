@@ -67,7 +67,7 @@ public class AimQueueConsumerBean implements MessageListener {
 		sendHtmlReplyMessage(event, aimName, XmlBuilder.escape(textMessage));
 	}
 	
-	private void processTokenEvent(BotEventToken event) throws RetryException {
+	private void processTokenEvent(final BotEventToken event) throws RetryException {
 		Token token;
 		try {
 			token = tokenSystem.getTokenByKey(event.getToken());
@@ -85,9 +85,9 @@ public class AimQueueConsumerBean implements MessageListener {
 			return;
 		}
 		
-		ResourceClaimToken claim = (ResourceClaimToken) token;
+		final ResourceClaimToken claim = (ResourceClaimToken) token;
 		
-		AimResource resource;
+		final AimResource resource;
 		try {
 			resource = identitySpider.getAim(event.getAimName());
 		} catch (ValidationException e) {
@@ -95,15 +95,17 @@ public class AimQueueConsumerBean implements MessageListener {
 			throw new RuntimeException("broken, invalid screen name from AIM bot", e);
 		}
 		
-		DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
-		
-		try {
-			claimVerifier.verify(null, claim, resource);
-			sendReplyMessage(event, event.getAimName(), "The screen name " + event.getAimName() + " was added to your Mugshot account");
-		} catch (HumanVisibleException e) {
-			logger.debug("exception verifying claim, sending back to user: {}", e.getMessage());
-			sendHtmlReplyMessage(event, event.getAimName(), e.getHtmlMessage());
-		}
+		DataService.currentSessionRW().runAsSystem(new Runnable() {
+			public void run() {
+				try {
+					claimVerifier.verify(null, claim, resource);
+					sendReplyMessage(event, event.getAimName(), "The screen name " + event.getAimName() + " was added to your Mugshot account");
+				} catch (HumanVisibleException e) {
+					logger.debug("exception verifying claim, sending back to user: {}", e.getMessage());
+					sendHtmlReplyMessage(event, event.getAimName(), e.getHtmlMessage());
+				}
+			}
+		});	
 	}
 	
 	private void processLoginEvent(BotEventLogin event) throws RetryException {
