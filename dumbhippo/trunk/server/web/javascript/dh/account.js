@@ -580,7 +580,7 @@ dh.account.aimVerify = function() {
 	dh.server.getTextGET("aimVerifyLink", 
 						{ },
 						function(type, data, http) {
-							window.open(data);
+							window.open(data, "_self");
 						},
 						function(type, error, http) {
 							alert("Couldn't get link to verify AIM account");
