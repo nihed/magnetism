@@ -1333,17 +1333,20 @@ hippo_dbus_proxy_unref(HippoDBusProxy          *proxy)
 }
 
 
-DBusMessage*
-hippo_dbus_proxy_call_method_sync_valist (HippoDBusProxy          *proxy,
-                                          const char              *method,
-                                          DBusError               *error,
-                                          int                      first_arg_type,
-                                          va_list                  args)
+static DBusMessage*
+call_method_sync_valist_appender (HippoDBusProxy          *proxy,
+                                  const char              *method,
+                                  DBusError               *error,
+                                  HippoDBusArgAppender     appender,
+                                  void                    *appender_data,
+                                  int                      first_arg_type,
+                                  va_list                  args)
 {
     DBusMessage *call;
     DBusMessage *reply;
-    char *prefixed_method = NULL;
+    char *prefixed_method;
 
+    prefixed_method = NULL;
     reply = NULL;
 
     if (proxy->method_prefix) {
@@ -1355,10 +1358,19 @@ hippo_dbus_proxy_call_method_sync_valist (HippoDBusProxy          *proxy,
 
     if (proxy->method_prefix)
         g_free(prefixed_method);
-    
-    if (!dbus_message_append_args_valist(call, first_arg_type, args)) {
-        dbus_set_error_const(error, DBUS_ERROR_NO_MEMORY, "No memory");
-        goto failed;
+
+    if (first_arg_type != DBUS_TYPE_INVALID) {
+        if (!dbus_message_append_args_valist(call, first_arg_type, args)) {
+            dbus_set_error_const(error, DBUS_ERROR_NO_MEMORY, "No memory");
+            goto failed;
+        }
+    }
+
+    if (appender != NULL) {
+        if (!(* appender)(call, appender_data)) {
+            dbus_set_error_const(error, DBUS_ERROR_NO_MEMORY, "No memory");
+            goto failed;
+        }
     }
     
     reply = dbus_connection_send_with_reply_and_block(proxy->connection, call, -1, error);
@@ -1374,6 +1386,31 @@ hippo_dbus_proxy_call_method_sync_valist (HippoDBusProxy          *proxy,
         dbus_message_unref(reply);
     
     return NULL;
+}
+
+DBusMessage*
+hippo_dbus_proxy_call_method_sync_valist (HippoDBusProxy          *proxy,
+                                          const char              *method,
+                                          DBusError               *error,
+                                          int                      first_arg_type,
+                                          va_list                  args)
+{
+    return call_method_sync_valist_appender(proxy, method, error,
+                                            NULL, NULL, first_arg_type, args);
+}
+
+DBusMessage*
+hippo_dbus_proxy_call_method_sync_appender  (HippoDBusProxy        *proxy,
+                                             const char            *method,
+                                             DBusError             *error,
+                                             HippoDBusArgAppender   appender,
+                                             void                  *appender_data)
+{
+    va_list dummy_valist;
+    
+    return call_method_sync_valist_appender(proxy, method, error,
+                                            appender, appender_data, DBUS_TYPE_INVALID,
+                                            dummy_valist);
 }
 
 DBusMessage*
@@ -1394,6 +1431,197 @@ hippo_dbus_proxy_call_method_sync(HippoDBusProxy          *proxy,
     return reply;
 }
 
+void
+hippo_dbus_proxy_call_method_async (HippoDBusProxy          *proxy,
+                                    const char              *method,
+                                    HippoDBusReplyHandler    handler,
+                                    void                    *data,
+                                    DBusFreeFunction         free_data_func,
+                                    int                      first_arg_type,
+                                    ...)
+{
+    va_list args;
+    
+    va_start(args, first_arg_type);
+    hippo_dbus_proxy_call_method_async_valist(proxy, method,
+                                              handler, data, free_data_func,
+                                              first_arg_type, args);
+    va_end(args);
+}
+
+typedef struct {
+    HippoDBusReplyHandler    handler;
+    void                    *data;
+    DBusFreeFunction         free_data_func;
+} AsyncReplyClosure;
+
+static AsyncReplyClosure*
+async_reply_closure_new(HippoDBusReplyHandler    handler,
+                        void                    *data,
+                        DBusFreeFunction         free_data_func)
+{
+    AsyncReplyClosure *closure;
+    closure = g_new(AsyncReplyClosure, 1);
+    closure->handler = handler;
+    closure->data = data;
+    closure->free_data_func = free_data_func;
+
+    return closure;
+}
+
+static void
+async_reply_closure_free(AsyncReplyClosure *closure)
+{
+    if (closure->free_data_func)
+        (* closure->free_data_func) (closure->data);
+    g_free(closure);
+}
+
+static void
+async_reply_closure_free_func(void *data)
+{
+    async_reply_closure_free(data);
+}
+
+static void
+async_reply_closure_invoke(AsyncReplyClosure *closure,
+                           DBusMessage       *reply)
+{
+    (* closure->handler) (reply, closure->data);
+}
+
+static void
+on_async_reply(DBusPendingCall *pending,
+               void            *data)
+{
+    AsyncReplyClosure *closure;
+    DBusMessage *reply;
+    
+    closure = data;
+    
+    reply = dbus_pending_call_steal_reply(pending);
+    if (reply == NULL) {
+        g_warning("NULL reply in on_async_reply?");
+        return;
+    }
+
+    async_reply_closure_invoke(closure, reply);
+    
+    dbus_message_unref(reply);
+
+    /* free data func should free the closure */
+}
+
+static void
+call_method_async_valist_appender(HippoDBusProxy          *proxy,
+                                  const char              *method,
+                                  HippoDBusReplyHandler    handler,
+                                  void                    *data,
+                                  DBusFreeFunction         free_data_func,
+                                  HippoDBusArgAppender     appender,
+                                  void                    *appender_data,
+                                  int                      first_arg_type,
+                                  va_list                  args)
+{
+    DBusMessage *call;
+    char *prefixed_method;
+
+    prefixed_method = NULL;
+
+    if (proxy->method_prefix) {
+        prefixed_method = g_strconcat(proxy->method_prefix, method, NULL);
+        method = prefixed_method;
+    }
+
+    call = dbus_message_new_method_call(proxy->bus_name, proxy->path, proxy->interface, method);
+
+    if (proxy->method_prefix)
+        g_free(prefixed_method);
+
+    if (first_arg_type != DBUS_TYPE_INVALID) {
+        if (!dbus_message_append_args_valist(call, first_arg_type, args)) {
+            g_warning("No memory to append args to async call");
+            goto failed;
+        }
+    }
+
+    if (appender != NULL) {
+        if (!(* appender)(call, appender_data)) {
+            g_warning("No memory to append args to async call");
+            goto failed;
+        }
+    }
+    
+    if (handler != NULL) {
+        DBusPendingCall *pending;
+        
+        pending = NULL;
+        dbus_connection_send_with_reply(proxy->connection, call, &pending, -1);
+
+        if (pending == NULL) {
+            g_warning("Failed to send method call %s (probably connection is disconnected)", method);
+            goto failed;
+        }
+        
+        if (!dbus_pending_call_set_notify(pending, on_async_reply,
+                                          async_reply_closure_new(handler, data, free_data_func),
+                                          async_reply_closure_free_func))
+            g_error("out of memory");
+        
+        
+        /* rely on connection to hold a reference to it, if finalized
+         * I think on_async_reply won't get called though, 
+         * which is fine currently
+         */
+        dbus_pending_call_unref(pending);
+    } else {
+        dbus_message_set_no_reply(call, TRUE);
+        dbus_connection_send(proxy->connection, call, NULL);
+    }
+    
+    dbus_message_unref(call);
+    
+    return;
+    
+ failed:
+    if (call)
+        dbus_message_unref(call);
+
+    return;
+}
+
+void
+hippo_dbus_proxy_call_method_async_valist(HippoDBusProxy          *proxy,
+                                          const char              *method,
+                                          HippoDBusReplyHandler    handler,
+                                          void                    *data,
+                                          DBusFreeFunction         free_data_func,
+                                          int                      first_arg_type,
+                                          va_list                  args)
+{
+    call_method_async_valist_appender(proxy, method, handler, data, free_data_func,
+                                      NULL, NULL, first_arg_type, args);
+}
+
+void
+hippo_dbus_proxy_call_method_async_appender (HippoDBusProxy        *proxy,
+                                             const char            *method,
+                                             HippoDBusReplyHandler  handler,
+                                             void                  *data,
+                                             DBusFreeFunction       free_data_func,
+                                             HippoDBusArgAppender   appender,
+                                             void                  *appender_data)
+{
+    va_list dummy_args;
+    
+    call_method_async_valist_appender(proxy, method, handler, data, free_data_func,
+                                      appender, appender_data, DBUS_TYPE_INVALID, dummy_args);
+}
+
+
+/* this is sort of bizarre in that it warns about then frees the passed-in error,
+ * rather than returning it.
+ */
 dbus_bool_t
 hippo_dbus_proxy_finish_method_call_freeing_reply (DBusMessage *reply,
                                                    const char  *method,
@@ -1405,6 +1633,12 @@ hippo_dbus_proxy_finish_method_call_freeing_reply (DBusMessage *reply,
 
     if (reply == NULL) {
         g_warning("No reply to %s: %s", method, error->message);
+        dbus_error_free(error);
+        return FALSE;
+    }
+
+    if (dbus_set_error_from_message(error, reply)) {
+        g_warning("Error from %s: %s: %s", method, error->name, error->message);
         dbus_error_free(error);
         return FALSE;
     }
@@ -1425,6 +1659,9 @@ hippo_dbus_proxy_finish_method_call_freeing_reply (DBusMessage *reply,
     }
 }
 
+/* this is sort of bizarre in that it warns about then frees the passed-in error,
+ * rather than returning it.
+ */
 dbus_bool_t
 hippo_dbus_proxy_finish_method_call_keeping_reply (DBusMessage *reply,
                                                    const char  *method,
@@ -1436,6 +1673,12 @@ hippo_dbus_proxy_finish_method_call_keeping_reply (DBusMessage *reply,
 
     if (reply == NULL) {
         g_warning("No reply to %s: %s", method, error->message);
+        dbus_error_free(error);
+        return FALSE;
+    }
+
+    if (dbus_set_error_from_message(error, reply)) {
+        g_warning("Error from %s: %s: %s", method, error->name, error->message);
         dbus_error_free(error);
         return FALSE;
     }

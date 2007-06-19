@@ -854,14 +854,12 @@ get_self_id()
 {
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
     HippoConnection *hippo_connection = hippo_data_cache_get_connection(cache);
-    const char *self_guid = hippo_connection_get_self_guid(hippo_connection);
+    const char *self_resource_id = hippo_connection_get_self_resource_id(hippo_connection);
 
-    if (self_guid == NULL)
+    if (self_resource_id == NULL) {
         return g_strdup("");
-    else {
-        HippoPlatform *platform = hippo_connection_get_platform(hippo_connection);
-        const char *server = hippo_platform_get_web_server(platform);
-        return g_strdup_printf("http://%s/o/user/%s", server, self_guid);
+    } else {
+        return g_strdup(self_resource_id);
     }
 }
 

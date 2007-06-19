@@ -14,6 +14,7 @@
 #include "hippo-dbus-model.h"
 #include "hippo-dbus-mugshot.h"
 #include "hippo-dbus-pidgin.h"
+#include "hippo-dbus-local.h"
 #include "hippo-dbus-settings.h"
 #include "hippo-dbus-web.h"
 #include "hippo-distribution.h"
@@ -274,6 +275,7 @@ hippo_dbus_try_to_acquire(const char  *server,
     hippo_dbus_init_contacts(connection, FALSE);
 
     hippo_dbus_init_im(connection, FALSE);
+    hippo_dbus_init_local(connection);
     hippo_dbus_init_pidgin(connection);
     hippo_dbus_init_model(connection);
                         

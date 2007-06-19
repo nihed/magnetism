@@ -51,6 +51,7 @@ HippoBrowserKind hippo_connection_get_auth_browser          (HippoConnection  *c
 
 /* CAN RETURN NULL if we don't have auth information right now */
 const char*      hippo_connection_get_self_guid             (HippoConnection  *connection);
+const char*      hippo_connection_get_self_resource_id      (HippoConnection  *connection);
 
 HippoState       hippo_connection_get_state                 (HippoConnection  *connection);
 /* are we in a state such that the main app should go about its normal server interactions?
