@@ -293,6 +293,23 @@ _wrap_HippoCanvasBox__do_get_content_height_request(PyObject *cls, PyObject *arg
     return Py_BuildValue("(ii)", min_height, natural_height);    
 }
 %%
+override hippo_canvas_box_get_position kwargs
+static PyObject *
+_wrap_hippo_canvas_box_get_position(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "child", NULL };
+    PyGObject *child;
+    int x = 0;
+    int y = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:HippoCanvasBox.get_position", kwlist, &PyHippoCanvasItem_Type, &child))
+        return NULL;
+
+    hippo_canvas_box_get_position(HIPPO_CANVAS_BOX(self->obj), HIPPO_CANVAS_ITEM(child->obj), &x, &y);
+
+    return Py_BuildValue("(ii)", x, y);
+}
+%%
 override HippoCanvasItem__proxy_do_get_width_request
 static void
 _wrap_HippoCanvasItem__proxy_do_get_width_request(HippoCanvasItem *self, int*min_width, int*natural_width)
