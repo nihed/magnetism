@@ -1,5 +1,5 @@
 # FIXME - move this information to externals.txt up one level
-hibernate3.jar official			hibernate-3.2.3.ga.tar.gz (official)
+hibernate3.jar official			SVN snapshot build Branch_3_2@11694 (post 3.2.4sp1) + patch for HHH-2159
 hibernate-annotations.jar		hibernate-annotations-3.3.0.GA.tar.gz (official)
 hibernate-commons-annotations.jar	hibernate-annotations-3.3.0.GA.tar.gz (official)
 hibernate-entitymanager.jar		hibernate-entitymanager-3.3.1.GA.tar.gz (official)
