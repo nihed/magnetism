@@ -40,11 +40,11 @@
 			</c:choose>
 		</div>
 	</c:when>	
-	<c:when test="${!signin.active || (includeDownload && signin.user.account.needsDownload)}">
+	<c:when test="${signin.needsTermsOfUse || (includeDownload && signin.user.account.needsDownload)}">
 	<c:set scope="request" var="accountStatusShowing" value="true"/>
 		<div id="dhAccountStatus">
 			<c:choose>
-			<c:when test="${!signin.user.account.hasAcceptedTerms}">
+			<c:when test="${signin.needsTermsOfUse}">
 				<table cellspacing="0" cellpadding="0">
 				<tr>
 				<td valign="center">			
