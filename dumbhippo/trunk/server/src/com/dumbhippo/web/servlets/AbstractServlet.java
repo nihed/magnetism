@@ -310,8 +310,9 @@ public abstract class AbstractServlet extends HttpServlet {
 	
 	/**
 	 * Is the servlet going to write to the database in response to the request? The
-	 * default is to look at GET vs. POST, but subclasses can refine. (A GET request
-	 * can't have side-effects, but a POST request is allowed to be side-effect-free)
+	 * default is to look at GET vs. POST, but subclasses can refine. (A POST request is 
+	 * allowed to be side-effect-free, so might want a ReadOnly session. In a few special
+	 * cases, like our "verify" links, we also need GET requests to have side effects.) 
 	 * 
 	 * @param request
 	 * @return
