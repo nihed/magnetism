@@ -131,12 +131,14 @@ public class TxUtils {
 					Throwable cause = e.getCause();
 					if (cause == null)
 						cause = e;
-
-					throw new RuntimeException("Giving up after " + RETRY_COUNT
-							+ " retries", cause);
+					
+					logger.error("Giving up after " + RETRY_COUNT	+ " retries", cause);
+					ExceptionUtils.throwAsRuntimeException(cause);
+				} else {
+					logger.info("Retrying on constraint violation: {}", e.getMessage());
+					retries--;
 				}
 			}
-			retries--;
 		}
 	}
 
@@ -223,11 +225,13 @@ public class TxUtils {
 					if (cause == null)
 						cause = e;
 
-					throw new RuntimeException("Giving up after " + RETRY_COUNT
-							+ " retries", cause);
+					logger.error("Giving up after " + RETRY_COUNT	+ " retries", cause);
+					ExceptionUtils.throwAsRuntimeException(cause);
+				} else {
+					logger.info("Retrying on constraint violation: {}", e.getMessage());
+					retries--;
 				}
 			}
-			retries--;
 		}
 	}
 
