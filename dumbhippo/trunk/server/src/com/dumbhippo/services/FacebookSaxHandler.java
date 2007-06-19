@@ -195,70 +195,55 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		String currentContent = getCurrentContent().trim();
 		if (c == Element.session_key) {
 			sessionKey = currentContent;
-			logger.debug("Parsed out sessionKey {}", sessionKey);
 		} else if (c == Element.uid) {
 			facebookUserId = currentContent;
-			logger.debug("Parsed out uid {}", facebookUserId);
 		} else if (c == Element.unread) {
 			if (parent() == Element.messages) {
                 unreadMessageCount = parseFacebookCount(c, currentContent); 
-			    logger.debug("Parsed out unread message count {}", unreadMessageCount);	
 			} else if (parent() == Element.pokes) {
-				unseenPokeCount = parseFacebookCount(c, currentContent); 
-				logger.debug("Parsed out unseen poke count {}", unseenPokeCount);					
+				unseenPokeCount = parseFacebookCount(c, currentContent); 					
 			}
 		} else if (c == Element.most_recent) {
 			if (parent() == Element.messages) {
                 mostRecentMessageId = parseFacebookCount(c, currentContent); 
-			    logger.debug("Parsed out most recent message id {}", mostRecentMessageId);	
 			} else if (parent() == Element.pokes) {
-				mostRecentPokeId = parseFacebookCount(c, currentContent); 
-				logger.debug("Parsed out most recent poke id {}", mostRecentPokeId);					
+				mostRecentPokeId = parseFacebookCount(c, currentContent); 				
 			}
 		} else if (c == Element.wall_count) {
 			wallMessageCount = parseFacebookCount(c, currentContent); 
-			logger.debug("Parsed out wall message count {}", wallMessageCount);
 		} else if (c == Element.link) {
 			if (gettingTaggedPhotos) {
 			    currentFacebookPhotoData().setLink(currentContent);
 			} else if (gettingAlbums) {
 				// currentFacebookAlbumData().getCoverPhoto().setLink(currentContent);
 			}
-			logger.debug("Parsed out photo link {}", currentContent);
 		} else if (c == Element.src_small) {
 			if (gettingTaggedPhotos) {
 			    currentFacebookPhotoData().setSource(currentContent);
 			} else if (gettingAlbums) {
 				// currentFacebookAlbumData().getCoverPhoto().setSource(currentContent);
 			}
-			logger.debug("Parsed out photo source {}", currentContent);
 		} else if (c == Element.caption) {
 			if (gettingTaggedPhotos) {
 			    currentFacebookPhotoData().setCaption(currentContent);
 			} else if (gettingAlbums) {
 				// currentFacebookAlbumData().getCoverPhoto().setCaption(currentContent);
 			}			    
-			logger.debug("Parsed out photo caption {}", currentContent);
 		} else if (c == Element.created) {
 		    long createdTimestamp = parseFacebookDate(c, currentContent);	
 			if (gettingTaggedPhotos) {
 			    currentFacebookPhotoData().setCreatedTimestamp(new Date(createdTimestamp));
-			    logger.debug("Parsed out tagged photo date {}", createdTimestamp);
 			} else if (gettingAlbums) {
-			    // currentFacebookAlbumData().setCreatedTimestampAsLong(createdTimestamp);
-				logger.debug("Parsed out album creation date {}", createdTimestamp);				
+			    // currentFacebookAlbumData().setCreatedTimestampAsLong(createdTimestamp);				
 			}
 		} else if (c == Element.modified) { 
 			long modifiedTimestamp = parseFacebookDate(c, currentContent);
 			currentFacebookAlbumData().setModifiedTimestampAsLong(modifiedTimestamp);
-			logger.debug("Parsed out album modification date {}", modifiedTimestamp);
 		} else if (c == Element.aid) {
 			if (gettingTaggedPhotos) {
 			    currentFacebookPhotoData().setAlbumId(currentContent);
-				logger.debug("Parsed out tagged photo album id {}", currentContent);
 			} else if (gettingAlbums) {
 				currentFacebookAlbumData().setAlbumId(currentContent);
-				logger.debug("Parsed out album id {}", currentContent);
 			}
 		} else if (c == Element.cover_pid) {
 			// FIXME: this call encrypts the id and we'll never see it again, 
@@ -267,13 +252,10 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 			currentFacebookAlbumData().getCoverPhoto().setPhotoId(currentContent);
 		} else if (c == Element.name) {
 			currentFacebookAlbumData().setName(currentContent);
-			logger.debug("Parsed out album name {}", currentContent);	
 		} else if (c == Element.description) {
-			currentFacebookAlbumData().setDescription(currentContent);
-			logger.debug("Parsed out album description {}", currentContent);	
+			currentFacebookAlbumData().setDescription(currentContent);	
 		} else if (c == Element.location) {
 			currentFacebookAlbumData().setLocation(currentContent);
-			logger.debug("Parsed out album location {}", currentContent);	
 		} else if (c == Element.old_id) {
 			getCurrentIdPair().setFirst(currentContent); 
 	    } else if (c == Element.new_id) {

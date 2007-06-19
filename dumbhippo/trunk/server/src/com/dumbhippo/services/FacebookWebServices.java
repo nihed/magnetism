@@ -236,7 +236,6 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	
 	// this function can be called with the detached facebookAccount
 	public int getTaggedPhotosCount(FacebookAccount facebookAccount) {
-		logger.debug("will get facebook tagged photos count for {}", facebookAccount.getFacebookUserId());
 		List<String> params = new ArrayList<String>();
 		String methodName = "facebook.photos.get";
         params.add("method=" + methodName);
@@ -256,7 +255,6 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	
 	// this function can be called with the detached facebookAccount
 	public List<FacebookPhotoData> getTaggedPhotos(FacebookAccount facebookAccount) {
-		logger.debug("will get facebook tagged photos for {}", facebookAccount.getFacebookUserId());
 		List<String> params = new ArrayList<String>();
 		String methodName = "facebook.photos.get";
         params.add("method=" + methodName);
