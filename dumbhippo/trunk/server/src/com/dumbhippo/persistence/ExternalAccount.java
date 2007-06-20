@@ -73,13 +73,14 @@ public class ExternalAccount extends DBUnique {
 	public String getHandle() {
 		return handle;
 	}
-	public void setHandle(String handle) {
-		if (accountType == null) {
-			// this happens if hibernate sets this field before the accountType field
-			// in that case we just skip validation... in theory stuff in the db is valid.
-			this.handle = handle;
-			return;
-		}
+	protected void setHandle(String handle) {
+		this.handle = handle;
+//		if (accountType == null) {
+//			// this happens if hibernate sets this field before the accountType field
+//			// in that case we just skip validation... in theory stuff in the db is valid.
+//			this.handle = handle;
+//			return;
+//		}
 		
 //		try {
 //			this.handle = accountType.canonicalizeHandle(handle);
