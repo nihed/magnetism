@@ -12,6 +12,8 @@ import javax.jms.ObjectMessage;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.dm.ChangeNotificationSet;
+import com.dumbhippo.server.dm.DataService;
 
 //
 // Handles taking events queued via LiveState.queueUpdate and dispatching
@@ -65,6 +67,9 @@ public class LiveQueueConsumerBean implements MessageListener {
 				
 				if (obj instanceof LiveEvent) {
 					process((LiveEvent) obj, isLocal);
+				} else if (obj instanceof ChangeNotificationSet) {
+					if (!isLocal)
+						DataService.getModel().notifyRemoteChange((ChangeNotificationSet)obj);
 				} else {
 					logger.warn("Got unknown object: " + obj);
 				}

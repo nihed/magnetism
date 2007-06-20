@@ -53,7 +53,7 @@ public class ReadWriteSession extends CachedSession {
 	 * @param propertyName the name of the property that changed
 	 */
 	public <K, T extends DMObject<K>> void changed(Class<T> clazz, K key, String propertyName) {
-		notificationSet.changed(clazz, key, propertyName);
+		notificationSet.changed(model, clazz, key, propertyName);
 		
 		// FIXME: invalidate the property in the session-local cached object if one exists
 	}
@@ -61,6 +61,6 @@ public class ReadWriteSession extends CachedSession {
 	@Override
 	public void afterCompletion(int status) {
 		if (status == Status.STATUS_COMMITTED)
-			notificationSet.commit();
+			model.commitChanges(notificationSet);
 	}
 }

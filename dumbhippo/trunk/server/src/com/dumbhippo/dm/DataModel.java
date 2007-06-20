@@ -37,6 +37,7 @@ public class DataModel {
 	private DMSessionMap sessionMap = new DMSessionMapJTA();
 	private UnfilteredSession unfilteredSession;
 	private EntityManagerFactory emf = null;
+	private ChangeNotifier notifier;
 	private Map<Class, DMClassHolder> classes = new HashMap<Class, DMClassHolder>();
 	private Map<String, DMClassHolder> classesByBase = new HashMap<String, DMClassHolder>();
 	private ClassPool classPool;
@@ -54,6 +55,8 @@ public class DataModel {
 	 *   transactions
 	 * @param emf Entity manager factory to create entity managers for injection into
 	 *   sessions
+	 * @param notifier object responsible for sending notifications to other cluster
+	 *   nodes. May be null in the non-clustered case
 	 * @param viewpointClass the class of the viewpoint objects that will be used with this model
 	 *   (might be the base class of a hierarchy)
 	 * @param systemViewpoint  the system viewpoint for this data model; this system viewpoint 
@@ -62,6 +65,7 @@ public class DataModel {
 	public DataModel(String                       baseUrl,
 			         DMSessionMap                 sessionMap,
 			         EntityManagerFactory         emf,
+			         ChangeNotifier               notifier,
 			         Class<? extends DMViewpoint> viewpointClass,
 			         DMViewpoint                  systemViewpoint) {
 		
@@ -80,6 +84,7 @@ public class DataModel {
 		
 		this.sessionMap = sessionMap;
 		this.emf = emf;
+		this.notifier = notifier;
 		this.viewpointClass = viewpointClass;
 		this.systemViewpoint = systemViewpoint;
 	}
@@ -201,7 +206,6 @@ public class DataModel {
 		return (ReadWriteSession)session;
 	}
 
-
 	public ClassPool getClassPool() {
 		return classPool;
 	}
@@ -217,8 +221,42 @@ public class DataModel {
 		return Timestamper.next();
 	}
 	
-	public void notifyAsync(ChangeNotificationSet notificationSet) {
-		notificationExecutor.execute(notificationSet);
+	private void sendNotifications(ChangeNotificationSet notifications) {
+		logger.debug("Sending notifications for {}", notifications);
+		ClientNotificationSet clientNotifications = notifications.resolveNotifications(this);
+		
+		logger.debug("Resolved notifications are {}", clientNotifications);
+		for (ClientNotification clientNotification : clientNotifications.getNotifications()) {
+			sendNotification(clientNotification);
+		}
+	}
+	
+	public void notifyRemoteChange(final ChangeNotificationSet notifications) {
+		notifications.doInvalidations(this);
+		sendNotifications(notifications);
+	}
+	
+	protected void commitChanges(final ChangeNotificationSet notifications) {
+		try {
+			if (notifications.isEmpty())
+				return;
+			
+			notifications.setTimestamp(getTimestamp());
+			if (notifier != null)
+				notifier.broadcastNotify(notifications);
+			
+			notifications.doInvalidations(this);
+			
+			notificationExecutor.execute(new Runnable() {
+				public void run() {
+					sendNotifications(notifications);
+				}
+			});
+		} catch (Exception e) {
+			// Since we are running afterCompletion, exceptions get swallowed
+			// so trap and log here
+			logger.error("Failed to commit changes", e);
+		}
 	}
 	
 	/**

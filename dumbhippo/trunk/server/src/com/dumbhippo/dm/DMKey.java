@@ -1,5 +1,7 @@
 package com.dumbhippo.dm;
 
+import java.io.Serializable;
+
 /**
  * DMKey is a base class for all custom key types for DMOs. You can also use Guid or String
  * as a key type. A custom key type:
@@ -18,6 +20,6 @@ package com.dumbhippo.dm;
  * 
  * @author otaylor
  */
-public abstract interface DMKey extends Cloneable {
+public abstract interface DMKey extends Cloneable, Serializable {
 	public DMKey clone(); 
 }

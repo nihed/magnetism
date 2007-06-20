@@ -34,6 +34,7 @@ public class TestSupport {
 		model = new DataModel("http://mugshot.org",
 							  new TestSessionMap(delegateEmf),
 							  testEmf,
+							  null,
 							  TestViewpoint.class,
 							  new TestViewpoint(null));
 		model.addDMClass(TestUserDMO.class);

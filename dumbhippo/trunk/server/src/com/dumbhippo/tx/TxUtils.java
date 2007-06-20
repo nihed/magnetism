@@ -280,7 +280,7 @@ public class TxUtils {
 		}
 	}
 
-	private static String transactionStatusString(int status) {
+	public static String transactionStatusString(int status) {
 		switch (status) {
 		case Status.STATUS_ACTIVE:
 			return "ACTIVE-" + status;

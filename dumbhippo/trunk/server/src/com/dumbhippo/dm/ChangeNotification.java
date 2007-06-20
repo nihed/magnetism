@@ -1,11 +1,11 @@
 package com.dumbhippo.dm;
 
+import java.io.Serializable;
+
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.schema.DMClassHolder;
-import com.dumbhippo.dm.store.DMStore;
-import com.dumbhippo.dm.store.StoreKey;
 
 /**
  * ChangeNotification represents pending notifications for a single resource.
@@ -13,15 +13,18 @@ import com.dumbhippo.dm.store.StoreKey;
  * @param <K>
  * @param <T>
  */
-public class ChangeNotification<K, T extends DMObject<K>> extends StoreKey<K,T> {
+public class ChangeNotification<K, T extends DMObject<K>> implements Serializable {
+	private static final long serialVersionUID = 3460039660076438219L;
+
 	private static Logger logger = GlobalSetup.getLogger(ChangeNotification.class);
 
-	private DataModel model;
+	private Class<T> clazz;
+	private K key;
 	private long propertyMask; // bitset
 
-	public ChangeNotification(DataModel model, DMClassHolder<K,T> classHolder, K key) {
-		super(classHolder, key);
-		this.model = model;
+	public ChangeNotification(Class<T> clazz, K key) {
+		this.clazz = clazz;
+		this.key = key;
 	}
 	
 	public void addProperty(int propertyIndex) {
@@ -32,7 +35,10 @@ public class ChangeNotification<K, T extends DMObject<K>> extends StoreKey<K,T> 
 		return propertyMask;
 	}
 	
-	public void invalidate(long timestamp) {
+	public void invalidate(DataModel model, long timestamp) {
+		@SuppressWarnings("unchecked")
+		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
+		
 		long v = propertyMask;
 		int propertyIndex = 0;
 		while (v != 0) {
@@ -50,12 +56,30 @@ public class ChangeNotification<K, T extends DMObject<K>> extends StoreKey<K,T> 
 		}
 	}
 
-	public void resolveNotifications(DMStore store, ClientNotificationSet result) {
-		store.resolveNotifications(this, result);
+	public void resolveNotifications(DataModel model, ClientNotificationSet result) {
+		@SuppressWarnings("unchecked")
+		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
+
+		model.getStore().resolveNotifications(classHolder, key, propertyMask, result);
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof ChangeNotification))
+			return false;
+		
+		ChangeNotification<?,?> other = (ChangeNotification<?,?>)o;
+		
+		return clazz == other.clazz && key.equals(other.key);
+	}
+	
+	@Override
+	public int hashCode() {
+		return 11 * clazz.hashCode() + 17 * key.hashCode();
 	}
 	
 	@Override
 	public String toString() {
-		return "{" + super.toString() + ", propertyMask=" + propertyMask + "}"; 
+		return clazz.getSimpleName() + "#" + key.toString();
 	}
 }
