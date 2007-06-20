@@ -20,12 +20,16 @@
 #include <config.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <time.h>
+#include <string.h>
 #include "session-info.h"
 #include "hippo-dbus-helper.h"
 #include "main.h"
 
-static gboolean message_iter_copy(DBusMessageIter *src_iter,
-                                  DBusMessageIter *dest_iter);
+static gboolean message_iter_copy (DBusMessageIter *src_iter,
+                                   DBusMessageIter *dest_iter);
+static gboolean message_iter_equal(DBusMessageIter *lhs,
+                                   DBusMessageIter *rhs);
 
 struct Info {
     int refcount;
@@ -35,6 +39,7 @@ struct Info {
 struct SessionInfos {
     int refcount;
     GHashTable *by_name;
+    guint32 serial;
 };
 
 Info*
@@ -97,6 +102,129 @@ info_unref (Info *info)
         if (info->message)
             dbus_message_unref(info->message);
         g_free(info);
+    }
+}
+
+/**
+ * A simple 8-byte value union that lets you access 8 bytes as if they
+ * were various types; useful when dealing with basic types via
+ * void pointers and varargs.
+ */
+typedef union
+{
+  dbus_int16_t  i16;   /**< as int16 */
+  dbus_uint16_t u16;   /**< as int16 */
+  dbus_int32_t  i32;   /**< as int32 */
+  dbus_uint32_t u32;   /**< as int32 */
+  dbus_int64_t  i64;   /**< as int64 */
+  dbus_uint64_t u64;   /**< as int64 */
+  double dbl;          /**< as double */
+  unsigned char byt;   /**< as byte */
+  char *str;           /**< as char* */
+} BasicValue;
+
+static void
+basic_value_zero (BasicValue *value)
+{
+    value->u64 = 0;
+}
+
+static dbus_bool_t
+basic_value_equal (int             type,
+                   BasicValue     *lhs,
+                   BasicValue     *rhs)
+{
+    if (type == DBUS_TYPE_STRING ||
+        type == DBUS_TYPE_SIGNATURE ||
+        type == DBUS_TYPE_OBJECT_PATH) {
+        return strcmp (lhs->str, rhs->str) == 0;
+    } else {
+        return lhs->u64 == rhs->u64;
+    }
+}
+
+static gboolean
+single_complete_type_iter_equal(DBusMessageIter *lhs,
+                                DBusMessageIter *rhs)
+{
+    int lhs_type;
+    int rhs_type;
+
+    lhs_type = dbus_message_iter_get_arg_type (lhs);
+    rhs_type = dbus_message_iter_get_arg_type (rhs);
+
+    if (lhs_type != rhs_type)
+        return FALSE;
+
+    if (lhs_type == DBUS_TYPE_INVALID)
+        return TRUE;
+
+    if (dbus_type_is_basic (lhs_type)) {
+        BasicValue lhs_value;
+        BasicValue rhs_value;
+
+        basic_value_zero (&lhs_value);
+        basic_value_zero (&rhs_value);
+      
+        dbus_message_iter_get_basic (lhs, &lhs_value);
+        dbus_message_iter_get_basic (rhs, &rhs_value);
+
+        return basic_value_equal (lhs_type, &lhs_value, &rhs_value);
+    } else {
+        DBusMessageIter lhs_sub;
+        DBusMessageIter rhs_sub;
+
+        dbus_message_iter_recurse (lhs, &lhs_sub);
+        dbus_message_iter_recurse (rhs, &rhs_sub);
+
+        return message_iter_equal (&lhs_sub, &rhs_sub);
+    }
+}
+
+static gboolean
+message_iter_equal(DBusMessageIter *lhs,
+                   DBusMessageIter *rhs)
+{
+    DBusMessageIter lhs_next;
+    DBusMessageIter rhs_next;
+    int lhs_type;
+    int rhs_type;
+    
+    if (!single_complete_type_iter_equal(lhs, rhs))
+        return FALSE;
+
+    lhs_type = dbus_message_iter_get_arg_type (lhs);
+    rhs_type = dbus_message_iter_get_arg_type (rhs);
+
+    g_assert (lhs_type == rhs_type);
+
+    if (lhs_type == DBUS_TYPE_INVALID)
+        return TRUE;
+        
+    lhs_next = *lhs;
+    rhs_next = *rhs;
+    dbus_message_iter_next(&lhs_next);
+    dbus_message_iter_next(&rhs_next);
+    return message_iter_equal(&lhs_next, &rhs_next);
+}
+
+gboolean
+info_equal(Info *a,
+           Info *b)
+{
+    if (a == b)
+        return TRUE;
+
+    if (a->message && b->message) {
+        DBusMessageIter a_iter;
+        DBusMessageIter b_iter;
+
+        dbus_message_iter_init (a->message, &a_iter);
+        dbus_message_iter_init (b->message, &b_iter);
+
+        return message_iter_equal(&a_iter, &b_iter);
+    } else {
+        return a->message == b->message; /* both NULL would be caught here */
     }
 }
 
@@ -228,6 +356,12 @@ session_infos_new (void)
     infos->refcount = 1;
 
     infos->by_name = g_hash_table_new(g_str_hash, g_str_equal);
+
+    /* starting with a time means we have a chance to get ordering
+     * right across restarts of the daemon, though obviously if the
+     * clock is messed with this will break down
+     */
+    infos->serial = time(NULL);
     
     return infos;
 }
@@ -272,15 +406,27 @@ session_infos_add (SessionInfos *infos,
                    Info         *info)
 {
     const char *name;
-
+    Info *old;
+    
     info_ref(info);
     
     name = info_get_name(info);
+
+    old = session_infos_get(infos, name);
+
+    if (old && info_equal(old, info)) {
+        g_debug("%s did not really change (new info equals old)", name);
+        return;
+    }
     
-    session_infos_remove(infos, name);
+    if (old != NULL) {
+        session_infos_remove(infos, name);
+    }
     
     g_hash_table_replace(infos->by_name,
                          (char*) name, info);
+
+    infos->serial += 1;
 }
 
 Info*
@@ -300,6 +446,7 @@ session_infos_remove (SessionInfos *infos,
     if (info != NULL) {
         g_hash_table_remove(infos->by_name, name);
         info_unref(info);
+        infos->serial += 1;
     }
 }
 
@@ -408,4 +555,31 @@ session_infos_new_with_builtins (void)
                      "org.freedesktop.od.UnixAccount", append_unix_account_info);
 
     return infos;
+}
+
+guint32
+session_infos_get_change_serial(SessionInfos *infos)
+{
+    return infos->serial;
+}
+
+static void
+append_bogus_info(DBusMessageIter *dict_iter)
+{
+    char *s;
+    
+    append_string_pair(dict_iter, "name", g_get_real_name());
+
+    s = g_strdup_printf("Time %d, churn is %u", (int) time(NULL),
+                        g_random_int());
+    append_string_pair(dict_iter, "time", s);
+    g_free(s);
+}
+
+void
+session_infos_churn_bogus_info (SessionInfos *infos)
+{
+    g_debug("Modifying random churn info");
+    add_builtin_info(infos,
+                     "org.freedesktop.od.BogusTestInfo", append_bogus_info);
 }

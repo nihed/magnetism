@@ -22,6 +22,7 @@
 #include <config.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 #include "avahi-scanner.h"
 #include "hippo-dbus-helper.h"
 #include "session-info.h"
@@ -55,7 +56,8 @@ typedef struct {
 typedef struct {
     int refcount;    
     SessionState state;
-    ServiceId id;    
+    ServiceId id;
+    AvahiServiceResolver *resolver; /* non-null only if we've successfully resolved */
     char *host_name;
     AvahiAddress address;
     guint16 port;
@@ -64,6 +66,10 @@ typedef struct {
      */
     char *machine_id;
     char *session_id;
+    /* We only store this when we connect and get the new information,
+     * i.e. it's the latest changes we have
+     */
+    unsigned long change_serial;
     /* Exists only if we're connecting */
     DBusConnection *connection;
     /* Exists only if we successfully requested it from the remote session */
@@ -86,6 +92,8 @@ session_unref(Session *session)
     g_assert(session->refcount > 0);
     session->refcount -= 1;
     if (session->refcount == 0) {
+        if (session->resolver)
+            avahi_service_resolver_free(session->resolver);
         g_free(session->id.name);
         g_free(session->id.type);
         g_free(session->id.domain);
@@ -285,7 +293,7 @@ on_get_session_info_reply(DBusPendingCall *pending,
             g_debug("Got info '%s':", info_name);
             dbus_message_iter_recurse(&info_iter, &dict_iter);
             
-            /* print_sv_dict(&dict_iter); */
+            print_sv_dict(&dict_iter);
             info = info_new_from_data(info_name, &dict_iter);
             if (info != NULL) {
                 if (session->infos == NULL)
@@ -377,6 +385,7 @@ session_connect(Session *session)
     }
 
     session_ref(session);
+    /* pass refcount on "pending" in here */
     dbus_pending_call_set_notify(pending, on_get_session_info_reply,
                                  session, NULL);
 }
@@ -412,6 +421,29 @@ get_txt_record(AvahiStringList *list,
     return v;
 }
 
+static guint32
+get_txt_record_uint32(AvahiStringList *list,
+                      const char      *key)
+{
+    char *s;
+    guint64 l;
+    char *end;
+    s = get_txt_record(list, key);
+    if (s == NULL)
+        return 0;
+
+    end = NULL;
+    l = g_ascii_strtoull(s, &end, 10);
+    if (end == s)
+        l = 0;
+
+    if (l > G_MAXUINT32)
+        l = G_MAXUINT32;
+    
+    g_free(s);
+    return l;
+}
+
 static void
 resolve_callback(AvahiServiceResolver *r,
                  AvahiIfIndex interface,
@@ -436,24 +468,43 @@ resolve_callback(AvahiServiceResolver *r,
         break;
         
     case AVAHI_RESOLVER_FOUND:
-        {
+        g_debug("Resolved %s:%d", host_name, port);
+        
+        if (session->state == SESSION_STATE_RESOLVING) {
             session->host_name = g_strdup(host_name);
             session->address = *address;
             session->port = port;
-            
-            g_debug("Resolved %s:%d", host_name, port);
             
             /* these may or may not be present. If they are, we verify their
              * accuracy later.
              */
             session->machine_id = get_txt_record(txt, "org.freedesktop.od.machine");
             session->session_id = get_txt_record(txt, "org.freedesktop.od.session");
-
+            
             session_connect(session);
+
+            /* Keep the resolver around, to get change notifications */
+            session->resolver = r;
+        } else {
+            /* presumably a change notification */
+            guint32 new_serial;
+            
+            new_serial = get_txt_record_uint32(txt, "org.freedesktop.od.serial");
+
+            g_debug("new change serial %u", new_serial);
+
+            if (new_serial > 0 &&
+                new_serial != session->change_serial) {
+                
+
+            }
         }
     }
+
+    /* if we didn't save the resolver, get rid of it */
+    if (session->resolver != r)
+        avahi_service_resolver_free(r);
     
-    avahi_service_resolver_free(r);
     /* this callback owned one ref */
     session_unref(session);
 }
@@ -502,10 +553,12 @@ browse_callback(AvahiServiceBrowser *b,
             add_session_by_service(session); /* the tree will own one ref */
             session_ref(session); /* the resolver callback below will own one ref */
 
-            /* We ignore the returned resolver object. In the callback
-             * function we free it. If the server is terminated before
-             * the callback function is called the server will free
-             * the resolver for us.
+            /* We ignore the returned resolver object here. In the
+             * callback function we free it or save it in the Session
+             * object. If the server is terminated before the callback
+             * function is called the server will free the resolver
+             * for us. (I'm not sure what "server is terminated" means, but
+             * I guess we leak the session in that case... FIXME)
              */
             resolver = avahi_service_resolver_new(avahi_glue_get_client(),
                                                   interface, protocol, name, type, domain, AVAHI_PROTO_UNSPEC, 0,
@@ -532,7 +585,12 @@ browse_callback(AvahiServiceBrowser *b,
 
     case AVAHI_BROWSER_ALL_FOR_NOW:
     case AVAHI_BROWSER_CACHE_EXHAUSTED:
-        /* fprintf(stderr, "(Browser) %s\n", event == AVAHI_BROWSER_CACHE_EXHAUSTED ? "CACHE_EXHAUSTED" : "ALL_FOR_NOW"); */
+        g_debug("Avahi browser event %s",
+                event == AVAHI_BROWSER_CACHE_EXHAUSTED ? "CACHE_EXHAUSTED" : "ALL_FOR_NOW");
+        break;
+        
+    default:
+        g_debug("Unknown Avahi browser event %d", event);
         break;
     }
 }

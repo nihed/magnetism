@@ -21,6 +21,7 @@
 #include "session-api.h"
 #include "session-info.h"
 #include "avahi-scanner.h"
+#include "avahi-advertiser.h"
 #include "hippo-dbus-helper.h"
 #include "main.h"
 
@@ -40,7 +41,9 @@ handle_add_info_to_our_session(void            *object,
     info = info_new_from_message(message);
 
     session_infos_add(infos, info);
-
+    /* will do nothing if change serial didn't really change */
+    avahi_advertiser_queue_republish();
+    
     info_unref(info);
 
     /* FIXME track the client that added this and remove the info when the client disappears?
@@ -66,14 +69,16 @@ handle_remove_info_from_our_session(void            *object,
     dbus_message_iter_get_basic(&iter, &name);
 
     session_infos_remove(infos, name);
+    /* will do nothing if change serial didn't really change */
+    avahi_advertiser_queue_republish();
     
     return dbus_message_new_method_return(message);
 }
 
 static DBusMessage*
-handle_get_info_from_other_sessions(void            *object,
-                                    DBusMessage     *message,
-                                    DBusError       *error)
+handle_get_info_from_all_sessions(void            *object,
+                                  DBusMessage     *message,
+                                  DBusError       *error)
 {
     DBusMessage *reply;
     DBusMessageIter iter, sessions_array_iter;
@@ -103,18 +108,38 @@ handle_get_info_from_other_sessions(void            *object,
 }
 
 static const HippoDBusMember local_export_members[] = {
-    /* args are "s" the namespaced name of the info, and "a{sv}" the dict of (string,variant) to export on the LAN */
+    /* args are "s" the namespaced name of the info, and "a{sv}" the
+     * dict of (string,variant) to export on the LAN
+     */
     { HIPPO_DBUS_MEMBER_METHOD, "AddInfoToOurSession", "sa{sv}", "", handle_add_info_to_our_session },
+
     /* arg is "s" the info to remove from our session */
     { HIPPO_DBUS_MEMBER_METHOD, "RemoveInfoFromOurSession", "s", "", handle_remove_info_from_our_session },
-    /* args are "s" the namespaced name of the info, and returns an array of struct; each struct is a session that provided
-     * the requested info, and the first dict in the struct is props of said session, while the second dict is the info.
-     * Props of the session would be machine ID, session ID, and IP addresses of the session.
+
+    /* args are "s" the namespaced name of the info, and returns an
+     * array of struct; each struct is a session that provided the
+     * requested info, and the first dict in the struct is props of
+     * said session, while the second dict is the info.  Props of the
+     * session would be machine ID, session ID, and IP addresses of
+     * the session.
      */
-    { HIPPO_DBUS_MEMBER_METHOD, "GetInfoFromOtherSessions", "s", "a(a{sv}a{sv})", handle_get_info_from_other_sessions },
-    /* FIXME here we would need change notification of some kind */
+    { HIPPO_DBUS_MEMBER_METHOD, "GetInfoFromAllSessions", "s", "a(a{sv}a{sv})", handle_get_info_from_all_sessions },
+
+    /* args are "s" the namespaced name of the info, and then a new value for that info for some
+     * session (as in GetInfoFromOtherSessions)
+     */
+    { HIPPO_DBUS_MEMBER_SIGNAL, "InfoChanged", "", "s(a{sv}a{sv})", NULL },
+    
     { 0, NULL }
 };
+
+static gboolean
+churn_bogus_changes_timeout(void *data)
+{
+    session_infos_churn_bogus_info(infos);
+    avahi_advertiser_queue_republish();
+    return TRUE;
+}
 
 gboolean
 session_api_init(DBusConnection *session_bus_)
@@ -129,6 +154,9 @@ session_api_init(DBusConnection *session_bus_)
     hippo_dbus_helper_register_object(session_bus, LOCAL_EXPORT_OBJECT_PATH,
                                       NULL, LOCAL_EXPORT_INTERFACE,
                                       NULL);
+
+    /* disable this in production! */
+    g_timeout_add(3000, churn_bogus_changes_timeout, NULL);
     
     return TRUE;
 }
@@ -137,4 +165,17 @@ gboolean
 session_api_append_all_infos(DBusMessageIter *array_iter)
 {
     return session_infos_append_all(infos, array_iter);
+}
+
+guint32
+session_api_get_change_serial(void)
+{
+    return session_infos_get_change_serial(infos);
+}
+
+void
+session_api_notify_changed (const char      *info_name,
+                            const char      *session_id)
+{
+    /* FIXME dbus helper to emit InfoChanged needs "appender" support */
 }

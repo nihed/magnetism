@@ -34,6 +34,8 @@ Info*       info_new_from_data    (const char      *name,
                                    DBusMessageIter *dict_iter);
 void        info_ref              (Info            *info);
 void        info_unref            (Info            *info);
+gboolean    info_equal            (Info            *a,
+                                   Info            *b);
 gboolean    info_write            (Info            *info,
                                    DBusMessageIter *dict_iter);
 const char* info_get_name         (Info            *info);
@@ -52,9 +54,9 @@ void          session_infos_remove            (SessionInfos    *infos,
                                                const char      *name);
 gboolean      session_infos_append_all        (SessionInfos    *infos,
                                                DBusMessageIter *array_iter);
+guint32       session_infos_get_change_serial (SessionInfos    *infos);
 
-
-
+void          session_infos_churn_bogus_info  (SessionInfos    *infos);
 
 #endif /* __SESSION_INFO_H__ */
 
