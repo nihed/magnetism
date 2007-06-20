@@ -57,7 +57,9 @@ public class NetflixBlockHandlerBean extends AbstractBlockPerFeedEntryHandlerBea
 
 	@Override
 	public void onNewBlockCreated(User user, ExternalAccount external) {
-	    moviesCache.getAsync(external.getHandle(), true);    	
+		// If we see a new feed entry, we want to be sure we get new results from 
+		// the movies web service as well so the user doesn't see inconsistent information
+		moviesCache.expireCache(external.getHandle());
 	}
 	
 	@Override
