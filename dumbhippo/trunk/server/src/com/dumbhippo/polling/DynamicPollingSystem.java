@@ -206,7 +206,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			// even if the item isn't changing.
 			if (changed || !hasSlowerSet) {
 				if (task.getPeriodicityAverage() == -1) {
-					long defaultPeriodicity = task.getFamily().getDefaultPeriodicitySeconds();
+					long defaultPeriodicity = task.getDefaultPeriodicitySeconds();
 					if (defaultPeriodicity != -1)
 						task.setPeriodicityAverage(defaultPeriodicity*1000);
 					else {
