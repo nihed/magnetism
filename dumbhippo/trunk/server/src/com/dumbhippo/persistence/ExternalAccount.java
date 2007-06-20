@@ -73,7 +73,7 @@ public class ExternalAccount extends DBUnique {
 	public String getHandle() {
 		return handle;
 	}
-	protected void setHandle(String handle) {
+	public void setHandle(String handle) {
 		this.handle = handle;
 //		if (accountType == null) {
 //			// this happens if hibernate sets this field before the accountType field
