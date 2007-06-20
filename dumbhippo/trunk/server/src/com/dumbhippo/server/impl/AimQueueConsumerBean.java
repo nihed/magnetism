@@ -30,7 +30,6 @@ import com.dumbhippo.server.TokenSystem;
 import com.dumbhippo.server.TokenUnknownException;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.views.AnonymousViewpoint;
-import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.tx.RetryException;
 
 @MessageDriven(activationConfig =
