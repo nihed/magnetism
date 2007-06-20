@@ -11,8 +11,6 @@ import com.dumbhippo.SortUtils;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.services.FlickrUser;
 import com.dumbhippo.services.LastFmWebServices;
-import com.dumbhippo.services.MySpaceScraper;
-import com.dumbhippo.services.TransientServiceException;
 import com.dumbhippo.services.YouTubeWebServices;
 
 /**
@@ -49,8 +47,8 @@ public enum ExternalAccountType {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
 				try {
-					MySpaceScraper.getFriendId(handle);
-				} catch (TransientServiceException e) {
+					new URL(getLink(handle, null));
+				} catch (MalformedURLException e) {
 					throw new ValidationException("Invalid MySpace name '" + handle + "'");
 				}
 			}

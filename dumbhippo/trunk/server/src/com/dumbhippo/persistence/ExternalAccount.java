@@ -73,20 +73,13 @@ public class ExternalAccount extends DBUnique {
 	public String getHandle() {
 		return handle;
 	}
+	
 	public void setHandle(String handle) {
-		this.handle = handle;
-//		if (accountType == null) {
-//			// this happens if hibernate sets this field before the accountType field
-//			// in that case we just skip validation... in theory stuff in the db is valid.
-//			this.handle = handle;
-//			return;
-//		}
+		// This is called by Hibernate when loading objects from the database, so
+		// we don't even want to do the minimal (now-web-service) validation work
+		// of validateHandle()
 		
-//		try {
-//			this.handle = accountType.canonicalizeHandle(handle);
-//		} catch (ValidationException e) {
-//			throw new IllegalArgumentException("Setting invalid handle on ExternalAccount type " + accountType + " value '" + handle + "'", e);
-//		}
+		this.handle = handle;
 	}
 
 	public String validateHandle(String handle) throws ValidationException {
