@@ -74,8 +74,12 @@ public abstract class AbstractBasicCacheBean<KeyType, ResultType> extends
 		
 		// you really don't want a transaction open unless you can assume on average we aren't doing a
 		// remote request (i.e. assuming a cache hit is likely)
-		if (alwaysRefetchEvenIfCached)
-			TxUtils.assertNoTransaction();
+		
+//		But sometimes we use getAsync(..., alwaysRefetchEvenInfCached=true) to just mean "invalidate
+//      and refetch, and it's fine to call it from within a transaction then
+//		
+//		if (alwaysRefetchEvenIfCached)
+//			TxUtils.assertNoTransaction();
 		
 		try {
 			if (alwaysRefetchEvenIfCached)
