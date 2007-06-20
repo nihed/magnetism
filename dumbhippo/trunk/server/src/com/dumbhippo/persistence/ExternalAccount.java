@@ -81,11 +81,11 @@ public class ExternalAccount extends DBUnique {
 			return;
 		}
 		
-		try {
-			this.handle = accountType.canonicalizeHandle(handle);
-		} catch (ValidationException e) {
-			throw new IllegalArgumentException("Setting invalid handle on ExternalAccount type " + accountType + " value '" + handle + "'", e);
-		}
+//		try {
+//			this.handle = accountType.canonicalizeHandle(handle);
+//		} catch (ValidationException e) {
+//			throw new IllegalArgumentException("Setting invalid handle on ExternalAccount type " + accountType + " value '" + handle + "'", e);
+//		}
 	}
 
 	public String validateHandle(String handle) throws ValidationException {
