@@ -249,7 +249,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 					try {
 						return identitySpider.getEmail(s);
 					} catch (ValidationException e) {
-						throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad eamil address " + s);
+						throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad email address " + s);
 					}
 				}
 

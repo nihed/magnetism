@@ -1610,9 +1610,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		email = parseEmail(email);
 		
-		// validation is not necessary because we've already found a flickr user using flickr web services when this
-		// method is called
-		external.setHandle(nsid);
+		try {
+			external.setHandleValidating(nsid);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
 		external.setExtra(email);
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 	}
@@ -1626,9 +1628,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			friendId = mySpaceInfoPair.getFirst();
 			isPrivate = mySpaceInfoPair.getSecond();
 			external.setExtraValidating(friendId);
-			// if we were able to get the friend id, the name must be valid, we don't 
-			// want to do the same validation the second time by calling setHandleValidating
-			external.setHandle(name);
+			external.setHandleValidating(name);
 			external.setFeeds(new HashSet<Feed>());
 		} catch (TransientServiceException e) {
 			logger.warn("Failed to get MySpace friend ID", e);
@@ -1776,8 +1776,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
 		}
 		
-		// we should only set the handle only if we were able to validate the url and are also setting the feed
-		external.setHandle(validatedHandle);
+		try {
+			external.setHandleValidating(validatedHandle);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		EJBUtil.forceInitialization(feed.getAccounts());
