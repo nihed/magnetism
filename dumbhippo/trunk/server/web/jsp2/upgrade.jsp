@@ -21,17 +21,20 @@
 	<c:choose>
 		<c:when test="${download.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.42</p>
+			<p>Version 1.1.45</p>
 			<ul>
-				<li>Allow quipping and chatting for all notification blocks.</li>
+				<li>Better handling of web shares in Firefox.</li>
+				<li>Notifications for Amazon account activity.</li>
+				<li>Backend support for the Online Desktop project.</li>
 				<li>Bug fixes.</li>
 			</ul>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.91</p>
+			<p>Version 1.1.92</p>
 			<ul>
-				<li>Allow quipping and chatting for all notification blocks.</li>
+				<li>Better handling of web shares in Firefox.</li>
+				<li>Notifications for Amazon account activity.</li>
 				<li>Bug fixes.</li>
 			</ul>
 		</c:otherwise>
