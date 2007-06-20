@@ -8,7 +8,11 @@ import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 
 public class ExternalAccountKey implements DMKey {
-	private long id = -1;
+	private static final long serialVersionUID = 7179756386307688402L;
+	
+	private transient long id = -1; // doesn't really need to be transient, 
+	                                // but we do it this way for consistency
+	                                // with the string form
 	private Guid userId;
 	private ExternalAccountType type;
 	

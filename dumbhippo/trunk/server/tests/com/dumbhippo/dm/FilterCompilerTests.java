@@ -31,7 +31,7 @@ public class FilterCompilerTests extends TestCase {
 	protected void setUp()  {
 		// The model is only used for the viewpoint class and the class pool; we don't
 		// want to set up a real model, because we want to avoid compiling filters.
-		model = new DataModel("http://mugshot.org", null, null, 
+		model = new DataModel("http://mugshot.org", null, null, null,
 							  TestViewpoint.class, new TestViewpoint(null));
 	}
 	

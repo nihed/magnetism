@@ -1,5 +1,6 @@
 package com.dumbhippo.dm;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,7 +8,6 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.dm.schema.DMClassHolder;
-import com.dumbhippo.dm.store.StoreKey;
 
 /**
  * A ChangeNotificationSet stores information about all changes to the data model that
@@ -18,18 +18,19 @@ import com.dumbhippo.dm.store.StoreKey;
  *  
  * @author otaylor
  */
-public class ChangeNotificationSet implements Runnable {
+public class ChangeNotificationSet implements Serializable {
+	private static final long serialVersionUID = 8736760824100549330L;
+
 	@SuppressWarnings("unused")
 	private static Logger logger = GlobalSetup.getLogger(ChangeNotificationSet.class);
 
-	private Map<StoreKey, ChangeNotification> notifications = new HashMap<StoreKey, ChangeNotification>();
-	private DataModel model;
+	private Map<ChangeNotification, ChangeNotification> notifications = new HashMap<ChangeNotification, ChangeNotification>();
+	private long timestamp;
 	
 	public ChangeNotificationSet(DataModel model) {
-		this.model = model;
 	}
 
-	public <K, T extends DMObject<K>> void changed(Class<T> clazz, K key, String propertyName) {
+	public <K, T extends DMObject<K>> void changed(DataModel model, Class<T> clazz, K key, String propertyName) {
 		@SuppressWarnings("unchecked")
 		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz);
 		int propertyIndex = classHolder.getPropertyIndex(propertyName);
@@ -42,38 +43,39 @@ public class ChangeNotificationSet implements Runnable {
 			key = clonedKey;
 		}
 
-		ChangeNotification notification = new ChangeNotification<K,T>(model, classHolder, key);
+		ChangeNotification notification = new ChangeNotification<K,T>(clazz, key);
 		ChangeNotification oldNotification = notifications.get(notification);
 		if (oldNotification != null) {
 			oldNotification.addProperty(propertyIndex);
 		} else {
-			notification = new ChangeNotification<K,T>(model, classHolder, key);
+			notification = new ChangeNotification<K,T>(clazz, key);
 			notifications.put(notification, notification);
 			notification.addProperty(propertyIndex);
 		}
 	}
 	
-	public void commit() {
-		long timestamp = model.getTimestamp();
-		
-		for (ChangeNotification<?, ?> notification : notifications.values())
-			notification.invalidate(timestamp);
 
-		model.notifyAsync(this);
-	}
-
-	public void run() {
-		logger.debug("Sending notifications for {}", this);
-		ClientNotificationSet clientNotifications = new ClientNotificationSet();
-		for (ChangeNotification<?, ?> changeNotification : notifications.values())
-			changeNotification.resolveNotifications(model.getStore(), clientNotifications);
-		
-		logger.debug("Resolved notifications are {}", clientNotifications);
-		for (ClientNotification clientNotification : clientNotifications.getNotifications()) {
-			model.sendNotification(clientNotification);
-		}
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
 	}
 	
+	public void doInvalidations(DataModel model) {
+		for (ChangeNotification<?, ?> notification : notifications.values())
+			notification.invalidate(model, timestamp);
+	}
+	
+	public ClientNotificationSet resolveNotifications(DataModel model) {
+		ClientNotificationSet clientNotifications = new ClientNotificationSet();
+		for (ChangeNotification<?, ?> changeNotification : notifications.values())
+			changeNotification.resolveNotifications(model, clientNotifications);
+		
+		return clientNotifications;
+	}
+	
+	public boolean isEmpty() {
+		return notifications.isEmpty();
+	}
+
 	@Override
 	public String toString() {
 		return notifications.values().toString();

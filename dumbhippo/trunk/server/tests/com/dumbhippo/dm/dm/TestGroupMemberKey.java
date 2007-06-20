@@ -7,6 +7,8 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 
 public class TestGroupMemberKey implements DMKey {
+	private static final long serialVersionUID = -5724889995159821821L;
+
 	private Guid groupId;
 	private Guid memberId;
 	
