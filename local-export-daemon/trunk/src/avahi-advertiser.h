@@ -28,7 +28,7 @@
 gboolean avahi_advertiser_init               (void);
 void     avahi_advertiser_reset_entry_group  (void);
 gboolean avahi_advertiser_ensure_entry_group (AvahiClient *client);
-
+void     avahi_advertiser_queue_republish    (void);
 
 
 #endif /* __AVAHI_ADVERTISER_H__ */

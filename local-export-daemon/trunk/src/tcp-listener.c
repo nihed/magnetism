@@ -40,6 +40,7 @@ handle_get_info_for_session(void            *object,
     const char *machine_id;
     const char *session_id;
     const char *info_name;
+    char *s;
     
     reply = dbus_message_new_method_return(message);
 
@@ -52,6 +53,10 @@ handle_get_info_for_session(void            *object,
 
     append_string_pair(&array_iter, "machine", machine_id);
     append_string_pair(&array_iter, "session", session_id);
+
+    s = g_strdup_printf("%u", session_api_get_change_serial());
+    append_string_pair(&array_iter, "serial", s);
+    g_free(s);
     
     dbus_message_iter_close_container(&iter, &array_iter);
     

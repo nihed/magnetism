@@ -246,6 +246,9 @@ main(int argc, char **argv)
 
     /* g_printerr("Session '%s' on machine '%s'\n", session_id, machine_id); */
 
+    if (!session_api_init(connection))
+        exit(1);
+
     if (!avahi_advertiser_init())
         exit(1);
     
@@ -253,9 +256,6 @@ main(int argc, char **argv)
         exit(1);
 
     if (!avahi_scanner_init())
-        exit(1);
-
-    if (!session_api_init(connection))
         exit(1);
     
     loop = g_main_loop_new(NULL, FALSE);
