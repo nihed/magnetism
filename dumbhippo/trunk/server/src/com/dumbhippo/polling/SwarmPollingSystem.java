@@ -115,7 +115,7 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 
 			if (changed) {
 				if (task.getPeriodicityAverage() == -1) {
-					long defaultPeriodicity = task.getFamily().getDefaultPeriodicitySeconds();
+					long defaultPeriodicity = task.getDefaultPeriodicitySeconds();
 					if (defaultPeriodicity != -1)
 						task.setPeriodicityAverage(defaultPeriodicity*1000);
 					else {
@@ -174,7 +174,9 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 					scheduleSecs = Math.max(scheduleSecs, MIN_TASK_PERIODICITY_SEC);
 					scheduleSecs = Math.min(scheduleSecs, MAX_TASK_PERIODICITY_SEC);
 
+					logger.debug("Rescheduling task {} in {} seconds (+ 0-10% fuzz)", task, scheduleSecs);
 					long scheduleOffsetMs = (long) (Math.random() * scheduleSecs * 1000.0 * 0.1);
+					
 					taskCompletion.schedule(task, 1000*scheduleSecs+scheduleOffsetMs, TimeUnit.MILLISECONDS);
 				}
 			}
@@ -221,7 +223,7 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 				Random r = new Random();
 				for (PollingTask task : loadResult.getTasks()) {
 					tasks.add(task);
-					long periodicitySecs = task.getFamily().getDefaultPeriodicitySeconds();
+					long periodicitySecs = task.getDefaultPeriodicitySeconds();
 					if (periodicitySecs < 0)
 						periodicitySecs = MAX_TASK_PERIODICITY_SEC;
 					int offsetSecs = r.nextInt((int) periodicitySecs);

@@ -147,7 +147,7 @@ public abstract class PollingTask implements Callable<PollingTaskExecutionResult
 	
 			// Fixup for a bug
 			if (periodicityAverage < 0)
-				periodicityAverage = getFamily().getDefaultPeriodicitySeconds()*1000;
+				periodicityAverage = getDefaultPeriodicitySeconds()*1000;
 			
 			entry.setPeriodicityAverage(periodicityAverage);
 			
@@ -165,5 +165,17 @@ public abstract class PollingTask implements Callable<PollingTaskExecutionResult
 
 	public void setRecentChangeDecayFactor(long recentChangeDecayFactor) {
 		this.recentChangeDecayFactor = recentChangeDecayFactor;
+	}
+	
+	// This is a workaround for not correctly persisting computed task periodicity;
+	// (as of 2007-06-20) the per-family default periodicities are way too high if 
+	// we start all 10,000+ tasks off with them, so we want to use something bigger. 
+	// This provides a single place to tweak that bigger value.
+	// 
+	static final private long GLOBAL_DEFAULT_PERIODICITY_SECONDS = 3600; // 1 hour
+	
+	public long getDefaultPeriodicitySeconds() {
+		// return getFamily().getDefaultPeriodicitySeconds();
+		return GLOBAL_DEFAULT_PERIODICITY_SECONDS;
 	}
 }
