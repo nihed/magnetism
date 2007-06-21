@@ -29,5 +29,5 @@ public interface AmazonUpdater extends CachedExternalUpdater<AmazonUpdateStatus>
 	
 	public void saveItemsInCache(List<AmazonItem> items);
 	
-	public List<Pair<String, String>> getAmazonLinks(String amazonUserId, boolean alwaysRefetchEvenIfCached);
+	public List<Pair<String, String>> getAmazonLinks(String amazonUserId, boolean expireCache);
 }
