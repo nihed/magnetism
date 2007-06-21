@@ -36,10 +36,9 @@ handle_get_info_for_session(void            *object,
                             DBusError       *error)
 {
     DBusMessage *reply;
-    DBusMessageIter iter, array_iter, struct_iter, dict_iter;
+    DBusMessageIter iter, array_iter;
     const char *machine_id;
     const char *session_id;
-    const char *info_name;
     char *s;
     
     reply = dbus_message_new_method_return(message);
@@ -99,10 +98,7 @@ handle_message_from_lan(DBusConnection     *connection,
     
     result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
-    result = hippo_dbus_helper_filter_message(connection, message);
-    if (result == DBUS_HANDLER_RESULT_HANDLED) {
-        ; /* we're done, something registered with the helper did the work */
-    } else if (type == DBUS_MESSAGE_TYPE_SIGNAL) {
+    if (type == DBUS_MESSAGE_TYPE_SIGNAL) {
         if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL, "Disconnected")) {
             /* client disconnected */
             dbus_connection_unref(connection);

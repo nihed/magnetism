@@ -31,6 +31,10 @@ static gboolean message_iter_copy (DBusMessageIter *src_iter,
 static gboolean message_iter_equal(DBusMessageIter *lhs,
                                    DBusMessageIter *rhs);
 
+struct SessionChangeNotifySet {
+    GHashTable *by_name;
+};
+
 struct Info {
     int refcount;
     DBusMessage *message; /* signature is sa{sv} where the string is the info name and the dict is the info props */
@@ -40,7 +44,59 @@ struct SessionInfos {
     int refcount;
     GHashTable *by_name;
     guint32 serial;
+    SessionChangeNotifySet *change_set;
+    char *machine_id;
+    char *session_id;
 };
+
+static SessionChangeNotifySet*
+session_change_notify_set_new(void)
+{
+    SessionChangeNotifySet *set;
+
+    set = g_new0(SessionChangeNotifySet, 1);
+    set->by_name = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                         NULL, (GFreeFunc) info_unref);
+
+    return set;
+}
+
+void
+session_change_notify_set_free(SessionChangeNotifySet *set)
+{
+    g_hash_table_destroy(set->by_name);
+    g_free(set);
+}
+
+static void
+session_change_notify_set_add(SessionChangeNotifySet *set,
+                              Info                   *info)
+{
+    info_ref(info);
+    g_hash_table_replace(set->by_name, (char*) info_get_name(info), info);
+}
+
+static gboolean
+return_true_func(void *key,
+                 void *value,
+                 void *data)
+{
+    return TRUE;
+}
+
+Info*
+session_change_notify_set_pop(SessionChangeNotifySet *set)
+{
+    Info *info;
+    
+    info = g_hash_table_find(set->by_name, return_true_func, NULL);
+    if (info != NULL) {
+        info_ref(info);
+        g_hash_table_remove(set->by_name, info_get_name(info));
+    }
+    
+    return info;
+}
 
 Info*
 info_new_from_message (DBusMessage *method_call)
@@ -348,7 +404,8 @@ info_get_name (Info *info)
 }
 
 SessionInfos*
-session_infos_new (void)
+session_infos_new (const char *machine_id,
+                   const char *session_id)
 {
     SessionInfos *infos;
 
@@ -362,6 +419,9 @@ session_infos_new (void)
      * clock is messed with this will break down
      */
     infos->serial = time(NULL);
+
+    infos->machine_id = g_strdup(machine_id);
+    infos->session_id = g_strdup(session_id);
     
     return infos;
 }
@@ -396,9 +456,25 @@ session_infos_unref (SessionInfos *infos)
         g_hash_table_foreach_remove (infos->by_name, remove_by_name_foreach, NULL);
         
         g_hash_table_destroy(infos->by_name);
+
+        if (infos->change_set)
+            session_change_notify_set_free(infos->change_set);
+
+        g_free(infos->machine_id);
+        g_free(infos->session_id);
         
         g_free(infos);
     }
+}
+
+static void
+session_infos_mark_changed(SessionInfos *infos,
+                           Info         *info)
+{
+    infos->serial += 1;
+    if (infos->change_set)
+        session_change_notify_set_add(infos->change_set,
+                                      info);
 }
 
 void
@@ -408,8 +484,6 @@ session_infos_add (SessionInfos *infos,
     const char *name;
     Info *old;
     
-    info_ref(info);
-    
     name = info_get_name(info);
 
     old = session_infos_get(infos, name);
@@ -418,6 +492,8 @@ session_infos_add (SessionInfos *infos,
         g_debug("%s did not really change (new info equals old)", name);
         return;
     }
+
+    info_ref(info);
     
     if (old != NULL) {
         session_infos_remove(infos, name);
@@ -426,7 +502,7 @@ session_infos_add (SessionInfos *infos,
     g_hash_table_replace(infos->by_name,
                          (char*) name, info);
 
-    infos->serial += 1;
+    session_infos_mark_changed(infos, info);
 }
 
 Info*
@@ -444,9 +520,11 @@ session_infos_remove (SessionInfos *infos,
     
     info = g_hash_table_lookup(infos->by_name, name);
     if (info != NULL) {
+        /* change set will take a ref, so do this before we unref */
+        session_infos_mark_changed(infos, info);
+        
         g_hash_table_remove(infos->by_name, name);
         info_unref(info);
-        infos->serial += 1;
     }
 }
 
@@ -546,11 +624,12 @@ add_builtin_info(SessionInfos     *infos,
 
 /* Create a SessionInfos with some builtin default info bundles */
 SessionInfos*
-session_infos_new_with_builtins (void)
+session_infos_new_with_builtins (const char *machine_id,
+                                 const char *session_id)
 {
     SessionInfos *infos;
 
-    infos = session_infos_new();
+    infos = session_infos_new(machine_id, session_id);
     add_builtin_info(infos,
                      "org.freedesktop.od.UnixAccount", append_unix_account_info);
 
@@ -582,4 +661,77 @@ session_infos_churn_bogus_info (SessionInfos *infos)
     g_debug("Modifying random churn info");
     add_builtin_info(infos,
                      "org.freedesktop.od.BogusTestInfo", append_bogus_info);
+}
+
+void
+session_infos_push_change_notify_set (SessionInfos *infos)
+{
+    g_return_if_fail(infos->change_set == NULL);
+    infos->change_set = session_change_notify_set_new();
+}
+
+SessionChangeNotifySet*
+session_infos_pop_change_notify_set (SessionInfos *infos)
+{
+    SessionChangeNotifySet *set;
+    g_return_val_if_fail(infos->change_set != NULL, NULL);
+    set = infos->change_set;
+    infos->change_set = NULL;
+    return set;
+}
+
+/*
+ * Write a struct "(a{sv}a{sv})" which is the session properties
+ * then the info properties.
+ */
+gboolean
+session_infos_write_with_info(SessionInfos    *infos,
+                              Info            *info,
+                              DBusMessageIter *iter)
+{
+    DBusMessageIter session_struct_iter, session_props_iter, info_dict_iter;
+    
+    if (!dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL, &session_struct_iter))
+        return FALSE;
+    
+    /* Append session properties */
+    
+    if (!dbus_message_iter_open_container(&session_struct_iter, DBUS_TYPE_ARRAY, "{sv}", &session_props_iter))
+        return FALSE;
+
+    if (!append_string_pair(&session_props_iter, "session", infos->session_id))
+        return FALSE;
+    
+    if (!append_string_pair(&session_props_iter, "machine", infos->machine_id))
+        return FALSE;
+
+    /* FIXME for SessionInfos for other sessions we need to get their
+     * change serial from the other session, rather than keeping it
+     * maintained locally
+     */
+#if 0
+    s = g_strdup_printf("%u", session_api_get_change_serial());
+    append_string_pair(&array_iter, "serial", s);
+    g_free(s);
+#endif    
+    
+    if (!dbus_message_iter_close_container(&session_struct_iter, &session_props_iter))
+        return FALSE;
+    
+    /* Append requested info bundle */
+    
+    if (!dbus_message_iter_open_container(&session_struct_iter, DBUS_TYPE_ARRAY, "{sv}", &info_dict_iter))
+        return FALSE;
+
+    if (!info_write(info, &info_dict_iter)) {
+        return FALSE;
+    }
+    
+    if (!dbus_message_iter_close_container(&session_struct_iter, &info_dict_iter))
+        return FALSE;
+    
+    if (!dbus_message_iter_close_container(iter, &session_struct_iter))
+        return FALSE;
+
+    return TRUE;
 }

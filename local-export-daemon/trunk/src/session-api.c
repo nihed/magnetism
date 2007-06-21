@@ -142,11 +142,13 @@ churn_bogus_changes_timeout(void *data)
 }
 
 gboolean
-session_api_init(DBusConnection *session_bus_)
+session_api_init(DBusConnection *session_bus_,
+                 const char      *machine_id,
+                 const char      *session_id)
 {    
     session_bus = session_bus_;
 
-    infos = session_infos_new_with_builtins();
+    infos = session_infos_new_with_builtins(machine_id, session_id);
     
     hippo_dbus_helper_register_interface(session_bus, LOCAL_EXPORT_INTERFACE,
                                          local_export_members, NULL);
@@ -173,9 +175,55 @@ session_api_get_change_serial(void)
     return session_infos_get_change_serial(infos);
 }
 
-void
-session_api_notify_changed (const char      *info_name,
-                            const char      *session_id)
+
+typedef struct {
+    SessionInfos *infos;
+    Info *info;
+} AppenderData;
+
+static dbus_bool_t
+append_info_changed(DBusMessage *message,
+                    void        *data)
 {
-    /* FIXME dbus helper to emit InfoChanged needs "appender" support */
+    AppenderData *ad = data;
+    const char *name;
+    DBusMessageIter iter;
+
+    dbus_message_iter_init_append(message, &iter);
+    
+    name = info_get_name(ad->info);
+
+    if (!dbus_message_iter_append_basic(&iter,
+                                        DBUS_TYPE_STRING,
+                                        &name))
+        return FALSE;
+
+    if (!session_infos_write_with_info(ad->infos,
+                                       ad->info,
+                                       &iter))
+        return FALSE;
+
+    return TRUE;
+}
+
+void
+session_api_notify_changed (SessionInfos           *infos,
+                            SessionChangeNotifySet *set)
+{
+    Info *info;
+
+    while ((info = session_change_notify_set_pop(set)) != NULL) {
+        AppenderData ad;
+
+        ad.infos = infos;
+        ad.info = info;
+        hippo_dbus_helper_emit_signal_appender(session_bus,
+                                               LOCAL_EXPORT_OBJECT_PATH,
+                                               LOCAL_EXPORT_INTERFACE,
+                                               "InfoChanged",
+                                               append_info_changed,
+                                               &ad);
+        
+        info_unref(info);
+    }
 }

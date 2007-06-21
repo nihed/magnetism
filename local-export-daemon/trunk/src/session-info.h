@@ -26,8 +26,8 @@
 #include <dbus/dbus.h>
 
 typedef struct SessionInfos SessionInfos;
-
 typedef struct Info Info;
+typedef struct SessionChangeNotifySet SessionChangeNotifySet;
 
 Info*       info_new_from_message (DBusMessage     *method_call);
 Info*       info_new_from_data    (const char      *name,
@@ -42,8 +42,10 @@ const char* info_get_name         (Info            *info);
 
 
 
-SessionInfos* session_infos_new               (void);
-SessionInfos* session_infos_new_with_builtins (void);
+SessionInfos* session_infos_new               (const char *machine_id,
+                                               const char *session_id);
+SessionInfos* session_infos_new_with_builtins (const char *machine_id,
+                                               const char *session_id);
 void          session_infos_ref               (SessionInfos    *infos);
 void          session_infos_unref             (SessionInfos    *infos);
 void          session_infos_add               (SessionInfos    *infos,
@@ -57,6 +59,16 @@ gboolean      session_infos_append_all        (SessionInfos    *infos,
 guint32       session_infos_get_change_serial (SessionInfos    *infos);
 
 void          session_infos_churn_bogus_info  (SessionInfos    *infos);
+
+void                    session_infos_push_change_notify_set (SessionInfos *infos);
+SessionChangeNotifySet* session_infos_pop_change_notify_set  (SessionInfos *infos);
+
+void  session_change_notify_set_free(SessionChangeNotifySet *set);
+Info* session_change_notify_set_pop (SessionChangeNotifySet *set);
+
+gboolean session_infos_write_with_info(SessionInfos    *infos,
+                                       Info            *info,
+                                       DBusMessageIter *iter);
 
 #endif /* __SESSION_INFO_H__ */
 

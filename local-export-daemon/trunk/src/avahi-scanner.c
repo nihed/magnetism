@@ -26,6 +26,7 @@
 #include "avahi-scanner.h"
 #include "hippo-dbus-helper.h"
 #include "session-info.h"
+#include "session-api.h"
 #include <dbus/dbus-glib-lowlevel.h>
 #include "main.h"
 #include <avahi-client/lookup.h>
@@ -92,8 +93,10 @@ session_unref(Session *session)
     g_assert(session->refcount > 0);
     session->refcount -= 1;
     if (session->refcount == 0) {
-        if (session->resolver)
+        if (session->resolver) {
             avahi_service_resolver_free(session->resolver);
+            session->resolver = NULL;
+        }
         g_free(session->id.name);
         g_free(session->id.type);
         g_free(session->id.domain);
@@ -136,6 +139,7 @@ add_session_by_service(Session *session)
     g_tree_insert(session_tree_by_service,
                   &session->id,
                   session);
+    session_ref(session);
 }
 
 static void
@@ -143,6 +147,16 @@ remove_session_by_service(Session *session)
 {
     g_tree_remove(session_tree_by_service,
                   &session->id);
+
+    /* no more callbacks on this session */
+    if (session->resolver) {
+        avahi_service_resolver_free(session->resolver);
+        session->resolver = NULL;
+        /* resolver owns one ref to the session */
+        session_unref(session);
+    }
+
+    session_unref(session); /* drop the ref owned by the tree */
 }
 
 static void
@@ -150,7 +164,6 @@ session_fail_resolve(Session *session)
 {
     session->state = SESSION_STATE_FAILED_RESOLVE;
     remove_session_by_service(session);
-    session_unref(session); /* drop the ref owned by the tree */
 }
 
 static void
@@ -226,7 +239,7 @@ session_extract_values(Session *session,
                 if (session->session_id == NULL) {
                     session->session_id = g_strdup(value);
                 } else if (strcmp(session->session_id, value) != 0) {
-                    g_debug("Session ID in TXT record does not match session ID from protocol");
+                    g_debug("Session ID in TXT record does not match session ID from protocol, or ID was changed");
                     return FALSE;
                 } else {
                     g_debug("Session ID from TXT record confirmed: %s", value);
@@ -235,7 +248,7 @@ session_extract_values(Session *session,
                 if (session->machine_id == NULL) {
                     session->machine_id = g_strdup(value);
                 } else if (strcmp(session->machine_id, value) != 0) {
-                    g_debug("Machine ID in TXT record does not match machine ID from protocol");
+                    g_debug("Machine ID in TXT record does not match machine ID from protocol, or ID was changed");
                     return FALSE;
                 } else {
                     g_debug("Machine ID from TXT record confirmed: %s", value);
@@ -257,8 +270,10 @@ on_get_session_info_reply(DBusPendingCall *pending,
 {
     DBusMessage *reply;
     Session *session;
+    SessionChangeNotifySet *change_set;
 
     session = user_data;
+    change_set = NULL;
     
     reply = dbus_pending_call_steal_reply(pending);
 
@@ -275,9 +290,20 @@ on_get_session_info_reply(DBusPendingCall *pending,
 
         /* print_sv_dict(&dict_iter); */
         session_extract_values(session, &dict_iter);
+
+
+        if (session->infos == NULL) {
+            g_assert(session->machine_id);
+            g_assert(session->session_id);
+            session->infos = session_infos_new(session->machine_id,
+                                               session->session_id);
+        }
         
         dbus_message_iter_next(&iter);
         dbus_message_iter_recurse(&iter, &infos_iter);
+
+        session_infos_push_change_notify_set(session->infos);
+        
         while (dbus_message_iter_get_arg_type(&infos_iter) == DBUS_TYPE_STRUCT) {
             DBusMessageIter info_iter;
             const char *info_name;
@@ -296,14 +322,14 @@ on_get_session_info_reply(DBusPendingCall *pending,
             print_sv_dict(&dict_iter);
             info = info_new_from_data(info_name, &dict_iter);
             if (info != NULL) {
-                if (session->infos == NULL)
-                    session->infos = session_infos_new();
                 session_infos_add(session->infos, info);
                 info_unref(info);
             }
             
             dbus_message_iter_next(&infos_iter);
         }
+
+        change_set = session_infos_pop_change_notify_set(session->infos);
         
     } else {
         if (reply == NULL)
@@ -321,6 +347,11 @@ on_get_session_info_reply(DBusPendingCall *pending,
     dbus_connection_close(session->connection);
     session->connection = NULL;
     session->state = SESSION_STATE_DISCONNECTED;
+
+    if (change_set != NULL) {
+        session_api_notify_changed(session->infos, change_set);
+        session_change_notify_set_free(change_set);
+    }
     
     session_unref(session);
 }
@@ -464,6 +495,10 @@ resolve_callback(AvahiServiceResolver *r,
 
     switch (event) {
     case AVAHI_RESOLVER_FAILURE:
+        /* This can happen on "change notification" (after we already found the
+         * session once) it seems?
+         */
+        g_debug("service failed to resolve, dropping it");
         session_fail_resolve(session);
         break;
         
@@ -480,33 +515,66 @@ resolve_callback(AvahiServiceResolver *r,
              */
             session->machine_id = get_txt_record(txt, "org.freedesktop.od.machine");
             session->session_id = get_txt_record(txt, "org.freedesktop.od.session");
-            
-            session_connect(session);
 
             /* Keep the resolver around, to get change notifications */
             session->resolver = r;
-        } else {
-            /* presumably a change notification */
+            
+            session_connect(session);
+        } else if (session->resolver == r) {
+            /* Presumably a change notification */
             guint32 new_serial;
+            char *new_machine_id;
+            char *new_session_id;
+
+            /* Can these really change? */
+            if (strcmp(session->host_name, host_name) != 0) {
+                g_free(session->host_name);
+                session->host_name = g_strdup(host_name);
+            }
+            session->address = *address;
+            session->port = port;
+
+            /* check new machine/session ID */
+            new_machine_id = get_txt_record(txt, "org.freedesktop.od.machine");
+            new_session_id = get_txt_record(txt, "org.freedesktop.od.session");
+
+            /* If these change for now we warn and ignore the change */
+            if (new_machine_id && session->machine_id &&
+                strcmp(new_machine_id, session->machine_id) != 0) {
+                g_printerr("Remote session changed its machine ID, which is not allowed\n");
+            }
+            if (new_session_id && session->session_id &&
+                strcmp(new_session_id, session->session_id) != 0) {
+                g_printerr("Remote session changed its session ID, which is not allowed\n");
+            }
+            g_free(new_machine_id);
+            g_free(new_session_id);
             
             new_serial = get_txt_record_uint32(txt, "org.freedesktop.od.serial");
 
             g_debug("new change serial %u", new_serial);
-
+            
             if (new_serial > 0 &&
                 new_serial != session->change_serial) {
-                
-
+                /* Connect again */
+                session_connect(session); 
             }
+        } else {
+            g_debug("new resolve but resolver is %p and new resolve is %p\n",
+                    session->resolver, r);
         }
+        break;
+    default:
+        g_debug("Unknown resolver event");
+        break;
     }
 
     /* if we didn't save the resolver, get rid of it */
-    if (session->resolver != r)
+    if (session->resolver != r) {
         avahi_service_resolver_free(r);
-    
-    /* this callback owned one ref */
-    session_unref(session);
+        /* and one ref owned by the resolver */
+        session_unref(session);
+    }
 }
 
 static void
@@ -550,9 +618,10 @@ browse_callback(AvahiServiceBrowser *b,
                 return;
             }
             session = session_new(&id);
-            add_session_by_service(session); /* the tree will own one ref */
-            session_ref(session); /* the resolver callback below will own one ref */
-
+            add_session_by_service(session); /* this increments the refcount */
+            session_ref(session); /* the resolver below will own one ref */
+            /* there are now 3 refs on session */
+            
             /* We ignore the returned resolver object here. In the
              * callback function we free it or save it in the Session
              * object. If the server is terminated before the callback
@@ -564,8 +633,12 @@ browse_callback(AvahiServiceBrowser *b,
                                                   interface, protocol, name, type, domain, AVAHI_PROTO_UNSPEC, 0,
                                                   resolve_callback, session /* callback data */);
             if (resolver == NULL) {
-                g_printerr("Failed to create service resolver: '%s': %s\n", name, avahi_strerror(avahi_client_errno(avahi_glue_get_client())));
+                g_printerr("Failed to create service resolver: '%s': %s\n", name,
+                           avahi_strerror(avahi_client_errno(avahi_glue_get_client())));
             }
+
+            /* drop our ref */
+            session_unref(session);
         }
         break;
 
@@ -578,8 +651,7 @@ browse_callback(AvahiServiceBrowser *b,
                 /* removed before we ever added it, I guess */
                 return;
             }
-            remove_session_by_service(session);
-            session_unref(session);
+            remove_session_by_service(session); /* should drop all refs */
         }
         break;
 
@@ -674,7 +746,6 @@ session_traverse_and_append_func(void *key,
     TraverseAndAppendData *taad = data;
     Session *session = value;
     Info *info;
-    DBusMessageIter session_struct_iter, session_props_iter, info_dict_iter;
 
     info = NULL;
     if (session->infos != NULL)
@@ -682,30 +753,13 @@ session_traverse_and_append_func(void *key,
     if (info == NULL)
         return FALSE; /* FALSE = keep traversing */
     
-    dbus_message_iter_open_container(taad->array_iter, DBUS_TYPE_STRUCT, NULL, &session_struct_iter);
-    
-    /* Append session properties */
-    
-    dbus_message_iter_open_container(&session_struct_iter, DBUS_TYPE_ARRAY, "{sv}", &session_props_iter);
-
-    append_string_pair(&session_props_iter, "session", session->session_id);
-    append_string_pair(&session_props_iter, "machine", session->machine_id);
-    
-    dbus_message_iter_close_container(&session_struct_iter, &session_props_iter);
-    
-    /* Append requested info bundle */
-    
-    dbus_message_iter_open_container(&session_struct_iter, DBUS_TYPE_ARRAY, "{sv}", &info_dict_iter);
-
-    if (!info_write(info, &info_dict_iter)) {
+    if (!session_infos_write_with_info(session->infos,
+                                       info,
+                                       taad->array_iter)) {
         taad->failed = TRUE;
         return TRUE; /* stop traversing */
     }
     
-    dbus_message_iter_close_container(&session_struct_iter, &info_dict_iter);
-    
-    dbus_message_iter_close_container(taad->array_iter, &session_struct_iter);
-
     return FALSE; /* keep traversing */
 }
 

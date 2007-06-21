@@ -15,9 +15,19 @@ typedef enum {
     HIPPO_DBUS_MEMBER_SIGNAL
 } HippoDBusMemberType;
 
-typedef struct HippoDBusMember HippoDBusMember;
 
+typedef struct HippoDBusProxy HippoDBusProxy;
+typedef struct HippoDBusMember HippoDBusMember;
 typedef struct HippoDBusProperty HippoDBusProperty;
+typedef struct HippoDBusServiceTracker HippoDBusServiceTracker;
+typedef struct HippoDBusSignalTracker HippoDBusSignalTracker;
+
+
+typedef void        (* HippoDBusReplyHandler) (DBusMessage *reply,
+                                               void        *data);
+typedef dbus_bool_t (* HippoDBusArgAppender)  (DBusMessage *message,
+                                               void        *data);
+
 
 typedef DBusMessage* (* HippoDBusHandler) (void            *object,
                                            DBusMessage     *message,
@@ -30,6 +40,21 @@ typedef dbus_bool_t (* HippoDBusSetter)   (void            *object,
                                            const char      *prop_name,
                                            DBusMessageIter *value_iter,
                                            DBusError       *error);
+
+typedef void (* HippoDBusServiceAvailableHandler)   (DBusConnection *connection,
+                                                     const char     *well_known_name,
+                                                     const char     *unique_name,
+                                                     void           *data);
+typedef void (* HippoDBusServiceUnavailableHandler) (DBusConnection *connection,
+                                                     const char     *well_known_name,
+                                                     const char     *unique_name,
+                                                     void           *data);
+/* if we were ever "productizing" this file, signal handlers should really be on
+ * the DBusProxy objects or something, not on the service like this
+ */
+typedef void (* HippoDBusSignalHandler)             (DBusConnection *connection,
+                                                     DBusMessage    *message,
+                                                     void           *data);
 
 struct HippoDBusMember
 {
@@ -51,6 +76,19 @@ struct HippoDBusProperty
     HippoDBusSetter setter;
 };
 
+struct HippoDBusServiceTracker
+{
+    HippoDBusServiceAvailableHandler available_handler;
+    HippoDBusServiceUnavailableHandler unavailable_handler;
+};
+
+struct HippoDBusSignalTracker
+{
+    const char *interface;
+    const char *signal;
+    HippoDBusSignalHandler handler;
+};
+
 void              hippo_dbus_helper_register_interface   (DBusConnection          *connection,
                                                           const char              *name,
                                                           const HippoDBusMember   *members,
@@ -69,8 +107,6 @@ void              hippo_dbus_helper_unregister_object    (DBusConnection        
                                                           const char              *path);
 gboolean          hippo_dbus_helper_object_is_registered (DBusConnection          *connection,
                                                           const char              *path);
-DBusHandlerResult hippo_dbus_helper_filter_message       (DBusConnection          *connection,
-                                                          DBusMessage             *message);
 void              hippo_dbus_helper_emit_signal          (DBusConnection          *connection,
                                                           const char              *path,
                                                           const char              *interface,
@@ -83,26 +119,73 @@ void              hippo_dbus_helper_emit_signal_valist   (DBusConnection        
                                                           const char              *signal_name,
                                                           int                      first_arg_type,
                                                           va_list                  args);
+void              hippo_dbus_helper_emit_signal_appender (DBusConnection          *connection,
+                                                          const char              *path,
+                                                          const char              *interface,
+                                                          const char              *signal_name,
+                                                          HippoDBusArgAppender     appender,
+                                                          void                    *appender_data);
+                                                          
 
-
-typedef struct HippoDBusProxy HippoDBusProxy;
+void hippo_dbus_helper_register_service_tracker   (DBusConnection                *connection,
+                                                   const char                    *well_known_name,
+                                                   const HippoDBusServiceTracker *tracker,
+                                                   const HippoDBusSignalTracker  *signal_handlers,
+                                                   void                          *data);
+void hippo_dbus_helper_unregister_service_tracker (DBusConnection                *connection,
+                                                   const char                    *well_known_name,
+                                                   const HippoDBusServiceTracker *tracker,
+                                                   void                          *data);
 
 HippoDBusProxy*   hippo_dbus_proxy_new                     (DBusConnection          *connection,
                                                             const char              *bus_name,
                                                             const char              *path,
                                                             const char              *interface);
+/* Set a constant string to prepend to the method name passed to the following functions
+ * before calling it. This is to manage Gaim/Pidgin where all methods were previously
+ * Gaim* and now are Purple*
+ */
+void              hippo_dbus_proxy_set_method_prefix       (HippoDBusProxy          *proxy,
+                                                            char                    *method_prefix);
 void              hippo_dbus_proxy_unref                   (HippoDBusProxy          *proxy);
 
-DBusMessage*      hippo_dbus_proxy_call_method_sync        (HippoDBusProxy          *proxy,
-                                                            const char              *method,
-                                                            DBusError               *error,
-                                                            int                      first_arg_type,
-                                                            ...);
-DBusMessage*      hippo_dbus_proxy_call_method_sync_valist (HippoDBusProxy          *proxy,
-                                                            const char              *method,
-                                                            DBusError               *error,
-                                                            int                      first_arg_type,
-                                                            va_list                  args);
+DBusMessage* hippo_dbus_proxy_call_method_sync           (HippoDBusProxy        *proxy,
+                                                          const char            *method,
+                                                          DBusError             *error,
+                                                          int                    first_arg_type,
+                                                          ...);
+DBusMessage* hippo_dbus_proxy_call_method_sync_valist    (HippoDBusProxy        *proxy,
+                                                          const char            *method,
+                                                          DBusError             *error,
+                                                          int                    first_arg_type,
+                                                          va_list                args);
+DBusMessage* hippo_dbus_proxy_call_method_sync_appender  (HippoDBusProxy        *proxy,
+                                                          const char            *method,
+                                                          DBusError             *error,
+                                                          HippoDBusArgAppender   appender,
+                                                          void                  *appender_data);
+void         hippo_dbus_proxy_call_method_async          (HippoDBusProxy        *proxy,
+                                                          const char            *method,
+                                                          HippoDBusReplyHandler  handler,
+                                                          void                  *data,
+                                                          DBusFreeFunction       free_data_func,
+                                                          int                    first_arg_type,
+                                                          ...);
+void         hippo_dbus_proxy_call_method_async_valist   (HippoDBusProxy        *proxy,
+                                                          const char            *method,
+                                                          HippoDBusReplyHandler  handler,
+                                                          void                  *data,
+                                                          DBusFreeFunction       free_data_func,
+                                                          int                    first_arg_type,
+                                                          va_list                args);
+void         hippo_dbus_proxy_call_method_async_appender (HippoDBusProxy        *proxy,
+                                                          const char            *method,
+                                                          HippoDBusReplyHandler  handler,
+                                                          void                  *data,
+                                                          DBusFreeFunction       free_data_func,
+                                                          HippoDBusArgAppender   appender,
+                                                          void                  *appender_data);
+
 
 /* this takes ownership of the error and the reply which means it also
  * frees the returned args unless they are just primitives. Not usable with array returns.
