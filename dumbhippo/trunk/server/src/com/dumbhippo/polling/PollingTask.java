@@ -139,7 +139,7 @@ public abstract class PollingTask implements Callable<PollingTaskExecutionResult
 		// and we don't do anything to update them
 		//
 		//periodicityAverage = entry.getPeriodicityAverage();
-		periodicityAverage = getDefaultPeriodicitySeconds();
+		periodicityAverage = getDefaultPeriodicitySeconds() * 1000L;
 		dirty = false;
 	}
 
