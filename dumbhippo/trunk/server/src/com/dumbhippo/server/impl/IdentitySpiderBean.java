@@ -207,8 +207,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		});
 	}
 
-	private <T extends Resource> T lookupResourceByName(Class<T> klass,
-			String identifier, String name) {
+	private <T extends Resource> T lookupResourceByName(Class<T> klass,	String identifier, String name) throws NotFoundException {
 		Query q;
 		String className = klass.getName();
 
@@ -220,7 +219,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		try {
 			res = klass.cast(q.getSingleResult());
 		} catch (NoResultException e) {
-			;
+			throw new NotFoundException("No such resource");
 		}
 		return res;
 	}
