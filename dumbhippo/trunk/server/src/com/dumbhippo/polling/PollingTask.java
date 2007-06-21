@@ -177,7 +177,7 @@ public abstract class PollingTask implements Callable<PollingTaskExecutionResult
 	// we start all 10,000+ tasks off with them, so we want to use something bigger. 
 	// This provides a single place to tweak that bigger value.
 	// 
-	static final private long GLOBAL_DEFAULT_PERIODICITY_SECONDS = 3600; // 1 hour
+	static final private long GLOBAL_DEFAULT_PERIODICITY_SECONDS = 4800; // 1 hour, 20 minutes
 	
 	public long getDefaultPeriodicitySeconds() {
 		// return getFamily().getDefaultPeriodicitySeconds();
