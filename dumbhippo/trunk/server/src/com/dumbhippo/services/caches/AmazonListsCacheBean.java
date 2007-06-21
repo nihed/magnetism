@@ -219,7 +219,8 @@ public class AmazonListsCacheBean extends AbstractBasicCacheBean<String,AmazonLi
 	public void expireCache(String key) {
 		TxUtils.assertHaveTransaction();
 		
-		summaryStorage.expireCache(key);
+		// we need to implement expireCache for BasicCacheBean
+		// summaryStorage.expireCache(key);
 		listListStorage.expireCache(key);
 	}
 }
