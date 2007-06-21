@@ -497,10 +497,7 @@ public class AmazonUpdaterBean extends CachedExternalUpdaterBean<AmazonUpdateSta
 			new Pair<String, String>("My Reviews", AmazonWebServices.getMemberReviewsLink(amazonUserId, null));
 		amazonLinks.add(reviewLink);
 	
-		// if (expireCache) 
-		//    listsCache.expireCache(amazonUserId);	
-		
-	    AmazonListsView lists = listsCache.getSync(amazonUserId, false);
+	    AmazonListsView lists = listsCache.getSync(amazonUserId, true);
 	    if (lists != null) {	
 			AmazonWebServices ws = new AmazonWebServices(REQUEST_TIMEOUT, config);
 		    for (AmazonListView list : lists.getLists()) {	
