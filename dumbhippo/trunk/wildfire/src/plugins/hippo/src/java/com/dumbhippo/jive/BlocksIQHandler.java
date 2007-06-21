@@ -96,8 +96,12 @@ public class BlocksIQHandler extends AnnotatedIQHandler {
 		stacker.pageStack(viewpoint, viewpoint.getViewer(), pageable, lastTimestamp, filter, false);
 		List<BlockView> views = pageable.getResults();
 		
-		if (lastTimestamp <= 0)
-			views.addAll(stacker.getUnansweredQuestions(viewpoint, views.get(views.size() - 1).getUserBlockData().getStackTimestampAsLong()));
+		// If views.size() == 0, there can be no missing unanswered questions; skip to avoid having
+		// to deal with the 'views.size() - 1 == -1' case
+		if (lastTimestamp <= 0 && views.size() > 0) {
+			long earliestTimestamp = views.get(views.size() - 1).getUserBlockData().getStackTimestampAsLong();
+			views.addAll(stacker.getUnansweredQuestions(viewpoint, earliestTimestamp));
+		}
 		
 		String xml = getBlocksXml(viewpoint, filterProvided ? null : filter, "blocks", views);
         
