@@ -37,9 +37,9 @@
 void get_machine_and_session_ids(const char **machine_id_p,
                                  const char **session_id_p);
 
-void append_string_pair(DBusMessageIter *dict_iter,
-                        const char      *key,
-                        const char      *value);
+gboolean append_string_pair(DBusMessageIter *dict_iter,
+                            const char      *key,
+                            const char      *value);
 
 #endif /*  __MAIN_H__ */
 

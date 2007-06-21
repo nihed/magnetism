@@ -37,7 +37,7 @@ static DBusHandlerResult handle_message         (DBusConnection     *connection,
                                                  void               *user_data);
 static void              on_disconnected        (void);
 
-void
+gboolean
 append_string_pair(DBusMessageIter *dict_iter,
                    const char      *key,
                    const char      *value)
@@ -45,17 +45,25 @@ append_string_pair(DBusMessageIter *dict_iter,
     DBusMessageIter entry_iter;
     DBusMessageIter variant_iter;
     
-    dbus_message_iter_open_container(dict_iter, DBUS_TYPE_DICT_ENTRY, NULL, &entry_iter);
+    if (!dbus_message_iter_open_container(dict_iter, DBUS_TYPE_DICT_ENTRY, NULL, &entry_iter))
+        return FALSE;
 
-    dbus_message_iter_append_basic(&entry_iter, DBUS_TYPE_STRING, &key);
+    if (!dbus_message_iter_append_basic(&entry_iter, DBUS_TYPE_STRING, &key))
+        return FALSE;
 
-    dbus_message_iter_open_container(&entry_iter, DBUS_TYPE_VARIANT, "s", &variant_iter);
+    if (!dbus_message_iter_open_container(&entry_iter, DBUS_TYPE_VARIANT, "s", &variant_iter))
+        return FALSE;
     
-    dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_STRING, &value);
+    if (!dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_STRING, &value))
+        return FALSE;
 
-    dbus_message_iter_close_container(&entry_iter, &variant_iter);
+    if (!dbus_message_iter_close_container(&entry_iter, &variant_iter))
+        return FALSE;
     
-    dbus_message_iter_close_container(dict_iter, &entry_iter);
+    if (!dbus_message_iter_close_container(dict_iter, &entry_iter))
+        return FALSE;
+
+    return TRUE;
 }
 
 void
@@ -83,10 +91,7 @@ handle_message(DBusConnection     *connection,
 
     result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
-    result = hippo_dbus_helper_filter_message(connection, message);
-    if (result == DBUS_HANDLER_RESULT_HANDLED) {
-        ; /* we're done, something registered with the helper did the work */
-    } else if (type == DBUS_MESSAGE_TYPE_SIGNAL) {
+    if (type == DBUS_MESSAGE_TYPE_SIGNAL) {
         const char *sender = dbus_message_get_sender(message);
         const char *interface = dbus_message_get_interface(message);
         const char *member = dbus_message_get_member(message);
@@ -246,7 +251,7 @@ main(int argc, char **argv)
 
     /* g_printerr("Session '%s' on machine '%s'\n", session_id, machine_id); */
 
-    if (!session_api_init(connection))
+    if (!session_api_init(connection, machine_id, session_id))
         exit(1);
 
     if (!avahi_advertiser_init())

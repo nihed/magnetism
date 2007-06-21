@@ -24,12 +24,15 @@
 #include <config.h>
 #include <glib.h>
 #include <dbus/dbus.h>
+#include "session-info.h"
 
-gboolean      session_api_init              (DBusConnection  *session_bus);
+gboolean      session_api_init              (DBusConnection  *session_bus,
+                                             const char      *machine_id,
+                                             const char      *session_id);
 gboolean      session_api_append_all_infos  (DBusMessageIter *array_iter);
 guint32       session_api_get_change_serial (void);
-void          session_api_notify_changed    (const char      *info_name,
-                                             const char      *session_id);
+void          session_api_notify_changed    (SessionInfos           *infos,
+                                             SessionChangeNotifySet *set);
 
 
 #endif /* __SESSION_API_H__ */

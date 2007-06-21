@@ -18,12 +18,25 @@ typedef struct {
 } HippoDBusObject;
 
 typedef struct {
+    char *well_known_name;
+    char *owner;
+    void *data;
+    const HippoDBusServiceTracker *tracker;
+    const HippoDBusSignalTracker  *signal_handlers;
+} HippoDBusService;
+
+typedef struct {
     GHashTable *interfaces;
+    GHashTable *services_by_well_known;
+    GHashTable *services_by_owner;
 } HippoDBusHelper;
 
 static DBusHandlerResult hippo_dbus_helper_handle_object_message(DBusConnection  *connection,
                                                                  DBusMessage     *message,
                                                                  HippoDBusObject *object);
+static DBusHandlerResult hippo_dbus_helper_filter_message       (DBusConnection  *connection,
+                                                                 DBusMessage     *message,
+                                                                 void            *data);
 
 static HippoDBusInterface*
 iface_new(const char              *name,
@@ -171,6 +184,8 @@ helper_free(void *data)
 
     /* FIXME free the hash contents */
 
+    g_hash_table_destroy(helper->services_by_well_known);
+    g_hash_table_destroy(helper->services_by_owner);
     g_hash_table_destroy(helper->interfaces);
     g_free(helper);
 }
@@ -191,7 +206,15 @@ get_helper(DBusConnection *connection)
         helper = g_new0(HippoDBusHelper, 1);
         helper->interfaces = g_hash_table_new(g_str_hash, g_str_equal);
 
+        helper->services_by_well_known = g_hash_table_new(g_str_hash, g_str_equal);
+        helper->services_by_owner = g_hash_table_new(g_str_hash, g_str_equal);
+        
         dbus_connection_set_data(connection, slot, helper, helper_free);
+
+        if (!dbus_connection_add_filter(connection,
+                                        hippo_dbus_helper_filter_message,
+                                        NULL, NULL))
+            g_error("no memory adding dbus helper connection filter");
     }
 
     return helper;
@@ -877,21 +900,15 @@ hippo_dbus_helper_handle_object_message(DBusConnection  *connection,
     }
 }
 
-DBusHandlerResult
-hippo_dbus_helper_filter_message(DBusConnection *connection,
-                                 DBusMessage    *message)
-{
-    /* Everything we do now is on a specific registered object */
-    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-}
-
-void
-hippo_dbus_helper_emit_signal_valist(DBusConnection          *connection,
-                                     const char              *path,
-                                     const char              *interface,
-                                     const char              *signal_name,
-                                     int                      first_arg_type,
-                                     va_list                  args)
+static void
+emit_signal_valist_appender(DBusConnection          *connection,
+                            const char              *path,
+                            const char              *interface,
+                            const char              *signal_name,
+                            HippoDBusArgAppender     appender,
+                            void                    *appender_data,
+                            int                      first_arg_type,
+                            va_list                  args)
 {
     DBusMessage *message;
     void *object_data;
@@ -911,8 +928,17 @@ hippo_dbus_helper_emit_signal_valist(DBusConnection          *connection,
     }
         
     message = dbus_message_new_signal(path, interface, signal_name);
-    dbus_message_append_args_valist(message, first_arg_type, args);
 
+    if (first_arg_type != DBUS_TYPE_INVALID) {
+        dbus_message_append_args_valist(message, first_arg_type, args);
+    }
+    
+    if (appender != NULL) {
+        if (!(* appender)(message, appender_data)) {
+            g_warning("no memory to append signal args");
+        }
+    }
+    
     if (!dbus_message_has_signature(message, member->out_args)) {
         g_warning("Tried to emit signal %s %s with args %s but should have been %s",
                   interface, signal_name, dbus_message_get_signature(message), member->out_args);
@@ -923,6 +949,32 @@ hippo_dbus_helper_emit_signal_valist(DBusConnection          *connection,
     dbus_connection_send(connection, message, NULL);
 
     dbus_message_unref(message);
+}
+
+void
+hippo_dbus_helper_emit_signal_valist(DBusConnection          *connection,
+                                     const char              *path,
+                                     const char              *interface,
+                                     const char              *signal_name,
+                                     int                      first_arg_type,
+                                     va_list                  args)
+{
+    emit_signal_valist_appender(connection, path, interface, signal_name,
+                                NULL, NULL, first_arg_type, args);
+}
+
+void
+hippo_dbus_helper_emit_signal_appender (DBusConnection          *connection,
+                                        const char              *path,
+                                        const char              *interface,
+                                        const char              *signal_name,
+                                        HippoDBusArgAppender     appender,
+                                        void                    *appender_data)
+{
+    va_list dummy_args;
+    
+    emit_signal_valist_appender(connection, path, interface, signal_name,
+                                appender, appender_data, DBUS_TYPE_INVALID, dummy_args);
 }
 
 void
@@ -942,12 +994,332 @@ hippo_dbus_helper_emit_signal(DBusConnection          *connection,
     va_end(args);
 }
 
+static HippoDBusService*
+service_new(const char                    *well_known_name,
+            const HippoDBusServiceTracker *tracker,
+            const HippoDBusSignalTracker  *signal_handlers,
+            void                          *data)
+{
+    HippoDBusService *service;
+
+    service = g_new0(HippoDBusService, 1);
+    service->well_known_name = g_strdup(well_known_name);
+    service->tracker = tracker;
+    service->signal_handlers = signal_handlers;
+    service->data = data;
+
+    return service;
+}
+
+static void
+service_free(HippoDBusService *service)
+{
+    g_free(service->well_known_name);
+    g_free(service->owner);
+    g_free(service);
+}
+
+static void
+set_signal_handlers_matched(DBusConnection                *connection,
+                            const char                    *bus_name,
+                            const HippoDBusSignalTracker  *signal_handlers,
+                            gboolean                       matched)
+{
+    int i;
+
+    for (i = 0; signal_handlers[i].interface != NULL; ++i) {
+        char *s;
+        
+        s = g_strdup_printf("type='signal',sender='"
+                            "%s"
+                            "',interface='"
+                            "%s"
+                            "',member='"
+                            "%s"
+                            "'",
+                            bus_name,
+                            signal_handlers[i].interface,
+                            signal_handlers[i].signal);
+        
+        /* Since we don't ask for the error, this should be async (not block) */
+        if (matched)
+            dbus_bus_add_match(connection, s, NULL);
+        else
+            dbus_bus_remove_match(connection, s, NULL);
+
+        g_free(s);
+    }
+}
+
+static void
+set_owner_matched(DBusConnection *connection,
+                  const char     *bus_name,
+                  gboolean        matched)
+{
+    char *s;
+    
+    s = g_strdup_printf("type='signal',sender='"
+                        DBUS_SERVICE_DBUS
+                        "',interface='"
+                        DBUS_INTERFACE_DBUS
+                        "',member='"
+                        "NameOwnerChanged"
+                        "',arg0='%s'",
+                        bus_name);
+    
+    /* this is nonblocking since we don't ask for errors */
+    if (matched)
+        dbus_bus_add_match(connection,
+                           s, NULL);
+    else
+        dbus_bus_remove_match(connection, s, NULL);
+    
+    g_free(s);
+}
+
+static void
+handle_name_owner_changed(DBusConnection *connection,
+                          const char     *well_known_name,
+                          /* old and new may be NULL */
+                          const char     *old_owner,
+                          const char     *new_owner)
+{
+    HippoDBusHelper *helper;
+    HippoDBusService *service;
+    
+    helper = get_helper(connection); 
+   
+    service = g_hash_table_lookup(helper->services_by_well_known, well_known_name);
+    if (service == NULL)
+        return; /* we don't care about this */
+
+    if (service->owner &&
+        (new_owner == NULL ||
+         strcmp(service->owner, new_owner) != 0)) {
+        /* Our previously-believed owner is going away */
+        char *owner;
+        
+        g_hash_table_remove(helper->services_by_owner,
+                            service->owner);
+        owner = service->owner;
+        service->owner = NULL;
+
+        g_debug("Service '%s' is now unavailable, old owner was '%s'",
+                service->well_known_name,
+                owner);
+        (* service->tracker->unavailable_handler) (connection,
+                                                   service->well_known_name,
+                                                   owner,
+                                                   service->data);
+        g_free(owner);
+    }
+
+    if (service->owner == NULL && new_owner) {
+        service->owner = g_strdup(new_owner);
+        /* We had no owner and now we do */
+        
+        g_hash_table_replace(helper->services_by_owner,
+                             service->owner, service);
+
+        g_debug("Service '%s' is now available, new owner is '%s'",
+                service->well_known_name,
+                service->owner);
+        
+        (* service->tracker->available_handler) (connection,
+                                                 service->well_known_name,
+                                                 service->owner,
+                                                 service->data);
+    }
+}
+
+typedef struct {
+    DBusConnection *connection;
+    char *well_known_name;
+} GetOwnerData;
+
+static GetOwnerData*
+get_owner_data_new(DBusConnection *connection,
+                   const char     *well_known_name)
+{
+    GetOwnerData *god;
+    god = g_new0(GetOwnerData, 1);
+    god->connection = connection;
+    god->well_known_name = g_strdup(well_known_name);
+    dbus_connection_ref(connection);
+
+    return god;
+}
+
+static void
+get_owner_data_free(GetOwnerData *god)
+{
+    dbus_connection_unref(god->connection);
+    g_free(god->well_known_name);
+    g_free(god);
+}
+
+static void
+on_get_owner_reply(DBusPendingCall *pending,
+                   void            *user_data)
+{
+    DBusMessage *reply;
+    GetOwnerData *god;
+
+    god = user_data;
+    
+    reply = dbus_pending_call_steal_reply(pending);
+    if (reply == NULL) {
+        g_warning("NULL reply in on_get_owner_reply?");
+        return;
+    }
+    
+    if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_METHOD_RETURN) {
+        const char *v_STRING = NULL;
+        if (!dbus_message_get_args(reply, NULL,
+                                   DBUS_TYPE_STRING, &v_STRING,
+                                   DBUS_TYPE_INVALID)) {
+            g_debug("GetNameOwner has wrong args '%s'",
+                    dbus_message_get_signature(reply));
+        } else {
+            g_debug("Got name owner '%s' for '%s'",
+                    v_STRING, god->well_known_name);
+            if (*v_STRING == '\0')
+                v_STRING = NULL;
+
+            handle_name_owner_changed(god->connection,
+                                      god->well_known_name,
+                                      NULL,
+                                      v_STRING);
+        }
+    }
+    
+    dbus_message_unref(reply);
+}
+
+void
+hippo_dbus_helper_register_service_tracker (DBusConnection                *connection,
+                                            const char                    *well_known_name,
+                                            const HippoDBusServiceTracker *tracker,
+                                            const HippoDBusSignalTracker  *signal_handlers,
+                                            void                          *data)
+{
+    HippoDBusHelper *helper;
+    HippoDBusService *service;
+    DBusPendingCall *call;
+    DBusMessage *get_owner;
+    
+    helper = get_helper(connection);
+
+    /* multiple registrations for the same name isn't allowed for now */
+    g_return_if_fail(g_hash_table_lookup(helper->services_by_well_known, well_known_name) == NULL);
+    
+    service = service_new(well_known_name, tracker, signal_handlers, data);
+
+    g_hash_table_replace(helper->services_by_well_known, service->well_known_name, service);
+
+    set_signal_handlers_matched(connection, well_known_name, signal_handlers, TRUE);
+
+    set_owner_matched(connection, well_known_name, TRUE);
+
+    /* Initially get the owner */
+
+    get_owner = dbus_message_new_method_call(DBUS_SERVICE_DBUS, DBUS_PATH_DBUS,
+                                             DBUS_INTERFACE_DBUS,
+                                             "GetNameOwner");
+    if (get_owner == NULL)
+        g_error("out of memory");
+    if (!dbus_message_append_args(get_owner, DBUS_TYPE_STRING, &well_known_name,
+                                  DBUS_TYPE_INVALID))
+        g_error("out of memory");
+    
+    call = NULL;               
+    dbus_connection_send_with_reply(connection, get_owner, &call, -1);
+    if (call != NULL) {
+        if (!dbus_pending_call_set_notify(call, on_get_owner_reply,
+                                          get_owner_data_new(connection, well_known_name),
+                                          (DBusFreeFunction) get_owner_data_free))
+            g_error("out of memory");
+        
+        /* rely on connection to hold a reference to it, if finalized
+         * I think on_get_song_props_reply won't get called though, 
+         * which is fine currently
+         */
+        dbus_pending_call_unref(call);        
+    }
+}
+
+void
+hippo_dbus_helper_unregister_service_tracker (DBusConnection                *connection,
+                                              const char                    *well_known_name,
+                                              const HippoDBusServiceTracker *tracker,
+                                              void                          *data)
+{
+    HippoDBusHelper *helper;
+    HippoDBusService *service;
+    
+    helper = get_helper(connection);
+
+    service = g_hash_table_lookup(helper->services_by_well_known, well_known_name);
+    g_return_if_fail(service != NULL);
+    if (service->tracker != tracker) {
+        g_warning("Multiple registered trackers for same service doesn't work yet");
+        return;
+    }
+    
+    set_signal_handlers_matched(connection, well_known_name, service->signal_handlers, FALSE);
+    set_owner_matched(connection, well_known_name, FALSE);
+    
+    if (service->owner)
+        g_hash_table_remove(helper->services_by_owner, service->owner);
+    g_hash_table_remove(helper->services_by_well_known, service->well_known_name);
+
+    if (service->owner) {
+        (* service->tracker->unavailable_handler) (connection,
+                                                   service->well_known_name,
+                                                   service->owner,
+                                                   service->data);
+    }
+
+    service_free(service);
+}
+
+static DBusHandlerResult
+hippo_dbus_helper_filter_message(DBusConnection *connection,
+                                 DBusMessage    *message,
+                                 void           *data)
+{
+    if (dbus_message_is_signal(message, DBUS_INTERFACE_DBUS, "NameOwnerChanged") &&
+        dbus_message_has_sender(message, DBUS_SERVICE_DBUS)) {
+        const char *name = NULL;
+        const char *old = NULL;
+        const char *new = NULL;
+        if (dbus_message_get_args(message, NULL,
+                                  DBUS_TYPE_STRING, &name,
+                                  DBUS_TYPE_STRING, &old,
+                                  DBUS_TYPE_STRING, &new,
+                                  DBUS_TYPE_INVALID)) {
+            g_debug("helper.c NameOwnerChanged %s '%s' -> '%s'", name, old, new);
+            if (*old == '\0')
+                old = NULL;
+            if (*new == '\0')
+                new = NULL;
+            
+            handle_name_owner_changed(connection, name, old, new);
+        } else {
+            g_warning("NameOwnerChanged had wrong args???");
+        }
+    }
+    
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
 struct HippoDBusProxy {
     int                refcount;
     DBusConnection    *connection;
     char              *bus_name;
     char              *path;
     char              *interface;
+    char              *method_prefix;
 };
 
 HippoDBusProxy*
@@ -971,6 +1343,19 @@ hippo_dbus_proxy_new(DBusConnection          *connection,
 }
 
 void
+hippo_dbus_proxy_set_method_prefix(HippoDBusProxy *proxy,
+                                   char           *method_prefix)
+{
+    if (proxy->method_prefix == method_prefix)
+        return;
+
+    if (proxy->method_prefix)
+        g_free(proxy->method_prefix);
+
+    proxy->method_prefix = g_strdup(method_prefix);
+}
+
+void
 hippo_dbus_proxy_unref(HippoDBusProxy          *proxy)
 {
     proxy->refcount -= 1;
@@ -979,27 +1364,50 @@ hippo_dbus_proxy_unref(HippoDBusProxy          *proxy)
         g_free(proxy->bus_name);
         g_free(proxy->path);
         g_free(proxy->interface);
+        g_free(proxy->method_prefix);
         g_free(proxy);
     }
 }
 
 
-DBusMessage*
-hippo_dbus_proxy_call_method_sync_valist (HippoDBusProxy          *proxy,
-                                          const char              *method,
-                                          DBusError               *error,
-                                          int                      first_arg_type,
-                                          va_list                  args)
+static DBusMessage*
+call_method_sync_valist_appender (HippoDBusProxy          *proxy,
+                                  const char              *method,
+                                  DBusError               *error,
+                                  HippoDBusArgAppender     appender,
+                                  void                    *appender_data,
+                                  int                      first_arg_type,
+                                  va_list                  args)
 {
     DBusMessage *call;
     DBusMessage *reply;
+    char *prefixed_method;
 
+    prefixed_method = NULL;
     reply = NULL;
+
+    if (proxy->method_prefix) {
+        prefixed_method = g_strconcat(proxy->method_prefix, method, NULL);
+        method = prefixed_method;
+    }
+
     call = dbus_message_new_method_call(proxy->bus_name, proxy->path, proxy->interface, method);
-    
-    if (!dbus_message_append_args_valist(call, first_arg_type, args)) {
-        dbus_set_error_const(error, DBUS_ERROR_NO_MEMORY, "No memory");
-        goto failed;
+
+    if (proxy->method_prefix)
+        g_free(prefixed_method);
+
+    if (first_arg_type != DBUS_TYPE_INVALID) {
+        if (!dbus_message_append_args_valist(call, first_arg_type, args)) {
+            dbus_set_error_const(error, DBUS_ERROR_NO_MEMORY, "No memory");
+            goto failed;
+        }
+    }
+
+    if (appender != NULL) {
+        if (!(* appender)(call, appender_data)) {
+            dbus_set_error_const(error, DBUS_ERROR_NO_MEMORY, "No memory");
+            goto failed;
+        }
     }
     
     reply = dbus_connection_send_with_reply_and_block(proxy->connection, call, -1, error);
@@ -1015,6 +1423,31 @@ hippo_dbus_proxy_call_method_sync_valist (HippoDBusProxy          *proxy,
         dbus_message_unref(reply);
     
     return NULL;
+}
+
+DBusMessage*
+hippo_dbus_proxy_call_method_sync_valist (HippoDBusProxy          *proxy,
+                                          const char              *method,
+                                          DBusError               *error,
+                                          int                      first_arg_type,
+                                          va_list                  args)
+{
+    return call_method_sync_valist_appender(proxy, method, error,
+                                            NULL, NULL, first_arg_type, args);
+}
+
+DBusMessage*
+hippo_dbus_proxy_call_method_sync_appender  (HippoDBusProxy        *proxy,
+                                             const char            *method,
+                                             DBusError             *error,
+                                             HippoDBusArgAppender   appender,
+                                             void                  *appender_data)
+{
+    va_list dummy_valist;
+    
+    return call_method_sync_valist_appender(proxy, method, error,
+                                            appender, appender_data, DBUS_TYPE_INVALID,
+                                            dummy_valist);
 }
 
 DBusMessage*
@@ -1035,6 +1468,197 @@ hippo_dbus_proxy_call_method_sync(HippoDBusProxy          *proxy,
     return reply;
 }
 
+void
+hippo_dbus_proxy_call_method_async (HippoDBusProxy          *proxy,
+                                    const char              *method,
+                                    HippoDBusReplyHandler    handler,
+                                    void                    *data,
+                                    DBusFreeFunction         free_data_func,
+                                    int                      first_arg_type,
+                                    ...)
+{
+    va_list args;
+    
+    va_start(args, first_arg_type);
+    hippo_dbus_proxy_call_method_async_valist(proxy, method,
+                                              handler, data, free_data_func,
+                                              first_arg_type, args);
+    va_end(args);
+}
+
+typedef struct {
+    HippoDBusReplyHandler    handler;
+    void                    *data;
+    DBusFreeFunction         free_data_func;
+} AsyncReplyClosure;
+
+static AsyncReplyClosure*
+async_reply_closure_new(HippoDBusReplyHandler    handler,
+                        void                    *data,
+                        DBusFreeFunction         free_data_func)
+{
+    AsyncReplyClosure *closure;
+    closure = g_new(AsyncReplyClosure, 1);
+    closure->handler = handler;
+    closure->data = data;
+    closure->free_data_func = free_data_func;
+
+    return closure;
+}
+
+static void
+async_reply_closure_free(AsyncReplyClosure *closure)
+{
+    if (closure->free_data_func)
+        (* closure->free_data_func) (closure->data);
+    g_free(closure);
+}
+
+static void
+async_reply_closure_free_func(void *data)
+{
+    async_reply_closure_free(data);
+}
+
+static void
+async_reply_closure_invoke(AsyncReplyClosure *closure,
+                           DBusMessage       *reply)
+{
+    (* closure->handler) (reply, closure->data);
+}
+
+static void
+on_async_reply(DBusPendingCall *pending,
+               void            *data)
+{
+    AsyncReplyClosure *closure;
+    DBusMessage *reply;
+    
+    closure = data;
+    
+    reply = dbus_pending_call_steal_reply(pending);
+    if (reply == NULL) {
+        g_warning("NULL reply in on_async_reply?");
+        return;
+    }
+
+    async_reply_closure_invoke(closure, reply);
+    
+    dbus_message_unref(reply);
+
+    /* free data func should free the closure */
+}
+
+static void
+call_method_async_valist_appender(HippoDBusProxy          *proxy,
+                                  const char              *method,
+                                  HippoDBusReplyHandler    handler,
+                                  void                    *data,
+                                  DBusFreeFunction         free_data_func,
+                                  HippoDBusArgAppender     appender,
+                                  void                    *appender_data,
+                                  int                      first_arg_type,
+                                  va_list                  args)
+{
+    DBusMessage *call;
+    char *prefixed_method;
+
+    prefixed_method = NULL;
+
+    if (proxy->method_prefix) {
+        prefixed_method = g_strconcat(proxy->method_prefix, method, NULL);
+        method = prefixed_method;
+    }
+
+    call = dbus_message_new_method_call(proxy->bus_name, proxy->path, proxy->interface, method);
+
+    if (proxy->method_prefix)
+        g_free(prefixed_method);
+
+    if (first_arg_type != DBUS_TYPE_INVALID) {
+        if (!dbus_message_append_args_valist(call, first_arg_type, args)) {
+            g_warning("No memory to append args to async call");
+            goto failed;
+        }
+    }
+
+    if (appender != NULL) {
+        if (!(* appender)(call, appender_data)) {
+            g_warning("No memory to append args to async call");
+            goto failed;
+        }
+    }
+    
+    if (handler != NULL) {
+        DBusPendingCall *pending;
+        
+        pending = NULL;
+        dbus_connection_send_with_reply(proxy->connection, call, &pending, -1);
+
+        if (pending == NULL) {
+            g_warning("Failed to send method call %s (probably connection is disconnected)", method);
+            goto failed;
+        }
+        
+        if (!dbus_pending_call_set_notify(pending, on_async_reply,
+                                          async_reply_closure_new(handler, data, free_data_func),
+                                          async_reply_closure_free_func))
+            g_error("out of memory");
+        
+        
+        /* rely on connection to hold a reference to it, if finalized
+         * I think on_async_reply won't get called though, 
+         * which is fine currently
+         */
+        dbus_pending_call_unref(pending);
+    } else {
+        dbus_message_set_no_reply(call, TRUE);
+        dbus_connection_send(proxy->connection, call, NULL);
+    }
+    
+    dbus_message_unref(call);
+    
+    return;
+    
+ failed:
+    if (call)
+        dbus_message_unref(call);
+
+    return;
+}
+
+void
+hippo_dbus_proxy_call_method_async_valist(HippoDBusProxy          *proxy,
+                                          const char              *method,
+                                          HippoDBusReplyHandler    handler,
+                                          void                    *data,
+                                          DBusFreeFunction         free_data_func,
+                                          int                      first_arg_type,
+                                          va_list                  args)
+{
+    call_method_async_valist_appender(proxy, method, handler, data, free_data_func,
+                                      NULL, NULL, first_arg_type, args);
+}
+
+void
+hippo_dbus_proxy_call_method_async_appender (HippoDBusProxy        *proxy,
+                                             const char            *method,
+                                             HippoDBusReplyHandler  handler,
+                                             void                  *data,
+                                             DBusFreeFunction       free_data_func,
+                                             HippoDBusArgAppender   appender,
+                                             void                  *appender_data)
+{
+    va_list dummy_args;
+    
+    call_method_async_valist_appender(proxy, method, handler, data, free_data_func,
+                                      appender, appender_data, DBUS_TYPE_INVALID, dummy_args);
+}
+
+
+/* this is sort of bizarre in that it warns about then frees the passed-in error,
+ * rather than returning it.
+ */
 dbus_bool_t
 hippo_dbus_proxy_finish_method_call_freeing_reply (DBusMessage *reply,
                                                    const char  *method,
@@ -1046,6 +1670,12 @@ hippo_dbus_proxy_finish_method_call_freeing_reply (DBusMessage *reply,
 
     if (reply == NULL) {
         g_warning("No reply to %s: %s", method, error->message);
+        dbus_error_free(error);
+        return FALSE;
+    }
+
+    if (dbus_set_error_from_message(error, reply)) {
+        g_warning("Error from %s: %s: %s", method, error->name, error->message);
         dbus_error_free(error);
         return FALSE;
     }
@@ -1066,6 +1696,9 @@ hippo_dbus_proxy_finish_method_call_freeing_reply (DBusMessage *reply,
     }
 }
 
+/* this is sort of bizarre in that it warns about then frees the passed-in error,
+ * rather than returning it.
+ */
 dbus_bool_t
 hippo_dbus_proxy_finish_method_call_keeping_reply (DBusMessage *reply,
                                                    const char  *method,
@@ -1077,6 +1710,12 @@ hippo_dbus_proxy_finish_method_call_keeping_reply (DBusMessage *reply,
 
     if (reply == NULL) {
         g_warning("No reply to %s: %s", method, error->message);
+        dbus_error_free(error);
+        return FALSE;
+    }
+
+    if (dbus_set_error_from_message(error, reply)) {
+        g_warning("Error from %s: %s: %s", method, error->name, error->message);
         dbus_error_free(error);
         return FALSE;
     }
