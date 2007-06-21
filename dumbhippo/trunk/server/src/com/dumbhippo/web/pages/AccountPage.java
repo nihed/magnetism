@@ -15,8 +15,6 @@ import com.dumbhippo.server.AmazonUpdater;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystem;
-import com.dumbhippo.server.FacebookSystemException;
-import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonViewer;
@@ -45,7 +43,6 @@ public class AccountPage {
 	private PersonView person;
 	private Configuration config;
 	private ExternalAccountSystem externalAccounts;
-	private FacebookTracker facebookTracker;
 	private FacebookSystem facebookSystem;
 	private String facebookAuthToken;
 	private String facebookErrorMessage;
@@ -55,7 +52,6 @@ public class AccountPage {
 		personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
 		config = WebEJBUtil.defaultLookup(Configuration.class);
 		externalAccounts = WebEJBUtil.defaultLookup(ExternalAccountSystem.class);
-		facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
 		facebookSystem =  WebEJBUtil.defaultLookup(FacebookSystem.class);
 		facebookAuthToken = null;
 		facebookErrorMessage = null;
@@ -385,12 +381,10 @@ public class AccountPage {
 	
     public void setFacebookAuthToken(String facebookAuthToken) {
     	this.facebookAuthToken = facebookAuthToken;  	
-    	try {
-    	    // request a session key for the signed in user and set it in the database 
-    	    facebookTracker.updateOrCreateFacebookAccount(signin.getViewpoint(), facebookAuthToken);
-    	} catch (FacebookSystemException e) {
-            facebookErrorMessage = e.getMessage();		
-    	}
+    }
+
+    public void setFacebookErrorMessage(String facebookErrorMessage) {
+    	this.facebookErrorMessage = facebookErrorMessage;  	
     }
     
     public String getFacebookErrorMessage() {

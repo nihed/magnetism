@@ -241,6 +241,34 @@
       <url-pattern>/verify</url-pattern>
    </servlet-mapping>
 
+   <servlet>
+      <servlet-name>FacebookVerifyFromAccountServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.FacebookVerifyServlet</servlet-class>
+      <init-param>
+          <param-name>redirect</param-name>
+          <param-value>account</param-value>
+      </init-param>      
+   </servlet>   
+
+   <servlet>
+      <servlet-name>FacebookVerifyFromHomeServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.FacebookVerifyServlet</servlet-class>
+      <init-param>
+          <param-name>redirect</param-name>
+          <param-value>home</param-value>
+      </init-param>      
+   </servlet>   
+
+   <servlet-mapping>
+      <servlet-name>FacebookVerifyFromAccountServlet</servlet-name>
+      <url-pattern>/facebook-verify-from-account</url-pattern>
+   </servlet-mapping>
+         
+   <servlet-mapping>
+      <servlet-name>FacebookVerifyFromHomeServlet</servlet-name>
+      <url-pattern>/facebook-verify-from-home</url-pattern>
+   </servlet-mapping>
+   
    <servlet-mapping>
       <servlet-name>AbnormalErrorServlet</servlet-name>
       <url-pattern>/abnormalerror</url-pattern>

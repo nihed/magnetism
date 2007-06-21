@@ -461,13 +461,8 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		this.needExternalAccounts = needExternalAccounts;
 	}
 	
-    public void setFacebookAuthToken(String facebookAuthToken) {
-    	try {
-    	    // request a session key for the signed in user and set it in the database 
-    	    facebookTracker.updateOrCreateFacebookAccount(getUserSignin().getViewpoint(), facebookAuthToken);
-    	} catch (FacebookSystemException e) {
-    		facebookErrorMessage = e.getMessage();
-    	}
+    public void setFacebookErrorMessage(String facebookErrorMessage) {
+        this.facebookErrorMessage = facebookErrorMessage;	 
     }
     
     public String getFacebookErrorMessage() {
