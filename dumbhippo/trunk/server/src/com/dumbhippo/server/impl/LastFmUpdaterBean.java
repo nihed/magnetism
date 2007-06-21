@@ -79,6 +79,46 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 		return props;
 	}
 
+	private void addNewTracks(String username, List<LastFmTrack> tracks, String previousHash) throws RetryException {
+		long mostRecentListenTimeSeconds = -1;
+		for (LastFmTrack track : tracks) {
+			if (mostRecentListenTimeSeconds == -1 || track.getListenTime() > mostRecentListenTimeSeconds)
+				mostRecentListenTimeSeconds = track.getListenTime();
+		}
+		
+		Date lastLastFmUpdate = new Date(mostRecentListenTimeSeconds * 1000);			
+		for (User user : getAccountLovers(username)) {
+			// Tracks are in most to least recent order, walk in reverse
+			Date lastNativeUpdate = user.getAccount().getNativeMusicSharingTimestamp();
+			// Don't add these tracks if we've gotten "recent" updates natively
+			if (lastNativeUpdate != null
+					&& (lastLastFmUpdate.before(lastNativeUpdate) || 
+					  (lastLastFmUpdate.getTime() - lastNativeUpdate.getTime()) < MusicSystem.NATIVE_MUSIC_OVERRIDE_TIME_MS)) {
+				logger.debug("Ignoring music update due to recent native update");
+				continue;
+			}
+			
+			long now = System.currentTimeMillis();
+			for (int i = tracks.size() - 1; i >= 0; i--) {
+				LastFmTrack lastFmTrack = tracks.get(i);
+				if (computeTrackHash(lastFmTrack).equals(previousHash))
+					break; // Stop when we get to the last track we saw
+				Map<String, String> props = lastFmTrackToProps(lastFmTrack);
+				
+				// The data we get from last.fm/audioscrobbler simply includes the 
+				// literal date provided by the audioscrobbler client. If the audioscrobbler
+				// client is broken or the user's clock is off, this might be in the
+				// future. Stacking blocks in the future is bad, since (among other things)
+				// it will make the user *always* the most recently active user on the system.
+				// So clamp play times to the current time.
+				long trackListenTime = lastFmTrack.getListenTime() * 1000;
+				long listenTime = trackListenTime <= now ? trackListenTime : now;
+				
+				musicSystem.addHistoricalTrack(user, props, listenTime, false);
+			}
+		}
+	}
+
 	public boolean saveUpdatedStatus(final String username, final List<LastFmTrack> tracks) {
 		logger.debug("Saving new Last.fm status for " + username + ": tracks {}", tracks);
 		
@@ -92,55 +132,21 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 
 		String hash = computeHash(tracks);
 		
-		if (!updateStatus.getSongHash().equals(hash)) {
-			final String previousHash = updateStatus.getSongHash();
-			logger.debug("Most recent tracks changed '{}' -> '{}'",
-					updateStatus.getSongHash(), hash);
-			updateStatus.setSongHash(hash);
-			long mostRecentListenTimeSeconds = -1;
-			for (LastFmTrack track : tracks) {
-				if (mostRecentListenTimeSeconds == -1 || track.getListenTime() > mostRecentListenTimeSeconds)
-					mostRecentListenTimeSeconds = track.getListenTime();
+		if (updateStatus.getSongHash().equals(hash))
+			return false;
+		
+		final String previousHash = updateStatus.getSongHash();
+		logger.debug("Most recent tracks changed '{}' -> '{}'",
+				updateStatus.getSongHash(), hash);
+		updateStatus.setSongHash(hash);
+
+		TxUtils.runInTransactionOnCommit(new TxRunnable() {
+			public void run() throws RetryException {
+				addNewTracks(username, tracks, previousHash);
 			}
-			Date lastLastFmUpdate = new Date(mostRecentListenTimeSeconds * 1000);			
-			for (User user : getAccountLovers(username)) {
-				// Tracks are in most to least recent order, walk in reverse
-				Date lastNativeUpdate = user.getAccount().getNativeMusicSharingTimestamp();
-				// Don't add these tracks if we've gotten "recent" updates natively
-				if (lastNativeUpdate != null
-						&& (lastLastFmUpdate.before(lastNativeUpdate) || 
-						  (lastLastFmUpdate.getTime() - lastNativeUpdate.getTime()) < MusicSystem.NATIVE_MUSIC_OVERRIDE_TIME_MS)) {
-					logger.debug("Ignoring music update due to recent native update");
-					continue;
-				}
-				long now = System.currentTimeMillis();
-				for (int i = tracks.size() - 1; i >= 0; i--) {
-					LastFmTrack lastFmTrack = tracks.get(i);
-					if (computeTrackHash(lastFmTrack).equals(previousHash))
-						break; // Stop when we get to the last track we saw
-					final Map<String, String> props = lastFmTrackToProps(lastFmTrack);
-					
-					// The data we get from last.fm/audioscrobbler simply includes the 
-					// literal date provided by the audioscrobbler client. If the audioscrobbler
-					// client is broken or the user's clock is off, this might be in the
-					// future. Stacking blocks in the future is bad, since (among other things)
-					// it will make the user *always* the most recently active user on the system.
-					// So clamp play times to the current time.
-					long trackListenTime = lastFmTrack.getListenTime() * 1000;
-					final long listenTime = trackListenTime <= now ? trackListenTime : now;
-					
-					final String userId = user.getId();
-					TxUtils.runInTransactionOnCommit(new TxRunnable() {
-						public void run() throws RetryException {
-							User attached = em.find(User.class, userId);
-							musicSystem.addHistoricalTrack(attached, props, listenTime, false);
-						}
-					});
-				}
-			}
-			return true;
-		}
-		return false;
+		});
+		
+		return true;
 	}
 	
 	@Override
