@@ -75,8 +75,14 @@ public abstract class AbstractBasicCacheBean<KeyType, ResultType> extends
 		// you really don't want a transaction open unless you can assume on average we aren't doing a
 		// remote request (i.e. assuming a cache hit is likely).
 		// (if you just want to expire a cache, use expireCache() not getAsync())
-		if (alwaysRefetchEvenIfCached)
-			TxUtils.assertNoTransaction();
+		// When expiring a cache happens in the same transaction right before getSync it causes 
+		// a deadlock, and having separate transactions in those places would just be a work-around.
+		// Even if alwaysRefetchEvenIfCached is false, we call this with a transaction when a user 
+		// is adding their accounts for the first time and we'll do remote requests anyway. So it 
+		// should be possible to call this with a transaction when we want to refresh information 
+		// based on the user's input.		
+		// if (alwaysRefetchEvenIfCached)
+		//     TxUtils.assertNoTransaction();
 		
 		try {
 			if (alwaysRefetchEvenIfCached)
