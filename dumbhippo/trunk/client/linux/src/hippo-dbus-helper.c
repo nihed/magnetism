@@ -900,13 +900,15 @@ hippo_dbus_helper_handle_object_message(DBusConnection  *connection,
     }
 }
 
-void
-hippo_dbus_helper_emit_signal_valist(DBusConnection          *connection,
-                                     const char              *path,
-                                     const char              *interface,
-                                     const char              *signal_name,
-                                     int                      first_arg_type,
-                                     va_list                  args)
+static void
+emit_signal_valist_appender(DBusConnection          *connection,
+                            const char              *path,
+                            const char              *interface,
+                            const char              *signal_name,
+                            HippoDBusArgAppender     appender,
+                            void                    *appender_data,
+                            int                      first_arg_type,
+                            va_list                  args)
 {
     DBusMessage *message;
     void *object_data;
@@ -926,8 +928,17 @@ hippo_dbus_helper_emit_signal_valist(DBusConnection          *connection,
     }
         
     message = dbus_message_new_signal(path, interface, signal_name);
-    dbus_message_append_args_valist(message, first_arg_type, args);
 
+    if (first_arg_type != DBUS_TYPE_INVALID) {
+        dbus_message_append_args_valist(message, first_arg_type, args);
+    }
+    
+    if (appender != NULL) {
+        if (!(* appender)(message, appender_data)) {
+            g_warning("no memory to append signal args");
+        }
+    }
+    
     if (!dbus_message_has_signature(message, member->out_args)) {
         g_warning("Tried to emit signal %s %s with args %s but should have been %s",
                   interface, signal_name, dbus_message_get_signature(message), member->out_args);
@@ -938,6 +949,32 @@ hippo_dbus_helper_emit_signal_valist(DBusConnection          *connection,
     dbus_connection_send(connection, message, NULL);
 
     dbus_message_unref(message);
+}
+
+void
+hippo_dbus_helper_emit_signal_valist(DBusConnection          *connection,
+                                     const char              *path,
+                                     const char              *interface,
+                                     const char              *signal_name,
+                                     int                      first_arg_type,
+                                     va_list                  args)
+{
+    emit_signal_valist_appender(connection, path, interface, signal_name,
+                                NULL, NULL, first_arg_type, args);
+}
+
+void
+hippo_dbus_helper_emit_signal_appender (DBusConnection          *connection,
+                                        const char              *path,
+                                        const char              *interface,
+                                        const char              *signal_name,
+                                        HippoDBusArgAppender     appender,
+                                        void                    *appender_data)
+{
+    va_list dummy_args;
+    
+    emit_signal_valist_appender(connection, path, interface, signal_name,
+                                appender, appender_data, DBUS_TYPE_INVALID, dummy_args);
 }
 
 void

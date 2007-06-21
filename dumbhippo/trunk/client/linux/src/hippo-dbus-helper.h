@@ -15,10 +15,19 @@ typedef enum {
     HIPPO_DBUS_MEMBER_SIGNAL
 } HippoDBusMemberType;
 
+
+typedef struct HippoDBusProxy HippoDBusProxy;
 typedef struct HippoDBusMember HippoDBusMember;
 typedef struct HippoDBusProperty HippoDBusProperty;
 typedef struct HippoDBusServiceTracker HippoDBusServiceTracker;
 typedef struct HippoDBusSignalTracker HippoDBusSignalTracker;
+
+
+typedef void        (* HippoDBusReplyHandler) (DBusMessage *reply,
+                                               void        *data);
+typedef dbus_bool_t (* HippoDBusArgAppender)  (DBusMessage *message,
+                                               void        *data);
+
 
 typedef DBusMessage* (* HippoDBusHandler) (void            *object,
                                            DBusMessage     *message,
@@ -110,6 +119,13 @@ void              hippo_dbus_helper_emit_signal_valist   (DBusConnection        
                                                           const char              *signal_name,
                                                           int                      first_arg_type,
                                                           va_list                  args);
+void              hippo_dbus_helper_emit_signal_appender (DBusConnection          *connection,
+                                                          const char              *path,
+                                                          const char              *interface,
+                                                          const char              *signal_name,
+                                                          HippoDBusArgAppender     appender,
+                                                          void                    *appender_data);
+                                                          
 
 void hippo_dbus_helper_register_service_tracker   (DBusConnection                *connection,
                                                    const char                    *well_known_name,
@@ -120,14 +136,6 @@ void hippo_dbus_helper_unregister_service_tracker (DBusConnection               
                                                    const char                    *well_known_name,
                                                    const HippoDBusServiceTracker *tracker,
                                                    void                          *data);
-
-typedef struct HippoDBusProxy HippoDBusProxy;
-
-typedef void        (* HippoDBusReplyHandler) (DBusMessage *reply,
-                                               void        *data);
-typedef dbus_bool_t (* HippoDBusArgAppender)  (DBusMessage *message,
-                                               void        *data);
-
 
 HippoDBusProxy*   hippo_dbus_proxy_new                     (DBusConnection          *connection,
                                                             const char              *bus_name,
