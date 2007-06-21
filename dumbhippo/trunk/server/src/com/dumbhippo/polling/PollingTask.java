@@ -134,7 +134,12 @@ public abstract class PollingTask implements Callable<PollingTaskExecutionResult
 		    lastExecuted = entry.getLastExecuted().getTime();
 		else 
 			lastExecuted = -1;
-		periodicityAverage = entry.getPeriodicityAverage();
+		
+		// The current state is that the database is full of bad periodicities,
+		// and we don't do anything to update them
+		//
+		//periodicityAverage = entry.getPeriodicityAverage();
+		periodicityAverage = getDefaultPeriodicitySeconds();
 		dirty = false;
 	}
 
