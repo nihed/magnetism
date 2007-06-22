@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include "avahi-scanner.h"
 #include "hippo-dbus-helper.h"
+#include "hippo-dbus-async.h"
 #include "session-info.h"
 #include "session-api.h"
 #include <dbus/dbus-glib-lowlevel.h>
@@ -148,6 +149,10 @@ add_session_by_service(Session *session)
 static void
 remove_session_by_service(Session *session)
 {
+    /* FIXME right now when we remove a session we never remove
+     * our local cache of the stuff it advertised!
+     */
+    
     g_tree_remove(session_tree_by_service,
                   &session->id);
 
@@ -332,6 +337,8 @@ on_get_session_info_reply(DBusPendingCall *pending,
                 session_infos_add(session->infos, info);
                 info_unref(info);
             }
+
+            /* FIXME right now we never remove an info that's no longer there! */
             
             dbus_message_iter_next(&infos_iter);
         }
