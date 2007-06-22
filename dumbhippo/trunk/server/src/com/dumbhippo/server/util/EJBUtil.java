@@ -23,6 +23,7 @@ import org.hibernate.Session;
 import org.hibernate.annotations.Cache;
 import org.hibernate.collection.PersistentCollection;
 import org.hibernate.exception.ConstraintViolationException;
+import org.hibernate.exception.LockAcquisitionException;
 import org.jboss.ejb3.entity.HibernateSession;
 import org.slf4j.Logger;
 
@@ -343,6 +344,10 @@ public class EJBUtil {
 		// constraint violation on the ID field or a constraint violation 
 		// on some other field, and throws EntityExistsException for all
 		CONSTRAINT_VIOLATION_EXCEPTIONS.add(EntityExistsException.class);
+		
+		// This isn't really a constraint violation, but something else we need
+		// to retry on in similar places
+		CONSTRAINT_VIOLATION_EXCEPTIONS.add(LockAcquisitionException.class);
 	}
 	
 	public static boolean isDatabaseException(Exception e) {
