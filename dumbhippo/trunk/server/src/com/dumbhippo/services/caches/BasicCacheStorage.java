@@ -47,6 +47,15 @@ public class BasicCacheStorage<KeyType, ResultType, EntityType extends CachedIte
 		}
 	}
 	
+	@Override
+	public void expireCache(KeyType key) {
+		TxUtils.assertHaveTransaction();
+		
+		EntityType result = mapper.queryExisting(key);
+		if (result != null)
+			result.setLastUpdated(new Date(0));
+	}
+	
 	// null data means to save a negative result
 	public ResultType saveInCacheInsideExistingTransaction(KeyType key, ResultType data, Date now, boolean refetchedWithoutCheckingCache) {
 		TxUtils.assertHaveTransaction();
