@@ -632,14 +632,24 @@ hippo_connection_get_self_resource_id(HippoConnection  *connection)
     g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), NULL);
 
     if (connection->self_resource_id == NULL) {
-        const char *server;
-        const char *self_guid;
-        
-        self_guid = hippo_connection_get_self_guid(connection);
-        
-        server = hippo_platform_get_web_server(connection->platform);
+        const char *self_guid = hippo_connection_get_self_guid(connection);
+        const char *raw_server = hippo_platform_get_web_server(connection->platform);
+        char *server;
+
+        /* Somewhat hacky: we need to match the server's own idea of what it's
+         * URL is; we've added on :80 elsewhere to "canonicalize" the URL, and
+         * strip it out again here. We might be better off having the server
+         * send it's resource base (or the user's "self ID") in the initial
+         * handshake.
+         */
+        if (g_str_has_suffix(raw_server, ":80"))
+            server = g_strndup(raw_server, strlen(raw_server) - 3);
+        else
+            server = g_strdup(raw_server);
         
         connection->self_resource_id = g_strdup_printf("http://%s/o/user/%s", server, self_guid);
+
+        g_free(server);
     }
 
     return connection->self_resource_id;
