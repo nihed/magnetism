@@ -54,6 +54,7 @@ Info*         session_infos_get               (SessionInfos    *infos,
                                                const char      *name);
 void          session_infos_remove            (SessionInfos    *infos,
                                                const char      *name);
+void          session_infos_remove_all        (SessionInfos    *infos);
 gboolean      session_infos_append_all        (SessionInfos    *infos,
                                                DBusMessageIter *array_iter);
 guint32       session_infos_get_change_serial (SessionInfos    *infos);
@@ -63,12 +64,16 @@ void          session_infos_churn_bogus_info  (SessionInfos    *infos);
 void                    session_infos_push_change_notify_set (SessionInfos *infos);
 SessionChangeNotifySet* session_infos_pop_change_notify_set  (SessionInfos *infos);
 
-void  session_change_notify_set_free(SessionChangeNotifySet *set);
-Info* session_change_notify_set_pop (SessionChangeNotifySet *set);
+void     session_change_notify_set_free             (SessionChangeNotifySet *set);
+Info*    session_change_notify_set_pop              (SessionChangeNotifySet *set);
+char*    session_change_notify_set_pop_removal      (SessionChangeNotifySet *set);
 
-gboolean session_infos_write_with_info(SessionInfos    *infos,
-                                       Info            *info,
-                                       DBusMessageIter *iter);
+gboolean session_infos_write           (SessionInfos    *infos,
+                                        DBusMessageIter *session_struct_iter);
+gboolean session_infos_write_with_info (SessionInfos    *infos,
+                                        Info            *info,
+                                        DBusMessageIter *iter);
+
 
 #endif /* __SESSION_INFO_H__ */
 

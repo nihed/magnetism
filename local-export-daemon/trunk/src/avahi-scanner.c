@@ -149,13 +149,20 @@ add_session_by_service(Session *session)
 static void
 remove_session_by_service(Session *session)
 {
-    /* FIXME right now when we remove a session we never remove
-     * our local cache of the stuff it advertised!
-     */
+    SessionChangeNotifySet *change_set;
     
     g_tree_remove(session_tree_by_service,
                   &session->id);
 
+    /* Remove all the "info" and send notification */
+    if (session->infos) {
+        session_infos_push_change_notify_set(session->infos);
+        session_infos_remove_all(session->infos);
+        change_set = session_infos_pop_change_notify_set(session->infos);
+        session_api_notify_changed(session->infos, change_set);
+        session_change_notify_set_free(change_set);
+    }
+    
     /* no more callbacks on this session */
     if (session->resolver) {
         avahi_service_resolver_free(session->resolver);
@@ -339,6 +346,12 @@ on_get_session_info_reply(DBusPendingCall *pending,
             }
 
             /* FIXME right now we never remove an info that's no longer there! */
+            /* At first it looks like we could just push change set, remove all,
+             * add back, and notify on the resulting change set. The problem with
+             * this is that we would fail to short-circuit items that were not really
+             * changed since we wouldn't have the original items due to the remove_all.
+             * So some slightly more involved approach is needed.
+             */
             
             dbus_message_iter_next(&infos_iter);
         }
