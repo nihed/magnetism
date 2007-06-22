@@ -15,9 +15,12 @@ import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.PresenceService;
+import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.tx.TxRunnable;
 import com.dumbhippo.tx.TxUtils;
@@ -132,6 +135,8 @@ public class XmppClientManager implements SessionManagerListener {
 				
 				executor.execute(new Runnable() {
 					public void run() {
+						DataService.getModel().initializeReadWriteSession(new UserViewpoint(userId));
+						
 						MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 						glue.updateLogoutDate(userId, timestamp);
 					}
@@ -148,6 +153,8 @@ public class XmppClientManager implements SessionManagerListener {
 					public void run() {
 						TxUtils.runInTransaction(new TxRunnable() {
 							public void run() throws RetryException {
+								DataService.getModel().initializeReadWriteSession(new UserViewpoint(userId));
+								
 								MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 								glue.updateLoginDate(userId, timestamp);
 								glue.sendConnectedResourceNotifications(userId, wasAlreadyConnected);
