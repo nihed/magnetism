@@ -33,6 +33,7 @@ static gboolean message_iter_equal(DBusMessageIter *lhs,
 
 struct SessionChangeNotifySet {
     GHashTable *by_name;
+    GHashTable *removed_names;
 };
 
 struct Info {
@@ -57,7 +58,9 @@ session_change_notify_set_new(void)
     set = g_new0(SessionChangeNotifySet, 1);
     set->by_name = g_hash_table_new_full(g_str_hash, g_str_equal,
                                          NULL, (GFreeFunc) info_unref);
-
+    set->removed_names = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                               g_free, NULL);
+    
     return set;
 }
 
@@ -65,6 +68,7 @@ void
 session_change_notify_set_free(SessionChangeNotifySet *set)
 {
     g_hash_table_destroy(set->by_name);
+    g_hash_table_destroy(set->removed_names);
     g_free(set);
 }
 
@@ -72,8 +76,28 @@ static void
 session_change_notify_set_add(SessionChangeNotifySet *set,
                               Info                   *info)
 {
+    const char *name;
     info_ref(info);
-    g_hash_table_replace(set->by_name, (char*) info_get_name(info), info);
+    name = info_get_name(info);
+    g_hash_table_replace(set->by_name, (char*) name, info);
+
+    /* if it changed, it's no longer removed */
+    g_hash_table_remove(set->removed_names, name);
+}
+
+static void
+session_change_notify_set_add_removal(SessionChangeNotifySet *set,
+                                      Info                   *info)
+{
+    char *name;
+
+    name = g_strdup(info_get_name(info));
+    
+    g_hash_table_replace(set->removed_names,
+                         name, name);
+
+    /* if it was removed, it's no longer changed */
+    g_hash_table_remove(set->by_name, name);
 }
 
 static gboolean
@@ -96,6 +120,20 @@ session_change_notify_set_pop(SessionChangeNotifySet *set)
     }
     
     return info;
+}
+
+char*
+session_change_notify_set_pop_removal(SessionChangeNotifySet *set)
+{
+    char *name;
+    
+    name = g_hash_table_find(set->removed_names, return_true_func, NULL);
+    if (name != NULL) {
+        name = g_strdup(name);
+        g_hash_table_remove(set->removed_names, name);
+    }
+    
+    return name;
 }
 
 Info*
@@ -434,18 +472,6 @@ session_infos_ref (SessionInfos *infos)
     infos->refcount += 1;
 }
 
-static gboolean
-remove_by_name_foreach (gpointer  key,
-                        gpointer  value,
-                        gpointer  user_data)
-{
-    Info *info = value;
-
-    info_unref (info);
-
-    return TRUE; /* TRUE means remove it */
-}
-
 void
 session_infos_unref (SessionInfos *infos)
 {
@@ -453,8 +479,8 @@ session_infos_unref (SessionInfos *infos)
 
     infos->refcount -= 1;
     if (infos->refcount == 0) {
-        g_hash_table_foreach_remove (infos->by_name, remove_by_name_foreach, NULL);
-        
+        session_infos_remove_all(infos);
+
         g_hash_table_destroy(infos->by_name);
 
         if (infos->change_set)
@@ -472,9 +498,20 @@ session_infos_mark_changed(SessionInfos *infos,
                            Info         *info)
 {
     infos->serial += 1;
-    if (infos->change_set)
+    if (infos->change_set) {
         session_change_notify_set_add(infos->change_set,
                                       info);
+    }
+}
+
+static void
+session_infos_mark_removed(SessionInfos *infos,
+                           Info         *info)
+{
+    infos->serial += 1;
+    if (infos->change_set)
+        session_change_notify_set_add_removal(infos->change_set,
+                                              info);
 }
 
 void
@@ -520,12 +557,32 @@ session_infos_remove (SessionInfos *infos,
     
     info = g_hash_table_lookup(infos->by_name, name);
     if (info != NULL) {
-        /* change set will take a ref, so do this before we unref */
-        session_infos_mark_changed(infos, info);
+        session_infos_mark_removed(infos, info);
         
         g_hash_table_remove(infos->by_name, name);
         info_unref(info);
     }
+}
+
+static gboolean
+remove_by_name_foreach (gpointer  key,
+                        gpointer  value,
+                        gpointer  user_data)
+{
+    Info *info = value;
+    SessionInfos *infos = user_data;
+
+    session_infos_mark_removed(infos, info);
+    
+    info_unref (info);
+
+    return TRUE; /* TRUE means remove it */
+}
+
+void
+session_infos_remove_all (SessionInfos *infos)
+{
+    g_hash_table_foreach_remove (infos->by_name, remove_by_name_foreach, infos);
 }
 
 typedef struct {
@@ -680,31 +737,21 @@ session_infos_pop_change_notify_set (SessionInfos *infos)
     return set;
 }
 
-/*
- * Write a struct "(a{sv}a{sv})" which is the session properties
- * then the info properties.
- */
 gboolean
-session_infos_write_with_info(SessionInfos    *infos,
-                              Info            *info,
-                              DBusMessageIter *iter)
+session_infos_write(SessionInfos    *infos,
+                    DBusMessageIter *session_struct_iter)
 {
-    DBusMessageIter session_struct_iter, session_props_iter, info_dict_iter;
+    DBusMessageIter session_props_iter;
     
-    if (!dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL, &session_struct_iter))
+    if (!dbus_message_iter_open_container(session_struct_iter, DBUS_TYPE_ARRAY, "{sv}", &session_props_iter))
         return FALSE;
     
-    /* Append session properties */
-    
-    if (!dbus_message_iter_open_container(&session_struct_iter, DBUS_TYPE_ARRAY, "{sv}", &session_props_iter))
-        return FALSE;
-
     if (!append_string_pair(&session_props_iter, "session", infos->session_id))
         return FALSE;
     
     if (!append_string_pair(&session_props_iter, "machine", infos->machine_id))
         return FALSE;
-
+    
     /* FIXME for SessionInfos for other sessions we need to get their
      * change serial from the other session, rather than keeping it
      * maintained locally
@@ -715,7 +762,28 @@ session_infos_write_with_info(SessionInfos    *infos,
     g_free(s);
 #endif    
     
-    if (!dbus_message_iter_close_container(&session_struct_iter, &session_props_iter))
+    if (!dbus_message_iter_close_container(session_struct_iter, &session_props_iter))
+        return FALSE;
+
+    return TRUE;
+}
+
+/*
+ * Write a struct "(a{sv}a{sv})" which is the session properties
+ * then the info properties.
+ */
+gboolean
+session_infos_write_with_info(SessionInfos    *infos,
+                              Info            *info,
+                              DBusMessageIter *iter)
+{
+    DBusMessageIter session_struct_iter, info_dict_iter;
+    
+    if (!dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL, &session_struct_iter))
+        return FALSE;
+    
+    /* Append session properties */
+    if (!session_infos_write(infos, &session_struct_iter))
         return FALSE;
     
     /* Append requested info bundle */

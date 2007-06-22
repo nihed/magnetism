@@ -129,6 +129,9 @@ static const HippoDBusMember local_export_members[] = {
      * session (as in GetInfoFromOtherSessions)
      */
     { HIPPO_DBUS_MEMBER_SIGNAL, "InfoChanged", "", "s(a{sv}a{sv})", NULL },
+
+    /* Args are the info name removed, and the session details */
+    { HIPPO_DBUS_MEMBER_SIGNAL, "InfoRemoved", "", "sa{sv}", NULL },
     
     { 0, NULL }
 };
@@ -181,6 +184,7 @@ session_api_get_change_serial(void)
 typedef struct {
     SessionInfos *infos;
     Info *info;
+    char *removed_name;
 } AppenderData;
 
 static dbus_bool_t
@@ -208,24 +212,65 @@ append_info_changed(DBusMessage *message,
     return TRUE;
 }
 
+static dbus_bool_t
+append_info_removed(DBusMessage *message,
+                    void        *data)
+{
+    AppenderData *ad = data;
+    DBusMessageIter iter;
+
+    dbus_message_iter_init_append(message, &iter);
+    
+    if (!dbus_message_iter_append_basic(&iter,
+                                        DBUS_TYPE_STRING,
+                                        &ad->removed_name))
+        return FALSE;
+    
+    if (!session_infos_write(ad->infos,
+                             &iter))
+        return FALSE;
+
+    return TRUE;
+}
+
 void
 session_api_notify_changed (SessionInfos           *infos,
                             SessionChangeNotifySet *set)
 {
     Info *info;
+    char *removed_name;
 
+    /* SessionChangeNotifySet is supposed to guarantee no overlap
+     * between "changed" and "removed" items
+     */
+    
     while ((info = session_change_notify_set_pop(set)) != NULL) {
         AppenderData ad;
-
+        
         ad.infos = infos;
         ad.info = info;
+        ad.removed_name = NULL;
         hippo_dbus_helper_emit_signal_appender(session_bus,
                                                LOCAL_EXPORT_OBJECT_PATH,
                                                LOCAL_EXPORT_INTERFACE,
                                                "InfoChanged",
                                                append_info_changed,
                                                &ad);
-        
         info_unref(info);
+    }
+
+    while ((removed_name = session_change_notify_set_pop_removal(set)) != NULL) {
+        AppenderData ad;
+        
+        ad.infos = infos;
+        ad.info = NULL;
+        ad.removed_name = removed_name;
+        hippo_dbus_helper_emit_signal_appender(session_bus,
+                                               LOCAL_EXPORT_OBJECT_PATH,
+                                               LOCAL_EXPORT_INTERFACE,
+                                               "InfoRemoved",
+                                               append_info_removed,
+                                               &ad);
+        g_free(removed_name);
     }
 }
