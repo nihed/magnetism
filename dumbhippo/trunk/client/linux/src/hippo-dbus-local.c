@@ -8,12 +8,6 @@
 #include "hippo-dbus-im.h"
 
 typedef struct {
-    DBusConnection *connection;
-    HippoDBusProxy *proxy;
-
-} LocalState;
-
-typedef struct {
     const char *key;
     const char *value;
 } DictStringEntry;
@@ -81,22 +75,39 @@ dict_extract_string_values(const DBusMessageIter *orig_dict_iter,
 }
 
 static gboolean
+read_session_info(DBusMessageIter *dict_iter,
+                  char           **machine_id_p,
+                  char           **session_id_p)
+{
+   DictStringEntry session_entries[3];
+   
+   session_entries[0].key = "machine";
+   session_entries[1].key = "session";
+   session_entries[2].key = NULL;
+   
+   if (!dict_extract_string_values(dict_iter, &session_entries[0]))
+       return FALSE;   
+   
+   if (machine_id_p)
+       *machine_id_p = g_strdup(session_entries[0].value);
+   if (session_id_p)
+       *session_id_p = g_strdup(session_entries[1].value);
+   
+   return TRUE;
+}
+
+static gboolean
 read_info(DBusMessageIter *struct_iter,
           char           **machine_id_p,
           char           **session_id_p,
           char           **user_resource_id_p)
 {
-    DictStringEntry session_entries[3];
     DictStringEntry info_entries[2];
     DBusMessageIter dict_iter;
-    
-    session_entries[0].key = "machine";
-    session_entries[1].key = "session";
-    session_entries[2].key = NULL;
-
+ 
     dbus_message_iter_recurse(struct_iter, &dict_iter);
 
-    if (!dict_extract_string_values(&dict_iter, &session_entries[0]))
+    if (!read_session_info(&dict_iter, machine_id_p, session_id_p))
         return FALSE;
 
     dbus_message_iter_next(struct_iter);
@@ -106,17 +117,32 @@ read_info(DBusMessageIter *struct_iter,
     
     dbus_message_iter_recurse(struct_iter, &dict_iter);
     
-    if (!dict_extract_string_values(&dict_iter, &info_entries[0]))
+    if (!dict_extract_string_values(&dict_iter, &info_entries[0])) {
+        if (machine_id_p) {
+            g_free(*machine_id_p);
+            *machine_id_p = NULL;
+        }
+        if (session_id_p) {
+            g_free(*session_id_p);
+            *session_id_p = NULL;
+        }
         return FALSE;
-
-    if (machine_id_p)
-        *machine_id_p = g_strdup(session_entries[0].value);
-    if (session_id_p)
-        *session_id_p = g_strdup(session_entries[1].value);
+    }
+    
     if (user_resource_id_p)
         *user_resource_id_p = g_strdup(info_entries[0].value);
     
     return TRUE;
+}
+
+static void
+update_buddy(HippoNotificationSet *notifications,
+             const char           *user_resource_id,
+             gboolean              is_online)
+{
+    hippo_dbus_im_update_buddy(notifications, user_resource_id,
+                               "mugshot-local", user_resource_id, is_online,
+                               is_online ? "Around" : "Offline");
 }
 
 static void
@@ -134,9 +160,11 @@ update_info(HippoNotificationSet *notifications,
                    &user_resource_id))
         return;
 
-    hippo_dbus_im_update_buddy(notifications, user_resource_id,
-                               "mugshot-local", user_resource_id, TRUE,
-                               "Around");
+    update_buddy(notifications, user_resource_id, TRUE);
+
+    g_free(machine_id);
+    g_free(session_id);
+    g_free(user_resource_id);
 }
 
 static gboolean
@@ -246,6 +274,57 @@ handle_info_changed(DBusConnection *connection,
     hippo_dbus_im_send_notifications(notifications);
 }
 
+static void
+handle_info_removed(DBusConnection *connection,
+                    DBusMessage    *message,
+                    void           *data)
+{
+    DBusMessageIter iter, session_props_iter;
+    HippoNotificationSet *notifications;
+    const char *name;
+    char *machine_id;
+    char *session_id;
+    
+    if (!dbus_message_has_signature(message, "sa{sv}"))
+        return;
+    
+    dbus_message_iter_init(message, &iter);
+
+    name = NULL;
+    dbus_message_iter_get_basic(&iter, &name);
+
+    if (!(name && strcmp(name, "org.mugshot.MugshotInfo") == 0)) {
+        return;
+    }
+
+    dbus_message_iter_next(&iter);
+    dbus_message_iter_recurse(&iter, &session_props_iter);
+
+    machine_id = NULL;
+    session_id = NULL;
+    if (!read_session_info(&session_props_iter, &machine_id, &session_id))
+        return;
+
+#if 0
+    /* FIXME This is some work to deal with, since we need to track all sessions
+     * that refer to a user, and keep an "online count" of how many sessions
+     * the user is online with.
+     *
+     * To make things worse, right now there could be two machines claiming to
+     * have the same session ID; which would only happen if someone was malicious,
+     * but we should at least not crash in that case.
+     */
+    user_resource_id = "FIXME";
+    
+    notifications = hippo_dbus_im_start_notifications();
+    update_buddy(notifications, user_resource_id, FALSE);
+    hippo_dbus_im_send_notifications(notifications);
+#endif
+    
+    g_free(machine_id);
+    g_free(session_id);
+}
+
 /* FIXME we need to subscribe to changes on this and update our info when it changes */
 static const char*
 get_self_id()
@@ -325,9 +404,10 @@ handle_service_unavailable(DBusConnection *connection,
 
 static const HippoDBusSignalTracker signal_handlers[] = {
     /* it would be slightly nicer if we also matched arg0=org.mugshot.MugshotInfo
-     * on this signal
+     * on these signals
      */
     { "org.freedesktop.od.LocalExport", "InfoChanged", handle_info_changed },
+    { "org.freedesktop.od.LocalExport", "InfoRemoved", handle_info_removed },
     { NULL, NULL, NULL }
 };
 
