@@ -133,8 +133,6 @@ public class XmppClientManager implements SessionManagerListener {
 				
 				executor.execute(new Runnable() {
 					public void run() {
-						DataService.getModel().initializeReadWriteSession(new UserViewpoint(userId));
-						
 						MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 						glue.updateLogoutDate(userId, timestamp);
 					}
