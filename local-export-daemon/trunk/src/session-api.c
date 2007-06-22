@@ -157,8 +157,10 @@ session_api_init(DBusConnection *session_bus_,
                                       NULL, LOCAL_EXPORT_INTERFACE,
                                       NULL);
 
+#if 0
     /* disable this in production! */
     g_timeout_add(3000, churn_bogus_changes_timeout, NULL);
+#endif
     
     return TRUE;
 }
