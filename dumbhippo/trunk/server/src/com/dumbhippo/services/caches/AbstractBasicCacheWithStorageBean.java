@@ -55,6 +55,12 @@ public abstract class AbstractBasicCacheWithStorageBean<KeyType,ResultType,Entit
 		return storage.checkCache(key);
 	}
 
+	@TransactionAttribute(TransactionAttributeType.REQUIRED) // would be the default, but we changed the class default
+	@Override
+	public void expireCache(KeyType key) {
+		storage.expireCache(key);
+	}
+	
 	public abstract EntityType newNoResultsMarker(KeyType key);
 	
 	// null data means to save a negative result
