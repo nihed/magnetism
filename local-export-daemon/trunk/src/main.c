@@ -219,6 +219,9 @@ main(int argc, char **argv)
     GMainLoop *loop;
     DBusConnection *connection;
     DBusError derror;
+
+    g_thread_init(NULL);
+    dbus_threads_init_default();
     
     dbus_error_init(&derror);
     connection = dbus_bus_get(DBUS_BUS_SESSION, &derror);

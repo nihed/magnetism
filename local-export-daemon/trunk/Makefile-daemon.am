@@ -15,6 +15,8 @@ local_export_daemon_SOURCES=			\
 	src/avahi-glue.h			\
 	src/avahi-scanner.c			\
 	src/avahi-scanner.h			\
+	src/hippo-dbus-async.c			\
+	src/hippo-dbus-async.h			\
 	src/hippo-dbus-helper.c			\
 	src/hippo-dbus-helper.h			\
 	src/main.c				\

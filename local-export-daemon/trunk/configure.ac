@@ -195,7 +195,7 @@ DBUS_GLIB_REQUIRED=0.70
 ## dbus 1.1.1 supports anonymous login
 DBUS_REQUIRED=1.1.1
 
-PKG_CHECK_MODULES(LOCAL_EXPORT_DAEMON, gobject-2.0 >= $GLIB2_REQUIRED avahi-glib >= $AVAHI_REQUIRED avahi-client >= $AVAHI_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED dbus-1 >= $DBUS_REQUIRED)
+PKG_CHECK_MODULES(LOCAL_EXPORT_DAEMON, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 avahi-glib >= $AVAHI_REQUIRED avahi-client >= $AVAHI_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED dbus-1 >= $DBUS_REQUIRED)
 
 GLIB_GENMARSHAL=`$PKG_CONFIG --variable=glib_genmarshal glib-2.0`
 AC_SUBST(GLIB_GENMARSHAL)

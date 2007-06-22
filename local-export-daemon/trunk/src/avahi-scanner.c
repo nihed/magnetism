@@ -50,9 +50,12 @@ typedef struct {
     char *domain;
 } ServiceId;
 
-/* Each session may be advertised on multiple interfaces/protocols,
- * e.g. ipv4 and v6, we only merge dups after we connect since then we
- * get the session ids.
+/* FIXME Each session may be advertised on multiple
+ * interfaces/protocols, e.g. ipv4 and v6. Also, hostile peers might
+ * forge duplicate session IDs for two sessions that are really
+ * distinct. Right now we really aren't dealing with either of these
+ * things; we just pass through the dups onto the session bus and
+ * local apps.
  */
 typedef struct {
     int refcount;    
@@ -170,6 +173,10 @@ static void
 session_fail_connect(Session *session)
 {
     session->state = SESSION_STATE_FAILED_CONNECT;
+    if (session->connection != NULL) {
+        dbus_connection_unref(session->connection);
+        session->connection = NULL;
+    }
     /* FIXME retry again later or something */
 }
 
@@ -345,6 +352,7 @@ on_get_session_info_reply(DBusPendingCall *pending,
 
     g_debug("Disconnecting");
     dbus_connection_close(session->connection);
+    dbus_connection_unref(session->connection);
     session->connection = NULL;
     session->state = SESSION_STATE_DISCONNECTED;
 
@@ -357,13 +365,58 @@ on_get_session_info_reply(DBusPendingCall *pending,
 }
 
 static void
+connection_opened_handler(DBusConnection  *connection_or_null,
+                          const DBusError *error_if_null,
+                          void            *data)
+{
+    Session *session;
+    DBusPendingCall *pending;
+    DBusMessage *message;
+
+    session = data;
+
+    g_assert(session->connection == NULL);
+    g_assert(session->state == SESSION_STATE_CONNECTING);
+    
+    if (connection_or_null == NULL) {
+        g_debug("Failed: %s", error_if_null->message);
+        session_fail_connect(session);
+        session_unref(session);
+        return;
+    }
+
+    session->connection = connection_or_null;
+    dbus_connection_ref(session->connection);
+    dbus_connection_setup_with_g_main(session->connection, NULL);
+
+    g_debug("Sending call");
+    
+    message = dbus_message_new_method_call(NULL, SESSION_INFO_OBJECT_PATH,
+                                           SESSION_INFO_INTERFACE,
+                                           "GetInfoForSession");
+    pending = NULL;
+    dbus_connection_send_with_reply(session->connection,
+                                    message,
+                                    &pending,
+                                    1000 * 120);
+    dbus_message_unref(message);
+    
+    if (pending == NULL) { /* happens if we are already disconnected */
+        session_fail_connect(session);
+        session_unref(session);
+        return;
+    }
+
+    /* pass refcount on "pending" and "session" in here */
+    dbus_pending_call_set_notify(pending, on_get_session_info_reply,
+                                 session, NULL);
+}
+
+static void
 session_connect(Session *session)
 {
     char *dbus_address;
     char address_str[AVAHI_ADDRESS_STR_MAX];
-    DBusError derror;
-    DBusPendingCall *pending;
-    DBusMessage *message;
     
     if (session->state == SESSION_STATE_CONNECTING)
         return;
@@ -384,41 +437,12 @@ session_connect(Session *session)
 
     g_debug("Connecting to '%s' protocol = %d (v4=%d v6=%d)",
             dbus_address, session->id.protocol, AVAHI_PROTO_INET, AVAHI_PROTO_INET6);
-    
-    dbus_error_init(&derror);
-    session->connection = dbus_connection_open_private(dbus_address, &derror);
-    g_free(dbus_address);
-    
-    if (session->connection == NULL) {
-        g_debug("Failed: %s", derror.message);
-        dbus_error_free(&derror); /* this is going to happen often enough that printing it isn't a good idea */
-        session_fail_connect(session);
-        return;
-    }
-
-    dbus_connection_setup_with_g_main(session->connection, NULL);
-
-    g_debug("Sending call");
-    
-    message = dbus_message_new_method_call(NULL, SESSION_INFO_OBJECT_PATH,
-                                           SESSION_INFO_INTERFACE,
-                                           "GetInfoForSession");
-    pending = NULL;
-    dbus_connection_send_with_reply(session->connection,
-                                    message,
-                                    &pending,
-                                    1000 * 120);
-    dbus_message_unref(message);
-    
-    if (pending == NULL) { /* happens if we are already disconnected */
-        session_fail_connect(session);
-        return;
-    }
 
     session_ref(session);
-    /* pass refcount on "pending" in here */
-    dbus_pending_call_set_notify(pending, on_get_session_info_reply,
-                                 session, NULL);
+    hippo_dbus_connection_open_private_async(dbus_address, connection_opened_handler,
+                                             session);
+
+    g_free(dbus_address);
 }
 
 static char*
