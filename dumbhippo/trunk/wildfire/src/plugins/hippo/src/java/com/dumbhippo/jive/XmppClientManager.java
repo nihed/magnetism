@@ -15,8 +15,6 @@ import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.PresenceService;
-import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
