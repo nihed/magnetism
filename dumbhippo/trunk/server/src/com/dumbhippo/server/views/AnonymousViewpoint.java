@@ -1,6 +1,7 @@
 package com.dumbhippo.server.views;
 
 import com.dumbhippo.dm.DMSession;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
 
 /**
@@ -37,5 +38,15 @@ public class AnonymousViewpoint extends Viewpoint {
 	}
 
 	public void setSession(DMSession session) {
+	}
+
+	@Override
+	public boolean canSeeFriendsOnly(Guid userId) {
+		return false;
+	}
+
+	@Override
+	public boolean canSeePrivate(Guid userId) {
+		return false;
 	}
 }

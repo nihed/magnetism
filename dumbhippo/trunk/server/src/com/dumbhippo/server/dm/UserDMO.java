@@ -10,12 +10,17 @@ import javax.persistence.EntityManager;
 
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
+import com.dumbhippo.dm.annotations.DMFilter;
 import com.dumbhippo.dm.annotations.DMO;
 import com.dumbhippo.dm.annotations.DMProperty;
 import com.dumbhippo.dm.annotations.Inject;
 import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.AccountClaim;
+import com.dumbhippo.persistence.AimResource;
+import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
@@ -75,6 +80,7 @@ public abstract class UserDMO extends DMObject<Guid> {
 	}
 	
 	@DMProperty
+	@DMFilter("viewer.canSeeFriendsOnly(this)")
 	public Set<UserDMO> getContacts() {
 		Set<UserDMO> result = new HashSet<UserDMO>();
 		
@@ -85,6 +91,7 @@ public abstract class UserDMO extends DMObject<Guid> {
 	}
 	
 	@DMProperty
+	@DMFilter("viewer.canSeePrivate(this)")
 	public Set<UserDMO> getContacters() {
 		Set<UserDMO> result = new HashSet<UserDMO>();
 		
@@ -92,5 +99,31 @@ public abstract class UserDMO extends DMObject<Guid> {
 			result.add(session.findUnchecked(UserDMO.class, guid));
 		
 		return result;
+	}
+	
+	@DMProperty
+	@DMFilter("viewer.canSeeFriendsOnly(this)")
+	public String getEmail() {
+		// FIXME: We need to let the user select their "primary" email,
+		// rather than returning a hash-table random email
+		for (AccountClaim ac : user.getAccountClaims()) {
+			Resource r = ac.getResource();
+			if (r instanceof EmailResource)
+				return ((EmailResource)r).getEmail();
+		}
+		
+		return null;
+	}
+	
+	@DMProperty
+	@DMFilter("viewer.canSeeFriendsOnly(this)")
+	public String getAim() {
+		for (AccountClaim ac : user.getAccountClaims()) {
+			Resource r = ac.getResource();
+			if (r instanceof AimResource)
+				return ((AimResource)r).getScreenName();
+		}
+		
+		return null;
 	}
 }

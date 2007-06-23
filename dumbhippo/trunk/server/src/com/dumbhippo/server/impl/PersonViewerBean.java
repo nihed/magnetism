@@ -30,7 +30,6 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.HippoProperty;

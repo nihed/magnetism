@@ -1,6 +1,7 @@
 package com.dumbhippo.server.views;
 
 import com.dumbhippo.dm.DMViewpoint;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
 
 /**
@@ -40,4 +41,7 @@ public abstract class Viewpoint implements DMViewpoint {
 	 * @return true if the Viewpoint is a UserViewpoint for the user
 	 */
 	public abstract boolean isOfUser(User user);
+	
+	public abstract boolean canSeeFriendsOnly(Guid userId);
+	public abstract boolean canSeePrivate(Guid userId);
 }
