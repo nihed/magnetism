@@ -11,7 +11,7 @@ import com.dumbhippo.dm.NotCachedException;
 import com.dumbhippo.dm.schema.DMClassHolder;
 
 public class StoreNode<K,T extends DMObject<K>> extends StoreKey<K,T> {
-	private static Object nil = new Boolean(false);
+	private static final Object nil = new Boolean(false);
 
 	private long timestamp = -1;
 	private Object[] properties;

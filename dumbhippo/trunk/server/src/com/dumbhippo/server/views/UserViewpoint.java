@@ -74,7 +74,15 @@ public class UserViewpoint extends Viewpoint {
 			return "{UserViewpoint " + viewerId + "}";
 	}
 
-	public boolean isContactOf(Guid userId) {
+	public void setSession(DMSession session) {
+		this.session = session;
+	}
+
+	@Override
+	public boolean canSeeFriendsOnly(Guid userId) {
+		if (canSeePrivate(userId))
+			return true;
+		
 		try {
 			@SuppressWarnings("unchecked")
 			Set<Guid> contacterIds = (Set<Guid>)session.getRawProperty(UserDMO.class, viewerId, "contacters");
@@ -84,8 +92,9 @@ public class UserViewpoint extends Viewpoint {
 			return false;
 		}
 	}
-	
-	public void setSession(DMSession session) {
-		this.session = session;
+
+	@Override
+	public boolean canSeePrivate(Guid userId) {
+		return viewerId.equals(userId);
 	}
 }

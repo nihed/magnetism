@@ -345,6 +345,11 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		// fix up group memberships
 		groupSystem.fixupGroupMemberships(claimedOwner);
 		
+		if (res instanceof EmailResource)
+			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "email");
+		else if (res instanceof AimResource)
+			DataService.currentSessionRW().changed(UserDMO.class, claimedOwner.getGuid(), "aim");
+		
 		// People may have listed the newly claimed resource as a contact
 		Collection<Guid> newContacters = findResourceContacters(res);
 		if (!newContacters.isEmpty()) {
@@ -376,6 +381,11 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				res.setAccountClaim(null);
 				claims.remove(claim);
 				em.remove(claim);
+				
+				if (res instanceof EmailResource)
+					DataService.currentSessionRW().changed(UserDMO.class, owner.getGuid(), "email");
+				else if (res instanceof AimResource)
+					DataService.currentSessionRW().changed(UserDMO.class, owner.getGuid(), "aim");
 				
 				// People may have listed resource as a contact
 				if (!oldContacters.isEmpty()) {
