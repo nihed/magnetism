@@ -45,6 +45,16 @@ DISTCLEANFILES =
 MAINTAINERCLEANFILES =
 BUILT_SOURCES =
 
+if USE_INCLUDED_CANVAS
+CANVASSRCDIR=$(top_srcdir)/canvas-dist
+CANVAS_CFLAGS =				\
+	-I $(CANVASSRCDIR)/common	\
+	-I $(CANVASSRCDIR)/linux
+CANVAS_LIBADD= libhippocanvas-1.la
+
+include Makefile-libhippocanvas.am
+endif
+
 include Makefile-libhippoipc.am
 include Makefile-libhippo.am
 include Makefile-libgtkcopy.am
@@ -54,3 +64,4 @@ include Makefile-mugshot-uri-handler.am
 include Makefile-test-hippo-ipc.am
 include Makefile-icons.am
 
+DISTCHECK_CONFIGURE_FLAGS=--with-included-canvas

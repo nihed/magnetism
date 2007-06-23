@@ -14,7 +14,8 @@ DOC_MAIN_SGML_FILE=hippo-canvas.xml
 
 SCAN_OPTIONS=
 
-DOC_SOURCE_DIR=$(top_srcdir)/common/hippo
+# The directory containing the source code. Relative to $(srcdir)
+DOC_SOURCE_DIR=../common/hippo
 
 HFILE_GLOB=
 CFILE_GLOB=

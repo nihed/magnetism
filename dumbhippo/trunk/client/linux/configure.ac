@@ -361,11 +361,40 @@ else
    AC_MSG_ERROR([PCRE is required])
 fi
 
-PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED cairo pango $PCRE_MODULES)
+#
+# Check if hippo-canvas is installed or we need to build our included version
+# (canvas be forces with --with-included-canvas/--without-included-canvas
+#
+AC_ARG_WITH(included_canvas,
+	    AC_HELP_STRING([--with-included-canvas=[yes/no/auto]],
+		           [Path to Gecko SDK]),
+	    ,
+	    with_included_canvas=auto)
+
+if test "x$with_included_canvas" = xauto ; then
+   AC_MSG_CHECKING([for hippo-canvas library])
+   PKG_CHECK_EXISTS(hippo-canvas-1, with_included_canvas=no, with_included_canvas=yes)
+   if test "x$with_included_canvas" = xyes ; then
+      AC_MSG_RESULT([no: using included version])
+   else
+      AC_MSG_RESULT([yes])
+   fi
+fi
+   
+if test "x$with_included_canvas" = xyes ; then
+   : 
+else
+   CANVAS_MODULES=hippo-canvas-1
+fi
+
+AM_CONDITIONAL(USE_INCLUDED_CANVAS, test "x$with_included_canvas" = xyes)
+
+PKG_CHECK_MODULES(LIBHIPPOCANVAS, gtk+-2.0 >= $GTK2_REQUIRED gobject-2.0 >= $GLIB2_REQUIRED cairo pango)
+PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED cairo pango $PCRE_MODULES $CANVAS_MODULES)
 AC_DEFINE(HIPPO_LOUDMOUTH_IS_10, 1, [Define if Loudmouth is version 1.0 or below])
 PKG_CHECK_MODULES(LIBHIPPOIPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)
-PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED gnome-desktop-2.0 >= $GNOME_DESKTOP_REQUIRED gnome-vfs-2.0 $XSCREENSAVER_PACKAGES)
+PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED gnome-desktop-2.0 >= $GNOME_DESKTOP_REQUIRED gnome-vfs-2.0 $XSCREENSAVER_PACKAGES $CANVAS_MODULES)
 MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $CURL_LIBS $XSCREENSAVER_LIBS $JPEG_LIBS $RESOLV_LIBS"
 MUGSHOT_CFLAGS="$MUGSHOT_BASE_CFLAGS $CURL_CFLAGS $XSCREENSAVER_CFLAGS"
 AC_SUBST(MUGSHOT_LIBS)
