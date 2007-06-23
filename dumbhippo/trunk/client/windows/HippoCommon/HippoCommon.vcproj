@@ -259,7 +259,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-box.c"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-box.c"
 				>
 			</File>
 			<File
@@ -267,11 +267,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-container.c"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-container.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-context.c"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-context.c"
 				>
 			</File>
 			<File
@@ -287,7 +287,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-gradient.c"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-gradient.c"
 				>
 			</File>
 			<File
@@ -295,15 +295,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-image-button.c"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-image-button.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-image.c"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-image.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-item.c"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-item.c"
 				>
 			</File>
 			<File
@@ -311,7 +311,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-link.c"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-link.c"
 				>
 			</File>
 			<File
@@ -331,15 +331,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-style.c"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-style.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-test.c"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-test.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-text.c"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-text.c"
 				>
 			</File>
 			<File
@@ -363,7 +363,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-util.c"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-util.c"
 				>
 			</File>
 			<File
@@ -433,7 +433,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-event.c"
+				RelativePath="..\..\canvas\common\hippo\hippo-event.c"
 				>
 			</File>
 			<File
@@ -449,7 +449,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-graphics.c"
+				RelativePath="..\..\canvas\common\hippo\hippo-graphics.c"
 				>
 			</File>
 			<File
@@ -663,7 +663,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-box.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-box.h"
 				>
 			</File>
 			<File
@@ -671,11 +671,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-container.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-container.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-context.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-context.h"
 				>
 			</File>
 			<File
@@ -691,7 +691,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-gradient.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-gradient.h"
 				>
 			</File>
 			<File
@@ -699,19 +699,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-image-button.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-image-button.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-image.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-image.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-internal.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-internal.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-item.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-item.h"
 				>
 			</File>
 			<File
@@ -719,7 +719,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-link.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-link.h"
 				>
 			</File>
 			<File
@@ -739,15 +739,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-style.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-style.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-test.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-test.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-text.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-text.h"
 				>
 			</File>
 			<File
@@ -771,11 +771,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-util.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-util.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-canvas-widgets.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-canvas-widgets.h"
 				>
 			</File>
 			<File
@@ -851,7 +851,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-event.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-event.h"
 				>
 			</File>
 			<File
@@ -867,7 +867,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\canvas\hippo\hippo-graphics.h"
+				RelativePath="..\..\canvas\common\hippo\hippo-graphics.h"
 				>
 			</File>
 			<File

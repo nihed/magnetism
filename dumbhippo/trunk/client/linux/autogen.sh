@@ -72,6 +72,10 @@ if $need_configure_in ; then
     fi
 fi
 
+if test -e canvas-dist ; then : ; else
+    ln -s ../canvas ./canvas-dist
+fi
+
 aclocal $ACLOCAL_FLAGS
 libtoolize --force
 autoheader

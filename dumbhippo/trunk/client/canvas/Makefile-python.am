@@ -1,5 +1,7 @@
 hippo_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)			\
+	-I $(top_srcdir)/common		\
+	-I $(top_srcdir)/linux		\
 	$(PYTHON_INCLUDES)		\
 	$(PYTHON_BINDINGS_CFLAGS)	\
 	$(PYCAIRO_CFLAGS)		\

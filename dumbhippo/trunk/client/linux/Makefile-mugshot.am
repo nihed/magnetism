@@ -4,11 +4,11 @@ mugshot_CPPFLAGS = 			\
 	$(AM_CPPFLAGS)			\
 	-I $(top_srcdir)		\
 	$(MUGSHOT_CFLAGS)		\
-       -DHOST_CPU=\"$(host_cpu)\"       \
-	-I$(top_srcdir)/canvas
+	$(CANVAS_CFLAGS)		\
+       -DHOST_CPU=\"$(host_cpu)\"
 
 mugshot_LDFLAGS=$(MUGSHOT_LIBS)
-mugshot_LDADD= libhippoipc.la libhippo.la
+mugshot_LDADD= libhippoipc.la libhippo.la $(CANVAS_LIBADD)
 
 if !HAVE_GTK210
 mugshot_CPPFLAGS += -I$(top_srcdir)/gtkcopy
@@ -16,17 +16,6 @@ mugshot_LDFLAGS += libgtkcopy.la
 endif
 
 mugshot_SOURCES	=				\
-	canvas/hippo/hippo-canvas.c		\
-	canvas/hippo/hippo-canvas.h		\
-	canvas/hippo/hippo-canvas-helper.c	\
-	canvas/hippo/hippo-canvas-helper.h	\
-	canvas/hippo/hippo-canvas-widget.c	\
-	canvas/hippo/hippo-canvas-widget.h	\
-	canvas/hippo/hippo-canvas-widgets.c	\
-	canvas/hippo/hippo-canvas-window.c	\
-	canvas/hippo/hippo-canvas-window.h	\
-	canvas/hippo/hippo-canvas-window-child.c\
-	canvas/hippo/hippo-canvas-window-child.h\
 	src/hippo-cookies-linux.c		\
 	src/hippo-cookies-linux.h		\
 	src/hippo-distribution.c		\
