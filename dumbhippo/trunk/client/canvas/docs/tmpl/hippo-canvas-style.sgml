@@ -1,0 +1,79 @@
+<!-- ##### SECTION Title ##### -->
+HippoCanvasStyle
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT HippoCanvasStyle ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### ARG HippoCanvasStyle:color ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasStyle:color-set ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasStyle:font ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasStyle:font-desc ##### -->
+<para>
+
+</para>
+
+<!-- ##### MACRO HIPPO_CANVAS_DEFAULT_COLOR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HIPPO_CANVAS_DEFAULT_BACKGROUND_COLOR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION hippo_canvas_style_affect_color ##### -->
+<para>
+
+</para>
+
+@style: 
+@color_rgba_p: 
+
+
+<!-- ##### FUNCTION hippo_canvas_style_affect_font_desc ##### -->
+<para>
+
+</para>
+
+@style: 
+@font_desc: 
+
+

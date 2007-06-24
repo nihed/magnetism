@@ -1,0 +1,55 @@
+<!-- ##### SECTION Title ##### -->
+HippoCanvasImageButton
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT HippoCanvasImageButton ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### ARG HippoCanvasImageButton:normal-image ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasImageButton:normal-image-name ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasImageButton:prelight-image ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasImageButton:prelight-image-name ##### -->
+<para>
+
+</para>
+
+<!-- ##### FUNCTION hippo_canvas_image_button_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+

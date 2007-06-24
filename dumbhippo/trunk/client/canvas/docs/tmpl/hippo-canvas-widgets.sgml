@@ -1,0 +1,170 @@
+<!-- ##### SECTION Title ##### -->
+Widgets
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### MACRO HIPPO_DECLARE_WIDGET_ITEM ##### -->
+<para>
+
+</para>
+
+@lower: 
+@Camel: 
+
+
+<!-- ##### MACRO HIPPO_TYPE_CANVAS_SCROLLBARS ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HIPPO_CANVAS_SCROLLBARS ##### -->
+<para>
+
+</para>
+
+@object: 
+
+
+<!-- ##### MACRO HIPPO_CANVAS_SCROLLBARS_CLASS ##### -->
+<para>
+
+</para>
+
+@klass: 
+
+
+<!-- ##### MACRO HIPPO_IS_CANVAS_SCROLLBARS ##### -->
+<para>
+
+</para>
+
+@object: 
+
+
+<!-- ##### MACRO HIPPO_IS_CANVAS_SCROLLBARS_CLASS ##### -->
+<para>
+
+</para>
+
+@klass: 
+
+
+<!-- ##### MACRO HIPPO_CANVAS_SCROLLBARS_GET_CLASS ##### -->
+<para>
+
+</para>
+
+@obj: 
+
+
+<!-- ##### MACRO HIPPO_TYPE_CANVAS_ENTRY ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HIPPO_CANVAS_ENTRY ##### -->
+<para>
+
+</para>
+
+@object: 
+
+
+<!-- ##### MACRO HIPPO_CANVAS_ENTRY_CLASS ##### -->
+<para>
+
+</para>
+
+@klass: 
+
+
+<!-- ##### MACRO HIPPO_IS_CANVAS_ENTRY ##### -->
+<para>
+
+</para>
+
+@object: 
+
+
+<!-- ##### MACRO HIPPO_IS_CANVAS_ENTRY_CLASS ##### -->
+<para>
+
+</para>
+
+@klass: 
+
+
+<!-- ##### MACRO HIPPO_CANVAS_ENTRY_GET_CLASS ##### -->
+<para>
+
+</para>
+
+@obj: 
+
+
+<!-- ##### FUNCTION hippo_canvas_scrollbars_set_root ##### -->
+<para>
+
+</para>
+
+@scrollbars: 
+@item: 
+
+
+<!-- ##### ENUM HippoScrollbarPolicy ##### -->
+<para>
+
+</para>
+
+@HIPPO_SCROLLBAR_NEVER: 
+@HIPPO_SCROLLBAR_AUTOMATIC: 
+@HIPPO_SCROLLBAR_ALWAYS: 
+
+<!-- ##### FUNCTION hippo_canvas_scrollbars_set_policy ##### -->
+<para>
+
+</para>
+
+@scrollbars: 
+@orientation: 
+@policy: 
+
+
+<!-- ##### FUNCTION hippo_canvas_entry_get_position ##### -->
+<para>
+
+</para>
+
+@entry: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_entry_set_position ##### -->
+<para>
+
+</para>
+
+@entry: 
+@pos: 
+
+

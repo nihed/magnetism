@@ -1,0 +1,416 @@
+<!-- ##### SECTION Title ##### -->
+HippoCanvasItem
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT HippoCanvasItem ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL HippoCanvasItem::activated ##### -->
+<para>
+
+</para>
+
+@hippocanvasitem: the object which received the signal.
+
+<!-- ##### SIGNAL HippoCanvasItem::button-press-event ##### -->
+<para>
+
+</para>
+
+@hippocanvasitem: the object which received the signal.
+@arg1: 
+@Returns: 
+
+<!-- ##### SIGNAL HippoCanvasItem::button-release-event ##### -->
+<para>
+
+</para>
+
+@hippocanvasitem: the object which received the signal.
+@arg1: 
+@Returns: 
+
+<!-- ##### SIGNAL HippoCanvasItem::key-press-event ##### -->
+<para>
+
+</para>
+
+@hippocanvasitem: the object which received the signal.
+@arg1: 
+@Returns: 
+
+<!-- ##### SIGNAL HippoCanvasItem::motion-notify-event ##### -->
+<para>
+
+</para>
+
+@hippocanvasitem: the object which received the signal.
+@arg1: 
+@Returns: 
+
+<!-- ##### SIGNAL HippoCanvasItem::paint ##### -->
+<para>
+
+</para>
+
+@hippocanvasitem: the object which received the signal.
+@arg1: 
+@arg2: 
+
+<!-- ##### SIGNAL HippoCanvasItem::paint-needed ##### -->
+<para>
+
+</para>
+
+@hippocanvasitem: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL HippoCanvasItem::request-changed ##### -->
+<para>
+
+</para>
+
+@hippocanvasitem: the object which received the signal.
+
+<!-- ##### SIGNAL HippoCanvasItem::tooltip-changed ##### -->
+<para>
+
+</para>
+
+@hippocanvasitem: the object which received the signal.
+
+<!-- ##### STRUCT HippoCanvasItemIface ##### -->
+<para>
+
+</para>
+
+@base_iface: 
+@sink: 
+@set_context: 
+@set_parent: 
+@get_parent: 
+@paint: 
+@get_width_request: 
+@get_height_request: 
+@allocate: 
+@get_allocation: 
+@button_press_event: 
+@button_release_event: 
+@motion_notify_event: 
+@key_press_event: 
+@activated: 
+@request_changed: 
+@paint_needed: 
+@get_needs_request: 
+@get_tooltip: 
+@tooltip_changed: 
+@get_pointer: 
+
+<!-- ##### ENUM HippoCanvasPointer ##### -->
+<para>
+
+</para>
+
+@HIPPO_CANVAS_POINTER_UNSET: 
+@HIPPO_CANVAS_POINTER_DEFAULT: 
+@HIPPO_CANVAS_POINTER_HAND: 
+
+<!-- ##### ENUM HippoItemAlignment ##### -->
+<para>
+
+</para>
+
+@HIPPO_ALIGNMENT_FILL: 
+@HIPPO_ALIGNMENT_START: 
+@HIPPO_ALIGNMENT_CENTER: 
+@HIPPO_ALIGNMENT_END: 
+
+<!-- ##### STRUCT HippoCanvasItemIface ##### -->
+<para>
+
+</para>
+
+@base_iface: 
+@sink: 
+@set_context: 
+@set_parent: 
+@get_parent: 
+@paint: 
+@get_width_request: 
+@get_height_request: 
+@allocate: 
+@get_allocation: 
+@button_press_event: 
+@button_release_event: 
+@motion_notify_event: 
+@key_press_event: 
+@activated: 
+@request_changed: 
+@paint_needed: 
+@get_needs_request: 
+@get_tooltip: 
+@tooltip_changed: 
+@get_pointer: 
+
+<!-- ##### FUNCTION hippo_canvas_item_sink ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_set_context ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@context: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_set_parent ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@container: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_get_parent ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_get_width_request ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@min_width_p: 
+@natural_width_p: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_get_height_request ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@for_width: 
+@min_height_p: 
+@natural_height_p: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_allocate ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@width: 
+@height: 
+@origin_changed: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_get_allocation ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@width_p: 
+@height_p: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_get_needs_request ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_get_tooltip ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@x: 
+@y: 
+@for_area: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_get_pointer ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@x: 
+@y: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_get_visible ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_set_visible ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@visible: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_emit_button_press_event ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@x: 
+@y: 
+@button: 
+@x11_x_root: 
+@x11_y_root: 
+@x11_time: 
+@count: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_emit_button_release_event ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@x: 
+@y: 
+@button: 
+@x11_x_root: 
+@x11_y_root: 
+@x11_time: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_emit_motion_notify_event ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@x: 
+@y: 
+@detail: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_emit_key_press_event ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@key: 
+@character: 
+@modifiers: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_emit_activated ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_emit_paint_needed ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@x: 
+@y: 
+@width: 
+@height: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_emit_tooltip_changed ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_emit_request_changed ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_process_event ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@event: 
+@allocation_x: 
+@allocation_y: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_process_paint ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+@cr: 
+@damaged_box: 
+@allocation_x: 
+@allocation_y: 
+
+

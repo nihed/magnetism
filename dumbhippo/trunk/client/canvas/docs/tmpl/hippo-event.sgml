@@ -1,0 +1,101 @@
+<!-- ##### SECTION Title ##### -->
+HippoEvent
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### MACRO HIPPO_TYPE_EVENT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### ENUM HippoEventType ##### -->
+<para>
+
+</para>
+
+@HIPPO_EVENT_BUTTON_PRESS: 
+@HIPPO_EVENT_BUTTON_RELEASE: 
+@HIPPO_EVENT_MOTION_NOTIFY: 
+@HIPPO_EVENT_KEY_PRESS: 
+
+<!-- ##### ENUM HippoMotionDetail ##### -->
+<para>
+
+</para>
+
+@HIPPO_MOTION_DETAIL_ENTER: 
+@HIPPO_MOTION_DETAIL_LEAVE: 
+@HIPPO_MOTION_DETAIL_WITHIN: 
+
+<!-- ##### STRUCT HippoEvent ##### -->
+<para>
+
+</para>
+
+@type: 
+@x: 
+@y: 
+
+<!-- ##### ENUM HippoKey ##### -->
+<para>
+
+</para>
+
+@HIPPO_KEY_UNKNOWN: 
+@HIPPO_KEY_RETURN: 
+@HIPPO_KEY_ESCAPE: 
+@HIPPO_KEY_TAB: 
+@HIPPO_KEY_LEFTTAB: 
+
+<!-- ##### ENUM HippoModifier ##### -->
+<para>
+
+</para>
+
+@HIPPO_MODIFIER_SHIFT: 
+@HIPPO_MODIFIER_CTRL: 
+@HIPPO_MODIFIER_ALT: 
+
+<!-- ##### FUNCTION hippo_event_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_event_copy ##### -->
+<para>
+
+</para>
+
+@event: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_event_free ##### -->
+<para>
+
+</para>
+
+@event: 
+
+

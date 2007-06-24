@@ -1,0 +1,36 @@
+<!-- ##### SECTION Title ##### -->
+Utilitites
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### MACRO HIPPO_TYPE_CAIRO_SURFACE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION hippo_cairo_surface_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+

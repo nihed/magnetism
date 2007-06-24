@@ -1,0 +1,56 @@
+<!-- ##### SECTION Title ##### -->
+HippoCanvasContainer
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT HippoCanvasContainer ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### STRUCT HippoCanvasContainerIface ##### -->
+<para>
+
+</para>
+
+@base_iface: 
+@get_child_visible: 
+@set_child_visible: 
+
+<!-- ##### FUNCTION hippo_canvas_container_get_child_visible ##### -->
+<para>
+
+</para>
+
+@container: 
+@child: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_container_set_child_visible ##### -->
+<para>
+
+</para>
+
+@container: 
+@child: 
+@visible: 
+
+

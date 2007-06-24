@@ -1,0 +1,55 @@
+<!-- ##### SECTION Title ##### -->
+HippoCanvasImage
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT HippoCanvasImage ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### ARG HippoCanvasImage:image ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasImage:image-name ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasImage:scale-height ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasImage:scale-width ##### -->
+<para>
+
+</para>
+
+<!-- ##### FUNCTION hippo_canvas_image_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+

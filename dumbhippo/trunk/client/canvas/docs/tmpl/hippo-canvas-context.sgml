@@ -1,0 +1,156 @@
+<!-- ##### SECTION Title ##### -->
+HippoCanvasContext
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### ENUM HippoStockColor ##### -->
+<para>
+
+</para>
+
+@HIPPO_STOCK_COLOR_BG_NORMAL: 
+@HIPPO_STOCK_COLOR_BG_PRELIGHT: 
+
+<!-- ##### STRUCT HippoCanvasContext ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL HippoCanvasContext::style-changed ##### -->
+<para>
+
+</para>
+
+@hippocanvascontext: the object which received the signal.
+@arg1: 
+
+<!-- ##### STRUCT HippoCanvasContextIface ##### -->
+<para>
+
+</para>
+
+@base_iface: 
+@create_layout: 
+@load_image: 
+@get_color: 
+@register_widget_item: 
+@unregister_widget_item: 
+@translate_to_widget: 
+@translate_to_screen: 
+@affect_color: 
+@affect_font_desc: 
+@style_changed: 
+
+<!-- ##### FUNCTION hippo_canvas_context_create_layout ##### -->
+<para>
+
+</para>
+
+@context: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_context_load_image ##### -->
+<para>
+
+</para>
+
+@context: 
+@image_name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_context_get_color ##### -->
+<para>
+
+</para>
+
+@context: 
+@color: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_context_register_widget_item ##### -->
+<para>
+
+</para>
+
+@context: 
+@item: 
+
+
+<!-- ##### FUNCTION hippo_canvas_context_unregister_widget_item ##### -->
+<para>
+
+</para>
+
+@context: 
+@item: 
+
+
+<!-- ##### FUNCTION hippo_canvas_context_translate_to_widget ##### -->
+<para>
+
+</para>
+
+@context: 
+@item: 
+@x_p: 
+@y_p: 
+
+
+<!-- ##### FUNCTION hippo_canvas_context_translate_to_screen ##### -->
+<para>
+
+</para>
+
+@context: 
+@item: 
+@x_p: 
+@y_p: 
+
+
+<!-- ##### FUNCTION hippo_canvas_context_affect_color ##### -->
+<para>
+
+</para>
+
+@context: 
+@color_rgba_p: 
+
+
+<!-- ##### FUNCTION hippo_canvas_context_affect_font_desc ##### -->
+<para>
+
+</para>
+
+@context: 
+@font_desc: 
+
+
+<!-- ##### FUNCTION hippo_canvas_context_emit_style_changed ##### -->
+<para>
+
+</para>
+
+@context: 
+@resize_needed: 
+
+
