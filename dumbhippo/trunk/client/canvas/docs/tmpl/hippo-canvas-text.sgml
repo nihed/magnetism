@@ -1,0 +1,69 @@
+<!-- ##### SECTION Title ##### -->
+HippoCanvasText
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### ENUM HippoCanvasSizeMode ##### -->
+<para>
+
+</para>
+
+@HIPPO_CANVAS_SIZE_FULL_WIDTH: 
+@HIPPO_CANVAS_SIZE_WRAP_WORD: 
+@HIPPO_CANVAS_SIZE_ELLIPSIZE_END: 
+
+<!-- ##### STRUCT HippoCanvasText ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### ARG HippoCanvasText:attributes ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasText:font-scale ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasText:markup ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasText:size-mode ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasText:text ##### -->
+<para>
+
+</para>
+
+<!-- ##### FUNCTION hippo_canvas_text_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+

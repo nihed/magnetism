@@ -1,0 +1,422 @@
+<!-- ##### SECTION Title ##### -->
+HippoCanvasBox
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### ENUM HippoPackFlags ##### -->
+<para>
+
+</para>
+
+@HIPPO_PACK_EXPAND: 
+@HIPPO_PACK_END: 
+@HIPPO_PACK_FIXED: 
+@HIPPO_PACK_IF_FITS: 
+@HIPPO_PACK_FLOAT_LEFT: 
+@HIPPO_PACK_FLOAT_RIGHT: 
+@HIPPO_PACK_CLEAR_LEFT: 
+@HIPPO_PACK_CLEAR_RIGHT: 
+@HIPPO_PACK_CLEAR_BOTH: 
+
+<!-- ##### ENUM HippoCascadeMode ##### -->
+<para>
+
+</para>
+
+@HIPPO_CASCADE_MODE_NONE: 
+@HIPPO_CASCADE_MODE_INHERIT: 
+
+<!-- ##### USER_FUNCTION HippoCanvasCompareChildFunc ##### -->
+<para>
+
+</para>
+
+@child_a: 
+@child_b: 
+@data: 
+@Returns: 
+
+
+<!-- ##### USER_FUNCTION HippoCanvasForeachChildFunc ##### -->
+<para>
+
+</para>
+
+@child: 
+@data: 
+
+
+<!-- ##### STRUCT HippoCanvasBox ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL HippoCanvasBox::hovering-changed ##### -->
+<para>
+
+</para>
+
+@hippocanvasbox: the object which received the signal.
+@arg1: 
+
+<!-- ##### ARG HippoCanvasBox:background-color ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:border ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:border-bottom ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:border-color ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:border-left ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:border-right ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:border-top ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:box-height ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:box-width ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:color ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:color-cascade ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:color-set ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:font ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:font-cascade ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:font-desc ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:orientation ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:padding ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:padding-bottom ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:padding-left ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:padding-right ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:padding-top ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:spacing ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:tooltip ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:xalign ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:yalign ##### -->
+<para>
+
+</para>
+
+<!-- ##### FUNCTION hippo_canvas_box_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_prepend ##### -->
+<para>
+
+</para>
+
+@box: 
+@child: 
+@flags: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_append ##### -->
+<para>
+
+</para>
+
+@box: 
+@child: 
+@flags: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_move ##### -->
+<para>
+
+</para>
+
+@box: 
+@child: 
+@gravity: 
+@x: 
+@y: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_set_position ##### -->
+<para>
+
+</para>
+
+@box: 
+@child: 
+@x: 
+@y: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_get_position ##### -->
+<para>
+
+</para>
+
+@box: 
+@child: 
+@x: 
+@y: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_remove ##### -->
+<para>
+
+</para>
+
+@box: 
+@child: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_remove_all ##### -->
+<para>
+
+</para>
+
+@box: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_get_children ##### -->
+<para>
+
+</para>
+
+@box: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_is_empty ##### -->
+<para>
+
+</para>
+
+@box: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_foreach ##### -->
+<para>
+
+</para>
+
+@box: 
+@func: 
+@data: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_reverse ##### -->
+<para>
+
+</para>
+
+@box: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_sort ##### -->
+<para>
+
+</para>
+
+@box: 
+@compare_func: 
+@data: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_insert_after ##### -->
+<para>
+
+</para>
+
+@box: 
+@child: 
+@ref_child: 
+@flags: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_insert_before ##### -->
+<para>
+
+</para>
+
+@box: 
+@child: 
+@ref_child: 
+@flags: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_insert_sorted ##### -->
+<para>
+
+</para>
+
+@box: 
+@child: 
+@flags: 
+@compare_func: 
+@data: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_set_child_packing ##### -->
+<para>
+
+</para>
+
+@box: 
+@child: 
+@flags: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_get_context ##### -->
+<para>
+
+</para>
+
+@box: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_get_background_area ##### -->
+<para>
+
+</para>
+
+@box: 
+@area: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_align ##### -->
+<para>
+
+</para>
+
+@box: 
+@content_width: 
+@content_height: 
+@x_p: 
+@y_p: 
+@width_p: 
+@height_p: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_set_clickable ##### -->
+<para>
+
+</para>
+
+@box: 
+@clickable: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_is_clickable ##### -->
+<para>
+
+</para>
+
+@box: 
+@Returns: 
+
+

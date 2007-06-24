@@ -1,0 +1,131 @@
+<!-- ##### SECTION Title ##### -->
+Graphics
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### MACRO HIPPO_TYPE_RECTANGLE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### ENUM HippoOrientation ##### -->
+<para>
+
+</para>
+
+@HIPPO_ORIENTATION_VERTICAL: 
+@HIPPO_ORIENTATION_HORIZONTAL: 
+
+<!-- ##### ENUM HippoSide ##### -->
+<para>
+
+</para>
+
+@HIPPO_SIDE_TOP: 
+@HIPPO_SIDE_BOTTOM: 
+@HIPPO_SIDE_LEFT: 
+@HIPPO_SIDE_RIGHT: 
+
+<!-- ##### ENUM HippoGravity ##### -->
+<para>
+
+</para>
+
+@HIPPO_GRAVITY_NORTH_WEST: 
+@HIPPO_GRAVITY_NORTH_EAST: 
+@HIPPO_GRAVITY_SOUTH_EAST: 
+@HIPPO_GRAVITY_SOUTH_WEST: 
+
+<!-- ##### STRUCT HippoRectangle ##### -->
+<para>
+
+</para>
+
+@x: 
+@y: 
+@width: 
+@height: 
+
+<!-- ##### FUNCTION hippo_rectangle_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_rectangle_intersect ##### -->
+<para>
+
+</para>
+
+@src1: 
+@src2: 
+@dest: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_rectangle_equal ##### -->
+<para>
+
+</para>
+
+@r1: 
+@r2: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_rectangle_copy ##### -->
+<para>
+
+</para>
+
+@r: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_rectangle_free ##### -->
+<para>
+
+</para>
+
+@r: 
+
+
+<!-- ##### FUNCTION hippo_cairo_set_source_rgba32 ##### -->
+<para>
+
+</para>
+
+@cr: 
+@color: 
+
+
+<!-- ##### FUNCTION hippo_cairo_pattern_add_stop_rgba32 ##### -->
+<para>
+
+</para>
+
+@pattern: 
+@offset: 
+@color: 
+
+
