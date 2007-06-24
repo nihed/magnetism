@@ -1,6 +1,8 @@
 import os, code, sys, traceback, logging, StringIO, threading, urlparse
 
-import cairo, gtk, gobject
+import cairo
+import gtk
+import gobject
 
 import hippo
 
@@ -174,9 +176,78 @@ class PhotoContentItem(PrelightingCanvasBox):
                 self.__photo.set_property("scale-width", 30)
                 self.__photo.set_property("scale-height", 30)            
 
+class _RootWindowWatcher(gtk.Invisible):
+    """Class to track properties of the root window.
+
+    The tracking is a distinctly hacky; what we do is set the user data of the root window
+    to point to an GtkInvisible and catch the property-notify events there, since we can't use
+    gdk_window_add_filter() from Python. If someone else uses the same trick in the
+    same process, we'll break.
+
+    """
+    
+    __gsignals__ = {
+        'realize' : 'override',
+        'unrealize' : 'override',
+        'workarea-changed' : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ()),
+        }
+
+    @staticmethod
+    def get_for_screen(screen):
+        watcher = screen.get_data("RootWindowWatcher")
+        if watcher == None:
+            watcher = RootWindowWatcher(screen)
+            screen.set_data("RootWindowWatcher", watcher)
+
+        return watcher
+
+    def __init__(self, screen):
+        """Don't call this, call get_for_screen() instead. (Might be possible to make
+           a singleton with __new__, but the GObject interaction could be tricky.)"""
+        
+        super(RootWindowWatcher, self).__init__()
+        self.set_screen(screen)
+
+    def do_realize(self):
+        super(RootWindowWatcher, self).do_realize(self)
+        
+        screen = self.get_screen()
+        rootw = screen.get_root_window()
+        self.__old_events = rootw.get_events()
+
+        rootw.set_events(self.__old_events | gtk.gdk.PROPERTY_CHANGE_MASK)
+        rootw.set_user_data(self)
+
+        self.__compute_workarea()
+
+    def do_unrealize(self):
+        rootw.set_events(self.__old_events)
+        rootw.set_user_data(None)
+        
+        super(RootWindowWatcher, self).do_unrealize(self)
+
+    def do_property_notify_event(self, event):
+        if event.atom == "_NET_WORKAREA":
+            old_workarea = self.__workarea
+            self.__compute_workarea()
+            if (self.__workarea != old_workarea):
+                self.emit("workarea-changed")
+
+    def __compute_workarea(self):
+        screen = self.get_screen()
+        rootw = screen.get_root_window()
+        prop = rootw.property_get("_NET_WORKAREA")
+        logging.debug("got _NET_WORKAREA: %s" % (prop,))
+        (_, _, workarea) = prop
+        self.__workarea = (workarea[0], workarea[1], workarea[2], workarea[3])
+
+    def get_workarea(self):
+        return self.__workarea
+                
 class Sidebar(DockWindow):
     __gsignals__ = {
-        'size-request' : 'override'
+        'screen-changed' : 'override',
+        'show' : 'override',
         }
 
     def __init__(self, is_left):
@@ -185,23 +256,29 @@ class Sidebar(DockWindow):
             gravity = gtk.gdk.GRAVITY_EAST
         DockWindow.__init__(self, gravity)
         self.is_left = is_left
+        self.__watcher = None
 
-    def do_size_request(self, req):
-        ret = DockWindow.do_size_request(self, req)
-        # Give some whitespace
-        geom = self.get_screen().get_monitor_geometry(0)
-        
-        screen = gtk.gdk.screen_get_default()
-        rootw = screen.get_root_window()
-        prop = rootw.property_get("_NET_WORKAREA")
-        logging.debug("got _NET_WORKAREA: %s" % (prop,))
-        (_, _, workarea) = prop
-        work_height = workarea[3]
-        req.height = work_height 
-        # Never take more than available size
-        req.width = min(geom.width, req.width)
-        return ret
+    def do_show(self):
+        self.__update_watcher()
+        super(Sidebar, self).do_show(self)
 
+    def do_screen_changed(self, old_screen):
+        super(Sidebar, self).do_screen_changed(old_screen)
+
+        self.__update_watcher()
+
+    def __update_watcher(self):
+        if self.__watcher != None:
+            self.__watcher.disconnect(self.__watcher_handler_id)
+        self.__watcher = RootWindowWatcher.get_for_screen(self.get_screen())
+        self.__watcher_handler_id = self.__watcher.connect('workarea-changed', self.__on_workarea_changed)
+        self.__on_workarea_changed(self.__watcher)
+
+    def __on_workarea_changed(self, watcher):
+        (x,y,width,height) = watcher.get_workarea()
+        self.set_size_request(-1, height)
+        self.move(0, y)
+            
 class CommandShell(gtk.Window):
     """Every application needs a development shell."""
     def __init__(self, locals={}):
