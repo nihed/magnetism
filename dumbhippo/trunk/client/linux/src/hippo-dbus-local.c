@@ -7,6 +7,8 @@
 #include "hippo-dbus-local.h"
 #include "hippo-dbus-im.h"
 
+#define LOCAL_RESOURCE_BASE "online-desktop:/o/local-user"
+
 typedef struct {
     const char *key;
     const char *value;
@@ -74,6 +76,28 @@ dict_extract_string_values(const DBusMessageIter *orig_dict_iter,
     return TRUE;
 }
 
+/* We build a resource_id URI around the session ID; to keep things
+ * simple, we validate that the session ID is a valid D-DBUS session
+ * ID up-front here.
+ */
+static gboolean
+validate_dbus_session_id(const char *id)
+{
+    const char *p ;
+
+    /* A D-BUS session ID should be exactly 32 hex digits */
+
+    if (strlen(id) != 32)
+        return FALSE;
+
+    for (p = id; *p; p++) {
+        if (!g_ascii_isxdigit(*p))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 static gboolean
 read_session_info(DBusMessageIter *dict_iter,
                   char           **machine_id_p,
@@ -86,8 +110,13 @@ read_session_info(DBusMessageIter *dict_iter,
    session_entries[2].key = NULL;
    
    if (!dict_extract_string_values(dict_iter, &session_entries[0]))
-       return FALSE;   
-   
+       return FALSE;
+
+   if (!validate_dbus_session_id(session_entries[1].value)) {
+       g_warning("Invalid D-BUS session ID");
+       return FALSE;
+   }
+
    if (machine_id_p)
        *machine_id_p = g_strdup(session_entries[0].value);
    if (session_id_p)
@@ -135,14 +164,35 @@ read_info(DBusMessageIter *struct_iter,
     return TRUE;
 }
 
+static char *
+make_resource_id(const char *session_id)
+{
+    return g_strconcat(LOCAL_RESOURCE_BASE "/" , session_id, NULL);
+}
+
+static void
+remove_buddy(HippoNotificationSet *notifications,
+             const char           *session_id)
+{
+    char *resource_id = make_resource_id(session_id);
+    
+    hippo_dbus_im_remove_buddy(notifications, resource_id);
+    
+    g_free(resource_id);
+}
+
 static void
 update_buddy(HippoNotificationSet *notifications,
-             const char           *user_resource_id,
-             gboolean              is_online)
+             const char           *session_id,
+             const char           *user_resource_id)
 {
-    hippo_dbus_im_update_buddy(notifications, user_resource_id,
-                               "mugshot-local", user_resource_id, is_online,
-                               is_online ? "Around" : "Offline");
+    char *resource_id = make_resource_id(session_id);
+    
+    hippo_dbus_im_update_buddy(notifications, resource_id,
+                               "mugshot-local", user_resource_id,
+                               TRUE, "Around");
+    
+    g_free(resource_id);
 }
 
 static void
@@ -160,7 +210,7 @@ update_info(HippoNotificationSet *notifications,
                    &user_resource_id))
         return;
 
-    update_buddy(notifications, user_resource_id, TRUE);
+    update_buddy(notifications, session_id, user_resource_id);
 
     g_free(machine_id);
     g_free(session_id);
@@ -305,21 +355,16 @@ handle_info_removed(DBusConnection *connection,
     if (!read_session_info(&session_props_iter, &machine_id, &session_id))
         return;
 
-#if 0
-    /* FIXME This is some work to deal with, since we need to track all sessions
-     * that refer to a user, and keep an "online count" of how many sessions
-     * the user is online with.
-     *
-     * To make things worse, right now there could be two machines claiming to
-     * have the same session ID; which would only happen if someone was malicious,
-     * but we should at least not crash in that case.
+    /* FIXME: Handle the case where a session maliciously claims
+     * to have the same session ID as an existing session; we'll get mildly confused
+     * by that now, though we shouldn't crash. But we're also completely vulnerable
+     * to someone publishing fake information, so maybe the confusion doesn't matter
+     * much.
      */
-    user_resource_id = "FIXME";
     
     notifications = hippo_dbus_im_start_notifications();
-    update_buddy(notifications, user_resource_id, FALSE);
+    remove_buddy(notifications, session_id);
     hippo_dbus_im_send_notifications(notifications);
-#endif
     
     g_free(machine_id);
     g_free(session_id);
