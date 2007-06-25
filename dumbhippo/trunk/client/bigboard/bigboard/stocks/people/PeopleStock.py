@@ -20,11 +20,16 @@ import bigboard.slideout
 import bigboard.profile
 import cgi
 
+def _open_aim(aim):
+    os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'aim:GoIM?screenname=' + cgi.escape(aim))
+
 class PersonItem(PhotoContentItem, DataBoundItem):
     def __init__(self, user, **kwargs):
         PhotoContentItem.__init__(self, **kwargs)
         DataBoundItem.__init__(self, user)
-
+        
+        self.set_clickable(True)
+        
         self.__photo = CanvasMugshotURLImage(scale_width=30,
                                             scale_height=30,
                                             border=1,
@@ -49,6 +54,7 @@ class PersonItem(PhotoContentItem, DataBoundItem):
         self.connect_resource(self.__update)
         self.__update(self.resource)
 
+        self.__aim_icon = None
         self.__aim_buddy = None
 
     def __update_color(self):
@@ -103,8 +109,13 @@ class PersonItem(PhotoContentItem, DataBoundItem):
     def set_aim_buddy(self, buddy):
         if buddy == self.__aim_buddy:
             return
+
+        if self.__aim_icon:
+            self.__aim_icon.destroy()
+
         self.__aim_buddy = buddy
-        self.__update_presence_box()
+        self.__aim_icon = AimIcon(self.__aim_buddy)
+        self.__presence_box.append(self.__aim_icon)
 
     def get_aim_buddy(self):
         return self.__aim_buddy
@@ -131,6 +142,29 @@ class ExternalAccountIcon(CanvasHBox):
         
     def __launch_browser(self):
         libbig.show_url(self.__acct.link)
+
+class AimIcon(hippo.CanvasText, DataBoundItem):
+    def __init__(self, buddy):
+        hippo.CanvasText.__init__(self)
+        DataBoundItem.__init__(self, buddy)
+        
+        self.connect("activated", self.__open_aim)
+        self.set_clickable(True)
+
+        self.connect_resource(self.__update)
+        self.__update(self.resource)
+        
+    def __update(self, buddy):
+        if buddy.status == "Available":
+            markup = "<b>AIM</b>"
+        else:
+            markup = "AIM"
+        self.set_property("markup", markup)
+        self.set_property("tooltip", "Chat with %s (%s)" % (buddy.name, buddy.status,))
+        
+    def __open_aim(self, object):
+        _open_aim(self.resource.name)
+        return True
 
 class ProfileItem(hippo.CanvasBox, DataBoundItem):
     def __init__(self, user, **kwargs):
@@ -214,7 +248,7 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'mailto:' + self.resource.email)
 
     def __on_activate_aim(self, canvas_item):
-        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'aim:GoIM?screenname=' + cgi.escape(self.resource.aim))
+        _open_aim(self.resource.name, self.resource.aim)
 
 class BuddyMonitor(gobject.GObject):
     __gsignals__ = {
@@ -350,7 +384,7 @@ class PeopleStock(AbstractMugshotStock):
         self.__box.append(item, hippo.PACK_IF_FITS)
         self.__items[contact.resource_id] = item
         self.__set_item_size(item, self.get_size())
-        item.connect('button-press-event', self.__handle_item_pressed)
+        item.connect('activated', self.__handle_item_pressed)
 
         contact.connect(self.__on_aim_changed, "contact")
         self.__on_aim_changed(contact)
@@ -374,10 +408,7 @@ class PeopleStock(AbstractMugshotStock):
         buddy = self.__buddy_monitor.get_aim_buddy(aim)
         self.__items[contact.resource_id].set_aim_buddy(buddy)
 
-    def __handle_item_pressed(self, item, event):
-        if event.button != 1 or event.count != 1:
-            return False
-
+    def __handle_item_pressed(self, item):
         if self.__slideout:
             self.__slideout.destroy()
             self.__slideout = None
