@@ -492,6 +492,7 @@ add_resource_to_message(DataClient        *client,
     HippoDataFetchIter fetch_iter;
     DataClientConnection *connection;
     HippoDataFetch *new_fetch;
+    HippoDataFetch *total_fetch;
     DBusMessageIter resource_iter;
     DBusMessageIter property_array_iter;
     const char *resource_id;
@@ -506,9 +507,8 @@ add_resource_to_message(DataClient        *client,
 
     if (is_notification) {
         new_fetch = hippo_data_fetch_ref(fetch);
+        total_fetch = hippo_data_fetch_ref(fetch);
     } else {
-        HippoDataFetch *total_fetch;
-        
         if (connection->fetch)
             new_fetch = hippo_data_fetch_subtract(fetch, connection->fetch);
         else
@@ -523,7 +523,6 @@ add_resource_to_message(DataClient        *client,
             total_fetch = hippo_data_fetch_ref(fetch);
         
         data_client_connection_set_fetch(connection, total_fetch);
-        hippo_data_fetch_unref(total_fetch);
     }
 
     if (new_fetch) {
@@ -577,6 +576,7 @@ add_resource_to_message(DataClient        *client,
 
     if (new_fetch)
         hippo_data_fetch_unref(new_fetch);
+    hippo_data_fetch_unref(total_fetch);
 }
 
 static void

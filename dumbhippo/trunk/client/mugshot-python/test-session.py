@@ -45,7 +45,7 @@ def on_global_query_failure(code, message):
 def on_connect():
     print "Connected"
 
-    query = model.query_resource(model.self_id, "+;contacts +;contacters +;lovedAccounts +")
+    query = model.query_resource(model.self_id, "+;contacts +;contacters +;lovedAccounts +;email;aim")
     query.add_handler(on_self_query_success)
     query.add_error_handler(on_self_query_failure)
     query.execute()

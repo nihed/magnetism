@@ -454,7 +454,7 @@ handle_online_changed(DBusConnection *connection,
     dbus_int32_t buddy_id = 0;
     dbus_uint64_t buddy_id_64 = 0; /* if Gaim was compiled on a 64-bit system it does this */
             
-    if (dbus_message_get_args(message, NULL, DBUS_TYPE_INT32, &buddy_id, DBUS_TYPE_INVALID))
+    if (dbus_message_get_args(message, NULL, DBUS_TYPE_UINT32, &buddy_id, DBUS_TYPE_INVALID))
         g_debug(" buddy id was %d\n", buddy_id);
     if (dbus_message_get_args(message, NULL, DBUS_TYPE_UINT64, &buddy_id_64, DBUS_TYPE_INVALID)) {
         g_debug(" buddy id was %d\n", (dbus_int32_t) buddy_id_64);

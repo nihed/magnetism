@@ -53,6 +53,7 @@ private:
     void onMouseDoubleClick(int button, WPARAM wParam, LPARAM lParam);    
     void onMouseMove(WPARAM wParam, LPARAM lParam);
     void onMouseLeave(WPARAM wParam, LPARAM lParam);
+    void onRootDestroy();
     void onRootRequestChanged();
     void onRootPaintNeeded(const HippoRectangle *damage_box);
     void onRootTooltipChanged();
@@ -70,6 +71,7 @@ private:
     bool tryAllocate(bool hscrollbar, bool vscrollbar);
 
     GConnection1<void,const HippoRectangle*> rootPaintNeeded_;
+    GConnection0<void> rootDestroy_;
     GConnection0<void> rootRequestChanged_;
     GConnection0<void> rootTooltipChanged_;
     HippoGObjectPtr<HippoCanvasItem> root_;

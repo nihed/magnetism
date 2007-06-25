@@ -461,6 +461,12 @@
   )
 )
 
+(define-method clear
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_clear")
+  (return-type "none")
+)
+
 (define-method remove
   (of-object "HippoCanvasBox")
   (c-name "hippo_canvas_box_remove")
@@ -851,6 +857,12 @@
   (return-type "none")
 )
 
+(define-method destroy
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_destroy")
+  (return-type "none")
+)
+
 (define-method set_context
   (of-object "HippoCanvasItem")
   (c-name "hippo_canvas_item_set_context")
@@ -978,6 +990,12 @@
   (parameters
     '("gboolean" "visible")
   )
+)
+
+(define-method emit_destroy
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_emit_destroy")
+  (return-type "none")
 )
 
 (define-method emit_button_press_event

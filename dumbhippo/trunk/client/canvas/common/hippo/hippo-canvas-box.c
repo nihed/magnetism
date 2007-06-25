@@ -122,8 +122,6 @@ static void hippo_canvas_box_get_content_height_request (HippoCanvasBox *box,
                                                          int            *min_width_p,
                                                          int            *natural_width_p);
 
-static void hippo_canvas_box_remove_and_dispose_all     (HippoCanvasBox *box);
-
 #define MIN_SIZE(child, orientation)     ((orientation) == HIPPO_ORIENTATION_VERTICAL ? (child)->min_height : (child)->min_width)
 #define NATURAL_SIZE(child, orientation) ((orientation) == HIPPO_ORIENTATION_VERTICAL ? (child)->natural_height : (child)->natural_width)
 typedef struct {
@@ -189,7 +187,8 @@ enum {
     PROP_FONT,
     PROP_FONT_DESC,
     PROP_FONT_CASCADE,
-    PROP_TOOLTIP
+    PROP_TOOLTIP,
+    PROP_DEBUG_NAME
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasBox, hippo_canvas_box, G_TYPE_OBJECT,
@@ -722,6 +721,19 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                         _("Tooltip to display on mouse hover"),
                                                         NULL,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+    
+    /**
+     * HippoCanvasBox:debug-name
+     *
+     * If set, debug-spew detailed information about size negotiation, prefixed with this name
+     */
+    g_object_class_install_property(object_class,
+                                    PROP_DEBUG_NAME,
+                                    g_param_spec_string("debug_name",
+                                                        _("Debug Name"),
+                                                        _("Use this string to mark size negotiation debug spew"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
 }
 
 static void
@@ -729,12 +741,14 @@ hippo_canvas_box_dispose(GObject *object)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(object);
 
-    hippo_canvas_box_remove_and_dispose_all(box);
+    hippo_canvas_box_clear(box);
 
     if (box->style) {
         g_object_unref(box->style);
         box->style = NULL;
     }
+
+    hippo_canvas_item_emit_destroy(HIPPO_CANVAS_ITEM(object));
     
     G_OBJECT_CLASS(hippo_canvas_box_parent_class)->dispose(object);
 }
@@ -921,6 +935,16 @@ hippo_canvas_box_set_property(GObject         *object,
         }
         need_resize = FALSE;
         break;
+    case PROP_DEBUG_NAME:
+        {
+            const char *new_name  = g_value_get_string(value);
+            if (new_name != box->debug_name) {
+                g_free(box->debug_name);
+                box->debug_name = g_strdup(new_name);
+            }
+        }
+        need_resize = FALSE;
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -1025,6 +1049,9 @@ hippo_canvas_box_get_property(GObject         *object,
         break;
     case PROP_TOOLTIP:
         g_value_set_string(value, box->tooltip);
+        break;
+    case PROP_DEBUG_NAME:
+        g_value_set_string(value, box->debug_name);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -1875,14 +1902,27 @@ adjust_one_if_fits(GSList          *children,
     int i;
     GSList *link;
     int spacing_delta;
+    gboolean visible_children = FALSE;
     
     if (*remaining_extra_space_p == 0)
         return FALSE;
 
-    /* if only one child, then adding an if-fits child won't add
-     * another spacing
+    /* if there are no currently visible children, then adding a child won't
+     * add another spacing
      */
-    spacing_delta = (children && children->next == NULL) ? 0 : spacing;
+    i = 0;
+    for (link = children; link != NULL; link = link->next) {
+        HippoBoxChild *child = link->data;
+                
+        if (child->visible && (!child->if_fits || !adjusts[i].does_not_fit)) {
+            visible_children = TRUE;
+            break;
+        }
+
+        i++;
+    }
+    
+    spacing_delta = visible_children ? spacing : 0;
     
     i = 0;
     for (link = children; link != NULL; link = link->next) {
@@ -1894,7 +1934,7 @@ adjust_one_if_fits(GSList          *children,
              * might be nice, but for now it's the first that fits)
              */
 
-            if ((MIN_SIZE(child, orientation) + spacing_delta) < *remaining_extra_space_p) {
+            if ((MIN_SIZE(child, orientation) + spacing_delta) <= *remaining_extra_space_p) {
                 adjusts[i].adjustment += MIN_SIZE(child, orientation);
                 
                 g_assert(adjusts[i].adjustment >= 0);
@@ -2581,6 +2621,14 @@ hippo_canvas_box_get_width_request(HippoCanvasItem *item,
         if (natural_width_p)
             *natural_width_p = content_natural_width + outside;
     }
+
+    if (box->debug_name != NULL && min_width_p != NULL) {
+        g_debug("box %s Computed minimum width as %d", box->debug_name, *min_width_p);
+    }
+
+    if (box->debug_name != NULL && natural_width_p != NULL) {
+        g_debug("box %s Computed natural width as %d", box->debug_name, *natural_width_p);
+    }
 }
 
 static void
@@ -2625,6 +2673,14 @@ hippo_canvas_box_get_height_request(HippoCanvasItem *item,
             *min_height_p = content_min_height + outside;
         if (natural_height_p)
             *natural_height_p = content_natural_height + outside;
+    }
+    
+    if (box->debug_name != NULL && min_height_p != NULL) {
+        g_debug("box %s Computed minimum height for width=%d as %d", box->debug_name, for_width, *min_height_p);
+    }
+
+    if (box->debug_name != NULL && natural_height_p != NULL) {
+        g_debug("box %s Computed natural height for width=%d as %d", box->debug_name, for_width, *natural_height_p);
     }
 }
 
@@ -2736,7 +2792,7 @@ layout_box(HippoCanvasBox  *box,
     int i;
     int allocated_size, requested_size;
     GSList *link;
-    
+
     if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
         allocated_size = allocated_content_height;
         requested_size = requested_content_height;            
@@ -2828,13 +2884,6 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     box = HIPPO_CANVAS_BOX(item);
     klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
 
-#if 0
-    g_debug(" allocating %s %p needs_allocate %d",
-            g_type_name_from_instance((GTypeInstance*) box),
-            box,
-            box->needs_allocate);
-#endif
-    
     /* If we haven't emitted request-changed then we are allowed to short-circuit 
      * an unchanged allocation
      */
@@ -2862,14 +2911,12 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
                               &content_y, &allocated_content_height);
     
 
-#if 0
-    if (box->x_align == HIPPO_ALIGNMENT_START && box->y_align == HIPPO_ALIGNMENT_START) {
-        g_debug("box %p allocated %dx%d  requested %dx%d lay out into %d,%d %dx%d",
-                box, box->allocated_width, box->allocated_height,
+    if (box->debug_name != NULL) {
+        g_debug("box %s allocated %dx%d  requested %dx%d lay out into %d,%d %dx%d",
+                box->debug_name, box->allocated_width, box->allocated_height,
                 requested_content_width, requested_content_height,
                 content_x, content_y, allocated_content_width, allocated_content_height);
     }
-#endif
 
     if (allocated_content_width == 0 || allocated_content_height == 0) {
 
@@ -3300,6 +3347,13 @@ hippo_canvas_box_get_pointer(HippoCanvasItem    *item,
 }
 
 static void
+child_destroy(HippoCanvasItem *child,
+              HippoCanvasBox  *box)
+{
+    hippo_canvas_box_remove(box, child);
+}
+
+static void
 child_request_changed(HippoCanvasItem *child,
                       HippoCanvasBox  *box)
 {
@@ -3359,6 +3413,8 @@ static void
 connect_child(HippoCanvasBox  *box,
               HippoCanvasItem *child)
 {
+    g_signal_connect(G_OBJECT(child), "destroy",
+                     G_CALLBACK(child_destroy), box);
     g_signal_connect(G_OBJECT(child), "request-changed",
                      G_CALLBACK(child_request_changed), box);
     g_signal_connect(G_OBJECT(child), "paint-needed",
@@ -3371,6 +3427,8 @@ static void
 disconnect_child(HippoCanvasBox  *box,
                  HippoCanvasItem *child)
 {
+    g_signal_handlers_disconnect_by_func(G_OBJECT(child),
+                                         G_CALLBACK(child_destroy), box);
     g_signal_handlers_disconnect_by_func(G_OBJECT(child),
                                          G_CALLBACK(child_request_changed), box);
     g_signal_handlers_disconnect_by_func(G_OBJECT(child),
@@ -3680,6 +3738,15 @@ hippo_canvas_box_remove(HippoCanvasBox  *box,
     remove_box_child(box, c);
 }
 
+/**
+ * hippo_canvas_box_remove_all:
+ * @box: the canvas box
+ * 
+ * Removes all children from the box without destroying them. You probably want
+ * hipppo_canvas_box_clear() instead unless you have a particular reason to
+ * preserve the children. The explicit destroy added by hipppo_canvas_box_clear()
+ * will make your application more robust against memory leaks.
+ **/
 void
 hippo_canvas_box_remove_all(HippoCanvasBox *box)
 {
@@ -3691,8 +3758,14 @@ hippo_canvas_box_remove_all(HippoCanvasBox *box)
     }
 }
 
-static void
-hippo_canvas_box_remove_and_dispose_all(HippoCanvasBox *box)
+/**
+ * hippo_canvas_box_clear:
+ * @box: the canvas box
+ * 
+ * Removes all children from the box and calls hippo_canvas_item_destroy() on them.
+ **/
+void
+hippo_canvas_box_clear(HippoCanvasBox *box)
 {
     g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
     
@@ -3702,9 +3775,13 @@ hippo_canvas_box_remove_and_dispose_all(HippoCanvasBox *box)
 
         g_object_ref(item);
 
+        /* We could let this happen as a side-effect of destroying
+         * the child; doing it this way results in a little less confusing
+         * reentrancy.
+         */
         remove_box_child(box, child);
 
-        g_object_run_dispose(G_OBJECT(item));
+        hippo_canvas_item_destroy(item);
         g_object_unref(item);
     }
 }

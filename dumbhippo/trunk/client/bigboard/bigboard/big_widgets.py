@@ -176,7 +176,7 @@ class PhotoContentItem(PrelightingCanvasBox):
                 self.__photo.set_property("scale-width", 30)
                 self.__photo.set_property("scale-height", 30)            
 
-class _RootWindowWatcher(gtk.Invisible):
+class RootWindowWatcher(gtk.Invisible):
     """Class to track properties of the root window.
 
     The tracking is a distinctly hacky; what we do is set the user data of the root window
