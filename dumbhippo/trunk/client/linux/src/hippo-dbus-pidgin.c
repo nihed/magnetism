@@ -509,9 +509,9 @@ handle_buddy_status_changed(DBusConnection *connection,
     dbus_int32_t new_status_id = 0;
     dbus_uint64_t new_status_id_64 = 0;
             
-    if (dbus_message_get_args(message, NULL, DBUS_TYPE_INT32, &buddy_id,
-                              DBUS_TYPE_INT32, &old_status_id,
-                              DBUS_TYPE_INT32, &new_status_id,
+    if (dbus_message_get_args(message, NULL, DBUS_TYPE_UINT32, &buddy_id,
+                              DBUS_TYPE_UINT32, &old_status_id,
+                              DBUS_TYPE_UINT32, &new_status_id,
                               DBUS_TYPE_INVALID))
         g_debug("got 32-bit status changed message\n");
 
@@ -562,7 +562,7 @@ handle_buddy_idle_changed(DBusConnection *connection,
     dbus_int32_t old_idle = 0;
     dbus_int32_t new_idle = 0;
             
-    if (dbus_message_get_args(message, NULL, DBUS_TYPE_INT32, &buddy_id,
+    if (dbus_message_get_args(message, NULL, DBUS_TYPE_UINT32, &buddy_id,
                               DBUS_TYPE_INT32, &old_idle,
                               DBUS_TYPE_INT32, &new_idle,
                               DBUS_TYPE_INVALID))
