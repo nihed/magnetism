@@ -201,6 +201,10 @@ class LocalIcon(hippo.CanvasText, DataBoundItem):
         self.set_property("markup", "<b>LOCAL</b> ")
         
 class ProfileItem(hippo.CanvasBox, DataBoundItem):
+    __gsignals__ = {
+        "close": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
+       }
+        
     def __init__(self, user, **kwargs):
         kwargs['orientation'] = hippo.ORIENTATION_VERTICAL
         kwargs['border'] = 1
@@ -214,6 +218,8 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         self.__photo = CanvasMugshotURLImage(scale_width=60,
                                             scale_height=60,
                                             border=5)
+        self.__photo.set_clickable(True)
+        self.__photo.connect("activated", self.__on_activate_web)
         self.__top_box.append(self.__photo)
 
         self.__address_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
@@ -277,11 +283,17 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
             aim.connect('activated', self.__on_activate_aim)
             self.__address_box.append(aim)
 
+    def __on_activate_web(self, canvas_item):
+        self.emit("close")
+        libbig.show_url(self.resource.homeUrl)
+
     def __on_activate_email(self, canvas_item):
+        self.emit("close")
         # email should probably cgi.escape except it breaks if you escape the @
         os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'mailto:' + self.resource.email)
 
     def __on_activate_aim(self, canvas_item):
+        self.emit("close")
         _open_aim(self.resource.name, self.resource.aim)
 
 class BuddyMonitor(gobject.GObject):
@@ -372,15 +384,26 @@ class PeopleStock(AbstractMugshotStock):
         super(PeopleStock, self).__init__(*args, **kwargs)
 
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
+        
+        self.__local_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
+        self.__box.append(self.__local_box)
 
-        self.__items = {}
+        self.__separator = hippo.CanvasBox(box_height=1, xalign=hippo.ALIGNMENT_FILL, background_color=0xccccccff)
+        self.__box.append(self.__separator)
+        
+        self.__contact_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
+        self.__box.append(self.__contact_box)
 
-        self.__contact_by_aim = {}
-        self.__aim_by_contact_id = {}
+        self.__local_items = {}
+        self.__contact_items = {}
+
+        self.__items_by_aim = {}
 
         self.__slideout = None
         self.__slideout_item = None
 
+        self.__update_separators()
+        
         self._model = DataModel()
         self._model.add_connected_handler(self.__on_connected)
         if self._model.connected:
@@ -391,7 +414,7 @@ class PeopleStock(AbstractMugshotStock):
         self.__buddy_monitor.connect("aim-removed", self.__on_aim_removed)
         self.__buddy_monitor.connect("local-added", self.__on_local_added)
         self.__buddy_monitor.connect("local-removed", self.__on_local_removed)
-        
+
     def get_authed_content(self, size):
         return self.__box
 
@@ -405,7 +428,9 @@ class PeopleStock(AbstractMugshotStock):
 
     def set_size(self, size):
         super(PeopleStock, self).set_size(size)
-        for i in self.__items.values():
+        for i in self.__local_items.values():
+            self.__set_item_size(i, size)
+        for i in self.__contact_items.values():
             self.__set_item_size(i, size)
 
     def __on_connected(self):
@@ -413,15 +438,15 @@ class PeopleStock(AbstractMugshotStock):
         query.add_handler(self.__on_got_self)
         query.execute()
 
-        self.__box.remove_all()
-        self.__items = {}
+        self.__contact_box.remove_all()
+        self.__contact_items = {}
         
     def __on_got_self(self, myself):
         myself.connect(self.__on_contacts_changed, "contacts")
         self.__on_contacts_changed(myself)
         
     def __on_contacts_changed(self, myself):
-        old_items = copy.copy(self.__items)
+        old_items = copy.copy(self.__contact_items)
         
         for contact in myself.contacts:
             if contact.resource_id in old_items:
@@ -430,56 +455,109 @@ class PeopleStock(AbstractMugshotStock):
                 self.__add_contact(contact)
 
         for id in old_items:
-            item = self.__items[id]
-            item.get_user().disconnect(self.__on_aim_changed)
-            item.destroy()
-            del self.__items[id]
+            self.__remove_contact(id)
 
-        gc.collect()
-            
-    def __add_contact(self, contact):
-        self._logger.debug("user added to people stock %s" % (contact.name))
-        if self.__items.has_key(contact.resource_id):
+    def __update_separators(self):
+        show_separator = len(self.__local_items) != 0 and len(self.__contact_items) != 0
+        self.__box.set_child_visible(self.__separator, show_separator)
+
+    def __add_user(self, user, box, map):
+        self._logger.debug("user added to people stock %s" % (user.name))
+        if map.has_key(user.resource_id):
             return
         
-        item = PersonItem(contact)
-        self.__box.append(item, hippo.PACK_IF_FITS)
-        self.__items[contact.resource_id] = item
+        item = PersonItem(user)
+        box.append(item, hippo.PACK_IF_FITS)
+        map[user.resource_id] = item
         self.__set_item_size(item, self.get_size())
         item.connect('activated', self.__handle_item_pressed)
 
-        contact.connect(self.__on_aim_changed, "contact")
-        self.__on_aim_changed(contact)
+        def on_aim_changed(user):
+            self.__on_aim_changed(user, item)
 
-    def __on_aim_changed(self, contact):
-        try:
-            old_aim = self.__aim_by_contact_id[contact.resource_id]
-            del self.__aim_by_contact_id[contact.resource_id]
-            del self.__contact_by_aim[old_aim]
-        except KeyError:
-            pass
+        user.connect(on_aim_changed, "aim")
+        item.aim = None
+        self.__on_aim_changed(user, item)
+
+        buddy = self.__buddy_monitor.get_local_buddy(user.resource_id)
+        item.set_local_buddy(buddy)
+
+        self.__update_separators()
+
+    def __remove_user(self, id, box, map):
+        item = map[id]
+        item.get_user().disconnect(self.__on_aim_changed)
+        item.destroy()
+        del map[id]
         
+    def __add_contact(self, contact):
+        self.__add_user(contact, self.__contact_box, self.__contact_items)
+        
+    def __remove_contact(self, id):
+        self.__remove_user(id, self.__contact_box, self.__contact_items)
+        
+    def __add_local(self, contact):
+        self.__add_user(contact, self.__local_box, self.__local_items)
+        
+    def __remove_local(self, id):
+        self.__remove_user(id, self.__local_box, self.__local_items)
+        
+    def __on_aim_changed(self, user, item):
         try:
-            aim = BuddyMonitor.canonicalize_aim(contact.aim)
+            aim = BuddyMonitor.canonicalize_aim(user.aim)
         except AttributeError:
+            aim = None
+
+        if item.aim != None:
+            self.__items_by_aim[item.aim].remove(item)
+
+        item.aim = aim
+
+        if item.aim != None:
+            try:
+                self.__items_by_aim[item.aim].append(item)
+            except KeyError:
+                self.__items_by_aim[item.aim] = [item]
+
+        if aim != None:
+            buddy = self.__buddy_monitor.get_aim_buddy(aim)
+            item.set_aim_buddy(buddy)
+        else:
+            item.set_aim_buddy(None)
+        
+    def __on_aim_added(self, object, buddy):
+        aim = BuddyMonitor.canonicalize_aim(buddy.name)
+
+        try:
+            items = self.__items_by_aim[aim]
+        except KeyError:
             return
 
-        self.__contact_by_aim[aim] = contact
-        self.__aim_by_contact_id[contact.resource_id] = aim
+        for item in items:
+            item.set_aim_buddy(buddy)
+                
+    def __on_aim_removed(self, object, buddy):
+        aim = BuddyMonitor.canonicalize_aim(buddy.name)
 
-        buddy = self.__buddy_monitor.get_aim_buddy(aim)
-        self.__items[contact.resource_id].set_aim_buddy(buddy)
+        try:
+            items = self.__items_by_aim[aim]
+        except KeyError:
+            return
 
-        buddy = self.__buddy_monitor.get_local_buddy(contact.resource_id)
-        self.__items[contact.resource_id].set_local_buddy(buddy)
-        
-    def __handle_item_pressed(self, item):
+        for item in items:
+            item.set_aim_buddy(buddy)
+
+    def __close_slideout(self, *args):
         if self.__slideout:
             self.__slideout.destroy()
             self.__slideout = None
-            if self.__slideout_item == item:
-                self.__slideout_item = None
-                return True
+            self.__slideout_item = None
+                
+    def __handle_item_pressed(self, item):
+        same_item = self.__slideout_item == item
+        self.__close_slideout()
+        if same_item:
+            return True
 
         self.__slideout = bigboard.slideout.Slideout()
         self.__slideout_item = item
@@ -488,43 +566,38 @@ class PeopleStock(AbstractMugshotStock):
 
         p = ProfileItem(item.get_user())
         self.__slideout.get_root().append(p)
+        p.connect("close", self.__close_slideout)
 
         return True
 
-    def __on_aim_added(self, object, buddy):
-        try:
-            aim = BuddyMonitor.canonicalize_aim(buddy.name)
-            contact = self.__contact_by_aim[aim]
-        except KeyError:
-            return
-
-        item = self.__items[contact.resource_id]
-        item.set_aim_buddy(buddy)
-        
-    def __on_aim_removed(self, object, buddy):
-        try:
-            aim = BuddyMonitor.canonicalize_aim(buddy.name)
-            contact = self.__contact_by_aim[aim]
-        except KeyError:
-            return
-        
-        item = self.__items[contact.resource_id]
-        item.set_aim_buddy(None)
-
-
     # FIXME: Need to handle multiple session for the same resource
     def __on_local_added(self, object, buddy):
-        try:
-            item = self.__items[buddy.name]
-        except KeyError:
+        # FIXME: Need to handle self_id changes; easiest thing to do is to
+        # repopulate the local box on reconnect
+        if buddy.name == self._model.self_id:
             return
-            
-        item.set_local_buddy(buddy)
+        
+        try:
+            self.__contact_items[buddy.name].set_local_buddy(buddy)
+        except KeyError:
+            pass
+
+        query = self._model.query_resource(buddy.name, "+;aim;email")
+        query.add_handler(self.__on_got_local_user)
+        query.execute()
         
     def __on_local_removed(self, object, buddy):
         try:
-            item = self.__items[buddy.name]
+            self.__contact_items[buddy.name].set_local_buddy(buddy)
         except KeyError:
+            pass
+
+        if self.__local_items.has_key(buddy.name):
+            self.__remove_local(buddy.name)
+
+    def __on_got_local_user(self, user):
+        buddy = self.__buddy_monitor.get_local_buddy(user.resource_id)
+        if buddy == None: # Already gone
             return
-            
-        item.set_local_buddy(None)
+
+        self.__add_local(user)
