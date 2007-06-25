@@ -1,20 +1,29 @@
 import logging
 
-import hippo
-
+import gc
 import os
+import copy
+import re
+import weakref
+
+import gtk
+import gobject
+import hippo
 import bigboard
-from bigboard.big_widgets import CanvasMugshotURLImage, CanvasMugshotURLImageButton, PhotoContentItem
+
+from mugshot import DataModel
+from bigboard.big_widgets import CanvasMugshotURLImage, CanvasMugshotURLImageButton, PhotoContentItem, CanvasHBox, CanvasVBox
 from bigboard.stock import AbstractMugshotStock
+from bigboard.databound import DataBoundItem
+import bigboard.libbig as libbig
 import bigboard.slideout
 import bigboard.profile
 import cgi
 
-class EntityItem(PhotoContentItem):
-    def __init__(self, **kwargs):
+class PersonItem(PhotoContentItem, DataBoundItem):
+    def __init__(self, user, **kwargs):
         PhotoContentItem.__init__(self, **kwargs)
-        
-        self.__entity = None
+        DataBoundItem.__init__(self, user)
 
         self.__photo = CanvasMugshotURLImage(scale_width=30,
                                             scale_height=30,
@@ -23,13 +32,24 @@ class EntityItem(PhotoContentItem):
 
         self.set_photo(self.__photo)
 
+        self.__details_box = CanvasVBox()
+        self.set_child(self.__details_box)
+
         self.__name = hippo.CanvasText(xalign=hippo.ALIGNMENT_FILL, yalign=hippo.ALIGNMENT_START,
                                       size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
-        self.set_child(self.__name)
+        self.__details_box.append(self.__name)
+
+        self.__presence_box = CanvasHBox()
+        self.__details_box.append(self.__presence_box)
 
         self.connect('button-press-event', self.__handle_button_press)
         self.connect('button-release-event', self.__handle_button_release)
         self.__pressed = False
+
+        self.connect_resource(self.__update)
+        self.__update(self.resource)
+
+        self.__aim_buddy = None
 
     def __update_color(self):
         if self.__pressed:
@@ -38,62 +58,87 @@ class EntityItem(PhotoContentItem):
             self.sync_prelight_color()
 
     def __handle_button_press(self, self2, event):
-        if event.button != 1:
+        if event.button != 1 or event.count != 1:
             return False
         
         self.__pressed = True
-
         self.__update_color()
+
+        return False
 
     def __handle_button_release(self, self2, event):
         if event.button != 1:
             return False
 
         self.__pressed = False
-
         self.__update_color()
-            
-    def set_entity(self, entity):
-        if self.__entity == entity:
-            return
-        self.__entity = entity
-        self.__update()
 
-    def get_guid(self):
-        return self.__entity.get_guid()
+        return False
 
-    def get_entity(self):
-        return self.__entity
+    def get_user(self):
+        return self.resource
 
     def set_size(self, size):
         if size == bigboard.stock.SIZE_BULL:
-            self.set_child_visible(self.__name, True)
+            self.set_child_visible(self.__details_box, True)
             self.__photo.set_property('xalign', hippo.ALIGNMENT_START)
             self.__photo.set_property('yalign', hippo.ALIGNMENT_START)
         else:
-            self.set_child_visible(self.__name, False)
+            self.set_child_visible(self.__details_box, False)
             self.__photo.set_property('xalign', hippo.ALIGNMENT_CENTER)
             self.__photo.set_property('yalign', hippo.ALIGNMENT_CENTER)
 
-    def __update(self):
-        if not self.__entity:
-            return
-        self.__name.set_property("text", self.__entity.get_name())
-        if self.__entity.get_photo_url():
-            self.__photo.set_url(self.__entity.get_photo_url())
+    def __update(self, user):
+        self.__name.set_property("text", self.resource.name)
+        self.__photo.set_url(self.resource.photoUrl)
 
     def get_screen_coords(self):
         return self.get_context().translate_to_screen(self)
 
-class ProfileItem(hippo.CanvasBox):
-    def __init__(self, profiles, **kwargs):
+    def __update_presence_box(self):
+        self.__presence_box.clear()
+        if self.__aim_buddy != None:
+            self.__presence_box.append(hippo.CanvasText(text="AIM"))
+
+    def set_aim_buddy(self, buddy):
+        if buddy == self.__aim_buddy:
+            return
+        self.__aim_buddy = buddy
+        self.__update_presence_box()
+
+    def get_aim_buddy(self):
+        return self.__aim_buddy
+
+class ExternalAccountIcon(CanvasHBox):
+    def __init__(self, acct):
+        super(ExternalAccountIcon, self).__init__()
+        self.__acct = None
+        self.__img = CanvasMugshotURLImage()
+        self.append(self.__img)
+        self.connect("activated", lambda s2: self.__launch_browser())
+        self.set_clickable(True)
+        self.set_acct(acct)
+        
+    def set_acct(self, acct):
+        if self.__acct:
+            self.__acct.disconnect(self.__sync)
+        self.__acct = acct
+        self.__acct.connect(self.__sync)
+        self.__sync()
+        
+    def __sync(self):
+        self.__img.set_url(self.__acct.iconUrl)
+        
+    def __launch_browser(self):
+        libbig.show_url(self.__acct.link)
+
+class ProfileItem(hippo.CanvasBox, DataBoundItem):
+    def __init__(self, user, **kwargs):
         kwargs['orientation'] = hippo.ORIENTATION_VERTICAL
         kwargs['border'] = 1
         kwargs['border-color'] = 0x0000000ff
         hippo.CanvasBox.__init__(self, **kwargs)
-
-        self.__profiles = profiles
-        self.__entity = None
+        DataBoundItem.__init__(self, user)
 
         self.__top_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
         self.append(self.__top_box)
@@ -106,81 +151,150 @@ class ProfileItem(hippo.CanvasBox):
         self.__address_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
         self.__top_box.append(self.__address_box)
 
-        self.__online = hippo.CanvasText(text='Offline')
-        self.append(self.__online)
+#        self.__online = hippo.CanvasText(text='Offline')
+#        self.append(self.__online)
 
         self.__ribbon_bar = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL,
                                            spacing=2, border=2)
         self.append(self.__ribbon_bar)
 
-    def set_entity(self, entity):
-        if self.__entity == entity:
-            return
-        self.__entity = entity    
-
-        if self.__entity:
-
-            if self.__entity.get_photo_url():
-                self.__photo.set_url(self.__entity.get_photo_url())
-
-            self.__profiles.fetch_profile(self.__entity.get_guid(), self.__on_profile_fetched)
-
-    def __on_activate_email(self, canvas_item, profile):
-        # email should probably cgi.escape except it breaks if you escape the @
-        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'mailto:' + profile.get_email())
-
-    def __on_activate_aim(self, canvas_item, profile):
-        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'aim:GoIM?screenname=' + cgi.escape(profile.get_aim()))
-
-    def __on_profile_fetched(self, profile):
-        if not profile:
-            print "failed to fetch profile"
-            return
+        self.connect_resource(self.__update)
+        self.connect_resource(self.__update_loved_accounts, "lovedAccounts")
         
-        #print str(profile)
+        query = DataModel().query_resource(self.resource.resource_id, "lovedAccounts +")
+        query.add_handler(self.__update_loved_accounts)
+        query.execute()
+        
+        self.__update(self.resource)
+        self.__update_loved_accounts(self.resource)
+            
+    def __update_loved_accounts(self, user):
+        try:
+            accounts = self.resource.lovedAccounts
+        except AttributeError:
+            accounts = []
+        
+        self.__ribbon_bar.clear()
+        for a in accounts:
+            icon = ExternalAccountIcon(a)
+            self.__ribbon_bar.append(icon)
 
-        if profile.get_online():
-            self.__online.set_property('text', 'Online')
-        else:
-            self.__online.set_property('text', 'Offline')
+    def __update(self, user):
+        self.__photo.set_url(self.resource.photoUrl)
 
-        self.__ribbon_bar.remove_all()
-        for a in profile.get_accounts():
-            badge = CanvasMugshotURLImageButton(scale_width=16, scale_height=16)
-            badge.set_url(a['icon'])
-            badge.set_property('tooltip', a['linkText']) # doesn't work...
-            self.__ribbon_bar.append(badge)
+#         if profile.get_online():
+#             self.__online.set_property('text', 'Online')
+#         else:
+#             self.__online.set_property('text', 'Offline')
 
         self.__address_box.remove_all()
-        if profile.get_email():
-            email = hippo.CanvasLink(text=profile.get_email(), xalign=hippo.ALIGNMENT_START)
-            email.connect('activated', self.__on_activate_email, profile)
+
+        try:
+            email = self.resource.email
+        except AttributeError:
+            email = None
+         
+        try:
+            aim = self.resource.aim
+        except AttributeError:
+            aim = None
+         
+        if email != None:
+            email = hippo.CanvasLink(text=email, xalign=hippo.ALIGNMENT_START)
+            email.connect('activated', self.__on_activate_email)
             self.__address_box.append(email)
 
-        if profile.get_aim():
-            aim = hippo.CanvasLink(text=profile.get_aim(), xalign=hippo.ALIGNMENT_START)
-            aim.connect('activated', self.__on_activate_aim, profile)
+        if aim != None:
+            aim = hippo.CanvasLink(text=aim, xalign=hippo.ALIGNMENT_START)
+            aim.connect('activated', self.__on_activate_aim)
             self.__address_box.append(aim)
 
+    def __on_activate_email(self, canvas_item):
+        # email should probably cgi.escape except it breaks if you escape the @
+        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'mailto:' + self.resource.email)
+
+    def __on_activate_aim(self, canvas_item):
+        os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'aim:GoIM?screenname=' + cgi.escape(self.resource.aim))
+
+class BuddyMonitor(gobject.GObject):
+    __gsignals__ = {
+        "aim-added": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "aim-removed": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
+       }
+        
+    def __init__(self):
+        gobject.GObject.__init__(self)
+        
+        self._model = DataModel()
+        self._model.add_connected_handler(self.__on_connected)
+        if self._model.connected:
+            self.__on_connected()
+        self.__aim_buddies = {}
+            
+    def __on_connected(self):
+        query = self._model.query_resource("online-desktop:/o/global", "onlineBuddies +")
+        query.add_handler(self.__on_got_buddies)
+        query.execute()
+        self.__set_new_buddies([])
+
+    def __on_got_buddies(self, globalResource):
+        globalResource.connect(self.__on_buddies_changed, "onlineBuddies")
+        self.__on_buddies_changed(globalResource)
+
+    def __on_buddies_changed(self, globalResource):
+        self.__set_new_buddies(globalResource.onlineBuddies)
+
+    def __set_new_buddies(self, buddies):
+        old_aim_buddies = self.__aim_buddies
+        self.__aim_buddies = {}
+
+        for buddy in buddies:
+            if buddy.protocol != "aim":
+                continue
+
+            canonical = BuddyMonitor.canonicalize_aim(buddy.name)
+                
+            self.__aim_buddies[canonical] = buddy
+            if not canonical in old_aim_buddies:
+                self.emit("aim-added", buddy)
+            else:
+                del old_aim_buddies[canonical]
+
+        for aim in old_aim_buddies:
+            self.emit("aim-removed", old_aim_buddies[aim])
+
+    def get_aim_buddy(self, aim):
+        try:
+            return self.__aim_buddies[aim]
+        except KeyError:
+            return None
+
+    @staticmethod
+    def canonicalize_aim(aim):
+        return aim.replace(" ", "").lower()
+        
 class PeopleStock(AbstractMugshotStock):
     def __init__(self, *args, **kwargs):
         super(PeopleStock, self).__init__(*args, **kwargs)
-        
+
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
 
         self.__items = {}
 
+        self.__contact_by_aim = {}
+        self.__aim_by_contact_id = {}
+
         self.__slideout = None
         self.__slideout_item = None
 
-        self.__profiles = bigboard.profile.ProfileFactory()
-        
-    def _on_mugshot_initialized(self):
-        super(PeopleStock, self)._on_mugshot_initialized()
-        self._mugshot.connect("self-known", self.__handle_self_known)
-        self._mugshot.connect("network-changed", self.__handle_network_changed)
-        self._mugshot.get_self()        
-        self._mugshot.get_network()
+        self._model = DataModel()
+        self._model.add_connected_handler(self.__on_connected)
+        if self._model.connected:
+            self.__on_connected()
+
+        self.__buddy_monitor = BuddyMonitor()
+        self.__buddy_monitor.connect("aim-added", self.__on_aim_added)
+        self.__buddy_monitor.connect("aim-removed", self.__on_aim_removed)
         
     def get_authed_content(self, size):
         return self.__box
@@ -198,41 +312,105 @@ class PeopleStock(AbstractMugshotStock):
         for i in self.__items.values():
             self.__set_item_size(i, size)
 
-    def __add_network_member(self, entity):
-        self._logger.debug("entity added to people stock %s" % (entity.get_name()))
-        if entity.get_type() != 'person':
-            return
-        if self.__items.has_key(entity.get_guid()):
+    def __on_connected(self):
+        query = self._model.query_resource(self._model.self_id, "contacts [+;aim;email]")
+        query.add_handler(self.__on_got_self)
+        query.execute()
+
+        self.__box.remove_all()
+        self.__items = {}
+        
+    def __on_got_self(self, myself):
+        myself.connect(self.__on_contacts_changed, "contacts")
+        self.__on_contacts_changed(myself)
+        
+    def __on_contacts_changed(self, myself):
+        old_items = copy.copy(self.__items)
+        
+        for contact in myself.contacts:
+            if contact.resource_id in old_items:
+                del old_items[contact.resource_id]
+            else:
+                self.__add_contact(contact)
+
+        for id in old_items:
+            item = self.__items[id]
+            item.get_user().disconnect(self.__on_aim_changed)
+            item.destroy()
+            del self.__items[id]
+
+        gc.collect()
+            
+    def __add_contact(self, contact):
+        self._logger.debug("user added to people stock %s" % (contact.name))
+        if self.__items.has_key(contact.resource_id):
             return
         
-        item = EntityItem()
-        item.set_entity(entity)
+        item = PersonItem(contact)
         self.__box.append(item, hippo.PACK_IF_FITS)
-        self.__items[entity.get_guid()] = item
+        self.__items[contact.resource_id] = item
         self.__set_item_size(item, self.get_size())
         item.connect('button-press-event', self.__handle_item_pressed)
 
-    def __handle_network_changed(self, mugshot):
-        network = mugshot.get_network()
-        for entity in network:
-            self.__add_network_member(entity)
-    
-    def __handle_self_known(self, mugshot):
-        pass
+        contact.connect(self.__on_aim_changed, "contact")
+        self.__on_aim_changed(contact)
+
+    def __on_aim_changed(self, contact):
+        try:
+            old_aim = self.__aim_by_contact_id[contact.resource_id]
+            del self.__aim_by_contact_id[contact.resource_id]
+            del self.__contact_by_aim[old_aim]
+        except KeyError:
+            pass
+        
+        try:
+            aim = BuddyMonitor.canonicalize_aim(contact.aim)
+        except AttributeError:
+            return
+
+        self.__contact_by_aim[aim] = contact
+        self.__aim_by_contact_id[contact.resource_id] = aim
+
+        buddy = self.__buddy_monitor.get_aim_buddy(aim)
+        self.__items[contact.resource_id].set_aim_buddy(buddy)
 
     def __handle_item_pressed(self, item, event):
+        if event.button != 1 or event.count != 1:
+            return False
+
         if self.__slideout:
             self.__slideout.destroy()
             self.__slideout = None
             if self.__slideout_item == item:
                 self.__slideout_item = None
-                return
+                return True
 
         self.__slideout = bigboard.slideout.Slideout()
         self.__slideout_item = item
         coords = item.get_screen_coords()
         self.__slideout.slideout_from(coords[0] + item.get_allocation()[0] + 4, coords[1])
 
-        p = ProfileItem(self.__profiles)
-        p.set_entity(item.get_entity())
+        p = ProfileItem(item.get_user())
         self.__slideout.get_root().append(p)
+
+        return True
+
+    def __on_aim_added(self, object, buddy):
+        try:
+            aim = BuddyMonitor.canonicalize_aim(buddy.name)
+            contact = self.__contact_by_aim[aim]
+        except KeyError:
+            return
+
+        item = self.__items[contact.resource_id]
+        item.set_aim_buddy(buddy)
+        
+    def __on_aim_removed(self, object, buddy):
+        try:
+            aim = BuddyMonitor.canonicalize_aim(buddy.name)
+            contact = self.__contact_by_aim[aim]
+        except KeyError:
+            return
+        
+        item = self.__items[contact.resource_id]
+        item.set_aim_buddy(None)

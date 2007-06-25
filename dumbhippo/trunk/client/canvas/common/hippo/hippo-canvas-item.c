@@ -7,6 +7,7 @@
 static void     hippo_canvas_item_base_init (void                  *klass);
 
 enum {
+    DESTROY,
     PAINT,
     REQUEST_CHANGED,      /* The size we want to request may have changed */
     PAINT_NEEDED,
@@ -43,9 +44,26 @@ hippo_canvas_item_base_init(void *klass)
 {
     static gboolean initialized = FALSE;
 
-    if (!initialized) {
+   if (!initialized) {
         /* create signals in here */
 
+        /**
+         * HippoCanvasItem::destroy
+         *
+         * This canvas item has explicitely been destroyed. All references it holds
+         * to other objects will be dropped, and all signal handlers removed.
+         *
+         * (If you 
+         */
+        signals[DESTROY] =
+            g_signal_new ("destroy",
+                          HIPPO_TYPE_CANVAS_ITEM,
+                          G_SIGNAL_RUN_CLEANUP | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
+                          0, /* No handler; in C implement cleanups in ->dispose() */
+                          NULL, NULL,
+                          g_cclosure_marshal_VOID__VOID,
+                          G_TYPE_NONE, 0);
+            
         /**
          * HippoCanvasItem::paint
          *
@@ -185,6 +203,29 @@ hippo_canvas_item_sink(HippoCanvasItem    *canvas_item)
     HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->sink(canvas_item);
 }
 
+/**
+ * hippo_canvas_item_destroy:
+ * HippoCanvasItem: the canvas item
+ * 
+ * Explicitly requests that the item be destroyed. This will cause item to
+ * drop all references it holds to other objects, and also result in the
+ * ::destroy signal being emitted. In response to the ::destroy signal, any
+ * other objects that are holding on to references to the item should drop
+ * the references they hold. In particular, the item will be removed from
+ * its parent container.
+ *
+ * Note that this function doesn't directly cause the memory for the object
+ * to be freed; the object will be freed only if the above actions cause all
+ * references to it to be dropped.
+ **/
+void
+hippo_canvas_item_destroy(HippoCanvasItem *canvas_item)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
+
+    g_object_run_dispose(G_OBJECT(canvas_item));
+}
+
 void
 hippo_canvas_item_set_context(HippoCanvasItem    *canvas_item,
                               HippoCanvasContext *context)
@@ -320,6 +361,25 @@ hippo_canvas_item_set_visible(HippoCanvasItem    *canvas_item,
     }
 
     hippo_canvas_container_set_child_visible(parent, canvas_item, visible != FALSE);
+}
+
+
+/**
+ * hippo_canvas_item_emit_destroy
+ * @canvas_item: the canvas item
+ * 
+ * Emit the ::destroy signal on canvas_item. Note that this doesn't actually destroy
+ * the item (see hippo_canvas_item()) for that. This function should be called at
+ * the end of your implementation of dispose() before chaining up if you are implementing
+ * HippoCanvasItem directly. If you derive from an implementation of HippoCanvasItem
+ * like HippoCanvasBox, you need not and should not call this function.
+ **/
+void
+hippo_canvas_item_emit_destroy (HippoCanvasItem *canvas_item)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
+
+    g_signal_emit(canvas_item, signals[DESTROY], 0);
 }
 
 gboolean

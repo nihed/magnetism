@@ -70,6 +70,12 @@ HippoCanvas::HippoCanvas()
 
 
 void
+HippoCanvas::onRootDestroy()
+{
+    setRoot(0);
+}
+
+void
 HippoCanvas::onRootRequestChanged()
 {
     markRequestChanged();
@@ -96,11 +102,14 @@ HippoCanvas::setRoot(HippoCanvasItem *item)
     if (root_ == item)
         return;
 
+    rootDestroy_.disconnect();
     rootRequestChanged_.disconnect();
     rootPaintNeeded_.disconnect();
 
     root_ = item;
     if (item) {
+        rootDestroy_.connect(G_OBJECT(item), "destroy",
+            slot(this, &HippoCanvas::onRootDestroy));
         rootRequestChanged_.connect(G_OBJECT(item), "request-changed",
             slot(this, &HippoCanvas::onRootRequestChanged));
         rootPaintNeeded_.connect(G_OBJECT(item), "paint-needed",

@@ -4755,7 +4755,7 @@ dm_context_get_value(DMContext      *context,
             }
             break;
         case HIPPO_DATA_STRING:
-            value->u.string = node->value;
+            value->u.string = node->value != NULL ? node->value : "";
             break;
         case HIPPO_DATA_URL:
             value->u.string = hippo_connection_make_absolute_url(context->connection, str);

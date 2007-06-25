@@ -39,7 +39,7 @@ struct _HippoCanvasItemIface {
     void                   (* set_parent)         (HippoCanvasItem      *canvas_item,
                                                    HippoCanvasContainer *container);
     HippoCanvasContainer*  (* get_parent)         (HippoCanvasItem      *canvas_item);
-    
+
     void     (* paint)              (HippoCanvasItem  *canvas_item,
                                      cairo_t          *cr,
                                      HippoRectangle   *damaged_box);
@@ -89,6 +89,8 @@ GType            hippo_canvas_item_get_type               (void) G_GNUC_CONST;
 
 void               hippo_canvas_item_sink               (HippoCanvasItem    *canvas_item);
 
+void               hippo_canvas_item_destroy            (HippoCanvasItem    *canvas_item);
+
 void               hippo_canvas_item_set_context        (HippoCanvasItem    *canvas_item,
                                                          HippoCanvasContext *context);
 
@@ -123,6 +125,8 @@ gboolean           hippo_canvas_item_get_visible        (HippoCanvasItem    *can
 
 void               hippo_canvas_item_set_visible        (HippoCanvasItem    *canvas_item,
                                                          gboolean            visible); 
+
+void hippo_canvas_item_emit_destroy (HippoCanvasItem *canvas_item);
 
 gboolean hippo_canvas_item_emit_button_press_event (HippoCanvasItem *canvas_item,
                                                     int              x,

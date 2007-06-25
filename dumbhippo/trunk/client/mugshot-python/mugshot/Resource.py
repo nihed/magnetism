@@ -39,6 +39,7 @@ class Resource:
         for i in range(0, len(self.__connections)):
             if self.__connections[i][0] == handler:
                 del self.__connections[i]
+                return
                 
     def get(self, property):
         """Retrieve a resource property. 

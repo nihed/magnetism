@@ -159,7 +159,12 @@ hippo_canvas_helper_dispose(GObject *object)
 {
     HippoCanvasHelper *helper = HIPPO_CANVAS_HELPER(object);
 
-    hippo_canvas_helper_set_root(helper, NULL);
+    if (helper->root != NULL) {
+        HippoCanvasItem *old_root = g_object_ref(helper->root);
+        hippo_canvas_helper_set_root(helper, NULL);
+        hippo_canvas_item_destroy(old_root);
+        g_object_unref(old_root);
+    }
 
     g_assert(helper->widget_items == NULL);
 
@@ -945,6 +950,13 @@ hippo_canvas_helper_translate_to_screen(HippoCanvasContext *context,
 }
 
 static void
+canvas_root_destroy(HippoCanvasItem   *root,
+                    HippoCanvasHelper *helper)
+{
+    hippo_canvas_helper_set_root(helper, NULL);
+}
+
+static void
 canvas_root_request_changed(HippoCanvasItem   *root,
                             HippoCanvasHelper *helper)
 {
@@ -994,6 +1006,9 @@ hippo_canvas_helper_set_root(HippoCanvasHelper *helper,
 
     if (helper->root != NULL) {
         g_signal_handlers_disconnect_by_func(helper->root,
+                                             G_CALLBACK(canvas_root_destroy),
+                                             helper);
+        g_signal_handlers_disconnect_by_func(helper->root,
                                              G_CALLBACK(canvas_root_request_changed),
                                              helper);
         g_signal_handlers_disconnect_by_func(helper->root,
@@ -1014,6 +1029,9 @@ hippo_canvas_helper_set_root(HippoCanvasHelper *helper,
         g_object_ref(root);
         hippo_canvas_item_sink(root);
         helper->root = root;
+        g_signal_connect(root, "destroy",
+                         G_CALLBACK(canvas_root_destroy),
+                         helper);
         g_signal_connect(root, "request-changed",
                          G_CALLBACK(canvas_root_request_changed),
                          helper);

@@ -1309,6 +1309,23 @@ hippo_dbus_helper_filter_message(DBusConnection *connection,
             g_warning("NameOwnerChanged had wrong args???");
         }
     }
+
+    if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_SIGNAL) {
+        HippoDBusHelper *helper = get_helper(connection); 
+        const char *sender = dbus_message_get_sender(message);
+        HippoDBusService *service = g_hash_table_lookup(helper->services_by_owner, sender);
+
+        if (service != NULL) {
+            int i;
+
+            for (i = 0; service->signal_handlers[i].interface != NULL; i++) {
+                const HippoDBusSignalTracker *tracker = &service->signal_handlers[i];
+                if (dbus_message_is_signal(message, tracker->interface, tracker->signal)) {
+                    tracker->handler(connection, message, service->data);
+                }
+            }
+        }
+    }
     
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }

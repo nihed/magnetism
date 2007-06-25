@@ -91,6 +91,9 @@ struct _HippoCanvasBox {
     
     guint8 spacing;
 
+    /* If set, we debug-spew about size allocation prefixed with this name */
+    char *debug_name;
+
     guint floating : 1;
     guint needs_width_request : 1;
     guint needs_height_request : 1;
@@ -158,6 +161,7 @@ void             hippo_canvas_box_get_position      (HippoCanvasBox             
                                                      HippoCanvasItem             *child,
                                                      int                         *x,
                                                      int                         *y);
+void             hippo_canvas_box_clear             (HippoCanvasBox              *box);
 void             hippo_canvas_box_remove            (HippoCanvasBox              *box,
                                                      HippoCanvasItem             *child);
 void             hippo_canvas_box_remove_all        (HippoCanvasBox              *box);

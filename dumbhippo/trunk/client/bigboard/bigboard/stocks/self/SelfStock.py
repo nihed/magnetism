@@ -146,7 +146,7 @@ class SelfSlideout(CanvasVBox):
             self.__fus_box.append(link)
             self.__fus_users = []
             self.__handle_fus_change()
-
+            
         self.update_self(myself)
 
     def update_self(self, myself):
@@ -251,13 +251,15 @@ class SelfStock(AbstractMugshotStock):
         self._box.append(self._signin)
         self._signin.connect("button-press-event", lambda signin, event: self.__on_activate())
 
+        self._model = DataModel()
+        
         self.__myself = None
-        model = DataModel()
-        model.add_connected_handler(self.__on_connected)
-        if model.connected:
+        self._model.add_connected_handler(self.__on_connected)
+        if self._model.connected:
             self.__on_connected()
 
         self.__slideout = None
+        self.__slideout_display = None
 
         self.__create_fus_proxy()
 
@@ -273,11 +275,10 @@ class SelfStock(AbstractMugshotStock):
             pass
 
     def __on_connected(self):
-        model = DataModel()
-        self._box.set_child_visible(self._signin, model.self_id == None)
-        self._box.set_child_visible(self._whereim_box, model.self_id != None)
+        self._box.set_child_visible(self._signin, self._model.self_id == None)
+        self._box.set_child_visible(self._whereim_box, self._model.self_id != None)
 
-        query = model.query_resource(model.self_id, "+;lovedAccounts +")
+        query = self._model.query_resource(self._model.self_id, "+;lovedAccounts +")
         query.add_handler(self.__on_got_self)
         query.execute()
         

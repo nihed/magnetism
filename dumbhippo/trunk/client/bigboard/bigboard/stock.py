@@ -4,7 +4,10 @@ import gobject
 
 import hippo
 
-import big_widgets, mugshot, libbig, libbig.state
+import big_widgets
+import mugshot
+import libbig
+import libbig.state
 from libbig.singletonmixin import Singleton
 
 ## FIXME remove these from the Stock class ... I can't figure out how to
@@ -109,7 +112,7 @@ class AbstractMugshotStock(Stock):
         
         self.__cursize = None
         self.__box = hippo.CanvasBox()
-        
+
     def __sync_content(self):
         self.__box.remove_all()        
         if self._auth:
@@ -149,7 +152,7 @@ class AbstractMugshotStock(Stock):
         """Should be overridden by subclasses to handle the state where mugshot
         is initialized and connected."""
         pass
-            
+
     def __handle_mugshot_connection_status(self, auth, xmpp, contacts):
         if auth != self._auth:
             self._logger.debug("emitting visibility: %s", auth)
