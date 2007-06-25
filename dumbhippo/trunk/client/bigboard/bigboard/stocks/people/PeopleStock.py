@@ -40,7 +40,7 @@ class PersonItem(PhotoContentItem, DataBoundItem):
         self.__details_box = CanvasVBox()
         self.set_child(self.__details_box)
 
-        self.__name = hippo.CanvasText(xalign=hippo.ALIGNMENT_FILL, yalign=hippo.ALIGNMENT_START,
+        self.__name = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START,
                                       size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         self.__details_box.append(self.__name)
 
@@ -56,6 +56,9 @@ class PersonItem(PhotoContentItem, DataBoundItem):
 
         self.__aim_icon = None
         self.__aim_buddy = None
+        
+        self.__local_icon = None
+        self.__local_buddy = None
 
     def __update_color(self):
         if self.__pressed:
@@ -112,13 +115,33 @@ class PersonItem(PhotoContentItem, DataBoundItem):
 
         if self.__aim_icon:
             self.__aim_icon.destroy()
+            self.__aim_icon = None
 
         self.__aim_buddy = buddy
-        self.__aim_icon = AimIcon(self.__aim_buddy)
-        self.__presence_box.append(self.__aim_icon)
+
+        if self.__aim_buddy:
+            self.__aim_icon = AimIcon(self.__aim_buddy)
+            self.__presence_box.append(self.__aim_icon)
 
     def get_aim_buddy(self):
         return self.__aim_buddy
+
+    def set_local_buddy(self, buddy):
+        if buddy == self.__local_buddy:
+            return
+
+        if self.__local_icon:
+            self.__local_icon.destroy()
+            self.__local_icon = None
+
+        self.__local_buddy = buddy
+
+        if self.__local_buddy:
+            self.__local_icon = LocalIcon(self.__local_buddy)
+            self.__presence_box.append(self.__local_icon)
+
+    def get_local_buddy(self):
+        return self.__local_buddy
 
 class ExternalAccountIcon(CanvasHBox):
     def __init__(self, acct):
@@ -156,9 +179,9 @@ class AimIcon(hippo.CanvasText, DataBoundItem):
         
     def __update(self, buddy):
         if buddy.status == "Available":
-            markup = "<b>AIM</b>"
+            markup = "<b>AIM</b> "
         else:
-            markup = "AIM"
+            markup = "AIM "
         self.set_property("markup", markup)
         self.set_property("tooltip", "Chat with %s (%s)" % (buddy.name, buddy.status,))
         
@@ -166,6 +189,17 @@ class AimIcon(hippo.CanvasText, DataBoundItem):
         _open_aim(self.resource.name)
         return True
 
+class LocalIcon(hippo.CanvasText, DataBoundItem):
+    def __init__(self, buddy):
+        hippo.CanvasText.__init__(self)
+        DataBoundItem.__init__(self, buddy)
+        
+        self.connect_resource(self.__update)
+        self.__update(self.resource)
+        
+    def __update(self, buddy):
+        self.set_property("markup", "<b>LOCAL</b> ")
+        
 class ProfileItem(hippo.CanvasBox, DataBoundItem):
     def __init__(self, user, **kwargs):
         kwargs['orientation'] = hippo.ORIENTATION_VERTICAL
@@ -253,7 +287,9 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
 class BuddyMonitor(gobject.GObject):
     __gsignals__ = {
         "aim-added": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "aim-removed": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
+        "aim-removed": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "local-added": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "local-removed": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
        }
         
     def __init__(self):
@@ -264,6 +300,7 @@ class BuddyMonitor(gobject.GObject):
         if self._model.connected:
             self.__on_connected()
         self.__aim_buddies = {}
+        self.__local_buddies = {}
             
     def __on_connected(self):
         query = self._model.query_resource("online-desktop:/o/global", "onlineBuddies +")
@@ -297,9 +334,32 @@ class BuddyMonitor(gobject.GObject):
         for aim in old_aim_buddies:
             self.emit("aim-removed", old_aim_buddies[aim])
 
+        old_local_buddies = self.__local_buddies
+        self.__local_buddies = {}
+
+        for buddy in buddies:
+            if buddy.protocol != "mugshot-local":
+                continue
+
+            self.__local_buddies[buddy.name] = buddy
+            if not buddy.name in old_local_buddies:
+                self.emit("local-added", buddy)
+            else:
+                del old_local_buddies[buddy.name]
+
+        for local in old_local_buddies:
+            self.emit("local-removed", old_local_buddies[local])
+
+            
     def get_aim_buddy(self, aim):
         try:
             return self.__aim_buddies[aim]
+        except KeyError:
+            return None
+
+    def get_local_buddy(self, user_id):
+        try:
+            return self.__local_buddies[user_id]
         except KeyError:
             return None
 
@@ -329,6 +389,8 @@ class PeopleStock(AbstractMugshotStock):
         self.__buddy_monitor = BuddyMonitor()
         self.__buddy_monitor.connect("aim-added", self.__on_aim_added)
         self.__buddy_monitor.connect("aim-removed", self.__on_aim_removed)
+        self.__buddy_monitor.connect("local-added", self.__on_local_added)
+        self.__buddy_monitor.connect("local-removed", self.__on_local_removed)
         
     def get_authed_content(self, size):
         return self.__box
@@ -408,6 +470,9 @@ class PeopleStock(AbstractMugshotStock):
         buddy = self.__buddy_monitor.get_aim_buddy(aim)
         self.__items[contact.resource_id].set_aim_buddy(buddy)
 
+        buddy = self.__buddy_monitor.get_local_buddy(contact.resource_id)
+        self.__items[contact.resource_id].set_local_buddy(buddy)
+        
     def __handle_item_pressed(self, item):
         if self.__slideout:
             self.__slideout.destroy()
@@ -445,3 +510,21 @@ class PeopleStock(AbstractMugshotStock):
         
         item = self.__items[contact.resource_id]
         item.set_aim_buddy(None)
+
+
+    # FIXME: Need to handle multiple session for the same resource
+    def __on_local_added(self, object, buddy):
+        try:
+            item = self.__items[buddy.name]
+        except KeyError:
+            return
+            
+        item.set_local_buddy(buddy)
+        
+    def __on_local_removed(self, object, buddy):
+        try:
+            item = self.__items[buddy.name]
+        except KeyError:
+            return
+            
+        item.set_local_buddy(None)
