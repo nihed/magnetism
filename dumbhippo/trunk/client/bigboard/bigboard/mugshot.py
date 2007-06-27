@@ -263,7 +263,7 @@ class Mugshot(gobject.GObject):
         self.emit("initialized")
     
     def __get_baseprop(self, name):
-        return self.__baseprops[name]
+        return self.__baseprops and self.__baseprops[name] or None
     
     def get_baseurl(self):
         return self.__get_baseprop('baseurl')
