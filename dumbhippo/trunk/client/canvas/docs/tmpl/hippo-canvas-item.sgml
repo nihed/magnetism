@@ -9,12 +9,10 @@ HippoCanvasItem
 
 </para>
 
-
 <!-- ##### SECTION See_Also ##### -->
 <para>
 
 </para>
-
 
 <!-- ##### SECTION Stability_Level ##### -->
 
@@ -49,6 +47,13 @@ HippoCanvasItem
 @hippocanvasitem: the object which received the signal.
 @arg1: 
 @Returns: 
+
+<!-- ##### SIGNAL HippoCanvasItem::destroy ##### -->
+<para>
+
+</para>
+
+@hippocanvasitem: the object which received the signal.
 
 <!-- ##### SIGNAL HippoCanvasItem::key-press-event ##### -->
 <para>
