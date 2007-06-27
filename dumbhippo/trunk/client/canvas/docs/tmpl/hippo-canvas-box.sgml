@@ -9,12 +9,10 @@ HippoCanvasBox
 
 </para>
 
-
 <!-- ##### SECTION See_Also ##### -->
 <para>
 
 </para>
-
 
 <!-- ##### SECTION Stability_Level ##### -->
 
@@ -132,6 +130,11 @@ HippoCanvasBox
 </para>
 
 <!-- ##### ARG HippoCanvasBox:color-set ##### -->
+<para>
+
+</para>
+
+<!-- ##### ARG HippoCanvasBox:debug-name ##### -->
 <para>
 
 </para>
