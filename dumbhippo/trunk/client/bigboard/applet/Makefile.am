@@ -10,6 +10,8 @@ $(server_in_files): $(server_in_files:.server.in=.server.in.in)
 appletdir = $(libexecdir)
 applet_SCRIPTS = bigboard-applet
 
+CLEANFILES = $(server_DATA)
+
 DISTCLEANFILES = $(server_in_files)
 
 EXTRA_DIST = bigboard-applet $(server_in_files:.server.in=.server.in.in) 

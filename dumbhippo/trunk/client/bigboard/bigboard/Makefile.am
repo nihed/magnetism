@@ -38,7 +38,6 @@ libbig_PYTHON = libbig/__init__.py \
 	       	libbig/logutil.py \
 	       	libbig/polling.py \
 	       	libbig/singletonmixin.py \
-	       	libbig/state.py \
 	       	libbig/struct.py \
 	       	libbig/xmlquery.py
 
