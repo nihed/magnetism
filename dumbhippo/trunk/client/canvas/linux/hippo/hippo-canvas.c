@@ -428,6 +428,15 @@ hippo_canvas_set_root(HippoCanvas     *canvas,
     hippo_canvas_helper_set_root(canvas->helper, root);
 }
 
+void
+hippo_canvas_set_width(HippoCanvas     *canvas,
+                       int              width)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS(canvas));
+
+    hippo_canvas_helper_set_width(canvas->helper, width);
+}
+
 /* TEST CODE */
 #if 1
 #include <gtk/gtk.h>

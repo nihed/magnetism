@@ -73,6 +73,7 @@ COMMON_CANVAS_HEADERFILES = 					\
 	$(CANVASSRCDIR)/common/hippo/hippo-canvas-image.h		\
 	$(CANVASSRCDIR)/common/hippo/hippo-canvas-image-button.h	\
 	$(CANVASSRCDIR)/common/hippo/hippo-canvas-item.h		\
+	$(CANVASSRCDIR)/common/hippo/hippo-canvas-layout.h		\
 	$(CANVASSRCDIR)/common/hippo/hippo-canvas-link.h		\
 	$(CANVASSRCDIR)/common/hippo/hippo-canvas-style.h		\
 	$(CANVASSRCDIR)/common/hippo/hippo-canvas-text.h		\
@@ -96,6 +97,7 @@ COMMON_CANVAS_SOURCEFILES = 					\
 	$(CANVASSRCDIR)/common/hippo/hippo-canvas-image.c		\
 	$(CANVASSRCDIR)/common/hippo/hippo-canvas-image-button.c	\
 	$(CANVASSRCDIR)/common/hippo/hippo-canvas-item.c		\
+	$(CANVASSRCDIR)/common/hippo/hippo-canvas-layout.c		\
 	$(CANVASSRCDIR)/common/hippo/hippo-canvas-link.c		\
 	$(CANVASSRCDIR)/common/hippo/hippo-canvas-style.c		\
 	$(CANVASSRCDIR)/common/hippo/hippo-canvas-text.c		\

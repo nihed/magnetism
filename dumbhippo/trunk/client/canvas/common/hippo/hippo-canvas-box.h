@@ -47,6 +47,11 @@ typedef void (* HippoCanvasForeachChildFunc) (HippoCanvasItem *child,
 typedef struct _HippoCanvasBox      HippoCanvasBox;
 typedef struct _HippoCanvasBoxClass HippoCanvasBoxClass;
 
+typedef struct _HippoCanvasBoxChild HippoCanvasBoxChild;
+
+/* Declare here to avoid circular header file dependency */
+typedef struct _HippoCanvasLayout   HippoCanvasLayout;
+
 #define HIPPO_TYPE_CANVAS_BOX              (hippo_canvas_box_get_type ())
 #define HIPPO_CANVAS_BOX(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), HIPPO_TYPE_CANVAS_BOX, HippoCanvasBox))
 #define HIPPO_CANVAS_BOX_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), HIPPO_TYPE_CANVAS_BOX, HippoCanvasBoxClass))
@@ -61,7 +66,22 @@ struct _HippoCanvasBox {
     HippoCanvasStyle *style; /* may be NULL if no relevant props set */
     GSList *children;
 
+    HippoCanvasLayout *layout;
+
     char *tooltip;
+
+    /* If set, we debug-spew about size allocation prefixed with this name */
+    char *debug_name;
+
+    /* Cache of last requested sizes of content. This largely duplicates the caching
+     * in HippoCanvasBoxChild; removing the caching in HippoCanvasBoxChild would
+     * save 20 bytes per item at the expense of having to continually call into
+     * the child and have the child add back on the padding border */
+    int content_min_width;       /* -1 if invalid */
+    int content_natural_width;   /* always valid and >= 0 when min_width is valid */
+    int content_min_height;      /* -1 if invalid */
+    int content_natural_height;  /* always valid and >= 0 when min_height is valid */
+    int content_height_request_for_width; /* width the height_request is valid for */
     
     int allocated_width;
     int allocated_height;
@@ -90,9 +110,6 @@ struct _HippoCanvasBox {
     guint8 border_right;
     
     guint8 spacing;
-
-    /* If set, we debug-spew about size allocation prefixed with this name */
-    char *debug_name;
 
     guint floating : 1;
     guint needs_width_request : 1;
@@ -137,7 +154,6 @@ struct _HippoCanvasBoxClass {
                                                gboolean          hovering);
 };
 
-
 GType            hippo_canvas_box_get_type          (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_box_new               (void);
@@ -148,6 +164,7 @@ void             hippo_canvas_box_prepend           (HippoCanvasBox             
 void             hippo_canvas_box_append            (HippoCanvasBox              *box,
                                                      HippoCanvasItem             *child,
                                                      HippoPackFlags               flags);
+
 void             hippo_canvas_box_move              (HippoCanvasBox              *box,
                                                      HippoCanvasItem             *child,
                                                      HippoGravity                 gravity,
@@ -191,6 +208,9 @@ void             hippo_canvas_box_set_child_packing (HippoCanvasBox             
                                                      HippoCanvasItem             *child,
                                                      HippoPackFlags               flags);
 
+void hippo_canvas_box_set_layout(HippoCanvasBox    *box,
+                                 HippoCanvasLayout *layout);
+    
 /* Protected accessors for subclasses */
 HippoCanvasContext* hippo_canvas_box_get_context         (HippoCanvasBox *box);
 void                hippo_canvas_box_get_background_area (HippoCanvasBox *box,
@@ -207,6 +227,70 @@ void                hippo_canvas_box_set_clickable       (HippoCanvasBox *box,
                                                           gboolean        clickable);
 
 gboolean            hippo_canvas_box_is_clickable        (HippoCanvasBox *box);
+
+/* API for layout managers */
+
+HippoCanvasBoxChild *hippo_canvas_box_find_box_child (HippoCanvasBox      *box,
+                                                      HippoCanvasItem     *item);
+
+GList *hippo_canvas_box_get_layout_children (HippoCanvasBox *box);
+
+#define HIPPO_TYPE_CANVAS_BOX_CHILD (hippo_canvas_box_child_get_type ())
+
+/**
+ * HippoCanvasBoxChild:
+ * 
+ * #HippoCanvasBoxChild holds data associated with an item that has been
+ * added to a canvas box. It is used by implementations of #HippoCanvasLayout
+ * when implementing methods like get_width_request and size_allocate.
+ *
+ * The life-cycle of a #HippoCanvasBoxChild is effectively until the item
+ * is removed from its parent. If a reference is held beyond that point, calling
+ * methods on the box child is safe, but the methods will have no effect,
+ * and defaults results will be returned.
+ */
+struct _HippoCanvasBoxChild {
+    HippoCanvasItem *item;
+
+    /* If this is false, layout managers should ignore this item */
+    guint            in_layout : 1;
+
+    guint            expand : 1;
+    guint            end : 1;
+    guint            fixed : 1;
+    guint            if_fits : 1;
+    guint            float_left : 1;
+    guint            float_right : 1;
+    guint            clear_left : 1;
+    guint            clear_right : 1;
+    guint            visible : 1;
+};
+
+GType     hippo_canvas_box_child_get_type           (void);
+
+HippoCanvasBoxChild *hippo_canvas_box_child_ref   (HippoCanvasBoxChild *child);
+void                 hippo_canvas_box_child_unref (HippoCanvasBoxChild *child);
+
+void     hippo_canvas_box_child_set_qdata (HippoCanvasBoxChild *child,
+                                           GQuark               key,
+                                           gpointer             data,
+                                           GDestroyNotify       notify);
+gpointer hippo_canvas_box_child_get_qdata (HippoCanvasBoxChild *child,
+                                           GQuark               key);
+
+void      hippo_canvas_box_child_get_width_request  (HippoCanvasBoxChild *child,
+                                                     int                 *min_width_p,
+                                                     int                 *natural_width_p);
+void      hippo_canvas_box_child_get_height_request (HippoCanvasBoxChild *child,
+                                                     int                  for_width,
+                                                     int                 *min_height_p,
+                                                     int                 *natural_height_p);
+void     hippo_canvas_box_child_allocate            (HippoCanvasBoxChild *child,
+                                                     int                  x,
+                                                     int                  y,
+                                                     int                  width,
+                                                     int                  height,
+                                                     gboolean             origin_changed);
 
 G_END_DECLS
 

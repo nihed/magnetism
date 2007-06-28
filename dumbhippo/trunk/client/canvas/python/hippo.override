@@ -4,12 +4,14 @@ headers
 #include <Python.h>
 
 #include "pygobject.h"
+#include "canvas-box-child.h"
 #include "hippo/hippo-canvas-item.h"
 #include "hippo/hippo-canvas-container.h"
 #include "hippo/hippo-canvas-box.h"
 #include "hippo/hippo-canvas-image.h"
 #include "hippo/hippo-canvas-image-button.h"
 #include "hippo/hippo-canvas-text.h"
+#include "hippo/hippo-canvas-layout.h"
 #include "hippo/hippo-canvas-link.h"
 #include "hippo/hippo-canvas-gradient.h"
 #include "hippo/hippo-canvas.h"
@@ -308,6 +310,52 @@ _wrap_hippo_canvas_box_get_position(PyGObject *self, PyObject *args, PyObject *k
     hippo_canvas_box_get_position(HIPPO_CANVAS_BOX(self->obj), HIPPO_CANVAS_ITEM(child->obj), &x, &y);
 
     return Py_BuildValue("(ii)", x, y);
+}
+%%
+override hippo_canvas_box_find_box_child kwargs
+static PyObject *
+_wrap_hippo_canvas_box_find_box_child(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "child", NULL };
+    PyGObject *child;
+    HippoCanvasBoxChild *box_child;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:HippoCanvasBox.find_box_child", kwlist, &PyHippoCanvasItem_Type, &child))
+        return NULL;
+    
+    box_child = hippo_canvas_box_find_box_child(HIPPO_CANVAS_BOX(self->obj), HIPPO_CANVAS_ITEM(child->obj));
+
+    return py_hippo_canvas_box_child_new(box_child);
+}
+%%
+override hippo_canvas_box_get_layout_children noargs
+static PyObject *
+_wrap_hippo_canvas_box_get_layout_children(PyGObject *self)
+{   
+    GSList *l;
+    PyObject *py_list;
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(self->obj);
+
+    py_list = PyList_New(0);
+    if (py_list == NULL)
+        return NULL;
+    
+    for (l = box->children; l != NULL; l = l->next) {
+	HippoCanvasBoxChild *child = l->data;
+
+	if (child->in_layout) {
+	    PyObject *child_obj = py_hippo_canvas_box_child_new(child);
+	    
+	    if (child_obj == NULL) {
+		Py_DECREF(py_list);
+		return NULL;
+	    }
+	    PyList_Append(py_list, child_obj);
+	    Py_DECREF(child_obj);
+	}
+    }
+    
+    return py_list;
 }
 %%
 override HippoCanvasItem__proxy_do_get_width_request
@@ -643,6 +691,133 @@ _wrap_hippo_event_tp_getattr(PyObject *self, char *attr)
     return Py_None;
 }
 %%
+override HippoCanvasLayout__proxy_do_get_width_request
+static void
+_wrap_HippoCanvasLayout__proxy_do_get_width_request(HippoCanvasLayout *self, int*min_width, int*natural_width)
+{
+    PyGILState_STATE __py_state;
+    PyObject *py_self;
+    PyObject *py_retval;
+    PyObject *py_method;
+
+    int my_min_width = 0;
+    int my_natural_width = 0;
+   
+    __py_state = pyg_gil_state_ensure();
+    py_self = pygobject_new((GObject *) self);
+    if (!py_self) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        pyg_gil_state_release(__py_state);
+        return;
+    } 
+    py_method = PyObject_GetAttrString(py_self, "do_get_width_request");
+    if (!py_method) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    py_retval = PyObject_CallObject(py_method, NULL);
+    if (!py_retval) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_method);
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    if (!PyArg_ParseTuple(py_retval, "ii", &my_min_width, &my_natural_width)) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_retval);
+        Py_DECREF(py_method);
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    
+    if (min_width)
+        *min_width = my_min_width;
+    if (natural_width)
+        *natural_width = my_natural_width;
+   
+    Py_DECREF(py_retval);
+    Py_DECREF(py_method);
+    Py_DECREF(py_self);
+    pyg_gil_state_release(__py_state);
+}
+%%
+override HippoCanvasLayout__proxy_do_get_height_request
+static void
+_wrap_HippoCanvasLayout__proxy_do_get_height_request(HippoCanvasLayout *self, int for_width, int*min_height, int*natural_height)
+{
+    PyGILState_STATE __py_state;
+    PyObject *py_self;
+    PyObject *py_for_width;
+    PyObject *py_retval;
+    PyObject *py_args;
+    PyObject *py_method;
+
+    int my_min_height = 0;
+    int my_natural_height = 0;
+   
+    __py_state = pyg_gil_state_ensure();
+    py_self = pygobject_new((GObject *) self);
+    if (!py_self) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    py_for_width = PyInt_FromLong(for_width);
+    
+    py_args = PyTuple_New(1);
+    PyTuple_SET_ITEM(py_args, 0, py_for_width);
+    
+    py_method = PyObject_GetAttrString(py_self, "do_get_height_request");
+    if (!py_method) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_args);
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    py_retval = PyObject_CallObject(py_method, py_args);
+    if (!py_retval) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_method);
+        Py_DECREF(py_args);
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    if (!PyArg_ParseTuple(py_retval, "ii", &my_min_height, &my_natural_height)) {
+        if (PyErr_Occurred())
+            PyErr_Print();
+        Py_DECREF(py_retval);
+        Py_DECREF(py_method);
+        Py_DECREF(py_args);
+        Py_DECREF(py_self);
+        pyg_gil_state_release(__py_state);
+        return;
+    }
+    
+    if (min_height)
+        *min_height = my_min_height;
+    if (natural_height)
+        *natural_height = my_natural_height;
+   
+    Py_DECREF(py_retval);
+    Py_DECREF(py_method);
+    Py_DECREF(py_args);
+    Py_DECREF(py_self);
+    pyg_gil_state_release(__py_state);
+}
+%%
 override hippo_cairo_surface_from_gdk_pixbuf kwargs
 static cairo_surface_t*
 _cairo_surface_from_pixbuf (GdkPixbuf *pixbuf)
@@ -792,3 +967,10 @@ _wrap_hippo_canvas_set_load_image_hook(PyGObject *self, PyObject *args, PyObject
     }
   	return result;
 }
+%%
+init
+if (PyType_Ready(&PyHippoCanvasBoxChild_Type) < 0) {
+    g_warning("could not ready hippo.CanvasBoxChild");
+    return;
+}
+%%

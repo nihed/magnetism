@@ -1,4 +1,4 @@
-;; -*- scheme -*-
+; -*- scheme -*-
 ; object definitions ...
 
 (define-boxed Event
@@ -695,6 +695,30 @@
   )
 )
 
+(define-method set_layout
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_set_layout")
+  (parameters
+    '("HippoCanvasLayout*" "layout")
+  )
+  (return-type "none")
+)
+
+(define-method find_box_child
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_find_box_child")
+  (parameters
+    '("HippoCanvasItem*" "child")
+  )
+  (return-type "HippoCanvasBoxChild*")
+)
+
+(define-method get_layout_children
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_get_layout_children")
+  (return-type "GSList*")
+)
+
 ;; From hippo-canvas-context.h
 
 (define-function canvas_context_get_type
@@ -1124,6 +1148,59 @@
   (return-type "none")
   (parameters
     '("HippoCanvasContext*" "context")
+  )
+)
+
+;; From hippo-canvas-layout.h
+
+(define-interface CanvasLayout
+  (in-module "Hippo")
+  (c-name "HippoCanvasLayout")
+  (gtype-id "HIPPO_TYPE_CANVAS_LAYOUT")
+)
+
+(define-virtual set_box
+  (of-object "HippoCanvasLayout")
+  (c-name "hippo_canvas_layout_set_box")
+  (return-type "none")
+  (parameters
+   '("HippoCanvasBox*" "box")
+   )
+)
+
+(define-virtual get_width_request
+  (of-object "HippoCanvasLayout")
+  (c-name "hippo_canvas_layout_get_width_request")
+  (return-type "none")
+  (parameters
+    '("int*" "min_width" (direction "out"))
+    '("int*" "natural_width" (direction "out"))
+  )
+)
+
+(define-virtual get_height_request
+  (of-object "HippoCanvasLayout")
+  (c-name "hippo_canvas_layout_get_height_request")
+  (return-type "none")
+  (parameters
+    '("int" "for_width")
+    '("int*" "min_height" (direction "out"))
+    '("int*" "natural_height" (direction "out"))
+  )
+)
+
+(define-virtual allocate
+  (of-object "HippoCanvasLayout")
+  (c-name "hippo_canvas_layout_allocate")
+  (return-type "none")
+  (parameters
+    '("int" "x")
+    '("int" "y")
+    '("int" "width")
+    '("int" "height")
+    '("int" "requested_width")
+    '("int" "requested_height")
+    '("gboolean" "origin_changed")
   )
 )
 

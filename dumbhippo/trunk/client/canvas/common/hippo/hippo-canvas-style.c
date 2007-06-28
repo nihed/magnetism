@@ -207,7 +207,7 @@ hippo_canvas_style_set_property(GObject         *object,
                     g_string_append_len(no_px_g, p + 2, strlen(p + 2));
                     no_px = g_string_free(no_px_g, FALSE);
                 }
-                desc = pango_font_description_from_string(no_px);
+                desc = pango_font_description_from_string(no_px ? no_px : s);
                 g_free(no_px);
                 if (desc == NULL) {
                     g_warning("Failed to parse font description string '%s'", s);

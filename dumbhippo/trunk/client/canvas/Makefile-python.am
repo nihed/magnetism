@@ -2,6 +2,7 @@ hippo_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)			\
 	-I $(top_srcdir)/common		\
 	-I $(top_srcdir)/linux		\
+	-I $(top_srcdir)/python		\
 	$(PYTHON_INCLUDES)		\
 	$(PYTHON_BINDINGS_CFLAGS)	\
 	$(PYCAIRO_CFLAGS)		\
@@ -21,6 +22,8 @@ hippo_la_LIBADD =					\
 	$(top_builddir)/libhippocanvas-1.la
 
 hippo_la_SOURCES = 				\
+	$(PYTHONSRCDIR)/canvas-box-child.c	\
+	$(PYTHONSRCDIR)/canvas-box-child.h	\
 	$(PYTHONSRCDIR)/hippomodule.c
 
 nodist_hippo_la_SOURCES = \

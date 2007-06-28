@@ -85,6 +85,7 @@ hippo_canvas_item_base_init(void *klass)
                           G_TYPE_NONE, 2, G_TYPE_POINTER, HIPPO_TYPE_RECTANGLE);
         /**
          * HippoCanvasItem::request-changed
+         *
          * Signal emitted when the natural or minimum size of the canvas item
          * may have changed. The parent canvas or parent canvas item will normally
          * need to recompute its layout in response.
@@ -99,6 +100,7 @@ hippo_canvas_item_base_init(void *klass)
                           G_TYPE_NONE, 0);
         /**
          * HippoCanvasItem::paint-needed
+         *
          * Signal emitted when a canvas item needs to be repainted. The
          * rectangle is the bounding box of the areas that need repainting.
          */
@@ -112,6 +114,7 @@ hippo_canvas_item_base_init(void *klass)
                           G_TYPE_NONE, 1, HIPPO_TYPE_RECTANGLE);
         /**
          * HippoCanvasItem::button-press-event
+         *
          * Signal emitted when a mouse button is pressed down on the canvas item.
          */
         signals[BUTTON_PRESS_EVENT] =
@@ -124,6 +127,7 @@ hippo_canvas_item_base_init(void *klass)
                       G_TYPE_BOOLEAN, 1, HIPPO_TYPE_EVENT);
         /**
          * HippoCanvasItem::button-release-event
+         *
          * Signal emitted when a mouse button is released on the canvas item.
          */        
         signals[BUTTON_RELEASE_EVENT] =
@@ -136,6 +140,7 @@ hippo_canvas_item_base_init(void *klass)
                           G_TYPE_BOOLEAN, 1, HIPPO_TYPE_EVENT);
         /**
          * HippoCanvasItem::motion-notify-event
+         *
          * Signal emitted when the mouse pointer enters, leaves, or moves within
          * a canvas item. Note that unlike #GtkWidget, there are not separate
          * events for enter and leave.
@@ -205,7 +210,7 @@ hippo_canvas_item_sink(HippoCanvasItem    *canvas_item)
 
 /**
  * hippo_canvas_item_destroy:
- * HippoCanvasItem: the canvas item
+ * @HippoCanvasItem: the canvas item
  * 
  * Explicitly requests that the item be destroyed. This will cause item to
  * drop all references it holds to other objects, and also result in the

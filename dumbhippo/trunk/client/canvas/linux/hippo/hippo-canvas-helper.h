@@ -32,6 +32,11 @@ HippoCanvasHelper* hippo_canvas_helper_new (GtkContainer *base_container);
 void         hippo_canvas_helper_set_root (HippoCanvasHelper *helper,
                                            HippoCanvasItem   *root);
 
+/* Set an explicit width on the helper; this will be used instead of the minimum
+ * width when computing the required height */
+void         hippo_canvas_helper_set_width (HippoCanvasHelper *helper,
+                                            int                width);
+
 void         hippo_canvas_helper_set_load_image_hook(HippoCanvasLoadImageHook hook);
 
 /* Caller must chain up to GtkContainer::expose after calling */
