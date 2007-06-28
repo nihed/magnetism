@@ -82,7 +82,7 @@ class BigBoardApplet(gobject.GObject):
 
         _logger.debug("getting mugshot")
         self.__mugshot = mugshot.get_mugshot()
-        self.__mugshot.connect("self-known", self.__on_self_known)
+        self.__mugshot.connect("connection-status", self.__on_conn_status)
         
         ebox = gtk.EventBox()
         ebox.add_events(gtk.gdk.BUTTON_PRESS_MASK)
@@ -165,9 +165,10 @@ class BigBoardApplet(gobject.GObject):
         if self.__bb:
             self.__bb.Expand()
 
-    def __on_self_known(self, mugshot):
-        _logger.debug("got mugshot self known")
-        self.__sync()
+    def __on_connection_status(self, have_auth, connected, contacts):
+        _logger.debug("got mugshot conn status") 
+        if have_auth and connected:
+            self.__sync()
 
     def __sync(self):
         myself = self.__mugshot.get_self()
