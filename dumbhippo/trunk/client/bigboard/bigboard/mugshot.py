@@ -276,7 +276,7 @@ class Mugshot(gobject.GObject):
     
     @log_except(_logger)
     def __on_get_network_entity_props(self, proxy, attrs, connect=False):
-        self._logger.debug("entity properties: %s" % (attrs,))
+        self._logger.debug("entity properties: %s", attrs)
         
         guid = attrs[u'guid']
         if not self.__network.has_key(guid):
@@ -295,11 +295,12 @@ class Mugshot(gobject.GObject):
     
     @log_except(_logger)
     def __on_get_network(self, opaths):
+        self._logger.debug("got network reply %s", opaths)
         self.__network = {}
         for opath in opaths:
             proxy = dbus.SessionBus().get_object('org.mugshot.Mugshot', opath)
-            proxy.GetProperties(reply_handler=functools.partial(self.__on_get_network_entity_props, connect=True),
-                                error_handler=_self.__on_dbus_error)              
+            proxy.GetProperties(reply_handler=functools.partial(self.__on_get_network_entity_props, None, connect=True),
+                                error_handler=self.__on_dbus_error)              
     
     def get_network(self):
         if self.__network is None:
