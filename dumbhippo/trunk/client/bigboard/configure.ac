@@ -160,6 +160,9 @@ PKG_CHECK_MODULES(BIGBOARD, gtk+-2.0 >= 2.8 pygtk-2.0 >= 2.8 gnome-keyring-1)
 AC_SUBST(BIGBOARD_LIBS)
 AC_SUBST(BIGBOARD_CFLAGS)
 
+AC_PATH_PROG(GCONFTOOL, gconftool-2)
+AM_GCONF_SOURCE_2
+
 ## Python bindings
 AM_PATH_PYTHON
 AM_CHECK_PYTHON_HEADERS(,[AC_MSG_ERROR(could not find Python headers)])
@@ -172,6 +175,8 @@ AC_ARG_ENABLE(pymod_checks,
 if test x${enable_pymod_checks} = xyes; then
   AM_CHECK_PYMOD(hippo,,,AC_MSG_ERROR([hippo module required (hippo-canvas)]))
   AM_CHECK_PYMOD(gnomeapplet,,,AC_MSG_ERROR([gnomeapplet module required]))
+  AM_CHECK_PYMOD(gconf,,,AC_MSG_ERROR([gconf module required]))
+  AM_CHECK_PYMOD(gnome.ui,,,AC_MSG_ERROR([gnome.ui module required]))
   AM_CHECK_PYMOD(dbus,,,AC_MSG_ERROR([dbus module required]))
 fi
 

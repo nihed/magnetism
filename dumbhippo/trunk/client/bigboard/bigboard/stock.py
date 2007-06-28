@@ -7,7 +7,6 @@ import hippo
 import big_widgets
 import mugshot
 import libbig
-import libbig.state
 from libbig.singletonmixin import Singleton
 
 ## FIXME remove these from the Stock class ... I can't figure out how to
@@ -54,7 +53,6 @@ class Stock(gobject.GObject):
         
         # For use in subclasses as well
         self._logger = logging.getLogger('bigboard.stocks.' + self._id)  
-        self._state = libbig.state.PrefixedState('/stock/' + self._id)
         self._logger.debug("initializing")
         
     def get_id(self):
