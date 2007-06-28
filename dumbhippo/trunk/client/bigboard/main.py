@@ -4,7 +4,7 @@ import os, sys, threading, getopt, logging, StringIO, stat, signal
 import xml.dom.minidom
 
 import gobject, gtk, pango
-import gnome.ui
+import gnome.ui, gconf
 import dbus
 import dbus.service
 import dbus.glib
@@ -32,6 +32,8 @@ import bigboard.keybinder
 BUS_NAME_STR='org.mugshot.BigBoard'
 BUS_IFACE=BUS_NAME_STR
 BUS_IFACE_PANEL=BUS_IFACE + ".Panel"
+
+GCONF_PREFIX = '/apps/bigboard/'
 
 class GradientHeader(hippo.CanvasGradient):
     def __init__(self, **kwargs):
@@ -124,8 +126,6 @@ class Exchange(hippo.CanvasBox):
         self.__logger = logging.getLogger("bigboard.Panel")
         self.__stock = stock
         self.__ticker_text = None
-        self.__state = bigboard.libbig.state.PrefixedState('/panel/stock/' + stock.get_id() + "/") 
-        self.__state.set_default('expanded', True)
         self.__ticker_container = None
         self.__mini_more_link = None
         self.__sep = Separator()
@@ -151,15 +151,6 @@ class Exchange(hippo.CanvasBox):
         self.__stock.connect("visible", lambda s, v: self.set_size(self.__size))
         self.__stockbox = hippo.CanvasBox()
         self.append(self.__stockbox)
-        self.__sync_expanded()
-        # wait to append stock until set_size is called
-    
-    def __toggle_expanded(self):
-        self.__state['expanded'] = not self.__state['expanded']
-        self.__sync_expanded()
-        
-    def __sync_expanded(self):
-        self.set_child_visible(self.__stockbox, self.__state['expanded'])
     
     def get_stock(self):
         return self.__stock
@@ -216,6 +207,8 @@ X-GNOME-Autostart-enabled=true
             af.write(self.__autostart_data)
             af.close()
 
+        gconf_client = gconf.client_get_default()
+
         self.__keybinding = "Super_L"
         self.__keybinding_bound = False
         
@@ -223,14 +216,6 @@ X-GNOME-Autostart-enabled=true
         
         self.__logger.info("constructing")
         
-        self.__state = bigboard.libbig.state.PrefixedState('/panel/')  
-        
-        self.__state.set_default('listed', 'org.mugshot.bigboard.SelfStock;org.mugshot.bigboard.SearchStock;org.mugshot.bigboard.AppsStock;org.mugshot.bigboard.PhotosStock')
-                       
-        self.__size_str = bigboard.libbig.BiMap("size", "str", {Stock.SIZE_BULL: u'bull', Stock.SIZE_BEAR: u'bear'})
-        self.__state.set_default('size', self.__size_str['size'][Stock.SIZE_BULL])
-        self.__state.set_default('expanded', True)
-
         self.__stockreader = StockReader(dirs)
         self.__stockreader.connect("stock-added", lambda reader, stock: self.__on_stock_added(stock))
 
@@ -261,14 +246,13 @@ X-GNOME-Autostart-enabled=true
         
         self._main_box.append(self._stocks_box)
   
+        gconf_client.notify_add(GCONF_PREFIX + 'expand', self._sync_size)
         self._sync_size()
         
         self.__stockreader.load()        
 
-        if self.__state['expanded']:
-            self.Expand()
-        else:
-            self.Unexpand()
+        gconf_client.notify_add(GCONF_PREFIX + 'visible', self.__sync_visible)
+        self.__sync_visible()
   
         self._canvas.show()
 
@@ -279,7 +263,7 @@ X-GNOME-Autostart-enabled=true
         self.external_focus()
         
     def __on_stock_added(self, prestock):
-        if not prestock.get_id() in self.__state['listed'].split(';'):
+        if not prestock.get_id() in gconf.client_get_default().get_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING):
             self.__logger.debug("ignoring unlisted stock %s")
             self.__prelisted[prestock.get_id()] = prestock
             return
@@ -290,7 +274,10 @@ X-GNOME-Autostart-enabled=true
         self.list(stock)
         
     def __get_size(self):
-            return self.__size_str['str'][self.__state['size']]
+        client = gconf.client_get_default()
+        if client.get_bool(GCONF_PREFIX + 'expand'):
+            return Stock.SIZE_BULL
+        return Stock.SIZE_BEAR
         
     def list(self, stock):
         """Add a stock to an Exchange and append it to the bigboard."""
@@ -300,8 +287,9 @@ X-GNOME-Autostart-enabled=true
         self._exchanges.append(container)
                 
         last_matched = None
-        for listed in self.__state['listed'].split(';'):
-            if listed == stock.get_id():
+        for listed in gconf.client_get_default().get_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING):
+            stockid = stock.get_id()
+            if listed == stockid:
                 self.__logger.debug("found stock %s in saved listing, inserting after %s", stock, last_matched)
                 if last_matched is None:
                     self._stocks_box.prepend(container)
@@ -322,22 +310,21 @@ X-GNOME-Autostart-enabled=true
                 return stock
         raise KeyError("Couldn't find stock %s" % (id,))
 
-    def list_stock_id(self, id):
-        self.__state['listed'] += u';%s' % (id,)
-        prelisted = self.__prelisted[id]
-        self.list(prelisted.get())
-        del self.__prelisted[id]
+    @log_except()
+    def __sync_visible(self, *args):
+        vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
+        if vis:
+            self._dw.show()
+        else:
+            self._dw.hide()
         
     @log_except()
     def _toggle_size(self):
         self.__logger.debug("toggling size")
-        if self.__get_size() == Stock.SIZE_BULL:
-            self.__state['size'] = self.__size_str['size'][Stock.SIZE_BEAR]
-        else:
-            self.__state['size']= self.__size_str['size'][Stock.SIZE_BULL]
-        self._sync_size()
+        expanded = gconf.client_get_default().get_bool(GCONF_PREFIX + 'expand')
+        gconf.client_get_default().set_bool(GCONF_PREFIX + 'expand', not expanded)
             
-    def _sync_size(self):       
+    def _sync_size(self, *args):       
         self._header_box.set_child_visible(self._title, self.__get_size() == Stock.SIZE_BULL)
         if self.__get_size() == Stock.SIZE_BEAR:
             self._header_box.remove(self._size_button)
@@ -396,8 +383,7 @@ X-GNOME-Autostart-enabled=true
                 self.__logger.exception("failed to unbind '%s'", self.__keybinding)
             self.__logger.debug("unbound '%s'", self.__keybinding)
             self.__keybinding_bound = False
-        self._dw.hide()
-        self.__state['expanded'] = False
+        gconf.client_get_default().set_bool(GCONF_PREFIX + 'visible', False)
         self.Expanded(False)
 
     @dbus.service.method(BUS_IFACE_PANEL)
@@ -410,8 +396,7 @@ X-GNOME-Autostart-enabled=true
             bigboard.keybinder.tomboy_keybinder_bind(self.__keybinding, self.__on_focus)
             self.__logger.debug("bound '%s'", self.__keybinding)
             self.__keybinding_bound = True
-        self._dw.show()
-        self.__state['expanded'] = True
+        gconf.client_get_default().set_bool(GCONF_PREFIX + 'visible', True)
         self.Expanded(True)
 
     @dbus.service.method(BUS_IFACE_PANEL)
@@ -422,7 +407,7 @@ X-GNOME-Autostart-enabled=true
     @dbus.service.method(BUS_IFACE_PANEL)
     def SignalExpanded(self):
         self.__logger.debug("got signalExpanded method call")
-        self.Expanded(self.__state['expanded'])
+        self.Expanded(gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible'))
 
     @dbus.service.method(BUS_IFACE_PANEL)
     def Logout(self):
@@ -542,6 +527,8 @@ def main():
     except bigboard.libbig.dbusutil.DBusNameExistsException:
         print "Big Board already running; exiting"
         sys.exit(0)
+        
+    gconf.client_get_default().add_dir(GCONF_PREFIX[:-1], gconf.CLIENT_PRELOAD_RECURSIVE)
 
     if not stockdirs:
         stockdirs = [os.path.join(os.path.dirname(bigboard.__file__), 'stocks')]
