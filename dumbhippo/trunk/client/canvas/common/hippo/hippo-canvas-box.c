@@ -3,10 +3,13 @@
 #include "hippo-canvas-type-builtins.h"
 #include "hippo-canvas-internal.h"
 #include "hippo-canvas-box.h"
+#include "hippo-canvas-layout.h"
 #include "hippo-canvas-container.h"
 #include "hippo-canvas-style.h"
 
 typedef struct {
+    int minimum;
+    int natural;
     int adjustment;
     unsigned int does_not_fit : 1;
 } AdjustInfo;
@@ -121,38 +124,45 @@ static void hippo_canvas_box_get_content_height_request (HippoCanvasBox *box,
                                                          int             for_width,
                                                          int            *min_width_p,
                                                          int            *natural_width_p);
+typedef struct _BoxChildQDataNode BoxChildQDataNode;
+ 
+struct _BoxChildQDataNode {
+    GQuark key;
+    gpointer data;
+    GDestroyNotify notify;
+    BoxChildQDataNode *next;
+};
 
-#define MIN_SIZE(child, orientation)     ((orientation) == HIPPO_ORIENTATION_VERTICAL ? (child)->min_height : (child)->min_width)
-#define NATURAL_SIZE(child, orientation) ((orientation) == HIPPO_ORIENTATION_VERTICAL ? (child)->natural_height : (child)->natural_width)
 typedef struct {
-    HippoCanvasItem *item;
+    HippoCanvasBoxChild public;
+
+    guint ref_count;
+    
     /* allocated x, y */
     int              x;
     int              y;
+    
     /* cache of last-requested sizes */
     int              min_width;       /* -1 if invalid */
     int              natural_width;   /* always valid and >= 0 when min_width is valid */
     int              min_height;      /* -1 if invalid */
     int              natural_height;  /* always valid and >= 0 when min_height is valid */
     int              height_request_for_width; /* width the height_request is valid for */
-    guint            expand : 1;
-    guint            end : 1;
-    guint            fixed : 1;
-    guint            if_fits : 1;
-    guint            float_left : 1;
-    guint            float_right : 1;
-    guint            clear_left : 1;
-    guint            clear_right : 1;
-    guint            hovering : 1;
-    guint            visible : 1;
-    guint            requesting : 1; /* used to detect bugs */
     
+    guint            requesting : 1; /* used to detect bugs */
+
+    /* Whether the mouse is over the child */
+    guint            hovering : 1;
+
     /* mouse button click tracking */
     guint            left_release_pending : 1;
     guint            middle_release_pending : 1;
     guint            right_release_pending : 1;
 
-} HippoBoxChild;
+    /* Layout manager data */
+    BoxChildQDataNode  *qdata;
+
+} BoxChildPrivate;
 
 enum {
     HOVERING_CHANGED,
@@ -249,6 +259,8 @@ hippo_canvas_box_init(HippoCanvasBox *box)
     box->box_width = -1;
     box->box_height = -1;
     box->background_color_rgba = HIPPO_CANVAS_DEFAULT_BACKGROUND_COLOR;
+    box->content_min_width = -1;
+    box->content_min_height = -1;
     box->needs_width_request = TRUE; /* be sure we do at least one allocation */
     box->needs_height_request = TRUE;
 
@@ -742,6 +754,7 @@ hippo_canvas_box_dispose(GObject *object)
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(object);
 
     hippo_canvas_box_clear(box);
+    hippo_canvas_box_set_layout(box, NULL);
 
     if (box->style) {
         g_object_unref(box->style);
@@ -1059,17 +1072,18 @@ hippo_canvas_box_get_property(GObject         *object,
     }
 }
 
-static HippoBoxChild*
+static BoxChildPrivate*
 find_child(HippoCanvasBox  *box,
            HippoCanvasItem *item)
 {
     GSList *link;
 
     for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        HippoCanvasBoxChild *child = link->data;
         if (child->item == item)
-            return child;
+            return (BoxChildPrivate *)child;
     }
+    
     return NULL;
 }
 
@@ -1140,7 +1154,7 @@ hippo_canvas_box_translate_to_widget(HippoCanvasContext *context,
                                      int                *y_p)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
-    HippoBoxChild *child;
+    BoxChildPrivate *child;
     
     g_assert(box->context != NULL);
 
@@ -1163,7 +1177,7 @@ hippo_canvas_box_translate_to_screen(HippoCanvasContext *context,
                                      int                *y_p)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
-    HippoBoxChild *child;
+    BoxChildPrivate *child;
     
     g_assert(box->context != NULL);
 
@@ -1274,8 +1288,8 @@ hippo_canvas_box_set_context(HippoCanvasItem    *item,
     }
     
     for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
-        hippo_canvas_item_set_context(child->item, child_context);
+        BoxChildPrivate *child = link->data;
+        hippo_canvas_item_set_context(child->public.item, child_context);
 
         /* clear child state flags */
         child->hovering = FALSE;
@@ -1391,25 +1405,25 @@ hippo_canvas_box_paint_children(HippoCanvasBox *box,
     
     /* Now draw children */
     for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;        
+        BoxChildPrivate *child = link->data;        
 
-        if (!child->visible)
+        if (!child->public.visible)
             continue;
         
         /* Fixed children have to be clipped to the box, since we
          * don't include them in the box's size request there's no
          * guarantee they are in the box
          */
-        if (child->fixed) {
+        if (child->public.fixed) {
             cairo_save(cr);
             cairo_rectangle(cr, 0, 0, box->allocated_width, box->allocated_height);
             cairo_clip(cr);
         }
         
-        hippo_canvas_item_process_paint(HIPPO_CANVAS_ITEM(child->item), cr, damaged_box,
+        hippo_canvas_item_process_paint(HIPPO_CANVAS_ITEM(child->public.item), cr, damaged_box,
                                         child->x, child->y);
 
-        if (child->fixed) {
+        if (child->public.fixed) {
             cairo_restore(cr);
         }
     }
@@ -1574,7 +1588,7 @@ get_content_area(HippoCanvasBox *box,
 }
 
 static gboolean
-child_is_expandable(HippoBoxChild *child, AdjustInfo *adjust)
+child_is_expandable(HippoCanvasBoxChild *child, AdjustInfo *adjust)
 {
 	return child->visible && child->expand &&
 		(!child->if_fits || (adjust && !(adjust->does_not_fit)));	
@@ -1590,12 +1604,12 @@ count_expandable_children(GSList     *children,
     count = 0;
     i = 0;
     for (link = children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        HippoCanvasBoxChild *child = link->data;
 
         /* We assume here that we've prevented via g_warning
          * any floats/fixed from having expand=TRUE
          */
-		if (child_is_expandable(child, adjusts ? &(adjusts[i]) : NULL))
+        if (child_is_expandable(child, adjusts ? &(adjusts[i]) : NULL))
             ++count;
         
         ++i;
@@ -1603,30 +1617,48 @@ count_expandable_children(GSList     *children,
     return count;
 }
 
-static void
-width_request_child(HippoBoxChild *child)
+void
+hippo_canvas_box_child_get_width_request(HippoCanvasBoxChild *child,
+                                         int                 *min_width_p,
+                                         int                 *natural_width_p)
 {
-    if (child->min_width < 0) {
-        if (child->requesting)
+    BoxChildPrivate *private = (BoxChildPrivate *)child;
+
+    if (child->item == NULL) {
+        if (min_width_p)
+            *min_width_p = 0;
+        if (natural_width_p)
+            *natural_width_p = 0;
+
+        return;
+    }
+    
+    if (private->min_width < 0) {
+        if (private->requesting)
             g_warning("Somehow recursively requesting child %p", child->item);
         
-        child->requesting = TRUE;
+        private->requesting = TRUE;
         
         hippo_canvas_item_get_width_request(child->item,
-                                            &child->min_width,
-                                            &child->natural_width);
+                                            &private->min_width,
+                                            &private->natural_width);
         
-        if (child->min_width < 0 || child->natural_width < 0)
+        if (private->min_width < 0 || private->natural_width < 0)
             g_warning("child %p %s returned width request of %d and %d, at least one <0",
                       child->item,
                       g_type_name_from_instance((GTypeInstance*) child->item),
-                      child->min_width, child->natural_width);
+                      private->min_width, private->natural_width);
         
-        if (child->natural_width < child->min_width)
+        if (private->natural_width < private->min_width)
             g_warning("some child says its natural width is below its min width");
         
-        child->requesting = FALSE;
+        private->requesting = FALSE;
     }
+
+    if (min_width_p)
+        *min_width_p = private->min_width;
+    if (natural_width_p)
+        *natural_width_p = private->natural_width;
 }
 
 static void
@@ -1640,24 +1672,41 @@ hippo_canvas_box_get_content_width_request(HippoCanvasBox *box,
     int n_children_in_natural;
     GSList *link;
 
+    for (link = box->children; link != NULL; link = link->next) {
+        HippoCanvasBoxChild *child = link->data;
+        
+        /* Note that we still request and allocate !visible children,
+         * but we allocate them 0x0.
+         */
+        if (!child->in_layout)
+            hippo_canvas_box_child_get_width_request(child, NULL, NULL);
+    }
+            
+        
+    if (box->layout) {
+        hippo_canvas_layout_get_width_request(box->layout, min_width_p, natural_width_p);
+        return;
+    }
+
     n_children_in_min = 0;
     n_children_in_natural = 0;
     total_min = 0;
     total_natural = 0;
     for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        HippoCanvasBoxChild *child = link->data;
+        int min_width;
+        int natural_width;
 
-        /* Note that we still request and allocate !visible children,
-         * but we allocate them 0x0. PACK_IF_FITS children are
-         * do not contribute to the min size of the whole box,
-         * but do contribute to natural size, and will be hidden
-         * entirely if their width request does not fit.
-         */
-        width_request_child(child);
- 
-        if (child->fixed || !child->visible)
+        if (!child->in_layout)
             continue;
         
+        /* PACK_IF_FITS children are do not contribute to the min size
+         * of the whole box, but do contribute to natural size, and
+         * will be hidden entirely if their width request does not
+         * fit.
+         */
+        hippo_canvas_box_child_get_width_request(child, &min_width, &natural_width);
+ 
         n_children_in_natural += 1;
 
         /* children with if fits flag won't appear at our min width if
@@ -1668,17 +1717,17 @@ hippo_canvas_box_get_content_width_request(HippoCanvasBox *box,
          */
         
         if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
-            total_min = MAX(total_min, child->min_width);
+            total_min = MAX(total_min, min_width);
             n_children_in_min += 1;
 
-            total_natural = MAX(total_natural, child->natural_width);
+            total_natural = MAX(total_natural, natural_width);
         } else {
             if (!child->if_fits) {
-                total_min += child->min_width;
+                total_min += min_width;
                 n_children_in_min += 1;
             }
             
-            total_natural += child->natural_width;
+            total_natural += natural_width;
         }
     }
 
@@ -1695,24 +1744,9 @@ hippo_canvas_box_get_content_width_request(HippoCanvasBox *box,
 }
 
 static int
-box_child_get_adjusted_min_width(HippoBoxChild   *child,
-                                 AdjustInfo      *adjust)
+get_adjusted_size(AdjustInfo          *adjust)
 {
-    return child->min_width + adjust->adjustment;
-}
-
-static int
-box_child_get_adjusted_min_height(HippoBoxChild   *child,
-                                  AdjustInfo      *adjust)
-{
-    return child->min_height + adjust->adjustment;
-}
-
-static AdjustInfo*
-adjust_infos_new(int count)
-{
-    /* we rely on the new0 to allocate 0 adjustments */
-    return g_new0(AdjustInfo, count);
+    return adjust->minimum + adjust->adjustment;
 }
 
 /*
@@ -1741,7 +1775,6 @@ adjust_infos_new(int count)
 /* return TRUE if it needs to run again */
 static gboolean
 adjust_up_to_natural_size(GSList          *children,
-                          HippoOrientation orientation,
                           int             *remaining_extra_space_p,
                           AdjustInfo      *adjusts,
                           gboolean         if_fits)
@@ -1761,7 +1794,7 @@ adjust_up_to_natural_size(GSList          *children,
     n_needing_increase = 0;
     i = 0;
     for (link = children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        HippoCanvasBoxChild *child = link->data;
 
         if (!child->fixed && child->visible &&
             ((!child->if_fits && !if_fits) ||
@@ -1771,7 +1804,7 @@ adjust_up_to_natural_size(GSList          *children,
             g_assert(adjusts[i].adjustment >= 0);
 
             /* guaranteed to be >= 0 */
-            needed_increase = NATURAL_SIZE(child, orientation) - MIN_SIZE(child, orientation);
+            needed_increase = adjusts[i].natural - adjusts[i].minimum;
             g_assert(needed_increase >= 0);
             
             needed_increase -= adjusts[i].adjustment; /* see how much we've already increased */
@@ -1799,7 +1832,7 @@ adjust_up_to_natural_size(GSList          *children,
 
     i = 0;
     for (link = children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        HippoCanvasBoxChild *child = link->data;
 
         if (!child->fixed && child->visible &&
             ((!child->if_fits && !if_fits) ||
@@ -1809,7 +1842,7 @@ adjust_up_to_natural_size(GSList          *children,
             g_assert(adjusts[i].adjustment >= 0);
 
             /* guaranteed to be >= 0 */
-            needed_increase = NATURAL_SIZE(child, orientation) - MIN_SIZE(child, orientation);
+            needed_increase = adjusts[i].natural - adjusts[i].minimum;
             g_assert(needed_increase >= 0);
 
             needed_increase -= adjusts[i].adjustment; /* see how much we've already increased */
@@ -1853,7 +1886,7 @@ adjust_for_expandable(GSList        *children,
 
     i = 0;
     for (link = children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        HippoCanvasBoxChild *child = link->data;
 
         if (child_is_expandable(child, &(adjusts[i])) && !adjusts[i].does_not_fit) {
             int extra;
@@ -1874,7 +1907,6 @@ adjust_for_expandable(GSList        *children,
 
 static void
 adjust_if_fits_as_not_fitting(GSList          *children,
-                              HippoOrientation orientation,
                               AdjustInfo      *adjusts)
 {
     int i;
@@ -1882,10 +1914,10 @@ adjust_if_fits_as_not_fitting(GSList          *children,
 
     i = 0;
     for (link = children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        HippoCanvasBoxChild *child = link->data;
 
         if (child->if_fits) {
-            adjusts[i].adjustment -= MIN_SIZE(child, orientation);
+            adjusts[i].adjustment -= adjusts[i].minimum;
             adjusts[i].does_not_fit = TRUE;
         }
         ++i;
@@ -1894,7 +1926,6 @@ adjust_if_fits_as_not_fitting(GSList          *children,
 
 static gboolean
 adjust_one_if_fits(GSList          *children,
-                   HippoOrientation orientation,
                    int              spacing,
                    int             *remaining_extra_space_p,
                    AdjustInfo      *adjusts)
@@ -1912,7 +1943,7 @@ adjust_one_if_fits(GSList          *children,
      */
     i = 0;
     for (link = children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        HippoCanvasBoxChild *child = link->data;
                 
         if (child->visible && (!child->if_fits || !adjusts[i].does_not_fit)) {
             visible_children = TRUE;
@@ -1926,21 +1957,19 @@ adjust_one_if_fits(GSList          *children,
     
     i = 0;
     for (link = children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
-
         if (adjusts[i].does_not_fit) {
             /* This child was adjusted downward, see if we can pop it visible
              * (picking the smallest instead of first if-fits child on each pass
              * might be nice, but for now it's the first that fits)
              */
 
-            if ((MIN_SIZE(child, orientation) + spacing_delta) <= *remaining_extra_space_p) {
-                adjusts[i].adjustment += MIN_SIZE(child, orientation);
+            if ((adjusts[i].minimum + spacing_delta) <= *remaining_extra_space_p) {
+                adjusts[i].adjustment += adjusts[i].minimum;
                 
                 g_assert(adjusts[i].adjustment >= 0);
                 
                 adjusts[i].does_not_fit = FALSE;
-                *remaining_extra_space_p -= (MIN_SIZE(child, orientation) + spacing_delta);
+                *remaining_extra_space_p -= (adjusts[i].minimum + spacing_delta);
 
                 g_assert(*remaining_extra_space_p >= 0);
                 
@@ -1959,27 +1988,19 @@ adjust_one_if_fits(GSList          *children,
  */
 static void
 compute_adjusts(GSList          *children,
-                int              children_length,
-                HippoOrientation orientation,
+                AdjustInfo      *adjusts,
                 int              spacing,
-                int              alloc_request_delta,
-                AdjustInfo     **adjusts_p)
+                int              alloc_request_delta)
 {
-    AdjustInfo *adjusts;
     int remaining_extra_space;
 
-    if (children == NULL) {
-        *adjusts_p = NULL;
+    if (children == NULL)
         return;
-    }
-
-    adjusts = adjust_infos_new(children_length);
-    *adjusts_p = adjusts;
 
     /* Go ahead and cram all PACK_IF_FITS children to zero width,
      * we'll expand them again if we can.
      */
-    adjust_if_fits_as_not_fitting(children, orientation, adjusts);
+    adjust_if_fits_as_not_fitting(children, adjusts);
     
     /* Make no adjustments if we got too little or just right space.
      * (FIXME handle too little space better)
@@ -1991,17 +2012,17 @@ compute_adjusts(GSList          *children,
     remaining_extra_space = alloc_request_delta;
 
     /* adjust non-PACK_IF_FITS up to natural size */
-    while (adjust_up_to_natural_size(children, orientation,
+    while (adjust_up_to_natural_size(children,
                                      &remaining_extra_space, adjusts, FALSE))
         ;
 
     /* see if any PACK_IF_FITS can get their minimum size */
-    while (adjust_one_if_fits(children, orientation,
+    while (adjust_one_if_fits(children,
                               spacing, &remaining_extra_space, adjusts))
         ;
 
     /* if so, then see if they can also get a natural size */
-    while (adjust_up_to_natural_size(children, orientation,
+    while (adjust_up_to_natural_size(children,
                                      &remaining_extra_space, adjusts, TRUE))
         ;
     
@@ -2011,16 +2032,53 @@ compute_adjusts(GSList          *children,
     /* remaining_extra_space need not be 0, if we had no expandable children */
 }
 
-static void
-height_request_child(HippoBoxChild *child,
-                     int            for_width)
+void
+hippo_canvas_box_child_get_height_request(HippoCanvasBoxChild *child,
+                                          int                  for_width,
+                                          int                 *min_height_p,
+                                          int                 *natural_height_p)
 {
-    if (child->min_height < 0 ||
-        child->height_request_for_width != for_width) {
-        hippo_canvas_item_get_height_request(child->item, for_width,
-                                             &child->min_height, &child->natural_height);
-        child->height_request_for_width = for_width;
+    BoxChildPrivate *private = (BoxChildPrivate *)child;
+    
+    if (child->item == NULL) {
+        if (min_height_p)
+            *min_height_p = 0;
+        if (natural_height_p)
+            *natural_height_p = 0;
+
+        return;
     }
+    
+    if (private->min_width < 0)
+        g_warning("Height requesting child without width requesting first");
+        
+    if (private->min_height < 0 ||
+        private->height_request_for_width != for_width) {
+        hippo_canvas_item_get_height_request(child->item, for_width,
+                                             &private->min_height, &private->natural_height);
+        private->height_request_for_width = for_width;
+    }
+
+    if (min_height_p)
+        *min_height_p = private->min_height;
+    if (natural_height_p)
+        *natural_height_p = private->natural_height;
+}
+
+static void
+request_child_natural_size(HippoCanvasBoxChild *child,
+                           int                 *width_p,
+                           int                 *height_p)
+{
+    int width, height;
+    
+    hippo_canvas_box_child_get_width_request(child, NULL, &width);
+    hippo_canvas_box_child_get_height_request(child, width, NULL, &height);
+
+    if (width_p)
+        *width_p = width;
+    if (height_p)
+        *height_p = height;
 }
 
 /*
@@ -2060,7 +2118,7 @@ box_validate_packing(HippoCanvasBox *box)
     GSList *l;
 
     for (l = box->children; l != NULL; l = l->next) {
-        HippoBoxChild *child = l->data;
+        HippoCanvasBoxChild *child = l->data;
 
         if (child->float_right || child->float_left || child->clear_left || child->clear_right)
             has_floats = TRUE;
@@ -2089,7 +2147,9 @@ box_validate_packing(HippoCanvasBox *box)
 /* Per-floated-child information that we need during the layout process
  */
 typedef struct {
-    HippoBoxChild *child;
+    HippoCanvasBoxChild *child;
+    int width;
+    int height;
     int y;
 } HippoBoxFloat;
 
@@ -2116,6 +2176,14 @@ typedef struct {
     
 } HippoBoxFloats;
 
+static void
+init_float(HippoBoxFloat       *float_,
+           HippoCanvasBoxChild *child)
+{
+    float_->child = child;
+    request_child_natural_size(child, &float_->width, &float_->height);
+}
+
 /* Initialize the layout process when doing layout with floats.
  */
 static void 
@@ -2135,9 +2203,9 @@ floats_start_packing(HippoBoxFloats  *floats,
      * per-child information
      */
     for (l = box->children; l != NULL; l = l->next) {
-        HippoBoxChild *child = l->data;
+        HippoCanvasBoxChild *child = l->data;
 
-        if (child->fixed || !child->visible)
+        if (!child->in_layout)
             continue;
 
         if (child->float_left)
@@ -2160,25 +2228,27 @@ floats_start_packing(HippoBoxFloats  *floats,
     i_left = 0;
     i_right = 0;
     for (l = box->children; l != NULL; l = l->next) {
-        HippoBoxChild *child = l->data;
+        HippoCanvasBoxChild *child = l->data;
 
-        if (child->fixed || !child->visible)
+        if (!child->in_layout)
             continue;
 
         if (child->float_left) {
-            floats->left[i_left].child = child;
+            init_float(&floats->left[i_left], child);
+            
             if (i_left == 0)
                 floats->left[i_left].y = 0;
             else
-                floats->left[i_left].y = floats->left[i_left - 1].y + floats->left[i_left - 1].child->natural_height + box->spacing;
+                floats->left[i_left].y = floats->left[i_left - 1].y + floats->left[i_left - 1].height + box->spacing;
                 
             i_left++;
         } else if (child->float_right) {
-            floats->right[i_right].child = child;
+            init_float(&floats->right[i_right], child);
+            
             if (i_right == 0)
                 floats->right[i_right].y = 0;
             else
-                floats->right[i_right].y = floats->right[i_right - 1].y + floats->right[i_right - 1].child->natural_height + box->spacing;
+                floats->right[i_right].y = floats->right[i_right - 1].y + floats->right[i_right - 1].height + box->spacing;
                 
             i_right++;
         }
@@ -2200,7 +2270,7 @@ static int
 floats_get_left_end_y(HippoBoxFloats *floats)
 {
     if (floats->next_left > 0)
-        return floats->left[floats->next_left - 1].y + floats->left[floats->next_left - 1].child->natural_height;
+        return floats->left[floats->next_left - 1].y + floats->left[floats->next_left - 1].height;
     else
         return 0;
 }
@@ -2211,29 +2281,28 @@ static int
 floats_get_right_end_y(HippoBoxFloats *floats)
 {
     if (floats->next_right > 0)
-        return floats->right[floats->next_right - 1].y + floats->right[floats->next_right - 1].child->natural_height;
+        return floats->right[floats->next_right - 1].y + floats->right[floats->next_right - 1].height;
     else
         return 0;
 }
 
-/**
+/*
  * Do layout for a single child; if do_request is FALSE we assume that we've
  * previously done layout at the same width (from get_width_request), so we skip
  * doing size negotation with the child, and use the cached value. The content-area
  * relative allocation of the child is stored in child_allocation, if non-NULL.
  */
 static void
-floats_add_child(HippoBoxFloats *floats,
-                 HippoBoxChild  *child,
-                 gboolean        do_request,
-                 HippoRectangle *child_allocation)
+floats_add_child(HippoBoxFloats       *floats,
+                 HippoCanvasBoxChild  *child,
+                 gboolean              do_request,
+                 HippoRectangle       *child_allocation)
 {
     HippoBoxFloat *left = floats->left;
     HippoBoxFloat *right = floats->right;
     int i;
     
-    if (child->fixed || !child->visible)
-        return;
+    g_assert(child->in_layout);
 
     if (child->float_left) {
         /* If the float doesn't appear below normal normal children that precede
@@ -2255,8 +2324,8 @@ floats_add_child(HippoBoxFloats *floats,
         if (child_allocation) {
             child_allocation->x = 0;
             child_allocation->y = left_float->y;
-            child_allocation->width = child->natural_width;
-            child_allocation->height = child->natural_height;
+            child_allocation->width = left_float->width;
+            child_allocation->height = left_float->height;
         }
         
         floats->next_left++;
@@ -2279,10 +2348,10 @@ floats_add_child(HippoBoxFloats *floats,
         }
         
         if (child_allocation) {
-            child_allocation->x = floats->for_width - child->natural_width;
+            child_allocation->x = floats->for_width - right_float->width;
             child_allocation->y = right_float->y;
-            child_allocation->width = child->natural_width;
-            child_allocation->height = child->natural_height;
+            child_allocation->width = right_float->width;
+            child_allocation->height = right_float->height;
         }
         
         floats->next_right++;
@@ -2292,8 +2361,15 @@ floats_add_child(HippoBoxFloats *floats,
         int i_right = floats->at_y_right;
         int left_float_width = 0;
         int right_float_width = 0;
-        int tentative_height = do_request ? 1 : child->natural_height;
         gboolean one_more_pass = TRUE;
+
+        /* Accessing natural_height here breaks the abstraction barrier between the
+         * "layout manager" parts of the code and the "container" parts of the code.
+         * If we were splitting out the floats layout manager into a truly separate
+         * piece of code, the per-child cached negotatiated height could be stored
+         * in layout-manager specific data using hippo_canvas_box_set_extra().
+         */
+        int tentative_height = do_request ? 1 : ((BoxChildPrivate *)child)->natural_height;
 
         /* Handle clear_left / clear_right. Ensure that normal-flow children appear below any
          * floats that they are specified to clear.
@@ -2318,11 +2394,11 @@ floats_add_child(HippoBoxFloats *floats,
          * normal-flow child will appear below it.
          */
         while (i_left < floats->next_left &&
-               left[i_left].y + left[i_left].child->natural_height <= floats->y)
+               left[i_left].y + left[i_left].height <= floats->y)
             i_left++;
 
         while (i_right < floats->next_right &&
-               right[i_right].y + right[i_right].child->natural_height <= floats->y)
+               right[i_right].y + right[i_right].height <= floats->y)
             i_right++;
         
         /* We need to iterate to determine the set of floats that actually do affect
@@ -2339,8 +2415,8 @@ floats_add_child(HippoBoxFloats *floats,
         while (TRUE) {
             while (i_left < floats->next_left &&
                    left[i_left].y < floats->y + tentative_height) {
-                if (left[i_left].child->natural_width > left_float_width) {
-                    left_float_width = left[i_left].child->natural_width;
+                if (left[i_left].width > left_float_width) {
+                    left_float_width = left[i_left].width;
                     one_more_pass = TRUE;
                 }
                 floats->at_y_left = i_left;
@@ -2349,8 +2425,8 @@ floats_add_child(HippoBoxFloats *floats,
 
             while (i_right < floats->next_right &&
                    right[i_right].y < floats->y + tentative_height) {
-                if (right[i_right].child->natural_width > right_float_width) {
-                    right_float_width = right[i_right].child->natural_width;
+                if (right[i_right].width > right_float_width) {
+                    right_float_width = right[i_right].width;
                     one_more_pass = TRUE;
                 }
                 floats->at_y_right = i_right;
@@ -2361,8 +2437,10 @@ floats_add_child(HippoBoxFloats *floats,
                 break;
 
             if (do_request) {
-                height_request_child(child, floats->for_width - left_float_width - right_float_width);
-                tentative_height = child->natural_height;
+                int natural_height;
+                
+                hippo_canvas_box_child_get_height_request(child, floats->for_width - left_float_width - right_float_width, NULL, &natural_height);
+                tentative_height = natural_height;
             }
 
             one_more_pass = FALSE;
@@ -2415,9 +2493,14 @@ get_floats_height_request(HippoCanvasBox *box,
     total_natural = 0;
 
     floats_start_packing(&floats, box, for_width);
-    
+
     for (link = box->children; link != NULL; link = link->next) {
-        floats_add_child(&floats, link->data, TRUE, NULL);
+        HippoCanvasBoxChild *child = link->data;
+        
+        if (!child->in_layout)
+            continue;
+        
+        floats_add_child(&floats, child, TRUE, NULL);
     }
     
     total_min = total_natural = floats_end_packing(&floats);
@@ -2447,20 +2530,22 @@ get_vbox_height_request(HippoCanvasBox *box,
     n_children_in_natural = 0;
 
     for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        HippoCanvasBoxChild *child = link->data;
+        int min_height;
+        int natural_height;
 
         /* Note that we still request and allocate !visible children */
-        height_request_child(child, for_width);
+        hippo_canvas_box_child_get_height_request(child, for_width, &min_height, &natural_height);
             
-        if (child->fixed || !child->visible)
+        if (!child->in_layout)
             continue;
             
         n_children_in_natural += 1;
-        total_natural += child->natural_height;
+        total_natural += natural_height;
             
         if (!child->if_fits) {
             n_children_in_min += 1;
-            total_min += child->min_height;
+            total_min += min_height;
         }
     }
 
@@ -2475,6 +2560,74 @@ get_vbox_height_request(HippoCanvasBox *box,
         *natural_height_p = total_natural;
 }
 
+static AdjustInfo*
+adjust_infos_new(HippoCanvasBox *box,
+                 int             for_content_width)
+{
+    /* Rely on the zero-initialization */
+    AdjustInfo *adjusts = g_new0(AdjustInfo, g_slist_length(box->children));
+    GSList *link;
+
+    int i = 0;
+    for (link = box->children; link != NULL; link = link->next) {
+        HippoCanvasBoxChild *child = link->data;
+
+        if (!child->in_layout) {
+            adjusts[i].minimum = adjusts[i].natural = 0;
+        } else if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
+            hippo_canvas_box_child_get_height_request(child, for_content_width, &adjusts[i].minimum, &adjusts[i].natural);
+        } else {
+            hippo_canvas_box_child_get_width_request(child,  &adjusts[i].minimum, &adjusts[i].natural);
+        }
+
+        i++;
+    }
+    
+    return adjusts;
+}
+
+static void
+get_content_width_request(HippoCanvasBox *box,
+                          int            *min_width_p,
+                          int            *natural_width_p)
+{
+    if (box->content_min_width < 0)
+    {
+        HippoCanvasBoxClass *klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
+    
+        (* klass->get_content_width_request)(box,
+                                             &box->content_min_width, &box->content_natural_width);
+    }
+
+    if (min_width_p)
+        *min_width_p = box->content_min_width;
+    if (natural_width_p)
+        *natural_width_p = box->content_natural_width;
+}
+
+static void
+get_content_height_request(HippoCanvasBox *box,
+                           int             for_width,
+                           int            *min_height_p,
+                           int            *natural_height_p)
+{
+    if (box->content_min_height < 0 ||
+        box->content_height_request_for_width != for_width)
+    {
+        HippoCanvasBoxClass *klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
+    
+        (* klass->get_content_height_request)(box, for_width,
+                                              &box->content_min_height, &box->content_natural_height);
+        
+        box->content_height_request_for_width = for_width;
+    }
+
+    if (min_height_p)
+        *min_height_p = box->content_min_height;
+    if (natural_height_p)
+        *natural_height_p = box->content_natural_height;
+}
+
 /* This function's algorithm must be kept in sync with the one in allocate() */
 static void
 get_hbox_height_request(HippoCanvasBox *box,
@@ -2485,7 +2638,6 @@ get_hbox_height_request(HippoCanvasBox *box,
     int total_min;
     int total_natural;
     GSList *link;
-    HippoCanvasBoxClass *klass;
     int requested_content_width;
     int natural_content_width;
     int allocated_content_width;
@@ -2495,38 +2647,34 @@ get_hbox_height_request(HippoCanvasBox *box,
     total_min = 0;
     total_natural = 0;
 
-    klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
-
-    (* klass->get_content_width_request)(box, &requested_content_width, &natural_content_width);
+    get_content_width_request(box, &requested_content_width, &natural_content_width);
 
     get_content_area_horizontal(box, requested_content_width, natural_content_width,
                                 for_width, NULL, &allocated_content_width);
 
+    width_adjusts = adjust_infos_new(box, for_width);
     compute_adjusts(box->children,
-                    g_slist_length(box->children),
-                    box->orientation,
+                    width_adjusts,
                     box->spacing,
-                    allocated_content_width - requested_content_width,
-                    &width_adjusts);
+                    allocated_content_width - requested_content_width);
 
     i = 0;
     for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        HippoCanvasBoxChild *child = link->data;
+        int min_height, natural_height;
         int req;
             
-        if (child->fixed || !child->visible) {
+        if (!child->in_layout) {
             ++i;
             continue;
         }
 
-        g_assert(child->min_width >= 0);
+        req = get_adjusted_size(&width_adjusts[i]);
 
-        req = box_child_get_adjusted_min_width(child, &width_adjusts[i]);
-
-        height_request_child(child, req);
+        hippo_canvas_box_child_get_height_request(child, req, &min_height, &natural_height);
             
-        total_min = MAX(total_min, child->min_height);
-        total_natural = MAX(total_natural, child->natural_height);
+        total_min = MAX(total_min, min_height);
+        total_natural = MAX(total_natural, natural_height);
 
         ++i;
     }
@@ -2551,24 +2699,23 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
 
     /* Do fixed children, just to have their request recorded;
      * the box for_width is ignored here, fixed children just
-     * always get their width request. Similarly, floated children
-     * just get their width request, so we request them first.
+     * always get their width request.
      *
      * For !visible children we want to request them but will
      * always allocate 0x0
      */
     for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        HippoCanvasBoxChild *child = link->data;
 
-        if (!(child->fixed || child->float_left || child->float_right || !child->visible))
-            continue;
-
-        if (child->min_width < 0)
-            g_warning("Height requesting child without width requesting first");
-        
-        height_request_child(child, child->min_width);
+        if (!child->in_layout)
+            request_child_natural_size(child, NULL, NULL);
     }
 
+    if (box->layout) {
+        hippo_canvas_layout_get_height_request(box->layout, for_width, min_height_p, natural_height_p);
+        return;
+    }
+ 
     /* Now do the box-layout children */
 
     has_floats = box_validate_packing(box);
@@ -2589,10 +2736,8 @@ hippo_canvas_box_get_width_request(HippoCanvasItem *item,
 {
     int content_min_width, content_natural_width;
     HippoCanvasBox *box;
-    HippoCanvasBoxClass *klass;
 
     box = HIPPO_CANVAS_BOX(item);
-    klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
 
     box->needs_width_request = FALSE;
 
@@ -2600,7 +2745,7 @@ hippo_canvas_box_get_width_request(HippoCanvasItem *item,
      * so that children can rely on getting the full request, allocate
      * cycle in order every time, and so we compute the cached requests.
      */
-    (* klass->get_content_width_request)(box, &content_min_width, &content_natural_width);
+    get_content_width_request(box, &content_min_width, &content_natural_width);
 
     if (box->box_width >= 0) {
         /* FIXME it's probably a lot more useful if we had separate properties
@@ -2640,10 +2785,8 @@ hippo_canvas_box_get_height_request(HippoCanvasItem *item,
     int content_min_height, content_natural_height;
     int content_for_width;
     HippoCanvasBox *box;
-    HippoCanvasBoxClass *klass;
 
     box = HIPPO_CANVAS_BOX(item);
-    klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
 
     box->needs_height_request = FALSE;
 
@@ -2655,9 +2798,9 @@ hippo_canvas_box_get_height_request(HippoCanvasItem *item,
      * so that children can rely on getting the full request, allocate
      * cycle in order every time, and so we compute the cached requests.
      */
-    (* klass->get_content_height_request)(box, content_for_width,
-                                          &content_min_height, &content_natural_height);
-
+    get_content_height_request(box, content_for_width,
+                               &content_min_height, &content_natural_height);
+    
     if (box->box_height >= 0) {
         /* FIXME the property should probably be separate for these two */
         if (min_height_p)
@@ -2723,19 +2866,24 @@ hippo_canvas_box_align(HippoCanvasBox *box,
                      x_p, y_p, width_p, height_p);
 }
 
-static void
-allocate_child(HippoCanvasBox *box,
-               HippoBoxChild  *child,
-               int             x,
-               int             y,
-               int             width,
-               int             height,
-               gboolean        origin_changed)
+void
+hippo_canvas_box_child_allocate(HippoCanvasBoxChild *child,
+                                int                  x,
+                                int                  y,
+                                int                  width,
+                                int                  height,
+                                gboolean             origin_changed)
 {
-    gboolean child_moved = x != child->x || y != child->y;
+    BoxChildPrivate *private = (BoxChildPrivate *)child;
+    gboolean child_moved;
 
-    child->x = x;
-    child->y = y;
+    if (child->item == NULL)
+        return;
+
+    child_moved = x != private->x || y != private->y;
+
+    private->x = x;
+    private->y = y;
 
     hippo_canvas_item_allocate(child->item,
                                width, height,
@@ -2758,19 +2906,19 @@ layout_floats(HippoCanvasBox  *box,
     floats_start_packing(&floats, box, allocated_content_width);
     
     for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        HippoCanvasBoxChild *child = link->data;
         HippoRectangle child_allocation;
         
-        if (child->fixed || !child->visible)
+        if (!child->in_layout)
             continue;
         
         floats_add_child(&floats, child, FALSE, &child_allocation);
         
-        allocate_child(box, child,
-                       content_x + child_allocation.x,
-                       content_y + child_allocation.y,
-                       child_allocation.width, child_allocation.height,
-                       origin_changed);
+        hippo_canvas_box_child_allocate(child,
+                                        content_x + child_allocation.x,
+                                        content_y + child_allocation.y,
+                                        child_allocation.width, child_allocation.height,
+                                        origin_changed);
     }
     
     floats_end_packing(&floats);
@@ -2804,45 +2952,42 @@ layout_box(HippoCanvasBox  *box,
     }
     end = start + allocated_size;
 
+    adjusts = adjust_infos_new(box, allocated_content_width);
     compute_adjusts(box->children,
-                    g_slist_length(box->children),
-                    box->orientation,
+                    adjusts,
                     box->spacing,
-                    allocated_size - requested_size,
-                    &adjusts);
+                    allocated_size - requested_size);
 
     i = 0;
     for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        HippoCanvasBoxChild *child = link->data;
         int req;
-
-        if (child->fixed || !child->visible) {
+        
+        if (!child->in_layout) {
             ++i;
             continue;
         }
 
         if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
-            req = box_child_get_adjusted_min_height(child, &adjusts[i]);
-            allocate_child(box, child,
-                           content_x, child->end ? (end - req) : start,
-                           allocated_content_width, req,
-                           origin_changed);
+            req = get_adjusted_size(&adjusts[i]);
+            hippo_canvas_box_child_allocate(child,
+                                            content_x, child->end ? (end - req) : start,
+                                            allocated_content_width, req,
+                                            origin_changed);
                 
         } else {
-            req = box_child_get_adjusted_min_width(child, &adjusts[i]);
-            allocate_child(box, child,
-                           child->end ? (end - req) : start, content_y,
-                           req, allocated_content_height,
-                           origin_changed);
+            req = get_adjusted_size(&adjusts[i]);
+            hippo_canvas_box_child_allocate(child,
+                                            child->end ? (end - req) : start, content_y,
+                                            req, allocated_content_height,
+                                            origin_changed);
         }
 
         if (req <= 0) {
             /* Child was adjusted out of existence, act like it's
              * !visible
              */
-            child->x = 0;
-            child->y = 0;
-            hippo_canvas_item_allocate(child->item, 0, 0, FALSE);
+            hippo_canvas_box_child_allocate(child, 0, 0, 0, 0, origin_changed);
         }
 
         /* Children with req == 0 still get spacing unless they are IF_FITS.
@@ -2870,7 +3015,6 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
                           gboolean         origin_changed)
 {
     HippoCanvasBox *box;
-    HippoCanvasBoxClass *klass;
     int requested_content_width;
     int requested_content_height;
     int natural_content_width;
@@ -2882,7 +3026,6 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     gboolean has_floats;
 
     box = HIPPO_CANVAS_BOX(item);
-    klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
 
     /* If we haven't emitted request-changed then we are allowed to short-circuit 
      * an unchanged allocation
@@ -2896,15 +3039,15 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     box->allocated_height = allocated_box_height;
     box->needs_allocate = FALSE;
 
-    (* klass->get_content_width_request)(box, &requested_content_width, &natural_content_width);  
+    get_content_width_request(box, &requested_content_width, &natural_content_width);  
 
     get_content_area_horizontal(box, requested_content_width, natural_content_width,
                                 allocated_box_width,
                                 &content_x, &allocated_content_width);
     
-    (* klass->get_content_height_request)(box,
-                                          allocated_content_width,
-                                          &requested_content_height, &natural_content_height);
+    get_content_height_request(box,
+                               allocated_content_width,
+                               &requested_content_height, &natural_content_height);
 
     get_content_area_vertical(box, requested_content_height, natural_content_height,
                               allocated_box_height,
@@ -2927,29 +3070,36 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
          */
         
         for (link = box->children; link != NULL; link = link->next) {
-            HippoBoxChild *child = link->data;
+            HippoCanvasBoxChild *child = link->data;
             hippo_canvas_item_allocate(child->item, 0, 0, FALSE);
         }
-    } else {    
-
+    } else {
         /* Allocate fixed children their natural size and invisible
          * children 0x0
          */
         for (link = box->children; link != NULL; link = link->next) {
-            HippoBoxChild *child = link->data;
+            HippoCanvasBoxChild *child = link->data;
             if (!child->visible) {
                 hippo_canvas_item_allocate(child->item, 0, 0, FALSE);
             } else if (child->fixed) {
-                hippo_canvas_item_allocate(child->item,
-                                           child->natural_width,
-                                           child->natural_height,
-                                           origin_changed);
+                int width, height;
+                request_child_natural_size(child, &width, &height);
+                hippo_canvas_item_allocate(child->item, width, height, origin_changed);
             } else {
                 continue;
             }
         }
 
         /* Now layout the box */
+        
+        if (box->layout) {
+            hippo_canvas_layout_allocate(box->layout,
+                                         content_x, content_y,
+                                         allocated_content_width, allocated_content_height,
+                                         requested_content_width, requested_content_height,
+                                         origin_changed);
+            return;
+        }
 
         has_floats = box_validate_packing(box);
     
@@ -2980,13 +3130,13 @@ hippo_canvas_box_get_allocation(HippoCanvasItem *item,
         *height_p = box->allocated_height;
 }
 
-static HippoBoxChild*
+static BoxChildPrivate*
 find_child_at_point(HippoCanvasBox *box,
                     int             x,
                     int             y)
 {
     GSList *link;
-    HippoBoxChild *topmost;
+    BoxChildPrivate *topmost;
 
     /* Box-layout children don't overlap each other, so we could just
      * return the first match, but for fixed children we have to
@@ -2995,13 +3145,13 @@ find_child_at_point(HippoCanvasBox *box,
     
     topmost = NULL;
     for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        BoxChildPrivate *child = link->data;
         int width, height;
 
-        if (!child->visible)
+        if (!child->public.visible)
             continue;
         
-        hippo_canvas_item_get_allocation(child->item, &width, &height);
+        hippo_canvas_item_get_allocation(child->public.item, &width, &height);
 
         if (x >= child->x && y >= child->y &&
             x < (child->x + width) &&
@@ -3014,13 +3164,13 @@ find_child_at_point(HippoCanvasBox *box,
     return topmost;
 }
 
-static HippoBoxChild*
+static BoxChildPrivate*
 find_hovering_child(HippoCanvasBox *box)
 {
     GSList *link;
     
     for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        BoxChildPrivate *child = link->data;
         if (child->hovering)
             return child;
     }
@@ -3039,8 +3189,8 @@ static gboolean
 forward_motion_event(HippoCanvasBox *box,
                      HippoEvent     *event)
 {
-    HippoBoxChild *child;
-    HippoBoxChild *was_hovering;
+    BoxChildPrivate *child;
+    BoxChildPrivate *was_hovering;
     gboolean result;
 
     result = FALSE; /* we only overwrite this when forwarding the current event,
@@ -3060,12 +3210,12 @@ forward_motion_event(HippoCanvasBox *box,
     if (was_hovering && child != was_hovering) {
         was_hovering->hovering = FALSE;
         if (event->u.motion.detail != HIPPO_MOTION_DETAIL_LEAVE)
-            hippo_canvas_item_emit_motion_notify_event(was_hovering->item,
+            hippo_canvas_item_emit_motion_notify_event(was_hovering->public.item,
                                                        event->x - was_hovering->x,
                                                        event->y - was_hovering->y,
                                                        HIPPO_MOTION_DETAIL_LEAVE);
         else
-            result = hippo_canvas_item_process_event(was_hovering->item,
+            result = hippo_canvas_item_process_event(was_hovering->public.item,
                                                      event, was_hovering->x, was_hovering->y);
     }
 
@@ -3079,7 +3229,7 @@ forward_motion_event(HippoCanvasBox *box,
             child->hovering = TRUE;
 
             if (event->u.motion.detail != HIPPO_MOTION_DETAIL_ENTER) {
-                hippo_canvas_item_emit_motion_notify_event(child->item,
+                hippo_canvas_item_emit_motion_notify_event(child->public.item,
                                                            event->x - child->x,
                                                            event->y - child->y,
                                                            HIPPO_MOTION_DETAIL_ENTER);
@@ -3087,7 +3237,7 @@ forward_motion_event(HippoCanvasBox *box,
         }
         
         /* forward an enter or motion within event */
-        result = hippo_canvas_item_process_event(child->item,
+        result = hippo_canvas_item_process_event(child->public.item,
                                                  event, child->x, child->y);
         
     }    
@@ -3096,7 +3246,7 @@ forward_motion_event(HippoCanvasBox *box,
 }
 
 static void
-set_release_pending (HippoBoxChild *child,
+set_release_pending (BoxChildPrivate *child,
                      guint          button,
                      gboolean       value)
 {
@@ -3117,7 +3267,7 @@ set_release_pending (HippoBoxChild *child,
 }
 
 static gboolean
-is_release_pending (HippoBoxChild *child,
+is_release_pending (BoxChildPrivate *child,
                     guint          button)
 {
     gboolean result = FALSE;
@@ -3147,13 +3297,13 @@ forward_button_release_event(HippoCanvasBox *box,
     GSList *link;
     
     for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child;
+        BoxChildPrivate *child;
 
         child = link->data;
         if (is_release_pending (child, event->u.button.button)) {
             gboolean handled = FALSE;
             
-            handled = hippo_canvas_item_process_event(child->item,
+            handled = hippo_canvas_item_process_event(child->public.item,
                                                       event, child->x, child->y);
             
             set_release_pending(child, event->u.button.button, FALSE); 
@@ -3169,7 +3319,7 @@ static gboolean
 forward_event(HippoCanvasBox *box,
               HippoEvent     *event)
 {
-    HippoBoxChild *child;
+    BoxChildPrivate *child;
 
     if (event->type == HIPPO_EVENT_MOTION_NOTIFY) {
         /* Motion events are a bit more complicated than the others */
@@ -3181,7 +3331,7 @@ forward_event(HippoCanvasBox *box,
         
         if (child != NULL) {
             set_release_pending (child, event->u.button.button, TRUE); 
-            return hippo_canvas_item_process_event(child->item,
+            return hippo_canvas_item_process_event(child->public.item,
                                                    event, child->x, child->y);
         } else {
             return FALSE;
@@ -3272,6 +3422,8 @@ hippo_canvas_box_request_changed(HippoCanvasItem *item)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
 
+    box->content_min_width = -1;
+    box->content_min_height = -1;
     box->needs_width_request = TRUE;
     box->needs_height_request = TRUE;
     box->needs_allocate = TRUE;
@@ -3292,14 +3444,14 @@ hippo_canvas_box_get_tooltip(HippoCanvasItem    *item,
                              HippoRectangle     *for_area)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);    
-    HippoBoxChild *child;
+    BoxChildPrivate *child;
     
     child = find_child_at_point(box, x, y);
 
     if (child != NULL) {
         char *tip;
 
-        tip = hippo_canvas_item_get_tooltip(child->item,
+        tip = hippo_canvas_item_get_tooltip(child->public.item,
                                             x - child->x,
                                             y - child->y,
                                             for_area);
@@ -3327,13 +3479,13 @@ hippo_canvas_box_get_pointer(HippoCanvasItem    *item,
                              int                 y)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);    
-    HippoBoxChild *child;
+    BoxChildPrivate *child;
     
     child = find_child_at_point(box, x, y);
 
     if (child != NULL) {
         HippoCanvasPointer p;
-        p = hippo_canvas_item_get_pointer(child->item,
+        p = hippo_canvas_item_get_pointer(child->public.item,
                                           x - child->x,
                                           y - child->y);
         if (p != HIPPO_CANVAS_POINTER_UNSET)
@@ -3357,22 +3509,22 @@ static void
 child_request_changed(HippoCanvasItem *child,
                       HippoCanvasBox  *box)
 {
-    HippoBoxChild *box_child;
+    BoxChildPrivate *box_child;
 
     box_child = find_child(box, child);
 
 #if 0
     g_debug("child %s %p of %s %p request changed",
-            g_type_name_from_instance((GTypeInstance*) box_child->item),
-            box_child->item,
+            g_type_name_from_instance((GTypeInstance*) box_child->public.item),
+            box_child->public.item,
             g_type_name_from_instance((GTypeInstance*) box),
             box);
 #endif
 
     if (box_child->requesting) {
         g_warning("Child item %p of type %s changed its size request inside a size request operation",
-                  box_child->item,
-                  g_type_name_from_instance((GTypeInstance*) box_child->item));
+                  box_child->public.item,
+                  g_type_name_from_instance((GTypeInstance*) box_child->public.item));
     }
     
     /* invalidate cached request for this child */
@@ -3389,13 +3541,13 @@ child_paint_needed(HippoCanvasItem *item,
                    const HippoRectangle *damage_box,
                    HippoCanvasBox  *box)
 {
-    HippoBoxChild *child;
+    BoxChildPrivate *child;
 
     /* translate to our own coordinates then emit the signal again */
     
     child = find_child(box, item);
 
-    if (child->visible)
+    if (child->public.visible)
         hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box),
                                             damage_box->x + child->x,
                                             damage_box->y + child->y,
@@ -3438,8 +3590,8 @@ disconnect_child(HippoCanvasBox  *box,
 }
 
 static gboolean
-set_flags(HippoBoxChild *c,
-          HippoPackFlags flags)
+set_flags(HippoCanvasBoxChild *c,
+          HippoPackFlags       flags)
 {
     HippoPackFlags old;
     
@@ -3493,10 +3645,10 @@ child_compare_func(const void *a,
                    void       *data)
 {
     ChildSortData *csd = data;
-    HippoBoxChild *child_a = (HippoBoxChild*) a;
-    HippoBoxChild *child_b = (HippoBoxChild*) b;
+    BoxChildPrivate *child_a = (BoxChildPrivate*) a;
+    BoxChildPrivate *child_b = (BoxChildPrivate*) b;
     
-    return (* csd->func) (child_a->item, child_b->item, csd->data);
+    return (* csd->func) (child_a->public.item, child_b->public.item, csd->data);
 }
 
 void
@@ -3512,23 +3664,32 @@ hippo_canvas_box_sort(HippoCanvasBox              *box,
     hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }
 
-static HippoBoxChild *
+static void
+update_in_layout(BoxChildPrivate *child)
+{
+    child->public.in_layout = !child->public.fixed && child->public.visible;
+}
+
+static BoxChildPrivate *
 child_create_from_item(HippoCanvasBox              *box,
                        HippoCanvasItem             *child,
                        HippoPackFlags               flags)
 {
-    HippoBoxChild *c;
+    BoxChildPrivate *c;
 
     g_object_ref(child);
     hippo_canvas_item_sink(child);
     connect_child(box, child);
-    c = g_new0(HippoBoxChild, 1);
-    c->item = child;
-    set_flags(c, flags);
-    c->visible = TRUE;
+    c = g_new0(BoxChildPrivate, 1);
+    c->ref_count = 1;
+    c->public.item = child;
+    set_flags(&c->public, flags);
+    c->public.visible = TRUE;
     c->min_width = -1;
     c->min_height = -1;
     c->height_request_for_width = -1;
+
+    update_in_layout(c);
 
     return c;    
 }
@@ -3557,8 +3718,8 @@ hippo_canvas_box_insert_before(HippoCanvasBox              *box,
                                HippoCanvasItem             *ref_child,
                                HippoPackFlags               flags)
 {
-    HippoBoxChild *c;
-    HippoBoxChild *ref_c;
+    BoxChildPrivate *c;
+    BoxChildPrivate *ref_c;
     int position;
 
     g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
@@ -3583,8 +3744,8 @@ hippo_canvas_box_insert_after(HippoCanvasBox              *box,
                               HippoCanvasItem             *ref_child,
                               HippoPackFlags               flags)
 {
-    HippoBoxChild *c;
-    HippoBoxChild *ref_c;
+    BoxChildPrivate *c;
+    BoxChildPrivate *ref_c;
     int position;
 
     g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
@@ -3610,7 +3771,7 @@ hippo_canvas_box_insert_sorted(HippoCanvasBox              *box,
                                HippoCanvasCompareChildFunc  compare_func,
                                void                        *data)
 {
-    HippoBoxChild *c;
+    BoxChildPrivate *c;
 
     g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
@@ -3649,7 +3810,7 @@ hippo_canvas_box_prepend(HippoCanvasBox  *box,
                          HippoCanvasItem *child,
                          HippoPackFlags   flags)
 {
-    HippoBoxChild *c;
+    BoxChildPrivate *c;
 
     g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
@@ -3702,18 +3863,20 @@ hippo_canvas_box_append(HippoCanvasBox  *box,
 
 static void
 remove_box_child(HippoCanvasBox *box,
-                 HippoBoxChild  *c)
+                 BoxChildPrivate  *c)
 {
     HippoCanvasItem *child;
 
-    child = c->item;
+    child = c->public.item;
+    c->public.item = NULL;
 
     box->children = g_slist_remove(box->children, c);
     disconnect_child(box, child);
     hippo_canvas_item_set_context(child, NULL);
  
     g_object_unref(child);
-    g_free(c);
+
+    hippo_canvas_box_child_unref(&c->public);
 
     hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));    
 }
@@ -3722,7 +3885,7 @@ void
 hippo_canvas_box_remove(HippoCanvasBox  *box,
                         HippoCanvasItem *child)
 {
-    HippoBoxChild *c;
+    BoxChildPrivate *c;
 
     g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
@@ -3733,7 +3896,6 @@ hippo_canvas_box_remove(HippoCanvasBox  *box,
         g_warning("Trying to remove a canvas item from a box it isn't in");
         return;
     }
-    g_assert(c->item == child);
 
     remove_box_child(box, c);
 }
@@ -3753,7 +3915,7 @@ hippo_canvas_box_remove_all(HippoCanvasBox *box)
     g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
     
     while (box->children != NULL) {
-        HippoBoxChild *child = box->children->data;
+        BoxChildPrivate *child = box->children->data;
         remove_box_child(box, child);
     }
 }
@@ -3770,8 +3932,8 @@ hippo_canvas_box_clear(HippoCanvasBox *box)
     g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
     
     while (box->children != NULL) {
-        HippoBoxChild *child = box->children->data;
-        HippoCanvasItem *item = child->item;
+        BoxChildPrivate *child = box->children->data;
+        HippoCanvasItem *item = child->public.item;
 
         g_object_ref(item);
 
@@ -3793,7 +3955,7 @@ hippo_canvas_box_move(HippoCanvasBox  *box,
                       int              x,
                       int              y)
 {
-    HippoBoxChild *c;
+    BoxChildPrivate *c;
     int w, h;
 
     g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
@@ -3805,31 +3967,31 @@ hippo_canvas_box_move(HippoCanvasBox  *box,
         g_warning("Trying to move a canvas item that isn't in the box");
         return;
     }
-    g_assert(c->item == child);
 
-
-    if (!c->fixed) {
+    if (!c->public.fixed) {
         g_warning("Trying to move a canvas box child that isn't fixed");
         return;
     }
 
     if (gravity != HIPPO_GRAVITY_NORTH_WEST) {
+        int natural_width;
+        int natural_height;
+        
         /* Ensure the child has been requested */
-        width_request_child(c);
-        height_request_child(c, c->min_width);
+        request_child_natural_size(&c->public, &natural_width, &natural_height);
 
         switch (gravity) {
         case HIPPO_GRAVITY_NORTH_WEST:
             break;
         case HIPPO_GRAVITY_NORTH_EAST:
-            x = x - c->min_width;
+            x = x - natural_width;
             break;
         case HIPPO_GRAVITY_SOUTH_WEST:
-            y = y - c->min_height;
+            y = y - natural_height;
             break;
         case HIPPO_GRAVITY_SOUTH_EAST:
-            x = x - c->min_width;
-            y = y - c->min_height;
+            x = x - natural_width;
+            y = y - natural_height;
             break;
         }
     }
@@ -3840,13 +4002,13 @@ hippo_canvas_box_move(HippoCanvasBox  *box,
          */
         hippo_canvas_item_get_allocation(child, &w, &h);
         
-        if (c->visible)
+        if (c->public.visible)
             hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box), c->x, c->y, w, h);
         
         c->x = x;
         c->y = y;
         
-        if (c->visible)
+        if (c->public.visible)
             hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box), c->x, c->y, w, h);
     }
 }
@@ -3866,7 +4028,7 @@ hippo_canvas_box_get_position(HippoCanvasBox  *box,
                               int             *x,
                               int             *y)
 {
-    HippoBoxChild *c;
+    BoxChildPrivate *c;
 
     g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
@@ -3877,7 +4039,6 @@ hippo_canvas_box_get_position(HippoCanvasBox  *box,
         g_warning("Trying to get the position of a canvas item that isn't in the box");
         return;
     }
-    g_assert(c->item == child);
 
     *x = c->x;
     *y = c->y;
@@ -3935,10 +4096,10 @@ hippo_canvas_box_foreach(HippoCanvasBox  *box,
     
     link = box->children;
     while (link != NULL) {
-        HippoBoxChild *child = link->data;
+        BoxChildPrivate *child = link->data;
         next = link->next; /* allow removal of children in the foreach */
         
-        (* func) (child->item, data);
+        (* func) (child->public.item, data);
 
         link = next;
     }
@@ -3962,9 +4123,9 @@ hippo_canvas_box_reverse(HippoCanvasBox  *box)
 
     link = box->children;
     while (link != NULL) {
-        HippoBoxChild *child = link->data;
+        BoxChildPrivate *child = link->data;
         
-        child->end = !child->end;
+        child->public.end = !child->public.end;
 
         link = link->next;
     }
@@ -3976,7 +4137,7 @@ static gboolean
 hippo_canvas_box_get_child_visible (HippoCanvasContainer        *container,
                                     HippoCanvasItem             *child)
 {
-    HippoBoxChild *c;
+    BoxChildPrivate *c;
     HippoCanvasBox *box;
 
     box = HIPPO_CANVAS_BOX(container);
@@ -3987,9 +4148,8 @@ hippo_canvas_box_get_child_visible (HippoCanvasContainer        *container,
         g_warning("Trying to get visibility on a canvas item that isn't in the box");
         return FALSE;
     }
-    g_assert(c->item == child);
 
-    return c->visible;
+    return c->public.visible;
 }
 
 static void
@@ -3997,7 +4157,7 @@ hippo_canvas_box_set_child_visible (HippoCanvasContainer        *container,
                                     HippoCanvasItem             *child,
                                     gboolean                     visible)
 {
-    HippoBoxChild *c;
+    BoxChildPrivate *c;
     HippoCanvasBox *box;
 
     box = HIPPO_CANVAS_BOX(container);
@@ -4008,15 +4168,16 @@ hippo_canvas_box_set_child_visible (HippoCanvasContainer        *container,
         g_warning("Trying to set visibility on a canvas item that isn't in the box");
         return;
     }
-    g_assert(c->item == child);
     
     visible = visible != FALSE;
-    if (visible == c->visible)
+    if (visible == c->public.visible)
         return;
     
-    c->visible = visible;
+    c->public.visible = visible;
 
-    if (c->fixed) {
+    update_in_layout(c);    
+
+    if (c->public.fixed) {
         int w, h;
         
         /* We only repaint, don't queue a resize - fixed items don't affect the
@@ -4033,8 +4194,8 @@ hippo_canvas_box_set_child_packing (HippoCanvasBox              *box,
                                     HippoCanvasItem             *child,
                                     HippoPackFlags               flags)
 {
-    HippoBoxChild *c;
-
+    BoxChildPrivate *c;
+    
     g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
 
@@ -4044,9 +4205,9 @@ hippo_canvas_box_set_child_packing (HippoCanvasBox              *box,
         g_warning("Trying to set flags on a canvas item that isn't in the box");
         return;
     }
-    g_assert(c->item == child);
 
-    if (set_flags(c, flags)) {
+    if (set_flags(&c->public, flags)) {
+        update_in_layout(c);
         hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
     }
 }
@@ -4068,4 +4229,229 @@ hippo_canvas_box_is_clickable (HippoCanvasBox *box)
     return box->clickable;
 }
 
+GType
+hippo_canvas_box_child_get_type (void)
+{
+  static GType our_type = 0;
+  
+  if (our_type == 0)
+    our_type = g_boxed_type_register_static (("HippoCanvasBoxChild"),
+					     (GBoxedCopyFunc) hippo_canvas_box_child_ref,
+					     (GBoxedFreeFunc) hippo_canvas_box_child_unref);
 
+  return our_type;
+}
+
+/**
+ * hippo_canvas_box_child_ref:
+ * @child: a #HippoCanvasBoxChild
+ *
+ * Adds a reference to a #HippoCanvasBoxChild. The child will not
+ * be freed before a corresponding call to hippo_canvas_box_child_unref()
+ *
+ * Return value: the child passed in
+ */
+HippoCanvasBoxChild *
+hippo_canvas_box_child_ref(HippoCanvasBoxChild *child)
+{
+    g_return_val_if_fail(child != NULL, NULL);
+
+    ((BoxChildPrivate *)child)->ref_count++;
+
+    return child;
+}
+
+/**
+ * hippo_canvas_box_child_ref:
+ * @child: a #HippoCanvasBoxChild
+ *
+ * Release a reference previously added to a #HippoCanvasBoxChild. If ther
+ * are no more outstanding references to the box child (including references
+ * held by the parent box), the child and associated data will be freed.
+ */
+void
+hippo_canvas_box_child_unref(HippoCanvasBoxChild *child)
+{
+    BoxChildPrivate *private;
+    
+    g_return_if_fail(child != NULL);
+
+    private = (BoxChildPrivate *)child;
+
+    private->ref_count--;
+    if (private->ref_count == 0) {
+        BoxChildQDataNode *node;
+
+        for (node = private->qdata; node; node = node->next) {
+            if (node->notify)
+                node->notify(node->data);
+        }
+
+        if (private->qdata)
+            g_slice_free_chain(BoxChildQDataNode, private->qdata, next);
+    
+        g_free(private);
+    }
+}
+
+/**
+ * hippo_canvas_box_child_set_qdata:
+ * @child: a #HippoCanvasBoxChild
+ * @key: a #GQuark identifying the data to store
+ * @data: the data to store
+ * @notify: a function to call when the data is replaced or the box child is freed
+ *
+ * Associates data with a #HippoCanvasBoxChild object
+ * 
+ * Return value: the data previously stored, or %NULL if data was not
+ *  previously stored for the given key.
+ */
+void
+hippo_canvas_box_child_set_qdata(HippoCanvasBoxChild *child,
+                                 GQuark               key,
+                                 gpointer             data,
+                                 GDestroyNotify       notify)
+{
+    BoxChildPrivate *private = (BoxChildPrivate *)child;
+    BoxChildQDataNode *node;
+    
+    for (node = private->qdata; node; node = node->next) {
+        if (node->key == key)
+            break;
+    }
+
+    if (node == NULL) {
+        node = g_slice_new(BoxChildQDataNode);
+        node->key = key;
+        node->next = private->qdata;
+        private->qdata = node;
+    } else {
+        if (node->notify)
+            node->notify(node->data);
+    }
+    
+    node->data = data;
+    node->notify = notify;
+}
+
+/**
+ * hippo_canvas_box_child_get_qdata:
+ * @child: a #HippoCanvasBoxChild
+ * @key: a #GQuark identifying the data to retrieve
+ *
+ * Retrieves data previously stored with hippo_canvas_box_child_set_qdata()
+ * 
+ * Return value: the data previously stored, or %NULL if data was not
+ *  previously stored for the given key.
+ */
+gpointer
+hippo_canvas_box_child_get_qdata(HippoCanvasBoxChild *child,
+                                 GQuark               key)
+{
+    BoxChildPrivate *private = (BoxChildPrivate *)child;
+    BoxChildQDataNode *node;
+
+    for (node = private->qdata; node; node = node->next) {
+        if (node->key == key)
+            return node->data;
+    }
+
+    return NULL;
+}
+
+/**
+ * hippo_canvas_box_find_box_child(HippoCanvasBox *box)
+ * @box: a #HippoCanvasBox
+ * @item: the canvas item to find the child object for
+ *
+ * Locates the #HippoCanvasBoxChild object for an item that is a child of the box.
+ *
+ * Return value: The #HippoCanvasBoxChild for the child item, or %NULL if the
+ *  item is not a child of the box. No reference is added to the returned
+ *  item.
+ */
+HippoCanvasBoxChild *
+hippo_canvas_box_find_box_child(HippoCanvasBox  *box,
+                                HippoCanvasItem *item)
+{
+    BoxChildPrivate *private;
+    
+    g_return_val_if_fail(HIPPO_IS_CANVAS_BOX(box), NULL);
+
+    private = find_child(box, item);
+    if (private)
+        return &private->public;
+    else
+        return NULL;
+}
+
+/**
+ * hippo_canvas_box_get_layout_children()
+ * @box: a #HippoCanvasBox
+ * 
+ * Return the list of children that a layout manager should manage. As compared
+ * to hippo_canvas_box_get_children() this list omits widgets that are
+ * not visible, positioned at a fixed position, or not geometry managed for
+ * some other reason. It also returns a list of #HippoCanvasBoxChild rather
+ * than a list of #HippoCanvasItem.
+ *
+ * If you are implementing a layout manager that iterates over the box's child list
+ * directly (to save creating the list, say), you should check the 'in_layout'
+ * property of each child before laying it out.
+ *
+ * Return value: a list of HippoCanvasBoxChild. The list should be freed with
+ *   g_list_free(), but the members don't have to be freed. (No reference count
+ *   is added to them.)
+ */
+GList *
+hippo_canvas_box_get_layout_children (HippoCanvasBox *box)
+{
+    GList *result;
+    GSList *link;
+
+    g_return_val_if_fail(HIPPO_IS_CANVAS_BOX(box), NULL);
+
+    result = NULL;
+    for (link = box->children; link != NULL; link = link->next) {
+        HippoCanvasBoxChild *child = link->data;
+        if (child->in_layout)
+            result = g_list_prepend(result, child);
+    }
+
+    return g_list_reverse(result);
+}
+
+/**
+ * hippo_canvas_box_set_layout:
+ * @box: a #HippoCanvasBox
+ * @layout: the layout manager to set on the box or %NULL to use the
+ *   default box layout manager.
+ * 
+ * Sets the layout manager to use for the box. A layout manager provides
+ * an alternate method of laying out the children of a box. Once you set
+ * a layout manager for the box, you will typically want to add children
+ * to the box using the methods of the layout manager, rather than the
+ * methods of the box, so that you can specify packing options that are
+ * specific to the layout manager.
+ */
+void
+hippo_canvas_box_set_layout(HippoCanvasBox    *box,
+                            HippoCanvasLayout *layout)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
+
+    if (box->layout) {
+        hippo_canvas_layout_set_box(box->layout, NULL);
+        g_object_unref(box->layout);
+        box->layout = NULL;
+    }
+
+    box->layout = layout;
+
+    if (box->layout) {
+        g_object_ref(box->layout);
+        hippo_canvas_layout_set_box(box->layout, box);
+    }
+
+    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
+}

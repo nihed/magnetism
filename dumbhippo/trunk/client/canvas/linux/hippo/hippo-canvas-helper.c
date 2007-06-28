@@ -81,6 +81,8 @@ struct _HippoCanvasHelper {
 
     GtkWidget *tooltip_window;
 
+    int width;
+
     guint tooltip_timeout_id;
     int last_window_x;
     int last_window_y;
@@ -113,6 +115,7 @@ G_DEFINE_TYPE_WITH_CODE(HippoCanvasHelper, hippo_canvas_helper, G_TYPE_OBJECT,
 static void
 hippo_canvas_helper_init(HippoCanvasHelper *helper)
 {
+    helper->width = -1;
     helper->pointer = HIPPO_CANVAS_POINTER_UNSET;
     helper->last_window_x = -1;
     helper->last_window_y = -1;
@@ -395,7 +398,7 @@ hippo_canvas_helper_size_request(HippoCanvasHelper *helper,
     if (helper->root != NULL) {
         int min_width, min_height;
         hippo_canvas_item_get_width_request(helper->root, &min_width, NULL);
-        hippo_canvas_item_get_height_request(helper->root, min_width, &min_height, NULL);
+        hippo_canvas_item_get_height_request(helper->root, MAX(helper->width, min_width), &min_height, NULL);
         requisition->width = min_width;
         requisition->height = min_height;
     }
@@ -1049,6 +1052,20 @@ hippo_canvas_helper_set_root(HippoCanvasHelper *helper,
     }
 
     gtk_widget_queue_resize(widget);
+}
+
+void
+hippo_canvas_helper_set_width(HippoCanvasHelper *helper,
+                              int                width)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_HELPER(helper));
+
+    if (helper->width == width)
+        return;
+
+    helper->width = width;
+
+    gtk_widget_queue_resize(helper->widget);
 }
 
 /*

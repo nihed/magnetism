@@ -147,11 +147,42 @@ suppress_shadow_width(GtkWidget *widget)
     gtk_widget_set_name(widget, "hippo-no-shadow-widget");
 }
 
+/* We want height-for-width behavior when we have a vertical scrollbar
+ * but no horizontal scrollbar. We hack this in by queuing a new
+ * request each time we are allocated with a different width. We can
+ * be pretty sure this won't cause infinite loops because of two
+ * things: 1) hippo_canvas_helper_set_width() short-circuits when
+ * setting the same width and doesn't queue a new size. 2) the
+ * presence of a vertical scrollbar means that the height request of
+ * the scrolled window won't depend on the height request of the
+ * viewport, reducing the chance of getting into a loop with some other
+ * part of the user interface that might also be queuing a resize
+ * on allocate in similar circumstance.
+ */
+static void
+on_viewport_size_allocate(GtkWidget    *viewport,
+                          GdkRectangle *allocation)
+{
+    GtkWidget *scrolled_window = viewport->parent;
+    GtkPolicyType hscrollbar_policy;
+    GtkPolicyType vscrollbar_policy;
+    
+    gtk_scrolled_window_get_policy(GTK_SCROLLED_WINDOW(scrolled_window),
+                                   &hscrollbar_policy, &vscrollbar_policy);
+
+    if (hscrollbar_policy == GTK_POLICY_NEVER && vscrollbar_policy != GTK_POLICY_NEVER) {
+        GtkWidget *viewport = GTK_BIN(scrolled_window)->child;
+        GtkWidget *canvas = GTK_BIN(viewport)->child;
+        hippo_canvas_set_width(HIPPO_CANVAS(canvas), allocation->width);
+    }
+}
+
 static void
 hippo_canvas_scrollbars_init(HippoCanvasScrollbars *scrollbars)
 {
     GtkWidget *widget;
     GtkWidget *canvas;
+    GtkWidget *viewport;
 
     widget = gtk_scrolled_window_new(NULL,NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
@@ -162,7 +193,11 @@ hippo_canvas_scrollbars_init(HippoCanvasScrollbars *scrollbars)
     canvas = hippo_canvas_new();
     gtk_widget_show(canvas);
     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(widget), canvas);
+    viewport = GTK_BIN(widget)->child;
 
+    g_signal_connect(viewport, "size-allocate",
+                     G_CALLBACK(on_viewport_size_allocate), NULL);
+               
     gtk_viewport_set_shadow_type(GTK_VIEWPORT(gtk_bin_get_child(GTK_BIN(widget))),
                                  GTK_SHADOW_NONE);
     suppress_shadow_width(gtk_bin_get_child(GTK_BIN(widget)));

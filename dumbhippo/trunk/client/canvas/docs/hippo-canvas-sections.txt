@@ -34,6 +34,7 @@ hippo_canvas_box_append
 hippo_canvas_box_move
 hippo_canvas_box_set_position
 hippo_canvas_box_get_position
+hippo_canvas_box_clear
 hippo_canvas_box_remove
 hippo_canvas_box_remove_all
 hippo_canvas_box_get_children
@@ -50,6 +51,18 @@ hippo_canvas_box_get_background_area
 hippo_canvas_box_align
 hippo_canvas_box_set_clickable
 hippo_canvas_box_is_clickable
+hippo_canvas_box_set_layout
+hippo_canvas_box_find_box_child
+hippo_canvas_box_get_layout_children
+<SUBSECTION>
+HippoCanvasBoxChild
+hippo_canvas_box_child_ref
+hippo_canvas_box_child_unref
+hippo_canvas_box_child_get_qdata
+hippo_canvas_box_child_set_qdata
+hippo_canvas_box_child_get_width_request
+hippo_canvas_box_child_get_height_request
+hippo_canvas_box_child_allocate
 <SUBSECTION Standard>
 HippoCanvasBoxClass
 HIPPO_CANVAS_BOX
@@ -59,6 +72,8 @@ hippo_canvas_box_get_type
 HIPPO_CANVAS_BOX_CLASS
 HIPPO_IS_CANVAS_BOX_CLASS
 HIPPO_CANVAS_BOX_GET_CLASS
+HIPPO_TYPE_CANVAS_BOX_CHILD
+hippo_canvas_box_child_get_type
 </SECTION>
 
 <SECTION>
@@ -181,6 +196,7 @@ HippoCanvasPointer
 HippoItemAlignment
 HippoCanvasItemIface
 hippo_canvas_item_sink
+hippo_canvas_item_destroy
 hippo_canvas_item_set_context
 hippo_canvas_item_set_parent
 hippo_canvas_item_get_parent
@@ -193,6 +209,7 @@ hippo_canvas_item_get_tooltip
 hippo_canvas_item_get_pointer
 hippo_canvas_item_get_visible
 hippo_canvas_item_set_visible
+hippo_canvas_item_emit_destroy
 hippo_canvas_item_emit_button_press_event
 hippo_canvas_item_emit_button_release_event
 hippo_canvas_item_emit_motion_notify_event
@@ -226,6 +243,25 @@ hippo_canvas_gradient_get_type
 HIPPO_CANVAS_GRADIENT_CLASS
 HIPPO_IS_CANVAS_GRADIENT_CLASS
 HIPPO_CANVAS_GRADIENT_GET_CLASS
+</SECTION>
+
+<SECTION>
+<INCLUDE>hippo/hippo-canvas-layout.h</INCLUDE>
+<FILE>hippo-canvas-layout</FILE>
+<TITLE>HippoCanvasLayout</TITLE>
+HippoCanvasLayout
+HippoCanvasLayoutIface
+hippo_canvas_layout_allocate
+hippo_canvas_layout_get_height_request
+hippo_canvas_layout_get_type
+hippo_canvas_layout_get_width_request
+hippo_canvas_layout_set_box
+<SUBSECTION Standard>
+HIPPO_CANVAS_LAYOUT
+HIPPO_IS_CANVAS_LAYOUT
+HIPPO_TYPE_CANVAS_LAYOUT
+hippo_canvas_layout_get_type
+HIPPO_CANVAS_LAYOUT_GET_IFACE
 </SECTION>
 
 <SECTION>

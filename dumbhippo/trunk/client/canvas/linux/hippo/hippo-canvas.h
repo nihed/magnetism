@@ -30,6 +30,8 @@ GType        	 hippo_canvas_get_type               (void) G_GNUC_CONST;
 GtkWidget*   hippo_canvas_new      (void);
 void         hippo_canvas_set_root (HippoCanvas     *canvas,
                                     HippoCanvasItem *root);
+void         hippo_canvas_set_width (HippoCanvas    *canvas,
+                                     int             width);
 
 void         hippo_canvas_set_load_image_hook(HippoCanvasLoadImageHook hook);
 
