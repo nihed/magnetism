@@ -225,8 +225,8 @@ get_info_from_all_sessions(HippoDBusProxy *proxy)
     dbus_bool_t retval;
     const char *info_name;
 
-    info_name = "org.mugshot.MugshotInfo";
-    dbus_error_init(&derror);    
+    info_name = "org.mugshot.Mugshot";
+    dbus_error_init(&derror);
     reply = hippo_dbus_proxy_call_method_sync(proxy, "GetInfoFromAllSessions",
                                               &derror,
                                               DBUS_TYPE_STRING, &info_name,
@@ -312,7 +312,7 @@ handle_info_changed(DBusConnection *connection,
     name = NULL;
     dbus_message_iter_get_basic(&iter, &name);
 
-    if (!(name && strcmp(name, "org.mugshot.MugshotInfo") == 0)) {
+    if (!(name && strcmp(name, "org.mugshot.Mugshot") == 0)) {
         return;
     }
 
@@ -343,7 +343,7 @@ handle_info_removed(DBusConnection *connection,
     name = NULL;
     dbus_message_iter_get_basic(&iter, &name);
 
-    if (!(name && strcmp(name, "org.mugshot.MugshotInfo") == 0)) {
+    if (!(name && strcmp(name, "org.mugshot.Mugshot") == 0)) {
         return;
     }
 
@@ -391,7 +391,7 @@ append_mugshot_info(DBusMessage *message,
     
     dbus_message_iter_init_append(message, &iter);
 
-    name = "org.mugshot.MugshotInfo";
+    name = "org.mugshot.Mugshot";
     if (!dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &name))
         return FALSE;
 
@@ -448,7 +448,7 @@ handle_service_unavailable(DBusConnection *connection,
 }
 
 static const HippoDBusSignalTracker signal_handlers[] = {
-    /* it would be slightly nicer if we also matched arg0=org.mugshot.MugshotInfo
+    /* it would be slightly nicer if we also matched arg0=org.mugshot.Mugshot
      * on these signals
      */
     { "org.freedesktop.od.LocalExport", "InfoChanged", handle_info_changed },
