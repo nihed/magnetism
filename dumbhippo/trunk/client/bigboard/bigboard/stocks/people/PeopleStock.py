@@ -15,6 +15,7 @@ from mugshot import DataModel
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasMugshotURLImageButton, PhotoContentItem, CanvasHBox, CanvasVBox
 from bigboard.stock import AbstractMugshotStock
 from bigboard.databound import DataBoundItem
+import bigboard.globals
 import bigboard.libbig as libbig
 import bigboard.slideout
 import bigboard.profile
@@ -235,7 +236,7 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         self.connect_resource(self.__update)
         self.connect_resource(self.__update_loved_accounts, "lovedAccounts")
         
-        query = DataModel().query_resource(self.resource.resource_id, "lovedAccounts +")
+        query = DataModel(bigboard.globals.server_name).query_resource(self.resource.resource_id, "lovedAccounts +")
         query.add_handler(self.__update_loved_accounts)
         query.execute()
         
@@ -307,7 +308,7 @@ class BuddyMonitor(gobject.GObject):
     def __init__(self):
         gobject.GObject.__init__(self)
         
-        self._model = DataModel()
+        self._model = DataModel(bigboard.globals.server_name)
         self._model.add_connected_handler(self.__on_connected)
         if self._model.connected:
             self.__on_connected()
@@ -404,7 +405,7 @@ class PeopleStock(AbstractMugshotStock):
 
         self.__update_separators()
         
-        self._model = DataModel()
+        self._model = DataModel(bigboard.globals.server_name)
         self._model.add_connected_handler(self.__on_connected)
         if self._model.connected:
             self.__on_connected()

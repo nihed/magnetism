@@ -60,7 +60,7 @@ class DataModel(AbstractModel):
 
         self.callback = _DBusCallback(self, bus)
 
-    def __update_proxy(self):
+    def __update_proxy(self, *args):
         self._on_disconnected()
 
         bus = dbus.SessionBus()
