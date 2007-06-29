@@ -266,6 +266,14 @@ HippoCanvasBox
 @y: 
 
 
+<!-- ##### FUNCTION hippo_canvas_box_clear ##### -->
+<para>
+
+</para>
+
+@box: 
+
+
 <!-- ##### FUNCTION hippo_canvas_box_remove ##### -->
 <para>
 
@@ -421,5 +429,122 @@ HippoCanvasBox
 
 @box: 
 @Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_set_layout ##### -->
+<para>
+
+</para>
+
+@box: 
+@layout: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_find_box_child ##### -->
+<para>
+
+</para>
+
+@box: 
+@item: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_get_layout_children ##### -->
+<para>
+
+</para>
+
+@box: 
+@Returns: 
+
+
+<!-- ##### STRUCT HippoCanvasBoxChild ##### -->
+<para>
+
+</para>
+
+@item: 
+@in_layout: 
+@expand: 
+@end: 
+@fixed: 
+@if_fits: 
+@float_left: 
+@float_right: 
+@clear_left: 
+@clear_right: 
+@visible: 
+
+<!-- ##### FUNCTION hippo_canvas_box_child_ref ##### -->
+<para>
+
+</para>
+
+@child: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_child_unref ##### -->
+<para>
+
+</para>
+
+@child: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_child_get_qdata ##### -->
+<para>
+
+</para>
+
+@child: 
+@key: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_child_set_qdata ##### -->
+<para>
+
+</para>
+
+@child: 
+@key: 
+@data: 
+@notify: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_child_get_width_request ##### -->
+<para>
+
+</para>
+
+@child: 
+@min_width_p: 
+@natural_width_p: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_child_get_height_request ##### -->
+<para>
+
+</para>
+
+@child: 
+@for_width: 
+@min_height_p: 
+@natural_height_p: 
+
+
+<!-- ##### FUNCTION hippo_canvas_box_child_allocate ##### -->
+<para>
+
+</para>
+
+@child: 
+@x: 
+@y: 
+@width: 
+@height: 
+@origin_changed: 
 
 
