@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<accessrules>
+			<accessrule kind="accessible" pattern="**/awt/image/**"/>
+			<accessrule kind="accessible" pattern="**/awt/geom/**"/>
+			<accessrule kind="accessible" pattern="**/awt/Graphics2D"/>
+			<accessrule kind="accessible" pattern="**/awt/Image"/>
+			<accessrule kind="accessible" pattern="**/awt/AlphaComposite"/>
+			<accessrule kind="accessible" pattern="**/awt/Rectangle"/>
+			<accessrule kind="discouraged" pattern="**/awt/**"/>
+		</accessrules>
+	</classpathentry>
+	<classpathentry sourcepath="ECLIPSE_HOME/plugins/org.eclipse.jdt.source_3.0.0/src/org.junit_3.8.1/junitsrc.zip" kind="var" path="JUNIT_HOME/junit.jar"/>
+	<classpathentry kind="src" path="tests"/>
+	<classpathentry kind="lib" path="lib/commons-logging-1.0.4.jar"/>
+	<classpathentry kind="lib" path="lib/commons-logging-api-1.0.4.jar"/>
+	<classpathentry kind="lib" path="lib/commons-collections-2.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/dom4j-1.6.jar"/>
+	<classpathentry sourcepath="/smack/source" kind="lib" path="lib/smack-svn-local-build-2005-09-30.jar"/>
+	<classpathentry kind="lib" path="lib/smackx-svn-local-build-2005-09-30.jar"/>
+	<classpathentry kind="lib" path="lib/jstl.jar"/>
+	<classpathentry kind="lib" path="lib/standard.jar"/>
+	<classpathentry kind="lib" path="lib/jboss-remoting.jar"/>
+	<classpathentry kind="lib" path="lib/commons-codec-1.3.jar"/>
+	<classpathentry kind="lib" path="lib/commons-httpclient-2.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/commons-fileupload-1.0.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/jboss-ejb3.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/jboss-ejb3x.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/client/mail.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/client/log4j.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aop-jdk50.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aspect-library-jdk50.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/client/activation.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/hibernate3.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/ejb3-persistence.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/lib/javax.servlet.jsp.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/client/jbossall-client.jar"/>
+	<classpathentry kind="output" path="eclipse-bin"/>
+</classpath>

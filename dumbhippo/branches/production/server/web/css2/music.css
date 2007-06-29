@@ -1,0 +1,19 @@
+@CHARSET "UTF-8";
+@IMPORT url("music-positions.css");
+
+.dh-sidebar-box.dh-controls-box {
+	background-color:		#AED7ED;
+}
+
+.dh-sidebar-box .dh-music-radar-options {
+	margin-top: 			3px;
+	margin-left:			3px;
+}
+
+#dhBeaconSample {
+	margin-bottom: 10px;
+}
+
+#dhContentColumn .dh-zone-box .dh-song {
+	margin-bottom:	10px;
+}

@@ -1,0 +1,156 @@
+..title: Proposal For Dojo Class Organization
+
+.. raw:: html
+   :file: website/rest_template/header.html
+
+Dojo Namespace Layout Proposal
+------------------------------
+
+For naming, this proposal follows the Dojo class and namespace naming
+conventions: lower case for singleton objects and other namespace-only items,
+and UpperCase initial letters for instantiable (terminal) classes.
+
+Legend::
+
+    B = abstract base class, only to be used in subclassing
+    S = only to scope static methods; never to be subclassed or instantiated
+    I = to be instantiated
+
+.. |                                  |       |                                   |                                   |                                          |
+.. +----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+.. dojo.AssertError     I    java.lang.AssertionError                                   thrown by dj_assert()
+
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| Proposed                          | B/S/I | Java                              | .NET                              |      Description                         |
++===================================+=======+===================================+===================================+==========================================+
+| dojo.alg                          | S     | java.util.Arrays                  | System.Collections                | static functions like find(), inspired by| 
+|                                   |       |                                   |                                   | C++.not much similar in Java or .NET     |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.comparator.*                 | SI    | java.util.Comparator,             |  System.Collections.Comparer      |                                          |
+|                                   |       | java.lang.Comparable,             |                                   |                                          |
+|                                   |       | java.text.Collator                |                                   |                                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.functional                   | S     |                                   |                                   | static functions for functional          | 
+|                                   |       |                                   |                                   | programming, like ``bind1st()``          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.math                         | S     | java.lang.Math,                   |                                   | gaussian(), random(). not called "Math"  |
+|                                   |       | java.math                         |                                   | because that is a primitive class        |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.lang                         | S     | java.lang.System                  |                                   | isArray(), isPrimitive(), uneval()       |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.mop                          | S     |                                   |                                   | static functions for MOP/AOP hacks, like | 
+|                                   |       |                                   |                                   | memoize(), addAdvice()                   |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.text                         | S     | java.util.StringTokenizer         | System.String, System.Text        | things like trimLeft(). For those who    |
+|                                   |       | java.text.*                       |                                   | want it, for many static functions we    |
+|                                   |       |                                   |                                   | will do String.prototype.* = dojo.text.*.|
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.datetime                     | S     | java.util.Date,                   |                                   | not called "Date", because that is a     |
+|                                   |       | java.util.Calendar                |                                   | primitive class. As with dojo.text,      |
+|                                   |       |                                   |                                   | there will be optional extension of the  |
+|                                   |       |                                   |                                   | builtin Date.                            |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.uri                          | SI    | java.net.URL                      | System.URI                        |                                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.error                        | SI    | java.lang.Error,                  |                                   | used in making better errors.            |
+|                                   |       | java.lang.Exception, ...          |                                   |                                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.crypto.*                     | S     | java.crypt.*                      | System.Security.Cryptography.*    | md5(), etc.                              |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.runtime.AbstractRuntime      | B     | java.lang.System,                 | System.Runtime                    | subclasses for each runtime environment: |
+|                                   |       |                                   |                                   | builtin Date.                            |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.runtime.DomRuntime,          |       | java.lang.Runtime                 |                                   |                                          |
+| dojo.runtime.WshRuntime,          |       |                                   |                                   |                                          |
+| dojo.runtime.SpiderMonkeyRuntime  |       |                                   |                                   |                                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.runtime.ScriptLoader,        | SI    | java.lang.ClassLoader,            | Microsoft.JScript, Microsoft.Vsa  |                                          |
+| dojo.runtime.Script               |       | java.lang.Class                   |                                   |                                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.runtime.Config               | S     | java.lang.System.getProperties()  | System.Configuration              | for ambient configuration information    |
+|                                   |       |                                   |                                   | (such as from window.location query      |
+|                                   |       |                                   |                                   | string, or some global js var)           |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.stack.StackFrame,            | SI    | java.lang.StackTraceElement       |                                   |                                          |
+| dojo.stack.StackTrace             |       |                                   |                                   |                                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.io.*                         | BI    | java.io.*,                        | System.IO.*, System.Net.*,        | AbstractURIRequest, XmlHttpURIRequest,   | 
+|                                   |       | java.nio.*, java.net.*,           | System.Web.Services.*             | IframeURIRequest, SOAPRequest            |
+|                                   |       | javax.servlet.*                   |                                   |                                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.collections.*                | I     | java.util.Vector, etc.            | System.Collections                |                                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.xml.*                        |       | javax.xml, org.xml.*              | System.Xml.*                      |                                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.xml.domUtil                  | S     |                                   |                                   | static conveniences that work in an XML  |
+|                                   |       |                                   |                                   | DOM, not just XHTML                      |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.xml.htmlUtil                 | S     |                                   |                                   | static conveniences for XHTML DOM (but   |
+|                                   |       |                                   |                                   | no functionality specific to browser     |
+|                                   |       |                                   |                                   | DOMs, such as events)                    |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.xml.xpath.*                  | SI    |                                   | System.Xml.XPath                  | XPath in pure javascript                 |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.reflect.PropertyDef          | I     | java.reflect, java.beans,         | System.Type, System.Reflection    | used to define property types, for       |
+|                                   |       | java.lang.Class                   |                                   | validation of forms and widget           |
+|                                   |       |                                   |                                   | declarations.                            |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.props.*                      |       | java.util.prefs,                  | System.Configuration,             | AbstractProperties, PropertyError        |
+|                                   |       | java.util.Properties              | System.Resources                  |                                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.logging.*                    |       | java.util.logging                 | System.Diagnostics.Debug          |                                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.event.*                      |       | java.awt.event,                   | System.EventArgs,                 | I'm not actually convince events are a   |
+|                                   |       | java.swing.event,                 | System.ComponentModel.EventHandler| universal, outside of ui                 |
+|                                   |       | javax.naming.event,               |                                   |                                          |
+|                                   |       | java.util.EventObject             |                                   |                                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.concurrent.*                 |       | java.lang.Thread,                 | System.Threading,                 |                                          |
+|                                   |       | java.util.Timer,                  | System.Timers,                    |                                          |
+|                                   |       | java.util.TimerTask,              | System.Windows.Forms.Timer        |                                          |
+|                                   |       | java.lang.Object                  |                                   |                                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.graphics.*                   |       | java.imageio.*                    | System.Drawing.Graphics,          | for 2d vector graphics and image         |
+|                                   |       |                                   | System.Drawing.Imaging,           | manipulation                             |
+|                                   |       |                                   | System.Drawing.ImageAnimator      |                                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.av.*                         |       | javax.sound.*                     |                                   | audio and video                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.web.InputEvent,              | SI    |                                   | S.Windows.Forms.Control.DragDrop, | for interaction with a browser (not just | 
+|                                   |       |                                   | etc.                              | any DOM): keyboard and mouse events,     | 
+|                                   |       |                                   | etc.                              | user agent, etc.                         |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.web.DragDrop,                |       |                                   |                                   |                                          |
+| dojo.web.TextSelection,           |       |                                   |                                   |                                          |
+| dojo.web.Cookies                  |       |                                   |                                   |                                          |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+| dojo.webui.widgets.*              | BI    | java.awt, javax.swing, etc.       | System.Web.UI, etc.               | widgets for the "webui" toolkit, which   |
+|                                   |       |                                   |                                   | relies on a XHTML DOM.                   |
++-----------------------------------+-------+-----------------------------------+-----------------------------------+------------------------------------------+
+
+Areas not covered::
+
+   3D graphics
+   animation/timing (SMIL, etc.)
+
+Functionality not in classes::
+
+   fixes to ecmascript implementations
+   dj_import(), dj_class(), dj_throw(), and any othe pseduo language extensions
+
+.. raw:: html
+   :file: website/rest_template/sidebar.html
+
+Proposal For Dojo Class Organization
+====================================
+
+:Author: Mark D. Anderson (mda@discerning.com), Alex Russell (alex@netWindows.org)
+:Version: $Id: dojo_classes.txt,v 1.2 2004/08/14 23:17:44 alex Exp $ 
+:Date: $Date: 2004/08/14 23:17:44 $
+
+.. contents::
+
+.. raw:: html
+   :file: website/rest_template/footer.html
+
+.. vim:ts=4:et:tw=0:shiftwidth=4:

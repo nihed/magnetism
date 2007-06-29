@@ -1,0 +1,231 @@
+body {
+	font-family: Georgia, Times, serif;
+	font-size : 85%;
+	padding : 0 50px;
+	margin : 0 auto;
+	margin-top : 1.25em;
+	max-width : 872px;
+	min-width : 640px;
+}
+
+div.clear {
+	clear:both;
+}
+
+/*  Page heading  */
+div#header {
+	width : 100%;
+}
+#dojo-top {
+	height : 34px;
+	overflow : hidden;
+	margin-bottom : 10px;
+	background : url(http://dojotoolkit.org/img/top-bg.gif) repeat-x top right;
+}
+#dojo-top h1 {
+	margin : 0;
+	padding : 0;
+	float : left;
+}
+#dojo-top h1 a {
+	display : block;
+	width : 155px;
+	height : 34px;
+	background : url(http://dojotoolkit.org/img/top-logo.gif) no-repeat;
+	text-indent : -99em;
+}
+#dojo-top-nav {
+	margin-right : 15px;
+	float : right;
+	height : 34px;
+}
+#dojo-top-nav a {
+	float : left;
+	color : #eee;
+	font : 11px Lucida Grande, Tahoma, sans-serif;
+	line-height : 34px;
+	text-transform : lowercase;
+	text-decoration : none;
+}
+#dojo-top-nav a:hover {
+	line-height : 24px;
+}
+#dojo-top-nav a#dojo-downloads:hover {
+	border-top: 5px solid #1e0e71;
+}
+#dojo-top-nav a#dojo-news:hover {
+	border-top: 5px solid #940a0a;
+}
+#dojo-top-nav a#dojo-docs:hover {
+	border-top: 5px solid #12770f;
+}
+#dojo-top-nav a#dojo-trac:hover {
+	border-top: 5px solid #aaa;
+}
+#dojo-top-nav a#dojo-community:hover {
+	border-top: 5px solid #e0942f;
+}
+#dojo-top-nav a#dojo-examples:hover {
+	border-top: 5px solid #a6238f;
+}
+#dojo-top-nav span {
+	display : block;
+	float : left;
+	width : 1px;
+	height : 34px;
+	overflow : hidden;
+	margin : 0 6px;
+	background : url(http://dojotoolkit.org/img/top-sep.gif) no-repeat top center;
+	text-indent : -5em;
+	cursor : default;
+}
+
+/*  Page content  */
+div#content-body {
+	position:relative;
+	width : 100%;
+	margin-top: 20px;
+	clear : both;
+}
+div#content {
+	padding-left : 6px;
+	margin-right : 338px;
+}
+div#content2 {
+	_width : 99.9%;
+}
+
+/* Content tag definitions */
+div.content table {
+	font-size : 1em;
+}
+
+div.content h1,
+div.content h2,
+div.content h3,
+div.content h4,
+div.content h5,
+div.content h6 {
+	font-family : Lucida Grande, Arial, Helvetica, sans-serif;
+	margin : 0;
+}
+div.content h1 a,
+div.content h2 a,
+div.content h3 a,
+div.content h4 a,
+div.content h5 a,
+div.content h6 a {
+	color : black;
+	text-decoration : none;
+}
+div.content h1 {
+	font-size : 1.1em;
+	border-bottom: 1px dotted #8b8b8b;
+	_border-bottom: 1px solid #bbb;
+}
+div.content h2 {
+	margin-top:0.5em;
+	font-size : 1.0em;
+}
+div.content h3 {
+	font-size : 1.0em;
+	font-style : italic;
+}
+div.content h4 {
+	font-size : 0.9em;
+}
+div.content p {
+	margin-top : 0;
+	margin-bottom : 1em;
+}
+div.content code,
+div.content pre {
+	padding : 1px;
+	background-color:#ededde;
+	font-family: consolas, courier, courier new;
+}
+div.content a code {
+	background-color:inherit;
+}
+div.content pre {
+	padding : 4px;
+}
+
+div.content p,
+div.content li,
+div.content dl,
+div.content dd {
+	line-height:150%;
+}
+
+div#sidebar {
+	position:absolute;
+	top:-6px;
+	right:0;
+	width : 318px;
+/*  Make the following a default image */
+/*	background-image:url(../img/header-news.png);  */
+	font-family : Lucida Grande, Arial, Helvetica, sans-serif;
+	font-size : 12px;
+	clear : both;
+}
+div#sidebar h1 { /* img replacement */
+	width : 318px;
+	height : 95px;
+	background-repeat : no-repeat;
+	text-indent : -5000px;
+	margin:0;
+	padding:0;
+}
+div#sidebar h2,
+div#sidebar h3,
+div#sidebar h4,
+div#sidebar h5,
+div#sidebar h6 {
+	font-family : Lucida Grande, Arial, Helvetica, sans-serif;
+}
+div#sidebar h2 {
+	margin-bottom : 0.25em;
+	font-size : 1em;
+}
+div#sidebar ul {
+	margin-top:0;
+}
+div#sidebar p {
+	line-height : 1.4;
+}
+div#section-sidebar {
+	width : 150px;
+	float : left;
+}
+div#site-sidebar {
+	margin-left : 6px;
+	width : 150px;
+	float : right;
+}
+div#footer {
+	margin-top:12px;
+	border-top : 1px solid #999;
+	padding-top: 2px;
+	text-align : right;
+	font-family: Lucida Grande, Tahoma, sans-serif;
+	font-size : 0.85em;
+}
+
+/*   section specific things  */
+body.news div#sidebar h1{
+	background-image:url(http://dojotoolkit.org/img/header-news.png);
+}
+body.downloads div#sidebar h1{
+	background-image:url(http://dojotoolkit.org/img/header-downloads.png);
+}
+body.examples div#sidebar h1{
+	background-image:url(http://dojotoolkit.org/img/header-examples.png);
+}
+body.docs div#sidebar h1{
+	background-image:url(http://dojotoolkit.org/img/header-docs.png);
+}
+
+body.community div#sidebar h1{
+	background-image:url(http://dojotoolkit.org/img/header-community.png);
+}

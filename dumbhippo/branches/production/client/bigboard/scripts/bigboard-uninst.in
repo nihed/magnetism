@@ -1,0 +1,4 @@
+#!/bin/sh
+builddir=$(dirname $0)
+canvas=${builddir}/@BB_TOPSRCDIR@/../canvas
+PYTHONPATH=$PYTHONPATH:${builddir}/../bigboard/.libs:${builddir}/../bigboard/keybinder/.libs:${canvas}/.libs:${canvas}/build/.libs:${builddir}/../../mugshot-python exec $BB_DEBUG_CMD @PYTHON@ ${builddir}/@BB_TOPSRCDIR@/main.py "$@"

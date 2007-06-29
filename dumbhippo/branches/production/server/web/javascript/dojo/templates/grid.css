@@ -1,0 +1,46 @@
+.dojoGrid {
+	width:30em;
+	height:20em;
+	overflow:scroll; /* should this be translated to a true scrolling table, or shuld there be a more explicit attribute to differentiate between the css
+	property, and making the table a scrolling table? */
+}
+
+.ascendingSort {
+
+}
+
+.descendingSort {
+
+}
+
+.headRowClassName1 {
+
+}
+
+.headCellClassName1 {
+
+}
+
+.bodyRowClassName1 {
+
+}
+
+.bodyRowClassName1 {
+
+}
+
+.bodyRowClassName2 {
+
+}
+
+.footRowClassName1 {
+
+}
+
+.footRowClassName1 {
+
+}
+
+.footRowClassName2 {
+
+}

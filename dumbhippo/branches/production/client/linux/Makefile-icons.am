@@ -1,0 +1,41 @@
+HUGEICONSUBDIR=icons/hicolor/128x128/apps
+hugeicondir=$(datadir)/$(HUGEICONSUBDIR)
+hugeicon_DATA=				\
+	$(HUGEICONSUBDIR)/mugshot.png
+
+NORMALICONSUBDIR=icons/hicolor/48x48/apps
+normalicondir=$(datadir)/$(NORMALICONSUBDIR)
+normalicon_DATA=				\
+	$(NORMALICONSUBDIR)/mugshot.png
+
+MEDIUMICONSUBDIR=icons/hicolor/32x32/apps
+mediumicondir=$(datadir)/$(MEDIUMICONSUBDIR)
+mediumicon_DATA=				\
+	$(MEDIUMICONSUBDIR)/mugshot.png
+
+SMALLISHICONSUBDIR=icons/hicolor/24x24/apps
+smallishicondir=$(datadir)/$(SMALLISHICONSUBDIR)
+smallishicon_DATA=				\
+	$(SMALLISHICONSUBDIR)/mugshot.png
+
+
+SMALLICONSUBDIR=icons/hicolor/22x22/apps
+smallicondir=$(datadir)/$(SMALLICONSUBDIR)
+smallicon_DATA=							\
+	$(SMALLICONSUBDIR)/mugshot_notification.png		\
+	$(SMALLICONSUBDIR)/mugshot_notification_disabled.png
+
+SMALLERICONSUBDIR=icons/hicolor/16x16/apps
+smallericondir=$(datadir)/$(SMALLERICONSUBDIR)
+smallericon_DATA=					\
+	$(SMALLERICONSUBDIR)/mugshot.png		\
+	$(SMALLERICONSUBDIR)/mugshot_note_on.png	\
+	$(SMALLERICONSUBDIR)/mugshot_note_off.png
+
+EXTRA_DIST +=					\
+	$(smallicon_DATA)			\
+	$(smallericon_DATA)			\
+	$(smallishicon_DATA)			\
+	$(mediumicon_DATA)			\
+	$(normalicon_DATA)			\
+	$(hugeicon_DATA)

@@ -1,0 +1,18 @@
+/* assuming height=400,width=550 */
+body {
+	color:                        #F16D1C;
+    background-color:             white;
+    padding:			    80px;
+}
+div {
+	margin:                  auto;
+    text-align:	       center;
+}
+p {
+	font-weight: bold;
+}
+a {
+    color:                        #F16D1C;
+    background-color:		    inherit;
+    text-decoration:		    underline;
+}

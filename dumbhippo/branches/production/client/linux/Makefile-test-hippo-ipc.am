@@ -1,0 +1,12 @@
+noinst_PROGRAMS += test-hippo-ipc
+
+test_hippo_ipc_CPPFLAGS =		\
+	$(AM_CPPFLAGS)			\
+	-I $(COMMONSRCDIR)/hippoipc	\
+	$(TEST_HIPPO_IPC_CFLAGS)
+
+test_hippo_ipc_LDFLAGS=$(TEST_HIPPO_IPC_LIBS)
+test_hippo_ipc_LDADD= libhippoipc.la
+
+test_hippo_ipc_SOURCES=				\
+	hippoipc/test-hippo-ipc.cpp

@@ -1,0 +1,70 @@
+@CHARSET "UTF-8";
+@IMPORT url("styled-form.css");
+@IMPORT url("invitation-positions.css");
+
+.dh-invitations-table .dh-person-item-more-info {
+	border:				none;
+	background-color:	transparent;
+}
+
+#dhSuggestGroupsPopup {
+    /* drop shadow color */
+	background-color:	#b3b3b3;
+}
+
+#dhSuggestGroupsPopup .dh-border {
+	background-color:	black;
+}
+
+#dhSuggestGroupsPopup .dh-content {
+	background-color:	white;
+	overflow:           auto; 
+}
+
+#dhSuggestGroupsArea {
+	border:				1px solid black;
+	overflow:           auto; 
+}
+
+.dh-explanation-note {
+	font-style:			italic;
+	font-size:			10px;
+}
+
+/* Used only in group-invitation.jsp */
+
+.dh-warning-note {
+	font-style:			italic;
+	font-size:			12px;
+}
+
+#dhAutoSuggest {
+    display:            none;
+    cursor:             pointer;
+}
+
+/* Suggestion list styling; similar rules are in sharelink.css */
+
+.dh-suggestion-list {
+    font-size:          12px;
+    background:         Window;
+    border:             1px solid WindowText;
+}
+
+.dh-suggestion-list ul {
+    list-style-type:    none;
+}
+
+.dh-suggestion-list a {
+    text-decoration:    none;
+    color:              WindowText;
+}
+
+.dh-suggestion-list .dh-selected {
+    background:         Highlight;
+    color:              HighlightText;
+}
+
+.dh-suggestion-list .dh-selected a {
+    color:              HighlightText;
+}

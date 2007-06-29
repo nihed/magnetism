@@ -1,0 +1,2 @@
+#!/bin/sh
+exec $BB_DEBUG_CMD @PYTHON@ @BB_PYDIR@/main.py "--stockdirs=@BB_STOCKDIR@" "$@"

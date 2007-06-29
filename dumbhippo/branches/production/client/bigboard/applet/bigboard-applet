@@ -1,0 +1,226 @@
+#!/usr/bin/python
+# -*- mode: python; tab-width: 4 -*-
+
+import sys, os, os.path, re, getopt, urlparse, logging
+
+import gtk, gobject, gnomeapplet, dbus, dbus.glib
+
+import bigboard.libbig
+import bigboard.libbig.logutil
+import bigboard.libbig.httpcache
+# workaround needed until the cache is safe for multiple processes to use
+bigboard.libbig.httpcache._cache = bigboard.libbig.httpcache.Cache(cachedir=os.path.join(os.path.expanduser("~"), '.gnome2', 'bigboard-applet', 'cache'))
+from bigboard.libbig.http import AsyncHTTPFetcher
+from bigboard.libbig.imagecache import URLImageCache
+import bigboard.keybinder
+import bigboard.mugshot as mugshot
+import bigboard.deskbar_embed as deskbar_embed
+
+_logger = logging.getLogger("bigboard.Applet")
+
+class ScaledPixbufImage(gtk.Image):
+    def __init__(self):
+        super(ScaledPixbufImage, self).__init__()
+        self.__orig_pixbuf = None
+        self.__width = 24
+        self.__height = 24
+
+    def set_orig_pixbuf_file(self, path):
+        pixbuf = gtk.gdk.pixbuf_new_from_file(path)
+        self.set_orig_pixbuf(pixbuf)
+
+    def set_orig_pixbuf(self, pixbuf):
+        self.__orig_pixbuf = pixbuf
+        self.__sync()
+
+    def __sync(self):
+        rect = self.get_allocation()
+        if not self.__width:
+            self.__width = rect.width
+        if not self.__height:
+            self.__height = rect.height
+        if not self.__orig_pixbuf:
+            return
+        pixbuf = self.__orig_pixbuf.scale_simple(self.__width, self.__height, gtk.gdk.INTERP_HYPER) 
+        self.set_from_pixbuf(pixbuf)
+
+class UrlScaledPixbufImage(ScaledPixbufImage):
+    def __init__(self):
+        super(UrlScaledPixbufImage, self).__init__()
+
+    def set_url(self, url):
+        image_cache = URLImageCache.getInstance()
+        image_cache.get(url, self.__handle_image_load, self.__handle_image_error, format='pixbuf')
+        
+    def __handle_image_load(self, url, pixbuf):
+        _logger.debug("Got image load result from %s", url)
+        self.set_orig_pixbuf(pixbuf)
+        
+    def __handle_image_error(self, url, exc):
+        logging.exception("failed to load image for '%s'", url)
+    
+class BigBoardApplet(gobject.GObject):
+    def __init__(self, applet, iid):
+        _logger.debug("constructing")
+        super(BigBoardApplet, self).__init__()
+        self.__applet = applet
+        self.__iid = iid
+
+        self.__keybinding = "Super_L"
+        self.__keybinding_bound = False
+
+        _logger.debug("connecting to bus")
+        session_bus = dbus.SessionBus()
+        bus_proxy = session_bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
+        self.__bus_proxy = bus_proxy.connect_to_signal("NameOwnerChanged", self.__on_dbus_name_owner_changed)
+        self.__create_proxy()
+
+        if applet.get_orient() in (gnomeapplet.ORIENT_UP, gnomeapplet.ORIENT_DOWN):
+            self.__box = gtk.HBox()
+        else:
+            self.__box = gtk.VBox()
+
+        _logger.debug("getting mugshot")
+        self.__mugshot = mugshot.get_mugshot()
+        self.__mugshot.connect("self-known", self.__on_self_known)
+        
+        ebox = gtk.EventBox()
+        ebox.add_events(gtk.gdk.BUTTON_PRESS_MASK)
+        ebox.connect("button-press-event", lambda ebox, e: self.__onclick())
+        self.__img = UrlScaledPixbufImage()
+        self.__img.set_orig_pixbuf_file('/usr/share/pixmaps/nobody.png')
+        ebox.add(self.__img)
+        self.__box.pack_start(ebox, expand=False)
+
+        _logger.debug("embedding deskbar")
+        #self.__deskbar = deskbar_embed.Deskbar()
+        #self.__box.pack_start(self.__deskbar, expand=True)
+        self.__deskbar = None
+
+        self.__applet.add(self.__box)
+        self.__applet.set_applet_flags(gnomeapplet.EXPAND_MINOR)
+		self.__applet.connect('change-size', lambda applet, orient: self.__on_change_size())
+
+        self.__sync()
+
+        _logger.debug("show all in applet")
+        self.__applet.show_all()
+
+    def __create_proxy(self):
+        try:
+            self.__bb_obj = dbus.SessionBus().get_object('org.mugshot.BigBoard', '/bigboard/panel')
+            self.__bb = dbus.Interface(self.__bb_obj, 'org.mugshot.BigBoard.Panel')
+            self.__bb_expanded = None
+            self.__bb.connect_to_signal("Expanded", self.__on_bb_expanded)
+            self.__bb.SignalExpanded()
+        except dbus.DBusException:
+            self.__bb_obj = None
+            self.__bb = None
+
+    def __on_dbus_name_owner_changed(self, name, prev_owner, new_owner):
+        if name == 'org.mugshot.BigBoard':
+            if new_owner != '':
+                _logger.debug("owner for org.mugshot.BigBoard changed, recreating proxies")
+                self.__create_proxy()
+            else:
+                self.__bb_obj = None
+                self.__bb = None
+
+    def __on_focus(self):
+        _logger.debug("got focus keypress")
+        if self.__deskbar:
+            self.__deskbar.focus()
+
+    def __unbind(self):
+        if self.__keybinding_bound:
+            try:
+                _logger.debug("unbinding '%s'", self.__keybinding)
+                bigboard.keybinder.tomboy_keybinder_unbind(self.__keybinding)
+            except KeyError, e:
+                pass
+            self.__keybinding_bound = False
+
+    def __bind(self):
+        if (not self.__keybinding_bound) and (self.__deskbar):
+            _logger.debug("binding '%s'", self.__keybinding)
+            bigboard.keybinder.tomboy_keybinder_bind(self.__keybinding, self.__on_focus)
+            self.__keybinding_bound = True
+
+    def __on_bb_expanded(self, is_expanded):
+        if is_expanded:
+            self.__unbind()
+            if self.__deskbar:
+                self.__deskbar.hide()
+        else:
+            self.__bind()
+            if self.__deskbar:
+                self.__deskbar.show()
+
+    def __on_change_size(self):
+        pass
+
+    def __onclick(self):
+        _logger.debug("got click")
+        self.__unbind()
+        if self.__bb:
+            self.__bb.Expand()
+
+    def __on_self_known(self, mugshot):
+        _logger.debug("got mugshot self known")
+        self.__sync()
+
+    def __sync(self):
+        myself = self.__mugshot.get_self()
+        _logger.debug("self: %s", myself)
+        if myself:
+            url = urlparse.urljoin(mugshot.get_mugshot().get_baseurl(), myself.get_photo_url()) 
+            _logger.debug("loading self url: %s", url)
+            self.__img.set_url(url)
+        
+if __name__ == "__main__":	
+    debug = False
+    window = False
+    debug_modules = []
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "wd", ["window", "debug", "debug-modules"])
+    except getopt.GetoptError:
+        opts = []
+
+    for o, a in opts:
+        if o in ('-d', '--debug'):
+            debug = True
+        elif o in ("-h", "--help"):
+            usage()
+        elif o in ("-w", "--window"):
+            window = True
+        elif o in ('--debug-modules'):
+            debug_modules = v.split(',')
+
+    gtk.gdk.threads_init()
+    dbus.glib.threads_init()    
+
+    default_log_level = 'ERROR'
+    if debug:
+        default_log_level = 'DEBUG'
+
+    bigboard.libbig.logutil.init(default_log_level, debug_modules, 'bigboard.')
+
+    if window:
+        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window.set_geometry_hints(None, max_height=24)
+        box = gtk.VBox()
+        window.add(box)
+        applet = gnomeapplet.Applet()
+        bbapplet = BigBoardApplet(applet, None)
+        applet.reparent(box)
+        window.show_all()
+        gtk.main()
+    else:
+        def factory(a,i):
+            BigBoardApplet(a,i)
+            return True
+        _logger.debug("calling factory")
+        gnomeapplet.bonobo_factory("OAFIID:BigBoard_Applet_Factory", 
+                                   gnomeapplet.Applet.__gtype__, 
+                                   "bigboard-applet", "0.3.4", factory)
+        _logger.debug("factory done")

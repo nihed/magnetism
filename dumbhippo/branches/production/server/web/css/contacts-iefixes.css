@@ -1,0 +1,23 @@
+@CHARSET "UTF-8";
+
+.dh-invite-link {
+	font-size:				x-small;
+}
+
+.dh-prev-contacts {
+    position:                   absolute;
+    top:                        595px;
+    left:                       53px;     
+}
+
+.dh-viewing-contacts {
+    position:                   absolute;
+    top:                        595px; 
+    left:                       160px;      
+}
+
+.dh-next-contacts {
+    position:                   absolute;
+    top:                        595px;
+    right:                      53px;   
+}

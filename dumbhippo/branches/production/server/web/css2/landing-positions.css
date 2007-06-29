@@ -1,0 +1,10 @@
+@CHARSET "UTF-8";
+
+.dh-body-without-sidebar #dhPage {
+	width:			500px;
+	text-align:		center; /* we want centered text */	
+}
+
+#dhLinkSwarmTag {
+	margin-top: 20px;
+}

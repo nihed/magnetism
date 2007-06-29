@@ -1,0 +1,369 @@
+12:13pm] You changed the topic to "comm layers for fun and profit!".
+[2:34pm] mda_ joined the chat room.
+[2:34pm] mda_: hello
+[2:35pm] slightlyoff: heya
+[2:35pm] ttrenka joined the chat room.
+[2:35pm] slightlyoff: hey tom
+[2:35pm] ttrenka: ok, that worked
+[2:35pm] ttrenka: mercy buckets
+[2:36pm] slightlyoff: what, exactly, are mercy buckets?
+[2:36pm] ttrenka: that's bad bad American for "merci beaucoup"
+[2:36pm] slightlyoff: heh
+[2:36pm] mda_: so we are here to discuss rpc-style vs. MOM-style communication?
+[2:36pm] ttrenka: MOM style?
+[2:36pm] slightlyoff: heh
+[2:36pm] slightlyoff: I hope not = )
+[2:37pm] slightlyoff: although I suppose that there's no telling how bad it can get
+[2:37pm] mda_: message-oriented-middleware. you negotiate publish-subscribe many-many mappings based on named rendezvous points.
+[2:37pm] ttrenka: oh ok
+[2:37pm] ttrenka: thanks
+[2:37pm] slightlyoff: the mailing list is down, or I would hae invited everyone over mail
+[2:38pm] slightlyoff: I think Tom and I started this discussion out of my personal confusion about what kind of interface to give things like repubsub
+[2:38pm] ttrenka: right
+[2:38pm] slightlyoff: (which, internally, always uses a MOM-style event interface)
+[2:39pm] slightlyoff: but at CodeCon last weekend, I got to talking with the maintainer of Nevow
+[2:39pm] dylanks joined the chat room.
+[2:39pm] slightlyoff: it's a Twisted python webapp thinger
+[2:39pm] dylanks: ok, I'm in
+[2:40pm] slightlyoff: and they do low-latency comm to the browser w/ an XMLHTTP request that never closes until the server has something to say (at which point, it opens a new one)
+[2:40pm] slightlyoff: (hey dylan)
+[2:40pm] ttrenka: hey dylan
+[2:40pm] dylanks: I assume you're talking about the thing we were discussing yesterday... the alternative modpubsub thinger
+[2:40pm] ttrenka: who's this now?
+[2:41pm] slightlyoff: Nevow
+[2:41pm] slightlyoff: let me find a link
+[2:41pm] ttrenka: going to look 
+[2:41pm] slightlyoff: http://nevow.com/
+[2:41pm] ttrenka: thanks 
+[2:41pm] ttrenka: license on this?
+[2:41pm] slightlyoff: not sure
+[2:43pm] slightlyoff: huh, doesn't seem to have a license
+[2:43pm] slightlyoff: but I'm pretty sure it's LGPL-ish
+[2:43pm] ttrenka: doesn't seem to have an JS in it, either
+[2:43pm] slightlyoff: (I can check w/ donovan)
+[2:43pm] ttrenka:
+[2:44pm] mda_: what are our use cases that the library has to satisfy? a javascript-based chat client?
+[2:44pm] dylanks: http://www.divmod.org/
+[2:44pm] slightlyoff: nevow/liveevil.py
+[2:44pm] ttrenka: anyways, for all...I was discussing with Alex the idea of using the URLRequest and Connection interfaces defined in the latest SVG1.2 spec
+[2:44pm] ttrenka: generic comm layer at this point
+[2:45pm] slightlyoff: right, so I think this falls into the second of two buckets
+[2:45pm] slightlyoff: the first is 1-to-1 request/response pairs
+[2:45pm] slightlyoff: the second is this kind of thing, where it might not be one-to-one
+[2:45pm] dylanks: right, here were my thoughts: it seems pretty good... I guess I have two questions after reading through it...
+[2:45pm] ttrenka: I'm figuring that we will be supporting both models
+[2:46pm] dylanks: 1) Can we support enough of this with XMLHttpRequest and getURL() (the latter is answered in their examples) ?
+[2:46pm] dylanks: 2) How does this compared with DOM 3 LS (Load/Save)?
+[2:46pm] ttrenka: you don't need to create an XML document to do comm 
+[2:46pm] ttrenka: (I can't stand load/save;)
+[2:46pm] slightlyoff: (which is a plus in my book)
+[2:46pm] mda_: xmlhttp can work with xml or with txt
+[2:46pm] ttrenka: right
+[2:46pm] slightlyoff: yeah
+[2:46pm] slightlyoff: and that's really good
+[2:46pm] ttrenka: we'd be looking at the responseText property
+[2:46pm] slightlyoff: (IMO)
+[2:47pm] mda_: i'm unclear on how the xml can work for multiple messages, since there can only be one xml root, right?
+[2:47pm] ttrenka: yeah
+[2:47pm] mda_: ok, so just text.
+[2:47pm] slightlyoff: base64 encoding in a CDATA section = )
+[2:47pm] dylanks: right I get that... not that you couldn't wrap text in a single xml tag if you needed to
+[2:47pm] ttrenka: heh
+[2:47pm] mda_: problem 2, is that last i checked, moz is broken in its state machine for notifications in xmlhttp
+[2:47pm] ttrenka: true
+[2:47pm] ttrenka: yeah
+[2:47pm] ttrenka: it is
+[2:47pm] slightlyoff: in what conditions?
+[2:47pm] ttrenka: afaik
+[2:47pm] ttrenka: it never fires the completed state, iirc
+[2:47pm] ttrenka: i could be wrong though
+[2:48pm] ttrenka: last i checked, it fires onload fine, but not onreadystatechange
+[2:48pm] slightlyoff: ...but you can check response text ahead of readyState == 4, right?
+[2:48pm] mda_: i've lost my notes, but either IE or moz won't tell you about partial responses until the socket is closed.
+[2:48pm] ttrenka: but those are implementation details
+[2:48pm] slightlyoff: I think that's IE
+[2:48pm] slightlyoff: (but I could just be iggnant)
+[2:48pm] ttrenka: that's actually inaccurate as well, but you can't from script
+[2:49pm] slightlyoff: right, stream return, etc
+[2:49pm] ttrenka: (other ready states are more aimed at accessing responseBody and responseStream from a COM+ platform)
+[2:49pm] slightlyoff: but I don't expect writing client-side C++ for Dojo = )
+[2:49pm] ttrenka: fuck I hope not
+[2:49pm] mda_: the alternative to xmlhttp is what, a hidden iframe that the server puts individual <script> elements into?
+[2:49pm] ttrenka: (oops, sorry, pardon my french)
+[2:49pm] ttrenka: that's one way. Using java in the browser is another
+[2:50pm] slightlyoff: (assuming a Java-JS bridge that functions)
+[2:50pm] mda_: i guess polling is another.
+[2:50pm] slightlyoff: yeah
+[2:50pm] ttrenka: polling would be another.
+[2:50pm] mda_: setTimeout on the browser, and probes some url
+[2:50pm] dylanks: right
+[2:50pm] slightlyoff: yes
+[2:50pm] ttrenka: but the basic q we are asking ourselves isn't so much how we implement as much as what the user's interface should be
+[2:50pm] slightlyoff: repubsub is the "server sends <scirpt> blocks" style
+[2:50pm] slightlyoff: yes
+[2:50pm] slightlyoff: (thanks, tom)
+[2:50pm] ttrenka: np
+[2:50pm] ttrenka:
+[2:51pm] slightlyoff: one option is that we just say "use whatever the transport author provides, and get over it"
+[2:51pm] ttrenka: i was thinking that using the interface def in the SVG1.2 spec would be a good place to start
+[2:51pm] slightlyoff: link?
+[2:52pm] ttrenka: 2 secs
+[2:52pm] ttrenka: (finding)
+[2:52pm] dylanks: http://www.w3.org/TR/SVG12/api.html#urlrequest-interface
+[2:52pm] ttrenka: http://www.w3.org/TR/SVG12/api.html
+[2:52pm] ttrenka: heh
+[2:52pm] ttrenka: thanks
+[2:52pm] dylanks: np
+[2:53pm] ttrenka: ...also possibly the Connection object as a base for things like repubsub
+[2:53pm] ttrenka: but you guys know that implementation better than i do
+[2:54pm] ttrenka: ...anyways...it would be fairly simple to wrap a JS interface of this signature around existing XmlHttp objects.
+[2:54pm] ttrenka: we run into issues with SVG and postUrl/getUrl though
+[2:54pm] ttrenka: mostly with headers
+[2:55pm] ttrenka: ...one of the reasons why I prefer this solution over using something like Load/Save is that it separates the comm layer from any content type
+[2:55pm] slightlyoff: well, we can fake a lot of headers
+[2:56pm] ttrenka: ...if I want to load an Xml Doc, I can use this and then use loadXML to get my document in mem
+[2:56pm] slightlyoff: and an abscence of information from the underlying protocol isn't something we can really do anything about
+[2:56pm] ttrenka: rigt
+[2:56pm] ttrenka: right
+[2:56pm] dylanks: or at least fail gracefully on weaker implementations
+[2:56pm] mda joined the chat room.
+[2:56pm] ttrenka: ...so anyways, that's what I was thinking
+[2:56pm] slightlyoff: so here's a question
+[2:57pm] slightlyoff: when sending data as part of the request, it's very often the case (in HTML docs) that I'll want to POST some set of stuff
+[2:57pm] ttrenka: k
+[2:57pm] ttrenka: and?
+[2:57pm] slightlyoff: right now, on iFrame based implementations, we just create a form element and set the target="" attr (since there's no other way to synthesize a POST that I know of)
+[2:58pm] ttrenka: I usually create the form on the fly on post it right from the iframe
+[2:58pm] slightlyoff: will we loose the ability to do that if we wrap the iframe comm layer in this API?
+[2:58pm] ttrenka: but sure
+[2:58pm] ttrenka: requestText is where the body of the form will go
+[2:58pm] ttrenka: and it will need to take the form of a regular POST.
+[2:58pm] ttrenka: so var1=something&var2=something
+[2:58pm] ttrenka: etc
+[2:58pm] mda_ left the chat room. (Read error: 60 (Operation timed out))
+[2:58pm] ttrenka: URLEncoded
+[2:59pm] ttrenka: escaped.
+[2:59pm] ttrenka: etc.
+[2:59pm] ttrenka: that's the main difference with URLRequest and XmlHttp
+[2:59pm] dylanks: so no multi-part posts?
+[2:59pm] slightlyoff: yeah, that's a problem...
+[3:00pm] slightlyoff: makes file uploads impossible
+[3:00pm] ttrenka: can't really do multi-part with XmlHttp now
+[3:00pm] slightlyoff: but we can w/ iframes
+[3:00pm] ttrenka: without writing the entire body of the request yourself
+[3:00pm] ttrenka: true
+[3:00pm] slightlyoff: I want to make sure that whatever API we use doesn't castrate us
+[3:00pm] ttrenka: ...if you look at this spec, you'll see that they've got some things for file handling
+[3:00pm] ttrenka: i suppose we could set up the iframe deal for that specific kind of thing
+[3:01pm] ttrenka: although I'd like to see how you guys are attaching files to a form in an iframe
+[3:01pm] slightlyoff: well, I'm not looking for an implementation here
+[3:01pm] slightlyoff: we've got tons of implementations
+[3:01pm] ttrenka: heh
+[3:01pm] slightlyoff: (iframe, XMLHTTP, etc.)
+[3:01pm] ttrenka: take a look at B.4.5. and B.4.6
+[3:01pm] slightlyoff: I want an interface to all of them that doesn't a.) make using them hard and b.) doesn't remove an essential capability
+[3:02pm] ttrenka: yeah
+[3:02pm] slightlyoff: (OTOH, I could also be smoking crack)
+[3:02pm] ttrenka: doing file bodies will be difficult at best
+[3:02pm] ttrenka: you know that
+[3:02pm] ttrenka: ...this is one of the main reasons why I wish JS had byte array handling
+[3:02pm] ttrenka:
+[3:03pm] ttrenka: anyways...
+[3:03pm] slightlyoff: well, we don't have FS access
+[3:03pm] ttrenka: I gotta run
+[3:03pm] ttrenka: right
+[3:03pm] slightlyoff: so it's kinda moot
+[3:03pm] ttrenka: right
+[3:03pm] slightlyoff: the only way I know of to post a file is via an iframe
+[3:03pm] ttrenka: then we keep that in mind when we write this
+[3:03pm] ttrenka:
+[3:03pm] ttrenka: have a good one, y'all
+[3:03pm] slightlyoff: so either we need a carve-out in the API for that, or an API that says instead of "postText" use "postForm" or something
+[3:03pm] slightlyoff: later
+[3:03pm] ttrenka left the chat room.
+[3:04pm] dylanks: ok
+[3:06pm] dylanks: so the SVG 1.2 way looks ok... better than the existing w3c alternatives and xmlhttp, but not sure in comparison to modpubsub
+[3:06pm] slightlyoff: I guess I'm also not entirely certain what the format of a URLResponse event's arguments are/should be
+[3:06pm] slightlyoff: some kind of event object?
+[3:06pm] slightlyoff: (that contains the response text?)
+[3:07pm] slightlyoff: it seems like kind of a queer API when our event system tries pretty hard to avoid creating synthentic event objects, but instead takes a function and passes it some (apropos) args
+[3:07pm] dylanks: It looks like it is somewhat similar to what Adobe has in their plugin... basically a responseObject that contains a few things (status, response text) and may contain other things that an implementor may want to provide access to
+[3:10pm] slightlyoff: mda: you still around?
+[3:12pm] dylanks: I guess that's a no
+[3:16pm] slightlyoff: so my current inclination is to try to come up w/ a resaonable set of things that we want the comm layer to support
+[3:16pm] slightlyoff: come up w/ a couple of interfaces that represent 90% or more of those things
+[3:16pm] slightlyoff: and then wrap the underlying transits in those APIs
+[3:17pm] mda: i'm here now.
+[3:17pm] slightlyoff: neat
+[3:19pm] mda: so anyhow, xmlhttp vs. iframe vs. SVG vs. Load&Save are all lower level than we'd want programmers to deal with, right?
+[3:19pm] slightlyoff: I'm hoping so
+[3:19pm] dylanks: and of course one that doesn't suck to use
+[3:19pm] slightlyoff: = )
+[3:19pm] dylanks: right, they are all lower level
+[3:19pm] slightlyoff: do you think the buckets of "1-to-1" and "not that" are good starting points?
+[3:20pm] slightlyoff: perhaps subdividing more than that, there's 1-to-1 that's async
+[3:20pm] slightlyoff: and sync
+[3:20pm] slightlyoff: and the "more than that" category seem async by defintion
+[3:20pm] mda: right, so 3 categories: rpc sync, rpc async, and events.
+[3:20pm] dylanks: well, I think you might also want a way to specify a degradation order as well (or at least we need to do that internally)
+[3:21pm] mda: i'm happy to only supply async apis.
+[3:22pm] mda: if the platform only supports synchronous operations, the programmer can still program with a callback/async api without having to change code.
+[3:22pm] slightlyoff: yes, true
+[3:22pm] mda: but if the platform only supports async (which is typically the case), there is no recourse if the programmer assumed sync is available
+[3:23pm] slightlyoff: yes
+[3:23pm] slightlyoff: so we can pretty much squish this down into: async RPC and event-channels
+[3:23pm] mda: another issue (sorry to jump around) is whether the api needs to have explicit support for two-way channels.
+[3:23pm] slightlyoff: (you're not jumping around, IMO)
+[3:23pm] mda: or whether we can just leave it to them to create an rpc and an event channel separately.
+[3:24pm] mda: because unless we go to java (or flash?) there is no access to true two-way channels (such as a socket)
+[3:24pm] slightlyoff: you mean ordered channels?
+[3:24pm] slightlyoff: or just channels?
+[3:24pm] slightlyoff: repubsub gets you pretty close
+[3:25pm] mda: i mean a channel where both read and write are possible. like a unix socket.
+[3:25pm] slightlyoff: you can both send and receive events from the same "path"
+[3:25pm] slightlyoff: which analagous to read and write
+[3:25pm] slightlyoff: except that you can't block (it's all async)
+[3:25pm] slightlyoff: so there's no message-ordering concept
+[3:26pm] slightlyoff: and XMLHTTP polling (like Nevow) plus an iframe for posting would do pretty much the same thing
+[3:26pm] mda: there will probably still be a way to deadlock at the application level, but that is the programmer's problem.
+[3:27pm] slightlyoff: the latency sucks, but it's a web browser, we're lucky to have nonstandard APIs that work at all
+[3:27pm] slightlyoff:
+[3:27pm] slightlyoff: yeah, I think you could still deadlock
+[3:27pm] slightlyoff: but I agree that it's not our problem
+[3:28pm] mda: since in the end we are talking about REST-style URLs, there is no reason really to *force* the same path for request and event. even if they are part of the same protocol/interface.
+[3:28pm] mda: SOAP seems to have about 3 levels of indirection in declaring these endpoints.
+[3:29pm] slightlyoff: I'd like fewer than that = )
+[3:29pm] mda: but SOAP does have an event model in addition to request-response.
+[3:30pm] mda: afaik nobody has proposed how REST would do things.
+[3:30pm] slightlyoff: I think that's true
+[3:30pm] mda: just like nobody has proposed how REST would do schemas/metadata; they just say it isn't necessary.
+[3:31pm] slightlyoff: well, for REST requests, we still have the tactical problem of what kind of response to expect\
+[3:31pm] slightlyoff: (XML, JS, MIME, etc.)
+[3:31pm] dylanks: (listening... nothing to contribute)
+[3:32pm] slightlyoff: I think we might necessarialy wind up dictating that kind of thing
+[3:32pm] slightlyoff: w/ NW, we do by saying "it's gotta be HTML that includes this script..."
+[3:34pm] slightlyoff: or for the places where we send JS, it's gotta be in a particular format
+[3:34pm] slightlyoff: so I don't know if it's possible to escape that level of cooperation
+[3:35pm] slightlyoff: I guess I'd be fine w/ providing a different interface based on expected repsponse type (XML, TXT, JS, whatever)
+[3:35pm] slightlyoff: is that specializing too far?
+[3:38pm] dylanks: seems better to make that a param than a separate interface, but I can't make a good assessment of that without trying to implement some of it
+[3:38pm] mda: so here is quick draft of a grand unifying api....
+[3:39pm] slightlyoff: dylanks: sounds like a good idea to me 
+[3:40pm] dylanks: contributions welcomed, eh
+[3:40pm] mda: bind_channel({url: 'http://whatever.org/service', method: 'post', content: 'whatever', handler: myhandler, interface: ifurn, mimetype: 'text/plain'})
+[3:40pm] mda: interface is optional, and is a urn for verification TBD.
+[3:41pm] mda: mimetype is also optional, to sanity check what comes back
+[3:41pm] slightlyoff: so what should myhandler() receive?
+[3:41pm] mda: handler can be a Function object (called for everything that comes back), or is an Object that has methods named according to the events that are defined by the interface.
+[3:41pm] slightlyoff: ah, that's not bad
+[3:42pm] mda: this allows for both rpc and eventing.
+[3:42pm] slightlyoff: I was just about to ask = )
+[3:42pm] mda: default for method is 'get' of course.
+[3:43pm] mda: there might be some extra convenience such as
+[3:43pm] mda: args: {arg1: 1, arg2: 2}
+[3:43pm] slightlyoff: so it would be pretty easy to provide a "reciever" object that I can register callbacks w/
+[3:43pm] mda: which would be converted to url params
+[3:44pm] slightlyoff: (assuming no Object.prototype extension hackery)
+[3:44pm] mda: if handler is a Function, it is called for everything.
+[3:45pm] slightlyoff: and expected to disambiguate the event and type?
+[3:45pm] mda: if handler is an Object, it must have a method called "handle" which is called if there is no member handler specific to the particular event that comes in.
+[3:45pm] slightlyoff: we'd also list a basic set of events too
+[3:46pm] slightlyoff: but at that point, we start to distinguish from event vs. rpc, right?
+[3:46pm] mda: if handler is a function, or if handler.handle is called, then the arguments are (eventname, cbdata)
+[3:47pm] mda: though it is so easy to do closures in js, maybe cbdata is stupid.
+[3:47pm] mda: whereas if handler is an object with a method for each event name coming in, those methods are just called with eventdata.
+[3:47pm] slightlyoff: you mean rather than passing a status event of some sort?
+[3:48pm] mda: or maybe in all cases they are given a single argument which is an event object?
+[3:48pm] slightlyoff: I was having that debate w/ tom earlier today
+[3:48pm] slightlyoff: my thinking was that our event system deals in functions and arguments and not event objects
+[3:48pm] mda: i guess i'd favor an event object.
+[3:48pm] mda:
+[3:48pm] slightlyoff: ...but it's easy enough to unroll in the handler and apss on
+[3:49pm] mda: because then you don't have to change your argument structure as you discover new context that you forgot to include....
+[3:49pm] slightlyoff: true
+[3:49pm] mda: and you've got a handle to do other things with.
+[3:50pm] mda: for example if you want to hand the event off to someone else, or close the connection, etc.
+[3:51pm] slightlyoff: so, as a user making an XMLHTTP request, I might register something like:
+[3:52pm] slightlyoff: bind_channel({url: 'http://whatever.org/service', method: 'gett', content: {arg1: 1, arg2: 2}, handler: function(evt){ foo.bar(evt.responseData); },})
+[3:53pm] slightlyoff: or, more likely:
+[3:54pm] slightlyoff: dojo.io.xmlhttp.bind({url: 'http://whatever.org/service', method: 'get', content: {arg1: 1, arg2: 2}, handler: function(evt){ foo.bar(evt.responseData); }})
+[3:55pm] slightlyoff: it might be nice to register the success handler instead of the generic handler in that arguments object
+[3:55pm] slightlyoff: so:
+[3:55pm] slightlyoff: dojo.io.xmlhttp.bind({url: 'http://whatever.org/service', method: 'get', content: {arg1: 1, arg2: 2}, onSuccess: function(evt){ foo.bar(evt.responseData); }})
+[3:56pm] slightlyoff: instead of having handler be an Object which has an onSuccess method or something
+[3:56pm] mda: yeah, good point.
+[3:56pm] slightlyoff: (success is probably a bad term, I'd want "onData" or something)
+[3:56pm] mda: it is easy to be flexible here.
+[3:56pm] mda: but i wouldn't call it dojo.io.xmlhttp.bind
+[3:56pm] slightlyoff: but you think that API is nice enough for general use?
+[3:56pm] mda: i'd call it dojo.io.bind
+[3:56pm] dylanks: back in a bit... meeting
+[3:57pm] slightlyoff: OK
+[3:57pm] slightlyoff: how do I specify that I want an XMLHTTP request?
+[3:57pm] slightlyoff: (or do I?)
+[3:57pm] mda: and there might be a chosen implementation of dojo.io.bind.impl.xmlhttp
+[3:57pm] mda: which would be chosen based on the url, method, platform, etc.
+[3:57pm] slightlyoff: ah, hmm
+[3:57pm] slightlyoff: OK
+[3:57pm] mda: if the programmer wants to force an implementation, they could pass in
+[3:57pm] slightlyoff: so auto-detection
+[3:57pm] mda: impl: xmlhttp
+[3:58pm] slightlyoff: that works for me
+[3:58pm] slightlyoff: one interesting side effect (perhaps)
+[3:58pm] slightlyoff: if I have both iframe and XMLHTTP bindings available
+[3:59pm] slightlyoff: it's perhaps pretty easy to fire requests out of order (nevermind their response order)
+[3:59pm] slightlyoff: like, say, if the iframe stuff is in a queue but XMLHTTP just creates a new object
+[3:59pm] mda: well, it seems unlikely it would use both bindings for the same url?
+[4:00pm] slightlyoff: lets say I say "post" and for one I send a file, and for the other I don't
+[4:00pm] mda: all in one browser?
+[4:00pm] slightlyoff: yeah
+[4:00pm] slightlyoff: if we let auto-detection do that thing that it does, that seems likely
+[4:00pm] slightlyoff: since I might say for one that I want to get text/plain back
+[4:01pm] slightlyoff: which I don't think I can safely do w/ an iframe
+[4:01pm] mda: i guess it could happen.
+[4:02pm] slightlyoff: anyway, I like the API
+[4:02pm] mda: though in general i think that if a programmer sets up multiple channels to the same url in the same browser window, they are in potentially risky territory, multiple bindings or not
+[4:02pm] slightlyoff: true (2-connection contention and all that)
+[4:02pm] slightlyoff: so should channels queue by default?
+[4:02pm] mda: btw, i figure that increasingly there will be native SOAP implementations built in to the browser.
+[4:03pm] slightlyoff: that seems like it's implied
+[4:03pm] slightlyoff: I can only hope, since building that stack myself seems like hell on earth
+[4:03pm] slightlyoff: I know we'd talked about SOAP proxies and the like
+[4:03pm] mda: i don't know that we can commit to queuing semantics.
+[4:03pm] mda: i think we can just document what the queuing semantics are for each implementation of the bind API.
+[4:04pm] slightlyoff: and then let the auto-selector muck w/ that?
+[4:04pm] mda: take xmlhttp for example -- it may or may not use the same socket.
+[4:04pm] slightlyoff: (or rather, select something that mucks w/ the user's expectations?)
+[4:04pm] slightlyoff: right
+[4:04pm] slightlyoff: but we shouldn't know/care about that
+[4:04pm] mda: and i don't want to have to try to force FIFO semantics on top of the chosen implementation.
+[4:05pm] mda: so we just document that if you are using the iframe implementation, you get serialization, but if you choose xmlhttp, you may not.
+[4:05pm] mda: this does introduce the issue of whether the implementation caches connection objects.
+[4:06pm] mda: do you create a new iframe every time? a new xmlhttp object every time?
+[4:06pm] mda: i think that is ok for now.
+[4:07pm] mda: generally speaking, there would be just one bind call per connection.
+[4:07pm] mda: so would be needless complexity to worry about multiple channels to the same url in the same browser window.
+[4:07pm] mda: we would just need to document what each implementation happens to do.
+[4:09pm] slightlyoff: I guess I'm OK w/ that
+[4:09pm] slightlyoff: if/when it bites us, we can figure something else out (or just tell people to force a single channel type)
+
+[4:36pm] mda: btw, i don't think either onData or onSuccess is quite the right thing.
+[4:36pm] mda: if it is rpc, then there is just one response back, and of a known type.
+[4:37pm] mda: i guess you could call that "onData", but i was thinking that would just be "handler".
+[4:37pm] slightlyoff: hmmmm
+[4:37pm] mda: if it is events, then the endpoint is known by the programmer to generate events with names X, Y, and Z, and so the programmer provides handlers for onX, onY, onZ
+[4:38pm] mda: with "handler" or "handle" or "service" or whatever being called if there is no name-specific handler.
+[4:38pm] slightlyoff: I guess handle() seems better
+[4:38pm] slightlyoff: (not sure why)
+[4:39pm] mda: only problem with "handle" is it can be a noun or verb.
+[4:39pm] slightlyoff: true
+[4:39pm] mda: there is also the question of callbacks for connection errors, or request errors, or partial success, etc.
+[4:39pm] slightlyoff: yes
+[4:40pm] slightlyoff: I was hoping we'd kind of normalize a little bit
+[4:40pm] slightlyoff: and provide access to the "low level" events if the user wants 'em
+[4:40pm] mda: i think we approach those as some event names that comes from our library, not the endpoint.
+[4:40pm] slightlyoff: yes
+[4:40pm] mda: and the same approach applies -- you either provide a name-specific handler, or it is given to "handle"
+[4:41pm] mda: except for progress events, which are dropped on the floor unless there is a name-specific handler.
+[4:41pm] slightlyoff: (few enough transits have them that I don't know how much I care)
+[4:53pm] dylanks: back... interesting thoughts...

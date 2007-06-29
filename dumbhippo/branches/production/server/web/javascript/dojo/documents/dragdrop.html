@@ -1,0 +1,196 @@
+<!doctype html
+	public "-//W3C//DTD HTML 4.01//EN"
+	       "http://www.w3.org/TR/html4/strict.dtd">
+
+<title>Drag and Drop Design Specification</title>
+<style type="text/css">
+a img { border: none; }
+
+.todo {
+	color: red;
+	background-color: #ccc;
+}
+.todo:before {
+	font-weight: bold;
+	content: "Todo: ";	
+}
+dt > code:first-child {
+	background-color: #edf6e0;
+}
+p {
+	margin: 0.8em 0;
+}
+body {
+	padding: 2em 10%;
+}
+
+h1, h2, h3, h4 {
+	margin-left: -1em;
+	margin-top: 2em;
+}
+pre {
+	background: #edf6e0;
+	border:1px solid #c0cfa8;
+	padding: 1em;
+	margin: 1.5em 0;
+}
+</style>
+
+<p><a href="http://dojotoolkit.org/"><img src="http://dojotoolkit.org/img/page-title-smaller.png" alt="Dojo: the browser toolkit"></a>
+
+<h1>Drag and Drop Design Specification</h1>
+<p>Created on 2005-07-22 by Paul Sowden.
+
+<ul>
+	<li><a href="#Preface">Preface</a>
+	<li><a href="#Requirements">Requirements</a>
+	<li><a href="#DragSource"><code>DragSource</code> Interface</a>
+		<ul>
+			<li><a href="#DragSource:interface">Interface</a>
+		</ul>
+	<li><a href="#DragObject"><code>DragObject</code> Interface</a>
+		<ul>
+			<li><a href="#DragObject:interface">Interface</a>
+		</ul>
+	<li><a href="#DropTarget"><code>DropTarget</code> Interface</a>
+		<ul>
+			<li><a href="#DropTarget:interface">Interface</a>
+		</ul>
+	<li>Provided Implementations
+	<li><a href="#References">References</a>
+</ul>
+
+<h2 id="Preface">Preface</h2>
+
+<p>Drag and Drop intro.
+
+
+<h2 id="Requirements">Use Cases and Requirements</h2>
+
+<ul>
+	<li>shopping cart (smarter drop)
+	<li>reordering (default?)
+		<ul>
+			<li>columns
+			<li>rows
+			<li>moves a clone (intermediate representation, drag icon)
+				<ul>
+					<li>option to drag an original
+				</ul>
+		</ul>
+	<li>date drag
+		<ul>
+			<li>"drops" a JS object (Date)
+		</ul>
+	<li>slider (or scrollbar)
+		<ul>
+			<li>constrained x/y movement
+			<li>boundry (node?)
+		</ul>
+	<li>click-hold event, eg. column sorting vs reordering in iTunes
+</ul>
+
+<p>Drag and Drop involves 3 interfaces:
+
+<ul>
+	<li><code>DragSource</code>
+	<li><code>DragObject</code>
+	<li><code>DropTarget</code>
+</ul>
+
+<p>These can be implemented by objects. There exists a set of implementations provided to do certain tasks (eg. reordering, moving). Probably in more than 50% of cases the <code>DragSource</code> and <code>DragObject</code> interfaces are implemented on the same JS Object (or DOM Node) -- ie. the source <em>is</em> the thing being dragged. Only in more complex widgets where several types can be dragged out or widgets such as the date picker will they be different.
+
+<p>Markup syntax; two attributes <code>dojoDrag</code> and <code>dojoDrop</code>. The values of these attributes are "drag types". The tags cause the DOM Nodes to inherit a certain provided implementation, where the <code>DragSource</code> and <code>DragObject</code> interfaces both exist on the drag source.
+
+<p>draggin
+
+<p>The three interfaces correspond to the three stages of a drag and drop operation, the start (<code>onmousedown</code> and sometimes hold), the middle (<code>onmousemove</code>) and the end (<code>onmouseup</code>). 
+
+<h2 id="DragSource"><code>DragSource</code> Interface</h2>
+
+<p>This interface needs to provide ways to:
+
+<ul>
+	<li>Provide arbitrary <code>DragObjects</code>, default is the <code>DragSource</code>
+	<li>Specify whether to drag a intermediate representation (cloneNode with opacity; default (IMO)) or the actual node (also, there could be an option for the node to be replaced with a place holder so there is no reflow?)
+	<li>A method the <code>DropTarget</code> can call to inform what it has done with the drop, allowing the <code>DragSource</code> to update itself.
+</ul>
+
+<h3 id="DragSource:interface">Interface</h3>
+
+<pre>
+interface DragSource {
+  DragObject   ondrag(in DragEvent event);
+};
+</pre>
+
+<h2 id="DragObject"><code>DragObject</code> Interface</h2>
+
+<p>This interface allows the object to define what happens to it during movement, which will mostly be constraining.
+
+<ul>
+	<li>the type of object this is or can provide
+	<li>constraints:
+		<ul>
+			<li>horizontal/vertical
+			<li>DOM Node dimensions
+			<li>bounding box
+			<li>arbritrary function
+		</ul>
+	<li>if it doesn't end on an accepting target then; slideback (default), poof, other (taken from OS X)
+</ul>
+
+<h3 id="DragObject:interface">Interface</h3>
+
+<pre>
+interface DragObject {
+  readonly attribute String[]   dragTypes;
+  Node       getDragIcon(); // usually defaults to cloneNode
+};
+</pre>
+
+
+<h2 id="DropTarget"><code>DropTarget</code> Interface</h2>
+
+<ul>
+	<li>the type of objects that can be dropped on this
+	<li>enter, move and leave events while the <code>DragObject</code> is over the target. These should be used to indicate whether a drop will occur and where possible an indication of what the result of the drop will be.
+	<li>indication that a drop is performed
+</ul>
+
+<h3 id="DropTarget:interface">Interface</h3>
+
+<pre>
+interface DropTarget {
+  readonly attribute String[]   acceptedDragTypes;
+  
+   // corresponding to the mouseover, mousemove and mouseout
+  void              ondragover(in DragEvent event);
+  void              ondragmove(in DragEvent event);
+  void               ondragout(in DragEvent event);
+  
+  void                  ondrop(in DragEvent event);
+};
+</pre>
+
+
+<h2>Provided Implementations</h2>
+
+<p>There should be a set of provided implementations which allow a developer to get off the ground with common use cases with a very small amount of effort. There should be at least as little and prefferably less code required to do the same effects as existing drag libraries, as a gauge of how well ours works.
+
+<ul>
+	<li>reording DOM nodes</li>
+	<li>moving DOM nodes to different parents</li>
+</ul>
+
+<p>When I get the undo manager polished off we should also provide undo/redo of drag and drop actions by default. Put that in your pipe and smoke it.
+
+
+<h2 id="References">References</h2>
+
+<ul>
+	<li><a href="http://whatwg.org/specs/web-apps/current-work/#drag-and">WHATWG Drag and Drop proposal</a> - drag and drop events tacked onto the DOM event model along with a <code>draggable</code> attribute. Clean but limited in the exact same way as the DOM.
+	<li><a href="http://www.bindows.net/documentation/tutorials/draganddrop.html">Bindows Drag and Drop tutorial</a> - event driven drag and drop, based on data transfer between components.
+	<li><a href="http://script.aculo.us/drag-and-drop">script.aculo.us: the be all end all of Drag and Drop</a> - *shudders*. It certainly has pretty covered.
+	<li><a href="http://youngpup.net/2001/domdrag">Youngpup DOM-Drag: the original Drag and Drop</a> - very much the original, handles dragging of DOM Nodes.
+</ul>

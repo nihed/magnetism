@@ -1,0 +1,49 @@
+@CHARSET "UTF-8";
+
+#dhPage {
+	width:			710px;
+}
+
+#dhMainContent {
+	table-layout:    fixed;
+}
+
+.dh-zone-box-header {
+	width:			230px;
+}
+
+.dh-zone-box-footer img {
+	display:		block;
+}
+
+.dh-zone-box-spacer {
+	width:			10px;
+}
+
+.dh-color-web .dh-extra-info {
+	margin-top:		10px;
+}
+
+.dh-extra-info table {
+	width:			208px;
+}
+
+.dh-zone-box .dh-item {
+	position:	relative;
+	width:			208px;
+	overflow-x:		hidden;
+}
+
+.dh-song-with-art {
+	width:				100%;
+}
+
+.dh-song-with-art .dh-song-info {
+	width:				124px;
+}
+
+.dh-zone-box .dh-item .dh-song-item-details {
+	/* must be padding not margin or an IE bug will assign the margin
+	   to the album art also */
+	padding-left:	85px;
+}

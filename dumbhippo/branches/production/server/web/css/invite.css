@@ -1,0 +1,118 @@
+@CHARSET "UTF-8";
+
+@import "sitewide.css";
+@import "home.css";
+
+.dh-invite-mail-body, .dh-invite-mail-header {
+	padding:					1em;
+	border:						1px solid #404040;
+}
+.dh-invite-mail-body a {
+	color:						blue;
+	background-color:			inherit;
+}
+.dh-invite-mail-header {
+	border-bottom:				0;
+}
+
+.dh-invite-mail-body {
+
+}
+
+.dh-invitee {
+    color:                      white;
+    font-size:                  small;
+    width:                      100%;
+    white-space:                nowrap; 
+    overflow:                   hidden;   
+    text-overflow:              ellipsis;     
+}
+
+.dh-share .dh-invitee {
+    position:                   absolute;
+	left:					    2px;
+	top:                        3px;
+    width:                      250px;  
+}
+
+.dh-invite-age {
+    color:                      white;
+    font-size:                  x-small;
+    font-style:                 italic;
+    white-space:                nowrap; 
+    overflow:                   hidden;  
+    text-overflow:              ellipsis;      
+}
+
+.dh-share .dh-invite-age {
+	position:				    absolute;
+    right:					    4px;
+	top:					    3px;	
+}
+
+.dh-invite-subject {
+	color:				 	    white;
+    position:                   relative;
+	left:					    2px;
+    font-size:                  small;
+    font-style:                 italic;
+    white-space:                nowrap; 
+    width:                      100%; 
+    max-height:                 20px;  
+    overflow:                   hidden; 
+    text-overflow:              ellipsis; 
+	padding-top:			    12px;    
+}
+
+.dh-invite-message {
+	color:				 	    white;
+    position:                   relative;
+	left:					    2px;
+    font-size:                  x-small;
+    width:                      100%;
+	max-height:				    35px;
+    overflow:                   hidden;  
+    text-overflow:              ellipsis;
+	padding-top:			    12px;
+}
+
+.dh-invite-actions {
+    position:                   absolute;
+	right:					    7px;
+	padding-bottom:			    12px;	
+}
+
+a.dh-invite-actions {
+    color:                      #fff500;
+}
+
+.dh-outstanding-invites-none {
+}
+
+.dhText {
+	width:						22em;
+}
+
+.dhTextArea {
+	width:						22em;
+}	
+
+input.dh-send-invite {
+}
+
+.dh-newer-invitations {
+    position:                   relative; 
+	left:					    50px;
+    margin-right:               80px; 
+    margin-bottom:              6px;
+    color:                      #fff500;	
+}
+
+.dh-later-invitations {
+    text-align:                 right;
+    margin-right:               53px;     
+    margin-top:                 14px;
+    color:                      #fff500;    
+}
+
+						

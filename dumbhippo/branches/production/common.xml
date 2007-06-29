@@ -1,0 +1,25 @@
+<project name="common">
+    <!-- ant magically defines ant.file.PROJECTNAME as the path to the project file -->
+    <dirname property="dumbhippo.global.trunkdir" file="${ant.file.common}" />
+
+    <property name="dumbhippo.global.lib" value="${dumbhippo.global.trunkdir}/lib" />
+
+    <property name="dumbhippo.global.jboss.root" value="/opt/jboss" />
+    <fileset id="dumbhippo.global.jboss.jars" dir="${dumbhippo.global.jboss.root}/">
+        <include name="lib/jboss-system.jar"/>
+        <include name="client/jbossall-client.jar"/>
+        <include name="server/all/lib/jboss-cache.jar"/>
+        <include name="server/all/lib/jgroups.jar"/>
+        <include name="server/all/lib/antlr-*.jar"/>
+        <include name="server/default/deploy/ejb3.deployer/*ejb3*.jar"/>
+        <include name="server/default/lib/*ejb3*.jar"/>
+    </fileset>
+    <fileset id="dumbhippo.global.lib.jars" dir="${dumbhippo.global.lib}/">
+        <include name="server/hibernate3.jar"/>
+        <include name="server/hibernate-commons-annotations.jar"/>
+        <include name="server/hibernate-annotations.jar"/>
+        <include name="server/hibernate-entitymanager.jar"/>
+        <include name="server/hibernate-search.jar"/>
+        <include name="server/javassist.jar"/>
+    </fileset>
+</project>

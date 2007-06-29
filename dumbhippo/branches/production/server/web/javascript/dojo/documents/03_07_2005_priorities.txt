@@ -1,0 +1,398 @@
+this space intentionally left blank
+
+* roadmap
+	- definitions of "success"
+	For Dojo to be successful, we must have measureable criteria upon which to base our definition of "success". This means that for short, medium, and long terms there must be some kind of meaning of "success" that we can quanitfy. For example, a short term measure of success might be "become the toolkit of choice for discerning professional DHTML hackers", while a medium-term definition might be "become the defacto DHTML toolkit for web application professionals and Open Source projects", while long term, we might shoot for "become baked into tools, and be the defacto DHTML UI toolkit for IT organizations worldwide".  (DKS: hmm, should our success be described on adoption, or capabilities?) (RAR: adoption. Nothing matters more than adoption)
+	- short term
+	  - Our current roadmap is to continue working on the plumbing and core components until we reach a point at which we can release something that people will find useful. (RAR: ummm...what exactly does this break down into?)
+	- medium term
+
+	- long term
+One of Dojo's guiding principles is to lower adoption costs of the framework. 
+This statement informs many of the non-functional requirements of the 
+framework. Put another way, the framework must give the developer a minimal 
+number of reasons not to adopt it within the target market. For browser 
+applications, the factors that influence adoption decisions include size of 
+the javascript file to be downloaded, performance and capability of the 
+widgets, platform support (breadth of supported browsers, versions, and 
+operating systems), stability, and "hackability". If the framework does not 
+provide an adequate experience to either end-users or developers, a barrier to 
+adoption has been created. Other factors that can affect adoption decision 
+cost ("adoption cost" or "barriers to adoption") are the quality and 
+completeness of documentation, the availability of examples that illustrate 
+common problems and usage scenarios, ease of obtaining support for the 
+framework, ability to file and track bugs, and the extent of (actual or 
+perceived) industry support.
+
+To ensure that Dojo provides a complete and acceptable framework for our target 
+market, non-functional requirements for the framework at large and each major 
+sub-component will be laid out in architecture or design documents. Testable 
+metrics will be determined on a per-item basis (where possible), target values 
+and minimum-acceptance values will be specified for each, and automated tests 
+will be constructed to verify that each component meets our standards for 
+developer and end-user acceptance. 
+
+	
+* releases
+* getting involved
+	- Currently, contributors are added to the project through invitation only, `much like firefox`.  If you would like to contribute to the Dojo project, please contact us.
+	- Subversion
+	- Java
+* milestones
+* project goals
+* current status
+	- Dojo is currently in development.  We have finished a significant portion of the core "plumbing" for the project, and we also have our first widget, a button, that can be constructed from markup in HTML and SVG namespaces.
+	  We still have a lot of work to do on making our widget system better, especially in the world of SVG.  The current SVG button could be described as hacky at best.  A button is a surprisingly complex widget, at least if it is done with any sort of sane flexibility and constraints.
+	  Other things we are actively working on include our event, IO, and data binding systems.  
+	  .. FIXME: add a concise, one sentence explanation of what this buys us.
+	  Ongoing improvements and refinements are being made to our xml declaration  language (specifically to support contraints and state) and parser.  The parser currently supports the most necessary markup constructs, with space to later accomodate more elaborate declaration mechanisms.
+
+	- infrastrstructure (complete)
+		- compression
+		- single-file builds from profile
+		- bootstraps
+		- package system
+		- basic linker
+		- basic unit testing
+		- generic xml parser
+		- IO (partial)
+	
+	- widget features (complete)
+		- button (html/svg)
+		- widget parsing infrastructure
+		- base widget classes
+		- event handling and mixins
+		- easy html widget hacking
+		
+	- infrastrstructure (incomplete)
+		- doc generation (discussing options w/ Erik Arvidsson)
+		- single-file builds from arbitrary file
+		- successful linking in build process
+		- in-browser unit testing in addition to command line tests
+		- JavaScript language extensions
+		- dojoml
+			- data binding
+			- events (<dojo:connect /> tag, wrapper around dojo.event.connect)
+			- property sets
+			- app/ui "state"
+			- repetition
+		- server-side "hooks"
+		- soap
+		- same source security proxy workaround thinger
+		- core api work
+			-math
+			- alg
+			- collections
+			- text
+			- lang
+			- mop/aop, functional programming support
+
+	- widgets features (incomplete)
+		- constraints
+			- layout manager
+				- movable borders
+				- overflow
+				- percentage layouts
+				- relative positioning/containing
+				- zoom
+				- resize
+				- panning
+				- split pane
+				- element resizer
+		- combo box
+		- auto-complete
+		- sliders
+		- data table
+		- menus and drop downs
+		- toolbar
+			- toggle buttons
+			- tab set
+		- debugger/logger
+		- tree
+		- progress bar
+		- status bar
+		- context menu
+		- status indicators
+		- WYSIWIG editor or rich-text edit control
+		- animation (RAR: need to engage Dan to get his code for this)
+		- drawing
+		- keyboard events
+		- drag and drop
+			- method for determing if you "accept" a drag or drop
+			- mime types? component class names? introspection? generic hook?
+		- internationalization? (RAR: good catch!)
+		- form controls ? (i.e. date picker, etc.) (RAR: we should break these out, lots of work here)
+			- combo box
+				- static data set
+				- dynamic data sets (server query for complete)
+				- filters
+		- hide/show (i.e. accordion in flex-speak)
+		- html+ controls
+			- text
+			- grid
+				- scrolling
+				- sorting
+				- tree
+			- list
+			- box
+			- window
+				- pop-ups
+				- alerts
+				- dialogs
+				- configuration systems (wizards)
+				- 
+				- combo box
+			- whatwg widgets (no, really, at least partial support)
+			- etc.
+		- gratuitous 3-d transition effects ;)
+		- cursor
+		- tooltips
+			- footnotes, may draw text from external URLs
+		- data validation
+			- form validation
+		- focus
+		- movement across windows/namespaces (IE drag a component from an html document to an svg document)
+		- printing (RAR: is this mostly a style-sheet issue, you think?  DKS: probably 80-90% is stylesheet, with the rest perhaps being a different mechanism for grabbing data, etc.)
+		- performance optimizations (for example, pre-rendering of hidden widgets, or waiting until a widget is need to grab data, etc.)
+		- style manager/abstraction between visual styles (RAR: hmm...how is that different than allowing differnet people to plug into a concerete implementation of a widget? DKS: I'm thinking general things for manipulating styles... we have some of this already for positioning/sizing, for example... not sure we need this)
+		- generic data loader (i.e. Google AdSense, Amazon, sports scores, etc. ... basically a widget that makes it numingly easy to add a self-updating data source) (RAR: how is this not a feed+diff tied to mod-pubsub?... DKS: it is (or with xmlhttprequest, but it's the sort of thing that by providing it as a "widget" will likely increase initial uptake of the toolkit)
+		- themes ?
+		- viewport coordinate translation
+		- app keyboard shortcuts/preferences manager?
+		
+################################################################################
+might be useful:
+
+The Benefits of Webapps
++++++++++++++++++++++++
+
+Traditional desktop-deployed applications provide a host of benefits over web
+applications. From filesystem access to complete and dependable GUI toolkits,
+the desktop application is by all accounts the best way to provide a rich and
+immersive user experience. So why then does anyone bother with the web? And why
+should INFA?
+
+The answer lies, paradoxically, in the relative lack of features that the web
+environment provides to application authors and the design choices that this
+has forced. Instead of applications deployed to every desktop, web applications
+must be deployed to a single location which general-purpose clients must then
+navigate to to use. The upside of this? Lower deployment, maintainance, and
+development costs. Your application only need perform correctly in your server
+environment.
+
+Likewise, the web provides relatively poor user-interface components to build
+UIs with, and state keeping mechanisms are primitive at best. The upside? Web
+apps must by their very nature be more robust in the face of intermittent
+failure, constantly re-think the end-user experience (since it is simpler to
+modify it in HTML than in C++ and competition reacts faster), and application
+rendering is now entirely standardized around the feature set defined in W3C
+specs and deployed to millions of desktops world wide.
+
+But perhaps the biggest "win" for web applications is development agility. Web
+applications are traditionally authored in dynamic languages which C and C++
+engineers view as "toy" languages such as PHP, Perl, and even Java. The
+productivity gains with both this new crop of languages, combined with the
+flexibility and inside-out benefits to businesses of using web applications
+makes Informatica's past and ongoing investment in web-deployed application
+technology prudent and increasing in importance as our competitors increasingly
+take advantage of the cost, time-to-market, and customer acceptance advantages
+of webapps.
+
+The Value Of Responsive UIs
++++++++++++++++++++++++++++
+
+One of the primary trade-offs that traditional web applications have made in
+respect to desktop applications has been a general decrease in UI
+responsiveness in return for universal deployability. As web applications have
+become ever-more commonplace, the value of a richer, more featureful user
+interface experience has gained in prominence as a differentiator among web
+applications. Users increasingly expect web browsers to do more of the tasks
+traditionally the purview of desktop appliations (email, chat, analytics)
+without tremendous sacrifices in the functionality or usability of the
+software. As we have proven with PowerAnalyzer, richer web application UIs can
+effectively compete with desktop applications, so long as the responsiveness,
+feature set, and "fit and feel" of the application are within reasonable
+distance of parity with the desktop-based competition.
+
+For some applications, the traditional request/response paradigm of traditional
+web applications simply won't work. Real-time data analysis or monitoring
+applications in particular make great targets for "webification" if only the UI
+and data latency problems can be solved.
+
+Problems Dojo Solves
+--------------------
+
+- competitive advantage through desktop-like interactivity delivered in a
+  true-web environment
+- low-latency communcation between web clients and servers
+- cross-browser, cross-renderer toolkit
+- markup-based UI declaraion for rich components
+- HTML and SVG co-existance and cooperation
+- clear, unambiguious, and friendly licensing terms for both INFA and INFA
+  clients
+- extensible, themeable, complete widget set to provide consistent look and
+  feel for INFA products
+  
+  Widget Instantiation From Markup
+--------------------------------
+
+Dojo will receive "markup" in whatever output language is used by the server
+(usually HTML) in order to locate declarative instructions to create widgets,
+data bindings, and event handler attachments within the client. The machinery
+to make all of ths happens relies on an object-model for components to declare
+and describe themselves. Also necessary in Zeus is a template system by which
+the visible (HTML or SVG) representaiton of a widget can be easily "jump
+started" and filled in with data later. This template system will allow for
+quicker turn-around for initial development and subsequent changes to the UI of
+Dojo widgets.
+
+Functionally, all of these pieces work together to allow application authors
+on the server side to output rendering-agnostic code with which to construct
+dynamic UI elements. On the client-side, inline Dojo markup allows mixed-mode
+(Dojo + non-Dojo) applications to peacefully co-exist without sacrificing UI
+responsivenes for those portions of an app that are constructed with Dojo.
+
+XML-to-Widget Declaration
++++++++++++++++++++++++++
+
+Dojo provides an XML declaration language which is translated (via XSLT) to
+generate declarative markup which is parsed on the client side (by the two-pass
+parser). Class constructors for each widget are then called, components are 
+rendered from templates, and then populated from data requested from the server.
+
+Communication Infrastructure (I/O Subsystem)
+++++++++++++++++++++++++++++++++++++++++++++
+
+Provides consistent interfaces to manage all of the various methods by which a
+responsive webapp can request partial or incremental data updates and notify
+the server of changes. This includes dealing with the vagaries of synchronous
+and asynchronous communication through the XMLHttp object (and it's propertary
+equivalents available in plug-in SVG environments), commmunication through 
+managed queues built on top of hidden iframes, and data transport over a 
+repubsub bus.
+
+Background submission of forms via GET or POST is also managed by the comm
+layer, as is notification of returned data from each submission. This function
+is essential to any responsive internet application, and entire toolkits have
+been built up around each one of these capabilities. Dojo will bring the best
+of all of these to the table, allowing application authors to choose the
+mechanism that best fits their needs and the capabilities of their environment.
+
+Two-Pass Parser
+++++++++++++++++++++++++++++++++++++++++++++
+
+A two-pass parser is a core part of Dojo. It supports the XML-to-Widget
+pipeline by creating JavaScript data structures from markup, handles the
+mechanics of calling widget constructors (and placing the resulting widgets
+into the UI), and implements the abstractions upon which data source binding
+and property sharing among widgets is predicated.
+
+Abstract Event Handling
+++++++++++++++++++++++++++++++++++++++++++++
+
+Dojo, as a UI toolkit, operates in environments which may or may not define
+their own low-level event notification mechanism from UI primitives. While
+these low-level handlers are useful, a well-architected system should allow
+various components of the system to be able to communicate via the same method
+as the user's communication with the system. To address this, Dojo will
+introduce a variant on the Aspect Oriented Programming (and Meta Object
+Protocol) concept of method "advice". This system does NOT require source
+code pre-processors, since the JavaScript language is dynamic enough to allow
+connection-time interception of subsequent function/method calls.
+
+A detailed discussion of this system (and the requirements document which arose
+from our research in this area) is available upon request.
+
+Interfaces
+----------
+
+The primary interface exposed by Dojo to the application author will be either
+in the form of custom or customized JSF components or DojoML markup. The markup
+language which Dojo uses to build components is specified elsewhere. Subsequent
+to the inital construction of a "page", Dojo will interact with server
+components via HTTP requests which send and receive messages/actions and data.
+
+Algorithms
+----------
+
+This document (a functional spec) is the wrong place to be discussing
+algorithmic design of a system such as Dojo. Regardless, major fuctional areas
+may require specialized patterns of usage, but it is not expected that any major
+design areas will require new or unique algorithms beyond what is commonly
+accepted in the areas of caching, sorting, event handling (call interception),
+and structured markup parsing.
+
+Internal
+--------
+
+The most minimal amount of code necessaray to initialize Dojo are the
+`bootstrap1.js`, `hostenv_*.js`, and `bootstrap2.js` files. In a "compressed"
+build, these files may be provided for a single environment by a single file
+loaded into the target environment.
+
+Subsequent to this, Dojo loads components based on "include" directives.
+Dependency statisfaction for these includes is handled by the system, but no
+non-JS dependencies are required to declare an application.
+
+Subsequent interaction (via the I/O subsystem) is done over HTTP, and
+interfaces passed to the client are called by these requests. Any sever-side
+system that integrates with Dojo will be required to define these call points
+and expose the expected list of parameters.
+
+External
+--------
+
+Dojo attempts to be a cross-platform and cross-server as possible. It is
+possible for an end user to receive the Dojo package and use it without
+external dependencies beyond an HTTP server and a modern web browser. More
+sophisticated users may choose to generate custom builds of Dojo to operate in
+command line or customized browser or vector-graphics environments.
+
+Browser environments that will be supported include all modern web browsers,
+and several SVG renderer implementations.
+
+Interaction ("plays well with others")
+======================================
+
+Dojo is designed and implemented in such a way as to "play nicely" with other
+DHTML/DSVG toolkits. The implementation strives to prevent global namespace
+polution to an extent not seen before in any DHTML toolkit. Dojo will
+also support "namespacing", which allows users to place the entire dojo class
+hierarchy at a location other than [[global]].dojo.*.
+
+On the server side, the integration plan with the various server-side
+technologies available is still under investigation by Martin and Sri, but it
+is not expected that are hurdles remain that would make Dojo incompatible with
+any chosen server-side framework.
+
+Page-based vs. no refresh applications
+--------------------------------------
+
+The spectrum of rich client application varies from the traditional one page at 
+a time, refresh the page for every action end, to the never refresh, always 
+incrementally update the view given user and application actions and commands.  
+The traditional page-based approach may be accomplished through a more 
+declarative manner with significantly less JavaScript code, but suffers from a 
+significant reduction in the responsiveness of the user interface.  The richer 
+interface applications require more JavaScript code for the application logic, 
+but require only the initial construction of the interface components to be 
+provided by the server.
+
+Look and Feel
+---------------------
+
+The view of the application may be modified by changing the component templates, 
+by making programmatic changes to the application style API, and through 
+component specific properties.  Layout is changed through modifying the document 
+structure that is passed to Dojo upon initialization of the application.  More 
+extreme changes to the look and feel include changing the rendering context 
+(html to svg for example), or alterting the collection of components and their 
+behaviors in an application.
+
+Build System
+-------------
+
+Most of the features in the build system, such as generation of documentation, 
+compression, namespacing, modularization, etc. are optional.  What is required 
+is specification of the components that the application author is interested in 
+including.

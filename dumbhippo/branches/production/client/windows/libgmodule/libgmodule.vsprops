@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="libgmodule"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories=".;..\libglib;..\..\common\glib;..\..\common\glib\glib;..\dependencies\gettext\include;..\dependencies\libiconv\include"
+		PreprocessorDefinitions="HAVE_CONFIG_H;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;GMODULE_COMPILATION"
+		DisableSpecificWarnings="4312;4267"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		OutputFile="$(OutDir)\libgmodule-2.0-0.dll"
+		ModuleDefinitionFile="..\..\common\glib\gmodule\gmodule.def"
+	/>
+</VisualStudioPropertySheet>

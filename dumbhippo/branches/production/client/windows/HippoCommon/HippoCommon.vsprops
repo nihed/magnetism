@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="HippoCommon"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories=".;../HippoUtil;../cairo;../../common/cairo/src;../../common/glib;../../common/glib/glib;../../common/pango;../libglib;../dependencies/gettext/include;../dependencies/jpeg/include;../../common;../../common/loudmouth;../../common/canvas;../../common/hippo/generated"
+		DisableSpecificWarnings="4311;4244;4267"
+	/>
+</VisualStudioPropertySheet>

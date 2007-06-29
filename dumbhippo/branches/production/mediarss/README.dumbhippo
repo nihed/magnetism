@@ -1,0 +1,22 @@
+This directory is an import of the Rome 'mediarss' module
+(http://wiki.java.net/bin/view/Javawsxml/MediaRSS), created
+so we could fix some bugs we were hitting.
+
+Upstream changes should be imported into the vendor branch
+(svn+ssh://svn.mugshot.org/svn/mediarss/vendor/current), and
+then merged into this directory.
+
+The toplevel of the import is:
+
+ subprojects/modules/mediarss/
+
+Inside the CVS directory:
+
+ pserver:<username>@cvs.dev.java.net:/cvs/rome
+
+Owen Taylor
+8 December 2006
+
+
+ 
+
