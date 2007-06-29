@@ -12,6 +12,6 @@
 	<c:set var="imgTitle" value="${label}: ${linkText}"/>
 </c:if>
 
-<a href="${linkTarget}">
+<a href="${linkTarget}" rel="me">
     <dh:png src="${imgSrc}" title="${imgTitle}" style="width: 16; height: 16; border: none;"/>
 </a>
