@@ -7,6 +7,7 @@ import bigboard.mugshot as mugshot
 import bigboard.libbig as libbig
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, \
              ActionLink, PrelightingCanvasBox
+from bigboard.overview_layout import OverviewLayout
 
 import apps_widgets, apps_directory
 
@@ -75,74 +76,35 @@ def categorize(apps):
         return local_categories
     return categories
         
-class MultiVTable(CanvasHBox):
-    """Implements an multi-column aligned table.  May have inner section headings."""
-    def __init__(self, columns=2, horiz_spacing=30, vert_spacing=5, item_height=None):
-        super(MultiVTable, self).__init__()    
-        
-        if item_height is None:
-            raise NotImplementedError("Must specify an item_height right now")
-        
-        self.__horiz_spacing = horiz_spacing
-        self.__vert_spacing = vert_spacing
-        self.__column_count = columns
-        self.__item_height = item_height
-
-    def __setup(self):
-        if self.__column_count == len(self.get_children()):
-            return
-        for i in range(self.__column_count):
-            self.append(CanvasVBox(spacing=self.__vert_spacing))
-        
-        self.__append_index = 0
+class OverviewTable(hippo.CanvasBox):
+    """Box with a OverviewLayout layout manager and convenience for adding sectional headers"""
+    def __init__(self, column_spacing=20, row_spacing=5, min_column_width=0, max_column_width=-1):
+        super(OverviewTable, self).__init__()
+        self.__layout = OverviewLayout(column_spacing=column_spacing, row_spacing=row_spacing,
+                                       min_column_width=min_column_width, max_column_width=max_column_width)
+        self.set_layout(self.__layout)
         
     def append_section_head(self, text, left_control=None, right_control=None):
-        self.__setup()
-        # Fill out empty spaces as necessary
-        if self.__append_index != 0:
-            (x,y) = self.get_children()[self.__append_index-1].get_allocation()            
-            for i,v in enumerate(self.get_children()[self.__append_index:]):
-                empty = CanvasVBox(box_height=(y>0 and y or self.__item_height))
-                v.append(empty)
-                
-        self.__append_index = 0
-        
-        for i,v in enumerate(self.get_children()):
-            subbox = CanvasVBox(color=0xAAAAAAFF, border_bottom=1, border_color=0xAAAAAAFF)
-            if i == 0:
-                target_box = subbox
-                if left_control:
-                    target_box = CanvasHBox()
-                    target_box.append(left_control)
-                    left_control.set_property("padding-right", 8)
-                item = hippo.CanvasText(text=text, font="Bold 14px", xalign=hippo.ALIGNMENT_START)
-                if left_control:
-                    target_box.append(item)
-                    item = target_box
-            elif right_control and i == self.__column_count-1:
-                item = right_control
-                right_control.set_property("xalign", hippo.ALIGNMENT_END)
-            else:
-                item = hippo.CanvasText(text="")
-            subbox.append(item)
-            v.append(subbox)
+        box = CanvasHBox(color=0xAAAAAAFF, border_bottom=1, border_color=0xAAAAAAFF)
+
+        if left_control:
+            box.append(left_control)
+            left_control.set_property("padding-right", 8)
+            
+        box.append(hippo.CanvasText(text=text, font="Bold 14px", xalign=hippo.ALIGNMENT_START))
+
+        if right_control:
+            box.append(right_control, flags=hippo.PACK_END)
+            right_control.set_property("padding-left", 8)
+
+        self.__layout.add(box, is_header=True)
+
+    def append_column_item(self, item):
+        self.__layout.add(item)
     
-    def append_column_item(self, child):
-        self.__setup()
-        for i,v in enumerate(self.get_children()):
-            if i == self.__append_index:
-                kwargs = {'box_height': self.__item_height}
-                if i != self.__column_count-1:
-                    kwargs['padding_right'] = self.__horiz_spacing
-                wrapper = CanvasVBox(**kwargs)
-                wrapper.append(child)
-                v.append(wrapper)
-                break
-        self.__append_index = (self.__append_index + 1) % self.__column_count
-        
-class AppCategoryUsage(MultiVTable):
+class AppCategoryUsage(OverviewTable):
     def __init__(self):
-        super(AppCategoryUsage, self).__init__(horiz_spacing=10, item_height=20)
+        super(AppCategoryUsage, self).__init__(column_spacing=10)
         
         self.__bar_height = 10
         self.__bar_width = 80
@@ -157,8 +119,8 @@ class AppCategoryUsage(MultiVTable):
     def set_apps(self, apps, used_apps):
         self.remove_all()
 
-        self.append_column_item(hippo.CanvasText(text="Category", font="Bold 12px", color=0x3F3F3FFF))
-        self.append_column_item(hippo.CanvasText(text="Your Usage", font="Bold 12px", color=0x3F3F3FFF))
+        self.append_column_item(hippo.CanvasText(text="Category", font="Bold 12px", color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START))
+        self.append_column_item(hippo.CanvasText(text="Your Usage", font="Bold 12px", color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START))
         
         categories = categorize(used_apps)
         cat_usage = {}
@@ -286,7 +248,8 @@ class AppExtras(CanvasVBox):
             self.__left_title.set_property('text', '')
             self.__right_title.set_property("text", "No popular %s found" % (thing,))
 
-        self.__app_pair.remove_all()
+        self.__app_pair.clear()
+        self.__app_pair2.clear()
         self.set_child_visible(self.__app_pair, not not self.__apps)
         found = 0
         for i,app in enumerate(self.__apps or []):
@@ -323,7 +286,7 @@ class AppList(CanvasVBox):
     def __init__(self, stock):
         super(AppList, self).__init__(padding=6)
 
-        self.__table = MultiVTable(columns=3,item_height=40)
+        self.__table = OverviewTable(min_column_width=200, max_column_width=250)
         self.append(self.__table, hippo.PACK_EXPAND)
 
         self.__extras_section = AppExtras(stock, self._filter_app, yalign=hippo.ALIGNMENT_END)
@@ -345,7 +308,6 @@ class AppList(CanvasVBox):
         self.__sync_display()
 
     def __sync_display(self):
-        
         self.__table.remove_all()
 
         categories = categorize(filter(self.__filter_app_and_installed, self.__all_apps))
@@ -445,8 +407,8 @@ class AppBrowser(hippo.CanvasWindow):
     
         self.__box = CanvasHBox()
     
-        self.__left_box = CanvasVBox(spacing=6, padding=6)
-        self.__left_box.set_property('background-color', 0xEEEEEEFF)                
+        self.__left_box = CanvasVBox(spacing=6, padding=6, box_width=250)
+        self.__left_box.set_property('background-color', 0xEEEEEEFF)
         self.__box.append(self.__left_box)
         
         self.__search_text = hippo.CanvasText(text="Search All Applications:", font="Bold 12px",
