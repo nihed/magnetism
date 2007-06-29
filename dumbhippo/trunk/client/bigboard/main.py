@@ -23,6 +23,7 @@ try:
     import bigboard.bignative as bignative
 except:
     import bignative
+import bigboard.globals
 import bigboard.google
 import bigboard.presence
 from bigboard.libbig.logutil import log_except
@@ -471,7 +472,7 @@ def usage():
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hds", ["help", "debug", "na", "no-autolaunch", "info", "replace", "stockdirs=", "debug-modules="])
+        opts, args = getopt.getopt(sys.argv[1:], "hds", ["help", "debug", "na", "no-autolaunch", "info", "replace", "stockdirs=", "debug-modules=", "server=", "dogfood"])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -483,16 +484,20 @@ def main():
     for o, v in opts:
         if o in ('-d', '--debug'):
             debug = True
+        elif o in ('--dogfood',):
+            bigboard.globals.set_server_name('dogfood.mugshot.org:9080')
         elif o in ('--info',):
             info = True
         elif o in ('--replace',):
             replace = True            
         elif o in ('--na', '--no-autolaunch'):
-            bigboard.mugshot.do_autolaunch = False
+            bigboard.globals.set_do_autolaunch(False)
         elif o in ('--stockdirs',):
             stockdirs = map(os.path.abspath, v.split(':'))
-        elif o in ('--debug-modules'):
+        elif o in ('--debug-modules',):
             debug_modules = v.split(',')
+        elif o in ('--server',):
+            bigboard.globals.set_server_name(v)
         elif o in ("-h", "--help"):
             usage()
             sys.exit()

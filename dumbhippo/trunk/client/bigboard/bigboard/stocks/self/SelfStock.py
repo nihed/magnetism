@@ -6,6 +6,7 @@ import dbus, dbus.glib
 import hippo
 
 from mugshot import DataModel
+import bigboard.globals
 import bigboard.slideout
 import bigboard.mugshot as mugshot
 import bigboard.libbig as libbig
@@ -251,7 +252,7 @@ class SelfStock(AbstractMugshotStock):
         self._box.append(self._signin)
         self._signin.connect("button-press-event", lambda signin, event: self.__on_activate())
 
-        self._model = DataModel()
+        self._model = DataModel(bigboard.globals.server_name)
         
         self.__myself = None
         self._model.add_connected_handler(self.__on_connected)
