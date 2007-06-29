@@ -24,9 +24,10 @@ except:
 import bigboard.google
 import bigboard.presence
 from bigboard.libbig.logutil import log_except
+import bigboard.libbig.dbusutil
 import bigboard.libbig.logutil
 import bigboard.libbig.xmlquery
-import bigboard.libbig.dbusutil
+import bigboard.libbig.stdout_logger
 import bigboard.keybinder
 
 BUS_NAME_STR='org.mugshot.BigBoard'
@@ -264,7 +265,7 @@ X-GNOME-Autostart-enabled=true
         
     def __on_stock_added(self, prestock):
         if not prestock.get_id() in gconf.client_get_default().get_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING):
-            self.__logger.debug("ignoring unlisted stock %s")
+            self.__logger.debug("ignoring unlisted stock %s", prestock.get_id())
             self.__prelisted[prestock.get_id()] = prestock
             return
         stock = prestock.get(panel=self)
@@ -495,7 +496,7 @@ def main():
             sys.exit()
 
     signal.signal(signal.SIGINT, lambda i,frame: sys.stderr.write('Caught SIGINT, departing this dear world\n') or os._exit(0))
-    
+
     def logger(domain, priority, msg):
         print msg
 
@@ -512,6 +513,9 @@ def main():
 
     bigboard.libbig.logutil.init(default_log_level, debug_modules, 'bigboard.')
 
+    # Redirect sys.stdout to our logging framework
+    sys.stdout = bigboard.libbig.stdout_logger.StdoutLogger()
+    
     bignative.set_application_name("BigBoard")
     bignative.set_program_name("bigboard")
     bignative.install_focus_docks_hack()
