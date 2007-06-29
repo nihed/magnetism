@@ -1,0 +1,8 @@
+Disallow: /trac/browser
+Disallow: /trac/log
+Disallow: /trac/changeset
+Disallow: /trac/file
+Disallow: /viewcvs/
+Disallow: /svn/dojo/
+Disallow: /viewcvs
+Disallow: /cgi-bin/

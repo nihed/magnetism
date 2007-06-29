@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY hippo-canvas-box SYSTEM "xml/hippo-canvas-box.xml">
+<!ENTITY hippo-canvas-container SYSTEM "xml/hippo-canvas-container.xml">
+<!ENTITY hippo-canvas-context SYSTEM "xml/hippo-canvas-context.xml">
+<!ENTITY hippo-canvas-gradient SYSTEM "xml/hippo-canvas-gradient.xml">
+<!ENTITY hippo-canvas-image-button SYSTEM "xml/hippo-canvas-image-button.xml">
+<!ENTITY hippo-canvas-image SYSTEM "xml/hippo-canvas-image.xml">
+<!ENTITY hippo-canvas-item SYSTEM "xml/hippo-canvas-item.xml">
+<!ENTITY hippo-canvas-link SYSTEM "xml/hippo-canvas-link.xml">
+<!ENTITY hippo-canvas-style SYSTEM "xml/hippo-canvas-style.xml">
+<!ENTITY hippo-canvas-text SYSTEM "xml/hippo-canvas-text.xml">
+<!ENTITY hippo-canvas-util SYSTEM "xml/hippo-canvas-util.xml">
+<!ENTITY hippo-canvas-widgets SYSTEM "xml/hippo-canvas-widgets.xml">
+<!ENTITY hippo-event SYSTEM "xml/hippo-event.xml">
+<!ENTITY hippo-graphics SYSTEM "xml/hippo-graphics.xml">
+]>
+<book>
+  <bookinfo>
+    <title>Hippo-Canvas Reference Manual</title>
+  </bookinfo>
+  
+  <chapter>
+    <title>The Hippo Canvas</title>
+    &hippo-canvas-box;
+    &hippo-canvas-container;
+    &hippo-canvas-context;
+    &hippo-canvas-gradient;
+    &hippo-canvas-image-button;
+    &hippo-canvas-image;
+    &hippo-canvas-item;
+    &hippo-canvas-link;
+    &hippo-canvas-style;
+    &hippo-canvas-text;
+    &hippo-canvas-util;
+    &hippo-canvas-widgets;
+    &hippo-event;
+    &hippo-graphics;
+  </chapter>
+</book>
+

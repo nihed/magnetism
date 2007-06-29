@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?><!-- -*- tab-width: 4; indent-tabs-mode: t -*- -->
+<!DOCTYPE server>
+<!-- $Id: properties-service.xml,v 1.5 2003/08/27 04:34:12 patriot1burke Exp $ -->
+<!-- Modified for use with dumbhippo, since I can't figure out a simpler way
+     to do external configuration -->
+
+<server>
+
+  <mbean code="org.jboss.varia.property.PropertyEditorManagerService"
+         name="jboss:type=Service,name=PropertyEditorManager">
+
+  </mbean>
+
+  <mbean code="org.jboss.varia.property.SystemPropertiesService"
+         name="jboss:type=Service,name=SystemProperties">
+
+    <!-- do not put trailing whitespace here, or we put you in the iron maiden -->
+    <attribute name="Properties"><![CDATA[
+	    java.awt.headless=true
+		dumbhippo.server.hajndiPort=@@hajndiPort:properties@@
+	    dumbhippo.server.features=@@serverFeatures:properties@@
+	    dumbhippo.server.disable.authentication=@@disableAuthentication:properties@@
+	    Dumbhippo.server.email.disable=@@disableEmail:properties@@
+        dumbhippo.server.bind.host=@@bindHost:properties@@
+		dumbhippo.server.xmpp.port=@@jivePlainPort:properties@@
+		dumbhippo.server.xmpp.adminuser=admin
+		dumbhippo.server.xmpp.password=@@jivePassword:properties@@
+        dumbhippo.server.http.port=@@tomcatHttpPort:properties@@
+		dumbhippo.server.baseurl=@@baseurl:properties@@
+		dumbhippo.server.web.version=@@webVersion:properties@@
+        dumbhippo.server.web.ie.forcealphaimage=@@forceIEAlphaImage:properties@@
+		dumbhippo.server.appinfo.dir=@@appinfoDir:properties@@
+		dumbhippo.server.crashdump.dir=@@crashdumpDir:properties@@
+		dumbhippo.server.files.saveurl=file://@@filesavedir:properties@@
+		dumbhippo.server.lucene.indexdir=@@luceneIndexDir:properties@@
+		dumbhippo.server.aimbot.name=@@imbotScreenName:properties@@
+		dumbhippo.server.aim.presence.key=@@aimPresenceKey:properties@@
+		dumbhippo.server.downloads=@@clientDownloads:properties@@
+		dumbhippo.server.amazon.accesskeyid=@@amazonAccessKeyId:properties@@
+		dumbhippo.server.amazon.secretkey=@@amazonSecretKey@@		
+		dumbhippo.server.amazon.associatetag=@@amazonAssociateTag:properties@@
+		dumbhippo.server.amazon.s3bucket=@@amazonS3Bucket:properties@@
+		dumbhippo.server.yahoo.appid=@@yahooAppId:properties@@
+		dumbhippo.server.ebay.devid=@@ebayDevId:properties@@
+		dumbhippo.server.ebay.appid=@@ebayAppId:properties@@
+		dumbhippo.server.ebay.certid=@@ebayCertId:properties@@
+		dumbhippo.server.flickr.apiid=@@flickrApiId:properties@@
+		dumbhippo.server.facebook.apikey=@@facebookApiKey:properties@@
+		dumbhippo.server.facebook.secret=@@facebookSecret:properties@@
+        dumbhippo.server.googleanalytics.key=@@googleAnalyticsKey:properties@@
+		dumbhippo.server.adminconsole.enable=@@adminConsole:properties@@
+		dumbhippo.server.newfeatures = @@newFeatures:properties@@
+		dumbhippo.server.stealthmode=@@stealthMode:properties@@
+		dumbhippo.server.slavemode=@@slaveMode:properties@@
+		dumbhippo.server.userupdateinterval=@@userUpdateInterval:properties@@
+		dumbhippo.server.summitgroupguid=@@summitGroupGuid:properties@@
+		dumbhippo.server.newuserinvitationcount=@@newUserInvitationCount:properties@@
+		dumbhippo.server.specialnewuserinvitationcount=@@specialNewUserInvitationCount:properties@@
+    ]]></attribute>
+  </mbean>
+  
+</server>

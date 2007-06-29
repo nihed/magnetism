@@ -1,0 +1,44 @@
+@CHARSET "UTF-8";
+@IMPORT url("buttons-positions.css");
+
+.dh-buttons-header-box {
+	background-color: 	#9648BC;
+	-moz-border-radius: 10px;
+}
+
+.dh-buttons-header-text-large {
+	font-size:			18px;
+	color:				#FFFFFF;	
+	font-weight:		bold;	
+	text-align:			center;	
+}
+
+.dh-buttons-header-text-small {
+	font-size:			14px;
+	color:				#FFFFFF;	
+	font-weight:		bold;
+	text-align:			center;
+}
+
+.dh-buttons-choice-background {
+	background-color: 	#EEEEEE;
+}
+
+.dh-buttons-instructions-headline {
+	color:				#9648BC;
+	font-weight:  		bold;
+	font-size:	  		18px;
+}
+
+.dh-buttons-instructions-title {
+	font-weight:		bold;
+	font-size:			14px;
+}
+
+.dh-buttons-instructions-body {
+	font-size:			12px;
+}
+
+.dh-buttons-code {
+	background-color:	#FFFFFF;
+}

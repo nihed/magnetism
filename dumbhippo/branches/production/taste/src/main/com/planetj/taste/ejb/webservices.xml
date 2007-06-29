@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<webservices xmlns="http://java.sun.com/xml/ns/j2ee"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://www.ibm.com/webservices/xsd/j2ee_web_services_1_1.xsd"
+             version="1.1">
+
+	<webservice-description>
+		<webservice-description-name>RecommenderWS</webservice-description-name>
+		<wsdl-file>META-INF/RecommenderWS.wsdl</wsdl-file>
+		<jaxrpc-mapping-file>META-INF/mapping.xml</jaxrpc-mapping-file>
+		<port-component>
+			<port-component-name>RecommenderServicePort</port-component-name>
+			<wsdl-port>
+				<namespaceURI>urn:com.planetj.taste.ejb.RecommenderWS</namespaceURI>
+				<localpart>RecommenderServicePort</localpart>
+			</wsdl-port>
+			<service-endpoint-interface>com.planetj.taste.ejb.RecommenderWS</service-endpoint-interface>
+			<service-impl-bean>
+				<ejb-link>RecommenderEJB</ejb-link>
+			</service-impl-bean>
+		</port-component>
+	</webservice-description>
+
+</webservices>

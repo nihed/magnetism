@@ -1,0 +1,6 @@
+@CHARSET "UTF-8";
+@IMPORT url("links-positions.css");
+
+.dh-sidebar-box.dh-controls-box {
+	background-color:		#FAC7A9;
+}

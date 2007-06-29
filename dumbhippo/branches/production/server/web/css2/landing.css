@@ -1,0 +1,14 @@
+@CHARSET "UTF-8";
+@IMPORT url("landing-positions.css");
+
+.dh-landing-result {
+	color: red;
+}
+
+.dh-landing-explanatory {
+	font-size: 13px;
+}
+
+.dh-title {
+    text-align: left;
+}

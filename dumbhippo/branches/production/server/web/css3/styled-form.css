@@ -1,0 +1,30 @@
+@CHARSET "UTF-8";
+@IMPORT url("styled-form-positions.css");
+
+.dh-form-table {
+	font-size:	13px;
+}
+
+.dh-form-table .dh-base-row {
+    background: #EDEDED;
+}
+
+.dh-form-table .dh-alt-row {
+    background: #F3F3F3;
+}
+
+.dh-form-table-orange .dh-base-row {
+    background: #FFE9DB;
+}
+
+.dh-form-table-orange .dh-alt-row {
+    background: #FFF0E7;
+}
+
+.dh-form-table .dh-label-cell {
+    font-weight: bold;
+}
+
+.dh-form-table .dh-info-cell {
+	color:			#9648BC;
+}

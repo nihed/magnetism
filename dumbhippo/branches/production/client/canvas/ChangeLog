@@ -1,0 +1,5 @@
+2007-06-06  Havoc Pennington  <hp@redhat.com>
+
+	* Makefile.am: add gtk-doc build stuff, patch from Matthias
+	
+

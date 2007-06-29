@@ -1,0 +1,15 @@
+@CHARSET "UTF-8";
+@IMPORT url("bookmark-positions.css");
+
+.dh-bookmark-uiref {
+	font-style: italic;
+}
+
+#dhBookmarkHowto {
+	width: 100%;
+	border: 1px solid black;
+}
+
+#dhBookmarkLink {
+	font-size:		18px;
+}

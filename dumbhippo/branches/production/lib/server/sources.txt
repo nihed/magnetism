@@ -1,0 +1,8 @@
+# FIXME - move this information to externals.txt up one level
+hibernate3.jar official			SVN snapshot build Branch_3_2@11694 (post 3.2.4sp1) + patch for HHH-2159
+hibernate-annotations.jar		hibernate-annotations-3.3.0.GA.tar.gz (official)
+hibernate-commons-annotations.jar	hibernate-annotations-3.3.0.GA.tar.gz (official)
+hibernate-entitymanager.jar		hibernate-entitymanager-3.3.1.GA.tar.gz (official)
+hibernate-search.jar			hibernate-search-3.0.0.Beta1.tar.gz (official)
+lucene-core-2.1.0.jar			lucene-2.1.0.tar.gz (official)
+javassist.jar				javassist-3.4.zip (official)

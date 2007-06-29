@@ -1,0 +1,111 @@
+1.0.1 (2006-01-08)
+- Fixed a reasonably important bug that caused Recommneder implementations
+  to not return the best recommendations in many cases. Thanks to
+  pevm on sourceforge.net for the report.
+
+1.0 (2005-12-16)
+- The first non-beta release. Good.
+- Added Recommender.recommender(..., ItemFilter),
+  Recommender.estimatePreference()
+- Corrected a couple problems with the web service -- should work as
+  expected now
+- Update to Axis 1.3
+- Final updates and edits to documentation
+
+0.9.5 (2005-12-08)
+- Release candidate 2!
+- Fixed bug in the ordering of recommended items from Recommenders
+- RecommenderServlet now returns recommended items as
+  "preference-value[tab]item-id"
+- RecommenderServlet now supports a "debug" flag which dumps more item info
+- Added getDataModel() to Recommender
+- FileDataModel and AbstractJDBCModel now expose methods buildUser(),
+  buildItem(), buildPreference(). This allows subclasses a "hook" by which
+  they can instantiate their preferred implementations, making these
+  DataModel implementations reusable. These classes are non-final now, as
+  are GenericUser, GenericItem, GenericPreference
+- Additional changes to refresh() methods to avoid potential problems
+  when modules have a circular dependency and refresh each other
+- Removed actual GroupLens data from distribution to comply with license
+- Improved the demo application and its documentation
+
+0.9 (2005-11-29)
+- This should be considered a 1.0 release candidate
+- Recommenders now return RecommendedItems, which include a preference
+  value in addition to the Item itself
+- More minor code refactoring
+- New unit tests for Recommenders
+- Updated some third-party tools to latest version (FindBugs, MySQLConnector)
+
+0.8 (2005-09-11)
+- Added a mechanism to create and deploy a web interface to Taste
+  on top of a servlet container like Tomcat
+  - Supports web services via Axis
+  - Supports simpler HTTP GETs for recommendations too
+- Rewrote the EJB support to match the new HTTP web interface
+- Minor fixes and slight performance tweaks across the board
+
+0.7.5 (2005-09-02)
+- Minor changes to ItemCorrelation: now takes Item parameters
+- More profiling and performance enhancements. In particular,
+  GenericItemCorrelation lets you plug precomputed item similarities
+  into GenericItemBasedRecommender to get a fast recommender system.
+
+0.7 (2005-08-22)
+- New! support for item-based recommender systems
+- Significant renaming and refactoring to support that
+- More unit tests, after Emma coverage reports showed some gaps
+
+0.6.5 (2005-07-29)
+- General code cleanup after updating to IntelliJ 5.0, including use of
+  IntelliJ's @Nullable and @NotNull annotations
+- Lots of performance profiling and lots of performance improvements --
+  2-4x or more depending on your setup
+- LoadTest JUnit test
+- EJB can now find a Recommender implementation in JNDI
+
+0.6 (2005-07-24)
+- Added InverseUserFrequency transform
+- Reimplemented the idea of "default preference". This is now encapsulated by
+  implementations of the PreferenceInferrer interface, instead of User.
+  Instances can be plugged into a Correlation, where they are now more
+  properly used. So, we now have "default voting".
+- Refreshable interface. Everything is "refreshable" now. Many classes
+  pre-compute values that may become stale; callers can clear stale data in
+  any component now by calling refresh() on a component (in particular,
+  instances of Recommender).
+- CachingRecommender uses more fine-grained locking for better performance
+- New tests, updated documentation
+
+0.5 (2005-07-11)
+- Recommender/DataModel now have setPreference() method for real-time updates
+- Neighborhood implementations now take advantage of multiple processors
+- Minor enhancements to JDBCModel; now named MySQLJDBCModel
+- Improved MySQLJDBCModelTest -- now sets up the table/data
+- Spruced up the documentation / web page
+
+0.4 (2005-06-17)
+- Rewrote JDBCDataModel to be much more reasonable about memory
+  requirements -- no longer reads everything into memory.
+- Fixed some obvious bugs in JDBCDataModel
+- FileDataModel
+- Tests for both DataModel implementations
+- Logging
+
+0.3 (2005-06-06)
+- Added RecommenderEJB interface (tested on JBoss 4)
+  Next version will likely see revisions to this interface
+- Beginnings of a J2EE 1.4 web service interface
+- Added CosineMeasureCorrelation
+- User's Guide
+
+0.2 (2005-05-26)
+- Most javadoc is complete
+- A few more tests, for Correlation implementations
+- JDBCDataModel
+- Miscellaneous tweaks and fixes, mostly to PearsonCorrelation
+
+0.1 (2005-05-20)
+- Initial release, including basic code, a few tests, and no documentation. 
+  Code is in good shape -- what's there -- but interfaces will likely 
+  change a lot.

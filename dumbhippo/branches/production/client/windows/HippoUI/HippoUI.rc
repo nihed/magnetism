@@ -1,0 +1,253 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_MUGSHOT             ICON                    "Mugshot.ico"
+IDI_SWARM1              ICON                    "swarm1.ico"
+IDI_DUMBHIPPO_1         ICON                    "Logo1.ico"
+IDI_DUMBHIPPO_2         ICON                    "Logo2.ico"
+IDI_DUMBHIPPO_3         ICON                    "Logo3.ico"
+IDI_DUMBHIPPO_4         ICON                    "Logo4.ico"
+IDI_DUMBHIPPO_5         ICON                    "Logo5.ico"
+IDI_DUMBHIPPO_BLANK     ICON                    "Logo6.ico"
+IDI_DUMBHIPPO_0         ICON                    "Logo0.ico"
+IDI_SWARM2              ICON                    "swarm2.ico"
+IDI_SWARM3              ICON                    "swarm3.ico"
+IDI_SWARM4              ICON                    "swarm4.ico"
+IDI_SWARM5              ICON                    "swarm5.ico"
+IDI_SWARM5B             ICON                    "swarm5b.ico"
+IDI_LINKSWARM           ICON                    "linkswarm.ico"
+IDI_NOTIFICATION        ICON                    "notification.ico"
+IDI_NOTIFICATION_DISCONNECTED ICON                    "notification_disconnected.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_NOTIFY MENU 
+BEGIN
+    POPUP "Dummy"
+    BEGIN
+        MENUITEM "Missed Links...",             IDM_MISSED
+        MENUITEM "&Recent links...",            IDM_RECENT
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+END
+
+IDR_DEBUG MENU 
+BEGIN
+    POPUP "Dummy"
+    BEGIN
+        MENUITEM "&Preferences...",             IDM_PREFERENCES
+        MENUITEM "&Debug Log...",               IDM_DEBUGLOG
+    END
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST ""HippoUI.exe.manifest""\r\n"
+    "1 TYPELIB ""HippoUI.tlb""\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_LOGIN DIALOGEX 0, 0, 200, 131
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Mugshot login"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Username:",IDC_STATIC,7,48,36,8
+    EDITTEXT        IDC_USERNAME,85,46,108,12,ES_AUTOHSCROLL
+    LTEXT           "Password:",IDC_STATIC,7,67,34,8
+    EDITTEXT        IDC_PASSWORD,85,65,108,12,ES_PASSWORD | ES_AUTOHSCROLL
+    CONTROL         "Remember password",IDC_REMEMBERPASS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,87,186,13
+    DEFPUSHBUTTON   "Login",IDOK,85,110,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,143,110,50,14
+    LTEXT           "Please enter your Mugshot login information. If you don't know your username or password, please visit the mugshot.org web page.",IDC_STATIC,7,7,186,37
+END
+
+IDD_PREFERENCES DIALOGEX 0, 0, 242, 102
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Mugshot Preferences"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "Show HippoUI Icon in notification area",IDC_SHOWICON,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,7,138,10
+    LTEXT           "Message Server:",IDC_STATIC,7,41,55,8
+    EDITTEXT        IDC_MESSAGE_SERVER,72,38,163,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Forget Sign-In Information",IDC_FORGETPASSWORD,7,81,95,14
+    DEFPUSHBUTTON   "OK",IDOK,129,81,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,185,81,50,14
+    ICON            IDI_MUGSHOT,IDC_LOGOICON,214,7,20,20
+    LTEXT           "Web Server:",IDC_STATIC,7,60,42,8
+    EDITTEXT        IDC_WEB_SERVER,72,57,163,14,ES_AUTOHSCROLL
+END
+
+IDD_CRASH DIALOGEX 0, 0, 239, 91
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Mugshot crashed"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Send Crash Report",IDOK,76,70,76,14
+    PUSHBUTTON      "Cancel",IDCANCEL,156,70,76,14
+    LTEXT           "The Mugshot software has crashed. By sending information about this crash to the Mugshot developers, you can help us fix the problem.",IDC_STATIC,7,7,225,18
+    LTEXT           "The report will contain only minimal information about your usage of the Mugshot software in addition to details about where in the Mugshot code the crash occurred.",IDC_STATIC,7,27,225,28
+END
+
+IDD_CRASH_REPORTED DIALOGEX 0, 0, 237, 99
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Mugshot crashed"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,180,78,50,14
+    LTEXT           "Your crash information has succesfully been sent. Thanks!\n\nYou may wish to submit a bug report to http://bugzilla.mugshot.org to provide additional information. If you do so, please include the following crash report identifier in your bug report:",IDC_STATIC,7,7,223,51
+    EDITTEXT        IDC_CRASH_ID,7,57,223,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER
+END
+
+IDD_REPEAT_CRASH DIALOGEX 0, 0, 253, 97
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Mugshot crashed"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Close",IDCLOSE,196,75,50,14
+    LTEXT           "The Mugshot software seems to be repeatedly crashing. It will now exit. We're sorry for the inconvenience.",IDC_STATIC,7,7,239,18
+    LTEXT           "• The currently installed version of Mugshot is: @VERSION@\n   You can check for a new version at http://mugshot.org/upgrade",IDC_VERSION,7,44,239,21,0,WS_EX_TRANSPARENT
+    LTEXT           "• You can try running Mugshot again from the ""All Programs"" menu.",IDC_STATIC,7,31,239,12
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_LOGIN, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 193
+        VERTGUIDE, 85
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 124
+    END
+
+    IDD_PREFERENCES, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 235
+        VERTGUIDE, 72
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 95
+    END
+
+    IDD_CRASH, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 232
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 84
+    END
+
+    IDD_CRASH_REPORTED, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 230
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 92
+    END
+
+    IDD_REPEAT_CRASH, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 246
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 89
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDS_APP_TITLE           "HippoUI"
+    IDC_HIPPOUI             "HIPPOUI"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "HippoUI.exe.manifest"
+1 TYPELIB "HippoUI.tlb"
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

@@ -1,0 +1,57 @@
+@CHARSET "UTF-8";
+
+#dhMugshotWelcome {
+    position:        relative; 
+    bottom:          -10px;
+}
+
+#dhMugshotIntro {
+    position:        relative;  
+    width:           290px; 
+    display:         block;
+    float:           left;
+    margin-top:      10px;  
+    margin-left:     15px;
+    margin-right:    10px;
+}
+
+#dhMugshotIntro * {
+    margin-top:     20px;
+}
+
+#dhMugshotTourBadge {
+    position:        relative;
+    text-align:      center;
+    margin-top:      5px;
+}
+
+#dhMugshotExample {
+    position:        relative;
+    width:           406px;    
+    display:         block;
+    float:           left;
+    bottom:          -9px;
+}
+
+#dhMugshotIntro .dh-intro-options {
+    margin-top:     0px;
+}
+
+#dhMugshotIntro .dh-button {
+   position:        relative;
+   top:             7px;  
+}
+
+.dh-header {
+    margin-bottom:  5px;
+    margin-top:     5px;
+}
+
+.dh-stacker-block-left {
+    white-space:    nowrap; 
+    overflow:       hidden;
+}
+
+.dh-stacker-block-right {
+    margin-top:     0px;
+}

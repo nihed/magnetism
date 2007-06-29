@@ -1,0 +1,621 @@
+﻿Session Start (dojo:#dojo): Wed Jul 20 16:02:04 2005
+*** Initial topic: widget APIs, boilerplate, D&D refactoring
+*** #dojo was created on Wed Jul 20 13:34:18 2005.
+*** schontz is now known as schontz_.
+*** schontz_ is now known as schontz__.
+slightlyoff: introductions?
+*** schontz__ has left #dojo.
+ttrenka: hey, tom trenka's in, but I'm gonna lurk for the most part
+*** dylanks has joined #dojo.
+slightlyoff: hey Dylan
+dylanks: hey
+slightlyoff: fzZzy: how's it going Donovan?
+*** David_ has joined #dojo.
+slightlyoff: hey David
+David_:  hey
+slightlyoff: soo...do we wanna get started?
+David_:  who's on? I don't see anyone in my list
+*** David_ has left #dojo.
+slightlyoff: MDA's online, but I'm not sure if we should pester him or not
+*** David_ has joined #dojo.
+*** David_ is now known as schontz.
+*** schontz has signed off IRC (Client Quit).
+slightlyoff: I think we can just post a log of david signing on and off and call it done ;-)
+iamthewalrus: :-)
+dylanks: lol
+ttrenka: heh
+*** schontz has joined #dojo.
+schontz: ok 
+schontz: I'm back 
+schontz: for good 
+schontz: I think 
+* slightlyoff rolls eyes
+ttrenka: heh
+* schontz shakes fist
+* slightlyoff ducks
+slightlyoff: soooo
+schontz:  yes
+slightlyoff: so I think there are a couple of things that are starting to really stand out as noticeable problems
+slightlyoff: the amount of boilerplate required to do widgets is one of them
+iamthewalrus: namespacing
+slightlyoff: trivial construction of "lightweight" widgets
+slightlyoff: and yeah, namespacing
+slightlyoff: also, D&D is up for debate
+schontz:  k
+dylanks: and what about namespacing?
+* slightlyoff pulls DM guide (first edition) out of desk drawer
+slightlyoff: well, right now we have a bunch of incompatible (and non-cooperating) prefixing notations
+schontz:  yes
+slightlyoff: basically, people keep asking "should I be developing my stuff outside of the Dojo tree?"
+iamthewalrus: right
+slightlyoff: and I think the answer needs to be "yes'
+ttrenka: big time
+slightlyoff: but the "how" of doing that right now is tricky or doesn't work at all
+iamthewalrus: my d&d example is largely outside the tree
+dylanks: yeah, I have to resort to ugly hacks to merge them at build time
+slightlyoff: is it here?: (Link: http://dojotoolkit.org/~psowden/ids/test_tables.html)http://dojotoolkit.org/~psowden/ids/test_tables.html
+iamthewalrus: yuhu
+iamthewalrus: it's not loaded in by the package system though
+slightlyoff: right
+slightlyoff: which is a situation that needs correcting
+iamthewalrus: but from what I gather is the bug in the prefix thing
+slightlyoff: if only because that's one of the primary ways that the build system figures things out
+slightlyoff: right
+slightlyoff: hrm
+slightlyoff: I haven't filed a bug for it yet
+* slightlyoff goes to file bug on self
+iamthewalrus: I think there should be a unified call which does some of this automatically
+slightlyoff: yes
+iamthewalrus: a registerWidget call or some such
+slightlyoff: so the question for widgets is 2-fold
+slightlyoff: ...and that would handle tag registration as well?
+iamthewalrus: would make sense
+slightlyoff: yeah, it might be a lot better than the current "set an alias to the dojo.webui.widgets namespace" dance
+slightlyoff: or even registering your own prefix
+iamthewalrus: so I'm tempted to bring  up xml namespaces
+schontz:  ruh roah
+iamthewalrus: :-)
+ttrenka: yah, ruh roah :)
+dylanks: :)
+slightlyoff: well, we do a lot of implicit xml namespace stuff right now
+dylanks: exactly what I was thinking
+slightlyoff: (namely be tacking "dojo:" onto the front of a bunch of strings and then stripping it back off)
+slightlyoff: but it's entirely inellegant
+iamthewalrus: I gathered widgets are designed to be written in xml?
+ttrenka: iirc that was the original intention, wasn't it Alex?
+iamthewalrus: the "dojo:" we currently pass to addParseTreeBlah is an XML namespace prefix, right?
+dylanks: the idea was xml, svg, or html
+dylanks: but to be compliant with IE, we don't require namespacing
+slightlyoff: Mozilla isn't even compliant-enough
+dylanks: so we basically support both dojo:widgetName="Foo" and dojoType="Foo"
+slightlyoff: right
+dylanks: not compliant enough when mixed with html at least
+iamthewalrus: so what is the reason for the "dojo:" prefix?
+dylanks: well, say you have a button widget
+slightlyoff: to make dylan feel better ;-)
+dylanks: did you mean dojo:button or an html button?
+dylanks: :)
+iamthewalrus: in the call to addParseBlah
+iamthewalrus: whatever the method is called
+slightlyoff: yes
+dylanks: right
+slightlyoff: so the parser normalizes to a JS data structure
+slightlyoff: and we look for widgets in that data structure w/ a tagName attirbute that starts w/ "dojo:"
+ttrenka: ...not to distract or detract, but is that structure a JSON one, or not?  I can't remember
+slightlyoff: which is, perhaps, naive
+slightlyoff: no, but that might be an obvious improvement
+iamthewalrus: so pseudo xml namespacing
+slightlyoff: right now it nests things pretty deeply
+ttrenka: ...we should come back to that.
+slightlyoff: ok
+slightlyoff: (I think a JSON serialization/deserializtion engine would be great for Dojo)
+ttrenka: ...consider that to be on my list, then
+slightlyoff: I didn't think that before, but I do now
+slightlyoff: = )
+ttrenka: = )
+slightlyoff: but back to widget namespacing
+slightlyoff: so if we have something like Paul's registerWidget, we could add a bunch of metadata w/ it at the same time:
+dylanks: is the walrus Paul?
+slightlyoff: dojo.webui.widgets.register(constructorRef, name, prefix);
+slightlyoff: heh
+iamthewalrus: yeah, turns out the walrus was Paul
+slightlyoff: I asked that yesterday and then about slapped myself
+ttrenka: i thought John was the walrus?
+slightlyoff: ;-)
+schontz:  ku ku kutchoo
+ttrenka: ...sorry, that was really bad.
+ttrenka: anyways.
+schontz:  ya
+slightlyoff: dylanks: that's a "yes"
+iamthewalrus: listen to "glass onion"
+dylanks: ok
+dylanks: so what does register replace/enhance
+slightlyoff: it would get rid of:
+iamthewalrus: I vote everything
+iamthewalrus: outside of the object definition
+slightlyoff: dojo.webui.widgets.tags.addParseTreeHandler("dojo:name");
+slightlyoff: (for one thing)
+slightlyoff: could also do the dj_inherits() prototype extension bit
+dylanks: ok
+slightlyoff: (if you register it w/ the right prefix, say, "HTML")
+dylanks: so how would it handle specifying where the widget code "lives"
+iamthewalrus: dojo.webui.widgetManager.registerWidgetPackage("uk.co.idontsmoke.dojo");
+iamthewalrus: you don't say that in the widget file
+iamthewalrus: by definition
+dylanks: do you pass a path for registerWidgetPackage
+slightlyoff: or a Uri object?
+iamthewalrus: heh, you have to know the path to get the widget
+iamthewalrus: you have to seperate them
+iamthewalrus: you can't put the path in the widget file
+iamthewalrus: dojo needs to know the path to load the widget file
+dylanks: right, of course, so a Uri object would be part of registerWidgetPackage?
+iamthewalrus: registerWidgetPackage would go in the widget file
+iamthewalrus: along with the object definition
+dylanks: ah, ok
+dylanks: sort of like the loadModule stuff
+iamthewalrus: yeah, instead of that
+slightlyoff: instead of that?
+iamthewalrus: sorry, alongside that
+slightlyoff: oh, good
+slightlyoff: you had me envisioning a parallel package system for a second ;-)
+slightlyoff: I'm plenty good at breaking one of them, 2 would be a bit too much = )
+schontz:  heh
+slightlyoff: so I guess I'm a bit confused
+slightlyoff: why even register a package as a widget source
+slightlyoff: when you could register each widget individually (no matter what package it's in) at the same time you do things like set up tag handlers
+iamthewalrus: ok, what I meant was inside your widget package you'd have a single dojo call which tells it that an object is a widget
+slightlyoff: or is that just too automagic?
+slightlyoff: ahh
+slightlyoff: right
+slightlyoff: so we're on the same page
+iamthewalrus: and that's all the boilerplate inside the widget file
+iamthewalrus: a single call
+slightlyoff: the one remaining bit is the widgetName property that we still require that each widget have
+slightlyoff: I'm still trying to figure ways around that
+slightlyoff: perhaps we could assign it when you request a widget of that instance?
+slightlyoff: right now the lookup system lets you get a reference to the constructor function back from a type name
+michaelkf: the problem being widgets of the same name in different widget packages?
+iamthewalrus: that's certainly a problem
+slightlyoff: yeah, that's problematic
+iamthewalrus: so namespacing with the object's name makes the most sense to me
+michaelkf: couldn't external packages register their own namespace?
+slightlyoff: one would hope so
+slightlyoff: but how would the function for that look?
+slightlyoff: what should the signature of the function be?
+iamthewalrus: the namespace will need to be incorporated into dojoType
+michaelkf: and should one be able to set a default namespace?
+slightlyoff: how would that help?
+slightlyoff: one might assume that I'd know what I wanted when I said dojoType="button"
+slightlyoff: (or maybe note)
+slightlyoff: I guess you should always be able to also say dojoType="foo:button"
+iamthewalrus: so if corp XYZ and ABC inc both had button widgets
+iamthewalrus: so, that, to me, looks like xml namespaces
+ttrenka: heh
+dylanks: :)
+ttrenka: funny how that works :)
+slightlyoff: which is fine by me
+slightlyoff: but we need to agree on the APIs for how you'd set all of this up
+slightlyoff: so how about registration like:
+slightlyoff: dojo.webui.widgets.register(dojo.webui.widgets.HTMLButton, "dojo:button", "html");
+michaelkf: what if XYZ corp only uses their widget package. should they be able to specify the default package as XYZ so that dojoType="button" defaults to the XYZ one
+michaelkf: or will one always need to specify a namespace so even for a dojo widget you'd say dojoType="dj:button"
+slightlyoff: I guess that doesn't solve the location problem
+slightlyoff: that seems janky
+slightlyoff: my first response is to say that "built-in" dojo widgets get the default
+slightlyoff: external packages should have to specify their namespace
+dylanks: agreed
+michaelkf: w/o an option of declaring what the default is?
+iamthewalrus: I think that leads people to develop off of the dojo tree
+michaelkf: ok
+dylanks: does any of this seem relevant for things that aren't widgets?
+slightlyoff: well, I think that locating modules from some kind of prefix def is
+dylanks: yeah, I was sort of thinking that was the bigger issue
+iamthewalrus: what's the issue with the current method?
+ttrenka: that would be something that needs to be loaded during doc load, not after load, right?
+slightlyoff: well, it could be done afterward
+ttrenka: ok
+slightlyoff: but only for modules that are loaded after the prefix is registered
+ttrenka: right
+slightlyoff: so it does make sense to put some kind of shorthand for it in djConfig
+iamthewalrus: are we discussing the problem of dojo.hostenv.setModulePrefix()?
+slightlyoff: yeah
+slightlyoff: but we haven't gotten any closer to a single method of setting prefixes
+iamthewalrus: ok, I see
+slightlyoff: (or of automatically locating template paths when you use a prefix)
+ttrenka: so basically, it seems like that problem is matching a JS namespace to a Url to a possible XML namespace, right?
+iamthewalrus: and this prefix is xml namespace style?
+iamthewalrus: so is it reasonable to equate your prefix to your namespace?
+slightlyoff: I suppose so
+ttrenka: ...would one ever consider a widget namespace to match multiple JS ones?
+slightlyoff: only in the case where you'd have a sub-tree
+slightlyoff: so like:
+ttrenka: right, but we'd have to handle that
+slightlyoff: well, I don't konw that it's a problem persae
+slightlyoff: if I point jot.* to jot/
+ttrenka: I would suppose that reg'ing a parent namespace would handle it, yeah
+ttrenka: we'll need to doc that.
+slightlyoff: then requesting jot.foo.bar will still look in jot/foo/bar.js
+iamthewalrus: so you'd register the root of your js object tree as /your/ namespace
+slightlyoff: yeah
+iamthewalrus: uk.co.idontsmoke would be mine
+iamthewalrus: and I can have uk.co.idontsmoke.dojo etc branching off of it
+dylanks: so really our namespacing is like an svn url
+dylanks: in that regard
+slightlyoff: at some point as a subdirectory, yes
+slightlyoff: yeah
+ttrenka: yeah
+schontz: yah 
+slightlyoff: so it sounds like we have 2 independent solutions
+slightlyoff: one is to fix setModulePrefix()
+slightlyoff: and the other is to have a widget registration facility
+slightlyoff: both of which support a different type of prefixing
+slightlyoff: is that right?
+iamthewalrus: I think the namespacing should be done in one place
+slightlyoff: ok, so I'd like to see the API for it then
+iamthewalrus: so in your widget you define widgetType as button and then the namespacing can be done elsewhere
+slightlyoff: how/where would you WANT to call it?
+iamthewalrus: in the register package call
+slightlyoff: oh, so in the __package__.js file?
+iamthewalrus: so you'd be saying; look here, this is the root of my javascript tree, this is where it is, and this is the prefix to use with it
+iamthewalrus: as a proposal
+schontz: hmm 
+slightlyoff: ok
+slightlyoff: how would I call that?
+iamthewalrus: it could be done in the setModulePrefix call
+*** _texmex_ has joined #dojo.
+slightlyoff: but doesn't that have to be called before I can request something from a particular namespace anyway?
+slightlyoff: it would be nice to see an example call
+iamthewalrus: yes
+slightlyoff: i have a hard time discussing this stuff w/o an API to look at
+slightlyoff: so what would the new arguments to setModulePrefix be?
+iamthewalrus: at the moment it is the root of your javascript tree and the path
+iamthewalrus: it would also include a prefix
+slightlyoff: I'm not sure I follow
+* _texmex_ waves
+slightlyoff: hey texmex
+iamthewalrus: dojo.hostenv.setModulePrefix("uk.co.idontsmoke", "ids", "../idontsmoke");
+_texmex_: hey.. I'm having some trouble w/ my irc client, please excuse me if I accidentally do anything weird
+iamthewalrus: my widgets would be ids:button
+iamthewalrus: ids maps to the uk.co.idontsmoke namespace
+iamthewalrus: which is located at ../idontsmoke
+ttrenka: not a fully qualified Uri?
+iamthewalrus: it's relative to the dojo root
+ttrenka: yeah, but does it need to be?
+ttrenka: I guess that's the q I'm asking
+ttrenka: if its resembling Xml namespaces, might as well go almost all the way, right?
+iamthewalrus: oh, that part isn't the namespace
+iamthewalrus: it's the actual location where the package manager can find the js
+ttrenka: right, I'm just saying that could be an absolute Uri
+slightlyoff: yes
+iamthewalrus: I don't see you'd gain anything from that
+ttrenka: it could be the same uri as an xml:namespace.
+slightlyoff: within reason, of course
+ttrenka: of course.
+ttrenka: :)
+slightlyoff: it has to be on the same server
+ttrenka: why?
+slightlyoff: we still have same-domain restrictions
+ttrenka: only when doing XmlHttp stuff.
+ttrenka: right?
+slightlyoff: yes
+slightlyoff: which was the "yes, within reason" bit
+slightlyoff: ;-)
+ttrenka: but if you load a script file from a separate domain, there's nothing wrong with that
+slightlyoff: sure
+ttrenka: ok
+slightlyoff: (aside from the package manager barfing)
+ttrenka: right
+ttrenka: that's a totally different deal though.
+slightlyoff: ;-)
+iamthewalrus: I was suggesting that the js object be the namespace
+iamthewalrus: as opposed to the uri
+iamthewalrus: so the uri is incidental to the namespacing
+ttrenka: right
+ttrenka: however...the reason why uris are used for Xml namespacing is the uniqueness of the uri
+ttrenka: (just throwing out some thoughts here0
+ttrenka: )
+*** _texmex_ has signed off IRC ("brb").
+iamthewalrus: but we can rely on the same for js objects
+ttrenka: true
+ttrenka: i just thought it *might* be useful if there were a mapping such as:
+ttrenka: "(Link: http://idontsmoke.co.uk/dojo/)http://idontsmoke.co.uk/dojo/" -->  (xml) ids:..., (js)co.uk.idontsmoke.dojo
+ttrenka: where the Uri would serve as a unique id for both
+ttrenka: ...not too sure what that buys, but something is tickling the back of my brain on this one
+slightlyoff: eh, if people are colliding on the XML prefix, I suspect we already have a problem
+ttrenka: yeah
+slightlyoff: we're only asking them to pick one really unique prefix (the xml one)
+ttrenka: but it's not really *our* problem, though, is it?
+ttrenka: hmm
+iamthewalrus: the "prefix" SHOULD be the same as any xml prefix used
+slightlyoff: no, and I'm entirely willing to foist this onto the user = )
+ttrenka: yeah...let's just call that a SEP and call it good.
+ttrenka: ;)
+*** _texmex_ has joined #dojo.
+_texmex_: there, that's better
+_texmex_: how was the drag/drop discussion? sorry I missed it
+slightlyoff: you haven't missed it = )
+iamthewalrus: is my proposed signature good?
+_texmex_: oh :)
+ttrenka: works for me.
+slightlyoff: yes, I like it
+ttrenka: not that i'm writing widgets right now...
+ttrenka: :)
+slightlyoff: well, dylanks should be the other opinion to weigh in here
+slightlyoff: he and I are doing most of the widgets that I'm aware of
+iamthewalrus: and dave?
+schontz: yes 
+slightlyoff: I dunno, schontz, have you made any widget-widgets?
+dylanks: I'm ok with what you're proposing I think
+schontz: what are widget-widgets? 
+slightlyoff: classes that descend from dojo.webui.Widget
+schontz: and are they cost effective? 
+schontz: versus just a 'widget'? 
+slightlyoff: not sure, answering that question is np-complete ;-)
+schontz: gah 
+schontz: I've done a couple dojo widgets, yes 
+slightlyoff: ok
+slightlyoff: do you like the proposed signature?
+iamthewalrus: ojo.hostenv.setModulePrefix("uk.co.idontsmoke", "ids", "../idontsmoke");
+dylanks: namespace, prefix, path
+ttrenka: ...speak young man...
+slightlyoff: perhaps prefix should go last?
+slightlyoff: that way it can be optional
+ttrenka: actually
+schontz: I would think prefix would go first 
+ttrenka: i'd think location would go first
+dylanks: lol
+schontz: gah 
+schontz: venga venga venga! 
+ttrenka: heh
+slightlyoff: heh
+iamthewalrus: I think they should be decided randomly at runtime
+schontz: well, you are setting a module prefix 
+dylanks: :)
+ttrenka: YES
+schontz: so the first part would be the prefix 
+schontz: no? 
+ttrenka: we should make all of dojo like that!
+schontz: this is all too complex 
+schontz: let's just scrap the whole dojo thing and extend script.aculo.us 
+dylanks: go back to your room
+schontz: I don't *have* a room 
+dylanks: and don't come out until you stop being a wanker
+slightlyoff: heh
+dylanks: :)
+schontz: I think only paul is allowd to say 'wanker' 
+ttrenka: ...don't make me call you something else.
+dylanks: I guess I've watched too much of the office
+ttrenka: :)
+iamthewalrus: you can never watch too much office!
+ttrenka: "two lesbians, preferably sisters, doing it, and i just watch"
+schontz: unless it is the american version 
+dylanks: (British version that is, not the lame US ripoff)
+ttrenka: heh
+iamthewalrus: damn straight
+slightlyoff: oy
+ttrenka: it's a quote
+ttrenka: ...been doing an Office fest for the past couple of weeks
+iamthewalrus: I never thought I say this but I'd like to hear more from Tom
+dylanks: anyway, so why is it called setModulePrefix
+slightlyoff: heh
+dylanks: lol
+ttrenka: lol
+iamthewalrus: that's just the current name
+schontz: going 
+schontz: downhill 
+schontz: fast 
+slightlyoff: soo....drag and drop!
+ttrenka: (see, Paul gets the quote)
+slightlyoff: ;-)
+dylanks: so if it was called setModule()
+iamthewalrus: something I've wondered about is what the dojo.hostenv namespace implies?
+dylanks: not sure I follow the question
+iamthewalrus: why is this stuff in that module?
+iamthewalrus: what's hostenv a wrapper for?
+ttrenka: picking the right code to run based on the host dojo is running within?
+dylanks: well, it sort of describes what to do when you are in that particular host environment
+dylanks: that you are running in
+iamthewalrus: I think setModule will clach too much with loadModule, defineModule, startModule
+iamthewalrus: what have you
+iamthewalrus: s/clach/clash/
+slightlyoff: well, we could clean up those names too
+michaelkf: registerModule() maybe?
+slightlyoff: speaking of startPackage and loadModule, I'm very much in favor of people using the new provide() and require() aliases
+ttrenka: nice
+iamthewalrus: this needs to be defined somewhere
+ttrenka: i'll change the collections stuff for that.
+dylanks: sure, I only threw those out there because that is the syntax I remember :)
+slightlyoff: heh
+slightlyoff: well, all this naming is acreted
+slightlyoff: and probably needs a general overhaul
+dylanks: no comments schontzler
+slightlyoff: but the purpose of this new method is to define where things live and how to call them?
+dylanks: right
+dylanks: at least I would hope so
+ttrenka: maybe "define"?
+ttrenka: is that a keyword?
+slightlyoff: perhaps definePrefix() or definePackagePrefix()?
+slightlyoff: or defineNamespace() ?
+ttrenka: what's wrong with just define?
+schontz: what does provide() do versus require()? 
+slightlyoff: provide is startPackage()
+iamthewalrus: define isn't reserved
+schontz: oh 
+iamthewalrus: why do we need either, why can't it be implicit?
+ttrenka: you mean provide() and require()?  Think that has to do with the linker
+schontz: linker? 
+ttrenka: MDA's linker?
+ttrenka: the prog that goes and pulls all your code into one compressed file?
+ttrenka: did that die or something?
+slightlyoff: we need them for the package system to work
+slightlyoff: it's kinda b0rken
+schontz: o right 
+slightlyoff: not very, but just a little
+slightlyoff: and I'm not very competent w/ Perl
+schontz: just a little bit of peril! 
+slightlyoff: I got it working about 95% w/ a build a couple of months ago
+slightlyoff: but it tends to move anonymous inner functions out of their defined namespace
+slightlyoff: which breaks things = (
+schontz: I wonder if perl+regex is the way to go for that or if loading code into some sort of real lexical analyzer is what's needed 
+slightlyoff: mda's linker is pretty much a "real lexical analyzer"
+slightlyoff: you should run it
+slightlyoff: it actually figures out transitive closure
+schontz: ok 
+slightlyoff: buildscripts/jslink.pl
+slightlyoff: lemmie see if I have the magic invocation sitting around anywhere
+_texmex_: I'm slightly competent w/ perl, I'd be happy to help, but I have no idea what a transitive closure is :)
+ttrenka: i can take a look, I'm ok with it.
+iamthewalrus: we we can replace the multitude of startPackage, loadModule, etc with require and provide?
+slightlyoff: so basically, it runs through the code and says "ok, so this thing calls this thing...which needs thing sthing..."
+slightlyoff: yes
+iamthewalrus: ok, I'm fine with that
+ttrenka: ok, so back to "define()"
+slightlyoff: the word "define" in my mind seems to imply that you're creating an object right there
+ttrenka: ok
+slightlyoff: when in fact we're just specifying namespaces/locations
+slightlyoff: oh, shit, tom
+slightlyoff: hrm
+ttrenka: ?
+ttrenka: oh
+slightlyoff: I've aliased dojo.hostenv.loadModule to dojo.hostenv.require()
+ttrenka: i figured "might as well"
+ttrenka: oh
+slightlyoff: not just window.require()
+ttrenka: duge
+ttrenka: duh
+slightlyoff: although I can do that too
+ttrenka: why not/
+ttrenka: ?
+slightlyoff: should they just be dojo.require()?
+ttrenka: good q
+slightlyoff: (I can define them at every level)
+slightlyoff: they're just aliases = )
+iamthewalrus: oof
+iamthewalrus: pollution
+slightlyoff: yeah
+ttrenka: yeah
+slightlyoff: how about just dojo.provide() and dojo.require()?
+ttrenka: any reason why it needs to be dojo.require?
+ttrenka: um
+slightlyoff: eh
+ttrenka: i meant why not stick them in window?
+slightlyoff: ugg
+iamthewalrus: there should be one location and deprecated locations that will go away
+ttrenka: (dojo.require is fine by me, btw)
+slightlyoff: paul, what's your preference?
+schontz: I think dojo. is best 
+iamthewalrus: in the dojo namespace somewhere
+slightlyoff: (btw, any change requires changes to the build system, so choose carefuly)
+schontz: I think we should move stuff away from dojo.hostenv as much as it makes sense 
+ttrenka: we can override the def within the hostenv code, right?
+slightlyoff: of course
+ttrenka: i'd vote for dojo.require/provide, then
+iamthewalrus: I don't think we should be "holier than thou" and steal the window namespace
+slightlyoff: yes, I agree
+slightlyoff: I think that's Bad Form (TM)
+ttrenka: I think for some very fundamental things it's not such a bad idea, but ok
+ttrenka: (it'd have to be VERY fundamental, though)
+iamthewalrus: I'd go with dojo.req/prov
+ttrenka: second it
+* slightlyoff goes to make changes
+iamthewalrus: and then the issue if the name for defining namespaces, locations
+iamthewalrus: I have no initial suggestion
+_texmex_: I was going to report a bug in the documents/ area, is there a preferred area/place to report bugs?
+slightlyoff: dojotoolkit.org/trac
+_texmex_: ok, thx
+slightlyoff: bug reports get cc'd to the checkins list
+slightlyoff: so you know we'll see 'em
+iamthewalrus: all 38 of them
+slightlyoff: = )
+ttrenka: there
+ttrenka: would defineNamespace work for you, Paul?
+iamthewalrus: I like it better than "registerFoo"
+ttrenka: or, god forbid, defineNS?
+ttrenka: rather, defineNs.
+ttrenka: ugh
+iamthewalrus: the original one
+ttrenka: defineNamespace?
+iamthewalrus: yeah, it's only called once per namespace so brevity shouldn't be a huge concern
+ttrenka: k, i'm good with it.
+slightlyoff: WFM
+ttrenka: (only reason I suggested defineNS is because that seems to be a W3 thing with Xml stuff)
+slightlyoff: ah
+iamthewalrus: it gives me thoughts of a define/defineNS pair
+ttrenka: true
+iamthewalrus: which is the W3 convention
+iamthewalrus: due to lack of foresight
+ttrenka: heh
+ttrenka: ...funny how that works...
+ttrenka: ;)
+iamthewalrus: :-)
+slightlyoff: so now we've got ways to:
+slightlyoff: a.) nicely register widgets
+slightlyoff: b.) nicely register namespaces
+slightlyoff: now all we need to do is fix the D&D APIs
+ttrenka: heh
+iamthewalrus: what is the function call for widget definitions?
+iamthewalrus: my irc client has chopped off the top of this session
+iamthewalrus: we've been talking too much
+ttrenka: i'm sure alex or david will post the log, right?
+slightlyoff: umm....I hope i have the full log
+slightlyoff: I have this feeling I'm on the same client
+iamthewalrus: should we do d&d now?
+iamthewalrus: who's still listening?
+ttrenka: i've got the full log if we need it.
+slightlyoff: I think we will
+slightlyoff: I'm here
+dylanks: I'm still here, just sleep deprived
+ttrenka: i'm probably going to tune out at this point though
+ttrenka: maybe we should do this another time?
+slightlyoff: heh
+slightlyoff: OK = )
+iamthewalrus: _texmex_: where you interested?
+iamthewalrus: s/where/were/
+iamthewalrus: preferences on time?
+_texmex_: yeah, sorry, being distracted by the kids
+ttrenka: i'm pretty much on all day every day...up to you guys
+ttrenka: well
+ttrenka: not evenings.
+ttrenka: but I can arrange it.
+ttrenka: if need be
+iamthewalrus: _texmex_: we're thinking of discussing d&d at another meet
+iamthewalrus: _texmex_: it's own devoted session
+_texmex_: ok, cool
+slightlyoff: that works for me
+iamthewalrus: 2pm PST this week or next?
+slightlyoff: I'm fine w/ either
+ttrenka: good for me
+_texmex_: 2p works fine for me, all my meetings are in the mornings
+slightlyoff: how about friday?
+slightlyoff: and we can set up Wed's as the weekly?
+slightlyoff: or just defer 'till next wed?
+slightlyoff: (and Tom, can you post the log?)
+ttrenka: how soon does it need to be discussed?
+ttrenka: sure
+slightlyoff: eh, it's an annoyance
+slightlyoff: and I know that both David and Paul would like a solution
+_texmex_: btw, I'm not that familiar w/ svn (vs cvs).. does 'svn up' usually just work?
+_texmex_: tex@peace:~/src/dojo> svn up
+_texmex_: svn: RA layer request failed
+_texmex_: svn: REPORT request failed on /svn/dojo
+_texmex_: svn: REPORT of /svn/dojo: 409 Conflict
+_texmex_: checkout worked just fine
+iamthewalrus: how about a week today
+iamthewalrus: I've not been very productive today
+iamthewalrus: or this week
+iamthewalrus: weekly Wednesdays?
+ttrenka: I'm good with that
+_texmex_: ok fer me
+slightlyoff: yeah, svn update should work
+michaelkf: I'm easy either way. I showed up for D&D so it's a moot issue to me.
+slightlyoff: sorry = (
+_texmex_: ok, I'll google for a fix
+ttrenka: ok, anything else then?
+slightlyoff: not for me
+ttrenka: Paul?  Dylan?
+slightlyoff: see y'all 2PM PST next wed
+ttrenka: i'll post the log of this conv in a couple of minutes.
+ttrenka: later, y'all!
+Session Close (#dojo): Wed Jul 20 18:24:31 2005
+
+

@@ -1,0 +1,139 @@
+Data Binding Requirements
+=========================
+
+:Author: Dylan Schiemann
+:Version: 0.1
+:Copyright: Dojo Foundation, 2005
+:Date: $Date:$
+
+.. contents::
+
+Purpose
+-------
+
+This document outlines the rationale and usage scenarios for the Dojo data
+binding system.
+
+Requirements
+------------
+
+Inline Data
+***********
+
+The simplistic approach to data binding is to simply provide data inline within 
+markup.  This is only useful for initialization, and has pros and cons
+associated with mixing data and component structure.
+
+Component Specific Data Formatting
+**********************************
+
+We had initially though that there would be a baseline set of data that would 
+apply to all component.  However, some widgets have little or no data, so there 
+does not seem to be a common data format or structure across all components. 
+Therefore each component will have its own definition for its data structure, 
+which may or may not inherit from data structures of other components.
+
+Formats
+*******
+
+Users should be able to provide data in either XML or JavaScript object 
+structures.
+
+Data Abstraction
+****************
+
+I originally proposed that it could be useful to provide a mapping or 
+relationship between a data source and a component's expected data structure.  
+My thought was that this would allow people to use Dojo without having to write 
+server-side code to transform between the two.  It would faciliate the 
+expression of things on the client like combinations of data fields, reuse of a 
+single data source for multiple components with different data fields used by 
+each components.
+
+While I still think this is useful, it is not a primary focus at this time 
+because there are good tools out there to accomplish this already (PHP, Python, 
+Java, XSLT, etc.), it may be a waste of effort as it may already be necessary to 
+do to get data from its source.  So for now we will assume an identity 
+transformation for data abstraction, which allows us to avoid the issue for now, 
+but not exclude it from future consideration.
+
+Examples
+--------
+
+Inline description of a data provder
+************************************
+
+.. FIXME: need a way to specify dataProvider type?
+.. note that I keeping the List nomenclature for consistency, and to be able to 
+.. provide multiple providers, though that is underspecified now
+
+from within a dojoml document:::
+
+	<dojo:grid dataProviderList="url#datasetFoo" />
+
+from within an html document:::
+	
+	<div dojoTagName="grid" dojoDataProviderList="url#datasetFoo">
+	</div>
+
+from within an xhtml document or document with support for namespaces:::
+	
+	<div dojo:tagName="grid" dojo:dataProviderList="url#datasetFoo" />
+
+from within an svg document:::
+	
+	<g dojo:tagName="grid" dojo:dataProviderList="url#datasetFoo" />
+
+Inline description of a data provder
+************************************
+
+It is possible to just provide data as inline attributes, or as child elements, 
+in much the same way that propertySets are specified.
+
+.. FIXME, add examples
+	
+XML Provider format
+*******************
+
+The format for a provider depends almost entirely on the component itself.  The 
+way in which data is specified for subcomponents or child elements, or as a way 
+to apply generically to a set of components is not yet completed.
+
+The following is only a hypothetical example, and should not be considered a 
+final format for any data model.::
+
+	<dojo:dataModel id="datasetFoo" type="xml">
+		<dojo:label value="name" />
+		<dojo:gridRowItem>
+			<dojo:gridCellItem>foo</dojo:gridCellItem>
+			<dojo:gridCellItem>bar</dojo:gridCellItem>
+			<dojo:gridCellItem>baz</dojo:gridCellItem>
+		</dojo:gridRowItem>
+		<dojo:gridRowItem>
+			<dojo:gridCellItem>foo2</dojo:gridCellItem>
+			<dojo:gridCellItem>bar2</dojo:gridCellItem>
+			<dojo:gridCellItem>baz2</dojo:gridCellItem>
+		</dojo:gridRowItem>
+	</dojo:dataModel>
+
+It should also be possible to have elements pull their data from external 
+resources.  For example:::
+
+			<dojo:gridCellItem xlink:href="url#id" dojo:type="js"/>
+
+JavaScript Provider format
+**************************
+
+The example above, but provided as a JavaScript object.::
+
+	dojo.dataModel.datasetFoo = {
+		label: name,
+		gridRowItem : [
+			gridCellItem : [
+				foo, bar, baz
+			],
+			gridCellItem : [
+				foo2, bar2, baz2
+			]
+		]
+	}

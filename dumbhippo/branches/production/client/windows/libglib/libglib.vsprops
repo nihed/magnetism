@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="libglib"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories=".;..\..\common\glib;..\..\common\glib\glib;..\dependencies\gettext\include;..\dependencies\libiconv\include"
+		PreprocessorDefinitions="HAVE_CONFIG_H;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;GLIB_COMPILATION"
+		DisableSpecificWarnings="4018;4244;4267;4311;4312"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalDependencies="iconv.lib intl.lib ws2_32.lib"
+		OutputFile="$(OutDir)\libglib-2.0-0.dll"
+		AdditionalLibraryDirectories="..\dependencies\libiconv\lib\;..\dependencies\gettext\lib\"
+		ModuleDefinitionFile="glib.def"
+	/>
+</VisualStudioPropertySheet>

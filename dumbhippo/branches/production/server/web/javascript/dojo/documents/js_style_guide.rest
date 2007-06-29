@@ -1,0 +1,343 @@
+.. title:: Javascript Programming Conventions
+
+.. raw:: html
+   :file: website/rest_template/header.html
+
+This document follows the basic outline of the Java Programming Conventions
+Guide, a copy of which may be found at http://geosoft.no/javastyle.html.
+
+Conventions
+-----------
+
+General
+*******
+
+Any violation to this guide is allowed if it enhances readability.
+
+Guidelines in this document are informed by discussions carried out among the
+Dojo core developers. The most weight has been given to considerations that
+impact external developer interaction with Dojo code and APIs. Rules such as
+whitespace placement are of a much lower order importance for Dojo developers,
+but should be followed in the main in order to improve developer coordination.
+
+Quick Reference
+***************
+
+Table of core API naming constructs:
+
+=============  =========================  =======
+Construct      Convention                 Comment
+=============  =========================  =======
+package        lower                      never multiple words
+class          UpperLower
+public method  lowerUpper                 whether class or instance method. lower_case() is acceptable only if the particular function is mimicing another API.
+public var     lowerUpper
+constant       UpperLower or UPPER_LOWER
+=============  =========================  =======
+
+Table of constructs that are not visible in the API, and therefore are optional
+and carry less weight of enforcement.
+
+==============  ===========================  =======
+Construct       Convention                   Comment
+==============  ===========================  =======
+private method  ``_lowerUpper``
+private var     ``_lowerUpper``
+method args     ``_lowerUpper``, lowerUpper
+local vars      ``_lowerUpper``, lowerUpper
+==============  ===========================  =======
+
+Naming Conventions
+******************
+
+A.  Names representing packages SHOULD be in all lower case.
+B.  Names representing types (classes) MUST be nouns and written in
+    UpperLower case::
+
+        Account, EventHandler
+
+C.  Constants SHOULD be placed within a single object created as a holder
+    for constants, emulating an Enum; the enum SHOULD be named
+    appropriately, and members SHOULD be named using either UpperLower or
+    UPPER_LOWER case::
+
+        var NodeTypes = {
+            Element : 1,
+            DOCUMENT: 2
+        }
+
+D.  Abbreviations and acronyms SHOULD NOT be uppercase when used as a name::
+
+        getInnerHtml(), getXml(), XmlDocument
+
+E.  Names representing methods SHOULD be verbs or verb phrases::
+
+        obj.getSomeValue()
+
+F.  Public class variables MUST be written using upperLower case.
+G.  Private class variables MAY be written using ``_upperLower`` (with
+    preceding underscore)::
+
+        var MyClass = function(){
+            var _buffer;
+            this.doSomething = function(){
+            };
+        }
+
+H.  Variables that are intended to be private, but cannot be based on the
+    semantics of Javascript, SHOULD prepended with a "_" (underscore) char::
+
+        this._somePrivateVariable = statement ;
+
+    NB  Note that the above variable also follows the convention for a
+    private variable.
+
+I.  Generic variables SHOULD have the same name as their type::
+
+        setTopic(topic) //  where topic isTypeOf Topic
+
+J.  All names SHOULD be written in English.
+K.  Variables with a large scope SHOULD have globally unambiguious names,
+    ambiguity MAY be distinguished by package memebership. Variables with
+    small or private scope MAY be more terse still.
+L.  The name of the return object is implicit, and SHOULD be avoided in a
+    method name::
+
+        getHandler(); //    NOT getEventHandler()
+
+..  FIXME: (alex) this is incorrect. Verbosity is not a primary virtue,
+    clarity is. Verbosity should only be accepted where it is REQUIRED to
+    improve clarity, since verbosity both increases file sizes of both our
+    code and others and creates more opportunities for error.
+
+M.  Public names SHOULD be as clear as necessary and SHOULD avoid unclear
+    shortenings and contractions::
+
+        MouseEventHandler, NOT MseEvtHdlr.
+
+    Note that, again, any context that can be determined by package
+    membership SHOULD be used when determining if a variable name is clear.
+    For example, a class that represents a mouse event handler::
+
+        dojo.events.mouse.Handler, NOT dojo.events.mouse.MouseEventHandler
+
+N.  Classes/constructors MAY be named based on their inheritance
+    pattern, with the base class to the right of the name::
+
+        EventHandler
+        UIEventHandler
+        MouseEventHandler
+
+    NB  The base class CAN be dropped from a name if it is obviously
+    implicit in the name::
+
+        MouseEventHandler as opposed to MouseUIEventHandler.
+
+Specific Naming conventions
+***************************
+
+A.  The terms get/set SHOULD NOT used where a field is accessed, unless the
+    variable being accessed is lexically private.
+B.  "is" prefix SHOULD be used for boolean variables and methods
+    NB. Alternatives include "has", "can" and "should"
+C.  The term "compute" CAN be used in methods where something is computed.
+D.  The term "find" CAN be used in methods where something is looked up.
+E.  The terms "initialize" or "init" CAN be used where an object or a
+    concept is established.
+F.  UI Control variables SHOULD be suffixed by the control type.
+    ex.  leftComboBox, topScrollPane
+G.  Plural form MUST be used to name collections.
+H.  "num" prefix or "count" postfix SHOULD be used for variables
+    representing a number of objects.
+I.  Iterator variables SHOULD be called "i", "j", "k", etc.
+J.  Compliment names MUST be used for compliment entities.
+    ex.  get/set, add/remove, create/destroy, start/stop, insert/delete,
+    begin/end, etc.
+K.  Abbreviations in names SHOULD be avoided.
+L.  Negated boolean variable names MUST be avoided::
+
+        isNotError, isNotFound are unacceptable.
+
+M.  Exception classes SHOULD be suffixed with "Exception" or "Error" .. FIXME (trt) not sure about this?
+N.  Methods returning an object MAY be named after what they return, and
+    methods returning void after what they do.
+
+Files
+*****
+
+A.  Class or object-per-file guidelines are not yet determined.
+B.  Tabs (set to 4 spaces) SHOULD be used for indentation. 
+C.  If your editor supports "file tags", please append the appropriate tag
+    at the end of the file enable others to effortlessly obey the correct
+    indentation guidelines for that file::
+
+        // vim:ts=4:noet:tw=0:
+
+C.  The incompleteness of split line MUST be made obvious::
+
+        var someExpression = Expression1
+            + Expression2
+            + Expression3 ;
+
+        var o = someObject.get(
+                Expression1,
+                Expression2,
+                Expression3
+            );
+
+    Note the indentation for expression continuation is indented relative
+    to the variable name, while indentation for parameters is relative to
+    the method being called.
+
+    Note also the position of the parenthesis in the method call;
+    positioning SHOULD be similar to the use of block notation.
+
+Variables
+*********
+
+A.  Variables SHOULD be initialized where they are declared and they SHOULD
+    be declared in the smallest scope possible. A null initialization is
+    acceptable.
+B.  Variables MUST never have a dual meaning.
+C.  Related variables of the same type CAN be declared in a common
+    statement; unrelated variables SHOULD NOT be declared in the same
+    statement.
+D.  Variables SHOULD be kept alive for as short a time as possible.
+E.  Loops / iterative declarations
+
+    1.  Only loop control statements MUST be included in the "for()"
+        construction.
+    2.  Loop variables SHOULD be initialized immediately before the loop;
+        loop variables in a "for" statement MAY be initialized in the "for"
+        loop construction.
+    3.  The use of "do...while" loops are acceptable (unlike in Java)
+    4.  The use of "break" and "continue" is not discouraged (unlike in Java)
+
+F.  Conditionals
+
+    1.  Complex conditional expressions SHOULD be avoided; use temporary
+        boolean variables instead.
+    2.  The nominal case SHOULD be put in the "if" part and the exception
+        in the "else" part of an "if" statement.
+    3.  Executable statements in conditionals MUST be avoided.
+
+G.  Miscellaneous
+
+    1.  The use of magic numbers in the code SHOULD be avoided; they SHOULD
+        be declared using named "constants" instead.
+    2.  Floating point constants SHOULD ALWAYS be written with decimal
+        point and at least one decimal.
+    3.  Floating point constants SHOULD ALWAYS be written with a digit
+        before the decimal point.
+
+Layout
+******
+
+A.  Block statements.
+    1.  Block layout SHOULD BE as illustrated below::
+
+            while(!isDone){
+                doSomething();
+                isDone = moreToDo();
+            }
+
+    2.  If statements SHOULD have the following form::
+
+            if(someCondition){
+                statements;
+            }else if(someOtherCondition){
+                statements;
+            }else{
+                statements;
+            }
+
+    3.  for statements SHOULD have the following form::
+
+            for(initialization; condition; update){
+                statements;
+            }
+
+    ..  FIXME: (alex) this reference should use reST reference syntax!
+
+    4.  while statement SHOULD follow the form in example VI.A.1.
+    5.  a do...while statement SHOULD have the following form::
+
+            do{
+                statements;
+            }while (condition);
+
+    6.  a switch statement SHOULD have the following form::
+
+            switch (condition){
+                case ABC:
+                    statements;
+                    //  fallthrough
+                case DEF:
+                    statements;
+                    break;
+                default :
+                    statements;
+                    break;
+            }
+
+    7.  A try...catch...finally statement SHOULD have the following form::
+
+            try{
+                statements;
+            }catch (ex){
+                statements;
+            }finally{
+                statements;
+            }
+
+    8.  Single statement if-else, while or for MUST NOT be written without
+        brackets, but CAN be written on the same line::
+
+            if(condition){ statement; }
+            while(condition){ statement; }
+            for(intialization; condition; update){ statement; }
+
+B.  Whitespace
+
+    1.  Conventional operators MAY be surrounded by a space (including
+        ternary operators).
+    2.  Reserved words SHOULD be followed by a space.
+    3.  Commas SHOULD be followed by a space.
+    4.  Colons MAY be surrounded by a space.
+    5.  Semi-colons in for statements SHOULD be followed by a space.
+    6.  Semi-colons SHOULD NOT be preceded by a space.
+    7.  Functions/method calls SHOULD NOT be followed by a space.
+        ex. doSomething(someParameter);     //  NOT doSomething (someParameter)
+    8.  Logical units within a block SHOULD be separated by one blank line.
+    9.  Statements MAY be aligned wherever this enhances readability.
+
+C.  Comments
+
+    1.  Tricky code SHOULD not be commented, but rewritten.
+    2.  All comments SHOULD be written in English.
+    3.  Comments SHOULD be indented relative to their position in the code,
+        preceding or to the right of the code in question.
+    4.  The declaration of collection variables SHOULD be followed by a
+        comment stating the common type of the elements in the collection.
+    5.  Comments SHOULD be included to explain BLOCKS of code, to explain
+        the point of the following block. 
+    6.  Comments SHOULD NOT be included for every single line of code.
+
+.. raw:: html
+   :file: website/rest_template/sidebar.html
+
+Javascript Programming Conventions
+==================================
+
+:Author: Thomas R. Trenka, Ph.D.
+:Editor: Alex Russell
+:Version: Draft 1.0.0 $Id: js_style_guide.txt,v 1.3 2004/07/30 04:02:28 alex Exp $ 
+:Copyright: dojotoolkit.org 2004
+:Date: $Date: 2004/07/30 04:02:28 $
+
+.. contents::
+
+.. raw:: html
+   :file: website/rest_template/footer.html
+
+.. vim:ts=4:et:tw=0:shiftwidth=4:

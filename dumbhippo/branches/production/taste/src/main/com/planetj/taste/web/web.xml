@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
+
+<web-app>
+
+	<servlet>
+		<servlet-name>taste-recommender</servlet-name>
+		<display-name>Taste Recommender</display-name>
+		<description>Taste recommender servlet</description>
+		<servlet-class>com.planetj.taste.web.RecommenderServlet</servlet-class>
+		<init-param>
+			<param-name>recommender-class</param-name>
+			<param-value>@RECOMMENDER_CLASS@</param-value>
+		</init-param>
+	</servlet>
+
+	<servlet>
+		<servlet-name>axis</servlet-name>
+		<display-name>Apache-Axis Servlet</display-name>
+		<servlet-class>org.apache.axis.transport.http.AxisServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>taste-recommender</servlet-name>
+		<url-pattern>/RecommenderServlet</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>axis</servlet-name>
+		<url-pattern>*.jws</url-pattern>
+	</servlet-mapping>
+
+	<!-- The rest of the config is adapted from Axis's default web app -->
+
+	<session-config>
+		<session-timeout>5</session-timeout>
+	</session-config>
+
+	<!-- currently the W3C havent settled on a media type for WSDL;
+		http://www.w3.org/TR/2003/WD-wsdl12-20030303/#ietf-draft
+		for now we go with the basic 'it's XML' response -->
+	<mime-mapping>
+		<extension>wsdl</extension>
+		<mime-type>text/xml</mime-type>
+	</mime-mapping>
+	<mime-mapping>
+		<extension>xsd</extension>
+		<mime-type>text/xml</mime-type>
+	</mime-mapping>
+
+</web-app>
