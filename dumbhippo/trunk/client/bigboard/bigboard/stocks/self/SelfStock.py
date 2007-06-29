@@ -270,7 +270,7 @@ class SelfStock(AbstractMugshotStock):
             fus = dbus.Interface(self.__fus_service, 'org.gnome.FastUserSwitch')
             fus.RecheckDisplays()
         except dbus.DBusException, e:
-            self._logger.error("Couldn't find org.gnome.FastUserSwitch service")
+            self._logger.debug("Couldn't find org.gnome.FastUserSwitch service, ignoring")
             self.__fus_service = None
             pass
 
