@@ -185,6 +185,14 @@ HippoCanvasItem
 @canvas_item: 
 
 
+<!-- ##### FUNCTION hippo_canvas_item_destroy ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
+
+
 <!-- ##### FUNCTION hippo_canvas_item_set_context ##### -->
 <para>
 
@@ -302,6 +310,14 @@ HippoCanvasItem
 
 @canvas_item: 
 @visible: 
+
+
+<!-- ##### FUNCTION hippo_canvas_item_emit_destroy ##### -->
+<para>
+
+</para>
+
+@canvas_item: 
 
 
 <!-- ##### FUNCTION hippo_canvas_item_emit_button_press_event ##### -->
