@@ -5,6 +5,8 @@ import xml.dom.minidom
 
 import gobject, gtk, pango
 import gnome.ui, gconf
+# We need to import this early before gnome_program_init() is called
+import gnomeapplet
 import dbus
 import dbus.service
 import dbus.glib
