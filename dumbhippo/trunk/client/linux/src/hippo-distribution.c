@@ -864,8 +864,8 @@ static int
 compare_versions(const char *version_a, const char *version_b)
 {
     while (TRUE) {
-        const char *end_a = strchr(version_a, '.');
-        const char *end_b = strchr(version_b, '.');
+        const char *end_a;
+        const char *end_b;
         int i_a, i_b;
         int string_cmp;
         
@@ -880,8 +880,10 @@ compare_versions(const char *version_a, const char *version_b)
         while (g_ascii_isdigit(*version_b))
             version_b++;
 
+        end_a = strchr(version_a, '.');
         if (end_a == NULL)
             end_a = version_a + strlen(version_a);
+        end_b = strchr(version_b, '.');
         if (end_b == NULL)
             end_b = version_b + strlen(version_b);
 
