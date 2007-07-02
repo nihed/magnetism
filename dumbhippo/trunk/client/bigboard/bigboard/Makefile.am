@@ -19,11 +19,14 @@ bignative_la_SOURCES = bignative.c bigboard-native.h bigboard-native.c
 bigboarddir = $(pyexecdir)/bigboard
 bigboard_PYTHON = __init__.py \
                   big_widgets.py \
+		  databound.py \
                   deskbar_embed.py \
                   google.py \
                   keyring.py \
                   libgimmie.py \
                   mugshot.py \
+                  globals.py \
+		  overview_layout.py \
                   presence.py \
                   profile.py \
                   slideout.py \
@@ -38,6 +41,7 @@ libbig_PYTHON = libbig/__init__.py \
 	       	libbig/logutil.py \
 	       	libbig/polling.py \
 	       	libbig/singletonmixin.py \
+	       	libbig/stdout_logger.py \
 	       	libbig/struct.py \
 	       	libbig/xmlquery.py
 
