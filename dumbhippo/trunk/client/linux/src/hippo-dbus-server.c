@@ -1867,9 +1867,9 @@ handle_message(DBusConnection     *connection,
             reply = NULL;
             result = DBUS_HANDLER_RESULT_HANDLED;
 
-			if (strcmp(member, "GetConnectionStatus") == 0) {
-				reply = hippo_dbus_handle_mugshot_get_connection_status(dbus, message);
-			} else if (strcmp(member, "NotifyAllWhereim") == 0) {
+            if (strcmp(member, "GetConnectionStatus") == 0) {
+                reply = hippo_dbus_handle_mugshot_get_connection_status(dbus, message);
+            } else if (strcmp(member, "NotifyAllWhereim") == 0) {
                 reply = hippo_dbus_handle_mugshot_get_whereim(dbus, xmpp_connection, message);
             } else if (strcmp(member, "GetNetwork") == 0) {
                 reply = hippo_dbus_handle_mugshot_get_network(dbus, message);

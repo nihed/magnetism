@@ -1361,7 +1361,7 @@ hippo_dbus_proxy_new(DBusConnection          *connection,
 
 void
 hippo_dbus_proxy_set_method_prefix(HippoDBusProxy *proxy,
-                                   char           *method_prefix)
+                                   const char     *method_prefix)
 {
     if (proxy->method_prefix == method_prefix)
         return;
