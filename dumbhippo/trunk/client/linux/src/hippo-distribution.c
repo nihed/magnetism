@@ -850,45 +850,6 @@ find_package_name(HippoDistribution *distro,
     return found;
 }
 
-/* Compare two dotted versions, using an algorithm vaguely similar to RPM, but
- * with no epochs, and the only delimiter is '.'.
- * http://www.linux.duke.edu/~mstenner/docs/rpm-version-cmp
- */
-static int
-rpmlike_compare_versions(const char *version_a, const char *version_b)
-{
-    while (TRUE) {
-        const char *end_a = strchr(version_a, '.');
-        const char *end_b = strchr(version_b, '.');
-        int string_cmp;
-
-        if (end_a == NULL)
-            end_a = version_a + strlen(version_a);
-        if (end_b == NULL)
-            end_b = version_b + strlen(version_b);
-
-        string_cmp = strncmp(version_a, version_b, MIN(end_a - version_a, end_b - version_b));
-        if (string_cmp != 0)
-            return string_cmp;
-
-        if (end_a - version_a != end_b - version_b) {
-            return end_a - version_a < end_b - version_b ? -1 : 1;
-        }
-
-        if (*end_a && *end_b) { /* Another segment for both */
-            version_a = end_a + 1;
-            version_b = end_b + 1;
-        } else {
-            if (!*end_a && !*end_b)
-                return 0;
-            else if (!*end_a)
-                return -1;
-            else
-                return 1;
-        }
-    }
-}
-
 /* cheesy comparison for dotted version strings; segments separated
  * by dots are compared by:
  *   primary:   numeric comparison of initial digit portion (empty == 0)
@@ -908,13 +869,8 @@ compare_versions(const char *version_a, const char *version_b)
         int i_a, i_b;
         int string_cmp;
         
-        if (end_a == NULL)
-            end_a = version_a + strlen(version_a);
-        if (end_b == NULL)
-            end_b = version_b + strlen(version_b);
-
-        i_a = atoi(end_a);
-        i_b = atoi(end_b);
+        i_a = atoi(version_a);
+        i_b = atoi(version_b);
 
         if (i_a != i_b)
             return i_a < i_b ? -1 : 1;
@@ -923,6 +879,11 @@ compare_versions(const char *version_a, const char *version_b)
             version_a++;
         while (g_ascii_isdigit(*version_b))
             version_b++;
+
+        if (end_a == NULL)
+            end_a = version_a + strlen(version_a);
+        if (end_b == NULL)
+            end_b = version_b + strlen(version_b);
 
         string_cmp = strncmp(version_a, version_b, MIN(end_a - version_a, end_b - version_b));
         if (string_cmp != 0)
@@ -955,7 +916,7 @@ hippo_distribution_find_install_package_function(HippoDistribution *distro,
     for (i = 0; i < G_N_ELEMENTS(install_package_functions); i++) {
         if (strcmp(install_package_functions[i].source, source) == 0) {
             if (install_package_functions[i].minimum_version
-                && rpmlike_compare_versions(distro->version, install_package_functions[i].minimum_version) < 0)
+                && compare_versions(distro->version, install_package_functions[i].minimum_version) < 0)
                 continue;
             
             return install_package_functions[i].func;
@@ -1153,7 +1114,7 @@ hippo_distribution_run_application   (HippoDistribution  *distro,
 #ifdef TEST_DISTRIBUTION
 /* Compile with:
  *
- *    gcc -o test-distribution hippo-distribution.c `pkg-config --cflags --libs gtk+-2.0 gnome-vfs-2.0 gnome-desktop-2.0` -Wall -DTEST_DISTRIBUTION
+ *    gcc -o test-distribution hippo-distribution.c `pkg-config --cflags --libs gtk+-2.0 gnome-vfs-2.0 gnome-desktop-2.0` -Wall -DTEST_DISTRIBUTION -DHOST_CPU=\"i386\"
  */
 
 static void
@@ -1229,6 +1190,26 @@ main(int argc, char **argv) {
 
     if (argc == 1)
         return 0;
+
+    if (argc == 4 && strcmp(argv[1], "compare_versions") == 0) {
+        char sym;
+        switch(compare_versions(argv[2], argv[3])) {
+        case 0:
+            sym = '=';
+            break;
+        case -1:
+            sym = '<';
+            break;
+        case 1:
+            sym = '>';
+            break;
+        default:
+            sym = '?';
+            break;
+        }
+        printf("%c\n", sym);
+        return 0;
+    }
 
     if (argc != 3) {
         usage();
