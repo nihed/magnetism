@@ -146,7 +146,7 @@ HippoDBusProxy*   hippo_dbus_proxy_new                     (DBusConnection      
  * Gaim* and now are Purple*
  */
 void              hippo_dbus_proxy_set_method_prefix       (HippoDBusProxy          *proxy,
-                                                            char                    *method_prefix);
+                                                            const char              *method_prefix);
 void              hippo_dbus_proxy_unref                   (HippoDBusProxy          *proxy);
 
 DBusMessage* hippo_dbus_proxy_call_method_sync           (HippoDBusProxy        *proxy,
