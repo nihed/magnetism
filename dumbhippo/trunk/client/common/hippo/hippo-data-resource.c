@@ -606,7 +606,7 @@ data_property_remove_value(HippoDataProperty *property,
         hippo_data_value_get_element(&property->value, l, &element);
 
         if (data_value_matches(value, &element)) {
-            hippo_data_value_free_element(value, l);
+            hippo_data_value_free_element(&property->value, l);
             property->value.u.list = g_slist_delete_link(property->value.u.list, l);
 
             return;
