@@ -37,7 +37,7 @@ class CanvasURLImageMixin:
     def set_url(self, url):
         if url:
             #print "fetching %s" % url
-            image_cache = URLImageCache.getInstance()
+            image_cache = URLImageCache()
             image_cache.get(url, self.__handle_image_load, self.__handle_image_error)
 
     def __handle_image_load(self, url, image):

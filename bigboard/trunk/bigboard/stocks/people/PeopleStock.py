@@ -1,6 +1,7 @@
 import logging
 
 import gc
+import cgi
 import os
 import copy
 import re
@@ -19,7 +20,8 @@ import bigboard.globals
 import bigboard.libbig as libbig
 import bigboard.slideout
 import bigboard.profile
-import cgi
+
+import peoplebrowser
 
 def _open_aim(aim):
     os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'aim:GoIM?screenname=' + cgi.escape(aim))
@@ -403,6 +405,9 @@ class PeopleStock(AbstractMugshotStock):
         self.__slideout = None
         self.__slideout_item = None
 
+        self.__people_browser = None
+        self._add_more_link(self.__on_more_link)        
+
         self.__update_separators()
         
         self._model = DataModel(bigboard.globals.server_name)
@@ -602,3 +607,9 @@ class PeopleStock(AbstractMugshotStock):
             return
 
         self.__add_local(user)
+        
+    def __on_more_link(self):
+        if self.__people_browser is None:
+            self.__people_browser = peoplebrowser.PeopleBrowser(self)
+        self.__people_browser.present()
+        
