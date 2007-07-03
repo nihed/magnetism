@@ -14,16 +14,22 @@ are:
     
 returns the instance of S. If none exists, it is created. 
 
-2) The usual idiom to construct an instance by calling the class, i.e.
+| 2) The usual idiom to construct an instance by calling the class, i.e.
+|
+|     S()
+|     
+| is disabled for the sake of clarity. If it were allowed, a programmer
+| who didn't happen  notice the inheritance from Singleton might think he
+| was creating a new instance. So it is felt that it is better to
+| make that clearer by requiring the call of a class method that is defined in
+| Singleton. An attempt to instantiate via S() will restult in an SingletonException
+| being raised.
 
-    S()
-    
-is disabled for the sake of clarity. If it were allowed, a programmer
-who didn't happen  notice the inheritance from Singleton might think he
-was creating a new instance. So it is felt that it is better to
-make that clearer by requiring the call of a class method that is defined in
-Singleton. An attempt to instantiate via S() will restult in an SingletonException
-being raised.
+>>> Modified for libbig to allow S() as the same as S.getInstance(); the
+>>> additional clarity isn't worth the noise and inconsistency with other
+>>> Python singletons.
+>>>
+>>> O. Taylor 2007-07-03
 
 3) If S.__init__(.) requires parameters, include them in the
 first call to S.getInstance(.). If subsequent calls have parameters,
@@ -65,7 +71,9 @@ class MetaSingleton(type):
         return super(MetaSingleton,metaclass).__new__(metaclass, strName, tupBases, dict)
         
     def __call__(cls, *lstArgs, **dictArgs):
-        raise SingletonException, 'Singletons may only be instantiated through getInstance()'
+#        See note above
+#        raise SingletonException, 'Singletons may only be instantiated through getInstance()
+        return cls.getInstance(*lstArgs, **dictArgs)
         
 class Singleton(object):
     __metaclass__ = MetaSingleton

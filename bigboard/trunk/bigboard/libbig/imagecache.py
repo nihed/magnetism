@@ -10,7 +10,7 @@ class URLImageCache(Singleton):
         self._cache = {}
         self._loads = {}
         self.__logger = logging.getLogger('bigboard.URLImageCache')
-        self._fetcher = AsyncHTTPFetcher.getInstance()
+        self._fetcher = AsyncHTTPFetcher()
     
     def get(self, url, cb, errcb, format='surface'):
         if self._cache.has_key(url): # TODO expire

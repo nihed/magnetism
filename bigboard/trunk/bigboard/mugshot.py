@@ -433,12 +433,12 @@ class Mugshot(gobject.GObject):
                              self.__on_my_top_applications)
     
     def __request_global_top_apps(self):
-        AsyncHTTPFetcher.getInstance().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/popularapplications'),
-                                                  (),
-                                                  self.__on_top_applications,
-                                                  self.__on_top_applications_error,
-                                                  self.__on_top_applications_error,
-                                                  cache_time=-1)
+        AsyncHTTPFetcher().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/popularapplications'),
+                                      (),
+                                      self.__on_top_applications,
+                                      self.__on_top_applications_error,
+                                      self.__on_top_applications_error,
+                                      cache_time=-1)
 
     def __on_category_applications(self, url, child_nodes):
         reply_root = child_nodes[0]
@@ -465,18 +465,18 @@ class Mugshot(gobject.GObject):
         self._logger.error("failed to search apps: %s", args)
 
     def __request_category_top_apps(self, category):
-        AsyncHTTPFetcher.getInstance().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/popularapplications'),
-                                                  {'category': category},
-                                                  self.__on_category_applications,
-                                                  self.__on_category_applications_error,
-                                                  self.__on_category_applications_error)
+        AsyncHTTPFetcher().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/popularapplications'),
+                                      {'category': category},
+                                      self.__on_category_applications,
+                                      self.__on_category_applications_error,
+                                      self.__on_category_applications_error)
 
     def request_app_search(self, search):
-        AsyncHTTPFetcher.getInstance().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/searchapplications'),
-                                                  {'search': search},
-                                                  lambda url, nodes: self.__on_applications_search(search, url, nodes),
-                                                  self.__on_applications_search_error,
-                                                  self.__on_applications_search_error)
+        AsyncHTTPFetcher().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/searchapplications'),
+                                      {'search': search},
+                                      lambda url, nodes: self.__on_applications_search(search, url, nodes),
+                                      self.__on_applications_search_error,
+                                      self.__on_applications_search_error)
             
     def __on_all_applications(self, url, child_nodes):
         reply_root = child_nodes[0]
@@ -488,11 +488,11 @@ class Mugshot(gobject.GObject):
         self._logger.error("failed to get all apps: %s", args)
 
     def request_all_apps(self):
-        AsyncHTTPFetcher.getInstance().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/allapplications'),
-                                                  {},
-                                                  self.__on_all_applications,
-                                                  self.__on_all_applications_error,
-                                                  self.__on_all_applications_error)
+        AsyncHTTPFetcher().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/allapplications'),
+                                      {},
+                                      self.__on_all_applications,
+                                      self.__on_all_applications_error,
+                                      self.__on_all_applications_error)
         
     def __request_pinned_apps(self):
         self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications",
