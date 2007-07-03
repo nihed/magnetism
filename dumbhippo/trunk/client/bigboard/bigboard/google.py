@@ -509,9 +509,13 @@ class CheckMailTask(libbig.polling.Task):
     def do_periodic_task(self):
         self.__google.fetch_new_mail(self.__on_fetched_mail, self.__on_fetch_error)
 
-class Google:
+class Google(gobject.GObject):
+    __gsignals__ = {
+        "auth" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,))
+    }
 
     def __init__(self):
+        super(Google, self).__init__()
         self.__logger = logging.getLogger("bigboard.Google")
         self.__username = None
         self.__password = None
@@ -521,17 +525,18 @@ class Google:
         self.__post_auth_hooks = []
 
         k = keyring.get_keyring()
-
+        
+        self.__mail_checker = None
+        
         try:
             username, password = k.get_login("google")
             self.__username = username
-            self.__password = password            
+            self.__password = password
+            self.__on_auth_ok(username, password)
         except TypeError:
             self.__username = None
             self.__password = None
-
-        self.__mail_checker = None
-        self.__consider_checking_mail()
+            self.__on_auth_cancel()
 
     def __consider_checking_mail(self):
         if self.__username and self.__password:
@@ -556,13 +561,18 @@ class Google:
         self.__post_auth_hooks = []
         for h in hooks:
             h()
+        self.emit("auth", True)
 
         self.__consider_checking_mail()
 
     def __on_auth_cancel(self):
         self.__username = None
         self.__password = None
+        self.emit("auth", False)        
         self.__consider_checking_mail()
+
+    def have_auth(self):
+        return (self.__username is not None) and (self.__password is not None)
 
     def __open_auth_uis(self):
         # we use the registered "auth uis" if available, else
