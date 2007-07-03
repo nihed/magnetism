@@ -204,7 +204,7 @@ bigboard_gnomekeyring_find_items_sync(PyObject *self, PyObject *args, PyObject *
     GType keyring_found_type;
     
     keyring_found_type = g_type_from_name("PyGnomeKeyringFound");
-    if (type == 0) {
+    if (keyring_found_type == 0) {
         PyErr_SetString(PyExc_RuntimeError, "gnome-keyring python types not registered");
         return NULL;
     }
