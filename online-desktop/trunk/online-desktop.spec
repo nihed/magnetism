@@ -2,7 +2,7 @@
 %{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
 
 Name:           online-desktop
-Version:        0.2.4
+Version:        0.2.5
 Release:        1%{?dist}
 Summary:        Desktop built around web sites and online services
 
@@ -131,7 +131,51 @@ touch --no-create %{_datadir}/icons/hicolor || :
 touch --no-create %{_datadir}/icons/hicolor || :
 %{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
 
+%post flickr
+touch --no-create %{_datadir}/icons/hicolor || :
+%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+
+%postun flickr
+touch --no-create %{_datadir}/icons/hicolor || :
+%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+
+%post gmail
+touch --no-create %{_datadir}/icons/hicolor || :
+%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+
+%postun gmail
+touch --no-create %{_datadir}/icons/hicolor || :
+%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+
+%post google-calendar
+touch --no-create %{_datadir}/icons/hicolor || :
+%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+
+%postun google-calendar
+touch --no-create %{_datadir}/icons/hicolor || :
+%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+
+%post google-docs
+touch --no-create %{_datadir}/icons/hicolor || :
+%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+
+%postun google-docs
+touch --no-create %{_datadir}/icons/hicolor || :
+%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+
+%post google-reader
+touch --no-create %{_datadir}/icons/hicolor || :
+%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+
+%postun google-reader
+touch --no-create %{_datadir}/icons/hicolor || :
+%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
+
 %changelog
+* Tue Jun 05 2007 Colin Walters <walters@redhat.com> - 0.2.5-1
+- update
+- add gtk-update-icon-cache for all pkgs
+
 * Fri Jun 01 2007 Colin Walters <walters@redhat.com> - 0.2.4-1
 - Update
 - Icon cache update in post/postun
