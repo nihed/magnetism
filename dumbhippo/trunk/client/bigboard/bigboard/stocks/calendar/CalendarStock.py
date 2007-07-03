@@ -11,6 +11,8 @@ from bigboard.stock import AbstractMugshotStock
 from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox
 import bigboard.libbig.polling as polling
 
+_logger = logging.getLogger("bigboard.stocks.CalendarStock")
+
 class EventDisplay(CanvasVBox):
     def __init__(self, event):
         super(EventDisplay, self).__init__(border_right=6)
@@ -70,7 +72,7 @@ class EventDisplay(CanvasVBox):
         if event.button != 1:
             return False
         
-        logging.debug("activated event %s", self)
+        _logger.debug("activated event %s", self)
 
         os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', self.__event.get_link())
 
@@ -81,21 +83,31 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
         self.__auth_ui = google.AuthCanvasItem()
         self.__box.append(self.__auth_ui)
-        google.get_google().add_auth_ui(self.__auth_ui)
+        gobj = google.get_google()
+        gobj.add_auth_ui(self.__auth_ui)
+        gobj.connect("auth", self.__on_google_auth)
 
         # these are at the end since they have the side effect of calling on_mugshot_ready it seems?
         AbstractMugshotStock.__init__(self, *args, **kwargs)
         polling.Task.__init__(self, 1000 * 120)
+        
+        self.__on_google_auth(gobj, gobj.have_auth())
 
         self._add_more_link(self.__on_more_link)
 
     def __on_more_link(self):
         libbig.show_url('http://calendar.google.com')
-        
 
     def _on_mugshot_ready(self):
         super(CalendarStock, self)._on_mugshot_ready()
         self.__update_events()
+
+    def __on_google_auth(self, gobj, have_auth):
+        _logger.debug("google auth state: %s", have_auth)
+        if have_auth:
+            self.start()
+        else:
+            self.stop()
 
     def do_periodic_task(self):
         self.__update_events()
@@ -107,6 +119,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         super(CalendarStock, self).set_size(size)
 
     def __on_load_events(self, events):
+        _logger.debug("loading events %s", events)
         auth_was_visible = self.__auth_ui.get_visible()
         self.__box.remove_all()
         self.__box.append(self.__auth_ui) # put this back, kind of a hack
