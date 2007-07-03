@@ -146,7 +146,7 @@ bigboard_install_focus_docks_hack(PyObject *self, PyObject *args)
 /* gnome-keyring stuff here is because find_items_sync() is broken in the official bindings */
 
 static GnomeKeyringAttributeList *
-pygnome_keyring_attribute_list_from_pyobject(PyObject *py_attrlist)
+bigboard_pygnome_keyring_attribute_list_from_pyobject(PyObject *py_attrlist)
 {
     GnomeKeyringAttributeList *attrlist;
     int iter = 0; /* Unfortunately this is supposed to be Py_ssize_t with newer python I think, but using ssize_t or gssize or long just warns on this version I'm using */
@@ -201,12 +201,19 @@ bigboard_gnomekeyring_find_items_sync(PyObject *self, PyObject *args, PyObject *
     PyObject * py_attributes = NULL;
     GList *found = NULL, *l;
     PyObject *py_found;
+    GType keyring_found_type;
     
+    keyring_found_type = g_type_from_name("PyGnomeKeyringFound");
+    if (type == 0) {
+        PyErr_SetString(PyExc_RuntimeError, "gnome-keyring python types not registered");
+        return NULL;
+    }
+        
     if (!PyArg_ParseTupleAndKeywords(args, kwargs,"OO:find_items_sync", kwlist, &py_type, &py_attributes))
         return NULL;
     if (pyg_enum_get_value(G_TYPE_NONE, py_type, &type))
         return NULL;
-    attributes = pygnome_keyring_attribute_list_from_pyobject(py_attributes);
+    attributes = bigboard_pygnome_keyring_attribute_list_from_pyobject(py_attributes);
     if (!attributes)
         return NULL;
     pyg_begin_allow_threads;
@@ -217,7 +224,7 @@ bigboard_gnomekeyring_find_items_sync(PyObject *self, PyObject *args, PyObject *
     py_found = PyList_New(0);
     for (l = found; l; l = l->next)
     {
-        PyObject *item = pyg_boxed_new(GNOME_KEYRING_TYPE_FOUND, l->data, FALSE, TRUE);
+        PyObject *item = pyg_boxed_new(type, l->data, FALSE, TRUE);
         PyList_Append(py_found, item);
         Py_DECREF(item);
     }
