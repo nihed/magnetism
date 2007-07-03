@@ -74,7 +74,7 @@ def get_keyring():
 
 if __name__ == '__main__':
 
-    libbig.set_application_name("BigBoard")
+    bignative.set_application_name("BigBoard")
     
     ring = get_keyring()
 
