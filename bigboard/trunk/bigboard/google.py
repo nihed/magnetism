@@ -498,7 +498,7 @@ class CheckMailTask(libbig.polling.Task):
                                                            'inbox-no-icon',
                                                            "Inbox (%d)" % len(self.__mails)], # action array
                                                           {'foo' : 'bar'}, # hints (pydbus barfs if empty)
-                                                          5000) # timeout
+                                                          10000) # timeout, 10 seconds
 
             self.__notify_id = notify_id
             self.__latest_mail = first
