@@ -20,6 +20,7 @@ import com.dumbhippo.web.WebEJBUtil;
 
 public class FacebookVerifyServlet extends AbstractServlet {
 
+	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(VerifyServlet.class);
 	
 	static final long serialVersionUID = 1;

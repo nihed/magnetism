@@ -24,7 +24,7 @@ public class RhapModuleImpl extends ModuleImpl implements RhapModule {
 		super(RhapModule.class, URI);
 	}
 	
-	public final Class getInterface() {
+	public final Class<?> getInterface() {
 		return RhapModule.class;
 	}
 	

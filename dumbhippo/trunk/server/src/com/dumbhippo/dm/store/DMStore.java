@@ -19,27 +19,25 @@ public class DMStore {
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(DMStore.class);
 	
-	public Map<StoreKey, StoreNode> nodes = new HashMap<StoreKey, StoreNode>();
+	public Map<StoreKey<?,?>, StoreNode<?,?>> nodes = new HashMap<StoreKey<?,?>, StoreNode<?,?>>();
 	
 	@SuppressWarnings("unchecked")
 	private <K, T extends DMObject<K>> StoreNode<K,T> getNode(StoreKey<K,T> storeKey) {
 		synchronized(nodes) {
-			return nodes.get(storeKey);
+			return (StoreNode<K,T>) nodes.get(storeKey);
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	private <K, T extends DMObject<K>> StoreNode<K,T> getNode(DMClassHolder<K,T> classHolder, K key) {
 		synchronized(nodes) {
 			StoreKey<K,T> storeKey = new StoreKey<K,T>(classHolder, key);
-			return nodes.get(storeKey);
+			return getNode(storeKey);
 		}
 	}
 	
 	private <K, T extends DMObject<K>> StoreNode<K,T> ensureNode(StoreKey<K,T> storeKey) {
 		synchronized(nodes) {
-			@SuppressWarnings("unchecked")
-			StoreNode<K,T> node = nodes.get(storeKey);
+			StoreNode<K,T> node = getNode(storeKey);
 			if (node != null)
 				return node;
 			
@@ -123,7 +121,7 @@ public class DMStore {
 		// There is still a small danger of an anomolous fetch taking arbitrarily long
 		// if there is a glacially responding external server, say. 
 		//
-		StoreNode node;
+		StoreNode<K,T> node;
 		do {
 			node = ensureNode(classHolder, key);
 			node.invalidate(propertyIndex, timestamp);
@@ -170,7 +168,7 @@ public class DMStore {
 		if (node == null)
 			return;
 		
-		Registration registration = node.removeRegistration(client);
+		Registration<K,T> registration = node.removeRegistration(client);
 		if (registration == null)
 			return;
 		
@@ -196,7 +194,7 @@ public class DMStore {
 		
 		// client.removeRegistration is careful not to remove any other registration
 		// subsequently added for the same StoreKey.
-		for (Registration registration : registrationsAtEviction) {
+		for (Registration<K,T> registration : registrationsAtEviction) {
 			StoreClient client = registration.getClient();
 			
 			client.removeRegistration(registration);

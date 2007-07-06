@@ -84,13 +84,13 @@ final class FastHttpDateFormat {
     /**
      * Formatter cache.
      */
-    protected static final HashMap formatCache = new HashMap();
+    protected static final HashMap<Long,String> formatCache = new HashMap<Long,String>();
 
 
     /**
      * Parser cache.
      */
-    protected static final HashMap parseCache = new HashMap();
+    protected static final HashMap<String,Long> parseCache = new HashMap<String,Long>();
 
 
     // --------------------------------------------------------- Public Methods

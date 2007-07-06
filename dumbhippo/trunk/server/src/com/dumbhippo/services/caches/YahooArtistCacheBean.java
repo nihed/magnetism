@@ -31,7 +31,7 @@ import com.dumbhippo.tx.TxUtils;
 
 @BanFromWebTier
 //@Stateless // for now, these cache beans are our own special kind of bean and not EJBs due to a jboss bug
-public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistData,Cache> implements YahooArtistCache {
+public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistData,Cache<String,YahooArtistData>> implements YahooArtistCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooArtistCacheBean.class);
 

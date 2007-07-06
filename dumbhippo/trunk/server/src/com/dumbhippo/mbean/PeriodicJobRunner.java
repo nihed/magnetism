@@ -23,17 +23,17 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(PeriodicJobRunner.class);
 	
-	private static final Class[] jobClasses = {
+	private static final Class<?>[] jobClasses = {
 		FacebookTrackerPeriodicJob.class,
 		ApplicationUpdatePeriodicJob.class
 	};
 	
 	private List<Thread> threads;
-	private Map<Class, PeriodicJobRunnable> jobs;
+	private Map<Class<?>, PeriodicJobRunnable> jobs;
 	
 	public PeriodicJobRunner() {
 		threads = new ArrayList<Thread>();
-		jobs = new HashMap<Class, PeriodicJobRunnable>();
+		jobs = new HashMap<Class<?>, PeriodicJobRunnable>();
 	}
 	
 	public synchronized void startSingleton() {
@@ -83,7 +83,7 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 		logger.debug("PeriodicUpdater singleton stopped");
 	}
 	
-	public synchronized void pokeTask(Class klass) {
+	public synchronized void pokeTask(Class<?> klass) {
 		logger.debug("Prodding periodic task for class {}", klass);
 		jobs.get(klass).poke();
 	}

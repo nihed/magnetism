@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
 import com.dumbhippo.ThreadUtils;
-import com.dumbhippo.tx.TxUtils;
 
 
 /** 

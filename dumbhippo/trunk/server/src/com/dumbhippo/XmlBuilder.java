@@ -86,7 +86,7 @@ public class XmlBuilder implements Appendable {
 		appendEscaped(text, null);
 	}
 	
-	public void openElement(Enum elementName, String... attributes) {
+	public void openElement(Enum<?> elementName, String... attributes) {
 		openElement(elementName.name(), attributes);
 	}
 	
@@ -134,7 +134,7 @@ public class XmlBuilder implements Appendable {
 		}
 	}
 	
-	public void appendEmptyNode(Enum element, String... attributes) {
+	public void appendEmptyNode(Enum<?> element, String... attributes) {
 		appendEmptyNode(element.name(), attributes);
 	}
 	
@@ -143,7 +143,7 @@ public class XmlBuilder implements Appendable {
 		closeElement();
 	}
 	
-	public void appendTextNode(Enum element, String content, String... attributes) {
+	public void appendTextNode(Enum<?> element, String content, String... attributes) {
 		appendTextNode(element.name(), content, attributes);
 	}
 	
@@ -161,7 +161,7 @@ public class XmlBuilder implements Appendable {
 		closeElement();
 	}
 	
-	public void appendBooleanNode(Enum element, boolean content, String... attributes) {
+	public void appendBooleanNode(Enum<?> element, boolean content, String... attributes) {
 		appendBooleanNode(element.name(), content, attributes);
 	}
 	
@@ -175,7 +175,7 @@ public class XmlBuilder implements Appendable {
 		appendTextNode(elementName, content ? "true" : "false", attributes);
 	}
 	
-	public void appendLongNode(Enum element, long content, String... attributes) {
+	public void appendLongNode(Enum<?> element, long content, String... attributes) {
 		appendLongNode(element.name(), content, attributes);
 	}
 	

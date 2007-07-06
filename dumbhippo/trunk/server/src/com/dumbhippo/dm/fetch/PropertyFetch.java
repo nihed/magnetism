@@ -4,21 +4,21 @@ import com.dumbhippo.dm.schema.DMPropertyHolder;
 
 
 public final class PropertyFetch implements Comparable<PropertyFetch> {
-	private DMPropertyHolder property;
-	private Fetch children;
+	private DMPropertyHolder<?,?,?> property;
+	private Fetch<?,?> children;
 	private boolean notify;
 	
-	public PropertyFetch(DMPropertyHolder property, Fetch children, boolean notify) {
+	public PropertyFetch(DMPropertyHolder<?,?,?> property, Fetch<?,?> children, boolean notify) {
 		this.property = property;
 		this.children = children;
 		this.notify = notify;
 	}
 
-	public Fetch getChildren() {
+	public Fetch<?,?> getChildren() {
 		return children;
 	}
 
-	public DMPropertyHolder getProperty() {
+	public DMPropertyHolder<?,?,?> getProperty() {
 		return property;
 	}
 	

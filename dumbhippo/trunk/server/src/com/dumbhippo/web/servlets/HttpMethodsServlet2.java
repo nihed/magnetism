@@ -334,7 +334,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 			logger.debug("HttpMethodRepository ready with {} methods on {} interfaces", methods.size(), interfaces.length);
 		}
 		
-		Marshaller lookupMarshaller(Class<?> klass) {
+		Marshaller<?> lookupMarshaller(Class<?> klass) {
 			return marshallers.get(klass);
 		}
 		
@@ -434,10 +434,10 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 	private static class HttpMethodParam {
 		private String name;
 		private boolean isOptional;
-		private Marshaller marshaller;
+		private Marshaller<?> marshaller;
 		
 		public HttpMethodParam(String name, boolean isOptional,
-				Marshaller marshaller) {
+				Marshaller<?> marshaller) {
 			this.name = name;
 			this.isOptional = isOptional;
 			this.marshaller = marshaller;
@@ -451,7 +451,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 			return name;
 		}
 		
-		public Marshaller getMarshaller() {
+		public Marshaller<?> getMarshaller() {
 			return marshaller;
 		}
 	}
@@ -576,7 +576,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 			
 			for (String pname : paramsAnnotation.value()) {
 				
-				Marshaller marshaller = repository.lookupMarshaller(args[i]);
+				Marshaller<?> marshaller = repository.lookupMarshaller(args[i]);
 				if (marshaller == null)
 					throw new RuntimeException("don't know how to marshal argument to " + m.getName() + " of type " + args[i].getName());
 				

@@ -18,7 +18,7 @@ public final class GlobalSetup {
 		// can't instantiate this thing
 	}
 	
-	public static Logger getLogger(Class klass) {
+	public static Logger getLogger(Class<?> klass) {
 		return LoggerFactory.getLogger(klass);
 	}
 }

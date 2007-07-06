@@ -57,7 +57,7 @@ public class FacebookSystemBean implements FacebookSystem {
 	private Configuration config;
 	
 	public List<FacebookAccount> getAllAccounts() {
-		List list = em.createQuery("SELECT fa FROM FacebookAccount fa").getResultList();
+		List<?> list = em.createQuery("SELECT fa FROM FacebookAccount fa").getResultList();
 		return TypeUtils.castList(FacebookAccount.class, list);
 	}
 

@@ -2,10 +2,7 @@ package com.dumbhippo.statistics;
 
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.MemoryManagerMXBean;
 import java.lang.management.MemoryPoolMXBean;
-import java.util.List;
 
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;

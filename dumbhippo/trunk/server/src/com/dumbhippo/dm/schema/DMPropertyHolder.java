@@ -33,7 +33,7 @@ import com.dumbhippo.dm.filter.Filter;
 import com.dumbhippo.dm.parser.FilterParser;
 import com.dumbhippo.dm.parser.ParseException;
 
-public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements Comparable<DMPropertyHolder> {
+public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements Comparable<DMPropertyHolder<?,?,?>> {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(DMPropertyHolder.class);
 	
@@ -215,7 +215,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 	abstract public Object filter(DMViewpoint viewpoint, K key, Object value);
 	abstract public Cardinality getCardinality();
 	
-	public Object getRawPropertyValue(DMObject object) {
+	public Object getRawPropertyValue(DMObject<?> object) {
 		try {
 			return method.invoke(object);
 		} catch (InvocationTargetException e) {
@@ -289,35 +289,98 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		else
 			throw new RuntimeException("Unexpected non-class type");
 		
-		DMClassInfo<?,?> classInfo = DMClassInfo.getForClass(elementType);
+		DMClassInfo<?,? extends DMObject<?>> classInfo = DMClassInfo.getForClass(elementType);
 
 		if (classInfo != null) {
 			return createResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent, listValued, setValued);
-		} else if (elementType.isPrimitive() || (elementType == String.class)) { 
+		} else if (elementType.isPrimitive() || (genericElementType == String.class)) { 
 			return createPlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent, listValued, setValued);
 		} else {
 			throw new RuntimeException("Property type must be DMObject, primitive, or string");
 		}
 	}
 	
+	// this is somewhat silly, the unchecked is to avoid having type params on the constructor; eclipse 
+	// will let you put them on there in the way we do with most other cases like this (see below for the plain holders for example),
+	// but javac gets confused by that
 	@SuppressWarnings("unchecked")
-	private static <K, T extends DMObject<K>> DMPropertyHolder<K,T,?> createResourcePropertyHolder(DMClassHolder<K,T> classHolder, CtMethod ctMethod, DMClassInfo<?,?> classInfo, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean listValued, boolean setValued) {
-		if (listValued)
-			return new ListResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
-		else if (setValued)
-			return new SetResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
-		else
-			return new SingleResourcePropertyHolder(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
+	private static <K, T extends DMObject<K>> ListResourcePropertyHolder<K,T,?,?>
+		newListResourcePropertyHolderHack(DMClassHolder<K,T> classHolder, CtMethod ctMethod, DMClassInfo<?,? extends DMObject<?>> classInfo,
+			DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
+		return new ListResourcePropertyHolder(classHolder, ctMethod, classInfo,
+				property, filter, viewerDependent);
 	}
 
+	// this is somewhat silly, the unchecked is to avoid having type params on the constructor; eclipse 
+	// will let you put them on there in the way we do with most other cases like this (see below for the plain holders for example),
+	// but javac gets confused by that
 	@SuppressWarnings("unchecked")
-	private static <K, T extends DMObject<K>> DMPropertyHolder<K,T,?> createPlainPropertyHolder(DMClassHolder<K,T> classHolder, CtMethod ctMethod, Class<?> elementType, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean listValued, boolean setValued) {
+	private static <K, T extends DMObject<K>> SetResourcePropertyHolder<K,T,?,?>
+		newSetResourcePropertyHolderHack(DMClassHolder<K,T> classHolder, CtMethod ctMethod, DMClassInfo<?,? extends DMObject<?>> classInfo,
+			DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
+		return new SetResourcePropertyHolder(classHolder, ctMethod, classInfo,
+				property, filter, viewerDependent);
+	}
+	
+	// this is somewhat silly, the unchecked is to avoid having type params on the constructor; eclipse 
+	// will let you put them on there in the way we do with most other cases like this (see below for the plain holders for example),
+	// but javac gets confused by that
+	@SuppressWarnings("unchecked")
+	private static <K, T extends DMObject<K>> SingleResourcePropertyHolder<K,T,?,?>
+		newSingleResourcePropertyHolderHack(DMClassHolder<K,T> classHolder, CtMethod ctMethod, DMClassInfo<?,? extends DMObject<?>> classInfo,
+			DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
+		return new SingleResourcePropertyHolder(classHolder, ctMethod, classInfo,
+				property, filter, viewerDependent);
+	}
+	
+	private static <K, T extends DMObject<K>> DMPropertyHolder<K,T,?> createResourcePropertyHolder(DMClassHolder<K,T> classHolder, CtMethod ctMethod,
+			DMClassInfo<?,? extends DMObject<?>> classInfo, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean listValued, boolean setValued) {
 		if (listValued)
-			return new ListPlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent);
+			return newListResourcePropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
 		else if (setValued)
-			return new SetPlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent);
+			return newSetResourcePropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
 		else
-			return new SinglePlainPropertyHolder(classHolder, ctMethod, elementType, property, filter, viewerDependent);
+			return newSingleResourcePropertyHolderHack(classHolder, ctMethod, classInfo, property, filter, viewerDependent);
+	}
+
+	// this gives us a "TI" to tack on to the constructor for the property holder, by 
+	// just casting the elementType to give it a TI	
+	@SuppressWarnings("unchecked")
+	private static <K, T extends DMObject<K>, TI> ListPlainPropertyHolder<K,T,TI>
+		newListPlainPropertyHolderHack(DMClassHolder<K,T> classHolder, CtMethod ctMethod, Class<?> elementType,
+			DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
+		return new ListPlainPropertyHolder<K,T,TI>(classHolder, ctMethod, (Class<TI>) elementType,
+				property, filter, viewerDependent);
+	}	
+	
+	// this gives us a "TI" to tack on to the constructor for the property holder, by 
+	// just casting the elementType to give it a TI	
+	@SuppressWarnings("unchecked")
+	private static <K, T extends DMObject<K>, TI> SetPlainPropertyHolder<K,T,TI>
+		newSetPlainPropertyHolderHack(DMClassHolder<K,T> classHolder, CtMethod ctMethod, Class<?> elementType,
+			DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
+		return new SetPlainPropertyHolder<K,T,TI>(classHolder, ctMethod, (Class<TI>) elementType,
+				property, filter, viewerDependent);
+	}	
+	
+	// this gives us a "TI" to tack on to the constructor for the property holder, by 
+	// just casting the elementType to give it a TI	
+	@SuppressWarnings("unchecked")
+	private static <K, T extends DMObject<K>, TI> SinglePlainPropertyHolder<K,T,TI>
+		newSinglePlainPropertyHolderHack(DMClassHolder<K,T> classHolder, CtMethod ctMethod, Class<?> elementType,
+			DMProperty property, DMFilter filter, ViewerDependent viewerDependent) {
+		return new SinglePlainPropertyHolder<K,T,TI>(classHolder, ctMethod, (Class<TI>) elementType,
+				property, filter, viewerDependent);
+	}	
+	 
+	private static <K, T extends DMObject<K>> DMPropertyHolder<K,T,?> createPlainPropertyHolder(DMClassHolder<K,T> classHolder, CtMethod ctMethod,
+			Class<?> elementType, DMProperty property, DMFilter filter, ViewerDependent viewerDependent, boolean listValued, boolean setValued) {
+		if (listValued)
+			return newListPlainPropertyHolderHack(classHolder, ctMethod, elementType, property, filter, viewerDependent);
+		else if (setValued)
+			return newSetPlainPropertyHolderHack(classHolder, ctMethod, elementType, property, filter, viewerDependent);
+		else
+			return newSinglePlainPropertyHolderHack(classHolder, ctMethod, elementType, property, filter, viewerDependent);
 	}
 
 	// Having a quick global ordering for all properties allows us to easily
@@ -357,7 +420,7 @@ public abstract class DMPropertyHolder<K, T extends DMObject<K>, TI> implements 
 		return ordering;
 	}
 	
-	public int compareTo(DMPropertyHolder other) {
+	public int compareTo(DMPropertyHolder<?,?,?> other) {
 		return ordering < other.ordering ? -1 : (ordering == other.ordering ? 0 : 1);
 	}
 	

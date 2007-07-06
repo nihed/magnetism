@@ -21,10 +21,10 @@ public abstract class CachedSession extends DMSession {
 	private DMClient client;
 	private DMViewpoint viewpoint;
 
-	private Map<StoreKey, DMObject> sessionDMOs = new HashMap<StoreKey, DMObject>();
+	private Map<StoreKey<?,?>, DMObject<?>> sessionDMOs = new HashMap<StoreKey<?,?>, DMObject<?>>();
 	
 	// Set true when we are running with a temporary viewpoint ("su"); in that case
-	// we must bypass the cache to avoid cross-polution with the parent viewpoint
+	// we must bypass the cache to avoid cross-pollution with the parent viewpoint
 	private boolean bypassCache;
 
 	protected CachedSession(DataModel model, DMClient client, DMViewpoint viewpoint) {

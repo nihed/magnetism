@@ -55,7 +55,8 @@ public class RhapModuleParser implements ModuleParser {
 		boolean foundSomething = false;
 		RhapModule rm = new RhapModuleImpl();
 		
-		List eList = root.getChildren("artist", RHAP_NS);
+		// should be List<Element> but jdom is messed up
+		List<?> eList = root.getChildren("artist", RHAP_NS);
 		if (eList.size() > 0) {
 			foundSomething = true;
 			rm.setArtist(getElementFromList(eList));
@@ -109,8 +110,8 @@ public class RhapModuleParser implements ModuleParser {
 		return (foundSomething) ? rm : null;
 	}
 	
-	protected final String getElementFromList(List eList) {
-		for (Iterator i = eList.iterator(); i.hasNext();) {
+	protected final String getElementFromList(List<?> eList) {
+		for (Iterator<?> i = eList.iterator(); i.hasNext();) {
 			Element e = (Element) i.next();
 			return e.getText();
 		}

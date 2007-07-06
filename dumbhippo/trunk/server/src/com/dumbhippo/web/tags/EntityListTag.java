@@ -43,7 +43,7 @@ public class EntityListTag extends SimpleTagSupport {
 			throw new RuntimeException(e);
 		}
 		
-		Iterator it = entities.iterator();
+		Iterator<?> it = entities.iterator();
 		
 		boolean first = true;
 		

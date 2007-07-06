@@ -17,13 +17,13 @@ import com.dumbhippo.dm.store.StoreKey;
  */
 public class ClientNotification {
 	private StoreClient client;
-	private List<ObjectNotification> notifications = new ArrayList<ObjectNotification>();
+	private List<ObjectNotification<?,?>> notifications = new ArrayList<ObjectNotification<?,?>>();
 	
 	public ClientNotification(StoreClient client) {
 		this.client = client;
 	}
 	
-	public <K, T extends DMObject<K>>void addObjectProperties(StoreKey<K,T> key, Fetch<K,? super T> fetch, long propertyMask, Fetch[] childFetches) {
+	public <K, T extends DMObject<K>>void addObjectProperties(StoreKey<K,T> key, Fetch<K,? super T> fetch, long propertyMask, Fetch<?,?>[] childFetches) {
 		notifications.add(new ObjectNotification<K,T>(key, fetch, propertyMask, childFetches));
 	}
 	
@@ -45,9 +45,9 @@ public class ClientNotification {
 		private StoreKey<K,T> key;
 		private Fetch<K, ? super T> fetch;
 		private long propertyMask;
-		private Fetch[] childFetches;
+		private Fetch<?,?>[] childFetches;
 
-		public ObjectNotification(StoreKey<K,T> key, Fetch<K, ? super T> fetch, long propertiesMask, Fetch[] childFetches) {
+		public ObjectNotification(StoreKey<K,T> key, Fetch<K, ? super T> fetch, long propertiesMask, Fetch<?,?>[] childFetches) {
 			this.key = key;
 			this.fetch = fetch;
 			this.propertyMask = propertiesMask;

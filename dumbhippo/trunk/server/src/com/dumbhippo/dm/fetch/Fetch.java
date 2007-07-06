@@ -40,7 +40,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 		return i < properties.length ? properties[i].getProperty().getOrdering() : Long.MAX_VALUE;
 	}
 	
-	private long classOrdering(DMPropertyHolder[] classProperties, int classIndex) {
+	private long classOrdering(DMPropertyHolder<?,?,?>[] classProperties, int classIndex) {
 		return classIndex < classProperties.length ? classProperties[classIndex].getOrdering() : Long.MAX_VALUE;
 	}
 	
@@ -170,7 +170,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 		visit(session, classHolder, object, visitor, false);
 	}
 	
-	private void appendToFetchString(StringBuilder sb, DMPropertyHolder propertyHolder, boolean qualify) {
+	private void appendToFetchString(StringBuilder sb, DMPropertyHolder<?,?,?> propertyHolder, boolean qualify) {
 		if (sb.length() > 0)
 			sb.append(";");
 		if (qualify)
@@ -184,7 +184,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 		if (!(o instanceof Fetch))
 			return false;
 		
-		Fetch other = (Fetch)o;
+		Fetch<?,?> other = (Fetch<?,?>)o;
 		
 		if (includeDefault != other.includeDefault)
 			return false;
@@ -291,8 +291,8 @@ public final class Fetch<K,T extends DMObject<K>> {
 	}
 
 	public void resolveNotifications(StoreClient client, StoreKey<K,? extends T> key, long propertyMask, ClientNotificationSet result) {
-		DMPropertyHolder[] classProperties = key.getClassHolder().getProperties();
-		Fetch[] childFetches = null;
+		DMPropertyHolder<K,? extends T,?>[] classProperties = key.getClassHolder().getProperties();
+		Fetch<?,?>[] childFetches = null;
 		long notifiedMask = 0;
 		
 		long bit = 1;
@@ -307,7 +307,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 					propertyOrdering = propertyOrdering(++propertyIndex);
 	
 				boolean notified = false;
-				Fetch childFetch = null;
+				Fetch<?,?> childFetch = null;
 
 				if (propertyOrdering == classOrdering) {
 					if (properties[propertyIndex].getNotify()) {
@@ -339,7 +339,7 @@ public final class Fetch<K,T extends DMObject<K>> {
 	}
 	
 	public <U extends T> String getFetchString(DMClassHolder<K,U> classHolder) {
-		DMPropertyHolder[] classProperties = classHolder.getProperties();
+		DMPropertyHolder<K,U,?>[] classProperties = classHolder.getProperties();
 		
 		boolean allFetched = true;
 		boolean noneFetched = true;

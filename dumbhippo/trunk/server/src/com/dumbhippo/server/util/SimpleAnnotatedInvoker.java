@@ -57,7 +57,7 @@ public class SimpleAnnotatedInvoker {
 					System.err.println("no annotation found for " + methodName);
 					continue;
 				}
-				Class[] paramTypes = method.getParameterTypes();
+				Class<?>[] paramTypes = method.getParameterTypes();
 				if (interceptor != null) {
 					targetArgs = interceptor.interceptArgs(method, args, context);
 				} else {

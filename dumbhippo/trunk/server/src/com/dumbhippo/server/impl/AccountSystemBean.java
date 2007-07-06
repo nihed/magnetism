@@ -130,7 +130,7 @@ public class AccountSystemBean implements AccountSystem {
 		Query q = em.createQuery("SELECT a FROM Account a WHERE a.wasSentShareLinkTutorial = TRUE");
 		
 		Set<Account> accounts = new HashSet<Account>();
-		List list = q.getResultList();
+		List<?> list = q.getResultList();
 		
 		for (Object o : list) {
 			accounts.add((Account) o);
