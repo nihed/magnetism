@@ -14,7 +14,6 @@ import dbus.glib
 import hippo
 
 import bigboard
-import bigboard.mugshot
 import bigboard.big_widgets
 from bigboard.big_widgets import Sidebar, CommandShell, CanvasHBox, ActionLink
 from bigboard.stock import Stock

@@ -4,7 +4,7 @@ import gobject, gtk, gnomeapplet, gconf
 
 import hippo
 
-import bigboard.mugshot as mugshot
+import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 import bigboard.deskbar_embed as deskbar_embed
 from bigboard.stock import Stock

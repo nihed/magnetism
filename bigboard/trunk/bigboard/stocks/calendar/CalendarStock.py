@@ -4,7 +4,7 @@ import gobject, pango, dbus, dbus.glib
 import hippo
 
 import bigboard.libbig as libbig
-import bigboard.mugshot as mugshot
+import bigboard.global_mugshot as global_mugshot
 import bigboard.stock as stock
 import bigboard.google as google
 from bigboard.stock import AbstractMugshotStock

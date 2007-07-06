@@ -78,7 +78,7 @@ class Mugshot(gobject.GObject):
         self._logger = logging.getLogger('bigboard.Mugshot')
         
         if not issingleton == 42:
-            raise Exception("use mugshot.get_mugshot()")
+            raise Exception("use global_mugshot.get_mugshot()")
         self.__my_apps_poll_id = 0
         self.__global_apps_poll_id = 0
 

@@ -5,7 +5,7 @@ import gobject, dbus
 import libbig
 from libbig.struct import AutoStruct, AutoSignallingStruct
 
-import mugshot
+import global_mugshot
     
 class Buddy(AutoStruct):
     """An IM buddy."""
@@ -23,7 +23,7 @@ class Presence:
 
         self.__proxy = None
         self.__buddies = []
-        mugshot.get_mugshot().connect("initialized", lambda mugshot: self.__on_reset())
+        global_mugshot.get_mugshot().connect("initialized", lambda mugshot: self.__on_reset())
 
     def __reload_buddy_list(self):
         if not self.__proxy:
@@ -42,7 +42,7 @@ class Presence:
         if self.__proxy:
             self.__proxy.disconnect_from_signal("BuddyChanged")
             self.__proxy.disconnect_from_signal("BuddyListChanged")
-        self.__proxy = mugshot.get_mugshot().get_im_proxy()
+        self.__proxy = global_mugshot.get_mugshot().get_im_proxy()
         if self.__proxy:
             self.__proxy.connect_to_signal("BuddyChanged", self.__on_buddy_changed)
             self.__proxy.connect_to_signal("BuddyListChanged", self.__reload_buddy_list)

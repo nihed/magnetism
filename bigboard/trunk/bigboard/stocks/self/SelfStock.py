@@ -8,7 +8,7 @@ import hippo
 from mugshot import DataModel
 import bigboard.globals
 import bigboard.slideout
-import bigboard.mugshot as mugshot
+import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 from bigboard.stock import Stock, AbstractMugshotStock
 from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink, Separator
@@ -167,7 +167,7 @@ class SelfSlideout(CanvasVBox):
         else:
             url = "/who-are-you"
             
-        libbig.show_url(mugshot.get_mugshot().get_baseurl() + url)
+        libbig.show_url(global_mugshot.get_mugshot().get_baseurl() + url)
         self.emit('close')
 
     def __on_minimize_mode(self, l): 
