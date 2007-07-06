@@ -93,8 +93,8 @@ class AppCategoryUsage(OverviewTable):
     def set_apps(self, apps, used_apps):
         self.remove_all()
 
-        self.append_column_item(hippo.CanvasText(text="Category", font="Bold 12px", color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START))
-        self.append_column_item(hippo.CanvasText(text="Your Usage", font="Bold 12px", color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START))
+        self.add_column_item(0, hippo.CanvasText(text="Category", font="Bold 12px", color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START))
+        self.add_column_item(0, hippo.CanvasText(text="Your Usage", font="Bold 12px", color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START))
         
         categories = categorize(used_apps)
         cat_usage = {}
@@ -116,9 +116,10 @@ class AppCategoryUsage(OverviewTable):
         cat_keys_sorted = cat_usage.keys()
         cat_keys_sorted.sort()
         for category in cat_keys_sorted:
-            self.append_column_item(hippo.CanvasText(text=category, 
-                                                     yalign=hippo.ALIGNMENT_CENTER,
-                                                     xalign=hippo.ALIGNMENT_START, color=0x3F3F3FFF))
+            self.add_column_item(0,
+                                 hippo.CanvasText(text=category, 
+                                                  yalign=hippo.ALIGNMENT_CENTER,
+                                                  xalign=hippo.ALIGNMENT_START, color=0x3F3F3FFF))
             factor = (cat_usage[category] * 1.0) / max_usage_count[1]
             box = CanvasHBox()
             (r, g, b) = map(lambda (min,max): int(min * (1.0-factor)) + int(max*factor), zip(self.__bar_min_color, self.__bar_max_color))          
@@ -128,7 +129,7 @@ class AppCategoryUsage(OverviewTable):
                                   yalign=hippo.ALIGNMENT_CENTER,
                                   background_color=(r << 24) + (g << 16) + (b << 8) + (0xFF << 0)))
 
-            self.append_column_item(box)
+            self.add_column_item(0, box)
             
 
 class AppExtras(CanvasVBox):
@@ -292,7 +293,8 @@ class AppList(CanvasVBox):
 
         self.__extras_section.set_catname(self.__selected_cat, self.__search)
 
-        display_only_used = (self.__used_apps) and (not self.__selected_cat) and (not self.__search) 
+        display_only_used = (self.__used_apps) and (not self.__selected_cat) and (not self.__search)
+        section_key = 0
         for catname in (self.__selected_cat and not self.__search) and [self.__selected_cat] or cat_keys:
             cat_used_apps = filter(lambda app: app in self.__used_apps, categories[catname])
             cat_used_apps_count = len(cat_used_apps)
@@ -307,7 +309,7 @@ class AppList(CanvasVBox):
                     left_link.connect("activated", self.__handle_nocategory)
                 else:
                     left_link = None
-            self.__table.append_section_head(catname, left_control=left_link, right_control=right_link)
+            self.__table.add_section_head(section_key, catname, left_control=left_link, right_control=right_link)
             if display_only_used:
                 appsource = cat_used_apps
             else:
@@ -315,7 +317,8 @@ class AppList(CanvasVBox):
             for app in appsource:
                 overview = apps_widgets.AppDisplay(app)
                 overview.connect("button-press-event", self.__on_overview_click)             
-                self.__table.append_column_item(overview)
+                self.__table.add_column_item(section_key, overview)
+            section_key += 1
 
     def reset_category(self):
         self.__handle_nocategory(None)
@@ -351,7 +354,11 @@ class AppList(CanvasVBox):
         return False
                 
     def set_search(self, search):
-        self.__search = (search == "" and None) or search
+        if search.strip() == "":
+            self.__search = None
+        else:
+            self.__search = search.lower()
+
         self.__sync_display()
              
     def __on_overview_click(self, overview, event):

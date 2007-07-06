@@ -40,7 +40,7 @@ class OverviewLayout(gobject.GObject,hippo.CanvasLayout):
         self.__min_column_width = min_column_width
         self.__max_column_width = max_column_width
     
-    def add(self, child, is_header=False, flags=0):
+    def add(self, child, is_header=False, flags=0, compare_func=None):
         """
         Add an item to the layout.
 
@@ -50,11 +50,16 @@ class OverviewLayout(gobject.GObject,hippo.CanvasLayout):
            non-header items (default=False).
         flags: flags to pass to hippo.CanvasBox.append(). Currently, all flags
            passed in are ignored by this layout manager. (default=0)
+        compare_func: function used to sort the item on insert, if None, items
+           are shown in the order they are inserted.
            
         """
         if self.__box == None:
             raise Exception("Layout must be set on a box before adding children")
-        self.__box.append(child, flags=flags)
+        if compare_func != None:
+            self.__box.insert_sorted(child, flags=flags, compare_func=compare_func)
+        else:
+            self.__box.append(child, flags=flags)
         box_child = self.__box.find_box_child(child)
         box_child.is_header = is_header
     
@@ -104,6 +109,9 @@ class OverviewLayout(gobject.GObject,hippo.CanvasLayout):
         return (max(max_item_min_width, max_header_min_width), max_line_natural_width)
 
     def __get_columns(self, width):
+        if self.__column_width == 0: # No non-empty column items
+            return (1, width)
+        
         columns = (width + self.__column_spacing) // (self.__column_width + self.__column_spacing)
         if columns > self.__max_line_items:
             columns = self.__max_line_items
@@ -116,7 +124,7 @@ class OverviewLayout(gobject.GObject,hippo.CanvasLayout):
     
     def do_get_height_request(self, width):
         (columns, width) = self.__get_columns(width)
-        
+
         total_min_height = 0
         total_natural_height = 0
 
