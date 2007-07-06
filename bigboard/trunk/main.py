@@ -541,6 +541,13 @@ def main():
         
     gconf.client_get_default().add_dir(GCONF_PREFIX[:-1], gconf.CLIENT_PRELOAD_RECURSIVE)
 
+    listings = gconf.client_get_default().get_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING)
+    ## this is a bad hack for now since we'll often not have schemas and there's no way
+    ## to add stocks to a blank bigboard
+    if not listings or len(listings) == 0:
+        gconf.client_get_default().set_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING,
+                                            ['org.mugshot.bigboard.SelfStock','org.mugshot.bigboard.SearchStock','org.mugshot.bigboard.AppsStock','org.mugshot.bigboard.PeopleStock','org.mugshot.bigboard.PhotosStock'])
+
     if not stockdirs:
         stockdirs = [os.path.join(os.path.dirname(bigboard.__file__), 'stocks')]
     panel = BigBoardPanel(stockdirs, bus_name)
