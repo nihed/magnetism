@@ -97,17 +97,36 @@ class PeopleList(OverviewTable):
             for id in section_items:
                 self.__update_visibility(section, section_items[id])
 
+    def __select_item(self, item):
+        if item == self.__selected_item:
+            return
+        
+        if self.__selected_item:
+            self.__selected_item.set_force_prelight(False)
+            
+        self.__selected_item = item
+        self.__selected_item.set_force_prelight(True)
+        self.emit("selected", item.resource)
+
     def __on_item_click(self, item, event):
          if event.count == 1:
-             if item == self.__selected_item:
-                 return
-             
-             if self.__selected_item:
-                 self.__selected_item.set_force_prelight(False)
+             self.__select_item(item)
 
-             self.__selected_item = item
-             self.__selected_item.set_force_prelight(True)
-             self.emit("selected", item.resource)
+    def select_single_visible_user(self):
+        visible_item = None
+        
+        for section in SECTIONS:
+            section_items = self.__items[section]
+            for id in section_items:
+                item = section_items[id]
+                if item.get_visible():
+                    if visible_item == None:
+                        visible_item = item
+                    elif visible_item.resource != item.resource:
+                        return # Two visible
+                    
+        if visible_item != None:
+            self.__select_item(visible_item)
              
 class PeopleBrowser(hippo.CanvasWindow):
     def __init__(self, stock):
@@ -131,6 +150,7 @@ class PeopleBrowser(hippo.CanvasWindow):
         self.__search_input = hippo.CanvasEntry()
         #self.__search_input.set_property('border-color', 0xAAAAAAFF)
         self.__search_input.connect("notify::text", self.__on_search_changed)
+        self.__search_input.connect("key-press-event", self.__on_search_keypress)
         self.__idle_search_id = 0
         self.__idle_search_mugshot_id = 0
         self.__left_box.append(self.__search_input)
@@ -200,6 +220,10 @@ class PeopleBrowser(hippo.CanvasWindow):
             return
         self.__idle_search_id = gobject.timeout_add(500, self.__idle_do_search)
         
+    def __on_search_keypress(self, entry, event):
+        if event.key == hippo.KEY_RETURN:
+            self.__people_list.select_single_visible_user()
+
     def __on_user_selected(self, list, user):
          self.__set_profile_user(user)
          

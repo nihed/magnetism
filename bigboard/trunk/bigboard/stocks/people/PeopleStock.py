@@ -7,7 +7,6 @@ import bigboard
 from bigboard.people_tracker import PeopleTracker
 from bigboard.stock import AbstractMugshotStock
 import bigboard.globals
-import bigboard.libbig as libbig
 import bigboard.slideout
 import bigboard.profile
 

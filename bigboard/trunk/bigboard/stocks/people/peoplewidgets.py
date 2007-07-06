@@ -7,6 +7,7 @@ import hippo
 import bigboard
 from bigboard.databound import DataBoundItem
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasMugshotURLImageButton, PhotoContentItem, CanvasHBox, CanvasVBox
+import bigboard.libbig as libbig
 
 from mugshot import DataModel
 
