@@ -224,7 +224,7 @@ public class TreeCache implements Cache {
 
 	public long getElementCountInMemory() {
 		try {
-			Set children = cache.getChildrenNames( regionFqn );
+			Set<?> children = cache.getChildrenNames( regionFqn );
 			return children == null ? 0 : children.size();
 		}
 		catch (Exception e) {

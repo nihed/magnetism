@@ -86,7 +86,7 @@ public class PagerLinkListTag extends SimpleTagSupport {
 		}
 	}
 	
-	public void setPageable(Pageable pageable) {
+	public void setPageable(Pageable<?> pageable) {
 		this.pageable = pageable;
 	}
 	

@@ -62,7 +62,7 @@ public class PropertyFetchNode {
 		resultList.add(new PropertyFetch(resourceHolder, boundChildren, notify));
 	}
 
-	public void bindPlainProperty(DMPropertyHolder propertyHolder, List<PropertyFetch> resultList, boolean maybeSkip, boolean notify) {
+	public void bindPlainProperty(DMPropertyHolder<?,?,?> propertyHolder, List<PropertyFetch> resultList, boolean maybeSkip, boolean notify) {
 		if (!maybeSkip)
 			resultList.add(new PropertyFetch(propertyHolder, null, notify));
 	}

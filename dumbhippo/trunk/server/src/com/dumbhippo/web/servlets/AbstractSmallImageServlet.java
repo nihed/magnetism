@@ -157,7 +157,7 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		}
 	}
 	
-	private void startUpload(HttpServletRequest request, HttpServletResponse response, FileUpload upload, List items)
+	private void startUpload(HttpServletRequest request, HttpServletResponse response, FileUpload upload, List<?> items)
 			throws HttpException, IOException, ServletException, HumanVisibleException {
 
 		FileItem photo = null;

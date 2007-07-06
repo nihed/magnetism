@@ -24,7 +24,7 @@ public class ChangeNotificationSet implements Serializable {
 	@SuppressWarnings("unused")
 	private static Logger logger = GlobalSetup.getLogger(ChangeNotificationSet.class);
 
-	private Map<ChangeNotification, ChangeNotification> notifications = new HashMap<ChangeNotification, ChangeNotification>();
+	private Map<ChangeNotification<?,?>, ChangeNotification<?,?>> notifications = new HashMap<ChangeNotification<?,?>, ChangeNotification<?,?>>();
 	private long timestamp;
 	
 	public ChangeNotificationSet(DataModel model) {
@@ -43,8 +43,8 @@ public class ChangeNotificationSet implements Serializable {
 			key = clonedKey;
 		}
 
-		ChangeNotification notification = new ChangeNotification<K,T>(clazz, key);
-		ChangeNotification oldNotification = notifications.get(notification);
+		ChangeNotification<?,?> notification = new ChangeNotification<K,T>(clazz, key);
+		ChangeNotification<?,?> oldNotification = notifications.get(notification);
 		if (oldNotification != null) {
 			oldNotification.addProperty(propertyIndex);
 		} else {

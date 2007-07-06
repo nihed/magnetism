@@ -13,7 +13,7 @@ import com.dumbhippo.dm.schema.DMClassHolder;
 
 public class StoreClient implements DMClient {
 	private DMClient client;
-	private Map<StoreKey, Registration<?,?>> registrations = new HashMap<StoreKey, Registration<?,?>>();
+	private Map<StoreKey<?,?>, Registration<?,?>> registrations = new HashMap<StoreKey<?,?>, Registration<?,?>>();
 	private AtomicLong nextSerial = new AtomicLong(-1);
 	private boolean closed;
 	
@@ -29,7 +29,7 @@ public class StoreClient implements DMClient {
 		return nextSerial.addAndGet(1);
 	}
 
-	public boolean addRegistration(Registration registration) {
+	public boolean addRegistration(Registration<?,?> registration) {
 		synchronized (registrations) {
 			if (closed)
 				return false;
@@ -39,14 +39,14 @@ public class StoreClient implements DMClient {
 		}
 	}
 	
-	public void removeRegistration(Registration registration) {
+	public void removeRegistration(Registration<?,?> registration) {
 		synchronized(registrations) {
 			StoreKey<?,?> key = registration.getNode();
 			
 			if (closed)
 				return;
 			
-			Registration current = registrations.get(key);
+			Registration<?,?> current = registrations.get(key);
 			if (current == registration)
 				registrations.remove(key);
 		}

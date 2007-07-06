@@ -20,7 +20,7 @@ public class RhapModuleGenerator  implements ModuleGenerator {
 		return RhapModule.URI;
 	}
 	
-	private static final Set NAMESPACES;
+	private static final Set<Namespace> NAMESPACES;
 	
 	static {
 		Set<Namespace> nss = new HashSet<Namespace>();
@@ -28,7 +28,7 @@ public class RhapModuleGenerator  implements ModuleGenerator {
 		NAMESPACES = Collections.unmodifiableSet(nss);
 	}
 	
-	public Set getNamespaces() {
+	public Set<Namespace> getNamespaces() {
 		return NAMESPACES;
 	}
 	

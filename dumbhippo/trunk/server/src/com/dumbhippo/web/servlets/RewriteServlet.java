@@ -666,7 +666,7 @@ public class RewriteServlet extends HttpServlet {
 		logger.debug("jsp pages are {}", jspPages);
 		
 		htmlPages = new HashSet<String>();
-		Set htmlPaths = context.getResourcePaths("/html/");
+		Set<?> htmlPaths = context.getResourcePaths("/html/");
 		if (htmlPaths != null) {
 			for (Object o : htmlPaths) {
 				String path = (String)o;

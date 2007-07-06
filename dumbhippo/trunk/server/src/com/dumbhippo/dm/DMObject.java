@@ -16,7 +16,7 @@ import com.dumbhippo.server.NotFoundException;
  */
 public abstract class DMObject<KeyType> {
 	private KeyType key;
-	private StoreKey storeKey;
+	private StoreKey<KeyType,? extends DMObject<KeyType>> storeKey;
 	Guid guid;
 	
 	@SuppressWarnings("unchecked")
@@ -29,7 +29,7 @@ public abstract class DMObject<KeyType> {
 		return key;
 	}
 	
-	public final StoreKey getStoreKey() {
+	public final StoreKey<KeyType,? extends DMObject<KeyType>> getStoreKey() {
 		return storeKey;
 	}
 	
@@ -67,5 +67,5 @@ public abstract class DMObject<KeyType> {
 	 * 
 	 * @return
 	 */
-	public abstract DMClassHolder getClassHolder();
+	public abstract <T extends DMObject<KeyType>> DMClassHolder<KeyType,T> getClassHolder();
 }

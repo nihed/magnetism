@@ -82,7 +82,7 @@ public class IterateStack extends LoopTagSupport {
 
 	@Override
 	protected void prepare() {
-		Iterable iterable = (Iterable<?>)items;
+		Iterable<?> iterable = (Iterable<?>)items;
 		iterator = iterable.iterator();
 		
 		seenPlayIds = new HashSet<String>();

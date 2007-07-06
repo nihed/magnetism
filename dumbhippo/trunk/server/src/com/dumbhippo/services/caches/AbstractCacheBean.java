@@ -63,7 +63,7 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 		AMAZON_ITEM
 	}
 	
-	private static EnumMap<Request,UniqueTaskExecutor> executors;
+	private static EnumMap<Request,UniqueTaskExecutor<?,?>> executors;
 	private static boolean shutdown = false;
 	
 	private Request defaultRequest;
@@ -80,29 +80,28 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 	@EJB
 	protected CacheFactory cacheFactory;
 	
-	private synchronized static UniqueTaskExecutor getExecutorInternal(Request request) {
+	private synchronized static <KeyType,ResultType> UniqueTaskExecutor<KeyType,ResultType> getExecutorInternal(Request request) {
 		if (shutdown)
 			throw new RuntimeException("getExecutor() called after shutdown");
 		
 		if (executors == null)
-			executors = new EnumMap<Request,UniqueTaskExecutor>(Request.class);
+			executors = new EnumMap<Request,UniqueTaskExecutor<?,?>>(Request.class);
 		
-		UniqueTaskExecutor executor = executors.get(request);
+		UniqueTaskExecutor<KeyType,ResultType> executor = (UniqueTaskExecutor<KeyType,ResultType>) executors.get(request);
 		if (executor == null) {
-			executor = new CacheTaskExecutor(request.name().toLowerCase() + " pool");
+			executor = new CacheTaskExecutor<KeyType,ResultType>(request.name().toLowerCase() + " pool");
 			executors.put(request, executor);
 		}
 		return executor;
 	}
 	
-	@SuppressWarnings("unchecked")
 	public static void shutdown() {
 		synchronized (AbstractCacheBean.class) {
 			shutdown = true;
 			
 			// executors is null if we've never called getExecutorInternal
 			if (executors != null) {
-				for (UniqueTaskExecutor executor : executors.values()) {
+				for (UniqueTaskExecutor<?,?> executor : executors.values()) {
 					executor.shutdownAndAwaitTermination();
 				}
 				executors.clear();

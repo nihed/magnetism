@@ -61,7 +61,7 @@ class FileUtils {
 	 * @throws IOException
 	 * @throws ParseException
 	 */
-	static public <T extends Enum> T readEnum(DataInput input, Class<T> clazz) throws IOException, ParseException {
+	static public <T extends Enum<?>> T readEnum(DataInput input, Class<T> clazz) throws IOException, ParseException {
 		int intValue = input.readInt();
 		for (T t : clazz.getEnumConstants()) {
 			if (t.ordinal() == intValue)
@@ -77,7 +77,7 @@ class FileUtils {
 	 * @param e
 	 * @throws IOException
 	 */
-	static void writeEnum(DataOutput output, Enum e) throws IOException {
+	static void writeEnum(DataOutput output, Enum<?> e) throws IOException {
 		output.writeInt(e.ordinal());
 	}
 }

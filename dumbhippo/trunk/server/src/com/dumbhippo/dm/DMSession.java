@@ -85,7 +85,6 @@ public abstract class DMSession {
 	}
 	
 	public <K,T extends DMObject<K>> void visitFetch(T object, Fetch<K,? super T> fetch, FetchVisitor visitor) {
-		@SuppressWarnings("unchecked")
 		DMClassHolder<K,T> classHolder = object.getClassHolder();
 		fetch.visit(this, classHolder, object, visitor);
 	}
@@ -97,7 +96,7 @@ public abstract class DMSession {
 	 * @param clazz
 	 * @param t
 	 */
-	public <T extends DMObject<?>> void internalInit(T t) {
+	public <K, T extends DMObject<K>> void internalInit(T t) {
 		try {
 			doInit(t);
 		} catch (NotFoundException e) {
@@ -105,15 +104,21 @@ public abstract class DMSession {
 		}
 	}
 	
-	private <K, T extends DMObject<K>> StoreKey<K,T> makeStoreKey(Class<T> clazz, K key) {
-		@SuppressWarnings("unchecked")
-		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)model.getClassHolder(clazz); 
-		return new StoreKey<K,T>(classHolder, key);
+	// This "casts" two classes K and T to be related, note we need a K and a T in order to construct
+	// StoreKey without a warning about a bare type
+	@SuppressWarnings("unchecked")
+	private static <K, T extends DMObject<K>> StoreKey<K,T> newStoreKeyHack(DMClassHolder<?,? extends DMObject<?>> classHolder,
+			K key) {
+		return new StoreKey<K,T>((DMClassHolder<K,T>) classHolder, key);
 	}
 	
-	private <T extends DMObject<?>>void doInit(T t) throws NotFoundException {
-		@SuppressWarnings("unchecked")
-		DMClassHolder<?,T> classHolder = t.getClassHolder(); 
+	private <K, T extends DMObject<K>> StoreKey<K,T> makeStoreKey(Class<T> clazz, K key) {
+		DMClassHolder<?,? extends DMObject<?>> classHolder = model.getClassHolder(clazz); 
+		return newStoreKeyHack(classHolder, key);
+	}
+	
+	private <K, T extends DMObject<K>> void doInit(T t) throws NotFoundException {
+		DMClassHolder<K,T> classHolder = t.getClassHolder();
 
 		classHolder.processInjections(this, t);
 		t.init();
@@ -186,7 +191,7 @@ public abstract class DMSession {
 		try {
 			return model.getStore().fetch(storeKey, propertyIndex);
 		} catch (NotCachedException e) {
-			DMPropertyHolder propertyHolder = storeKey.getClassHolder().getProperty(propertyIndex);
+			DMPropertyHolder<?,? extends DMObject<?>,?> propertyHolder = storeKey.getClassHolder().getProperty(propertyIndex);
 			T object = model.getUnfilteredSession().findUnchecked(storeKey);
 
 			// There is some inefficiency here ... the property value is dehydrated twice;

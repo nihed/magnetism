@@ -46,6 +46,10 @@ public class JBossInjectableEntityManagerFactory implements EntityManagerFactory
 		return factory.getEntityManager();
 	}
 
+	// Eclipse wants to warn about no type params on Map, but 
+	// adding them (even <?,?>) keeps us from implementing the 
+	// interface method apparently
+	@SuppressWarnings("unchecked")
 	public EntityManager createEntityManager(Map arg0) {
 		return factory.getEntityManager();
 	}

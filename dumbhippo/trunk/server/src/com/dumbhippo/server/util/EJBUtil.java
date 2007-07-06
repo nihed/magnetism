@@ -220,7 +220,7 @@ public class EJBUtil {
 		try {
 			logger.debug("Dumping items in {}", name);
 			Context namingContext = new InitialContext();
-			NamingEnumeration ne = namingContext.list(name);
+			NamingEnumeration<?> ne = namingContext.list(name);
 			while (ne.hasMore()) {
 				Object o = ne.next();
 				logger.debug(" listed object {} {}", o.getClass().getName(), o);
@@ -325,7 +325,7 @@ public class EJBUtil {
 		//logger.debug("Listing known bean classes");
 		Set<String> beanClasses = new HashSet<String>();
 		Context namingContext = new InitialContext();
-		NamingEnumeration ne = namingContext.list(ROOT_NAME);
+		NamingEnumeration<?> ne = namingContext.list(ROOT_NAME);
 		while (ne.hasMore()) {
 			NameClassPair ncp = (NameClassPair) ne.next();
 			//logger.debug(" bean '{}'", ncp.getName());
@@ -447,7 +447,7 @@ public class EJBUtil {
 	 *  
 	 * @param collection
 	 */
-	public static void forceInitialization(Collection collection) {
+	public static void forceInitialization(Collection<?> collection) {
 		if (collection instanceof PersistentCollection) {
 			((PersistentCollection)collection).forceInitialization();
 		}

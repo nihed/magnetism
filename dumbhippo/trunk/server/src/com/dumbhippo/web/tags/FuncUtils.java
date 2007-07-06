@@ -7,7 +7,7 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 
 public class FuncUtils {
-	public static boolean enumIs(Enum value, String name) {
+	public static boolean enumIs(Enum<?> value, String name) {
 		if (value == null)
 			throw new IllegalArgumentException("null enum value passed to enumIs function, name=" + name);
 		if (name == null)
@@ -40,7 +40,7 @@ public class FuncUtils {
 		return XmlBuilder.escape(s);
 	}
 	
-	public static int size(Collection collection) {
+	public static int size(Collection<?> collection) {
 		return collection.size();
 	}
 }

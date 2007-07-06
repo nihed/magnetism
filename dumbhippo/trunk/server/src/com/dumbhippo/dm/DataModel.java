@@ -38,8 +38,8 @@ public class DataModel {
 	private UnfilteredSession unfilteredSession;
 	private EntityManagerFactory emf = null;
 	private ChangeNotifier notifier;
-	private Map<Class, DMClassHolder> classes = new HashMap<Class, DMClassHolder>();
-	private Map<String, DMClassHolder> classesByBase = new HashMap<String, DMClassHolder>();
+	private Map<Class<?>, DMClassHolder<?,?>> classes = new HashMap<Class<?>, DMClassHolder<?,?>>();
+	private Map<String, DMClassHolder<?,?>> classesByBase = new HashMap<String, DMClassHolder<?,?>>();
 	private ClassPool classPool;
 	private DMStore store = new DMStore();
 	private boolean completed = false;
@@ -105,11 +105,11 @@ public class DataModel {
 	 * @param <T>
 	 * @param clazz
 	 */
-	public void addDMClass(Class<? extends DMObject> clazz) {
+	public <K, T extends DMObject<K>> void addDMClass(Class<T> clazz) {
 		if (completed)
 			throw new IllegalStateException("completeDMClasses has already been callled");
 		
-		DMClassHolder classHolder = DMClassHolder.createForClass(this, clazz);
+		DMClassHolder<?,?> classHolder = DMClassHolder.createForClass(this, clazz);
 		classes.put(clazz, classHolder);
 		classesByBase.put(classHolder.getResourceBase(), classHolder);
 	}
@@ -124,7 +124,7 @@ public class DataModel {
 
 		completed = true;
 		
-		for (DMClassHolder classHolder : classes.values())
+		for (DMClassHolder<?,?> classHolder : classes.values())
 			classHolder.complete();
 	}
 	
@@ -135,24 +135,26 @@ public class DataModel {
 		return emf.createEntityManager();
 	}
 	
-	public DMClassHolder<?,?> getClassHolder(Class<?> clazz) {
-		DMClassHolder<?,?> classHolder = classes.get(clazz);
+	public DMClassHolder<?, ? extends DMObject<?>> getClassHolder(Class<?> tClass) {
+		DMClassHolder<?,?> classHolder = classes.get(tClass);
 		
 		if (classHolder == null)
-			throw new IllegalArgumentException("Class " + clazz.getName() + " is not bound as a DMO");
+			throw new IllegalArgumentException("Class " + tClass.getName() + " is not bound as a DMO");
 		
 		return classHolder;
 	}
-	
 
 	public DMClassHolder<?, ?> getClassHolder(String relativeBase) {
 		return classesByBase.get(relativeBase);
 	}
 
+	@SuppressWarnings("unchecked")
+	private <K, T extends DMObject<K>> DMClassHolder<K,T> castClassHolder(DMClassHolder<?,?> holder, Class<K> keyClass, Class<T> objectClass) {
+		return (DMClassHolder<K,T>) holder;	
+	}
 	
 	public <K, T extends DMObject<K>> DMClassHolder<K,T> getClassHolder(Class<K> keyClass, Class<T> objectClass) {
-		@SuppressWarnings("unchecked")
-		DMClassHolder<K,T> classHolder = classes.get(objectClass);
+		DMClassHolder<K,T> classHolder =  castClassHolder(classes.get(objectClass), keyClass, objectClass);
 		
 		if (classHolder == null)
 			throw new IllegalArgumentException("Class " + objectClass.getName() + " is not bound as a DMO");

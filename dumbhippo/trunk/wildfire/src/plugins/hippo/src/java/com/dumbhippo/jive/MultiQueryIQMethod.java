@@ -61,14 +61,22 @@ public class MultiQueryIQMethod<K, T extends DMObject<K>> extends QueryIQMethod 
 		}
 	}
 	
+	// This "casts" two classes K and T to be related, note we need a K and a T in order to construct
+	// MultiQueryIQMethod without a warning about a bare type
 	@SuppressWarnings("unchecked")
-	public static MultiQueryIQMethod<?,?> getForClassInfo(DMClassInfo<?,?> classInfo, AnnotatedIQHandler handler, Method method, IQMethod annotation) {
-		DMClassHolder classHolder = DataService.getModel().getClassHolder(classInfo.getClass());
-		
-		return new MultiQueryIQMethod(classHolder, handler, method, annotation);
+	private static <K, T extends DMObject<K>> MultiQueryIQMethod<K,T> newMultiQueryIQMethodHack(DMClassHolder<?,? extends DMObject<?>> classHolder,
+			AnnotatedIQHandler handler, Method method, IQMethod annotation) {
+		return new MultiQueryIQMethod<K,T>((DMClassHolder<K,T>)classHolder, handler, method, annotation);
 	}
 	
-	public static MultiQueryIQMethod<?,?> getForMethod(AnnotatedIQHandler handler, Method method, IQMethod annotation) {
+	public static <K, T extends DMObject<K>> MultiQueryIQMethod<K,T> getForClassInfo(DMClassInfo<?,?> classInfo,
+			AnnotatedIQHandler handler, Method method, IQMethod annotation) {
+		DMClassHolder<?,?> classHolder = DataService.getModel().getClassHolder(classInfo.getObjectClass());
+		
+		return newMultiQueryIQMethodHack(classHolder, handler, method, annotation);
+	}
+	
+	public static MultiQueryIQMethod<?,? extends DMObject<?>> getForMethod(AnnotatedIQHandler handler, Method method, IQMethod annotation) {
 		Type genericType = method.getGenericReturnType();
 		
 		if (!(genericType instanceof ParameterizedType))

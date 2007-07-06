@@ -87,8 +87,8 @@ public class SearchSystemBean implements SearchSystem, SimpleServiceMBean {
 	@EJB
 	PostingBoard postingBoard;;
 	
-	private Map<Class, Expirable<IndexReader>> readers = new HashMap<Class, Expirable<IndexReader>>();
-	private Map<Class, Expirable<IndexSearcher>> searchers = new HashMap<Class, Expirable<IndexSearcher>>();
+	private Map<Class<?>, Expirable<IndexReader>> readers = new HashMap<Class<?>, Expirable<IndexReader>>();
+	private Map<Class<?>, Expirable<IndexSearcher>> searchers = new HashMap<Class<?>, Expirable<IndexSearcher>>();
 	
 	private static abstract class Expirable<T> {
 		private long expirationTime;
@@ -219,7 +219,7 @@ public class SearchSystemBean implements SearchSystem, SimpleServiceMBean {
 		return ContextHelper.getSearchFactory(getSession());
 	}
 		
-	private DocumentBuilder getBuilder(Class<?> clazz) {
+	private DocumentBuilder<?> getBuilder(Class<?> clazz) {
 		SearchFactory sf = ContextHelper.getSearchFactory(getSession());
 		
 		return sf.getDocumentBuilders().get(clazz);
@@ -311,7 +311,7 @@ public class SearchSystemBean implements SearchSystem, SimpleServiceMBean {
 		else
 			logger.debug("Got a batch of {} items to index", queue.size());
 		
-		Set<Class> classes = new HashSet<Class>();
+		Set<Class<?>> classes = new HashSet<Class<?>>();
 		for (LuceneWork work : queue)
 			classes.add(work.getClass());
 		
@@ -329,6 +329,7 @@ public class SearchSystemBean implements SearchSystem, SimpleServiceMBean {
 		} finally {
 			// Clear any IndexReaders we have cached, so that new searches will
 			// will see the items we just indexed
+			// WARNING - if you make this "Class<?>" the java 5 .11 and .12 compilers will crash with assertion failure.
 			for (Class clazz : classes)
 				clearSearcher(clazz);
 		}
@@ -339,7 +340,7 @@ public class SearchSystemBean implements SearchSystem, SimpleServiceMBean {
 	public void clearIndex(Class<?> clazz) {
 		logger.info("Got a request to clear the index for class {}", clazz.getSimpleName());
 		
-		DocumentBuilder builder = getBuilder(clazz);
+		DocumentBuilder<?> builder = getBuilder(clazz);
 		
 		IndexWriter writer;
 		try {

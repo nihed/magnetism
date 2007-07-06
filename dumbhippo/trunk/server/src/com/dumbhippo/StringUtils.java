@@ -73,11 +73,11 @@ public class StringUtils {
 		return joinUngenericList(strings, separator);
 	}
 	
-	public static String joinUngenericList(Collection strings, String separator) {
+	public static String joinUngenericList(Collection<String> strings, String separator) {
 		StringBuilder builder = new StringBuilder();
-		Iterator iterator = strings.iterator();
+		Iterator<String> iterator = strings.iterator();
 		while (iterator.hasNext()) {
-			String s = (String) iterator.next();
+			String s = iterator.next();
 			builder.append(s);
 			if (iterator.hasNext())
 				builder.append(separator);

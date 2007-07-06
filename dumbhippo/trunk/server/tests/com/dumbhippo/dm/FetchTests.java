@@ -122,7 +122,7 @@ public class FetchTests extends AbstractSupportedTests {
 	// Hack to work around generic system
 	public <K,T extends DMObject<K>> Fetch<?,?> bindToClass(FetchNode fetchNode, DMClassInfo<K,T> classInfo) {
 		@SuppressWarnings("unchecked")
-		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>)support.getModel().getClassHolder(classInfo.getClass());
+		DMClassHolder<K,T> classHolder = (DMClassHolder<K,T>) support.getModel().getClassHolder(classInfo.getObjectClass());
 		return fetchNode.bind(classHolder);
 	}
 	

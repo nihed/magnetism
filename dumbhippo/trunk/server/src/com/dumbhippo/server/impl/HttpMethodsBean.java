@@ -1269,7 +1269,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			xml.openElement("retvalReflection");
 			for (Method m : result.getClass().getMethods()) {
 				xml.openElement("method", "name", m.getName(), "return", m.getReturnType().getSimpleName());
-				for (Class param : m.getParameterTypes()) {
+				for (Class<?> param : m.getParameterTypes()) {
 					xml.appendTextNode("param", param.getSimpleName());
 				}
 				xml.closeElement();
@@ -1309,7 +1309,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			}
 		}		
 		
-		public Object getMBean(Class iface, String service) throws MalformedObjectNameException {
+		public Object getMBean(Class<?> iface, String service) throws MalformedObjectNameException {
 			MBeanServer server = MBeanServerLocator.locateJBoss();
 			return MBeanProxyExt.create(iface, service, server);			
 		}

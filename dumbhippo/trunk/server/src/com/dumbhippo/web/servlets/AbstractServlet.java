@@ -167,7 +167,7 @@ public abstract class AbstractServlet extends HttpServlet {
 				request.getContentType() + "' transaction=" + requiresTransaction,
 				type, request.getRequestURI());
 		
-		Enumeration names = request.getAttributeNames(); 
+		Enumeration<?> names = request.getAttributeNames(); 
 		while (names.hasMoreElements()) {
 			String name = (String) names.nextElement();
 			
@@ -321,7 +321,7 @@ public abstract class AbstractServlet extends HttpServlet {
 		return request.getMethod().toUpperCase().equals("POST");
 	}
 	
-	private Object runWithTransaction(HttpServletRequest request, Callable func) throws HumanVisibleException, HttpException {
+	private Object runWithTransaction(HttpServletRequest request, Callable<?> func) throws HumanVisibleException, HttpException {
 		long startTime = System.currentTimeMillis();
 		UserTransaction tx;
 		try {
@@ -387,7 +387,7 @@ public abstract class AbstractServlet extends HttpServlet {
 		}						
 	}
 	
-	private Object runWithErrorPage(HttpServletRequest request, HttpServletResponse response, Callable func) throws IOException, ServletException {
+	private Object runWithErrorPage(HttpServletRequest request, HttpServletResponse response, Callable<?> func) throws IOException, ServletException {
 		try {
 			try {
 				return func.call();
@@ -417,8 +417,8 @@ public abstract class AbstractServlet extends HttpServlet {
 	// that persistance beans returned to the web tier won't be detached.
 	//
 	// While we are add it, we time the request for performancing monitoring	
-	private Object runWithTransactionAndErrorPage(final HttpServletRequest request, final HttpServletResponse response, final Callable func) throws IOException, ServletException  {
-		return runWithErrorPage(request, response, new Callable() {
+	private Object runWithTransactionAndErrorPage(final HttpServletRequest request, final HttpServletResponse response, final Callable<?> func) throws IOException, ServletException  {
+		return runWithErrorPage(request, response, new Callable<Object>() {
 			public Object call() throws Exception {
 				return runWithTransaction(request, func);
 			}
@@ -438,13 +438,13 @@ public abstract class AbstractServlet extends HttpServlet {
 		logRequest(request, "POST", requiresTransaction);
 		String forwardUrl;
 		if (requiresTransaction) {
-			 forwardUrl = (String)runWithTransactionAndErrorPage(request, response, new Callable() { 
+			 forwardUrl = (String)runWithTransactionAndErrorPage(request, response, new Callable<Object>() { 
 				public Object call() throws Exception {
 					return wrappedDoPost(request, response);
 				}
 			});
 		} else {
-			forwardUrl = (String)runWithErrorPage(request, response, new Callable() {
+			forwardUrl = (String)runWithErrorPage(request, response, new Callable<Object>() {
 				public Object call() throws Exception {
 					return wrappedDoPost(request, response);
 				}
@@ -580,13 +580,13 @@ public abstract class AbstractServlet extends HttpServlet {
 		logRequest(request, "GET", requiresTransaction);
 		String forwardUrl;
 		if (requiresTransaction) {
-			forwardUrl = (String)runWithTransactionAndErrorPage(request, response, new Callable() { 
+			forwardUrl = (String)runWithTransactionAndErrorPage(request, response, new Callable<Object>() { 
 				public Object call() throws Exception {
 					return wrappedDoGet(request, response);
 				}
 			});
 		} else {
-			forwardUrl = (String)runWithErrorPage(request, response, new Callable() {
+			forwardUrl = (String)runWithErrorPage(request, response, new Callable<Object>() {
 				public Object call() throws Exception {
 					return wrappedDoGet(request, response);
 				}

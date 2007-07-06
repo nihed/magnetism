@@ -29,7 +29,7 @@ public class BeanTag extends SimpleTagSupport {
 	
 	String id;
 	Scope scope;
-	Class clazz;
+	Class<?> clazz;
 
 	private Object findInScope(Scope s, String key) {
 		PageContext context = (PageContext)getJspContext();
@@ -206,7 +206,7 @@ public class BeanTag extends SimpleTagSupport {
 			throw new IllegalArgumentException("Bad scope value " + s);
 	}
 	
-	public void setClass(Class c) {
+	public void setClass(Class<?> c) {
 		clazz = c;
 	}
 }

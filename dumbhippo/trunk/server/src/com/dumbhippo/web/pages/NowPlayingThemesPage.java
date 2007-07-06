@@ -2,7 +2,6 @@ package com.dumbhippo.web.pages;
 
 import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.Character;
 import com.dumbhippo.server.NowPlayingThemeSystem;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.views.Viewpoint;

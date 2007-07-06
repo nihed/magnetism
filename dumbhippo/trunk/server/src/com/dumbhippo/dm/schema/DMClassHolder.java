@@ -55,8 +55,8 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 	private DataModel model;
 	private Class<T> baseClass;
 	private Class<K> keyClass;
-	private Constructor keyStringConstructor;
-	private Constructor wrapperConstructor;
+	private Constructor<K> keyStringConstructor;
+	private Constructor<? extends T> wrapperConstructor;
 	private DMPropertyHolder<K,T,?>[] properties;
 	private boolean[] mustQualify;
 	private Map<String, Integer> propertiesMap = new HashMap<String, Integer>();
@@ -176,8 +176,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 
 	public T createInstance(Object key, DMSession session) {
 		try {
-			@SuppressWarnings("unchecked")
-			T result = (T)wrapperConstructor.newInstance(key, session);
+			T result = wrapperConstructor.newInstance(key, session);
 			return result;
 		} catch (Exception e) {
 			throw new RuntimeException("Error creating instance of class " + baseClass.getName(), e);
@@ -464,7 +463,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		mustQualify = new boolean[foundProperties.size()];
 
 		for (int i = 0; i < properties.length; i++) {
-			DMPropertyHolder property = properties[i];
+			DMPropertyHolder<?,?,?> property = properties[i];
 			
 			propertiesMap.put(property.getName(), i);
 			mustQualify[i] = nameCount.get(property.getName()) > 1;
@@ -500,7 +499,7 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 			Class<?> wrapperClass  = wrapperCtClass.toClass();
 			injectClassHolder(wrapperClass);
 			
-			wrapperConstructor = wrapperClass.getDeclaredConstructors()[0]; 
+			wrapperConstructor = (Constructor<? extends T>) wrapperClass.getDeclaredConstructors()[0]; 
 		} catch (CannotCompileException e) {
 			throw new RuntimeException("Error compiling wrapper for " + className, e);
 		} catch (NotFoundException e) {
@@ -508,8 +507,15 @@ public class DMClassHolder<K,T extends DMObject<K>> {
 		}
 	}
 
+	// This "casts" two classes K and T to be related, note we need a K and a T in order to construct
+	// DMClassHolder without a warning about a bare type
 	@SuppressWarnings("unchecked")
-	public static DMClassHolder<?,?> createForClass(DataModel model, Class<? extends DMObject> clazz) {
-		return new DMClassHolder(model, DMClassInfo.getForClass(clazz));
+	private static <K, T extends DMObject<K>> DMClassHolder<K,T> newClassHolderHack(DataModel model, DMClassInfo<?,?> classInfo) {
+		return new DMClassHolder<K,T>(model, (DMClassInfo<K,T>) classInfo);
+	}
+	
+	
+	public static DMClassHolder<?, ? extends DMObject<?>> createForClass(DataModel model, Class<?> clazz) {
+		return newClassHolderHack(model, DMClassInfo.getForClass(clazz));
 	}
 }

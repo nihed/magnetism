@@ -774,7 +774,7 @@ public class FeedSystemBean implements FeedSystem {
 	}
 	
 	public List<Feed> getInUseFeeds() {
-		List l = em.createQuery("SELECT f FROM Feed f WHERE EXISTS " + 
+		List<?> l = em.createQuery("SELECT f FROM Feed f WHERE EXISTS " + 
 				" (SELECT gf FROM GroupFeed gf WHERE gf.feed = f AND gf.removed = 0) OR " +
 				" EXISTS (SELECT ea FROM ExternalAccount ea WHERE ea.feed = f AND ea.sentiment = :loved)")
 				.setParameter("loved", Sentiment.LOVE)
