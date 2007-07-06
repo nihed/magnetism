@@ -11,7 +11,7 @@ from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, 
 from bigboard.overview_table import OverviewTable
 from bigboard.people_tracker import PeopleTracker
 
-from peoplewidgets import PersonItem
+from peoplewidgets import PersonItem, ProfileItem
 
 _logger = logging.getLogger("bigboard.PeopleBrowser")
 
@@ -40,6 +40,7 @@ class PeopleList(OverviewTable):
             self.__section_headers[section] = self.add_section_head(section, SECTIONS[section])
             self.__section_headers[section].set_visible(False)
 
+        self.__selected_item = None
         self.__search = None
 
     def add_user(self, user, section):
@@ -47,7 +48,8 @@ class PeopleList(OverviewTable):
             return
         
         item = PersonItem(user)
-        
+        item.connect("button-press-event", self.__on_item_click)
+                
         self.add_column_item(section, item, lambda a,b: cmp(a.resource.name, b.resource.name))
         self.__section_counts[section] += 1
         if self.__section_counts[section] == 1:
@@ -95,6 +97,18 @@ class PeopleList(OverviewTable):
             for id in section_items:
                 self.__update_visibility(section, section_items[id])
 
+    def __on_item_click(self, item, event):
+         if event.count == 1:
+             if item == self.__selected_item:
+                 return
+             
+             if self.__selected_item:
+                 self.__selected_item.set_force_prelight(False)
+
+             self.__selected_item = item
+             self.__selected_item.set_force_prelight(True)
+             self.emit("selected", item.resource)
+             
 class PeopleBrowser(hippo.CanvasWindow):
     def __init__(self, stock):
         super(PeopleBrowser, self).__init__(gtk.WINDOW_TOPLEVEL)
@@ -119,7 +133,11 @@ class PeopleBrowser(hippo.CanvasWindow):
         self.__search_input.connect("notify::text", self.__on_search_changed)
         self.__idle_search_id = 0
         self.__idle_search_mugshot_id = 0
-        self.__left_box.append(self.__search_input)        
+        self.__left_box.append(self.__search_input)
+
+        self.__profile_box = CanvasVBox(border=1, border_color=0xAAAAAAFF, background_color=0xFFFFFFFF)
+        self.__left_box.append(self.__profile_box)
+        self.__set_profile_user(None)
     
         self.__right_scroll = hippo.CanvasScrollbars()
         self.__right_scroll.set_policy(hippo.ORIENTATION_HORIZONTAL,
@@ -130,7 +148,7 @@ class PeopleBrowser(hippo.CanvasWindow):
         self.__people_list = PeopleList()
         self.__right_box.append(self.__people_list, hippo.PACK_EXPAND)
 
-#        self.__people_list.connect("selected", lambda list, app: self.__on_app_selected(app))
+        self.__people_list.connect("selected", self.__on_user_selected)
         
         self.__right_scroll.set_root(self.__right_box)        
         
@@ -154,6 +172,14 @@ class PeopleBrowser(hippo.CanvasWindow):
         for user in self.__tracker.local_users:
             self.__on_local_user_added(self.__tracker.local_users, user)
 
+    def __set_profile_user(self, user):
+        self.__profile_box.clear()
+        if user == None:
+            self.__profile_box.set_property("box-height", 300)
+        else:
+            self.__profile_box.set_property("box_height", -1)
+            self.__profile_box.append(ProfileItem(user))
+
     def __reset(self):
         self.__search_input.set_property('text', '')
 
@@ -174,6 +200,9 @@ class PeopleBrowser(hippo.CanvasWindow):
             return
         self.__idle_search_id = gobject.timeout_add(500, self.__idle_do_search)
         
+    def __on_user_selected(self, list, user):
+         self.__set_profile_user(user)
+         
     def __on_contact_added(self, list, contact):
         self.__people_list.add_user(contact, CONTACTS)
         

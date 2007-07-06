@@ -1,4 +1,5 @@
 import cgi
+import os
 
 import gobject
 import hippo
