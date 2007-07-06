@@ -5,7 +5,7 @@ import hippo
 
 import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
-from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, \
+from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, CanvasTable, \
              ActionLink, PrelightingCanvasBox
 from bigboard.overview_table import OverviewTable
 
@@ -76,14 +76,42 @@ def categorize(apps):
         return local_categories
     return categories
         
-class AppCategoryUsage(OverviewTable):
-    def __init__(self):
-        super(AppCategoryUsage, self).__init__(column_spacing=10)
+class Bar(hippo.CanvasBox):
+    _height = 12
+    _width = 100
+    _min_color = (0xeb, 0xdc, 0xf3); 
+    _max_color = (0xa4, 0x5a, 0xc6);        
         
-        self.__bar_height = 10
-        self.__bar_width = 80
-        self.__bar_min_color = (0xeb, 0xdc, 0xf3); 
-        self.__bar_max_color = (0xa4, 0x5a, 0xc6);        
+    def __init__(self, factor, **kwargs):
+        self.__factor = factor
+        self.__color = map(lambda (min,max): (min * (1.0-factor) + max*factor) / 255., zip(Bar._min_color, Bar._max_color))
+        kwargs['xalign'] = hippo.ALIGNMENT_START
+        kwargs['yalign'] = hippo.ALIGNMENT_CENTER
+
+        hippo.CanvasBox.__init__(self, **kwargs)
+
+    def do_paint_below_children(self, cr, damaged):
+        (width, height) = self.get_allocation()
+
+        # border/padding should be subtracted out from width
+        x,y,width,height = self.align(int(width * self.__factor), Bar._height)
+
+        cr.set_source_rgb(*self.__color)
+        cr.rectangle(x,y,width,height)
+        cr.fill()
+
+    def do_get_content_width_request(self):
+        return (0, Bar._width)
+        
+    def do_get_content_height_request(self, for_width):
+        return (Bar._height, Bar._height)
+
+gobject.type_register(Bar)
+
+class AppCategoryUsage(CanvasTable):
+    def __init__(self):
+        super(AppCategoryUsage, self).__init__(column_spacing=10, row_spacing=3)
+        self.set_column_expand(1, True)
         
         self.__apps = set()
 
@@ -93,8 +121,8 @@ class AppCategoryUsage(OverviewTable):
     def set_apps(self, apps, used_apps):
         self.remove_all()
 
-        self.add_column_item(0, hippo.CanvasText(text="Category", font="Bold 12px", color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START))
-        self.add_column_item(0, hippo.CanvasText(text="Your Usage", font="Bold 12px", color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START))
+        self.add(hippo.CanvasText(text="Category", font="Bold 12px", color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START), left=0, top=0)
+        self.add(hippo.CanvasText(text="Your Usage", font="Bold 12px", color=0x3F3F3FFF, xalign=hippo.ALIGNMENT_START), left=1, top=0)
         
         categories = categorize(used_apps)
         cat_usage = {}
@@ -115,21 +143,17 @@ class AppCategoryUsage(OverviewTable):
 
         cat_keys_sorted = cat_usage.keys()
         cat_keys_sorted.sort()
+        row = 1
         for category in cat_keys_sorted:
-            self.add_column_item(0,
-                                 hippo.CanvasText(text=category, 
-                                                  yalign=hippo.ALIGNMENT_CENTER,
-                                                  xalign=hippo.ALIGNMENT_START, color=0x3F3F3FFF))
+            self.add(hippo.CanvasText(text=category, 
+                                      yalign=hippo.ALIGNMENT_CENTER,
+                                      xalign=hippo.ALIGNMENT_START, color=0x3F3F3FFF),
+                     left=0, top=row)
             factor = (cat_usage[category] * 1.0) / max_usage_count[1]
-            box = CanvasHBox()
-            (r, g, b) = map(lambda (min,max): int(min * (1.0-factor)) + int(max*factor), zip(self.__bar_min_color, self.__bar_max_color))          
-
-            box.append(CanvasVBox(box_height=self.__bar_height,
-                                  box_width=(int(self.__bar_width * factor)),
-                                  yalign=hippo.ALIGNMENT_CENTER,
-                                  background_color=(r << 24) + (g << 16) + (b << 8) + (0xFF << 0)))
-
-            self.add_column_item(0, box)
+            
+            self.add(Bar(factor), left=1, top=row)
+            
+            row += 1
             
 
 class AppExtras(CanvasVBox):

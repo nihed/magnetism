@@ -155,7 +155,7 @@ class PeopleBrowser(hippo.CanvasWindow):
         self.__idle_search_mugshot_id = 0
         self.__left_box.append(self.__search_input)
 
-        self.__profile_box = CanvasVBox(border=1, border_color=0xAAAAAAFF, background_color=0xFFFFFFFF)
+        self.__profile_box = CanvasVBox(border=1, border_color=0x999999FF, background_color=0xFFFFFFFF)
         self.__left_box.append(self.__profile_box)
         self.__set_profile_user(None)
     

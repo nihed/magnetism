@@ -131,7 +131,10 @@ class PeopleStock(AbstractMugshotStock):
         coords = item.get_screen_coords()
         self.__slideout.slideout_from(coords[0] + item.get_allocation()[0] + 4, coords[1])
 
-        p = ProfileItem(item.get_user())
+        p = ProfileItem(item.get_user(),
+                        border=1,
+                        border_color = 0x0000000ff)
+
         self.__slideout.get_root().append(p)
         p.connect("close", self.__close_slideout)
 
