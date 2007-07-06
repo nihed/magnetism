@@ -19,6 +19,7 @@ import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.DesktopSetting;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.DesktopSettings;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.tx.TxRunnable;
 import com.dumbhippo.tx.TxUtils;
@@ -82,6 +83,19 @@ public class DesktopSettingsBean implements DesktopSettings {
 			return ds.getValue();
 		} catch (NoResultException e) {
 			return null;
+		}
+	}
+
+	public DesktopSetting getSettingObject(User user, String key) throws NotFoundException {
+		Query q = em.createQuery("SELECT ds FROM DesktopSetting ds WHERE ds.user = :user AND ds.keyName = :key");
+		q.setParameter("user", user);
+		q.setParameter("key", key);
+		DesktopSetting ds;
+		try {
+			ds = (DesktopSetting) q.getSingleResult();
+			return ds;
+		} catch (NoResultException e) {
+			throw new NotFoundException("no setting for user " + user + " key " + key);
 		}
 	}
 }
