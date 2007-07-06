@@ -9,7 +9,8 @@ class CairoParam(reversewrapper.Parameter):
         self.wrapper.write_code(
             code=('py_%s = PycairoContext_FromContext(cairo_reference(%s), NULL, NULL);' %
                   (self.name, self.name)),
-            cleanup=("Py_DECREF(py_%s);" % self.name))
+            cleanup=("Py_DECREF(py_%s);" % self.name),
+            failure_expression=("!py_%s" % self.name))
         self.wrapper.add_pyargv_item("py_%s" % self.name)
 
 matcher.register_reverse("cairo_t*", CairoParam)
