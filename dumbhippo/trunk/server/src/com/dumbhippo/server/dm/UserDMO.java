@@ -1,6 +1,7 @@
 package com.dumbhippo.server.dm;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,10 +19,12 @@ import com.dumbhippo.dm.annotations.PropertyType;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.AimResource;
+import com.dumbhippo.persistence.DesktopSetting;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.DesktopSettings;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 
@@ -40,6 +43,9 @@ public abstract class UserDMO extends DMObject<Guid> {
 
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private DesktopSettings settings;
 	
 	protected UserDMO(Guid key) {
 		super(key);
@@ -125,5 +131,19 @@ public abstract class UserDMO extends DMObject<Guid> {
 		}
 		
 		return null;
+	}
+	
+	@DMProperty
+	@DMFilter("viewer.canSeePrivate(this)")
+	public Set<DesktopSettingDMO> getSettings() {
+		Set<DesktopSettingDMO> result = new HashSet<DesktopSettingDMO>();
+		
+		Collection<DesktopSetting> userSettings = settings.getSettingsObjects(user); 
+		
+		for (DesktopSetting setting : userSettings) {
+			result.add(session.findUnchecked(DesktopSettingDMO.class, new DesktopSettingKey(setting)));
+		}
+		
+		return result;
 	}
 }

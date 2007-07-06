@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,8 @@ import com.dumbhippo.persistence.DesktopSetting;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.DesktopSettings;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.tx.TxRunnable;
 import com.dumbhippo.tx.TxUtils;
@@ -33,21 +36,25 @@ public class DesktopSettingsBean implements DesktopSettings {
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
 	
-	public Map<String, String> getSettings(User user) {
-		Query q = em.createQuery("SELECT ds FROM DesktopSetting ds WHERE ds.user = :user");
-		q.setParameter("user", user);
-		
-		List<?> settings = q.getResultList();
-		
+	public Map<String, String> getSettings(User user) {		
 		Map<String,String> map = new HashMap<String,String>();
 		
-		for (DesktopSetting ds : TypeUtils.castList(DesktopSetting.class, settings)) {
+		for (DesktopSetting ds : getSettingsObjects(user)) {
 			map.put(ds.getKeyName(), ds.getValue());
 		}
 		
 		return map;
 	}
 
+	public Collection<DesktopSetting> getSettingsObjects(User user) {
+		Query q = em.createQuery("SELECT ds FROM DesktopSetting ds WHERE ds.user = :user");
+		q.setParameter("user", user);
+		
+		List<?> settings = q.getResultList();
+		
+		return TypeUtils.castList(DesktopSetting.class, settings);
+	}
+	
 	// null value means unset
 	public void setSetting(final User user, final String key, final String value) throws RetryException {
 		TxUtils.runNeedsRetry(new TxRunnable() {
@@ -68,6 +75,7 @@ public class DesktopSettingsBean implements DesktopSettings {
 						em.persist(ds);
 					}
 				}
+				DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "settings");
 				LiveState.getInstance().queueUpdate(new DesktopSettingChangedEvent(user.getGuid(), key, value));
 			}
 		});
