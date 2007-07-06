@@ -6,7 +6,7 @@ import hippo
 
 import bigboard
 from bigboard.databound import DataBoundItem
-from bigboard.big_widgets import CanvasMugshotURLImage, CanvasMugshotURLImageButton, PhotoContentItem, CanvasHBox, CanvasVBox
+from bigboard.big_widgets import ActionLink, CanvasMugshotURLImage, CanvasMugshotURLImageButton, PhotoContentItem, CanvasHBox, CanvasVBox
 import bigboard.libbig as libbig
 
 from mugshot import DataModel
@@ -43,15 +43,12 @@ class PersonItem(PhotoContentItem, DataBoundItem):
         self.__pressed = False
 
         self.__aim_icon = None
-        self.__local_icon = None
 
         self.connect_resource(self.__update, 'name')
         self.connect_resource(self.__update, 'photoUrl')
         self.connect_resource(self.__update_aim_buddy, 'aimBuddy')
-        self.connect_resource(self.__update_local_buddy, 'localBuddy')
         self.__update(self.resource)
         self.__update_aim_buddy(self.resource)
-        self.__update_local_buddy(self.resource)
 
     def __update_color(self):
         if self.__pressed:
@@ -107,25 +104,12 @@ class PersonItem(PhotoContentItem, DataBoundItem):
         self.__aim_icon = AimIcon(buddy)
         self.__presence_box.append(self.__aim_icon)
 
-    def __update_local_buddy(self, buddy):
-        if self.__local_icon:
-            self.__local_icon.destroy()
-            self.__local_icon = None
-
-        try:
-            buddy = self.resource.localBuddy
-        except AttributeError:
-            return
-
-        self.__local_icon = LocalIcon(buddy)
-        self.__presence_box.append(self.__local_icon)
-
     def get_screen_coords(self):
         return self.get_context().translate_to_screen(self)
 
 class ExternalAccountIcon(CanvasHBox):
     def __init__(self, acct):
-        super(ExternalAccountIcon, self).__init__()
+        super(ExternalAccountIcon, self).__init__(box_width=16, box_height=16)
         self.__acct = None
         self.__img = CanvasMugshotURLImage()
         self.append(self.__img)
@@ -169,17 +153,6 @@ class AimIcon(hippo.CanvasText, DataBoundItem):
         _open_aim(self.resource.name)
         return True
 
-class LocalIcon(hippo.CanvasText, DataBoundItem):
-    def __init__(self, buddy):
-        hippo.CanvasText.__init__(self)
-        DataBoundItem.__init__(self, buddy)
-        
-        self.connect_resource(self.__update)
-        self.__update(self.resource)
-        
-    def __update(self, buddy):
-        self.set_property("markup", "<b>LOCAL</b> ")
-        
 class ProfileItem(hippo.CanvasBox, DataBoundItem):
     __gsignals__ = {
         "close": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
@@ -187,10 +160,19 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         
     def __init__(self, user, **kwargs):
         kwargs['orientation'] = hippo.ORIENTATION_VERTICAL
-        kwargs['border'] = 1
-        kwargs['border-color'] = 0x0000000ff
         hippo.CanvasBox.__init__(self, **kwargs)
         DataBoundItem.__init__(self, user)
+
+        self.__header = hippo.CanvasGradient(orientation=hippo.ORIENTATION_HORIZONTAL,
+                                             start_color=0xf2f2f2f2,
+                                             end_color=0xc8c8c8ff)
+        self.append(self.__header)
+        self.__name = hippo.CanvasText(font="22px", padding=6)
+        self.__header.append(self.__name)
+
+        mugshot_link = ActionLink(text="Mugshot", padding=6)
+        self.__header.append(mugshot_link, flags=hippo.PACK_END)
+        mugshot_link.connect("activated", self.__on_activate_web)
 
         self.__top_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
         self.append(self.__top_box)
@@ -208,8 +190,11 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
 #        self.__online = hippo.CanvasText(text='Offline')
 #        self.append(self.__online)
 
+        separator = hippo.CanvasBox(box_height=1, background_color=0xAAAAAAFF)
+        self.append(separator)
+
         self.__ribbon_bar = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL,
-                                           spacing=2, border=2)
+                                           spacing=2, border=4)
         self.append(self.__ribbon_bar)
 
         self.connect_resource(self.__update)
@@ -234,6 +219,7 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
             self.__ribbon_bar.append(icon)
 
     def __update(self, user):
+        self.__name.set_property('text', self.resource.name)
         self.__photo.set_url(self.resource.photoUrl)
 
 #         if profile.get_online():

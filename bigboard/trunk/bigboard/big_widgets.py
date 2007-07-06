@@ -9,6 +9,7 @@ import hippo
 from libgimmie import DockWindow
 from libbig.imagecache import URLImageCache
 import libbig, stock, global_mugshot, bigboard
+from table_layout import TableLayout
 
 class CanvasVBox(hippo.CanvasBox):
     def __init__(self, **kwargs):
@@ -19,6 +20,22 @@ class CanvasHBox(hippo.CanvasBox):
     def __init__(self, **kwargs):
         kwargs['orientation'] = hippo.ORIENTATION_HORIZONTAL
         hippo.CanvasBox.__init__(self, **kwargs)
+
+class CanvasTable(hippo.CanvasBox):
+    def __init__(self, column_spacing=0, row_spacing=0, **kwargs):
+        hippo.CanvasBox.__init__(self, **kwargs)
+
+        self.__layout = TableLayout(column_spacing=column_spacing, row_spacing=row_spacing)
+        self.set_layout(self.__layout)
+
+    def add(self, child, left=None, right=None, top=None, bottom=None, flags=0):
+        self.__layout.add(child, left, right, top, bottom, flags)
+
+    def set_column_expand(self, column, expand):
+        self.__layout.set_column_expand(column, expand)
+
+    def set_row_expand(self, row, expand):
+        self.__layout.set_row_expand(row, expand)        
         
 class ActionLink(hippo.CanvasLink):
     def __init__(self, **kwargs):

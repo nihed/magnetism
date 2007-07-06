@@ -2,6 +2,8 @@ import gobject
 import copy
 import hippo
 
+import layout_utils
+
 class OverviewLayout(gobject.GObject,hippo.CanvasLayout):
     """A Canvas Layout manager that arranges items in a grid with headings in-between
 
@@ -191,32 +193,34 @@ class OverviewLayout(gobject.GObject,hippo.CanvasLayout):
         if height < self.__min_height:
             height = self.__min_height
 
-        to_shrink = self.__natural_height - height
-        if to_shrink >= 0:
-            line_heights = copy.copy(self.__line_natural_height)
-            # We were allocated less than our natural height. We want to shrink lines
-            # as equally as possible, but no line more than it's maximum shrink.
-            #
-            # To do this, we process the lines in order of the available shrink from
-            # least available shrink to most
-            #
-            shrinks = []
-            for i in range(0, self.__line_count):
-                shrinks.append((i, self.__line_natural_height[i] - self.__line_min_height[i]))
-                shrinks.sort(key=lambda t: t[1])
+        line_heights = layout_utils.compute_lengths(height, self.__line_min_height, self.__line_natural_height)
 
-            lines_remaining = self.__line_count
-            for (i, shrink) in shrinks:
-                # If we can shrink the rest of the lines equally, do that. Otherwise
-                # shrink this line as much as possible
-                if shrink * lines_remaining >= to_shrink:
-                    shrink = to_shrink // lines_remaining
+#         to_shrink = self.__natural_height - height
+#         if to_shrink >= 0:
+#             line_heights = copy.copy(self.__line_natural_height)
+#             # We were allocated less than our natural height. We want to shrink lines
+#             # as equally as possible, but no line more than it's maximum shrink.
+#             #
+#             # To do this, we process the lines in order of the available shrink from
+#             # least available shrink to most
+#             #
+#             shrinks = []
+#             for i in range(0, self.__line_count):
+#                 shrinks.append((i, self.__line_natural_height[i] - self.__line_min_height[i]))
+#                 shrinks.sort(key=lambda t: t[1])
 
-                line_heights[i] -= shrink
-                lines_remaining -= 1
-                to_shrink -= shrink
-        else:
-            line_heights = self.__line_natural_height
+#             lines_remaining = self.__line_count
+#             for (i, shrink) in shrinks:
+#                 # If we can shrink the rest of the lines equally, do that. Otherwise
+#                 # shrink this line as much as possible
+#                 if shrink * lines_remaining >= to_shrink:
+#                     shrink = to_shrink // lines_remaining
+
+#                 line_heights[i] -= shrink
+#                 lines_remaining -= 1
+#                 to_shrink -= shrink
+#         else:
+#             line_heights = self.__line_natural_height
 
         line_index = 0
         line_item_count = 0
