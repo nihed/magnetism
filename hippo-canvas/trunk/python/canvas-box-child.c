@@ -103,6 +103,21 @@ static const PyMethodDef _PyHippoCanvasBoxChild_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
+static PyObject *
+_wrap_hippo_canvas_box_child__get_item(PyObject *self, void *closure)
+{
+    HippoCanvasItem *ret;
+
+    ret = HIPPO_CANVAS_BOX_CHILD(pygobject_get(self))->item;
+    /* pygobject_new handles NULL checking */
+    return pygobject_new((GObject *)ret);
+}
+
+static const PyGetSetDef hippo_canvas_box_child_getsets[] = {
+    { "item", (getter)_wrap_hippo_canvas_box_child__get_item, (setter)0 },
+    { NULL, (getter)0, (setter)0 },
+};
+
 PyTypeObject G_GNUC_INTERNAL PyHippoCanvasBoxChild_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                            /* ob_size */
@@ -135,7 +150,7 @@ PyTypeObject G_GNUC_INTERNAL PyHippoCanvasBoxChild_Type = {
     (iternextfunc)0,                              /* tp_iternext */
     (struct PyMethodDef*)_PyHippoCanvasBoxChild_methods, /* tp_methods */
     (struct PyMemberDef*)0,                       /* tp_members */
-    (struct PyGetSetDef*)0,                       /* tp_getset */
+    (struct PyGetSetDef*)hippo_canvas_box_child_getsets, /* tp_getset */
     NULL,                                         /* tp_base */
     NULL,                                         /* tp_dict */
     (descrgetfunc)0,                              /* tp_descr_get */
