@@ -25,7 +25,8 @@ public class StringUtils {
 		return str.toString();
 	}
 	
-	public static String urlDecode(String str) {
+	// throws IllegalArgumentException on bad data
+	public static String urlDecode(String str) throws IllegalArgumentException {
 		try {
 			return URLDecoder.decode(str, "UTF-8");
 		} catch (UnsupportedEncodingException e) {

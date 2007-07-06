@@ -4,6 +4,7 @@ import java.util.Map;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.persistence.DesktopSetting;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.tx.RetryException;
 
@@ -32,6 +33,8 @@ public interface DesktopSettings {
 	 * @return the value, or null if unset
 	 */
 	public String getSetting(User user, String key);
+	
+	public DesktopSetting getSettingObject(User user, String key) throws NotFoundException;
 	
 	/** 
 	 * Sets a new value for a setting, or unsets if value is null
