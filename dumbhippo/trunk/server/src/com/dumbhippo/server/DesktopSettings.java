@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import java.util.Collection;
 import java.util.Map;
 
 import javax.ejb.Local;
@@ -25,6 +26,8 @@ public interface DesktopSettings {
 	 * @return
 	 */
 	public Map<String,String> getSettings(User user);
+	
+	public Collection<DesktopSetting> getSettingsObjects(User user);
 	
 	/**
 	 * Gets one setting
