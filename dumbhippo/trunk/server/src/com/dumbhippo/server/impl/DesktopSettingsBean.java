@@ -22,6 +22,8 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.DesktopSettings;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.dm.DataService;
+import com.dumbhippo.server.dm.DesktopSettingDMO;
+import com.dumbhippo.server.dm.DesktopSettingKey;
 import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.tx.TxRunnable;
@@ -62,20 +64,27 @@ public class DesktopSettingsBean implements DesktopSettings {
 				Query q = em.createQuery("SELECT ds FROM DesktopSetting ds WHERE ds.user = :user AND ds.keyName = :key");
 				q.setParameter("user", user);
 				q.setParameter("key", key);
+				boolean addedOrRemoved = false;
 				DesktopSetting ds;
 				try {
 					ds = (DesktopSetting) q.getSingleResult();
-					if (value != null)
+					if (value != null) {
 						ds.setValue(value);
-					else
+						DataService.currentSessionRW().changed(DesktopSettingDMO.class, new DesktopSettingKey(ds), "value");
+					} else {
+						addedOrRemoved = true;
 						em.remove(ds);
+					}
 				} catch (NoResultException e) {
 					if (value != null) {
 						ds = new DesktopSetting(user, key, value);
+						addedOrRemoved = false;
 						em.persist(ds);
 					}
 				}
-				DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "settings");
+				if (addedOrRemoved)
+					DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "settings");
+					
 				LiveState.getInstance().queueUpdate(new DesktopSettingChangedEvent(user.getGuid(), key, value));
 			}
 		});
