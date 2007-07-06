@@ -235,7 +235,8 @@ HippoCanvasBoxChild *hippo_canvas_box_find_box_child (HippoCanvasBox      *box,
 
 GList *hippo_canvas_box_get_layout_children (HippoCanvasBox *box);
 
-#define HIPPO_TYPE_CANVAS_BOX_CHILD (hippo_canvas_box_child_get_type ())
+#define HIPPO_TYPE_CANVAS_BOX_CHILD    (hippo_canvas_box_child_get_type ())
+#define HIPPO_CANVAS_BOX_CHILD(object) (G_TYPE_CHECK_INSTANCE_CAST ((object), HIPPO_TYPE_CANVAS_BOX_CHILD, HippoCanvasBoxChild))
 
 /**
  * HippoCanvasBoxChild:
