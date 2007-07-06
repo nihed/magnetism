@@ -5,7 +5,7 @@ import gobject
 import hippo
 
 import big_widgets
-import mugshot
+import global_mugshot
 import libbig
 from libbig.singletonmixin import Singleton
 
@@ -104,7 +104,7 @@ class AbstractMugshotStock(Stock):
         self._mugshot_initialized = False
         self._dependent_handlers = []
         
-        self._mugshot = mugshot.get_mugshot()
+        self._mugshot = global_mugshot.get_mugshot()
         self._mugshot.connect("initialized", lambda mugshot: self._on_mugshot_initialized())
         self._mugshot.connect("connection-status", lambda mugshot, auth, xmpp, contacts: self.__handle_mugshot_connection_status(auth, xmpp, contacts))  
         

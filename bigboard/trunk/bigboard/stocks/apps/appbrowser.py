@@ -3,7 +3,7 @@ import logging, time, urlparse, urllib
 import gobject, gtk
 import hippo
 
-import bigboard.mugshot as mugshot
+import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasHBox, CanvasVBox, \
              ActionLink, PrelightingCanvasBox
@@ -167,7 +167,7 @@ class AppExtras(CanvasVBox):
         self.append(self.__app_pair)
         self.append(self.__app_pair2)
 
-        mugshot.get_mugshot().connect("apps-search-changed", self.__handle_mugshot_results)
+        global_mugshot.get_mugshot().connect("apps-search-changed", self.__handle_mugshot_results)
 
     def have_apps(self):
         return not not self.__found_app_count
@@ -175,9 +175,9 @@ class AppExtras(CanvasVBox):
     def set_catname(self, catname, search):
         self.__catname = catname
         if catname:
-            mugshot_apps = mugshot.get_mugshot().get_category_top_apps(catname)
+            mugshot_apps = global_mugshot.get_mugshot().get_category_top_apps(catname)
         else:
-            mugshot_apps = mugshot.get_mugshot().get_global_top_apps()  
+            mugshot_apps = global_mugshot.get_mugshot().get_global_top_apps()  
         if mugshot_apps is None:
             self.set_top_apps(None, search)
         else:
@@ -190,7 +190,7 @@ class AppExtras(CanvasVBox):
         self.__sync()
 
     def __on_more_popular(self, w):
-        libbig.show_url(urlparse.urljoin(mugshot.get_mugshot().get_baseurl(),
+        libbig.show_url(urlparse.urljoin(global_mugshot.get_mugshot().get_baseurl(),
                                          "applications%s" % ((self.__search and ("?q=" + urllib.quote(self.__search)))
                                                              or self.__catname and ("?category=" + urllib.quote(self.__catname)))))
         # more-info with None just means hide window
@@ -430,7 +430,7 @@ class AppBrowser(hippo.CanvasWindow):
                
         self.set_root(self.__box)
 
-        self.__mugshot = mugshot.get_mugshot()
+        self.__mugshot = global_mugshot.get_mugshot()
         self.__mugshot.connect("initialized", lambda mugshot: self.__sync())
         self.__mugshot.connect("my-top-apps-changed", 
                                lambda mugshot, apps: self.__sync())          
@@ -465,7 +465,7 @@ class AppBrowser(hippo.CanvasWindow):
 
     def __on_show_more_info(self, app):
         if app:
-            libbig.show_url(urlparse.urljoin(mugshot.get_mugshot().get_baseurl(), "application?id=" + app.get_mugshot_app().get_id()))
+            libbig.show_url(urlparse.urljoin(global_mugshot.get_mugshot().get_baseurl(), "application?id=" + app.get_mugshot_app().get_id()))
         self.__hide_reset()
 
     def __on_app_launch(self):
@@ -477,7 +477,7 @@ class AppBrowser(hippo.CanvasWindow):
             self.__hide_reset()
 
     def __on_browse_popular_apps(self):
-        libbig.show_url(urlparse.urljoin(mugshot.get_mugshot().get_baseurl(), "applications"))
+        libbig.show_url(urlparse.urljoin(global_mugshot.get_mugshot().get_baseurl(), "applications"))
         self.__hide_reset()
             
     def __on_search_changed(self, input, text):
@@ -495,7 +495,7 @@ class AppBrowser(hippo.CanvasWindow):
     def __idle_do_mugshot_search(self):
         searchtext = self.__search_input.get_property("text")
         if searchtext:
-            mugshot.get_mugshot().request_app_search(searchtext)
+            global_mugshot.get_mugshot().request_app_search(searchtext)
         self.__idle_mugshot_search_id = 0
 
     def __on_mugshot_initialized(self, mugshot):

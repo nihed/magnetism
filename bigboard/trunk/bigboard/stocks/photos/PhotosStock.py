@@ -4,7 +4,7 @@ import gobject, cairo
 
 import hippo
 
-import bigboard.mugshot as mugshot
+import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 from bigboard.stock import Stock, AbstractMugshotStock
 from bigboard.big_widgets import CanvasURLImage, CanvasVBox, CanvasHBox, CanvasMugshotURLImage, ActionLink
@@ -228,7 +228,7 @@ class PhotosStock(AbstractMugshotStock):
         self._logger.debug("visiting person for %s", self.__current_image)
         if not self.__current_image:
             return
-        libbig.show_url(mugshot.get_mugshot().get_baseurl() + self.__current_image[0].get_home_url())    
+        libbig.show_url(global_mugshot.get_mugshot().get_baseurl() + self.__current_image[0].get_home_url())    
 
     def __thumbnails_generator(self):
         """The infinite photos function.  Cool."""

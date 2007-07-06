@@ -3,7 +3,7 @@
 import logging
 import xml.sax
 import libbig
-import mugshot
+import global_mugshot
 
 # object representing a profile; also a sax handler that can parse the xml form
 class Profile(libbig.struct.AutoStruct, xml.sax.ContentHandler):
@@ -49,7 +49,7 @@ class ProfileFactory:
 
     def __init__(self):
         self._fetcher = libbig.http.AsyncHTTPFetcher()
-        self._mugshot = mugshot.get_mugshot()
+        self._mugshot = global_mugshot.get_mugshot()
         self._baseurl = None
         self._mugshot.connect("initialized", lambda mugshot: self._sync_baseurl())
         self._profiles = {}

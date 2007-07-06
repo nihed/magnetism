@@ -3,17 +3,16 @@ import logging
 import gc
 import cgi
 import os
-import copy
-import re
 import weakref
 
 import gtk
 import gobject
 import hippo
 import bigboard
-
 from mugshot import DataModel
+
 from bigboard.big_widgets import CanvasMugshotURLImage, CanvasMugshotURLImageButton, PhotoContentItem, CanvasHBox, CanvasVBox
+from bigboard.people_tracker import PeopleTracker
 from bigboard.stock import AbstractMugshotStock
 from bigboard.databound import DataBoundItem
 import bigboard.globals
@@ -54,14 +53,16 @@ class PersonItem(PhotoContentItem, DataBoundItem):
         self.connect('button-release-event', self.__handle_button_release)
         self.__pressed = False
 
-        self.connect_resource(self.__update)
-        self.__update(self.resource)
-
         self.__aim_icon = None
-        self.__aim_buddy = None
-        
         self.__local_icon = None
-        self.__local_buddy = None
+
+        self.connect_resource(self.__update, 'name')
+        self.connect_resource(self.__update, 'photoUrl')
+        self.connect_resource(self.__update_aim_buddy, 'aimBuddy')
+        self.connect_resource(self.__update_local_buddy, 'localBuddy')
+        self.__update(self.resource)
+        self.__update_aim_buddy(self.resource)
+        self.__update_local_buddy(self.resource)
 
     def __update_color(self):
         if self.__pressed:
@@ -104,47 +105,34 @@ class PersonItem(PhotoContentItem, DataBoundItem):
         self.__name.set_property("text", self.resource.name)
         self.__photo.set_url(self.resource.photoUrl)
 
-    def get_screen_coords(self):
-        return self.get_context().translate_to_screen(self)
-
-    def __update_presence_box(self):
-        self.__presence_box.clear()
-        if self.__aim_buddy != None:
-            self.__presence_box.append(hippo.CanvasText(text="AIM"))
-
-    def set_aim_buddy(self, buddy):
-        if buddy == self.__aim_buddy:
-            return
-
+    def __update_aim_buddy(self, user):
         if self.__aim_icon:
             self.__aim_icon.destroy()
             self.__aim_icon = None
 
-        self.__aim_buddy = buddy
-
-        if self.__aim_buddy:
-            self.__aim_icon = AimIcon(self.__aim_buddy)
-            self.__presence_box.append(self.__aim_icon)
-
-    def get_aim_buddy(self):
-        return self.__aim_buddy
-
-    def set_local_buddy(self, buddy):
-        if buddy == self.__local_buddy:
+        try:
+            buddy = self.resource.aimBuddy
+        except AttributeError:
             return
 
+        self.__aim_icon = AimIcon(buddy)
+        self.__presence_box.append(self.__aim_icon)
+
+    def __update_local_buddy(self, buddy):
         if self.__local_icon:
             self.__local_icon.destroy()
             self.__local_icon = None
 
-        self.__local_buddy = buddy
+        try:
+            buddy = self.resource.localBuddy
+        except AttributeError:
+            return
 
-        if self.__local_buddy:
-            self.__local_icon = LocalIcon(self.__local_buddy)
-            self.__presence_box.append(self.__local_icon)
+        self.__local_icon = LocalIcon(buddy)
+        self.__presence_box.append(self.__local_icon)
 
-    def get_local_buddy(self):
-        return self.__local_buddy
+    def get_screen_coords(self):
+        return self.get_context().translate_to_screen(self)
 
 class ExternalAccountIcon(CanvasHBox):
     def __init__(self, acct):
@@ -299,89 +287,6 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         self.emit("close")
         _open_aim(self.resource.name, self.resource.aim)
 
-class BuddyMonitor(gobject.GObject):
-    __gsignals__ = {
-        "aim-added": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "aim-removed": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "local-added": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
-        "local-removed": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
-       }
-        
-    def __init__(self):
-        gobject.GObject.__init__(self)
-        
-        self._model = DataModel(bigboard.globals.server_name)
-        self._model.add_connected_handler(self.__on_connected)
-        if self._model.connected:
-            self.__on_connected()
-        self.__aim_buddies = {}
-        self.__local_buddies = {}
-            
-    def __on_connected(self):
-        query = self._model.query_resource("online-desktop:/o/global", "onlineBuddies +")
-        query.add_handler(self.__on_got_buddies)
-        query.execute()
-        self.__set_new_buddies([])
-
-    def __on_got_buddies(self, globalResource):
-        globalResource.connect(self.__on_buddies_changed, "onlineBuddies")
-        self.__on_buddies_changed(globalResource)
-
-    def __on_buddies_changed(self, globalResource):
-        self.__set_new_buddies(globalResource.onlineBuddies)
-
-    def __set_new_buddies(self, buddies):
-        old_aim_buddies = self.__aim_buddies
-        self.__aim_buddies = {}
-
-        for buddy in buddies:
-            if buddy.protocol != "aim":
-                continue
-
-            canonical = BuddyMonitor.canonicalize_aim(buddy.name)
-                
-            self.__aim_buddies[canonical] = buddy
-            if not canonical in old_aim_buddies:
-                self.emit("aim-added", buddy)
-            else:
-                del old_aim_buddies[canonical]
-
-        for aim in old_aim_buddies:
-            self.emit("aim-removed", old_aim_buddies[aim])
-
-        old_local_buddies = self.__local_buddies
-        self.__local_buddies = {}
-
-        for buddy in buddies:
-            if buddy.protocol != "mugshot-local":
-                continue
-
-            self.__local_buddies[buddy.name] = buddy
-            if not buddy.name in old_local_buddies:
-                self.emit("local-added", buddy)
-            else:
-                del old_local_buddies[buddy.name]
-
-        for local in old_local_buddies:
-            self.emit("local-removed", old_local_buddies[local])
-
-            
-    def get_aim_buddy(self, aim):
-        try:
-            return self.__aim_buddies[aim]
-        except KeyError:
-            return None
-
-    def get_local_buddy(self, user_id):
-        try:
-            return self.__local_buddies[user_id]
-        except KeyError:
-            return None
-
-    @staticmethod
-    def canonicalize_aim(aim):
-        return aim.replace(" ", "").lower()
-        
 class PeopleStock(AbstractMugshotStock):
     def __init__(self, *args, **kwargs):
         super(PeopleStock, self).__init__(*args, **kwargs)
@@ -400,8 +305,6 @@ class PeopleStock(AbstractMugshotStock):
         self.__local_items = {}
         self.__contact_items = {}
 
-        self.__items_by_aim = {}
-
         self.__slideout = None
         self.__slideout_item = None
 
@@ -410,16 +313,19 @@ class PeopleStock(AbstractMugshotStock):
 
         self.__update_separators()
         
-        self._model = DataModel(bigboard.globals.server_name)
-        self._model.add_connected_handler(self.__on_connected)
-        if self._model.connected:
-            self.__on_connected()
+        self.__tracker = PeopleTracker()
+        self.__tracker.contacts.connect("added", self.__on_contact_added)
+        self.__tracker.contacts.connect("removed", self.__on_contact_removed)
+        self.__tracker.local_users.connect("added", self.__on_local_user_added)
+        self.__tracker.local_users.connect("removed", self.__on_local_user_removed)
 
-        self.__buddy_monitor = BuddyMonitor()
-        self.__buddy_monitor.connect("aim-added", self.__on_aim_added)
-        self.__buddy_monitor.connect("aim-removed", self.__on_aim_removed)
-        self.__buddy_monitor.connect("local-added", self.__on_local_added)
-        self.__buddy_monitor.connect("local-removed", self.__on_local_removed)
+        self.__model = DataModel(bigboard.globals.server_name)
+
+        for user in self.__tracker.contacts:
+            self.__on_contact_added(self.__tracker.contacts, user)
+            
+        for user in self.__tracker.local_users:
+            self.__on_local_user_added(self.__tracker.local_users, user)
 
     def get_authed_content(self, size):
         return self.__box
@@ -439,30 +345,6 @@ class PeopleStock(AbstractMugshotStock):
         for i in self.__contact_items.values():
             self.__set_item_size(i, size)
 
-    def __on_connected(self):
-        query = self._model.query_resource(self._model.self_id, "contacts [+;aim;email]")
-        query.add_handler(self.__on_got_self)
-        query.execute()
-
-        self.__contact_box.remove_all()
-        self.__contact_items = {}
-        
-    def __on_got_self(self, myself):
-        myself.connect(self.__on_contacts_changed, "contacts")
-        self.__on_contacts_changed(myself)
-        
-    def __on_contacts_changed(self, myself):
-        old_items = copy.copy(self.__contact_items)
-        
-        for contact in myself.contacts:
-            if contact.resource_id in old_items:
-                del old_items[contact.resource_id]
-            else:
-                self.__add_contact(contact)
-
-        for id in old_items:
-            self.__remove_contact(id)
-
     def __update_separators(self):
         show_separator = len(self.__local_items) != 0 and len(self.__contact_items) != 0
         self.__box.set_child_visible(self.__separator, show_separator)
@@ -478,81 +360,34 @@ class PeopleStock(AbstractMugshotStock):
         self.__set_item_size(item, self.get_size())
         item.connect('activated', self.__handle_item_pressed)
 
-        def on_aim_changed(user):
-            self.__on_aim_changed(user, item)
-
-        user.connect(on_aim_changed, "aim")
-        item.aim = None
-        self.__on_aim_changed(user, item)
-
-        buddy = self.__buddy_monitor.get_local_buddy(user.resource_id)
-        item.set_local_buddy(buddy)
-
         self.__update_separators()
 
-    def __remove_user(self, id, box, map):
-        item = map[id]
-        item.get_user().disconnect(self.__on_aim_changed)
-        item.destroy()
-        del map[id]
+    def __remove_user(self, user, box, map):
+        try:
+            item = map[user.resource_id]
+        except KeyError:
+            return
         
-    def __add_contact(self, contact):
+        item.destroy()
+        del map[user.resource_id]
+        
+        self.__update_separators()
+
+    def __on_contact_added(self, list, contact):
         self.__add_user(contact, self.__contact_box, self.__contact_items)
         
-    def __remove_contact(self, id):
-        self.__remove_user(id, self.__contact_box, self.__contact_items)
+    def __on_contact_removed(self, list, contact):
+        self.__remove_user(contact, self.__contact_box, self.__contact_items)
         
-    def __add_local(self, contact):
-        self.__add_user(contact, self.__local_box, self.__local_items)
-        
-    def __remove_local(self, id):
-        self.__remove_user(id, self.__local_box, self.__local_items)
-        
-    def __on_aim_changed(self, user, item):
-        try:
-            aim = BuddyMonitor.canonicalize_aim(user.aim)
-        except AttributeError:
-            aim = None
-
-        if item.aim != None:
-            self.__items_by_aim[item.aim].remove(item)
-
-        item.aim = aim
-
-        if item.aim != None:
-            try:
-                self.__items_by_aim[item.aim].append(item)
-            except KeyError:
-                self.__items_by_aim[item.aim] = [item]
-
-        if aim != None:
-            buddy = self.__buddy_monitor.get_aim_buddy(aim)
-            item.set_aim_buddy(buddy)
-        else:
-            item.set_aim_buddy(None)
-        
-    def __on_aim_added(self, object, buddy):
-        aim = BuddyMonitor.canonicalize_aim(buddy.name)
-
-        try:
-            items = self.__items_by_aim[aim]
-        except KeyError:
+    def __on_local_user_added(self, list, user):
+        if user.resource_id == self.__model.self_id:
             return
-
-        for item in items:
-            item.set_aim_buddy(buddy)
-                
-    def __on_aim_removed(self, object, buddy):
-        aim = BuddyMonitor.canonicalize_aim(buddy.name)
-
-        try:
-            items = self.__items_by_aim[aim]
-        except KeyError:
-            return
-
-        for item in items:
-            item.set_aim_buddy(buddy)
-
+        
+        self.__add_user(user, self.__local_box, self.__local_items)
+        
+    def __on_local_user_removed(self, list, user):
+        self.__remove_user(user, self.__local_box, self.__local_items)
+        
     def __close_slideout(self, *args):
         if self.__slideout:
             self.__slideout.destroy()
@@ -576,40 +411,7 @@ class PeopleStock(AbstractMugshotStock):
 
         return True
 
-    # FIXME: Need to handle multiple session for the same resource
-    def __on_local_added(self, object, buddy):
-        # FIXME: Need to handle self_id changes; easiest thing to do is to
-        # repopulate the local box on reconnect
-        if buddy.name == self._model.self_id:
-            return
-        
-        try:
-            self.__contact_items[buddy.name].set_local_buddy(buddy)
-        except KeyError:
-            pass
-
-        query = self._model.query_resource(buddy.name, "+;aim;email")
-        query.add_handler(self.__on_got_local_user)
-        query.execute()
-        
-    def __on_local_removed(self, object, buddy):
-        try:
-            self.__contact_items[buddy.name].set_local_buddy(buddy)
-        except KeyError:
-            pass
-
-        if self.__local_items.has_key(buddy.name):
-            self.__remove_local(buddy.name)
-
-    def __on_got_local_user(self, user):
-        buddy = self.__buddy_monitor.get_local_buddy(user.resource_id)
-        if buddy == None: # Already gone
-            return
-
-        self.__add_local(user)
-        
     def __on_more_link(self):
         if self.__people_browser is None:
             self.__people_browser = peoplebrowser.PeopleBrowser(self)
         self.__people_browser.present()
-        

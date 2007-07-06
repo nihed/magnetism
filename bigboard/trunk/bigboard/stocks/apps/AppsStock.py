@@ -3,7 +3,7 @@ import logging, time, re, os
 import gmenu, gobject, pango, gnomedesktop, gtk
 import hippo
 
-import bigboard.mugshot as mugshot
+import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
 from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasHBox, CanvasVBox, ActionLink
 import bigboard.stock
