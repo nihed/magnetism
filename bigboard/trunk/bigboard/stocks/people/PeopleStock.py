@@ -355,7 +355,7 @@ class PeopleStock(AbstractMugshotStock):
             return
         
         item = PersonItem(user)
-        box.append(item, hippo.PACK_IF_FITS)
+        box.insert_sorted(item, hippo.PACK_IF_FITS, lambda a,b: cmp(a.resource.name, b.resource.name))
         map[user.resource_id] = item
         self.__set_item_size(item, self.get_size())
         item.connect('activated', self.__handle_item_pressed)
