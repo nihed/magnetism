@@ -364,15 +364,18 @@ class AppList(CanvasVBox):
     def __on_overview_click(self, overview, event):
          _logger.debug("pressed %s %d", overview, event.count)
          
-         if self.__selected_app:
-             self.__selected_app.set_force_prelight(False)
-
          if event.count == 1:
+             if overview == self.__selected_app:
+                 return
+             
+             if self.__selected_app:
+                 self.__selected_app.set_force_prelight(False)
+
              app = overview.get_app()
              self.__selected_app = overview
              self.__selected_app.set_force_prelight(True)
              self.emit("selected", app)
-         else:
+         elif event.count == 2:
              self.emit("launch")
              
 class AppBrowser(hippo.CanvasWindow):
