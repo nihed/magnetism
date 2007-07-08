@@ -35,6 +35,8 @@ void         hippo_canvas_set_width (HippoCanvas    *canvas,
 
 void         hippo_canvas_set_load_image_hook(HippoCanvasLoadImageHook hook);
 
+GtkWidget   *hippo_canvas_get_canvas_for_item(HippoCanvasItem *item);
+
 void hippo_canvas_open_test_window(void);
 
 G_END_DECLS

@@ -437,6 +437,27 @@ hippo_canvas_set_width(HippoCanvas     *canvas,
     hippo_canvas_helper_set_width(canvas->helper, width);
 }
 
+GtkWidget *
+hippo_canvas_get_canvas_for_item(HippoCanvasItem *item)
+{
+    HippoCanvasContainer *parent;
+    HippoCanvasContext *context;
+
+    g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(item), NULL);
+
+    while ((parent = hippo_canvas_item_get_parent(item)) != NULL) {
+        g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(item), NULL);
+
+        item = HIPPO_CANVAS_ITEM(parent);
+    }
+
+    context = hippo_canvas_item_get_context(item);
+    if (HIPPO_IS_CANVAS_HELPER(context))
+      return hippo_canvas_helper_get_widget(HIPPO_CANVAS_HELPER(context));
+    else
+      return NULL; 
+}
+
 /* TEST CODE */
 #if 1
 #include <gtk/gtk.h>

@@ -71,6 +71,7 @@ static void             hippo_canvas_box_set_child_visible      (HippoCanvasCont
 
 /* Canvas item methods */
 static void               hippo_canvas_box_sink                (HippoCanvasItem    *item);
+static HippoCanvasContext* hippo_canvas_box_get_context        (HippoCanvasItem    *item);
 static void               hippo_canvas_box_set_context         (HippoCanvasItem    *item,
                                                                 HippoCanvasContext *context);
 static void               hippo_canvas_box_set_parent          (HippoCanvasItem    *item,
@@ -210,6 +211,7 @@ static void
 hippo_canvas_box_iface_init(HippoCanvasItemIface *klass)
 {
     klass->sink = hippo_canvas_box_sink;
+    klass->get_context = hippo_canvas_box_get_context;
     klass->set_context = hippo_canvas_box_set_context;
     klass->set_parent = hippo_canvas_box_set_parent;
     klass->get_parent = hippo_canvas_box_get_parent;
@@ -1252,6 +1254,14 @@ on_context_style_changed(HippoCanvasContext *context,
      */
     hippo_canvas_context_emit_style_changed(HIPPO_CANVAS_CONTEXT(box),
                                             resize_needed);
+}
+
+static HippoCanvasContext*
+hippo_canvas_box_get_context(HippoCanvasItem *item)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+
+    return box->context;
 }
 
 static void
@@ -4074,14 +4084,6 @@ hippo_canvas_box_is_empty(HippoCanvasBox *box)
     g_return_val_if_fail(HIPPO_IS_CANVAS_BOX(box), FALSE);
 
     return box->children == NULL;
-}
-
-HippoCanvasContext*
-hippo_canvas_box_get_context(HippoCanvasBox *box)
-{
-    g_return_val_if_fail(HIPPO_IS_CANVAS_BOX(box), NULL);
-
-    return box->context;
 }
 
 void

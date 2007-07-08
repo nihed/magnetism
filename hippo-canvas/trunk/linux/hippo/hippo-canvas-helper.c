@@ -1054,6 +1054,14 @@ hippo_canvas_helper_set_root(HippoCanvasHelper *helper,
     gtk_widget_queue_resize(widget);
 }
 
+GtkWidget *
+hippo_canvas_helper_get_widget(HippoCanvasHelper *helper)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_HELPER(helper));
+
+    return helper->widget;
+}
+
 void
 hippo_canvas_helper_set_width(HippoCanvasHelper *helper,
                               int                width)

@@ -212,7 +212,6 @@ void hippo_canvas_box_set_layout(HippoCanvasBox    *box,
                                  HippoCanvasLayout *layout);
     
 /* Protected accessors for subclasses */
-HippoCanvasContext* hippo_canvas_box_get_context         (HippoCanvasBox *box);
 void                hippo_canvas_box_get_background_area (HippoCanvasBox *box,
                                                           HippoRectangle *area);
 void                hippo_canvas_box_align               (HippoCanvasBox *box,

@@ -231,6 +231,14 @@ hippo_canvas_item_destroy(HippoCanvasItem *canvas_item)
     g_object_run_dispose(G_OBJECT(canvas_item));
 }
 
+HippoCanvasContext *
+hippo_canvas_item_get_context(HippoCanvasItem *canvas_item)
+{
+    g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), NULL);
+
+    return HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_context(canvas_item);
+}
+
 void
 hippo_canvas_item_set_context(HippoCanvasItem    *canvas_item,
                               HippoCanvasContext *context)

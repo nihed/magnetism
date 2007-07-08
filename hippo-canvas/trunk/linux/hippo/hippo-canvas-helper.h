@@ -31,6 +31,7 @@ GType        	 hippo_canvas_helper_get_type               (void) G_GNUC_CONST;
 HippoCanvasHelper* hippo_canvas_helper_new (GtkContainer *base_container);
 void         hippo_canvas_helper_set_root (HippoCanvasHelper *helper,
                                            HippoCanvasItem   *root);
+GtkWidget   *hippo_canvas_helper_get_widget(HippoCanvasHelper *helper);
 
 /* Set an explicit width on the helper; this will be used instead of the minimum
  * width when computing the required height */
