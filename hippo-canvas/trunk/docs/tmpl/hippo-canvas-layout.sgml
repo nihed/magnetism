@@ -1,0 +1,89 @@
+<!-- ##### SECTION Title ##### -->
+HippoCanvasLayout
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT HippoCanvasLayout ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### STRUCT HippoCanvasLayoutIface ##### -->
+<para>
+
+</para>
+
+@base_iface: 
+@set_box: 
+@get_width_request: 
+@get_height_request: 
+@allocate: 
+
+<!-- ##### FUNCTION hippo_canvas_layout_allocate ##### -->
+<para>
+
+</para>
+
+@layout: 
+@x: 
+@y: 
+@width: 
+@height: 
+@requested_width: 
+@requested_height: 
+@origin_changed: 
+
+
+<!-- ##### FUNCTION hippo_canvas_layout_get_height_request ##### -->
+<para>
+
+</para>
+
+@layout: 
+@for_width: 
+@min_height_p: 
+@natural_height_p: 
+
+
+<!-- ##### FUNCTION hippo_canvas_layout_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION hippo_canvas_layout_get_width_request ##### -->
+<para>
+
+</para>
+
+@layout: 
+@min_width_p: 
+@natural_width_p: 
+
+
+<!-- ##### FUNCTION hippo_canvas_layout_set_box ##### -->
+<para>
+
+</para>
+
+@layout: 
+@box: 
+
+

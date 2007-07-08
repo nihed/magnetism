@@ -381,15 +381,6 @@ HippoCanvasBox
 @flags: 
 
 
-<!-- ##### FUNCTION hippo_canvas_box_get_context ##### -->
-<para>
-
-</para>
-
-@box: 
-@Returns: 
-
-
 <!-- ##### FUNCTION hippo_canvas_box_get_background_area ##### -->
 <para>
 

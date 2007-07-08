@@ -561,12 +561,6 @@
   )
 )
 
-(define-method get_context
-  (of-object "HippoCanvasBox")
-  (c-name "hippo_canvas_box_get_context")
-  (return-type "HippoCanvasContext*")
-)
-
 (define-method get_background_area
   (of-object "HippoCanvasBox")
   (c-name "hippo_canvas_box_get_background_area")
@@ -887,6 +881,12 @@
   (return-type "none")
 )
 
+(define-method get_context
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_get_context")
+  (return-type "HippoCanvasContext*")
+)
+
 (define-method set_context
   (of-object "HippoCanvasItem")
   (c-name "hippo_canvas_item_set_context")
@@ -1140,6 +1140,12 @@
   (parameters
     '("HippoEvent*" "event")
   )
+)
+
+(define-virtual get_context
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_get_context")
+  (return-type "HippoCanvasContext*")
 )
 
 (define-virtual set_context
@@ -1422,5 +1428,13 @@
   (return-type "cairo_surface_t*")
   (parameters
     '("GdkPixbuf*" "pixbuf")
+  )
+)
+
+(define-function get_canvas_for_item
+  (c-name "hippo_canvas_get_canvas_for_item")
+  (return-type "GtkWidget*")
+  (parameters
+    '("HippoCanvasItem*" "item")
   )
 )

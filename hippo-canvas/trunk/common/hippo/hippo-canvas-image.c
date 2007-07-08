@@ -219,7 +219,7 @@ set_surface_from_name(HippoCanvasImage *image)
         cairo_surface_t *surface;
         HippoCanvasContext *context;
 
-        context = hippo_canvas_box_get_context(HIPPO_CANVAS_BOX(image));
+        context = hippo_canvas_item_get_context(HIPPO_CANVAS_ITEM(image));
 
         /* If context is NULL, we'll call set_surface_from_name again
          * when a new context is set
