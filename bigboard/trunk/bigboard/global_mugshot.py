@@ -1,5 +1,6 @@
+import os,sys
 import logging, inspect, xml.dom, xml.dom.minidom, functools
-import StringIO, urlparse, urllib, subprocess, time
+import StringIO, urlparse, urllib, subprocess, time, sha
 
 import gobject, dbus
 
@@ -97,6 +98,12 @@ class Mugshot(gobject.GObject):
         self.__create_im_proxy()
 
         self.__reset()        
+        
+        self.__iqcachedir = os.path.expanduser("~/.bigboard/iqcache")
+        try:
+            os.makedirs(self.__iqcachedir)
+        except OSError, e:
+            pass        
         
     def __reset(self):
         self._logger.debug("reset")  
@@ -218,8 +225,11 @@ class Mugshot(gobject.GObject):
     @log_except(_logger)
     def __externalIQReturn(self, id, content):
         if self.__external_iqs.has_key(id):
-            self._logger.debug("got external IQ reply for %d (%d outstanding)", id, len(self.__external_iqs.keys())-1)            
-            self.__external_iqs[id](content)
+            self._logger.debug("got external IQ reply for %d (%d outstanding)", id, len(self.__external_iqs.keys())-1)
+            (cb, iqkey) = self.__external_iqs[id]
+            iqfile = os.path.join(self.__iqcachedir, iqkey)
+            open(iqfile, 'w').write(content)
+            cb(content)            
             del self.__external_iqs[id]
     
     def get_entity(self, guid):
@@ -288,7 +298,7 @@ class Mugshot(gobject.GObject):
             self.__network[guid].update(attrs)        
         if connect:
             proxy.connect_to_signal("Changed", 
-                                    self.__on_get_network_entity_props,
+                                    functools.partial(self.__on_get_network_entity_props, None),
                                     'org.mugshot.Mugshot.Entity')
         
     
@@ -298,7 +308,7 @@ class Mugshot(gobject.GObject):
         self.__network = {}
         for opath in opaths:
             proxy = dbus.SessionBus().get_object(globals.bus_name, opath)
-            proxy.GetProperties(reply_handler=functools.partial(self.__on_get_network_entity_props, None, connect=True),
+            proxy.GetProperties(reply_handler=functools.partial(self.__on_get_network_entity_props, proxy, connect=True),
                                 error_handler=self.__on_dbus_error)              
     
     def get_network(self):
@@ -313,9 +323,22 @@ class Mugshot(gobject.GObject):
         #print cookies
         return cookies
 
+    def __iq_key(self, name, xmlns, attrs):
+        return sha.new(name+xmlns+repr(attrs)).hexdigest()
+
     def __do_external_iq(self, name, xmlns, cb, attrs=None, content="", is_set=False):
         """Sends a raw IQ request to Mugshot server, indirecting
-        via D-BUS to client."""     
+        via D-BUS to client."""
+        if not is_set:
+            # Check the cache
+            iqkey = self.__iq_key(name, xmlns, attrs)
+            iqfile = os.path.join(self.__iqcachedir, iqkey)
+            if os.access(iqfile, os.R_OK):
+                cachedata = open(iqfile).read()
+                gobject.idle_add(log_except(_logger)(cb), cachedata)
+        gobject.idle_add(log_except(_logger)(functools.partial(self.__do_external_iq_uncached, iqkey, name, xmlns, cb, attrs=attrs, content=content, is_set=is_set)))
+    
+    def __do_external_iq_uncached(self, iqkey, name, xmlns, cb, attrs=None, content="", is_set=False):
         if self.__proxy is None:
             self._logger.warn("No Mugshot active, not sending IQ")
             return
@@ -328,8 +351,7 @@ class Mugshot(gobject.GObject):
             flattened_attrs.append(k)
             flattened_attrs.append(v)
         id = self.__proxy.SendExternalIQ(is_set, name, flattened_attrs, content)
-        self.__external_iqs[id] = cb
-        return id
+        self.__external_iqs[id] = (cb, iqkey)
         
     def __on_get_person_accounts(self, person, xml_str):
         doc = xml.dom.minidom.parseString(xml_str) 
@@ -367,9 +389,9 @@ class Mugshot(gobject.GObject):
         person.set_external_accounts(accts)
         
     def get_person_accounts(self, person):
-        return self.__do_external_iq("whereim", "http://dumbhippo.com/protocol/whereim",
-                                     lambda node: self.__on_get_person_accounts(person, node),
-                                     attrs={'who': person.get_guid()})
+        self.__do_external_iq("whereim", "http://dumbhippo.com/protocol/whereim",
+                              lambda node: self.__on_get_person_accounts(person, node),
+                              attrs={'who': person.get_guid()})
     
     def __load_app_from_xml(self, node):
         id = node.getAttribute("id")
