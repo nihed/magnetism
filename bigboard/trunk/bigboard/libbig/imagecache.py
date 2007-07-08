@@ -43,6 +43,6 @@ class URLImageCache(Singleton):
         del self._loads[url]            
         
     def _do_load_error(self, url, exc_info):
-        for cb,errcb in self._loads[url]:
+        for cb,errcb,fmt in self._loads[url]:
             errcb(url, exc_info)
         del self._loads[url]        
