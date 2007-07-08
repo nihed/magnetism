@@ -23,14 +23,19 @@ bigboard_PYTHON = __init__.py \
                   deskbar_embed.py \
                   google.py \
                   keyring.py \
+                  layout_utils.py \
                   libgimmie.py \
-                  mugshot.py \
+                  global_mugshot.py \
                   globals.py \
 		  overview_layout.py \
+		  overview_table.py \
+                  people_tracker.py \
                   presence.py \
                   profile.py \
                   slideout.py \
-		  stock.py
+		  stock.py \
+		  sync.py \
+		  table_layout.py
 
 libbigdir=$(bigboarddir)/libbig
 libbig_PYTHON = libbig/__init__.py \
