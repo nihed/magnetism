@@ -13,10 +13,11 @@ bigboard.libbig.httpcache._cache = bigboard.libbig.httpcache.Cache(cachedir=os.p
 from bigboard.libbig.http import AsyncHTTPFetcher
 from bigboard.libbig.imagecache import URLImageCache
 import bigboard.keybinder
-import bigboard.mugshot as mugshot
+import bigboard.global_mugshot as mugshot
 import bigboard.deskbar_embed as deskbar_embed
 
-_logger = logging.getLogger("bigboard.Applet")
+global _logger
+_logger = None
 
 class ScaledPixbufImage(gtk.Image):
     def __init__(self):
@@ -61,7 +62,6 @@ class UrlScaledPixbufImage(ScaledPixbufImage):
     
 class BigBoardApplet(gobject.GObject):
     def __init__(self, applet, iid):
-        _logger.debug("constructing")
         super(BigBoardApplet, self).__init__()
         self.__applet = applet
         self.__iid = iid
@@ -82,6 +82,7 @@ class BigBoardApplet(gobject.GObject):
 
         _logger.debug("getting mugshot")
         self.__mugshot = mugshot.get_mugshot()
+        self.__mugshot.connect("self-known", self.__sync)
         self.__mugshot.connect("connection-status", self.__on_conn_status)
         
         ebox = gtk.EventBox()
@@ -99,7 +100,7 @@ class BigBoardApplet(gobject.GObject):
 
         self.__applet.add(self.__box)
         self.__applet.set_applet_flags(gnomeapplet.EXPAND_MINOR)
-		self.__applet.connect('change-size', lambda applet, orient: self.__on_change_size())
+        self.__applet.connect('change-size', lambda applet, orient: self.__on_change_size())
 
         self.__sync()
 
@@ -170,11 +171,14 @@ class BigBoardApplet(gobject.GObject):
         if have_auth and connected:
             self.__sync()
 
-    def __sync(self):
+    def __on_conn_status(self, *args):
+        self.__sync()
+
+    def __sync(self, *args):
         myself = self.__mugshot.get_self()
         _logger.debug("self: %s", myself)
         if myself:
-            url = urlparse.urljoin(mugshot.get_mugshot().get_baseurl(), myself.get_photo_url()) 
+            url = urlparse.urljoin(self.__mugshot.get_baseurl(), myself.get_photo_url()) 
             _logger.debug("loading self url: %s", url)
             self.__img.set_url(url)
         
@@ -205,6 +209,7 @@ if __name__ == "__main__":
         default_log_level = 'DEBUG'
 
     bigboard.libbig.logutil.init(default_log_level, debug_modules, 'bigboard.')
+    _logger = logging.getLogger("bigboard.Applet")
 
     if window:
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
