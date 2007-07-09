@@ -78,20 +78,18 @@ class MetaSingleton(type):
 class Singleton(object):
     __metaclass__ = MetaSingleton
     
-    def getInstance(cls, *lstArgs):
+    def getInstance(cls, *lstArgs, **kwargs):
         """
         Call this to instantiate an instance or retrieve the existing instance.
         If the singleton requires args to be instantiated, include them the first
         time you call getInstance.        
         """
         if cls._isInstantiated():
-            if len(lstArgs) != 0:
+            if len(lstArgs) != 0 or len(kwargs) != 0:
                 raise SingletonException, 'If no supplied args, singleton must already be instantiated, or __init__ must require no args'
         else:
-            if cls._getConstructionArgCountNotCountingSelf() > 0 and len(lstArgs) <= 0:
-                raise SingletonException, 'If the singleton requires __init__ args, supply them on first instantiation'
             instance = cls.__new__(cls)
-            instance.__init__(*lstArgs)
+            instance.__init__(*lstArgs, **kwargs)
             cls.cInstance = instance
         return cls.cInstance
     getInstance = classmethod(getInstance)
@@ -99,10 +97,6 @@ class Singleton(object):
     def _isInstantiated(cls):
         return hasattr(cls, 'cInstance')
     _isInstantiated = classmethod(_isInstantiated)  
-
-    def _getConstructionArgCountNotCountingSelf(cls):
-        return cls.__init__.im_func.func_code.co_argcount - 1
-    _getConstructionArgCountNotCountingSelf = classmethod(_getConstructionArgCountNotCountingSelf)
 
     def _forgetClassInstanceReferenceForTesting(cls):
         """
