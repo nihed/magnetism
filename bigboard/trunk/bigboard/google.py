@@ -1,15 +1,18 @@
-import sys, logging, threading, datetime, re
+import sys, logging, threading, datetime, re, functools
 import xml, xml.sax
 
 import hippo, gobject, gtk, dbus, dbus.glib
 
 import httplib2
 import gdata.calendar as gcalendar
+from bigboard.libbig.http import AsyncHTTPFetcher
 from bigboard import libbig
 import bigboard.keyring as keyring
 import libbig.logutil
 from libbig.struct import AutoStruct, AutoSignallingStruct
 import libbig.polling
+
+_logger = logging.getLogger("bigboard.Google")
 
 class AbstractDocument(AutoStruct):
     def __init__(self):
@@ -239,40 +242,28 @@ class NewMailParser(xml.sax.ContentHandler):
     def get_new_mails(self):
         return self.__mails
 
-class AsyncHTTPLib2Fetcher:
-    """Asynchronously fetch objects over HTTP, invoking
-       callbacks using the GLib main loop."""
-    def fetch(self, url, username, password, cb, errcb, authcb):
-        self.__logger = logging.getLogger("bigboard.AsyncHTTPLib2Fetcher")
-        #self.__logger.debug('creating async HTTP request thread for %s' % (url,))
-
-        thread = threading.Thread(target=self._do_fetch, name="AsyncHTTPLib2Fetch", args=(url, username, password, cb, errcb, authcb))
-        thread.setDaemon(True)
-        thread.start()
+class AsyncHTTPFetcherWithAuth(object):
+    def __init__(self):
+        super(AsyncHTTPFetcherWithAuth, self).__init__()
+        self.__fetcher = AsyncHTTPFetcher()
         
-    def _do_fetch(self, url, username, password, cb, errcb, authcb):
-        #self.__logger.debug("in thread fetch of %s" % (url,))
-        try:
-            h = httplib2.Http()
-            h.add_credentials(username, password)
-            h.follow_all_redirects = True
-
-            #self.__logger.debug("sending http request")
-
-            headers, data = h.request(url, "GET", headers = {})
-
-            if headers.status == 401:
-                self.__logger.error("auth failure for fetch of %s: %s" % (url, headers.status))
-                gobject.idle_add(lambda: authcb(url) and False)
-            else:
-                #self.__logger.debug("adding idle after http request")
-                pass
-
-                gobject.idle_add(lambda: cb(url, data) and False)
-        except Exception, e:
-            self.__logger.error("caught error for fetch of %s: %s" % (url, e))
+    def fetch(self, url, username, password, cb, errcb, authcb):
+        self.__fetcher.fetch_extended(url=url, cb=cb, 
+                                      response_errcb=functools.partial(self.__handle_response_error, authcb, errcb),
+                                      setupfn=functools.partial(self.__http_setupfn, username, password))
+        
+    def __http_setupfn(self, username, password, h):
+        h.add_credentials(username, password)
+        h.follow_all_redirects = True
+        
+    def __handle_response_error(self, authcb, errcb, response, content):
+        if response.status == 401:
+            _logger.debug("auth failure for fetch of %s; invoking auth callback", url)
+            gobject.idle_add(lambda: authcb(url) and False)
+        else:
+            _logger.error("caught error for fetch of %s (status %s)", url, response.status)
             # in my experience sys.exc_info() is some kind of junk here, while "e" is useful
-            gobject.idle_add(lambda: errcb(url, sys.exc_info()) and False)
+            gobject.idle_add(lambda: errcb(url, response) and False)
 
 ## interface to be implemented by an authentication UI
 class AuthUI:
@@ -521,7 +512,7 @@ class Google(gobject.GObject):
         self.__logger = logging.getLogger("bigboard.Google")
         self.__username = None
         self.__password = None
-        self.__fetcher = AsyncHTTPLib2Fetcher()
+        self.__fetcher = AsyncHTTPFetcherWithAuth()
         self.__auth_dialog = None
         self.__auth_uis = []
         self.__post_auth_hooks = []
@@ -630,9 +621,6 @@ class Google(gobject.GObject):
         except xml.sax.SAXException, e:
             errcb(sys.exc_info())
 
-    def __on_calendar_error(self, url, exc_info, errcb):
-        self.__logger.debug("error loading calendar from " + url)
-        errcb(exc_info)
 
     def __have_login_fetch_calendar(self, cb, errcb):
 
@@ -640,7 +628,7 @@ class Google(gobject.GObject):
 
         self.__fetcher.fetch(uri, self.__username, self.__password,
                              lambda url, data: self.__on_calendar_load(url, data, cb, errcb),
-                             lambda url, exc_info: self.__on_calendar_error(url, exc_info, errcb),
+                             lambda url, resp: errcb(resp),
                              lambda url: self.__on_bad_auth(lambda: self.__have_login_fetch_calendar(cb, errcb)))
 
     def fetch_calendar(self, cb, errcb):
