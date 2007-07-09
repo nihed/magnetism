@@ -215,9 +215,11 @@ class AppExtras(CanvasVBox):
         self.__sync()
 
     def __on_more_popular(self, w):
+        subquery = (self.__search and ("?q=" + urllib.quote(self.__search))) \
+                    or self.__catname and ("?category=" + urllib.quote(self.__catname)) \
+                    or ''
         libbig.show_url(urlparse.urljoin(global_mugshot.get_mugshot().get_baseurl(),
-                                         "applications%s" % ((self.__search and ("?q=" + urllib.quote(self.__search)))
-                                                             or self.__catname and ("?category=" + urllib.quote(self.__catname)))))
+                                         "applications%s" % (subquery,)))
         # more-info with None just means hide window
         self.emit("more-info", None)
 
