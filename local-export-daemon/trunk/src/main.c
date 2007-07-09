@@ -175,7 +175,7 @@ request_bus_name(DBusConnection *connection,
 static char*
 get_session_guid_hack(void)
 {
-    /* We need a dbus_connection_get_server_guid(); until then we have to do this */
+    /* This is a fallback for 1.0 dbus daemons that don't support dbus_bus_get_id() */
     const char *address = g_getenv("DBUS_SESSION_BUS_ADDRESS");
     const char *s;
 
