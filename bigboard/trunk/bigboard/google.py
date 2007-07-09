@@ -1,8 +1,10 @@
-import httplib2, sys, logging, threading, datetime, re
+import sys, logging, threading, datetime, re
 import xml, xml.sax
 
 import hippo, gobject, gtk, dbus, dbus.glib
 
+import httplib2
+import gdata.calendar as gcalendar
 from bigboard import libbig
 import bigboard.keyring as keyring
 import libbig.logutil
@@ -620,6 +622,8 @@ class Google(gobject.GObject):
     def __on_calendar_load(self, url, data, cb, errcb):
         self.__logger.debug("loaded calendar from " + url)
         try:
+            calendar = gcalendar.CalendarEventFeedFromString(data)
+            self.__logger.debug("number of entries: %s ", len(calendar.entry))
             p = EventsParser()
             xml.sax.parseString(data, p)
             cb(p.get_events())
