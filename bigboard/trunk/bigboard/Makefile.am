@@ -40,7 +40,6 @@ bigboard_PYTHON = __init__.py \
 libbigdir=$(bigboarddir)/libbig
 libbig_PYTHON = libbig/__init__.py \
 	       	libbig/dbusutil.py \
-	       	libbig/httpcache.py \
 	       	libbig/http.py \
 	       	libbig/imagecache.py \
 	       	libbig/logutil.py \
