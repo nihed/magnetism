@@ -24,9 +24,9 @@ class URLImageCache(Singleton):
         else:
             self._loads[url] = [cbdata]
             self.__logger.debug("adding url='%s' to pending loads (%d outstanding)" % (url, len(self._loads.keys())))        
-            self._fetcher.fetch(url, self._do_load, self._do_load_error)
+            self._fetcher.refetch(url, self._do_load, self._do_load_error)
         
-    def _do_load(self, url, data):
+    def _do_load(self, url, data, is_refetch=False):
         try:
             loader = gtk.gdk.PixbufLoader()
             # the write and close can both throw
@@ -40,7 +40,8 @@ class URLImageCache(Singleton):
         except:
             for cb, errcb, fmt in self._loads[url]:
                 errcb(url, sys.exc_info())
-        del self._loads[url]            
+        if not is_refetch:
+            del self._loads[url]            
         
     def _do_load_error(self, url, exc_info):
         for cb,errcb,fmt in self._loads[url]:

@@ -62,6 +62,15 @@ class AsyncHTTPFetcher(Singleton):
             t.setDaemon(True)
             t.start()        
        
+    def refetch(self, url, cb, errcb, **kwargs):
+        headers = {'Cache-Control': 'only-if-cached'}
+        h = httplib2.Http(cache=_cache)
+        (response, content) = h.request(url, headers=headers)
+        if response.status == 200:
+            self.__logger.debug("using immediate cached value for url: %s", url)
+            cb(url, content, is_refetch=True)
+        self.fetch(url, cb, errcb, **kwargs)
+       
     def fetch(self, url, cb, errcb, data=None, cookies=None):
         self.__work_lock.acquire()
         self.__work_queue.append((url, cb, errcb, data, cookies))
