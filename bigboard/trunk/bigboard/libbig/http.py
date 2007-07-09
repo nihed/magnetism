@@ -32,22 +32,24 @@ class ThreadsafeFileCache(httplib2.FileCache):
         finally:
             self.__lock.release()
         
-class HomeDirCache(ThreadsafeFileCache, Singleton):
-    def __init__(self):
-        path = os.path.expanduser('~/.bigboard/httpcache')
+class FileCache(ThreadsafeFileCache):
+    def __init__(self, path=None):
+        path = path or os.path.expanduser('~/.bigboard/httpcache')
         try:
             os.makedirs(path)
         except OSError, e:
             pass
         httplib2.FileCache.__init__(self, path)
-_cache = HomeDirCache()
 
 class AsyncHTTPFetcher(Singleton):
     """Asynchronously fetch objects over HTTP, invoking
        callbacks using the GLib main loop."""
    
-    def __init__(self):
+    def __init__(self, cache=None):
+        super(AsyncHTTPFetcher, self).__init__()
         self.__logger = logging.getLogger("bigboard.AsyncHTTPFetcher")
+        
+        self.__cache = cache or FileCache()
         
         self.__worker_count = 6
         self.__work_lock = threading.RLock()
@@ -64,7 +66,7 @@ class AsyncHTTPFetcher(Singleton):
        
     def refetch(self, url, cb, errcb, **kwargs):
         headers = {'Cache-Control': 'only-if-cached'}
-        h = httplib2.Http(cache=_cache)
+        h = httplib2.Http(cache=self.__cache)
         (response, content) = h.request(url, headers=headers)
         if response.status == 200:
             self.__logger.debug("using immediate cached value for url: %s", url)
@@ -84,6 +86,14 @@ class AsyncHTTPFetcher(Singleton):
                    lambda url, data: self.__handle_xml_method_return(url, data, cb, normerrcb),
                    errcb,
                    data=formdata)
+        
+    def xml_method_refetch(self, url, params, cb, normerrcb, errcb):
+        formdata = urllib.urlencode(params)
+        self.__logger.debug("doing XML method request (using cache) '%s' params: '%s'", url, formdata)
+        self.refetch(url,
+                     lambda url, data, is_refetch=False: self.__handle_xml_method_return(url, data, cb, normerrcb),
+                     errcb,
+                     data=formdata)        
 
     def __handle_xml_method_return(self, url, data, cb, normerrcb):
         doc = xml.dom.minidom.parseString(data) 
@@ -113,7 +123,7 @@ class AsyncHTTPFetcher(Singleton):
 
     def __do_fetch(self, url, cb, errcb, data, cookies):
         self.__logger.debug("in thread fetch of %s (%s)" % (url, data))
-        h = httplib2.Http(cache=_cache)
+        h = httplib2.Http(cache=self.__cache)
         kwargs = {}
         if data:
             kwargs['method'] = 'POST'

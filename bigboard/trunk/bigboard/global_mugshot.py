@@ -509,11 +509,11 @@ class Mugshot(gobject.GObject):
         self._logger.error("failed to get all apps: %s", args)
 
     def request_all_apps(self):
-        AsyncHTTPFetcher().xml_method(urlparse.urljoin(self.get_baseurl(), '/xml/allapplications'),
-                                      {},
-                                      self.__on_all_applications,
-                                      self.__on_all_applications_error,
-                                      self.__on_all_applications_error)
+        AsyncHTTPFetcher().xml_method_refetch(urlparse.urljoin(self.get_baseurl(), '/xml/allapplications'),
+                                              {},
+                                              self.__on_all_applications,
+                                              self.__on_all_applications_error,
+                                              self.__on_all_applications_error)
         
     def __request_pinned_apps(self):
         self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications",
