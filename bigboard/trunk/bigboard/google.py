@@ -3,7 +3,6 @@ import xml, xml.sax
 
 import hippo, gobject, gtk, dbus, dbus.glib
 
-import httplib2
 import gdata.calendar as gcalendar
 from bigboard.libbig.http import AsyncHTTPFetcher
 from bigboard import libbig
@@ -243,6 +242,8 @@ class NewMailParser(xml.sax.ContentHandler):
         return self.__mails
 
 class AsyncHTTPFetcherWithAuth(object):
+    """Small proxy class which expects username/password combinations for fetch(),
+    and supports invoking a callback on 401."""
     def __init__(self):
         super(AsyncHTTPFetcherWithAuth, self).__init__()
         self.__fetcher = AsyncHTTPFetcher()
