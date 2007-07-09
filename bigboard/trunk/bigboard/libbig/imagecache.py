@@ -24,7 +24,7 @@ class URLImageCache(Singleton):
         else:
             self._loads[url] = [cbdata]
             self.__logger.debug("adding url='%s' to pending loads (%d outstanding)" % (url, len(self._loads.keys())))        
-            self._fetcher.fetch(url, self._do_load, self._do_load_error, cache_time=-1)
+            self._fetcher.fetch(url, self._do_load, self._do_load_error)
         
     def _do_load(self, url, data):
         try:
