@@ -245,6 +245,7 @@ main(int argc, char **argv)
     session_id = dbus_bus_get_id(connection, &derror);
     if (session_id == NULL) {
         g_printerr("Failed to get session bus ID: %s\n", derror.message);
+        dbus_error_free(&derror);
         /* this fallback is to fix the case where we upgrade the dbus package,
          * but the session bus hasn't restarted yet
          */
