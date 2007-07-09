@@ -181,7 +181,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             display = EventDisplay(event)
             self.__box.append(display)
 
-    def __on_failed_load(self, exc_info):
+    def __on_failed_load(self, response):
         pass
             
     def __update_events(self):

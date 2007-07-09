@@ -73,11 +73,17 @@ class AsyncHTTPFetcher(Singleton):
             cb(url, content, is_refetch=True)
         self.fetch(url, cb, errcb, **kwargs)
        
-    def fetch(self, url, cb, errcb, data=None, cookies=None):
+    def fetch(self, url, cb, errcb, **kwargs):
+        kwargs['url'] = url
+        kwargs['cb'] = cb
+        kwargs['errcb'] = errcb
+        self.fetch_extended(**kwargs)
+        
+    def fetch_extended(self, **kwargs):
         self.__work_lock.acquire()
-        self.__work_queue.append((url, cb, errcb, data, cookies))
+        self.__work_queue.append((kwargs,))
         self.__work_cond.notify()
-        self.__work_lock.release()
+        self.__work_lock.release()        
 
     def xml_method(self, url, params, cb, normerrcb, errcb):
         formdata = urllib.urlencode(params)
@@ -121,28 +127,33 @@ class AsyncHTTPFetcher(Singleton):
             self.__work_lock.release()            
             self.__do_fetch(*args)
 
-    def __do_fetch(self, url, cb, errcb, data, cookies):
-        self.__logger.debug("in thread fetch of %s (%s)" % (url, data))
+    def __do_fetch(self, kwargs):
+        url = kwargs['url']     
+        self.__logger.debug("in thread fetch of %s" % (url,))
         h = httplib2.Http(cache=self.__cache)
-        kwargs = {}
-        if data:
-            kwargs['method'] = 'POST'
-            kwargs['body'] = data
-        if cookies:
+        if 'setupfn' in kwargs:
+            kwargs['setupfn'](h)
+        http_kwargs = {}
+        if 'data' in kwargs:
+            http_kwargs['method'] = 'POST'
+            http_kwargs['body'] = kwargs['data']
+        if 'cookies' in kwargs:
             headers={}
-            kwargs['headers'] = headers
+            http_kwargs['headers'] = headers
             # oddly, apparently there's no escaping here
-            cookie_str = ','.join(["%s=%s" % x for x in cookies])
-            headers['Cookie'] = cookie_str       
-        (response, content) = h.request(url, **kwargs)
+            cookie_str = ','.join(["%s=%s" % x for x in kwargs['cookies']])
+            headers['Cookie'] = cookie_str
+        (response, content) = h.request(url, **http_kwargs)
         if response.status == 200:
-            gobject.idle_add(lambda: self.__emit_results(url, data, cb, content))
+            gobject.idle_add(lambda: self.__emit_results(url, kwargs['cb'], content))
+        elif 'response_errcb' in kwargs:
+            gobject.idle_add(lambda: kwargs['response_errcb'](response, content))
         else:
-            self.__logger.info("caught error for fetch of %s (status: %s)" % (url, response.status))
-            # in my experience sys.exc_info() is some kind of junk here, while "e" is useful
-            gobject.idle_add(lambda: errcb(url, sys.exc_info()) and False)
+            self.__logger.info("caught error for fetch of %s (status: %s)" % (url, response.status))     
+            if 'errcb' in kwargs:           
+                gobject.idle_add(lambda: kwargs['errcb'](url) and False)
 
-    def __emit_results(self, url, data, cb, fdata):
+    def __emit_results(self, url, cb, fdata):
         self.__logger.debug("fetch of %s complete with %d bytes" % (url,len(fdata)))
         cb(url, fdata)
     
