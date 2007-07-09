@@ -51,6 +51,12 @@ typedef struct {
     char *domain;
 } ServiceId;
 
+typedef struct {
+    int refcount;    
+    ServiceId id;    
+    AvahiServiceResolver *resolver;
+} Resolver;
+
 /* FIXME Each session may be advertised on multiple
  * interfaces/protocols, e.g. ipv4 and v6. Also, hostile peers might
  * forge duplicate session IDs for two sessions that are really
@@ -62,7 +68,6 @@ typedef struct {
     int refcount;    
     SessionState state;
     ServiceId id;
-    AvahiServiceResolver *resolver; /* non-null only if we've successfully resolved */
     char *host_name;
     AvahiAddress address;
     guint16 port;
@@ -83,7 +88,26 @@ typedef struct {
 
 static AvahiServiceBrowser *service_browser = NULL;
 static GTree *session_tree_by_service = NULL;
+static GTree *resolver_tree_by_service = NULL;
 /* static GHashTable *session_hash_by_session_id = NULL; */
+
+static void
+service_id_free_fields(ServiceId *id)
+{
+    g_free(id->name);
+    g_free(id->type);
+    g_free(id->domain);
+}
+
+static void
+service_id_init_fields(ServiceId       *id,
+                       const ServiceId *orig)
+{
+    *id = *orig;
+    id->name = g_strdup(orig->name);
+    id->type = g_strdup(orig->type);
+    id->domain = g_strdup(orig->domain);
+}
 
 static void
 session_ref(Session *session)
@@ -97,13 +121,7 @@ session_unref(Session *session)
     g_assert(session->refcount > 0);
     session->refcount -= 1;
     if (session->refcount == 0) {
-        if (session->resolver) {
-            avahi_service_resolver_free(session->resolver);
-            session->resolver = NULL;
-        }
-        g_free(session->id.name);
-        g_free(session->id.type);
-        g_free(session->id.domain);
+        service_id_free_fields(&session->id);
         g_free(session->host_name);
         g_free(session->machine_id);
         g_free(session->session_id);
@@ -123,10 +141,7 @@ session_new(const ServiceId    *id)
     session = g_new0(Session, 1);
     session->refcount = 1;
     session->state = SESSION_STATE_RESOLVING;
-    session->id = *id;
-    session->id.name = g_strdup(session->id.name);
-    session->id.type = g_strdup(session->id.type);
-    session->id.domain = g_strdup(session->id.domain);
+    service_id_init_fields(&session->id, id);
     
     return session;
 }
@@ -161,15 +176,7 @@ remove_session_by_service(Session *session)
         change_set = session_infos_pop_change_notify_set(session->infos);
         session_api_notify_changed(session->infos, change_set);
         session_change_notify_set_free(change_set);
-    }
-    
-    /* no more callbacks on this session */
-    if (session->resolver) {
-        avahi_service_resolver_free(session->resolver);
-        session->resolver = NULL;
-        /* resolver owns one ref to the session */
-        session_unref(session);
-    }
+    }    
 
     session_unref(session); /* drop the ref owned by the tree */
 }
@@ -465,6 +472,51 @@ session_connect(Session *session)
     g_free(dbus_address);
 }
 
+static void
+resolver_ref(Resolver *resolver)
+{
+    resolver->refcount += 1;
+}
+
+static void
+resolver_unref(Resolver *resolver)
+{
+    g_assert(resolver->refcount > 0);
+    resolver->refcount -= 1;
+    if (resolver->refcount == 0) {
+        service_id_free_fields(&resolver->id);
+
+        if (resolver->resolver) /* only NULL if we failed to create it in resolver_new */
+            avahi_service_resolver_free(resolver->resolver);
+        
+        g_free(resolver);
+    }
+}
+
+static Resolver*
+get_resolver_by_service(const ServiceId *id)
+{
+    return g_tree_lookup(resolver_tree_by_service, id);
+}
+
+static void
+add_resolver_by_service(Resolver *resolver)
+{
+    g_tree_insert(resolver_tree_by_service,
+                  &resolver->id,
+                  resolver);
+    resolver_ref(resolver);
+}
+
+static void
+remove_resolver_by_service(Resolver *resolver)
+{
+    g_tree_remove(resolver_tree_by_service,
+                  &resolver->id);
+    
+    resolver_unref(resolver); /* drop the ref owned by the tree */
+}
+
 static char*
 get_txt_record(AvahiStringList *list,
                const char      *key)
@@ -535,20 +587,35 @@ resolve_callback(AvahiServiceResolver *r,
                  void* data)
 {
     /* Called whenever a service has been resolved successfully or timed out */
-    Session *session = data;
+    Resolver *resolver = data;
+    Session *session;
 
+    session = get_session_by_service(&resolver->id);
+    
     switch (event) {
     case AVAHI_RESOLVER_FAILURE:
         /* This can happen on "change notification" (after we already found the
          * session once) it seems?
          */
         g_debug("service failed to resolve, dropping it");
-        session_fail_resolve(session);
+        if (session != NULL)
+            session_fail_resolve(session);
+
+        /* not sure we should free the resolver? can it still get "FOUND" later?
+         * With this setup, we will need another browser event to recreate it.
+         */
+        remove_resolver_by_service(resolver);
         break;
         
     case AVAHI_RESOLVER_FOUND:
         g_debug("Resolved %s:%d", host_name, port);
         
+        if (session == NULL) {
+            session = session_new(&resolver->id);
+            add_session_by_service(session); /* this increments the refcount */
+            session_unref(session); /* drop our refcount from new() */
+        }
+
         if (session->state == SESSION_STATE_RESOLVING) {
             session->host_name = g_strdup(host_name);
             session->address = *address;
@@ -559,12 +626,9 @@ resolve_callback(AvahiServiceResolver *r,
              */
             session->machine_id = get_txt_record(txt, "org.freedesktop.od.machine");
             session->session_id = get_txt_record(txt, "org.freedesktop.od.session");
-
-            /* Keep the resolver around, to get change notifications */
-            session->resolver = r;
             
             session_connect(session);
-        } else if (session->resolver == r) {
+        } else {
             /* Presumably a change notification */
             guint32 new_serial;
             char *new_machine_id;
@@ -603,22 +667,49 @@ resolve_callback(AvahiServiceResolver *r,
                 /* Connect again */
                 session_connect(session); 
             }
-        } else {
-            g_debug("new resolve but resolver is %p and new resolve is %p\n",
-                    session->resolver, r);
         }
         break;
     default:
         g_debug("Unknown resolver event");
         break;
     }
+}
 
-    /* if we didn't save the resolver, get rid of it */
-    if (session->resolver != r) {
-        avahi_service_resolver_free(r);
-        /* and one ref owned by the resolver */
-        session_unref(session);
+static Resolver*
+resolver_new(const ServiceId      *id)
+{
+    Resolver *resolver;
+
+    resolver = g_new0(Resolver, 1);
+    resolver->refcount = 1;
+    service_id_init_fields(&resolver->id, id);
+
+    /* According to the Avahi examples "if the server is
+     * terminated before the callback function is called the
+     * server will free the resolver for us." I'm not sure
+     * what "server is terminated" means, but I don't see how
+     * we could handle Avahi freeing the resolver out from
+     * under us. For now, we'll just hope it doesn't do that.
+     */
+    
+    resolver->resolver = avahi_service_resolver_new(avahi_glue_get_client(),
+                                                    resolver->id.interface,
+                                                    resolver->id.protocol,
+                                                    resolver->id.name,
+                                                    resolver->id.type,
+                                                    resolver->id.domain,
+                                                    AVAHI_PROTO_UNSPEC, 0,
+                                                    resolve_callback,
+                                                    resolver /* callback data */);
+
+    if (resolver->resolver == NULL) {
+        g_printerr("Failed to create service resolver: '%s': %s\n", resolver->id.name,
+                   avahi_strerror(avahi_client_errno(avahi_glue_get_client())));
+        resolver_unref(resolver);
+        return NULL;
     }
+    
+    return resolver;
 }
 
 static void
@@ -650,52 +741,32 @@ browse_callback(AvahiServiceBrowser *b,
 
     case AVAHI_BROWSER_NEW:
         {
-            AvahiServiceResolver *resolver;
-            Session *session;
+            Resolver *resolver;
 
             g_debug("Browsed %s", name);
             
-            session = get_session_by_service(&id);
-            if (session != NULL) {
-                /* Should not happen - we already browsed this thing. Print a warning and ignore. */
-                g_warning("Avahi reported a service we already knew about?\n");
-                return;
+            resolver = resolver_new(&id);
+            if (resolver != NULL) {
+                add_resolver_by_service(resolver);
+                resolver_unref(resolver);
             }
-            session = session_new(&id);
-            add_session_by_service(session); /* this increments the refcount */
-            session_ref(session); /* the resolver below will own one ref */
-            /* there are now 3 refs on session */
-            
-            /* We ignore the returned resolver object here. In the
-             * callback function we free it or save it in the Session
-             * object. If the server is terminated before the callback
-             * function is called the server will free the resolver
-             * for us. (I'm not sure what "server is terminated" means, but
-             * I guess we leak the session in that case... FIXME)
-             */
-            resolver = avahi_service_resolver_new(avahi_glue_get_client(),
-                                                  interface, protocol, name, type, domain, AVAHI_PROTO_UNSPEC, 0,
-                                                  resolve_callback, session /* callback data */);
-            if (resolver == NULL) {
-                g_printerr("Failed to create service resolver: '%s': %s\n", name,
-                           avahi_strerror(avahi_client_errno(avahi_glue_get_client())));
-            }
-
-            /* drop our ref */
-            session_unref(session);
         }
         break;
 
     case AVAHI_BROWSER_REMOVE:
         {
+            Resolver *resolver;
             Session *session;
 
-            session = get_session_by_service(&id);
-            if (session == NULL) {
-                /* removed before we ever added it, I guess */
-                return;
+            resolver = get_resolver_by_service(&id);
+            if (resolver != NULL) {
+                remove_resolver_by_service(resolver);
             }
-            remove_session_by_service(session); /* should drop all refs */
+            
+            session = get_session_by_service(&id);
+            if (session != NULL) {
+                remove_session_by_service(session);
+            }
         }
         break;
 
@@ -760,6 +831,7 @@ avahi_scanner_init(void)
     g_assert(service_browser == NULL);
 
     session_tree_by_service = g_tree_new(service_id_cmp);
+    resolver_tree_by_service = g_tree_new(service_id_cmp);
     
     service_browser = avahi_service_browser_new(avahi_glue_get_client(),
                                                 AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_freedesktop_local_export._tcp",
