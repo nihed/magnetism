@@ -224,7 +224,7 @@ bigboard_gnomekeyring_find_items_sync(PyObject *self, PyObject *args, PyObject *
     py_found = PyList_New(0);
     for (l = found; l; l = l->next)
     {
-        PyObject *item = pyg_boxed_new(type, l->data, FALSE, TRUE);
+        PyObject *item = pyg_boxed_new(keyring_found_type, l->data, FALSE, TRUE);
         PyList_Append(py_found, item);
         Py_DECREF(item);
     }
