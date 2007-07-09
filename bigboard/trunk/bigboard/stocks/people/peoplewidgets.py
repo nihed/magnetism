@@ -260,5 +260,4 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
 
     def __on_activate_aim(self, canvas_item):
         self.emit("close")
-        _open_aim(self.resource.name, self.resource.aim)
-
+        _open_aim(self.resource.aim)
