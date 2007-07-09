@@ -7,9 +7,6 @@ import gtk, gobject, gnomeapplet, dbus, dbus.glib
 
 import bigboard.libbig
 import bigboard.libbig.logutil
-import bigboard.libbig.httpcache
-# workaround needed until the cache is safe for multiple processes to use
-bigboard.libbig.httpcache._cache = bigboard.libbig.httpcache.Cache(cachedir=os.path.join(os.path.expanduser("~"), '.gnome2', 'bigboard-applet', 'cache'))
 from bigboard.libbig.http import AsyncHTTPFetcher
 from bigboard.libbig.imagecache import URLImageCache
 import bigboard.keybinder
@@ -210,6 +207,10 @@ if __name__ == "__main__":
 
     bigboard.libbig.logutil.init(default_log_level, debug_modules, 'bigboard.')
     _logger = logging.getLogger("bigboard.Applet")
+
+	# Initialize the HTTP library with separate cache
+	cache = bigboard.libbig.http.FileCache(os.path.expanduser('~/.bigboard/applet-httpcache'))
+	fetcher = AsyncHTTPFetcher.getInstance(cache=cache)
 
     if window:
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
