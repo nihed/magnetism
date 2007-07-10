@@ -61,9 +61,11 @@ public class SchemaUpdater {
 	private DataSource dataSource;
 	private Connection connection;
 	private DatabaseMetadata meta;
+	private String classResourceFromJar;
 	
-	private SchemaUpdater(DataSource dataSource) {
+	private SchemaUpdater(DataSource dataSource, String classResourceFromJar) {
 		this.dataSource = dataSource;
+		this.classResourceFromJar = classResourceFromJar;
 	}
 	
 	private void open() throws SQLException {
@@ -91,7 +93,11 @@ public class SchemaUpdater {
 	 */
 	public List<Class<?>> getClasses() {
 		ClassLoader loader = SchemaUpdater.class.getClassLoader();
-		URL resource  = loader.getResource("META-INF/persistence.xml");
+		URL resource = loader.getResource(classResourceFromJar);
+		
+		if (resource == null)
+			throw new RuntimeException("no resource " + classResourceFromJar + 
+					" found, probably you need to fix SchemaUpdater.update() to reflect removing or moving this class");
 		
 		if (!resource.getProtocol().equals("jar"))
 			throw new RuntimeException("Can't list classes for updating because they aren't loaded from a jar");
@@ -240,12 +246,19 @@ public class SchemaUpdater {
 		logger.debug("Updating schemas...");
 		try {
 			DataSource dataSource = (DataSource)(new InitialContext()).lookup("java:/DumbHippoDS");
-			SchemaUpdater updater = new SchemaUpdater(dataSource);
+			SchemaUpdater updater = new SchemaUpdater(dataSource, "com/dumbhippo/persistence/Account.class");
 			
 			updater.open();
 			updater.updateTables();
 			updater.close();
 			 
+			dataSource = (DataSource)(new InitialContext()).lookup("java:/DumbHippoCachesDS");
+			updater = new SchemaUpdater(dataSource, "com/dumbhippo/persistence/caches/CachedItem.class");
+			
+			updater.open();
+			updater.updateTables();
+			updater.close();			
+			
 			logger.debug("Finished updating schemas");
 		} catch (NamingException e) {
 			throw new RuntimeException("Couldn't get DataSource to update schemas", e);
