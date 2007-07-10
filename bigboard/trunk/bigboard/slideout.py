@@ -28,5 +28,5 @@ class Slideout(hippo.CanvasWindow):
     
     def slideout_from(self, x, y):
         self.move(x, y)
-        self.present()
+        self.present_with_time(gtk.get_current_event_time())
     

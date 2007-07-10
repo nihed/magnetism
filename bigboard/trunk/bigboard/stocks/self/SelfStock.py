@@ -10,8 +10,122 @@ import bigboard.globals
 import bigboard.slideout
 import bigboard.global_mugshot as global_mugshot
 import bigboard.libbig as libbig
+from bigboard.workboard import WorkBoard
 from bigboard.stock import Stock, AbstractMugshotStock
 from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink, Separator
+
+_logger = logging.getLogger('bigboard.stocks.SelfStock')
+
+class LoginItem(hippo.CanvasBox):
+    __gsignals__ = {
+        "login" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT))
+    }
+    def __init__(self, svcname):
+        super(LoginItem, self).__init__(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)        
+
+        self.svcname = svcname
+
+        # I can't get Pango to take just "Bold" without a size; not sure what the problem is here
+        self.append(hippo.CanvasText(text=svcname, xalign=hippo.ALIGNMENT_START, font="Bold 12px"))
+        self.__reauth_text = hippo.CanvasText(text='Login incorrect', xalign=hippo.ALIGNMENT_START)
+        self.append(self.__reauth_text)
+        self.set_child_visible(self.__reauth_text, False)
+
+        box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
+        self.append(box)
+
+        box.append(hippo.CanvasText(text="Username:", xalign=hippo.ALIGNMENT_START, border_right=3))
+        self.__username_entry = hippo.CanvasEntry()
+        self.__username_entry.set_property("xalign", hippo.ALIGNMENT_FILL)
+        box.append(self.__username_entry, hippo.PACK_EXPAND)
+
+        box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
+        self.append(box)
+
+        box.append(hippo.CanvasText(text="Password:", xalign=hippo.ALIGNMENT_START, border_right=3))
+        self.__password_entry = hippo.CanvasEntry()
+        self.__password_entry.set_property("xalign", hippo.ALIGNMENT_FILL)
+        box.append(self.__password_entry, hippo.PACK_EXPAND)
+
+        self.__password_entry.set_property("password-mode", True)
+        
+        self.__ok_button = hippo.CanvasButton()
+        # why don't keywords work on CanvasButton constructor?
+        self.__ok_button.set_property("text", "Login")
+        self.__ok_button.set_property("xalign", hippo.ALIGNMENT_END)
+        self.append(self.__ok_button)
+
+        self.__ok_button.connect("activated", self.__on_login_activated)
+
+    def __on_login_activated(self, somearg):
+        self.emit('login', self.__username_entry.get_property("text"),
+                  self.__password_entry.get_property("text"))
+        
+    def set_username(self, name):
+        curtext = self.__username_entry.get_property("text")
+        if not curtext:
+            self.__username_entry.set_property('text', name)
+        
+    def set_reauth(self, is_reauth):
+        self.set_child_visible(self.__reauth_text, True)        
+
+class LoginSlideout(CanvasVBox):
+    __gsignals__ = {
+        "visible" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,))
+    }    
+    def __init__(self):
+        super(LoginSlideout, self).__init__(border=1, border_color=0x0000000ff,
+                                           spacing=4, padding=4)
+        self.__requests = {}
+        self.__myself = None
+        WorkBoard().observe(self.__service_pwauth, 'service.pwauth')
+    
+    def set_myself(self, myself):
+        self.__myself = myself
+        myself.connect(self.__on_self_changed)
+        self.__sync()
+    
+    def __service_pwauth(self, svc, cb, username=None, reauth=False):
+        _logger.debug("handling pwauth for %s username=%s reauth=%s", svc, username, reauth)
+        if svc in self.__requests:
+            self.__requests[svc][1].add(cb)
+            if reauth:
+                self.__requests[svc][0].set_reauth(True)
+            return
+        req = LoginItem(svc)
+        self.__requests[svc] = (req, set([cb]))
+        self.append(req)
+        if username:
+            req.set_username(username)
+        req.connect('login', self.__on_req_login)
+        self.emit("visible", len(self.__requests) > 0)
+        
+    def __on_req_login(self, r, username, password):
+        pwhidden = ''.join(['*' for x in xrange(len(password))]) # elaborate, but fun
+        _logger.debug("got u=%s p=%s for svc=%s", username, pwhidden, r.svcname) 
+        (_, cbs) = self.__requests[r.svcname]
+        for cb in cbs:
+            cb(username, password)
+        del self.__requests[r.svcname]
+        self.remove(r)
+        self.emit("visible", len(self.__requests) > 0)
+        
+    def __accountsvc_username_from_external(self, external):
+        if external.accountType == 'PICASA':
+            return os.path.split(external.link)[1]
+        return None    
+        
+    def __sync(self):
+        for (svc,(req, cbs)) in self.__requests.iteritems():
+            for external in self.__myself.lovedAccounts:
+                uname = self.__accountsvc_username_from_external(external)
+                if uname:
+                    _logger.debug("matched account %s to svc %s yielding username %s", external, svc, uname)
+                    req.set_username(uname)
+                    break
+
+    def __on_self_changed(self, myself):
+        self.__sync()
 
 class FixedCountWrapBox(CanvasVBox):
     def __init__(self, max_row_count, spacing=0, **kwargs):
@@ -262,7 +376,40 @@ class SelfStock(AbstractMugshotStock):
         self.__slideout = None
         self.__slideout_display = None
 
+        self.__auth_section_container = CanvasVBox(spacing=4)
+        self.__auth_section_container.append(Separator())        
+        self.__auth_section = CanvasHBox()
+        self.__auth_section_container.append(self.__auth_section)
+        self._box.append(self.__auth_section_container)
+        self.__on_authq_visible(None, False)
+        authq_image = hippo.CanvasImage(xalign=hippo.ALIGNMENT_CENTER, yalign=hippo.ALIGNMENT_CENTER,
+                                        scale_width=30, scale_height=30)
+        authq_image.set_property('image-name', 'gtk-dialog-question')
+        self.__auth_section.append(authq_image)
+        self.__authq_button = authq_button = hippo.CanvasButton()
+        authq_button.set_property('text', 'Login To Your Accounts')
+        authq_button.connect('activated', self.__on_authq_button_activated)
+        self.__auth_section.append(authq_button)
+
+        self.__authq_slideout_visible = False
+        self.__authq_slideout_window = None
+        self.__authq_slideout = LoginSlideout()
+        self.__authq_slideout.connect('visible', self.__on_authq_visible)
+
         self.__create_fus_proxy()
+
+    def __on_authq_visible(self, authq, vis):
+        self._box.set_child_visible(self.__auth_section_container, vis)
+
+    def __on_authq_button_activated(self, b):
+        if not self.__authq_slideout_visible:
+            if not self.__authq_slideout_window:
+                self.__authq_slideout_window = self.__do_slideout(self.__authq_slideout, widget=self.__authq_button)
+            self.__authq_slideout_window.present_with_time(gtk.get_current_event_time())
+            self.__authq_slideout_visible = True
+        else:
+            self.__authq_slideout_window.hide()
+            self.__authq_slideout_visible = False
 
     def __create_fus_proxy(self):
         try:
@@ -285,6 +432,7 @@ class SelfStock(AbstractMugshotStock):
         
     def __on_got_self(self, myself):
         self.__myself = myself
+        self.__authq_slideout.set_myself(myself)        
         myself.connect(self.__on_self_changed)
         self.__on_self_changed(myself)
         
@@ -292,6 +440,15 @@ class SelfStock(AbstractMugshotStock):
         self._box.set_child_visible(self._whereim_box, not not auth)
         self._box.set_child_visible(self._signin, not auth)
             
+    def __do_slideout(self, display, widget=None):
+        slideout = bigboard.slideout.Slideout()        
+        widget_src = widget or self._box
+        (box_x, box_y) = self._box.get_context().translate_to_screen(self._box)
+        (src_x, src_y) = widget_src.get_context().translate_to_screen(widget_src)
+        slideout.slideout_from(box_x + self._box.get_allocation()[0] + 4, src_y)
+        slideout.get_root().append(display)
+        return slideout
+         
     def __do_logout(self):
         self._panel.Logout()
 
@@ -305,15 +462,11 @@ class SelfStock(AbstractMugshotStock):
             return
 
         self.__create_fus_proxy()
-        self.__slideout = bigboard.slideout.Slideout()
-        widget = self._box
-        coords = widget.get_context().translate_to_screen(widget)
-        self.__slideout.slideout_from(coords[0] + widget.get_allocation()[0] + 4, coords[1])
         self.__slideout_display = SelfSlideout(self, self.__myself, fus=self.__fus_service, logger=self._logger)
         self.__slideout_display.connect('minimize', lambda s: self.__do_minimize())
         self.__slideout_display.connect('logout', lambda s: self.__do_logout())
         self.__slideout_display.connect('close', lambda s: self.__on_activate())
-        self.__slideout.get_root().append(self.__slideout_display)
+        self.__slideout = self.__do_slideout(self.__slideout_display)        
         
     def get_authed_content(self, size):
         return self._box
@@ -326,14 +479,14 @@ class SelfStock(AbstractMugshotStock):
         self._namephoto_box.set_size(size)
     
     def __on_self_changed(self, myself):
-        self._logger.debug("self (%s) changed" % (myself.resource_id,))
+        self._logger.debug("self (%s) changed", myself.resource_id)
         self._photo.set_url(myself.photoUrl)
         self._name.set_property("text", myself.name)
         
         self._whereim_box.remove_all()
         for acct in myself.lovedAccounts:
             icon = ExternalAccountIcon(acct)
-            self._logger.debug("appending external account %s" % (acct.accountType,))
+            self._logger.debug("appending external account %s", acct.accountType)
             self._whereim_box.append(icon)
 
         if self.__slideout_display != None:
