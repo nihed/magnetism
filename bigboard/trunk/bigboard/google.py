@@ -68,8 +68,15 @@ class DocumentsParser(xml.sax.ContentHandler):
 
 class Event(AutoStruct):
     def __init__(self):
-        super(Event, self).__init__({ 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '' })
+        super(Event, self).__init__({ 'calendar_title' : '', 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '' })
+        self.__event_entry = None
 
+    def set_event_entry(self, event_entry):
+        __event_entry = event_entry
+
+    def get_event_entry(self):
+        return __event_entry 
+    
 ## this is from the "Wuja" applet code, GPL v2
 def parse_timestamp(timestamp, tz=None):
     """ Convert internet timestamp (RFC 3339) into a Python datetime
@@ -95,64 +102,48 @@ def parse_timestamp(timestamp, tz=None):
     return datetime.datetime(int(year), int(month), int(day), int(hour), int(minute),
         int(second), tzinfo=tz)
 
-class EventsParser(xml.sax.ContentHandler):
-    def __init__(self):
+class EventsParser:
+    def __init__(self, data):
         self.__events = []
         self.__events_sorted = False
-        self.__inside_title = False
-        self.__inside_recurrence = False
-        self.__content = ""
         self.__dt_re = re.compile(r'DT\w+;VALUE=DATE:(\d+)\s')
+        self.__parseEvents(data)
 
-    def startElement(self, name, attrs):
-        #print "<" + name + ">"
-        #print attrs.getNames() # .getValue('foo')
-        self.__content = ""
-
-        if name == 'entry':
+    def __parseEvents(self, data):
+        calendar = gcalendar.CalendarEventFeedFromString(data)
+        _logger.debug("number of entries: %s ", len(calendar.entry)) 
+        
+        calendar_title = calendar.title.text
+        for entry in calendar.entry:  
             e = Event()
             self.__events.append(e)
-        elif len(self.__events) > 0:
-            e = self.__events[-1]
-            if name == 'title':
-                self.__inside_title = True
-            elif name == 'gd:when':
-                e.update({ 'start_time' : parse_timestamp(attrs.getValue('startTime')),
-                           'end_time' : parse_timestamp(attrs.getValue('endTime')) })
-            elif name == 'gd:recurrence':
-                self.__inside_recurrence = True
-            elif name == 'link':
-                rel = attrs.getValue('rel')
-                href = attrs.getValue('href')
-                type = attrs.getValue('type')
-                #print str((rel, href, type))
-                if rel == 'alternate' and type == 'text/html':
-                    e.update({'link' : href})
-                
-    def endElement(self, name):
-        #print "</" + name + ">"
+            e.set_event_entry(entry)
+            e.update({ 'calendar_title' : calendar_title, 
+                       'title' : entry.title.text, 
+                       'link' : entry.GetHtmlLink().href })            
 
-        if len(self.__events) > 0:
-            e = self.__events[-1]
-        if name == 'title' and self.__inside_title:
-            e.update({'title' : self.__content})
-            self.__inside_title = False
-        elif name == 'gd:recurrence' and self.__inside_recurrence:
-            self.__inside_recurrence = False
-            dt_start = None
-            dt_end = None
-            match = self.__dt_re.search(self.__content)
-            if match:
-                dt_start = match.group(1)
-                match = self.__dt_re.search(self.__content, match.end())
+            # if this is a recurring event, use the first time interval it occurres for the start and end time
+            # TODO: double check that this also applies for all-day events that are saved as one-time recurrences
+            if entry.recurrence is not None:
+                dt_start = None
+                dt_end = None
+                match = self.__dt_re.search(entry.recurrence.text)
                 if match:
-                    dt_end = match.group(1)
-            if dt_start and dt_end:
-                e.update({ 'start_time' : parse_timestamp(dt_start),
-                           'end_time' : parse_timestamp(dt_end) })
+                    dt_start = match.group(1)
+                    match = self.__dt_re.search(entry.recurrence.text, match.end())
+                    if match:
+                        dt_end = match.group(1)
+                if dt_start and dt_end:
+                    e.update({ 'start_time' : parse_timestamp(dt_start),
+                               'end_time' : parse_timestamp(dt_end) })
 
-    def characters(self, content):
-        self.__content += content
+            for when in entry.when:
+                # _logger.debug("start time %s\n" % (when.start_time,))
+                # _logger.debug("end time %s\n" % (when.end_time,))     
+                e.update({ 'start_time' : parse_timestamp(when.start_time),
+                           'end_time' : parse_timestamp(when.end_time) })
+                for reminder in when.reminder:
+                    # _logger.debug('%s %s\n '% (reminder.minutes, reminder.extension_attributes['method']))
         
     def __compare_by_date(self, a, b):
         return cmp(a.get_start_time(), b.get_start_time())
@@ -614,10 +605,7 @@ class Google(gobject.GObject):
     def __on_calendar_load(self, url, data, cb, errcb):
         self.__logger.debug("loaded calendar from " + url)
         try:
-            calendar = gcalendar.CalendarEventFeedFromString(data)
-            self.__logger.debug("number of entries: %s ", len(calendar.entry))
-            p = EventsParser()
-            xml.sax.parseString(data, p)
+            p = EventsParser(data)
             cb(p.get_events())
         except xml.sax.SAXException, e:
             errcb(sys.exc_info())
