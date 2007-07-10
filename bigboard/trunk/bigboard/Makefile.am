@@ -35,7 +35,8 @@ bigboard_PYTHON = __init__.py \
                   slideout.py \
 		  stock.py \
 		  sync.py \
-		  table_layout.py
+		  table_layout.py \
+		  workboard.py
 
 libbigdir=$(bigboarddir)/libbig
 libbig_PYTHON = libbig/__init__.py \

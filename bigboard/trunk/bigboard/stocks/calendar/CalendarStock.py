@@ -82,24 +82,21 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self.__event_alerts = {}
         self.__event_notify_ids = {}
  
-        self.__auth_ui = google.AuthCanvasItem()
-        self.__box.append(self.__auth_ui)
-        gobj = google.get_google()
-        gobj.add_auth_ui(self.__auth_ui)
-        gobj.connect("auth", self.__on_google_auth)
-
         # these are at the end since they have the side effect of calling on_mugshot_ready it seems?
         AbstractMugshotStock.__init__(self, *args, **kwargs)
         polling.Task.__init__(self, 1000 * 120)
         
         bus = dbus.SessionBus()
-
         o = bus.get_object('org.freedesktop.Notifications', '/org/freedesktop/Notifications')
         self.__notifications_proxy = dbus.Interface(o, 'org.freedesktop.Notifications')
-
         self.__notifications_proxy.connect_to_signal('ActionInvoked', self.__on_action)
-
-        self.__on_google_auth(gobj, gobj.have_auth())
+        
+        gobj = google.get_google()
+        gobj.connect("auth", self.__on_google_auth)
+        if gobj.have_auth():
+            self.__on_google_auth(gobj, True)
+        else:
+            gobj.request_auth()
 
         self._add_more_link(self.__on_more_link)
 
@@ -145,10 +142,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
     def __on_load_events(self, events):
         _logger.debug("loading events %s", events)
-        auth_was_visible = self.__auth_ui.get_visible()
         self.__box.remove_all()
-        self.__box.append(self.__auth_ui) # put this back, kind of a hack
-        self.__auth_ui.set_visible(auth_was_visible)
         events = list(events)
         events.reverse()
         for event in events:
