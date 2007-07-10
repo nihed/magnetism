@@ -27,7 +27,8 @@ class LoginItem(hippo.CanvasBox):
 
         # I can't get Pango to take just "Bold" without a size; not sure what the problem is here
         self.append(hippo.CanvasText(text=svcname, xalign=hippo.ALIGNMENT_START, font="Bold 12px"))
-        self.__reauth_text = hippo.CanvasText(text='Login incorrect', xalign=hippo.ALIGNMENT_START)
+        self.__reauth_text = hippo.CanvasText(text='Login incorrect', xalign=hippo.ALIGNMENT_START,
+                                              color=0xFF0000FF)
         self.append(self.__reauth_text)
         self.set_child_visible(self.__reauth_text, False)
 
@@ -66,7 +67,7 @@ class LoginItem(hippo.CanvasBox):
         if not curtext:
             self.__username_entry.set_property('text', name)
         
-    def set_reauth(self, is_reauth):
+    def set_reauth(self):
         self.set_child_visible(self.__reauth_text, True)        
 
 class LoginSlideout(CanvasVBox):
@@ -78,7 +79,10 @@ class LoginSlideout(CanvasVBox):
                                            spacing=4, padding=4)
         self.__requests = {}
         self.__myself = None
-        WorkBoard().observe(self.__service_pwauth, 'service.pwauth')
+        # This is necessary because we need to hold a ref to our own
+        # bound method; the workboard uses weak references.
+        self.__svcfn = self.__service_pwauth
+        WorkBoard().observe(self.__svcfn, 'service.pwauth')
     
     def set_myself(self, myself):
         self.__myself = myself
@@ -90,15 +94,18 @@ class LoginSlideout(CanvasVBox):
         if svc in self.__requests:
             self.__requests[svc][1].add(cb)
             if reauth:
-                self.__requests[svc][0].set_reauth(True)
+                self.__requests[svc][0].set_reauth()
             return
         req = LoginItem(svc)
         self.__requests[svc] = (req, set([cb]))
         self.append(req)
         if username:
             req.set_username(username)
+        if reauth:
+            req.set_reauth()
         req.connect('login', self.__on_req_login)
         self.emit("visible", len(self.__requests) > 0)
+        self.__sync()
         
     def __on_req_login(self, r, username, password):
         pwhidden = ''.join(['*' for x in xrange(len(password))]) # elaborate, but fun
@@ -381,7 +388,6 @@ class SelfStock(AbstractMugshotStock):
         self.__auth_section = CanvasHBox()
         self.__auth_section_container.append(self.__auth_section)
         self._box.append(self.__auth_section_container)
-        self.__on_authq_visible(None, False)
         authq_image = hippo.CanvasImage(xalign=hippo.ALIGNMENT_CENTER, yalign=hippo.ALIGNMENT_CENTER,
                                         scale_width=30, scale_height=30)
         authq_image.set_property('image-name', 'gtk-dialog-question')
@@ -395,11 +401,16 @@ class SelfStock(AbstractMugshotStock):
         self.__authq_slideout_window = None
         self.__authq_slideout = LoginSlideout()
         self.__authq_slideout.connect('visible', self.__on_authq_visible)
+        self.__on_authq_visible(None, False)        
 
         self.__create_fus_proxy()
 
     def __on_authq_visible(self, authq, vis):
         self._box.set_child_visible(self.__auth_section_container, vis)
+        if not vis:
+            if self.__authq_slideout_window:
+                self.__authq_slideout_window.hide()
+                self.__authq_slideout_visible = False
 
     def __on_authq_button_activated(self, b):
         if not self.__authq_slideout_visible:
