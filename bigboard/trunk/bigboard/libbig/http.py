@@ -63,15 +63,20 @@ class AsyncHTTPFetcher(Singleton):
             self.__workers.add(t)
             t.setDaemon(True)
             t.start()        
+            
+    def __emit_refetch(self, url, content, cb, errcb, kwargs):
+        self.__logger.debug("using immediate cached value for url: %s", url)
+        cb(url, content, is_refetch=True)
+        self.fetch(url, cb, errcb, **kwargs) 
        
     def refetch(self, url, cb, errcb, **kwargs):
         headers = {'Cache-Control': 'only-if-cached'}
         h = httplib2.Http(cache=self.__cache)
         (response, content) = h.request(url, headers=headers)
         if response.status == 200:
-            self.__logger.debug("using immediate cached value for url: %s", url)
-            cb(url, content, is_refetch=True)
-        self.fetch(url, cb, errcb, **kwargs)
+            gobject.idle_add(self.__emit_refetch, url, content, cb, errcb, kwargs)
+        else:
+            self.fetch(url, cb, errcb, **kwargs)
        
     def fetch(self, url, cb, errcb, **kwargs):
         kwargs['url'] = url
@@ -151,7 +156,7 @@ class AsyncHTTPFetcher(Singleton):
         else:
             self.__logger.info("caught error for fetch of %s (status: %s)" % (url, response.status))     
             if 'errcb' in kwargs:           
-                gobject.idle_add(lambda: kwargs['errcb'](url) and False)
+                gobject.idle_add(lambda: kwargs['errcb'](url, response) and False)
 
     def __emit_results(self, url, cb, fdata):
         self.__logger.debug("fetch of %s complete with %d bytes" % (url,len(fdata)))
