@@ -536,7 +536,7 @@ def main():
     if debug:
         default_log_level = 'DEBUG'
 
-    bigboard.libbig.logutil.init(default_log_level, debug_modules, 'bigboard.')
+    bigboard.libbig.logutil.init(default_log_level, debug_modules, '')
 
     # Redirect sys.stdout to our logging framework
     sys.stdout = bigboard.libbig.stdout_logger.StdoutLogger()
