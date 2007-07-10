@@ -10,7 +10,7 @@ import javax.ejb.TransactionAttributeType;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.CachedListItem;
+import com.dumbhippo.persistence.caches.CachedListItem;
 
 @TransactionAttribute(TransactionAttributeType.SUPPORTS) // hackaround for bug with method tx attr on generic methods
 public abstract class AbstractListCacheWithStorageBean<KeyType,ResultType,EntityType extends CachedListItem>

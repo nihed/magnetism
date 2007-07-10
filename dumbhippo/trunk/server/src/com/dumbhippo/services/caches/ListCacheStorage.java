@@ -10,7 +10,7 @@ import javax.persistence.EntityManager;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.CachedListItem;
+import com.dumbhippo.persistence.caches.CachedListItem;
 import com.dumbhippo.tx.TxUtils;
 
 public class ListCacheStorage<KeyType, ResultType, EntityType extends CachedListItem>

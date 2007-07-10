@@ -1,4 +1,4 @@
-package com.dumbhippo.persistence;
+package com.dumbhippo.persistence.caches;
 
 import java.util.Date;
 
@@ -9,6 +9,7 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.DBUnique;
 import com.dumbhippo.services.FacebookPhotoData;
 import com.dumbhippo.services.FacebookPhotoDataView;
 import com.dumbhippo.services.FacebookWebServices;

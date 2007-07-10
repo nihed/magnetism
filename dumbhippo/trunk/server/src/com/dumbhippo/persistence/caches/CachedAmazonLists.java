@@ -1,4 +1,4 @@
-package com.dumbhippo.persistence;
+package com.dumbhippo.persistence.caches;
 
 import java.util.Date;
 
@@ -8,13 +8,14 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
-import com.dumbhippo.services.AmazonReviews;
-import com.dumbhippo.services.AmazonReviewsView;
+import com.dumbhippo.persistence.DBUnique;
+import com.dumbhippo.services.AmazonLists;
+import com.dumbhippo.services.AmazonListsView;
 import com.dumbhippo.services.AmazonWebServices;
 
 @Entity
 @Table(uniqueConstraints = {@UniqueConstraint(columnNames={"amazonUserId"})})
-public class CachedAmazonReviews extends DBUnique implements CachedItem {
+public class CachedAmazonLists extends DBUnique implements CachedItem {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -22,22 +23,22 @@ public class CachedAmazonReviews extends DBUnique implements CachedItem {
 	private int totalCount;
 	private long lastUpdated;
 	
-	protected CachedAmazonReviews() {
+	protected CachedAmazonLists() {
 		
 	}
 	
-	public CachedAmazonReviews(String amazonUserId, int totalCount) {
+	public CachedAmazonLists(String amazonUserId, int totalCount) {
 		this.amazonUserId = amazonUserId;
 		this.totalCount = totalCount;
 	}
 	
-	public CachedAmazonReviews(String amazonUserId, AmazonReviewsView view) {
+	public CachedAmazonLists(String amazonUserId, AmazonListsView view) {
 		this.amazonUserId = amazonUserId;
 		update(view);
 	}
 	
-	static public CachedAmazonReviews newNoResultsMarker(String amazonUserId) {
-		return new CachedAmazonReviews(amazonUserId, -1);
+	static public CachedAmazonLists newNoResultsMarker(String amazonUserId) {
+		return new CachedAmazonLists(amazonUserId, -1);
 	}
 	
 	@Transient
@@ -45,17 +46,17 @@ public class CachedAmazonReviews extends DBUnique implements CachedItem {
 		return totalCount < 0;
 	}	
 
-	public void update(AmazonReviewsView reviews) {
-		if (reviews == null)
+	public void update(AmazonListsView lists) {
+		if (lists == null)
 			totalCount = -1; // no results marker
 		else
-			setTotalCount(reviews.getTotal());
+			setTotalCount(lists.getTotal());
 	}
 	
-	public AmazonReviewsView toAmazonReviews() {
-		AmazonReviews amazonReviews = new AmazonReviews();
-		amazonReviews.setTotal(totalCount);
-		return amazonReviews;
+	public AmazonListsView toAmazonLists() {
+		AmazonLists amazonLists = new AmazonLists();
+		amazonLists.setTotal(totalCount);
+		return amazonLists;
 	}
 	
 	@Column(nullable=false, length=AmazonWebServices.MAX_AMAZON_USER_ID_LENGTH)
@@ -87,9 +88,9 @@ public class CachedAmazonReviews extends DBUnique implements CachedItem {
 	@Override
 	public String toString() {
 		if (isNoResultsMarker())
-			return "{CachedAmazonReviews:NoResultsMarker}";
+			return "{CachedAmazonLists:NoResultsMarker}";
 		else
-			return "{CachedAmazonReviews: amazonUserId=" + amazonUserId +
-		           " totalCount=" + totalCount + "}";
+			return "{CachedAmazonLists: amazonUserId=" + amazonUserId +
+			       " totalCount=" + totalCount + "}";
 	}
 }

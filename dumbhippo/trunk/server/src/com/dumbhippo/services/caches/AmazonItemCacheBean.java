@@ -6,7 +6,7 @@ import javax.persistence.Query;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.CachedAmazonItem;
+import com.dumbhippo.persistence.caches.CachedAmazonItem;
 import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.services.AmazonItem;
 import com.dumbhippo.services.AmazonItemLookupWebServices;

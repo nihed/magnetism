@@ -76,7 +76,8 @@ public class SchemaUpdater {
 		connection.close();
 	}
 	
-	static private final String CLASS_PREFIX = "com/dumbhippo/persistence/";
+	static private final String PERSISTENCE_PREFIX = "com/dumbhippo/persistence/";
+	static private final String PERSISTENCE_CACHES_PREFIX = "com/dumbhippo/persistence/caches/";
 	static private final String CLASS_SUFFIX = ".class";
 	
 	/**
@@ -101,14 +102,26 @@ public class SchemaUpdater {
 			URLConnection connection = URLUtils.openConnection(resource);
 			JarFile file = ((JarURLConnection)connection).getJarFile();
 			
+			logger.debug("Updating schemas for entity beans in {}", file.getName());
+			
 			Enumeration<JarEntry> entries = file.entries();
 			while (entries.hasMoreElements()) {
 				JarEntry entry = entries.nextElement();
 				String entryName = entry.getName();
-				if (entryName.startsWith(CLASS_PREFIX) && entryName.endsWith(CLASS_SUFFIX)) {
-					String className = ("com.dumbhippo.persistence." +
-										entryName.substring(CLASS_PREFIX.length(),
-							                                entryName.length() - CLASS_SUFFIX.length()));
+				String className = null;
+				
+				// the longer prefix has to be checked first, be careful
+				if (entryName.startsWith(PERSISTENCE_CACHES_PREFIX) && entryName.endsWith(CLASS_SUFFIX)) {
+					className = ("com.dumbhippo.persistence.caches." +
+							entryName.substring(PERSISTENCE_CACHES_PREFIX.length(),
+									entryName.length() - CLASS_SUFFIX.length()));
+				} else if (entryName.startsWith(PERSISTENCE_PREFIX) && entryName.endsWith(CLASS_SUFFIX)) {
+					className = ("com.dumbhippo.persistence." +
+							entryName.substring(PERSISTENCE_PREFIX.length(),
+									entryName.length() - CLASS_SUFFIX.length()));
+				}
+				
+				if (className != null) {
 					try {
 						classes.add(loader.loadClass(className));
 					} catch (ClassNotFoundException e) {

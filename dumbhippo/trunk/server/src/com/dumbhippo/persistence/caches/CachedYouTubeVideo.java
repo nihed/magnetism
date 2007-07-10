@@ -1,4 +1,4 @@
-package com.dumbhippo.persistence;
+package com.dumbhippo.persistence.caches;
 
 import java.util.Date;
 
@@ -9,38 +9,39 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import com.dumbhippo.Thumbnail;
-import com.dumbhippo.services.PicasaAlbum;
-import com.dumbhippo.services.PicasaWebServices;
+import com.dumbhippo.persistence.DBUnique;
+import com.dumbhippo.services.YouTubeVideo;
+import com.dumbhippo.services.YouTubeWebServices;
 
 /** 
- * Cached Picasa web album from the public web album feed.
+ * Cached fields from YouTube videos feed.
+ * 
+ * @author Colin Walters
  */
 @Entity
 @Table(uniqueConstraints = {@UniqueConstraint(columnNames={"owner", "url"})})
-public class CachedPicasaAlbum extends DBUnique implements CachedListItem {
+public class CachedYouTubeVideo extends DBUnique implements CachedListItem {
 	private String url;	
 	private String owner;
 	private String title;
 	private String thumbnail;	
 	private long lastUpdated;
 	
-	private static final int MAX_PICASA_URL_LENGTH = 160;
+	private static final int MAX_YOUTUBE_URL_LENGTH = 128;
 	
 	// for hibernate
-	protected CachedPicasaAlbum() {
-		if (MAX_PICASA_URL_LENGTH + PicasaWebServices.MAX_GOOGLE_USERNAME_LENGTH > 255)
-			throw new RuntimeException("unique key on CachedPicasaAlbum will be too long");
+	protected CachedYouTubeVideo() {
 	}
 	
-	public CachedPicasaAlbum(String owner, String title, String url, String thumbnail) {
+	public CachedYouTubeVideo(String owner, String title, String url, String thumbnail) {
 		this.owner = owner;
 		this.title = title;
 		this.url = url;
 		this.thumbnail = thumbnail;
 	}
 	
-	static public CachedPicasaAlbum newNoResultsMarker(String username) {
-		return new CachedPicasaAlbum(username, "", "", "");
+	static public CachedYouTubeVideo newNoResultsMarker(String username) {
+		return new CachedYouTubeVideo(username, "", "", "");
 	}
 	
 	@Transient
@@ -48,19 +49,19 @@ public class CachedPicasaAlbum extends DBUnique implements CachedListItem {
 		return url.length() == 0;
 	}
 	
-	public CachedPicasaAlbum(String ownerId, Thumbnail result) {
+	public CachedYouTubeVideo(String ownerId, Thumbnail result) {
 		this(ownerId, result.getThumbnailTitle(), result.getThumbnailHref(), result.getThumbnailSrc()); 
 	}
 	
-	public PicasaAlbum toThumbnail() {
-		PicasaAlbum album = new PicasaAlbum(title, url, thumbnail);
-		return album;
+	public YouTubeVideo toThumbnail() {
+		YouTubeVideo video = new YouTubeVideo(title, url, thumbnail);
+		return video;
 	}
 	
 	@Override
 	public String toString() {
 		if (isNoResultsMarker())
-			return "{CachedPicasaAlbum:NoResultsMarker}";
+			return "{CachedYouTubeVideo:NoResultsMarker}";
 		else
 			return "{ownerId=" + owner + " url=" + url + " title='" + title + "'}";
 	}
@@ -74,7 +75,7 @@ public class CachedPicasaAlbum extends DBUnique implements CachedListItem {
 		this.lastUpdated = lastUpdated.getTime();
 	}
 
-	@Column(nullable=false, length=PicasaWebServices.MAX_GOOGLE_USERNAME_LENGTH)
+	@Column(nullable=false, length=YouTubeWebServices.MAX_YOUTUBE_USERNAME_LENGTH)
 	public String getOwner() {
 		return owner;
 	}
@@ -101,7 +102,7 @@ public class CachedPicasaAlbum extends DBUnique implements CachedListItem {
 		this.title = title;
 	}
 
-	@Column(nullable=false, length=MAX_PICASA_URL_LENGTH)	
+	@Column(nullable=false, length=MAX_YOUTUBE_URL_LENGTH)	
 	public String getUrl() {
 		return url;
 	}

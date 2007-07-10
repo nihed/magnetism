@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.persistence.CachedYouTubeVideo;
+import com.dumbhippo.persistence.caches.CachedYouTubeVideo;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YouTubeVideo;
 import com.dumbhippo.services.YouTubeVideoFeedParser;

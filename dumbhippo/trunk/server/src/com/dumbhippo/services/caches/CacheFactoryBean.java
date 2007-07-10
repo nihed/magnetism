@@ -41,12 +41,14 @@ import com.dumbhippo.tx.TxUtils;
 @Stateless
 public class CacheFactoryBean implements CacheFactory {
 
+	static private final String PERSISTENCE_UNIT_NAME = "dumbhippo-caches";
+	
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(CacheFactoryBean.class);
 	
 	private HashMap<Class<?>,Object> cachedObjects;
 	
-	@PersistenceContext(unitName = "dumbhippo")
+	@PersistenceContext(unitName = PERSISTENCE_UNIT_NAME)
 	private EntityManager em;
 	
 	public CacheFactoryBean() {
@@ -181,7 +183,9 @@ public class CacheFactoryBean implements CacheFactory {
 					Object ejb = EJBUtil.defaultLookup(f.getType());
 					setField(o, f, ejb);
 				} else if (f.isAnnotationPresent(PersistenceContext.class)) {
-					// assume context=dumbhippo
+					PersistenceContext annotation = f.getAnnotation(PersistenceContext.class);
+					if (!annotation.unitName().equals(PERSISTENCE_UNIT_NAME))
+						throw new RuntimeException("PersistenceContext annotation on cache bean " + clazz.getName() + " has wrong unitName " + annotation.unitName());
 					setField(o, f, em);
 				}
 			}

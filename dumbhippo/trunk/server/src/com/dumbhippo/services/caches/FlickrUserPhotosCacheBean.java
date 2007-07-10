@@ -13,8 +13,8 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.persistence.CachedFlickrPhotos;
-import com.dumbhippo.persistence.CachedFlickrUserPhoto;
+import com.dumbhippo.persistence.caches.CachedFlickrPhotos;
+import com.dumbhippo.persistence.caches.CachedFlickrUserPhoto;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.FlickrPhotoView;
 import com.dumbhippo.services.FlickrPhotos;

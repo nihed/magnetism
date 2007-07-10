@@ -9,7 +9,7 @@ import javax.ejb.TransactionAttributeType;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.CachedItem;
+import com.dumbhippo.persistence.caches.CachedItem;
 import com.dumbhippo.tx.TxUtils;
 
 /** 

@@ -204,7 +204,7 @@
 				<include name="persistence.xml" />
 			</metainf>
 			<fileset dir="${build}">
-				<include name="**/persistence/**/*.class" />
+				<include name="**/persistence/*.class" />
 			</fileset>
 			<manifest>
 				<attribute name="Class-Path" value="${bundled-classpath}" />
@@ -212,6 +212,20 @@
 		</jar>
 	</target>
 
+	<target name="par-caches" depends="compile">
+		<jar destfile="${buildjar.dir}/dumbhippo-caches.par">
+			<metainf dir="dd/caches">
+				<include name="persistence.xml" />
+			</metainf>
+			<fileset dir="${build}">
+				<include name="**/persistence/caches/*.class" />
+			</fileset>
+			<manifest>
+				<attribute name="Class-Path" value="${bundled-classpath}" />
+			</manifest>
+		</jar>
+	</target>	
+	
 	<target name="javascript-compress" depends="init">
 		<exec executable="${basedir}/jscompress" failonerror="true">
 			<arg line="${web}/javascript/dh ${web}/javascript/common.js ${web}/javascript/dojo/src ${build.javascript}"/>
@@ -293,10 +307,11 @@
 		</exec>
 	</target>		
 	
-	<target name="exploded-ear-do-work" depends="ejb3jar,par,basejar,exploded-war">
+	<target name="exploded-ear-do-work" depends="ejb3jar,par,par-caches,basejar,exploded-war">
 		<copy file="${buildjar.dir}/dumbhippo-base.jar" todir="${build.deploy.ear}"/>
 		<copy file="${buildjar.dir}/dumbhippo.ejb3" todir="${build.deploy.ear}"/>
 		<copy file="${buildjar.dir}/dumbhippo.par" todir="${build.deploy.ear}"/>
+		<copy file="${buildjar.dir}/dumbhippo-caches.par" todir="${build.deploy.ear}"/>
 		<copy todir="${build.deploy.ear}">
 			<fileset dir="${lib}" includes="${bundled-classpath.external}"/>
 		</copy>

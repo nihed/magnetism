@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.persistence.CachedYahooArtistAlbumData;
+import com.dumbhippo.persistence.caches.CachedYahooArtistAlbumData;
 import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.services.YahooAlbumData;

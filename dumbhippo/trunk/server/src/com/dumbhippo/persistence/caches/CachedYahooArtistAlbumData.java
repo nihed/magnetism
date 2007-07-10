@@ -1,4 +1,4 @@
-package com.dumbhippo.persistence;
+package com.dumbhippo.persistence.caches;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

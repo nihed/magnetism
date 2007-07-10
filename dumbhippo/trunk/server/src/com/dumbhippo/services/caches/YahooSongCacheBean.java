@@ -11,8 +11,8 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.persistence.CachedYahooSongData;
 import com.dumbhippo.persistence.Track;
+import com.dumbhippo.persistence.caches.CachedYahooSongData;
 import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.services.YahooSearchWebServices;
 import com.dumbhippo.services.YahooSongData;
