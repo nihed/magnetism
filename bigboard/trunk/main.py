@@ -15,7 +15,7 @@ import hippo
 
 import bigboard
 import bigboard.big_widgets
-from bigboard.big_widgets import Sidebar, CommandShell, CanvasHBox, ActionLink
+from bigboard.big_widgets import Sidebar, CommandShell, CanvasHBox, CanvasVBox, ActionLink
 from bigboard.stock import Stock
 import bigboard.libbig
 try:
@@ -37,6 +37,8 @@ BUS_IFACE=BUS_NAME_STR
 BUS_IFACE_PANEL=BUS_IFACE + ".Panel"
 
 GCONF_PREFIX = '/apps/bigboard/'
+
+_logger = logging.getLogger("bigboard.Main")
 
 class GradientHeader(hippo.CanvasGradient):
     def __init__(self, **kwargs):
@@ -435,12 +437,25 @@ X-GNOME-Autostart-enabled=true
                                 True)
 
 
+    def __create_scratch_window(self):
+        w = hippo.CanvasWindow(gtk.WINDOW_TOPLEVEL)
+        w.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(65535,65535,65535))
+        w.set_title('Scratch Window')
+        box = CanvasVBox()
+        w.set_root(box)
+        w.connect('delete-event', lambda *args: w.destroy())
+        w.show_all()
+        w.present_with_time(gtk.get_current_event_time())
+        return box
+
     @dbus.service.method(BUS_IFACE_PANEL)
     def Shell(self):
         if self.__shell:
             self.__shell.destroy()
-        self.__shell = CommandShell({'panel': self})
+        self.__shell = CommandShell({'panel': self,
+                                     'scratch_window': self.__create_scratch_window})
         self.__shell.show_all()
+        self.__shell.present_with_time(gtk.get_current_event_time())
 
     @dbus.service.method(BUS_IFACE_PANEL)
     def Exit(self):
@@ -456,8 +471,12 @@ X-GNOME-Autostart-enabled=true
         pass
 
 def load_image_hook(img_name):
-    logging.debug("loading: %s" % (img_name,))
-    pixbuf = gtk.gdk.pixbuf_new_from_file(img_name)
+    if img_name.find(os.sep) >= 0:
+        pixbuf = gtk.gdk.pixbuf_new_from_file(img_name)
+    else:
+        theme = gtk.icon_theme_get_default()
+        pixbuf = theme.load_icon(img_name, 60, gtk.ICON_LOOKUP_USE_BUILTIN)
+    _logger.debug("loaded '%s': %s" % (img_name,pixbuf))        
     return hippo.cairo_surface_from_gdk_pixbuf(pixbuf)    
 
 def on_name_lost(*args):
