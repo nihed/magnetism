@@ -116,6 +116,7 @@ class Mugshot(gobject.GObject):
         self.__prefs = {}
         self.__network = None
         self.__entities = {} # <str>,<Entity>
+        self.__all_apps_requested = False
         self.__applications = {} # <str>,<Application>
         self.__my_top_apps = None # <Application>
         self.__my_app_usage_start = None
@@ -503,17 +504,21 @@ class Mugshot(gobject.GObject):
         reply_root = child_nodes[0]
         apps = self.__parse_app_set('applications',
                                     child_nodes=reply_root.childNodes)
+        self.__all_apps_requested = False
         self.emit("all-apps-loaded")
 
     def __on_all_applications_error(self, *args):
         self._logger.error("failed to get all apps: %s", args)
+        self.__all_apps_requested = False
 
     def request_all_apps(self):
-        AsyncHTTPFetcher().xml_method_refetch(urlparse.urljoin(self.get_baseurl(), '/xml/allapplications'),
-                                              {},
-                                              self.__on_all_applications,
-                                              self.__on_all_applications_error,
-                                              self.__on_all_applications_error)
+        if not self.__all_apps_requested:
+            self.__all_apps_requested = True
+            AsyncHTTPFetcher().xml_method_refetch(urlparse.urljoin(self.get_baseurl(), '/xml/allapplications'),
+                                                  {},
+                                                  self.__on_all_applications,
+                                                  self.__on_all_applications_error,
+                                                  self.__on_all_applications_error)
         
     def __request_pinned_apps(self):
         self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications",
