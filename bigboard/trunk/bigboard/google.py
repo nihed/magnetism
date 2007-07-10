@@ -142,7 +142,7 @@ class EventsParser:
                 # _logger.debug("end time %s\n" % (when.end_time,))     
                 e.update({ 'start_time' : parse_timestamp(when.start_time),
                            'end_time' : parse_timestamp(when.end_time) })
-                for reminder in when.reminder:
+                # for reminder in when.reminder:
                     # _logger.debug('%s %s\n '% (reminder.minutes, reminder.extension_attributes['method']))
         
     def __compare_by_date(self, a, b):
