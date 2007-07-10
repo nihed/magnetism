@@ -13,6 +13,8 @@ import bigboard.libbig.polling as polling
 
 _logger = logging.getLogger("bigboard.stocks.CalendarStock")
 
+_events_polling_periodicity_seconds = 120
+
 def fmt_time(dt):
     date_str = str(dt.date())
     if dt.time().hour == 0 and dt.time().minute == 0 and  dt.time().second == 0:
@@ -84,7 +86,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
  
         # these are at the end since they have the side effect of calling on_mugshot_ready it seems?
         AbstractMugshotStock.__init__(self, *args, **kwargs)
-        polling.Task.__init__(self, 1000 * 120)
+        polling.Task.__init__(self, _events_polling_periodicity_seconds * 1000)
         
         bus = dbus.SessionBus()
         o = bus.get_object('org.freedesktop.Notifications', '/org/freedesktop/Notifications')
@@ -165,35 +167,44 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                 entry = event.get_event_entry() 
                 for when in entry.when:
                     for reminder in when.reminder:
-                        # _logger.debug('delta days %s delta seconds %s reminder seconds %s %s\n '% (delta.days, delta_seconds, (int(reminder.minutes) * 60), reminder.extension_attributes['method']))
-                        if reminder.extension_attributes['method'] == 'alert' and delta_seconds < (int(reminder.minutes) * 60) and not self.__event_alerts.has_key(event.get_link() + reminder.minutes):   
-                       
+                        reminder_seconds = int(reminder.minutes) * 60  
+                        # _logger.debug('delta days %s delta seconds %s reminder seconds %s %s\n '% (delta.days, delta_seconds, reminder_seconds, reminder.extension_attributes['method']))
+                        # schedule notifications for alerts that need to happen before the next time we poll events
+                        if reminder.extension_attributes['method'] == 'alert' and (delta_seconds - _events_polling_periodicity_seconds) < reminder_seconds and not self.__event_alerts.has_key(event.get_link() + reminder.minutes):   
+                           
                            self.__event_alerts[event.get_link() + reminder.minutes] = event
+                           if delta_seconds > reminder_seconds:
+                               gobject.timeout_add((delta_seconds - reminder_seconds) * 1000, self.__create_notification, event)
+                           else:
+                               self.__create_notification(event)
 
-                           # We don't want multiple alerts for the same event to be showing at the same time, 
-                           # so make sure we use a single notification for all alert times for the same event
-                           # (we otherwise would have displayed multiple alerts for the same event
-                           # when bigboard is started and some alert times for upcoming events were missed).  
-                           # When notify_id = 0 we will not replace any existing notification.
-                           notify_id = 0
-                           if self.__event_notify_ids.has_key(event.get_link()):      
-                               notify_id = self.__event_notify_ids[event.get_link()]
-
-                           self.__event_notify_ids[event.get_link()] = self.__notifications_proxy.Notify(
-                                                                           "BigBoard",
-                                                                           notify_id, # "id"
-                                                                           "", # icon name
-                                                                           event.get_title(),   # summary
-                                                                           fmt_time(event.get_start_time()), # body
-                                                                           ['view_event' + event.get_link(),
-                                                                            "View Event",
-                                                                            'calendar',
-                                                                            "View Calendar"], # action array
-                                                                           {'foo' : 'bar'}, # hints (pydbus barfs if empty)
-                                                                           10000) # timeout, 10 seconds        
             display = EventDisplay(event)
             self.__box.append(display)
 
+    def __create_notification(self, event):
+        # We don't want multiple alerts for the same event to be showing at the same time, 
+        # so make sure we use a single notification for all alert times for the same event
+        # (we otherwise would have displayed multiple alerts for the same event
+        # when bigboard is started and some alert times for upcoming events were missed).  
+        # When notify_id = 0 we will not replace any existing notification.
+        notify_id = 0
+        if self.__event_notify_ids.has_key(event.get_link()):      
+            notify_id = self.__event_notify_ids[event.get_link()]
+
+        self.__event_notify_ids[event.get_link()] = self.__notifications_proxy.Notify(
+                                                        "BigBoard",
+                                                        notify_id, # "id"
+                                                        "", # icon name
+                                                        event.get_title(),   # summary
+                                                        fmt_time(event.get_start_time()), # body
+                                                        ['view_event' + event.get_link(),
+                                                         "View Event",
+                                                         'calendar',
+                                                         "View Calendar"], # action array
+                                                        {'foo' : 'bar'}, # hints (pydbus barfs if empty)
+                                                        10000) # timeout, 10 seconds                  
+        return False       
+     
     def __on_failed_load(self, response):
         pass
             
