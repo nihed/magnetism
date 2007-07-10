@@ -1,4 +1,5 @@
 import logging, os, datetime, string
+import xml, xml.sax, xml.sax.saxutils
 
 import gobject, pango, dbus, dbus.glib
 import hippo
@@ -191,12 +192,18 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         if self.__event_notify_ids.has_key(event.get_link()):      
             notify_id = self.__event_notify_ids[event.get_link()]
 
+        body = "<i>for: " + fmt_time(event.get_start_time()) + \
+               "\nfrom: " + xml.sax.saxutils.escape(event.get_calendar_title()) + "</i>"
+
+        if event.get_event_entry().content.text is not None:
+            body = body + "\n\n" + xml.sax.saxutils.escape(event.get_event_entry().content.text)
+
         self.__event_notify_ids[event.get_link()] = self.__notifications_proxy.Notify(
                                                         "BigBoard",
                                                         notify_id, # "id"
-                                                        "", # icon name
+                                                        "stock_timer", # icon name
                                                         event.get_title(),   # summary
-                                                        fmt_time(event.get_start_time()), # body
+                                                        body, # body
                                                         ['view_event' + event.get_link(),
                                                          "View Event",
                                                          'calendar',
