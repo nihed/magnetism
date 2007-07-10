@@ -43,7 +43,7 @@ class URLImageCache(Singleton):
         if not is_refetch:
             del self._loads[url]            
         
-    def _do_load_error(self, url, exc_info):
+    def _do_load_error(self, url, resp):
         for cb,errcb,fmt in self._loads[url]:
-            errcb(url, exc_info)
+            errcb(url, resp)
         del self._loads[url]        
