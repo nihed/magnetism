@@ -115,13 +115,13 @@ class EventsParser:
         calendar = gcalendar.CalendarEventFeedFromString(data)
         _logger.debug("number of entries: %s ", len(calendar.entry)) 
         
-        calendar_title = calendar.title.text
+        calendar_title = calendar.title.text and calendar.title.text or "<No Title>"
         for entry in calendar.entry:  
             e = Event()
             self.__events.append(e)
             e.set_event_entry(entry)
             e.update({ 'calendar_title' : calendar_title, 
-                       'title' : entry.title.text, 
+                       'title' : entry.title.text and entry.title.text or "<No Title>", 
                        'link' : entry.GetHtmlLink().href })            
 
             # if this is a recurring event, use the first time interval it occurres for the start and end time
