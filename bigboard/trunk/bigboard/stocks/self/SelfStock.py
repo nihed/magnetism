@@ -47,20 +47,27 @@ class LoginItem(hippo.CanvasBox):
         self.__password_entry = hippo.CanvasEntry()
         self.__password_entry.set_property("xalign", hippo.ALIGNMENT_FILL)
         box.append(self.__password_entry, hippo.PACK_EXPAND)
-
+        self.__password_entry.connect('key-press-event', self.__on_password_keypress)
         self.__password_entry.set_property("password-mode", True)
         
         self.__ok_button = hippo.CanvasButton()
         # why don't keywords work on CanvasButton constructor?
         self.__ok_button.set_property("text", "Login")
         self.__ok_button.set_property("xalign", hippo.ALIGNMENT_END)
-        self.append(self.__ok_button)
+        self.append(self.__ok_button)       
 
         self.__ok_button.connect("activated", self.__on_login_activated)
+        
+    def __on_password_keypress(self, pw, event):
+        if event.key == hippo.KEY_RETURN:
+            self.__on_login_activated(None)
 
     def __on_login_activated(self, somearg):
         self.emit('login', self.__username_entry.get_property("text"),
                   self.__password_entry.get_property("text"))
+        
+    def get_login(self):
+        return (self.__username_entry.get_property("text"), self.__password_entry.get_property("text"))
         
     def set_username(self, name):
         curtext = self.__username_entry.get_property("text")
@@ -68,7 +75,11 @@ class LoginItem(hippo.CanvasBox):
             self.__username_entry.set_property('text', name)
         
     def set_reauth(self):
-        self.set_child_visible(self.__reauth_text, True)        
+        self.set_child_visible(self.__reauth_text, True)
+        self.__password_entry.set_property('text', '')
+        
+    def focus_password(self):
+        self.__password_entry.get_property('widget').grab_focus()  
 
 class LoginSlideout(CanvasVBox):
     __gsignals__ = {
@@ -133,6 +144,13 @@ class LoginSlideout(CanvasVBox):
 
     def __on_self_changed(self, myself):
         self.__sync()
+        
+    def focus(self):
+        for (svc,(req, cbs)) in self.__requests.iteritems():
+            (username, password) = req.get_login()
+            if username:
+                req.focus_password()
+                break
 
 class FixedCountWrapBox(CanvasVBox):
     def __init__(self, max_row_count, spacing=0, **kwargs):
@@ -218,7 +236,7 @@ class SelfSlideout(CanvasVBox):
         self.__personal_box.append(self.__photo)
 
         self.__personal_box_right = CanvasVBox()
-        self.__personal_box.append(self.__personal_box_right)
+        self.__personal_box.append(self.__personal_box_right, hippo.PACK_EXPAND)
         
         self.__name_logout = CanvasHBox()
         self.__name = hippo.CanvasText(font="14px Bold",
@@ -457,7 +475,10 @@ class SelfStock(AbstractMugshotStock):
         (box_x, box_y) = self._box.get_context().translate_to_screen(self._box)
         (src_x, src_y) = widget_src.get_context().translate_to_screen(widget_src)
         slideout.slideout_from(box_x + self._box.get_allocation()[0] + 4, src_y)
+        if hasattr(display, 'focus'):
+            display.focus()
         slideout.get_root().append(display)
+        slideout.set_size_request(200, -1)
         return slideout
          
     def __do_logout(self):
@@ -477,7 +498,7 @@ class SelfStock(AbstractMugshotStock):
         self.__slideout_display.connect('minimize', lambda s: self.__do_minimize())
         self.__slideout_display.connect('logout', lambda s: self.__do_logout())
         self.__slideout_display.connect('close', lambda s: self.__on_activate())
-        self.__slideout = self.__do_slideout(self.__slideout_display)        
+        self.__slideout = self.__do_slideout(self.__slideout_display)     
         
     def get_authed_content(self, size):
         return self._box
