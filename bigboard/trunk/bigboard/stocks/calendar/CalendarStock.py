@@ -80,7 +80,8 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
     def __init__(self, *args, **kwargs):
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
         self.__event_alerts = {}
-
+        self.__event_notify_ids = {}
+ 
         self.__auth_ui = google.AuthCanvasItem()
         self.__box.append(self.__auth_ui)
         gobj = google.get_google()
@@ -155,29 +156,47 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             if event.get_end_time() < now:
                 delta = now - event.get_end_time()
                 # don't show stuff older than a week
-                if delta.days >= 7:
+                if delta.days >= 3:
                     continue
             else: 
                 delta = event.get_start_time() - now
+                delta_seconds = (delta.days * 3600 * 24) + delta.seconds 
                 # notify about an event if it is currently happening or coming up in the next 24 hours,
                 # and we have not yet notified about it
                 # TODO: use alert preferences from the event
                 # this won't create an additional notification if the event time changes,
                 # so will need to check if the time is the same
-                # should also see what happens for the recurring events 
-                if delta.days < 1 and not self.__event_alerts.has_key(event.get_link()):
-                    self.__event_alerts[event.get_link()] = event
-                    self.__notifications_proxy.Notify("BigBoard",
-                                                      0, # "id" - 0 to not replace any existing
-                                                      "", # icon name
-                                                      event.get_title(),   # summary
-                                                      fmt_time(event.get_start_time()), # body
-                                                      ['view_event' + event.get_link(),
-                                                       "View Event",
-                                                       'calendar',
-                                                       "View Calendar"], # action array
-                                                       {'foo' : 'bar'}, # hints (pydbus barfs if empty)
-                                                       10000) # timeout, 10 seconds        
+                # should also see what happens for the recurring events
+                # TODO: create only a single alert in the same cycle 
+                entry = event.get_event_entry() 
+                for when in entry.when:
+                    for reminder in when.reminder:
+                        # _logger.debug('delta days %s delta seconds %s reminder seconds %s %s\n '% (delta.days, delta_seconds, (int(reminder.minutes) * 60), reminder.extension_attributes['method']))
+                        if reminder.extension_attributes['method'] == 'alert' and delta_seconds < (int(reminder.minutes) * 60) and not self.__event_alerts.has_key(event.get_link() + reminder.minutes):   
+                       
+                           self.__event_alerts[event.get_link() + reminder.minutes] = event
+
+                           # We don't want multiple alerts for the same event to be showing at the same time, 
+                           # so make sure we use a single notification for all alert times for the same event
+                           # (we otherwise would have displayed multiple alerts for the same event
+                           # when bigboard is started and some alert times for upcoming events were missed).  
+                           # When notify_id = 0 we will not replace any existing notification.
+                           notify_id = 0
+                           if self.__event_notify_ids.has_key(event.get_link()):      
+                               notify_id = self.__event_notify_ids[event.get_link()]
+
+                           self.__event_notify_ids[event.get_link()] = self.__notifications_proxy.Notify(
+                                                                           "BigBoard",
+                                                                           notify_id, # "id"
+                                                                           "", # icon name
+                                                                           event.get_title(),   # summary
+                                                                           fmt_time(event.get_start_time()), # body
+                                                                           ['view_event' + event.get_link(),
+                                                                            "View Event",
+                                                                            'calendar',
+                                                                            "View Calendar"], # action array
+                                                                           {'foo' : 'bar'}, # hints (pydbus barfs if empty)
+                                                                           10000) # timeout, 10 seconds        
             display = EventDisplay(event)
             self.__box.append(display)
 

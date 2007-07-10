@@ -72,10 +72,10 @@ class Event(AutoStruct):
         self.__event_entry = None
 
     def set_event_entry(self, event_entry):
-        __event_entry = event_entry
+        self.__event_entry = event_entry
 
     def get_event_entry(self):
-        return __event_entry 
+        return self.__event_entry 
     
 ## this is from the "Wuja" applet code, GPL v2
 def parse_timestamp(timestamp, tz=None):
