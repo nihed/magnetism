@@ -70,13 +70,8 @@ class AsyncHTTPFetcher(Singleton):
         self.fetch(url, cb, errcb, **kwargs) 
        
     def refetch(self, url, cb, errcb, **kwargs):
-        headers = {'Cache-Control': 'only-if-cached'}
-        h = httplib2.Http(cache=self.__cache)
-        (response, content) = h.request(url, headers=headers)
-        if response.status == 200:
-            gobject.idle_add(self.__emit_refetch, url, content, cb, errcb, kwargs)
-        else:
-            self.fetch(url, cb, errcb, **kwargs)
+        kwargs['refetch'] = True
+        self.fetch(url, cb, errcb, **kwargs)
        
     def fetch(self, url, cb, errcb, **kwargs):
         kwargs['url'] = url
@@ -133,32 +128,40 @@ class AsyncHTTPFetcher(Singleton):
             self.__do_fetch(*args)
 
     def __do_fetch(self, kwargs):
-        url = kwargs['url']     
+        url = kwargs['url']
+        is_refetch = 'refetch' in kwargs
         self.__logger.debug("in thread fetch of %s" % (url,))
         h = httplib2.Http(cache=self.__cache)
         if 'setupfn' in kwargs:
             kwargs['setupfn'](h)
-        http_kwargs = {}
+        headers = {}            
+        http_kwargs = {'headers': headers}     
         if 'data' in kwargs:
             http_kwargs['method'] = 'POST'
             http_kwargs['body'] = kwargs['data']
         if 'cookies' in kwargs:
-            headers={}
-            http_kwargs['headers'] = headers
             # oddly, apparently there's no escaping here
             cookie_str = ','.join(["%s=%s" % x for x in kwargs['cookies']])
             headers['Cookie'] = cookie_str
+        if is_refetch:
+            headers['Cache-Control'] = 'only-if-cached'
         (response, content) = h.request(url, **http_kwargs)
         if response.status == 200:
-            gobject.idle_add(lambda: self.__emit_results(url, kwargs['cb'], content))
+            gobject.idle_add(lambda: self.__emit_results(url, kwargs['cb'], content, is_refetch=is_refetch))
         elif 'response_errcb' in kwargs:
             gobject.idle_add(lambda: kwargs['response_errcb'](url, response, content))
-        else:
+        elif 'refetch' not in kwargs:
             self.__logger.info("caught error for fetch of %s (status: %s)" % (url, response.status))     
             if 'errcb' in kwargs:           
                 gobject.idle_add(lambda: kwargs['errcb'](url, response) and False)
-
-    def __emit_results(self, url, cb, fdata):
+        if is_refetch:
+            del kwargs['refetch']
+            self.fetch_extended(**kwargs)
+            
+    def __emit_results(self, url, cb, fdata, is_refetch=False):
         self.__logger.debug("fetch of %s complete with %d bytes" % (url,len(fdata)))
-        cb(url, fdata)
+        kwargs = {}
+        if is_refetch:
+            kwargs['is_refetch'] = True
+        cb(url, fdata, **kwargs)
     
