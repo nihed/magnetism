@@ -134,6 +134,8 @@ class LoginSlideout(CanvasVBox):
         return None    
         
     def __sync(self):
+        if not self.__myself:
+            return
         for (svc,(req, cbs)) in self.__requests.iteritems():
             for external in self.__myself.lovedAccounts:
                 uname = self.__accountsvc_username_from_external(external)
