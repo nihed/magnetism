@@ -6,7 +6,7 @@ import javax.persistence.Query;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.CachedAmazonAlbumData;
+import com.dumbhippo.persistence.caches.CachedAmazonAlbumData;
 import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;

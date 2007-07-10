@@ -13,8 +13,8 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.persistence.CachedAmazonReview;
-import com.dumbhippo.persistence.CachedAmazonReviews;
+import com.dumbhippo.persistence.caches.CachedAmazonReview;
+import com.dumbhippo.persistence.caches.CachedAmazonReviews;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.AmazonReviewView;
 import com.dumbhippo.services.AmazonReviews;

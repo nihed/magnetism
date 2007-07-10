@@ -48,6 +48,9 @@
         <ejb>dumbhippo.par</ejb>
     </module>    
     <module>
+        <ejb>dumbhippo-caches.par</ejb>
+    </module>
+    <module>
         <ejb>dumbhippo.ejb3</ejb>
     </module>
     <!--  war can be separate, see jboss-web.xml, comment the below out if so -->

@@ -71,7 +71,7 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 	private Class<? extends EjbIfaceType> ejbIface;
 	private long expirationTime; // in milliseconds until we expire the cache	
 	
-	@PersistenceContext(unitName = "dumbhippo")
+	@PersistenceContext(unitName = "dumbhippo-caches")
 	protected EntityManager em;
 	
 	@EJB

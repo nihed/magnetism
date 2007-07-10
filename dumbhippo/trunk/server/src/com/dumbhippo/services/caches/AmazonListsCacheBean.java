@@ -15,8 +15,8 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.persistence.CachedAmazonList;
-import com.dumbhippo.persistence.CachedAmazonLists;
+import com.dumbhippo.persistence.caches.CachedAmazonList;
+import com.dumbhippo.persistence.caches.CachedAmazonLists;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.AmazonListView;
 import com.dumbhippo.services.AmazonLists;

@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.persistence.CachedPicasaAlbum;
+import com.dumbhippo.persistence.caches.CachedPicasaAlbum;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.PicasaAlbum;
 import com.dumbhippo.services.PicasaAlbumFeedParser;

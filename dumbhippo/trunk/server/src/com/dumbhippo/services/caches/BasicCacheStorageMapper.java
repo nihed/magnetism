@@ -1,6 +1,6 @@
 package com.dumbhippo.services.caches;
 
-import com.dumbhippo.persistence.CachedItem;
+import com.dumbhippo.persistence.caches.CachedItem;
 
 /** Maps from a web service result to a single database entity (one row per result to be saved).
  */

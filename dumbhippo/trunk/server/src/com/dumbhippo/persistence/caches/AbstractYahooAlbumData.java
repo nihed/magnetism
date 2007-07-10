@@ -1,4 +1,4 @@
-package com.dumbhippo.persistence;
+package com.dumbhippo.persistence.caches;
 
 import java.util.Date;
 
@@ -6,6 +6,7 @@ import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 
+import com.dumbhippo.persistence.DBUnique;
 import com.dumbhippo.services.YahooAlbumData;
 
 @MappedSuperclass

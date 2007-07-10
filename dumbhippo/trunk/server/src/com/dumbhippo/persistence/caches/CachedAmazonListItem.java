@@ -1,4 +1,4 @@
-package com.dumbhippo.persistence;
+package com.dumbhippo.persistence.caches;
 
 import java.util.Date;
 
@@ -11,6 +11,7 @@ import javax.persistence.UniqueConstraint;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.DBUnique;
 import com.dumbhippo.services.AmazonListItem;
 import com.dumbhippo.services.AmazonListItemView;
 import com.dumbhippo.services.AmazonWebServices;

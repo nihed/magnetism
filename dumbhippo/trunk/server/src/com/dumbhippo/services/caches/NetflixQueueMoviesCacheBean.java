@@ -13,8 +13,8 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.persistence.CachedNetflixMovie;
-import com.dumbhippo.persistence.CachedNetflixMovies;
+import com.dumbhippo.persistence.caches.CachedNetflixMovie;
+import com.dumbhippo.persistence.caches.CachedNetflixMovies;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.NetflixMovieView;
 import com.dumbhippo.services.NetflixMovies;

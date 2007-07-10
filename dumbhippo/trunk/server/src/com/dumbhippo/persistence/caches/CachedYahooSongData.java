@@ -1,9 +1,10 @@
-package com.dumbhippo.persistence;
+package com.dumbhippo.persistence.caches;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 
 import org.hibernate.annotations.Index;
+
 
 /**
  * This table maps (album,artist,name) triplet to yahoo song data.

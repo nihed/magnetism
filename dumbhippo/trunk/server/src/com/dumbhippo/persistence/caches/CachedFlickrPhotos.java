@@ -1,4 +1,4 @@
-package com.dumbhippo.persistence;
+package com.dumbhippo.persistence.caches;
 
 import java.util.Date;
 
@@ -8,13 +8,14 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
-import com.dumbhippo.services.FlickrPhotosets;
-import com.dumbhippo.services.FlickrPhotosetsView;
+import com.dumbhippo.persistence.DBUnique;
+import com.dumbhippo.services.FlickrPhotos;
+import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.FlickrWebServices;
 
 @Entity
 @Table(uniqueConstraints = {@UniqueConstraint(columnNames={"flickrId"})})
-public class CachedFlickrPhotosets extends DBUnique implements CachedItem {
+public class CachedFlickrPhotos extends DBUnique implements CachedItem {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -22,22 +23,22 @@ public class CachedFlickrPhotosets extends DBUnique implements CachedItem {
 	private int totalCount;
 	private long lastUpdated;
 	
-	protected CachedFlickrPhotosets() {
+	protected CachedFlickrPhotos() {
 		
 	}
 	
-	public CachedFlickrPhotosets(String flickrId, int totalCount) {
+	public CachedFlickrPhotos(String flickrId, int totalCount) {
 		this.flickrId = flickrId;
 		this.totalCount = totalCount;
 	}
 	
-	public CachedFlickrPhotosets(String flickrId, FlickrPhotosetsView view) {
+	public CachedFlickrPhotos(String flickrId, FlickrPhotosView view) {
 		this.flickrId = flickrId;
 		update(view);
 	}
 	
-	static public CachedFlickrPhotosets newNoResultsMarker(String flickrId) {
-		return new CachedFlickrPhotosets(flickrId, -1);
+	static public CachedFlickrPhotos newNoResultsMarker(String flickrId) {
+		return new CachedFlickrPhotos(flickrId, -1);
 	}
 	
 	@Transient
@@ -45,17 +46,20 @@ public class CachedFlickrPhotosets extends DBUnique implements CachedItem {
 		return totalCount < 0;
 	}	
 
-	public void update(FlickrPhotosetsView photos) {
+	public void update(FlickrPhotosView photos) {
 		if (photos == null)
 			totalCount = -1; // no results marker
 		else
 			setTotalCount(photos.getTotal());
 	}
 	
-	public FlickrPhotosetsView toPhotosets() {
-		FlickrPhotosets photosets = new FlickrPhotosets();
-		photosets.setTotal(totalCount);
-		return photosets;
+	public FlickrPhotosView toPhotos() {
+		FlickrPhotos photos = new FlickrPhotos();
+		photos.setPage(1); // flickr paging starts at 1
+		photos.setPages(1);
+		photos.setPerPage(totalCount);
+		photos.setTotal(totalCount);
+		return photos;
 	}
 	
 	@Column(nullable=false, length=FlickrWebServices.MAX_FLICKR_USER_ID_LENGTH)

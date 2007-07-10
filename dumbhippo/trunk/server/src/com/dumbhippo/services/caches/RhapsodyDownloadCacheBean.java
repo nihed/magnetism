@@ -20,7 +20,7 @@ import sun.text.Normalizer;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.URLUtils;
-import com.dumbhippo.persistence.CachedRhapsodyDownload;
+import com.dumbhippo.persistence.caches.CachedRhapsodyDownload;
 import com.dumbhippo.server.BanFromWebTier;
 
 @BanFromWebTier

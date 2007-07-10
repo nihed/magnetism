@@ -6,7 +6,7 @@ import javax.persistence.Query;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.CachedYahooAlbumData;
+import com.dumbhippo.persistence.caches.CachedYahooAlbumData;
 import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.services.YahooAlbumData;
 import com.dumbhippo.services.YahooSearchWebServices;
