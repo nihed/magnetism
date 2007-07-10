@@ -1,10 +1,14 @@
+import re,logging
+
+import dbus
+import dbus.service
+
 from mugshot.AbstractModel import *
 from mugshot.Query import *
 from mugshot.NotificationSet import *
 from mugshot.Resource import *
-import dbus
-import dbus.service
-import re
+
+_logger = logging.getLogger('mugshot.DataModel')
 
 def _escape_byte(m):
     return "_%02X" % ord(m.group(0))
@@ -156,6 +160,7 @@ class _DBusCallback(dbus.service.Object):
     @dbus.service.method("org.mugshot.dm.Client",
                          in_signature='a(ssba(ssyyyv))', out_signature='')
     def Notify(self, resources):
+        _logger.debug("got notify for resources: %s", resources)
         notifications = NotificationSet(self.__model)
         for resource_struct in resources:
             self.__model._update_resource_from_dbus(resource_struct, notifications=notifications)
@@ -180,14 +185,16 @@ class _DBusQuery(Query):
         self._on_success(result)
 
     def __on_error(self, *args):
-        print args
+        _logger.error('Caught error; args: %s', args)
 
     def execute(self):
         # FIXME: Would it be better to call the __on_error? Doing that sync could cause problems.
         #   If we decide to continue raising an exception here, we should use a subclass
         if not self.__model.connected:
             raise Exception("Not connected")
-        
-        self.__model._get_proxy().Query(self.__model.callback.path, self.__method[0] + "#" + self.__method[1], self.__fetch, self.__params,
+
+        meth_path = self.__method[0] + "#" + self.__method[1]
+        _logger.debug("executing query meth: '%s' fetch: '%s' params: '%s'", meth_path, self.__fetch, self.__params)
+        self.__model._get_proxy().Query(self.__model.callback.path, meth_path, self.__fetch, self.__params,
                                         dbus_interface='org.mugshot.dm.Model', reply_handler=self.__on_reply, error_handler=self.__on_error)
         
