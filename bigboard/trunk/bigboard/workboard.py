@@ -16,10 +16,12 @@ class WorkBoard(Singleton):
     __observers = []
     
     def append(self, name, *args, **kwargs):
+        _logger.debug("appending message name='%s' args='%s', kwargs='%s'", name, args, kwargs)
         self.__queue.append((name, args, kwargs))
         self.__signal()
         
     def observe(self, func, *names):
+        _logger.debug("adding observer for names='%s': %s", names, func)        
         self.__observers.append((names, weakref.ref(func)))
         self.__signal()
         

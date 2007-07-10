@@ -372,6 +372,7 @@ class Google(gobject.GObject):
     def __on_auth_ok(self, username, password):
         self.__username = username
         self.__password = password
+        self.__auth_requested = False
         keyring.get_keyring().store_login('google', self.__username, self.__password)
 
         hooks = self.__post_auth_hooks
@@ -395,18 +396,22 @@ class Google(gobject.GObject):
         """Call func after we get username and password"""
 
         if self.__username and self.__password:
+            _logger.debug("auth looks valid")   
             func()
             return
             
         if not self.__auth_requested:
             self.__auth_requested = True
             WorkBoard().append('service.pwauth', 'Google', self.__on_auth_ok, reauth=reauth)
+        else:
+            _logger.debug("auth request pending; not resending")            
         self.__post_auth_hooks.append(func)
 
-    def __on_bad_auth(self, func):
-        # don't null username, leave it filled in
+    def __on_bad_auth(self):
+        _logger.debug("got bad auth; invoking reauth")
+        # don't null username, leave it filled inf
         self.__password = None
-        self.__with_login_info(func, reauth=True)
+        self.__with_login_info(lambda: True, reauth=True)
 
     ### Calendar
 
@@ -426,7 +431,7 @@ class Google(gobject.GObject):
         self.__fetcher.fetch(uri, self.__username, self.__password,
                              lambda url, data: self.__on_calendar_load(url, data, cb, errcb),
                              lambda url, resp: errcb(resp),
-                             lambda url: self.__on_bad_auth(lambda: self.__have_login_fetch_calendar(cb, errcb)))
+                             lambda url: self.__on_bad_auth())
 
     def fetch_calendar(self, cb, errcb):
         self.__with_login_info(lambda: self.__have_login_fetch_calendar(cb, errcb))
@@ -456,7 +461,7 @@ class Google(gobject.GObject):
         self.__fetcher.fetch(uri, self.__username, self.__password,
                              lambda url, data: self.__on_documents_load(url, data, cb, errcb),
                              lambda url, exc_info: self.__on_documents_error(url, exc_info, errcb),
-                             lambda url: self.__on_bad_auth(lambda: self.__have_login_fetch_documents(cb, errcb)))
+                             lambda url: self.__on_bad_auth())
 
     def fetch_documents(self, cb, errcb):
         self.__with_login_info(lambda: self.__have_login_fetch_documents(cb, errcb))
@@ -484,7 +489,7 @@ class Google(gobject.GObject):
         self.__fetcher.fetch(uri, self.__username, self.__password,
                              lambda url, data: self.__on_new_mail_load(url, data, cb, errcb),
                              lambda url, exc_info: self.__on_new_mail_error(url, exc_info, errcb),
-                             lambda url: self.__on_bad_auth(lambda: self.__have_login_fetch_new_mail(cb, errcb)))
+                             lambda url: self.__on_bad_auth())
 
     def fetch_new_mail(self, cb, errcb):
         self.__with_login_info(lambda: self.__have_login_fetch_new_mail(cb, errcb))
