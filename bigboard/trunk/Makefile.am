@@ -1,6 +1,6 @@
 include $(top_srcdir)/Makefile-include.am
 
-SUBDIRS = applet bigboard scripts po mugshot-python
+SUBDIRS = applet data bigboard scripts po mugshot-python
 
 mainscript_PYTHON = main.py
 
