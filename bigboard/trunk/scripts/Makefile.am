@@ -9,6 +9,7 @@ bigboard: bigboard.in
 	    -e s!\@PYTHON\@!@PYTHON@!g \
 	    -e s!\@BB_PYDIR\@!$(mainscriptdir)!g \
 	    -e s!\@BB_STOCKDIR\@!$(stocksdir)!g \
+	    -e s!\@pyexecdir\@!$(pyexecdir)!g \
 	    < $< > $@
 	chmod a+x $@
 
