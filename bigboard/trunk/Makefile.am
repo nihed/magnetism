@@ -4,6 +4,8 @@ SUBDIRS = applet bigboard scripts po mugshot-python
 
 mainscript_PYTHON = main.py
 
+MAINTAINERCLEANFILES =
+
 DISTCLEANFILES = \
 	intltool-extract \
 	intltool-merge \
@@ -27,3 +29,20 @@ install-schemas:
 endif
 DISTCLEANFILES += $(schema_DATA)
 EXTRA_DIST += $(schema_in_files)
+
+## this globally runs the daemon for all users, which is not what we want long-term. 
+## But, it won't (or shouldn't) do anything if you aren't running mugshot.
+## we'll have to clean this up later.
+
+autostartdir=$(datadir)/gnome/autostart
+autostart_in_files=gconf-online-sync.desktop.in
+autostart_files=$(autostart_in_files:.desktop.in=.desktop)
+autostart_DATA = $(autostart_files)
+
+# intltool not here until po exists and all that
+#@INTLTOOL_DESKTOP_RULE@
+gconf-online-sync.desktop: gconf-online-sync.desktop.in
+	cat $(srcdir)/gconf-online-sync.desktop.in | sed -e 's/^_//g' > gconf-online-sync.desktop
+
+EXTRA_DIST += $(autostart_in_files)
+MAINTAINERCLEANFILES +=	$(autostart_files)
