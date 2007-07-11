@@ -92,7 +92,10 @@ def parse_timestamp(timestamp, tz=None):
     if timestamp.count('T') > 0:
         date_str, time_str = timestamp.split('T')
         time_str = time_str.split('.')[0]
-        hour, minute, second = time_str.split(':')
+        if time_str.find(':') >= 0:
+            hour, minute, second = time_str.split(':')
+        else:
+            hour, minute, second = (time_str[0:2], time_str[2:4], time_str[4:6])
     else:
         date_str = timestamp
         hour, minute, second = 0, 0, 0
@@ -108,7 +111,7 @@ class EventsParser:
     def __init__(self, data):
         self.__events = []
         self.__events_sorted = False
-        self.__dt_re = re.compile(r'DT\w+;VALUE=DATE:(\d+)\s')
+        self.__dt_re = re.compile(r'DT[\w;=/_]+:(\d+)(?:T(\d+))\s')
         self.__parseEvents(data)
 
     def __parseEvents(self, data):
@@ -122,31 +125,38 @@ class EventsParser:
             e.set_event_entry(entry)
             e.update({ 'calendar_title' : calendar_title, 
                        'title' : entry.title.text and entry.title.text or "<No Title>", 
-                       'link' : entry.GetHtmlLink().href })            
-
-            # if this is a recurring event, use the first time interval it occurres for the start and end time
-            # TODO: double check that this also applies for all-day events that are saved as one-time recurrences
-            if entry.recurrence is not None:
-                dt_start = None
-                dt_end = None
-                match = self.__dt_re.search(entry.recurrence.text)
-                if match:
-                    dt_start = match.group(1)
-                    match = self.__dt_re.search(entry.recurrence.text, match.end())
-                    if match:
-                        dt_end = match.group(1)
-                if dt_start and dt_end:
-                    e.update({ 'start_time' : parse_timestamp(dt_start),
-                               'end_time' : parse_timestamp(dt_end) })
+                       'link' : entry.GetHtmlLink().href })           
 
             for when in entry.when:
-                # _logger.debug("start time %s\n" % (when.start_time,))
-                # _logger.debug("end time %s\n" % (when.end_time,))     
+                # _logger.debug("start time %s\n" % (parse_timestamp(when.start_time),))
+                # _logger.debug("end time %s\n" % (parse_timestamp(when.end_time),))     
                 e.update({ 'start_time' : parse_timestamp(when.start_time),
                            'end_time' : parse_timestamp(when.end_time) })
                 # for reminder in when.reminder:
                     # _logger.debug('%s %s\n '% (reminder.minutes, reminder.extension_attributes['method']))
         
+            # if this is a recurring event, use the first time interval it occurres for the start and end time
+            # TODO: double check that this also applies for all-day events that are saved as one-time recurrences
+            if entry.recurrence is not None:
+                dt_start = None
+                dt_end = None
+                # _logger.debug("recurrence text %s" % (entry.recurrence.text,))
+                match = self.__dt_re.search(entry.recurrence.text)
+                if match:
+                    dt_start = match.group(1) 
+                    if match.group(2) is not None: 
+                        dt_start = dt_start + "T" + match.group(2)
+                    match = self.__dt_re.search(entry.recurrence.text, match.end())
+                    if match:
+                        dt_end = match.group(1)
+                        if match.group(2) is not None: 
+                            dt_end = dt_end + "T" + match.group(2)
+                if dt_start and dt_end:
+                    # _logger.debug("recurrence start time %s\n" % (parse_timestamp(dt_start),))
+                    # _logger.debug("recurrence end time %s\n" % (parse_timestamp(dt_end),))   
+                    e.update({ 'start_time' : parse_timestamp(dt_start),
+                               'end_time' : parse_timestamp(dt_end) })
+
     def __compare_by_date(self, a, b):
         return cmp(a.get_start_time(), b.get_start_time())
 
