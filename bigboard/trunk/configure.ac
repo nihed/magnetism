@@ -190,6 +190,7 @@ Makefile
 applet/Makefile
 bigboard/Makefile
 bigboard/keybinder/Makefile
+data/Makefile
 scripts/Makefile
 po/Makefile.in
 mugshot-python/Makefile

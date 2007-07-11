@@ -38,6 +38,11 @@ BUS_IFACE_PANEL=BUS_IFACE + ".Panel"
 
 GCONF_PREFIX = '/apps/bigboard/'
 
+try:
+    DATADIR = os.path.abspath(os.getenv('BB_DATADIR'))
+except KeyError, e:
+    DATADIR = '/usr/share/pixmaps/bigboard' # Don't really care about nonstandard $(datadir) right now
+
 _logger = logging.getLogger("bigboard.Main")
 
 class GradientHeader(hippo.CanvasGradient):
@@ -239,7 +244,8 @@ X-GNOME-Autostart-enabled=true
      
         self._header_box.append(self._title, hippo.PACK_EXPAND)
         
-        self._size_button = hippo.CanvasLink(xalign=hippo.ALIGNMENT_CENTER)
+        self._size_button = hippo.CanvasImage(xalign=hippo.ALIGNMENT_CENTER, yalign=hippo.ALIGNMENT_CENTER)
+        self._size_button.set_clickable(True)
         self._size_button.connect("button-press-event", lambda text, event: self._toggle_size())
         
         self._header_box.append(self._size_button, hippo.PACK_END)
@@ -333,12 +339,12 @@ X-GNOME-Autostart-enabled=true
         if self.__get_size() == Stock.SIZE_BEAR:
             self._header_box.remove(self._size_button)
             self._header_box.append(self._size_button, hippo.PACK_EXPAND)
-            self._size_button.set_property("text", u"\u00bb")
+            self._size_button.set_property('image-name', 'bigboard-expand.png')
             self._canvas.set_size_request(Stock.SIZE_BEAR_CONTENT_PX, 42)
         else:
             self._header_box.remove(self._size_button)
             self._header_box.append(self._size_button, hippo.PACK_END)            
-            self._size_button.set_property("text", u"\u00ab small")        
+            self._size_button.set_property('image-name', 'bigboard-collapse.png')       
             self._canvas.set_size_request(Stock.SIZE_BULL_CONTENT_PX, 42)
             
         for exchange in self._exchanges:
@@ -470,6 +476,8 @@ X-GNOME-Autostart-enabled=true
         pass
 
 def load_image_hook(img_name):
+    if img_name.startswith('bigboard-'):
+        img_name = os.path.join(DATADIR, img_name)
     if img_name.find(os.sep) >= 0:
         pixbuf = gtk.gdk.pixbuf_new_from_file(img_name)
     else:
