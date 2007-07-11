@@ -38,10 +38,9 @@ BUS_IFACE_PANEL=BUS_IFACE + ".Panel"
 
 GCONF_PREFIX = '/apps/bigboard/'
 
-try:
-    DATADIR = os.path.abspath(os.getenv('BB_DATADIR'))
-except KeyError, e:
-    DATADIR = '/usr/share/pixmaps/bigboard' # Don't really care about nonstandard $(datadir) right now
+# Don't really care about nonstandard $(datadir) right now
+DATADIR = os.getenv('BB_DATADIR') or '/usr/share/pixmaps/bigboard'
+DATADIR = os.path.abspath(DATADIR)
 
 _logger = logging.getLogger("bigboard.Main")
 
