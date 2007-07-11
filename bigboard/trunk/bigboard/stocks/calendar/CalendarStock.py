@@ -46,7 +46,7 @@ def parse_timestamp(timestamp, tz=None):
     return datetime.datetime(int(year), int(month), int(day), int(hour), int(minute),
         int(second), tzinfo=tz)
 
-def fmt_time(dt):
+def fmt_datetime(dt):
     today = datetime.date.today()
     if today == dt.date():
         date_str = "Today"
@@ -59,17 +59,20 @@ def fmt_time(dt):
         return date_str
     return date_str + " " + str(dt.time())
 
-def fmt_date(dt):
+def fmt_time(dt):     
+    return dt.time().strftime("%I:%M%p")
+
+def fmt_date(date):
     today = datetime.date.today()
-    abbreviated_date_str = dt.strftime("%a %b %d")   
-    if today == dt:
+    abbreviated_date_str = date.strftime("%a %b %d")   
+    if today == date:
         return "Today - " + abbreviated_date_str
-    elif today + datetime.timedelta(1) == dt:
+    elif today + datetime.timedelta(1) == date:
         return "Tomorrow - " + abbreviated_date_str
-    elif today - datetime.timedelta(1) == dt:
+    elif today - datetime.timedelta(1) == date:
         return "Yesterday - " + abbreviated_date_str
     
-    return dt.strftime("%A %b %d")
+    return date.strftime("%A %b %d")
 
 class Event(AutoStruct):
     def __init__(self):
@@ -149,9 +152,7 @@ class EventDisplay(CanvasVBox):
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=2, 
                                      border_right=4)
         self.__title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
-        self.__description = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         self.__box.append(self.__title)
-        self.__box.append(self.__description)        
         
         self.append(self.__box)
     
@@ -173,15 +174,12 @@ class EventDisplay(CanvasVBox):
         return '<EventDisplay name="%s">' % (self.__get_title())
     
     def __event_display_sync(self):
-        self.__title.set_property("text", self.__event.get_title())
-        self.__description.set_property("text", "  " + (fmt_time(self.__event.get_start_time())))
-
+        self.__title.set_property("text", fmt_time(self.__event.get_start_time()) + "  " + self.__event.get_title())
         now = datetime.datetime.now()
         if self.__event.get_end_time() < now:
             attrs = pango.AttrList()
             attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
-            self.__title.set_property("attributes", attrs)        
-            self.__description.set_property("attributes", attrs)        
+            self.__title.set_property("attributes", attrs)               
         # stuff for today is bold
         if self.__event.get_start_time() < now:
             delta = now - self.__event.get_start_time()
@@ -341,7 +339,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         if self.__event_notify_ids.has_key(event.get_link()):      
             notify_id = self.__event_notify_ids[event.get_link()]
 
-        body = "<i>for: " + fmt_time(event.get_start_time()) + \
+        body = "<i>for: " + fmt_datetime(event.get_start_time()) + \
                "\nfrom: " + xml.sax.saxutils.escape(event.get_calendar_title()) + "</i>"
 
         if event.get_event_entry().content.text is not None:
