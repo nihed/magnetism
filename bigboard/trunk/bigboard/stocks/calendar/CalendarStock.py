@@ -101,7 +101,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         else:
             gobj.request_auth()
 
-        self._add_more_link(self.__on_more_link)
+        self._add_more_button(self.__on_more_button)
 
     # what to do when buttons on the notification are clicked
     def __on_action(self, *args):
@@ -120,7 +120,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             _logger.debug("unknown action: %s", action)   
             print "unknown action " + action
 
-    def __on_more_link(self):
+    def __on_more_button(self):
         libbig.show_url('http://calendar.google.com')
 
     def _on_mugshot_ready(self):

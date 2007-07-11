@@ -165,7 +165,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__box.set_child_visible(self.__dynamic_set, False)
         
         self.__app_browser = None
-        self._add_more_link(self.__on_more_link)
+        self._add_more_button(self.__on_more_button)
 
         self._mugshot.connect("all-apps-loaded", lambda mugshot: self.__merge_apps())  
         self._mugshot.connect("global-top-apps-changed", lambda mugshot, apps: self.__sync())  
@@ -186,7 +186,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         for app in ad.get_apps():
             self.get_local_app(app)
 
-    def __on_more_link(self):
+    def __on_more_button(self):
         self._logger.debug("more!")
         if self.__app_browser is None:
             self.__app_browser = appbrowser.AppBrowser(self)            
