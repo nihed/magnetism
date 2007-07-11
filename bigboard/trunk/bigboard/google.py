@@ -158,7 +158,7 @@ class EventsParser:
                                'end_time' : parse_timestamp(dt_end) })
 
     def __compare_by_date(self, a, b):
-        return cmp(a.get_start_time(), b.get_start_time())
+        return cmp(b.get_start_time(), a.get_start_time())
 
     def get_events(self):
         if not self.__events_sorted:

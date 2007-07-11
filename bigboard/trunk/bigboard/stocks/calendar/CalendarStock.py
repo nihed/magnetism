@@ -16,16 +16,18 @@ _logger = logging.getLogger("bigboard.stocks.CalendarStock")
 
 _events_polling_periodicity_seconds = 120
 
+_day_displayed = datetime.date.today()
+
 def fmt_time(dt):
-    now = datetime.datetime.now()
-    if now.date() == dt.date():
+    today = datetime.date.today()
+    if today == dt.date():
         date_str = "Today"
-    elif (now + datetime.timedelta(1)).date() == dt.date():
+    elif today + datetime.timedelta(1) == dt.date():
         date_str = "Tomorrow"
     else: 
         date_str = str(dt.date())
      
-    if dt.time().hour == 0 and dt.time().minute == 0 and  dt.time().second == 0:
+    if dt.time().hour == 0 and dt.time(Ev).minute == 0 and  dt.time().second == 0:
         return date_str
     return date_str + " " + str(dt.time())
 
@@ -157,12 +159,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         events.reverse()
         for event in events:
             now = datetime.datetime.now()            
-            if event.get_end_time() < now:
-                delta = now - event.get_end_time()
-                # don't show stuff older than a week
-                if delta.days >= 3:
-                    continue
-            else: 
+            if event.get_end_time() >= now:
                 delta = event.get_start_time() - now
                 delta_seconds = (delta.days * 3600 * 24) + delta.seconds 
                 # notify about an event if it is currently happening or coming up in the next 24 hours,
@@ -186,8 +183,9 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                            else:
                                self.__create_notification(event)
 
-            display = EventDisplay(event)
-            self.__box.append(display)
+            if event.get_start_time().date() == _day_displayed: 
+                display = EventDisplay(event)
+                self.__box.append(display)
 
     def __create_notification(self, event):
         # We don't want multiple alerts for the same event to be showing at the same time, 
