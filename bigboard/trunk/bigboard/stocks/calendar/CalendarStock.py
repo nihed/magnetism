@@ -17,7 +17,14 @@ _logger = logging.getLogger("bigboard.stocks.CalendarStock")
 _events_polling_periodicity_seconds = 120
 
 def fmt_time(dt):
-    date_str = str(dt.date())
+    now = datetime.datetime.now()
+    if now.date() == dt.date():
+        date_str = "Today"
+    elif (now + datetime.timedelta(1)).date() == dt.date():
+        date_str = "Tomorrow"
+    else: 
+        date_str = str(dt.date())
+     
     if dt.time().hour == 0 and dt.time().minute == 0 and  dt.time().second == 0:
         return date_str
     return date_str + " " + str(dt.time())
