@@ -10,15 +10,13 @@ import bigboard.global_mugshot as global_mugshot
 import bigboard.stock as stock
 import bigboard.google as google
 from bigboard.stock import AbstractMugshotStock
-from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox
+from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink
 from bigboard.libbig.struct import AutoStruct
 import bigboard.libbig.polling as polling
 
 _logger = logging.getLogger("bigboard.stocks.CalendarStock")
 
 _events_polling_periodicity_seconds = 120
-
-_day_displayed = datetime.date.today()
 
 ## this is from the "Wuja" applet code, GPL v2
 def parse_timestamp(timestamp, tz=None):
@@ -57,9 +55,21 @@ def fmt_time(dt):
     else: 
         date_str = str(dt.date())
      
-    if dt.time().hour == 0 and dt.time(Ev).minute == 0 and  dt.time().second == 0:
+    if dt.time().hour == 0 and dt.time().minute == 0 and  dt.time().second == 0:
         return date_str
     return date_str + " " + str(dt.time())
+
+def fmt_date(dt):
+    today = datetime.date.today()
+    abbreviated_date_str = dt.strftime("%a %b %d")   
+    if today == dt:
+        return "Today - " + abbreviated_date_str
+    elif today + datetime.timedelta(1) == dt:
+        return "Tomorrow - " + abbreviated_date_str
+    elif today - datetime.timedelta(1) == dt:
+        return "Yesterday - " + abbreviated_date_str
+    
+    return dt.strftime("%A %b %d")
 
 class Event(AutoStruct):
     def __init__(self):
@@ -123,7 +133,7 @@ class EventsParser:
                                'end_time' : parse_timestamp(dt_end) })
 
     def __compare_by_date(self, a, b):
-        return cmp(b.get_start_time(), a.get_start_time())
+        return cmp(a.get_start_time(), b.get_start_time())
 
     def get_events(self):
         if not self.__events_sorted:
@@ -191,9 +201,11 @@ class EventDisplay(CanvasVBox):
 class CalendarStock(AbstractMugshotStock, polling.Task):
     def __init__(self, *args, **kwargs):
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
+        self.__events = []
+        self.__day_displayed = datetime.date.today()
         self.__event_alerts = {}
         self.__event_notify_ids = {}
- 
+         
         # these are at the end since they have the side effect of calling on_mugshot_ready it seems?
         AbstractMugshotStock.__init__(self, *args, **kwargs)
         polling.Task.__init__(self, _events_polling_periodicity_seconds * 1000)
@@ -206,11 +218,19 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         gobj = google.get_google()
         gobj.connect("auth", self.__on_google_auth)
         if gobj.have_auth():
-            self.__on_google_auth(gobj, True)
+            self.__on_google_auth(gobj, True) 
         else:
             gobj.request_auth()
 
         self._add_more_button(self.__on_more_button)
+
+    def __do_next(self):
+        self.__day_displayed = self.__day_displayed + datetime.timedelta(1)
+        self.__refresh_events()
+        
+    def __do_prev(self):
+        self.__day_displayed = self.__day_displayed - datetime.timedelta(1)
+        self.__refresh_events()
 
     # what to do when buttons on the notification are clicked
     def __on_action(self, *args):
@@ -262,10 +282,8 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
     def __on_load_events(self, events):
         _logger.debug("loading events %s", events)
-        self.__box.remove_all()
-        events = list(events)
-        events.reverse()
-        for event in events:
+        self.__events = list(events)
+        for event in self.__events:
             now = datetime.datetime.now()            
             if event.get_end_time() >= now:
                 delta = event.get_start_time() - now
@@ -291,9 +309,27 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                            else:
                                self.__create_notification(event)
 
-            if event.get_start_time().date() == _day_displayed: 
+        self.__refresh_events()
+
+
+    def __refresh_events(self):      
+        self.__box.remove_all()
+        title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+        title.set_property("text", "  " + (fmt_date(self.__day_displayed)))
+        title.set_property("font", "13px Bold")
+        self.__box.append(title) 
+        for event in self.__events:
+            if event.get_start_time().date() == self.__day_displayed: 
                 display = EventDisplay(event)
                 self.__box.append(display)
+        self.__controlbox = CanvasHBox()
+        prev_link = ActionLink(text=u"\u00ab Prev", xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START)
+        prev_link.connect("button-press-event", lambda b,e: self.__do_prev())
+        self.__box.append(prev_link, hippo.PACK_EXPAND)
+        next_link = ActionLink(text=u"Next \u00bb", xalign=hippo.ALIGNMENT_END, yalign=hippo.ALIGNMENT_START)
+        next_link.connect("button-press-event", lambda b,e: self.__do_next())
+        self.__controlbox.append(next_link, hippo.PACK_EXPAND)
+        self.__box.append(self.__controlbox)    
 
     def __create_notification(self, event):
         # We don't want multiple alerts for the same event to be showing at the same time, 
