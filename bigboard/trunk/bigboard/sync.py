@@ -217,6 +217,9 @@ def main():
     gconf_client = gconf.client_get_default()
     bus = dbus.SessionBus()
 
+    ## FIXME we are evil and make no attempt to own a bus name, so you can start
+    ## multiple copies
+
     #proxy_obj = bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
     #dbus_iface = dbus.Interface(proxy_obj, 'org.freedesktop.DBus')
     #print dbus_iface.ListNames()
@@ -239,5 +242,4 @@ def main():
 
     loop.run()
 
-main()
  

@@ -1,0 +1,5 @@
+#!@PYTHON@
+
+import bigboard.sync
+
+bigboard.sync.main()

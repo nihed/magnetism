@@ -21,6 +21,14 @@ bigboard-uninst: bigboard-uninst.in
 	    < $< > $@
 	chmod a+x $@
 
-EXTRA_DIST = bigboard.in bigboard-uninst.in
+gconf-online-sync: gconf-online-sync.in
+	sed \
+	    -e s!\@PYTHON\@!@PYTHON@!g \
+	    -e s!\@BB_PYDIR\@!$(mainscriptdir)!g \
+	    -e s!\@BB_STOCKDIR\@!$(stocksdir)!g \
+	    < $< > $@
+	chmod a+x $@
 
-CLEANFILES = bigboard bigboard-uninst
+EXTRA_DIST = bigboard.in bigboard-uninst.in gconf-online-sync.in
+
+CLEANFILES = bigboard bigboard-uninst gconf-online-sync
