@@ -44,6 +44,7 @@ hippo_canvas_link_new
 hippo_canvas_window_new
 hippo_canvas_widget_new
 hippo_canvas_entry_new
+hippo_canvas_button_new
 %%
 ignore-glob
   *_get_type
