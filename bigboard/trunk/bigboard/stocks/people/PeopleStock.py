@@ -35,7 +35,7 @@ class PeopleStock(AbstractMugshotStock):
         self.__slideout_item = None
 
         self.__people_browser = None
-        self._add_more_link(self.__on_more_link)        
+        self._add_more_button(self.__on_more_button)        
 
         self.__update_separators()
         
@@ -140,7 +140,7 @@ class PeopleStock(AbstractMugshotStock):
 
         return True
 
-    def __on_more_link(self):
+    def __on_more_button(self):
         if self.__people_browser is None:
             self.__people_browser = peoplebrowser.PeopleBrowser(self)
         self.__people_browser.present()

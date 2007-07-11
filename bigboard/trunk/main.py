@@ -15,7 +15,7 @@ import hippo
 
 import bigboard
 import bigboard.big_widgets
-from bigboard.big_widgets import Sidebar, CommandShell, CanvasHBox, CanvasVBox, ActionLink
+from bigboard.big_widgets import Sidebar, CommandShell, CanvasHBox, CanvasVBox, ActionLink, Button
 from bigboard.stock import Stock
 import bigboard.libbig
 try:
@@ -119,7 +119,6 @@ class StockReader(gobject.GObject):
 
                 self.emit("stock-added", PrelistedStock(id, stockdir))
                 
-                
 class Exchange(hippo.CanvasBox):
     """A container for stocks."""
     
@@ -132,7 +131,7 @@ class Exchange(hippo.CanvasBox):
         self.__stock = stock
         self.__ticker_text = None
         self.__ticker_container = None
-        self.__mini_more_link = None
+        self.__mini_more_button = None
         self.__sep = Separator()
         self.append(self.__sep)
         if not stock.get_ticker() in ("-", ""):
@@ -142,15 +141,15 @@ class Exchange(hippo.CanvasBox):
             self.__ticker_text.connect("button-press-event", lambda text, event: self.__toggle_expanded())  
             self.__ticker_container.append(self.__ticker_text, hippo.PACK_EXPAND)
             
-            if stock.has_more_link():
-                more_link = ActionLink(xalign=hippo.ALIGNMENT_END, 
-                                       text=u"More \u00BB")
-                more_link.connect("activated", lambda l: stock.on_more_clicked())
-                self.__ticker_container.append(more_link)
-                self.__mini_more_link = ActionLink(xalign=hippo.ALIGNMENT_CENTER, 
-                                                   text=u"More") 
-                self.__mini_more_link.connect("activated", lambda l: stock.on_more_clicked())
-                self.append(self.__mini_more_link)
+            if stock.has_more_button():
+                more_button = Button(label='More', label_ypadding=-2)              
+                more_button.set_property('yalign', hippo.ALIGNMENT_CENTER)
+                more_button.connect("activated", lambda l: stock.on_more_clicked())
+                self.__ticker_container.append(more_button)
+                self.__mini_more_button = Button(label='More', label_ypadding=-1)          
+                self.__mini_more_button.set_property('yalign', hippo.ALIGNMENT_CENTER)                   
+                self.__mini_more_button.connect("activated", lambda l: stock.on_more_clicked())
+                self.append(self.__mini_more_button)
             
             self.append(self.__ticker_container)
         self.__stock.connect("visible", lambda s, v: self.set_size(self.__size))
@@ -172,8 +171,8 @@ class Exchange(hippo.CanvasBox):
                                ((self.__ticker_container and size == Stock.SIZE_BEAR) \
                                 or (size == Stock.SIZE_BULL
                                     and ((not self.__ticker_container) or (self.__stock.get_ticker() == "-")))))
-        if self.__mini_more_link:
-            self.set_child_visible(self.__mini_more_link, size == Stock.SIZE_BEAR)
+        if self.__mini_more_button:
+            self.set_child_visible(self.__mini_more_button, size == Stock.SIZE_BEAR)
         self.set_child_visible(self.__stockbox, not not content)
         if not content:
             self.__logger.debug("no content for stock %s", self.__stock)
@@ -558,6 +557,15 @@ def main():
         sys.exit(0)
         
     gconf.client_get_default().add_dir(GCONF_PREFIX[:-1], gconf.CLIENT_PRELOAD_RECURSIVE)
+
+    gtk.rc_parse_string('''
+style "bigboard-nopad-button" {
+  xthickness = 0
+  ythickness = 0
+  GtkButton::inner-border = {0,0,0,0}
+}
+widget "*bigboard-nopad-button" style "bigboard-nopad-button"
+''')
 
     listings = gconf.client_get_default().get_list(GCONF_PREFIX + 'listings', gconf.VALUE_STRING)
     ## this is a bad hack for now since we'll often not have schemas and there's no way
