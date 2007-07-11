@@ -244,7 +244,7 @@ X-GNOME-Autostart-enabled=true
      
         self._header_box.append(self._title, hippo.PACK_EXPAND)
         
-        self._size_button = hippo.CanvasImage(xalign=hippo.ALIGNMENT_CENTER, yalign=hippo.ALIGNMENT_CENTER)
+        self._size_button = hippo.CanvasImage(xalign=hippo.ALIGNMENT_END, yalign=hippo.ALIGNMENT_START)
         self._size_button.set_clickable(True)
         self._size_button.connect("button-press-event", lambda text, event: self._toggle_size())
         
