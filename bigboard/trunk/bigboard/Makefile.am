@@ -81,3 +81,10 @@ selfstockdir=$(stocksdir)/self
 selfstock_PYTHON = \
                 stocks/self/SelfStock.py \
                 stocks/self/listing.xml
+                
+peoplestockdir=$(stocksdir)/people
+peoplestock_PYTHON = \
+                stocks/people/PeopleStock.py \
+                stocks/people/peoplebrowser.py \
+                stocks/people/peoplewidgets.py \
+                stocks/people/listing.xml

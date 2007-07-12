@@ -228,8 +228,9 @@ class Mugshot(gobject.GObject):
         if self.__external_iqs.has_key(id):
             self._logger.debug("got external IQ reply for %d (%d outstanding)", id, len(self.__external_iqs.keys())-1)
             (cb, iqkey) = self.__external_iqs[id]
-            iqfile = os.path.join(self.__iqcachedir, iqkey)
-            open(iqfile, 'w').write(content)
+            if iqkey:
+                iqfile = os.path.join(self.__iqcachedir, iqkey)
+                open(iqfile, 'w').write(content)
             cb(content)            
             del self.__external_iqs[id]
     
@@ -337,6 +338,8 @@ class Mugshot(gobject.GObject):
             if os.access(iqfile, os.R_OK):
                 cachedata = open(iqfile).read()
                 gobject.idle_add(log_except(_logger)(cb), cachedata)
+        else:
+            iqkey = None
         gobject.idle_add(log_except(_logger)(functools.partial(self.__do_external_iq_uncached, iqkey, name, xmlns, cb, attrs=attrs, content=content, is_set=is_set)))
     
     def __do_external_iq_uncached(self, iqkey, name, xmlns, cb, attrs=None, content="", is_set=False):
