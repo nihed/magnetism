@@ -6,6 +6,7 @@ import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.ChannelHandler;
 import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
@@ -32,6 +33,8 @@ public class XmppClient implements DMClient {
 	private PriorityQueue<QueuedPacket> packets = new PriorityQueue<QueuedPacket>();
 	private boolean havePacketSender = false;
 	private boolean closed = false;
+	
+	static long MAX_WAIT_TIME = 5 * 60 * 1000; // 5 minutes
 
 	XmppClient(XmppClientManager clientManager, DataModel model, ClientSession clientSession, Guid userId) {
 		this.clientManager = clientManager;
@@ -81,8 +84,10 @@ public class XmppClient implements DMClient {
 			
 			synchronized(packets) {
 				while (true) {
-					if (closed)
+					if (closed) {
+						havePacketSender = false;
 						return;
+					}
 					
 					packet = packets.peek();
 					if (packet == null) {
@@ -95,11 +100,31 @@ public class XmppClient implements DMClient {
 						lastSentSerial = packet.serial;
 						break;
 					} else {
-						try {
-							packets.wait();
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+						long waitStart = System.currentTimeMillis();
+						long now = waitStart;
+						
+						while (true) {
+							long waitTime = waitStart + MAX_WAIT_TIME - now;
+							
+							if (waitTime < 0) {
+								Log.error("Giving up waiting for packet after " + MAX_WAIT_TIME + " ms, a missing nullNotify?");
+								packet = packets.peek();
+								lastSentSerial = packet.serial - 1;
+								break;
+							}
+
+							try {
+								packets.wait(waitTime);
+							} catch (InterruptedException e) { // Shut down
+								havePacketSender = false;
+								return;
+							}
+						
+							packet = packets.peek();
+							if (packet.serial == lastSentSerial + 1)
+								break;
+							
+							now = System.currentTimeMillis();
 						}
 					}
 				}
@@ -113,7 +138,9 @@ public class XmppClient implements DMClient {
 			try {
 				handler.process(packet.packet);
 			} catch (UnauthorizedException e) {
-				e.printStackTrace();
+				Log.error("Got UnauthorizedException when delivering packet to client session", e);
+			} catch (RuntimeException e) {
+				Log.error("Got exception when delivering packet to client session", e);
 			}
 		}
 	}
@@ -140,8 +167,8 @@ public class XmppClient implements DMClient {
 	}
 
 	public <K, T extends DMObject<K>> void notifyEviction(DMClassHolder<K, T> classHolder, K key, long serial) {
-		// TODO Auto-generated method stub
-
+		// TODO implement this
+		nullNotification(serial);
 	}
 
 	public void nullNotification(long serial) {
