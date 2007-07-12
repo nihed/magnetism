@@ -6,6 +6,7 @@ import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.ChannelHandler;
 import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
@@ -107,6 +108,7 @@ public class XmppClient implements DMClient {
 			@SuppressWarnings("unchecked")
 			ChannelHandler<Packet> handler = clientSession;
 			try {
+				Log.debug("Sending packet with serial " + packet.serial + " to the packet handler");
 				handler.process(packet.packet);
 			} catch (UnauthorizedException e) {
 				e.printStackTrace();
