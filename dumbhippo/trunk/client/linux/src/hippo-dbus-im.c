@@ -26,6 +26,7 @@ typedef struct {
     char *name;
     gboolean is_online;
     char *status;
+    char *webdav_url;
 } HippoDBusImBuddy;
 
 static void hippo_dbus_im_append_buddy(DBusMessageIter        *append_iter,
@@ -38,6 +39,7 @@ hippo_dbus_im_buddy_destroy(HippoDBusImBuddy *buddy)
     g_free(buddy->protocol);
     g_free(buddy->name);
     g_free(buddy->status);
+    g_free(buddy->webdav_url);
     g_free(buddy);
 }
 
@@ -222,7 +224,8 @@ hippo_dbus_im_update_buddy(HippoNotificationSet *notifications,
                            const char           *protocol,
                            const char           *name,
                            gboolean              is_online,
-                           const char           *status)
+                           const char           *status,
+                           const char           *webdav_url)
 {
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
     HippoDBusIm *im = hippo_dbus_im_get(cache);
@@ -308,6 +311,24 @@ hippo_dbus_im_update_buddy(HippoNotificationSet *notifications,
         _hippo_data_resource_update_property(buddy_resource,
                                              hippo_qname_get(BUDDY_CLASS, "status"),
                                              buddy->status ? HIPPO_DATA_UPDATE_REPLACE : HIPPO_DATA_UPDATE_CLEAR,
+                                             HIPPO_DATA_CARDINALITY_01,
+                                             TRUE, NULL,
+                                             &value,
+                                             notifications);
+        
+        buddy_changed = !new_buddy;
+    }
+
+    if (new_buddy || !compare_strings(webdav_url, buddy->webdav_url)) {
+        g_free(buddy->webdav_url);
+        buddy->webdav_url = g_strdup(webdav_url);
+
+        value.type = HIPPO_DATA_STRING;
+        value.u.string = buddy->webdav_url;
+
+        _hippo_data_resource_update_property(buddy_resource,
+                                             hippo_qname_get(BUDDY_CLASS, "webdavUrl"),
+                                             buddy->webdav_url ? HIPPO_DATA_UPDATE_REPLACE : HIPPO_DATA_UPDATE_CLEAR,
                                              HIPPO_DATA_CARDINALITY_01,
                                              TRUE, NULL,
                                              &value,

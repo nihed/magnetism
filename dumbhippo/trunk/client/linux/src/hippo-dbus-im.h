@@ -24,7 +24,8 @@ void hippo_dbus_im_update_buddy       (HippoNotificationSet *notifications,
                                        const char           *protocol,
                                        const char           *name,
                                        gboolean              is_online,
-                                       const char           *status);
+                                       const char           *status,
+                                       const char           *webdav_url);
 void hippo_dbus_im_remove_buddy       (HippoNotificationSet *notifications,
                                        const char           *buddy_id);
 

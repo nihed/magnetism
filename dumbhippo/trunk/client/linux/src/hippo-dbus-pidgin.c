@@ -260,7 +260,7 @@ pidgin_buddy_update(HippoNotificationSet *notifications,
     resource_id = pidgin_buddy_make_resource_id(account, buddy);
 
     hippo_dbus_im_update_buddy(notifications, resource_id,
-                               protocol, name, is_online, status);
+                               protocol, name, is_online, status, NULL);
 
     g_free(resource_id);
 }

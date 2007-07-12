@@ -7,12 +7,23 @@
 #include "hippo-dbus-local.h"
 #include "hippo-dbus-im.h"
 
+#define MUGSHOT_INFO_NAME "org.mugshot.Mugshot"
+#define STANDARD_INFO_NAME "org.freedesktop.od.Standard"
+
 #define LOCAL_RESOURCE_BASE "online-desktop:/o/local-user"
+
+typedef struct {
+    char *session_id;
+    char *user_resource_id;
+    char *webdav_url;
+} LocalBuddy;
 
 typedef struct {
     const char *key;
     const char *value;
 } DictStringEntry;
+
+static GHashTable *local_buddies = NULL;
 
 static gboolean
 dict_extract_string_values(const DBusMessageIter *orig_dict_iter,
@@ -98,6 +109,90 @@ validate_dbus_session_id(const char *id)
     return TRUE;
 }
 
+static LocalBuddy *
+get_local_buddy(const char *session_id)
+{
+    return g_hash_table_lookup(local_buddies, session_id);
+}
+
+static LocalBuddy *
+ensure_local_buddy(const char *session_id)
+{
+    LocalBuddy *local_buddy = g_hash_table_lookup(local_buddies, session_id);
+    if (!local_buddy) {
+        local_buddy = g_new0(LocalBuddy, 1);
+        local_buddy->session_id = g_strdup(session_id);
+        g_hash_table_insert(local_buddies, local_buddy->session_id, local_buddy);
+    }
+
+    return local_buddy;
+}
+
+static void
+maybe_remove_local_buddy(const char *session_id)
+{
+    LocalBuddy *local_buddy = get_local_buddy(session_id);
+    if (!local_buddy)
+        return;
+
+    if (local_buddy->user_resource_id == NULL && local_buddy->webdav_url == NULL) {
+        g_hash_table_remove(local_buddies, session_id);
+        g_free(local_buddy);
+    }
+}
+
+static void
+update_mugshot_info(const char *session_id,
+                    const char *user_resource_id)
+{
+    LocalBuddy *local_buddy = ensure_local_buddy(session_id);
+
+    if (local_buddy->user_resource_id != NULL) {
+        g_free(local_buddy->user_resource_id);
+        local_buddy->user_resource_id = NULL;
+    }
+
+    local_buddy->user_resource_id = g_strdup(user_resource_id);
+}
+
+static void
+update_standard_info(const char *session_id,
+                     const char *webdav_url)
+{
+    LocalBuddy *local_buddy = ensure_local_buddy(session_id);
+
+    if (local_buddy->webdav_url != NULL) {
+        g_free(local_buddy->webdav_url);
+        local_buddy->webdav_url = NULL;
+    }
+
+    local_buddy->webdav_url = g_strdup(webdav_url);
+}
+
+static char *
+make_resource_id(const char *session_id)
+{
+    return g_strconcat(LOCAL_RESOURCE_BASE "/" , session_id, NULL);
+}
+
+static void
+update_im_buddy(HippoNotificationSet *notifications,
+                const char           *session_id)
+{
+    LocalBuddy *local_buddy = get_local_buddy(session_id);
+    char *resource_id = make_resource_id(session_id);
+
+    if (!local_buddy || local_buddy->user_resource_id == NULL) {
+        hippo_dbus_im_remove_buddy(notifications, resource_id);
+    } else {
+        hippo_dbus_im_update_buddy(notifications, resource_id,
+                                   "mugshot-local", local_buddy->user_resource_id,
+                                   TRUE, "Around", local_buddy->webdav_url);
+    }
+    
+    g_free(resource_id);
+}
+
 static gboolean
 read_session_info(DBusMessageIter *dict_iter,
                   char           **machine_id_p,
@@ -126,10 +221,10 @@ read_session_info(DBusMessageIter *dict_iter,
 }
 
 static gboolean
-read_info(DBusMessageIter *struct_iter,
-          char           **machine_id_p,
-          char           **session_id_p,
-          char           **user_resource_id_p)
+read_mugshot_info(DBusMessageIter *struct_iter,
+                  char           **machine_id_p,
+                  char           **session_id_p,
+                  char           **user_resource_id_p)
 {
     DictStringEntry info_entries[2];
     DBusMessageIter dict_iter;
@@ -141,7 +236,7 @@ read_info(DBusMessageIter *struct_iter,
 
     dbus_message_iter_next(struct_iter);
 
-    info_entries[0].key = "user_resource_id";
+    info_entries[0].key = "userResourceId";
     info_entries[1].key = NULL;
     
     dbus_message_iter_recurse(struct_iter, &dict_iter);
@@ -165,39 +260,7 @@ read_info(DBusMessageIter *struct_iter,
 }
 
 static char *
-make_resource_id(const char *session_id)
-{
-    return g_strconcat(LOCAL_RESOURCE_BASE "/" , session_id, NULL);
-}
-
-static void
-remove_buddy(HippoNotificationSet *notifications,
-             const char           *session_id)
-{
-    char *resource_id = make_resource_id(session_id);
-    
-    hippo_dbus_im_remove_buddy(notifications, resource_id);
-    
-    g_free(resource_id);
-}
-
-static void
-update_buddy(HippoNotificationSet *notifications,
-             const char           *session_id,
-             const char           *user_resource_id)
-{
-    char *resource_id = make_resource_id(session_id);
-    
-    hippo_dbus_im_update_buddy(notifications, resource_id,
-                               "mugshot-local", user_resource_id,
-                               TRUE, "Around");
-    
-    g_free(resource_id);
-}
-
-static void
-update_info(HippoNotificationSet *notifications,
-            DBusMessageIter      *struct_iter)
+read_and_update_mugshot_info(DBusMessageIter *struct_iter)
 {
     char *machine_id;
     char *session_id;
@@ -206,26 +269,131 @@ update_info(HippoNotificationSet *notifications,
     machine_id = NULL;
     session_id = NULL;
     user_resource_id = NULL;
-    if (!read_info(struct_iter, &machine_id, &session_id,
-                   &user_resource_id))
-        return;
+    if (!read_mugshot_info(struct_iter, &machine_id, &session_id,
+                           &user_resource_id))
+        return NULL;
 
-    update_buddy(notifications, session_id, user_resource_id);
+    update_mugshot_info(session_id, user_resource_id);
 
     g_free(machine_id);
-    g_free(session_id);
     g_free(user_resource_id);
+
+    return session_id;
+}
+
+static gboolean
+read_standard_info(DBusMessageIter *struct_iter,
+                   char           **machine_id_p,
+                   char           **session_id_p,
+                   char           **webdav_url_p)
+{
+    DictStringEntry info_entries[2];
+    DBusMessageIter dict_iter;
+    const char *webdav_url = NULL;
+ 
+    dbus_message_iter_recurse(struct_iter, &dict_iter);
+
+    if (!read_session_info(&dict_iter, machine_id_p, session_id_p))
+        return FALSE;
+
+    dbus_message_iter_next(struct_iter);
+
+    info_entries[0].key = "webdavUrl";
+    info_entries[1].key = NULL;
+    
+    dbus_message_iter_recurse(struct_iter, &dict_iter);
+    
+    if (dict_extract_string_values(&dict_iter, &info_entries[0])) {
+        webdav_url = info_entries[0].value;
+    }
+    
+    if (webdav_url_p)
+        *webdav_url_p = g_strdup(webdav_url);
+    
+    return TRUE;
+}
+
+static char *
+read_and_update_standard_info(DBusMessageIter *struct_iter)
+{
+    char *machine_id;
+    char *session_id;
+    char *webdav_url;
+
+    machine_id = NULL;
+    session_id = NULL;
+    webdav_url = NULL;
+    if (!read_standard_info(struct_iter, &machine_id, &session_id,
+                            &webdav_url))
+        return NULL;
+    
+    update_standard_info(session_id, webdav_url);
+
+    g_free(machine_id);
+    g_free(webdav_url);
+
+    return session_id;
+}
+
+static void
+clean_mugshot_info_foreach(void *key,
+                           void *value,
+                           void *data)
+{
+    const char *session_id = key;
+    GHashTable *seen_mugshot_ids = data;
+
+    if (g_hash_table_lookup(seen_mugshot_ids, session_id) == NULL)
+        update_mugshot_info(session_id, NULL);
+}
+
+static void
+clean_standard_info_foreach(void *key,
+                            void *value,
+                            void *data)
+{
+    const char *session_id = key;
+    GHashTable *seen_standard_ids = data;
+
+    if (g_hash_table_lookup(seen_standard_ids, session_id) == NULL)
+        update_standard_info(session_id, NULL);
+}
+
+static gboolean
+update_im_buddies_foreach(void *key,
+                          void *value,
+                          void *data)
+{
+    const char *session_id = key;
+    LocalBuddy *local_buddy = value;
+    HippoNotificationSet *notifications = data;
+
+    update_im_buddy(notifications, session_id);
+
+    if (local_buddy->user_resource_id == NULL && local_buddy->webdav_url == NULL) {
+        g_free(local_buddy);
+        return TRUE;
+    } else {
+        return FALSE;
+    }
 }
 
 static gboolean
 get_info_from_all_sessions(HippoDBusProxy *proxy)
 {
+    HippoNotificationSet *notifications;
     DBusMessage *reply;
     DBusError derror;
     dbus_bool_t retval;
     const char *info_name;
+    GHashTable *seen_mugshot_ids;
+    GHashTable *seen_standard_ids;
 
-    info_name = "org.mugshot.Mugshot";
+    seen_mugshot_ids = g_hash_table_new_full(g_str_hash, g_str_equal, (GDestroyNotify)g_free, NULL);
+    
+    notifications = hippo_dbus_im_start_notifications();    
+            
+    info_name = MUGSHOT_INFO_NAME;
     dbus_error_init(&derror);
     reply = hippo_dbus_proxy_call_method_sync(proxy, "GetInfoFromAllSessions",
                                               &derror,
@@ -241,28 +409,80 @@ get_info_from_all_sessions(HippoDBusProxy *proxy)
             retval = FALSE;
         } else {
             DBusMessageIter iter, array_iter;
-            HippoNotificationSet *notifications;
-            
-            notifications = hippo_dbus_im_start_notifications();    
             
             dbus_message_iter_init(reply, &iter);
             dbus_message_iter_recurse(&iter, &array_iter);
             while (dbus_message_iter_get_arg_type(&array_iter) != DBUS_TYPE_INVALID) {
                 DBusMessageIter struct_iter;
+                char *session_id;
+                
                 dbus_message_iter_recurse(&array_iter, &struct_iter);
                 
-                update_info(notifications, &struct_iter);
+                session_id = read_and_update_mugshot_info(&struct_iter);
+                if (session_id)
+                    g_hash_table_insert(seen_mugshot_ids, session_id, session_id);
                 
                 dbus_message_iter_next(&array_iter);
             }
 
-            hippo_dbus_im_send_notifications(notifications);
+        }
+    }
+
+    g_hash_table_foreach(local_buddies, clean_mugshot_info_foreach, seen_mugshot_ids);
+    g_hash_table_destroy(seen_mugshot_ids);
+
+    if (reply != NULL)
+        dbus_message_unref(reply);
+    
+    /* Now get the "standard info" and merge it in */
+
+    seen_standard_ids = g_hash_table_new_full(g_str_hash, g_str_equal, (GDestroyNotify)g_free, NULL);
+    
+    info_name = STANDARD_INFO_NAME;
+    dbus_error_init(&derror);
+    reply = hippo_dbus_proxy_call_method_sync(proxy, "GetInfoFromAllSessions",
+                                              &derror,
+                                              DBUS_TYPE_STRING, &info_name,
+                                              DBUS_TYPE_INVALID);
+
+    retval = hippo_dbus_proxy_finish_method_call_keeping_reply(reply, "GetInfoFromAllSessions", &derror,
+                                                               DBUS_TYPE_INVALID);
+
+    if (retval) {
+        if (!dbus_message_has_signature(reply, "a(a{sv}a{sv})")) {
+            g_warning("Bad signature on GetInfoFromAllSessions reply");
+            retval = FALSE;
+        } else {
+            DBusMessageIter iter, array_iter;
+            
+            dbus_message_iter_init(reply, &iter);
+            dbus_message_iter_recurse(&iter, &array_iter);
+            while (dbus_message_iter_get_arg_type(&array_iter) != DBUS_TYPE_INVALID) {
+                DBusMessageIter struct_iter;
+                char *session_id;
+                
+                dbus_message_iter_recurse(&array_iter, &struct_iter);
+                
+                session_id = read_and_update_standard_info(&struct_iter);
+                if (session_id)
+                    g_hash_table_insert(seen_standard_ids, session_id, session_id);
+                
+                dbus_message_iter_next(&array_iter);
+            }
+
         }
     }
 
     if (reply != NULL)
         dbus_message_unref(reply);
+    
+    g_hash_table_foreach(local_buddies, clean_standard_info_foreach, seen_standard_ids);
+    g_hash_table_destroy(seen_standard_ids);
 
+    g_hash_table_foreach_remove(local_buddies, update_im_buddies_foreach, notifications);
+
+    hippo_dbus_im_send_notifications(notifications);
+    
     return retval;
 }
 
@@ -303,6 +523,7 @@ handle_info_changed(DBusConnection *connection,
     DBusMessageIter iter, struct_iter;
     HippoNotificationSet *notifications;
     const char *name;
+    char *session_id = NULL;
     
     if (!dbus_message_has_signature(message, "s(a{sv}a{sv})"))
         return;
@@ -312,15 +533,27 @@ handle_info_changed(DBusConnection *connection,
     name = NULL;
     dbus_message_iter_get_basic(&iter, &name);
 
-    if (!(name && strcmp(name, "org.mugshot.Mugshot") == 0)) {
+    if (!(name &&
+          (strcmp(name, MUGSHOT_INFO_NAME) == 0 ||
+           strcmp(name, STANDARD_INFO_NAME) == 0)))
         return;
-    }
-
+    
     dbus_message_iter_next(&iter);
     dbus_message_iter_recurse(&iter, &struct_iter);
 
-    notifications = hippo_dbus_im_start_notifications();    
-    update_info(notifications, &struct_iter);
+    notifications = hippo_dbus_im_start_notifications();
+    
+    if (strcmp(name, MUGSHOT_INFO_NAME) == 0) {
+        session_id = read_and_update_mugshot_info(&struct_iter);
+    } else if (strcmp(name, STANDARD_INFO_NAME) == 0) {
+        session_id = read_and_update_standard_info(&struct_iter);
+    }
+
+    if (session_id) {
+        update_im_buddy(notifications, session_id);
+        maybe_remove_local_buddy(session_id);
+    }
+    
     hippo_dbus_im_send_notifications(notifications);
 }
 
@@ -343,29 +576,32 @@ handle_info_removed(DBusConnection *connection,
     name = NULL;
     dbus_message_iter_get_basic(&iter, &name);
 
-    if (!(name && strcmp(name, "org.mugshot.Mugshot") == 0)) {
+    if (!(name &&
+          (strcmp(name, MUGSHOT_INFO_NAME) == 0 ||
+           strcmp(name, STANDARD_INFO_NAME) == 0)))
         return;
-    }
-
+    
     dbus_message_iter_next(&iter);
     dbus_message_iter_recurse(&iter, &session_props_iter);
-
+    
     machine_id = NULL;
     session_id = NULL;
     if (!read_session_info(&session_props_iter, &machine_id, &session_id))
         return;
-
-    /* FIXME: Handle the case where a session maliciously claims
-     * to have the same session ID as an existing session; we'll get mildly confused
-     * by that now, though we shouldn't crash. But we're also completely vulnerable
-     * to someone publishing fake information, so maybe the confusion doesn't matter
-     * much.
-     */
     
     notifications = hippo_dbus_im_start_notifications();
-    remove_buddy(notifications, session_id);
+
+    if (strcmp(name, MUGSHOT_INFO_NAME) == 0) {
+        update_mugshot_info(session_id, NULL);
+    } else if (strcmp(name, STANDARD_INFO_NAME) == 0) {
+        update_standard_info(session_id, NULL);
+    }
+
+    update_im_buddy(notifications, session_id);
+    maybe_remove_local_buddy(session_id);
+        
     hippo_dbus_im_send_notifications(notifications);
-    
+        
     g_free(machine_id);
     g_free(session_id);
 }
@@ -391,7 +627,7 @@ append_mugshot_info(DBusMessage *message,
     
     dbus_message_iter_init_append(message, &iter);
 
-    name = "org.mugshot.Mugshot";
+    name = MUGSHOT_INFO_NAME;
     if (!dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &name))
         return FALSE;
 
@@ -400,7 +636,7 @@ append_mugshot_info(DBusMessage *message,
 
     s = get_self_id();
     if (s != NULL) {
-        if (!append_string_pair(&prop_iter, "user_resource_id", s))
+        if (!append_string_pair(&prop_iter, "userResourceId", s))
             return FALSE;
     }
         
@@ -464,6 +700,8 @@ static const HippoDBusServiceTracker service_tracker = {
 void
 hippo_dbus_init_local(DBusConnection *connection)
 {
+    local_buddies = g_hash_table_new(g_str_hash, g_str_equal);
+    
     hippo_dbus_helper_register_service_tracker(connection,
                                                "org.freedesktop.od.LocalExport",
                                                &service_tracker,
