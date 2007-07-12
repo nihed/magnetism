@@ -75,6 +75,16 @@ def fmt_date(date):
     
     return date.strftime("%A %b %d")
 
+def fmt_canvas_text(canvas_text, is_today, is_over):
+    # stuf that is over is grey 
+    if is_over:
+        attrs = pango.AttrList()
+        attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
+        canvas_text.set_property("attributes", attrs)               
+    # stuff for today is bold
+    if is_today:
+        canvas_text.set_property("font", "12px Bold")
+
 class Event(AutoStruct):
     def __init__(self):
         super(Event, self).__init__({ 'calendar_title' : '', 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '' })
@@ -176,18 +186,9 @@ class EventDisplay(CanvasVBox):
     
     def __event_display_sync(self):
         self.__title.set_property("text", fmt_time(self.__event.get_start_time()) + "  " + self.__event.get_title())
-        now = datetime.datetime.now()
-        if self.__event.get_end_time() < now:
-            attrs = pango.AttrList()
-            attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
-            self.__title.set_property("attributes", attrs)               
-        # stuff for today is bold
-        if self.__event.get_start_time() < now:
-            delta = now - self.__event.get_start_time()
-        else:
-            delta = self.__event.get_start_time() - now
-        if delta.days == 0:
-            self.__title.set_property("font", "12px Bold")
+        is_today = self.__event.get_start_time().date() == datetime.date.today()
+        is_over = self.__event.get_end_time() < datetime.datetime.now()
+        fmt_canvas_text(self.__title, is_today, is_over)
         
     def __on_button_press(self, event):
         if event.button != 1:
@@ -326,6 +327,11 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         if day_event_count == 0:
             no_events_text = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
             no_events_text.set_property("text", "No events scheduled")
+            today = datetime.date.today()
+            # always pass in false for is_today because we don't want to make it bold 
+            is_today = False # self.__day_displayed == today
+            is_over = self.__day_displayed < today
+            fmt_canvas_text(no_events_text, is_today, is_over)
             self.__box.append(no_events_text)
             
         self.__controlbox = CanvasHBox()
