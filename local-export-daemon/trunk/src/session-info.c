@@ -612,6 +612,45 @@ session_infos_remove_all (SessionInfos *infos)
 }
 
 typedef struct {
+    SessionInfos *infos;
+    SessionInfoMatchFunc match_func;
+    void *data;
+} RemoveMatchingData;
+
+static gboolean
+remove_matching_foreach (gpointer  key,
+                        gpointer   value,
+                        gpointer   user_data)
+{
+    RemoveMatchingData *rmd = user_data;
+    Info *info = value;
+
+    if (rmd->match_func(info, rmd->data)) {
+        session_infos_mark_removed(rmd->infos, info);
+        
+        info_unref (info);
+        
+        return TRUE; /* TRUE means remove it */
+    } else {
+        return FALSE;
+    }
+}
+
+void
+session_infos_remove_matching (SessionInfos         *infos,
+                               SessionInfoMatchFunc  match_func,
+                               void                 *data)
+{
+    RemoveMatchingData rmd;
+
+    rmd.infos = infos;
+    rmd.match_func = match_func;
+    rmd.data = data;
+    
+    g_hash_table_foreach_remove (infos->by_name, remove_matching_foreach, &rmd);
+}
+
+typedef struct {
     DBusMessageIter *array_iter;
     gboolean failed;
 } AppendAllData;

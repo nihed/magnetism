@@ -29,6 +29,9 @@ typedef struct SessionInfos SessionInfos;
 typedef struct Info Info;
 typedef struct SessionChangeNotifySet SessionChangeNotifySet;
 
+typedef gboolean (*SessionInfoMatchFunc) (Info *info,
+                                          void *data);
+
 Info*       info_new_from_message (DBusMessage     *method_call);
 Info*       info_new_from_data    (const char      *name,
                                    DBusMessageIter *dict_iter);
@@ -59,6 +62,11 @@ GHashTable*   session_infos_get_all           (SessionInfos    *infos);
 void          session_infos_remove            (SessionInfos    *infos,
                                                const char      *name);
 void          session_infos_remove_all        (SessionInfos    *infos);
+
+void          session_infos_remove_matching   (SessionInfos         *infos,
+                                               SessionInfoMatchFunc  match_func,
+                                               void                 *data);
+
 gboolean      session_infos_append_all        (SessionInfos    *infos,
                                                DBusMessageIter *array_iter);
 guint32       session_infos_get_change_serial (SessionInfos    *infos);
