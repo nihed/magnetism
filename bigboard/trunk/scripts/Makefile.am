@@ -1,6 +1,6 @@
 include $(top_srcdir)/Makefile-include.am
 
-bin_SCRIPTS = bigboard
+bin_SCRIPTS = bigboard gconf-online-sync
 
 noinst_SCRIPTS = bigboard-uninst 
 
