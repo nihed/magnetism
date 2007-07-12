@@ -55,7 +55,7 @@ public abstract class CachedSession extends DMSession {
 	}
 	
 	private <K, T extends DMObject<K>> T createRawObject(StoreKey<K,T> storeKey) {
-		logger.debug("Didn't find object for key {}, creating a new one", storeKey.getKey());
+		// logger.debug("Didn't find object for key {}, creating a new one", storeKey.getKey());
 		return storeKey.getClassHolder().createInstance(storeKey.getKey(), this);
 	}
 	

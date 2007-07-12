@@ -6,7 +6,6 @@ import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.ChannelHandler;
 import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
@@ -31,6 +30,7 @@ public class XmppClient implements DMClient {
 	private Guid userId;
 	private long lastSentSerial = -1;
 	private PriorityQueue<QueuedPacket> packets = new PriorityQueue<QueuedPacket>();
+	private boolean havePacketSender = false;
 	private boolean closed = false;
 
 	XmppClient(XmppClientManager clientManager, DataModel model, ClientSession clientSession, Guid userId) {
@@ -53,20 +53,21 @@ public class XmppClient implements DMClient {
 	}
 	
 	public void queuePacket(Packet packet, long serial) {
-		boolean wasEmpty;
+		boolean needSender;
 		
 		synchronized(packets) {
 			if (closed)
 				return;
 			
-			wasEmpty = packets.isEmpty();
+			needSender = !havePacketSender;
 			packets.add(new QueuedPacket(packet, serial));
+			havePacketSender = true;
 			
-			if (!wasEmpty)
+			if (!needSender)
 				packets.notify();
 		}
 		
-		if (wasEmpty)
+		if (needSender)
 			clientManager.addClientSender(this);
 	}
 
@@ -84,8 +85,10 @@ public class XmppClient implements DMClient {
 						return;
 					
 					packet = packets.peek();
-					if (packet == null)
+					if (packet == null) {
+						havePacketSender = false;
 						return;
+					}
 
 					if (packet.serial == lastSentSerial + 1) {
 						packets.poll();
@@ -108,7 +111,6 @@ public class XmppClient implements DMClient {
 			@SuppressWarnings("unchecked")
 			ChannelHandler<Packet> handler = clientSession;
 			try {
-				Log.debug("Sending packet with serial " + packet.serial + " to the packet handler");
 				handler.process(packet.packet);
 			} catch (UnauthorizedException e) {
 				e.printStackTrace();

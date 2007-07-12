@@ -97,7 +97,6 @@ public abstract class AnnotatedIQMethod {
 				doIQ(new UserViewpoint(getUserId(request)), request, reply);
 			}
 
-			Log.debug("Queueing reply packet with serial: " + serial);
 			client.queuePacket(reply, serial);
 				
 		} catch (IQException e) {
