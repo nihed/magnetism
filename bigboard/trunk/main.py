@@ -38,7 +38,8 @@ BUS_IFACE_PANEL=BUS_IFACE + ".Panel"
 
 GCONF_PREFIX = '/apps/bigboard/'
 
-REEXEC_CMD = os.path.abspath(sys.argv[0])
+REEXEC_CMD = os.getenv('BB_REEXEC') or '/usr/bin/bigboard'
+REEXEC_CMD = os.path.abspath(REEXEC_CMD)
 
 # Don't really care about nonstandard $(datadir) right now
 DATADIR = os.getenv('BB_DATADIR') or '/usr/share/pixmaps/bigboard'
