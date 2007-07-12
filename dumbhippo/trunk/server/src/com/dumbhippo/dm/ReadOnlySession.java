@@ -29,7 +29,7 @@ public class ReadOnlySession extends CachedSession {
 		DMPropertyHolder<K,T,?> property = key.getClassHolder().getProperty(propertyIndex);
 		Object value = model.getStore().fetch(key, propertyIndex);
 
-		logger.debug("Found value for {}.{} in the cache", key, property.getName());
+		// logger.debug("Found value for {}.{} in the cache", key, property.getName());
 
 		return property.rehydrate(getViewpoint(), key.getKey(), value, this);
 	}
@@ -39,7 +39,7 @@ public class ReadOnlySession extends CachedSession {
 		DMPropertyHolder<K,T,?> property = key.getClassHolder().getProperty(propertyIndex);
 		model.getStore().store(key, propertyIndex, property.dehydrate(value), txTimestamp);
 		
-		logger.debug("Cached new value for {}.{}", key, property.getName());
+		// logger.debug("Cached new value for {}.{}", key, property.getName());
 		
 		return property.filter(getViewpoint(), key.getKey(), value);
 	}
