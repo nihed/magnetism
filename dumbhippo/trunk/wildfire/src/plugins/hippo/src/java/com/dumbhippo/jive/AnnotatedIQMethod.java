@@ -76,28 +76,36 @@ public abstract class AnnotatedIQMethod {
 		try {
 			final XmppClient client = XmppClientManager.getInstance().getClient(request.getFrom());
 			long serial = client.getStoreClient().allocateSerial();
-			final IQ reply = IQ.createResultIQ(request);
+			boolean success = false;
 			
-			if (annotation.needsTransaction()) {
-				TxUtils.runInTransaction(new Callable<Boolean>() {
-					public Boolean call() throws IQException, RetryException {
-						DataModel model = DataService.getModel();
-						DMSession session;
+			try {
+				final IQ reply = IQ.createResultIQ(request);
+				
+				if (annotation.needsTransaction()) {
+					TxUtils.runInTransaction(new Callable<Boolean>() {
+						public Boolean call() throws IQException, RetryException {
+							DataModel model = DataService.getModel();
+							DMSession session;
+								
+							if (annotation.type() == IQ.Type.get)
+								session = model.initializeReadOnlySession(client);
+							else
+								session = model.initializeReadWriteSession(client);
 							
-						if (annotation.type() == IQ.Type.get)
-							session = model.initializeReadOnlySession(client);
-						else
-							session = model.initializeReadWriteSession(client);
-						
-						doIQ((UserViewpoint)session.getViewpoint(), request, reply);
-						return true;
-					}
-				});
-			} else {
-				doIQ(new UserViewpoint(getUserId(request)), request, reply);
+							doIQ((UserViewpoint)session.getViewpoint(), request, reply);
+							return true;
+						}
+					});
+				} else {
+					doIQ(new UserViewpoint(getUserId(request)), request, reply);
+				}
+	
+				client.queuePacket(reply, serial);
+				success = true;
+			} finally {
+				if (!success)
+					client.nullNotification(serial);
 			}
-
-			client.queuePacket(reply, serial);
 				
 		} catch (IQException e) {
 			throw e;
