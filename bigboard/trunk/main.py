@@ -38,6 +38,8 @@ BUS_IFACE_PANEL=BUS_IFACE + ".Panel"
 
 GCONF_PREFIX = '/apps/bigboard/'
 
+REEXEC_CMD = os.path.abspath(sys.argv[0])
+
 # Don't really care about nonstandard $(datadir) right now
 DATADIR = os.getenv('BB_DATADIR') or '/usr/share/pixmaps/bigboard'
 DATADIR = os.path.abspath(DATADIR)
@@ -238,6 +240,7 @@ X-GNOME-Autostart-enabled=true
         self._canvas.set_root(self._main_box)
      
         self._header_box = GradientHeader()
+        self._header_box.connect("button-press-event", self.__on_header_buttonpress)     
      
         self._title = hippo.CanvasText(text="My Desktop", font="Bold 14px", xalign=hippo.ALIGNMENT_START)
      
@@ -266,6 +269,11 @@ X-GNOME-Autostart-enabled=true
         self._canvas.show()
 
         self.__queue_strut()
+
+    def __on_header_buttonpress(self, box, e):
+        self.__logger.debug("got shell header click: %s %s %s", e, e.button, e.modifiers)
+        if e.button == 2:
+            self.Shell()
 
     def __on_focus(self):
         self.__logger.debug("got focus keypress")
@@ -417,6 +425,16 @@ X-GNOME-Autostart-enabled=true
     def SignalExpanded(self):
         self.__logger.debug("got signalExpanded method call")
         self.Expanded(gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible'))
+
+    @dbus.service.method(BUS_IFACE_PANEL)
+    def Reboot(self):
+        import subprocess
+        args = [REEXEC_CMD]
+        args.extend(sys.argv[1:])
+        if not '--replace' in args:
+            args.append('--replace')
+        _logger.debug("Got Reboot, executing %s", args)
+        subprocess.Popen(args)
 
     @dbus.service.method(BUS_IFACE_PANEL)
     def Logout(self):
