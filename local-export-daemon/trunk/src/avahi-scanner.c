@@ -34,7 +34,7 @@
 typedef struct _InfoRetrieval InfoRetrieval;
 typedef struct _Session       Session;
 
-#define STANDARD_INFO_NAME "org.freedesktop.od.standard"
+#define STANDARD_INFO_NAME "org.freedesktop.od.Standard"
 
 /* Information about an in-flight retrieval of the information we obtain by connecting
  * to a local-export service
