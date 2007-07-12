@@ -34,6 +34,8 @@
 typedef struct _InfoRetrieval InfoRetrieval;
 typedef struct _Session       Session;
 
+#define STANDARD_INFO_NAME "org.freedesktop.od.standard"
+
 /* Information about an in-flight retrieval of the information we obtain by connecting
  * to a local-export service
  */
@@ -52,6 +54,12 @@ struct _Session {
     char *machine_id;
 
     unsigned long change_serial;
+
+    /* This is information we add based on what we know, rather than what the server
+     * sent. Right now, it has the WebDAV URL for the session if it is exporting one
+     */
+    Info *standard_info;
+    
     SessionInfos *infos;
     InfoRetrieval *info_retrieval;
 
@@ -62,6 +70,7 @@ struct _Session {
 static GHashTable *sessions_by_id = NULL;
 
 static HippoAvahiSessionBrowser *local_export_browser = NULL;
+static HippoAvahiSessionBrowser *dav_browser = NULL;
 
 static void session_info_retrieval_succeeded(Session     *session,
                                              DBusMessage *reply);
@@ -390,14 +399,23 @@ session_info_retrieval_succeeded(Session     *session,
         print_sv_dict(&dict_iter);
         info = info_new_from_data(info_name, &dict_iter);
         if (info != NULL) {
-            session_infos_add(session->infos, info);
+            /* the standard info is synthesized locally, so can't be sent */
+            if (strcmp(info_name, STANDARD_INFO_NAME) != 0) {
+                session_infos_add(session->infos, info);
+                
+                /* We've seen the key, remove it from the set of infos to remove */
+                g_hash_table_remove(old_infos, info_name);
+            }
+            
             info_unref(info);
         }
         
-        /* We've seen the key, remove it from the set of infos to remove */
-        g_hash_table_remove(old_infos, info_name);
-        
         dbus_message_iter_next(&infos_iter);
+    }
+
+    if (session->standard_info) {
+        session_infos_add(session->infos, session->standard_info);
+        g_hash_table_remove(old_infos, STANDARD_INFO_NAME);
     }
     
     /* Now remove any names in old_infos that we didn't see */
@@ -454,8 +472,8 @@ get_txt_property_uint32(HippoAvahiService *service,
 }
 
 static void
-on_service_address_changed(HippoAvahiService *service,
-                           Session           *session)
+on_local_export_service_address_changed(HippoAvahiService *service,
+                                        Session           *session)
 {
     /* The address or port changed, reconnect to the local export daemon and get new values */
     
@@ -463,8 +481,8 @@ on_service_address_changed(HippoAvahiService *service,
 }
     
 static void
-on_service_txt_changed(HippoAvahiService *service,
-                       Session           *session)
+on_local_export_service_txt_changed(HippoAvahiService *service,
+                                    Session           *session)
 {
     guint32 new_serial;
     char *new_machine_id;
@@ -504,11 +522,18 @@ on_local_export_service_added(HippoAvahiBrowser *browser,
     
     session->machine_id = hippo_avahi_service_get_txt_property(service, "org.freedesktop.od.machine");
     g_signal_connect(service, "address-changed",
-                     G_CALLBACK(on_service_address_changed), session);
+                     G_CALLBACK(on_local_export_service_address_changed), session);
     g_signal_connect(service, "txt-changed",
-                     G_CALLBACK(on_service_txt_changed), session);
+                     G_CALLBACK(on_local_export_service_txt_changed), session);
 
     session_connect(session);
+}
+
+static gboolean
+info_is_not_standard(Info *info,
+                     void *data)
+{
+    return strcmp(info_get_name(info), STANDARD_INFO_NAME) != 0;
 }
 
 static void
@@ -518,7 +543,7 @@ on_local_export_service_removed(HippoAvahiBrowser *browser,
     Session *session = get_session(hippo_avahi_service_get_session_id(service));
     SessionChangeNotifySet *change_set;
 
-    if (session == NULL) {
+    if (session == NULL || session->local_export_service != service) {
         g_warning("local export service removed we don't know about");
         return;
     }
@@ -529,10 +554,10 @@ on_local_export_service_removed(HippoAvahiBrowser *browser,
     }
 
     g_signal_handlers_disconnect_by_func(service, 
-                                         (void *)on_service_address_changed,
+                                         (void *)on_local_export_service_address_changed,
                                          session);
     g_signal_handlers_disconnect_by_func(service, 
-                                         (void *)on_service_txt_changed,
+                                         (void *)on_local_export_service_txt_changed,
                                          session);
 
     if (session->info_retrieval) {
@@ -543,7 +568,7 @@ on_local_export_service_removed(HippoAvahiBrowser *browser,
     /* Remove all the "info" and send notification */
     if (session->infos) {
         session_infos_push_change_notify_set(session->infos);
-        session_infos_remove_all(session->infos);
+        session_infos_remove_matching(session->infos, info_is_not_standard, NULL);
         change_set = session_infos_pop_change_notify_set(session->infos);
         session_api_notify_changed(session->infos, change_set);
         session_change_notify_set_free(change_set);
@@ -555,6 +580,191 @@ on_local_export_service_removed(HippoAvahiBrowser *browser,
     session->machine_id = NULL;
 
     if (session->dav_service == NULL)
+        remove_session(session->session_id);
+}
+
+static char *
+make_dav_url(Session *session)
+{
+    char address_str[AVAHI_ADDRESS_STR_MAX];
+    guint16 port;
+    AvahiAddress address;
+    char *dav_url;
+    char *user;
+
+    if (session->dav_service == NULL)
+        return NULL;
+
+    hippo_avahi_service_get_address(session->dav_service, &address);
+    port = hippo_avahi_service_get_port(session->dav_service);
+    
+    avahi_address_snprint(address_str, sizeof(address_str), &address);
+
+    user = hippo_avahi_service_get_txt_property(session->dav_service, "u");
+
+    dav_url = g_strdup_printf("http://%s%s%s%s%s:%d",
+                              user ? user : "",
+                              user ? "@" : "",
+                              (address.proto == AVAHI_PROTO_INET6) ? "[" : "",
+                              address_str,
+                              (address.proto == AVAHI_PROTO_INET6) ? "]" : "",
+                              port);
+    
+    g_debug("WebDAV service for session %s now has URL %s", session->session_id, dav_url);
+
+    g_free(user);
+
+    return dav_url;
+}
+
+static Info*
+create_standard_info(Session *session)
+{
+    DBusMessage *message;
+    Info *info;
+    DBusMessageIter iter, prop_iter, entry_iter, variant_iter;
+    const char *name = STANDARD_INFO_NAME;
+    const char *prop_name;
+    char *dav_url;
+
+    dav_url = make_dav_url(session);
+    if (dav_url == NULL)
+        return NULL;
+    
+    /* create dummy message */
+    message = dbus_message_new_method_call("a.b.c", "/a/b", "a.b.c", "abc");
+
+    dbus_message_iter_init_append(message, &iter);
+    dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &name);
+
+    dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "{sv}", &prop_iter);
+
+    if (dav_url != NULL) {
+        prop_name = "webdavUrl";
+
+        dbus_message_iter_open_container(&prop_iter, DBUS_TYPE_DICT_ENTRY, NULL, &entry_iter);
+
+        dbus_message_iter_append_basic(&entry_iter, DBUS_TYPE_STRING, &prop_name);
+
+        dbus_message_iter_open_container(&entry_iter, DBUS_TYPE_VARIANT,
+                                         DBUS_TYPE_STRING_AS_STRING,
+                                         &variant_iter);
+
+        dbus_message_iter_append_basic(&variant_iter, DBUS_TYPE_STRING, &dav_url);
+        
+        dbus_message_iter_close_container(&entry_iter, &variant_iter);
+        dbus_message_iter_close_container(&prop_iter, &entry_iter);
+    }
+    
+    dbus_message_iter_close_container(&iter, &prop_iter);
+
+    info = info_new_from_message(message);
+    dbus_message_unref(message);
+
+    g_free(dav_url);
+
+    return info;
+}
+
+static void
+republish_standard_info(Session *session)
+{
+    SessionChangeNotifySet *change_set;
+    Info *old_info = session->standard_info;
+    Info *new_info = create_standard_info(session);
+
+    session->standard_info = new_info;
+
+    if (session->infos) {
+        /* If session->infos is NULL, that means that we haven't yet get the reply from the
+         * session's local export daemon. In that case, we just store the standard info
+         * and wait until that comes in before sending out notifications. We could notify
+         * immediately, but the "standard info" isn't really useful without the stuff
+         * we fetch from the remote local-export-daemon, so we avoid being overly chatty.
+         */
+        session_infos_push_change_notify_set(session->infos);
+        
+        if (old_info && !new_info)
+            session_infos_remove(session->infos, STANDARD_INFO_NAME);
+        else if (new_info)
+            session_infos_add(session->infos, new_info);
+        
+        change_set = session_infos_pop_change_notify_set(session->infos);
+        session_api_notify_changed(session->infos, change_set);
+        session_change_notify_set_free(change_set);
+    }
+
+    if (old_info)
+        info_unref(old_info);
+}
+
+static void
+on_dav_service_address_changed(HippoAvahiService *service,
+                               Session           *session)
+{
+    republish_standard_info(session);
+}
+
+static void
+on_dav_service_txt_changed(HippoAvahiService *service,
+                           Session           *session)
+{
+    republish_standard_info(session);
+}
+    
+static void
+on_dav_service_added(HippoAvahiBrowser *browser,
+                     HippoAvahiService *service)
+{
+    Session *session = ensure_session(hippo_avahi_service_get_session_id(service));
+
+    if (session->dav_service) {
+        g_warning("local service added when we already had one for that ID");
+        return;
+    }
+
+    session->dav_service = service;
+
+    g_debug("Found new WebDAV service for session %s", session->session_id);
+    
+    g_signal_connect(service, "address-changed",
+                     G_CALLBACK(on_dav_service_address_changed), session);
+    g_signal_connect(service, "txt-changed",
+                     G_CALLBACK(on_dav_service_txt_changed), session);
+
+    republish_standard_info(session);
+}
+
+static void
+on_dav_service_removed(HippoAvahiBrowser *browser,
+                       HippoAvahiService *service)
+{
+    Session *session = get_session(hippo_avahi_service_get_session_id(service));
+
+    if (session == NULL || session->dav_service != service) {
+        g_warning("WebDAV service removed we don't know about");
+        return;
+    }
+
+    if (session->dav_service != service) {
+        g_warning("Mismatch between removed service and service cached in session");
+        return;
+    }
+
+    g_debug("WebDAV service for session %s gone", session->session_id);
+    
+    g_signal_handlers_disconnect_by_func(service, 
+                                         (void *)on_dav_service_address_changed,
+                                         session);
+    g_signal_handlers_disconnect_by_func(service, 
+                                         (void *)on_dav_service_txt_changed,
+                                         session);
+
+    session->dav_service = NULL;
+
+    republish_standard_info(session);
+    
+    if (session->local_export_service == NULL)
         remove_session(session->session_id);
 }
 
@@ -570,6 +780,12 @@ avahi_scanner_init(void)
                      G_CALLBACK(on_local_export_service_added), NULL);
     g_signal_connect(local_export_browser, "service-removed",
                      G_CALLBACK(on_local_export_service_removed), NULL);
+
+    dav_browser = hippo_avahi_session_browser_new("_webdav._tcp");
+    g_signal_connect(dav_browser, "service-added",
+                     G_CALLBACK(on_dav_service_added), NULL);
+    g_signal_connect(dav_browser, "service-removed",
+                     G_CALLBACK(on_dav_service_removed), NULL);
     
     return TRUE;
 }
@@ -604,7 +820,6 @@ session_foreach_append_func(void              *key,
         fad->failed = TRUE;
     }
 }
-    
 
 gboolean
 avahi_scanner_append_infos_with_name(const char      *name,
