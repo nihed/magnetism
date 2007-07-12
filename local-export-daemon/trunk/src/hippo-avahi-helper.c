@@ -595,7 +595,7 @@ hippo_avahi_service_class_init(HippoAvahiServiceClass *service_class)
 						    NULL, NULL,
 						    g_cclosure_marshal_VOID__VOID,
 						    G_TYPE_NONE, 0);
-    service_signals[HOST_NAME_CHANGED] = g_signal_new("host-name--changed",
+    service_signals[HOST_NAME_CHANGED] = g_signal_new("host-name-changed",
 						      G_TYPE_FROM_CLASS (object_class),
 						      G_SIGNAL_RUN_LAST,
 						      0,
