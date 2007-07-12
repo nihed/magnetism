@@ -92,11 +92,13 @@ handle_message(DBusConnection     *connection,
     result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
     if (type == DBUS_MESSAGE_TYPE_SIGNAL) {
+        /*
         const char *sender = dbus_message_get_sender(message);
         const char *interface = dbus_message_get_interface(message);
         const char *member = dbus_message_get_member(message);
 
-        /* g_debug("signal from %s %s.%s", sender ? sender : "NULL", interface, member); */
+        g_debug("signal from %s %s.%s", sender ? sender : "NULL", interface, member);
+        */
    
         if (dbus_message_has_sender(message, DBUS_SERVICE_DBUS) &&
             dbus_message_is_signal(message, DBUS_INTERFACE_DBUS, "NameLost")) {
@@ -222,6 +224,8 @@ main(int argc, char **argv)
 
     g_thread_init(NULL);
     dbus_threads_init_default();
+
+    g_type_init();
     
     dbus_error_init(&derror);
     connection = dbus_bus_get(DBUS_BUS_SESSION, &derror);

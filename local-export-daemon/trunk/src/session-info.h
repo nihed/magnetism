@@ -32,14 +32,13 @@ typedef struct SessionChangeNotifySet SessionChangeNotifySet;
 Info*       info_new_from_message (DBusMessage     *method_call);
 Info*       info_new_from_data    (const char      *name,
                                    DBusMessageIter *dict_iter);
-void        info_ref              (Info            *info);
+Info*       info_ref              (Info            *info);
 void        info_unref            (Info            *info);
 gboolean    info_equal            (Info            *a,
                                    Info            *b);
 gboolean    info_write            (Info            *info,
                                    DBusMessageIter *dict_iter);
 const char* info_get_name         (Info            *info);
-
 
 
 SessionInfos* session_infos_new               (const char *machine_id,
@@ -52,6 +51,11 @@ void          session_infos_add               (SessionInfos    *infos,
                                                Info            *info);
 Info*         session_infos_get               (SessionInfos    *infos,
                                                const char      *name);
+/* Returns a newly allocated string => info hash table that is a copy of
+ * all the names and infos in the hash table. Free with g_hash_table_destroy();
+ * that will free the names/infos as well.
+ */
+GHashTable*   session_infos_get_all           (SessionInfos    *infos);
 void          session_infos_remove            (SessionInfos    *infos,
                                                const char      *name);
 void          session_infos_remove_all        (SessionInfos    *infos);

@@ -63,8 +63,8 @@ client_callback(AvahiClient     *client,
             
     case AVAHI_CLIENT_FAILURE:
 
-        /* Unclear what this would mean or how it could happen, or what
-         * we would do about it if it did.
+        /* FIXME: This means that we got disconnected from the Avahi server; we need to
+         * clean everything up and restart.
          */
             
         g_printerr("Avahi client failure: %s\n", avahi_strerror(avahi_client_errno(client)));

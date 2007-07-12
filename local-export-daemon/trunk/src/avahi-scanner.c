@@ -17,13 +17,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-/* strnlen */
-#define _GNU_SOURCE 1
 #include <config.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdlib.h>
 #include "avahi-scanner.h"
+#include "hippo-avahi-helper.h"
 #include "hippo-dbus-helper.h"
 #include "hippo-dbus-async.h"
 #include "session-info.h"
@@ -32,171 +31,211 @@
 #include "main.h"
 #include <avahi-client/lookup.h>
 
-typedef enum {
-    SESSION_STATE_RESOLVING,
-    SESSION_STATE_FAILED_RESOLVE,
-    SESSION_STATE_FAILED_CONNECT,
-    SESSION_STATE_CONNECTING,
-    SESSION_STATE_DISCONNECTED
-} SessionState;
+typedef struct _InfoRetrieval InfoRetrieval;
+typedef struct _Session       Session;
 
-/*
- * Information that can be used to identify a service as it is added/removed
+/* Information about an in-flight retrieval of the information we obtain by connecting
+ * to a local-export service
  */
-typedef struct {
-    AvahiIfIndex interface;
-    AvahiProtocol protocol;
-    char *name;
-    char *type;
-    char *domain;
-} ServiceId;
-
-typedef struct {
-    int refcount;    
-    ServiceId id;    
-    AvahiServiceResolver *resolver;
-} Resolver;
-
-/* FIXME Each session may be advertised on multiple
- * interfaces/protocols, e.g. ipv4 and v6. Also, hostile peers might
- * forge duplicate session IDs for two sessions that are really
- * distinct. Right now we really aren't dealing with either of these
- * things; we just pass through the dups onto the session bus and
- * local apps.
- */
-typedef struct {
-    int refcount;    
-    SessionState state;
-    ServiceId id;
-    char *host_name;
-    AvahiAddress address;
-    guint16 port;
-    /* may be found in TXT when we resolve; if not, is found
-     * when we connect.
-     */
-    char *machine_id;
-    char *session_id;
-    /* We only store this when we connect and get the new information,
-     * i.e. it's the latest changes we have
-     */
-    unsigned long change_serial;
-    /* Exists only if we're connecting */
+struct _InfoRetrieval {
     DBusConnection *connection;
-    /* Exists only if we successfully requested it from the remote session */
-    SessionInfos *infos;
-} Session;
-
-static AvahiServiceBrowser *service_browser = NULL;
-static GTree *session_tree_by_service = NULL;
-static GTree *resolver_tree_by_service = NULL;
-/* static GHashTable *session_hash_by_session_id = NULL; */
-
-static void
-service_id_free_fields(ServiceId *id)
-{
-    g_free(id->name);
-    g_free(id->type);
-    g_free(id->domain);
-}
-
-static void
-service_id_init_fields(ServiceId       *id,
-                       const ServiceId *orig)
-{
-    *id = *orig;
-    id->name = g_strdup(orig->name);
-    id->type = g_strdup(orig->type);
-    id->domain = g_strdup(orig->domain);
-}
-
-static void
-session_ref(Session *session)
-{
-    session->refcount += 1;
-}
-
-static void
-session_unref(Session *session)
-{
-    g_assert(session->refcount > 0);
-    session->refcount -= 1;
-    if (session->refcount == 0) {
-        service_id_free_fields(&session->id);
-        g_free(session->host_name);
-        g_free(session->machine_id);
-        g_free(session->session_id);
-        if (session->connection != NULL)
-            dbus_connection_unref(session->connection);
-        if (session->infos)
-            session_infos_unref(session->infos);
-        g_free(session);
-    }
-}
-
-static Session*
-session_new(const ServiceId    *id)
-{
     Session *session;
+};
 
-    session = g_new0(Session, 1);
-    session->refcount = 1;
-    session->state = SESSION_STATE_RESOLVING;
-    service_id_init_fields(&session->id, id);
-    
+/* All information associated with a particular session ID; this may be merged from
+ * multiple independent services
+ */
+struct _Session {
+    char *session_id;
+
+    HippoAvahiService *local_export_service;
+    char *machine_id;
+
+    unsigned long change_serial;
+    SessionInfos *infos;
+    InfoRetrieval *info_retrieval;
+
+    HippoAvahiService *dav_service;
+    char *dav_url;
+};
+
+static GHashTable *sessions_by_id = NULL;
+
+static HippoAvahiSessionBrowser *local_export_browser = NULL;
+
+static void session_info_retrieval_succeeded(Session     *session,
+                                             DBusMessage *reply);
+static void session_info_retrieval_failed   (Session *session);
+
+static Session *
+get_session(const char *id)
+{
+    return g_hash_table_lookup(sessions_by_id, id);
+}
+
+static Session *
+ensure_session(const char *id)
+{
+    Session *session = g_hash_table_lookup(sessions_by_id, id);
+    if (session == NULL) {
+        session = g_new0(Session, 1);
+        session->session_id = g_strdup(id);
+
+        g_hash_table_insert(sessions_by_id, session->session_id, session);
+    }
+
     return session;
 }
 
-static Session*
-get_session_by_service(const ServiceId *id)
-{
-    return g_tree_lookup(session_tree_by_service, id);
-}
-
 static void
-add_session_by_service(Session *session)
+remove_session(const char *id)
 {
-    g_tree_insert(session_tree_by_service,
-                  &session->id,
-                  session);
-    session_ref(session);
-}
-
-static void
-remove_session_by_service(Session *session)
-{
-    SessionChangeNotifySet *change_set;
-    
-    g_tree_remove(session_tree_by_service,
-                  &session->id);
-
-    /* Remove all the "info" and send notification */
-    if (session->infos) {
-        session_infos_push_change_notify_set(session->infos);
-        session_infos_remove_all(session->infos);
-        change_set = session_infos_pop_change_notify_set(session->infos);
-        session_api_notify_changed(session->infos, change_set);
-        session_change_notify_set_free(change_set);
-    }    
-
-    session_unref(session); /* drop the ref owned by the tree */
-}
-
-static void
-session_fail_resolve(Session *session)
-{
-    session->state = SESSION_STATE_FAILED_RESOLVE;
-    remove_session_by_service(session);
-}
-
-static void
-session_fail_connect(Session *session)
-{
-    session->state = SESSION_STATE_FAILED_CONNECT;
-    if (session->connection != NULL) {
-        dbus_connection_unref(session->connection);
-        session->connection = NULL;
+    Session *session = g_hash_table_lookup(sessions_by_id, id);
+    if (session == NULL) {
+        g_warning("remove_session called on non-existent session");
+        return;
     }
-    /* FIXME retry again later or something */
+
+    g_hash_table_remove(sessions_by_id, id);
+
+    g_assert(session->local_export_service == NULL);
+    g_assert(session->dav_service == NULL);
+    g_assert(session->info_retrieval == NULL);
+    
+    g_free(session->machine_id);
+    g_free(session->session_id);
+    if (session->infos)
+        session_infos_unref(session->infos);
+
+    g_free(session);
+}
+
+static void
+info_retrieval_free(InfoRetrieval *retrieval)
+{
+    if (retrieval->connection) {
+        g_debug("Disconnecting");
+
+        dbus_connection_close(retrieval->connection);
+        dbus_connection_unref(retrieval->connection);
+    }
+        
+    g_free(retrieval);
+}
+
+static void
+info_retrieval_on_get_session_info_reply(DBusPendingCall *pending,
+                                         void            *user_data)
+{
+    DBusMessage *reply;
+    InfoRetrieval *retrieval;
+
+    retrieval = user_data;
+
+    reply = dbus_pending_call_steal_reply(pending);
+
+    if (reply != NULL) {
+        if (retrieval->session)
+            session_info_retrieval_succeeded(retrieval->session, reply);
+        
+        dbus_message_unref(reply);
+    } else if (reply == NULL) {
+        g_debug("NULL reply");
+    }
+
+    dbus_pending_call_unref(pending);
+
+    info_retrieval_free(retrieval);
+}
+
+static void
+info_retrieval_connection_opened_handler(DBusConnection  *connection_or_null,
+                                         const DBusError *error_if_null,
+                                         void            *data)
+{
+    InfoRetrieval *retrieval;
+    DBusPendingCall *pending;
+    DBusMessage *message;
+
+    retrieval = data;
+
+    if (connection_or_null == NULL) {
+        g_debug("Failed to connect to local export service: %s", error_if_null->message);
+        if (retrieval->session)
+            session_info_retrieval_failed(retrieval->session);
+        info_retrieval_free(retrieval);
+        return;
+    }
+
+    if (retrieval->session == NULL) {
+        info_retrieval_free(retrieval);
+        return;
+    }
+
+    retrieval->connection = connection_or_null;
+    dbus_connection_ref(retrieval->connection);
+    dbus_connection_setup_with_g_main(retrieval->connection, NULL);
+
+    g_debug("Sending GetInfoForSession message");
+    
+    message = dbus_message_new_method_call(NULL, SESSION_INFO_OBJECT_PATH,
+                                           SESSION_INFO_INTERFACE,
+                                           "GetInfoForSession");
+    pending = NULL;
+    dbus_connection_send_with_reply(retrieval->connection,
+                                    message,
+                                    &pending,
+                                    1000 * 120);
+    dbus_message_unref(message);
+    
+    if (pending == NULL) { /* Shouldn't happen */
+        g_debug("Failed to send GetInfoForSession message");
+        session_info_retrieval_failed(retrieval->session);
+        info_retrieval_free(retrieval);
+        return;
+    }
+
+    /* pass refcount on "pending" in here */
+    dbus_pending_call_set_notify(pending, info_retrieval_on_get_session_info_reply,
+                                 retrieval, NULL);
+}
+
+static InfoRetrieval *
+info_retrieval_start(Session *session)
+{
+    AvahiAddress address;
+    char address_str[AVAHI_ADDRESS_STR_MAX];
+    guint16 port;
+    char *dbus_address;
+    InfoRetrieval *retrieval;
+
+    hippo_avahi_service_get_address(session->local_export_service, &address);
+    port = hippo_avahi_service_get_port(session->local_export_service);
+    
+    avahi_address_snprint(address_str, sizeof(address_str), &address);
+    
+    dbus_address = g_strdup_printf("tcp:host=%s,port=%u", address_str, port);
+
+    g_debug("Connecting to '%s' protocol = %d (v4=%d v6=%d)",
+            hippo_avahi_service_get_name(session->local_export_service),
+            address.proto, AVAHI_PROTO_INET, AVAHI_PROTO_INET6);
+
+    retrieval = g_new0(InfoRetrieval, 1);
+    retrieval->session = session;
+    hippo_dbus_connection_open_private_async(dbus_address, info_retrieval_connection_opened_handler,
+                                             retrieval);
+    g_free(dbus_address);
+
+    return retrieval;
+}
+
+static void
+info_retrieval_cancel(InfoRetrieval *retrieval)
+{
+    /* We just flag the retrieval as canceled by removing the session pointer,
+     * from it, we otherwise let it proceed to completion.
+     */
+    retrieval->session = NULL;
 }
 
 static void
@@ -233,11 +272,19 @@ print_sv_dict(const DBusMessageIter *orig_dict_iter)
 }
 
 static gboolean
-session_extract_values(Session *session,
+session_extract_values(Session               *session,
                        const DBusMessageIter *orig_dict_iter)
 {
     DBusMessageIter dict_iter;
 
+    /* The 'values' here are a shadow in the local-export protocol of the properties also provided in
+     * the TXT record. This in theory allows us to conform to a "SHOULD" on the dns-sd
+     * spec and avoid depending on the TXT record for the local-export service, but since we use
+     * the same infrastructure with the session ID stored in the TXT record for webdav,
+     * trying to use the session ID from the protocol would complicate things. So we check
+     * to see that the values match and warn on mismatch, but otherwise ignore them.
+     */
+    
     dict_iter = *orig_dict_iter;
     while (dbus_message_iter_get_arg_type(&dict_iter) == DBUS_TYPE_DICT_ENTRY) {
         DBusMessageIter entry_iter;
@@ -262,25 +309,11 @@ session_extract_values(Session *session,
         
         if (value != NULL) {
             if (strcmp("key", "session") == 0) {
-                if (session->session_id == NULL) {
-                    session->session_id = g_strdup(value);
-                } else if (strcmp(session->session_id, value) != 0) {
-                    g_debug("Session ID in TXT record does not match session ID from protocol, or ID was changed");
-                    return FALSE;
-                } else {
-                    g_debug("Session ID from TXT record confirmed: %s", value);
-                }
+                if (strcmp(session->session_id, value) != 0)
+                    g_warning("Session ID in TXT record does not match session ID from protocol, or ID was changed");
             } else if (strcmp("key", "machine") == 0) {
-                if (session->machine_id == NULL) {
-                    session->machine_id = g_strdup(value);
-                } else if (strcmp(session->machine_id, value) != 0) {
-                    g_debug("Machine ID in TXT record does not match machine ID from protocol, or ID was changed");
-                    return FALSE;
-                } else {
-                    g_debug("Machine ID from TXT record confirmed: %s", value);
-                }
-            } else {
-                /* some property we don't know about */
+                if (session->machine_id == NULL || (strcmp(session->machine_id, value) != 0))
+                    g_warning("Machine ID in TXT record does not match machine ID from protocol, or ID was changed");
             }
         }
             
@@ -291,271 +324,120 @@ session_extract_values(Session *session,
 }
 
 static void
-on_get_session_info_reply(DBusPendingCall *pending,
-                          void            *user_data)
+remove_name_from_infos(void *key,
+                       void *value,
+                       void *data)
 {
-    DBusMessage *reply;
-    Session *session;
-    SessionChangeNotifySet *change_set;
-
-    session = user_data;
-    change_set = NULL;
+    SessionInfos *infos = data;
     
-    reply = dbus_pending_call_steal_reply(pending);
-
-    if (reply != NULL && dbus_message_has_signature(reply, "a{sv}a(sa{sv})")) {
-        DBusMessageIter iter;
-        DBusMessageIter dict_iter;        
-        DBusMessageIter infos_iter;
-        
-        g_debug("Got a reply");
-        
-        dbus_message_iter_init(reply, &iter);
-
-        dbus_message_iter_recurse(&iter, &dict_iter);
-
-        /* print_sv_dict(&dict_iter); */
-        session_extract_values(session, &dict_iter);
-
-
-        if (session->infos == NULL) {
-            g_assert(session->machine_id);
-            g_assert(session->session_id);
-            session->infos = session_infos_new(session->machine_id,
-                                               session->session_id);
-        }
-        
-        dbus_message_iter_next(&iter);
-        dbus_message_iter_recurse(&iter, &infos_iter);
-
-        session_infos_push_change_notify_set(session->infos);
-        
-        while (dbus_message_iter_get_arg_type(&infos_iter) == DBUS_TYPE_STRUCT) {
-            DBusMessageIter info_iter;
-            const char *info_name;
-            Info *info;
-            
-            dbus_message_iter_recurse(&infos_iter, &info_iter);
-
-            info_name = NULL;
-            dbus_message_iter_get_basic(&info_iter, &info_name);
-
-            dbus_message_iter_next(&info_iter);
-
-            g_debug("Got info '%s':", info_name);
-            dbus_message_iter_recurse(&info_iter, &dict_iter);
-            
-            print_sv_dict(&dict_iter);
-            info = info_new_from_data(info_name, &dict_iter);
-            if (info != NULL) {
-                session_infos_add(session->infos, info);
-                info_unref(info);
-            }
-
-            /* FIXME right now we never remove an info that's no longer there! */
-            /* At first it looks like we could just push change set, remove all,
-             * add back, and notify on the resulting change set. The problem with
-             * this is that we would fail to short-circuit items that were not really
-             * changed since we wouldn't have the original items due to the remove_all.
-             * So some slightly more involved approach is needed.
-             */
-            
-            dbus_message_iter_next(&infos_iter);
-        }
-
-        change_set = session_infos_pop_change_notify_set(session->infos);
-        
-    } else {
-        if (reply == NULL)
-            g_debug("NULL reply");
-        else
-            g_debug("reply had wrong signature '%s'", dbus_message_get_signature(reply));
-    }
-
-    if (reply != NULL)
-        dbus_message_unref(reply);
-
-    dbus_pending_call_unref(pending);
-
-    g_debug("Disconnecting");
-    dbus_connection_close(session->connection);
-    dbus_connection_unref(session->connection);
-    session->connection = NULL;
-    session->state = SESSION_STATE_DISCONNECTED;
-
-    if (change_set != NULL) {
-        session_api_notify_changed(session->infos, change_set);
-        session_change_notify_set_free(change_set);
-    }
-    
-    session_unref(session);
+    session_infos_remove(infos, key);
 }
 
 static void
-connection_opened_handler(DBusConnection  *connection_or_null,
-                          const DBusError *error_if_null,
-                          void            *data)
+session_info_retrieval_succeeded(Session     *session,
+                                 DBusMessage *reply)
 {
-    Session *session;
-    DBusPendingCall *pending;
-    DBusMessage *message;
-
-    session = data;
-
-    g_assert(session->connection == NULL);
-    g_assert(session->state == SESSION_STATE_CONNECTING);
+    SessionChangeNotifySet *change_set;
+    DBusMessageIter iter;
+    DBusMessageIter dict_iter;        
+    DBusMessageIter infos_iter;
+    GHashTable *old_infos;
     
-    if (connection_or_null == NULL) {
-        g_debug("Failed: %s", error_if_null->message);
-        session_fail_connect(session);
-        session_unref(session);
+    session->info_retrieval = NULL;
+
+    if (!dbus_message_has_signature(reply, "a{sv}a(sa{sv})")) {
+        g_debug("reply had wrong signature '%s'", dbus_message_get_signature(reply));
         return;
     }
-
-    session->connection = connection_or_null;
-    dbus_connection_ref(session->connection);
-    dbus_connection_setup_with_g_main(session->connection, NULL);
-
-    g_debug("Sending call");
     
-    message = dbus_message_new_method_call(NULL, SESSION_INFO_OBJECT_PATH,
-                                           SESSION_INFO_INTERFACE,
-                                           "GetInfoForSession");
-    pending = NULL;
-    dbus_connection_send_with_reply(session->connection,
-                                    message,
-                                    &pending,
-                                    1000 * 120);
-    dbus_message_unref(message);
+    dbus_message_iter_init(reply, &iter);
     
-    if (pending == NULL) { /* happens if we are already disconnected */
-        session_fail_connect(session);
-        session_unref(session);
-        return;
+    dbus_message_iter_recurse(&iter, &dict_iter);
+    
+    /* print_sv_dict(&dict_iter); */
+    session_extract_values(session, &dict_iter);
+
+    if (session->infos == NULL) {
+        g_assert(session->machine_id);
+        g_assert(session->session_id);
+        session->infos = session_infos_new(session->machine_id,
+                                           session->session_id);
     }
+    
+    dbus_message_iter_next(&iter);
+    dbus_message_iter_recurse(&iter, &infos_iter);
+    
+    /* Remember what was there, so we can remove anything we don't see from this message */
+    old_infos = session_infos_get_all(session->infos);
+        
+    session_infos_push_change_notify_set(session->infos);
+    
+    while (dbus_message_iter_get_arg_type(&infos_iter) == DBUS_TYPE_STRUCT) {
+        DBusMessageIter info_iter;
+        const char *info_name;
+        Info *info;
+        
+        dbus_message_iter_recurse(&infos_iter, &info_iter);
+        
+        info_name = NULL;
+        dbus_message_iter_get_basic(&info_iter, &info_name);
+        
+        dbus_message_iter_next(&info_iter);
+        
+        g_debug("Got info '%s':", info_name);
+        dbus_message_iter_recurse(&info_iter, &dict_iter);
+        
+        print_sv_dict(&dict_iter);
+        info = info_new_from_data(info_name, &dict_iter);
+        if (info != NULL) {
+            session_infos_add(session->infos, info);
+            info_unref(info);
+        }
+        
+        /* We've seen the key, remove it from the set of infos to remove */
+        g_hash_table_remove(old_infos, info_name);
+        
+        dbus_message_iter_next(&infos_iter);
+    }
+    
+    /* Now remove any names in old_infos that we didn't see */
+    g_hash_table_foreach(old_infos, remove_name_from_infos, session->infos);
+    g_hash_table_destroy(old_infos);
+    
+    change_set = session_infos_pop_change_notify_set(session->infos);
+    session_api_notify_changed(session->infos, change_set);
+    session_change_notify_set_free(change_set);
+}
 
-    /* pass refcount on "pending" and "session" in here */
-    dbus_pending_call_set_notify(pending, on_get_session_info_reply,
-                                 session, NULL);
+static void
+session_info_retrieval_failed(Session *session)
+{
+    session->info_retrieval = NULL;
+    
+    /* FIXME retry again later or something */
 }
 
 static void
 session_connect(Session *session)
 {
-    char *dbus_address;
-    char address_str[AVAHI_ADDRESS_STR_MAX];
-    
-    if (session->state == SESSION_STATE_CONNECTING)
-        return;
-
-#if 0
-    if (session->id.protocol == AVAHI_PROTO_INET6) {
-        /* dbus does not do IPv6 for now I don't think */
-        session_fail_connect(session);
-        return;
-    }
-#endif
-    
-    session->state = SESSION_STATE_CONNECTING;
-    
-    avahi_address_snprint(address_str, sizeof(address_str), &session->address);
-    
-    dbus_address = g_strdup_printf("tcp:host=%s,port=%u", address_str, session->port);
-
-    g_debug("Connecting to '%s' protocol = %d (v4=%d v6=%d)",
-            dbus_address, session->id.protocol, AVAHI_PROTO_INET, AVAHI_PROTO_INET6);
-
-    session_ref(session);
-    hippo_dbus_connection_open_private_async(dbus_address, connection_opened_handler,
-                                             session);
-
-    g_free(dbus_address);
-}
-
-static void
-resolver_ref(Resolver *resolver)
-{
-    resolver->refcount += 1;
-}
-
-static void
-resolver_unref(Resolver *resolver)
-{
-    g_assert(resolver->refcount > 0);
-    resolver->refcount -= 1;
-    if (resolver->refcount == 0) {
-        service_id_free_fields(&resolver->id);
-
-        if (resolver->resolver) /* only NULL if we failed to create it in resolver_new */
-            avahi_service_resolver_free(resolver->resolver);
+    if (session->info_retrieval) {
+        /* Cancel any outstanding retrieval */
         
-        g_free(resolver);
+        info_retrieval_cancel(session->info_retrieval);
+        session->info_retrieval = NULL;
     }
-}
 
-static Resolver*
-get_resolver_by_service(const ServiceId *id)
-{
-    return g_tree_lookup(resolver_tree_by_service, id);
-}
-
-static void
-add_resolver_by_service(Resolver *resolver)
-{
-    g_tree_insert(resolver_tree_by_service,
-                  &resolver->id,
-                  resolver);
-    resolver_ref(resolver);
-}
-
-static void
-remove_resolver_by_service(Resolver *resolver)
-{
-    g_tree_remove(resolver_tree_by_service,
-                  &resolver->id);
-    
-    resolver_unref(resolver); /* drop the ref owned by the tree */
-}
-
-static char*
-get_txt_record(AvahiStringList *list,
-               const char      *key)
-{
-    AvahiStringList *found;
-    char *k;
-    char *v;
-    size_t len;
-    
-    found = avahi_string_list_find(list, key);
-    if (found == NULL)
-        return NULL;
-
-    k = NULL;
-    v = NULL;
-    len = 0;
-    avahi_string_list_get_pair(found, &k, &v, &len);
-
-    avahi_free(k);
-
-    /* if the string isn't nul terminated then bail */
-    if (v != NULL &&
-        (strnlen(v, len) < len ||
-         (strnlen(v, len) == len && v[len] != '\0'))) {
-        avahi_free(v);
-        v = NULL;
-    }
-    
-    return v;
+    session->info_retrieval = info_retrieval_start(session);
 }
 
 static guint32
-get_txt_record_uint32(AvahiStringList *list,
-                      const char      *key)
+get_txt_property_uint32(HippoAvahiService *service,
+                        const char        *key)
 {
     char *s;
     guint64 l;
     char *end;
-    s = get_txt_record(list, key);
+    s = hippo_avahi_service_get_txt_property(service, key);
     if (s == NULL)
         return 0;
 
@@ -572,278 +454,122 @@ get_txt_record_uint32(AvahiStringList *list,
 }
 
 static void
-resolve_callback(AvahiServiceResolver *r,
-                 AvahiIfIndex interface,
-                 AvahiProtocol protocol,
-                 AvahiResolverEvent event,
-                 const char *name,
-                 const char *type,
-                 const char *domain,
-                 const char *host_name,
-                 const AvahiAddress *address,
-                 uint16_t port,
-                 AvahiStringList *txt,
-                 AvahiLookupResultFlags flags,
-                 void* data)
+on_service_address_changed(HippoAvahiService *service,
+                           Session           *session)
 {
-    /* Called whenever a service has been resolved successfully or timed out */
-    Resolver *resolver = data;
-    Session *session;
-
-    session = get_session_by_service(&resolver->id);
+    /* The address or port changed, reconnect to the local export daemon and get new values */
     
-    switch (event) {
-    case AVAHI_RESOLVER_FAILURE:
-        /* This can happen on "change notification" (after we already found the
-         * session once) it seems?
-         */
-        g_debug("service failed to resolve, dropping it");
-        if (session != NULL)
-            session_fail_resolve(session);
+    session_connect(session);
+}
+    
+static void
+on_service_txt_changed(HippoAvahiService *service,
+                       Session           *session)
+{
+    guint32 new_serial;
+    char *new_machine_id;
 
-        /* not sure we should free the resolver? can it still get "FOUND" later?
-         * With this setup, we will need another browser event to recreate it.
-         */
-        remove_resolver_by_service(resolver);
-        break;
-        
-    case AVAHI_RESOLVER_FOUND:
-        g_debug("Resolved %s:%d", host_name, port);
-        
-        if (session == NULL) {
-            session = session_new(&resolver->id);
-            add_session_by_service(session); /* this increments the refcount */
-            session_unref(session); /* drop our refcount from new() */
-        }
-
-        if (session->state == SESSION_STATE_RESOLVING) {
-            session->host_name = g_strdup(host_name);
-            session->address = *address;
-            session->port = port;
-            
-            /* these may or may not be present. If they are, we verify their
-             * accuracy later.
-             */
-            session->machine_id = get_txt_record(txt, "org.freedesktop.od.machine");
-            session->session_id = get_txt_record(txt, "org.freedesktop.od.session");
-            
-            session_connect(session);
-        } else {
-            /* Presumably a change notification */
-            guint32 new_serial;
-            char *new_machine_id;
-            char *new_session_id;
-
-            /* Can these really change? */
-            if (strcmp(session->host_name, host_name) != 0) {
-                g_free(session->host_name);
-                session->host_name = g_strdup(host_name);
-            }
-            session->address = *address;
-            session->port = port;
-
-            /* check new machine/session ID */
-            new_machine_id = get_txt_record(txt, "org.freedesktop.od.machine");
-            new_session_id = get_txt_record(txt, "org.freedesktop.od.session");
-
-            /* If these change for now we warn and ignore the change */
-            if (new_machine_id && session->machine_id &&
-                strcmp(new_machine_id, session->machine_id) != 0) {
-                g_printerr("Remote session changed its machine ID, which is not allowed\n");
-            }
-            if (new_session_id && session->session_id &&
-                strcmp(new_session_id, session->session_id) != 0) {
-                g_printerr("Remote session changed its session ID, which is not allowed\n");
-            }
-            g_free(new_machine_id);
-            g_free(new_session_id);
-            
-            new_serial = get_txt_record_uint32(txt, "org.freedesktop.od.serial");
-
-            g_debug("new change serial %u", new_serial);
-            
-            if (new_serial > 0 &&
-                new_serial != session->change_serial) {
-                /* Connect again */
-                session_connect(session); 
-            }
-        }
-        break;
-    default:
-        g_debug("Unknown resolver event");
-        break;
+    new_machine_id = hippo_avahi_service_get_txt_property(service, "org.freedesktop.od.machine");
+    
+    /* For now we warn and ignore the change */
+    if (new_machine_id && session->machine_id &&
+        strcmp(new_machine_id, session->machine_id) != 0) {
+        g_printerr("Remote session changed its machine ID, which is not allowed\n");
+    }
+    g_free(new_machine_id);
+    
+    new_serial = get_txt_property_uint32(service, "org.freedesktop.od.serial");
+    
+    g_debug("new change serial %u", new_serial);
+    
+    if (new_serial > 0 &&
+        new_serial != session->change_serial) {
+        /* Connect again */
+        session_connect(session); 
     }
 }
-
-static Resolver*
-resolver_new(const ServiceId      *id)
+    
+static void
+on_local_export_service_added(HippoAvahiBrowser *browser,
+                              HippoAvahiService *service)
 {
-    Resolver *resolver;
+    Session *session = ensure_session(hippo_avahi_service_get_session_id(service));
 
-    resolver = g_new0(Resolver, 1);
-    resolver->refcount = 1;
-    service_id_init_fields(&resolver->id, id);
-
-    /* According to the Avahi examples "if the server is
-     * terminated before the callback function is called the
-     * server will free the resolver for us." I'm not sure
-     * what "server is terminated" means, but I don't see how
-     * we could handle Avahi freeing the resolver out from
-     * under us. For now, we'll just hope it doesn't do that.
-     */
-    
-    resolver->resolver = avahi_service_resolver_new(avahi_glue_get_client(),
-                                                    resolver->id.interface,
-                                                    resolver->id.protocol,
-                                                    resolver->id.name,
-                                                    resolver->id.type,
-                                                    resolver->id.domain,
-                                                    AVAHI_PROTO_UNSPEC, 0,
-                                                    resolve_callback,
-                                                    resolver /* callback data */);
-
-    if (resolver->resolver == NULL) {
-        g_printerr("Failed to create service resolver: '%s': %s\n", resolver->id.name,
-                   avahi_strerror(avahi_client_errno(avahi_glue_get_client())));
-        resolver_unref(resolver);
-        return NULL;
+    if (session->local_export_service) {
+        g_warning("local service added when we already had one for that ID");
+        return;
     }
+
+    session->local_export_service = service;
     
-    return resolver;
+    session->machine_id = hippo_avahi_service_get_txt_property(service, "org.freedesktop.od.machine");
+    g_signal_connect(service, "address-changed",
+                     G_CALLBACK(on_service_address_changed), session);
+    g_signal_connect(service, "txt-changed",
+                     G_CALLBACK(on_service_txt_changed), session);
+
+    session_connect(session);
 }
 
 static void
-browse_callback(AvahiServiceBrowser *b,
-                AvahiIfIndex interface,
-                AvahiProtocol protocol,
-                AvahiBrowserEvent event,
-                const char *name,
-                const char *type,
-                const char *domain,
-                AvahiLookupResultFlags flags,
-                void* data)
-{    
-    /* Called whenever a new services becomes available on the LAN or is removed from the LAN */
-    ServiceId id;
-    
-    id.interface = interface;
-    id.protocol = protocol;
-    id.name = (char*) name;
-    id.type = (char*) type;
-    id.domain = (char*) domain;
-    
-    switch (event) {
-    case AVAHI_BROWSER_FAILURE:
-        /* Nothing sane to do here - help */
-        g_printerr("Avahi browser failed: %s\n", avahi_strerror(avahi_client_errno(avahi_service_browser_get_client(b))));
-        exit(1);
+on_local_export_service_removed(HippoAvahiBrowser *browser,
+                                HippoAvahiService *service)
+{
+    Session *session = get_session(hippo_avahi_service_get_session_id(service));
+    SessionChangeNotifySet *change_set;
+
+    if (session == NULL) {
+        g_warning("local export service removed we don't know about");
         return;
-
-    case AVAHI_BROWSER_NEW:
-        {
-            Resolver *resolver;
-
-            g_debug("Browsed %s", name);
-            
-            resolver = resolver_new(&id);
-            if (resolver != NULL) {
-                add_resolver_by_service(resolver);
-                resolver_unref(resolver);
-            }
-        }
-        break;
-
-    case AVAHI_BROWSER_REMOVE:
-        {
-            Resolver *resolver;
-            Session *session;
-
-            resolver = get_resolver_by_service(&id);
-            if (resolver != NULL) {
-                remove_resolver_by_service(resolver);
-            }
-            
-            session = get_session_by_service(&id);
-            if (session != NULL) {
-                remove_session_by_service(session);
-            }
-        }
-        break;
-
-    case AVAHI_BROWSER_ALL_FOR_NOW:
-    case AVAHI_BROWSER_CACHE_EXHAUSTED:
-        g_debug("Avahi browser event %s",
-                event == AVAHI_BROWSER_CACHE_EXHAUSTED ? "CACHE_EXHAUSTED" : "ALL_FOR_NOW");
-        break;
-        
-    default:
-        g_debug("Unknown Avahi browser event %d", event);
-        break;
     }
+
+    if (session->local_export_service != service) {
+        g_warning("Mismatch between removed service and service cached in session");
+        return;
+    }
+
+    g_signal_handlers_disconnect_by_func(service, 
+                                         (void *)on_service_address_changed,
+                                         session);
+    g_signal_handlers_disconnect_by_func(service, 
+                                         (void *)on_service_txt_changed,
+                                         session);
+
+    if (session->info_retrieval) {
+        info_retrieval_cancel(session->info_retrieval);
+        session->info_retrieval = NULL;
+    }
+
+    /* Remove all the "info" and send notification */
+    if (session->infos) {
+        session_infos_push_change_notify_set(session->infos);
+        session_infos_remove_all(session->infos);
+        change_set = session_infos_pop_change_notify_set(session->infos);
+        session_api_notify_changed(session->infos, change_set);
+        session_change_notify_set_free(change_set);
+    }    
+
+    session->local_export_service = NULL;
+    
+    g_free(session->machine_id);
+    session->machine_id = NULL;
+
+    if (session->dav_service == NULL)
+        remove_session(session->session_id);
 }
-
-static int
-int_cmp(const int a,
-        const int b)
-{
-    if (a < b)
-        return -1;
-    else if (a > b)
-        return 1;
-    else
-        return 0;
-}
-
-static int
-service_id_cmp(const void *a,
-               const void *b)
-{
-    const ServiceId *service_id_a = a;
-    const ServiceId *service_id_b = b;
-    int v;
-
-    v = int_cmp(service_id_a->interface, service_id_b->interface);
-    if (v != 0)
-        return v;
-    v = int_cmp(service_id_a->protocol, service_id_b->protocol);
-    if (v != 0)
-        return v;
-    /* do name first since it's most likely to be different, thus saving
-     * the other comparisons. In fact type and domain will generally
-     * all be the same I think.
-     */
-    v = strcmp(service_id_a->name, service_id_b->name);
-    if (v != 0)
-        return v;
-    v = strcmp(service_id_a->type, service_id_b->type);
-    if (v != 0)
-        return v;
-    v = strcmp(service_id_a->domain, service_id_b->domain);
-    if (v != 0)
-        return v;
-
-    return 0;
-}              
 
 gboolean
 avahi_scanner_init(void)
 {
-    g_assert(service_browser == NULL);
+    g_assert(local_export_browser == NULL);
 
-    session_tree_by_service = g_tree_new(service_id_cmp);
-    resolver_tree_by_service = g_tree_new(service_id_cmp);
-    
-    service_browser = avahi_service_browser_new(avahi_glue_get_client(),
-                                                AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, "_freedesktop_local_export._tcp",
-                                                NULL, /* domain */
-                                                0, /* flags */
-                                                browse_callback,
-                                                NULL /* callback data */);
-    
-    if (service_browser == NULL) {
-        g_printerr("Failed to create service browser: %s\n", avahi_strerror(avahi_client_errno(avahi_glue_get_client())));
-        return FALSE;
-    }
+    sessions_by_id = g_hash_table_new(g_str_hash, g_str_equal);
+
+    local_export_browser = hippo_avahi_session_browser_new("_freedesktop_local_export._tcp");
+    g_signal_connect(local_export_browser, "service-added",
+                     G_CALLBACK(on_local_export_service_added), NULL);
+    g_signal_connect(local_export_browser, "service-removed",
+                     G_CALLBACK(on_local_export_service_removed), NULL);
     
     return TRUE;
 }
@@ -852,44 +578,45 @@ typedef struct {
     const char *info_name;
     DBusMessageIter *array_iter;
     gboolean failed;
-} TraverseAndAppendData;
+} ForeachAppendData;
 
-static gboolean
-session_traverse_and_append_func(void *key,
-                                 void *value,
-                                 void *data)
+static void
+session_foreach_append_func(void              *key,
+                            void              *value,
+                            void              *data)
 {
-    TraverseAndAppendData *taad = data;
+    ForeachAppendData *fad = data;
     Session *session = value;
     Info *info;
 
+    if (fad->failed)
+        return;
+    
     info = NULL;
     if (session->infos != NULL)
-        info = session_infos_get(session->infos, taad->info_name);
+        info = session_infos_get(session->infos, fad->info_name);
     if (info == NULL)
-        return FALSE; /* FALSE = keep traversing */
+        return;
     
     if (!session_infos_write_with_info(session->infos,
                                        info,
-                                       taad->array_iter)) {
-        taad->failed = TRUE;
-        return TRUE; /* stop traversing */
+                                       fad->array_iter)) {
+        fad->failed = TRUE;
     }
-    
-    return FALSE; /* keep traversing */
 }
+    
 
 gboolean
 avahi_scanner_append_infos_with_name(const char      *name,
                                      DBusMessageIter *array_iter)
 {
-    TraverseAndAppendData taad;
+    ForeachAppendData fad;
 
-    taad.info_name = name;
-    taad.array_iter = array_iter;
-    taad.failed = FALSE;
+    fad.info_name = name;
+    fad.array_iter = array_iter;
+    fad.failed = FALSE;
     
-    g_tree_foreach(session_tree_by_service, session_traverse_and_append_func, &taad);
+    g_hash_table_foreach(sessions_by_id, session_foreach_append_func, &fad);
 
-    return !taad.failed;
+    return !fad.failed;
 }
