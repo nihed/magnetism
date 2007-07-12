@@ -14,6 +14,15 @@ from mugshot import DataModel
 def _open_aim(aim):
     os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', 'aim:GoIM?screenname=' + cgi.escape(aim))
 
+def _open_webdav(url):
+    # We pass around WebDAV URL's using the standard http:// scheme, but nautilus wants dav://
+    # instead.
+
+    if url.startswith("http:"):
+        url = "dav:" + url[5:]
+    
+    os.spawnlp(os.P_NOWAIT, 'gnome-open', 'gnome-open', url)
+
 class PersonItem(PhotoContentItem, DataBoundItem):
     def __init__(self, user, **kwargs):
         PhotoContentItem.__init__(self, **kwargs)
@@ -153,6 +162,30 @@ class AimIcon(hippo.CanvasText, DataBoundItem):
         _open_aim(self.resource.name)
         return True
 
+class LocalFilesLink(hippo.CanvasBox, DataBoundItem):
+    def __init__(self, buddy):
+        hippo.CanvasBox.__init__(self)
+        DataBoundItem.__init__(self, buddy)
+
+        self.__link = ActionLink(text="Shared Files")
+        self.__link.connect("activated", self.__open_webdav)
+        self.append(self.__link)
+
+        self.connect_resource(self.__update)
+        self.__update(self.resource)
+
+    def __get_url(self):
+        try:
+            return self.resource.webdavUrl
+        except AttributeError:
+            return None
+
+    def __update(self, buddy):
+        self.__link.set_visible(self.__get_url() != None)
+        
+    def __open_webdav(self, object):
+        _open_webdav(self.__get_url())
+
 class ProfileItem(hippo.CanvasBox, DataBoundItem):
     __gsignals__ = {
         "close": (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
@@ -197,8 +230,15 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
                                            spacing=2, border=4)
         self.append(self.__ribbon_bar)
 
+        self.__link_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL,
+                                          spacing=2, border=4)
+        self.append(self.__link_box)
+        
+        self.__local_files_link = None
+
         self.connect_resource(self.__update)
         self.connect_resource(self.__update_loved_accounts, "lovedAccounts")
+        self.connect_resource(self.__update_local_buddy, "localBuddy")
         
         query = DataModel(bigboard.globals.server_name).query_resource(self.resource.resource_id, "lovedAccounts +")
         query.add_handler(self.__update_loved_accounts)
@@ -206,6 +246,7 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         
         self.__update(self.resource)
         self.__update_loved_accounts(self.resource)
+        self.__update_local_buddy(self.resource)
             
     def __update_loved_accounts(self, user):
         try:
@@ -217,6 +258,19 @@ class ProfileItem(hippo.CanvasBox, DataBoundItem):
         for a in accounts:
             icon = ExternalAccountIcon(a)
             self.__ribbon_bar.append(icon)
+
+    def __update_local_buddy(self, user):
+        if self.__local_files_link:
+            self.__local_files_link.destroy()
+            self.__local_files_link = None
+
+        try:
+            buddy = self.resource.localBuddy
+        except AttributeError:
+            return
+
+        self.__local_files_link = LocalFilesLink(buddy)
+        self.__link_box.append(self.__local_files_link)
 
     def __update(self, user):
         self.__name.set_property('text', self.resource.name)
