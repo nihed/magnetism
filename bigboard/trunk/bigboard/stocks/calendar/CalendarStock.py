@@ -313,7 +313,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
     def __refresh_events(self):      
         self.__box.remove_all()
         title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
-        title.set_property("text", "  " + (fmt_date(self.__day_displayed)))
+        title.set_property("text", fmt_date(self.__day_displayed))
         title.set_property("font", "13px Bold")
         self.__box.append(title) 
         for event in self.__events:
@@ -321,10 +321,10 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                 display = EventDisplay(event)
                 self.__box.append(display)
         self.__controlbox = CanvasHBox()
-        prev_link = ActionLink(text=u"\u00ab Prev", xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_START)
+        prev_link = ActionLink(text=u"\u00ab Prev", xalign=hippo.ALIGNMENT_START)
         prev_link.connect("button-press-event", lambda b,e: self.__do_prev())
-        self.__box.append(prev_link, hippo.PACK_EXPAND)
-        next_link = ActionLink(text=u"Next \u00bb", xalign=hippo.ALIGNMENT_END, yalign=hippo.ALIGNMENT_START)
+        self.__controlbox.append(prev_link)
+        next_link = ActionLink(text=u"Next \u00bb", xalign=hippo.ALIGNMENT_END)
         next_link.connect("button-press-event", lambda b,e: self.__do_next())
         self.__controlbox.append(next_link, hippo.PACK_EXPAND)
         self.__box.append(self.__controlbox)    
