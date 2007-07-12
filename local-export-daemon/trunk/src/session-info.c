@@ -181,10 +181,12 @@ info_new_from_data (const char      *name,
     return info;
 }
 
-void
+Info *
 info_ref (Info *info)
 {
     info->refcount += 1;
+
+    return info;
 }
 
 void
@@ -547,6 +549,30 @@ session_infos_get (SessionInfos *infos,
                    const char   *name)
 {
     return g_hash_table_lookup(infos->by_name, name);
+}
+
+static void
+get_all_foreach(void *key,
+                void *value,
+                void *data)
+{
+    const char *name = key;
+    Info *info = value;
+    GHashTable *result = data;
+
+    g_hash_table_insert(result, g_strdup(name), info_ref(info));
+}
+
+
+GHashTable*
+session_infos_get_all(SessionInfos *infos)
+{
+    GHashTable *result = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                               (GDestroyNotify)g_free, (GDestroyNotify)info_unref);
+
+    g_hash_table_foreach(infos->by_name, get_all_foreach, result);
+
+    return result;
 }
 
 void
