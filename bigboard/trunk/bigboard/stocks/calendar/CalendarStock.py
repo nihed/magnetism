@@ -57,10 +57,11 @@ def fmt_datetime(dt):
      
     if dt.time().hour == 0 and dt.time().minute == 0 and  dt.time().second == 0:
         return date_str
-    return date_str + " " + str(dt.time())
+    return date_str + " " + fmt_time(dt)
 
 def fmt_time(dt):     
-    return dt.time().strftime("%I:%M%p")
+    time = dt.time().strftime("%I:%M%p")
+    return time.find("0") == 0 and (time[1:].lower() + "  ") or time.lower()
 
 def fmt_date(date):
     today = datetime.date.today()
@@ -316,10 +317,17 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         title.set_property("text", fmt_date(self.__day_displayed))
         title.set_property("font", "13px Bold")
         self.__box.append(title) 
+        day_event_count = 0
         for event in self.__events:
             if event.get_start_time().date() == self.__day_displayed: 
+                day_event_count = day_event_count + 1
                 display = EventDisplay(event)
                 self.__box.append(display)
+        if day_event_count == 0:
+            no_events_text = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
+            no_events_text.set_property("text", "No events scheduled")
+            self.__box.append(no_events_text)
+            
         self.__controlbox = CanvasHBox()
         prev_link = ActionLink(text=u"\u00ab Prev", xalign=hippo.ALIGNMENT_START)
         prev_link.connect("button-press-event", lambda b,e: self.__do_prev())
