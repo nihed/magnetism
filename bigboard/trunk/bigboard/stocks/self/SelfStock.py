@@ -26,7 +26,7 @@ class LoginItem(hippo.CanvasBox):
         self.svcname = svcname
 
         # I can't get Pango to take just "Bold" without a size; not sure what the problem is here
-        self.append(hippo.CanvasText(text=svcname, xalign=hippo.ALIGNMENT_START, weight="bold"))
+        self.append(hippo.CanvasText(text=svcname, xalign=hippo.ALIGNMENT_START, font="Bold 12px"))
         self.__reauth_text = hippo.CanvasText(text='Login incorrect', xalign=hippo.ALIGNMENT_START,
                                               color=0xFF0000FF)
         self.append(self.__reauth_text)
