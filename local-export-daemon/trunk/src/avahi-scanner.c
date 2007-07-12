@@ -178,6 +178,7 @@ info_retrieval_connection_opened_handler(DBusConnection  *connection_or_null,
 
     if (retrieval->session == NULL) {
         info_retrieval_free(retrieval);
+        dbus_connection_close(connection_or_null);
         return;
     }
 
