@@ -45,14 +45,19 @@ DISTCLEANFILES =
 MAINTAINERCLEANFILES =
 BUILT_SOURCES =
 
-if USE_INCLUDED_CANVAS
 CANVASSRCDIR=$(top_srcdir)/canvas-dist
+
+if USE_INCLUDED_CANVAS
 CANVAS_CFLAGS =				\
 	-I $(CANVASSRCDIR)/common	\
 	-I $(CANVASSRCDIR)/linux
 CANVAS_LIBADD= libhippocanvas-1.la
 
 include Makefile-libhippocanvas.am
+else
+# Apparently this doesn't get picked up when automake finds the files to
+# distribute from all branches of the conditional, so add it manually
+EXTRA_DIST += $(CANVASSRCDIR)/common/hippo/hippo-canvas-marshal.list
 endif
 
 include Makefile-libhippoipc.am
