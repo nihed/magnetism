@@ -1,4 +1,4 @@
-bin_PROGRAMS += local-export-daemon
+libexec_PROGRAMS += local-export-daemon
 
 local_export_daemon_CPPFLAGS = 			\
 		$(AM_CPPFLAGS)			\
@@ -35,7 +35,7 @@ servicedir = $(datadir)/dbus-1/services
 service_in_files = org.freedesktop.od.LocalExport.service.in
 service_DATA = $(service_in_files:.service.in=.service)
 $(service_DATA): $(service_in_files) Makefile
-	@sed -e "s|\@bindir\@|$(bindir)|" $< > $@
+	@sed -e "s|\@libexecdir\@|$(libexecdir)|" $< > $@
 
 autostartdir=$(datadir)/gnome/autostart
 autostart_in_files=local-export-daemon.desktop.in
@@ -45,7 +45,7 @@ autostart_DATA = $(autostart_files)
 # intltool not here until po exists and all that
 #@INTLTOOL_DESKTOP_RULE@
 local-export-daemon.desktop: local-export-daemon.desktop.in
-	cat $(srcdir)/local-export-daemon.desktop.in | sed -e 's/^_//g' > local-export-daemon.desktop
+	cat $(srcdir)/local-export-daemon.desktop.in | sed -e 's/^_//g; s|\@libexecdir\@|$(libexecdir)|' > local-export-daemon.desktop
 
 EXTRA_DIST += $(autostart_in_files) $(service_in_files)
 MAINTAINERCLEANFILES +=	$(autostart_files) $(service_DATA)
