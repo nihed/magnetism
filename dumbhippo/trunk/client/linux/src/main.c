@@ -10,7 +10,6 @@
 #include "hippo-platform-impl.h"
 #include "hippo-dbus-server.h"
 #include "hippo-dbus-client.h"
-#include "hippo-dbus-pidgin.h"
 #include "hippo-idle.h"
 #include "hippo-ui.h"
 
@@ -871,6 +870,8 @@ main(int argc, char **argv)
     the_app = hippo_app_new(options.instance_type, platform, dbus,
                             options.restart_argv, options.restart_argc);
 
+    hippo_dbus_init_services(dbus);
+    
     /* get rid of all this, the app has taken over */
     g_object_unref(dbus);
     dbus = NULL;
@@ -878,9 +879,6 @@ main(int argc, char **argv)
     platform = NULL;
     g_free(server);
     server = NULL;
-    
-    /* Stuff local date into the data model */
-    hippo_dbus_pidgin_restore_state();
 
     /* Ignore failure here */
     hippo_connection_signin(the_app->connection);

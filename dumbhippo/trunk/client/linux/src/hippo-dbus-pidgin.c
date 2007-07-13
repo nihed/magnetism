@@ -137,12 +137,6 @@ pidgin_store_state(HippoNotificationSet *notifications)
     }
 }
 
-void
-hippo_dbus_pidgin_restore_state(void)
-{
-    pidgin_store_state(NULL);
-}
-
 static void
 pidgin_state_set(PidginState *new_state)
 {
@@ -684,6 +678,8 @@ hippo_dbus_init_pidgin(DBusConnection *connection)
                                                &service_tracker,
                                                gaim_signal_handlers,
                                                NULL);
+
+    pidgin_store_state(NULL);
 }
 
 #if 0
