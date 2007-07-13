@@ -1,4 +1,4 @@
-import logging, time, re, os
+import logging, time, re, os, sys
 
 import gmenu, gobject, pango, gnomedesktop, gtk
 import hippo
@@ -249,7 +249,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self._mugshot.get_pinned_apps(force=True)
             
     def __set_dynamic_set(self, mugshot_apps):
-        self.__dynamic_set.remove_all()        
+        self.__dynamic_set.remove_all()
         for i, mugshot_app in enumerate(mugshot_apps or []):
             app = self.get_app(mugshot_app)
             if self.__static_set_ids.has_key(app.get_id()):
@@ -322,7 +322,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__static_set.remove_all()
         self.__static_set_ids = {}
         for i, mugshot_app in enumerate(self._mugshot.get_pinned_apps() or []):
-            if i >= self.STATIC_SET_SIZE:
+            if i > self.STATIC_SET_SIZE:
                 break
             app = self.get_app(mugshot_app)
             display = apps_widgets.AppDisplay(app)
