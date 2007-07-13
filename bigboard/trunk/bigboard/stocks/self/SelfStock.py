@@ -218,6 +218,7 @@ class LocalUserDisplay(CanvasVBox):
 
 class SelfSlideout(CanvasVBox):
     __gsignals__ = {
+        "account" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),                    
         "logout" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
         "minimize" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, []),
         "close" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
@@ -303,12 +304,7 @@ class SelfSlideout(CanvasVBox):
             self.__mugshot_link.set_property("text", 'Sign in')
         
     def __show_mugshot_link(self, l):
-        if self.__myself:
-            url = "/account"
-        else:
-            url = "/who-are-you"
-            
-        libbig.show_url(global_mugshot.get_mugshot().get_baseurl() + url)
+        self.emit('account')
         self.emit('close')
 
     def __on_minimize_mode(self, l): 
@@ -391,7 +387,7 @@ class SelfStock(AbstractMugshotStock):
 
         self._signin = ActionLink(text="Please Login or Signup")
         self._box.append(self._signin)
-        self._signin.connect("button-press-event", lambda signin, event: self.__on_activate())
+        self._signin.connect("button-press-event", lambda signin, event: self.__do_account())
 
         self._model = DataModel(bigboard.globals.server_name)
         
@@ -489,6 +485,13 @@ class SelfStock(AbstractMugshotStock):
     def __do_minimize(self):
         self._panel.Unexpand()
     
+    def __do_account(self):
+        if self.__myself:
+            url = "/account"
+        else:
+            url = "/who-are-you"
+        libbig.show_url(global_mugshot.get_mugshot().get_baseurl() + url)
+            
     def __on_activate(self):
         if self.__slideout:
             self.__slideout.destroy()
@@ -497,10 +500,11 @@ class SelfStock(AbstractMugshotStock):
 
         self.__create_fus_proxy()
         self.__slideout_display = SelfSlideout(self, self.__myself, fus=self.__fus_service, logger=self._logger)
+        self.__slideout_display.connect('account', lambda s: self.__do_account())        
         self.__slideout_display.connect('minimize', lambda s: self.__do_minimize())
         self.__slideout_display.connect('logout', lambda s: self.__do_logout())
         self.__slideout_display.connect('close', lambda s: self.__on_activate())
-        self.__slideout = self.__do_slideout(self.__slideout_display)     
+        self.__slideout = self.__do_slideout(self.__slideout_display)   
         
     def get_authed_content(self, size):
         return self._box
