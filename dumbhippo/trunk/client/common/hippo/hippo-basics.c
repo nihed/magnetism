@@ -660,6 +660,12 @@ hippo_parse_options(int          *argc_p,
         results->restart_argv[results->restart_argc] = g_strdup("--verbose-xmpp");
         results->restart_argc += 1;
     }
+
+    /* Always use --no-show-window when restarting since whether to show is a property
+     * of the context we were launched in, not a persistent property of the app
+     */
+    results->restart_argv[results->restart_argc] = g_strdup("--no-show-window");
+    results->restart_argc += 1;
     
     return TRUE;
 }
