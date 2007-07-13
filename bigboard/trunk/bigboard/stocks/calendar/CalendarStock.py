@@ -384,46 +384,76 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                      
         events_to_display = 5
         index = 0
+        today = datetime.date.today()
+        now = datetime.datetime.now()
         # we expect the events to be ordered by start time
         for event in self.__events_for_day_displayed:    
-            if index >= len(self.__events_for_day_displayed) - events_to_display:
-                # we can't just break here because __move_up might be true
-                finalize_index = True
             # by default, start with the event that is still happenning if displaying today's agenda,
             # start with the first event for any other day
             # this should have an effect of re-centering the calendar on data reloads
-            elif self.__top_event_displayed is not None:
+            if self.__top_event_displayed is not None:
                 # we need to handle scrolling through multiple events with the same start time, so we use
                 # the links to compare events; however, on refresh, an event with a given link might be gone,
                 # so we should include the next one after it timewise; it would be ideal to include all other
                 # events we previously included that have the same time as the removed event, but that would
                 # require a bit more work
-                finalize_index = event.get_link() == self.__top_event_displayed.get_link() or event.get_start_time() > self.__top_event_displayed.get_start_time() 
-            elif self.__day_displayed == datetime.date.today():
-                finalize_index = event.get_end_time() >= datetime.datetime.now()
+                finalize_index = event.get_link() == self.__top_event_displayed.get_link() or event.get_start_time() > self.__top_event_displayed.get_start_time()                 
+            elif self.__day_displayed == today:
+                finalize_index = event.get_end_time() >= now
+                _logger.debug("finalize_index %s", finalize_index)
             else:
                 finalize_index = True   
 
             if finalize_index:
-                # display the previous event if the user wanted to move up
-                if self.__move_up and index > 0:
-                    index = index - 1 
- 
-                # skip the first event if the user wanted to move down
+
+                if self.__day_displayed == today and self.__top_event_displayed is not None and self.__top_event_displayed.get_end_time() > now and self.__move_up:
+                    new_index = max(index - events_to_display, 0)
+                    if self.__events_for_day_displayed[new_index].get_end_time() < now:
+                        # we need to search for the index to start with that should be between new_index and index
+                        while self.__events_for_day_displayed[new_index].get_end_time() < now and new_index < index:  
+                            new_index = new_index + 1
+                        if index == new_index:
+                            # if __top_event_displayed is the first one that is current, we want to process
+                            # that below
+                            self.__top_event_displayed = None
+                        else: 
+                            # we just want to re-center in this case, so return to default
+                            self.__move_up = False
+                            self.__top_event_displayed = None
+                            index = new_index
+                            break
+
+                if self.__day_displayed == today and self.__top_event_displayed is None and self.__move_up and index % events_to_display != 0:
+                    # we are centered, but we should change into the mode where pages we display are 
+                    # consistent when we are scrolling up to past events
+                    index = max(index - (index % events_to_display), 0)                     
+                elif self.__move_up:
+                    # display the previous page of events if the user wanted to move up
+                    index = max(index - events_to_display, 0) 
+                  
+                if self.__day_displayed == today and self.__top_event_displayed is not None and self.__top_event_displayed.get_end_time() < now and self.__move_down:
+                    new_index = min(index + events_to_display, len(self.__events_for_day_displayed) - 1)
+                    if self.__events_for_day_displayed[new_index].get_end_time() >= now:
+                        # we just want to re-center in this case, so don't break and return to default
+                        self.__move_down = False
+                        self.__top_event_displayed = None
+                        index = index + 1  
+                        _logger.debug("we decide to continue")
+                        continue
+
+                # skip the first page of events if the user wanted to move down
                 # events_to_display should be greater than 0, but let's include the
                 # last check just in case
                 if self.__move_down and index < len(self.__events_for_day_displayed) - events_to_display and index < len(self.__events_for_day_displayed) - 1:                   
-                    index = index + 1 
+                    index = index + events_to_display 
 
                 break
- 
+            _logger.debug("index + 1 %d", index)
             index = index + 1   
 
         end_index = 0  
         if len(self.__events_for_day_displayed) > 0:
-            end_index = index + events_to_display
-            if end_index > len(self.__events_for_day_displayed): 
-                end_index = len(self.__events_for_day_displayed) 
+            end_index = min(index + events_to_display, len(self.__events_for_day_displayed))
         
             for event in self.__events_for_day_displayed[index:end_index]:
                 display = EventDisplay(event)
