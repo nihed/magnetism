@@ -387,11 +387,13 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         today = datetime.date.today()
         now = datetime.datetime.now()
         # we expect the events to be ordered by start time
-        for event in self.__events_for_day_displayed:    
+        for event in self.__events_for_day_displayed:   
+            if len(self.__events_for_day_displayed) <= events_to_display:
+                break
             # by default, start with the event that is still happenning if displaying today's agenda,
             # start with the first event for any other day
             # this should have an effect of re-centering the calendar on data reloads
-            if self.__top_event_displayed is not None:
+            elif self.__top_event_displayed is not None:
                 # we need to handle scrolling through multiple events with the same start time, so we use
                 # the links to compare events; however, on refresh, an event with a given link might be gone,
                 # so we should include the next one after it timewise; it would be ideal to include all other
@@ -400,7 +402,6 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                 finalize_index = event.get_link() == self.__top_event_displayed.get_link() or event.get_start_time() > self.__top_event_displayed.get_start_time()                 
             elif self.__day_displayed == today:
                 finalize_index = event.get_end_time() >= now
-                _logger.debug("finalize_index %s", finalize_index)
             else:
                 finalize_index = True   
 
@@ -438,7 +439,6 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                         self.__move_down = False
                         self.__top_event_displayed = None
                         index = index + 1  
-                        _logger.debug("we decide to continue")
                         continue
 
                 # skip the first page of events if the user wanted to move down
@@ -448,7 +448,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                     index = index + events_to_display 
 
                 break
-            _logger.debug("index + 1 %d", index)
+
             index = index + 1   
 
         end_index = 0  
