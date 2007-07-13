@@ -66,7 +66,13 @@ class Button(hippo.CanvasButton):
         button.add(child)
         child.set_alignment(0.5, 0)
         child.set_padding(0, 0)
-        
+
+    def get_button(self):
+        return self.get_property('widget')
+  
+    def get_label(self):
+	return self.get_button().child
+
 class CanvasURLImageMixin:
     """A wrapper for CanvasImage which has a set_url method to retrieve
        images from a URL."""
