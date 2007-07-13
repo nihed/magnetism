@@ -262,6 +262,9 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         notification_id = args[0]
         action = args[1]
 
+        if notification_id not in self.__event_notify_ids.values():
+            return
+
         if string.find(action, 'view_event') >= 0:
             # the rest of the view_event action is the link to the event,
             # we should use a shorter event id in the future

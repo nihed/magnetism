@@ -195,6 +195,9 @@ class CheckMailTask(libbig.polling.Task):
         notification_id = args[0]
         action = args[1]
 
+        if notification_id != self.__notify_id:
+            return
+
         if action == 'mail':
             if self.__latest_mail:
                 libbig.show_url(self.__latest_mail.get_link())
