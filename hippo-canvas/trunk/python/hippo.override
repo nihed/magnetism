@@ -934,17 +934,24 @@ _canvas_load_image_hook(HippoCanvasContext *context,
     PyObject *arglist;
     PyObject *result;
     PycairoSurface *surface_result;
-    cairo_surface_t *surface;
-    
+    cairo_surface_t *surface = NULL;
+    PyGILState_STATE state;	
+	
+    state = pyg_gil_state_ensure();
+
     arglist = Py_BuildValue("(s)", image_name);
     result = PyEval_CallObject(_canvas_load_image_hook_cb, arglist);
     Py_DECREF(arglist);
     if (result == NULL)
-        return NULL;
+        goto out;
     surface_result = (PycairoSurface*)result;
     surface = surface_result->surface;
     cairo_surface_reference(surface);
     Py_XDECREF(result);
+
+out:
+    pyg_gil_state_release(state);
+    
     return surface;
 }
 
