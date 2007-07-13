@@ -153,6 +153,7 @@ typedef struct {
     guint verbose : 1;
     guint verbose_xmpp : 1;
     guint debug_updates : 1;
+    guint show_window : 1;
     char *crash_dump;
     char **restart_argv;
     int    restart_argc;

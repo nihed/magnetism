@@ -165,6 +165,9 @@ $(service_DATA): $(service_in_files) Makefile
 #@INTLTOOL_DESKTOP_RULE@
 mugshot.desktop: mugshot.desktop.in
 	cat $(srcdir)/mugshot.desktop.in | sed -e 's/^_//g' > mugshot.desktop
+mugshot-autostart.desktop: mugshot-autostart.desktop.in
+	cat $(srcdir)/mugshot-autostart.desktop.in | sed -e 's/^_//g' > mugshot-autostart.desktop
+
 
 EXTRA_DIST += $(autostart_in_files) $(desktopfiles_in_files) $(service_in_files)
 MAINTAINERCLEANFILES +=	$(autostart_files) $(desktopfiles_files) $(service_DATA)

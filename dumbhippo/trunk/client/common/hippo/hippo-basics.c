@@ -557,6 +557,7 @@ hippo_parse_options(int          *argc_p,
     static gboolean verbose = FALSE;
     static gboolean verbose_xmpp = FALSE;
     static gboolean debug_updates = FALSE;
+    static gboolean no_show_window = FALSE;
     static char *crash_dump = NULL;
     char *argv0;
     GError *error;
@@ -578,6 +579,7 @@ hippo_parse_options(int          *argc_p,
         { "debug-updates", 0, 0, G_OPTION_ARG_NONE, (gpointer)&debug_updates, "Show debugging animation for display updates" },
         { "verbose", 0, 0, G_OPTION_ARG_NONE, (gpointer)&verbose, "Print lots of debugging information" },
         { "verbose-xmpp", 0, 0, G_OPTION_ARG_NONE, (gpointer)&verbose_xmpp, "Print lots of debugging information about raw XMPP traffic" },
+        { "no-show-window", 0, 0, G_OPTION_ARG_NONE, (gpointer)&no_show_window, "If already running, don't ask the existing one to open a window" },
         { NULL }
     };
 
@@ -625,7 +627,8 @@ hippo_parse_options(int          *argc_p,
     results->verbose_xmpp = verbose_xmpp;
     results->debug_updates = debug_updates;
     results->crash_dump = g_strdup(crash_dump);
-
+    results->show_window = ! no_show_window;
+    
     hippo_print_debug_level = results->verbose;
     hippo_print_xmpp_noise = results->verbose_xmpp;
     if (hippo_print_debug_level || hippo_print_xmpp_noise) {
