@@ -1,4 +1,4 @@
-import logging, time, urlparse, urllib
+import logging, time, urlparse, urllib, time
 
 import gobject, gtk
 import hippo
@@ -460,11 +460,16 @@ class AppBrowser(hippo.CanvasWindow):
         
         self.__right_scroll.set_root(self.__right_box)        
         
-        self.set_default_size(750, 600)
+        self.set_default_size(1000, 600)
         self.connect("delete-event", lambda *args: self.__hide_reset() or True)
         self.connect("key-press-event", lambda win, event: self.__on_keypress(event))
                
         self.set_root(self.__box)
+        
+        ad = apps_directory.get_app_directory()
+        self.__last_local_app_change = 0
+        self.__last_local_app_idle_id = 0
+        ad.connect('changed', self.__on_local_apps_changed)
 
         self.__mugshot = global_mugshot.get_mugshot()
         self.__mugshot.connect("initialized", lambda mugshot: self.__sync())
@@ -479,7 +484,11 @@ class AppBrowser(hippo.CanvasWindow):
         self.__stock.connect("all-apps-loaded",
                              lambda as: self.__sync())
         self.__sync()
-
+        
+    def __on_local_apps_changed(self, ad):
+        _logger.debug("handling local app change")
+        self.__sync()
+        
     def __handle_global_changed(self, m, apps):
         self.__handle_category_changed(m, None, apps)
 

@@ -13,6 +13,8 @@ class AppDirectory(gobject.GObject):
         self._apps = {}
         # with gnome-menus-2.16.0-2.fc6 omitting the user_data arg crashes the gmenu module
         self._tree.add_monitor(self._on_apps_changed, None)
+        self.__last_local_app_update = 0.0
+        self.__last_local_app_idle_id = 0
         self._on_apps_changed(None, None)
         
     def _append_directory(self, directory):
@@ -31,7 +33,20 @@ class AppDirectory(gobject.GObject):
         self._apps = {} 
         self._append_directory(self._tree.root)
         self._logger.debug("app read complete (%d apps)", len(self._apps.keys()))
-        self.emit("changed")
+        curtime = time.time()
+        if self.__last_local_app_update < curtime-10:
+            self.__last_local_app_update = curtime
+            self._logger.debug("no changes before in last 10 secs, emitting changed now")            
+            self.emit('changed')
+        elif self.__last_local_app_idle_id == 0:
+            self._logger.debug("queuing idle change emit")                  
+            self.__last_local_app_idle_id = gobject.timeout_add(7000, self.__idle_handle_local_apps_changed)
+                        
+    def __idle_handle_local_apps_changed(self):
+        self._logger.debug("doing idle local app change")
+        self.__last_local_app_idle_id = 0
+        self.__last_local_app_update = time.time()
+        self.emit('changed')
         
     def get_apps(self):
         return self._apps.itervalues()
