@@ -10,10 +10,8 @@ import bigboard.stock
 
 import appbrowser, apps_widgets, apps_directory
 
-class Application(gobject.GObject):
-    __gsignals__ = {
-        "changed" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, ())
-    }    
+class Application(object):
+    __slots__ = ['__app', '__install_checked', '__desktop_entry', '__menu_entry']
     def __init__(self, mugshot_app=None, menu_entry=None):
         super(Application, self).__init__()
         self.__app = mugshot_app
@@ -71,7 +69,6 @@ class Application(gobject.GObject):
 
     def set_app(self, app):
         self.__app = app
-        self.emit("changed")
 
     def __lookup_desktop(self):
         if self.__menu_entry:
@@ -119,8 +116,6 @@ class Application(gobject.GObject):
     def recheck_installed(self):
         old_installed = self.__desktop_entry is not None
         self.__desktop_entry = self.__lookup_desktop()
-        if (self.__desktop_entry is not None) != old_installed:
-            self.emit("changed")
             
     def launch(self):
         if self.__desktop_entry:
