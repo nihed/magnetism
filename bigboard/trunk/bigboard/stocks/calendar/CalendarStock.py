@@ -10,7 +10,7 @@ import bigboard.global_mugshot as global_mugshot
 import bigboard.stock as stock
 import bigboard.google as google
 from bigboard.stock import AbstractMugshotStock
-from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink
+from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink, Button
 from bigboard.libbig.struct import AutoStruct
 import bigboard.libbig.polling as polling
 
@@ -83,7 +83,7 @@ def fmt_canvas_text(canvas_text, is_today, is_over):
         canvas_text.set_property("attributes", attrs)               
     # stuff for today is bold
     if is_today:
-        canvas_text.set_property("font", "12px Bold")
+        canvas_text.set_property("font", "13px Bold")
 
 class Event(AutoStruct):
     def __init__(self):
@@ -202,7 +202,12 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
     def __init__(self, *args, **kwargs):
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
         self.__events = []
+        self.__events_for_day_displayed = None
         self.__day_displayed = datetime.date.today()
+        self.__top_event_displayed = None
+        self.__move_up = False
+        self.__move_down = False
+
         self.__event_alerts = {}
         self.__event_notify_ids = {}
          
@@ -226,11 +231,27 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
     def __do_next(self):
         self.__day_displayed = self.__day_displayed + datetime.timedelta(1)
+        self.__events_for_day_displayed = None
+        self.__top_event_displayed = None
         self.__refresh_events()
         
     def __do_prev(self):
         self.__day_displayed = self.__day_displayed - datetime.timedelta(1)
+        self.__events_for_day_displayed = None
+        self.__top_event_displayed = None
         self.__refresh_events()
+
+    def __on_up_button(self):
+        self.__move_up = True
+        self.__refresh_events()
+        #__refresh_events() restes it too, but we do it here just in case
+        self.__move_up = False
+        
+    def __on_down_button(self):
+        self.__move_down = True
+        self.__refresh_events()
+        #__refresh_events() restes it too, but we do it here just in case
+        self.__move_down = False
 
     # what to do when buttons on the notification are clicked
     def __on_action(self, *args):
@@ -283,6 +304,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
     def __on_load_events(self, events):
         _logger.debug("loading events %s", events)
         self.__events = list(events)
+        self.__events_for_day_displayed = None
         for event in self.__events:
             now = datetime.datetime.now()            
             if event.get_end_time() >= now:
@@ -314,17 +336,92 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
     def __refresh_events(self):      
         self.__box.remove_all()
+
         title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         title.set_property("text", fmt_date(self.__day_displayed))
         title.set_property("font", "13px Bold")
         self.__box.append(title) 
-        day_event_count = 0
-        for event in self.__events:
-            if event.get_start_time().date() == self.__day_displayed: 
-                day_event_count = day_event_count + 1
+
+        content_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL, spacing=3)
+        content_box.set_property("box-height", 95)
+
+        arrows_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
+        arrows_box.set_property("box-height", 95)
+        
+        # keywords don't seem to work on the button constructor? Noted in SelfStock as well
+        up_button = Button()      
+        up_button.set_property("text", u"\u02C6")      
+        up_button.set_property('yalign', hippo.ALIGNMENT_START)
+        up_button.connect("activated", lambda l: self.__on_up_button())
+        arrows_box.append(up_button)
+
+        down_button = Button()         
+        down_button.set_property("text", u"\u02C5")              
+        down_button.set_property('yalign', hippo.ALIGNMENT_END)
+        down_button.connect("activated", lambda l: self.__on_down_button())
+        arrows_box.append(down_button, hippo.PACK_EXPAND)
+
+        content_box.append(arrows_box) 
+
+        events_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
+        events_box.set_property("box-height", 95)
+        if self.__events_for_day_displayed is None:
+            self.__events_for_day_displayed = []
+            for event in self.__events:
+                # TODO we can break from this loop once we pass the day displayed, since the 
+                # events are sorted by start time
+                if event.get_start_time().date() == self.__day_displayed: 
+                    self.__events_for_day_displayed.append(event) 
+                     
+        events_to_display = 5
+        index = 0
+        # we expect the events to be ordered by start time
+        for event in self.__events_for_day_displayed:    
+            if index >= len(self.__events_for_day_displayed) - events_to_display:
+                # we can't just break here because __move_up might be true
+                finalize_index = True
+            # by default, start with the event that is still happenning if displaying today's agenda,
+            # start with the first event for any other day
+            # this should have an effect of re-centering the calendar on data reloads
+            elif self.__top_event_displayed is not None:
+                # we need to handle scrolling through multiple events with the same start time, so we use
+                # the links to compare events; however, on refresh, an event with a given link might be gone,
+                # so we should include the next one after it timewise; it would be ideal to include all other
+                # events we previously included that have the same time as the removed event, but that would
+                # require a bit more work
+                finalize_index = event.get_link() == self.__top_event_displayed.get_link() or event.get_start_time() > self.__top_event_displayed.get_start_time() 
+            elif self.__day_displayed == datetime.date.today():
+                finalize_index = event.get_end_time() >= datetime.datetime.now()
+            else:
+                finalize_index = True   
+
+            if finalize_index:
+                # display the previous event if the user wanted to move up
+                if self.__move_up and index > 0:
+                    index = index - 1 
+ 
+                # skip the first event if the user wanted to move down
+                # events_to_display should be greater than 0, but let's include the
+                # last check just in case
+                if self.__move_down and index < len(self.__events_for_day_displayed) - events_to_display and index < len(self.__events_for_day_displayed) - 1:                   
+                    index = index + 1 
+
+                break
+ 
+            index = index + 1   
+ 
+        if len(self.__events_for_day_displayed) > 0:
+            end_index = index + events_to_display
+            if end_index > len(self.__events_for_day_displayed): 
+                end_index = len(self.__events_for_day_displayed) 
+        
+            for event in self.__events_for_day_displayed[index:end_index]:
                 display = EventDisplay(event)
-                self.__box.append(display)
-        if day_event_count == 0:
+                events_box.append(display)
+
+            if self.__move_up or self.__move_down or self.__top_event_displayed is not None:
+                self.__top_event_displayed = self.__events_for_day_displayed[index]    
+        else:
             no_events_text = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
             no_events_text.set_property("text", "No events scheduled")
             today = datetime.date.today()
@@ -332,8 +429,14 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             is_today = False # self.__day_displayed == today
             is_over = self.__day_displayed < today
             fmt_canvas_text(no_events_text, is_today, is_over)
-            self.__box.append(no_events_text)
-            
+            events_box.append(no_events_text)  
+        
+        self.__move_up = False
+        self.__move_down = False 
+   
+        content_box.append(events_box) 
+        self.__box.append(content_box)
+       
         self.__controlbox = CanvasHBox()
         prev_link = ActionLink(text=u"\u00ab Prev", xalign=hippo.ALIGNMENT_START)
         prev_link.connect("button-press-event", lambda b,e: self.__do_prev())
@@ -341,7 +444,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         next_link = ActionLink(text=u"Next \u00bb", xalign=hippo.ALIGNMENT_END)
         next_link.connect("button-press-event", lambda b,e: self.__do_next())
         self.__controlbox.append(next_link, hippo.PACK_EXPAND)
-        self.__box.append(self.__controlbox)    
+        self.__box.append(self.__controlbox)  
 
     def __create_notification(self, event):
         # We don't want multiple alerts for the same event to be showing at the same time, 
