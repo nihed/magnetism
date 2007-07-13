@@ -55,7 +55,6 @@ class AppDisplay(PhotoContentItem):
         
     def set_app(self, app):
         self.__app = app
-        self.__app.connect("changed", lambda app: self.__app_display_sync())
         self.__app_display_sync()
     
     def __get_name(self):
