@@ -125,6 +125,7 @@ class Mugshot(gobject.GObject):
         self.__global_top_apps = None # <Application>
         self.__category_top_apps = {}
         self.__category_mapping = {}
+        self.__endpoint_id = None
         
         self.__external_iqs = {} # <int>,<function>
         
@@ -160,9 +161,12 @@ class Mugshot(gobject.GObject):
              self.__proxy.connect_to_signal('ExternalIQReturn', self.__externalIQReturn)
              self.__get_connection_status()    
              self.__proxy.GetBaseProperties(reply_handler=self.__on_get_baseprops, error_handler=self.__on_dbus_error)
+             self.__mugshot_dbus_proxy = bus.get_object(globals.bus_name, '/com/dumbhippo/client')             
+             self.__mugshot_dbus_proxy.RegisterEndpoint(reply_handler=self.__on_register_endpoint, error_handler=self.__on_dbus_error)
             
-         except dbus.DBusException:
-            self.__proxy = None
+         except dbus.DBusException, e:
+             _logger.debug("Caught D-BUS exception while trying to create proxy", exc_info=True)
+             self.__proxy = None
 
     def __create_ws_proxy(self):
          try:
@@ -190,6 +194,10 @@ class Mugshot(gobject.GObject):
                 self.__proxy = None
                 self.__ws_proxy = None
                 self.__im_proxy = None
+
+    @log_except(_logger)
+    def __on_register_endpoint(self, id):
+        self.__endpoint_id = id
 
     @log_except(_logger)
     def __on_connection_status(self, has_auth, connected, contacts):
@@ -610,7 +618,11 @@ class Mugshot(gobject.GObject):
         self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications", 
                               lambda *args: cb(), 
                               content=iq.getvalue(),
-                              is_set=True)     
+                              is_set=True) 
+        
+    def install_application(self, id, package_names, desktop_names):
+        self._logger.debug("requesting install of app id %s", id)
+        self.__mugshot_dbus_proxy.InstallApplication(self.__endpoint_id, id, package_names, desktop_names)
 
 
 mugshot_inst = None

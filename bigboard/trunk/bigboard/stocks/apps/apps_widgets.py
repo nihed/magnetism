@@ -41,6 +41,8 @@ class AppDisplay(PhotoContentItem):
         self.__description = hippo.CanvasText(size_mode=hippo.CANVAS_SIZE_WRAP_WORD, **sub_kwargs)
         self.__box.append(self.__description)
         
+        self.__photo.set_clickable(True)
+        self.__box.set_clickable(True)         
         if app:
             self.set_app(app)
 
@@ -74,11 +76,12 @@ class AppDisplay(PhotoContentItem):
 
         self.__box.set_child_visible(self.__subtitle, not self.__description_mode)
         self.__box.set_child_visible(self.__description, self.__description_mode)
-
-        self.__photo.set_clickable(self.__app.is_installed())
-        self.__box.set_clickable(self.__app.is_installed())  
+ 
         self.__title.set_property("text", self.__app.get_name())
-        self.__subtitle.set_property("text", self.__app.get_generic_name() or self.__app.get_tooltip() or self.__app.get_comment())
+        if self.__app.is_installed():
+            self.__subtitle.set_property("text", self.__app.get_generic_name() or self.__app.get_tooltip() or self.__app.get_comment())
+        else:
+            self.__subtitle.set_property('text', "(Click to install)")
 
         self.__description.set_property("text", self.__app.get_description())
 
@@ -92,3 +95,4 @@ class AppDisplay(PhotoContentItem):
     def launch(self):
         self._logger.debug("launching app %s", self)
         self.__app.launch()
+

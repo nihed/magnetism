@@ -19,9 +19,7 @@ class Application(gobject.GObject):
         self.__app = mugshot_app
         self.__install_checked = False
         self.__desktop_entry = None
-        self.__menu_entry = menu_entry
-        ad = apps_directory.get_app_directory()            
-        ad.connect("changed", lambda ad: self.__recheck_installed())        
+        self.__menu_entry = menu_entry      
         
     def get_id(self):
         return self.__app.get_id()
@@ -114,11 +112,11 @@ class Application(gobject.GObject):
 
     def is_installed(self):
         if not self.__install_checked:
-            self.__recheck_installed()            
+            self.recheck_installed()            
         self.__install_checked = True               
         return self.__desktop_entry is not None      
    
-    def __recheck_installed(self):
+    def recheck_installed(self):
         old_installed = self.__desktop_entry is not None
         self.__desktop_entry = self.__lookup_desktop()
         if (self.__desktop_entry is not None) != old_installed:
@@ -127,6 +125,8 @@ class Application(gobject.GObject):
     def launch(self):
         if self.__desktop_entry:
             self.__desktop_entry.launch([])
+        else:
+            global_mugshot.get_mugshot().install_application(self.__app.get_id(), self.__app.get_package_names(), self.__app.get_desktop_names())            
 
     def __str__(self):
         return "App: %s mugshot: %s menu: %s local: %s" % (self.get_name(), self.__app, self.__menu_entry,
@@ -183,8 +183,14 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         self.__local_apps = {} # desktop -> app
 
         ad = apps_directory.get_app_directory()
+        ad.connect('changed', self.__on_local_apps_changed)
         for app in ad.get_apps():
             self.get_local_app(app)
+            
+    def __on_local_apps_changed(self, ad):
+        for id,app in self.__apps.iteritems():
+            app.recheck_installed()
+        self.__sync()
 
     def __on_more_button(self):
         self._logger.debug("more!")
@@ -324,8 +330,6 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
             if i >= self.STATIC_SET_SIZE:
                 break
             app = self.get_app(mugshot_app)
-            if not app.is_installed():
-                continue
             display = apps_widgets.AppDisplay(app)
             display.connect("button-press-event", lambda display, event: display.launch()) 
             self._logger.debug("setting pinned app: %s", app)
