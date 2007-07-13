@@ -841,11 +841,13 @@ main(int argc, char **argv)
             g_debug("%s\n", error->message);
             g_error_free(error);
             error = NULL;
-            
-            if (!hippo_dbus_show_browser_blocking(server, &error)) {
-                g_printerr(_("Can't talk to existing instance: %s\n"), error->message);
-                g_error_free(error);
-                return 1;
+
+            if (options.show_window) {
+                if (!hippo_dbus_show_browser_blocking(server, &error)) {
+                    g_printerr(_("Can't talk to existing instance: %s\n"), error->message);
+                    g_error_free(error);
+                    return 1;
+                }
             }
 
             return 0;
