@@ -490,23 +490,24 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         control_box = CanvasHBox(xalign=hippo.ALIGNMENT_CENTER)
         control_box.set_property("padding-top", 5) 
 
-        left_button = hippo.CanvasImage(xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_CENTER)
+        left_button = hippo.CanvasImage()
         left_button.set_property('image-name', 'bigboard-left-button.png') 
         left_button.set_clickable(True)
         left_button.connect("button-press-event", lambda text, event: self.__do_prev())
         left_button.set_property("padding-right", 4)
         control_box.append(left_button)
 
-        today_button = Button()      
-        today_button.set_property("text", "Today")      
-        today_button.get_label().modify_font(pango.FontDescription("normal 8"))
-        today_button.get_label().set_padding(4, 0)         
-        today_button.connect("activated", lambda l: self.__on_today_button())
+        today_button = hippo.CanvasImage()
         if self.__day_displayed == datetime.date.today():
-            today_button.get_button().set_sensitive(False)
+            today_button.set_property('image-name', 'bigboard-today-disabled.png') 
+            today_button.set_clickable(False)
+        else:
+            today_button.set_property('image-name', 'bigboard-today-enabled.png') 
+            today_button.set_clickable(True)
+            today_button.connect("button-press-event", lambda text, event: self.__on_today_button())
         control_box.append(today_button)
 
-        right_button = hippo.CanvasImage(xalign=hippo.ALIGNMENT_END, yalign=hippo.ALIGNMENT_CENTER)
+        right_button = hippo.CanvasImage()
         right_button.set_property('image-name', 'bigboard-right-button.png') 
         right_button.set_clickable(True)
         right_button.connect("button-press-event", lambda text, event: self.__do_next())
