@@ -24,6 +24,8 @@ typedef struct {
 } DictStringEntry;
 
 static GHashTable *local_buddies = NULL;
+static char *local_export_unique_name = NULL;
+static gboolean have_locally_exported = FALSE;
 
 static gboolean
 dict_extract_string_values(const DBusMessageIter *orig_dict_iter,
@@ -606,13 +608,17 @@ handle_info_removed(DBusConnection *connection,
     g_free(session_id);
 }
 
-/* FIXME we need to subscribe to changes on this and update our info when it changes */
 static const char*
-get_self_id()
+get_self_id(void)
 {
-    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
-    HippoConnection *hippo_connection = hippo_data_cache_get_connection(cache);
-    const char *self_resource_id = hippo_connection_get_self_resource_id(hippo_connection);
+    HippoDataCache *cache;
+    HippoConnection *hippo_connection;
+    const char *self_resource_id;
+    
+    cache = hippo_app_get_data_cache(hippo_get_app());
+    hippo_connection = hippo_data_cache_get_connection(cache);
+
+    self_resource_id = hippo_connection_get_self_resource_id(hippo_connection);
 
     return self_resource_id;
 }
@@ -633,7 +639,7 @@ append_mugshot_info(DBusMessage *message,
 
     if (!dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "{sv}", &prop_iter))
         return FALSE;
-
+    
     s = get_self_id();
     if (s != NULL) {
         if (!append_string_pair(&prop_iter, "userResourceId", s))
@@ -647,6 +653,49 @@ append_mugshot_info(DBusMessage *message,
 }
 
 static void
+update_local_export_info(DBusConnection *connection)
+{
+    gboolean should_locally_export;
+
+    should_locally_export = local_export_unique_name != NULL &&
+        get_self_id() != NULL;
+    
+    if (should_locally_export != have_locally_exported &&
+        local_export_unique_name) {
+        HippoDBusProxy *proxy;
+        
+        proxy = hippo_dbus_proxy_new(connection, local_export_unique_name,
+                                     "/org/freedesktop/od/LocalExport",
+                                     "org.freedesktop.od.LocalExport");
+
+        if (should_locally_export)
+            hippo_dbus_proxy_call_method_async_appender(proxy, "AddInfoToOurSession",
+                                                        NULL, NULL, NULL,
+                                                        append_mugshot_info, NULL);
+        else
+            hippo_dbus_proxy_call_method_async(proxy, "RemoveInfoFromOurSession",
+                                               NULL, NULL, NULL,
+                                               DBUS_TYPE_INVALID);
+        
+        hippo_dbus_proxy_unref(proxy);
+    }
+
+    have_locally_exported = should_locally_export;    
+}
+
+static void
+connection_has_auth_changed(HippoConnection *hippo_connection,
+                            void            *data)
+{
+
+    DBusConnection *connection;
+
+    connection = data;
+
+    update_local_export_info(connection);
+}
+
+static void
 handle_service_available(DBusConnection *connection,
                          const char     *well_known_name,
                          const char     *unique_name,
@@ -654,15 +703,20 @@ handle_service_available(DBusConnection *connection,
 {
     HippoDBusProxy *proxy;
     
+    if (local_export_unique_name != NULL) {
+        g_warning("local_export_unique_name should be NULL");
+        g_free(local_export_unique_name);
+    }
+
     g_debug("%s (%s) appeared", well_known_name, unique_name);
     
-    proxy = hippo_dbus_proxy_new(connection, unique_name,
+    local_export_unique_name = g_strdup(unique_name);
+    
+    update_local_export_info(connection);
+    
+    proxy = hippo_dbus_proxy_new(connection, local_export_unique_name,
                                  "/org/freedesktop/od/LocalExport",
                                  "org.freedesktop.od.LocalExport");
-
-    hippo_dbus_proxy_call_method_async_appender(proxy, "AddInfoToOurSession",
-                                                NULL, NULL, NULL,
-                                                append_mugshot_info, NULL);
 
     /* blocking call to get all the latest stuff */
     get_info_from_all_sessions(proxy);
@@ -670,7 +724,6 @@ handle_service_available(DBusConnection *connection,
     /* FIXME for now we have no way to learn about removals, and we don't
      * handle them
      */
-    
     hippo_dbus_proxy_unref(proxy);
 }
 
@@ -681,6 +734,11 @@ handle_service_unavailable(DBusConnection *connection,
                            void           *data)
 {
     g_debug("%s (%s) going away", well_known_name, unique_name);
+
+    g_free(local_export_unique_name);
+    local_export_unique_name = NULL;
+
+    update_local_export_info(connection);
 }
 
 static const HippoDBusSignalTracker signal_handlers[] = {
@@ -700,13 +758,24 @@ static const HippoDBusServiceTracker service_tracker = {
 void
 hippo_dbus_init_local(DBusConnection *connection)
 {
+    HippoDataCache *cache;
+    HippoConnection *hippo_connection;
+    
     local_buddies = g_hash_table_new(g_str_hash, g_str_equal);
     
     hippo_dbus_helper_register_service_tracker(connection,
                                                "org.freedesktop.od.LocalExport",
                                                &service_tracker,
                                                signal_handlers,
-                                               NULL);    
+                                               NULL);
+
+    cache = hippo_app_get_data_cache(hippo_get_app());
+    hippo_connection = hippo_data_cache_get_connection(cache);
+
+    g_signal_connect(G_OBJECT(hippo_connection),
+                     "has-auth-changed",
+                     G_CALLBACK(connection_has_auth_changed),
+                     connection);
 }
 
 #if 0
