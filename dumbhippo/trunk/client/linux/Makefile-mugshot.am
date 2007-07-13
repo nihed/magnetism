@@ -145,7 +145,7 @@ mugshot-dist-hook:
 	cp $(EMBEDDED_IMAGES) $(distdir)/common-dist/images
 
 autostartdir=$(datadir)/gnome/autostart
-autostart_in_files=mugshot.desktop.in
+autostart_in_files=mugshot-autostart.desktop.in
 autostart_files=$(autostart_in_files:.desktop.in=.desktop)
 autostart_DATA = $(autostart_files)
 
