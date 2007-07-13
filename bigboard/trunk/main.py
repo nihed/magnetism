@@ -229,6 +229,7 @@ X-GNOME-Autostart-enabled=true
         
         self.__stockreader = StockReader(dirs)
         self.__stockreader.connect("stock-added", lambda reader, stock: self.__on_stock_added(stock))
+        gconf_client.notify_add(GCONF_PREFIX + 'listings', lambda *args: self.Reboot())        
 
         self._exchanges = []
         self.__prelisted = {}
