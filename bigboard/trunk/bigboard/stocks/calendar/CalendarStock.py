@@ -157,11 +157,10 @@ class EventsParser:
 
 class EventDisplay(CanvasVBox):
     def __init__(self, event):
-        super(EventDisplay, self).__init__(border_right=6)
+        super(EventDisplay, self).__init__(border_right=2)
         self.__event = None
                 
-        self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=2, 
-                                     border_right=4)
+        self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
         self.__title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         self.__box.append(self.__title)
         
@@ -200,7 +199,7 @@ class EventDisplay(CanvasVBox):
 
 class CalendarStock(AbstractMugshotStock, polling.Task):
     def __init__(self, *args, **kwargs):
-        self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
+        self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
         self.__events = []
         self.__events_for_day_displayed = None
         self.__day_displayed = datetime.date.today()
@@ -229,17 +228,22 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
         self._add_more_button(self.__on_more_button)
 
-    def __do_next(self):
-        self.__day_displayed = self.__day_displayed + datetime.timedelta(1)
+    def __change_day(self):
         self.__events_for_day_displayed = None
         self.__top_event_displayed = None
         self.__refresh_events()
+
+    def __do_next(self):
+        self.__day_displayed = self.__day_displayed + datetime.timedelta(1)
+        self.__change_day()
         
     def __do_prev(self):
         self.__day_displayed = self.__day_displayed - datetime.timedelta(1)
-        self.__events_for_day_displayed = None
-        self.__top_event_displayed = None
-        self.__refresh_events()
+        self.__change_day()
+
+    def __on_today_button(self):
+        self.__day_displayed = datetime.date.today()
+        self.__change_day()
 
     def __on_up_button(self):
         self.__move_up = True
@@ -342,28 +346,30 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         title.set_property("font", "13px Bold")
         self.__box.append(title) 
 
-        content_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL, spacing=3)
+        content_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_HORIZONTAL)
         content_box.set_property("box-height", 95)
 
-        arrows_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
+        arrows_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
         arrows_box.set_property("box-height", 95)
-        
-        # keywords don't seem to work on the button constructor? Noted in SelfStock as well
-        up_button = Button()      
-        up_button.set_property("text", u"\u02C6")      
-        up_button.set_property('yalign', hippo.ALIGNMENT_START)
-        up_button.connect("activated", lambda l: self.__on_up_button())
+        arrows_box.set_property("padding-top", 3)
+        arrows_box.set_property("padding-bottom", 2)
+        arrows_box.set_property("padding-right", 2)
+ 
+        # we set the button images below, because we want to have them enabled or disabled 
+        # depending on whether there are more events to scroll to
+        up_button = hippo.CanvasImage(yalign=hippo.ALIGNMENT_START)
+        up_button.set_clickable(True)
+        up_button.connect("button-press-event", lambda text, event: self.__on_up_button())
         arrows_box.append(up_button)
 
-        down_button = Button()         
-        down_button.set_property("text", u"\u02C5")              
-        down_button.set_property('yalign', hippo.ALIGNMENT_END)
-        down_button.connect("activated", lambda l: self.__on_down_button())
+        down_button = hippo.CanvasImage(yalign=hippo.ALIGNMENT_END)
+        down_button.set_clickable(True)
+        down_button.connect("button-press-event", lambda text, event: self.__on_down_button())
         arrows_box.append(down_button, hippo.PACK_EXPAND)
 
         content_box.append(arrows_box) 
 
-        events_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, spacing=3)
+        events_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, yalign=hippo.ALIGNMENT_START, spacing=3)
         events_box.set_property("box-height", 95)
         if self.__events_for_day_displayed is None:
             self.__events_for_day_displayed = []
@@ -409,7 +415,8 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                 break
  
             index = index + 1   
- 
+
+        end_index = 0  
         if len(self.__events_for_day_displayed) > 0:
             end_index = index + events_to_display
             if end_index > len(self.__events_for_day_displayed): 
@@ -430,21 +437,50 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             is_over = self.__day_displayed < today
             fmt_canvas_text(no_events_text, is_today, is_over)
             events_box.append(no_events_text)  
-        
+
+        if index > 0:
+            up_button.set_property('image-name', 'bigboard-up-arrow-enabled.png') 
+        else:
+            up_button.set_property('image-name', 'bigboard-up-arrow-disabled.png')         
+
+        if end_index < len(self.__events_for_day_displayed):
+            down_button.set_property('image-name', 'bigboard-down-arrow-enabled.png') 
+        else:
+            down_button.set_property('image-name', 'bigboard-down-arrow-disabled.png') 
+
         self.__move_up = False
         self.__move_down = False 
    
         content_box.append(events_box) 
         self.__box.append(content_box)
        
-        self.__controlbox = CanvasHBox()
-        prev_link = ActionLink(text=u"\u00ab Prev", xalign=hippo.ALIGNMENT_START)
-        prev_link.connect("button-press-event", lambda b,e: self.__do_prev())
-        self.__controlbox.append(prev_link)
-        next_link = ActionLink(text=u"Next \u00bb", xalign=hippo.ALIGNMENT_END)
-        next_link.connect("button-press-event", lambda b,e: self.__do_next())
-        self.__controlbox.append(next_link, hippo.PACK_EXPAND)
-        self.__box.append(self.__controlbox)  
+        control_box = CanvasHBox(xalign=hippo.ALIGNMENT_CENTER)
+        control_box.set_property("padding-top", 5) 
+
+        left_button = hippo.CanvasImage(xalign=hippo.ALIGNMENT_START, yalign=hippo.ALIGNMENT_CENTER)
+        left_button.set_property('image-name', 'bigboard-left-button.png') 
+        left_button.set_clickable(True)
+        left_button.connect("button-press-event", lambda text, event: self.__do_prev())
+        left_button.set_property("padding-right", 4)
+        control_box.append(left_button)
+
+        today_button = Button()      
+        today_button.set_property("text", "Today")      
+        today_button.get_label().modify_font(pango.FontDescription("normal 8"))
+        today_button.get_label().set_padding(4, 0)         
+        today_button.connect("activated", lambda l: self.__on_today_button())
+        if self.__day_displayed == datetime.date.today():
+            today_button.get_button().set_sensitive(False)
+        control_box.append(today_button)
+
+        right_button = hippo.CanvasImage(xalign=hippo.ALIGNMENT_END, yalign=hippo.ALIGNMENT_CENTER)
+        right_button.set_property('image-name', 'bigboard-right-button.png') 
+        right_button.set_clickable(True)
+        right_button.connect("button-press-event", lambda text, event: self.__do_next())
+        right_button.set_property("padding-left", 4)
+        control_box.append(right_button, hippo.PACK_EXPAND)
+
+        self.__box.append(control_box)  
 
     def __create_notification(self, event):
         # We don't want multiple alerts for the same event to be showing at the same time, 
