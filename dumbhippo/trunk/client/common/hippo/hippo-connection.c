@@ -611,6 +611,7 @@ hippo_connection_forget_auth(HippoConnection *connection)
 
     hippo_platform_delete_login_cookie(connection->platform);
     zero_str(&connection->username);
+    zero_str(&connection->self_resource_id);
     zero_str(&connection->password);
     zero_str(&connection->self_resource_id);
     
@@ -631,8 +632,14 @@ hippo_connection_get_self_resource_id(HippoConnection  *connection)
 {
     g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), NULL);
 
-    if (connection->self_resource_id == NULL) {
+    if (connection->self_resource_id == NULL && connection->username != NULL) {
         const char *self_guid = hippo_connection_get_self_guid(connection);
+
+        /* There isn't any notification when hippo_platform_get_web_server() changes
+         * but that won't happen in normal operation; right now the only time that
+         * it happens is when adjusting the web server in the hidden properties
+         * dialog on the windows client.
+         */
         const char *raw_server = hippo_platform_get_web_server(connection->platform);
         char *server;
 
