@@ -11,8 +11,6 @@ G_BEGIN_DECLS
 
 void hippo_dbus_init_pidgin(DBusConnection *connection);
 
-void hippo_dbus_pidgin_restore_state(void);
-
 G_END_DECLS
 
 #endif /* __HIPPO_DBUS_PIDGIN_H__ */

@@ -262,88 +262,6 @@ hippo_dbus_try_to_acquire(const char  *server,
 
     g_free(old_bus_name);
     
-    /* Grab ownership of the Mugshot interface */
-    hippo_dbus_try_acquire_mugshot(connection, FALSE);
-
-    /* Acquire online prefs manager; we continue even if this
-     * fails. If another Mugshot had it, we should have replaced that
-     * Mugshot above synchronously. So we don't pass replace=TRUE to
-     * this.
-     */
-    hippo_dbus_try_acquire_online_prefs_manager(connection, FALSE);
-
-    hippo_dbus_init_contacts(connection, FALSE);
-
-    hippo_dbus_init_im(connection, FALSE);
-    hippo_dbus_init_local(connection);
-    hippo_dbus_init_pidgin(connection);
-    hippo_dbus_init_model(connection);
-                        
-    /* Add Rhythmbox signal match */
-    dbus_bus_add_match(connection,
-                       "type='signal',sender='"
-                       RB_BUS_NAME
-                       "',interface='"
-                       RB_PLAYER_IFACE
-                       "',member='"
-                       RB_PLAYING_URI_CHANGED
-                       "'",
-                       &derror);
-
-    if (dbus_error_is_set(&derror)) {
-        g_free(bus_name);
-        propagate_dbus_error(error, &derror);
-        /* FIXME leak bus connection since unref isn't allowed */
-        return NULL;
-    }
-
-    dbus_bus_add_match(connection,
-                       "type='signal',sender='"
-                       MUINE_BUS_NAME
-                       "',interface='"
-                       MUINE_PLAYER_IFACE
-                       "',member='"
-                       MUINE_SONG_CHANGED
-                       "'",
-                       &derror);
-
-    if (dbus_error_is_set(&derror)) {
-        g_free(bus_name);
-        propagate_dbus_error(error, &derror);
-        /* FIXME leak bus connection since unref isn't allowed */
-        return NULL;
-    }
-    
-    dbus_bus_add_match(connection,"type='signal',interface='"
-                       BANSHEE_MUGSHOT_IFACE
-                       "',member='"
-                       BANSHEE_STATE_CHANGED
-                       "'",
-                       &derror);
-
-    if (dbus_error_is_set(&derror)) {
-        g_free(bus_name);
-        propagate_dbus_error(error, &derror);
-        /* FIXME leak bus connection since unref isn't allowed */
-        return NULL;
-    }
-
-    /* Add QuodLibet signal match */
-    /* don't match on sender, because QL doesn't standardize on one
-     * (which makes things really inefficient - bad QL)
-     */
-    dbus_bus_add_match(connection,
-                       "type='signal',interface='" QL_PLAYER_IFACE
-                       "',member='" QL_SONG_STARTED "'", 
-                       &derror);
-    
-    if (dbus_error_is_set(&derror)) {
-        g_free(bus_name);
-        propagate_dbus_error(error, &derror);
-        /* FIXME leak bus connection since unref isn't allowed */
-        return NULL;
-    }
-    
     /* the connection is already set up with the main loop. 
      * We just need to create our object, filters, etc. 
      */
@@ -368,6 +286,91 @@ hippo_dbus_try_to_acquire(const char  *server,
 
     /* also returning a ref to the caller */    
     return dbus;
+}
+
+void
+hippo_dbus_init_services(HippoDBus   *dbus)
+{
+    DBusConnection *connection;
+    DBusError derror;
+    
+    connection = dbus->connection;
+
+    dbus_error_init(&derror);
+    
+    /* Grab ownership of the Mugshot interface */
+    hippo_dbus_try_acquire_mugshot(connection, FALSE);
+
+    /* Acquire online prefs manager; we continue even if this
+     * fails. If another Mugshot had it, we should have replaced that
+     * Mugshot above synchronously. So we don't pass replace=TRUE to
+     * this.
+     */
+    hippo_dbus_try_acquire_online_prefs_manager(connection, FALSE);
+    
+    hippo_dbus_init_contacts(connection, FALSE);
+
+    hippo_dbus_init_im(connection, FALSE);
+    hippo_dbus_init_local(connection);
+    hippo_dbus_init_pidgin(connection);    
+    hippo_dbus_init_model(connection);
+                        
+    /* Add Rhythmbox signal match */
+    dbus_bus_add_match(connection,
+                       "type='signal',sender='"
+                       RB_BUS_NAME
+                       "',interface='"
+                       RB_PLAYER_IFACE
+                       "',member='"
+                       RB_PLAYING_URI_CHANGED
+                       "'",
+                       &derror);
+
+    if (dbus_error_is_set(&derror)) {
+        g_warning("%s", derror.message);
+        dbus_error_free(&derror);
+    }
+
+    dbus_bus_add_match(connection,
+                       "type='signal',sender='"
+                       MUINE_BUS_NAME
+                       "',interface='"
+                       MUINE_PLAYER_IFACE
+                       "',member='"
+                       MUINE_SONG_CHANGED
+                       "'",
+                       &derror);
+
+    if (dbus_error_is_set(&derror)) {
+        g_warning("%s", derror.message);
+        dbus_error_free(&derror);
+    }
+    
+    dbus_bus_add_match(connection,"type='signal',interface='"
+                       BANSHEE_MUGSHOT_IFACE
+                       "',member='"
+                       BANSHEE_STATE_CHANGED
+                       "'",
+                       &derror);
+
+    if (dbus_error_is_set(&derror)) {
+        g_warning("%s", derror.message);
+        dbus_error_free(&derror);
+    }
+
+    /* Add QuodLibet signal match */
+    /* don't match on sender, because QL doesn't standardize on one
+     * (which makes things really inefficient - bad QL)
+     */
+    dbus_bus_add_match(connection,
+                       "type='signal',interface='" QL_PLAYER_IFACE
+                       "',member='" QL_SONG_STARTED "'", 
+                       &derror);
+    
+    if (dbus_error_is_set(&derror)) {
+        g_warning("%s", derror.message);
+        dbus_error_free(&derror);
+    }
 }
 
 static void

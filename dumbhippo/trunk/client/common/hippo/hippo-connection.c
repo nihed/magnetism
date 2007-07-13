@@ -290,8 +290,8 @@ enum {
      * activity instead of just once an hour */
     INITIAL_APPLICATION_BURST,
     EXTERNAL_IQ_RETURN,
-   	CONTACTS_LOADED,
-   	PREF_CHANGED,
+    CONTACTS_LOADED,
+    PREF_CHANGED,
     LAST_SIGNAL
 };
 

@@ -25,6 +25,7 @@ GType        	 hippo_dbus_get_type               (void) G_GNUC_CONST;
 HippoDBus* hippo_dbus_try_to_acquire           (const char  *server,
                                                 gboolean     replace_existing,
                                                 GError     **error);
+void       hippo_dbus_init_services            (HippoDBus   *dbus);
 
 /* These add the signal match rules, but you need to modify
  * hippo-dbus-server.c:handle_message() to actually deal with the notifications
