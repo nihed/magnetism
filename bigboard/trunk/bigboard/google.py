@@ -328,17 +328,24 @@ class Google(gobject.GObject):
 
     ### Calendar
 
-    def __have_login_fetch_calendar(self, cb, errcb):
+    def __have_login_fetch_calendar(self, cb, errcb, event_range_start, event_range_end):
 
-        uri = 'http://www.google.com/calendar/feeds/' + self.__username + '@gmail.com/private/full'
+        min_and_max_str = ""
+        if event_range_start is not None and event_range_end is not None:
+            # just specifying start-min and start-max includes multiple "when" tags in the response for the recurrent events,
+            # specifying singlevents=true in addition to that expands recurrent events into separate events, which gives us
+            # links to each particular event in the recurrence
+            # the default for max-results is 25, we usually use a range of 29 days, so 1000 max-results should be a good "large number" 
+            min_and_max_str =  "?start-min=" + event_range_start + "&start-max=" + event_range_end + "&singleevents=true" + "&max-results=1000"
+        uri = 'http://www.google.com/calendar/feeds/' + self.__username + '@gmail.com/private/full' + min_and_max_str
 
         self.__fetcher.fetch(uri, self.__username, self.__password,
                              lambda url, data: cb(url, data),
                              lambda url, resp: errcb(resp),
                              lambda url: self.__on_bad_auth())
 
-    def fetch_calendar(self, cb, errcb):
-        self.__with_login_info(lambda: self.__have_login_fetch_calendar(cb, errcb))
+    def fetch_calendar(self, cb, errcb, event_range_start = None, event_range_end = None):
+        self.__with_login_info(lambda: self.__have_login_fetch_calendar(cb, errcb, event_range_start, event_range_end))
 
     def request_auth(self):
         self.__with_login_info(lambda: True)

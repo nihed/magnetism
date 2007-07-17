@@ -1,4 +1,4 @@
-import logging, os, datetime, re, string
+import logging, os, datetime, time, re, string, copy
 import xml, xml.sax, xml.sax.saxutils
 
 import gobject, pango, dbus, dbus.glib
@@ -17,6 +17,11 @@ import bigboard.libbig.polling as polling
 _logger = logging.getLogger("bigboard.stocks.CalendarStock")
 
 _events_polling_periodicity_seconds = 120
+
+# we prime the calendar 14 days back and 14 days forward
+# the maximum reminder time Google UI allows to specify is 1 week, so we 
+# should not miss any reminders if we always get events for 2 weeks ahead 
+_default_events_range = 14
 
 ## this is from the "Wuja" applet code, GPL v2
 def parse_timestamp(timestamp, tz=None):
@@ -85,6 +90,9 @@ def fmt_canvas_text(canvas_text, is_today, is_over):
     if is_today:
         canvas_text.set_property("font", "13px Bold")
 
+def fmt_date_for_feed_request(date):
+    return datetime.datetime.utcfromtimestamp(time.mktime(date.timetuple())).strftime("%Y-%m-%dT%H:%M:%S")
+
 class Event(AutoStruct):
     def __init__(self):
         super(Event, self).__init__({ 'calendar_title' : '', 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '' })
@@ -106,17 +114,31 @@ class EventsParser:
     def __parseEvents(self, data):
         calendar = gcalendar.CalendarEventFeedFromString(data)
         _logger.debug("number of entries: %s ", len(calendar.entry)) 
-        
-        calendar_title = calendar.title.text and calendar.title.text or "<No Title>"
-        for entry in calendar.entry:  
-            e = Event()
-            self.__events.append(e)
-            e.set_event_entry(entry)
-            e.update({ 'calendar_title' : calendar_title, 
-                       'title' : entry.title.text and entry.title.text or "<No Title>", 
-                       'link' : entry.GetHtmlLink().href })           
 
+        calendar_title = calendar.title.text and calendar.title.text or "<No Title>"
+        for entry in calendar.entry:
+            original_events_length = len(self.__events) 
+            entry_title = entry.title.text and entry.title.text or "<No Title>"   
             for when in entry.when:
+                # we get recurrent events expanded into separate entries, however if we only specified 
+                # start-min and start-max, we would get back entries with multiple "when" tags,
+                # in this case we would want to create a new Event object for each instance of a recurrent 
+                # event represented by a "when" tag (the disadvantage of that is that we don't get links
+                # to the individual events in the recurrence) 
+                e = Event()
+                self.__events.append(e)
+                
+                if len(entry.when) == 1:
+                    entry_copy = entry
+                else:      
+                    entry_copy = copy.deepcopy(entry) 
+                    entry_copy.when = []
+                    entry_copy.when.append(when)
+  
+                e.set_event_entry(entry_copy)
+                e.update({ 'calendar_title' : calendar_title, 
+                           'title' : entry_title, 
+                           'link' : entry.GetHtmlLink().href })  
                 # _logger.debug("start time %s\n" % (parse_timestamp(when.start_time),))
                 # _logger.debug("end time %s\n" % (parse_timestamp(when.end_time),))     
                 e.update({ 'start_time' : parse_timestamp(when.start_time),
@@ -126,7 +148,7 @@ class EventsParser:
         
             # if this is a recurring event, use the first time interval it occurres for the start and end time
             # TODO: double check that this also applies for all-day events that are saved as one-time recurrences
-            if entry.recurrence is not None:
+            if len(entry.when) == 0 and entry.recurrence is not None:
                 dt_start = None
                 dt_end = None
                 # _logger.debug("recurrence text %s" % (entry.recurrence.text,))
@@ -141,10 +163,19 @@ class EventsParser:
                         if match.group(2) is not None: 
                             dt_end = dt_end + "T" + match.group(2)
                 if dt_start and dt_end:
+                    e = Event()
+                    self.__events.append(e) 
+                    e.set_event_entry(entry)
+                    e.update({ 'calendar_title' : calendar_title, 
+                               'title' : entry_title, 
+                               'link' : entry.GetHtmlLink().href }) 
                     # _logger.debug("recurrence start time %s\n" % (parse_timestamp(dt_start),))
                     # _logger.debug("recurrence end time %s\n" % (parse_timestamp(dt_end),))   
                     e.update({ 'start_time' : parse_timestamp(dt_start),
                                'end_time' : parse_timestamp(dt_end) })
+
+            if original_events_length == len(self.__events):
+                _logger.warn("could not parse event %s\n" % (entry,))
 
     def __compare_by_date(self, a, b):
         return cmp(a.get_start_time(), b.get_start_time())
@@ -210,6 +241,9 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self.__event_alerts = {}
         self.__event_notify_ids = {}
          
+        self.__event_range_start = datetime.date.today() - datetime.timedelta(_default_events_range)
+        self.__event_range_end = datetime.date.today() + datetime.timedelta(_default_events_range + 1)  
+
         # these are at the end since they have the side effect of calling on_mugshot_ready it seems?
         AbstractMugshotStock.__init__(self, *args, **kwargs)
         polling.Task.__init__(self, _events_polling_periodicity_seconds * 1000)
@@ -235,26 +269,60 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
     def __do_next(self):
         self.__day_displayed = self.__day_displayed + datetime.timedelta(1)
+        if self.__day_displayed == datetime.date.today():
+            self.__on_today_button()
+            return
+ 
         self.__change_day()
+        # we update the range when the user is two clicks away from the day we don't have info for
+        # we update both start and end, so as to not have a range that produces more than max-results  
+        # which we set to a 1000 in google.py 
+        if self.__day_displayed + datetime.timedelta(3) > self.__event_range_end:   
+            self.__event_range_end = self.__event_range_end + datetime.timedelta(_default_events_range)
+            # + 1 allows to include Today when the user goes outside of the original range the first time,
+            # the user is always one click away from Today, but it's ok to not have info for that day since 
+            # we want to ensure the range we request events for is always reasonably small  
+            self.__event_range_start = self.__event_range_end - datetime.timedelta(_default_events_range * 2 + 1)
+            self.__update_events()       
         
     def __do_prev(self):
         self.__day_displayed = self.__day_displayed - datetime.timedelta(1)
+        if self.__day_displayed == datetime.date.today():
+            self.__on_today_button()
+            return
+
         self.__change_day()
+        # see comments in __do_next()
+        if self.__day_displayed - datetime.timedelta(2) < self.__event_range_start:
+            self.__event_range_start = self.__event_range_start - datetime.timedelta(_default_events_range)
+            self.__event_range_end = self.__event_range_start + datetime.timedelta(_default_events_range * 2 + 1)
+            self.__update_events()
 
     def __on_today_button(self):
         self.__day_displayed = datetime.date.today()
+
+        need_to_update_events = False
+        if self.__event_range_start > self.__day_displayed:
+            need_to_update_events = True 
+
+        self.__event_range_start = datetime.date.today() - datetime.timedelta(_default_events_range)
+        self.__event_range_end = datetime.date.today() + datetime.timedelta(_default_events_range + 1) 
+
+        if need_to_update_events:         
+            self.__update_events()
+
         self.__change_day()
 
     def __on_up_button(self):
         self.__move_up = True
         self.__refresh_events()
-        #__refresh_events() restes it too, but we do it here just in case
+        #__refresh_events() resets it too, but we do it here just in case
         self.__move_up = False
         
     def __on_down_button(self):
         self.__move_down = True
         self.__refresh_events()
-        #__refresh_events() restes it too, but we do it here just in case
+        #__refresh_events() resets it too, but we do it here just in case
         self.__move_down = False
 
     # what to do when buttons on the notification are clicked
@@ -551,4 +619,4 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             
     def __update_events(self):
         _logger.debug("retrieving events")
-        google.get_google().fetch_calendar(self.__on_calendar_load, self.__on_failed_load)
+        google.get_google().fetch_calendar(self.__on_calendar_load, self.__on_failed_load, fmt_date_for_feed_request(self.__event_range_start), fmt_date_for_feed_request(self.__event_range_end))
