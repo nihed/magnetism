@@ -303,7 +303,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self.__day_displayed = datetime.date.today()
 
         need_to_update_events = False
-        if self.__event_range_start > self.__day_displayed or self.__event_range_end <= self.__day_displayed:
+        if self.__event_range_start > datetime.date.today() - datetime.timedelta(_default_events_range) or self.__event_range_end < datetime.date.today() + datetime.timedelta(_default_events_range + 1):
             need_to_update_events = True 
 
         self.__event_range_start = datetime.date.today() - datetime.timedelta(_default_events_range)
