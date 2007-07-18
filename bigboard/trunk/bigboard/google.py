@@ -1,4 +1,4 @@
-import sys, logging, threading, datetime, functools
+import sys, logging, threading, datetime, time, functools
 import xml, xml.sax
 
 import hippo, gobject, gtk, dbus, dbus.glib
@@ -13,6 +13,10 @@ from libbig.struct import AutoStruct, AutoSignallingStruct
 import libbig.polling
 
 _logger = logging.getLogger("bigboard.Google")
+
+
+def fmt_date_for_feed_request(date):
+    return datetime.datetime.utcfromtimestamp(time.mktime(date.timetuple())).strftime("%Y-%m-%dT%H:%M:%S")
 
 class AbstractDocument(AutoStruct):
     def __init__(self):
@@ -336,11 +340,11 @@ class Google(gobject.GObject):
             # specifying singlevents=true in addition to that expands recurrent events into separate events, which gives us
             # links to each particular event in the recurrence
             # the default for max-results is 25, we usually use a range of 29 days, so 1000 max-results should be a good "large number" 
-            min_and_max_str =  "?start-min=" + event_range_start + "&start-max=" + event_range_end + "&singleevents=true" + "&max-results=1000"
+            min_and_max_str =  "?start-min=" + fmt_date_for_feed_request(event_range_start) + "&start-max=" + fmt_date_for_feed_request(event_range_end) + "&singleevents=true" + "&max-results=1000"
         uri = 'http://www.google.com/calendar/feeds/' + self.__username + '@gmail.com/private/full' + min_and_max_str
 
         self.__fetcher.fetch(uri, self.__username, self.__password,
-                             lambda url, data: cb(url, data),
+                             lambda url, data: cb(url, data, event_range_start, event_range_end),
                              lambda url, resp: errcb(resp),
                              lambda url: self.__on_bad_auth())
 
