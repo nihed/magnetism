@@ -93,7 +93,7 @@ def fmt_canvas_text(canvas_text, is_today, is_over):
 
 class Event(AutoStruct):
     def __init__(self):
-        super(Event, self).__init__({ 'calendar_title' : '', 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '' })
+        super(Event, self).__init__({ 'calendar_title' : '', 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '', 'is_all_day' : False })
         self.__event_entry = None
 
     def set_event_entry(self, event_entry):
@@ -141,6 +141,8 @@ class EventsParser:
                 # _logger.debug("end time %s\n" % (parse_timestamp(when.end_time),))     
                 e.update({ 'start_time' : parse_timestamp(when.start_time),
                            'end_time' : parse_timestamp(when.end_time) })
+                if e.get_start_time().time() == datetime.time(0) and e.get_end_time().time() == datetime.time(0) and e.get_start_time() < e.get_end_time():
+                    e.update({ 'is_all_day' : True})
                 # for reminder in when.reminder:
                     # _logger.debug('%s %s\n '% (reminder.minutes, reminder.extension_attributes['method']))
         
@@ -213,7 +215,11 @@ class EventDisplay(CanvasVBox):
         return '<EventDisplay name="%s">' % (self.__get_title())
     
     def __event_display_sync(self):
-        self.__title.set_property("text", fmt_time(self.__event.get_start_time()) + "  " + self.__event.get_title())
+        if self.__event.get_is_all_day() : 
+            time_portion = "all day    "
+        else : 
+            time_portion = fmt_time(self.__event.get_start_time())
+        self.__title.set_property("text", time_portion + "  " + self.__event.get_title())
         is_today = self.__event.get_start_time().date() == datetime.date.today()
         is_over = self.__event.get_end_time() < datetime.datetime.now()
         fmt_canvas_text(self.__title, is_today, is_over)
@@ -382,14 +388,15 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self.__events = list(events)
         self.__available_event_range_start = event_range_start
         self.__available_event_range_end = event_range_end 
-        if event_range_start <= datetime.date.today() and event_range_end > datetime.date.today():
+        today = datetime.date.today()
+        if event_range_start <= today and event_range_end > today:
             # we can update events for today because they will be returned in those results   
             self.__events_for_today = []
 
         self.__events_for_day_displayed = None
 
         for event in self.__events:
-            if event.get_start_time().date() == datetime.date.today(): 
+            if event.get_start_time().date() == today or event.get_is_all_day() and event.get_start_time().date() < today and event.get_end_time().date() > today: 
                 self.__events_for_today.append(event)
 
             now = datetime.datetime.now()            
@@ -465,7 +472,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
                 self.__events_for_day_displayed.extend(self.__events_for_today)
             elif events_available:   
                 for event in self.__events:
-                    if event.get_start_time().date() == self.__day_displayed: 
+                    if event.get_start_time().date() == self.__day_displayed or event.get_is_all_day() and event.get_start_time().date() < self.__day_displayed and event.get_end_time().date() > self.__day_displayed: 
                         self.__events_for_day_displayed.append(event)
                     elif event.get_start_time().date() > self.__day_displayed:
                         # we can break here because events should be ordered by start time
