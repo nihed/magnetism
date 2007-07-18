@@ -1,4 +1,4 @@
-import logging, os, datetime, time, re, string, copy
+import logging, os, datetime, re, string, copy
 import xml, xml.sax, xml.sax.saxutils
 
 import gobject, pango, dbus, dbus.glib
@@ -22,6 +22,7 @@ _events_polling_periodicity_seconds = 120
 # the maximum reminder time Google UI allows to specify is 1 week, so we 
 # should not miss any reminders if we always get events for 2 weeks ahead 
 _default_events_range = 14
+_prepare_events_days = 10
 
 ## this is from the "Wuja" applet code, GPL v2
 def parse_timestamp(timestamp, tz=None):
@@ -89,9 +90,6 @@ def fmt_canvas_text(canvas_text, is_today, is_over):
     # stuff for today is bold
     if is_today:
         canvas_text.set_property("font", "13px Bold")
-
-def fmt_date_for_feed_request(date):
-    return datetime.datetime.utcfromtimestamp(time.mktime(date.timetuple())).strftime("%Y-%m-%dT%H:%M:%S")
 
 class Event(AutoStruct):
     def __init__(self):
@@ -232,6 +230,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
     def __init__(self, *args, **kwargs):
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
         self.__events = []
+        self.__events_for_today = []
         self.__events_for_day_displayed = None
         self.__day_displayed = datetime.date.today()
         self.__top_event_displayed = None
@@ -243,6 +242,8 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
          
         self.__event_range_start = datetime.date.today() - datetime.timedelta(_default_events_range)
         self.__event_range_end = datetime.date.today() + datetime.timedelta(_default_events_range + 1)  
+        self.__available_event_range_start = None
+        self.__available_event_range_end = None
 
         # these are at the end since they have the side effect of calling on_mugshot_ready it seems?
         AbstractMugshotStock.__init__(self, *args, **kwargs)
@@ -277,7 +278,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         # we update the range when the user is two clicks away from the day we don't have info for
         # we update both start and end, so as to not have a range that produces more than max-results  
         # which we set to a 1000 in google.py 
-        if self.__day_displayed + datetime.timedelta(3) > self.__event_range_end:   
+        if self.__day_displayed + datetime.timedelta(_prepare_events_days + 1) > self.__event_range_end:   
             self.__event_range_end = self.__event_range_end + datetime.timedelta(_default_events_range)
             # + 1 allows to include Today when the user goes outside of the original range the first time,
             # the user is always one click away from Today, but it's ok to not have info for that day since 
@@ -293,7 +294,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
         self.__change_day()
         # see comments in __do_next()
-        if self.__day_displayed - datetime.timedelta(2) < self.__event_range_start:
+        if self.__day_displayed - datetime.timedelta(_prepare_events_days) < self.__event_range_start:
             self.__event_range_start = self.__event_range_start - datetime.timedelta(_default_events_range)
             self.__event_range_end = self.__event_range_start + datetime.timedelta(_default_events_range * 2 + 1)
             self.__update_events()
@@ -302,7 +303,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self.__day_displayed = datetime.date.today()
 
         need_to_update_events = False
-        if self.__event_range_start > self.__day_displayed:
+        if self.__event_range_start > self.__day_displayed or self.__event_range_end <= self.__day_displayed:
             need_to_update_events = True 
 
         self.__event_range_start = datetime.date.today() - datetime.timedelta(_default_events_range)
@@ -368,19 +369,29 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
     def set_size(self, size):
         super(CalendarStock, self).set_size(size)
 
-    def __on_calendar_load(self, url, data):
+    def __on_calendar_load(self, url, data, event_range_start, event_range_end):
         _logger.debug("loaded calendar from " + url)
         try:
             p = EventsParser(data)
-            self.__on_load_events(p.get_events())
+            self.__on_load_events(p.get_events(), event_range_start, event_range_end)
         except xml.sax.SAXException, e:
             __on_failed_load(sys.exc_info())
 
-    def __on_load_events(self, events):
+    def __on_load_events(self, events, event_range_start, event_range_end):
         _logger.debug("loading events %s", events)
         self.__events = list(events)
+        self.__available_event_range_start = event_range_start
+        self.__available_event_range_end = event_range_end 
+        if event_range_start <= datetime.date.today() and event_range_end > datetime.date.today():
+            # we can update events for today because they will be returned in those results   
+            self.__events_for_today = []
+
         self.__events_for_day_displayed = None
+
         for event in self.__events:
+            if event.get_start_time().date() == datetime.date.today(): 
+                self.__events_for_today.append(event)
+
             now = datetime.datetime.now()            
             if event.get_end_time() >= now:
                 delta = event.get_start_time() - now
@@ -442,13 +453,23 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
         events_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, yalign=hippo.ALIGNMENT_START, spacing=3)
         events_box.set_property("box-height", 95)
+
+        events_available = self.__available_event_range_start <= self.__day_displayed and self.__available_event_range_end > self.__day_displayed or self.__day_displayed == datetime.date.today()
+ 
         if self.__events_for_day_displayed is None:
             self.__events_for_day_displayed = []
-            for event in self.__events:
-                # TODO we can break from this loop once we pass the day displayed, since the 
-                # events are sorted by start time
-                if event.get_start_time().date() == self.__day_displayed: 
-                    self.__events_for_day_displayed.append(event) 
+            if self.__day_displayed == datetime.date.today():
+                # self.__events_for_today are always going to be updated, and
+                # they are going to be available even if we didn't yet recieve
+                # the response for updated range that includes today     
+                self.__events_for_day_displayed.extend(self.__events_for_today)
+            elif events_available:   
+                for event in self.__events:
+                    if event.get_start_time().date() == self.__day_displayed: 
+                        self.__events_for_day_displayed.append(event)
+                    elif event.get_start_time().date() > self.__day_displayed:
+                        # we can break here because events should be ordered by start time
+                        break;  
                      
         events_to_display = 5
         index = 0
@@ -529,15 +550,21 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
             if self.__move_up or self.__move_down or self.__top_event_displayed is not None:
                 self.__top_event_displayed = self.__events_for_day_displayed[index]    
-        else:
+        else: 
+            if events_available:
+                text = "No events scheduled"
+            else:
+                text = "Loading events..."
+
             no_events_text = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
-            no_events_text.set_property("text", "No events scheduled")
+            no_events_text.set_property("text", text)
             today = datetime.date.today()
             # always pass in false for is_today because we don't want to make it bold 
             is_today = False # self.__day_displayed == today
             is_over = self.__day_displayed < today
             fmt_canvas_text(no_events_text, is_today, is_over)
             events_box.append(no_events_text)  
+
 
         if index > 0:
             up_button.set_property('image-name', 'bigboard-up-arrow-enabled.png') 
@@ -619,4 +646,4 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             
     def __update_events(self):
         _logger.debug("retrieving events")
-        google.get_google().fetch_calendar(self.__on_calendar_load, self.__on_failed_load, fmt_date_for_feed_request(self.__event_range_start), fmt_date_for_feed_request(self.__event_range_end))
+        google.get_google().fetch_calendar(self.__on_calendar_load, self.__on_failed_load, self.__event_range_start, self.__event_range_end)
