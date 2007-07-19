@@ -236,7 +236,6 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
     def __init__(self, *args, **kwargs):
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
         self.__events = []
-        self.__events_for_today = []
         self.__events_for_day_displayed = None
         self.__day_displayed = datetime.date.today()
         self.__top_event_displayed = None
@@ -248,8 +247,8 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
          
         self.__event_range_start = datetime.date.today() - datetime.timedelta(_default_events_range)
         self.__event_range_end = datetime.date.today() + datetime.timedelta(_default_events_range + 1)  
-        self.__available_event_range_start = None
-        self.__available_event_range_end = None
+        self.__min_event_range_start = self.__event_range_start
+        self.__max_event_range_end = self.__event_range_end
 
         # these are at the end since they have the side effect of calling on_mugshot_ready it seems?
         AbstractMugshotStock.__init__(self, *args, **kwargs)
@@ -385,20 +384,20 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
     def __on_load_events(self, events, event_range_start, event_range_end):
         _logger.debug("loading events %s", events)
-        self.__events = list(events)
-        self.__available_event_range_start = event_range_start
-        self.__available_event_range_end = event_range_end 
-        today = datetime.date.today()
-        if event_range_start <= today and event_range_end > today:
-            # we can update events for today because they will be returned in those results   
-            self.__events_for_today = []
-
+        events_to_keep = []
+        for event in self.__events:
+            if datetime.datetime.combine(event_range_start, datetime.time(0)) > event.get_end_time() or datetime.datetime.combine(event_range_end, datetime.time(0)) <= event.get_start_time():
+                _logger.debug("keeping event that starts %s", event.get_start_time())
+                events_to_keep.append(event)
+        self.__events = events_to_keep
+        _logger.debug("events_to_keep length %s", len(self.__events))
+        self.__events.extend(list(events)) 
+        _logger.debug("extended events length %s", len(self.__events))
+        self.__min_event_range_start = min(event_range_start, self.__min_event_range_start) 
+        self.__max_event_range_end = max(event_range_end, self.__max_event_range_end) 
         self.__events_for_day_displayed = None
 
         for event in self.__events:
-            if event.get_start_time().date() == today or event.get_is_all_day() and event.get_start_time().date() < today and event.get_end_time().date() > today: 
-                self.__events_for_today.append(event)
-
             now = datetime.datetime.now()            
             if event.get_end_time() >= now:
                 delta = event.get_start_time() - now
@@ -461,16 +460,11 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         events_box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL, yalign=hippo.ALIGNMENT_START, spacing=3)
         events_box.set_property("box-height", 95)
 
-        events_available = self.__available_event_range_start <= self.__day_displayed and self.__available_event_range_end > self.__day_displayed or self.__day_displayed == datetime.date.today()
+        events_available = self.__min_event_range_start <= self.__day_displayed and self.__max_event_range_end > self.__day_displayed
  
         if self.__events_for_day_displayed is None:
             self.__events_for_day_displayed = []
-            if self.__day_displayed == datetime.date.today():
-                # self.__events_for_today are always going to be updated, and
-                # they are going to be available even if we didn't yet recieve
-                # the response for updated range that includes today     
-                self.__events_for_day_displayed.extend(self.__events_for_today)
-            elif events_available:   
+            if events_available:   
                 for event in self.__events:
                     if event.get_start_time().date() == self.__day_displayed or event.get_is_all_day() and event.get_start_time().date() < self.__day_displayed and event.get_end_time().date() > self.__day_displayed: 
                         self.__events_for_day_displayed.append(event)
