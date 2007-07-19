@@ -91,6 +91,9 @@ def fmt_canvas_text(canvas_text, is_today, is_over):
     if is_today:
         canvas_text.set_property("font", "13px Bold")
 
+def compare_by_date(event_a, event_b):
+    return cmp(event_a.get_start_time(), event_b.get_start_time())
+
 class Event(AutoStruct):
     def __init__(self):
         super(Event, self).__init__({ 'calendar_title' : '', 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '', 'is_all_day' : False })
@@ -177,20 +180,18 @@ class EventsParser:
             if original_events_length == len(self.__events):
                 _logger.warn("could not parse event %s\n" % (entry,))
 
-    def __compare_by_date(self, a, b):
-        return cmp(a.get_start_time(), b.get_start_time())
-
-    def get_events(self):
-        if not self.__events_sorted:
-            self.__events.sort(self.__compare_by_date)
+    def get_events(self, sort = False):
+        if sort and not self.__events_sorted:
+            self.__events.sort(compare_by_date)
             self.__events_sorted = True
         return self.__events
 
 class EventDisplay(CanvasVBox):
-    def __init__(self, event):
+    def __init__(self, event, day_displayed):
         super(EventDisplay, self).__init__(border_right=2)
         self.__event = None
-                
+        self.__day_displayed = day_displayed
+        
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
         self.__title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         self.__box.append(self.__title)
@@ -220,7 +221,8 @@ class EventDisplay(CanvasVBox):
         else : 
             time_portion = fmt_time(self.__event.get_start_time())
         self.__title.set_property("text", time_portion + "  " + self.__event.get_title())
-        is_today = self.__event.get_start_time().date() == datetime.date.today()
+        today = datetime.date.today()
+        is_today = self.__event.get_start_time().date() <= today and self.__event.get_end_time().date() >= today and self.__day_displayed == today   
         is_over = self.__event.get_end_time() < datetime.datetime.now()
         fmt_canvas_text(self.__title, is_today, is_over)
         
@@ -393,6 +395,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         _logger.debug("events_to_keep length %s", len(self.__events))
         self.__events.extend(list(events)) 
         _logger.debug("extended events length %s", len(self.__events))
+        self.__events.sort(compare_by_date)
         self.__min_event_range_start = min(event_range_start, self.__min_event_range_start) 
         self.__max_event_range_end = max(event_range_end, self.__max_event_range_end) 
         self.__events_for_day_displayed = None
@@ -546,7 +549,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             end_index = min(index + events_to_display, len(self.__events_for_day_displayed))
         
             for event in self.__events_for_day_displayed[index:end_index]:
-                display = EventDisplay(event)
+                display = EventDisplay(event, self.__day_displayed)
                 events_box.append(display)
 
             if self.__move_up or self.__move_down or self.__top_event_displayed is not None:
