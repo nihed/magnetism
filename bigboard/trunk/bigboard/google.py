@@ -332,7 +332,21 @@ class Google(gobject.GObject):
 
     ### Calendar
 
-    def __have_login_fetch_calendar(self, cb, errcb, event_range_start, event_range_end):
+    def __have_login_fetch_calendar(self, cb, errcb):
+
+        # there is a chance that someone might have access to more than 25 calendars, so let's
+        # specify 1000 for max-results to make sure we get information about all calendars 
+        uri = 'http://www.google.com/calendar/feeds/' + self.__username + '@gmail.com?max-results=1000'
+
+        self.__fetcher.fetch(uri, self.__username, self.__password,
+                             lambda url, data: cb(url, data),
+                             lambda url, resp: errcb(resp),
+                             lambda url: self.__on_bad_auth())
+
+    def fetch_calendar_list(self, cb, errcb):
+        self.__with_login_info(lambda: self.__have_login_fetch_calendar_list(cb, errcb))
+
+    def __have_login_fetch_calendar(self, cb, errcb, calendar_feed_url, event_range_start, event_range_end):
 
         min_and_max_str = ""
         if event_range_start is not None and event_range_end is not None:
@@ -341,15 +355,19 @@ class Google(gobject.GObject):
             # links to each particular event in the recurrence
             # the default for max-results is 25, we usually use a range of 29 days, so 1000 max-results should be a good "large number" 
             min_and_max_str =  "?start-min=" + fmt_date_for_feed_request(event_range_start) + "&start-max=" + fmt_date_for_feed_request(event_range_end) + "&singleevents=true" + "&max-results=1000"
-        uri = 'http://www.google.com/calendar/feeds/' + self.__username + '@gmail.com/private/full' + min_and_max_str
+
+        if calendar_feed_url is None:
+            uri = 'http://www.google.com/calendar/feeds/' + self.__username + '@gmail.com/private/full' + min_and_max_str
+        else:
+            uri = calendar_feed_url + min_and_max_str
 
         self.__fetcher.fetch(uri, self.__username, self.__password,
-                             lambda url, data: cb(url, data, event_range_start, event_range_end),
+                             lambda url, data: cb(url, data, calendar_feed_url, event_range_start, event_range_end),
                              lambda url, resp: errcb(resp),
                              lambda url: self.__on_bad_auth())
 
-    def fetch_calendar(self, cb, errcb, event_range_start = None, event_range_end = None):
-        self.__with_login_info(lambda: self.__have_login_fetch_calendar(cb, errcb, event_range_start, event_range_end))
+    def fetch_calendar(self, cb, errcb, calendar_feed_url = None, event_range_start = None, event_range_end = None):
+        self.__with_login_info(lambda: self.__have_login_fetch_calendar(cb, errcb, calendar_feed_url, event_range_start, event_range_end))
 
     def request_auth(self):
         self.__with_login_info(lambda: True)

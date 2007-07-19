@@ -96,7 +96,7 @@ def compare_by_date(event_a, event_b):
 
 class Event(AutoStruct):
     def __init__(self):
-        super(Event, self).__init__({ 'calendar_title' : '', 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '', 'is_all_day' : False })
+        super(Event, self).__init__({ 'calendar_title' : '', 'calendar_link' : '', 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '', 'is_all_day' : False })
         self.__event_entry = None
 
     def set_event_entry(self, event_entry):
@@ -117,6 +117,7 @@ class EventsParser:
         _logger.debug("number of entries: %s ", len(calendar.entry)) 
 
         calendar_title = calendar.title.text and calendar.title.text or "<No Title>"
+        calendar_link = calendar.id.text
         for entry in calendar.entry:
             original_events_length = len(self.__events) 
             entry_title = entry.title.text and entry.title.text or "<No Title>"   
@@ -137,7 +138,8 @@ class EventsParser:
                     entry_copy.when.append(when)
   
                 e.set_event_entry(entry_copy)
-                e.update({ 'calendar_title' : calendar_title, 
+                e.update({ 'calendar_title' : calendar_title,
+                           'calendar_link' : calendar_link, 
                            'title' : entry_title, 
                            'link' : entry.GetHtmlLink().href })  
                 # _logger.debug("start time %s\n" % (parse_timestamp(when.start_time),))
@@ -237,6 +239,10 @@ class EventDisplay(CanvasVBox):
 class CalendarStock(AbstractMugshotStock, polling.Task):
     def __init__(self, *args, **kwargs):
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
+        # we keep calendars in a dictionary, referenced by calendar feed links,
+        # so that we can get calendar names without updating events that are
+        # currently not in range; we also use it to get calendar color for events 
+        self.__calendars = {}
         self.__events = []
         self.__events_for_day_displayed = None
         self.__day_displayed = datetime.date.today()
@@ -368,7 +374,8 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             self.stop()
 
     def do_periodic_task(self):
-        self.__update_events()
+        # self.__update_calendar_list_and_events()
+        self.__update_events()        
 
     def get_authed_content(self, size):
         return size == self.SIZE_BULL and self.__box or None
@@ -376,7 +383,32 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
     def set_size(self, size):
         super(CalendarStock, self).set_size(size)
 
-    def __on_calendar_load(self, url, data, event_range_start, event_range_end):
+    def __on_calendar_list_load(self, url, data):
+        # parse calendar list feed into a list of Calendar objects
+        calendar_list = gcalendar.CalendarListFeedFromString(data)
+        calendar_dictionary = {}
+        for calendar_entry in calendar_list.entry:
+            calendar_dictionary[calendar_entry.GetHtmlLink().href] = calendar_entry
+            # we delete entries from the old dictionary if they were not deselected
+            if self.__calendars.has_key(calendar_entry.GetHtmlLink().href) and (calendar_entry.selected.value == "true" or self.__calendars[calendar_entry.GetHtmlLink().href].selected.value == "false"):
+                del self.__calendars[calendar_entry.GetHtmlLink().href]
+
+        events = self.__events.copy() 
+        # remove items from calendars that are no longer returned or are no longer selected  
+        # this should still keep events list sorted by event time
+        for calendar_link in self.__calendars.keys():  
+            for event in events:
+                if event.get_calendar_link() == calendar_link:
+                    self.__events.remove(event)             
+       
+        self.__calendars = calendar_dictionary
+     
+        self.__update_events()
+ 
+    def __on_calendar_load(self, url, data, calendar_feed_url, event_range_start, event_range_end):
+        # we are using calendar_feed_url as a calendar id, but it should be the same as what we
+        # parse out as a calender id in the Events Parser, so for now we don't used calendar_feed_url
+        # that gets passed in here
         _logger.debug("loaded calendar from " + url)
         try:
             p = EventsParser(data)
@@ -647,7 +679,16 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
      
     def __on_failed_load(self, response):
         pass
-            
+
+    def __update_calendar_list_and_events(self):
+        _logger.debug("retreiving calendar list")
+        # we update events in __on_calendar_list_load()            
+        google.get_google().fetch_calendar_list(self.__on_calendar_list_load, self.__on_failed_load)      
+
     def __update_events(self):
         _logger.debug("retrieving events")
-        google.get_google().fetch_calendar(self.__on_calendar_load, self.__on_failed_load, self.__event_range_start, self.__event_range_end)
+        # for calendar in self.__calendars.values():   
+        #    if calendar.selected.value == 'true':
+                # TODO: test if this works, if not can construct a feed based on an id
+        #        calendar_feed_url = calendar.GetHtmlLink().href
+        google.get_google().fetch_calendar(self.__on_calendar_load, self.__on_failed_load, None, self.__event_range_start, self.__event_range_end)
