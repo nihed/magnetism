@@ -19,7 +19,7 @@ class DockWindow(gtk.Window):
 
         self.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DOCK)
         self.set_resizable(False)
-        self.set_keep_above(1)
+        self.stick()
         self.set_focus_on_map(0)
         # self.set_property("accept-focus", 0) # this is probably wrong, we need complex handling (take focus only when certain things are clicked)
 
