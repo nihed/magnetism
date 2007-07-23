@@ -181,6 +181,7 @@ class AppsStock(bigboard.stock.AbstractMugshotStock):
         ad.connect('changed', self.__on_local_apps_changed)
         for app in ad.get_apps():
             self.get_local_app(app)
+        self.__sync()
             
     def __on_local_apps_changed(self, ad):
         for id,app in self.__apps.iteritems():
