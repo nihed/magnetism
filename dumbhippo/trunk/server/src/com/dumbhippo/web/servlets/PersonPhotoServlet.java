@@ -17,6 +17,7 @@ import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.web.SigninBean;
 
 public class PersonPhotoServlet extends AbstractPhotoServlet {
 	private static final long serialVersionUID = 1L;
@@ -44,9 +45,15 @@ public class PersonPhotoServlet extends AbstractPhotoServlet {
 		// make setStockPhoto short-circuit the null => null case.
 		DataService.currentSessionRW().changed(UserDMO.class, user.getGuid(), "photoUrl");
 		
+		SigninBean signin = SigninBean.getForRequest(request);
+		if (!signin.isValid())
+			throw new HumanVisibleException("It looks like you aren't logged in");
+		
+		UserViewpoint viewpoint = (UserViewpoint) signin.getViewpoint();
+		
 		// if we upload a photo we have to remove the stock photo that 
 		// would otherwise override
-		identitySpider.setStockPhoto(new UserViewpoint(user), user, null);
+		identitySpider.setStockPhoto(viewpoint, user, null);
 		
 		doFinalRedirect(request, response);
 	}

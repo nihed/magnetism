@@ -22,6 +22,7 @@ import org.xmpp.packet.PacketError.Condition;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import com.dumbhippo.Site;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.jive.MessageSender;
@@ -33,9 +34,11 @@ import com.dumbhippo.server.ChatRoomInfo;
 import com.dumbhippo.server.ChatRoomKind;
 import com.dumbhippo.server.ChatRoomUser;
 import com.dumbhippo.server.ChatSystem;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.tx.TxRunnable;
 import com.dumbhippo.tx.TxUtils;
@@ -550,8 +553,10 @@ public class Room implements PresenceListener {
 				// will then be sent to all nodes, including us, saying that there are new messages.
 				// We'll (in onMessagesChanged) query for new messages and send them to the connected clients.
 				ChatSystem chatSystem = EJBUtil.defaultLookup(ChatSystem.class);
+				IdentitySpider spider = EJBUtil.defaultLookup(IdentitySpider.class);
+				UserViewpoint viewpoint = new UserViewpoint(spider.lookupUser(userId), Site.XMPP);
 				
-				chatSystem.addChatRoomMessage(roomGuid, kind, userId, packet.getBody(), sentiment, new Date());
+				chatSystem.addChatRoomMessage(roomGuid, kind, viewpoint, packet.getBody(), sentiment, new Date());
 			}
 		});
 	}
@@ -631,13 +636,14 @@ public class Room implements PresenceListener {
 	 */
 	public boolean checkUserCanJoin(String username) {
 		ChatSystem chatSystem = EJBUtil.defaultLookup(ChatSystem.class);
+		IdentitySpider spider = EJBUtil.defaultLookup(IdentitySpider.class);
 		Guid userId;
 		try {
 			userId = Guid.parseJabberId(username);
 		} catch (ParseException e) {
 			return false;
 		}
-		return chatSystem.canJoinChat(roomGuid, kind, userId);
+		return chatSystem.canJoinChat(roomGuid, kind, new UserViewpoint(spider.lookupUser(userId), Site.XMPP));
 	}
 
 	/**

@@ -6,6 +6,7 @@ import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.tx.RetryException;
 
 /**
@@ -40,12 +41,12 @@ public interface ClaimVerifier {
 	 * the AIM bot or something.
 	 * If this method succeeds then a new AccountClaim is created.
 	 * 
-	 * @param user logged-in user for double-check or null if unknown
+	 * @param viewpoint logged-in user for double-check or null if unknown
 	 * @param token token for verification
 	 * @param resource resource, or null
 	 * @throws ClaimVerifierException if no ownership claim is created
 	 */
-	public void verify(User user, ResourceClaimToken token, Resource resource) throws HumanVisibleException;
+	public void verify(Viewpoint viewpoint, ResourceClaimToken token, Resource resource) throws HumanVisibleException;
 		
 	/**
 	 * Send email or an IM with a link that, when clicked, will verify the association of the given user 

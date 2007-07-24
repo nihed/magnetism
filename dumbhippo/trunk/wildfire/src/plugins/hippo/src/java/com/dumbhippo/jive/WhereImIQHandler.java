@@ -9,6 +9,7 @@ import org.dom4j.Element;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 
+import com.dumbhippo.Site;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.jive.annotations.IQHandler;
@@ -92,7 +93,7 @@ public class WhereImIQHandler extends AnnotatedIQHandler implements LiveEventLis
 
 	public void onEvent(ExternalAccountChangedEvent event) {
 		User user = identitySpider.lookupUser(event.getUserId());
-		UserViewpoint viewpoint = new UserViewpoint(user);		
+		UserViewpoint viewpoint = new UserViewpoint(user, Site.XMPP);		
 		ExternalAccount acct;
 		try {
 			acct = externalAccountSystem.lookupExternalAccount(viewpoint, user, event.getType());

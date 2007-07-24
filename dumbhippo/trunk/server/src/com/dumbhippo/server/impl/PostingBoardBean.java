@@ -744,8 +744,8 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostView(viewpoint, p);
 	}
 
-	public void postViewedBy(final Post post, final User user) {
-		logger.debug("Post {} clicked by {}", post.getId(), user);
+	public void postViewedBy(final Post post, final UserViewpoint viewpoint) {
+		logger.debug("Post {} clicked by {}", post.getId(), viewpoint.getViewer());
 		final long clickTime = System.currentTimeMillis();
 		
 		// We don't actually need to wait for transaction commit to do this (the
@@ -754,7 +754,7 @@ public class PostingBoardBean implements PostingBoard {
 		TxUtils.runInTransactionOnCommit(new TxRunnable() {
 			public void run() throws RetryException {
 				Post attachedPost = em.find(Post.class, post.getId());
-				User attachedUser = em.find(User.class, user.getId());
+				User attachedUser = em.find(User.class, viewpoint.getViewer().getId());
 
 				// Notify the recommender system that a user clicked through, so that ratings can be updated
 				recommenderSystem.addRatingForPostViewedBy(attachedPost, attachedUser);
@@ -765,7 +765,7 @@ public class PostingBoardBean implements PostingBoard {
 		});
 	}
 
-	public void postViewedBy(String postId, User user) {
+	public void postViewedBy(String postId, UserViewpoint viewpoint) {
 		Guid postGuid;
 		try {
 			postGuid = new Guid(postId);
@@ -775,12 +775,12 @@ public class PostingBoardBean implements PostingBoard {
 		
 		Post post;
 		try {
-			post = loadRawPost(new UserViewpoint(user), postGuid);
+			post = loadRawPost(viewpoint, postGuid);
 		} catch (NotFoundException e) {
 			throw new RuntimeException("postViewedBy, nonexistent Guid for some reason " + postId, e);
 		}
 		
-		postViewedBy(post, user);
+		postViewedBy(post, viewpoint);
   	}
 		
   	public int getPostsForCount(Viewpoint viewpoint, Person forPerson) {

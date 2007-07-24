@@ -34,6 +34,8 @@ public class ConfigurationBean implements Configuration, SimpleServiceMBean {
 	private DownloadConfiguration downloads;
 	
 	private URL baseurl;
+
+	private URL baseurlGnome;
 	
 	public void start() {
 		Properties systemProperties = System.getProperties();
@@ -84,6 +86,13 @@ public class ConfigurationBean implements Configuration, SimpleServiceMBean {
 		String s = getPropertyFatalIfUnset(HippoProperty.BASEURL);
 		try {
 			baseurl = new URL(s);
+		} catch (MalformedURLException e) {
+			throw new RuntimeException("Server misconfiguration - base URL is invalid! '" + s + "'", e);
+		}
+		
+		s = getPropertyFatalIfUnset(HippoProperty.BASEURL_GNOME);
+		try {
+			baseurlGnome = new URL(s);
 		} catch (MalformedURLException e) {
 			throw new RuntimeException("Server misconfiguration - base URL is invalid! '" + s + "'", e);
 		}
@@ -146,6 +155,10 @@ public class ConfigurationBean implements Configuration, SimpleServiceMBean {
 
 	public URL getBaseUrl() {
 		return baseurl;
+	}
+	
+	public URL getBaseUrlGnome() {
+		return baseurlGnome;
 	}
 	
 	public void setProperty(String name, String value) {

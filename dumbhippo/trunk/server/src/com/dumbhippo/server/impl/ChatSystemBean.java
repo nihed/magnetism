@@ -476,9 +476,8 @@ public class ChatSystemBean implements ChatSystem {
 		throw new IllegalArgumentException("Bad chat room type");
 	}
 
-	public void addChatRoomMessage(Guid roomGuid, ChatRoomKind kind, Guid userId, String text, Sentiment sentiment, Date timestamp) throws RetryException {
-		User fromUser = getUserFromGuid(userId);
-		UserViewpoint viewpoint = new UserViewpoint(fromUser);
+	public void addChatRoomMessage(Guid roomGuid, ChatRoomKind kind, UserViewpoint fromViewpoint, String text, Sentiment sentiment, Date timestamp) throws RetryException {
+		User fromUser = fromViewpoint.getViewer();
 		Block block;
 		ChatMessage message;
 		
@@ -486,7 +485,7 @@ public class ChatSystemBean implements ChatSystem {
 		case POST:
 			Post post;
 			try {
-				post = postingBoard.loadRawPost(viewpoint, roomGuid);
+				post = postingBoard.loadRawPost(fromViewpoint, roomGuid);
 			} catch (NotFoundException e) {
 				throw new RuntimeException("post chat not found", e);
 			}
@@ -496,7 +495,7 @@ public class ChatSystemBean implements ChatSystem {
 		case GROUP:
 			Group group;
 			try {
-				group = groupSystem.lookupGroupById(viewpoint, roomGuid);
+				group = groupSystem.lookupGroupById(fromViewpoint, roomGuid);
 			} catch (NotFoundException e) {
 				throw new RuntimeException("group chat not found", e);
 			}
@@ -536,9 +535,8 @@ public class ChatSystemBean implements ChatSystem {
 		LiveState.getInstance().queueUpdate(new ChatRoomEvent(roomGuid, ChatRoomEvent.Detail.MESSAGES_CHANGED));
 	}
 	
-	public boolean canJoinChat(Guid roomGuid, ChatRoomKind kind, Guid userId) {
-		User user = getUserFromGuid(userId);
-		UserViewpoint viewpoint = new UserViewpoint(user);
+	public boolean canJoinChat(Guid roomGuid, ChatRoomKind kind, UserViewpoint viewpoint) {
+		User user = viewpoint.getViewer();
 		switch (kind) {
 		case POST:
 			try {

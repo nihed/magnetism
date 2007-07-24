@@ -11,6 +11,7 @@ import com.dumbhippo.persistence.ChatMessage;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.server.views.ChatMessageView;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.tx.RetryException;
 
@@ -73,7 +74,7 @@ public interface ChatSystem {
 	 */
 	List<? extends ChatMessage> getChatRoomMessages(Guid roomGuid, ChatRoomKind kind, long lastSeenSerial);
 	
-	public boolean canJoinChat(Guid roomGuid, ChatRoomKind kind, Guid userId);
+	public boolean canJoinChat(Guid roomGuid, ChatRoomKind kind, UserViewpoint viewpoint);
 	
 	/**
 	 * Adds a new message to a chatroom.
@@ -81,11 +82,11 @@ public interface ChatSystem {
 	 * @param roomGuid the GUID for post (etc.) the chat is about
 	 *        This must exist or an exception will be thrown
 	 * @param kind the kind of chatroom (group or post)
-	 * @param userId the GUID of the user posting the message
+	 * @param fromViewpoint the GUID of the user posting the message
 	 * @param text the text of the message
 	 * @param timestamp the timestamp for the message
 	 * @param sentiment the sentiment of the message INDIFFERENT=Chat LOVE/HATE=Quip
 	 * @throws RetryException 
 	 */
-	public void addChatRoomMessage(Guid roomGuid, ChatRoomKind kind, Guid userId, String text, Sentiment sentiment, Date timestamp) throws RetryException;
+	public void addChatRoomMessage(Guid roomGuid, ChatRoomKind kind, UserViewpoint fromViewpoint, String text, Sentiment sentiment, Date timestamp) throws RetryException;
 }

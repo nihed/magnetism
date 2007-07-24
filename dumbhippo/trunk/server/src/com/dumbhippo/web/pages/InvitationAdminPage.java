@@ -12,7 +12,6 @@ import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.WantsInView;
 import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.WebEJBUtil;
@@ -71,7 +70,7 @@ public class InvitationAdminPage extends AbstractSigninRequiredPage {
 	public ListBean<GroupView> getGroups() {
 		if (groups == null) {
 		    User inviter = accountSystem.getMugshotCharacter();
-			groups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(new UserViewpoint(inviter), inviter, MembershipStatus.ACTIVE)));
+			groups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(getSignin().getViewpoint(), inviter, MembershipStatus.ACTIVE)));
 		}
 		return groups;		
 	}

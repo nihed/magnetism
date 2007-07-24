@@ -18,6 +18,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.PostView;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.tx.RetryException;
 
@@ -104,10 +105,10 @@ public interface PostingBoard {
 	 * @param postId the ID of the post that was clicked
 	 * @param clicker person who clicked on the post
 	 */
-	public void postViewedBy(Post post, User clicker);
+	public void postViewedBy(Post post, UserViewpoint clicker);
 	// Should get rid of this variant, but it's slightly a pain, due to the
 	// usage from web servlets
-	public void postViewedBy(String postId, User clicker);
+	public void postViewedBy(String postId, UserViewpoint clicker);
 	
 	/**
 	 * Search the database of posts using Lucene.

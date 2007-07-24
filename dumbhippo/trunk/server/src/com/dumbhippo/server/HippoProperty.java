@@ -2,7 +2,8 @@ package com.dumbhippo.server;
 
 public enum HippoProperty {
 	BASEURL("dumbhippo.server.baseurl", "http://mugshot.org"),
-	FEATURES("dumbhippo.server.features", ""),	
+	BASEURL_GNOME("dumbhippo.server.baseurlGnome", "http://online.gnome.org"),
+	FEATURES("dumbhippo.server.features", ""),
 	DISABLE_AUTHENTICATION("dumbhippo.server.disable.authentication", "false"),
 	DISABLE_EMAIL("dumbhippo.server.email.disable", "false"),
 	FEEDBACK_EMAIL("dumbhippo.server.email.feedback", "feedback@mugshot.org"),

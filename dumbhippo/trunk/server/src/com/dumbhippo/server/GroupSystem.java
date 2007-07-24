@@ -44,7 +44,7 @@ public interface GroupSystem {
 	 * @param invitee
 	 * @return a set of groups an invitee was invited to by the adder
 	 */
-	public Set<Group> getInvitedToGroups(User adder, Resource invitee);
+	public Set<Group> getInvitedToGroups(UserViewpoint adder, Resource invitee);
 	
 	/**
 	 * Returns true if the viewer can see the content of the group's mugshot and stacker.
@@ -70,9 +70,9 @@ public interface GroupSystem {
 	
 	public void addMember(User adder, Group group, Person person);
 	
-	public void reviseGroupMembershipPolicy(User revisor, Group group, boolean open);
+	public void reviseGroupMembershipPolicy(UserViewpoint revisor, Group group, boolean open);
 	
-	public Pair<Integer, Integer> inviteAllFollowers(User adder, Group group);
+	public Pair<Integer, Integer> inviteAllFollowers(Viewpoint viewpoint, User adder, Group group);
 	
 	public boolean canRemoveInvitation(User remover, GroupMember groupMember);
 	

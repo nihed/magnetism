@@ -90,6 +90,12 @@ public interface Configuration {
 	public URL getBaseUrl();
 	
 	/**
+	 * Gets our base URL for the GNOME site parsed into an URL object.
+	 * @return the base URL for this server
+	 */
+	public URL getBaseUrlGnome();
+	
+	/**
 	 * Set a configuration property, use to override properties loaded 
 	 * when the server starts up.
 	 *  

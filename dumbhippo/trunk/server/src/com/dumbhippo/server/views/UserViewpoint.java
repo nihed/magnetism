@@ -2,6 +2,7 @@ package com.dumbhippo.server.views;
 
 import java.util.Set;
 
+import com.dumbhippo.Site;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
@@ -23,6 +24,7 @@ import com.dumbhippo.server.util.EJBUtil;
 public class UserViewpoint extends Viewpoint {
 	private Guid viewerId;
 	private User viewer;
+	private Site site;
 	private DMSession session;
 	
 	/**
@@ -32,11 +34,12 @@ public class UserViewpoint extends Viewpoint {
 	 * 
 	 * @param viewer the user viewing the system
 	 */
-	public UserViewpoint(User viewer) {
+	public UserViewpoint(User viewer, Site site) {
 		if (viewer == null)
 			throw new NullPointerException("UserViewpoint created with null user");
 		this.viewerId = viewer.getGuid();
 		this.viewer = viewer;
+		this.site = site;
 	}
 	
 	/**
@@ -47,10 +50,11 @@ public class UserViewpoint extends Viewpoint {
 	 * 
 	 * @param viewerId
 	 */
-	public UserViewpoint(Guid viewerId) {
+	public UserViewpoint(Guid viewerId, Site site) {
 		if (viewerId == null)
 			throw new NullPointerException("UserViewpoint created with null userId");
 		this.viewerId = viewerId;
+		this.site = site;
 	}
 
 	public User getViewer() {
@@ -59,6 +63,10 @@ public class UserViewpoint extends Viewpoint {
 			viewer = spider.lookupUser(viewerId);
 		}
 		return viewer;
+	}
+	
+	public Site getSite() {
+		return site;
 	}
 	
 	@Override

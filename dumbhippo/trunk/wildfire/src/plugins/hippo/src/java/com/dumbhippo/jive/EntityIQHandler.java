@@ -8,6 +8,7 @@ import javax.ejb.EJB;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.Message;
 
+import com.dumbhippo.Site;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.jive.annotations.IQHandler;
@@ -43,7 +44,7 @@ public class EntityIQHandler extends AnnotatedIQHandler implements LiveEventList
 	
 	public void onEvent(UserChangedEvent event) {
 		User user = identitySpider.lookupUser(event.getUserId());
-		PersonView view = personViewer.getPersonView(new UserViewpoint(user), user);
+		PersonView view = personViewer.getPersonView(new UserViewpoint(user, Site.XMPP), user);
 		
 		Set<Guid> interested = Collections.singleton(user.getGuid());
 		

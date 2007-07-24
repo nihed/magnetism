@@ -28,6 +28,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.tx.RetryException;
@@ -144,20 +145,25 @@ public class ClaimVerifierBean implements ClaimVerifier {
 		}
 	}
 	
-	public void verify(User user, ResourceClaimToken token, Resource resource) throws HumanVisibleException { 
-		if (user != null) {
-			if (!user.equals(token.getUser())) {
-				Viewpoint viewpoint = new UserViewpoint(user);
-				PersonView self = personViewer.getPersonView(viewpoint, user);
+	public void verify(Viewpoint viewpoint, ResourceClaimToken token, Resource resource) throws HumanVisibleException { 
+		User user;
+		if (viewpoint instanceof UserViewpoint) {
+			UserViewpoint userViewpoint = (UserViewpoint) viewpoint;
+			if (!viewpoint.isOfUser(token.getUser())) {
+				PersonView self = personViewer.getPersonView(viewpoint, userViewpoint.getViewer());
 				PersonView other = personViewer.getPersonView(viewpoint, token.getUser());
 				throw new HumanVisibleException("You are signed in as " + self.getName() 
 						+ " but trying to change the account " + other.getName());
 			}
-		} else {
+			user = userViewpoint.getViewer();
+		} else if (viewpoint instanceof SystemViewpoint){
 			user = token.getUser();
+		} else {
+			user = null;
 		}
 
-		assert user != null;
+		if (user == null)
+			throw new RuntimeException("Invalid viewpoint passed to verify()");
 		
 		if (resource != null) {
 			Resource tokenResource = token.getResource();

@@ -10,6 +10,7 @@ import org.jivesoftware.wildfire.XMPPServer;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
+import com.dumbhippo.Site;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.dm.DataModel;
@@ -97,7 +98,7 @@ public abstract class AnnotatedIQMethod {
 						}
 					});
 				} else {
-					doIQ(new UserViewpoint(getUserId(request)), request, reply);
+					doIQ(new UserViewpoint(getUserId(request), Site.XMPP), request, reply);
 				}
 	
 				client.queuePacket(reply, serial);

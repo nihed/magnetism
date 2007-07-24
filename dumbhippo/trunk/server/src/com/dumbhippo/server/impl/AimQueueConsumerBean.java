@@ -30,6 +30,7 @@ import com.dumbhippo.server.TokenSystem;
 import com.dumbhippo.server.TokenUnknownException;
 import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.views.AnonymousViewpoint;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.tx.RetryException;
 
 @MessageDriven(activationConfig =
@@ -97,7 +98,7 @@ public class AimQueueConsumerBean implements MessageListener {
 		DataService.currentSessionRW().runAsSystem(new Runnable() {
 			public void run() {
 				try {
-					claimVerifier.verify(null, claim, resource);
+					claimVerifier.verify(SystemViewpoint.getInstance(), claim, resource);
 					sendReplyMessage(event, event.getAimName(), "The screen name " + event.getAimName() + " was added to your Mugshot account");
 				} catch (HumanVisibleException e) {
 					logger.debug("exception verifying claim, sending back to user: {}", e.getMessage());

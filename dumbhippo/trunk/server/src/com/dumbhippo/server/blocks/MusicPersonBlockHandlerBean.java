@@ -27,6 +27,7 @@ import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.TrackView;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
@@ -126,11 +127,11 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 		updatePublicFlag(account, false);
 	}
 	
-	public void onMusicSharingToggled(Account account) {
-		updatePublicFlag(account, false);
+	public void onMusicSharingToggled(UserViewpoint viewpoint) {
+		updatePublicFlag(viewpoint.getViewer().getAccount(), false);
 	}
 
-	public void onApplicationUsageToggled(Account account) {
+	public void onApplicationUsageToggled(UserViewpoint viewpoint) {
 		// We aren't interested in this, just part of a listener iface we're using
 	}
 	
