@@ -3,6 +3,7 @@ package com.dumbhippo.web;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.User;
@@ -25,7 +26,7 @@ public class UserSigninBean extends SigninBean {
 	private PersonView userView;
 	private PersonView userFromSystemView;
 	private Guid userGuid;
-	private User user; // lazily initialized
+	private UserViewpoint viewpoint; // lazily initialized
 	
 	/**
 	 * Creates a new SigninBean object for a particular signed in
@@ -34,9 +35,10 @@ public class UserSigninBean extends SigninBean {
 	 * 
 	 * @param user the account object
 	 */
-	UserSigninBean(Account account) {
-		this.user = account.getOwner();
-		this.userGuid = user.getGuid();
+	UserSigninBean(Account account, Site site) {
+		super(site);
+		this.viewpoint = new UserViewpoint(account.getOwner(), site);
+		this.userGuid = this.viewpoint.getViewer().getGuid();
 	}
 	
 	private IdentitySpider getSpider() {
@@ -52,15 +54,7 @@ public class UserSigninBean extends SigninBean {
 	}
 		
 	public User getUser() {
-		if (user == null) {
-			try {
-				user = getSpider().lookupGuid(User.class, userGuid);
-			} catch (NotFoundException e) {
-				throw new RuntimeException("Could not lazily create User object");
-			}
-		}
-
-		return user;
+		return getViewpoint().getViewer();
 	}
 	
 	public PersonView getViewedUser() {
@@ -85,7 +79,17 @@ public class UserSigninBean extends SigninBean {
 	
 	@Override
 	public UserViewpoint getViewpoint() {
-		return new UserViewpoint(getUser());
+		if (viewpoint == null) {
+			// this happens if there's a resetSessionObjects()
+			try {
+				User user = getSpider().lookupGuid(User.class, userGuid);
+				viewpoint = new UserViewpoint(user, getSite()); 
+			} catch (NotFoundException e) {
+				throw new RuntimeException("Could not lazily create UserViewpoint object");
+			}
+		}
+		
+		return viewpoint;
 	}
 	
 	@Override
@@ -100,7 +104,7 @@ public class UserSigninBean extends SigninBean {
 	
 	@Override
 	public void resetSessionObjects() {
-		user = null;
+		viewpoint = null;
 	}	
 
 	@Override

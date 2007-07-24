@@ -21,6 +21,7 @@ import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemeSystem;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class NowPlayingThemePhotoServlet extends AbstractPhotoServlet {
@@ -68,8 +69,14 @@ public class NowPlayingThemePhotoServlet extends AbstractPhotoServlet {
 		
 		writePhoto(image, filename, true);
 		
+		SigninBean signin = SigninBean.getForRequest(request);
+		if (!signin.isValid())
+			throw new HumanVisibleException("It looks like you aren't logged in");
+		
+		UserViewpoint viewpoint = (UserViewpoint) signin.getViewpoint();
+		
 		try {
-			nowPlayingSystem.setNowPlayingThemeImage(new UserViewpoint(user), themeId, mode, hexSum);
+			nowPlayingSystem.setNowPlayingThemeImage(viewpoint, themeId, mode, hexSum);
 		} catch (ParseException e) {
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Bad theme id", e);
 		} catch (NotFoundException e) {

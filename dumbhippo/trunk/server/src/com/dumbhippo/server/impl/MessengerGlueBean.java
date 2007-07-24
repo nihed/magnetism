@@ -16,6 +16,7 @@ import javax.interceptor.InvocationContext;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Account;
@@ -207,24 +208,25 @@ public class MessengerGlueBean implements MessengerGlue {
 		return user;
 	}
 	
-	private void doShareLinkTutorial(Account account) throws RetryException {
+	private void doShareLinkTutorial(UserViewpoint newUser) throws RetryException {
 		logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
 
+		Account account = newUser.getViewer().getAccount();
+		
 		InvitationToken invite = invitationSystem.getCreatingInvitation(account);
 		
 		// see what feature the user was sold on originally, and share the right thing 
 		// with them accordingly
 		
-		User owner = account.getOwner();
+		User owner = newUser.getViewer();
 		if (invite != null && invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602)
 			postingBoard.doNowPlayingTutorialPost(owner);
 		else {
-			UserViewpoint viewpoint = new UserViewpoint(owner);
-			Set<Group> invitedToGroups = groupSystem.findRawGroups(viewpoint, owner, MembershipStatus.INVITED);
-			Set<Group> invitedToFollowGroups = groupSystem.findRawGroups(viewpoint, owner, MembershipStatus.INVITED_TO_FOLLOW);
+			Set<Group> invitedToGroups = groupSystem.findRawGroups(newUser, owner, MembershipStatus.INVITED);
+			Set<Group> invitedToFollowGroups = groupSystem.findRawGroups(newUser, owner, MembershipStatus.INVITED_TO_FOLLOW);
 			invitedToGroups.addAll(invitedToFollowGroups);
 			if (invitedToGroups.size() == 0) {
-				postingBoard.doShareLinkTutorialPost(account.getOwner());
+				postingBoard.doShareLinkTutorialPost(owner);
 			} else {
 				for (Group group : invitedToGroups) {
 					postingBoard.doGroupInvitationPost(owner, group);
@@ -272,8 +274,10 @@ public class MessengerGlueBean implements MessengerGlue {
 			return;
 		}
 
+		UserViewpoint viewpoint = new UserViewpoint(account.getOwner(), Site.XMPP);
+		
 		if (!account.getWasSentShareLinkTutorial()) {
-			doShareLinkTutorial(account);
+			doShareLinkTutorial(viewpoint);
 		}
 	}
 	
@@ -324,14 +328,15 @@ public class MessengerGlueBean implements MessengerGlue {
 	
 	public void setPostIgnored(Guid userId, Guid postId, boolean ignore) throws NotFoundException, ParseException {
 		User user = getUserFromGuid(userId);
-		Post post = postingBoard.loadRawPost(new UserViewpoint(user), postId);
+		UserViewpoint viewpoint = new UserViewpoint(user, Site.XMPP);
+		Post post = postingBoard.loadRawPost(viewpoint, postId);
 		
-		postBlockHandler.setPostHushed(new UserViewpoint(user), post, ignore);
+		postBlockHandler.setPostHushed(viewpoint, post, ignore);
 	}
 
 	public void addGroupMember(Guid userId, Guid groupId, Guid inviteeId) throws NotFoundException {
 		User user = getUserFromGuid(userId);
-		UserViewpoint viewpoint = new UserViewpoint(user);
+		UserViewpoint viewpoint = new UserViewpoint(user, Site.XMPP);
 		GroupView groupView = groupSystem.loadGroup(viewpoint, groupId);
 		User invitee = getUserFromGuid(inviteeId);		
 		groupSystem.addMember(user, groupView.getGroup(), invitee);

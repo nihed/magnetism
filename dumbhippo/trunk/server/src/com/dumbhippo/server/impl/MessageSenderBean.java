@@ -9,6 +9,7 @@ import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.EmailResource;
@@ -98,7 +99,9 @@ public class MessageSenderBean implements MessageSender {
 			// account and thus can't have a viewpoint. Using an anonymous
 			// viewpoint wouldn't work since the anonymous viewpoint wouldn't
 			// be able to see the post details.
-			UserViewpoint viewpoint = new UserViewpoint(poster);
+			// FIXME hardcoding MUGSHOT for now since we don't do share link 
+			// on gnome.org anyhow
+			UserViewpoint viewpoint = new UserViewpoint(poster, Site.MUGSHOT);
 			
 			// We don't want to send email notifications if, say, the recipient
 			// is a member of a public group that the post was sent to, since

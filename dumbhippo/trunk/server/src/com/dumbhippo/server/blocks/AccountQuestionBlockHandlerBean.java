@@ -109,24 +109,24 @@ public class AccountQuestionBlockHandlerBean extends AbstractBlockHandlerBean<Ac
 		
 	}
 
-	public void onApplicationUsageToggled(Account account) {
+	public void onApplicationUsageToggled(UserViewpoint viewpoint) {
 		try {
-			Block block = stacker.queryBlock(getKey(account.getOwner(), AccountQuestion.APPLICATION_USAGE));
-			questionAnswered(new UserViewpoint(account.getOwner()), block);
+			Block block = stacker.queryBlock(getKey(viewpoint.getViewer(), AccountQuestion.APPLICATION_USAGE));
+			questionAnswered(viewpoint, block);
 		} catch (NotFoundException e) {
 			// No block, nothing to do
 		}
 	}
 
-	public void onMusicSharingToggled(Account account) {
+	public void onMusicSharingToggled(UserViewpoint viewpoint) {
 		// Don't care
 	}
 
 	private void handleApplicationUsageResponse(UserViewpoint viewpoint, String response) throws BadResponseCodeException {
 		if (response.equals("yes"))
-			identitySpider.setApplicationUsageEnabled(viewpoint.getViewer(), true);
+			identitySpider.setApplicationUsageEnabled(viewpoint, true);
 		else if (response.equals("no"))
-			identitySpider.setApplicationUsageEnabled(viewpoint.getViewer(), false);
+			identitySpider.setApplicationUsageEnabled(viewpoint, false);
 		else
 			throw new BadResponseCodeException("Bad response code in response to APPLICATION_USAGE question");
 	}

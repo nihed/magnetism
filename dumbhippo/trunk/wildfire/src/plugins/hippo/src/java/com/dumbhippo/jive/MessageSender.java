@@ -24,6 +24,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
+import com.dumbhippo.Site;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
@@ -277,7 +278,7 @@ public class MessageSender implements XmppMessageSenderProvider {
 			return;
 		}
 		
-		Viewpoint viewpoint = new UserViewpoint(recipient);
+		Viewpoint viewpoint = new UserViewpoint(recipient, Site.XMPP);
 
 		PostView postView = postingBoard.getPostView(viewpoint, post);
 		Set<EntityView> referenced = postingBoard.getReferencedEntities(viewpoint, post);
@@ -311,7 +312,7 @@ public class MessageSender implements XmppMessageSenderProvider {
 		if (!userIsPresent(recipient.getGuid()))
 			return;
 		
-		Viewpoint viewpoint = new UserViewpoint(recipient);
+		Viewpoint viewpoint = new UserViewpoint(recipient, Site.XMPP);
 		
 		PersonView memberView = personViewer.getPersonView(viewpoint, groupMember.getMember());
 

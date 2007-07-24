@@ -236,11 +236,11 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		throw new NotFoundException("GroupMember for resource " + resourceId + " not found");
 	}
 	
-	public Set<Group> getInvitedToGroups(User adder, Resource invitee) {
+	public Set<Group> getInvitedToGroups(UserViewpoint adder, Resource invitee) {
 		Set<Group> invitedToGroups = new HashSet<Group>();
 		
 		Set<Group> adderGroups = 
-			findRawGroups(new UserViewpoint(adder), adder, MembershipStatus.ACTIVE);
+			findRawGroups(adder, adder.getViewer(), MembershipStatus.ACTIVE);
 
 	    for (Group group : adderGroups) {
 	        try {
@@ -392,16 +392,16 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		addMember(adder, group, resource, false);		
 	}
 	
-	public void reviseGroupMembershipPolicy(User revisor, Group group, boolean open) {
+	public void reviseGroupMembershipPolicy(UserViewpoint revisor, Group group, boolean open) {
 	    User mugshot = accountSystem.getMugshotCharacter();
         Viewpoint viewpoint;
         
-	    if (revisor.equals(mugshot))
+	    if (revisor.isOfUser(mugshot))
 			viewpoint = SystemViewpoint.getInstance();
-		else 
-			viewpoint = new UserViewpoint(revisor);
-
-		if (!(revisor.equals(mugshot) || canEditGroup((UserViewpoint)viewpoint, group)))
+	    else
+	    	viewpoint = revisor;
+		
+		if (!(viewpoint instanceof SystemViewpoint || canEditGroup(revisor, group)))
 			throw new RuntimeException("Only active members or Mugshot can edit a group");	
 		
 		if (group.getAccess() == GroupAccess.SECRET)
@@ -416,27 +416,20 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		if (needToInviteFollowers) {
 			// we need to make all of the groups' followers members,
 			// those notifications will not be pushed to group members' stacks
-			Pair<Integer, Integer> followerCounts = inviteAllFollowers((revisor.equals(mugshot) ? null : revisor), group);
+			Pair<Integer, Integer> followerCounts = inviteAllFollowers(viewpoint, revisor.getViewer(), group);
 			followers = followerCounts.getFirst();
 			invitedFollowers = followerCounts.getSecond();
 		}
-		revisionControl.persistRevision(new GroupMembershipPolicyRevision(revisor, group, new Date(), open, followers, invitedFollowers));			
+		revisionControl.persistRevision(new GroupMembershipPolicyRevision(revisor.getViewer(), group, new Date(), open, followers, invitedFollowers));			
 	}
 	
-	public Pair<Integer, Integer> inviteAllFollowers(User adder, Group group) {
+	public Pair<Integer, Integer> inviteAllFollowers(Viewpoint viewpoint, User adder, Group group) {
 		boolean openGroupAdjustment = (group.getAccess() == GroupAccess.PUBLIC);
-		
-		Viewpoint viewpoint;
-		if (adder != null) {
-			viewpoint = new UserViewpoint(adder);
-		} else {
-		    viewpoint =	SystemViewpoint.getInstance();
-		}
-		
+				
 		Set<User> followers = getUserMembers(viewpoint, group, MembershipStatus.FOLLOWER);	
 		for (User follower : followers) {
 			addMember(follower, group, follower.getAccount(), openGroupAdjustment);
-		}	
+		}
 		
 		List<Resource> invitedFollowers = getResourceMembers(viewpoint, group, -1, MembershipStatus.INVITED_TO_FOLLOW);		
 		for (Resource invitedFollower : invitedFollowers) {

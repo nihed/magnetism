@@ -90,7 +90,7 @@ public class FramerPage {
 			
 			if (isVisit && signin.isValid()) {
 				UserViewpoint viewpoint = (UserViewpoint)signin.getViewpoint();
-				postBoard.postViewedBy(post.getPost(), viewpoint.getViewer());
+				postBoard.postViewedBy(post.getPost(), viewpoint);
 			}
 		} catch (NotFoundException e) {
 			errorText = "Can't find a visible post or post block for the post ID '" + postId + "'";

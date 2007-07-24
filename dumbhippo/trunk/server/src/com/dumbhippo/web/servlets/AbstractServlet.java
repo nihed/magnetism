@@ -37,6 +37,7 @@ import org.jboss.ha.framework.interfaces.HAPartition;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.StreamUtils;
 import com.dumbhippo.URLUtils;
 import com.dumbhippo.persistence.User;
@@ -202,6 +203,11 @@ public abstract class AbstractServlet extends HttpServlet {
 			return ((UserSigninBean)signin).getUser();
 		else 
 			return null;
+	}
+	
+	protected Site getSite(HttpServletRequest request) {
+		SigninBean signin = SigninBean.getForRequest(request);
+		return signin.getSite();
 	}
 	
 	protected User doLogin(HttpServletRequest request) throws IOException, HttpException {

@@ -7,6 +7,7 @@ import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
@@ -34,6 +35,7 @@ public abstract class SigninBean  {
 	private static final String SIGNIN_BEAN_KEY = "signin";
 	
 	private String server;
+	private Site site;
 	
 	public static SigninBean getForRequest(HttpServletRequest request) {
 		SigninBean result = null;
@@ -79,11 +81,20 @@ public abstract class SigninBean  {
 					logger.warn("Couldn't load account for stored authenticated user");
 				}
 			}
+
+			Site site;
+			Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
+			String host = config.getBaseUrlGnome().getHost();
+			if (request.getRequestURL().toString().equals(host)) {
+				site = Site.GNOME;
+			} else {
+				site = Site.MUGSHOT;
+			}
 			
 			if (account != null)
-				result = new UserSigninBean(account);
+				result = new UserSigninBean(account, site);
 			else
-				result = new AnonymousSigninBean();
+				result = new AnonymousSigninBean(site);
 
 			logger.debug("storing SigninBean on request, valid = {}", result.isValid());
 			request.setAttribute(SIGNIN_BEAN_KEY, result);
@@ -187,6 +198,10 @@ public abstract class SigninBean  {
 		logger.debug("Unset auth cookie");
 	}
 	
+	protected SigninBean(Site site) {
+		this.site = site;
+	}
+	
 	/** 
 	 * Return the server in host:port format suitable for use in a URI,
 	 * used for example to generate mugshot: URIs or absolute links.
@@ -208,6 +223,10 @@ public abstract class SigninBean  {
 			server = url.substring("http://".length());
 		}
 		return server;
+	}
+	
+	public Site getSite() {
+		return site;
 	}
 	
 	/** Are we signed in? returns false if anonymous */

@@ -823,12 +823,12 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				"invalid value for enabled param to getMusicSharingEnabled");
 	}
 
-	public void setMusicSharingEnabled(User user, boolean enabled) {
-		Account account = getAttachedAccount(user);
+	public void setMusicSharingEnabled(UserViewpoint viewpoint, boolean enabled) {
+		Account account = getAttachedAccount(viewpoint.getViewer());
 		if (account.isMusicSharingEnabled() == null || account.isMusicSharingEnabled() != enabled) {
 			account.setMusicSharingEnabled(enabled);
-			notifier.onMusicSharingToggled(account);
-			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(user.getGuid(), "musicSharingEnabled", Boolean.toString(enabled)));
+			notifier.onMusicSharingToggled(viewpoint);
+			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(viewpoint.getViewer().getGuid(), "musicSharingEnabled", Boolean.toString(enabled)));
 		}
 	}
 
@@ -850,16 +850,16 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return enabled != null ? enabled : AccountSystem.DEFAULT_APPLICATION_USAGE_ENABLED;
 	}
 	
-	public void setApplicationUsageEnabled(User user, boolean enabled) {
-		Account account = user.getAccount();
+	public void setApplicationUsageEnabled(UserViewpoint viewpoint, boolean enabled) {
+		Account account = viewpoint.getViewer().getAccount();
 		boolean wasSet = account.isApplicationUsageEnabled() != null;
-		boolean wasEnabled = getApplicationUsageEnabled(user);
+		boolean wasEnabled = getApplicationUsageEnabled(viewpoint.getViewer());
 		account.setApplicationUsageEnabled(enabled);
 		if (enabled != wasEnabled)
-			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(user.getGuid(), "applicationUsageEnabled", Boolean.toString(enabled)));
+			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(viewpoint.getViewer().getGuid(), "applicationUsageEnabled", Boolean.toString(enabled)));
 
 		if (enabled != wasEnabled || !wasSet)
-			notifier.onApplicationUsageToggled(account);
+			notifier.onApplicationUsageToggled(viewpoint);
 	}
 
 	public void incrementUserVersion(final User user) {

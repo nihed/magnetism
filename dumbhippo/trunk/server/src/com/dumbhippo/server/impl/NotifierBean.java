@@ -51,6 +51,7 @@ import com.dumbhippo.server.listeners.RevisionListener;
 import com.dumbhippo.server.listeners.UserCreationListener;
 import com.dumbhippo.server.listeners.YouTubeListener;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.PicasaAlbum;
 import com.dumbhippo.services.YouTubeVideo;
@@ -209,15 +210,15 @@ public class NotifierBean implements Notifier {
 		}
 	}
 
-	public void onMusicSharingToggled(Account account) {
+	public void onMusicSharingToggled(UserViewpoint viewpoint) {
 		for (AccountStatusListener l : getListeners(AccountStatusListener.class)) {
-			l.onMusicSharingToggled(account);
+			l.onMusicSharingToggled(viewpoint);
 		}
 	}
 
-	public void onApplicationUsageToggled(Account account) {
+	public void onApplicationUsageToggled(UserViewpoint viewpoint) {
 		for (AccountStatusListener l : getListeners(AccountStatusListener.class)) {
-			l.onApplicationUsageToggled(account);
+			l.onApplicationUsageToggled(viewpoint);
 		}
 	}
 

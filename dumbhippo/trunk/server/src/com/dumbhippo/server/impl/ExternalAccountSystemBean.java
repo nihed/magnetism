@@ -309,11 +309,11 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		}		
 	}
 
-	public void onMusicSharingToggled(Account account) {
+	public void onMusicSharingToggled(UserViewpoint viewpoint) {
 		// We aren't interested in this, just part of a listener iface we're using
 	}
 	
-	public void onApplicationUsageToggled(Account account) {
+	public void onApplicationUsageToggled(UserViewpoint viewpoint) {
 		// We aren't interested in this, just part of a listener iface we're using
 	}
 	

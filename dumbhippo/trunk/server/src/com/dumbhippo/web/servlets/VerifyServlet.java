@@ -31,6 +31,7 @@ import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.TokenExpiredException;
 import com.dumbhippo.server.TokenSystem;
 import com.dumbhippo.server.TokenUnknownException;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.web.SigninBean;
@@ -91,8 +92,9 @@ public class VerifyServlet extends AbstractServlet {
 		}
 		
 		if (viewedPostId != null && user != null) {
+			SigninBean signin = SigninBean.getForRequest(request);
 			PostingBoard postingBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
-			postingBoard.postViewedBy(viewedPostId, user);
+			postingBoard.postViewedBy(viewedPostId, new UserViewpoint(user, signin.getSite()));
 		}
 		
 		if (urlParam != null) {
@@ -133,7 +135,7 @@ public class VerifyServlet extends AbstractServlet {
 		
 		ClaimVerifier verifier = WebEJBUtil.defaultLookup(ClaimVerifier.class);
 		
-		verifier.verify(null, token, null);
+		verifier.verify(SystemViewpoint.getInstance(), token, null);
 		return redirectToNextPage(request, response, "/account", null);
 	}
 

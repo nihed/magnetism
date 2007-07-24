@@ -317,7 +317,7 @@ public interface IdentitySpider {
 
 	public boolean getMusicSharingEnabled(User user, Enabled enabled);
 	
-	public void setMusicSharingEnabled(User user, boolean enabled);
+	public void setMusicSharingEnabled(UserViewpoint viewpoint, boolean enabled);
 
 	public boolean getMusicSharingPrimed(User user);
 	
@@ -325,7 +325,7 @@ public interface IdentitySpider {
 	
 	public boolean getApplicationUsageEnabled(User user);
 	
-	public void setApplicationUsageEnabled(User user, boolean enabled);
+	public void setApplicationUsageEnabled(UserViewpoint viewpoint, boolean enabled);
 	
 	/**
 	 * Set a user's bio 

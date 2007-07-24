@@ -13,6 +13,7 @@ import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
+import com.dumbhippo.Site;
 import com.dumbhippo.dm.DMClient;
 import com.dumbhippo.dm.DMObject;
 import com.dumbhippo.dm.DMViewpoint;
@@ -146,7 +147,7 @@ public class XmppClient implements DMClient {
 	}
 
 	public DMViewpoint createViewpoint() {
-		return new UserViewpoint(userId);
+		return new UserViewpoint(userId, Site.XMPP);
 	}
 
 	QName NOTIFICATION_QNAME = QName.get("notify", Namespace.get("http://mugshot.org/p/system")); 

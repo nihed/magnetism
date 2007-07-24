@@ -16,6 +16,7 @@ import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.tx.RetryException;
+import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class SendInviteServlet extends AbstractServlet {
@@ -45,11 +46,17 @@ public class SendInviteServlet extends AbstractServlet {
 		
 		InvitationSystem invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 		
+		SigninBean signin = SigninBean.getForRequest(request);
+		if (!signin.isValid())
+			throw new HumanVisibleException("It looks like you aren't logged in");
+		
+		UserViewpoint viewpoint = (UserViewpoint) signin.getViewpoint();
+		
 		// we no longer need to check if the user has an invitation voucher to spend, 
 		// because invitationSystem will take care of it
 		String note;
 		try {
-			note = invitationSystem.sendEmailInvitation(new UserViewpoint(user), null, email, subject, message);
+			note = invitationSystem.sendEmailInvitation(viewpoint, null, email, subject, message);
 		} catch (ValidationException e) {
 			// the error page redirect kind of sucks, but if we do inline javascript 
 			// validation it would only happen in weird manual-url-typing cases

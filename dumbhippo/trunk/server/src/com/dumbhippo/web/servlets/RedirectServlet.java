@@ -11,9 +11,10 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
-import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class RedirectServlet extends AbstractServlet {
@@ -71,10 +72,10 @@ public class RedirectServlet extends AbstractServlet {
 				// to get the jsessionid, at least in theory
 				url = response.encodeRedirectURL(url);
 			} else {
-				User user = getUser(request);
-				if (user != null) {
+				SigninBean signin = SigninBean.getForRequest(request);
+				if (signin.isValid()) {
 					PostingBoard postingBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
-					postingBoard.postViewedBy(postId, user);
+					postingBoard.postViewedBy(postId, (UserViewpoint) signin.getViewpoint());
 				}
 			}
 			

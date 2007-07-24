@@ -19,7 +19,7 @@ import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.UserViewpoint;
-import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class GroupPhotoServlet extends AbstractPhotoServlet {
@@ -46,9 +46,11 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 		if (groupId == null)
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "group ID not provided");
 
-		// FIXME this will get cleaned up with future changes to have
-		// doLogin return a viewpoint
-		Viewpoint viewpoint = new UserViewpoint(user);
+		SigninBean signin = SigninBean.getForRequest(request);
+		if (!signin.isValid())
+			throw new HumanVisibleException("It looks like you aren't logged in");
+		
+		UserViewpoint viewpoint = (UserViewpoint) signin.getViewpoint();
 		Group group;
 		try {
 			group = groupSystem.lookupGroupById(viewpoint, groupId);
@@ -72,7 +74,7 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 		
 		// if we upload a photo we have to remove the stock photo that 
 		// would otherwise override
-		groupSystem.setStockPhoto(new UserViewpoint(user), group, null);
+		groupSystem.setStockPhoto(viewpoint, group, null);
 		
 		doFinalRedirect(request, response);
 	}

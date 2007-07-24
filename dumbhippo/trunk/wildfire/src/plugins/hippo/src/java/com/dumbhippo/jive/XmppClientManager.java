@@ -11,6 +11,7 @@ import org.jivesoftware.wildfire.SessionManagerListener;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 
+import com.dumbhippo.Site;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -149,7 +150,7 @@ public class XmppClientManager implements SessionManagerListener {
 					public void run() {
 						TxUtils.runInTransaction(new TxRunnable() {
 							public void run() throws RetryException {
-								DataService.getModel().initializeReadWriteSession(new UserViewpoint(userId));
+								DataService.getModel().initializeReadWriteSession(new UserViewpoint(userId, Site.XMPP));
 								
 								MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 								glue.updateLoginDate(userId, timestamp);

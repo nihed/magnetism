@@ -123,7 +123,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 	}
 
-	private InviterData lookupInviterData(User inviter, Resource invitee) {
+	private InviterData lookupInviterData(UserViewpoint inviter, Resource invitee) {
 		InviterData inviterData;
 		try {
 			// we get the newest invitation token, sort by date in descending order
@@ -133,7 +133,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 				"    AND ivd.invitation.invitee = :resource " +
 				"  ORDER BY ivd.invitation.creationDate DESC");
 			q.setParameter("resource", invitee);
-			q.setParameter("inviter", inviter);
+			q.setParameter("inviter", inviter.getViewer());
 			q.setMaxResults(1); // only need the first one
 			inviterData = (InviterData) q.getSingleResult();
 			
@@ -183,11 +183,13 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	public InvitationView lookupInvitationViewFor(UserViewpoint viewpoint, Resource invitee) {
 		// when someone is viewing an invitation, they can see it only if they
 		// are an inviter
-		User inviter = viewpoint.getViewer();
-		InviterData ivd = lookupInviterData(inviter, invitee);
+		InviterData ivd = lookupInviterData(viewpoint, invitee);
+		
+		if (ivd == null)
+			return null;
 		
 		Set<Group> suggestedGroups = 
-			groupSystem.getInvitedToGroups(ivd.getInviter(), invitee);
+			groupSystem.getInvitedToGroups(viewpoint, invitee);
 		
         InvitationView invitationView = new InvitationView(ivd.getInvitation(), ivd, suggestedGroups);
         
@@ -272,7 +274,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			// the invitations sent out by this particular inviter, but if it
 			// is null, it's ok to pass it to the invitationView constructor too
 			Set<Group> suggestedGroups = 
-				groupSystem.getInvitedToGroups(inviterData.getInviter(), invite.getInvitee());
+				groupSystem.getInvitedToGroups(viewpoint, invite.getInvitee());
             InvitationView invitationView = new InvitationView(invite, inviterData, suggestedGroups);
             invitationViews.add(invitationView);
 		}
@@ -294,7 +296,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		InviterData ivd = deleteInvitation(inviter, invite); 
 		if (ivd != null) {
 		    Set<Group> suggestedGroups = 
-		   	    groupSystem.getInvitedToGroups(ivd.getInviter(), invite.getInvitee());
+		   	    groupSystem.getInvitedToGroups(viewpoint, invite.getInvitee());
             InvitationView invitationView = new InvitationView(invite, ivd, suggestedGroups);
             return invitationView;	
 		}
@@ -733,10 +735,8 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	}
 
 	public boolean hasInvited(UserViewpoint viewpoint, Resource invitee) {
-		User user = viewpoint.getViewer();
-		
-		// iv will be null if user is not among the inviters
-		InviterData ivd = lookupInviterData(user, invitee);
+		// ivd will be null if user is not among the inviters
+		InviterData ivd = lookupInviterData(viewpoint, invitee);
 		
 		if (ivd != null && ivd.getInvitation().isValid() && !ivd.isDeleted())
 			return true;

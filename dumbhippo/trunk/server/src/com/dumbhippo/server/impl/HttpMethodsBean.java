@@ -48,6 +48,7 @@ import com.dumbhippo.BeanUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.RssBuilder;
+import com.dumbhippo.Site;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
@@ -550,7 +551,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doSetGroupMembershipPolicy(UserViewpoint viewpoint, Group group, boolean open) {
-		groupSystem.reviseGroupMembershipPolicy(viewpoint.getViewer(), group, open);		
+		groupSystem.reviseGroupMembershipPolicy(viewpoint, group, open);		
 	}
 	
 	public void doRenameGroup(UserViewpoint viewpoint, Group group, String name) {
@@ -681,7 +682,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	public void doSetMusicSharingEnabled(UserViewpoint viewpoint, boolean enabled)
 			throws IOException {
-		identitySpider.setMusicSharingEnabled(viewpoint.getViewer(), enabled);
+		identitySpider.setMusicSharingEnabled(viewpoint, enabled);
 	}
 	
 	public void doSetBio(UserViewpoint viewpoint, String bio) {
@@ -926,7 +927,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				} else {
 					// this does NOT check whether the account has invitations left,
 					// that's why we do it above.
-					note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter), promotionCode, address,
+					// FIXME handle a "GNOME" rather than "MUGSHOT" invite
+					note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter, Site.MUGSHOT), promotionCode, address,
 								"Mugshot Invitation", "");
 					if (note == null)
 						note = "Your invitation is on its way (check your email)";
@@ -1007,7 +1009,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			if (invitee == null)
 				continue;
 			
-			note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter), null, invitee,
+			// FIXME need to support GNOME in addition to MUGSHOT except we never do wants in on 
+			// gnome.org right now anyhow
+			note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter, Site.MUGSHOT), null, invitee,
 			                                            subject, message);
 		    if (note == null) {
                 logger.debug("Invitation for {} is on its way", wantsIn.getAddress());
@@ -1027,7 +1031,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 			try {
 			    for (String groupId : groupIdsSet) {
-			        Group groupToSuggest = groupSystem.lookupGroupById(new UserViewpoint(inviter), groupId);
+			        Group groupToSuggest = groupSystem.lookupGroupById(new UserViewpoint(inviter, Site.MUGSHOT), groupId);
 			        groupSystem.addMember(inviter, groupToSuggest, contact);
 			    }
 			} catch (NotFoundException e) {
@@ -1136,7 +1140,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		try {
-			signinSystem.sendRepairLink(user);
+			signinSystem.sendRepairLink(viewpoint, user);
 		} catch (HumanVisibleException e) {
 			throw new RuntimeException("Error sending repair link", e);
 		}
@@ -1298,7 +1302,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		public UserViewpoint getView(User u) {
-			return new UserViewpoint(u);
+			// admin console is currently always from "mugshot" view
+			return new UserViewpoint(u, Site.MUGSHOT);
 		}
 		
 		public Object getEJB(String name) throws ClassNotFoundException, NamingException {
@@ -2413,7 +2418,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doSetApplicationUsageEnabled(UserViewpoint viewpoint, boolean enabled) throws IOException, HumanVisibleException {
-		identitySpider.setApplicationUsageEnabled(viewpoint.getViewer(), enabled);
+		identitySpider.setApplicationUsageEnabled(viewpoint, enabled);
 	}
 	
 	public void doRevertApplication(XmlBuilder builder, UserViewpoint viewpoint, String applicationId, Guid version, String comment) throws XmlMethodException {
@@ -2464,9 +2469,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	public void doAddChatMessage(XmlBuilder xml, UserViewpoint viewpoint, Guid chatId, String text, String sentimentString) throws XmlMethodException, RetryException {
-		ChatRoomInfo info;
-		User user = viewpoint.getViewer();
-		
+
 		Sentiment sentiment;
 		try {
 			sentiment = Sentiment.valueOf(sentimentString);
@@ -2474,15 +2477,16 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Bad value for sentiment");
 		}
 		
+		ChatRoomInfo info;
 		try {
 			info = chatSystem.getChatRoomInfo(chatId, false);
-			if (!chatSystem.canJoinChat(info.getChatId(), info.getKind(), user.getGuid()))
+			if (!chatSystem.canJoinChat(info.getChatId(), info.getKind(), viewpoint))
 				throw new NotFoundException("Chatroom not visible");
 		} catch (NotFoundException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "No such chatroom");
 		}
 		
-		chatSystem.addChatRoomMessage(info.getChatId(), info.getKind(), user.getGuid(), text, sentiment, new Date());
+		chatSystem.addChatRoomMessage(info.getChatId(), info.getKind(), viewpoint, text, sentiment, new Date());
 	}
 	
 	public void getAimVerifyLink(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint) throws IOException, RetryException {
