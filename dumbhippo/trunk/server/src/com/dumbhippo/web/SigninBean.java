@@ -1,5 +1,8 @@
 package com.dumbhippo.web;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -36,6 +39,12 @@ public abstract class SigninBean  {
 	
 	private String server;
 	private Site site;
+	
+	// this convenience function may allow us to avoid creating SigninBean in some 
+	// cases eventually, not sure it's really needed
+	public static Site getSiteForRequest(HttpServletRequest request) {
+		return getForRequest(request).getSite();
+	}
 	
 	public static SigninBean getForRequest(HttpServletRequest request) {
 		SigninBean result = null;
@@ -82,13 +91,20 @@ public abstract class SigninBean  {
 				}
 			}
 
-			Site site;
-			Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
-			String host = config.getBaseUrlGnome().getHost();
-			if (request.getRequestURL().toString().equals(host)) {
-				site = Site.GNOME;
-			} else {
-				site = Site.MUGSHOT;
+			Site site = Site.MUGSHOT;
+			URL requestUrl = null;
+			try {
+				String requestUrlString = request.getRequestURL().toString();
+				// logger.debug("Request url '{}'", requestUrlString);
+				requestUrl = new URL(requestUrlString);
+			} catch (MalformedURLException e) {
+			}
+			if (requestUrl != null) {
+				Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
+				String host = config.getBaseUrlGnome().getHost();
+				if (requestUrl.getHost().equals(host)) {
+					site = Site.GNOME;
+				}
 			}
 			
 			if (account != null)
@@ -97,8 +113,7 @@ public abstract class SigninBean  {
 				result = new AnonymousSigninBean(site);
 
 			logger.debug("storing SigninBean on request, valid = {}", result.isValid());
-			request.setAttribute(SIGNIN_BEAN_KEY, result);
-			
+			request.setAttribute(SIGNIN_BEAN_KEY, result);			
 		}
 				
 		return result;

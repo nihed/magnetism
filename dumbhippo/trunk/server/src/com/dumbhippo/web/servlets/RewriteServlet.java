@@ -39,6 +39,7 @@ import javax.transaction.UserTransaction;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
@@ -78,6 +79,7 @@ public class RewriteServlet extends HttpServlet {
 	private Set<String> requiresSigninStealth;
 	private Set<String> noSignin;
 	private Map<String, Integer> jspPages;
+	private Set<String> jspPagesGnome;
 	private Set<String> htmlPages;
 	private String buildStamp;
 	
@@ -160,16 +162,20 @@ public class RewriteServlet extends HttpServlet {
 	return !path.equals("/error");
     }
     
-    private String getVersionedJspPath(String name) {
-		Integer version = jspPages.get(name);
-		String suffix = version.intValue() > 1 ? version.toString() : ""; 	
-		return "/jsp" + suffix + "/" + name + ".jsp";
+    private String getVersionedJspPath(Site site, String name) {
+    	if (site == Site.GNOME && jspPagesGnome.contains(name)) {
+    		return "/jsp-gnome/" + name + ".jsp";
+    	} else {
+			Integer version = jspPages.get(name);
+			String suffix = version.intValue() > 1 ? version.toString() : ""; 	
+			return "/jsp" + suffix + "/" + name + ".jsp";
+    	}
     }
 	
 	private void handleVersionedJsp(HttpServletRequest request, HttpServletResponse response, String name) throws IOException, ServletException {
 		// We can't use RewrittenRequest for JSP's because it breaks the
 		// handling of <jsp:forward/> and is generally unreliable
-		handleJsp(request, response, getVersionedJspPath(name));		
+		handleJsp(request, response, getVersionedJspPath(SigninBean.getSiteForRequest(request), name));		
 	}
     
 	public void handleJsp(HttpServletRequest request, HttpServletResponse response, String newPath) throws IOException, ServletException {
@@ -186,7 +192,8 @@ public class RewriteServlet extends HttpServlet {
 		// If the server says it's too busy, just redirect to a busy page
 	    if (serverStatus.isTooBusy() && canBusyRedirect(request)) {
 	    	WebStatistics.getInstance().incrementWebTooBusyCount();
-			context.getRequestDispatcher(getVersionedJspPath("busy")).forward(request, response);
+	    	String busyPath = getVersionedJspPath(SigninBean.getSiteForRequest(request), "busy");
+			context.getRequestDispatcher(busyPath).forward(request, response);
 			return;
 		}
 		
@@ -408,7 +415,8 @@ public class RewriteServlet extends HttpServlet {
 				// config.js is special and handled by a JSP, but it doesn't need
 				// our usual error/transaction stuff in handleJsp since it's just text 
 				// substitution
-				context.getRequestDispatcher(getVersionedJspPath("configjs")).forward(request, response);
+				String configPath = getVersionedJspPath(SigninBean.getSiteForRequest(request), "configjs");
+				context.getRequestDispatcher(configPath).forward(request, response);
 			} else if (path.equals("/javascript/whereimat.js")) {
 				handleVersionedJsp(request, response, "whereimatjs");
 			} else if (path.startsWith("/favicons/")) {
@@ -664,6 +672,17 @@ public class RewriteServlet extends HttpServlet {
 			}			
 		}
 		logger.debug("jsp pages are {}", jspPages);
+		
+		jspPagesGnome = new HashSet<String>();
+		{
+			String prefix = "/jsp-gnome/";
+			for (Object o : context.getResourcePaths(prefix)) {
+				String path = (String)o;
+				if (path.endsWith(".jsp") && path.indexOf('/') != -1)
+					jspPagesGnome.add(path.substring(prefix.length(), path.length() - 4));
+			}
+		}
+		logger.debug("gnome jsp pages are {}", jspPagesGnome);
 		
 		htmlPages = new HashSet<String>();
 		Set<?> htmlPaths = context.getResourcePaths("/html/");
