@@ -2360,16 +2360,19 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.closeElement();			
 	}
 
-	public void getUserRSS(OutputStream out, HttpResponseData contentType, User who, boolean participantOnly) throws IOException, XmlMethodException {
+	public void getUserRSS(OutputStream out, HttpResponseData contentType, Viewpoint viewpoint, User who, boolean participantOnly) throws IOException, XmlMethodException {
+		
+		// anonymize while keeping Site
+		viewpoint = AnonymousViewpoint.getInstance(viewpoint.getSite());
 		
 		List<BlockView> stack;
 		Pageable<BlockView> pageable = new Pageable<BlockView>("stack");
 		pageable.setPosition(0);
 		pageable.setInitialPerPage(5);
-		stacker.pageStack(AnonymousViewpoint.getInstance(), who, pageable, participantOnly);
+		stacker.pageStack(viewpoint, who, pageable, participantOnly);
 		stack = pageable.getResults();
 		
-		PersonView userView = personViewer.getPersonView(AnonymousViewpoint.getInstance(), who);
+		PersonView userView = personViewer.getPersonView(viewpoint, who);
 		
 	    String baseUrlString = config.getProperty(HippoProperty.BASEURL);
 	    

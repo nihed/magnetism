@@ -866,7 +866,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		if (userViewpoint != null)
 			viewpoint = userViewpoint;
 		else
-			viewpoint = AnonymousViewpoint.getInstance();
+			viewpoint = AnonymousViewpoint.getInstance(signin.getSite());
 		
 		// FIXME allow an XmlBuilder arg instead of output stream for 
 		// HttpResponseData.XML as well as XMLMETHOD

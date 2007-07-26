@@ -11,6 +11,7 @@ import javax.jms.ObjectMessage;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.botcom.BotEvent;
 import com.dumbhippo.botcom.BotEventLogin;
@@ -119,7 +120,7 @@ public class AimQueueConsumerBean implements MessageListener {
 	}
 
 	public void onMessage(Message message) {
-		DataService.getModel().initializeReadWriteSession(AnonymousViewpoint.getInstance());
+		DataService.getModel().initializeReadWriteSession(AnonymousViewpoint.getInstance(Site.NONE));
 		
 		try {
 			if (message instanceof ObjectMessage) {
