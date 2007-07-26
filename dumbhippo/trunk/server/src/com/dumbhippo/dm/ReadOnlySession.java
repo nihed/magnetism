@@ -16,6 +16,7 @@ import com.dumbhippo.dm.store.StoreKey;
  * @author otaylor
  */
 public class ReadOnlySession extends CachedSession {
+	@SuppressWarnings("unused")
 	private static Logger logger = GlobalSetup.getLogger(ReadOnlySession.class);
 	private long txTimestamp;
 
