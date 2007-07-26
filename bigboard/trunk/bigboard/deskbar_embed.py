@@ -2,7 +2,11 @@ import os, sys, re, logging
 
 import gtk, gobject, gnomeapplet, gconf
 
-import deskbar, deskbar.DeskbarApplet
+import deskbar
+try:
+    import deskbar.DeskbarApplet as DeskbarApplet
+except ImportError:
+    import deskbar.ui.DeskbarApplet as DeskbarApplet
 
 class Deskbar(gtk.VBox):
     def __init__(self, **kwargs):
@@ -12,7 +16,7 @@ class Deskbar(gtk.VBox):
 
         self.__applet = gnomeapplet.Applet()
         self.__applet.get_orient = lambda: gnomeapplet.ORIENT_DOWN
-        self.__deskbar = deskbar.DeskbarApplet.DeskbarApplet(self.__applet)
+        self.__deskbar = DeskbarApplet.DeskbarApplet(self.__applet)
         self.__deskbar.loader.connect("modules-loaded", self.__override_modules_loaded)
         self.__applet.reparent(self)
         uiname = gconf.Value(gconf.VALUE_STRING)
