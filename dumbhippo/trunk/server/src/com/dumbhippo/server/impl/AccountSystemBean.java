@@ -154,8 +154,7 @@ public class AccountSystemBean implements AccountSystem {
 	// usually we are called from HippoService which does not have its own transaction.
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	public void createCharacters() throws RetryException {
-		// Site.XMPP is a white lie (it doesn't matter what site we use).
-		DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance(Site.XMPP));
+		DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance());
 
 		for (final Character c : Character.values()) {
 			TxUtils.runNeedsRetry(new TxCallable<User>() {
