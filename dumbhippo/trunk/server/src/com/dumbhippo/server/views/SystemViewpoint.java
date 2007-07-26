@@ -1,8 +1,5 @@
 package com.dumbhippo.server.views;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.dumbhippo.Site;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.identity20.Guid;
@@ -24,32 +21,18 @@ import com.dumbhippo.persistence.User;
  * @author otaylor
  */
 public class SystemViewpoint extends Viewpoint {
-	private Site site;
-	
-	private SystemViewpoint(Site site) {
-		this.site = site;
+	private SystemViewpoint() {
 	}
 	
-	static final private Map<Site,SystemViewpoint> instances;
-	
-	static {
-		instances = new HashMap<Site,SystemViewpoint>();
-		for (Site s : Site.values())
-			instances.put(s, new SystemViewpoint(s));
-	}
-	
-	// FIXME planning to take this out in my next commit
-	static public SystemViewpoint getInstance() {
-		return instances.get(Site.MUGSHOT);
-	}
+	static final private SystemViewpoint instance = new SystemViewpoint();
 	
 	/**
-	 * Gets the system viewpoint singleton for the given site.
+	 * Gets the system viewpoint singleton. Its Site is always Site.NONE 
 	 * 
 	 * @return the global system viewpoint
 	 */
-	static public SystemViewpoint getInstance(Site site) {
-		return instances.get(site);
+	static public SystemViewpoint getInstance() {
+		return instance;
 	}
 
 	@Override
@@ -75,8 +58,9 @@ public class SystemViewpoint extends Viewpoint {
 		return true;
 	}
 
+	// the SystemViewpoint is never relative to Site.GNOME or Site.MUGSHOT
 	@Override
 	public Site getSite() {
-		return site;
+		return Site.NONE;
 	}
 }
