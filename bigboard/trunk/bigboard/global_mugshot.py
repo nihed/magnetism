@@ -153,8 +153,6 @@ class Mugshot(gobject.GObject):
          try:        
              bus = dbus.SessionBus()
              self._logger.debug("creating proxy for %s" % globals.bus_name)
-             if globals.do_autolaunch:
-                 subprocess.Popen(['mugshot']).pid
              self.__proxy = bus.get_object(globals.bus_name, '/org/mugshot/Mugshot')
              self.__proxy.connect_to_signal('ConnectionStatusChanged', self.__on_connection_status_changed)
              self.__proxy.connect_to_signal('PrefChanged', self.__on_pref_changed)            
