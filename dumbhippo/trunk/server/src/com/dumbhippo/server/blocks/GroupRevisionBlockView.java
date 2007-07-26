@@ -168,7 +168,7 @@ public class GroupRevisionBlockView extends BlockView implements PersonSourceBlo
 		case GROUP_FEED_REMOVED:
 			return revisor.getName() + " removed the feed '" + ((GroupFeedRemovedRevision) revision).getFeed().getTitle() + "' from " + group.getName();
 		case GROUP_MEMBERSHIP_POLICY_CHANGED:	
-			if (revisor.isMugshotCharacter())
+			if (revisor.isSpecialCharacter())
 				return group.getName() + " was changed " + getMembershipRevisionInfo();
 			else 
 			    return revisor.getName() + " changed " + group.getName() + getMembershipRevisionInfo();

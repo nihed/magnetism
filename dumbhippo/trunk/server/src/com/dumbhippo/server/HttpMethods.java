@@ -180,7 +180,7 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "countToInvite", "subject", "message", "suggestedGroupIds" })	
     @HttpOptions( adminOnly = true )
-	public void doInviteWantsIn(String countToInvite, String subject, String message, String suggestedGroupIds) throws IOException, RetryException;
+	public void doInviteWantsIn(Viewpoint viewpoint, String countToInvite, String subject, String message, String suggestedGroupIds) throws IOException, RetryException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "groupId", "inviteeId", "inviteeAddress", "subject", "message" })

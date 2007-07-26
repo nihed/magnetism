@@ -5,6 +5,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import com.dumbhippo.Pair;
+import com.dumbhippo.Site;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
@@ -160,13 +161,14 @@ public interface InvitationSystem {
 	 * for the user and such, and grants the client access to the account
 	 * by adding a Client object. If firstClientName is null no client 
 	 * is added.
-	 * 
+	 * @param site the site
 	 * @param invite the invitation
 	 * @param firstClientName name of the first client to create
 	 * @param disable true if the user wants to disable the account
+	 * 
 	 * @return initial client authorized to access the account
 	 */
-	public Client viewInvitation(InvitationToken invite, String firstClientName, boolean disable);
+	public Client viewInvitation(Site site, InvitationToken invite, String firstClientName, boolean disable);
 	
 	/**
 	 * Return the names (from the system viewpoint) of the inviting
@@ -222,8 +224,9 @@ public interface InvitationSystem {
 
 	/**
 	 * Get the number of self invitations that can be used for open sign up. 
+	 * @param site the site
 	 * 
 	 * @return count of self invitations available
 	 */
-    public int getSelfInvitationCount();
+    public int getSelfInvitationCount(Site site);
 }

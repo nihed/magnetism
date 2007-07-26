@@ -25,9 +25,12 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.SchemaUpdater;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.impl.MusicSystemBean;
+import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.FaviconCache;
 import com.dumbhippo.services.caches.AbstractCacheBean;
+import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.tx.TxUtils;
 
 // The point of this extremely simple MBean is to get notification
@@ -77,6 +80,13 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 		
 		heartbeatThread = new Thread(new Heartbeat());
 		heartbeatThread.start();
+		
+		AccountSystem accounts = EJBUtil.defaultLookup(AccountSystem.class);
+		try {
+			accounts.createCharacters();
+		} catch (RetryException e) {
+			throw new RuntimeException("Failed to create characters", e);
+		}
     }
 	
     @Override

@@ -17,6 +17,7 @@ import com.dumbhippo.server.NotFoundException;
  * @author otaylor
  */
 public abstract class CachedSession extends DMSession {
+	@SuppressWarnings("unused")
 	private static Logger logger = GlobalSetup.getLogger(CachedSession.class);
 	private DMClient client;
 	private DMViewpoint viewpoint;

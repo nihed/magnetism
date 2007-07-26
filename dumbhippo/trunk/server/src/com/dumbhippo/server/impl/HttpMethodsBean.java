@@ -976,13 +976,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	
-	public void doInviteWantsIn(String countToInvite, String subject, String message, String suggestedGroupIds) throws IOException, RetryException {	
+	public void doInviteWantsIn(Viewpoint viewpoint, String countToInvite, String subject, String message, String suggestedGroupIds) throws IOException, RetryException {	
 		logger.debug("Got into doInviteWantsIn");
 		int countToInviteValue = Integer.parseInt(countToInvite);
 		
 		String note = null;
 		
-		User inviter = accountSystem.getMugshotCharacter();
+		User inviter = accountSystem.getSiteCharacter(viewpoint.getSite());
 		
 		if (!inviter.getAccount().canSendInvitations(countToInviteValue)) {
             logger.debug("Mugshot character does not have enough invitations to invite {} people.", countToInviteValue);

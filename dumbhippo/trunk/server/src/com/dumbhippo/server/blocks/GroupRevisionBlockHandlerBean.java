@@ -53,7 +53,7 @@ public class GroupRevisionBlockHandlerBean
 			throw new BlockNotVisibleException("Group for the block is not visible", e);
 		}
 		
-		PersonView revisorView = personViewer.getPersonView(viewpoint, revision.getRevisor(), PersonViewExtra.MUGSHOT_CHARACTER_STATUS);
+		PersonView revisorView = personViewer.getPersonView(viewpoint, revision.getRevisor(), PersonViewExtra.SPECIAL_CHARACTER_STATUS);
 		
 		List<ChatMessageView> messageViews = chatSystem.viewMessages(chatSystem.getNewestMessages(block, BlockView.RECENT_MESSAGE_COUNT), viewpoint);
 		

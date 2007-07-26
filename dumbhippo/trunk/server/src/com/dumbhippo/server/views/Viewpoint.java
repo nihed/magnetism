@@ -1,5 +1,6 @@
 package com.dumbhippo.server.views;
 
+import com.dumbhippo.Site;
 import com.dumbhippo.dm.DMViewpoint;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
@@ -44,4 +45,6 @@ public abstract class Viewpoint implements DMViewpoint {
 	
 	public abstract boolean canSeeFriendsOnly(Guid userId);
 	public abstract boolean canSeePrivate(Guid userId);
+
+	public abstract Site getSite();
 }

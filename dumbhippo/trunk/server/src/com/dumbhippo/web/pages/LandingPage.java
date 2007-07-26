@@ -17,7 +17,7 @@ public class LandingPage extends AbstractPersonPage {
 	
 	public int getSelfInvitations() {
 		if (selfInvitations < 0) {
-			selfInvitations = invitationSystem.getSelfInvitationCount();
+			selfInvitations = invitationSystem.getSelfInvitationCount(getSignin().getSite());
 		}
 		return selfInvitations;
 	}

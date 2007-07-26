@@ -9,6 +9,8 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -17,6 +19,7 @@ import javax.persistence.Query;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
@@ -33,7 +36,9 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.UnauthorizedException;
+import com.dumbhippo.server.dm.DataService;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.tx.TxCallable;
@@ -145,46 +150,57 @@ public class AccountSystemBean implements AccountSystem {
 		return TypeUtils.castList(Account.class, q.getResultList());
 	}
 
-	public User getCharacter(final Character whichOne) throws RetryException {
-		return TxUtils.runNeedsRetry(new TxCallable<User>() {
-			public User call() throws RetryException {
-				EmailResource email;
-				try {
-					email = spider.getEmail(whichOne.getEmail());
-				} catch (ValidationException e) {
-					throw new RuntimeException("Character has invalid email address!");
+	// force a new transaction since we initializeReadWriteSession().
+	// usually we are called from HippoService which does not have its own transaction.
+	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+	public void createCharacters() throws RetryException {
+		// Site.XMPP is a white lie (it doesn't matter what site we use).
+		DataService.getModel().initializeReadWriteSession(SystemViewpoint.getInstance(Site.XMPP));
+
+		for (final Character c : Character.values()) {
+			TxUtils.runNeedsRetry(new TxCallable<User>() {
+				public User call() throws RetryException {
+					EmailResource email;
+					try {
+						email = spider.getEmail(c.getEmail());
+					} catch (ValidationException e) {
+						throw new RuntimeException("Character has invalid email address!");
+					}
+					User user = spider.getUser(email);
+					if (user == null) {
+						// don't add any special handling in here - it should be OK if 
+						// someone just creates the character accounts manually without running
+						// this code. We don't want to start doing "if (character) ; else ;" all
+						// over the place.
+						logger.info("Creating special user " + c);
+						Account account = createAccountFromResource(email);
+						user = account.getOwner();
+						user.setNickname(c.getDefaultNickname());
+					}
+					return user;
 				}
-				User user = spider.getUser(email);
-				if (user == null) {
-					// don't add any special handling in here - it should be OK if 
-					// someone just creates the character accounts manually without running
-					// this code. We don't want to start doing "if (character) ; else ;" all
-					// over the place.
-					logger.info("Creating special user " + whichOne);
-					Account account = createAccountFromResource(email);
-					user = account.getOwner();
-					user.setNickname(whichOne.getDefaultNickname());
-				}
-				return user;
-			}
-		});
+			});
+		}
 	}
 	
-	public User lookupCharacter(Character whichOne) throws NotFoundException {
-		EmailResource email = spider.lookupEmail(whichOne.getEmail());
+	public User getCharacter(Character whichOne) {
+		EmailResource email;
+		try {
+			email = spider.lookupEmail(whichOne.getEmail());
+		} catch (NotFoundException e) {
+			throw new RuntimeException("Character should have been created at startup: " + whichOne, e);
+		}
 		User user = spider.getUser(email);
 		if (user == null)
-			throw new NotFoundException("No user for character");
-		
+			throw new RuntimeException("Character should have been created at startup: " + whichOne);
 		return user;
 	}
 	
-	public User getMugshotCharacter() {
-		try {
+	public User getSiteCharacter(Site site) {
+		if (site == Site.GNOME)
+			return getCharacter(Character.GNOME);
+		else
 			return getCharacter(Character.MUGSHOT);
-		} catch (RetryException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	public Map<String, String> getPrefs(Account account) {
