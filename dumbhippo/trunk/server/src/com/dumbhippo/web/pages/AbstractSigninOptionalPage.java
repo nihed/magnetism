@@ -22,7 +22,7 @@ public class AbstractSigninOptionalPage extends AbstractSigninPage {
 		if (getSignin().isValid()) {
 			return getUserSignin().getViewpoint();
 		}
-		return AnonymousViewpoint.getInstance();
+		return AnonymousViewpoint.getInstance(getSignin().getSite());
 	}	
 	
 	@Override

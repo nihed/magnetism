@@ -31,11 +31,6 @@ public class AnonymousViewpoint extends Viewpoint {
 			instances.put(s, new AnonymousViewpoint(s));
 	}
 	
-	// FIXME planning to take this out in my next commit
-	static public AnonymousViewpoint getInstance() {
-		return instances.get(Site.MUGSHOT);
-	}
-	
 	/**
 	 * Gets the anonymous viewpoint singleton for the given site.
 	 * 

@@ -17,7 +17,7 @@ public class AnonymousSigninBean extends SigninBean {
 	
 	@Override
 	public Viewpoint getViewpoint() {
-		return AnonymousViewpoint.getInstance();
+		return AnonymousViewpoint.getInstance(getSite());
 	}
 	
 	public User getUser() {

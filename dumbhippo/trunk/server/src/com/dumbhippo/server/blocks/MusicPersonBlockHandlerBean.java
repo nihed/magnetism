@@ -10,6 +10,7 @@ import javax.ejb.Stateless;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Block;
@@ -103,7 +104,7 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 		if (publicBlock && !knownToHaveTracks) {
 			// maybe disable public block flag due to no visible tracks, this 
 			// happens if someone has never played anything
-			publicBlock = musicSystem.hasTrackHistory(AnonymousViewpoint.getInstance(), user);
+			publicBlock = musicSystem.hasTrackHistory(AnonymousViewpoint.getInstance(Site.NONE), user);
 		}
 		block.setPublicBlock(publicBlock);
 	}
