@@ -98,6 +98,7 @@ public abstract class SigninBean  {
 				// logger.debug("Request url '{}'", requestUrlString);
 				requestUrl = new URL(requestUrlString);
 			} catch (MalformedURLException e) {
+				logger.warn("Request contained malformed URL '{}': {}", request.getRequestURL().toString(), e);
 			}
 			if (requestUrl != null) {
 				Configuration config = WebEJBUtil.defaultLookup(Configuration.class);

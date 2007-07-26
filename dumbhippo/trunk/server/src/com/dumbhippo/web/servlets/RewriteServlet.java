@@ -387,14 +387,22 @@ public class RewriteServlet extends HttpServlet {
 		
 		if (path.equals("/favicon.ico")) {
 			// there are some cases where we aren't serving html so there's no 
-			// <link type="icon"/> - we normally point browsers to /images/favicon.ico 
+			// <link type="icon"/> - we normally point browsers to /images2/favicon.ico 
 			// in the html itself, but we need this for when we don't
-			RewrittenRequest rewrittenRequest = new RewrittenRequest(request, "/images2/favicon.ico");
+			String faviconPath;
+			if (SigninBean.getSiteForRequest(request) == Site.GNOME) {
+				faviconPath = "/images-gnome/favicon.ico";
+			} else {
+				faviconPath = "/images2/favicon.ico";
+			}
+			RewrittenRequest rewrittenRequest = new RewrittenRequest(request, faviconPath);
 			context.getNamedDispatcher("default").forward(rewrittenRequest, response);
 			return;
 		} else if (path.startsWith("/javascript/") ||
 				path.matches("/css\\d*/.*") ||
 				path.matches("/images\\d*/.*") ||
+				path.startsWith("/css-gnome/") ||
+				path.startsWith("/images-gnome/") ||
 				path.startsWith("/flash/") || 
 				path.startsWith("/favicons/")) {
 			
