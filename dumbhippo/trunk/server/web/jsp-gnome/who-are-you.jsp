@@ -2,18 +2,19 @@
 <%@ page pageEncoding="UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
-<%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
+<%@ taglib tagdir="/WEB-INF/tags/gnome" prefix="gnome" %>
 
 <dh:bean id="whoareyou" class="com.dumbhippo.web.pages.WhoAreYouPage" scope="page"/>
 
 <head>
-	<title>Log In GNOME Edition</title>
-	<dht:siteStyle/>
-	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/who-are-you.css">
-	<dht:faviconIncludes/>
-		<dh:script module="dh.login"/>
+	<title>GNOME Online Desktop: Log In</title>
+	<gnome:faviconIncludes/>
+	<gnome:stylesheet name="site"/>
+	<gnome:stylesheet name="who-are-you"/>	
+	<dh:script module="dh.login"/>
 </head>
-<dht:systemPage disableFooter="true" disableJumpTo="true" topImage="/images2/${buildStamp}/header_login310.gif" bottomImage="/images2/${buildStamp}/bottom_gray310.gif">
+
+<body>
 	<form id="dhLoginForm" name="dhLoginForm" action="/signinpost" method="post">
 		<c:if test='${!empty param["next"]}'>
 			<input type="hidden" value='${param["next"]}' name="next"/>
@@ -27,11 +28,11 @@
 		<div id="dhLoginNotification" style="display: none;"></div>
 		<div>Email address:</div>
 		<div>
-			<dht:textInput id="dhLoginAddressEntry" name="address"/>
+			<input id="dhLoginAddressEntry" name="address" type="text" maxlength="64"/>
 		</div>
 		<div id="dhLoginPasswordLabel" style="display: none;">Password:</div>
 		<div>
-			<dht:textInput id="dhLoginPasswordEntry" type="password" name="password" style="display: none;"/>
+			<input id="dhLoginPasswordEntry" type="password" name="password" style="display: none;" maxlength="64"/>
 		</div>
 		<input id="dhLoginPasswordShowing" type="hidden" value='false' name="passwordShowing"/>
 		<div style="position:relative">
@@ -39,7 +40,6 @@
 			<a id="dhPasswordHelp" href="http://developer.mugshot.org/wiki/Did_You_Set_A_Password" target="_blank">Did you set a password?</a>
 		</div>
 	</form>
-	<dht:zoneBoxSeparator/>
 	<div>
 		<c:if test="${!empty whoareyou.aimBotScreenName}">
 			<%-- c:if on one line here to avoid weird link text spacing --%>
@@ -48,5 +48,5 @@
 		<a id="dhLoginTogglePasswordLink" href="javascript:dh.login.togglePasswordBox()"><%-- filled in by javascript --%></a>&nbsp; [alt-p]
 	</div>
 	
-</dht:systemPage>
+</body>
 </html>
