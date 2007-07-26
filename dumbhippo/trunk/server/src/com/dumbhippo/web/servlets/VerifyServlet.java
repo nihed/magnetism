@@ -12,7 +12,6 @@ import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.Site;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.LoginToken;
