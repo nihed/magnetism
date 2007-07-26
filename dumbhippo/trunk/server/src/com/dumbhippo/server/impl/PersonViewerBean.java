@@ -190,12 +190,18 @@ public class PersonViewerBean implements PersonViewer {
 
 			pv.setContactOfViewer(isContact);
 			break;
-		case MUGSHOT_CHARACTER_STATUS:
-			boolean isMugshotCharacter = false;
-			if (pv.getUser() != null)
-			    isMugshotCharacter = pv.getUser().equals(accountSystem.getMugshotCharacter());
+		case SPECIAL_CHARACTER_STATUS:
+			boolean isSpecialCharacter = false;
+			if (pv.getUser() != null) {
+				for (com.dumbhippo.server.Character c : com.dumbhippo.server.Character.values()) {
+					if (pv.getUser().equals(accountSystem.getCharacter(c))) {
+						isSpecialCharacter = true;
+						break;
+					}
+				}
+			}
 			
-			pv.setMugshotCharacter(isMugshotCharacter);    
+			pv.setSpecialCharacter(isSpecialCharacter);    
 		}
 	}
 

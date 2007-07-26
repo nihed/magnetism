@@ -4,6 +4,8 @@
     <mbean code="com.dumbhippo.mbean.HippoService" name="dumbhippo.com:service=Hippo">
     	<!-- Initialize this service after our session MBeans are initialized -->
     	<depends>jboss.j2ee:service=EJB3,module=dumbhippo.ejb3</depends>
+    	<!-- And after data service is initialized -->
+    	<depends>dumbhippo.com:service=Data</depends>
     	<depends>jboss.j2ee:service=EJB3,module=dumbhippo-caches.par</depends>    	
     </mbean>
     <mbean code="com.dumbhippo.server.dm.DataService" name="dumbhippo.com:service=Data">

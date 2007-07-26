@@ -12,6 +12,7 @@ import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.LoginToken;
@@ -86,7 +87,7 @@ public class VerifyServlet extends AbstractServlet {
 			}
 		} else {
 			// first time we've gone to the invite link
-			Client client = invitationSystem.viewInvitation(invite, SigninBean.computeClientIdentifier(request), disable);
+			Client client = invitationSystem.viewInvitation(SigninBean.getSiteForRequest(request), invite, SigninBean.computeClientIdentifier(request), disable);
 			user = client.getAccount().getOwner();
 			SigninBean.initializeAuthentication(request, response, client);
 		}
@@ -199,7 +200,7 @@ public class VerifyServlet extends AbstractServlet {
 			if (e.getTokenClass() == InvitationToken.class)
 				if (!e.isViewed()) {
 					InvitationSystem invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
-					if (invitationSystem.getSelfInvitationCount() > 0)
+					if (invitationSystem.getSelfInvitationCount(SigninBean.getSiteForRequest(request)) > 0)
 				        throw new HumanVisibleException("Your invitation has expired.").setHtmlSuggestion("<a href=\"/signup\">Get a new invitation here!</a>");
 					else 
 						throw new HumanVisibleException("Your invitation has expired.").setHtmlSuggestion("<a href=\"/signup\">Request a new invitation here</a> or ask the person who sent you this to invite you again.");

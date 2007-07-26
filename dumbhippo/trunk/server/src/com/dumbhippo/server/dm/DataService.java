@@ -39,6 +39,8 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 	
 	private static DataService instance;
 	
+	// This service is started before HippoService, which sets up the tree cache and updates db schemas.
+	// Thus, don't try to use the database in here.
 	@Override
 	protected void startService() {
 		logger.info("Starting DataService MBean");

@@ -6,6 +6,7 @@ import java.util.Set;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.Site;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
@@ -102,6 +103,14 @@ public interface AccountSystem {
 	 */
 	public Account lookupAccountByOwnerId(Guid ownerId) throws NotFoundException;
 
+	/** 
+	 * Creates all the characters in the Character enum. Called at initialization time,
+	 * to avoid any need to create the characters inside getCharacter() or getSiteCharacter(). 
+	 * 
+	 * @throws RetryException
+	 */
+	public void createCharacters() throws RetryException;
+	
 	/**
 	 * Gets one of our special users, like the music butterfly or 
 	 * photo hippo or whatever. Supposed to be like any other user in 
@@ -111,26 +120,15 @@ public interface AccountSystem {
 	 * @return the character's User
 	 * @throws RetryException 
 	 */
-	public User getCharacter(Character whichOne) throws RetryException;
+	public User getCharacter(Character whichOne);
 	
 	/**
-	 * Like getCharacter(), but won't create it if it doesn't exist 
-	 * 
-	 * @param whichOne
-	 * @return
-	 * @throws NotFoundException
+	 * Returns the "main" character for the site, which is the Mugshot or GNOME 
+	 *  character. Should never fail since characters are created on startup.
+	 *  
+	 * @return user for the character 
 	 */
-	public User lookupCharacter(Character whichOne) throws NotFoundException;
-	
-	/**
-	 * Like getCharacter(Character.MUGSHOT), but without the exception return;
-	 * the idea here is that we use MUGSHOT all over the place, so so it
-	 * won't be newly created and thus the race condition that results in
-	 * RetryException won't happen.
-	 * 
-	 * @return Mugshot's user
-	 */
-	public User getMugshotCharacter();
+	public User getSiteCharacter(Site site);
 
 	/**
 	 * Return the "preferences" for this user.  Currently just two keys:

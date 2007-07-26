@@ -17,7 +17,7 @@
 	<dht3:blockLeft block="${block}" chatHeader="${chatHeader}" oneLine="${oneLine}">
 		<dht3:blockTitle>
 		    <c:choose>
-		        <c:when test="${block.revisorView.mugshotCharacter && dh:enumIs(block.revision.type, 'GROUP_MEMBERSHIP_POLICY_CHANGED')}">
+		        <c:when test="${block.revisorView.specialCharacter && dh:enumIs(block.revision.type, 'GROUP_MEMBERSHIP_POLICY_CHANGED')}">
 		             <dht3:entityLink who="${block.groupView}"/> was changed <c:out value="${block.membershipRevisionInfo}"/> 
 		        </c:when>
 		        <c:otherwise>     

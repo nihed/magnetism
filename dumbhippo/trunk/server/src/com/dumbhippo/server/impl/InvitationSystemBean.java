@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
+import com.dumbhippo.Site;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.email.MessageContent;
@@ -604,7 +605,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		//}
 	}
 	
-	public Client viewInvitation(InvitationToken invite, String firstClientName, boolean disable) {
+	public Client viewInvitation(Site site, InvitationToken invite, String firstClientName, boolean disable) {
 		if (invite.isViewed()) {
 			throw new IllegalArgumentException("InvitationToken " + invite + " has already been viewed");
 		}
@@ -649,7 +650,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			    // invite has a List of inviters, let's rather use the Mugshot character explicitly here,
 			    // it is important that Mugshot is already a member of a group we are inviting to,
 			    // which it already is for the summit group
-			    groupSystem.addMember(accounts.getMugshotCharacter(), summitGroup, newUser);
+			    groupSystem.addMember(accounts.getSiteCharacter(site), summitGroup, newUser);
 			} catch (PropertyNotFoundException e) {
 				logger.error("Summit Group guid not found, exception: {}", e.getMessage());				
 		    } catch (NotFoundException e) {
@@ -751,17 +752,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		int count = 0;
 		for (Character c : Character.values()) {
 			// the character enum has the same user more than once
-			User u;
-			try {
-				u = accounts.lookupCharacter(c);
-				if (already.contains(u))
-					continue;
-				already.add(u);
+			User u = accounts.getCharacter(c);
+			if (already.contains(u))
+				continue;
+			already.add(u);
 				
-				count += u.getAccount().getInvitations();
-			} catch (NotFoundException e) {
-				// Character account never created
-			}
+			count += u.getAccount().getInvitations();
 		}
 		return count;
 	}
@@ -773,8 +769,8 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return ((Number) q.getSingleResult()).intValue();
 	}
 	
-	public int getSelfInvitationCount() {
-		return getInvitations(SystemViewpoint.getInstance(), accounts.getMugshotCharacter());
+	public int getSelfInvitationCount(Site site) {
+		return getInvitations(SystemViewpoint.getInstance(), accounts.getSiteCharacter(site));
 	}
 	
 	static private class InviteMessageContent extends MessageContent {
@@ -861,7 +857,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			throw new RuntimeException(e);
 		}
 		
-		User mugshot = accounts.getMugshotCharacter();
+		User mugshot = accounts.getSiteCharacter(viewpoint.getSite());
 		boolean isMugshotInvite = (viewedInviter.getUser().equals(mugshot));
 		
 		if (subject == null || subject.trim().length() == 0) {

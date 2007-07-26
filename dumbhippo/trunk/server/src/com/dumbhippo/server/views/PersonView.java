@@ -63,7 +63,7 @@ public class PersonView extends EntityView {
 	private String aimPresenceKey;
 	private boolean viewerIsContact;
 	private InvitationView invitationView;
-	private boolean isMugshotCharacter;
+	private boolean isSpecialCharacter;
 	
 	private void addExtras(EnumSet<PersonViewExtra> more) {
 		if (extras == null)
@@ -940,15 +940,15 @@ public class PersonView extends EntityView {
 		return invitationView;
 	}
 
-	public void setMugshotCharacter(boolean isMugshotCharacter) {
-		this.isMugshotCharacter = isMugshotCharacter;
-		addExtras(EnumSet.of(PersonViewExtra.MUGSHOT_CHARACTER_STATUS));
+	public void setSpecialCharacter(boolean isMugshotCharacter) {
+		this.isSpecialCharacter = isMugshotCharacter;
+		addExtras(EnumSet.of(PersonViewExtra.SPECIAL_CHARACTER_STATUS));
 	}
 	
-	public boolean isMugshotCharacter() {
-		if (!hasExtra(PersonViewExtra.MUGSHOT_CHARACTER_STATUS))
+	public boolean isSpecialCharacter() {
+		if (!hasExtra(PersonViewExtra.SPECIAL_CHARACTER_STATUS))
 			logger.warn("isMugshotCharacter called on a PersonView without the MUGSHOT_CHARACTER_STATUS extra");
-		return isMugshotCharacter;
+		return isSpecialCharacter;
 	}	
 	
 }

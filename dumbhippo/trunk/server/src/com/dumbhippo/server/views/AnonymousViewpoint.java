@@ -1,5 +1,9 @@
 package com.dumbhippo.server.views;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import com.dumbhippo.Site;
 import com.dumbhippo.dm.DMSession;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
@@ -13,18 +17,32 @@ import com.dumbhippo.persistence.User;
  * @author otaylor
  */
 public class AnonymousViewpoint extends Viewpoint {
-	private AnonymousViewpoint() {
+	private Site site;
+	
+	private AnonymousViewpoint(Site site) {
+		this.site = site;
 	}
 	
-	static final private AnonymousViewpoint instance = new AnonymousViewpoint();
+	static final private Map<Site,AnonymousViewpoint> instances;
+	
+	static {
+		instances = new HashMap<Site,AnonymousViewpoint>();
+		for (Site s : Site.values())
+			instances.put(s, new AnonymousViewpoint(s));
+	}
+	
+	// FIXME planning to take this out in my next commit
+	static public AnonymousViewpoint getInstance() {
+		return instances.get(Site.MUGSHOT);
+	}
 	
 	/**
-	 * Gets the anonymous viewpoint singleton.
+	 * Gets the anonymous viewpoint singleton for the given site.
 	 * 
 	 * @return the global anonymous viewpoint
 	 */	
-	static public AnonymousViewpoint getInstance() {
-		return instance;
+	static public AnonymousViewpoint getInstance(Site site) {
+		return instances.get(site);
 	}
 
 	@Override
@@ -48,5 +66,10 @@ public class AnonymousViewpoint extends Viewpoint {
 	@Override
 	public boolean canSeePrivate(Guid userId) {
 		return false;
+	}
+
+	@Override
+	public Site getSite() {
+		return site;
 	}
 }
