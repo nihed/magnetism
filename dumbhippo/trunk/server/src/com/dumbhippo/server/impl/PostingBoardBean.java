@@ -59,7 +59,6 @@ import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.CreateInvitationResult;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MessageSender;
@@ -161,14 +160,14 @@ public class PostingBoardBean implements PostingBoard {
 	 * @param original the original url
 	 * @return either the same url or a fixed-up one
 	 */
-	private URL removeFrameset(URL original) {
+	private URL removeFrameset(Viewpoint viewpoint, URL original) {
 		logger.debug(String.format("do we remove frameset with path %s host %s query %s",
 				original.getPath(), original.getHost(), original.getQuery()));
 		
 		if (!original.getPath().equals("/visit"))
 			return original;
 		 
-		URL baseurl = configuration.getBaseUrl();
+		URL baseurl = configuration.getBaseUrlObject(viewpoint);
 		if (!original.getHost().equals(baseurl.getHost()))
 			return original;
 		String q = original.getQuery();
@@ -263,14 +262,14 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
-	private Post doLinkPostInternal(User poster, boolean toWorld, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo, PostType postType) throws NotFoundException {
+	private Post doLinkPostInternal(Viewpoint viewpoint, User poster, boolean toWorld, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo, PostType postType) throws NotFoundException {
 		
 		PostVisibility visibility;
 		
 		// if we want to explicitly send to "the world" then force public even if not to any public groups
 		visibility = toWorld ? PostVisibility.ATTRIBUTED_PUBLIC : PostVisibility.RECIPIENTS_ONLY;
 		
-		url = removeFrameset(url);
+		url = removeFrameset(viewpoint, url);
 		
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url)));
 		
@@ -335,11 +334,11 @@ public class PostingBoardBean implements PostingBoard {
 		return post;		
 	}
 	
-	public Post doLinkPost(User poster, boolean isPublic, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo) throws NotFoundException {
-		return doLinkPostInternal(poster, isPublic, title, text, url, recipients, inviteRecipients, postInfo, PostType.NORMAL);
+	public Post doLinkPost(Viewpoint viewpoint, User poster, boolean isPublic, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo) throws NotFoundException {
+		return doLinkPostInternal(viewpoint, poster, isPublic, title, text, url, recipients, inviteRecipients, postInfo, PostType.NORMAL);
 	}
 	
-	public Post doShareGroupPost(User poster, Group group, String title, String text, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients)
+	public Post doShareGroupPost(Viewpoint viewpoint, User poster, Group group, String title, String text, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients)
 	throws NotFoundException {
 		
 		for (GuidPersistable r : recipients) {
@@ -349,7 +348,7 @@ public class PostingBoardBean implements PostingBoard {
 				throw new NotFoundException("No recipient found for id " + r.getId());
 		}
 
-		String baseurl = configuration.getProperty(HippoProperty.BASEURL);
+		String baseurl = configuration.getBaseUrl(viewpoint);
 		URL url;
 		try {
 			url = new URL(baseurl + "/group?who=" + group.getId());
@@ -364,10 +363,10 @@ public class PostingBoardBean implements PostingBoard {
 		postInfo.getTree().updateContentChild(group.getId(), NodeName.shareGroup, NodeName.groupId);
 		postInfo.makeImmutable();
 
-		return doLinkPostInternal(poster, false, title, text, url, recipients, inviteRecipients, postInfo, PostType.GROUP);		
+		return doLinkPostInternal(viewpoint, poster, false, title, text, url, recipients, inviteRecipients, postInfo, PostType.GROUP);		
 	}
 
-	private void doTutorialPost(User recipient, Character sender, String urlText, String title, String text) throws RetryException {
+	private void doTutorialPost(Viewpoint viewpoint, User recipient, Character sender, String urlText, String title, String text) throws RetryException {
 		logger.debug("Sending tutorial post to {}", recipient);
 		User poster = accountSystem.getCharacter(sender);
 		URL url;
@@ -380,7 +379,7 @@ public class PostingBoardBean implements PostingBoard {
 		Set<GuidPersistable> recipientSet = Collections.singleton((GuidPersistable)recipient);
 		Post post;
 		try {
-			post = doLinkPostInternal(poster, false, title, text, url, recipientSet, InviteRecipients.MUST_INVITE, null, PostType.TUTORIAL);
+			post = doLinkPostInternal(viewpoint, poster, false, title, text, url, recipientSet, InviteRecipients.MUST_INVITE, null, PostType.TUTORIAL);
 		} catch (NotFoundException e) {
 			logger.error("Failed to post: {}", e.getMessage());
 			throw new RuntimeException(e);
@@ -388,24 +387,24 @@ public class PostingBoardBean implements PostingBoard {
 		logger.debug("Tutorial post done: {}", post);
 	}
 	
-	public void doShareLinkTutorialPost(User recipient) throws RetryException {
-		doTutorialPost(recipient, Character.LOVES_ACTIVITY, 
-				configuration.getProperty(HippoProperty.BASEURL) + "/account",
+	public void doShareLinkTutorialPost(Viewpoint viewpoint, User recipient) throws RetryException {
+		doTutorialPost(viewpoint, recipient, Character.LOVES_ACTIVITY, 
+				configuration.getBaseUrl(viewpoint) + "/account",
 				"What is this Mugshot thing?",
 				"Set up your account and learn to use Mugshot by visiting this link");
 	}
 
-	public void doNowPlayingTutorialPost(User recipient) throws RetryException {
-		doTutorialPost(recipient, Character.MUSIC_GEEK, 
-				configuration.getProperty(HippoProperty.BASEURL) + "/nowplaying",
+	public void doNowPlayingTutorialPost(Viewpoint viewpoint, User recipient) throws RetryException {
+		doTutorialPost(viewpoint, recipient, Character.MUSIC_GEEK, 
+				configuration.getBaseUrl(viewpoint) + "/nowplaying",
 				"Put your music online",
 				"Visit this link to learn how to put your music on your blog or MySpace page");
 	}
 	
 
-	public void doGroupInvitationPost(User recipient, Group group) throws RetryException {
-		doTutorialPost(recipient, Character.LOVES_ACTIVITY, 
-				configuration.getProperty(HippoProperty.BASEURL) + "/group?who=" + group.getId(),
+	public void doGroupInvitationPost(Viewpoint viewpoint, User recipient, Group group) throws RetryException {
+		doTutorialPost(viewpoint, recipient, Character.LOVES_ACTIVITY, 
+				configuration.getBaseUrl(viewpoint) + "/group?who=" + group.getId(),
 				"Invitation to join " + group.getName(),
 				"You've been invited to join the " + group.getName() + " group");		
 	}	

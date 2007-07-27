@@ -55,7 +55,6 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.Enabled;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
@@ -676,9 +675,9 @@ public class MusicSystemBean implements MusicSystem {
 		return view;		
 	}
 	
-	private void fillArtistInfo(YahooArtistData yahooArtist, ExpandedArtistView artistView) {		
+	private void fillArtistInfo(Viewpoint viewpoint, YahooArtistData yahooArtist, ExpandedArtistView artistView) {		
 		// set defaults for the image
-        artistView.setSmallImageUrl(config.getProperty(HippoProperty.BASEURL) + "/images/no_image_available75x75light.gif");
+        artistView.setSmallImageUrl(config.getBaseUrl(viewpoint) + "/images/no_image_available75x75light.gif");
         artistView.setSmallImageWidth(75);
         artistView.setSmallImageHeight(75);
 			
@@ -728,7 +727,7 @@ public class MusicSystemBean implements MusicSystem {
 		// whack the results we don't need so we don't bother converting them to AlbumView
 		albumsByArtist.chopForPageResults(albums);
 		
-		fillArtistInfo(yahooArtist, view);
+		fillArtistInfo(viewpoint, yahooArtist, view);
 		
 		// can start threads to get each album cover and to get songs for each album in parallel 
 		Map<String, Future<AmazonAlbumData>> futureAmazonAlbums = new HashMap<String, Future<AmazonAlbumData>>();		

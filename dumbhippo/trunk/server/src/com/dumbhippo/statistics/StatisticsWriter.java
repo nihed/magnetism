@@ -50,7 +50,8 @@ public class StatisticsWriter extends StatisticsSet {
 		header = new Header();
 		
 		Configuration configuration = EJBUtil.defaultLookup(Configuration.class);
-		header.setHostName(configuration.getBaseUrl().getHost());
+		// here it doesn't matter whether we use the mugshot.org or other base url
+		header.setHostName(configuration.getBaseUrlMugshot().getHost());
 		
 		header.setInterval(INTERVAL);
 		header.setStartTime(new Date());

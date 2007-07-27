@@ -10,9 +10,9 @@ import com.dumbhippo.tx.RetryException;
 @Local
 public interface SigninSystem {
 
-	public void sendSigninLinkEmail(String address) throws HumanVisibleException, RetryException;
+	public void sendSigninLinkEmail(Viewpoint viewpoint, String address) throws HumanVisibleException, RetryException;
 	
-	public String getSigninLinkAim(String address) throws HumanVisibleException, RetryException;
+	public String getSigninLinkAim(Viewpoint viewpoint, String address) throws HumanVisibleException, RetryException;
 	
 	public void sendRepairLink(Viewpoint viewpoint, User user) throws HumanVisibleException, RetryException; 
 	

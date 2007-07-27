@@ -40,7 +40,7 @@ public class CookieAuthentication {
 		Cookie[] cookies = request.getCookies();
 		
 		Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
-		URL url = config.getBaseUrl();
+		URL url = config.getBaseUrlObject(SigninBean.getSiteForRequest(request));
 		String host = url.getHost();
 		
 		if (cookies != null) {

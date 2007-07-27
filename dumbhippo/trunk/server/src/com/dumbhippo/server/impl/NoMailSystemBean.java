@@ -15,9 +15,9 @@ import com.dumbhippo.persistence.NoMail;
 import com.dumbhippo.persistence.ToggleNoMailToken;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NoMailSystem;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.tx.RetryException;
 import com.dumbhippo.tx.TxCallable;
 import com.dumbhippo.tx.TxUtils;
@@ -80,12 +80,12 @@ public class NoMailSystemBean implements NoMailSystem {
 	}
 
 
-	public String getNoMailUrl(String address, Action action) throws ValidationException, RetryException {
+	public String getNoMailUrl(Viewpoint viewpoint, String address, Action action) throws ValidationException, RetryException {
 		EmailResource email = identitySpider.getEmail(address);
-		return getNoMailUrl(email, action);
+		return getNoMailUrl(viewpoint, email, action);
 	}
 	
-	public String getNoMailUrl(final EmailResource email, Action action) throws RetryException {
+	public String getNoMailUrl(Viewpoint viewpoint, final EmailResource email, Action action) throws RetryException {
 		ToggleNoMailToken token = TxUtils.runNeedsRetry(new TxCallable<ToggleNoMailToken>() {
 			public ToggleNoMailToken call() {
 				Query q;
@@ -111,11 +111,11 @@ public class NoMailSystemBean implements NoMailSystem {
 			
 		});
 
-		return getNoMailUrl(token, action);
+		return getNoMailUrl(viewpoint, token, action);
 	}
 
-	public String getNoMailUrl(ToggleNoMailToken token, Action action) {
-		String url = token.getAuthURL(config.getPropertyFatalIfUnset(HippoProperty.BASEURL));
+	public String getNoMailUrl(Viewpoint viewpoint, ToggleNoMailToken token, Action action) {
+		String url = token.getAuthURL(config.getBaseUrl(viewpoint));
 		if (action == Action.NO_MAIL_PLEASE)
 			return url + "&action=disable";
 		else if (action == Action.WANTS_MAIL)

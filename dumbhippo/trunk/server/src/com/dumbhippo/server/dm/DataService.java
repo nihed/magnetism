@@ -10,6 +10,7 @@ import org.jboss.system.ServiceMBeanSupport;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.dm.ChangeNotificationSet;
 import com.dumbhippo.dm.ChangeNotifier;
 import com.dumbhippo.dm.DMSessionMapJTA;
@@ -22,7 +23,6 @@ import com.dumbhippo.jms.JmsConsumer;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.jms.JmsShutdownException;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
@@ -50,7 +50,10 @@ public class DataService extends ServiceMBeanSupport implements DataServiceMBean
 		em = emf.createEntityManager();
 
 		Configuration config = EJBUtil.defaultLookup(Configuration.class);
-		String baseUrl = config.getProperty(HippoProperty.BASEURL);
+		
+		// FIXME using the Mugshot base url hardcoded here is not good. config.getBaseUrl() 
+		// will whine about it once in the logs so we don't forget.
+		String baseUrl = config.getBaseUrl(Site.NONE);
 		
 		model = new DataModel(baseUrl, new DMSessionMapJTA(), emf, this, Viewpoint.class, SystemViewpoint.getInstance());
 		

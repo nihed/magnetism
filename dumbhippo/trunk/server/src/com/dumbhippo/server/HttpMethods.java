@@ -114,7 +114,7 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "address" })
-	public void doSendLoginLinkEmail(XmlBuilder xml, String address) throws IOException, HumanVisibleException, RetryException;
+	public void doSendLoginLinkEmail(XmlBuilder xml, Viewpoint viewpoint, String address) throws IOException, HumanVisibleException, RetryException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address" })
@@ -152,7 +152,8 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "who", "theme" })
 	@HttpOptions( optionalParams = { "theme" } )
-	public void getNowPlaying(OutputStream out, HttpResponseData contentType, String who, String theme)
+	public void getNowPlaying(OutputStream out, HttpResponseData contentType, Viewpoint viewpoint,
+			String who, String theme)
 			throws IOException;
 
 	@HttpContentTypes(HttpResponseData.TEXT)

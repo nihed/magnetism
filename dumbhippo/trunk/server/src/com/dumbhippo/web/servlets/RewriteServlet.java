@@ -326,6 +326,13 @@ public class RewriteServlet extends HttpServlet {
 	@Override
 	public void service(HttpServletRequest request,	HttpServletResponse response) throws IOException, ServletException {
 
+		SigninBean signin = SigninBean.getForRequest(request);
+		Configuration configuration = EJBUtil.defaultLookup(Configuration.class);
+		
+        // Store the server's base URL for reference from JSP pages
+        String baseUrl = configuration.getBaseUrl(signin.getSite());
+        request.setAttribute("baseUrl", baseUrl);
+		
 		// be sure we only handle appropriate http methods, not e.g. DAV methods.
 		// also, appropriately implement OPTIONS method.
 		String httpMethod = request.getMethod().toUpperCase();
@@ -441,7 +448,6 @@ public class RewriteServlet extends HttpServlet {
 		
 		String afterSlash = path.substring(1);
 		
-		SigninBean signin = SigninBean.getForRequest(request);
 		boolean doSigninRedirect;
 		
 		boolean isRequiresSignin = requiresSignin.contains(afterSlash); 
@@ -751,11 +757,8 @@ public class RewriteServlet extends HttpServlet {
 		} catch (IOException e) {
 			logger.error("Initial build stamp load failed: {}", e.getMessage());
 			throw new ServletException("Failed to load build stamp", e);
-		}
-		
-        // Store the server's base URL for reference from JSP pages
-        String baseUrl = configuration.getPropertyFatalIfUnset(HippoProperty.BASEURL);
-        getServletContext().setAttribute("baseUrl", baseUrl);
+		}		
+
         getServletContext().setAttribute("googleAnalyticsKey", configuration.getPropertyFatalIfUnset(HippoProperty.GOOGLE_ANALYTICS_KEY));        
 	}
 	

@@ -75,7 +75,7 @@ public class PersonPage extends AbstractPersonPage {
 	}
 	
 	private String getFullProfileUrl() {
-		return config.getBaseUrl().toExternalForm() + "/person?who=" + getViewedUserId();
+		return config.getBaseUrl(getSignin().getSite()) + "/person?who=" + getViewedUserId();
 	}
 	
 	// this is done in Java instead of in the jsp because the escaping is too mind-melting otherwise

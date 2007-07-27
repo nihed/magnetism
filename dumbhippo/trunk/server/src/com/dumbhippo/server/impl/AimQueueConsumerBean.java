@@ -111,7 +111,8 @@ public class AimQueueConsumerBean implements MessageListener {
 	
 	private void processLoginEvent(BotEventLogin event) throws RetryException {
 		try {
-			String htmlSigninLinkMessage = signinSystem.getSigninLinkAim(event.getAimName());
+			String htmlSigninLinkMessage = signinSystem.getSigninLinkAim(AnonymousViewpoint.getInstance(Site.NONE), 
+					event.getAimName());
 			sendHtmlReplyMessage(event, event.getAimName(), htmlSigninLinkMessage);
 		} catch (HumanVisibleException e) {
 			logger.warn("exception getting signin link, sending back to user: {} ", e.getMessage());

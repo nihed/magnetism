@@ -18,7 +18,6 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.Mailer;
@@ -117,7 +116,7 @@ public class MessageSenderBean implements MessageSender {
 				return;
 			}
 			
-			String baseurl = config.getProperty(HippoProperty.BASEURL);
+			String baseurl = config.getBaseUrl(viewpoint);
 			
 			// If the sender has addressed their post directly to this recipient, then
 			// we want to "pile on" to any invitation that exists for the recipient.
@@ -135,7 +134,7 @@ public class MessageSenderBean implements MessageSender {
 			String recipientStopUrl;
 			
 			if (recipientInviteUrl == null) {
-				recipientStopUrl = noMail.getNoMailUrl(recipient, NoMailSystem.Action.NO_MAIL_PLEASE);
+				recipientStopUrl = noMail.getNoMailUrl(viewpoint, recipient, NoMailSystem.Action.NO_MAIL_PLEASE);
 			} else {
 				recipientStopUrl = recipientInviteUrl + "&disable=true";
 			}

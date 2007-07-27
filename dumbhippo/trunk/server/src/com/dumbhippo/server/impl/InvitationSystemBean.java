@@ -851,7 +851,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		String baseurl;
 		URL baseurlObject;
 		try {
-			baseurl = configuration.getProperty(HippoProperty.BASEURL);
+			baseurl = configuration.getBaseUrl(viewpoint);
 			baseurlObject = new URL(baseurl);
 		} catch (MalformedURLException e) {
 			throw new RuntimeException(e);
