@@ -6,7 +6,9 @@ import java.net.URL;
 import javax.ejb.ApplicationException;
 import javax.ejb.Local;
 
+import com.dumbhippo.Site;
 import com.dumbhippo.server.downloads.DownloadConfiguration;
+import com.dumbhippo.server.views.Viewpoint;
 
 /**
  * Represents the configuration of the Dumbhippo server; just
@@ -83,11 +85,19 @@ public interface Configuration {
 	 */
 	public String getPropertyFatalIfUnset(HippoProperty name);
 	
+	public URL getBaseUrlObject(Site site);
+	
+	public String getBaseUrl(Site site);
+	
+	public URL getBaseUrlObject(Viewpoint viewpoint);
+	
+	public String getBaseUrl(Viewpoint viewpoint);
+	
 	/**
 	 * Gets our base URL parsed into an URL object.
 	 * @return the base URL for this server
 	 */
-	public URL getBaseUrl();
+	public URL getBaseUrlMugshot();
 	
 	/**
 	 * Gets our base URL for the GNOME site parsed into an URL object.

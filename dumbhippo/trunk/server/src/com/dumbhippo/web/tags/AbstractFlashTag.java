@@ -10,7 +10,6 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.web.WebEJBUtil;
 ;
 
@@ -52,7 +51,8 @@ public abstract class AbstractFlashTag extends SimpleTagSupport {
 	
 	static private String getAbsoluteUrl(FlashBadge badge, String queryString) {
 		Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
-		String baseurl = config.getProperty(HippoProperty.BASEURL);
+		// hardcoding Mugshot for now because the flash stuff is only used on Mugshot site anyway 
+		String baseurl = config.getBaseUrlMugshot().toExternalForm();
 		StringBuilder sb = new StringBuilder();
 		sb.append(baseurl);
 		sb.append(badge.getRelativeUrl());
@@ -132,7 +132,8 @@ public abstract class AbstractFlashTag extends SimpleTagSupport {
 			throw new RuntimeException("no user provided to output tag");
 
 		Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
-		String baseurl = config.getProperty(HippoProperty.BASEURL);		
+		// hardcoding mugshot for now since we only use flash on the Mugshot.org site
+		String baseurl = config.getBaseUrlMugshot().toExternalForm();		
 		
 		StringBuilder sb = new StringBuilder();
 		

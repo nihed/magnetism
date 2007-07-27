@@ -47,4 +47,14 @@ public abstract class Viewpoint implements DMViewpoint {
 	public abstract boolean canSeePrivate(Guid userId);
 
 	public abstract Site getSite();
+	
+	/**
+	 * converts the viewpoint to an anonymous viewpoint, preserving the 
+	 * Site and any other future non-user-specific info we might add.
+	 * 
+	 * @return
+	 */
+	public AnonymousViewpoint anonymize() {
+		return AnonymousViewpoint.getInstance(getSite());
+	}
 }

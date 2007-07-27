@@ -21,7 +21,6 @@ import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
@@ -102,7 +101,7 @@ public class VerifyServlet extends AbstractServlet {
 			
 			// if the redirect url is to ourself (normally a group page) then 
 			// we want to tell the page we're sending to that it's from here
-			if (urlParam.startsWith(config.getPropertyFatalIfUnset(HippoProperty.BASEURL))) {
+			if (urlParam.startsWith(config.getBaseUrl(SigninBean.getSiteForRequest(request)))) {
 				try {
 					URL url = new URL(urlParam);
 					if (url.getQuery() == null)

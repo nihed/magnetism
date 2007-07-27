@@ -17,7 +17,6 @@ import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.web.CookieAuthentication.NotLoggedInException;
@@ -36,14 +35,45 @@ public abstract class SigninBean  {
 	private static final String USER_ID_KEY = "dumbhippo.signedInUserId";
 	private static final String CLIENT_ID_KEY = "dumbhippo.signedInClient";
 	private static final String SIGNIN_BEAN_KEY = "signin";
+	private static final String SITE_KEY = "site";
 	
 	private String server;
 	private Site site;
 	
-	// this convenience function may allow us to avoid creating SigninBean in some 
-	// cases eventually, not sure it's really needed
+	// The Site is stored with its own SITE_KEY instead of as part of the 
+	// SigninBean because sometimes we need the site as part of signing
+	// in, e.g. to put the host name in our login cookie.
 	public static Site getSiteForRequest(HttpServletRequest request) {
-		return getForRequest(request).getSite();
+		Site site;
+		try {
+			site = (Site) request.getAttribute(SITE_KEY);
+		} catch (ClassCastException e) {
+			logger.error("Value of {} wasn't a Site value", SITE_KEY);
+			site = null;
+		}
+		
+		if (site == null) {
+			site = Site.MUGSHOT;
+			URL requestUrl = null;
+			try {
+				String requestUrlString = request.getRequestURL().toString();
+				// logger.debug("Request url '{}'", requestUrlString);
+				requestUrl = new URL(requestUrlString);
+			} catch (MalformedURLException e) {
+				logger.warn("Request contained malformed URL '{}': {}", request.getRequestURL().toString(), e);
+			}
+			if (requestUrl != null) {
+				Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
+				String host = config.getBaseUrlGnome().getHost();
+				if (requestUrl.getHost().equals(host)) {
+					site = Site.GNOME;
+				}
+			}
+			
+			request.setAttribute(SITE_KEY, site);
+		}
+		
+		return site;
 	}
 	
 	public static SigninBean getForRequest(HttpServletRequest request) {
@@ -60,6 +90,8 @@ public abstract class SigninBean  {
 		}
 		
 		if (result == null) {
+			Site site = getSiteForRequest(request);
+			
 			Guid userGuid = null;
 			Account account = null;
 			
@@ -88,23 +120,6 @@ public abstract class SigninBean  {
 					account = accountSystem.lookupAccountByOwnerId(userGuid);
 				} catch (NotFoundException e) {
 					logger.warn("Couldn't load account for stored authenticated user");
-				}
-			}
-
-			Site site = Site.MUGSHOT;
-			URL requestUrl = null;
-			try {
-				String requestUrlString = request.getRequestURL().toString();
-				// logger.debug("Request url '{}'", requestUrlString);
-				requestUrl = new URL(requestUrlString);
-			} catch (MalformedURLException e) {
-				logger.warn("Request contained malformed URL '{}': {}", request.getRequestURL().toString(), e);
-			}
-			if (requestUrl != null) {
-				Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
-				String host = config.getBaseUrlGnome().getHost();
-				if (requestUrl.getHost().equals(host)) {
-					site = Site.GNOME;
 				}
 			}
 			
@@ -151,11 +166,11 @@ public abstract class SigninBean  {
 		Account account = client.getAccount();
 		User user = account.getOwner();
 		if (account.isActive()) {
-			setCookie(response, user.getGuid(), client.getAuthKey());
+			setCookie(getSiteForRequest(request), response, user.getGuid(), client.getAuthKey());
 		} else {
 			SigninBean.storeGuid(request.getSession(), user.getGuid());
 			request.getSession().setAttribute(CLIENT_ID_KEY, client.getId());
-			setAuthenticatedCookie(response);
+			setAuthenticatedCookie(getSiteForRequest(request), response);
 		}		
 
 		return "/";
@@ -176,10 +191,10 @@ public abstract class SigninBean  {
 				Client client = accountSystem.getExistingClient(userId, clientId);
 				Account account = client.getAccount();
 				if (account.isActive())
-					setCookie(response, userId, client.getAuthKey());
+					setCookie(getSiteForRequest(request), response, userId, client.getAuthKey());
 				else {
 					unsetCookie(response);
-					setAuthenticatedCookie(response);
+					setAuthenticatedCookie(getSiteForRequest(request), response);
 				}
 			} catch (NotFoundException e) {
 				// Client must have been deleted since we first authorized the session, do nothing
@@ -187,9 +202,9 @@ public abstract class SigninBean  {
 		}
 	}
 	
-	private static void setCookie(HttpServletResponse response, Guid personId, String authKey) {
+	private static void setCookie(Site site, HttpServletResponse response, Guid personId, String authKey) {
 		Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
-		String host = config.getBaseUrl().getHost();
+		String host = config.getBaseUrlObject(site).getHost();
 		
 		LoginCookie loginCookie = new LoginCookie(host, personId.toString(), authKey);
 		response.addCookie(loginCookie.getCookie());
@@ -201,9 +216,9 @@ public abstract class SigninBean  {
 	// This is set in the "signed in but account is not active" state and used
 	// by  by our caching infrastructure to know that the user shouldn't be served
 	// anonymous cached content.
-	private static void setAuthenticatedCookie(HttpServletResponse response) {
+	private static void setAuthenticatedCookie(Site site, HttpServletResponse response) {
 		Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
-		String host = config.getBaseUrl().getHost();
+		String host = config.getBaseUrlObject(site).getHost();
 
 		response.addCookie(LoginCookie.newAuthenticatedCookie(host));
 		logger.debug("Set authenticated cookie");
@@ -231,7 +246,7 @@ public abstract class SigninBean  {
 	public String getServer() {
 		if (server == null) {
 			Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
-			String url = config.getPropertyFatalIfUnset(HippoProperty.BASEURL);
+			String url = config.getBaseUrl(site);
 			// if you get this exception, should probably just add new 
 			// config props for host and port
 			if (!url.startsWith("http://") || url.endsWith("/"))

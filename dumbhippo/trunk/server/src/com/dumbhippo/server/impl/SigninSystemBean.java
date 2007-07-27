@@ -55,19 +55,19 @@ public class SigninSystemBean implements SigninSystem {
 	@EJB
 	private Mailer mailer;
 	
-	private String getLoginLink(Resource resource) throws HumanVisibleException, RetryException {
+	private String getLoginLink(Viewpoint viewpoint, Resource resource) throws HumanVisibleException, RetryException {
 		LoginToken token = loginVerifier.getLoginToken(resource);
-		return token.getAuthURL(configuration.getPropertyFatalIfUnset(HippoProperty.BASEURL));
+		return token.getAuthURL(configuration.getBaseUrl(viewpoint));
 	}
 	
-	public void sendSigninLinkEmail(String address) throws HumanVisibleException, RetryException {
+	public void sendSigninLinkEmail(Viewpoint viewpoint, String address) throws HumanVisibleException, RetryException {
 		EmailResource resource;
 		try {
 			resource = identitySpider.lookupEmail(address);
 		} catch (NotFoundException e) {
 			throw new HumanVisibleException("That isn't an email address we know about");
 		}
-		String link = getLoginLink(resource);
+		String link = getLoginLink(viewpoint, resource);
 		MimeMessage message = mailer.createMessage(Mailer.SpecialSender.LOGIN, resource.getEmail());
 		
 		StringBuilder bodyText = new StringBuilder();
@@ -86,7 +86,7 @@ public class SigninSystemBean implements SigninSystem {
 		mailer.sendMessage(message);
 	}
 	
-	public String getSigninLinkAim(String address) throws HumanVisibleException, RetryException {
+	public String getSigninLinkAim(Viewpoint viewpoint, String address) throws HumanVisibleException, RetryException {
 		AimResource resource;
 		try {
 			resource = identitySpider.lookupAim(address);
@@ -94,7 +94,7 @@ public class SigninSystemBean implements SigninSystem {
 			throw new HumanVisibleException("That isn't an AIM screen name we know about");
 		}
 		
-		String link = getLoginLink(resource);
+		String link = getLoginLink(viewpoint, resource);
 		XmlBuilder bodyHtml = new XmlBuilder();
 		bodyHtml.appendTextNode("a", "Click to sign in", "href", link);
 		
@@ -173,7 +173,7 @@ public class SigninSystemBean implements SigninSystem {
 		
 		EmailResource emailResource = (EmailResource)resource;
 		
-		String baseLink = getLoginLink(emailResource);
+		String baseLink = getLoginLink(viewpoint, emailResource);
 		String link = baseLink + "&next=repair";
 		MimeMessage message = mailer.createMessage(Mailer.SpecialSender.LOGIN, emailResource.getEmail());
 		

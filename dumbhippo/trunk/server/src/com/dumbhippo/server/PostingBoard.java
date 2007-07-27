@@ -59,10 +59,10 @@ public interface PostingBoard {
 	 * @return
 	 * @throws NotFoundException
 	 */
-	public Post doLinkPost(User poster, boolean isPublic, String title, String text, URL link, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo)
+	public Post doLinkPost(Viewpoint viewpoint, User poster, boolean isPublic, String title, String text, URL link, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo)
 		throws NotFoundException;
 
-	public Post doShareGroupPost(User poster, Group group, String title, String text, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients)
+	public Post doShareGroupPost(Viewpoint viewpoint, User poster, Group group, String title, String text, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients)
 		throws NotFoundException;
 	
 	/**
@@ -74,11 +74,11 @@ public interface PostingBoard {
 	 */
 	public void doFeedPost(GroupFeed feed, FeedEntry entry);
 
-	public void doGroupInvitationPost(User owner, Group group) throws RetryException;	
+	public void doGroupInvitationPost(Viewpoint viewpoint, User owner, Group group) throws RetryException;	
 	
-	public void doShareLinkTutorialPost(User recipient) throws RetryException;
+	public void doShareLinkTutorialPost(Viewpoint viewpoint, User recipient) throws RetryException;
 	
-	public void doNowPlayingTutorialPost(User recipient) throws RetryException;
+	public void doNowPlayingTutorialPost(Viewpoint viewpoint, User recipient) throws RetryException;
 	
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid) throws NotFoundException;
 	

@@ -22,7 +22,6 @@ import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AimQueueSender;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Mailer;
@@ -94,9 +93,9 @@ public class ClaimVerifierBean implements ClaimVerifier {
 		return getToken(user, resource).getAuthKey();
 	}
 	
-	private String getClaimVerifierLink(User user, Resource resource) throws HumanVisibleException, RetryException {
+	private String getClaimVerifierLink(Viewpoint viewpoint, User user, Resource resource) throws HumanVisibleException, RetryException {
 		ResourceClaimToken token = getToken(user, resource);
-		return token.getAuthURL(configuration.getPropertyFatalIfUnset(HippoProperty.BASEURL));
+		return token.getAuthURL(configuration.getBaseUrl(viewpoint));
 	}
 	
 	public void sendClaimVerifierLink(UserViewpoint viewpoint, User user, String address) throws HumanVisibleException, RetryException {
@@ -110,7 +109,7 @@ public class ClaimVerifierBean implements ClaimVerifier {
 			} catch (ValidationException e) {
 				throw new HumanVisibleException("That isn't a valid email address (" + e.getMessage() + ")");
 			}
-			String link = getClaimVerifierLink(user, resource);
+			String link = getClaimVerifierLink(viewpoint, user, resource);
 			MimeMessage message = mailer.createMessage(Mailer.SpecialSender.VERIFIER, resource.getEmail());
 			
 			StringBuilder bodyText = new StringBuilder();
@@ -135,7 +134,7 @@ public class ClaimVerifierBean implements ClaimVerifier {
 			} catch (ValidationException e) {
 				throw new HumanVisibleException(e.getMessage());
 			}
-			String link = getClaimVerifierLink(user, resource);
+			String link = getClaimVerifierLink(viewpoint, user, resource);
 			XmlBuilder bodyHtml = new XmlBuilder();
 			bodyHtml.appendTextNode("a", "Click to add '" + resource.getScreenName() + "' to your Mugshot account", "href", link);
 			bodyHtml.appendTextNode("p", "NOTE: anyone with access to this AIM account will be able to log in to your Mugshot account.");

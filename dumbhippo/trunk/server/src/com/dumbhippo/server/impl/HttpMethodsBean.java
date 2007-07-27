@@ -128,7 +128,6 @@ import com.dumbhippo.server.dm.ExternalAccountDMO;
 import com.dumbhippo.server.dm.ExternalAccountKey;
 import com.dumbhippo.server.dm.UserDMO;
 import com.dumbhippo.server.util.EJBUtil;
-import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.PersonView;
@@ -453,7 +452,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		URL urlObject = parseUserEnteredUrl(url, true);
 
-		Post post = postingBoard.doLinkPost(viewpoint.getViewer(), isPublic, title, description,
+		Post post = postingBoard.doLinkPost(viewpoint, viewpoint.getViewer(), isPublic, title, description,
 							urlObject, recipients, PostingBoard.InviteRecipients.DONT_INVITE, info);
 		XmlBuilder xml = new XmlBuilder();
 		xml.openElement("post", "id", post.getId());
@@ -470,7 +469,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Set<GuidPersistable> recipients = identitySpider.lookupGuidStrings(
 				GuidPersistable.class, recipientGuids);
 
-		postingBoard.doShareGroupPost(viewpoint.getViewer(), group, null, description, recipients,
+		postingBoard.doShareGroupPost(viewpoint, viewpoint.getViewer(), group, null, description, recipients,
 				PostingBoard.InviteRecipients.MUST_INVITE);
 	}
 
@@ -625,8 +624,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}    
 	}
 	
-	public void doSendLoginLinkEmail(XmlBuilder xml, String address) throws IOException, HumanVisibleException, RetryException {
-		signinSystem.sendSigninLinkEmail(address);
+	public void doSendLoginLinkEmail(XmlBuilder xml, Viewpoint viewpoint, String address) throws IOException, HumanVisibleException, RetryException {
+		signinSystem.sendSigninLinkEmail(viewpoint, address);
 	}
 
 	public void doSendClaimLinkEmail(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException, RetryException {
@@ -693,14 +692,14 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		identitySpider.setMusicBio(viewpoint, viewpoint.getViewer(), bio);
 	}
 	
-	private void returnTrackXml(XmlBuilder xml, TrackView tv) {
+	private void returnTrackXml(XmlBuilder xml, Viewpoint viewpoint, TrackView tv) {
 		xml.openElement("song");
 		if (tv != null) {
 			String image = tv.getSmallImageUrl();
 			
 			// flash embed needs an absolute url
 			if (image != null && image.startsWith("/")) {
-				String baseurl = config.getProperty(HippoProperty.BASEURL);
+				String baseurl = config.getBaseUrl(viewpoint);
 				image = baseurl + image;
 			}
 			xml.appendTextNode("image", image);
@@ -718,10 +717,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	public void getNowPlaying(OutputStream out, HttpResponseData contentType,
+			Viewpoint viewpoint,
 			String who, String theme) throws IOException {
 		if (contentType != HttpResponseData.XML)
 			throw new IllegalArgumentException("only support XML replies");
 
+		viewpoint = viewpoint.anonymize();
+		
 		User whoUser;
 		try {
 			whoUser = identitySpider.lookupGuidString(User.class, who);
@@ -759,9 +761,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		TrackView tv;
 		try {
-			// FIXME this is from the system viewpoint for now, but
-			// should really be from an "anonymous" viewpoint
-			tv = musicSystem.getCurrentTrackView(null, whoUser);
+			tv = musicSystem.getCurrentTrackView(viewpoint, whoUser);
 		} catch (NotFoundException e) {
 			tv = null;
 		}
@@ -770,7 +770,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendStandaloneFragmentHeader();
 		xml.openElement("nowPlaying");
 		
-		returnTrackXml(xml, tv);
+		returnTrackXml(xml, viewpoint, tv);
 		
 		if (themeObject != null) {
 			xml.openElement("theme");
@@ -1080,7 +1080,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		GuidPersistable recipient = person;
 		Set<GuidPersistable> recipients = Collections.singleton(recipient);
 		try {
-			postingBoard.doShareGroupPost(viewpoint.getViewer(), group, subject, message, recipients, inviteRecipients);
+			postingBoard.doShareGroupPost(viewpoint, viewpoint.getViewer(), group, subject, message, recipients, inviteRecipients);
 		} catch (NotFoundException e) {
 			throw new RuntimeException("doShareGroup unxpectedly couldn't find contact recipient");
 		}
@@ -2363,7 +2363,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void getUserRSS(OutputStream out, HttpResponseData contentType, Viewpoint viewpoint, User who, boolean participantOnly) throws IOException, XmlMethodException {
 		
 		// anonymize while keeping Site
-		viewpoint = AnonymousViewpoint.getInstance(viewpoint.getSite());
+		viewpoint = viewpoint.anonymize();
 		
 		List<BlockView> stack;
 		Pageable<BlockView> pageable = new Pageable<BlockView>("stack");
@@ -2374,7 +2374,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		PersonView userView = personViewer.getPersonView(viewpoint, who);
 		
-	    String baseUrlString = config.getProperty(HippoProperty.BASEURL);
+	    String baseUrlString = config.getBaseUrl(viewpoint);
 	    
 	    URL baseUrl = new URL(baseUrlString);
 	    URL userPhotoUrl = new URL(baseUrl, userView.getPhotoUrl());
@@ -2433,7 +2433,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void getApplicationEditRSS(OutputStream out, HttpResponseData contentType, Viewpoint viewpoint) throws IOException, XmlMethodException {
 		List<AppinfoUploadView> uploads = applicationSystem.getUploadHistory(viewpoint, NUM_APPLICATION_EDIT_ITEMS);
 		
-	    String baseUrlString = config.getProperty(HippoProperty.BASEURL);
+	    String baseUrlString = config.getBaseUrl(viewpoint);
 	    URL baseUrl = new URL(baseUrlString);
 	    URL homeUrl = new URL(baseUrl, "/applications");
 

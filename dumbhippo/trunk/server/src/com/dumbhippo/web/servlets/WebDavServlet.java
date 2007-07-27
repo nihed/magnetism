@@ -303,7 +303,7 @@ public class WebDavServlet extends AbstractServlet {
 		Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
 		URL url;
 		try {
-			url = new URL(config.getBaseUrl(), servletRoot);
+			url = new URL(config.getBaseUrlObject(SigninBean.getSiteForRequest(request)), servletRoot);
 		} catch (MalformedURLException e) {
 			throw new RuntimeException("malformed dav root url");
 		}

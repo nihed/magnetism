@@ -7,6 +7,8 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.web.Browser;
 import com.dumbhippo.web.BrowserBean;
+import com.dumbhippo.web.Signin;
+import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class BookmarkPage {
@@ -15,6 +17,9 @@ public class BookmarkPage {
 
 	@Browser
 	private BrowserBean browser;
+	
+	@Signin
+	private SigninBean signin;
 	
 	private Configuration config;
 	
@@ -27,6 +32,6 @@ public class BookmarkPage {
 	}
 	
 	public String getBaseUrl() {
-		return config.getPropertyFatalIfUnset(HippoProperty.BASEURL);
+		return config.getBaseUrl(signin.getSite());
 	}
 }

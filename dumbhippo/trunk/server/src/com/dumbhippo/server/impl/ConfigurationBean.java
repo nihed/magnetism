@@ -5,19 +5,24 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 import org.jboss.annotation.ejb.Service;
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import com.dumbhippo.FuzzyStackTrace;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.SimpleServiceMBean;
 import com.dumbhippo.server.downloads.DownloadConfiguration;
 import com.dumbhippo.server.downloads.DownloadSaxHandler;
+import com.dumbhippo.server.views.Viewpoint;
 
 /*
  * Implementation of Configuration
@@ -30,10 +35,20 @@ public class ConfigurationBean implements Configuration, SimpleServiceMBean {
 
 	static private Properties overriddenProperties = new Properties();
 	
+	static private Set<FuzzyStackTrace> loggedTraces = new HashSet<FuzzyStackTrace>();
+	
+	static synchronized void warnOncePerUniqueTrace(Throwable t) {
+		FuzzyStackTrace fuzzy = new FuzzyStackTrace(t);
+		if (loggedTraces.contains(fuzzy))
+			return;
+		loggedTraces.add(fuzzy);
+		logger.warn("First instance of this stack trace, will not log it again", t);
+	}
+	
 	private Properties props;
 	private DownloadConfiguration downloads;
 	
-	private URL baseurl;
+	private URL baseurlMugshot;
 
 	private URL baseurlGnome;
 	
@@ -83,18 +98,18 @@ public class ConfigurationBean implements Configuration, SimpleServiceMBean {
 				props.remove(prop.getKey());
 		}
 		
-		String s = getPropertyFatalIfUnset(HippoProperty.BASEURL);
+		String s = getPropertyFatalIfUnset(HippoProperty.BASEURL_MUGSHOT);
 		try {
-			baseurl = new URL(s);
+			baseurlMugshot = new URL(s);
 		} catch (MalformedURLException e) {
-			throw new RuntimeException("Server misconfiguration - base URL is invalid! '" + s + "'", e);
+			throw new RuntimeException("Server misconfiguration - Mugshot base URL is invalid! '" + s + "'", e);
 		}
 		
 		s = getPropertyFatalIfUnset(HippoProperty.BASEURL_GNOME);
 		try {
 			baseurlGnome = new URL(s);
 		} catch (MalformedURLException e) {
-			throw new RuntimeException("Server misconfiguration - base URL is invalid! '" + s + "'", e);
+			throw new RuntimeException("Server misconfiguration - GNOME base URL is invalid! '" + s + "'", e);
 		}
 		
 		String downloadXml = getPropertyFatalIfUnset(HippoProperty.DOWNLOADS);
@@ -153,12 +168,36 @@ public class ConfigurationBean implements Configuration, SimpleServiceMBean {
 		}
 	}
 
-	public URL getBaseUrl() {
-		return baseurl;
+	public URL getBaseUrlMugshot() {
+		return baseurlMugshot;
 	}
 	
 	public URL getBaseUrlGnome() {
 		return baseurlGnome;
+	}
+	
+
+	public String getBaseUrl(Site site) {
+		return getBaseUrlObject(site).toExternalForm();
+	}
+
+	public String getBaseUrl(Viewpoint viewpoint) {
+		return getBaseUrl(viewpoint.getSite());
+	}
+
+	public URL getBaseUrlObject(Viewpoint viewpoint) {
+		return getBaseUrlObject(viewpoint.getSite());
+	}	
+	
+	public URL getBaseUrlObject(Site site) {
+		if (site == Site.GNOME) {
+			return baseurlGnome;
+		} else if (site == Site.MUGSHOT) {
+			return baseurlMugshot;
+		} else {
+			warnOncePerUniqueTrace(new Throwable("base URL requested from context where we don't know which one to use, site=" + site.name()));
+			return baseurlMugshot;
+		}
 	}
 	
 	public void setProperty(String name, String value) {

@@ -220,16 +220,16 @@ public class MessengerGlueBean implements MessengerGlue {
 		
 		User owner = newUser.getViewer();
 		if (invite != null && invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602)
-			postingBoard.doNowPlayingTutorialPost(owner);
+			postingBoard.doNowPlayingTutorialPost(newUser, owner);
 		else {
 			Set<Group> invitedToGroups = groupSystem.findRawGroups(newUser, owner, MembershipStatus.INVITED);
 			Set<Group> invitedToFollowGroups = groupSystem.findRawGroups(newUser, owner, MembershipStatus.INVITED_TO_FOLLOW);
 			invitedToGroups.addAll(invitedToFollowGroups);
 			if (invitedToGroups.size() == 0) {
-				postingBoard.doShareLinkTutorialPost(owner);
+				postingBoard.doShareLinkTutorialPost(newUser, owner);
 			} else {
 				for (Group group : invitedToGroups) {
-					postingBoard.doGroupInvitationPost(owner, group);
+					postingBoard.doGroupInvitationPost(newUser, owner, group);
 				}
 			}
 		}
