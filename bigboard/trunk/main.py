@@ -41,9 +41,21 @@ GCONF_PREFIX = '/apps/bigboard/'
 REEXEC_CMD = os.getenv('BB_REEXEC') or '/usr/bin/bigboard'
 REEXEC_CMD = os.path.abspath(REEXEC_CMD)
 
-# Don't really care about nonstandard $(datadir) right now
-DATADIR = os.getenv('BB_DATADIR') or '/usr/share/pixmaps/bigboard'
-DATADIR = os.path.abspath(DATADIR)
+def _find_in_datadir(fname):
+    datadir_env = os.getenv('BB_DATADIR')
+    if datadir_env:
+        return os.path.join(datadir_env, fname)    
+    datadir_env = os.getenv('XDG_DATA_DIRS')
+    if datadir_env:
+        datadirs = datadir_env.split(':')
+    else:
+        datadirs = ['/usr/share/']
+    datadirs = map(lambda x: os.path.join(x, 'bigboard'), datadirs)
+    for dir in datadirs:
+        fpath = os.path.join(dir, fname)
+        if os.access(fpath, os.R_OK):
+            return fpath
+    return None
 
 _logger = logging.getLogger("bigboard.Main")
 
@@ -496,7 +508,7 @@ X-GNOME-Autostart-enabled=true
 
 def load_image_hook(img_name):
     if img_name.startswith('bigboard-'):
-        img_name = os.path.join(DATADIR, img_name)
+        img_name = _find_in_datadir(img_name)
     if img_name.find(os.sep) >= 0:
         pixbuf = gtk.gdk.pixbuf_new_from_file(img_name)
     else:
