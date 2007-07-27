@@ -1,4 +1,4 @@
 #!/bin/sh
-PYTHONPATH=@pyexecdir@/bigboard_externals
+PYTHONPATH=$PYTHONPATH:@pyexecdir@/bigboard_externals
 export PYTHONPATH
 exec $BB_DEBUG_CMD @PYTHON@ @BB_PYDIR@/main.py "--stockdirs=@BB_STOCKDIR@" "$@"
