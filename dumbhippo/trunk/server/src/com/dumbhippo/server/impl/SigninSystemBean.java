@@ -17,6 +17,7 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.LoginToken;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -200,6 +201,28 @@ public class SigninSystemBean implements SigninSystem {
 		boolean noAuthentication = configuration.getProperty(HippoProperty.DISABLE_AUTHENTICATION).equals("true"); 
 		if (noAuthentication) {
 			logger.warn("Not requiring authentication for address {}", address);
+		}
+
+		if (noAuthentication) {
+			// be sure the email/aim exists, if not authenticating, this is 
+			// how you can create an account implicitly. If we are authenticating
+			// we don't want people to be able to put a bunch of bogus email and aim 
+			// addresses in the db.
+			// This probably doesn't quite work since the newly-created Email/AimResource
+			// won't be in the current transaction, but since this is a debug feature, 
+			// just try again and it will work on attempt 2.
+			try {
+				if (address.contains("@")) {
+					identitySpider.getEmail(address);
+				} else {
+					identitySpider.getAim(address);
+				}
+			} catch (RetryException e) {
+				logger.warn("Failed to implicitly create email/aim resource", e);
+				// will fail down below when lookupEmail/lookupAim fails
+			} catch (ValidationException e) {
+				throw new HumanVisibleException("'" + address + "' is not a valid email or AIM address");
+			}
 		}
 		
 		try {
