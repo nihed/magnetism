@@ -8,7 +8,9 @@
 #include "hippo-http.h"
 #include "hippo-dbus-system.h"
 #include "main.h"
+#include <dbus/dbus.h>
 #include <string.h>
+#include <errno.h>
 
 static void      hippo_platform_impl_init                (HippoPlatformImpl       *impl);
 static void      hippo_platform_impl_class_init          (HippoPlatformImplClass  *klass);
@@ -63,6 +65,10 @@ static void         hippo_platform_impl_set_web_server      (HippoPlatform     *
                                                              const char        *value);
 static void         hippo_platform_impl_set_signin          (HippoPlatform     *platform,
                                                              gboolean           value);
+
+static char *hippo_platform_impl_make_cache_filename (HippoPlatform  *platform,
+                                                      const char     *server,
+                                                      const char     *user_id);
 
 typedef struct Dialogs Dialogs;
 
@@ -132,6 +138,8 @@ hippo_platform_impl_iface_init(HippoPlatformClass *klass)
     klass->set_message_server = hippo_platform_impl_set_message_server;
     klass->set_web_server = hippo_platform_impl_set_web_server;
     klass->set_signin = hippo_platform_impl_set_signin;
+    
+    klass->make_cache_filename = hippo_platform_impl_make_cache_filename;
 }
 
 static void
@@ -607,6 +615,36 @@ hippo_platform_impl_set_signin(HippoPlatform  *platform,
 {
 
     /* FIXME */
+}
+
+static char *
+hippo_platform_impl_make_cache_filename (HippoPlatform  *platform,
+                                         const char     *server,
+                                         const char     *user_id)
+{
+    char *directory;
+    char *filename;
+    char *path;
+    char *machine_id;
+
+    directory = g_build_filename(g_get_home_dir(), ".online-data-cache", NULL);
+    if (!g_file_test (directory, G_FILE_TEST_IS_DIR)) {
+        if (g_mkdir_with_parents(directory, 0700) != 0) {
+            g_warning("Can't create directory for online data cache: %s", g_strerror(errno));
+            return NULL;
+        }
+    }
+    
+    machine_id = dbus_get_local_machine_id();
+
+    filename = g_strdup_printf("%s-%s-%s.db", server, user_id, machine_id);
+    path = g_build_filename(g_get_home_dir(), ".online-data-cache", filename, NULL);
+
+    dbus_free(machine_id);
+    g_free(directory);
+    g_free(filename);
+
+    return path;
 }
 
 /* We want to show either a login dialog or a dialog with connection status

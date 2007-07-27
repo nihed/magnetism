@@ -226,6 +226,19 @@ hippo_platform_set_signin(HippoPlatform  *platform,
     HIPPO_PLATFORM_GET_CLASS(platform)->set_signin(platform, value);                              
 }
 
+char *
+hippo_platform_make_cache_filename (HippoPlatform  *platform,
+                                    const char     *server,
+                                    const char     *user_id)
+{
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
+
+    if (HIPPO_PLATFORM_GET_CLASS(platform)->make_cache_filename)
+        return HIPPO_PLATFORM_GET_CLASS(platform)->make_cache_filename(platform, server, user_id);
+    else
+        return NULL;
+}
+
 void
 hippo_platform_get_message_host_port(HippoPlatform  *platform,
                                      char          **host_p,

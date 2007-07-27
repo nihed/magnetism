@@ -140,9 +140,7 @@ void hippo_connection_send_account_question_response(HippoConnection *connection
                                                      const char      *response);
 
 void hippo_connection_send_query (HippoConnection *connection,
-                                  HippoDataQuery  *query,
-                                  const char      *fetch,
-                                  GHashTable      *params);
+                                  HippoDataQuery  *query);
 
 /* Gets the number of milliseconds to add to the local time to get the server time */
 gint64   hippo_connection_get_server_time_offset    (HippoConnection *connection);

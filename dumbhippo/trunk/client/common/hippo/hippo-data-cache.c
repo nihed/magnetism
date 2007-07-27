@@ -93,8 +93,6 @@ hippo_data_cache_init(HippoDataCache *cache)
     cache->music_sharing_primed = TRUE;
     
     cache->hotness = HIPPO_HOTNESS_UNKNOWN;
-
-    cache->model = _hippo_data_model_new(cache);
 }
 
 static void
@@ -271,6 +269,8 @@ hippo_data_cache_new(HippoConnection *connection)
     cache->connection = connection;
     g_object_ref(cache->connection);
     hippo_connection_set_cache(cache->connection, cache);
+
+    cache->model = _hippo_data_model_new(cache);
 
     g_signal_connect(cache->connection, "connected-changed",
                      G_CALLBACK(hippo_data_cache_on_connect), cache);

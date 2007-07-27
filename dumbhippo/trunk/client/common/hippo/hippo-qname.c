@@ -46,3 +46,25 @@ hippo_qname_get(const char *uri,
 
     return qname;
 }
+
+HippoQName *
+hippo_qname_from_uri(const char *full_uri)
+{
+    const char *hash;
+    const char *name;
+    char *uri;
+    HippoQName *qname;
+    
+    hash = strchr(full_uri, '#');
+    if (hash == NULL) {
+        g_warning("URI '%s' representing qualified name doesn't have a fragment", full_uri);
+        return NULL;
+    }
+
+    name = hash + 1;
+    uri = g_strndup(full_uri, hash - full_uri);
+    qname = hippo_qname_get(uri, name);
+    g_free(uri);
+
+    return qname;
+}

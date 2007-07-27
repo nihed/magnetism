@@ -10,10 +10,13 @@ G_BEGIN_DECLS
 typedef struct _HippoNotificationSet      HippoNotificationSet;
 
 HippoNotificationSet *_hippo_notification_set_new  (HippoDataModel       *model);
+void                  _hippo_notification_set_free (HippoNotificationSet *notifications);
 void                  _hippo_notification_set_add  (HippoNotificationSet *notifications,
                                                     HippoDataResource    *resource,
                                                     HippoQName           *property_id);
 void                  _hippo_notification_set_send (HippoNotificationSet *notifications);
+void                  _hippo_notification_set_save_to_disk (HippoNotificationSet *notifications,
+                                                            gint64                timestamp);
 gboolean              _hippo_notification_set_has_property (HippoNotificationSet *notifications,
                                                             const char           *resource_id,
                                                             HippoQName           *property_id);

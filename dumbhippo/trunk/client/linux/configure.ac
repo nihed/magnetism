@@ -275,6 +275,8 @@ DBUS_GLIB_REQUIRED=0.60
 CURL_REQUIRED=7.13.1
 # earlier might work, but this is what's been tested
 PCRE_REQUIRED=6.3
+# earlier might work, but this is what's been tested
+SQLITE_REQUIRED=3.3
 # 2.10 for gnome_desktop_item_set_launch_time()
 GNOME_DESKTOP_REQUIRED=2.10.0
 
@@ -361,13 +363,41 @@ else
    AC_MSG_ERROR([PCRE is required])
 fi
 
+# SQLite checks
+
+AC_ARG_WITH(sqlite,
+	    AC_HELP_STRING([--with-sqlite=[yes/no/auto]],
+		           [Whether to use SQLite for offline caching]),
+	    ,
+	    with_sqlite=auto)
+	    
+AC_MSG_CHECKING([for sqlite3])
+if test x"$with_sqlite" = xno ; then
+   found_sqlite=no
+   AC_MSG_RESULT(disabled)
+else
+   PKG_CHECK_EXISTS(sqlite3 >= $SQLITE_REQUIRED, found_sqlite=yes, found_sqlite=no)
+   AC_MSG_RESULT([$found_sqlite])
+fi
+
+if test $found_sqlite = yes ; then
+   SQLITE_MODULES=sqlite3
+   AC_DEFINE(HAVE_SQLITE, 1, [Define if you have SQLite database library])
+else
+   if test x"$with_sqlite" = xyes ; then
+      AC_MSG_ERROR([SQLite >= $SQLITE_REQUIRED not found])
+   else
+      AC_MSG_WARN([*** SQLite >= $SQLITE_REQUIRED not found, offline caching will be disabled])
+   fi
+fi
+
 #
 # Check if hippo-canvas is installed or we need to build our included version
 # (canvas be forces with --with-included-canvas/--without-included-canvas
 #
 AC_ARG_WITH(included_canvas,
 	    AC_HELP_STRING([--with-included-canvas=[yes/no/auto]],
-		           [Path to Gecko SDK]),
+		           [Use copy of HippoCanvas included with the mugshot sources]),
 	    ,
 	    with_included_canvas=auto)
 
@@ -390,7 +420,7 @@ fi
 AM_CONDITIONAL(USE_INCLUDED_CANVAS, test "x$with_included_canvas" = xyes)
 
 PKG_CHECK_MODULES(LIBHIPPOCANVAS, gtk+-2.0 >= $GTK2_REQUIRED gobject-2.0 >= $GLIB2_REQUIRED cairo pango)
-PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED cairo pango $PCRE_MODULES $CANVAS_MODULES)
+PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED cairo pango $PCRE_MODULES $SQLITE_MODULES $CANVAS_MODULES)
 AC_DEFINE(HIPPO_LOUDMOUTH_IS_10, 1, [Define if Loudmouth is version 1.0 or below])
 PKG_CHECK_MODULES(LIBHIPPOIPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)

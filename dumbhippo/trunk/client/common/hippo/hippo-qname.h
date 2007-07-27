@@ -16,6 +16,9 @@ struct _HippoQName {
 HippoQName *hippo_qname_get(const char *uri,
                             const char *name);
 
+/* Create a QName from a representation in <uri>#<name> form */
+HippoQName *hippo_qname_from_uri(const char *full_uri);
+
 G_END_DECLS
 
 #endif /* __HIPPO_QNAME_H__ */

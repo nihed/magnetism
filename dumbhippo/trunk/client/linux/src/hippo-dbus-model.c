@@ -415,6 +415,7 @@ add_property_value_to_message(DBusMessageIter      *property_array_iter,
     case HIPPO_DATA_RESOURCE:
         {
             const char *v = hippo_data_resource_get_resource_id(value->u.resource);
+
             dbus_message_iter_append_basic(&value_iter, DBUS_TYPE_STRING, &v);
             
         }
@@ -532,7 +533,11 @@ add_resource_to_message(DataClient        *client,
             HippoDataFetch *children;
 
             hippo_data_fetch_iter_next(&fetch_iter, &property, &children);
-            
+
+            /* FIXME: This check on children isn't really right ... if we have a resource-value
+             * property that is default-fetched without default-children, then we should
+             * send an empty resource element for it, because the recipient needs at least
+             * the classId. */
             if (!children)
                 continue;
             

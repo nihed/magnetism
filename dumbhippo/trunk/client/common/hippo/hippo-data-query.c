@@ -10,8 +10,10 @@ typedef enum {
 } HandlerType;
 
 struct _HippoDataQuery {
-    HippoDataQuery *query;
+    HippoDataModel *model;
     HippoQName *qname;
+    char *fetch;
+    GHashTable *params;
     
     HandlerType handler_type;
     union {
@@ -24,12 +26,36 @@ struct _HippoDataQuery {
     gpointer error_handler_data;
 };
 
+HippoDataModel *
+hippo_data_query_get_model (HippoDataQuery *query)
+{
+    g_return_val_if_fail(query != NULL, NULL);
+
+    return query->model;
+}
+
 HippoQName *
 hippo_data_query_get_qname (HippoDataQuery *query)
 {
     g_return_val_if_fail(query != NULL, NULL);
 
     return query->qname;
+}
+
+const char *
+hippo_data_query_get_fetch (HippoDataQuery *query)
+{
+    g_return_val_if_fail(query != NULL, NULL);
+
+    return query->fetch;
+}
+
+GHashTable *
+_hippo_data_query_get_params (HippoDataQuery *query)
+{
+    g_return_val_if_fail(query != NULL, NULL);
+
+    return query->params;
 }
 
 void
@@ -79,15 +105,44 @@ hippo_data_query_set_error_handler (HippoDataQuery     *query,
     query->error_handler_data = user_data;
 }
 
+static void
+add_param_foreach(gpointer key,
+                  gpointer val,
+                  gpointer data)
+{
+    const char *name = key;
+    const char *value = val;
+    HippoDataQuery *query = data;
+
+    g_hash_table_replace(query->params, g_strdup(name), g_strdup(value));
+}
+
 HippoDataQuery *
-_hippo_data_query_new (HippoQName *qname)
+_hippo_data_query_new (HippoDataModel *model,
+                       HippoQName     *qname,
+                       const char     *fetch,
+                       GHashTable     *params)
 {
     HippoDataQuery *query =  g_new0(HippoDataQuery, 1);
-    
+
+    query->model = model;
     query->qname = qname;
+    query->fetch = g_strdup(fetch);
+    query->params = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                          (GDestroyNotify)g_free, (GDestroyNotify)g_free);
+    g_hash_table_foreach(params, add_param_foreach, query);
+    
     query->handler_type = HANDLER_NONE;
 
     return query;
+}
+
+static void
+hippo_data_query_free (HippoDataQuery *query)
+{
+    g_free(query->fetch);
+    g_hash_table_destroy(query->params);
+    g_free(query);
 }
 
 void
@@ -128,7 +183,7 @@ _hippo_data_query_response (HippoDataQuery  *query,
         break;
     }
 
-    g_free(query);
+    hippo_data_query_free(query);
 }
 
 void
@@ -140,5 +195,5 @@ _hippo_data_query_error (HippoDataQuery  *query,
 
     query->error_handler(error, message, query->error_handler_data);
 
-    g_free(query);
+    hippo_data_query_free(query);
 }

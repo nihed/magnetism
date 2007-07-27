@@ -162,11 +162,21 @@ _hippo_data_resource_new(const char *resource_id,
     HippoDataResource *resource = g_new0(HippoDataResource, 1);
 
     resource->resource_id = g_strdup(resource_id);
-    // TODO: strdup() isn't really necessary, since class_id is currently g_intern_string
-    // in all cases.
-    resource->class_id = g_strdup(class_id);
+    _hippo_data_resource_set_class_id(resource, class_id);
 
     return resource;
+}
+
+void
+_hippo_data_resource_set_class_id(HippoDataResource    *resource,
+                                  const char           *class_id)
+{
+    if (resource->class_id != NULL)
+        g_free(resource->class_id);
+    
+    // TODO: strdup() isn't really necessary, since class_id is currently g_intern_string
+    // in most (but not all!) cases
+    resource->class_id = g_strdup(class_id);
 }
 
 const char *
@@ -645,15 +655,14 @@ remove_property(HippoDataResource *resource,
     g_free(property);
 }
 
-void
+gboolean
 _hippo_data_resource_update_property(HippoDataResource    *resource,
                                      HippoQName           *property_id,
                                      HippoDataUpdate       update,
                                      HippoDataCardinality  cardinality,
                                      gboolean              default_include,
                                      const char           *default_children,
-                                     HippoDataValue       *value,
-                                     HippoNotificationSet *notifications)
+                                     HippoDataValue       *value)
 {
     HippoDataProperty *property = NULL;
     GSList *l;
@@ -667,7 +676,7 @@ _hippo_data_resource_update_property(HippoDataResource    *resource,
 
     if (update == HIPPO_DATA_UPDATE_DELETE && property == NULL) {
         g_warning("Remove of a property we don't have");
-        return;
+        return FALSE;
     }
 
     if (property != NULL && cardinality != property->cardinality) {
@@ -695,7 +704,7 @@ _hippo_data_resource_update_property(HippoDataResource    *resource,
         case HIPPO_DATA_UPDATE_DELETE:
             if (property == NULL || !data_value_matches(&property->value, value)) {
                 g_warning("remove of a property value not there");
-                return;
+                return FALSE;
             }
             remove_property(resource, property);
             break;
@@ -770,8 +779,7 @@ _hippo_data_resource_update_property(HippoDataResource    *resource,
             property->default_children = hippo_data_fetch_from_string(default_children);
     }
 
-    if (notifications)
-        _hippo_notification_set_add(notifications, resource, property_id);
+    return TRUE;
 }
 
 void

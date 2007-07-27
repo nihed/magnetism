@@ -394,6 +394,55 @@ hippo_data_fetch_from_string(const char *str)
     return result;
 }
 
+static void
+hippo_data_fetch_to_string_internal(HippoDataFetch *fetch,
+                                    GString        *out)
+{
+    int i;
+
+    for (i = 0; i < fetch->n_properties; i++) {
+        FetchProperty *property = &fetch->properties[i];
+        
+        if (i != 0)
+            g_string_append_c(out, ';');
+
+        if (property->qname) {
+            g_string_append(out, property->qname->uri);
+            g_string_append_c(out, '#');
+            g_string_append(out, property->qname->name);
+        } else {
+            g_string_append(out, property->name);
+        }
+
+        if (property->children) {
+            if (property->children->n_properties + (fetch->include_default ? 1 : 0) > 0) {
+                g_string_append_c(out, '[');
+                hippo_data_fetch_to_string_internal(property->children, out);
+                g_string_append_c(out, ']');
+            } else {
+                hippo_data_fetch_to_string_internal(property->children, out);
+            }
+        }
+    }
+
+    if (fetch->include_default) {
+        if (i != 0)
+            g_string_append_c(out, ';');
+        
+        g_string_append_c(out, '+');
+    }
+}
+
+char *
+hippo_data_fetch_to_string(HippoDataFetch *fetch)
+{
+    GString *out = g_string_new(NULL);
+
+    hippo_data_fetch_to_string_internal(fetch, out);
+
+    return g_string_free(out, FALSE);
+}
+
 HippoDataFetch *
 hippo_data_fetch_merge(HippoDataFetch *fetch,
                        HippoDataFetch *other)
