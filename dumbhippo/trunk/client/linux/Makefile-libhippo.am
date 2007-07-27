@@ -136,6 +136,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-data-query.c		\
 	$(COMMONSRCDIR)/hippo/hippo-data-query.h		\
 	$(COMMONSRCDIR)/hippo/hippo-data-query-internal.h	\
+	$(COMMONSRCDIR)/hippo/hippo-disk-cache.c		\
+	$(COMMONSRCDIR)/hippo/hippo-disk-cache.h		\
 	$(COMMONSRCDIR)/hippo/hippo-entity.c			\
 	$(COMMONSRCDIR)/hippo/hippo-entity.h			\
 	$(COMMONSRCDIR)/hippo/hippo-external-account.c		\

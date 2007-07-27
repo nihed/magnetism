@@ -87,6 +87,7 @@ _hippo_notification_set_send (HippoNotificationSet *notifications)
 }
 
 typedef struct {
+    HippoDiskCache *disk_cache;
     HippoNotificationSet *notifications;
     gint64 timestamp;
 } SaveNotificationsClosure;
@@ -99,7 +100,7 @@ save_notification_foreach(gpointer key,
     SaveNotificationsClosure *snc = data;
     ResourceInfo *info = value;
 
-    _hippo_data_model_save_properties_to_disk(snc->notifications->model, info->resource, info->changed_properties,
+    _hippo_disk_cache_save_properties_to_disk(snc->disk_cache, info->resource, info->changed_properties,
                                               snc->timestamp);
 }
 
@@ -109,6 +110,10 @@ _hippo_notification_set_save_to_disk (HippoNotificationSet *notifications,
 {
     SaveNotificationsClosure snc;
 
+    snc.disk_cache = _hippo_data_model_get_disk_cache(notifications->model);
+    if (snc.disk_cache == NULL)
+        return;
+    
     snc.notifications = notifications;
     snc.timestamp = timestamp;
     
