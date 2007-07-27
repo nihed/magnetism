@@ -4611,7 +4611,6 @@ dm_context_get_type(DMContext            *context,
                     gboolean             *default_include)
 {
     const char *type_attr = dm_context_get_system_attribute(context, "type");
-    const char *p;
 
     if (type_attr == NULL) {
         if (*type != HIPPO_DATA_NONE) {
@@ -4845,6 +4844,7 @@ on_query_reply(LmMessageHandler *handler,
 {
     MessageContext *message_context = data;
     HippoDataQuery *query = message_context->data;
+    HippoDiskCache *disk_cache;
     HippoQName *query_qname = hippo_data_query_get_qname(query);
     LmMessageNode *node = lm_message_get_node(message);
     DMContext context;
@@ -4890,7 +4890,10 @@ on_query_reply(LmMessageHandler *handler,
         dm_context_pop_node(&context);
     }
 
-    _hippo_data_model_save_query_to_disk(context.model, query, results, notifications);
+    disk_cache = _hippo_data_model_get_disk_cache(context.model);
+    if (disk_cache)
+        _hippo_disk_cache_save_query_to_disk(disk_cache, query, results, notifications);
+    
     _hippo_notification_set_free(notifications);
     
     _hippo_data_query_response(query, results);
@@ -4958,6 +4961,7 @@ handle_data_notify (HippoConnection *connection,
                     LmMessage       *message)
 {
     DMContext context;
+    HippoDiskCache *disk_cache;
     LmMessageNode *node = lm_message_get_node(message);
     LmMessageNode *child;
     LmMessageNode *resource_node;
@@ -4994,7 +4998,11 @@ handle_data_notify (HippoConnection *connection,
 
         _hippo_notification_set_send(broadcast_notifications);
         _hippo_notification_set_free(broadcast_notifications);
-        _hippo_data_model_save_update_to_disk(context.model, save_notifications);
+        
+        disk_cache = _hippo_data_model_get_disk_cache(context.model);
+        if (disk_cache)
+            _hippo_disk_cache_save_update_to_disk(disk_cache, save_notifications);
+        
         _hippo_notification_set_free(save_notifications);
 
     next_child:
