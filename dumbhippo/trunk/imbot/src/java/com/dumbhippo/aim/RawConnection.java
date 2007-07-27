@@ -68,17 +68,21 @@ public class RawConnection {
     // Needs to match exchange used in aim launch URL in web UI
     private static final int AIM_CHAT_ROOM_EXCHANGE = 5;
     
+    // we need to set this capability when the bot is signing on, so that ICQ users 
+    // can see it online
+    private static final String AIM_ICQ_INTEROPERABILITY = "0946134D-4C7F-11D1-8222-444553540000";
+    
     // Number of milliseconds that a bot will wait around for someone else
     // to join an empty chatroom before it leaves itself.
     private static final long CHAT_ROOM_LONELY_BOT_TIMEOUT = 60000;
 
-    private String loginServer = "toc.oscar.aol.com";
+    private String loginServer = "aimexpress.oscar.aol.com";
 
     private int loginPort = 5190;
 
     private String authorizerServer = "login.oscar.aol.com";
 
-    private int authorizerPort = 29999;
+    private int authorizerPort = 5190;
     
     // private final String ROAST = "Tic/Toc";
 
@@ -1318,6 +1322,7 @@ public class RawConnection {
                 in.readFully(signon); // data
                 // * Client sends TOC toc_init_done message
                 writeFrame("toc_init_done\0");
+                writeFrame("toc_set_caps " + AIM_ICQ_INTEROPERABILITY + "\0");
                 onceSignedOn = true;
                 writeFrame("toc_set_info \"" + info + "\"\0");
                 logger.debug("Done with AIM logon");
