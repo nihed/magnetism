@@ -4,6 +4,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 
+import com.dumbhippo.StringUtils;
+
 @Entity
 public class AimResource extends Resource {
 	private static final long serialVersionUID = 0L;
@@ -23,29 +25,26 @@ public class AimResource extends Resource {
 	public static String canonicalize(String str) throws ValidationException {
 		if (str == null)
 			return null;
-		
+
+	    /* According to one possibly-wrong web page, AIM screen name is
+	     * "between 3 and 16 characters long, using letters,
+	     * numbers, and spaces and must begin with a letter"
+	     * We now accept ICQ ids for AIM screen names, so those begin with a number, not a letter.
+	     * It's also now possible to register your e-mail as an AIM screen name, though
+	     * those users can't see our bot for some reason, so can't add it to Mugshot.
+	     * But we shouldn't be checking for a 16 character maximum, in case e-mail screen names start 
+	     * getting added.
+	     */		
 		str = str.trim(); // gets tabs and stuff not just spaces
 		str = str.replaceAll(" ", ""); // but suck spaces out of middle of string, not just ends
 		
-		if (str.length() > 16)
-			throw new ValidationException("'" + str + "' is too long to be an AIM screen name");
 		if (str.length() < 3)
 			throw new ValidationException("'" + str + "' is too short to be an AIM screen name");
 		
 	    str = str.toLowerCase();
 	    
-	    /* According to one possibly-wrong web page,
-	     * "between 3 and 16 characters long, using letters,
-	     * numbers, and spaces and must begin with a letter"
-	     */
-	    char[] chars = str.toCharArray();
-	    for (char c : chars) {
-	    	// FIXME I bet AOL only allows ASCII, but this checks unicode
-	    	if (!Character.isLetterOrDigit(c))
-	    		throw new ValidationException("'" + c + "' isn't allowed in an AIM screen name (you typed '" + str + "')");
-	    }
-	    if (!Character.isLetter(str.charAt(0)))
-	    	throw new ValidationException("AIM screen names have to start with a letter (you typed '" + str + "')");
+	    if (!StringUtils.isAlphanumericOrInSet(str, "@_-+."))
+	        throw new ValidationException("Possibly invalid AIM screen name: '" + str + "')");
 	    
 	    return str;
 	}
