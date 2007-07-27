@@ -11,14 +11,17 @@ G_BEGIN_DECLS
 HippoDataResource *_hippo_data_resource_new (const char *resource_id,
                                              const char *class_id);
 
-void _hippo_data_resource_update_property (HippoDataResource    *resource,
-                                           HippoQName           *property_id,
-                                           HippoDataUpdate       update,
-                                           HippoDataCardinality  cardinality,
-                                           gboolean              default_include,
-                                           const char           *default_children,
-                                           HippoDataValue       *value,
-                                           HippoNotificationSet *notifications);
+/* Sometimes it's useful to create the resource object first, and set the class_id later */
+void     _hippo_data_resource_set_class_id    (HippoDataResource    *resource,
+                                               const char           *class_id);
+
+gboolean _hippo_data_resource_update_property (HippoDataResource    *resource,
+                                               HippoQName           *property_id,
+                                               HippoDataUpdate       update,
+                                               HippoDataCardinality  cardinality,
+                                               gboolean              default_include,
+                                               const char           *default_children,
+                                               HippoDataValue       *value);
 
 void _hippo_data_resource_on_resource_change (HippoDataResource *resource,
                                               GSList            *changed_properties);

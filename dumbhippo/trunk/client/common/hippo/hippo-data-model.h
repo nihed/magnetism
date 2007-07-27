@@ -3,12 +3,12 @@
 #define __HIPPO_DATA_MODEL_H__
 
 #include <glib-object.h>
-#include <hippo/hippo-data-query.h>
 
 G_BEGIN_DECLS
 
 typedef struct _HippoDataModel      HippoDataModel;
 typedef struct _HippoDataModelClass HippoDataModelClass;
+typedef struct _HippoDataQuery      HippoDataQuery;
 
 #define HIPPO_TYPE_DATA_MODEL              (hippo_data_model_get_type ())
 #define HIPPO_DATA_MODEL(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), HIPPO_TYPE_DATA_MODEL, HippoDataModel))

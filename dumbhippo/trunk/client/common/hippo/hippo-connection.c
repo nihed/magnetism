@@ -4623,64 +4623,7 @@ dm_context_get_type(DMContext            *context,
         }
     }
 
-    p = type_attr;
-    if (*p == '+') {
-        *default_include = TRUE;
-        p++;
-    }
-
-    switch (*p) {
-    case 'b':
-        *type = HIPPO_DATA_BOOLEAN;
-        break;
-    case 'i':
-        *type = HIPPO_DATA_INTEGER;
-        break;
-    case 'l':
-        *type = HIPPO_DATA_LONG;
-        break;
-    case 'f':
-        *type = HIPPO_DATA_FLOAT;
-        break;
-    case 's':
-        *type = HIPPO_DATA_STRING;
-        break;
-    case 'r':
-        *type = HIPPO_DATA_RESOURCE;
-        break;
-    case 'u':
-        *type = HIPPO_DATA_URL;
-        break;
-    default:
-        g_warning("Can't understand m:type attribute '%s'", type_attr);
-        return FALSE;
-    }
-        
-    p++;
-
-    switch (*p) {
-    case '*':
-        *cardinality = HIPPO_DATA_CARDINALITY_N;
-        p++;
-        break;
-    case '?':
-        *cardinality = HIPPO_DATA_CARDINALITY_01;
-        p++;
-        break;
-    case '\0':
-        *cardinality = HIPPO_DATA_CARDINALITY_1;
-        break;
-    default:
-        g_warning("Can't understand m:type attribute '%s'", type_attr);
-        return FALSE;
-    }
-
-    if (*p != '\0') {
-        g_warning("Can't understand m:type attribute '%s'", type_attr);
-        return FALSE;
-    }
-
-    return TRUE;
+    return _hippo_data_parse_type(type_attr, type, cardinality, default_include);
 }
 
 static gboolean
@@ -4784,7 +4727,8 @@ dm_context_get_value(DMContext      *context,
 static void
 update_property(DMContext            *context,
                 HippoDataResource    *resource,
-                HippoNotificationSet *notifications)
+                HippoNotificationSet *broadcast_notifications,
+                HippoNotificationSet *save_notifications)
 {
     const char *property_uri;
     const char *property_name;
@@ -4795,6 +4739,7 @@ update_property(DMContext            *context,
     HippoDataCardinality cardinality = HIPPO_DATA_CARDINALITY_1;
     gboolean default_include = FALSE;
     const char *default_children;
+    gboolean changed = FALSE;
     
     if (!dm_context_node_info(context, &property_uri, &property_name) || property_uri == NULL) {
         g_warning("Couldn't resolve the namespace for child element of a resource %s",
@@ -4825,25 +4770,32 @@ update_property(DMContext            *context,
         default_children = NULL;
     
     if (update == HIPPO_DATA_UPDATE_CLEAR) {
-        _hippo_data_resource_update_property(resource, property_qname, update, cardinality,
-                                             default_include, default_children,
-                                             NULL,
-                                             notifications);
+        changed = _hippo_data_resource_update_property(resource, property_qname, update, cardinality,
+                                                       default_include, default_children,
+                                                       NULL);
     } else {
         HippoDataValue value;
         
         if (dm_context_get_value(context, type, &value)) {
             _hippo_data_resource_update_property(resource, property_qname, update, cardinality,
                                                  default_include, default_children,
-                                                 &value,
-                                                 notifications);
+                                                 &value);
+            changed = TRUE;
         }
+    }
+
+    if (changed) {
+        if (broadcast_notifications)
+            _hippo_notification_set_add(broadcast_notifications, resource, property_qname);
+        if (save_notifications && save_notifications != broadcast_notifications)
+            _hippo_notification_set_add(save_notifications, resource, property_qname);
     }
 }
 
 static HippoDataResource *
 update_resource(DMContext            *context,
-                HippoNotificationSet *notifications)
+                HippoNotificationSet *broadcast_notifications,
+                HippoNotificationSet *save_notifications)
 {
     const char *uri;
     const char *name;
@@ -4870,10 +4822,10 @@ update_resource(DMContext            *context,
 
     resource = _hippo_data_model_ensure_resource(context->model, resource_id, uri); 
     indirect = dm_context_get_indirect(context);
-    
+
     for (property_node = node->children; property_node; property_node = property_node->next) {
         dm_context_push_node(context, property_node);
-        update_property(context, resource, indirect ? NULL :  notifications);
+        update_property(context, resource, indirect ? NULL :  broadcast_notifications, save_notifications);
         dm_context_pop_node(context);
     }
     
@@ -4901,6 +4853,7 @@ on_query_reply(LmMessageHandler *handler,
     const char *child_uri;
     const char *child_name;
     GSList *results = NULL;
+    HippoNotificationSet *notifications;
     
     dm_context_init(&context, message_context->connection);
     dm_context_push_node(&context, node);
@@ -4923,19 +4876,25 @@ on_query_reply(LmMessageHandler *handler,
         g_warning("<iq/> child name didn't match the query");
         goto pop_child;
     }
+
+    notifications = _hippo_notification_set_new(context.model);
     
     for (resource_node = child->children; resource_node; resource_node = resource_node->next) {
         HippoDataResource *resource;
-        
+
         dm_context_push_node(&context, resource_node);
-        resource = update_resource(&context, NULL);
+        resource = update_resource(&context, NULL, notifications);
         if (resource != NULL)
             results = g_slist_prepend(results, resource); 
         
         dm_context_pop_node(&context);
     }
 
+    _hippo_data_model_save_query_to_disk(context.model, query, results, notifications);
+    _hippo_notification_set_free(notifications);
+    
     _hippo_data_query_response(query, results);
+    
     g_slist_free(results);
 
  pop_child:
@@ -4967,14 +4926,14 @@ add_param_foreach(gpointer key,
 
 void
 hippo_connection_send_query(HippoConnection *connection,
-                            HippoDataQuery  *query,
-                            const char      *fetch,
-                            GHashTable      *params)
+                            HippoDataQuery  *query)
 {
     LmMessage *message;
     LmMessageNode *node;
     LmMessageNode *child;
     HippoQName *query_qname = hippo_data_query_get_qname(query);
+    GHashTable *params = _hippo_data_query_get_params(query);
+    const char *fetch = hippo_data_query_get_fetch(query);
     
     message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
@@ -5010,7 +4969,8 @@ handle_data_notify (HippoConnection *connection,
     for (child = node->children; !found && child; child = child->next) {
         const char *child_uri;
         const char *child_name;
-        HippoNotificationSet *notifications;
+        HippoNotificationSet *broadcast_notifications;
+        HippoNotificationSet *save_notifications;
     
         dm_context_push_node(&context, child);
         if (!dm_context_node_info(&context, &child_uri, &child_name)) {
@@ -5023,15 +4983,19 @@ handle_data_notify (HippoConnection *connection,
 
         found = TRUE;
 
-        notifications = _hippo_notification_set_new(context.model);
+        broadcast_notifications = _hippo_notification_set_new(context.model);
+        save_notifications = _hippo_notification_set_new(context.model);
         
         for (resource_node = child->children; resource_node; resource_node = resource_node->next) {
             dm_context_push_node(&context, resource_node);
-            update_resource(&context, notifications);
+            update_resource(&context, broadcast_notifications, save_notifications);
             dm_context_pop_node(&context);
         }
 
-        _hippo_notification_set_send(notifications);
+        _hippo_notification_set_send(broadcast_notifications);
+        _hippo_notification_set_free(broadcast_notifications);
+        _hippo_data_model_save_update_to_disk(context.model, save_notifications);
+        _hippo_notification_set_free(save_notifications);
 
     next_child:
         dm_context_pop_node(&context);

@@ -87,6 +87,14 @@ struct _HippoPlatformClass {
     void     (* set_web_server)      (HippoPlatform *platform, const char *value);
     void     (* set_signin)          (HippoPlatform *platform, gboolean    value);
 
+    /* Create a suitable filename for storing the cache via SQLite; it should be
+     * machine-specific or live in a location that is visible only to this machine
+     * and not network mounted, since SQLite databases can't reliably be shared
+     * between machines. */
+    char *   (* make_cache_filename) (HippoPlatform  *platform,
+                                      const char     *server,
+                                      const char     *user_id);
+
     HippoInstanceType (* get_instance_type) (HippoPlatform *platform);
 };
 
@@ -158,7 +166,10 @@ void             hippo_platform_set_web_server         (HippoPlatform  *platform
                                                         const char     *value); 
 void             hippo_platform_set_signin             (HippoPlatform  *platform,
                                                         gboolean        value);
-                                                       
+
+char *           hippo_platform_make_cache_filename    (HippoPlatform  *platform,
+                                                        const char     *server,
+                                                        const char     *user_id);
 
 /* Convenience wrappers on get_server stuff that parse the host/port */
 void             hippo_platform_get_message_host_port  (HippoPlatform  *platform,

@@ -2,15 +2,15 @@
 #ifndef __HIPPO_DATA_QUERY_H__
 #define __HIPPO_DATA_QUERY_H__
 
+#include <hippo/hippo-data-model.h>
 #include <hippo/hippo-data-resource.h>
 
 G_BEGIN_DECLS
 
-typedef struct _HippoDataQuery      HippoDataQuery;
-
 typedef enum {
     HIPPO_DATA_ERROR_NO_CONNECTION = -1,
     HIPPO_DATA_ERROR_BAD_REPLY = -2,
+    HIPPO_DATA_ERROR_INTERNAL = -3,
     HIPPO_DATA_ERROR_BAD_REQUEST = 400,
     HIPPO_DATA_ERROR_FORBIDDEN = 403,
     HIPPO_DATA_ERROR_ITEM_NOT_FOUND = 404,
@@ -25,8 +25,10 @@ typedef void (*HippoUpdateHandler) (gpointer           user_data);
 typedef void (*HippoErrorHandler)  (HippoDataError     error,
                                     const char        *message,
                                     gpointer           user_data);
-                                   
+
+HippoDataModel *hippo_data_query_get_model (HippoDataQuery *query);
 HippoQName *    hippo_data_query_get_qname (HippoDataQuery *query);
+const char *    hippo_data_query_get_fetch (HippoDataQuery *query);
 
 void hippo_data_query_set_single_handler (HippoDataQuery     *query,
                                           HippoSingleHandler  handler,

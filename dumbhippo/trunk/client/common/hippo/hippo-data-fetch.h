@@ -25,6 +25,8 @@ HippoDataFetch *hippo_data_fetch_merge       (HippoDataFetch *fetch,
 					      HippoDataFetch *other);
 HippoDataFetch *hippo_data_fetch_subtract    (HippoDataFetch *fetch,
                                               HippoDataFetch *other);
+char *          hippo_data_fetch_to_string   (HippoDataFetch *fetch);
+
 
 void hippo_data_fetch_iter_init  (HippoDataFetchIter *iter,
                                   HippoDataResource  *resource,
