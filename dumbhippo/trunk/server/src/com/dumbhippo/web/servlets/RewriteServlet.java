@@ -368,16 +368,24 @@ public class RewriteServlet extends HttpServlet {
 		// configuration.
 				
 		if (path.equals("/")) {
-			String requestQueryString = request.getQueryString();
-			Guid signinUserGuid = getSigninGuid(request);
-			if (signinUserGuid != null) {
-				String additionalQueryString = "who=" + signinUserGuid.toString();
-				response.sendRedirect("/person" + constructQueryString(new String[]{additionalQueryString, requestQueryString}));
-			} else if (stealthMode) {
-				response.sendRedirect("/comingsoon" + constructQueryString(new String[]{requestQueryString}));
+			String requestQueryString = request.getQueryString();			
+			if (signin.getSite() == Site.MUGSHOT) {
+				Guid signinUserGuid = getSigninGuid(request);
+				if (signinUserGuid != null) {
+					String additionalQueryString = "who=" + signinUserGuid.toString();
+					response.sendRedirect("/person" + constructQueryString(new String[]{additionalQueryString, requestQueryString}));
+				} else if (stealthMode) {
+					response.sendRedirect("/comingsoon" + constructQueryString(new String[]{requestQueryString}));
+				} else {
+					response.sendRedirect("/main" + constructQueryString(new String[]{requestQueryString}));
+				}
 			} else {
-				response.sendRedirect("/main" + constructQueryString(new String[]{requestQueryString}));
-			}	
+				if (signin.isValid()) {
+					response.sendRedirect("/account" + constructQueryString(new String[]{requestQueryString}));
+				} else {
+					response.sendRedirect("/who-are-you" + constructQueryString(new String[]{requestQueryString}));
+				}
+			}
 			return;
 		}
 		
