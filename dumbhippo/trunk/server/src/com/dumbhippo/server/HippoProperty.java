@@ -6,6 +6,7 @@ public enum HippoProperty {
 	FEATURES("dumbhippo.server.features", ""),
 	DISABLE_AUTHENTICATION("dumbhippo.server.disable.authentication", "false"),
 	DISABLE_EMAIL("dumbhippo.server.email.disable", "false"),
+	FORBID_ROBOTS("dumbhippo.server.forbidRobots", "false"),
 	FEEDBACK_EMAIL("dumbhippo.server.email.feedback", "feedback@mugshot.org"),
 	DOWNLOADS("dumbhippo.server.downloads", null),
 	WEB_VERSION("dumbhippo.server.web.version", null),
