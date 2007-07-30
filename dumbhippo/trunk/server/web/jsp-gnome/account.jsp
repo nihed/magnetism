@@ -31,7 +31,9 @@
 	<gnome:page>
 		<dht3:accountStatus enableControl="true" includeDownload="false"/>
 		<div id="gnomeAccountContents" class="${signin.active ? 'gnome-account-contents' : 'gnome-account-contents-disabled'}">
-			<dht3:accountEditTable account="${account}" termsOfUseNote="${termsOfUseNote}"/>
+			<div style="margin-right: 100px;"><%-- avoid foot logo --%>
+				<dht3:accountEditTable account="${account}" termsOfUseNote="${termsOfUseNote}"/>
+			</div>
 		</div>
 	</gnome:page>
 	<dht2:photoChooser/>
