@@ -18,7 +18,7 @@
 </c:choose>
 
 <head>
-	<title>Something went wrong.</title>
+	<gnome:title>Error</gnome:title>
 	<gnome:faviconIncludes/>
 	<gnome:stylesheet name="site"/>
 	<gnome:stylesheet name="error"/>
