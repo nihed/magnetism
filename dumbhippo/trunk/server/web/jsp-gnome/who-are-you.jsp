@@ -17,7 +17,7 @@
 </head>
 
 <body>
-	<gnome:fixedLogo/>
+	<gnome:header/>
 	<div>
 		<form id="dhLoginForm" name="dhLoginForm" action="/signinpost" method="post">
 			<c:if test='${!empty param["next"]}'>

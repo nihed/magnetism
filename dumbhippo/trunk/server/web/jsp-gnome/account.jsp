@@ -22,6 +22,7 @@
 	<gnome:faviconIncludes/>
 </head>
 <body>
+	<gnome:header/>
 	Account!
 </body>
 </html>

@@ -1,5 +1,9 @@
 @CHARSET "UTF-8";
 
+/*
+ * classes are like gnome-my-class and ids are gnomeMyId
+ */
+
 body {
 	margin:      20px;
 	font-size:   14pt;
@@ -36,7 +40,7 @@ table, tr, td, th {
 	margin: 	0px;
 }
 
-#foot-logo {
+#gnomeFootLogo {
 	position: 	      		fixed;
 	bottom: 	        	40px;
 	right: 			    	40px;
@@ -45,4 +49,21 @@ table, tr, td, th {
 	background-image:   	url('/images-gnome/gnome_logo.png');
 	background-position:	top left;
 	background-repeat: 		no-repeat;
+}
+
+#gnomeHeader {
+	margin: 		0px;
+	margin-bottom:  20px;
+	padding: 		0px;
+	border-bottom:  4px solid #222222;
+}
+
+a.gnome-header {
+	font-size: 	 		24pt; /* mimic the h1 */
+	font-weight: 		bold;
+	text-decoration: 	none;
+	display: 			block;
+	margin-top: 		0.5em;
+	margin-bottom: 		0.5em;
+	color: 				#222222;
 }

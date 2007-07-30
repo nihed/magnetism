@@ -1,1 +1,1 @@
-<div id="foot-logo"></div>
+<div id="gnomeFootLogo"></div>
