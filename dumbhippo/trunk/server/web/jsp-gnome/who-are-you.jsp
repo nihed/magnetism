@@ -9,7 +9,7 @@
 <dh:bean id="landing" class="com.dumbhippo.web.pages.LandingPage" scope="page"/>
 
 <head>
-	<title>GNOME Online Desktop: Log In</title>
+	<gnome:title>Log In</gnome:title>
 	<gnome:faviconIncludes/>
 	<gnome:stylesheet name="site"/>
 	<gnome:stylesheet name="who-are-you"/>	

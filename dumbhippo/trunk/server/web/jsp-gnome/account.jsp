@@ -16,14 +16,14 @@
 <dh:bean id="account" class="com.dumbhippo.web.pages.AccountPage" scope="page"/>
 
 <head>
-    <title><c:out value="${person.viewedPerson.name}"/>'s Account - GNOME Online</title>
-	<gnome:stylesheet name="site"/>			
+    <gnome:title><c:out value="${person.viewedPerson.name}"/>'s Account</gnome:title>
+	<gnome:stylesheet name="site"/>
 	<gnome:stylesheet name="account"/>	
 	<gnome:faviconIncludes/>
 </head>
 <body>
 	<gnome:page>
-		<div>Account!</div>
+		<div></div>
 	</gnome:page>
 </body>
 </html>
