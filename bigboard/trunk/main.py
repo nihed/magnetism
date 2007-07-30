@@ -41,10 +41,13 @@ GCONF_PREFIX = '/apps/bigboard/'
 REEXEC_CMD = os.getenv('BB_REEXEC') or '/usr/bin/bigboard'
 REEXEC_CMD = os.path.abspath(REEXEC_CMD)
 
+BB_DATADIR = os.getenv('BB_DATADIR')
+if BB_DATADIR:
+    BB_DATADIR = os.path.abspath(BB_DATADIR)
+
 def _find_in_datadir(fname):
-    datadir_env = os.getenv('BB_DATADIR')
-    if datadir_env:
-        return os.path.join(datadir_env, fname)    
+    if BB_DATADIR:
+        return os.path.join(BB_DATADIR, fname)
     datadir_env = os.getenv('XDG_DATA_DIRS')
     if datadir_env:
         datadirs = datadir_env.split(':')
