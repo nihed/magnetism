@@ -25,7 +25,7 @@
 			</c:if>	
 			<table width="100%">
 			<tr>
-			  <td><div class="dh-title">Log in</div></td>
+			  <td><div>Log in</div></td>
 			</tr>
 			</table>
 			<div id="dhLoginNotification" style="display: none;"></div>
@@ -38,7 +38,7 @@
 				<input id="dhLoginPasswordEntry" type="password" name="password" style="display: none;" maxlength="64"/>
 			</div>
 			<input id="dhLoginPasswordShowing" type="hidden" value='false' name="passwordShowing"/>
-			<div style="position:relative">
+			<div style="position:relative;">
 				<input id="dhLoginButton" type="submit" value="Log in"/>
 				<a id="dhPasswordHelp" href="http://developer.mugshot.org/wiki/Did_You_Set_A_Password" target="_blank">Did you set a password?</a>
 			</div>
@@ -57,7 +57,6 @@
 		<div>		
 			<c:choose>
 			    <c:when test="${landing.selfInvitations > 0}">
-	                <br/>
 	                <dht2:selfInvite promotion="${landing.openSignupPromotion}" invitesAvailable="${landing.selfInvitations}"/>
 			    </c:when>
 			    <c:otherwise>

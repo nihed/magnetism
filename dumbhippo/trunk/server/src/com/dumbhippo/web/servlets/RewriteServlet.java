@@ -332,7 +332,8 @@ public class RewriteServlet extends HttpServlet {
         // Store the server's base URL for reference from JSP pages
         String baseUrl = configuration.getBaseUrl(signin.getSite());
         request.setAttribute("baseUrl", baseUrl);
-		
+		request.setAttribute("site", signin.getSite());
+        
 		// be sure we only handle appropriate http methods, not e.g. DAV methods.
 		// also, appropriately implement OPTIONS method.
 		String httpMethod = request.getMethod().toUpperCase();

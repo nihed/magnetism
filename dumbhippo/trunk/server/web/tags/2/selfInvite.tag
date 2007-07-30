@@ -80,7 +80,7 @@
 				    </c:when>
 				    <c:otherwise>
 				        <div class="dh-special-subtitle">
-				            To sign up for Mugshot, enter your email address.
+				            To sign up for <c:out value="${site.siteName}"/>, enter your email address.
 				            <br/>
 					        Then, check your email for a sign-in link.
 				        </div>		   
@@ -95,11 +95,11 @@
 	        		Temporarily out of invitations
         		</div>
         		<div class="dh-special-subtitle dh-landing-explanatory">
-        			Sorry, we've run out of invitations to Mugshot. If you enter your email address below, we'll let you know when we have more available.
+        			Sorry, we've run out of invitations to <c:out value="${site.siteName}"/>. If you enter your email address below, we'll let you know when we have more available.
         		</div>
         		<dht:wantsIn buttonText="Take a rain check"/>
 			</c:otherwise>
-		</c:choose>    	
+		</c:choose>
 	</div>
 	<br/>
 	<div id="dhSelfInviteMessage${N}" class="dh-landing-result dhInvisible">
