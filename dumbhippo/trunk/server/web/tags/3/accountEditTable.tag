@@ -17,12 +17,12 @@
     <%-- This is ok here, but don't use browser.firefox on the anonymous pages --%>
     <%-- for which we use a single cache for all gecko browsers. --%>
     <c:when test="${browser.firefox && browser.windows}">
-        <c:set var="browseButton" value="/images3/${buildStamp}/browse_ff.gif"/>   
-        <c:set var="browseInputSize" value="1"/>  
+        <c:set var="browseButton" value="/${siteImageDir}/${buildStamp}/browse_ff.gif"/>   
+        <c:set var="browseInputSize" value="1"/>
         <c:set var="browseInputClass" value="dh-hidden-file-upload"/>
     </c:when>
     <c:when test="${browser.firefox && browser.linux}">
-        <c:set var="browseButton" value="/images3/${buildStamp}/browse_lff.gif"/>   
+        <c:set var="browseButton" value="/${siteImageDir}/${buildStamp}/browse_lff.gif"/>   
         <c:set var="browseInputSize" value="1"/>  
         <c:set var="browseInputClass" value="dh-hidden-file-upload"/>
     </c:when>
@@ -107,7 +107,7 @@
 						<td></td>
 					</tr>
 				</c:forEach>
-				<tr><td><dht2:textInput id='dhEmailEntry'/></td><td><img id='dhEmailVerifyButton' src="/images3/${buildStamp}/verify_button.gif" onclick="dh.account.verifyEmail();"/></td></tr>
+				<tr><td><dht2:textInput id='dhEmailEntry'/></td><td><img id='dhEmailVerifyButton' src="/${siteImageDir}/${buildStamp}/verify_button.gif" onclick="dh.account.verifyEmail();"/></td></tr>
                          </tbody>
 		    </table>
 	    </dht2:formTableRow>
@@ -226,7 +226,7 @@
 	</dht2:formTableRow>
 	<dht2:formTableRow label="Application statistics" altRow="true">
 	    <div class="dh-explanation">
-		Share information about which applications you use with Mugshot and Fedora. <a href="/applications">Read more</a>
+		Share information about which applications you use. <a href="/applications">Read more</a>
 		</div>
 	    <div id="dhApplicationUsagePreferences" class="dh-account-preferences-row">
 	    Application usage statistics: 
@@ -279,7 +279,7 @@
         </c:if>    
 	    <div>
 			<dh:script module="dh.actions"/>						
-			<img id="dhDisableAccountButton" src="/images3/${buildStamp}/disable.gif" onclick="javascript:dh.actions.disableAccount();"/>
+			<img id="dhDisableAccountButton" src="/${siteImageDir}/${buildStamp}/disable.gif" onclick="javascript:dh.actions.disableAccount();"/>
 		</div>
 		<div>
 		</div>
