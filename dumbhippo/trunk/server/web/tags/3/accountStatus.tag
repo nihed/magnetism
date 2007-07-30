@@ -18,7 +18,7 @@
 	<c:when test="${signin.user.account.adminDisabled}">
 		<div id="dhAccountDisabled">
 			<span class="dh-account-disabled-header">Your account is currently disabled.</span>
-			Your account has been disabled by the Mugshot site adminstrators. If you believe it
+			Your account has been disabled by the <c:out value="${site.siteName}"/> site adminstrators. If you believe it
 			was disabled in error, please contact <a href="mailto:feedback@mugshot.org">feedback@mugshot.org</a> 
 			so we can straighten the situation out.
 		</div>
@@ -31,8 +31,8 @@
 					Go to <a href="/account">My Account</a> to reenable it.
 				</c:when>
 				<c:otherwise>
-					The information on your Mugshot pages is not visible to anybody else. 
-					Reenable your account to use all of Mugshot's features. 
+					The information on your <c:out value="${site.siteName}"/> pages is not visible to anybody else. 
+					Reenable your account to use all of <c:out value="${site.siteName}"/>'s features. 
                     <p>
                     	<a href="javascript:dh.actions.enableAccount()">Reenable my account</a>
                     </p>
@@ -49,11 +49,11 @@
 				<tr>
 				<td valign="center">			
 					<div>
-						<div class="dh-account-status-primary">Welcome to Mugshot!</div>
+						<div class="dh-account-status-primary">Welcome to <c:out value="${site.siteName}"/>!</div>
 						Activate your account to share updates with friends.
 					</div>
 					<div>
-						<a href="/features">Learn more about Mugshot.</a>					
+						<a href="/features">Learn more about <c:out value="${site.siteName}"/>.</a>					
 					</div>
 					<script type="text/javascript">
 						dh.event.addPageLoadListener(dh.actions.updateGetStarted);
@@ -63,7 +63,7 @@
 					<div class="dh-account-status-secondary">
 						<div>
 			        	<input type="checkbox" id="dhAcceptTerms" onclick="dh.actions.updateGetStarted();">
-		                	<label for="dhAcceptTerms">I agree to the Mugshot</label> <a href="javascript:window.open('/terms', 'dhTermsOfUse', 'menubar=no,scrollbars=yes,width=700,height=700');void(0);">Terms of Use</a>.
+		                	<label for="dhAcceptTerms">I agree to the <c:out value="${site.siteName}"/></label> <a href="javascript:window.open('/terms', 'dhTermsOfUse', 'menubar=no,scrollbars=yes,width=700,height=700');void(0);">Terms of Use</a>.
 				        </input>
 				        </div>
 				        <div>
@@ -80,7 +80,7 @@
 				</div>
 				<div id="dhDownloadMessage">
 					<dh:png src="/images3/${buildStamp}/star.png" style="width: 13px; height: 13px;"/>
-					Make the most of Mugshot by downloading our desktop software. <a href="/download">Download now</a>.
+					Make the most of <c:out value="${site.siteName}"/> by downloading our desktop software. <a href="/download">Download now</a>.
 				</div>
 			</c:when>
 		</c:choose>

@@ -3,6 +3,6 @@
 <%@ taglib tagdir="/WEB-INF/tags/gnome" prefix="gnome" %>
 
 <div id="gnomeHeader">
-  	<a class="gnome-header" href="">GNOME Online Desktop</a>
+  	<a class="gnome-header" href="">GNOME Online</a>
 </div>
 <gnome:fixedLogo/>
