@@ -20,6 +20,7 @@
 		dumbhippo.server.hajndiPort=@@hajndiPort:properties@@
 	    dumbhippo.server.features=@@serverFeatures:properties@@
 	    dumbhippo.server.disable.authentication=@@disableAuthentication:properties@@
+	    dumbhippo.server.forbidRobots=@@forbidRobots:properties@@
 	    Dumbhippo.server.email.disable=@@disableEmail:properties@@
         dumbhippo.server.bind.host=@@bindHost:properties@@
 		dumbhippo.server.xmpp.port=@@jivePlainPort:properties@@

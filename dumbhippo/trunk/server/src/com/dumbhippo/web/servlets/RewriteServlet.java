@@ -519,9 +519,12 @@ public class RewriteServlet extends HttpServlet {
 			String newPath;
 			// We could eliminate the use of RewrittenRequest entirely by
 			// adding a mapping for *.html to servlet-info.xml
-			if (afterSlash.equals("robots.txt"))
-				newPath = "/html/robots.txt";
-			else
+			if (afterSlash.equals("robots.txt")) {
+				if (configuration.getProperty(HippoProperty.FORBID_ROBOTS).equals("true"))
+					newPath = "/html/no-robots.txt";
+				else
+					newPath = "/html/robots.txt";
+			} else
 				newPath = "/html" + path + ".html";
 			RewrittenRequest rewrittenRequest = new RewrittenRequest(request, newPath);
 			context.getNamedDispatcher("default").forward(rewrittenRequest, response);
