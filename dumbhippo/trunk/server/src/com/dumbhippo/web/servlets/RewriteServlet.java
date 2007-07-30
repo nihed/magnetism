@@ -333,6 +333,8 @@ public class RewriteServlet extends HttpServlet {
         String baseUrl = configuration.getBaseUrl(signin.getSite());
         request.setAttribute("baseUrl", baseUrl);
 		request.setAttribute("site", signin.getSite());
+		request.setAttribute("siteImageDir", signin.getSite() == Site.GNOME ? 
+											  "images-gnome" : "images3");
         
 		// be sure we only handle appropriate http methods, not e.g. DAV methods.
 		// also, appropriately implement OPTIONS method.

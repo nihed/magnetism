@@ -78,9 +78,9 @@ dhPasswordFormUpdate = function(ev) {
 	
 	dh.password.invalid = invalid;
 	if (invalid) {
-		dh.password.setButton.src = dhImageRoot3 + "setpassword_disabled.gif";
+		dh.password.setButton.src = dhImageRootSite + "setpassword_disabled.gif";
 	} else {
-		dh.password.setButton.src = dhImageRoot3 + "setpassword.gif";
+		dh.password.setButton.src = dhImageRootSite + "setpassword.gif";
 	}
 				
 	var key = dh.event.getKeyCode(ev);

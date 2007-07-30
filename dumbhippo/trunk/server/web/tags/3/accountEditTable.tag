@@ -265,7 +265,7 @@
 		<c:if test="${!account.hasPassword}">
 			<c:set var="removePasswordLinkStyle" value="display: none;" scope="page"/>
 		</c:if>
-		<img id="dhSetPasswordButton" src="/images3/${buildStamp}/setpassword_disabled.gif"/><a id="dhRemovePasswordLink" style="${removePasswordLinkStyle}" href="javascript:dh.password.unsetPassword();" title="Delete my password">Delete my current password.</a>
+		<img id="dhSetPasswordButton" src="/${siteImageDir}/${buildStamp}/setpassword_disabled.gif"/><a id="dhRemovePasswordLink" style="${removePasswordLinkStyle}" href="javascript:dh.password.unsetPassword();" title="Delete my password">Delete my current password.</a>
 	</dht2:formTableRow>
 	<dht2:formTableRow label="Disable account" altRow="true">
 	    <div class="dh-explanation">
