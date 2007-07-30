@@ -4,6 +4,13 @@
  * classes are like gnome-my-class and ids are gnomeMyId
  */
 
+/* This class violates the naming conventions for backward compatibility, since
+   it's referenced from javascript which may apply to old pages.
+ */
+.dhInvisible {
+	display:			none;
+}
+
 body {
 	margin:      20px;
 	font-size:   14pt;
@@ -51,6 +58,14 @@ table, tr, td, th {
 	background-repeat: 		no-repeat;
 }
 
+#gnomePage {
+	min-height: 			600px;
+}
+
+#gnomeContent {	
+	border-bottom: 			1px solid #222222;
+}
+
 #gnomeHeader {
 	margin: 		0px;
 	margin-bottom:  20px;
@@ -66,4 +81,16 @@ a.gnome-header {
 	margin-top: 		0.5em;
 	margin-bottom: 		0.5em;
 	color: 				#222222;
+}
+
+.gnome-title {
+	font-size: 			18pt;
+	font-weight: 		bold;
+}
+
+/* used in dht2:selfInvite, dht2:notevil */
+.dh-special-subtitle, .dh-disclaimer, .dh-disclaimer-own-section {
+	font-size: 			14pt;
+	color: 				#666666;
+	margin-bottom:		10px;
 }

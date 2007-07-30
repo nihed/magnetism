@@ -22,7 +22,8 @@
 	<gnome:faviconIncludes/>
 </head>
 <body>
-	<gnome:header/>
-	Account!
+	<gnome:page>
+		<div>Account!</div>
+	</gnome:page>
 </body>
 </html>
