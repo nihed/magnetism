@@ -22,6 +22,10 @@ a {
 	color: 		#0066dd;
 }
 
+img {
+	border-style:		none;	
+}
+
 input[type="text"], input[type="password"] {
 	padding: 		  0.1em;
 	border: 		  1px solid #777777;

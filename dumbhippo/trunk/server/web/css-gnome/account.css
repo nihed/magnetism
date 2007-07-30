@@ -1,1 +1,5 @@
 @CHARSET "UTF-8";
+
+.gnome-account-contents-disabled * { 
+	color:				gray;
+}
