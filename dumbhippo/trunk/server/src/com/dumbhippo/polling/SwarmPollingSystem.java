@@ -112,24 +112,28 @@ public class SwarmPollingSystem extends ServiceMBeanSupport implements SwarmPoll
 			else
 				task.setExecutionAverage((long) exponentialAverage(task.getExecutionAverage(), lastExecDuration, 0.1));
 			
-
-			if (changed) {
-				if (task.getPeriodicityAverage() == -1) {
-					long defaultPeriodicity = task.getDefaultPeriodicitySeconds();
-					if (defaultPeriodicity != -1)
-						task.setPeriodicityAverage(defaultPeriodicity*1000);
-					else {
-						// We initialize task periodicity to 30 minutes as a guess, but task families
-						// should really be picking their own
-						task.setPeriodicityAverage(30 * 60 * 1000);
-					}
-				} else if (task.getLastChange() > 0) {
-					long periodicity = System.currentTimeMillis() - task.getLastChange();
-					task.setPeriodicityAverage((long) exponentialAverage(task.getPeriodicityAverage(), 
-							                                             periodicity, 
-							                                             0.3));
+			if (task.getPeriodicityAverage() == -1) {
+				long defaultPeriodicity = task.getDefaultPeriodicitySeconds();
+				if (defaultPeriodicity != -1) {
+					task.setPeriodicityAverage(defaultPeriodicity*1000);					    
+				} else {
+					// We initialize task periodicity to 30 minutes as a guess, but task families
+					// should really be picking their own
+					task.setPeriodicityAverage(30 * 60 * 1000);
 				}
-				task.touchChanged();
+			} else if (task.getLastChange() > 0) {				
+				long periodicity = System.currentTimeMillis() - task.getLastChange();
+				task.setPeriodicityAverage((long) exponentialAverage(task.getPeriodicityAverage(), 
+						                                             periodicity, 
+						                                             0.3));
+		    }
+
+			// We want to initialize lastChanged the first time the task gets executed, so that we can
+			// keep track of how long it doesn't change after that. This will result in one cycle of 
+			// execution being scheduled for a little bit sooner than the default, but it shouldn't be 
+			// a big deal.
+			if (changed || task.getLastChange() <= 0) {	
+		        task.touchChanged();
 			}	
 		}
 		
