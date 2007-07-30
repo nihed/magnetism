@@ -1,1 +1,8 @@
 @CHARSET "UTF-8";
+
+/* used in dht2:selfInvite, dht2:notevil */
+.dh-special-subtitle, .dh-disclaimer, .dh-disclaimer-own-section {
+	font-size: 			14pt;
+	color: 				#666666;
+	margin-bottom:		10px;
+}
