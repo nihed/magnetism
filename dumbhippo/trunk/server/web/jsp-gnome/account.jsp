@@ -20,10 +20,6 @@
 <jsp:setProperty name="account" property="facebookAuthToken" param="auth_token"/>
 <jsp:setProperty name="account" property="facebookErrorMessage" param="error_message"/>
 
-<c:set var="browseButton" value=""/>     
-<c:set var="browseInputSize" value="24"/>
-<c:set var="browseInputClass" value="dh-file-upload"/>
-
 <head>
     <gnome:title><c:out value="${person.viewedPerson.name}"/>'s Account</gnome:title>
 	<gnome:stylesheet name="site"/>
@@ -34,7 +30,10 @@
 <body>
 	<gnome:page>
 		<dht3:accountStatus enableControl="true" includeDownload="false"/>
-		<div></div>
+		<div id="gnomeAccountContents" class="${signin.active ? 'gnome-account-contents' : 'gnome-account-contents-disabled'}">
+			<dht3:accountEditTable account="${account}" termsOfUseNote="${termsOfUseNote}"/>
+		</div>
 	</gnome:page>
+	<dht2:photoChooser/>
 </body>
 </html>
