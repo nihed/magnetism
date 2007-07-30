@@ -24,7 +24,8 @@
 	<gnome:stylesheet name="error"/>
 </head>
 <body>
-	<p class="dh-error-header">
+	<gnome:header/>
+	<p class="gnome-error-header">
 		<c:choose>
 			<c:when test="${!empty errorHtml}">
 				<c:out value="${errorHtml}" escapeXml="false"/>
