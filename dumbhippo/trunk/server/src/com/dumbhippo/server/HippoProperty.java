@@ -34,6 +34,7 @@ public enum HippoProperty {
 	NEW_FEATURES("dumbhippo.server.newfeatures", "false"),
 	STEALTH_MODE("dumbhippo.server.stealthmode", "false"),
 	SLAVE_MODE("dumbhippo.server.slavemode", "false"),	
+	DOGFOOD_MODE("dumbhippo.server.dogfoodmode", "false"),
 	USER_UPDATE_INTERVAL("dumbhippo.server.userupdateinterval", "300"), // 5 minutes
 	SUMMIT_GROUP_GUID("dumbhippo.server.summitgroupguid", null),	
 	NEW_USER_INVITATION_COUNT("dumbhippo.server.newuserinvitationcount", "0"),
@@ -41,7 +42,7 @@ public enum HippoProperty {
 	FLICKR_API_ID("dumbhippo.server.flickr.apiid", null),
 	FACEBOOK_API_KEY("dumbhippo.server.facebook.apikey", null),
 	FACEBOOK_SECRET("dumbhippo.server.facebook.secret", null),	
-	BIND_HOST("dumbhippo.server.bind.host", null), 
+	BIND_HOST("dumbhippo.server.bind.host", null),
 	GOOGLE_ANALYTICS_KEY("dumbhippo.server.googleanalytics.key", "");
 	
 	private String key;

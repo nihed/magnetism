@@ -54,6 +54,7 @@
 		dumbhippo.server.newfeatures = @@newFeatures:properties@@
 		dumbhippo.server.stealthmode=@@stealthMode:properties@@
 		dumbhippo.server.slavemode=@@slaveMode:properties@@
+		dumbhippo.server.dogfoodmode=@@dogfoodMode:properties@@
 		dumbhippo.server.userupdateinterval=@@userUpdateInterval:properties@@
 		dumbhippo.server.summitgroupguid=@@summitGroupGuid:properties@@
 		dumbhippo.server.newuserinvitationcount=@@newUserInvitationCount:properties@@

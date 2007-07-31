@@ -74,7 +74,7 @@ public class RewriteServlet extends HttpServlet {
 		return xmppEnabled;
 	}
 	
-	private boolean stealthMode;
+	private boolean stealthMode; 
 	private Set<String> requiresSignin;
 	private Set<String> requiresSigninStealth;
 	private Set<String> noSignin;
@@ -685,6 +685,9 @@ public class RewriteServlet extends HttpServlet {
 		stealthMode = Boolean.parseBoolean(stealthModeString);
 		
 		logger.debug("Stealth mode: " + stealthMode);
+
+		boolean dogfoodMode = Boolean.parseBoolean(configuration.getProperty(HippoProperty.DOGFOOD_MODE));
+        getServletContext().setAttribute("dogfoodMode", dogfoodMode);
 		
 		requiresSignin = getStringSet(config, "requiresSignin");
 		requiresSigninStealth = getStringSet(config, "requiresSigninStealth");
