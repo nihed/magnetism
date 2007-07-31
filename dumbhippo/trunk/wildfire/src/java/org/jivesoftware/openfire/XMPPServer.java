@@ -9,34 +9,41 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire;
+package org.jivesoftware.openfire;
 
 import org.dom4j.Document;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.wildfire.audit.AuditManager;
-import org.jivesoftware.wildfire.audit.spi.AuditManagerImpl;
-import org.jivesoftware.wildfire.commands.AdHocCommandHandler;
-import org.jivesoftware.wildfire.component.InternalComponentManager;
-import org.jivesoftware.wildfire.container.AdminConsolePlugin;
-import org.jivesoftware.wildfire.container.Module;
-import org.jivesoftware.wildfire.container.PluginManager;
-import org.jivesoftware.wildfire.disco.IQDiscoInfoHandler;
-import org.jivesoftware.wildfire.disco.IQDiscoItemsHandler;
-import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.wildfire.disco.ServerItemsProvider;
-import org.jivesoftware.wildfire.handler.*;
-import org.jivesoftware.wildfire.muc.MultiUserChatServer;
-import org.jivesoftware.wildfire.muc.spi.MultiUserChatServerImpl;
-import org.jivesoftware.wildfire.net.MulticastDNSService;
-import org.jivesoftware.wildfire.roster.RosterManager;
-import org.jivesoftware.wildfire.spi.*;
-import org.jivesoftware.wildfire.transport.TransportHandler;
-import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.Version;
+import org.jivesoftware.openfire.audit.AuditManager;
+import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
+import org.jivesoftware.openfire.commands.AdHocCommandHandler;
+import org.jivesoftware.openfire.component.InternalComponentManager;
+import org.jivesoftware.openfire.container.AdminConsolePlugin;
+import org.jivesoftware.openfire.container.Module;
+import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
+import org.jivesoftware.openfire.disco.IQDiscoItemsHandler;
+import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.openfire.disco.ServerItemsProvider;
+import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
+import org.jivesoftware.openfire.filetransfer.FileTransferManager;
+import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
+import org.jivesoftware.openfire.handler.*;
+import org.jivesoftware.openfire.mediaproxy.MediaProxyService;
+import org.jivesoftware.openfire.muc.MultiUserChatServer;
+import org.jivesoftware.openfire.muc.spi.MultiUserChatServerImpl;
+import org.jivesoftware.openfire.net.MulticastDNSService;
+import org.jivesoftware.openfire.net.SSLConfig;
+import org.jivesoftware.openfire.net.ServerTrafficCounter;
+import org.jivesoftware.openfire.pubsub.PubSubModule;
+import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.spi.*;
+import org.jivesoftware.openfire.stun.STUNService;
+import org.jivesoftware.openfire.transport.TransportHandler;
+import org.jivesoftware.openfire.update.UpdateManager;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.vcard.VCardManager;
+import org.jivesoftware.util.*;
 import org.xmpp.packet.JID;
 
 import java.io.File;
@@ -44,36 +51,38 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.security.KeyStore;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * The main XMPP server that will load, initialize and start all the server's
  * modules. The server is unique in the JVM and could be obtained by using the
  * {@link #getInstance()} method.<p>
- *
+ * <p/>
  * The loaded modules will be initialized and may access through the server other
  * modules. This means that the only way for a module to locate another module is
  * through the server. The server maintains a list of loaded modules.<p>
- *
+ * <p/>
  * After starting up all the modules the server will load any available plugin.
- * For more information see: {@link org.jivesoftware.wildfire.container.PluginManager}.<p>
- *
+ * For more information see: {@link org.jivesoftware.openfire.container.PluginManager}.<p>
+ * <p/>
  * A configuration file keeps the server configuration. This information is required for the
  * server to work correctly. The server assumes that the configuration file is named
- * <b>wildfire.xml</b> and is located in the <b>conf</b> folder. The folder that keeps
+ * <b>openfire.xml</b> and is located in the <b>conf</b> folder. The folder that keeps
  * the configuration file must be located under the home folder. The server will try different
  * methods to locate the home folder.
- *
+ * <p/>
  * <ol>
- *  <li><b>system property</b> - The server will use the value defined in the <i>wildfireHome</i>
- *      system property.</li>
- *  <li><b>working folder</b> -  The server will check if there is a <i>conf</i> folder in the
- *      working directory. This is the case when running in standalone mode.</li>
- *  <li><b>wildfire_init.xml file</b> - Attempt to load the value from wildfire_init.xml which
- *      must be in the classpath</li>
+ * <li><b>system property</b> - The server will use the value defined in the <i>openfireHome</i>
+ * system property.</li>
+ * <li><b>working folder</b> -  The server will check if there is a <i>conf</i> folder in the
+ * working directory. This is the case when running in standalone mode.</li>
+ * <li><b>openfire_init.xml file</b> - Attempt to load the value from openfire_init.xml which
+ * must be in the classpath</li>
  * </ol>
  *
  * @author Gaston Dombiak
@@ -91,13 +100,18 @@ public class XMPPServer {
     /**
      * All modules loaded by this server
      */
-    private Map<Class,Module> modules = new HashMap<Class,Module>();
+    private Map<Class, Module> modules = new LinkedHashMap<Class, Module>();
+
+    /**
+     * Listeners that will be notified when the server has started or is about to be stopped.
+     */
+    private List<XMPPServerListener> listeners = new CopyOnWriteArrayList<XMPPServerListener>();
 
     /**
      * Location of the home directory. All configuration files should be
      * located here.
      */
-    private File wildfireHome;
+    private File openfireHome;
     private ClassLoader loader;
 
     private PluginManager pluginManager;
@@ -109,7 +123,7 @@ public class XMPPServer {
     private boolean setupMode = true;
 
     private static final String STARTER_CLASSNAME =
-            "org.jivesoftware.wildfire.starter.ServerStarter";
+            "org.jivesoftware.openfire.starter.ServerStarter";
     private static final String WRAPPER_CLASSNAME =
             "org.tanukisoftware.wrapper.WrapperManager";
 
@@ -166,7 +180,7 @@ public class XMPPServer {
      */
     public boolean isLocal(JID jid) {
         boolean local = false;
-        if (jid != null && name != null && name.equalsIgnoreCase(jid.getDomain())) {
+        if (jid != null && name != null && name.equals(jid.getDomain())) {
             local = true;
         }
         return local;
@@ -182,8 +196,7 @@ public class XMPPServer {
      */
     public boolean isRemote(JID jid) {
         if (jid != null) {
-            String domain = jid.getDomain();
-            if (!name.equals(domain) && componentManager.getComponent(domain) == null) {
+            if (!name.equals(jid.getDomain()) && componentManager.getComponent(jid) == null) {
                 return true;
             }
         }
@@ -197,10 +210,8 @@ public class XMPPServer {
      * @return true if the given address matches a component service JID.
      */
     public boolean matchesComponent(JID jid) {
-        if (jid != null) {
-            return componentManager.getComponent(jid.getDomain()) != null;
-        }
-        return false;
+        return jid != null && !name.equals(jid.getDomain()) &&
+                componentManager.getComponent(jid) != null;
     }
 
     /**
@@ -233,11 +244,11 @@ public class XMPPServer {
         while (tokenizer.hasMoreTokens()) {
             String username = tokenizer.nextToken();
             try {
-                admins.add(createJID(username, null));
+                admins.add(createJID(username.toLowerCase().trim(), null));
             }
             catch (IllegalArgumentException e) {
                 // Ignore usernames that when appended @server.com result in an invalid JID
-                Log.warn("Invalid username found in authorizedUsernames at wildfire.xml: " +
+                Log.warn("Invalid username found in authorizedUsernames at openfire.xml: " +
                         username, e);
             }
         }
@@ -247,27 +258,44 @@ public class XMPPServer {
         jids = (jids == null || jids.trim().length() == 0) ? "" : jids;
         tokenizer = new StringTokenizer(jids, ",");
         while (tokenizer.hasMoreTokens()) {
-            String jid = tokenizer.nextToken();
+            String jid = tokenizer.nextToken().toLowerCase().trim();
             try {
                 admins.add(new JID(jid));
             }
             catch (IllegalArgumentException e) {
-                Log.warn("Invalid JID found in authorizedJIDs at wildfire.xml: " + jid, e);
+                Log.warn("Invalid JID found in authorizedJIDs at openfire.xml: " + jid, e);
             }
         }
 
         return admins;
     }
 
+    /**
+     * Adds a new server listener that will be notified when the server has been started
+     * or is about to be stopped.
+     *
+     * @param listener the new server listener to add.
+     */
+    public void addServerListener(XMPPServerListener listener) {
+        listeners.add(listener);
+    }
+
+    /**
+     * Removes a server listener that was being notified when the server was being started
+     * or was about to be stopped.
+     *
+     * @param listener the server listener to remove.
+     */
+    public void removeServerListener(XMPPServerListener listener) {
+        listeners.remove(listener);
+    }
+
     private void initialize(String home) throws FileNotFoundException {
-        locateWildfire(home);
+        locateOpenfire(home);
 
-        name = JiveGlobals.getProperty("xmpp.domain");
-        if (name == null) {
-            name = "127.0.0.1";
-        }
+        name = JiveGlobals.getProperty("xmpp.domain", "127.0.0.1").toLowerCase();
 
-        version = new Version(2, 4, 0, Version.ReleaseStatus.Release, -1);
+        version = new Version(3, 3, 2, Version.ReleaseStatus.Release, 1);
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             setupMode = false;
         }
@@ -277,7 +305,6 @@ public class XMPPServer {
         }
 
         loader = Thread.currentThread().getContextClassLoader();
-        componentManager = InternalComponentManager.getInstance();
 
         initialized = true;
     }
@@ -294,25 +321,47 @@ public class XMPPServer {
         // Make sure that setup finished correctly.
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {
             // Set the new server domain assigned during the setup process
-            name = JiveGlobals.getProperty("xmpp.domain");
+            name = JiveGlobals.getProperty("xmpp.domain").toLowerCase();
+
+            // Update certificates (if required)
+            try {
+                // Check if keystore already has certificates for current domain
+                KeyStore ksKeys = SSLConfig.getKeyStore();
+                boolean dsaFound = CertificateManager.isDSACertificate(ksKeys, name);
+                boolean rsaFound = CertificateManager.isRSACertificate(ksKeys, name);
+
+                // No certificates were found so create new self-signed certificates
+                if (!dsaFound) {
+                    CertificateManager.createDSACert(ksKeys, SSLConfig.getKeyPassword(),
+                            name + "_dsa", "cn=" + name, "cn=" + name, "*." + name);
+                }
+                if (!rsaFound) {
+                    CertificateManager.createRSACert(ksKeys, SSLConfig.getKeyPassword(),
+                            name + "_rsa", "cn=" + name, "cn=" + name, "*." + name);
+                }
+                // Save new certificates into the key store
+                if (!dsaFound || !rsaFound) {
+                    SSLConfig.saveStores();
+                }
+
+            } catch (Exception e) {
+                Log.error("Error generating self-signed certificates", e);
+            }
 
             Thread finishSetup = new Thread() {
                 public void run() {
                     try {
                         if (isStandAlone()) {
-                            // If the user selected different ports for the admin console to run on,
-                            // we need to restart the embedded Jetty instance to listen on the
-                            // new ports.
-                            if (!JiveGlobals.getXMLProperty("adminConsole.port").equals("9090") ||
-                                    !JiveGlobals.getXMLProperty("adminConsole.securePort")
-                                            .equals("9091")) {
-                                // Wait a short period before shutting down the admin console.
-                                // Otherwise, the page that requested the setup finish won't
-                                // render properly!
-                                Thread.sleep(1000);
-                                ((AdminConsolePlugin) pluginManager.getPlugin("admin"))
-                                        .restartListeners();
-                            }
+                            // Always restart the HTTP server manager. This covers the case
+                            // of changing the ports, as well as generating self-signed certificates.
+                        
+                            // Wait a short period before shutting down the admin console.
+                            // Otherwise, the page that requested the setup finish won't
+                            // render properly!
+                            Thread.sleep(1000);
+                            ((AdminConsolePlugin) pluginManager.getPlugin("admin")).restart();
+//                            ((AdminConsolePlugin) pluginManager.getPlugin("admin")).shutdown();
+//                            ((AdminConsolePlugin) pluginManager.getPlugin("admin")).startup();
                         }
 
                         verifyDataSource();
@@ -323,8 +372,6 @@ public class XMPPServer {
                         initModules();
                         // Start all the modules
                         startModules();
-                        // Initialize component manager (initialize before plugins get loaded)
-                        InternalComponentManager.getInstance().start();
                     }
                     catch (Exception e) {
                         e.printStackTrace();
@@ -345,6 +392,10 @@ public class XMPPServer {
         try {
             initialize(home);
 
+            // Create PluginManager now (but don't start it) so that modules may use it
+            File pluginDir = new File(openfireHome, "plugins");
+            pluginManager = new PluginManager(pluginDir);
+
             // If the server has already been setup then we can start all the server's modules
             if (!setupMode) {
                 verifyDataSource();
@@ -355,25 +406,25 @@ public class XMPPServer {
                 initModules();
                 // Start all the modules
                 startModules();
-                // Initialize component manager (initialize before plugins get loaded)
-                InternalComponentManager.getInstance().start();
             }
+            // Initialize statistics
+            ServerTrafficCounter.initStatistics();
+
             // Load plugins (when in setup mode only the admin console will be loaded)
-            File pluginDir = new File(wildfireHome, "plugins");
-            pluginManager = new PluginManager(pluginDir);
             pluginManager.start();
 
             // Log that the server has been started
-
-            List<String> params = new ArrayList<String>();
-            params.add(version.getVersionString());
-            params.add(JiveGlobals.formatDateTime(new Date()));
-            String startupBanner = LocaleUtils.getLocalizedString("startup.name", params);
+            String startupBanner = LocaleUtils.getLocalizedString("short.title") + " " + version.getVersionString() +
+                    " [" + JiveGlobals.formatDateTime(new Date()) + "]";
             Log.info(startupBanner);
             System.out.println(startupBanner);
 
             startDate = new Date();
             stopDate = null;
+            // Notify server listeners that the server has been started
+            for (XMPPServerListener listener : listeners) {
+                listener.serverStarted();
+            }
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -392,15 +443,17 @@ public class XMPPServer {
         // Load core modules
         loadModule(PresenceManagerImpl.class.getName());
         loadModule(SessionManager.class.getName());
-        loadModule(PacketRouter.class.getName());
+        loadModule(PacketRouterImpl.class.getName());
         loadModule(IQRouter.class.getName());
         loadModule(MessageRouter.class.getName());
         loadModule(PresenceRouter.class.getName());
+        loadModule(MulticastRouter.class.getName());
         loadModule(PacketTransporterImpl.class.getName());
         loadModule(PacketDelivererImpl.class.getName());
         loadModule(TransportHandler.class.getName());
         loadModule(OfflineMessageStrategy.class.getName());
         loadModule(OfflineMessageStore.class.getName());
+        loadModule(VCardManager.class.getName());
         // Load standard modules
         loadModule(IQBindHandler.class.getName());
         loadModule(IQSessionEstablishmentHandler.class.getName());
@@ -421,9 +474,19 @@ public class XMPPServer {
         loadModule(MulticastDNSService.class.getName());
         loadModule(IQSharedGroupHandler.class.getName());
         loadModule(AdHocCommandHandler.class.getName());
+        loadModule(IQPrivacyHandler.class.getName());
+        loadModule(DefaultFileTransferManager.class.getName());
+        loadModule(FileTransferProxy.class.getName());
+        loadModule(MediaProxyService.class.getName());
+        loadModule(STUNService.class.getName());
+        loadModule(PubSubModule.class.getName());
+        loadModule(UpdateManager.class.getName());
+        loadModule(InternalComponentManager.class.getName());
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
         loadModule(ConnectionManagerImpl.class.getName());
+        // Keep a reference to the internal component manager
+        componentManager = getComponentManager();
     }
 
     /**
@@ -434,7 +497,7 @@ public class XMPPServer {
     private void loadModule(String module) {
         try {
             Class modClass = loader.loadClass(module);
-            Module mod = (Module)modClass.newInstance();
+            Module mod = (Module) modClass.newInstance();
             this.modules.put(modClass, mod);
         }
         catch (Exception e) {
@@ -492,13 +555,42 @@ public class XMPPServer {
         if (isStandAlone() && isRestartable()) {
             try {
                 Class wrapperClass = Class.forName(WRAPPER_CLASSNAME);
-                Method restartMethod = wrapperClass.getMethod("restart", (Class [])null);
-                restartMethod.invoke(null, (Object [])null);
+                Method restartMethod = wrapperClass.getMethod("restart", (Class []) null);
+                restartMethod.invoke(null, (Object []) null);
             }
             catch (Exception e) {
                 Log.error("Could not restart container", e);
             }
         }
+    }
+
+    /**
+     * Restarts the HTTP server only when running in stand alone mode. The restart
+     * process will be done in another thread that will wait 1 second before doing
+     * the actual restart. The delay will give time to the page that requested the
+     * restart to fully render its content.
+     */
+    public void restartHTTPServer() {
+        Thread restartThread = new Thread() {
+            public void run() {
+                if (isStandAlone()) {
+                    // Restart the HTTP server manager. This covers the case
+                    // of changing the ports, as well as generating self-signed certificates.
+
+                    // Wait a short period before shutting down the admin console.
+                    // Otherwise, this page won't render properly!
+                    try {
+                        Thread.sleep(1000);
+                        ((AdminConsolePlugin) pluginManager.getPlugin("admin")).shutdown();
+                        ((AdminConsolePlugin) pluginManager.getPlugin("admin")).startup();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+        restartThread.setContextClassLoader(loader);
+        restartThread.start();
     }
 
     /**
@@ -512,8 +604,8 @@ public class XMPPServer {
             if (isRestartable()) {
                 try {
                     Class wrapperClass = Class.forName(WRAPPER_CLASSNAME);
-                    Method stopMethod = wrapperClass.getMethod("stop", new Class[]{Integer.TYPE});
-                    stopMethod.invoke(null, new Object[]{0});
+                    Method stopMethod = wrapperClass.getMethod("stop", Integer.TYPE);
+                    stopMethod.invoke(null, 0);
                 }
                 catch (Exception e) {
                     Log.error("Could not stop container", e);
@@ -540,7 +632,7 @@ public class XMPPServer {
     }
 
     public boolean isRestartable() {
-        boolean restartable = false;
+        boolean restartable;
         try {
             restartable = Class.forName(WRAPPER_CLASSNAME) != null;
         }
@@ -552,13 +644,13 @@ public class XMPPServer {
 
     /**
      * Returns if the server is running in standalone mode. We consider that it's running in
-     * standalone if the "org.jivesoftware.wildfire.starter.ServerStarter" class is present in the
+     * standalone if the "org.jivesoftware.openfire.starter.ServerStarter" class is present in the
      * system.
      *
      * @return true if the server is running in standalone mode.
      */
     public boolean isStandAlone() {
-        boolean standalone = false;
+        boolean standalone;
         try {
             standalone = Class.forName(STARTER_CLASSNAME) != null;
         }
@@ -590,41 +682,41 @@ public class XMPPServer {
         }
         finally {
             if (conn != null) {
-                try { conn.close(); }
-                catch (SQLException e) { Log.error(e); }
+                try {
+                    conn.close();
+                }
+                catch (SQLException e) {
+                    Log.error(e);
+                }
             }
         }
     }
 
     /**
-     * Verifies that the given home guess is a real Wildfire home directory.
-     * We do the verification by checking for the Wildfire config file in
+     * Verifies that the given home guess is a real Openfire home directory.
+     * We do the verification by checking for the Openfire config file in
      * the config dir of jiveHome.
      *
-     * @param homeGuess      a guess at the path to the home directory.
+     * @param homeGuess a guess at the path to the home directory.
      * @param jiveConfigName the name of the config file to check.
      * @return a file pointing to the home directory or null if the
      *         home directory guess was wrong.
      * @throws java.io.FileNotFoundException if there was a problem with the home
-     *                               directory provided
+     *                                       directory provided
      */
     private File verifyHome(String homeGuess, String jiveConfigName) throws FileNotFoundException {
-        File realHome = null;
-        File guess = new File(homeGuess);
-        File configFileGuess = new File(guess, jiveConfigName);
-        if (configFileGuess.exists()) {
-            realHome = guess;
-        }
-        File wildfireHome = new File(guess, jiveConfigName);
-        if (!wildfireHome.exists()) {
+        File openfireHome = new File(homeGuess);
+        File configFile = new File(openfireHome, jiveConfigName);
+        if (!configFile.exists()) {
             throw new FileNotFoundException();
         }
-
-        try{
-            return new File(realHome.getCanonicalPath());
-        }
-        catch(Exception ex){
-           throw new FileNotFoundException();
+        else {
+            try {
+                return new File(openfireHome.getCanonicalPath());
+            }
+            catch (Exception ex) {
+                throw new FileNotFoundException();
+            }
         }
     }
 
@@ -634,14 +726,14 @@ public class XMPPServer {
      * @param specifiedHome Home directory passed to the constructor
      * @throws FileNotFoundException If jiveHome could not be located
      */
-    private void locateWildfire(String specifiedHome) throws FileNotFoundException {
+    private void locateOpenfire(String specifiedHome) throws FileNotFoundException {
         String jiveConfigName = "conf" + File.separator + "wildfire.xml";
         
         // If a home directory was passed to the constructor, use that
-        if (wildfireHome == null) {
+        if (openfireHome == null) {
             try {
                 if (specifiedHome != null) {
-                    wildfireHome = verifyHome(specifiedHome, jiveConfigName);
+                    openfireHome = verifyHome(specifiedHome, jiveConfigName);
                 }
             }
             catch (FileNotFoundException fe) {
@@ -649,12 +741,12 @@ public class XMPPServer {
             }
         }
         
-        // Then try to load it wildfireHome as a system property.
-        if (wildfireHome == null) {
-            String homeProperty = System.getProperty("wildfireHome");
+        // Then try to load it openfireHome as a system property.
+        if (openfireHome == null) {
+            String homeProperty = System.getProperty("openfireHome");
             try {
                 if (homeProperty != null) {
-                    wildfireHome = verifyHome(homeProperty, jiveConfigName);
+                    openfireHome = verifyHome(homeProperty, jiveConfigName);
                 }
             }
             catch (FileNotFoundException fe) {
@@ -665,9 +757,9 @@ public class XMPPServer {
         // If we still don't have home, let's assume this is standalone
         // and just look for home in a standard sub-dir location and verify
         // by looking for the config file
-        if (wildfireHome == null) {
+        if (openfireHome == null) {
             try {
-                wildfireHome = verifyHome("..", jiveConfigName).getCanonicalFile();
+                openfireHome = verifyHome("..", jiveConfigName).getCanonicalFile();
             }
             catch (FileNotFoundException fe) {
                 // Ignore.
@@ -678,19 +770,19 @@ public class XMPPServer {
         }
 
         // If home is still null, no outside process has set it and
-        // we have to attempt to load the value from wildfire_init.xml,
+        // we have to attempt to load the value from openfire_init.xml,
         // which must be in the classpath.
-        if (wildfireHome == null) {
+        if (openfireHome == null) {
             InputStream in = null;
             try {
-                in = getClass().getResourceAsStream("/wildfire_init.xml");
+                in = getClass().getResourceAsStream("/openfire_init.xml");
                 if (in != null) {
                     SAXReader reader = new SAXReader();
                     Document doc = reader.read(in);
                     String path = doc.getRootElement().getText();
                     try {
                         if (path != null) {
-                            wildfireHome = verifyHome(path, jiveConfigName);
+                            openfireHome = verifyHome(path, jiveConfigName);
                         }
                     }
                     catch (FileNotFoundException fe) {
@@ -699,11 +791,15 @@ public class XMPPServer {
                 }
             }
             catch (Exception e) {
-                System.err.println("Error loading wildfire_init.xml to find home.");
+                System.err.println("Error loading openfire_init.xml to find home.");
                 e.printStackTrace();
             }
             finally {
-                try { if (in != null) { in.close(); } }
+                try {
+                    if (in != null) {
+                        in.close();
+                    }
+                }
                 catch (Exception e) {
                     System.err.println("Could not close open connection");
                     e.printStackTrace();
@@ -711,13 +807,13 @@ public class XMPPServer {
             }
         }
 
-        if (wildfireHome == null) {
+        if (openfireHome == null) {
             System.err.println("Could not locate home");
             throw new FileNotFoundException();
         }
         else {
             // Set the home directory for the config file
-            JiveGlobals.setHomeDirectory(wildfireHome.toString());
+            JiveGlobals.setHomeDirectory(openfireHome.toString());
             // Set the name of the config file
             JiveGlobals.setConfigName(jiveConfigName);
         }
@@ -731,6 +827,7 @@ public class XMPPServer {
      * @author Iain Shigeoka
      */
     private class ShutdownHookThread extends Thread {
+
         /**
          * <p>Logs the server shutdown.</p>
          */
@@ -749,6 +846,7 @@ public class XMPPServer {
      * @author Iain Shigeoka
      */
     private class ShutdownThread extends Thread {
+
         /**
          * <p>Shuts down the JVM after a 5 second delay.</p>
          */
@@ -769,6 +867,13 @@ public class XMPPServer {
      * Makes a best effort attempt to shutdown the server
      */
     private void shutdownServer() {
+        // Notify server listeners that the server is about to be stopped
+        for (XMPPServerListener listener : listeners) {
+            listener.serverStopping();
+        }
+        // Shutdown the task engine.
+        TaskEngine.getInstance().shutdown();
+
         // If we don't have modules then the server has already been shutdown
         if (modules.isEmpty()) {
             return;
@@ -784,9 +889,9 @@ public class XMPPServer {
             pluginManager.shutdown();
         }
         // Stop the Db connection manager.
-        DbConnectionManager.getConnectionProvider().destroy();
-        // TODO: hack to allow safe stopping
-        Log.info("Wildfire stopped");
+        DbConnectionManager.destroyConnectionProvider();
+        // hack to allow safe stopping
+        Log.info("Openfire stopped");
     }
 
     /**
@@ -863,7 +968,7 @@ public class XMPPServer {
      * @return the <code>OfflineMessageStrategy</code> registered with this server.
      */
     public OfflineMessageStrategy getOfflineMessageStrategy() {
-        return (OfflineMessageStrategy)modules.get(OfflineMessageStrategy.class);
+        return (OfflineMessageStrategy) modules.get(OfflineMessageStrategy.class);
     }
 
     /**
@@ -874,7 +979,7 @@ public class XMPPServer {
      * @return the <code>PacketRouter</code> registered with this server.
      */
     public PacketRouter getPacketRouter() {
-        return (PacketRouter)modules.get(PacketRouter.class);
+        return (PacketRouter) modules.get(PacketRouterImpl.class);
     }
 
     /**
@@ -885,7 +990,7 @@ public class XMPPServer {
      * @return the <code>IQRegisterHandler</code> registered with this server.
      */
     public IQRegisterHandler getIQRegisterHandler() {
-        return (IQRegisterHandler)modules.get(IQRegisterHandler.class);
+        return (IQRegisterHandler) modules.get(IQRegisterHandler.class);
     }
 
     /**
@@ -896,7 +1001,7 @@ public class XMPPServer {
      * @return the <code>IQAuthHandler</code> registered with this server.
      */
     public IQAuthHandler getIQAuthHandler() {
-        return (IQAuthHandler)modules.get(IQAuthHandler.class);
+        return (IQAuthHandler) modules.get(IQAuthHandler.class);
     }
 
     /**
@@ -909,6 +1014,17 @@ public class XMPPServer {
     }
 
     /**
+     * Returns the <code>PubSubModule</code> registered with this server. The
+     * <code>PubSubModule</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>PubSubModule</code> registered with this server.
+     */
+    public PubSubModule getPubSubModule() {
+        return (PubSubModule) modules.get(PubSubModule.class);
+    }
+
+    /**
      * Returns a list with all the modules registered with the server that inherit from IQHandler.
      *
      * @return a list with all the modules registered with the server that inherit from IQHandler.
@@ -917,7 +1033,7 @@ public class XMPPServer {
         List<IQHandler> answer = new ArrayList<IQHandler>();
         for (Module module : modules.values()) {
             if (module instanceof IQHandler) {
-                answer.add((IQHandler)module);
+                answer.add((IQHandler) module);
             }
         }
         return answer;
@@ -1001,6 +1117,17 @@ public class XMPPServer {
     }
 
     /**
+     * Returns the <code>MulticastRouter</code> registered with this server. The
+     * <code>MulticastRouter</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>MulticastRouter</code> registered with this server.
+     */
+    public MulticastRouter getMulticastRouter() {
+        return (MulticastRouter) modules.get(MulticastRouter.class);
+    }
+
+    /**
      * Returns the <code>UserManager</code> registered with this server. The
      * <code>UserManager</code> was registered with the server as a module while starting up
      * the server.
@@ -1009,6 +1136,17 @@ public class XMPPServer {
      */
     public UserManager getUserManager() {
         return UserManager.getInstance();
+    }
+
+    /**
+     * Returns the <code>UpdateManager</code> registered with this server. The
+     * <code>UpdateManager</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>UpdateManager</code> registered with this server.
+     */
+    public UpdateManager getUpdateManager() {
+        return (UpdateManager) modules.get(UpdateManager.class);
     }
 
     /**
@@ -1108,4 +1246,60 @@ public class XMPPServer {
     public AdHocCommandHandler getAdHocCommandHandler() {
         return (AdHocCommandHandler) modules.get(AdHocCommandHandler.class);
     }
+
+    /**
+     * Returns the <code>FileTransferProxy</code> registered with this server. The
+     * <code>FileTransferProxy</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>FileTransferProxy</code> registered with this server.
+     */
+    public FileTransferProxy getFileTransferProxy() {
+        return (FileTransferProxy) modules.get(FileTransferProxy.class);
+    }
+
+    /**
+     * Returns the <code>FileTransferManager</code> registered with this server. The
+     * <code>FileTransferManager</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>FileTransferProxy</code> registered with this server.
+     */
+    public FileTransferManager getFileTransferManager() {
+        return (FileTransferManager) modules.get(DefaultFileTransferManager.class);
+    }
+
+    /**
+     * Returns the <code>MediaProxyService</code> registered with this server. The
+     * <code>MediaProxyService</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>MediaProxyService</code> registered with this server.
+     */
+    public MediaProxyService getMediaProxyService() {
+        return (MediaProxyService) modules.get(MediaProxyService.class);
+    }
+
+    /**
+     * Returns the <code>STUNService</code> registered with this server. The
+     * <code>MediaProxyService</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>STUNService</code> registered with this server.
+     */
+    public STUNService getSTUNService() {
+        return (STUNService) modules.get(STUNService.class);
+    }
+
+    /**
+     * Returns the <code>InternalComponentManager</code> registered with this server. The
+     * <code>InternalComponentManager</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>InternalComponentManager</code> registered with this server.
+     */
+    private InternalComponentManager getComponentManager() {
+        return (InternalComponentManager) modules.get(InternalComponentManager.class);
+    }
+
 }

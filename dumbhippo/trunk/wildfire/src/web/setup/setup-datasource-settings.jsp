@@ -11,8 +11,6 @@
                  org.jivesoftware.database.EmbeddedConnectionProvider,
                  org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.ConnectionProvider,
-                 org.jivesoftware.database.ConnectionProvider,
-                 org.jivesoftware.database.DbConnectionManager,
                  java.util.*" %>
 <%@ page import="java.io.File"%>
 <%@ page import="java.sql.Connection"%>
@@ -20,7 +18,7 @@
 <%@ page import="java.sql.SQLException"%>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
 <%@ page import="org.jivesoftware.util.ClassUtils"%>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 
 <%
 	// Redirect if we've already run setup:
@@ -58,8 +56,7 @@
             	}
             	catch (SQLException sqle) {
                     success = false;
-                    sqle.printStackTrace();
-                    errors.put("general","The Wildfire database schema does not "
+                    errors.put("general","The Openfire database schema does not "
                         + "appear to be installed. Follow the installation guide to "
                         + "fix this error.");
             	}
@@ -78,7 +75,7 @@
 <%
     boolean embeddedMode = false;
     try {
-        ClassUtils.forName("org.jivesoftware.wildfire.starter.ServerStarter");
+        ClassUtils.forName("org.jivesoftware.openfire.starter.ServerStarter");
         embeddedMode = true;
     }
     catch (Exception ignored) {}
@@ -107,11 +104,8 @@
             ConnectionProvider conProvider = new EmbeddedConnectionProvider();
             DbConnectionManager.setConnectionProvider(conProvider);
             if (testConnection(errors)) {
-                // Update the sidebar status
-                session.setAttribute("jive.setup.sidebar.3","done");
-                session.setAttribute("jive.setup.sidebar.4","in_progress");
                 // Redirect
-                response.sendRedirect("setup-admin-settings.jsp");
+                response.sendRedirect("setup-profile-settings.jsp");
                 return;
             }
         }
@@ -133,18 +127,19 @@
 <html>
 <head>
     <title><fmt:message key="setup.datasource.settings.title" /></title>
+    <meta name="currentStep" content="2"/>
 </head>
 <body>
 
-<p class="jive-setup-page-header">
-<fmt:message key="setup.datasource.settings.title" />
-</p>
+	<h1>
+	<fmt:message key="setup.datasource.settings.title" />
+	</h1>
 
-<p>
-<fmt:message key="setup.datasource.settings.info">
-    <fmt:param value="<%= LocaleUtils.getLocalizedString("short.title") %>" />
-</fmt:message>
-</p>
+	<p>
+	<fmt:message key="setup.datasource.settings.info">
+	    <fmt:param value="<%= LocaleUtils.getLocalizedString("short.title") %>" />
+	</fmt:message>
+	</p>
 
 <%  if (errors.size() > 0) { %>
 
@@ -154,7 +149,11 @@
 
 <%  } %>
 
-<form action="setup-datasource-settings.jsp">
+	<!-- BEGIN jive-contentBox -->
+	<div class="jive-contentBox">
+
+		<form action="setup-datasource-settings.jsp">
+
 <input type="hidden" name="next" value="true">
 
 <table cellpadding="3" cellspacing="2" border="0">
@@ -198,11 +197,15 @@
 
 <br><br>
 
-<hr size="0">
 
-<div align="right"><input type="submit" value=" <fmt:message key="global.continue" /> "></div>
+		<div align="right">
+			<input type="Submit" name="continue" value="<fmt:message key="global.continue" />" id="jive-setup-save" border="0">
+		</div>
+	</form>
 
-</form>
+	</div>
+	<!-- END jive-contentBox -->
+
 
 </body>
 </html>

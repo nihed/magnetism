@@ -24,7 +24,7 @@ import org.jivesoftware.util.log.util.StackIntrospector;
  * information dynamically.
  *
  * @author <a href="mailto:peter@apache.org">Peter Donald</a>
- * @version CVS $Revision: 37 $ $Date: 2004-10-21 02:08:43 -0400 (Thu, 21 Oct 2004) $
+ * @version CVS $Revision: 37 $ $Date: 2004-10-21 01:08:43 -0500 (Thu, 21 Oct 2004) $
  */
 public class ExtendedPatternFormatter extends PatternFormatter {
     private final static int TYPE_METHOD = MAX_TYPE + 1;

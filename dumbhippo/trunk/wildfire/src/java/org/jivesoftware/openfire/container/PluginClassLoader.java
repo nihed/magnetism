@@ -9,8 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.container;
+package org.jivesoftware.openfire.container;
 
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.Log;
 
 import java.io.File;
@@ -19,9 +20,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Collection;
 
 /**
  * ClassLoader for plugins. It searches the plugin directory for classes
@@ -34,21 +35,18 @@ import java.util.Collection;
  *
  * @author Derek DeMoro
  */
-class PluginClassLoader {
+public class PluginClassLoader {
 
     private URLClassLoader classLoader;
     private final List<URL> list = new ArrayList<URL>();
 
-
     /**
      * Constructs a plugin loader for the given plugin directory.
      *
-     * @param pluginDir the plugin directory.
      * @throws SecurityException if the created class loader violates
-     *                                     existing security constraints.
+     *                           existing security constraints.
      */
-    public PluginClassLoader(File pluginDir) throws SecurityException {
-        addDirectory(pluginDir);
+    public PluginClassLoader() throws SecurityException {
     }
 
     /**
@@ -56,13 +54,37 @@ class PluginClassLoader {
      * after adding the directory to make the change take effect.
      *
      * @param directory the directory.
+     * @param developmentMode true if the plugin is running in development mode. This
+     *      resolves classloader conflicts between the deployed plugin
+     * and development classes.
      */
-    public void addDirectory(File directory) {
+    public void addDirectory(File directory, boolean developmentMode) {
         try {
+            // Add classes directory to classpath.
             File classesDir = new File(directory, "classes");
             if (classesDir.exists()) {
                 list.add(classesDir.toURL());
             }
+
+            // Add i18n directory to classpath.
+            File databaseDir = new File(directory, "database");
+            if(databaseDir.exists()){
+                list.add(databaseDir.toURL());
+            }
+
+            // Add i18n directory to classpath.
+            File i18nDir = new File(directory, "i18n");
+            if(i18nDir.exists()){
+                list.add(i18nDir.toURL());
+            }
+
+            // Add web directory to classpath.
+            File webDir = new File(directory, "web");
+            if(webDir.exists()){
+                list.add(webDir.toURL());
+            }
+
+            // Add lib directory to classpath.
             File libDir = new File(directory, "lib");
             File[] jars = libDir.listFiles(new FilenameFilter() {
                 public boolean accept(File dir, String name) {
@@ -72,7 +94,15 @@ class PluginClassLoader {
             if (jars != null) {
                 for (int i = 0; i < jars.length; i++) {
                     if (jars[i] != null && jars[i].isFile()) {
-                        list.add(jars[i].toURL());
+                        if (developmentMode) {
+                            // Do not add plugin-pluginName.jar to classpath.
+                            if (!jars[i].getName().equals("plugin-" + directory.getName() + ".jar")) {
+                                list.add(jars[i].toURL());
+                            }
+                        }
+                        else {
+                            list.add(jars[i].toURL());
+                        }
                     }
                 }
             }
@@ -82,7 +112,7 @@ class PluginClassLoader {
         }
     }
 
-    public Collection<URL> getURLS(){
+    public Collection<URL> getURLS() {
         return list;
     }
 
@@ -145,7 +175,7 @@ class PluginClassLoader {
      * @return the best parent classloader to use.
      */
     private ClassLoader findParentClassLoader() {
-        ClassLoader parent = Thread.currentThread().getContextClassLoader();
+        ClassLoader parent = XMPPServer.class.getClassLoader();
         if (parent == null) {
             parent = this.getClass().getClassLoader();
         }
@@ -153,5 +183,14 @@ class PluginClassLoader {
             parent = ClassLoader.getSystemClassLoader();
         }
         return parent;
+    }
+
+    /**
+     * Returns the URLClassloader used.
+     *
+     * @return the URLClassLoader used.
+     */
+    public ClassLoader getClassLoader() {
+        return classLoader;
     }
 }

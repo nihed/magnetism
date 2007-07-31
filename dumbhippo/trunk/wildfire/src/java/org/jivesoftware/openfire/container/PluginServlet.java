@@ -8,7 +8,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.container;
+package org.jivesoftware.openfire.container;
 
 import org.apache.jasper.JasperException;
 import org.apache.jasper.JspC;
@@ -19,14 +19,6 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
 import org.xml.sax.SAXException;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.GenericServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServlet;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -40,15 +32,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.servlet.GenericServlet;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * The plugin servlet acts as a proxy for web requests (in the admin console)
  * to plugins. Since plugins can be dynamically loaded and live in a different place
- * than normal Wildfire admin console files, it's not possible to have them
- * added to the normal Wildfire admin console web app directory.<p>
+ * than normal Openfire admin console files, it's not possible to have them
+ * added to the normal Openfire admin console web app directory.<p>
  * <p/>
  * The servlet listens for requests in the form <tt>/plugins/[pluginName]/[JSP File]</tt>
- * (e.g. <tt>/plugins/foo/example.jsp</tt>). It also listens for image requests in the
- * the form <tt>/plugins/[pluginName]/images/*.png|gif</tt> (e.g.
+ * (e.g. <tt>/plugins/foo/example.jsp</tt>). It also listens for non JSP requests in the
+ * form like <tt>/plugins/[pluginName]/images/*.png|gif</tt>,
+ * <tt>/plugins/[pluginName]/scripts/*.js|css</tt> or
+ * <tt>/plugins/[pluginName]/styles/*.css</tt> (e.g.
  * <tt>/plugins/foo/images/example.gif</tt>).<p>
  * <p/>
  * JSP files must be compiled and available via the plugin's class loader. The mapping
@@ -75,8 +77,7 @@ public class PluginServlet extends HttpServlet {
     }
 
     public void service(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException
-    {
+        throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
         if (pathInfo == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -110,15 +111,15 @@ public class PluginServlet extends HttpServlet {
      * Registers all JSP page servlets for a plugin.
      *
      * @param manager the plugin manager.
-     * @param plugin  the plugin.
-     * @param webXML  the web.xml file containing JSP page names to servlet class file
-     *                mappings.
+     * @param plugin the plugin.
+     * @param webXML the web.xml file containing JSP page names to servlet class file
+     *      mappings.
      */
     public static void registerServlets(PluginManager manager, Plugin plugin, File webXML) {
         pluginManager = manager;
         if (!webXML.exists()) {
             Log.error("Could not register plugin servlets, file " + webXML.getAbsolutePath() +
-                    " does not exist.");
+                " does not exist.");
             return;
         }
         // Find the name of the plugin directory given that the webXML file
@@ -130,7 +131,7 @@ public class PluginServlet extends HttpServlet {
             SAXReader saxReader = new SAXReader(false);
             try {
                 saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
-                        false);
+                    false);
             }
             catch (SAXException e) {
                 Log.warn("Error setting SAXReader feature", e);
@@ -153,6 +154,10 @@ public class PluginServlet extends HttpServlet {
                 String url = nameElement.element("url-pattern").getTextTrim();
                 // Register the servlet for the URL.
                 Class servletClass = classMap.get(name);
+                if(servletClass == null) {
+                    Log.error("Unable to load servlet, " + name + ", servlet-class not found.");
+                    continue;
+                }
                 Object instance = servletClass.newInstance();
                 if (instance instanceof GenericServlet) {
                     // Initialize the servlet then add it to the map..
@@ -178,7 +183,7 @@ public class PluginServlet extends HttpServlet {
     public static void unregisterServlets(File webXML) {
         if (!webXML.exists()) {
             Log.error("Could not unregister plugin servlets, file " + webXML.getAbsolutePath() +
-                    " does not exist.");
+                " does not exist.");
             return;
         }
         // Find the name of the plugin directory given that the webXML file
@@ -187,7 +192,7 @@ public class PluginServlet extends HttpServlet {
         try {
             SAXReader saxReader = new SAXReader(false);
             saxReader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
-                    false);
+                false);
             Document doc = saxReader.read(webXML);
             // Find all <servelt-mapping> entries to discover name to URL mapping.
             List names = doc.selectNodes("//servlet-mapping");
@@ -196,7 +201,9 @@ public class PluginServlet extends HttpServlet {
                 String url = nameElement.element("url-pattern").getTextTrim();
                 // Destroy the servlet than remove from servlets map.
                 GenericServlet servlet = servlets.get(pluginName + url);
-                servlet.destroy();
+                if (servlet != null) {
+                    servlet.destroy();
+                }
                 servlets.remove(pluginName + url);
                 servlet = null;
             }
@@ -324,9 +331,17 @@ public class PluginServlet extends HttpServlet {
             else if (pathInfo.endsWith(".swf")) {
                 contentType = "application/x-shockwave-flash";
             }
-            response.setHeader("Content-disposition", "filename=\"" + file + "\";");
+            else if (pathInfo.endsWith(".css")) {
+                contentType = "text/css";
+            }
+            else if (pathInfo.endsWith(".js")) {
+                contentType = "text/javascript";
+            }
+
+            // setting the content-disposition header breaks IE when downloading CSS
+            // response.setHeader("Content-disposition", "filename=\"" + file + "\";");
             response.setContentType(contentType);
-            // Write out the image to the user.
+            // Write out the resource to the user.
             InputStream in = null;
             ServletOutputStream out = null;
             try {
@@ -433,7 +448,7 @@ public class PluginServlet extends HttpServlet {
 
                 try {
                     Object servletInstance = pluginManager.loadClass(plugin, "org.apache.jsp." +
-                            relativeDir + filename).newInstance();
+                        relativeDir + filename).newInstance();
                     HttpServlet servlet = (HttpServlet)servletInstance;
                     servlet.init(servletConfig);
                     servlet.service(request, response);
@@ -483,15 +498,17 @@ public class PluginServlet extends HttpServlet {
             classpath.append(libFile.getAbsolutePath()).append(';');
         }
 
-        File wildfireRoot = pluginDirectory.getParentFile().getParentFile().getParentFile();
-        File wildfireLib = new File(wildfireRoot, "target//lib");
+        File openfireRoot = pluginDirectory.getParentFile().getParentFile().getParentFile();
+        File openfireLib = new File(openfireRoot, "target//lib");
 
-        classpath.append(wildfireLib.getAbsolutePath()).append("//servlet.jar;");
-        classpath.append(wildfireLib.getAbsolutePath()).append("//wildfire.jar;");
-        classpath.append(wildfireLib.getAbsolutePath()).append("//jasper-compiler.jar;");
-        classpath.append(wildfireLib.getAbsolutePath()).append("//jasper-runtime.jar;");
-        classpath.append(pluginEnv.getClassesDir().getAbsolutePath()).append(";");
+        classpath.append(openfireLib.getAbsolutePath()).append("//servlet.jar;");
+        classpath.append(openfireLib.getAbsolutePath()).append("//openfire.jar;");
+        classpath.append(openfireLib.getAbsolutePath()).append("//jasper-compiler.jar;");
+        classpath.append(openfireLib.getAbsolutePath()).append("//jasper-runtime.jar;");
 
+        if (pluginEnv.getClassesDir() != null) {
+            classpath.append(pluginEnv.getClassesDir().getAbsolutePath()).append(";");
+        }
         return classpath.toString();
     }
 }

@@ -1,7 +1,7 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -9,12 +9,13 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.wildfire.*,
-                 java.text.NumberFormat,
-                 org.jivesoftware.wildfire.component.ComponentSession"
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.session.ComponentSession"
     errorPage="error.jsp"
 %>
+<%@ page import="java.text.NumberFormat" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>

@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire;
+package org.jivesoftware.openfire;
 
 /**
  * Thrown when a a user is trying to add or remove a contact from his/her roster that belongs to a

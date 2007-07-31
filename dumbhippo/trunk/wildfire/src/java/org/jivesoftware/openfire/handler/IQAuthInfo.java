@@ -9,9 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.handler;
+package org.jivesoftware.openfire.handler;
 
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 
 /**
  * Information for controlling the authentication options for the server.
@@ -25,7 +25,7 @@ public interface IQAuthInfo {
      *
      * @return true if anonymous logins are allowed
      */
-    public boolean isAllowAnonymous();
+    public boolean isAnonymousAllowed();
 
     /**
      * Changes the server's support for anonymous authentication.

@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire;
+package org.jivesoftware.openfire;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;

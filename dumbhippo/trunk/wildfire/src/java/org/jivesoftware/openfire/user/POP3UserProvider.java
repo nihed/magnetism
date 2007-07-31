@@ -9,11 +9,11 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.user;
+package org.jivesoftware.openfire.user;
 
 /**
  * A UserProvider to be used in conjunction with
- * {@link org.jivesoftware.wildfire.auth.POP3AuthProvider POP3AuthProvider}, which
+ * {@link org.jivesoftware.openfire.auth.POP3AuthProvider POP3AuthProvider}, which
  * authenticates using a POP3 server. New user accounts will automatically be created
  * as needed (upon successful initial authentication) and are subsequently treated as
  * read-only (for the most part). To enable this provider, edit the XML config file
@@ -22,28 +22,20 @@ package org.jivesoftware.wildfire.user;
  * <pre>
  * &lt;provider&gt;
  *     &lt;auth&gt;
- *         &lt;className&gt;org.jivesoftware.wildfire.auth.POP3AuthProvider&lt;/className&gt;
+ *         &lt;className&gt;org.jivesoftware.openfire.auth.POP3AuthProvider&lt;/className&gt;
  *     &lt;/auth&gt;
  *     &lt;user&gt;
- *         &lt;className&gt;org.jivesoftware.wildfire.user.POP3UserProvider&lt;/className&gt;
+ *         &lt;className&gt;org.jivesoftware.openfire.user.POP3UserProvider&lt;/className&gt;
  *     &lt;/user&gt;
  * &lt;/provider&gt;
  * </pre>
  *
- * @see org.jivesoftware.wildfire.auth.POP3AuthProvider POP3AuthProvider
+ * @see org.jivesoftware.openfire.auth.POP3AuthProvider POP3AuthProvider
  * @author Sean Meiners
  */
 public class POP3UserProvider extends DefaultUserProvider {
 
     public void setEmail(String username, String email) throws UserNotFoundException {
         throw new UnsupportedOperationException();
-    }
-
-    public void setPassword(String username, String password) throws UserNotFoundException {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean supportsPasswordRetrieval() {
-        return false;
     }
 }

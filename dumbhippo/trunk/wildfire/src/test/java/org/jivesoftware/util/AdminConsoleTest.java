@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 3195 $
- * $Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+ * $Revision: 7655 $
+ * $Date: 2007-03-22 15:50:33 -0500 (Thu, 22 Mar 2007) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  */
@@ -36,7 +36,7 @@ public class AdminConsoleTest extends TestCase {
     public void testGetGlobalProps() throws Exception {
         String name = AdminConsole.getAppName();
         String image = AdminConsole.getLogoImage();
-        assertEquals("Wildfire", name);
+        assertEquals("Openfire", name);
         assertEquals("images/header-title.gif", image);
     }
 

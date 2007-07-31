@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire;
+package org.jivesoftware.openfire;
 
 /**
  * Represents a runtime packet exception typically from a malformed

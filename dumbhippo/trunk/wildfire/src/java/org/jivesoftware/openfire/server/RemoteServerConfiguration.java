@@ -1,4 +1,4 @@
-package org.jivesoftware.wildfire.server;
+package org.jivesoftware.openfire.server;
 
 /**
  * Holds the configuration when connecting to/from a remote server. The configuration specifies

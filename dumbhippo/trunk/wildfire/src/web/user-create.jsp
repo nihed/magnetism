@@ -1,6 +1,6 @@
 <%--
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
@@ -9,14 +9,14 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.wildfire.user.*,
+                 org.jivesoftware.openfire.user.*,
                  java.net.URLEncoder,
                  org.jivesoftware.stringprep.Stringprep,
                  org.jivesoftware.stringprep.StringprepException"
     errorPage="error.jsp"
 %>
 <%@ page import="java.util.Map"%>
-<%@ page import="java.util.HashMap"%>
+<%@ page import="java.util.HashMap"%><%@ page import="org.xmpp.packet.JID"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -50,13 +50,18 @@
         else {
             try {
                 username = username.trim().toLowerCase();
+                username = JID.escapeNode(username);
                 username = Stringprep.nodeprep(username);
             }
             catch (StringprepException se) {
                 errors.put("username", "");
             }
         }
-        if (password == null) {
+        // Trim the password. This means we don't accept spaces as passwords. We don't
+        // trim the passwordConfirm as well since not trimming will ensure the user doesn't
+        // think space is an ok password character.
+        password = password.trim();
+        if (password == null || password.equals("")) {
             errors.put("password","");
         }
         if (passwordConfirm == null) {
@@ -100,10 +105,16 @@
     </head>
     <body>
 
+<% if (UserManager.getUserProvider().isReadOnly()) { %>
+<div class="error">
+    <fmt:message key="user.read_only"/>
+</div>
+<% } %>
+
 <p><fmt:message key="user.create.info" /></p>
 
-<c:set var="submit" value="${param.create}"/>
-<c:set var="errors" value="${errors}"/>
+<%--<c:set var="submit" value="${param.create}"/>--%>
+<%--<c:set var="errors" value="${errors}"/>--%>
 
 <%  if (!errors.isEmpty()) { %>
 
@@ -155,73 +166,90 @@
 
 <form name="f" action="user-create.jsp" method="get">
 
-<fieldset>
-    <legend><fmt:message key="user.create.new_user" /></legend>
-    <div>
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-    <tr>
-        <td width="1%" nowrap><label for="usernametf"><fmt:message key="user.create.username" />:</label> *</td>
-        <td width="99%">
-            <input type="text" name="username" size="30" maxlength="75" value="<%= ((username!=null) ? username : "") %>"
-             id="usernametf" autocomplete="off">
-        </td>
-    </tr>
-    <tr>
-        <td width="1%" nowrap>
-            <label for="nametf"><fmt:message key="user.create.name" />:</label>
-        </td>
-        <td width="99%">
-            <input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? name : "") %>"
-             id="nametf">
-        </td>
-    </tr>
-    <tr>
-        <td width="1%" nowrap>
-            <label for="emailtf"><fmt:message key="user.create.email" />:</label></td>
-        <td width="99%">
-            <input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? email : "") %>"
-             id="emailtf">
-        </td>
-    </tr>
-    <tr>
-        <td nowrap>
-            <label for="passtf"><fmt:message key="user.create.pwd" />:</label> *
-        </td>
-        <td width="99%">
-            <input type="password" name="password" value="" size="20" maxlength="75"
-             id="passtf">
-        </td>
-    </tr>
-    <tr>
-        <td width="1%" nowrap>
-            <label for="confpasstf"><fmt:message key="user.create.confirm_pwd" />:</label> *
-        </td>
-        <td width="99%">
-            <input type="password" name="passwordConfirm" value="" size="20" maxlength="75"
-             id="confpasstf">
-        </td>
-    </tr>
-    </tbody>
-    </table>
-    <br>
-    <span class="jive-description">
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="user.create.new_user" />
+	</div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
+		<tr>
+			<td width="1%" nowrap><label for="usernametf"><fmt:message key="user.create.username" />:</label> *</td>
+			<td width="99%">
+				<input type="text" name="username" size="30" maxlength="75" value="<%= ((username!=null) ? username : "") %>"
+				 id="usernametf" autocomplete="off">
+			</td>
+		</tr>
+		<tr>
+			<td width="1%" nowrap>
+				<label for="nametf"><fmt:message key="user.create.name" />:</label>
+			</td>
+			<td width="99%">
+				<input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? name : "") %>"
+				 id="nametf">
+			</td>
+		</tr>
+		<tr>
+			<td width="1%" nowrap>
+				<label for="emailtf"><fmt:message key="user.create.email" />:</label></td>
+			<td width="99%">
+				<input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? email : "") %>"
+				 id="emailtf">
+			</td>
+		</tr>
+		<tr>
+			<td nowrap>
+				<label for="passtf"><fmt:message key="user.create.pwd" />:</label> *
+			</td>
+			<td width="99%">
+				<input type="password" name="password" value="" size="20" maxlength="75"
+				 id="passtf">
+			</td>
+		</tr>
+		<tr>
+			<td width="1%" nowrap>
+				<label for="confpasstf"><fmt:message key="user.create.confirm_pwd" />:</label> *
+			</td>
+			<td width="99%">
+				<input type="password" name="passwordConfirm" value="" size="20" maxlength="75"
+				 id="confpasstf">
+			</td>
+		</tr>
+		<tr>
+
+			<td colspan="2" style="padding-top: 10px;">
+				<input type="submit" name="create" value="<fmt:message key="user.create.create" />">
+				<input type="submit" name="another" value="<fmt:message key="user.create.create_another" />">
+				<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />"></td>
+		</tr>
+		</tbody>
+		</table>
+
+	</div>
+
+	<span class="jive-description">
     * <fmt:message key="user.create.requied" />
     </span>
-    </div>
-</fieldset>
 
-<br><br>
-
-<input type="submit" name="create" value="<fmt:message key="user.create.create" />">
-<input type="submit" name="another" value="<fmt:message key="user.create.create_another" />">
-<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 
 </form>
 
 <script language="JavaScript" type="text/javascript">
 document.f.username.focus();
 </script>
+
+<%  // Disable the form if a read-only user provider.
+if (UserManager.getUserProvider().isReadOnly()) { %>
+
+<script language="Javascript" type="text/javascript">
+  function disable() {
+    var limit = document.forms[0].elements.length;
+    for (i=0;i<limit;i++) {
+      document.forms[0].elements[i].disabled = true;
+    }
+  }
+  disable();
+</script>
+    <% } %>
 
     </body>
 </html>

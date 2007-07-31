@@ -3,32 +3,34 @@
  * $Revision: 3126 $
  * $Date: 2005-11-30 15:20:53 -0300 (Wed, 30 Nov 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.component;
+package org.jivesoftware.openfire.component;
 
 import org.dom4j.Element;
-import org.jivesoftware.wildfire.PacketException;
-import org.jivesoftware.wildfire.PacketRouter;
-import org.jivesoftware.wildfire.RoutableChannelHandler;
-import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.session.ComponentSession;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentException;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.component.ComponentManagerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manages the registration and delegation of Components. The ComponentManager
@@ -42,12 +44,18 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Derek DeMoro
  */
-public class InternalComponentManager implements ComponentManager, RoutableChannelHandler {
+public class InternalComponentManager extends BasicModule implements ComponentManager, RoutableChannelHandler {
 
     private Map<String, Component> components = new ConcurrentHashMap<String, Component>();
+    private Map<String, IQ> componentInfo = new ConcurrentHashMap<String, IQ>();
     private Map<JID, JID> presenceMap = new ConcurrentHashMap<JID, JID>();
+    /**
+     * Holds the list of listeners that will be notified of component events.
+     */
+    private List<ComponentEventListener> listeners =
+            new CopyOnWriteArrayList<ComponentEventListener>();
 
-    private static InternalComponentManager instance = new InternalComponentManager();
+    private static InternalComponentManager instance;
     /**
      * XMPP address of this internal service. The address is of the form: component.[domain]
      */
@@ -57,6 +65,11 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
      * in many methods.
      */
     private String serverDomain;
+
+    public InternalComponentManager() {
+        super("Internal Component Manager");
+        instance = this;
+    }
 
     public static InternalComponentManager getInstance() {
         return instance;
@@ -76,7 +89,23 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         }
     }
 
+    public void stop() {
+        super.stop();
+        if (getAddress() != null) {
+            // Remove the route to this service
+            XMPPServer.getInstance().getRoutingTable().removeRoute(getAddress());
+        }
+    }
+
     public void addComponent(String subdomain, Component component) throws ComponentException {
+        // Check that the requested subdoman is not taken by another component
+        Component existingComponent = components.get(subdomain);
+        if (existingComponent != null && existingComponent != component) {
+            throw new ComponentException("Domain (" + subdomain +
+                    ") already taken by another component: " + existingComponent);
+        }
+        Log.debug("Registering component for domain: " + subdomain);
+        // Register that the domain is now taken by the component
         components.put(subdomain, component);
 
         JID componentJID = new JID(subdomain + "." + serverDomain);
@@ -89,23 +118,39 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         try {
             component.initialize(componentJID, this);
             component.start();
+
+            // Notify listeners that a new component has been registered
+            for (ComponentEventListener listener : listeners) {
+                listener.componentRegistered(component, componentJID);
+            }
+
+            // Check for potential interested users.
+            checkPresences();
+            // Send a disco#info request to the new component. If the component provides information
+            // then it will be added to the list of discoverable server items.
+            checkDiscoSupport(component, componentJID);
+            Log.debug("Component registered for domain: " + subdomain);
         }
-        catch (ComponentException e) {
+        catch (Exception e) {
+            // Unregister the componet's domain
+            components.remove(subdomain);
             // Remove the route
             XMPPServer.getInstance().getRoutingTable().removeRoute(componentJID);
+            if (e instanceof ComponentException) {
+                // Rethrow the exception
+                throw (ComponentException)e;
+            }
             // Rethrow the exception
-            throw e;
+            throw new ComponentException(e);
         }
 
-        // Check for potential interested users.
-        checkPresences();
-        // Send a disco#info request to the new component. If the component provides information
-        // then it will be added to the list of discoverable server items.
-        checkDiscoSupport(component, componentJID);
     }
 
     public void removeComponent(String subdomain) {
+        Log.debug("Unregistering component for domain: " + subdomain);
         Component component = components.remove(subdomain);
+        // Remove any info stored with the component being removed
+        componentInfo.remove(subdomain);
 
         JID componentJID = new JID(subdomain + "." + serverDomain);
 
@@ -123,14 +168,82 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         if (component != null) {
             component.shutdown();
         }
+
+        // Notify listeners that a new component has been registered
+        for (ComponentEventListener listener : listeners) {
+            listener.componentUnregistered(component, componentJID);
+        }
+        Log.debug("Component unregistered for domain: " + subdomain);
     }
 
     public void sendPacket(Component component, Packet packet) {
-        PacketRouter router;
-        router = XMPPServer.getInstance().getPacketRouter();
+        if (packet != null && packet.getFrom() == null) {
+            throw new IllegalArgumentException("Packet with no FROM address was received from component.");
+        }
+
+        PacketRouter router = XMPPServer.getInstance().getPacketRouter();
         if (router != null) {
             router.route(packet);
         }
+    }
+
+    public IQ query(Component component, IQ packet, int timeout) throws ComponentException {
+        final LinkedBlockingQueue<IQ> answer = new LinkedBlockingQueue<IQ>(8);
+        XMPPServer.getInstance().getIQRouter().addIQResultListener(packet.getID(), new IQResultListener() {
+            public void receivedAnswer(IQ packet) {
+                answer.offer(packet);
+            }
+        });
+        sendPacket(component, packet);
+        IQ reply = null;
+        try {
+            reply = answer.poll(timeout, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            // Ignore
+        }
+        if (reply == null) {
+            reply = IQ.createResultIQ(packet);
+            reply.setError(PacketError.Condition.item_not_found);
+        }
+        return reply;
+    }
+
+    public void query(Component component, IQ packet, IQResultListener listener) throws ComponentException {
+        XMPPServer.getInstance().getIQRouter().addIQResultListener(packet.getID(), listener);
+        sendPacket(component, packet);
+    }
+
+    /**
+     * Adds a new listener that will be notified of component events. Events being
+     * notified are: 1) when a component is added to the component manager, 2) when
+     * a component is deleted and 3) when disco#info is received from a component.
+     *
+     * @param listener the new listener to notify of component events.
+     */
+    public void addListener(ComponentEventListener listener) {
+        listeners.add(listener);
+        // Notify the new listener about existing components
+        for (Map.Entry<String, Component> entry : components.entrySet()) {
+            String subdomain = entry.getKey();
+            Component component = entry.getValue();
+            JID componentJID = new JID(subdomain + "." + serverDomain);
+            listener.componentRegistered(component, componentJID);
+            // Check if there is disco#info stored for the component
+            IQ disco = componentInfo.get(subdomain);
+            if (disco != null) {
+                listener.componentInfoReceived(component, disco);
+            }
+        }
+    }
+
+    /**
+     * Removes the specified listener from the listeners being notified of component
+     * events.
+     *
+     * @param listener the listener to remove.
+     */
+    public void removeListener(ComponentEventListener listener) {
+        listeners.remove(listener);
     }
 
     public String getProperty(String name) {
@@ -138,7 +251,7 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
     }
 
     public void setProperty(String name, String value) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        //Ignore
     }
 
     public String getServerName() {
@@ -150,7 +263,7 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
     }
 
     public boolean isExternalMode() {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        return false;
     }
 
     public org.xmpp.component.Log getLog() {
@@ -206,6 +319,16 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
     }
 
     /**
+     * Returns the list of components that are currently installed in the server.
+     * This includes internal and external components.
+     *
+     * @return the list of installed components.
+     */
+    public Collection<Component> getComponents() {
+        return Collections.unmodifiableCollection(components.values());
+    }
+
+    /**
      * Retrieves the <code>Component</code> which is mapped
      * to the specified JID.
      *
@@ -213,22 +336,23 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
      * @return the component with the specified id.
      */
     public Component getComponent(JID componentJID) {
-        String jid = componentJID.toBareJID();
-        if (components.containsKey(jid)) {
-            return components.get(jid);
+        if (componentJID.getNode() != null) {
+            return null;
+        }
+        Component component = components.get(componentJID.getDomain());
+        if (component != null) {
+            return component;
         }
         else {
-            if (!jid.contains(serverDomain)) {
-                // Ignore JIDs that doesn't belong to this server
-                return null;
-            }
-            String serverName = new JID(jid).getDomain();
-            int index = serverName.indexOf(".");
-            if (index != -1) {
-                jid = serverName.substring(0, index);
+            // Search again for those JIDs whose domain include the server name but this
+            // time remove the server name from the JID's domain
+            String serverName = componentJID.getDomain();
+            int index = serverName.lastIndexOf("." + serverDomain);
+            if (index > -1) {
+                return components.get(serverName.substring(0, index));
             }
         }
-        return components.get(jid);
+        return null;
     }
 
     /**
@@ -256,7 +380,7 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
         for (JID prober : presenceMap.keySet()) {
             JID probee = presenceMap.get(prober);
 
-            Component component = getComponent(probee.toBareJID());
+            Component component = getComponent(probee);
             if (component != null) {
                 Presence presence = new Presence();
                 presence.setFrom(prober);
@@ -300,7 +424,7 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
      * @param packet the packet to process.
      */
     public void process(Packet packet) throws PacketException {
-        Component component = getComponent(packet.getFrom().getDomain());
+        Component component = getComponent(packet.getFrom());
         // Only process packets that were sent by registered components
         if (component != null) {
             if (packet instanceof IQ && IQ.Type.result == ((IQ) packet).getType()) {
@@ -313,15 +437,32 @@ public class InternalComponentManager implements ComponentManager, RoutableChann
                 if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
                     // Add a disco item to the server for the component that supports disco
                     Element identity = childElement.element("identity");
-                    XMPPServer.getInstance().getIQDiscoItemsHandler().addComponentItem(packet.getFrom()
-                            .toBareJID(),
-                            identity.attributeValue("name"));
-                    if (component instanceof ComponentSession.ExternalComponent) {
-                        ComponentSession.ExternalComponent externalComponent =
-                                (ComponentSession.ExternalComponent) component;
-                        externalComponent.setName(identity.attributeValue("name"));
-                        externalComponent.setType(identity.attributeValue("type"));
-                        externalComponent.setCategory(identity.attributeValue("category"));
+                    if (identity == null) {
+                        // Do nothing since there are no identities in the disco#info packet
+                        return;
+                    }
+                    try {
+                        XMPPServer.getInstance().getIQDiscoItemsHandler().addComponentItem(packet.getFrom()
+                                .toBareJID(),
+                                identity.attributeValue("name"));
+                        if (component instanceof ComponentSession.ExternalComponent) {
+                            ComponentSession.ExternalComponent externalComponent =
+                                    (ComponentSession.ExternalComponent) component;
+                            externalComponent.setName(identity.attributeValue("name"));
+                            externalComponent.setType(identity.attributeValue("type"));
+                            externalComponent.setCategory(identity.attributeValue("category"));
+                        }
+                    }
+                    catch (Exception e) {
+                        Log.error("Error processing disco packet of component: " + component +
+                                " - " + packet.toXML(), e);
+                    }
+                    // Store the IQ disco#info returned by the component
+                    String subdomain = packet.getFrom().getDomain().replace("." + serverDomain, "");
+                    componentInfo.put(subdomain, iq);
+                    // Notify listeners that a component answered the disco#info request
+                    for (ComponentEventListener listener : listeners) {
+                        listener.componentInfoReceived(component, iq);
                     }
                 }
             }

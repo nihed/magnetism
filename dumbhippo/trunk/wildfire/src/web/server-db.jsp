@@ -1,6 +1,6 @@
 <%--
-  -	$Revision: 2926 $
-  -	$Date: 2005-10-07 12:52:10 -0400 (Fri, 07 Oct 2005) $
+  -	$Revision: 4818 $
+  -	$Date: 2006-08-04 16:39:01 -0500 (Fri, 04 Aug 2006) $
   -
   - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
@@ -151,6 +151,15 @@
         catch (SQLException e) { Log.error(e); }
     }
 %>
+    <br/><br/>
+    <table border="0">
+        <tr>
+            <td valign="center">
+                <a href="server-db-stats.jsp"><img src="images/arrow_right_blue.gif" width="24" height="24" border="0" alt="<fmt:message key="server.db_stats.title" />" /></a>
+            </td>
+            <td valign="center"><a href="server-db-stats.jsp"><fmt:message key="server.db_stats.title" /></a></td>
+        </tr>
+    </table>
 
     </body>
 </html>

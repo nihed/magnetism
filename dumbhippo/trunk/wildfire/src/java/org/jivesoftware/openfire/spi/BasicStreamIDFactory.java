@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.spi;
+package org.jivesoftware.openfire.spi;
 
-import org.jivesoftware.wildfire.StreamID;
-import org.jivesoftware.wildfire.StreamIDFactory;
+import org.jivesoftware.openfire.StreamID;
+import org.jivesoftware.openfire.StreamIDFactory;
 import java.util.Random;
 
 /**

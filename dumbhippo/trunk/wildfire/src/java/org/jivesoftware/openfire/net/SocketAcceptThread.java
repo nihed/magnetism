@@ -3,82 +3,57 @@
  * $Revision: 1583 $
  * $Date: 2005-07-03 17:55:39 -0300 (Sun, 03 Jul 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.net;
+package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.wildfire.ConnectionManager;
-import org.jivesoftware.wildfire.ServerPort;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.openfire.ConnectionManager;
+import org.jivesoftware.openfire.ServerPort;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 
 /**
  * Implements a network front end with a dedicated thread reading
- * each incoming socket.
+ * each incoming socket. Blocking and non-blocking modes are supported.
+ * By default blocking mode is used. Use the <i>xmpp.socket.blocking</i>
+ * system property to change the blocking mode. Restart the server after making
+ * changes to the system property.
  *
- * @author Iain Shigeoka
+ * @author Gaston Dombiak
  */
 public class SocketAcceptThread extends Thread {
-
-    /**
-     * The default XMPP port for clients.
-     */
-    public static final int DEFAULT_PORT = 5222;
-
-    /**
-     * The default XMPP port for external components.
-     */
-    public static final int DEFAULT_COMPONENT_PORT = 10015;
-
-    /**
-     * The default XMPP port for server2server communication.
-     */
-    public static final int DEFAULT_SERVER_PORT = 5269;
 
     /**
      * Holds information about the port on which the server will listen for connections.
      */
     private ServerPort serverPort;
 
-    /**
-     * Interface to bind to.
-     */
-    private InetAddress bindInterface;
-
-    /**
-     * True while this thread should continue running.
-     */
-    private boolean notTerminated = true;
-
-    /**
-     * socket that listens for connections.
-     */
-    ServerSocket serverSocket;
-
-    private ConnectionManager connManager;
+    private SocketAcceptingMode acceptingMode;
 
     public SocketAcceptThread(ConnectionManager connManager, ServerPort serverPort)
             throws IOException {
         super("Socket Listener at port " + serverPort.getPort());
-        this.connManager = connManager;
-        this.serverPort = serverPort;
-        String interfaceName = serverPort.getInterfaceName();
-        bindInterface = null;
+        // Listen on a specific network interface if it has been set.
+        String interfaceName = JiveGlobals.getXMLProperty("network.interface");
+        InetAddress bindInterface = null;
         if (interfaceName != null) {
             if (interfaceName.trim().length() > 0) {
                 bindInterface = InetAddress.getByName(interfaceName);
+                // Create the new server port based on the new bind address
+                serverPort = new ServerPort(serverPort.getPort(),
+                        serverPort.getDomainNames().get(0), interfaceName, serverPort.isSecure(),
+                        serverPort.getSecurityType(), serverPort.getType());
             }
         }
-        serverSocket = new ServerSocket(serverPort.getPort(), -1, bindInterface);
+        this.serverPort = serverPort;
+        // Set the blocking reading mode to use
+        acceptingMode = new BlockingAcceptingMode(connManager, serverPort, bindInterface);
     }
 
     /**
@@ -103,19 +78,7 @@ public class SocketAcceptThread extends Thread {
      * Unblock the thread and force it to terminate.
      */
     public void shutdown() {
-        notTerminated = false;
-
-        try {
-            ServerSocket sSock = serverSocket;
-            serverSocket = null;
-            if (sSock != null) {
-                sSock.close();
-            }
-        }
-        catch (IOException e) {
-            // we don't care, no matter what, the socket should be dead
-        }
-
+        acceptingMode.shutdown();
     }
 
     /**
@@ -123,34 +86,8 @@ public class SocketAcceptThread extends Thread {
      * call getting sockets and handing them to the SocketManager.
      */
     public void run() {
-        while (notTerminated) {
-            try {
-                Socket sock = serverSocket.accept();
-                if (sock != null) {
-                    Log.debug("Connect " + sock.toString());
-                    connManager.addSocket(sock, false, serverPort);
-                }
-            }
-            catch (IOException ie) {
-                if (notTerminated) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error.accept"),
-                            ie);
-                }
-            }
-            catch (Exception e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error.accept"), e);
-            }
-        }
-
-        try {
-            ServerSocket sSock = serverSocket;
-            serverSocket = null;
-            if (sSock != null) {
-                sSock.close();
-            }
-        }
-        catch (IOException e) {
-            // we don't care, no matter what, the socket should be dead
-        }
+        acceptingMode.run();
+        // We stopped accepting new connections so close the listener
+        shutdown();
     }
 }

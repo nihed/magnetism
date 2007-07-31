@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.muc;
+package org.jivesoftware.openfire.muc;
 
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
@@ -93,13 +93,12 @@ public class HistoryStrategy {
     /**
      * Set the maximum number of messages for strategies using message number limitations.
      *
-     * @param max The maximum number of messages to store in applicable strategies.
+     * @param max the maximum number of messages to store in applicable strategies.
      */
     public void setMaxNumber(int max) {
         this.maxNumber = max;
         if (contextPrefix != null){
-            JiveGlobals.setProperty(contextPrefix + ".maxNumber",
-                                    Integer.toString(maxNumber));
+            JiveGlobals.setProperty(contextPrefix + ".maxNumber", Integer.toString(maxNumber));
         }
     }
 
@@ -215,15 +214,16 @@ public class HistoryStrategy {
      * Strategy type.
      */
     public enum Type {
-        defaulType, none, all, number;
-    }
+        defaulType, none, all, number
+    };
 
     /**
      * Obtain the strategy type from string name. See the Type enumeration name
      * strings for the names strings supported. If nothing matches
-     * and parent != null DEFAULT is used, otherwise, NUMBER is used.
+     * and parent is not null, then the default strategy is used. Otherwise the number
+     * strategy is used.
      *
-     * @param typeName The text name of the strategy type
+     * @param typeName the text name of the strategy type.
      */
     public void setTypeFromString(String typeName) {
         try {
@@ -252,9 +252,9 @@ public class HistoryStrategy {
         if (maxNumberString != null && maxNumberString.trim().length() > 0){
             try {
                 setMaxNumber(Integer.parseInt(maxNumberString));
-            }catch (Exception e){
-                Log.info("Jive property "
-                        + prefix + ".maxNumber not a valid number.");
+            }
+            catch (Exception e){
+                Log.info("Jive property " + prefix + ".maxNumber not a valid number.");
             }
         }
     }

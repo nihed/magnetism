@@ -1,4 +1,4 @@
-package org.jivesoftware.wildfire.net;
+package org.jivesoftware.openfire.net;
 
 import org.jivesoftware.util.XMLWriter;
 

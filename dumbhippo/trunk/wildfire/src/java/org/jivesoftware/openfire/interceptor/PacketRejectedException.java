@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.interceptor;
+package org.jivesoftware.openfire.interceptor;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;

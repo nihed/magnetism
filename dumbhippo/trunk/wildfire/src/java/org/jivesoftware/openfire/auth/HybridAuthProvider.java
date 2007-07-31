@@ -8,11 +8,12 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.auth;
+package org.jivesoftware.openfire.auth;
 
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 
 import java.util.Set;
 import java.util.HashSet;
@@ -33,7 +34,7 @@ import java.util.HashSet;
  * <pre>
  * &lt;provider&gt;
  *     &lt;auth&gt;
- *         &lt;className&gt;org.jivesoftware.wildfire.auth.HybridAuthProvider&lt;/className&gt;
+ *         &lt;className&gt;org.jivesoftware.openfire.auth.HybridAuthProvider&lt;/className&gt;
  *     &lt;/auth&gt;
  * &lt;/provider&gt;
  * </pre>
@@ -43,10 +44,10 @@ import java.util.HashSet;
  * <pre>
  * &lt;hybridAuthProvider&gt;
  *      &lt;primaryProvider&gt;
- *          &lt;className&gt;org.jivesoftware.wildfire.auth.DefaultAuthProvider&lt;className&gt;
+ *          &lt;className&gt;org.jivesoftware.openfire.auth.DefaultAuthProvider&lt;className&gt;
  *      &lt;/primaryProvider&gt;
  *      &lt;secondaryProvider&gt;
- *          &lt;className&gt;org.jivesoftware.wildfire.auth.NativeAuthProvider&lt;/className&gt;
+ *          &lt;className&gt;org.jivesoftware.openfire.auth.NativeAuthProvider&lt;/className&gt;
  *      &lt;/secondaryProvider&gt;
  * &lt;/hybridAuthProvider&gt;
  * </pre>
@@ -232,4 +233,19 @@ public class HybridAuthProvider implements AuthProvider {
         throw new UnauthorizedException("Digest authentication not supported.");
     }
 
+    public String getPassword(String username)
+            throws UserNotFoundException, UnsupportedOperationException
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setPassword(String username, String password)
+            throws UserNotFoundException, UnsupportedOperationException
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean supportsPasswordRetrieval() {
+        return false;
+    }
 }

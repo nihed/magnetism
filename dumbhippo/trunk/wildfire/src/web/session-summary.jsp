@@ -1,6 +1,6 @@
 <%--
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
@@ -8,13 +8,15 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.wildfire.*,
-                 java.util.Date,
-                 org.xmpp.packet.JID"
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.SessionResultFilter,
+                 org.jivesoftware.openfire.session.ClientSession,
+                 java.util.Collection"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.Date" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -35,6 +37,8 @@
     int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("session-summary", DEFAULT_RANGE));
     int refresh = ParamUtils.getIntParameter(request,"refresh",webManager.getRefreshValue("session-summary", 0));
     boolean close = ParamUtils.getBooleanParameter(request,"close");
+    int order = ParamUtils.getIntParameter(request, "order",
+            webManager.getPageProperty("session-summary", "console.order", SessionResultFilter.ASCENDING));
     String jid = ParamUtils.getParameter(request,"jid");
 
     if (request.getParameter("range") != null) {
@@ -45,11 +49,15 @@
         webManager.setRefreshValue("session-summary", refresh);
     }
 
+    if (request.getParameter("order") != null) {
+        webManager.setPageProperty("session-summary", "console.order", order);
+    }
+
     // Get the user manager
     SessionManager sessionManager = webManager.getSessionManager();
 
     // Get the session count
-    int sessionCount = sessionManager.getSessionCount();
+    int sessionCount = sessionManager.getUserSessionsCount() + sessionManager.getAnonymousSessionCount();
 
     // Close a connection if requested
     if (close) {
@@ -102,7 +110,7 @@
 
             <%  if (numPages > 1) { %>
 
-                - <fmt:message key="global.showing" /> <%= (start+1) %>-<%= (start+range) %>
+                -- <fmt:message key="global.showing" /> <%= (start+1) %>-<%= (start+range) %>
 
             <%  } %>
 
@@ -123,7 +131,7 @@
                 ]
 
             <%  } %>
-            - <fmt:message key="session.summary.sessions_per_page" />:
+            -- <fmt:message key="session.summary.sessions_per_page" />:
             <select size="1" name="range" onchange="this.form.submit();">
 
                 <%  for (int i=0; i<RANGE_PRESETS.length; i++) { %>
@@ -152,33 +160,67 @@
 </tbody>
 </table>
 <br>
-<p>
-<fmt:message key="session.summary.info" />
-</p>
+
+ <% // Get the iterator of sessions, print out session info if any exist.
+     SessionResultFilter filter = SessionResultFilter.createDefaultSessionFilter();
+     filter.setSortOrder(order);
+     filter.setStartIndex(start);
+     filter.setNumResults(range);
+     Collection<org.jivesoftware.openfire.session.ClientSession> sessions = sessionManager.getSessions(filter);
+ %>
 
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
     <tr>
         <th>&nbsp;</th>
-        <th nowrap><fmt:message key="session.details.name" /></th>
+        <th nowrap>
+        <%
+            if (filter.getSortField() == SessionResultFilter.SORT_USER) {
+                if (filter.getSortOrder() == SessionResultFilter.DESCENDING) {
+        %>
+        <table border="0"><tr valign="middle"><th>
+        <a href="session-summary.jsp?order=<%=SessionResultFilter.ASCENDING %>">
+        <fmt:message key="session.details.name" /></a>
+        </th><th>
+        <a href="session-summary.jsp?order=<%=SessionResultFilter.ASCENDING %>">
+        <img src="images/sort_descending.gif" border="0" width="16" height="16" alt=""></a>
+        </th></tr></table></div>
+        <%
+                }
+                else {
+        %>
+        <table border="0"><tr valign="middle"><th>
+        <a href="session-summary.jsp?order=<%=SessionResultFilter.DESCENDING %>">
+        <fmt:message key="session.details.name" /></a>
+        </th><th>
+        <a href="session-summary.jsp?order=<%=SessionResultFilter.DESCENDING %>">
+        <img src="images/sort_ascending.gif" width="16" height="16" border="0" alt=""></a>
+        </th></tr></table></div>
+        <%
+                }
+            }
+            else {
+        %>
+            <fmt:message key="session.details.name" />
+        <%
+            }
+        %>
+        </th>
         <th nowrap><fmt:message key="session.details.resource" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.presence" /></th>
+        <th nowrap><fmt:message key="session.details.priority" /></th>
         <th nowrap><fmt:message key="session.details.clientip" /></th>
         <th nowrap><fmt:message key="session.details.close_connect" /></th>
     </tr>
 </thead>
 <tbody>
-    <%  // Get the iterator of sessions, print out session info if any exist.
-        SessionResultFilter filter = new SessionResultFilter();
-        filter.setStartIndex(start);
-        filter.setNumResults(range);
-        Collection<ClientSession> sessions = sessionManager.getSessions(filter);
+    <%
         if (sessions.isEmpty()) {
     %>
         <tr>
-            <td colspan="9">
+            <td colspan="10">
 
                 <fmt:message key="session.summary.not_session" />
 
@@ -191,6 +233,10 @@
         boolean current = false; // needed in session-row.jspf
         String linkURL = "session-details.jsp";
         for (ClientSession sess : sessions) {
+            if (sess.getAuthToken() == null) {
+                // Double check: Ignore non-authenticated sessions
+                continue;
+            }
             count++;
     %>
         <%@ include file="session-row.jspf" %>

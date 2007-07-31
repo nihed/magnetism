@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.disco;
+package org.jivesoftware.openfire.disco;
 
 /**
  * An item is associated with an XMPP Entity, usually thought of a children of the parent

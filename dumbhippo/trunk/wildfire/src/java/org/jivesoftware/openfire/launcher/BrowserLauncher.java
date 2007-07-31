@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.launcher;
+package org.jivesoftware.openfire.launcher;
 
 import java.io.File;
 import java.io.IOException;

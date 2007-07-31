@@ -9,9 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.forms.spi;
+package org.jivesoftware.openfire.forms.spi;
 
-import org.jivesoftware.wildfire.forms.FormField;
+import org.jivesoftware.openfire.forms.FormField;
 
 import java.util.*;
 import org.dom4j.DocumentHelper;

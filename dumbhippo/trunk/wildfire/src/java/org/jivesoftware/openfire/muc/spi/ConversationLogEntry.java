@@ -9,11 +9,11 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.muc.spi;
+package org.jivesoftware.openfire.muc.spi;
 
 import java.util.Date;
 
-import org.jivesoftware.wildfire.muc.MUCRoom;
+import org.jivesoftware.openfire.muc.MUCRoom;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.JID;
 

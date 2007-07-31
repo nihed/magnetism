@@ -1,6 +1,6 @@
 <%--
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
@@ -8,36 +8,40 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.wildfire.handler.IQRegisterHandler,
-                 org.jivesoftware.wildfire.handler.IQAuthHandler,
-                 java.util.*,
-                 org.jivesoftware.wildfire.ClientSession,
-                 org.jivesoftware.util.*"
+<%@ page import="org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.openfire.handler.IQAuthHandler,
+                 org.jivesoftware.openfire.handler.IQRegisterHandler,
+                 org.jivesoftware.openfire.session.ClientSession,
+                 java.util.HashMap"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.Iterator"%>
+<%@ page import="java.util.Map"%>
+<%@ page import="java.util.StringTokenizer"%>
 <%@ page import="java.util.regex.Pattern"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 
 <html>
-    <head>
-        <title><fmt:message key="reg.settings.title"/></title>
-        <meta name="pageID" content="server-reg-and-login"/>
-        <meta name="helpPage" content="manage_registration_and_login_settings.html"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="reg.settings.title"/></title>
+<meta name="pageID" content="server-reg-and-login"/>
+<meta name="helpPage" content="manage_registration_and_login_settings.html"/>
+</head>
+<body>
 
-<%  // Get parameters
+<% // Get parameters
     boolean save = request.getParameter("save") != null;
-    boolean inbandEnabled = ParamUtils.getBooleanParameter(request,"inbandEnabled");
-    boolean canChangePassword = ParamUtils.getBooleanParameter(request,"canChangePassword");
-    boolean anonLogin = ParamUtils.getBooleanParameter(request,"anonLogin");
+    boolean inbandEnabled = ParamUtils.getBooleanParameter(request, "inbandEnabled");
+    boolean canChangePassword = ParamUtils.getBooleanParameter(request, "canChangePassword");
+    boolean anonLogin = ParamUtils.getBooleanParameter(request, "anonLogin");
     String allowedIPs = request.getParameter("allowedIPs");
 
     // Get an IQRegisterHandler:
-    IQRegisterHandler regHandler = new IQRegisterHandler();
-    IQAuthHandler authHandler = new IQAuthHandler();
+    IQRegisterHandler regHandler = XMPPServer.getInstance().getIQRegisterHandler();
+    IQAuthHandler authHandler = XMPPServer.getInstance().getIQAuthHandler();
 
     if (save) {
         regHandler.setInbandRegEnabled(inbandEnabled);
@@ -48,7 +52,7 @@
         Pattern pattern = Pattern.compile("(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.)" +
                 "(?:(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){2}" +
                 "(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
-        Map<String,String> newMap = new HashMap<String,String>();
+        Map<String, String> newMap = new HashMap<String, String>();
         StringTokenizer tokens = new StringTokenizer(allowedIPs, ", ");
         while (tokens.hasMoreTokens()) {
             String address = tokens.nextToken().trim();
@@ -62,15 +66,15 @@
     // Reset the value of page vars:
     inbandEnabled = regHandler.isInbandRegEnabled();
     canChangePassword = regHandler.canChangePassword();
-    anonLogin = authHandler.isAllowAnonymous();
+    anonLogin = authHandler.isAnonymousAllowed();
     // Encode the allowed IP addresses
     StringBuilder buf = new StringBuilder();
-    Iterator<String> iter = ClientSession.getAllowedIPs().keySet().iterator();
+    Iterator<String> iter = org.jivesoftware.openfire.session.ClientSession.getAllowedIPs().keySet().iterator();
     if (iter.hasNext()) {
         buf.append(iter.next());
     }
     while (iter.hasNext()) {
-        buf.append(", ").append((String)iter.next());
+        buf.append(", ").append((String) iter.next());
     }
     allowedIPs = buf.toString();
 %>
@@ -96,10 +100,14 @@
 
 <% } %>
 
-<fieldset>
-    <legend><fmt:message key="reg.settings.inband_account" /></legend>
-    <div>
-    <p>
+<!-- BEGIN registration settings -->
+	<!--<div class="jive-contentBoxHeader">
+
+	</div>-->
+	<div class="jive-contentBox" style="-moz-border-radius: 3px;">
+
+	<h4><fmt:message key="reg.settings.inband_account" /></h4>
+	<p>
     <fmt:message key="reg.settings.inband_account_info" />
     </p>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
@@ -125,15 +133,12 @@
         </tr>
     </tbody>
     </table>
-    </div>
-</fieldset>
 
-<br>
+	<br>
+	<br>
 
-<fieldset>
-    <legend><fmt:message key="reg.settings.change_password" /></legend>
-    <div>
-    <p>
+	<h4><fmt:message key="reg.settings.change_password" /></h4>
+	<p>
     <fmt:message key="reg.settings.change_password_info" />
     </p>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
@@ -158,15 +163,12 @@
         </tr>
     </tbody>
     </table>
-    </div>
-</fieldset>
 
-<br>
+	<br>
+	<br>
 
-<fieldset>
-    <legend><fmt:message key="reg.settings.anonymous_login" /></legend>
-    <div>
-    <p>
+	<h4><fmt:message key="reg.settings.anonymous_login" /></h4>
+	<p>
     <fmt:message key="reg.settings.anonymous_login_info" />
     </p>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
@@ -191,15 +193,12 @@
         </tr>
     </tbody>
     </table>
-    </div>
-</fieldset>
 
-<br>
+	<br>
+	<br>
 
-<fieldset>
-    <legend><fmt:message key="reg.settings.allowed_ips" /></legend>
-    <div>
-    <p>
+	<h4><fmt:message key="reg.settings.allowed_ips" /></h4>
+	<p>
     <fmt:message key="reg.settings.allowed_ips_info" />
     </p>
     <table cellpadding="3" cellspacing="0" border="0" width="100%">
@@ -211,14 +210,13 @@
         </tr>
     </tbody>
     </table>
-    </div>
-</fieldset>
-
-<br><br>
-
-<input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
+	
+	</div>
+    <input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
+<!-- END registration settings -->
 
 </form>
 
-    </body>
+
+</body>
 </html>

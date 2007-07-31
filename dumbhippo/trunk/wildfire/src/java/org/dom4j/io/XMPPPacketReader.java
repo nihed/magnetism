@@ -9,18 +9,14 @@
 
 package org.dom4j.io;
 
-import java.io.*;
-import java.net.URL;
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.DocumentFactory;
-import org.dom4j.Element;
-import org.dom4j.ElementHandler;
-import org.dom4j.QName;
+import org.dom4j.*;
+import org.jivesoftware.openfire.net.MXParser;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
-import org.jivesoftware.wildfire.net.MXParser;
+
+import java.io.*;
+import java.net.URL;
 
 /**
  * <p><code>XMPPPacketReader</code> is a Reader of DOM4J documents that
@@ -130,6 +126,20 @@ public class XMPPPacketReader {
      */
     public Document read(InputStream in) throws DocumentException, IOException, XmlPullParserException {
         return read(createReader(in));
+    }
+
+    /**
+     * <p>Reads a Document from the given stream</p>
+     *
+     * @param charSet the charSet that the input is encoded in
+     * @param in <code>InputStream</code> to read from.
+     * @return the newly created Document instance
+     * @throws DocumentException if an error occurs during parsing.
+     */
+    public Document read(String charSet, InputStream in)
+            throws DocumentException, IOException, XmlPullParserException
+    {
+        return read(createReader(in, charSet));
     }
 
     /**
@@ -264,12 +274,34 @@ public class XMPPPacketReader {
 
     /**
      * Returns the last time a full Document was read or a heartbeat was received. Hearbeats
-     * are represented as whitespaces received while a Document is not being parsed.
+     * are represented as whitespaces or \n received while a Document is not being parsed.
      *
      * @return the time in milliseconds when the last document or heartbeat was received.
      */
     public long getLastActive() {
-        return lastActive;
+        long lastHeartbeat = 0;
+        try {
+            lastHeartbeat = getXPPParser().getLastHeartbeat();
+        }
+        catch (XmlPullParserException e) {}
+        return lastActive > lastHeartbeat ? lastActive : lastHeartbeat;
+    }
+
+    /*
+     * DANIELE: Add parse document by string
+     */
+    public Document parseDocument(String xml) throws DocumentException {
+        /*
+        // Long way with reuse of DocumentFactory.
+        DocumentFactory df = getDocumentFactory();
+        SAXReader reader = new SAXReader( df );
+        Document document = reader.read( new StringReader( xml );*/
+
+        // Simple way
+        // TODO Optimize. Do not create a sax reader for each parsing
+        Document document = DocumentHelper.parseText(xml);
+
+        return document;
     }
 
     // Implementation methods
@@ -341,7 +373,9 @@ public class XMPPPacketReader {
                     // "jabber:component:accept"
                     if ("jabber:client".equals(qname.getNamespaceURI()) ||
                             "jabber:server".equals(qname.getNamespaceURI()) ||
-                            "jabber:component:accept".equals(qname.getNamespaceURI())) {
+                            "jabber:connectionmanager".equals(qname.getNamespaceURI()) ||
+                            "jabber:component:accept".equals(qname.getNamespaceURI()) ||
+                            "http://jabber.org/protocol/httpbind".equals(qname.getNamespaceURI())) {
                         newElement = df.createElement(pp.getName());
                     }
                     else {
@@ -393,11 +427,6 @@ public class XMPPPacketReader {
                     }
                     break;
                 }
-                case XmlPullParser.IGNORABLE_WHITESPACE: {
-                    //System.out.println("Heartbeat was detected");
-                    // Update the last time a heartbeat was received
-                    lastActive = System.currentTimeMillis();
-                }
                 default:
                 {
                     ;
@@ -422,6 +451,10 @@ public class XMPPPacketReader {
      */
     protected Reader createReader(InputStream in) throws IOException {
         return new BufferedReader(new InputStreamReader(in));
+    }
+
+    private Reader createReader(InputStream in, String charSet) throws UnsupportedEncodingException {
+        return new BufferedReader(new InputStreamReader(in, charSet));
     }
 }
 

@@ -17,7 +17,7 @@
 <%@ page import="java.util.Map"%>
 <%@ page import="java.sql.Statement"%>
 <%@ page import="java.sql.SQLException"%>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
@@ -34,6 +34,7 @@
         sidebar = "true";
     }
     boolean showSidebar = Boolean.parseBoolean(sidebar);
+    int currentStep = decoratedPage.getIntProperty("meta.currentStep");
 %>
 
 <%!
@@ -69,7 +70,7 @@
             	catch (SQLException sqle) {
                     success = false;
                     sqle.printStackTrace();
-                    errors.put("general","The Wildfire database schema does not "
+                    errors.put("general","The Openfire database schema does not "
                         + "appear to be installed. Follow the installation guide to "
                         + "fix this error.");
             	}
@@ -87,125 +88,96 @@
 
 <html>
 <head>
-	<title><fmt:message key="title" /> <fmt:message key="setup.title" />: <decorator:title /></title>
-	<link rel="stylesheet" type="text/css" href="setup-style.css">
+<title><fmt:message key="title" /> <fmt:message key="setup.title" />: <decorator:title /></title>
+
+<style type="text/css" title="setupStyle" media="screen">
+	@import "../style/setup.css";
+	@import "../style/lightbox.css";
+</style>
+
+<script language="JavaScript" type="text/javascript" src="../js/prototype.js"></script>
+<script language="JavaScript" type="text/javascript" src="../js/scriptaculous.js"></script>
+<script language="JavaScript" type="text/javascript" src="../js/lightbox.js"></script>
+<script language="javascript" type="text/javascript" src="../js/tooltips/domLib.js"></script>
+<script language="javascript" type="text/javascript" src="../js/tooltips/domTT.js"></script>
+<script language="javascript" type="text/javascript" src="../js/setup.js"></script>
+<decorator:head />
 </head>
 
-<body>
+<body onload="<decorator:getProperty property="body.onload" />">
 
-<span class="jive-setup-header">
-<table cellpadding="8" cellspacing="0" border="0" width="100%">
-<tr>
-    <td>
-        <fmt:message key="title" /> <fmt:message key="setup.title" />
-    </td>
-</tr>
-</table>
-</span>
-<table bgcolor="#bbbbbb" cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td><img src="../images/blank.gif" width="1" height="1" border="0" alt=""></td></tr>
-</table>
-<table bgcolor="#dddddd" cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td><img src="../images/blank.gif" width="1" height="1" border="0" alt=""></td></tr>
-</table>
-<table bgcolor="#eeeeee" cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td><img src="../images/blank.gif" width="1" height="1" border="0" alt=""></td></tr>
-</table>
 
-<br>
+<!-- BEGIN jive-header -->
+<div id="jive-header">
+	<div id="jive-logo" title="openfire"></div>
+	<div id="jive-header-text"><fmt:message key="setup.title" /></div>
+	<div id="sidebar-top"></div>
+</div>
+<!-- END jive-header -->
 
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr valign="top">
-    <%  if (showSidebar) { %>
-        <td width="1%" nowrap>
-           <%!
-                final String INCOMPLETE = "incomplete";
-                final String IN_PROGRESS = "in_progress";
-                final String DONE = "done";
-            %>
 
-            <%  // Get sidebar values from the session:
 
-                String step1 = (String)session.getAttribute("jive.setup.sidebar.1");
-                String step2 = (String)session.getAttribute("jive.setup.sidebar.2");
-                String step3 = (String)session.getAttribute("jive.setup.sidebar.3");
-                String step4 = (String)session.getAttribute("jive.setup.sidebar.4");
-
-                if (step1 == null) { step1 = IN_PROGRESS; }
-                if (step2 == null) { step2 = INCOMPLETE; }
-                if (step3 == null) { step3 = INCOMPLETE; }
-                if (step4 == null) { step4 = INCOMPLETE; }
-
-                String[] items = {step1, step2, step3, step4};
-                String[] names = {
+<!-- BEGIN jive-sidebar -->
+<div id="jive-sidebar">
+    <%  if (showSidebar) {
+               String[] names = {
                     LocaleUtils.getLocalizedString("setup.sidebar.language"),
                     LocaleUtils.getLocalizedString("setup.sidebar.settings"),
                     LocaleUtils.getLocalizedString("setup.sidebar.datasource"),
+                    LocaleUtils.getLocalizedString("setup.sidebar.profile"),
                     LocaleUtils.getLocalizedString("setup.sidebar.admin")
                 };
                 String[] links = {
                     "index.jsp",
                     "setup-host-settings.jsp",
                     "setup-datasource-settings.jsp",
+                    "setup-profile-settings.jsp",
                     "setup-admin-settings.jsp"
                 };
             %>
+	<div class="jive-sidebar-group">
+	<strong><fmt:message key="setup.sidebar.title" /></strong>
+		<ul>
+			<%  for (int i=0; i<names.length; i++) { %>
+				<%  if (currentStep < i) { %>
+				<li><%= names[i] %></li>
+				<%  } else if (currentStep == i) { %>
+				<li class="jiveCurrent"><%= names[i] %></li>
+				<%  } else { %>
+				<li class="jiveComplete"><!--<a href="<%= links[i] %>">--><%= names[i] %></li>
+				<%  } %>
+			<%  } %>
+		</ul>
+	</div>
 
-            <table bgcolor="#cccccc" cellpadding="0" cellspacing="0" border="0" width="200">
-            <tr><td>
-            <table bgcolor="#cccccc" cellpadding="3" cellspacing="1" border="0" width="200">
-            <tr bgcolor="#eeeeee">
-                <td align="center">
-                    <span style="padding:6px">
-                    <b><fmt:message key="setup.sidebar.title" /></b>
-                    </span>
-                </td>
-            </tr>
-            <tr bgcolor="#ffffff">
-                <td>
-                    <table cellpadding="5" cellspacing="0" border="0" width="100%">
-                    <%  for (int i=0; i<items.length; i++) { %>
-                        <tr>
-                        <%  if (INCOMPLETE.equals(items[i])) { %>
+    <div class="jive-sidebar-group">
+		<strong><fmt:message key="setup.sidebar.title" /></strong>
+		<img src="../images/setup_sidebar_progress<%= currentStep %>.gif" alt="" width="142" height="13" border="0">
+	</div>
 
-                            <td width="1%"><img src="../images/bullet-red-14x14.gif" width="14" height="14" border="0" alt="*"></td>
-                            <td width="99%">
-                                    <%= names[i] %>
-                            </td>
-
-                        <%  } else if (IN_PROGRESS.equals(items[i])) { %>
-
-                            <td width="1%"><img src="../images/bullet-yellow-14x14.gif" width="14" height="14" border="0" alt="*"></td>
-                            <td width="99%">
-                                    <a href="<%= links[i] %>"><%= names[i] %></a>
-                            </td>
-
-                        <%  } else { %>
-
-                            <td width="1%"><img src="../images/bullet-green-14x14.gif" width="14" height="14" border="0" alt="*"></td>
-                            <td width="99%">
-                                    <a href="<%= links[i] %>"><%= names[i] %></a>
-                            </td>
-
-                        <%  } %>
-                        </tr>
-                    <%  } %>
-                    <tr><td colspan="2"><br><br><br><br></td></tr>
-                    </table>
-                </td>
-            </tr>
-            </table>
-            </td></tr>
-            </table>
-        </td>
-        <td width="1%" nowrap><img src="../images/blank.gif" width="15" height="1" border="0" alt=""></td>
     <%  } %>
-    <td width="98%">
+
+
+</div>
+<!-- END jive-sidebar -->
+
+
+
+<!-- BEGIN jive-body -->
+<div id="jive-body">
 
     <decorator:body/>
 
-    </td></tr>
-</table>
+</div>
+<!-- END jive-body -->
+
+
+
+<!-- BEGIN jive-footer -->
+<div id="jive-footer"></div>
+<!-- END jive-footer -->
+
+
 
 </body>
 </html>

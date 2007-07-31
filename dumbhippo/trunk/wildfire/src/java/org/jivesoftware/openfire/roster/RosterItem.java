@@ -9,15 +9,17 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.roster;
+package org.jivesoftware.openfire.roster;
 
-import org.jivesoftware.util.IntEnum;
-import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.CacheSizes;
-import org.jivesoftware.wildfire.group.GroupManager;
-import org.jivesoftware.wildfire.group.GroupNotFoundException;
-import org.jivesoftware.wildfire.group.Group;
-import org.jivesoftware.wildfire.SharedGroupException;
+import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.IntEnum;
+import org.jivesoftware.openfire.SharedGroupException;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.user.UserNameManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 
 import java.util.*;
@@ -94,7 +96,7 @@ public class RosterItem implements Cacheable {
     public static final SubType SUB_BOTH = new SubType("both", 3);
 
     /**
-     * <p>The roster item has no pending subscripton requests.</p>
+     * <p>The roster item has no pending subscription requests.</p>
      */
     public static final AskType ASK_NONE = new AskType("", -1);
     /**
@@ -125,10 +127,14 @@ public class RosterItem implements Cacheable {
     protected JID jid;
     protected String nickname;
     protected List<String> groups;
-    protected Set<Group> sharedGroups = new HashSet<Group>();
-    protected Set<Group> invisibleSharedGroups = new HashSet<Group>();
+    protected Set<String> sharedGroups = new HashSet<String>();
+    protected Set<String> invisibleSharedGroups = new HashSet<String>();
     protected SubType subStatus;
     protected AskType askStatus;
+    /**
+     * Holds the ID that uniquely identifies the roster in the backend store. A value of
+     * zero means that the roster item is not persistent.
+     */
     private long rosterID;
 
     public RosterItem(long id,
@@ -220,6 +226,15 @@ public class RosterItem implements Cacheable {
      * @param subStatus The subscription status of the item
      */
     public void setSubStatus(SubType subStatus) {
+        // Optimization: Load user only if we need to set the nickname of the roster item
+        if ("".equals(nickname) && (subStatus == SUB_BOTH || subStatus == SUB_TO)) {
+            try {
+                nickname = UserNameManager.getUserName(jid);
+            }
+            catch (UserNotFoundException e) {
+                // Do nothing
+            }
+        }
         this.subStatus = subStatus;
     }
 
@@ -322,7 +337,7 @@ public class RosterItem implements Cacheable {
             }
 
             // Remove shared groups from the param
-            Collection<Group> existingGroups = GroupManager.getInstance().getGroups();
+            Collection<Group> existingGroups = GroupManager.getInstance().getSharedGroups();
             for (Iterator<String> it=groups.iterator(); it.hasNext();) {
                 String groupName = it.next();
                 try {
@@ -333,9 +348,14 @@ public class RosterItem implements Cacheable {
                     Group group = GroupManager.getInstance().getGroup(groupName);
                     // Get the display name of the group
                     String displayName = group.getProperties().get("sharedRoster.displayName");
-                    if (displayName.equals(groupName)) {
+                    if (displayName != null && displayName.equals(groupName)) {
                         // Remove the shared group from the list (since it exists)
-                        it.remove();
+                        try {
+                            it.remove();
+                        }
+                        catch (IllegalStateException e) {
+                            // Do nothing
+                        }
                     }
                 }
                 catch (GroupNotFoundException e) {
@@ -343,9 +363,14 @@ public class RosterItem implements Cacheable {
                     for (Group group : existingGroups) {
                         // Get the display name of the group
                         String displayName = group.getProperties().get("sharedRoster.displayName");
-                        if (displayName.equals(groupName)) {
+                        if (displayName != null && displayName.equals(groupName)) {
                             // Remove the shared group from the list (since it exists)
-                            it.remove();
+                            try {
+                                it.remove();
+                            }
+                            catch (IllegalStateException ise) {
+                                // Do nothing
+                            }
                         }
                     }
                 }
@@ -360,7 +385,16 @@ public class RosterItem implements Cacheable {
      * @return The shared groups this item belongs to.
      */
     public Collection<Group> getSharedGroups() {
-        return sharedGroups;
+        Collection<Group> groups = new ArrayList<Group>(sharedGroups.size());
+        for (String groupName : sharedGroups) {
+            try {
+                groups.add(GroupManager.getInstance().getGroup(groupName));
+            }
+            catch (GroupNotFoundException e) {
+                // Do nothing
+            }
+        }
+        return groups;
     }
 
     /**
@@ -371,7 +405,24 @@ public class RosterItem implements Cacheable {
      * @return The shared groups this item belongs to.
      */
     public Collection<Group> getInvisibleSharedGroups() {
+        Collection<Group> groups = new ArrayList<Group>(invisibleSharedGroups.size());
+        for (String groupName : invisibleSharedGroups) {
+            try {
+                groups.add(GroupManager.getInstance().getGroup(groupName));
+            }
+            catch (GroupNotFoundException e) {
+                // Do nothing
+            }
+        }
+        return groups;
+    }
+
+    Set<String> getInvisibleSharedGroupsNames() {
         return invisibleSharedGroups;
+    }
+
+    void setInvisibleSharedGroupsNames(Set<String> groupsNames) {
+        invisibleSharedGroups = groupsNames;
     }
 
     /**
@@ -380,8 +431,8 @@ public class RosterItem implements Cacheable {
      * @param sharedGroup The shared group to add to the list of shared groups.
      */
     public void addSharedGroup(Group sharedGroup) {
-        sharedGroups.add(sharedGroup);
-        invisibleSharedGroups.remove(sharedGroup);
+        sharedGroups.add(sharedGroup.getName());
+        invisibleSharedGroups.remove(sharedGroup.getName());
     }
 
     /**
@@ -392,7 +443,7 @@ public class RosterItem implements Cacheable {
      * @param sharedGroup The shared group to add to the list of shared groups.
      */
     public void addInvisibleSharedGroup(Group sharedGroup) {
-        invisibleSharedGroups.add(sharedGroup);
+        invisibleSharedGroups.add(sharedGroup.getName());
     }
 
     /**
@@ -401,8 +452,8 @@ public class RosterItem implements Cacheable {
      * @param sharedGroup The shared group to remove from the list of shared groups.
      */
     public void removeSharedGroup(Group sharedGroup) {
-        sharedGroups.remove(sharedGroup);
-        invisibleSharedGroups.remove(sharedGroup);
+        sharedGroups.remove(sharedGroup.getName());
+        invisibleSharedGroups.remove(sharedGroup.getName());
     }
 
     /**
@@ -427,9 +478,10 @@ public class RosterItem implements Cacheable {
     }
 
     /**
-     * <p>Obtain the roster ID associated with this particular roster item.</p>
-     * <p/>
-     * <p>Databases can use the roster ID as the key in locating roster items.</p>
+     * Returns the roster ID associated with this particular roster item. A value of zero
+     * means that the roster item is not being persisted in the backend store.<p>
+     *
+     * Databases can use the roster ID as the key in locating roster items.
      *
      * @return The roster ID
      */
@@ -437,6 +489,14 @@ public class RosterItem implements Cacheable {
         return rosterID;
     }
 
+    /**
+     * Sets the roster ID associated with this particular roster item. A value of zero
+     * means that the roster item is not being persisted in the backend store.<p>
+     *
+     * Databases can use the roster ID as the key in locating roster items.
+     *
+     * @param rosterID The roster ID.
+     */
     public void setID(long rosterID) {
         this.rosterID = rosterID;
     }

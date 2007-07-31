@@ -1,7 +1,7 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -13,9 +13,9 @@
                  java.text.DateFormat,
                  org.jivesoftware.admin.*,
                  java.util.*,
-                 org.jivesoftware.wildfire.muc.MUCRoom,
-                 org.jivesoftware.wildfire.forms.spi.*,
-                 org.jivesoftware.wildfire.forms.*,
+                 org.jivesoftware.openfire.muc.MUCRoom,
+                 org.jivesoftware.openfire.forms.spi.*,
+                 org.jivesoftware.openfire.forms.*,
                  org.dom4j.Element,
                  org.xmpp.packet.IQ,
                  org.xmpp.packet.Message,
@@ -25,7 +25,7 @@
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.wildfire.muc.NotAllowedException"%>
+<%@ page import="org.jivesoftware.openfire.muc.NotAllowedException"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -307,17 +307,17 @@
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="muc.room.edit.form.title"/></title>
-        <% if (create) { %>
-        <meta name="pageID" content="muc-room-create"/>
-        <% } else { %>
-        <meta name="subPageID" content="muc-room-edit-form"/>
-        <% } %>
-        <meta name="extraParams" content="<%= "roomName="+URLEncoder.encode(roomName, "UTF-8")+"&create="+create %>"/>
-        <meta name="helpPage" content="view_group_chat_room_summary.html"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="muc.room.edit.form.title"/></title>
+<% if (create) { %>
+<meta name="pageID" content="muc-room-create"/>
+<% } else { %>
+<meta name="subPageID" content="muc-room-edit-form"/>
+<% } %>
+<meta name="extraParams" content="<%= "roomName="+URLEncoder.encode(roomName, "UTF-8")+"&create="+create %>"/>
+<meta name="helpPage" content="view_group_chat_room_summary.html"/>
+</head>
+<body>
 
 <%  if (!errors.isEmpty()) { %>
 
@@ -351,8 +351,7 @@
         </tr>
     </tbody>
     </table>
-    </div>
-    <br>
+    </div><br>
 
 <%  } else if (success || addsuccess) { %>
 
@@ -394,7 +393,11 @@
     <tbody>
         <tr>
             <td><%= room.getName() %></td>
+            <% if (room.getOccupantsCount() == 0) { %>
             <td><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></td>
+            <% } else { %>
+            <td><a href="muc-room-occupants.jsp?roomName=<%= URLEncoder.encode(roomName, "UTF-8")%>"><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></a></td>
+            <% } %>
             <td><%= dateFormatter.format(room.getCreationDate()) %></td>
             <td><%= dateFormatter.format(room.getModificationDate()) %></td>
         </tr>

@@ -1,12 +1,12 @@
--- $RCSfile$
 -- $Revision: 1650 $
 -- $Date: 2005-07-20 00:18:17 -0300 (Wed, 20 Jul 2005) $
 
 -- Note: This schema has only been tested on PostgreSQL 7.3.2.
 
 CREATE TABLE jiveUser (
-  username              VARCHAR(48)     NOT NULL,
-  password              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
+  password              VARCHAR(32),
+  encryptedPassword     VARCHAR(255),
   name                  VARCHAR(100),
   email                 VARCHAR(100),
   creationDate          CHAR(15)        NOT NULL,
@@ -17,7 +17,7 @@ CREATE INDEX jiveUser_cDate_idx ON jiveUser (creationDate);
 
 
 CREATE TABLE jiveUserProp (
-  username              VARCHAR(48)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             TEXT            NOT NULL,
   CONSTRAINT jiveUserProp_pk PRIMARY KEY (username, name)
@@ -25,7 +25,7 @@ CREATE TABLE jiveUserProp (
 
 
 CREATE TABLE jivePrivate (
-  username              VARCHAR(48)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
   value                 TEXT            NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE jivePrivate (
 
 
 CREATE TABLE jiveOffline (
-  username              VARCHAR(48)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   messageID             INTEGER         NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
@@ -43,9 +43,17 @@ CREATE TABLE jiveOffline (
 );
 
 
+CREATE TABLE jivePresence (
+  username              VARCHAR(64)     NOT NULL,
+  offlinePresence       TEXT,
+  offlineDate           VARCHAR(15)     NOT NULL,
+  CONSTRAINT jivePresence_pk PRIMARY KEY (username)
+);
+
+
 CREATE TABLE jiveRoster (
   rosterID              INTEGER         NOT NULL,
-  username              VARCHAR(48)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   jid                   VARCHAR(1024)   NOT NULL,
   sub                   INTEGER         NOT NULL,
   ask                   INTEGER         NOT NULL,
@@ -67,7 +75,7 @@ ALTER TABLE jiveRosterGroups ADD CONSTRAINT jiveRosterGroups_rosterID_fk FOREIGN
 
 
 CREATE TABLE jiveVCard (
-  username              VARCHAR(48)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   value                 TEXT            NOT NULL,
   CONSTRAINT jiveVCard_pk PRIMARY KEY (username)
 );
@@ -111,8 +119,9 @@ CREATE TABLE jiveProperty (
 
 
 CREATE TABLE jiveVersion (
-  majorVersion  INTEGER  NOT NULL,
-  minorVersion  INTEGER  NOT NULL
+  name     VARCHAR(50)  NOT NULL,
+  version  INTEGER  NOT NULL,
+  CONSTRAINT jiveVersion_pk PRIMARY KEY (name)
 );
 
 CREATE TABLE jiveExtComponentConf (
@@ -127,6 +136,21 @@ CREATE TABLE jiveRemoteServerConf (
   remotePort            INTEGER,
   permission            VARCHAR(10)     NOT NULL,
   CONSTRAINT jiveRemoteServerConf_pk PRIMARY KEY (domain)
+);
+
+CREATE TABLE jivePrivacyList (
+  username              VARCHAR(64)     NOT NULL,
+  name                  VARCHAR(100)    NOT NULL,
+  isDefault             INTEGER         NOT NULL,
+  list                  TEXT            NOT NULL,
+  CONSTRAINT jivePrivacyList_pk PRIMARY KEY (username, name)
+);
+CREATE INDEX jivePList_default_idx ON jivePrivacyList (username, isDefault);
+
+CREATE TABLE jiveSASLAuthorized (
+  username          VARCHAR(64)   NOT NULL,
+  principal         VARCHAR(4000) NOT NULL,
+  CONSTRAINT jiveSASLAuthoirzed_pk PRIMARY KEY (username, principal)
 );
 
 -- MUC Tables
@@ -195,13 +219,122 @@ CREATE TABLE mucConversationLog (
 );
 CREATE INDEX mucLog_time_idx ON mucConversationLog (time);
 
+-- PubSub Tables
+
+CREATE TABLE pubsubNode (
+  serviceID           VARCHAR(100)  NOT NULL,
+  nodeID              VARCHAR(100)  NOT NULL,
+  leaf                INTEGER       NOT NULL,
+  creationDate        CHAR(15)      NOT NULL,
+  modificationDate    CHAR(15)      NOT NULL,
+  parent              VARCHAR(100)  NULL,
+  deliverPayloads     INTEGER       NOT NULL,
+  maxPayloadSize      INTEGER       NULL,
+  persistItems        INTEGER       NULL,
+  maxItems            INTEGER       NULL,
+  notifyConfigChanges INTEGER       NOT NULL,
+  notifyDelete        INTEGER       NOT NULL,
+  notifyRetract       INTEGER       NOT NULL,
+  presenceBased       INTEGER       NOT NULL,
+  sendItemSubscribe   INTEGER       NOT NULL,
+  publisherModel      VARCHAR(15)   NOT NULL,
+  subscriptionEnabled INTEGER       NOT NULL,
+  configSubscription  INTEGER       NOT NULL,
+  accessModel         VARCHAR(10)   NOT NULL,
+  payloadType         VARCHAR(100)  NULL,
+  bodyXSLT            VARCHAR(100)  NULL,
+  dataformXSLT        VARCHAR(100)  NULL,
+  creator             VARCHAR(1024) NOT NULL,
+  description         VARCHAR(255)  NULL,
+  language            VARCHAR(255)  NULL,
+  name                VARCHAR(50)   NULL,
+  replyPolicy         VARCHAR(15)   NULL,
+  associationPolicy   VARCHAR(15)   NULL,
+  maxLeafNodes        INTEGER       NULL,
+  CONSTRAINT pubsubNode_pk PRIMARY KEY (serviceID, nodeID)
+);
+
+CREATE TABLE pubsubNodeJIDs (
+  serviceID           VARCHAR(100)  NOT NULL,
+  nodeID              VARCHAR(100)  NOT NULL,
+  jid                 VARCHAR(1024) NOT NULL,
+  associationType     VARCHAR(20)   NOT NULL,
+  CONSTRAINT pubsubJID_pk PRIMARY KEY (serviceID, nodeID, jid)
+);
+
+CREATE TABLE pubsubNodeGroups (
+  serviceID           VARCHAR(100)  NOT NULL,
+  nodeID              VARCHAR(100)  NOT NULL,
+  rosterGroup         VARCHAR(100)  NOT NULL
+);
+CREATE INDEX pubsubNodeGroups_idx ON pubsubNodeGroups (serviceID, nodeID);
+
+CREATE TABLE pubsubAffiliation (
+  serviceID           VARCHAR(100)  NOT NULL,
+  nodeID              VARCHAR(100)  NOT NULL,
+  jid                 VARCHAR(1024) NOT NULL,
+  affiliation         VARCHAR(10)   NOT NULL,
+  CONSTRAINT pubsubAffil_pk PRIMARY KEY (serviceID, nodeID, jid)
+);
+
+CREATE TABLE pubsubItem (
+  serviceID           VARCHAR(100)  NOT NULL,
+  nodeID              VARCHAR(100)  NOT NULL,
+  id                  VARCHAR(100)  NOT NULL,
+  jid                 VARCHAR(1024) NOT NULL,
+  creationDate        CHAR(15)      NOT NULL,
+  payload             TEXT          NULL,
+  CONSTRAINT pubsubItem_pk PRIMARY KEY (serviceID, nodeID, id)
+);
+
+CREATE TABLE pubsubSubscription (
+  serviceID           VARCHAR(100)  NOT NULL,
+  nodeID              VARCHAR(100)  NOT NULL,
+  id                  VARCHAR(100)  NOT NULL,
+  jid                 VARCHAR(1024) NOT NULL,
+  owner               VARCHAR(1024) NOT NULL,
+  state               VARCHAR(15)   NOT NULL,
+  deliver             INTEGER       NOT NULL,
+  digest              INTEGER       NOT NULL,
+  digest_frequency    INTEGER       NOT NULL,
+  expire              CHAR(15)      NULL,
+  includeBody         INTEGER       NOT NULL,
+  showValues          VARCHAR(30)   NOT NULL,
+  subscriptionType    VARCHAR(10)   NOT NULL,
+  subscriptionDepth   INTEGER       NOT NULL,
+  keyword             VARCHAR(200)  NULL,
+  CONSTRAINT pubsubSubs_pk PRIMARY KEY (serviceID, nodeID, id)
+);
+
+CREATE TABLE pubsubDefaultConf (
+  serviceID           VARCHAR(100)  NOT NULL,
+  leaf                INTEGER       NOT NULL,
+  deliverPayloads     INTEGER       NOT NULL,
+  maxPayloadSize      INTEGER       NOT NULL,
+  persistItems        INTEGER       NOT NULL,
+  maxItems            INTEGER       NOT NULL,
+  notifyConfigChanges INTEGER       NOT NULL,
+  notifyDelete        INTEGER       NOT NULL,
+  notifyRetract       INTEGER       NOT NULL,
+  presenceBased       INTEGER       NOT NULL,
+  sendItemSubscribe   INTEGER       NOT NULL,
+  publisherModel      VARCHAR(15)   NOT NULL,
+  subscriptionEnabled INTEGER       NOT NULL,
+  accessModel         VARCHAR(10)   NOT NULL,
+  language            VARCHAR(255)  NULL,
+  replyPolicy         VARCHAR(15)   NULL,
+  associationPolicy   VARCHAR(15)   NOT NULL,
+  maxLeafNodes        INTEGER       NOT NULL,
+  CONSTRAINT pubsubDefConf_pk PRIMARY KEY (serviceID, leaf)
+);
+
 -- Finally, insert default table values.
 
 INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (majorVersion, minorVersion) VALUES (2, 2);
+INSERT INTO jiveVersion (name, version) VALUES ('openfire', 11);
 
 -- Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)

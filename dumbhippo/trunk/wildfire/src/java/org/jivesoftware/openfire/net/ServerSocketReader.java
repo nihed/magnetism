@@ -3,21 +3,22 @@
  * $Revision: 3174 $
  * $Date: 2005-12-08 17:41:00 -0300 (Thu, 08 Dec 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.net;
+package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
-import org.jivesoftware.wildfire.PacketRouter;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.interceptor.PacketRejectedException;
-import org.jivesoftware.wildfire.server.IncomingServerSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.*;
 
@@ -38,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  * could be routed at the same time. To avoid creating new threads every time a packet is received
  * each <tt>ServerSocketReader</tt> instance uses a {@link ThreadPoolExecutor}. By default the
  * maximum number of threads that the executor may have is 50. However, this value may be modified
- * by changing the property <b>xmpp.server.processing.threads</b>.
+ * by changing the property <b>xmpp.server.processing.max.threads</b>.
  *
  * @author Gaston Dombiak
  */
@@ -49,15 +50,17 @@ public class ServerSocketReader extends SocketReader {
      */
     private ThreadPoolExecutor threadPool;
 
-    public ServerSocketReader(PacketRouter router, String serverName, Socket socket,
-            SocketConnection connection) {
-        super(router, serverName, socket, connection);
+    public ServerSocketReader(PacketRouter router, RoutingTable routingTable, String serverName,
+            Socket socket, SocketConnection connection, boolean useBlockingMode) {
+        super(router, routingTable, serverName, socket, connection, useBlockingMode);
         // Create a pool of threads that will process received packets. If more threads are
         // required then the command will be executed on the SocketReader process
-        int maxThreads = JiveGlobals.getIntProperty("xmpp.server.processing.threads", 50);
+        int coreThreads = JiveGlobals.getIntProperty("xmpp.server.processing.core.threads", 2);
+        int maxThreads = JiveGlobals.getIntProperty("xmpp.server.processing.max.threads", 50);
+        int queueSize = JiveGlobals.getIntProperty("xmpp.server.processing.queue", 50);
         threadPool =
-                new ThreadPoolExecutor(1, maxThreads, 60, TimeUnit.SECONDS,
-                        new LinkedBlockingQueue<Runnable>(),
+                new ThreadPoolExecutor(coreThreads, maxThreads, 60, TimeUnit.SECONDS,
+                        new LinkedBlockingQueue<Runnable>(queueSize),
                         new ThreadPoolExecutor.CallerRunsPolicy());
     }
 
@@ -213,6 +216,10 @@ public class ServerSocketReader extends SocketReader {
 
     String getNamespace() {
         return "jabber:server";
+    }
+
+    String getName() {
+        return "Server SR - " + hashCode();
     }
 
     boolean validateHost() {

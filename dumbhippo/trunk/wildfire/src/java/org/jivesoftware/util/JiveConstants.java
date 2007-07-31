@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1715 $
- * $Date: 2005-07-26 20:05:38 -0400 (Tue, 26 Jul 2005) $
+ * $Revision: 5980 $
+ * $Date: 2006-11-07 12:01:52 -0600 (Tue, 07 Nov 2006) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -29,8 +29,15 @@ public class JiveConstants {
 
     /**
      * Date/time format for use by SimpleDateFormat. The format conforms to
-     * <a href="http://www.jabber.org/jeps/jep-0082.html">JEP-0082</a>, which defines
+     * <a href="http://www.xmpp.org/extensions/xep-0082.html">XEP-0082</a>, which defines
      * a unified date/time format for XMPP.
      */
     public static final String XMPP_DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+
+    /**
+     * Date/time format for use by SimpleDateFormat. The format conforms to the format
+     * defined in <a href="http://www.xmpp.org/extensions/xep-0091.html">XEP-0091</a>,
+     * a specialized date format for historical XMPP usage.
+     */
+    public static final String XMPP_DELAY_DATETIME_FORMAT = "yyyyMMdd'T'HH:mm:ss";
 }

@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.starter;
+package org.jivesoftware.openfire.starter;
 
 import java.io.File;
 import java.io.FilenameFilter;

@@ -1,7 +1,7 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -9,14 +9,18 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.wildfire.*,
-                 java.util.Date,
-                 java.net.URLEncoder,
-                 org.jivesoftware.wildfire.component.ComponentSession"
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.session.ComponentSession,
+                 org.jivesoftware.openfire.session.Session,
+                 java.net.URLEncoder"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.ArrayList"%>
+<%@ page import="java.util.Calendar"%>
+<%@ page import="java.util.Collection"%>
+<%@ page import="java.util.Date"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -28,11 +32,12 @@
 <jsp:useBean id="admin" class="org.jivesoftware.util.WebManager"  />
 <% admin.init(request, response, session, application, out ); %>
 
-<%  // Get parameters
-    int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",admin.getRowsPerPage("component-session-summary", DEFAULT_RANGE));
-    boolean close = ParamUtils.getBooleanParameter(request,"close");
-    String jid = ParamUtils.getParameter(request,"jid");
+<% // Get parameters
+    int start = ParamUtils.getIntParameter(request, "start", 0);
+    int range = ParamUtils
+            .getIntParameter(request, "range", admin.getRowsPerPage("component-session-summary", DEFAULT_RANGE));
+    boolean close = ParamUtils.getBooleanParameter(request, "close");
+    String jid = ParamUtils.getParameter(request, "jid");
 
     if (request.getParameter("range") != null) {
         admin.setRowsPerPage("component-session-summary", range);
@@ -64,9 +69,9 @@
         return;
     }
     // paginator vars
-    int numPages = (int)Math.ceil((double)sessionCount/(double)range);
-    int curPage = (start/range) + 1;
-    int maxIndex = (start+range <= sessionCount ? start+range : sessionCount);
+    int numPages = (int) Math.ceil((double) sessionCount / (double) range);
+    int curPage = (start / range) + 1;
+    int maxIndex = (start + range <= sessionCount ? start + range : sessionCount);
 %>
 
 <html>
@@ -84,6 +89,7 @@
 
 <%  } %>
 
+<p>
 <fmt:message key="component.session.summary.active" />: <b><%= sessions.size() %></b>
 
 <%  if (numPages > 1) { %>
@@ -102,6 +108,7 @@
     <%  } %>
 
 </select>
+</p>
 
 <%  if (numPages > 1) { %>
 
@@ -174,22 +181,33 @@
             <%= componentSession.getExternalComponent().getCategory() %>
         </td>
         <td align="center" width="10%" nowrap>
+            <table border="0">
+            <tr valign="center">
             <% if ("gateway".equals(componentSession.getExternalComponent().getCategory())) {
                 if ("msn".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/msn.gif" width="16" height="16" border="0" alt="MSN">&nbsp;
+                <td><img src="images/msn.gif" width="16" height="16" border="0" alt="MSN"></td>
              <% }
                 else if ("aim".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/aim.gif" width="16" height="16" border="0" alt="AIM">&nbsp;
+                <td><img src="images/aim.gif" width="16" height="16" border="0" alt="AIM"></td>
              <% }
                 else if ("yahoo".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/yahoo.gif" width="22" height="16" border="0" alt="Yahoo!">&nbsp;
+                <td><img src="images/yahoo.gif" width="22" height="16" border="0" alt="Yahoo!"></td>
              <% }
                 else if ("icq".equals(componentSession.getExternalComponent().getType())) { %>
-                <img src="images/icq.gif" width="16" height="16" border="0" alt="ICQ">&nbsp;
+                <td><img src="images/icq.gif" width="16" height="16" border="0" alt="ICQ"></td>
              <% }
-            }
+                else if ("irc".equals(componentSession.getExternalComponent().getType())) { %>
+                <td><img src="images/irc.gif" width="16" height="16" border="0" alt="IRC"></td>
+             <% }
+               }
+               else if ("component".equals(componentSession.getExternalComponent().getCategory())) {
+                if ("clearspace".equals(componentSession.getExternalComponent().getType().toLowerCase())) { %>
+                <td><img src="images/clearspace.gif" width="16" height="16" border="0" alt="Clearspace"></td> 
+             <% }
+               }
             %>
-            <%= componentSession.getExternalComponent().getType() %>
+            <td><%= componentSession.getExternalComponent().getType() %></td>
+            </tr></table>
         </td>
         <%  Date creationDate = componentSession.getCreationDate();
             Calendar creationCal = Calendar.getInstance();

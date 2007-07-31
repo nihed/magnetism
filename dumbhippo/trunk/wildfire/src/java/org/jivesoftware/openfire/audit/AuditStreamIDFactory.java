@@ -9,11 +9,11 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.audit;
+package org.jivesoftware.openfire.audit;
 
-import org.jivesoftware.wildfire.StreamID;
-import org.jivesoftware.wildfire.StreamIDFactory;
-import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.StreamID;
+import org.jivesoftware.openfire.StreamIDFactory;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 
 /**
  * Factory for producing audit stream IDs. We use a factory so that

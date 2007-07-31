@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.event;
+package org.jivesoftware.openfire.event;
 
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.group.Group;
+import org.jivesoftware.openfire.group.Group;
 
 import java.util.List;
 import java.util.Map;

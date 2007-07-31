@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.launcher;
+package org.jivesoftware.openfire.launcher;
 
 import javax.swing.*;
 import java.awt.dnd.*;

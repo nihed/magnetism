@@ -9,36 +9,67 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.net;
+package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.XMPPServerInfo;
-import org.jivesoftware.wildfire.ServerPort;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.admin.AdminConsole;
+import org.jivesoftware.util.*;
+import org.jivesoftware.openfire.ServerPort;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServerInfo;
+import org.jivesoftware.openfire.container.BasicModule;
 
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceInfo;
 import java.io.IOException;
-import java.util.Iterator;
+import java.util.Map;
+import java.util.TimerTask;
 
 /**
- * Publishes Wildfire as a service using the Multicast DNS (marketed by Apple
+ * Publishes Openfire information as a service using the Multicast DNS (marketed by Apple
  * as Rendezvous) protocol. This lets other nodes on the local network to discover
- * the name and port of Wildfire.<p>
+ * the name and port of Openfire.<p>
  *
- * The multicast DNS entry is published with a type of "_xmpp-client._tcp.local.".
+ * The multicast DNS entries published:<ul>
+ *  <li>Client connections: type of "_xmpp-client._tcp.local.".
+ *  <li>Component connections: type of "_xmpp-component._tcp.local.".
+ * </ul>
  *
  * @author Matt Tucker
  */
 public class MulticastDNSService extends BasicModule {
 
     private JmDNS jmdns;
-    private ServiceInfo serviceInfo;
 
     public MulticastDNSService() {
         super("Multicast DNS Service");
+
+        PropertyEventDispatcher.addListener(new PropertyEventListener() {
+
+            public void propertySet(String property, Map params) {
+                // Restart the service if component settings changes.
+                if (property.equals("xmpp.component.socket.active") ||
+                        property.equals(" xmpp.component.socket.port"))
+                {
+                    stop();
+                    start();
+                }
+            }
+
+            public void propertyDeleted(String property, Map params) {
+                // Restart the service if component settings changes.
+                if (property.equals("xmpp.component.socket.active") ||
+                        property.equals(" xmpp.component.socket.port"))
+                {
+                    stop();
+                    start();
+                }
+            }
+
+            public void xmlPropertySet(String property, Map params) {
+            }
+
+            public void xmlPropertyDeleted(String property, Map params) {
+            }
+        });
     }
 
     public void initialize(XMPPServer server) {
@@ -46,36 +77,47 @@ public class MulticastDNSService extends BasicModule {
     }
 
     public void start() throws IllegalStateException {
-        if (jmdns != null) {
-            Runnable startService = new Runnable() {
-                public void run() {
-                    XMPPServerInfo info = XMPPServer.getInstance().getServerInfo();
-                    Iterator ports = info.getServerPorts();
-                    int portNum = -1;
-                    while (ports.hasNext()) {
-                        ServerPort port = (ServerPort)ports.next();
-                        if (port.isClientPort() && !port.isSecure()) {
-                            portNum = port.getPort();
-                        }
+        // If the service isn't enabled, return.
+        if (!JiveGlobals.getBooleanProperty("multicastDNS.enabled", false) ) {
+            return;     
+        }
+        TimerTask startService = new TimerTask() {
+            public void run() {
+                XMPPServerInfo info = XMPPServer.getInstance().getServerInfo();
+                int clientPortNum = -1;
+                int componentPortNum = -1;
+                for (ServerPort port : info.getServerPorts()) {
+                    if (port.isClientPort()) {
+                        clientPortNum = port.getPort();
                     }
-                    try {
-                        if (jmdns == null) {
-                            jmdns = new JmDNS();
-                        }
-                        if (portNum != -1) {
-                            String serverName = AdminConsole.getAppName();
-                            serviceInfo = new ServiceInfo("_xmpp-client._tcp.local.",
-                                    serverName, portNum, 0, 0, "XMPP Server");
-                            jmdns.registerService(serviceInfo);
-                        }
-                    }
-                     catch (IOException ioe) {
-                        Log.error(ioe);
+                    else if (port.isComponentPort()) {
+                        componentPortNum = port.getPort();
                     }
                 }
-            };
-            new Thread(startService).start();
-        }
+                try {
+                    if (jmdns == null) {
+                        jmdns = new JmDNS();
+                    }
+                    String serverName = XMPPServer.getInstance().getServerInfo().getName();
+
+                    if (clientPortNum != -1) {
+                        ServiceInfo clientService = new ServiceInfo("_xmpp-client._tcp.local.",
+                                serverName + "._xmpp-client._tcp.local.", clientPortNum, "XMPP Server");
+                        jmdns.registerService(clientService);
+                    }
+                    if (componentPortNum != -1) {
+                        ServiceInfo componentService = new ServiceInfo("_xmpp-component._tcp.local.",
+                                serverName +  "._xmpp-component._tcp.local.", componentPortNum, "XMPP Component Server");
+                        jmdns.registerService(componentService);
+                    }
+                }
+                 catch (IOException ioe) {
+                    Log.error(ioe);
+                }
+            }
+        };
+        // Schedule the task to run in 5 seconds, to give Wildire time to start the ports. 
+        TaskEngine.getInstance().schedule(startService, 5000);
     }
 
 
@@ -84,7 +126,9 @@ public class MulticastDNSService extends BasicModule {
             try {
                 jmdns.close();
             }
-            catch (Exception e) { }
+            catch (Exception e) {
+                // Ignore.
+            }
         }
     }
 

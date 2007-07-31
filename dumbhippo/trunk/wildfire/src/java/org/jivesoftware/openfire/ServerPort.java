@@ -9,10 +9,11 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire;
+package org.jivesoftware.openfire;
 
-import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Represents a port on which the server will listen for connections.
@@ -24,19 +25,16 @@ import java.util.ArrayList;
 public class ServerPort {
 
     private int port;
-    private String interfaceName;
-    private ArrayList names;
+    private List<String> names = new ArrayList<String>(1);
     private String address;
     private boolean secure;
     private String algorithm;
     private Type type;
 
-    public ServerPort(int port, String interfaceName, String name, String address,
-            boolean isSecure, String algorithm, Type type)
+    public ServerPort(int port, String name, String address,
+                      boolean isSecure, String algorithm, Type type)
     {
         this.port = port;
-        this.interfaceName = interfaceName;
-        this.names = new ArrayList(1);
         this.names.add(name);
         this.address = address;
         this.secure = isSecure;
@@ -53,19 +51,15 @@ public class ServerPort {
         return port;
     }
 
-    public String getInterfaceName() {
-        return interfaceName;
-    }
-
     /**
      * Returns the logical domains for this server port. As multiple
      * domains may point to the same server, this helps to define what
      * the server considers "local".
      *
-     * @return The server domain name(s) as Strings
+     * @return the server domain name(s) as Strings.
      */
-    public Iterator getDomainNames() {
-        return names.iterator();
+    public List<String> getDomainNames() {
+        return Collections.unmodifiableList(names);
     }
 
     /**
@@ -123,11 +117,26 @@ public class ServerPort {
         return type == Type.component;
     }
 
+    /**
+     * Returns true if connection managers can connect to this port.
+     *
+     * @return true if connection managers can connect to this port.
+     */
+    public boolean isConnectionManagerPort() {
+        return type == Type.connectionManager;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
     public static enum Type {
         client,
 
         server,
 
-        component;
+        component,
+
+        connectionManager
     }
 }

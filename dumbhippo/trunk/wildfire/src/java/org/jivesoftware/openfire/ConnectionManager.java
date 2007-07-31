@@ -9,11 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire;
+package org.jivesoftware.openfire;
 
+import org.jivesoftware.openfire.net.SocketReader;
+
+import java.io.IOException;
 import java.net.Socket;
-import java.util.Iterator;
-import org.xmlpull.v1.XmlPullParserException;
+import java.util.Collection;
 
 /**
  * Coordinates connections (accept, read, termination) on the server.
@@ -23,23 +25,51 @@ import org.xmlpull.v1.XmlPullParserException;
 public interface ConnectionManager {
 
     /**
+     * The default XMPP port for clients. This port can be used with secured
+     * and unsecured connections. Clients will initially connect using an unsecure
+     * connection and may secure it by using StartTLS.
+     */
+    final int DEFAULT_PORT = 5222;
+    /**
+     * The default legacy Jabber port for SSL traffic. This old method, and soon
+     * to be deprecated, uses encrypted connections as soon as they are created.
+     */
+    final int DEFAULT_SSL_PORT = 5223;
+    /**
+     * The default XMPP port for external components.
+     */
+    final int DEFAULT_COMPONENT_PORT = 5275;
+    /**
+     * The default XMPP port for server2server communication.
+     */
+    final int DEFAULT_SERVER_PORT = 5269;
+    /**
+     * The default XMPP port for connection multiplex.
+     */
+    final int DEFAULT_MULTIPLEX_PORT = 5262;
+
+    /**
      * Returns an array of the ports managed by this connection manager.
      *
      * @return an iterator of the ports managed by this connection manager
      *      (can be an empty but never null).
      */
-    public Iterator<ServerPort> getPorts();
+    public Collection<ServerPort> getPorts();
 
     /**
-     * Adds a socket to be managed by the connection manager.
+     * Creates a new socket reader for the new accepted socket to be managed
+     * by the connection manager.
      *
-     * @param socket the socket to add to this manager for management.
+     * @param socket the new accepted socket by this manager.
      * @param isSecure true if the connection is secure.
      * @param serverPort holds information about the port on which the server is listening for
      *        connections.
+     * @param useBlockingMode true means that the server will use a thread per connection.
+     * @return the created socket reader.
+     * @throws java.io.IOException when there is an error creating the socket reader.
      */
-    public void addSocket(Socket socket, boolean isSecure, ServerPort serverPort)
-            throws XmlPullParserException;
+    public SocketReader createSocketReader(Socket socket, boolean isSecure, ServerPort serverPort,
+            boolean useBlockingMode) throws IOException;
 
     /**
      * Sets if the port listener for unsecured clients will be available or not. When disabled
@@ -114,6 +144,24 @@ public interface ConnectionManager {
     public boolean isServerListenerEnabled();
 
     /**
+     * Sets if the port listener for connection managers will be available or not. When disabled
+     * there won't be a port listener active. Therefore, clients will need to connect directly
+     * to the server.
+     *
+     * @param enabled true if new connection managers will be able to connect to the server.
+     */
+    public void enableConnectionManagerListener(boolean enabled);
+
+    /**
+     * Returns true if the port listener for connection managers is available. When disabled
+     * there won't be a port listener active. Therefore, clients will need to connect directly
+     * to the server.
+     *
+     * @return true if the port listener for connection managers is available.
+     */
+    public boolean isConnectionManagerListenerEnabled();
+
+    /**
      * Sets the port to use for unsecured clients. Default port: 5222.
      *
      * @param port the port to use for unsecured clients.
@@ -170,4 +218,20 @@ public interface ConnectionManager {
      * @return the port to use for remote servers.
      */
     public int getServerListenerPort();
+
+    /**
+     * Sets the port to use for connection managers. This port is used for connection managers
+     * to connect to this server. Default port: 5262.
+     *
+     * @param port the port to use for connection managers.
+     */
+    public void setConnectionManagerListenerPort(int port);
+
+    /**
+     * Returns the port to use for remote servers. This port is used for connection managers
+     * to connect to this server. Default port: 5262.
+     *
+     * @return the port to use for connection managers.
+     */
+    public int getConnectionManagerListenerPort();
 }

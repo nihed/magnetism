@@ -73,7 +73,7 @@ import java.util.Stack;
  *
  * @author <a href="mailto:peter@apache.org">Peter Donald</a>
  * @author <a href="mailto:sylvain@apache.org">Sylvain Wallez</a>
- * @version CVS $Revision: 1747 $ $Date: 2005-08-04 17:36:36 -0400 (Thu, 04 Aug 2005) $
+ * @version CVS $Revision: 1747 $ $Date: 2005-08-04 16:36:36 -0500 (Thu, 04 Aug 2005) $
  */
 public class PatternFormatter implements Formatter {
     private final static int TYPE_TEXT = 1;

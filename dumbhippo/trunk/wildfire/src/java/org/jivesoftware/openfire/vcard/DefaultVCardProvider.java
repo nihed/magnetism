@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.vcard;
+package org.jivesoftware.openfire.vcard;
 
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
@@ -53,7 +53,9 @@ public class DefaultVCardProvider implements VCardProvider {
         super();
         // Initialize the pool of sax readers
         for (int i=0; i<10; i++) {
-            xmlReaders.add(new SAXReader());
+            SAXReader xmlReader = new SAXReader();
+            xmlReader.setEncoding("UTF-8");
+            xmlReaders.add(xmlReader);
         }
     }
 

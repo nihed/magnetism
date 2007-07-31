@@ -9,23 +9,23 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.muc.spi;
+package org.jivesoftware.openfire.muc.spi;
+
+import org.dom4j.Element;
+import org.jivesoftware.database.SequenceManager;
+import org.jivesoftware.util.*;
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.xmpp.packet.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.wildfire.muc.*;
-import org.jivesoftware.util.*;
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.xmpp.packet.*;
-import org.dom4j.Element;
 
 /**
  * Simple in-memory implementation of a chatroom. A MUCRoomImpl could represent a persistent room 
@@ -39,7 +39,7 @@ public class MUCRoomImpl implements MUCRoom {
     /**
      * The server hosting the room.
      */
-    private MultiUserChatServer server;
+    private MultiUserChatServerImpl server;
 
     /**
      * The occupants of the room accessible by the occupants nickname.
@@ -138,7 +138,7 @@ public class MUCRoomImpl implements MUCRoom {
     /**
      * Indicates if occupants are allowed to change the subject of the room. 
      */
-    private boolean canOccupantsChangeSubject = false;
+    private boolean canOccupantsChangeSubject = JiveGlobals.getBooleanProperty("muc.room.canOccupantsChangeSubject", false);
 
     /**
      * Maximum number of occupants that could be present in the room. If the limit's been reached
@@ -156,32 +156,32 @@ public class MUCRoomImpl implements MUCRoom {
      * A public room means that the room is searchable and visible. This means that the room can be
      * located using disco requests.
      */
-    private boolean publicRoom = true;
+    private boolean publicRoom = JiveGlobals.getBooleanProperty("muc.room.publicRoom", true);
 
     /**
      * Persistent rooms are saved to the database to make sure that rooms configurations can be
      * restored in case the server goes down.
      */
-    private boolean persistent = false;
+    private boolean persistent = JiveGlobals.getBooleanProperty("muc.room.persistent", false);
 
     /**
      * Moderated rooms enable only participants to speak. Users that join the room and aren't
      * participants can't speak (they are just visitors).
      */
-    private boolean moderated = false;
+    private boolean moderated = JiveGlobals.getBooleanProperty("muc.room.moderated", false);
 
     /**
      * A room is considered members-only if an invitation is required in order to enter the room.
      * Any user that is not a member of the room won't be able to join the room unless the user
      * decides to register with the room (thus becoming a member).
      */
-    private boolean membersOnly = false;
+    private boolean membersOnly = JiveGlobals.getBooleanProperty("muc.room.membersOnly", false);
 
     /**
      * Some rooms may restrict the occupants that are able to send invitations. Sending an 
      * invitation in a members-only room adds the invitee to the members list.
      */
-    private boolean canOccupantsInvite = false;
+    private boolean canOccupantsInvite = JiveGlobals.getBooleanProperty("muc.room.canOccupantsInvite", false);
 
     /**
      * The password that every occupant should provide in order to enter the room.
@@ -192,31 +192,31 @@ public class MUCRoomImpl implements MUCRoom {
      * Every presence packet can include the JID of every occupant unless the owner deactives this
      * configuration. 
      */
-    private boolean canAnyoneDiscoverJID = false;
+    private boolean canAnyoneDiscoverJID = JiveGlobals.getBooleanProperty("muc.room.canAnyoneDiscoverJID", true);
 
     /**
      * Enables the logging of the conversation. The conversation in the room will be saved to the
      * database.
      */
-    private boolean logEnabled = false;
+    private boolean logEnabled = JiveGlobals.getBooleanProperty("muc.room.logEnabled", false);
 
     /**
      * Enables the logging of the conversation. The conversation in the room will be saved to the
      * database.
      */
-    private boolean loginRestrictedToNickname = false;
+    private boolean loginRestrictedToNickname = JiveGlobals.getBooleanProperty("muc.room.loginRestrictedToNickname", false);
 
     /**
      * Enables the logging of the conversation. The conversation in the room will be saved to the
      * database.
      */
-    private boolean canChangeNickname = true;
+    private boolean canChangeNickname = JiveGlobals.getBooleanProperty("muc.room.canChangeNickname", true);
 
     /**
      * Enables the logging of the conversation. The conversation in the room will be saved to the
      * database.
      */
-    private boolean registrationEnabled = true;
+    private boolean registrationEnabled = JiveGlobals.getBooleanProperty("muc.room.registrationEnabled", true);
 
     /**
      * Internal component that handles IQ packets sent by the room owners.
@@ -270,7 +270,7 @@ public class MUCRoomImpl implements MUCRoom {
      * @param packetRouter the router for sending packets from the room.
      */
     MUCRoomImpl(MultiUserChatServer chatserver, String roomname, PacketRouter packetRouter) {
-        this.server = chatserver;
+        this.server = (MultiUserChatServerImpl) chatserver;
         this.name = roomname;
         this.naturalLanguageName = roomname;
         this.description = roomname;
@@ -361,7 +361,7 @@ public class MUCRoomImpl implements MUCRoom {
         throw new UserNotFoundException();
     }
 
-    public MUCRole getOccupantByFullJID(String jid) throws UserNotFoundException {
+    public MUCRole getOccupantByFullJID(JID jid) throws UserNotFoundException {
         MUCRole role = occupantsByFullJID.get(jid);
         if (role != null) {
             return role;
@@ -562,6 +562,8 @@ public class MUCRoomImpl implements MUCRoom {
         }
         // Update the date when the last occupant left the room
         setEmptyDate(null);
+        // Fire event that occupant joined the room
+        server.fireOccupantJoined(getRole().getRoleAddress(), user.getAddress(), joinRole.getNickname());
         return joinRole;
     }
 
@@ -620,6 +622,8 @@ public class MUCRoomImpl implements MUCRoom {
             if (occupants.isEmpty() && !isPersistent()) {
                 endTime = System.currentTimeMillis();
                 server.removeChatRoom(name);
+                // Fire event that the room has been destroyed
+                server.fireRoomDestroyed(getRole().getRoleAddress());
             }
             if (occupants.isEmpty()) {
                 // Update the date when the last occupant left the room
@@ -634,6 +638,16 @@ public class MUCRoomImpl implements MUCRoom {
             Presence presence = leaveRole.getPresence().createCopy();
             presence.setType(Presence.Type.unavailable);
             presence.setStatus(null);
+            // Change (or add) presence information about roles and affiliations
+            Element childElement = presence.getChildElement("x", "http://jabber.org/protocol/muc#user");
+            if (childElement == null) {
+                childElement = presence.addChildElement("x", "http://jabber.org/protocol/muc#user");
+            }
+            Element item = childElement.element("item");
+            if (item == null) {
+                item = childElement.addElement("item");
+            }
+            item.addAttribute("role", "none");
             // Inform the leaving user that he/she has left the room
             leaveRole.send(presence);
             // Inform the rest of the room occupants that the user has left the room
@@ -664,11 +678,13 @@ public class MUCRoomImpl implements MUCRoom {
                 occupantsByBareJID.remove(user.getAddress().toBareJID());
             }
         }
-        occupantsByFullJID.remove(user.getAddress().toString());
+        occupantsByFullJID.remove(user.getAddress());
+        // Fire event that occupant left the room
+        server.fireOccupantLeft(getRole().getRoleAddress(), user.getAddress());
     }
 
     public void destroyRoom(String alternateJID, String reason) {
-        MUCRole leaveRole = null;
+        MUCRole leaveRole;
         Collection<MUCRole> removedRoles = new ArrayList<MUCRole>();
         lock.writeLock().lock();
         try {
@@ -723,6 +739,8 @@ public class MUCRoomImpl implements MUCRoom {
         }
         // Remove the room from the DB if the room was persistent
         MUCPersistenceManager.deleteFromDB(this);
+        // Fire event that the room has been destroyed
+        server.fireRoomDestroyed(getRole().getRoleAddress());
     }
 
     public Presence createPresence(Presence.Type presenceType) throws UnauthorizedException {
@@ -749,6 +767,9 @@ public class MUCRoomImpl implements MUCRoom {
         // Send the message to all occupants
         message.setFrom(senderRole.getRoleAddress());
         send(message);
+        // Fire event that message was receibed by the room
+        server.fireMessageReceived(getRole().getRoleAddress(), senderRole.getChatUser().getAddress(),
+                senderRole.getNickname(), message);
     }
 
     public void sendPrivatePacket(Packet packet, MUCRole senderRole) throws NotFoundException {
@@ -834,13 +855,16 @@ public class MUCRoomImpl implements MUCRoom {
 
     private void broadcast(Message message) {
         for (MUCRole occupant : occupants.values()) {
-            occupant.send(message);
+            // Do not send broadcast messages to deaf occupants
+            if (!occupant.isVoiceOnly()) {
+                occupant.send(message);
+            }
         }
         if (isLogEnabled()) {
             MUCRole senderRole = null;
-            JID senderAddress = null;
-            if (message.getTo() != null && message.getTo().getResource() != null) {
-                senderRole = occupants.get(message.getTo().getResource());
+            JID senderAddress;
+            if (message.getFrom() != null && message.getFrom().getResource() != null) {
+                senderRole = occupants.get(message.getFrom().getResource().toLowerCase());
             }
             if (senderRole == null) {
                 // The room itself is sending the message
@@ -853,6 +877,7 @@ public class MUCRoomImpl implements MUCRoom {
             // Log the conversation
             server.logConversation(this, message, senderAddress);
         }
+        server.messageBroadcastedTo(occupants.size());
     }
 
     /**
@@ -898,6 +923,10 @@ public class MUCRoomImpl implements MUCRoom {
 
         public MUCUser getChatUser() {
             return null;
+        }
+
+        public boolean isVoiceOnly() {
+            return false;
         }
 
         public MUCRoom getChatRoom() {
@@ -988,6 +1017,11 @@ public class MUCRoomImpl implements MUCRoom {
         if (MUCRole.Affiliation.owner != sendRole.getAffiliation()) {
             throw new ForbiddenException();
         }
+        // Check if user is already an owner
+        if (owners.contains(bareJID)) {
+            // Do nothing
+            return Collections.emptyList();
+        }
         owners.add(bareJID);
         // Remove the user from other affiliation lists
         if (removeAdmin(bareJID)) {
@@ -1030,6 +1064,11 @@ public class MUCRoomImpl implements MUCRoom {
         // Check that the room always has an owner
         if (owners.contains(bareJID) && owners.size() == 1) {
             throw new ConflictException();
+        }
+        // Check if user is already an admin
+        if (admins.contains(bareJID)) {
+            // Do nothing
+            return Collections.emptyList();
         }
         admins.add(bareJID);
         // Remove the user from other affiliation lists
@@ -1139,6 +1178,11 @@ public class MUCRoomImpl implements MUCRoom {
         // Check that the room always has an owner
         if (owners.contains(bareJID) && owners.size() == 1) {
             throw new ConflictException();
+        }
+        // Check if user is already an outcast
+        if (outcasts.contains(bareJID)) {
+            // Do nothing
+            return Collections.emptyList();
         }
         // Update the presence with the new affiliation and inform all occupants
         JID actorJID = null;
@@ -1492,7 +1536,7 @@ public class MUCRoomImpl implements MUCRoom {
     private void kickPresence(Presence kickPresence, JID actorJID) {
         MUCRole kickedRole;
         // Get the role to kick
-        kickedRole = occupants.get(kickPresence.getFrom().getResource());
+        kickedRole = occupants.get(kickPresence.getFrom().getResource().toLowerCase());
         if (kickedRole != null) {
             kickPresence = kickPresence.createCopy();
             // Add the actor's JID that kicked this user from the room

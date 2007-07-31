@@ -9,13 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.transport;
+package org.jivesoftware.openfire.transport;
 
-import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;

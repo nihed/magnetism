@@ -1,6 +1,6 @@
 <%--
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
@@ -8,15 +8,15 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.wildfire.*,
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.openfire.PresenceManager,
+                 org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.session.ClientSession,
+                 org.jivesoftware.openfire.user.User,
+                 org.jivesoftware.openfire.user.UserManager,
                  java.text.NumberFormat,
-                 org.jivesoftware.admin.*,
-                 org.jivesoftware.wildfire.user.User,
-                 org.xmpp.packet.JID,
-                 org.xmpp.packet.Presence,
-                 java.net.URLEncoder"
+                 java.util.Collection"
     errorPage="error.jsp"
 %>
 
@@ -26,7 +26,7 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
-<%  // Get parameters
+<% // Get parameters
     String jid = ParamUtils.getParameter(request, "jid");
 
     // Handle a "go back" click:
@@ -38,8 +38,9 @@
     // Get the session & address objects
     SessionManager sessionManager = webManager.getSessionManager();
     JID address = new JID(jid);
-    ClientSession currentSess = sessionManager.getSession(address);
-    boolean isAnonymous = address.getNode() == null || "".equals(address.getNode());
+    org.jivesoftware.openfire.session.ClientSession currentSess = sessionManager.getSession(address);
+    boolean isAnonymous = webManager.getXMPPServer().isLocal(address) &&
+            !UserManager.getInstance().isRegisteredUser(address.getNode());
 
     // Get a presence manager
     PresenceManager presenceManager = webManager.getPresenceManager();
@@ -76,7 +77,7 @@
 
 <p>
 <fmt:message key="session.details.info">
-    <fmt:param value="<%= "<b>"+address.toString()+"</b>" %>" />
+    <fmt:param value="<%= "<b>" + StringUtils.escapeForXML(address.toString()) + "</b>" %>" />
     <fmt:param value="<%= address.getNode() == null ? "" : "<b>"+address.getNode()+"</b>" %>" />
 </fmt:message>
 
@@ -97,7 +98,7 @@
             <fmt:message key="session.details.session_id" />
         </td>
         <td>
-            <%= address.toString() %>
+            <%= StringUtils.escapeForXML(address.toString()) %>
         </td>
     </tr>
     <tr>
@@ -106,14 +107,14 @@
         </td>
         <td>
             <%  String n = address.getNode(); %>
-            <%  if (n == null || "".equals(n)) { %>
+            <%  if (isAnonymous) { %>
 
-                <i> <fmt:message key="session.details.anonymous" /> </i> - <%= address.getResource()==null?"":address.getResource() %>
+                <i> <fmt:message key="session.details.anonymous" /> </i> - <%= address.getResource()==null?"":StringUtils.escapeForXML(address.getResource()) %>
 
             <%  } else { %>
 
-                <a href="user-properties.jsp?username=<%= n %>"><%= n %></a>
-                - <%= address.getResource()==null?"":address.getResource() %>
+                <a href="user-properties.jsp?username=<%= URLEncoder.encode(n, "UTF-8") %>"><%= JID.unescapeNode(n) %></a>
+                - <%= address.getResource()==null?"":StringUtils.escapeForXML(address.getResource()) %>
 
             <%  } %>
         </td>
@@ -167,7 +168,7 @@
                 Presence.Show show = currentSess.getPresence().getShow();
                 String statusTxt = currentSess.getPresence().getStatus();
                 if (statusTxt != null) {
-                    statusTxt = " -- " + statusTxt;
+                    statusTxt = " -- " + StringUtils.escapeForXML(statusTxt);
                 }
                 else {
                     statusTxt = "";
@@ -175,33 +176,33 @@
                 if (show == Presence.Show.away) {
             %>
 
-                <img src="images/im_away.gif" width="16" height="16" border="0" title="Away">
+                <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
                 <fmt:message key="session.details.away" /> <%= statusTxt %>
 
             <%
                 } else if (show == Presence.Show.chat) {
             %>
-                <img src="images/im_free_chat.gif" width="16" height="16" border="0" title="Available to Chat">
+                <img src="images/im_free_chat.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
                 <fmt:message key="session.details.chat_available" /> <%= statusTxt %>
             <%
                 } else if (show == Presence.Show.dnd) {
             %>
 
-                <img src="images/im_dnd.gif" width="16" height="16" border="0" title="Do not Disturb">
+                <img src="images/im_dnd.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
                 <fmt:message key="session.details.not_disturb" /> <%= statusTxt %>
 
             <%
                 } else if (show == null) {
             %>
 
-                <img src="images/im_available.gif" width="16" height="16" border="0" title="Online">
+                <img src="images/im_available.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.online" />" alt="<fmt:message key="session.details.online" />">
                 <fmt:message key="session.details.online" /> <%= statusTxt %>
 
             <%
                 } else if (show == Presence.Show.xa) {
             %>
 
-                <img src="images/im_away.gif" width="16" height="16" border="0" title="Extended Away">
+                <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
                 <fmt:message key="session.details.extended" /> <%= statusTxt %>
 
             <%
@@ -213,6 +214,14 @@
             <%
                 }
             %>
+        </td>
+    </tr>
+    <tr>
+        <td class="c1">
+            <fmt:message key="session.details.priority" />
+        </td>
+        <td>
+            <%= currentSess.getPresence().getPriority() %>
         </td>
     </tr>
     <tr>
@@ -267,8 +276,9 @@
         <th>&nbsp;</th>
         <th><fmt:message key="session.details.name" /></th>
         <th><fmt:message key="session.details.resource" /></th>
-        <th><fmt:message key="session.details.status" /></th>
+        <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
         <th nowrap colspan="2"><fmt:message key="session.details.if_presence" /></th>
+        <th><fmt:message key="session.details.priority" /></th>
         <th nowrap><fmt:message key="session.details.clientip" /></th>
         <th nowrap><fmt:message key="session.details.close_connect" /></th>
     </tr>
@@ -312,7 +322,7 @@
 <br>
 
 <form action="session-details.jsp">
-<input type="hidden" name="jid" value="<%= jid %>">
+<input type="hidden" name="jid" value="<%= URLEncoder.encode(jid, "UTF-8") %>">
 <center>
 <%--<%  if (!isAnonymous && presenceManager.isAvailable(user)) { %>--%>
 <%----%>

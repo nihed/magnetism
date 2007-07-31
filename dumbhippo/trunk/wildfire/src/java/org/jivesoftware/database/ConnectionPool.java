@@ -1,9 +1,9 @@
 /**
  * $RCSfile$
- * $Revision: 3189 $
- * $Date: 2005-12-11 22:38:08 -0500 (Sun, 11 Dec 2005) $
+ * $Revision: 6674 $
+ * $Date: 2007-01-11 16:21:34 -0600 (Thu, 11 Jan 2007) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -12,12 +12,13 @@
 package org.jivesoftware.database;
 
 import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 
 import java.io.IOException;
 import java.sql.*;
-import java.util.*;
+import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Database connection pool.
@@ -44,6 +45,8 @@ public class ConnectionPool implements Runnable {
     private ConnectionWrapper[] wrappers;
     private Object waitLock = new Object();
     private Object conCountLock = new Object();
+
+    private AtomicInteger used = new AtomicInteger(0);
 
     public ConnectionPool(String driver, String serverURL, String username,
                           String password, int minCon, int maxCon,
@@ -134,29 +137,29 @@ public class ConnectionPool implements Runnable {
 
         // Check to see if there are any connections available. If not, then enter wait-based
         // retry loop
-        ConnectionWrapper con = getCon();
+        ConnectionWrapper wrapper = getCon();
 
-        if (con != null) {
-            synchronized (con) {
-                con.checkedout = true;
-                con.lockTime = System.currentTimeMillis();
+        if (wrapper != null) {
+            synchronized (wrapper) {
+                wrapper.checkedout = true;
+                wrapper.lockTime = System.currentTimeMillis();
             }
-            return con;
+            return wrapper;
         }
         else {
             synchronized (waitLock) {
                 try {
                     waitingForCon++;
                     while (true) {
-                        con = getCon();
+                        wrapper = getCon();
 
-                        if (con != null) {
+                        if (wrapper != null) {
                             --waitingForCon;
-                            synchronized (con) {
-                                con.checkedout = true;
-                                con.lockTime = System.currentTimeMillis();
+                            synchronized (wrapper) {
+                                wrapper.checkedout = true;
+                                wrapper.lockTime = System.currentTimeMillis();
                             }
-                            return con;
+                            return wrapper;
                         }
                         else {
                             waitLock.wait();
@@ -175,6 +178,7 @@ public class ConnectionPool implements Runnable {
     }
 
     public void freeConnection() {
+        used.decrementAndGet();
         synchronized (waitLock) {
             if (waitingForCon > 0) {
                 waitLock.notifyAll();
@@ -395,6 +399,7 @@ public class ConnectionPool implements Runnable {
                         wrapper.exception = new Exception();
                         wrapper.hasLoggedException = false;
                     }
+                    used.incrementAndGet();
 
                     return wrapper;
                 }
@@ -409,6 +414,7 @@ public class ConnectionPool implements Runnable {
 
             ConnectionWrapper con = createCon(conCount);
             conCount++;
+            used.incrementAndGet();
             return con;
         }
     }
@@ -483,4 +489,7 @@ public class ConnectionPool implements Runnable {
         }
     }
 
+    public String toString() {
+        return minCon + "," + maxCon + "," + conCount + "," + used.intValue(); 
+    }
 }
