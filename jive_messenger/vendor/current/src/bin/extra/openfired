@@ -1,17 +1,17 @@
 #!/bin/sh
 
-# wildfired
+# openfired	stops and starts the openfire XMPP service
 #
-# chkconfig: 2345 20 80
-# description: Used to start and stop the wildfire XMPP server
+# chkconfig: 2345 99 1
+# description: Used to start and stop the openfire XMPP server
 # 
-# Script used to start wildfire as daemon
+# Script used to start openfire as daemon
 # The script has currently been tested on Redhat Fedora Core 3,
 # but should theoretically work on most UNIX like systems
 #
-# before running this script make sure $WILDFIRE_HOME/bin/wildfire is
-# executable by the user you want to run wildfire as
-# (chmod +x $WILDFIRE_HOME/bin/wildfire)
+# before running this script make sure $OPENFIRE_HOME/bin/openfire is
+# executable by the user you want to run openfire as
+# (chmod +x $OPENFIRE_HOME/bin/openfire)
 #
 # This script should be copied into /etc/init.d and linked into
 # your default runlevel directory.
@@ -20,28 +20,28 @@
 #
 # Link to the directory like follows
 # cd /etc/rc<num>.d
-# ln -s ../init.d/wildfired $90wildfired
+# ln -s ../init.d/openfired $90openfired
 #
 
-# Set this to tell this script where wildfire lives
-# If this is not set the script will look for /opt/jive_wildfire, then /usr/local/jive_wildfire
-#export WILDFIRE_HOME=
+# Set this to tell this script where openfire lives
+# If this is not set the script will look for /opt/openfire, then /usr/local/openfire
+#export OPENFIRE_HOME=
 
 # If there is a different user you would like to run this script as,
 # change the following line
-export WILDFIRE_USER=jive
+export OPENFIRE_USER=jive
 
 # -----------------------------------------------------------------
 
-# If a wildfire home variable has not been specified, try to determine it
-if [ ! $WILDFIRE_HOME ]; then
-	if [ -d "/opt/wildfire" ]; then
-		WILDFIRE_HOME="/opt/wildfire"
-	elif [ -d "/usr/local/wildfire" ]; then
-		WILDFIRE_HOME="/usr/local/wildfire"
+# If a openfire home variable has not been specified, try to determine it
+if [ ! $OPENFIRE_HOME ]; then
+	if [ -d "/opt/openfire" ]; then
+		OPENFIRE_HOME="/opt/openfire"
+	elif [ -d "/usr/local/openfire" ]; then
+		OPENFIRE_HOME="/usr/local/openfire"
 	else
-		echo "Could not find Wildfire installation under /opt or /usr/local"
-		echo "Please specify the Wildfire installation location in environment variable WILDFIRE_HOME"
+		echo "Could not find Openfire installation under /opt or /usr/local"
+		echo "Please specify the Openfire installation location in environment variable OPENFIRE_HOME"
 		exit 1
 	fi
 fi
@@ -49,9 +49,10 @@ fi
 
 function execCommand() {
 	OLD_PWD=`pwd`
-	cd $WILDFIRE_HOME/bin
-	CMD="./wildfire $1"
-	su -c "$CMD" $WILDFIRE_USER &
+	cd $OPENFIRE_HOME/bin
+	CMD="./openfire.sh $1"
+	su -c "$CMD" $OPENFIRE_USER &
+	sleep 1 # allows prompt to return
 	cd $OLD_PWD
 }
 
@@ -72,8 +73,23 @@ case "$1" in
 	stop)
 		stop
 		;;
+	restart)
+		stop
+		sleep 10 # since stop is backgrounded
+		start
+		;;
+	status) 
+		retval=$(pgrep -u $OPENFIRE_USER -f $OPENFIRE_HOME/bin/openfire > /dev/null ; echo $?)
+		if [ "$retval" = "0" ] ; then 
+			echo "openfire is running"
+			exit 0
+		else 
+			echo "openfire is not running"
+			exit 0
+		fi
+		;;
 	*)
-		echo "Usage $0 {start|stop}"
+		echo "Usage $0 {start|stop|restart|status}"
 		exit 1
 esac
 

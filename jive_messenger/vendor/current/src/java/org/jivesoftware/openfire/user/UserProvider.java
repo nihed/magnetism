@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.user;
+package org.jivesoftware.openfire.user;
 
-import java.util.Date;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Set;
 
 /**
@@ -74,6 +74,13 @@ public interface UserProvider {
     public Collection<User> getUsers();
 
     /**
+     * Returns an unmodifiable Collection of usernames of all users in the system.
+     *
+     * @return an unmodifiable Collection of all usernames in the system.
+     */
+    public Collection<String> getUsernames();
+
+    /**
      * Returns an unmodifiable Collections of users in the system within the
      * specified range. The {@link UserCollection} class can be used to assist
      * in the implementation of this method. It takes a String [] of usernames
@@ -89,32 +96,6 @@ public interface UserProvider {
      * @return an unmodifiable Collection of users within the specified range.
      */
     public Collection<User> getUsers(int startIndex, int numResults);
-
-    /**
-     * Returns the user's password. This method should throw an UnsupportedOperationException
-     * if this operation is not supported by the backend user store.
-     *
-     * @param username the username of the user.
-     * @return the user's password.
-     * @throws UserNotFoundException if the given user could not be loaded.
-     * @throws UnsupportedOperationException if the provider does not
-     *      support the operation (this is an optional operation).
-     */
-    public String getPassword(String username) throws UserNotFoundException,
-            UnsupportedOperationException;
-
-    /**
-     * Sets the users's password. This method should throw an UnsupportedOperationException
-     * if this operation is not supported by the backend user store.
-     *
-     * @param username the username of the user.
-     * @param password the new plaintext password for the user.
-     * @throws UserNotFoundException if the given user could not be loaded.
-     * @throws UnsupportedOperationException if the provider does not
-     *      support the operation (this is an optional operation).
-     */
-    public void setPassword(String username, String password)
-            throws UserNotFoundException, UnsupportedOperationException;
 
     /**
      * Sets the user's name. This method should throw an UnsupportedOperationException
@@ -211,9 +192,9 @@ public interface UserProvider {
      *
      * @param fields the fields to search on.
      * @param query the query string.
+     * @param startIndex the starting index in the search result to return.
+     * @param numResults the number of users to return in the search result.
      * @return a Collection of users that match the search.
-     * @return startIndex the starting index in the search result to return.
-     * @return numResults the number of users to return in the search result.
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation (this is an optional operation).
      */
@@ -227,14 +208,4 @@ public interface UserProvider {
      * @return true if the user provider is read-only.
      */
     public boolean isReadOnly();
-
-    /**
-     * Returns true if this UserProvider is able to retrieve user passwords from
-     * the backend user store. If this operation is not supported then {@link #getPassword(String)}
-     * will throw an {@link UnsupportedOperationException} if invoked.
-     *
-     * @return true if this UserProvider is able to retrieve user passwords from the
-     *         backend user store.
-     */
-    public boolean supportsPasswordRetrieval();
 }

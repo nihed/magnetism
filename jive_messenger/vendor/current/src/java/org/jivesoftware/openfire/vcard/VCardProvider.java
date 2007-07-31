@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.vcard;
+package org.jivesoftware.openfire.vcard;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.AlreadyExistsException;

@@ -9,23 +9,25 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.handler;
+package org.jivesoftware.openfire.handler;
 
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.roster.Roster;
-import org.jivesoftware.wildfire.roster.RosterItem;
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.util.CacheManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.roster.Roster;
+import org.jivesoftware.openfire.roster.RosterItem;
+import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -76,24 +78,39 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
 
     private RoutingTable routingTable;
     private XMPPServer localServer;
+    private String serverName;
     private PacketDeliverer deliverer;
     private PresenceManager presenceManager;
+    private RosterManager rosterManager;
+    private UserManager userManager;
 
     public PresenceSubscribeHandler() {
         super("Presence subscription handler");
     }
 
     public void process(Packet xmppPacket) throws PacketException {
-        Presence presence = (Presence)xmppPacket;
+        Presence presence = (Presence) xmppPacket;
         try {
             JID senderJID = presence.getFrom();
             JID recipientJID = presence.getTo();
             Presence.Type type = presence.getType();
+
+            // Reject presence subscription requests sent to the local server itself.
+            if (recipientJID == null || recipientJID.toString().equals(serverName)) {
+                if (type == Presence.Type.subscribe) {
+                    Presence reply = new Presence();
+                    reply.setTo(senderJID);
+                    reply.setFrom(recipientJID);
+                    reply.setType(Presence.Type.unsubscribed);
+                    deliverer.deliver(reply);
+                }
+                return;
+            }
+
             try {
                 Roster senderRoster = getRoster(senderJID);
-                boolean senderSubChanged = false;
                 if (senderRoster != null) {
-                    senderSubChanged = manageSub(recipientJID, true, type, senderRoster);
+                    manageSub(recipientJID, true, type, senderRoster);
                 }
                 Roster recipientRoster = getRoster(recipientJID);
                 boolean recipientSubChanged = false;
@@ -134,12 +151,14 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                     // a module, the module will be able to handle the packet. If the handler is a
                     // Session the packet will be routed to the client. If a route cannot be found
                     // then the packet will be delivered based on its recipient and sender.
-                    ChannelHandler handler = routingTable.getRoute(recipientJID);
-                    if (handler != null) {
-                        Presence presenteToSend = presence.createCopy();
-                        // Stamp the presence with the user's bare JID as the 'from' address
-                        presenteToSend.setFrom(senderJID.toBareJID());
-                        handler.process(presenteToSend);
+                    List<ChannelHandler> handlers = routingTable.getRoutes(recipientJID);
+                    if (!handlers.isEmpty()) {
+                        for (ChannelHandler handler : handlers) {
+                            Presence presenteToSend = presence.createCopy();
+                            // Stamp the presence with the user's bare JID as the 'from' address
+                            presenteToSend.setFrom(senderJID.toBareJID());
+                            handler.process(presenteToSend);
+                        }
                     }
                     else {
                         deliverer.deliver(presence.createCopy());
@@ -148,7 +167,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                     if (type == Presence.Type.subscribed) {
                         // Send the presence of the local user to the remote user. The remote user
                         // subscribed to the presence of the local user and the local user accepted
-                        presenceManager.probePresence(recipientJID, senderJID);
+                        JID prober = localServer.isLocal(recipientJID) ?
+                                new JID(recipientJID.toBareJID()) : recipientJID;
+                        presenceManager.probePresence(prober, senderJID);
                     }
                 }
 
@@ -179,22 +200,15 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * @return The roster or null if the address is not managed on the server
      */
     private Roster getRoster(JID address) {
-        String username = null;
+        String username;
         Roster roster = null;
-        if (localServer.isLocal(address) && address.getNode() != null &&
-                !"".equals(address.getNode())) {
+        if (localServer.isLocal(address) && userManager.isRegisteredUser(address.getNode())) {
             username = address.getNode();
-            // Check for a cached roster:
-            roster = (Roster)CacheManager.getCache("username2roster").get(username);
-            if (roster == null) {
-                synchronized(address.toString().intern()) {
-                    roster = (Roster)CacheManager.getCache("username2roster").get(username);
-                    if (roster == null) {
-                        // Not in cache so load a new one:
-                        roster = new Roster(username);
-                        CacheManager.getCache("username2roster").put(username, roster);
-                    }
-                }
+            try {
+                roster = rosterManager.getRoster(username);
+            }
+            catch (UserNotFoundException e) {
+                // Do nothing
             }
         }
         return roster;
@@ -214,20 +228,24 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             throws UserAlreadyExistsException, SharedGroupException
     {
         RosterItem item = null;
-        RosterItem.AskType oldAsk = null;
+        RosterItem.AskType oldAsk;
         RosterItem.SubType oldSub = null;
-        RosterItem.RecvType oldRecv = null;
+        RosterItem.RecvType oldRecv;
+        boolean newItem = false;
         try {
             if (roster.isRosterItem(target)) {
                 item = roster.getRosterItem(target);
             }
             else {
-                if (Presence.Type.unsubscribed == type) {
+                if (Presence.Type.unsubscribed == type || Presence.Type.unsubscribe == type ||
+                        Presence.Type.subscribed == type) {
                     // Do not create a roster item when processing a confirmation of
-                    // an unsubscription
+                    // an unsubscription or receiving an unsubscription request or a
+                    // subscription approval from an unknown user
                     return false;
                 }
-                item = roster.createRosterItem(target);
+                item = roster.createRosterItem(target, false, true);
+                newItem = true;
             }
             // Get a snapshot of the item state
             oldAsk = item.getAskStatus();
@@ -239,6 +257,13 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
             if (oldAsk != item.getAskStatus() || oldSub != item.getSubStatus() ||
                     oldRecv != item.getRecvStatus()) {
                 roster.updateRosterItem(item);
+            }
+            else if (newItem) {
+                // Do not push items with a state of "None + Pending In"
+                if (item.getSubStatus() != RosterItem.SUB_NONE ||
+                        item.getRecvStatus() != RosterItem.RECV_SUBSCRIBE) {
+                    roster.broadcast(item, false);
+                }
             }
         }
         catch (UserNotFoundException e) {
@@ -258,16 +283,17 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * <li>'new state' table: the changed item values</li>
      * </ul>
      */
-    private static Hashtable stateTable = new Hashtable();
+    private static Hashtable<RosterItem.SubType, Map<String, Map<Presence.Type, Change>>> stateTable =
+            new Hashtable<RosterItem.SubType, Map<String, Map<Presence.Type, Change>>>();
 
     static {
-        Hashtable subrTable;
-        Hashtable subsTable;
-        Hashtable sr;
+        Hashtable<Presence.Type, Change> subrTable;
+        Hashtable<Presence.Type, Change> subsTable;
+        Hashtable<String,Map<Presence.Type, Change>> sr;
 
-        sr = new Hashtable();
-        subrTable = new Hashtable();
-        subsTable = new Hashtable();
+        sr = new Hashtable<String,Map<Presence.Type, Change>>();
+        subrTable = new Hashtable<Presence.Type, Change>();
+        subsTable = new Hashtable<Presence.Type, Change>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_NONE, sr);
@@ -296,9 +322,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         // Valid response if item requested subscription and we're denying request
         subsTable.put(Presence.Type.unsubscribed, new Change(RosterItem.RECV_NONE, null, null));
 
-        sr = new Hashtable();
-        subrTable = new Hashtable();
-        subsTable = new Hashtable();
+        sr = new Hashtable<String,Map<Presence.Type, Change>>();
+        subrTable = new Hashtable<Presence.Type, Change>();
+        subsTable = new Hashtable<Presence.Type, Change>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_FROM, sr);
@@ -331,9 +357,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         // Valid response if owner requested subscription and item is denying request
         subrTable.put(Presence.Type.unsubscribed, new Change(null, null, RosterItem.ASK_NONE));
 
-        sr = new Hashtable();
-        subrTable = new Hashtable();
-        subsTable = new Hashtable();
+        sr = new Hashtable<String,Map<Presence.Type, Change>>();
+        subrTable = new Hashtable<Presence.Type, Change>();
+        subsTable = new Hashtable<Presence.Type, Change>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_TO, sr);
@@ -363,9 +389,9 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         // Setting subscription to none
         subrTable.put(Presence.Type.unsubscribed, new Change(null, RosterItem.SUB_NONE, RosterItem.ASK_NONE));
 
-        sr = new Hashtable();
-        subrTable = new Hashtable();
-        subsTable = new Hashtable();
+        sr = new Hashtable<String,Map<Presence.Type, Change>>();
+        subrTable = new Hashtable<Presence.Type, Change>();
+        subsTable = new Hashtable<Presence.Type, Change>();
         sr.put("recv", subrTable);
         sr.put("send", subsTable);
         stateTable.put(RosterItem.SUB_BOTH, sr);
@@ -430,16 +456,14 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
      * @param isSending True if the roster owner of the item is sending the new state change request
      */
     private static void updateState(RosterItem item, Presence.Type action, boolean isSending) {
-        Map srTable = (Map)stateTable.get(item.getSubStatus());
-        Map changeTable = (Map)srTable.get(isSending ? "send" : "recv");
-        Change change = (Change)changeTable.get(action);
-        boolean modified = false;
+        Map<String, Map<Presence.Type, Change>> srTable = stateTable.get(item.getSubStatus());
+        Map<Presence.Type, Change> changeTable = srTable.get(isSending ? "send" : "recv");
+        Change change = changeTable.get(action);
         if (change.newAsk != null && change.newAsk != item.getAskStatus()) {
             item.setAskStatus(change.newAsk);
         }
         if (change.newSub != null && change.newSub != item.getSubStatus()) {
             item.setSubStatus(change.newSub);
-            modified = true;
         }
         if (change.newRecv != null && change.newRecv != item.getRecvStatus()) {
             item.setRecvStatus(change.newRecv);
@@ -449,8 +473,11 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
     public void initialize(XMPPServer server) {
         super.initialize(server);
         localServer = server;
+        serverName = server.getServerInfo().getName();
         routingTable = server.getRoutingTable();
         deliverer = server.getPacketDeliverer();
         presenceManager = server.getPresenceManager();
+        rosterManager = server.getRosterManager();
+        userManager = server.getUserManager();
     }
 }

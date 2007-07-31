@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1766 $
- * $Date: 2005-08-11 01:38:20 -0400 (Thu, 11 Aug 2005) $
+ * $Revision: 6207 $
+ * $Date: 2006-11-21 19:36:11 -0600 (Tue, 21 Nov 2006) $
  *
  * Copyright (C) 2003-2005 Jive Software. All rights reserved.
  *
@@ -14,9 +14,6 @@ package org.jivesoftware.util;
 import java.security.Security;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.ArrayBlockingQueue;
 
 import javax.mail.Address;
 import javax.mail.*;
@@ -29,25 +26,22 @@ import javax.mail.internet.*;
  * or to add messages into a queue to be sent. Using these methods, you can
  * send emails in the following couple of ways:<p>
  * <pre>
- *   EmailTask emailTask = new EmailTask();
- *   emailTask.addMessage(
+ *   EmailService.sendMessage(
  *     "Joe Bloe", "jbloe@place.org",
  *     "Jane Doe", "jane@doe.com",
  *     "Hello...",
- *     "This is the body of the email..."
+ *     "This is the body of the email...",
+ *     null
  *   );
- *   emailTask.run();
  * </pre>
  * or
  * <pre>
- *   EmailTask emailTask = new EmailTask();
- *   Message message = emailTask.createMimeMessage();
+ *   Message message = EmailService.createMimeMessage();
  *   // call setters on the message object
  *   // .
  *   // .
  *   // .
- *   emailTask.sendMessage(message);
- *   emailTask.run();
+ *   emailService.sendMessage(message);
  * </pre><p>
  *
  * This class is configured with a set of Jive properties:<ul>
@@ -82,16 +76,12 @@ public class EmailService {
     private boolean sslEnabled;
     private boolean debugEnabled;
 
-    private ThreadPoolExecutor executor;
     private Session session = null;
 
     /**
      * Constructs a new EmailService instance.
      */
     private EmailService() {
-        executor = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60,
-            TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(5));
-
         host = JiveGlobals.getProperty("mail.smtp.host", "localhost");
         port = JiveGlobals.getIntProperty("mail.smtp.port", 25);
         username = JiveGlobals.getProperty("mail.smtp.username");
@@ -105,7 +95,7 @@ public class EmailService {
      * object returned and set desired message properties. When done, pass the
      * object to the addMessage(Message) method.
      *
-     * @return A new JavaMail message.
+     * @return a new JavaMail message.
      */
     public MimeMessage createMimeMessage() {
         if (session == null) {
@@ -140,7 +130,7 @@ public class EmailService {
         if (messages.size() == 0) {
             return;
         }
-        executor.execute(new EmailTask(messages));
+        TaskEngine.getInstance().submit(new EmailTask(messages));
     }
 
     /**
@@ -182,8 +172,8 @@ public class EmailService {
             try {
                 String encoding = MimeUtility.mimeCharset("iso-8859-1");
                 MimeMessage message = createMimeMessage();
-                Address to   = null;
-                Address from = null;
+                Address to;
+                Address from;
 
                 if (toName != null) {
                     to = new InternetAddress(toEmail, toName, encoding);
@@ -257,11 +247,11 @@ public class EmailService {
 
     /**
      * Sends a collection of email messages. This method differs from
-     * {@link #sendMessages(Collection<MimeMessage>)} in that messages are sent
+     * {@link #sendMessages(Collection)} in that messages are sent
      * before this method returns rather than queueing the messages to be sent later.
      *
-     * @param messages
-     * @throws MessagingException
+     * @param messages the messages to send.
+     * @throws MessagingException if an error occurs.
      */
     public void sendMessagesImmediately(Collection<MimeMessage> messages)
             throws MessagingException

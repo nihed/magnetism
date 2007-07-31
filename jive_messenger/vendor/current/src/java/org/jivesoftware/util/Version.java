@@ -1,17 +1,17 @@
 /**
- * $RCSfile$
- * $Revision: 3195 $
- * $Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+ * $Revision: 7655 $
+ * $Date: 2007-03-22 15:50:33 -0500 (Thu, 22 Mar 2007) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2006 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
+
 package org.jivesoftware.util;
 
 /**
- * Holds version information for Wildfire.
+ * Holds version information for Openfire.
  *
  * @author Iain Shigeoka
  */
@@ -81,7 +81,7 @@ public class Version {
     }
 
     /**
-     * Returns the version number of this instance of Wildfire as a
+     * Returns the version number of this instance of Openfire as a
      * String (ie major.minor.revision).
      *
      * @return The version as a string
@@ -142,6 +142,16 @@ public class Version {
      * are indicated by type safe enum constants.
      */
     public enum ReleaseStatus {
-        Release, Release_Candidate, Beta, Alpha;
+        Release(""), Release_Candidate("RC"), Beta("Beta"), Alpha("Alpha");
+
+        private String status;
+
+        private ReleaseStatus(String status) {
+            this.status = status;
+        }
+
+        public String toString() {
+            return status;
+        }
     }
 }

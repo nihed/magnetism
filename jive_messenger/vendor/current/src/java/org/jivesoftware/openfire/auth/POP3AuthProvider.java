@@ -9,16 +9,16 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.auth;
+package org.jivesoftware.openfire.auth;
 
 import org.jivesoftware.util.*;
-import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 
-import javax.mail.Store;
-import javax.mail.Session;
 import javax.mail.NoSuchProviderException;
+import javax.mail.Session;
+import javax.mail.Store;
 import java.util.Properties;
 
 /**
@@ -29,10 +29,10 @@ import java.util.Properties;
  * <pre>
  * &lt;provider&gt;
  *     &lt;auth&gt;
- *         &lt;className&gt;org.jivesoftware.wildfire.auth.POP3AuthProvider&lt;/className&gt;
+ *         &lt;className&gt;org.jivesoftware.openfire.auth.POP3AuthProvider&lt;/className&gt;
  *     &lt;/auth&gt;
  *     &lt;user&gt;
- *         &lt;className&gt;org.jivesoftware.wildfire.user.POP3UserProvider&lt;/className&gt;
+ *         &lt;className&gt;org.jivesoftware.openfire.user.POP3UserProvider&lt;/className&gt;
  *     &lt;/user&gt;
  * &lt;/provider&gt;
  * </pre>
@@ -80,7 +80,9 @@ public class POP3AuthProvider implements AuthProvider {
             int maxSize = JiveGlobals.getXMLProperty("pop3.authCache.size", 512*1024);
             long maxLifetime = (long)JiveGlobals.getXMLProperty("pop3.authCache.maxLifetime",
 								(int)JiveConstants.HOUR);
-            authCache = new Cache("POP3 Auth Cache", maxSize, maxLifetime);
+            String cacheName = "POP3 Authentication";
+            CacheManager.initializeCache(cacheName, "pop3", maxSize, maxLifetime);
+            authCache = CacheManager.getCache(cacheName);
         }
 
         useSSL = Boolean.valueOf(JiveGlobals.getXMLProperty("pop3.ssl"));
@@ -200,6 +202,20 @@ public class POP3AuthProvider implements AuthProvider {
     }
 
     public boolean isDigestSupported() {
+        return false;
+    }
+
+    public String getPassword(String username)
+            throws UserNotFoundException, UnsupportedOperationException
+    {
+        throw new UnsupportedOperationException();
+    }
+
+     public void setPassword(String username, String password) throws UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean supportsPasswordRetrieval() {
         return false;
     }
 }

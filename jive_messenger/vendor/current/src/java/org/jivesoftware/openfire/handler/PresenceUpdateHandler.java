@@ -3,21 +3,24 @@
  * $Revision: 3125 $
  * $Date: 2005-11-30 15:14:14 -0300 (Wed, 30 Nov 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.handler;
+package org.jivesoftware.openfire.handler;
 
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.roster.Roster;
-import org.jivesoftware.wildfire.roster.RosterItem;
-import org.jivesoftware.wildfire.roster.RosterManager;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.roster.Roster;
+import org.jivesoftware.openfire.roster.RosterItem;
+import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.ConcurrentHashSet;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -74,19 +77,26 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     private PacketDeliverer deliverer;
     private OfflineMessageStore messageStore;
     private SessionManager sessionManager;
+    private UserManager userManager;
 
     public PresenceUpdateHandler() {
         super("Presence update handler");
         directedPresences = new ConcurrentHashMap<String, WeakHashMap<ChannelHandler, Set<String>>>();
     }
 
-    public void process(Packet xmppPacket) throws UnauthorizedException, PacketException {
-        Presence presence = (Presence)xmppPacket;
+    public void process(Packet packet) throws UnauthorizedException, PacketException {
+        process((Presence) packet, sessionManager.getSession(packet.getFrom()));
+    }
+
+    public void process(Presence presence, ClientSession session) throws UnauthorizedException, PacketException {
         try {
-            ClientSession session = sessionManager.getSession(presence.getFrom());
             Presence.Type type = presence.getType();
             // Available
             if (type == null) {
+                if (session != null && session.getStatus() == Session.STATUS_CLOSED) {
+                    Log.warn("Rejected available presence: " + presence + " - " + session);
+                    return;
+                }
                 broadcastUpdate(presence.createCopy());
                 if (session != null) {
                     session.setPresence(presence);
@@ -127,7 +137,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
 
         }
         catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            Log.error(LocaleUtils.getLocalizedString("admin.error") + ". Triggered by packet: " + presence, e);
         }
     }
 
@@ -176,19 +186,24 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     private void initSession(ClientSession session)  throws UserNotFoundException {
 
         // Only user sessions need to be authenticated
-        if (session.getAddress().getNode() != null && !"".equals(session.getAddress().getNode())) {
+        if (userManager.isRegisteredUser(session.getAddress().getNode())) {
             String username = session.getAddress().getNode();
-            Roster roster = rosterManager.getRoster(username);
-            for (RosterItem item : roster.getRosterItems()) {
-                if (item.getRecvStatus() == RosterItem.RECV_SUBSCRIBE) {
-                    session.process(createSubscribePresence(item.getJid(), true));
-                }
-                else if (item.getRecvStatus() == RosterItem.RECV_UNSUBSCRIBE) {
-                    session.process(createSubscribePresence(item.getJid(), false));
-                }
-                if (item.getSubStatus() == RosterItem.SUB_TO
-                        || item.getSubStatus() == RosterItem.SUB_BOTH) {
-                    presenceManager.probePresence(session.getAddress(), item.getJid());
+
+            // Send pending subscription requests to user if roster service is enabled
+            if (RosterManager.isRosterServiceEnabled()) {
+                Roster roster = rosterManager.getRoster(username);
+                for (RosterItem item : roster.getRosterItems()) {
+                    if (item.getRecvStatus() == RosterItem.RECV_SUBSCRIBE) {
+                        session.process(createSubscribePresence(item.getJid(),
+                                new JID(session.getAddress().toBareJID()), true));
+                    } else if (item.getRecvStatus() == RosterItem.RECV_UNSUBSCRIBE) {
+                        session.process(createSubscribePresence(item.getJid(),
+                                new JID(session.getAddress().toBareJID()), false));
+                    }
+                    if (item.getSubStatus() == RosterItem.SUB_TO
+                            || item.getSubStatus() == RosterItem.SUB_BOTH) {
+                        presenceManager.probePresence(session.getAddress(), item.getJid());
+                    }
                 }
             }
             if (session.canFloodOfflineMessages()) {
@@ -201,9 +216,10 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         }
     }
 
-    public Presence createSubscribePresence(JID senderAddress, boolean isSubscribe) {
+    public Presence createSubscribePresence(JID senderAddress, JID targetJID, boolean isSubscribe) {
         Presence presence = new Presence();
         presence.setFrom(senderAddress);
+        presence.setTo(targetJID);
         if (isSubscribe) {
             presence.setType(Presence.Type.subscribe);
         }
@@ -230,11 +246,14 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             return;
         }
         if (localServer.isLocal(update.getFrom())) {
+            // Do nothing if roster service is disabled
+            if (!RosterManager.isRosterServiceEnabled()) {
+                return;
+            }
             // Local updates can simply run through the roster of the local user
             String name = update.getFrom().getNode();
             try {
                 if (name != null && !"".equals(name)) {
-                    name = name.toLowerCase();
                     Roster roster = rosterManager.getRoster(name);
                     roster.broadcastPresence(update);
                 }
@@ -301,29 +320,34 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             WeakHashMap<ChannelHandler, Set<String>> map;
             String name = update.getFrom().getNode();
             if (name != null && !"".equals(name)) {
-                name = name.toLowerCase();
-                try {
-                    Roster roster = rosterManager.getRoster(name);
-                    // If the directed presence was sent to an entity that is not in the user's
-                    // roster, keep a registry of this so that when the user goes offline we will
-                    // be able to send the unavailable presence to the entity
-                    RosterItem rosterItem = null;
+                // Keep track of all directed presences if roster service is disabled
+                if (!RosterManager.isRosterServiceEnabled()) {
+                    keepTrack = true;
+                }
+                else {
                     try {
-                        rosterItem = roster.getRosterItem(update.getTo());
+                        Roster roster = rosterManager.getRoster(name);
+                        // If the directed presence was sent to an entity that is not in the user's
+                        // roster, keep a registry of this so that when the user goes offline we
+                        // will be able to send the unavailable presence to the entity
+                        RosterItem rosterItem = null;
+                        try {
+                            rosterItem = roster.getRosterItem(update.getTo());
+                        }
+                        catch (UserNotFoundException e) {}
+                        if (rosterItem == null ||
+                                RosterItem.SUB_NONE == rosterItem.getSubStatus() ||
+                                RosterItem.SUB_TO == rosterItem.getSubStatus()) {
+                            keepTrack = true;
+                        }
                     }
-                    catch (UserNotFoundException e) {}
-                    if (rosterItem == null || RosterItem.SUB_NONE == rosterItem.getSubStatus() ||
-                            RosterItem.SUB_TO == rosterItem.getSubStatus()) {
-                        keepTrack = true;
+                    catch (UserNotFoundException e) {
+                        Log.warn("Presence being sent from unknown user " + name, e);
+                    }
+                    catch (PacketException e) {
+                        Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
                     }
                 }
-                catch (UserNotFoundException e) {
-                    Log.warn("Presence being sent from unknown user " + name, e);
-                }
-                catch (PacketException e) {
-                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
-                }
-
             }
             else if (update.getFrom().getResource() != null){
                 // Keep always track of anonymous users directed presences
@@ -359,6 +383,14 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                         Set<String> jids = map.get(handler);
                         if (jids != null) {
                             jids.remove(jid);
+                            if (jids.isEmpty()) {
+                                map.remove(handler);
+                                if (map.isEmpty()) {
+                                    // Remove the user from the registry since the list of directed
+                                    // presences is empty
+                                    directedPresences.remove(update.getFrom().toString());
+                                }
+                            }
                         }
 
                     }
@@ -387,7 +419,8 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             return;
         }
         if (localServer.isLocal(update.getFrom())) {
-            Map<ChannelHandler, Set<String>> map = directedPresences.get(update.getFrom().toString());
+            // Remove the registry of directed presences of this user
+            Map<ChannelHandler, Set<String>> map = directedPresences.remove(update.getFrom().toString());
             if (map != null) {
                 // Iterate over all the entities that the user sent a directed presence
                 for (ChannelHandler handler : new HashSet<ChannelHandler>(map.keySet())) {
@@ -406,8 +439,6 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                         }
                     }
                 }
-                // Remove the registry of directed presences of this user
-                directedPresences.remove(update.getFrom().toString());
             }
         }
     }
@@ -436,6 +467,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         deliverer = server.getPacketDeliverer();
         messageStore = server.getOfflineMessageStore();
         sessionManager = server.getSessionManager();
+        userManager = server.getUserManager();
     }
 
 }

@@ -9,22 +9,26 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.user;
+package org.jivesoftware.openfire.user;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.wildfire.vcard.VCardManager;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.*;
+import org.jivesoftware.openfire.auth.AuthFactory;
 
 import java.sql.*;
 import java.util.*;
 import java.util.Date;
 
-
 /**
  * Default implementation of the UserProvider interface, which reads and writes data
- * from the <tt>jiveUser</tt> database table.
+ * from the <tt>jiveUser</tt> database table.<p>
+ *
+ * Passwords can be stored as plain text, or encrypted using Blowfish. The
+ * encryption/decryption key is stored as the Openfire property <tt>passwordKey</tt>,
+ * which is automatically created on first-time use. It's critical that the password key
+ * not be changed once created, or existing passwords will be lost. By default
+ * passwords will be stored encrypted. Plain-text password storage can be enabled
+ * by setting the Openfire property <tt>user.usePlainPassword</tt> to <tt>true</tt>.
  *
  * @author Matt Tucker
  */
@@ -35,10 +39,10 @@ public class DefaultUserProvider implements UserProvider {
     private static final String USER_COUNT =
             "SELECT count(*) FROM jiveUser";
     private static final String ALL_USERS =
-            "SELECT username FROM jiveUser";
+            "SELECT username FROM jiveUser ORDER BY username";
     private static final String INSERT_USER =
-            "INSERT INTO jiveUser (username,password,name,email,creationDate,modificationDate) " +
-            "VALUES (?,?,?,?,?,?)";
+            "INSERT INTO jiveUser (username,password,encryptedPassword,name,email,creationDate,modificationDate) " +
+            "VALUES (?,?,?,?,?,?,?)";
     private static final String DELETE_USER_PROPS =
             "DELETE FROM jiveUserProp WHERE username=?";
     private static final String DELETE_USER =
@@ -51,19 +55,16 @@ public class DefaultUserProvider implements UserProvider {
             "UPDATE jiveUser SET creationDate=? WHERE username=?";
     private static final String UPDATE_MODIFICATION_DATE =
             "UPDATE jiveUser SET modificationDate=? WHERE username=?";
-    private static final String LOAD_PASSWORD =
-            "SELECT password FROM jiveUser WHERE username=?";
-    private static final String UPDATE_PASSWORD =
-            "UPDATE jiveUser SET password=? WHERE username=?";
 
     public User loadUser(String username) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_USER);
             pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (!rs.next()) {
                 throw new UserNotFoundException();
             }
@@ -71,7 +72,6 @@ public class DefaultUserProvider implements UserProvider {
             String email = rs.getString(2);
             Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
             Date modificationDate = new Date(Long.parseLong(rs.getString(4).trim()));
-            rs.close();
 
             return new User(username, name, email, creationDate, modificationDate);
         }
@@ -79,10 +79,7 @@ public class DefaultUserProvider implements UserProvider {
             throw new UserNotFoundException(e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
     }
 
@@ -100,6 +97,22 @@ public class DefaultUserProvider implements UserProvider {
         }
         catch (UserNotFoundException unfe) {
             // The user doesn't already exist so we can create a new user
+
+            // Determine if the password should be stored as plain text or encrypted.
+            boolean usePlainPassword = JiveGlobals.getBooleanProperty("user.usePlainPassword");
+            String encryptedPassword = null;
+            if (!usePlainPassword) {
+                try {
+                    encryptedPassword = AuthFactory.encryptPassword(password);
+                    // Set password to null so that it's inserted that way.
+                    password = null;
+                }
+                catch (UnsupportedOperationException uoe) {
+                    // Encrypting the password may have failed if in setup mode. Therefore,
+                    // use the plain password.
+                }
+            }
+
             Date now = new Date();
             Connection con = null;
             PreparedStatement pstmt = null;
@@ -107,31 +120,39 @@ public class DefaultUserProvider implements UserProvider {
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(INSERT_USER);
                 pstmt.setString(1, username);
-                pstmt.setString(2, password);
-                if (name == null) {
+                if (password == null) {
+                    pstmt.setNull(2, Types.VARCHAR);
+                }
+                else {
+                    pstmt.setString(2, password);
+                }
+                if (encryptedPassword == null) {
                     pstmt.setNull(3, Types.VARCHAR);
                 }
                 else {
-                    pstmt.setString(3, name);
+                    pstmt.setString(3, encryptedPassword);
                 }
-                if (email == null) {
+                if (name == null) {
                     pstmt.setNull(4, Types.VARCHAR);
                 }
                 else {
-                    pstmt.setString(4, email);
+                    pstmt.setString(4, name);
                 }
-                pstmt.setString(5, StringUtils.dateToMillis(now));
+                if (email == null) {
+                    pstmt.setNull(5, Types.VARCHAR);
+                }
+                else {
+                    pstmt.setString(5, email);
+                }
                 pstmt.setString(6, StringUtils.dateToMillis(now));
+                pstmt.setString(7, StringUtils.dateToMillis(now));
                 pstmt.execute();
             }
             catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
             finally {
-                try { if (pstmt != null) { pstmt.close(); } }
-                catch (Exception e) { Log.error(e); }
-                try { if (con != null) { con.close(); } }
-                catch (Exception e) { Log.error(e); }
+                DbConnectionManager.closeConnection(pstmt, con);
             }
             return new User(username, name, email, now, now);
         }
@@ -146,17 +167,12 @@ public class DefaultUserProvider implements UserProvider {
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;
         try {
-            con = DbConnectionManager.getTransactionConnection();
             // Delete all of the users's extended properties
+            con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(DELETE_USER_PROPS);
             pstmt.setString(1, username);
             pstmt.execute();
             pstmt.close();
-            // Delete all of the users's vcard properties
-            try {
-                VCardManager.getInstance().deleteVCard(username);
-            }
-            catch (UnsupportedOperationException e) {}
             // Delete the actual user entry
             pstmt = con.prepareStatement(DELETE_USER);
             pstmt.setString(1, username);
@@ -167,9 +183,7 @@ public class DefaultUserProvider implements UserProvider {
             abortTransaction = true;
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            DbConnectionManager.closeTransactionConnection(con, abortTransaction);
+            DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
         }
     }
 
@@ -177,63 +191,63 @@ public class DefaultUserProvider implements UserProvider {
         int count = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(USER_COUNT);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (rs.next()) {
                 count = rs.getInt(1);
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return count;
     }
 
     public Collection<User> getUsers() {
+        Collection<String> usernames = getUsernames();
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
+    }
+
+    public Collection<String> getUsernames() {
         List<String> usernames = new ArrayList<String>(500);
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(ALL_USERS);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             // Set the fetch size. This will prevent some JDBC drivers from trying
             // to load the entire result set into memory.
             DbConnectionManager.setFetchSize(rs, 500);
             while (rs.next()) {
                 usernames.add(rs.getString(1));
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
-        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+        return usernames;
     }
 
     public Collection<User> getUsers(int startIndex, int numResults) {
         List<String> usernames = new ArrayList<String>(numResults);
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = DbConnectionManager.createScrollablePreparedStatement(con, ALL_USERS);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             DbConnectionManager.setFetchSize(rs, startIndex + numResults);
             DbConnectionManager.scrollResultSet(rs, startIndex);
             int count = 0;
@@ -241,18 +255,14 @@ public class DefaultUserProvider implements UserProvider {
                 usernames.add(rs.getString(1));
                 count++;
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
-        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
     public void setName(String username, String name) throws UserNotFoundException {
@@ -273,10 +283,7 @@ public class DefaultUserProvider implements UserProvider {
             throw new UserNotFoundException(sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -298,10 +305,7 @@ public class DefaultUserProvider implements UserProvider {
             throw new UserNotFoundException(sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -323,10 +327,7 @@ public class DefaultUserProvider implements UserProvider {
             throw new UserNotFoundException(sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -348,63 +349,7 @@ public class DefaultUserProvider implements UserProvider {
             throw new UserNotFoundException(sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
-        }
-    }
-
-    public String getPassword(String username) throws UserNotFoundException {
-        if (!supportsPasswordRetrieval()) {
-            // Reject the operation since the provider is read-only
-            throw new UnsupportedOperationException();
-        }
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_PASSWORD);
-            pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
-            if (!rs.next()) {
-                throw new UserNotFoundException(username);
-            }
-            return rs.getString(1);
-        }
-        catch (SQLException sqle) {
-            throw new UserNotFoundException(sqle);
-        }
-        finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
-        }
-    }
-
-    public void setPassword(String username, String password) throws UserNotFoundException {
-        if (isReadOnly()) {
-            // Reject the operation since the provider is read-only
-            throw new UnsupportedOperationException();
-        }
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(UPDATE_PASSWORD);
-            pstmt.setString(1, password);
-            pstmt.setString(2, username);
-            pstmt.executeUpdate();
-        }
-        catch (SQLException sqle) {
-            throw new UserNotFoundException(sqle);
-        }
-        finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -436,6 +381,7 @@ public class DefaultUserProvider implements UserProvider {
         List<String> usernames = new ArrayList<String>(50);
         Connection con = null;
         Statement stmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             stmt = con.createStatement();
@@ -459,22 +405,18 @@ public class DefaultUserProvider implements UserProvider {
                 }
                 sql.append(" email LIKE '").append(StringUtils.escapeForSQL(query)).append("'");
             }
-            ResultSet rs = stmt.executeQuery(sql.toString());
+            rs = stmt.executeQuery(sql.toString());
             while (rs.next()) {
                 usernames.add(rs.getString(1));
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try { if (stmt != null) { stmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, stmt, con);
         }
-        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
     public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
@@ -501,6 +443,7 @@ public class DefaultUserProvider implements UserProvider {
         List<String> usernames = new ArrayList<String>(50);
         Connection con = null;
         Statement stmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             stmt = con.createStatement();
@@ -524,7 +467,7 @@ public class DefaultUserProvider implements UserProvider {
                 }
                 sql.append(" email LIKE '").append(StringUtils.escapeForSQL(query)).append("'");
             }
-            ResultSet rs = stmt.executeQuery(sql.toString());
+            rs = stmt.executeQuery(sql.toString());
             // Scroll to the start index.
             DbConnectionManager.scrollResultSet(rs, startIndex);
             int count = 0;
@@ -532,25 +475,17 @@ public class DefaultUserProvider implements UserProvider {
                 usernames.add(rs.getString(1));
                 count++;
             }
-            rs.close();
         }
         catch (SQLException e) {
             Log.error(e);
         }
         finally {
-            try { if (stmt != null) { stmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, stmt, con);
         }
-        return new UserCollection((String[])usernames.toArray(new String[usernames.size()]));
+        return new UserCollection(usernames.toArray(new String[usernames.size()]));
     }
 
     public boolean isReadOnly() {
         return false;
-    }
-
-    public boolean supportsPasswordRetrieval() {
-        return true;
     }
 }

@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.forms;
+package org.jivesoftware.openfire.forms;
 
 import java.util.Iterator;
 

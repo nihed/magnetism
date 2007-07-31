@@ -8,28 +8,20 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.ldap;
+package org.jivesoftware.openfire.ldap;
 
-import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-
-import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Node;
-import org.jivesoftware.wildfire.vcard.VCardProvider;
-import org.jivesoftware.util.AlreadyExistsException;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.*;
+import org.jivesoftware.openfire.vcard.VCardManager;
+import org.jivesoftware.openfire.vcard.VCardProvider;
 import org.xmpp.packet.JID;
+
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import java.util.*;
 
 /**
  * Read-only LDAP provider for vCards.Configuration consists of adding a provider:<p/>
@@ -37,12 +29,12 @@ import org.xmpp.packet.JID;
  * <pre>
  * &lt;provider&gt;
  *   &lt;vcard&gt;
- *  	&lt;className&gt;org.jivesoftware.wildfire.ldap.LdapVCardProvider&lt;/className&gt;
+ *  	&lt;className&gt;org.jivesoftware.openfire.ldap.LdapVCardProvider&lt;/className&gt;
  *    &lt;/vcard&gt;
  * &lt;/provider&gt;
  * </pre><p/>
  *
- * and an xml vcard-mapping to wildfire.xml.<p/>
+ * and an xml vcard-mapping to openfire.xml.<p/>
  *
  * The vcard attributes can be configured by adding an <code>attrs="attr1,attr2"</code>
  * attribute to the vcard elements.<p/>
@@ -105,16 +97,26 @@ import org.xmpp.packet.JID;
  *
  * @author rkelly
  */
-public class LdapVCardProvider implements VCardProvider {
+public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
 
     private LdapManager manager;
     private VCardTemplate template;
 
     public LdapVCardProvider() {
         manager = LdapManager.getInstance();
+        initTemplate();
+        // Listen to property events so that the template is always up to date
+        PropertyEventDispatcher.addListener(this);
+    }
+
+    private void initTemplate() {
         String property = JiveGlobals.getXMLProperty("ldap.vcard-mapping");
         Log.debug("Found vcard mapping: '" + property);
         try {
+            // Remove CDATA wrapping element
+            if (property.startsWith("<![CDATA[")) {
+                property = property.substring(9, property.length()-3);
+            }
             Document document = DocumentHelper.parseText(property);
             template = new VCardTemplate(document);
         }
@@ -126,21 +128,22 @@ public class LdapVCardProvider implements VCardProvider {
     }
 
     private Map<String, String> getLdapAttributes(String username) {
-        HashMap<String, String> map = new HashMap<String, String>();
+        // Un-escape username
+        username = JID.unescapeNode(username);
+        Map<String, String> map = new HashMap<String, String>();
 
         DirContext ctx = null;
         try {
             String userDN = manager.findUserDN(username);
 
-            ctx = manager.getContext();
+            ctx = manager.getContext(manager.getUsersBaseDN(username));
             Attributes attrs = ctx.getAttributes(userDN, template.getAttributes());
 
             for (String attribute : template.getAttributes()) {
                 javax.naming.directory.Attribute attr = attrs.get(attribute);
                 String value;
                 if (attr == null) {
-                    Log.debug("No ldap value found for attribute '" + attribute
-                            + "'");
+                    Log.debug("No ldap value found for attribute '" + attribute + "'");
                     value = "";
                 }
                 else {
@@ -153,7 +156,7 @@ public class LdapVCardProvider implements VCardProvider {
         }
         catch (Exception e) {
             Log.error(e);
-            return null;
+            return Collections.emptyMap();
         }
         finally {
             try {
@@ -193,6 +196,27 @@ public class LdapVCardProvider implements VCardProvider {
         return true;
     }
 
+
+    public void propertySet(String property, Map params) {
+        //Ignore
+    }
+
+    public void propertyDeleted(String property, Map params) {
+        //Ignore
+    }
+
+    public void xmlPropertySet(String property, Map params) {
+        if ("ldap.vcard-mapping".equals(property)) {
+            initTemplate();
+            // Reset cache of vCards
+            VCardManager.getInstance().reset();
+        }
+    }
+
+    public void xmlPropertyDeleted(String property, Map params) {
+        //Ignore
+    }
+
     /**
      * Class to hold a <code>Document</code> representation of a vcard mapping
      * and unique attribute placeholders. Used by <code>VCard</code> to apply
@@ -227,14 +251,13 @@ public class LdapVCardProvider implements VCardProvider {
                 Node node = element.node(i);
                 if (node instanceof Element) {
                     Element emement = (Element) node;
-                    Attribute attr = emement.attribute("attrs");
-                    if (attr != null) {
-                        String[] attrs = attr.getStringValue().split(",");
-                        for (String string : attrs) {
-                            Log.debug("VCardTemplate: found attribute "
-                                    + string);
-                            set.add(string);
-                        }
+
+                    StringTokenizer st = new StringTokenizer(emement.getTextTrim(), ", //{}");
+                    while (st.hasMoreTokens()) {
+                        // Remove enclosing {}
+                        String string = st.nextToken().replaceAll("(\\{)([\\d\\D&&[^}]]+)(})", "$2");
+                        Log.debug("VCardTemplate: found attribute " + string);
+                        set.add(string);
                     }
                     treeWalk(emement, set);
                 }
@@ -264,16 +287,20 @@ public class LdapVCardProvider implements VCardProvider {
                 Node node = element.node(i);
                 if (node instanceof Element) {
                     Element emement = (Element) node;
-                    Attribute attr = emement.attribute("attrs");
-                    if (attr != null) {
-                        String[] attrs = attr.getStringValue().split(",");
-                        Object[] values = new String[attrs.length];
-                        for (int j = 0; j < attrs.length; j++) {
-                            values[j] = map.get(attrs[j]);
+
+                    String elementText = emement.getTextTrim();
+                    if (elementText != null && !"".equals(elementText)) {
+                        String format = emement.getStringValue();
+
+                        StringTokenizer st = new StringTokenizer(elementText, ", //{}");
+                        while (st.hasMoreTokens()) {
+                            // Remove enclosing {}
+                            String field = st.nextToken();
+                            String attrib = field.replaceAll("(\\{)(" + field + ")(})", "$2");
+                            String value = map.get(attrib);
+                            format = format.replaceFirst("(\\{)(" + field + ")(})", value);
                         }
-                        emement.remove(attr);
-                        emement.setText(MessageFormat.format(emement
-                                .getStringValue(), values));
+                        emement.setText(format);
                     }
                     treeWalk(emement, map);
                 }

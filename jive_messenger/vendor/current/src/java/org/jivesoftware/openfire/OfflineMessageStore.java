@@ -9,14 +9,20 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire;
+package org.jivesoftware.openfire;
 
+import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.util.*;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.event.UserEventDispatcher;
+import org.jivesoftware.openfire.event.UserEventListener;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserManager;
+import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 import java.io.StringReader;
@@ -26,6 +32,8 @@ import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Represents the user's offline message storage. A message store holds messages that were
@@ -36,7 +44,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  *
  * @author Iain Shigeoka
  */
-public class OfflineMessageStore extends BasicModule {
+public class OfflineMessageStore extends BasicModule implements UserEventListener {
 
     private static final String INSERT_OFFLINE =
         "INSERT INTO jiveOffline (username, messageID, creationDate, messageSize, message) " +
@@ -54,8 +62,13 @@ public class OfflineMessageStore extends BasicModule {
     private static final String DELETE_OFFLINE_MESSAGE =
         "DELETE FROM jiveOffline WHERE username=? AND creationDate=?";
 
-    private Cache sizeCache;
+    private Cache<String, Integer> sizeCache;
     private FastDateFormat dateFormat;
+    /**
+     * Pattern to use for detecting invalid XML characters. Invalid XML characters will
+     * be removed from the stored offline messages.
+     */
+    private Pattern pattern = Pattern.compile("&\\#[\\d]+;");
 
     /**
      * Returns the instance of <tt>OfflineMessageStore</tt> being used by the XMPPServer.
@@ -76,8 +89,10 @@ public class OfflineMessageStore extends BasicModule {
      */
     public OfflineMessageStore() {
         super("Offline Message Store");
-        dateFormat = FastDateFormat.getInstance("yyyyMMdd'T'HH:mm:ss", TimeZone.getTimeZone("UTC"));
-        sizeCache = new Cache("Offline Message Size Cache", 1024*100, JiveConstants.HOUR*12);
+        dateFormat = FastDateFormat.getInstance(JiveConstants.XMPP_DELAY_DATETIME_FORMAT,
+                TimeZone.getTimeZone("UTC"));
+        sizeCache = CacheManager.initializeCache("Offline Message Size", "offlinemessage",
+                1024 * 100, JiveConstants.HOUR * 12);
     }
 
     /**
@@ -90,13 +105,14 @@ public class OfflineMessageStore extends BasicModule {
         if (message == null) {
             return;
         }
-        String username = message.getTo().getNode();
+        JID recipient = message.getTo();
+        String username = recipient.getNode();
         // If the username is null (such as when an anonymous user), don't store.
-        if (username == null) {
+        if (username == null || !UserManager.getInstance().isRegisteredUser(recipient)) {
             return;
         }
-        else if (!XMPPServer.getInstance().getServerInfo().getName().equals(message.getTo()
-                .getDomain())) {
+        else
+        if (!XMPPServer.getInstance().getServerInfo().getName().equals(recipient.getDomain())) {
             // Do not store messages sent to users of remote servers
             return;
         }
@@ -123,15 +139,12 @@ public class OfflineMessageStore extends BasicModule {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
 
         // Update the cached size if it exists.
         if (sizeCache.containsKey(username)) {
-            int size = (Integer)sizeCache.get(username);
+            int size = sizeCache.get(username);
             size += msgXML.length();
             sizeCache.put(username, size);
         }
@@ -161,19 +174,29 @@ public class OfflineMessageStore extends BasicModule {
             while (rs.next()) {
                 String msgXML = rs.getString(1);
                 Date creationDate = new Date(Long.parseLong(rs.getString(2).trim()));
-                OfflineMessage message = new OfflineMessage(creationDate,
-                        xmlReader.read(new StringReader(msgXML)).getRootElement());
+                OfflineMessage message;
+                try {
+                    message = new OfflineMessage(creationDate,
+                            xmlReader.read(new StringReader(msgXML)).getRootElement());
+                } catch (DocumentException e) {
+                    // Try again after removing invalid XML chars (e.g. &#12;)
+                    Matcher matcher = pattern.matcher(msgXML);
+                    if (matcher.find()) {
+                        msgXML = matcher.replaceAll("");
+                    }
+                    message = new OfflineMessage(creationDate,
+                            xmlReader.read(new StringReader(msgXML)).getRootElement());
+                }
                 // Add a delayed delivery (JEP-0091) element to the message.
                 Element delay = message.addChildElement("x", "jabber:x:delay");
                 delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getName());
-                synchronized (dateFormat) {
-                    delay.addAttribute("stamp", dateFormat.format(creationDate));
-                }
+                delay.addAttribute("stamp", dateFormat.format(creationDate));
                 messages.add(message);
             }
             rs.close();
-            // Check if the offline messages loaded should be deleted
-            if (delete) {
+            // Check if the offline messages loaded should be deleted, and that there are
+            // messages to delete.
+            if (delete && !messages.isEmpty()) {
                 pstmt.close();
 
                 pstmt = con.prepareStatement(DELETE_OFFLINE);
@@ -184,15 +207,14 @@ public class OfflineMessageStore extends BasicModule {
             }
         }
         catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            Log.error("Error retrieving offline messages of username: " + username, e);
         }
         finally {
             // Return the sax reader to the pool
-            if (xmlReader != null) xmlReaders.add(xmlReader);
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            if (xmlReader != null) {
+                xmlReaders.add(xmlReader);
+            }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
         return messages;
     }
@@ -209,6 +231,7 @@ public class OfflineMessageStore extends BasicModule {
         OfflineMessage message = null;
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         SAXReader xmlReader = null;
         try {
             // Get a sax reader from the pool
@@ -217,31 +240,27 @@ public class OfflineMessageStore extends BasicModule {
             pstmt = con.prepareStatement(LOAD_OFFLINE_MESSAGE);
             pstmt.setString(1, username);
             pstmt.setString(2, StringUtils.dateToMillis(creationDate));
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 String msgXML = rs.getString(1);
-                message =
-                        new OfflineMessage(creationDate,
-                                xmlReader.read(new StringReader(msgXML)).getRootElement());
+                message = new OfflineMessage(creationDate,
+                        xmlReader.read(new StringReader(msgXML)).getRootElement());
                 // Add a delayed delivery (JEP-0091) element to the message.
                 Element delay = message.addChildElement("x", "jabber:x:delay");
                 delay.addAttribute("from", XMPPServer.getInstance().getServerInfo().getName());
-                synchronized (dateFormat) {
-                    delay.addAttribute("stamp", dateFormat.format(creationDate));
-                }
+                delay.addAttribute("stamp", dateFormat.format(creationDate));
             }
-            rs.close();
         }
         catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            Log.error("Error retrieving offline messages of username: " + username +
+                    " creationDate: " + creationDate, e);
         }
         finally {
             // Return the sax reader to the pool
-            if (xmlReader != null) xmlReaders.add(xmlReader);
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            if (xmlReader != null) {
+                xmlReaders.add(xmlReader);
+            }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return message;
     }
@@ -263,13 +282,10 @@ public class OfflineMessageStore extends BasicModule {
             removeUsernameFromSizeCache(username);
         }
         catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            Log.error("Error deleting offline messages of username: " + username, e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -297,19 +313,17 @@ public class OfflineMessageStore extends BasicModule {
             pstmt.setString(2, StringUtils.dateToMillis(creationDate));
             pstmt.executeUpdate();
             
-            //force a refresh for next call to getSize(username)
-            //its easier than loading the msg to be deleted just
-            //to update the cache.
+            // Force a refresh for next call to getSize(username),
+            // it's easier than loading the message to be deleted just
+            // to update the cache.
             removeUsernameFromSizeCache(username);
         }
         catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            Log.error("Error deleting offline messages of username: " + username +
+                    " creationDate: " + creationDate, e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -323,20 +337,20 @@ public class OfflineMessageStore extends BasicModule {
     public int getSize(String username) {
         // See if the size is cached.
         if (sizeCache.containsKey(username)) {
-            return (Integer)sizeCache.get(username);
+            return sizeCache.get(username);
         }
         int size = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(SELECT_SIZE_OFFLINE);
             pstmt.setString(1, username);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (rs.next()) {
                 size = rs.getInt(1);
             }
-            rs.close();
             // Add the value to cache.
             sizeCache.put(username, size);
         }
@@ -344,10 +358,7 @@ public class OfflineMessageStore extends BasicModule {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return size;
     }
@@ -362,38 +373,55 @@ public class OfflineMessageStore extends BasicModule {
         int size = 0;
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(SELECT_SIZE_ALL_OFFLINE);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             if (rs.next()) {
                 size = rs.getInt(1);
             }
-            rs.close();
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
         finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) { con.close(); } }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
         return size;
+    }
+
+    public void userCreated(User user, Map params) {
+        //Do nothing
+    }
+
+    public void userDeleting(User user, Map params) {
+        // Delete all offline messages of the user
+        deleteMessages(user.getUsername());
+    }
+
+    public void userModified(User user, Map params) {
+        //Do nothing
     }
 
     public void start() throws IllegalStateException {
         super.start();
         // Initialize the pool of sax readers
         for (int i=0; i<10; i++) {
-            xmlReaders.add(new SAXReader());
+            SAXReader xmlReader = new SAXReader();
+            xmlReader.setEncoding("UTF-8");
+            xmlReaders.add(xmlReader);
         }
+        // Add this module as a user event listener so we can delete
+        // all offline messages when a user is deleted
+        UserEventDispatcher.addListener(this);
     }
 
     public void stop() {
         super.stop();
         // Clean up the pool of sax readers
         xmlReaders.clear();
+        // Remove this module as a user event listener
+        UserEventDispatcher.removeListener(this);
     }
 }

@@ -1,14 +1,13 @@
 /**
  * $RCSfile$
- * $Revision: 3227 $
- * $Date: 2005-12-14 14:31:38 -0500 (Wed, 14 Dec 2005) $
+ * $Revision: 7655 $
+ * $Date: 2007-03-22 15:50:33 -0500 (Thu, 22 Mar 2007) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
-
 
 package org.jivesoftware.database;
 
@@ -22,31 +21,15 @@ import java.sql.*;
 /**
  * Central manager of database connections. All methods are static so that they
  * can be easily accessed throughout the classes in the database package.<p>
- * <p/>
+ *
  * This class also provides a set of utility methods that abstract out
  * operations that may not work on all databases such as setting the max number
  * or rows that a query should return.
  *
  * @author Jive Software
- *
- * @see org.jivesoftware.database.ConnectionProvider
+ * @see ConnectionProvider
  */
 public class DbConnectionManager {
-
-     private static final String CHECK_VERSION =
-            "SELECT majorVersion, minorVersion FROM jiveVersion";
-
-    /**
-     * Database schema major version. The schema version corresponds to the
-     * product release version, but may not exactly match in the case that
-     * the product version has advanced without schema changes.
-     */
-    private static final int CURRENT_MAJOR_VERSION = 2;
-
-    /**
-     * Database schema minor version.
-     */
-    private static final int CURRENT_MINOR_VERSION = 4;
 
     private static ConnectionProvider connectionProvider;
     private static final Object providerLock = new Object();
@@ -71,9 +54,14 @@ public class DbConnectionManager {
 
     private static DatabaseType databaseType = DatabaseType.unknown;
 
+    private static SchemaManager schemaManager = new SchemaManager();
+
     /**
      * Returns a database connection from the currently active connection
      * provider. (auto commit is set to true).
+     *
+     * @return a connection.
+     * @throws SQLException if a SQL exception occurs.
      */
     public static Connection getConnection() throws SQLException {
         if (connectionProvider == null) {
@@ -120,6 +108,9 @@ public class DbConnectionManager {
     /**
      * Returns a Connection from the currently active connection provider that
      * is ready to participate in transactions (auto commit is set to false).
+     *
+     * @return a connection with transactions enabled.
+     * @throws SQLException if a SQL exception occurs.
      */
     public static Connection getTransactionConnection() throws SQLException {
         Connection con = getConnection();
@@ -130,8 +121,33 @@ public class DbConnectionManager {
     }
 
     /**
+     * Closes a PreparedStatement and Connection. However, it first rolls back the transaction or
+     * commits it depending on the value of <code>abortTransaction</code>.
+     *
+     * @param pstmt the prepared statement to close.
+     * @param con the connection to close.
+     * @param abortTransaction true if the transaction should be rolled back.
+     */
+    public static void closeTransactionConnection(PreparedStatement pstmt, Connection con,
+            boolean abortTransaction)
+    {
+        try {
+            if (pstmt != null) {
+                pstmt.close();
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        closeTransactionConnection(con, abortTransaction);
+    }
+
+    /**
      * Closes a Connection. However, it first rolls back the transaction or
      * commits it depending on the value of <code>abortTransaction</code>.
+     *
+     * @param con the connection to close.
+     * @param abortTransaction true if the transaction should be rolled back.
      */
     public static void closeTransactionConnection(Connection con, boolean abortTransaction) {
         // test to see if the connection passed in is null
@@ -172,10 +188,109 @@ public class DbConnectionManager {
     }
 
     /**
-     * Closes a prepared statement and database connection (returning the connection to
+     * Closes a result set. This method should be called within the finally section of
+     * your database logic, as in the following example:
+     *
+     * <pre>
+     *  public void doSomething(Connection con) {
+     *      ResultSet rs = null;
+     *      PreparedStatement pstmt = null;
+     *      try {
+     *          pstmt = con.prepareStatement("select * from blah");
+     *          rs = pstmt.executeQuery();
+     *          ....
+     *      }
+     *      catch (SQLException sqle) {
+     *          Log.error(sqle);
+     *      }
+     *      finally {
+     *          ConnectionManager.closeResultSet(rs);
+     *          ConnectionManager.closePreparedStatement(pstmt);
+     *      }
+     * } </pre>
+     *
+     * @param rs the result set to close.
+     */
+    public static void closeResultSet(ResultSet rs) {
+        try {
+            if (rs != null) {
+                rs.close();
+            }
+        }
+        catch (SQLException e) {
+            Log.error(e);
+        }
+    }
+
+    /**
+     * Closes a statement. This method should be called within the finally section of
+     * your database logic, as in the following example:
+     *
+     * <pre>
+     *  public void doSomething(Connection con) {
+     *      PreparedStatement pstmt = null;
+     *      try {
+     *          pstmt = con.prepareStatement("select * from blah");
+     *          ....
+     *      }
+     *      catch (SQLException sqle) {
+     *          Log.error(sqle);
+     *      }
+     *      finally {
+     *          ConnectionManager.closePreparedStatement(pstmt);
+     *      }
+     * } </pre>
+     *
+     * @param stmt the statement.
+     */
+    public static void closeStatement(Statement stmt) {
+        try {
+            if (stmt != null) {
+                stmt.close();
+            }
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+    }
+
+    /**
+     * Closes a result set, statement and database connection (returning the connection to
      * the connection pool). This method should be called within the finally section of
      * your database logic, as in the following example:
      *
+     * <pre>
+     * Connection con = null;
+     * PrepatedStatment pstmt = null;
+     * ResultSet rs = null;
+     * try {
+     *     con = ConnectionManager.getConnection();
+     *     pstmt = con.prepareStatement("select * from blah");
+     *     rs = psmt.executeQuery();
+     *     ....
+     * }
+     * catch (SQLException sqle) {
+     *     Log.error(sqle);
+     * }
+     * finally {
+     *     ConnectionManager.closeConnection(rs, pstmt, con);
+     * }</pre>
+     *
+     * @param rs the result set.
+     * @param stmt the statement.
+     * @param con the connection.
+     */
+    public static void closeConnection(ResultSet rs, Statement stmt, Connection con) {
+        closeResultSet(rs);
+        closeStatement(stmt);
+        closeConnection(con);
+    }
+
+    /**
+     * Closes a statement and database connection (returning the connection to
+     * the connection pool). This method should be called within the finally section of
+     * your database logic, as in the following example:
+     * <p/>
      * <pre>
      * Connection con = null;
      * PrepatedStatment pstmt = null;
@@ -191,13 +306,13 @@ public class DbConnectionManager {
      *     DbConnectionManager.closeConnection(pstmt, con);
      * }</pre>
      *
-     * @param pstmt the prepated statement.
+     * @param stmt the statement.
      * @param con the connection.
      */
-    public static void closeConnection(PreparedStatement pstmt, Connection con) {
+    public static void closeConnection(Statement stmt, Connection con) {
         try {
-            if (pstmt != null) {
-                pstmt.close();
+            if (stmt != null) {
+                stmt.close();
             }
         }
         catch (Exception e) {
@@ -211,7 +326,7 @@ public class DbConnectionManager {
      * statements associated with the connection should be closed before calling this method.
      * This method should be called within the finally section of your database logic, as
      * in the following example:
-     *
+     * <p/>
      * <pre>
      * Connection con = null;
      * try {
@@ -290,7 +405,19 @@ public class DbConnectionManager {
         if (isScrollResultsSupported()) {
             if (rowNumber > 0) {
                 rs.setFetchDirection(ResultSet.FETCH_FORWARD);
-                rs.relative(rowNumber);
+
+                // We will attempt to do a relative fetch. This may fail in SQL Server if
+                // <resultset-navigation-strategy> is set to absolute. It would need to be
+                // set to looping to work correctly.
+                // If so, manually scroll to the correct row.
+                try {
+                    rs.relative(rowNumber);
+                }
+                catch (SQLException e) {
+                    for (int i = 0; i < rowNumber; i++) {
+                        rs.next();
+                    }
+                }
             }
         }
         // Otherwise, manually scroll to the correct row.
@@ -306,6 +433,8 @@ public class DbConnectionManager {
      * method should be called is if more information about the current
      * connection provider is needed. Database connections should always be
      * obtained by calling the getConnection method of this class.
+     *
+     * @return the connection provider.
      */
     public static ConnectionProvider getConnectionProvider() {
         return connectionProvider;
@@ -335,21 +464,20 @@ public class DbConnectionManager {
                 setMetaData(con);
 
                 // Check to see if the database schema needs to be upgraded.
-                try {
-                    upgradeDatabase(con);
-                }
-                catch (Exception e) {
-                    Log.error("Database upgrade failed. Please manually upgrade your database.", e);
-                    System.out.println("Database upgrade failed. Please manually upgrade your " +
-                            "database.");
-                }
+                schemaManager.checkOpenfireSchema(con);
             }
             catch (Exception e) {
                 Log.error(e);
             }
             finally {
-                try { if (con != null) { con.close(); } }
-                catch (Exception e) { Log.error(e); }
+                try {
+                    if (con != null) {
+                        con.close();
+                    }
+                }
+                catch (Exception e) {
+                    Log.error(e);
+                }
             }
         }
         // Remember what connection provider we want to use for restarts.
@@ -380,6 +508,7 @@ public class DbConnectionManager {
      * @param rs the ResultSet to retrieve the text field from.
      * @param columnIndex the column in the ResultSet of the text field.
      * @return the String value of the text field.
+     * @throws SQLException if an SQL exception occurs.
      */
     public static String getLargeTextField(ResultSet rs, int columnIndex) throws SQLException {
         if (isStreamTextRequired()) {
@@ -429,10 +558,10 @@ public class DbConnectionManager {
      * @param pstmt the PreparedStatement to set the text field in.
      * @param parameterIndex the index corresponding to the text field.
      * @param value the String to set.
+     * @throws SQLException if an SQL exception occurs.
      */
     public static void setLargeTextField(PreparedStatement pstmt, int parameterIndex,
-            String value) throws SQLException
-    {
+                                         String value) throws SQLException {
         if (isStreamTextRequired()) {
             Reader bodyReader;
             try {
@@ -456,7 +585,7 @@ public class DbConnectionManager {
      * statement. The operation is automatically bypassed if Jive knows that the
      * the JDBC driver or database doesn't support it.
      *
-     * @param stmt the Statement to set the max number of rows for.
+     * @param stmt    the Statement to set the max number of rows for.
      * @param maxRows the max number of rows to return.
      */
     public static void setMaxRows(Statement stmt, int maxRows) {
@@ -500,8 +629,21 @@ public class DbConnectionManager {
     }
 
     /**
+     * Returns a SchemaManager instance, which can be used to manage the database
+     * schema information for Openfire and plugins.
+     *
+     * @return a SchemaManager instance.
+     */
+    public static SchemaManager getSchemaManager() {
+        return schemaManager;
+    }
+
+    /**
      * Uses a connection from the database to set meta data information about
      * what different JDBC drivers and databases support.
+     *
+     * @param con the connection.
+     * @throws SQLException if an SQL exception occurs.
      */
     private static void setMetaData(Connection con) throws SQLException {
         DatabaseMetaData metaData = con.getMetaData();
@@ -545,7 +687,7 @@ public class DbConnectionManager {
         }
         // Postgres properties
         else if (dbName.indexOf("postgres") != -1) {
-            databaseType = DatabaseType.postgres;
+            databaseType = DatabaseType.postgresql;
             // Postgres blows, so disable scrolling result sets.
             scrollResultsSupported = false;
             fetchSizeSupported = false;
@@ -658,11 +800,12 @@ public class DbConnectionManager {
      * there are certain cases where it's critical to know the database for
      * performance reasons.
      */
+    @SuppressWarnings({"UnnecessarySemicolon"}) // Support for QDox parsing
     public static enum DatabaseType {
 
         oracle,
 
-        postgres,
+        postgresql,
 
         mysql,
 
@@ -674,142 +817,7 @@ public class DbConnectionManager {
 
         interbase,
 
-        unknown
-    }
-
-    /**
-     * Checks to see if the database needs to be upgraded. This method should be
-     * called once every time the application starts up.
-     *
-     * @throws SQLException if an error occured.
-     */
-    private static boolean upgradeDatabase(Connection con) throws Exception {
-        int majorVersion;
-        int minorVersion;
-        PreparedStatement pstmt = null;
-        try {
-            pstmt = con.prepareStatement(CHECK_VERSION);
-            ResultSet rs = pstmt.executeQuery();
-            // If no results, assume the version is 2.0.
-            if (!rs.next()) {
-                majorVersion = 2;
-                minorVersion = 0;
-            }
-            majorVersion = rs.getInt(1);
-            minorVersion = rs.getInt(2);
-            rs.close();
-        }
-        catch (SQLException sqle) {
-            // If the table doesn't exist, an error will be thrown. Therefore
-            // assume the version is 2.0.
-            majorVersion = 2;
-            minorVersion = 0;
-        }
-        finally {
-            try { if (pstmt != null) { pstmt.close(); } }
-            catch (Exception e) { Log.error(e); }
-        }
-        if (majorVersion == CURRENT_MAJOR_VERSION && minorVersion == CURRENT_MINOR_VERSION) {
-            return false;
-        }
-        // The database is an old version that needs to be upgraded.
-        Log.info("Found old database schema (" + majorVersion + "." + minorVersion + "). " +
-                "Upgrading to latest schema.");
-        System.out.println("Found old database schema (" + majorVersion + "." +
-                minorVersion + "). " + "Upgrading to latest schema.");
-        if (databaseType == DatabaseType.unknown) {
-            Log.info("Warning: database type unknown. You must manually upgrade your database.");
-            System.out.println("Warning: database type unknown. You must manually upgrade your " +
-                    "database.");
-            return false;
-        }
-        else if (databaseType == DatabaseType.interbase) {
-            Log.info("Warning: automatic upgrades of Interbase are not supported. You " +
-                    "must manually upgrade your database.");
-            System.out.println("Warning: automatic upgrades of Interbase are not supported. You " +
-                    "must manually upgrade your database.");
-            return false;
-        }
-        // Run all upgrade scripts until we're up to the latest schema.
-        for (int i=minorVersion; i<CURRENT_MINOR_VERSION; i++) {
-            BufferedReader in = null;
-            Statement stmt;
-            try {
-                // Resource will be like "/database/upgrade/2.0_to_2.1/wildfire_hsqldb.sql"
-                String resourceName = "/database/upgrade/" + CURRENT_MAJOR_VERSION + "." + i +
-                        "_to_" + CURRENT_MAJOR_VERSION + "." + (i+1) + "/wildfire_" +
-                        databaseType + ".sql";
-                InputStream resource = DbConnectionManager.class.getResourceAsStream(resourceName);
-                if (resource == null) {
-                    Log.info("Warning: Make sure that database was not modified for release: " +
-                            CURRENT_MAJOR_VERSION + "." + (i + 1) + ". Upgrade script not found: " +
-                            resourceName);
-                    System.out.println("Warning: Make sure that database was not modified for " +
-                            "release: " + CURRENT_MAJOR_VERSION + "." + (i + 1) +
-                            ". Upgrade script not found: " + resourceName);
-                    continue;
-                }
-                in = new BufferedReader(new InputStreamReader(resource));
-                boolean done = false;
-                while (!done) {
-                    StringBuilder command = new StringBuilder();
-                    while (true) {
-                        String line = in.readLine();
-                        if (line == null) {
-                            done = true;
-                            break;
-                        }
-                        // Ignore comments and blank lines.
-                        if (isSQLCommandPart(line)) {
-                            command.append(line);
-                        }
-                        if (line.endsWith(";")) {
-                            break;
-                        }
-                    }
-                    // Send command to database.
-                    if (!done && command != null) {
-                        stmt = con.createStatement();
-                        stmt.execute(command.toString());
-                        stmt.close();
-                    }
-                }
-            }
-            finally {
-                try { if (pstmt != null) { pstmt.close(); } }
-                catch (Exception e) { Log.error(e); }
-                if (in != null) {
-                    try { in.close(); }
-                    catch (Exception e) {
-                        // Ignore.
-                    }
-                }
-            }
-        }
-        Log.info("Database upgraded successfully.");
-        System.out.println("Database upgraded successfully.");
-        return true;
-    }
-
-    /**
-     * Returns true if a line from a SQL schema is a valid command part.
-     *
-     * @param line the line of the schema.
-     * @return true if a valid command part.
-     */
-    public static boolean isSQLCommandPart(String line) {
-        line = line.trim();
-        if (line.equals("")) {
-            return false;
-        }
-        // Check to see if the line is a comment. Valid comment types:
-        //   "//" is HSQLDB
-        //   "--" is DB2 and Postgres
-        //   "#" is MySQL
-        //   "REM" is Oracle
-        //   "/*" is SQLServer
-        return !(line.startsWith("//") || line.startsWith("--") || line.startsWith("#") ||
-                line.startsWith("REM") || line.startsWith("/*") || line.startsWith("*"));
+        unknown;
     }
 
     private DbConnectionManager() {

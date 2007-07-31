@@ -9,19 +9,19 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.muc.spi;
+package org.jivesoftware.openfire.muc.spi;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.wildfire.forms.DataForm;
-import org.jivesoftware.wildfire.forms.FormField;
-import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
-import org.jivesoftware.wildfire.forms.spi.XFormFieldImpl;
-import org.jivesoftware.wildfire.muc.ConflictException;
-import org.jivesoftware.wildfire.muc.ForbiddenException;
-import org.jivesoftware.wildfire.muc.MUCRoom;
-import org.jivesoftware.wildfire.muc.MultiUserChatServer;
+import org.jivesoftware.openfire.forms.DataForm;
+import org.jivesoftware.openfire.forms.FormField;
+import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
+import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
+import org.jivesoftware.openfire.muc.ConflictException;
+import org.jivesoftware.openfire.muc.ForbiddenException;
+import org.jivesoftware.openfire.muc.MUCRoom;
+import org.jivesoftware.openfire.muc.MultiUserChatServer;
 import org.jivesoftware.util.ElementUtil;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -106,7 +106,11 @@ class IQMUCRegisterHandler {
     public IQ handleIQ(IQ packet) {
         IQ reply = null;
         // Get the target room
-        MUCRoom room = mucServer.getChatRoom(packet.getTo().getNode());
+        MUCRoom room = null;
+        String name = packet.getTo().getNode();
+        if (name != null) {
+            room = mucServer.getChatRoom(name);
+        }
         if (room == null) {
             // The room doesn't exist so answer a NOT_FOUND error
             reply = IQ.createResultIQ(packet);

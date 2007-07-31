@@ -9,18 +9,18 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.muc.spi;
+package org.jivesoftware.openfire.muc.spi;
 
-import org.jivesoftware.wildfire.forms.DataForm;
-import org.jivesoftware.wildfire.forms.FormField;
-import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
-import org.jivesoftware.wildfire.forms.spi.XFormFieldImpl;
-import org.jivesoftware.wildfire.muc.ConflictException;
-import org.jivesoftware.wildfire.muc.ForbiddenException;
-import org.jivesoftware.wildfire.muc.MUCRole;
+import org.jivesoftware.openfire.forms.DataForm;
+import org.jivesoftware.openfire.forms.FormField;
+import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
+import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
+import org.jivesoftware.openfire.muc.ConflictException;
+import org.jivesoftware.openfire.muc.ForbiddenException;
+import org.jivesoftware.openfire.muc.MUCRole;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import java.util.*;
 
 import org.dom4j.DocumentHelper;

@@ -1,6 +1,6 @@
 <%--
-  -	$Revision: 2989 $
-  -	$Date: 2005-10-23 17:34:49 -0400 (Sun, 23 Oct 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
@@ -8,10 +8,30 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.text.*,
-                 org.jivesoftware.admin.AdminConsole"
+<%@ page import="org.jivesoftware.admin.AdminConsole,
+                 org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.StringUtils"
 %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.openfire.update.Update"%>
+<%@ page import="org.jivesoftware.openfire.update.UpdateManager"%>
+<%@ page import="java.text.DecimalFormat"%>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
+<%@ page import="org.apache.mina.transport.socket.nio.SocketAcceptor" %>
+<%@ page import="java.net.SocketAddress" %>
+<%@ page import="java.net.InetSocketAddress" %>
+<%@ page import="org.jivesoftware.openfire.ServerPort" %>
+<%@ page import="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy" %>
+<%@ page import="org.jivesoftware.openfire.http.HttpBindManager" %>
+<%@ page import="org.jivesoftware.openfire.mediaproxy.MediaProxyService" %>
+<%@ page import="org.jivesoftware.openfire.stun.STUNService" %>
+<%@ page import="org.jivesoftware.openfire.session.ConnectionMultiplexerSession" %>
+<%@ page import="org.jivesoftware.openfire.Connection" %>
+<%@ page import="org.jivesoftware.openfire.session.ClientSession" %>
+<%@ page import="org.jivesoftware.util.LocaleUtils" %>
+<%@ page import="org.jivesoftware.openfire.container.AdminConsolePlugin" %>
+<%@ page import="org.jivesoftware.util.CertificateManager" %>
+<%@ page import="org.jivesoftware.openfire.net.SSLConfig" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -31,20 +51,35 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out); %>
 
-<%  // Get parameters //
+<% // Get parameters //
     boolean serverOn = (webManager.getXMPPServer() != null);
-    boolean stop = request.getParameter("stop") != null;
-    boolean restart = request.getParameter("restart") != null;
 
-    // Handle stops & restarts
-    if (stop) {
-      response.sendRedirect("server-stopped.jsp");
-      return;
+    String interfaceName = JiveGlobals.getXMLProperty("network.interface");
+
+
+    ConnectionManagerImpl connectionManager = ((ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager());
+    SocketAcceptor socketAcceptor = connectionManager.getSocketAcceptor();
+    SocketAcceptor sslSocketAcceptor = connectionManager.getSSLSocketAcceptor();
+    SocketAcceptor multiplexerSocketAcceptor = connectionManager.getMultiplexerSocketAcceptor();
+    ServerPort serverPort = null;
+    ServerPort componentPort = null;
+    AdminConsolePlugin adminConsolePlugin =
+            (AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin");
+
+    FileTransferProxy fileTransferProxy = XMPPServer.getInstance().getFileTransferProxy();
+    HttpBindManager httpBindManager = HttpBindManager.getInstance();
+    MediaProxyService mediaProxyService = XMPPServer.getInstance().getMediaProxyService();
+    STUNService stunService = XMPPServer.getInstance().getSTUNService();
+
+    // Search for s2s and external component ports info
+    for (ServerPort port : XMPPServer.getInstance().getServerInfo().getServerPorts()) {
+        if (port.getType() == ServerPort.Type.server) {
+            serverPort = port;
+        } else if (port.getType() == ServerPort.Type.component) {
+            componentPort = port;
+        }
     }
-    else if (restart) {
-      response.sendRedirect("server-stopped.jsp?restart=Restart");
-      return;
-    }
+
 %>
 
 <html>
@@ -55,24 +90,45 @@
     </head>
     <body>
 
+<%
+    UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
+    Update serverUpdate = updateManager.getServerUpdate();
+    if (serverUpdate != null) { %>
+    <div class="warning">
+    <table cellpadding="0" cellspacing="0" border="0" >
+    <tbody>
+        <tr>
+            <td class="jive-icon-label">
+            <b><fmt:message key="index.update.alert" /></b><br/><br/>
+            </td>
+        </tr>
+        <td valign="top" align="left" colspan="2">
+        <span><fmt:message key="index.update.info">
+                <fmt:param value="<%= serverUpdate.getLatestVersion()%>" />
+                <fmt:param value="<%= "<a href='"+serverUpdate.getURL()+"'>" %>" />
+                <fmt:param value="<%= "</a>" %>" />
+                <fmt:param value="<%= "<a href='"+serverUpdate.getChangelog()+"'>" %>" />
+                <fmt:param value="<%= "</a>" %>" />
+            </fmt:message></span>
+        </td>
+    </tbody>
+    </table>
+    </div>
+    <br>
+
+<%
+    }
+%>
 <p>
 <fmt:message key="index.title.info" />
 </p>
 
-<script language="JavaScript" type="text/javascript">
-    var checked = false;
-    function checkClick() {
-        if (checked) { return false; }
-        else { checked = true; return true; }
-    }
-</script>
 <style type="text/css">
 .bar TD {
     padding : 0px;
 }
 </style>
 
-<form action="index.jsp" onsubmit="return checkClick();">
 <div class="jive-table">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <thead>
@@ -88,37 +144,10 @@
             <td class="c1"><fmt:message key="index.uptime" /></td>
             <td>
                 <%
-                    String uptimeDisplay = null;
-                    if ("en".equals(JiveGlobals.getLocale().getLanguage())) {
-                        long now = System.currentTimeMillis();
-                        long lastStarted = webManager.getXMPPServer().getServerInfo().getLastStarted().getTime();
-                        long uptime = now - lastStarted;
-
-                        if (uptime < JiveConstants.MINUTE) {
-                            uptimeDisplay = "Less than 1 minute";
-                        }
-                        else if (uptime < JiveConstants.HOUR) {
-                            long mins = uptime / JiveConstants.MINUTE;
-                            uptimeDisplay = mins + ((mins==1) ? " minute" : " minutes");
-                        }
-                        else if (uptime < JiveConstants.DAY) {
-                            long hours = uptime / JiveConstants.HOUR;
-                            uptime -= hours * JiveConstants.HOUR;
-                            long mins = uptime / JiveConstants.MINUTE;
-                            uptimeDisplay = hours + ((hours==1) ? " hour" : " hours" + ", " +
-                                    mins + ((mins==1) ? " minute" : " minutes"));
-                        }
-                        else {
-                            long days = uptime / JiveConstants.DAY;
-                            uptime -= days * JiveConstants.DAY;
-                            long hours = uptime / JiveConstants.HOUR;
-                            uptime -= hours * JiveConstants.HOUR;
-                            long mins = uptime / JiveConstants.MINUTE;
-                            uptimeDisplay = days + ((days==1) ? " day" : " days") + ", " +
-                                    hours + ((hours==1) ? " hour" : " hours") + ", " +
-                                    mins + ((mins==1) ? " minute" : " minutes");
-                        }
-                    }
+                    long now = System.currentTimeMillis();
+                    long lastStarted = webManager.getXMPPServer().getServerInfo().getLastStarted().getTime();
+                    long uptime = now - lastStarted;
+                    String uptimeDisplay = StringUtils.getElapsedTime(uptime);
                 %>
 
                 <%  if (uptimeDisplay != null) { %>
@@ -126,14 +155,6 @@
                 <%  } %>
 
                 <%= JiveGlobals.formatDateTime(webManager.getXMPPServer().getServerInfo().getLastStarted()) %>
-
-                <% if (webManager.getXMPPServer().isStandAlone()){ %>
-                        &nbsp;&nbsp;<input type="submit" value="<fmt:message key="global.stop" />" name="stop" <%= ((serverOn) ? "" : "disabled") %>>
-                    <% if (webManager.getXMPPServer().isRestartable()){ %>
-                        &nbsp;&nbsp;<input type="submit" value="<fmt:message key="global.restart" />" name="restart" <%= ((serverOn) ? "" : "disabled") %>>
-                    <% } %>
-                <% } %>
-
             </td>
         </tr>
 
@@ -157,55 +178,12 @@
             <fmt:message key="index.server_name" />
         </td>
         <td class="c2">
+            <% if (!CertificateManager.isRSACertificate(SSLConfig.getKeyStore(), XMPPServer.getInstance().getServerInfo().getName())) {%>
+            <img src="images/warning-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="index.certificate-warning" />" text="<fmt:message key="index.certificate-warning" />">&nbsp;
+            <% } %>
             ${webManager.serverInfo.name}
         </td>
     </tr>
-</tbody>
-<thead>
-    <tr>
-        <th colspan="2"><fmt:message key="index.server_port" /></th>
-    </tr>
-</thead>
-<tbody>
-    <%  int i=0; %>
-    <c:forEach var="port" items="${webManager.serverInfo.serverPorts}">
-        <%  i++; %>
-        <tr>
-            <td class="c1">
-                <%= i %>: <fmt:message key="index.server_ip" />
-            </td>
-            <td class="c2">
-                ${port.IPAddress}:${port.port},
-                <c:choose>
-                    <c:when test="${empty port.securityType}">
-                        <fmt:message key="index.port_type" />
-                    </c:when>
-                    <c:otherwise>
-                        <c:choose>
-                            <c:when test="${port.securityType == 'TLS'}">
-                                <fmt:message key="index.port_type1" />
-                            </c:when>
-                            <c:otherwise>
-                                <c:out value="${port.securityType}" />
-                            </c:otherwise>
-                        </c:choose>
-                    </c:otherwise>
-                </c:choose>
-            </td>
-        </tr>
-        <tr valign="top">
-            <td class="c1">
-                <nobr>&nbsp;&nbsp;&nbsp; <fmt:message key="index.domain_name" /></nobr>
-            </td>
-            <td class="c2">
-                <c:set var="sep" value="" />
-                <c:forEach var="name" items="${port.domainNames}">
-                    <c:out value="${sep}" /><c:out value="${name}" />
-                    <c:set var="set" value=", " />
-                </c:forEach>
-            </td>
-        </tr>
-    </c:forEach>
 </tbody>
 <thead>
     <tr>
@@ -307,7 +285,191 @@
 </tbody>
 </table>
 </div>
-</form>
+
+<br>
+
+<div id="jive-title"><fmt:message key="index.server_port" /></div>
+<div class="jive-table">
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<thead>
+    <tr>
+        <th width="80"><fmt:message key="ports.interface" /></th>
+        <th width="1"><fmt:message key="ports.port" /></th>
+        <th width="1">&nbsp;</th>
+        <th width="130"><fmt:message key="ports.type" /></th>
+        <th><fmt:message key="ports.description" /></th>
+    </tr>
+</thead>
+<tbody>
+    <% if (socketAcceptor != null) {
+        for (SocketAddress socketAddress : socketAcceptor.getManagedServiceAddresses()) {
+            InetSocketAddress address = (InetSocketAddress) socketAddress;
+    %>
+    <tr>
+        <td><%= "0.0.0.0".equals(address.getHostName()) ? LocaleUtils.getLocalizedString("ports.all_ports") : address.getHostName() %></td>
+        <td><%= address.getPort() %></td>
+        <% if (ClientSession.getTLSPolicy() == Connection.TLSPolicy.disabled) { %>
+            <td><img src="images/blank.gif" width="1" height="1"></td>
+        <% } else { %>
+            <td><img src="images/lock.gif" width="16" height="16" border="0"/></td>
+        <% } %>
+        <td><fmt:message key="ports.client_to_server" /></td>
+        <td><fmt:message key="ports.client_to_server.desc">
+            <fmt:param value="<a href='ssl-settings.jsp'>" />
+            <fmt:param value="</a>" />
+            </fmt:message>
+        </td>
+    </tr>
+    <% } } %>
+    <% if (sslSocketAcceptor != null) {
+        for (SocketAddress socketAddress : sslSocketAcceptor.getManagedServiceAddresses()) {
+            InetSocketAddress address = (InetSocketAddress) socketAddress;
+    %>
+    <tr>
+        <td><%= "0.0.0.0".equals(address.getHostName()) ? LocaleUtils.getLocalizedString("ports.all_ports") : address.getHostName() %></td>
+        <td><%= address.getPort() %></td>
+        <td><img src="images/lock.gif" width="16" height="16" border="0"/></td>
+        <td><fmt:message key="ports.client_to_server" /></td>
+        <td><fmt:message key="ports.client_to_server.desc_old_ssl">
+            <fmt:param value="<a href='ssl-settings.jsp'>" />
+            <fmt:param value="</a>" />
+            </fmt:message>
+        </td>
+    </tr>
+    <% } } %>
+    <%
+        if (serverPort != null) {
+    %>
+    <tr>
+        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : serverPort.getIPAddress() %></td>
+        <td><%= serverPort.getPort() %></td>
+        <% if (JiveGlobals.getBooleanProperty("xmpp.server.tls.enabled", true)) { %>
+            <td><img src="images/lock.gif" width="16" height="16" border="0"/></td>
+        <% } else { %>
+            <td><img src="images/blank.gif" width="1" height="1"></td>
+        <% } %>
+        <td><fmt:message key="ports.server_to_server" /></td>
+        <td><fmt:message key="ports.server_to_server.desc">
+            <fmt:param value="<a href='server2server-settings.jsp'>" />
+            <fmt:param value="</a>" />
+            </fmt:message>
+        </td>
+        <td>
+</td>
+    </tr>
+    <% } %>
+    <% if (multiplexerSocketAcceptor != null) {
+        for (SocketAddress socketAddress : multiplexerSocketAcceptor.getManagedServiceAddresses()) {
+            InetSocketAddress address = (InetSocketAddress) socketAddress;
+    %>
+    <tr>
+        <td><%= "0.0.0.0".equals(address.getHostName()) ? LocaleUtils.getLocalizedString("ports.all_ports") : address.getHostName() %></td>
+        <td><%= address.getPort() %></td>
+        <% if (ConnectionMultiplexerSession.getTLSPolicy() == Connection.TLSPolicy.disabled) { %>
+            <td><img src="images/blank.gif" width="1" height="1"></td>
+        <% } else { %>
+            <td><img src="images/lock.gif" width="16" height="16" border="0"/></td>
+        <% } %>
+        <td><fmt:message key="ports.connection_manager" /></td>
+        <td><fmt:message key="ports.connection_manager.desc">
+            <fmt:param value="<a href='connection-managers-settings.jsp'>" />
+            <fmt:param value="</a>" />
+            </fmt:message>
+        </td>
+    </tr>
+    <% } } %>
+    <%
+        if (componentPort != null) {
+    %>
+    <tr>
+        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : componentPort.getIPAddress() %></td>
+        <td><%= componentPort.getPort() %></td>
+        <td><img src="images/blank.gif" width="1" height="1"></td>
+        <td><fmt:message key="ports.external_components" /></td>
+        <td><fmt:message key="ports.external_components.desc">
+            <fmt:param value="<a href='external-components-settings.jsp'>" />
+            <fmt:param value="</a>" />
+            </fmt:message>
+        </td>
+    </tr>
+    <% } %>
+    <tr>
+        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+        <td><%= adminConsolePlugin.getAdminUnsecurePort() %></td>
+        <td><img src="images/blank.gif" width="1" height="1"></td>
+        <td><fmt:message key="ports.admin_console" /></td>
+        <td><fmt:message key="ports.admin_console.desc_unsecured" /></td>
+    </tr>
+    <tr>
+        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+        <td><%= adminConsolePlugin.getAdminSecurePort() %></td>
+        <td><img src="images/lock.gif" width="16" height="16" border="0"/></td>
+        <td><fmt:message key="ports.admin_console" /></td>
+        <td><fmt:message key="ports.admin_console.desc_secured" /></td>
+    </tr>
+    <%
+        if (fileTransferProxy.isProxyEnabled()) {
+    %>
+    <tr>
+        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+        <td><%= fileTransferProxy.getProxyPort() %></td>
+        <td><img src="images/blank.gif" width="1" height="1"></td>
+        <td><fmt:message key="ports.file_proxy" /></td>
+        <td><fmt:message key="ports.file_proxy.desc" /></td>
+    </tr>
+    <% } %>
+    <%
+        if (httpBindManager.isHttpBindEnabled()) {
+    %>
+        <%
+            if (httpBindManager.getHttpBindUnsecurePort() > 0) {
+        %>
+        <tr>
+            <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+            <td><%= httpBindManager.getHttpBindUnsecurePort() %></td>
+            <td><img src="images/blank.gif" width="1" height="1"></td>
+            <td><fmt:message key="ports.http_bind" /></td>
+            <td><fmt:message key="ports.http_bind.desc_unsecured" /></td>
+        </tr>
+        <% } %>
+        <%
+            if (httpBindManager.getHttpBindSecurePort() > 0) {
+        %>
+        <tr>
+            <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+            <td><%= httpBindManager.getHttpBindSecurePort() %></td>
+            <td><img src="images/lock.gif" width="16" height="16" border="0"/></td>
+            <td><fmt:message key="ports.http_bind" /></td>
+            <td><fmt:message key="ports.http_bind.desc_secured" /></td>
+            <td></td>
+        </tr>
+        <% } %>
+    <% } %>
+    <%
+        if (mediaProxyService.isEnabled()) {
+    %>
+    <tr>
+        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+        <td><%= mediaProxyService.getMinPort() %> - <%= mediaProxyService.getMaxPort() %></td>
+        <td><img src="images/blank.gif" width="1" height="1"></td>
+        <td><fmt:message key="ports.media_proxy" /></td>
+        <td><fmt:message key="ports.media_proxy.desc" /></td>
+    </tr>
+    <% } %>
+    <%
+        if (stunService.isEnabled()) {
+    %>
+    <tr>
+        <td><%= interfaceName == null ? LocaleUtils.getLocalizedString("ports.all_ports") : interfaceName %></td>
+        <td><%= stunService.getPrimaryPort() %> & <%= stunService.getSecondaryPort() %></td>
+        <td><img src="images/blank.gif" width="1" height="1"></td>
+        <td><fmt:message key="ports.stun" /></td>
+        <td><fmt:message key="ports.stun.desc" /></td>
+    </tr>
+    <% } %>
+</tbody>
+</table>
+</div>
 <br>
 
 <form action="server-props.jsp">

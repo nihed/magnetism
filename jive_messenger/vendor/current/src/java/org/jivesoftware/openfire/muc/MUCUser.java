@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.muc;
+package org.jivesoftware.openfire.muc;
 
 import org.jivesoftware.util.NotFoundException;
-import org.jivesoftware.wildfire.ChannelHandler;
+import org.jivesoftware.openfire.ChannelHandler;
 import org.xmpp.packet.JID;
 
 import java.util.Iterator;
@@ -66,13 +66,28 @@ public interface MUCUser extends ChannelHandler {
     Iterator<MUCRole> getRoles();
 
     /**
-     * Removes the role of the use in a particular room.<p>
-     * <p/>
+     * Adds the role of the user in a particular room.
+     *
+     * @param roomName The name of the room.
+     * @param role The new role of the user.
+     */
+    void addRole(String roomName, MUCRole role);
+
+    /**
+     * Removes the role of the user in a particular room.<p>
+     *
      * Note: PREREQUISITE: A lock on this object has already been obtained.
      *
      * @param roomName The name of the room we're being removed
      */
     void removeRole(String roomName);
+
+    /**
+     * Returns true if the user is currently present in one or more rooms.
+     *
+     * @return true if the user is currently present in one or more rooms.
+     */
+    boolean isJoined();
 
     /**
      * Get time (in milliseconds from System currentTimeMillis()) since last packet.

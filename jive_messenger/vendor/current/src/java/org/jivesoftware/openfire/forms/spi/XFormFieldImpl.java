@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.forms.spi;
+package org.jivesoftware.openfire.forms.spi;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,7 +18,7 @@ import java.util.List;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.wildfire.forms.FormField;
+import org.jivesoftware.openfire.forms.FormField;
 
 /**
  * A concrete FormField capable of sending itself to a writer and recover its state from an XMPP

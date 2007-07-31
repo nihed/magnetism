@@ -9,9 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.event;
+package org.jivesoftware.openfire.event;
 
-import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.openfire.user.User;
 
 import java.util.Map;
 
@@ -30,7 +30,7 @@ public interface UserEventListener {
      * @param user the user.
      * @param params event parameters.
      */
-    public void userCreated(User user, Map params);
+    public void userCreated(User user, Map<String,Object> params);
 
     /**
      * A user is being deleted.
@@ -38,7 +38,7 @@ public interface UserEventListener {
      * @param user the user.
      * @param params event parameters.
      */
-    public void userDeleting(User user, Map params);
+    public void userDeleting(User user, Map<String,Object> params);
 
     /**
      * A user's name, email, or an extended property was changed.
@@ -46,5 +46,5 @@ public interface UserEventListener {
      * @param user the user.
      * @param params event parameters.
      */
-    public void userModified(User user, Map params);
+    public void userModified(User user, Map<String,Object> params);
 }

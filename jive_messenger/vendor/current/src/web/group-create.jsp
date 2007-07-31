@@ -1,6 +1,6 @@
 <%--
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
@@ -8,17 +8,15 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.HashMap,
-                 java.util.Map,
-                 java.util.*,
-                 org.jivesoftware.wildfire.group.*,
-                 java.net.URLEncoder,
-                 org.jivesoftware.wildfire.user.UserManager"
+<%@ page import="org.jivesoftware.util.Log,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.openfire.group.Group,
+                 org.jivesoftware.openfire.group.GroupAlreadyExistsException"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.stringprep.Stringprep"%>
-<%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="java.net.URLEncoder"%>
+<%@ page import="java.util.HashMap"%>
+<%@ page import="java.util.Map"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -27,27 +25,24 @@
 <%  webManager.init(request, response, session, application, out); %>
 
 <%  // Get parameters //
+    String groupName = ParamUtils.getParameter(request, "group");
+
     boolean create = request.getParameter("create") != null;
+    boolean edit = request.getParameter("edit") != null;
     boolean cancel = request.getParameter("cancel") != null;
     String name = ParamUtils.getParameter(request, "name");
-    String description = ParamUtils.getParameter(request, "description");
-    String users = ParamUtils.getParameter(request, "users", true);
-
-    boolean enableRosterGroups = ParamUtils.getBooleanParameter(request,"enableRosterGroups");
-    String groupDisplayName = ParamUtils.getParameter(request,"groupDisplayName");
-    String showGroup = ParamUtils.getParameter(request,"showGroup");
-    String[] groupNames = ParamUtils.getParameters(request, "groupNames");
-
-//    String showInRosterType = ParamUtils.getParameter(request, "show");
-//    boolean showInRoster = "onlyGroup".equals(showInRosterType) || "everybody".equals(showInRosterType);
-//    String displayName = ParamUtils.getParameter(request, "display");
-//    String groupList = ParamUtils.getParameter(request, "groupList");
-
+    String description = ParamUtils.getParameter(request, "description", true);
+    
     Map<String, String> errors = new HashMap<String, String>();
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("group-summary.jsp");
+        if (groupName == null) {
+            response.sendRedirect("group-summary.jsp");
+        }
+        else {
+            response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8"));    
+        }
         return;
     }
     // Handle a request to create a group:
@@ -56,14 +51,6 @@
         if (name == null) {
             errors.put("name", "");
         }
-        if (enableRosterGroups) {
-            if (groupDisplayName == null) {
-                errors.put("groupDisplayName", "");
-            }
-            if ("spefgroups".equals(showGroup) && (groupNames == null || groupNames.length == 0)) {
-                errors.put("groupNames","");
-            }
-        }
         // do a create if there were no errors
         if (errors.size() == 0) {
             try {
@@ -71,43 +58,11 @@
                 if (description != null) {
                     newGroup.setDescription(description);
                 }
-                if (enableRosterGroups) {
-                    if ("spefgroups".equals(showGroup)) {
-                        showGroup = "onlyGroup";
-                    }
-                    newGroup.getProperties().put("sharedRoster.showInRoster", showGroup);
-                    if (groupDisplayName != null) {
-                        newGroup.getProperties().put("sharedRoster.displayName", groupDisplayName);
-                    }
-                    newGroup.getProperties().put("sharedRoster.groupList", toList(groupNames));
-                }
-                else {
-                    newGroup.getProperties().put("sharedRoster.showInRoster", "nobody");
-                    newGroup.getProperties().put("sharedRoster.displayName", "");
-                    newGroup.getProperties().put("sharedRoster.groupList", "");
-                }
 
-                if (users.length() > 0){
-                    StringTokenizer tokenizer = new StringTokenizer(users, ", \t\n\r\f");
-                    while (tokenizer.hasMoreTokens()) {
-                        String username = tokenizer.nextToken();
-                        try {
-                            if (username.indexOf('@') == -1) {
-                                // No @ was found so assume this is a JID of a local user
-                                username = Stringprep.nodeprep(username);
-                                UserManager.getInstance().getUser(username);
-                                newGroup.getMembers().add(webManager.getXMPPServer().createJID(username, null));
-                            }
-                            else {
-                                // Admin entered a JID. Add the JID directly to the list of group members
-                                newGroup.getMembers().add(new JID(username));
-                            }
-                        }
-                        catch (Exception e) {
-                            throw new IllegalArgumentException("Invalid user.", e);
-                        }
-                    }
-                }
+                newGroup.getProperties().put("sharedRoster.showInRoster", "nobody");
+                newGroup.getProperties().put("sharedRoster.displayName", "");
+                newGroup.getProperties().put("sharedRoster.groupList", "");
+
                 // Successful, so redirect
                 response.sendRedirect("group-edit.jsp?creategroupsuccess=true&group=" + URLEncoder.encode(newGroup.getName(), "UTF-8"));
                 return;
@@ -121,24 +76,63 @@
             }
         }
     }
+    // Handle a request to edit a group:
+    if (edit) {
+        // Validate
+        if (name == null) {
+            errors.put("name", "");
+        }
+        // do a create if there were no errors
+        if (errors.size() == 0) {
+            try {
+                Group group = webManager.getGroupManager().getGroup(groupName);
+                group.setName(name);
+                if (description != null) {
+                    group.setDescription(description);
+                }
 
-    if (errors.size() == 0) {
-        showGroup = "everybody";
+                // Successful, so redirect
+                response.sendRedirect("group-edit.jsp?groupChanged=true&group=" + URLEncoder.encode(group.getName(), "UTF-8"));
+                return;
+            }
+            catch (Exception e) {
+                errors.put("general", "");
+                Log.error(e);
+            }
+        }
     }
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="group.create.title"/></title>
-        <meta name="pageID" content="group-create"/>
-        <meta name="helpPage" content="create_a_group.html"/>
-    </head>
-    <body>
+<head>
+<title><%
+           // If editing the group.
+           if (groupName != null) {
+        %>
+        <fmt:message key="group.edit.title" />
+        <% }
+           // Otherwise creating a new group.
+           else {
+        %>
+        <fmt:message key="group.create.title" />
+        <% } %>
+</title>
+
+<% if (groupName == null) { %>
+<meta name="pageID" content="group-create"/>
+<% }
+   else { %>
+<meta name="subPageID" content="group-edit"/>
+<meta name="extraParams" content="<%= "group="+URLEncoder.encode(groupName, "UTF-8") %>"/>
+<% } %>
+    
+<meta name="helpPage" content="create_a_group.html"/>
+</head>
+<body>
 
 <c:set var="submit" value="${param.create}"/>
 
 <%  if (errors.get("general") != null) { %>
-
     <div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
@@ -153,20 +147,44 @@
     </tbody>
     </table>
     </div><br>
-
 <%  } %>
 
 <p>
-<fmt:message key="group.create.form" />
+    <%
+        // If editing the group.
+        if (groupName != null) {
+    %>
+    <fmt:message key="group.edit.details_info" />
+    <% }
+       // Otherwise creating a new group.
+       else {
+    %>
+    <fmt:message key="group.create.form" />
+    <% } %>
 </p>
 
 <form name="f" action="group-create.jsp" method="post">
 
-<fieldset>
-    <legend><fmt:message key="group.create.new_group_title" /></legend>
-    <div>
+   <% if (groupName != null) { %>
+    <input type="hidden" name="group" value="<%= groupName %>" id="existingName">
+   <% } %>
 
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
+    <!-- BEGIN create group -->
+	<div class="jive-contentBoxHeader">
+        <%
+            // If editing the group.
+            if (groupName != null) {
+        %>
+        <fmt:message key="group.edit.title" />
+        <% }
+           // Otherwise creating a new group.
+           else {
+        %>
+        <fmt:message key="group.create.new_group_title" />
+        <% } %>
+    </div>
+	<div class="jive-contentBox">
+		<table cellpadding="3" cellspacing="0" border="0">
     <tr valign="top">
         <td width="1%" nowrap>
             <label for="gname"><fmt:message key="group.create.group_name" /></label> *
@@ -215,137 +233,27 @@
 
     <%  } %>
 
-    <tr>
-        <td nowrap width="1%" valign="top">
-            <fmt:message key="group.create.label_initial_member" />
-        </td>
-        <td nowrap class="c1" align="left">
-            <textarea name="users" cols="30" rows="3" id="users"
-             ><%= ((users != null) ? users : "") %></textarea>
-        </td>
-    </tr>
+	<tr>
+		<td></td>
+		<td>
+            <%
+               // If editing the group.
+               if (groupName != null) {
+            %>
+            <input type="submit" name="edit" value="<fmt:message key="group.edit.title" />">
+            <% }
+               // Otherwise creating a new group.
+               else {
+            %>
+            <input type="submit" name="create" value="<fmt:message key="group.create.create" />">
+            <% } %>
+            <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
+		</td>
+	</tr>
     </table>
-
-    <br>
-    <p><b><fmt:message key="group.create.share_groups_title" /></b></p>
-
-    <p>
-    <fmt:message key="group.create.share_groups_info" />
-    </p>
-
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr>
-            <td width="1%">
-                <input type="radio" name="enableRosterGroups" value="false" id="rb201" <%= !enableRosterGroups ? "checked" : "" %>>
-            </td>
-            <td width="99%">
-                <label for="rb201"><fmt:message key="group.create.disable_share_group" /></label>
-            </td>
-        </tr>
-        <tr>
-            <td width="1%">
-                <input type="radio" name="enableRosterGroups" value="true" id="rb202" <%= enableRosterGroups ? "checked" : "" %>>
-            </td>
-            <td width="99%">
-                <label for="rb202"><fmt:message key="group.create.enable_share_group" /></label>
-            </td>
-        </tr>
-        <tr>
-            <td width="1%">
-                &nbsp;
-            </td>
-            <td width="99%">
-
-                <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                <tbody>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <fmt:message key="group.create.group_display_name" />
-                        </td>
-                        <td width="99%">
-                            <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"
-                             onclick="this.form.enableRosterGroups[1].checked=true;">
-
-                            <%  if (errors.get("groupDisplayName") != null) { %>
-
-                                    <span class="jive-error-text"><fmt:message key="group.create.enter_a_group_name" /></span>
-
-                            <%  } %>
-                        </td>
-                    </tr>
-                </tbody>
-                </table>
-
-                <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                <tbody>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <input type="radio" name="showGroup" value="everybody" id="rb002"
-                             onclick="this.form.enableRosterGroups[1].checked=true;"
-                             <%= ("everybody".equals(showGroup) ? "checked" : "") %>>
-                        </td>
-                        <td width="99%">
-                            <label for="rb002"><fmt:message key="group.create.show_group_in_all_users" /></label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <input type="radio" name="showGroup" value="onlyGroup" id="rb001"
-                             onclick="this.form.enableRosterGroups[1].checked=true;"
-                             <%= ("onlyGroup".equals(showGroup) && (groupNames == null || groupNames.length == 0) ? "checked" : "") %>>
-                        </td>
-                        <td width="99%">
-                            <label for="rb001"><fmt:message key="group.create.show_group_in_group_members" /></label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <input type="radio" name="showGroup" value="spefgroups" id="rb003"
-                             onclick="this.form.enableRosterGroups[1].checked=true;"
-                             <%= (groupNames != null && groupNames.length > 0) ? "checked" : "" %>>
-                        </td>
-                        <td width="99%">
-                            <label for="rb003"><fmt:message key="group.create.show_group_in_roster_group" /></label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="1%" nowrap>
-                            &nbsp;
-                        </td>
-                        <td width="99%">
-                            <select name="groupNames" size="6" onclick="this.form.showGroup[2].checked=true;this.form.enableRosterGroups[1].checked=true;"
-                             multiple style="width:300px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;">
-
-                            <%  for (Group group : webManager.getGroupManager().getGroups()) { %>
-
-                                <option value="<%= URLEncoder.encode(group.getName(), "UTF-8") %>"
-                                 <%= (contains(groupNames, group.getName()) ? "selected" : "") %>
-                                 ><%= group.getName() %></option>
-
-                            <%  } %>
-
-                            </select>
-                        </td>
-                    </tr>
-                </tbody>
-                </table>
-
-            </td>
-        </tr>
-    </tbody>
-    </table>
-
-    <br>
-    <span class="jive-description">* <fmt:message key="group.create.required_fields" /> </span>
-    </div>
-
-</fieldset>
-
-<br><br>
-
-<input type="submit" name="create" value="<fmt:message key="group.create.create" />">
-<input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
+	</div>
+	<span class="jive-description">* <fmt:message key="group.create.required_fields" /> </span>
+	<!-- END create group -->
 
 </form>
 
@@ -353,32 +261,5 @@
 document.f.name.focus();
 </script>
 
-    </body>
-</html>
-
-<%!
-    private static String toList(String[] array) {
-        if (array == null || array.length == 0) {
-            return "";
-        }
-        StringBuffer buf = new StringBuffer();
-        String sep = "";
-        for (int i=0; i<array.length; i++) {
-            buf.append(sep).append(array[i]);
-            sep = ",";
-        }
-        return buf.toString();
-    }
-
-    private static boolean contains(String[] array, String item) {
-        if (array == null || array.length == 0 || item == null) {
-            return false;
-        }
-        for (int i=0; i<array.length; i++) {
-            if (item.equals(array[i])) {
-                return true;
-            }
-        }
-        return false;
-    }
-%>
+</body>
+</html>%>

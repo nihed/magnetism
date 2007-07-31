@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 3195 $
- * $Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+ * $Revision: 7742 $
+ * $Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -11,20 +11,20 @@
 
 package org.jivesoftware.util;
 
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.AuthToken;
-import org.jivesoftware.wildfire.group.GroupManager;
-import org.jivesoftware.wildfire.muc.MultiUserChatServer;
-import org.jivesoftware.wildfire.roster.RosterManager;
-import org.jivesoftware.wildfire.user.User;
-import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.muc.MultiUserChatServer;
+import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserManager;
 
 import java.io.*;
 import java.net.URL;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
- * A utility bean for Wildfire admin console pages.
+ * A utility bean for Openfire admin console pages.
  */
 public class WebManager extends WebBean {
 
@@ -42,7 +42,7 @@ public class WebManager extends WebBean {
     }
 
     /**
-     * Returns <tt>true</tt> if the Wildfire container is in setup mode, <tt>false</tt> otherwise.
+     * Returns <tt>true</tt> if the Openfire container is in setup mode, <tt>false</tt> otherwise.
      */
     public boolean isSetupMode() {
         return getXMPPServer().isSetupMode();
@@ -112,7 +112,7 @@ public class WebManager extends WebBean {
      */
     public boolean isEmbedded() {
         try {
-            ClassUtils.forName("org.jivesoftware.wildfire.starter.ServerStarter");
+            ClassUtils.forName("org.jivesoftware.openfire.starter.ServerStarter");
             return true;
         }
         catch (Exception ignored) {
@@ -301,7 +301,7 @@ public class WebManager extends WebBean {
         setPageProperty(pageName, "console.refresh", newValue);
     }
 
-    private int getPageProperty(String pageName, String property, int defaultValue) {
+    public int getPageProperty(String pageName, String property, int defaultValue) {
         User user = getUser();
         if (user != null) {
             String values = user.getProperties().get(property);
@@ -352,5 +352,17 @@ public class WebManager extends WebBean {
                 user.getProperties().put(property, toStore);
             }
         }
+    }
+
+    public Cache[] getCaches() {
+        List<Cache> caches = new ArrayList<Cache>(CacheManager.getCaches());
+        Collections.sort(caches, new Comparator() {
+            public int compare(Object o1, Object o2) {
+                Cache cache1 = (Cache)o1;
+                Cache cache2 = (Cache)o2;
+                return cache1.getName().toLowerCase().compareTo(cache2.getName().toLowerCase());
+            }
+        });
+        return caches.toArray(new Cache[]{});
     }
 }

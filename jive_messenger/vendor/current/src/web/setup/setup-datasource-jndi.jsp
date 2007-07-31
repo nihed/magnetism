@@ -14,8 +14,7 @@
                  javax.naming.Binding,
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.database.JNDIDataSourceProvider,
-                 org.jivesoftware.database.DbConnectionManager,
-                 org.jivesoftware.database.JNDIDataSourceProvider" %>
+                 org.jivesoftware.database.DbConnectionManager" %>
 <%@ page import="org.jivesoftware.util.ClassUtils"%>
 <%@ page import="java.util.Map"%>
 <%@ page import="java.sql.Connection"%>
@@ -23,7 +22,7 @@
 <%@ page import="java.sql.Statement"%>
 <%@ page import="java.sql.SQLException"%>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 
 <%
 	// Redirect if we've already run setup:
@@ -57,7 +56,7 @@
             	catch (SQLException sqle) {
                     success = false;
                     sqle.printStackTrace();
-                    errors.put("general","The Wildfire database schema does not "
+                    errors.put("general","The Openfire database schema does not "
                         + "appear to be installed. Follow the installation guide to "
                         + "fix this error.");
             	}
@@ -76,7 +75,7 @@
 <%
     boolean embeddedMode = false;
     try {
-        ClassUtils.forName("org.jivesoftware.wildfire.starter.ServerStarter");
+        ClassUtils.forName("org.jivesoftware.openfire.starter.ServerStarter");
         embeddedMode = true;
     }
     catch (Exception ignored) {}
@@ -120,10 +119,7 @@
             DbConnectionManager.setConnectionProvider(conProvider);
             // Try to establish a connection to the datasource
             if (testConnection(errors)) {
-                // update the sidebar status
-                session.setAttribute("jive.setup.sidebar.3","done");
-                session.setAttribute("jive.setup.sidebar.4","in_progress");
-                // All good, so redirect
+                // Finished, so redirect
                 response.sendRedirect("setup-admin-settings.jsp");
                 return;
             }
@@ -134,8 +130,8 @@
 <html>
     <head>
         <title><fmt:message key="setup.datasource.jndi.setting" /></title>
+        <meta name="currentStep" content="2"/>
     </head>
-
 <body>
 
 <p class="jive-setup-page-header">

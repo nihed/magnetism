@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.disco;
+package org.jivesoftware.openfire.disco;
 
 import java.util.Iterator;
 

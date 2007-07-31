@@ -9,11 +9,11 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.ldap;
+package org.jivesoftware.openfire.ldap;
 
-import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
@@ -25,10 +25,12 @@ import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
 import java.net.URLEncoder;
-import java.util.Hashtable;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * Centralized administration of LDAP connections. The getInstance() method
+ * Centralized administration of LDAP connections. The {@link #getInstance()} method
  * should be used to get an instace. The following properties configure this manager:
  *
  * <ul>
@@ -41,9 +43,9 @@ import java.util.Hashtable;
  *      <li>ldap.usernameField -- default value is "uid".</li>
  *      <li>ldap.nameField -- default value is "cn".</li>
  *      <li>ldap.emailField -- default value is "mail".</li>
- *      <li>ldap.searchFilter -- the filter used to load the list of users. The
- *              default value is in the form "([usernameField]={0})" where [usernameField]
- *              is the value of ldap.usernameField.
+ *      <li>ldap.searchFilter -- the filter used to load the list of users. When defined, it
+ *              will be used with the default filter, which is "([usernameField]={0})" where
+ *              [usernameField] is the value of ldap.usernameField.
  *      <li>ldap.groupNameField</li>
  *      <li>ldap.groupMemberField</li>
  *      <li>ldap.groupDescriptionField</li>
@@ -54,18 +56,83 @@ import java.util.Hashtable;
  *      <li>ldap.autoFollowReferrals</li>
  *      <li>ldap.initialContextFactory --  if this value is not specified,
  *          "com.sun.jndi.ldap.LdapCtxFactory" will be used.</li>
+ *      <li>ldap.connectionPoolEnabled -- true if an LDAP connection pool should be used.
+ *          False if not set.</li>
  * </ul>
  *
  * @author Matt Tucker
  */
 public class LdapManager {
 
-    private String host;
-    private int port = 389;
-    private String usernameField = "uid";
-    private String nameField = "cn";
-    private String emailField = "mail";
-    private String baseDN = "";
+    private static LdapManager instance;
+    static {
+        // Create a special Map implementation to wrap XMLProperties. We only implement
+        // the get, put, and remove operations, since those are the only ones used. Using a Map
+        // makes it easier to perform LdapManager testing.
+        Map<String, String> properties = new Map<String, String>() {
+
+            public String get(Object key) {
+                return JiveGlobals.getXMLProperty((String)key);
+            }
+
+            public String put(String key, String value) {
+                JiveGlobals.setXMLProperty(key, value);
+                // Always return null since XMLProperties doesn't support the normal semantics.
+                return null;
+            }
+
+            public String remove(Object key) {
+                JiveGlobals.deleteXMLProperty((String)key);
+                // Always return null since XMLProperties doesn't support the normal semantics.
+                return null;
+            }
+
+
+            public int size() {
+                return 0;
+            }
+
+            public boolean isEmpty() {
+                return false;
+            }
+
+            public boolean containsKey(Object key) {
+                return false;
+            }
+
+            public boolean containsValue(Object value) {
+                return false;
+            }
+
+            public void putAll(Map<? extends String, ? extends String> t) {
+            }
+
+            public void clear() {
+            }
+
+            public Set<String> keySet() {
+                return null;
+            }
+
+            public Collection<String> values() {
+                return null;
+            }
+
+            public Set<Entry<String, String>> entrySet() {
+                return null;
+            }
+        };
+        instance = new LdapManager(properties);
+    }
+
+
+    private Collection<String> hosts = new ArrayList<String>();
+    private int port;
+    private int readTimeout = -1;
+    private String usernameField;
+    private String nameField;
+    private String emailField;
+    private String baseDN;
     private String alternateBaseDN = null;
     private String adminDN = null;
     private String adminPassword;
@@ -75,14 +142,18 @@ public class LdapManager {
     private boolean followReferrals = false;
     private boolean connectionPoolEnabled = true;
     private String searchFilter = null;
+    private boolean subTreeSearch;
+    private boolean encloseUserDN;
 
-    private String groupNameField = "cn";
-    private String groupMemberField = "member";
-    private String groupDescriptionField = "description";
+    private String groupNameField;
+    private String groupMemberField;
+    private String groupDescriptionField;
     private boolean posixMode = false;
     private String groupSearchFilter = null;
 
-    private static LdapManager instance = new LdapManager();
+    private Pattern userDNPattern;
+
+    private Map<String, String> properties;
 
     /**
      * Provides singleton access to an instance of the LdapManager class.
@@ -94,76 +165,120 @@ public class LdapManager {
     }
 
     /**
-     * Constructs a new LdapManager instance. This class is a singleton so the
-     * constructor is private.
+     * Constructs a new LdapManager instance. Typically, {@link #getInstance()} should be
+     * called instead of this method. LdapManager instances should only be created directly
+     * for testing purposes.
+     *
+     * @param properties the Map that contains properties used by the LDAP manager, such as
+     *      LDAP host and base DN.
      */
-    private LdapManager() {
-        this.host = JiveGlobals.getXMLProperty("ldap.host");
-        String portStr = JiveGlobals.getXMLProperty("ldap.port");
+    public LdapManager(Map<String, String> properties) {
+        this.properties = properties;
+        
+        String host = properties.get("ldap.host");
+        if (host != null) {
+            // Parse the property and check if many hosts were defined. Hosts can be separated
+            // by commas or white spaces
+            StringTokenizer st = new StringTokenizer(host, " ,\t\n\r\f");
+            while (st.hasMoreTokens()) {
+                hosts.add(st.nextToken());
+            }
+        }
+        String portStr = properties.get("ldap.port");
+        port = 389;
         if (portStr != null) {
             try {
                 this.port = Integer.parseInt(portStr);
             }
-            catch (NumberFormatException nfe) { }
+            catch (NumberFormatException nfe) {
+                Log.error(nfe);
+            }
         }
-        if (JiveGlobals.getXMLProperty("ldap.usernameField") != null) {
-            this.usernameField = JiveGlobals.getXMLProperty("ldap.usernameField");
-        }
-        if (JiveGlobals.getXMLProperty("ldap.baseDN") != null) {
-            this.baseDN = JiveGlobals.getXMLProperty("ldap.baseDN");
-        }
-        if (JiveGlobals.getXMLProperty("ldap.alternateBaseDN") != null) {
-            this.alternateBaseDN = JiveGlobals.getXMLProperty("ldap.alternateBaseDN");
-        }
-        if (JiveGlobals.getXMLProperty("ldap.nameField") != null) {
-            this.nameField = JiveGlobals.getXMLProperty("ldap.nameField");
-        }
-        if (JiveGlobals.getXMLProperty("ldap.emailField") != null) {
-            this.emailField = JiveGlobals.getXMLProperty("ldap.emailField");
-        }
-        if (JiveGlobals.getXMLProperty("ldap.connectionPoolEnabled") != null) {
-            this.connectionPoolEnabled = Boolean.valueOf(
-                    JiveGlobals.getXMLProperty("ldap.connectionPoolEnabled")).booleanValue();
-        }
-        if (JiveGlobals.getXMLProperty("ldap.searchFilter") != null) {
-            this.searchFilter = JiveGlobals.getXMLProperty("ldap.searchFilter");
-        }
-        else {
-            StringBuilder filter = new StringBuilder();
-            filter.append("(").append(usernameField).append("={0})");
-            this.searchFilter = filter.toString();
-        }
-        if (JiveGlobals.getXMLProperty("ldap.groupNameField") != null) {
-            this.groupNameField = JiveGlobals.getXMLProperty("ldap.groupNameField");
-        }
-        if (JiveGlobals.getXMLProperty("ldap.groupMemberField") != null) {
-            this.groupMemberField = JiveGlobals.getXMLProperty("ldap.groupMemberField");
-        }
-        if (JiveGlobals.getXMLProperty("ldap.groupDescriptionField") != null) {
-            this.groupDescriptionField = JiveGlobals.getXMLProperty("ldap.groupDescriptionField");
-        }
-        if (JiveGlobals.getXMLProperty("ldap.posixMode") != null) {
-            this.posixMode = Boolean.valueOf(JiveGlobals.getXMLProperty("ldap.posixMode"));
-        }
-        if (JiveGlobals.getXMLProperty("ldap.groupSearchFilter") != null) {
-            this.groupSearchFilter = JiveGlobals.getXMLProperty("ldap.groupSearchFilter");
-        }
-        else {
-            this.groupSearchFilter = "("+groupMemberField+"={0})";
+        String timeout = properties.get("ldap.readTimeout");
+        if (timeout != null) {
+            try {
+                this.readTimeout = Integer.parseInt(timeout);
+            }
+            catch (NumberFormatException nfe) {
+                Log.error(nfe);
+            }
         }
 
-        this.adminDN = JiveGlobals.getXMLProperty("ldap.adminDN");
+        usernameField = properties.get("ldap.usernameField");
+        if (usernameField == null) {
+            usernameField = "uid";
+        }
+        baseDN = properties.get("ldap.baseDN");
+        if (baseDN == null) {
+            baseDN = "";
+        }
+        alternateBaseDN = properties.get("ldap.alternateBaseDN");
+        nameField = properties.get("ldap.nameField");
+        if (nameField == null) {
+            nameField = "cn";
+        }
+        emailField = properties.get("ldap.emailField");
+        if (emailField == null) {
+            emailField = "mail";
+        }
+        connectionPoolEnabled = true;
+        String connectionPoolStr = properties.get("ldap.connectionPoolEnabled");
+        if (connectionPoolStr != null) {
+            connectionPoolEnabled = Boolean.valueOf(connectionPoolStr);
+        }
+        searchFilter = properties.get("ldap.searchFilter");
+        subTreeSearch = true;
+        String subTreeStr = properties.get("ldap.subTreeSearch");
+        if (subTreeStr != null) {
+            subTreeSearch = Boolean.valueOf(subTreeStr);
+        }
+        groupNameField = properties.get("ldap.groupNameField");
+        if (groupNameField == null) {
+            groupNameField = "cn";
+        }
+        groupMemberField = properties.get("ldap.groupMemberField");
+        if (groupMemberField ==null) {
+            groupMemberField = "member";
+        }
+        groupDescriptionField = properties.get("ldap.groupDescriptionField");
+        if (groupDescriptionField == null) {
+            groupDescriptionField = "description";
+        }
+        posixMode = false;
+        String posixStr = properties.get("ldap.posixMode");
+        if (posixStr != null) {
+            posixMode = Boolean.valueOf(posixStr);
+        }
+        groupSearchFilter = properties.get("ldap.groupSearchFilter");
+
+        adminDN = properties.get("ldap.adminDN");
         if (adminDN != null && adminDN.trim().equals("")) {
             adminDN = null;
         }
-        this.adminPassword = JiveGlobals.getXMLProperty("ldap.adminPassword");
-        this.ldapDebugEnabled = Boolean.valueOf(JiveGlobals.getXMLProperty(
-                "ldap.debugEnabled")).booleanValue();
-        this.sslEnabled = Boolean.valueOf(JiveGlobals.getXMLProperty(
-                "ldap.sslEnabled")).booleanValue();
-        this.followReferrals = Boolean.valueOf(JiveGlobals.getXMLProperty(
-                "ldap.autoFollowReferrals")).booleanValue();
-        this.initialContextFactory = JiveGlobals.getXMLProperty("ldap.initialContextFactory");
+        adminPassword = properties.get("ldap.adminPassword");
+        ldapDebugEnabled = false;
+        String ldapDebugStr = properties.get("ldap.debugEnabled");
+        if (ldapDebugStr != null) {
+            ldapDebugEnabled = Boolean.valueOf(ldapDebugStr);
+        }
+        sslEnabled = false;
+        String sslEnabledStr = properties.get("ldap.sslEnabled");
+        if (sslEnabledStr != null) {
+            sslEnabled = Boolean.valueOf(sslEnabledStr);
+        }
+        followReferrals = false;
+        String followReferralsStr = properties.get("ldap.autoFollowReferrals");
+        if (followReferralsStr != null) {
+            followReferrals = Boolean.valueOf(followReferralsStr);
+        }
+        encloseUserDN = true;
+        String encloseUserStr = properties.get("ldap.encloseUserDN");
+        if (encloseUserStr != null) {
+            encloseUserDN = Boolean.valueOf(encloseUserStr);    
+        }
+        // Set the pattern to use to wrap userDNs values "
+        userDNPattern = Pattern.compile("(=)([^\\\"][^=]*[^\\\"])(?:,|$)");
+        this.initialContextFactory = properties.get("ldap.initialContextFactory");
         if (initialContextFactory != null) {
             try {
                 Class.forName(initialContextFactory);
@@ -179,41 +294,58 @@ public class LdapManager {
             initialContextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
         }
 
+        StringBuilder buf = new StringBuilder();
+        buf.append("Created new LdapManager() instance, fields:\n");
+        buf.append("\t host: ").append(hosts).append("\n");
+        buf.append("\t port: ").append(port).append("\n");
+        buf.append("\t usernamefield: ").append(usernameField).append("\n");
+        buf.append("\t baseDN: ").append(baseDN).append("\n");
+        buf.append("\t alternateBaseDN: ").append(alternateBaseDN).append("\n");
+        buf.append("\t nameField: ").append(nameField).append("\n");
+        buf.append("\t emailField: ").append(emailField).append("\n");
+        buf.append("\t adminDN: ").append(adminDN).append("\n");
+        buf.append("\t adminPassword: ").append(adminPassword).append("\n");
+        buf.append("\t searchFilter: ").append(searchFilter).append("\n");
+        buf.append("\t subTreeSearch:").append(subTreeSearch).append("\n");
+        buf.append("\t ldapDebugEnabled: ").append(ldapDebugEnabled).append("\n");
+        buf.append("\t sslEnabled: ").append(sslEnabled).append("\n");
+        buf.append("\t initialContextFactory: ").append(initialContextFactory).append("\n");
+        buf.append("\t connectionPoolEnabled: ").append(connectionPoolEnabled).append("\n");
+        buf.append("\t autoFollowReferrals: ").append(followReferrals).append("\n");
+        buf.append("\t groupNameField: ").append(groupNameField).append("\n");
+        buf.append("\t groupMemberField: ").append(groupMemberField).append("\n");
+        buf.append("\t groupDescriptionField: ").append(groupDescriptionField).append("\n");
+        buf.append("\t posixMode: ").append(posixMode).append("\n");
+        buf.append("\t groupSearchFilter: ").append(groupSearchFilter).append("\n");
+
         if (Log.isDebugEnabled()) {
-            Log.debug("Created new LdapManager() instance, fields:");
-            Log.debug("\t host: " + host);
-            Log.debug("\t port: " + port);
-            Log.debug("\t usernamefield: " + usernameField);
-            Log.debug("\t baseDN: " + baseDN);
-            Log.debug("\t alternateBaseDN: " + alternateBaseDN);
-            Log.debug("\t nameField: " + nameField);
-            Log.debug("\t emailField: " + emailField);
-            Log.debug("\t adminDN: " + adminDN);
-            Log.debug("\t adminPassword: " + adminPassword);
-            Log.debug("\t searchFilter: " + searchFilter);
-            Log.debug("\t ldapDebugEnabled: " + ldapDebugEnabled);
-            Log.debug("\t sslEnabled: " + sslEnabled);
-            Log.debug("\t initialContextFactory: " + initialContextFactory);
-            Log.debug("\t connectionPoolEnabled: " + connectionPoolEnabled);
-            Log.debug("\t autoFollowReferrals: " + followReferrals);
-            Log.debug("\t groupNameField: " + groupNameField);
-            Log.debug("\t groupMemberField: " + groupMemberField);
-            Log.debug("\t groupDescriptionField: " + groupDescriptionField);
-            Log.debug("\t posixMode: " + posixMode);
-            Log.debug("\t groupSearchFilter: " + groupSearchFilter);
+            Log.debug(buf.toString());
+        }
+        if (ldapDebugEnabled) {
+            System.err.println(buf.toString());
         }
     }
 
     /**
      * Returns a DirContext for the LDAP server that can be used to perform
-     * lookups and searches using the default base DN. The context uses the
+     * lookups and searches using the default base DN. The alternate DN will be used
+     * in case there is a {@link NamingException} using base DN. The context uses the
      * admin login that is defined by <tt>adminDN</tt> and <tt>adminPassword</tt>.
      *
      * @return a connection to the LDAP server.
      * @throws NamingException if there is an error making the LDAP connection.
      */
     public LdapContext getContext() throws NamingException {
-        return getContext(baseDN);
+        try {
+            return getContext(baseDN);
+        }
+        catch (NamingException e) {
+            if (alternateBaseDN != null) {
+                return getContext(alternateBaseDN);
+            } else {
+                throw(e);
+            }
+        }
     }
 
     /**
@@ -304,13 +436,20 @@ public class LdapManager {
             env.put(Context.SECURITY_PRINCIPAL, userDN + "," + baseDN);
             env.put(Context.SECURITY_CREDENTIALS, password);
             // Specify timeout to be 10 seconds, only on non SSL since SSL connections
-            // break with a teimout.
+            // break with a timemout.
             if (!sslEnabled) {
                 env.put("com.sun.jndi.ldap.connect.timeout", "10000");
+            }
+            if (readTimeout > 0) {
+                env.put("com.sun.jndi.ldap.read.timeout", String.valueOf(readTimeout));
             }
             if (ldapDebugEnabled) {
                 env.put("com.sun.jndi.ldap.trace.ber", System.err);
             }
+            if (followReferrals) {
+                env.put(Context.REFERRAL, "follow");
+            }
+
             if (debug) {
                 Log.debug("Created context values, attempting to create context...");
             }
@@ -322,8 +461,14 @@ public class LdapManager {
         catch (NamingException ne) {
             // If an alt baseDN is defined, attempt a lookup there.
             if (alternateBaseDN != null) {
-                try { ctx.close(); }
-                catch (Exception ignored) { }
+                try {
+                    if (ctx != null) {
+                        ctx.close();
+                    }
+                }
+                catch (Exception e) {
+                    Log.error(e);
+                }
                 try {
                     // See if the user authenticates.
                     Hashtable<String, Object> env = new Hashtable<String, Object>();
@@ -338,12 +483,15 @@ public class LdapManager {
                     env.put(Context.SECURITY_PRINCIPAL, userDN + "," + alternateBaseDN);
                     env.put(Context.SECURITY_CREDENTIALS, password);
                     // Specify timeout to be 10 seconds, only on non SSL since SSL connections
-                    // break with a teimout.
+                    // break with a timemout.
                     if (!sslEnabled) {
                         env.put("com.sun.jndi.ldap.connect.timeout", "10000");
                     }
                     if (ldapDebugEnabled) {
                         env.put("com.sun.jndi.ldap.trace.ber", System.err);
+                    }
+                    if (followReferrals) {
+                        env.put(Context.REFERRAL, "follow");
                     }
                     if (debug) {
                         Log.debug("Created context values, attempting to create context...");
@@ -365,8 +513,14 @@ public class LdapManager {
             }
         }
         finally {
-            try { ctx.close(); }
-            catch (Exception ignored) { }
+            try {
+                if (ctx != null) {
+                    ctx.close();
+                }
+            }
+            catch (Exception e) {
+                Log.error(e);
+            }
         }
         return true;
     }
@@ -414,9 +568,9 @@ public class LdapManager {
      * will be performed using the field "uid", but this can be changed by setting
      * the <tt>usernameField</tt> property.<p>
      *
-     * Searches are performed over all subtrees relative to the <tt>baseDN</tt>.
-     * For example, if the <tt>baseDN</tt> is "o=jivesoftware, o=com" and we
-     * do a search for "mtucker", then we might find a userDN of
+     * Searches are performed over all sub-trees relative to the <tt>baseDN</tt> unless
+     * sub-tree searching has been disabled. For example, if the <tt>baseDN</tt> is
+     * "o=jivesoftware, o=com" and we do a search for "mtucker", then we might find a userDN of
      * "uid=mtucker,ou=People". This kind of searching is a good thing since
      * it doesn't make the assumption that all user records are stored in a flat
      * structure. However, it does add the requirement that "uid" field (or the
@@ -426,13 +580,13 @@ public class LdapManager {
      * "uid=mtucker,ou=Administrators". In such a case, it's not possible to
      * uniquely identify a user, so this method will throw an error.<p>
      *
-     * The dn that's returned is relative to the <tt>baseDN</tt>.
+     * The DN that's returned is relative to the <tt>baseDN</tt>.
      *
      * @param username the username to lookup the dn for.
      * @param baseDN the base DN to use for this search.
      * @return the dn associated with <tt>username</tt>.
      * @throws Exception if the search for the dn fails.
-     * @see #findUserDN(String)  to search using the default baseDN and alternateBaseDN.
+     * @see #findUserDN(String) to search using the default baseDN and alternateBaseDN.
      */
     public String findUserDN(String username, String baseDN) throws Exception {
         boolean debug = Log.isDebugEnabled();
@@ -448,10 +602,17 @@ public class LdapManager {
             }
             // Search for the dn based on the username.
             SearchControls constraints = new SearchControls();
-            constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            // If sub-tree searching is enabled (default is true) then search the entire tree.
+            if (subTreeSearch) {
+                constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            }
+            // Otherwise, only search a single level.
+            else {
+                constraints.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+            }
             constraints.setReturningAttributes(new String[] { usernameField });
 
-            NamingEnumeration answer = ctx.search("", searchFilter, new String[] {username},
+            NamingEnumeration answer = ctx.search("", getSearchFilter(), new String[] {username},
                     constraints);
 
             if (debug) {
@@ -478,6 +639,25 @@ public class LdapManager {
                 throw new UserNotFoundException("LDAP username lookup for " + username +
                         " matched multiple entries.");
             }
+            // Close the enumeration.
+            answer.close();
+            // All other methods assume that userDN is not a full LDAP string.
+            // However if a referal was followed this is not the case.  The
+            // following code converts a referral back to a "partial" LDAP string.
+            if (userDN.startsWith("ldap://")) {
+                userDN = userDN.replace("," + baseDN, "");
+                userDN = userDN.substring(userDN.lastIndexOf("/") + 1);
+                userDN = java.net.URLDecoder.decode(userDN, "UTF-8");
+            }
+            if (encloseUserDN) {
+                // Enclose userDN values between "
+                // eg. cn=John\, Doe,ou=People --> cn="John\, Doe",ou="People"
+                Matcher matcher = userDNPattern.matcher(userDN);
+                userDN = matcher.replaceAll("$1\"$2\",");
+                if (userDN.endsWith(",")) {
+                    userDN = userDN.substring(0, userDN.length() - 1);
+                }
+            }
             return userDN;
         }
         catch (Exception e) {
@@ -488,7 +668,9 @@ public class LdapManager {
         }
         finally {
             try { ctx.close(); }
-            catch (Exception ignored) { }
+            catch (Exception ignored) {
+                // Ignore.
+            }
         }
     }
 
@@ -500,42 +682,59 @@ public class LdapManager {
      * @return the properly encoded URL for use in as PROVIDER_URL.
      */
     private String getProviderURL(String baseDN) {
-        String ldapURL = "";
+        StringBuffer ldapURL = new StringBuffer();
         try {
-            // Create a correctly-encoded ldap URL for the PROVIDER_URL
-            ldapURL = "ldap://" + host + ":" + port + "/" +
-                    URLEncoder.encode(baseDN, "UTF-8");
+            baseDN = URLEncoder.encode(baseDN, "UTF-8");
             // The java.net.URLEncoder class encodes spaces as +, but they need to be %20
-            ldapURL = ldapURL.replaceAll("\\+", "%20");
+            baseDN = baseDN.replaceAll("\\+", "%20");
         }
         catch (java.io.UnsupportedEncodingException e) {
             // UTF-8 is not supported, fall back to using raw baseDN
-            ldapURL = "ldap://" + host + ":" + port + "/" + baseDN;
         }
-        return ldapURL;
+        for (String host : hosts) {
+            // Create a correctly-encoded ldap URL for the PROVIDER_URL
+            ldapURL.append("ldap://");
+            ldapURL.append(host);
+            ldapURL.append(":");
+            ldapURL.append(port);
+            ldapURL.append("/");
+            ldapURL.append(baseDN);
+            ldapURL.append(" ");
+        }
+        return ldapURL.toString();
     }
 
     /**
-     * Returns the LDAP server host; e.g. <tt>localhost</tt> or
+     * Returns the LDAP servers hosts; e.g. <tt>localhost</tt> or
      * <tt>machine.example.com</tt>, etc. This value is stored as the Jive
      * Property <tt>ldap.host</tt>.
      *
      * @return the LDAP server host name.
      */
-    public String getHost() {
-        return host;
+    public Collection<String> getHosts() {
+        return hosts;
     }
 
     /**
-     * Sets the LDAP server host; e.g., <tt>localhost</tt> or
+     * Sets the list of LDAP servers host; e.g., <tt>localhost</tt> or
      * <tt>machine.example.com</tt>, etc. This value is store as the Jive
-     * Property <tt>ldap.host</tt>
+     * Property <tt>ldap.host</tt> using a comma as a delimiter for each host.<p>
      *
-     * @param host the LDAP server host name.
+     * Note that all LDAP servers have to share the same configuration.
+     *
+     * @param hosts the LDAP servers host names.
      */
-    public void setHost(String host) {
-        this.host = host;
-        JiveGlobals.setXMLProperty("ldap.host", host);
+    public void setHosts(Collection<String> hosts) {
+        this.hosts = hosts;
+        StringBuilder hostProperty = new StringBuilder();
+        for (String host : hosts) {
+            hostProperty.append(host).append(",");
+        }
+        if (!hosts.isEmpty()) {
+            // Remove the last comma
+            hostProperty.setLength(hostProperty.length()-1);
+        }
+        properties.put("ldap.host", hostProperty.toString());
     }
 
     /**
@@ -556,7 +755,7 @@ public class LdapManager {
      */
     public void setPort(int port) {
         this.port = port;
-        JiveGlobals.setXMLProperty("ldap.port", ""+port);
+        properties.put("ldap.port", Integer.toString(port));
     }
 
     /**
@@ -579,7 +778,7 @@ public class LdapManager {
      */
     public void setDebugEnabled(boolean debugEnabled) {
         this.ldapDebugEnabled = debugEnabled;
-        JiveGlobals.setXMLProperty("ldap.ldapDebugEnabled", ""+debugEnabled);
+        properties.put("ldap.ldapDebugEnabled", Boolean.toString(debugEnabled));
     }
 
     /**
@@ -598,7 +797,7 @@ public class LdapManager {
      */
     public void setSslEnabled(boolean sslEnabled) {
         this.sslEnabled = sslEnabled;
-        JiveGlobals.setXMLProperty("ldap.sslEnabled", ""+sslEnabled);
+        properties.put("ldap.sslEnabled", Boolean.toString(sslEnabled));
     }
 
     /**
@@ -621,10 +820,11 @@ public class LdapManager {
     public void setUsernameField(String usernameField) {
         this.usernameField = usernameField;
         if (usernameField == null) {
-            JiveGlobals.deleteXMLProperty("ldap.usernameField");
+            properties.remove("ldap.usernameField");
+            this.usernameField = "uid";
         }
         else {
-            JiveGlobals.setXMLProperty("ldap.usernameField", usernameField);
+            properties.put("ldap.usernameField", usernameField);
         }
     }
 
@@ -632,7 +832,7 @@ public class LdapManager {
      * Returns the LDAP field name that the user's name is stored in. By default
      * this is "cn". Another common value is "displayName".
      *
-     * @return the LDAP field that that correspond's to the user's name.
+     * @return the LDAP field that that corresponds to the user's name.
      */
     public String getNameField() {
         return nameField;
@@ -642,15 +842,15 @@ public class LdapManager {
      * Sets the LDAP field name that the user's name is stored in. By default
      * this is "cn". Another common value is "displayName".
      *
-     * @param nameField the LDAP field that that correspond's to the user's name.
+     * @param nameField the LDAP field that that corresponds to the user's name.
      */
     public void setNameField(String nameField) {
         this.nameField = nameField;
         if (nameField == null) {
-            JiveGlobals.deleteXMLProperty("ldap.nameField");
+            properties.remove("ldap.nameField");
         }
         else {
-            JiveGlobals.setXMLProperty("ldap.nameField", nameField);
+            properties.put("ldap.nameField", nameField);
         }
     }
 
@@ -658,7 +858,7 @@ public class LdapManager {
      * Returns the LDAP field name that the user's email address is stored in.
      * By default this is "mail".
      *
-     * @return the LDAP field that that correspond's to the user's email
+     * @return the LDAP field that that corresponds to the user's email
      *      address.
      */
     public String getEmailField() {
@@ -669,16 +869,16 @@ public class LdapManager {
      * Sets the LDAP field name that the user's email address is stored in.
      * By default this is "mail".
      *
-     * @param emailField the LDAP field that that correspond's to the user's
+     * @param emailField the LDAP field that that corresponds to the user's
      *      email address.
      */
     public void setEmailField(String emailField) {
         this.emailField = emailField;
         if (emailField == null) {
-            JiveGlobals.deleteXMLProperty("ldap.emailField");
+            properties.remove("ldap.emailField");
         }
         else {
-            JiveGlobals.setXMLProperty("ldap.emailField", emailField);
+            properties.put("ldap.emailField", emailField);
         }
     }
 
@@ -700,7 +900,7 @@ public class LdapManager {
      */
     public void setBaseDN(String baseDN) {
         this.baseDN = baseDN;
-        JiveGlobals.setXMLProperty("ldap.baseDN", baseDN);
+        properties.put("ldap.baseDN", baseDN);
     }
 
     /**
@@ -725,11 +925,37 @@ public class LdapManager {
     public void setAlternateBaseDN(String alternateBaseDN) {
         this.alternateBaseDN = alternateBaseDN;
         if (alternateBaseDN == null) {
-            JiveGlobals.deleteXMLProperty("ldap.alternateBaseDN");
+            properties.remove("ldap.alternateBaseDN");
         }
         else {
-            JiveGlobals.setXMLProperty("ldap.alternateBaseDN", alternateBaseDN);
+            properties.put("ldap.alternateBaseDN", alternateBaseDN);
         }
+    }
+
+    /**
+     * Returns the BaseDN for the given username.
+     *
+     * @param username username to return its base DN.
+     * @return the BaseDN for the given username. If no baseDN is found,
+     *         this method will return <tt>null</tt>.
+     */
+    public String getUsersBaseDN(String username) {
+        try {
+            findUserDN(username, baseDN);
+            return baseDN;
+        }
+        catch (Exception e) {
+            try {
+                if (alternateBaseDN != null) {
+                    findUserDN(username, alternateBaseDN);
+                    return alternateBaseDN;
+                }
+            }
+            catch (Exception ex) {
+                Log.debug(ex);
+            }
+        }
+        return null;
     }
 
     /**
@@ -750,7 +976,7 @@ public class LdapManager {
      */
     public void setAdminDN(String adminDN) {
         this.adminDN = adminDN;
-        JiveGlobals.setXMLProperty("ldap.adminDN", adminDN);
+        properties.put("ldap.adminDN", adminDN);
     }
 
     /**
@@ -771,36 +997,101 @@ public class LdapManager {
      */
     public void setAdminPassword(String adminPassword) {
         this.adminPassword = adminPassword;
-        JiveGlobals.setXMLProperty("ldap.adminPassword", adminPassword);
+        properties.put("ldap.adminPassword", adminPassword);
     }
 
     /**
-     * Returns the filter used for searching the directory for users.
+     * Sets whether an LDAP connection pool should be used or not.
+     *
+     * @param connectionPoolEnabled true if an LDAP connection pool should be used.
+     */
+    public void setConnectionPoolEnabled(boolean connectionPoolEnabled) {
+        this.connectionPoolEnabled = connectionPoolEnabled;
+        properties.put("ldap.connectionPoolEnabled", Boolean.toString(connectionPoolEnabled));
+    }
+
+    /**
+     * Returns whether an LDAP connection pool should be used or not.
+     *
+     * @return true if an LDAP connection pool should be used.
+     */
+    public boolean isConnectionPoolEnabled() {
+        return connectionPoolEnabled;
+    }
+
+    /**
+     * Returns the filter used for searching the directory for users, which includes
+     * the default filter (username field search) plus any custom-defined search filter.
      *
      * @return the search filter.
      */
     public String getSearchFilter() {
-    	return searchFilter;
+        StringBuilder filter = new StringBuilder();
+        if (searchFilter == null) {
+            filter.append("(").append(usernameField).append("={0})");
+        }
+        else {
+            filter.append("(&(").append(usernameField).append("={0})");
+            filter.append(searchFilter).append(")");
+        }
+        return filter.toString();
     }
 
     /**
-     * Sets the filter used for searching the directory for users. The filter should
-     * contain a single token "{0}" that will be dynamically replaced with the
-     * user's unique ID.
+     * Sets the search filter appended to the default filter when searching for users.
      *
-     * @param searchFilter the search filter.
+     * @param searchFilter the search filter appended to the default filter
+     *      when searching for users.
      */
     public void setSearchFilter(String searchFilter) {
-    	if (searchFilter == null || "".equals(searchFilter)) {
-            StringBuilder filter = new StringBuilder();
-            filter.append("(").append(usernameField).append("={0})");
-            this.searchFilter = filter.toString();
-            JiveGlobals.deleteXMLProperty("ldap.searchFilter");
-        }
-        else {
-            this.searchFilter = searchFilter;
-    		JiveGlobals.setXMLProperty("ldap.searchFilter", searchFilter);
-    	}
+        this.searchFilter = searchFilter;
+        properties.put("ldap.searchFilter", searchFilter);
+    }
+
+    /**
+     * Returns true if the entire tree under the base DN will be searched (recursive search)
+     * when doing LDAP queries (finding users, groups, etc). When false, only a single level
+     * under the base DN will be searched. The default is <tt>true</tt> which is the best
+     * option for most LDAP setups. In only a few cases will the directory be setup in such
+     * a way that it's better to do single level searching.
+     *
+     * @return true if the entire tree under the base DN will be searched.
+     */
+    public boolean isSubTreeSearch() {
+        return subTreeSearch;
+    }
+
+    /**
+     * Sets whether the entire tree under the base DN will be searched (recursive search)
+     * when doing LDAP queries (finding users, groups, etc). When false, only a single level
+     * under the base DN will be searched. The default is <tt>true</tt> which is the best
+     * option for most LDAP setups. In only a few cases will the directory be setup in such
+     * a way that it's better to do single level searching.
+     *
+     * @param subTreeSearch true if the entire tree under the base DN will be searched.
+     */
+    public void setSubTreeSearch(boolean subTreeSearch) {
+        this.subTreeSearch = subTreeSearch;
+        properties.put("ldap.subTreeSearch", String.valueOf(subTreeSearch));
+    }
+
+    /**
+     * Returns true if LDAP referrals will automatically be followed when found.
+     *
+     * @return true if LDAP referrals are automatically followed.
+     */
+    public boolean isFollowReferralsEnabled() {
+        return followReferrals;
+    }
+
+    /**
+     * Sets whether LDAP referrals should be automatically followed.
+     *
+     * @param followReferrals true if LDAP referrals should be automatically followed.
+     */
+    public void setFollowReferralsEnabled(boolean followReferrals) {
+        this.followReferrals = followReferrals;
+        properties.put("ldap.autoFollowReferrals", String.valueOf(followReferrals));
     }
 
     /**
@@ -820,7 +1111,7 @@ public class LdapManager {
      */
     public void setGroupNameField(String groupNameField) {
         this.groupNameField = groupNameField;
-        JiveGlobals.setXMLProperty("ldap.groupNameField", groupNameField);
+        properties.put("ldap.groupNameField", groupNameField);
     }
 
     /**
@@ -839,9 +1130,9 @@ public class LdapManager {
      *
      * @param groupMemberField the field used to list members within a group.
      */
-    public void setGroupmemberField(String groupMemberField) {
+    public void setGroupMemberField(String groupMemberField) {
         this.groupMemberField = groupMemberField;
-        JiveGlobals.setXMLProperty("ldap.groupMemberField", groupMemberField);
+        properties.put("ldap.groupMemberField", groupMemberField);
     }
 
     /**
@@ -862,7 +1153,7 @@ public class LdapManager {
      */
     public void setGroupDescriptionField(String groupDescriptionField) {
         this.groupDescriptionField = groupDescriptionField;
-        JiveGlobals.setXMLProperty("ldap.groupDescriptionField", groupDescriptionField);
+        properties.put("ldap.groupDescriptionField", groupDescriptionField);
     }
 
     /**
@@ -884,29 +1175,37 @@ public class LdapManager {
      *
      * @param posixMode true if posix mode is being used by the LDAP server.
      */
-    public void setPostfixMode(boolean posixMode) {
+    public void setPosixMode(boolean posixMode) {
         this.posixMode = posixMode;
-        JiveGlobals.setXMLProperty("ldap.posixEnabled", String.valueOf(posixMode));
+        properties.put("ldap.posixMode", String.valueOf(posixMode));
     }
 
     /**
-     * Return the field used as the search filter when searching for groups.
-     * Value of groupSearchFilter defaults "(groupMemberField=*)".
+     * Returns the filter used for searching the directory for groups, which includes
+     * the default filter plus any custom-defined search filter.
      *
-     * @return the field used as the search filter when searching for groups.
+     * @return the search filter when searching for groups.
      */
     public String getGroupSearchFilter() {
-        return groupSearchFilter;
+        StringBuilder groupFilter = new StringBuilder();
+        if (groupSearchFilter == null) {
+            groupFilter.append("(").append(groupNameField).append("={0})");
+        }
+        else {
+            groupFilter.append("(&(").append(groupNameField).append("={0})");
+            groupFilter.append(groupSearchFilter).append(")");
+        }
+        return groupFilter.toString();
     }
 
     /**
-     * Sets the field used as the search filter when searching for groups.
-     * Value of groupSearchFilter defaults "(groupMemberField=*)".
+     * Sets the search filter appended to the default filter when searching for groups.
      *
-     * @param groupSearchFilter the field used as the search filter when searching for groups.
+     * @param groupSearchFilter the search filter appended to the default filter
+     *      when searching for groups.
      */
     public void setGroupSearchFilter(String groupSearchFilter) {
         this.groupSearchFilter = groupSearchFilter;
-        JiveGlobals.setXMLProperty("ldap.groupSearchFilter", groupSearchFilter);
+        properties.put("ldap.groupSearchFilter", groupSearchFilter);
     }
 }

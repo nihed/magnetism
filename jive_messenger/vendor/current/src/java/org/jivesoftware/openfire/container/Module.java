@@ -9,9 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.container;
+package org.jivesoftware.openfire.container;
 
-import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServer;
 
 /**
  * Logical, server-managed entities must implement this interface. A module
@@ -43,7 +43,7 @@ import org.jivesoftware.wildfire.XMPPServer;
 public interface Module {
 
     /**
-     * <p>Obtain the name of the module for display in administration interfaces.</p>
+     * Returns the name of the module for display in administration interfaces.
      *
      * @return The name of the module.
      */

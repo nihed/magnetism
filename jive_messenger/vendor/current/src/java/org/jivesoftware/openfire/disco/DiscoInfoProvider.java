@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.disco;
+package org.jivesoftware.openfire.disco;
 
 import org.dom4j.Element;
-import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
+import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
 import org.xmpp.packet.JID;
 
 import java.util.Iterator;

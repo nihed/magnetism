@@ -9,25 +9,26 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.disco;
+package org.jivesoftware.openfire.disco;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.wildfire.IQHandlerInfo;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
-import org.jivesoftware.wildfire.handler.IQHandler;
-import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
+import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * IQDiscoInfoHandler is responsible for handling disco#info requests. This class holds a map with
@@ -52,24 +53,29 @@ import java.util.concurrent.ConcurrentHashMap;
 public class IQDiscoInfoHandler extends IQHandler {
 
     private Map<String, DiscoInfoProvider> entities = new HashMap<String, DiscoInfoProvider>();
-    private List<String> serverFeatures = new ArrayList<String>();
+    private Set<String> serverFeatures = new CopyOnWriteArraySet<String>();
     private Map<String, DiscoInfoProvider> serverNodeProviders =
             new ConcurrentHashMap<String, DiscoInfoProvider>();
     private IQHandlerInfo info;
 
-    private List<Element> userIdentities = new ArrayList<Element>();
+    private List<Element> anonymousUserIdentities = new ArrayList<Element>();
+    private List<Element> registeredUserIdentities = new ArrayList<Element>();
     private List<String> userFeatures = new ArrayList<String>();
 
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");
         info = new IQHandlerInfo("query", "http://jabber.org/protocol/disco#info");
-        serverFeatures.add("http://jabber.org/protocol/disco#info");
+        addServerFeature("http://jabber.org/protocol/disco#info");
         // Initialize the user identity and features collections (optimization to avoid creating
         // the same objects for each response)
         Element userIdentity = DocumentHelper.createElement("identity");
         userIdentity.addAttribute("category", "account");
+        userIdentity.addAttribute("type", "anonymous");
+        anonymousUserIdentities.add(userIdentity);
+        userIdentity = DocumentHelper.createElement("identity");
+        userIdentity.addAttribute("category", "account");
         userIdentity.addAttribute("type", "registered");
-        userIdentities.add(userIdentity);
+        registeredUserIdentities.add(userIdentity);
         userFeatures.add("http://jabber.org/protocol/disco#info");
     }
 
@@ -77,7 +83,7 @@ public class IQDiscoInfoHandler extends IQHandler {
         return info;
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException {
+    public IQ handleIQ(IQ packet) {
         // Create a copy of the sent pack that will be used as the reply
         // we only need to add the requested info to the reply if any otherwise add 
         // a not found error
@@ -99,7 +105,7 @@ public class IQDiscoInfoHandler extends IQHandler {
             Element iq = packet.getChildElement();
             String node = iq.attributeValue("node");
             //String node = metaData.getProperty("query:node");
-            
+
             // Check if we have information about the requested name and node
             if (infoProvider.hasInfo(name, node, packet.getFrom())) {
                 reply.setChildElement(iq.createCopy());
@@ -113,7 +119,7 @@ public class IQDiscoInfoHandler extends IQHandler {
                     identity.setQName(new QName(identity.getName(), queryElement.getNamespace()));
                     queryElement.add((Element)identity.clone());
                 }
-                
+
                 // Add to the reply all the features provided by the DiscoInfoProvider
                 Iterator features = infoProvider.getFeatures(name, node, packet.getFrom());
                 while (features.hasNext()) {
@@ -208,8 +214,29 @@ public class IQDiscoInfoHandler extends IQHandler {
      */
     private void addServerFeaturesProvider(ServerFeaturesProvider provider) {
         for (Iterator<String> it = provider.getFeatures(); it.hasNext();) {
-            serverFeatures.add(it.next());
+            addServerFeature(it.next());
         }
+    }
+
+    /**
+     * Adds one specific feature to the information returned whenever a disco for information is
+     * made against the server.
+     *
+     * @param namespace the namespace identifying the new server feature.
+     * @return true if the new feature was successfully added.
+     */
+    public boolean addServerFeature(String namespace) {
+        return serverFeatures.add(namespace);
+    }
+
+    /**
+     * Removes a feature from the information returned whenever a disco for information is
+     * made against the server.
+     *
+     * @param namespace the namespace of the feature to be removed.
+     */
+    public void removeServerFeature(String namespace) {
+        serverFeatures.remove(namespace);
     }
 
     public void initialize(XMPPServer server) {
@@ -231,7 +258,7 @@ public class IQDiscoInfoHandler extends IQHandler {
      */
     private DiscoInfoProvider getServerInfoProvider() {
         DiscoInfoProvider discoInfoProvider = new DiscoInfoProvider() {
-            ArrayList<Element> identities = new ArrayList<Element>();
+            final ArrayList<Element> identities = new ArrayList<Element>();
 
             public Iterator<Element> getIdentities(String name, String node, JID senderJID) {
                 if (node != null && serverNodeProviders.get(node) != null) {
@@ -245,7 +272,7 @@ public class IQDiscoInfoHandler extends IQHandler {
                             Element identity = DocumentHelper.createElement("identity");
                             identity.addAttribute("category", "server");
                             identity.addAttribute("name", JiveGlobals.getProperty(
-                                    "xmpp.server.name", "Wildfire Server"));
+                                    "xmpp.server.name", "Openfire Server"));
                             identity.addAttribute("type", "im");
 
                             identities.add(identity);
@@ -254,9 +281,15 @@ public class IQDiscoInfoHandler extends IQHandler {
                     return identities.iterator();
                 }
                 else {
-                    // Answer identity of a registered user.
-                    // Note: We know that this user exists because #hasInfo returned true
-                    return userIdentities.iterator();
+                    if (SessionManager.getInstance().isAnonymousRoute(name)) {
+                        // Answer identity of an anonymous user.
+                        return anonymousUserIdentities.iterator();
+                    }
+                    else {
+                        // Answer identity of a registered user.
+                        // Note: We know that this user exists because #hasInfo returned true
+                        return registeredUserIdentities.iterator();
+                    }
                 }
             }
 
@@ -285,10 +318,10 @@ public class IQDiscoInfoHandler extends IQHandler {
                     return false;
                 }
                 try {
-                    // True if it is an info request of the server or of a registered user. We
-                    // now support disco of user's bare JIDs
-                    return node == null &&
-                            (name == null || UserManager.getInstance().getUser(name) != null);
+                    // True if it is an info request of the server, a registered user or an
+                    // anonymous user. We now support disco of user's bare JIDs
+                    return name == null || UserManager.getInstance().getUser(name) != null ||
+                            SessionManager.getInstance().isAnonymousRoute(name);
                 }
                 catch (UserNotFoundException e) {
                     return false;

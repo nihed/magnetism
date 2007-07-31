@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.event;
+package org.jivesoftware.openfire.event;
 
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.user.User;
+import org.jivesoftware.openfire.user.User;
 
 import java.util.List;
 import java.util.Map;
@@ -111,7 +111,7 @@ public class UserEventDispatcher {
      * @param eventType the event type.
      * @param params event parameters.
      */
-    public static void dispatchEvent(User user, EventType eventType, Map params) {
+    public static void dispatchEvent(User user, EventType eventType, Map<String,Object> params) {
         for (UserEventListener listener : listeners) {
             try {
                 switch (eventType) {

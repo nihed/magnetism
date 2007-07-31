@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.handler;
+package org.jivesoftware.openfire.handler;
 
-import org.jivesoftware.wildfire.IQHandlerInfo;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
 
 /**

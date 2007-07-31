@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1709 $
- * $Date: 2005-07-26 14:55:27 -0400 (Tue, 26 Jul 2005) $
+ * $Revision: 4016 $
+ * $Date: 2006-06-18 16:12:04 -0500 (Sun, 18 Jun 2006) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -116,9 +116,8 @@ public class AuthCheckFilter implements Filter {
             Log.error(e);
         }
         try {
-            String url= loginPage + "?url=" + URLEncoder.encode(buf.toString(), "ISO-8859-1")
+            return loginPage + "?url=" + URLEncoder.encode(buf.toString(), "ISO-8859-1")
                     + (optionalParams != null ? "&"+optionalParams : "");
-            return url;
         }
         catch (Exception e) {
             Log.error(e);

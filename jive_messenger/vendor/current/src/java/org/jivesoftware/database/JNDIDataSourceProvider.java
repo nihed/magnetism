@@ -1,6 +1,6 @@
 /**
  * $Revision: 2949 $
- * $Date: 2005-10-10 03:53:06 -0400 (Mon, 10 Oct 2005) $
+ * $Date: 2005-10-10 02:53:06 -0500 (Mon, 10 Oct 2005) $
  *
  * Copyright (C) 2004-2005 Jive Software. All rights reserved.
  *

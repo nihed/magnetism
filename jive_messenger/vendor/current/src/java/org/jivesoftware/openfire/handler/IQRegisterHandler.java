@@ -3,32 +3,37 @@
  * $Revision: 1634 $
  * $Date: 2005-07-15 22:37:54 -0300 (Fri, 15 Jul 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.handler;
+package org.jivesoftware.openfire.handler;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.wildfire.forms.DataForm;
-import org.jivesoftware.wildfire.forms.FormField;
-import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
-import org.jivesoftware.wildfire.forms.spi.XFormFieldImpl;
-import org.jivesoftware.wildfire.group.GroupManager;
-import org.jivesoftware.wildfire.roster.RosterManager;
-import org.jivesoftware.wildfire.user.User;
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
-import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.openfire.forms.DataForm;
+import org.jivesoftware.openfire.forms.FormField;
+import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
+import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
+import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -170,7 +175,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         currentRegistration.addElement("registered");
                         currentRegistration.element("username").setText(user.getUsername());
                         currentRegistration.element("password").setText("");
-                        currentRegistration.element("email").setText(user.getEmail());
+                        currentRegistration.element("email")
+                                .setText(user.getEmail() == null ? "" : user.getEmail());
                         currentRegistration.element("name").setText(user.getName());
 
                         Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
@@ -185,7 +191,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                                 field.addElement("value").addText(user.getName());
                             }
                             else if ("email".equals(field.attributeValue("var"))) {
-                                field.addElement("value").addText(user.getEmail());
+                                field.addElement("value")
+                                        .addText(user.getEmail() == null ? "" : user.getEmail());
                             }
                         }
                         reply.setChildElement(currentRegistration);
@@ -226,6 +233,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
 
                             reply = IQ.createResultIQ(packet);
                             session.process(reply);
+                            // Take a quick nap so that the client can process the result
+                            Thread.sleep(10);
                             // Close the user's connection
                             session.getConnection().close();
                             // The reply has been sent so clean up the variable
@@ -237,12 +246,12 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     }
                 }
                 else {
-                    String username = null;
+                    String username;
                     String password = null;
                     String email = null;
                     String name = null;
-                    User newUser = null;
-                    XDataFormImpl registrationForm = null;
+                    User newUser;
+                    XDataFormImpl registrationForm;
                     FormField field;
 
                     Element formElement = iqElement.element("x");
@@ -308,23 +317,25 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         }
                         else {
                             User user = userManager.getUser(session.getUsername());
-                            if (user != null) {
-                                if (user.getUsername().equalsIgnoreCase(username)) {
-                                    if (password != null && password.trim().length() > 0) {
-                                        user.setPassword(password);
-                                    }
-                                    if (!onlyPassword) {
-                                        user.setEmail(email);
-                                    }
-                                    newUser = user;
+                            if (user.getUsername().equalsIgnoreCase(username)) {
+                                if (password != null && password.trim().length() > 0) {
+                                    user.setPassword(password);
                                 }
-                                else {
-                                    // An admin can create new accounts when logged in.
-                                    newUser = userManager.createUser(username, password, null, email);
+                                if (!onlyPassword) {
+                                    user.setEmail(email);
                                 }
+                                newUser = user;
+                            }
+                            else if (password != null && password.trim().length() > 0) {
+                                // An admin can create new accounts when logged in.
+                                newUser = userManager.createUser(username, password, null, email);
                             }
                             else {
-                                throw new UnauthorizedException();
+                                // Deny registration of users with no password
+                                reply = IQ.createResultIQ(packet);
+                                reply.setChildElement(packet.getChildElement().createCopy());
+                                reply.setError(PacketError.Condition.not_acceptable);
+                                return reply;
                             }
                         }
                     }
@@ -380,7 +391,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                 reply.setError(PacketError.Condition.not_allowed);
             }
             catch (Exception e) {
-                // Some unexpected error happened so return an internal_server_error 
+                // Some unexpected error happened so return an internal_server_error
                 reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.internal_server_error);
@@ -416,8 +427,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         return info;
     }
 
-    public Iterator getFeatures() {
-        ArrayList features = new ArrayList();
+    public Iterator<String> getFeatures() {
+        ArrayList<String> features = new ArrayList<String>();
         features.add("jabber:iq:register");
         return features.iterator();
     }

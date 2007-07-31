@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 37 $
- * $Date: 2004-10-21 02:08:43 -0400 (Thu, 21 Oct 2004) $
+ * $Revision: 6658 $
+ * $Date: 2007-01-10 21:31:00 -0600 (Wed, 10 Jan 2007) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -10,9 +10,6 @@
  */
 
 package org.jivesoftware.database;
-
-import org.jivesoftware.database.AbstractConnection;
-import org.jivesoftware.database.ConnectionPool;
 
 import java.sql.Connection;
 import java.sql.SQLException;

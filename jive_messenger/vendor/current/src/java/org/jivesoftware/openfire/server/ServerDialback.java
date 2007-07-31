@@ -3,25 +3,29 @@
  * $Revision: 3188 $
  * $Date: 2005-12-12 00:28:19 -0300 (Mon, 12 Dec 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.server;
+package org.jivesoftware.openfire.server;
 
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.AuthFactory;
-import org.jivesoftware.wildfire.net.DNSUtil;
-import org.jivesoftware.wildfire.net.SocketConnection;
-import org.jivesoftware.wildfire.net.MXParser;
-import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.auth.AuthFactory;
+import org.jivesoftware.openfire.net.DNSUtil;
+import org.jivesoftware.openfire.net.MXParser;
+import org.jivesoftware.openfire.net.ServerTrafficCounter;
+import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.session.IncomingServerSession;
+import org.jivesoftware.openfire.session.OutgoingServerSession;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -29,7 +33,8 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.StreamError;
 
 import java.io.*;
-import java.net.*;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -53,7 +58,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Gaston Dombiak
  */
-class ServerDialback {
+public class ServerDialback {
     /**
      * The utf-8 charset for decoding and encoding Jabber packet streams.
      */
@@ -80,11 +85,26 @@ class ServerDialback {
     private RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
 
     /**
+     * Returns true if server dialback is enabled. When enabled remote servers may connect to this
+     * server using the server dialback method and this server may try the server dialback method
+     * to connect to remote servers.<p>
+     *
+     * When TLS is enabled between servers and server dialback method is enabled then TLS is going
+     * to be tried first, when connecting to a remote server, and if TLS fails then server dialback
+     * is going to be used as a last resort.
+     *
+     * @return true if server dialback is enabled.
+     */
+    public static boolean isEnabled() {
+        return JiveGlobals.getBooleanProperty("xmpp.server.dialback.enabled", true);
+    }
+
+    /**
      * Creates a new instance that will be used for creating {@link IncomingServerSession},
      * validating subsequent domains or authenticatig new domains. Use
      * {@link #createIncomingSession(org.dom4j.io.XMPPPacketReader)} for creating a new server
      * session used for receiving packets from the remote server. Use
-     * {@link #validateRemoteDomain(org.dom4j.Element, org.jivesoftware.wildfire.StreamID)} for
+     * {@link #validateRemoteDomain(org.dom4j.Element, org.jivesoftware.openfire.StreamID)} for
      * validating subsequent domains and use
      * {@link #authenticateDomain(OutgoingServerSocketReader, String, String, String)} for
      * registering new domains that are allowed to send packets to the remote server.<p>
@@ -100,12 +120,12 @@ class ServerDialback {
      * @param connection the connection created by the remote server.
      * @param serverName the name of the local server.
      */
-    ServerDialback(Connection connection, String serverName) {
+    public ServerDialback(Connection connection, String serverName) {
         this.connection = connection;
         this.serverName = serverName;
     }
 
-    ServerDialback() {
+    public ServerDialback() {
     }
 
     /**
@@ -122,11 +142,12 @@ class ServerDialback {
         int realPort = port;
         try {
             // Establish a TCP connection to the Receiving Server
-            Log.debug("OS - Trying to connect to " + hostname + ":" + port);
             // Get the real hostname to connect to using DNS lookup of the specified hostname
             DNSUtil.HostAddress address = DNSUtil.resolveXMPPServerDomain(hostname, port);
             realHostname = address.getHost();
             realPort = address.getPort();
+            Log.debug("OS - Trying to connect to " + hostname + ":" + port +
+                        "(DNS lookup: " + realHostname + ":" + realPort + ")");
             // Connect to the remote server
             Socket socket = new Socket();
             socket.connect(new InetSocketAddress(realHostname, realPort),
@@ -143,18 +164,23 @@ class ServerDialback {
             stream.append(" xmlns=\"jabber:server\"");
             stream.append(" xmlns:db=\"jabber:server:dialback\">");
             connection.deliverRawText(stream.toString());
-            stream = null;
+
+            // Set a read timeout (of 5 seconds) so we don't keep waiting forever
+            int soTimeout = socket.getSoTimeout();
+            socket.setSoTimeout(RemoteServerManager.getSocketTimeout());
 
             XMPPPacketReader reader = new XMPPPacketReader();
             reader.setXPPFactory(FACTORY);
-            reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(),
-                    CHARSET));
+            reader.getXPPParser().setInput(new InputStreamReader(
+                    ServerTrafficCounter.wrapInputStream(socket.getInputStream()), CHARSET));
             // Get the answer from the Receiving Server
             XmlPullParser xpp = reader.getXPPParser();
             for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
                 eventType = xpp.next();
             }
             if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
+                // Restore default timeout
+                socket.setSoTimeout(soTimeout);
                 String id = xpp.getAttributeValue("", "id");
                 OutgoingServerSocketReader socketReader = new OutgoingServerSocketReader(reader);
                 if (authenticateDomain(socketReader, domain, hostname, id)) {
@@ -175,10 +201,8 @@ class ServerDialback {
             else {
                 Log.debug("OS - Invalid namespace in packet: " + xpp.getText());
                 // Send an invalid-namespace stream error condition in the response
-                StreamError error = new StreamError(StreamError.Condition.invalid_namespace);
-                StringBuilder sb = new StringBuilder();
-                sb.append(error.toXML());
-                connection.deliverRawText(sb.toString());
+                connection.deliverRawText(
+                        new StreamError(StreamError.Condition.invalid_namespace).toXML());
                 // Close the connection
                 connection.close();
             }
@@ -234,7 +258,6 @@ class ServerDialback {
             sb.append(key);
             sb.append("</db:result>");
             connection.deliverRawText(sb.toString());
-            sb = null;
 
             // Process the answer from the Receiving Server
             try {
@@ -300,7 +323,6 @@ class ServerDialback {
             XmlPullParserException {
         XmlPullParser xpp = reader.getXPPParser();
         StringBuilder sb;
-        StreamError error;
         if ("jabber:server:dialback".equals(xpp.getNamespace("db"))) {
 
             StreamID streamID = sessionManager.nextStreamID();
@@ -343,15 +365,12 @@ class ServerDialback {
                     String verifyFROM = doc.attributeValue("from");
                     String id = doc.attributeValue("id");
                     Log.debug("AS - Connection closed for host: " + verifyFROM + " id: " + id);
-                    sb = null;
                     return null;
                 }
                 else {
                     // The remote server sent an invalid/unknown packet
-                    error = new StreamError(StreamError.Condition.invalid_xml);
-                    sb = new StringBuilder();
-                    sb.append(error.toXML());
-                    connection.deliverRawText(sb.toString());
+                    connection.deliverRawText(
+                            new StreamError(StreamError.Condition.invalid_xml).toXML());
                     // Close the underlying connection
                     connection.close();
                     return null;
@@ -367,10 +386,8 @@ class ServerDialback {
         }
         else {
             // Include the invalid-namespace stream error condition in the response
-            error = new StreamError(StreamError.Condition.invalid_namespace);
-            sb = new StringBuilder();
-            sb.append(error.toXML());
-            connection.deliverRawText(sb.toString());
+            connection.deliverRawText(
+                    new StreamError(StreamError.Condition.invalid_namespace).toXML());
             // Close the underlying connection
             connection.close();
             return null;
@@ -392,17 +409,13 @@ class ServerDialback {
      * @return true if the requested domain is valid.
      */
     public boolean validateRemoteDomain(Element doc, StreamID streamID) {
-        StreamError error;
         StringBuilder sb;
         String recipient = doc.attributeValue("to");
         String hostname = doc.attributeValue("from");
         Log.debug("RS - Received dialback key from host: " + hostname + " to: " + recipient);
         if (!RemoteServerManager.canAccess(hostname)) {
             // Remote server is not allowed to establish a connection to this server
-            error = new StreamError(StreamError.Condition.host_unknown);
-            sb = new StringBuilder();
-            sb.append(error.toXML());
-            connection.deliverRawText(sb.toString());
+            connection.deliverRawText(new StreamError(StreamError.Condition.host_unknown).toXML());
             // Close the underlying connection
             connection.close();
             Log.debug("RS - Error, hostname is not allowed to establish a connection to " +
@@ -412,10 +425,7 @@ class ServerDialback {
         }
         else if (isHostUnknown(recipient)) {
             // address does not match a recognized hostname
-            error = new StreamError(StreamError.Condition.host_unknown);
-            sb = new StringBuilder();
-            sb.append(error.toXML());
-            connection.deliverRawText(sb.toString());
+            connection.deliverRawText(new StreamError(StreamError.Condition.host_unknown).toXML());
             // Close the underlying connection
             connection.close();
             Log.debug("RS - Error, hostname not recognized: " + recipient);
@@ -430,12 +440,10 @@ class ServerDialback {
                     alreadyExists = true;
                 }
             }
-            if (alreadyExists) {
+            if (alreadyExists && !sessionManager.isMultipleServerConnectionsAllowed()) {
                 // Remote server already has a IncomingServerSession created
-                error = new StreamError(StreamError.Condition.not_authorized);
-                sb = new StringBuilder();
-                sb.append(error.toXML());
-                connection.deliverRawText(sb.toString());
+                connection.deliverRawText(
+                        new StreamError(StreamError.Condition.not_authorized).toXML());
                 // Close the underlying connection
                 connection.close();
                 Log.debug("RS - Error, incoming connection already exists from: " + hostname);
@@ -468,15 +476,12 @@ class ServerDialback {
                     return valid;
                 }
                 catch (Exception e) {
-                    Log.warn("Error verifying key", e);
+                    Log.warn("Error verifying key of remote server: " + hostname, e);
                     // Send a <remote-connection-failed/> stream error condition
                     // and terminate both the XML stream and the underlying
                     // TCP connection
-                    error =
-                            new StreamError(StreamError.Condition.remote_connection_failed);
-                    sb = new StringBuilder();
-                    sb.append(error.toXML());
-                    connection.deliverRawText(sb.toString());
+                    connection.deliverRawText(new StreamError(
+                            StreamError.Condition.remote_connection_failed).toXML());
                     // Close the underlying connection
                     connection.close();
                     return false;
@@ -508,11 +513,11 @@ class ServerDialback {
     private boolean verifyKey(String key, String streamID, String recipient, String hostname,
             String host, int port) throws IOException, XmlPullParserException,
             RemoteConnectionFailedException {
-        XMPPPacketReader reader = null;
+        XMPPPacketReader reader;
         Writer writer = null;
-        StreamError error;
         // Establish a TCP connection back to the domain name asserted by the Originating Server
-        Log.debug("RS - Trying to connect to Authoritative Server: " + hostname + ":" + port);
+        Log.debug("RS - Trying to connect to Authoritative Server: " + hostname + ":" + port +
+                        "(DNS lookup: " + host + ":" + port + ")");
         // Connect to the Authoritative server
         Socket socket = new Socket();
         socket.connect(new InetSocketAddress(host, port), RemoteServerManager.getSocketTimeout());
@@ -537,7 +542,6 @@ class ServerDialback {
             stream.append(" xmlns:db=\"jabber:server:dialback\">");
             writer.write(stream.toString());
             writer.flush();
-            stream = null;
 
             // Get the answer from the Authoritative Server
             XmlPullParser xpp = reader.getXPPParser();
@@ -556,17 +560,13 @@ class ServerDialback {
                 sb.append("</db:verify>");
                 writer.write(sb.toString());
                 writer.flush();
-                sb = null;
 
                 try {
                     Element doc = reader.parseDocument().getRootElement();
                     if ("db".equals(doc.getNamespacePrefix()) && "verify".equals(doc.getName())) {
                         if (!streamID.equals(doc.attributeValue("id"))) {
                             // Include the invalid-id stream error condition in the response
-                            error = new StreamError(StreamError.Condition.invalid_id);
-                            sb = new StringBuilder();
-                            sb.append(error.toXML());
-                            writer.write(sb.toString());
+                            writer.write(new StreamError(StreamError.Condition.invalid_id).toXML());
                             writer.flush();
                             // Thrown an error so <remote-connection-failed/> stream error
                             // condition is sent to the Originating Server
@@ -574,10 +574,8 @@ class ServerDialback {
                         }
                         else if (isHostUnknown(doc.attributeValue("to"))) {
                             // Include the host-unknown stream error condition in the response
-                            error = new StreamError(StreamError.Condition.host_unknown);
-                            sb = new StringBuilder();
-                            sb.append(error.toXML());
-                            writer.write(sb.toString());
+                            writer.write(
+                                    new StreamError(StreamError.Condition.host_unknown).toXML());
                             writer.flush();
                             // Thrown an error so <remote-connection-failed/> stream error
                             // condition is sent to the Originating Server
@@ -585,10 +583,8 @@ class ServerDialback {
                         }
                         else if (!hostname.equals(doc.attributeValue("from"))) {
                             // Include the invalid-from stream error condition in the response
-                            error = new StreamError(StreamError.Condition.invalid_from);
-                            sb = new StringBuilder();
-                            sb.append(error.toXML());
-                            writer.write(sb.toString());
+                            writer.write(
+                                    new StreamError(StreamError.Condition.invalid_from).toXML());
                             writer.flush();
                             // Thrown an error so <remote-connection-failed/> stream error
                             // condition is sent to the Originating Server
@@ -616,10 +612,7 @@ class ServerDialback {
             }
             else {
                 // Include the invalid-namespace stream error condition in the response
-                error = new StreamError(StreamError.Condition.invalid_namespace);
-                StringBuilder sb = new StringBuilder();
-                sb.append(error.toXML());
-                writer.write(sb.toString());
+                writer.write(new StreamError(StreamError.Condition.invalid_namespace).toXML());
                 writer.flush();
                 // Thrown an error so <remote-connection-failed/> stream error condition is
                 // sent to the Originating Server
@@ -638,6 +631,7 @@ class ServerDialback {
                 socket.close();
             }
             catch (IOException ioe) {
+                // Do nothing
             }
         }
         return false;

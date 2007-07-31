@@ -3,36 +3,28 @@
  * $Revision: 2814 $
  * $Date: 2005-09-13 16:41:10 -0300 (Tue, 13 Sep 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2006 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.auth;
+package org.jivesoftware.openfire.auth;
 
 import org.jivesoftware.util.*;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 
 /**
- * Authentication service.
- *
- * Users of Jive that wish to change the AuthProvider implementation used to authenticate users
- * can set the <code>AuthProvider.className</code> Jive property. For example, if
- * you have altered Jive to use LDAP for user information, you'd want to send a custom
- * implementation of AuthFactory to make LDAP authToken queries. After changing the
- * <code>AuthProvider.className</code> Jive property, you must restart your application
- * server.<p>
- * <p/>
- * The getAuthToken method that takes servlet request and response objects as arguments can be
- * used to implement single sign-on. Additionally, two helper methods are provided for securely
- * encrypting and decrypting login information so that it can be stored as a cookie value to
- * implement auto-login.<p>
+ * Pluggable authentication service. Users of Openfire that wish to change the AuthProvider
+ * implementation used to authenticate users can set the <code>AuthProvider.className</code>
+ * XML property. For example, if you have configured Openfire to use LDAP for user information,
+ * you'd want to send a custom implementation of AuthFactory to make LDAP auth queries.
+ * After changing the <code>AuthProvider.className</code> XML property, you must restart your
+ * application server.
  *
  * @author Matt Tucker
  */
@@ -40,19 +32,10 @@ public class AuthFactory {
 
     private static AuthProvider authProvider = null;
     private static MessageDigest digest;
+    private static final Object DIGEST_LOCK = new Object();
+    private static Blowfish cipher = null;
 
     static {
-        // Load an auth provider.
-        String className = JiveGlobals.getXMLProperty("provider.auth.className",
-                "org.jivesoftware.wildfire.auth.DefaultAuthProvider");
-        try {
-            Class c = ClassUtils.forName(className);
-            authProvider = (AuthProvider)c.newInstance();
-        }
-        catch (Exception e) {
-            Log.error("Error loading auth provider: " + className, e);
-            authProvider = new DefaultAuthProvider();
-        }
         // Create a message digest instance.
         try {
             digest = MessageDigest.getInstance("SHA");
@@ -60,6 +43,58 @@ public class AuthFactory {
         catch (NoSuchAlgorithmException e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
         }
+        // Load an auth provider.
+        initProvider();
+
+        // Detect when a new auth provider class is set 
+        PropertyEventListener propListener = new PropertyEventListener() {
+            public void propertySet(String property, Map params) {
+                //Ignore
+            }
+
+            public void propertyDeleted(String property, Map params) {
+                //Ignore
+            }
+
+            public void xmlPropertySet(String property, Map params) {
+                if ("provider.auth.className".equals(property)) {
+                    initProvider();
+                }
+            }
+
+            public void xmlPropertyDeleted(String property, Map params) {
+                //Ignore
+            }
+        };
+        PropertyEventDispatcher.addListener(propListener);
+    }
+
+    private static void initProvider() {
+        String className = JiveGlobals.getXMLProperty("provider.auth.className",
+                "org.jivesoftware.openfire.auth.DefaultAuthProvider");
+        // Check if we need to reset the auth provider class 
+        if (authProvider == null || !className.equals(authProvider.getClass().getName())) {
+            try {
+                Class c = ClassUtils.forName(className);
+                authProvider = (AuthProvider)c.newInstance();
+            }
+            catch (Exception e) {
+                Log.error("Error loading auth provider: " + className, e);
+                authProvider = new DefaultAuthProvider();
+            }
+        }
+    }
+
+    /**
+     * Returns the currently-installed AuthProvider. <b>Warning:</b> in virtually all
+     * cases the auth provider should not be used directly. Instead, the appropriate
+     * methods in AuthFactory should be called. Direct access to the auth provider is
+     * only provided for special-case logic.
+     *
+     * @return the current UserProvider.
+     */
+    public static AuthProvider getAuthProvider() {
+        return authProvider;
     }
 
     /**
@@ -95,7 +130,7 @@ public class AuthFactory {
      */
     public static String getPassword(String username) throws UserNotFoundException,
             UnsupportedOperationException {
-        return UserManager.getUserProvider().getPassword(username);
+        return authProvider.getPassword(username.toLowerCase());
     }
 
     /**
@@ -144,9 +179,86 @@ public class AuthFactory {
      * @return the digested result as a hex string.
      */
     public static String createDigest(String token, String password) {
-        synchronized (digest) {
+        synchronized (DIGEST_LOCK) {
             digest.update(token.getBytes());
             return StringUtils.encodeHex(digest.digest(password.getBytes()));
         }
+    }
+
+    /**
+     * Returns an encrypted version of the plain-text password. Encryption is performed
+     * using the Blowfish algorithm. The encryption key is stored as the Jive property
+     * "passwordKey". If the key is not present, it will be automatically generated.
+     *
+     * @param password the plain-text password.
+     * @return the encrypted password.
+     * @throws UnsupportedOperationException if encryption/decryption is not possible;
+     *      for example, during setup mode.
+     */
+    public static String encryptPassword(String password) {
+        if (password == null) {
+            return null;
+        }
+        Blowfish cipher = getCipher();
+        if (cipher == null) {
+            throw new UnsupportedOperationException();
+        }
+        return cipher.encryptString(password);
+    }
+
+    /**
+     * Returns a decrypted version of the encrypted password. Encryption is performed
+     * using the Blowfish algorithm. The encryption key is stored as the Jive property
+     * "passwordKey". If the key is not present, it will be automatically generated.
+     *
+     * @param encryptedPassword the encrypted password.
+     * @return the encrypted password.
+     * @throws UnsupportedOperationException if encryption/decryption is not possible;
+     *      for example, during setup mode.
+     */
+    public static String decryptPassword(String encryptedPassword) {
+        if (encryptedPassword == null) {
+            return null;
+        }
+        Blowfish cipher = getCipher();
+        if (cipher == null) {
+            throw new UnsupportedOperationException();
+        }
+        return cipher.decryptString(encryptedPassword);
+    }
+
+    /**
+     * Returns a Blowfish cipher that can be used for encrypting and decrypting passwords.
+     * The encryption key is stored as the Jive property "passwordKey". If it's not present,
+     * it will be automatically generated.
+     *
+     * @return the Blowfish cipher, or <tt>null</tt> if Openfire is not able to create a Cipher;
+     *      for example, during setup mode.
+     */
+    private static synchronized Blowfish getCipher() {
+        if (cipher != null) {
+            return cipher;
+        }
+        // Get the password key, stored as a database property. Obviously,
+        // protecting your database is critical for making the
+        // encryption fully secure.
+        String keyString;
+        try {
+            keyString = JiveGlobals.getProperty("passwordKey");
+            if (keyString == null) {
+                keyString = StringUtils.randomString(15);
+                JiveGlobals.setProperty("passwordKey", keyString);
+                // Check to make sure that setting the property worked. It won't work,
+                // for example, when in setup mode.
+                if (!keyString.equals(JiveGlobals.getProperty("passwordKey"))) {
+                    return null;
+                }
+            }
+            cipher = new Blowfish(keyString);
+        }
+        catch (Exception e) {
+            Log.error(e);
+        }
+        return cipher;
     }
 }

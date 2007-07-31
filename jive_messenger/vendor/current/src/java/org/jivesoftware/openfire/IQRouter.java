@@ -3,21 +3,30 @@
  * $Revision: 3135 $
  * $Date: 2005-12-01 02:03:04 -0300 (Thu, 01 Dec 2005) $
  *
- * Copyright (C) 2005 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire;
+package org.jivesoftware.openfire;
 
 import org.dom4j.Element;
-import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.handler.IQHandler;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.interceptor.InterceptorManager;
+import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.openfire.privacy.PrivacyList;
+import org.jivesoftware.openfire.privacy.PrivacyListManager;
+import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.user.UserManager;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
 
 import java.util.ArrayList;
@@ -36,12 +45,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class IQRouter extends BasicModule {
 
     private RoutingTable routingTable;
+    private MulticastRouter multicastRouter;
     private String serverName;
     private List<IQHandler> iqHandlers = new ArrayList<IQHandler>();
     private Map<String, IQHandler> namespace2Handlers = new ConcurrentHashMap<String, IQHandler>();
     private Map<String, IQResultListener> resultListeners =
             new ConcurrentHashMap<String, IQResultListener>();
     private SessionManager sessionManager;
+    private UserManager userManager;
 
     /**
      * Creates a packet router.
@@ -67,21 +78,60 @@ public class IQRouter extends BasicModule {
         if (packet == null) {
             throw new NullPointerException();
         }
-        Session session = sessionManager.getSession(packet.getFrom());
-        if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED || (
-                isLocalServer(packet.getTo()) && (
-                        "jabber:iq:auth".equals(packet.getChildElement().getNamespaceURI()) ||
-                                "jabber:iq:register"
-                                        .equals(packet.getChildElement().getNamespaceURI()) ||
-                                "urn:ietf:params:xml:ns:xmpp-bind"
-                                        .equals(packet.getChildElement().getNamespaceURI())))) {
-            handle(packet);
+        ClientSession session = sessionManager.getSession(packet.getFrom());
+        try {
+            // Invoke the interceptors before we process the read packet
+            InterceptorManager.getInstance().invokeInterceptors(packet, session, true, false);
+            JID to = packet.getTo();
+            if (session != null && to != null && session.getStatus() == Session.STATUS_CONNECTED &&
+                    !serverName.equals(to.toString())) {
+                // User is requesting this server to authenticate for another server. Return
+                // a bad-request error
+                IQ reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setError(PacketError.Condition.bad_request);
+                sessionManager.getSession(packet.getFrom()).process(reply);
+                Log.warn("User tried to authenticate with this server using an unknown receipient: " +
+                        packet);
+            }
+            else if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED || (
+                    isLocalServer(to) && (
+                            "jabber:iq:auth".equals(packet.getChildElement().getNamespaceURI()) ||
+                                    "jabber:iq:register"
+                                            .equals(packet.getChildElement().getNamespaceURI()) ||
+                                    "urn:ietf:params:xml:ns:xmpp-bind"
+                                            .equals(packet.getChildElement().getNamespaceURI())))) {
+                handle(packet);
+            }
+            else {
+                IQ reply = IQ.createResultIQ(packet);
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setError(PacketError.Condition.not_authorized);
+                sessionManager.getSession(packet.getFrom()).process(reply);
+            }
+            // Invoke the interceptors after we have processed the read packet
+            InterceptorManager.getInstance().invokeInterceptors(packet, session, true, true);
         }
-        else {
-            IQ reply = IQ.createResultIQ(packet);
-            reply.setChildElement(packet.getChildElement().createCopy());
-            reply.setError(PacketError.Condition.not_authorized);
-            sessionManager.getSession(packet.getFrom()).process(reply);
+        catch (PacketRejectedException e) {
+            if (session != null) {
+                // An interceptor rejected this packet so answer a not_allowed error
+                IQ reply = new IQ();
+                reply.setChildElement(packet.getChildElement().createCopy());
+                reply.setID(packet.getID());
+                reply.setTo(session.getAddress());
+                reply.setFrom(packet.getTo());
+                reply.setError(PacketError.Condition.not_allowed);
+                session.process(reply);
+                // Check if a message notifying the rejection should be sent
+                if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
+                    // A message for the rejection will be sent to the sender of the rejected packet
+                    Message notification = new Message();
+                    notification.setTo(session.getAddress());
+                    notification.setFrom(packet.getTo());
+                    notification.setBody(e.getRejectionMessage());
+                    session.process(notification);
+                }
+            }
         }
     }
 
@@ -136,7 +186,10 @@ public class IQRouter extends BasicModule {
      * @param id the id of the IQ packet being sent from the server to an XMPP entity.
      * @param listener the IQResultListener that will be invoked when an answer is received
      */
-    void addIQResultListener(String id, IQResultListener listener) {
+    public void addIQResultListener(String id, IQResultListener listener) {
+        // TODO Add a check that if no IQ reply was received for a while then an IQ error should
+        // be generated by the server and simulate like the client sent it. This will let listeners
+        // react and be removed from the collection
         resultListeners.put(id, listener);
     }
 
@@ -144,8 +197,10 @@ public class IQRouter extends BasicModule {
         super.initialize(server);
         serverName = server.getServerInfo().getName();
         routingTable = server.getRoutingTable();
+        multicastRouter = server.getMulticastRouter();
         iqHandlers.addAll(server.getIQHandlers());
         sessionManager = server.getSessionManager();
+        userManager = server.getUserManager();
     }
 
     /**
@@ -165,11 +220,23 @@ public class IQRouter extends BasicModule {
         // Check if the packet was sent to the server hostname
         if (recipientJID != null && recipientJID.getNode() == null &&
                 recipientJID.getResource() == null && serverName.equals(recipientJID.getDomain())) {
-            if (IQ.Type.result == packet.getType() || IQ.Type.error == packet.getType()) {
+            Element childElement = packet.getChildElement();
+            if (childElement != null && childElement.element("addresses") != null) {
+                // Packet includes multicast processing instructions. Ask the multicastRouter
+                // to route this packet
+                multicastRouter.route(packet);
+                return;
+            }
+            else if (IQ.Type.result == packet.getType() || IQ.Type.error == packet.getType()) {
                 // The server got an answer to an IQ packet that was sent from the server
                 IQResultListener iqResultListener = resultListeners.remove(packet.getID());
                 if (iqResultListener != null) {
-                    iqResultListener.receivedAnswer(packet);
+                    try {
+                        iqResultListener.receivedAnswer(packet);
+                    }
+                    catch (Exception e) {
+                        Log.error("Error processing answer of remote entity", e);
+                    }
                     return;
                 }
             }
@@ -198,44 +265,35 @@ public class IQRouter extends BasicModule {
                     }
                 }
                 else {
+                    // Check if communication to local users is allowed
+                    if (recipientJID != null &&
+                            userManager.isRegisteredUser(recipientJID.getNode())) {
+                        PrivacyList list = PrivacyListManager.getInstance()
+                                .getDefaultPrivacyList(recipientJID.getNode());
+                        if (list != null && list.shouldBlockPacket(packet)) {
+                            // Communication is blocked
+                            if (IQ.Type.set == packet.getType() || IQ.Type.get == packet.getType()) {
+                                // Answer that the service is unavailable
+                                sendErrorPacket(packet, PacketError.Condition.service_unavailable);
+                            }
+                            return;
+                        }
+                    }
                     IQHandler handler = getHandler(namespace);
                     if (handler == null) {
-                        IQ reply = IQ.createResultIQ(packet);
                         if (recipientJID == null) {
                             // Answer an error since the server can't handle the requested namespace
-                            reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.service_unavailable);
+                            sendErrorPacket(packet, PacketError.Condition.service_unavailable);
                         }
                         else if (recipientJID.getNode() == null ||
                                 "".equals(recipientJID.getNode())) {
                             // Answer an error if JID is of the form <domain>
-                            reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.feature_not_implemented);
+                            sendErrorPacket(packet, PacketError.Condition.feature_not_implemented);
                         }
                         else {
                             // JID is of the form <node@domain>
                             // Answer an error since the server can't handle packets sent to a node
-                            reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.service_unavailable);
-                        }
-
-                        // Locate a route to the sender of the IQ and ask it to process
-                        // the packet. Use the routingTable so that routes to remote servers
-                        // may be found
-                        ChannelHandler route = routingTable.getRoute(packet.getFrom());
-                        if (route != null) {
-                            route.process(reply);
-                        }
-                        else {
-                            // No root was found so try looking for local sessions that have never
-                            // sent an available presence or haven't authenticated yet
-                            Session session = sessionManager.getSession(packet.getFrom());
-                            if (session != null) {
-                                session.process(reply);
-                            }
-                            else {
-                                Log.warn("Packet could not be delivered " + packet);
-                            }
+                            sendErrorPacket(packet, PacketError.Condition.service_unavailable);
                         }
                     }
                     else {
@@ -251,10 +309,12 @@ public class IQRouter extends BasicModule {
                 // So if the target address belongs to this server then use the sessionManager
                 // instead of the routingTable since unavailable clients won't have a route to them
                 if (XMPPServer.getInstance().isLocal(recipientJID)) {
-                    Session session = sessionManager.getBestRoute(recipientJID);
+                    ClientSession session = sessionManager.getSession(recipientJID);
                     if (session != null) {
-                        session.process(packet);
-                        handlerFound = true;
+                        if (session.canProcess(packet)) {
+                            session.process(packet);
+                            handlerFound = true;
+                        }
                     }
                     else {
                         Log.info("Packet sent to unreachable address " + packet);
@@ -272,28 +332,8 @@ public class IQRouter extends BasicModule {
                 }
                 // If a route to the target address was not found then try to answer a
                 // service_unavailable error code to the sender of the IQ packet
-                if (!handlerFound && IQ.Type.result != packet.getType()) {
-                    IQ reply = IQ.createResultIQ(packet);
-                    reply.setChildElement(packet.getChildElement().createCopy());
-                    reply.setError(PacketError.Condition.service_unavailable);
-                    // Locate a route to the sender of the IQ and ask it to process
-                    // the packet. Use the routingTable so that routes to remote servers
-                    // may be found
-                    ChannelHandler route = routingTable.getRoute(packet.getFrom());
-                    if (route != null) {
-                        route.process(reply);
-                    }
-                    else {
-                        // No root was found so try looking for local sessions that have never
-                        // sent an available presence or haven't authenticated yet
-                        Session session = sessionManager.getSession(packet.getFrom());
-                        if (session != null) {
-                            session.process(reply);
-                        }
-                        else {
-                            Log.warn("Packet could not be delivered " + reply);
-                        }
-                    }
+                if (!handlerFound && IQ.Type.result != packet.getType() && IQ.Type.error != packet.getType()) {
+                    sendErrorPacket(packet, PacketError.Condition.service_unavailable);
                 }
             }
         }
@@ -305,6 +345,41 @@ public class IQRouter extends BasicModule {
                 if (conn != null) {
                     conn.close();
                 }
+            }
+        }
+    }
+
+    private void sendErrorPacket(IQ originalPacket, PacketError.Condition condition)
+            throws UnauthorizedException {
+        if (IQ.Type.error == originalPacket.getType()) {
+            Log.error("Cannot reply an IQ error to another IQ error: " + originalPacket);
+            return;
+        }
+        IQ reply = IQ.createResultIQ(originalPacket);
+        reply.setChildElement(originalPacket.getChildElement().createCopy());
+        reply.setError(condition);
+        // Check if the server was the sender of the IQ
+        if (serverName.equals(originalPacket.getFrom().toString())) {
+            // Just let the IQ router process the IQ error reply
+            handle(reply);
+            return;
+        }
+        // Locate a route to the sender of the IQ and ask it to process
+        // the packet. Use the routingTable so that routes to remote servers
+        // may be found
+        ChannelHandler route = routingTable.getRoute(originalPacket.getFrom());
+        if (route != null) {
+            route.process(reply);
+        }
+        else {
+            // No root was found so try looking for local sessions that have never
+            // sent an available presence or haven't authenticated yet
+            Session session = sessionManager.getSession(originalPacket.getFrom());
+            if (session != null) {
+                session.process(reply);
+            }
+            else {
+                Log.warn("Error packet could not be delivered " + reply);
             }
         }
     }
