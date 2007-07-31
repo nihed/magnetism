@@ -9,12 +9,12 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.spi;
+package org.jivesoftware.openfire.spi;
 
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.net.SocketPacketWriteHandler;
+import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.net.SocketPacketWriteHandler;
 import org.xmpp.packet.Packet;
 
 /**

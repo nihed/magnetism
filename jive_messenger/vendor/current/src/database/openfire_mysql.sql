@@ -1,10 +1,10 @@
-# $RCSfile$
 # $Revision: 1650 $
 # $Date: 2005-07-20 00:18:17 -0300 (Wed, 20 Jul 2005) $
 
 CREATE TABLE jiveUser (
-  username              VARCHAR(32)     NOT NULL,
-  password              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
+  password              VARCHAR(32),
+  encryptedPassword     VARCHAR(255),
   name                  VARCHAR(100),
   email                 VARCHAR(100),
   creationDate          CHAR(15)        NOT NULL,
@@ -14,14 +14,14 @@ CREATE TABLE jiveUser (
 );
 
 CREATE TABLE jiveUserProp (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   propValue             TEXT            NOT NULL,
   PRIMARY KEY (username, name)
 );
 
 CREATE TABLE jiveGroup (
-  groupName              VARCHAR(50)     NOT NULL,
+  groupName             VARCHAR(50)     NOT NULL,
   description           VARCHAR(255),
   PRIMARY KEY (groupName)
 );
@@ -41,15 +41,15 @@ CREATE TABLE jiveGroupUser (
 );
 
 CREATE TABLE jivePrivate (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
   namespace             VARCHAR(200)    NOT NULL,
   value                 TEXT            NOT NULL,
-  PRIMARY KEY (username, name, namespace)
+  PRIMARY KEY (username, name, namespace(100))
 );
 
 CREATE TABLE jiveOffline (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   messageID             BIGINT          NOT NULL,
   creationDate          CHAR(15)        NOT NULL,
   messageSize           INTEGER         NOT NULL,
@@ -57,9 +57,16 @@ CREATE TABLE jiveOffline (
   PRIMARY KEY (username, messageID)
 );
 
+CREATE TABLE jivePresence (
+  username              VARCHAR(64)     NOT NULL,
+  offlinePresence       TEXT,
+  offlineDate           CHAR(15)     NOT NULL,
+  PRIMARY KEY (username)
+);
+
 CREATE TABLE jiveRoster (
   rosterID              BIGINT          NOT NULL,
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   jid                   TEXT            NOT NULL,
   sub                   TINYINT         NOT NULL,
   ask                   TINYINT         NOT NULL,
@@ -78,7 +85,7 @@ CREATE TABLE jiveRosterGroups (
 );
 
 CREATE TABLE jiveVCard (
-  username              VARCHAR(32)     NOT NULL,
+  username              VARCHAR(64)     NOT NULL,
   value                 TEXT            NOT NULL,
   PRIMARY KEY (username)
 );
@@ -97,8 +104,9 @@ CREATE TABLE jiveProperty (
 
 
 CREATE TABLE jiveVersion (
-  majorVersion  INTEGER  NOT NULL,
-  minorVersion  INTEGER  NOT NULL
+  name     VARCHAR(50)  NOT NULL,
+  version  INTEGER  NOT NULL,
+  PRIMARY KEY (name)
 );
 
 CREATE TABLE jiveExtComponentConf (
@@ -113,6 +121,21 @@ CREATE TABLE jiveRemoteServerConf (
   remotePort            INTEGER,
   permission            VARCHAR(10)     NOT NULL,
   PRIMARY KEY (domain)
+);
+
+CREATE TABLE jivePrivacyList (
+  username              VARCHAR(64)     NOT NULL,
+  name                  VARCHAR(100)    NOT NULL,
+  isDefault             TINYINT         NOT NULL,
+  list                  TEXT            NOT NULL,
+  PRIMARY KEY (username, name),
+  INDEX jivePList_default_idx (username, isDefault)
+);
+
+CREATE TABLE jiveSASLAuthorized (
+  username            VARCHAR(64)   NOT NULL,
+  principal           TEXT          NOT NULL,
+  PRIMARY KEY (username, principal(200))
 );
 
 # MUC Tables
@@ -180,13 +203,122 @@ CREATE TABLE mucConversationLog (
   INDEX mucLog_time_idx (time)
 );
 
+# PubSub Tables
+
+CREATE TABLE pubsubNode (
+  serviceID           VARCHAR(100)  NOT NULL,
+  nodeID              VARCHAR(100)  NOT NULL,
+  leaf                TINYINT       NOT NULL,
+  creationDate        CHAR(15)      NOT NULL,
+  modificationDate    CHAR(15)      NOT NULL,
+  parent              VARCHAR(100)  NULL,
+  deliverPayloads     TINYINT       NOT NULL,
+  maxPayloadSize      INTEGER       NULL,
+  persistItems        TINYINT       NULL,
+  maxItems            INTEGER       NULL,
+  notifyConfigChanges TINYINT       NOT NULL,
+  notifyDelete        TINYINT       NOT NULL,
+  notifyRetract       TINYINT       NOT NULL,
+  presenceBased       TINYINT       NOT NULL,
+  sendItemSubscribe   TINYINT       NOT NULL,
+  publisherModel      VARCHAR(15)   NOT NULL,
+  subscriptionEnabled TINYINT       NOT NULL,
+  configSubscription  TINYINT       NOT NULL,
+  accessModel         VARCHAR(10)   NOT NULL,
+  payloadType         VARCHAR(100)  NULL,
+  bodyXSLT            VARCHAR(100)  NULL,
+  dataformXSLT        VARCHAR(100)  NULL,
+  creator             VARCHAR(255) NOT NULL,
+  description         VARCHAR(255)  NULL,
+  language            VARCHAR(255)  NULL,
+  name                VARCHAR(50)   NULL,
+  replyPolicy         VARCHAR(15)   NULL,
+  associationPolicy   VARCHAR(15)   NULL,
+  maxLeafNodes        INTEGER       NULL,
+  PRIMARY KEY (serviceID, nodeID)
+);
+
+CREATE TABLE pubsubNodeJIDs (
+  serviceID           VARCHAR(100)  NOT NULL,
+  nodeID              VARCHAR(100)  NOT NULL,
+  jid                 VARCHAR(255)  NOT NULL,
+  associationType     VARCHAR(20)   NOT NULL,
+  PRIMARY KEY (serviceID, nodeID, jid(70))
+);
+
+CREATE TABLE pubsubNodeGroups (
+  serviceID           VARCHAR(100)  NOT NULL,
+  nodeID              VARCHAR(100)  NOT NULL,
+  rosterGroup         VARCHAR(100)   NOT NULL,
+  INDEX pubsubNodeGroups_idx (serviceID, nodeID)
+);
+
+CREATE TABLE pubsubAffiliation (
+  serviceID           VARCHAR(100)  NOT NULL,
+  nodeID              VARCHAR(100)  NOT NULL,
+  jid                 VARCHAR(255) NOT NULL,
+  affiliation         VARCHAR(10)   NOT NULL,
+  PRIMARY KEY (serviceID, nodeID, jid(70))
+);
+
+CREATE TABLE pubsubItem (
+  serviceID           VARCHAR(100)  NOT NULL,
+  nodeID              VARCHAR(100)  NOT NULL,
+  id                  VARCHAR(100)  NOT NULL,
+  jid                 VARCHAR(255) NOT NULL,
+  creationDate        CHAR(15)      NOT NULL,
+  payload             TEXT          NULL,
+  PRIMARY KEY (serviceID, nodeID, id)
+);
+
+CREATE TABLE pubsubSubscription (
+  serviceID           VARCHAR(100)  NOT NULL,
+  nodeID              VARCHAR(100)  NOT NULL,
+  id                  VARCHAR(100)  NOT NULL,
+  jid                 VARCHAR(255) NOT NULL,
+  owner               VARCHAR(255) NOT NULL,
+  state               VARCHAR(15)   NOT NULL,
+  deliver             TINYINT       NOT NULL,
+  digest              TINYINT       NOT NULL,
+  digest_frequency    INT           NOT NULL,
+  expire              CHAR(15)      NULL,
+  includeBody         TINYINT       NOT NULL,
+  showValues          VARCHAR(30)   NULL,
+  subscriptionType    VARCHAR(10)   NOT NULL,
+  subscriptionDepth   TINYINT       NOT NULL,
+  keyword             VARCHAR(200)  NULL,
+  PRIMARY KEY (serviceID, nodeID, id)
+);
+
+CREATE TABLE pubsubDefaultConf (
+  serviceID           VARCHAR(100)  NOT NULL,
+  leaf                TINYINT       NOT NULL,
+  deliverPayloads     TINYINT       NOT NULL,
+  maxPayloadSize      INTEGER       NOT NULL,
+  persistItems        TINYINT       NOT NULL,
+  maxItems            INTEGER       NOT NULL,
+  notifyConfigChanges TINYINT       NOT NULL,
+  notifyDelete        TINYINT       NOT NULL,
+  notifyRetract       TINYINT       NOT NULL,
+  presenceBased       TINYINT       NOT NULL,
+  sendItemSubscribe   TINYINT       NOT NULL,
+  publisherModel      VARCHAR(15)   NOT NULL,
+  subscriptionEnabled TINYINT       NOT NULL,
+  accessModel         VARCHAR(10)   NOT NULL,
+  language            VARCHAR(255)  NULL,
+  replyPolicy         VARCHAR(15)   NULL,
+  associationPolicy   VARCHAR(15)   NOT NULL,
+  maxLeafNodes        INTEGER       NOT NULL,
+  PRIMARY KEY (serviceID, leaf)
+);
+
 # Finally, insert default table values.
 
 INSERT INTO jiveID (idType, id) VALUES (18, 1);
 INSERT INTO jiveID (idType, id) VALUES (19, 1);
 INSERT INTO jiveID (idType, id) VALUES (23, 1);
 
-INSERT INTO jiveVersion (majorVersion, minorVersion) VALUES (2, 2);
+INSERT INTO jiveVersion (name, version) VALUES ('openfire', 11);
 
 # Entry for admin user
 INSERT INTO jiveUser (username, password, name, email, creationDate, modificationDate)

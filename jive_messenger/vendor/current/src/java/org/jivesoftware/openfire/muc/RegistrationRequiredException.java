@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.muc;
+package org.jivesoftware.openfire.muc;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;

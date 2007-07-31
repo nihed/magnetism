@@ -1,6 +1,6 @@
 <%--
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2005 Jive Software. All rights reserved.
   -
@@ -8,31 +8,34 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="java.util.*,
-                 org.jivesoftware.wildfire.group.GroupManager,
-                 org.jivesoftware.wildfire.group.Group,
-                 java.net.URLEncoder,
-                 java.net.URLDecoder,
-                 java.io.UnsupportedEncodingException,
-                 org.jivesoftware.util.*"
+<%@ page import="org.jivesoftware.stringprep.Stringprep,
+                 org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.util.Log,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.openfire.PresenceManager,
+                 org.jivesoftware.openfire.group.Group,
+                 org.jivesoftware.openfire.group.GroupManager"
 %>
+<%@ page import="org.jivesoftware.openfire.user.User"%>
+<%@ page import="org.jivesoftware.openfire.user.UserManager"%>
+<%@ page import="org.jivesoftware.openfire.user.UserNotFoundException"%>
 <%@ page import="org.xmpp.packet.JID"%>
-<%@ page import="org.jivesoftware.stringprep.Stringprep"%>
-<%@ page import="org.jivesoftware.wildfire.user.UserManager"%>
-<%@ page import="org.jivesoftware.wildfire.user.UserNotFoundException"%>
+<%@ page import="org.xmpp.packet.Presence"%>
+<%@ page import="java.io.UnsupportedEncodingException"%>
+<%@ page import="java.net.URLDecoder"%>
+<%@ page import="java.net.URLEncoder"%>
+<%@ page import="java.util.*"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
 <!-- Define Administration Bean -->
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"/>
 <%  webManager.init(pageContext); %>
-<jsp:useBean id="errors" class="java.util.HashMap"/>
-
-
 
 <%  // Get parameters
     boolean add = request.getParameter("add") != null;
     boolean delete = request.getParameter("remove") != null;
+    boolean updateMember = request.getParameter("updateMember") != null;
     boolean update = request.getParameter("save") != null;
     boolean cancel = request.getParameter("cancel") != null;
     String users = ParamUtils.getParameter(request, "users");
@@ -40,20 +43,22 @@
     String [] deleteMembers = ParamUtils.getParameters(request, "delete");
     String groupName = ParamUtils.getParameter(request, "group");
     GroupManager groupManager = webManager.getGroupManager();
-    boolean edit = ParamUtils.getBooleanParameter(request, "edit", false);
-    String newName = ParamUtils.getParameter(request, "newName");
-    String newDescription = ParamUtils.getParameter(request, "newDescription");
     boolean groupInfoChanged = ParamUtils.getBooleanParameter(request, "groupChanged", false);
 
+    Map<String,String> errors = new HashMap<String,String>();
+
+    // Get the presence manager
+    PresenceManager presenceManager = webManager.getPresenceManager();
+    UserManager userManager = webManager.getUserManager();
+
     boolean enableRosterGroups = ParamUtils.getBooleanParameter(request,"enableRosterGroups");
+    boolean shareAdditional = ParamUtils.getParameter(request, "shareContactList") != null;
     String groupDisplayName = ParamUtils.getParameter(request,"groupDisplayName");
     String showGroup = ParamUtils.getParameter(request,"showGroup");
     String[] groupNames = ParamUtils.getParameters(request, "groupNames");
 
-    edit = true;
-
     Group group = groupManager.getGroup(groupName);
-    boolean success = false;
+    boolean success;
     StringBuffer errorBuf = new StringBuffer();
 
     if (cancel) {
@@ -61,15 +66,16 @@
         return;
     }
 
-    if (newName != null && newName.length() > 0) {
+    if (update) {
         if (enableRosterGroups && (groupDisplayName == null || groupDisplayName.trim().length() == 0)) {
             errors.put("groupDisplayName", "");
         }
         if (errors.isEmpty()) {
-            group.setName(newName);
-            group.setDescription(newDescription);
 
                 if (enableRosterGroups) {
+                    if (showGroup == null || !shareAdditional) {
+                        showGroup = "onlyGroup";
+                    }
                     if ("spefgroups".equals(showGroup)) {
                         showGroup = "onlyGroup";
                     }
@@ -88,24 +94,21 @@
                     group.getProperties().put("sharedRoster.groupList", "");
                 }
 
-            groupName = newName;
-            groupInfoChanged = true;
              // Get admin list and compare it the admin posted list.
             response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&groupChanged=true");
             return;
         }
         else {
             // Continue editing since there are some errors
-            edit = true;
-            update = false;
+            updateMember = false;
         }
     }
 
 
-    if (update) {
+    if (updateMember) {
         Set<JID> adminIDSet = new HashSet<JID>();
-        for (int i = 0; i < adminIDs.length; i++) {
-            JID newAdmin = new JID(adminIDs[i]);
+        for (String adminID : adminIDs) {
+            JID newAdmin = new JID(adminID);
             adminIDSet.add(newAdmin);
             boolean isAlreadyAdmin = group.getAdmins().contains(newAdmin);
             if (!isAlreadyAdmin) {
@@ -113,18 +116,15 @@
                 group.getAdmins().add(newAdmin);
             }
         }
-        Iterator<JID> groupIter = Collections.unmodifiableCollection(group.getAdmins()).iterator();
+        Collection<JID> admins = Collections.unmodifiableCollection(group.getAdmins());
         Set<JID> removeList = new HashSet<JID>();
-        while (groupIter.hasNext()) {
-            JID m = (JID) groupIter.next();
-            if (!adminIDSet.contains(m)) {
-                removeList.add(m);
+        for (JID admin : admins) {
+            if (!adminIDSet.contains(admin)) {
+                removeList.add(admin);
             }
         }
-        Iterator<JID> i = removeList.iterator();
-        while (i.hasNext()) {
-            JID m = (JID) i.next();
-            group.getMembers().add(m);
+        for (JID member : removeList) {
+            group.getMembers().add(member);
         }
         // Get admin list and compare it the admin posted list.
         response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8") + "&updatesuccess=true");
@@ -138,9 +138,20 @@
             username = username.trim();
             username = username.toLowerCase();
 
+            if(username.indexOf('@') != -1){
+                try {
+                    UserManager.getInstance().getUser(JID.escapeNode(username));
+                    // That means that this user has an email address as their node.
+                    username = JID.escapeNode(username);
+                }
+                catch (UserNotFoundException e) {
+
+                }
+            }
+
             // Add to group as member by default.
             try {
-                boolean added = false;
+                boolean added;
                 if (username.indexOf('@') == -1) {
                     // No @ was found so assume this is a JID of a local user
                     username = Stringprep.nodeprep(username);
@@ -157,16 +168,14 @@
                 }
                 else {
                     errorBuf.append("<br>").append(
-                            LocaleUtils.getLocalizedString("group.edit.already_user",
-                            JiveGlobals.getLocale(), Arrays.asList(username)));
+                            LocaleUtils.getLocalizedString("group.edit.already_user", Arrays.asList(username)));
                 }
 
             }
             catch (Exception e) {
                 Log.debug("Problem adding new user to existing group", e);
                 errorBuf.append("<br>").append(
-                        LocaleUtils.getLocalizedString("group.edit.inexistent_user",
-                        JiveGlobals.getLocale(), Arrays.asList(username)));
+                        LocaleUtils.getLocalizedString("group.edit.inexistent_user", Arrays.asList(username)));
             }
         }
         if (count > 0) {
@@ -184,8 +193,8 @@
         add = false;
     }
     else if (delete) {
-        for (int i = 0; i < deleteMembers.length; i++) {
-            JID member = new JID(deleteMembers[i]);
+        for (String deleteMember : deleteMembers) {
+            JID member = new JID(deleteMember);
             group.getMembers().remove(member);
             group.getAdmins().remove(member);
         }
@@ -198,36 +207,44 @@
             "true".equals(request.getParameter("creategroupsuccess"));
 
     if (errors.size() == 0) {
-        enableRosterGroups = !"nobody".equals(group.getProperties().get("sharedRoster.showInRoster"));
         showGroup = group.getProperties().get("sharedRoster.showInRoster");
+        enableRosterGroups = !"nobody".equals(showGroup);
+        shareAdditional = "everybody".equals(showGroup);
         if ("onlyGroup".equals(showGroup)) {
             String glist = group.getProperties().get("sharedRoster.groupList");
-            List l = new ArrayList();
+            List<String> l = new ArrayList<String>();
             if (glist != null) {
                 StringTokenizer tokenizer = new StringTokenizer(glist,",\t\n\r\f");
                 while (tokenizer.hasMoreTokens()) {
                     String tok = tokenizer.nextToken().trim();
                     l.add(tok.trim());
                 }
+                if (!l.isEmpty()) {
+                    shareAdditional = true;
+                }
             }
-            groupNames = (String[])l.toArray(new String[]{});
+            groupNames = l.toArray(new String[]{});
         }
         groupDisplayName = group.getProperties().get("sharedRoster.displayName"); 
     }
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="group.edit.title"/></title>
-        <meta name="subPageID" content="group-edit"/>
-        <meta name="extraParams" content="<%= "group="+URLEncoder.encode(groupName, "UTF-8") %>"/>
-        <meta name="helpPage" content="edit_group_properties.html"/>
-    </head>
-    <body>
+<head>
+<title><fmt:message key="group.edit.title"/></title>
+<meta name="subPageID" content="group-edit"/>
+<meta name="extraParams" content="<%= "group="+URLEncoder.encode(groupName, "UTF-8") %>"/>
+<meta name="helpPage" content="edit_group_properties.html"/>
+</head>
+<body>
 
-    <p>
-        <fmt:message key="group.edit.form_info" />
-    </p>
+<p>
+	<fmt:message key="group.edit.form_info" />
+</p>
+
+<p>
+	<a href="group-summary.jsp" class="jive-link-back"><span>&laquo;</span> Back to all groups</a>
+</p>
 
 <%
     if (success) {
@@ -258,7 +275,7 @@
     }
     else if(!success && add){
 %>
- <div class="jive-error">
+	<div class="jive-error">
     <table cellpadding="0" cellspacing="0" border="0">
     <tbody>
         <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
@@ -272,79 +289,130 @@
     </table>
     </div><br>
 <% } %>
+
+	<div class="jive-horizontalRule"></div>
+
 <form name="ff" action="group-edit.jsp">
 <input type="hidden" name="group" value="<%= groupName %>"/>
 
-    <fieldset>
-        <legend>
-            <fmt:message key="group.edit.group_summary" />
-        </legend>
 
-        <table cellpadding="3" cellspacing="1" border="0">
-            <tr>
-                <td  width="1%" nowrap>
-                    <fmt:message key="group.edit.group_name" />
-                </td>
-                <% if(!edit) { %>
-                <td align=left nowrap width="1%">
-                    <b><%= group.getName() %></b>
-                </td>
-                <td>
-                    <a href="group-edit.jsp?edit=true&group=<%= URLEncoder.encode(groupName, "UTF-8") %>">
-                    <img src="images/edit-16x16.gif" border="0" alt="">
-                   </a>
-                </td>
-                <% } else { %>
+	<!-- BEGIN group name and description -->
+	<div class="jive-contentBox-plain">
+        <%  // Only show edit and delete options if the groups aren't read-only.
+            if (!webManager.getGroupManager().isReadOnly()) { %>
+        <div class="jive-contentBox-toolbox">
+			<a href="group-create.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>&name=<%= URLEncoder.encode(group.getName(), "UTF-8")%>&description=<%= group.getDescription() != null? URLEncoder.encode(group.getDescription(), "UTF-8") : "" %>" class="jive-link-edit"><fmt:message key="group.edit.edit_details" /></a>
+			<a href="group-delete.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>" class="jive-link-delete"><fmt:message key="group.edit.delete" /></a>
+		</div>
+        <% } %>
 
-                <td>
-                <input type="text" name="newName" value="<%= group.getName() %>">
-                </td>
-
-                <% } %>
-            </tr>
-            <tr>
-                <td width="1%" nowrap>
-                    <fmt:message key="group.edit.group_description" />
-                </td>
-                <% if(!edit) { %>
-                <td colspan="2">
-                    <%= ((group.getDescription() != null) ? group.getDescription() : "<i>"+LocaleUtils.getLocalizedString("group.edit.group_not_description")+"</i>") %>
-                </td>
-                <% } else { %>
-
-                <td>
-                <textarea name="newDescription" cols="40" rows="4"><%= group.getDescription() != null ? group.getDescription() : "" %></textarea>
-                </td>
-
-                <% } %>
-            </tr>
-            </table>
+        <h3>
+			<%= group.getName() %>
+		</h3>
+		<p>
+			<%= group.getDescription() != null ? group.getDescription() : "" %>
+		</p>
+    </div>
+	<!-- END group name and description -->
 
 
+	<!-- BEGIN contact list settings -->
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="group.edit.share_title" />
 
-    <br>
-    <p><fmt:message key="group.edit.group_share_title" /></p>
+	</div>
+	<div class="jive-contentBox">
+		<p>
+            <fmt:message key="group.edit.share_content" />
+        </p>
 
-    <p>
-    <fmt:message key="group.edit.group_share_content" />
-    </p>
-
-    <table cellpadding="3" cellspacing="0" border="0" width="100%">
-    <tbody>
-        <tr>
+		<table cellpadding="3" cellspacing="0" border="0">
+		<tbody>
+		<tr>
             <td width="1%">
-                <input type="radio" name="enableRosterGroups" value="false" id="rb201" <%= !enableRosterGroups ? "checked" : "" %>>
+                <input type="radio" name="enableRosterGroups" value="false" id="rb201" <%= !enableRosterGroups ? "checked" : "" %> onClick="document.getElementById('jive-roster').style.display = 'none';">
             </td>
             <td width="99%">
-                <label for="rb201"><fmt:message key="group.edit.group_share_not_in_rosters" /></label>
+                <label for="rb201"><fmt:message key="group.edit.share_not_in_rosters" /></label>
             </td>
         </tr>
         <tr>
-            <td width="1%">
-                <input type="radio" name="enableRosterGroups" value="true" id="rb202" <%= enableRosterGroups ? "checked" : "" %>>
+            <td width="1%" valign="top">
+                <input type="radio" name="enableRosterGroups" value="true" id="rb202" <%= enableRosterGroups ? "checked" : "" %> onClick="document.getElementById('jive-roster').style.display = 'block';">
             </td>
             <td width="99%">
-                <label for="rb202"><fmt:message key="group.edit.group_share_in_rosters" /></label>
+                <label for="rb202"><fmt:message key="group.edit.share_in_rosters" /></label>
+
+                <div id="jive-roster" style="display: <%= !enableRosterGroups ? "none" : "block"  %>;">
+	               <b><fmt:message key="group.edit.share_display_name" /></b>
+	               <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"><br>
+                       <%  if (errors.get("groupDisplayName") != null) { %>
+                           <span class="jive-error-text"><fmt:message key="group.edit.share_display_name" /></span><br/>
+                       <%  } %>
+	                   <script type="text/javascript" language="JavaScript">
+		                   function toggleRosterShare() {
+			                   if (document.getElementById('cb101').checked == false) {
+			                       document.getElementById('jive-rosterShare').style.display = 'none';
+                                } else {
+				                   document.getElementById('jive-rosterShare').style.display = 'block';
+                                   document.getElementById('rb002').checked = true;
+			                   }
+		                   }
+	                   </script>
+
+	               <input type="checkbox" id="cb101" name="shareContactList" onClick="toggleRosterShare();" style="vertical-align: middle;"
+										 <%= (shareAdditional ? "checked" : "") %>>
+	               <label for="cb101"><fmt:message key="group.edit.share_additional" /></label>
+	                    <div id="jive-rosterShare" style="display: <%= (enableRosterGroups && shareAdditional) ? "block" : "none"  %>;">
+		                    <table cellpadding="2" cellspacing="0" border="0" width="100%">
+							<tbody>
+								<tr>
+									<td width="1%" nowrap>
+										<input type="radio" name="showGroup" value="everybody" id="rb002"
+										 <%= ("everybody".equals(showGroup) ? "checked" : "") %>>
+									</td>
+									<td width="99%">
+										<label for="rb002"><fmt:message key="group.edit.share_all_users" /></label>
+									</td>
+								</tr>
+								<tr>
+									<td width="1%" nowrap>
+										<input type="radio" name="showGroup" value="spefgroups" id="rb003"
+										 <%= (groupNames != null && groupNames.length > 0) ? "checked" : "" %>>
+									</td>
+									<td width="99%">
+										<label for="rb003"><fmt:message key="group.edit.share_roster_groups" /></label>
+									</td>
+								</tr>
+								<tr>
+									<td width="1%" nowrap>
+										&nbsp;
+									</td>
+									<td width="99%">
+										<select name="groupNames" size="6" onclick="this.form.showGroup[1].checked=true;"
+										 multiple style="width:340px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;">
+
+										<%  for (Group g : webManager.getGroupManager().getGroups()) {
+											// Do not offer the edited group in the list of groups
+											// Members of the editing group can always see each other
+											if (g.equals(group)) {
+												continue;
+											}
+										%>
+
+											<option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
+											 <%= (contains(groupNames, g.getName()) ? "selected" : "") %>
+											 ><%= g.getName() %></option>
+
+										<%  } %>
+
+										</select>
+									</td>
+								</tr>
+							</tbody>
+							</table>
+		                </div>
+                </div>
             </td>
         </tr>
         <tr>
@@ -353,132 +421,71 @@
             </td>
             <td width="99%">
 
-                <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                <tbody>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <fmt:message key="group.edit.group_display_name" />
-                        </td>
-                        <td width="99%">
-                            <input type="text" name="groupDisplayName" size="30" maxlength="100" value="<%= (groupDisplayName != null ? groupDisplayName : "") %>"
-                             onclick="this.form.enableRosterGroups[1].checked=true;">
-
-                            <%  if (errors.get("groupDisplayName") != null) { %>
-
-                                    <span class="jive-error-text"><fmt:message key="group.create.enter_a_group_name" /></span>
-
-                            <%  } %>
-                        </td>
-                    </tr>
-                </tbody>
-                </table>
-
-                <table cellpadding="3" cellspacing="0" border="0" width="100%">
-                <tbody>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <input type="radio" name="showGroup" value="everybody" id="rb002"
-                             onclick="this.form.enableRosterGroups[1].checked=true;"
-                             <%= ("everybody".equals(showGroup) || "nobody".equals(showGroup) ? "checked" : "") %>>
-                        </td>
-                        <td width="99%">
-                            <label for="rb002"><fmt:message key="group.edit.show_groups_in_all_user" /></label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <input type="radio" name="showGroup" value="onlyGroup" id="rb001"
-                             onclick="this.form.enableRosterGroups[1].checked=true;"
-                             <%= ("onlyGroup".equals(showGroup) && (groupNames == null || groupNames.length == 0) ? "checked" : "") %>>
-                        </td>
-                        <td width="99%">
-                            <label for="rb001"><fmt:message key="group.edit.show_groups_in_groups_members" /></label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="1%" nowrap>
-                            <input type="radio" name="showGroup" value="spefgroups" id="rb003"
-                             onclick="this.form.enableRosterGroups[1].checked=true;"
-                             <%= (groupNames != null && groupNames.length > 0) ? "checked" : "" %>>
-                        </td>
-                        <td width="99%">
-                            <label for="rb003"><fmt:message key="group.edit.show_group_in_roster_group" /></label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="1%" nowrap>
-                            &nbsp;
-                        </td>
-                        <td width="99%">
-                            <select name="groupNames" size="6" onclick="this.form.showGroup[2].checked=true;this.form.enableRosterGroups[1].checked=true;"
-                             multiple style="width:300px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;">
-
-                            <%  for (Group g : webManager.getGroupManager().getGroups()) { %>
-
-                                <option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
-                                 <%= (contains(groupNames, g.getName()) ? "selected" : "") %>
-                                 ><%= g.getName() %></option>
-
-                            <%  } %>
-
-                            </select>
-                        </td>
-                    </tr>
-                </tbody>
-                </table>
+                <input type="submit" name="save" value="<fmt:message key="group.edit.share_save" />">
 
             </td>
         </tr>
     </tbody>
     </table>
 
-    </fieldset>
-    <br>
 
-    <%  if (edit) { %>
-        <input type="submit" name="save" value="<fmt:message key="global.save_settings" />">
-        <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
-    <%  } %>
+	</div>
+	<!-- END contact list settings -->
 
-                    </form>
 
-    <br><br>
+</form>
 
-    <form action="group-edit.jsp" method="post" name="f">
+
+	<!-- BEGIN group membership management -->
+	<div class="jive-contentBoxHeader">
+		<fmt:message key="group.edit.members" />
+	</div>
+	<div class="jive-contentBox">
+		<%  // Only show if the group isn't read-only.
+            if (!webManager.getGroupManager().isReadOnly()) { %>
+        <p>
+			<fmt:message key="group.edit.members_description" />
+		</p>
+
+        <form action="group-edit.jsp" method="post" name="f">
         <input type="hidden" name="group" value="<%= groupName %>">
         <input type="hidden" name="add" value="Add"/>
-        <table cellpadding="3" cellspacing="1" border="0">
+        <table cellpadding="3" cellspacing="1" border="0" style="margin: 0px 0px 8px 0px;">
             <tr>
                 <td nowrap width="1%">
                     <fmt:message key="group.edit.add_user" />
                 </td>
                 <td nowrap class="c1" align="left">
-                    <input type="text" size="40" name="users"/>
+                    <input type="text" size="45" name="users"/>
                     &nbsp;<input type="submit" name="addbutton" value="<fmt:message key="global.add" />">
                 </td>
             </tr>
         </table>
-    </form>
+        </form>
 
-    <form action="group-edit.jsp" method="post" name="main">
+        <% } %>
+
+        <form action="group-edit.jsp" method="post" name="main">
         <input type="hidden" name="group" value="<%= groupName %>">
-        <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="600">
+        <table class="jive-table" cellpadding="3" cellspacing="0" border="0" width="435">
             <tr>
+	            <th>&nbsp;</th>
                 <th nowrap><fmt:message key="group.edit.username" /></th>
-                <th width="1%" nowrap><fmt:message key="group.edit.admin" /></th>
-                <th width="1%" nowrap><fmt:message key="group.edit.remove" /></th>
+                <%  // Only show if the group isn't read-only.
+                if (!webManager.getGroupManager().isReadOnly()) { %>
+                <th width="1%" nowrap class="jive-table-th-center"><fmt:message key="group.edit.admin" /></th>
+                <th width="1%" nowrap class="jive-table-th-center"><fmt:message key="group.edit.remove" /></th>
+                <% } %>
             </tr>
             <!-- Add admins first -->
 <%
             int memberCount = group.getMembers().size() + group.getAdmins().size();
-            Iterator<JID> members = group.getMembers().iterator();
-            Iterator<JID> admins = group.getAdmins().iterator();
-%>
-<%
+            boolean showUpdateButtons = memberCount > 0;
+            boolean showRemoteJIDsWarning = false;
             if (memberCount == 0) {
 %>
                 <tr>
-                    <td align="center" colspan="3">
+                    <td align="center" colspan="4">
                         <br>
                         <fmt:message key="group.edit.user_hint" />
                         <br>
@@ -487,50 +494,77 @@
                 </tr>
 <%
             }
-%>
-<%
-            boolean showUpdateButtons = memberCount > 0;
-            boolean showRemoteJIDsWarning = false;
-            while (admins.hasNext()) {
-                JID user = (JID)admins.next();
+            else {
+                // Sort the list of members.
+                ArrayList<JID> allMembers = new ArrayList<JID>(memberCount);
+                allMembers.addAll(group.getMembers());
+                Collection<JID> admins = group.getAdmins();
+                allMembers.addAll(admins);
+                Collections.sort(allMembers);
+                for (JID jid:allMembers) {
+                    boolean isLocal = webManager.getXMPPServer().isLocal(jid);
+                    User user = null;
+                    if (isLocal) {
+                        try {
+                            user = userManager.getUser(jid.getNode());
+                        }
+                        catch (UserNotFoundException unfe) {
+                            // Ignore.
+                        }
+                    }
 %>
                 <tr>
-                    <td><%= user %><% if (!webManager.getXMPPServer().isLocal(user)) { showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font><%}%></td>
+                    <td width="1%">
+                    <%  if (user != null && presenceManager.isAvailable(user)) {
+                            Presence presence = presenceManager.getPresence(user);
+                    %>
+                    <% if (presence.getShow() == null) { %>
+                    <img src="images/im_available.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.available" />" alt="<fmt:message key="user.properties.available" />">
+                    <% } %>
+                    <% if (presence.getShow() == Presence.Show.chat) { %>
+                    <img src="images/im_free_chat.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
+                    <% } %>
+                    <% if (presence.getShow() == Presence.Show.away) { %>
+                    <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
+                    <% } %>
+                    <% if (presence.getShow() == Presence.Show.xa) { %>
+                    <img src="images/im_away.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
+                    <% } %>
+                    <% if (presence.getShow() == Presence.Show.dnd) { %>
+                    <img src="images/im_dnd.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
+                    <% } %>
+
+                    <%  } else { %>
+                    <img src="images/im_unavailable.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.offline" />" alt="<fmt:message key="user.properties.offline" />">
+                    <%  } %>
+
+                    </td>
+                    <% if (user != null) { %>
+                    <td><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= JID.unescapeNode(user.getUsername()) %></a><% if (!isLocal) { showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font><%}%></td>
+                    <% } else { %>
+                    <td><%= jid %><% showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font></td>
+                    <% } %>
+                    <%  // Only show if the group isn't read-only.
+                    if (!webManager.getGroupManager().isReadOnly()) { %>
                     <td align="center">
-                        <input type="checkbox" name="admin" value="<%= user %>" checked>
+                        <input type="checkbox" name="admin" value="<%= jid %>" <% if (admins.contains(jid)) { %>checked<% } %>>
                     </td>
                     <td align="center">
-                        <input type="checkbox" name="delete" value="<%= user %>">
+                        <input type="checkbox" name="delete" value="<%= jid %>">
                     </td>
+                    <% } %>
                 </tr>
 <%
+                }
             }
-%>
-<%
-            while (members.hasNext()) {
-                JID user = (JID)members.next();
+            if (showUpdateButtons && !webManager.getGroupManager().isReadOnly()) {
 %>
                 <tr>
-                    <td><%= user %><% if (!webManager.getXMPPServer().isLocal(user)) { showRemoteJIDsWarning = true; %> <font color="red"><b>*</b></font><%}%></td>
-                    <td align="center">
-                        <input type="checkbox" name="admin" value="<%= user %>">
-                    </td>
-                    <td align="center">
-                        <input type="checkbox" name="delete" value="<%= user %>">
-                    </td>
-                </tr>
-<%
-            }
-%>
-<%
-            if (showUpdateButtons) {
-%>
-                <tr>
-                    <td>
+                    <td colspan="2">
                         &nbsp;
                     </td>
                     <td align="center">
-                        <input type="submit" name="save" value="Update">
+                        <input type="submit" name="updateMember" value="Update">
                     </td>
                     <td align="center">
                         <input type="submit" name="remove" value="Remove">
@@ -542,7 +576,7 @@
             if (showRemoteJIDsWarning) {
 %>
             <tr>
-                <td colspan="3">
+                <td colspan="4">
                     <font color="red">* <fmt:message key="group.edit.note" /></font>
                 </td>
             </tr>
@@ -550,15 +584,20 @@
             }
 %>
         </table>
-        </div>
-    </form>
+        </form>
 
     <script type="text/javascript">
         document.f.users.focus();
     </script>
 
-    </body>
+	</div>
+	<!-- END group membership management -->
+
+
+
+</body>
 </html>
+
 
 <%!
     private static String toList(String[] array, String enc) {

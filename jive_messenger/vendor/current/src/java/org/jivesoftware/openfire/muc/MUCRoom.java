@@ -9,20 +9,20 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.muc;
+package org.jivesoftware.openfire.muc;
 
 import java.util.List;
 import java.util.Date;
 import java.util.Collection;
 
 import org.dom4j.Element;
-import org.jivesoftware.wildfire.muc.spi.IQAdminHandler;
-import org.jivesoftware.wildfire.muc.spi.IQOwnerHandler;
+import org.jivesoftware.openfire.muc.spi.IQAdminHandler;
+import org.jivesoftware.openfire.muc.spi.IQOwnerHandler;
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.database.JiveID;
 import org.xmpp.packet.Presence;
 import org.xmpp.packet.Message;
@@ -145,7 +145,7 @@ public interface MUCRoom {
      * @return The user's role in the room
      * @throws UserNotFoundException If there is no user with the given nickname
      */
-    MUCRole getOccupantByFullJID(String jid) throws UserNotFoundException;
+    MUCRole getOccupantByFullJID(JID jid) throws UserNotFoundException;
 
     /**
      * Obtain the roles of all users in the chatroom.

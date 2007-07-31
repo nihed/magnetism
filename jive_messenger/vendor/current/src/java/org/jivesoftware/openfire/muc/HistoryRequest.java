@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.muc;
+package org.jivesoftware.openfire.muc;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -20,9 +20,10 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.TimeZone;
 
-import org.jivesoftware.wildfire.muc.spi.MUCRoleImpl;
+import org.jivesoftware.openfire.muc.spi.MUCRoleImpl;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveConstants;
+import org.jivesoftware.util.FastDateFormat;
 import org.dom4j.Element;
 import org.xmpp.packet.Message;
 
@@ -41,9 +42,10 @@ import org.xmpp.packet.Message;
 public class HistoryRequest {
 
     private static final DateFormat formatter = new SimpleDateFormat(JiveConstants.XMPP_DATETIME_FORMAT);
-    private static final DateFormat delayedFormatter = new SimpleDateFormat("yyyyMMdd'T'HH:mm:ss");
+    private static final DateFormat delayedFormatter = new SimpleDateFormat(
+            JiveConstants.XMPP_DELAY_DATETIME_FORMAT);
     static {
-        delayedFormatter.setTimeZone(TimeZone.getTimeZone("GMT+0"));
+        delayedFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 

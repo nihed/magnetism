@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.net;
+package org.jivesoftware.openfire.net;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,8 +47,15 @@ public class TLSStreamReader {
 
     public TLSStreamReader(TLSWrapper tlsWrapper, Socket socket) throws IOException {
 		wrapper = tlsWrapper;
-		rbc = Channels.newChannel(socket.getInputStream());
-		inNetBB = ByteBuffer.allocate(wrapper.getNetBuffSize());
+        // DANIELE: Add code to use directly the socket channel
+        if (socket.getChannel() != null) {
+            rbc = ServerTrafficCounter.wrapReadableChannel(socket.getChannel());
+        }
+        else {
+            rbc = Channels.newChannel(
+                    ServerTrafficCounter.wrapInputStream(socket.getInputStream()));
+        }
+        inNetBB = ByteBuffer.allocate(wrapper.getNetBuffSize());
 		inAppBB = ByteBuffer.allocate(wrapper.getAppBuffSize());
 	}
 

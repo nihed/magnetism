@@ -1,6 +1,6 @@
 <%--
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2004-2005 Jive Software. All rights reserved.
   -
@@ -8,14 +8,19 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.wildfire.user.*,
-                 org.jivesoftware.admin.*,
-                 org.jivesoftware.wildfire.*,
-                 org.xmpp.packet.Presence,
-                 java.net.URLEncoder"
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.openfire.PresenceManager,
+                 org.jivesoftware.openfire.group.Group,
+                 org.jivesoftware.openfire.user.User,
+                 org.jivesoftware.openfire.user.UserNotFoundException"
     errorPage="error.jsp"
 %>
+<%@ page import="org.xmpp.packet.Presence"%>
+<%@ page import="java.net.URLEncoder"%>
+<%@ page import="java.util.Collection"%>
+<%@ page import="java.util.Iterator"%>
+<%@ page import="org.jivesoftware.openfire.user.UserManager"%><%@ page import="org.xmpp.packet.JID"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -52,7 +57,6 @@
         user = webManager.getUserManager().getUser(username);
     }
     catch (UserNotFoundException unfe) {
-        user = webManager.getUserManager().getUser(username);
     }
 
     PresenceManager presenceManager = webManager.getPresenceManager();
@@ -97,6 +101,19 @@
     </table>
     </div><br>
 
+<% } else if (user == null) { %>
+    <div class="warning">
+    <table cellpadding="0" cellspacing="0" border="0">
+    <tbody>
+        <tr>
+        <td class="jive-icon-label">
+            <fmt:message key="error.specific_user_not_found">
+                <fmt:param value="<%= username%>" />
+            </fmt:message>
+        </td></tr>
+    </tbody>
+    </table>
+    </div><br>
 <%  } %>
 
 <div class="jive-table">
@@ -109,12 +126,19 @@
     </tr>
 </thead>
 <tbody>
+    <% if (user == null) { %>
+    <tr>
+        <td colspan="2" align="center">
+            <fmt:message key="error.requested_user_not_found" />
+        </td>
+    </tr>
+    <% } else { %>
     <tr>
         <td class="c1">
             <fmt:message key="user.create.username" />:
         </td>
         <td>
-            <%= user.getUsername() %>
+            <%= JID.unescapeNode(user.getUsername()) %>
         </td>
     </tr>
     <tr>
@@ -126,24 +150,19 @@
                     Presence presence = presenceManager.getPresence(user);
             %>
                 <% if (presence.getShow() == null) { %>
-                    <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="user.properties.available" />">
-                    <fmt:message key="user.properties.available" />
+                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.available" />" alt="<fmt:message key="user.properties.available" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.chat) { %>
-                    <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.chat_available" />">
-                    <fmt:message key="session.details.chat_available" />
+                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.away) { %>
-                    <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.away" />">
-                    <fmt:message key="session.details.away" />
+                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.xa) { %>
-                    <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.extended" />">
-                    <fmt:message key="session.details.extended" />
+                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.dnd) { %>
-                    <img src="images/user-red-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.not_disturb" />">
-                    <fmt:message key="session.details.not_disturb" />
+                <img src="images/user-red-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
                 <% } %>
 
             <%  } else { %>
@@ -195,16 +214,47 @@
             <%= JiveGlobals.formatDate(user.getCreationDate()) %>
         </td>
     </tr>
+    <tr>
+        <td class="c1">
+            Groups:
+        </td>
+        <td>
+            <%
+                Collection groups = webManager.getGroupManager().getGroups(user);
+                if (groups.isEmpty()) {
+            %>
+                <i>None</i>
+            <%
+                }
+                else {
+                    int count = 0;
+                    for (Iterator it=groups.iterator();it.hasNext();) {
+                        Group group = (Group) it.next();
+                        if (count != 0) {
+                            out.print(", ");
+                        }
+                        out.print(group.getName());
+                        count ++;
+                    }
+                }
+            %>
+        </td>
+    </tr>
+    <% } %>
 </tbody>
 </table>
 </div>
 
 <br><br>
 
+<% if (user != null && !UserManager.getUserProvider().isReadOnly()) { %>
+
 <form action="user-edit-form.jsp">
 <input type="hidden" name="username" value="<%= user.getUsername() %>">
 <input type="submit" value="<fmt:message key="global.edit_properties" />">
 </form>
+
+<% } %>
 
 </body>
 </html>

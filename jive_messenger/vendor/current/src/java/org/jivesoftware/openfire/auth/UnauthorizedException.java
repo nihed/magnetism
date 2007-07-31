@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.auth;
+package org.jivesoftware.openfire.auth;
 
 /**
  * Thrown if a user does not have permission to access a particular method.

@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 3195 $
- * $Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+ * $Revision: 7655 $
+ * $Date: 2007-03-22 15:50:33 -0500 (Thu, 22 Mar 2007) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -32,7 +32,7 @@ import java.util.*;
  */
 public class JiveGlobals {
 
-    private static String JIVE_CONFIG_FILENAME = "conf" + File.separator + "wildfire.xml";
+    private static String JIVE_CONFIG_FILENAME = "conf" + File.separator + "openfire.xml";
 
     /**
      * Location of the jiveHome directory. All configuration files should be
@@ -120,7 +120,7 @@ public class JiveGlobals {
     public static TimeZone getTimeZone() {
         if (timeZone == null) {
             if (properties != null) {
-                String timeZoneID = (String)properties.get("locale.timeZone");
+                String timeZoneID = properties.get("locale.timeZone");
                 if (timeZoneID == null) {
                     timeZone = TimeZone.getDefault();
                 }
@@ -353,6 +353,35 @@ public class JiveGlobals {
     }
 
     /**
+     * Returns a boolean value local property. Local properties are stored in the
+     * file defined in <tt>JIVE_CONFIG_FILENAME</tt> that exists in the <tt>home</tt>
+     * directory. Properties are always specified as "foo.bar.prop", which would map to
+     * the following entry in the XML file:
+     * <pre>
+     * &lt;foo&gt;
+     *     &lt;bar&gt;
+     *         &lt;prop&gt;some value&lt;/prop&gt;
+     *     &lt;/bar&gt;
+     * &lt;/foo&gt;
+     * </pre>
+     *
+     * If the specified property can't be found, the <tt>defaultValue</tt> will be returned.
+     * If the property is found, it will be parsed using {@link Boolean#valueOf(String)}.  
+     *
+     * @param name the name of the property to return.
+     * @param defaultValue value returned if the property could not be loaded or was not
+     *      a number.
+     * @return the property value specified by name or <tt>defaultValue</tt>.
+     */
+    public static boolean getXMLProperty(String name, boolean defaultValue) {
+        String value = getXMLProperty(name);
+        if (value != null) {
+            return Boolean.valueOf(value);
+        }
+        return defaultValue;
+    }
+
+    /**
      * Sets a local property. If the property doesn't already exists, a new
      * one will be created. Local properties are stored in the file defined in
      * <tt>JIVE_CONFIG_FILENAME</tt> that exists in the <tt>home</tt> directory.
@@ -476,7 +505,7 @@ public class JiveGlobals {
             }
             properties = JiveProperties.getInstance();
         }
-        return (String)properties.get(name);
+        return properties.get(name);
     }
 
     /**
@@ -494,7 +523,7 @@ public class JiveGlobals {
             }
             properties = JiveProperties.getInstance();
         }
-        String value = (String)properties.get(name);
+        String value = properties.get(name);
         if (value != null) {
             return value;
         }
@@ -517,6 +546,28 @@ public class JiveGlobals {
         if (value != null) {
             try {
                 return Integer.parseInt(value);
+            }
+            catch (NumberFormatException nfe) {
+                // Ignore.
+            }
+        }
+        return defaultValue;
+    }
+
+    /**
+     * Returns a long value Jive property. If the specified property doesn't exist, the
+     * <tt>defaultValue</tt> will be returned.
+     *
+     * @param name the name of the property to return.
+     * @param defaultValue value returned if the property doesn't exist or was not
+     *      a number.
+     * @return the property value specified by name or <tt>defaultValue</tt>.
+     */
+    public static long getLongProperty(String name, long defaultValue) {
+        String value = getProperty(name);
+        if (value != null) {
+            try {
+                return Long.parseLong(value);
             }
             catch (NumberFormatException nfe) {
                 // Ignore.
@@ -551,7 +602,7 @@ public class JiveGlobals {
     public static boolean getBooleanProperty(String name, boolean defaultValue) {
         String value = getProperty(name);
         if (value != null) {
-            return Boolean.valueOf(getProperty(name));
+            return Boolean.valueOf(value);
         }
         else {
             return defaultValue;
@@ -645,7 +696,7 @@ public class JiveGlobals {
      *
      * @param propertyMap a map of properties, keyed on property name.
      */
-    public static void setProperties(Map propertyMap) {
+    public static void setProperties(Map<String, String> propertyMap) {
         if (properties == null) {
             if (isSetupMode()) {
                 return;
@@ -674,7 +725,7 @@ public class JiveGlobals {
 
    /**
     * Allows the name of the local config file name to be changed. The
-    * default is "wildfire.xml".
+    * default is "openfire.xml".
     *
     * @param configName the name of the config file.
     */

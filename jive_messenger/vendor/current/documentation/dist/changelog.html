@@ -1,551 +1,807 @@
+
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 
 <html>
 <head>
-	<title>Wildfire Changelog</title>
-    <style type="text/css">
-        BODY {
-            font-size : 100%;
-        }
-        BODY, TD, TH {
-            font-family : tahoma, verdana, arial, helvetica, sans-serif;
-            font-size : 0.8em;
-        }
-				H2 {
-					 font-size : 10pt;
-					 font-weight : bold;
-					 padding-left : 1em;
-				}
-        A:hover {
-            text-decoration : none;
-        }
-        .pageheader {
-            font-family : arial, helvetica, sans-serif;
-            font-size : 14pt;
-            font-weight: bold;
-        }
-        .header {
-            font-family : tahoma, arial, helvetica, sans-serif;
-            font-size : 1.4em;
-            font-weight: bold;
-            border-bottom : 1px #ccc solid;
-            padding-bottom : 2px;
-        }
-        .subheader {
-            font-weight: bold;
-            color: #600;
-        }
-        TT {
-            font-family : courier new;
-            font-weight : bold;
-            color : #060;
-        }
-        PRE {
-            font-family : courier new;
-            font-size : 100%;
-        }
-        .footer {
-            font-size : 8pt;
-            color : #666;
-            text-align : center;
-						margin-top : 2em;
-						padding-top : 0.5em;
-						border-top : 1px #CCC solid;
-        }
-        .important {
-            color : #c00;
-            font-weight : bold;
-        }
-        .issueid {
-            color : #999;
-            font-size : 11px;
-        }
-    </style>
+<title>Openfire Changelog</title>
+<style type="text/css">
+/* global font and body settings */
+body {
+	font-size : 100%;
+	background-color : #d3d6d9;
+	padding: 0px;
+	margin: 0px 0px 30px 0px;
+}
+body, td, th {
+	font-family : arial, helvetica, sans-serif;
+	font-size : 10pt;
+}
+pre, tt, code {
+	font-family : courier new, monospaced;
+	font-size : 9pt;
+}
+#pageContainer {
+	display: block;
+	position: relative;
+	clear: both;
+	background-color: #fff;
+	border: 1px solid #999;
+	padding: 40px;
+	margin: 30px;
+	-moz-border-radius: 6px;
+}
+#pageHeader {
+	display: block;
+	position: relative;
+	height: 80px;
+	background-color: #e7eaee;
+	border: 1px solid #cccccc;
+	border-bottom: none;
+	-moz-border-radius: 5px 5px 0px 0px;
+	margin: 10px 0px 0px 0px;
+}
+#pageBody {
+	margin: 0px 18px 0px 20px;
+}
+
+
+
+/* anchors */
+a:link {
+	color: #11568c;
+}
+a:visited {
+	color: #571c8d;
+}
+a:hover {
+	color: #7a1d42;
+	text-decoration : underline;
+}
+a:active {
+	color: #7a1d42;
+}
+
+
+
+/* page header elements (logo and navigation) */
+.navigation {
+	display: block;
+	position: relative;
+	height: 20px;
+	background-color: #335588;
+	border: 1px solid #cccccc;
+	border-top: none;
+	color: #ffffff;
+	font-size: 11px;
+	line-height: 18px;
+	padding: 0px 0px 0px 0px;
+	margin: 0px 0px 25px 0px;
+	overflow: hidden;
+}
+.navigation a {
+	margin: 0px 20px 0px 20px;
+}
+.navigation a:link { color: #ffffff; }
+.navigation a:visited { color: #ffffff; }
+.navigation a:hover { color: #ffffff; }
+.navigation a:active { color: #ffffff; }
+
+
+
+/* headings */
+h1 {
+	display: block;
+	position: relative;
+	font-size : 1.7em;
+	font-weight : bold;
+	color: #670e15;
+	padding: 0px;
+	margin: 30px 0px 0px 20px;
+}
+h2 {
+	font-size : 1.3em;
+	font-weight : bold;
+	margin: 40px 0px 6px 0px;
+	padding: 0px;
+	color: #335588;
+}
+h3 {
+	font-size : 1.0em;
+	font-weight : bold;
+	margin: 25px 0px 3px 0px;
+	padding: 0px;
+	color: #334466;
+}
+
+
+
+/* general elements */
+p {
+	margin: 0px 0px 15px 0px;
+}
+
+ul {
+	margin: 5px 0px 15px 35px;
+}
+li {
+	padding-bottom : 4px;
+}
+tt {
+	font-family : courier new;
+	font-weight : bold;
+	color : #060;
+}
+hr {
+	display: block;
+	height: 1px;
+	background-color: #999999;
+	border: none;
+	margin: 40px 0px 20px 0px;
+}
+	
+.footer {
+	font-size : 8pt;
+	color : #666;
+	text-align : center;
+	margin-top : 2em;
+	padding-top : 0.5em;
+	border-top : 1px #CCC solid;
+}
+</style>
 </head>
 <body>
 
-<div class="header">
-Wildfire Changelog
-</div>
-
-<p>
-<b>2.4.0</b> -- December 15, 2005
-<p>
-
-<h2>New Features</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-480'>JM-480</a>] - Server performance was optimized.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-333'>JM-333</a>] - Added support for JEP-0138 (stream compression). <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-486'>JM-486</a>] - Added support for closing idle c2s connections. <b>(4 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-479'>JM-479</a>] - Upgraded to JDK 1.5.0_06</li>
-</ul>
-
-<h2>Bug Fixes</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-490'>JM-490</a>] - When a group was not found in LDAP an exception was not being thrown.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-491'>JM-491</a>] - Packets for remote servers were sometimes lost.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-483'>JM-483</a>] - Kicking old client due to resource conflict was not letting the new client log into the server.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-481'>JM-481</a>] - Last packet sent before closing the client connection was not being processed.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-482'>JM-482</a>] - An empty roster is now returned when anonymous user requests their rosters.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-484'>JM-484</a>] - IQ packets of type &lt;auth&gt; and &lt;register&gt; were not being offered when TLS was disabled.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-488'>JM-488</a>] - Fixed problem where threads may wait forever trying to obtain a db connection from the pool.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-487'>JM-487</a>] - JDBC drivers were upgraded.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-485'>JM-485</a>] - Source build was failing.</li>
-</ul>
-
-<p>
-<b>2.3.1</b> -- December 1, 2005
-<p>
-
-<h2>New Features</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-476'>JM-476</a>] - Server performance was optimized.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-210'>JM-210</a>] - Groups can now hold JIDs. <b>(10 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-477'>JM-477</a>] - Added support for sending IQ requests and processing IQ results.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-465'>JM-465</a>] - Replaced presence icons with ones from Spark.</li>
-</ul>
-
-<h2>Bug Fixes</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-475'>JM-475</a>] - Unavailable presences are no longer sent when unsubscribing from a contact that previously received a directed presence.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-466'>JM-466</a>] - Direct presences were not being cleaned up for some sessions.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-467'>JM-467</a>] - Messages of type groupchat, error or headline are no longer being stored offline.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-468'>JM-468</a>] - Fixed SQL Server issue with DefaultUserProvider.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-469'>JM-469</a>] - Time zone was not being persisted.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-470'>JM-470</a>] - Fixed concurrency issues in room history.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-472'>JM-472</a>] - Directed presences were not being tracked for some JIDs.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-473'>JM-473</a>] - Packets were not being sent to remote servers when subdomain matched a component domain.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-478'>JM-478</a>] - Roster items with subscription NONE were being created when removing a contact.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-474'>JM-474</a>] - Fixed error when adding the same user to group twice.</li>
-</ul>
-
-<p>
-<b>2.3.0</b> -- November 17, 2005
-<p>
-
-<h2>New Features</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-387'>JM-387</a>] - Added TLS support for client sessions. Thanks to Hao Chen.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-7'>JM-7</a>] - Added SASL support and resource binding for client sessions. Thanks to Hao Chen. <b>(7 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-388'>JM-388</a>] - Added Session Establishment support.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-201'>JM-201</a>] - Added support for PAM authentication. <b>(4 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-347'>JM-347</a>] - Added session event support. Thanks to Conor Hayes.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-416'>JM-416</a>] - Creation of connections to remote servers is now asynchronous.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-409'>JM-409</a>] - Connection timeout to remote servers is now configurable. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-411'>JM-411</a>] - SASL authentication is now offered before TLS is negotiated.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-121'>JM-121</a>] - VCARDs can now be populated from LDAP info. <b>(19 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-458'>JM-458</a>] - LDAP searches now include wildcard by default.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-450'>JM-450</a>] - Added support for JEP-50: Ad-hoc commands.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-425'>JM-425</a>] - Delete operation was implemented for POP3 provider.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-417'>JM-417</a>] - Value of 'to' attribute of stream headers is now validated.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-252'>JM-252</a>] - Added Spanish translation. Thanks to Jorge Merlino.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-403'>JM-403</a>] - Added support for setting time zone.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-437'>JM-437</a>] - Added packet extension to indicate when a group is a shared group. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-444'>JM-444</a>] - Removed restarting requirement from setup tool.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-421'>JM-421</a>] - Converted admin console to use Sitemesh. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-365'>JM-365</a>] - Added support for PNG plugin icons. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-435'>JM-435</a>] - Added mime.types file to build.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-408'>JM-408</a>] - Upgraded to JDK 1.5.0_05.</li>
-</ul>
-
-<h2>Bug Fixes</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-322'>JM-322</a>] - Simplified admin account creation in setup. <b>(2 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-446'>JM-446</a>] - Modified way admins were being specified in wildfire.xml</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-442'>JM-442</a>] - Fixed shared group problem where contacts may incorrectly appear as offline.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-451'>JM-451</a>] - Members added to shared groups did not have correct presence subscription status in some cases.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-463'>JM-463</a>] - Couldn't add a contact to a group if the group matched the name of a shared group.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-427'>JM-427</a>] - Users of remote servers could incorrectly appear in shared groups.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-430'>JM-430</a>] - Fixed cross-site scripting attack in the login form. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-439'>JM-439</a>] - Fixed exception when sending last presence with no TO attribute.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-436'>JM-436</a>] - Room occupants can now exchange IQ packets.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-440'>JM-440</a>] - Room occupants can now exchange disco packets.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-447'>JM-447</a>] - IQ packets of type result sent to the MUC service are now ignored.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-456'>JM-456</a>] - Not-allowed error is now returned when room creation is restricted.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-464'>JM-464</a>] - Server was ignoring room invitations when message contained many invitations.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-424'>JM-424</a>] - Replaced XMPPBootServlet with context listener. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-443'>JM-443</a>] - "Launch Admin" button in launcher now works if only secure port is enabled.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-432'>JM-432</a>] - Wildfire was not handling different web types (flash, applets, etc.).</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-452'>JM-452</a>] - Invalid show value in Presence packet was breaking the admin console.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-455'>JM-455</a>] - Fixed concurrency error when getting room history.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-457'>JM-457</a>] - Stream header was not being added when sending some stream errors.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-461'>JM-461</a>] - Fixed bug in getXMLProperties()</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-401'>JM-401</a>] - Presence plugin includes new icons. Fixed licensing problem.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-204'>JM-204</a>] - Installer no longer overwrites keystore or config file. <b>(4 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-383'>JM-383</a>] - Default port used for server dialback is now configurable. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-406'>JM-406</a>] - Route to subdomains of remote servers was not being removed.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-407'>JM-407</a>] - Remote servers were not able to connect to subdomains of the local server.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-410'>JM-410</a>] - Server identity updated to follow Jabber Registrar.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-413'>JM-413</a>] - Trillian was not able to authenticate using SASL.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-415'>JM-415</a>] - Sending packets from a subdomain to a remote server was not working.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-418'>JM-418</a>] - An error is now returned when it is not possible to send packets to remote servers.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-422'>JM-422</a>] - Broken connections could freeze the server.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-423'>JM-423</a>] - The returned size in bytes of offline messages of a user could be incorrect. Thanks to Conor Hayes.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-428'>JM-428</a>] - Remote users could broadcast messages faking local users.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-385'>JM-385</a>] - Fixed exception in Roster when contact has no username. Thanks to Nathan Palmer.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-389'>JM-389</a>] - Fixed wildfired script to have unix line endings. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-426'>JM-426</a>] - Fixed post-install script.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-390'>JM-390</a>] - Fixed sessions summary page to show its inline help.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-392'>JM-392</a>] - Fixed exception when removing the same item from the roster twice. Thanks to Nathan Palmer.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-459'>JM-459</a>] - Allowed GenericServlet support in plugins.</li>
-</ul>
-
-<p>
-<b>2.2.2</b> -- September 19, 2005
-<p>
-
-<h2>Bug Fixes</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-274'>JM-397</a>] - Fixed built-in certificates that were recently expired.</li>
-</ul>
-
-<p>
-<b>2.2.1</b> -- September 1, 2005
-<p>
-
-<h2>New Features</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-274'>JM-274</a>] - Added POP3 authentication. Thanks to Sean Meiners.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-374'>JM-374</a>] - Added inline help to the admin console.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-363'>JM-363</a>] - Updated database libs to the latest releases.</li>
-</ul>
-
-<h2>Bug Fixes</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-357'>JM-357</a>] - Fixed problem when loading group properties whose key or value was null.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-359'>JM-359</a>] - Fixed case sensitive problem that prevented loading of plugins. <b>(3 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-360'>JM-360</a>] - Fixed parsing of dates that may freeze the server.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-361'>JM-361</a>] - When s2s is disabled, the server will no longer attempt to send packets to remote servers.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-364'>JM-364</a>] - Reading XML using SAXParser was not thread safe. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-366'>JM-366</a>] - Handling of offline messages was using a 0-12 hour format.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-368'>JM-368</a>] - Import and export users plugin now uses complete roster item JID instead of just the JID's node.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-371'>JM-371</a>] - Fixed wildfireHome location code.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-372'>JM-372</a>] - Fixed Packet.getError() to return correct XML.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-375'>JM-375</a>] - Fixed packet routing between components.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-376'>JM-376</a>] - The bin/extra directory was missing for the Unix builds.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-378'>JM-378</a>] - Added escaping of usernames in LdapGroupProvider</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-380'>JM-380</a>] - Added validation of IP address in accept list. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-381'>JM-381</a>] - IQ packets with node or resource not null may now be routed to components.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-377'>JM-377</a>] - Changed ldap.posixEnabled to ldap.posixMode.</li>
-</ul>
-
-<p>
-<b>2.2.0</b> -- August 2, 2005
-<p>
-
-<h2>New Features</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-5'>JM-5</a>] - Added support for external components. <b>(3 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-6'>JM-6</a>] - Added server to server (S2S) support. <b>(28 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-8'>JM-8</a>] - Added support for JEP-0013, better offline messages. <b>(2 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-71'>JM-71</a>] - Added support for application server deployments. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-129'>JM-129</a>] - LDAP groups are now supported. <b>(14 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-154'>JM-154</a>] - Added the ability to restrict anonymous connections. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-172'>JM-172</a>] - Added property listeners.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-225'>JM-225</a>] - Add support for reserved nicknames in MUC. <b>(3 votes)</b></li>
- <li>[<a href='http://www.jivesoftware.org/issues/browse/JM-234'>JM-234</a>] - Added a servlet to show online status. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-300'>JM-300</a>] - Plugin readme and changelog files are now shown in the admin console.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-308'>JM-308</a>] - Room registration can now be deactivated. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-311'>JM-311</a>] - Added support for JEP-0012: Last Activity.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-312'>JM-312</a>] - Messages sent to the server hostname can now be forwarded to a configurable set of JID's.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-313'>JM-313</a>] - Improved behavior for rejection of messages by PacketInterceptors. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-317'>JM-317</a>] - Upgraded to the latest JVM release, 1.5.0_04.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-319'>JM-319</a>] - Added additional plugin meta-data.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-320'>JM-320</a>] - Enabling or modifying listeners ports no longer requires a server restart.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-326'>JM-326</a>] - The "rows per page" shown in the admin console is now saved.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-328'>JM-328</a>] - The folder for audit files is now configurable.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-339'>JM-339</a>] - The vCard backend storage module is now pluggable.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-330'>JM-330</a>] - Auditing of packets may ignore certain users</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-336'>JM-336</a>] - Added support for child plugins.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-340'>JM-340</a>] - Invalid presence type is now a warning instead of an error.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-350'>JM-350</a>] - The AuthCheckFilter can now be configured programmatically.</li>
-</ul>
-
-<h2>Bug Fixes</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-125'>JM-125</a>] - Password changes failed when inbound registration was disabled. <b>(4 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-190'>JM-190</a>] - Presence Subscriptions were not being cancelled when removing a roster item. <b>(2 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-288'>JM-288</a>] - Multiple unlimited roster auth requests are no longer allowed (fixes an issue with Psi). <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-301'>JM-301</a>] - Increased the max size of the server name in the admin console.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-302'>JM-302</a>] - The System Properties field was truncated for large values.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-309'>JM-309</a>] - Fixed UserEventListner Javadocs.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-310'>JM-310</a>] - Fixed JEP-0082 (date/time profile) for a few cases. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-315'>JM-315</a>] - The Group constructor is now public, which makes writing GroupProvider implementations easier.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-321'>JM-321</a>] - Unloading plugins with JSP pages was failing.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-327'>JM-327</a>] - Clients sending an end of stream was not closing the connection</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-329'>JM-329</a>] - Fixed an error when closing and establishing a new connection immediately.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-332'>JM-332</a>] - Fixed an error where closing a component connection caused an end of stream twice.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-337'>JM-337</a>] - Offline messages are no longer stored for remote users.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-338'>JM-338</a>] - Fixed vCard implementation, which was causing information to be lost or mixed up. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-344'>JM-344</a>] - Fixed LDAP group bugs. <b>(2 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-346'>JM-346</a>] - Use specific DiscoProviders when a disco request includes a node.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-348'>JM-348</a>] - Fixed problem with s2s when the remote hostname looked like a subdomain of the local host.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-352'>JM-352</a>] - Restricting logins was not handling IP addresses correctly.</li>
-</ul>
-
-
-<p>
-<b>2.1.5</b> -- June 14, 2005
-<p>
-
-<h2>New Features</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-307'>JM-307</a>] - Added Portuguese-Brazilian translation of the admin console.</li>
-</ul>
-
-<h2>Bug Fixes</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-303'>JM-303</a>] - Fixed SSL LDAP support.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-304'>JM-304</a>] - Fixed error when anonymous user changes his presence priority.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-306'>JM-306</a>] - GAIM SSL connections now work.</li>
-</ul>   
+<div id="pageContainer">
  
-<p>
-<b>2.1.4</b> -- June 2, 2005
-<p>
+	<div id="pageHeader">
+		<h1>Openfire Changelog</h1>
+	</div>
+	<div class="navigation">
+	<a href="README.html">Readme</a>|<a href="changelog.html"><strong>Changelog</strong></a>|<a href="LICENSE.html">License</a>
+	</div>
+	
+	<div id="pageBody">
 
-<h2>New Features</h2>
+
+
+<h2>3.3.2 -- <span style="font-weight: normal;">June 22, 2007</span></h2>
+
+<h3>Openfire New Features</h3>
 <ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-230'>JM-230</a>] - Added support for JID escaping, which helps with LDAP. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-273'>JM-273</a>] - Added email service.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-280'>JM-280</a>] - Added support for discovering information about a user's bare JID address.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-287'>JM-287</a>] - Added French translation of the admin console.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-289'>JM-289</a>] - Added auto-refresh option to the session page. <b>(2 votes)</b></li>
+    <li>No changes</li>
 </ul>
 
-<h2>Bug Fixes</h2>
+<h3>Openfire Bug Fixes</h3>
 <ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-268'>JM-268</a>] - Improved drag and drop support in the launcher.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-269'>JM-269</a>] - Drag and drop installation of plugins was broken.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-270'>JM-270</a>] - Setting vCard data could fail.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-271'>JM-271</a>] - Fixed bug where adding a packet interceptor would cause IndexOutOfBoundsException</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-275'>JM-275</a>] - vCard properties can now be deleted.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-276'>JM-276</a>] - Fixed concurreny problem when user connected from more than one resource.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-277'>JM-277</a>] - Fixed concurreny problem managing properies of users and groups.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-278'>JM-278</a>] - The server now sends a stream:error conflict when a resource conflict exists.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-279'>JM-279</a>] - Sending a room invitation to an offline was closing the inviter's connection.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-282'>JM-282</a>] - Closing many connections concurrently could produce a deadlock in some circumstances.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-283'>JM-283</a>] - Group chat room creation now prevents invalid room IDs.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-284'>JM-284</a>] - Fixed concurreny problem managing directed presences.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-286'>JM-286</a>] - Fixed some words that were still hardcoded in English in the admin console.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-290'>JM-290</a>] - Invalid JIDs were not always being detected</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-293'>JM-293</a>] - The setup tool now enforces a min database connection pool size.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-297'>JM-297</a>] - Added logic to detect and forcibly shut down dead sockets.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-299'>JM-299</a>] - Fixed error loading room history when using MS-SQL.</li>
-</ul>
- 
-<p>
-<b>2.1.3</b> -- April 22, 2005
-<p>
-
-<h2>New Features</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-151'>JM-151</a>] - Added servlet support to plugins. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-196'>JM-196</a>] - Added support for drag and drop installation of plugins into the launcher.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-198'>JM-198</a>] - Java VM information and memory usage is now shown in the admin console.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-200'>JM-200</a>] - Addressed several bottlenecks in the server, increasing performance by several hundred percent.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-202'>JM-202</a>] - Improved performance by replacing StringBuffer with StringBuilder.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-203'>JM-203</a>] - Optimized login and authentication process.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-207'>JM-207</a>] - Added an "open permissions" mode to the broadcast plugin. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-209'>JM-209</a>] - Admin console ports can now be disabled.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-218'>JM-218</a>] - Added support for packet interceptors to the core API.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-223'>JM-223</a>] - The embedded http server can now filter the addresses allowed to connect.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-226'>JM-226</a>] - Updated bundled JRE to 1.5.0_02 with the server VM.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-227'>JM-227</a>] - The packet classes are now Javadoced.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-231'>JM-231</a>] - Added support for new locales: Czech, Deutsch and Nederlands.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-232'>JM-232</a>] - Added property listener support.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-233'>JM-233</a>] - Improved the protocol support document.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-246'>JM-246</a>] - Added user events.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-247'>JM-247</a>] - Search results can now be paginated.</li>
-</ul>
-    
-<h2>Bug Fixes</h2>
-<ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-189'>JM-189</a>] - LDAP users were able to log in with no password in some cases. <b>(2 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-197'>JM-197</a>] - Some words in the admin tool weren't internationalized.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-205'>JM-205</a>] - User editing did not honor optional status of name/email fields.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-208'>JM-208</a>] - The redhat-postinstall.sh script had an extra 's'.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-211'>JM-211</a>] - IQRouter#addHandler needed to send #initialize to the new handler.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-212'>JM-212</a>] - Fixed NPE when trying to get the vCard of an anonymous user.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-213'>JM-213</a>] - IQ packets of type ERROR now include the original child element.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-214'>JM-214</a>] - Removed logging of a warn message when the server receives an IQ of type result with no child element.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-215'>JM-215</a>] - IQRegister now returns an error packet if the registration fails for any reason.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-217'>JM-217</a>] - The default session for a bare JID was not being updated when a session became available.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-219'>JM-219</a>] - Changes to admin ports in the admin console were being lost.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-220'>JM-220</a>] - The admin console did not allow setting the https port.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-221'>JM-221</a>] - Made getUserProvider() public.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-224'>JM-224</a>] - Overriding sidebar elements in the admin console was not working.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-229'>JM-229</a>] - Enabling sharing group did not select an option by default.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-238'>JM-238</a>] - Shared items could incorrectly stay in the roster.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-243'>JM-243</a>] - Sessions with no resource caused problems.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-244'>JM-244</a>] - Wildfire can now send IQ packets to active but unavailable resources.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-245'>JM-245</a>] - Updated the installer version, which fixes several bugs.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-248'>JM-248</a>] - Moved JiveGlobals to org.jivesoftware.util and made it more generic.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-249'>JM-249</a>] - Only set the sender of the packets when using ClientSessions.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-250'>JM-250</a>] - Packets directed to a component's address are now passed to the component.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-251'>JM-251</a>] - Moved PropertyEventDispatcher and PropertyEventListener to org.jivesoftware.util.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-254'>JM-254</a>] - Presence updates are no longer sent when changing the permission level of a group member.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-255'>JM-255</a>] - Shared contacts disappeared when removing a user from a public group.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-256'>JM-256</a>] - Added recovery logic when sending a packet over a connection fails.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-257'>JM-257</a>] - Fixed concurreny problem while broadcasting a message.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-258'>JM-258</a>] - Improved error reporting when binding to ports fails.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-259'>JM-259</a>] - The launcher now works in Windows 2000 and Windows 2003 and console output is now shown in the launcher.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-260'>JM-260</a>] - Fixed authentication redirect for plugins for expired sessions.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-261'>JM-261</a>] - Storage of user properties were based on name not username.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-262'>JM-262</a>] - SessionManager#sendServerMessage was not storing messages for offline users.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-263'>JM-263</a>] - Size of "jid" field in mucAffiliation and mucMember tables was too long in MS-SQL.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-264'>JM-264</a>] - Modified the error code returned when max number of occupants has been reached in a MUC room.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-265'>JM-265</a>] - The offline strategy was filtering the wrong packets.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-267'>JM-267</a>] - An unavailable presence is now sent to the user after leaving a MUC room. This fixes a bug GAIM users were running into.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1087'>JM-1087</a>] - <font color="red"><b>!</b></font> Fixed out of memory problem produced by XMPPDecoder.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1088'>JM-1088</a>] - <font color="red"><b>!</b></font> Fixed out of memory problem produced by XMLLightweightParser.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1074'>JM-1074</a>] - HTTP Binding no longer depends upon /resources/spank directory.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1090'>JM-1090</a>] - Modified SSO authorization to use uppercase when comparing principals.</li>
 </ul>
 
-<p>
-<b>2.1.2</b> -- March 6, 2005
-<p>
-<h2>New Features</h2>
+<h3>Openfire Enterprise</h3>
 <ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-69'>JM-69</a>] - Plugins can now be managed in the admin console.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-122'>JM-122</a>] - Added search capabilities to UserManager. <b>(1 vote)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-130'>JM-130</a>] - Added LDAP search filters. <b>(6 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-146'>JM-146</a>] - Added disco support for components. <b>(3 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-156'>JM-156</a>] - Full resource bundle support is now included, along with a Chinese translation.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-161'>JM-161</a>] - Users loaded from LDAP can now be sorted, either server-side or client-side with a property enabled.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-176'>JM-176</a>] - Improved plugin API and management.</li> 
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-178'>JM-178</a>] - The admin console now supports https connections. <b>(1 vote)</b></li> 
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-182'>JM-182</a>] - Preferred language can now be selected during setup.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-183'>JM-183</a>] - The last unavailable presence value for users is now stored. <b>(2 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-185'>JM-185</a>] - Improved UI of the user browser in the admin console.</li>
+<li>No changes</li>
 </ul>
 
-<h2>Bug Fixes</h2>
+<h3>Openfire Connection Manager Module</h3>
 <ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-58'>JM-58</a>] - Plugin build process failed with multiple plugins.</li> 
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-86'>JM-86</a>] - Extended presence info is now preserved in group chats.</li> 
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-126'>JM-126</a>] - Improved Linux install process.</li> 
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-145'>JM-145</a>] - Server was not sending closing &lt;/stream&gt;.</li> 
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-147'>JM-147</a>] - Offline messages had incorrect jabber:x:delay information.</li> 
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-148'>JM-148</a>] - Shared groups that were publicly visible were having problem seeing other shared groups. <b>(3 votes)</b></li> 
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-150'>JM-150</a>] - Group names did not allow spaces.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-152'>JM-152</a>] - Fixed LDAP SSL support.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-153'>JM-153</a>] - Fixed exception on auditor close.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-155'>JM-155</a>] - Improved the "Illegal JID format" error.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-157'>JM-157</a>] - The option element in data forms had an empty namespace in the XML representation.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-158'>JM-158</a>] - Shared group members were not showing corectly in some cases.</li> 
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-159'>JM-159</a>] - Admin console port was not being read from the XML config file.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-162'>JM-162</a>] - Fixed bug preventing Psi clients from connecting to the server.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-164'>JM-164</a>] - Plugins could fail due to external DTD validation.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-165'>JM-165</a>] - Encoding of log files was wrong.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-166'>JM-166</a>] - Directed presences was not working for anonymous users.</li> 
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-167'>JM-167</a>] - Server was hanging under load due to trying to read a resource bundle when creating a new connection.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-168'>JM-168</a>] - Adding a new contact to the roster was not honoring the contact's domain.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-174'>JM-174</a>] - The from attribute of presence probes is now a full JID.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-175'>JM-175</a>] - Improved plugin build process to copy .jar.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-177'>JM-177</a>] - Fixed bug where stopping the server when users are connected was generating an exception.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-179'>JM-179</a>] - Shared groups no longer send packets for subscription type FROM.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-181'>JM-181</a>] - Add resources\i18n directory to release.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-186'>JM-186</a>] - Fixed bug where renaming nickname of a group chat occupant was generating an error.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-187'>JM-187</a>] - Viewing the session details of an anonymous session was causing an exception.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-188'>JM-188</a>] - Removing roster items for a foreign contact was generating an error.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-190'>JM-190</a>] - Presence subscriptions were not being cancelled when removing a roster item.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1087'>JM-1087</a>] - <font color="red"><b>!</b></font> Fixed out of memory problem produced by XMPPDecoder.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1088'>JM-1088</a>] - <font color="red"><b>!</b></font> Fixed out of memory problem produced by XMLLightweightParser.</li>
 </ul>
 
-<p>
-<b>2.1.1</b> -- January 30, 2005
-<p>
-<h2>New Features</h2>
+<h2>3.3.1 -- <span style="font-weight: normal;">May 10, 2007</span></h2>
+
+<h3><font color="red"><b>!</b></font> Upgrade Information</h3>
+<ul>Unix admins should follow the <a href='http://wiki.igniterealtime.org/display/WILDFIRE/Openfire+3.3.0+to+Openfire+3.3.1+Upgrade+Guide'>upgrade guide</a>.</ul>
+
+<h3>Openfire New Features</h3>
 <ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-103'>JM-103</a>] - Added support for Delayed Delivery (JEP-0091)</li>
+    <!--<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-765'>JM-765</a>] - Created Ubuntu/Debian package. <b>(7 votes)</b></li>-->
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-766'>JM-766</a>] - New RedHat RPM. <b>(3 votes)</b></li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-872'>JM-872</a>] - Improved Unix script. <b>(6 votes)</b></li>
 </ul>
 
-<h2>Bug Fixes</h2>
+<h3>Openfire Bug Fixes</h3>
 <ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-12'>JM-12</a>] - Don't display shutdown message by default</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-57'>JM-57</a>] - Fixed web.xml generation during build process.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-72'>JM-72</a>] - Added caching to offline message storage operations.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-120'>JM-120</a>] - Shut down embedded database at end of setup.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-124'>JM-124</a>] - Fixed exception using upper-case usernames to login.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-128'>JM-128</a>] - Marking users as group admins now works.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-131'>JM-131</a>] - Pagination now works on group pages.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-134'>JM-134</a>] - Fixed Exception when sorting users on the user summary page.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-136'>JM-136</a>] - Search result bug fixed.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-137'>JM-137</a>] - Updated the multicast DNS name.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-138'>JM-138</a>] - Refactored IQ Handler to make it more usable by plugins.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-139'>JM-139</a>] - Auditor file now uses UTF-8 as the character encoding.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-140'>JM-140</a>] - Initial presence was not being sent after connecting the same user from many resources.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-141'>JM-141</a>] - Fixed minor problems in group edit page.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-142'>JM-142</a>] - Incorrect items were being added to the roster when using shared groups</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-144'>JM-144</a>] - Fixed DB2 Schema issues.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-143'>JM-143</a>] - Bug fixes and new features in the shared groups feature.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-132'>JM-132</a>] - Results from LDAP are now sorted when the LDAP server supports it.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-135'>JM-135</a>] - Packet extensions now kept with group chat room invitations.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1049'>JM-1049</a>] - <font color="red"><b>!</b></font> Fixed security issue.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1035'>JM-1035</a>] - Fixed concurrency problem when users authenticate using encrypted passwords.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1036'>JM-1036</a>] - Phantom users remained in the room after kicking occupants using uppercase letters in their nicknames.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1037'>JM-1037</a>] - Room conversation log was confusing messages sent from occupants as being sent from the room itself.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1040'>JM-1040</a>] - Fixed NPE when there is no default session.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1041'>JM-1041</a>] - Counter of sessions could be decremented twice for the same session.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1042'>JM-1042</a>] - State of client sessions was never changed to CLOSED.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1043'>JM-1043</a>] - Simulation of unavailable presence when socket was abruptly closed was not being properly routed.</li>
+    <li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1044'>JM-1044</a>] - Fixed NPE when server stops.</li>
 </ul>
 
-<p>
-<b>2.1.0</b> -- January 15, 2005
-<p>
-<h2>New Features</h2>
+<h3>Openfire Enterprise</h3>
 <ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-1'>JM-1</a>] - Flash XML streams are now supported.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-10'>JM-10</a>] - LDAP can now be used for authentication and user information. <b>(3 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-21'>JM-21</a>] - Created plugin to let users easily broadcast messages to groups. <b>(2 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-22'>JM-22</a>] - Groups can now be automatically added to group member's rosters. <b>(10 votes)</b></li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-24'>JM-24</a>] - The lib directory can now be specified using the "wildfire.lib.dir" Java system property.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-39'>JM-39</a>] - History is now saved to the database in persistent group chat rooms.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-41'>JM-41</a>] - Added auto-archive process to clean-up unused group chat rooms.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-44'>JM-44</a>] - Added ability to cleanly shut down the server with a "stop" button in the admin console.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-47'>JM-47</a>] - Group chat visibility policy can now be set based on room lock status.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-60'>JM-60</a>] - Plugins are now supported.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-62'>JM-62</a>] - Added full support for groups.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-63'>JM-63</a>] - Under Windows, the launcher now appears in the system tray.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-77'>JM-77</a>] - Group chat rooms can be created and administered from the admin console.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-84'>JM-84</a>] - Zeroconf (Rendezvous) support added.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-96'>JM-96</a>] - Improved installer which is simpler ans smaller.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-97'>JM-97</a>] - Added support for deploying as Windows service.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-101'>JM-101</a>] - Added xml:lang support.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-105'>JM-105</a>] - Database version now included in schemas to assist with upgrading.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-107'>JM-107</a>] - Improved database upgrade process.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-110'>JM-110</a>] - Added RPM installer.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-115'>JM-115</a>] - IQ handlers can now be added and removed dynamically.</li>
+<li>No changes</li>
 </ul>
 
-<h2>Bug Fixes</h2>
+<h3>Openfire Connection Manager Module</h3>
 <ul>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-34'>JM-34</a>] - Broadcast messages from the admin console now support i18n.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-35'>JM-35</a>] - Improved UI of user creation screens.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-36'>JM-36</a>] - Fixed Postgres setup documentation.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-37'>JM-37</a>] - Fixed Postgres database schema typo.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-39'>JM-39</a>] - Minor bugs in SSLConfig fixed.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-43'>JM-43</a>] - Idle users and log conversation settings now in the group chat section of admin console.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-51'>JM-51</a>] - Fixed how group chat subject-change messages are saved in the history.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-52'>JM-52</a>] - Fixed bug when broadcasting messages in group chat rooms for users that are logged off.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-53'>JM-54</a>] - Fixed ClassCastException in MucRoomImpl.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-54'>JM-54</a>] - Refactored admin console framework.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-55'>JM-55</a>] - Fixed bug where presence was being sent twice to clients during login.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-56'>JM-56</a>] - SSL support can now be activated and deactivated.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-57'>JM-57</a>] - Updated SSL guide.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-61'>JM-61</a>] - Replaced core packet representation in server.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-64'>JM-64</a>] - Participants can now change the group chat room subject if they should be able to.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-66'>JM-66</a>] - Fixed error in the SQL Server database schema.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-75'>JM-75</a>] - VCARD is now vCard, which fixes vCard support in clients.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-76'>JM-76</a>] - Resolved Trillian compatability issues.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-80'>JM-80</a>] - Unavailable presence now correctly sent when a connection is closed.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-81'>JM-81</a>] - Removed join/leave broadcast messages from group chat rooms.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-85'>JM-85</a>] - Name field now works for in-band registration.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-87'>JM-87</a>] - Fixed NullPointerException when setting history type in group chat.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-88'>JM-88</a>] - Added URLEncoding to the admin console so that i18n usernames work correctly.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-90'>JM-90</a>] - Fixed redirect in last step of admin console when admin port is not 9090.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-91'>JM-91</a>] - Cleaned up configuration file property names.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-92'>JM-92</a>] - Owner and admin fields are now optional in group chat room config form.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-93'>JM-93</a>] - Group chat service now correctly passes through extended presence information in presence broadcasts.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-94'>JM-94</a>] - Fixed exception in group chat when banning users.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-98'>JM-98</a>] - Added room creation date to disco information.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-112'>JM-112</a>] - To and From values of certain IQ's are now correct.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-114'>JM-114</a>] - Fixed freezes in the group chat code.</li>
-<li>[<a href='http://www.jivesoftware.org/issues/browse/JM-116'>JM-116</a>] - Fixed routing table logic for case when unavailable packet received.</li>
+<li>No changes</li>
 </ul>
 
-<div class="footer">
-Copyright &copy; Jive Software, 2004
+<h2>3.3.0 -- <span style="font-weight: normal;">April 12, 2007</span></h2>
+
+<h3><font color="red"><b>!</b></font> Upgrade Information</h3>
+<ul>Due to the name change from Wildfire to Openfire you must follow the steps descibed in the <a href='http://wiki.igniterealtime.org/display/WILDFIRE/Wildfire+to+Openfire+Upgrade+Guide'>upgrade guide</a>.</ul>
+
+<h3>Openfire New Features</h3>
+<ul>
+<li>Renamed Wildfire to Openfire.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-14'>JM-14</a>] - Improved delivery strategy when connected from multiple resources.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1006'>JM-1006</a>] - Added support for room event listeners.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1007'>JM-1007</a>] - Occupants in rooms can now be seen from the admin console.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-420'>JM-420</a>] - Created ad-hoc command that forwards packets to components.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-868'>JM-868</a>] - Added favicon to admin console.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1021'>JM-1021</a>] - Added web folder to the plugin classloader.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1024'>JM-1024</a>] - Updated JVM to 1.6.0_u1.</li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1022'>JM-1022</a>] - Fixed memory leaking problem in HttpBinding.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1009'>JM-1009</a>] - Messages sent to bare-JID addresses were sent to resources with negative priority.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-897'>JM-897</a>] - Client sessions were not always being counted correctly. <b>(3 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1031'>JM-1031</a>] - Links were incorrect when using child plugins. Thanks to Guus der Kinderen.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1004'>JM-1004</a>] - ComponentManager could be null after modules have been started.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1028'>JM-1028</a>] - Fixed NPE when no room name was specified when trying to register with room.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1023'>JM-1023</a>] - Unicode (UTF-8) charset is now used instead of ISO-8859-1 in admin console pages.</li>
+</ul>
+
+<h3>Openfire Enterprise</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-93'>ENT-93</a>] - Added support for group chats archiving.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-94'>ENT-94</a>] - Updated iText library to latest version.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-95'>ENT-95</a>] - Updated jRobin library to latest version.</li>
+</ul>
+
+<h3>Openfire Connection Manager Module</h3>
+<ul>
+<li>No changes</li>
+</ul>
+
+<h2>3.2.4 -- <span style="font-weight: normal;">March 29, 2007</span></h2>
+
+<h3>Wildfire New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1018'>JM-1018</a>] - Updated MINA library to latest version.</li>
+</ul>
+
+<h3>Wildfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-991'>JM-991</a>] - Fixed XML parsing problem with />. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1003'>JM-1003</a>] - Fixed XML parsing problem with open quotes. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1019'>JM-1019</a>] - Changed idle timeout to 6 minutes.</li>
+</ul>
+
+<h3>Wildfire Enterprise</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-101'>ENT-101</a>] - Transfers and invites across workgroups were failing.</li>
+</ul>
+
+<h3>Wildfire Connection Manager Module</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-991'>JM-991</a>] - Fixed XML parsing problem with />. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1003'>JM-1003</a>] - Fixed XML parsing problem with open quotes. <b>(1 vote)</b></li>
+</ul>
+
+<h2>3.2.3 -- <span style="font-weight: normal;">March 15, 2007</span></h2>
+
+<h3>Openfire New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-998'>JM-998</a>] - Added milliseconds to timestamp in the audit log.</li>
+<li>Stream compression is back again available.</li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-993'>JM-993</a>] - Removing idle connections could fail and freeze the server. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-997'>JM-997</a>] - Fixed TLS problem when using Pandion.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1001'>JM-1001</a>] - Fixed http-binding deadlock.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-992'>JM-992</a>] - Direct buffers were used by default instead of heap buffers.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-994'>JM-994</a>] - IQ packet sent to a full JID that was not available was being routed to other resource of the same user.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-987'>JM-987</a>] - Server can now recover from UnknownHostException during setup.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-990'>JM-990</a>] - IQ type is now verified when handling iq:version requests.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-996'>JM-996</a>] - Invalid SASL mechanisms were being offered to CMs.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1002'>JM-1002</a>] - Changed default idle timeout value to 2 minutes.</li>
+</ul>
+
+<h3>Openfire Enterprise</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-90'>ENT-90</a>] - Metadata of user request is now included when initiating or transferring to another agent.</li>
+</ul>
+
+<h3>Openfire Connection Manager Module</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-995'>JM-995</a>] - Connection Manager connection was being closed when client used invalid SASL mechanism.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-992'>JM-992</a>] - Direct buffers were used by default instead of heap buffers.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-997'>JM-997</a>] - Fixed TLS problem when using Pandion.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-1000'>JM-1000</a>] - Connection Managers were not using SRV records for the DNS lookup.</li>
+</ul>
+
+<h2>3.2.2 -- <span style="font-weight: normal;">February 19, 2007</span></h2>
+
+<h3>Openfire New Features</h3>
+<ul>
+<li>No changes</li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-983'>JM-983</a>] - Client became unresponsibe after sending message that ended with "/".</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-984'>JM-984</a>] - Client became unresponsibe after sending a stanza with a comment.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-985'>JM-985</a>] - Fixed presence problem when shared groups can be seen by other groups.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-986'>JM-986</a>] - Fixed out of order RID errors in HTTP-Binding.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-966'>JM-966</a>] - Disabled multi-cast DNS by default.</li>
+</ul>
+
+<h3>Openfire Enterprise</h3>
+<ul>
+<li>No changes</li>
+</ul>
+
+<h3>Openfire Connection Manager Module</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-983'>JM-983</a>] - Client became unresponsibe after sending message that ended with "/".</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-984'>JM-984</a>] - Client became unresponsibe after sending a stanza with a comment.</li>
+</ul>
+
+<h2>3.2.1 -- <span style="font-weight: normal;">February 15, 2007</span></h2>
+
+<h3>Openfire New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-974'>JM-974</a>] - Updated MUC implementation to send role="none" when leaving a room.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-978'>JM-978</a>] - Updated MINA library to latest version.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-977'>JM-977</a>] - Updated bouncycastle library to latest version.</li>
+<li>New draft page for importing signed certificates.</li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-970'>JM-970</a>] - Fixed deadlock when using old SSL method.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-980'>JM-980</a>] - Fixed DOS attach by closing connection from client that tries to send a "never ending" packet.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-981'>JM-981</a>] - Fixed parsing of packets with nested elements with the same name.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-981'>JM-981</a>] - Fixed parsing of &lt;\stream:stream&gt;.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-968'>JM-968</a>] - The https port was not working in the admin console.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-963'>JM-963</a>] - A throwable exception was preventing users from logging in.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-959'>JM-959</a>] - HTTP-Binding was failing over HTTPS.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-969'>JM-969</a>] - HTTP-Binding sessions were not being closed properly.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-971'>JM-971</a>] - Messages could be lost when using HTTP Binding.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-973'>JM-973</a>] - HTTP-binding would be held open and not closed when new packets arrived.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-972'>JM-972</a>] - Fixed presence problem when shared groups can be seen by a common non-shared group and both users belong to such group.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-979'>JM-979</a>] - Fixed NPE when auditing message received from legacy network.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-962'>JM-962</a>] - PLAIN SASL authentication failed to authenticate clients that were sending bare JIDs.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-975'>JM-975</a>] - Client connections were closed before flushing end of stream stanza.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-967'>JM-967</a>] - Plugins that require a newer server version were shown as available to be installed.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-965'>JM-965</a>] - Available Plugins was listing reports that list "has not been downloaded" when all available plugins were installed.</li>
+</ul>
+
+<h3>Openfire Enterprise</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-53'>ENT-53</a>] - Webchat is now more resistant to network failures.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-68'>ENT-68</a>] - Webchat setup is now always required.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-69'>ENT-69</a>] - Webchat was not connecting to agent when using IE6.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-70'>ENT-70</a>] - Webchat could kill the JVM when not able to connect to Openfire.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-71'>ENT-71</a>] - Webchat now properly disconnects dangling connections.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-79'>ENT-79</a>] - SIP Phone now sends on-phone presence.</li>
+</ul>
+
+<h3>Openfire Connection Manager Module</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-970'>JM-970</a>] - Fixed deadlock when using old SSL method.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-980'>JM-980</a>] - Fixed DOS attach by closing connection from client that tries to send a "never ending" packet.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-981'>JM-981</a>] - Fixed parsing of packets with nested elements with the same name.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-978'>JM-978</a>] - Updated MINA library to latest version.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-977'>JM-977</a>] - Updated bouncycastle library to latest version.</li>
+</ul>
+
+<h2>3.2.0 -- <span style="font-weight: normal;">February 6, 2007</span></h2>
+
+<h3>Openfire New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-925'>JM-925</a>] - Improved scalability of Openfire.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-356'>JM-356</a>] - Added support for XEP-0124: HTTP Binding. <b>(34 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-936'>JM-936</a>] - Added STUN server support.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-937'>JM-937</a>] - Added Media Proxy for Jingle.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-941'>JM-941</a>] - Allowed to set read timeout when connected to LDAP (requires Java 1.6).</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-912'>JM-912</a>] - Added listener for offline messages. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-944'>JM-944</a>] - Bundled root certificate of XMPP Intermediate Certificate Authority.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-948'>JM-948</a>] - Updated truststore with Java 6 built-in certificates.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-946'>JM-946</a>] - Removed Jetty information from HTTP headers.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-892'>JM-892</a>] - Simplified certificates creation and process of signing certificates. <b>(10 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-767'>JM-767</a>] - Added Mac OS X DMG installer.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-893'>JM-893</a>] - Added support for certificate event listeners.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-934'>JM-934</a>] - Added new plugin that provides load statistics.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-914'>JM-914</a>] - Added new ad-hoc command to get server info and basic statistics.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-657'>JM-657</a>] - Optimized algorithm used for sending packets to remote servers when new connections are required.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-924'>JM-924</a>] - PacketInterceptors are now triggered in the routing layer and not the networking layer.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-915'>JM-915</a>] - Added support in ComponentManager for sending packets in blocking mode.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-901'>JM-901</a>] - Updated support for 'creation of collection nodes' based on latest XEP-60.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-913'>JM-913</a>] - Support for multiple subscriptions is now optional in PubSubModule.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-931'>JM-931</a>] - Allowed components to create nodes and publish items.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-949'>JM-949</a>] - Default configuration of new group chat rooms can now be configured.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-950'>JM-950</a>] - Group chat rooms are now not anonymous by default.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-952'>JM-952</a>] - Allowed to explicitly specify the FQDN of the server.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-935'>JM-935</a>] - Added to the admin console information about ports being used by the server.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-900'>JM-900</a>] - Upgraded to latest installer version.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-888'>JM-888</a>] - Updated bouncycastle library to latest version.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-939'>JM-939</a>] - Updated bundled JVM to 1.6.0 <i>(Note: Java 5 or later is required)</i>.</li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-957'>JM-957</a>] - Execution of DB2 scripts is now working.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-947'>JM-947</a>] - A nice error message is now displayed when trying to view user properties of a non-existent user.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-943'>JM-943</a>] - Messages with no body and no subject were being store in rooms' history.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-940'>JM-940</a>] - Fixed NPE in server certificates page.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-885'>JM-885</a>] - Fixed parsing of mappings when using more than one LDAP field.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-886'>JM-886</a>] - Loaded vCards were not being updated after reconfiguring LDAP settings.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-906'>JM-906</a>] - Email test page was not working when integrated with LDAP.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-954'>JM-954</a>] - No IQ error was being returned when an error occurs while processing an IQ roster packet.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-887'>JM-887</a>] - PluginManager was being used by modules before it was created.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-889'>JM-889</a>] - Fixed NPE in LdapVCardProvider when username was not found.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-890'>JM-890</a>] - Fixed error when IQ error packet failed to be handled.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-895'>JM-895</a>] - TLS was being offered even when keystore was empty.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-896'>JM-896</a>] - Fixed error that was closing a database statement twice.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-902'>JM-902</a>] - Component domain was not being released if an error occured while registing a new component.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-916'>JM-916</a>] - External components were able to connect to the server before the server has finished to start up.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-903'>JM-903</a>] - Sending "subscribed" presence to a new user was updating roster of both users.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-918'>JM-918</a>] - Fixed error when shared group had no display name.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-928'>JM-928</a>] - Clicking on login link from setup could fail with 404.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-933'>JM-933</a>] - Enabling/disabling anonymous connections no longer requires a server restart.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-938'>JM-938</a>] - "Per-user offline message storage limit" can now be updated.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-755'>JM-755</a>] - Fixed compilation problem under JDK 1.6.</li>
+</ul>
+
+<h3>Openfire Enterprise</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-50'>ENT-50</a>] - Added support for SIP integration.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-35'>ENT-35</a>] - Archiving was only done one-way with gateways.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-44'>ENT-44</a>] - Added support for transfering support session to another workgroup, queue, agent or user.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-63'>ENT-63</a>] - Fixed security breach when viewing messages of ongoing support sessions.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-56'>ENT-56</a>] - Warning message is now displayed when license is about to expire (30 days).</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-54'>ENT-54</a>] - Added support for iq:version to components to discover Openfire version.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-55'>ENT-55</a>] - Changed license validation to validate maintenance date.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-62'>ENT-62</a>] - Fixed display error in dashboard when accessing the page immediately after start up.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-37'>ENT-37</a>] - Fixed error in MSSQL due to conflict with keyword.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-59'>ENT-59</a>] - Added Portuguese translation.</li>
+</ul>
+
+<h3>Openfire Connection Manager Module</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-907'>JM-907</a>] - Improved scalability of ConnectionManagers.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-926'>JM-926</a>] - Added stringprep operations in Connection Manager to offload Openfire.</li>
+</ul>
+
+<h2>3.1.1 -- <span style="font-weight: normal;">October 27, 2006</span></h2>
+
+<h3>Openfire New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-870'>JM-870</a>] - Added support for testing administrator accounts during LDAP setup.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-875'>JM-875</a>] - Added support for testing user mapping settings during LDAP setup.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-876'>JM-876</a>] - Added support for testing group mapping settings during LDAP setup.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-877'>JM-877</a>] - Added support for changing existing LDAP settings from admin console.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-722'>JM-722</a>] - Added alternate base DN support for user data. <b>(3 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-595'>JM-595</a>] - Admin console now shows last time a user logged out from the server. <b>(5 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-866'>JM-866</a>] - Increased max size of LDAP filters to 250 characters.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-864'>JM-864</a>] - Updated LDAP guide with new setup procedure.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-871'>JM-871</a>] - Updated Java mail library to latest version.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-879'>JM-879</a>] - Streamlined build process.</li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-859'>JM-859</a>] - Conflict policy is now applied after successful login when using iq:auth.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-878'>JM-878</a>] - Some settings were not being saved when configuring LDAP from the admin console.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-880'>JM-880</a>] - Logging into the admin console could not work after initial setup when using LDAP.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-883'>JM-883</a>] - UTF-8 was not always being used when reading/writing XML content.</li>
+</ul>
+
+<h3>Openfire Enterprise</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-30'>ENT-30</a>] - Enabling/disabling meta-data archiving was not working.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-31'>ENT-31</a>] - MS-SQL 2005 script failed to execute.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-32'>ENT-32</a>] - Conversations with users through gateway were not being marked as external.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-33'>ENT-33</a>] - Fixed editing of routing rules when using quotes.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-34'>ENT-34</a>] - Removed scheduling feature from Fastpath.</li>
+</ul>
+
+<h3>Openfire Connection Manager Module</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-867'>JM-867</a>] - Socket connections were closed under high load.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-881'>JM-881</a>] - Fixed NPE when closing connection manager session.</li>
+</ul>
+
+<h2>3.1.0 -- <span style="font-weight: normal;">October 9, 2006</span></h2>
+
+<h3>Openfire New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-761'>JM-761</a>] - Added new gateway plugin with AIM and ICQ support. <b>(36 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-769'>JM-769</a>] - Added Yahoo protocol support to the gateway plugin. <b>(18 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-770'>JM-770</a>] - Added MSN protocol support to the gateway plugin. <b>(27 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-193'>JM-193</a>] - Improved LDAP support. <b>(26 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-820'>JM-820</a>] - Added support for presence event listeners.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-797'>JM-797</a>] - Added database statistics monitoring.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-807'>JM-807</a>] - Added support for roster event listeners.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-804'>JM-804</a>] - Added support for component event listeners.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-860'>JM-860</a>] - Added Pack200 support for plugins.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-843'>JM-843</a>] - Optimized session retrieval from SessionManager.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-816'>JM-816</a>] - Created ad-hoc commands for managing groups.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-808'>JM-808</a>] - Enhanced roster to be able to hold non-persistent roster items.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-194'>JM-194</a>] - Editing of users is now not allowed when they are read-only. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-833'>JM-833</a>] - Improved openfired script.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-771'>JM-771</a>] - Added search method to GroupProvider. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-824'>JM-824</a>] - Added #getComponents() to InternalComponentManager.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-827'>JM-827</a>] - Upgraded to hsqldb 1.8.0.5.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-805'>JM-805</a>] - Updated JVM to 1.5.0_08.</li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-851'>JM-851</a>] - Fixed presence issues with LDAP and shared groups. <b>(3 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-844'>JM-844</a>] - Enabled LDAP connection pooling by default.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-832'>JM-832</a>] - Connection pooling is no longer used for LDAP authentication.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-846'>JM-846</a>] - Improved error handling if connection to JS plugin update service is not possible.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-854'>JM-854</a>] - Improved handling of SQL command parts.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-839'>JM-839</a>] - Internal server errors while processing MUC packet was not returning any response to client.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-842'>JM-842</a>] - Message flooding was checking ALL sessions instead of only user sessions.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-818'>JM-818</a>] - Change in DB upgrade code broke plugin upgrades.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-819'>JM-819</a>] - Upgrades for non-Openfire schemas was checking against wrong version.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-822'>JM-822</a>] - Users from LDAP now have correct creation date.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-691'>JM-691</a>] - Documentation for "Create a shared roster group" was incorrect. <b>(3 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-826'>JM-826</a>] - MUC disco name was being hardcoded.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-828'>JM-828</a>] - Rooms were allowing owners, admins and outcasts to be duplicated.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-862'>JM-862</a>] - Messages with no body and no subject were being logged in group chat rooms.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-817'>JM-817</a>] - Fixed small security hole in email settings page.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-781'>JM-781</a>] - Stream compression is now optional by default for client-2-server connections.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-792'>JM-792</a>] - Improved syntax of LDAP searchFilter and groupSearchFilter.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-809'>JM-809</a>] - In band registration was accepting new users with no password.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-810'>JM-810</a>] - Presence subscription packets sent to the server were broadcasted to all connected users.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-701'>JM-701</a>] - Fixed bug with roster modification when deleting shared group. <b>(7 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-801'>JM-801</a>] - Removing users from shared group could generate roster items in the database.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-811'>JM-811</a>] - Fixed case-sensitive error while authenticating users.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-784'>JM-784</a>] - Success data included after a SASL successful operation was not being encoded.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-794'>JM-794</a>] - SASL mechanisms were being offered to remote servers even before securing the socket.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-796'>JM-796</a>] - Fixed "null cert chain" error when trying to secure s2s connection.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-789'>JM-789</a>] - CN field in certificates was not being correctly parsed.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-785'>JM-785</a>] - Retrieving a privacy list was including two list elements in the answer.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-780'>JM-780</a>] - Plugin check is now based on original JAR date, not on unzip date.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-786'>JM-786</a>] - JDBCAuthProvider and JDBCUserProvider were using wrong property names.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-812'>JM-812</a>] - It was not possible to retrieve offline messages with invalid XML characters.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-793'>JM-793</a>] - Counter of client sessions was wrong.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-783'>JM-783</a>] - Admin console now displays actual bound IP address. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-790'>JM-790</a>] - Removed database scripts from the openfire JAR.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-815'>JM-815</a>] - Changed &lt;entity/&gt; element to &lt;subscription/&gt; element in response to subscription request.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-861'>JM-861</a>] - Moved abrupt connection closure messages to debug.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-863'>JM-863</a>] - XMLProperties was not able to store CDATA.</li>
+</ul>
+
+<h3>Openfire Enterprise</h3>
+<ul>
+    <li>No changes</li>
+</ul>
+
+<h3>Openfire Connection Manager Module</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-795'>JM-795</a>] - DNS SRV lookup was overriding port to use to connect Connection Manager to server.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-788'>JM-788</a>] - manager.xml was not using the correct property for setting the client port. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-814'>JM-814</a>] - Connections between Connection Managers and Openfire are not encrypted by default.</li>
+</ul>
+
+<h2>3.0.1 -- <span style="font-weight: normal;">July 13, 2006</span></h2>
+
+<h3>Openfire New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-752'>JM-752</a>] - A proxy server can now be used to download updates. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-754'>JM-754</a>] - Added JDBC user provider and documentation.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-759'>JM-759</a>] - Added support for vCards events. Thanks to Remko Tron&ccedil;on.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-762'>JM-762</a>] - Performance optimized by reducing privacy list SQL calls when no privacy lists used.</li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-744'>JM-744</a>] - Presence updates were not being sent to shared contacts whose subscriptions is FROM.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-745'>JM-745</a>] - Users of the same group (not shared) that can see a shared group were receiving presences of each other.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-750'>JM-750</a>] - Presence subscription was incorrect when adding group member to non-shared group that could see shared group.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-758'>JM-758</a>] - Available presence was not being sent to all connected resources after subscription was approved.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-775'>JM-775</a>] - Member of public group was not able to add to his roster contact that did not belong to public group.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-776'>JM-776</a>] - Members of public shared groups were not getting their rosters updated when a new user was created in the system.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-777'>JM-777</a>] - Presence was not working when creating new shared groups and at the same time defining list of members.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-695'>JM-695</a>] - Fixed presence problem when using shared group loaded from LDAP. <b>(5 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-772'>JM-772</a>] - An error is now logged when Openfire cannot connect to the LDAP server.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-741'>JM-741</a>] - Fixed javascript error while updating plugin. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-742'>JM-742</a>] - Fixed NPE in privacy lists when presence packet has no TO address.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-748'>JM-748</a>] - Fixed NPE when trying to unload a bad plugin in plugin-admin page.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-749'>JM-749</a>] - TLS feature was being offered to clients using old SSL method.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-760'>JM-760</a>] - Fixed login problem when using uppercase letters in username and there is a resource conflict.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-763'>JM-763</a>] - Removed warning from logs on installation.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-768'>JM-768</a>] - A semicolon was missing in mysql and sqlserver upgrade scripts #9.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-778'>JM-778</a>] - Fixed error when trying to unregister an account from a client.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-751'>JM-751</a>] - Moved getPassword/setPassword methods from UserProvider to AuthProvider.</li>
+</ul>
+
+<h3>Openfire Enterprise</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/ENT-19'>ENT-19</a>] - Message archiving was failing on Postgres.</li>
+</ul>
+
+<h3>Openfire Connection Manager Module</h3>
+<ul>
+    <li>No changes</li>
+</ul>
+
+<h2>3.0.0 -- <span style="font-weight: normal;">June 29, 2006</span></h2>
+
+<h3>Openfire New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-666'>JM-666</a>] - Added support for connection managers.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-281'>JM-281</a>] - Added support for Kerberos/NTLM (status: experimental). <b>(56 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-673'>JM-673</a>] - Added database support for plugins.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-677'>JM-677</a>] - Added i18n support for plugins.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-718'>JM-718</a>] - Added servlet filter framework for plugins.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-683'>JM-683</a>] - Added support for virtual connections.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-684'>JM-684</a>] - Added support for JEP-0164: vCard Filtering</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-704'>JM-704</a>] - Added support of other password types to JDBCAuthProvider.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-715'>JM-715</a>] - Added support for notifications of new server or plugins updates.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-740'>JM-740</a>] - Added support for adding/removing SASL mechanisms at runtime.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-719'>JM-719</a>] - Allowed flat searches of LDAP instead of sub-tree.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-680'>JM-680</a>] - Improved performance of server-to-server connections by using many threads to process incoming packets.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-720'>JM-720</a>] - Improved performance of SessionManager#getSessionCount().</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-687'>JM-687</a>] - Added support for non-blocking connections (status: experimental). <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-717'>JM-717</a>] - Updated the look and feel in the admin console.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-305'>JM-305</a>] - Server features list is now dynamic. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-652'>JM-652</a>] - Caching of favicons has been improved.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-675'>JM-675</a>] - File transfer service can now be enabled/disabled. <b>(2 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-676'>JM-676</a>] - MUC service can now be enabled/disabled. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-679'>JM-679</a>] - SASL success stanza now includes challenge data that needs to be processed by clients.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-678'>JM-678</a>] - SASLAuthentication was refactored to accommodate HTTP Binding and Connection Managers. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-688'>JM-688</a>] - Updated third-party libraries.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-713'>JM-713</a>] - Updated bundled MySQL driver.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-688'>JM-688</a>] - Upgraded to JDK 1.5.0_07.</li>
+</ul>
+
+<h3>Openfire Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-702'>JM-702</a>] - Presence updates were not being broadcasted to other connected resources. <b>(4 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-735'>JM-735</a>] - Presence packets sent to bare JIDs were not being sent to all connected resources.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-731'>JM-731</a>] - DNS lookups was failing with some DNS servers.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-707'>JM-707</a>] - A &lt;system-shutdown/&gt; stream error condition is now sent when shutting down the server.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-653'>JM-653</a>] - FileTransfer was not implementing Cacheable.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-654'>JM-654</a>] - Fixed conflict in Proxy Transfer cache name.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-655'>JM-655</a>] - File Transfer Proxy no longer returns null disco#items.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-710'>JM-710</a>] - File Transfer Proxy socket was not being cleaned up properly.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-721'>JM-721</a>] - File Transfer Proxy did not acknowledge configured interface.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-661'>JM-661</a>] - Field digest_frequency of pubsubSubscription table in MySQL was too small.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-665'>JM-665</a>] - Accessing published items of a pubsub node was expecting that requester was subscribed to the node.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-672'>JM-672</a>] - Updated the way pubsub node owners manage node affiliations and subscriptions.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-708'>JM-708</a>] - Answer format was incorrect when returning pubsub node affiliations or node subscriptions of a node owner.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-667'>JM-667</a>] - Roster items with subscription NONE and ask PENDING were being sent to clients.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-668'>JM-668</a>] - Fixed error when deleting a user with shared contacts that belong to public shared groups.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-669'>JM-669</a>] - Added fix for "javax.net.ssl.SSLException: Unsupported record version Unknown" error.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-729'>JM-729</a>] - Server was not processing IQ errors triggered by IQ requests made by the server.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-732'>JM-732</a>] - mucConversationLog was storing room's JID instead of the sender's JID.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-681'>JM-681</a>] - No more than 5 concurrent threads were used for creating new server-to-server connections.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-670'>JM-670</a>] - Flash clients were waiting forever for a response if old SASL method failed or there was a conflict while binding a resource.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-671'>JM-671</a>] - Fixed NPE when external component did not include a TO attribute in stream header.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-674'>JM-674</a>] - Fixed NPE in IQDiscoItemsHandler when an ServerItemsProvider was disabled.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-698'>JM-698</a>] - Fixed bug in XMLProperties.getChildren.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-728'>JM-728</a>] - Fixed PK length error when upgrading jivePrivate in MySQL using URF-8.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-736'>JM-736</a>] - Added commit statement to Oracle db scripts.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-737'>JM-737</a>] - Fixed invalid character error when upgrading Oracle database.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-700'>JM-700</a>] - Increased the column size of "username" from 32 to 64.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-706'>JM-706</a>] - Non-SASL Authentication stream feature was not being offered when anonymous login was disabled.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-712'>JM-712</a>] - VCard manager was not returning vcard-temp as a stream feature.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-726'>JM-726</a>] - Privacy list now implements Cacheable interface.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-656'>JM-656</a>] - Streamlined disco registration process.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-709'>JM-709</a>] - An exception is now thrown when plugin servlet class was not found.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-663'>JM-663</a>] - UserProvider no longer depends on VCardManager.</li>
+</ul>
+
+<h3>Openfire Enterprise</h3>
+<ul>
+    Initial release.
+</ul>
+
+<h3>Openfire Connection Manager Module</h3>
+<ul>
+    Initial release.
+</ul>
+
+<h2>2.6.2 -- <span style="font-weight: normal;">April 20, 2006</span></h2>
+
+<h3>Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-648'>JM-648</a>] - Server-to-server thread pool was getting exhausted when remote servers were unresponsive.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-650'>JM-650</a>] - Fixed concurrency problem that was closing active connections by mistake.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-642'>JM-642</a>] - Deleting a user was not removing all references from memory.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-646'>JM-646</a>] - Fixed error when searching for groups of a non-local user when using LDAP.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-571'>JM-571</a>] - File transfer proxy was not being removed from service discovery when disabled. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-638'>JM-638</a>] - Unhandled exceptions while processing IQ packets were not always returning IQ errors.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-639'>JM-639</a>] - Fixed ConcurrentModificationException while purging a pubsub node.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-640'>JM-640</a>] - A "service-not-implemented" error was being returned after an ad-hoc command was handled by pubsub.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-641'>JM-641</a>] - Modified pubsub tables so that all supported databases may correctly run the database scripts.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-644'>JM-644</a>] - Allowed Base64 decoding that doesn't encode bytes as String.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-645'>JM-645</a>] - Fixed recursivity error in SessionManager when searching for best route.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-647'>JM-647</a>] - Sometimes users were remaining as room occupants when using shared groups.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-649'>JM-649</a>] - Increased proxy file transfer buffer size.</li>
+</ul>
+
+
+
+<h2>2.6.1 -- <span style="font-weight: normal;">April 11, 2006</span></h2>
+
+<h3>New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-222'>JM-222</a>] - Entire user base is no longer loaded when using public shared groups. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-634'>JM-634</a>] - Shared contacts whose subscription type is FROM are no longer kept in memory.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-633'>JM-633</a>] - Added sorting to session list.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-637'>JM-637</a>] - Added support for basic commands defined in JEP-133: Service Administration.</li>
+</ul>
+
+<h3>Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-636'>JM-636</a>] - After initial install new user accounts were corrupted until restart.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-630'>JM-630</a>] - Fixed upgrade scripts of PostreSQL, SQLServer and Sybase.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-631'>JM-631</a>] - New user passwords were not being saved to the database.</li>
+</ul>
+
+
+
+<h2>2.6.0 -- <span style="font-weight: normal;">April 6, 2006</span></h2>
+
+<h3>New Features</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-291'>JM-291</a>] - Encrypted passwords are now stored in the db. <b>(21 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-613'>JM-613</a>] - Added support for JEP-0060: Publish-Subscribe. <b>(1 vote)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-298'>JM-298</a>] - Auditing now supports rolling over by date. <b>(12 votes)</b></li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-599'>JM-599</a>] - Improved performance by avoiding queries to load users.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-607'>JM-607</a>] - Improved performance by avoiding unnecessary LDAP queries.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-608'>JM-608</a>] - Improved performance when detecting which groups are shared groups.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-621'>JM-621</a>] - Improved performance by avoiding using locks in RoutingTable (server core).</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-605'>JM-605</a>] - Improved performance by caching groups.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-606'>JM-606</a>] - Added JDBC Authentication provider.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-600'>JM-600</a>] - Added support for managing system caches from the admin console.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-624'>JM-624</a>] - Allowed external components to bind more than one domain.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-603'>JM-603</a>] - Improved db upgrade process.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-609'>JM-609</a>] - Refactored Ad-hoc commands so that services can also offer ad-hoc commands.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-597'>JM-597</a>] - Improved LDAPGroupProvider Exception Handling.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-625'>JM-625</a>] - Added support for XMPPServer listeners.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-620'>JM-620</a>] - Added development mode for web.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-623'>JM-623</a>] - Exposed port in connection object.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-614'>JM-614</a>] - Updated third-party libraries.</li>
+</ul>
+
+<h3>Bug Fixes</h3>
+<ul>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-615'>JM-615</a>] - Fixed deadlock when loading users and rosters.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-621'>JM-621</a>] - Fixed deadlock in RoutingTable.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-495'>JM-495</a>] - Server session tab was loading very slow.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-596'>JM-596</a>] - LDAP connections were not being closed correctly.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-601'>JM-601</a>] - LDAP referrals were not being respected while verifying authentication.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-604'>JM-604</a>] - SASL EXTERNAL for s2s was not checking if certificate validation was disabled.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-611'>JM-611</a>] - PLAIN SASL authentication was not accepting empty auth packets.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-627'>JM-627</a>] - Null SASL responses were not being padded.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-610'>JM-610</a>] - Fixed NPE in privacy list when user session no longer exists.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-612'>JM-612</a>] - Registering new internal components was not checking that component domain is not taken.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-618'>JM-618</a>] - Remote server count was wrong.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-619'>JM-619</a>] - Names of users were not being sorted when loading from database.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-622'>JM-622</a>] - Admin console was failing to startup on unexpected log impl.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-626'>JM-626</a>] - Several instances of the same disco#item could appear in the server's disco#items.</li>
+<li>[<a href='http://www.igniterealtime.org/issues/browse/JM-628'>JM-628</a>] - Pretty printing of openfire.xml file was not always working.</li>
+</ul>
+
+
+	<div class="footer">
+	Copyright &copy; Jive Software, 2006-2007
+	</div>
+
+
+	</div>
 </div>
 
 </body>

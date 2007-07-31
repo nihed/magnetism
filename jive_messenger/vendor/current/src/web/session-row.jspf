@@ -1,21 +1,23 @@
  <%--
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
 --%>
 
-<%@ page import="org.jivesoftware.wildfire.Session,
-                 org.xmpp.packet.Presence,
-                 java.net.URLEncoder,
-                 org.jivesoftware.util.LocaleUtils"%>
+<%@ page import="org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.openfire.session.Session,
+                 org.xmpp.packet.JID,
+                 org.xmpp.packet.Presence"%>
+ <%@ page import="java.net.URLEncoder"%>
 
-<%--
-  - This page is meant to be included in other pages. It assumes 2 variables:
-  -     * 'sess', a org.jivesoftware.xmpp.Session object
-  -     * 'count', an int representing the row number we're on.
-  -     * 'current', a boolean which indicates the current row the user is looking (pass in
-  -       false if there is no current row.
-  -     * 'linkURL', a String representing the JSP page to link to
---%>
+ <%--
+   - This page is meant to be included in other pages. It assumes 2 variables:
+   -     * 'sess', a org.jivesoftware.xmpp.Session object
+   -     * 'count', an int representing the row number we're on.
+   -     * 'current', a boolean which indicates the current row the user is looking (pass in
+   -       false if there is no current row.
+   -     * 'linkURL', a String representing the JSP page to link to
+ --%>
 
 <%  if (current) { %>
 
@@ -31,10 +33,10 @@
     <td width="10%" nowrap>
         <%  String name = sess.getAddress().getNode(); %>
             <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>" title="<fmt:message key="session.row.cliked" />"
-             ><%= ((name != null && !"".equals(name)) ? name : "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
+            ><%= ((!sessionManager.isAnonymousRoute(sess.getUsername())) ? JID.unescapeNode(name): "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
     </td>
     <td width="15%" nowrap>
-        <%= sess.getAddress().getResource() %>
+        <%= StringUtils.escapeForXML(sess.getAddress().getResource()) %>
     </td>
     <td>
         <%  int _status = sess.getStatus();
@@ -50,7 +52,7 @@
 
             <fmt:message key="session.details.streaming" />
 
-        <%  } else if (_status == Session.STATUS_AUTHENTICATED) { %>
+        <% } else if (_status == org.jivesoftware.openfire.session.Session.STATUS_AUTHENTICATED) { %>
 
             <fmt:message key="session.details.authenticated" />
 
@@ -147,6 +149,10 @@
         </td>
 
     <%  } %>
+
+    <td width="1%" nowrap>
+        <%= sess.getPresence().getPriority() %>
+    </td>
 
     <td width="1%" nowrap>
         <%= sess.getConnection().getInetAddress().getHostAddress() %>

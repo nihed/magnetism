@@ -9,52 +9,28 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.launcher;
+package org.jivesoftware.openfire.launcher;
 
 import org.jdesktop.jdic.tray.SystemTray;
 import org.jdesktop.jdic.tray.TrayIcon;
-import org.jivesoftware.util.WebManager;
-import org.jivesoftware.util.XMLProperties;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
-import javax.swing.JTextPane;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
-
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Frame;
-import java.awt.Graphics;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.net.URL;
 
 /**
- * Graphical launcher for Wildfire.
+ * Graphical launcher for Openfire.
  *
  * @author Matt Tucker
  */
@@ -62,8 +38,8 @@ public class Launcher {
 
     private String appName;
     private File binDir;
-    private Process wildfired;
-    private String configFile;
+    private Process openfired;
+    private File configFile;
     private JPanel toolbar = new JPanel();
 
     private ImageIcon offIcon;
@@ -89,7 +65,7 @@ public class Launcher {
             // Log to System error instead of standard error log.
             System.err.println("Error loading system tray library, system tray support disabled.");
         }
-        
+
         // Use the native look and feel.
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -102,7 +78,7 @@ public class Launcher {
             appName = System.getProperty("app.name");
         }
         else {
-            appName = "Wildfire";
+            appName = "Openfire";
         }
 
         binDir = new File("").getAbsoluteFile();
@@ -111,8 +87,7 @@ public class Launcher {
             binDir = new File(System.getProperty("appdir"));
         }
 
-        configFile = new File(new File(binDir.getParent(), "conf"),
-                "wildfire.xml").getAbsolutePath();
+        configFile = new File(new File(binDir.getParent(), "conf"), "openfire.xml");
 
         frame = new DroppableFrame() {
             public void fileDropped(File file) {
@@ -125,7 +100,7 @@ public class Launcher {
 
         frame.setTitle(appName);
 
-        ImageIcon splash = null;
+        ImageIcon splash;
         JPanel mainPanel = new JPanel();
         JLabel splashLabel = null;
 
@@ -136,8 +111,8 @@ public class Launcher {
             splash = new ImageIcon(getClass().getClassLoader().getResource("splash.gif"));
             splashLabel = new JLabel("", splash, JLabel.CENTER);
 
-            onIcon = new ImageIcon(getClass().getClassLoader().getResource("wildfire_on-16x16.gif"));
-            offIcon = new ImageIcon(getClass().getClassLoader().getResource("wildfire_off-16x16.gif"));
+            onIcon = new ImageIcon(getClass().getClassLoader().getResource("openfire_on-16x16.gif"));
+            offIcon = new ImageIcon(getClass().getClassLoader().getResource("openfire_off-16x16.gif"));
             frame.setIconImage(offIcon.getImage());
         }
         catch (Exception e) {
@@ -371,15 +346,15 @@ public class Launcher {
     }
 
     private synchronized void startApplication() {
-        if (wildfired == null) {
+        if (openfired == null) {
             try {
-                File windowsExe = new File(binDir, "wildfired.exe");
-                File unixExe = new File(binDir, "wildfired");
+                File windowsExe = new File(binDir, "openfired.exe");
+                File unixExe = new File(binDir, "openfired");
                 if (windowsExe.exists()) {
-                    wildfired = Runtime.getRuntime().exec(new String[]{windowsExe.toString()});
+                    openfired = Runtime.getRuntime().exec(new String[]{windowsExe.toString()});
                 }
                 else if (unixExe.exists()) {
-                    wildfired = Runtime.getRuntime().exec(new String[]{unixExe.toString()});
+                    openfired = Runtime.getRuntime().exec(new String[]{unixExe.toString()});
                 }
                 else {
                     throw new FileNotFoundException();
@@ -389,7 +364,7 @@ public class Launcher {
                 // Try one more time using the jar and hope java is on the path
                 try {
                     File libDir = new File(binDir.getParentFile(), "lib").getAbsoluteFile();
-                    wildfired = Runtime.getRuntime().exec(new String[]{
+                    openfired = Runtime.getRuntime().exec(new String[]{
                         "java", "-jar", new File(libDir, "startup.jar").toString()
                     });
                 }
@@ -404,10 +379,10 @@ public class Launcher {
             final SimpleAttributeSet styles = new SimpleAttributeSet();
             SwingWorker inputWorker = new SwingWorker() {
                 public Object construct() {
-                    if (wildfired != null) {
+                    if (openfired != null) {
                         try {
                             // Get the input stream and read from it
-                            InputStream in = wildfired.getInputStream();
+                            InputStream in = openfired.getInputStream();
                             int c;
                             while ((c = in.read()) != -1) {
                                 try {
@@ -433,10 +408,10 @@ public class Launcher {
 
             SwingWorker errorWorker = new SwingWorker() {
                 public Object construct() {
-                    if (wildfired != null) {
+                    if (openfired != null) {
                         try {
                             // Get the input stream and read from it
-                            InputStream in = wildfired.getErrorStream();
+                            InputStream in = openfired.getErrorStream();
                             int c;
                             while ((c = in.read()) != -1) {
                                 try {
@@ -478,10 +453,10 @@ public class Launcher {
     }
 
     private synchronized void stopApplication() {
-        if (wildfired != null) {
+        if (openfired != null) {
             try {
-                wildfired.destroy();
-                wildfired.waitFor();
+                openfired.destroy();
+                openfired.waitFor();
                 cardLayout.show(cardPanel, "main");
             }
             catch (Exception e) {
@@ -489,14 +464,27 @@ public class Launcher {
             }
         }
 
-        wildfired = null;
+        openfired = null;
     }
 
     private synchronized void launchBrowser() {
         try {
-            XMLProperties props = new XMLProperties(configFile);
-            String port = props.getProperty("adminConsole.port");
-            String securePort = props.getProperty("adminConsole.securePort");
+            // Note, we use standard DOM to read in the XML. This is necessary so that
+            // Launcher has fewer dependencies.
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            Document document = factory.newDocumentBuilder().parse(configFile);
+            Element rootElement = document.getDocumentElement();
+            Element adminElement = (Element)rootElement.getElementsByTagName("adminConsole").item(0);
+            String port = "-1";
+            String securePort = "-1";
+            Element portElement = (Element)adminElement.getElementsByTagName("port").item(0);
+            if (portElement != null) {
+                port = portElement.getTextContent();
+            }
+            Element securePortElement = (Element)adminElement.getElementsByTagName("securePort").item(0);
+            if (securePortElement != null) {
+                securePort = securePortElement.getTextContent();
+            }
             if ("-1".equals(port)) {
                 BrowserLauncher.openURL("https://127.0.0.1:" + securePort + "/index.html");
             }
@@ -505,6 +493,8 @@ public class Launcher {
             }
         }
         catch (Exception e) {
+            // Make sure to print the exception
+            e.printStackTrace(System.out);
             JOptionPane.showMessageDialog(new JFrame(), configFile + " " + e.getMessage());
         }
     }
@@ -533,7 +523,7 @@ public class Launcher {
                     // Just for fun. Show no matter what for two seconds.
                     Thread.sleep(2000);
 
-                    WebManager.copy(plugin.toURL(), tempPluginsFile);
+                    copy(plugin.toURL(), tempPluginsFile);
 
                     // If successfull, rename to real plugin name.
                     tempPluginsFile.renameTo(realPluginsFile);
@@ -554,5 +544,50 @@ public class Launcher {
 
         dialog.setLocationRelativeTo(frame);
         dialog.setVisible(true);
+    }
+
+    private static void copy(URL src, File dst) throws IOException {
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+            in = src.openStream();
+            out = new FileOutputStream(dst);
+            dst.mkdirs();
+            copy(in, out);
+        }
+        finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            }
+            catch (IOException e) {
+                // Ignore.
+            }
+            try {
+                if (out != null) {
+                    out.close();
+                }
+            }
+            catch (IOException e) {
+                // Ignore.
+            }
+        }
+    }
+
+    /**
+     * Common code for copy routines.  By convention, the streams are
+     * closed in the same method in which they were opened.  Thus,
+     * this method does not close the streams when the copying is done.
+     */
+    private static void copy(InputStream in, OutputStream out) throws IOException {
+        byte[] buffer = new byte[4096];
+        while (true) {
+            int bytesRead = in.read(buffer);
+            if (bytesRead < 0) {
+                break;
+            }
+            out.write(buffer, 0, bytesRead);
+        }
     }
 }

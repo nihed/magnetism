@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.net;
+package org.jivesoftware.openfire.net;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,8 +38,15 @@ public class TLSStreamWriter {
 
 	public TLSStreamWriter(TLSWrapper tlsWrapper, Socket socket) throws IOException {
 		wrapper = tlsWrapper;
-		wbc = Channels.newChannel(socket.getOutputStream());
-		outAppData = ByteBuffer.allocate(tlsWrapper.getAppBuffSize());
+        // DANIELE: Add code to use directly the socket channel
+        if (socket.getChannel() != null) {
+            wbc = ServerTrafficCounter.wrapWritableChannel(socket.getChannel());
+        }
+        else {
+            wbc = Channels.newChannel(
+                    ServerTrafficCounter.wrapOutputStream(socket.getOutputStream()));
+        }
+        outAppData = ByteBuffer.allocate(tlsWrapper.getAppBuffSize());
 	}
 
 	private void doWrite(ByteBuffer buff) throws IOException {
@@ -57,8 +64,8 @@ public class TLSStreamWriter {
 	}
 
 	private void tlsWrite(ByteBuffer buf) throws IOException {
-		ByteBuffer tlsBuffer = null;
-		ByteBuffer tlsOutput = null;
+		ByteBuffer tlsBuffer;
+		ByteBuffer tlsOutput;
 		do {
             // TODO Consider optimizing by not creating new instances each time
             tlsBuffer = ByteBuffer.allocate(Math.min(buf.remaining(), wrapper.getAppBuffSize()));

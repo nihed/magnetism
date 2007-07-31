@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1705 $
- * $Date: 2005-07-26 13:10:33 -0400 (Tue, 26 Jul 2005) $
+ * $Revision: 7175 $
+ * $Date: 2007-02-16 13:50:15 -0600 (Fri, 16 Feb 2007) $
  *
  * Copyright (C) 2004-2005 Jive Software. All rights reserved.
  *
@@ -10,8 +10,6 @@
  */
 
 package org.jivesoftware.util;
-
-import org.jivesoftware.util.Log;
 
 import java.util.List;
 import java.util.Map;
@@ -70,7 +68,7 @@ public class PropertyEventDispatcher {
      * @param eventType the event type.
      * @param params event parameters.
      */
-    public static void dispatchEvent(String property, EventType eventType, Map params) {
+    public static void dispatchEvent(String property, EventType eventType, Map<String, Object> params) {
         for (PropertyEventListener listener : listeners) {
             try {
                 switch (eventType) {

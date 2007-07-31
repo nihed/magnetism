@@ -9,12 +9,12 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.auth;
+package org.jivesoftware.openfire.auth;
 
 import org.jivesoftware.util.Log;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.wildfire.user.*;
+import org.jivesoftware.openfire.user.*;
 import com.cenqua.shaj.Shaj;
 
 import java.net.URL;
@@ -36,10 +36,10 @@ import java.lang.reflect.Field;
  * <pre>
  * &lt;provider&gt;
  *     &lt;auth&gt;
- *         &lt;className&gt;org.jivesoftware.wildfire.auth.NativeAuthProvider&lt;/className&gt;
+ *         &lt;className&gt;org.jivesoftware.openfire.auth.NativeAuthProvider&lt;/className&gt;
  *     &lt;/auth&gt;
  *     &lt;user&gt;
- *         &lt;className&gt;org.jivesoftware.wildfire.user.NativeUserProvider&lt;/className&gt;
+ *         &lt;className&gt;org.jivesoftware.openfire.user.NativeUserProvider&lt;/className&gt;
  *     &lt;/user&gt;
  * &lt;/provider&gt;
  * </pre>
@@ -68,7 +68,7 @@ public class NativeAuthProvider implements AuthProvider {
         this.domain = JiveGlobals.getXMLProperty("nativeAuth.domain");
 
         // Configure the library path so that we can load the shaj native library
-        // from the Wildfire lib directory.
+        // from the Openfire lib directory.
         // Find the root path of this class.
         try {
             String binaryPath = (new URL(Shaj.class.getProtectionDomain()
@@ -88,7 +88,7 @@ public class NativeAuthProvider implements AuthProvider {
             Log.error(e);
         }
 
-        // Configure Shaj to log output to the Wildfire logger.
+        // Configure Shaj to log output to the Openfire logger.
         com.cenqua.shaj.log.Log.Factory.setInstance(new com.cenqua.shaj.log.Log() {
             public boolean isDebug() {
                 return Log.isDebugEnabled();
@@ -110,8 +110,12 @@ public class NativeAuthProvider implements AuthProvider {
 
     public void authenticate(String username, String password) throws UnauthorizedException {
         try {
-            if (!Shaj.checkPassword(domain, username, password)) {
-                throw new UnauthorizedException();
+            // Some native authentication mechanisms appear to not handle high load
+            // very well. Therefore, synchronize access to Shaj to throttle auth checks.
+            synchronized (this) {
+                if (!Shaj.checkPassword(domain, username, password)) {
+                    throw new UnauthorizedException();
+                }
             }
         }
         catch (UnauthorizedException ue) {
@@ -158,6 +162,20 @@ public class NativeAuthProvider implements AuthProvider {
     }
 
     public boolean isDigestSupported() {
+        return false;
+    }
+
+    public String getPassword(String username)
+            throws UserNotFoundException, UnsupportedOperationException
+    {
+        throw new UnsupportedOperationException();    
+    }
+
+    public void setPassword(String username, String password) throws UserNotFoundException {
+        throw new UnsupportedOperationException();
+    }
+
+    public boolean supportsPasswordRetrieval() {
         return false;
     }
 }

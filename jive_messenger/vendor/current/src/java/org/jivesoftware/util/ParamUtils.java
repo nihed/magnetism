@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 750 $
- * $Date: 2004-12-26 21:54:13 -0500 (Sun, 26 Dec 2004) $
+ * $Revision: 5574 $
+ * $Date: 2006-10-01 19:02:42 -0500 (Sun, 01 Oct 2006) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -37,7 +37,7 @@ public class ParamUtils {
      * @param request the HttpServletRequest object, known as "request" in a
      *      JSP page.
      * @param name the name of the parameter you want to get
-     * @param emptyStringsOK teturn the parameter values even if it is an empty string.
+     * @param emptyStringsOK return the parameter values even if it is an empty string.
      * @return the value of the parameter or null if the parameter was not
      *      found.
      */

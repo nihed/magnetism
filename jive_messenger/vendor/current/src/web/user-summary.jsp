@@ -1,7 +1,7 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -9,14 +9,17 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.wildfire.user.*,
-                 java.util.*,
-                 org.jivesoftware.wildfire.PresenceManager,
-                 org.xmpp.packet.Presence,
-                 java.net.URLEncoder,
-                 org.jivesoftware.util.JiveGlobals"
-%>
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.LocaleUtils,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
+                 org.jivesoftware.openfire.PresenceManager,
+                 org.jivesoftware.openfire.user.User,
+                 org.jivesoftware.openfire.user.UserManager"
+%><%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="org.xmpp.packet.Presence" %>
+<%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.util.Collection" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -56,10 +59,6 @@
     int curPage = (start/range) + 1;
 %>
 
-<p>
-<fmt:message key="user.summary.info" />
-</p>
-
 <style type="text/css">
 .jive-current {
     font-weight : bold;
@@ -84,17 +83,17 @@
 
 <p>
 <fmt:message key="user.summary.total_user" />:
-<%= LocaleUtils.getLocalizedNumber(webManager.getUserManager().getUserCount()) %> --
+<b><%= LocaleUtils.getLocalizedNumber(userCount) %></b> --
 
 <%  if (numPages > 1) { %>
 
     <fmt:message key="global.showing" />
-    <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(start+range) %>,
+    <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(start+range > userCount ? userCount:start+range) %>,
 
 <%  } %>
 <fmt:message key="user.summary.sorted" />
 
-- <fmt:message key="user.summary.users_per_page" />:
+-- <fmt:message key="user.summary.users_per_page" />:
 <select size="1" onchange="location.href='user-summary.jsp?start=0&range=' + this.options[this.selectedIndex].value;">
 
     <%  for (int i=0; i<RANGE_PRESETS.length; i++) { %>
@@ -158,8 +157,12 @@
         <th nowrap><fmt:message key="user.create.username" /></th>
         <th nowrap><fmt:message key="user.create.name" /></th>
         <th nowrap><fmt:message key="user.summary.created" /></th>
+        <th nowrap><fmt:message key="user.summary.last-logout" /></th>
+         <%  // Don't allow editing or deleting if users are read-only.
+            if (!UserManager.getUserProvider().isReadOnly()) { %>
         <th nowrap><fmt:message key="user.summary.edit" /></th>
         <th nowrap><fmt:message key="global.delete" /></th>
+        <% } %>
     </tr>
 </thead>
 <tbody>
@@ -189,19 +192,19 @@
                     Presence presence = presenceManager.getPresence(user);
             %>
                 <% if (presence.getShow() == null) { %>
-                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="user.properties.available" />">
+                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="user.properties.available" />" alt="<fmt:message key="user.properties.available" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.chat) { %>
-                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.chat_available" />">
+                <img src="images/user-green-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.chat_available" />" alt="<fmt:message key="session.details.chat_available" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.away) { %>
-                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.away" />">
+                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.away" />" alt="<fmt:message key="session.details.away" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.xa) { %>
-                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.extended" />">
+                <img src="images/user-yellow-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.extended" />" alt="<fmt:message key="session.details.extended" />">
                 <% } %>
                 <% if (presence.getShow() == Presence.Show.dnd) { %>
-                <img src="images/user-red-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="session.details.not_disturb" />">
+                <img src="images/user-red-16x16.gif" width="16" height="16" border="0" title="<fmt:message key="session.details.not_disturb" />" alt="<fmt:message key="session.details.not_disturb" />">
                 <% } %>
 
             <%  } else { %>
@@ -210,25 +213,37 @@
 
             <%  } %>
         </td>
-        <td width="30%">
-            <a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= user.getUsername() %></a>
+        <td width="23%">
+            <a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= JID.unescapeNode(user.getUsername()) %></a>
         </td>
-        <td width="40%">
+        <td width="33%">
             <%= user.getName() %> &nbsp;
         </td>
-        <td width="26%">
+        <td width="15%">
             <%= JiveGlobals.formatDate(user.getCreationDate()) %>
         </td>
+        <td width="25%">
+            <% long logoutTime = presenceManager.getLastActivity(user);
+                if (logoutTime > -1) {
+                    out.println(StringUtils.getElapsedTime(logoutTime));
+                }
+                else {
+                    out.println("&nbsp;");
+                } %>
+        </td>
+         <%  // Don't allow editing or deleting if users are read-only.
+            if (!UserManager.getUserProvider().isReadOnly()) { %>
         <td width="1%" align="center">
             <a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
              title="<fmt:message key="global.click_edit" />"
-             ><img src="images/edit-16x16.gif" width="17" height="17" border="0"></a>
+             ><img src="images/edit-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_edit" />"></a>
         </td>
         <td width="1%" align="center" style="border-right:1px #ccc solid;">
             <a href="user-delete.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
              title="<fmt:message key="global.click_delete" />"
-             ><img src="images/delete-16x16.gif" width="16" height="16" border="0"></a>
+             ><img src="images/delete-16x16.gif" width="16" height="16" border="0" alt="<fmt:message key="global.click_delete" />"></a>
         </td>
+        <% } %>
     </tr>
 
 <%

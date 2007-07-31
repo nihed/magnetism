@@ -9,13 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.handler;
+package org.jivesoftware.openfire.handler;
 
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.container.BasicModule;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
@@ -45,21 +45,18 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
     public void process(Packet packet) throws PacketException {
         IQ iq = (IQ) packet;
         try {
-            iq = handleIQ(iq);
-            if (iq != null) {
-                deliverer.deliver(iq);
+            IQ reply = handleIQ(iq);
+            if (reply != null) {
+                deliverer.deliver(reply);
             }
         }
-        catch (org.jivesoftware.wildfire.auth.UnauthorizedException e) {
+        catch (org.jivesoftware.openfire.auth.UnauthorizedException e) {
             if (iq != null) {
                 try {
                     IQ response = IQ.createResultIQ(iq);
                     response.setChildElement(iq.getChildElement().createCopy());
                     response.setError(PacketError.Condition.not_authorized);
-                    Session session = sessionManager.getSession(iq.getFrom());
-                    if (!session.getConnection().isClosed()) {
-                        session.process(response);
-                    }
+                    sessionManager.getSession(iq.getFrom()).process(response);
                 }
                 catch (Exception de) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), de);
@@ -69,6 +66,15 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            try {
+                IQ response = IQ.createResultIQ(iq);
+                response.setChildElement(iq.getChildElement().createCopy());
+                response.setError(PacketError.Condition.internal_server_error);
+                sessionManager.getSession(iq.getFrom()).process(response);
+            }
+            catch (Exception e1) {
+                // Do nothing
+            }
         }
     }
 

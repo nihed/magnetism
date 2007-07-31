@@ -9,16 +9,17 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.group;
+package org.jivesoftware.openfire.group;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.event.GroupEventDispatcher;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.util.Cacheable;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,7 +28,11 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Groups organize users into a single entity for easier management.
+ * Groups organize users into a single entity for easier management.<p>
+ *
+ * The actual group implementation is controlled by the {@link GroupProvider}, which
+ * includes things like the group name, the members, and adminstrators. Each group
+ * also has properties, which are always stored in the Openfire database.
  *
  * @see GroupManager#createGroup(String)
  *
@@ -43,9 +48,13 @@ public class Group implements Cacheable {
         "UPDATE jiveGroupProp SET propValue=? WHERE name=? AND groupName=?";
     private static final String INSERT_PROPERTY =
         "INSERT INTO jiveGroupProp (groupName, name, propValue) VALUES (?, ?, ?)";
+    private static final String LOAD_SHARED_GROUPS =
+        "SELECT groupName FROM jiveGroupProp WHERE name='sharedRoster.showInRoster' " +
+        "AND propValue IS NOT NULL AND propValue <> 'nobody'";
 
-    private GroupProvider provider;
-    private GroupManager groupManager;
+    private transient GroupProvider provider;
+    private transient GroupManager groupManager;
+
     private String name;
     private String description;
     private Map<String, String> properties;
@@ -53,21 +62,47 @@ public class Group implements Cacheable {
     private Set<JID> administrators;
 
     /**
+     * Returns the name of the groups that are shared groups.
+     *
+     * @return the name of the groups that are shared groups.
+     */
+    static Set<String> getSharedGroupsNames() {
+        Set<String> groupNames = new HashSet<String>();
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_SHARED_GROUPS);
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                groupNames.add(rs.getString(1));
+            }
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        return groupNames;
+    }
+
+    /**
      * Constructs a new group. Note: this constructor is intended for implementors of the
      * {@link GroupProvider} interface. To create a new group, use the
      * {@link GroupManager#createGroup(String)} method. 
      *
-     * @param provider the group provider.
      * @param name the name.
      * @param description the description.
      * @param members a Collection of the group members.
      * @param administrators a Collection of the group administrators.
      */
-    public Group(GroupProvider provider, String name, String description,
-            Collection<JID> members, Collection<JID> administrators)
+    public Group(String name, String description, Collection<JID> members,
+            Collection<JID> administrators)
     {
-        this.provider = provider;
         this.groupManager = GroupManager.getInstance();
+        this.provider = groupManager.getProvider();
         this.name = name;
         this.description = description;
         this.members = new HashSet<JID>(members);
@@ -90,6 +125,11 @@ public class Group implements Cacheable {
      * @param name the name for the group.
      */
     public void setName(String name) {
+        if (name == this.name || (name != null && name.equals(this.name)) || provider.isReadOnly())
+        {
+            // Do nothing
+            return;
+        }
         try {
             String originalName = this.name;
             provider.setName(this.name, name);
@@ -128,6 +168,13 @@ public class Group implements Cacheable {
      * @param description the description of the group.
      */
     public void setDescription(String description) {
+        if (description == this.description ||
+                (description != null && description.equals(this.description)) ||
+                provider.isReadOnly())
+        {
+            // Do nothing
+            return;
+        }
         try {
             String originalDescription = this.description;
             provider.setDescription(name, description);
@@ -186,12 +233,16 @@ public class Group implements Cacheable {
     }
 
     /**
-     * Returns true if the provided username belongs to a user that is part of the group.
+     * Returns true if the provided JID belongs to a user that is part of the group.
      *
      * @param user the JID address of the user to check.
      * @return true if the specified user is a group user.
      */
     public boolean isUser(JID user) {
+        // Make sure that we are always checking bare JIDs 
+        if (user != null && user.getResource() != null) {
+            user = new JID(user.toBareJID());
+        }
         return user != null && (members.contains(user) || administrators.contains(user));
     }
 
@@ -203,10 +254,21 @@ public class Group implements Cacheable {
      */
     public boolean isUser(String username) {
         if  (username != null) {
-        	return isUser(XMPPServer.getInstance().createJID(username, null));
-        } else {
+            return isUser(XMPPServer.getInstance().createJID(username, null));
+        }
+        else {
             return false;
         }
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out)  throws IOException {
+        out.defaultWriteObject();
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        groupManager = GroupManager.getInstance();
+        provider = groupManager.getProvider();
     }
 
     public int getCachedSize() {
@@ -216,9 +278,33 @@ public class Group implements Cacheable {
         size += CacheSizes.sizeOfObject();              // overhead of object
         size += CacheSizes.sizeOfString(name);
         size += CacheSizes.sizeOfString(description);
+        size += CacheSizes.sizeOfMap(properties);
+
+        for (JID member: members) {
+            size += CacheSizes.sizeOfString(member.toString());
+        }
+        for (JID admin: administrators) {
+            size += CacheSizes.sizeOfString(admin.toString());
+        }
+
         return size;
     }
 
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (object != null && object instanceof Group) {
+            return name.equals(((Group)object).getName());
+        }
+        else {
+            return false;
+        }
+    }
     /**
      * Collection implementation that notifies the GroupProvider of any
      * changes to the collection.
@@ -252,6 +338,10 @@ public class Group implements Cacheable {
                     if (current == null) {
                         throw new IllegalStateException();
                     }
+                    // Do nothing if the provider is read-only.
+                    if (provider.isReadOnly()) {
+                        return;
+                    }
                     JID user = (JID)current;
                     // Remove the user from the collection in memory.
                     iter.remove();
@@ -279,9 +369,13 @@ public class Group implements Cacheable {
         }
 
         public boolean add(Object member) {
+            // Do nothing if the provider is read-only.
+            if (provider.isReadOnly()) {
+                return false;
+            }
             JID user = (JID) member;
-            // Find out if the user was already a group user
-            boolean alreadyGroupUser = false;
+            // Find out if the user was already a group user.
+            boolean alreadyGroupUser;
             if (adminCollection) {
                 alreadyGroupUser = members.contains(user);
             }
@@ -425,11 +519,12 @@ public class Group implements Cacheable {
     private void loadProperties() {
         Connection con = null;
         PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_PROPERTIES);
             pstmt.setString(1, name);
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
             while (rs.next()) {
                 String key = rs.getString(1);
                 String value = rs.getString(2);
@@ -444,16 +539,12 @@ public class Group implements Cacheable {
                     Log.warn("There is a group property whose key is null of Group: " + name);
                 }
             }
-            rs.close();
         }
         catch (SQLException sqle) {
             Log.error(sqle);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
     }
 
@@ -472,10 +563,7 @@ public class Group implements Cacheable {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -494,10 +582,7 @@ public class Group implements Cacheable {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
@@ -515,10 +600,7 @@ public class Group implements Cacheable {
             Log.error(e);
         }
         finally {
-            try { if (pstmt != null) pstmt.close(); }
-            catch (Exception e) { Log.error(e); }
-            try { if (con != null) con.close(); }
-            catch (Exception e) { Log.error(e); }
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 }

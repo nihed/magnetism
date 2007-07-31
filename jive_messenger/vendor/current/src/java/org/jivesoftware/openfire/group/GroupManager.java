@@ -9,17 +9,20 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.group;
+package org.jivesoftware.openfire.group;
 
 import org.jivesoftware.util.*;
-import org.jivesoftware.wildfire.user.User;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.wildfire.event.GroupEventDispatcher;
-import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.event.GroupEventDispatcher;
+import org.jivesoftware.openfire.event.GroupEventListener;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * Manages groups.
@@ -29,10 +32,15 @@ import java.util.Collections;
  */
 public class GroupManager {
 
-    Cache groupCache;
+    Cache<String, Group> groupCache;
+    Cache<String, Object> groupMetaCache;
     private GroupProvider provider;
 
     private static GroupManager instance = new GroupManager();
+
+    private static final String GROUP_COUNT_KEY = "GROUP_COUNT";
+    private static final String SHARED_GROUPS_KEY = "SHARED_GROUPS";
+    private static final String GROUP_NAMES_KEY = "GROUP_NAMES";
 
     /**
      * Returns a singleton instance of GroupManager.
@@ -45,20 +53,88 @@ public class GroupManager {
 
     private GroupManager() {
         // Initialize caches.
-        CacheManager.initializeCache("group", 128 * 1024);
-        CacheManager.initializeCache("group member", 32 * 1024);
-        groupCache = CacheManager.getCache("group");
+        groupCache = CacheManager.initializeCache("Group", "group", 1024 * 1024,
+                JiveConstants.MINUTE*15);
+
+        // A cache for meta-data around groups: count, group names, groups associated with
+        // a particular user
+        groupMetaCache = CacheManager.initializeCache("Group Metadata Cache", "groupMeta",
+                512 * 1024, JiveConstants.MINUTE*15);
+
         // Load a group provider.
         String className = JiveGlobals.getXMLProperty("provider.group.className",
-                "org.jivesoftware.wildfire.group.DefaultGroupProvider");
+                "org.jivesoftware.openfire.group.DefaultGroupProvider");
         try {
             Class c = ClassUtils.forName(className);
-            provider = (GroupProvider)c.newInstance();
+            provider = (GroupProvider) c.newInstance();
         }
         catch (Exception e) {
             Log.error("Error loading group provider: " + className, e);
             provider = new DefaultGroupProvider();
         }
+
+        GroupEventDispatcher.addListener(new GroupEventListener() {
+            public void groupCreated(Group group, Map params) {
+                groupMetaCache.clear();
+            }
+
+            public void groupDeleting(Group group, Map params) {
+                groupMetaCache.clear();
+            }
+
+            public void groupModified(Group group, Map params) {
+                String type = (String)params.get("type");
+                // If shared group settings changed, expire the cache.
+                if (type != null && (type.equals("propertyModified") ||
+                        type.equals("propertyDeleted") || type.equals("propertyAdded")))
+                {
+                    if (params.get("propertyKey") != null &&
+                            params.get("propertyKey").equals("sharedRoster.showInRoster"))
+                    {
+                        groupMetaCache.clear();
+                    }
+                }
+            }
+
+            public void memberAdded(Group group, Map params) {
+                groupMetaCache.clear();
+            }
+
+            public void memberRemoved(Group group, Map params) {
+                groupMetaCache.clear();
+            }
+
+            public void adminAdded(Group group, Map params) {
+                groupMetaCache.clear();
+            }
+
+            public void adminRemoved(Group group, Map params) {
+                groupMetaCache.clear();
+            }
+        });
+
+        // Pre-load shared groups. This will provide a faster response
+        // time to the first client that logs in.
+        Runnable task = new Runnable() {
+            public void run() {
+                Collection<Group> groups = getSharedGroups();
+                // Load each group into cache.
+                for (Group group : groups) {
+                    // Load each user in the group into cache.
+                    for (JID jid : group.getMembers()) {
+                        try {
+                            if (XMPPServer.getInstance().isLocal(jid)) {
+                                UserManager.getInstance().getUser(jid.getNode());
+                            }
+                        }
+                        catch (UserNotFoundException unfe) {
+                            // Ignore.
+                        }
+                    }
+                }
+            }
+        };
+        TaskEngine.getInstance().submit(task);
     }
 
     /**
@@ -70,7 +146,7 @@ public class GroupManager {
      */
     public Group createGroup(String name) throws GroupAlreadyExistsException {
         synchronized (name.intern()) {
-            Group newGroup = null;
+            Group newGroup;
             try {
                 getGroup(name);
                 // The group already exists since now exception, so:
@@ -79,6 +155,7 @@ public class GroupManager {
             catch (GroupNotFoundException unfe) {
                 // The group doesn't already exist so we can create a new group
                 newGroup = provider.createGroup(name);
+                // Update caches.
                 groupCache.put(name, newGroup);
 
                 // Fire event.
@@ -97,12 +174,12 @@ public class GroupManager {
      * @throws GroupNotFoundException if the group does not exist.
      */
     public Group getGroup(String name) throws GroupNotFoundException {
-        Group group = (Group)groupCache.get(name);
+        Group group = groupCache.get(name);
         // If ID wan't found in cache, load it up and put it there.
         if (group == null) {
             synchronized (name.intern()) {
-                group = (Group)groupCache.get(name);
-                // If ID wan't found in cache, load it up and put it there.
+                group = groupCache.get(name);
+                // If group wan't found in cache, load it up and put it there.
                 if (group == null) {
                     group = provider.getGroup(name);
                     groupCache.put(name, group);
@@ -125,7 +202,7 @@ public class GroupManager {
         // Delete the group.
         provider.deleteGroup(group.getName());
 
-        // Expire all relevant caches.
+        // Expire cache.
         groupCache.remove(group.getName());
     }
 
@@ -133,7 +210,7 @@ public class GroupManager {
      * Deletes a user from all the groups where he/she belongs. The most probable cause
      * for this request is that the user has been deleted from the system.
      *
-     * TODO: remove this method and use events isntead.
+     * TODO: remove this method and use events instead.
      *
      * @param user the deleted user from the system.
      */
@@ -141,10 +218,16 @@ public class GroupManager {
         JID userJID = XMPPServer.getInstance().createJID(user.getUsername(), null);
         for (Group group : getGroups(userJID)) {
             if (group.getAdmins().contains(userJID)) {
-                group.getAdmins().remove(userJID);
+                if (group.getAdmins().remove(userJID)) {
+                    // Remove the group from cache.
+                    groupCache.remove(group.getName());
+                }
             }
             else {
-                group.getMembers().remove(userJID);
+                if (group.getMembers().remove(userJID)) {
+                    // Remove the group from cache.
+                    groupCache.remove(group.getName());
+                }
             }
         }
     }
@@ -155,8 +238,17 @@ public class GroupManager {
      * @return the total number of groups.
      */
     public int getGroupCount() {
-        // TODO: add caching
-        return provider.getGroupCount();
+        Integer count = (Integer)groupMetaCache.get(GROUP_COUNT_KEY);
+        if (count == null) {
+            synchronized(GROUP_COUNT_KEY.intern()) {
+                count = (Integer)groupMetaCache.get(GROUP_COUNT_KEY);
+                if (count == null) {
+                    count = provider.getGroupCount();
+                    groupMetaCache.put(GROUP_COUNT_KEY, count);
+                }
+            }
+        }
+        return count;
     }
 
     /**
@@ -165,27 +257,73 @@ public class GroupManager {
      * @return an unmodifiable Collection of all groups.
      */
     public Collection<Group> getGroups() {
-        // TODO: add caching
-        return provider.getGroups();
+        Collection<String> groupNames = (Collection<String>)groupMetaCache.get(GROUP_NAMES_KEY);
+        if (groupNames == null) {
+            synchronized(GROUP_NAMES_KEY.intern()) {
+                groupNames = (Collection<String>)groupMetaCache.get(GROUP_NAMES_KEY);
+                if (groupNames == null) {
+                    groupNames = provider.getGroupNames();
+                    groupMetaCache.put(GROUP_NAMES_KEY, groupNames);
+                }
+            }
+        }
+        return new GroupCollection(groupNames);
     }
 
     /**
-     * Returns an iterator for all groups according to a filter.
-     * <p/>
-     * This is useful to support
-     * pagination in a GUI where you may only want to display a certain
-     * number of results per page. It is possible that the
-     * number of results returned will be less than that specified by
-     * numResults if numResults is greater than the number of records left in
-     * the system to display.
+     * Returns an unmodifiable Collection of all shared groups in the system.
+     *
+     * @return an unmodifiable Collection of all shared groups.
+     */
+    public Collection<Group> getSharedGroups() {
+        Collection<String> groupNames = (Collection<String>)groupMetaCache.get(SHARED_GROUPS_KEY);
+        if (groupNames == null) {
+            synchronized(SHARED_GROUPS_KEY.intern()) {
+                groupNames = (Collection<String>)groupMetaCache.get(SHARED_GROUPS_KEY);
+                if (groupNames == null) {
+                    groupNames = Group.getSharedGroupsNames();
+                    groupMetaCache.put(SHARED_GROUPS_KEY, groupNames);
+                }
+            }
+        }
+        return new GroupCollection(groupNames);
+    }
+
+    /**
+     * Returns all groups given a start index and desired number of results. This is
+     * useful to support pagination in a GUI where you may only want to display a certain
+     * number of results per page. It is possible that the number of results returned will
+     * be less than that specified by numResults if numResults is greater than the number
+     * of records left in the system to display.
      *
      * @param startIndex start index in results.
      * @param numResults number of results to return.
      * @return an Iterator for all groups in the specified range.
      */
     public Collection<Group> getGroups(int startIndex, int numResults) {
-        // TODO: add caching
-        return provider.getGroups(startIndex, numResults);
+        String key = GROUP_NAMES_KEY + startIndex + "," + numResults;
+
+        Collection<String> groupNames = (Collection<String>)groupMetaCache.get(key);
+        if (groupNames == null) {
+            synchronized(key.intern()) {
+                groupNames = (Collection<String>)groupMetaCache.get(key);
+                if (groupNames == null) {
+                    groupNames = provider.getGroupNames(startIndex, numResults);
+                    groupMetaCache.put(key, groupNames);
+                }
+            }
+        }
+        return new GroupCollection(groupNames);
+    }
+
+    /**
+     * Returns an iterator for all groups that the User is a member of.
+     *
+     * @param user the user.
+     * @return all groups the user belongs to.
+     */
+    public Collection<Group> getGroups(User user) {
+        return getGroups(XMPPServer.getInstance().createJID(user.getUsername(), null));
     }
 
     /**
@@ -195,7 +333,81 @@ public class GroupManager {
      * @return all groups that an entity belongs to.
      */
     public Collection<Group> getGroups(JID user) {
-        // TODO: add caching
-        return provider.getGroups(user);
+        String key = user.toBareJID();
+
+        Collection<String> groupNames = (Collection<String>)groupMetaCache.get(key);
+        if (groupNames == null) {
+            synchronized(key.intern()) {
+                groupNames = (Collection<String>)groupMetaCache.get(key);
+                if (groupNames == null) {
+                    groupNames = provider.getGroupNames(user);
+                    groupMetaCache.put(key, groupNames);
+                }
+            }
+        }
+        return new GroupCollection(groupNames);
+    }
+
+    /**
+     * Returns true if groups are read-only.
+     *
+     * @return true if groups are read-only.
+     */
+    public boolean isReadOnly() {
+        return provider.isReadOnly();
+    }
+
+    /**
+     * Returns true if searching for groups is supported.
+     *
+     * @return true if searching for groups are supported.
+     */
+    public boolean isSearchSupported() {
+        return provider.isSearchSupported();
+    }
+
+    /**
+     * Returns the groups that match the search. The search is over group names and
+     * implicitly uses wildcard matching (although the exact search semantics are left
+     * up to each provider implementation). For example, a search for "HR" should match
+     * the groups "HR", "HR Department", and "The HR People".<p>
+     *
+     * Before searching or showing a search UI, use the {@link #isSearchSupported} method
+     * to ensure that searching is supported.
+     *
+     * @param query the search string for group names.
+     * @return all groups that match the search.
+     */
+    public Collection<Group> search(String query) {
+        Collection<String> groupNames = provider.search(query);
+        return new GroupCollection(groupNames);
+    }
+
+    /**
+     * Returns the groups that match the search given a start index and desired number
+     * of results. The search is over group names and implicitly uses wildcard matching
+     * (although the exact search semantics are left up to each provider implementation).
+     * For example, a search for "HR" should match the groups "HR", "HR Department", and
+     * "The HR People".<p>
+     *
+     * Before searching or showing a search UI, use the {@link #isSearchSupported} method
+     * to ensure that searching is supported.
+     *
+     * @param query the search string for group names.
+     * @return all groups that match the search.
+     */
+    public Collection<Group> search(String query, int startIndex, int numResults) {
+        Collection<String> groupNames = provider.search(query, startIndex, numResults);
+        return new GroupCollection(groupNames);
+    }
+
+    /**
+     * Returns the configured group provider. Note that this method has special access
+     * privileges since only a few certain classes need to access the provider directly.
+     *
+     * @return the group provider.
+     */
+    public GroupProvider getProvider() {
+        return provider;
     }
 }

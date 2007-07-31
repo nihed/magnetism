@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire;
+package org.jivesoftware.openfire;
 
 import org.xmpp.packet.Packet;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 
 /**
  * Interface to handle packets delivered by Channels.

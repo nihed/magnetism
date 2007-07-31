@@ -1,6 +1,6 @@
 <%--
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -12,7 +12,7 @@
                  org.jivesoftware.util.*,
                  java.text.*,
                  org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.wildfire.user.*,
+                 org.jivesoftware.openfire.user.*,
                  java.util.*"
 %>
 

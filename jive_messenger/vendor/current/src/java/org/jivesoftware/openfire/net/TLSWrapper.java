@@ -3,15 +3,14 @@
  * $Revision: $
  * $Date: $
  *
- * Copyright (C) 2005 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software and Artur Hefczyc. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.net;
+package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
 import javax.net.ssl.*;
@@ -22,13 +21,13 @@ import java.nio.ByteBuffer;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.X509Certificate;
 
 /**
  * Creates and initializes the SSLContext instance to use to secure the plain connection. This
  * class is also responsible for encoding and decoding the encrypted data and place it into
  * the corresponding the {@link ByteBuffer}.
  *
+ * @author Artur Hefczyc
  * @author Hao Chen
  */
 public class TLSWrapper {
@@ -57,7 +56,7 @@ public class TLSWrapper {
     private int netBuffSize;
     private int appBuffSize;
 
-    public TLSWrapper(boolean clientMode) {
+    public TLSWrapper(boolean clientMode, boolean needClientAuth, String remoteServer) {
 
         if (debug) {
             System.setProperty("javax.net.debug", "all");
@@ -77,26 +76,10 @@ public class TLSWrapper {
 
             // TrustManager's decide whether to allow connections.
             TrustManager[] tm = SSLJiveTrustManagerFactory.getTrustManagers(ksTrust, trustpass);
-            boolean verify = JiveGlobals.getBooleanProperty("xmpp.server.certificate.verify", true);
-            if (clientMode && !verify) {
-                // Trust any certificate presented by the server. Disabling certificate validation
-                // is not recommended for production environments.
-                tm = new TrustManager[]{new X509TrustManager() {
-                    public void checkClientTrusted(X509Certificate[] x509Certificates,
-                            String string) {
-                    }
-
-                    public void checkServerTrusted(X509Certificate[] x509Certificates,
-                            String string) {
-                    }
-
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return new X509Certificate[0];
-                    }
-                }
-                };
+            if (clientMode || needClientAuth) {
+                // Check if we can trust certificates presented by the server
+                tm = new TrustManager[]{new ServerTrustManager(remoteServer, ksTrust)};
             }
-
 
             SSLContext tlsContext = SSLContext.getInstance(PROTOCOL);
 

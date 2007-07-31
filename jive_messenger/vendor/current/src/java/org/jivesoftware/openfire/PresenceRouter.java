@@ -3,23 +3,27 @@
  * $Revision: 3138 $
  * $Date: 2005-12-01 02:13:26 -0300 (Thu, 01 Dec 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire;
+package org.jivesoftware.openfire;
 
-import org.xmpp.packet.Presence;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.PacketError;
-import org.jivesoftware.wildfire.handler.PresenceUpdateHandler;
-import org.jivesoftware.wildfire.handler.PresenceSubscribeHandler;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.util.Log;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.handler.PresenceSubscribeHandler;
+import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
+import org.jivesoftware.openfire.interceptor.InterceptorManager;
+import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.Session;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
 /**
  * <p>Route presence packets throughout the server.</p>
@@ -37,6 +41,7 @@ public class PresenceRouter extends BasicModule {
     private PresenceSubscribeHandler subscribeHandler;
     private PresenceManager presenceManager;
     private SessionManager sessionManager;
+    private MulticastRouter multicastRouter;
     private String serverName;
 
     /**
@@ -56,25 +61,56 @@ public class PresenceRouter extends BasicModule {
         if (packet == null) {
             throw new NullPointerException();
         }
-        Session session = sessionManager.getSession(packet.getFrom());
-        if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED) {
-            handle(packet);
-        }
-        else {
-            packet.setTo(session.getAddress());
-            packet.setFrom((JID)null);
-            packet.setError(PacketError.Condition.not_authorized);
-            try {
+        ClientSession session = sessionManager.getSession(packet.getFrom());
+        try {
+            // Invoke the interceptors before we process the read packet
+            InterceptorManager.getInstance().invokeInterceptors(packet, session, true, false);
+            if (session == null || session.getStatus() == Session.STATUS_AUTHENTICATED) {
+                handle(packet);
+            }
+            else {
+                packet.setTo(session.getAddress());
+                packet.setFrom((JID)null);
+                packet.setError(PacketError.Condition.not_authorized);
                 session.process(packet);
             }
-            catch (UnauthorizedException ue) {
-                Log.error(ue);
+            // Invoke the interceptors after we have processed the read packet
+            InterceptorManager.getInstance().invokeInterceptors(packet, session, true, true);
+        }
+        catch (PacketRejectedException e) {
+            if (session != null) {
+                // An interceptor rejected this packet so answer a not_allowed error
+                Presence reply = new Presence();
+                reply.setID(packet.getID());
+                reply.setTo(session.getAddress());
+                reply.setFrom(packet.getTo());
+                reply.setError(PacketError.Condition.not_allowed);
+                session.process(reply);
+                // Check if a message notifying the rejection should be sent
+                if (e.getRejectionMessage() != null && e.getRejectionMessage().trim().length() > 0) {
+                    // A message for the rejection will be sent to the sender of the rejected packet
+                    Message notification = new Message();
+                    notification.setTo(session.getAddress());
+                    notification.setFrom(packet.getTo());
+                    notification.setBody(e.getRejectionMessage());
+                    session.process(notification);
+                }
             }
         }
     }
 
     private void handle(Presence packet) {
         JID recipientJID = packet.getTo();
+        // Check if the packet was sent to the server hostname
+        if (recipientJID != null && recipientJID.getNode() == null &&
+                recipientJID.getResource() == null && serverName.equals(recipientJID.getDomain())) {
+            if (packet.getElement().element("addresses") != null) {
+                // Presence includes multicast processing instructions. Ask the multicastRouter
+                // to route this packet
+                multicastRouter.route(packet);
+                return;
+            }
+        }
         try {
             Presence.Type type = packet.getType();
             // Presence updates (null is 'available')
@@ -87,12 +123,20 @@ public class PresenceRouter extends BasicModule {
                     updateHandler.process(packet);
                 }
                 else {
+                    // Check that sender session is still active
+                    Session session = sessionManager.getSession(packet.getFrom());
+                    if (session != null && session.getStatus() == Session.STATUS_CLOSED) {
+                        Log.warn("Rejected available presence: " + packet + " - " + session);
+                        return;
+                    }
+
                     // The user sent a directed presence to an entity
-                    ChannelHandler route = routingTable.getRoute(recipientJID);
-                    if (route != null) {
-                        route.process(packet);
-                        // Notify the PresenceUpdateHandler of the directed presence
+                    // Broadcast it to all connected resources
+                    for (ChannelHandler route : routingTable.getRoutes(recipientJID)) {
+                        // Register the sent directed presence
                         updateHandler.directedPresenceSent(packet, route, recipientJID.toString());
+                        // Route the packet
+                        route.process(packet);
                     }
                 }
 
@@ -106,7 +150,17 @@ public class PresenceRouter extends BasicModule {
             }
             else if (Presence.Type.probe == type) {
                 // Handle a presence probe sent by a remote server
-                presenceManager.handleProbe(packet);
+                if (!XMPPServer.getInstance().isLocal(recipientJID)) {
+                    // Target is a component of the server so forward it
+                    ChannelHandler route = routingTable.getRoute(recipientJID);
+                    if (route != null) {
+                        route.process(packet);
+                    }
+                }
+                else {
+                    // Handle probe to a local user
+                    presenceManager.handleProbe(packet);
+                }
             }
             else {
                 // It's an unknown or ERROR type, just deliver it because there's nothing
@@ -137,6 +191,7 @@ public class PresenceRouter extends BasicModule {
         updateHandler = server.getPresenceUpdateHandler();
         subscribeHandler = server.getPresenceSubscribeHandler();
         presenceManager = server.getPresenceManager();
+        multicastRouter = server.getMulticastRouter();
         sessionManager = server.getSessionManager();
     }
 }

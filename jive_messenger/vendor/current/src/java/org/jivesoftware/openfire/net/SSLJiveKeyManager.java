@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.net;
+package org.jivesoftware.openfire.net;
 
 import com.sun.net.ssl.X509KeyManager;
 import java.net.Socket;

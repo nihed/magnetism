@@ -1,9 +1,9 @@
 /**
  * $RCSfile$
- * $Revision: 1217 $
- * $Date: 2005-04-11 17:11:06 -0400 (Mon, 11 Apr 2005) $
+ * $Revision: 6674 $
+ * $Date: 2007-01-11 16:21:34 -0600 (Thu, 11 Jan 2007) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -316,5 +316,9 @@ public class DefaultConnectionProvider implements ConnectionProvider {
                 Integer.toString(maxConnections));
         JiveGlobals.setXMLProperty("database.defaultProvider.connectionTimeout",
                 Double.toString(connectionTimeout));
+    }
+
+    public String toString() {
+        return connectionPool.toString();
     }
 }

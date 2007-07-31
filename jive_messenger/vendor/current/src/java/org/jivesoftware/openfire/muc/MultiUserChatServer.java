@@ -3,22 +3,22 @@
  * $Revision: 3036 $
  * $Date: 2005-11-07 15:15:00 -0300 (Mon, 07 Nov 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.muc;
+package org.jivesoftware.openfire.muc;
 
-import java.util.List;
-import java.util.Collection;
-
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.JID;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.component.Component;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Manages groupchat conversations, chatrooms, and users. This class is designed to operate
@@ -276,11 +276,49 @@ public interface MultiUserChatServer extends Component {
      * the logged messages in memory until the logging process saves them to the database. It's 
      * possible to configure the logging process to run every X milliseconds and also the number 
      * of messages to log on each execution. 
-     * @see org.jivesoftware.wildfire.muc.spi.MultiUserChatServerImpl#initialize(org.jivesoftware.wildfire.XMPPServer)
+     * @see org.jivesoftware.openfire.muc.spi.MultiUserChatServerImpl#initialize(org.jivesoftware.openfire.XMPPServer)
      * 
      * @param room the room that received the message.
      * @param message the message to log as part of the conversation in the room.
      * @param sender the real XMPPAddress of the sender (e.g. john@example.org). 
      */
     void logConversation(MUCRoom room, Message message, JID sender);
+
+    /**
+     * Notification message indicating the server that an incoming message was broadcasted
+     * to a given number of occupants.
+     *
+     * @param numOccupants number of occupants that received the message.
+     */
+    void messageBroadcastedTo(int numOccupants);
+
+    /**
+     * Enables or disables the MUC service. When disabled the MUC service will disappear from
+     * the disco#items list. Moreover, service discovery features will be disabled. 
+     *
+     * @param enabled true if the service is enabled.
+     */
+    void enableService(boolean enabled);
+
+    /**
+     * Returns true if the MUC service is available. Use {@link #enableService(boolean)} to
+     * enable or disable the service.
+     *
+     * @return true if the MUC service is available.
+     */
+    boolean isServiceEnabled();
+
+    /**
+     * Registers a listener to receive events.
+     *
+     * @param listener the listener.
+     */
+    void addListener(MUCEventListener listener);
+
+    /**
+     * Unregisters a listener to receive events.
+     *
+     * @param listener the listener.
+     */
+    void removeListener(MUCEventListener listener);
 }

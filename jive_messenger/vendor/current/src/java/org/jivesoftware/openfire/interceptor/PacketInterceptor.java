@@ -3,15 +3,15 @@
  * $Revision: 3010 $
  * $Date: 2005-10-31 20:28:11 -0300 (Mon, 31 Oct 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.interceptor;
+package org.jivesoftware.openfire.interceptor;
 
-import org.jivesoftware.wildfire.Session;
+import org.jivesoftware.openfire.session.Session;
 import org.xmpp.packet.Packet;
 
 /**
@@ -37,15 +37,19 @@ public interface PacketInterceptor {
      * the packet, or throw a PacketRejectedException to block it from being sent or processed
      * (when read).<p>
      *
-     * The exception can only be thrown when <tt>processed</tt> is false which means that the read
+     * An exception can only be thrown when <tt>processed</tt> is false which means that the read
      * packet has not been processed yet or the packet was not sent yet. If the exception is thrown
      * with a "read" packet then the sender of the packet will receive an answer with an error. But
-     * if the exception is thrown with a "sent" packet then nothing will happen.
+     * if the exception is thrown with a "sent" packet then nothing will happen.<p>
      *
-     * @param packet    the packet to take action on.
-     * @param session   the session that received or is sending the packet.
-     * @param incoming  flag that indicates if the packet was read by the server or sent from 
-     *                  the server.
+     * Note that for each packet, every interceptor will be called twice: once before processing
+     * is complete (<tt>processing==true</tt>) and once after processing is complete. Typically,
+     * an interceptor will want to ignore one or the other case.
+     *
+     * @param packet the packet to take action on.
+     * @param session the session that received or is sending the packet.
+     * @param incoming flag that indicates if the packet was read by the server or sent from
+     *      the server.
      * @param processed flag that indicates if the action (read/send) was performed. (PRE vs. POST).
      * @throws PacketRejectedException if the packet should be prevented from being processed.
      */

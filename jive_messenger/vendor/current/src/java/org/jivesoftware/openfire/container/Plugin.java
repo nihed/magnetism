@@ -9,17 +9,17 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.container;
+package org.jivesoftware.openfire.container;
 
 import java.io.File;
 
 /**
- * Plugin interface. Plugins enhance the functionality of Wildfire. They can:<ul>
+ * Plugin interface. Plugins enhance the functionality of Openfire. They can:<ul>
  *
  *      <li>Act as {@link org.xmpp.component.Component Components} to implement
  *      additional features in the XMPP protocol.
  *      <li>Dynamically modify the admin console.
- *      <li>Use the Wildfire API to add new functionality to server.
+ *      <li>Use the Openfire API to add new functionality to the server.
  * </ul>
  *
  * Plugins live in the <tt>plugins</tt> directory of <tt>home</tt>. Plugins
@@ -45,10 +45,15 @@ import java.io.File;
  *     &lt;description&gt;This is an example plugin.&lt;/description&gt;
  *     &lt;author&gt;Foo Inc.&lt;/author&gt;
  *     &lt;version&gt;1.0&lt;/version&gt;
- *     &lt;minServerVersion&gt;2.1.2&lt;/minServerVersion&gt;
+ *     &lt;minServerVersion&gt;3.0.0&lt;/minServerVersion&gt;
+ *     &lt;licenseType&gt;gpl&lt;/licenseType&gt;
  * &lt;/plugin&gt;</pre>
+ * <p/>
+ * Each plugin will be loaded in its own class loader, unless the plugin is configured
+ * with a parent plugin.<p/>
  *
- * Each plugin will be loaded in its own class loader.
+ * Please see the Plugin Developer Guide (available with the
+ * Openfire documentation) for additional details about plugin development.
  *
  * @author Matt Tucker
  */
@@ -67,7 +72,7 @@ public interface Plugin {
      *
      * Implementations of this method must release all resources held
      * by the plugin such as file handles, database or network connections,
-     * and references to core Wildfire classes. In other words, a
+     * and references to core Openfire classes. In other words, a
      * garbage collection executed after this method is called must be able
      * to clean up all plugin classes.
      */

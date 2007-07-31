@@ -3,24 +3,27 @@
  * $Revision: 1761 $
  * $Date: 2005-08-09 19:34:09 -0300 (Tue, 09 Aug 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.handler;
+package org.jivesoftware.openfire.handler;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.disco.*;
-import org.jivesoftware.wildfire.forms.DataForm;
-import org.jivesoftware.wildfire.forms.FormField;
-import org.jivesoftware.wildfire.forms.spi.XDataFormImpl;
-import org.jivesoftware.wildfire.forms.spi.XFormFieldImpl;
+import org.jivesoftware.util.JiveConstants;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.disco.*;
+import org.jivesoftware.openfire.forms.DataForm;
+import org.jivesoftware.openfire.forms.FormField;
+import org.jivesoftware.openfire.forms.spi.XDataFormImpl;
+import org.jivesoftware.openfire.forms.spi.XFormFieldImpl;
+import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.user.UserManager;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
@@ -40,18 +43,19 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
 
     private static final String NAMESPACE = "http://jabber.org/protocol/offline";
 
-    private SimpleDateFormat dateFormat;
+    final private SimpleDateFormat dateFormat =
+            new SimpleDateFormat(JiveConstants.XMPP_DATETIME_FORMAT);
     private IQHandlerInfo info;
     private IQDiscoInfoHandler infoHandler;
     private IQDiscoItemsHandler itemsHandler;
 
     private SessionManager sessionManager;
+    private UserManager userManager;
     private OfflineMessageStore messageStore;
 
     public IQOfflineMessagesHandler() {
         super("Flexible Offline Message Retrieval Handler");
         info = new IQHandlerInfo("offline", NAMESPACE);
-        dateFormat = new SimpleDateFormat("yyyy-MM-DD'T'HH:mm:ss.SSS'Z'");
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
@@ -116,7 +120,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         return info;
     }
 
-    public Iterator getFeatures() {
+    public Iterator<String> getFeatures() {
         ArrayList<String> features = new ArrayList<String>();
         features.add(NAMESPACE);
         return features.iterator();
@@ -154,7 +158,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
     }
 
     public boolean hasInfo(String name, String node, JID senderJID) {
-        return NAMESPACE.equals(node) && senderJID.getNode() != null;
+        return NAMESPACE.equals(node) && userManager.isRegisteredUser(senderJID.getNode());
     }
 
     public Iterator<Element> getItems(String name, String node, JID senderJID) {
@@ -182,6 +186,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         itemsHandler = server.getIQDiscoItemsHandler();
         messageStore = server.getOfflineMessageStore();
         sessionManager = server.getSessionManager();
+        userManager = server.getUserManager();
     }
 
     public void start() throws IllegalStateException {

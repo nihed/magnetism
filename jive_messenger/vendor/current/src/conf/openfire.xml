@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    This file stores bootstrap properties needed by Wildfire.
+    This file stores bootstrap properties needed by Openfire.
     Property names must be in the format: "prop.name.is.blah=value"
     That will be stored as:
         <prop>
@@ -11,7 +11,7 @@
             </name>
         </prop>
 
-    Most properties are stored in the Wildfire database. A
+    Most properties are stored in the Openfire database. A
 	property viewer and editor is included in the admin console.
 -->
 <!-- root element, all properties must be under this element -->
@@ -41,26 +41,13 @@
 
     <locale>en</locale>
 
-    <!-- Example LDAP settings -->
+    <!-- Network settings. By default, Openfire will bind to all network interfaces.
+      Alternatively, you can specify a specific network interfaces that the server
+      will listen on. For example, 127.0.0.1. This setting is generally only useful
+       on multi-homed servers. -->
     <!--
-    <ldap>
-        <host></host>
-        <port>389</port>
-        <usernameField>uid</usernameField>
-        <nameField>cn</nameField>
-        <emailField>mail</emailField>
-        <baseDN></baseDN>
-        <adminDN></adminDN>
-        <adminPassword></adminPassword>
-    </ldap>
-    <provider>
-        <user>
-            <className>org.jivesoftware.wildfire.ldap.LdapUserProvider</className>
-        </user>
-        <auth>
-            <className>org.jivesoftware.wildfire.ldap.LdapAuthProvider</className>
-        </auth>
-    </provider>
+    <network>
+        <interface></interface>
+    </network>
     -->
-    <!-- End example LDAP settings -->
 </jive>

@@ -9,13 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.container;
+package org.jivesoftware.openfire.container;
 
 import java.io.File;
 
 /**
  * Represents the data model used to represent development mode within the Jive
- * Wildfire plugin framework.
+ * Openfire plugin framework.
  *
  * @author Derek DeMoro
  */

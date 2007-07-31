@@ -1,6 +1,6 @@
 <%--
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -8,14 +8,17 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.wildfire.*,
-                 java.text.NumberFormat,
-                 org.jivesoftware.wildfire.server.IncomingServerSession,
-                 org.jivesoftware.wildfire.server.OutgoingServerSession"
+<%@ page import="org.jivesoftware.util.JiveGlobals,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.session.IncomingServerSession,
+                 org.jivesoftware.openfire.session.OutgoingServerSession,
+                java.text.NumberFormat"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.Calendar" %>
+<%@ page import="java.util.Date" %>
+<%@ page import="java.util.List" %>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jstl/fmt_rt" prefix="fmt" %>
@@ -23,7 +26,7 @@
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
-<%  // Get parameters
+<% // Get parameters
     String hostname = ParamUtils.getParameter(request, "hostname");
 
     // Handle a "go back" click:
@@ -110,12 +113,19 @@
     <div class="jive-table">
     <table cellpadding="3" cellspacing="1" border="0" width="100%">
     <tr>
-        <th width="35%"><fmt:message key="server.session.details.streamid" /></th>
+        <th width="35%" colspan="2"><fmt:message key="server.session.details.streamid" /></th>
         <th width="20%"><fmt:message key="server.session.label.creation" /></th>
         <th width="20%"><fmt:message key="server.session.label.last_active" /></th>
         <th width="25%" nowrap><fmt:message key="server.session.details.incoming_statistics" /></th>
     </tr>
     <tr>
+        <%  if (inSession.getConnection().isSecure()) { %>
+            <td width="1%">
+                <img src="images/lock.gif" width="16" height="16" border="0">
+            </td>
+         <% } else { %>
+            <td width="1%"><img src="images/blank.gif" width="1" height="1"></td>
+         <% } %>
         <%
             Date creationDate = inSession.getCreationDate();
             Date lastActiveDate = inSession.getLastActiveDate();
@@ -149,12 +159,19 @@
     <div class="jive-table">
     <table cellpadding="3" cellspacing="1" border="0" width="100%">
     <tr>
-        <th width="35%"><fmt:message key="server.session.details.streamid" /></th>
+        <th width="35%" colspan="2"><fmt:message key="server.session.details.streamid" /></th>
         <th width="20%"><fmt:message key="server.session.label.creation" /></th>
         <th width="20%"><fmt:message key="server.session.label.last_active" /></th>
         <th width="25%" nowrap><fmt:message key="server.session.details.outgoing_statistics" /></th>
     </tr>
     <tr>
+        <%  if (outSession.getConnection().isSecure()) { %>
+        <td width="1%">
+            <img src="images/lock.gif" width="16" height="16" border="0">
+        </td>
+         <% } else { %>
+        <td width="1%"><img src="images/blank.gif" width="1" height="1"></td>
+         <% } %>
         <%
             Date creationDate = outSession.getCreationDate();
             Date lastActiveDate = outSession.getLastActiveDate();
