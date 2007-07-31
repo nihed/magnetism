@@ -110,7 +110,7 @@ public class ClaimVerifierBean implements ClaimVerifier {
 				throw new HumanVisibleException("That isn't a valid email address (" + e.getMessage() + ")");
 			}
 			String link = getClaimVerifierLink(viewpoint, user, resource);
-			MimeMessage message = mailer.createMessage(Mailer.SpecialSender.VERIFIER, resource.getEmail());
+			MimeMessage message = mailer.createMessage(viewpoint, Mailer.SpecialSender.VERIFIER, resource.getEmail());
 			
 			StringBuilder bodyText = new StringBuilder();
 			XmlBuilder bodyHtml = new XmlBuilder();
