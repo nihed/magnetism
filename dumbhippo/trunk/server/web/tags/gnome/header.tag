@@ -3,6 +3,13 @@
 <%@ taglib tagdir="/WEB-INF/tags/gnome" prefix="gnome" %>
 
 <div id="gnomeHeader">
-  	<a class="gnome-header" href="">GNOME Online</a>
+	<c:choose>
+		<c:when test="${dogfoodMode}">
+			<a class="gnome-header" href="">GNOME Online <span style="color: red;">DOGFOOD</span></a>
+		</c:when>
+		<c:otherwise>
+			<a class="gnome-header" href="">GNOME Online</a>
+		</c:otherwise>
+	</c:choose>
 </div>
 <gnome:fixedLogo/>

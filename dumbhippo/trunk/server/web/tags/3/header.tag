@@ -35,10 +35,19 @@
 	</c:when>	
 </c:choose>
 
+<c:choose>
+	<c:when test="${dogfoodMode}">
+		<c:set var="headerLeftImage" value="/images3/${buildStamp}/header_left_dogfood.png"/>
+	</c:when>
+	<c:otherwise>
+		<c:set var="headerLeftImage" value="/images3/${buildStamp}/header_left.png"/>
+	</c:otherwise>
+</c:choose>
+
 <div id="dhPageHeader3">
 	<table cellspacing="0" cellpadding="0" width="100%">
 	<tr valign="top">
-	<td width="250px"><a href="/" id="dhPageHeaderLeftLink"><dh:png id="dhPageHeaderLeft" src="/images3/${buildStamp}/header_left.png" style="width: 250px; height: 64px"/></a></td>
+	<td width="250px"><a href="/" id="dhPageHeaderLeftLink"><dh:png id="dhPageHeaderLeft" src="${headerLeftImage}" style="width: 250px; height: 64px"/></a></td>
 	<td id="dhPageHeaderLeftControls" align="left" valign="bottom">
 		<div id="dhPageHeaderLeftControlsArea">
 		<c:choose>
