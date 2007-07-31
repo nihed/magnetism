@@ -9,12 +9,13 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.net;
+package org.jivesoftware.openfire.net;
 
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.IOException;
+import java.io.Reader;
 
 /**
  * MXParser that returns an IGNORABLE_WHITESPACE event when a whitespace character or a
@@ -23,6 +24,13 @@ import java.io.IOException;
  * @author Gaston Dombiak
  */
 public class MXParser extends org.xmlpull.mxp1.MXParser {
+
+    /**
+     * Last time a heartbeat was received. Hearbeats are represented as whitespaces
+     * or \n characters received when an XmlPullParser.END_TAG was parsed. Note that we
+     * can falsely detect heartbeats when parsing XHTML content but that is fine.
+     */
+    private long lastHeartbeat = 0;
 
     protected int nextImpl()
         throws XmlPullParserException, IOException
@@ -256,11 +264,12 @@ public class MXParser extends org.xmlpull.mxp1.MXParser {
                     do {
 
                         // check that ]]> does not show in
-                        if (eventType == XmlPullParser.END_TAG && (ch == ' ' || ch == '\n')) {
+                        if (eventType == XmlPullParser.END_TAG &&
+                                (ch == ' ' || ch == '\n' || ch == '\t')) {
                             // ** ADDED CODE (INCLUDING IF STATEMENT)
-                            return IGNORABLE_WHITESPACE;
+                            lastHeartbeat = System.currentTimeMillis();;
                         }
-                        else if(ch == ']') {
+                        if(ch == ']') {
                             if(seenBracket) {
                                 seenBracketBracket = true;
                             } else {
@@ -322,5 +331,24 @@ public class MXParser extends org.xmlpull.mxp1.MXParser {
                 return parseProlog();
             }
         }
+    }
+
+    /**
+     * Returns the last time a heartbeat was received. Hearbeats are represented as whitespaces
+     * or \n characters received when an XmlPullParser.END_TAG was parsed. Note that we
+     * can falsely detect heartbeats when parsing XHTML content but that is fine.
+     *
+     * @return the time in milliseconds when a heartbeat was received.
+     */
+    public long getLastHeartbeat() {
+        return lastHeartbeat;
+    }
+
+    public void resetInput() {
+        Reader oldReader = reader;
+        String oldEncoding = inputEncoding;
+        reset();
+        reader = oldReader;
+        inputEncoding = oldEncoding;
     }
 }

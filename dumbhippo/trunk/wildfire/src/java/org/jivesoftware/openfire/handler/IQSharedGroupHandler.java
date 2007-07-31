@@ -1,13 +1,11 @@
-package org.jivesoftware.wildfire.handler;
+package org.jivesoftware.openfire.handler;
 
 import org.dom4j.Element;
-import org.jivesoftware.wildfire.IQHandlerInfo;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.group.Group;
-import org.jivesoftware.wildfire.roster.RosterManager;
-import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.roster.RosterManager;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
@@ -24,7 +22,6 @@ public class IQSharedGroupHandler extends IQHandler {
 
     private IQHandlerInfo info;
     private String serverName;
-    private UserManager userManager;
     private RosterManager rosterManager;
 
     public IQSharedGroupHandler() {
@@ -44,21 +41,14 @@ public class IQSharedGroupHandler extends IQHandler {
             return result;
         }
 
-        try {
-            Collection<Group> groups = rosterManager.getSharedGroups(userManager.getUser(username));
-            Element sharedGroups = result.setChildElement("sharedgroup",
-                    "http://www.jivesoftware.org/protocol/sharedgroup");
-            for (Group sharedGroup : groups) {
-                String displayName = sharedGroup.getProperties().get("sharedRoster.displayName");
-                if (displayName != null) {
-                    sharedGroups.addElement("group").setText(displayName);
-                }
+        Collection<Group> groups = rosterManager.getSharedGroups(username);
+        Element sharedGroups = result.setChildElement("sharedgroup",
+                "http://www.jivesoftware.org/protocol/sharedgroup");
+        for (Group sharedGroup : groups) {
+            String displayName = sharedGroup.getProperties().get("sharedRoster.displayName");
+            if (displayName != null) {
+                sharedGroups.addElement("group").setText(displayName);
             }
-        }
-        catch (UserNotFoundException e) {
-            // User not found return an error. This case should never happen.
-            result.setChildElement(packet.getChildElement().createCopy());
-            result.setError(PacketError.Condition.not_allowed);
         }
         return result;
     }
@@ -70,7 +60,6 @@ public class IQSharedGroupHandler extends IQHandler {
     public void initialize(XMPPServer server) {
         super.initialize(server);
         serverName = server.getServerInfo().getName();
-        userManager = server.getUserManager();
         rosterManager = server.getRosterManager();
     }
 }

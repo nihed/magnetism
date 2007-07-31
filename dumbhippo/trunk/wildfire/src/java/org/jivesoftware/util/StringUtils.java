@@ -1,9 +1,8 @@
 /**
- * $RCSfile$
- * $Revision: 1217 $
- * $Date: 2005-04-11 17:11:06 -0400 (Mon, 11 Apr 2005) $
+ * $Revision: 6032 $
+ * $Date: 2006-11-09 19:16:09 -0600 (Thu, 09 Nov 2006) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2004-2006 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
@@ -15,10 +14,8 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.BreakIterator;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Utility class to peform common String manipulation algorithms.
@@ -31,15 +28,19 @@ public class StringUtils {
     private static final char[] LT_ENCODE = "&lt;".toCharArray();
     private static final char[] GT_ENCODE = "&gt;".toCharArray();
 
+    private StringUtils() {
+        // Not instantiable.
+    }
+
     /**
      * Replaces all instances of oldString with newString in string.
      *
-     * @param string    the String to search to perform replacements on
-     * @param oldString the String that should be replaced by newString
-     * @param newString the String that will replace all instances of oldString
-     * @return a String will all instances of oldString replaced by newString
+     * @param string the String to search to perform replacements on.
+     * @param oldString the String that should be replaced by newString.
+     * @param newString the String that will replace all instances of oldString.
+     * @return a String will all instances of oldString replaced by newString.
      */
-    public static final String replace(String string, String oldString, String newString) {
+    public static String replace(String string, String oldString, String newString) {
         if (string == null) {
             return null;
         }
@@ -75,7 +76,7 @@ public class StringUtils {
      * @param newString the String that will replace all instances of oldString
      * @return a String will all instances of oldString replaced by newString
      */
-    public static final String replaceIgnoreCase(String line, String oldString,
+    public static String replaceIgnoreCase(String line, String oldString,
                                                  String newString) {
         if (line == null) {
             return null;
@@ -114,8 +115,9 @@ public class StringUtils {
      *                  performed.
      * @return a String will all instances of oldString replaced by newString
      */
-    public static final String replaceIgnoreCase(String line, String oldString,
-                                                 String newString, int[] count) {
+    public static String replaceIgnoreCase(String line, String oldString,
+            String newString, int[] count)
+    {
         if (line == null) {
             return null;
         }
@@ -148,13 +150,14 @@ public class StringUtils {
      * Replaces all instances of oldString with newString in line.
      * The count Integer is updated with number of replaces.
      *
-     * @param line      the String to search to perform replacements on
-     * @param oldString the String that should be replaced by newString
-     * @param newString the String that will replace all instances of oldString
-     * @return a String will all instances of oldString replaced by newString
+     * @param line the String to search to perform replacements on.
+     * @param oldString the String that should be replaced by newString.
+     * @param newString the String that will replace all instances of oldString.
+     * @return a String will all instances of oldString replaced by newString.
      */
-    public static final String replace(String line, String oldString,
-                                       String newString, int[] count) {
+    public static String replace(String line, String oldString,
+            String newString, int[] count)
+    {
         if (line == null) {
             return null;
         }
@@ -188,7 +191,7 @@ public class StringUtils {
      * @param in the text to be converted.
      * @return the input string with all tags removed.
      */
-    public static final String stripTags(String in) {
+    public static String stripTags(String in) {
         if (in == null) {
             return null;
         }
@@ -201,7 +204,6 @@ public class StringUtils {
         for (; i < len; i++) {
             ch = input[i];
             if (ch > '>') {
-                continue;
             }
             else if (ch == '<') {
                 if (i + 3 < len && input[i + 1] == 'b' && input[i + 2] == 'r' && input[i + 3] == '>') {
@@ -229,13 +231,13 @@ public class StringUtils {
     /**
      * This method takes a string which may contain HTML tags (ie, &lt;b&gt;,
      * &lt;table&gt;, etc) and converts the '&lt'' and '&gt;' characters to
-     * their HTML escape sequences.
+     * their HTML escape sequences. It will also replace LF  with &lt;br&gt;.
      *
      * @param in the text to be converted.
      * @return the input string with the characters '&lt;' and '&gt;' replaced
      *         with their HTML escape sequences.
      */
-    public static final String escapeHTMLTags(String in) {
+    public static String escapeHTMLTags(String in) {
         if (in == null) {
             return null;
         }
@@ -248,7 +250,6 @@ public class StringUtils {
         for (; i < len; i++) {
             ch = input[i];
             if (ch > '>') {
-                continue;
             }
             else if (ch == '<') {
                 if (i > last) {
@@ -264,6 +265,13 @@ public class StringUtils {
                 last = i + 1;
                 out.append(GT_ENCODE);
             }
+            else if (ch == '\n') {
+                if (i > last) {
+                    out.append(input, last, i - last);
+                }
+                last = i + 1;
+                out.append("<br>");
+            }
         }
         if (last == 0) {
             return in;
@@ -277,7 +285,8 @@ public class StringUtils {
     /**
      * Used by the hash method.
      */
-    private static MessageDigest digest = null;
+    private static Map<String, MessageDigest> digests =
+            new ConcurrentHashMap<String, MessageDigest>();
 
     /**
      * Hashes a String using the Md5 algorithm and returns the result as a
@@ -303,24 +312,88 @@ public class StringUtils {
      * @param data the String to compute the hash of.
      * @return a hashed version of the passed-in String
      */
-    public synchronized static final String hash(String data) {
-        if (digest == null) {
-            try {
-                digest = MessageDigest.getInstance("MD5");
-            }
-            catch (NoSuchAlgorithmException nsae) {
-                Log.error("Failed to load the MD5 MessageDigest. " +
-                        "Jive will be unable to function normally.", nsae);
-            }
-        }
-        // Now, compute hash.
+    public static String hash(String data) {
+        return hash(data, "MD5");
+    }
+
+    /**
+     * Hashes a String using the specified algorithm and returns the result as a
+     * String of hexadecimal numbers. This method is synchronized to avoid
+     * excessive MessageDigest object creation. If calling this method becomes
+     * a bottleneck in your code, you may wish to maintain a pool of
+     * MessageDigest objects instead of using this method.
+     * <p/>
+     * A hash is a one-way function -- that is, given an
+     * input, an output is easily computed. However, given the output, the
+     * input is almost impossible to compute. This is useful for passwords
+     * since we can store the hash and a hacker will then have a very hard time
+     * determining the original password.
+     * <p/>
+     * In Jive, every time a user logs in, we simply
+     * take their plain text password, compute the hash, and compare the
+     * generated hash to the stored hash. Since it is almost impossible that
+     * two passwords will generate the same hash, we know if the user gave us
+     * the correct password or not. The only negative to this system is that
+     * password recovery is basically impossible. Therefore, a reset password
+     * method is used instead.
+     *
+     * @param data the String to compute the hash of.
+     * @param algorithm the name of the algorithm requested.
+     * @return a hashed version of the passed-in String
+     */
+    public static String hash(String data, String algorithm) {
         try {
-            digest.update(data.getBytes("utf-8"));
+            return hash(data.getBytes("utf-8"), algorithm);
         }
         catch (UnsupportedEncodingException e) {
             Log.error(e);
         }
-        return encodeHex(digest.digest());
+        return data;
+    }
+
+    /**
+     * Hashes a byte array using the specified algorithm and returns the result as a
+     * String of hexadecimal numbers. This method is synchronized to avoid
+     * excessive MessageDigest object creation. If calling this method becomes
+     * a bottleneck in your code, you may wish to maintain a pool of
+     * MessageDigest objects instead of using this method.
+     * <p/>
+     * A hash is a one-way function -- that is, given an
+     * input, an output is easily computed. However, given the output, the
+     * input is almost impossible to compute. This is useful for passwords
+     * since we can store the hash and a hacker will then have a very hard time
+     * determining the original password.
+     * <p/>
+     * In Jive, every time a user logs in, we simply
+     * take their plain text password, compute the hash, and compare the
+     * generated hash to the stored hash. Since it is almost impossible that
+     * two passwords will generate the same hash, we know if the user gave us
+     * the correct password or not. The only negative to this system is that
+     * password recovery is basically impossible. Therefore, a reset password
+     * method is used instead.
+     *
+     * @param bytes the byte array to compute the hash of.
+     * @param algorithm the name of the algorithm requested.
+     * @return a hashed version of the passed-in String
+     */
+    public static String hash(byte[] bytes, String algorithm) {
+        synchronized (algorithm.intern()) {
+            MessageDigest digest = digests.get(algorithm);
+            if (digest == null) {
+                try {
+                    digest = MessageDigest.getInstance(algorithm);
+                    digests.put(algorithm, digest);
+                }
+                catch (NoSuchAlgorithmException nsae) {
+                    Log.error("Failed to load the " + algorithm + " MessageDigest. " +
+                            "Jive will be unable to function normally.", nsae);
+                    return null;
+                }
+            }
+            // Now, compute hash.
+            digest.update(bytes);
+            return encodeHex(digest.digest());
+        }
     }
 
     /**
@@ -334,7 +407,7 @@ public class StringUtils {
      * @param bytes an array of bytes to convert to a hex-string
      * @return generated hex string
      */
-    public static final String encodeHex(byte[] bytes) {
+    public static String encodeHex(byte[] bytes) {
         StringBuilder buf = new StringBuilder(bytes.length * 2);
         int i;
 
@@ -354,7 +427,7 @@ public class StringUtils {
      * @param hex a hex encoded String to transform into a byte array.
      * @return a byte array representing the hex String[
      */
-    public static final byte[] decodeHex(String hex) {
+    public static byte[] decodeHex(String hex) {
         char[] chars = hex.toCharArray();
         byte[] bytes = new byte[chars.length / 2];
         int byteCount = 0;
@@ -376,7 +449,7 @@ public class StringUtils {
      * @param ch a hexedicmal character (0-f)
      * @return the byte value of the character (0x00-0x0F)
      */
-    private static final byte hexCharToByte(char ch) {
+    private static byte hexCharToByte(char ch) {
         switch (ch) {
             case '0':
                 return 0x00;
@@ -414,16 +487,6 @@ public class StringUtils {
         return 0x00;
     }
 
-    //*********************************************************************
-    //* Base64 - a simple base64 encoder and decoder.
-    //*
-    //*     Copyright (c) 1999, Bob Withers - bwit@pobox.com
-    //*
-    //* This code may be freely used for any purpose, either personal
-    //* or commercial, provided the authors copyright notice remains
-    //* intact.
-    //*********************************************************************
-
     /**
      * Encodes a String as a base64 String.
      *
@@ -433,7 +496,7 @@ public class StringUtils {
     public static String encodeBase64(String data) {
         byte[] bytes = null;
         try {
-            bytes = data.getBytes("ISO-8859-1");
+            bytes = data.getBytes("UTF-8");
         }
         catch (UnsupportedEncodingException uee) {
             Log.error(uee);
@@ -448,38 +511,11 @@ public class StringUtils {
      * @return a base64 encode String.
      */
     public static String encodeBase64(byte[] data) {
-        int c;
-        int len = data.length;
-        StringBuilder ret = new StringBuilder(((len / 3) + 1) * 4);
-        for (int i = 0; i < len; ++i) {
-            c = (data[i] >> 2) & 0x3f;
-            ret.append(cvt.charAt(c));
-            c = (data[i] << 4) & 0x3f;
-            if (++i < len)
-                c |= (data[i] >> 4) & 0x0f;
-
-            ret.append(cvt.charAt(c));
-            if (i < len) {
-                c = (data[i] << 2) & 0x3f;
-                if (++i < len)
-                    c |= (data[i] >> 6) & 0x03;
-
-                ret.append(cvt.charAt(c));
-            }
-            else {
-                ++i;
-                ret.append((char)fillchar);
-            }
-
-            if (i < len) {
-                c = data[i] & 0x3f;
-                ret.append(cvt.charAt(c));
-            }
-            else {
-                ret.append((char)fillchar);
-            }
-        }
-        return ret.toString();
+        // Encode the String. We pass in a flag to specify that line
+        // breaks not be added. This is consistent with our previous base64
+        // implementation. Section 2.1 of 3548 (base64 spec) also specifies
+        // no line breaks by default.
+        return Base64.encodeBytes(data, Base64.DONT_BREAK_LINES);
     }
 
     /**
@@ -488,77 +524,26 @@ public class StringUtils {
      * @param data a base64 encoded String to decode.
      * @return the decoded String.
      */
-    public static String decodeBase64(String data) {
-        byte[] bytes = null;
-        try {
-            bytes = data.getBytes("ISO-8859-1");
-        }
-        catch (UnsupportedEncodingException uee) {
-            Log.error(uee);
-        }
-        return decodeBase64(bytes);
+    public static byte[] decodeBase64(String data) {
+        return Base64.decode(data);
     }
-
-    /**
-     * Decodes a base64 aray of bytes.
-     *
-     * @param data a base64 encode byte array to decode.
-     * @return the decoded String.
-     */
-    public static String decodeBase64(byte[] data) {
-        int c, c1;
-        int len = data.length;
-        StringBuilder ret = new StringBuilder((len * 3) / 4);
-        for (int i = 0; i < len; ++i) {
-            c = cvt.indexOf(data[i]);
-            ++i;
-            c1 = cvt.indexOf(data[i]);
-            c = ((c << 2) | ((c1 >> 4) & 0x3));
-            ret.append((char)c);
-            if (++i < len) {
-                c = data[i];
-                if (fillchar == c)
-                    break;
-
-                c = cvt.indexOf(c);
-                c1 = ((c1 << 4) & 0xf0) | ((c >> 2) & 0xf);
-                ret.append((char)c1);
-            }
-
-            if (++i < len) {
-                c1 = data[i];
-                if (fillchar == c1)
-                    break;
-
-                c1 = cvt.indexOf(c1);
-                c = ((c << 6) & 0xc0) | c1;
-                ret.append((char)c);
-            }
-        }
-        return ret.toString();
-    }
-
-    private static final int fillchar = '=';
-    private static final String cvt = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            + "abcdefghijklmnopqrstuvwxyz"
-            + "0123456789+/";
 
     /**
      * Converts a line of text into an array of lower case words using a
-     * BreakIterator.wordInstance(). <p>
-     * <p/>
+     * BreakIterator.wordInstance().<p>
+     *
      * This method is under the Jive Open Source Software License and was
      * written by Mark Imbriaco.
      *
      * @param text a String of text to convert into an array of words
      * @return text broken up into an array of words.
      */
-    public static final String[] toLowerCaseWordArray(String text) {
+    public static String[] toLowerCaseWordArray(String text) {
         if (text == null || text.length() == 0) {
             return new String[0];
         }
 
-        ArrayList wordList = new ArrayList();
+        List<String> wordList = new ArrayList<String>();
         BreakIterator boundary = BreakIterator.getWordInstance();
         boundary.setText(text);
         int start = 0;
@@ -579,7 +564,7 @@ public class StringUtils {
                 wordList.add(tmp);
             }
         }
-        return (String[])wordList.toArray(new String[wordList.size()]);
+        return wordList.toArray(new String[wordList.size()]);
     }
 
     /**
@@ -611,7 +596,7 @@ public class StringUtils {
      * @param length the desired length of the random String to return.
      * @return a random String of numbers and letters of the specified length.
      */
-    public static final String randomString(int length) {
+    public static String randomString(int length) {
         if (length < 1) {
             return null;
         }
@@ -640,7 +625,7 @@ public class StringUtils {
      * @return a substring of <code>string</code> whose length is less than or
      *         equal to <code>length</code>, and that is chopped at whitespace.
      */
-    public static final String chopAtWord(String string, int length) {
+    public static String chopAtWord(String string, int length) {
         if (string == null || string.length() == 0) {
             return string;
         }
@@ -775,7 +760,7 @@ public class StringUtils {
      * @param string the string to escape.
      * @return the string with appropriate characters escaped.
      */
-    public static final String escapeForSQL(String string) {
+    public static String escapeForSQL(String string) {
         if (string == null) {
             return null;
         }
@@ -821,7 +806,7 @@ public class StringUtils {
      * @param string the string to escape.
      * @return the string with appropriate characters escaped.
      */
-    public static final String escapeForXML(String string) {
+    public static String escapeForXML(String string) {
         if (string == null) {
             return null;
         }
@@ -834,7 +819,6 @@ public class StringUtils {
         for (; i < len; i++) {
             ch = input[i];
             if (ch > '>') {
-                continue;
             }
             else if (ch == '<') {
                 if (i > last) {
@@ -874,7 +858,7 @@ public class StringUtils {
      * @param string the string to unescape.
      * @return the string with appropriate characters unescaped.
      */
-    public static final String unescapeFromXML(String string) {
+    public static String unescapeFromXML(String string) {
         string = replace(string, "&lt;", "<");
         string = replace(string, "&gt;", ">");
         string = replace(string, "&quot;", "\"");
@@ -897,7 +881,7 @@ public class StringUtils {
      * @param length the desired length of the new padded String.
      * @return a new String padded with the required number of 0's.
      */
-    public static final String zeroPadString(String string, int length) {
+    public static String zeroPadString(String string, int length) {
         if (string == null || string.length() > length) {
             return string;
         }
@@ -912,7 +896,115 @@ public class StringUtils {
      *
      * @return a Date encoded as a String.
      */
-    public static final String dateToMillis(Date date) {
+    public static String dateToMillis(Date date) {
         return zeroPadString(Long.toString(date.getTime()), 15);
+    }
+
+    /**
+     * Returns a textual representation for the time that has elapsed.
+     *
+     * @param delta the elapsed time.
+     * @return textual representation for the time that has elapsed.
+     */
+    public static String getElapsedTime(long delta) {
+        if (delta < JiveConstants.MINUTE) {
+            return LocaleUtils.getLocalizedString("global.less-minute");
+        }
+        else if (delta < JiveConstants.HOUR) {
+            long mins = delta / JiveConstants.MINUTE;
+            StringBuilder sb = new StringBuilder();
+            sb.append(mins).append(" ");
+            sb.append((mins==1) ? LocaleUtils.getLocalizedString("global.minute") : LocaleUtils.getLocalizedString("global.minutes"));
+            return sb.toString();
+        }
+        else if (delta < JiveConstants.DAY) {
+            long hours = delta / JiveConstants.HOUR;
+            delta -= hours * JiveConstants.HOUR;
+            long mins = delta / JiveConstants.MINUTE;
+            StringBuilder sb = new StringBuilder();
+            sb.append(hours).append(" ");
+            sb.append((hours == 1) ? LocaleUtils.getLocalizedString("global.hour") : LocaleUtils.getLocalizedString("global.hours"));
+            sb.append(", ");
+            sb.append(mins).append(" ");
+            sb.append((mins == 1) ? LocaleUtils.getLocalizedString("global.minute") : LocaleUtils.getLocalizedString("global.minutes"));
+            return sb.toString();
+        } else {
+            long days = delta / JiveConstants.DAY;
+            delta -= days * JiveConstants.DAY;
+            long hours = delta / JiveConstants.HOUR;
+            delta -= hours * JiveConstants.HOUR;
+            long mins = delta / JiveConstants.MINUTE;
+            StringBuilder sb = new StringBuilder();
+            sb.append(days).append(" ");
+            sb.append((days == 1) ? LocaleUtils.getLocalizedString("global.day") : LocaleUtils.getLocalizedString("global.days"));
+            sb.append(", ");
+            sb.append(hours).append(" ");
+            sb.append((hours == 1) ? LocaleUtils.getLocalizedString("global.hour") : LocaleUtils.getLocalizedString("global.hours"));
+            sb.append(", ");
+            sb.append(mins).append(" ");
+            sb.append((mins == 1) ? LocaleUtils.getLocalizedString("global.minute") : LocaleUtils.getLocalizedString("global.minutes"));
+            return sb.toString();
+        }
+    }
+    /**
+     * Returns a collection of Strings as a comma-delimitted list of strings.
+     *
+     * @return a String representing the Collection.
+     */
+    public static String collectionToString(Collection<String> collection) {
+        if (collection == null || collection.isEmpty()) {
+            return "";
+        }
+        StringBuilder buf = new StringBuilder();
+        String delim = "";
+        for (String element : collection) {
+            buf.append(delim);
+            buf.append(element);
+            delim = ",";
+        }
+        return buf.toString();
+    }
+
+    /**
+     * Returns a comma-delimitted list of Strings as a Collection.
+     *
+     * @return a Collection representing the String.
+     */
+    public static Collection<String> stringToCollection(String string) {
+        if (string == null || string.trim().length() == 0) {
+            return Collections.emptyList();
+        }
+        Collection<String> collection = new ArrayList<String>();
+        StringTokenizer tokens = new StringTokenizer(string, ",");
+        while (tokens.hasMoreTokens()) {
+            collection.add(tokens.nextToken().trim());
+        }
+        return collection;
+    }
+
+    /**
+     * Abbreviates a string to a specified length and then adds an ellipsis
+     * if the input is greater than the maxWidth. Example input:
+     * <pre>
+     *      user1@jivesoftware.com/home
+     * </pre>
+     * and a maximum length of 20 characters, the abbreviate method will return:
+     * <pre>
+     *      user1@jivesoftware.c...
+     * </pre>
+     * @param str the String to abbreviate.
+     * @param maxWidth the maximum size of the string, minus the ellipsis.
+     * @return the abbreviated String, or <tt>null</tt> if the string was <tt>null</tt>.
+     */
+    public static String abbreviate(String str, int maxWidth) {
+        if (null == str) {
+            return null;
+        }
+
+        if (str.length() <= maxWidth) {
+            return str;
+        }
+        
+        return str.substring(0, maxWidth) + "...";
     }
 }

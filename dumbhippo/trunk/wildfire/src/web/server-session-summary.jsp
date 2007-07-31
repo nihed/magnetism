@@ -1,6 +1,6 @@
 <%--
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -8,13 +8,11 @@
   - a copy of which is included in this distribution.
 --%>
 
-<%@ page import="org.jivesoftware.util.*,
-                 java.util.*,
-                 org.jivesoftware.wildfire.*,
-                 java.util.Date,
-                 org.jivesoftware.admin.*,
-                 org.jivesoftware.wildfire.server.IncomingServerSession,
-                 org.jivesoftware.wildfire.server.OutgoingServerSession"
+<%@ page import="org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.openfire.SessionManager,
+                 org.jivesoftware.openfire.session.OutgoingServerSession,
+                 org.jivesoftware.openfire.session.Session,
+                 java.util.*"
     errorPage="error.jsp"
 %>
 
@@ -95,6 +93,7 @@
 
 <%  } %>
 
+<p>
 <fmt:message key="server.session.summary.active" />: <b><%= hostnames.size() %></b>
 
 <%  if (numPages > 1) { %>
@@ -113,6 +112,7 @@
     <%  } %>
 
 </select>
+</p>
 
 <%  if (numPages > 1) { %>
 
@@ -146,7 +146,7 @@
     <tr>
         <th>&nbsp;</th>
         <th nowrap><fmt:message key="server.session.label.host" /></th>
-        <th nowrap colspan="2"><fmt:message key="server.session.label.connection" /></th>
+        <th nowrap colspan="3"><fmt:message key="server.session.label.connection" /></th>
         <th nowrap><fmt:message key="server.session.label.creation" /></th>
         <th nowrap><fmt:message key="server.session.label.last_active" /></th>
         <th nowrap><fmt:message key="server.session.label.close_connect" /></th>
@@ -166,7 +166,7 @@
 
     <%  } %>
 
-    <%  int count = 0;
+    <% int count = 0;
         hostnames = new ArrayList<String>(hostnames).subList(start, maxIndex);
         for (String host : hostnames) {
             count++;

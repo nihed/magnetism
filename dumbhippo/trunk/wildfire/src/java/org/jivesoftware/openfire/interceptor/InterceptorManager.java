@@ -3,19 +3,23 @@
  * $Revision: 3142 $
  * $Date: 2005-12-01 13:39:33 -0300 (Thu, 01 Dec 2005) $
  *
- * Copyright (C) 2005 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.interceptor;
+package org.jivesoftware.openfire.interceptor;
 
-import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.session.Session;
 import org.xmpp.packet.Packet;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -38,6 +42,7 @@ public class InterceptorManager {
 
     private static InterceptorManager instance = new InterceptorManager();
 
+    private XMPPServer server = XMPPServer.getInstance();
     private List<PacketInterceptor> globalInterceptors =
             new CopyOnWriteArrayList<PacketInterceptor>();
     private Map<String, List<PacketInterceptor>> usersInterceptors =
@@ -230,14 +235,18 @@ public class InterceptorManager {
                         throw e;
                     }
                 }
-                catch (Exception e) {
-                    Log.error("Error in interceptor", e);
+                catch (Throwable e) {
+                    Log.error("Error in interceptor: " + interceptor, e);
                 }
             }
         }
         // Invoke the interceptors that are related to the address of the session
+        if (usersInterceptors.isEmpty()) {
+            // Do nothing
+            return;
+        }
         String username = session.getAddress().getNode();
-        if (username != null) {
+        if (username != null && server.isLocal(session.getAddress())) {
             Collection<PacketInterceptor> userInterceptors = usersInterceptors.get(username);
             if (userInterceptors != null && !userInterceptors.isEmpty()) {
                 for (PacketInterceptor interceptor : userInterceptors) {
@@ -253,8 +262,8 @@ public class InterceptorManager {
                             throw e;
                         }
                     }
-                    catch (Exception e) {
-                        Log.error("Error in interceptor", e);
+                    catch (Throwable e) {
+                        Log.error("Error in interceptor: " + interceptor, e);
                     }
                 }
             }

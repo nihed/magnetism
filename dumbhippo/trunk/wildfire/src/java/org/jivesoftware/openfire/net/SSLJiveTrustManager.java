@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.net;
+package org.jivesoftware.openfire.net;
 
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;

@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.group;
+package org.jivesoftware.openfire.group;
 
 /**
  * Thrown when attempting to create a group that already exists.

@@ -3,27 +3,26 @@
  * $Revision: 3170 $
  * $Date: 2005-12-07 14:00:58 -0300 (Wed, 07 Dec 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire;
+package org.jivesoftware.openfire;
 
-import org.jivesoftware.wildfire.audit.AuditStreamIDFactory;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.handler.PresenceUpdateHandler;
-import org.jivesoftware.wildfire.server.IncomingServerSession;
-import org.jivesoftware.wildfire.server.OutgoingServerSession;
-import org.jivesoftware.wildfire.server.OutgoingSessionPromise;
-import org.jivesoftware.wildfire.spi.BasicStreamIDFactory;
-import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.component.ComponentSession;
-import org.jivesoftware.wildfire.component.InternalComponentManager;
-import org.jivesoftware.wildfire.event.SessionEventDispatcher;
+import org.jivesoftware.openfire.audit.AuditStreamIDFactory;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.component.InternalComponentManager;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.event.SessionEventDispatcher;
+import org.jivesoftware.openfire.http.HttpSession;
+import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
+import org.jivesoftware.openfire.server.OutgoingSessionPromise;
+import org.jivesoftware.openfire.session.*;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
@@ -32,9 +31,12 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Manages the sessions associated with an account. The information
@@ -45,20 +47,29 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class SessionManager extends BasicModule {
 
-    private int sessionCount = 0;
     public static final int NEVER_KICK = -1;
 
-    private PresenceUpdateHandler presenceHandler;
     private PacketRouter router;
     private String serverName;
     private JID serverAddress;
     private UserManager userManager;
     private int conflictLimit;
 
+    /**
+     * Counter of user connections. A connection is counted just after it was created and not
+     * after the user became available.
+     */
+    private final AtomicInteger connectionsCounter = new AtomicInteger(0);
+    /**
+     * Counter of non-anonymous user sessions.
+     */
+    private final AtomicInteger userSessionsCounter = new AtomicInteger(0);
+
     private ClientSessionListener clientSessionListener = new ClientSessionListener();
     private ComponentSessionListener componentSessionListener = new ComponentSessionListener();
     private IncomingServerSessionListener incomingServerListener = new IncomingServerSessionListener();
     private OutgoingServerSessionListener outgoingServerListener = new OutgoingServerSessionListener();
+    private ConnectionMultiplexerSessionListener multiplexerSessionListener = new ConnectionMultiplexerSessionListener();
 
     private Set<SessionManagerListener> listeners;
      
@@ -89,6 +100,16 @@ public class SessionManager extends BasicModule {
     private List<ComponentSession> componentsSessions = new CopyOnWriteArrayList<ComponentSession>();
 
     /**
+     * Map of connection multiplexer sessions grouped by connection managers. Each connection
+     * manager may have many connections to the server (i.e. connection pool). All connections
+     * originated from the same connection manager are grouped as a single entry in the map.
+     * Once all connections have been closed users that were logged using the connection manager
+     * will become unavailable.
+     */
+    private Map<String, List<ConnectionMultiplexerSession>> connnectionManagerSessions =
+            new ConcurrentHashMap<String, List<ConnectionMultiplexerSession>>();
+
+    /**
      * The sessions contained in this Map are server sessions originated by a remote server. These
      * sessions can only receive packets from the remote server but are not capable of sending
      * packets to the remote server. Sessions will be added to this collecion only after they were
@@ -96,7 +117,8 @@ public class SessionManager extends BasicModule {
      * list of IncomingServerSession that will keep each session created by a remote server to
      * this server.
      */
-    private Map<String, List<IncomingServerSession>> incomingServerSessions = new ConcurrentHashMap<String, List<IncomingServerSession>>();
+    private final Map<String, List<IncomingServerSession>> incomingServerSessions =
+            new ConcurrentHashMap<String, List<IncomingServerSession>>();
 
     /**
      * The sessions contained in this Map are server sessions originated from this server to remote
@@ -142,23 +164,132 @@ public class SessionManager extends BasicModule {
         else {
             streamIDFactory = new BasicStreamIDFactory();
         }
+        conflictLimit = JiveGlobals.getIntProperty("xmpp.session.conflict-limit", 0);
+    }
 
-        String conflictLimitProp = JiveGlobals.getProperty("xmpp.session.conflict-limit");
-        if (conflictLimitProp == null) {
-            conflictLimit = 0;
-            JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
+    /**
+     * Returns the session originated from the specified address. If the address contains
+     * a resource then the exact session is going to be looked for and if none is found then
+     * <tt>null</tt> is going to be returned. On the other hand, if the address is just a domain
+     * then any session originated from the connection manager is going to be returned and if
+     * the connection manager has no sessions then <tt>null</tt> is going to be returned.
+     *
+     * @param address the address of the connection manager (no resource included) or a specific
+     *        session of the connection manager (resource included).
+     * @return the session originated from the specified address.
+     */
+    public ConnectionMultiplexerSession getConnectionMultiplexerSession(JID address) {
+        List<ConnectionMultiplexerSession> sessions =
+                connnectionManagerSessions.get(address.getDomain());
+        if (sessions == null || sessions.isEmpty()) {
+            return null;
+        }
+        if (address.getResource() != null) {
+            // Look for the exact session
+            for (ConnectionMultiplexerSession session : sessions) {
+                if (session.getAddress().equals(address)) {
+                    return session;
+                }
+            }
+            return null;
         }
         else {
-            try {
-                conflictLimit = Integer.parseInt(conflictLimitProp);
-            }
-            catch (NumberFormatException e) {
-                conflictLimit = 0;
-                JiveGlobals.setProperty("xmpp.session.conflict-limit", Integer.toString(conflictLimit));
+            // Look for any session of the connection manager
+            return sessions.get(0);
+        }
+    }
+
+    /**
+     * Returns all sessions originated from connection managers.
+     *
+     * @return all sessions originated from connection managers.
+     */
+    public List<ConnectionMultiplexerSession> getConnectionMultiplexerSessions() {
+        if (connnectionManagerSessions.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<ConnectionMultiplexerSession> answer = new ArrayList<ConnectionMultiplexerSession>();
+        for (List<ConnectionMultiplexerSession> sessions : connnectionManagerSessions.values()) {
+            answer.addAll(sessions);
+        }
+        return answer;
+    }
+
+    /**
+     * Returns a collection with all the sessions originated from the connection manager
+     * whose domain matches the specified domain. If there is no connection manager with
+     * the specified domain then an empty list is going to be returned.
+     *
+     * @param domain the domain of the connection manager.
+     * @return a collection with all the sessions originated from the connection manager
+     *         whose domain matches the specified domain.
+     */
+    public List<ConnectionMultiplexerSession> getConnectionMultiplexerSessions(String domain) {
+        List<ConnectionMultiplexerSession> sessions = connnectionManagerSessions.get(domain);
+        if (sessions == null || sessions.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return new ArrayList<ConnectionMultiplexerSession>(sessions);
+    }
+
+    /**
+     * Returns the IP address of the connection manager whose domain matches the
+     * specified domain.
+     *
+     * @param domain the domain of the connection manager.
+     * @return the IP address of the connection manager.
+     */
+    public InetAddress getConnectionMultiplexerInetAddress(String domain) {
+        List<ConnectionMultiplexerSession> sessions = connnectionManagerSessions.get(domain);
+        if (sessions == null || sessions.isEmpty()) {
+            return null;
+        }
+        try {
+            return sessions.get(0).getConnection().getInetAddress();
+        } catch (UnknownHostException e) {
+            Log.error(e);
+            return null;
+        }
+    }
+
+    /**
+     * Creates a new <tt>ConnectionMultiplexerSession</tt>.
+     *
+     * @param conn the connection to create the session from.
+     * @param address the JID (may include a resource) of the connection manager's session. 
+     * @return a newly created session.
+     */
+    public ConnectionMultiplexerSession createMultiplexerSession(Connection conn, JID address) {
+        if (serverName == null) {
+            throw new IllegalStateException("Server not initialized");
+        }
+        StreamID id = nextStreamID();
+        ConnectionMultiplexerSession session = new ConnectionMultiplexerSession(serverName, conn, id);
+        conn.init(session);
+        // Register to receive close notification on this session so we can
+        // figure out when users that were using this connection manager may become unavailable
+        conn.registerCloseListener(multiplexerSessionListener, session);
+
+        // Add to connection multiplexer session.
+        List<ConnectionMultiplexerSession> sessions =
+                connnectionManagerSessions.get(address.getDomain());
+        if (sessions == null) {
+            synchronized (address.getDomain().intern()) {
+                sessions = connnectionManagerSessions.get(address.getDomain());
+                if (sessions == null) {
+                    sessions = new CopyOnWriteArrayList<ConnectionMultiplexerSession>();
+                    connnectionManagerSessions.put(address.getDomain(), sessions);
+                    // Notify ConnectionMultiplexerManager that a new connection manager
+                    // is available
+                    ConnectionMultiplexerManager.getInstance()
+                            .multiplexerAvailable(address.getDomain());
+                }
             }
         }
 
         listeners = new HashSet<SessionManagerListener>();	
+        sessions.add(session);
+        return session;
     }
 
     /**
@@ -167,12 +298,12 @@ public class SessionManager extends BasicModule {
      */
     private class SessionMap {
         private Map<String,ClientSession> resources = new ConcurrentHashMap<String,ClientSession>();
-        private LinkedList<String> priorityList = new LinkedList<String>();
+        private final LinkedList<String> priorityList = new LinkedList<String>();
 
         /**
          * Add a session to the manager.
          *
-         * @param session
+         * @param session the session to add.
          */
         void addSession(ClientSession session) {
             String resource = session.getAddress().getResource();
@@ -225,14 +356,16 @@ public class SessionManager extends BasicModule {
         /**
          * Remove a session from the manager.
          *
-         * @param session The session to remove
+         * @param session The session to remove.
+         * @return true if the session was present in the map and was removed.
          */
-        void removeSession(Session session) {
+        boolean removeSession(Session session) {
             String resource = session.getAddress().getResource();
-            resources.remove(resource);
+            boolean removed = resources.remove(resource) != null;
             synchronized (priorityList) {
                 priorityList.remove(resource);
             }
+            return removed;
         }
 
         /**
@@ -262,7 +395,8 @@ public class SessionManager extends BasicModule {
          *
          * @param filterAvailable flag that indicates if only available sessions should be
          *        considered.
-         * @return The default session for the user.
+         * @return the default session for the user or null if no session with presence priority
+         * greater than 0 was found.
          */
         ClientSession getDefaultSession(boolean filterAvailable) {
             if (priorityList.isEmpty()) {
@@ -270,19 +404,54 @@ public class SessionManager extends BasicModule {
             }
 
             if (!filterAvailable) {
-                return resources.get(priorityList.getFirst());
+                ClientSession session = resources.get(priorityList.getFirst());
+                // Only consider sessions with positive presence priorities 
+                if (session.getPresence().getPriority() >= 0) {
+                    return session;
+                }
+                return null;
             }
             else {
                 synchronized (priorityList) {
-                    for (int i=0; i < priorityList.size(); i++) {
-                        ClientSession s = resources.get(priorityList.get(i));
+                    for (String resource : priorityList) {
+                        ClientSession s = resources.get(resource);
                         if (s != null && s.getPresence().isAvailable()) {
-                            return s;
+                            // Only consider sessions with positive presence priorities
+                            if (s.getPresence().getPriority() >= 0) {
+                                return s;
+                            }
                         }
                     }
                 }
                 return null;
             }
+        }
+
+        /**
+         * Returns client sessions of the user that have the same highest priority.
+         *
+         * @return client sessions of the user that have the same highest priority.
+         */
+        List<ClientSession> getHighestPrioritySessions() {
+            if (priorityList.isEmpty()) {
+                return Collections.emptyList();
+            }
+
+            List<ClientSession> answer = new ArrayList<ClientSession>();
+            int highest = -1;
+            synchronized (priorityList) {
+                for (String resource : priorityList) {
+                    ClientSession s = resources.get(resource);
+                    if (s != null && s.getPresence().isAvailable()) {
+                        // Only consider sessions with positive presence priorities
+                        if (s.getPresence().getPriority() >= 0 && s.getPresence().getPriority() >= highest) {
+                            highest = s.getPresence().getPriority();
+                            answer.add(s);
+                        }
+                    }
+                }
+            }
+            return answer;
         }
 
         /**
@@ -295,9 +464,11 @@ public class SessionManager extends BasicModule {
         }
 
         /**
-         * Broadcast to all resources for the given user
+         * Broadcast to all resources for the given user.
          *
-         * @param packet
+         * @param packet the packet to broadcast.
+         * @throws UnauthorizedException if not allowed to send the packet.
+         * @throws PacketException if an exception occurs.
          */
         private void broadcast(Packet packet) throws UnauthorizedException, PacketException {
             for (Session session : resources.values()) {
@@ -363,17 +534,27 @@ public class SessionManager extends BasicModule {
     }
 
     /**
-     * Creates a new <tt>ClientSession</tt>.
+     * Creates a new <tt>ClientSession</tt>. The new Client session will have a newly created
+     * stream ID.
      *
      * @param conn the connection to create the session from.
      * @return a newly created session.
-     * @throws UnauthorizedException
      */
-    public Session createClientSession(Connection conn) throws UnauthorizedException {
+    public ClientSession createClientSession(Connection conn) {
+        return createClientSession(conn, nextStreamID());
+    }
+
+    /**
+     * Creates a new <tt>ClientSession</tt> with the specified streamID.
+     *
+     * @param conn the connection to create the session from.
+     * @param id the streamID to use for the new session.
+     * @return a newly created session.
+     */
+    public ClientSession createClientSession(Connection conn, StreamID id) {
         if (serverName == null) {
-            throw new UnauthorizedException("Server not initialized");
+            throw new IllegalStateException("Server not initialized");
         }
-        StreamID id = nextStreamID();
         ClientSession session = new ClientSession(serverName, conn, id);
         conn.init(session);
         // Register to receive close notification on this session so we can
@@ -382,7 +563,25 @@ public class SessionManager extends BasicModule {
         conn.registerCloseListener(clientSessionListener, session);
 
         // Add to pre-authenticated sessions.
-        preAuthenticatedSessions.put(session.getAddress().toString(), session);
+        preAuthenticatedSessions.put(session.getAddress().getResource(), session);
+        // Increment the counter of user sessions
+        connectionsCounter.incrementAndGet();
+        return session;
+    }
+
+    public HttpSession createClientHttpSession(long rid, InetAddress address, StreamID id)
+            throws UnauthorizedException
+    {
+        if (serverName == null) {
+            throw new UnauthorizedException("Server not initialized");
+        }
+        PacketDeliverer backupDeliverer = XMPPServer.getInstance().getPacketDeliverer();
+        HttpSession session = new HttpSession(backupDeliverer, serverName, address, id, rid);
+        Connection conn = session.getConnection();
+        conn.init(session);
+        conn.registerCloseListener(clientSessionListener, session);
+        preAuthenticatedSessions.put(session.getAddress().getResource(), session);
+        connectionsCounter.incrementAndGet();
         return session;
     }
 
@@ -491,6 +690,10 @@ public class SessionManager extends BasicModule {
             List<IncomingServerSession> sessions = incomingServerSessions.get(hostname);
             if (sessions != null) {
                 sessions.remove(session);
+                if (sessions.isEmpty()) {
+                    // Remove key since there are no more sessions associated
+                    incomingServerSessions.remove(hostname);
+                }
             }
         }
     }
@@ -523,31 +726,30 @@ public class SessionManager extends BasicModule {
     }
 
     /**
-     * Add a new session to be managed.
+     * Add a new session to be managed. The session has been authenticated by
+     * a non-anonymous user.
+     *
+     * @param session the session that was authenticated.
      */
-    public boolean addSession(ClientSession session) {
-        boolean success = false;
-        String username = session.getAddress().getNode().toLowerCase();
-        SessionMap resources = null;
+    public void addSession(ClientSession session) {
+        String username = session.getAddress().getNode();
+        SessionMap resources;
 
-        synchronized(username.intern()) {
+        synchronized (username.intern()) {
             resources = sessions.get(username);
             if (resources == null) {
                 resources = new SessionMap();
                 sessions.put(username, resources);
             }
             resources.addSession(session);
-            // Remove the pre-Authenticated session but remember to use the temporary JID as the key
-            preAuthenticatedSessions.remove(new JID(null, session.getAddress().getDomain(),
-                    session.getStreamID().toString()).toString());
-            
-            // Fire session created event.
-            SessionEventDispatcher.dispatchEvent(session,
-                    SessionEventDispatcher.EventType.session_created);
-            
-            success = true;
         }
-        return success;
+        // Remove the pre-Authenticated session but remember to use the temporary ID as the key
+        preAuthenticatedSessions.remove(session.getStreamID().toString());
+        // Increment counter of authenticated sessions
+        userSessionsCounter.incrementAndGet();
+        // Fire session created event.
+        SessionEventDispatcher
+                .dispatchEvent(session, SessionEventDispatcher.EventType.session_created);
     }
 
     /**
@@ -566,23 +768,25 @@ public class SessionManager extends BasicModule {
         }
         else {
             // A non-anonymous session is now available
-            Session defaultSession = null;
+            Session defaultSession;
             try {
                 SessionMap sessionMap = sessions.get(session.getUsername());
                 if (sessionMap == null) {
                     Log.warn("No SessionMap found for session" + "\n" + session);
+                    return;
                 }
                 // Update the order of the sessions based on the new presence of this session
                 sessionMap.sessionAvailable(session);
                 defaultSession = sessionMap.getDefaultSession(true);
-                JID node = new JID(defaultSession.getAddress().getNode(),
-                        defaultSession.getAddress().getDomain(), null);
-                // Add route to default session (used when no resource is specified)
-                routingTable.addRoute(node, defaultSession);
+                if (defaultSession != null) {
+                    // Add route to default session (used when no resource is specified)
+                    JID node = new JID(session.getAddress().getNode(), session.getAddress().getDomain(), null);
+                    routingTable.addRoute(node, defaultSession);
+                }
                 // Add route to the new session
                 routingTable.addRoute(session.getAddress(), session);
                 // Broadcast presence between the user's resources
-                broadcastPresenceToOtherResource(session);
+                broadcastPresenceOfOtherResource(session);
                  
                 notifyClientSessionAvailable(session);
             }
@@ -593,15 +797,13 @@ public class SessionManager extends BasicModule {
     }
 
     /**
-     * Broadcast initial presence from the user's new available resource to any of the user's 
-     * existing available resources (if any).
+     * Sends the presences of other connected resources to the resource that just connected.
      * 
-     * @param session the session that received the new presence and therefore will not receive 
-     *        the notification.
+     * @param session the newly created session.
+     * @throws UserNotFoundException if the an error occurs sending presence to a session.
      */
-    private void broadcastPresenceToOtherResource(ClientSession session)
-            throws UserNotFoundException {
-        Presence presence = null;
+    private void broadcastPresenceOfOtherResource(ClientSession session) throws UserNotFoundException {
+        Presence presence;
         Collection<ClientSession> availableSession;
         SessionMap sessionMap = sessions.get(session.getUsername());
         if (sessionMap != null) {
@@ -610,14 +812,30 @@ public class SessionManager extends BasicModule {
                 if (userSession != session) {
                     // Send the presence of an existing session to the session that has just changed
                     // the presence
-                    if (session.getPresence().isAvailable()) {
-                        presence = userSession.getPresence().createCopy();
-                        presence.setTo(session.getAddress());
-                        session.process(presence);
-                    }
-                    // Send the presence of the session whose presence has changed to this other
-                    // user's session
-                    presence = session.getPresence().createCopy();
+                    presence = userSession.getPresence().createCopy();
+                    presence.setTo(session.getAddress());
+                    session.process(presence);
+                }
+            }
+        }
+    }
+
+    /**
+     * Broadcasts presence updates from the originating user's resource to any of the user's
+     * existing available resources (if any).
+     *
+     * @param originatingResource the full JID of the session that sent the presence update.
+     * @param presence the presence.
+     */
+    public void broadcastPresenceToOtherResources(JID originatingResource, Presence presence) {
+        Collection<ClientSession> availableSession;
+        SessionMap sessionMap = sessions.get(originatingResource.getNode());
+        if (sessionMap != null) {
+            availableSession = new ArrayList<ClientSession>(sessionMap.getAvailableSessions());
+            for (ClientSession userSession : availableSession) {
+                if (userSession.getAddress() != originatingResource) {
+                    // Send the presence of the session whose presence has changed to
+                    // this other user's session
                     presence.setTo(userSession.getAddress());
                     userSession.process(presence);
                 }
@@ -658,19 +876,22 @@ public class SessionManager extends BasicModule {
                     // Remove the route for the session's BARE address
                     routingTable.removeRoute(new JID(session.getAddress().getNode(),
                             session.getAddress().getDomain(), ""));
-                    // Broadcast presence between the user's resources
-                    broadcastPresenceToOtherResource(session);
                 }
                 else {
                     // Update the order of the sessions based on the new presence of this session
                     sessionMap.sessionUnavailable(session);
                     // Update the route for the session's BARE address
                     Session defaultSession = sessionMap.getDefaultSession(true);
-                    routingTable.addRoute(new JID(defaultSession.getAddress().getNode(),
-                            defaultSession.getAddress().getDomain(), ""),
-                            defaultSession);
-                    // Broadcast presence between the user's resources
-                    broadcastPresenceToOtherResource(session);
+                    JID jid =
+                            new JID(session.getAddress().getNode(), session.getAddress().getDomain(), "");
+                    if (defaultSession != null) {
+                        // Set the route to the bare JID to the session with highest priority
+                        routingTable.addRoute(jid, defaultSession);
+                    }
+                    else {
+                        // All sessions have a negative priority presence so delete the route to the bare JID
+                        routingTable.removeRoute(jid);
+                    }
                 }
                  
                 notifyClientSessionUnavailable(session);
@@ -688,24 +909,45 @@ public class SessionManager extends BasicModule {
      * @param priority The new priority for the session
      */
     public void changePriority(JID sender, int priority) {
-        if (sender.getNode() == null) {
-                // Do nothing if the session belongs to an anonymous user
+        if (sender.getNode() == null || !userManager.isRegisteredUser(sender.getNode())) {
+            // Do nothing if the session belongs to an anonymous user
             return;
         }
-        String username = sender.getNode().toLowerCase();
+        Session defaultSession;
+        String username = sender.getNode();
+        SessionMap resources = sessions.get(username);
+        if (resources == null) {
+            return;
+        }
         synchronized (username.intern()) {
-            SessionMap resources = sessions.get(username);
-            if (resources == null) {
-                return;
-            }
             resources.changePriority(sender, priority);
 
             // Get the session with highest priority
-            Session defaultSession = resources.getDefaultSession(true);
-            // Update the route to the bareJID with the session with highest priority
-            routingTable.addRoute(new JID(defaultSession.getAddress().getNode(),
-                    defaultSession.getAddress().getDomain(), ""),
-                    defaultSession);
+            defaultSession = resources.getDefaultSession(true);
+        }
+        // Update the route to the bareJID with the session with highest priority
+        JID defaultAddress = new JID(sender.getNode(), sender.getDomain(), "");
+        // Update the route to the bare JID
+        if (defaultSession != null) {
+            boolean hadDefault = routingTable.getRoute(defaultAddress) != null;
+            // Set the route to the bare JID to the session with highest priority
+            routingTable.addRoute(defaultAddress, defaultSession);
+            // Check if we need to deliver offline messages
+            if (!hadDefault) {
+                // User sessions had negative presence before this change so deliver messages
+                ClientSession session = resources.getSession(sender.getResource());
+                if (session != null && session.canFloodOfflineMessages()) {
+                    OfflineMessageStore messageStore = XMPPServer.getInstance().getOfflineMessageStore();
+                    Collection<OfflineMessage> messages = messageStore.getMessages(username, true);
+                    for (Message message : messages) {
+                        session.process(message);
+                    }
+                }
+            }
+        }
+        else {
+            // All sessions have a negative priority presence so delete the route to the bare JID
+            routingTable.removeRoute(defaultAddress);
         }
     }
 
@@ -719,7 +961,7 @@ public class SessionManager extends BasicModule {
      * @param recipient The recipient ID to deliver packets to
      * @return The XMPPAddress best suited to use for delivery to the recipient
      */
-    public Session getBestRoute(JID recipient) {
+    public ClientSession getBestRoute(JID recipient) {
         // Return null if the JID belongs to a foreign server
         if (serverName == null || !serverName.equals(recipient.getDomain())) {
              return null;
@@ -727,25 +969,24 @@ public class SessionManager extends BasicModule {
         ClientSession session = null;
         String resource = recipient.getResource();
         String username = recipient.getNode();
-        if (username == null || "".equals(username)) {
-            if (resource != null) {
-                session = anonymousSessions.get(resource);
-                if (session == null){
-                    session = getSession(recipient);
-                }
+        if (resource != null && (username == null || !userManager.isRegisteredUser(username))) {
+            session = anonymousSessions.get(resource);
+            if (session == null){
+                session = getSession(recipient);
             }
         }
         else {
-            username = username.toLowerCase();
-            synchronized (username.intern()) {
-                SessionMap sessionMap = sessions.get(username);
-                if (sessionMap != null) {
-                    if (resource == null) {
+            SessionMap sessionMap = sessions.get(username);
+            if (sessionMap != null) {
+                if (resource == null) {
+                    synchronized (username.intern()) {
                         session = sessionMap.getDefaultSession(false);
                     }
-                    else {
-                        session = sessionMap.getSession(resource);
-                        if (session == null) {
+                }
+                else {
+                    session = sessionMap.getSession(resource);
+                    if (session == null) {
+                        synchronized (username.intern()) {
                             session = sessionMap.getDefaultSession(false);
                         }
                     }
@@ -761,27 +1002,30 @@ public class SessionManager extends BasicModule {
         return session;
     }
 
+    public boolean isAnonymousRoute(String username) {
+        // JID's node and resource are the same for anonymous sessions
+        return anonymousSessions.containsKey(username);
+    }
+
     public boolean isActiveRoute(String username, String resource) {
         boolean hasRoute = false;
 
-        if (username == null || "".equals(username)) {
-            if (resource != null) {
-                hasRoute = anonymousSessions.containsKey(resource);
-            }
+        // Check if there is an anonymous session
+        if (resource != null && resource.equals(username) &&
+                anonymousSessions.containsKey(resource)) {
+            hasRoute = true;
         }
         else {
-            username = username.toLowerCase();
+            // Check if there is a session for a registered user
             Session session = null;
-            synchronized (username.intern()) {
-                SessionMap sessionMap = sessions.get(username);
-                if (sessionMap != null) {
-                    if (resource == null) {
-                        hasRoute = !sessionMap.isEmpty();
-                    }
-                    else {
-                        if (sessionMap.hasSession(resource)) {
-                            session = sessionMap.getSession(resource);
-                        }
+            SessionMap sessionMap = sessions.get(username);
+            if (sessionMap != null) {
+                if (resource == null) {
+                    hasRoute = !sessionMap.isEmpty();
+                }
+                else {
+                    if (sessionMap.hasSession(resource)) {
+                        session = sessionMap.getSession(resource);
                     }
                 }
             }
@@ -807,7 +1051,7 @@ public class SessionManager extends BasicModule {
         if (from == null) {
             return null;
         }
-        return getSession(from.toString(), from.getNode(), from.getDomain(), from.getResource());
+        return getSession(from.getNode(), from.getDomain(), from.getResource());
     }
 
     /**
@@ -827,64 +1071,38 @@ public class SessionManager extends BasicModule {
             return null;
         }
 
-        // Build a JID represention based on the given JID data
-        StringBuilder buf = new StringBuilder(40);
-        if (username != null) {
-            buf.append(username).append("@");
-        }
-        buf.append(domain);
-        if (resource != null) {
-            buf.append("/").append(resource);
-        }
-        return getSession(buf.toString(), username, domain, resource);
-    }
-
-    /**
-     * Returns the session responsible for this JID data. The returned Session may have never sent
-     * an available presence (thus not have a route) or could be a Session that hasn't
-     * authenticated yet (i.e. preAuthenticatedSessions).
-     *
-     * @param jid the full representation of the JID.
-     * @param username the username of the JID.
-     * @param domain the username of the JID.
-     * @param resource the username of the JID.
-     * @return the <code>Session</code> associated with the JID data.
-     */
-    private ClientSession getSession(String jid, String username, String domain, String resource) {
-        // Return null if the JID's data belongs to a foreign server. If the server is
-        // shutting down then serverName will be null so answer null too in this case.
-        if (serverName == null || !serverName.equals(domain)) {
-            return null;
-        }
-
         ClientSession session = null;
         // Initially Check preAuthenticated Sessions
-        session = preAuthenticatedSessions.get(jid);
-        if(session != null){
-            return session;
+        if (resource != null) {
+            session = preAuthenticatedSessions.get(resource);
+            if (session != null) {
+                return session;
+            }
         }
 
-        if (resource == null) {
+        if (resource == null || username == null) {
             return null;
         }
-        if (username == null || "".equals(username)) {
-            session = anonymousSessions.get(resource);
+
+        SessionMap sessionMap = sessions.get(username);
+        if (sessionMap != null) {
+            session = sessionMap.getSession(resource);
         }
-        else {
-            username = username.toLowerCase();
-            synchronized (username.intern()) {
-                SessionMap sessionMap = sessions.get(username);
-                if (sessionMap != null) {
-                    session = sessionMap.getSession(resource);
-                }
-            }
+        else if (!userManager.isRegisteredUser(username)) {
+            session = anonymousSessions.get(resource);
         }
         return session;
     }
 
+    /**
+     * Returns a list that contains all authenticated client sessions connected to the server.
+     * The list contains sessions of anonymous and non-anonymous users.
+     *
+     * @return a list that contains all client sessions connected to the server.
+     */
     public Collection<ClientSession> getSessions() {
         List<ClientSession> allSessions = new ArrayList<ClientSession>();
-        copyUserSessions(allSessions);
+        copyAllUserSessions(allSessions);
         copyAnonSessions(allSessions);
         return allSessions;
     }
@@ -897,7 +1115,7 @@ public class SessionManager extends BasicModule {
             if (filter.getUsername() == null) {
                 // No user id filtering
                 copyAnonSessions(results);
-                copyUserSessions(results);
+                copyAllUserSessions(results);
             }
             else {
                 try {
@@ -1056,16 +1274,14 @@ public class SessionManager extends BasicModule {
 
     private void copyAnonSessions(List<ClientSession> sessions) {
         // Add anonymous sessions
-        for (ClientSession session : anonymousSessions.values()) {
-            sessions.add(session);
-        }
+        sessions.addAll(anonymousSessions.values());
     }
 
-    private void copyUserSessions(List<ClientSession> sessions) {
+    private void copyAllUserSessions(List<ClientSession> sessions) {
         // Get a copy of the sessions from all users
-        for (String username : getSessionUsers()) {
-            for (ClientSession session : getSessions(username)) {
-                sessions.add(session);
+        for(SessionMap sessionMap : this.sessions.values()) {
+            if(sessionMap != null) {
+                sessions.addAll(sessionMap.getSessions());
             }
         }
     }
@@ -1074,14 +1290,12 @@ public class SessionManager extends BasicModule {
         // Get a copy of the sessions from all users
         SessionMap sessionMap = sessions.get(username);
         if (sessionMap != null) {
-            for (ClientSession session : sessionMap.getSessions()) {
-                sessionList.add(session);
-            }
+            sessionList.addAll(sessionMap.getSessions());
         }
     }
 
     public Iterator getAnonymousSessions() {
-        return Arrays.asList(anonymousSessions.values().toArray()).iterator();
+        return Collections.unmodifiableCollection(anonymousSessions.values()).iterator();
     }
 
     public Collection<ClientSession> getSessions(String username) {
@@ -1092,16 +1306,53 @@ public class SessionManager extends BasicModule {
         return sessionList;
     }
 
-    public int getTotalSessionCount() {
-        return sessionCount;
+    /**
+     * Returns client sessions of the user that have the same highest priority.
+     *
+     * @param username the user.
+     * @return client sessions of the user that have the same highest priority.
+     */
+    public List<ClientSession> getHighestPrioritySessions(String username) {
+        SessionMap sessionMap = sessions.get(username);
+        if (sessionMap != null) {
+            return sessionMap.getHighestPrioritySessions();
+        }
+        return Collections.emptyList();
     }
 
-    public int getSessionCount() {
+    /**
+     * Returns number of client sessions that are connected to the server. Sessions that
+     * are authenticated and not authenticated will be included
+     *
+     * @return number of client sessions that are connected to the server.
+     */
+    public int getConnectionsCount() {
+        return connectionsCounter.get();
+    }
+
+    /**
+     * Returns number of client sessions that are authenticated with the server using a
+     * non-anoymous user.
+     *
+     * @return number of client sessions that are authenticated with the server using a non-anoymous user.
+     */
+    public int getUserSessionsCount() {
+        return userSessionsCounter.get();
+    }
+
+    /**
+     * Returns number of client sessions that are available. Anonymous users
+     * are included too.
+     *
+     * @return number of client sessions that are available.
+     */
+    public int getActiveSessionCount() {
         int sessionCount = 0;
-        for (String username : getSessionUsers()) {
-            sessionCount += getSessionCount(username);
+        for (ClientSession session : getSessions()) {
+            if (session.getPresence().isAvailable()) {
+                sessionCount++;
+            }
         }
-        sessionCount += anonymousSessions.size();
         return sessionCount;
     }
 
@@ -1109,8 +1360,32 @@ public class SessionManager extends BasicModule {
         return anonymousSessions.size();
     }
 
+    /**
+     * Returns the number of sessions for a user that are available. For the count
+     * of all sessions for the user, including sessions that are just starting
+     * or closed, see {@see #getConnectionsCount(String)}.
+     *
+     * @param username the user.
+     * @return number of available sessions for a user.
+     */
+    public int getActiveSessionCount(String username) {
+        if (username == null || !userManager.isRegisteredUser(username)) {
+            return 0;
+        }
+        int sessionCount = 0;
+        SessionMap sessionMap = sessions.get(username);
+        if (sessionMap != null) {
+            for (ClientSession session: sessionMap.getSessions()) {
+                if (session.getPresence().isAvailable()) {
+                    sessionCount++;
+                }
+            }
+        }
+        return sessionCount;
+    }
+
     public int getSessionCount(String username) {
-        if (username == null) {
+        if (username == null || !userManager.isRegisteredUser(username)) {
             return 0;
         }
         int sessionCount = 0;
@@ -1121,6 +1396,12 @@ public class SessionManager extends BasicModule {
         return sessionCount;
     }
 
+    /**
+     * Returns the number of users that are authenticated with the server. For users
+     * that are connected from more than one resource the count will be one.
+     *
+     * @return the number of users that are authenticated with the server.
+     */
     public Collection<String> getSessionUsers() {
         return Collections.unmodifiableCollection(sessions.keySet());
     }
@@ -1175,11 +1456,12 @@ public class SessionManager extends BasicModule {
      * Broadcasts the given data to all connected sessions. Excellent
      * for server administration messages.
      *
-     * @param packet The packet to be broadcast
+     * @param packet the packet to be broadcast.
+     * @throws UnauthorizedException if not allowed to perform the operation.
      */
     public void broadcast(Packet packet) throws UnauthorizedException {
         for (SessionMap sessionMap : sessions.values()) {
-            ((SessionMap) sessionMap).broadcast(packet);
+            sessionMap.broadcast(packet);
         }
 
         for (Session session : anonymousSessions.values()) {
@@ -1192,7 +1474,10 @@ public class SessionManager extends BasicModule {
      * user. Excellent for updating all connected resources for users such as
      * roster pushes.
      *
-     * @param packet The packet to be broadcast
+     * @param username the user to send the boradcast to.
+     * @param packet the packet to be broadcast.
+     * @throws UnauthorizedException if not allowed to perform the operation.
+     * @throws PacketException if a packet exception occurs.
      */
     public void userBroadcast(String username, Packet packet) throws UnauthorizedException, PacketException {
         SessionMap sessionMap = sessions.get(username);
@@ -1205,64 +1490,70 @@ public class SessionManager extends BasicModule {
      * Removes a session.
      *
      * @param session the session.
+     * @return true if the requested session was successfully removed.
      */
-    public void removeSession(ClientSession session) {
-        // TODO: Requires better error checking to ensure the session count is maintained
-        // TODO: properly (removal actually does remove).
+    public boolean removeSession(ClientSession session) {
         // Do nothing if session is null or if the server is shutting down. Note: When the server
         // is shutting down the serverName will be null.
         if (session == null || serverName == null) {
-            return;
+            return false;
         }
-        SessionMap sessionMap = null;
-        if (anonymousSessions.containsValue(session)) {
-            anonymousSessions.remove(session.getAddress().getResource());
-            sessionCount--;
-            
+        boolean auth_removed = false;
+        if (anonymousSessions.remove(session.getAddress().getResource()) != null) {
             // Fire session event.
             SessionEventDispatcher.dispatchEvent(session,
                     SessionEventDispatcher.EventType.anonymous_session_destroyed);
+            // Set that the session was found and removed
+            auth_removed = true;
         }
         else {
             // If this is a non-anonymous session then remove the session from the SessionMap
-            if (session.getAddress() != null && session.getAddress().getNode() != null) {
-                String username = session.getAddress().getNode().toLowerCase();
-                synchronized (username.intern()) {
-                    sessionMap = sessions.get(username);
-                    if (sessionMap != null) {
-                        sessionMap.removeSession(session);
-                        sessionCount--;
-                        if (sessionMap.isEmpty()) {
-                            sessions.remove(username);
+            String username = session.getAddress().getNode();
+            if (username != null) {
+                SessionMap sessionMap = sessions.get(username);
+                if (sessionMap != null) {
+                    synchronized (username.intern()) {
+                        auth_removed = sessionMap.removeSession(session);
+                        if (auth_removed) {
+                            // Decrement number of authenticated sessions (of non-anonymous users)
+                            userSessionsCounter.decrementAndGet();
                         }
-                        
-                        // Fire session event.
-                        SessionEventDispatcher.dispatchEvent(session,
-                                SessionEventDispatcher.EventType.session_destroyed);
                     }
+                    if (sessionMap.isEmpty()) {
+                        sessions.remove(username);
+                    }
+                }
+                if (auth_removed) {
+                    // Fire session event.
+                    SessionEventDispatcher.dispatchEvent(session,
+                            SessionEventDispatcher.EventType.session_destroyed);
                 }
             }
         }
+        // Remove the session from the pre-Authenticated sessions list (if present)
+        boolean preauth_removed =
+                preAuthenticatedSessions.remove(session.getAddress().getResource()) != null;
         // If the user is still available then send an unavailable presence
         Presence presence = session.getPresence();
-        if (presence == null || presence.isAvailable()) {
+        if (presence.isAvailable()) {
             Presence offline = new Presence();
             offline.setFrom(session.getAddress());
             offline.setTo(new JID(null, serverName, null));
             offline.setType(Presence.Type.unavailable);
             router.route(offline);
         }
-        else if (preAuthenticatedSessions.containsValue(session)) {
-            // Remove the session from the pre-Authenticated sessions list
-            preAuthenticatedSessions.remove(session.getAddress().toString());
+        if (auth_removed || preauth_removed) {
+            // Decrement the counter of user sessions
+            connectionsCounter.decrementAndGet();
+            return true;
         }
+        return false;
     }
 
     public void addAnonymousSession(ClientSession session) {
         anonymousSessions.put(session.getAddress().getResource(), session);
         // Remove the session from the pre-Authenticated sessions list
-        preAuthenticatedSessions.remove(session.getAddress().toString());
-        
+        preAuthenticatedSessions.remove(session.getAddress().getResource());
         // Fire session event.
         SessionEventDispatcher.dispatchEvent(session,
                 SessionEventDispatcher.EventType.anonymous_session_created);
@@ -1295,16 +1586,17 @@ public class SessionManager extends BasicModule {
          */
         public void onConnectionClose(Object handback) {
             try {
-                ClientSession session = (ClientSession)handback;
+                ClientSession session = (ClientSession) handback;
                 try {
-                    if (session.getPresence().isAvailable() || !session.wasAvailable()) {
+                    if ((session.getPresence().isAvailable() || !session.wasAvailable()) &&
+                            getSession(session.getAddress()) != null) {
                         // Send an unavailable presence to the user's subscribers
                         // Note: This gives us a chance to send an unavailable presence to the
                         // entities that the user sent directed presences
                         Presence presence = new Presence();
                         presence.setType(Presence.Type.unavailable);
                         presence.setFrom(session.getAddress());
-                        presenceHandler.process(presence);
+                        router.route(presence);
                     }
                 }
                 finally {
@@ -1328,10 +1620,11 @@ public class SessionManager extends BasicModule {
         public void onConnectionClose(Object handback) {
             ComponentSession session = (ComponentSession)handback;
             try {
-                // Unbind the domain for this external component
-                String domain = session.getAddress().getDomain();
-                String subdomain = domain.substring(0, domain.indexOf(serverName) - 1);
-                InternalComponentManager.getInstance().removeComponent(subdomain);
+                // Unbind registered domains for this external component
+                for (String domain : session.getExternalComponent().getSubdomains()) {
+                    String subdomain = domain.substring(0, domain.indexOf(serverName) - 1);
+                    InternalComponentManager.getInstance().removeComponent(subdomain);
+                }
             }
             catch (Exception e) {
                 // Can't do anything about this problem...
@@ -1376,9 +1669,31 @@ public class SessionManager extends BasicModule {
         }
     }
 
+    private class ConnectionMultiplexerSessionListener implements ConnectionCloseListener {
+        /**
+         * Handle a session that just closed.
+         *
+         * @param handback The session that just closed
+         */
+        public void onConnectionClose(Object handback) {
+            ConnectionMultiplexerSession session = (ConnectionMultiplexerSession)handback;
+            // Remove all the hostnames that were registered for this server session
+            String domain = session.getAddress().getDomain();
+            List<ConnectionMultiplexerSession> sessions = connnectionManagerSessions.get(domain);
+            if (sessions != null) {
+                sessions.remove(session);
+                if (sessions.isEmpty()) {
+                    connnectionManagerSessions.remove(domain);
+                    // Terminate ClientSessions originated from this connection manager
+                    // that are still active since the connection manager has gone down
+                    ConnectionMultiplexerManager.getInstance().multiplexerUnavailable(domain);
+                }
+            }
+        }
+    }
+
     public void initialize(XMPPServer server) {
         super.initialize(server);
-        presenceHandler = server.getPresenceUpdateHandler();
         router = server.getPacketRouter();
         userManager = server.getUserManager();
         routingTable = server.getRoutingTable();
@@ -1438,7 +1753,8 @@ public class SessionManager extends BasicModule {
     public void sendServerMessage(JID address, String subject, String body) {
         Message packet = createServerMessage(subject, body);
         try {
-            if (address == null || address.getNode() == null || address.getNode().length() < 1) {
+            if (address == null || address.getNode() == null ||
+                    !userManager.isRegisteredUser(address)) {
                 broadcast(packet);
             }
             else if (address.getResource() == null || address.getResource().length() < 1) {
@@ -1471,14 +1787,27 @@ public class SessionManager extends BasicModule {
         // Stop threads that are sending packets to remote servers
         OutgoingSessionPromise.getInstance().shutdown();
         timer.cancel();
-        serverName = null;
         if (JiveGlobals.getBooleanProperty("shutdownMessage.enabled")) {
             sendServerMessage(null, LocaleUtils.getLocalizedString("admin.shutdown.now"));
         }
         try {
-            for (Session session : getSessions()) {
+            // Send the close stream header to all connected connections
+            Set<Session> sessions = new HashSet<Session>();
+            sessions.addAll(getSessions());
+            sessions.addAll(getComponentSessions());
+            sessions.addAll(outgoingServerSessions.values());
+            for (List<IncomingServerSession> incomingSessions : incomingServerSessions.values()) {
+                sessions.addAll(incomingSessions);
+            }
+            for (List<ConnectionMultiplexerSession> multiplexers : connnectionManagerSessions
+                    .values()) {
+                sessions.addAll(multiplexers);
+            }
+
+            for (Session session : sessions) {
                 try {
-                    session.getConnection().close();
+                    // Notify connected client that the server is being shut down
+                    session.getConnection().systemShutdown();
                 }
                 catch (Throwable t) {
                     // Ignore.
@@ -1487,6 +1816,44 @@ public class SessionManager extends BasicModule {
         }
         catch (Exception e) {
             // Ignore.
+        }
+        serverName = null;
+    }
+
+    /**
+     * Returns true if remote servers are allowed to have more than one connection to this
+     * server. Having more than one connection may improve number of packets that can be
+     * transfered per second. This setting only used by the server dialback mehod.<p>
+     *
+     * It is highly recommended that {@link #getServerSessionTimeout()} is enabled so that
+     * dead connections to this server can be easily discarded.
+     *
+     * @return true if remote servers are allowed to have more than one connection to this
+     *         server.
+     */
+    public boolean isMultipleServerConnectionsAllowed() {
+        return JiveGlobals.getBooleanProperty("xmpp.server.session.allowmultiple", true);
+    }
+
+    /**
+     * Sets if remote servers are allowed to have more than one connection to this
+     * server. Having more than one connection may improve number of packets that can be
+     * transfered per second. This setting only used by the server dialback mehod.<p>
+     *
+     * It is highly recommended that {@link #getServerSessionTimeout()} is enabled so that
+     * dead connections to this server can be easily discarded.
+     *
+     * @param allowed true if remote servers are allowed to have more than one connection to this
+     *        server.
+     */
+    public void setMultipleServerConnectionsAllowed(boolean allowed) {
+        JiveGlobals.setProperty("xmpp.server.session.allowmultiple", Boolean.toString(allowed));
+        if (allowed && JiveGlobals.getIntProperty("xmpp.server.session.idle", 10 * 60 * 1000) <= 0)
+        {
+            Log.warn("Allowing multiple S2S connections for each domain, without setting a " +
+                    "maximum idle timeout for these connections, is unrecommended! Either " +
+                    "set xmpp.server.session.allowmultiple to 'false' or change " +
+                    "xmpp.server.session.idle to a (large) positive value.");
         }
     }
 
@@ -1528,6 +1895,14 @@ public class SessionManager extends BasicModule {
         }
         // Set the new property value
         JiveGlobals.setProperty("xmpp.server.session.idle", Integer.toString(idleTime));
+
+        if (idleTime <= 0 && isMultipleServerConnectionsAllowed() )
+        {
+            Log.warn("Allowing multiple S2S connections for each domain, without setting a " +
+                "maximum idle timeout for these connections, is unrecommended! Either " +
+                "set xmpp.server.session.allowmultiple to 'false' or change " +
+                "xmpp.server.session.idle to a (large) positive value.");
+        }
     }
 
     public int getServerSessionIdleTime() {

@@ -52,13 +52,13 @@ primarily useful for sending announcements or notifications.
 
 <h2>Installation</h2>
 
-<p>Copy broadcast.jar into the plugins directory of your Wildfire installation. The
+<p>Copy broadcast.jar into the plugins directory of your Openfire installation. The
 plugin will then be automatically deployed. To upgrade to a new version, copy the new
 broadcast.jar file over the existing file.</p>
 
 <h2>Configuration</h2>
 
-The broadcast plugin is configured via Wildfire system properties. These can
+The broadcast plugin is configured via Openfire system properties. These can
 be configured under Server/Server Manager/System Properties:
 
 <ul>
@@ -83,7 +83,7 @@ To send a broadcast message, send a message to all@[serviceName].[serverName] or
 [group]@[serviceName].[serverName]. For example, if your server is called foo and the
 default service name is being used, a message to all@broadcast.foo would be broadcast to
 all users connected to the server. For the group staff, a message to staff@broadcast.foo would
-be sent to all users in the group staff that are currently online.
+be sent to all users in the group staff that are currently online or offline.
 
 <p>
 Note: for maximum compatability between group implementations, it's recommended that you use

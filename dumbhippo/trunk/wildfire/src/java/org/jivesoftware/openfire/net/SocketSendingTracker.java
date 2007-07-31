@@ -1,4 +1,4 @@
-package org.jivesoftware.wildfire.net;
+package org.jivesoftware.openfire.net;
 
 /**
  * A SocketSendingTracker keeps track of all the sockets that are currently sending data and

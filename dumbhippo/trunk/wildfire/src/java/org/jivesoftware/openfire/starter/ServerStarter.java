@@ -9,28 +9,31 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.starter;
+package org.jivesoftware.openfire.starter;
 
 import org.jivesoftware.util.Log;
 
-import java.io.File;
+import java.io.*;
+import java.util.jar.Pack200;
+import java.util.jar.JarOutputStream;
 
 /**
  * Starts the core XMPP server. A bootstrap class that configures classloaders
  * to ensure easy, dynamic server startup.
  *
- * This class should be for standalone mode only. Wildfire servers launched
+ * This class should be for standalone mode only. Openfire servers launched
  * through a J2EE container (servlet/EJB) will use those environment's
  * classloading facilities to ensure proper startup.<p>
  *
  * Tasks:<ul>
+ *      <li>Unpack any pack files in the lib directory (Pack200 encoded JAR files).</li>
  *      <li>Add all jars in the lib directory to the classpath.</li>
  *      <li>Add the config directory to the classpath for loadResource()</li>
  *      <li>Start the server</li>
  * </ul>
  *
- * Note: if the enviroment property <tt>wildfire.lib.directory</tt> is specified
- * ServerStarter will attempt to use this value as the value for wildfire's lib
+ * Note: if the enviroment property <tt>openfire.lib.directory</tt> is specified
+ * ServerStarter will attempt to use this value as the value for openfire's lib
  * directory. If the property is not specified the default value of ../lib will be used.
  *
  * @author Iain Shigeoka
@@ -52,12 +55,12 @@ public class ServerStarter {
      * started and the server starter should not be used again.
      */
     private void start() {
-        // setup the classpath using JiveClassLoader
+        // Setup the classpath using JiveClassLoader
         try {
             // Load up the bootstrap container
             final ClassLoader parent = findParentClassLoader();
 
-            String libDirString = System.getProperty("wildfire.lib.dir");
+            String libDirString = System.getProperty("openfire.lib.dir");
 
             File libDir;
             if (libDirString != null) {
@@ -74,11 +77,19 @@ public class ServerStarter {
                 libDir = new File(DEFAULT_LIB_DIR);
             }
 
+            // Unpack any pack files.
+            unpackArchives(libDir, true);
+
+            File adminLibDir = new File("../plugins/admin/webapp/WEB-INF/lib");
+            if (adminLibDir.exists()) {
+                unpackArchives(adminLibDir, false);
+            }
+
             ClassLoader loader = new JiveClassLoader(parent, libDir);
-           
+
             Thread.currentThread().setContextClassLoader(loader);
             Class containerClass = loader.loadClass(
-                    "org.jivesoftware.wildfire.XMPPServer");
+                    "org.jivesoftware.openfire.XMPPServer");
             containerClass.newInstance();
         }
         catch (Exception e) {
@@ -100,5 +111,65 @@ public class ServerStarter {
             }
         }
         return parent;
+    }
+
+    /**
+     * Converts any pack files in a directory into standard JAR files. Each
+     * pack file will be deleted after being converted to a JAR. If no
+     * pack files are found, this method does nothing.
+     *
+     * @param libDir the directory containing pack files.
+     * @param printStatus true if status ellipses should be printed when unpacking.
+     */
+    private void unpackArchives(File libDir, boolean printStatus) {
+        // Get a list of all packed files in the lib directory.
+        File [] packedFiles = libDir.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".pack");
+            }
+        });
+
+        if (packedFiles == null) {
+            // Do nothing since no .pack files were found
+            return;
+        }
+
+        // Unpack each.
+        boolean unpacked = false;
+        for (File packedFile : packedFiles) {
+            try {
+                String jarName = packedFile.getName().substring(0,
+                        packedFile.getName().length() - ".pack".length());
+                // Delete JAR file with same name if it exists (could be due to upgrade
+                // from old Openfire release).
+                File jarFile = new File(libDir, jarName);
+                if (jarFile.exists()) {
+                    jarFile.delete();
+                }
+                
+                InputStream in = new BufferedInputStream(new FileInputStream(packedFile));
+                JarOutputStream out = new JarOutputStream(new BufferedOutputStream(
+                        new FileOutputStream(new File(libDir, jarName))));
+                Pack200.Unpacker unpacker = Pack200.newUnpacker();
+                // Print something so the user knows something is happening.
+                if (printStatus) {
+                    System.out.print(".");
+                }
+                // Call the unpacker
+                unpacker.unpack(in, out);
+
+                in.close();
+                out.close();
+                packedFile.delete();
+                unpacked = true;
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        // Print newline if unpacking happened.
+        if (unpacked && printStatus) {
+            System.out.println();
+        }
     }
 }

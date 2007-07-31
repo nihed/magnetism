@@ -9,20 +9,22 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.muc.spi;
+package org.jivesoftware.openfire.muc.spi;
+
+import org.dom4j.Element;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.muc.*;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.xmpp.packet.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.dom4j.Element;
-
-import org.jivesoftware.wildfire.muc.*;
-import org.jivesoftware.util.*;
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.xmpp.packet.*;
 
 /**
  * Implementation of MUCUser. There will be a MUCUser per user that is connected to one or more 
@@ -67,19 +69,27 @@ public class MUCUserImpl implements MUCUser {
     }
 
     public MUCRole getRole(String roomName) throws NotFoundException {
-        MUCRole role = roles.get(roomName.toLowerCase());
+        MUCRole role = roles.get(roomName);
         if (role == null) {
             throw new NotFoundException(roomName);
         }
         return role;
     }
 
+    public boolean isJoined() {
+        return !roles.isEmpty();
+    }
+
     public Iterator<MUCRole> getRoles() {
         return Collections.unmodifiableCollection(roles.values()).iterator();
     }
 
+    public void addRole(String roomName, MUCRole role) {
+        roles.put(roomName, role);
+    }
+
     public void removeRole(String roomName) {
-        roles.remove(roomName.toLowerCase());
+        roles.remove(roomName);
     }
 
     public long getLastPacketTime() {
@@ -153,7 +163,7 @@ public class MUCUserImpl implements MUCUser {
                     + packet.toString());
         }
         else {
-            MUCRole role = roles.get(group.toLowerCase());
+            MUCRole role = roles.get(group);
             if (role == null) {
                 if (server.hasChatRoom(group)) {
                     boolean declinedInvitation = false;
@@ -302,7 +312,7 @@ public class MUCUserImpl implements MUCUser {
                     + packet.toString());
         }
         else {
-            MUCRole role = roles.get(group.toLowerCase());
+            MUCRole role = roles.get(group);
             if (role == null) {
                 // TODO: send error message to user (can't send packets to group you haven't
                 // joined)
@@ -359,6 +369,9 @@ public class MUCUserImpl implements MUCUser {
                     catch (NotAllowedException e) {
                         sendErrorPacket(packet, PacketError.Condition.not_allowed);
                     }
+                    catch (Exception e) {
+                        sendErrorPacket(packet, PacketError.Condition.internal_server_error);
+                    }
                 }
             }
         }
@@ -378,7 +391,7 @@ public class MUCUserImpl implements MUCUser {
             }
         }
         else {
-            MUCRole role = roles.get(group.toLowerCase());
+            MUCRole role = roles.get(group);
             if (role == null) {
                 // If we're not already in a room, we either are joining it or it's not
                 // properly addressed and we drop it silently
@@ -406,7 +419,6 @@ public class MUCUserImpl implements MUCUser {
                                     historyRequest,
                                     this,
                                     packet.createCopy());
-                            roles.put(group.toLowerCase(), role);
                             // If the client that created the room is non-MUC compliant then
                             // unlock the room thus creating an "instant" room
                             if (mucInfo == null && room.isLocked() && !room.isManuallyLocked()) {
@@ -464,7 +476,7 @@ public class MUCUserImpl implements MUCUser {
                 else {
                     if (Presence.Type.unavailable == packet.getType()) {
                         try {
-                            roles.remove(group.toLowerCase());
+                            removeRole(group);
                             role.getChatRoom().leaveRoom(role.getNickname());
                         }
                         catch (UserNotFoundException e) {

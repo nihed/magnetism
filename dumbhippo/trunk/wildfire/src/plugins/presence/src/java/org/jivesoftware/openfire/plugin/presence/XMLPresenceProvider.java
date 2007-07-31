@@ -9,11 +9,12 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.plugin.presence;
+package org.jivesoftware.openfire.plugin.presence;
 
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.user.User;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
@@ -46,6 +47,10 @@ class XMLPresenceProvider extends PresenceInfoProvider {
                 String status = server.getPresenceManager().getLastPresenceStatus(user);
                 if (status != null) {
                     presence.setStatus(status);
+                }
+                else {
+                    presence.setStatus(JiveGlobals.getProperty("plugin.presence.unavailable.status",
+                                                               "Unavailable"));
                 }
             }
             catch (UserNotFoundException e) {}

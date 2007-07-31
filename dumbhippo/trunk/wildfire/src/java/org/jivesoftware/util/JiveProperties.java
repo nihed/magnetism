@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1217 $
- * $Date: 2005-04-11 17:11:06 -0400 (Mon, 11 Apr 2005) $
+ * $Revision: 7175 $
+ * $Date: 2007-02-16 13:50:15 -0600 (Fri, 16 Feb 2007) $
  *
  * Copyright (C) 1999-2004 Jive Software. All rights reserved.
  *
@@ -11,18 +11,21 @@
 
 package org.jivesoftware.util;
 
+import org.jivesoftware.database.DbConnectionManager;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.sql.*;
-
-import org.jivesoftware.database.DbConnectionManager;
 
 /**
  * Retrieves and stores Jive properties. Properties are stored in the database.
  *
  * @author Matt Tucker
  */
-public class JiveProperties implements Map {
+public class JiveProperties implements Map<String, String> {
 
     private static final String LOAD_PROPERTIES = "SELECT name, propValue FROM jiveProperty";
     private static final String INSERT_PROPERTY = "INSERT INTO jiveProperty(name, propValue) VALUES(?,?)";
@@ -87,26 +90,25 @@ public class JiveProperties implements Map {
         return properties.containsValue(value);
     }
 
-    public Collection values() {
+    public Collection<String> values() {
         return Collections.unmodifiableCollection(properties.values());
     }
 
-    public void putAll(Map t) {
-        for (Iterator i=t.entrySet().iterator(); i.hasNext();  ) {
-            Map.Entry entry = (Map.Entry)i.next();
+    public void putAll(Map<? extends String, ? extends String> t) {
+        for (Map.Entry<? extends String, ? extends String> entry : t.entrySet() ) {
             put(entry.getKey(), entry.getValue());
         }
     }
 
-    public Set entrySet() {
+    public Set<Map.Entry<String, String>> entrySet() {
         return Collections.unmodifiableSet(properties.entrySet());
     }
 
-    public Set keySet() {
+    public Set<String> keySet() {
         return Collections.unmodifiableSet(properties.keySet());
     }
 
-    public Object get(Object key) {
+    public String get(Object key) {
         return properties.get(key);
     }
 
@@ -151,12 +153,11 @@ public class JiveProperties implements Map {
         return properties.keySet();
     }
 
-    public synchronized Object remove(Object key) {
-        Object value = properties.remove(key);
+    public synchronized String remove(Object key) {
+        String value = properties.remove(key);
         // Also remove any children.
-        Collection propNames = getPropertyNames();
-        for (Iterator i=propNames.iterator(); i.hasNext(); ) {
-            String name = (String)i.next();
+        Collection<String> propNames = getPropertyNames();
+        for (String name : propNames) {
             if (name.startsWith((String)key)) {
                 properties.remove(name);
             }
@@ -164,13 +165,13 @@ public class JiveProperties implements Map {
         deleteProperty((String)key);
 
         // Generate event.
-        PropertyEventDispatcher.dispatchEvent((String)key,
-                PropertyEventDispatcher.EventType.property_deleted, Collections.emptyMap());
+        Map<String, Object> params = Collections.emptyMap();
+        PropertyEventDispatcher.dispatchEvent((String)key, PropertyEventDispatcher.EventType.property_deleted, params);
 
         return value;
     }
 
-    public synchronized Object put(Object key, Object value) {
+    public synchronized String put(String key, String value) {
         if (key == null || value == null) {
             throw new NullPointerException("Key or value cannot be null. Key=" +
                     key + ", value=" + value);
@@ -178,26 +179,27 @@ public class JiveProperties implements Map {
         if (!(key instanceof String) || !(value instanceof String)) {
             throw new IllegalArgumentException("Key and value must be of type String.");
         }
-        if (((String)key).endsWith(".")) {
-            key = ((String)key).substring(0, ((String)key).length()-1);
+        if (key.endsWith(".")) {
+            key = key.substring(0, key.length()-1);
         }
-        key =((String)key).trim();
+        key = key.trim();
         if (properties.containsKey(key)) {
             if (!properties.get(key).equals(value)) {
-                updateProperty((String)key, (String)value);
+                updateProperty(key, value);
             }
         }
         else {
-            insertProperty((String)key, (String)value);
+            insertProperty(key, value);
         }
 
-        // Generate event.
-        Map params = new HashMap();
-        params.put("value", value);
-        PropertyEventDispatcher.dispatchEvent((String)key,
-                PropertyEventDispatcher.EventType.property_set, params);
+        String result = properties.put(key, value);
 
-        return properties.put((String)key, (String)value);
+        // Generate event.
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("value", value);
+        PropertyEventDispatcher.dispatchEvent(key, PropertyEventDispatcher.EventType.property_set, params);
+
+        return result;
     }
 
     private void insertProperty(String name, String value) {

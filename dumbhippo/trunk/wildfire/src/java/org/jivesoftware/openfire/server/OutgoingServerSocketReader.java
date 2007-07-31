@@ -3,17 +3,18 @@
  * $Revision: 1530 $
  * $Date: 2005-06-17 18:38:27 -0300 (Fri, 17 Jun 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.server;
+package org.jivesoftware.openfire.server;
 
 import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.session.OutgoingServerSession;
 
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
@@ -86,7 +87,7 @@ public class OutgoingServerSocketReader {
         Thread thread = new Thread("Outgoing Server Reader") {
             public void run() {
                 while (open) {
-                    Element doc = null;
+                    Element doc;
                     try {
                         doc = reader.parseDocument().getRootElement();
 

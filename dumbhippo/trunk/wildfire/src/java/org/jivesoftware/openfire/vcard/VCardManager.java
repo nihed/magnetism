@@ -9,38 +9,36 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.vcard;
+package org.jivesoftware.openfire.vcard;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.*;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.openfire.event.UserEventAdapter;
+import org.jivesoftware.openfire.event.UserEventDispatcher;
+import org.jivesoftware.openfire.user.User;
 
-import java.util.StringTokenizer;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Manages VCard information for users.
  *
  * @author Matt Tucker
  */
-public class VCardManager {
+public class VCardManager extends BasicModule implements ServerFeaturesProvider {
 
-    private static VCardProvider provider;
-    private static VCardManager instance = new VCardManager();
+    private VCardProvider provider;
+    private static VCardManager instance;
 
-    private Cache vcardCache;
-
-    static {
-        // Load a VCard provider.
-        String className = JiveGlobals.getXMLProperty("provider.vcard.className",
-                DefaultVCardProvider.class.getName());
-        try {
-            Class c = ClassUtils.forName(className);
-            provider = (VCardProvider)c.newInstance();
-        }
-        catch (Exception e) {
-            Log.error("Error loading vcard provider: " + className, e);
-            provider = new DefaultVCardProvider();
-        }
-    }
+    private Cache<String, Element> vcardCache;
+    private EventHandler eventHandler;
+    /**
+     * List of listeners that will be notified when vCards are created, updated or deleted.
+     */
+    private List<VCardListener> listeners = new CopyOnWriteArrayList<VCardListener>();
 
     public static VCardManager getInstance() {
         return instance;
@@ -55,12 +53,14 @@ public class VCardManager {
      * @return the current VCardProvider.
      */
     public static VCardProvider getProvider() {
-        return provider;
+        return instance.provider;
     }
 
-    private VCardManager() {
-        CacheManager.initializeCache("vcardCache", 512 * 1024);
-        vcardCache = CacheManager.getCache("vcardCache");
+    public VCardManager() {
+        super("VCard Manager");
+        String cacheName = "VCard";
+        vcardCache = CacheManager.initializeCache(cacheName, "vcardCache", 512 * 1024);
+        this.eventHandler = new EventHandler();
     }
 
     /**
@@ -69,7 +69,6 @@ public class VCardManager {
      * does not exist then a <tt>null</tt> value will be answered. Advanced user systems can
      * use vCard information to link to user directory information or store other relevant
      * user information.</p>
-     *
      * Note that many elements in the vCard may have the same path so the returned value in that
      * case will be the first found element. For instance, "ADR:STREET" may be present in
      * many addresses of the user. Use {@link #getVCard(String)} to get the whole vCard of
@@ -116,6 +115,9 @@ public class VCardManager {
      * @throws Exception if an error occured while storing the new vCard.
      */
     public void setVCard(String username, Element vCardElement) throws Exception {
+        boolean created = false;
+        boolean updated = false;
+
         if (provider.isReadOnly()) {
             throw new UnsupportedOperationException("VCard provider is read-only.");
         }
@@ -126,29 +128,43 @@ public class VCardManager {
             if (!oldVCard.equals(vCardElement)) {
                 try {
                     provider.updateVCard(username, vCardElement);
+                    updated = true;
                 }
                 catch (NotFoundException e) {
                     Log.warn("Tried to update a vCard that does not exist", e);
                     provider.createVCard(username, vCardElement);
+                    created = true;
                 }
             }
         }
         else {
             try {
                 provider.createVCard(username, vCardElement);
+                created = true;
             }
             catch (AlreadyExistsException e) {
                 Log.warn("Tried to create a vCard when one already exist", e);
                 provider.updateVCard(username, vCardElement);
+                updated = true;
             }
         }
         vcardCache.put(username, vCardElement);
+        // Dispatch vCard events
+        if (created) {
+            // Alert listeners that a new vCard has been created
+            dispatchVCardCreated(username);
+        } else if (updated) {
+            // Alert listeners that a vCard has been updated
+            dispatchVCardUpdated(username);
+        }
     }
 
     /**
      * Deletes the user's vCard from the user account.
      *
      * @param username The username of the user to delete his vCard.
+     * @throws UnsupportedOperationException If the provider is read-only and the data
+     *         cannot be deleted, this exception is thrown
      */
     public void deleteVCard(String username) {
         if (provider.isReadOnly()) {
@@ -159,6 +175,8 @@ public class VCardManager {
             vcardCache.remove(username);
             // Delete the property from the DB if it was present in memory
             provider.deleteVCard(username);
+            // Alert listeners that a vCard has been deleted
+            dispatchVCardDeleted(username);
         }
     }
 
@@ -175,7 +193,7 @@ public class VCardManager {
     }
 
     private Element getOrLoadVCard(String username) {
-        Element vCardElement = (Element) vcardCache.get(username);
+        Element vCardElement = vcardCache.get(username);
         if (vCardElement == null) {
             vCardElement = provider.loadVCard(username);
             if (vCardElement != null) {
@@ -183,5 +201,109 @@ public class VCardManager {
             }
         }
         return vCardElement;
+    }
+
+    /**
+     * Registers a listener to receive events when a vCard is created, updated or deleted.
+     *
+     * @param listener the listener.
+     */
+    public void addListener(VCardListener listener) {
+        if (listener == null) {
+            throw new NullPointerException();
+        }
+        listeners.add(listener);
+    }
+
+    /**
+     * Unregisters a listener to receive events.
+     *                  
+     * @param listener the listener.
+     */
+    public void removeListener(VCardListener listener) {
+        listeners.remove(listener);
+    }
+
+    /**
+     * Dispatches that a vCard was updated to all listeners.
+     *
+     * @param user the user for which the vCard was set.
+     */
+    private void dispatchVCardUpdated(String user) {
+        for (VCardListener listener : listeners) {
+            listener.vCardUpdated(user);
+        }
+    }
+
+    /**
+     * Dispatches that a vCard was created to all listeners.
+     *
+     * @param user the user for which the vCard was created.
+     */
+    private void dispatchVCardCreated(String user) {
+        for (VCardListener listener : listeners) {
+            listener.vCardCreated(user);
+        }
+    }
+
+    /**
+     * Dispatches that a vCard was deleted to all listeners.
+     *
+     * @param user the user for which the vCard was deleted.
+     */
+    private void dispatchVCardDeleted(String user) {
+        for (VCardListener listener : listeners) {
+            listener.vCardDeleted(user);
+        }
+    }
+
+    public void initialize(XMPPServer server) {
+        instance = this;
+
+        // Load a VCard provider.
+        String className = JiveGlobals.getXMLProperty("provider.vcard.className",
+                DefaultVCardProvider.class.getName());
+        try {
+            Class c = ClassUtils.forName(className);
+            provider = (VCardProvider) c.newInstance();
+        }
+        catch (Exception e) {
+            Log.error("Error loading vcard provider: " + className, e);
+            provider = new DefaultVCardProvider();
+        }
+    }
+
+    public void start() {
+        // Add this module as a user event listener so we can delete
+        // all user properties when a user is deleted
+        if (!provider.isReadOnly()) {
+            UserEventDispatcher.addListener(eventHandler);
+        }
+    }
+
+    public void stop() {
+        // Remove this module as a user event listener
+        UserEventDispatcher.removeListener(eventHandler);
+    }
+
+    /**
+     * Resets the manager state. The cache where loaded vCards are stored will be flushed.
+     */
+    public void reset() {
+        vcardCache.clear();
+    }
+
+    public Iterator<String> getFeatures() {
+        ArrayList<String> features = new ArrayList<String>();
+        features.add("vcard-temp");
+        return features.iterator();
+    }
+
+    private class EventHandler extends UserEventAdapter {
+        public void userDeleting(User user, Map params) {
+            try {
+                deleteVCard(user.getUsername());
+            } catch (UnsupportedOperationException ue) { /* Do Nothing */ }
+        }
     }
 }

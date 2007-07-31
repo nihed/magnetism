@@ -1,7 +1,7 @@
  <%--
   -	$RCSfile$
-  -	$Revision: 2925 $
-  -	$Date: 2005-10-07 12:26:47 -0400 (Fri, 07 Oct 2005) $
+  -	$Revision: 7860 $
+  -	$Date: 2007-04-02 18:26:20 -0500 (Mon, 02 Apr 2007) $
 --%>
 <%@ page import="org.jivesoftware.admin.AdminConsole,
                  org.jivesoftware.util.LocaleUtils"%>
@@ -26,7 +26,7 @@
 <html>
 <head>
  <title><%= AdminConsole.getAppName() %> <fmt:message key="error.serverdown.admin_console" /><%= (pageinfo.getTitle() != null ? (": "+pageinfo.getTitle()) : "") %></title>
- <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+ <meta http-equiv="content-type" content="text/html; charset=UTF-8">
  <link rel="stylesheet" type="text/css" href="<%= path %>/style/global.css">
 </head>
 

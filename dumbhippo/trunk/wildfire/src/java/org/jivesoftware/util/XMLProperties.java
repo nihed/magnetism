@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 3186 $
- * $Date: 2005-12-10 22:07:52 -0500 (Sat, 10 Dec 2005) $
+ * $Revision: 7175 $
+ * $Date: 2007-02-16 13:50:15 -0600 (Fri, 16 Feb 2007) $
  *
  * Copyright (C) 2004 Jive Software. All rights reserved.
  *
@@ -11,8 +11,10 @@
 
 package org.jivesoftware.util;
 
+import org.dom4j.CDATA;
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.Node;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 
@@ -125,8 +127,8 @@ public class XMLProperties {
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML heirarchy.
         Element element = document.getRootElement();
-        for (int i = 0; i < propName.length; i++) {
-            element = element.element(propName[i]);
+        for (String aPropName : propName) {
+            element = element.element(aPropName);
             if (element == null) {
                 // This node doesn't match this part of the property name which
                 // indicates this property doesn't exist so return null.
@@ -229,11 +231,11 @@ public class XMLProperties {
                 return Collections.EMPTY_LIST.iterator();
             }
         }
-        // We found matching property, return names of children.
+        // We found matching property, return values of the children.
         Iterator iter = element.elementIterator(propName[propName.length - 1]);
         ArrayList<String> props = new ArrayList<String>();
         while (iter.hasNext()) {
-            props.add(((Element)iter.next()).getName());
+            props.add(((Element)iter.next()).getText());
         }
         return props.iterator();
     }
@@ -254,8 +256,7 @@ public class XMLProperties {
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML heirarchy.
         Element element = document.getRootElement();
-        for (int i = 0; i < propName.length; i++) {
-            String child = propName[i];
+        for (String child : propName) {
             element = element.element(child);
             if (element == null) {
                 // This node doesn't match this part of the property name which
@@ -303,17 +304,31 @@ public class XMLProperties {
         }
         String childName = propName[propName.length - 1];
         // We found matching property, clear all children.
-        List toRemove = new ArrayList();
+        List<Element> toRemove = new ArrayList<Element>();
         Iterator iter = element.elementIterator(childName);
         while (iter.hasNext()) {
-            toRemove.add(iter.next());
+            toRemove.add((Element) iter.next());
         }
         for (iter = toRemove.iterator(); iter.hasNext();) {
             element.remove((Element)iter.next());
         }
         // Add the new children.
         for (String value : values) {
-            element.addElement(childName).setText(value);
+            Element childElement = element.addElement(childName);
+            if (value.startsWith("<![CDATA[")) {
+                Iterator it = childElement.nodeIterator();
+                while (it.hasNext()) {
+                    Node node = (Node) it.next();
+                    if (node instanceof CDATA) {
+                        childElement.remove(node);
+                        break;
+                    }
+                }
+                childElement.addCDATA(value.substring(9, value.length()-3));
+            }
+            else {
+                childElement.setText(value);
+            }
         }
         saveProperties();
 
@@ -338,8 +353,8 @@ public class XMLProperties {
         String[] propName = parsePropertyName(parent);
         // Search for this property by traversing down the XML heirarchy.
         Element element = document.getRootElement();
-        for (int i = 0; i < propName.length; i++) {
-            element = element.element(propName[i]);
+        for (String aPropName : propName) {
+            element = element.element(aPropName);
             if (element == null) {
                 // This node doesn't match this part of the property name which
                 // indicates this property doesn't exist so return empty array.
@@ -364,8 +379,12 @@ public class XMLProperties {
      * @param value the new value for the property.
      */
     public synchronized void setProperty(String name, String value) {
-        if (name == null) return;
-        if (value == null) value = "";
+        if (name == null) {
+            return;
+        }
+        if (value == null) {
+            value = "";
+        }
 
         // Set cache correctly with prop name and value.
         propertyCache.put(name, value);
@@ -373,21 +392,34 @@ public class XMLProperties {
         String[] propName = parsePropertyName(name);
         // Search for this property by traversing down the XML heirarchy.
         Element element = document.getRootElement();
-        for (int i = 0; i < propName.length; i++) {
+        for (String aPropName : propName) {
             // If we don't find this part of the property in the XML heirarchy
             // we add it as a new node
-            if (element.element(propName[i]) == null) {
-                element.addElement(propName[i]);
+            if (element.element(aPropName) == null) {
+                element.addElement(aPropName);
             }
-            element = element.element(propName[i]);
+            element = element.element(aPropName);
         }
         // Set the value of the property in this node.
-        element.setText(value);
+        if (value.startsWith("<![CDATA[")) {
+            Iterator it = element.nodeIterator();
+            while (it.hasNext()) {
+                Node node = (Node) it.next();
+                if (node instanceof CDATA) {
+                    element.remove(node);
+                    break;
+                }
+            }
+            element.addCDATA(value.substring(9, value.length()-3));
+        }
+        else {
+            element.setText(value);
+        }
         // Write the XML properties to disk
         saveProperties();
 
         // Generate event.
-        Map<String, String> params = new HashMap<String,String>();
+        Map<String, Object> params = new HashMap<String, Object>();
         params.put("value", value);
         PropertyEventDispatcher.dispatchEvent(name,
                 PropertyEventDispatcher.EventType.xml_property_set, params);
@@ -418,8 +450,8 @@ public class XMLProperties {
         saveProperties();
 
         // Generate event.
-        PropertyEventDispatcher.dispatchEvent(name,
-                PropertyEventDispatcher.EventType.xml_property_deleted, Collections.emptyMap());
+        Map<String, Object> params = Collections.emptyMap();
+        PropertyEventDispatcher.dispatchEvent(name, PropertyEventDispatcher.EventType.xml_property_deleted, params);
     }
 
     /**
@@ -428,6 +460,7 @@ public class XMLProperties {
     private void buildDoc(Reader in) throws IOException {
         try {
             SAXReader xmlReader = new SAXReader();
+            xmlReader.setEncoding("UTF-8");
             document = xmlReader.read(in);
         }
         catch (Exception e) {
@@ -454,7 +487,6 @@ public class XMLProperties {
             tempFile = new File(file.getParentFile(), file.getName() + ".tmp");
             writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile), "UTF-8"));
             OutputFormat prettyPrinter = OutputFormat.createPrettyPrint();
-            prettyPrinter.setEncoding("UTF-8");
             XMLWriter xmlWriter = new XMLWriter(writer, prettyPrinter);
             xmlWriter.write(document);
         }
@@ -557,12 +589,12 @@ public class XMLProperties {
     /**
      * Copies data from an input stream to an output stream
      *
-     * @param in  The stream to copy data from
-     * @param out The stream to copy data to
-     * @throws IOException if there's trouble during the copy
+     * @param in the stream to copy data from.
+     * @param out the stream to copy data to.
+     * @throws IOException if there's trouble during the copy.
      */
     private static void copy(InputStream in, OutputStream out) throws IOException {
-        // do not allow other threads to whack on in or out during copy
+        // Do not allow other threads to intrude on streams during copy.
         synchronized (in) {
             synchronized (out) {
                 byte[] buffer = new byte[256];

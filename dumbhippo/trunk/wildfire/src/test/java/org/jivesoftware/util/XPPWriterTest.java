@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 3195 $
- * $Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+ * $Revision: 7655 $
+ * $Date: 2007-03-22 15:50:33 -0500 (Thu, 22 Mar 2007) $
  *
  * Copyright (C) 1999-2003 CoolServlets, Inc. All rights reserved.
  *
@@ -34,7 +34,7 @@ public class XPPWriterTest extends TestCase {
         // NOTE: disabling this test case until we get resources working again.
         /*
         try {
-            Document doc = XPPReader.parseDocument(new FileReader("../conf/wildfire.xml"),this.getClass());
+            Document doc = XPPReader.parseDocument(new FileReader("../conf/openfire.xml"),this.getClass());
             XPPWriter.write(doc, new FileWriter("../conf/xmpp_writer_test_copy.xml"));
         } catch (Exception e) {
             e.printStackTrace();

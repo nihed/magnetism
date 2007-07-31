@@ -1,18 +1,18 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7958 $
+  -	$Date: 2007-04-10 12:31:11 -0500 (Tue, 10 Apr 2007) $
 --%>
 
 <%@ page import="java.util.*,
-                 org.jivesoftware.wildfire.auth.AuthToken,
-                 org.jivesoftware.wildfire.auth.AuthFactory,
-                 org.jivesoftware.wildfire.auth.UnauthorizedException,
+                 org.jivesoftware.openfire.auth.AuthToken,
+                 org.jivesoftware.openfire.auth.AuthFactory,
+                 org.jivesoftware.openfire.auth.UnauthorizedException,
                  org.jivesoftware.admin.AdminConsole"
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.util.*"%>
-<%@ page import="org.jivesoftware.wildfire.XMPPServer"%>
+<%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 <%@ page import="org.xmpp.packet.JID"%>
 
 <%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
@@ -23,7 +23,7 @@
 <% admin.init(request, response, session, application, out ); %>
 
 <%! // List of allowed usernames:
-    static Map authorizedUsernames = new HashMap();
+    static Map<String, String> authorizedUsernames = new HashMap<String, String>();
     static {
         for (JID jid : XMPPServer.getInstance().getAdmins()) {
             // Only allow local users to log into the admin console
@@ -32,7 +32,7 @@
             }
         }
     }
-    static final String go(String url) {
+    static String go(String url) {
         if (url == null) {
             return "index.jsp";
         }
@@ -43,12 +43,18 @@
 %>
 
 <%-- Check if in setup mode --%>
-<c:if test="${admin.setupMode}">
-  <c:redirect url="setup/index.jsp" />
-</c:if>
+<% 
+    if (admin.isSetupMode()) {
+        response.sendRedirect("setup/index.jsp");
+        return;
+    }
+%>
 
 <%	// get parameters
     String username = ParamUtils.getParameter(request,"username");
+    if(username != null){
+        username = JID.escapeNode(username);
+    }
     // Escape HTML tags in username to prevent cross-site scripting attacks. This
     // is necessary because we display the username in the page below.
     username = org.jivesoftware.util.StringUtils.escapeHTMLTags(username);
@@ -57,7 +63,7 @@
     String url = ParamUtils.getParameter(request,"url");
 
     // The user auth token:
-    AuthToken authToken = null;
+    AuthToken authToken;
 
     // Check the request/response for a login token
     
@@ -81,6 +87,7 @@
             return;
 		}
 		catch (UnauthorizedException ue) {
+            Log.debug(ue);
             errors = true;
 		}
 	}
@@ -111,39 +118,7 @@
 		//-->
 	</script>
     <link rel="stylesheet" href="style/global.css" type="text/css">
-    <style type="text/css">
-    .jive-login-form {
-        position : relative;
-        top : 148px;
-        text-align : center;
-        width : 100%;
-    }
-    .jive-login-form .jive-login-label {
-        font-size : 0.8em;
-    }
-    .jive-login-form .jive-footer {
-        font-size : 0.8em;
-        font-weight : bold;
-    }
-    #jive-login-text-image {
-        padding : 0px;
-        margin : 0px;
-        padding-top : 18px;
-        padding-bottom : 10px;
-    }
-    #jive-logo-image {
-        padding : 0px;
-        margin : 0px;
-        padding-right : 10px;
-    }
-    BODY {
-        background-image : url(images/login-back.gif);
-        background-repeat : repeat-x;
-        background-color : #fff;
-        padding : 0px;
-        margin : 0px;
-    }
-    </style>
+    <link rel="stylesheet" href="style/login.css" type="text/css">
 </head>
 
 <body>
@@ -158,105 +133,84 @@
 
 <input type="hidden" name="login" value="true">
 
-<div class="jive-login-form">
+<div align="center">
+    <!-- BEGIN login box -->
+    <div id="jive-loginBox">
 
-    <table cellpadding="0" cellspacing="0" border="0" width="100%">
-    <tr>
-        <td width="48%">&nbsp;</td>
-        <td width="1%" nowrap>
+        <div id="jive-loginLogo"></div>
+        <div id="jive-loginHeader"><fmt:message key="admin.console" /></div>
 
-            <table cellpadding="3" cellspacing="0" border="0">
-            <tr valign="top">
-                <td rowspan="99"
-                    ><div id="jive-logo-image"
-                    ><img src="<%= AdminConsole.getLoginLogoImage() %>" border="0" alt="<%= AdminConsole.getAppName() %>"
-                    ></div></td>
-                <td colspan="3"
-                    ><div id="jive-login-text-image"
-                    ><img src="images/login-text.gif" width="237" height="28" border="0" alt="<fmt:message key="login.hint" />"
-                    ></div></td>
-            </tr>
 
-            <noscript>
+
+        <div align="center" id="jive-loginTable">
+
+            <div style="text-align: center; width: 380px;">
+            <table cellpadding="0" cellspacing="0" border="0" align="center">
                 <tr>
-                    <td colspan="3">
-                        <table cellpadding="0" cellspacing="0" border="0">
+                    <td align="right" class="loginFormTable">
+
+                        <table cellpadding="2" cellspacing="0" border="0">
+                        <noscript>
+                            <tr>
+                                <td colspan="3">
+                                    <table cellpadding="0" cellspacing="0" border="0">
+                                    <tr valign="top">
+                                        <td><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" vspace="2"></td>
+                                        <td><div class="jive-error-text" style="padding-left:5px; color:#cc0000;"><fmt:message key="login.error" /></div></td>
+                                    </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </noscript>
+                        <%  if (errors) { %>
+                            <tr>
+                                <td colspan="3">
+                                    <table cellpadding="0" cellspacing="0" border="0">
+                                    <tr valign="top">
+                                        <td><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" vspace="2"></td>
+                                        <td><div class="jive-error-text" style="padding-left:5px; color:#cc0000;"><fmt:message key="login.failed" /></div></td>
+                                    </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        <%  } %>
+                        <tr>
+                            <td><input type="text" name="username" size="15" maxlength="50" id="u01" value="<%= (username != null ? username : "") %>"></td>
+                            <td><input type="password" name="password" size="15" maxlength="50" id="p01"></td>
+                            <td align="center"><input type="submit" value="&nbsp; <fmt:message key="login.login" /> &nbsp;"></td>
+                        </tr>
                         <tr valign="top">
-                            <td><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" vspace="2"></td>
-                            <td>
-                                <div class="jive-error-text" style="padding-left:5px;">
-                                <fmt:message key="login.error" />
-                                </div>
-                            </td>
+                            <td class="jive-login-label"><label for="u01"><fmt:message key="login.username" /></label></td>
+                            <td class="jive-login-label"><label for="p01"><fmt:message key="login.password" /></label></td>
+                            <td>&nbsp;</td>
                         </tr>
                         </table>
+                            <script language="JavaScript" type="text/javascript">
+                                <!--
+                                document.loginForm.username.focus();
+                                //-->
+                            </script>
                     </td>
                 </tr>
-            </noscript>
-
-            <%  if (errors) { %>
-
                 <tr>
-                    <td colspan="3">
-                        <table cellpadding="0" cellspacing="0" border="0">
-                        <tr valign="top">
-                            <td><img src="images/error-16x16.gif" width="16" height="16" border="0" alt="" vspace="2"></td>
-                            <td>
-                                <div class="jive-error-text" style="padding-left:5px;">
-																<fmt:message key="login.failed" />
-                                </div>
-                            </td>
-                        </tr>
-                        </table>
+                    <td align="right">
+                        <div align="right" id="jive-loginVersion">
+                        <%= AdminConsole.getAppName() %>, <fmt:message key="login.version" />: <%= AdminConsole.getVersionString() %>
+                        </div>
                     </td>
                 </tr>
-
-            <%  } %>
-
-            <tr>
-                <td>
-                    <input type="text" name="username" size="15" maxlength="50" id="u01" value="<%= (username != null ? username : "") %>">
-                </td>
-                <td>
-                    <input type="password" name="password" size="15" maxlength="50" id="p01">
-                </td>
-                <td align="center">
-                    <input type="submit" value="&nbsp; <fmt:message key="login.login" /> &nbsp;">
-                </td>
-            </tr>
-            <tr valign="top">
-                <td class="jive-login-label">
-                    <label for="u01">
-                    <fmt:message key="login.username" />
-                    </label>
-                </td>
-                <td class="jive-login-label">
-                    <label for="p01">
-                    <fmt:message key="login.password" />
-                    </label>
-                </td>
-                <td>
-                    &nbsp;
-                </td>
-            </tr>
-            <tr class="jive-login-label">
-                <td colspan="3"><img src="images/blank.gif" width="1" height="4" border="0" alt=""></td>
-            </tr>
-            <tr class="jive-footer">
-                <td colspan="3" nowrap>
-                    <span style="font-size:0.8em;">
-                    <%= AdminConsole.getAppName() %>, <fmt:message key="login.version" />: <%= AdminConsole.getVersionString() %>
-                    </span>
-                </td>
-            </tr>
             </table>
+            </div>
+        </div>
 
-        </td>
-        <td width="48%">&nbsp;</td>
-    </tr>
-    </table>
-
+    </div>
+    <!-- END login box -->
 </div>
+
+<!-- old login log image
+ <img src="<%= AdminConsole.getLoginLogoImage() %>" border="0" alt="<%= AdminConsole.getAppName() %>">
+ -->
+
 
 </form>
 

@@ -1,7 +1,7 @@
 <%--
   -	$RCSfile$
-  -	$Revision: 3195 $
-  -	$Date: 2005-12-13 13:07:30 -0500 (Tue, 13 Dec 2005) $
+  -	$Revision: 7742 $
+  -	$Date: 2007-03-27 19:44:27 -0500 (Tue, 27 Mar 2007) $
   -
   - Copyright (C) 2004 Jive Software. All rights reserved.
   -
@@ -10,8 +10,7 @@
 --%>
 
 <%@ page import="org.jivesoftware.util.*,
-                 org.jivesoftware.admin.*,
-                 org.jivesoftware.wildfire.group.Group,
+                 org.jivesoftware.openfire.group.Group,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
@@ -55,6 +54,12 @@
     </head>
     <body>
 
+<% if (webManager.getGroupManager().isReadOnly()) { %>
+<div class="error">
+    <fmt:message key="group.read_only"/>
+</div>
+<% } %>
+
 <p>
 <fmt:message key="group.delete.hint_info" />
 <b><a href="group-edit.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8")%>"><%= group.getName() %></a></b>
@@ -66,6 +71,20 @@
 <input type="submit" name="delete" value="<fmt:message key="group.delete.delete" />">
 <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
 </form>
+
+    <%  // Disable the form if a read-only user provider.
+    if (webManager.getGroupManager().isReadOnly()) { %>
+
+<script language="Javascript" type="text/javascript">
+  function disable() {
+    var limit = document.forms[0].elements.length;
+    for (i=0;i<limit;i++) {
+      document.forms[0].elements[i].disabled = true;
+    }
+  }
+  disable();
+</script>
+    <% } %>
 
     </body>
 </html>

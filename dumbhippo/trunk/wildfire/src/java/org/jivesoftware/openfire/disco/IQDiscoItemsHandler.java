@@ -3,27 +3,26 @@
  * $Revision: 1701 $
  * $Date: 2005-07-26 02:23:45 -0300 (Tue, 26 Jul 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.disco;
+package org.jivesoftware.openfire.disco;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.wildfire.IQHandlerInfo;
-import org.jivesoftware.wildfire.Session;
-import org.jivesoftware.wildfire.SessionManager;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.handler.IQHandler;
-import org.jivesoftware.wildfire.roster.RosterItem;
-import org.jivesoftware.wildfire.user.User;
-import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.handler.IQHandler;
+import org.jivesoftware.openfire.roster.RosterItem;
+import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -55,7 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProvider {
 
-    private HashMap entities = new HashMap();
+    private Map<String,DiscoItemsProvider> entities = new HashMap<String,DiscoItemsProvider>();
     private List<Element> serverItems = new ArrayList<Element>();
     private Map<String, DiscoItemsProvider> serverNodeProviders =
             new ConcurrentHashMap<String, DiscoItemsProvider>();
@@ -71,9 +70,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         return info;
     }
 
-    public IQ handleIQ(IQ packet) throws UnauthorizedException {
-        // TODO Let configure an authorization policy (ACL?). Currently anyone can discover items.
-        
+    public IQ handleIQ(IQ packet) {
         // Create a copy of the sent pack that will be used as the reply
         // we only need to add the requested items to the reply if any otherwise add 
         // a not found error
@@ -115,7 +112,6 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
                     item.setQName(new QName(item.getName(), queryElement.getNamespace()));
                     queryElement.add(item.createCopy());
                 }
-                ;
             }
             else {
                 // If the DiscoItemsProvider has no items for the requested name and node 
@@ -142,7 +138,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      *         or null if none was found.
      */
     private DiscoItemsProvider getProvider(String name) {
-        return (DiscoItemsProvider)entities.get(name);
+        return entities.get(name);
     }
 
     /**
@@ -174,23 +170,48 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      *
      * @param provider the ServerItemsProvider that provides new server items.
      */
-    private void addServerItemsProvider(ServerItemsProvider provider) {
+    public void addServerItemsProvider(ServerItemsProvider provider) {
         DiscoServerItem discoItem;
-        for (Iterator it = provider.getItems(); it.hasNext();) {
-            discoItem = (DiscoServerItem)it.next();
-            // Create a new element based on the provided DiscoItem
-            Element element = DocumentHelper.createElement("item");
-            element.addAttribute("jid", discoItem.getJID());
-            element.addAttribute("node", discoItem.getNode());
-            element.addAttribute("name", discoItem.getName());
+        Iterator<DiscoServerItem> items = provider.getItems();
+        if (items == null) {
+            // Do nothing
+            return;
+        }
+        while (items.hasNext()) {
+            discoItem = items.next();
             // Add the element to the list of items related to the server
-            serverItems.add(element);
-            
+            addComponentItem(discoItem.getJID(), discoItem.getNode(), discoItem.getName());
+
             // Add the new item as a valid entity that could receive info and items disco requests
             String host = new JID(discoItem.getJID()).getDomain();
             infoHandler.setProvider(host, discoItem.getDiscoInfoProvider());
             setProvider(host, discoItem.getDiscoItemsProvider());
         }
+    }
+
+    /**
+     * Removes the provided items as a service of the service.
+     *
+     * @param provider The provider that is being removed.
+     */
+    public void removeServerItemsProvider(ServerItemsProvider provider) {
+        DiscoServerItem discoItem;
+        Iterator<DiscoServerItem> items = provider.getItems();
+        if (items == null) {
+            // Do nothing
+            return;
+        }
+        while (items.hasNext()) {
+            discoItem = items.next();
+            // Remove the item from the server items list
+            removeComponentItem(discoItem.getJID());
+
+            // Remove the item as a valid entity that could receive info and items disco requests
+            String host = new JID(discoItem.getJID()).getDomain();
+            infoHandler.removeProvider(host);
+            removeProvider(host);
+        }
+
     }
 
     /**
@@ -224,6 +245,18 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      * @param name the discovered name of the component.
      */
     public void addComponentItem(String jid, String name) {
+        addComponentItem(jid, null, name);
+    }
+
+    /**
+     * Registers a new disco item for a component. The jid attribute of the item will match the jid
+     * of the component and the name should be the name of the component discovered using disco.
+     *
+     * @param jid the jid of the component.
+     * @param node the node that complements the jid address.
+     * @param name the discovered name of the component.
+     */
+    public synchronized void addComponentItem(String jid, String node, String name) {
         // A component may send his disco#info many times and we only want to have one item
         // for the component so remove any element under the requested jid
         removeComponentItem(jid);
@@ -231,6 +264,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         // Create a new element based on the provided DiscoItem
         Element element = DocumentHelper.createElement("item");
         element.addAttribute("jid", jid);
+        element.addAttribute("node", node);
         element.addAttribute("name", name);
         // Add the element to the list of items related to the server
         serverItems.add(element);
@@ -241,7 +275,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
      *
      * @param jid the jid of the component being removed.
      */
-    public void removeComponentItem(String jid) {
+    public synchronized void removeComponentItem(String jid) {
         for (Iterator<Element> it = serverItems.iterator(); it.hasNext();) {
             if (jid.equals(it.next().attributeValue("jid"))) {
                 it.remove();
@@ -264,8 +298,8 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         }
     }
 
-    public Iterator getFeatures() {
-        ArrayList features = new ArrayList();
+    public Iterator<String> getFeatures() {
+        List<String> features = new ArrayList<String>();
         features.add("http://jabber.org/protocol/disco#items");
         // TODO Comment out this line when publishing of client items is implemented
         //features.add("http://jabber.org/protocol/disco#publish");
@@ -273,7 +307,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
     }
 
     private DiscoItemsProvider getServerItemsProvider() {
-        DiscoItemsProvider discoItemsProvider = new DiscoItemsProvider() {
+        return new DiscoItemsProvider() {
             public Iterator<Element> getItems(String name, String node, JID senderJID) {
                 if (node != null) {
                     // Check if there is a provider for the requested node
@@ -308,6 +342,5 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
                 }
             }
         };
-        return discoItemsProvider;
     }
 }

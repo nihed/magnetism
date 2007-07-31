@@ -3,20 +3,26 @@
  * $Revision: 3114 $
  * $Date: 2005-11-23 18:12:54 -0300 (Wed, 23 Nov 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2007 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire;
+package org.jivesoftware.openfire;
 
-import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.privacy.PrivacyList;
+import org.jivesoftware.openfire.privacy.PrivacyListManager;
+import org.jivesoftware.openfire.user.UserManager;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
+
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Controls what is done with offline messages.
@@ -27,6 +33,8 @@ public class OfflineMessageStrategy extends BasicModule {
 
     private static int quota = 100*1024; // Default to 100 K.
     private static Type type = Type.store_and_bounce;
+
+    private static List<OfflineMessageListener> listeners = new CopyOnWriteArrayList<OfflineMessageListener>();
 
     private OfflineMessageStore messageStore;
     private JID serverAddress;
@@ -62,13 +70,20 @@ public class OfflineMessageStrategy extends BasicModule {
             // Do nothing if the message was sent to the server itself or to an anonymous user
             JID recipientJID = message.getTo();
             if (recipientJID == null || serverAddress.equals(recipientJID) ||
-                    recipientJID.getNode() == null) {
+                    recipientJID.getNode() == null ||
+                    !UserManager.getInstance().isRegisteredUser(recipientJID.getNode())) {
                 return;
             }
             // Do not store messages of type groupchat, error or headline as specified in JEP-160
             if (Message.Type.groupchat == message.getType() ||
                     Message.Type.error == message.getType() ||
                     Message.Type.headline == message.getType()) {
+                return;
+            }
+            // Do not store messages if communication is blocked
+            PrivacyList list =
+                    PrivacyListManager.getInstance().getDefaultPrivacyList(recipientJID.getNode());
+            if (list != null && list.shouldBlockPacket(message)) {
                 return;
             }
 
@@ -94,12 +109,39 @@ public class OfflineMessageStrategy extends BasicModule {
         }
     }
 
+    /**
+     * Registers a listener to receive events.
+     *
+     * @param listener the listener.
+     */
+    public static void addListener(OfflineMessageListener listener) {
+        if (listener == null) {
+            throw new NullPointerException();
+        }
+        listeners.add(listener);
+    }
+
+    /**
+     * Unregisters a listener to receive events.
+     *
+     * @param listener the listener.
+     */
+    public static void removeListener(OfflineMessageListener listener) {
+        listeners.remove(listener);
+    }
+
     private boolean underQuota(Message message) {
         return quota > messageStore.getSize(message.getTo().getNode()) + message.toXML().length();
     }
 
     private void store(Message message) {
         messageStore.addMessage(message);
+        // Inform listeners that an offline message was stored
+        if (!listeners.isEmpty()) {
+            for (OfflineMessageListener listener : listeners) {
+                listener.messageStored(message);
+            }
+        }
     }
 
     private void bounce(Message message) {
@@ -116,6 +158,12 @@ public class OfflineMessageStrategy extends BasicModule {
             errorResponse.setTo(message.getFrom());
             // Send the response
             router.route(errorResponse);
+            // Inform listeners that an offline message was bounced
+            if (!listeners.isEmpty()) {
+                for (OfflineMessageListener listener : listeners) {
+                    listener.messageBounced(message);
+                }
+            }
         }
         catch (Exception e) {
             Log.error(e);
@@ -166,6 +214,6 @@ public class OfflineMessageStrategy extends BasicModule {
         /**
          * Messages are stored up to the storage limit, and then silently dropped.
          */
-        store_and_drop;
+        store_and_drop
     }
 }

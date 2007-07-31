@@ -9,9 +9,9 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.handler;
+package org.jivesoftware.openfire.handler;
 
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 
 /**
  * Handle the various user registration settings that are
@@ -121,7 +121,7 @@ public interface IQRegisterInfo {
      * Sets the location for storing field information.
      *
      * @param location The location type
-     * @throws org.jivesoftware.wildfire.auth.UnauthorizedException
+     * @throws org.jivesoftware.openfire.auth.UnauthorizedException
      *          If you don't have permission to adjust this setting
      */
     public void setFieldStoreLocation(int location) throws UnauthorizedException;
@@ -138,7 +138,7 @@ public interface IQRegisterInfo {
      * Tells the server whether to support open registration or not.
      *
      * @param isSupported True if open registration is supported
-     * @throws org.jivesoftware.wildfire.auth.UnauthorizedException
+     * @throws org.jivesoftware.openfire.auth.UnauthorizedException
      *          If you don't have permission to change this setting
      */
     public void setOpenRegistrationSupported(boolean isSupported) throws UnauthorizedException;
@@ -156,7 +156,7 @@ public interface IQRegisterInfo {
      *
      * @param fieldType  The field to require.
      * @param isRequired True if the field should be required
-     * @throws org.jivesoftware.wildfire.auth.UnauthorizedException
+     * @throws org.jivesoftware.openfire.auth.UnauthorizedException
      *          If you don't have permission to change this setting
      */
     public void setFieldRequired(int fieldType, boolean isRequired) throws UnauthorizedException;

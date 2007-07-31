@@ -9,19 +9,20 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.handler;
+package org.jivesoftware.openfire.handler;
 
-import org.jivesoftware.wildfire.*;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.wildfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.wildfire.roster.Roster;
-import org.jivesoftware.wildfire.roster.RosterItem;
-import org.jivesoftware.wildfire.user.User;
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
-import org.jivesoftware.wildfire.user.UserManager;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.stringprep.IDNAException;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.openfire.roster.Roster;
+import org.jivesoftware.openfire.roster.RosterItem;
+import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
@@ -99,7 +100,8 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
             JID recipientJID = packet.getTo();
 
             // The packet is bound for the server and must be roster management
-            if (recipientJID == null || recipientJID.getNode() == null) {
+            if (recipientJID == null || recipientJID.getNode() == null ||
+                    !UserManager.getInstance().isRegisteredUser(recipientJID.getNode())) {
                 returnPacket = manageRoster(roster);
             }
             // The packet must be a roster removal from a foreign domain user.
@@ -115,9 +117,21 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
             return result;
         }
         catch (Exception e) {
-            Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+            if (e.getCause() instanceof IDNAException) {
+                Log.warn(LocaleUtils.getLocalizedString("admin.error"), e);
+                IQ result = IQ.createResultIQ(packet);
+                result.setChildElement(packet.getChildElement().createCopy());
+                result.setError(PacketError.Condition.jid_malformed);
+                return result;
+            }
+            else {
+                Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                IQ result = IQ.createResultIQ(packet);
+                result.setChildElement(packet.getChildElement().createCopy());
+                result.setError(PacketError.Condition.internal_server_error);
+                return result;
+            }
         }
-        return null;
     }
 
     /**
@@ -164,23 +178,30 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
             UserAlreadyExistsException, SharedGroupException {
 
         IQ returnPacket = null;
-        ClientSession session = sessionManager.getSession(packet.getFrom());
-
+        JID sender = packet.getFrom();
         IQ.Type type = packet.getType();
 
         try {
-            if (session.getUsername() == null && IQ.Type.get == type) {
-                // If anonymous user asks for his roster then return an empty roster
+            if ((sender.getNode() == null || !RosterManager.isRosterServiceEnabled() ||
+                    !userManager.isRegisteredUser(sender.getNode())) &&
+                    IQ.Type.get == type) {
+                // If anonymous user asks for his roster or roster service is disabled then
+                // return an empty roster
                 IQ reply = IQ.createResultIQ(packet);
                 reply.setChildElement("query", "jabber:iq:roster");
                 return reply;
             }
-            User sessionUser = userManager.getUser(session.getUsername());
-            Roster cachedRoster = sessionUser.getRoster();
+            if (!localServer.isLocal(sender)) {
+                // Sender belongs to a remote server so discard this IQ request
+                Log.warn("Discarding IQ roster packet of remote user: " + packet);
+                return null;
+            }
+
+            Roster cachedRoster = userManager.getUser(sender.getNode()).getRoster();
             if (IQ.Type.get == type) {
                 returnPacket = cachedRoster.getReset();
                 returnPacket.setType(IQ.Type.result);
-                returnPacket.setTo(session.getAddress());
+                returnPacket.setTo(sender);
                 returnPacket.setID(packet.getID());
                 // Force delivery of the response because we need to trigger
                 // a presence probe from all contacts
@@ -225,7 +246,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * @param sender The JID of the sender of the removal request
      * @param item   The removal item element
      */
-    private void removeItem(org.jivesoftware.wildfire.roster.Roster roster, JID sender,
+    private void removeItem(org.jivesoftware.openfire.roster.Roster roster, JID sender,
             org.xmpp.packet.Roster.Item item) throws SharedGroupException {
         JID recipient = item.getJID();
         // Remove recipient from the sender's roster
@@ -237,6 +258,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
                 recipientRoster.deleteRosterItem(sender, true);
             }
             catch (UserNotFoundException e) {
+                // Do nothing
             }
         }
         else {

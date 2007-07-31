@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.group;
+package org.jivesoftware.openfire.group;
 
 import org.xmpp.packet.JID;
 
@@ -18,7 +18,7 @@ import java.util.Collection;
 /**
  * Provider interface for groups. Users that wish to integrate with
  * their own group system must implement this class and then register
- * the implementation with Wildfire in the <tt>wildfire.xml</tt>
+ * the implementation with Openfire in the <tt>openfire.xml</tt>
  * file. An entry in that file would look like the following:
  *
  * <pre>
@@ -97,28 +97,29 @@ public interface GroupProvider {
     int getGroupCount();
 
     /**
-     * Returns the Collection of all groups in the system.
+     * Returns the Collection of all group names in the system.
      *
      * @return the Collection of all groups.
      */
-    Collection<Group> getGroups();
+    Collection<String> getGroupNames();
 
     /**
      * Returns the Collection of all groups in the system.
      *
      * @param startIndex start index in results.
      * @param numResults number of results to return.
-     * @return the Collection of all groups given the <tt>startIndex</tt> and <tt>numResults</tt>.
+     * @return the Collection of all group names given the
+     *      <tt>startIndex</tt> and <tt>numResults</tt>.
      */
-    Collection<Group> getGroups(int startIndex, int numResults);
+    Collection<String> getGroupNames(int startIndex, int numResults);
 
     /**
-     * Returns the Collection of Groups that an entity belongs to.
+     * Returns the Collection of group names that an entity belongs to.
      *
      * @param user the JID of the entity.
-     * @return the Collection of groups that the user belongs to.
+     * @return the Collection of group names that the user belongs to.
      */
-    Collection<Group> getGroups(JID user);
+    Collection<String> getGroupNames(JID user);
 
     /**
      * Adds an entity to a group (optional operation).
@@ -160,5 +161,42 @@ public interface GroupProvider {
      *
      * @return true if the user provider is read-only.
      */
-    public boolean isReadOnly();
+    boolean isReadOnly();
+
+    /**
+     * Returns the group names that match a search. The search is over group names and
+     * implicitly uses wildcard matching (although the exact search semantics are left
+     * up to each provider implementation). For example, a search for "HR" should match
+     * the groups "HR", "HR Department", and "The HR People".<p>
+     *
+     * Before searching or showing a search UI, use the {@link #isSearchSupported} method
+     * to ensure that searching is supported.
+     *
+     * @param query the search string for group names.
+     * @return all groups that match the search.
+     */
+    Collection<String> search(String query);
+
+    /**
+     * Returns the group names that match a search given a start index and desired number of results.
+     * The search is over group names and implicitly uses wildcard matching (although the
+     * exact search semantics are left up to each provider implementation). For example, a
+     * search for "HR" should match the groups "HR", "HR Department", and "The HR People".<p>
+     *
+     * Before searching or showing a search UI, use the {@link #isSearchSupported} method
+     * to ensure that searching is supported.
+     *
+     * @param query the search string for group names.
+     * @param startIndex start index in results.
+     * @param numResults number of results to return.
+     * @return all groups that match the search.
+     */
+    Collection<String> search(String query, int startIndex, int numResults);
+
+    /**
+     * Returns true if group searching is supported by the provider.
+     *
+     * @return true if searching is supported.
+     */
+    boolean isSearchSupported();
 }

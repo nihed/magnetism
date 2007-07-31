@@ -1,12 +1,22 @@
-package org.jivesoftware.wildfire.server;
+/**
+ * $Revision: $
+ * $Date: $
+ *
+ * Copyright (C) 2007 Jive Software. All rights reserved.
+ *
+ * This software is published under the terms of the GNU Public License (GPL),
+ * a copy of which is included in this distribution.
+ */
+
+package org.jivesoftware.openfire.server;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.wildfire.Session;
-import org.jivesoftware.wildfire.SessionManager;
-import org.jivesoftware.wildfire.net.SocketAcceptThread;
-import org.jivesoftware.wildfire.server.RemoteServerConfiguration.Permission;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.ConnectionManager;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.server.RemoteServerConfiguration.Permission;
+import org.jivesoftware.openfire.session.Session;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -273,15 +283,13 @@ public class RemoteServerManager {
      * @return the remote port to connect for the specified remote server.
      */
     public static int getPortForServer(String domain) {
-        int port = JiveGlobals.getIntProperty("xmpp.server.socket.remotePort",
-                SocketAcceptThread.DEFAULT_SERVER_PORT);
+        int port = JiveGlobals.getIntProperty("xmpp.server.socket.remotePort", ConnectionManager.DEFAULT_SERVER_PORT);
         RemoteServerConfiguration config = getConfiguration(domain);
         if (config != null) {
             port = config.getRemotePort();
             if (port == 0) {
-                port =
-                        JiveGlobals.getIntProperty("xmpp.server.socket.remotePort",
-                                SocketAcceptThread.DEFAULT_SERVER_PORT);
+                port = JiveGlobals
+                        .getIntProperty("xmpp.server.socket.remotePort", ConnectionManager.DEFAULT_SERVER_PORT);
             }
         }
         return port;

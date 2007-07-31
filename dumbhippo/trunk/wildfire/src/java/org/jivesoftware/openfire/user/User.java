@@ -9,22 +9,23 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.user;
+package org.jivesoftware.openfire.user;
 
-import org.jivesoftware.wildfire.roster.Roster;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.event.UserEventDispatcher;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.util.Cacheable;
-import org.jivesoftware.util.CacheSizes;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.CacheSizes;
+import org.jivesoftware.util.Cacheable;
+import org.jivesoftware.util.Log;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.AuthFactory;
+import org.jivesoftware.openfire.event.UserEventDispatcher;
+import org.jivesoftware.openfire.roster.Roster;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Encapsulates information about a user. New users are created using
@@ -40,6 +41,8 @@ public class User implements Cacheable {
 
     private static final String LOAD_PROPERTIES =
         "SELECT name, propValue FROM jiveUserProp WHERE username=?";
+    private static final String LOAD_PROPERTY =
+        "SELECT propValue FROM jiveUserProp WHERE username=? AND name=?";
     private static final String DELETE_PROPERTY =
         "DELETE FROM jiveUserProp WHERE username=? AND name=?";
     private static final String UPDATE_PROPERTY =
@@ -54,6 +57,41 @@ public class User implements Cacheable {
     private Date modificationDate;
 
     private Map<String,String> properties = null;
+
+    /**
+     * Returns the value of the specified property for the given username. This method is
+     * an optimization to avoid loading a user to get a specific property.
+     *
+     * @param username the username of the user to get a specific property value.
+     * @param propertyName the name of the property to return its value.
+     * @return the value of the specified property for the given username.
+     */
+    public static String getPropertyValue(String username, String propertyName) {
+        String propertyValue = null;
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_PROPERTY);
+            pstmt.setString(1, username);
+            pstmt.setString(2, propertyName);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                propertyValue = rs.getString(1);
+            }
+            rs.close();
+        }
+        catch (SQLException sqle) {
+            Log.error(sqle);
+        }
+        finally {
+            try { if (pstmt != null) pstmt.close(); }
+            catch (Exception e) { Log.error(e); }
+            try { if (con != null) con.close(); }
+            catch (Exception e) { Log.error(e); }
+        }
+        return propertyValue;
+    }
 
     /**
      * Constructs a new user. All arguments can be <tt>null</tt> except the username.
@@ -99,13 +137,16 @@ public class User implements Cacheable {
         }
 
         try {
-            UserManager.getUserProvider().setPassword(username, password);
+            AuthFactory.getAuthProvider().setPassword(username, password);
 
             // Fire event.
-            Map params = new HashMap();
+            Map<String,Object> params = new HashMap<String,Object>();
             params.put("type", "passwordModified");
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
                     params);
+        }
+        catch (UnsupportedOperationException uoe) {
+            Log.error(uoe);
         }
         catch (UserNotFoundException unfe) {
             Log.error(unfe);
@@ -127,7 +168,7 @@ public class User implements Cacheable {
             this.name = name;
 
             // Fire event.
-            Map params = new HashMap();
+            Map<String,Object> params = new HashMap<String,Object>();
             params.put("type", "nameModified");
             params.put("originalValue", originalName);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -138,6 +179,11 @@ public class User implements Cacheable {
         }
     }
 
+    /**
+     * Returns the email address of the user or <tt>null</tt> if none is defined.
+     *
+     * @return the email address of the user or nullif none is defined.
+     */
     public String getEmail() {
         return email;
     }
@@ -152,7 +198,7 @@ public class User implements Cacheable {
             UserManager.getUserProvider().setEmail(username, email);
             this.email = email;
             // Fire event.
-            Map params = new HashMap();
+            Map<String,Object> params = new HashMap<String,Object>();
             params.put("type", "emailModified");
             params.put("originalValue", originalEmail);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -178,7 +224,7 @@ public class User implements Cacheable {
             this.creationDate = creationDate;
 
             // Fire event.
-            Map params = new HashMap();
+            Map<String,Object> params = new HashMap<String,Object>();
             params.put("type", "creationDateModified");
             params.put("originalValue", originalCreationDate);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -204,7 +250,7 @@ public class User implements Cacheable {
             this.modificationDate = modificationDate;
 
             // Fire event.
-            Map params = new HashMap();
+            Map<String,Object> params = new HashMap<String,Object>();
             params.put("type", "nameModified");
             params.put("originalValue", originalModificationDate);
             UserEventDispatcher.dispatchEvent(this, UserEventDispatcher.EventType.user_modified,
@@ -288,12 +334,12 @@ public class User implements Cacheable {
     private class PropertiesMap extends AbstractMap {
 
         public Object put(Object key, Object value) {
-            Map eventParams = new HashMap();
+            Map<String,Object> eventParams = new HashMap<String,Object>();
             Object answer;
             String keyString = (String) key;
             synchronized (keyString.intern()) {
-                if (properties.containsKey(key)) {
-                    String originalValue = properties.get(key);
+                if (properties.containsKey(keyString)) {
+                    String originalValue = properties.get(keyString);
                     answer = properties.put(keyString, (String)value);
                     updateProperty(keyString, (String)value);
                     // Configure event.
@@ -352,7 +398,7 @@ public class User implements Cacheable {
                     deleteProperty(key);
                     iter.remove();
                     // Fire event.
-                    Map params = new HashMap();
+                    Map<String,Object> params = new HashMap<String,Object>();
                     params.put("type", "propertyDeleted");
                     params.put("propertyKey", key);
                     UserEventDispatcher.dispatchEvent(User.this,

@@ -8,7 +8,7 @@
 
 <%@ page import="org.jivesoftware.util.JiveGlobals,
                  java.util.Map,
-                 org.jivesoftware.wildfire.XMPPServer"
+                 org.jivesoftware.openfire.XMPPServer"
 %>
 <%@ page import="org.jivesoftware.util.LocaleUtils"%>
 
@@ -39,21 +39,43 @@
 <html>
     <head>
         <title><fmt:message key="setup.finished.title" /></title>
-        <meta name="showSidebar" content="false"/>
+        <meta name="currentStep" content="5"/>
+        <script type="text/javascript">
+
+        function showhide(id){
+            var obj = document.getElementById(id);
+            if (obj.style.display == "none"){
+                obj.style.display = "";
+            } else {
+                obj.style.display = "none";
+            }
+        }
+
+        function toggleDivs() {
+            showhide('loginlink');
+            showhide('logintext');
+        }
+        </script>
     </head>
-<body>
+<body onload="setTimeout('toggleDivs()', 1500);">
 
-<p class="jive-setup-page-header">
-<fmt:message key="setup.finished.title" />
-</p>
+	<h1>
+	<fmt:message key="setup.finished.title" />
+	</h1>
 
-<p>
-<fmt:message key="setup.finished.info">
-    <fmt:param value="<%= LocaleUtils.getLocalizedString("title") %>" />
-</fmt:message>
-</p>
+	<p>
+	<fmt:message key="setup.finished.info">
+	    <fmt:param value="<%= LocaleUtils.getLocalizedString("title") %>" />
+	</fmt:message>
+	</p>
 
 <%
+    String authorizedUsernames = JiveGlobals.getXMLProperty("admin.authorizedUsernames");
+    String authorizedJIDS = JiveGlobals.getXMLProperty("admin.authorizedJIDs");
+
+    boolean useAdmin = authorizedJIDS == null  && authorizedUsernames == null;
+    String parameters = useAdmin ? "?username=admin" : "";
+
     // Figure out the URL that the user can use to login to the admin console.
     String url;
     if (XMPPServer.getInstance().isStandAlone()) {
@@ -63,20 +85,26 @@
         // Use secure login if we're currently secure (and the secure port isn't disabled)
         // or if the user disabled the plain port.
         if ((request.isSecure() && securePort > 0) || plainPort < 0) {
-            url = "https://" + server + ":" + securePort + "/login.jsp?username=admin";
+            url = "https://" + server + ":" + securePort + "/login.jsp"+parameters;
         }
         else {
-            url = "http://" + server + ":" + plainPort + "/login.jsp?username=admin";
+            url = "http://" + server + ":" + plainPort + "/login.jsp"+parameters;
         }
     }
     else {
         url = request.getRequestURL().toString();
-        url = url.replace("setup/setup-finished.jsp", "login.jsp?username=admin");
+        url = url.replace("setup/setup-finished.jsp", "login.jsp"+parameters);
     }
 %>
-<ul>
-    <a href="<%= url %>"><fmt:message key="setup.finished.login" /></a>
-</ul>
+
+<br><br>
+	<div id="loginlink" style="display:none;" class="jive_setup_launchAdmin">
+		<a href="<%= url %>"><fmt:message key="setup.finished.login" /></a>
+	</div>
+
+	<div id="logintext" class="jive_setup_launchAdmin">
+		<fmt:message key="setup.finished.wait" /> <img src="../images/working-16x16.gif" alt="<fmt:message key="setup.finished.wait" />" width="16" height="16">
+	</div>
 
 </body>
 </html>

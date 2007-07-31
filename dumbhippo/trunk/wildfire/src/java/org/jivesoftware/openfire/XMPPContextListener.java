@@ -8,7 +8,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire;
+package org.jivesoftware.openfire;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;

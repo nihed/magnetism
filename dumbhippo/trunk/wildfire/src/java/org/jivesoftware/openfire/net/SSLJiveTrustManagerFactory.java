@@ -9,7 +9,7 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.net;
+package org.jivesoftware.openfire.net;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -25,7 +25,7 @@ import org.jivesoftware.util.Log;
 
 /**
  * A custom TrustManagerFactory that creates a trust manager list using the
- * default trust manager or a standard keystore as specified in jive_config.xml.
+ * default trust manager or a standard keystore as specified in openfire.xml.
  * There is no default trust keystore provided with the Jive distribution as most
  * clients will not need to be authenticated with the server.
  * <p/>

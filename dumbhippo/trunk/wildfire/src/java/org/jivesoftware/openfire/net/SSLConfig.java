@@ -3,14 +3,16 @@
  * $Revision: 1217 $
  * $Date: 2005-04-11 18:11:06 -0300 (Mon, 11 Apr 2005) $
  *
- * Copyright (C) 2004 Jive Software. All rights reserved.
+ * Copyright (C) 2006 Jive Software. All rights reserved.
  *
  * This software is published under the terms of the GNU Public License (GPL),
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.net;
+package org.jivesoftware.openfire.net;
 
+import org.jivesoftware.util.CertificateEventListener;
+import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
@@ -21,9 +23,11 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.security.KeyStore;
+import java.security.cert.X509Certificate;
+import java.util.List;
 
 /**
- * Configuration of Wildfire's SSL settings.
+ * Configuration of Openfire's SSL settings.
  *
  * @author Iain Shigeoka
  */
@@ -36,13 +40,14 @@ public class SSLConfig {
     private static String trustpass;
     private static String keyStoreLocation;
     private static String trustStoreLocation;
+    private static String storeType;
 
     private SSLConfig() {
     }
 
     static {
         String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
-        String storeType = JiveGlobals.getProperty("xmpp.socket.ssl.storeType", "jks");
+        storeType = JiveGlobals.getProperty("xmpp.socket.ssl.storeType", "jks");
 
         // Get the keystore location. The default location is security/keystore
         keyStoreLocation = JiveGlobals.getProperty("xmpp.socket.ssl.keystore",
@@ -83,6 +88,36 @@ public class SSLConfig {
             trustStore = null;
             sslFactory = null;
         }
+        // Reset ssl factoty when certificates are modified
+        CertificateManager.addListener(new CertificateEventListener() {
+            public void certificateCreated(KeyStore keyStore, String alias, X509Certificate cert) {
+                // Reset ssl factory since keystores have changed
+                resetFactory(keyStore);
+            }
+
+            public void certificateDeleted(KeyStore keyStore, String alias) {
+                // Reset ssl factory since keystores have changed
+                resetFactory(keyStore);
+            }
+
+            public void certificateSigned(KeyStore keyStore, String alias,
+                    List<X509Certificate> certificates) {
+                // Reset ssl factory since keystores have changed
+                resetFactory(keyStore);
+            }
+
+            private void resetFactory(KeyStore keyStore) {
+                try {
+                    String algorithm = JiveGlobals.getProperty("xmpp.socket.ssl.algorithm", "TLS");
+                    sslFactory = (SSLJiveServerSocketFactory)SSLJiveServerSocketFactory.getInstance(
+                            algorithm, keyStore, trustStore);
+                }
+                catch (IOException e) {
+                    Log.error("Error while resetting ssl factory", e);
+                    sslFactory = null;
+                }
+            }
+        });
     }
 
     public static String getKeyPassword() {
@@ -150,5 +185,21 @@ public class SSLConfig {
         else {
             return sslFactory.createServerSocket(port, -1, ifAddress);
         }
+    }
+
+    public static String getKeystoreLocation() {
+        return keyStoreLocation;
+    }
+
+    public static String getTruststoreLocation() {
+        return trustStoreLocation;
+    }
+
+    public static String getStoreType() {
+        return storeType;
+    }
+
+    public static SSLJiveServerSocketFactory getServerSocketFactory() {
+        return sslFactory;
     }
 }

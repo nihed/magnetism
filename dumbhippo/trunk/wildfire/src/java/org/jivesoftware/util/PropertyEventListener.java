@@ -1,7 +1,7 @@
 /**
  * $RCSfile$
- * $Revision: 1705 $
- * $Date: 2005-07-26 13:10:33 -0400 (Tue, 26 Jul 2005) $
+ * $Revision: 7175 $
+ * $Date: 2007-02-16 13:50:15 -0600 (Fri, 16 Feb 2007) $
  *
  * Copyright (C) 2004-2005 Jive Software. All rights reserved.
  *
@@ -23,35 +23,37 @@ import java.util.Map;
 public interface PropertyEventListener {
 
     /**
-     * A property was set.
+     * A property was set. The parameter map <tt>params</tt> will contain the
+     * the value of the property under the key <tt>value</tt>.
      *
-     * @param property the property.
+     * @param property the name of the property.
      * @param params event parameters.
      */
-    public void propertySet(String property, Map params);
+    public void propertySet(String property, Map<String, Object> params);
 
     /**
      * A property was deleted.
      *
-     * @param property the deleted.
+     * @param property the name of the property deleted.
      * @param params event parameters.
      */
-    public void propertyDeleted(String property, Map params);
+    public void propertyDeleted(String property, Map<String, Object> params);
 
     /**
-     * An XML property was set.
+     * An XML property was set. The parameter map <tt>params</tt> will contain the
+     * the value of the property under the key <tt>value</tt>. 
      *
-     * @param property the property.
+     * @param property the name of the property.
      * @param params event parameters.
      */
-    public void xmlPropertySet(String property, Map params);
+    public void xmlPropertySet(String property, Map<String, Object> params);
 
     /**
      * An XML property was deleted.
      *
-     * @param property the property.
+     * @param property the name of the property.
      * @param params event parameters.
      */
-    public void xmlPropertyDeleted(String property, Map params);
+    public void xmlPropertyDeleted(String property, Map<String, Object> params);
 
 }
