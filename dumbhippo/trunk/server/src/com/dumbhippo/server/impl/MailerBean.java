@@ -21,6 +21,7 @@ import javax.mail.internet.MimeMultipart;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Site;
 import com.dumbhippo.email.MessageContent;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -28,6 +29,7 @@ import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.tx.TxUtils;
 
 
@@ -53,7 +55,7 @@ public class MailerBean implements Mailer {
 	@EJB
 	private PersonViewer personViewer;
 
-	private MimeMessage createMessage(InternetAddress fromAddress, InternetAddress toAddress) {
+	private MimeMessage createMessage(Site site, InternetAddress fromAddress, InternetAddress toAddress) {
 			MimeMessage msg;
 			
 			msg = new MimeMessage(mailSession);
@@ -62,7 +64,8 @@ public class MailerBean implements Mailer {
 				// sender the recipient will see
 				msg.setFrom(fromAddress);
 				// sender the mail system will verify against etc.
-				msg.setSender(new InternetAddress(SpecialSender.NOBODY.toString()));
+				msg.setSender(new InternetAddress(SpecialSender.NOBODY.getSiteAddress(site)));
+				msg.setReplyTo(new InternetAddress[] { new InternetAddress(SpecialSender.NOBODY.getSiteAddress(site)) } );
 				msg.setRecipient(Message.RecipientType.TO, toAddress);
 			} catch (MessagingException e) {
 				throw new RuntimeException(e);
@@ -71,8 +74,8 @@ public class MailerBean implements Mailer {
 			return msg;
 	}
 
-	private MimeMessage createMessage(InternetAddress fromAddress, InternetAddress replyToAddress, InternetAddress toAddress) {
-		MimeMessage msg = createMessage(fromAddress, toAddress);
+	private MimeMessage createMessage(Site site, InternetAddress fromAddress, InternetAddress replyToAddress, InternetAddress toAddress) {
+		MimeMessage msg = createMessage(site, fromAddress, toAddress);
 		
 		try {
 			msg.setReplyTo(new InternetAddress[]{replyToAddress});
@@ -123,19 +126,19 @@ public class MailerBean implements Mailer {
 		InternetAddress fromAddress = createAddressFromViewpoint(viewpoint, viewpointFallbackAddress);
 		InternetAddress toAddress = createAddressFromString(to);
 		
-		return createMessage(fromAddress, toAddress);
+		return createMessage(viewpoint.getSite(), fromAddress, toAddress);
 	}
 	
 	public MimeMessage createMessage(UserViewpoint viewpoint, String to) {
-		return createMessage(viewpoint, SpecialSender.MUGSHOT, to);
+		return createMessage(viewpoint, SpecialSender.SITE, to);
 	}
 
-	public MimeMessage createMessage(SpecialSender from, String to) {
+	public MimeMessage createMessage(Viewpoint viewpoint, SpecialSender from, String to) {
 		
 		InternetAddress fromAddress = createAddressFromString(from.toString());
 		InternetAddress toAddress = createAddressFromString(to);
 		
-		return createMessage(fromAddress, toAddress);
+		return createMessage(viewpoint.getSite(), fromAddress, toAddress);
 	}
 
 	public MimeMessage createMessage(SpecialSender from, UserViewpoint viewpointReplyTo, 
@@ -145,7 +148,7 @@ public class MailerBean implements Mailer {
 		InternetAddress replyToAddress = createAddressFromViewpoint(viewpointReplyTo, viewpointFallbackAddress);
 		InternetAddress toAddress = createAddressFromString(to);
 		
-		return createMessage(fromAddress, replyToAddress, toAddress);
+		return createMessage(viewpointReplyTo.getSite(), fromAddress, replyToAddress, toAddress);
 	}
 
 	private MimeBodyPart createHtmlBodyPart(String bodyHtml, boolean htmlUsesMugshotLogo) throws MessagingException {

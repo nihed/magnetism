@@ -69,7 +69,7 @@ public class SigninSystemBean implements SigninSystem {
 			throw new HumanVisibleException("That isn't an email address we know about");
 		}
 		String link = getLoginLink(viewpoint, resource);
-		MimeMessage message = mailer.createMessage(Mailer.SpecialSender.LOGIN, resource.getEmail());
+		MimeMessage message = mailer.createMessage(viewpoint, Mailer.SpecialSender.LOGIN, resource.getEmail());
 		
 		StringBuilder bodyText = new StringBuilder();
 		XmlBuilder bodyHtml = new XmlBuilder();
@@ -176,7 +176,7 @@ public class SigninSystemBean implements SigninSystem {
 		
 		String baseLink = getLoginLink(viewpoint, emailResource);
 		String link = baseLink + "&next=repair";
-		MimeMessage message = mailer.createMessage(Mailer.SpecialSender.LOGIN, emailResource.getEmail());
+		MimeMessage message = mailer.createMessage(viewpoint, Mailer.SpecialSender.LOGIN, emailResource.getEmail());
 		
 		StringBuilder bodyText = new StringBuilder();
 		XmlBuilder bodyHtml = new XmlBuilder();
