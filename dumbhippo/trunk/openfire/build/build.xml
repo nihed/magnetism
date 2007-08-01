@@ -30,7 +30,7 @@
     <!-- GLOBAL TASKDEFs                                                                         -->
     <!-- ======================================================================================= -->
 
-    <property name="tasklib.dir" value="${dumbhippo.global.trunkdir}/lib/wildfire"/>
+    <property name="tasklib.dir" value="${dumbhippo.global.trunkdir}/lib/openfire"/>
 
     <taskdef resource="net/sf/antcontrib/antcontrib.properties">
         <classpath>
@@ -85,7 +85,7 @@
     <property name="docs.dir" value="${basedir}/documentation"/>
     <property name="web.dir" value="${src.dir}/web"/>
     <property name="spank.dir" value="${src.dir}/spank"/>
-    <property name="lib.build.dir" value="${dumbhippo.global.trunkdir}/lib/wildfire"/>
+    <property name="lib.build.dir" value="${dumbhippo.global.trunkdir}/lib/openfire"/>
     <property name="lib.build.installer.dir" value="${basedir}/build/installer"/>
     <property name="lib.merge.dir" value="${lib.build.dir}/merge"/>
     <property name="lib.dist.dir" value="${lib.build.dir}/dist"/>
