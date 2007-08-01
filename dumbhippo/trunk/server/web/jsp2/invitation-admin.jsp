@@ -57,10 +57,10 @@
         
 	    <dht:formTable>
             <dht:formTableRow label="Subject">        
-                <input id="dhSubjectEntry" size="30" maxlength="64" value="Your Mugshot Invitation"/>
+                <input id="dhSubjectEntry" size="30" maxlength="64" value="Your ${dh:xmlEscape(site.siteName)} Invitation"/>
             </dht:formTableRow>
             <dht:formTableRow label="Message">
-                <textarea id="dhMessageEntry" rows="5" cols="36">Hey! Click here to get the Mugshot Music Radar and Web Swarm.</textarea>    
+                <textarea id="dhMessageEntry" rows="5" cols="36">Your invitation has arrived! Click here to sign up for ${dh:xmlEscape(site.siteName)}.</textarea>    
             </dht:formTableRow>
             <tr>
                 <td><input type="button" value="Let Them In" onclick="return dh.invitationadmin.invite(${invitationAdmin.wantsInList.size});"/></td>
