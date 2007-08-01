@@ -1,6 +1,7 @@
 import logging, os, subprocess
 
 import gobject, gtk, pango
+import gconf
 import gnome.ui
 import dbus, dbus.glib
 import hippo
@@ -15,6 +16,8 @@ from bigboard.stock import Stock, AbstractMugshotStock
 from bigboard.big_widgets import CanvasMugshotURLImage, PhotoContentItem, CanvasVBox, CanvasHBox, ActionLink, Separator
 
 _logger = logging.getLogger('bigboard.stocks.SelfStock')
+
+GCONF_PREFIX = '/apps/bigboard/'
 
 class LoginItem(hippo.CanvasBox):
     __gsignals__ = {
@@ -267,7 +270,8 @@ class SelfSlideout(CanvasVBox):
         link = hippo.CanvasLink(text='System preferences', xalign=hippo.ALIGNMENT_START)
         link.connect("activated", self.__on_system_preferences)
         self.__personalization_box.append(link)
-        link = hippo.CanvasLink(text='Minimize sidebar', xalign=hippo.ALIGNMENT_START)
+        visible = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')        
+        link = hippo.CanvasLink(text='%s sidebar' % (visible and 'Minimize' or 'Show'), xalign=hippo.ALIGNMENT_START)
         link.connect("activated", self.__on_minimize_mode)
         self.__personalization_box.append(link)
 
@@ -483,7 +487,7 @@ class SelfStock(AbstractMugshotStock):
         self._panel.Logout()
 
     def __do_minimize(self):
-        self._panel.Unexpand()
+        self._panel.toggle_expand()
     
     def __do_account(self):
         if self.__myself:

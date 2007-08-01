@@ -75,6 +75,41 @@ class Separator(hippo.CanvasBox):
     def __init__(self):
         hippo.CanvasBox.__init__(self, border_top=1, border_color=0x999999FF)
         
+class FirstTimeMinimizeDialog(gtk.Dialog):
+    def __init__(self, show_windows):
+        super(FirstTimeMinimizeDialog, self).__init__("Minimizing Sidebar",
+                                                      None,
+                                                      gtk.DIALOG_MODAL,
+                                                      ('Undo', gtk.RESPONSE_CANCEL,
+                                                       gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+        self.set_has_separator(False)
+        hbox = gtk.HBox(spacing=8)
+        self.vbox.add(hbox)
+        if show_windows:
+            img_filename = 'windows_key.png'
+        else:
+            img_filename = 'ctrl_esc_keys.png'
+        img_filename = _find_in_datadir(img_filename)
+        _logger.debug("using img %s", img_filename)            
+        img = gtk.Image()
+        img.set_from_file(img_filename)
+        hbox.add(img)
+        hbox.add(gtk.Label('''The sidebar is now hidden; press the key shown on the left to pop it
+back up temporarily.'''))
+        self.connect('response', self.__on_response)
+        
+    def __on_response(self, self2, id):
+        if id != gtk.RESPONSE_CANCEL:
+            gconf.client_get_default().set_bool(GCONF_PREFIX + 'first_time_minimize_seen', True)
+        else:
+            # Avoid set of same value on notify receipt
+            gobject.timeout_add(100, self.__idle_undo_visible)
+        self.destroy()
+        
+    def __idle_undo_visible(self):
+        gconf.client_get_default().set_bool(GCONF_PREFIX + 'visible', True)
+        return False        
+        
 class PrelistedStock(object):
     def __init__(self, id, stockdir):
         self.__id = id
@@ -156,6 +191,7 @@ class Exchange(hippo.CanvasBox):
         self.__mini_more_button = None
         self.__sep = Separator()
         self.append(self.__sep)
+        self.__expanded = True
         if not stock.get_ticker() in ("-", ""):
             text = stock.get_ticker()
             self.__ticker_container = GradientHeader()
@@ -177,6 +213,10 @@ class Exchange(hippo.CanvasBox):
         self.__stock.connect("visible", lambda s, v: self.set_size(self.__size))
         self.__stockbox = hippo.CanvasBox()
         self.append(self.__stockbox)
+    
+    def __toggle_expanded(self):
+        self.__expanded = not self.__expanded
+        self.set_child_visible(self.__stockbox, self.__expanded)
     
     def get_stock(self):
         return self.__stock
@@ -211,7 +251,11 @@ class Exchange(hippo.CanvasBox):
 class BigBoardPanel(dbus.service.Object):
     def __init__(self, dirs, bus_name):
         dbus.service.Object.__init__(self, bus_name, '/bigboard/panel')
-        self._dw = Sidebar(True)
+        
+        self.__logger = logging.getLogger("bigboard.Panel")        
+        self.__logger.info("constructing")
+                
+        self._dw = Sidebar(True, GCONF_PREFIX + 'visible')
         self._shown = False
         self.__shell = None
         self.__autostart_data = '''
@@ -236,11 +280,11 @@ X-GNOME-Autostart-enabled=true
         gconf_client = gconf.client_get_default()
 
         self.__keybinding = "Super_L"
-        self.__keybinding_bound = False
-        
-        self.__logger = logging.getLogger("bigboard.Panel")
-        
-        self.__logger.info("constructing")
+        bigboard.keybinder.tomboy_keybinder_bind(self.__keybinding, self.__on_focus)
+    
+        self.__autohide_id = 0
+        self._dw.connect('enter-notify-event', self.__on_mouse_enter)        
+        self._dw.connect('leave-notify-event', self.__on_mouse_leave)
         
         self.__stockreader = StockReader(dirs)
         self.__stockreader.connect("stock-added", lambda reader, stock: self.__on_stock_added(stock))
@@ -280,6 +324,12 @@ X-GNOME-Autostart-enabled=true
         
         self.__stockreader.load()        
 
+        try:
+            search = self.get_stock('org.mugshot.bigboard.SearchStock')
+            search.connect('match-selected', self.__on_search_match_selected)
+        except KeyError, e:
+            pass
+
         gconf_client.notify_add(GCONF_PREFIX + 'visible', self.__sync_visible)
         self.__sync_visible()
   
@@ -292,6 +342,7 @@ X-GNOME-Autostart-enabled=true
         if e.button == 2:
             self.Shell()
 
+    @log_except()
     def __on_focus(self):
         self.__logger.debug("got focus keypress")
         self.external_focus()
@@ -345,12 +396,51 @@ X-GNOME-Autostart-enabled=true
         raise KeyError("Couldn't find stock %s" % (id,))
 
     @log_except()
-    def __sync_visible(self, *args):
+    def __on_mouse_enter(self, w, e):
+        self.__logger.debug("mouse enter %s", e)
+        if self.__autohide_id > 0:
+            self.__logger.debug("removing autohide timeout")
+            gobject.source_remove(self.__autohide_id)
+            self.__autohide_id = 0
+    
+    @log_except()
+    def __on_search_match_selected(self, search):
+        self.__logger.debug("search match selected")        
+        self.__handle_deactivation(immediate=True)    
+    
+    @log_except()
+    def __on_mouse_leave(self, w, e):
+        self.__logger.debug("mouse leave %s", e)
+        self.__handle_deactivation()
+        
+    def __handle_deactivation(self, immediate=False):
+        vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
+        if not vis and self.__autohide_id == 0:
+            self.__logger.debug("enqueued autohide timeout")            
+            self.__autohide_id = gobject.timeout_add(immediate and 1 or 1500, self.__idle_do_hide)        
+            
+    @log_except()
+    def __idle_do_hide(self):
+        self.__logger.debug("in idle hide")
         vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
         if vis:
+            return        
+        self.__shown = False
+        self._dw.hide()
+        
+    @log_except()
+    def __sync_visible(self, *args):
+        vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
+        self.__queue_strut()
+        if vis:
             self._dw.show()
+            self.Expanded(True)
         else:
             self._dw.hide()
+            if not gconf.client_get_default().get_bool(GCONF_PREFIX + 'first_time_minimize_seen'):
+                dialog = FirstTimeMinimizeDialog(True)
+                dialog.show_all()        
+            self.Expanded(False)
         
     @log_except()
     def _toggle_size(self):
@@ -395,11 +485,14 @@ X-GNOME-Autostart-enabled=true
         gobject.timeout_add(250, self.__idle_do_strut)
         
     def show(self):
-        self._dw.show_all()
-        self._shown = True
-        self.__do_expand()
+        self.__sync_visible()
 
     def external_focus(self):
+        vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
+        if not vis:
+            self.__logger.debug("showing all")
+            self._dw.show_all()
+            self._shown = True
         if self.__get_size() == Stock.SIZE_BEAR:
             self._toggle_size()
         try:
@@ -410,15 +503,7 @@ X-GNOME-Autostart-enabled=true
         search.focus()
 
     def __do_unexpand(self):
-        if self.__keybinding_bound:
-            try:
-                bigboard.keybinder.tomboy_keybinder_unbind(self.__keybinding)
-            except KeyError, e:
-                self.__logger.exception("failed to unbind '%s'", self.__keybinding)
-            self.__logger.debug("unbound '%s'", self.__keybinding)
-            self.__keybinding_bound = False
         gconf.client_get_default().set_bool(GCONF_PREFIX + 'visible', False)
-        self.Expanded(False)
 
     @dbus.service.method(BUS_IFACE_PANEL)
     def Unexpand(self):
@@ -426,12 +511,12 @@ X-GNOME-Autostart-enabled=true
         return self.__do_unexpand()
 
     def __do_expand(self):
-        if not self.__keybinding_bound:
-            bigboard.keybinder.tomboy_keybinder_bind(self.__keybinding, self.__on_focus)
-            self.__logger.debug("bound '%s'", self.__keybinding)
-            self.__keybinding_bound = True
         gconf.client_get_default().set_bool(GCONF_PREFIX + 'visible', True)
-        self.Expanded(True)
+
+    def toggle_expand(self):
+        vis = gconf.client_get_default().get_bool(GCONF_PREFIX + 'visible')
+        vis = not vis
+        gconf.client_get_default().set_bool(GCONF_PREFIX + 'visible', vis)
 
     @dbus.service.method(BUS_IFACE_PANEL)
     def Expand(self):
@@ -495,7 +580,16 @@ X-GNOME-Autostart-enabled=true
                                      'scratch_window': self.__create_scratch_window})
         self.__shell.show_all()
         self.__shell.present_with_time(gtk.get_current_event_time())
-
+        
+    @dbus.service.method(BUS_IFACE_PANEL)
+    def Kill(self):
+        try:
+            bigboard.keybinder.tomboy_keybinder_unbind(self.__keybinding)
+        except KeyError, e:
+            pass   
+        # This is a timeout so we reply to the method call
+        gobject.timeout_add(100, gtk.main_quit)
+        
     @dbus.service.method(BUS_IFACE_PANEL)
     def Exit(self):
         try:
@@ -591,7 +685,7 @@ def main():
     bus = dbus.SessionBus() 
     bus_name = dbus.service.BusName(BUS_NAME_STR, bus=bus)
 
-    logging.debug("Requesting D-BUS name")
+    _logger.debug("Requesting D-BUS name")
     try:
         bigboard.libbig.dbusutil.take_name(BUS_NAME_STR, replace, on_name_lost)
     except bigboard.libbig.dbusutil.DBusNameExistsException:
@@ -618,6 +712,7 @@ widget "*bigboard-nopad-button" style "bigboard-nopad-button"
 
     if not stockdirs:
         stockdirs = [os.path.join(os.path.dirname(bigboard.__file__), 'stocks')]
+    _logger.debug("Creating panel")
     panel = BigBoardPanel(stockdirs, bus_name)
     
     panel.show()
@@ -626,10 +721,11 @@ widget "*bigboard-nopad-button" style "bigboard-nopad-button"
     #bigboard.presence.get_presence() # for side effect of creating Presence object
         
     gtk.gdk.threads_enter()
+    _logger.debug("Enter mainloop")    
     gtk.main()
     gtk.gdk.threads_leave()
 
-    logging.debug("Exiting BigBoard")
+    _logger.debug("Exiting BigBoard")
     sys.exit(0)
 
 if __name__ == "__main__":

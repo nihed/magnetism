@@ -3,6 +3,7 @@ import os, code, sys, traceback, logging, StringIO, threading, urlparse
 import cairo
 import gtk
 import gobject
+import gconf
 
 import hippo
 
@@ -297,13 +298,14 @@ class Sidebar(DockWindow):
         'show' : 'override',
         }
 
-    def __init__(self, is_left):
+    def __init__(self, is_left, strut_key):
         gravity = gtk.gdk.GRAVITY_WEST
         if not is_left:
             gravity = gtk.gdk.GRAVITY_EAST
         DockWindow.__init__(self, gravity)
         self.is_left = is_left
         self.__watcher = None
+        self.__strut_key = strut_key
 
     def do_show(self):
         self.__update_watcher()
@@ -325,6 +327,12 @@ class Sidebar(DockWindow):
         (x,y,width,height) = watcher.get_workarea()
         self.set_size_request(-1, height)
         self.move(0, y)
+        
+    def do_set_wm_strut(self):
+        kwargs = {}
+        if not gconf.client_get_default().get_bool(self.__strut_key):
+            kwargs['remove'] = True
+        super(Sidebar, self).do_set_wm_strut(**kwargs)
             
 class CommandShell(gtk.Window):
     """Every application needs a development shell."""
