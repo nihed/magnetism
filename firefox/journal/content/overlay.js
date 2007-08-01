@@ -41,11 +41,11 @@ var firefoxjournal = {
     this.strings = document.getElementById("firefoxjournal-strings");
   },
   onMenuItemCommand: function(e) {
-    var promptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
-                                  .getService(Components.interfaces.nsIPromptService);
-    promptService.alert(window, this.strings.getString("helloMessageTitle"),
-                                this.strings.getString("helloMessage"));
+	var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+		.getService(Components.interfaces.nsIWindowMediator);
+	var recentWindow = wm.getMostRecentWindow("navigator:browser");		
+	recentWindow.delayedOpenTab("chrome://firefoxjournal/content/journal.html", null, null, null, null);
+	
   },
-
 };
 window.addEventListener("load", function(e) { firefoxjournal.onLoad(e); }, false);
