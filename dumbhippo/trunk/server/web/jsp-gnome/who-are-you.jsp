@@ -13,7 +13,7 @@
 	<gnome:faviconIncludes/>
 	<gnome:stylesheet name="site"/>
 	<gnome:stylesheet name="who-are-you"/>	
-	<dh:script module="dh.login"/>
+	<dh:script module="dh.login,dh.textinput"/>
 </head>
 
 <body>
