@@ -1,0 +1,6 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Mugshot
+Exec=mugshot --no-show-window
+Version=1.0
+X-GNOME-Autostart-enabled=true

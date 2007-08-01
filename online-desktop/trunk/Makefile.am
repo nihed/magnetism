@@ -31,3 +31,4 @@ include Makefile-gmail.am
 include Makefile-desktop.am
 include Makefile-icons.am
 include Makefile-godmode.am
+include Makefile-autostart.am

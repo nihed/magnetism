@@ -8,24 +8,17 @@ import dbus.glib
 
 import gobject
 
-from godmode import gnomepanel
+from godmode import odpanel
 
 def god_mode():
-    godpanel = 'bottom_panel_GOD'
-    gnomepanel.create_toplevel(godpanel)
-    gnomepanel.add_applet(godpanel, 'show_desktop_button_GOD', 'GNOME_ShowDesktopApplet', 0)
-    gnomepanel.add_applet(godpanel, 'bigboard_GOD', 'BigBoard_Applet', 1)
-    gnomepanel.add_applet(godpanel, 'windowlist_GOD', 'GNOME_WindowListApplet', 2)
-    gnomepanel.add_applet(godpanel, 'clock_GOD', 'GNOME_ClockApplet', 1, right=True)
-    gnomepanel.add_applet(godpanel, 'tray_GOD', 'GNOME_SystemTrayApplet', 0, right=True)
-    gnomepanel.set_toplevels([godpanel])
+	odpanel.setup_panels()
     subprocess.Popen(['bigboard'])
     
 def apostate_mode():
     gnomepanel.set_toplevels(['bottom_panel', 'top_panel'])
 
 def usage():
-    print "Usage: god-mode 1|0"
+    print "Usage: od-mode 1|0"
     print "  1 turns on online desktop mode"
     print "  0 disables online desktop mode"
 

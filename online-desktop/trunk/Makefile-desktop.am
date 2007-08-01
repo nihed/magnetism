@@ -18,7 +18,10 @@ desktopfiles_DATA = $(desktopfiles_files)
 # this mkdir is totally unportable (gnu make, gnu -p), feel free to fix it somehow
 %.desktop: %.desktop.in
 	mkdir -p $(@D) && cat $< | sed -e 's/^_//g' > $@
+	
+gnomeautostartdir = $(datadir)/gnome/autostart
+gnomeautostart_DATA = online-desktop-autostart.desktop
 
-EXTRA_DIST += $(desktopfiles_in_files)
+EXTRA_DIST += $(desktopfiles_in_files) $(gnomeautostart_DATA)
 MAINTAINERCLEANFILES +=	$(desktopfiles_files)
 

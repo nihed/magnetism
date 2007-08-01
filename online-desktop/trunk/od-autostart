@@ -1,0 +1,16 @@
+#!/usr/bin/python
+import os,sys,subprocess
+
+datadir_env = os.getenv('XDG_DATA_DIRS')
+if datadir_env:
+	datadirs = datadir_env.split(':')
+else:
+	datadirs = ['/usr/share/']
+autostart_dirs = map(lambda x: os.path.join(x, 'online-desktop', 'autostart'), datadirs)
+for dir in autostart_dirs:
+	if os.access(dir, os.R_OK):
+		for name in listdir(dir):
+			fname = os.path.join(dir, name)
+			subprocess.Popen([fname])
+		break
+sys.exit(0)

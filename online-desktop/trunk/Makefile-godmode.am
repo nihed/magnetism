@@ -1,8 +1,7 @@
 
-bin_SCRIPTS = god-mode/od-mode
+bin_SCRIPTS = god-mode/od-mode god-mode/od-session
 
 pylibdir = $(pythondir)/godmode
-pylib_PYTHON = god-mode/godmode/__init__.py \
-	       god-mode/godmode/gnomepanel.py
+pylib_PYTHON = god-mode/godmode/*.py
 
-EXTRA_DIST += god-mode/od-mode
+EXTRA_DIST += $(bin_SCRIPTS) 
