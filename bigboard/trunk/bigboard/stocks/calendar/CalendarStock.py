@@ -81,12 +81,17 @@ def fmt_date(date):
     
     return date.strftime("%A %b %d")
 
-def fmt_canvas_text(canvas_text, is_today, is_over):
-    # stuf that is over is grey 
+def fmt_canvas_text(canvas_text, is_today, is_over, color):
+    # stuff that is over is grey 
     if is_over:
         attrs = pango.AttrList()
         attrs.insert(pango.AttrForeground(0x6666, 0x6666, 0x6666, 0, 0xFFFF))
         canvas_text.set_property("attributes", attrs)               
+    else:
+        attrs = pango.AttrList()
+        # the color is in the format '#FFFFFF' 
+        attrs.insert(pango.AttrForeground(int(color[1:3], 16) * 0x101, int(color[3:5], 16) * 0x101, int(color[5:7], 16) * 0x101, 0, 0xFFFF))
+        canvas_text.set_property("attributes", attrs)   
     # stuff for today is bold
     if is_today:
         canvas_text.set_property("font", "13px Bold")
@@ -120,9 +125,14 @@ def get_selected_value(extension_elements):
     # wrong; though true would be a meaningful default, gCal:selected should always be there 
     return 'false'
     
+# hidden calendars can still be selected, we should check both flags and only
+# include the ones that are selected and not hidden
+def include_calendar(calendar):
+    return get_selected_value(calendar.extension_elements) == 'true' and calendar.hidden.value == 'false'
+
 class Event(AutoStruct):
     def __init__(self):
-        super(Event, self).__init__({ 'calendar_title' : '', 'calendar_link' : '', 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '', 'is_all_day' : False })
+        super(Event, self).__init__({ 'calendar_title' : '', 'calendar_link' : '', 'color' : '', 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '', 'is_all_day' : False })
         self.__event_entry = None
 
     def set_event_entry(self, event_entry):
@@ -218,8 +228,8 @@ class EventDisplay(CanvasVBox):
     def __init__(self, event, day_displayed):
         super(EventDisplay, self).__init__(border_right=2)
         self.__event = None
-        self.__day_displayed = day_displayed
-        
+        self.__day_displayed = day_displayed   
+
         self.__box = hippo.CanvasBox(orientation=hippo.ORIENTATION_VERTICAL)
         self.__title = hippo.CanvasText(xalign=hippo.ALIGNMENT_START, size_mode=hippo.CANVAS_SIZE_ELLIPSIZE_END)
         self.__box.append(self.__title)
@@ -252,7 +262,7 @@ class EventDisplay(CanvasVBox):
         today = datetime.date.today()
         is_today = self.__event.get_start_time().date() <= today and self.__event.get_end_time().date() >= today and self.__day_displayed == today   
         is_over = self.__event.get_end_time() < datetime.datetime.now()
-        fmt_canvas_text(self.__title, is_today, is_over)
+        fmt_canvas_text(self.__title, is_today, is_over, self.__event.get_color())
         
     def __on_button_press(self, event):
         if event.button != 1:
@@ -418,7 +428,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             _logger.debug("calendar feed id: %s", calendar_entry_id) 
             calendar_dictionary[calendar_entry_id] = calendar_entry
             # we delete entries from the old dictionary if they were not deselected
-            if self.__calendars.has_key(calendar_entry_id) and (get_selected_value(calendar_entry.extension_elements) == "true" or get_selected_value(self.__calendars[calendar_entry_id].extension_elements) == "false"):
+            if self.__calendars.has_key(calendar_entry_id) and (include_calendar(calendar_entry) or not include_calendar(self.__calendars[calendar_entry_id])):
                 del self.__calendars[calendar_entry_id]
 
         events = copy.copy(self.__events)
@@ -434,12 +444,12 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         self.__update_events()
  
     def __on_calendar_load(self, url, data, calendar_feed_url, event_range_start, event_range_end):
-        # we are using calendar_feed_url as a calendar id, but it should be the same as what we
-        # parse out as a calender id in the Events Parser, so for now we are not using calendar_feed_url
-        # that gets passed in here
         _logger.debug("loaded calendar from " + url)
         try:
             p = EventsParser(data)
+            color = self.__calendars[calendar_feed_url].color.value 
+            for event in p.get_events(): 
+                event.update({ 'color' : color})
             self.__on_load_events(p.get_events(), calendar_feed_url, event_range_start, event_range_end)
         except xml.sax.SAXException, e:
             __on_failed_load(sys.exc_info())
@@ -454,7 +464,6 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             # events from a particular calendar and date range (this should work too if we are
             # updating events from all the calendars if calendar_feed_url is None) 
             if datetime.datetime.combine(event_range_start, datetime.time(0)) > event.get_end_time() or datetime.datetime.combine(event_range_end, datetime.time(0)) <= event.get_start_time() or calendar_feed_url is not None and calendar_feed_url != event.get_calendar_link():
-                _logger.debug("keeping event that starts %s", event.get_start_time())
                 events_to_keep.append(event)
         self.__events = events_to_keep
         _logger.debug("events_to_keep length %s", len(self.__events))
@@ -614,6 +623,9 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             end_index = min(index + events_to_display, len(self.__events_for_day_displayed))
         
             for event in self.__events_for_day_displayed[index:end_index]:
+                # we can update the event color here by using
+                # self.__calendars[event.get_calendar_link()].color.value
+                # if we want to make sure we always use the updated color
                 display = EventDisplay(event, self.__day_displayed)
                 events_box.append(display)
 
@@ -721,6 +733,6 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
     def __update_events(self):
         _logger.debug("retrieving events")
         for calendar in self.__calendars.values():   
-            if get_selected_value(calendar.extension_elements) == 'true':
+            if include_calendar(calendar):
                 calendar_feed_url =  create_calendar_feed_url(calendar.id.text)
                 google.get_google().fetch_calendar(self.__on_calendar_load, self.__on_failed_load, calendar_feed_url, self.__event_range_start, self.__event_range_end)
