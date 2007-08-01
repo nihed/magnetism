@@ -12,12 +12,16 @@ from bigboard.big_widgets import CanvasMugshotURLImage, CanvasVBox
         
 class SearchStock(Stock):
     """Search.  It's what's for dinner."""
+    __gsignals__ = {
+        "match-selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
+    }    
     def __init__(self, *args, **kwargs):
         super(SearchStock,self).__init__(*args, **kwargs)
         
         self.__box = hippo.CanvasBox()
         
         self.__deskbar = deskbar_embed.Deskbar()
+        self.__deskbar.connect('match-selected', lambda d: self.emit('match-selected'))
         self.__widget = hippo.CanvasWidget(widget=self.__deskbar)
         self.__box.append(self.__widget)
         self.__empty_box = CanvasVBox()

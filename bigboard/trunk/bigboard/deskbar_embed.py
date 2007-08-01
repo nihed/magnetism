@@ -9,6 +9,9 @@ except ImportError:
     import deskbar.ui.DeskbarApplet as DeskbarApplet
 
 class Deskbar(gtk.VBox):
+    __gsignals__ = {
+        "match-selected" : (gobject.SIGNAL_RUN_LAST, gobject.TYPE_NONE, [])
+    }
     def __init__(self, **kwargs):
         super(Deskbar, self).__init__(**kwargs)
 
@@ -22,6 +25,7 @@ class Deskbar(gtk.VBox):
         uiname = gconf.Value(gconf.VALUE_STRING)
         uiname.set_string(deskbar.ENTRIAC_UI_NAME)
         self.__deskbar.on_ui_changed(uiname)
+        self.__deskbar.ui.connect('match-selected', lambda *args: self.emit('match-selected'))
 
     def __override_modules_loaded(self, loader):
         self._logger.debug("got modules loaded")        

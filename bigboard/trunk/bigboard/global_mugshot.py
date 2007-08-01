@@ -519,15 +519,22 @@ class Mugshot(gobject.GObject):
     def __on_all_applications_error(self, *args):
         self._logger.error("failed to get all apps: %s", args)
         self.__all_apps_requested = False
+        
+    def __on_all_applications_error_do_xmlfallback(self, *args):
+        self._logger.error("failed to get all apps, falling back to old XML method")
+        AsyncHTTPFetcher().xml_method_refetch(urlparse.urljoin(self.get_baseurl(), '/xml/allapplications'),
+                                              {},
+                                              self.__on_all_applications,
+                                              self.__on_all_applications_error,
+                                              self.__on_all_applications_error)        
 
     def request_all_apps(self):
         if not self.__all_apps_requested:
             self.__all_apps_requested = True
-            AsyncHTTPFetcher().xml_method_refetch(urlparse.urljoin(self.get_baseurl(), '/xml/allapplications'),
-                                                  {},
-                                                  self.__on_all_applications,
-                                                  self.__on_all_applications_error,
-                                                  self.__on_all_applications_error)
+            AsyncHTTPFetcher().refetch(urlparse.urljoin(self.get_baseurl(), '/files/allapplications'),
+                                       self.__on_all_applications,
+                                       self.__on_all_applications_error_do_xmlfallback,)            
+
         
     def __request_pinned_apps(self):
         self.__do_external_iq("pinned", "http://dumbhippo.com/protocol/applications",

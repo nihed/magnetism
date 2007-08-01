@@ -55,12 +55,18 @@ class DockWindow(gtk.Window):
         return ret      
 
     # thanks to Gimmie (Alex Graveley) for this method
-    def do_set_wm_strut(self):
+    def do_set_wm_strut(self, remove=False):
         '''
         Set the _NET_WM_STRUT window manager hint, so that maximized windows
         and/or desktop icons will not overlap this window\'s allocated area.
         See http://standards.freedesktop.org/wm-spec/latest for details.
         '''
+        if self.window and remove:
+            self.window.property_delete("_NET_WM_STRUT")
+            return
+        elif remove:
+            return
+        
         if self.edge_gravity != gtk.gdk.GRAVITY_WEST:
             raise "haven't implemented gravities other than WEST"
         

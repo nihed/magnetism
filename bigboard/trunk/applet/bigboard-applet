@@ -11,7 +11,6 @@ from bigboard.libbig.http import AsyncHTTPFetcher
 from bigboard.libbig.imagecache import URLImageCache
 import bigboard.keybinder
 import bigboard.global_mugshot as mugshot
-import bigboard.deskbar_embed as deskbar_embed
 
 global _logger
 _logger = None
@@ -89,10 +88,7 @@ class BigBoardApplet(gobject.GObject):
         self.__img.set_orig_pixbuf_file('/usr/share/pixmaps/nobody.png')
         ebox.add(self.__img)
         self.__box.pack_start(ebox, expand=False)
-
-        _logger.debug("embedding deskbar")
-        #self.__deskbar = deskbar_embed.Deskbar()
-        #self.__box.pack_start(self.__deskbar, expand=True)
+        
         self.__deskbar = None
 
         self.__applet.add(self.__box)
