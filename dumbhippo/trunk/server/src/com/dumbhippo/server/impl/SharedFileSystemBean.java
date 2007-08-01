@@ -159,6 +159,7 @@ public class SharedFileSystemBean implements SharedFileSystem {
 	private static final long QUOTA = 1024 * 1024 * 10; 
 	
 	private long getQuotaRemaining(UserViewpoint viewpoint) {
+		logger.debug("getting remaining quota for {}", viewpoint.getViewer());
 		User user = viewpoint.getViewer();
 		
 		// Note that we count all of NOT_STORED, STORED, DELETING which is to avoid races.
@@ -169,7 +170,13 @@ public class SharedFileSystemBean implements SharedFileSystem {
 		q.setParameter("creator", user);
 		long used;
 		try {
-			used = ((Number) q.getSingleResult()).longValue();
+			Number n = (Number) q.getSingleResult();
+			if (n == null) {
+				// when using SUM(), you get NULL if there are no rows
+				used = 0;
+			} else {
+				used = n.longValue();
+			}
 		} catch (NoResultException e) {
 			used = 0;
 		}
