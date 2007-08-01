@@ -766,6 +766,8 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		if (!spider.isAdministrator(viewpoint.getViewer()))
 			throw new RuntimeException("can't do this if you aren't an admin");
 		Query q = em.createQuery("SELECT SUM(a.invitations) FROM Account a");
+		// q.getSingleResult() here could return NULL if the Account table were empty, 
+		// but that can't happen since we have to be the admin so we have an account
 		return ((Number) q.getSingleResult()).intValue();
 	}
 	
