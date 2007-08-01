@@ -78,4 +78,6 @@ def set_toplevels(names):
     client = gconf.client_get_default()
     _save_id_list('toplevel_id_list', names)
     _save_other_lists('toplevel_id_list')
-    
+
+def get_toplevels():
+    return gconf.client_get_default().get_list(PANEL_CONFIG_DIR + '/general/toplevel_id_list', gconf.VALUE_STRING)
