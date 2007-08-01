@@ -1,5 +1,10 @@
 #!/usr/bin/python
-import os,sys,subprocess
+import os,sys
+
+import gnomedesktop
+
+if not os.getenv('OD_SESSION'):
+	sys.exit(0)
 
 datadir_env = os.getenv('XDG_DATA_DIRS')
 if datadir_env:
@@ -9,8 +14,10 @@ else:
 autostart_dirs = map(lambda x: os.path.join(x, 'online-desktop', 'autostart'), datadirs)
 for dir in autostart_dirs:
 	if os.access(dir, os.R_OK):
-		for name in listdir(dir):
+		for name in os.listdir(dir):
 			fname = os.path.join(dir, name)
-			subprocess.Popen([fname])
+			df = gnomedesktop.item_new_from_file(fname, 0)
+			print "Launching %s" % (fname,)
+			df.launch([])			
 		break
 sys.exit(0)
