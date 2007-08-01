@@ -332,7 +332,7 @@ class Google(gobject.GObject):
 
     ### Calendar
 
-    def __have_login_fetch_calendar(self, cb, errcb):
+    def __have_login_fetch_calendar_list(self, cb, errcb):
 
         # there is a chance that someone might have access to more than 25 calendars, so let's
         # specify 1000 for max-results to make sure we get information about all calendars 

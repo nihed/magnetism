@@ -94,6 +94,32 @@ def fmt_canvas_text(canvas_text, is_today, is_over):
 def compare_by_date(event_a, event_b):
     return cmp(event_a.get_start_time(), event_b.get_start_time())
 
+# we use calendar feed urls as calendar ids, such urls show up
+# as ids for individual calendars when we get events feed, e.g.
+# in calendar list feed id would be 
+# http://www.google.com/calendar/feeds/example%40gmail.com/example%40gmail.com
+# while id for the same calendar in the calendar events feed woud be
+# http://www.google.com/calendar/feeds/example%40gmail.com/private/full
+# this function converts from the first format to the second one, which
+# is then used as a calendar feed url and a calendar id in the code
+def create_calendar_feed_url(calendar_id):
+    calendar_id_feeds_index = calendar_id.find("/feeds/")
+    calendar_id_slash_index = calendar_id.find("/", calendar_id_feeds_index + len(str("/feeds/")) + 1)
+    return calendar_id[:calendar_id_feeds_index + len(str("/feeds"))] + calendar_id[calendar_id_slash_index:] + "/private/full"
+
+# for some reason python library doesn't provide a value
+# for gCal:selected element, so we need to fish it out from
+# extension elements list; it should be a simple change to add 
+# getting gCal:selected in our local copy of the library 
+def get_selected_value(extension_elements):
+    for extension in extension_elements:
+        _logger.debug("tag %s value %s", extension.tag, extension.attributes['value'])  
+        if extension.tag == 'selected' and extension.namespace == 'http://schemas.google.com/gCal/2005':
+            return extension.attributes['value'].find('true') >= 0 and 'true' or 'false'
+    # return false since that way we are more likely to notice something is
+    # wrong; though true would be a meaningful default, gCal:selected should always be there 
+    return 'false'
+    
 class Event(AutoStruct):
     def __init__(self):
         super(Event, self).__init__({ 'calendar_title' : '', 'calendar_link' : '', 'title' : '', 'start_time' : '', 'end_time' : '', 'link' : '', 'is_all_day' : False })
@@ -364,7 +390,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
     def _on_mugshot_ready(self):
         super(CalendarStock, self)._on_mugshot_ready()
-        self.__update_events()
+        self.__update_calendar_list_and_events()
 
     def __on_google_auth(self, gobj, have_auth):
         _logger.debug("google auth state: %s", have_auth)
@@ -374,8 +400,8 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
             self.stop()
 
     def do_periodic_task(self):
-        # self.__update_calendar_list_and_events()
-        self.__update_events()        
+        self.__update_calendar_list_and_events()
+        # self.__update_events()        
 
     def get_authed_content(self, size):
         return size == self.SIZE_BULL and self.__box or None
@@ -388,12 +414,14 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
         calendar_list = gcalendar.CalendarListFeedFromString(data)
         calendar_dictionary = {}
         for calendar_entry in calendar_list.entry:
-            calendar_dictionary[calendar_entry.GetHtmlLink().href] = calendar_entry
+            calendar_entry_id = create_calendar_feed_url(calendar_entry.id.text)
+            _logger.debug("calendar feed id: %s", calendar_entry_id) 
+            calendar_dictionary[calendar_entry_id] = calendar_entry
             # we delete entries from the old dictionary if they were not deselected
-            if self.__calendars.has_key(calendar_entry.GetHtmlLink().href) and (calendar_entry.selected.value == "true" or self.__calendars[calendar_entry.GetHtmlLink().href].selected.value == "false"):
-                del self.__calendars[calendar_entry.GetHtmlLink().href]
+            if self.__calendars.has_key(calendar_entry_id) and (get_selected_value(calendar_entry.extension_elements) == "true" or get_selected_value(self.__calendars[calendar_entry_id].extension_elements) == "false"):
+                del self.__calendars[calendar_entry_id]
 
-        events = self.__events.copy() 
+        events = copy.copy(self.__events)
         # remove items from calendars that are no longer returned or are no longer selected  
         # this should still keep events list sorted by event time
         for calendar_link in self.__calendars.keys():  
@@ -407,20 +435,25 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
  
     def __on_calendar_load(self, url, data, calendar_feed_url, event_range_start, event_range_end):
         # we are using calendar_feed_url as a calendar id, but it should be the same as what we
-        # parse out as a calender id in the Events Parser, so for now we don't used calendar_feed_url
+        # parse out as a calender id in the Events Parser, so for now we are not using calendar_feed_url
         # that gets passed in here
         _logger.debug("loaded calendar from " + url)
         try:
             p = EventsParser(data)
-            self.__on_load_events(p.get_events(), event_range_start, event_range_end)
+            self.__on_load_events(p.get_events(), calendar_feed_url, event_range_start, event_range_end)
         except xml.sax.SAXException, e:
             __on_failed_load(sys.exc_info())
 
-    def __on_load_events(self, events, event_range_start, event_range_end):
+    # we could use the calendar off each event, assuming they are all from the same calendar
+    # but it's better to make it work for loading events from multiple calendars too
+    def __on_load_events(self, events, calendar_feed_url, event_range_start, event_range_end):
         _logger.debug("loading events %s", events)
         events_to_keep = []
         for event in self.__events:
-            if datetime.datetime.combine(event_range_start, datetime.time(0)) > event.get_end_time() or datetime.datetime.combine(event_range_end, datetime.time(0)) <= event.get_start_time():
+            # keep events from other date ranges and calendars, as we are only updating
+            # events from a particular calendar and date range (this should work too if we are
+            # updating events from all the calendars if calendar_feed_url is None) 
+            if datetime.datetime.combine(event_range_start, datetime.time(0)) > event.get_end_time() or datetime.datetime.combine(event_range_end, datetime.time(0)) <= event.get_start_time() or calendar_feed_url is not None and calendar_feed_url != event.get_calendar_link():
                 _logger.debug("keeping event that starts %s", event.get_start_time())
                 events_to_keep.append(event)
         self.__events = events_to_keep
@@ -687,8 +720,7 @@ class CalendarStock(AbstractMugshotStock, polling.Task):
 
     def __update_events(self):
         _logger.debug("retrieving events")
-        # for calendar in self.__calendars.values():   
-        #    if calendar.selected.value == 'true':
-                # TODO: test if this works, if not can construct a feed based on an id
-        #        calendar_feed_url = calendar.GetHtmlLink().href
-        google.get_google().fetch_calendar(self.__on_calendar_load, self.__on_failed_load, None, self.__event_range_start, self.__event_range_end)
+        for calendar in self.__calendars.values():   
+            if get_selected_value(calendar.extension_elements) == 'true':
+                calendar_feed_url =  create_calendar_feed_url(calendar.id.text)
+                google.get_google().fetch_calendar(self.__on_calendar_load, self.__on_failed_load, calendar_feed_url, self.__event_range_start, self.__event_range_end)
