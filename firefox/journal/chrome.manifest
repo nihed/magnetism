@@ -1,0 +1,4 @@
+content	firefoxjournal	content/
+locale	firefoxjournal	en-US	locale/en-US/
+skin	firefoxjournal	classic/1.0	skin/
+overlay	chrome://browser/content/browser.xul	chrome://firefoxjournal/content/firefoxOverlay.xul
