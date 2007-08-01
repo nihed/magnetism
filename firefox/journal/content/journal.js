@@ -33,19 +33,13 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  * 
  * ***** END LICENSE BLOCK ***** */
+ 
+var journal = {
+  onload: function() {
+    document.getElementById('q').focus();
 
-var firefoxjournal = {
-  onLoad: function() {
-    // initialization code
-    this.initialized = true;
-    this.strings = document.getElementById("firefoxjournal-strings");
-  },
-  onMenuItemCommand: function(e) {
-	var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-		.getService(Components.interfaces.nsIWindowMediator);
-	var recentWindow = wm.getMostRecentWindow("navigator:browser");		
-	recentWindow.delayedOpenTab("chrome://firefoxjournal/content/journal.html", null, null, null, null);
-	
-  },
-};
-window.addEventListener("load", function(e) { firefoxjournal.onLoad(e); }, false);
+    content = document.getElementById('content')
+    content.appendChild(document.createTextNode('HELLO WORLD'))
+  }
+ }
+ 
