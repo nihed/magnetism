@@ -3,5 +3,6 @@ Encoding=UTF-8
 Name=Browser
 # FIXME - redhat/fedora specific?
 Exec=htmlview
+Type=Application
 Version=1.0
 X-GNOME-Autostart-enabled=true
