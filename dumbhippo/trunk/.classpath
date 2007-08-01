@@ -6,7 +6,7 @@
 	<classpathentry kind="src" path="hungry/src/test/java"/>
 	<classpathentry kind="src" path="cluster/balancer/src"/>
 	<classpathentry kind="src" path="mediarss/src/java"/>
-	<classpathentry kind="src" path="wildfire/src/plugins/userImportExport/src/java"/>
+	<classpathentry kind="src" path="openfire/src/plugins/userImportExport/src/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<accessrules>
 			<accessrule kind="accessible" pattern="**/awt/image/**"/>
@@ -43,29 +43,29 @@
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/hungry/xercesImpl.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/hungry/xmlParserAPIs.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/hungry/jwebunit-1.2.jar"/>
-	<classpathentry excluding="org/jivesoftware/openfire/launcher/" kind="src" path="wildfire/src/java"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/ant.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/ant-contrib.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/ant-subdirtask.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/commons-el.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/jasper-compiler.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/jasper-runtime.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/junit.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/xmltask.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/activation.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/hsqldb.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/jtds.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/mysql.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/postgres.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/dom4j.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/jaxen.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/jetty.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/jmdns.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/shaj.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/sitemesh.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/standard.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/xpp3.jar"/>
-	<classpathentry kind="src" path="wildfire/src/plugins/hippo/src/java"/>
+	<classpathentry excluding="org/jivesoftware/openfire/launcher/" kind="src" path="openfire/src/java"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/ant.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/ant-contrib.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/ant-subdirtask.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/commons-el.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/jasper-compiler.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/jasper-runtime.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/junit.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/xmltask.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/dist/activation.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/dist/hsqldb.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/dist/jtds.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/dist/mysql.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/dist/postgres.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/dom4j.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/jaxen.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/jetty.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/jmdns.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/shaj.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/sitemesh.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/standard.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/xpp3.jar"/>
+	<classpathentry kind="src" path="openfire/src/plugins/hippo/src/java"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/slf4j-log4j12.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/taste/annotations.jar"/>
 	<classpathentry kind="src" path="server/tests"/>
@@ -93,24 +93,24 @@
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/hibernate-search.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/javassist.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/all/lib/antlr-2.7.6.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/commons-logging.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/jetty-util.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/bouncycastle.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/mina-core-1.2.0.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/mina-filter-compression-1.2.0.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/mina-filter-ssl-1.2.0.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/stringprep.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/jzlib.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/jstun-0.6.1.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/i4jruntime.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/jdic.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/commons-logging.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/jetty-util.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/dist/bouncycastle.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/mina-core-1.2.0.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/mina-filter-compression-1.2.0.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/mina-filter-ssl-1.2.0.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/stringprep.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/jzlib.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/jstun-0.6.1.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/i4jruntime.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/dist/jdic.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/commons-httpclient-3.0.1.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/lib/jboss-jmx.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/lib/jboss-j2ee.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/all/lib/jbossha.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/lib/jboss-common.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/dbutil.jar"/>
-	<classpathentry kind="lib" path="wildfire/src/plugins/userImportExport/lib/msv.jar"/>
-	<classpathentry kind="lib" path="wildfire/src/plugins/userImportExport/lib/isorelax.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/openfire/merge/dbutil.jar"/>
+	<classpathentry kind="lib" path="openfire/src/plugins/userImportExport/lib/msv.jar"/>
+	<classpathentry kind="lib" path="openfire/src/plugins/userImportExport/lib/isorelax.jar"/>
 	<classpathentry kind="output" path="eclipse-build"/>
 </classpath>

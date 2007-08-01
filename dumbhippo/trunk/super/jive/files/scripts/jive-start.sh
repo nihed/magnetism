@@ -7,7 +7,7 @@ dbpath="@@dbpath@@"
 dbpassword="@@dbpassword@@"
 jbossLibs="@@jbossLibs@@"
 
-echo "Starting Jive Wildfire..."
+echo "Starting Jive Openfire..."
 
 ######################################################################
 
@@ -45,7 +45,7 @@ commit;
 shutdown;
 EOF
 
-$twiddle invoke jboss.system:service=MainDeployer deploy file://$targetdir/deploy/wildfire.sar/ > /dev/null
+$twiddle invoke jboss.system:service=MainDeployer deploy file://$targetdir/deploy/openfire.sar/ > /dev/null
 
 started=false
 
