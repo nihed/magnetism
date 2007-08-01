@@ -12,7 +12,7 @@ import java.util.Set;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServer;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;

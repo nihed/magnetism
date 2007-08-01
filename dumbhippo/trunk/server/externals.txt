@@ -30,7 +30,7 @@ Source: http://jakarta.apache.org/commons/codec
 License: Apache 2.0
 
 File: commons-httpclient.jar
-Source: http://jakarta.apache.org/commons/httpclient
+Source: http://commons.apache.org/httpclient/
 License: Apache 2.0
 
 File: commons-fileupload.jar

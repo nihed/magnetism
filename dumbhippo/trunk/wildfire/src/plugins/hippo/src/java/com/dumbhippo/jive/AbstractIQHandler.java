@@ -3,7 +3,7 @@ package com.dumbhippo.jive;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
-import org.jivesoftware.wildfire.handler.IQHandler;
+import org.jivesoftware.openfire.handler.IQHandler;
 
 public abstract class AbstractIQHandler extends IQHandler {
 

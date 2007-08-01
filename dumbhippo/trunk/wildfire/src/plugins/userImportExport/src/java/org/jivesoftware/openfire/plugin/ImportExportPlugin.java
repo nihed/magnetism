@@ -1,5 +1,14 @@
 package org.jivesoftware.openfire.plugin;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
 import org.apache.commons.fileupload.FileItem;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
@@ -14,6 +23,7 @@ import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.roster.RosterItemProvider;
+import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
@@ -23,15 +33,6 @@ import org.jivesoftware.stringprep.Stringprep;
 import org.jivesoftware.stringprep.StringprepException;
 import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * The user import/export plugin provides a way to import and export Openfire
@@ -204,7 +205,7 @@ public class ImportExportPlugin implements Plugin {
         List<String> invalidUsers = new ArrayList<String>();
         
         UserManager userManager = UserManager.getInstance();
-	RosterManager rosterManager = XMPPServer.getInstance().getRosterManager();
+        RosterManager rosterManager = XMPPServer.getInstance().getRosterManager();
         RosterItemProvider rosterItemProvider = rosterManager.getRosterItemProvider();
         
         Element users = document.getRootElement();

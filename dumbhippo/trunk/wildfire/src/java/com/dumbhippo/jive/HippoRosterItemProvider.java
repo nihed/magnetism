@@ -2,10 +2,10 @@ package com.dumbhippo.jive;
 
 import java.util.Iterator;
 
-import org.jivesoftware.wildfire.roster.RosterItem;
-import org.jivesoftware.wildfire.roster.RosterItemProvider;
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.roster.RosterItem;
+import org.jivesoftware.openfire.roster.RosterItemProvider;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 
 public class HippoRosterItemProvider implements RosterItemProvider {
 

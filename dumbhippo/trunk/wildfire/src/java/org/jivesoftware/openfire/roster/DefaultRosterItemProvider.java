@@ -9,10 +9,10 @@
  * a copy of which is included in this distribution.
  */
 
-package org.jivesoftware.wildfire.roster;
+package org.jivesoftware.openfire.roster;
 
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.util.JiveConstants;
@@ -64,7 +64,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
             "SELECT groupName FROM jiveRosterGroups WHERE rosterID=? ORDER BY rank";
     
     /* (non-Javadoc)
-     * @see org.jivesoftware.wildfire.roster.RosterItemProvider#createItem(java.lang.String, org.jivesoftware.wildfire.roster.RosterItem)
+     * @see org.jivesoftware.openfire.roster.RosterItemProvider#createItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)
      */
     public RosterItem createItem(String username, RosterItem item)
             throws UserAlreadyExistsException
@@ -101,7 +101,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     }
 
     /* (non-Javadoc)
-     * @see org.jivesoftware.wildfire.roster.RosterItemProvider#updateItem(java.lang.String, org.jivesoftware.wildfire.roster.RosterItem)
+     * @see org.jivesoftware.openfire.roster.RosterItemProvider#updateItem(java.lang.String, org.jivesoftware.openfire.roster.RosterItem)
      */
     public void updateItem(String username, RosterItem item) throws UserNotFoundException {
         Connection con = null;
@@ -140,7 +140,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     }
 
     /* (non-Javadoc)
-     * @see org.jivesoftware.wildfire.roster.RosterItemProvider#deleteItem(java.lang.String, long)
+     * @see org.jivesoftware.openfire.roster.RosterItemProvider#deleteItem(java.lang.String, long)
      */
     public void deleteItem(String username, long rosterItemID) {
         // Only try to remove the user if they exist in the roster already:
@@ -174,7 +174,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     }
 
     /* (non-Javadoc)
-     * @see org.jivesoftware.wildfire.roster.RosterItemProvider#getUsernames(java.lang.String)
+     * @see org.jivesoftware.openfire.roster.RosterItemProvider#getUsernames(java.lang.String)
      */
     public Iterator<String> getUsernames(String jid) {
         List<String> answer = new ArrayList<String>();
@@ -202,7 +202,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     }
 
     /* (non-Javadoc)
-     * @see org.jivesoftware.wildfire.roster.RosterItemProvider#getItemCount(java.lang.String)
+     * @see org.jivesoftware.openfire.roster.RosterItemProvider#getItemCount(java.lang.String)
      */
     public int getItemCount(String username) {
         int count = 0;
@@ -230,7 +230,7 @@ public class DefaultRosterItemProvider implements RosterItemProvider {
     }
 
     /* (non-Javadoc)
-     * @see org.jivesoftware.wildfire.roster.RosterItemProvider#getItems(java.lang.String)
+     * @see org.jivesoftware.openfire.roster.RosterItemProvider#getItems(java.lang.String)
      */
     public Iterator<RosterItem> getItems(String username) {
         LinkedList<RosterItem> itemList = new LinkedList<RosterItem>();

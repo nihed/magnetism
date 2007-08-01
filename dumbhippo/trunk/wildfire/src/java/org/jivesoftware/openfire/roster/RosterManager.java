@@ -11,9 +11,13 @@
 
 package org.jivesoftware.openfire.roster;
 
-import org.jivesoftware.util.Cache;
-import org.jivesoftware.util.CacheManager;
-import org.jivesoftware.util.JiveGlobals;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.StringTokenizer;
+
 import org.jivesoftware.openfire.ChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SharedGroupException;
@@ -30,10 +34,13 @@ import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.Cache;
+import org.jivesoftware.util.CacheManager;
+import org.jivesoftware.util.ClassUtils;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.Log;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
-
-import java.util.*;
 
 /**
  * A simple service that allows components to retrieve a roster based solely on the ID
@@ -68,7 +75,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         
         // Load provider
         String className = JiveGlobals.getXMLProperty("provider.rosteritem.className",
-        "org.jivesoftware.wildfire.roster.DefaultRosterItemProvider");
+        "org.jivesoftware.openfire.roster.DefaultRosterItemProvider");
         try {
         	Class c = ClassUtils.forName(className);
         	rosterItemProvider = (RosterItemProvider)c.newInstance();
@@ -930,7 +937,6 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         }
         return false;
     }
-<<<<<<< .working
 
     /**
      * Gets the RosterItemProvider.
@@ -938,9 +944,8 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      * @return the RosterItemProvider
      */
     public RosterItemProvider getRosterItemProvider() {
-	return rosterItemProvider;
+    	return rosterItemProvider;
     }
-=======
 
     public void start() throws IllegalStateException {
         super.start();
@@ -958,5 +963,4 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         // Remove this module as a listener of group events
         GroupEventDispatcher.removeListener(this);
     }
->>>>>>> .merge-right.r6152
 }

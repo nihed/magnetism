@@ -5,10 +5,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
+import org.jivesoftware.openfire.SessionManagerListener;
+import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.ClientSession;
-import org.jivesoftware.wildfire.SessionManagerListener;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
 import org.xmpp.packet.JID;
 
 import com.dumbhippo.Site;

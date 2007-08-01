@@ -6,10 +6,10 @@ import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.ChannelHandler;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.ChannelHandler;
-import org.jivesoftware.wildfire.ClientSession;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 

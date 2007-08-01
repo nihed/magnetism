@@ -4,8 +4,9 @@
 package com.dumbhippo.jive;
 
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.auth.AuthFactory;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.auth.AuthFactory;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
 
 import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.util.EJBUtil;
@@ -16,10 +17,10 @@ import com.dumbhippo.server.util.ServerTooBusyException;
  *
  */
 public class HippoAuthProvider implements
-		org.jivesoftware.wildfire.auth.AuthProvider {
+		org.jivesoftware.openfire.auth.AuthProvider {
 
 	/* (non-Javadoc)
-	 * @see org.jivesoftware.wildfire.auth.AuthProvider#isPlainSupported()
+	 * @see org.jivesoftware.openfire.auth.AuthProvider#isPlainSupported()
 	 */
 	public boolean isPlainSupported() {
 		
@@ -29,7 +30,7 @@ public class HippoAuthProvider implements
 	}
 
 	/* (non-Javadoc)
-	 * @see org.jivesoftware.wildfire.auth.AuthProvider#isDigestSupported()
+	 * @see org.jivesoftware.openfire.auth.AuthProvider#isDigestSupported()
 	 */
 	public boolean isDigestSupported() {
 		
@@ -39,7 +40,7 @@ public class HippoAuthProvider implements
 	}
 
 	/* (non-Javadoc)
-	 * @see org.jivesoftware.wildfire.auth.AuthProvider#authenticate(java.lang.String, java.lang.String)
+	 * @see org.jivesoftware.openfire.auth.AuthProvider#authenticate(java.lang.String, java.lang.String)
 	 */
 	public void authenticate(String username, String password)
 			throws UnauthorizedException {
@@ -50,7 +51,7 @@ public class HippoAuthProvider implements
 	}
 
 	/* (non-Javadoc)
-	 * @see org.jivesoftware.wildfire.auth.AuthProvider#authenticate(java.lang.String, java.lang.String, java.lang.String)
+	 * @see org.jivesoftware.openfire.auth.AuthProvider#authenticate(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	public void authenticate(String username, String token, String digest)
 			throws UnauthorizedException {
@@ -74,6 +75,19 @@ public class HippoAuthProvider implements
 				throw new UnauthorizedException("Not authorized");
 		}
 		Log.debug("auth succeeded for user " + username);
+	}
+
+	public String getPassword(String username) throws UserNotFoundException, UnsupportedOperationException {
+		throw new UnsupportedOperationException();
+	}
+
+	public void setPassword(String username, String password) throws UserNotFoundException, UnsupportedOperationException {
+		throw new UnsupportedOperationException();
+		
+	}
+
+	public boolean supportsPasswordRetrieval() {
+		return false;
 	}		
 }
 	

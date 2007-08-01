@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.concurrent.Callable;
 
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServer;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 

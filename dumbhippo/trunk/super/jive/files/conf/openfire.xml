@@ -35,6 +35,9 @@
       <password>@@dbpassword@@</password>
     </defaultProvider>
   </database>
+  <network>
+    <interface>@@bindHost@@</interface>
+  </network>
   <setup>true</setup>
   <log>
     <debug>

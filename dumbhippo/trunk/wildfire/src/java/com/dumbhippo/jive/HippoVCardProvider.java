@@ -4,7 +4,7 @@
 package com.dumbhippo.jive;
 
 import org.dom4j.Element;
-import org.jivesoftware.wildfire.vcard.VCardProvider;
+import org.jivesoftware.openfire.vcard.VCardProvider;
 import org.jivesoftware.util.AlreadyExistsException;
 import org.jivesoftware.util.NotFoundException;
 
