@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServer;
 import org.xmpp.component.Component;
 import org.xmpp.component.ComponentManager;
 import org.xmpp.packet.IQ;

@@ -5,14 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.IQRouter;
-import org.jivesoftware.wildfire.SessionManager;
-import org.jivesoftware.wildfire.XMPPServer;
-import org.jivesoftware.wildfire.component.InternalComponentManager;
-import org.jivesoftware.wildfire.container.Module;
-import org.jivesoftware.wildfire.container.Plugin;
-import org.jivesoftware.wildfire.container.PluginManager;
-import org.jivesoftware.wildfire.handler.IQHandler;
+import org.jivesoftware.openfire.IQRouter;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.component.InternalComponentManager;
+import org.jivesoftware.openfire.container.Module;
+import org.jivesoftware.openfire.container.Plugin;
+import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.handler.IQHandler;
 import org.xmpp.component.ComponentException;
 
 import com.dumbhippo.ExceptionUtils;

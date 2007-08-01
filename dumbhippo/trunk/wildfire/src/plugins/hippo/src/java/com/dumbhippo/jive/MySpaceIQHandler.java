@@ -1,8 +1,8 @@
 package com.dumbhippo.jive;
 
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.IQHandlerInfo;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
 
 public class MySpaceIQHandler extends AbstractIQHandler {

@@ -146,8 +146,8 @@ public class XMPPServer {
     /**
      * Creates a server and starts it with a specified homedir
      * 
-     * @param home the home directory of the wildfire installation. If null,
-     *    then it will be retrieved from the system property wildfireHome.
+     * @param home the home directory of the opefire installation. If null,
+     *    then it will be retrieved from the system property opefireHome.
      */
     public XMPPServer(String home) {
         // We may only have one instance of the server running on the JVM
@@ -727,7 +727,7 @@ public class XMPPServer {
      * @throws FileNotFoundException If jiveHome could not be located
      */
     private void locateOpenfire(String specifiedHome) throws FileNotFoundException {
-        String jiveConfigName = "conf" + File.separator + "wildfire.xml";
+        String jiveConfigName = "conf" + File.separator + "openfire.xml";
         
         // If a home directory was passed to the constructor, use that
         if (openfireHome == null) {

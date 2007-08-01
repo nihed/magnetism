@@ -2,10 +2,10 @@ package com.dumbhippo.jive;
 
 import java.util.Collection;
 
-import org.jivesoftware.wildfire.group.Group;
-import org.jivesoftware.wildfire.group.GroupAlreadyExistsException;
-import org.jivesoftware.wildfire.group.GroupNotFoundException;
-import org.jivesoftware.wildfire.group.GroupProvider;
+import org.jivesoftware.openfire.group.Group;
+import org.jivesoftware.openfire.group.GroupAlreadyExistsException;
+import org.jivesoftware.openfire.group.GroupNotFoundException;
+import org.jivesoftware.openfire.group.GroupProvider;
 import org.xmpp.packet.JID;
 
 public class HippoGroupProvider implements GroupProvider {
@@ -43,21 +43,6 @@ public class HippoGroupProvider implements GroupProvider {
 		// TODO FIXME
 	}
 
-	public Collection<Group> getGroups() {
-		throw new UnsupportedOperationException();		
-		// TODO FIXME
-	}
-
-	public Collection<Group> getGroups(int startIndex, int numResults) {
-		throw new UnsupportedOperationException();		
-		// TODO FIXME
-	}
-
-	public Collection<Group> getGroups(JID user) {
-		throw new UnsupportedOperationException();		
-		// TODO FIXME
-	}
-
 	public void addMember(String groupName, JID user,
 			boolean administrator) throws UnsupportedOperationException {
 		throw new UnsupportedOperationException();		
@@ -78,5 +63,29 @@ public class HippoGroupProvider implements GroupProvider {
 
 	public boolean isReadOnly() {
 		return false;
+	}
+
+	public Collection<String> getGroupNames() {
+		throw new UnsupportedOperationException();		
+	}
+
+	public Collection<String> getGroupNames(int startIndex, int numResults) {
+		throw new UnsupportedOperationException();		
+	}
+
+	public Collection<String> getGroupNames(JID user) {
+		throw new UnsupportedOperationException();		
+	}
+
+	public boolean isSearchSupported() {
+		return false;
+	}
+
+	public Collection<String> search(String query) {
+		throw new UnsupportedOperationException();		
+	}
+
+	public Collection<String> search(String query, int startIndex, int numResults) {
+		throw new UnsupportedOperationException();		
 	}
 }

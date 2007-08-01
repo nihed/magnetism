@@ -145,12 +145,10 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
                 }
             }
         }
-        catch (Exception e) {
-        	if (!(e instanceof ServerTooBusyException))
-        		Log.error("Error handling authentication IQ packet", e);
-        	else
-        		Log.info("Got ServerTooBusyException, closing connection");
+        catch (ServerTooBusyException e) {
+        	Log.info("Got ServerTooBusyException, closing connection");
             sessionManager.getSession(packet.getFrom()).getConnection().close();
+            return null;
         }
         catch (UserNotFoundException e) {
             response = IQ.createResultIQ(packet);

@@ -41,7 +41,9 @@
 		<pathelement location="${jboss.root}/client/mail.jar"/>
 		<pathelement location="${jboss.root}/client/activation.jar"/>
 		<pathelement location="${jboss.root}/client/log4j.jar"/>
+		<pathelement location="${jboss.root}/server/all/lib/jbossha.jar"/>
 		<pathelement location="${jboss.root}/server/default/lib/javax.servlet.jsp.jar"/>
+		<pathelement location="${jboss.root}/server/default/lib/JBOSS_HOME/server/all/lib/javax.servlet.jsp.jar"/>
 		<pathelement location="${jboss.root}/server/default/lib/antlr-2.7.6.jar"/>
 		<pathelement location="${jboss.root}/server/default/deploy/jbossweb-tomcat55.sar/tomcat-util.jar"/>
 		<pathelement location="${jboss.root}/server/default/deploy/jbossweb-tomcat55.sar/jsf-libs/jstl.jar"/>

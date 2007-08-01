@@ -49,18 +49,18 @@
     </taskdef>
     <taskdef name="pack200" classname="com.sun.tools.apache.ant.pack200.Pack200Task">
         <classpath>
-            <pathelement location="${basedir}/build/lib/pack200task.jar"/>
+            <pathelement location="${tasklib.dir}/pack200task.jar"/>
         </classpath>
     </taskdef>
     <taskdef name="unpack200" classname="com.sun.tools.apache.ant.pack200.Unpack200Task">
         <classpath>
-            <pathelement location="${basedir}/build/lib/pack200task.jar"/>
+            <pathelement location="${tasklib.dir}/pack200task.jar"/>
         </classpath>
     </taskdef>
     <typedef name="srcinc" classname="com.jivesoftware.tools.selector.IncludeSourceSelector" >
         <classpath>
-            <pathelement location="${basedir}/build/lib/ant-jive-edition.jar"/>
-            <pathelement location="${basedir}/build/lib/qdox.jar"/>
+            <pathelement location="${tasklib.dir}/ant-jive-edition.jar"/>
+            <pathelement location="${tasklib.dir}/qdox.jar"/>
         </classpath>
     </typedef>
 
@@ -173,7 +173,7 @@
     </path>
 
 	<path id="hippoclient.dependencies">
-		<fileset dir="${jar.dest.dir}" includes="jbossall-client.jar jboss-system.jar antlr-*.jar *hibernate*.jar *ejb3*.jar *jdk50*.jar dumbhippo-client.jar" />
+		<fileset dir="${jar.dest.dir}" includes="jbossall-client.jar jboss-system.jar antlr-*.jar *hibernate*.jar *ejb3*.jar jboss-jmx.jar *jdk50*.jar dumbhippo-client.jar" />
 	</path>
 	
     <path id="compile.dependencies">
@@ -410,7 +410,8 @@
             <fileset dir="${src.i18n.dir}" includes="*.properties"/>
             <fileset dir="${target.i18n.dir}" includes="*.properties"/>
             <fileset dir="${resources.dir}/jar" includes="**"/>
-            <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar"/>
+            <!-- HIPPO: Exclude commons-logging since we already have it in the server -->
+            <zipgroupfileset dir="${lib.merge.dir}" includes="*.jar" excludes="commons-logging.jar"/>
             <manifest>
                 <attribute name="Built-By" value="Jive Software (www.igniterealtime.org)"/>
             </manifest>

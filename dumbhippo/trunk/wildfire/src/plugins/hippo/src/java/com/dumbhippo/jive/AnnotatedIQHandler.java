@@ -9,8 +9,8 @@ import javax.ejb.EJB;
 
 import org.dom4j.Element;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.IQHandlerInfo;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
@@ -38,7 +38,7 @@ import com.dumbhippo.server.util.EJBUtil;
  *  
  * @author otaylor
  */
-public class AnnotatedIQHandler extends org.jivesoftware.wildfire.handler.IQHandler {
+public class AnnotatedIQHandler extends org.jivesoftware.openfire.handler.IQHandler {
 	private IQHandlerInfo info;
 	private Map<String, AnnotatedIQMethod> getMethods = new HashMap<String, AnnotatedIQMethod>();
 	private Map<String, AnnotatedIQMethod> setMethods = new HashMap<String, AnnotatedIQMethod>();

@@ -71,7 +71,7 @@ public class SessionManager extends BasicModule {
     private OutgoingServerSessionListener outgoingServerListener = new OutgoingServerSessionListener();
     private ConnectionMultiplexerSessionListener multiplexerSessionListener = new ConnectionMultiplexerSessionListener();
 
-    private Set<SessionManagerListener> listeners;
+    private Set<SessionManagerListener> listeners = new HashSet<SessionManagerListener>();
      
     /**
      * Map that holds sessions that has been created but haven't been authenticated yet. The Map

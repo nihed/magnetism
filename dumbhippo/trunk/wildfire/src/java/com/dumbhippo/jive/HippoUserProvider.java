@@ -1,13 +1,14 @@
 package com.dumbhippo.jive;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
 
-import org.jivesoftware.wildfire.user.User;
-import org.jivesoftware.wildfire.user.UserAlreadyExistsException;
-import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.jivesoftware.wildfire.user.UserProvider;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.user.UserProvider;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
@@ -208,6 +209,12 @@ public class HippoUserProvider implements UserProvider {
 		if (adminUsername == null)
 			adminUsername = JiveGlobals.getXMLProperty("dumbhippo.adminuser");			
 		return adminUsername;
+	}
+
+
+	public Collection<String> getUsernames() {
+		// All users on system isn't something we want to support
+		return Collections.singleton(getAdminUsername());
 	}
 
 	public static synchronized String getAdminPassword() {

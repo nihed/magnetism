@@ -1,6 +1,6 @@
 package com.dumbhippo.jive.jmx;
 
-import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.openfire.XMPPServer;
 
 public class XMPPService implements XMPPServiceMBean {
 	String homeDirectory;

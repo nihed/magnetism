@@ -1,4 +1,6 @@
-package org.jivesoftware.wildfire;
+package org.jivesoftware.openfire;
+
+import org.jivesoftware.openfire.session.ClientSession;
 
 /**
  * Listener to global session-related events, e.g. watching as sessions come and go.
