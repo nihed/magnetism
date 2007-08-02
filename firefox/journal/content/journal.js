@@ -185,6 +185,7 @@ var formatMonth = function(i) { return ["January", "February", "March", "April",
 
 var journal = {
   appendDaySet: function(dayset) {
+    var me = this;
     var date = dayset[0].date;
 
     dayset.sort(function (a,b) { if (a.date > b.date) { return -1; } else { return 1; }})
@@ -203,8 +204,10 @@ var journal = {
       var is_target = viewed_item == this.targetHistoryItem;
       var histitemnode = document.createElement('div');
       histitemnode.className = 'item';
-      if (is_target)
+      if (is_target) {
         histitemnode.addClassName('target-item');
+        histitemnode.setAttribute('id', 'default-target-item');
+      }
       var hrs = viewed_item.date.getHours();
       var mins = viewed_item.date.getMinutes();
       histitemnode.appendChild(createSpanText(twelveHour(hrs) + ":" + pad(mins) + " " + meridiem(hrs), 'time'));
@@ -213,6 +216,8 @@ var journal = {
       titleLink.setAttribute('tabindex', 1);
       if (is_target) 
         this.targetHistoryItemLink = titleLink;
+      titleLink.addEventListener("focus", function(e) { me.onResultFocus(e, true); }, false);
+      titleLink.addEventListener("blur", function(e) { me.onResultFocus(e, false); }, false);             
       histitemnode.appendChild(titleLink);
 
       var histmetanode = document.createElement('div');
@@ -220,13 +225,21 @@ var journal = {
       histmetanode.appendChild(createSpanText(' ', 'blue'));
       histmetanode.appendChild(createSpanText(' ', 'tags'));
       var hrefLink = createAText(viewed_item.url.split("?")[0],viewed_item.url,'url');
-      hrefLink.setAttribute('tabindex', 0)
+      hrefLink.setAttribute('tabindex', 0); 
       histmetanode.appendChild(hrefLink);
       histnode.appendChild(histitemnode);
       histnode.appendChild(histmetanode);
     }
   },
-
+  onResultFocus: function(e, focused) {
+    if (focused) {
+      var defTarget = document.getElementById("default-target-item");
+      defTarget.removeClassName("target-item"); 
+      e.target.addClassName("target-item");
+    } else {
+      e.target.removeClassName("target-item");
+    }
+  },
   redisplay: function() {    
     LOG("redisplay");
     var content = document.getElementById('history'); 
